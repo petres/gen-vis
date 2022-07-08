@@ -12,18 +12,14 @@ import Vis from '@/Vis.vue';
 
 
 export default {
-    setup() {
-        const store = baseStore();
-        store.load();
-        return {
-            store: store
-        }
-    },
+    data: () => ({
+        store: baseStore(),
+    }),
     components: {
         Vis
     },
     mounted() {
-
+        this.store.load();
     }
 }
 </script>

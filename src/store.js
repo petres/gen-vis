@@ -12,7 +12,7 @@ export const baseStore = defineStore('base', {
     },
     actions: {
         load() {
-            this.loadDef().then(() => {
+            return this.loadDef().then(() => {
                 // console.log(this.def)
                 this.loadData();
             })
