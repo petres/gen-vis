@@ -4,11 +4,11 @@ import * as d3 from "d3";
 
 export const baseStore = defineStore('base', {
     state: () => ({
-        def: {},
-        data: [],
+        def: null,
+        data: null,
     }),
     getters: {
-
+        loaded() { return (this.def !== null && this.data !== null)}
     },
     actions: {
         load() {

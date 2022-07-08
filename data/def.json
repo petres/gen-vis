@@ -1,8 +1,73 @@
 {
     "data": "data.csv",
-    "lines": {
+    "mapping": {
         "x": "year",
         "y": "value",
-        "g": "id"
+        "g": "g1",
+        "f": "g2"
+    },
+    "x": {
+        "scale": 3
+    },
+    "attrs": {
+        "common": {
+            "opacity": 0.2,
+            "r": 5
+        },
+        "manual": {
+            "A": {
+                "fill": "red"
+            },
+            "B": {
+                "fill": "blue"
+            },
+            "C": {
+                "fill": "green"
+            }
+        }
+    },
+    "facets": {
+
+    },
+    "paths": {
+        "attrs": {
+            "common": {
+                "stroke-width": 2,
+                "fill": "none",
+                "opacity": 0.2,
+                "stroke": "black"
+            },
+            "manual": {
+                "A": {
+                    "stroke": "red"
+                },
+                "B": {
+                    "stroke": "blue",
+                    "stroke-width": 4
+                },
+                "C": {
+                    "stroke": "green"
+                }
+            }
+        }
+    },
+    "circles": {
+        "attrs": {
+            "common": {
+                "opacity": 0.2,
+                "r": 5
+            },
+            "manual": {
+                "A": {
+                    "fill": "red"
+                },
+                "B": {
+                    "fill": "blue"
+                },
+                "C": {
+                    "fill": "green"
+                }
+            }
+        }
     }
 }
