@@ -9,65 +9,43 @@
     "x": {
         "scale": 3
     },
-    "attrs": {
+    "f": {
+
+    },
+    "g": {
         "common": {
             "opacity": 0.2,
-            "r": 5
+            "stroke-width": 2
         },
         "manual": {
             "A": {
-                "fill": "red"
+                "label": "alt",
+                "color": "red"
             },
             "B": {
-                "fill": "blue"
+                "label": "mittel",
+                "color": "blue",
+                "stroke-width": 3
             },
             "C": {
-                "fill": "green"
+                "label": "neu",
+                "color": "green"
             }
         }
     },
-    "facets": {
-
-    },
     "paths": {
         "attrs": {
-            "common": {
-                "stroke-width": 2,
-                "fill": "none",
-                "opacity": 0.2,
-                "stroke": "black"
-            },
-            "manual": {
-                "A": {
-                    "stroke": "red"
-                },
-                "B": {
-                    "stroke": "blue",
-                    "stroke-width": 4
-                },
-                "C": {
-                    "stroke": "green"
-                }
-            }
+            "stroke-width": ":stroke-width",
+            "fill": "none",
+            "opacity": ":opacity",
+            "stroke": ":color"
         }
     },
     "circles": {
         "attrs": {
-            "common": {
-                "opacity": 0.2,
-                "r": 5
-            },
-            "manual": {
-                "A": {
-                    "fill": "red"
-                },
-                "B": {
-                    "fill": "blue"
-                },
-                "C": {
-                    "fill": "green"
-                }
-            }
+            "opacity": ":opacity",
+            "r": 5,
+            "fill": ":color"
         }
     }
 }

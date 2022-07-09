@@ -1,6 +1,12 @@
 <template>
     <div>
-        <facet v-for="f in facets" :f="f"/>
+        <template v-if="facets.length > 0">
+            <facet v-for="f in facets" :f="f"/>
+        </template>
+        <template v-else>
+            <facet/>
+            <legend/>
+        </template>
     </div>
 </template>
 
@@ -8,6 +14,7 @@
 import { baseStore } from '@/store.js'
 import * as d3 from "d3";
 import Facet from '@/Facet.vue';
+import Legend from '@/Legend.vue';
 
 
 export default {
@@ -22,12 +29,11 @@ export default {
         innerHeight() { return this.height - (this.margin.t + this.margin.b) },
     },
     components: {
-        Facet
+        Facet, Legend
     },
     mounted() {
         const store = baseStore();
-        this.facets = ['X', 'Y'];
-
+        // this.facets = ['X', 'Y'];
     }
 }
 </script>

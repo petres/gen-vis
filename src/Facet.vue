@@ -15,6 +15,8 @@
 <script>
 import { baseStore } from '@/store.js'
 import * as d3 from "d3";
+import * as du from "@/data-utils";
+import * as ju from "@/json-utils";
 
 
 export default {
@@ -27,6 +29,10 @@ export default {
         margin: {l: 50, r: 50, t: 50, b: 50},
         width: 600,
         height: 300,
+        xs: null,
+        ys: null,
+        def: null,
+        inner: null,
     }),
     computed: {
         innerWidth() { return this.width - (this.margin.l + this.margin.r) },
@@ -37,10 +43,10 @@ export default {
     mounted() {
         const store = baseStore();
         // const svg = d3.select(this.$refs.svg);
-        const inner = d3.select(this.$refs.inner);
-        const def = store.def;
+        this.inner = d3.select(this.$refs.inner);
+        this.def = store.def;
 
-        const mapping = def.mapping;
+        const mapping = this.def.mapping;
 
         let data = store.data;
 
@@ -55,37 +61,42 @@ export default {
         const xr = d3.extent(v.map(d => d.x))
         const yr = d3.extent(v.map(d => d.y))
 
-        const xs = d3.scaleLinear()
+        this.xs = d3.scaleLinear()
             .domain(xr)
             .range([ 0, this.innerWidth]);
 
-        const ys = d3.scaleLinear()
+        this.ys = d3.scaleLinear()
             .domain(yr)
             .range([ this.innerHeight, 0]);
 
         d3.select(this.$refs.x)
-            .call(d3.axisBottom(xs).ticks(5))
+            .call(d3.axisBottom(this.xs).ticks(5))
             .attr('transform', `translate(0, ${this.innerHeight})`)
 
         d3.select(this.$refs.y)
-            .call(d3.axisLeft(ys).ticks(5))
+            .call(d3.axisLeft(this.ys).ticks(5))
 
-        const splitted = {};
+        const dataGrouped = {};
         data.forEach((d, i) => {
             const g = d[mapping.g];
-            if (!(g in splitted))
-                splitted[g] = [];
-            splitted[g].push(v[i])
+            if (!(g in dataGrouped))
+                dataGrouped[g] = [];
+            dataGrouped[g].push(v[i])
         });
 
-        if (def.paths) {
-            const linesData = Object.keys(splitted).map(d => ({
+        if (this.def.paths) this.paths(dataGrouped);
+        if (this.def.circles) this.circles(dataGrouped);
+
+    },
+    methods: {
+        paths(dataGrouped) {
+            const linesData = Object.keys(dataGrouped).map(d => ({
                 g: d,
-                a: Object.assign({}, def.paths.attrs.common, def.paths.attrs.manual[d]),
-                vs: splitted[d],
+                a: ju.fill(this.def.paths.attrs, ju.merged(this.def.g, d)),
+                vs: dataGrouped[d],
             }))
 
-            inner.append("g")
+            this.inner.append("g")
                 .attr("class", "paths")
                 .selectAll("path")
                 .data(linesData)
@@ -98,20 +109,19 @@ export default {
                     }
                 })
                 .attr("d", d => d3.line()
-                    .x(e => xs(e.x))
-                    .y(e => ys(e.y))
+                    .x(e => this.xs(e.x))
+                    .y(e => this.ys(e.y))
                     (d.vs)
                 )
-        }
-
-        if (def.circles) {
-            const circlesData = Object.keys(splitted).map(d => ({
+        },
+        circles(dataGrouped) {
+            const circlesData = Object.keys(dataGrouped).map(d => ({
                 g: d,
-                a: Object.assign({}, def.circles.attrs.common, def.circles.attrs.manual[d]),
-                vs: splitted[d],
+                a: ju.fill(this.def.circles.attrs, ju.merged(this.def.g, d)),
+                vs: dataGrouped[d],
             }))
 
-            inner.append("g")
+            this.inner.append("g")
                 .attr("class", "circles")
                 .selectAll("g.circleGroup")
                 .data(circlesData)
@@ -127,15 +137,15 @@ export default {
                 })
                 .enter()
                 .append("circle")
-                .each(function(d, i , j) {
+                .each(function(d) {
                     const e = d3.select(this);
                     for (const [key, value] of Object.entries(d.a)) {
                         e.attr(key, value);
                     }
                 })
-                .attr('cx', d => xs(d.v.x))
-                .attr('cy', d => ys(d.v.y))
-        }
+                .attr('cx', d => this.xs(d.v.x))
+                .attr('cy', d => this.ys(d.v.y))
+        },
     }
 }
 </script>
