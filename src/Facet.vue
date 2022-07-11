@@ -15,6 +15,7 @@
 <script>
 import { baseStore } from '@/store.js'
 import * as d3 from "d3";
+import * as pu from "@/plot-utils";
 import * as du from "@/data-utils";
 import * as ju from "@/json-utils";
 
@@ -58,17 +59,14 @@ export default {
             x: +d[mapping.x],
             y: +d[mapping.y],
         }))
-        const xr = d3.extent(v.map(d => d.x))
-        const yr = d3.extent(v.map(d => d.y))
 
-        this.xs = d3.scaleLinear()
-            .domain(xr)
+        this.xs = pu.scale(this.def.x, () => v.map(d => d.x))
             .range([ 0, this.innerWidth]);
 
-        this.ys = d3.scaleLinear()
-            .domain(yr)
+        this.ys = pu.scale(this.def.y, () => v.map(d => d.y))
             .range([ this.innerHeight, 0]);
 
+        // pu.axis(this.$refs.x, this.def.x.axis, scale)
         d3.select(this.$refs.x)
             .call(d3.axisBottom(this.xs).ticks(5))
             .attr('transform', `translate(0, ${this.innerHeight})`)
@@ -76,38 +74,27 @@ export default {
         d3.select(this.$refs.y)
             .call(d3.axisLeft(this.ys).ticks(5))
 
-        const dataGrouped = {};
-        data.forEach((d, i) => {
-            const g = d[mapping.g];
-            if (!(g in dataGrouped))
-                dataGrouped[g] = [];
-            dataGrouped[g].push(v[i])
-        });
+        const dataGrouped = du.group(data, v, mapping.g)
 
         if (this.def.paths) this.paths(dataGrouped);
         if (this.def.circles) this.circles(dataGrouped);
+        if (this.def.lines) this.lines(dataGrouped);
+        if (this.def.rects) this.rects(dataGrouped);
 
     },
     methods: {
         paths(dataGrouped) {
-            const linesData = Object.keys(dataGrouped).map(d => ({
-                g: d,
-                a: ju.fill(this.def.paths.attrs, ju.merged(this.def.g, d)),
-                vs: dataGrouped[d],
-            }))
+            const data = ju.getAttrs(dataGrouped, this.def.paths.attrs, this.def.g);
+
 
             this.inner.append("g")
                 .attr("class", "paths")
-                .selectAll("path")
-                .data(linesData)
+                .selectAll("path.pathsGroup")
+                .data(data)
                 .enter()
                 .append("path")
-                .each(function(d) {
-                    const e = d3.select(this);
-                    for (const [key, value] of Object.entries(d.a)) {
-                        e.attr(key, value);
-                    }
-                })
+                .attr("class", "pathsGroup")
+                .each(pu.setAttrs)
                 .attr("d", d => d3.line()
                     .x(e => this.xs(e.x))
                     .y(e => this.ys(e.y))
@@ -115,36 +102,71 @@ export default {
                 )
         },
         circles(dataGrouped) {
-            const circlesData = Object.keys(dataGrouped).map(d => ({
-                g: d,
-                a: ju.fill(this.def.circles.attrs, ju.merged(this.def.g, d)),
-                vs: dataGrouped[d],
-            }))
+            const data = ju.getAttrs(dataGrouped, this.def.circles.attrs, this.def.g);
 
             this.inner.append("g")
                 .attr("class", "circles")
-                .selectAll("g.circleGroup")
-                .data(circlesData)
+                .selectAll("g.circlesGroup")
+                .data(data)
                 .enter()
                 .append("g")
-                .attr("class", "circleGroup")
+                .attr("class", "circlesGroup")
                 .selectAll("circle")
-                .data(d => {
-                    return d.vs.map(e => ({
-                        a: d.a,
-                        v: e
-                    }))
-                })
+                .data(d => d.vs.map(e => ({
+                    a: d.a,
+                    v: e
+                })))
                 .enter()
                 .append("circle")
-                .each(function(d) {
-                    const e = d3.select(this);
-                    for (const [key, value] of Object.entries(d.a)) {
-                        e.attr(key, value);
-                    }
-                })
+                .each(pu.setAttrs)
                 .attr('cx', d => this.xs(d.v.x))
                 .attr('cy', d => this.ys(d.v.y))
+        },
+        lines(dataGrouped) {
+            const data = ju.getAttrs(dataGrouped, this.def.lines.attrs, this.def.g);
+
+            this.inner.append("g")
+                .attr("class", "lines")
+                .selectAll("g.linesGroup")
+                .data(data)
+                .enter()
+                .append("g")
+                .attr("class", "linesGroup")
+                .selectAll("line")
+                .data(d => d.vs.map(e => ({
+                    a: d.a,
+                    v: e
+                })))
+                .enter()
+                .append("line")
+                .each(pu.setAttrs)
+                .attr('x1', d => this.xs(d.v.x))
+                .attr('x2', d => this.xs(d.v.x) + 10)
+                .attr('y1', d => this.ys(d.v.y))
+                .attr('y2', d => this.ys(d.v.y) + 10)
+        },
+        rects(dataGrouped) {
+            const data = ju.getAttrs(dataGrouped, this.def.rects.attrs, this.def.g);
+
+            this.inner.append("g")
+                .attr("class", "rects")
+                .selectAll("g.rectsGroup")
+                .data(data)
+                .enter()
+                .append("g")
+                .attr("class", "rectsGroup")
+                .selectAll("rect")
+                .data(d => d.vs.map(e => ({
+                    a: d.a,
+                    v: e
+                })))
+                .enter()
+                .append("rect")
+                .each(pu.setAttrs)
+                .attr('x', d => this.xs(d.v.x))
+                .attr('y', d => this.ys(d.v.y))
+                .attr('width', 10)
+                .attr('height', 10)
         },
     }
 }

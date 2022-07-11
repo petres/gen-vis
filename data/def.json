@@ -3,11 +3,24 @@
     "mapping": {
         "x": "year",
         "y": "value",
-        "g": "g1",
+        "g": "g2",
         "f": "g2"
     },
     "x": {
-        "scale": 3
+        "column": "year",
+        "axis": {
+            "ticks": 3,
+            "label": "Year",
+            "format": ""
+        }
+    },
+    "y": {
+        "column": "value",
+        "domain": [0, null],
+        "axis": {
+            "ticks": 3,
+            "label": "Value"
+        }
     },
     "f": {
 
@@ -30,6 +43,10 @@
             "C": {
                 "label": "neu",
                 "color": "green"
+            },
+            "D": {
+                "label": "bla",
+                "color": "yellow"
             }
         }
     },
@@ -45,6 +62,17 @@
         "attrs": {
             "opacity": ":opacity",
             "r": 5,
+            "fill": ":color"
+        }
+    },
+    "lines": {
+        "attrs": {
+            "opacity": 1,
+            "stroke": ":color"
+        }
+    },
+    "rects": {
+        "attrs": {
             "fill": ":color"
         }
     }
