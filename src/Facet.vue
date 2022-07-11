@@ -141,9 +141,9 @@ export default {
 
 
 
-        const dataGrouped = du.group(data, "type")
+        const dataGrouped = du.group(data, "nuts")
         def.plot.forEach(d => {
-            const data = ju.getAttrs(dataGrouped, d.attrs, def.mapping.type);
+            const data = ju.getAttrs(dataGrouped, d.attrs, def.mapping.nuts);
             this[d.type](data);
         });
     },
