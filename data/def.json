@@ -54,6 +54,18 @@
                             "y": 0,
                             "width": 20,
                             "height": 20,
+                            "fill": "#EEE",
+                            "stroke": "#AAA",
+                            "rx": 7,
+                            "ry": 7
+                        }
+                    },
+                    {
+                        "type": "circle",
+                        "attrs": {
+                            "cx": 10,
+                            "cy": 10,
+                            "r": 5,
                             "fill": "@color"
                         }
                     }

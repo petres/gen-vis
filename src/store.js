@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios';
 import * as d3 from "d3";
+import globals from '@/globals.js'
 
 export const baseStore = defineStore('base', {
     state: () => ({
@@ -19,7 +20,7 @@ export const baseStore = defineStore('base', {
         },
         loadDef() {
             return axios
-                .get(`/data/def.json`)
+                .get(`/data/${globals.def}`)
                 .then(response => {
                     this.def = response.data
                 })

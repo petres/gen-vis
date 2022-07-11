@@ -1,7 +1,7 @@
 <template>
     <div>
         {{ f }}
-        <div>
+        <div :style="`width: ${width}px`">
             <div ref="legends" class="legends"/>
             <svg ref="svg" :width="width" :height="height">
                 <g ref="inner" :transform="`translate(${this.margin.l} ${this.margin.t})`"/>
@@ -24,7 +24,7 @@ export default {
         }
     },
     data: () => ({
-        margin: {l: 50, r: 50, t: 100, b: 50},
+        margin: {l: 50, r: 50, t: 50, b: 50},
         width: 600,
         height: 300,
         xs: null,
@@ -58,24 +58,30 @@ export default {
         const mapping = Object.keys(def.mapping).map(n => ({
             name: n,
             column: def.mapping[n].column,
-            numeric: def.mapping[n].type == 'continuous',
+            numeric: def.mapping[n].type == 'numeric',
+            date: def.mapping[n].type == 'date',
         }));
 
         let data = dataRaw.map(d => {
             const e = {};
             mapping.forEach(c => {
                 let ev = d[c.column];
+                if (c.date)
+                    ev = Date.parse(ev);
                 if (c.numeric)
                     ev = 1 * ev;
                 e[c.name] = ev;
             });
             return e;
         })
+        console.log(data)
 
         const scales = Object.keys(def.mapping).filter(n => ('scale' in def.mapping[n]))
         scales.forEach(n => {
             def.mapping[n]._scale = pu.scale(def.mapping[n].scale, this.constants, () => data.map(d => d[n]));
         });
+
+        console.log(def.mapping)
 
         data = data.map(d => {
             scales.forEach(n => {
@@ -104,7 +110,7 @@ export default {
             const i = def.mapping[n];
             const d = Object.keys(i.manual).map(d => ({
                 key: d,
-                attrs: i.manual[d]
+                props: i.manual[d]
             }))
             // const d = Object.values(def.mapping[n].manual)
             const e = legendsContainer.append("div")
@@ -125,47 +131,19 @@ export default {
             i.legend.elements.forEach(e => {
                 s.append(e.type)
                     .each(function(a, b) {
-                        console.log([a, b])
-                        // pu.setAttrs
+                        // console.log([a, b])
+                        // console.log(ju.fill(e.attrs, a.props))
+                        pu.setAttrs.call(this, ju.fill(e.attrs, a.props))
                     })
-                //
-                // const datum = s.data()
-                //
-                // console.log(datum)
-                // .data(d => {console.log(d); ju.fill(e.attrs, d.attrs)})
-                    // .datum(d => function(d) {console.log(d)})
-
-                // const data = ju.fill(, i.manual.A)
-                // console.log(data)
-                // this[d.type](data);
             });
-            //
-            // .data(d => d.values.map(e => ju.fill(d.attrs, e)))
-            // .enter()
-            // .append(type)
-            // .each(pu.setAttrs)
-            //
-                //
-                // .append("rect")
-                // .attr("x", 0)
-                // .attr("y", 0)
-                // .attr("height", size)
-                // .attr("width", size)
-                // // .attr("rx", 5)
-                // .attr("fill", "none")
-                // .attr("stroke", "#999")
-                // .attr("stroke-width", 2)
-
-
-
-            e.append("span").text(d => d.attrs.label)
+            e.append("span").text(d => d.props.label)
         });
 
 
 
-        const dataGrouped = du.group(data, "g")
+        const dataGrouped = du.group(data, "type")
         def.plot.forEach(d => {
-            const data = ju.getAttrs(dataGrouped, d.attrs, def.mapping.g);
+            const data = ju.getAttrs(dataGrouped, d.attrs, def.mapping.type);
             this[d.type](data);
         });
     },

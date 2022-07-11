@@ -1,0 +1,120 @@
+{
+    "data": "sprit-nuts/data.csv",
+    "options": {
+        "height": 500,
+        "width": 900
+    },
+    "mapping": {
+        "x": {
+            "column": "date",
+            "type": "date",
+
+            "scale": {
+                "type": "time",
+                "range": [0, "@width"]
+            },
+
+            "axis": {
+                "ticks": 12,
+                "label": "Year",
+                "format": "",
+                "position": "bottom"
+            }
+        },
+        "y": {
+            "column": "priceMean",
+            "type": "numeric",
+
+            "scale": {
+                "type": "linear",
+                "domain": [0, null],
+                "range": ["@height", 0]
+            },
+
+            "axis": {
+                "ticks": 8,
+                "label": "Preis",
+                "position": "left"
+            }
+        },
+        "type": {
+            "column": "fuelType",
+            "legend": {
+                "size": 20,
+                "elements": [{
+                    "type": "line",
+                    "attrs": {
+                        "x1": 0,
+                        "x2": 20,
+                        "y1": 10,
+                        "y2": 10,
+                        "stroke": "@color",
+                        "opacity": "@opacity"
+                    }
+                }]
+            },
+            "common": {
+                "opacity": 0.7,
+                "stroke-width": 1
+            },
+            "manual": {
+                "DIE": {
+                    "label": "Diesel",
+                    "color": "red"
+                },
+                "SUP": {
+                    "label": "Benzin",
+                    "color": "blue"
+                }
+            }
+        },
+        "nuts": {
+            "column": "nuts2",
+            "common": {
+                "opacity": 0.7,
+                "stroke-width": 1
+            },
+            "legend": {
+                "size": 20,
+                "elements": [{
+                    "type": "line",
+                    "attrs": {
+                        "x1": 0,
+                        "x2": 20,
+                        "y1": 10,
+                        "y2": 10,
+                        "stroke": "@color",
+                        "stroke-width": 3
+                    }
+                }]
+            },
+            "manual": {
+                "W":  { "color": "#559BD5", "label": "Wien" },
+                "N":  { "color": "#72BB6F", "label": "Niederösterreich" },
+                "B":  { "color": "#559E8F", "label": "Burgenland" },
+                "O":  { "color": "#12A7E7", "label": "Oberösterreich" },
+                "Sa": { "color": "#96B428", "label": "Salzburg" },
+                "St": { "color": "#C3423F", "label": "Steiermark" },
+                "K":  { "color": "#F3D039", "label": "Kärnten" },
+                "T":  { "color": "#DDEBF7", "label": "Tirol" },
+                "V":  { "color": "#E3F1E2", "label": "Vorarlberg" },
+                "AT":  { "color": "#DBECE9", "label": "Gesamt" }
+            }
+        }
+    },
+    "plot": [
+        {
+            "type": "path",
+            "attrs": {
+                "stroke-width": "@stroke-width",
+                "fill": "none",
+                "opacity": "@opacity",
+                "stroke": "@color",
+                "d": {
+                    "x": "@x:scaled",
+                    "y": "@y:scaled"
+                }
+            }
+        }
+    ]
+}

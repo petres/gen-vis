@@ -2,6 +2,9 @@ pre {
     background-color: #EEE;
 }
 
+body, text {
+    font-family: Verdana, sans-serif;
+}
 
 
 .legends {
@@ -12,6 +15,16 @@ pre {
         svg {
             display: inline-block;
             margin-right: 5px;
+            border: 1px solid #DDD;
+            border-radius: 5px;
+        }
+
+        span {
+            top: -5px;
+            display: inline-block;
+            position: relative;
+            font-size: 14px;
         }
     }
+    text-align: center;
 }
