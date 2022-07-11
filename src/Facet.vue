@@ -2,11 +2,9 @@
     <div>
         {{ f }}
         <div>
+            <div ref="legends" class="legends"/>
             <svg ref="svg" :width="width" :height="height">
-                <g ref="inner" :transform="`translate(${this.margin.l} ${this.margin.t})`">
-                    <g ref="x"/>
-                    <g ref="y"/>
-                </g>
+                <g ref="inner" :transform="`translate(${this.margin.l} ${this.margin.t})`"/>
             </svg>
         </div>
     </div>
@@ -19,7 +17,6 @@ import * as pu from "@/plot-utils";
 import * as du from "@/data-utils";
 import * as ju from "@/json-utils";
 
-
 export default {
     props: {
         f: {
@@ -27,146 +24,191 @@ export default {
         }
     },
     data: () => ({
-        margin: {l: 50, r: 50, t: 50, b: 50},
+        margin: {l: 50, r: 50, t: 100, b: 50},
         width: 600,
         height: 300,
         xs: null,
         ys: null,
-        def: null,
-        inner: null,
     }),
     computed: {
         innerWidth() { return this.width - (this.margin.l + this.margin.r) },
         innerHeight() { return this.height - (this.margin.t + this.margin.b) },
+        constants() {
+            return {
+                "width": this.innerWidth,
+                "height": this.innerHeight,
+            }
+        }
     },
     components: {
     },
+    created() {
+        this.store = baseStore();
+    },
     mounted() {
-        const store = baseStore();
+        const dataRaw = this.store.data;
+        const def = this.store.def;
+
+        this.height = this.store.def.options.height;
+        this.width = this.store.def.options.width;
+
         // const svg = d3.select(this.$refs.svg);
         this.inner = d3.select(this.$refs.inner);
-        this.def = store.def;
 
-        const mapping = this.def.mapping;
+        const mapping = Object.keys(def.mapping).map(n => ({
+            name: n,
+            column: def.mapping[n].column,
+            numeric: def.mapping[n].type == 'continuous',
+        }));
 
-        let data = store.data;
+        let data = dataRaw.map(d => {
+            const e = {};
+            mapping.forEach(c => {
+                let ev = d[c.column];
+                if (c.numeric)
+                    ev = 1 * ev;
+                e[c.name] = ev;
+            });
+            return e;
+        })
 
-        if (this.f) {
-            data = data.filter(d => d[mapping.f] == this.f)
-        }
+        const scales = Object.keys(def.mapping).filter(n => ('scale' in def.mapping[n]))
+        scales.forEach(n => {
+            def.mapping[n]._scale = pu.scale(def.mapping[n].scale, this.constants, () => data.map(d => d[n]));
+        });
 
-        const v = data.map(d => ({
-            x: +d[mapping.x],
-            y: +d[mapping.y],
-        }))
+        data = data.map(d => {
+            scales.forEach(n => {
+                d[`${n}:scaled`] = def.mapping[n]._scale(d[n])
+            });
+            return d;
+        })
 
-        this.xs = pu.scale(this.def.x, () => v.map(d => d.x))
-            .range([ 0, this.innerWidth]);
 
-        this.ys = pu.scale(this.def.y, () => v.map(d => d.y))
-            .range([ this.innerHeight, 0]);
+        const axis = scales.filter(n => ('axis' in def.mapping[n]));
+        axis.forEach(n => {
+            const i = def.mapping[n].axis;
+            const s = def.mapping[n]._scale;
+            const a = this.inner.append("g")
+                .attr("class", `axis-${n}`)
+                .call(d3[`axis${du.capitalize(i.position)}`](s).ticks(i.ticks))
+            if (i.position == 'bottom')
+                 a.attr('transform', `translate(0, ${this.innerHeight})`)
+            if (i.position == 'right')
+                a.attr('transform', `translate(${this.innerWidth}, 0)`)
+        });
 
-        // pu.axis(this.$refs.x, this.def.x.axis, scale)
-        d3.select(this.$refs.x)
-            .call(d3.axisBottom(this.xs).ticks(5))
-            .attr('transform', `translate(0, ${this.innerHeight})`)
+        const legendsContainer = d3.select(this.$refs.legends);
+        const legends = Object.keys(def.mapping).filter(n => ('legend' in def.mapping[n]))
+        legends.forEach(n => {
+            const i = def.mapping[n];
+            const d = Object.keys(i.manual).map(d => ({
+                key: d,
+                attrs: i.manual[d]
+            }))
+            // const d = Object.values(def.mapping[n].manual)
+            const e = legendsContainer.append("div")
+                .attr("class", `legend legend-${n}`)
+                .selectAll("div.entry")
+                .data(d)
+                .enter()
+                .append("div")
+                .attr("class", d => `entry entry-${d.key}`)
 
-        d3.select(this.$refs.y)
-            .call(d3.axisLeft(this.ys).ticks(5))
+            const size = i.legend.size;
+            const s = e.append("svg")
+                .attr("height", size)
+                .attr("width", size)
 
-        const dataGrouped = du.group(data, v, mapping.g)
+            // console.log(d)
 
-        if (this.def.paths) this.paths(dataGrouped);
-        if (this.def.circles) this.circles(dataGrouped);
-        if (this.def.lines) this.lines(dataGrouped);
-        if (this.def.rects) this.rects(dataGrouped);
+            i.legend.elements.forEach(e => {
+                s.append(e.type)
+                    .each(function(a, b) {
+                        console.log([a, b])
+                        // pu.setAttrs
+                    })
+                //
+                // const datum = s.data()
+                //
+                // console.log(datum)
+                // .data(d => {console.log(d); ju.fill(e.attrs, d.attrs)})
+                    // .datum(d => function(d) {console.log(d)})
 
+                // const data = ju.fill(, i.manual.A)
+                // console.log(data)
+                // this[d.type](data);
+            });
+            //
+            // .data(d => d.values.map(e => ju.fill(d.attrs, e)))
+            // .enter()
+            // .append(type)
+            // .each(pu.setAttrs)
+            //
+                //
+                // .append("rect")
+                // .attr("x", 0)
+                // .attr("y", 0)
+                // .attr("height", size)
+                // .attr("width", size)
+                // // .attr("rx", 5)
+                // .attr("fill", "none")
+                // .attr("stroke", "#999")
+                // .attr("stroke-width", 2)
+
+
+
+            e.append("span").text(d => d.attrs.label)
+        });
+
+
+
+        const dataGrouped = du.group(data, "g")
+        def.plot.forEach(d => {
+            const data = ju.getAttrs(dataGrouped, d.attrs, def.mapping.g);
+            this[d.type](data);
+        });
     },
     methods: {
-        paths(dataGrouped) {
-            const data = ju.getAttrs(dataGrouped, this.def.paths.attrs, this.def.g);
-
-
+        path(data) {
             this.inner.append("g")
                 .attr("class", "paths")
-                .selectAll("path.pathsGroup")
+                .selectAll("path")
                 .data(data)
                 .enter()
                 .append("path")
-                .attr("class", "pathsGroup")
-                .each(pu.setAttrs)
+                .each(function(d) {pu.setAttrs.call(this, d.attrs)})
                 .attr("d", d => d3.line()
-                    .x(e => this.xs(e.x))
-                    .y(e => this.ys(e.y))
-                    (d.vs)
+                    .x(e => e.x)
+                    .y(e => e.y)
+                    (d.values.map(e => ju.fill(d.attrs.d, e)))
                 )
         },
-        circles(dataGrouped) {
-            const data = ju.getAttrs(dataGrouped, this.def.circles.attrs, this.def.g);
-
-            this.inner.append("g")
-                .attr("class", "circles")
-                .selectAll("g.circlesGroup")
+        pointwise(data, type) {
+            return this.inner.append("g")
+                .attr("class", type)
+                .selectAll(`g.group`)
                 .data(data)
                 .enter()
                 .append("g")
-                .attr("class", "circlesGroup")
-                .selectAll("circle")
-                .data(d => d.vs.map(e => ({
-                    a: d.a,
-                    v: e
-                })))
+                .attr("class", `group`)
+                .selectAll(type)
+                .data(d => d.values.map(e => ju.fill(d.attrs, e)))
                 .enter()
-                .append("circle")
+                .append(type)
                 .each(pu.setAttrs)
-                .attr('cx', d => this.xs(d.v.x))
-                .attr('cy', d => this.ys(d.v.y))
         },
-        lines(dataGrouped) {
-            const data = ju.getAttrs(dataGrouped, this.def.lines.attrs, this.def.g);
-
-            this.inner.append("g")
-                .attr("class", "lines")
-                .selectAll("g.linesGroup")
-                .data(data)
-                .enter()
-                .append("g")
-                .attr("class", "linesGroup")
-                .selectAll("line")
-                .data(d => d.vs.map(e => ({
-                    a: d.a,
-                    v: e
-                })))
-                .enter()
-                .append("line")
-                .each(pu.setAttrs)
-                .attr('x1', d => this.xs(d.v.x))
-                .attr('x2', d => this.xs(d.v.x) + 10)
-                .attr('y1', d => this.ys(d.v.y))
-                .attr('y2', d => this.ys(d.v.y) + 10)
+        circle(data) {
+            this.pointwise(data, "circle")
         },
-        rects(dataGrouped) {
-            const data = ju.getAttrs(dataGrouped, this.def.rects.attrs, this.def.g);
-
-            this.inner.append("g")
-                .attr("class", "rects")
-                .selectAll("g.rectsGroup")
-                .data(data)
-                .enter()
-                .append("g")
-                .attr("class", "rectsGroup")
-                .selectAll("rect")
-                .data(d => d.vs.map(e => ({
-                    a: d.a,
-                    v: e
-                })))
-                .enter()
-                .append("rect")
-                .each(pu.setAttrs)
-                .attr('x', d => this.xs(d.v.x))
-                .attr('y', d => this.ys(d.v.y))
-                .attr('width', 10)
-                .attr('height', 10)
+        line(data) {
+            this.pointwise(data, "line")
+        },
+        rect(data) {
+            this.pointwise(data, "rect")
+        },
+        text(data) {
+            this.pointwise(data, "text")
         },
     }
 }

@@ -1,3 +1,17 @@
 pre {
     background-color: #EEE;
 }
+
+
+
+.legends {
+    .entry {
+        display: inline-block;
+        margin: 2px 10px;
+
+        svg {
+            display: inline-block;
+            margin-right: 5px;
+        }
+    }
+}

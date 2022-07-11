@@ -5,7 +5,7 @@
         </template>
         <template v-else>
             <facet/>
-            <legend/>
+            <!-- <legend/> -->
         </template>
     </div>
 </template>

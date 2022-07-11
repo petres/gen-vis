@@ -45,23 +45,11 @@
             "column": "g2",
             "type": "category",
             "legend": {
-                "size": 20,
-                "elements": [
-                    {
-                        "type": "rect",
-                        "attrs": {
-                            "x": 0,
-                            "y": 0,
-                            "width": 20,
-                            "height": 20,
-                            "fill": "@color"
-                        }
-                    }
-                ]
+
             },
             "common": {
-                "opacity": 0.5,
-                "stroke-width": 1
+                "opacity": 0.2,
+                "stroke-width": 2
             },
             "manual": {
                 "A": {
@@ -101,10 +89,29 @@
             "type": "circle",
             "attrs": {
                 "opacity": "@opacity",
-                "r": 3,
+                "r": 10,
                 "fill": "@color",
                 "cx": "@x:scaled",
                 "cy": "@y:scaled"
+            }
+        }, {
+            "type": "rect",
+            "attrs": {
+                "fill": "@color",
+                "x": "@x:scaled",
+                "y": "@y:scaled",
+                "width": 6,
+                "height": 6,
+                "transform": "translate(-3 -3)"
+            }
+        }, {
+            "type": "text",
+            "attrs": {
+                "fill": "@color",
+                "x": "@x:scaled",
+                "y": "@y:scaled",
+                "transform": "translate(-3 -3)",
+                "text": "@label"
             }
         }
     ]
