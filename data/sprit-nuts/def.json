@@ -1,18 +1,20 @@
 {
     "data": "sprit-nuts/data.csv",
     "options": {
-        "height": 500, "width": 900
+        "height": 500, "width": 1000,
+        "margins": {"top": 20, "right": 0, "bottom": 30, "left": 80},
+        "title": "Spritpreis",
+        "subtitle": "nach Typ und Bundesland",
+        "footer": "<strong>Quelle:</strong> Tankstellenpreise <a target='_blank' href='https://spritpreisrechner.at'>spritpreisrechner.at</a>"
     },
     "mapping": {
         "x": {
             "column": "date",
             "type": "date",
-
             "scale": {
                 "type": "time",
                 "range": [0, "@width"]
             },
-
             "axis": {
                 "ticks": 12,
                 "label": "Year",
@@ -23,13 +25,11 @@
         "y": {
             "column": "priceMean",
             "type": "numeric",
-
             "scale": {
                 "type": "linear",
-                "domain": [0, null],
+                "domain": [1, null],
                 "range": ["@height", 0]
             },
-
             "axis": {
                 "ticks": 8,
                 "label": "Preis",
@@ -39,49 +39,41 @@
         "type": {
             "column": "fuelType",
             "legend": {
-                "size": 20,
+                "size": 16,
                 "elements": [{
                     "type": "line",
                     "attrs": {
-                        "x1": 0,
-                        "x2": 20,
-                        "y1": 10,
-                        "y2": 10,
-                        "stroke": "#888",
-                        "opacity": "@opacity",
-                        "stroke-width": 2,
-                        "stroke-dasharray": "@stroke-dasharray"
+                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                        "stroke": "#888", "stroke-width": 2,
+                        "stroke-dasharray": "@stroke-dasharray",
+                        "opacity": "@opacity"
                     }
                 }]
             },
             "common": {
-                "opacity": 0.7,
-                "stroke-width": 1
+                "opacity": 0.7
             },
             "manual": {
                 "DIE": { "label": "Diesel", "stroke-dasharray": null },
-                "SUP": { "label": "Benzin", "stroke-dasharray": 2 }
+                "SUP": { "label": "Benzin", "stroke-dasharray": 4 }
             }
         },
         "nuts": {
             "column": "nuts2",
-            "common": {
-                "opacity": 0.7,
-                "stroke-width": 1
-            },
             "legend": {
-                "size": 20,
+                "size": 16,
                 "elements": [{
                     "type": "line",
                     "attrs": {
-                        "x1": 0,
-                        "x2": 20,
-                        "y1": 10,
-                        "y2": 10,
-                        "stroke": "@color",
-                        "stroke-width": 2
+                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                        "stroke": "@color", "stroke-width": "@stroke-width",
+                        "opacity": "@opacity"
                     }
                 }]
+            },
+            "common": {
+                "opacity": 0.7,
+                "stroke-width": 2
             },
             "manual": {
                 "W":  { "color": "#559BD5", "label": "Wien" },
@@ -93,15 +85,17 @@
                 "K":  { "color": "#F3D039", "label": "Kärnten" },
                 "T":  { "color": "#DDEBF7", "label": "Tirol" },
                 "V":  { "color": "#E3F1E2", "label": "Vorarlberg" },
-                "AT": { "color": "#DBECE9", "label": "Gesamt" }
+                "NA": { "color": "#000000", "label": "Österreich", "stroke-width": 3 }
             }
         }
     },
     "plot": [
         {
             "type": "path",
+            "categories": ["type", "nuts"],
             "attrs": {
                 "stroke-width": "@stroke-width",
+                "stroke-dasharray": "@stroke-dasharray",
                 "fill": "none",
                 "opacity": "@opacity",
                 "stroke": "@color",

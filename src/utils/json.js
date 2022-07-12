@@ -33,10 +33,22 @@ const merged = (str, k) => {
 }
 
 
-const getAttrs = (dataGrouped, attrs, g) => {
-    return Object.keys(dataGrouped).map(d => ({
-        group: d,
-        attrs: fill(attrs, merged(g, d)),
-        values: dataGrouped[d],
+// const getAttrs = (dataGrouped, attrs, g) => {
+//     return Object.keys(dataGrouped).map(d => ({
+//         group: d,
+//         attrs: fill(attrs, merged(g, d)),
+//         values: dataGrouped[d],
+//     }))
+// }
+
+
+const getAttrs = (dataGrouped, attrs, mappings) => {
+    return dataGrouped.map(g => ({
+        group: g.group,
+        // TODO: SPEED UP
+        attrs: Object.keys(g.group).reduce(
+            (storage, item) => fill(storage, merged(mappings[item], g.group[item]))
+        , attrs),
+        values: g.entries,
     }))
 }

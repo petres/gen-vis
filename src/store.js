@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia'
 import axios from 'axios';
-import * as d3 from "d3";
+
 import globals from '@/globals.js'
+import * as du from "@/utils/data";
 
 export const baseStore = defineStore('base', {
     state: () => ({
+        defOrg: null,
         def: null,
         data: null,
     }),
@@ -22,14 +24,15 @@ export const baseStore = defineStore('base', {
             return axios
                 .get(`/data/${globals.def}`)
                 .then(response => {
-                    this.def = response.data
+                    this.defOrg = response.data
+                    this.def = JSON.parse(JSON.stringify(this.defOrg))
                 })
         },
         loadData() {
             return axios
                 .get(`/data/${this.def.data}`)
                 .then(response => {
-                    this.data = d3.csvParse(response.data)
+                    this.data = du.prepareData(response.data, this.def);
                 })
         },
     },

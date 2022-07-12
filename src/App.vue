@@ -1,7 +1,7 @@
 <template>
     <div>
         <vis v-if="store.loaded"/>
-        <pre>{{ JSON.stringify(store.def, null, 2) }}</pre>
+        <pre>{{ JSON.stringify(store.defOrg, null, 4) }}</pre>
     </div>
 </template>
 

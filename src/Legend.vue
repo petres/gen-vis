@@ -1,53 +1,54 @@
 <template>
-    <div>
-        {{ f }}
-        <div>
-            <svg ref="svg" :width="width" :height="height">
-                <g ref="inner" :transform="`translate(${this.margin.l} ${this.margin.t})`">
-                    <g ref="x"/>
-                    <g ref="y"/>
-                </g>
-            </svg>
-        </div>
-    </div>
+    <div ref="legend"></div>
 </template>
 
 <script>
 import { baseStore } from '@/store.js'
 import * as d3 from "d3";
+import * as pu from "@/utils/plot";
+import * as du from "@/utils/data";
+import * as ju from "@/utils/json";
 
 
 export default {
-    props: {
-        f: {
-            default: null,
-        }
-    },
-    data: () => ({
-        margin: {l: 50, r: 50, t: 50, b: 50},
-        width: 600,
-        height: 300,
-    }),
-    computed: {
-        innerWidth() { return this.width - (this.margin.l + this.margin.r) },
-        innerHeight() { return this.height - (this.margin.t + this.margin.b) },
-    },
-    components: {
-    },
+    props: ["legend"],
     mounted() {
         const store = baseStore();
-        // const svg = d3.select(this.$refs.svg);
-        const inner = d3.select(this.$refs.inner);
         const def = store.def;
+        const n = this.legend;
 
-        const mapping = def.mapping;
+        const i = def.mapping[n];
+        const d = Object.keys(i.manual).map(d => ({
+            key: d,
+            props: i.manual[d]
+        }))
+        // const d = Object.values(def.mapping[n].manual)
+        const e = d3.select(this.$refs.legend)
+            .attr("class", `legend legend-${n}`)
+            .selectAll("div.entry")
+            .data(d)
+            .enter()
+            .append("div")
+            .attr("class", d => `entry entry-${d.key}`)
 
-        let data = store.data;
+        const size = i.legend.size;
+        const s = e.append("svg")
+            .attr("height", size)
+            .attr("width", size)
 
-        if (this.f) {
-            data = data.filter(d => d[mapping.f] == this.f)
-        }
+        i.legend.elements.forEach(e => {
+            s.append(e.type)
+                .each(function(a, b) {
+                    // console.log([a, b])
+                    // console.log(ju.fill(e.attrs, a.props))
+                    pu.setAttrs.call(this, ju.fill(e.attrs, a.props))
+                })
+        });
+        e.append("span").text(d => d.props.label)
 
+        e.on('click', (e, d) => {
+            console.log(`legend click ${n} -> ${d.key}`)
+        })
     }
 }
 </script>

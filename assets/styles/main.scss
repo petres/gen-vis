@@ -3,28 +3,58 @@ pre {
 }
 
 body, text {
-    font-family: Verdana, sans-serif;
+    font-family: Helvetica, sans-serif;
 }
 
+.header {
+    .title {
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .subtitle {
+        font-size: 13px;
+        // font-weight: bold;
+    }
+    margin-bottom: 10px;
+}
 
 .legends {
-    .entry {
-        display: inline-block;
-        margin: 2px 10px;
-
-        svg {
+    .legend {
+        .entry {
+            cursor: pointer;
             display: inline-block;
-            margin-right: 5px;
-            border: 1px solid #DDD;
-            border-radius: 5px;
+            margin: 0px 5px;
+
+            svg {
+                display: inline-block;
+                margin-right: 5px;
+                border: 1px solid #DDD;
+                border-radius: 3px;
+            }
+
+            span {
+                top: -4px;
+                display: inline-block;
+                position: relative;
+                font-size: 13px;
+            }
         }
+        margin: 5px 0;
+    }
+    // text-align: center;
+}
 
-        span {
-            top: -5px;
-            display: inline-block;
-            position: relative;
-            font-size: 14px;
+.footer {
+    span {
+        font-size: 13px;
+    }
+}
+
+svg {
+    g.tick {
+        text {
+            font-size: 13px;
         }
     }
-    text-align: center;
 }

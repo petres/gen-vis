@@ -1,8 +1,9 @@
 export { scale, axis, setAttrs };
 
 import * as d3 from "d3";
-import * as ju from "@/json-utils.js";
-import * as du from "@/data-utils.js";
+import * as ju from "@/utils/json.js";
+import * as du from "@/utils/data.js";
+import * as eu from "@/utils/else.js";
 
 const scale = (i, constants, vf) => {
     // console.log(i)
@@ -13,7 +14,7 @@ const scale = (i, constants, vf) => {
         i.domain[1] ??= e[1];
     }
 
-    return d3[`scale${du.capitalize(i.type)}`]()
+    return d3[`scale${eu.capitalize(i.type)}`]()
         .domain(i.domain)
         .range(ju.fill(i.range, constants))
 };
