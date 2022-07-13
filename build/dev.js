@@ -1,8 +1,31 @@
-const baseConfig = require('./base.js');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+const baseConfig = require('./_base.js');
 const { merge } = require('webpack-merge');
 
 module.exports = merge(baseConfig, {
+    entry: {
+        dev: './src/main.js',
+        lib: './src/lib.js'
+    },
     mode: 'development',
+    plugins: [
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: 'data', to: 'data' }
+            ]
+        }),
+        new HtmlWebpackPlugin({
+            template: 'dev.html',
+            chunks: ['dev']
+        }),
+        new HtmlWebpackPlugin({
+            filename: 'lib.html',
+            template: 'lib.html',
+            chunks: ['lib']
+        }),
+    ],
     devServer: {
         historyApiFallback: {
           disableDotRule: true

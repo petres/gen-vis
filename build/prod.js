@@ -1,11 +1,13 @@
-const baseConfig = require('./base.js');
+const baseConfig = require('./_base.js');
 const { merge } = require('webpack-merge');
-// const { DefinePlugin } = require('webpack')
 
 module.exports = merge(baseConfig, {
+    entry: {
+        main: './src/lib.js',
+    },
     mode: 'production',
     output: {
         publicPath: '/',
-        filename: '[name].[fullhash].js'
+        filename: 'gen-vis.js'
     },
 });

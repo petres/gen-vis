@@ -4,16 +4,13 @@ const path = require('path')
 const resolve = (dir) => path.join(__dirname, '..', dir)
 
 module.exports = {
-    entry: {
-        main: './src/lib.js',
-    },
     module: {
         rules: [{
             test: /\.css$/i,
-            use: [MiniCssExtractPlugin.loader, 'css-loader'],
+            use: ['style-loader', 'css-loader'],
         }, {
             test: /\.scss$/i,
-            use: [MiniCssExtractPlugin.loader, 'css-loader', "sass-loader"],
+            use: ['style-loader', 'css-loader', "sass-loader"],
         }, {
             test: /\.vue$/i,
             use: 'vue-loader'
@@ -26,12 +23,9 @@ module.exports = {
     },
     plugins: [
         new VueLoaderPlugin(),
-        new HtmlWebpackPlugin({
-            filename: 'index.html',
-            template: 'test.html'
-        }),
     ],
     output: {
-        publicPath: '/'
+        publicPath: '/',
+        filename: '[name].[fullhash].js'
     }
 };
