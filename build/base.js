@@ -9,8 +9,9 @@ const resolve = (dir) => path.join(__dirname, '..', dir)
 
 module.exports = {
     entry: {
-        main: './src/main.js',
-        style: './assets/styles/main.scss'
+        dev: './src/main.js',
+        style: './assets/styles/main.scss',
+        lib: './src/lib.js'
     },
     module: {
         rules: [{
@@ -22,10 +23,6 @@ module.exports = {
         }, {
             test: /\.vue$/i,
             use: 'vue-loader'
-        // }, {
-        //     test: /\.js$/,
-        //     exclude: /node_modules/,
-        //     use: ['babel-loader']
         }]
     },
     resolve: {
@@ -44,8 +41,13 @@ module.exports = {
             filename: '[name].[chunkhash].css'
         }),
         new HtmlWebpackPlugin({
-            filename: 'index.html',
-            template: 'index.html'
+            template: 'dev.html',
+            chunks: ['dev', 'style']
+        }),
+        new HtmlWebpackPlugin({
+            filename: 'lib.html',
+            template: 'lib.html',
+            chunks: ['lib']
         }),
         new VueLoaderPlugin(),
     ],

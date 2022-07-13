@@ -1,4 +1,4 @@
-export { fill, merge, merged, getAttrs };
+export { fill, merge, merged, getProps };
 
 const fillRule = (value, base) => {
     const isRef = (typeof value) == "string" && value.charAt() == '@';
@@ -33,22 +33,27 @@ const merged = (str, k) => {
 }
 
 
-// const getAttrs = (dataGrouped, attrs, g) => {
+// const getAProps = (dataGrouped, props, g) => {
 //     return Object.keys(dataGrouped).map(d => ({
 //         group: d,
-//         attrs: fill(attrs, merged(g, d)),
+//         props: fill(props, merged(g, d)),
 //         values: dataGrouped[d],
 //     }))
 // }
 
 
-const getAttrs = (dataGrouped, attrs, mappings) => {
+const getProps = (dataGrouped, props, mappings) => {
+    // dataGrouped.forEach(g => {
+    //     Object.keys(g.group).forEach((item, i) => {
+    //         console.log([item, g.group[item].props])
+    //     });
+    // });
     return dataGrouped.map(g => ({
         group: g.group,
         // TODO: SPEED UP
-        attrs: Object.keys(g.group).reduce(
-            (storage, item) => fill(storage, merged(mappings[item], g.group[item]))
-        , attrs),
+        props: Object.keys(g.group).reduce(
+            (storage, item) => fill(storage, merged(mappings[item].props, g.group[item]))
+        , props),
         values: g.entries,
     }))
 }

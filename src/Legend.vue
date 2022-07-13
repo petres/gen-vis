@@ -18,9 +18,9 @@ export default {
         const n = this.legend;
 
         const i = def.mapping[n];
-        const d = Object.keys(i.manual).map(d => ({
+        const d = Object.keys(i.props.manual).map(d => ({
             key: d,
-            props: i.manual[d]
+            props: i.props.manual[d]
         }))
         // const d = Object.values(def.mapping[n].manual)
         const e = d3.select(this.$refs.legend)
@@ -40,8 +40,8 @@ export default {
             s.append(e.type)
                 .each(function(a, b) {
                     // console.log([a, b])
-                    // console.log(ju.fill(e.attrs, a.props))
-                    pu.setAttrs.call(this, ju.fill(e.attrs, a.props))
+                    // console.log(ju.fill(e.props, a.props))
+                    pu.setProps.call(this, ju.fill(e.props, a.props))
                 })
         });
         e.append("span").text(d => d.props.label)

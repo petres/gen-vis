@@ -84,8 +84,8 @@ export default {
 
         def.plot.forEach(d => {
             const dataGrouped = du.groupBy(data, d.categories);
-            const dataGroupedAttrs = ju.getAttrs(dataGrouped, d.attrs, def.mapping);
-            this[d.type](dataGroupedAttrs);
+            const dataGroupedProps = ju.getProps(dataGrouped, d.props, def.mapping);
+            this[d.type](dataGroupedProps);
         });
     },
     methods: {
@@ -97,11 +97,11 @@ export default {
                 .data(data)
                 .enter()
                 .append("path")
-                .each(function(d) {pu.setAttrs.call(this, d.attrs)})
+                .each(function(d) {pu.setProps.call(this, d.props)})
                 .attr("d", d => d3.line()
                     .x(e => e.x)
                     .y(e => e.y)
-                    (d.values.map(e => ju.fill(d.attrs.d, e)))
+                    (d.values.map(e => ju.fill(d.props.d, e)))
                 )
         },
         pointwise(data, type) {
@@ -113,10 +113,10 @@ export default {
                 .append("g")
                 .attr("class", `group`)
                 .selectAll(type)
-                .data(d => d.values.map(e => ju.fill(d.attrs, e)))
+                .data(d => d.values.map(e => ju.fill(d.props, e)))
                 .enter()
                 .append(type)
-                .each(pu.setAttrs)
+                .each(pu.setProps)
         },
         circle(data) {
             this.pointwise(data, "circle")

@@ -10,7 +10,7 @@ module.exports = merge(baseConfig, {
         open: true,
         liveReload: true,
         hot: false,
-        watchFiles: ["data/*"]
+        watchFiles: ["data/**"]
     },
     devtool: 'source-map',
 });

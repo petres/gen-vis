@@ -27,7 +27,7 @@
             "type": "numeric",
             "scale": {
                 "type": "linear",
-                "domain": [1, null],
+                "domain": [0, null],
                 "range": ["@height", 0]
             },
             "axis": {

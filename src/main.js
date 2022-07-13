@@ -3,6 +3,14 @@ import { createApp } from 'vue'
 import App from '@/App.vue'
 import { createPinia } from 'pinia'
 
-const app = createApp(App)
+
+import globals from '@/globals.js'
+
+const attrs = {
+    debug: true,
+    def: `/data/${globals.def}`,
+}
+
+const app = createApp(App, attrs)
     .use(createPinia())
     .mount('#app')

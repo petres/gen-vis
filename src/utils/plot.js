@@ -1,4 +1,4 @@
-export { scale, axis, setAttrs };
+export { scale, axis, setProps };
 
 import * as d3 from "d3";
 import * as ju from "@/utils/json.js";
@@ -25,7 +25,7 @@ const axis = (i, scale) => {
     return a;
 };
 
-const setAttrs = function(d) {
+const setProps = function(d) {
     const e = d3.select(this);
     for (const [key, value] of Object.entries(d)) {
         if (value instanceof Object)

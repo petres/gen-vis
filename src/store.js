@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios';
 
-import globals from '@/globals.js'
 import * as du from "@/utils/data";
 
 export const baseStore = defineStore('base', {
@@ -14,15 +13,15 @@ export const baseStore = defineStore('base', {
         loaded() { return (this.def !== null && this.data !== null)}
     },
     actions: {
-        load() {
-            return this.loadDef().then(() => {
+        load(def) {
+            return this.loadDef(def).then(() => {
                 // console.log(this.def)
                 this.loadData();
             })
         },
-        loadDef() {
+        loadDef(def) {
             return axios
-                .get(`/data/${globals.def}`)
+                .get(def)
                 .then(response => {
                     this.defOrg = response.data
                     this.def = JSON.parse(JSON.stringify(this.defOrg))
