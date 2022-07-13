@@ -1,0 +1,102 @@
+{
+    "data": "bev/data.csv",
+    "options": {
+        "height": 300, "width": 1000,
+        "margins": {"top": 20, "right": 30, "bottom": 30, "left": 80},
+        "title": "Bevölkerung",
+        "subtitle": "nach Bundesland",
+        "footer": "<strong>Quelle:</strong> Somewhere</a>"
+    },
+    "mapping": {
+        "x": {
+            "column": "Jahr",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "range": [0, "@width"]
+            },
+            "axis": {
+                "ticks": 20,
+                "label": "Jahr",
+                "format": "",
+                "position": "bottom"
+            }
+        },
+        "y": {
+            "column": "Einwohner",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "domain": [0, null],
+                "range": ["@height", 0]
+            },
+            "axis": {
+                "ticks": 5,
+                "label": "Einwohner",
+                "position": "left"
+            }
+        },
+        "land": {
+            "column": "Bundesland",
+            "legend": {
+                "size": 16,
+                "elements": [{
+                    "type": "line",
+                    "props": {
+                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                        "stroke": "@color", "stroke-width": "@stroke-width"
+                    }
+                }, {
+                    "type": "circle",
+                    "props": {
+                        "cx": 8, "cy": 8, "r": 3,
+                        "fill": "@color"
+                    }
+                }]
+            },
+            "props": {
+                "common": {
+                    "stroke-width": 2
+                },
+                "manual": {
+                    "Wien":             { "color": "#559BD5" },
+                    "Niederösterreich": { "color": "#72BB6F" },
+                    "Burgenland":       { "color": "#559E8F" },
+                    "Oberösterreich":   { "color": "#12A7E7" },
+                    "Salzburg":         { "color": "#96B428" },
+                    "Steiermark":       { "color": "#C3423F" },
+                    "Kärnten":          { "color": "#F3D039" },
+                    "Tirol":            { "color": "#DDEBF7" },
+                    "Vorarlberg":       { "color": "#E3F1E2" },
+                    "ÖSTERREICH":       { "color": "#000000", "stroke-width": 3 }
+                }
+            }
+        }
+    },
+    "plot": [
+        {
+            "type": "path",
+            "categories": ["land"],
+            "props": {
+                "stroke-width": "@stroke-width",
+                "fill": "none",
+                "opacity": 0.9,
+                "stroke": "@color",
+                "d": {
+                    "x": "@x:scaled",
+                    "y": "@y:scaled"
+                }
+            }
+        }, {
+            "type": "circle",
+            "categories": ["land"],
+            "props": {
+                "fill": "@color",
+                "opacity": 0.6,
+                "cx": "@x:scaled",
+                "cy": "@y:scaled",
+                "r": 3
+            }
+        }
+    ]
+}

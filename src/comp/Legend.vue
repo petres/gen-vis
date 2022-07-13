@@ -44,7 +44,7 @@ export default {
                     pu.setProps.call(this, ju.fill(e.props, a.props))
                 })
         });
-        e.append("span").text(d => d.props.label)
+        e.append("span").text(d => d.props.label ? d.props.label : d.key)
 
         e.on('click', (e, d) => {
             console.log(`legend click ${n} -> ${d.key}`)

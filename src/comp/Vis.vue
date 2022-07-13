@@ -22,13 +22,13 @@
 <script>
 import { baseStore } from '@/store.js'
 import * as d3 from "d3";
-import Facet from '@/Facet.vue';
-import LegendEntry from '@/Legend.vue';
+import Facet from '@/comp/Facet.vue';
+import LegendEntry from '@/comp/Legend.vue';
 
 
 export default {
     data: () => ({
-        margin: {l: 50, r: 50, t: 50, b: 50},
+        margins: {l: 50, r: 50, t: 50, b: 50},
         width: 600,
         height: 300,
         def: null,
@@ -54,7 +54,7 @@ export default {
         this.subtitle = def.options.subtitle;
         this.footer = def.options.footer;
 
-        this.margin =  def.options.margin;
+        this.margins =  def.options.margins;
         this.height = def.options.height;
         this.width = def.options.width;
 

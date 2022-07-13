@@ -6,7 +6,7 @@ const { merge } = require('webpack-merge');
 
 module.exports = merge(baseConfig, {
     entry: {
-        dev: './src/main.js',
+        dev: './src/dev.js',
         lib: './src/lib.js'
     },
     mode: 'development',

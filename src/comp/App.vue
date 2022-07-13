@@ -8,7 +8,7 @@
 <script>
 import { baseStore } from '@/store.js';
 import * as d3 from "d3";
-import Vis from '@/Vis.vue';
+import Vis from '@/comp/Vis.vue';
 
 export default {
     props: {

@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 
 import '../assets/styles/main.scss'
 
-import App from '@/App.vue'
+import App from '@/comp/App.vue'
 import { createPinia } from 'pinia'
 
 import globals from '@/globals.js'
