@@ -50,3 +50,10 @@ const groupBy = function(data, keys) {
         return storage;
     }, {}));
 };
+
+// 
+// const filter = function(data, conditions) {
+//     data.filter(e => {
+//
+//     })
+// };

@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="vis">
         <div class="header">
             <div class="title">{{ title }}</div>
             <div class="subtitle">{{ subtitle }}</div>

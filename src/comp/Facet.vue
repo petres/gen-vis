@@ -2,7 +2,7 @@
     <div v-if="show">
         {{ f }}
         <div :style="`width: ${width}px`">
-            <svg ref="svg" :width="width" :height="height">
+            <svg ref="svg" :width="width" :height="height" class="facet">
                 <g ref="inner" :transform="`translate(${this.margins.left} ${this.margins.top})`"/>
             </svg>
         </div>
@@ -59,7 +59,9 @@ export default {
 
         const scales = Object.keys(def.mapping).filter(n => ('scale' in def.mapping[n]))
         scales.forEach(n => {
-            def.mapping[n]._scale = pu.scale(def.mapping[n].scale, this.constants, () => data.map(d => d[n]));
+            def.mapping[n]._values = data.map(d => d[n]);
+            def.mapping[n]._extent = d3.extent(def.mapping[n]._values);
+            def.mapping[n]._scale = pu.scale(def.mapping[n].scale, def.mapping[n]._extent, this.constants);
         });
 
         data = data.map(d => {
@@ -87,6 +89,20 @@ export default {
             const dataGroupedProps = ju.getProps(dataGrouped, d.props, def.mapping);
             this[d.type](dataGroupedProps);
         });
+
+        const xa = def.mapping.x;
+
+        this.inner.append("rect")
+            .attr("class", "events")
+            .attr("width", this.innerWidth)
+            .attr("height", this.innerHeight)
+            .attr("opacity", 0)
+            .on("mousemove", function(e) {
+                const c = d3.pointer(e);
+                const i = d3.bisectCenter(xa._values, xa._scale.invert(c[0]))
+                console.log(xa._values[i])
+
+            })
     },
     methods: {
         path(data) {
@@ -98,6 +114,7 @@ export default {
                 .enter()
                 .append("path")
                 .each(function(d) {pu.setProps.call(this, d.props)})
+                .each(pu.setGroupData)
                 .attr("d", d => d3.line()
                     .x(e => e.x)
                     .y(e => e.y)
@@ -112,6 +129,7 @@ export default {
                 .enter()
                 .append("g")
                 .attr("class", `group`)
+                .each(pu.setGroupData)
                 .selectAll(type)
                 .data(d => d.values.map(e => ju.fill(d.props, e)))
                 .enter()

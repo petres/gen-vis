@@ -29,8 +29,12 @@ body, text {
             svg {
                 display: inline-block;
                 margin-right: 5px;
-                border: 1px solid #DDD;
+                border: 1px solid #AAA;
                 border-radius: 3px;
+            }
+
+            &[data-visible="false"] {
+                opacity: 0.3;
             }
 
             span {
@@ -55,6 +59,15 @@ svg {
     g.tick {
         text {
             font-size: 13px;
+        }
+    }
+}
+
+
+svg.facet {
+    g.group, path {
+        &[data-visible="false"] {
+            opacity: 0.01;
         }
     }
 }

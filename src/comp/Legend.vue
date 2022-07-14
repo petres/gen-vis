@@ -24,12 +24,15 @@ export default {
         }))
         // const d = Object.values(def.mapping[n].manual)
         const e = d3.select(this.$refs.legend)
-            .attr("class", `legend legend-${n}`)
+        .attr("class", `legend`)
+            .attr("data-dim", n)
             .selectAll("div.entry")
             .data(d)
             .enter()
             .append("div")
-            .attr("class", d => `entry entry-${d.key}`)
+            .attr("class", d => `entry`)
+            .attr("data-visible", true)
+            .attr("data-key", d => d.key)
 
         const size = i.legend.size;
         const s = e.append("svg")
@@ -46,8 +49,24 @@ export default {
         });
         e.append("span").text(d => d.props.label ? d.props.label : d.key)
 
-        e.on('click', (e, d) => {
-            console.log(`legend click ${n} -> ${d.key}`)
+        e.on('click', function(ev, d) {
+            const e = d3.select(this);
+            const visible = (e.attr('data-visible') === 'true');
+            const dim = n;
+            const key = d.key;
+            // console.log(`legend click ${dim} -> ${key}`)
+
+            d3.selectAll(`.vis svg.facet g.group[data-group-${dim}="${key}"], .vis svg.facet path[data-group-${dim}="${key}"]`)
+                .attr(`data-visible-${dim}`, !visible)
+                .each(function() {
+                    const show = this.getAttributeNames()
+                        .filter(name => name.startsWith('data-visible-'))
+                        .map(dv => this.getAttribute(dv) === "true").reduce((s, v) => s && v, true)
+                    this.setAttribute('data-visible', show);
+                })
+
+            e.attr('data-visible', !visible);
+
         })
     }
 }

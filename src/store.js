@@ -29,7 +29,7 @@ export const baseStore = defineStore('base', {
         },
         loadData() {
             return axios
-                .get(`/data/${this.def.data}`)
+                .get(`./${this.def.data}`)
                 .then(response => {
                     this.data = du.prepareData(response.data, this.def);
                 })

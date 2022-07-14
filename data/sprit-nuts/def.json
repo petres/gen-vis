@@ -1,5 +1,5 @@
 {
-    "data": "sprit-nuts/data.csv",
+    "data": "./data/sprit-nuts/data.csv",
     "options": {
         "height": 500, "width": 1000,
         "margins": {"top": 20, "right": 0, "bottom": 30, "left": 80},
