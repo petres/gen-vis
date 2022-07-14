@@ -73,15 +73,35 @@ export default {
 
         const axis = scales.filter(n => ('axis' in def.mapping[n]));
         axis.forEach(n => {
-            const i = def.mapping[n].axis;
-            const s = def.mapping[n]._scale;
-            const a = this.inner.append("g")
+            const m = def.mapping[n];
+            const i = m.axis;
+            const s = m._scale;
+            const a = d3[`axis${eu.capitalize(i.position)}`](s).ticks(i.ticks);
+
+            // console.log('ticks')
+            // console.log()
+            if (i.grid) {
+                const g = this.inner.append("g")
+                    .attr("class", "grid")
+                    .selectAll('line')
+                    .data(s.ticks(i.ticks))
+                    .enter()
+                    .append("line")
+                    .attr('x1', 0)
+                    .attr('x2', this.innerWidth)
+                    .attr('y1', d => s(d))
+                    .attr('y2', d => s(d))
+            }
+
+            const ga = this.inner.append("g")
                 .attr("class", `axis-${n}`)
-                .call(d3[`axis${eu.capitalize(i.position)}`](s).ticks(i.ticks))
+                .call(a)
             if (i.position == 'bottom')
-                 a.attr('transform', `translate(0, ${this.innerHeight})`)
+                ga.attr('transform', `translate(0, ${this.innerHeight})`)
             if (i.position == 'right')
-                a.attr('transform', `translate(${this.innerWidth}, 0)`)
+                ga.attr('transform', `translate(${this.innerWidth}, 0)`)
+
+
         });
 
         def.plot.forEach(d => {
@@ -106,7 +126,7 @@ export default {
     },
     methods: {
         path(data) {
-            console.log(data);
+            // console.log(data);
             this.inner.append("g")
                 .attr("class", "paths")
                 .selectAll("path")

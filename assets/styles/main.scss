@@ -29,7 +29,7 @@ body, text {
             svg {
                 display: inline-block;
                 margin-right: 5px;
-                border: 1px solid #AAA;
+                border: 1px solid #BBB;
                 border-radius: 3px;
             }
 
@@ -69,5 +69,10 @@ svg.facet {
         &[data-visible="false"] {
             opacity: 0.01;
         }
+    }
+
+    g.grid {
+        stroke: #CCC;
+        stroke-width: 0.75px;
     }
 }

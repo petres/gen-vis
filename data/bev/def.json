@@ -33,7 +33,8 @@
             "axis": {
                 "ticks": 5,
                 "label": "Einwohner",
-                "position": "left"
+                "position": "left",
+                "grid": true
             }
         },
         "land": {
