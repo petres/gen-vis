@@ -49,7 +49,11 @@ const getProps = (dataGrouped, props, mappings) => {
     //     });
     // });
     return dataGrouped.map(g => ({
-        group: g.group,
+        group: Object.keys(g.group).map(d => ({
+            dim: d,
+            key: g.group[d],
+            visible: merged(mappings[d].props, g.group[d])['visible'],
+        })),
         // TODO: SPEED UP
         props: Object.keys(g.group).reduce(
             (storage, item) => fill(storage, merged(mappings[item].props, g.group[item]))

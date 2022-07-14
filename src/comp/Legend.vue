@@ -20,7 +20,7 @@ export default {
         const i = def.mapping[n];
         const d = Object.keys(i.props.manual).map(d => ({
             key: d,
-            props: i.props.manual[d]
+            props: ju.merged(i.props, d)
         }))
         // const d = Object.values(def.mapping[n].manual)
         const e = d3.select(this.$refs.legend)
@@ -31,7 +31,7 @@ export default {
             .enter()
             .append("div")
             .attr("class", d => `entry`)
-            .attr("data-visible", true)
+            .attr("data-visible", d => d.props.visible)
             .attr("data-key", d => d.key)
 
         const size = i.legend.size;

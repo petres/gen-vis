@@ -45,18 +45,17 @@
                     "props": {
                         "x1": 0, "x2": 16, "y1": 8, "y2": 8,
                         "stroke": "#888", "stroke-width": 2,
-                        "stroke-dasharray": "@stroke-dasharray",
-                        "opacity": "@opacity"
+                        "stroke-dasharray": "@stroke-dasharray"
                     }
                 }]
             },
             "props": {
                 "common": {
-                    "opacity": 0.7
+                    "visible": true
                 },
                 "manual": {
                     "DIE": { "label": "Diesel", "stroke-dasharray": null },
-                    "SUP": { "label": "Benzin", "stroke-dasharray": 4 }
+                    "SUP": { "label": "Benzin", "stroke-dasharray": 1 }
                 }
             }
         },
@@ -68,27 +67,26 @@
                     "type": "line",
                     "props": {
                         "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                        "stroke": "@color", "stroke-width": "@stroke-width",
-                        "opacity": "@opacity"
+                        "stroke": "@color", "stroke-width": "@stroke-width"
                     }
                 }]
             },
             "props": {
                 "common": {
-                    "opacity": 0.7,
-                    "stroke-width": 2
+                    "stroke-width": 1.5,
+                    "visible": false
                 },
                 "manual": {
                     "W":  { "color": "#559BD5", "label": "Wien" },
                     "N":  { "color": "#72BB6F", "label": "Niederösterreich" },
-                    "B":  { "color": "#559E8F", "label": "Burgenland" },
+                    "B":  { "color": "#559E8F", "label": "Burgenland", "visible": true },
                     "O":  { "color": "#12A7E7", "label": "Oberösterreich" },
                     "Sa": { "color": "#96B428", "label": "Salzburg" },
                     "St": { "color": "#C3423F", "label": "Steiermark" },
                     "K":  { "color": "#F3D039", "label": "Kärnten" },
                     "T":  { "color": "#DDEBF7", "label": "Tirol" },
                     "V":  { "color": "#E3F1E2", "label": "Vorarlberg" },
-                    "NA": { "color": "#000000", "label": "Österreich", "stroke-width": 3 }
+                    "NA": { "color": "#000000", "label": "Österreich", "stroke-width": 2.5, "visible": true }
                 }
             }
         }
@@ -101,7 +99,6 @@
                 "stroke-width": "@stroke-width",
                 "stroke-dasharray": "@stroke-dasharray",
                 "fill": "none",
-                "opacity": "@opacity",
                 "stroke": "@color",
                 "d": {
                     "x": "@x:scaled",

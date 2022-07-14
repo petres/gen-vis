@@ -38,10 +38,17 @@ const setProps = function(d) {
 }
 
 const setGroupData = function(d) {
-    const e = d3.select(this);
-    Object.entries(d.group).forEach(([k, v], i) => {
-        e.attr(`data-group-${k}`, v)
+    const element = d3.select(this);
+    // console.log(d)
+    d.group.forEach(e => {
+        element.attr(`data-group-${e.dim}`, e.key)
     });
+
+    d.group.forEach(e => {
+        element.attr(`data-visible-${e.dim}`, e.visible)
+    });
+
+    element.attr(`data-visible`, d.group.reduce((s, e) => s && e.visible, true))
 
     // for (const [key, value] of Object.entries(d)) {
     //     if (value instanceof Object)
