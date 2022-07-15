@@ -5,15 +5,19 @@ import * as ju from "@/utils/json.js";
 import * as du from "@/utils/data.js";
 import * as eu from "@/utils/else.js";
 
-const scale = (i, extent, constants) => {
+const scale = (i, info, constants) => {
     // console.log(i)
-    i.domain ??= [null, null];
+    info.domain = [...(i.domain ? i.domain : [null, null])];
 
-    i.domain[0] ??= extent[0];
-    i.domain[1] ??= extent[1];
+    info.domain[0] ??= info.extent[0];
+    info.domain[1] ??= info.extent[1];
+
+
+    console.log(info)
+    // console.log(info.domain)
 
     return d3[`scale${eu.capitalize(i.type)}`]()
-        .domain(i.domain)
+        .domain(info.domain)
         .range(ju.fill(i.range, constants))
 };
 

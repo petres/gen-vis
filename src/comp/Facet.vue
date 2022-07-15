@@ -1,11 +1,9 @@
 <template>
-    <div v-if="show">
-        {{ f }}
-        <div :style="`width: ${width}px`">
-            <svg ref="svg" :width="width" :height="height" class="facet">
-                <g ref="inner" :transform="`translate(${this.margins.left} ${this.margins.top})`"/>
-            </svg>
-        </div>
+    <div v-if="show" :style="`width: ${width}px`">
+        {{ debug }}
+        <svg ref="svg" :width="width" :height="height" class="facet">
+            <g ref="inner" :transform="`translate(${this.margins.left} ${this.margins.top})`"/>
+        </svg>
     </div>
 </template>
 
@@ -27,7 +25,8 @@ export default {
         margins: {top: 0, right: 0, bottom: 0, left: 0},
         width: 0,
         height: 0,
-        show: false
+        show: false,
+        debug: ""
     }),
     computed: {
         innerWidth() { return this.width - (this.margins.left + this.margins.right) },
@@ -50,93 +49,22 @@ export default {
         this.margins = this.store.def.options.margins;
 
         this.show = true;
+
+        this.info = {};
     },
     mounted() {
+        this.inner = d3.select(this.$refs.inner);
+
         let data = this.store.data;
         let def = this.store.def;
 
-        this.inner = d3.select(this.$refs.inner);
+        if (this.f) {
+            data = du.filter(data, [this.f]);
+        }
 
-        const scales = Object.keys(def.mapping).filter(n => ('scale' in def.mapping[n]))
-        scales.forEach(n => {
-            def.mapping[n]._values = data.map(d => d[n]);
-            def.mapping[n]._extent = d3.extent(def.mapping[n]._values);
-            def.mapping[n]._scale = pu.scale(def.mapping[n].scale, def.mapping[n]._extent, this.constants);
-        });
 
-        data = data.map(d => {
-            scales.forEach(n => {
-                d[`${n}:scaled`] = def.mapping[n]._scale(d[n])
-            });
-            return d;
-        })
-
-        const axis = scales.filter(n => ('axis' in def.mapping[n]));
-        axis.forEach(n => {
-            const m = def.mapping[n];
-            const i = m.axis;
-            const s = m._scale;
-            const a = d3[`axis${eu.capitalize(i.position)}`](s).ticks(i.ticks);
-            if (m.scale.format)
-                a.tickFormat(eu.locale.format(m.scale.format))
-
-            if (m.scale.timeFormat)
-                a.tickFormat(eu.localeTime.format(m.scale.timeFormat))
-
-            // console.log('ticks')
-            // console.log()
-            if (i.grid) {
-                const g = this.inner.append("g")
-                    .attr("class", "grid")
-                    .selectAll('line')
-                    .data(s.ticks(i.ticks))
-                    .enter()
-                    .append("line")
-                    .attr('x1', 0)
-                    .attr('x2', this.innerWidth)
-                    .attr('y1', d => s(d))
-                    .attr('y2', d => s(d))
-            }
-
-            const ga = this.inner.append("g")
-                .attr("class", `axis-${n}`)
-                .call(a)
-
-            if (i.position == 'bottom')
-                ga.attr('transform', `translate(0, ${this.innerHeight})`)
-            if (i.position == 'right')
-                ga.attr('transform', `translate(${this.innerWidth}, 0)`)
-
-            if (['top', 'bottom'])
-
-            if (i.rotate)
-                ga.selectAll("text")
-                    .attr("text-anchor", "end")
-                    .attr("transform", `rotate(-${i.rotate})`)
-
-            if (i.title) {
-                const at = this.inner.append("text")
-                    .attr('class', 'axis-title')
-                    .attr('y', 0)
-                    .attr('x', 0)
-                    .attr("text-anchor", "middle")
-                    .attr("dominant-baseline", "middle")
-                    .text(i.title.name)
-
-                if (i.position == 'left')
-                    at.attr("transform", `rotate(-90) translate(-${this.innerHeight/2} -${i.title.offset})`)
-
-                if (i.position == 'right')
-                    at.attr("transform", `rotate(90) translate(${this.innerHeight/2} -${this.innerWidth + i.title.offset})`)
-
-                if (i.position == 'top')
-                    at.attr("transform", `translate(${this.innerWidth/2} -${i.title.offset})`)
-
-                if (i.position == 'bottom')
-                    at.attr("transform", `translate(${this.innerHeight/2} -${i.title.offset})`)
-            }
-
-        });
+        this.scales(data);
+        this.axis();
 
         def.plot.forEach(d => {
             const dataGrouped = du.groupBy(data, d.categories);
@@ -144,19 +72,19 @@ export default {
             this[d.type](dataGroupedProps);
         });
 
-        const xa = def.mapping.x;
-
-        this.inner.append("rect")
-            .attr("class", "events")
-            .attr("width", this.innerWidth)
-            .attr("height", this.innerHeight)
-            .attr("opacity", 0)
-            .on("mousemove", function(e) {
-                const c = d3.pointer(e);
-                const i = d3.bisectCenter(xa._values, xa._scale.invert(c[0]))
-                console.log(xa._values[i])
-
-            })
+        // const xa = def.mapping.x;
+        //
+        // this.inner.append("rect")
+        //     .attr("class", "events")
+        //     .attr("width", this.innerWidth)
+        //     .attr("height", this.innerHeight)
+        //     .attr("opacity", 0)
+        //     .on("mousemove", function(e) {
+        //         const c = d3.pointer(e);
+        //         const i = d3.bisectCenter(xa._values, xa._scale.invert(c[0]))
+        //         console.log(xa._values[i])
+        //
+        //     })
     },
     methods: {
         path(data) {
@@ -202,6 +130,108 @@ export default {
         text(data) {
             this.pointwise(data, "text")
         },
+
+        scales(data) {
+            let def = this.store.def;
+            const scales = Object.keys(def.mapping).filter(n => ('scale' in def.mapping[n]))
+            scales.forEach(n => {
+                const m = def.mapping[n];
+
+                const info = {};
+                info.values = data.map(d => d[n]);
+                info.extent = d3.extent(info.values);
+                info.scale = pu.scale(m.scale, info, this.constants);
+
+                //
+                // m._values = values;
+                // m._extent = extent;
+                // m._scale = scale;
+
+                // this.debug = info.domain;
+                //
+                //
+                this.info[n] = info;
+
+            });
+
+            data.forEach(d => {
+                scales.forEach(n => {
+                    d[`${n}:scaled`] = this.info[n].scale(d[n]);
+                    // d[`${n}:scaled`] = def.mapping[n]._scale(d[n]);
+                });
+            })
+        },
+
+        axis() {
+            let def = this.store.def;
+            const axisM = Object.keys(def.mapping).filter(n => ('axis' in def.mapping[n]));
+            axisM.forEach(n => {
+                const m = def.mapping[n];
+                const i = m.axis;
+                const s = this.info[n].scale;
+                // const s = m._scale;
+                const a = d3[`axis${eu.capitalize(i.position)}`](s).ticks(i.ticks);
+                if (m.scale.format)
+                    a.tickFormat(eu.locale.format(m.scale.format))
+
+                if (m.scale.timeFormat)
+                    a.tickFormat(eu.localeTime.format(m.scale.timeFormat))
+
+                // console.log('ticks')
+                // console.log()
+                if (i.grid) {
+                    const g = this.inner.append("g")
+                        .attr("class", "grid")
+                        .selectAll('line')
+                        .data(s.ticks(i.ticks))
+                        .enter()
+                        .append("line")
+                        .attr('x1', 0)
+                        .attr('x2', this.innerWidth)
+                        .attr('y1', d => s(d))
+                        .attr('y2', d => s(d))
+                }
+
+                const ga = this.inner.append("g")
+                    .attr("class", `axis-${n}`)
+                    .call(a)
+
+                if (i.position == 'bottom')
+                    ga.attr('transform', `translate(0, ${this.innerHeight})`)
+                if (i.position == 'right')
+                    ga.attr('transform', `translate(${this.innerWidth}, 0)`)
+
+                if (['top', 'bottom'])
+
+                if (i.rotate)
+                    ga.selectAll("text")
+                        .attr("text-anchor", "end")
+                        .attr("transform", `rotate(-${i.rotate})`)
+
+                if (i.title) {
+                    const at = this.inner.append("text")
+                        .attr('class', 'axis-title')
+                        .attr('y', 0)
+                        .attr('x', 0)
+                        .attr("text-anchor", "middle")
+                        .attr("dominant-baseline", "middle")
+                        .text(i.title.name)
+
+                    if (i.position == 'left')
+                        at.attr("transform", `rotate(-90) translate(-${this.innerHeight/2} -${i.title.offset})`)
+
+                    if (i.position == 'right')
+                        at.attr("transform", `rotate(90) translate(${this.innerHeight/2} -${this.innerWidth + i.title.offset})`)
+
+                    if (i.position == 'top')
+                        at.attr("transform", `translate(${this.innerWidth/2} -${i.title.offset})`)
+
+                    if (i.position == 'bottom')
+                        at.attr("transform", `translate(${this.innerHeight/2} -${i.title.offset})`)
+                }
+
+            });
+        }
     }
 }
 </script>

@@ -2,7 +2,7 @@
     "data": "./data/bev/data.csv",
     "options": {
         "height": 300, "width": 1000,
-        "margins": {"top": 20, "right": 30, "bottom": 30, "left": 80},
+        "margins": {"top": 10, "right": 30, "bottom": 40, "left": 80},
         "title": "Bevölkerung",
         "subtitle": "nach Bundesland",
         "footer": "<strong>Quelle:</strong> Somewhere</a>"
@@ -60,6 +60,7 @@
                     "stroke-width": 2
                 },
                 "manual": {
+                    "ÖSTERREICH":       { "color": "#000000", "stroke-width": 3, "name": "Gesamt" },
                     "Wien":             { "color": "#559BD5" },
                     "Niederösterreich": { "color": "#72BB6F" },
                     "Burgenland":       { "color": "#559E8F" },
@@ -68,11 +69,13 @@
                     "Steiermark":       { "color": "#C3423F" },
                     "Kärnten":          { "color": "#F3D039" },
                     "Tirol":            { "color": "#DDEBF7" },
-                    "Vorarlberg":       { "color": "#E3F1E2" },
-                    "ÖSTERREICH":       { "color": "#000000", "stroke-width": 3, "name": "Gesamt" }
+                    "Vorarlberg":       { "color": "#E3F1E2" }
                 }
             }
         }
+    },
+    "facets": {
+        "dim": "land"
     },
     "plot": [
         {

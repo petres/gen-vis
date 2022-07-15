@@ -7,12 +7,13 @@
         <div ref="legends" class="legends">
             <legend-entry v-for="legend in legends" :legend="legend" />
         </div>
-        <template v-if="facets.length > 0">
-            <facet v-for="f in facets" :f="f"/>
+        <template v-if="facets.length > 0" v-for="f in facets">
+            <div class="facet-title">{{ f.key }}</div>
+            <facet :f="f"/>
         </template>
-        <template v-else>
+        <!-- <template v-else>
             <facet/>
-        </template>
+        </template> -->
         <div class="footer">
             <span v-html="footer"/>
         </div>
@@ -59,8 +60,13 @@ export default {
         this.height = def.options.height;
         this.width = def.options.width;
 
-
-        // this.facets = ['X', 'Y'];
+        if (def.facets) {
+            const d = def.facets.dim;
+            // console.log(d)
+            this.facets = Object.keys(def.mapping[d].props.manual).map(k => ({
+                dim: d, key: k
+            }));
+        }
     }
 }
 </script>

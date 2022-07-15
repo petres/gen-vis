@@ -37,35 +37,13 @@
                 "position": "left",
                 "grid": true,
                 "title": {
-                    "name": "Preis in €",
+                    "name": "Preis in €/l",
                     "offset": 50
-                }
-            }
-        },
-        "facets": {
-            "column": "fuelType",
-            "name": "Treibstoff Facet",
-            "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "line",
-                    "props": {
-                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                        "stroke": "#888", "stroke-width": 2
-                    }
-                }]
-            },
-            "props": {
-                "common": { "visible": true },
-                "manual": {
-                    "DIE": { "name": "Diesel" },
-                    "SUP": { "name": "Benzin" }
                 }
             }
         },
         "type": {
             "column": "fuelType",
-            "name": "Treibstoff",
             "legend": {
                 "size": 16,
                 "elements": [{
@@ -89,7 +67,6 @@
         },
         "nuts": {
             "column": "nuts2",
-            "name": "Bundesland",
             "legend": {
                 "size": 16,
                 "elements": [{
@@ -119,6 +96,9 @@
                 }
             }
         }
+    },
+    "facets": {
+        "dim": "type"
     },
     "plot": [
         {

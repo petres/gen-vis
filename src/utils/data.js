@@ -1,4 +1,4 @@
-export { groupBy, prepareData };
+export { groupBy, prepareData, filter };
 
 import * as d3 from "d3";
 
@@ -39,7 +39,7 @@ const prepareData = (data, def) => {
 //     return dataGrouped;
 // };
 
-const groupBy = function(data, keys) {
+const groupBy = (data, keys) => {
     return Object.values(data.reduce((storage, item) => {
         var group = keys.map(k => item[k]).join('-'); //item[key];
         storage[group] = storage[group] || {
@@ -51,9 +51,10 @@ const groupBy = function(data, keys) {
     }, {}));
 };
 
-// 
-// const filter = function(data, conditions) {
-//     data.filter(e => {
-//
-//     })
-// };
+
+const filter = (data, conditions) => {
+    // console.log(conditions)
+    return data.filter(e => conditions.reduce((s, c) => {
+        return (s && e[c.dim] == c.key)
+    }, true));
+};
