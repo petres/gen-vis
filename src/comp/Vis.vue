@@ -35,6 +35,7 @@ export default {
         facets: [],
         title: "",
         subtitle: "",
+        footer: "",
         legends: [],
     }),
     computed: {

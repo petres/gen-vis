@@ -23,9 +23,17 @@ export default {
             props: ju.merged(i.props, d)
         }))
         // const d = Object.values(def.mapping[n].manual)
-        const e = d3.select(this.$refs.legend)
-        .attr("class", `legend`)
+        const b = d3.select(this.$refs.legend)
+            .attr("class", `legend`)
             .attr("data-dim", n)
+
+        b.append("div")
+            .attr("class", `title`)
+            .text(i.name)
+
+
+        const e = b.append("div")
+            .attr("class", `entries`)
             .selectAll("div.entry")
             .data(d)
             .enter()
@@ -47,7 +55,7 @@ export default {
                     pu.setProps.call(this, ju.fill(e.props, a.props))
                 })
         });
-        e.append("span").text(d => d.props.label ? d.props.label : d.key)
+        e.append("span").text(d => d.props.name ? d.props.name : d.key)
 
         e.on('click', function(ev, d) {
             const e = d3.select(this);

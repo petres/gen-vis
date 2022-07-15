@@ -77,6 +77,11 @@ export default {
             const i = m.axis;
             const s = m._scale;
             const a = d3[`axis${eu.capitalize(i.position)}`](s).ticks(i.ticks);
+            if (m.scale.format)
+                a.tickFormat(eu.locale.format(m.scale.format))
+
+            if (m.scale.timeFormat)
+                a.tickFormat(eu.localeTime.format(m.scale.timeFormat))
 
             // console.log('ticks')
             // console.log()
@@ -96,11 +101,40 @@ export default {
             const ga = this.inner.append("g")
                 .attr("class", `axis-${n}`)
                 .call(a)
+
             if (i.position == 'bottom')
                 ga.attr('transform', `translate(0, ${this.innerHeight})`)
             if (i.position == 'right')
                 ga.attr('transform', `translate(${this.innerWidth}, 0)`)
 
+            if (['top', 'bottom'])
+
+            if (i.rotate)
+                ga.selectAll("text")
+                    .attr("text-anchor", "end")
+                    .attr("transform", `rotate(-${i.rotate})`)
+
+            if (i.title) {
+                const at = this.inner.append("text")
+                    .attr('class', 'axis-title')
+                    .attr('y', 0)
+                    .attr('x', 0)
+                    .attr("text-anchor", "middle")
+                    .attr("dominant-baseline", "middle")
+                    .text(i.title.name)
+
+                if (i.position == 'left')
+                    at.attr("transform", `rotate(-90) translate(-${this.innerHeight/2} -${i.title.offset})`)
+
+                if (i.position == 'right')
+                    at.attr("transform", `rotate(90) translate(${this.innerHeight/2} -${this.innerWidth + i.title.offset})`)
+
+                if (i.position == 'top')
+                    at.attr("transform", `translate(${this.innerWidth/2} -${i.title.offset})`)
+
+                if (i.position == 'bottom')
+                    at.attr("transform", `translate(${this.innerHeight/2} -${i.title.offset})`)
+            }
 
         });
 

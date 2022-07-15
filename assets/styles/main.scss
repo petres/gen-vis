@@ -21,27 +21,39 @@ body, text {
 
 .legends {
     .legend {
-        .entry {
-            cursor: pointer;
-            display: inline-block;
-            margin: 0px 5px;
-
-            svg {
+        .title {
+            font-weight: bold;
+            font-size: 13px;
+            margin: 3px;
+            // display: inline-block;
+            // top: -4px;
+            position: relative;
+            // margin-right: 20px;
+        }
+        .entries {
+            // display: inline-block;
+            .entry {
+                cursor: pointer;
                 display: inline-block;
-                margin-right: 5px;
-                border: 1px solid #BBB;
-                border-radius: 3px;
-            }
+                margin: 0px 5px;
 
-            &[data-visible="false"] {
-                opacity: 0.3;
-            }
+                svg {
+                    display: inline-block;
+                    margin-right: 5px;
+                    border: 1px solid #BBB;
+                    border-radius: 3px;
+                }
 
-            span {
-                top: -4px;
-                display: inline-block;
-                position: relative;
-                font-size: 13px;
+                &[data-visible="false"] {
+                    opacity: 0.3;
+                }
+
+                span {
+                    top: -4px;
+                    display: inline-block;
+                    position: relative;
+                    font-size: 13px;
+                }
             }
         }
         margin: 5px 0;
@@ -60,6 +72,9 @@ svg {
         text {
             font-size: 13px;
         }
+    }
+    .axis-title {
+        font-size: 13px;
     }
 }
 

@@ -2,7 +2,7 @@
     "data": "./data/sprit-nuts/data.csv",
     "options": {
         "height": 500, "width": 1000,
-        "margins": {"top": 20, "right": 0, "bottom": 30, "left": 80},
+        "margins": {"top": 20, "right": 20, "bottom": 50, "left": 80},
         "title": "Spritpreis",
         "subtitle": "nach Typ und Bundesland",
         "footer": "<strong>Quelle:</strong> Tankstellenpreise <a target='_blank' href='https://spritpreisrechner.at'>spritpreisrechner.at</a>"
@@ -13,13 +13,14 @@
             "type": "date",
             "scale": {
                 "type": "time",
-                "range": [0, "@width"]
+                "range": [0, "@width"],
+                "timeFormat": "%b %y"
             },
             "axis": {
                 "ticks": 12,
-                "label": "Year",
                 "format": "",
-                "position": "bottom"
+                "position": "bottom",
+                "rotate": 40
             }
         },
         "y": {
@@ -27,17 +28,44 @@
             "type": "numeric",
             "scale": {
                 "type": "linear",
-                "domain": [1, null],
-                "range": ["@height", 0]
+                "domain": [0, null],
+                "range": ["@height", 0],
+                "format": ".2f"
             },
             "axis": {
                 "ticks": 8,
-                "label": "Preis",
-                "position": "left"
+                "position": "left",
+                "grid": true,
+                "title": {
+                    "name": "Preis in €",
+                    "offset": 50
+                }
+            }
+        },
+        "facets": {
+            "column": "fuelType",
+            "name": "Treibstoff Facet",
+            "legend": {
+                "size": 16,
+                "elements": [{
+                    "type": "line",
+                    "props": {
+                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                        "stroke": "#888", "stroke-width": 2
+                    }
+                }]
+            },
+            "props": {
+                "common": { "visible": true },
+                "manual": {
+                    "DIE": { "name": "Diesel" },
+                    "SUP": { "name": "Benzin" }
+                }
             }
         },
         "type": {
             "column": "fuelType",
+            "name": "Treibstoff",
             "legend": {
                 "size": 16,
                 "elements": [{
@@ -54,13 +82,14 @@
                     "visible": true
                 },
                 "manual": {
-                    "DIE": { "label": "Diesel", "stroke-dasharray": null },
-                    "SUP": { "label": "Benzin", "stroke-dasharray": 1 }
+                    "DIE": { "name": "Diesel", "stroke-dasharray": null },
+                    "SUP": { "name": "Benzin", "stroke-dasharray": 1 }
                 }
             }
         },
         "nuts": {
             "column": "nuts2",
+            "name": "Bundesland",
             "legend": {
                 "size": 16,
                 "elements": [{
@@ -77,16 +106,16 @@
                     "visible": false
                 },
                 "manual": {
-                    "W":  { "color": "#559BD5", "label": "Wien" },
-                    "N":  { "color": "#72BB6F", "label": "Niederösterreich" },
-                    "B":  { "color": "#559E8F", "label": "Burgenland", "visible": true },
-                    "O":  { "color": "#12A7E7", "label": "Oberösterreich" },
-                    "Sa": { "color": "#96B428", "label": "Salzburg" },
-                    "St": { "color": "#C3423F", "label": "Steiermark" },
-                    "K":  { "color": "#F3D039", "label": "Kärnten" },
-                    "T":  { "color": "#DDEBF7", "label": "Tirol" },
-                    "V":  { "color": "#E3F1E2", "label": "Vorarlberg" },
-                    "NA": { "color": "#000000", "label": "Österreich", "stroke-width": 2.5, "visible": true }
+                    "W":  { "color": "#559BD5", "name": "Wien" },
+                    "N":  { "color": "#72BB6F", "name": "Niederösterreich" },
+                    "B":  { "color": "#559E8F", "name": "Burgenland", "visible": true },
+                    "O":  { "color": "#12A7E7", "name": "Oberösterreich" },
+                    "Sa": { "color": "#96B428", "name": "Salzburg" },
+                    "St": { "color": "#C3423F", "name": "Steiermark" },
+                    "K":  { "color": "#F3D039", "name": "Kärnten" },
+                    "T":  { "color": "#DDEBF7", "name": "Tirol" },
+                    "V":  { "color": "#E3F1E2", "name": "Vorarlberg" },
+                    "NA": { "color": "#000000", "name": "Österreich", "stroke-width": 2.5, "visible": true }
                 }
             }
         }
