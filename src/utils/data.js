@@ -1,4 +1,4 @@
-export { groupBy, prepareData, filter };
+export { groupBy, prepareData, filter, addDimInfo, addScaledData };
 
 import * as d3 from "d3";
 
@@ -26,6 +26,23 @@ const prepareData = (data, def) => {
         return e;
     })
 };
+
+const addDimInfo = (info, data) => {
+    info.values = data.map(d => d[info.dim]);
+    info.extent = d3.extent(info.values);
+}
+
+const addScaledData = (data, infos) => {
+    // console.log(infos)
+    data.forEach(d => {
+        Object.values(infos).forEach(i => {
+            d[`${i.dim}:scaled`] = i.scale(d[i.dim]);
+            // d[`${n}:scaled`] = def.mapping[n]._scale(d[n]);
+        });
+    })
+}
+
+
 
 
 // const group = (data, col) => {

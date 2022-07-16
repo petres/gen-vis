@@ -1,5 +1,5 @@
 <template>
-    <div v-if="show" :style="`width: ${width}px`">
+    <div v-if="info" :style="`width: ${width}px`">
         <span v-if="debug" style="font-size: 13px;">{{ debug }}</span>
         <svg ref="svg" :width="width" :height="height" class="facet">
             <g ref="inner" :transform="`translate(${this.margins.left} ${this.margins.top})`"/>
@@ -16,16 +16,9 @@ import * as ju from "@/utils/json";
 import * as eu from "@/utils/else";
 
 export default {
-    props: {
-        f: {
-            default: null,
-        }
-    },
+    props: ["filter", "shared", "height", "width", "margins"],
     data: () => ({
-        margins: {top: 0, right: 0, bottom: 0, left: 0},
-        width: 0,
-        height: 0,
-        show: false,
+        info: null,
         debug: null
     }),
     computed: {
@@ -42,24 +35,17 @@ export default {
     },
     created() {
         this.store = baseStore();
-
-        this.height = this.store.def.options.height;
-        this.width = this.store.def.options.width;
-
-        this.margins = this.store.def.options.margins;
-
-        this.show = true;
-
         this.info = {};
     },
     mounted() {
+        // console.log(this.shared)
         this.inner = d3.select(this.$refs.inner);
 
         let data = this.store.data;
         let def = this.store.def;
 
-        if (this.f) {
-            data = du.filter(data, [this.f]);
+        if (this.filter) {
+            data = du.filter(data, [this.filter]);
         }
 
 
@@ -132,97 +118,91 @@ export default {
         },
 
         scales(data) {
-            this.store.mappingNamesWithKey('scale').forEach(n => {
-                const m = this.store.mapping(n);
+            this.info = {...this.shared};
+            this.store.mappingNamesWithKey('scale')
+                .filter(n => !Object.keys(this.info).includes(n))
+                .forEach(n => {
+                    const m = this.store.mapping(n);
+                    this.info[n] = {
+                        dim: n
+                    }
+                    du.addDimInfo(this.info[n], data)
+                    pu.addScale(this.info[n], m.scale, this.constants);
 
-                const info = {};
-
-                info.values = data.map(d => d[n]);
-                info.extent = d3.extent(info.values);
-                info.scale = pu.scale(m.scale, info, this.constants);
-
-                // console.log(info);
-                // this.debug = info;?
-
-                this.info[n] = info;
-
-            });
-
-            data.forEach(d => {
-                this.store.mappingNamesWithKey('scale').forEach(n => {
-                    d[`${n}:scaled`] = this.info[n].scale(d[n]);
-                    // d[`${n}:scaled`] = def.mapping[n]._scale(d[n]);
                 });
-            })
+            du.addScaledData(data, this.info);
+            // this.debug = this.info;
         },
 
         axis() {
-            this.store.mappingNamesWithKey('axis').forEach(n => {
-                const m = this.store.mapping(n);
-                const i = m.axis;
-                const s = this.info[n].scale;
-                // const s = m._scale;
-                const a = d3[`axis${eu.capitalize(i.position)}`](s).ticks(i.ticks);
-                if (m.scale.format)
-                    a.tickFormat(eu.locale.format(m.scale.format))
+            this.store.mappingNamesWithKey('axis')
+                // .filter(n => !Object.keys(this.shared).includes(n))
+                .forEach(n => {
+                    const m = this.store.mapping(n);
+                    const i = m.axis;
+                    const s = this.info[n].scale;
+                    // const s = m._scale;
+                    const a = d3[`axis${eu.capitalize(i.position)}`](s).ticks(i.ticks);
+                    if (m.scale.format)
+                        a.tickFormat(eu.locale.format(m.scale.format))
 
-                if (m.scale.timeFormat)
-                    a.tickFormat(eu.localeTime.format(m.scale.timeFormat))
+                    if (m.scale.timeFormat)
+                        a.tickFormat(eu.localeTime.format(m.scale.timeFormat))
 
-                // console.log('ticks')
-                // console.log()
-                if (i.grid) {
-                    const g = this.inner.append("g")
-                        .attr("class", "grid")
-                        .selectAll('line')
-                        .data(s.ticks(i.ticks))
-                        .enter()
-                        .append("line")
-                        .attr('x1', 0)
-                        .attr('x2', this.innerWidth)
-                        .attr('y1', d => s(d))
-                        .attr('y2', d => s(d))
-                }
+                    // console.log('ticks')
+                    // console.log()
+                    if (i.grid) {
+                        const g = this.inner.append("g")
+                            .attr("class", "grid")
+                            .selectAll('line')
+                            .data(s.ticks(i.ticks))
+                            .enter()
+                            .append("line")
+                            .attr('x1', 0)
+                            .attr('x2', this.innerWidth)
+                            .attr('y1', d => s(d))
+                            .attr('y2', d => s(d))
+                    }
 
-                const ga = this.inner.append("g")
-                    .attr("class", `axis-${n}`)
-                    .call(a)
-
-                if (i.position == 'bottom')
-                    ga.attr('transform', `translate(0, ${this.innerHeight})`)
-                if (i.position == 'right')
-                    ga.attr('transform', `translate(${this.innerWidth}, 0)`)
-
-                if (['top', 'bottom'])
-
-                if (i.rotate)
-                    ga.selectAll("text")
-                        .attr("text-anchor", "end")
-                        .attr("transform", `rotate(-${i.rotate})`)
-
-                if (i.title) {
-                    const at = this.inner.append("text")
-                        .attr('class', 'axis-title')
-                        .attr('y', 0)
-                        .attr('x', 0)
-                        .attr("text-anchor", "middle")
-                        .attr("dominant-baseline", "middle")
-                        .text(i.title.name)
-
-                    if (i.position == 'left')
-                        at.attr("transform", `rotate(-90) translate(-${this.innerHeight/2} -${i.title.offset})`)
-
-                    if (i.position == 'right')
-                        at.attr("transform", `rotate(90) translate(${this.innerHeight/2} -${this.innerWidth + i.title.offset})`)
-
-                    if (i.position == 'top')
-                        at.attr("transform", `translate(${this.innerWidth/2} -${i.title.offset})`)
+                    const ga = this.inner.append("g")
+                        .attr("class", `axis-${n}`)
+                        .call(a)
 
                     if (i.position == 'bottom')
-                        at.attr("transform", `translate(${this.innerHeight/2} -${i.title.offset})`)
-                }
+                        ga.attr('transform', `translate(0, ${this.innerHeight})`)
+                    if (i.position == 'right')
+                        ga.attr('transform', `translate(${this.innerWidth}, 0)`)
 
-            });
+                    if (['top', 'bottom'])
+
+                    if (i.rotate)
+                        ga.selectAll("text")
+                            .attr("text-anchor", "end")
+                            .attr("transform", `rotate(-${i.rotate})`)
+
+                    if (i.title) {
+                        const at = this.inner.append("text")
+                            .attr('class', 'axis-title')
+                            .attr('y', 0)
+                            .attr('x', 0)
+                            .attr("text-anchor", "middle")
+                            .attr("dominant-baseline", "middle")
+                            .text(i.title.name)
+
+                        if (i.position == 'left')
+                            at.attr("transform", `rotate(-90) translate(-${this.innerHeight/2} -${i.title.offset})`)
+
+                        if (i.position == 'right')
+                            at.attr("transform", `rotate(90) translate(${this.innerHeight/2} -${this.innerWidth + i.title.offset})`)
+
+                        if (i.position == 'top')
+                            at.attr("transform", `translate(${this.innerWidth/2} -${i.title.offset})`)
+
+                        if (i.position == 'bottom')
+                            at.attr("transform", `translate(${this.innerHeight/2} -${i.title.offset})`)
+                    }
+
+                });
         }
     }
 }

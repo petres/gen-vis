@@ -7,12 +7,13 @@
         <div ref="legends" class="legends">
             <legend-entry v-for="legend in legends" :legend="legend" />
         </div>
-        <template v-if="facets.length > 0" v-for="f in facets">
+        <!-- {{ facets.shared }} -->
+        <template v-if="facets.filters.length > 0" v-for="f in facets.filters">
             <div class="facet-title">{{ f.key }}</div>
-            <facet :f="f"/>
+            <facet :filter="f" :shared="facets.shared" :height='height' :width='width' :margins='margins'/>
         </template>
         <template v-else>
-            <facet/>
+            <facet :filter="facets.filters" :shared="facets.shared" :height='height' :width='width' :margins='margins'/>
         </template>
         <div class="footer">
             <span v-html="footer"/>
@@ -23,31 +24,44 @@
 <script>
 import { baseStore } from '@/store.js'
 import * as d3 from "d3";
+import * as du from "@/utils/data.js";
+import * as pu from "@/utils/plot.js";
 import Facet from '@/comp/Facet.vue';
 import LegendEntry from '@/comp/Legend.vue';
 
 
 export default {
     data: () => ({
-        margins: {l: 50, r: 50, t: 50, b: 50},
+        margins: {top: 0, right: 0, bottom: 0, left: 0},
         width: 600,
         height: 300,
-        def: null,
-        facets: [],
+
         title: "",
         subtitle: "",
         footer: "",
+
         legends: [],
+        facets: {
+            shared: {},
+            filters: {},
+        },
     }),
     computed: {
-        innerWidth() { return this.width - (this.margin.l + this.margin.r) },
-        innerHeight() { return this.height - (this.margin.t + this.margin.b) },
+        innerWidth() { return this.width - (this.margins.left + this.margins.right) },
+        innerHeight() { return this.height - (this.margins.top + this.margins.bottom) },
+        constants() {
+            return {
+                "width": this.innerWidth,
+                "height": this.innerHeight,
+            }
+        }
     },
     components: {
         Facet, LegendEntry
     },
     mounted() {
         const store = baseStore();
+        const data = store.data;
         const def = store.def;
 
         this.legends = store.mappingNamesWithKey('legend')
@@ -61,9 +75,27 @@ export default {
         this.width = def.options.width;
 
         if (def.facets) {
-            const d = def.facets.dim;
+
             // console.log(d)
-            this.facets = Object.keys(def.mapping[d].props.manual).map(k => ({
+
+            // scales
+            const sharedList = def.facets.scales.map(n => {
+                // console.log(n)
+                const m = store.mapping(n);
+                // console.log(m)
+                const info = {
+                    dim: n
+                }
+                du.addDimInfo(info, data)
+                pu.addScale(info, m.scale, this.constants);
+                return info;
+            });
+            console.log(sharedList)
+            this.facets.shared = Object.fromEntries(sharedList.map(e => [e.dim, e]))
+            // du.addScaledData(data, infos);
+
+            const d = def.facets.dim;
+            this.facets.filters = Object.keys(def.mapping[d].props.manual).map(k => ({
                 dim: d, key: k
             }));
         }

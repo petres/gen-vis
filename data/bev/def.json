@@ -29,8 +29,8 @@
             "type": "numeric",
             "scale": {
                 "type": "linear",
-                "domain": [null, null],
-                "domainRel": [-0.2, 0.2],
+                "domain": [0, null],
+                "domainRel": [0, 0.2],
                 "range": ["@height", 0],
                 "format": ",.0f"
             },

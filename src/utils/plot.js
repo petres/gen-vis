@@ -1,15 +1,14 @@
-export { scale, axis, setProps, setGroupData };
+export { addScale, axis, setProps, setGroupData };
 
 import * as d3 from "d3";
 import * as ju from "@/utils/json.js";
 import * as du from "@/utils/data.js";
 import * as eu from "@/utils/else.js";
 
-const scale = (i, info, constants) => {
-    // console.log(i)
-    info.domain = [...(i.domain ? i.domain : [null, null])];
-    info.domainRel = [...(i.domainRel ? i.domainRel : [0, 0])];
-    info.domainAbs = [...(i.domainAbs ? i.domainAbs : [0, 0])];
+const addScale = (info, scaleDef, constants) => {
+    info.domain = [...(scaleDef.domain ? scaleDef.domain : [null, null])];
+    info.domainRel = [...(scaleDef.domainRel ? scaleDef.domainRel : [0, 0])];
+    info.domainAbs = [...(scaleDef.domainAbs ? scaleDef.domainAbs : [0, 0])];
 
     info.domain[0] ??= info.extent[0];
     info.domain[1] ??= info.extent[1];
@@ -23,10 +22,9 @@ const scale = (i, info, constants) => {
 
     // console.log(info)
     // console.log(info.domain)
-
-    return d3[`scale${eu.capitalize(i.type)}`]()
+    info.scale = d3[`scale${eu.capitalize(scaleDef.type)}`]()
         .domain(info.domain)
-        .range(ju.fill(i.range, constants))
+        .range(ju.fill(scaleDef.range, constants))
 };
 
 const axis = (i, scale) => {
