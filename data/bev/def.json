@@ -13,7 +13,9 @@
             "type": "numeric",
             "scale": {
                 "type": "linear",
-                "range": [0, "@width"]
+                "domainAbs": [-0.5, 0.5],
+                "range": [0, "@width"],
+                "format": "c"
             },
             "axis": {
                 "ticks": 20,
@@ -27,8 +29,10 @@
             "type": "numeric",
             "scale": {
                 "type": "linear",
-                "domain": [0, null],
-                "range": ["@height", 0]
+                "domain": [null, null],
+                "domainRel": [-0.2, 0.2],
+                "range": ["@height", 0],
+                "format": ",.0f"
             },
             "axis": {
                 "ticks": 5,
@@ -57,25 +61,27 @@
             },
             "props": {
                 "common": {
-                    "stroke-width": 2
+                    "stroke-width": 2.5,
+                    "visible": true
                 },
                 "manual": {
-                    "ÖSTERREICH":       { "color": "#000000", "stroke-width": 3, "name": "Gesamt" },
-                    "Wien":             { "color": "#559BD5" },
-                    "Niederösterreich": { "color": "#72BB6F" },
-                    "Burgenland":       { "color": "#559E8F" },
-                    "Oberösterreich":   { "color": "#12A7E7" },
-                    "Salzburg":         { "color": "#96B428" },
-                    "Steiermark":       { "color": "#C3423F" },
-                    "Kärnten":          { "color": "#F3D039" },
-                    "Tirol":            { "color": "#DDEBF7" },
-                    "Vorarlberg":       { "color": "#E3F1E2" }
+                    "ÖSTERREICH":       { "color": "#1E4F77", "stroke-width": 3, "name": "Gesamt" },
+                    "Wien":             { "color": "#BBD7EE" },
+                    "Niederösterreich": { "color": "#5BC5F2" },
+                    "Burgenland":       { "color": "#559BD5" },
+                    "Oberösterreich":   { "color": "#C7DF71" },
+                    "Salzburg":         { "color": "#4B9847" },
+                    "Steiermark":       { "color": "#9CE1F8" },
+                    "Kärnten":          { "color": "#72BB6F" },
+                    "Tirol":            { "color": "#3F766B" },
+                    "Vorarlberg":       { "color": "#ABD6A9" }
                 }
             }
         }
     },
     "facets": {
-        "dim": "land"
+        "dim": ["land"],
+        "scales": ["y"]
     },
     "plot": [
         {

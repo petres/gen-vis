@@ -8,12 +8,20 @@ import * as eu from "@/utils/else.js";
 const scale = (i, info, constants) => {
     // console.log(i)
     info.domain = [...(i.domain ? i.domain : [null, null])];
+    info.domainRel = [...(i.domainRel ? i.domainRel : [0, 0])];
+    info.domainAbs = [...(i.domainAbs ? i.domainAbs : [0, 0])];
 
     info.domain[0] ??= info.extent[0];
     info.domain[1] ??= info.extent[1];
 
+    const da = info.domain[1] - info.domain[0];
+    info.domain[0] += da*info.domainRel[0];
+    info.domain[1] += da*info.domainRel[1];
 
-    console.log(info)
+    info.domain[0] += info.domainAbs[0];
+    info.domain[1] += info.domainAbs[1];
+
+    // console.log(info)
     // console.log(info.domain)
 
     return d3[`scale${eu.capitalize(i.type)}`]()

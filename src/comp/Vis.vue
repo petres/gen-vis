@@ -11,9 +11,9 @@
             <div class="facet-title">{{ f.key }}</div>
             <facet :f="f"/>
         </template>
-        <!-- <template v-else>
+        <template v-else>
             <facet/>
-        </template> -->
+        </template>
         <div class="footer">
             <span v-html="footer"/>
         </div>
@@ -50,7 +50,7 @@ export default {
         const store = baseStore();
         const def = store.def;
 
-        this.legends = Object.keys(def.mapping).filter(n => ('legend' in def.mapping[n]))
+        this.legends = store.mappingNamesWithKey('legend')
 
         this.title = def.options.title;
         this.subtitle = def.options.subtitle;

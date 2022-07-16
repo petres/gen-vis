@@ -28,7 +28,7 @@
             "type": "numeric",
             "scale": {
                 "type": "linear",
-                "domain": [0, null],
+                "domain": [1, null],
                 "range": ["@height", 0],
                 "format": ".2f"
             },
@@ -61,7 +61,7 @@
                 },
                 "manual": {
                     "DIE": { "name": "Diesel", "stroke-dasharray": null },
-                    "SUP": { "name": "Benzin", "stroke-dasharray": 1 }
+                    "SUP": { "name": "Benzin", "stroke-dasharray": 2 }
                 }
             }
         },
@@ -83,22 +83,23 @@
                     "visible": false
                 },
                 "manual": {
-                    "W":  { "color": "#559BD5", "name": "Wien" },
-                    "N":  { "color": "#72BB6F", "name": "Niederösterreich" },
-                    "B":  { "color": "#559E8F", "name": "Burgenland", "visible": true },
-                    "O":  { "color": "#12A7E7", "name": "Oberösterreich" },
-                    "Sa": { "color": "#96B428", "name": "Salzburg" },
-                    "St": { "color": "#C3423F", "name": "Steiermark" },
-                    "K":  { "color": "#F3D039", "name": "Kärnten" },
-                    "T":  { "color": "#DDEBF7", "name": "Tirol" },
-                    "V":  { "color": "#E3F1E2", "name": "Vorarlberg" },
-                    "NA": { "color": "#000000", "name": "Österreich", "stroke-width": 2.5, "visible": true }
+                    "W":  { "color": "#1E4F77", "name": "Wien" },
+                    "N":  { "color": "#BBD7EE", "name": "Niederösterreich" },
+                    "B":  { "color": "#5BC5F2", "name": "Burgenland", "visible": true },
+                    "O":  { "color": "#559BD5", "name": "Oberösterreich" },
+                    "Sa": { "color": "#C7DF71", "name": "Salzburg" },
+                    "St": { "color": "#4B9847", "name": "Steiermark" },
+                    "K":  { "color": "#9CE1F8", "name": "Kärnten" },
+                    "T":  { "color": "#72BB6F", "name": "Tirol" },
+                    "V":  { "color": "#3F766B", "name": "Vorarlberg" },
+                    "NA": { "color": "#ABD6A9", "name": "Österreich", "stroke-width": 2.5, "visible": true }
                 }
             }
         }
     },
     "facets": {
-        "dim": "type"
+        "dim": "type",
+        "scales": ["y"]
     },
     "plot": [
         {

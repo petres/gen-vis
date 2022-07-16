@@ -1,6 +1,6 @@
 <template>
     <div v-if="show" :style="`width: ${width}px`">
-        {{ debug }}
+        <span v-if="debug" style="font-size: 13px;">{{ debug }}</span>
         <svg ref="svg" :width="width" :height="height" class="facet">
             <g ref="inner" :transform="`translate(${this.margins.left} ${this.margins.top})`"/>
         </svg>
@@ -26,7 +26,7 @@ export default {
         width: 0,
         height: 0,
         show: false,
-        debug: ""
+        debug: null
     }),
     computed: {
         innerWidth() { return this.width - (this.margins.left + this.margins.right) },
@@ -132,30 +132,24 @@ export default {
         },
 
         scales(data) {
-            let def = this.store.def;
-            const scales = Object.keys(def.mapping).filter(n => ('scale' in def.mapping[n]))
-            scales.forEach(n => {
-                const m = def.mapping[n];
+            this.store.mappingNamesWithKey('scale').forEach(n => {
+                const m = this.store.mapping(n);
 
                 const info = {};
+
                 info.values = data.map(d => d[n]);
                 info.extent = d3.extent(info.values);
                 info.scale = pu.scale(m.scale, info, this.constants);
 
-                //
-                // m._values = values;
-                // m._extent = extent;
-                // m._scale = scale;
+                // console.log(info);
+                // this.debug = info;?
 
-                // this.debug = info.domain;
-                //
-                //
                 this.info[n] = info;
 
             });
 
             data.forEach(d => {
-                scales.forEach(n => {
+                this.store.mappingNamesWithKey('scale').forEach(n => {
                     d[`${n}:scaled`] = this.info[n].scale(d[n]);
                     // d[`${n}:scaled`] = def.mapping[n]._scale(d[n]);
                 });
@@ -163,10 +157,8 @@ export default {
         },
 
         axis() {
-            let def = this.store.def;
-            const axisM = Object.keys(def.mapping).filter(n => ('axis' in def.mapping[n]));
-            axisM.forEach(n => {
-                const m = def.mapping[n];
+            this.store.mappingNamesWithKey('axis').forEach(n => {
+                const m = this.store.mapping(n);
                 const i = m.axis;
                 const s = this.info[n].scale;
                 // const s = m._scale;

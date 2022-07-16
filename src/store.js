@@ -10,7 +10,9 @@ export const baseStore = defineStore('base', {
         data: null,
     }),
     getters: {
-        loaded() { return (this.def !== null && this.data !== null)}
+        loaded() { return (this.def !== null && this.data !== null)},
+        mapping(n) { return n => this.def.mapping[n]},
+        mappingNamesWithKey(k) { return k => Object.keys(this.def.mapping).filter(n => (k in this.def.mapping[n]))},
     },
     actions: {
         load(def) {

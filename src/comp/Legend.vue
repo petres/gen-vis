@@ -14,10 +14,9 @@ export default {
     props: ["legend"],
     mounted() {
         const store = baseStore();
-        const def = store.def;
         const n = this.legend;
 
-        const i = def.mapping[n];
+        const i = store.mapping(n);
         const d = Object.keys(i.props.manual).map(d => ({
             key: d,
             props: ju.merged(i.props, d)
