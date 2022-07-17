@@ -1,5 +1,5 @@
 <template>
-    <div v-if="info" :style="`width: ${width}px`">
+    <div v-if="info" :style="`width: ${width}px; display: inline-block;`">
         <span v-if="debug" style="font-size: 13px;">{{ debug }}</span>
         <svg ref="svg" :width="width" :height="height" class="facet">
             <g ref="inner" :transform="`translate(${this.margins.left} ${this.margins.top})`"/>
@@ -122,13 +122,13 @@ export default {
             this.store.mappingNamesWithKey('scale')
                 .filter(n => !Object.keys(this.info).includes(n))
                 .forEach(n => {
-                    const m = this.store.mapping(n);
-                    this.info[n] = {
-                        dim: n
+                    const info = {
+                        dim: n,
+                        mapping: this.store.mapping(n)
                     }
-                    du.addDimInfo(this.info[n], data)
-                    pu.addScale(this.info[n], m.scale, this.constants);
-
+                    du.addDimInfo(info, data)
+                    pu.addScale(info, this.constants);
+                    this.info[n] = info;
                 });
             du.addScaledData(data, this.info);
             // this.debug = this.info;

@@ -2,7 +2,7 @@
     "data": "./data/bev/data.csv",
     "options": {
         "height": 300, "width": 1000,
-        "margins": {"top": 10, "right": 30, "bottom": 40, "left": 80},
+        "margins": {"top": 10, "right": 10, "bottom": 40, "left": 80},
         "title": "Bevölkerung",
         "subtitle": "nach Bundesland",
         "footer": "<strong>Quelle:</strong> Somewhere</a>"
@@ -18,7 +18,7 @@
                 "format": "c"
             },
             "axis": {
-                "ticks": 20,
+                "ticks": 5,
                 "name": "Jahr",
                 "format": "",
                 "position": "bottom"
@@ -81,7 +81,8 @@
     },
     "facets": {
         "dim": ["land"],
-        "scales": ["y"]
+        "scales": ["y"],
+        "cols": 2
     },
     "plot": [
         {

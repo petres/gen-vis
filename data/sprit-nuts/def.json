@@ -97,10 +97,6 @@
             }
         }
     },
-    "facets": {
-        "dim": "type",
-        "scales": ["y"]
-    },
     "plot": [
         {
             "type": "path",

@@ -9,8 +9,10 @@
         </div>
         <!-- {{ facets.shared }} -->
         <template v-if="facets.filters.length > 0" v-for="f in facets.filters">
-            <div class="facet-title">{{ f.key }}</div>
-            <facet :filter="f" :shared="facets.shared" :height='height' :width='width' :margins='margins'/>
+            <div :style="`width: ${facets.width}px; display: inline-block;`">
+                <div class="facet-title">{{ f.key }}</div>
+                <facet :filter="f" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
+            </div>
         </template>
         <template v-else>
             <facet :filter="facets.filters" :shared="facets.shared" :height='height' :width='width' :margins='margins'/>
@@ -44,6 +46,9 @@ export default {
         facets: {
             shared: {},
             filters: {},
+            height: 0,
+            width: 0,
+            margins: {top: 0, right: 0, bottom: 0, left: 0},
         },
     }),
     computed: {
@@ -70,27 +75,27 @@ export default {
         this.subtitle = def.options.subtitle;
         this.footer = def.options.footer;
 
-        this.margins =  def.options.margins;
+        this.margins = def.options.margins;
         this.height = def.options.height;
         this.width = def.options.width;
 
         if (def.facets) {
 
-            // console.log(d)
+            this.facets.margins = def.options.margins;
+            this.facets.height = def.options.height;
+            this.facets.width = def.options.width/def.facets.cols;
 
             // scales
             const sharedList = def.facets.scales.map(n => {
-                // console.log(n)
-                const m = store.mapping(n);
-                // console.log(m)
                 const info = {
-                    dim: n
+                    dim: n,
+                    mapping: store.mapping(n),
                 }
                 du.addDimInfo(info, data)
-                pu.addScale(info, m.scale, this.constants);
+                pu.addScale(info, this.constants);
                 return info;
             });
-            console.log(sharedList)
+            // console.log(sharedList)
             this.facets.shared = Object.fromEntries(sharedList.map(e => [e.dim, e]))
             // du.addScaledData(data, infos);
 

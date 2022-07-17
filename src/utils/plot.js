@@ -5,7 +5,8 @@ import * as ju from "@/utils/json.js";
 import * as du from "@/utils/data.js";
 import * as eu from "@/utils/else.js";
 
-const addScale = (info, scaleDef, constants) => {
+const addScale = (info, constants) => {
+    const scaleDef = info.mapping.scale;
     info.domain = [...(scaleDef.domain ? scaleDef.domain : [null, null])];
     info.domainRel = [...(scaleDef.domainRel ? scaleDef.domainRel : [0, 0])];
     info.domainAbs = [...(scaleDef.domainAbs ? scaleDef.domainAbs : [0, 0])];
