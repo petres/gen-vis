@@ -48,7 +48,6 @@ export default {
             data = du.filter(data, [this.filter]);
         }
 
-
         this.scales(data);
         this.axis();
 

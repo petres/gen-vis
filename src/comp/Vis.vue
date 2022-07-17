@@ -1,5 +1,5 @@
 <template>
-    <div class="vis">
+    <div class="vis" ref="vis">
         <div class="header">
             <div class="title">{{ title }}</div>
             <div class="subtitle">{{ subtitle }}</div>
@@ -7,16 +7,13 @@
         <div ref="legends" class="legends">
             <legend-entry v-for="legend in legends" :legend="legend" />
         </div>
-        <!-- {{ facets.shared }} -->
-        <template v-if="facets.filters.length > 0" v-for="f in facets.filters">
-            <div :style="`width: ${facets.width}px; display: inline-block;`">
-                <div class="facet-title">{{ f.key }}</div>
+        <div v-if="initialized" class="vis-inner">
+            <div v-if="facets.filters.length > 0" v-for="f in facets.filters" :style="`width: ${facets.width}px; display: inline-block;`">
+                <div class="facet-title">{{ f.name }}</div>
                 <facet :filter="f" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
             </div>
-        </template>
-        <template v-else>
-            <facet :filter="facets.filters" :shared="facets.shared" :height='height' :width='width' :margins='margins'/>
-        </template>
+            <facet v-else :filter="facets.filters" :shared="facets.shared" :height='height' :width='width' :margins='margins'/>
+        </div>
         <div class="footer">
             <span v-html="footer"/>
         </div>
@@ -34,9 +31,11 @@ import LegendEntry from '@/comp/Legend.vue';
 
 export default {
     data: () => ({
+        initialized: false,
+
         margins: {top: 0, right: 0, bottom: 0, left: 0},
-        width: 600,
-        height: 300,
+        width: 0,
+        height: 0,
 
         title: "",
         subtitle: "",
@@ -77,33 +76,42 @@ export default {
 
         this.margins = def.options.margins;
         this.height = def.options.height;
-        this.width = def.options.width;
+
+        if (def.options.width) {
+            this.width = def.options.width;
+        } else {
+            this.width = this.$refs.vis.getBoundingClientRect().width
+            console.log(this.width)
+        }
 
         if (def.facets) {
-
-            this.facets.margins = def.options.margins;
-            this.facets.height = def.options.height;
-            this.facets.width = def.options.width/def.facets.cols;
+            this.facets.margins = this.margins;
+            this.facets.height = this.height;
+            this.facets.width = this.width/def.facets.cols;
 
             // scales
-            const sharedList = def.facets.scales.map(n => {
-                const info = {
-                    dim: n,
-                    mapping: store.mapping(n),
-                }
-                du.addDimInfo(info, data)
-                pu.addScale(info, this.constants);
-                return info;
-            });
-            // console.log(sharedList)
-            this.facets.shared = Object.fromEntries(sharedList.map(e => [e.dim, e]))
-            // du.addScaledData(data, infos);
+            if (def.facets.scales) {
+                const sharedList = def.facets.scales.map(n => {
+                    const info = {
+                        dim: n,
+                        mapping: store.mapping(n),
+                    }
+                    du.addDimInfo(info, data)
+                    pu.addScale(info, this.constants);
+                    return info;
+                });
+                // console.log(sharedList)
+                this.facets.shared = Object.fromEntries(sharedList.map(e => [e.dim, e]))
+                // du.addScaledData(data, infos);
+            }
 
             const d = def.facets.dim;
-            this.facets.filters = Object.keys(def.mapping[d].props.manual).map(k => ({
-                dim: d, key: k
+            this.facets.filters = Object.keys(store.mapping(d).props.manual).map(k => ({
+                dim: d, key: k, name: store.mapping(d).props.manual[k].name
             }));
         }
+
+        this.initialized = true;
     }
 }
 </script>
