@@ -3,8 +3,10 @@ pre {
 }
 
 body, text {
-    font-family: Helvetica, sans-serif;
+    font-family: Century Gothic, sans-serif;
 }
+
+
 
 .header {
     .title {
@@ -14,6 +16,7 @@ body, text {
 
     .subtitle {
         font-size: 13px;
+        margin-top: 3px;
         // font-weight: bold;
     }
     margin-bottom: 10px;
@@ -40,8 +43,8 @@ body, text {
                 svg {
                     display: inline-block;
                     margin-right: 5px;
-                    border: 1px solid #BBB;
-                    border-radius: 3px;
+                    // border: 1px solid #BBB;
+                    // border-radius: 3px;
                 }
 
                 &[data-visible="false"] {
@@ -68,6 +71,8 @@ body, text {
 }
 
 svg {
+    g.axis-x g.tick line {transform: translate(0px, -4px);}
+    g.axis-y g.tick line {transform: translate(5px, 0px);}
     g.tick {
         text {
             font-size: 13px;

@@ -136,7 +136,11 @@ export default {
                     const i = m.axis;
                     const s = this.info[n].scale;
                     // const s = m._scale;
-                    const a = d3[`axis${eu.capitalize(i.position)}`](s).ticks(i.ticks);
+                    const a = d3[`axis${eu.capitalize(i.position)}`](s)
+                        .ticks(i.ticks)
+                        .tickSizeInner(9)
+                        .tickSizeOuter(0)
+
                     if (m.scale.format)
                         a.tickFormat(eu.locale.format(m.scale.format))
 

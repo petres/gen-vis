@@ -1,4 +1,4 @@
-export { addScale, axis, setProps, setGroupData };
+export { addScale, setProps, setGroupData };
 
 import * as d3 from "d3";
 import * as ju from "@/utils/json.js";
@@ -26,12 +26,6 @@ const addScale = (info, constants) => {
     info.scale = d3[`scale${eu.capitalize(scaleDef.type)}`]()
         .domain(info.domain)
         .range(ju.fill(scaleDef.range, constants))
-};
-
-const axis = (i, scale) => {
-    const a = d3.axisBottom(scale);
-    if (i.ticks) a.ticks(i.ticks);
-    return a;
 };
 
 const setProps = function(d) {
