@@ -90,6 +90,11 @@ svg.facet {
         stroke: #CCC;
         stroke-width: 0.75px;
     }
+    g.hover {
+        line {
+            stroke: #BBB;
+        }
+    }
 }
 
 .facet-title {

@@ -57,19 +57,14 @@ export default {
             this[d.type](dataGroupedProps);
         });
 
-        // const xa = def.mapping.x;
-        //
-        // this.inner.append("rect")
-        //     .attr("class", "events")
-        //     .attr("width", this.innerWidth)
-        //     .attr("height", this.innerHeight)
-        //     .attr("opacity", 0)
-        //     .on("mousemove", function(e) {
-        //         const c = d3.pointer(e);
-        //         const i = d3.bisectCenter(xa._values, xa._scale.invert(c[0]))
-        //         console.log(xa._values[i])
-        //
-        //     })
+
+
+
+
+
+        this.hover();
+
+
     },
     methods: {
         path(data) {
@@ -202,6 +197,42 @@ export default {
                     }
 
                 });
+        },
+        hover() {
+            const xAxis = 'x';
+            const self = this;
+            const hover = this.inner.append("g")
+                .attr("class", "hover")
+                .attr("visibility", "hidden")
+
+            const hoverLine = hover
+                .append("line")
+
+            this.inner.append("rect")
+                .attr("class", "events")
+                .attr("width", this.innerWidth)
+                .attr("height", this.innerHeight)
+                .attr("opacity", 0)
+                .on("mousemove", function(e) {
+                    const c = d3.pointer(e);
+                    const i = self.info[xAxis];
+                    // console.log(self.info)
+                    const xv = d3.bisectCenter(i.values, i.scale.invert(c[0]))
+                    // console.log(i.values[xv])
+
+                    const xx = i.scale(i.values[xv]);
+                    hoverLine.attr("x1", xx)
+                    hoverLine.attr("x2", xx)
+                    hoverLine.attr("y1", 0)
+                    hoverLine.attr("y2", self.innerHeight)
+
+                })
+                .on("mouseout", function(e) {
+                    hover.attr("visibility", "hidden")
+                })
+                .on("mouseenter", function(e) {
+                    hover.attr("visibility", "visible")
+                })
         }
     }
 }
