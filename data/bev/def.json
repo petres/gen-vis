@@ -79,11 +79,6 @@
             }
         }
     },
-    "facets": {
-        "dim": ["land"],
-        "scales": ["y"],
-        "cols": 2
-    },
     "plot": [
         {
             "type": "path",

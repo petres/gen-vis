@@ -1,20 +1,20 @@
 <template>
     <div class="vis" ref="vis">
-        <div class="header">
+        <div class="vis-header">
             <div class="title">{{ title }}</div>
             <div class="subtitle">{{ subtitle }}</div>
         </div>
-        <div ref="legends" class="legends">
+        <div ref="legends" class="vis-legends">
             <legend-entry v-for="legend in legends" :legend="legend" />
         </div>
-        <div v-if="initialized" class="vis-inner">
+        <div v-if="initialized" class="vis-body">
             <div v-if="facets.filters.length > 0" v-for="f in facets.filters" :style="`width: ${facets.width}px; display: inline-block;`">
                 <div class="facet-title">{{ f.name }}</div>
                 <facet :filter="f" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
             </div>
             <facet v-else :filter="facets.filters" :shared="facets.shared" :height='height' :width='width' :margins='margins'/>
         </div>
-        <div class="footer">
+        <div class="vis-footer">
             <span v-html="footer"/>
         </div>
     </div>
@@ -115,3 +115,39 @@ export default {
     }
 }
 </script>
+
+
+<style lang="scss" scoped>
+    .vis {
+        :deep(text), :deep(span), :deep(div) {
+            font-family: Century Gothic, sans-serif;
+        }
+    }
+
+    .vis-header {
+        .title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            margin-top: 3px;
+            // font-weight: bold;
+        }
+        margin-bottom: 10px;
+    }
+
+    .vis-footer {
+        span {
+            font-size: 13px;
+        }
+    }
+
+    .facet-title {
+        font-size: 13px;
+        font-weight: bold;
+        margin-top: 8px;
+        margin-left: 80px;
+    }
+</style>

@@ -1,5 +1,5 @@
 <template>
-    <div ref="legend"></div>
+    <div ref="legend" class="legend"></div>
 </template>
 
 <script>
@@ -22,16 +22,15 @@ export default {
             props: ju.merged(i.props, d)
         }))
         // const d = Object.values(def.mapping[n].manual)
-        const b = d3.select(this.$refs.legend)
-            .attr("class", `legend`)
+        const legendElement = d3.select(this.$refs.legend)
             .attr("data-dim", n)
 
-        b.append("div")
+        legendElement.append("div")
             .attr("class", `title`)
             .text(i.name)
 
 
-        const e = b.append("div")
+        const e = legendElement.append("div")
             .attr("class", `entries`)
             .selectAll("div.entry")
             .data(d)
@@ -56,6 +55,7 @@ export default {
         });
         e.append("span").text(d => d.props.name ? d.props.name : d.key)
 
+        const self = this;
         e.on('click', function(ev, d) {
             const e = d3.select(this);
             const visible = (e.attr('data-visible') === 'true');
@@ -63,7 +63,8 @@ export default {
             const key = d.key;
             // console.log(`legend click ${dim} -> ${key}`)
 
-            d3.selectAll(`.vis svg.facet g.group[data-group-${dim}="${key}"], .vis svg.facet path[data-group-${dim}="${key}"]`)
+            d3.select(self.$refs.legend.closest('.vis'))
+                .selectAll(`svg.facet g.group[data-group-${dim}="${key}"], .vis svg.facet path[data-group-${dim}="${key}"]`)
                 .attr(`data-visible-${dim}`, !visible)
                 .each(function() {
                     const show = this.getAttributeNames()
@@ -78,3 +79,45 @@ export default {
     }
 }
 </script>
+
+
+<style lang="scss" scoped>
+    .legend {
+        :deep(.title) {
+            font-weight: bold;
+            font-size: 13px;
+            margin: 3px;
+            // display: inline-block;
+            // top: -4px;
+            position: relative;
+            // margin-right: 20px;
+        }
+        :deep(.entries) {
+            // display: inline-block;
+            .entry {
+                cursor: pointer;
+                display: inline-block;
+                margin: 0px 5px;
+
+                svg {
+                    display: inline-block;
+                    margin-right: 5px;
+                    // border: 1px solid #BBB;
+                    // border-radius: 3px;
+                }
+
+                &[data-visible="false"] {
+                    opacity: 0.3;
+                }
+
+                span {
+                    top: -4px;
+                    display: inline-block;
+                    position: relative;
+                    font-size: 13px;
+                }
+            }
+        }
+    }
+
+</style>

@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="vis-outer">
         <vis v-if="store.loaded"/>
         <pre v-if="debug">{{ JSON.stringify(store.defOrg, null, 4) }}</pre>
     </div>

@@ -50,23 +50,17 @@ export default {
 
         this.scales(data);
         this.axis();
-
-        def.plot.forEach(d => {
-            const dataGrouped = du.groupBy(data, d.categories);
-            const dataGroupedProps = ju.getProps(dataGrouped, d.props, def.mapping);
-            this[d.type](dataGroupedProps);
-        });
-
-
-
-
-
-
+        this.plot(def, data);
         this.hover();
-
-
     },
     methods: {
+        plot(def, data) {
+            def.plot.forEach(d => {
+                const dataGrouped = du.groupBy(data, d.categories);
+                const dataGroupedProps = ju.getProps(dataGrouped, d.props, def.mapping);
+                this[d.type](dataGroupedProps);
+            });
+        },
         path(data) {
             // console.log(data);
             this.inner.append("g")
@@ -98,18 +92,10 @@ export default {
                 .append(type)
                 .each(pu.setProps)
         },
-        circle(data) {
-            this.pointwise(data, "circle")
-        },
-        line(data) {
-            this.pointwise(data, "line")
-        },
-        rect(data) {
-            this.pointwise(data, "rect")
-        },
-        text(data) {
-            this.pointwise(data, "text")
-        },
+        circle(data) { this.pointwise(data, "circle") },
+        line(data)   { this.pointwise(data, "line") },
+        rect(data)   { this.pointwise(data, "rect") },
+        text(data)   { this.pointwise(data, "text") },
 
         scales(data) {
             this.info = {...this.shared};
@@ -241,3 +227,35 @@ export default {
     }
 }
 </script>
+
+
+<style lang="scss" scoped>
+    :deep(svg) {
+        g.axis-x g.tick line {transform: translate(0px, -4px);}
+        g.axis-y g.tick line {transform: translate(5px, 0px);}
+        g.tick {
+            text {
+                font-size: 13px;
+            }
+        }
+        .axis-title {
+            font-size: 13px;
+        }
+
+        g.group, path {
+            &[data-visible="false"] {
+                opacity: 0.01;
+            }
+        }
+
+        g.grid {
+            stroke: #CCC;
+            stroke-width: 0.75px;
+        }
+        g.hover {
+            line {
+                stroke: #BBB;
+            }
+        }
+    }
+</style>
