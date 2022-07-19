@@ -1,9 +1,13 @@
 <template>
-    <div v-if="info" :style="`width: ${width}px; display: inline-block;`">
-        <span v-if="debug" style="font-size: 13px;">{{ debug }}</span>
+    <div :style="`width: ${width}px;`" class="vis-inner">
+        <span v-if="debug" class="debug">{{ debug }}</span>
         <svg ref="svg" :width="width" :height="height" class="facet">
-            <g ref="inner" :transform="`translate(${this.margins.left} ${this.margins.top})`"/>
+            <g ref="inner" :transform="`translate(${margins.left} ${margins.top})`"/>
         </svg>
+        <div class="hover aaa" ref="hover" :style="`bottom: ${margins.bottom}px; left: ${margins.left}px;`">
+            <div class="title" style="dfa"/>
+            <table class="entries"/>
+        </div>
     </div>
 </template>
 
@@ -18,8 +22,10 @@ import * as eu from "@/utils/else";
 export default {
     props: ["filter", "shared", "height", "width", "margins"],
     data: () => ({
-        info: null,
-        debug: null
+        info: {},
+        debug: null,
+        data: null,
+        def: null,
     }),
     computed: {
         innerWidth() { return this.width - (this.margins.left + this.margins.right) },
@@ -35,29 +41,26 @@ export default {
     },
     created() {
         this.store = baseStore();
-        this.info = {};
+        this.data = this.store.data;
+        this.def = this.store.def;
     },
     mounted() {
-        // console.log(this.shared)
         this.inner = d3.select(this.$refs.inner);
-
-        let data = this.store.data;
-        let def = this.store.def;
-
+        // this.debug = this.filter;
         if (this.filter) {
-            data = du.filter(data, [this.filter]);
+            this.data = du.filter(this.data, [this.filter]);
         }
 
-        this.scales(data);
+        this.scales();
         this.axis();
-        this.plot(def, data);
+        this.plot();
         this.hover();
     },
     methods: {
-        plot(def, data) {
-            def.plot.forEach(d => {
-                const dataGrouped = du.groupBy(data, d.categories);
-                const dataGroupedProps = ju.getProps(dataGrouped, d.props, def.mapping);
+        plot() {
+            this.def.plot.forEach(d => {
+                const dataGrouped = du.groupBy(this.data, d.categories);
+                const dataGroupedProps = ju.getProps(dataGrouped, d.props, this.def.mapping);
                 this[d.type](dataGroupedProps);
             });
         },
@@ -97,7 +100,7 @@ export default {
         rect(data)   { this.pointwise(data, "rect") },
         text(data)   { this.pointwise(data, "text") },
 
-        scales(data) {
+        scales() {
             this.info = {...this.shared};
             this.store.mappingNamesWithKey('scale')
                 .filter(n => !Object.keys(this.info).includes(n))
@@ -106,11 +109,11 @@ export default {
                         dim: n,
                         mapping: this.store.mapping(n)
                     }
-                    du.addDimInfo(info, data)
+                    du.addDimInfo(info, this.data)
                     pu.addScale(info, this.constants);
                     this.info[n] = info;
                 });
-            du.addScaledData(data, this.info);
+            du.addScaledData(this.data, this.info);
             // this.debug = this.info;
         },
 
@@ -127,11 +130,14 @@ export default {
                         .tickSizeInner(9)
                         .tickSizeOuter(0)
 
-                    if (m.scale.format)
-                        a.tickFormat(eu.locale.format(m.scale.format))
+                    if (i.format) {
+                        if (m.scale.type == "time")
+                            a.tickFormat(eu.localeTime.format(i.format))
+                        else
+                            a.tickFormat(eu.locale.format(i.format))
+                    }
 
-                    if (m.scale.timeFormat)
-                        a.tickFormat(eu.localeTime.format(m.scale.timeFormat))
+
 
                     // console.log('ticks')
                     // console.log()
@@ -189,14 +195,40 @@ export default {
                 });
         },
         hover() {
-            const xAxis = 'x';
             const self = this;
+
+            let axis = [
+                { axis: 'x', name: 'x' },
+                { axis: 'y', name: 'y' },
+            ]
+            // console.log(this.def)
+            axis.forEach(a => {
+                const m = this.def.mapping[a.name];
+                const i = m.hover;
+                let format = 'c';
+                if (i && i.format) {
+                    format = i.format;
+                }
+
+                if (m.scale.type == "time")
+                    a.formatter = eu.localeTime.format(format);
+                else
+                    a.formatter = eu.locale.format(format);
+            });
+
+            axis = Object.fromEntries(axis.map(a => [a.axis, a]))
+
+            const categories = this.store.mappingNamesWithKey('hover').filter(e => !Object.keys(axis).includes(e));
+
             const hover = this.inner.append("g")
                 .attr("class", "hover")
                 .attr("visibility", "hidden")
 
             const hoverLine = hover
-                .append("line")
+                .append("line");
+
+            const hoverDiv = d3.select(this.$refs.hover)
+                .style("visibility", "hidden");
 
             this.inner.append("rect")
                 .attr("class", "events")
@@ -205,23 +237,52 @@ export default {
                 .attr("opacity", 0)
                 .on("mousemove", function(e) {
                     const c = d3.pointer(e);
-                    const i = self.info[xAxis];
+                    const i = self.info[axis['x'].name];
                     // console.log(self.info)
-                    const xv = d3.bisectCenter(i.values, i.scale.invert(c[0]))
-                    // console.log(i.values[xv])
-
-                    const xx = i.scale(i.values[xv]);
-                    hoverLine.attr("x1", xx)
-                    hoverLine.attr("x2", xx)
+                    const xii = d3.bisectCenter(i.values, i.scale.invert(c[0]))
+                    const x = i.values[xii];
+                    const xs = i.scale(x);
+                    hoverLine.attr("x1", xs)
+                    hoverLine.attr("x2", xs)
                     hoverLine.attr("y1", 0)
                     hoverLine.attr("y2", self.innerHeight)
+                    //
+                    hoverDiv.select('div.title')
+                        .text(axis['x'].formatter(x))
+
+                    let tt = du.filter(self.data, [{dim: axis['x'].name, key: x}]).sort((a, b) => b[axis['y'].name] - a[axis['y'].name]);
+                    // console.log(tt)
+
+                    let entries = hoverDiv.select('table.entries').selectAll('tr.entry')
+                        .data(tt)
+                        .join('tr')
+                        .attr('class', "entry")
+
+
+                    entries.selectAll("td.value")
+                        .data(d => [d])
+                        .join("td")
+                        .attr('class', "value")
+                        .text(d => axis['y'].formatter(d[axis['y'].name]))
+
+                    categories.forEach(n => {
+                        entries.selectAll(`td.${n}`)
+                            .data(d => [d])
+                            .join("td")
+                            .attr('class', n)
+                            .text(d => d[n])
+                    });
+
 
                 })
                 .on("mouseout", function(e) {
                     hover.attr("visibility", "hidden")
+                    hoverDiv.style("visibility", "hidden")
                 })
                 .on("mouseenter", function(e) {
                     hover.attr("visibility", "visible")
+                    hoverDiv.style("visibility", "visible")
+
                 })
         }
     }
@@ -230,32 +291,66 @@ export default {
 
 
 <style lang="scss" scoped>
-    :deep(svg) {
-        g.axis-x g.tick line {transform: translate(0px, -4px);}
-        g.axis-y g.tick line {transform: translate(5px, 0px);}
-        g.tick {
-            text {
+    .vis-inner {
+        position: relative;
+        display: inline-block;
+        .debug {
+            font-size: 12px;
+        }
+        :deep(svg) {
+            g.axis-x g.tick line {transform: translate(0px, -4px);}
+            g.axis-y g.tick line {transform: translate(5px, 0px);}
+            g.tick {
+                text {
+                    font-size: 13px;
+                }
+            }
+            .axis-title {
                 font-size: 13px;
             }
+
+            g.group, path {
+                &[data-visible="false"] {
+                    opacity: 0.01;
+                }
+            }
+
+            g.grid {
+                stroke: #CCC;
+                stroke-width: 0.75px;
+            }
+            g.hover {
+                line {
+                    stroke: #BBB;
+                }
+            }
         }
-        .axis-title {
+        :deep(div.hover) {
+            position: absolute;
             font-size: 13px;
-        }
-
-        g.group, path {
-            &[data-visible="false"] {
-                opacity: 0.01;
+            .title {
+                font-weight: bold;
+                text-align: center;
             }
-        }
+            background-color: #FFFFFFCC;
 
-        g.grid {
-            stroke: #CCC;
-            stroke-width: 0.75px;
-        }
-        g.hover {
-            line {
-                stroke: #BBB;
+            margin: 20px;
+
+            table {
+                border-collapse: collapse;
+                td {
+                    padding: 1px 3px;
+                    &.value {
+                        text-align: right;
+                    }
+                }
             }
+            pointer-events:none;
+
         }
     }
+
+
+
+
 </style>

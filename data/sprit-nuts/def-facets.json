@@ -1,7 +1,7 @@
 {
     "data": "./data/sprit-nuts/data.csv",
     "options": {
-        "height": 400, 
+        "height": 400,
         "margins": {"top": 20, "right": 20, "bottom": 50, "left": 80},
         "title": "Spritpreis",
         "subtitle": "nach Typ und Bundesland",
@@ -13,14 +13,17 @@
             "type": "date",
             "scale": {
                 "type": "time",
-                "range": [0, "@width"],
-                "timeFormat": "%b %y"
+                "range": [0, "@width"]
             },
             "axis": {
                 "ticks": 6,
                 "format": "",
                 "position": "bottom",
-                "rotate": 40
+                "rotate": 40,
+                "format": "%b %y"
+            },
+            "hover": {
+                "format": "%e. %b %Y"
             }
         },
         "y": {
@@ -29,8 +32,7 @@
             "scale": {
                 "type": "linear",
                 "domain": [0, null],
-                "range": ["@height", 0],
-                "format": ".2f"
+                "range": ["@height", 0]
             },
             "axis": {
                 "ticks": 8,
@@ -39,29 +41,22 @@
                 "title": {
                     "name": "Preis in €/l",
                     "offset": 50
-                }
+                },
+                "format": ".1f"
+            },
+            "hover": {
+                "format": ".2f"
             }
         },
         "type": {
             "column": "fuelType",
-            "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "line",
-                    "props": {
-                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                        "stroke": "#888", "stroke-width": 2,
-                        "stroke-dasharray": "@stroke-dasharray"
-                    }
-                }]
-            },
             "props": {
                 "common": {
                     "visible": true
                 },
                 "manual": {
-                    "DIE": { "name": "Diesel", "stroke-dasharray": null },
-                    "SUP": { "name": "Benzin", "stroke-dasharray": 2 }
+                    "DIE": { "name": "Diesel"},
+                    "SUP": { "name": "Benzin"}
                 }
             }
         },
@@ -94,6 +89,8 @@
                     "V":  { "color": "#3F766B", "name": "Vorarlberg" },
                     "NA": { "color": "#ABD6A9", "name": "Österreich", "stroke-width": 2.5, "visible": true }
                 }
+            },
+            "hover": {
             }
         }
     },
@@ -104,10 +101,9 @@
     "plot": [
         {
             "type": "path",
-            "categories": ["type", "nuts"],
+            "categories": ["nuts"],
             "props": {
                 "stroke-width": "@stroke-width",
-                "stroke-dasharray": "@stroke-dasharray",
                 "fill": "none",
                 "stroke": "@color",
                 "d": {

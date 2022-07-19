@@ -14,14 +14,17 @@
             "scale": {
                 "type": "linear",
                 "domainAbs": [-0.5, 0.5],
-                "range": [0, "@width"],
-                "format": "c"
+                "range": [0, "@width"]
             },
             "axis": {
                 "ticks": 5,
                 "name": "Jahr",
                 "format": "",
-                "position": "bottom"
+                "position": "bottom",
+                "format": "c"
+            },
+            "hover": {
+                "format": "c"
             }
         },
         "y": {
@@ -31,14 +34,17 @@
                 "type": "linear",
                 "domain": [0, null],
                 "domainRel": [0, 0.2],
-                "range": ["@height", 0],
-                "format": ",.0f"
+                "range": ["@height", 0]
             },
             "axis": {
                 "ticks": 5,
                 "name": "Einwohner",
                 "position": "left",
-                "grid": true
+                "grid": true,
+                "format": ",.0f"
+            },
+            "hover": {
+                "format": ",.0f"
             }
         },
         "land": {
@@ -76,6 +82,8 @@
                     "Tirol":            { "color": "#3F766B" },
                     "Vorarlberg":       { "color": "#ABD6A9" }
                 }
+            },
+            "hover": {
             }
         }
     },
