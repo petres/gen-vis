@@ -1,10 +1,10 @@
 <template>
     <div :style="`width: ${width}px;`" class="vis-inner">
-        <span v-if="debug" class="debug">{{ debug }}</span>
         <svg ref="svg" :width="width" :height="height" class="facet">
             <g ref="inner" :transform="`translate(${margins.left} ${margins.top})`"/>
         </svg>
-        <div class="hover aaa" ref="hover" :style="`bottom: ${margins.bottom}px; left: ${margins.left}px;`">
+        <span v-if="debug" class="debug">{{ debug }}</span>
+        <div class="hover aaa" ref="hover">
             <div class="title" style="dfa"/>
             <table class="entries"/>
         </div>
@@ -253,6 +253,14 @@ export default {
                     let tt = du.filter(self.data, [{dim: axis['x'].name, key: x}]).sort((a, b) => b[axis['y'].name] - a[axis['y'].name]);
                     // console.log(tt)
 
+                    if (xs >= self.innerWidth/2) {
+                        hoverDiv.style("left", `${xs + self.margins.left - 20}px`)
+                        hoverDiv.style("transform", `translate(-100%, -50%)`)
+                    } else {
+                        hoverDiv.style("left", `${xs + self.margins.left + 20}px`)
+                        hoverDiv.style("transform", `translate(0, -50%)`)
+                    }
+
                     let entries = hoverDiv.select('table.entries').selectAll('tr.entry')
                         .data(tt)
                         .join('tr')
@@ -321,29 +329,36 @@ export default {
             }
             g.hover {
                 line {
-                    stroke: #BBB;
+                    stroke: #999;
                 }
             }
         }
         :deep(div.hover) {
             position: absolute;
             font-size: 13px;
+
             .title {
                 font-weight: bold;
+                padding: 1px 3px;
+                border-bottom: 2px solid #000;
                 text-align: center;
             }
-            background-color: #FFFFFFCC;
+            background-color: #FFFFFFAA;
+            top: 40%;
 
-            margin: 20px;
+            // margin: 20px;
 
             table {
                 border-collapse: collapse;
                 td {
+                    text-align: left;
                     padding: 1px 3px;
                     &.value {
                         text-align: right;
                     }
                 }
+                margin-left: auto;
+                margin-right: auto;
             }
             pointer-events:none;
 

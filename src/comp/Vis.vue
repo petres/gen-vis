@@ -9,7 +9,7 @@
         </div>
         <div v-if="initialized" class="vis-body">
             <div v-if="facets.filters.length > 0" v-for="f in facets.filters" :style="`width: ${facets.width}px; display: inline-block;`">
-                <div class="facet-title">{{ f.name }}</div>
+                <div class="facet-title" :style="`margin-left: ${facets.margins.left}px`">{{ f.name }}</div>
                 <facet :filter="f" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
             </div>
             <facet v-else :filter="facets.filters" :shared="facets.shared" :height='height' :width='width' :margins='margins'/>
@@ -148,6 +148,5 @@ export default {
         font-size: 13px;
         font-weight: bold;
         margin-top: 8px;
-        margin-left: 80px;
     }
 </style>
