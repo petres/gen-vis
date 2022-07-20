@@ -8,11 +8,11 @@
             <legend-entry v-for="legend in legends" :legend="legend" />
         </div>
         <div v-if="initialized" class="vis-body">
-            <div v-if="facets.filters.length > 0" v-for="f in facets.filters" :style="`width: ${facets.width}px; display: inline-block;`">
-                <div class="facet-title" :style="`margin-left: ${facets.margins.left}px`">{{ f.name }}</div>
-                <facet :filter="f" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
+            <div v-if="facets.entries.length > 0" v-for="e in facets.entries" :style="`width: ${facets.width}px; display: inline-block;`">
+                <div class="facet-title" :style="`margin-left: ${facets.margins.left}px`">{{ e.filter.name }}</div>
+                <facet :data="e.data" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
             </div>
-            <facet v-else :filter="facets.filters" :shared="facets.shared" :height='height' :width='width' :margins='margins'/>
+            <facet v-else :filter="[]" :data="this.data" :shared="{}" :height='height' :width='width' :margins='margins'/>
         </div>
         <div class="vis-footer">
             <span v-html="footer"/>
@@ -44,11 +44,13 @@ export default {
         legends: [],
         facets: {
             shared: {},
-            filters: {},
+            entries: [],
             height: 0,
             width: 0,
             margins: {top: 0, right: 0, bottom: 0, left: 0},
         },
+
+        data: null,
     }),
     computed: {
         innerWidth() { return this.width - (this.margins.left + this.margins.right) },
@@ -66,6 +68,7 @@ export default {
     mounted() {
         const store = baseStore();
         const data = store.data;
+        this.data = data;
         const def = store.def;
 
         this.legends = store.mappingNamesWithKey('legend')
@@ -81,7 +84,7 @@ export default {
             this.width = def.options.width;
         } else {
             this.width = this.$refs.vis.getBoundingClientRect().width
-            console.log(this.width)
+            // console.log(this.width)
         }
 
         if (def.facets) {
@@ -89,26 +92,55 @@ export default {
             this.facets.height = this.height;
             this.facets.width = this.width/def.facets.cols;
 
+            // dims
+            const d = def.facets.dim;
+            // this.facets.filters = Object.keys(store.mapping(d).props.manual).map(k => ({
+            //     dim: d, key: k, name: store.mapping(d).props.manual[k].name
+            // }));
+
+
+
+            // console.log
+
+            this.facets.entries = du.groupBy(data, [d])
+                .filter(e => Object.keys(store.mapping(d).props).includes(e.group[d]))
+                .map(e => ({
+                    filter: {
+                        dim: e.group[d],
+                        key: d,
+                        name: store.mapping(d).props[e.group[d]].name
+                    },
+                    data: e.entries
+                }))
+            // console.log(this.facets.entries)
+
+
+            // this.facets.filters = Object.keys(store.mapping(d).props.manual).map(k => ({
+            //     dim: d, key: k, name: store.mapping(d).props.manual[k].name
+            // }));
+
             // scales
             if (def.facets.scales) {
-                const sharedList = def.facets.scales.map(n => {
+                const infos = def.facets.scales.map(n => {
+                    const m = store.mapping(n);
                     const info = {
                         dim: n,
-                        mapping: store.mapping(n),
+                        mapping: m,
+                    }
+                    if (m.stacked) {
+                        // console.log([d, n])
+                        du.addStackedData(data, info)
                     }
                     du.addDimInfo(info, data)
                     pu.addScale(info, this.constants);
+
                     return info;
                 });
+                du.addScaledData(data, infos);
                 // console.log(sharedList)
-                this.facets.shared = Object.fromEntries(sharedList.map(e => [e.dim, e]))
+                this.facets.shared = Object.fromEntries(infos.map(e => [e.dim, e]))
                 // du.addScaledData(data, infos);
             }
-
-            const d = def.facets.dim;
-            this.facets.filters = Object.keys(store.mapping(d).props.manual).map(k => ({
-                dim: d, key: k, name: store.mapping(d).props.manual[k].name
-            }));
         }
 
         this.initialized = true;

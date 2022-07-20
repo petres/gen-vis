@@ -1,7 +1,12 @@
 <template>
     <div class="vis-outer">
         <vis v-if="store.loaded"/>
-        <pre v-if="debug">{{ JSON.stringify(store.defOrg, null, 4) }}</pre>
+        <div v-if="debug">
+            <h3>prepared:</h3>
+            <pre style="height: 500px; overflow: auto; font-size: 11px;">{{ JSON.stringify(store.def, null, 4) }}</pre>
+            <h3>org:</h3>
+            <pre style="height: 500px; overflow: auto; font-size: 11px;">{{ JSON.stringify(store.defOrg, null, 4) }}</pre>
+        </div>
     </div>
 </template>
 

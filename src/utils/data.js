@@ -1,4 +1,4 @@
-export { groupBy, prepareData, filter, addDimInfo, addScaledData };
+export { groupBy, prepareData, filter, addDimInfo, addScaledData, addStackedData };
 
 import * as d3 from "d3";
 
@@ -41,6 +41,18 @@ const addScaledData = (data, infos) => {
         });
     })
 }
+
+const addStackedData = (data, infos) => {
+    console.log([infos.dim, infos.mapping.stacked])
+    data.forEach(d => {
+        Object.values(infos).forEach(i => {
+            // d[`${i.dim}:scaled`] = i.scale(d[i.dim]);
+            // d[`${n}:scaled`] = def.mapping[n]._scale(d[n]);
+        });
+    })
+}
+
+
 
 
 

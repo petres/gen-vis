@@ -17,9 +17,9 @@ export default {
         const n = this.legend;
 
         const i = store.mapping(n);
-        const d = Object.keys(i.props.manual).map(d => ({
+        const d = Object.keys(i.props).map(d => ({
             key: d,
-            props: ju.merged(i.props, d)
+            props: i.props[d]
         }))
         // const d = Object.values(def.mapping[n].manual)
         const legendElement = d3.select(this.$refs.legend)

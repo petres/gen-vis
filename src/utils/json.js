@@ -1,4 +1,4 @@
-export { fill, merge, merged, getProps };
+export { fill, getProps, prepareDef };
 
 const fillRule = (value, base) => {
     const isRef = (typeof value) == "string" && value.charAt() == '@';
@@ -24,24 +24,6 @@ const fill = (fill, base) => {
     }
 }
 
-const merge = (o1, o2) => {
-    return Object.assign({}, o1, o2)
-}
-
-const merged = (str, k) => {
-    return merge(str.common, str.manual[k])
-}
-
-
-// const getAProps = (dataGrouped, props, g) => {
-//     return Object.keys(dataGrouped).map(d => ({
-//         group: d,
-//         props: fill(props, merged(g, d)),
-//         values: dataGrouped[d],
-//     }))
-// }
-
-
 const getProps = (dataGrouped, props, mappings) => {
     // dataGrouped.forEach(g => {
     //     Object.keys(g.group).forEach((item, i) => {
@@ -52,12 +34,35 @@ const getProps = (dataGrouped, props, mappings) => {
         group: Object.keys(g.group).map(d => ({
             dim: d,
             key: g.group[d],
-            visible: merged(mappings[d].props, g.group[d])['visible'],
+            visible: mappings[d].props[g.group[d]].visible,
         })),
         // TODO: SPEED UP
         props: Object.keys(g.group).reduce(
-            (storage, item) => fill(storage, merged(mappings[item].props, g.group[item]))
+            (storage, item) => fill(storage, mappings[item].props[g.group[item]])
         , props),
         values: g.entries,
     }))
+}
+
+
+
+const prepareDef = def => {
+    Object.values(def.mapping).forEach(m => {
+        // console.log(m)
+        if (m.props) {
+            const props = m.props
+            // console.log(m.props)
+            const keys = Object.keys(props);
+            if (keys.includes('manual') && keys.includes('common')) {
+                m.props = Object.fromEntries(Object.keys(props.manual).map(k => {
+                    props.manual[k].name ??= k;
+                    props.manual[k].visible ??= true;
+                    return [k, Object.assign({}, props.common, props.manual[k])]
+                }))
+            }
+
+        }
+    });
+
+    return def;
 }

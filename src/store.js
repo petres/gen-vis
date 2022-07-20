@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import axios from 'axios';
 
 import * as du from "@/utils/data";
+import * as ju from "@/utils/json";
 
 export const baseStore = defineStore('base', {
     state: () => ({
@@ -25,8 +26,8 @@ export const baseStore = defineStore('base', {
             return axios
                 .get(def)
                 .then(response => {
-                    this.defOrg = response.data
-                    this.def = JSON.parse(JSON.stringify(this.defOrg))
+                    this.defOrg = response.data;
+                    this.def = ju.prepareDef(JSON.parse(JSON.stringify(this.defOrg)))
                 })
         },
         loadData() {

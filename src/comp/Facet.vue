@@ -20,11 +20,10 @@ import * as ju from "@/utils/json";
 import * as eu from "@/utils/else";
 
 export default {
-    props: ["filter", "shared", "height", "width", "margins"],
+    props: ["filter", "shared", "height", "width", "margins", "data"],
     data: () => ({
         info: {},
         debug: null,
-        data: null,
         def: null,
     }),
     computed: {
@@ -41,15 +40,10 @@ export default {
     },
     created() {
         this.store = baseStore();
-        this.data = this.store.data;
         this.def = this.store.def;
     },
     mounted() {
         this.inner = d3.select(this.$refs.inner);
-        // this.debug = this.filter;
-        if (this.filter) {
-            this.data = du.filter(this.data, [this.filter]);
-        }
 
         this.scales();
         this.axis();
@@ -101,9 +95,9 @@ export default {
         text(data)   { this.pointwise(data, "text") },
 
         scales() {
-            this.info = {...this.shared};
+            const tinfo = {};
             this.store.mappingNamesWithKey('scale')
-                .filter(n => !Object.keys(this.info).includes(n))
+                .filter(n => !Object.keys(this.shared).includes(n))
                 .forEach(n => {
                     const info = {
                         dim: n,
@@ -111,9 +105,10 @@ export default {
                     }
                     du.addDimInfo(info, this.data)
                     pu.addScale(info, this.constants);
-                    this.info[n] = info;
+                    tinfo[n] = info;
                 });
-            du.addScaledData(this.data, this.info);
+            du.addScaledData(this.data, tinfo);
+            this.info = {...this.shared, ...tinfo};
             // this.debug = this.info;
         },
 

@@ -1,4 +1,5 @@
 export default {
-    def: "sprit-nuts/def-facets.json",
-    // def: "bev/def.json"
+    // def: "rechtsform/def.json",
+    // def: "sprit-nuts/def-facets.json",
+    def: "bev/def.json"
 }
