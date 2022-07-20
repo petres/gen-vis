@@ -12,15 +12,17 @@
             "column": "Jahr",
             "type": "numeric",
             "scale": {
+                "type": "linear",
                 "range": [0, "@width"],
                 "domainAbs": [-4, 4]
             },
             "axis": {
                 "ticks": 6,
+                "label": "Jahr",
+                "format": "",
                 "position": "bottom",
                 "rotate": 0,
-                "format": "c",
-                "values": [1971, 1981, 1991, 2001, 2011, 2020]
+                "format": "c"
             },
             "hover": {
                 "format": "c"
@@ -29,8 +31,11 @@
         "y": {
             "column": "Anzahl",
             "type": "numeric",
+            "stacked": ["type"],
             "scale": {
+                "type": "linear",
                 "domain": [0, null],
+                "domainRel": [0, 0.02],
                 "range": ["@height", 0]
             },
             "axis": {
@@ -39,13 +44,17 @@
                 "grid": true,
                 "format": ",.0f"
             },
-            "hover": {}
+            "hover": {
+                "format": ",.0f"
+            }
         },
         "yt": {
             "column": "Anzahl",
             "type": "numeric",
             "scale": {
+                "type": "linear",
                 "domain": [0, null],
+                "domainRel": [0, 0.02],
                 "range": [0, "@height"]
             }
         },
@@ -54,10 +63,16 @@
             "legend": {
                 "size": 16,
                 "elements": [{
-                    "type": "rect",
+                    "type": "line",
                     "props": {
-                        "x": 0, "y": 0, "width": 16, "height": 16,
-                        "fill": "@color", "rx": 3
+                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                        "stroke": "@color", "stroke-width": "@stroke-width"
+                    }
+                }, {
+                    "type": "circle",
+                    "props": {
+                        "cx": 8, "cy": 8, "r": "@r",
+                        "fill": "@color"
                     }
                 }]
             },
@@ -65,17 +80,15 @@
                 "common": {
                     "visible": true,
                     "stroke-width": 3,
-                    "r": 4,
-                    "width": 10,
-                    "transform": "translate(-20 0)"
+                    "r": 4
                 },
                 "manual": {
-                    "Hauseigentum":     { "color": "#BBD7EE", "transform": "translate(-25 0)", "name": "Hauseigentum"},
-                    "Wohnungseigentum": { "color": "#5BC5F2", "transform": "translate(-15 0)", "name": "Wohnungseigentum"},
-                    "GBV Miete":        { "color": "#559BD5", "transform": "translate( -5 0)", "name": "GBV Miete"},
-                    "Gemeinde Miete":   { "color": "#C7DF71", "transform": "translate(  5 0)", "name": "Gemeinde Miete"},
-                    "Private Miete":    { "color": "#4B9847", "transform": "translate( 15 0)", "name": "Private Miete"},
-                    "Sonstige":         { "color": "#9CE1F8", "transform": "translate( 25 0)", "name": "Sonstige"}
+                    "Hauseigentum":     { "color": "#BBD7EE", "name": "Hauseigentum"},
+                    "Wohnungseigentum": { "color": "#5BC5F2", "name": "Wohnungseigentum"},
+                    "GBV Miete":        { "color": "#559BD5", "name": "GBV Miete"},
+                    "Gemeinde Miete":   { "color": "#C7DF71", "name": "Gemeinde Miete"},
+                    "Private Miete":    { "color": "#4B9847", "name": "Private Miete"},
+                    "Sonstige":         { "color": "#9CE1F8", "name": "Sonstige"}
                 }
             },
             "hover": {
@@ -94,21 +107,45 @@
     },
     "facets": {
         "dim": ["geo"],
-        "scales": [],
+        "scales": ["y", "yt"],
         "cols": 2
     },
     "plot": [
         {
+            "type": "path",
+            "categories": ["type"],
+            "props": {
+                "stroke-width": "@stroke-width",
+                "stroke-dasharray": "@stroke-dasharray",
+                "fill": "none",
+                "opacity": 0.2,
+                "stroke": "@color",
+                "d": {
+                    "x": "@x:scaled",
+                    "y": "@y:scaled"
+                }
+            }
+        }, {
+            "type": "circle",
+            "categories": ["type"],
+            "props": {
+                "fill": "@color",
+                "opacity": 0.6,
+                "cx": "@x:scaled",
+                "cy": "@y:scaled",
+                "r": "@r"
+            }
+        }, {
             "type": "rect",
             "categories": ["type"],
             "props": {
                 "fill": "@color",
-                "opacity": 0.8,
+                "opacity": 0.6,
                 "x": "@x:scaled",
-                "width": "@width",
+                "width": 40,
                 "y": "@y:scaled",
                 "height": "@yt:scaled",
-                "transform": "@transform"
+                "transform": "translate(-20 0)"
             }
         }
     ]

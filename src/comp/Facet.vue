@@ -132,7 +132,9 @@ export default {
                             a.tickFormat(eu.locale.format(i.format))
                     }
 
-
+                    if (i.values) {
+                        a.tickValues(i.values)
+                    }
 
                     // console.log('ticks')
                     // console.log()

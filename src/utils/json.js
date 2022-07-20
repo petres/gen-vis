@@ -63,6 +63,19 @@ const prepareDef = def => {
             // }
 
         }
+
+        if (m.scale) {
+            m.scale.type ??= "linear";
+            m.scale.domain ??= [null, null];
+            if (!m.scale.domainAbs)
+                m.scale.domainRel ??= m.scale.domain.map(v => v === null ? 0.04 : 0);
+        }
+
+        if (m.hover) {
+            if (m.scale) {
+                m.hover.format ??= m.scale.format;
+            }
+        }
     });
 
     return def;
