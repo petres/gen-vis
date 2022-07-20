@@ -53,13 +53,14 @@ const prepareDef = def => {
             const props = m.props
             // console.log(m.props)
             const keys = Object.keys(props);
-            if (keys.includes('manual') && keys.includes('common')) {
+            // if (keys.includes('manual') && keys.includes('common')) {
                 m.props = Object.fromEntries(Object.keys(props.manual).map(k => {
-                    props.manual[k].name ??= k;
-                    props.manual[k].visible ??= true;
-                    return [k, Object.assign({}, props.common, props.manual[k])]
+                    const t = Object.assign({}, props.common, props.manual[k])
+                    t.name ??= k;
+                    t.visible ??= true;
+                    return [k, t];
                 }))
-            }
+            // }
 
         }
     });

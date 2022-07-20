@@ -1,0 +1,131 @@
+{
+    "data": "./data/wc/data.csv",
+    "options": {
+        "height": 400,
+        "margins": {"top": 20, "right": 20, "bottom": 50, "left": 50},
+        "title": "Ausstattungsqualität",
+        "subtitle": "Anteil der Wohnungen / Häuser mit WC im Wohnungsverband. Veränderung zwischen 1971 und 2001",
+        "footer": "<strong>Q:</strong> Statistik Austria (2021c)"
+    },
+    "mapping": {
+        "x": {
+            "column": "Jahr",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "range": [0, "@width"],
+                "domainAbs": [-1, 0.5]
+            },
+            "axis": {
+                "ticks": 6,
+                "label": "Jahr",
+                "format": "",
+                "position": "bottom",
+                "rotate": 0,
+                "format": "c"
+            },
+            "hover": {
+                "format": "c"
+            }
+        },
+        "y": {
+            "column": "Anteil",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "domain": [null, null],
+                "domainRel": [-0.02, 0],
+                "range": ["@height", 0]
+            },
+            "axis": {
+                "ticks": 5,
+                "label": "Preis",
+                "position": "left",
+                "grid": true,
+                "format": ".0%"
+            },
+            "hover": {
+                "format": ".1%"
+            }
+        },
+        "type": {
+            "column": "Wohnungssegment",
+            "legend": {
+                "size": 16,
+                "elements": [{
+                    "type": "line",
+                    "props": {
+                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                        "stroke": "@color", "stroke-width": "@stroke-width"
+                    }
+                }, {
+                    "type": "circle",
+                    "props": {
+                        "cx": 8, "cy": 8, "r": "@r",
+                        "fill": "@color"
+                    }
+                }]
+            },
+            "props": {
+                "common": {
+                    "visible": true,
+                    "stroke-width": 3,
+                    "r": 4
+                },
+                "manual": {
+                    "Hauseigentum":     { "color": "#BBD7EE", "name": "Hauseigentum"},
+                    "Wohnungseigentum": { "color": "#5BC5F2", "name": "Wohnungseigentum"},
+                    "GBV Miete":        { "color": "#559BD5", "name": "GBV Miete"},
+                    "Kommunale Miete":  { "color": "#C7DF71", "name": "Kommunale Miete"},
+                    "Private Miete":    { "color": "#4B9847", "name": "Private Miete"},
+                    "Sonstiges":        { "color": "#9CE1F8", "name": "Sonstiges"},
+                    "Alle Haushalte":   { "color": "#72BB6F", "name": "Alle Haushalte", "stroke-width": 4}
+                }
+            },
+            "hover": {
+
+            }
+        },
+        "einheit": {
+            "column": "Einheit",
+            "props": {
+                "common": {},
+                "manual": {
+                    "Österreich": { "name": "Österreich"},
+                    "Wien": { "name": "Wien"}
+                }
+            }
+        }
+    },
+    "facets": {
+        "dim": ["einheit"],
+        "scales": ["y"],
+        "cols": 2
+    },
+    "plot": [
+        {
+            "type": "path",
+            "categories": ["type"],
+            "props": {
+                "stroke-width": "@stroke-width",
+                "stroke-dasharray": "@stroke-dasharray",
+                "fill": "none",
+                "stroke": "@color",
+                "d": {
+                    "x": "@x:scaled",
+                    "y": "@y:scaled"
+                }
+            }
+        }, {
+            "type": "circle",
+            "categories": ["type"],
+            "props": {
+                "fill": "@color",
+                "opacity": 0.6,
+                "cx": "@x:scaled",
+                "cy": "@y:scaled",
+                "r": "@r"
+            }
+        }
+    ]
+}

@@ -1,0 +1,57 @@
+Einheit,Wohnungssegment,Jahr,Anteil
+Österreich,Hauseigentum,1971,0.75
+Österreich,Wohnungseigentum,1971,1.00
+Österreich,GBV Miete,1971,0.97
+Österreich,Kommunale Miete,1971,0.88
+Österreich,Private Miete,1971,0.49
+Österreich,Sonstiges,1971,0.56
+Österreich,Alle Haushalte,1971,0.70
+Österreich,Hauseigentum,1981,0.91
+Österreich,Wohnungseigentum,1981,0.99
+Österreich,GBV Miete,1981,0.97
+Österreich,Kommunale Miete,1981,0.92
+Österreich,Private Miete,1981,0.68
+Österreich,Sonstiges,1981,0.78
+Österreich,Alle Haushalte,1981,0.86
+Österreich,Hauseigentum,1991,0.96
+Österreich,Wohnungseigentum,1991,0.98
+Österreich,GBV Miete,1991,0.97
+Österreich,Kommunale Miete,1991,0.95
+Österreich,Private Miete,1991,0.83
+Österreich,Sonstiges,1991,0.87
+Österreich,Alle Haushalte,1991,0.93
+Österreich,Hauseigentum,2001,0.99
+Österreich,Wohnungseigentum,2001,1.00
+Österreich,GBV Miete,2001,1.00
+Österreich,Kommunale Miete,2001,0.99
+Österreich,Private Miete,2001,0.97
+Österreich,Sonstiges,2001,0.97
+Österreich,Alle Haushalte,2001,0.99
+Wien,Hauseigentum,1971,0.84
+Wien,Wohnungseigentum,1971,1.00
+Wien,GBV Miete,1971,0.98
+Wien,Kommunale Miete,1971,0.96
+Wien,Private Miete,1971,0.46
+Wien,Sonstiges,1971,0.45
+Wien,Alle Haushalte,1971,0.67
+Wien,Hauseigentum,1981,0.93
+Wien,Wohnungseigentum,1981,0.99
+Wien,GBV Miete,1981,0.99
+Wien,Kommunale Miete,1981,0.98
+Wien,Private Miete,1981,0.63
+Wien,Sonstiges,1981,0.70
+Wien,Alle Haushalte,1981,0.81
+Wien,Hauseigentum,1991,0.96
+Wien,Wohnungseigentum,1991,0.98
+Wien,GBV Miete,1991,0.98
+Wien,Kommunale Miete,1991,0.98
+Wien,Private Miete,1991,0.78
+Wien,Sonstiges,1991,0.81
+Wien,Alle Haushalte,1991,0.90
+Wien,Hauseigentum,2001,0.99
+Wien,Wohnungseigentum,2001,1.00
+Wien,GBV Miete,2001,1.00
+Wien,Kommunale Miete,2001,1.00
+Wien,Private Miete,2001,0.95
+Wien,Sonstiges,2001,0.96
+Wien,Alle Haushalte,2001,0.98
