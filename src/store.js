@@ -13,6 +13,7 @@ export const baseStore = defineStore('base', {
     getters: {
         loaded() { return (this.def !== null && this.data !== null)},
         mapping(n) { return n => this.def.mapping[n]},
+        prop(n, k) { return (n, k) => this.def.mapping[n].props[k]},
         mappingNamesWithKey(k) { return k => Object.keys(this.def.mapping).filter(n => (k in this.def.mapping[n]))},
     },
     actions: {

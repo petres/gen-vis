@@ -270,12 +270,13 @@ export default {
                         .attr('class', "value")
                         .text(d => axis['y'].formatter(d[axis['y'].name]))
 
+
                     categories.forEach(n => {
                         entries.selectAll(`td.${n}`)
                             .data(d => [d])
                             .join("td")
                             .attr('class', n)
-                            .text(d => d[n])
+                            .text(d => self.store.prop(n, d[n]).name)
                     });
 
 
