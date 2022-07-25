@@ -3,11 +3,11 @@
         <svg ref="svg" :width="width" :height="height" class="facet">
             <g ref="inner" :transform="`translate(${margins.left} ${margins.top})`"/>
         </svg>
-        <span v-if="debug" class="debug">{{ debug }}</span>
-        <div class="hover aaa" ref="hover">
-            <div class="title" style="dfa"/>
+        <div class="hover" ref="hover">
+            <div class="title"/>
             <table class="entries"/>
         </div>
+        <span v-if="debug" class="debug">{{ debug }}</span>
     </div>
 </template>
 
@@ -362,8 +362,4 @@ export default {
 
         }
     }
-
-
-
-
 </style>

@@ -5,7 +5,7 @@
             <div class="subtitle">{{ subtitle }}</div>
         </div>
         <div ref="legends" class="vis-legends">
-            <legend-entry v-for="legend in legends" :legend="legend" />
+            <legend-entry v-for="legend in legends" :legend="legend" @changeSelectedLegend="changeSelected"/>
         </div>
         <div v-if="initialized" class="vis-body">
             <div v-if="facets.entries.length > 0" v-for="e in facets.entries" :style="`width: ${facets.width}px; display: inline-block;`">
@@ -42,6 +42,9 @@ export default {
         footer: "",
 
         legends: [],
+
+        selected: {},
+
         facets: {
             shared: {},
             entries: [],
@@ -51,6 +54,7 @@ export default {
         },
 
         data: null,
+        def: null,
     }),
     computed: {
         innerWidth() { return this.width - (this.margins.left + this.margins.right) },
@@ -66,76 +70,92 @@ export default {
         Facet, LegendEntry
     },
     mounted() {
-        const store = baseStore();
-        const data = store.data;
-        this.data = data;
-        const def = store.def;
+        this.store = baseStore();
 
-        this.legends = store.mappingNamesWithKey('legend')
+        this.legends = this.store.mappingNamesWithKey('legend')
 
-        this.title = def.options.title;
-        this.subtitle = def.options.subtitle;
-        this.footer = def.options.footer;
+        this.title = this.store.def.options.title;
+        this.subtitle = this.store.def.options.subtitle;
+        this.footer = this.store.def.options.footer;
 
-        this.margins = def.options.margins;
-        this.height = def.options.height;
+        this.margins = this.store.def.options.margins;
+        this.height = this.store.def.options.height;
 
-        if (def.options.width) {
-            this.width = def.options.width;
+        if (this.store.def.options.width) {
+            this.width = this.store.def.options.width;
         } else {
             this.width = this.$refs.vis.getBoundingClientRect().width
             // console.log(this.width)
         }
 
-        const axis = {
-            x: 'x',
-            y: 'y'
-        };
+        this.plot();
+    },
+    methods: {
+        plot() {
+            const def = this.store.def;
+            const axis = {
+                x: 'x',
+                y: 'y'
+            };
+
+            // stacked
+            du.addStackedData(this.store.data, axis, def.facets ? def.facets.dim : []);
+
+            
+            if (def.facets) {
+                this.facets.margins = this.margins;
+                this.facets.height = this.height;
+                this.facets.width = this.width/def.facets.cols;
+
+                // dims
+                const d = def.facets.dim;
+                const dataGroupedByFacets = du.groupBy(this.store.data, [d]);
+
+                this.facets.entries = dataGroupedByFacets
+                    .filter(e => Object.keys(this.store.mapping(d).props).includes(e.group[d]))
+                    .map(e => ({
+                        filter: {
+                            dim: e.group[d],
+                            key: d,
+                            name: this.store.mapping(d).props[e.group[d]].name
+                        },
+                        data: e.entries
+                    }))
+
+            }
 
 
-        if (def.facets) {
-            this.facets.margins = this.margins;
-            this.facets.height = this.height;
-            this.facets.width = this.width/def.facets.cols;
 
-            // dims
-            const d = def.facets.dim;
-            const dataGroupedByFacets = du.groupBy(data, [d]);
+            // scales
+            if (def.facets && def.facets.scales) {
+                const infos = def.facets.scales.map(n => {
+                    const m = store.mapping(n);
+                    const info = {
+                        dim: n,
+                        mapping: m,
+                    };
+                    du.addDimInfo(info, this.store.data);
+                    pu.addScale(info, this.constants);
 
-            this.facets.entries = dataGroupedByFacets
-                .filter(e => Object.keys(store.mapping(d).props).includes(e.group[d]))
-                .map(e => ({
-                    filter: {
-                        dim: e.group[d],
-                        key: d,
-                        name: store.mapping(d).props[e.group[d]].name
-                    },
-                    data: e.entries
-                }))
+                    return info;
+                });
+                du.addScaledData(this.store.data, infos);
+                this.facets.shared = Object.fromEntries(infos.map(e => [e.dim, e]));
+            }
 
+            this.initialized = true;
+        },
+        changeSelected(info) {
+            d3.select(this.$refs.vis)
+                .selectAll(`svg.facet g.group[data-group-${info.dim}="${info.key}"], .vis svg.facet path[data-group-${info.dim}="${info.key}"]`)
+                .attr(`data-visible-${info.dim}`, info.selected)
+                .each(function() {
+                    const show = this.getAttributeNames()
+                        .filter(name => name.startsWith('data-visible-'))
+                        .map(dv => this.getAttribute(dv) === "true").reduce((s, v) => s && v, true)
+                    this.setAttribute('data-visible', show);
+                })
         }
-
-        // stacked
-        du.addStackedData(data, axis, def.facets ? def.facets.dim : []);
-
-        // scales
-        if (def.facets && def.facets.scales) {
-            const infos = def.facets.scales.map(n => {
-                const m = store.mapping(n);
-                const info = {
-                    dim: n,
-                    mapping: m,
-                };
-                du.addDimInfo(info, data);
-                pu.addScale(info, this.constants);
-
-                return info;
-            });
-            du.addScaledData(data, infos);
-            this.facets.shared = Object.fromEntries(infos.map(e => [e.dim, e]));
-        }
-
-        this.initialized = true;
     }
 }
 </script>
