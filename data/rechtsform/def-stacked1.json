@@ -95,18 +95,16 @@
                     "Österreich": { "name": "Österreich"},
                     "Wien": { "name": "Wien"}
                 }
+            },
+            "hover": {
+                
             }
         }
-    },
-    "facets": {
-        "dim": ["geo"],
-        "scales": [],
-        "cols": 2
     },
     "plot": [
         {
             "type": "rect",
-            "categories": ["type"],
+            "categories": ["type", "geo"],
             "props": {
                 "fill": "@color",
                 "opacity": 0.7,

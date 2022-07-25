@@ -1,0 +1,116 @@
+{
+    "data": "./data/bev/data.csv",
+    "options": {
+        "height": 300,
+        "margins": {"top": 10, "right": 10, "bottom": 40, "left": 80},
+        "title": "Bevölkerung",
+        "subtitle": "nach Bundesland",
+        "footer": "<strong>Quelle:</strong> Somewhere</a>"
+    },
+    "mapping": {
+        "x": {
+            "column": "Jahr",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "domainAbs": [-0.5, 0.5],
+                "range": [0, "@width"]
+            },
+            "axis": {
+                "ticks": 5,
+                "name": "Jahr",
+                "format": "",
+                "position": "bottom",
+                "format": "c"
+            },
+            "hover": {
+                "format": "c"
+            }
+        },
+        "y": {
+            "column": "Einwohner",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "domain": [0, null],
+                "domainRel": [0, 0.2],
+                "range": ["@height", 0]
+            },
+            "axis": {
+                "ticks": 5,
+                "name": "Einwohner",
+                "position": "left",
+                "grid": true,
+                "format": ",.0f"
+            },
+            "hover": {
+                "format": ",.0f"
+            }
+        },
+        "land": {
+            "column": "Bundesland",
+            "legend": {
+                "size": 16,
+                "elements": [{
+                    "type": "line",
+                    "props": {
+                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                        "stroke": "@color", "stroke-width": "@stroke-width"
+                    }
+                }, {
+                    "type": "circle",
+                    "props": {
+                        "cx": 8, "cy": 8, "r": 3,
+                        "fill": "@color"
+                    }
+                }]
+            },
+            "props": {
+                "common": {
+                    "stroke-width": 2.5,
+                    "visible": true
+                },
+                "manual": {
+                    "ÖSTERREICH":       { "color": "#1E4F77", "stroke-width": 3, "name": "Gesamt" },
+                    "Wien":             { "color": "#BBD7EE" },
+                    "Niederösterreich": { "color": "#5BC5F2" },
+                    "Burgenland":       { "color": "#559BD5" },
+                    "Oberösterreich":   { "color": "#C7DF71" },
+                    "Salzburg":         { "color": "#4B9847" },
+                    "Steiermark":       { "color": "#9CE1F8" },
+                    "Kärnten":          { "color": "#72BB6F" },
+                    "Tirol":            { "color": "#3F766B" },
+                    "Vorarlberg":       { "color": "#ABD6A9" }
+                }
+            },
+            "hover": {
+            }
+        }
+    },
+    "plot": [
+        {
+            "type": "path",
+            "categories": ["land"],
+            "props": {
+                "stroke-width": "@stroke-width",
+                "fill": "none",
+                "opacity": 0.9,
+                "stroke": "@color",
+                "d": {
+                    "x": "@x:scaled",
+                    "y": "@y:scaled"
+                }
+            }
+        }, {
+            "type": "circle",
+            "categories": ["land"],
+            "props": {
+                "fill": "@color",
+                "opacity": 0.6,
+                "cx": "@x:scaled",
+                "cy": "@y:scaled",
+                "r": 3
+            }
+        }
+    ]
+}

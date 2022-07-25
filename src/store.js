@@ -15,6 +15,7 @@ export const baseStore = defineStore('base', {
         mapping(n) { return n => this.def.mapping[n]},
         prop(n, k) { return (n, k) => this.def.mapping[n].props[k]},
         mappingNamesWithKey(k) { return k => Object.keys(this.def.mapping).filter(n => (k in this.def.mapping[n]))},
+        mappingNamesWithKeyValue(k, v) { return (k, v) => Object.keys(this.def.mapping).filter(n => (k in this.def.mapping[n] && this.def.mapping[n][k] == v))},
     },
     actions: {
         load(def) {

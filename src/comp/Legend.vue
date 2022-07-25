@@ -14,21 +14,20 @@ export default {
     props: ["legend"],
     mounted() {
         const store = baseStore();
-        const n = this.legend;
+        // const n = this.legend;
 
-        const i = store.mapping(n);
+        const i = store.mapping(this.legend);
         const d = Object.keys(i.props).map(d => ({
             key: d,
             props: i.props[d]
         }))
         // const d = Object.values(def.mapping[n].manual)
         const legendElement = d3.select(this.$refs.legend)
-            .attr("data-dim", n)
+            .attr("data-dim", this.legend)
 
         legendElement.append("div")
             .attr("class", `title`)
             .text(i.name)
-
 
         const e = legendElement.append("div")
             .attr("class", `entries`)
@@ -59,8 +58,12 @@ export default {
         e.on('click', function(ev, d) {
             const e = d3.select(this);
             const visible = (e.attr('data-visible') === 'true');
-            const dim = n;
+            const dim = self.legend;
             const key = d.key;
+
+            self.$emit('changeSelected', {
+                dim: dim, key: key, selected: !visible
+            })
             // console.log(`legend click ${dim} -> ${key}`)
 
             d3.select(self.$refs.legend.closest('.vis'))
@@ -74,7 +77,6 @@ export default {
                 })
 
             e.attr('data-visible', !visible);
-
         })
     }
 }
@@ -119,5 +121,4 @@ export default {
             }
         }
     }
-
 </style>

@@ -87,6 +87,12 @@ export default {
             // console.log(this.width)
         }
 
+        const axis = {
+            x: 'x',
+            y: 'y'
+        };
+
+
         if (def.facets) {
             this.facets.margins = this.margins;
             this.facets.height = this.height;
@@ -94,15 +100,9 @@ export default {
 
             // dims
             const d = def.facets.dim;
-            // this.facets.filters = Object.keys(store.mapping(d).props.manual).map(k => ({
-            //     dim: d, key: k, name: store.mapping(d).props.manual[k].name
-            // }));
+            const dataGroupedByFacets = du.groupBy(data, [d]);
 
-
-
-            // console.log
-
-            this.facets.entries = du.groupBy(data, [d])
+            this.facets.entries = dataGroupedByFacets
                 .filter(e => Object.keys(store.mapping(d).props).includes(e.group[d]))
                 .map(e => ({
                     filter: {
@@ -112,35 +112,27 @@ export default {
                     },
                     data: e.entries
                 }))
-            // console.log(this.facets.entries)
 
+        }
 
-            // this.facets.filters = Object.keys(store.mapping(d).props.manual).map(k => ({
-            //     dim: d, key: k, name: store.mapping(d).props.manual[k].name
-            // }));
+        // stacked
+        du.addStackedData(data, axis, def.facets ? def.facets.dim : []);
 
-            // scales
-            if (def.facets.scales) {
-                const infos = def.facets.scales.map(n => {
-                    const m = store.mapping(n);
-                    const info = {
-                        dim: n,
-                        mapping: m,
-                    }
-                    if (m.stacked) {
-                        // console.log([d, n])
-                        du.addStackedData(data, info)
-                    }
-                    du.addDimInfo(info, data)
-                    pu.addScale(info, this.constants);
+        // scales
+        if (def.facets && def.facets.scales) {
+            const infos = def.facets.scales.map(n => {
+                const m = store.mapping(n);
+                const info = {
+                    dim: n,
+                    mapping: m,
+                };
+                du.addDimInfo(info, data);
+                pu.addScale(info, this.constants);
 
-                    return info;
-                });
-                du.addScaledData(data, infos);
-                // console.log(sharedList)
-                this.facets.shared = Object.fromEntries(infos.map(e => [e.dim, e]))
-                // du.addScaledData(data, infos);
-            }
+                return info;
+            });
+            du.addScaledData(data, infos);
+            this.facets.shared = Object.fromEntries(infos.map(e => [e.dim, e]));
         }
 
         this.initialized = true;

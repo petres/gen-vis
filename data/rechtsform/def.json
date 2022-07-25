@@ -51,6 +51,7 @@
         },
         "type": {
             "column": "Type",
+            "type": "categorical",
             "legend": {
                 "size": 16,
                 "elements": [{
@@ -70,20 +71,19 @@
                     "transform": "translate(-20 0)"
                 },
                 "manual": {
-                    "Hauseigentum":     { "color": "#BBD7EE", "transform": "translate(-25 0)", "name": "Hauseigentum"},
-                    "Wohnungseigentum": { "color": "#5BC5F2", "transform": "translate(-15 0)", "name": "Wohnungseigentum"},
-                    "GBV Miete":        { "color": "#559BD5", "transform": "translate( -5 0)", "name": "GBV Miete"},
-                    "Gemeinde Miete":   { "color": "#C7DF71", "transform": "translate(  5 0)", "name": "Gemeinde Miete"},
-                    "Private Miete":    { "color": "#4B9847", "transform": "translate( 15 0)", "name": "Private Miete"},
-                    "Sonstige":         { "color": "#9CE1F8", "transform": "translate( 25 0)", "name": "Sonstige"}
+                    "Hauseigentum":     { "color": "#BBD7EE", "transform": "translate(-25 0)"},
+                    "Wohnungseigentum": { "color": "#5BC5F2", "transform": "translate(-15 0)"},
+                    "GBV Miete":        { "color": "#559BD5", "transform": "translate( -5 0)"},
+                    "Gemeinde Miete":   { "color": "#C7DF71", "transform": "translate(  5 0)"},
+                    "Private Miete":    { "color": "#4B9847", "transform": "translate( 15 0)"},
+                    "Sonstige":         { "color": "#9CE1F8", "transform": "translate( 25 0)"}
                 }
             },
-            "hover": {
-
-            }
+            "hover": {}
         },
         "geo": {
             "column": "Geo",
+            "type": "categorical",
             "props": {
                 "manual": {
                     "Österreich": { "name": "Österreich"},
@@ -96,6 +96,9 @@
         "dim": ["geo"],
         "scales": [],
         "cols": 2
+    },
+    "hover": {
+
     },
     "plot": [
         {

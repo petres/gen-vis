@@ -7,9 +7,9 @@ import * as eu from "@/utils/else.js";
 
 const addScale = (info, constants) => {
     const scaleDef = info.mapping.scale;
-    info.domain = [...(scaleDef.domain ? scaleDef.domain : [null, null])];
+    info.domain = [...scaleDef.domain];
     info.domainRel = [...(scaleDef.domainRel ? scaleDef.domainRel : [0, 0])];
-    info.domainAbs = [...(scaleDef.domainAbs ? scaleDef.domainAbs : [0, 0])];
+    info.domainAbs = scaleDef.domainAbs;
 
     info.domain[0] ??= info.extent[0];
     info.domain[1] ??= info.extent[1];
@@ -22,7 +22,7 @@ const addScale = (info, constants) => {
     info.domain[1] += info.domainAbs[1];
 
     // console.log(info)
-    // console.log(info.domain)
+    // console.log(`scale${eu.capitalize(scaleDef.type)}`)
     info.scale = d3[`scale${eu.capitalize(scaleDef.type)}`]()
         .domain(info.domain)
         .range(ju.fill(scaleDef.range, constants))

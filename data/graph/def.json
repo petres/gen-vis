@@ -1,0 +1,79 @@
+{
+    "data": "./data/graph/data.csv",
+    "options": {
+        "height": 300, "width": 1000,
+        "margins": {"top": 10, "right": 10, "bottom": 40, "left": 80},
+        "title": "Graph",
+        "subtitle": "no idea",
+        "footer": "<strong>Quelle:</strong> Somewhere</a>"
+    },
+    "mapping": {
+        "x": {
+            "column": "x",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "domainAbs": [-0.5, 0.5],
+                "range": [0, "@width"]
+            }
+        },
+        "y": {
+            "column": "y",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "domainAbs": [-0.5, 0.5],
+                "range": ["@height", 0]
+            }
+        },
+        "s": {
+            "column": "s",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "range": [3, 5]
+            }
+        },
+        "t": {
+            "column": "t",
+            "legend": {
+                "size": 16,
+                "elements": [{
+                    "type": "circle",
+                    "props": {
+                        "cx": 8, "cy": 8, "r": 3,
+                        "fill": "@color"
+                    }
+                }]
+            },
+            "props": {
+                "common": {
+                    "stroke-width": 2.5,
+                    "visible": true
+                },
+                "manual": {
+                    "1": { "color": "#1E4F77", "name": "Type 1" },
+                    "2": { "color": "#BBD7EE", "name": "Type 2" },
+                    "3": { "color": "#5BC5F2", "name": "Type 3" },
+                    "4": { "color": "#559BD5", "name": "Type 4" },
+                    "5": { "color": "#C7DF71", "name": "Type 5" }
+                }
+            },
+            "hover": {
+            }
+        }
+    },
+    "plot": [
+        {
+            "type": "circle",
+            "categories": ["t"],
+            "props": {
+                "fill": "@color",
+                "opacity": 0.6,
+                "cx": "@x:scaled",
+                "cy": "@y:scaled",
+                "r": "@s:scaled"
+            }
+        }
+    ]
+}

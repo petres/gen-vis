@@ -197,7 +197,7 @@ export default {
             let axis = [
                 { axis: 'x', name: 'x' },
                 { axis: 'y', name: 'y' },
-            ]
+            ];
             // console.log(this.def)
             axis.forEach(a => {
                 const m = this.def.mapping[a.name];

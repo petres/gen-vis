@@ -29,44 +29,40 @@ const prepareData = (data, def) => {
 
 const addDimInfo = (info, data) => {
     info.values = data.map(d => d[info.dim]);
-    info.extent = d3.extent(info.values);
+    if (info.mapping.stacked) {
+        info.extent = d3.extent(data.map(d => d[`${info.dim}:st:e`]));
+    } else {
+        info.extent = d3.extent(info.values);
+    }
 }
+
+
+const addStackedData = (data, axis, dims = []) => {
+    groupBy(data, [...dims, axis.x]).forEach(g => {
+        let t = 0;
+        g.entries.forEach(e => {
+            e[`${axis.y}:st:s`] = t;
+            t += e[axis.y];
+            e[`${axis.y}:st:e`] = t;
+        });
+    });
+}
+
 
 const addScaledData = (data, infos) => {
     // console.log(infos)
     data.forEach(d => {
         Object.values(infos).forEach(i => {
             d[`${i.dim}:scaled`] = i.scale(d[i.dim]);
-            // d[`${n}:scaled`] = def.mapping[n]._scale(d[n]);
+            if (i.mapping.stacked) {
+                d[`${i.dim}:st:e:scaled`] = i.scale(d[`${i.dim}:st:e`]);
+                d[`${i.dim}:st:s:scaled`] = i.scale(d[`${i.dim}:st:s`]);
+                d[`${i.dim}:st:h:scaled`] = d[`${i.dim}:st:s:scaled`] - d[`${i.dim}:st:e:scaled`];
+            }
         });
     })
 }
 
-const addStackedData = (data, infos) => {
-    console.log([infos.dim, infos.mapping.stacked])
-    data.forEach(d => {
-        Object.values(infos).forEach(i => {
-            // d[`${i.dim}:scaled`] = i.scale(d[i.dim]);
-            // d[`${n}:scaled`] = def.mapping[n]._scale(d[n]);
-        });
-    })
-}
-
-
-
-
-
-
-// const group = (data, col) => {
-//     const dataGrouped = {};
-//     data.forEach((d, i) => {
-//         const g = d[col];
-//         if (!(g in dataGrouped))
-//             dataGrouped[g] = [];
-//         dataGrouped[g].push(d)
-//     });
-//     return dataGrouped;
-// };
 
 const groupBy = (data, keys) => {
     return Object.values(data.reduce((storage, item) => {
