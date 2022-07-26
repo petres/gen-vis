@@ -77,9 +77,19 @@ const groupBy = (data, keys) => {
 };
 
 
+// const filter = (data, conditions) => {
+//     // console.log(conditions)
+//     return data.filter(e => conditions.reduce((s, c) => {
+//         return (s && e[c.dim] == c.key)
+//     }, true));
+// };
+
 const filter = (data, conditions) => {
     // console.log(conditions)
     return data.filter(e => conditions.reduce((s, c) => {
-        return (s && e[c.dim] == c.key)
+        if (Array.isArray(c.key))
+            return (s && c.key.includes(e[c.dim]))
+        else
+            return (s && e[c.dim] == c.key)
     }, true));
 };

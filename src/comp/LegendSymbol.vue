@@ -1,14 +1,11 @@
 <template>
-    <svg :width="size" :height="size" ref="legendSymbol" class="legendSymbol"/>
+    <svg :width="size" :height="size" ref="legendSymbol"/>
 </template>
 
 <script>
-import { baseStore } from '@/store.js'
 import * as d3 from "d3";
-import * as pu from "@/utils/plot";
-import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
-
+import * as pu from "@/utils/plot";
 
 export default {
     props: ["size", "elements", "props"],
@@ -22,13 +19,10 @@ export default {
     }
 }
 </script>
-<!--
 
 <style lang="scss" scoped>
-    :deep(svg) {
+    svg {
         display: inline-block;
         margin-right: 5px;
-        // border: 1px solid #BBB;
-        // border-radius: 3px;
     }
-</style> -->
+</style>

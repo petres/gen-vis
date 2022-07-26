@@ -2,7 +2,7 @@
     <div ref="legend" class="legend" :data-dim="legend">
         <div class="title">{{ info.name }}</div>
         <div ref="entries" class="entries">
-            <div v-for="entry of entries" class="entry" :data-visible="entry.props.visible" :data-key="entry.key" @click="switched({ dim: legend, key: entry.key, selected: !entry.props.visible})">
+            <div v-for="entry of entries" class="entry" :data-visible="entry.props.visible" :data-key="entry.key" @click="switched(entry)">
                 <LegendSymbol :size="info.legend.size" :elements="info.legend.elements" :props="entry.props"/>
                 <span>{{ entry.props.name }}</span>
             </div>
@@ -37,19 +37,21 @@ export default {
         }))
     },
     methods: {
-        switched(info) {
+        switched(entry) {
+            entry.props.visible = !entry.props.visible
+            const info = { dim: this.legend, key: entry.key, selected: entry.props.visible}
+
             this.$emit('changeSelectedLegend', info);
-            this.vis.select(`.vis-legends .legend[data-dim="${info.dim}"] .entry[data-key="${info.key}"]`)
-                .attr('data-visible', info.selected);
+            // this.vis.select(`.vis-legends .legend[data-dim="${info.dim}"] .entry[data-key="${info.key}"]`)
+            //     .attr('data-visible', info.selected);
         }
     }
 }
 </script>
 
-
 <style lang="scss" scoped>
     .legend {
-        :deep(.title) {
+        .title {
             font-weight: bold;
             font-size: 13px;
             margin: 3px;
@@ -58,19 +60,12 @@ export default {
             position: relative;
             // margin-right: 20px;
         }
-        :deep(.entries) {
+        .entries {
             // display: inline-block;
             .entry {
                 cursor: pointer;
                 display: inline-block;
                 margin: 0px 5px;
-
-                svg {
-                    display: inline-block;
-                    margin-right: 5px;
-                    // border: 1px solid #BBB;
-                    // border-radius: 3px;
-                }
 
                 &[data-visible="false"] {
                     opacity: 0.3;

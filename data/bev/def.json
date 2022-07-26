@@ -67,11 +67,10 @@
             },
             "props": {
                 "common": {
-                    "stroke-width": 2.5,
-                    "visible": true
+                    "stroke-width": 2.5
                 },
                 "manual": {
-                    "ÖSTERREICH":       { "color": "#1E4F77", "stroke-width": 3, "name": "Gesamt" },
+                    "ÖSTERREICH":       { "color": "#1E4F77", "stroke-width": 3, "name": "Gesamt", "visible": false },
                     "Wien":             { "color": "#BBD7EE" },
                     "Niederösterreich": { "color": "#5BC5F2" },
                     "Burgenland":       { "color": "#559BD5" },

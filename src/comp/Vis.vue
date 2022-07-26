@@ -10,9 +10,9 @@
         <div v-if="initialized" class="vis-body">
             <div v-if="facets.entries.length > 0" v-for="e in facets.entries" :style="`width: ${facets.width}px; display: inline-block;`">
                 <div class="facet-title" :style="`margin-left: ${facets.margins.left}px`">{{ e.filter.name }}</div>
-                <facet :data="e.data" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
+                <facet :key="e.data" :data="e.data" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
             </div>
-            <facet v-else :filter="[]" :data="this.data" :shared="{}" :height='height' :width='width' :margins='margins'/>
+            <facet v-else :key="data" :data="data" :shared="{}" :height='height' :width='width' :margins='margins'/>
         </div>
         <div class="vis-footer">
             <span v-html="footer"/>
@@ -42,8 +42,8 @@ export default {
         footer: "",
 
         legends: [],
-
-        selected: {},
+        filter: [],
+        data: [],
 
         facets: {
             shared: {},
@@ -70,38 +70,49 @@ export default {
         Facet, LegendEntry
     },
     mounted() {
-        this.store = baseStore();
-
-        this.legends = this.store.mappingNamesWithKey('legend')
-
-        this.title = this.store.def.options.title;
-        this.subtitle = this.store.def.options.subtitle;
-        this.footer = this.store.def.options.footer;
-
-        this.margins = this.store.def.options.margins;
-        this.height = this.store.def.options.height;
-
-        if (this.store.def.options.width) {
-            this.width = this.store.def.options.width;
-        } else {
-            this.width = this.$refs.vis.getBoundingClientRect().width
-            // console.log(this.width)
-        }
-
-        this.plot();
+        this.baseInit();
+        this.dataInit();
+        this.scales();
     },
     methods: {
-        plot() {
+        baseInit() {
+            this.store = baseStore();
+
+            this.legends = this.store.mappingNamesWithKey('legend')
+
+            this.title = this.store.def.options.title;
+            this.subtitle = this.store.def.options.subtitle;
+            this.footer = this.store.def.options.footer;
+
+            this.margins = this.store.def.options.margins;
+            this.height = this.store.def.options.height;
+
+            if (this.store.def.options.width) {
+                this.width = this.store.def.options.width;
+            } else {
+                this.width = this.$refs.vis.getBoundingClientRect().width
+                // console.log(this.width)
+            }
+        },
+        dataInit() {
             const def = this.store.def;
             const axis = {
                 x: 'x',
                 y: 'y'
             };
 
-            // stacked
-            du.addStackedData(this.store.data, axis, def.facets ? def.facets.dim : []);
+            // filter
+            this.filter = this.store.mappingNamesWithKey('props').map(c => ({
+                dim: c,
+                key: Object.keys(this.store.mapping(c).props).filter(k => this.store.mapping(c).props[k].visible)
+            }));
+            this.data = du.filter(this.store.data, this.filter)
+            // console.log(f)
 
-            
+            // stacked
+            du.addStackedData(this.data, axis, def.facets ? def.facets.dim : []);
+
+
             if (def.facets) {
                 this.facets.margins = this.margins;
                 this.facets.height = this.height;
@@ -109,7 +120,7 @@ export default {
 
                 // dims
                 const d = def.facets.dim;
-                const dataGroupedByFacets = du.groupBy(this.store.data, [d]);
+                const dataGroupedByFacets = du.groupBy(this.data, [d]);
 
                 this.facets.entries = dataGroupedByFacets
                     .filter(e => Object.keys(this.store.mapping(d).props).includes(e.group[d]))
@@ -121,40 +132,40 @@ export default {
                         },
                         data: e.entries
                     }))
-
             }
-
-
-
-            // scales
+        },
+        scales() {
+            const def = this.store.def;
             if (def.facets && def.facets.scales) {
                 const infos = def.facets.scales.map(n => {
-                    const m = store.mapping(n);
+                    const m = this.store.mapping(n);
                     const info = {
                         dim: n,
                         mapping: m,
                     };
-                    du.addDimInfo(info, this.store.data);
+                    du.addDimInfo(info, this.data);
                     pu.addScale(info, this.constants);
 
                     return info;
                 });
-                du.addScaledData(this.store.data, infos);
+                du.addScaledData(this.data, infos);
                 this.facets.shared = Object.fromEntries(infos.map(e => [e.dim, e]));
             }
 
             this.initialized = true;
         },
         changeSelected(info) {
-            d3.select(this.$refs.vis)
-                .selectAll(`svg.facet g.group[data-group-${info.dim}="${info.key}"], .vis svg.facet path[data-group-${info.dim}="${info.key}"]`)
-                .attr(`data-visible-${info.dim}`, info.selected)
-                .each(function() {
-                    const show = this.getAttributeNames()
-                        .filter(name => name.startsWith('data-visible-'))
-                        .map(dv => this.getAttribute(dv) === "true").reduce((s, v) => s && v, true)
-                    this.setAttribute('data-visible', show);
-                })
+            this.dataInit();
+            this.scales();
+            // d3.select(this.$refs.vis)
+            //     .selectAll(`svg.facet g.group[data-group-${info.dim}="${info.key}"], .vis svg.facet path[data-group-${info.dim}="${info.key}"]`)
+            //     .attr(`data-visible-${info.dim}`, info.selected)
+            //     .each(function() {
+            //         const show = this.getAttributeNames()
+            //             .filter(name => name.startsWith('data-visible-'))
+            //             .map(dv => this.getAttribute(dv) === "true").reduce((s, v) => s && v, true)
+            //         this.setAttribute('data-visible', show);
+            //     })
         }
     }
 }

@@ -278,8 +278,6 @@ export default {
                             .attr('class', n)
                             .text(d => self.store.prop(n, d[n]).name)
                     });
-
-
                 })
                 .on("mouseout", function(e) {
                     hover.attr("visibility", "hidden")
