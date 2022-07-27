@@ -9,7 +9,8 @@ import globals from '@/globals.js'
 
 const attrs = {
     debug: true,
-    def: `/data/${globals.def}`,
+    defFile: `/data/${globals.def}`,
+    // def: '{"a": 3}',
 }
 
 const app = createApp(App, attrs)

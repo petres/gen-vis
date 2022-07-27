@@ -21,8 +21,17 @@ export default {
            type: Boolean,
            default: false
         },
+        defFile: {
+           type: String,
+           default: null
+        },
         def: {
-           type: String
+           type: String,
+           default: null
+        },
+        data: {
+           type: String,
+           default: null
         },
     },
     data: () => ({
@@ -32,7 +41,13 @@ export default {
         Vis
     },
     mounted() {
-        this.store.load(this.def);
+        if (this.def !== null) {
+            this.store.init(JSON.parse(this.def), this.data);
+        } else if (this.defFile !== null)  {
+            this.store.load(this.defFile);
+        } else {
+            console.log('No definition given.')
+        }
     }
 }
 </script>

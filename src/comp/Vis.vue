@@ -5,7 +5,7 @@
             <div class="subtitle">{{ subtitle }}</div>
         </div>
         <div ref="legends" class="vis-legends">
-            <legend-entry v-for="legend in legends" :legend="legend" @changeSelectedLegend="changeSelected"/>
+            <legend-entry v-for="legend in legends" :legend="legend" @changeSelected="changeSelected"/>
         </div>
         <div v-if="initialized" class="vis-body">
             <div v-if="facets.entries.length > 0" v-for="e in facets.entries" :style="`width: ${facets.width}px; display: inline-block;`">
@@ -69,10 +69,16 @@ export default {
     components: {
         Facet, LegendEntry
     },
+    created() {
+        window.addEventListener("resize", this.resized);
+    },
     mounted() {
         this.baseInit();
         this.dataInit();
         this.scales();
+    },
+    destroyed() {
+        window.removeEventListener("resize", this.resized);
     },
     methods: {
         baseInit() {
@@ -93,6 +99,15 @@ export default {
                 this.width = this.$refs.vis.getBoundingClientRect().width
                 // console.log(this.width)
             }
+        },
+        resized() {
+            if (this.store.def.options.width) {
+            } else {
+                this.width = this.$refs.vis.getBoundingClientRect().width
+                this.dataInit();
+                this.scales();
+            }
+
         },
         dataInit() {
             const def = this.store.def;
