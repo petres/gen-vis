@@ -227,6 +227,8 @@ export default {
             const hoverDiv = d3.select(this.$refs.hover)
                 .style("visibility", "hidden");
 
+            hoverDiv.select('table.entries').selectAll('*').remove();
+
             this.inner.append("rect")
                 .attr("class", "events")
                 .attr("width", this.innerWidth)
@@ -247,7 +249,7 @@ export default {
                     hoverDiv.select('div.title')
                         .text(axis['x'].formatter(x))
 
-                    let tt = du.filter(self.data, [{dim: axis['x'].name, key: x}]).sort((a, b) => b[axis['y'].name] - a[axis['y'].name]);
+                    const tt = du.filter(self.data, [{dim: axis['x'].name, key: x}]).sort((a, b) => b[axis['y'].name] - a[axis['y'].name]);
                     // console.log(tt)
 
                     if (xs >= self.innerWidth/2) {
@@ -258,7 +260,7 @@ export default {
                         hoverDiv.style("transform", `translate(0, -50%)`)
                     }
 
-                    let entries = hoverDiv.select('table.entries').selectAll('tr.entry')
+                    const entries = hoverDiv.select('table.entries').selectAll('tr.entry')
                         .data(tt)
                         .join('tr')
                         .attr('class', "entry")
