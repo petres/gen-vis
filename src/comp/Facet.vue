@@ -29,12 +29,6 @@ export default {
     computed: {
         innerWidth() { return this.width - (this.margins.left + this.margins.right) },
         innerHeight() { return this.height - (this.margins.top + this.margins.bottom) },
-        constants() {
-            return {
-                "width": this.innerWidth,
-                "height": this.innerHeight,
-            }
-        }
     },
     components: {
     },
@@ -105,7 +99,10 @@ export default {
                         mapping: m,
                     };
                     du.addDimInfo(info, this.data)
-                    pu.addScale(info, this.constants);
+                    pu.addScale(info, {
+                        width: this.innerWidth,
+                        height: this.innerHeight,
+                    });
                     tinfo[n] = info;
                     // console.log(info)
                 });

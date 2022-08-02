@@ -5,7 +5,7 @@ import * as ju from "@/utils/json.js";
 import * as du from "@/utils/data.js";
 import * as eu from "@/utils/else.js";
 
-const addScale = (info, constants) => {
+const addScale = (info, dims) => {
     const scaleDef = info.mapping.scale;
     info.domain = [...scaleDef.domain];
     info.domainRel = [...(scaleDef.domainRel ? scaleDef.domainRel : [0, 0])];
@@ -25,7 +25,7 @@ const addScale = (info, constants) => {
     // console.log(`scale${eu.capitalize(scaleDef.type)}`)
     info.scale = d3[`scale${eu.capitalize(scaleDef.type)}`]()
         .domain(info.domain)
-        .range(ju.fill(scaleDef.range, constants))
+        .range(ju.fill(scaleDef.range, dims))
 };
 
 const setProps = function(d) {

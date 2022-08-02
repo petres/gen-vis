@@ -1,0 +1,135 @@
+{
+    "data": "./data/rechtsform/data.csv",
+    "options": {
+        "height": 400,
+        "margins": {"top": 20, "right": 20, "bottom": 50, "left": 70},
+        "title": "Wohnungsbestände nach Rechtsform",
+        "subtitle": "Anzahl Wohnungen",
+        "footer": "<strong>Q:</strong> GWZ/HWZ 1971-2001, RZ 2011, MZ 2020"
+    },
+    "mapping": {
+        "x": {
+            "column": "Jahr",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "range": [0, "@width"],
+                "domainAbs": [-4, 4]
+            },
+            "axis": {
+                "ticks": 6,
+                "label": "Jahr",
+                "format": "",
+                "position": "bottom",
+                "rotate": 0,
+                "format": "c",
+                "values": [1971, 1981, 1991, 2001, 2011, 2020]
+            },
+            "hover": {
+                "format": "c"
+            }
+        },
+        "y": {
+            "column": "Anzahl",
+            "type": "numeric",
+            "stacked": ["type"],
+            "scale": {
+                "type": "linear",
+                "domain": [0, null],
+                "domainRel": [0, 0.02],
+                "range": ["@height", 0]
+            },
+            "axis": {
+                "ticks": 8,
+                "position": "left",
+                "grid": true,
+                "format": ",.0f"
+            },
+            "hover": {
+                "format": ",.0f"
+            }
+        },
+        "type": {
+            "column": "Type",
+            "type": "categorical",
+            "legend": {
+                "size": 16,
+                "elements": [{
+                    "type": "line",
+                    "props": {
+                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                        "stroke": "@color", "stroke-width": "@stroke-width"
+                    }
+                }, {
+                    "type": "circle",
+                    "props": {
+                        "cx": 8, "cy": 8, "r": "@r",
+                        "fill": "@color"
+                    }
+                }]
+            },
+            "props": {
+                "common": {
+                    "visible": true,
+                    "stroke-width": 3,
+                    "r": 4
+                },
+                "manual": {
+                    "Hauseigentum":     { "color": "#BBD7EE"},
+                    "Wohnungseigentum": { "color": "#5BC5F2"},
+                    "GBV Miete":        { "color": "#559BD5"},
+                    "Gemeinde Miete":   { "color": "#C7DF71"},
+                    "Private Miete":    { "color": "#4B9847"},
+                    "Sonstige":         { "color": "#9CE1F8"}
+                }
+            },
+            "hover": {
+
+            }
+        },
+        "geo": {
+            "column": "Geo",
+            "type": "categorical",
+            "props": {
+                "manual": {
+                    "Österreich": { "name": "Österreich"},
+                    "Wien": { "name": "Wien"}
+                }
+            }
+        }
+    },
+    "facets": {
+        "dim": ["geo"],
+        "scales": [],
+        "cols": 2
+    },
+    "plot": [
+        {
+            "type": "rect",
+            "data": [
+                {"x": 2020}
+            ],
+            "props": {
+                "fill": "#AAA",
+                "opacity": 0.7,
+                "x": "@x:scaled",
+                "width": 40,
+                "y": 0,
+                "height": 100
+            }
+        },
+        {
+            "type": "rect",
+            "categories": ["type"],
+            "props": {
+                "fill": "@color",
+                "opacity": 0.7,
+                "x": "@x:scaled",
+                "width": 40,
+                "y": "@y:st:e:scaled",
+                "height": "@y:st:h:scaled",
+                "transform": "translate(-20 0)"
+            }
+        }
+    ]
+}

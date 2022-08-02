@@ -59,12 +59,6 @@ export default {
     computed: {
         innerWidth() { return this.width - (this.margins.left + this.margins.right) },
         innerHeight() { return this.height - (this.margins.top + this.margins.bottom) },
-        constants() {
-            return {
-                "width": this.innerWidth,
-                "height": this.innerHeight,
-            }
-        }
     },
     components: {
         Facet, LegendEntry
@@ -159,7 +153,10 @@ export default {
                         mapping: m,
                     };
                     du.addDimInfo(info, this.data);
-                    pu.addScale(info, this.constants);
+                    pu.addScale(info, {
+                        "width": this.facets.width - (this.facets.margins.left + this.facets.margins.right),
+                        "height": this.facets.height - (this.facets.margins.top + this.facets.margins.bottom),
+                    });
 
                     return info;
                 });
