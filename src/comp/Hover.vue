@@ -1,7 +1,11 @@
 <template>
     <div class="hover" ref="hover">
         <div class="title"/>
-        <table class="entries"/>
+        <table class="entries">
+            <tr class="entry">
+                <td></td>
+            </tr>
+        </table>
     </div>
 </template>
 
@@ -26,7 +30,7 @@ export default {
     mounted() {
     },
     methods: {
-        
+
         hover() {
             const self = this;
 

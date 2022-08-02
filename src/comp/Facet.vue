@@ -99,13 +99,15 @@ export default {
             this.store.mappingNamesWithKey('scale')
                 .filter(n => !Object.keys(this.shared).includes(n))
                 .forEach(n => {
+                    const m = this.store.mapping(n);
                     const info = {
                         dim: n,
-                        mapping: this.store.mapping(n)
-                    }
+                        mapping: m,
+                    };
                     du.addDimInfo(info, this.data)
                     pu.addScale(info, this.constants);
                     tinfo[n] = info;
+                    // console.log(info)
                 });
             du.addScaledData(this.data, tinfo);
             this.info = {...this.shared, ...tinfo};

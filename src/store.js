@@ -4,6 +4,13 @@ import axios from 'axios';
 import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 
+const modUrl = (url) => {
+    if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0 || url.indexOf('/') === 0) {
+        return url;
+    }
+    return `./${url}`;
+}
+
 export const baseStore = defineStore('base', {
     state: () => ({
         defOrg: null,
@@ -25,19 +32,19 @@ export const baseStore = defineStore('base', {
             if (data === null) {
                 this.loadData();
             } else {
-                this.data = du.prepareData(data);
+                this.data = du.prepareData(data, this.def);
             }
         },
         load(def) {
             return axios
-                .get(def)
+                .get(modUrl(def))
                 .then(response => {
                     this.init(response.data);
                 })
         },
         loadData() {
             return axios
-                .get(`./${this.def.data}`)
+                .get(modUrl(this.def.data))
                 .then(response => {
                     // console.log(response.data)
                     this.data = du.prepareData(response.data, this.def);
