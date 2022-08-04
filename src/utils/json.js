@@ -1,24 +1,35 @@
-export { fill, getProps, prepareDef };
+export { fill, getProps, prepareDef, calcValue };
 
-const fillRule = (value, base) => {
+const calcValue = (info, bases) => {
+    if (info.mode == 'relative')
+        return info.ratio*bases[info.base];
+
+    return info;
+}
+
+const fillRule = (value, base, setNull = false) => {
     const isRef = (typeof value) == "string" && value.charAt() == '@';
     if (isRef) {
         const ref = value.substring(1);
         if (ref in base)
-            return base[ref]
+            return base[ref];
+        else if (setNull)
+            return null;
     }
     return value;
 }
 
-const fill = (fill, base) => {
+const fill = (fill, base, setNull = false) => {
+    if (fill == null)
+        return {};
     // console.log(fill)
     // console.log(Array.isArray(fill))
     if (Array.isArray(fill)) {
-        return fill.map(value => fillRule(value, base))
+        return fill.map(value => fillRule(value, base, setNull))
     } else {
         return Object.fromEntries(
             Object.entries(fill).map(
-                ([attr, value], i) => [attr, fillRule(value, base)]
+                ([attr, value], i) => [attr, fillRule(value, base, setNull)]
             )
         );
     }
@@ -34,7 +45,7 @@ const getProps = (dataGrouped, props, mappings) => {
         group: Object.keys(g.group).map(d => ({
             dim: d,
             key: g.group[d],
-            visible: mappings[d].props[g.group[d]].visible,
+            // visible: mappings[d].props[g.group[d]].visible,
         })),
         // TODO: SPEED UP
         props: Object.keys(g.group).reduce(

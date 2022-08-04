@@ -1,7 +1,7 @@
 {
     "data": "./data/bev/data.csv",
     "options": {
-        "height": 300, "width": 1000,
+        "height": 300,
         "margins": {"top": 10, "right": 10, "bottom": 40, "left": 80},
         "title": "Bevölkerung",
         "subtitle": "nach Bundesland",
@@ -17,7 +17,11 @@
                 "range": [0, "@width"]
             },
             "axis": {
-                "ticks": 5,
+                "ticks": {
+                    "mode": "relative",
+                    "base": "innerWidth",
+                    "ratio": 0.013
+                },
                 "name": "Jahr",
                 "format": "",
                 "position": "bottom",
@@ -50,27 +54,32 @@
         "land": {
             "column": "Bundesland",
             "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "line",
-                    "props": {
-                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                        "stroke": "@color", "stroke-width": "@stroke-width"
-                    }
-                }, {
-                    "type": "circle",
-                    "props": {
-                        "cx": 8, "cy": 8, "r": 3,
-                        "fill": "@color"
-                    }
-                }]
+                "props": {
+                    "class": "@class"
+                },
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "@color", "stroke-width": "@stroke-width"
+                        }
+                    }, {
+                        "type": "circle",
+                        "props": {
+                            "cx": 8, "cy": 8, "r": 3,
+                            "fill": "@color"
+                        }
+                    }]
+                }
             },
             "props": {
                 "common": {
                     "stroke-width": 2.5
                 },
                 "manual": {
-                    "ÖSTERREICH":       { "color": "#1E4F77", "stroke-width": 3, "name": "Gesamt", "visible": false },
+                    "ÖSTERREICH":       { "color": "#1E4F77", "stroke-width": 4, "name": "Gesamt", "visible": false, "class": "bold" },
                     "Wien":             { "color": "#BBD7EE" },
                     "Niederösterreich": { "color": "#5BC5F2" },
                     "Burgenland":       { "color": "#559BD5" },
@@ -88,7 +97,7 @@
     },
     "plot": [
         {
-            "type": "path",
+            "type": "svg:path",
             "categories": ["land"],
             "props": {
                 "stroke-width": "@stroke-width",
@@ -101,7 +110,7 @@
                 }
             }
         }, {
-            "type": "circle",
+            "type": "svg:circle",
             "categories": ["land"],
             "props": {
                 "fill": "@color",

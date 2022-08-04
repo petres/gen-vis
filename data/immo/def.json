@@ -1,0 +1,185 @@
+{
+    "data": "./data/immo/ind-full.csv",
+    "options": {
+        "height": 400,
+        "margins": {"top": 20, "right": 20, "bottom": 50, "left": 40},
+        "title": "Mietpreis",
+        "subtitle": "Preis in €/m²",
+        "footer": "Q: Mikrozensus."
+    },
+    "mapping": {
+        "x": {
+            "column": "year",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "range": [0, "@width"]
+            },
+            "axis": {
+                "ticks": 6,
+                "format": "c",
+                "position": "bottom"
+            }
+        },
+        "y": {
+            "column": "price.m2.v",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "domain": [0, null],
+                "range": ["@height", 0],
+                "format": ".2f"
+            },
+            "axis": {
+                "ticks": 8,
+                "position": "left",
+                "grid": true,
+                "format": ".1f"
+            },
+            "hover": {
+                "format": ".2f"
+            }
+        },
+        "quali": {
+            "column": "quali",
+            "legend": {
+                "size": 16,
+                "elements": [{
+                    "type": "line",
+                    "props": {
+                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                        "stroke": "#888", "stroke-width": 2
+                    }
+                }]
+            },
+            "props": {
+                "common": {
+                    "visible": false
+                },
+                "manual": {
+                    "A":  { "visible": true },
+                    "B":  {  },
+                    "C":  {  },
+                    "D":  {  },
+                    "NA": {  }
+                }
+            },
+            "hover": {}
+        },
+        "werr": {
+            "column": "werr.label",
+            "legend": {
+                "size": 16,
+                "elements": [{
+                    "type": "line",
+                    "props": {
+                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                        "stroke": "#888", "stroke-width": 2
+                    }
+                }]
+            },
+            "props": {
+                "common": {
+                    "visible": false
+                },
+                "manual": {
+                    "1918 und davor": { "visible": true},
+                    "1919 - 1944":    { },
+                    "1945 - 1960":    { },
+                    "1961 - 1970":    { },
+                    "1971 - 1980":    { },
+                    "1981 - 1990":    { },
+                    "1991 - 2000":    { },
+                    "2001 - 2010":    { },
+                    "2011 - 2020":    { },
+                    "NA":             { }
+                }
+            },
+            "hover": {}
+        },
+        "wrecht": {
+            "column": "wrecht.miete",
+            "legend": {
+                "size": 16,
+                "elements": [{
+                    "type": "line",
+                    "props": {
+                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                        "stroke": "#888", "stroke-width": 2,
+                        "stroke-dasharray": "@stroke-dasharray"
+                    }
+                }]
+            },
+            "props": {
+                "common": {
+                    "visible": false
+                },
+                "manual": {
+                    "gbv": { "name": "GBV", "stroke-dasharray": null, "visible": true },
+                    "pub": { "name": "öffentlich", "stroke-dasharray": 2 },
+                    "priv": { "name": "privat", "stroke-dasharray": 4 },
+                    "NA": { "stroke-dasharray": "2 4" }
+                }
+            },
+            "hover": {}
+        },
+        "bundesland": {
+            "column": "xnuts2.label",
+            "legend": {
+                "size": 16,
+                "elements": [{
+                    "type": "line",
+                    "props": {
+                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                        "stroke": "@color", "stroke-width": "@stroke-width"
+                    }
+                }]
+            },
+            "props": {
+                "common": {
+                    "stroke-width": 1.5,
+                    "visible": false
+                },
+                "manual": {
+                    "Wien":  { "color": "#1E4F77", "name": "Wien", "visible": true  },
+                    "Niederösterreich":  { "color": "#BBD7EE", "name": "Niederösterreich" },
+                    "Burgenland":  { "color": "#5BC5F2", "name": "Burgenland"},
+                    "Oberösterreich":  { "color": "#559BD5", "name": "Oberösterreich" },
+                    "Salzburg": { "color": "#C7DF71", "name": "Salzburg" },
+                    "Steiermark": { "color": "#4B9847", "name": "Steiermark" },
+                    "Kärnten":  { "color": "#9CE1F8", "name": "Kärnten" },
+                    "Tirol":  { "color": "#72BB6F", "name": "Tirol" },
+                    "Vorarlberg":  { "color": "#3F766B", "name": "Vorarlberg" },
+                    "NA": { "color": "#ABD6A9", "name": "NA"}
+                }
+            },
+            "hover": {}
+        }
+    },
+    "plot": [
+        {
+            "type": "path",
+            "categories": ["quali", "werr", "wrecht", "bundesland"],
+            "props": {
+                "stroke-width": "2",
+                "stroke-dasharray": "@stroke-dasharray",
+                "fill": "none",
+                "stroke": "@color",
+                "d": {
+                    "x": "@x:scaled",
+                    "y": "@y:scaled"
+                }
+            }
+        },
+        {
+            "type": "circle",
+            "categories": ["quali", "werr", "wrecht", "bundesland"],
+            "props": {
+                "fill": "@color",
+                "r": "3",
+                "cx": "@x:scaled",
+                "cy": "@y:scaled"
+            }
+        }
+    ]
+}

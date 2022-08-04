@@ -2,8 +2,8 @@
     <div class="legend" :data-dim="legend">
         <div class="title">{{ info.name }}</div>
         <div class="entries">
-            <div v-for="entry of entries" class="entry" :data-visible="entry.props.visible" :data-key="entry.key" @click="switched(entry)">
-                <LegendSymbol :size="info.legend.size" :elements="info.legend.elements" :props="entry.props"/>
+            <div v-for="entry of entries" :data-visible="entry.props.visible" :data-key="entry.key" @click="switched(entry)" v-bind='ju.fill(info.legend.props, entry.props, true)'>
+                <LegendSymbol v-if="info.legend.symbol" :info="info.legend.symbol" :props="entry.props"/>
                 <span>{{ entry.props.name }}</span>
             </div>
         </div>
@@ -23,6 +23,7 @@ import LegendSymbol from '@/comp/LegendSymbol.vue';
 export default {
     props: ["legend"],
     data: () => ({
+        ju: ju,
         info: {},
         entries: [],
     }),
@@ -63,7 +64,7 @@ export default {
         }
         .entries {
             // display: inline-block;
-            .entry {
+            > div {
                 cursor: pointer;
                 display: inline-block;
                 margin: 0px 5px;
@@ -77,6 +78,10 @@ export default {
                     display: inline-block;
                     position: relative;
                     font-size: 13px;
+                }
+
+                &.bold {
+                    font-weight: bold;
                 }
             }
         }

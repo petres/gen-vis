@@ -1,5 +1,5 @@
 <template>
-    <svg :width="size" :height="size" ref="legendSymbol"/>
+    <svg :width="info.size" :height="info.size" ref="legendSymbol"/>
 </template>
 
 <script>
@@ -8,10 +8,10 @@ import * as ju from "@/utils/json";
 import * as pu from "@/utils/plot";
 
 export default {
-    props: ["size", "elements", "props"],
+    props: ["info", "props"],
     mounted() {
         const svg = d3.select(this.$refs.legendSymbol)
-        this.elements.forEach(e => {
+        this.info.elements.forEach(e => {
             const el = svg.append(e.type);
             pu.setProps.call(el.node(), ju.fill(e.props, this.props))
         });

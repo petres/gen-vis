@@ -1,15 +1,19 @@
 <template>
     <div :style="`width: ${width}px;`" class="vis-inner">
         <svg ref="svg" :width="width" :height="height" class="facet">
-            <g ref="inner" :transform="`translate(${margins.left} ${margins.top})`"/>
+            <g ref="inner" :transform="`translate(${margins.left} ${margins.top})`">
+                <g :visibility="hover.visible ? 'visible' : 'hidden'" class="hoverMarker" ref="hoverMarker">
+                    <line/>
+                </g>
+            </g>
         </svg>
-        <div class="hover" ref="hover">
-            <div class="title"/>
-            <table class="entries"/>
+        <div :style="`transform: translate(${margins.left}px, ${margins.top + innerHeight/2}px); position: absolute; top: 0; left: 0;`">
+            <hover v-if="hover.visible" :data="hover.data" :side="hover.side" :x="hover.x" :title="hover.title" />
         </div>
         <span v-if="debug" class="debug">{{ debug }}</span>
     </div>
 </template>
+
 
 <script>
 import { baseStore } from '@/store.js'
@@ -19,18 +23,32 @@ import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 import * as eu from "@/utils/else";
 
+import Hover from '@/comp/Hover.vue';
+
 export default {
     props: ["filter", "shared", "height", "width", "margins", "data"],
     data: () => ({
         info: {},
         debug: null,
         def: null,
+        hover: {
+            visible: false
+        }
     }),
     computed: {
         innerWidth() { return this.width - (this.margins.left + this.margins.right) },
         innerHeight() { return this.height - (this.margins.top + this.margins.bottom) },
+        relativeBases() {
+            return {
+                width: this.width,
+                innerWidth: this.innerWidth,
+                height: this.height,
+                innerHeight: this.innerHeight,
+            }
+        }
     },
     components: {
+        Hover
     },
     created() {
         this.store = baseStore();
@@ -42,7 +60,7 @@ export default {
         this.scales();
         this.axis();
         this.plot();
-        this.hover();
+        this.hoverInit();
     },
     methods: {
         plot() {
@@ -52,7 +70,7 @@ export default {
                 this[d.type](dataGroupedProps);
             });
         },
-        path(data) {
+        'svg:path': function(data) {
             // console.log(data);
             this.inner.append("g")
                 .attr("class", "paths")
@@ -83,10 +101,10 @@ export default {
                 .append(type)
                 .each(pu.setProps)
         },
-        circle(data) { this.pointwise(data, "circle") },
-        line(data)   { this.pointwise(data, "line") },
-        rect(data)   { this.pointwise(data, "rect") },
-        text(data)   { this.pointwise(data, "text") },
+        'svg:circle': function(data) { this.pointwise(data, "circle") },
+        'svg:line': function(data)   { this.pointwise(data, "line") },
+        'svg:rect': function(data)   { this.pointwise(data, "rect") },
+        'svg:text': function(data)   { this.pointwise(data, "text") },
 
         scales() {
             const tinfo = {};
@@ -120,9 +138,12 @@ export default {
                     const s = this.info[n].scale;
                     // const s = m._scale;
                     const a = d3[`axis${eu.capitalize(i.position)}`](s)
-                        .ticks(i.ticks)
                         .tickSizeInner(9)
                         .tickSizeOuter(0)
+                        .ticks(ju.calcValue(i.ticks, this.relativeBases))
+
+                    // console.log(i.ticks.ratio)
+                    // console.log(this[i.ticks.base])
 
                     if (i.format) {
                         if (m.scale.type == "time")
@@ -190,7 +211,7 @@ export default {
 
                 });
         },
-        hover() {
+        hoverInit() {
             const self = this;
 
             let axis = [
@@ -216,18 +237,13 @@ export default {
 
             const categories = this.store.mappingNamesWithKey('hover').filter(e => !Object.keys(axis).includes(e));
 
-            const hover = this.inner.append("g")
-                .attr("class", "hover")
-                .attr("visibility", "hidden")
+            const hoverMarker = d3.select(this.$refs.hoverMarker);
+            const hoverLine = hoverMarker.select("line");
 
-            const hoverLine = hover
-                .append("line");
-
-            const hoverDiv = d3.select(this.$refs.hover)
-                .style("visibility", "hidden");
+            const hoverDiv = d3.select(this.$refs.hover);
 
             hoverDiv.select('table.entries').selectAll('*').remove();
-
+            let xo = null;
             this.inner.append("rect")
                 .attr("class", "events")
                 .attr("width", this.innerWidth)
@@ -239,55 +255,41 @@ export default {
                     // console.log(self.info)
                     const xii = d3.bisectCenter(i.values, i.scale.invert(c[0]))
                     const x = i.values[xii];
+
+                    if (x == xo)
+                        return;
+
+                    xo = x;
+
                     const xs = i.scale(x);
                     hoverLine.attr("x1", xs)
                     hoverLine.attr("x2", xs)
                     hoverLine.attr("y1", 0)
                     hoverLine.attr("y2", self.innerHeight)
-                    //
-                    hoverDiv.select('div.title')
-                        .text(axis['x'].formatter(x))
 
-                    const tt = du.filter(self.data, [{dim: axis['x'].name, key: x}]).sort((a, b) => b[axis['y'].name] - a[axis['y'].name]);
-                    // console.log(tt)
+                    self.hover.title = axis['x'].formatter(x);
+                    const tt = du.filter(self.data, [{dim: axis['x'].name, key: x}])
+                        .sort((a, b) => b[axis['y'].name] - a[axis['y'].name])
+                        .map(e => {
+                            const t = {};
+                            categories.forEach(n => {
+                                t[n] = self.store.prop(n, e[n]).name
+                            })
+                            t[axis['y'].name] = axis['y'].formatter(e[axis['y'].name]);
+                            return t;
+                        })
 
-                    if (xs >= self.innerWidth/2) {
-                        hoverDiv.style("left", `${xs + self.margins.left - 20}px`)
-                        hoverDiv.style("transform", `translate(-100%, -50%)`)
-                    } else {
-                        hoverDiv.style("left", `${xs + self.margins.left + 20}px`)
-                        hoverDiv.style("transform", `translate(0, -50%)`)
-                    }
+                    self.hover.data = tt;
+                    self.hover.x = xs;
+                    self.hover.side = xs > self.innerWidth/2 ? "left" : "right";
 
-                    const entries = hoverDiv.select('table.entries').selectAll('tr.entry')
-                        .data(tt)
-                        .join('tr')
-                        .attr('class', "entry")
-
-
-                    entries.selectAll("td.value")
-                        .data(d => [d])
-                        .join("td")
-                        .attr('class', "value")
-                        .text(d => axis['y'].formatter(d[axis['y'].name]))
-
-
-                    categories.forEach(n => {
-                        entries.selectAll(`td.${n}`)
-                            .data(d => [d])
-                            .join("td")
-                            .attr('class', n)
-                            .text(d => self.store.prop(n, d[n]).name)
-                    });
                 })
                 .on("mouseout", function(e) {
-                    hover.attr("visibility", "hidden")
-                    hoverDiv.style("visibility", "hidden")
+                    self.hover.visible = false;
+                    xo = null;
                 })
                 .on("mouseenter", function(e) {
-                    hover.attr("visibility", "visible")
-                    hoverDiv.style("visibility", "visible")
-
+                    self.hover.visible = true;
                 })
         }
     }
@@ -324,41 +326,11 @@ export default {
                 stroke: #CCC;
                 stroke-width: 0.75px;
             }
-            g.hover {
+            g.hoverMarker {
                 line {
                     stroke: #999;
                 }
             }
-        }
-        :deep(div.hover) {
-            position: absolute;
-            font-size: 13px;
-
-            .title {
-                font-weight: bold;
-                padding: 1px 3px;
-                border-bottom: 2px solid #000;
-                text-align: center;
-            }
-            background-color: #FFFFFFAA;
-            top: 40%;
-
-            // margin: 20px;
-
-            table {
-                border-collapse: collapse;
-                td {
-                    text-align: left;
-                    padding: 1px 3px;
-                    &.value {
-                        text-align: right;
-                    }
-                }
-                margin-left: auto;
-                margin-right: auto;
-            }
-            pointer-events:none;
-
         }
     }
 </style>

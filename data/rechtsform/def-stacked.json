@@ -53,20 +53,22 @@
             "column": "Type",
             "type": "categorical",
             "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "line",
-                    "props": {
-                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                        "stroke": "@color", "stroke-width": "@stroke-width"
-                    }
-                }, {
-                    "type": "circle",
-                    "props": {
-                        "cx": 8, "cy": 8, "r": "@r",
-                        "fill": "@color"
-                    }
-                }]
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "@color", "stroke-width": "@stroke-width"
+                        }
+                    }, {
+                        "type": "circle",
+                        "props": {
+                            "cx": 8, "cy": 8, "r": "@r",
+                            "fill": "@color"
+                        }
+                    }]
+                }
             },
             "props": {
                 "common": {
@@ -90,6 +92,7 @@
         "geo": {
             "column": "Geo",
             "type": "categorical",
+            "legend": {},
             "props": {
                 "manual": {
                     "Österreich": { "name": "Österreich"},
@@ -105,7 +108,7 @@
     },
     "plot": [
         {
-            "type": "rect",
+            "type": "svg:rect",
             "categories": ["type"],
             "props": {
                 "fill": "@color",
