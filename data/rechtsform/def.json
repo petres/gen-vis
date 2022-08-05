@@ -41,26 +41,20 @@
             },
             "hover": {}
         },
-        "yt": {
-            "column": "Anzahl",
-            "type": "numeric",
-            "scale": {
-                "domain": [0, null],
-                "range": [0, "@height"]
-            }
-        },
         "type": {
             "column": "Type",
             "type": "categorical",
             "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "rect",
-                    "props": {
-                        "x": 0, "y": 0, "width": 16, "height": 16,
-                        "fill": "@color", "rx": 3
-                    }
-                }]
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "rect",
+                        "props": {
+                            "x": 0, "y": 0, "width": 16, "height": 16,
+                            "fill": "@color", "rx": 3
+                        }
+                    }]
+                }
             },
             "props": {
                 "common": {
@@ -102,15 +96,14 @@
     },
     "plot": [
         {
-            "type": "rect",
+            "type": "bar",
             "categories": ["type"],
             "props": {
                 "fill": "@color",
-                "opacity": 0.8,
-                "x": "@x:scaled",
+                "opacity": 1,
+                "cx": "@x:scaled",
                 "width": "@width",
-                "y": "@y:scaled",
-                "height": "@yt:scaled",
+                "height": "@y:scaled",
                 "transform": "@transform"
             }
         }

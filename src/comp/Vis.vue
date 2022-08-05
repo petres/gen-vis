@@ -119,7 +119,8 @@ export default {
             // console.log(f)
 
             // stacked
-            du.addStackedData(this.data, axis, def.facets ? def.facets.dim : []);
+            if (this.store.mapping(axis.y).stacked)
+                du.addStackedData(this.data, axis, def.facets ? def.facets.dim : []);
 
 
             if (def.facets) {

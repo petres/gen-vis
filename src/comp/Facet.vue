@@ -67,6 +67,7 @@ export default {
             this.def.plot.forEach(d => {
                 const dataGrouped = du.groupBy(this.data, d.categories);
                 const dataGroupedProps = ju.getProps(dataGrouped, d.props, this.def.mapping);
+                // console.log(dataGroupedProps)
                 this[d.type](dataGroupedProps);
             });
         },
@@ -86,7 +87,7 @@ export default {
                     (d.values.map(e => ju.fill(d.props.d, e)))
                 )
         },
-        pointwise(data, type) {
+        pointwise(data, type, translate = v => v) {
             return this.inner.append("g")
                 .attr("class", type)
                 .selectAll(`g.group`)
@@ -96,15 +97,38 @@ export default {
                 .attr("class", `group`)
                 .each(pu.setGroupData)
                 .selectAll(type)
-                .data(d => d.values.map(e => ju.fill(d.props, e)))
+                .data(d => d.values.map(e => translate(ju.fill(d.props, e), d.props)))
                 .enter()
                 .append(type)
                 .each(pu.setProps)
         },
+
         'svg:circle': function(data) { this.pointwise(data, "circle") },
         'svg:line': function(data)   { this.pointwise(data, "line") },
         'svg:rect': function(data)   { this.pointwise(data, "rect") },
         'svg:text': function(data)   { this.pointwise(data, "text") },
+
+        bar(data) {
+            const self = this;
+            this.pointwise(data, "rect", (v, p) => {
+                const yBase = p.height.substring(1, p.height.indexOf(':'));
+                const yZero =  self.info[yBase].scale(0);
+
+                v.x = v.cx;
+
+                v.y = v.height;
+                v.height = yZero - v.height;
+
+
+                //
+                // self.info[xBase].scale
+                //
+                delete v.cx;
+                // console.log(v)
+                // console.log(yBase)
+                return v;
+            })
+        },
 
         scales() {
             const tinfo = {};
@@ -126,6 +150,7 @@ export default {
                 });
             du.addScaledData(this.data, tinfo);
             this.info = {...this.shared, ...tinfo};
+            console.log(this.info)
             // this.debug = this.info;
         },
 

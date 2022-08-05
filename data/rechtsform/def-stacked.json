@@ -32,7 +32,7 @@
         "y": {
             "column": "Anzahl",
             "type": "numeric",
-            "stacked": ["type"],
+            "stacked": true,
             "scale": {
                 "type": "linear",
                 "domain": [0, null],
