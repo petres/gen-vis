@@ -35,16 +35,21 @@ const addScale = (info, dims) => {
         info.domain[0] += info.domainAbs[0];
         info.domain[1] += info.domainAbs[1];
 
+        s.invertCustom = (v) => {
+            const index = d3.bisectCenter(info.values, s.invert(v));
+            // console.log(info.values)
+            return info.values[index];
+        }
 
     } else {
         info.domain = info.values;
         scaleDef.padding ??= 0.4
+        // s.paddingInner(scaleDef.padding);
         s.padding(scaleDef.padding);
+        // s.paddingOuter(scaleDef.padding/2);
         s.invertCustom = (v) => {
-            var eachBand = s.step();
-            var index = Math.round((v / eachBand));
-            console.log(index)
-            return s.domain()[index];
+          const index = Math.floor(v / s.step());
+          return s.domain()[Math.max(0,Math.min(index, s.domain().length-1))];
         }
     }
 

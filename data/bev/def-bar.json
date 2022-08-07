@@ -12,9 +12,9 @@
             "column": "Bundesland",
             "type": "categorical",
             "scale": {
-                "type": "band",
+                "type": "point",
                 "range": "horizontal",
-                "padding": 0.6
+                "padding": 0.5
             },
             "axis": {
                 "ticks": {
@@ -23,7 +23,6 @@
                     "ratio": 0.013
                 },
                 "name": "Jahr",
-                "format": "",
                 "position": "bottom"
             },
             "props": {
@@ -63,11 +62,11 @@
         }
     },
     "plot": {
-        "type": "bar2",
+        "type": "bar",
         "props": {
             "fill": "#1E4F77",
-            "opacity": 0.9,
-            "x": "@x:scaled",
+            "opacity": 0.8,
+            "cx": "@x:scaled",
             "height": "@y:scaled"
         }
     }

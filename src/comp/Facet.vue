@@ -114,32 +114,14 @@ export default {
             this.pointwise(data, "rect", (v, p) => {
                 const yBase = p.height.substring(1, p.height.indexOf(':'));
                 const yZero =  self.info[yBase].scale(0);
-
+                if (v.width === undefined) {
+                    const xBase = p.cx.substring(1, p.cx.indexOf(':'));
+                    v.width = self.info[xBase].scale.step()*(1-self.info[xBase].scale.padding());
+                }
                 v.x = v.cx - v.width/2;
                 delete v.cx;
-
                 v.y = v.height;
                 v.height = yZero - v.height;
-
-                return v;
-            })
-        },
-
-        bar2(data) {
-            const self = this;
-            this.pointwise(data, "rect", (v, p) => {
-                const yBase = p.height.substring(1, p.height.indexOf(':'));
-                const xBase = p.x.substring(1, p.x.indexOf(':'));
-
-                // console.log(xBase)
-
-                const yZero =  self.info[yBase].scale(0);
-                // console.log(self.info[yBase].scale)
-                v.width = self.info[xBase].scale.bandwidth();
-
-                v.y = v.height;
-                v.height = yZero - v.height;
-                // console.log(v)
                 return v;
             })
         },
@@ -293,13 +275,7 @@ export default {
                     const i = self.info[axis['x'].name];
                     // console.log(self.info)
                     // console.log(i.scale)
-                    let x;
-                    if (i.scale.invert) {
-                        const xii = d3.bisectCenter(i.values, i.scale.invert(c[0]));
-                        x = i.values[xii];
-                    } else {
-                        x = i.scale.invertCustom(c[0]);
-                    }
+                    const x = i.scale.invertCustom(c[0]);
 
                     if (x == xo)
                         return;
