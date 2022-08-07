@@ -66,14 +66,13 @@ export default {
         plot() {
             this.def.plot.forEach(d => {
                 const dataGrouped = du.groupBy(this.data, d.categories);
-                // console.log(dataGrouped)
-                const dataGroupedProps = ju.getProps(dataGrouped, d.props, this.def.mapping);
+                // console.log(d)
+                const dataGroupedProps = ju.getProps(dataGrouped, d, this.def.mapping);
                 // console.log(dataGroupedProps)
                 this[d.type](dataGroupedProps);
             });
         },
         'svg:path': function(data) {
-            // console.log(data);
             this.inner.append("g")
                 .attr("class", "paths")
                 .selectAll("path")
@@ -85,10 +84,11 @@ export default {
                 .attr("d", d => d3.line()
                     .x(e => e.x)
                     .y(e => e.y)
-                    (d.values.map(e => ju.fill(d.props.d, e)))
+                    (d.values.map(e => ju.fill2(d.props.d, e)))
                 )
         },
         pointwise(data, type, translate = v => v) {
+            // console.log(data);
             return this.inner.append("g")
                 .attr("class", type)
                 .selectAll(`g.group`)
@@ -98,7 +98,7 @@ export default {
                 .attr("class", `group`)
                 .each(pu.setGroupData)
                 .selectAll(type)
-                .data(d => d.values.map(e => translate(ju.fill(d.props, e), d.props)))
+                .data(d => d.values.map(e => translate(ju.fill2(d.props, e), d.props)))
                 .enter()
                 .append(type)
                 .each(pu.setProps)
@@ -110,12 +110,16 @@ export default {
         'svg:text': function(data)   { this.pointwise(data, "text") },
 
         bar(data) {
+
             const self = this;
             this.pointwise(data, "rect", (v, p) => {
-                const yBase = p.height.substring(1, p.height.indexOf(':'));
+                // console.log(v)
+                // console.log(p)
+                const yBase = p.height.value.substring(0, p.height.value.indexOf(':'));
+                // console.log(p.height.value)
                 const yZero =  self.info[yBase].scale(0);
                 if (v.width === undefined) {
-                    const xBase = p.cx.substring(1, p.cx.indexOf(':'));
+                    const xBase = p.cx.value.substring(0, p.cx.value.indexOf(':'));
                     v.width = self.info[xBase].scale.step()*(1-self.info[xBase].scale.padding());
                 }
                 v.x = v.cx - v.width/2;

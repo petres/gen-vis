@@ -1,4 +1,4 @@
-export { fill, getProps, prepareDef, calcValue };
+export { fill, fill2, getProps, prepareDef, calcValue, toValue };
 
 const calcValue = (info, bases) => {
     if (info.mode == 'relative')
@@ -35,27 +35,80 @@ const fill = (fill, base, setNull = false) => {
     }
 }
 
-const getProps = (dataGrouped, props, mappings) => {
+const getProps = (dataGrouped, plot, mappings) => {
+     // console.log(plot)
     // dataGrouped.forEach(g => {
     //     Object.keys(g.group).forEach((item, i) => {
     //         console.log([item, g.group[item].props])
     //     });
     // });
-    return dataGrouped.map(g => ({
-        group: Object.keys(g.group).map(d => ({
-            dim: d,
-            key: g.group[d],
-            // visible: mappings[d].props[g.group[d]].visible,
-        })),
-        // TODO: SPEED UP
-        props: Object.keys(g.group).reduce(
-            (storage, item) => fill(storage, mappings[item].props[g.group[item]])
-        , props),
-        values: g.entries,
-    }))
+    return dataGrouped.map(g => {
+        // console.log(Object.assign({}, ...Object.keys(g.group).map(v => mappings[v].props[g.group[v]])));
+        // console.log(plot._fill(Object.assign({}, ...Object.keys(g.group).map(v => mappings[v].props[g.group[v]]))));
+
+        return {
+            group: Object.keys(g.group).map(d => ({
+                dim: d,
+                key: g.group[d],
+            })),
+            // TODO: SPEED UP
+            props: plot._fill(Object.assign({}, ...Object.keys(g.group).map(v => mappings[v].props[g.group[v]]))),
+            // props: Object.keys(g.group).reduce(
+            //     (storage, item) => fill(storage, mappings[item].props[g.group[item]])
+            // , plot.props),
+            values: g.entries,
+        }
+    })
 }
 
 
+const toValue = (prop, d, final) => {
+    if (!prop.ref)
+        return prop.value;
+
+    const value = d[prop.value];
+    if (value !== undefined)
+        return value;
+
+    // if (!final)
+    //     return "@" + prop.value;
+
+    if (!final)
+        return prop;
+
+    return null;
+}
+
+const fill2 = (fill, base, final = false) => {
+    // console.log(fill)
+    // console.log(base)
+    if (fill == null)
+        return {};
+
+    return Object.fromEntries(
+        Object.entries(fill).map(
+            ([attr, value], i) => [attr, (typeof value === 'object' && value !== null && value.ref !== null ) ? toValue(value, base, final): value ]
+        )
+    );
+}
+
+const value2Prop = (name, value) => {
+    if (typeof value === 'object' && value !== null) {
+        // is object -> recursive
+        value = Object.fromEntries(
+            Object.entries(value).map(
+                ([k, v], i) => [k, value2Prop(k, v)]
+            )
+        );
+    }
+
+    const ref = (typeof value) == "string" && value.charAt() == '@';
+
+    if (ref)
+        value = value.substring(1);
+
+    return {name, ref, value}
+}
 
 const prepareDef = def => {
     Object.values(def.mapping).forEach(m => {
@@ -97,6 +150,21 @@ const prepareDef = def => {
         p.categories ??= [];
     });
 
+
+    def.plot.forEach(p => {
+        const propRefs = Object.keys(p.props).map(name => value2Prop(name, p.props[name]));
+        console.log(propRefs)
+        p._fill = (d, final = false) => {
+            // console.log(propRefs)
+            const t = Object.fromEntries(
+                propRefs.map(prop => [prop.name, toValue(prop, d, final)])
+            );
+            // console.log(t)
+            return t;
+        }
+
+        // console.log(p)
+    });
 
 
     return def;
