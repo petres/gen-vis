@@ -29,7 +29,7 @@ const prepareData = (data, def) => {
 
 const addDimInfo = (info, data) => {
     info.values = data.map(d => d[info.dim]);
-    if (info.mapping.type == 'numeric') {
+    if (info.mapping.type == 'numeric' || info.mapping.type == 'date' ) {
         if (info.mapping.stacked) {
             info.extent = d3.extent(data.map(d => d[`${info.dim}:st:e`]));
         } else {

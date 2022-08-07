@@ -14,7 +14,7 @@
             "scale": {
                 "type": "linear",
                 "domainAbs": [-0.5, 0.5],
-                "range": [0, "@width"]
+                "range": "horizontal"
             }
         },
         "y": {
@@ -23,7 +23,7 @@
             "scale": {
                 "type": "linear",
                 "domainAbs": [-0.5, 0.5],
-                "range": ["@height", 0]
+                "range": "vertical"
             }
         },
         "s": {

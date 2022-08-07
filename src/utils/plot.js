@@ -18,7 +18,7 @@ const addScale = (info, dims) => {
         }
     }
     s.range(ju.fill(scaleDef.range, dims))
-
+    // console.log(info)
     if (info.extent) {
         info.domain = [...scaleDef.domain];
 

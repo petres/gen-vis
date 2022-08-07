@@ -13,7 +13,7 @@
             "type": "categorical",
             "scale": {
                 "type": "linear",
-                "range": [0, "@width"],
+                "range": "horizontal",
                 "domainAbs": [-4, 4]
             },
             "axis": {
@@ -51,7 +51,7 @@
                 "type": "linear",
                 "domain": [0, null],
                 "domainRel": [0, 0.02],
-                "range": ["@height", 0]
+                "range": "vertical"
             },
             "axis": {
                 "ticks": 8,

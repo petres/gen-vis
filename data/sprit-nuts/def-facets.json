@@ -13,7 +13,7 @@
             "type": "date",
             "scale": {
                 "type": "time",
-                "range": [0, "@width"]
+                "range": "horizontal"
             },
             "axis": {
                 "ticks": 6,
@@ -32,7 +32,7 @@
             "scale": {
                 "type": "linear",
                 "domain": [0, null],
-                "range": ["@height", 0]
+                "range": "vertical"
             },
             "axis": {
                 "ticks": 8,
@@ -100,7 +100,7 @@
     },
     "plot": [
         {
-            "type": "path",
+            "type": "svg:path",
             "categories": ["nuts"],
             "props": {
                 "stroke-width": "@stroke-width",

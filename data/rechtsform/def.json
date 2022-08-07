@@ -12,7 +12,7 @@
             "column": "Jahr",
             "type": "numeric",
             "scale": {
-                "range": [0, "@width"],
+                "range": "horizontal",
                 "domainAbs": [-4, 4]
             },
             "axis": {
@@ -31,7 +31,7 @@
             "type": "numeric",
             "scale": {
                 "domain": [0, null],
-                "range": ["@height", 0]
+                "range": "vertical"
             },
             "axis": {
                 "ticks": 8,
