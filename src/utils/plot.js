@@ -7,25 +7,54 @@ import * as eu from "@/utils/else.js";
 
 const addScale = (info, dims) => {
     const scaleDef = info.mapping.scale;
-    info.domain = [...scaleDef.domain];
-    info.domainRel = [...(scaleDef.domainRel ? scaleDef.domainRel : [0, 0])];
-    info.domainAbs = scaleDef.domainAbs;
 
-    info.domain[0] ??= info.extent[0];
-    info.domain[1] ??= info.extent[1];
+    const s = d3[`scale${eu.capitalize(scaleDef.type)}`]()
 
-    const da = info.domain[1] - info.domain[0];
-    info.domain[0] += da*info.domainRel[0];
-    info.domain[1] += da*info.domainRel[1];
+    if (!Array.isArray(scaleDef.range)) {
+        if (scaleDef.range == "horizontal") {
+            scaleDef.range = [0, "@width"];
+        } else if (scaleDef.range == "vertical") {
+            scaleDef.range = ["@height", 0];
+        }
+    }
+    s.range(ju.fill(scaleDef.range, dims))
 
-    info.domain[0] += info.domainAbs[0];
-    info.domain[1] += info.domainAbs[1];
+    if (info.extent) {
+        info.domain = [...scaleDef.domain];
+
+        info.domainRel = [...(scaleDef.domainRel ? scaleDef.domainRel : [0, 0])];
+        info.domainAbs = scaleDef.domainAbs;
+
+        info.domain[0] ??= info.extent[0];
+        info.domain[1] ??= info.extent[1];
+
+        const da = info.domain[1] - info.domain[0];
+        info.domain[0] += da*info.domainRel[0];
+        info.domain[1] += da*info.domainRel[1];
+
+        info.domain[0] += info.domainAbs[0];
+        info.domain[1] += info.domainAbs[1];
+
+
+    } else {
+        info.domain = info.values;
+        scaleDef.padding ??= 0.4
+        s.padding(scaleDef.padding);
+        s.invertCustom = (v) => {
+            var eachBand = s.step();
+            var index = Math.round((v / eachBand));
+            console.log(index)
+            return s.domain()[index];
+        }
+    }
 
     // console.log(info)
     // console.log(`scale${eu.capitalize(scaleDef.type)}`)
-    info.scale = d3[`scale${eu.capitalize(scaleDef.type)}`]()
-        .domain(info.domain)
-        .range(ju.fill(scaleDef.range, dims))
+
+    s.domain(info.domain)
+
+
+    info.scale = s;
 };
 
 const setProps = function(d) {

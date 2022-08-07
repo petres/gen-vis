@@ -66,6 +66,7 @@ export default {
         plot() {
             this.def.plot.forEach(d => {
                 const dataGrouped = du.groupBy(this.data, d.categories);
+                // console.log(dataGrouped)
                 const dataGroupedProps = ju.getProps(dataGrouped, d.props, this.def.mapping);
                 // console.log(dataGroupedProps)
                 this[d.type](dataGroupedProps);
@@ -114,18 +115,31 @@ export default {
                 const yBase = p.height.substring(1, p.height.indexOf(':'));
                 const yZero =  self.info[yBase].scale(0);
 
-                v.x = v.cx;
+                v.x = v.cx - v.width/2;
+                delete v.cx;
 
                 v.y = v.height;
                 v.height = yZero - v.height;
 
+                return v;
+            })
+        },
 
-                //
-                // self.info[xBase].scale
-                //
-                delete v.cx;
+        bar2(data) {
+            const self = this;
+            this.pointwise(data, "rect", (v, p) => {
+                const yBase = p.height.substring(1, p.height.indexOf(':'));
+                const xBase = p.x.substring(1, p.x.indexOf(':'));
+
+                // console.log(xBase)
+
+                const yZero =  self.info[yBase].scale(0);
+                // console.log(self.info[yBase].scale)
+                v.width = self.info[xBase].scale.bandwidth();
+
+                v.y = v.height;
+                v.height = yZero - v.height;
                 // console.log(v)
-                // console.log(yBase)
                 return v;
             })
         },
@@ -150,7 +164,7 @@ export default {
                 });
             du.addScaledData(this.data, tinfo);
             this.info = {...this.shared, ...tinfo};
-            console.log(this.info)
+            // console.log(this.info)
             // this.debug = this.info;
         },
 
@@ -278,8 +292,14 @@ export default {
                     const c = d3.pointer(e);
                     const i = self.info[axis['x'].name];
                     // console.log(self.info)
-                    const xii = d3.bisectCenter(i.values, i.scale.invert(c[0]))
-                    const x = i.values[xii];
+                    // console.log(i.scale)
+                    let x;
+                    if (i.scale.invert) {
+                        const xii = d3.bisectCenter(i.values, i.scale.invert(c[0]));
+                        x = i.values[xii];
+                    } else {
+                        x = i.scale.invertCustom(c[0]);
+                    }
 
                     if (x == xo)
                         return;

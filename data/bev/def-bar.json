@@ -1,0 +1,74 @@
+{
+    "data": "./data/bev/data22.csv",
+    "options": {
+        "height": 300,
+        "margins": {"top": 10, "right": 10, "bottom": 40, "left": 80},
+        "title": "Bevölkerung",
+        "subtitle": "im Jahr nach Bundesland",
+        "footer": "Q: Statistik Austria</a>"
+    },
+    "mapping": {
+        "x": {
+            "column": "Bundesland",
+            "type": "categorical",
+            "scale": {
+                "type": "band",
+                "range": "horizontal",
+                "padding": 0.6
+            },
+            "axis": {
+                "ticks": {
+                    "mode": "relative",
+                    "base": "innerWidth",
+                    "ratio": 0.013
+                },
+                "name": "Jahr",
+                "format": "",
+                "position": "bottom"
+            },
+            "props": {
+                "common": {},
+                "manual": {
+                    "Wien":             { "name": "#BBD7EE" },
+                    "Niederösterreich": { "name": "#5BC5F2" },
+                    "Burgenland":       { "name": "#559BD5" },
+                    "Oberösterreich":   { "name": "#C7DF71" },
+                    "Salzburg":         { "name": "#4B9847" },
+                    "Steiermark":       { "name": "#9CE1F8" },
+                    "Kärnten":          { "name": "#72BB6F" },
+                    "Tirol":            { "name": "#3F766B" },
+                    "Vorarlberg":       { "name": "#ABD6A9" }
+                }
+            }
+        },
+        "y": {
+            "column": "Einwohner",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "domain": [0, null],
+                "domainRel": [0, 0.2],
+                "range": "vertical"
+            },
+            "axis": {
+                "ticks": 5,
+                "name": "Einwohner",
+                "position": "left",
+                "grid": true,
+                "format": ",.0f"
+            },
+            "hover": {
+                "format": ",.0f"
+            }
+        }
+    },
+    "plot": {
+        "type": "bar2",
+        "props": {
+            "fill": "#1E4F77",
+            "opacity": 0.9,
+            "x": "@x:scaled",
+            "height": "@y:scaled"
+        }
+    }
+}

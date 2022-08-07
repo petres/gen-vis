@@ -110,14 +110,16 @@ export default {
                 y: 'y'
             };
 
+
+
             // filter
             this.filter = this.store.mappingNamesWithKey('props').map(c => ({
                 dim: c,
                 key: Object.keys(this.store.mapping(c).props).filter(k => this.store.mapping(c).props[k].visible)
             }));
-            this.data = du.filter(this.store.data, this.filter)
-            // console.log(f)
 
+            this.data = du.filter(this.store.data, this.filter)
+            
             // stacked
             if (this.store.mapping(axis.y).stacked)
                 du.addStackedData(this.data, axis, def.facets ? def.facets.dim : []);

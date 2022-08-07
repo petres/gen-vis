@@ -90,5 +90,14 @@ const prepareDef = def => {
         }
     });
 
+    if (!Array.isArray(def.plot))
+        def.plot = [def.plot];
+
+    def.plot.forEach(p => {
+        p.categories ??= [];
+    });
+
+
+
     return def;
 }
