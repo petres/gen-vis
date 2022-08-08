@@ -1,5 +1,6 @@
 export { fillDirect, fillProps, getProps, prepareDef, calcValue, toValue, stringToProp };
 
+
 const calcValue = (info, bases) => {
     if (info.mode == 'relative')
         return info.ratio*bases[info.base];
@@ -152,7 +153,7 @@ const prepareDef = def => {
 
     def.plot.forEach(p => {
         const propRefs = Object.keys(p.props).map(name => stringToProp(p.props[name], name));
-        console.log(propRefs)
+        // console.log(propRefs)
         p._fill = (d, final = false) => {
             // console.log(propRefs)
             const t = Object.fromEntries(

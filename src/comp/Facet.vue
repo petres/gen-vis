@@ -111,7 +111,6 @@ export default {
         'svg:text': function(data)   { this.pointwise(data, "text") },
 
         bar(data) {
-
             const self = this;
             this.pointwise(data, "rect", (v, p) => {
                 // console.log(v)
@@ -129,6 +128,18 @@ export default {
                 v.height = yZero - v.height;
                 return v;
             })
+        },
+
+        stackedBar(data) {
+            const self = this;
+            data.forEach(g => {
+                const x = g.props["x"].key;
+                const y = g.props["y"].key;
+                g.props["x"] = ju.stringToProp(`@${x}:scaled`, "x");
+                g.props["y"] = ju.stringToProp(`@${y}:st:e:scaled`, "y");
+                g.props["height"] = ju.stringToProp(`@${y}:st:h:scaled`, "height");
+            });
+            this.pointwise(data, "rect");
         },
 
         scales() {
@@ -240,11 +251,13 @@ export default {
         hoverInit() {
             const self = this;
 
-            let axis = [
-                { axis: 'x', name: 'x' },
-                { axis: 'y', name: 'y' },
-            ];
-            // console.log(this.def)
+            let axis = this.store.axis;
+
+            axis = Object.keys(axis).map(t => ({
+                axis: t, name: axis[t]
+            }))
+
+            // console.log(axis)
             axis.forEach(a => {
                 const m = this.def.mapping[a.name];
                 const i = m.hover;
@@ -261,7 +274,10 @@ export default {
 
             axis = Object.fromEntries(axis.map(a => [a.axis, a]))
 
-            const categories = this.store.mappingNamesWithKey('hover').filter(e => !Object.keys(axis).includes(e));
+            // console.log(axis)
+
+            const categories = this.store.mappingNamesWithKey('hover').filter(e => !Object.values(axis).map(t => t.name).includes(e));
+            // console.log(categories)
 
             const hoverMarker = d3.select(this.$refs.hoverMarker);
             const hoverLine = hoverMarker.select("line");
@@ -277,9 +293,8 @@ export default {
                 .attr("opacity", 0)
                 .on("mousemove", function(e) {
                     const c = d3.pointer(e);
-                    const i = self.info[axis['x'].name];
+                    const i = self.info[axis.h.name];
                     // console.log(self.info)
-                    // console.log(i.scale)
                     const x = i.scale.invertCustom(c[0]);
 
                     if (x == xo)
@@ -293,15 +308,16 @@ export default {
                     hoverLine.attr("y1", 0)
                     hoverLine.attr("y2", self.innerHeight)
 
-                    self.hover.title = axis['x'].formatter(x);
-                    const tt = du.filter(self.data, [{dim: axis['x'].name, key: x}])
-                        .sort((a, b) => b[axis['y'].name] - a[axis['y'].name])
+                    self.hover.title = axis.h.formatter(x);
+                    const tt = du.filter(self.data, [{dim: axis.h.name, key: x}])
+                        .sort((a, b) => b[axis.v.name] - a[axis.v.name])
                         .map(e => {
                             const t = {};
+
                             categories.forEach(n => {
                                 t[n] = self.store.prop(n, e[n]).name
                             })
-                            t[axis['y'].name] = axis['y'].formatter(e[axis['y'].name]);
+                            t[axis.v.name] = axis.v.formatter(e[axis.v.name]);
                             return t;
                         })
 

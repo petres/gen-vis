@@ -8,12 +8,12 @@
         "footer": "<strong>Q:</strong> GWZ/HWZ 1971-2001, RZ 2011, MZ 2020"
     },
     "mapping": {
-        "x": {
+        "xx": {
             "column": "Jahr",
             "type": "numeric",
             "scale": {
                 "type": "linear",
-                "range": "horizontal",
+                "orientation": "horizontal",
                 "domainAbs": [-4, 4]
             },
             "axis": {
@@ -29,7 +29,7 @@
                 "format": "c"
             }
         },
-        "y": {
+        "yy": {
             "column": "Anzahl",
             "type": "numeric",
             "stacked": true,
@@ -37,7 +37,7 @@
                 "type": "linear",
                 "domain": [0, null],
                 "domainRel": [0, 0.02],
-                "range": "vertical"
+                "orientation": "vertical"
             },
             "axis": {
                 "ticks": 8,
@@ -108,15 +108,14 @@
     },
     "plot": [
         {
-            "type": "svg:rect",
+            "type": "stackedBar",
             "categories": ["type"],
             "props": {
                 "fill": "@color",
                 "opacity": 0.7,
-                "x": "@x:scaled",
+                "x": "@xx",
+                "y": "@yy",
                 "width": 40,
-                "y": "@y:st:e:scaled",
-                "height": "@y:st:h:scaled",
                 "transform": "translate(-20 0)"
             }
         }

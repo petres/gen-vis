@@ -19,6 +19,19 @@ export const baseStore = defineStore('base', {
     }),
     getters: {
         loaded() { return (this.def !== null && this.data !== null)},
+        axis() {
+            const b = this.mappingNamesWithKey('scale');
+            // console.log(b)
+            let axis = {};
+            b.forEach(n => {
+                const r = this.mapping(n).scale.orientation;
+                if (r == 'horizontal')
+                    axis.h = n;
+                if (r == 'vertical')
+                    axis.v = n;
+            });
+            return axis;
+        },
         mapping(n) { return n => this.def.mapping[n]},
         prop(n, k) { return (n, k) => this.def.mapping[n].props[k]},
         mappingNamesWithKey(k) { return k => Object.keys(this.def.mapping).filter(n => (k in this.def.mapping[n]))},

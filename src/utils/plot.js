@@ -11,9 +11,9 @@ const addScale = (info, dims) => {
     const s = d3[`scale${eu.capitalize(scaleDef.type)}`]()
 
     if (!Array.isArray(scaleDef.range)) {
-        if (scaleDef.range == "horizontal") {
+        if (scaleDef.orientation == "horizontal") {
             scaleDef.range = [0, "@width"];
-        } else if (scaleDef.range == "vertical") {
+        } else if (scaleDef.orientation == "vertical") {
             scaleDef.range = ["@height", 0];
         }
     }

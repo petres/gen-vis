@@ -105,12 +105,9 @@ export default {
         },
         dataInit() {
             const def = this.store.def;
-            const axis = {
-                x: 'x',
-                y: 'y'
-            };
+            const axis = this.store.axis;
 
-
+            // console.log(axis);
 
             // filter
             this.filter = this.store.mappingNamesWithKey('props').map(c => ({
@@ -119,10 +116,11 @@ export default {
             }));
 
             this.data = du.filter(this.store.data, this.filter)
-            
+
             // stacked
-            if (this.store.mapping(axis.y).stacked)
+            if (this.store.mapping(axis.v).stacked)
                 du.addStackedData(this.data, axis, def.facets ? def.facets.dim : []);
+            // console.log(JSON.stringify(this.data))
 
 
             if (def.facets) {

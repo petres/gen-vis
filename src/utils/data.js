@@ -42,12 +42,12 @@ const addDimInfo = (info, data) => {
 
 
 const addStackedData = (data, axis, dims = []) => {
-    groupBy(data, [...dims, axis.x]).forEach(g => {
+    groupBy(data, [...dims, axis.h]).forEach(g => {
         let t = 0;
         g.entries.forEach(e => {
-            e[`${axis.y}:st:s`] = t;
-            t += e[axis.y];
-            e[`${axis.y}:st:e`] = t;
+            e[`${axis.v}:st:s`] = t;
+            t += e[axis.v];
+            e[`${axis.v}:st:e`] = t;
         });
     });
 }
