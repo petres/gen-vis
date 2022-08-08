@@ -13,7 +13,7 @@ export default {
         const svg = d3.select(this.$refs.legendSymbol)
         this.info.elements.forEach(e => {
             const el = svg.append(e.type);
-            pu.setProps.call(el.node(), ju.fill(e.props, this.props))
+            pu.setProps.call(el.node(), ju.fillDirect(e.props, this.props))
         });
     }
 }

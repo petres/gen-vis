@@ -1,38 +1,10 @@
-export { fill, fill2, getProps, prepareDef, calcValue, toValue };
+export { fillDirect, fillProps, getProps, prepareDef, calcValue, toValue, stringToProp };
 
 const calcValue = (info, bases) => {
     if (info.mode == 'relative')
         return info.ratio*bases[info.base];
 
     return info;
-}
-
-const fillRule = (value, base, setNull = false) => {
-    const isRef = (typeof value) == "string" && value.charAt() == '@';
-    if (isRef) {
-        const ref = value.substring(1);
-        if (ref in base)
-            return base[ref];
-        else if (setNull)
-            return null;
-    }
-    return value;
-}
-
-const fill = (fill, base, setNull = false) => {
-    if (fill == null)
-        return {};
-    // console.log(fill)
-    // console.log(Array.isArray(fill))
-    if (Array.isArray(fill)) {
-        return fill.map(value => fillRule(value, base, setNull))
-    } else {
-        return Object.fromEntries(
-            Object.entries(fill).map(
-                ([attr, value], i) => [attr, fillRule(value, base, setNull)]
-            )
-        );
-    }
 }
 
 const getProps = (dataGrouped, plot, mappings) => {
@@ -63,15 +35,16 @@ const getProps = (dataGrouped, plot, mappings) => {
 
 
 const toValue = (prop, d, final) => {
-    if (!prop.ref)
+    // console.log(prop)
+    if (typeof prop !== 'object')
+        return prop;
+
+    if (prop.key === null)
         return prop.value;
 
-    const value = d[prop.value];
+    const value = d[prop.key];
     if (value !== undefined)
         return value;
-
-    // if (!final)
-    //     return "@" + prop.value;
 
     if (!final)
         return prop;
@@ -79,35 +52,61 @@ const toValue = (prop, d, final) => {
     return null;
 }
 
-const fill2 = (fill, base, final = false) => {
-    // console.log(fill)
-    // console.log(base)
-    if (fill == null)
+
+const fillDirect = (raw, base, final = false) => {
+    if (raw == null)
         return {};
 
-    return Object.fromEntries(
-        Object.entries(fill).map(
-            ([attr, value], i) => [attr, (typeof value === 'object' && value !== null && value.ref !== null ) ? toValue(value, base, final): value ]
-        )
-    );
+    let t = null
+    if (Array.isArray(raw)) {
+        t = raw.map(r => stringToProp(r))
+
+    } else {
+        t = Object.fromEntries(
+            Object.entries(raw).map(
+                ([name, r], i) => [name, stringToProp(r)]
+            )
+        );
+    }
+    return fillProps(t, base, final);
 }
 
-const value2Prop = (name, value) => {
+
+
+const fillProps = (props, base, final = false) => {
+    if (props == null)
+        return {};
+
+    if (Array.isArray(props)) {
+        return props.map(prop => toValue(prop, base, final))
+    } else {
+        return Object.fromEntries(
+            Object.entries(props).map(
+                ([name, prop], i) => [name, toValue(prop, base, final)]
+            )
+        );
+    }
+}
+
+const stringToProp = (value, name = null) => {
     if (typeof value === 'object' && value !== null) {
         // is object -> recursive
         value = Object.fromEntries(
             Object.entries(value).map(
-                ([k, v], i) => [k, value2Prop(k, v)]
+                ([k, v], i) => [k, stringToProp(v, k)]
             )
         );
     }
 
-    const ref = (typeof value) == "string" && value.charAt() == '@';
+    let key = null;
+    let parts = null;
+    if ((typeof value) == "string" && value.charAt() == '@') {
+        key = value.substring(1);
+        value = null;
+        parts = key.split(':');
+    }
 
-    if (ref)
-        value = value.substring(1);
-
-    return {name, ref, value}
+    return {name, key, value, parts}
 }
 
 const prepareDef = def => {
@@ -152,14 +151,13 @@ const prepareDef = def => {
 
 
     def.plot.forEach(p => {
-        const propRefs = Object.keys(p.props).map(name => value2Prop(name, p.props[name]));
+        const propRefs = Object.keys(p.props).map(name => stringToProp(p.props[name], name));
         console.log(propRefs)
         p._fill = (d, final = false) => {
             // console.log(propRefs)
             const t = Object.fromEntries(
                 propRefs.map(prop => [prop.name, toValue(prop, d, final)])
             );
-            // console.log(t)
             return t;
         }
 

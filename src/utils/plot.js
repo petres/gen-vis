@@ -17,8 +17,8 @@ const addScale = (info, dims) => {
             scaleDef.range = ["@height", 0];
         }
     }
-    s.range(ju.fill(scaleDef.range, dims))
-    // console.log(info)
+    s.range(ju.fillDirect(scaleDef.range, dims))
+    // console.log(s.range())
     if (info.extent) {
         info.domain = [...scaleDef.domain];
 

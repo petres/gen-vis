@@ -73,6 +73,7 @@ export default {
             });
         },
         'svg:path': function(data) {
+            // console.log(data)
             this.inner.append("g")
                 .attr("class", "paths")
                 .selectAll("path")
@@ -84,7 +85,7 @@ export default {
                 .attr("d", d => d3.line()
                     .x(e => e.x)
                     .y(e => e.y)
-                    (d.values.map(e => ju.fill2(d.props.d, e)))
+                    (d.values.map(e => ju.fillProps(d.props.d, e)))
                 )
         },
         pointwise(data, type, translate = v => v) {
@@ -98,7 +99,7 @@ export default {
                 .attr("class", `group`)
                 .each(pu.setGroupData)
                 .selectAll(type)
-                .data(d => d.values.map(e => translate(ju.fill2(d.props, e), d.props)))
+                .data(d => d.values.map(e => translate(ju.fillProps(d.props, e), d.props)))
                 .enter()
                 .append(type)
                 .each(pu.setProps)
@@ -115,11 +116,11 @@ export default {
             this.pointwise(data, "rect", (v, p) => {
                 // console.log(v)
                 // console.log(p)
-                const yBase = p.height.value.substring(0, p.height.value.indexOf(':'));
+                const yBase = p.height.parts[0];
                 // console.log(p.height.value)
                 const yZero =  self.info[yBase].scale(0);
                 if (v.width === undefined) {
-                    const xBase = p.cx.value.substring(0, p.cx.value.indexOf(':'));
+                    const xBase = p.cx.parts[0];
                     v.width = self.info[xBase].scale.step()*(1-self.info[xBase].scale.padding());
                 }
                 v.x = v.cx - v.width/2;
