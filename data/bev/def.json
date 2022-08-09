@@ -18,8 +18,8 @@
             },
             "axis": {
                 "ticks": {
-                    "mode": "relative",
-                    "base": "innerWidth",
+                    "prop": "relative",
+                    "ref": "innerWidth",
                     "ratio": 0.013
                 },
                 "name": "Jahr",
@@ -117,13 +117,10 @@
                 "opacity": 0.6,
                 "cx": "@x:scaled",
                 "cy": {
-                    "prop": true,
-                    "key": "y:scaled"
+                    "prop": "ref",
+                    "ref": "y:scaled"
                 },
-                "r": {
-                    "prop": true,
-                    "value": 5
-                }
+                "r": 5
             }
         }
     ]

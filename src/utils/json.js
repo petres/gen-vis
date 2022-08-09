@@ -1,4 +1,4 @@
-export { fillDirect, fillProps, getProps, prepareDef, calcValue, toValue, entryToProp, isProp };
+export { fillDirect, fillProps, getProps, prepareDef, entryToValue, toValue, entryToProp, isProp };
 
 const mapObject = (d, t) => Object.fromEntries(
     Object.entries(d).map(
@@ -15,14 +15,7 @@ const arrayToObject = (a, key, value = v => v) => Object.fromEntries(
 );
 
 
-const calcValue = (info, bases) => {
-    if (info.mode == 'relative')
-        return info.ratio*bases[info.base];
-
-    return info;
-}
-
-const getProps = (dataGrouped, plot, mappings) => {
+const getProps = (dataGrouped, plotDef, globs, mappings) => {
      // console.log(plot)
     // dataGrouped.forEach(g => {
     //     Object.keys(g.group).forEach((item, i) => {
@@ -39,7 +32,7 @@ const getProps = (dataGrouped, plot, mappings) => {
                 key: g.group[d],
             })),
             // TODO: SPEED UP
-            props: plot._fill(Object.assign({}, ...Object.keys(g.group).map(v => mappings[v].props[g.group[v]]))),
+            props: plotDef._fill(Object.assign(globs, ...Object.keys(g.group).map(v => mappings[v].props[g.group[v]]))),
             // props: Object.keys(g.group).reduce(
             //     (storage, item) => fill(storage, mappings[item].props[g.group[item]])
             // , plot.props),
@@ -49,15 +42,20 @@ const getProps = (dataGrouped, plot, mappings) => {
 }
 
 
-const toValue = (prop, d, final = true) => {
-    // console.log(prop)
-    // if (prop.value == null) {
-        if (prop.key !== null) {
-            const value = d[prop.key];
+const toValue = (prop, base, final = true) => {
+    if (prop.value === undefined || prop.value === null) {
+        if (prop.prop == "ref") {
+            const value = base[prop.ref];
             if (value !== undefined)
                 prop.value = value;
         }
-    // }
+
+        if (prop.prop == "relative") {
+            const value = base[prop.ref];
+            if (value !== undefined)
+                prop.value = prop.ratio*value;
+        }
+    }
 
     if (final)
         return prop.value
@@ -65,56 +63,38 @@ const toValue = (prop, d, final = true) => {
     return prop;
 }
 
-// const toValue = (prop, d, final) => {
-//     // console.log(prop)
-//     if (typeof prop !== 'object')
-//         return prop;
-//
-//     if (prop.key === null)
-//         return prop.value;
-//
-//     const value = d[prop.key];
-//     if (value !== undefined)
-//         return value;
-//
-//     if (!final)
-//         return prop;
-//
-//
-//     return null;
-// }
-
+const entryToValue = (e, base) =>
+    toValue(entryToProp(e), base, true);
 
 const fillDirect = (raw, base, final = true) => {
     // console.log({raw, base, final})
     return fillProps(mapObjectOrArray(raw, entryToProp), base, final);
 }
 
-
 const fillProps = (props, base, final = false) =>
     mapObjectOrArray(props, prop => toValue({...prop}, base, final))
 
-const isProp = o => o.prop === true;
+const isProp = o => o.prop !== undefined;
 
 const entryToProp = (value) => {
     if (typeof value === 'object' && value !== null) {
-        if (isProp(value)) {
+        if (isProp(value))
             return value;
-        }
         return mapObject(value, entryToProp)
     }
 
-    let prop = true;
-    let key = null;
-    let parts = null;
     if ((typeof value) == "string" && value.charAt() == '@') {
-        key = value.substring(1);
-        value = null;
-        parts = key.split(':');
+        const ref = value.substring(1);
+        return {
+            prop: "ref",
+            ref: ref,
+            parts: ref.split(':'),
+        }
     }
 
     return {
-        prop, key, value, parts
+        prop: "fixed",
+        value: value,
     }
 }
 

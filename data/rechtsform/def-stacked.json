@@ -14,7 +14,7 @@
             "scale": {
                 "type": "linear",
                 "orientation": "horizontal",
-                "domainAbs": [-4, 4]
+                "domainAbs": [-6, 6]
             },
             "axis": {
                 "ticks": 6,
@@ -115,8 +115,11 @@
                 "opacity": 0.7,
                 "x": "@xx",
                 "y": "@yy",
-                "width": 40,
-                "transform": "translate(-20 0)"
+                "width": {
+                    "prop": "relative",
+                    "ref": "innerWidth",
+                    "ratio": 0.1
+                }
             }
         }
     ]

@@ -64,6 +64,7 @@ const addScale = (info, dims) => {
 
 const setProps = function(d) {
     const e = d3.select(this);
+    // console.log(d)
     Object.entries(d).forEach(([k, v], i) => {
         if (v instanceof Object) {
             if (!ju.isProp(v))

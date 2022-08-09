@@ -64,12 +64,13 @@ export default {
     },
     methods: {
         plot() {
-            this.def.plot.forEach(d => {
-                const dataGrouped = du.groupBy(this.data, d.categories);
+            this.def.plot.forEach(plotDef => {
+                // d.props = ju.fillProps(d.props, );
+                const dataGrouped = du.groupBy(this.data, plotDef.categories);
                 // console.log(d)
-                const dataGroupedProps = ju.getProps(dataGrouped, d, this.def.mapping);
+                const dataGroupedProps = ju.getProps(dataGrouped, plotDef, this.relativeBases, this.def.mapping);
                 // console.log(dataGroupedProps)
-                this[d.type](dataGroupedProps);
+                this[plotDef.type](dataGroupedProps);
             });
         },
         'svg:path': function(data) {
@@ -133,11 +134,12 @@ export default {
         stackedBar(data) {
             const self = this;
             data.forEach(g => {
-                const x = g.props["x"].key;
-                const y = g.props["y"].key;
+                const x = g.props["x"].ref;
+                const y = g.props["y"].ref;
                 g.props["x"] = ju.entryToProp(`@${x}:scaled`);
                 g.props["y"] = ju.entryToProp(`@${y}:st:e:scaled`);
                 g.props["height"] = ju.entryToProp(`@${y}:st:h:scaled`);
+                g.props["transform"] = ju.entryToProp(`translate(-${g.props.width.value/2} 0)`);
             });
             this.pointwise(data, "rect");
         },
@@ -174,10 +176,11 @@ export default {
                     const i = m.axis;
                     const s = this.info[n].scale;
                     // const s = m._scale;
+
                     const a = d3[`axis${eu.capitalize(i.position)}`](s)
                         .tickSizeInner(9)
                         .tickSizeOuter(0)
-                        .ticks(ju.calcValue(i.ticks, this.relativeBases))
+                        .ticks(ju.entryToValue(i.ticks, this.relativeBases))
 
                     // console.log(i.ticks.ratio)
                     // console.log(this[i.ticks.base])
