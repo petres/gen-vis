@@ -13,7 +13,7 @@
             "type": "date",
             "scale": {
                 "type": "time",
-                "range": "horizontal",
+                "orientation": "horizontal",
                 "timeFormat": "%b %y"
             },
             "axis": {
@@ -29,7 +29,7 @@
             "scale": {
                 "type": "linear",
                 "domain": [0, null],
-                "range": "vertical",
+                "orientation": "vertical",
                 "format": ".2f"
             },
             "axis": {

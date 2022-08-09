@@ -13,7 +13,7 @@
             "type": "numeric",
             "scale": {
                 "type": "linear",
-                "range": "horizontal"
+                "orientation": "horizontal"
             },
             "axis": {
                 "ticks": 6,
@@ -27,7 +27,7 @@
             "scale": {
                 "type": "linear",
                 "domain": [0, null],
-                "range": "vertical",
+                "orientation": "vertical",
                 "format": ".2f"
             },
             "axis": {

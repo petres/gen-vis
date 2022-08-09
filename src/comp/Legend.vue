@@ -2,7 +2,7 @@
     <div class="legend" :data-dim="legend">
         <div class="title">{{ info.name }}</div>
         <div class="entries">
-            <div v-for="entry of entries" :data-visible="entry.props.visible" :data-key="entry.key" @click="switched(entry)" v-bind='ju.fillDirect(info.legend.props, entry.props, true)'>
+            <div v-for="entry of entries" :data-visible="entry.props.visible" :data-key="entry.key" @click="switched(entry)" v-bind='ju.fillDirect(info.legend.props, entry.props)'>
                 <LegendSymbol v-if="info.legend.symbol" :info="info.legend.symbol" :props="entry.props"/>
                 <span>{{ entry.props.name }}</span>
             </div>

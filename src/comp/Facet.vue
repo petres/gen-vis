@@ -73,7 +73,7 @@ export default {
             });
         },
         'svg:path': function(data) {
-            // console.log(data)
+            console.log(data)
             this.inner.append("g")
                 .attr("class", "paths")
                 .selectAll("path")
@@ -85,7 +85,7 @@ export default {
                 .attr("d", d => d3.line()
                     .x(e => e.x)
                     .y(e => e.y)
-                    (d.values.map(e => ju.fillProps(d.props.d, e)))
+                    (d.values.map(e => ju.fillProps(d.props.d, e, true)))
                 )
         },
         pointwise(data, type, translate = v => v) {
@@ -99,7 +99,7 @@ export default {
                 .attr("class", `group`)
                 .each(pu.setGroupData)
                 .selectAll(type)
-                .data(d => d.values.map(e => translate(ju.fillProps(d.props, e), d.props)))
+                .data(d => d.values.map(e => translate(ju.fillProps(d.props, e))))
                 .enter()
                 .append(type)
                 .each(pu.setProps)
@@ -112,20 +112,20 @@ export default {
 
         bar(data) {
             const self = this;
-            this.pointwise(data, "rect", (v, p) => {
-                // console.log(v)
-                // console.log(p)
-                const yBase = p.height.parts[0];
-                // console.log(p.height.value)
-                const yZero =  self.info[yBase].scale(0);
+            this.pointwise(data, "rect", (v) => {
+                const yBase = v.height.parts[0];
+                const yZero = self.info[yBase].scale(0);
+
                 if (v.width === undefined) {
-                    const xBase = p.cx.parts[0];
-                    v.width = self.info[xBase].scale.step()*(1-self.info[xBase].scale.padding());
+                    const xBase = v.cx.parts[0];
+                    v.width = ju.entryToProp(self.info[xBase].scale.step()*(1-self.info[xBase].scale.padding()));
                 }
-                v.x = v.cx - v.width/2;
+
+                v.x = ju.entryToProp(v.cx.value - v.width.value/2);
                 delete v.cx;
-                v.y = v.height;
-                v.height = yZero - v.height;
+
+                v.y = ju.entryToProp(v.height.value);
+                v.height = ju.entryToProp(yZero - v.height.value);
                 return v;
             })
         },
@@ -135,9 +135,9 @@ export default {
             data.forEach(g => {
                 const x = g.props["x"].key;
                 const y = g.props["y"].key;
-                g.props["x"] = ju.stringToProp(`@${x}:scaled`, "x");
-                g.props["y"] = ju.stringToProp(`@${y}:st:e:scaled`, "y");
-                g.props["height"] = ju.stringToProp(`@${y}:st:h:scaled`, "height");
+                g.props["x"] = ju.entryToProp(`@${x}:scaled`);
+                g.props["y"] = ju.entryToProp(`@${y}:st:e:scaled`);
+                g.props["height"] = ju.entryToProp(`@${y}:st:h:scaled`);
             });
             this.pointwise(data, "rect");
         },

@@ -170,15 +170,6 @@ export default {
         changeSelected(info) {
             this.dataInit();
             this.scales();
-            // d3.select(this.$refs.vis)
-            //     .selectAll(`svg.facet g.group[data-group-${info.dim}="${info.key}"], .vis svg.facet path[data-group-${info.dim}="${info.key}"]`)
-            //     .attr(`data-visible-${info.dim}`, info.selected)
-            //     .each(function() {
-            //         const show = this.getAttributeNames()
-            //             .filter(name => name.startsWith('data-visible-'))
-            //             .map(dv => this.getAttribute(dv) === "true").reduce((s, v) => s && v, true)
-            //         this.setAttribute('data-visible', show);
-            //     })
         }
     }
 }

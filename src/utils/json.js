@@ -1,4 +1,18 @@
-export { fillDirect, fillProps, getProps, prepareDef, calcValue, toValue, stringToProp };
+export { fillDirect, fillProps, getProps, prepareDef, calcValue, toValue, entryToProp, isProp };
+
+const mapObject = (d, t) => Object.fromEntries(
+    Object.entries(d).map(
+        ([k, v], i) => [k, t(v, k)]
+    )
+);
+
+const mapObjectOrArray = (d, t) =>
+    Array.isArray(d) ? d.map(t) : mapObject(d, t);
+
+
+const arrayToObject = (a, key, value = v => v) => Object.fromEntries(
+    a.map(e => [key(e), value(e)])
+);
 
 
 const calcValue = (info, bases) => {
@@ -35,70 +49,62 @@ const getProps = (dataGrouped, plot, mappings) => {
 }
 
 
-const toValue = (prop, d, final) => {
+const toValue = (prop, d, final = true) => {
     // console.log(prop)
-    if (typeof prop !== 'object')
-        return prop;
+    // if (prop.value == null) {
+        if (prop.key !== null) {
+            const value = d[prop.key];
+            if (value !== undefined)
+                prop.value = value;
+        }
+    // }
 
-    if (prop.key === null)
-        return prop.value;
+    if (final)
+        return prop.value
 
-    const value = d[prop.key];
-    if (value !== undefined)
-        return value;
+    return prop;
+}
 
-    if (!final)
-        return prop;
+// const toValue = (prop, d, final) => {
+//     // console.log(prop)
+//     if (typeof prop !== 'object')
+//         return prop;
+//
+//     if (prop.key === null)
+//         return prop.value;
+//
+//     const value = d[prop.key];
+//     if (value !== undefined)
+//         return value;
+//
+//     if (!final)
+//         return prop;
+//
+//
+//     return null;
+// }
 
-    return null;
+
+const fillDirect = (raw, base, final = true) => {
+    // console.log({raw, base, final})
+    return fillProps(mapObjectOrArray(raw, entryToProp), base, final);
 }
 
 
-const fillDirect = (raw, base, final = false) => {
-    if (raw == null)
-        return {};
+const fillProps = (props, base, final = false) =>
+    mapObjectOrArray(props, prop => toValue({...prop}, base, final))
 
-    let t = null
-    if (Array.isArray(raw)) {
-        t = raw.map(r => stringToProp(r))
+const isProp = o => o.prop === true;
 
-    } else {
-        t = Object.fromEntries(
-            Object.entries(raw).map(
-                ([name, r], i) => [name, stringToProp(r)]
-            )
-        );
-    }
-    return fillProps(t, base, final);
-}
-
-
-
-const fillProps = (props, base, final = false) => {
-    if (props == null)
-        return {};
-
-    if (Array.isArray(props)) {
-        return props.map(prop => toValue(prop, base, final))
-    } else {
-        return Object.fromEntries(
-            Object.entries(props).map(
-                ([name, prop], i) => [name, toValue(prop, base, final)]
-            )
-        );
-    }
-}
-
-const stringToProp = (value, name = null) => {
+const entryToProp = (value) => {
     if (typeof value === 'object' && value !== null) {
-        // is object -> recursive
-        value = Object.fromEntries(
-            Object.entries(value).map(
-                ([k, v], i) => [k, stringToProp(v, k)]
-            )
-        );
+        if (isProp(value)) {
+            return value;
+        }
+        return mapObject(value, entryToProp)
     }
 
+    let prop = true;
     let key = null;
     let parts = null;
     if ((typeof value) == "string" && value.charAt() == '@') {
@@ -107,8 +113,12 @@ const stringToProp = (value, name = null) => {
         parts = key.split(':');
     }
 
-    return {name, key, value, parts}
+    return {
+        prop, key, value, parts
+    }
 }
+
+
 
 const prepareDef = def => {
     Object.values(def.mapping).forEach(m => {
@@ -141,6 +151,11 @@ const prepareDef = def => {
         if (m.hover !== undefined && m.axis !== undefined) {
             m.hover.format ??= m.axis.format;
         }
+
+        if (m.legend) {
+            if (m.legend.props === undefined)
+                m.legend.props = {};
+        }
     });
 
     if (!Array.isArray(def.plot))
@@ -152,17 +167,8 @@ const prepareDef = def => {
 
 
     def.plot.forEach(p => {
-        const propRefs = Object.keys(p.props).map(name => stringToProp(p.props[name], name));
-        // console.log(propRefs)
-        p._fill = (d, final = false) => {
-            // console.log(propRefs)
-            const t = Object.fromEntries(
-                propRefs.map(prop => [prop.name, toValue(prop, d, final)])
-            );
-            return t;
-        }
-
-        // console.log(p)
+        p.props = mapObject(p.props, entryToProp);
+        p._fill = d => fillProps(p.props, d)
     });
 
 

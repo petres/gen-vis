@@ -64,16 +64,21 @@ const addScale = (info, dims) => {
 
 const setProps = function(d) {
     const e = d3.select(this);
-    for (const [key, value] of Object.entries(d)) {
-        if (value instanceof Object)
-            continue;
-        // console.log([key, value])
-        if (key == "text") {
-            e.text(value);
-            continue;
+    Object.entries(d).forEach(([k, v], i) => {
+        if (v instanceof Object) {
+            if (!ju.isProp(v))
+                return;
+            // console.log(v);
+            v = v.value;
         }
-        e.attr(key, value);
-    }
+        //
+        if (k == "text") {
+            e.text(v);
+            return;
+        }
+        // console.log({k, v})
+        e.attr(k, v);
+    });
 }
 
 const setGroupData = function(d) {

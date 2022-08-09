@@ -13,7 +13,7 @@
             "type": "numeric",
             "scale": {
                 "type": "linear",
-                "range": "horizontal",
+                "orientation": "horizontal",
                 "domainAbs": [-4, 4]
             },
             "axis": {
@@ -37,7 +37,7 @@
                 "type": "linear",
                 "domain": [0, null],
                 "domainRel": [0, 0.02],
-                "range": "vertical"
+                "orientation": "vertical"
             },
             "axis": {
                 "ticks": 8,

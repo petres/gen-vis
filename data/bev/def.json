@@ -5,7 +5,7 @@
         "margins": {"top": 10, "right": 10, "bottom": 40, "left": 80},
         "title": "Bevölkerung",
         "subtitle": "nach Bundesland",
-        "footer": "<strong>Quelle:</strong> Somewhere</a>"
+        "footer": "Q: Statistik Austria"
     },
     "mapping": {
         "x": {
@@ -14,7 +14,7 @@
             "scale": {
                 "type": "linear",
                 "domainAbs": [-0.5, 0.5],
-                "range": "horizontal"
+                "orientation": "horizontal"
             },
             "axis": {
                 "ticks": {
@@ -38,7 +38,7 @@
                 "type": "linear",
                 "domain": [0, null],
                 "domainRel": [0, 0.2],
-                "range": "vertical"
+                "orientation": "vertical"
             },
             "axis": {
                 "ticks": 5,
@@ -116,8 +116,14 @@
                 "fill": "@color",
                 "opacity": 0.6,
                 "cx": "@x:scaled",
-                "cy": "@y:scaled",
-                "r": 3
+                "cy": {
+                    "prop": true,
+                    "key": "y:scaled"
+                },
+                "r": {
+                    "prop": true,
+                    "value": 5
+                }
             }
         }
     ]

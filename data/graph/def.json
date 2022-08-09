@@ -14,7 +14,7 @@
             "scale": {
                 "type": "linear",
                 "domainAbs": [-0.5, 0.5],
-                "range": "horizontal"
+                "orientation": "horizontal"
             }
         },
         "y": {
@@ -23,7 +23,7 @@
             "scale": {
                 "type": "linear",
                 "domainAbs": [-0.5, 0.5],
-                "range": "vertical"
+                "orientation": "vertical"
             }
         },
         "s": {
@@ -37,14 +37,16 @@
         "t": {
             "column": "t",
             "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "circle",
-                    "props": {
-                        "cx": 8, "cy": 8, "r": 3,
-                        "fill": "@color"
-                    }
-                }]
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "circle",
+                        "props": {
+                            "cx": 8, "cy": 8, "r": 3,
+                            "fill": "@color"
+                        }
+                    }]
+                }
             },
             "props": {
                 "common": {
@@ -65,7 +67,7 @@
     },
     "plot": [
         {
-            "type": "circle",
+            "type": "svg:circle",
             "categories": ["t"],
             "props": {
                 "fill": "@color",
