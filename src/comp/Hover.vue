@@ -69,7 +69,7 @@ export default {
             border-bottom: 2px solid #000;
             text-align: center;
         }
-        background-color: #FFFFFFAA;
+        background-color: #FFFFFFCC;
         top: 40%;
 
         // margin: 20px;

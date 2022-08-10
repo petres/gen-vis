@@ -153,10 +153,18 @@ export default {
                 const y = g.props["y"].ref;
                 g.props["x"] = ju.entryToProp(`@${x}:scaled`);
                 g.props["y"] = ju.entryToProp(`@${y}:st:e:scaled`);
+
                 g.props["height"] = ju.entryToProp(`@${y}:st:h:scaled`);
+
                 g.props["transform"] = ju.entryToProp(`translate(-${g.props.width.value/2} 0)`);
             });
-            this._pointwise(data, "rect");
+            this._pointwise(data, "rect", (v) => {
+                if(v.height.value < 0) {
+                    v.y.value += v.height.value;
+                    v.height.value = -v.height.value;
+                }
+                return v;
+            });
         },
 
         scales() {

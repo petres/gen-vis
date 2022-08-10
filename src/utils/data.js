@@ -43,11 +43,19 @@ const addDimInfo = (info, data) => {
 
 const addStackedData = (data, axis, dims = []) => {
     groupBy(data, [...dims, axis.h]).forEach(g => {
-        let t = 0;
+        let tp = 0;
+        let tn = 0;
         g.entries.forEach(e => {
-            e[`${axis.v}:st:s`] = t;
-            t += e[axis.v];
-            e[`${axis.v}:st:e`] = t;
+            const v = e[axis.v];
+            if (v >= 0) {
+                e[`${axis.v}:st:s`] = tp;
+                tp += v;
+                e[`${axis.v}:st:e`] = tp;
+            } else {
+                e[`${axis.v}:st:s`] = tn;
+                tn += v;
+                e[`${axis.v}:st:e`] = tn;
+            }
         });
     });
 }
@@ -58,9 +66,11 @@ const addScaledData = (data, infos) => {
     data.forEach(d => {
         Object.values(infos).forEach(i => {
             d[`${i.dim}:scaled`] = i.scale(d[i.dim]);
+
             d[`${i.dim}:scaled:min`] = i.scale(i.domain[0]);
-            d[`${i.dim}:scaled:max`] = i.scale(i.domain[1]);
             d[`${i.dim}:scaled:0`] = i.scale(0);
+            d[`${i.dim}:scaled:max`] = i.scale(i.domain[1]);
+
             if (i.mapping.stacked) {
                 d[`${i.dim}:st:e:scaled`] = i.scale(d[`${i.dim}:st:e`]);
                 d[`${i.dim}:st:s:scaled`] = i.scale(d[`${i.dim}:st:s`]);
