@@ -54,7 +54,7 @@ const addStackedData = (data, axis, dims = []) => {
 
 
 const addScaledData = (data, infos) => {
-    console.log(infos.y.domain)
+    // console.log(infos.y.domain)
     data.forEach(d => {
         Object.values(infos).forEach(i => {
             d[`${i.dim}:scaled`] = i.scale(d[i.dim]);
