@@ -6,6 +6,7 @@ export default {
     // def: "sprit-nuts/def-facets.json",
     // def: "bev/def.json",
     def: "wwwi/def.json",
+    // def: "fb/def-fb2.json",
     // def: "bev/def-bar.json",
     // def: "graph/def.json",
 }

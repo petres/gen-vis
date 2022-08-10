@@ -54,10 +54,13 @@ const addStackedData = (data, axis, dims = []) => {
 
 
 const addScaledData = (data, infos) => {
-    // console.log(infos)
+    console.log(infos.y.domain)
     data.forEach(d => {
         Object.values(infos).forEach(i => {
             d[`${i.dim}:scaled`] = i.scale(d[i.dim]);
+            d[`${i.dim}:scaled:min`] = i.scale(i.domain[0]);
+            d[`${i.dim}:scaled:max`] = i.scale(i.domain[1]);
+            d[`${i.dim}:scaled:0`] = i.scale(0);
             if (i.mapping.stacked) {
                 d[`${i.dim}:st:e:scaled`] = i.scale(d[`${i.dim}:st:e`]);
                 d[`${i.dim}:st:s:scaled`] = i.scale(d[`${i.dim}:st:s`]);

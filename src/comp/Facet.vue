@@ -73,9 +73,9 @@ export default {
                 this[plotDef.type](dataGroupedProps);
             });
         },
-        'svg:path': function(data) {
+        _groupwise: function(data) {
             // console.log(data)
-            this.inner.append("g")
+            return this.inner.append("g")
                 .attr("class", "paths")
                 .selectAll("path")
                 .data(data)
@@ -83,13 +83,8 @@ export default {
                 .append("path")
                 .each(function(d) {pu.setProps.call(this, d.props)})
                 .each(pu.setGroupData)
-                .attr("d", d => d3.line()
-                    .x(e => e.x)
-                    .y(e => e.y)
-                    (d.values.map(e => ju.fillProps(d.props.d, e, true)))
-                )
         },
-        pointwise(data, type, translate = v => v) {
+        _pointwise(data, type, translate = v => v) {
             // console.log(data);
             return this.inner.append("g")
                 .attr("class", type)
@@ -106,14 +101,34 @@ export default {
                 .each(pu.setProps)
         },
 
-        'svg:circle': function(data) { this.pointwise(data, "circle") },
-        'svg:line': function(data)   { this.pointwise(data, "line") },
-        'svg:rect': function(data)   { this.pointwise(data, "rect") },
-        'svg:text': function(data)   { this.pointwise(data, "text") },
+        'svg:path': function(data) {
+            this._groupwise(data)
+                .attr("d", d => d3.line()
+                    .x(e => e.x)
+                    .y(e => e.y)
+                    (d.values.map(e => ju.fillProps(d.props.d, e, true)))
+                )
+        },
+
+
+        'svg:circle': function(data) { this._pointwise(data, "circle") },
+        'svg:line': function(data)   { this._pointwise(data, "line") },
+        'svg:rect': function(data)   { this._pointwise(data, "rect") },
+        'svg:text': function(data)   { this._pointwise(data, "text") },
+
+        'base:area': function(data) {
+            this._groupwise(data)
+                .attr("d", d => d3.area()
+                    .x(e => e.x)
+                    .y1(e => e.y1)
+                    .y0(e => e.y0)
+                    (d.values.map(e => ju.fillProps(d.props.d, e, true)))
+                )
+        },
 
         bar(data) {
             const self = this;
-            this.pointwise(data, "rect", (v) => {
+            this._pointwise(data, "rect", (v) => {
                 const yBase = v.height.parts[0];
                 const yZero = self.info[yBase].scale(0);
 
@@ -141,7 +156,7 @@ export default {
                 g.props["height"] = ju.entryToProp(`@${y}:st:h:scaled`);
                 g.props["transform"] = ju.entryToProp(`translate(-${g.props.width.value/2} 0)`);
             });
-            this.pointwise(data, "rect");
+            this._pointwise(data, "rect");
         },
 
         scales() {
