@@ -74,7 +74,7 @@ export default {
             });
         },
         'svg:path': function(data) {
-            console.log(data)
+            // console.log(data)
             this.inner.append("g")
                 .attr("class", "paths")
                 .selectAll("path")
@@ -182,8 +182,8 @@ export default {
                         .tickSizeOuter(0)
                         .ticks(ju.entryToValue(i.ticks, this.relativeBases))
 
-                    // console.log(i.ticks.ratio)
-                    // console.log(this[i.ticks.base])
+                    // console.log({ n , value: ju.entryToValue(i.ticks, this.relativeBases) })
+                    // console.log(this.relativeBases)
 
                     if (i.format) {
                         if (m.scale.type == "time")
@@ -318,11 +318,15 @@ export default {
                             const t = {};
 
                             categories.forEach(n => {
-                                t[n] = self.store.prop(n, e[n]).name
+                                // t[n] = self.store.prop(n, e[n]).name
+                                t[n] = ju.fillDirect(self.store.mapping(n).hover.props, self.store.prop(n, e[n]))
                             })
+
                             t[axis.v.name] = axis.v.formatter(e[axis.v.name]);
                             return t;
                         })
+
+                    // console.log(tt)
 
                     self.hover.data = tt;
                     self.hover.x = xs;

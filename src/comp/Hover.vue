@@ -50,7 +50,7 @@ export default {
                     .data(d => Object.entries(d))
                     .join("td")
                     .attr('class', d => d[0])
-                    .text(d => d[1])
+                    .text(d => typeof d[1] === 'object' ? d[1].name : d[1])
         }
     }
 }

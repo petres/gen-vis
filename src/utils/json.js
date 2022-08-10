@@ -64,7 +64,7 @@ const toValue = (prop, base, final = true) => {
 }
 
 const entryToValue = (e, base) =>
-    toValue(entryToProp(e), base, true);
+    toValue({...entryToProp(e)}, base, true);
 
 const fillDirect = (raw, base, final = true) => {
     // console.log({raw, base, final})
@@ -135,6 +135,19 @@ const prepareDef = def => {
         if (m.legend) {
             if (m.legend.props === undefined)
                 m.legend.props = {};
+
+            if (!('name' in m.legend.props)) {
+                 m.legend.props.name = "@name"
+            }
+        }
+
+        if (m.hover) {
+            if (m.hover.props === undefined)
+                m.hover.props = {};
+
+            if (!('name' in m.hover.props)) {
+                 m.hover.props.name = "@name"
+            }
         }
     });
 

@@ -2,9 +2,9 @@
     <div class="legend" :data-dim="legend">
         <div class="title">{{ info.name }}</div>
         <div class="entries">
-            <div v-for="entry of entries" :data-visible="entry.props.visible" :data-key="entry.key" @click="switched(entry)" v-bind='ju.fillDirect(info.legend.props, entry.props)'>
+            <div v-for="entry of entries" :data-visible="entry.props.visible" :data-key="entry.key" @click="switched(entry)" v-bind='Object.assign({...entry.filled}, {name: null})'>
                 <LegendSymbol v-if="info.legend.symbol" :info="info.legend.symbol" :props="entry.props"/>
-                <span>{{ entry.props.name }}</span>
+                <span v-html='entry.filled.name'/>
             </div>
         </div>
     </div>
@@ -35,7 +35,8 @@ export default {
         this.info = store.mapping(this.legend);
         this.entries = Object.keys(this.info.props).map(d => ({
             key: d,
-            props: this.info.props[d]
+            props: this.info.props[d],
+            filled: ju.fillDirect(this.info.legend.props, this.info.props[d]),
         }))
     },
     methods: {

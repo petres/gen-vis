@@ -17,6 +17,7 @@ module.exports = merge(baseConfig, {
             ]
         }),
         new HtmlWebpackPlugin({
+            favicon: 'assets/icon.png',
             template: 'dev.html',
             chunks: ['dev']
         }),
