@@ -10,13 +10,7 @@ const addScale = (info, dims) => {
 
     const s = d3[`scale${eu.capitalize(scaleDef.type)}`]()
 
-    if (!Array.isArray(scaleDef.range)) {
-        if (scaleDef.orientation == "horizontal") {
-            scaleDef.range = [0, "@width"];
-        } else if (scaleDef.orientation == "vertical") {
-            scaleDef.range = ["@height", 0];
-        }
-    }
+    // fill width and eight
     s.range(ju.fillDirect(scaleDef.range, dims))
     // console.log(s.range())
     if (info.extent) {

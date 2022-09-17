@@ -126,6 +126,19 @@ const prepareDef = def => {
                 m.scale.domainRel ??= m.scale.domain.map((v, i) => v === null ? (i == 0 ? -1 : 1) * 0.02 : 0);
 
             m.scale.domainAbs ??= [0, 0];
+
+
+            if (!Array.isArray(m.scale.range)) {
+                if (m.scale.orientation == "horizontal") {
+                    m.scale.range = [0, "@width"];
+                } else if (m.scale.orientation == "vertical") {
+                    m.scale.range = ["@height", 0];
+                }
+            }
+        }
+
+        if (m.axis) {
+            m.axis.padding ??= 3;
         }
 
         if (m.hover !== undefined && m.axis !== undefined) {

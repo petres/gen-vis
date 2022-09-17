@@ -67,7 +67,16 @@ export default {
             this.def.plot.forEach(plotDef => {
                 // d.props = ju.fillProps(d.props, );
                 const dataGrouped = du.groupBy(this.data, plotDef.categories);
-                // console.log(d)
+                // const filter = plotDef.filter.map(f => {
+                //     const r = RegExp(f.regexp, 'i');
+                //     return {
+                //         dim: f.dim,
+                //         key: v => r.test(v),
+                //     }
+                // })
+                // const dataFiltered = du.filter(this.data, filter);
+                // const dataGrouped = du.groupBy(dataFiltered, plotDef.categories);
+                // // console.log(d)
                 const dataGroupedProps = ju.getProps(dataGrouped, plotDef, this.relativeBases, this.def.mapping);
                 // console.log(dataGroupedProps)
                 this[plotDef.type](dataGroupedProps);
@@ -177,7 +186,9 @@ export default {
                         dim: n,
                         mapping: m,
                     };
+                    // console.log(this.data)
                     du.addDimInfo(info, this.data)
+                    // console.log(info.values)
                     pu.addScale(info, {
                         width: this.innerWidth,
                         height: this.innerHeight,
@@ -204,6 +215,7 @@ export default {
                         .tickSizeInner(9)
                         .tickSizeOuter(0)
                         .ticks(ju.entryToValue(i.ticks, this.relativeBases))
+                        .tickPadding(i.padding)
 
                     // console.log({ n , value: ju.entryToValue(i.ticks, this.relativeBases) })
                     // console.log(this.relativeBases)
@@ -235,7 +247,7 @@ export default {
                     }
 
                     const ga = this.inner.append("g")
-                        .attr("class", `axis-${n}`)
+                        .attr("class", `axis-name-${n} axis-position-${i.position}`)
                         .call(a)
 
                     if (i.position == 'bottom')
@@ -319,10 +331,11 @@ export default {
                 .attr("opacity", 0)
                 .on("mousemove", function(e) {
                     const c = d3.pointer(e);
+                    // console.log(c[0])
                     const i = self.info[axis.h.name];
-                    // console.log(self.info)
+                    // console.log(i.scale.domain())
                     const x = i.scale.invertCustom(c[0]);
-
+                    // console.log(x)
                     if (x == xo)
                         return;
 
@@ -377,8 +390,11 @@ export default {
             font-size: 12px;
         }
         :deep(svg) {
-            g.axis-x g.tick line {transform: translate(0px, -4px);}
-            g.axis-y g.tick line {transform: translate(5px, 0px);}
+            g.axis-position-bottom g.tick line {transform: translate(0px, -4px);}
+            g.axis-position-top g.tick line {transform: translate(0px, 5px);}
+            g.axis-position-right g.tick line {transform: translate(-4px, 0px);}
+            g.axis-position-bottom g.tick line {transform: translate(0px, -4px);}
+            g.axis-position-left g.tick line {transform: translate(5px, 0px);}
             g.tick {
                 text {
                     font-size: 13px;

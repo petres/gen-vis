@@ -28,7 +28,8 @@ const prepareData = (data, def) => {
 };
 
 const addDimInfo = (info, data) => {
-    info.values = data.map(d => d[info.dim]);
+    // get unique values
+    info.values = [...new Set(data.map(d => d[info.dim]))];
     if (info.mapping.type == 'numeric' || info.mapping.type == 'date' ) {
         if (info.mapping.stacked) {
             info.extent = d3.extent(data.map(d => d[`${info.dim}:st:e`]));
@@ -102,10 +103,14 @@ const groupBy = (data, keys) => {
 // };
 
 const filter = (data, conditions) => {
+    if (conditions.length == 0)
+        return
     // console.log(conditions)
     return data.filter(e => conditions.reduce((s, c) => {
         if (Array.isArray(c.key))
             return (s && c.key.includes(e[c.dim]))
+        else if (typeof c.key == 'function')
+            return (s && c.key(e[c.dim]))
         else
             return (s && e[c.dim] == c.key)
     }, true));
