@@ -5,7 +5,7 @@ import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 
 const modUrl = (url) => {
-    if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0 || url.indexOf('/') === 0) {
+    if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0 || url.indexOf('/') === 0 || url.indexOf('.') === 0) {
         return url;
     }
     return `./${url}`;
@@ -39,8 +39,11 @@ export const baseStore = defineStore('base', {
     },
     actions: {
         init(def, data = null) {
-            // console.log(def)
             this.defOrg = def;
+            if(typeof def == "string") {
+                console.error(`No valid JSON definiton file`)
+                throw new Error('No valid JSON definiton');
+            }
             this.def = ju.prepareDef(JSON.parse(JSON.stringify(def)))
             if (data === null) {
                 this.loadData();
@@ -54,6 +57,10 @@ export const baseStore = defineStore('base', {
                 .then(response => {
                     this.init(response.data);
                 })
+                .catch((error) => {
+                    // console.log(error)
+                    console.error(`Could not load def file ${modUrl(def)}`)
+                })
         },
         loadData() {
             return axios
@@ -61,6 +68,9 @@ export const baseStore = defineStore('base', {
                 .then(response => {
                     // console.log(response.data)
                     this.data = du.prepareData(response.data, this.def);
+                })
+                .catch((error) => {
+                    console.error(`Could not load data file '${modUrl(this.def.data)}'`)
                 })
         },
     },
