@@ -4,15 +4,21 @@ import axios from 'axios';
 import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 
-const modUrl = (url) => {
+const modUrl = (url, defUrl = null) => {
     if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0 || url.indexOf('/') === 0 || url.indexOf('.') === 0) {
         return url;
     }
+
+    if (defUrl) {
+        return `${defUrl.substring(0, defUrl.lastIndexOf("/"))}/${url}`;
+    }
+    
     return `./${url}`;
 }
 
 export const baseStore = defineStore('base', {
     state: () => ({
+        defUrl: null,
         defOrg: null,
         def: null,
         data: null,
@@ -52,19 +58,20 @@ export const baseStore = defineStore('base', {
             }
         },
         load(def) {
+            this.defUrl = modUrl(def);
             return axios
-                .get(modUrl(def))
+                .get(this.defUrl)
                 .then(response => {
                     this.init(response.data);
                 })
                 .catch((error) => {
-                    // console.log(error)
+                    console.log(error)
                     console.error(`Could not load def file ${modUrl(def)}`)
                 })
         },
         loadData() {
             return axios
-                .get(modUrl(this.def.data))
+                .get(modUrl(this.def.data, this.defUrl))
                 .then(response => {
                     // console.log(response.data)
                     this.data = du.prepareData(response.data, this.def);
