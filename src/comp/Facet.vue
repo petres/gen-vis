@@ -348,6 +348,7 @@ export default {
                     hoverLine.attr("y2", self.innerHeight)
 
                     self.hover.title = axis.h.formatter(x);
+                    // console.log(categories)
                     const tt = du.filter(self.data, [{dim: axis.h.name, key: x}])
                         .sort((a, b) => b[axis.v.name] - a[axis.v.name])
                         .map(e => {

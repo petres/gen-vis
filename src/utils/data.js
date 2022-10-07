@@ -104,7 +104,7 @@ const groupBy = (data, keys) => {
 
 const filter = (data, conditions) => {
     if (conditions.length == 0)
-        return
+        return data;
     // console.log(conditions)
     return data.filter(e => conditions.reduce((s, c) => {
         if (Array.isArray(c.key))
