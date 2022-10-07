@@ -42,8 +42,8 @@ const getProps = (dataGrouped, plotDef, globs, mappings) => {
 }
 
 
-const toValue = (prop, base, final = true) => {
-    if (prop.value === undefined || prop.value === null) {
+const toValue = (prop, base, final = true, reevaluate = false) => {
+    if (prop.value === undefined || prop.value === null || reevaluate) {
         if (prop.prop == "ref") {
             const value = base[prop.ref];
             if (value !== undefined)
@@ -54,6 +54,16 @@ const toValue = (prop, base, final = true) => {
             const value = base[prop.ref];
             if (value !== undefined)
                 prop.value = prop.ratio*value;
+        }
+
+        if (prop.prop == "steps") {
+            const value = base[prop.ref];
+            if (value !== undefined) {
+                prop.steps.forEach(s => {
+                    if (value > s.cut)
+                        prop.value = s.value;
+                });
+            }
         }
     }
 

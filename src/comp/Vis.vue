@@ -23,8 +23,11 @@
 <script>
 import { baseStore } from '@/store.js'
 import * as d3 from "d3";
+
 import * as du from "@/utils/data.js";
 import * as pu from "@/utils/plot.js";
+import * as ju from "@/utils/json.js";
+
 import Facet from '@/comp/Facet.vue';
 import LegendEntry from '@/comp/Legend.vue';
 
@@ -96,6 +99,7 @@ export default {
         },
         resized() {
             if (this.store.def.options.width) {
+
             } else {
                 this.width = this.$refs.vis.getBoundingClientRect().width
                 this.dataInit();
@@ -116,17 +120,29 @@ export default {
             }));
 
             this.data = du.filter(this.store.data, this.filter)
+            // console.log(this.store.data)
+            // console.log(this.filter)
+            // console.log(this.data)
 
             // stacked
-            if (this.store.mapping(axis.v).stacked)
-                du.addStackedData(this.data, axis, def.facets ? def.facets.dim : []);
+            axis.v.forEach(a => {
+                if (this.store.mapping(a).stacked)
+                    du.addStackedData(this.data, axis, def.facets ? def.facets.dim : []);
+            });
+
+
             // console.log(JSON.stringify(this.data))
 
 
             if (def.facets) {
                 this.facets.margins = this.margins;
                 this.facets.height = this.height;
-                this.facets.width = this.width/def.facets.cols;
+
+                const cols = ju.entryToValue(def.facets.cols, {
+                    totalWidth: this.width
+                }, true, true);
+
+                this.facets.width = this.width/cols;
 
                 // dims
                 const d = def.facets.dim;

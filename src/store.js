@@ -22,13 +22,13 @@ export const baseStore = defineStore('base', {
         axis() {
             const b = this.mappingNamesWithKey('scale');
             // console.log(b)
-            let axis = {};
+            let axis = {h: [], v: []};
             b.forEach(n => {
                 const r = this.mapping(n).scale.orientation;
                 if (r == 'horizontal')
-                    axis.h = n;
+                    axis.h.push(n);
                 if (r == 'vertical')
-                    axis.v = n;
+                    axis.v.push(n);
             });
             return axis;
         },
