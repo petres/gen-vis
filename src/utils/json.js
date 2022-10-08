@@ -87,7 +87,7 @@ const fillProps = (props, base, final = false) =>
 const isProp = o => o.prop !== undefined;
 
 const entryToProp = (value) => {
-    if (typeof value === 'object' && value !== null) {
+    if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
         if (isProp(value))
             return value;
         return mapObject(value, entryToProp)

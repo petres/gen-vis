@@ -1,8 +1,11 @@
 <template>
     <div class="vis" ref="vis">
         <div class="vis-header">
-            <div class="title">{{ title }}</div>
-            <div class="subtitle">{{ subtitle }}</div>
+            <div class="title">{{ options.title }}</div>
+            <div class="subtitle">{{ options.subtitle }}</div>
+        </div>
+        <div ref="form" class="vis-form-elements">
+            <form-element v-for="element in formElements" :element="element" :globals="this.globals" @changeSelected="changeSelected"/>
         </div>
         <div ref="legends" class="vis-legends">
             <legend-entry v-for="legend in legends" :legend="legend" @changeSelected="changeSelected"/>
@@ -12,10 +15,10 @@
                 <div class="facet-title" :style="`margin-left: ${facets.margins.left}px`">{{ e.filter.name }}</div>
                 <facet :key="e.data" :data="e.data" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
             </div>
-            <facet v-else :key="data" :data="data" :shared="{}" :height='height' :width='width' :margins='margins'/>
+            <facet v-else :key="data" :data="data" :shared="{}" :height='options.height' :width='options.width' :margins='options.margins'/>
         </div>
         <div class="vis-footer">
-            <span v-html="footer"/>
+            <span v-html="options.footer"/>
         </div>
     </div>
 </template>
@@ -30,21 +33,18 @@ import * as ju from "@/utils/json.js";
 
 import Facet from '@/comp/Facet.vue';
 import LegendEntry from '@/comp/Legend.vue';
+import FormElement from '@/comp/FormElement.vue';
 
 
 export default {
     data: () => ({
         initialized: false,
 
-        margins: {top: 0, right: 0, bottom: 0, left: 0},
-        width: 0,
-        height: 0,
-
-        title: "",
-        subtitle: "",
-        footer: "",
+        options: {},
+        globals: {},
 
         legends: [],
+        formElements: [],
         filter: [],
         data: [],
 
@@ -57,14 +57,13 @@ export default {
         },
 
         data: null,
-        def: null,
     }),
     computed: {
-        innerWidth() { return this.width - (this.margins.left + this.margins.right) },
-        innerHeight() { return this.height - (this.margins.top + this.margins.bottom) },
+        innerWidth() { return this.options.width - (this.options.margins.left + this.options.margins.right) },
+        innerHeight() { return this.options.height - (this.options.margins.top + this.options.margins.bottom) },
     },
     components: {
-        Facet, LegendEntry
+        Facet, LegendEntry, FormElement,
     },
     created() {
         window.addEventListener("resize", this.resized);
@@ -82,26 +81,18 @@ export default {
             this.store = baseStore();
 
             this.legends = this.store.mappingNamesWithKey('legend')
+            this.formElements = this.store.def.formElements;
+            this.globals = this.store.def.globals;
 
-            this.title = this.store.def.options.title;
-            this.subtitle = this.store.def.options.subtitle;
-            this.footer = this.store.def.options.footer;
+            this.options = Object.assign({}, this.store.def.options);
 
-            this.margins = this.store.def.options.margins;
-            this.height = this.store.def.options.height;
-
-            if (this.store.def.options.width) {
-                this.width = this.store.def.options.width;
-            } else {
-                this.width = this.$refs.vis.getBoundingClientRect().width
-                // console.log(this.width)
+            if (!this.options.width) {
+                this.options.width = this.$refs.vis.getBoundingClientRect().width
             }
         },
         resized() {
-            if (this.store.def.options.width) {
-
-            } else {
-                this.width = this.$refs.vis.getBoundingClientRect().width
+            if (!this.store.def.options.width) {
+                this.options.width = this.$refs.vis.getBoundingClientRect().width
                 this.dataInit();
                 this.scales();
             }
@@ -137,14 +128,14 @@ export default {
 
 
             if (def.facets) {
-                this.facets.margins = this.margins;
-                this.facets.height = this.height;
+                this.facets.margins = this.options.margins;
+                this.facets.height = this.options.height;
 
                 const cols = ju.entryToValue(def.facets.cols, {
-                    totalWidth: this.width
+                    totalWidth: this.options.width
                 }, true, true);
 
-                this.facets.width = this.width/cols;
+                this.facets.width = this.options.width/cols;
 
                 // dims
                 const d = def.facets.dim;
@@ -165,22 +156,26 @@ export default {
         scales() {
             const def = this.store.def;
             if (def.facets && def.facets.scales) {
-                const infos = def.facets.scales.map(n => {
-                    const m = this.store.mapping(n);
-                    const info = {
-                        dim: n,
-                        mapping: m,
-                    };
-                    du.addDimInfo(info, this.data);
-                    pu.addScale(info, {
-                        "width": this.facets.width - (this.facets.margins.left + this.facets.margins.right),
-                        "height": this.facets.height - (this.facets.margins.top + this.facets.margins.bottom),
-                    });
+                const scales = ju.entryToValue(def.facets.scales, def.globals, true, true);
+                // if (scales) {
+                    const infos = scales.map(n => {
+                        const m = this.store.mapping(n);
+                        const info = {
+                            dim: n,
+                            mapping: m,
+                        };
+                        du.addDimInfo(info, this.data);
+                        pu.addScale(info, {
+                            "width": this.facets.width - (this.facets.margins.left + this.facets.margins.right),
+                            "height": this.facets.height - (this.facets.margins.top + this.facets.margins.bottom),
+                        });
 
-                    return info;
-                });
-                du.addScaledData(this.data, infos);
-                this.facets.shared = Object.fromEntries(infos.map(e => [e.dim, e]));
+                        return info;
+                    });
+                
+                    du.addScaledData(this.data, infos);
+                    this.facets.shared = Object.fromEntries(infos.map(e => [e.dim, e]));
+                // }
             }
 
             this.initialized = true;
