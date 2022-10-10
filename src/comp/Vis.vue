@@ -89,10 +89,17 @@ export default {
             if (!this.options.width) {
                 this.options.width = this.$refs.vis.getBoundingClientRect().width
             }
+
+            this.options.height = ju.entryToValue(this.options.height, {
+                totalWidth: this.options.width
+            }, true, true);
         },
         resized() {
             if (!this.store.def.options.width) {
                 this.options.width = this.$refs.vis.getBoundingClientRect().width
+                this.options.height = ju.entryToValue(this.store.def.options.height, {
+                    totalWidth: this.options.width
+                }, true, true);
                 this.dataInit();
                 this.scales();
             }
