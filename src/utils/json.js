@@ -86,6 +86,11 @@ const fillProps = (props, base, final = false) =>
 
 const isProp = o => o.prop !== undefined;
 
+
+
+/**
+ * Converts strings to props
+ */
 const entryToProp = (value) => {
     if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
         if (isProp(value))
@@ -177,8 +182,9 @@ const prepareDef = def => {
     if (!Array.isArray(def.plot))
         def.plot = [def.plot];
 
-    def.plot.forEach(p => {
+    def.plot.forEach((p, i) => {
         p.categories ??= [];
+        p.id ??= `plot-${i}`;
     });
 
 

@@ -8,7 +8,7 @@
             </g>
         </svg>
         <div :style="`transform: translate(${margins.left}px, ${margins.top + innerHeight/2}px); position: absolute; top: 0; left: 0;`">
-            <hover v-if="hover.visible" :data="hover.data" :side="hover.side" :x="hover.x" :title="hover.title" />
+            <hover v-if="hover.visible" :data="hover.data" :side="hover.side" :axis="hover.axis"/>
         </div>
         <span v-if="debug" class="debug">{{ debug }}</span>
     </div>
@@ -322,8 +322,19 @@ export default {
 
             const hoverDiv = d3.select(this.$refs.hover);
 
+
+            const resetHover = (selection = 'svg .nearest', attrs = []) => {
+                const resetElements = d3.selectAll(selection)
+                if (resetElements.size() > 0) {
+                    attrs.forEach(n => {
+                        resetElements.attr(n, resetElements.attr(`data-cache-${n}`))
+                    })
+                }
+                resetElements.classed('nearest', false);
+            }
+
             hoverDiv.select('table.entries').selectAll('*').remove();
-            let xo = null;
+            // let xo = null;
             this.inner.append("rect")
                 .attr("class", "events")
                 .attr("width", this.innerWidth)
@@ -336,43 +347,84 @@ export default {
                     // console.log(i.scale.domain())
                     const x = i.scale.invertCustom(c[0]);
                     // console.log(x)
-                    if (x == xo)
-                        return;
+                    // if (x == xo)
+                    //     return;
 
-                    xo = x;
+                    // xo = x;
 
                     const xs = i.scale(x);
+
                     hoverLine.attr("x1", xs)
                     hoverLine.attr("x2", xs)
                     hoverLine.attr("y1", 0)
                     hoverLine.attr("y2", self.innerHeight)
 
-                    self.hover.title = axis.h.formatter(x);
-                    // console.log(categories)
+                    // console.log(self.data)
                     const tt = du.filter(self.data, [{dim: axis.h.name, key: x}])
-                        .sort((a, b) => b[axis.v.name] - a[axis.v.name])
+                        // .sort((a, b) => b[axis.v.name] - a[axis.v.name])
                         .map(e => {
-                            const t = {};
-
+                            const t = {entries: {}, data: e, nearest: false};
                             categories.forEach(n => {
-                                // t[n] = self.store.prop(n, e[n]).name
-                                t[n] = ju.fillDirect(self.store.mapping(n).hover.props, self.store.prop(n, e[n]))
+                                t.entries[n] = ju.fillDirect(self.store.mapping(n).hover.props, self.store.prop(n, e[n]))
                             })
-
-                            t[axis.v.name] = axis.v.formatter(e[axis.v.name]);
+                            t.entries[axis.v.name] = {
+                                value: e[axis.v.name],
+                                name: axis.v.formatter(e[axis.v.name])
+                            };
                             return t;
                         })
 
-                    // console.log(tt)
+                    const ys = self.info[axis.v.name].scale.invert(c[1]);
 
+                    const ttt = tt.map((e, i) => ({v: e.entries[axis.v.name].value, i: i})).sort((a, b) => a.v - b.v)
+
+
+                    const nearestElement = tt[ttt[d3.bisectCenter(ttt.map(e => e.v), ys)].i]
+                    nearestElement.nearest = true;
+
+                    
+                    self.def.plot.forEach(plotDef => {
+                        if (plotDef.hover) {
+                            // resetHover('svg .nearest', Object.keys(plotDef.hover))
+                            const t = plotDef.categories.map(c => ({name: c, value: nearestElement.data[c]}));
+
+                            const f = t.map(e => `[data-group-${e.name}='${e.value}']`).join('');
+                            // console.log(f)
+                            const es = d3.selectAll(`svg ${f}, svg ${f} circle, svg ${f} rect`)
+                            es.classed('nearest', true);
+
+                            Object.entries(plotDef.hover).forEach(([n, v]) => {
+                                es.attr(`data-cache-${n}`, es.attr(n))
+                                    .attr(n, v)
+                            })
+
+                            // console.log(plotDef.hover)
+                        }
+                    })
+
+
+                    // console.log(tt)
                     self.hover.data = tt;
-                    self.hover.x = xs;
+
+                    self.hover.axis = {
+                        h: {
+                            col: axis.h.name,
+                            value: xs,
+                            name: axis.h.formatter(x),
+                        },
+                        v: {
+                            col: axis.v.name,
+                            value: ys,
+                        }
+                    }
+                    // console.log(self.hover.axis)
+
                     self.hover.side = xs > self.innerWidth/2 ? "left" : "right";
 
                 })
                 .on("mouseout", function(e) {
                     self.hover.visible = false;
-                    xo = null;
+                    // xo = null;
                 })
                 .on("mouseenter", function(e) {
                     self.hover.visible = true;
@@ -417,7 +469,8 @@ export default {
             }
             g.hoverMarker {
                 line {
-                    stroke: #999;
+                    stroke-width: 0.75px;
+                    stroke: #AAA;
                 }
             }
         }

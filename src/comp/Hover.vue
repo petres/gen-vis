@@ -1,6 +1,6 @@
 <template>
-    <div class="hover" ref="hover" :style='{left: left, transform: transform}'>
-        <div class="title">{{ title }}</div>
+    <div v-if="axis && axis.h" class="hover" ref="hover" :style='{left: left, transform: transform}'>
+        <div class="title">{{ axis.h.name }}</div>
         <table class="entries" ref="entries">
             <!-- <tr class="entry">
                 <td></td>
@@ -18,12 +18,12 @@ import * as ju from "@/utils/json";
 import * as eu from "@/utils/else";
 
 export default {
-    props: ["title", "x", "side", "data"],
+    props: ["title", "axis", "side", "data"],
     data: () => ({
-        space: 10
+        space: 20
     }),
     computed: {
-        left() { return (this.side == "left") ? `${this.x - this.space}px` : `${this.x + this.space}px` },
+        left() { return (this.side == "left") ? `${this.axis.h.value - this.space}px` : `${this.axis.h.value + this.space}px` },
         transform() { return (this.side == "left") ? `translate(-100%, -50%)` : `translate(0, -50%)` },
     },
     components: {
@@ -32,25 +32,24 @@ export default {
         this.store = baseStore();
     },
     mounted() {
+        // console.log(this.axis)
     },
     watch: {
-        data(newQuestion, oldQuestion) {
-            let axis = [
-                { axis: 'x', name: 'x' },
-                { axis: 'y', name: 'y' },
-            ];
-
+        data() {
+            const data = [...this.data].sort((a, b) => b.entries[this.axis.v.col].value - a.entries[this.axis.v.col].value)
+            // console.log(data)
             let entries = d3.select(this.$refs.entries).selectAll('tr.entry')
-                .data(this.data)
+                .data(data)
                 .join('tr')
                 .attr('class', "entry")
+                .classed('nearest', d => d.nearest)
 
-                entries.selectAll("td").remove();
-                entries.selectAll("td")
-                    .data(d => Object.entries(d))
-                    .join("td")
-                    .attr('class', d => d[0])
-                    .html(d => typeof d[1] === 'object' ? d[1].name : d[1])
+            entries.selectAll("td").remove();
+            entries.selectAll("td")
+                .data(d => Object.entries(d.entries))
+                .join("td")
+                .attr('class', d => d[0])
+                .html(d => typeof d[1] === 'object' ? d[1].name : d[1])
         }
     }
 }
@@ -78,6 +77,9 @@ export default {
             border-collapse: collapse;
 
             tr {
+                &.nearest {
+                    font-weight: bold;
+                }
                 td {
                     text-align: left;
                     padding: 1px 5px;

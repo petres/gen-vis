@@ -23,7 +23,6 @@
                     "ratio": 0.013
                 },
                 "name": "Jahr",
-                "format": "",
                 "position": "bottom",
                 "format": "c"
             },
@@ -102,25 +101,26 @@
             "props": {
                 "stroke-width": "@stroke-width",
                 "fill": "none",
-                "opacity": 0.9,
+                "opacity": 0.7,
                 "stroke": "@color",
                 "d": {
                     "x": "@x:scaled",
                     "y": "@y:scaled"
-                }
+                },
+                "hover-opacity": 1,
+                "hover-stroke-width": 3
             }
         }, {
             "type": "svg:circle",
             "categories": ["land"],
             "props": {
                 "fill": "@color",
-                "opacity": 0.6,
+                "opacity": 0.7,
                 "cx": "@x:scaled",
-                "cy": {
-                    "prop": "ref",
-                    "ref": "y:scaled"
-                },
-                "r": 5
+                "cy": "@y:scaled",
+                "r": 4,
+                "hover-r": 5,
+                "hover-opacity": 1
             }
         }
     ]
