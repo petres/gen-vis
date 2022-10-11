@@ -8,6 +8,7 @@ export default {
     // def: "wwwi/def-wwwi.json",
     // def: "wwwi/def-use.json",
     // def: "energy/electricity/generation/def-facets.json",
+    def: "energy/electricity/load/def.json",
     // def: "fb/def-fb2.json",
     // def: "bev/def-bar.json",
     // def: "graph/def.json",
