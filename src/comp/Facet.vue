@@ -78,14 +78,19 @@ export default {
                 // const dataGrouped = du.groupBy(dataFiltered, plotDef.categories);
                 // // console.log(d)
                 const dataGroupedProps = ju.getProps(dataGrouped, plotDef, this.relativeBases, this.def.mapping);
+                // console.log(plotDef.id)
                 // console.log(dataGroupedProps)
-                this[plotDef.type](dataGroupedProps);
+
+                const parent = this.inner.append("g")
+                    .classed("plotGroup", true)
+                    .classed(plotDef.id, true)
+                this[plotDef.type](dataGroupedProps, parent);
             });
         },
-        _groupwise: function(data) {
+        _groupwise: function(data, parent) {
             // console.log(data)
-            return this.inner.append("g")
-                .attr("class", "paths")
+            return parent
+                .classed("paths", true)
                 .selectAll("path")
                 .data(data)
                 .enter()
@@ -93,10 +98,10 @@ export default {
                 .each(function(d) {pu.setProps.call(this, d.props)})
                 .each(pu.setGroupData)
         },
-        _pointwise(data, type, translate = v => v) {
+        _pointwise(data, parent, type, translate = v => v) {
             // console.log(data);
-            return this.inner.append("g")
-                .attr("class", type)
+            return parent
+                .classed(type, true)
                 .selectAll(`g.group`)
                 .data(data)
                 .enter()
@@ -110,8 +115,8 @@ export default {
                 .each(pu.setProps)
         },
 
-        'svg:path': function(data) {
-            this._groupwise(data)
+        'svg:path': function(data, parent) {
+            this._groupwise(data, parent)
                 .attr("d", d => d3.line()
                     .x(e => e.x)
                     .y(e => e.y)
@@ -120,13 +125,13 @@ export default {
         },
 
 
-        'svg:circle': function(data) { this._pointwise(data, "circle") },
-        'svg:line': function(data)   { this._pointwise(data, "line") },
-        'svg:rect': function(data)   { this._pointwise(data, "rect") },
-        'svg:text': function(data)   { this._pointwise(data, "text") },
+        'svg:circle': function(data, parent) { this._pointwise(data, parent, "circle") },
+        'svg:line':   function(data, parent) { this._pointwise(data, parent, "line") },
+        'svg:rect':   function(data, parent) { this._pointwise(data, parent, "rect") },
+        'svg:text':   function(data, parent) { this._pointwise(data, parent, "text") },
 
         'base:area': function(data) {
-            this._groupwise(data)
+            this._groupwise(data, parent)
                 .attr("d", d => d3.area()
                     .x(e => e.x)
                     .y1(e => e.y1)
@@ -135,9 +140,9 @@ export default {
                 )
         },
 
-        bar(data) {
+        bar(data, parent) {
             const self = this;
-            this._pointwise(data, "rect", (v) => {
+            this._pointwise(data, parent, "rect", (v) => {
                 const yBase = v.height.parts[0];
                 const yZero = self.info[yBase].scale(0);
 
@@ -155,7 +160,7 @@ export default {
             })
         },
 
-        stackedBar(data) {
+        stackedBar(data, parent) {
             const self = this;
             data.forEach(g => {
                 const x = g.props["x"].ref;
@@ -167,7 +172,7 @@ export default {
 
                 g.props["transform"] = ju.entryToProp(`translate(-${g.props.width.value/2} 0)`);
             });
-            this._pointwise(data, "rect", (v) => {
+            this._pointwise(data, parent, "rect", (v) => {
                 if(v.height.value < 0) {
                     v.y.value += v.height.value;
                     v.height.value = -v.height.value;
@@ -323,14 +328,13 @@ export default {
             const hoverDiv = d3.select(this.$refs.hover);
 
 
-            const resetHover = (selection = 'svg .nearest', attrs = []) => {
-                const resetElements = d3.selectAll(selection)
-                if (resetElements.size() > 0) {
+            const resetHover = (elements, attrs = []) => {
+                if (elements.size() > 0) {
+                    elements.classed('hover', false);
                     attrs.forEach(n => {
-                        resetElements.attr(n, resetElements.attr(`data-cache-${n}`))
+                        elements.attr(n, elements.attr(`default-${n}`));
                     })
                 }
-                resetElements.classed('nearest', false);
             }
 
             hoverDiv.select('table.entries').selectAll('*').remove();
@@ -383,23 +387,39 @@ export default {
                     nearestElement.nearest = true;
 
                     
-                    self.def.plot.forEach(plotDef => {
-                        if (plotDef.hover) {
-                            // resetHover('svg .nearest', Object.keys(plotDef.hover))
-                            const t = plotDef.categories.map(c => ({name: c, value: nearestElement.data[c]}));
+                    self.def.plot.filter(p => p.hoverProps.length > 0).forEach(plotDef => {
+                        const t = plotDef.categories.map(c => ({name: c, value: nearestElement.data[c]}));
 
-                            const f = t.map(e => `[data-group-${e.name}='${e.value}']`).join('');
-                            // console.log(f)
-                            const es = d3.selectAll(`svg ${f}, svg ${f} circle, svg ${f} rect`)
-                            es.classed('nearest', true);
+                        const f = t.map(e => `[data-group-${e.name}='${e.value}']`).join('');
+                        const selectorToHover = `g.plotGroup.${plotDef.id} ${f}`;
+                        const selectorHovered = `g.plotGroup.${plotDef.id} .hover`;
 
-                            Object.entries(plotDef.hover).forEach(([n, v]) => {
-                                es.attr(`data-cache-${n}`, es.attr(n))
-                                    .attr(n, v)
+                        // resetHover(, ha)
+                        // console.log(selector)
+                        const esToHover = self.inner.selectAll(selectorToHover);
+                        const esHovered = self.inner.selectAll(selectorHovered);
+                        // console.log(es.size())
+                        if (esHovered.size() > 0) {
+                            esHovered.classed('hover', false)
+                            plotDef.hoverProps.forEach(n => {
+                                esHovered.attr(n, esHovered.attr(`default-${n}`));
                             })
-
-                            // console.log(plotDef.hover)
                         }
+
+                        // add hover
+                        const esNew = esToHover.filter(":not(.hover)")
+                        if (esNew.size() > 0) {
+                            esNew.classed('hover', true)
+                                .raise();
+                            
+                            plotDef.hoverProps.forEach(n => {
+                                esNew.attr(`default-${n}`, esNew.attr(n))
+                                    .attr(n, esNew.attr(`hover-${n}`))
+                            })
+                        }
+
+                        // remove hover
+                        // self.inner.selectAll(selectorToHover)
                     })
 
 
@@ -424,7 +444,18 @@ export default {
                 })
                 .on("mouseout", function(e) {
                     self.hover.visible = false;
-                    // xo = null;
+
+                    // remove hover
+                    self.def.plot.filter(p => p.hoverProps.length > 0).forEach(plotDef => {
+                        const selectorHovered = `g.plotGroup.${plotDef.id} .hover`;
+                        const esHovered = self.inner.selectAll(selectorHovered);
+                        if (esHovered.size() > 0) {
+                            esHovered.classed('hover', false)
+                            plotDef.hoverProps.forEach(n => {
+                                esHovered.attr(n, esHovered.attr(`default-${n}`));
+                            })
+                        }
+                    })
                 })
                 .on("mouseenter", function(e) {
                     self.hover.visible = true;
