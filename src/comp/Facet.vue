@@ -63,6 +63,7 @@ export default {
         this.hoverInit();
     },
     methods: {
+        getFormatterByType: t => t == "time" ? eu.localeTime.format : eu.locale.format,
         plot() {
             this.def.plot.forEach(plotDef => {
                 // d.props = ju.fillProps(d.props, );
@@ -222,14 +223,8 @@ export default {
                         .ticks(ju.entryToValue(i.ticks, this.relativeBases))
                         .tickPadding(i.padding)
 
-                    // console.log({ n , value: ju.entryToValue(i.ticks, this.relativeBases) })
-                    // console.log(this.relativeBases)
-
                     if (i.format) {
-                        if (m.scale.type == "time")
-                            a.tickFormat(eu.localeTime.format(i.format))
-                        else
-                            a.tickFormat(eu.locale.format(i.format))
+                        a.tickFormat(this.getFormatterByType(m.scale.type)(i.format))
                     }
 
                     if (i.values) {
@@ -295,7 +290,6 @@ export default {
             const self = this;
 
             let axis = this.store.axis;
-
             axis = Object.keys(axis).map(t => ({
                 axis: t, name: axis[t]
             }))
@@ -308,11 +302,7 @@ export default {
                 if (i && i.format) {
                     format = i.format;
                 }
-
-                if (m.scale.type == "time")
-                    a.formatter = eu.localeTime.format(format);
-                else
-                    a.formatter = eu.locale.format(format);
+                a.formatter = this.getFormatterByType(m.scale.type)(i.format);
             });
 
             axis = Object.fromEntries(axis.map(a => [a.axis, a]))
@@ -327,16 +317,6 @@ export default {
 
             const hoverDiv = d3.select(this.$refs.hover);
 
-
-            const resetHover = (elements, attrs = []) => {
-                if (elements.size() > 0) {
-                    elements.classed('hover', false);
-                    attrs.forEach(n => {
-                        elements.attr(n, elements.attr(`default-${n}`));
-                    })
-                }
-            }
-
             hoverDiv.select('table.entries').selectAll('*').remove();
             // let xo = null;
             this.inner.append("rect")
@@ -346,26 +326,19 @@ export default {
                 .attr("opacity", 0)
                 .on("mousemove", function(e) {
                     const c = d3.pointer(e);
-                    // console.log(c[0])
                     const i = self.info[axis.h.name];
-                    // console.log(i.scale.domain())
+
+                    // get next existing x value with data
                     const x = i.scale.invertCustom(c[0]);
-                    // console.log(x)
-                    // if (x == xo)
-                    //     return;
-
-                    // xo = x;
-
                     const xs = i.scale(x);
 
                     hoverLine.attr("x1", xs)
-                    hoverLine.attr("x2", xs)
-                    hoverLine.attr("y1", 0)
-                    hoverLine.attr("y2", self.innerHeight)
+                        .attr("x2", xs)
+                        .attr("y1", 0)
+                        .attr("y2", self.innerHeight)
 
                     // console.log(self.data)
                     const tt = du.filter(self.data, [{dim: axis.h.name, key: x}])
-                        // .sort((a, b) => b[axis.v.name] - a[axis.v.name])
                         .map(e => {
                             const t = {entries: {}, data: e, nearest: false};
                             categories.forEach(n => {
@@ -382,7 +355,6 @@ export default {
 
                     const ttt = tt.map((e, i) => ({v: e.entries[axis.v.name].value, i: i})).sort((a, b) => a.v - b.v)
 
-
                     const nearestElement = tt[ttt[d3.bisectCenter(ttt.map(e => e.v), ys)].i]
                     nearestElement.nearest = true;
 
@@ -392,13 +364,13 @@ export default {
 
                         const f = t.map(e => `[data-group-${e.name}='${e.value}']`).join('');
                         const selectorToHover = `g.plotGroup.${plotDef.id} ${f}`;
+
                         const selectorHovered = `g.plotGroup.${plotDef.id} .hover`;
 
-                        // resetHover(, ha)
-                        // console.log(selector)
                         const esToHover = self.inner.selectAll(selectorToHover);
                         const esHovered = self.inner.selectAll(selectorHovered);
-                        // console.log(es.size())
+
+                        // remove hover
                         if (esHovered.size() > 0) {
                             esHovered.classed('hover', false)
                             plotDef.hoverProps.forEach(n => {
@@ -417,11 +389,7 @@ export default {
                                     .attr(n, esNew.attr(`hover-${n}`))
                             })
                         }
-
-                        // remove hover
-                        // self.inner.selectAll(selectorToHover)
                     })
-
 
                     // console.log(tt)
                     self.hover.data = tt;
