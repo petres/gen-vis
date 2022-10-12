@@ -17,7 +17,6 @@
             },
             "axis": {
                 "ticks": 6,
-                "format": "",
                 "position": "bottom",
                 "rotate": 40,
                 "format": "%b %y"

@@ -46,7 +46,7 @@ export default {
         } else if (this.defFile !== null)  {
             this.store.load(this.defFile);
         } else {
-            console.log('No definition given.')
+            console.error('No definition given.')
         }
     }
 }

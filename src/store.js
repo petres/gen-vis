@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import axios from 'axios';
 
+import merge from 'deepmerge';
+const overwriteMerge = (target, source, options) => source;
+
 import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 
@@ -51,28 +54,47 @@ export const baseStore = defineStore('base', {
     },
     actions: {
         init(def, data = null) {
-            this.defOrg = def;
+            const self = this;
+            this.loadAndMergeParent(def, [def], function(defResolved) {
+                self.defOrg = defResolved;
+                self.def = ju.prepareDef(JSON.parse(JSON.stringify(self.defOrg)))
+                if (data === null) {
+                    self.loadData();
+                } else {
+                    self.data = du.prepareData(data, self.def);
+                }
+            })
+        },
+        loadAndMergeParent(def, parents, call) {
+            const self = this;
             if(typeof def == "string") {
                 console.error(`No valid JSON definiton file`)
                 throw new Error('No valid JSON definiton');
             }
-            this.def = ju.prepareDef(JSON.parse(JSON.stringify(def)))
-            if (data === null) {
-                this.loadData();
+            if (def.parent) {
+                this.load(def.parent, function(defParent) {
+                    parents.push(defParent);
+                    self.loadAndMergeParent(defParent, parents, call);
+                })
             } else {
-                this.data = du.prepareData(data, this.def);
+                // console.log(parents)
+                parents.reverse();
+                const merged = merge.all(parents, { arrayMerge: overwriteMerge });
+                // console.log(merged)
+                call(merged);
             }
         },
-        load(def) {
-            this.defUrl = modUrl(def);
+        load(defUrl, call = this.init) {
+            const defUrlM = modUrl(defUrl);
+            this.defUrl ??= defUrlM;
             return axios
-                .get(this.defUrl)
+                .get(defUrlM)
                 .then(response => {
-                    this.init(response.data);
+                    call(response.data);
                 })
                 .catch((error) => {
                     console.log(error)
-                    console.error(`Could not load def file ${modUrl(def)}`)
+                    console.error(`Could not load def file ${defUrlM}`)
                 })
         },
         loadData() {

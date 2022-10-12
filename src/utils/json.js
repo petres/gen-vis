@@ -186,7 +186,6 @@ const prepareDef = def => {
         p.categories ??= [];
         p.id ??= `plot-${i}`;
         p.hoverProps = Object.keys(p.props).filter(n => n.startsWith('hover-')).map(n => n.substring(6));
-        console.log(p)
     });
 
 
