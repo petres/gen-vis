@@ -8,7 +8,7 @@
             <form-element v-for="element in formElements" :element="element" :globals="this.globals" @changeSelected="changeSelected"/>
         </div>
         <div ref="legends" class="vis-legends">
-            <legend-entry v-for="legend in legends" :legend="legend" @changeSelected="changeSelected"/>
+            <legend-entry v-for="legend in legends" :legend="legend" @changeSelected="changeSelected" @highlight="highlight"/>
         </div>
         <div v-if="initialized" class="vis-body">
             <div v-if="facets.entries.length > 0" v-for="e in facets.entries" :style="`width: ${facets.width}px; display: inline-block;`">
@@ -108,9 +108,7 @@ export default {
         dataInit() {
             const def = this.store.def;
             const axis = this.store.axis;
-
-            // console.log(axis);
-
+            
             // filter
             this.filter = this.store.mappingNamesWithKey('props').map(c => ({
                 dim: c,
@@ -190,6 +188,10 @@ export default {
         changeSelected(info) {
             this.dataInit();
             this.scales();
+        },
+        highlight(info) {
+            // console.log(info);
+            pu.highlightElements(d3.select(this.$refs.vis), this.store.def.plot, {[info.dim]: info.key})
         }
     }
 }

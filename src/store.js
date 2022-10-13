@@ -8,7 +8,7 @@ import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 
 const modUrl = (url, defUrl = null) => {
-    if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0 || url.indexOf('/') === 0 || url.indexOf('.') === 0) {
+    if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0 || url.indexOf('/') === 0) {
         return url;
     }
 

@@ -1,5 +1,5 @@
 {
-    "data": "./data/bev/data.csv",
+    "data": "data.csv",
     "options": {
         "height": 300,
         "margins": {"top": 10, "right": 10, "bottom": 40, "left": 80},
@@ -107,8 +107,8 @@
                     "x": "@x:scaled",
                     "y": "@y:scaled"
                 },
-                "hover-opacity": 1,
-                "hover-stroke-width": 3
+                "highlight-opacity": 1,
+                "highlight-stroke-width": 3
             }
         }, {
             "type": "svg:circle",
@@ -119,8 +119,8 @@
                 "cx": "@x:scaled",
                 "cy": "@y:scaled",
                 "r": 4,
-                "hover-r": 5,
-                "hover-opacity": 1
+                "highlight-r": 5,
+                "highlight-opacity": 1
             }
         }
     ]

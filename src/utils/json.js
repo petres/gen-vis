@@ -185,15 +185,13 @@ const prepareDef = def => {
     def.plot.forEach((p, i) => {
         p.categories ??= [];
         p.id ??= `plot-${i}`;
-        p.hoverProps = Object.keys(p.props).filter(n => n.startsWith('hover-')).map(n => n.substring(6));
+        p.highlightProps = Object.keys(p.props).filter(n => n.startsWith('highlight-')).map(n => n.substring(10));
     });
-
 
     def.plot.forEach(p => {
         p.props = mapObject(p.props, entryToProp);
         p._fill = d => fillProps(p.props, d)
     });
-
 
     return def;
 }

@@ -1,4 +1,4 @@
-export { addScale, setProps, setGroupData };
+export { addScale, setProps, setGroupData, highlightElements };
 
 import * as d3 from "d3";
 import * as ju from "@/utils/json.js";
@@ -99,4 +99,47 @@ const setGroupData = function(d) {
     //     }
     //     e.attr(key, value);
     // }
+}
+
+
+const highlightElements = (inner, plotDefs, dataEntry = null) => {
+    // TODO: REWRITE, TOTAL MESS
+    plotDefs.filter(p => p.highlightProps.length > 0).forEach(plotDef => {
+        const selectorHighlighted = `g.plotGroup.${plotDef.id} .highlight`;
+        const esHighlighted = inner.selectAll(selectorHighlighted);
+
+        // remove highlight
+        if (esHighlighted.size() > 0) {
+            esHighlighted.classed('highlight', false)
+            esHighlighted.each(function() {
+                const e = d3.select(this);
+                plotDef.highlightProps.forEach(n => {
+                    e.attr(n, e.attr(`default-${n}`))
+                })
+            });
+        }
+        
+        if (dataEntry) {
+            const f = plotDef.categories
+                .filter(c => Object.keys(dataEntry).includes(c))
+                .map(c => ({name: c, value: dataEntry[c]}))
+                .map(e => `[data-group-${e.name}='${e.value}']`).join('');
+
+            const esToHighlight = inner.selectAll(`g.plotGroup.${plotDef.id} ${f}`);
+            // add highlight
+            // const esNew = esToHighlight.filter(":not(.highlight)")
+            if (esToHighlight.size() > 0) {
+                esToHighlight.classed('highlight', true)
+                    .raise();
+                
+                esToHighlight.each(function() {
+                    const e = d3.select(this);
+                    plotDef.highlightProps.forEach(n => {
+                        e.attr(`default-${n}`, e.attr(n))
+                         .attr(n, e.attr(`highlight-${n}`))
+                    })
+                });
+            }
+        }
+    })
 }

@@ -358,39 +358,8 @@ export default {
                     const nearestElement = tt[ttt[d3.bisectCenter(ttt.map(e => e.v), ys)].i]
                     nearestElement.nearest = true;
 
+                    pu.highlightElements(self.inner, self.def.plot, nearestElement.data);                
                     
-                    self.def.plot.filter(p => p.hoverProps.length > 0).forEach(plotDef => {
-                        const t = plotDef.categories.map(c => ({name: c, value: nearestElement.data[c]}));
-
-                        const f = t.map(e => `[data-group-${e.name}='${e.value}']`).join('');
-                        const selectorToHover = `g.plotGroup.${plotDef.id} ${f}`;
-
-                        const selectorHovered = `g.plotGroup.${plotDef.id} .hover`;
-
-                        const esToHover = self.inner.selectAll(selectorToHover);
-                        const esHovered = self.inner.selectAll(selectorHovered);
-
-                        // remove hover
-                        if (esHovered.size() > 0) {
-                            esHovered.classed('hover', false)
-                            plotDef.hoverProps.forEach(n => {
-                                esHovered.attr(n, esHovered.attr(`default-${n}`));
-                            })
-                        }
-
-                        // add hover
-                        const esNew = esToHover.filter(":not(.hover)")
-                        if (esNew.size() > 0) {
-                            esNew.classed('hover', true)
-                                .raise();
-                            
-                            plotDef.hoverProps.forEach(n => {
-                                esNew.attr(`default-${n}`, esNew.attr(n))
-                                    .attr(n, esNew.attr(`hover-${n}`))
-                            })
-                        }
-                    })
-
                     // console.log(tt)
                     self.hover.data = tt;
 
@@ -405,25 +374,13 @@ export default {
                             value: ys,
                         }
                     }
-                    // console.log(self.hover.axis)
-
                     self.hover.side = xs > self.innerWidth/2 ? "left" : "right";
-
                 })
                 .on("mouseout", function(e) {
+                    // remove hover div
                     self.hover.visible = false;
-
-                    // remove hover
-                    self.def.plot.filter(p => p.hoverProps.length > 0).forEach(plotDef => {
-                        const selectorHovered = `g.plotGroup.${plotDef.id} .hover`;
-                        const esHovered = self.inner.selectAll(selectorHovered);
-                        if (esHovered.size() > 0) {
-                            esHovered.classed('hover', false)
-                            plotDef.hoverProps.forEach(n => {
-                                esHovered.attr(n, esHovered.attr(`default-${n}`));
-                            })
-                        }
-                    })
+                    // remove hover lines
+                    pu.highlightElements(self.inner, self.def.plot)
                 })
                 .on("mouseenter", function(e) {
                     self.hover.visible = true;
