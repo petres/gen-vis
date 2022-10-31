@@ -23,7 +23,13 @@ import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 import * as eu from "@/utils/else";
 
+// import { isProxy, toRaw } from 'vue';
+
 import Hover from '@/comp/Hover.vue';
+
+const l = (e) => {
+    console.log(JSON.parse(JSON.stringify(e)))
+}
 
 export default {
     props: ["filter", "shared", "height", "width", "margins", "data"],
@@ -337,7 +343,12 @@ export default {
                         .attr("y1", 0)
                         .attr("y2", self.innerHeight)
 
+                    // l(self.data.sort((a, b) => a.x - b.x))
+                    // l(self.data.filter(e => e.x == x))
                     // console.log(self.data)
+                    // console.log([{dim: axis.h.name, key: x}])
+                    // console.log(i.scale)
+                    // console.log(du.filter(self.data, [{dim: axis.h.name, key: x}]))
                     const tt = du.filter(self.data, [{dim: axis.h.name, key: x}])
                         .map(e => {
                             const t = {entries: {}, data: e, nearest: false};
@@ -350,6 +361,7 @@ export default {
                             };
                             return t;
                         })
+                    // console.log(tt)
 
                     const ys = self.info[axis.v.name].scale.invert(c[1]);
 

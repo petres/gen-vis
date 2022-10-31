@@ -1,33 +1,43 @@
 {
   "name": "gen-vis",
-  "version": "0.2.7",
-  "description": "",
-  "main": "index.js",
+  "version": "0.3.0",
+  "description": "A declarative d3 visualisation library",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "webpack serve --config build/dev.js",
-    "build": "rm -rf dist && webpack --config build/prod.js",
+    "lib": "rm -rf dist && webpack --config build/lib.js",
+    "npm": "rm -rf dist && webpack --config build/npm.js",
     "upload": "rsync -arv dist/ preschen@hades.wsr.ac.at:/usr/local/www/datascience/htdocs/gen-vis",
-    "deploy": "npm run build && npm run upload"
+    "deploy": "npm run lib && npm run upload"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/petres/gen-vis.git"
   },
   "author": {
     "name": "Peter Reschenhofer",
-    "email": "peter.reschenhofer@gmail.com"
+    "email": "peter@abteil.org"
   },
+  "bugs": {
+    "url": "https://github.com/petres/gen-vis/issues"
+  },
+  "homepage": "https://github.com/petres/gen-vis",
   "dependencies": {
-    "axios": "^0.27.2",
-    "copy-webpack-plugin": "^11",
-    "css-loader": "^6",
+    "axios": "^1",
     "d3": "^7",
     "deepmerge": "^4",
+    "pinia": "^2",
+    "vue": "^3"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^11",
+    "css-loader": "^6",
     "file-loader": "^6",
     "html-webpack-plugin": "^5",
-    "pinia": "^2",
     "sass": "^1",
     "sass-loader": "^13",
     "style-loader": "^3",
-    "vue": "^3",
     "vue-loader": "^17",
-    "webpack": "^5",
     "webpack-cli": "^4",
     "webpack-dev-server": "^4"
   }
