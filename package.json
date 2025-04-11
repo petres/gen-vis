@@ -26,19 +26,19 @@
     "axios": "^1",
     "d3": "^7",
     "deepmerge": "^4",
-    "pinia": "^2",
+    "pinia": "^3",
     "vue": "^3"
   },
   "devDependencies": {
-    "copy-webpack-plugin": "^11",
-    "css-loader": "^6",
+    "copy-webpack-plugin": "^13",
+    "css-loader": "^7",
     "file-loader": "^6",
     "html-webpack-plugin": "^5",
     "sass": "^1",
-    "sass-loader": "^13",
-    "style-loader": "^3",
+    "sass-loader": "^16",
+    "style-loader": "^4",
     "vue-loader": "^17",
-    "webpack-cli": "^4",
-    "webpack-dev-server": "^4"
+    "webpack-cli": "^6",
+    "webpack-dev-server": "^5"
   }
 }
