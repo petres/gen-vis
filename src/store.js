@@ -90,7 +90,8 @@ export const baseStore = defineStore('base', {
             return axios
                 .get(defUrlM)
                 .then(response => {
-                    call(response.data);
+                    console.log(response.data)
+                    // call(response.data);
                 })
                 .catch((error) => {
                     console.log(error)

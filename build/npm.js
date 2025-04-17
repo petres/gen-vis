@@ -5,7 +5,7 @@ module.exports = merge(baseConfig, {
     entry: {
         main: './src/index.js',
     },
-    mode: 'production',
+    mode: 'development',
     output: {
         filename: 'index.js',
         library: {

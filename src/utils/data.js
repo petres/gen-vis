@@ -3,7 +3,15 @@ export { groupBy, prepareData, filter, addDimInfo, addScaledData, addStackedData
 import * as d3 from "d3";
 
 const prepareData = (data, def) => {
-    data = d3.csvParse(data);
+    // console.log({data})
+    // console.log(`prepareData: ${typeof data}`)
+
+    // if (typeof data == "string")
+    if (data.charAt(0) == '[')
+        data = JSON.parse(data)
+    else
+        data = d3.csvParse(data);
+    
 
     // TODO: CLEANUP
     const mapping = Object.keys(def.mapping).map(n => ({
@@ -15,7 +23,7 @@ const prepareData = (data, def) => {
 
     return data.map(d => {
         const e = {};
-        mapping.forEach(c => {
+        mapping.forEach(c => {``
             let ev = d[c.column];
             if (c.date)
                 ev = Date.parse(ev);
