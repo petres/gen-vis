@@ -5,7 +5,7 @@
             <div class="subtitle">{{ options.subtitle }}</div>
         </div>
         <div ref="form" class="vis-form-elements">
-            <form-element v-for="element in formElements" :element="element" :globals="this.globals" @changeSelected="formChanged"/>
+            <form-element v-for="element in formElements" :element="element" :globals="globals" @changeSelected="formChanged"/>
         </div>
         <div ref="legends" class="vis-legends">
             <legend-entry v-for="legend in legends" :legend="legend" @changeSelected="changeSelected" @highlight="highlight"/>
@@ -56,8 +56,6 @@ export default {
             width: 0,
             margins: {top: 0, right: 0, bottom: 0, left: 0},
         },
-
-        data: null,
     }),
     computed: {
         innerWidth() { return this.options.width - (this.options.margins.left + this.options.margins.right) },
@@ -66,16 +64,23 @@ export default {
     components: {
         Facet, LegendEntry, FormElement,
     },
-    created() {
-        window.addEventListener("resize", this.resized);
-    },
     mounted() {
         this.baseInit();
         this.dataInit();
         this.scales();
+
+        // without a fixed width the visualisation fills its container
+        if (!this.store.def.options.width) {
+            this.resizeObserver = new ResizeObserver(() => {
+                clearTimeout(this.resizeTimeout);
+                this.resizeTimeout = setTimeout(this.resized, 100);
+            });
+            this.resizeObserver.observe(this.$refs.vis);
+        }
     },
-    destroyed() {
-        window.removeEventListener("resize", this.resized);
+    unmounted() {
+        this.resizeObserver?.disconnect();
+        clearTimeout(this.resizeTimeout);
     },
     methods: {
         baseInit() {
@@ -84,30 +89,27 @@ export default {
             this.globals = this.store.def.globals;
 
             this.options = Object.assign({}, this.store.def.options);
-
-            if (!this.options.width) {
-                this.options.width = this.$refs.vis.getBoundingClientRect().width
-            }
-
-            this.options.height = ju.entryToValue(this.options.height, {
+            this.measure();
+        },
+        measure() {
+            const options = this.store.def.options;
+            this.options.width = options.width || this.$refs.vis.getBoundingClientRect().width;
+            this.options.height = ju.entryToValue(options.height, {
                 totalWidth: this.options.width
-            }, true, true);
+            });
         },
         resized() {
-            if (!this.store.def.options.width) {
-                this.options.width = this.$refs.vis.getBoundingClientRect().width
-                this.options.height = ju.entryToValue(this.store.def.options.height, {
-                    totalWidth: this.options.width
-                }, true, true);
-                this.dataInit();
-                this.scales();
-            }
-
+            const width = this.$refs.vis?.getBoundingClientRect().width;
+            if (!width || width == this.options.width)
+                return;
+            this.measure();
+            this.dataInit();
+            this.scales();
         },
         dataInit() {
             const def = this.store.def;
             const axis = this.store.axis;
-            
+
             // filter
             this.filter = this.store.mappingNamesWithKey('props').map(c => ({
                 dim: c,
@@ -115,21 +117,10 @@ export default {
             }));
 
             this.data = markRaw(du.filter(this.store.data, this.filter));
-            // console.log(this.store.data)
-            // console.log(this.filter)
-            // console.log(this.data)
 
             // stacked
-            // axis.v.forEach(a => {
-            //     if (this.store.mapping(a).stacked)
-            //         du.addStackedData(this.data, axis, def.facets ? def.facets.dim : []);
-            // });
-            if (this.store.mapping(axis.v).stacked)
+            if (axis.v && this.store.mapping(axis.v).stacked)
                 du.addStackedData(this.data, axis, def.facets ? def.facets.dim : []);
-
-
-            // console.log(JSON.stringify(this.data))
-
 
             if (def.facets) {
                 this.facets.margins = this.options.margins;
@@ -137,7 +128,7 @@ export default {
 
                 const cols = ju.entryToValue(def.facets.cols, {
                     totalWidth: this.options.width
-                }, true, true);
+                });
 
                 this.facets.width = this.options.width/cols;
 
@@ -160,26 +151,23 @@ export default {
         scales() {
             const def = this.store.def;
             if (def.facets && def.facets.scales) {
-                const scales = ju.entryToValue(def.facets.scales, def.globals, true, true);
-                // if (scales) {
-                    const infos = scales.map(n => {
-                        const m = this.store.mapping(n);
-                        const info = {
-                            dim: n,
-                            mapping: m,
-                        };
-                        du.addDimInfo(info, this.data);
-                        pu.addScale(info, {
-                            "width": this.facets.width - (this.facets.margins.left + this.facets.margins.right),
-                            "height": this.facets.height - (this.facets.margins.top + this.facets.margins.bottom),
-                        });
-
-                        return info;
+                const scales = ju.entryToValue(def.facets.scales, def.globals);
+                const infos = scales.map(n => {
+                    const info = {
+                        dim: n,
+                        mapping: this.store.mapping(n),
+                    };
+                    du.addDimInfo(info, this.data);
+                    pu.addScale(info, {
+                        "width": this.facets.width - (this.facets.margins.left + this.facets.margins.right),
+                        "height": this.facets.height - (this.facets.margins.top + this.facets.margins.bottom),
                     });
-                
-                    du.addScaledData(this.data, infos);
-                    this.facets.shared = Object.fromEntries(infos.map(e => [e.dim, e]));
-                // }
+
+                    return info;
+                });
+
+                du.addScaledData(this.data, infos);
+                this.facets.shared = Object.fromEntries(infos.map(e => [e.dim, e]));
             }
 
             this.initialized = true;
@@ -193,7 +181,6 @@ export default {
             this.changeSelected(info);
         },
         highlight(info) {
-            // console.log(info);
             pu.highlightElements(d3.select(this.$refs.vis), this.store.def.plot, {[info.dim]: info.key})
         }
     }

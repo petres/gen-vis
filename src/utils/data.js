@@ -6,30 +6,40 @@ import * as d3 from "d3";
 const parseData = data => {
     if (typeof data != "string")
         return data;
-    if (data.charAt(0) == '[')
+    data = data.replace(/^﻿/, '');
+    if (/^\s*\[/.test(data))
         return JSON.parse(data);
     return d3.csvParse(data);
 };
 
+const missing = v => v === null || v === undefined || v === '';
+
+// missing and invalid values are null
+const toNumber = v => {
+    const n = missing(v) ? NaN : +v;
+    return isNaN(n) ? null : n;
+};
+
+// dates are strings or timestamps
+const toDate = v => {
+    const t = missing(v) ? NaN : (typeof v == 'number' ? v : Date.parse(v));
+    return isNaN(t) ? null : t;
+};
+
+const converters = { numeric: toNumber, date: toDate };
+
 // maps the parsed rows to the mappings, e.g. column `share` to `y`
 const prepareData = (data, def) => {
-    // TODO: CLEANUP
     const mapping = Object.keys(def.mapping).map(n => ({
         name: n,
         column: def.mapping[n].column,
-        numeric: def.mapping[n].type == 'numeric',
-        date: def.mapping[n].type == 'date',
+        convert: converters[def.mapping[n].type] ?? (v => v),
     }));
 
     return data.map(d => {
         const e = {};
-        mapping.forEach(c => {``
-            let ev = d[c.column];
-            if (c.date)
-                ev = Date.parse(ev);
-            if (c.numeric)
-                ev = 1 * ev;
-            e[c.name] = ev;
+        mapping.forEach(c => {
+            e[c.name] = c.convert(d[c.column]);
         });
         return e;
     })
@@ -39,13 +49,13 @@ const addDimInfo = (info, data) => {
     // get unique values
     info.values = [...new Set(data.map(d => d[info.dim]))];
     if (info.mapping.type == 'numeric' || info.mapping.type == 'date' ) {
+        // sorted for the lookup of the nearest value
+        info.values = info.values.filter(v => v !== null).sort((a, b) => a - b);
         if (info.mapping.stacked) {
             info.extent = d3.extent(data.map(d => d[`${info.dim}:st:e`]));
         } else {
             info.extent = d3.extent(info.values);
         }
-    } else if (info.mapping.type == 'categorical') {
-
     }
 }
 
@@ -71,7 +81,6 @@ const addStackedData = (data, axis, dims = []) => {
 
 
 const addScaledData = (data, infos) => {
-    // console.log(infos.y.domain)
     data.forEach(d => {
         Object.values(infos).forEach(i => {
             d[`${i.dim}:scaled`] = i.scale(d[i.dim]);
@@ -92,7 +101,7 @@ const addScaledData = (data, infos) => {
 
 const groupBy = (data, keys) => {
     return Object.values(data.reduce((storage, item) => {
-        var group = keys.map(k => item[k]).join('-'); //item[key];
+        var group = keys.map(k => item[k]).join('-');
         storage[group] = storage[group] || {
             group: Object.fromEntries(keys.map(k => [k, item[k]])),
             entries: []
@@ -103,17 +112,10 @@ const groupBy = (data, keys) => {
 };
 
 
-// const filter = (data, conditions) => {
-//     // console.log(conditions)
-//     return data.filter(e => conditions.reduce((s, c) => {
-//         return (s && e[c.dim] == c.key)
-//     }, true));
-// };
-
+// always a new array, the facets are rendered again if their data changes
 const filter = (data, conditions) => {
     if (conditions.length == 0)
-        return data;
-    // console.log(conditions)
+        return [...data];
     return data.filter(e => conditions.reduce((s, c) => {
         if (Array.isArray(c.key))
             return (s && c.key.includes(e[c.dim]))

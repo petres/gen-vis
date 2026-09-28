@@ -1,4 +1,4 @@
-export { fillDirect, fillProps, getProps, prepareDef, applyFormElements, mergeAll, sameValue, entryToValue, toValue, entryToProp, isProp };
+export { fillDirect, fillProps, getProps, prepareDef, applyFormElements, mergeAll, sameValue, entryToValue, toValue, entryToProp, isProp, refNames };
 
 import merge from 'deepmerge';
 const overwriteMerge = (target, source, options) => source;
@@ -22,31 +22,15 @@ const arrayToObject = (a, key, value = v => v) => Object.fromEntries(
 );
 
 
-const getProps = (dataGrouped, plotDef, globs, mappings) => {
-     // console.log(plot)
-    // dataGrouped.forEach(g => {
-    //     Object.keys(g.group).forEach((item, i) => {
-    //         console.log([item, g.group[item].props])
-    //     });
-    // });
-    return dataGrouped.map(g => {
-        // console.log(Object.assign({}, ...Object.keys(g.group).map(v => mappings[v].props[g.group[v]])));
-        // console.log(plot._fill(Object.assign({}, ...Object.keys(g.group).map(v => mappings[v].props[g.group[v]]))));
-
-        return {
-            group: Object.keys(g.group).map(d => ({
-                dim: d,
-                key: g.group[d],
-            })),
-            // TODO: SPEED UP
-            props: plotDef._fill(Object.assign(globs, ...Object.keys(g.group).map(v => mappings[v].props[g.group[v]]))),
-            // props: Object.keys(g.group).reduce(
-            //     (storage, item) => fill(storage, mappings[item].props[g.group[item]])
-            // , plot.props),
-            values: g.entries,
-        }
-    })
-}
+// the props of every group are filled with globs and the props of its categories
+const getProps = (dataGrouped, plotDef, globs, mappings) => dataGrouped.map(g => ({
+    group: Object.keys(g.group).map(d => ({
+        dim: d,
+        key: g.group[d],
+    })),
+    props: plotDef._fill(Object.assign({}, globs, ...Object.keys(g.group).map(v => mappings[v].props[g.group[v]]))),
+    values: g.entries,
+}));
 
 
 const toValue = (prop, base, final = true, reevaluate = false) => {
@@ -83,15 +67,22 @@ const toValue = (prop, base, final = true, reevaluate = false) => {
 const entryToValue = (e, base) =>
     toValue({...entryToProp(e)}, base, true);
 
-const fillDirect = (raw, base, final = true) => {
-    // console.log({raw, base, final})
-    return fillProps(mapObjectOrArray(raw, entryToProp), base, final);
-}
+const fillDirect = (raw, base, final = true) =>
+    fillProps(mapObjectOrArray(raw, entryToProp), base, final);
 
 const fillProps = (props, base, final = false) =>
     mapObjectOrArray(props, prop => toValue({...prop}, base, final))
 
 const isProp = o => o.prop !== undefined;
+
+// the names referenced by the (nested) props, e.g. `y` for "@y:scaled"
+const refNames = props => Object.values(props).flatMap(p => {
+    if (p === null || typeof p != 'object')
+        return [];
+    if (!isProp(p))
+        return refNames(p);
+    return typeof p.ref == 'string' ? [p.ref.split(':')[0]] : [];
+});
 
 
 

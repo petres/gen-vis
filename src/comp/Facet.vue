@@ -22,13 +22,9 @@ import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 import * as eu from "@/utils/else";
 
-// import { isProxy, toRaw } from 'vue';
-
 import Hover from '@/comp/Hover.vue';
 
-const l = (e) => {
-    console.log(JSON.parse(JSON.stringify(e)))
-}
+const finite = (...values) => values.every(v => Number.isFinite(v));
 
 export default {
     props: ["filter", "shared", "height", "width", "margins", "data"],
@@ -71,21 +67,8 @@ export default {
         getFormatterByType: t => t == "time" ? eu.localeTime.format : eu.locale.format,
         plot() {
             this.def.plot.forEach(plotDef => {
-                // d.props = ju.fillProps(d.props, );
                 const dataGrouped = du.groupBy(this.data, plotDef.categories);
-                // const filter = plotDef.filter.map(f => {
-                //     const r = RegExp(f.regexp, 'i');
-                //     return {
-                //         dim: f.dim,
-                //         key: v => r.test(v),
-                //     }
-                // })
-                // const dataFiltered = du.filter(this.data, filter);
-                // const dataGrouped = du.groupBy(dataFiltered, plotDef.categories);
-                // // console.log(d)
                 const dataGroupedProps = ju.getProps(dataGrouped, plotDef, this.relativeBases, this.def.mapping);
-                // console.log(plotDef.id)
-                // console.log(dataGroupedProps)
 
                 const parent = this.inner.append("g")
                     .classed("plotGroup", true)
@@ -94,7 +77,6 @@ export default {
             });
         },
         _groupwise: function(data, parent) {
-            // console.log(data)
             return parent
                 .classed("paths", true)
                 .selectAll("path")
@@ -105,7 +87,6 @@ export default {
                 .each(pu.setGroupData)
         },
         _pointwise(data, parent, type, translate = v => v) {
-            // console.log(data);
             return parent
                 .classed(type, true)
                 .selectAll(`g.group`)
@@ -115,15 +96,23 @@ export default {
                 .attr("class", `group`)
                 .each(pu.setGroupData)
                 .selectAll(type)
-                .data(d => d.values.map(e => translate(ju.fillProps(d.props, e))))
+                .data(d => {
+                    // entries with missing values are not drawn
+                    const names = ju.refNames(d.props);
+                    return d.values
+                        .filter(e => names.every(n => e[n] !== null))
+                        .map(e => translate(ju.fillProps(d.props, e)));
+                })
                 .enter()
                 .append(type)
                 .each(pu.setProps)
         },
 
+        // missing values are gaps in paths and areas
         'svg:path': function(data, parent) {
             this._groupwise(data, parent)
                 .attr("d", d => d3.line()
+                    .defined(e => finite(e.x, e.y))
                     .x(e => e.x)
                     .y(e => e.y)
                     (d.values.map(e => ju.fillProps(d.props.d, e, true)))
@@ -136,9 +125,10 @@ export default {
         'svg:rect':   function(data, parent) { this._pointwise(data, parent, "rect") },
         'svg:text':   function(data, parent) { this._pointwise(data, parent, "text") },
 
-        'base:area': function(data) {
+        'base:area': function(data, parent) {
             this._groupwise(data, parent)
                 .attr("d", d => d3.area()
+                    .defined(e => finite(e.x, e.y0, e.y1))
                     .x(e => e.x)
                     .y1(e => e.y1)
                     .y0(e => e.y0)
@@ -167,7 +157,6 @@ export default {
         },
 
         stackedBar(data, parent) {
-            const self = this;
             data.forEach(g => {
                 const x = g.props["x"].ref;
                 const y = g.props["y"].ref;
@@ -192,138 +181,127 @@ export default {
             this.store.mappingNamesWithKey('scale')
                 .filter(n => !Object.keys(this.shared).includes(n))
                 .forEach(n => {
-                    const m = this.store.mapping(n);
                     const info = {
                         dim: n,
-                        mapping: m,
+                        mapping: this.store.mapping(n),
                     };
-                    // console.log(this.data)
                     du.addDimInfo(info, this.data)
-                    // console.log(info.values)
                     pu.addScale(info, {
                         width: this.innerWidth,
                         height: this.innerHeight,
                     });
                     tinfo[n] = info;
-                    // console.log(info)
                 });
             du.addScaledData(this.data, tinfo);
             this.info = {...this.shared, ...tinfo};
-            // console.log(this.info)
-            // this.debug = this.info;
         },
 
         axis() {
-            this.store.mappingNamesWithKey('axis')
-                // .filter(n => !Object.keys(this.shared).includes(n))
-                .forEach(n => {
-                    const m = this.store.mapping(n);
-                    const i = m.axis;
-                    const s = this.info[n].scale;
-                    // const s = m._scale;
+            this.store.mappingNamesWithKey('axis').forEach(n => {
+                const m = this.store.mapping(n);
+                const i = m.axis;
+                const s = this.info[n].scale;
+                const ticks = ju.entryToValue(i.ticks, this.relativeBases);
 
-                    const a = d3[`axis${eu.capitalize(i.position)}`](s)
-                        .tickSizeInner(9)
-                        .tickSizeOuter(0)
-                        .ticks(ju.entryToValue(i.ticks, this.relativeBases))
-                        .tickPadding(i.padding)
+                const a = d3[`axis${eu.capitalize(i.position)}`](s)
+                    .tickSizeInner(9)
+                    .tickSizeOuter(0)
+                    .ticks(ticks)
+                    .tickPadding(i.padding)
 
-                    if (i.format) {
-                        a.tickFormat(this.getFormatterByType(m.scale.type)(i.format))
-                    }
+                if (i.format) {
+                    a.tickFormat(this.getFormatterByType(m.scale.type)(i.format))
+                }
 
-                    if (i.values) {
-                        a.tickValues(i.values)
-                    }
+                if (i.values) {
+                    a.tickValues(i.values)
+                }
 
-                    // console.log('ticks')
-                    // console.log()
-                    if (i.grid) {
-                        const g = this.inner.append("g")
-                            .attr("class", "grid")
-                            .selectAll('line')
-                            .data(s.ticks(i.ticks))
-                            .enter()
-                            .append("line")
-                            .attr('x1', 0)
-                            .attr('x2', this.innerWidth)
-                            .attr('y1', d => s(d))
-                            .attr('y2', d => s(d))
-                    }
+                // the grid lines are at the ticks of the axis
+                if (i.grid) {
+                    const values = i.values ?? (s.ticks ? s.ticks(ticks) : s.domain());
+                    this.grid(s, values, ['left', 'right'].includes(i.position));
+                }
 
-                    const ga = this.inner.append("g")
-                        .attr("class", `axis-name-${n} axis-position-${i.position}`)
-                        .call(a)
+                const ga = this.inner.append("g")
+                    .attr("class", `axis-name-${n} axis-position-${i.position}`)
+                    .call(a)
+
+                if (i.position == 'bottom')
+                    ga.attr('transform', `translate(0, ${this.innerHeight})`)
+                if (i.position == 'right')
+                    ga.attr('transform', `translate(${this.innerWidth}, 0)`)
+
+                if (i.rotate)
+                    ga.selectAll("text")
+                        .attr("text-anchor", "end")
+                        .attr("transform", `rotate(-${i.rotate})`)
+
+                if (i.title) {
+                    const at = this.inner.append("text")
+                        .attr('class', 'axis-title')
+                        .attr('y', 0)
+                        .attr('x', 0)
+                        .attr("text-anchor", "middle")
+                        .attr("dominant-baseline", "middle")
+                        .text(i.title.name)
+
+                    if (i.position == 'left')
+                        at.attr("transform", `rotate(-90) translate(-${this.innerHeight/2} -${i.title.offset})`)
+
+                    if (i.position == 'right')
+                        at.attr("transform", `rotate(90) translate(${this.innerHeight/2} -${this.innerWidth + i.title.offset})`)
+
+                    if (i.position == 'top')
+                        at.attr("transform", `translate(${this.innerWidth/2} -${i.title.offset})`)
 
                     if (i.position == 'bottom')
-                        ga.attr('transform', `translate(0, ${this.innerHeight})`)
-                    if (i.position == 'right')
-                        ga.attr('transform', `translate(${this.innerWidth}, 0)`)
+                        at.attr("transform", `translate(${this.innerWidth/2} ${this.innerHeight + i.title.offset})`)
+                }
+            });
+        },
+        // horizontal lines for a vertical axis and vice versa
+        grid(s, values, vertical) {
+            const offset = s.bandwidth ? s.bandwidth()/2 : 0;
+            const lines = this.inner.append("g")
+                .attr("class", "grid")
+                .selectAll('line')
+                .data(values)
+                .enter()
+                .append("line")
 
-                    if (['top', 'bottom'])
-
-                    if (i.rotate)
-                        ga.selectAll("text")
-                            .attr("text-anchor", "end")
-                            .attr("transform", `rotate(-${i.rotate})`)
-
-                    if (i.title) {
-                        const at = this.inner.append("text")
-                            .attr('class', 'axis-title')
-                            .attr('y', 0)
-                            .attr('x', 0)
-                            .attr("text-anchor", "middle")
-                            .attr("dominant-baseline", "middle")
-                            .text(i.title.name)
-
-                        if (i.position == 'left')
-                            at.attr("transform", `rotate(-90) translate(-${this.innerHeight/2} -${i.title.offset})`)
-
-                        if (i.position == 'right')
-                            at.attr("transform", `rotate(90) translate(${this.innerHeight/2} -${this.innerWidth + i.title.offset})`)
-
-                        if (i.position == 'top')
-                            at.attr("transform", `translate(${this.innerWidth/2} -${i.title.offset})`)
-
-                        if (i.position == 'bottom')
-                            at.attr("transform", `translate(${this.innerHeight/2} -${i.title.offset})`)
-                    }
-
-                });
+            if (vertical) {
+                lines.attr('x1', 0)
+                    .attr('x2', this.innerWidth)
+                    .attr('y1', d => s(d) + offset)
+                    .attr('y2', d => s(d) + offset)
+            } else {
+                lines.attr('y1', 0)
+                    .attr('y2', this.innerHeight)
+                    .attr('x1', d => s(d) + offset)
+                    .attr('x2', d => s(d) + offset)
+            }
         },
         hoverInit() {
             const self = this;
 
-            let axis = this.store.axis;
-            axis = Object.keys(axis).map(t => ({
-                axis: t, name: axis[t]
-            }))
+            // the hover needs a horizontal and a vertical axis
+            const names = this.store.axis;
+            if (!names.h || !names.v)
+                return;
 
-            // console.log(axis)
-            axis.forEach(a => {
-                const m = this.def.mapping[a.name];
-                const i = m.hover;
-                let format = 'c';
-                if (i && i.format) {
-                    format = i.format;
-                }
-                a.formatter = this.getFormatterByType(m.scale.type)(i.format);
-            });
+            const axis = Object.fromEntries(Object.entries(names).map(([t, name]) => {
+                const m = this.def.mapping[name];
+                const format = m.hover?.format ?? m.axis?.format ?? (m.scale.type == 'time' ? '%x' : 'c');
+                return [t, {axis: t, name, formatter: this.getFormatterByType(m.scale.type)(format)}];
+            }));
 
-            axis = Object.fromEntries(axis.map(a => [a.axis, a]))
+            // categorical mappings, e.g. not a second vertical axis
+            const categories = this.store.mappingNamesWithKey('hover')
+                .filter(n => n != names.h && n != names.v && this.store.mapping(n).props);
 
-            // console.log(axis)
+            const hoverLine = d3.select(this.$refs.hoverMarker).select("line");
 
-            const categories = this.store.mappingNamesWithKey('hover').filter(e => !Object.values(axis).map(t => t.name).includes(e));
-            // console.log(categories)
-
-            const hoverMarker = d3.select(this.$refs.hoverMarker);
-            const hoverLine = hoverMarker.select("line");
-
-            const hoverDiv = d3.select(this.$refs.hover);
-
-            hoverDiv.select('table.entries').selectAll('*').remove();
-            // let xo = null;
             this.inner.append("rect")
                 .attr("class", "events")
                 .attr("width", this.innerWidth)
@@ -335,6 +313,8 @@ export default {
 
                     // get next existing x value with data
                     const x = i.scale.invertCustom(c[0]);
+                    if (x === undefined)
+                        return;
                     const xs = i.scale(x);
 
                     hoverLine.attr("x1", xs)
@@ -342,13 +322,8 @@ export default {
                         .attr("y1", 0)
                         .attr("y2", self.innerHeight)
 
-                    // l(self.data.sort((a, b) => a.x - b.x))
-                    // l(self.data.filter(e => e.x == x))
-                    // console.log(self.data)
-                    // console.log([{dim: axis.h.name, key: x}])
-                    // console.log(i.scale)
-                    // console.log(du.filter(self.data, [{dim: axis.h.name, key: x}]))
                     const tt = du.filter(self.data, [{dim: axis.h.name, key: x}])
+                        .filter(e => e[axis.v.name] !== null)
                         .map(e => {
                             const t = {entries: {}, data: e, nearest: false};
                             categories.forEach(n => {
@@ -360,27 +335,26 @@ export default {
                             };
                             return t;
                         })
-                    // console.log(tt)
 
                     const ys = self.info[axis.v.name].scale.invert(c[1]);
+                    const v = axis.v.name;
 
                     let nearestElement;
-                    if (self.store.mapping(axis.v.name).stacked) {
+                    if (self.store.mapping(v).stacked) {
                         // stacked: the segment under the mouse, outside of the stack the closest one
-                        const v = axis.v.name;
                         nearestElement = d3.least(tt, e => {
                             const [lo, hi] = d3.extent([e.data[`${v}:st:s`], e.data[`${v}:st:e`]]);
                             return ys < lo ? lo - ys : (ys > hi ? ys - hi : 0);
                         });
                     } else {
-                        const ttt = tt.map((e, i) => ({v: e.entries[axis.v.name].value, i: i})).sort((a, b) => a.v - b.v)
-                        nearestElement = tt[ttt[d3.bisectCenter(ttt.map(e => e.v), ys)].i]
+                        nearestElement = d3.least(tt, e => Math.abs(e.data[v] - ys));
                     }
-                    nearestElement.nearest = true;
 
-                    pu.highlightElements(self.inner, self.def.plot, nearestElement.data);                
-                    
-                    // console.log(tt)
+                    // there is no entry e.g. if all categories are hidden
+                    if (nearestElement)
+                        nearestElement.nearest = true;
+                    pu.highlightElements(self.inner, self.def.plot, nearestElement?.data);
+
                     self.hover.data = tt;
 
                     self.hover.axis = {
