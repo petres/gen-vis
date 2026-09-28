@@ -16,9 +16,10 @@
     "build": "vite build",
     "watch": "vite build --watch",
     "lib": "vite build --mode lib",
+    "test": "vitest run",
     "upload": "rsync -arv dist-lib/ preschen@hades.wsr.ac.at:/usr/local/www/datascience/htdocs/gen-vis",
     "deploy": "npm run lib && npm run upload",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm test && npm run build"
   },
   "repository": {
     "type": "git",
@@ -41,8 +42,10 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.9",
+    "jsdom": "^30.1.1",
     "sass": "^1.105.0",
     "vite": "^8.3.1",
+    "vitest": "^5.0.2",
     "vue": "^3.5.43"
   }
 }
