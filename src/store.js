@@ -5,6 +5,7 @@ import * as d3 from "d3";
 
 import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
+import { validateDef } from "@/utils/validate";
 
 // relative urls are resolved against `base`, e.g. the url of the def referencing them
 const resolveUrl = (url, base = document.baseURI) => new URL(url, base).href;
@@ -54,6 +55,7 @@ const load = async ({ def = null, defUrl = null, data = null }) => {
     }
 
     const defOrg = await resolveParents(JSON.parse(JSON.stringify(def)), url);
+    validateDef(defOrg).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
     const prepared = ju.prepareDef(JSON.parse(JSON.stringify(defOrg)));
     ju.applyFormElements(prepared, defOrg);
 
