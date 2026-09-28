@@ -1,18 +1,15 @@
-export { groupBy, prepareData, filter, addDimInfo, addScaledData, addStackedData };
+export { groupBy, parseData, prepareData, filter, addDimInfo, addScaledData, addStackedData };
 
 import * as d3 from "d3";
 
-const prepareData = (data, def) => {
-    // console.log({data})
-    // console.log(`prepareData: ${typeof data}`)
-
-    // if (typeof data == "string")
+const parseData = data => {
     if (data.charAt(0) == '[')
-        data = JSON.parse(data)
-    else
-        data = d3.csvParse(data);
-    
+        return JSON.parse(data);
+    return d3.csvParse(data);
+};
 
+// maps the parsed rows to the mappings, e.g. column `share` to `y`
+const prepareData = (data, def) => {
     // TODO: CLEANUP
     const mapping = Object.keys(def.mapping).map(n => ({
         name: n,

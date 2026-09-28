@@ -365,9 +365,18 @@ export default {
 
                     const ys = self.info[axis.v.name].scale.invert(c[1]);
 
-                    const ttt = tt.map((e, i) => ({v: e.entries[axis.v.name].value, i: i})).sort((a, b) => a.v - b.v)
-
-                    const nearestElement = tt[ttt[d3.bisectCenter(ttt.map(e => e.v), ys)].i]
+                    let nearestElement;
+                    if (self.store.mapping(axis.v.name).stacked) {
+                        // stacked: the segment under the mouse, outside of the stack the closest one
+                        const v = axis.v.name;
+                        nearestElement = d3.least(tt, e => {
+                            const [lo, hi] = d3.extent([e.data[`${v}:st:s`], e.data[`${v}:st:e`]]);
+                            return ys < lo ? lo - ys : (ys > hi ? ys - hi : 0);
+                        });
+                    } else {
+                        const ttt = tt.map((e, i) => ({v: e.entries[axis.v.name].value, i: i})).sort((a, b) => a.v - b.v)
+                        nearestElement = tt[ttt[d3.bisectCenter(ttt.map(e => e.v), ys)].i]
+                    }
                     nearestElement.nearest = true;
 
                     pu.highlightElements(self.inner, self.def.plot, nearestElement.data);                

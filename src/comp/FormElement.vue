@@ -38,12 +38,7 @@ export default {
             this.$emit('changeSelected', {
             });
         },
-        equal(v) { 
-            if (v == this.vg)
-                return true;
-            
-            return JSON.stringify(v) == JSON.stringify(this.vg);
-        }
+        equal(v) { return ju.sameValue(v, this.vg) }
     }
 }
 </script>
