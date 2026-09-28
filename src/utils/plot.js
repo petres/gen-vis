@@ -2,7 +2,6 @@ export { addScale, setProps, setGroupData, highlightElements };
 
 import * as d3 from "d3";
 import * as ju from "@/utils/json.js";
-import * as du from "@/utils/data.js";
 import * as eu from "@/utils/else.js";
 
 const addScale = (info, dims) => {
@@ -10,9 +9,8 @@ const addScale = (info, dims) => {
 
     const s = d3[`scale${eu.capitalize(scaleDef.type)}`]()
 
-    // fill width and eight
+    // fill width and height
     s.range(ju.fillDirect(scaleDef.range, dims))
-    // console.log(s.range())
     if (info.extent) {
         info.domain = [...scaleDef.domain];
 
@@ -29,56 +27,40 @@ const addScale = (info, dims) => {
         info.domain[0] += info.domainAbs[0];
         info.domain[1] += info.domainAbs[1];
 
-        s.invertCustom = (v) => {
-            const index = d3.bisectCenter(info.values, s.invert(v));
-            // console.log(info.values)
-            return info.values[index];
-        }
-
+        // the nearest value with data
+        s.invertCustom = (v) => info.values[d3.bisectCenter(info.values, s.invert(v))];
     } else {
         info.domain = info.values;
         scaleDef.padding ??= 0.4
-        // s.paddingInner(scaleDef.padding);
         s.padding(scaleDef.padding);
-        // s.paddingOuter(scaleDef.padding/2);
         s.invertCustom = (v) => {
           const index = Math.floor(v / s.step());
           return s.domain()[Math.max(0,Math.min(index, s.domain().length-1))];
         }
     }
 
-    // console.log(info)
-    // console.log(`scale${eu.capitalize(scaleDef.type)}`)
-
     s.domain(info.domain)
-
-
     info.scale = s;
 };
 
 const setProps = function(d) {
     const e = d3.select(this);
-    // console.log(d)
     Object.entries(d).forEach(([k, v], i) => {
         if (v instanceof Object) {
             if (!ju.isProp(v))
                 return;
-            // console.log(v);
             v = v.value;
         }
-        //
         if (k == "text") {
             e.text(v);
             return;
         }
-        // console.log({k, v})
         e.attr(k, v);
     });
 }
 
 const setGroupData = function(d) {
     const element = d3.select(this);
-    // console.log(d)
     d.group.forEach(e => {
         element.attr(`data-group-${e.dim}`, e.key)
     });
@@ -88,17 +70,6 @@ const setGroupData = function(d) {
     });
 
     element.attr(`data-visible`, d.group.reduce((s, e) => s && e.visible, true))
-
-    // for (const [key, value] of Object.entries(d)) {
-    //     if (value instanceof Object)
-    //         continue;
-    //     // console.log([key, value])
-    //     if (key == "text") {
-    //         e.text(value);
-    //         continue;
-    //     }
-    //     e.attr(key, value);
-    // }
 }
 
 
@@ -127,7 +98,6 @@ const highlightElements = (inner, plotDefs, dataEntry = null) => {
 
             const esToHighlight = inner.selectAll(`g.plotGroup.${plotDef.id} ${f}`);
             // add highlight
-            // const esNew = esToHighlight.filter(":not(.highlight)")
             if (esToHighlight.size() > 0) {
                 esToHighlight.classed('highlight', true)
                     .raise();

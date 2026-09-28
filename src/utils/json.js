@@ -114,20 +114,14 @@ const entryToProp = (value) => {
 
 
 const prepareMapping = m => {
-    // console.log(m)
     if (m.props) {
         const props = m.props
-        // console.log(m.props)
-        const keys = Object.keys(props);
-        // if (keys.includes('manual') && keys.includes('common')) {
-            m.props = Object.fromEntries(Object.keys(props.manual).map(k => {
-                const t = Object.assign({}, props.common, props.manual[k])
-                t.name ??= k;
-                t.visible ??= true;
-                return [k, t];
-            }))
-        // }
-
+        m.props = Object.fromEntries(Object.keys(props.manual).map(k => {
+            const t = Object.assign({}, props.common, props.manual[k])
+            t.name ??= k;
+            t.visible ??= true;
+            return [k, t];
+        }))
     }
 
     if (m.scale) {
