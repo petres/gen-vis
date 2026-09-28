@@ -2,13 +2,23 @@
   "name": "@preschen/gen-vis",
   "version": "0.4.0",
   "description": "A declarative d3 visualisation library",
-  "main": "dist/index.js",
+  "type": "module",
+  "main": "dist/gen-vis.js",
+  "module": "dist/gen-vis.js",
+  "exports": {
+    ".": "./dist/gen-vis.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "dev": "webpack serve --config build/dev.js",
-    "lib": "rm -rf dist && webpack --config build/lib.js",
-    "npm": "rm -rf dist && webpack --config build/npm.js",
-    "upload": "rsync -arv dist/ preschen@hades.wsr.ac.at:/usr/local/www/datascience/htdocs/gen-vis",
-    "deploy": "npm run lib && npm run upload"
+    "dev": "vite",
+    "build": "vite build",
+    "watch": "vite build --watch",
+    "lib": "vite build --mode lib",
+    "upload": "rsync -arv dist-lib/ preschen@hades.wsr.ac.at:/usr/local/www/datascience/htdocs/gen-vis",
+    "deploy": "npm run lib && npm run upload",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -22,23 +32,19 @@
     "url": "https://github.com/petres/gen-vis/issues"
   },
   "homepage": "https://github.com/petres/gen-vis",
+  "peerDependencies": {
+    "vue": "^3"
+  },
   "dependencies": {
     "axios": "^1",
     "d3": "^7",
     "deepmerge": "^4",
-    "pinia": "^4",
-    "vue": "^3"
+    "pinia": "^4"
   },
   "devDependencies": {
-    "copy-webpack-plugin": "^14",
-    "css-loader": "^7",
-    "file-loader": "^6",
-    "html-webpack-plugin": "^5",
-    "sass": "^1",
-    "sass-loader": "^17",
-    "style-loader": "^4",
-    "vue-loader": "^17",
-    "webpack-cli": "^7",
-    "webpack-dev-server": "^6"
+    "@vitejs/plugin-vue": "^6.0.9",
+    "sass": "^1.105.0",
+    "vite": "^8.3.1",
+    "vue": "^3.5.43"
   }
 }

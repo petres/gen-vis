@@ -8,8 +8,13 @@
     <body>
         <h1>gen-vis Library Test</h1>
         <h2>/data/sprit-nuts/def.json</h2>
-        <div class="genVis" data-def="/data/sprit-nuts/def.json"></div>
+        <div class="genVis" data-def-file="/data/sprit-nuts/def.json"></div>
         <h2>/data/bev/def.json</h2>
-        <div class="genVis" data-def="/data/bev/def.json"></div>
+        <div class="genVis" data-def-file="/data/bev/def.json"></div>
+        <!-- with the built script: <script src="gen-vis-x.y.z.js"></script> -->
+        <script type="module">
+            import '/src/lib.js';
+            mountGenVisByClass('genVis');
+        </script>
     </body>
 </html>
