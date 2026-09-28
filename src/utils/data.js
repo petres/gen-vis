@@ -1,10 +1,11 @@
-export { groupBy, prepareData, filter, addDimInfo, addScaledData, addStackedData };
+export { groupBy, parseData, prepareData, filter, addDimInfo, addScaledData, addStackedData };
 
 import * as d3 from "d3";
 
-const prepareData = (data, def) => {
-    data = d3.csvParse(data);
+const parseData = data => d3.csvParse(data);
 
+// maps the parsed rows to the mappings, e.g. column `share` to `y`
+const prepareData = (data, def) => {
     // TODO: CLEANUP
     const mapping = Object.keys(def.mapping).map(n => ({
         name: n,

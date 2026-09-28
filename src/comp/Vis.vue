@@ -5,7 +5,7 @@
             <div class="subtitle">{{ options.subtitle }}</div>
         </div>
         <div ref="form" class="vis-form-elements">
-            <form-element v-for="element in formElements" :element="element" :globals="this.globals" @changeSelected="changeSelected"/>
+            <form-element v-for="element in formElements" :element="element" :globals="this.globals" @changeSelected="formChanged"/>
         </div>
         <div ref="legends" class="vis-legends">
             <legend-entry v-for="legend in legends" :legend="legend" @changeSelected="changeSelected" @highlight="highlight"/>
@@ -188,6 +188,10 @@ export default {
         changeSelected(info) {
             this.dataInit();
             this.scales();
+        },
+        formChanged(info) {
+            this.store.applyFormElements();
+            this.changeSelected(info);
         },
         highlight(info) {
             // console.log(info);

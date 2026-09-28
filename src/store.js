@@ -1,9 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios';
 
-import merge from 'deepmerge';
-const overwriteMerge = (target, source, options) => source;
-
 import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 
@@ -24,6 +21,7 @@ export const baseStore = defineStore('base', {
         defUrl: null,
         defOrg: null,
         def: null,
+        rows: null,
         data: null,
     }),
     getters: {
@@ -58,10 +56,11 @@ export const baseStore = defineStore('base', {
             this.loadAndMergeParent(def, [def], function(defResolved) {
                 self.defOrg = defResolved;
                 self.def = ju.prepareDef(JSON.parse(JSON.stringify(self.defOrg)))
+                ju.applyFormElements(self.def, self.defOrg);
                 if (data === null) {
                     self.loadData();
                 } else {
-                    self.data = du.prepareData(data, self.def);
+                    self.setData(data);
                 }
             })
         },
@@ -79,7 +78,7 @@ export const baseStore = defineStore('base', {
             } else {
                 // console.log(parents)
                 parents.reverse();
-                const merged = merge.all(parents, { arrayMerge: overwriteMerge });
+                const merged = ju.mergeAll(parents);
                 // console.log(merged)
                 call(merged);
             }
@@ -102,11 +101,20 @@ export const baseStore = defineStore('base', {
                 .get(modUrl(this.def.data, this.defUrl))
                 .then(response => {
                     // console.log(response.data)
-                    this.data = du.prepareData(response.data, this.def);
+                    this.setData(response.data);
                 })
                 .catch((error) => {
                     console.error(`Could not load data file '${modUrl(this.def.data)}'`)
                 })
+        },
+        setData(data) {
+            this.rows = du.parseData(data);
+            this.data = du.prepareData(this.rows, this.def);
+        },
+        // the columns of patched mappings might have changed
+        applyFormElements() {
+            if (ju.applyFormElements(this.def, this.defOrg))
+                this.data = du.prepareData(this.rows, this.def);
         },
     },
 })
