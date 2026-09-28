@@ -1,30 +1,25 @@
-export { mountGenVisElement, mountGenVisByClass };
+export { GenVis, mountGenVisElement, mountGenVisByClass };
 
 import { createApp } from 'vue'
-import App from '@/comp/App.vue'
-import { createPinia } from 'pinia'
+import GenVis from '@/comp/App.vue'
 
+// vue plugin, registers the <GenVis> component
+export default {
+    install(app) {
+        app.component('GenVis', GenVis);
+    },
+};
 
-// const { createApp } = require('vue')
-// const App = require('@/comp/App.vue')
-// const { createPinia } = require('pinia')
-
+// the props are taken from the data attributes, e.g. data-def-file="def.json"
 const mountGenVisElement = element => {
-    const attrs = element.getAttributeNames()
+    const props = Object.fromEntries(element.getAttributeNames()
         .filter(name => name.startsWith('data-'))
-        .reduce((acc, name) => {
-            return {...acc, [name.substring(5)]: element.getAttribute(name)};
-        }, {});
-    // console.log(attrs);
-    createApp(App, attrs)
-        .use(createPinia())
-        .mount(element)
+        .map(name => [name.substring(5), element.getAttribute(name)]));
+    return createApp(GenVis, props).mount(element);
 }
 
 const mountGenVisByClass = cl => {
-    const es = document.getElementsByClassName(cl);
-    // console.log(es)
-    for (const e of es) {
+    for (const e of document.getElementsByClassName(cl)) {
         if (!e.classList.contains('gen-vis-attached')) {
             e.classList.add('gen-vis-attached')
             mountGenVisElement(e);

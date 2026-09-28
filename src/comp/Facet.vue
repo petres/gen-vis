@@ -16,7 +16,6 @@
 
 
 <script>
-import { baseStore } from '@/store.js'
 import * as d3 from "d3";
 import * as pu from "@/utils/plot";
 import * as du from "@/utils/data";
@@ -33,6 +32,7 @@ const l = (e) => {
 
 export default {
     props: ["filter", "shared", "height", "width", "margins", "data"],
+    inject: ['store'],
     data: () => ({
         info: {},
         debug: null,
@@ -57,7 +57,6 @@ export default {
         Hover
     },
     created() {
-        this.store = baseStore();
         this.def = this.store.def;
     },
     mounted() {

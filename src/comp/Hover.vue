@@ -10,12 +10,7 @@
 </template>
 
 <script>
-import { baseStore } from '@/store.js'
 import * as d3 from "d3";
-import * as pu from "@/utils/plot";
-import * as du from "@/utils/data";
-import * as ju from "@/utils/json";
-import * as eu from "@/utils/else";
 
 export default {
     props: ["title", "axis", "side", "data"],
@@ -26,18 +21,9 @@ export default {
         left() { return (this.side == "left") ? `${this.axis.h.value - this.space}px` : `${this.axis.h.value + this.space}px` },
         transform() { return (this.side == "left") ? `translate(-100%, -50%)` : `translate(0, -50%)` },
     },
-    components: {
-    },
-    created() {
-        this.store = baseStore();
-    },
-    mounted() {
-        // console.log(this.axis)
-    },
     watch: {
         data() {
             const data = [...this.data].sort((a, b) => b.entries[this.axis.v.col].value - a.entries[this.axis.v.col].value)
-            // console.log(data)
             let entries = d3.select(this.$refs.entries).selectAll('tr.entry')
                 .data(data)
                 .join('tr')

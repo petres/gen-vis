@@ -24,7 +24,7 @@
 </template>
 
 <script>
-import { baseStore } from '@/store.js'
+import { markRaw } from 'vue';
 import * as d3 from "d3";
 
 import * as du from "@/utils/data.js";
@@ -37,6 +37,7 @@ import FormElement from '@/comp/FormElement.vue';
 
 
 export default {
+    inject: ['store'],
     data: () => ({
         initialized: false,
 
@@ -78,8 +79,6 @@ export default {
     },
     methods: {
         baseInit() {
-            this.store = baseStore();
-
             this.legends = this.store.mappingNamesWithKey('legend')
             this.formElements = this.store.def.formElements;
             this.globals = this.store.def.globals;
@@ -115,7 +114,7 @@ export default {
                 key: Object.keys(this.store.mapping(c).props).filter(k => this.store.mapping(c).props[k].visible)
             }));
 
-            this.data = du.filter(this.store.data, this.filter)
+            this.data = markRaw(du.filter(this.store.data, this.filter));
             // console.log(this.store.data)
             // console.log(this.filter)
             // console.log(this.data)
@@ -154,7 +153,7 @@ export default {
                             key: d,
                             name: this.store.mapping(d).props[e.group[d]].name
                         },
-                        data: e.entries
+                        data: markRaw(e.entries)
                     }))
             }
         },

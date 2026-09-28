@@ -11,26 +11,12 @@
 </template>
 
 <script>
-import { baseStore } from '@/store.js'
-
-import * as d3 from "d3";
-import * as pu from "@/utils/plot";
-import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
-
-import LegendSymbol from '@/comp/LegendSymbol.vue';
 
 export default {
     props: ["element", "globals"],
-    data: () => ({
-    }),
     computed: {
         vg() { return this.globals[this.element.ref] }
-    },
-    components: {
-        LegendSymbol
-    },
-    mounted() {
     },
     methods: {
         switched(entry) {

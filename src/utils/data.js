@@ -2,7 +2,10 @@ export { groupBy, parseData, prepareData, filter, addDimInfo, addScaledData, add
 
 import * as d3 from "d3";
 
+// strings are parsed as JSON or CSV, already parsed data is passed through
 const parseData = data => {
+    if (typeof data != "string")
+        return data;
     if (data.charAt(0) == '[')
         return JSON.parse(data);
     return d3.csvParse(data);

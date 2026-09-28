@@ -13,19 +13,14 @@
 </template>
 
 <script>
-import { baseStore } from '@/store.js'
-
-import * as d3 from "d3";
-import * as pu from "@/utils/plot";
-import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 
 import LegendSymbol from '@/comp/LegendSymbol.vue';
 
 export default {
     props: ["legend"],
+    inject: ['store'],
     data: () => ({
-        ju: ju,
         info: {},
         entries: [],
     }),
@@ -33,8 +28,7 @@ export default {
         LegendSymbol
     },
     mounted() {
-        const store = baseStore();
-        this.info = store.mapping(this.legend);
+        this.info = this.store.mapping(this.legend);
         this.entries = Object.keys(this.info.props).map(d => ({
             key: d,
             props: this.info.props[d],

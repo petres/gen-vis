@@ -1,121 +1,130 @@
-import { defineStore } from 'pinia'
-import axios from 'axios';
+export { createStore, resolveUrl, resolveParents };
+
+import { reactive, markRaw, toRaw } from 'vue';
+import * as d3 from "d3";
 
 import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 
-const modUrl = (url, defUrl = null) => {
-    if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0 || url.indexOf('/') === 0) {
-        return url;
+// relative urls are resolved against `base`, e.g. the url of the def referencing them
+const resolveUrl = (url, base = document.baseURI) => new URL(url, base).href;
+
+const fetchText = async url => {
+    try {
+        return await d3.text(url);
+    } catch (error) {
+        throw new Error(`Could not load '${url}': ${error.message}`);
+    }
+};
+
+const parseDef = (text, source) => {
+    try {
+        return JSON.parse(text);
+    } catch (error) {
+        throw new Error(`Invalid JSON in definition ${source}: ${error.message}`);
+    }
+};
+
+// merges def with its parents, a parent url is relative to the def referencing it
+const resolveParents = async (def, url, load = fetchText) => {
+    const parts = [def];
+    const seen = new Set();
+    while (def.parent) {
+        url = resolveUrl(def.parent, url);
+        if (seen.has(url))
+            throw new Error(`Cyclic parent definition '${url}'`);
+        seen.add(url);
+        def = parseDef(await load(url), `'${url}'`);
+        parts.unshift(def);
+    }
+    return ju.mergeAll(parts);
+};
+
+// the rows are not made reactive, they can be large and are only replaced as a whole
+const raw = rows => markRaw(Array.from(toRaw(rows)));
+
+// see Store.init, urls of inline defs are relative to the page
+const load = async ({ def = null, defUrl = null, data = null }) => {
+    let url;
+    if (def === null) {
+        url = resolveUrl(defUrl);
+        def = parseDef(await fetchText(url), `'${url}'`);
+    } else if (typeof def == 'string') {
+        def = parseDef(def, 'attribute');
     }
 
-    if (defUrl) {
-        return `${defUrl.substring(0, defUrl.lastIndexOf("/"))}/${url}`;
+    const defOrg = await resolveParents(JSON.parse(JSON.stringify(def)), url);
+    const prepared = ju.prepareDef(JSON.parse(JSON.stringify(defOrg)));
+    ju.applyFormElements(prepared, defOrg);
+
+    if (data === null) {
+        if (!defOrg.data)
+            throw new Error('No data given, neither in the definition nor as attribute.');
+        data = await fetchText(resolveUrl(defOrg.data, url));
     }
-    
-    return `./${url}`;
+    const rows = raw(du.parseData(data));
+
+    return {
+        defUrl: url ?? null,
+        defOrg,
+        rows,
+        def: prepared,
+        data: raw(du.prepareData(rows, prepared)),
+    };
+};
+
+class Store {
+    defUrl = null;
+    defOrg = null;
+    def = null;
+    rows = null;
+    data = null;
+    runs = 0;
+
+    get loaded() { return this.def !== null && this.data !== null }
+
+    // the names of the mappings of the horizontal and vertical axis
+    get axis() {
+        const axis = {};
+        this.mappingNamesWithKey('scale').forEach(n => {
+            const o = this.mapping(n).scale.orientation;
+            if (o == 'horizontal')
+                axis.h = n;
+            if (o == 'vertical')
+                axis.v = n;
+        });
+        return axis;
+    }
+
+    mapping(n) { return this.def.mapping[n] }
+    prop(n, k) { return this.def.mapping[n].props[k] }
+    mappingNamesWithKey(k) { return Object.keys(this.def.mapping).filter(n => k in this.def.mapping[n]) }
+
+    /**
+     * def is an object or a JSON string, if it is null the def is loaded from
+     * defUrl. data are rows or a CSV/JSON string, if it is null it is loaded
+     * from the url given in the def.
+     */
+    async init(sources) {
+        const run = ++this.runs;
+        this.def = this.data = null;
+        try {
+            const state = await load(sources);
+            if (run == this.runs)
+                Object.assign(this, state);
+        } catch (error) {
+            // a newer init was started in the meantime
+            if (run == this.runs)
+                throw error;
+        }
+    }
+
+    // the columns of patched mappings might have changed
+    applyFormElements() {
+        if (ju.applyFormElements(this.def, this.defOrg))
+            this.data = raw(du.prepareData(this.rows, this.def));
+    }
 }
 
-export const baseStore = defineStore('base', {
-    state: () => ({
-        defUrl: null,
-        defOrg: null,
-        def: null,
-        rows: null,
-        data: null,
-    }),
-    getters: {
-        loaded() { return (this.def !== null && this.data !== null)},
-        axis() {
-            const b = this.mappingNamesWithKey('scale');
-            // console.log(b)
-            let axis = {};
-            // let axis = {h: [], v: []};
-            b.forEach(n => {
-                const r = this.mapping(n).scale.orientation;
-                if (r == 'horizontal') {
-                    axis.h = n;
-                    // axis.h.push(n);
-                }
-                    
-                if (r == 'vertical') {
-                    axis.v = n;
-                    // axis.v.push(n);
-                }
-            });
-            return axis;
-        },
-        mapping(n) { return n => this.def.mapping[n]},
-        prop(n, k) { return (n, k) => this.def.mapping[n].props[k]},
-        mappingNamesWithKey(k) { return k => Object.keys(this.def.mapping).filter(n => (k in this.def.mapping[n]))},
-        mappingNamesWithKeyValue(k, v) { return (k, v) => Object.keys(this.def.mapping).filter(n => (k in this.def.mapping[n] && this.def.mapping[n][k] == v))},
-    },
-    actions: {
-        init(def, data = null) {
-            const self = this;
-            this.loadAndMergeParent(def, [def], function(defResolved) {
-                self.defOrg = defResolved;
-                self.def = ju.prepareDef(JSON.parse(JSON.stringify(self.defOrg)))
-                ju.applyFormElements(self.def, self.defOrg);
-                if (data === null) {
-                    self.loadData();
-                } else {
-                    self.setData(data);
-                }
-            })
-        },
-        loadAndMergeParent(def, parents, call) {
-            const self = this;
-            if(typeof def == "string") {
-                console.error(`No valid JSON definiton file`)
-                throw new Error('No valid JSON definiton');
-            }
-            if (def.parent) {
-                this.load(def.parent, function(defParent) {
-                    parents.push(defParent);
-                    self.loadAndMergeParent(defParent, parents, call);
-                })
-            } else {
-                // console.log(parents)
-                parents.reverse();
-                const merged = ju.mergeAll(parents);
-                // console.log(merged)
-                call(merged);
-            }
-        },
-        load(defUrl, call = this.init) {
-            const defUrlM = modUrl(defUrl);
-            this.defUrl ??= defUrlM;
-            return axios
-                .get(defUrlM)
-                .then(response => {
-                    console.log(response.data)
-                    // call(response.data);
-                })
-                .catch((error) => {
-                    console.log(error)
-                    console.error(`Could not load def file ${defUrlM}`)
-                })
-        },
-        loadData() {
-            return axios
-                .get(modUrl(this.def.data, this.defUrl))
-                .then(response => {
-                    // console.log(response.data)
-                    this.setData(response.data);
-                })
-                .catch((error) => {
-                    console.error(`Could not load data file '${modUrl(this.def.data)}'`)
-                })
-        },
-        setData(data) {
-            this.rows = du.parseData(data);
-            this.data = du.prepareData(this.rows, this.def);
-        },
-        // the columns of patched mappings might have changed
-        applyFormElements() {
-            if (ju.applyFormElements(this.def, this.defOrg))
-                this.data = du.prepareData(this.rows, this.def);
-        },
-    },
-})
+// every visualisation has its own store, it is provided to all its components
+const createStore = () => reactive(new Store());
