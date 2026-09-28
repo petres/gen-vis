@@ -1,5 +1,5 @@
 {
-    "data": "./data/immo/ind-full-final-l.csv",
+    "data": "ind-full-final-l.csv",
     "options": {
         "height": 400,
         "margins": {"top": 20, "right": 10, "bottom": 50, "left": 70},

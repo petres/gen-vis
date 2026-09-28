@@ -1,5 +1,5 @@
 {
-    "data": "./data/graph/data.csv",
+    "data": "data.csv",
     "options": {
         "height": 300, "width": 1000,
         "margins": {"top": 10, "right": 10, "bottom": 40, "left": 80},

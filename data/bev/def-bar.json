@@ -1,5 +1,5 @@
 {
-    "data": "./data/bev/data22.csv",
+    "data": "data22.csv",
     "options": {
         "height": 300,
         "margins": {"top": 10, "right": 10, "bottom": 40, "left": 80},
@@ -18,8 +18,8 @@
             },
             "axis": {
                 "ticks": {
-                    "mode": "relative",
-                    "base": "innerWidth",
+                    "prop": "relative",
+                    "ref": "innerWidth",
                     "ratio": 0.013
                 },
                 "name": "Jahr",

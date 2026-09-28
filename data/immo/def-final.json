@@ -1,5 +1,5 @@
 {
-    "data": "./data/immo/ind-full-final.csv",
+    "data": "ind-full-final.csv",
     "options": {
         "height": 400,
         "margins": {"top": 20, "right": 80, "bottom": 50, "left": 40},
@@ -201,7 +201,7 @@
     },
     "plot": [
         {
-            "type": "path",
+            "type": "svg:path",
             "categories": ["quali", "werr", "wrecht", "bundesland", "wfrist"],
             "props": {
                 "stroke-width": "2",
@@ -215,7 +215,7 @@
             }
         },
         {
-            "type": "circle",
+            "type": "svg:circle",
             "categories": ["quali", "werr", "wrecht", "bundesland", "wfrist"],
             "props": {
                 "fill": "@color",
@@ -225,7 +225,7 @@
             }
         },
         {
-            "type": "circle",
+            "type": "svg:circle",
             "categories": ["quali", "werr", "wrecht", "bundesland", "wfrist"],
             "props": {
                 "fill": "@color",

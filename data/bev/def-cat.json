@@ -1,5 +1,5 @@
 {
-    "data": "./data/bev/data.csv",
+    "data": "data.csv",
     "options": {
         "height": 300,
         "margins": {"top": 10, "right": 10, "bottom": 40, "left": 80},
@@ -89,7 +89,7 @@
     },
     "plot": [
         {
-            "type": "path",
+            "type": "svg:path",
             "categories": ["land"],
             "props": {
                 "stroke-width": "@stroke-width",
@@ -102,7 +102,7 @@
                 }
             }
         }, {
-            "type": "circle",
+            "type": "svg:circle",
             "categories": ["land"],
             "props": {
                 "fill": "@color",

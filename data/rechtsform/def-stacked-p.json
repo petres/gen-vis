@@ -1,5 +1,5 @@
 {
-    "data": "./data/rechtsform/data.csv",
+    "data": "data.csv",
     "options": {
         "height": 400,
         "margins": {"top": 20, "right": 20, "bottom": 50, "left": 70},
@@ -105,7 +105,7 @@
     },
     "plot": [
         {
-            "type": "rect",
+            "type": "svg:rect",
             "data": [
                 {"x": 2020}
             ],
@@ -119,7 +119,7 @@
             }
         },
         {
-            "type": "rect",
+            "type": "svg:rect",
             "categories": ["type"],
             "props": {
                 "fill": "@color",
