@@ -54,17 +54,18 @@ const mount = async (component, props) => {
     return el;
 };
 
+const pointer = (type, init = {}) => new PointerEvent(type, { pointerType: 'mouse', bubbles: true, ...init });
+
 // moves the mouse over all facets, returns the most hover rows at a position
 const hover = async el => {
     let rows = 0;
     for (const events of el.querySelectorAll('rect.events')) {
-        events.dispatchEvent(new MouseEvent('mouseenter'));
         for (let x = 0; x <= 800; x += 25) {
-            events.dispatchEvent(new MouseEvent('mousemove', { clientX: x, clientY: 150 }));
+            events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: 150 }));
             await nextTick();
             rows = Math.max(rows, el.querySelectorAll('.hover tr.entry').length);
         }
-        events.dispatchEvent(new MouseEvent('mouseout'));
+        events.dispatchEvent(pointer('pointerleave'));
     }
     return rows;
 };
@@ -145,6 +146,21 @@ describe('rendering', () => {
         });
     });
 
+    test.each([
+        [40, 'rotate(-40)', 'end'],
+        [-40, 'rotate(40)', 'start'],
+    ])('axis labels rotated by %s', async (rotate, transform, anchor) => {
+        const def = lineDef();
+        def.mapping.x.axis.rotate = rotate;
+        const el = await mount(GenVis, { def, data: lineData });
+        const labels = [...el.querySelectorAll('g.axis-position-bottom g.tick text')];
+        expect(labels.length).toBeGreaterThan(0);
+        labels.forEach(t => {
+            expect(t.getAttribute('transform')).toBe(transform);
+            expect(t.getAttribute('text-anchor')).toBe(anchor);
+        });
+    });
+
     test('areas', async () => {
         const def = lineDef();
         def.plot = { type: 'base:area', categories: ['c'], props: { fill: '@color', d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } } };
@@ -206,5 +222,160 @@ describe('rendering', () => {
         mountGenVisElement(el);
         await rendered(el);
         expect(el.querySelector('.vis-header .title').textContent).toBe('Bevölkerung');
+    });
+});
+
+describe('locale and font', () => {
+    const labels = (el, position) => [...el.querySelectorAll(`g.axis-position-${position} g.tick text`)].map(t => t.textContent);
+    const bigData = 'year,value,land\n2020,1000,Wien\n2021,2500,Wien';
+
+    test('german by default, also the ticks of axes without format', async () => {
+        const def = lineDef();
+        def.mapping.x.axis.format = ',.1f';
+        const el = await mount(GenVis, { def, data: bigData });
+        expect(labels(el, 'bottom')).toContain('2.020,0');
+        expect(labels(el, 'left')).toContain('2.000');
+    });
+
+    test('a built-in locale', async () => {
+        const def = lineDef({ locale: 'en' });
+        def.mapping.x.axis.format = ',.1f';
+        const el = await mount(GenVis, { def, data: bigData });
+        expect(labels(el, 'bottom')).toContain('2,020.0');
+        expect(labels(el, 'left')).toContain('2,000');
+    });
+
+    test('a locale merged into a built-in one', async () => {
+        const def = lineDef({ locale: { number: { thousands: ' ' } } });
+        const el = await mount(GenVis, { def, data: bigData });
+        expect(labels(el, 'left')).toContain('2 000');
+    });
+
+    test('month names of time axes', async () => {
+        const def = lineDef();
+        def.mapping.x = { column: 'date', type: 'date', scale: { type: 'time', orientation: 'horizontal' }, axis: { position: 'bottom' } };
+        const el = await mount(GenVis, { def, data: 'date,value,land\n2020-01-15,1,Wien\n2020-05-15,2,Wien' });
+        expect(labels(el, 'bottom')).toContain('März');
+    });
+
+    test('an unknown locale is an error', async () => {
+        const el = await mount(GenVis, { def: lineDef({ locale: 'xx' }), data: lineData });
+        expect(el.querySelector('.vis-error').textContent).toBe(`Unknown locale 'xx', expected one of 'de', 'en'`);
+    });
+
+    test('the currency of the german locale', async () => {
+        const { getLocale } = await import('@/utils/else');
+        expect(getLocale().number.format('$,.2f')(1234.5)).toBe('1.234,50 €');
+        expect(getLocale('en').number.format('$,.2f')(1234.5)).toBe('$1,234.50');
+    });
+
+    test('the font', async () => {
+        const el = await mount(GenVis, { def: lineDef({ fontFamily: 'Arial' }), data: lineData });
+        expect(el.querySelector('.vis').style.getPropertyValue('--gen-vis-font-family')).toBe('Arial');
+
+        const other = await mount(GenVis, { def: lineDef(), data: lineData });
+        expect(other.querySelector('.vis').style.getPropertyValue('--gen-vis-font-family')).toBe('');
+    });
+});
+
+describe('touch', () => {
+    const touch = (type, init = {}) => pointer(type, { pointerType: 'touch', clientX: 300, clientY: 150, ...init });
+
+    test('a touch shows the hover until the next touch outside', async () => {
+        const el = await mount(GenVis, { def: lineDef(), data: lineData });
+        const events = el.querySelector('rect.events');
+        const rows = () => el.querySelectorAll('.hover tr.entry').length;
+
+        events.dispatchEvent(touch('pointerdown'));
+        await nextTick();
+        expect(rows()).toBe(2);
+
+        // lifting the finger keeps the hover
+        events.dispatchEvent(touch('pointerup'));
+        events.dispatchEvent(touch('pointerleave'));
+        await nextTick();
+        expect(rows()).toBe(2);
+
+        // a touch in the facet moves it, outside it hides it
+        events.dispatchEvent(touch('pointerdown', { clientX: 500 }));
+        await nextTick();
+        expect(rows()).toBe(2);
+        document.body.dispatchEvent(touch('pointerdown'));
+        await nextTick();
+        expect(rows()).toBe(0);
+        expect(errors).toEqual([]);
+    });
+
+    test('scrolling hides the hover', async () => {
+        const el = await mount(GenVis, { def: lineDef(), data: lineData });
+        const events = el.querySelector('rect.events');
+        events.dispatchEvent(touch('pointerdown'));
+        await nextTick();
+        events.dispatchEvent(touch('pointercancel'));
+        await nextTick();
+        expect(el.querySelectorAll('.hover tr.entry')).toHaveLength(0);
+    });
+
+    test('vertical swipes scroll the page', async () => {
+        const el = await mount(GenVis, { def: lineDef(), data: lineData });
+        expect(el.querySelector('rect.events').style.touchAction).toBe('pan-y');
+    });
+
+    test('the listener of the document is removed', async () => {
+        const remove = vi.spyOn(document, 'removeEventListener');
+        const el = document.body.appendChild(document.createElement('div'));
+        const app = createApp(GenVis, { def: lineDef(), data: lineData });
+        app.mount(el);
+        await rendered(el);
+        app.unmount();
+        expect(remove).toHaveBeenCalledWith('pointerdown', expect.any(Function));
+    });
+});
+
+describe('fixed bugs', () => {
+    test('categories with quotes are highlighted', async () => {
+        const def = lineDef();
+        def.mapping.c.props.manual = { "O'Brien": { color: 'red' }, 'Say "hi"': { color: 'blue' } };
+        def.plot[0].props['stroke-width'] = 1;
+        def.plot[0].props['highlight-stroke-width'] = 3;
+        const data = lineData.replaceAll('Wien', `O'Brien`).replaceAll('Tirol', '"Say ""hi"""');
+        const el = await mount(GenVis, { def, data });
+
+        const [first, second] = el.querySelectorAll('.legend .entries > div');
+        second.dispatchEvent(new MouseEvent('mouseenter'));
+        const highlighted = el.querySelectorAll('g.plotGroup.plot-0 path.highlight');
+        expect(highlighted).toHaveLength(1);
+        expect(highlighted[0].getAttribute('data-group-c')).toBe('Say "hi"');
+        expect(highlighted[0].getAttribute('stroke-width')).toBe('3');
+
+        second.dispatchEvent(new MouseEvent('mouseleave'));
+        first.dispatchEvent(new MouseEvent('mouseenter'));
+        expect(el.querySelector('g.plotGroup.plot-0 path.highlight').getAttribute('data-group-c')).toBe(`O'Brien`);
+        expect(el.querySelector(`g.plotGroup.plot-0 path[data-group-c='Say "hi"']`).getAttribute('stroke-width')).toBe('1');
+        expect(errors).toEqual([]);
+    });
+
+    test('stacked facets, the dim is a name', async () => {
+        const def = lineDef();
+        def.mapping.y.stacked = true;
+        def.mapping.type = { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } };
+        def.facets = { dim: 'c', cols: 2 };
+        def.mapping.facet = def.mapping.c;
+        def.plot = { type: 'svg:circle', categories: ['type'], props: { r: 2, cx: '@x:scaled', cy: '@y:st:e:scaled' } };
+        // the name of the facet mapping has several characters
+        def.mapping.land = def.mapping.c;
+        delete def.mapping.c;
+        delete def.mapping.facet;
+        def.facets.dim = 'land';
+        const data = 'year,value,land,type\n2020,1,Wien,a\n2020,2,Wien,b\n2020,1,Tirol,a\n2020,2,Tirol,b';
+        const el = await mount(GenVis, { def, data });
+
+        // stacked within every facet, not across them
+        const facets = [...el.querySelectorAll('svg.facet')];
+        expect(facets).toHaveLength(2);
+        facets.forEach(f => {
+            const ticks = [...f.querySelectorAll('g.axis-position-left g.tick text')].map(t => parseFloat(t.textContent));
+            expect(Math.max(...ticks)).toBeLessThanOrEqual(3);
+        });
     });
 });

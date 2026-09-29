@@ -178,6 +178,10 @@ const prepareDef = def => {
     if (!Array.isArray(def.plot))
         def.plot = [def.plot];
 
+    // the facets are the categories of one mapping, older definitions list it
+    if (def.facets && Array.isArray(def.facets.dim))
+        def.facets.dim = def.facets.dim[0];
+
     def.plot.forEach((p, i) => {
         p.categories ??= [];
         p.id ??= `plot-${i}`;

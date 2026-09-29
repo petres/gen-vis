@@ -14,6 +14,13 @@ const base = () => ({
     plot: { type: 'svg:path', categories: ['c'], props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
 });
 
+test('the facets need one known mapping', () => {
+    expect(validateDef({ ...base(), facets: { dim: 'c' } })).toEqual([]);
+    expect(validateDef({ ...base(), facets: { dim: ['c'] } })).toEqual([]);
+    expect(validateDef({ ...base(), facets: { dim: 'z' } })).toEqual([`facets.dim: unknown mapping 'z'`]);
+    expect(validateDef({ ...base(), facets: { dim: ['c', 'x'] } })).toEqual([`facets.dim: expected the name of one mapping`]);
+});
+
 describe('the example definitions', () => {
     test('are found', () => {
         expect(Object.keys(examples).length).toBeGreaterThan(10);

@@ -101,4 +101,14 @@ describe('groupBy', () => {
             { group: { a: 1, b: 'y' }, entries: [data[1]] },
         ]);
     });
+
+    test('values containing the separator are different groups', () => {
+        const data = [{ a: 'a-b', b: 'c' }, { a: 'a', b: 'b-c' }];
+        expect(du.groupBy(data, ['a', 'b'])).toHaveLength(2);
+    });
+
+    test('the groups are in the order of the data, also for numeric keys', () => {
+        const data = [{ a: '2021' }, { a: '2020' }, { a: 'x' }];
+        expect(du.groupBy(data, ['a']).map(g => g.group.a)).toEqual(['2021', '2020', 'x']);
+    });
 });

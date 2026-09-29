@@ -63,8 +63,10 @@ export default {
         this.plot();
         this.hoverInit();
     },
+    unmounted() {
+        document.removeEventListener("pointerdown", this.hideOnPointerOutside);
+    },
     methods: {
-        getFormatterByType: t => t == "time" ? eu.localeTime.format : eu.locale.format,
         plot() {
             this.def.plot.forEach(plotDef => {
                 const dataGrouped = du.groupBy(this.data, plotDef.categories);
@@ -210,7 +212,11 @@ export default {
                     .tickPadding(i.padding)
 
                 if (i.format) {
-                    a.tickFormat(this.getFormatterByType(m.scale.type)(i.format))
+                    a.tickFormat(this.store.formatter(m.scale.type)(i.format))
+                } else if (!i.values) {
+                    const format = this.store.locale.tickFormat(s, m.scale.type, ticks);
+                    if (format)
+                        a.tickFormat(format);
                 }
 
                 if (i.values) {
@@ -232,10 +238,12 @@ export default {
                 if (i.position == 'right')
                     ga.attr('transform', `translate(${this.innerWidth}, 0)`)
 
+                // positive angles rotate counterclockwise, negative ones
+                // clockwise, the labels start at their tick in both cases
                 if (i.rotate)
                     ga.selectAll("text")
-                        .attr("text-anchor", "end")
-                        .attr("transform", `rotate(-${i.rotate})`)
+                        .attr("text-anchor", i.rotate > 0 ? "end" : "start")
+                        .attr("transform", `rotate(${-i.rotate})`)
 
                 if (i.title) {
                     const at = this.inner.append("text")
@@ -292,8 +300,8 @@ export default {
 
             const axis = Object.fromEntries(Object.entries(names).map(([t, name]) => {
                 const m = this.def.mapping[name];
-                const format = m.hover?.format ?? m.axis?.format ?? (m.scale.type == 'time' ? '%x' : 'c');
-                return [t, {axis: t, name, formatter: this.getFormatterByType(m.scale.type)(format)}];
+                const format = m.hover?.format ?? m.axis?.format ?? (['time', 'utc'].includes(m.scale.type) ? '%x' : 'c');
+                return [t, {axis: t, name, formatter: this.store.formatter(m.scale.type)(format)}];
             }));
 
             // categorical mappings, e.g. not a second vertical axis
@@ -302,12 +310,27 @@ export default {
 
             const hoverLine = d3.select(this.$refs.hoverMarker).select("line");
 
+            const hide = () => {
+                self.hover.visible = false;
+                pu.highlightElements(self.inner, self.def.plot);
+            };
+
+            // a touch keeps the hover until the next touch outside of the facet
+            this.hideOnPointerOutside = e => {
+                if (self.hover.visible && !self.$refs.svg.contains(e.target))
+                    hide();
+            };
+            document.addEventListener("pointerdown", this.hideOnPointerOutside);
+
+            // mouse, touch and pen, vertical swipes still scroll the page
             this.inner.append("rect")
                 .attr("class", "events")
                 .attr("width", this.innerWidth)
                 .attr("height", this.innerHeight)
                 .attr("opacity", 0)
-                .on("mousemove", function(e) {
+                .style("touch-action", "pan-y")
+                .on("pointerdown pointermove", function(e) {
+                    self.hover.visible = true;
                     const c = d3.pointer(e);
                     const i = self.info[axis.h.name];
 
@@ -370,15 +393,12 @@ export default {
                     }
                     self.hover.side = xs > self.innerWidth/2 ? "left" : "right";
                 })
-                .on("mouseout", function(e) {
-                    // remove hover div
-                    self.hover.visible = false;
-                    // remove hover lines
-                    pu.highlightElements(self.inner, self.def.plot)
+                .on("pointerleave", e => {
+                    if (e.pointerType != "touch")
+                        hide();
                 })
-                .on("mouseenter", function(e) {
-                    self.hover.visible = true;
-                })
+                // the browser scrolls the page instead
+                .on("pointercancel", hide)
         }
     }
 }

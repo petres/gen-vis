@@ -91,9 +91,6 @@
         "scales": [],
         "cols": 2
     },
-    "hover": {
-
-    },
     "plot": [
         {
             "type": "bar",

@@ -27,8 +27,7 @@
             "scale": {
                 "type": "linear",
                 "domain": [0, null],
-                "orientation": "vertical",
-                "format": ".2f"
+                "orientation": "vertical"
             },
             "axis": {
                 "ticks": 8,
@@ -43,14 +42,16 @@
         "quali": {
             "column": "quali",
             "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "line",
-                    "props": {
-                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                        "stroke": "#888", "stroke-width": 2
-                    }
-                }]
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "#888", "stroke-width": 2
+                        }
+                    }]
+                }
             },
             "props": {
                 "common": {
@@ -69,14 +70,16 @@
         "werr": {
             "column": "werr.label",
             "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "line",
-                    "props": {
-                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                        "stroke": "#888", "stroke-width": 2
-                    }
-                }]
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "#888", "stroke-width": 2
+                        }
+                    }]
+                }
             },
             "props": {
                 "common": {
@@ -100,15 +103,17 @@
         "wrecht": {
             "column": "wrecht.miete",
             "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "line",
-                    "props": {
-                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                        "stroke": "#888", "stroke-width": 2,
-                        "stroke-dasharray": "@stroke-dasharray"
-                    }
-                }]
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "#888", "stroke-width": 2,
+                            "stroke-dasharray": "@stroke-dasharray"
+                        }
+                    }]
+                }
             },
             "props": {
                 "common": {
@@ -126,14 +131,16 @@
         "bundesland": {
             "column": "xnuts2.label",
             "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "line",
-                    "props": {
-                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                        "stroke": "@color", "stroke-width": "@stroke-width"
-                    }
-                }]
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "@color", "stroke-width": "@stroke-width"
+                        }
+                    }]
+                }
             },
             "props": {
                 "common": {

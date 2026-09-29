@@ -6,6 +6,7 @@ import * as d3 from "d3";
 import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 import { validateDef } from "@/utils/validate";
+import { getLocale } from "@/utils/else";
 
 // relative urls are resolved against `base`, e.g. the url of the def referencing them
 const resolveUrl = (url, base = document.baseURI) => new URL(url, base).href;
@@ -69,6 +70,7 @@ const load = async ({ def = null, defUrl = null, data = null }) => {
     return {
         defUrl: url ?? null,
         defOrg,
+        locale: markRaw(getLocale(defOrg.options?.locale)),
         rows,
         def: prepared,
         data: raw(du.prepareData(rows, prepared)),
@@ -78,6 +80,7 @@ const load = async ({ def = null, defUrl = null, data = null }) => {
 class Store {
     defUrl = null;
     defOrg = null;
+    locale = null;
     def = null;
     rows = null;
     data = null;
@@ -96,6 +99,15 @@ class Store {
                 axis.v = n;
         });
         return axis;
+    }
+
+    // d3 format of the locale for the values of a scale type
+    formatter(scaleType) {
+        if (scaleType == 'time')
+            return this.locale.time.format;
+        if (scaleType == 'utc')
+            return this.locale.time.utcFormat;
+        return this.locale.number.format;
     }
 
     mapping(n) { return this.def.mapping[n] }

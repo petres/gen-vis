@@ -13,8 +13,7 @@
             "type": "date",
             "scale": {
                 "type": "time",
-                "orientation": "horizontal",
-                "timeFormat": "%b %y"
+                "orientation": "horizontal"
             },
             "axis": {
                 "ticks": 6,
@@ -29,8 +28,7 @@
             "scale": {
                 "type": "linear",
                 "domain": [0, null],
-                "orientation": "vertical",
-                "format": ".2f"
+                "orientation": "vertical"
             },
             "axis": {
                 "ticks": 8,
@@ -45,15 +43,17 @@
         "type": {
             "column": "fuelType",
             "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "line",
-                    "props": {
-                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                        "stroke": "#888", "stroke-width": 2,
-                        "stroke-dasharray": "@stroke-dasharray"
-                    }
-                }]
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "#888", "stroke-width": 2,
+                            "stroke-dasharray": "@stroke-dasharray"
+                        }
+                    }]
+                }
             },
             "props": {
                 "common": {
@@ -68,14 +68,16 @@
         "nuts": {
             "column": "nuts2",
             "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "line",
-                    "props": {
-                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                        "stroke": "@color", "stroke-width": "@stroke-width"
-                    }
-                }]
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "@color", "stroke-width": "@stroke-width"
+                        }
+                    }]
+                }
             },
             "props": {
                 "common": {

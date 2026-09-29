@@ -27,8 +27,7 @@
             "scale": {
                 "type": "linear",
                 "domain": [0, null],
-                "orientation": "vertical",
-                "format": ".2f"
+                "orientation": "vertical"
             },
             "axis": {
                 "ticks": 8,

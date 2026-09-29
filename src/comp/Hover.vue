@@ -21,8 +21,17 @@ export default {
         left() { return (this.side == "left") ? `${this.axis.h.value - this.space}px` : `${this.axis.h.value + this.space}px` },
         transform() { return (this.side == "left") ? `translate(-100%, -50%)` : `translate(0, -50%)` },
     },
+    // the rows are also rendered when the hover is shown, e.g. by a touch
+    mounted() {
+        this.render();
+    },
     watch: {
-        data() {
+        data: 'render',
+    },
+    methods: {
+        render() {
+            if (!this.$refs.entries || !this.data)
+                return;
             const data = [...this.data].sort((a, b) => b.entries[this.axis.v.col].value - a.entries[this.axis.v.col].value)
             let entries = d3.select(this.$refs.entries).selectAll('tr.entry')
                 .data(data)

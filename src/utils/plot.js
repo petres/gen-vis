@@ -73,43 +73,40 @@ const setGroupData = function(d) {
 }
 
 
-const highlightElements = (inner, plotDefs, dataEntry = null) => {
-    // TODO: REWRITE, TOTAL MESS
-    plotDefs.filter(p => p.highlightProps.length > 0).forEach(plotDef => {
-        const selectorHighlighted = `g.plotGroup.${plotDef.id} .highlight`;
-        const esHighlighted = inner.selectAll(selectorHighlighted);
+// the elements of a plot in the groups of dataEntry, the values are compared
+// directly, they are not part of a selector, so they can contain any character
+const groupElements = (inner, plotDef, dataEntry) => {
+    const conditions = plotDef.categories
+        .filter(c => c in dataEntry)
+        .map(c => ({ attr: `data-group-${c}`, value: String(dataEntry[c]) }));
+    if (conditions.length == 0)
+        return null;
+    return inner.selectAll(`g.plotGroup.${plotDef.id} [${conditions[0].attr}]`)
+        .filter(function() { return conditions.every(c => this.getAttribute(c.attr) === c.value) });
+}
 
-        // remove highlight
-        if (esHighlighted.size() > 0) {
-            esHighlighted.classed('highlight', false)
-            esHighlighted.each(function() {
+// the highlight- props of the plots replace the props of the highlighted
+// elements, their default values are kept in default- attributes
+const highlightElements = (inner, plotDefs, dataEntry = null) => {
+    plotDefs.filter(p => p.highlightProps.length > 0).forEach(plotDef => {
+        inner.selectAll(`g.plotGroup.${plotDef.id} .highlight`)
+            .classed('highlight', false)
+            .each(function() {
+                const e = d3.select(this);
+                plotDef.highlightProps.forEach(n => e.attr(n, e.attr(`default-${n}`)));
+            });
+
+        const elements = dataEntry && groupElements(inner, plotDef, dataEntry);
+        if (!elements)
+            return;
+        elements.classed('highlight', true)
+            .raise()
+            .each(function() {
                 const e = d3.select(this);
                 plotDef.highlightProps.forEach(n => {
-                    e.attr(n, e.attr(`default-${n}`))
-                })
-            });
-        }
-        
-        if (dataEntry) {
-            const f = plotDef.categories
-                .filter(c => Object.keys(dataEntry).includes(c))
-                .map(c => ({name: c, value: dataEntry[c]}))
-                .map(e => `[data-group-${e.name}='${e.value}']`).join('');
-
-            const esToHighlight = inner.selectAll(`g.plotGroup.${plotDef.id} ${f}`);
-            // add highlight
-            if (esToHighlight.size() > 0) {
-                esToHighlight.classed('highlight', true)
-                    .raise();
-                
-                esToHighlight.each(function() {
-                    const e = d3.select(this);
-                    plotDef.highlightProps.forEach(n => {
-                        e.attr(`default-${n}`, e.attr(n))
-                         .attr(n, e.attr(`highlight-${n}`))
-                    })
+                    e.attr(`default-${n}`, e.attr(n))
+                     .attr(n, e.attr(`highlight-${n}`))
                 });
-            }
-        }
+            });
     })
 }

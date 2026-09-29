@@ -18,7 +18,6 @@
             },
             "axis": {
                 "ticks": 5,
-                "name": "Jahr",
                 "format": "",
                 "position": "bottom",
                 "format": "c"
@@ -38,7 +37,6 @@
             },
             "axis": {
                 "ticks": 5,
-                "name": "Einwohner",
                 "position": "left",
                 "grid": true,
                 "format": ",.0f"
@@ -50,20 +48,22 @@
         "land": {
             "column": "Bundesland",
             "legend": {
-                "size": 16,
-                "elements": [{
-                    "type": "line",
-                    "props": {
-                        "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                        "stroke": "@color", "stroke-width": "@stroke-width"
-                    }
-                }, {
-                    "type": "circle",
-                    "props": {
-                        "cx": 8, "cy": 8, "r": 3,
-                        "fill": "@color"
-                    }
-                }]
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "@color", "stroke-width": "@stroke-width"
+                        }
+                    }, {
+                        "type": "circle",
+                        "props": {
+                            "cx": 8, "cy": 8, "r": 3,
+                            "fill": "@color"
+                        }
+                    }]
+                }
             },
             "props": {
                 "common": {

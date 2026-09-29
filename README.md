@@ -75,11 +75,46 @@ its `parent` (and its parent into its own parent), arrays are replaced, not
 merged. The merged definition is checked for common mistakes, e.g. unknown
 plot types, the findings are logged as warnings in the console.
 
+The package contains a JSON Schema of the definitions, `schema.json`. With
+`"$schema"` in a definition, editors like VS Code complete and check it:
+
+```json
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis/schema.json",
+    ...
+}
+```
+
+or with a local path, e.g. `"./node_modules/@preschen/gen-vis/schema.json"`.
+The schema also allows parts of definitions, e.g. definitions with a `parent`.
+
 ### `options`
 
 `title`, `subtitle`, `footer` (HTML), `width` (the width of the container if
 not given), `height` and `margins` (`{"top", "right", "bottom", "left"}` in
 pixels). `height` can be a prop based on `totalWidth`, see [props](#props-1).
+
+`locale` sets the number and date formats of the axes and the hover, also of
+axes without `format`: `de` (the default) or `en`, or an object with a `base`
+locale and the parts which are changed, see d3's
+[formatLocale](https://d3js.org/d3-format#formatLocale) and
+[timeFormatLocale](https://d3js.org/d3-time-format#timeFormatLocale):
+
+```json
+"locale": { "base": "de", "number": { "currency": ["", " EUR"] } }
+```
+
+`timeTicks` of the object are the tick formats of time axes without `format`,
+by the interval of the date (`millisecond`, `second`, `minute`, `hour`, `day`,
+`week`, `month`, `year`).
+
+`fontFamily` sets the font, by default the css variable
+`--gen-vis-font-family` or Century Gothic, so the font of all visualisations of
+a page can be set with css:
+
+```css
+.vis { --gen-vis-font-family: Arial, sans-serif; }
+```
 
 ### `mapping`
 
@@ -108,10 +143,13 @@ the definition refer to these names.
   the data. `domainRel` (relative to the domain) and `domainAbs` (absolute)
   extend it. `padding` for categorical scales.
 - `axis`: `position` (`top`, `bottom`, `left`, `right`), `ticks`, `values`
-  (fixed ticks), `format` (d3 number or time format), `rotate`, `grid` (lines
-  at the ticks), `title` (`{"name", "offset"}`) and `padding`.
+  (fixed ticks), `format` (d3 number or time format), `rotate` (the angle of
+  the labels in degrees, positive counterclockwise, negative clockwise), `grid`
+  (lines at the ticks), `title` (`{"name", "offset"}`) and `padding`.
 - `hover`: the hover shows the values of the vertical axis at the position of
-  the mouse. `format` of the horizontal and vertical axis, it defaults to the
+  the mouse. On touch devices it is shown by a tap and stays until a tap
+  outside of the plot, horizontal swipes move it, vertical ones scroll the
+  page. `format` of the horizontal and vertical axis, it defaults to the
   axis format. For categorical mappings `props` are the columns of the entries,
   `name` by default.
 - `props`: the categories and their props, e.g. colors. `common` props are
@@ -166,8 +204,8 @@ Objects without `prop` are nested props, e.g. `d` of a path.
 
 ### `facets`
 
-A plot for every category of `dim` (a mapping with `props`), in `cols`
-columns. The mappings listed in `scales` share their scale across all facets.
+A plot for every category of `dim` (the name of a mapping with `props`), in
+`cols` columns. The mappings listed in `scales` share their scale across all facets.
 `cols` can be a prop based on `totalWidth`, `scales` a reference to `globals`.
 
 ### `formElements` and `globals`
@@ -192,7 +230,7 @@ the column of an axis:
 ```sh
 npm install
 npm run dev     # dev server, the definition shown by dev.html is set in src/globals.js
-npm test        # unit tests and rendering of all definitions in data/
+npm test        # unit tests, rendering and schema check of all definitions in data/
 npm run build   # es module for bundlers in dist/
 npm run watch   # rebuilds dist/ on changes, e.g. for `npm link`
 npm run lib     # standalone script in dist-lib/

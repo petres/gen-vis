@@ -6,10 +6,12 @@
   "main": "dist/gen-vis.js",
   "module": "dist/gen-vis.js",
   "exports": {
-    ".": "./dist/gen-vis.js"
+    ".": "./dist/gen-vis.js",
+    "./schema.json": "./schema.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "schema.json"
   ],
   "scripts": {
     "dev": "vite",
@@ -42,6 +44,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.9",
+    "ajv": "^8.20.0",
     "jsdom": "^30.1.1",
     "sass": "^1.105.0",
     "vite": "^8.3.1",

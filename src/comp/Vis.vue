@@ -1,5 +1,5 @@
 <template>
-    <div class="vis" ref="vis">
+    <div class="vis" ref="vis" :style="{'--gen-vis-font-family': options.fontFamily}">
         <div class="vis-header">
             <div class="title">{{ options.title }}</div>
             <div class="subtitle">{{ options.subtitle }}</div>
@@ -120,7 +120,7 @@ export default {
 
             // stacked
             if (axis.v && this.store.mapping(axis.v).stacked)
-                du.addStackedData(this.data, axis, def.facets ? def.facets.dim : []);
+                du.addStackedData(this.data, axis, def.facets ? [def.facets.dim] : []);
 
             if (def.facets) {
                 this.facets.margins = this.options.margins;
@@ -189,9 +189,10 @@ export default {
 
 
 <style lang="scss" scoped>
+    // the font can be set with options.fontFamily or the css variable
     .vis {
         :deep(text), :deep(span), :deep(div) {
-            font-family: Century Gothic, sans-serif;
+            font-family: var(--gen-vis-font-family, Century Gothic, sans-serif);
         }
     }
 

@@ -85,8 +85,12 @@ const validateDef = def => {
         checkProp(p.props, `${path}.props`, warn);
     });
 
-    if (def.facets && !(def.facets.dim in mapping))
-        warn('facets.dim', `unknown mapping '${def.facets.dim}'`);
+    if (def.facets) {
+        const dims = [].concat(def.facets.dim ?? []);
+        if (dims.length != 1)
+            warn('facets.dim', `expected the name of one mapping`);
+        dims.filter(d => !(d in mapping)).forEach(d => warn('facets.dim', `unknown mapping '${d}'`));
+    }
 
     checkProp(def.options?.height, 'options.height', warn);
     checkProp(def.facets?.cols, 'facets.cols', warn);

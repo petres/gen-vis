@@ -22,7 +22,6 @@
                     "ref": "innerWidth",
                     "ratio": 0.013
                 },
-                "name": "Jahr",
                 "position": "bottom",
                 "format": "c"
             },
@@ -41,7 +40,6 @@
             },
             "axis": {
                 "ticks": 5,
-                "name": "Einwohner",
                 "position": "left",
                 "grid": true,
                 "format": ",.0f"

@@ -99,16 +99,17 @@ const addScaledData = (data, infos) => {
 }
 
 
+// the groups are in the order of their first entry, the values of the keys
+// are not joined, so e.g. 'a-b', 'c' and 'a', 'b-c' are different groups
 const groupBy = (data, keys) => {
-    return Object.values(data.reduce((storage, item) => {
-        var group = keys.map(k => item[k]).join('-');
-        storage[group] = storage[group] || {
-            group: Object.fromEntries(keys.map(k => [k, item[k]])),
-            entries: []
-        };
-        storage[group].entries.push(item);
-        return storage;
-    }, {}));
+    const groups = new Map();
+    data.forEach(item => {
+        const key = JSON.stringify(keys.map(k => item[k]));
+        if (!groups.has(key))
+            groups.set(key, { group: Object.fromEntries(keys.map(k => [k, item[k]])), entries: [] });
+        groups.get(key).entries.push(item);
+    });
+    return [...groups.values()];
 };
 
 

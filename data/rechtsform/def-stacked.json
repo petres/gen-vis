@@ -18,7 +18,6 @@
             },
             "axis": {
                 "ticks": 6,
-                "label": "Jahr",
                 "format": "",
                 "position": "bottom",
                 "rotate": 0,

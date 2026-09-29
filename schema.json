@@ -1,0 +1,370 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://unpkg.com/@preschen/gen-vis/schema.json",
+    "title": "gen-vis definition",
+    "description": "A chart of gen-vis, see https://github.com/petres/gen-vis. A definition can be a part which is merged into its parent, so no entry is required.",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "$schema": { "type": "string" },
+        "parent": {
+            "type": "string",
+            "description": "Url of the definition this one is deep merged into, relative to this definition. Arrays are replaced, not merged."
+        },
+        "data": {
+            "type": "string",
+            "description": "Url of the CSV or JSON data, relative to the definition."
+        },
+        "options": { "$ref": "#/definitions/options" },
+        "globals": {
+            "type": "object",
+            "description": "Values changed by the form elements, e.g. the shared scales of the facets."
+        },
+        "mapping": {
+            "type": "object",
+            "description": "Maps columns of the data to named dimensions, the plots and all other parts of the definition refer to these names.",
+            "additionalProperties": { "$ref": "#/definitions/mapping" }
+        },
+        "plot": {
+            "description": "A plot or a list of plots, drawn in order.",
+            "oneOf": [
+                { "$ref": "#/definitions/plot" },
+                { "type": "array", "items": { "$ref": "#/definitions/plot" } }
+            ]
+        },
+        "facets": { "$ref": "#/definitions/facets" },
+        "formElements": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/formElement" }
+        }
+    },
+    "definitions": {
+        "prop": {
+            "description": "A computed value: a reference, a ratio of a reference or steps based on a reference. The prop is required unless the object is merged into a prop of the parent definition.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "prop": { "enum": ["fixed", "ref", "relative", "steps"] },
+                "ref": {
+                    "type": "string",
+                    "description": "e.g. totalWidth, innerWidth, innerHeight or a global"
+                },
+                "ratio": { "type": "number" },
+                "steps": {
+                    "type": "array",
+                    "description": "The value of the last step with a cut below the reference.",
+                    "items": {
+                        "type": "object",
+                        "required": ["cut", "value"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "cut": { "type": "number" },
+                            "value": {}
+                        }
+                    }
+                },
+                "value": { "description": "Used instead of the computed value." }
+            },
+            "allOf": [
+                { "if": { "required": ["prop"], "properties": { "prop": { "const": "ref" } } }, "then": { "required": ["ref"] } },
+                { "if": { "required": ["prop"], "properties": { "prop": { "const": "relative" } } }, "then": { "required": ["ref", "ratio"] } },
+                { "if": { "required": ["prop"], "properties": { "prop": { "const": "steps" } } }, "then": { "required": ["ref", "steps"] } }
+            ]
+        },
+        "value": {
+            "description": "A fixed value, a reference \"@name\" or a computed prop.",
+            "anyOf": [
+                { "type": ["string", "number", "boolean", "null"] },
+                { "$ref": "#/definitions/prop" }
+            ]
+        },
+        "number": {
+            "description": "A number or a computed prop, e.g. based on totalWidth.",
+            "anyOf": [
+                { "type": "number" },
+                { "$ref": "#/definitions/prop" }
+            ]
+        },
+        "props": {
+            "type": "object",
+            "description": "Svg attributes (and text), values are fixed, references \"@name\", computed props or nested props, e.g. d of a path.",
+            "additionalProperties": { "$ref": "#/definitions/propEntry" }
+        },
+        "propEntry": {
+            "anyOf": [
+                { "$ref": "#/definitions/value" },
+                {
+                    "type": "object",
+                    "not": { "required": ["prop"] },
+                    "additionalProperties": { "$ref": "#/definitions/propEntry" }
+                }
+            ]
+        },
+        "pair": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": { "type": ["number", "null"] }
+        },
+        "locale": {
+            "description": "Number and date formats, the name of a built-in locale or a d3 locale definition merged into one.",
+            "anyOf": [
+                { "enum": ["de", "en"] },
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "base": { "enum": ["de", "en"], "default": "de" },
+                        "number": {
+                            "type": "object",
+                            "description": "See d3.formatLocale, e.g. decimal, thousands, grouping and currency ([prefix, suffix])."
+                        },
+                        "time": {
+                            "type": "object",
+                            "description": "See d3.timeFormatLocale, e.g. date, months and shortMonths."
+                        },
+                        "timeTicks": {
+                            "type": "object",
+                            "description": "The formats of the ticks of time axes without format, by the interval of the date.",
+                            "additionalProperties": false,
+                            "properties": {
+                                "millisecond": { "type": "string" },
+                                "second": { "type": "string" },
+                                "minute": { "type": "string" },
+                                "hour": { "type": "string" },
+                                "day": { "type": "string" },
+                                "week": { "type": "string" },
+                                "month": { "type": "string" },
+                                "year": { "type": "string" }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "options": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "title": { "type": "string" },
+                "subtitle": { "type": "string" },
+                "footer": { "type": "string", "description": "HTML" },
+                "width": { "type": "number", "description": "The width of the container if not given." },
+                "height": { "$ref": "#/definitions/number" },
+                "margins": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "top": { "type": "number" },
+                        "right": { "type": "number" },
+                        "bottom": { "type": "number" },
+                        "left": { "type": "number" }
+                    }
+                },
+                "locale": { "$ref": "#/definitions/locale" },
+                "fontFamily": {
+                    "type": "string",
+                    "description": "Css font-family, by default the css variable --gen-vis-font-family or Century Gothic."
+                }
+            }
+        },
+        "scale": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "enum": ["linear", "log", "pow", "sqrt", "symlog", "time", "utc", "point", "band"],
+                    "default": "linear",
+                    "description": "A d3 scale, continuous scales need a numeric or date mapping, point and band a categorical one."
+                },
+                "orientation": {
+                    "enum": ["horizontal", "vertical"],
+                    "description": "Places the scale on the plot."
+                },
+                "domain": {
+                    "$ref": "#/definitions/pair",
+                    "description": "Fixes the domain, null entries are taken from the data."
+                },
+                "domainRel": {
+                    "$ref": "#/definitions/pair",
+                    "description": "Extends the domain relative to its size."
+                },
+                "domainAbs": {
+                    "$ref": "#/definitions/pair",
+                    "description": "Extends the domain by absolute values."
+                },
+                "range": {
+                    "type": "array",
+                    "items": { "type": ["number", "string"] },
+                    "description": "By default the width or height of the plot."
+                },
+                "padding": { "type": "number", "description": "For categorical scales." }
+            }
+        },
+        "axis": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "position": { "enum": ["top", "bottom", "left", "right"] },
+                "ticks": { "$ref": "#/definitions/number" },
+                "values": { "type": "array", "description": "Fixed ticks." },
+                "format": { "type": "string", "description": "A d3 number or time format." },
+                "rotate": {
+                    "type": "number",
+                    "description": "The angle of the labels in degrees, positive counterclockwise, negative clockwise."
+                },
+                "grid": { "type": "boolean", "description": "Lines at the ticks." },
+                "title": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "name": { "type": "string" },
+                        "offset": { "type": "number" }
+                    }
+                },
+                "padding": { "type": "number" }
+            }
+        },
+        "mapping": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "column": { "type": "string" },
+                "type": {
+                    "enum": ["numeric", "date", "categorical"],
+                    "description": "Missing and invalid numeric and date values are null, dates are parsed with Date.parse or are timestamps."
+                },
+                "stacked": { "type": "boolean", "description": "Stacks the values of a vertical axis." },
+                "scale": { "$ref": "#/definitions/scale" },
+                "axis": { "$ref": "#/definitions/axis" },
+                "hover": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "format": { "type": "string", "description": "By default the format of the axis." },
+                        "props": {
+                            "type": "object",
+                            "description": "The columns of the entries of a categorical mapping, name by default.",
+                            "additionalProperties": { "$ref": "#/definitions/value" }
+                        }
+                    }
+                },
+                "legend": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "symbol": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "size": { "type": "number" },
+                                "elements": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "required": ["type"],
+                                        "additionalProperties": false,
+                                        "properties": {
+                                            "type": { "type": "string", "description": "An svg element, e.g. line or circle." },
+                                            "props": { "$ref": "#/definitions/props" }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "props": {
+                            "type": "object",
+                            "additionalProperties": { "$ref": "#/definitions/value" }
+                        }
+                    }
+                },
+                "props": {
+                    "type": "object",
+                    "description": "The categories and their props, e.g. colors. Only visible categories are shown.",
+                    "additionalProperties": false,
+                    "properties": {
+                        "common": { "$ref": "#/definitions/categoryProps" },
+                        "manual": {
+                            "type": "object",
+                            "additionalProperties": { "$ref": "#/definitions/categoryProps" }
+                        }
+                    }
+                }
+            }
+        },
+        "categoryProps": {
+            "type": "object",
+            "properties": {
+                "name": { "type": "string", "description": "The key by default." },
+                "visible": { "type": "boolean", "default": true }
+            }
+        },
+        "plot": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "enum": ["svg:path", "svg:circle", "svg:line", "svg:rect", "svg:text", "base:area", "bar", "stackedBar"],
+                    "description": "svg:path and base:area draw a path per group, the others an element per row."
+                },
+                "id": { "type": "string", "description": "The class of the plot group, plot-<index> by default." },
+                "categories": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "The rows are grouped by these mappings, the props of their categories are available in the props."
+                },
+                "props": { "$ref": "#/definitions/props" }
+            }
+        },
+        "facets": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "dim": {
+                    "description": "A plot for every category of this mapping.",
+                    "anyOf": [
+                        { "type": "string" },
+                        { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 1 }
+                    ]
+                },
+                "cols": { "$ref": "#/definitions/number" },
+                "scales": {
+                    "description": "The mappings which share their scale across all facets, or a reference to a global.",
+                    "anyOf": [
+                        { "type": "array", "items": { "type": "string" } },
+                        { "$ref": "#/definitions/prop" }
+                    ]
+                }
+            }
+        },
+        "formElement": {
+            "type": "object",
+            "required": ["id", "ref", "type", "values"],
+            "additionalProperties": false,
+            "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "ref": { "type": "string", "description": "The global which is changed." },
+                "type": { "enum": ["switch"] },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["id", "value"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "id": { "type": "string" },
+                            "name": { "type": "string" },
+                            "value": {},
+                            "mapping": {
+                                "type": "object",
+                                "description": "Patches the mappings while the entry is selected.",
+                                "additionalProperties": { "$ref": "#/definitions/mapping" }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

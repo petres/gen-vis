@@ -18,7 +18,6 @@
             },
             "axis": {
                 "ticks": 6,
-                "label": "Jahr",
                 "format": "",
                 "position": "bottom",
                 "rotate": 0,
@@ -39,7 +38,6 @@
             },
             "axis": {
                 "ticks": 5,
-                "label": "Preis",
                 "position": "left",
                 "grid": true,
                 "format": ".0%"
