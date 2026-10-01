@@ -154,10 +154,13 @@ the definition refer to these names.
   `name` by default.
 - `props`: the categories and their props, e.g. colors. `common` props are
   used for all `manual` entries, `name` and `visible` are set by default. Only
-  visible categories are shown.
+  visible categories are shown. The order of the `manual` entries is the order
+  of the legend, the facets and the stacks, not the order of the rows. Keys
+  which are integers, e.g. years, are ordered ascending by JavaScript.
 - `legend`: a toggle for every category, `symbol` draws svg `elements` (with
   props) of the given `size` before the name.
-- `stacked`: stacks the values of a vertical axis, see `stackedBar`.
+- `stacked`: stacks the values of a vertical axis, see `stackedBar`, the first
+  category is at the bottom.
 
 ### `plot`
 

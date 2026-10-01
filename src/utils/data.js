@@ -1,4 +1,4 @@
-export { groupBy, parseData, prepareData, filter, addDimInfo, addScaledData, addStackedData };
+export { groupBy, parseData, prepareData, filter, addDimInfo, addScaledData, addStackedData, categoryOrder };
 
 import * as d3 from "d3";
 
@@ -60,11 +60,27 @@ const addDimInfo = (info, data) => {
 }
 
 
-const addStackedData = (data, axis, dims = []) => {
+// compares rows by the order of the categories in the definition, e.g. the
+// order of the `manual` props, `orders` are the dims with their ordered keys
+const categoryOrder = orders => {
+    const ranks = orders.map(({ dim, keys }) => ({ dim, rank: new Map(keys.map((k, i) => [k, i])) }));
+    return (a, b) => {
+        for (const { dim, rank } of ranks) {
+            const d = (rank.get(a[dim]) ?? Infinity) - (rank.get(b[dim]) ?? Infinity);
+            if (d)
+                return d;
+        }
+        return 0;
+    };
+};
+
+// the values are stacked in the order of `compare`, by default in the order of the rows
+const addStackedData = (data, axis, dims = [], compare = null) => {
     groupBy(data, [...dims, axis.h]).forEach(g => {
         let tp = 0;
         let tn = 0;
-        g.entries.forEach(e => {
+        const entries = compare ? [...g.entries].sort(compare) : g.entries;
+        entries.forEach(e => {
             const v = e[axis.v];
             if (v >= 0) {
                 e[`${axis.v}:st:s`] = tp;

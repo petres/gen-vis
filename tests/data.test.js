@@ -75,6 +75,20 @@ describe('addStackedData', () => {
         du.addStackedData(data, { h: 'x', v: 'y' });
         expect(data.map(d => [d['y:st:s'], d['y:st:e']])).toEqual([[0, 2], [0, -1], [2, 5], [0, 5]]);
     });
+
+    test('in the order of the categories, not of the rows', () => {
+        const data = [{ x: 1, y: 1, c: 'b' }, { x: 1, y: 2, c: 'a' }, { x: 1, y: 4, c: 'c' }];
+        du.addStackedData(data, { h: 'x', v: 'y' }, [], du.categoryOrder([{ dim: 'c', keys: ['a', 'b', 'c'] }]));
+        expect(data.map(d => [d.c, d['y:st:s'], d['y:st:e']])).toEqual([['b', 2, 3], ['a', 0, 2], ['c', 3, 7]]);
+    });
+});
+
+describe('categoryOrder', () => {
+    test('by the dims in turn, unknown keys last', () => {
+        const compare = du.categoryOrder([{ dim: 'a', keys: ['y', 'x'] }, { dim: 'b', keys: ['2', '1'] }]);
+        const rows = [{ a: 'x', b: '1' }, { a: 'z', b: '2' }, { a: 'y', b: '1' }, { a: 'x', b: '2' }];
+        expect([...rows].sort(compare)).toEqual([rows[2], rows[3], rows[0], rows[1]]);
+    });
 });
 
 describe('filter', () => {

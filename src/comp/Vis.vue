@@ -118,9 +118,11 @@ export default {
 
             this.data = markRaw(du.filter(this.store.data, this.filter));
 
-            // stacked
-            if (axis.v && this.store.mapping(axis.v).stacked)
-                du.addStackedData(this.data, axis, def.facets ? [def.facets.dim] : []);
+            // stacked in the order of the categories, not of the rows
+            if (axis.v && this.store.mapping(axis.v).stacked) {
+                const order = du.categoryOrder(this.filter.map(f => ({ dim: f.dim, keys: f.key })));
+                du.addStackedData(this.data, axis, def.facets ? [def.facets.dim] : [], order);
+            }
 
             if (def.facets) {
                 this.facets.margins = this.options.margins;
@@ -132,12 +134,14 @@ export default {
 
                 this.facets.width = this.options.width/cols;
 
-                // dims
+                // in the order of the categories, not of the rows
                 const d = def.facets.dim;
+                const keys = Object.keys(this.store.mapping(d).props);
                 const dataGroupedByFacets = du.groupBy(this.data, [d]);
 
                 this.facets.entries = dataGroupedByFacets
-                    .filter(e => Object.keys(this.store.mapping(d).props).includes(e.group[d]))
+                    .filter(e => keys.includes(e.group[d]))
+                    .sort((a, b) => keys.indexOf(a.group[d]) - keys.indexOf(b.group[d]))
                     .map(e => ({
                         filter: {
                             dim: e.group[d],

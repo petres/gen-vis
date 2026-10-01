@@ -414,4 +414,22 @@ describe('fixed bugs', () => {
             expect(Math.max(...ticks)).toBeLessThanOrEqual(3);
         });
     });
+
+    test('facets and stacks in the order of the categories, not of the rows', async () => {
+        const def = lineDef();
+        def.mapping.y.stacked = true;
+        def.mapping.type = { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } };
+        def.facets = { dim: 'c', cols: 2 };
+        def.plot = { type: 'svg:circle', categories: ['type'], props: { r: 2, cx: '@x:scaled', cy: '@y:st:e:scaled' } };
+        const data = 'year,value,land,type\n2020,2,Tirol,b\n2020,1,Tirol,a\n2020,2,Wien,b\n2020,1,Wien,a';
+        const el = await mount(GenVis, { def, data });
+
+        expect([...el.querySelectorAll('.facet-title')].map(t => t.textContent)).toEqual(['Wien', 'Tirol']);
+        el.querySelectorAll('svg.facet').forEach(f => {
+            const cy = type => parseFloat(f.querySelector(`g.group[data-group-type='${type}'] circle`).getAttribute('cy'));
+            // a is at the bottom of the stack, the top of b is above it
+            expect(cy('a')).toBeGreaterThan(cy('b'));
+        });
+        expect(errors).toEqual([]);
+    });
 });
