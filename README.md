@@ -225,6 +225,31 @@ the column of an axis:
 }]
 ```
 
+If the column depends on several form elements, it can be a template of the
+globals, e.g. the values and their shares in the columns `twh`, `co2`,
+`twh.share` and `co2.share`:
+
+```json
+"globals": { "values": "twh", "share": "" },
+"formElements": [{
+    "id": "values", "name": "Werte", "ref": "values", "type": "switch",
+    "values": [
+        { "id": "twh", "name": "TWh", "value": "twh" },
+        { "id": "co2", "name": "CO₂", "value": "co2" }
+    ]
+}, {
+    "id": "share", "name": "Darstellung", "ref": "share", "type": "switch",
+    "values": [
+        { "id": "abs", "name": "Absolut", "value": "" },
+        { "id": "rel", "name": "Anteil", "value": ".share", "mapping": { "y": { "axis": { "format": ".0%" } } } }
+    ]
+}],
+"mapping": { "y": { "column": "{values}{share}" } }
+```
+
+`{name}` is replaced by the value of the global, unknown globals are kept and
+reported as warnings.
+
 ## Development
 
 ```sh

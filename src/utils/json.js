@@ -1,4 +1,4 @@
-export { fillDirect, fillProps, getProps, prepareDef, applyFormElements, mergeAll, sameValue, entryToValue, toValue, entryToProp, isProp, refNames };
+export { fillDirect, fillProps, getProps, prepareDef, applyFormElements, templateRefs, fillTemplate, mergeAll, sameValue, entryToValue, toValue, entryToProp, isProp, refNames };
 
 import merge from 'deepmerge';
 const overwriteMerge = (target, source, options) => source;
@@ -197,15 +197,28 @@ const prepareDef = def => {
 }
 
 
+// the names of the globals in a column template, e.g. `values` and `share` of "{values}{share}"
+const templateRefs = column => typeof column == 'string' ?
+    [...column.matchAll(/\{(\w+)\}/g)].map(m => m[1]) : [];
+
+// unknown globals are kept as they are
+const fillTemplate = (column, globals = {}) =>
+    column.replace(/\{(\w+)\}/g, (t, n) => n in globals ? String(globals[n]) : t);
+
 /**
  * Entries of form elements can patch mappings, e.g. to switch the column of
  * an axis. Patched mappings are prepared again from the original definition
  * with the patches of the selected entries, the props are kept, so the legend
- * state survives. Returns true if there are patched mappings.
+ * state survives. Columns can be templates of globals, e.g. "{values}{share}",
+ * so they can depend on several form elements. Returns true if there are
+ * patched or templated mappings.
  */
 const applyFormElements = (def, defOrg) => {
     const elements = def.formElements ?? [];
-    const names = new Set(elements.flatMap(e => e.values.flatMap(v => Object.keys(v.mapping ?? {}))));
+    const names = new Set([
+        ...elements.flatMap(e => e.values.flatMap(v => Object.keys(v.mapping ?? {}))),
+        ...Object.keys(defOrg.mapping ?? {}).filter(n => templateRefs(defOrg.mapping[n].column).length > 0),
+    ]);
     if (names.size == 0)
         return false;
 
@@ -215,7 +228,10 @@ const applyFormElements = (def, defOrg) => {
 
     names.forEach(n => {
         const patches = selected.filter(v => v.mapping[n]).map(v => v.mapping[n]);
-        const m = prepareMapping(mergeAll([defOrg.mapping[n] ?? {}, ...patches]));
+        const merged = mergeAll([defOrg.mapping[n] ?? {}, ...patches]);
+        if (typeof merged.column == 'string')
+            merged.column = fillTemplate(merged.column, def.globals);
+        const m = prepareMapping(merged);
         if (def.mapping[n] && 'props' in def.mapping[n])
             m.props = def.mapping[n].props;
         def.mapping[n] = m;

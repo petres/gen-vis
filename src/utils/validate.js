@@ -2,6 +2,7 @@ export { validateDef, plotTypes };
 
 import * as d3 from "d3";
 import * as eu from "@/utils/else.js";
+import { templateRefs } from "@/utils/json.js";
 
 // the plot types implemented by Facet.vue
 const plotTypes = ['svg:path', 'svg:circle', 'svg:line', 'svg:rect', 'svg:text', 'base:area', 'bar', 'stackedBar'];
@@ -91,6 +92,14 @@ const validateDef = def => {
             warn('facets.dim', `expected the name of one mapping`);
         dims.filter(d => !(d in mapping)).forEach(d => warn('facets.dim', `unknown mapping '${d}'`));
     }
+
+    // column templates, e.g. "{values}{share}", need the globals
+    const checkTemplate = (column, path) => templateRefs(column).filter(r => !(r in (def.globals ?? {}))).forEach(r =>
+        warn(path, `unknown global '${r}' in the column template`));
+    Object.entries(mapping).forEach(([n, m]) => checkTemplate(m.column, `mapping.${n}.column`));
+    (def.formElements ?? []).forEach((e, i) => (e.values ?? []).forEach((v, j) =>
+        Object.entries(v.mapping ?? {}).forEach(([n, m]) =>
+            checkTemplate(m.column, `formElements[${i}].values[${j}].mapping.${n}.column`))));
 
     checkProp(def.options?.height, 'options.height', warn);
     checkProp(def.facets?.cols, 'facets.cols', warn);

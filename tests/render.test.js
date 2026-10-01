@@ -195,6 +195,42 @@ describe('rendering', () => {
         expect(errors).toEqual([]);
     });
 
+    test('column templates combine form elements', async () => {
+        const data = 'year,value,other,value.share,other.share,land\n2020,1,10,0.1,0.5,Wien\n2021,2,20,0.2,0.9,Wien';
+        const def = lineDef();
+        def.mapping.y.column = '{column}{share}';
+        def.globals = { column: 'value', share: '' };
+        def.formElements = [
+            { id: 'column', name: 'Wert', ref: 'column', type: 'switch', values: [
+                { id: 'value', name: 'Value', value: 'value' },
+                { id: 'other', name: 'Other', value: 'other' },
+            ] },
+            { id: 'share', name: 'Anteil', ref: 'share', type: 'switch', values: [
+                { id: 'abs', name: 'Absolut', value: '' },
+                { id: 'rel', name: 'Anteil', value: '.share', mapping: { y: { axis: { format: '.0%' } } } },
+            ] },
+        ];
+        const el = await mount(GenVis, { def, data });
+        const ticks = () => [...el.querySelectorAll('g.axis-position-left g.tick text')].map(t => t.textContent);
+        const entries = i => el.querySelectorAll('.formElement')[i].querySelectorAll('.entries > div');
+        expect(ticks().at(-1)).toBe('2,0');
+
+        entries(0)[1].click();
+        await nextTick();
+        expect(ticks().at(-1)).toBe('20');
+
+        // other.share
+        entries(1)[1].click();
+        await nextTick();
+        expect(ticks().at(-1)).toBe('90%');
+
+        // value.share
+        entries(0)[0].click();
+        await nextTick();
+        expect(ticks().at(-1)).toBe('20%');
+        expect(errors).toEqual([]);
+    });
+
     test('several visualisations have their own state', async () => {
         const el = await mount({
             render: () => ['A', 'B'].map(title => h(GenVis, { def: lineDef({ title }), data: lineData })),

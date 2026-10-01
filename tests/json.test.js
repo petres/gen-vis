@@ -84,4 +84,40 @@ describe('applyFormElements', () => {
     test('nothing to do without patches', () => {
         expect(ju.applyFormElements({ mapping: {} }, { mapping: {} })).toBe(false);
     });
+
+    test('columns are filled from the globals of several form elements', () => {
+        const org = {
+            globals: { values: 'twh', share: '' },
+            formElements: [
+                { ref: 'values', type: 'switch', values: [{ value: 'twh' }, { value: 'co2' }] },
+                { ref: 'share', type: 'switch', values: [
+                    { value: '' },
+                    { value: '.share', mapping: { y: { axis: { format: '.0%' } } } },
+                ] },
+            ],
+            mapping: { y: { column: '{values}{share}', type: 'numeric', axis: { format: ',.1f' } } },
+            plot: { type: 'svg:path', props: {} },
+        };
+        const def = ju.prepareDef(JSON.parse(JSON.stringify(org)));
+        expect(ju.applyFormElements(def, org)).toBe(true);
+        expect(def.mapping.y).toMatchObject({ column: 'twh', axis: { format: ',.1f' } });
+
+        Object.assign(def.globals, { values: 'co2', share: '.share' });
+        ju.applyFormElements(def, org);
+        expect(def.mapping.y).toMatchObject({ column: 'co2.share', axis: { format: '.0%' } });
+        expect(org.mapping.y.column).toBe('{values}{share}');
+    });
+});
+
+describe('column templates', () => {
+    test('the referenced globals', () => {
+        expect(ju.templateRefs('{values}{share}')).toEqual(['values', 'share']);
+        expect(ju.templateRefs('value')).toEqual([]);
+        expect(ju.templateRefs(undefined)).toEqual([]);
+    });
+
+    test('unknown globals are kept', () => {
+        expect(ju.fillTemplate('{a}.{b}', { a: 'x' })).toBe('x.{b}');
+        expect(ju.fillTemplate('{a}', { a: 1 })).toBe('1');
+    });
 });
