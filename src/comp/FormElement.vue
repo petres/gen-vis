@@ -30,9 +30,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+    // several form elements are in one line, wrapped if there is not enough space
     .formElement {
+        display: inline-block;
         font-size: 13px;
-        margin: 6px 4px;
+        margin: 2px 16px 2px 4px;
         .title {
             font-weight: bold;
             margin-right: 5px;
