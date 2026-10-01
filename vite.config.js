@@ -4,14 +4,16 @@ import { fileURLToPath } from 'node:url';
 import pkg from './package.json' with { type: 'json' };
 
 // the styles are injected by the script, so a single file is enough to use
-// the library (as it was with the style-loader of webpack)
+// the library (as it was with the style-loader of webpack), they are in the
+// cascade layer `gen-vis`, so every style of the page overrides them,
+// regardless of its specificity and order
 const injectCss = () => ({
     name: 'inject-css',
     apply: 'build',
     enforce: 'post',
     generateBundle(options, bundle) {
         const assets = Object.values(bundle).filter(f => f.type == 'asset' && f.fileName.endsWith('.css'));
-        const css = assets.map(f => f.source).join('\n');
+        const css = assets.length ? `@layer gen-vis {\n${assets.map(f => f.source).join('\n')}\n}` : '';
         assets.forEach(f => delete bundle[f.fileName]);
         if (css) {
             const entry = Object.values(bundle).find(f => f.type == 'chunk' && f.isEntry);

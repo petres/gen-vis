@@ -54,6 +54,23 @@ Every visualisation has its own state, several of them can be used on a page.
 If the props change, the visualisation is loaded again. Errors are shown in
 place of the visualisation.
 
+### Styles
+
+The styles of the package are in the cascade layer `gen-vis`, so every style
+of the page overrides them, regardless of its specificity and of the order of
+the styles, e.g.:
+
+```css
+.formElement { display: block; margin: 6px 4px; }
+.vis-header .subtitle { font-size: 15px; }
+```
+
+The main classes are `vis`, `vis-header` (with `title` and `subtitle`),
+`vis-form-elements` (with a `formElement` for every form element),
+`vis-legends`, `facet-title` and `vis-footer`. Styles of the page which are in
+a cascade layer themselves only override the package if their layer is
+declared after it, e.g. `@layer gen-vis, page;`.
+
 ## Definition
 
 ```json
