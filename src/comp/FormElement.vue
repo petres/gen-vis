@@ -3,7 +3,7 @@
         <div class="title">{{ element.name }}:</div>
         <div v-if="element.type == 'switch'" class="entries">
             <div v-for="e of element.values" :id="`container-${e.id}`" @click="switched(e)">
-                <input type="radio" :name="element.id" :value="e.id" :checked="equal(e.value)">
+                <input type="radio" :name="`${uid}-${element.id}`" :value="e.id" :checked="equal(e.value)">
                 <label :for="e.id">{{ e.name }}</label>
             </div>
         </div>
@@ -13,8 +13,15 @@
 <script>
 import * as ju from "@/utils/json";
 
+// the radio buttons of a form element are a group of their own, also if
+// several visualisations on a page use the same ids
+let count = 0;
+
 export default {
     props: ["element", "globals"],
+    created() {
+        this.uid = `gen-vis-form-${count++}`;
+    },
     computed: {
         vg() { return this.globals[this.element.ref] }
     },
