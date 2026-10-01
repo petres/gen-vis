@@ -1,6 +1,6 @@
 {
   "name": "@preschen/gen-vis",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "A declarative d3 visualisation library",
   "type": "module",
   "main": "dist/gen-vis.js",
