@@ -1,7 +1,7 @@
 <template>
     <div class="vis-outer">
         <div v-if="error" class="vis-error">{{ error }}</div>
-        <vis-base v-else-if="store.loaded"/>
+        <vis-base v-else-if="store.loaded" @state-changed="$emit('update:state', store.state)"/>
         <div v-if="debug && store.def">
             <h3>prepared:</h3>
             <pre style="height: 500px; overflow: auto; font-size: 11px;">{{ JSON.stringify(store.def, null, 4) }}</pre>
@@ -13,6 +13,7 @@
 
 <script>
 import { createStore } from '@/store.js';
+import { sameValue } from '@/utils/json.js';
 import VisBase from '@/comp/Vis.vue';
 
 export default {
@@ -36,7 +37,14 @@ export default {
            type: [Array, String],
            default: null
         },
+        // the changes of the user, e.g. kept by the page, see utils/state.js,
+        // with v-model:state it is updated on every change
+        state: {
+           type: Object,
+           default: null
+        },
     },
+    emits: ['update:state'],
     data: () => ({
         store: createStore(),
         error: null,
@@ -51,6 +59,10 @@ export default {
         def: 'init',
         defFile: 'init',
         data: 'init',
+        state: {
+            handler: 'syncState',
+            deep: true,
+        },
     },
     mounted() {
         this.init();
@@ -66,10 +78,17 @@ export default {
             if (this.def === null && this.defFile === null)
                 return this.showError(new Error('No definition given.'));
             try {
-                await this.store.init({ def: this.def, defUrl: this.defFile, data: this.data });
+                await this.store.init({ def: this.def, defUrl: this.defFile, data: this.data, state: this.state });
+                // the state might have changed while loading
+                this.syncState();
             } catch (error) {
                 this.showError(error);
             }
+        },
+        // only if it differs, the own updates of v-model come back unchanged
+        syncState() {
+            if (this.store.loaded && !sameValue(this.state ?? {}, this.store.state))
+                this.store.setState(this.state);
         },
         showError(error) {
             console.error(error);

@@ -3,7 +3,7 @@ import { describe, test, expect, vi, beforeAll, beforeEach, afterEach } from 'vi
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { createApp, h, nextTick } from 'vue';
+import { createApp, h, nextTick, ref } from 'vue';
 import { GenVis, mountGenVisElement } from '@/index.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -228,6 +228,64 @@ describe('rendering', () => {
         entries(0)[0].click();
         await nextTick();
         expect(ticks().at(-1)).toBe('20%');
+        expect(errors).toEqual([]);
+    });
+
+    const stateDef = () => {
+        const def = lineDef();
+        def.globals = { column: 'value' };
+        def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'switch', values: [
+            { id: 'value', name: 'Value', value: 'value', mapping: { y: { column: 'value' } } },
+            { id: 'other', name: 'Other', value: 'other', mapping: { y: { column: 'other' } } },
+        ] }];
+        return def;
+    };
+    const maxTick = el => Math.max(...[...el.querySelectorAll('g.axis-position-left g.tick text')].map(t => parseFloat(t.textContent)));
+    const legendVisible = el => [...el.querySelectorAll('.legend .entries > div')].map(e => e.dataset.visible);
+    const checked = el => [...el.querySelectorAll('.formElement input')].map(i => i.checked);
+
+    test('a given state is applied', async () => {
+        const state = { globals: { column: 'other' }, visible: { c: { Tirol: false } } };
+        const el = await mount(GenVis, { def: stateDef(), data: lineData, state });
+        expect(checked(el)).toEqual([false, true]);
+        expect(legendVisible(el)).toEqual(['true', 'false']);
+        // other of Wien
+        expect(maxTick(el)).toBe(40);
+        expect(el.querySelectorAll('g.plotGroup.plot-1 circle')).toHaveLength(4);
+        expect(errors).toEqual([]);
+    });
+
+    test('v-model:state reports the changes and resets', async () => {
+        const state = ref(null);
+        const updates = [];
+        // the same def, a new one would load the visualisation again
+        const def = stateDef();
+        const el = await mount({
+            render: () => h(GenVis, { def, data: lineData, state: state.value, 'onUpdate:state': s => {
+                updates.push(s);
+                state.value = s;
+            } }),
+        });
+
+        el.querySelectorAll('.formElement .entries > div')[1].click();
+        await nextTick();
+        el.querySelectorAll('.legend .entries > div')[1].click();
+        await nextTick();
+        expect(updates).toEqual([
+            { globals: { column: 'other' } },
+            { globals: { column: 'other' }, visible: { c: { Tirol: false } } },
+        ]);
+        expect(maxTick(el)).toBe(40);
+
+        // back to the default, not reported as a change
+        state.value = null;
+        await nextTick();
+        await nextTick();
+        expect(checked(el)).toEqual([true, false]);
+        expect(legendVisible(el)).toEqual(['true', 'true']);
+        expect(maxTick(el)).toBe(4);
+        expect(el.querySelectorAll('g.plotGroup.plot-1 circle')).toHaveLength(7);
+        expect(updates).toHaveLength(2);
         expect(errors).toEqual([]);
     });
 

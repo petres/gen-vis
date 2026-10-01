@@ -38,6 +38,8 @@ import FormElement from '@/comp/FormElement.vue';
 
 export default {
     inject: ['store'],
+    // the user changed the state, see store.state
+    emits: ['stateChanged'],
     data: () => ({
         initialized: false,
 
@@ -63,6 +65,13 @@ export default {
     },
     components: {
         Facet, LegendEntry, FormElement,
+    },
+    watch: {
+        // the state was set from outside
+        'store.stateSets'() {
+            this.dataInit();
+            this.scales();
+        },
     },
     mounted() {
         this.baseInit();
@@ -179,6 +188,7 @@ export default {
         changeSelected(info) {
             this.dataInit();
             this.scales();
+            this.$emit('stateChanged');
         },
         formChanged(info) {
             this.store.applyFormElements();

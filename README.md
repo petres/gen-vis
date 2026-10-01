@@ -49,10 +49,31 @@ well.
 | `def`      | `data-def`      | the definition, an object or a JSON string |
 | `data`     | `data-data`     | the data as rows or a CSV/JSON string, if not given it is loaded from the `data` url of the definition |
 | `debug`    | `data-debug`    | shows the prepared definition |
+| `state`    |                 | the changes of the user, see [state](#state) |
 
 Every visualisation has its own state, several of them can be used on a page.
 If the props change, the visualisation is loaded again. Errors are shown in
 place of the visualisation.
+
+### State
+
+The state holds what the user changed compared to the definition: the
+globals of the form elements and the entries of the legends shown or hidden.
+
+```json
+{ "globals": { "column": "share" }, "visible": { "year": { "2019": true, "2022": false } } }
+```
+
+The component emits `update:state` on every change of the user, so with
+`v-model:state` the page can keep it, e.g. in the local storage. A given state
+is applied when the visualisation is loaded, a new one (`null` for the
+definition) is applied without loading it again. Globals, values and entries
+the definition does not have (anymore) are ignored, new entries of the
+definition keep their defaults.
+
+```html
+<GenVis def-file="/data/bev/def.json" v-model:state="state"/>
+```
 
 ### Styles
 

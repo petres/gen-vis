@@ -6,6 +6,7 @@ import * as d3 from "d3";
 import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
 import { validateDef } from "@/utils/validate";
+import * as su from "@/utils/state";
 import { getLocale } from "@/utils/else";
 
 // relative urls are resolved against `base`, e.g. the url of the def referencing them
@@ -46,7 +47,7 @@ const resolveParents = async (def, url, load = fetchText) => {
 const raw = rows => markRaw(Array.from(toRaw(rows)));
 
 // see Store.init, urls of inline defs are relative to the page
-const load = async ({ def = null, defUrl = null, data = null }) => {
+const load = async ({ def = null, defUrl = null, data = null, state = null }) => {
     let url;
     if (def === null) {
         url = resolveUrl(defUrl);
@@ -58,6 +59,8 @@ const load = async ({ def = null, defUrl = null, data = null }) => {
     const defOrg = await resolveParents(JSON.parse(JSON.stringify(def)), url);
     validateDef(defOrg).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
     const prepared = ju.prepareDef(JSON.parse(JSON.stringify(defOrg)));
+    const defaults = su.snapshot(prepared);
+    su.applyState(prepared, state);
     ju.applyFormElements(prepared, defOrg);
 
     if (data === null) {
@@ -73,6 +76,7 @@ const load = async ({ def = null, defUrl = null, data = null }) => {
         locale: markRaw(getLocale(defOrg.options?.locale)),
         rows,
         def: prepared,
+        defaults,
         data: raw(du.prepareData(rows, prepared)),
     };
 };
@@ -84,9 +88,15 @@ class Store {
     def = null;
     rows = null;
     data = null;
+    defaults = null;
     runs = 0;
+    // incremented if the state is set from outside, the components update
+    stateSets = 0;
 
     get loaded() { return this.def !== null && this.data !== null }
+
+    // the changes of the user compared to the definition, see utils/state.js
+    get state() { return this.loaded ? su.diffState(su.snapshot(this.def), this.defaults) : null }
 
     // the names of the mappings of the horizontal and vertical axis
     get axis() {
@@ -117,7 +127,8 @@ class Store {
     /**
      * def is an object or a JSON string, if it is null the def is loaded from
      * defUrl. data are rows or a CSV/JSON string, if it is null it is loaded
-     * from the url given in the def.
+     * from the url given in the def. state is applied to the def, see
+     * utils/state.js.
      */
     async init(sources) {
         const run = ++this.runs;
@@ -137,6 +148,14 @@ class Store {
     applyFormElements() {
         if (ju.applyFormElements(this.def, this.defOrg))
             this.data = raw(du.prepareData(this.rows, this.def));
+    }
+
+    // replaces the state of the loaded visualisation, null for the defaults
+    setState(state) {
+        su.applyState(this.def, this.defaults);
+        su.applyState(this.def, state);
+        this.applyFormElements();
+        this.stateSets++;
     }
 }
 
