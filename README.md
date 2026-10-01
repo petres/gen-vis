@@ -15,7 +15,7 @@ the styles, and provides two global functions:
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
 
-<script src="gen-vis-0.6.0.js"></script>
+<script src="gen-vis-0.7.0.js"></script>
 <script>mountGenVisByClass('genVis')</script>
 ```
 
