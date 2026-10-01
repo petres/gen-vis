@@ -28,18 +28,26 @@ const parseDef = (text, source) => {
     }
 };
 
-// merges def with its parents, a parent url is relative to the def referencing it
+// merges def with its parents, a parent url is relative to the def referencing
+// it. A list of parents (mixins) is merged in its order, later ones override
+// earlier ones. A parent shared by several mixins is merged once, before the
+// first one using it, so it does not override the mixins in between.
 const resolveParents = async (def, url, load = fetchText) => {
-    const parts = [def];
-    const seen = new Set();
-    while (def.parent) {
-        url = resolveUrl(def.parent, url);
-        if (seen.has(url))
-            throw new Error(`Cyclic parent definition '${url}'`);
-        seen.add(url);
-        def = parseDef(await load(url), `'${url}'`);
-        parts.unshift(def);
-    }
+    const parts = [];
+    const included = new Set();
+    const add = async (def, url, ancestors) => {
+        for (const parent of [def.parent ?? []].flat()) {
+            const parentUrl = resolveUrl(parent, url);
+            if (ancestors.includes(parentUrl))
+                throw new Error(`Cyclic parent definition '${parentUrl}'`);
+            if (included.has(parentUrl))
+                continue;
+            included.add(parentUrl);
+            await add(parseDef(await load(parentUrl), `'${parentUrl}'`), parentUrl, [...ancestors, parentUrl]);
+        }
+        parts.push(def);
+    };
+    await add(def, url, []);
     return ju.mergeAll(parts);
 };
 

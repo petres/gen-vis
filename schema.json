@@ -8,8 +8,11 @@
     "properties": {
         "$schema": { "type": "string" },
         "parent": {
-            "type": "string",
-            "description": "Url of the definition this one is deep merged into, relative to this definition. Arrays are replaced, not merged."
+            "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+            ],
+            "description": "Url of the definition this one is deep merged into, relative to this definition, or a list of them (mixins) merged in their order, later ones override earlier ones. Arrays are replaced, not merged."
         },
         "data": {
             "type": "string",

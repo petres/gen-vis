@@ -58,9 +58,31 @@ describe('resolveParents', () => {
         expect(merged.plot).toEqual([{ type: 'b' }]);
     });
 
+    test('mixins are merged in their order, with their own parents', async () => {
+        const files = {
+            'http://h/data/root.json': JSON.stringify({ options: { title: 'root', height: 1, width: 1 } }),
+            'http://h/data/lines.json': JSON.stringify({ parent: 'root.json', options: { height: 2 }, plot: [{ type: 'a' }] }),
+            'http://h/data/facets.json': JSON.stringify({ parent: 'root.json', options: { width: 3 }, facets: { dim: ['type'] } }),
+        };
+        const loaded = [];
+        const merged = await resolveParents(
+            { parent: ['../lines.json', '../facets.json'], options: { title: 'def' } },
+            'http://h/data/bev/def.json',
+            url => { loaded.push(url); return files[url]; },
+        );
+        // the shared parent is loaded and merged once, it does not override lines.json
+        expect(loaded).toEqual(['http://h/data/lines.json', 'http://h/data/root.json', 'http://h/data/facets.json']);
+        expect(merged.options).toEqual({ title: 'def', height: 2, width: 3 });
+        expect(merged.plot).toEqual([{ type: 'a' }]);
+        expect(merged.facets).toEqual({ dim: ['type'] });
+    });
+
     test('cyclic parents', async () => {
         await expect(resolveParents({ parent: 'a.json' }, 'http://h/a.json', () => '{"parent": "a.json"}'))
             .rejects.toThrow("Cyclic parent definition 'http://h/a.json'");
+        const files = { 'http://h/b.json': '{"parent": ["c.json"]}', 'http://h/c.json': '{"parent": "b.json"}' };
+        await expect(resolveParents({ parent: ['x.json', 'b.json'] }, 'http://h/a.json', url => files[url] ?? '{}'))
+            .rejects.toThrow("Cyclic parent definition 'http://h/b.json'");
     });
 
     test('invalid JSON', async () => {

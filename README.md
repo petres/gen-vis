@@ -113,6 +113,19 @@ its `parent` (and its parent into its own parent), arrays are replaced, not
 merged. The merged definition is checked for common mistakes, e.g. unknown
 plot types, the findings are logged as warnings in the console.
 
+`parent` can also be a list of definitions (mixins), merged in their order,
+later ones override earlier ones, e.g. a chart type and a form element:
+
+```json
+{
+    "parent": ["../shared/years.json", "../shared/scale-switch.json"],
+    "data": "data.csv"
+}
+```
+
+A parent shared by several mixins is merged once, before the first mixin
+using it, so it does not override the mixins in between.
+
 The package contains a JSON Schema of the definitions, `schema.json`. With
 `"$schema"` in a definition, editors like VS Code complete and check it:
 
