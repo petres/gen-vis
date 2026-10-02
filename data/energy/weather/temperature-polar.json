@@ -15,7 +15,7 @@
         "x": {
             "scale": {
                 "type": "utc",
-                "orientation": "angle",
+                "orientation": "angular",
                 "domain": [
                     "2020-01-01",
                     "2021-01-01"
@@ -29,7 +29,7 @@
         },
         "y": {
             "scale": {
-                "orientation": "radius"
+                "orientation": "radial"
             },
             "axis": {
                 "position": "radial",
@@ -40,7 +40,7 @@
         }
     },
     "plot": {
-        "type": "radial:path",
+        "type": "polar:line",
         "props": {
             "d": {
                 "angle": "@x:scaled",

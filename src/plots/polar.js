@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import * as pu from "@/utils/plot";
 import * as ju from "@/utils/json";
 import { groupwise, pointwise, finite, curve } from "@/plots/elements";
-import { barScale, barWidth } from "@/plots/bars";
+import { barScale, barWidth } from "@/plots/cartesian";
 import { radiusRange } from "@/coords/polar";
 
 // the angles of a band scale are in the center of the band, as the ones of the axis
@@ -31,7 +31,7 @@ const arcProps = ['angle', 'width', 'innerRadius', 'outerRadius', 'padAngle', 'c
 // clockwise from the top, missing values are gaps in paths and areas
 export default {
     // a line per group, `d` with `angle` and `radius`
-    'radial:path': {
+    'polar:line': {
         curve: true,
         coords: ['polar'],
         render(groups, parent, plotDef, { info }) {
@@ -48,7 +48,7 @@ export default {
     },
 
     // an area per group, `d` with `angle`, `innerRadius` and `outerRadius`
-    'radial:area': {
+    'polar:area': {
         curve: true,
         coords: ['polar'],
         render(groups, parent, plotDef, { info }) {
@@ -68,11 +68,11 @@ export default {
     // a segment of a ring per row, e.g. the bars of a rose or a stacked one,
     // centered at the `angle`, `width` defaults to the width of a band or the
     // step of a point scale, `innerRadius` to the inner radius of the plot
-    'radial:arc': {
+    'polar:arc': {
         coords: ['polar'],
         render: (groups, parent, plotDef, ctx) => pointwise(groups, parent, "path", v => {
-            const s = barScale(ctx.info, v.angle, 'radial:arc');
-            const width = v.width?.value ?? barWidth(s, 'radial:arc');
+            const s = barScale(ctx.info, v.angle, 'polar:arc');
+            const width = v.width?.value ?? barWidth(s, 'polar:arc');
             const a = v.angle.value + pu.bandCenter(s);
             const d = d3.arc()
                 .padAngle(v.padAngle?.value ?? 0)
@@ -87,6 +87,6 @@ export default {
         }),
     },
 
-    'radial:circle': positioned('radial:circle', 'circle', 'cx', 'cy'),
-    'radial:text': positioned('radial:text', 'text', 'x', 'y'),
+    'polar:circle': positioned('polar:circle', 'circle', 'cx', 'cy'),
+    'polar:text': positioned('polar:text', 'text', 'x', 'y'),
 };

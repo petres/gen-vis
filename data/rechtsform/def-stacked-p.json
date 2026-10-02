@@ -124,8 +124,8 @@
                 "opacity": 0.7,
                 "x": "@x:scaled",
                 "width": 40,
-                "y": "@y:st:e:scaled",
-                "height": "@y:st:h:scaled",
+                "y": "@y:end:scaled",
+                "height": "@y:height:scaled",
                 "transform": "translate(-20 0)"
             }
         }

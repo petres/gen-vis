@@ -6,9 +6,10 @@ import { templateRefs } from "@/utils/json.js";
 import { curves } from "@/utils/plot.js";
 import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
+import { upgradePlot } from "@/utils/compat.js";
 import { dataFormats } from "@/utils/data.js";
 
-// the interpolations of the plot types with a curve, e.g. svg:path
+// the interpolations of the plot types with a curve, e.g. cartesian:line
 const curveNames = Object.keys(curves);
 
 const mappingTypes = ['numeric', 'date', 'categorical'];
@@ -98,11 +99,14 @@ const validateDef = def => {
     const plots = [].concat(def.plot ?? []);
     if (plots.length == 0)
         warn('plot', 'missing');
-    plots.forEach((p, i) => {
+    plots.forEach((raw, i) => {
         const path = `plot[${i}]`;
+        // the names of 0.9 still work, see utils/compat.js
+        const { plot: p, notes } = upgradePlot(raw);
+        notes.forEach(n => warn(`${path}`, `deprecated, ${n}`));
         if (!types.includes(p.type))
             warn(`${path}.type`, `unknown type '${p.type}', expected one of ${list(types)}`);
-        else if (plotTypes[p.type].coords && !plotTypes[p.type].coords.includes(coordName))
+        else if (plotTypes[p.type].coords && coordName in coords && !plotTypes[p.type].coords.includes(coordName))
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
         (p.categories ?? []).filter(c => !(c in mapping)).forEach(c =>
             warn(`${path}.categories`, `unknown mapping '${c}'`));

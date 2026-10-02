@@ -42,33 +42,11 @@ const pointwise = (groups, parent, type, translate = v => v) => parent
 
 const element = type => ({ render: (groups, parent) => pointwise(groups, parent, type) });
 
-// the svg elements, missing values are gaps in paths and areas
+// the svg elements, an element per row in any coordinate system, the props are
+// its attributes, e.g. "@x:scaled" of cx
 export default {
-    'svg:path': {
-        curve: true,
-        render: (groups, parent, plotDef) => groupwise(groups, parent)
-            .attr("d", d => d3.line()
-                .curve(curve(plotDef))
-                .defined(e => finite(e.x, e.y))
-                .x(e => e.x)
-                .y(e => e.y)
-                (d.values.map(e => ju.fillProps(d.props.d, e, true)))
-            ),
-    },
     'svg:circle': element("circle"),
     'svg:line': element("line"),
     'svg:rect': element("rect"),
     'svg:text': element("text"),
-    'base:area': {
-        curve: true,
-        render: (groups, parent, plotDef) => groupwise(groups, parent)
-            .attr("d", d => d3.area()
-                .curve(curve(plotDef))
-                .defined(e => finite(e.x, e.y0, e.y1))
-                .x(e => e.x)
-                .y1(e => e.y1)
-                .y0(e => e.y0)
-                (d.values.map(e => ju.fillProps(d.props.d, e, true)))
-            ),
-    },
 };

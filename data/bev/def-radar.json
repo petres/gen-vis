@@ -14,7 +14,7 @@
             "type": "categorical",
             "scale": {
                 "type": "point",
-                "orientation": "angle"
+                "orientation": "angular"
             },
             "axis": {
                 "position": "angular",
@@ -43,7 +43,7 @@
                 "type": "linear",
                 "domain": [0, null],
                 "domainRel": [0, 0.05],
-                "orientation": "radius"
+                "orientation": "radial"
             },
             "axis": {
                 "ticks": 4,
@@ -80,7 +80,7 @@
     },
     "plot": [
         {
-            "type": "radial:path",
+            "type": "polar:line",
             "categories": ["year"],
             "curve": "linearClosed",
             "props": {
@@ -91,7 +91,7 @@
                 "highlight-stroke-width": 4
             }
         }, {
-            "type": "radial:circle",
+            "type": "polar:circle",
             "categories": ["year"],
             "props": {
                 "fill": "@color",

@@ -165,7 +165,7 @@
     },
     "plot": [
         {
-            "type": "svg:path",
+            "type": "cartesian:line",
             "categories": ["quali", "werr", "wrecht", "bundesland"],
             "props": {
                 "stroke-width": "2",

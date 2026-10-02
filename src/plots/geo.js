@@ -21,7 +21,7 @@ const positioned = (type, x, y) => ({
 // the plot types of maps, the geometry is drawn in the projection of the facet
 export default {
     // all features, e.g. as background or borders, the props are fixed
-    'geo:features': {
+    'geo:base': {
         coords: ['geo'],
         render(groups, parent, plotDef, ctx) {
             const props = ju.fillProps(plotDef.props, ctx.relativeBases, true);
@@ -37,7 +37,7 @@ export default {
 
     // the feature of every row, e.g. colored by its value, rows without a
     // feature are not drawn
-    'geo:path': {
+    'geo:region': {
         coords: ['geo'],
         render: (groups, parent, plotDef, ctx) => pointwise(groups, parent, "path", (v, row) => {
             const f = featureOf(ctx, row);

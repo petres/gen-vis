@@ -15,7 +15,7 @@ the styles, and provides two global functions:
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
 
-<script src="gen-vis-0.9.0.js"></script>
+<script src="gen-vis-1.0.0.js"></script>
 <script>mountGenVisByClass('genVis')</script>
 ```
 
@@ -223,7 +223,7 @@ the definition refer to these names.
 - `scale`: `type` is a d3 scale (`linear`, `time`, `log`, `point`, `band`,
   ...), continuous scales need a `numeric` or `date` type, `point` and `band`
   a `categorical` one. `orientation` (`horizontal` or `vertical`) places the
-  scale on the plot, `angle` or `radius` in polar plots. `domain` fixes the
+  scale on the plot, `angular` or `radial` in polar plots. `domain` fixes the
   domain, `null` entries are taken from the data, dates are parsed as the ones
   of the data. `domainRel` (relative to the domain) and `domainAbs` (absolute)
   extend it, by default a domain of a position taken from the data is
@@ -256,8 +256,11 @@ the definition refer to these names.
   props) of the given `size` before the name. A mapping with a scale but
   without props has the colors of its scale as legend, a gradient or the
   classes, `format` of the values, by default the one of the hover.
-- `stacked`: stacks the values of a vertical axis, see `stackedBar`, the first
-  category is at the bottom.
+- `stacked`: stacks the values of a vertical (or radial) axis, the first
+  category is at the bottom. `@y:start` and `@y:end` are the start and the end
+  of the stacked value, `@y:start:scaled` and `@y:end:scaled` their positions,
+  e.g. `y0` and `y1` of `cartesian:bar`, `@y:height:scaled` the difference,
+  e.g. the height of an `svg:rect`.
 
 ### `plot`
 
@@ -265,7 +268,7 @@ A plot or a list of plots, drawn in order:
 
 ```json
 {
-    "type": "svg:path",
+    "type": "cartesian:line",
     "categories": ["nuts"],
     "props": {
         "stroke": "@color",
@@ -276,14 +279,18 @@ A plot or a list of plots, drawn in order:
 }
 ```
 
-- `type`: `svg:path` (a line per group, `d` with `x` and `y`), `base:area`
-  (an area per group, `d` with `x`, `y0` and `y1`), `svg:circle`, `svg:rect`,
-  `svg:line`, `svg:text` (an element per row), `bar` (props `cx` and
-  `height`, negative values are drawn downwards from 0) and `stackedBar`
-  (props `x`, `y` and `width`). The bars are centered at their category, in
-  the middle of a band, `width` defaults to the width of a band or the step of
-  a point scale, a continuous scale needs a `width`. The `radial:` types of
-  polar plots are described [below](#polar-plots).
+- `type`: the types are named by their coordinate system:
+  - `svg:circle`, `svg:rect`, `svg:line`, `svg:text`: an svg element per row
+    in any coordinate system, the props are its attributes, e.g.
+    `"cx": "@x:scaled"`
+  - `cartesian:line`: a line per group, `d` with `x` and `y`
+  - `cartesian:area`: an area per group, `d` with `x`, `y0` and `y1`
+  - `cartesian:bar`: a bar per row from `y0` to `y1`, by default from the
+    position of 0, e.g. `"y1": "@y:scaled"`, or a stacked value with
+    `"y0": "@y:start:scaled", "y1": "@y:end:scaled"`. The bars are centered at
+    `x`, in the middle of a band, `width` defaults to the width of a band or
+    the step of a point scale, a continuous scale needs a `width`.
+  - `polar:*` of [polar plots](#polar-plots) and `geo:*` of [maps](#maps)
 - `categories`: the rows are grouped by these mappings, the props of their
   categories are available in the plot props. Mappings without `props` only
   group the rows, e.g. a line per id.
@@ -299,8 +306,8 @@ A plot or a list of plots, drawn in order:
 ### Polar plots
 
 With `"coord": "polar"` the plots are in a circle in the center of the facet,
-the mapping with the `angle` orientation goes around it, clockwise from the
-top, the one with the `radius` orientation from the center outwards, the
+the mapping with the `angular` orientation goes around it, clockwise from the
+top, the one with the `radial` orientation from the center outwards, the
 margins are the space of the labels:
 
 ```json
@@ -308,16 +315,16 @@ margins are the space of the labels:
 "mapping": {
     "x": {
         "column": "date", "type": "date",
-        "scale": { "type": "utc", "orientation": "angle", "domain": ["2020-01-01", "2021-01-01"] },
+        "scale": { "type": "utc", "orientation": "angular", "domain": ["2020-01-01", "2021-01-01"] },
         "axis": { "position": "angular", "ticks": 12, "format": "%b", "grid": true }
     },
     "y": {
         "column": "value", "type": "numeric",
-        "scale": { "orientation": "radius", "domain": [0, null] },
+        "scale": { "orientation": "radial", "domain": [0, null] },
         "axis": { "position": "radial", "ticks": 4, "grid": true }
     }
 },
-"plot": { "type": "radial:path", "categories": ["year"], "props": { "stroke": "@color", "fill": "none", "d": { "angle": "@x:scaled", "radius": "@y:scaled" } } }
+"plot": { "type": "polar:line", "categories": ["year"], "props": { "stroke": "@color", "fill": "none", "d": { "angle": "@x:scaled", "radius": "@y:scaled" } } }
 ```
 
 - The angle is a cycle, the end of its domain is at the angle of its start,
@@ -332,18 +339,18 @@ margins are the space of the labels:
   (degrees, clockwise from the top, 0 by default), `grid` draws circles, or
   polygons through the ticks of the angle with `"gridShape": "polygon"`, e.g.
   of radar charts. The labels of radial axes are above the plots.
-- The plot types: `radial:path` (a line per group, `d` with `angle` and
-  `radius`), `radial:area` (an area per group, `d` with `angle`,
-  `innerRadius` and `outerRadius`), `radial:arc` (a segment of a ring per row,
+- The plot types: `polar:line` (a line per group, `d` with `angle` and
+  `radius`), `polar:area` (an area per group, `d` with `angle`,
+  `innerRadius` and `outerRadius`), `polar:arc` (a segment of a ring per row,
   props `angle`, `innerRadius` and `outerRadius`, optional `width` in radians,
   `padAngle` and `cornerRadius`, e.g. the bars of a rose chart), and
-  `radial:circle` and `radial:text` (an element per row at `angle` and
+  `polar:circle` and `polar:text` (an element per row at `angle` and
   `radius`). The angles of a band scale are in the center of the band. The
-  `svg:` types draw with the center as origin, `bar` and `stackedBar` are
+  `svg:` types draw with the center as origin, the `cartesian:` types are
   cartesian only.
 - Stacked values (`stacked` of the radius) are stacked from the center, e.g.
-  `"innerRadius": "@y:st:s:scaled", "outerRadius": "@y:st:e:scaled"` of
-  `radial:arc`.
+  `"innerRadius": "@y:start:scaled", "outerRadius": "@y:end:scaled"` of
+  `polar:arc`.
 - The hover shows the values of the angle nearest to the mouse, also across
   the top, it is in the center, on the other side of the marker.
 
@@ -375,8 +382,8 @@ mapping (`join`) whose values are the keys of the features:
     }
 },
 "plot": [
-    { "type": "geo:features", "props": { "fill": "#EEE", "stroke": "white" } },
-    { "type": "geo:path", "categories": ["country"], "props": { "fill": "@price:scaled", "highlight-stroke": "#333" } }
+    { "type": "geo:base", "props": { "fill": "#EEE", "stroke": "white" } },
+    { "type": "geo:region", "categories": ["country"], "props": { "fill": "@price:scaled", "highlight-stroke": "#333" } }
 ]
 ```
 
@@ -390,8 +397,8 @@ mapping (`join`) whose values are the keys of the features:
   e.g. `rotate`, `center` or `parallels`. It is fitted to the facet, `fit` are
   the features it is fitted to: all (default), the ones with data (`"data"`)
   or a list of keys, e.g. `["AT"]`.
-- The plot types: `geo:features` (all features, e.g. as background, the props
-  are fixed), `geo:path` (the feature of every row), `geo:circle` and
+- The plot types: `geo:base` (all features, e.g. as background, the props
+  are fixed), `geo:region` (the feature of every row), `geo:circle` and
   `geo:text` (an element per row at the center of its feature or at the `lon`
   and `lat` of its props, e.g. proportional circles with a `sqrt` scale of
   `r`).
@@ -412,8 +419,9 @@ Most values of a definition can be props:
 
 - fixed values, e.g. `3` or `"none"`
 - references `"@name"`: in a plot a column of the row (e.g. `@x`), the scaled
-  value (`@x:scaled`, `@x:scaled:0` for the position of 0, `@y:st:e:scaled`
-  for the end of a stacked value), a prop of the categories (e.g. `@color`) or
+  value (`@x:scaled`, `@x:scaled:0` for the position of 0, `@x:scaled:min`
+  and `@x:scaled:max` of the domain, `@y:end:scaled` for the end of a stacked
+  value, see `stacked`), a prop of the categories (e.g. `@color`) or
   the size of the plot (`@width`, `@innerWidth`, `@height`, `@innerHeight`)
 - `{"prop": "relative", "ref": "innerWidth", "ratio": 0.01}`: a ratio of a
   reference
@@ -504,7 +512,9 @@ Plot types and coordinate systems can be registered, before the
 visualisations are loaded. A plot type draws the groups of rows of a plot,
 every group has its `props`, filled with the props of its categories, and its
 rows as `values`. `pointwise` draws an element per row and fills its props,
-`groupwise` a path per group:
+`groupwise` a path per group. The extensions are experimental, their
+interface may change in minor versions, e.g. the props are objects of the
+internal format, `{ "prop": "fixed", "value": 3 }`:
 
 ```js
 import { registerPlotType, pointwise } from '@preschen/gen-vis';
@@ -522,12 +532,32 @@ registerPlotType('my:tick', {
 `ctx` has the `store`, the d3 selection `inner` of the plot area, the
 `data` and the scales (`info`) of the facet, `innerWidth`, `innerHeight` and
 `relativeBases`. `curve: true` passes the `curve` of the plot, `coords` limits
-a type to coordinate systems, e.g. `bar` and `stackedBar` to `cartesian`. A
+a type to coordinate systems, e.g. `cartesian:bar` to `cartesian`. A
 coordinate system (`registerCoord(name, coord)`) has the default ranges of the
 orientations of its scales, the axes and the geometry of the hover, see
-`src/coords/index.js`, `src/coords/cartesian.js` and `src/coords/polar.js`. Both are known to
+`src/coords/index.js` and e.g. `src/coords/polar.js`. Both are known to
 `validateDef`, `@preschen/gen-vis/check` exports `registerPlotType` and
-`registerCoord` as well. The schema only knows the built-in ones.
+`registerCoord` as well, the standalone script has them as
+`GenVis.registerPlotType`, `GenVis.registerCoord`, `GenVis.pointwise` and
+`GenVis.groupwise`. The schema only knows the built-in ones.
+
+### Upgrading from 0.9
+
+The definitions of 0.9 still work, the console warns of the old names, they
+might be removed with 2.0:
+
+| 0.9 | 1.0 |
+|-----|-----|
+| `svg:path` | `cartesian:line` |
+| `base:area` | `cartesian:area` |
+| `bar` with `cx` and `height` | `cartesian:bar` with `x` and `y1` |
+| `stackedBar` with `"x": "@x"`, `"y": "@y"` | `cartesian:bar` with `"x": "@x:scaled"`, `"y0": "@y:start:scaled"`, `"y1": "@y:end:scaled"` |
+| `@y:st:s`, `@y:st:e`, `@y:st:h` | `@y:start`, `@y:end`, `@y:height` |
+
+Some charts look a bit different: the bars of band scales are centered in
+the band, a stacked axis without a fixed domain starts at 0, negative bars are
+drawn downwards, the hover lists stacked values in the order of the stack and
+`highlight-` props of elements per row, e.g. circles, are applied.
 
 ## Development
 
@@ -546,3 +576,8 @@ The page of the dev server (`index.html`, `src/dev/`) shows the definitions in
 without the mixins (`_*.json`). All definitions in `data/` are rendered,
 hovered and checked by the tests, so they have to stay valid. `data/energy/`
 is a selection of the energy dashboard, see its `README.md`.
+
+## License
+
+MIT, see `LICENSE`. The example data in `data/` has its own sources, see the
+footers of the definitions and the readmes of `data/geo/` and `data/energy/`.

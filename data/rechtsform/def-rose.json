@@ -14,7 +14,7 @@
             "type": "categorical",
             "scale": {
                 "type": "band",
-                "orientation": "angle",
+                "orientation": "angular",
                 "padding": 0.1
             },
             "axis": {
@@ -32,7 +32,7 @@
                 "type": "sqrt",
                 "domain": [0, null],
                 "range": [20, "@radius"],
-                "orientation": "radius"
+                "orientation": "radial"
             },
             "axis": {
                 "ticks": 4,
@@ -88,15 +88,15 @@
         }
     },
     "plot": {
-        "type": "radial:arc",
+        "type": "polar:arc",
         "categories": ["type"],
         "props": {
             "fill": "@color",
             "stroke": "white",
             "stroke-width": 0.5,
             "angle": "@year:scaled",
-            "innerRadius": "@count:st:s:scaled",
-            "outerRadius": "@count:st:e:scaled",
+            "innerRadius": "@count:start:scaled",
+            "outerRadius": "@count:end:scaled",
             "highlight-opacity": 0.8
         }
     }

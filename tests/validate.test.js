@@ -16,7 +16,7 @@ const base = () => ({
         y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' }, axis: { position: 'left' } },
         c: { column: 'land', type: 'categorical', props: { manual: { Wien: {} } } },
     },
-    plot: { type: 'svg:path', categories: ['c'], props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
+    plot: { type: 'cartesian:line', categories: ['c'], props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
 });
 
 test('the facets need one known mapping', () => {
@@ -52,7 +52,7 @@ describe('validateDef', () => {
         def.plot.curve = 'smooth';
         expect(validateDef(def)).toEqual([`plot[0].curve: unknown curve 'smooth', expected one of ${curveNames.map(c => `'${c}'`).join(', ')}`]);
         def.plot = { ...def.plot, type: 'svg:circle', curve: 'monotoneX' };
-        expect(validateDef(def)).toEqual([`plot[0].curve: only used by 'svg:path', 'base:area', 'radial:path', 'radial:area'`]);
+        expect(validateDef(def)).toEqual([`plot[0].curve: only used by 'cartesian:line', 'cartesian:area', 'polar:line', 'polar:area'`]);
     });
 
     test('all plot types are implemented', () => {
@@ -70,9 +70,11 @@ describe('validateDef', () => {
         def.mapping.x.axis.position = 'outer';
         def.mapping.y.axis.position = 'outer';
         delete def.mapping.y.scale.orientation;
+        // the svg elements are of all coordinate systems
+        def.plot = { type: 'svg:circle', props: {} };
         expect(validateDef(def)).toEqual([]);
 
-        def.plot = { type: 'bar', props: {} };
+        def.plot = { type: 'cartesian:bar', props: {} };
         expect(validateDef(def)).toEqual([`plot[0].type: not available in the coordinate system 'test:coord'`]);
         delete coords['test:coord'];
     });
@@ -140,7 +142,7 @@ describe('validateDef', () => {
         def.geo = { join: 'region', projection: { type: 'flat' } };
         def.filter = { year: '@year' };
         def.formElements = [{ id: 'f', type: 'slider', values: [{ id: 'a' }] }];
-        def.plot = { type: 'geo:path', props: {} };
+        def.plot = { type: 'geo:region', props: {} };
         delete def.mapping.x.axis;
         delete def.mapping.y.axis;
         def.mapping.y.scale = { type: 'threshold', scheme: 'Unknown' };

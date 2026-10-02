@@ -24,7 +24,7 @@ const def = {
         x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' } },
         y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' } },
     },
-    plot: { type: 'svg:path', props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
+    plot: { type: 'cartesian:line', props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
 };
 const csv = 'year,value\n2020,1\n2021,\n2022,3';
 

@@ -144,7 +144,7 @@
     },
     "plot": [
         {
-            "type": "geo:features",
+            "type": "geo:base",
             "props": {
                 "fill": "#EEE",
                 "stroke": "white",
@@ -152,7 +152,7 @@
             }
         },
         {
-            "type": "geo:path",
+            "type": "geo:region",
             "categories": [
                 "country"
             ],

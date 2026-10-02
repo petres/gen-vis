@@ -135,13 +135,13 @@ describe('addStackedData', () => {
     test('positive and negative values are stacked separately', () => {
         const data = [{ x: 1, y: 2 }, { x: 1, y: -1 }, { x: 1, y: 3 }, { x: 2, y: 5 }];
         du.addStackedData(data, { h: 'x', v: 'y' });
-        expect(data.map(d => [d['y:st:s'], d['y:st:e']])).toEqual([[0, 2], [0, -1], [2, 5], [0, 5]]);
+        expect(data.map(d => [d['y:start'], d['y:end']])).toEqual([[0, 2], [0, -1], [2, 5], [0, 5]]);
     });
 
     test('in the order of the categories, not of the rows', () => {
         const data = [{ x: 1, y: 1, c: 'b' }, { x: 1, y: 2, c: 'a' }, { x: 1, y: 4, c: 'c' }];
         du.addStackedData(data, { h: 'x', v: 'y' }, [], du.categoryOrder([{ dim: 'c', keys: ['a', 'b', 'c'] }]));
-        expect(data.map(d => [d.c, d['y:st:s'], d['y:st:e']])).toEqual([['b', 2, 3], ['a', 0, 2], ['c', 3, 7]]);
+        expect(data.map(d => [d.c, d['y:start'], d['y:end']])).toEqual([['b', 2, 3], ['a', 0, 2], ['c', 3, 7]]);
     });
 });
 

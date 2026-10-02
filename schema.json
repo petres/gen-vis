@@ -215,8 +215,8 @@
                     "description": "A d3 scale, continuous scales and the ones of classes (quantize, quantile, threshold) need a numeric or date mapping, point and band a categorical one."
                 },
                 "orientation": {
-                    "enum": ["horizontal", "vertical", "angle", "radius"],
-                    "description": "Places the scale on the plot."
+                    "enum": ["horizontal", "vertical", "angular", "radial"],
+                    "description": "Places the scale on the plot, horizontal and vertical in the cartesian coordinate system, angular and radial in the polar one."
                 },
                 "domain": {
                     "type": "array",
@@ -360,8 +360,8 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "enum": ["svg:path", "svg:circle", "svg:line", "svg:rect", "svg:text", "base:area", "bar", "stackedBar", "radial:path", "radial:area", "radial:arc", "radial:circle", "radial:text", "geo:features", "geo:path", "geo:circle", "geo:text"],
-                    "description": "svg:path, base:area, radial:path and radial:area draw a path per group, the others an element per row. The radial types are for the polar coordinate system."
+                    "enum": ["svg:circle", "svg:line", "svg:rect", "svg:text", "cartesian:line", "cartesian:area", "cartesian:bar", "polar:line", "polar:area", "polar:arc", "polar:circle", "polar:text", "geo:base", "geo:region", "geo:circle", "geo:text"],
+                    "description": "The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, the others an element per row."
                 },
                 "id": { "type": "string", "description": "The class of the plot group, plot-<index> by default." },
                 "curve": {

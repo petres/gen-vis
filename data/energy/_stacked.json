@@ -35,13 +35,14 @@
     },
     "plot": [
         {
-            "type": "stackedBar",
+            "type": "cartesian:bar",
             "categories": ["type"],
             "props": {
                 "fill": "@color",
                 "opacity": 0.9,
-                "x": "@x",
-                "y": "@y",
+                "x": "@x:scaled",
+                "y0": "@y:start:scaled",
+                "y1": "@y:end:scaled",
                 "width": {
                     "prop": "relative",
                     "ref": "innerWidth",

@@ -87,7 +87,7 @@ const lineDef = (options = {}) => ({
         c: { column: 'land', type: 'categorical', legend: {}, hover: {}, props: { manual: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } } },
     },
     plot: [
-        { type: 'svg:path', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { x: '@x:scaled', y: '@y:scaled' } } },
+        { type: 'cartesian:line', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { x: '@x:scaled', y: '@y:scaled' } } },
         { type: 'svg:circle', categories: ['c'], props: { fill: '@color', r: 3, cx: '@x:scaled', cy: '@y:scaled' } },
     ],
 });
@@ -180,7 +180,7 @@ describe('rendering', () => {
         // linear by default, smooth curves are bezier curves
         expect(await wien(undefined)).not.toMatch(/C/);
         expect(await wien('monotoneX')).toMatch(/C/);
-        def.plot = { type: 'base:area', curve: 'monotoneX', categories: ['c'], props: { fill: '@color', d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } } };
+        def.plot = { type: 'cartesian:area', curve: 'monotoneX', categories: ['c'], props: { fill: '@color', d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } } };
         const el = await mount(GenVis, { def, data });
         expect(el.querySelector('g.plotGroup path').getAttribute('d')).toMatch(/C/);
         expect(errors).toEqual([]);
@@ -188,7 +188,7 @@ describe('rendering', () => {
 
     test('areas', async () => {
         const def = lineDef();
-        def.plot = { type: 'base:area', categories: ['c'], props: { fill: '@color', d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } } };
+        def.plot = { type: 'cartesian:area', categories: ['c'], props: { fill: '@color', d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } } };
         const el = await mount(GenVis, { def, data: lineData });
         expect(el.querySelectorAll('g.plotGroup path')).toHaveLength(2);
         expect(errors).toEqual([]);
@@ -344,6 +344,45 @@ describe('rendering', () => {
     });
 });
 
+describe('the names of 0.9', () => {
+    test('still work, with a warning, e.g. stacked bars', async () => {
+        const def = lineDef();
+        def.mapping.y.stacked = true;
+        def.mapping.y.scale.domain = [0, null];
+        def.mapping.type = { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } };
+        const data = 'year,value,land,type\n2020,5,Wien,a\n2020,2,Wien,b\n2021,8,Wien,a\n2021,2,Wien,b';
+        const boxes = el => [...el.querySelectorAll('g.plotGroup rect')].map(r => ['x', 'y', 'width', 'height'].map(a => Math.round(parseFloat(r.getAttribute(a)))));
+
+        def.plot = { type: 'cartesian:bar', categories: ['type'], props: { x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled', width: 10 } };
+        const now = boxes(await mount(GenVis, { def, data }));
+        def.plot = { type: 'stackedBar', categories: ['type'], props: { x: '@x', y: '@y', width: 10 } };
+        expect(boxes(await mount(GenVis, { def, data }))).toEqual(now);
+        def.plot = { type: 'svg:rect', categories: ['type'], props: { x: '@x:scaled', y: '@y:st:e:scaled', width: 10, height: '@y:st:h:scaled', transform: 'translate(-5 0)' } };
+        const rects = boxes(await mount(GenVis, { def, data }));
+        expect(rects.map(([x, ...r]) => [x - 5, ...r])).toEqual(now);
+
+        expect(errors).toEqual([
+            expect.stringMatching(/plot\[0\]: deprecated, 'stackedBar' is 'cartesian:bar' with the props "x": "@x:scaled", "y0": "@y:start:scaled" and "y1": "@y:end:scaled"/),
+            expect.stringMatching(/plot\[0\]: deprecated, the stacked values are ':start', ':end' and ':height'/),
+        ]);
+    });
+
+    test('lines, areas and bars', async () => {
+        const def = lineDef();
+        def.plot = { type: 'svg:path', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { x: '@x:scaled', y: '@y:scaled' } } };
+        let el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelectorAll('g.plotGroup path')).toHaveLength(2);
+        def.plot = { type: 'base:area', categories: ['c'], props: { fill: '@color', d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } } };
+        el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelectorAll('g.plotGroup path')).toHaveLength(2);
+        def.mapping.x = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'horizontal' }, axis: { position: 'bottom' } };
+        def.plot = { type: 'bar', categories: ['c'], props: { cx: '@x:scaled', height: '@y:scaled' } };
+        el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelectorAll('g.plotGroup rect')).toHaveLength(7);
+        expect(errors.map(e => e.match(/deprecated, '([^']+)'/)[1])).toEqual(['svg:path', 'base:area', 'bar']);
+    });
+});
+
 describe('maps', () => {
     // two squares next to each other, the rings are counterclockwise as of GeoJSON (RFC 7946)
     const square = (id, x) => ({ type: 'Feature', id, properties: { name: `Region ${id}`, code: id.toLowerCase() },
@@ -363,8 +402,8 @@ describe('maps', () => {
             value: { name: 'Wert', column: 'value', type: 'numeric', scale: { type: 'sequential', interpolator: 'Blues' }, legend: {}, hover: { format: '.1f' } },
         },
         plot: [
-            { type: 'geo:features', props: { fill: '#EEE' } },
-            { type: 'geo:path', categories: ['region'], props: { fill: '@value:scaled', stroke: 'none', 'highlight-stroke': 'black' } },
+            { type: 'geo:base', props: { fill: '#EEE' } },
+            { type: 'geo:region', categories: ['region'], props: { fill: '@value:scaled', stroke: 'none', 'highlight-stroke': 'black' } },
             { type: 'geo:circle', categories: ['region'], props: { r: 3, fill: 'red' } },
         ],
     });
@@ -550,11 +589,11 @@ describe('polar', () => {
     const polarData = 'month,value,land\n' + months.flatMap(m => [`${m},${m + 1},Wien`, `${m},2,Tirol`]).join('\n');
     const polarDef = () => {
         const def = lineDef({ coord: 'polar', width: 400, height: 400, margins: { top: 50, right: 50, bottom: 50, left: 50 } });
-        def.mapping.x = { column: 'month', type: 'numeric', scale: { orientation: 'angle', domain: [0, 12] }, axis: { position: 'angular', values: [0, 3, 6, 9, 12], grid: true } };
-        def.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radius', domain: [0, 12] }, axis: { position: 'radial', ticks: 3, grid: true }, hover: {} };
+        def.mapping.x = { column: 'month', type: 'numeric', scale: { orientation: 'angular', domain: [0, 12] }, axis: { position: 'angular', values: [0, 3, 6, 9, 12], grid: true } };
+        def.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radial', domain: [0, 12] }, axis: { position: 'radial', ticks: 3, grid: true }, hover: {} };
         def.plot = [
-            { type: 'radial:path', categories: ['c'], curve: 'linearClosed', props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } },
-            { type: 'radial:circle', categories: ['c'], props: { fill: '@color', r: 3, angle: '@x:scaled', radius: '@y:scaled' } },
+            { type: 'polar:line', categories: ['c'], curve: 'linearClosed', props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } },
+            { type: 'polar:circle', categories: ['c'], props: { fill: '@color', r: 3, angle: '@x:scaled', radius: '@y:scaled' } },
         ];
         return def;
     };
@@ -624,10 +663,10 @@ describe('polar', () => {
 
     test('stacked arcs of a band scale', async () => {
         const def = polarDef();
-        def.mapping.x = { column: 'month', type: 'categorical', scale: { type: 'band', orientation: 'angle' }, axis: { position: 'angular' } };
+        def.mapping.x = { column: 'month', type: 'categorical', scale: { type: 'band', orientation: 'angular' }, axis: { position: 'angular' } };
         def.mapping.y.stacked = true;
         def.mapping.y.scale.domain = [0, null];
-        def.plot = { type: 'radial:arc', categories: ['c'], props: { fill: '@color', angle: '@x:scaled', innerRadius: '@y:st:s:scaled', outerRadius: '@y:st:e:scaled' } };
+        def.plot = { type: 'polar:arc', categories: ['c'], props: { fill: '@color', angle: '@x:scaled', innerRadius: '@y:start:scaled', outerRadius: '@y:end:scaled' } };
         const el = await mount(GenVis, { def, data: polarData });
         const arcs = el.querySelectorAll('g.plotGroup path');
         expect(arcs).toHaveLength(24);
@@ -775,7 +814,7 @@ describe('fixed bugs', () => {
         const def = lineDef();
         def.mapping.y.stacked = true;
         def.mapping.type = { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } };
-        def.plot = { type: 'stackedBar', categories: ['type'], props: { x: '@x', y: '@y', width: 10, fill: 'red' } };
+        def.plot = { type: 'cartesian:bar', categories: ['type'], props: { x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled', width: 10, fill: 'red' } };
         return def;
     };
     const stackData = 'year,value,land,type\n2020,5,Wien,a\n2020,2,Wien,b\n2021,8,Wien,a\n2021,2,Wien,b';
@@ -792,7 +831,7 @@ describe('fixed bugs', () => {
     const barDef = () => {
         const def = lineDef();
         def.mapping.x = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'horizontal' }, axis: { position: 'bottom' } };
-        def.plot = { type: 'bar', categories: ['c'], props: { cx: '@x:scaled', height: '@y:scaled', fill: '@color' } };
+        def.plot = { type: 'cartesian:bar', categories: ['c'], props: { x: '@x:scaled', y1: '@y:scaled', fill: '@color' } };
         return def;
     };
 
@@ -820,8 +859,7 @@ describe('fixed bugs', () => {
         delete def.plot.props.width;
         const stack = await mount(GenVis, { def, data: stackData });
         const [x, y, width] = rects(stack)[0];
-        const transform = parseFloat(stack.querySelector('g.plotGroup rect').getAttribute('transform').match(/translate\((-?[\d.]+)/)[1]);
-        expect(x + transform + width/2).toBeCloseTo(ticks(stack)[0]);
+        expect(x + width/2).toBeCloseTo(ticks(stack)[0]);
         expect(width).toBeGreaterThan(0);
         expect(await hover(stack)).toBeGreaterThan(0);
         expect(errors).toEqual([]);
@@ -844,7 +882,7 @@ describe('fixed bugs', () => {
         const def = stackDef();
         delete def.plot.props.width;
         const el = await mount(GenVis, { def, data: stackData });
-        expect(el.querySelector('.vis-error').textContent).toBe(`stackedBar: a 'width' is needed for a continuous scale`);
+        expect(el.querySelector('.vis-error').textContent).toBe(`cartesian:bar: a 'width' is needed for a continuous scale`);
     });
 
     test('the hover of a band scale shows the band under the mouse', async () => {
@@ -924,7 +962,7 @@ describe('fixed bugs', () => {
         def.mapping.type = { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } };
         def.facets = { dim: 'c', cols: 2 };
         def.mapping.facet = def.mapping.c;
-        def.plot = { type: 'svg:circle', categories: ['type'], props: { r: 2, cx: '@x:scaled', cy: '@y:st:e:scaled' } };
+        def.plot = { type: 'svg:circle', categories: ['type'], props: { r: 2, cx: '@x:scaled', cy: '@y:end:scaled' } };
         // the name of the facet mapping has several characters
         def.mapping.land = def.mapping.c;
         delete def.mapping.c;
@@ -947,7 +985,7 @@ describe('fixed bugs', () => {
         def.mapping.y.stacked = true;
         def.mapping.type = { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } };
         def.facets = { dim: 'c', cols: 2 };
-        def.plot = { type: 'svg:circle', categories: ['type'], props: { r: 2, cx: '@x:scaled', cy: '@y:st:e:scaled' } };
+        def.plot = { type: 'svg:circle', categories: ['type'], props: { r: 2, cx: '@x:scaled', cy: '@y:end:scaled' } };
         const data = 'year,value,land,type\n2020,2,Tirol,b\n2020,1,Tirol,a\n2020,2,Wien,b\n2020,1,Wien,a';
         const el = await mount(GenVis, { def, data });
 

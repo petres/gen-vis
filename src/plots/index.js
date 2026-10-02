@@ -1,8 +1,8 @@
 export { plotTypes, registerPlotType };
 
 import elements from "@/plots/elements";
-import bars from "@/plots/bars";
-import radial from "@/plots/radial";
+import cartesian from "@/plots/cartesian";
+import polar from "@/plots/polar";
 import geo from "@/plots/geo";
 
 /**
@@ -13,7 +13,7 @@ import geo from "@/plots/geo";
  * - `curve`: the type uses the `curve` of the plot
  * - `coords`: the coordinate systems of the type, all if it is not given
  */
-const plotTypes = { ...elements, ...bars, ...radial, ...geo };
+const plotTypes = { ...elements, ...cartesian, ...polar, ...geo };
 
 const registerPlotType = (name, type) => {
     plotTypes[name] = type;

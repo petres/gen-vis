@@ -1,6 +1,7 @@
 export { fillDirect, fillProps, getProps, prepareDef, applyFormElements, templateRefs, fillTemplate, mergeAll, sameValue, entryToValue, toValue, entryToProp, isProp, refNames };
 
 import merge from 'deepmerge';
+import { upgradePlot } from '@/utils/compat';
 
 // arrays whose entries all have an `id`, e.g. the form elements and their
 // values, are merged by it, entries with a new id are appended, all other
@@ -168,8 +169,8 @@ const prepareMapping = m => {
 const prepareDef = def => {
     Object.values(def.mapping).forEach(prepareMapping);
 
-    if (!Array.isArray(def.plot))
-        def.plot = [def.plot];
+    // the plot types and props of 0.9 are the ones of 1.0, see validateDef
+    def.plot = [def.plot].flat().map(p => upgradePlot(p).plot);
 
     // the facets are the categories of one mapping, older definitions list it
     if (def.facets && Array.isArray(def.facets.dim))

@@ -60,12 +60,12 @@
         }
     },
     "plot": {
-        "type": "bar",
+        "type": "cartesian:bar",
         "props": {
             "fill": "#1E4F77",
             "opacity": 0.8,
-            "cx": "@x:scaled",
-            "height": "@y:scaled"
+            "x": "@x:scaled",
+            "y1": "@y:scaled"
         }
     }
 }

@@ -19,7 +19,7 @@ const def = () => prepareDef({
         c: { column: 'land', type: 'categorical', legend: {}, props: { manual: { Wien: {}, Tirol: { visible: false } } } },
         f: { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } },
     },
-    plot: { type: 'svg:path', props: {} },
+    plot: { type: 'cartesian:line', props: {} },
 });
 
 describe('snapshot', () => {

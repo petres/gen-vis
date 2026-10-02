@@ -55,7 +55,7 @@
         }
     },
     "plot": {
-        "type": "svg:path",
+        "type": "cartesian:line",
         "curve": "monotoneX",
         "categories": ["road", "vehicle"],
         "props": {

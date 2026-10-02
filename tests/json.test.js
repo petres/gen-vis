@@ -5,7 +5,7 @@ describe('props', () => {
     test('fixed values and refs', () => {
         expect(ju.entryToValue(3, {})).toBe(3);
         expect(ju.entryToValue('@a', { a: 'x' })).toBe('x');
-        expect(ju.entryToProp('@y:st:e:scaled')).toEqual({ prop: 'ref', ref: 'y:st:e:scaled', parts: ['y', 'st', 'e', 'scaled'] });
+        expect(ju.entryToProp('@y:end:scaled')).toEqual({ prop: 'ref', ref: 'y:end:scaled', parts: ['y', 'end', 'scaled'] });
     });
 
     test('relative', () => {
@@ -19,7 +19,7 @@ describe('props', () => {
     });
 
     test('refNames of nested props', () => {
-        const props = ju.entryToProp({ x: '@x:scaled', d: { y: '@y:st:e:scaled' }, fill: 'red', w: { prop: 'relative', ref: 'innerWidth', ratio: 1 } });
+        const props = ju.entryToProp({ x: '@x:scaled', d: { y: '@y:end:scaled' }, fill: 'red', w: { prop: 'relative', ref: 'innerWidth', ratio: 1 } });
         expect(ju.refNames(props)).toEqual(['x', 'y', 'innerWidth']);
     });
 });
@@ -70,7 +70,7 @@ describe('applyFormElements', () => {
             { value: 'b', mapping: { y: { column: 'B' } } },
         ] }],
         mapping: { y: { column: 'A', type: 'numeric', scale: { orientation: 'vertical' } } },
-        plot: { type: 'svg:path', props: {} },
+        plot: { type: 'cartesian:line', props: {} },
     };
 
     test('the selected entries patch the mappings', () => {
@@ -96,7 +96,7 @@ describe('applyFormElements', () => {
                 ] },
             ],
             mapping: { y: { column: '{values}{share}', type: 'numeric', axis: { format: ',.1f' } } },
-            plot: { type: 'svg:path', props: {} },
+            plot: { type: 'cartesian:line', props: {} },
         };
         const def = ju.prepareDef(JSON.parse(JSON.stringify(org)));
         expect(ju.applyFormElements(def, org)).toBe(true);

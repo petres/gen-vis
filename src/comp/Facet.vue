@@ -163,13 +163,13 @@ export default {
                             const entries = Object.fromEntries(categories.map(n =>
                                 [n, ju.fillDirect(store.mapping(n).hover.props, store.prop(n, e[n]))]));
                             entries[v] = { value: e[v], name: format.v(e[v]) };
-                            const order = stacked ? (e[`${v}:st:s`] + e[`${v}:st:e`])/2 : e[v];
+                            const order = stacked ? (e[`${v}:start`] + e[`${v}:end`])/2 : e[v];
                             return { entries, data: e, nearest: false, order };
                         });
 
                     // stacked: the segment under the pointer, outside of the stack the closest one
                     const distance = stacked ? e => {
-                        const [lo, hi] = d3.extent([e.data[`${v}:st:s`], e.data[`${v}:st:e`]]);
+                        const [lo, hi] = d3.extent([e.data[`${v}:start`], e.data[`${v}:end`]]);
                         return value < lo ? lo - value : (value > hi ? value - hi : 0);
                     } : e => Math.abs(e.data[v] - value);
                     const nearest = value === undefined ? undefined : d3.least(rows, distance);

@@ -44,7 +44,7 @@ describe('the schema', () => {
     });
 
     test('nested props and computed props', () => {
-        expect(errors({ plot: { type: 'svg:path', props: {
+        expect(errors({ plot: { type: 'cartesian:line', props: {
             d: { x: '@x:scaled', y: '@y:scaled' },
             'stroke-width': { prop: 'relative', ref: 'innerWidth', ratio: 0.01 },
         } } })).toEqual([]);

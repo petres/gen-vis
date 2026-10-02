@@ -93,14 +93,14 @@
     },
     "plot": [
         {
-            "type": "bar",
+            "type": "cartesian:bar",
             "categories": ["type"],
             "props": {
                 "fill": "@color",
                 "opacity": 1,
-                "cx": "@x:scaled",
+                "x": "@x:scaled",
                 "width": "@width",
-                "height": "@y:scaled",
+                "y1": "@y:scaled",
                 "transform": "@transform"
             }
         }

@@ -79,7 +79,7 @@ const addDimInfo = (info, data) => {
         info.values = info.values.filter(v => v !== null).sort((a, b) => a - b);
         if (info.mapping.stacked) {
             // the starts of the stacks, e.g. 0, are part of the extent
-            info.extent = d3.extent(data.flatMap(d => [d[`${info.dim}:st:s`], d[`${info.dim}:st:e`]]));
+            info.extent = d3.extent(data.flatMap(d => [d[`${info.dim}:start`], d[`${info.dim}:end`]]));
         } else {
             info.extent = d3.extent(info.values);
         }
@@ -110,13 +110,13 @@ const addStackedData = (data, axis, dims = [], compare = null) => {
         entries.forEach(e => {
             const v = e[axis.v];
             if (v >= 0) {
-                e[`${axis.v}:st:s`] = tp;
+                e[`${axis.v}:start`] = tp;
                 tp += v;
-                e[`${axis.v}:st:e`] = tp;
+                e[`${axis.v}:end`] = tp;
             } else {
-                e[`${axis.v}:st:s`] = tn;
+                e[`${axis.v}:start`] = tn;
                 tn += v;
-                e[`${axis.v}:st:e`] = tn;
+                e[`${axis.v}:end`] = tn;
             }
         });
     });
@@ -133,9 +133,10 @@ const addScaledData = (data, infos) => {
             d[`${i.dim}:scaled:max`] = i.scale(i.domain[1]);
 
             if (i.mapping.stacked) {
-                d[`${i.dim}:st:e:scaled`] = i.scale(d[`${i.dim}:st:e`]);
-                d[`${i.dim}:st:s:scaled`] = i.scale(d[`${i.dim}:st:s`]);
-                d[`${i.dim}:st:h:scaled`] = d[`${i.dim}:st:s:scaled`] - d[`${i.dim}:st:e:scaled`];
+                d[`${i.dim}:start:scaled`] = i.scale(d[`${i.dim}:start`]);
+                d[`${i.dim}:end:scaled`] = i.scale(d[`${i.dim}:end`]);
+                // the height of the bar of a stacked value, e.g. of an svg:rect
+                d[`${i.dim}:height:scaled`] = d[`${i.dim}:start:scaled`] - d[`${i.dim}:end:scaled`];
             }
         });
     })

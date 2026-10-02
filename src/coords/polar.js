@@ -167,9 +167,9 @@ const axes = ctx => {
 // the plot area is a circle in the center of the facet, the angle (clockwise
 // from the top) and the radius are the positions
 export default {
-    ranges: { angle: [0, tau], radius: [0, "@radius"] },
-    cyclic: ['angle'],
-    axis: { h: 'angle', v: 'radius' },
+    ranges: { angular: [0, tau], radial: [0, "@radius"] },
+    cyclic: ['angular'],
+    axis: { h: 'angular', v: 'radial' },
     positions: ['angular', 'radial'],
     dims: (width, height) => ({ width, height, radius: Math.min(width, height)/2 }),
     origin: (width, height) => [width/2, height/2],

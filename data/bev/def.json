@@ -94,7 +94,7 @@
     },
     "plot": [
         {
-            "type": "svg:path",
+            "type": "cartesian:line",
             "categories": ["land"],
             "props": {
                 "stroke-width": "@stroke-width",
