@@ -44,13 +44,21 @@ export default {
            default: null
         },
     },
-    emits: ['update:state'],
+    // update:state of the changes of the user, hover and select of the rows
+    // of the hover and of a click, see Facet.vue
+    emits: ['update:state', 'hover', 'select'],
     data: () => ({
         store: createStore(),
         error: null,
     }),
+    // the slots (hover, header, footer) and the events (hover, select) are the
+    // ones of the components inside
     provide() {
-        return { store: this.store };
+        return {
+            store: this.store,
+            slots: this.$slots,
+            emit: (name, payload) => this.$emit(name, payload),
+        };
     },
     components: {
         VisBase

@@ -20,8 +20,13 @@ the styles, and provides two global functions:
 ```
 
 `mountGenVisByClass(className)` mounts all elements with the class which are
-not mounted yet, `mountGenVisElement(element)` mounts a single element. The
-props are taken from the `data-` attributes, see below.
+not mounted yet, `mountGenVisElement(element, props)` mounts a single element.
+The props are taken from the `data-` attributes, see below, and from `props`,
+e.g. the events:
+
+```js
+GenVis.mountGenVisElement(element, { onSelect: e => location.href = `/region/${e.key}` });
+```
 
 ### Vue component
 
@@ -54,6 +59,33 @@ well.
 Every visualisation has its own state, several of them can be used on a page.
 If the props change, the visualisation is loaded again. Errors are shown in
 place of the visualisation.
+
+### Events and slots
+
+Besides `update:state` (see [state](#state)) the component emits `hover` and
+`select` (a click or a tap) with the rows under the mouse, `hover` with `null`
+at its end:
+
+```js
+{ key: 2023, title: "2023", rows: [{ x: 2023, y: 4, land: "Wien" }, ...], nearest: { x: 2023, y: 4, land: "Wien" } }
+```
+
+`key` is the value of the position, e.g. of the horizontal axis or the key of
+the region of a map, `title` the title of the hover, the rows are the values
+of the mappings, `nearest` the row of the element under the mouse.
+
+The slots replace parts of the visualisation, `hover` the content of the
+hover (it also has `entries`, the formatted values of the default table),
+`header` the title and the subtitle and `footer` the footer:
+
+```html
+<GenVis def-file="/data/bev/def.json" @select="open">
+    <template #hover="{ title, nearest }">
+        <strong>{{ title }}</strong> {{ nearest?.land }}: {{ nearest?.y }}
+    </template>
+    <template #footer="{ footer }"><small v-html="footer"/></template>
+</GenVis>
+```
 
 ### State
 

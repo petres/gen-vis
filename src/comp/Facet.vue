@@ -8,7 +8,7 @@
             </g>
         </svg>
         <div :style="`transform: translate(${margins.left + origin[0] + hover.x}px, ${margins.top + origin[1] + hover.y}px); position: absolute; top: 0; left: 0;`">
-            <hover v-if="hover.visible" :title="hover.title" :data="hover.data" :side="hover.side"/>
+            <hover v-if="hover.visible" :title="hover.title" :data="hover.data" :side="hover.side" :payload="hover.payload"/>
         </div>
     </div>
 </template>
@@ -26,7 +26,7 @@ import Hover from '@/comp/Hover.vue';
 export default {
     // facetKey is the key of the category of the facet, e.g. for annotations
     props: ["shared", "height", "width", "margins", "data", "facetKey"],
-    inject: ['store'],
+    inject: ['store', 'emit'],
     data: () => ({
         hover: {
             visible: false,
@@ -153,7 +153,14 @@ export default {
 
             const marker = d3.select(this.$refs.hoverMarker).select("line");
 
+            // the rows by their key, e.g. of the horizontal axis, compared as strings
+            const rowsByKey = d3.group(this.data.filter(e => e[v] !== null), e => String(e[names.h]));
+            let last = null;
+
             const hide = () => {
+                if (this.hover.visible)
+                    this.emit('hover', null);
+                last = null;
                 this.hover.visible = false;
                 pu.highlightElements(ctx.inner, store.def.plot);
             };
@@ -165,6 +172,42 @@ export default {
             };
             document.addEventListener("pointerdown", this.hideOnPointerOutside);
 
+            // the rows at the pointer from the top to the bottom, stacks as they
+            // are drawn, the nearest one, null without a key
+            const at = e => {
+                const position = coord.hover.locate(ctx, d3.pointer(e), names, e);
+                if (!position)
+                    return null;
+                const { key, value } = position;
+                const rows = (rowsByKey.get(String(key)) ?? [])
+                    .map(e => {
+                        const entries = Object.fromEntries(categories.map(n =>
+                            [n, ju.fillDirect(store.mapping(n).hover.props, store.prop(n, e[n]))]));
+                        entries[v] = { value: e[v], name: format.v(e[v]) };
+                        const order = stacked ? (e[`${v}:start`] + e[`${v}:end`])/2 : e[v];
+                        return { entries, data: e, nearest: false, order };
+                    });
+
+                // stacked: the segment under the pointer, outside of the stack the closest one
+                const distance = stacked ? e => {
+                    const [lo, hi] = d3.extent([e.data[`${v}:start`], e.data[`${v}:end`]]);
+                    return value < lo ? lo - value : (value > hi ? value - hi : 0);
+                } : e => Math.abs(e.data[v] - value);
+                const nearest = value === undefined ? undefined : d3.least(rows, distance);
+                const title = coord.hover.title ? coord.hover.title(ctx, key, names) : format.h(key);
+                return { key, value, rows, nearest, title };
+            };
+
+            // the rows of the events and the slot, the values of the mappings
+            // without the computed ones, e.g. of the scales
+            const plain = row => Object.fromEntries(Object.entries(row).filter(([k]) => !k.includes(':')));
+            const payload = ({ key, title, rows, nearest }) => ({
+                key,
+                title,
+                rows: rows.map(r => plain(r.data)),
+                nearest: nearest ? plain(nearest.data) : null,
+            });
+
             // mouse, touch and pen, vertical swipes still scroll the page
             coord.hover.area(ctx, ctx.inner)
                 .attr("class", "events")
@@ -172,29 +215,15 @@ export default {
                 .style("touch-action", "pan-y")
                 .on("pointerdown pointermove", e => {
                     this.hover.visible = true;
-
-                    const position = coord.hover.locate(ctx, d3.pointer(e), names, e);
-                    if (!position)
+                    const found = at(e);
+                    if (!found)
                         return;
-                    const { key, value } = position;
+                    const { key, value, rows, nearest } = found;
 
-                    // the rows from the top to the bottom, stacks as they are drawn
-                    const rows = du.filter(this.data, [{dim: names.h, key}])
-                        .filter(e => e[v] !== null)
-                        .map(e => {
-                            const entries = Object.fromEntries(categories.map(n =>
-                                [n, ju.fillDirect(store.mapping(n).hover.props, store.prop(n, e[n]))]));
-                            entries[v] = { value: e[v], name: format.v(e[v]) };
-                            const order = stacked ? (e[`${v}:start`] + e[`${v}:end`])/2 : e[v];
-                            return { entries, data: e, nearest: false, order };
-                        });
-
-                    // stacked: the segment under the pointer, outside of the stack the closest one
-                    const distance = stacked ? e => {
-                        const [lo, hi] = d3.extent([e.data[`${v}:start`], e.data[`${v}:end`]]);
-                        return value < lo ? lo - value : (value > hi ? value - hi : 0);
-                    } : e => Math.abs(e.data[v] - value);
-                    const nearest = value === undefined ? undefined : d3.least(rows, distance);
+                    // the same key and row as before, e.g. a move within a step of the axis
+                    if (last && last.key === key && last.nearest === nearest?.data)
+                        return;
+                    last = { key, nearest: nearest?.data };
 
                     // there is no entry e.g. if all categories are hidden, without
                     // a value the elements of the key are highlighted, e.g. a region
@@ -202,10 +231,19 @@ export default {
                         nearest.nearest = true;
                     pu.highlightElements(ctx.inner, store.def.plot, nearest?.data ?? (value === undefined ? {[names.h]: key} : null));
 
+                    const p = payload(found);
                     Object.assign(this.hover, coord.hover.marker(ctx, key, names, marker), {
                         data: rows,
-                        title: coord.hover.title ? coord.hover.title(ctx, key, names) : format.h(key),
+                        title: found.title,
+                        payload: p,
                     });
+                    this.emit('hover', p);
+                })
+                // a click or a tap, e.g. on a region of a map
+                .on("click", e => {
+                    const found = at(e);
+                    if (found)
+                        this.emit('select', payload(found));
                 })
                 .on("pointerleave", e => {
                     if (e.pointerType != "touch")

@@ -1,22 +1,37 @@
 <template>
     <div class="hover" ref="hover" :style='{left: left, transform: transform}'>
-        <div class="title">{{ title }}</div>
-        <table class="entries" ref="entries"/>
+        <!-- the content of the hover slot of the GenVis component, e.g. a table of its own -->
+        <slot-content v-if="slots.hover" :fn="slots.hover" :props="slotProps"/>
+        <template v-else>
+            <div class="title">{{ title }}</div>
+            <table class="entries" ref="entries"/>
+        </template>
     </div>
 </template>
 
 <script>
 import * as d3 from "d3";
+import SlotContent from '@/comp/SlotContent.vue';
 
 export default {
-    // beside the marker, on the `side` with more space
-    props: ["title", "side", "data"],
+    // beside the marker, on the `side` with more space, `payload` are the rows
+    // of the slot and the events, see Facet.vue
+    props: ["title", "side", "data", "payload"],
+    inject: ['slots'],
+    components: { SlotContent },
     data: () => ({
         space: 20
     }),
     computed: {
         left() { return (this.side == "left") ? `${-this.space}px` : `${this.space}px` },
         transform() { return (this.side == "left") ? `translate(-100%, -50%)` : `translate(0, -50%)` },
+        // the rows and their formatted values, as the ones of the default table
+        slotProps() {
+            return {
+                ...this.payload,
+                entries: [...(this.data ?? [])].sort((a, b) => b.order - a.order).map(d => ({ ...d.entries, nearest: d.nearest })),
+            };
+        },
     },
     // the rows are also rendered when the hover is shown, e.g. by a touch
     mounted() {

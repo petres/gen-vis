@@ -421,6 +421,44 @@ describe('controls', () => {
     });
 });
 
+describe('events and slots', () => {
+    test('hover and select with the rows of the mappings', async () => {
+        const hovers = [], selects = [];
+        const el = await mount({ render: () => h(GenVis, { def: lineDef(), data: lineData,
+            onHover: e => hovers.push(e), onSelect: e => selects.push(e) }) });
+        const events = el.querySelector('rect.events');
+        // the right end, 2023, Wien is 4, Tirol 2
+        events.dispatchEvent(pointer('pointermove', { clientX: 549, clientY: 0 }));
+        await nextTick();
+        expect(hovers).toHaveLength(1);
+        expect(hovers[0]).toMatchObject({ key: 2023, title: '2023', nearest: { x: 2023, y: 4, c: 'Wien' } });
+        expect(hovers[0].rows).toEqual([{ x: 2023, y: 4, c: 'Wien' }, { x: 2023, y: 2, c: 'Tirol' }]);
+        // the same position is no new hover
+        events.dispatchEvent(pointer('pointermove', { clientX: 548, clientY: 0 }));
+        events.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 549, clientY: 0 }));
+        events.dispatchEvent(pointer('pointerleave'));
+        await nextTick();
+        expect(hovers).toHaveLength(2);
+        expect(hovers[1]).toBeNull();
+        expect(selects).toEqual([hovers[0]]);
+    });
+
+    test('the content of the hover, the header and the footer', async () => {
+        const el = await mount({ render: () => h(GenVis, { def: lineDef({ title: 'Titel', footer: 'Quelle' }), data: lineData }, {
+            hover: ({ title, rows, entries }) => h('div', { class: 'own' }, `${title}: ${rows.map(r => r.c).join(', ')} ${entries.map(e => e.y.name).join(' ')}`),
+            header: ({ title }) => h('h2', title.toUpperCase()),
+            footer: ({ footer }) => h('small', `${footer}!`),
+        }) });
+        expect(el.querySelector('.vis-header h2').textContent).toBe('TITEL');
+        expect(el.querySelector('.vis-footer small').textContent).toBe('Quelle!');
+        el.querySelector('rect.events').dispatchEvent(pointer('pointermove', { clientX: 549, clientY: 0 }));
+        await nextTick();
+        expect(el.querySelector('.hover .own').textContent).toBe('2023: Wien, Tirol 4,0 2,0');
+        expect(el.querySelector('.hover table')).toBeNull();
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('annotations', () => {
     const num = (e, a) => parseFloat(e.getAttribute(a));
     const annotated = annotations => {

@@ -1,4 +1,4 @@
-export { fillDirect, fillProps, getProps, prepareDef, applyFormElements, templateRefs, fillTemplate, mergeAll, sameValue, entryToValue, toValue, entryToProp, isProp, refNames };
+export { fillDirect, fillProps, valuesOf, propsOf, getProps, prepareDef, applyFormElements, templateRefs, fillTemplate, mergeAll, sameValue, entryToValue, toValue, entryToProp, isProp, refNames };
 
 import merge from 'deepmerge';
 import { upgradePlot } from '@/utils/compat';
@@ -80,6 +80,32 @@ const fillDirect = (raw, base, final = true) =>
 
 const fillProps = (props, base, final = false) =>
     mapObjectOrArray(props, prop => toValue({...prop}, base, final))
+
+// the props filled of many rows, e.g. the points of a line, as fillProps with
+// the row as base, a value or a ref is prepared once
+const filler = (props, wrap) => {
+    const fillers = Object.entries(props).map(([k, p]) => {
+        if (p === null || typeof p != 'object' || !isProp(p))
+            return [k, () => p];
+        if (p.value !== undefined && p.value !== null)
+            return [k, () => wrap(p, p.value)];
+        if (p.prop == 'ref')
+            return [k, row => wrap(p, row[p.ref])];
+        return [k, row => toValue({ ...p }, row, !wrap.props)];
+    });
+    return row => {
+        const o = {};
+        for (const [k, f] of fillers)
+            o[k] = f(row);
+        return o;
+    };
+};
+
+// the values of the props of a row, e.g. of `d` of a line
+const valuesOf = props => filler(props, (p, v) => v);
+
+// the props of a row with their values, e.g. of the element of a row
+const propsOf = props => filler(props, Object.assign((p, v) => v === undefined ? { ...p } : { ...p, value: v }, { props: true }));
 
 const isProp = o => o.prop !== undefined;
 

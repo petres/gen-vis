@@ -124,36 +124,62 @@ const addStackedData = (data, axis, dims = [], compare = null) => {
 
 
 const addScaledData = (data, infos) => {
-    data.forEach(d => {
-        Object.values(infos).forEach(i => {
-            d[`${i.dim}:scaled`] = i.scale(d[i.dim]);
-
-            d[`${i.dim}:scaled:min`] = i.scale(i.domain[0]);
-            d[`${i.dim}:scaled:0`] = i.scale(0);
-            d[`${i.dim}:scaled:max`] = i.scale(i.domain[1]);
-
-            if (i.mapping.stacked) {
-                d[`${i.dim}:start:scaled`] = i.scale(d[`${i.dim}:start`]);
-                d[`${i.dim}:end:scaled`] = i.scale(d[`${i.dim}:end`]);
+    // the names and the positions of the scales which are the same for all rows,
+    // e.g. of 0, a diverging domain has a middle entry, its last one is the max
+    const scales = Object.values(infos).map(i => ({
+        s: i.scale,
+        dim: i.dim,
+        stacked: i.mapping.stacked,
+        scaled: `${i.dim}:scaled`,
+        min: [`${i.dim}:scaled:min`, i.scale(i.domain[0])],
+        zero: [`${i.dim}:scaled:0`, i.scale(0)],
+        max: [`${i.dim}:scaled:max`, i.scale(i.domain.at(-1))],
+        start: [`${i.dim}:start`, `${i.dim}:start:scaled`],
+        end: [`${i.dim}:end`, `${i.dim}:end:scaled`],
+        height: `${i.dim}:height:scaled`,
+    }));
+    for (const d of data) {
+        for (const c of scales) {
+            d[c.scaled] = c.s(d[c.dim]);
+            d[c.min[0]] = c.min[1];
+            d[c.zero[0]] = c.zero[1];
+            d[c.max[0]] = c.max[1];
+            if (c.stacked) {
+                d[c.start[1]] = c.s(d[c.start[0]]);
+                d[c.end[1]] = c.s(d[c.end[0]]);
                 // the height of the bar of a stacked value, e.g. of an svg:rect
-                d[`${i.dim}:height:scaled`] = d[`${i.dim}:start:scaled`] - d[`${i.dim}:end:scaled`];
+                d[c.height] = d[c.start[1]] - d[c.end[1]];
             }
-        });
-    })
+        }
+    }
 }
 
 
 // the groups are in the order of their first entry, the values of the keys
-// are not joined, so e.g. 'a-b', 'c' and 'a', 'b-c' are different groups
+// are not joined, so e.g. 'a-b', 'c' and 'a', 'b-c' are different groups, they
+// are the keys of nested maps
 const groupBy = (data, keys) => {
-    const groups = new Map();
-    data.forEach(item => {
-        const key = JSON.stringify(keys.map(k => item[k]));
-        if (!groups.has(key))
-            groups.set(key, { group: Object.fromEntries(keys.map(k => [k, item[k]])), entries: [] });
-        groups.get(key).entries.push(item);
-    });
-    return [...groups.values()];
+    const root = new Map();
+    const groups = [];
+    const last = keys.length - 1;
+    for (const item of data) {
+        let m = root;
+        for (let i = 0; i < last; i++) {
+            const v = item[keys[i]];
+            if (!m.has(v))
+                m.set(v, new Map());
+            m = m.get(v);
+        }
+        const v = last < 0 ? undefined : item[keys[last]];
+        let g = m.get(v);
+        if (!g) {
+            g = { group: Object.fromEntries(keys.map(k => [k, item[k]])), entries: [] };
+            m.set(v, g);
+            groups.push(g);
+        }
+        g.entries.push(item);
+    }
+    return groups;
 };
 
 
@@ -162,13 +188,24 @@ const groupBy = (data, keys) => {
 // of JSON or parquet rows
 const filter = (data, conditions) => {
     const tests = conditions.map(c => {
+        const dim = c.dim;
         if (Array.isArray(c.key)) {
             const keys = new Set(c.key.map(String));
-            return e => e[c.dim] !== null && e[c.dim] !== undefined && keys.has(String(e[c.dim]));
+            return e => {
+                const v = e[dim];
+                return typeof v == 'string' ? keys.has(v) : (v !== null && v !== undefined && keys.has(String(v)));
+            };
         }
         if (typeof c.key == 'function')
-            return e => c.key(e[c.dim]);
-        return e => e[c.dim] == c.key;
+            return e => c.key(e[dim]);
+        return e => e[dim] == c.key;
     });
-    return data.filter(e => tests.every(t => t(e)));
+    if (tests.length == 1)
+        return data.filter(tests[0]);
+    return data.filter(e => {
+        for (const t of tests)
+            if (!t(e))
+                return false;
+        return true;
+    });
 };

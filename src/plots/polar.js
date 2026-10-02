@@ -11,7 +11,7 @@ const angleOffset = (info, prop) => {
     return scale ? pu.bandCenter(scale) : 0;
 };
 
-const fill = d => d.values.map(e => ju.fillProps(d.props.d, e, true));
+const fill = d => d.values.map(ju.valuesOf(d.props.d));
 
 // an element of `type` per row at the `angle` and `radius` of the props, as `x` and `y`
 const positioned = (name, type, x, y) => ({

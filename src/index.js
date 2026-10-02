@@ -13,12 +13,13 @@ export default {
     },
 };
 
-// the props are taken from the data attributes, e.g. data-def-file="def.json"
-const mountGenVisElement = element => {
-    const props = Object.fromEntries(element.getAttributeNames()
+// the props are taken from the data attributes, e.g. data-def-file="def.json",
+// and `props`, e.g. { onSelect: e => ... } of the events
+const mountGenVisElement = (element, props = {}) => {
+    const attributes = Object.fromEntries(element.getAttributeNames()
         .filter(name => name.startsWith('data-'))
         .map(name => [name.substring(5), element.getAttribute(name)]));
-    return createApp(GenVis, props).mount(element);
+    return createApp(GenVis, { ...attributes, ...props }).mount(element);
 }
 
 const mountGenVisByClass = cl => {

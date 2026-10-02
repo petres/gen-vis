@@ -1,8 +1,11 @@
 <template>
     <div class="vis" ref="vis" :style="{'--gen-vis-font-family': options.fontFamily}">
         <div class="vis-header">
-            <div class="title">{{ options.title }}</div>
-            <div class="subtitle">{{ options.subtitle }}</div>
+            <slot-content v-if="slots.header" :fn="slots.header" :props="{ title: options.title, subtitle: options.subtitle }"/>
+            <template v-else>
+                <div class="title">{{ options.title }}</div>
+                <div class="subtitle">{{ options.subtitle }}</div>
+            </template>
         </div>
         <div ref="form" class="vis-form-elements">
             <form-element v-for="element in formElements" :key="element.id" :element="element" :globals="globals" @changeSelected="formChanged"/>
@@ -25,7 +28,8 @@
             <facet v-else :key="data" :data="data" :shared="{}" :height='options.height' :width='options.width' :margins='options.margins'/>
         </div>
         <div class="vis-footer">
-            <span v-html="options.footer"/>
+            <slot-content v-if="slots.footer" :fn="slots.footer" :props="{ footer: options.footer }"/>
+            <span v-else v-html="options.footer"/>
         </div>
     </div>
 </template>
@@ -41,17 +45,19 @@ import * as ju from "@/utils/json.js";
 import Facet from '@/comp/Facet.vue';
 import LegendEntry from '@/comp/Legend.vue';
 import ColorLegend from '@/comp/ColorLegend.vue';
+import SlotContent from '@/comp/SlotContent.vue';
 import FormElement from '@/comp/FormElement.vue';
 
 
 export default {
-    inject: ['store'],
+    inject: ['store', 'slots'],
     // the user changed the state, see store.state
     emits: ['stateChanged'],
-    data: () => ({
+    // the options of the definition already in the first render, e.g. of the header slot
+    data() { return {
         initialized: false,
 
-        options: {},
+        options: { ...this.store.def.options },
         globals: {},
 
         legends: [],
@@ -66,9 +72,9 @@ export default {
             width: 0,
             margins: {top: 0, right: 0, bottom: 0, left: 0},
         },
-    }),
+    } },
     components: {
-        Facet, LegendEntry, ColorLegend, FormElement,
+        Facet, LegendEntry, ColorLegend, FormElement, SlotContent,
     },
     watch: {
         // the state was set from outside

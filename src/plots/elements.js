@@ -32,11 +32,12 @@ const pointwise = (groups, parent, type, translate = v => v) => parent
     .data(d => {
         // entries with missing values are not drawn
         const names = ju.refNames(d.props);
+        const fill = ju.propsOf(d.props);
         return d.values
             .filter(e => names.every(n => e[n] !== null))
             .map(e => {
                 // the row of the element, e.g. for the highlight of a row
-                const v = translate(ju.fillProps(d.props, e), e);
+                const v = translate(fill(e), e);
                 v[pu.rowOf] = e;
                 return v;
             });

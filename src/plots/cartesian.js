@@ -33,7 +33,7 @@ export default {
                 .defined(e => finite(e.x, e.y))
                 .x(e => e.x)
                 .y(e => e.y)
-                (d.values.map(e => ju.fillProps(d.props.d, e, true)))
+                (d.values.map(ju.valuesOf(d.props.d)))
             ),
     },
 
@@ -48,7 +48,7 @@ export default {
                 .x(e => e.x)
                 .y1(e => e.y1)
                 .y0(e => e.y0)
-                (d.values.map(e => ju.fillProps(d.props.d, e, true)))
+                (d.values.map(ju.valuesOf(d.props.d)))
             ),
     },
 
