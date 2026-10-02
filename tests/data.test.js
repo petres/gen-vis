@@ -1,4 +1,6 @@
 import { describe, test, expect } from 'vitest';
+import zlib from 'node:zlib';
+import { parquetWriteBuffer } from 'hyparquet-writer';
 import * as du from '@/utils/data';
 
 const def = {
@@ -10,23 +12,83 @@ const def = {
 };
 
 describe('parseData', () => {
-    test('csv', () => {
-        expect([...du.parseData('a,b\n1,2')]).toEqual([{ a: '1', b: '2' }]);
+    test('csv', async () => {
+        expect([...await du.parseData('a,b\n1,2')]).toEqual([{ a: '1', b: '2' }]);
     });
 
-    test('json, also with leading whitespace', () => {
-        expect(du.parseData('[{"a": 1}]')).toEqual([{ a: 1 }]);
-        expect(du.parseData(' \n[{"a": 1}]')).toEqual([{ a: 1 }]);
+    test('json, also with leading whitespace', async () => {
+        expect(await du.parseData('[{"a": 1}]')).toEqual([{ a: 1 }]);
+        expect(await du.parseData(' \n[{"a": 1}]')).toEqual([{ a: 1 }]);
     });
 
-    test('a byte order mark is removed', () => {
-        expect(du.parseData('﻿a,b\n1,2').columns).toEqual(['a', 'b']);
-        expect(du.parseData('﻿[{"a": 1}]')).toEqual([{ a: 1 }]);
+    test('a byte order mark is removed', async () => {
+        expect((await du.parseData('\uFEFFa,b\n1,2')).columns).toEqual(['a', 'b']);
+        expect(await du.parseData('\uFEFF[{"a": 1}]')).toEqual([{ a: 1 }]);
     });
 
-    test('parsed data is passed through', () => {
+    test('parsed data is passed through', async () => {
         const rows = [{ a: 1 }];
-        expect(du.parseData(rows)).toBe(rows);
+        expect(await du.parseData(rows)).toBe(rows);
+    });
+
+    test('the format of the data', async () => {
+        expect([...await du.parseData('a\tb\n1\t2', 'tsv')]).toEqual([{ a: '1', b: '2' }]);
+        expect([...await du.parseData('[a]\n1', 'csv')]).toEqual([{ '[a]': '1' }]);
+        await expect(du.parseData('{', 'json')).rejects.toThrow();
+        await expect(du.parseData('a,b', 'parquet')).rejects.toThrow('Parquet data needs to be binary');
+    });
+
+    test('the format of a url by its extension', () => {
+        expect(du.dataFormat('https://a.at/data.parquet?v=2')).toBe('parquet');
+        expect(du.dataFormat('/data/bev/data.TSV')).toBe('tsv');
+        expect(du.dataFormat('data.json')).toBe('json');
+        expect(du.dataFormat('/api/data')).toBeUndefined();
+        expect(du.dataFormat('/api/data', 'csv')).toBe('csv');
+    });
+
+    test('parquet, integers of 64 bits are numbers and dates are timestamps', async () => {
+        const buffer = parquetWriteBuffer({ columnData: [
+            { name: 'year', data: [2020n, 2021n, null], type: 'INT64' },
+            { name: 'id', data: [2n**60n, 1n, 2n], type: 'INT64' },
+            { name: 'date', data: [new Date('2020-01-01'), new Date('2021-06-15T12:00:00Z'), null], type: 'TIMESTAMP' },
+            { name: 'land', data: ['Wien', 'Tirol', 'Wien'], type: 'STRING' },
+            { name: 'value', data: [1.5, 2, null], type: 'DOUBLE' },
+        ] });
+        expect(await du.parseData(buffer)).toEqual([
+            { year: 2020, id: String(2n**60n), date: Date.parse('2020-01-01'), land: 'Wien', value: 1.5 },
+            { year: 2021, id: 1, date: Date.parse('2021-06-15T12:00:00Z'), land: 'Tirol', value: 2 },
+            { year: null, id: 2, date: null, land: 'Wien', value: null },
+        ]);
+        // also a view of a buffer
+        expect(await du.parseData(new Uint8Array(buffer))).toHaveLength(3);
+    });
+
+    test('parquet with other compressions than snappy, e.g. zstd of polars', async () => {
+        // the writer only has snappy
+        const compressors = {
+            GZIP: b => new Uint8Array(zlib.gzipSync(b)),
+            BROTLI: b => new Uint8Array(zlib.brotliCompressSync(b)),
+            ZSTD: b => new Uint8Array(zlib.zstdCompressSync(b)),
+        };
+        for (const codec of ['UNCOMPRESSED', 'GZIP', 'BROTLI', 'ZSTD']) {
+            const buffer = parquetWriteBuffer({ codec, compressors, columnData: [{ name: 'a', data: [1, 2], type: 'INT32' }] });
+            expect(await du.parseData(buffer)).toEqual([{ a: 1 }, { a: 2 }]);
+        }
+    });
+});
+
+describe('values of other formats than csv', () => {
+    test('numbers and dates', () => {
+        const def = { mapping: { n: { column: 'n', type: 'numeric' }, d: { column: 'd', type: 'date' } } };
+        expect(du.prepareData([{ n: 5n, d: new Date(0) }, { n: 2, d: 86400000n }], def))
+            .toEqual([{ n: 5, d: 0 }, { n: 2, d: 86400000 }]);
+    });
+
+    test('keys of categories are compared as strings', () => {
+        const data = [{ year: 2020 }, { year: 2021 }, { year: '2022' }, { year: null }];
+        expect(du.filter(data, [{ dim: 'year', key: ['2020', '2022'] }])).toEqual([{ year: 2020 }, { year: '2022' }]);
+        const order = du.categoryOrder([{ dim: 'year', keys: ['2021', '2020'] }]);
+        expect([{ year: 2020 }, { year: 2021 }].sort(order)).toEqual([{ year: 2021 }, { year: 2020 }]);
     });
 });
 

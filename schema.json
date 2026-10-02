@@ -16,7 +16,11 @@
         },
         "data": {
             "type": "string",
-            "description": "Url of the CSV or JSON data, relative to the definition."
+            "description": "Url of the data, relative to the definition, CSV, TSV, JSON or parquet, by the extension or dataFormat."
+        },
+        "dataFormat": {
+            "enum": ["csv", "tsv", "json", "parquet"],
+            "description": "The format of the data, by default the one of the extension of its url, without one CSV or JSON by the content."
         },
         "options": { "$ref": "#/definitions/options" },
         "globals": {

@@ -148,8 +148,8 @@ export default {
                 const dataGroupedByFacets = du.groupBy(this.data, [d]);
 
                 this.facets.entries = dataGroupedByFacets
-                    .filter(e => keys.includes(e.group[d]))
-                    .sort((a, b) => keys.indexOf(a.group[d]) - keys.indexOf(b.group[d]))
+                    .filter(e => keys.includes(String(e.group[d])))
+                    .sort((a, b) => keys.indexOf(String(a.group[d])) - keys.indexOf(String(b.group[d])))
                     .map(e => ({
                         key: e.group[d],
                         name: this.store.mapping(d).props[e.group[d]].name,

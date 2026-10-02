@@ -19,20 +19,27 @@ const cacheTime = 5 * 60 * 1000;
 const cache = new Map();
 const clearCache = () => cache.clear();
 
-const fetchText = url => {
+// `type` is text or buffer, e.g. of parquet data
+const fetchCached = (url, type = 'text') => {
     const now = Date.now();
-    cache.forEach((c, u) => { if (now - c.time >= cacheTime) cache.delete(u) });
-    if (!cache.has(url)) {
-        const text = d3.text(url).catch(error => {
+    const key = `${type} ${url}`;
+    cache.forEach((c, k) => { if (now - c.time >= cacheTime) cache.delete(k) });
+    if (!cache.has(key)) {
+        const content = d3[type](url).catch(error => {
             // failed requests are not kept
-            if (cache.get(url)?.text === text)
-                cache.delete(url);
+            if (cache.get(key)?.content === content)
+                cache.delete(key);
             throw new Error(`Could not load '${url}': ${error.message}`);
         });
-        cache.set(url, { text, time: now });
+        cache.set(key, { content, time: now });
     }
-    return cache.get(url).text;
+    return cache.get(key).content;
 };
+
+const fetchText = url => fetchCached(url);
+
+// parquet is binary, the other formats are text
+const fetchData = (url, format) => fetchCached(url, format == 'parquet' ? 'buffer' : 'text');
 
 const parseDef = (text, source) => {
     try {
@@ -83,8 +90,10 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     }
 
     // the data is requested together with the parents, if the def names it
-    if (data === null && typeof def.data == 'string' && !def.data.includes('{'))
-        fetchText(resolveUrl(def.data, url)).catch(() => {});
+    if (data === null && typeof def.data == 'string' && !def.data.includes('{')) {
+        const dataUrl = resolveUrl(def.data, url);
+        fetchData(dataUrl, du.dataFormat(dataUrl, def.dataFormat)).catch(() => {});
+    }
 
     const defOrg = await resolveParents(JSON.parse(JSON.stringify(def)), url);
     validateDef(defOrg).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
@@ -93,12 +102,16 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     su.applyState(prepared, state);
     ju.applyFormElements(prepared, defOrg);
 
+    // the format of the data, by default the one of the extension of its url
+    let format = defOrg.dataFormat;
     if (data === null) {
         if (!defOrg.data)
             throw new Error('No data given, neither in the definition nor as attribute.');
-        data = await fetchText(resolveUrl(defOrg.data, url));
+        const dataUrl = resolveUrl(defOrg.data, url);
+        format = du.dataFormat(dataUrl, format);
+        data = await fetchData(dataUrl, format);
     }
-    const rows = raw(du.parseData(data));
+    const rows = raw(await du.parseData(data, format));
 
     return {
         defUrl: url ?? null,

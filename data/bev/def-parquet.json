@@ -1,0 +1,7 @@
+{
+    "parent": "def.json",
+    "data": "data.parquet",
+    "options": {
+        "subtitle": "nach Bundesland, aus einer Parquet-Datei"
+    }
+}

@@ -3,6 +3,8 @@ import { validateDef, curveNames } from '@/utils/validate';
 import { prepareDef } from '@/utils/json';
 import { plotTypes, registerPlotType } from '@/plots';
 import { coords, registerCoord } from '@/coords';
+import { resolveParents } from '@/store';
+import { readFileSync } from 'node:fs';
 
 const examples = import.meta.glob('../data/*/def*.json', { eager: true, import: 'default' });
 
@@ -27,7 +29,10 @@ describe('the example definitions', () => {
         expect(Object.keys(examples).length).toBeGreaterThan(10);
     });
 
-    test.each(Object.entries(examples))('%s is valid', (file, def) => {
+    // merged with their parents, as by a check before a deploy
+    test.each(Object.entries(examples))('%s is valid', async (file, org) => {
+        const url = new URL(file, import.meta.url).href;
+        const def = await resolveParents(JSON.parse(JSON.stringify(org)), url, u => readFileSync(new URL(u), 'utf8'));
         expect(validateDef(def)).toEqual([]);
         expect(() => prepareDef(JSON.parse(JSON.stringify(def)))).not.toThrow();
     });

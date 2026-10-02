@@ -30,12 +30,17 @@ export default defineConfig(({ mode }) => ({
         },
     },
     server: {
-        open: '/dev.html',
+        open: '/',
     },
-    // the standalone script includes vue, which checks the environment
-    define: mode == 'lib' ? { 'process.env.NODE_ENV': JSON.stringify('production') } : {},
+    define: {
+        // the standalone script reads parquet without the decompressors of
+        // other compressions than snappy, see src/utils/parquet.js
+        __GEN_VIS_STANDALONE__: JSON.stringify(mode == 'lib'),
+        // the standalone script includes vue, which checks the environment
+        ...(mode == 'lib' ? { 'process.env.NODE_ENV': JSON.stringify('production') } : {}),
+    },
     build: mode == 'lib' ? {
-        // standalone script for embedding, see lib.html
+        // standalone script for embedding, see the readme
         outDir: 'dist-lib',
         lib: {
             // named as the entry of the es module, the styles are injected into it

@@ -6,6 +6,7 @@ import { templateRefs } from "@/utils/json.js";
 import { curves } from "@/utils/plot.js";
 import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
+import { dataFormats } from "@/utils/data.js";
 
 // the interpolations of the plot types with a curve, e.g. svg:path
 const curveNames = Object.keys(curves);
@@ -117,6 +118,9 @@ const validateDef = def => {
     (def.formElements ?? []).forEach((e, i) => (e.values ?? []).forEach((v, j) =>
         Object.entries(v.mapping ?? {}).forEach(([n, m]) =>
             checkTemplate(m.column, `formElements[${i}].values[${j}].mapping.${n}.column`))));
+
+    if (def.dataFormat !== undefined && !dataFormats.includes(def.dataFormat))
+        warn('dataFormat', `unknown format '${def.dataFormat}', expected one of ${list(dataFormats)}`);
 
     checkProp(def.options?.height, 'options.height', warn);
     checkProp(def.facets?.cols, 'facets.cols', warn);

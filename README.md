@@ -47,7 +47,7 @@ well.
 |------------|-----------------|-------------|
 | `defFile`  | `data-def-file` | url of the definition |
 | `def`      | `data-def`      | the definition, an object or a JSON string |
-| `data`     | `data-data`     | the data as rows or a CSV/JSON string, if not given it is loaded from the `data` url of the definition |
+| `data`     | `data-data`     | the data as rows, a CSV/JSON string or parquet (an `ArrayBuffer`), if not given it is loaded from the `data` url of the definition |
 | `debug`    | `data-debug`    | shows the prepared definition |
 | `state`    |                 | the changes of the user, see [state](#state) |
 
@@ -108,7 +108,8 @@ declared after it, e.g. `@layer gen-vis, page;`.
 ```
 
 Relative urls are resolved against the definition referencing them, e.g.
-`data.csv` is next to the definition file. A definition is deep merged into
+`data.csv` is next to the definition file, the `data` of a parent against the
+loaded definition. A definition is deep merged into
 its `parent` (and its parent into its own parent), arrays are replaced, not
 merged, except arrays whose entries all have an `id`, e.g. the form elements
 and their values, these are merged by the ids, entries with a new id are
@@ -145,6 +146,26 @@ The package contains a JSON Schema of the definitions, `schema.json`. With
 
 or with a local path, e.g. `"./node_modules/@preschen/gen-vis/schema.json"`.
 The schema also allows parts of definitions, e.g. definitions with a `parent`.
+
+### Data
+
+`data` is CSV, TSV, JSON (a list of rows) or [parquet](https://parquet.apache.org/),
+by the extension of the url (`.csv`, `.tsv`, `.json`, `.parquet`), without one
+CSV or JSON by the content. `dataFormat` sets it, e.g. for an url of an api:
+
+```json
+{ "data": "/api/prices?year=2024", "dataFormat": "json" }
+```
+
+Parquet is read with [hyparquet](https://github.com/hyparam/hyparquet) (no
+wasm), it is only loaded for parquet data. Integers of 64 bits are numbers,
+unless they are too large for them, e.g. ids, then they are strings, dates and
+timestamps are timestamps as the ones of the other formats. Snappy, the
+default of arrow (R, Python), pandas and duckdb, is read directly, other
+compressions, e.g. zstd of polars, load the decompressors of
+`hyparquet-compressors` (~70 kB), the standalone script reads only snappy and
+uncompressed parquet. Keys of categories are compared as strings, e.g. the
+years of a parquet or JSON column as keys of `props`.
 
 ### `options`
 
@@ -432,7 +453,7 @@ orientations of its scales, the axes and the geometry of the hover, see
 
 ```sh
 npm install
-npm run dev     # dev server, the definition shown by dev.html is set in src/globals.js
+npm run dev     # dev server with all definitions in data/, ?def=bev/def.json shows one with the prepared definition
 npm test        # unit tests, rendering and schema check of all definitions in data/
 npm run build   # es module for bundlers in dist/
 npm run watch   # rebuilds dist/ on changes, e.g. for `npm link`
@@ -440,5 +461,7 @@ npm run lib     # standalone script in dist-lib/
 npm run deploy  # builds and uploads the standalone script
 ```
 
-`lib.html` shows the embedding with the dev server. The examples in `data/`
-are rendered by the tests, so they have to stay valid.
+The page of the dev server (`index.html`, `src/dev/`) shows the definitions in
+`data/`, also of linked directories, e.g. of the pages using the package,
+without the mixins (`_*.json`). The examples in `data/` are rendered by the
+tests, so they have to stay valid.

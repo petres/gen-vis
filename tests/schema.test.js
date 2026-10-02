@@ -5,6 +5,7 @@ import { curveNames } from '@/utils/validate';
 import { plotTypes } from '@/plots';
 import { coords } from '@/coords';
 import { localeNames } from '@/utils/else';
+import { dataFormats } from '@/utils/data';
 
 const validate = new Ajv({ allErrors: true, allowUnionTypes: true }).compile(schema);
 const errors = def => validate(def) ? [] : validate.errors.map(e => `${e.instancePath} ${e.message}`);
@@ -22,6 +23,7 @@ describe('the schema', () => {
         expect(schema.definitions.options.properties.coord.enum).toEqual(Object.keys(coords));
         expect(schema.definitions.plot.properties.curve.enum).toEqual(curveNames);
         expect(schema.definitions.locale.anyOf[0].enum).toEqual(localeNames);
+        expect(schema.properties.dataFormat.enum).toEqual(dataFormats);
     });
 
     test('parts of a definition are valid, e.g. patches of the parent', () => {

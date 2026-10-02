@@ -1,28 +1,51 @@
-export { groupBy, parseData, prepareData, filter, addDimInfo, addScaledData, addStackedData, categoryOrder, toDate };
+export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, filter, addDimInfo, addScaledData, addStackedData, categoryOrder, toDate };
 
 import * as d3 from "d3";
 
-// strings are parsed as JSON or CSV, already parsed data is passed through
-const parseData = data => {
+const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
+
+// the format of the data of a url, the given one or the one of its extension,
+// undefined if it is neither, see parseData
+const dataFormat = (url, format) => format ??
+    dataFormats.find(f => new URL(url, 'file:///').pathname.toLowerCase().endsWith(`.${f}`));
+
+const isBinary = data => data instanceof ArrayBuffer || ArrayBuffer.isView(data);
+
+/**
+ * The rows of the data: binary data is parquet, strings are parsed in their
+ * `format`, without one as JSON (a list of rows) or CSV by their content,
+ * already parsed rows are passed through. The parquet reader is only loaded
+ * for parquet data.
+ */
+const parseData = async (data, format) => {
+    if (isBinary(data)) {
+        const { parseParquet } = await import('@/utils/parquet.js');
+        return parseParquet(data);
+    }
     if (typeof data != "string")
         return data;
-    data = data.replace(/^﻿/, '');
-    if (/^\s*\[/.test(data))
+    if (format == 'parquet')
+        throw new Error('Parquet data needs to be binary, e.g. an ArrayBuffer.');
+    data = data.replace(/^\uFEFF/, '');
+    if (format == 'tsv')
+        return d3.tsvParse(data);
+    if (format == 'json' || (format != 'csv' && /^\s*\[/.test(data)))
         return JSON.parse(data);
     return d3.csvParse(data);
 };
 
 const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
 
-// missing and invalid values are null
+// missing and invalid values are null, also integers of 64 bits, e.g. of parquet
 const toNumber = v => {
-    const n = missing(v) ? NaN : +v;
+    const n = missing(v) ? NaN : Number(v);
     return isNaN(n) ? null : n;
 };
 
-// dates are strings or timestamps
+// dates are strings, timestamps or Date objects
 const toDate = v => {
-    const t = missing(v) ? NaN : (typeof v == 'number' ? v : Date.parse(v));
+    const t = missing(v) ? NaN :
+        (v instanceof Date ? v.getTime() : (typeof v == 'number' || typeof v == 'bigint' ? Number(v) : Date.parse(v)));
     return isNaN(t) ? null : t;
 };
 
@@ -64,10 +87,10 @@ const addDimInfo = (info, data) => {
 // compares rows by the order of the categories in the definition, e.g. the
 // order of the `manual` props, `orders` are the dims with their ordered keys
 const categoryOrder = orders => {
-    const ranks = orders.map(({ dim, keys }) => ({ dim, rank: new Map(keys.map((k, i) => [k, i])) }));
+    const ranks = orders.map(({ dim, keys }) => ({ dim, rank: new Map(keys.map((k, i) => [String(k), i])) }));
     return (a, b) => {
         for (const { dim, rank } of ranks) {
-            const d = (rank.get(a[dim]) ?? Infinity) - (rank.get(b[dim]) ?? Infinity);
+            const d = (rank.get(String(a[dim])) ?? Infinity) - (rank.get(String(b[dim])) ?? Infinity);
             if (d)
                 return d;
         }
@@ -130,16 +153,18 @@ const groupBy = (data, keys) => {
 };
 
 
-// always a new array, the facets are rendered again if their data changes
+// always a new array, the facets are rendered again if their data changes, a
+// list of keys is compared as strings, e.g. the keys of props with the numbers
+// of JSON or parquet rows
 const filter = (data, conditions) => {
-    if (conditions.length == 0)
-        return [...data];
-    return data.filter(e => conditions.reduce((s, c) => {
-        if (Array.isArray(c.key))
-            return (s && c.key.includes(e[c.dim]))
-        else if (typeof c.key == 'function')
-            return (s && c.key(e[c.dim]))
-        else
-            return (s && e[c.dim] == c.key)
-    }, true));
+    const tests = conditions.map(c => {
+        if (Array.isArray(c.key)) {
+            const keys = new Set(c.key.map(String));
+            return e => e[c.dim] !== null && e[c.dim] !== undefined && keys.has(String(e[c.dim]));
+        }
+        if (typeof c.key == 'function')
+            return e => c.key(e[c.dim]);
+        return e => e[c.dim] == c.key;
+    });
+    return data.filter(e => tests.every(t => t(e)));
 };

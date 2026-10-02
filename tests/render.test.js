@@ -6,6 +6,7 @@ import path from 'node:path';
 import { createApp, h, nextTick, ref } from 'vue';
 import { GenVis, mountGenVisElement, registerPlotType, pointwise } from '@/index.js';
 import { plotTypes } from '@/plots';
+import { parquetWriteBuffer } from 'hyparquet-writer';
 import { clearCache } from '@/store';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -337,6 +338,36 @@ describe('rendering', () => {
         mountGenVisElement(el);
         await rendered(el);
         expect(el.querySelector('.vis-header .title').textContent).toBe('Bevölkerung');
+    });
+});
+
+describe('data formats', () => {
+    test('parquet as data, integers as categories', async () => {
+        const def = lineDef();
+        def.mapping.c = { column: 'year', type: 'categorical', legend: {}, hover: {}, props: { manual: { 2020: { color: 'red' }, 2021: { color: 'blue' } } } };
+        def.mapping.x.column = 'month';
+        const data = parquetWriteBuffer({ columnData: [
+            { name: 'year', data: [2020n, 2020n, 2021n, 2021n, 2022n], type: 'INT64' },
+            { name: 'month', data: [1, 2, 1, 2, 1], type: 'INT32' },
+            { name: 'value', data: [1.5, 2.5, 3, null, 4], type: 'DOUBLE' },
+        ] });
+        const el = await mount(GenVis, { def, data });
+        // 2022 has no props, it is not shown
+        expect(el.querySelectorAll('g.plotGroup.plot-0 path')).toHaveLength(2);
+        expect(el.querySelectorAll('g.plotGroup.plot-1 circle')).toHaveLength(3);
+        expect(await hover(el)).toBe(2);
+
+        el.querySelector('.legend .entries > div').click();
+        await nextTick();
+        expect(el.querySelectorAll('g.plotGroup.plot-1 circle')).toHaveLength(1);
+        expect(errors).toEqual([]);
+    });
+
+    test('tsv by the format of the definition', async () => {
+        const def = { ...lineDef(), dataFormat: 'tsv' };
+        const el = await mount(GenVis, { def, data: lineData.replaceAll(',', '\t') });
+        expect(el.querySelectorAll('g.plotGroup.plot-1 circle')).toHaveLength(7);
+        expect(errors).toEqual([]);
     });
 });
 

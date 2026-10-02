@@ -32,9 +32,9 @@ export default {
            type: [Object, String],
            default: null
         },
-        // rows or a CSV/JSON string
+        // rows, a CSV/JSON string or parquet as an ArrayBuffer or Uint8Array
         data: {
-           type: [Array, String],
+           type: [Array, String, ArrayBuffer, Uint8Array],
            default: null
         },
         // the changes of the user, e.g. kept by the page, see utils/state.js,
