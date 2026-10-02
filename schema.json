@@ -166,8 +166,8 @@
                 },
                 "locale": { "$ref": "#/definitions/locale" },
                 "coord": {
-                    "enum": ["cartesian"],
-                    "description": "The coordinate system of the plots, cartesian by default."
+                    "enum": ["cartesian", "polar"],
+                    "description": "The coordinate system of the plots, cartesian (a horizontal and a vertical axis) by default, or polar (an angle and a radius)."
                 },
                 "fontFamily": {
                     "type": "string",
@@ -185,7 +185,7 @@
                     "description": "A d3 scale, continuous scales need a numeric or date mapping, point and band a categorical one."
                 },
                 "orientation": {
-                    "enum": ["horizontal", "vertical"],
+                    "enum": ["horizontal", "vertical", "angle", "radius"],
                     "description": "Places the scale on the plot."
                 },
                 "domain": {
@@ -212,7 +212,15 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "position": { "enum": ["top", "bottom", "left", "right"] },
+                "position": {
+                    "enum": ["top", "bottom", "left", "right", "angular", "radial"],
+                    "description": "top, bottom, left or right of the cartesian coordinate system, angular (around the circle) or radial (from the center) of the polar one."
+                },
+                "angle": { "type": "number", "description": "The angle of a radial axis in degrees, clockwise from the top, 0 by default." },
+                "gridShape": {
+                    "enum": ["circle", "polygon"],
+                    "description": "The grid lines of a radial axis, circles or polygons through the ticks of the angle, e.g. of radar charts."
+                },
                 "ticks": { "$ref": "#/definitions/number" },
                 "values": { "type": "array", "description": "Fixed ticks." },
                 "format": { "type": "string", "description": "A d3 number or time format." },
@@ -314,14 +322,14 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "enum": ["svg:path", "svg:circle", "svg:line", "svg:rect", "svg:text", "base:area", "bar", "stackedBar"],
-                    "description": "svg:path and base:area draw a path per group, the others an element per row."
+                    "enum": ["svg:path", "svg:circle", "svg:line", "svg:rect", "svg:text", "base:area", "bar", "stackedBar", "radial:path", "radial:area", "radial:arc", "radial:circle", "radial:text"],
+                    "description": "svg:path, base:area, radial:path and radial:area draw a path per group, the others an element per row. The radial types are for the polar coordinate system."
                 },
                 "id": { "type": "string", "description": "The class of the plot group, plot-<index> by default." },
                 "curve": {
-                    "enum": ["linear", "monotoneX", "natural", "catmullRom", "basis", "step", "stepBefore", "stepAfter"],
+                    "enum": ["linear", "monotoneX", "natural", "catmullRom", "basis", "step", "stepBefore", "stepAfter", "linearClosed", "catmullRomClosed", "basisClosed"],
                     "default": "linear",
-                    "description": "The interpolation of svg:path and base:area between their points, monotoneX is smooth without overshooting the values."
+                    "description": "The interpolation of the paths and areas between their points, monotoneX is smooth without overshooting the values, the closed ones connect the last point with the first one, e.g. of radar charts."
                 },
                 "categories": {
                     "type": "array",

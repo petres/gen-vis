@@ -69,7 +69,9 @@ export default {
                 &.nearest {
                     font-weight: bold;
                 }
+                // the hover is not wider than needed, its entries are not wrapped
                 td {
+                    white-space: nowrap;
                     text-align: left;
                     padding: 1px 5px;
                     &.value {

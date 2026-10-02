@@ -134,11 +134,6 @@ const prepareMapping = m => {
     if (m.scale) {
         m.scale.type ??= "linear";
         m.scale.domain ??= [null, null];
-
-        if (!m.scale.domainAbs)
-            m.scale.domainRel ??= m.scale.domain.map((v, i) => v === null ? (i == 0 ? -1 : 1) * 0.02 : 0);
-
-        m.scale.domainAbs ??= [0, 0];
     }
 
     if (m.axis) {

@@ -167,7 +167,8 @@ by the interval of the date (`millisecond`, `second`, `minute`, `hour`, `day`,
 `week`, `month`, `year`).
 
 `coord` is the coordinate system of the plots, `cartesian` (the default, a
-horizontal and a vertical axis) or a registered one, see
+horizontal and a vertical axis), `polar` (an angle and a radius, see
+[polar plots](#polar-plots)) or a registered one, see
 [extensions](#extensions).
 
 `fontFamily` sets the font, by default the css variable
@@ -201,10 +202,14 @@ the definition refer to these names.
 - `scale`: `type` is a d3 scale (`linear`, `time`, `log`, `point`, `band`,
   ...), continuous scales need a `numeric` or `date` type, `point` and `band`
   a `categorical` one. `orientation` (`horizontal` or `vertical`) places the
-  scale on the plot. `domain` fixes the domain, `null` entries are taken from
-  the data. `domainRel` (relative to the domain) and `domainAbs` (absolute)
-  extend it. `padding` for categorical scales.
-- `axis`: `position` (`top`, `bottom`, `left`, `right`), `ticks`, `values`
+  scale on the plot, `angle` or `radius` in polar plots. `domain` fixes the
+  domain, `null` entries are taken from the data, dates are parsed as the ones
+  of the data. `domainRel` (relative to the domain) and `domainAbs` (absolute)
+  extend it, by default a domain taken from the data is extended by 2%.
+  `padding` for categorical scales. A scale without `orientation` has the
+  `range` given, e.g. colors or the radius of points.
+- `axis`: `position` (`top`, `bottom`, `left`, `right`, in polar plots
+  `angular` and `radial`), `ticks`, `values`
   (fixed ticks), `format` (d3 number or time format), `rotate` (the angle of
   the labels in degrees, positive counterclockwise, negative clockwise), `grid`
   (lines at the ticks), `title` (`{"name", "offset"}`) and `padding`.
@@ -247,17 +252,72 @@ A plot or a list of plots, drawn in order:
   `height`, negative values are drawn downwards from 0) and `stackedBar`
   (props `x`, `y` and `width`). The bars are centered at their category, in
   the middle of a band, `width` defaults to the width of a band or the step of
-  a point scale, a continuous scale needs a `width`.
+  a point scale, a continuous scale needs a `width`. The `radial:` types of
+  polar plots are described [below](#polar-plots).
 - `categories`: the rows are grouped by these mappings, the props of their
   categories are available in the plot props. Mappings without `props` only
   group the rows, e.g. a line per id.
 - `props`: svg attributes (and `text`). Props starting with `highlight-` are
   used for the elements of the category under the mouse or the legend entry.
-- `curve`: the interpolation of `svg:path` and `base:area` between their
-  points, `linear` (default), `monotoneX`, `natural`, `catmullRom`, `basis`,
-  `step`, `stepBefore` or `stepAfter`. `monotoneX` is smooth without
-  overshooting the values, e.g. for monthly data, `basis` does not pass
-  through the points.
+- `curve`: the interpolation of the paths and areas between their points,
+  `linear` (default), `monotoneX`, `natural`, `catmullRom`, `basis`, `step`,
+  `stepBefore` or `stepAfter`. `monotoneX` is smooth without overshooting the
+  values, e.g. for monthly data, `basis` does not pass through the points.
+  `linearClosed`, `catmullRomClosed` and `basisClosed` connect the last point
+  with the first one, e.g. of radar charts.
+
+### Polar plots
+
+With `"coord": "polar"` the plots are in a circle in the center of the facet,
+the mapping with the `angle` orientation goes around it, clockwise from the
+top, the one with the `radius` orientation from the center outwards, the
+margins are the space of the labels:
+
+```json
+"options": { "coord": "polar", "height": 400, "margins": {"top": 30, "right": 60, "bottom": 30, "left": 60} },
+"mapping": {
+    "x": {
+        "column": "date", "type": "date",
+        "scale": { "type": "utc", "orientation": "angle", "domain": ["2020-01-01", "2021-01-01"] },
+        "axis": { "position": "angular", "ticks": 12, "format": "%b", "grid": true }
+    },
+    "y": {
+        "column": "value", "type": "numeric",
+        "scale": { "orientation": "radius", "domain": [0, null] },
+        "axis": { "position": "radial", "ticks": 4, "grid": true }
+    }
+},
+"plot": { "type": "radial:path", "categories": ["year"], "props": { "stroke": "@color", "fill": "none", "d": { "angle": "@x:scaled", "radius": "@y:scaled" } } }
+```
+
+- The angle is a cycle, the end of its domain is at the angle of its start,
+  e.g. a year from `2020-01-01` to `2021-01-01`, a domain taken from the data
+  is not extended. The categories of `point` and `band` scales have the same
+  distance, also the last and the first one.
+- The range of the radius is `[0, "@radius"]` by default, the half of the
+  smaller side of the facet, e.g. `[20, "@radius"]` leaves a hole in the
+  center.
+- `angular` axes are around the circle, `grid` draws lines from the center.
+  `radial` axes go from the center outwards, at the `angle` of the axis
+  (degrees, clockwise from the top, 0 by default), `grid` draws circles, or
+  polygons through the ticks of the angle with `"gridShape": "polygon"`, e.g.
+  of radar charts. The labels of radial axes are above the plots.
+- The plot types: `radial:path` (a line per group, `d` with `angle` and
+  `radius`), `radial:area` (an area per group, `d` with `angle`,
+  `innerRadius` and `outerRadius`), `radial:arc` (a segment of a ring per row,
+  props `angle`, `innerRadius` and `outerRadius`, optional `width` in radians,
+  `padAngle` and `cornerRadius`, e.g. the bars of a rose chart), and
+  `radial:circle` and `radial:text` (an element per row at `angle` and
+  `radius`). The angles of a band scale are in the center of the band. The
+  `svg:` types draw with the center as origin, `bar` and `stackedBar` are
+  cartesian only.
+- Stacked values (`stacked` of the radius) are stacked from the center, e.g.
+  `"innerRadius": "@y:st:s:scaled", "outerRadius": "@y:st:e:scaled"` of
+  `radial:arc`.
+- The hover shows the values of the angle nearest to the mouse, also across
+  the top, it is in the center, on the other side of the marker.
+
+See `data/bev/def-radar.json` and `data/rechtsform/def-rose.json`.
 
 ### Props
 
@@ -364,7 +424,7 @@ registerPlotType('my:tick', {
 a type to coordinate systems, e.g. `bar` and `stackedBar` to `cartesian`. A
 coordinate system (`registerCoord(name, coord)`) has the default ranges of the
 orientations of its scales, the axes and the geometry of the hover, see
-`src/coords/index.js` and `src/coords/cartesian.js`. Both are known to
+`src/coords/index.js`, `src/coords/cartesian.js` and `src/coords/polar.js`. Both are known to
 `validateDef`, `@preschen/gen-vis/check` exports `registerPlotType` and
 `registerCoord` as well. The schema only knows the built-in ones.
 

@@ -1,0 +1,103 @@
+{
+    "data": "data.csv",
+    "options": {
+        "coord": "polar",
+        "height": 380,
+        "margins": {"top": 30, "right": 40, "bottom": 30, "left": 40},
+        "title": "Wohnungsbestände nach Rechtsform",
+        "subtitle": "Anzahl Wohnungen",
+        "footer": "<strong>Q:</strong> GWZ/HWZ 1971-2001, RZ 2011, MZ 2020"
+    },
+    "mapping": {
+        "year": {
+            "column": "Jahr",
+            "type": "categorical",
+            "scale": {
+                "type": "band",
+                "orientation": "angle",
+                "padding": 0.1
+            },
+            "axis": {
+                "position": "angular"
+            },
+            "hover": {
+                "format": "c"
+            }
+        },
+        "count": {
+            "column": "Anzahl",
+            "type": "numeric",
+            "stacked": true,
+            "scale": {
+                "type": "sqrt",
+                "domain": [0, null],
+                "range": [20, "@radius"],
+                "orientation": "radius"
+            },
+            "axis": {
+                "ticks": 4,
+                "position": "radial",
+                "grid": true,
+                "format": ".2s"
+            },
+            "hover": {
+                "format": ",.0f"
+            }
+        },
+        "type": {
+            "column": "Type",
+            "type": "categorical",
+            "legend": {
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "rect",
+                        "props": { "x": 2, "y": 2, "width": 12, "height": 12, "fill": "@color" }
+                    }]
+                }
+            },
+            "props": {
+                "manual": {
+                    "Hauseigentum":     { "color": "#BBD7EE" },
+                    "Wohnungseigentum": { "color": "#5BC5F2" },
+                    "GBV Miete":        { "color": "#559BD5" },
+                    "Gemeinde Miete":   { "color": "#C7DF71" },
+                    "Private Miete":    { "color": "#4B9847" },
+                    "Sonstige":         { "color": "#9CE1F8" }
+                }
+            },
+            "hover": {}
+        },
+        "geo": {
+            "column": "Geo",
+            "type": "categorical",
+            "props": {
+                "manual": {
+                    "Österreich": {},
+                    "Wien": {}
+                }
+            }
+        }
+    },
+    "facets": {
+        "dim": "geo",
+        "cols": {
+            "prop": "steps",
+            "ref": "totalWidth",
+            "steps": [{"cut": 0, "value": 1}, {"cut": 700, "value": 2}]
+        }
+    },
+    "plot": {
+        "type": "radial:arc",
+        "categories": ["type"],
+        "props": {
+            "fill": "@color",
+            "stroke": "white",
+            "stroke-width": 0.5,
+            "angle": "@year:scaled",
+            "innerRadius": "@count:st:s:scaled",
+            "outerRadius": "@count:st:e:scaled",
+            "highlight-opacity": 0.8
+        }
+    }
+}

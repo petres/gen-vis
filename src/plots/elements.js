@@ -1,4 +1,4 @@
-export { groupwise, pointwise };
+export { groupwise, pointwise, finite, curve };
 
 import * as d3 from "d3";
 import * as pu from "@/utils/plot";

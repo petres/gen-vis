@@ -1,4 +1,4 @@
-export { groupBy, parseData, prepareData, filter, addDimInfo, addScaledData, addStackedData, categoryOrder };
+export { groupBy, parseData, prepareData, filter, addDimInfo, addScaledData, addStackedData, categoryOrder, toDate };
 
 import * as d3 from "d3";
 

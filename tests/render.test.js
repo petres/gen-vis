@@ -360,8 +360,8 @@ describe('extensions', () => {
     });
 
     test('an unknown coordinate system is an error', async () => {
-        const el = await mount(GenVis, { def: lineDef({ coord: 'polar' }), data: lineData });
-        expect(el.querySelector('.vis-error').textContent).toBe(`Unknown coordinate system 'polar', expected one of 'cartesian'`);
+        const el = await mount(GenVis, { def: lineDef({ coord: 'spherical' }), data: lineData });
+        expect(el.querySelector('.vis-error').textContent).toBe(`Unknown coordinate system 'spherical', expected one of 'cartesian', 'polar'`);
     });
 
     test('scales without orientation and range, e.g. of colors', async () => {
@@ -373,6 +373,125 @@ describe('extensions', () => {
         const circles = [...el.querySelectorAll('g.plotGroup circle')];
         expect(circles.map(c => c.getAttribute('r'))).toContain('1');
         expect(circles.map(c => c.getAttribute('fill'))).toContain('rgb(255, 0, 0)');
+        expect(errors).toEqual([]);
+    });
+});
+
+describe('polar', () => {
+    // a month (0 to 11) per row, the angle is cyclic, 12 is at the angle of 0
+    const months = Array.from({ length: 12 }, (_, m) => m);
+    const polarData = 'month,value,land\n' + months.flatMap(m => [`${m},${m + 1},Wien`, `${m},2,Tirol`]).join('\n');
+    const polarDef = () => {
+        const def = lineDef({ coord: 'polar', width: 400, height: 400, margins: { top: 50, right: 50, bottom: 50, left: 50 } });
+        def.mapping.x = { column: 'month', type: 'numeric', scale: { orientation: 'angle', domain: [0, 12] }, axis: { position: 'angular', values: [0, 3, 6, 9, 12], grid: true } };
+        def.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radius', domain: [0, 12] }, axis: { position: 'radial', ticks: 3, grid: true }, hover: {} };
+        def.plot = [
+            { type: 'radial:path', categories: ['c'], curve: 'linearClosed', props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } },
+            { type: 'radial:circle', categories: ['c'], props: { fill: '@color', r: 3, angle: '@x:scaled', radius: '@y:scaled' } },
+        ];
+        return def;
+    };
+    const num = (e, a) => parseFloat(e.getAttribute(a));
+
+    test('lines and points around the center of the facet', async () => {
+        const el = await mount(GenVis, { def: polarDef(), data: polarData });
+        // inner size 300, the radius is 150
+        expect(el.querySelector('svg.facet > g').getAttribute('transform')).toBe('translate(200 200)');
+        expect(el.querySelectorAll('g.plotGroup.plot-0 path')).toHaveLength(2);
+        expect(el.querySelector('g.plotGroup.plot-0 path').getAttribute('d')).toMatch(/Z$/);
+
+        // month 3 of Tirol (radius 2 of 12) is on the right of the center
+        const circles = [...el.querySelectorAll('g.plotGroup.plot-1 g.group[data-group-c="Tirol"] circle')];
+        expect(circles).toHaveLength(12);
+        expect(num(circles[3], 'cx')).toBeCloseTo(25);
+        expect(num(circles[3], 'cy')).toBeCloseTo(0);
+        expect(errors).toEqual([]);
+    });
+
+    test('the axes, the end of the cycle is not a tick of its own', async () => {
+        const el = await mount(GenVis, { def: polarDef(), data: polarData });
+        const angular = [...el.querySelectorAll('g.axis-position-angular g.tick text')];
+        expect(angular.map(t => t.textContent)).toEqual(['0', '3', '6', '9']);
+        // 3 is on the right, 6 at the bottom
+        expect(num(angular[1], 'x')).toBeGreaterThan(150);
+        expect(angular[1].getAttribute('text-anchor')).toBe('start');
+        expect(num(angular[2], 'y')).toBeGreaterThan(150);
+        expect(el.querySelectorAll('g.grid line')).toHaveLength(4);
+
+        const radial = [...el.querySelectorAll('g.axis-position-radial g.tick text')];
+        expect(radial.length).toBeGreaterThan(1);
+        expect(el.querySelectorAll('g.grid circle')).toHaveLength(radial.length);
+        // above the plots
+        expect(el.querySelector('svg.facet > g').lastElementChild.previousElementSibling.getAttribute('class')).toMatch(/axis-position-radial/);
+    });
+
+    test('polygons as grid lines', async () => {
+        const def = polarDef();
+        def.mapping.y.axis.gridShape = 'polygon';
+        const el = await mount(GenVis, { def, data: polarData });
+        const grid = [...el.querySelectorAll('g.grid path')];
+        expect(grid.length).toBeGreaterThan(1);
+        // through the 4 ticks of the angle
+        expect(grid[1].getAttribute('d').match(/L/g)).toHaveLength(3);
+    });
+
+    test('the hover takes the nearest angle, also across the top', async () => {
+        const el = await mount(GenVis, { def: polarDef(), data: polarData });
+        const events = el.querySelector('rect.events');
+        // the pointer relative to the center, jsdom has no transforms
+        const at = async (x, y) => {
+            events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: y }));
+            await nextTick();
+            return el.querySelector('.hover .title').textContent;
+        };
+        expect(await at(100, 0)).toBe('3');
+        expect(await at(0, 100)).toBe('6');
+        // just left of the top, 11 is at 330 degrees, 0 at 0 degrees
+        expect(await at(-5, -100)).toBe('0');
+        expect(el.querySelectorAll('.hover tr.entry')).toHaveLength(2);
+        // the marker from the center to the outer radius
+        const line = el.querySelector('.hoverMarker line');
+        expect([num(line, 'x1'), num(line, 'y1'), num(line, 'x2'), num(line, 'y2')].map(Math.round)).toEqual([0, 0, 0, -150]);
+        expect(errors).toEqual([]);
+    });
+
+    test('stacked arcs of a band scale', async () => {
+        const def = polarDef();
+        def.mapping.x = { column: 'month', type: 'categorical', scale: { type: 'band', orientation: 'angle' }, axis: { position: 'angular' } };
+        def.mapping.y.stacked = true;
+        def.mapping.y.scale.domain = [0, null];
+        def.plot = { type: 'radial:arc', categories: ['c'], props: { fill: '@color', angle: '@x:scaled', innerRadius: '@y:st:s:scaled', outerRadius: '@y:st:e:scaled' } };
+        const el = await mount(GenVis, { def, data: polarData });
+        const arcs = el.querySelectorAll('g.plotGroup path');
+        expect(arcs).toHaveLength(24);
+        arcs.forEach(a => expect(a.getAttribute('d')).toMatch(/^M.*A/));
+        expect(await hover(el)).toBe(2);
+
+        // the categories have the same distance, also the last and the first one
+        const angles = [...el.querySelectorAll('g.axis-position-angular g.tick text')]
+            .map(t => Math.atan2(num(t, 'x'), -num(t, 'y')));
+        const step = 2*Math.PI/12;
+        expect(angles[0]).toBeCloseTo(step/2);
+        expect(angles[1] - angles[0]).toBeCloseTo(step);
+        expect(errors).toEqual([]);
+    });
+
+    test('cartesian plot types are not available', async () => {
+        const def = polarDef();
+        def.plot = { type: 'bar', categories: ['c'], props: { cx: '@x:scaled', height: '@y:scaled' } };
+        await mount(GenVis, { def, data: polarData });
+        expect(errors).toContainEqual(expect.stringMatching(/plot\[0\]\.type: not available in the coordinate system 'polar'/));
+    });
+});
+
+describe('scales', () => {
+    test('dates of a fixed domain', async () => {
+        const def = lineDef();
+        def.mapping.x = { column: 'date', type: 'date', scale: { type: 'utc', orientation: 'horizontal', domain: ['2020-01-01', '2021-01-01'] }, axis: { position: 'bottom', format: '%b' } };
+        const el = await mount(GenVis, { def, data: 'date,value,land\n2020-03-01,1,Wien\n2020-06-01,2,Wien' });
+        const labels = [...el.querySelectorAll('g.axis-position-bottom g.tick text')].map(t => t.textContent);
+        expect(labels[0]).toBe('Jan');
+        expect(labels.at(-1)).toBe('Jan');
         expect(errors).toEqual([]);
     });
 });
@@ -558,7 +677,7 @@ describe('fixed bugs', () => {
         const def = stackDef();
         delete def.plot.props.width;
         const el = await mount(GenVis, { def, data: stackData });
-        expect(el.querySelector('.vis-error').textContent).toBe(`stackedBar: a 'width' is needed for a continuous horizontal scale`);
+        expect(el.querySelector('.vis-error').textContent).toBe(`stackedBar: a 'width' is needed for a continuous scale`);
     });
 
     test('the hover of a band scale shows the band under the mouse', async () => {

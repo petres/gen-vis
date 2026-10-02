@@ -1,3 +1,5 @@
+export { barScale, barWidth };
+
 import * as pu from "@/utils/plot";
 import * as ju from "@/utils/json";
 import { pointwise } from "@/plots/elements";
@@ -13,7 +15,7 @@ const barScale = (info, prop, type) => {
 // the default width of the bars of a categorical scale
 const barWidth = (scale, type) => {
     if (!scale.step)
-        throw new Error(`${type}: a 'width' is needed for a continuous horizontal scale`);
+        throw new Error(`${type}: a 'width' is needed for a continuous scale`);
     return scale.bandwidth() || scale.step()*(1 - scale.padding());
 };
 

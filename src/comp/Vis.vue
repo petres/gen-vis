@@ -171,7 +171,7 @@ export default {
                     pu.addScale(info, coord.dims(
                         this.facets.width - (this.facets.margins.left + this.facets.margins.right),
                         this.facets.height - (this.facets.margins.top + this.facets.margins.bottom),
-                    ), coord.ranges);
+                    ), coord);
 
                     return info;
                 });

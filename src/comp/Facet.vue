@@ -1,13 +1,13 @@
 <template>
     <div :style="`width: ${width}px;`" class="vis-inner">
         <svg ref="svg" :width="width" :height="height" class="facet">
-            <g ref="inner" :transform="`translate(${margins.left} ${margins.top})`">
+            <g ref="inner" :transform="`translate(${margins.left + origin[0]} ${margins.top + origin[1]})`">
                 <g :visibility="hover.visible ? 'visible' : 'hidden'" class="hoverMarker" ref="hoverMarker">
                     <line/>
                 </g>
             </g>
         </svg>
-        <div :style="`transform: translate(${margins.left + hover.x}px, ${margins.top + hover.y}px); position: absolute; top: 0; left: 0;`">
+        <div :style="`transform: translate(${margins.left + origin[0] + hover.x}px, ${margins.top + origin[1] + hover.y}px); position: absolute; top: 0; left: 0;`">
             <hover v-if="hover.visible" :title="hover.title" :data="hover.data" :side="hover.side"/>
         </div>
     </div>
@@ -36,6 +36,8 @@ export default {
     computed: {
         innerWidth() { return this.width - (this.margins.left + this.margins.right) },
         innerHeight() { return this.height - (this.margins.top + this.margins.bottom) },
+        // the origin of the plots and axes in the inner area, e.g. its center
+        origin() { return this.store.coord.origin?.(this.innerWidth, this.innerHeight) ?? [0, 0] },
         relativeBases() {
             return {
                 width: this.width,
@@ -56,6 +58,7 @@ export default {
             inner: d3.select(this.$refs.inner),
             data: this.data,
             info: this.scales(),
+            dims: this.store.coord.dims(this.innerWidth, this.innerHeight),
             innerWidth: this.innerWidth,
             innerHeight: this.innerHeight,
             relativeBases: this.relativeBases,
@@ -63,6 +66,7 @@ export default {
 
         this.store.coord.axes(this.ctx);
         this.plot();
+        this.store.coord.raise?.(this.ctx);
         this.hoverInit();
     },
     unmounted() {
@@ -95,7 +99,7 @@ export default {
                         mapping: this.store.mapping(n),
                     };
                     du.addDimInfo(info, this.data)
-                    pu.addScale(info, coord.dims(this.innerWidth, this.innerHeight), coord.ranges);
+                    pu.addScale(info, coord.dims(this.innerWidth, this.innerHeight), coord);
                     infos[n] = info;
                 });
             du.addScaledData(this.data, infos);

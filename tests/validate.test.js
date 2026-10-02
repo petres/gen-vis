@@ -45,7 +45,7 @@ describe('validateDef', () => {
         def.plot.curve = 'smooth';
         expect(validateDef(def)).toEqual([`plot[0].curve: unknown curve 'smooth', expected one of ${curveNames.map(c => `'${c}'`).join(', ')}`]);
         def.plot = { ...def.plot, type: 'svg:circle', curve: 'monotoneX' };
-        expect(validateDef(def)).toEqual([`plot[0].curve: only used by 'svg:path', 'base:area'`]);
+        expect(validateDef(def)).toEqual([`plot[0].curve: only used by 'svg:path', 'base:area', 'radial:path', 'radial:area'`]);
     });
 
     test('all plot types are implemented', () => {
@@ -54,8 +54,8 @@ describe('validateDef', () => {
 
     test('coordinate systems and the plot types of them', () => {
         const def = base();
-        def.options = { coord: 'polar' };
-        expect(validateDef(def)).toEqual([`options.coord: unknown coordinate system 'polar', expected one of 'cartesian'`]);
+        def.options = { coord: 'spherical' };
+        expect(validateDef(def)).toEqual([`options.coord: unknown coordinate system 'spherical', expected one of 'cartesian', 'polar'`]);
 
         registerCoord('test:coord', { ...coords.cartesian, ranges: { angle: [0, 6.28] }, positions: ['outer'] });
         def.options.coord = 'test:coord';

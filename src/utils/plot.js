@@ -3,6 +3,7 @@ export { addScale, bandCenter, setProps, setGroupData, highlightElements, curves
 import * as d3 from "d3";
 import * as ju from "@/utils/json.js";
 import * as eu from "@/utils/else.js";
+import { toDate } from "@/utils/data.js";
 
 // the interpolations of the paths and areas between their points, `monotoneX`
 // is smooth without overshooting the values, e.g. for monthly data
@@ -15,15 +16,22 @@ const curves = {
     step: d3.curveStep,
     stepBefore: d3.curveStepBefore,
     stepAfter: d3.curveStepAfter,
+    // closed, e.g. around the circle of polar plots
+    linearClosed: d3.curveLinearClosed,
+    catmullRomClosed: d3.curveCatmullRomClosed,
+    basisClosed: d3.curveBasisClosed,
 };
 
 // the offset of the center of a band, the position of band scales is its start
 const bandCenter = s => s.bandwidth ? s.bandwidth()/2 : 0;
 
-// `ranges` are the default ranges of the orientations, in the sizes of `dims`,
-// see coords/index.js
-const addScale = (info, dims, ranges = {}) => {
+// `coord` has the default ranges of the orientations, in the sizes of `dims`,
+// and the cyclic orientations, e.g. the angle, see coords/index.js
+const addScale = (info, dims, coord = {}) => {
     const scaleDef = info.mapping.scale;
+    const ranges = coord.ranges ?? {};
+    // the end of a cyclic range is its start, e.g. of the angles of a circle
+    const cyclic = (coord.cyclic ?? []).includes(scaleDef.orientation);
 
     const s = d3[`scale${eu.capitalize(scaleDef.type)}`]()
 
@@ -33,10 +41,13 @@ const addScale = (info, dims, ranges = {}) => {
     if (range)
         s.range(ju.fillDirect(range, dims))
     if (info.extent) {
-        info.domain = [...scaleDef.domain];
+        // dates of a fixed domain are parsed as the ones of the data, e.g. "2020-01-01"
+        info.domain = scaleDef.domain.map(v => v !== null && info.mapping.type == 'date' ? toDate(v) : v);
 
-        info.domainRel = [...(scaleDef.domainRel ? scaleDef.domainRel : [0, 0])];
-        info.domainAbs = scaleDef.domainAbs;
+        // without fixed values the domain is extended a bit, not if it is cyclic
+        info.domainRel = [...(scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic ? [0, 0] :
+            scaleDef.domain.map((v, i) => v === null ? (i == 0 ? -1 : 1) * 0.02 : 0)))];
+        info.domainAbs = scaleDef.domainAbs ?? [0, 0];
 
         info.domain[0] ??= info.extent[0];
         info.domain[1] ??= info.extent[1];
@@ -52,8 +63,12 @@ const addScale = (info, dims, ranges = {}) => {
         s.invertCustom = (v) => info.values[d3.bisectCenter(info.values, s.invert(v))];
     } else {
         info.domain = info.values;
-        scaleDef.padding ??= 0.4
+        // the categories of a cyclic range have the same distance, also the
+        // last and the first one
+        scaleDef.padding ??= cyclic && !s.bandwidth ? 0.5 : 0.4;
         s.padding(scaleDef.padding);
+        if (cyclic && s.paddingOuter)
+            s.paddingOuter(scaleDef.padding/2);
         // the category with the nearest position, e.g. the center of a band
         s.invertCustom = (v) => d3.least(s.domain(), d => Math.abs(s(d) + bandCenter(s) - v));
     }

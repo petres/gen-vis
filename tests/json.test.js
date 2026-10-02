@@ -38,7 +38,7 @@ describe('prepareDef', () => {
             },
             plot: { type: 'svg:circle', props: { r: '@r', 'highlight-r': 5 } },
         });
-        expect(def.mapping.x.scale).toMatchObject({ type: 'linear', domainAbs: [0, 0] });
+        expect(def.mapping.x.scale).toMatchObject({ type: 'linear', domain: [null, null] });
         expect(def.mapping.x.hover.format).toBe('c');
         expect(def.mapping.c.props).toEqual({ a: { r: 3, name: 'a', visible: true }, b: { r: 3, name: 'B', visible: false } });
         expect(def.plot).toHaveLength(1);

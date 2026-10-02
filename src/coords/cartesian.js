@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import * as pu from "@/utils/plot";
 import * as ju from "@/utils/json";
 import * as eu from "@/utils/else";
+import { tickValues, tickFormat } from "@/coords/ticks";
 
 // horizontal lines for a vertical axis and vice versa
 const grid = (ctx, s, values, vertical) => {
@@ -40,23 +41,17 @@ const axes = ctx => {
             .ticks(ticks)
             .tickPadding(i.padding)
 
-        if (i.format) {
-            a.tickFormat(store.formatter(m.scale.type)(i.format))
-        } else if (!i.values) {
-            const format = store.locale.tickFormat(s, m.scale.type, ticks);
-            if (format)
-                a.tickFormat(format);
-        }
+        const format = tickFormat(store, m, s, ticks);
+        if (format)
+            a.tickFormat(format);
 
         if (i.values) {
             a.tickValues(i.values)
         }
 
         // the grid lines are at the ticks of the axis
-        if (i.grid) {
-            const values = i.values ?? (s.ticks ? s.ticks(ticks) : s.domain());
-            grid(ctx, s, values, ['left', 'right'].includes(i.position));
-        }
+        if (i.grid)
+            grid(ctx, s, tickValues(i, s, ticks), ['left', 'right'].includes(i.position));
 
         const ga = inner.append("g")
             .attr("class", `axis-name-${n} axis-position-${i.position}`)

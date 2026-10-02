@@ -2,6 +2,7 @@ export { plotTypes, registerPlotType };
 
 import elements from "@/plots/elements";
 import bars from "@/plots/bars";
+import radial from "@/plots/radial";
 
 /**
  * The plot types by name, the `type` of a plot:
@@ -11,7 +12,7 @@ import bars from "@/plots/bars";
  * - `curve`: the type uses the `curve` of the plot
  * - `coords`: the coordinate systems of the type, all if it is not given
  */
-const plotTypes = { ...elements, ...bars };
+const plotTypes = { ...elements, ...bars, ...radial };
 
 const registerPlotType = (name, type) => {
     plotTypes[name] = type;
