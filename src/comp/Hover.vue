@@ -1,11 +1,7 @@
 <template>
     <div v-if="axis && axis.h" class="hover" ref="hover" :style='{left: left, transform: transform}'>
         <div class="title">{{ axis.h.name }}</div>
-        <table class="entries" ref="entries">
-            <!-- <tr class="entry">
-                <td></td>
-            </tr> -->
-        </table>
+        <table class="entries" ref="entries"/>
     </div>
 </template>
 
@@ -13,7 +9,7 @@
 import * as d3 from "d3";
 
 export default {
-    props: ["title", "axis", "side", "data"],
+    props: ["axis", "side", "data"],
     data: () => ({
         space: 20
     }),
@@ -54,7 +50,6 @@ export default {
 <style lang="scss" scoped>
     .hover {
         position: absolute;
-        top: 0px;
         font-size: 13px;
 
         .title {
@@ -65,8 +60,6 @@ export default {
         }
         background-color: #FFFFFFCC;
         top: 40%;
-
-        // margin: 20px;
 
         :deep(table) {
             border-collapse: collapse;
@@ -84,7 +77,6 @@ export default {
                     &.y {
                         text-align: right;
                     }
-                    // border-left: 1px solid #777;
                 }
                 td:first-child {
                     border-left: 0;

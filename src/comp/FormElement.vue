@@ -2,9 +2,9 @@
     <div class="formElement" :id="`container-${element.id}`">
         <div class="title">{{ element.name }}:</div>
         <div v-if="element.type == 'switch'" class="entries">
-            <div v-for="e of element.values" :id="`container-${e.id}`" @click="switched(e)">
-                <input type="radio" :name="`${uid}-${element.id}`" :value="e.id" :checked="equal(e.value)">
-                <label :for="e.id">{{ e.name }}</label>
+            <div v-for="e of element.values" :key="e.id" :id="`container-${e.id}`" @click="switched(e)">
+                <input type="radio" :id="`${uid}-${element.id}-${e.id}`" :name="`${uid}-${element.id}`" :value="e.id" :checked="equal(e.value)">
+                <label :for="`${uid}-${element.id}-${e.id}`">{{ e.name }}</label>
             </div>
         </div>
     </div>
@@ -28,8 +28,7 @@ export default {
     methods: {
         switched(entry) {
             this.globals[this.element.ref] = entry.value;
-            this.$emit('changeSelected', {
-            });
+            this.$emit('changeSelected');
         },
         equal(v) { return ju.sameValue(v, this.vg) }
     }

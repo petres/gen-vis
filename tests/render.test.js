@@ -447,6 +447,118 @@ describe('touch', () => {
 });
 
 describe('fixed bugs', () => {
+    const stackDef = () => {
+        const def = lineDef();
+        def.mapping.y.stacked = true;
+        def.mapping.type = { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } };
+        def.plot = { type: 'stackedBar', categories: ['type'], props: { x: '@x', y: '@y', width: 10, fill: 'red' } };
+        return def;
+    };
+    const stackData = 'year,value,land,type\n2020,5,Wien,a\n2020,2,Wien,b\n2021,8,Wien,a\n2021,2,Wien,b';
+    const rects = el => [...el.querySelectorAll('g.plotGroup rect')].map(r => ['x', 'y', 'width', 'height'].map(a => parseFloat(r.getAttribute(a))));
+
+    test('the domain of stacks without a fixed domain includes their start', async () => {
+        const el = await mount(GenVis, { def: stackDef(), data: stackData });
+        const ticks = [...el.querySelectorAll('g.axis-position-left g.tick text')].map(t => t.textContent);
+        expect(ticks[0]).toBe('0');
+        // inner height 250
+        rects(el).forEach(([x, y, w, h]) => expect(y + h).toBeLessThanOrEqual(250));
+    });
+
+    const barDef = () => {
+        const def = lineDef();
+        def.mapping.x = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'horizontal' }, axis: { position: 'bottom' } };
+        def.plot = { type: 'bar', categories: ['c'], props: { cx: '@x:scaled', height: '@y:scaled', fill: '@color' } };
+        return def;
+    };
+
+    test('bars of negative values are drawn downwards from 0', async () => {
+        const el = await mount(GenVis, { def: barDef(), data: 'year,value,land\n2020,5,Wien\n2021,-2,Wien' });
+        const [pos, neg] = rects(el);
+        expect(pos[3]).toBeGreaterThan(0);
+        expect(neg[3]).toBeGreaterThan(0);
+        // both end at 0
+        expect(pos[1] + pos[3]).toBeCloseTo(neg[1]);
+        expect(errors).toEqual([]);
+    });
+
+    test('bars and stacks are centered in the bands of a band scale', async () => {
+        const centers = el => rects(el).map(([x, y, w]) => x + w/2);
+        const ticks = el => [...el.querySelectorAll('g.axis-position-bottom g.tick')]
+            .map(t => parseFloat(t.getAttribute('transform').match(/translate\(([\d.]+)/)[1]));
+
+        const bar = await mount(GenVis, { def: barDef(), data: 'year,value,land\n2020,5,Wien\n2021,2,Wien' });
+        centers(bar).forEach((c, i) => expect(c).toBeCloseTo(ticks(bar)[i]));
+
+        const def = stackDef();
+        def.mapping.x = barDef().mapping.x;
+        // the width of the bands by default
+        delete def.plot.props.width;
+        const stack = await mount(GenVis, { def, data: stackData });
+        const [x, y, width] = rects(stack)[0];
+        const transform = parseFloat(stack.querySelector('g.plotGroup rect').getAttribute('transform').match(/translate\((-?[\d.]+)/)[1]);
+        expect(x + transform + width/2).toBeCloseTo(ticks(stack)[0]);
+        expect(width).toBeGreaterThan(0);
+        expect(await hover(stack)).toBeGreaterThan(0);
+        expect(errors).toEqual([]);
+    });
+
+    test('stacks of a continuous scale without width are an error', async () => {
+        const def = stackDef();
+        delete def.plot.props.width;
+        const el = await mount(GenVis, { def, data: stackData });
+        expect(el.querySelector('.vis-error').textContent).toBe(`stackedBar: a 'width' is needed for a continuous horizontal scale`);
+    });
+
+    test('the hover of a band scale shows the band under the mouse', async () => {
+        const el = await mount(GenVis, { def: barDef(), data: 'year,value,land\n2020,5,Wien\n2021,2,Wien\n2022,3,Wien' });
+        const events = el.querySelector('rect.events');
+        const title = x => {
+            events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: 100 }));
+            return nextTick().then(() => el.querySelector('.hover .title').textContent);
+        };
+        // inner width 550, the centers of the bands are at 113, 275 and 437
+        expect(await title(185)).toBe('2020');
+        expect(await title(200)).toBe('2021');
+        expect(await title(350)).toBe('2021');
+        expect(await title(362)).toBe('2022');
+    });
+
+    test('categories without props only group the rows', async () => {
+        const def = lineDef();
+        def.mapping.id = { column: 'land', type: 'categorical' };
+        def.plot[0].categories = ['id'];
+        def.plot[0].props.stroke = 'black';
+        const el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelectorAll('g.plotGroup.plot-0 path')).toHaveLength(2);
+        expect(errors).toEqual([]);
+    });
+
+    test('plot ids which are no css classes are highlighted', async () => {
+        const def = lineDef();
+        def.plot[0].id = '1st line';
+        def.plot[0].props['highlight-stroke-width'] = 3;
+        const el = await mount(GenVis, { def, data: lineData });
+        expect(await hover(el)).toBe(2);
+        el.querySelector('.legend .entries > div').dispatchEvent(new MouseEvent('mouseenter'));
+        expect(el.querySelector('path.highlight').getAttribute('stroke-width')).toBe('3');
+        expect(errors).toEqual([]);
+    });
+
+    test('the labels of the form elements belong to their radio buttons', async () => {
+        const def = lineDef();
+        def.globals = { column: 'value' };
+        def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'switch', values: [
+            { id: 'value', name: 'Value', value: 'value' },
+            { id: 'other', name: 'Other', value: 'other' },
+        ] }];
+        const el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelectorAll('.formElement label')).toHaveLength(2);
+        el.querySelectorAll('.formElement label').forEach(l => {
+            expect(document.getElementById(l.htmlFor)).toBe(l.previousElementSibling);
+        });
+    });
+
     test('categories with quotes are highlighted', async () => {
         const def = lineDef();
         def.mapping.c.props.manual = { "O'Brien": { color: 'red' }, 'Say "hi"': { color: 'blue' } };

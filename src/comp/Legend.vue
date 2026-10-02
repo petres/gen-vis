@@ -2,7 +2,7 @@
     <div class="legend" :data-dim="legend">
         <div class="title">{{ info.name }}</div>
         <div class="entries">
-            <div v-for="entry of entries" :data-visible="entry.props.visible" :data-key="entry.key" 
+            <div v-for="entry of entries" :key="entry.key" :data-visible="entry.props.visible" :data-key="entry.key"
                 v-bind='Object.assign({...entry.filled}, {name: null})'
                 @click="switched(entry)" @mouseenter="$emit('highlight', {dim: this.legend, key: entry.key})" @mouseleave="$emit('highlight', {})">
                 <LegendSymbol v-if="info.legend.symbol" :info="info.legend.symbol" :props="entry.props"/>
@@ -54,13 +54,9 @@ export default {
             font-weight: bold;
             font-size: 13px;
             margin: 3px;
-            // display: inline-block;
-            // top: -4px;
             position: relative;
-            // margin-right: 20px;
         }
         .entries {
-            // display: inline-block;
             > div {
                 cursor: pointer;
                 display: inline-block;

@@ -240,10 +240,13 @@ A plot or a list of plots, drawn in order:
 - `type`: `svg:path` (a line per group, `d` with `x` and `y`), `base:area`
   (an area per group, `d` with `x`, `y0` and `y1`), `svg:circle`, `svg:rect`,
   `svg:line`, `svg:text` (an element per row), `bar` (props `cx` and
-  `height`, `width` defaults to the step of a categorical scale) and
-  `stackedBar` (props `x`, `y` and `width`).
+  `height`, negative values are drawn downwards from 0) and `stackedBar`
+  (props `x`, `y` and `width`). The bars are centered at their category, in
+  the middle of a band, `width` defaults to the width of a band or the step of
+  a point scale, a continuous scale needs a `width`.
 - `categories`: the rows are grouped by these mappings, the props of their
-  categories are available in the plot props.
+  categories are available in the plot props. Mappings without `props` only
+  group the rows, e.g. a line per id.
 - `props`: svg attributes (and `text`). Props starting with `highlight-` are
   used for the elements of the category under the mouse or the legend entry.
 - `curve`: the interpolation of `svg:path` and `base:area` between their

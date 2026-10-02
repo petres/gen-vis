@@ -21,18 +21,11 @@ const mergeAll = parts => merge.all(parts, { arrayMerge });
 const sameValue = (a, b) => a == b || JSON.stringify(a) == JSON.stringify(b);
 
 const mapObject = (d, t) => Object.fromEntries(
-    Object.entries(d).map(
-        ([k, v], i) => [k, t(v, k)]
-    )
+    Object.entries(d).map(([k, v]) => [k, t(v, k)])
 );
 
 const mapObjectOrArray = (d, t) =>
     Array.isArray(d) ? d.map(t) : mapObject(d, t);
-
-
-const arrayToObject = (a, key, value = v => v) => Object.fromEntries(
-    a.map(e => [key(e), value(e)])
-);
 
 
 // the props of every group are filled with globs and the props of its categories
@@ -41,7 +34,8 @@ const getProps = (dataGrouped, plotDef, globs, mappings) => dataGrouped.map(g =>
         dim: d,
         key: g.group[d],
     })),
-    props: plotDef._fill(Object.assign({}, globs, ...Object.keys(g.group).map(v => mappings[v].props[g.group[v]]))),
+    // categories without props only group the rows, e.g. a line per id
+    props: plotDef._fill(Object.assign({}, globs, ...Object.keys(g.group).map(v => mappings[v].props?.[g.group[v]]))),
     values: g.entries,
 }));
 

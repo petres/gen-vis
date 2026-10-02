@@ -1,4 +1,4 @@
-export { addScale, setProps, setGroupData, highlightElements, curves };
+export { addScale, bandCenter, setProps, setGroupData, highlightElements, curves };
 
 import * as d3 from "d3";
 import * as ju from "@/utils/json.js";
@@ -16,6 +16,9 @@ const curves = {
     stepBefore: d3.curveStepBefore,
     stepAfter: d3.curveStepAfter,
 };
+
+// the offset of the center of a band, the position of band scales is its start
+const bandCenter = s => s.bandwidth ? s.bandwidth()/2 : 0;
 
 const addScale = (info, dims) => {
     const scaleDef = info.mapping.scale;
@@ -46,10 +49,8 @@ const addScale = (info, dims) => {
         info.domain = info.values;
         scaleDef.padding ??= 0.4
         s.padding(scaleDef.padding);
-        s.invertCustom = (v) => {
-          const index = Math.floor(v / s.step());
-          return s.domain()[Math.max(0,Math.min(index, s.domain().length-1))];
-        }
+        // the category with the nearest position, e.g. the center of a band
+        s.invertCustom = (v) => d3.least(s.domain(), d => Math.abs(s(d) + bandCenter(s) - v));
     }
 
     s.domain(info.domain)
@@ -58,7 +59,7 @@ const addScale = (info, dims) => {
 
 const setProps = function(d) {
     const e = d3.select(this);
-    Object.entries(d).forEach(([k, v], i) => {
+    Object.entries(d).forEach(([k, v]) => {
         if (v instanceof Object) {
             if (!ju.isProp(v))
                 return;
@@ -86,15 +87,20 @@ const setGroupData = function(d) {
 }
 
 
+// the groups of a plot, the ids are compared directly, they are not part of
+// a selector, so they can contain any character, e.g. spaces
+const plotGroups = (inner, plotDef) => inner.selectAll('g.plotGroup')
+    .filter(function() { return this.getAttribute('data-plot') === plotDef.id });
+
 // the elements of a plot in the groups of dataEntry, the values are compared
-// directly, they are not part of a selector, so they can contain any character
+// directly as well
 const groupElements = (inner, plotDef, dataEntry) => {
     const conditions = plotDef.categories
         .filter(c => c in dataEntry)
         .map(c => ({ attr: `data-group-${c}`, value: String(dataEntry[c]) }));
     if (conditions.length == 0)
         return null;
-    return inner.selectAll(`g.plotGroup.${plotDef.id} [${conditions[0].attr}]`)
+    return plotGroups(inner, plotDef).selectAll(`[${conditions[0].attr}]`)
         .filter(function() { return conditions.every(c => this.getAttribute(c.attr) === c.value) });
 }
 
@@ -102,7 +108,7 @@ const groupElements = (inner, plotDef, dataEntry) => {
 // elements, their default values are kept in default- attributes
 const highlightElements = (inner, plotDefs, dataEntry = null) => {
     plotDefs.filter(p => p.highlightProps.length > 0).forEach(plotDef => {
-        inner.selectAll(`g.plotGroup.${plotDef.id} .highlight`)
+        plotGroups(inner, plotDef).selectAll('.highlight')
             .classed('highlight', false)
             .each(function() {
                 const e = d3.select(this);

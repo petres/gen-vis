@@ -5,16 +5,19 @@
             <div class="subtitle">{{ options.subtitle }}</div>
         </div>
         <div ref="form" class="vis-form-elements">
-            <form-element v-for="element in formElements" :element="element" :globals="globals" @changeSelected="formChanged"/>
+            <form-element v-for="element in formElements" :key="element.id" :element="element" :globals="globals" @changeSelected="formChanged"/>
         </div>
         <div ref="legends" class="vis-legends">
-            <legend-entry v-for="legend in legends" :legend="legend" @changeSelected="changeSelected" @highlight="highlight"/>
+            <legend-entry v-for="legend in legends" :key="legend" :legend="legend" @changeSelected="changeSelected" @highlight="highlight"/>
         </div>
         <div v-if="initialized" class="vis-body">
-            <div v-if="facets.entries.length > 0" v-for="e in facets.entries" :style="`width: ${facets.width}px; display: inline-block;`">
-                <div class="facet-title" :style="`margin-left: ${facets.margins.left}px`">{{ e.filter.name }}</div>
-                <facet :key="e.data" :data="e.data" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
-            </div>
+            <!-- the facets are rendered again if their data changes -->
+            <template v-if="facets.entries.length > 0">
+                <div v-for="e in facets.entries" :key="e.key" :style="`width: ${facets.width}px; display: inline-block;`">
+                    <div class="facet-title" :style="`margin-left: ${facets.margins.left}px`">{{ e.name }}</div>
+                    <facet :key="e.data" :data="e.data" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
+                </div>
+            </template>
             <facet v-else :key="data" :data="data" :shared="{}" :height='options.height' :width='options.width' :margins='options.margins'/>
         </div>
         <div class="vis-footer">
@@ -59,10 +62,6 @@ export default {
             margins: {top: 0, right: 0, bottom: 0, left: 0},
         },
     }),
-    computed: {
-        innerWidth() { return this.options.width - (this.options.margins.left + this.options.margins.right) },
-        innerHeight() { return this.options.height - (this.options.margins.top + this.options.margins.bottom) },
-    },
     components: {
         Facet, LegendEntry, FormElement,
     },
@@ -119,7 +118,7 @@ export default {
             const def = this.store.def;
             const axis = this.store.axis;
 
-            // filter
+            // the visible categories
             this.filter = this.store.mappingNamesWithKey('props').map(c => ({
                 dim: c,
                 key: Object.keys(this.store.mapping(c).props).filter(k => this.store.mapping(c).props[k].visible)
@@ -152,12 +151,9 @@ export default {
                     .filter(e => keys.includes(e.group[d]))
                     .sort((a, b) => keys.indexOf(a.group[d]) - keys.indexOf(b.group[d]))
                     .map(e => ({
-                        filter: {
-                            dim: e.group[d],
-                            key: d,
-                            name: this.store.mapping(d).props[e.group[d]].name
-                        },
-                        data: markRaw(e.entries)
+                        key: e.group[d],
+                        name: this.store.mapping(d).props[e.group[d]].name,
+                        data: markRaw(e.entries),
                     }))
             }
         },
@@ -185,14 +181,14 @@ export default {
 
             this.initialized = true;
         },
-        changeSelected(info) {
+        changeSelected() {
             this.dataInit();
             this.scales();
             this.$emit('stateChanged');
         },
-        formChanged(info) {
+        formChanged() {
             this.store.applyFormElements();
-            this.changeSelected(info);
+            this.changeSelected();
         },
         highlight(info) {
             pu.highlightElements(d3.select(this.$refs.vis), this.store.def.plot, {[info.dim]: info.key})
@@ -219,7 +215,6 @@ export default {
         .subtitle {
             font-size: 13px;
             margin-top: 3px;
-            // font-weight: bold;
         }
         margin-bottom: 10px;
     }

@@ -12,7 +12,7 @@ const parseData = data => {
     return d3.csvParse(data);
 };
 
-const missing = v => v === null || v === undefined || v === '';
+const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
 
 // missing and invalid values are null
 const toNumber = v => {
@@ -52,7 +52,8 @@ const addDimInfo = (info, data) => {
         // sorted for the lookup of the nearest value
         info.values = info.values.filter(v => v !== null).sort((a, b) => a - b);
         if (info.mapping.stacked) {
-            info.extent = d3.extent(data.map(d => d[`${info.dim}:st:e`]));
+            // the starts of the stacks, e.g. 0, are part of the extent
+            info.extent = d3.extent(data.flatMap(d => [d[`${info.dim}:st:s`], d[`${info.dim}:st:e`]]));
         } else {
             info.extent = d3.extent(info.values);
         }

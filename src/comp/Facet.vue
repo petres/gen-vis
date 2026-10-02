@@ -10,7 +10,6 @@
         <div :style="`transform: translate(${margins.left}px, ${margins.top + innerHeight/2}px); position: absolute; top: 0; left: 0;`">
             <hover v-if="hover.visible" :data="hover.data" :side="hover.side" :axis="hover.axis"/>
         </div>
-        <span v-if="debug" class="debug">{{ debug }}</span>
     </div>
 </template>
 
@@ -27,11 +26,10 @@ import Hover from '@/comp/Hover.vue';
 const finite = (...values) => values.every(v => Number.isFinite(v));
 
 export default {
-    props: ["filter", "shared", "height", "width", "margins", "data"],
+    props: ["shared", "height", "width", "margins", "data"],
     inject: ['store'],
     data: () => ({
         info: {},
-        debug: null,
         def: null,
         hover: {
             visible: false
@@ -75,10 +73,11 @@ export default {
                 const parent = this.inner.append("g")
                     .classed("plotGroup", true)
                     .classed(plotDef.id, true)
+                    .attr("data-plot", plotDef.id)
                 this[plotDef.type](dataGroupedProps, parent, plotDef);
             });
         },
-        _groupwise: function(data, parent) {
+        _groupwise(data, parent) {
             return parent
                 .classed("paths", true)
                 .selectAll("path")
@@ -140,22 +139,33 @@ export default {
                 )
         },
 
+        // the scale of a prop of a bar, e.g. of "@x:scaled"
+        _barScale(prop, type) {
+            const scale = this.info[prop?.parts?.[0]]?.scale;
+            if (!scale)
+                throw new Error(`${type}: the positions need a scaled value, e.g. "@x:scaled"`);
+            return scale;
+        },
+        // the default width of the bars of a categorical scale
+        _barWidth(scale, type) {
+            if (!scale.step)
+                throw new Error(`${type}: a 'width' is needed for a continuous horizontal scale`);
+            return scale.bandwidth() || scale.step()*(1 - scale.padding());
+        },
+
+        // negative values are drawn downwards from 0
         bar(data, parent) {
-            const self = this;
             this._pointwise(data, parent, "rect", (v) => {
-                const yBase = v.height.parts[0];
-                const yZero = self.info[yBase].scale(0);
+                const yZero = this._barScale(v.height, 'bar')(0);
+                const xScale = this._barScale(v.cx, 'bar');
 
-                if (v.width === undefined) {
-                    const xBase = v.cx.parts[0];
-                    v.width = ju.entryToProp(self.info[xBase].scale.step()*(1-self.info[xBase].scale.padding()));
-                }
+                v.width ??= ju.entryToProp(this._barWidth(xScale, 'bar'));
 
-                v.x = ju.entryToProp(v.cx.value - v.width.value/2);
+                v.x = ju.entryToProp(v.cx.value + pu.bandCenter(xScale) - v.width.value/2);
                 delete v.cx;
 
-                v.y = ju.entryToProp(v.height.value);
-                v.height = ju.entryToProp(yZero - v.height.value);
+                v.y = ju.entryToProp(Math.min(v.height.value, yZero));
+                v.height = ju.entryToProp(Math.abs(yZero - v.height.value));
                 return v;
             })
         },
@@ -169,7 +179,9 @@ export default {
 
                 g.props["height"] = ju.entryToProp(`@${y}:st:h:scaled`);
 
-                g.props["transform"] = ju.entryToProp(`translate(-${g.props.width.value/2} 0)`);
+                const xScale = this._barScale(g.props.x, 'stackedBar');
+                g.props.width ??= ju.entryToProp(this._barWidth(xScale, 'stackedBar'));
+                g.props["transform"] = ju.entryToProp(`translate(${pu.bandCenter(xScale) - g.props.width.value/2} 0)`);
             });
             this._pointwise(data, parent, "rect", (v) => {
                 if(v.height.value < 0) {
@@ -272,7 +284,7 @@ export default {
         },
         // horizontal lines for a vertical axis and vice versa
         grid(s, values, vertical) {
-            const offset = s.bandwidth ? s.bandwidth()/2 : 0;
+            const offset = pu.bandCenter(s);
             const lines = this.inner.append("g")
                 .attr("class", "grid")
                 .selectAll('line')
@@ -340,7 +352,7 @@ export default {
                     const x = i.scale.invertCustom(c[0]);
                     if (x === undefined)
                         return;
-                    const xs = i.scale(x);
+                    const xs = i.scale(x) + pu.bandCenter(i.scale);
 
                     hoverLine.attr("x1", xs)
                         .attr("x2", xs)
@@ -411,14 +423,10 @@ export default {
     .vis-inner {
         position: relative;
         display: inline-block;
-        .debug {
-            font-size: 12px;
-        }
         :deep(svg) {
             g.axis-position-bottom g.tick line {transform: translate(0px, -4px);}
             g.axis-position-top g.tick line {transform: translate(0px, 5px);}
             g.axis-position-right g.tick line {transform: translate(-4px, 0px);}
-            g.axis-position-bottom g.tick line {transform: translate(0px, -4px);}
             g.axis-position-left g.tick line {transform: translate(5px, 0px);}
             g.tick {
                 text {
