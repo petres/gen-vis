@@ -1,4 +1,4 @@
-export { createStore, resolveUrl, resolveParents };
+export { createStore, resolveUrl, resolveParents, clearCache };
 
 import { reactive, markRaw, toRaw } from 'vue';
 import * as d3 from "d3";
@@ -12,12 +12,25 @@ import { getLocale } from "@/utils/else";
 // relative urls are resolved against `base`, e.g. the url of the def referencing them
 const resolveUrl = (url, base = document.baseURI) => new URL(url, base).href;
 
-const fetchText = async url => {
-    try {
-        return await d3.text(url);
-    } catch (error) {
-        throw new Error(`Could not load '${url}': ${error.message}`);
+// requests of the last minutes are shared, e.g. the parents of the charts of a
+// page or a csv of two charts, later ones load again, e.g. for updated data
+const cacheTime = 5 * 60 * 1000;
+const cache = new Map();
+const clearCache = () => cache.clear();
+
+const fetchText = url => {
+    const now = Date.now();
+    cache.forEach((c, u) => { if (now - c.time >= cacheTime) cache.delete(u) });
+    if (!cache.has(url)) {
+        const text = d3.text(url).catch(error => {
+            // failed requests are not kept
+            if (cache.get(url)?.text === text)
+                cache.delete(url);
+            throw new Error(`Could not load '${url}': ${error.message}`);
+        });
+        cache.set(url, { text, time: now });
     }
+    return cache.get(url).text;
 };
 
 const parseDef = (text, source) => {
@@ -31,19 +44,23 @@ const parseDef = (text, source) => {
 // merges def with its parents, a parent url is relative to the def referencing
 // it. A list of parents (mixins) is merged in its order, later ones override
 // earlier ones. A parent shared by several mixins is merged once, before the
-// first one using it, so it does not override the mixins in between.
+// first one using it, so it does not override the mixins in between. The
+// parents of a def are requested at once, but merged in their order.
 const resolveParents = async (def, url, load = fetchText) => {
     const parts = [];
     const included = new Set();
     const add = async (def, url, ancestors) => {
-        for (const parent of [def.parent ?? []].flat()) {
-            const parentUrl = resolveUrl(parent, url);
+        const parents = [def.parent ?? []].flat().map(p => resolveUrl(p, url));
+        const texts = new Map(parents.filter(u => !included.has(u)).map(u => [u, Promise.resolve().then(() => load(u))]));
+        // errors are thrown in the order of the parents, not as unhandled ones
+        texts.forEach(t => t.catch(() => {}));
+        for (const parentUrl of parents) {
             if (ancestors.includes(parentUrl))
                 throw new Error(`Cyclic parent definition '${parentUrl}'`);
             if (included.has(parentUrl))
                 continue;
             included.add(parentUrl);
-            await add(parseDef(await load(parentUrl), `'${parentUrl}'`), parentUrl, [...ancestors, parentUrl]);
+            await add(parseDef(await texts.get(parentUrl), `'${parentUrl}'`), parentUrl, [...ancestors, parentUrl]);
         }
         parts.push(def);
     };
@@ -63,6 +80,10 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     } else if (typeof def == 'string') {
         def = parseDef(def, 'attribute');
     }
+
+    // the data is requested together with the parents, if the def names it
+    if (data === null && typeof def.data == 'string' && !def.data.includes('{'))
+        fetchText(resolveUrl(def.data, url)).catch(() => {});
 
     const defOrg = await resolveParents(JSON.parse(JSON.stringify(def)), url);
     validateDef(defOrg).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));

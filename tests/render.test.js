@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { createApp, h, nextTick, ref } from 'vue';
 import { GenVis, mountGenVisElement } from '@/index.js';
+import { clearCache } from '@/store';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const examples = Object.keys(import.meta.glob('../data/*/def*.json')).map(f => f.substring(2));
@@ -36,6 +37,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    clearCache();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
     document.body.innerHTML = '';

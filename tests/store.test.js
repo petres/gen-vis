@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi, afterEach } from 'vitest';
 import { isReactive } from 'vue';
-import { createStore, resolveUrl, resolveParents } from '@/store';
+import { createStore, resolveUrl, resolveParents, clearCache } from '@/store';
 
 // serves files, a delay per url simulates slow responses
 const serve = (files, delays = {}) => vi.stubGlobal('fetch', async url => {
@@ -12,6 +12,7 @@ const serve = (files, delays = {}) => vi.stubGlobal('fetch', async url => {
 });
 
 afterEach(() => {
+    clearCache();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
 });
@@ -70,8 +71,9 @@ describe('resolveParents', () => {
             'http://h/data/bev/def.json',
             url => { loaded.push(url); return files[url]; },
         );
-        // the shared parent is loaded and merged once, it does not override lines.json
-        expect(loaded).toEqual(['http://h/data/lines.json', 'http://h/data/root.json', 'http://h/data/facets.json']);
+        // the shared parent is loaded and merged once, it does not override lines.json,
+        // the parents of a def are requested at once
+        expect(loaded).toEqual(['http://h/data/lines.json', 'http://h/data/facets.json', 'http://h/data/root.json']);
         expect(merged.options).toEqual({ title: 'def', height: 2, width: 3 });
         expect(merged.plot).toEqual([{ type: 'a' }]);
         expect(merged.facets).toEqual({ dim: ['type'] });
@@ -92,6 +94,38 @@ describe('resolveParents', () => {
 });
 
 describe('Store.init', () => {
+    test('requests are shared, the data is requested together with the parents', async () => {
+        const requested = [];
+        const files = {
+            'http://h/data/def.json': JSON.stringify({ ...def, parent: 'base.json' }),
+            'http://h/data/base.json': JSON.stringify({ options: { title: 'base' } }),
+            'http://h/data/data.csv': csv,
+        };
+        vi.stubGlobal('fetch', async url => {
+            requested.push(url);
+            return new Response(files[url]);
+        });
+        const stores = [createStore(), createStore()];
+        await Promise.all(stores.map(s => s.init({ defUrl: 'http://h/data/def.json' })));
+        expect(requested).toEqual(['http://h/data/def.json', 'http://h/data/data.csv', 'http://h/data/base.json']);
+        expect(stores.map(s => s.def.options.title)).toEqual(['base', 'base']);
+
+        // later ones load again
+        const now = Date.now();
+        vi.spyOn(Date, 'now').mockReturnValue(now + 5 * 60 * 1000);
+        await createStore().init({ defUrl: 'http://h/data/def.json' });
+        expect(requested.length).toBe(6);
+    });
+
+    test('failed requests are not kept', async () => {
+        serve({ 'http://h/data/def.json': JSON.stringify(def) });
+        await expect(createStore().init({ defUrl: 'http://h/data/def.json' })).rejects.toThrow(/404/);
+        serve({ 'http://h/data/def.json': JSON.stringify(def), 'http://h/data/data.csv': csv });
+        const store = createStore();
+        await store.init({ defUrl: 'http://h/data/def.json' });
+        expect(store.data.length).toBe(3);
+    });
+
     test('loads the def and the data relative to it', async () => {
         serve({ 'http://h/data/def.json': JSON.stringify(def), 'http://h/data/data.csv': csv });
         const store = createStore();

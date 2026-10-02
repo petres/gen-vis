@@ -126,6 +126,11 @@ later ones override earlier ones, e.g. a chart type and a form element:
 A parent shared by several mixins is merged once, before the first mixin
 using it, so it does not override the mixins in between.
 
+The charts of a page share their requests of the last 5 minutes, e.g. a parent
+used by all of them or a csv of two charts is loaded once, later ones load
+again, e.g. for updated data. The parents of a definition and its data are
+requested at once.
+
 The package contains a JSON Schema of the definitions, `schema.json`. With
 `"$schema"` in a definition, editors like VS Code complete and check it:
 
