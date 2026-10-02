@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import * as eu from "@/utils/else";
+import { setAnnotationProps } from "@/coords/annotations";
 
 // the mapping of the regions, its values are the keys of the features
 const joinOf = store => store.def.geo?.join;
@@ -57,6 +58,17 @@ export default {
         ctx.path = d3.geoPath(ctx.projection);
     },
     axes: () => {},
+    // a text or a circle at `lon` and `lat`, e.g. of a city
+    annotations: ['text', 'circle'],
+    annotate(ctx, g, a) {
+        const p = ctx.projection([a.lon, a.lat]);
+        if (!p)
+            return;
+        if (a.type == 'text')
+            setAnnotationProps(g.append("text").attr("class", "annotation text").attr("x", p[0]).attr("y", p[1]), a, ctx, { "font-size": 11, fill: "#444" });
+        else if (a.type == 'circle')
+            setAnnotationProps(g.append("circle").attr("class", "annotation circle").attr("cx", p[0]).attr("cy", p[1]), a, ctx, { r: 4, fill: "#666" });
+    },
     hover: {
         area: (ctx, parent) => parent.append("rect")
             .attr("width", ctx.innerWidth)

@@ -161,6 +161,31 @@ describe('validateDef', () => {
         ]);
     });
 
+    test('annotations and the highlight of a plot', () => {
+        const def = base();
+        def.plot.highlight = 'element';
+        def.annotations = [{ type: 'band', x: [0, 1], z: 2 }, { type: 'arrow' }, { type: 'text', c: 'Wien' }];
+        expect(validateDef(def)).toEqual([
+            "plot[0].highlight: unknown highlight 'element', expected one of 'group', 'row'",
+            "annotations[0].z: unknown mapping 'z'",
+            "annotations[1].type: unknown type 'arrow', expected one of 'band', 'line', 'text', 'circle'",
+            "annotations[2].c: the mapping has no scale",
+        ]);
+        def.plot.highlight = 'row';
+        def.options = { coord: 'geo' };
+        def.geo = { data: 'regions.json' };
+        def.plot = { type: 'geo:region', props: {} };
+        delete def.mapping.x.axis;
+        delete def.mapping.y.axis;
+        delete def.mapping.y.scale.orientation;
+        def.annotations = [{ type: 'band' }, { type: 'text', lon: 16.4, lat: 48.2 }];
+        expect(validateDef(def).sort()).toEqual([
+            "annotations[0].type: unknown type 'band', expected one of 'text', 'circle'",
+            "annotations[0]: an annotation of a map needs 'lon' and 'lat'",
+            "mapping.x.scale.orientation: the coordinate system 'geo' has no orientations, e.g. a scale of colors has none",
+        ].sort());
+    });
+
     test('column templates need the globals', () => {
         const def = base();
         def.globals = { values: 'value' };

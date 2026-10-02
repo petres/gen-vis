@@ -34,7 +34,12 @@ const pointwise = (groups, parent, type, translate = v => v) => parent
         const names = ju.refNames(d.props);
         return d.values
             .filter(e => names.every(n => e[n] !== null))
-            .map(e => translate(ju.fillProps(d.props, e), e));
+            .map(e => {
+                // the row of the element, e.g. for the highlight of a row
+                const v = translate(ju.fillProps(d.props, e), e);
+                v[pu.rowOf] = e;
+                return v;
+            });
     })
     .enter()
     .append(type)

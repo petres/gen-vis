@@ -99,6 +99,9 @@
             }
         }
     },
+    "annotations": [
+        { "type": "band", "x": ["2022-02-24", null], "label": "Krieg in der Ukraine" }
+    ],
     "plot": [
         {
             "type": "cartesian:line",

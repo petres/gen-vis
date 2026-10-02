@@ -296,6 +296,9 @@ A plot or a list of plots, drawn in order:
   group the rows, e.g. a line per id.
 - `props`: svg attributes (and `text`). Props starting with `highlight-` are
   used for the elements of the category under the mouse or the legend entry.
+- `highlight`: `group` (default) highlights the elements of the category under
+  the mouse, `row` only the element of its row, e.g. the segment of a stacked
+  bar, an entry of the legend highlights all of its category.
 - `curve`: the interpolation of the paths and areas between their points,
   `linear` (default), `monotoneX`, `natural`, `catmullRom`, `basis`, `step`,
   `stepBefore` or `stepAfter`. `monotoneX` is smooth without overshooting the
@@ -392,11 +395,19 @@ mapping (`join`) whose values are the keys of the features:
   the key of the features (`id`, the default, or a property, e.g. `NUTS_ID`)
   and `name` the property of their names (`name` by default). Polygons of
   GeoJSON of both orders of their rings are drawn, e.g. of RFC 7946.
+  `include` are the keys of the only features, `exclude` the ones of features
+  which are left out, they are not drawn at all, e.g. `"include": ["AT",
+  "DE", ...]` for the countries of the EU or `"exclude": ["RU", "BY"]`.
 - `projection` is a d3 projection (`type`, `mercator` by default, e.g.
-  `conicConformal`, `azimuthalEqualArea` or `equalEarth`) and its parameters,
-  e.g. `rotate`, `center` or `parallels`. It is fitted to the facet, `fit` are
-  the features it is fitted to: all (default), the ones with data (`"data"`)
-  or a list of keys, e.g. `["AT"]`.
+  `conicConformal`, `azimuthalEqualArea` or `equalEarth`) and its parameters.
+  The projection is fitted to the facet, so the section of the map is the
+  one of `fit`: all features (default), the ones with data (`"data"`) or the
+  ones of a list of keys, e.g. `["AT", "DE", "CH"]`. The parameters change
+  the shape, e.g. `rotate` (`[-longitude, -latitude]`) is the center of an
+  azimuthal projection, `"rotate": [-10, -52]` of `azimuthalEqualArea` is the
+  common projection of Europe (EPSG:3035), `parallels` are the ones of a
+  conic projection, e.g. `"parallels": [46, 49]` of `conicConformal` for
+  Austria, `rotate` of `mercator` its central meridian.
 - The plot types: `geo:base` (all features, e.g. as background, the props
   are fixed), `geo:region` (the feature of every row), `geo:circle` and
   `geo:text` (an element per row at the center of its feature or at the `lon`
@@ -412,6 +423,42 @@ mapping (`join`) whose values are the keys of the features:
 See `data/bev/def-map.json`, `data/sprit-nuts/def-map.json` and the maps of
 `data/energy/`. The geometries of `data/geo/` are of Eurostat (GISCO), see
 `data/geo/README.md`.
+
+### Annotations
+
+`annotations` are bands, lines, texts and circles at values of mappings, e.g.
+estimated values or events, the keys are the names of the mappings, a value
+or a range `[from, to]`, `null` is the edge of the domain, values are
+converted as the ones of the rows, e.g. dates:
+
+```json
+"annotations": [
+    { "type": "band", "x": ["2025-07-01", null], "label": "Schätzung" },
+    { "type": "line", "y": 0, "props": { "stroke": "#999", "stroke-dasharray": "3 3" } },
+    { "type": "text", "x": "2020-03-16", "y": 30, "text": "Lockdown" },
+    { "type": "circle", "x": "2022-02-24", "y": 1.8, "above": true }
+]
+```
+
+- `band`: a rectangle, a mapping without value is over the whole plot area,
+  e.g. a band of the horizontal axis has the height of the plot area, a
+  category of a `band` or `point` scale is its band, `label` is its name.
+- `line`: a value of the horizontal axis is a vertical line, of the vertical
+  one a horizontal line, with a `label`.
+- `text` (`text`) and `circle` at the values, without one of an axis at the
+  start of the other one.
+- `props` are svg attributes, e.g. `fill` or `stroke`, the defaults are grey,
+  `above` draws the annotation above the plots, by default it is below the
+  plots and grid lines, labels are above them. `facet` is a key or a list of
+  keys of the facets of the annotation, by default it is in all facets.
+- Polar plots: a `band` of the angle is a sector (also across the top, e.g.
+  from November to February), of the radius a ring, a `line` of the angle a
+  spoke, of the radius a circle. Maps: `text` and `circle` at `lon` and `lat`.
+- The classes are `annotation` and `band`, `line`, `text` or `circle`, the
+  labels `annotation-label`.
+
+See `data/sprit-nuts/def.json`, `data/rechtsform/def-stacked-p.json` and
+`data/energy/weather/temperature-polar.json`.
 
 ### Props
 

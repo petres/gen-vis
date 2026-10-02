@@ -109,9 +109,13 @@
         {
             "type": "cartesian:bar",
             "categories": ["type"],
+            "highlight": "row",
             "props": {
                 "fill": "@color",
                 "opacity": 0.7,
+                "highlight-opacity": 1,
+                "highlight-stroke": "#333",
+                "highlight-stroke-width": 1.5,
                 "x": "@xx:scaled",
                 "y0": "@yy:start:scaled",
                 "y1": "@yy:end:scaled",

@@ -10,7 +10,7 @@
             "left": 10
         },
         "title": "Spritpreise in Europa",
-        "subtitle": "inkl. Steuern, in €/Liter, Stand 28.09.2026",
+        "subtitle": "Länder der EU, inkl. Steuern, in €/Liter, Stand 28.09.2026",
         "footer": "Source: EC Weekly Oil Bulletin; Grenzen: © EuroGeographics"
     },
     "geo": {
@@ -18,6 +18,7 @@
         "key": "id",
         "join": "country",
         "fit": "data",
+        "include": ["AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK"],
         "projection": {
             "type": "azimuthalEqualArea",
             "rotate": [

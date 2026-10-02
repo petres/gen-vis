@@ -344,6 +344,120 @@ describe('rendering', () => {
     });
 });
 
+describe('annotations', () => {
+    const num = (e, a) => parseFloat(e.getAttribute(a));
+    const annotated = annotations => {
+        const def = lineDef();
+        // inner size 550 x 250, 2020 to 2023
+        def.mapping.x.scale.domain = [2020, 2023];
+        def.mapping.y.scale.domain = [0, 4];
+        def.annotations = annotations;
+        return def;
+    };
+
+    test('bands, lines, texts and circles of cartesian plots', async () => {
+        const el = await mount(GenVis, { def: annotated([
+            { type: 'band', x: [2021.5, null], label: 'Schätzung' },
+            { type: 'line', y: 2, props: { stroke: 'red' } },
+            { type: 'line', x: '2021', label: 'Lockdown' },
+            { type: 'text', x: 2021, y: 3, text: 'Hinweis' },
+            { type: 'circle', x: 2022, y: 1, above: true },
+        ]), data: lineData });
+        const band = el.querySelector('g.annotations.below rect.band');
+        expect(['x', 'y', 'width', 'height'].map(a => num(band, a))).toEqual([275, 0, 275, 250]);
+        // the labels are above the plots
+        expect(el.querySelector('g.annotation-labels .annotation-label').textContent).toBe('Schätzung');
+        const [horizontal, vertical] = el.querySelectorAll('g.annotations line');
+        expect(['x1', 'x2', 'y1', 'y2'].map(a => num(horizontal, a))).toEqual([0, 550, 125, 125]);
+        expect(horizontal.getAttribute('stroke')).toBe('red');
+        expect(num(vertical, 'x1')).toBeCloseTo(550/3);
+        expect(el.querySelector('g.annotations text.text').textContent).toBe('Hinweis');
+        expect(num(el.querySelector('g.annotations.above circle'), 'cx')).toBeCloseTo(1100/3);
+        // below the plots, the circle above them
+        const order = [...el.querySelector('svg.facet > g').children].map(c => c.getAttribute('class'));
+        expect(order.indexOf('annotations below')).toBeLessThan(order.findIndex(c => c?.startsWith('plotGroup')));
+        expect(order.indexOf('annotations above')).toBeGreaterThan(order.findLastIndex(c => c?.startsWith('plotGroup')));
+        expect(order.indexOf('annotation-labels')).toBeGreaterThan(order.indexOf('annotations above'));
+        // below the grid lines
+        expect(order.indexOf('annotations below')).toBeLessThan(order.indexOf('grid'));
+        expect(errors).toEqual([]);
+    });
+
+    test('a band of a category, dates and facets', async () => {
+        const def = annotated([
+            { type: 'band', x: '2020' },
+            { type: 'text', x: '2021-06-01', text: 'Wien', facet: 'Wien' },
+        ]);
+        def.mapping.x = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'horizontal' }, axis: { position: 'bottom' } };
+        def.mapping.d = { column: 'date', type: 'date', scale: { type: 'utc', orientation: 'horizontal', domain: ['2021-01-01', '2022-01-01'] } };
+        def.annotations[1] = { type: 'text', d: '2021-07-02', text: 'Wien', facet: 'Wien' };
+        def.facets = { dim: 'c', cols: 2 };
+        def.plot = { type: 'cartesian:bar', categories: ['c'], props: { x: '@x:scaled', y1: '@y:scaled' } };
+        const el = await mount(GenVis, { def, data: lineData.replace('year,', 'date,year,').replace(/\n(\d{4})/g, (m, y) => `\n${y}-01-01,${y}`) });
+        const [wien, tirol] = el.querySelectorAll('svg.facet');
+        const band = wien.querySelector('rect.band');
+        const bar = wien.querySelectorAll('g.plotGroup rect')[0];
+        // the band of the category, the bar is in its middle
+        expect(num(band, 'width')).toBeGreaterThan(num(bar, 'width'));
+        expect(num(band, 'x') + num(band, 'width')/2).toBeCloseTo(num(bar, 'x') + num(bar, 'width')/2);
+        // in the middle of the year, the inner width of a facet is 250
+        expect(num(wien.querySelector('text.text'), 'x')).toBeCloseTo(125, -1);
+        expect(tirol.querySelector('text.text')).toBeNull();
+        expect(tirol.querySelector('rect.band')).not.toBeNull();
+    });
+
+    test('sectors and rings of polar plots', async () => {
+        const def = lineDef({ coord: 'polar', width: 400, height: 400, margins: { top: 50, right: 50, bottom: 50, left: 50 } });
+        def.mapping.x = { column: 'year', type: 'numeric', scale: { orientation: 'angular', domain: [2020, 2024] } };
+        def.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radial', domain: [0, 4] } };
+        def.plot = { type: 'polar:line', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
+        def.annotations = [
+            // across the top, from 2023.5 to 2020.5
+            { type: 'band', x: [2023.5, 2020.5], label: 'Winter' },
+            { type: 'line', y: 2 },
+            { type: 'line', x: 2022 },
+            { type: 'text', x: 2021, y: 4, text: 'Osten' },
+        ];
+        const el = await mount(GenVis, { def, data: lineData });
+        const sector = el.querySelector('path.band');
+        expect(sector.getAttribute('d')).toMatch(/^M/);
+        // the label of the sector is above the center
+        const label = el.querySelector('.annotation-label');
+        expect(Math.abs(num(label, 'x'))).toBeLessThan(1);
+        expect(num(label, 'y')).toBeLessThan(0);
+        expect(num(el.querySelector('circle.line'), 'r')).toBeCloseTo(75);
+        const spoke = el.querySelector('line.line');
+        expect([num(spoke, 'x2'), num(spoke, 'y2')].map(Math.round)).toEqual([0, 150]);
+        const text = el.querySelector('text.text');
+        expect([num(text, 'x'), num(text, 'y')].map(Math.round)).toEqual([150, 0]);
+        expect(errors).toEqual([]);
+    });
+});
+
+describe('the highlight of a row', () => {
+    test('the segment of a stacked bar under the mouse, the legend all of the category', async () => {
+        const def = lineDef();
+        def.mapping.y.stacked = true;
+        def.mapping.y.scale.domain = [0, null];
+        def.mapping.type = { column: 'type', type: 'categorical', legend: {}, props: { manual: { a: {}, b: {} } } };
+        def.plot = { type: 'cartesian:bar', categories: ['type'], highlight: 'row',
+            props: { x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled', width: 10, stroke: 'none', 'highlight-stroke': 'black' } };
+        const data = 'year,value,land,type\n2020,1,Wien,a\n2020,2,Wien,b\n2023,3,Wien,a\n2023,1,Wien,b';
+        const el = await mount(GenVis, { def, data });
+        const highlighted = () => [...el.querySelectorAll('g.plotGroup rect')].filter(r => r.getAttribute('stroke') == 'black');
+
+        // the bottom segment of 2020, a of the value 1
+        el.querySelector('rect.events').dispatchEvent(pointer('pointermove', { clientX: 0, clientY: 240 }));
+        await nextTick();
+        expect(highlighted()).toHaveLength(1);
+        expect(highlighted()[0].parentNode.getAttribute('data-group-type')).toBe('a');
+
+        el.querySelector('.legend[data-dim="type"] .entries > div').dispatchEvent(new MouseEvent('mouseenter'));
+        expect(highlighted()).toHaveLength(2);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('the names of 0.9', () => {
     test('still work, with a warning, e.g. stacked bars', async () => {
         const def = lineDef();
@@ -493,6 +607,21 @@ describe('maps', () => {
         def.geo.object = 'circles';
         el = await mount(GenVis, { def, data: mapData });
         expect(el.querySelector('.vis-error').textContent).toBe(`Unknown object 'circles' of the TopoJSON, expected one of 'squares'`);
+    });
+
+    test('only the features of include, without the ones of exclude, and annotations', async () => {
+        const def = mapDef();
+        def.geo.include = ['A', 'B'];
+        def.geo.exclude = ['B'];
+        def.annotations = [{ type: 'text', lon: 0.5, lat: 0.5, text: 'A' }, { type: 'circle', lon: 0.5, lat: 0.5, above: true }];
+        const el = await mount(GenVis, { def, data: mapData });
+        expect([...el.querySelectorAll('g.plotGroup.plot-0 path')].map(p => p.getAttribute('data-geo-key'))).toEqual(['A']);
+        // A fills the facet, B has no feature
+        expect([...el.querySelectorAll('g.plotGroup.plot-1 path')].map(p => p.hasAttribute('d'))).toEqual([true, false]);
+        const text = el.querySelector('g.annotations text.text');
+        expect([num(text, 'x'), num(text, 'y')].map(Math.round)).toEqual([150, 50]);
+        expect(el.querySelector('g.annotations.above circle')).not.toBeNull();
+        expect(errors).toEqual([]);
     });
 
     test('a map needs a geometry', async () => {

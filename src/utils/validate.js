@@ -7,6 +7,7 @@ import { curves } from "@/utils/plot.js";
 import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
 import { upgradePlot } from "@/utils/compat.js";
+import { annotationKeys } from "@/coords/annotations.js";
 import { dataFormats } from "@/utils/data.js";
 
 // the interpolations of the plot types with a curve, e.g. cartesian:line
@@ -85,7 +86,9 @@ const validateDef = def => {
             if (type == 'threshold' && !(Array.isArray(m.scale.domain) && m.scale.domain.every(v => v !== null)))
                 warn(`${path}.scale.domain`, `a threshold scale needs the values between its classes`);
             if (m.scale.orientation !== undefined && !orientations.includes(m.scale.orientation))
-                warn(`${path}.scale.orientation`, `unknown orientation '${m.scale.orientation}', expected one of ${list(orientations)}`);
+                warn(`${path}.scale.orientation`, orientations.length > 0
+                    ? `unknown orientation '${m.scale.orientation}', expected one of ${list(orientations)}`
+                    : `the coordinate system '${coordName}' has no orientations, e.g. a scale of colors has none`);
         }
         if (m.axis) {
             if (!m.scale)
@@ -110,6 +113,8 @@ const validateDef = def => {
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
         (p.categories ?? []).filter(c => !(c in mapping)).forEach(c =>
             warn(`${path}.categories`, `unknown mapping '${c}'`));
+        if (p.highlight !== undefined && !['group', 'row'].includes(p.highlight))
+            warn(`${path}.highlight`, `unknown highlight '${p.highlight}', expected one of 'group', 'row'`);
         if (p.curve !== undefined && !curveNames.includes(p.curve))
             warn(`${path}.curve`, `unknown curve '${p.curve}', expected one of ${list(curveNames)}`);
         else if (p.curve !== undefined && types.includes(p.type) && !curvePlots.includes(p.type))
@@ -129,6 +134,22 @@ const validateDef = def => {
 
     Object.keys(def.filter ?? {}).filter(n => !(n in mapping)).forEach(n =>
         warn(`filter.${n}`, `unknown mapping '${n}'`));
+
+    // the values of an annotation are of mappings with a scale, of maps `lon` and `lat`
+    const annotationTypes = coord.annotations ?? [];
+    [].concat(def.annotations ?? []).forEach((a, i) => {
+        const path = `annotations[${i}]`;
+        if (!annotationTypes.includes(a.type))
+            warn(`${path}.type`, `unknown type '${a.type}', expected one of ${list(annotationTypes)}`);
+        Object.keys(a).filter(k => !annotationKeys.includes(k)).forEach(k => {
+            if (!(k in mapping))
+                warn(`${path}.${k}`, `unknown mapping '${k}'`);
+            else if (!mapping[k].scale)
+                warn(`${path}.${k}`, `the mapping has no scale`);
+        });
+        if (coordName == 'geo' && !(typeof a.lon == 'number' && typeof a.lat == 'number'))
+            warn(path, `an annotation of a map needs 'lon' and 'lat'`);
+    });
 
     (def.formElements ?? []).forEach((e, i) => {
         if (!formElementTypes.includes(e.type))

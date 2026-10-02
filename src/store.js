@@ -124,8 +124,12 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
             const geoUrl = resolveUrl(json, url);
             json = parseDef(await fetchText(geoUrl), `'${geoUrl}'`, 'geometry');
         }
-        const features = geoFeatures(json, defOrg.geo.object);
         const key = geoKey(defOrg.geo.key ?? 'id');
+        // only the features of `include`, without the ones of `exclude`, they are not drawn at all
+        const include = defOrg.geo.include && new Set(defOrg.geo.include.map(String));
+        const exclude = new Set((defOrg.geo.exclude ?? []).map(String));
+        const features = geoFeatures(json, defOrg.geo.object)
+            .filter(f => (!include || include.has(key(f))) && !exclude.has(key(f)));
         geo = markRaw({ features, key, byKey: new Map(features.map(f => [key(f), f])) });
     }
 

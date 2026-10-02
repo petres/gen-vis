@@ -19,6 +19,8 @@ import geo from "@/coords/geo";
  *   ones of `axis`, e.g. of a map
  * - `prepare(ctx)`: adds to the context before the axes and plots are drawn,
  *   e.g. the projection of a map
+ * - `annotations`: the types of the annotations, `annotate(ctx, parent, a)`
+ *   draws one, see coords/annotations.js
  * - `axes(ctx)`: draws the axes and grid lines of the mappings, `raise(ctx)`
  *   is called after the plots, e.g. to raise axes in the plot area above them
  * - `hover.area(ctx, parent)`: appends the element of the pointer events,

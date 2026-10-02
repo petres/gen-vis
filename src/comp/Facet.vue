@@ -24,7 +24,8 @@ import { plotTypes } from "@/plots";
 import Hover from '@/comp/Hover.vue';
 
 export default {
-    props: ["shared", "height", "width", "margins", "data"],
+    // facetKey is the key of the category of the facet, e.g. for annotations
+    props: ["shared", "height", "width", "margins", "data", "facetKey"],
     inject: ['store'],
     data: () => ({
         hover: {
@@ -65,8 +66,12 @@ export default {
         };
 
         this.store.coord.prepare?.(this.ctx);
+        // the annotations below the plots are also below the grid lines and axes
+        this.annotate(false);
         this.store.coord.axes(this.ctx);
         this.plot();
+        // also without annotations above the plots, for the labels of the ones below
+        this.annotate(true);
         this.store.coord.raise?.(this.ctx);
         this.hoverInit();
     },
@@ -86,6 +91,23 @@ export default {
                     .attr("data-plot", plotDef.id)
                 plotTypes[plotDef.type].render(groups, parent, plotDef, this.ctx);
             });
+        },
+
+        // the annotations below or `above` the plots, of all facets or the ones
+        // of `facet`, e.g. "Wien" or a list of keys
+        annotate(above) {
+            const coord = this.store.coord;
+            const annotations = (this.store.def.annotations ?? []).filter(a => Boolean(a.above) == above
+                && (a.facet === undefined || [a.facet].flat().map(String).includes(String(this.facetKey))));
+            if (!coord.annotate || (annotations.length == 0 && !(above && this.ctx.inner.select(".annotation-label").node())))
+                return;
+            const g = this.ctx.inner.append("g").attr("class", `annotations ${above ? 'above' : 'below'}`);
+            annotations.forEach(a => coord.annotate(this.ctx, g, a));
+            // the labels are above the plots, also the ones of annotations below them
+            if (above) {
+                const labels = this.ctx.inner.append("g").attr("class", "annotation-labels");
+                this.ctx.inner.selectAll(".annotations .annotation-label").each(function() { labels.node().appendChild(this) });
+            }
         },
 
         // the scales of the facet and the shared ones of all facets

@@ -3,6 +3,7 @@ import * as pu from "@/utils/plot";
 import * as ju from "@/utils/json";
 import * as eu from "@/utils/else";
 import { tickValues, tickFormat } from "@/coords/ticks";
+import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
 
 // horizontal lines for a vertical axis and vice versa
 const grid = (ctx, s, values, vertical) => {
@@ -93,6 +94,43 @@ const axes = ctx => {
     });
 };
 
+// a band, a line, a text or a circle at values of the mappings of the axes,
+// without a value of an axis over the whole plot area, e.g. a band of the
+// horizontal axis has the height of the plot area
+const annotate = (ctx, g, a) => {
+    const c = constraints(ctx, a);
+    const h = c.find(e => e.orientation == 'horizontal');
+    const v = c.find(e => e.orientation == 'vertical');
+    const [x0, x1] = h ? span(h) : [0, ctx.innerWidth];
+    const [y0, y1] = v ? span(v) : [0, ctx.innerHeight];
+
+    if (a.type == 'band') {
+        setAnnotationProps(g.append("rect").attr("class", "annotation band")
+            .attr("x", x0).attr("y", y0).attr("width", x1 - x0).attr("height", y1 - y0), a, ctx, { fill: "#EEE" });
+        drawLabel(g, a, x0 + 4, y0 + 4);
+    } else if (a.type == 'line') {
+        // a value of the horizontal axis is a vertical line, of the vertical one a horizontal line
+        const line = g.append("line").attr("class", "annotation line");
+        if (h) {
+            const x = position(h);
+            line.attr("x1", x).attr("x2", x).attr("y1", y0).attr("y2", y1);
+            drawLabel(g, a, x + 4, y0 + 4);
+        } else {
+            const y = v ? position(v) : 0;
+            line.attr("x1", x0).attr("x2", x1).attr("y1", y).attr("y2", y);
+            drawLabel(g, a, x1 - 4, y - 4, "end", "auto");
+        }
+        setAnnotationProps(line, a, ctx, { stroke: "#999" });
+    } else if (a.type == 'text' || a.type == 'circle') {
+        const x = h ? position(h) : 0;
+        const y = v ? position(v) : 0;
+        if (a.type == 'text')
+            setAnnotationProps(g.append("text").attr("class", "annotation text").attr("x", x).attr("y", y), a, ctx, { "font-size": 11, fill: "#444" });
+        else
+            setAnnotationProps(g.append("circle").attr("class", "annotation circle").attr("cx", x).attr("cy", y), a, ctx, { r: 4, fill: "#666" });
+    }
+};
+
 // the plot area of the facet with a horizontal and a vertical axis
 export default {
     ranges: { horizontal: [0, "@width"], vertical: ["@height", 0] },
@@ -100,6 +138,8 @@ export default {
     positions: ['top', 'bottom', 'left', 'right'],
     dims: (width, height) => ({ width, height }),
     axes,
+    annotations: ['band', 'line', 'text', 'circle'],
+    annotate,
     hover: {
         area: (ctx, parent) => parent.append("rect")
             .attr("width", ctx.innerWidth)

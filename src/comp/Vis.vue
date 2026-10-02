@@ -19,7 +19,7 @@
             <template v-if="facets.entries.length > 0">
                 <div v-for="e in facets.entries" :key="e.key" :style="`width: ${facets.width}px; display: inline-block;`">
                     <div class="facet-title" :style="`margin-left: ${facets.margins.left}px`">{{ e.name }}</div>
-                    <facet :key="e.data" :data="e.data" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
+                    <facet :key="e.data" :data="e.data" :facet-key="e.key" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
                 </div>
             </template>
             <facet v-else :key="data" :data="data" :shared="{}" :height='options.height' :width='options.width' :margins='options.margins'/>

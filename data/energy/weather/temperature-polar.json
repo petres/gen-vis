@@ -39,6 +39,10 @@
             }
         }
     },
+    "annotations": [
+        { "type": "band", "x": ["2020-06-01", "2020-09-01"], "label": "Sommer", "props": { "fill": "#FFF3D6" } },
+        { "type": "line", "y": 0, "label": "0 °C", "props": { "stroke": "#4A96D4", "stroke-dasharray": "3 3" } }
+    ],
     "plot": {
         "type": "polar:line",
         "props": {

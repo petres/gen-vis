@@ -32,6 +32,8 @@
                 "key": { "type": "string", "description": "The key of the features, id (default) or a property, e.g. NUTS_ID." },
                 "name": { "type": "string", "description": "The property of the names of the features, name by default." },
                 "join": { "type": "string", "description": "The mapping whose values are the keys of the features." },
+                "include": { "type": "array", "items": { "type": "string" }, "description": "Only the features of these keys, e.g. the countries of the EU." },
+                "exclude": { "type": "array", "items": { "type": "string" }, "description": "The features of these keys are not drawn at all, e.g. [\"RU\", \"BY\"]." },
                 "projection": {
                     "type": "object",
                     "description": "A d3 projection (type, mercator by default) and its parameters, e.g. rotate, center or parallels.",
@@ -40,6 +42,31 @@
                 "fit": {
                     "description": "The features the projection is fitted to, all (default), the ones with data or a list of keys.",
                     "anyOf": [{ "enum": ["all", "data"] }, { "type": "array", "items": { "type": "string" } }]
+                }
+            }
+        },
+        "annotations": {
+            "type": "array",
+            "description": "Bands, lines, texts and circles at values of the mappings, e.g. { \"type\": \"band\", \"x\": [\"2025-07-01\", null], \"label\": \"Schätzung\" }.",
+            "items": {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                    "type": { "enum": ["band", "line", "text", "circle"] },
+                    "props": { "$ref": "#/definitions/props" },
+                    "label": { "type": "string", "description": "A label of a band or a line." },
+                    "text": { "type": "string", "description": "The text of a text." },
+                    "above": { "type": "boolean", "description": "Above the plots, below them by default." },
+                    "facet": { "description": "The facets of the annotation, a key or a list of them, all by default." },
+                    "lon": { "type": "number", "description": "The longitude of a map." },
+                    "lat": { "type": "number", "description": "The latitude of a map." }
+                },
+                "additionalProperties": {
+                    "description": "A value or a range [from, to] of the mapping, null is the edge of the domain.",
+                    "anyOf": [
+                        { "type": ["number", "string", "null"] },
+                        { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": ["number", "string", "null"] } }
+                    ]
                 }
             }
         },
@@ -364,6 +391,10 @@
                     "description": "The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, the others an element per row."
                 },
                 "id": { "type": "string", "description": "The class of the plot group, plot-<index> by default." },
+                "highlight": {
+                    "enum": ["group", "row"],
+                    "description": "The elements with the highlight- props, the ones of the category of the hover (group, default) or only the one of its row (row), e.g. a segment of a stacked bar."
+                },
                 "curve": {
                     "enum": ["linear", "monotoneX", "natural", "catmullRom", "basis", "step", "stepBefore", "stepAfter", "linearClosed", "catmullRomClosed", "basisClosed"],
                     "default": "linear",
