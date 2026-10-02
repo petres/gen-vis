@@ -1,7 +1,10 @@
-export { GenVis, mountGenVisElement, mountGenVisByClass };
+export { GenVis, mountGenVisElement, mountGenVisByClass, registerPlotType, registerCoord, groupwise, pointwise };
 
 import { createApp } from 'vue'
 import GenVis from '@/comp/App.vue'
+import { registerPlotType } from '@/plots'
+import { groupwise, pointwise } from '@/plots/elements'
+import { registerCoord } from '@/coords'
 
 // vue plugin, registers the <GenVis> component
 export default {

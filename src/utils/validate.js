@@ -1,20 +1,16 @@
-export { validateDef, plotTypes, curveNames };
+export { validateDef, curveNames };
 
 import * as d3 from "d3";
 import * as eu from "@/utils/else.js";
 import { templateRefs } from "@/utils/json.js";
 import { curves } from "@/utils/plot.js";
+import { plotTypes } from "@/plots";
+import { coords } from "@/coords";
 
-// the plot types implemented by Facet.vue
-const plotTypes = ['svg:path', 'svg:circle', 'svg:line', 'svg:rect', 'svg:text', 'base:area', 'bar', 'stackedBar'];
-
-// the interpolations of svg:path and base:area
+// the interpolations of the plot types with a curve, e.g. svg:path
 const curveNames = Object.keys(curves);
-const curvePlots = ['svg:path', 'base:area'];
 
 const mappingTypes = ['numeric', 'date', 'categorical'];
-const orientations = ['horizontal', 'vertical'];
-const positions = ['top', 'bottom', 'left', 'right'];
 const propKinds = ['fixed', 'ref', 'relative', 'steps'];
 
 const list = a => a.map(e => `'${e}'`).join(', ');
@@ -48,6 +44,16 @@ const validateDef = def => {
     if (!def.mapping)
         warn('mapping', 'missing');
 
+    // the plot types and coordinate systems known at the time of the check,
+    // also registered ones
+    const types = Object.keys(plotTypes);
+    const curvePlots = types.filter(t => plotTypes[t].curve);
+    const coordName = def.options?.coord ?? 'cartesian';
+    if (!Object.hasOwn(coords, coordName))
+        warn('options.coord', `unknown coordinate system '${coordName}', expected one of ${list(Object.keys(coords))}`);
+    const coord = coords[coordName] ?? coords.cartesian;
+    const orientations = Object.keys(coord.ranges);
+
     Object.entries(mapping).forEach(([n, m]) => {
         const path = `mapping.${n}`;
         if (typeof m.column != 'string')
@@ -73,8 +79,8 @@ const validateDef = def => {
         if (m.axis) {
             if (!m.scale)
                 warn(`${path}.axis`, `an axis needs a 'scale'`);
-            if (!positions.includes(m.axis.position))
-                warn(`${path}.axis.position`, `unknown position '${m.axis.position}', expected one of ${list(positions)}`);
+            if (!coord.positions.includes(m.axis.position))
+                warn(`${path}.axis.position`, `unknown position '${m.axis.position}', expected one of ${list(coord.positions)}`);
             checkProp(m.axis.ticks, `${path}.axis.ticks`, warn);
         }
     });
@@ -84,13 +90,15 @@ const validateDef = def => {
         warn('plot', 'missing');
     plots.forEach((p, i) => {
         const path = `plot[${i}]`;
-        if (!plotTypes.includes(p.type))
-            warn(`${path}.type`, `unknown type '${p.type}', expected one of ${list(plotTypes)}`);
+        if (!types.includes(p.type))
+            warn(`${path}.type`, `unknown type '${p.type}', expected one of ${list(types)}`);
+        else if (plotTypes[p.type].coords && !plotTypes[p.type].coords.includes(coordName))
+            warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
         (p.categories ?? []).filter(c => !(c in mapping)).forEach(c =>
             warn(`${path}.categories`, `unknown mapping '${c}'`));
         if (p.curve !== undefined && !curveNames.includes(p.curve))
             warn(`${path}.curve`, `unknown curve '${p.curve}', expected one of ${list(curveNames)}`);
-        else if (p.curve !== undefined && plotTypes.includes(p.type) && !curvePlots.includes(p.type))
+        else if (p.curve !== undefined && types.includes(p.type) && !curvePlots.includes(p.type))
             warn(`${path}.curve`, `only used by ${list(curvePlots)}`);
         checkProp(p.props, `${path}.props`, warn);
     });

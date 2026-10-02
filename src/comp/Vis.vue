@@ -159,6 +159,7 @@ export default {
         },
         scales() {
             const def = this.store.def;
+            const coord = this.store.coord;
             if (def.facets && def.facets.scales) {
                 const scales = ju.entryToValue(def.facets.scales, def.globals);
                 const infos = scales.map(n => {
@@ -167,10 +168,10 @@ export default {
                         mapping: this.store.mapping(n),
                     };
                     du.addDimInfo(info, this.data);
-                    pu.addScale(info, {
-                        "width": this.facets.width - (this.facets.margins.left + this.facets.margins.right),
-                        "height": this.facets.height - (this.facets.margins.top + this.facets.margins.bottom),
-                    });
+                    pu.addScale(info, coord.dims(
+                        this.facets.width - (this.facets.margins.left + this.facets.margins.right),
+                        this.facets.height - (this.facets.margins.top + this.facets.margins.bottom),
+                    ), coord.ranges);
 
                     return info;
                 });

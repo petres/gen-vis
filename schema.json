@@ -165,6 +165,10 @@
                     }
                 },
                 "locale": { "$ref": "#/definitions/locale" },
+                "coord": {
+                    "enum": ["cartesian"],
+                    "description": "The coordinate system of the plots, cartesian by default."
+                },
                 "fontFamily": {
                     "type": "string",
                     "description": "Css font-family, by default the css variable --gen-vis-font-family or Century Gothic."

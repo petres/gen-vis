@@ -1,7 +1,8 @@
 import { describe, test, expect } from 'vitest';
-import { validateDef, plotTypes, curveNames } from '@/utils/validate';
+import { validateDef, curveNames } from '@/utils/validate';
 import { prepareDef } from '@/utils/json';
-import Facet from '@/comp/Facet.vue';
+import { plotTypes, registerPlotType } from '@/plots';
+import { coords, registerCoord } from '@/coords';
 
 const examples = import.meta.glob('../data/*/def*.json', { eager: true, import: 'default' });
 
@@ -48,7 +49,34 @@ describe('validateDef', () => {
     });
 
     test('all plot types are implemented', () => {
-        expect(plotTypes.filter(t => typeof Facet.methods[t] != 'function')).toEqual([]);
+        expect(Object.keys(plotTypes).filter(t => typeof plotTypes[t].render != 'function')).toEqual([]);
+    });
+
+    test('coordinate systems and the plot types of them', () => {
+        const def = base();
+        def.options = { coord: 'polar' };
+        expect(validateDef(def)).toEqual([`options.coord: unknown coordinate system 'polar', expected one of 'cartesian'`]);
+
+        registerCoord('test:coord', { ...coords.cartesian, ranges: { angle: [0, 6.28] }, positions: ['outer'] });
+        def.options.coord = 'test:coord';
+        def.mapping.x.scale.orientation = 'angle';
+        def.mapping.x.axis.position = 'outer';
+        def.mapping.y.axis.position = 'outer';
+        delete def.mapping.y.scale.orientation;
+        expect(validateDef(def)).toEqual([]);
+
+        def.plot = { type: 'bar', props: {} };
+        expect(validateDef(def)).toEqual([`plot[0].type: not available in the coordinate system 'test:coord'`]);
+        delete coords['test:coord'];
+    });
+
+    test('registered plot types', () => {
+        const def = base();
+        def.plot.type = 'test:type';
+        expect(validateDef(def)).toEqual([expect.stringMatching(/^plot\[0\]\.type: unknown type 'test:type'/)]);
+        registerPlotType('test:type', { render() {} });
+        expect(validateDef(def)).toEqual([]);
+        delete plotTypes['test:type'];
     });
 
     test('unknown plot types and categories', () => {

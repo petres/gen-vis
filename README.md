@@ -166,6 +166,10 @@ locale and the parts which are changed, see d3's
 by the interval of the date (`millisecond`, `second`, `minute`, `hour`, `day`,
 `week`, `month`, `year`).
 
+`coord` is the coordinate system of the plots, `cartesian` (the default, a
+horizontal and a vertical axis) or a registered one, see
+[extensions](#extensions).
+
 `fontFamily` sets the font, by default the css variable
 `--gen-vis-font-family` or Century Gothic, so the font of all visualisations of
 a page can be set with css:
@@ -332,6 +336,37 @@ const def = await resolveParents(JSON.parse(readFileSync(new URL(url), 'utf8')),
     u => readFileSync(new URL(u), 'utf8'));
 console.log(validateDef(def));  // the warnings, e.g. unknown plot types
 ```
+
+### Extensions
+
+Plot types and coordinate systems can be registered, before the
+visualisations are loaded. A plot type draws the groups of rows of a plot,
+every group has its `props`, filled with the props of its categories, and its
+rows as `values`. `pointwise` draws an element per row and fills its props,
+`groupwise` a path per group:
+
+```js
+import { registerPlotType, pointwise } from '@preschen/gen-vis';
+
+registerPlotType('my:tick', {
+    render: (groups, parent, plotDef, ctx) => pointwise(groups, parent, 'rect', v => ({
+        ...v,
+        x: { prop: 'fixed', value: v.cx.value - 1 },
+        width: { prop: 'fixed', value: 2 },
+        height: { prop: 'fixed', value: ctx.innerHeight },
+    })),
+});
+```
+
+`ctx` has the `store`, the d3 selection `inner` of the plot area, the
+`data` and the scales (`info`) of the facet, `innerWidth`, `innerHeight` and
+`relativeBases`. `curve: true` passes the `curve` of the plot, `coords` limits
+a type to coordinate systems, e.g. `bar` and `stackedBar` to `cartesian`. A
+coordinate system (`registerCoord(name, coord)`) has the default ranges of the
+orientations of its scales, the axes and the geometry of the hover, see
+`src/coords/index.js` and `src/coords/cartesian.js`. Both are known to
+`validateDef`, `@preschen/gen-vis/check` exports `registerPlotType` and
+`registerCoord` as well. The schema only knows the built-in ones.
 
 ## Development
 

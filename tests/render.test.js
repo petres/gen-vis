@@ -4,7 +4,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { createApp, h, nextTick, ref } from 'vue';
-import { GenVis, mountGenVisElement } from '@/index.js';
+import { GenVis, mountGenVisElement, registerPlotType, pointwise } from '@/index.js';
+import { plotTypes } from '@/plots';
 import { clearCache } from '@/store';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -336,6 +337,43 @@ describe('rendering', () => {
         mountGenVisElement(el);
         await rendered(el);
         expect(el.querySelector('.vis-header .title').textContent).toBe('Bevölkerung');
+    });
+});
+
+describe('extensions', () => {
+    test('a registered plot type', async () => {
+        registerPlotType('test:square', {
+            render: (groups, parent, plotDef, ctx) => pointwise(groups, parent, 'rect', v => ({
+                ...v, x: { prop: 'fixed', value: v.cx.value - 2 }, width: { prop: 'fixed', value: 4 }, height: { prop: 'fixed', value: ctx.innerHeight },
+            })),
+        });
+        const def = lineDef();
+        def.plot = { type: 'test:square', categories: ['c'], props: { cx: '@x:scaled', fill: '@color' } };
+        const el = await mount(GenVis, { def, data: lineData });
+        const rects = el.querySelectorAll('g.plotGroup rect');
+        expect(rects).toHaveLength(8);
+        expect(rects[0].getAttribute('height')).toBe('250');
+        expect(rects[0].getAttribute('fill')).toBe('red');
+        expect(await hover(el)).toBe(2);
+        expect(errors).toEqual([]);
+        delete plotTypes['test:square'];
+    });
+
+    test('an unknown coordinate system is an error', async () => {
+        const el = await mount(GenVis, { def: lineDef({ coord: 'polar' }), data: lineData });
+        expect(el.querySelector('.vis-error').textContent).toBe(`Unknown coordinate system 'polar', expected one of 'cartesian'`);
+    });
+
+    test('scales without orientation and range, e.g. of colors', async () => {
+        const def = lineDef();
+        def.mapping.v = { column: 'other', type: 'numeric', scale: { type: 'linear', domain: [0, 40] } };
+        def.mapping.col = { column: 'other', type: 'numeric', scale: { type: 'linear', domain: [0, 40], range: ['white', 'red'] } };
+        def.plot = { type: 'svg:circle', props: { r: '@v:scaled', fill: '@col:scaled', cx: '@x:scaled', cy: '@y:scaled' } };
+        const el = await mount(GenVis, { def, data: lineData });
+        const circles = [...el.querySelectorAll('g.plotGroup circle')];
+        expect(circles.map(c => c.getAttribute('r'))).toContain('1');
+        expect(circles.map(c => c.getAttribute('fill'))).toContain('rgb(255, 0, 0)');
+        expect(errors).toEqual([]);
     });
 });
 

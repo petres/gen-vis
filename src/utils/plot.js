@@ -20,13 +20,18 @@ const curves = {
 // the offset of the center of a band, the position of band scales is its start
 const bandCenter = s => s.bandwidth ? s.bandwidth()/2 : 0;
 
-const addScale = (info, dims) => {
+// `ranges` are the default ranges of the orientations, in the sizes of `dims`,
+// see coords/index.js
+const addScale = (info, dims, ranges = {}) => {
     const scaleDef = info.mapping.scale;
 
     const s = d3[`scale${eu.capitalize(scaleDef.type)}`]()
 
-    // fill width and height
-    s.range(ju.fillDirect(scaleDef.range, dims))
+    // fill width and height, scales without orientation and range keep the
+    // range of d3, e.g. [0, 1]
+    const range = Array.isArray(scaleDef.range) ? scaleDef.range : ranges[scaleDef.orientation];
+    if (range)
+        s.range(ju.fillDirect(range, dims))
     if (info.extent) {
         info.domain = [...scaleDef.domain];
 

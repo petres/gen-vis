@@ -7,8 +7,8 @@
                 </g>
             </g>
         </svg>
-        <div :style="`transform: translate(${margins.left}px, ${margins.top + innerHeight/2}px); position: absolute; top: 0; left: 0;`">
-            <hover v-if="hover.visible" :data="hover.data" :side="hover.side" :axis="hover.axis"/>
+        <div :style="`transform: translate(${margins.left + hover.x}px, ${margins.top + hover.y}px); position: absolute; top: 0; left: 0;`">
+            <hover v-if="hover.visible" :title="hover.title" :data="hover.data" :side="hover.side"/>
         </div>
     </div>
 </template>
@@ -19,20 +19,18 @@ import * as d3 from "d3";
 import * as pu from "@/utils/plot";
 import * as du from "@/utils/data";
 import * as ju from "@/utils/json";
-import * as eu from "@/utils/else";
+import { plotTypes } from "@/plots";
 
 import Hover from '@/comp/Hover.vue';
-
-const finite = (...values) => values.every(v => Number.isFinite(v));
 
 export default {
     props: ["shared", "height", "width", "margins", "data"],
     inject: ['store'],
     data: () => ({
-        info: {},
-        def: null,
         hover: {
-            visible: false
+            visible: false,
+            x: 0,
+            y: 0,
         }
     }),
     computed: {
@@ -50,14 +48,20 @@ export default {
     components: {
         Hover
     },
-    created() {
-        this.def = this.store.def;
-    },
     mounted() {
-        this.inner = d3.select(this.$refs.inner);
+        // the context of the plot types and the coordinate system, the scales
+        // are not reactive, they are only replaced with the facet
+        this.ctx = {
+            store: this.store,
+            inner: d3.select(this.$refs.inner),
+            data: this.data,
+            info: this.scales(),
+            innerWidth: this.innerWidth,
+            innerHeight: this.innerHeight,
+            relativeBases: this.relativeBases,
+        };
 
-        this.scales();
-        this.axis();
+        this.store.coord.axes(this.ctx);
         this.plot();
         this.hoverInit();
     },
@@ -66,349 +70,114 @@ export default {
     },
     methods: {
         plot() {
-            this.def.plot.forEach(plotDef => {
-                const dataGrouped = du.groupBy(this.data, plotDef.categories);
-                const dataGroupedProps = ju.getProps(dataGrouped, plotDef, this.relativeBases, this.def.mapping);
+            this.store.def.plot.forEach(plotDef => {
+                if (!Object.hasOwn(plotTypes, plotDef.type))
+                    throw new Error(`Unknown plot type '${plotDef.type}'`);
+                const groups = ju.getProps(du.groupBy(this.data, plotDef.categories), plotDef, this.relativeBases, this.store.def.mapping);
 
-                const parent = this.inner.append("g")
+                const parent = this.ctx.inner.append("g")
                     .classed("plotGroup", true)
                     .classed(plotDef.id, true)
                     .attr("data-plot", plotDef.id)
-                this[plotDef.type](dataGroupedProps, parent, plotDef);
-            });
-        },
-        _groupwise(data, parent) {
-            return parent
-                .classed("paths", true)
-                .selectAll("path")
-                .data(data)
-                .enter()
-                .append("path")
-                .each(function(d) {pu.setProps.call(this, d.props)})
-                .each(pu.setGroupData)
-        },
-        _pointwise(data, parent, type, translate = v => v) {
-            return parent
-                .classed(type, true)
-                .selectAll(`g.group`)
-                .data(data)
-                .enter()
-                .append("g")
-                .attr("class", `group`)
-                .each(pu.setGroupData)
-                .selectAll(type)
-                .data(d => {
-                    // entries with missing values are not drawn
-                    const names = ju.refNames(d.props);
-                    return d.values
-                        .filter(e => names.every(n => e[n] !== null))
-                        .map(e => translate(ju.fillProps(d.props, e)));
-                })
-                .enter()
-                .append(type)
-                .each(pu.setProps)
-        },
-
-        // missing values are gaps in paths and areas
-        'svg:path': function(data, parent, plotDef) {
-            this._groupwise(data, parent)
-                .attr("d", d => d3.line()
-                    .curve(pu.curves[plotDef.curve ?? 'linear'] ?? d3.curveLinear)
-                    .defined(e => finite(e.x, e.y))
-                    .x(e => e.x)
-                    .y(e => e.y)
-                    (d.values.map(e => ju.fillProps(d.props.d, e, true)))
-                )
-        },
-
-
-        'svg:circle': function(data, parent) { this._pointwise(data, parent, "circle") },
-        'svg:line':   function(data, parent) { this._pointwise(data, parent, "line") },
-        'svg:rect':   function(data, parent) { this._pointwise(data, parent, "rect") },
-        'svg:text':   function(data, parent) { this._pointwise(data, parent, "text") },
-
-        'base:area': function(data, parent, plotDef) {
-            this._groupwise(data, parent)
-                .attr("d", d => d3.area()
-                    .curve(pu.curves[plotDef.curve ?? 'linear'] ?? d3.curveLinear)
-                    .defined(e => finite(e.x, e.y0, e.y1))
-                    .x(e => e.x)
-                    .y1(e => e.y1)
-                    .y0(e => e.y0)
-                    (d.values.map(e => ju.fillProps(d.props.d, e, true)))
-                )
-        },
-
-        // the scale of a prop of a bar, e.g. of "@x:scaled"
-        _barScale(prop, type) {
-            const scale = this.info[prop?.parts?.[0]]?.scale;
-            if (!scale)
-                throw new Error(`${type}: the positions need a scaled value, e.g. "@x:scaled"`);
-            return scale;
-        },
-        // the default width of the bars of a categorical scale
-        _barWidth(scale, type) {
-            if (!scale.step)
-                throw new Error(`${type}: a 'width' is needed for a continuous horizontal scale`);
-            return scale.bandwidth() || scale.step()*(1 - scale.padding());
-        },
-
-        // negative values are drawn downwards from 0
-        bar(data, parent) {
-            this._pointwise(data, parent, "rect", (v) => {
-                const yZero = this._barScale(v.height, 'bar')(0);
-                const xScale = this._barScale(v.cx, 'bar');
-
-                v.width ??= ju.entryToProp(this._barWidth(xScale, 'bar'));
-
-                v.x = ju.entryToProp(v.cx.value + pu.bandCenter(xScale) - v.width.value/2);
-                delete v.cx;
-
-                v.y = ju.entryToProp(Math.min(v.height.value, yZero));
-                v.height = ju.entryToProp(Math.abs(yZero - v.height.value));
-                return v;
-            })
-        },
-
-        stackedBar(data, parent) {
-            data.forEach(g => {
-                const x = g.props["x"].ref;
-                const y = g.props["y"].ref;
-                g.props["x"] = ju.entryToProp(`@${x}:scaled`);
-                g.props["y"] = ju.entryToProp(`@${y}:st:e:scaled`);
-
-                g.props["height"] = ju.entryToProp(`@${y}:st:h:scaled`);
-
-                const xScale = this._barScale(g.props.x, 'stackedBar');
-                g.props.width ??= ju.entryToProp(this._barWidth(xScale, 'stackedBar'));
-                g.props["transform"] = ju.entryToProp(`translate(${pu.bandCenter(xScale) - g.props.width.value/2} 0)`);
-            });
-            this._pointwise(data, parent, "rect", (v) => {
-                if(v.height.value < 0) {
-                    v.y.value += v.height.value;
-                    v.height.value = -v.height.value;
-                }
-                return v;
+                plotTypes[plotDef.type].render(groups, parent, plotDef, this.ctx);
             });
         },
 
+        // the scales of the facet and the shared ones of all facets
         scales() {
-            const tinfo = {};
+            const coord = this.store.coord;
+            const infos = {};
             this.store.mappingNamesWithKey('scale')
-                .filter(n => !Object.keys(this.shared).includes(n))
+                .filter(n => !(n in this.shared))
                 .forEach(n => {
                     const info = {
                         dim: n,
                         mapping: this.store.mapping(n),
                     };
                     du.addDimInfo(info, this.data)
-                    pu.addScale(info, {
-                        width: this.innerWidth,
-                        height: this.innerHeight,
-                    });
-                    tinfo[n] = info;
+                    pu.addScale(info, coord.dims(this.innerWidth, this.innerHeight), coord.ranges);
+                    infos[n] = info;
                 });
-            du.addScaledData(this.data, tinfo);
-            this.info = {...this.shared, ...tinfo};
+            du.addScaledData(this.data, infos);
+            return {...this.shared, ...infos};
         },
 
-        axis() {
-            this.store.mappingNamesWithKey('axis').forEach(n => {
-                const m = this.store.mapping(n);
-                const i = m.axis;
-                const s = this.info[n].scale;
-                const ticks = ju.entryToValue(i.ticks, this.relativeBases);
-
-                const a = d3[`axis${eu.capitalize(i.position)}`](s)
-                    .tickSizeInner(9)
-                    .tickSizeOuter(0)
-                    .ticks(ticks)
-                    .tickPadding(i.padding)
-
-                if (i.format) {
-                    a.tickFormat(this.store.formatter(m.scale.type)(i.format))
-                } else if (!i.values) {
-                    const format = this.store.locale.tickFormat(s, m.scale.type, ticks);
-                    if (format)
-                        a.tickFormat(format);
-                }
-
-                if (i.values) {
-                    a.tickValues(i.values)
-                }
-
-                // the grid lines are at the ticks of the axis
-                if (i.grid) {
-                    const values = i.values ?? (s.ticks ? s.ticks(ticks) : s.domain());
-                    this.grid(s, values, ['left', 'right'].includes(i.position));
-                }
-
-                const ga = this.inner.append("g")
-                    .attr("class", `axis-name-${n} axis-position-${i.position}`)
-                    .call(a)
-
-                if (i.position == 'bottom')
-                    ga.attr('transform', `translate(0, ${this.innerHeight})`)
-                if (i.position == 'right')
-                    ga.attr('transform', `translate(${this.innerWidth}, 0)`)
-
-                // positive angles rotate counterclockwise, negative ones
-                // clockwise, the labels start at their tick in both cases
-                if (i.rotate)
-                    ga.selectAll("text")
-                        .attr("text-anchor", i.rotate > 0 ? "end" : "start")
-                        .attr("transform", `rotate(${-i.rotate})`)
-
-                if (i.title) {
-                    const at = this.inner.append("text")
-                        .attr('class', 'axis-title')
-                        .attr('y', 0)
-                        .attr('x', 0)
-                        .attr("text-anchor", "middle")
-                        .attr("dominant-baseline", "middle")
-                        .text(i.title.name)
-
-                    if (i.position == 'left')
-                        at.attr("transform", `rotate(-90) translate(-${this.innerHeight/2} -${i.title.offset})`)
-
-                    if (i.position == 'right')
-                        at.attr("transform", `rotate(90) translate(${this.innerHeight/2} -${this.innerWidth + i.title.offset})`)
-
-                    if (i.position == 'top')
-                        at.attr("transform", `translate(${this.innerWidth/2} -${i.title.offset})`)
-
-                    if (i.position == 'bottom')
-                        at.attr("transform", `translate(${this.innerWidth/2} ${this.innerHeight + i.title.offset})`)
-                }
-            });
-        },
-        // horizontal lines for a vertical axis and vice versa
-        grid(s, values, vertical) {
-            const offset = pu.bandCenter(s);
-            const lines = this.inner.append("g")
-                .attr("class", "grid")
-                .selectAll('line')
-                .data(values)
-                .enter()
-                .append("line")
-
-            if (vertical) {
-                lines.attr('x1', 0)
-                    .attr('x2', this.innerWidth)
-                    .attr('y1', d => s(d) + offset)
-                    .attr('y2', d => s(d) + offset)
-            } else {
-                lines.attr('y1', 0)
-                    .attr('y2', this.innerHeight)
-                    .attr('x1', d => s(d) + offset)
-                    .attr('x2', d => s(d) + offset)
-            }
-        },
         hoverInit() {
-            const self = this;
+            const { store, ctx } = this;
+            const coord = store.coord;
 
-            // the hover needs a horizontal and a vertical axis
-            const names = this.store.axis;
+            // the hover needs the mappings of the positions and of the values
+            const names = store.axis;
             if (!names.h || !names.v)
                 return;
 
-            const axis = Object.fromEntries(Object.entries(names).map(([t, name]) => {
-                const m = this.def.mapping[name];
+            const formatter = n => {
+                const m = store.mapping(n);
                 const format = m.hover?.format ?? m.axis?.format ?? (['time', 'utc'].includes(m.scale.type) ? '%x' : 'c');
-                return [t, {axis: t, name, formatter: this.store.formatter(m.scale.type)(format)}];
-            }));
+                return store.formatter(m.scale.type)(format);
+            };
+            const format = { h: formatter(names.h), v: formatter(names.v) };
+            const v = names.v;
+            const stacked = store.mapping(v).stacked;
 
             // categorical mappings, e.g. not a second vertical axis
-            const categories = this.store.mappingNamesWithKey('hover')
-                .filter(n => n != names.h && n != names.v && this.store.mapping(n).props);
+            const categories = store.mappingNamesWithKey('hover')
+                .filter(n => n != names.h && n != v && store.mapping(n).props);
 
-            const hoverLine = d3.select(this.$refs.hoverMarker).select("line");
+            const marker = d3.select(this.$refs.hoverMarker).select("line");
 
             const hide = () => {
-                self.hover.visible = false;
-                pu.highlightElements(self.inner, self.def.plot);
+                this.hover.visible = false;
+                pu.highlightElements(ctx.inner, store.def.plot);
             };
 
             // a touch keeps the hover until the next touch outside of the facet
             this.hideOnPointerOutside = e => {
-                if (self.hover.visible && !self.$refs.svg.contains(e.target))
+                if (this.hover.visible && !this.$refs.svg.contains(e.target))
                     hide();
             };
             document.addEventListener("pointerdown", this.hideOnPointerOutside);
 
             // mouse, touch and pen, vertical swipes still scroll the page
-            this.inner.append("rect")
+            coord.hover.area(ctx, ctx.inner)
                 .attr("class", "events")
-                .attr("width", this.innerWidth)
-                .attr("height", this.innerHeight)
                 .attr("opacity", 0)
                 .style("touch-action", "pan-y")
-                .on("pointerdown pointermove", function(e) {
-                    self.hover.visible = true;
-                    const c = d3.pointer(e);
-                    const i = self.info[axis.h.name];
+                .on("pointerdown pointermove", e => {
+                    this.hover.visible = true;
 
-                    // get next existing x value with data
-                    const x = i.scale.invertCustom(c[0]);
-                    if (x === undefined)
+                    const position = coord.hover.locate(ctx, d3.pointer(e), names);
+                    if (!position)
                         return;
-                    const xs = i.scale(x) + pu.bandCenter(i.scale);
-
-                    hoverLine.attr("x1", xs)
-                        .attr("x2", xs)
-                        .attr("y1", 0)
-                        .attr("y2", self.innerHeight)
+                    const { key, value } = position;
 
                     // the rows from the top to the bottom, stacks as they are drawn
-                    const stacked = self.store.mapping(axis.v.name).stacked;
-                    const tt = du.filter(self.data, [{dim: axis.h.name, key: x}])
-                        .filter(e => e[axis.v.name] !== null)
+                    const rows = du.filter(this.data, [{dim: names.h, key}])
+                        .filter(e => e[v] !== null)
                         .map(e => {
-                            const order = stacked ? (e[`${axis.v.name}:st:s`] + e[`${axis.v.name}:st:e`])/2 : e[axis.v.name];
-                            const t = {entries: {}, data: e, nearest: false, order};
-                            categories.forEach(n => {
-                                t.entries[n] = ju.fillDirect(self.store.mapping(n).hover.props, self.store.prop(n, e[n]))
-                            })
-                            t.entries[axis.v.name] = {
-                                value: e[axis.v.name],
-                                name: axis.v.formatter(e[axis.v.name])
-                            };
-                            return t;
-                        })
-
-                    const ys = self.info[axis.v.name].scale.invert(c[1]);
-                    const v = axis.v.name;
-
-                    let nearestElement;
-                    if (stacked) {
-                        // stacked: the segment under the mouse, outside of the stack the closest one
-                        nearestElement = d3.least(tt, e => {
-                            const [lo, hi] = d3.extent([e.data[`${v}:st:s`], e.data[`${v}:st:e`]]);
-                            return ys < lo ? lo - ys : (ys > hi ? ys - hi : 0);
+                            const entries = Object.fromEntries(categories.map(n =>
+                                [n, ju.fillDirect(store.mapping(n).hover.props, store.prop(n, e[n]))]));
+                            entries[v] = { value: e[v], name: format.v(e[v]) };
+                            const order = stacked ? (e[`${v}:st:s`] + e[`${v}:st:e`])/2 : e[v];
+                            return { entries, data: e, nearest: false, order };
                         });
-                    } else {
-                        nearestElement = d3.least(tt, e => Math.abs(e.data[v] - ys));
-                    }
+
+                    // stacked: the segment under the pointer, outside of the stack the closest one
+                    const distance = stacked ? e => {
+                        const [lo, hi] = d3.extent([e.data[`${v}:st:s`], e.data[`${v}:st:e`]]);
+                        return value < lo ? lo - value : (value > hi ? value - hi : 0);
+                    } : e => Math.abs(e.data[v] - value);
+                    const nearest = value === undefined ? undefined : d3.least(rows, distance);
 
                     // there is no entry e.g. if all categories are hidden
-                    if (nearestElement)
-                        nearestElement.nearest = true;
-                    pu.highlightElements(self.inner, self.def.plot, nearestElement?.data);
+                    if (nearest)
+                        nearest.nearest = true;
+                    pu.highlightElements(ctx.inner, store.def.plot, nearest?.data);
 
-                    self.hover.data = tt;
-
-                    self.hover.axis = {
-                        h: {
-                            col: axis.h.name,
-                            value: xs,
-                            name: axis.h.formatter(x),
-                        },
-                        v: {
-                            col: axis.v.name,
-                            value: ys,
-                        }
-                    }
-                    self.hover.side = xs > self.innerWidth/2 ? "left" : "right";
+                    Object.assign(this.hover, coord.hover.marker(ctx, key, names, marker), {
+                        data: rows,
+                        title: format.h(key),
+                    });
                 })
                 .on("pointerleave", e => {
                     if (e.pointerType != "touch")

@@ -8,6 +8,7 @@ import * as ju from "@/utils/json";
 import { validateDef } from "@/utils/validate";
 import * as su from "@/utils/state";
 import { getLocale } from "@/utils/else";
+import { getCoord } from "@/coords";
 
 // relative urls are resolved against `base`, e.g. the url of the def referencing them
 const resolveUrl = (url, base = document.baseURI) => new URL(url, base).href;
@@ -103,6 +104,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         defUrl: url ?? null,
         defOrg,
         locale: markRaw(getLocale(defOrg.options?.locale)),
+        coord: markRaw(getCoord(defOrg.options?.coord)),
         rows,
         def: prepared,
         defaults,
@@ -114,6 +116,7 @@ class Store {
     defUrl = null;
     defOrg = null;
     locale = null;
+    coord = null;
     def = null;
     rows = null;
     data = null;
@@ -127,15 +130,16 @@ class Store {
     // the changes of the user compared to the definition, see utils/state.js
     get state() { return this.loaded ? su.diffState(su.snapshot(this.def), this.defaults) : null }
 
-    // the names of the mappings of the horizontal and vertical axis
+    // the names of the mappings of the positions (h) and of the values (v) of
+    // the hover and the stacks, e.g. of the horizontal and the vertical axis
     get axis() {
         const axis = {};
         this.mappingNamesWithKey('scale').forEach(n => {
             const o = this.mapping(n).scale.orientation;
-            if (o == 'horizontal')
-                axis.h = n;
-            if (o == 'vertical')
-                axis.v = n;
+            Object.entries(this.coord.axis).forEach(([a, orientation]) => {
+                if (o == orientation)
+                    axis[a] = n;
+            });
         });
         return axis;
     }

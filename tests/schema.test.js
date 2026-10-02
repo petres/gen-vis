@@ -1,7 +1,9 @@
 import { describe, test, expect } from 'vitest';
 import Ajv from 'ajv';
 import schema from '../schema.json';
-import { plotTypes, curveNames } from '@/utils/validate';
+import { curveNames } from '@/utils/validate';
+import { plotTypes } from '@/plots';
+import { coords } from '@/coords';
 import { localeNames } from '@/utils/else';
 
 const validate = new Ajv({ allErrors: true, allowUnionTypes: true }).compile(schema);
@@ -15,8 +17,9 @@ describe('the schema', () => {
         expect(errors(def)).toEqual([]);
     });
 
-    test('knows the plot types and locales', () => {
-        expect(schema.definitions.plot.properties.type.enum).toEqual(plotTypes);
+    test('knows the plot types, coordinate systems and locales', () => {
+        expect(schema.definitions.plot.properties.type.enum).toEqual(Object.keys(plotTypes));
+        expect(schema.definitions.options.properties.coord.enum).toEqual(Object.keys(coords));
         expect(schema.definitions.plot.properties.curve.enum).toEqual(curveNames);
         expect(schema.definitions.locale.anyOf[0].enum).toEqual(localeNames);
     });

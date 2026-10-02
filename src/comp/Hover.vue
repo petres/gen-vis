@@ -1,6 +1,6 @@
 <template>
-    <div v-if="axis && axis.h" class="hover" ref="hover" :style='{left: left, transform: transform}'>
-        <div class="title">{{ axis.h.name }}</div>
+    <div class="hover" ref="hover" :style='{left: left, transform: transform}'>
+        <div class="title">{{ title }}</div>
         <table class="entries" ref="entries"/>
     </div>
 </template>
@@ -9,12 +9,13 @@
 import * as d3 from "d3";
 
 export default {
-    props: ["axis", "side", "data"],
+    // beside the marker, on the `side` with more space
+    props: ["title", "side", "data"],
     data: () => ({
         space: 20
     }),
     computed: {
-        left() { return (this.side == "left") ? `${this.axis.h.value - this.space}px` : `${this.axis.h.value + this.space}px` },
+        left() { return (this.side == "left") ? `${-this.space}px` : `${this.space}px` },
         transform() { return (this.side == "left") ? `translate(-100%, -50%)` : `translate(0, -50%)` },
     },
     // the rows are also rendered when the hover is shown, e.g. by a touch
