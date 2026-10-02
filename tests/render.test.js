@@ -213,7 +213,7 @@ describe('rendering', () => {
         const ticks = () => [...el.querySelectorAll('g.axis-position-left g.tick text')].map(t => parseFloat(t.textContent));
         expect(ticks().at(-1)).toBe(4);
 
-        el.querySelectorAll('.formElement .entries > div')[1].click();
+        el.querySelectorAll('.formElement .entries input')[1].click();
         await nextTick();
         expect(ticks().at(-1)).toBe(40);
         expect(el.querySelectorAll('g.plotGroup.plot-1 circle')).toHaveLength(8);
@@ -237,7 +237,7 @@ describe('rendering', () => {
         ];
         const el = await mount(GenVis, { def, data });
         const ticks = () => [...el.querySelectorAll('g.axis-position-left g.tick text')].map(t => t.textContent);
-        const entries = i => el.querySelectorAll('.formElement')[i].querySelectorAll('.entries > div');
+        const entries = i => el.querySelectorAll('.formElement')[i].querySelectorAll('.entries input');
         expect(ticks().at(-1)).toBe('2,0');
 
         entries(0)[1].click();
@@ -292,7 +292,7 @@ describe('rendering', () => {
             } }),
         });
 
-        el.querySelectorAll('.formElement .entries > div')[1].click();
+        el.querySelectorAll('.formElement .entries input')[1].click();
         await nextTick();
         el.querySelectorAll('.legend .entries > div')[1].click();
         await nextTick();
@@ -341,6 +341,83 @@ describe('rendering', () => {
         mountGenVisElement(el);
         await rendered(el);
         expect(el.querySelector('.vis-header .title').textContent).toBe('Bevölkerung');
+    });
+});
+
+describe('controls', () => {
+    const switchDef = () => {
+        const def = lineDef();
+        def.globals = { column: 'value' };
+        def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'switch', values: [
+            { id: 'value', name: 'Value', value: 'value', mapping: { y: { column: 'value' } } },
+            { id: 'other', name: 'Other', value: 'other', mapping: { y: { column: 'other' } } },
+        ] }];
+        def.plot[0].props['highlight-stroke-width'] = 3;
+        return def;
+    };
+    const mountWithUpdates = async def => {
+        const updates = [];
+        const el = await mount({ render: () => h(GenVis, { def, data: lineData, 'onUpdate:state': s => updates.push(s) }) });
+        return { el, updates };
+    };
+    const visible = el => [...el.querySelectorAll('.legend .entries > div')].map(e => e.getAttribute('aria-checked'));
+    const click = (e, detail = 1) => e.dispatchEvent(new MouseEvent('click', { bubbles: true, detail }));
+
+    test('a click on the label of a radio button is one change', async () => {
+        const { el, updates } = await mountWithUpdates(switchDef());
+        el.querySelectorAll('.formElement label')[1].click();
+        await nextTick();
+        expect(updates).toEqual([{ globals: { column: 'other' } }]);
+        expect(el.querySelectorAll('.formElement input')[1].checked).toBe(true);
+    });
+
+    test('the entries of a legend by the keyboard, the focus highlights them', async () => {
+        const { el, updates } = await mountWithUpdates(switchDef());
+        const [wien] = el.querySelectorAll('.legend .entries > div');
+        expect(wien.getAttribute('role')).toBe('checkbox');
+        expect(wien.tabIndex).toBe(0);
+        wien.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        await nextTick();
+        expect(visible(el)).toEqual(['false', 'true']);
+        wien.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        await nextTick();
+        expect(visible(el)).toEqual(['true', 'true']);
+        expect(updates).toHaveLength(2);
+
+        wien.dispatchEvent(new FocusEvent('focus'));
+        expect(el.querySelector('g.plotGroup.plot-0 path.highlight').getAttribute('data-group-c')).toBe('Wien');
+        wien.dispatchEvent(new FocusEvent('blur'));
+        expect(el.querySelector('g.plotGroup.plot-0 path.highlight')).toBeNull();
+    });
+
+    test('a double click shows only the entry, the next one all', async () => {
+        const def = switchDef();
+        def.mapping.c.props.manual.Salzburg = { color: 'green' };
+        const { el } = await mountWithUpdates(def);
+        const tirol = el.querySelectorAll('.legend .entries > div')[1];
+        const double = async e => {
+            click(e, 1);
+            await nextTick();
+            click(e, 2);
+            e.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, detail: 2 }));
+            await nextTick();
+        };
+        await double(tirol);
+        expect(visible(el)).toEqual(['false', 'true', 'false']);
+        expect(el.querySelectorAll('g.plotGroup.plot-1 circle')).toHaveLength(4);
+        await double(tirol);
+        expect(visible(el)).toEqual(['true', 'true', 'true']);
+        expect(el.querySelectorAll('g.plotGroup.plot-1 circle')).toHaveLength(7);
+        expect(errors).toEqual([]);
+    });
+
+    test('a touch does not highlight, it has no end', async () => {
+        const { el } = await mountWithUpdates(switchDef());
+        const [wien] = el.querySelectorAll('.legend .entries > div');
+        wien.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }));
+        expect(el.querySelector('g.plotGroup.plot-0 path.highlight')).toBeNull();
+        wien.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+        expect(el.querySelector('g.plotGroup.plot-0 path.highlight')).not.toBeNull();
     });
 });
 
@@ -452,7 +529,7 @@ describe('the highlight of a row', () => {
         expect(highlighted()).toHaveLength(1);
         expect(highlighted()[0].parentNode.getAttribute('data-group-type')).toBe('a');
 
-        el.querySelector('.legend[data-dim="type"] .entries > div').dispatchEvent(new MouseEvent('mouseenter'));
+        el.querySelector('.legend[data-dim="type"] .entries > div').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
         expect(highlighted()).toHaveLength(2);
         expect(errors).toEqual([]);
     });
@@ -637,10 +714,10 @@ describe('highlight', () => {
         const def = lineDef();
         def.plot[1].props['highlight-r'] = 6;
         const el = await mount(GenVis, { def, data: lineData });
-        el.querySelector('.legend .entries > div').dispatchEvent(new MouseEvent('mouseenter'));
+        el.querySelector('.legend .entries > div').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
         const circles = [...el.querySelectorAll('g.plotGroup.plot-1 g.group[data-group-c="Wien"] circle')];
         expect(circles.map(c => c.getAttribute('r'))).toEqual(['6', '6', '6']);
-        el.querySelector('.legend .entries > div').dispatchEvent(new MouseEvent('mouseleave'));
+        el.querySelector('.legend .entries > div').dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
         expect(circles.map(c => c.getAttribute('r'))).toEqual(['3', '3', '3']);
     });
 });
@@ -1044,7 +1121,7 @@ describe('fixed bugs', () => {
         def.plot[0].props['highlight-stroke-width'] = 3;
         const el = await mount(GenVis, { def, data: lineData });
         expect(await hover(el)).toBe(2);
-        el.querySelector('.legend .entries > div').dispatchEvent(new MouseEvent('mouseenter'));
+        el.querySelector('.legend .entries > div').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
         expect(el.querySelector('path.highlight').getAttribute('stroke-width')).toBe('3');
         expect(errors).toEqual([]);
     });
@@ -1072,14 +1149,14 @@ describe('fixed bugs', () => {
         const el = await mount(GenVis, { def, data });
 
         const [first, second] = el.querySelectorAll('.legend .entries > div');
-        second.dispatchEvent(new MouseEvent('mouseenter'));
+        second.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
         const highlighted = el.querySelectorAll('g.plotGroup.plot-0 path.highlight');
         expect(highlighted).toHaveLength(1);
         expect(highlighted[0].getAttribute('data-group-c')).toBe('Say "hi"');
         expect(highlighted[0].getAttribute('stroke-width')).toBe('3');
 
-        second.dispatchEvent(new MouseEvent('mouseleave'));
-        first.dispatchEvent(new MouseEvent('mouseenter'));
+        second.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
+        first.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
         expect(el.querySelector('g.plotGroup.plot-0 path.highlight').getAttribute('data-group-c')).toBe(`O'Brien`);
         expect(el.querySelector(`g.plotGroup.plot-0 path[data-group-c='Say "hi"']`).getAttribute('stroke-width')).toBe('1');
         expect(errors).toEqual([]);

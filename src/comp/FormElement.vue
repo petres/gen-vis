@@ -5,8 +5,9 @@
             <option v-for="e of element.values" :key="e.id" :value="e.id" :selected="equal(e.value)">{{ e.name }}</option>
         </select>
         <div v-else-if="element.type == 'switch'" class="entries">
-            <div v-for="e of element.values" :key="e.id" :id="`container-${e.id}`" @click="switched(e)">
-                <input type="radio" :id="`${uid}-${element.id}-${e.id}`" :name="`${uid}-${element.id}`" :value="e.id" :checked="equal(e.value)">
+            <!-- the change of the radio button, by its label, a click or the keyboard -->
+            <div v-for="e of element.values" :key="e.id" :id="`container-${e.id}`">
+                <input type="radio" :id="`${uid}-${element.id}-${e.id}`" :name="`${uid}-${element.id}`" :value="e.id" :checked="equal(e.value)" @change="switched(e)">
                 <label :for="`${uid}-${element.id}-${e.id}`">{{ e.name }}</label>
             </div>
         </div>
@@ -58,6 +59,9 @@ export default {
                     position: relative;
                     display: inline-block;
                     top: 1px;
+                }
+                input, label {
+                    cursor: pointer;
                 }
             }
         }

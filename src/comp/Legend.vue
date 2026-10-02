@@ -1,10 +1,16 @@
 <template>
     <div class="legend" :data-dim="legend">
         <div class="title">{{ info.name }}</div>
-        <div class="entries">
+        <!-- an entry is a checkbox, also of the keyboard (enter, space), a double
+             click shows only it, the next one all entries -->
+        <div class="entries" role="group" :aria-label="info.name">
             <div v-for="entry of entries" :key="entry.key" :data-visible="entry.props.visible" :data-key="entry.key"
                 v-bind='Object.assign({...entry.filled}, {name: null})'
-                @click="switched(entry)" @mouseenter="$emit('highlight', {dim: this.legend, key: entry.key})" @mouseleave="$emit('highlight', {})">
+                role="checkbox" tabindex="0" :aria-checked="String(entry.props.visible)"
+                @click="clicked(entry, $event)" @dblclick="only(entry)"
+                @keydown.enter.prevent="switched(entry)" @keydown.space.prevent="switched(entry)"
+                @pointerenter="hovered(entry, $event)" @pointerleave="hovered(null, $event)"
+                @focus="highlight(entry)" @blur="highlight(null)">
                 <LegendSymbol v-if="info.legend.symbol" :info="info.legend.symbol" :props="entry.props"/>
                 <span v-html='entry.filled.name'/>
             </div>
@@ -36,13 +42,35 @@ export default {
         }))
     },
     methods: {
+        // the second click of a double click is the one of `only`, the
+        // visibility before the first one is kept for it
+        clicked(entry, event) {
+            if (event.detail > 1)
+                return;
+            this.before = { entry, visible: this.entries.map(e => e.props.visible) };
+            this.switched(entry);
+        },
         switched(entry) {
             entry.props.visible = !entry.props.visible;
-            this.$emit('changeSelected', {
-                dim: this.legend,
-                key: entry.key,
-                selected: entry.props.visible
-            });
+            this.changed();
+        },
+        // only the entry, if it is the only one already all entries
+        only(entry) {
+            const visible = this.before?.entry === entry ? this.before.visible : this.entries.map(e => e.props.visible);
+            const alone = this.entries.every((e, i) => visible[i] == (e === entry));
+            this.entries.forEach(e => e.props.visible = alone || e === entry);
+            this.changed();
+        },
+        changed() {
+            this.$emit('changeSelected', { dim: this.legend });
+        },
+        // the highlight of the mouse, not of a touch, it has no end
+        hovered(entry, event) {
+            if (event.pointerType != 'touch')
+                this.highlight(entry);
+        },
+        highlight(entry) {
+            this.$emit('highlight', entry ? { dim: this.legend, key: entry.key } : {});
         }
     }
 }
@@ -61,6 +89,14 @@ export default {
                 cursor: pointer;
                 display: inline-block;
                 margin: 0px 5px;
+                // no selection of the text of a double click
+                user-select: none;
+                border-radius: 2px;
+
+                &:focus-visible {
+                    outline: 2px solid #1E4F77;
+                    outline-offset: 1px;
+                }
 
                 &[data-visible="false"] {
                     opacity: 0.3;

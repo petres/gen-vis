@@ -253,7 +253,10 @@ the definition refer to these names.
   of the legend, the facets and the stacks, not the order of the rows. Keys
   which are integers, e.g. years, are ordered ascending by JavaScript.
 - `legend`: a toggle for every category, `symbol` draws svg `elements` (with
-  props) of the given `size` before the name. A mapping with a scale but
+  props) of the given `size` before the name. A click shows or hides the
+  category, a double click shows only it, the next double click all of them.
+  The entries are checkboxes of the keyboard (tab, enter or space), the mouse
+  and the focus highlight their category. A mapping with a scale but
   without props has the colors of its scale as legend, a gradient or the
   classes, `format` of the values, by default the one of the hover.
 - `stacked`: stacks the values of a vertical (or radial) axis, the first
