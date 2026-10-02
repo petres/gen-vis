@@ -38,7 +38,8 @@ export default defineConfig(({ mode }) => ({
         // standalone script for embedding, see lib.html
         outDir: 'dist-lib',
         lib: {
-            entry: 'src/lib.js',
+            // named as the entry of the es module, the styles are injected into it
+            entry: { 'gen-vis': 'src/lib.js' },
             formats: ['iife'],
             name: 'GenVis',
             fileName: () => `gen-vis-${pkg.version}.js`,
