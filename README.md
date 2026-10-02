@@ -110,7 +110,9 @@ declared after it, e.g. `@layer gen-vis, page;`.
 Relative urls are resolved against the definition referencing them, e.g.
 `data.csv` is next to the definition file. A definition is deep merged into
 its `parent` (and its parent into its own parent), arrays are replaced, not
-merged. The merged definition is checked for common mistakes, e.g. unknown
+merged, except arrays whose entries all have an `id`, e.g. the form elements
+and their values, these are merged by the ids, entries with a new id are
+appended. The merged definition is checked for common mistakes, e.g. unknown
 plot types, the findings are logged as warnings in the console.
 
 `parent` can also be a list of definitions (mixins), merged in their order,

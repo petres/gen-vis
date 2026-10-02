@@ -1,9 +1,22 @@
 export { fillDirect, fillProps, getProps, prepareDef, applyFormElements, templateRefs, fillTemplate, mergeAll, sameValue, entryToValue, toValue, entryToProp, isProp, refNames };
 
 import merge from 'deepmerge';
-const overwriteMerge = (target, source, options) => source;
 
-const mergeAll = parts => merge.all(parts, { arrayMerge: overwriteMerge });
+// arrays whose entries all have an `id`, e.g. the form elements and their
+// values, are merged by it, entries with a new id are appended, all other
+// arrays are replaced
+const hasIds = a => a.length > 0 && a.every(e => e !== null && typeof e == 'object' && !Array.isArray(e) && 'id' in e);
+const arrayMerge = (target, source, options) => {
+    if (!hasIds(target) || !hasIds(source))
+        return source;
+    const merged = target.map(t => {
+        const s = source.find(e => e.id == t.id);
+        return s ? merge(t, s, options) : t;
+    });
+    return [...merged, ...source.filter(s => !target.some(t => t.id == s.id))];
+};
+
+const mergeAll = parts => merge.all(parts, { arrayMerge });
 
 const sameValue = (a, b) => a == b || JSON.stringify(a) == JSON.stringify(b);
 

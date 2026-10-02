@@ -121,3 +121,26 @@ describe('column templates', () => {
         expect(ju.fillTemplate('{a}', { a: 1 })).toBe('1');
     });
 });
+
+describe('mergeAll', () => {
+    test('arrays are replaced, arrays of entries with an id are merged by it', () => {
+        const merged = ju.mergeAll([
+            { plot: [{ type: 'a' }], formElements: [
+                { id: 'values', name: 'Werte', values: [{ id: 'abs', name: 'Absolut' }, { id: 'share', name: 'Anteil' }] },
+                { id: 'scale', name: 'Skala' },
+            ] },
+            { plot: [{ type: 'b' }], formElements: [
+                { id: 'values', values: [{ id: 'abs', name: 'Anzahl' }] },
+                { id: 'unit', name: 'Einheit' },
+            ] },
+        ]);
+        expect(merged.plot).toEqual([{ type: 'b' }]);
+        expect(merged.formElements).toEqual([
+            { id: 'values', name: 'Werte', values: [{ id: 'abs', name: 'Anzahl' }, { id: 'share', name: 'Anteil' }] },
+            { id: 'scale', name: 'Skala' },
+            { id: 'unit', name: 'Einheit' },
+        ]);
+        // values without ids, e.g. the ones of a switch, are replaced
+        expect(ju.mergeAll([{ v: [{ id: 'a' }, 'x'] }, { v: [{ id: 'a', n: 1 }] }]).v).toEqual([{ id: 'a', n: 1 }]);
+    });
+});
