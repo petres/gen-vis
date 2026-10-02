@@ -314,6 +314,11 @@
                     "description": "svg:path and base:area draw a path per group, the others an element per row."
                 },
                 "id": { "type": "string", "description": "The class of the plot group, plot-<index> by default." },
+                "curve": {
+                    "enum": ["linear", "monotoneX", "natural", "catmullRom", "basis", "step", "stepBefore", "stepAfter"],
+                    "default": "linear",
+                    "description": "The interpolation of svg:path and base:area between their points, monotoneX is smooth without overshooting the values."
+                },
                 "categories": {
                     "type": "array",
                     "items": { "type": "string" },

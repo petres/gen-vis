@@ -1,8 +1,21 @@
-export { addScale, setProps, setGroupData, highlightElements };
+export { addScale, setProps, setGroupData, highlightElements, curves };
 
 import * as d3 from "d3";
 import * as ju from "@/utils/json.js";
 import * as eu from "@/utils/else.js";
+
+// the interpolations of the paths and areas between their points, `monotoneX`
+// is smooth without overshooting the values, e.g. for monthly data
+const curves = {
+    linear: d3.curveLinear,
+    monotoneX: d3.curveMonotoneX,
+    natural: d3.curveNatural,
+    catmullRom: d3.curveCatmullRom,
+    basis: d3.curveBasis,
+    step: d3.curveStep,
+    stepBefore: d3.curveStepBefore,
+    stepAfter: d3.curveStepAfter,
+};
 
 const addScale = (info, dims) => {
     const scaleDef = info.mapping.scale;

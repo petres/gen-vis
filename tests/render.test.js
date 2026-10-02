@@ -163,6 +163,24 @@ describe('rendering', () => {
         });
     });
 
+    test('curves of lines and areas', async () => {
+        const def = lineDef();
+        // without gaps, a segment of two points is straight
+        const data = lineData.replace('2021,,20', '2021,5,20');
+        const wien = async curve => {
+            def.plot[0].curve = curve;
+            const el = await mount(GenVis, { def, data });
+            return el.querySelector('g.plotGroup.plot-0 path').getAttribute('d');
+        };
+        // linear by default, smooth curves are bezier curves
+        expect(await wien(undefined)).not.toMatch(/C/);
+        expect(await wien('monotoneX')).toMatch(/C/);
+        def.plot = { type: 'base:area', curve: 'monotoneX', categories: ['c'], props: { fill: '@color', d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } } };
+        const el = await mount(GenVis, { def, data });
+        expect(el.querySelector('g.plotGroup path').getAttribute('d')).toMatch(/C/);
+        expect(errors).toEqual([]);
+    });
+
     test('areas', async () => {
         const def = lineDef();
         def.plot = { type: 'base:area', categories: ['c'], props: { fill: '@color', d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } } };

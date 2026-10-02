@@ -1,11 +1,16 @@
-export { validateDef, plotTypes };
+export { validateDef, plotTypes, curveNames };
 
 import * as d3 from "d3";
 import * as eu from "@/utils/else.js";
 import { templateRefs } from "@/utils/json.js";
+import { curves } from "@/utils/plot.js";
 
 // the plot types implemented by Facet.vue
 const plotTypes = ['svg:path', 'svg:circle', 'svg:line', 'svg:rect', 'svg:text', 'base:area', 'bar', 'stackedBar'];
+
+// the interpolations of svg:path and base:area
+const curveNames = Object.keys(curves);
+const curvePlots = ['svg:path', 'base:area'];
 
 const mappingTypes = ['numeric', 'date', 'categorical'];
 const orientations = ['horizontal', 'vertical'];
@@ -83,6 +88,10 @@ const validateDef = def => {
             warn(`${path}.type`, `unknown type '${p.type}', expected one of ${list(plotTypes)}`);
         (p.categories ?? []).filter(c => !(c in mapping)).forEach(c =>
             warn(`${path}.categories`, `unknown mapping '${c}'`));
+        if (p.curve !== undefined && !curveNames.includes(p.curve))
+            warn(`${path}.curve`, `unknown curve '${p.curve}', expected one of ${list(curveNames)}`);
+        else if (p.curve !== undefined && plotTypes.includes(p.type) && !curvePlots.includes(p.type))
+            warn(`${path}.curve`, `only used by ${list(curvePlots)}`);
         checkProp(p.props, `${path}.props`, warn);
     });
 

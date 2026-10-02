@@ -75,7 +75,7 @@ export default {
                 const parent = this.inner.append("g")
                     .classed("plotGroup", true)
                     .classed(plotDef.id, true)
-                this[plotDef.type](dataGroupedProps, parent);
+                this[plotDef.type](dataGroupedProps, parent, plotDef);
             });
         },
         _groupwise: function(data, parent) {
@@ -111,9 +111,10 @@ export default {
         },
 
         // missing values are gaps in paths and areas
-        'svg:path': function(data, parent) {
+        'svg:path': function(data, parent, plotDef) {
             this._groupwise(data, parent)
                 .attr("d", d => d3.line()
+                    .curve(pu.curves[plotDef.curve ?? 'linear'] ?? d3.curveLinear)
                     .defined(e => finite(e.x, e.y))
                     .x(e => e.x)
                     .y(e => e.y)
@@ -127,9 +128,10 @@ export default {
         'svg:rect':   function(data, parent) { this._pointwise(data, parent, "rect") },
         'svg:text':   function(data, parent) { this._pointwise(data, parent, "text") },
 
-        'base:area': function(data, parent) {
+        'base:area': function(data, parent, plotDef) {
             this._groupwise(data, parent)
                 .attr("d", d => d3.area()
+                    .curve(pu.curves[plotDef.curve ?? 'linear'] ?? d3.curveLinear)
                     .defined(e => finite(e.x, e.y0, e.y1))
                     .x(e => e.x)
                     .y1(e => e.y1)

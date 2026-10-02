@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { validateDef, plotTypes } from '@/utils/validate';
+import { validateDef, plotTypes, curveNames } from '@/utils/validate';
 import { prepareDef } from '@/utils/json';
 import Facet from '@/comp/Facet.vue';
 
@@ -35,6 +35,16 @@ describe('the example definitions', () => {
 describe('validateDef', () => {
     test('a valid definition', () => {
         expect(validateDef(base())).toEqual([]);
+    });
+
+    test('curves of paths and areas', () => {
+        const def = base();
+        def.plot.curve = 'monotoneX';
+        expect(validateDef(def)).toEqual([]);
+        def.plot.curve = 'smooth';
+        expect(validateDef(def)).toEqual([`plot[0].curve: unknown curve 'smooth', expected one of ${curveNames.map(c => `'${c}'`).join(', ')}`]);
+        def.plot = { ...def.plot, type: 'svg:circle', curve: 'monotoneX' };
+        expect(validateDef(def)).toEqual([`plot[0].curve: only used by 'svg:path', 'base:area'`]);
     });
 
     test('all plot types are implemented', () => {

@@ -246,6 +246,11 @@ A plot or a list of plots, drawn in order:
   categories are available in the plot props.
 - `props`: svg attributes (and `text`). Props starting with `highlight-` are
   used for the elements of the category under the mouse or the legend entry.
+- `curve`: the interpolation of `svg:path` and `base:area` between their
+  points, `linear` (default), `monotoneX`, `natural`, `catmullRom`, `basis`,
+  `step`, `stepBefore` or `stepAfter`. `monotoneX` is smooth without
+  overshooting the values, e.g. for monthly data, `basis` does not pass
+  through the points.
 
 ### Props
 
