@@ -177,3 +177,11 @@ describe('Store.init', () => {
         expect(store.def.options.title).toBe('fast');
     });
 });
+
+describe('the entry for scripts', () => {
+    test('merges and checks definitions', async () => {
+        const check = await import('@/check');
+        const merged = await check.resolveParents({ parent: 'base.json' }, 'http://h/def.json', () => JSON.stringify(def));
+        expect(check.validateDef(merged)).toEqual([]);
+    });
+});

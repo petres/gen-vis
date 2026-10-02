@@ -316,6 +316,20 @@ globals, e.g. the values and their shares in the columns `twh`, `co2`,
 `{name}` is replaced by the value of the global, unknown globals are kept and
 reported as warnings.
 
+### Checks outside the browser
+
+`@preschen/gen-vis/check` merges and checks definitions in scripts, e.g. all
+definitions of a page before a deploy, `load` reads the file of an url:
+
+```js
+import { resolveParents, validateDef } from '@preschen/gen-vis/check';
+
+const url = pathToFileURL('data/gas/price.json').href;
+const def = await resolveParents(JSON.parse(readFileSync(new URL(url), 'utf8')), url,
+    u => readFileSync(new URL(u), 'utf8'));
+console.log(validateDef(def));  // the warnings, e.g. unknown plot types
+```
+
 ## Development
 
 ```sh
