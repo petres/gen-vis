@@ -28,7 +28,7 @@ export default {
         render() {
             if (!this.$refs.entries || !this.data)
                 return;
-            const data = [...this.data].sort((a, b) => b.entries[this.axis.v.col].value - a.entries[this.axis.v.col].value)
+            const data = [...this.data].sort((a, b) => b.order - a.order)
             let entries = d3.select(this.$refs.entries).selectAll('tr.entry')
                 .data(data)
                 .join('tr')

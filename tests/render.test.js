@@ -503,6 +503,19 @@ describe('fixed bugs', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the hover lists stacked values in the order of the stack', async () => {
+        const def = stackDef();
+        def.mapping.type.hover = {};
+        def.mapping.type.props.manual = { a: {}, b: {}, n: {}, m: {} };
+        // a is at the bottom, but larger than b, n and m are below 0
+        const data = 'year,value,land,type\n2020,5,Wien,a\n2020,2,Wien,b\n2020,-1,Wien,n\n2020,-3,Wien,m';
+        const el = await mount(GenVis, { def, data });
+        el.querySelector('rect.events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
+        await nextTick();
+        const names = [...el.querySelectorAll('.hover tr.entry td.type')].map(t => t.textContent);
+        expect(names).toEqual(['b', 'a', 'n', 'm']);
+    });
+
     test('stacks of a continuous scale without width are an error', async () => {
         const def = stackDef();
         delete def.plot.props.width;

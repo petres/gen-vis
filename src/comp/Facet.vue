@@ -359,10 +359,13 @@ export default {
                         .attr("y1", 0)
                         .attr("y2", self.innerHeight)
 
+                    // the rows from the top to the bottom, stacks as they are drawn
+                    const stacked = self.store.mapping(axis.v.name).stacked;
                     const tt = du.filter(self.data, [{dim: axis.h.name, key: x}])
                         .filter(e => e[axis.v.name] !== null)
                         .map(e => {
-                            const t = {entries: {}, data: e, nearest: false};
+                            const order = stacked ? (e[`${axis.v.name}:st:s`] + e[`${axis.v.name}:st:e`])/2 : e[axis.v.name];
+                            const t = {entries: {}, data: e, nearest: false, order};
                             categories.forEach(n => {
                                 t.entries[n] = ju.fillDirect(self.store.mapping(n).hover.props, self.store.prop(n, e[n]))
                             })
@@ -377,7 +380,7 @@ export default {
                     const v = axis.v.name;
 
                     let nearestElement;
-                    if (self.store.mapping(v).stacked) {
+                    if (stacked) {
                         // stacked: the segment under the mouse, outside of the stack the closest one
                         nearestElement = d3.least(tt, e => {
                             const [lo, hi] = d3.extent([e.data[`${v}:st:s`], e.data[`${v}:st:e`]]);
