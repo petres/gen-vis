@@ -1,0 +1,25 @@
+{
+    "globals": {
+        "values": "abs"
+    },
+    "formElements": [{
+        "id": "values",
+        "name": "Werte",
+        "ref": "values",
+        "type": "switch",
+        "values": [
+            { "id": "valuesAbs", "value": "abs", "name": "Absolut" },
+            {
+                "id": "valuesShare", "value": "share", "name": "Anteil",
+                "mapping": {
+                    "y": {
+                        "column": "value.share",
+                        "scale": { "domain": [0, 1], "domainRel": [0, 0] },
+                        "axis": { "format": ".0%" },
+                        "hover": { "format": ".1%" }
+                    }
+                }
+            }
+        ]
+    }]
+}

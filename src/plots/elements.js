@@ -18,7 +18,8 @@ const groupwise = (groups, parent) => parent
     .each(function(d) { pu.setProps.call(this, d.props) })
     .each(pu.setGroupData);
 
-// an element of `type` per row, `translate` changes the filled props of a row
+// an element of `type` per row, `translate` changes the filled props of a row,
+// it also gets the row
 const pointwise = (groups, parent, type, translate = v => v) => parent
     .classed(type, true)
     .selectAll(`g.group`)
@@ -33,7 +34,7 @@ const pointwise = (groups, parent, type, translate = v => v) => parent
         const names = ju.refNames(d.props);
         return d.values
             .filter(e => names.every(n => e[n] !== null))
-            .map(e => translate(ju.fillProps(d.props, e)));
+            .map(e => translate(ju.fillProps(d.props, e), e));
     })
     .enter()
     .append(type)

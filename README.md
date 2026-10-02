@@ -1,9 +1,9 @@
 # gen-vis
 
 A declarative d3 visualisation library: a chart is described by a JSON
-definition (the *def*) and a CSV or JSON data file. Line, point, bar, stacked
-bar and area charts with legends, hover, facets and form elements are
-supported.
+definition (the *def*) and a data file (CSV, TSV, JSON or parquet). Line,
+point, bar, stacked bar and area charts, polar plots (e.g. radar and rose
+charts) and maps with legends, hover, facets and form elements are supported.
 
 ## Usage
 
@@ -189,8 +189,8 @@ by the interval of the date (`millisecond`, `second`, `minute`, `hour`, `day`,
 
 `coord` is the coordinate system of the plots, `cartesian` (the default, a
 horizontal and a vertical axis), `polar` (an angle and a radius, see
-[polar plots](#polar-plots)) or a registered one, see
-[extensions](#extensions).
+[polar plots](#polar-plots)), `geo` (a map, see [maps](#maps)) or a
+registered one, see [extensions](#extensions).
 
 `fontFamily` sets the font, by default the css variable
 `--gen-vis-font-family` or Century Gothic, so the font of all visualisations of
@@ -226,9 +226,16 @@ the definition refer to these names.
   scale on the plot, `angle` or `radius` in polar plots. `domain` fixes the
   domain, `null` entries are taken from the data, dates are parsed as the ones
   of the data. `domainRel` (relative to the domain) and `domainAbs` (absolute)
-  extend it, by default a domain taken from the data is extended by 2%.
-  `padding` for categorical scales. A scale without `orientation` has the
-  `range` given, e.g. colors or the radius of points.
+  extend it, by default a domain of a position taken from the data is
+  extended by 2%. `padding` for categorical scales. A scale without
+  `orientation` has the `range` given, e.g. colors or the radius of points.
+- Scales of colors: `sequential` and `diverging` scales (a domain with a
+  middle entry, e.g. `[null, 0, null]`) have an `interpolator` of d3, e.g.
+  `Blues`, `Viridis` or `RdYlGn`. `quantize`, `quantile` and `threshold`
+  scales (the `domain` are the values between the classes) are classes of
+  colors, the `range` or a `scheme` of d3, e.g. `Blues`, with `classes`
+  colors. Scales without orientation are the same in all facets.
+- `name`: the title of the legend.
 - `axis`: `position` (`top`, `bottom`, `left`, `right`, in polar plots
   `angular` and `radial`), `ticks`, `values`
   (fixed ticks), `format` (d3 number or time format), `rotate` (the angle of
@@ -246,7 +253,9 @@ the definition refer to these names.
   of the legend, the facets and the stacks, not the order of the rows. Keys
   which are integers, e.g. years, are ordered ascending by JavaScript.
 - `legend`: a toggle for every category, `symbol` draws svg `elements` (with
-  props) of the given `size` before the name.
+  props) of the given `size` before the name. A mapping with a scale but
+  without props has the colors of its scale as legend, a gradient or the
+  classes, `format` of the values, by default the one of the hover.
 - `stacked`: stacks the values of a vertical axis, see `stackedBar`, the first
   category is at the bottom.
 
@@ -340,6 +349,63 @@ margins are the space of the labels:
 
 See `data/bev/def-radar.json` and `data/rechtsform/def-rose.json`.
 
+### Maps
+
+With `"coord": "geo"` the plots are a map, `geo` is its geometry and the
+mapping (`join`) whose values are the keys of the features:
+
+```json
+"options": { "coord": "geo", "height": 480 },
+"geo": {
+    "data": "../geo/europe.json",
+    "key": "id",
+    "join": "country",
+    "fit": "data",
+    "projection": { "type": "azimuthalEqualArea", "rotate": [-10, -52] }
+},
+"globals": { "type": "euroSuper95" },
+"filter": { "type": "@type" },
+"mapping": {
+    "country": { "column": "country", "type": "categorical" },
+    "type": { "column": "variable", "type": "categorical" },
+    "price": {
+        "name": "€/Liter", "column": "value", "type": "numeric",
+        "scale": { "type": "sequential", "interpolator": "YlOrRd" },
+        "legend": { "format": ",.1f" }, "hover": { "format": "$,.3f" }
+    }
+},
+"plot": [
+    { "type": "geo:features", "props": { "fill": "#EEE", "stroke": "white" } },
+    { "type": "geo:path", "categories": ["country"], "props": { "fill": "@price:scaled", "highlight-stroke": "#333" } }
+]
+```
+
+- `geo.data` is the url of GeoJSON or TopoJSON (or the GeoJSON or TopoJSON
+  itself), `object` the object of TopoJSON (the first one by default), `key`
+  the key of the features (`id`, the default, or a property, e.g. `NUTS_ID`)
+  and `name` the property of their names (`name` by default). Polygons of
+  GeoJSON of both orders of their rings are drawn, e.g. of RFC 7946.
+- `projection` is a d3 projection (`type`, `mercator` by default, e.g.
+  `conicConformal`, `azimuthalEqualArea` or `equalEarth`) and its parameters,
+  e.g. `rotate`, `center` or `parallels`. It is fitted to the facet, `fit` are
+  the features it is fitted to: all (default), the ones with data (`"data"`)
+  or a list of keys, e.g. `["AT"]`.
+- The plot types: `geo:features` (all features, e.g. as background, the props
+  are fixed), `geo:path` (the feature of every row), `geo:circle` and
+  `geo:text` (an element per row at the center of its feature or at the `lon`
+  and `lat` of its props, e.g. proportional circles with a `sqrt` scale of
+  `r`).
+- The hover shows the region under the mouse: its name (the `name` of the
+  props of the `join` mapping, of the feature or the key) and the rows of it,
+  the region is highlighted.
+- One row per region is usually shown, `filter` (see
+  [formElements](#formelements-and-globals)) or facets select them, e.g. a map
+  per fuel type.
+
+See `data/bev/def-map.json`, `data/sprit-nuts/def-map.json` and the maps of
+`data/energy/`. The geometries of `data/geo/` are of Eurostat (GISCO), see
+`data/geo/README.md`.
+
 ### Props
 
 Most values of a definition can be props:
@@ -364,7 +430,21 @@ A plot for every category of `dim` (the name of a mapping with `props`), in
 
 ### `formElements` and `globals`
 
-Form elements change `globals`, e.g. the shared scales of the facets. An entry
+Form elements change `globals`, e.g. the shared scales of the facets, as
+radio buttons (`"type": "switch"`) or a drop down list (`"type": "select"`).
+`filter` shows only the rows of values of mappings, e.g. of a global, the
+values are compared as the ones of the rows, e.g. dates:
+
+```json
+"globals": { "year": "2025" },
+"filter": { "year": "@year" },
+"formElements": [{
+    "id": "year", "name": "Jahr", "ref": "year", "type": "select",
+    "values": [{ "id": "2024", "name": "2024", "value": "2024" }, { "id": "2025", "name": "2025", "value": "2025" }]
+}]
+```
+
+An entry
 with a `mapping` also patches the mappings while it is selected, e.g. to switch
 the column of an axis:
 
@@ -463,5 +543,6 @@ npm run deploy  # builds and uploads the standalone script
 
 The page of the dev server (`index.html`, `src/dev/`) shows the definitions in
 `data/`, also of linked directories, e.g. of the pages using the package,
-without the mixins (`_*.json`). The examples in `data/` are rendered by the
-tests, so they have to stay valid.
+without the mixins (`_*.json`). All definitions in `data/` are rendered,
+hovered and checked by the tests, so they have to stay valid. `data/energy/`
+is a selection of the energy dashboard, see its `README.md`.

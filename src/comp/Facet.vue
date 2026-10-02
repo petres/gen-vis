@@ -64,6 +64,7 @@ export default {
             relativeBases: this.relativeBases,
         };
 
+        this.store.coord.prepare?.(this.ctx);
         this.store.coord.axes(this.ctx);
         this.plot();
         this.store.coord.raise?.(this.ctx);
@@ -117,8 +118,8 @@ export default {
 
             const formatter = n => {
                 const m = store.mapping(n);
-                const format = m.hover?.format ?? m.axis?.format ?? (['time', 'utc'].includes(m.scale.type) ? '%x' : 'c');
-                return store.formatter(m.scale.type)(format);
+                const format = m.hover?.format ?? m.axis?.format ?? (['time', 'utc'].includes(m.scale?.type) ? '%x' : 'c');
+                return store.formatter(m.scale?.type)(format);
             };
             const format = { h: formatter(names.h), v: formatter(names.v) };
             const v = names.v;
@@ -150,7 +151,7 @@ export default {
                 .on("pointerdown pointermove", e => {
                     this.hover.visible = true;
 
-                    const position = coord.hover.locate(ctx, d3.pointer(e), names);
+                    const position = coord.hover.locate(ctx, d3.pointer(e), names, e);
                     if (!position)
                         return;
                     const { key, value } = position;
@@ -173,14 +174,15 @@ export default {
                     } : e => Math.abs(e.data[v] - value);
                     const nearest = value === undefined ? undefined : d3.least(rows, distance);
 
-                    // there is no entry e.g. if all categories are hidden
+                    // there is no entry e.g. if all categories are hidden, without
+                    // a value the elements of the key are highlighted, e.g. a region
                     if (nearest)
                         nearest.nearest = true;
-                    pu.highlightElements(ctx.inner, store.def.plot, nearest?.data);
+                    pu.highlightElements(ctx.inner, store.def.plot, nearest?.data ?? (value === undefined ? {[names.h]: key} : null));
 
                     Object.assign(this.hover, coord.hover.marker(ctx, key, names, marker), {
                         data: rows,
-                        title: format.h(key),
+                        title: coord.hover.title ? coord.hover.title(ctx, key, names) : format.h(key),
                     });
                 })
                 .on("pointerleave", e => {

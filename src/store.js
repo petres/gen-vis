@@ -9,6 +9,7 @@ import { validateDef } from "@/utils/validate";
 import * as su from "@/utils/state";
 import { getLocale } from "@/utils/else";
 import { getCoord } from "@/coords";
+import { geoFeatures, geoKey } from "@/utils/geo";
 
 // relative urls are resolved against `base`, e.g. the url of the def referencing them
 const resolveUrl = (url, base = document.baseURI) => new URL(url, base).href;
@@ -41,11 +42,11 @@ const fetchText = url => fetchCached(url);
 // parquet is binary, the other formats are text
 const fetchData = (url, format) => fetchCached(url, format == 'parquet' ? 'buffer' : 'text');
 
-const parseDef = (text, source) => {
+const parseDef = (text, source, what = 'definition') => {
     try {
         return JSON.parse(text);
     } catch (error) {
-        throw new Error(`Invalid JSON in definition ${source}: ${error.message}`);
+        throw new Error(`Invalid JSON in ${what} ${source}: ${error.message}`);
     }
 };
 
@@ -89,11 +90,13 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         def = parseDef(def, 'attribute');
     }
 
-    // the data is requested together with the parents, if the def names it
+    // the data and the geometry are requested together with the parents, if the def names them
     if (data === null && typeof def.data == 'string' && !def.data.includes('{')) {
         const dataUrl = resolveUrl(def.data, url);
         fetchData(dataUrl, du.dataFormat(dataUrl, def.dataFormat)).catch(() => {});
     }
+    if (typeof def.geo?.data == 'string')
+        fetchText(resolveUrl(def.geo.data, url)).catch(() => {});
 
     const defOrg = await resolveParents(JSON.parse(JSON.stringify(def)), url);
     validateDef(defOrg).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
@@ -113,11 +116,25 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     }
     const rows = raw(await du.parseData(data, format));
 
+    // the features of a map, see coords/geo.js, the url of GeoJSON or TopoJSON or itself
+    let geo = null;
+    if (defOrg.geo?.data) {
+        let json = defOrg.geo.data;
+        if (typeof json == 'string') {
+            const geoUrl = resolveUrl(json, url);
+            json = parseDef(await fetchText(geoUrl), `'${geoUrl}'`, 'geometry');
+        }
+        const features = geoFeatures(json, defOrg.geo.object);
+        const key = geoKey(defOrg.geo.key ?? 'id');
+        geo = markRaw({ features, key, byKey: new Map(features.map(f => [key(f), f])) });
+    }
+
     return {
         defUrl: url ?? null,
         defOrg,
         locale: markRaw(getLocale(defOrg.options?.locale)),
         coord: markRaw(getCoord(defOrg.options?.coord)),
+        geo,
         rows,
         def: prepared,
         defaults,
@@ -130,6 +147,7 @@ class Store {
     defOrg = null;
     locale = null;
     coord = null;
+    geo = null;
     def = null;
     rows = null;
     data = null;
@@ -146,6 +164,8 @@ class Store {
     // the names of the mappings of the positions (h) and of the values (v) of
     // the hover and the stacks, e.g. of the horizontal and the vertical axis
     get axis() {
+        if (this.coord.names)
+            return this.coord.names(this);
         const axis = {};
         this.mappingNamesWithKey('scale').forEach(n => {
             const o = this.mapping(n).scale.orientation;

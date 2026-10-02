@@ -1,0 +1,21 @@
+{
+    "globals": {
+        "shareScale": ["x"]
+    },
+    "formElements": [{
+        "id": "scale",
+        "name": "Y-Skala",
+        "ref": "shareScale",
+        "type": "switch",
+        "values": [
+            { "id": "shareAxisOff", "value": ["x"], "name": "Getrennt" },
+            { "id": "shareAxisOn", "value": ["x", "y"], "name": "Geteilt" }
+        ]
+    }],
+    "facets": {
+        "scales": {
+            "prop": "ref",
+            "ref": "shareScale"
+        }
+    }
+}

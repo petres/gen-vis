@@ -1,4 +1,4 @@
-export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, filter, addDimInfo, addScaledData, addStackedData, categoryOrder, toDate };
+export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, convert, filter, addDimInfo, addScaledData, addStackedData, categoryOrder, toDate };
 
 import * as d3 from "d3";
 
@@ -50,6 +50,9 @@ const toDate = v => {
 };
 
 const converters = { numeric: toNumber, date: toDate };
+
+// a value as the ones of the rows of a mapping, e.g. "2022-06-01" of a date
+const convert = (mapping, v) => (converters[mapping?.type] ?? (v => v))(v);
 
 // maps the parsed rows to the mappings, e.g. column `share` to `y`
 const prepareData = (data, def) => {

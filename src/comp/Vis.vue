@@ -8,7 +8,11 @@
             <form-element v-for="element in formElements" :key="element.id" :element="element" :globals="globals" @changeSelected="formChanged"/>
         </div>
         <div ref="legends" class="vis-legends">
-            <legend-entry v-for="legend in legends" :key="legend" :legend="legend" @changeSelected="changeSelected" @highlight="highlight"/>
+            <!-- toggles of categories, the colors of a scale otherwise -->
+            <template v-for="legend in legends" :key="legend">
+                <legend-entry v-if="store.mapping(legend).props" :legend="legend" @changeSelected="changeSelected" @highlight="highlight"/>
+                <color-legend v-else-if="store.mapping(legend).scale" :legend="legend" :data="data"/>
+            </template>
         </div>
         <div v-if="initialized" class="vis-body">
             <!-- the facets are rendered again if their data changes -->
@@ -36,6 +40,7 @@ import * as ju from "@/utils/json.js";
 
 import Facet from '@/comp/Facet.vue';
 import LegendEntry from '@/comp/Legend.vue';
+import ColorLegend from '@/comp/ColorLegend.vue';
 import FormElement from '@/comp/FormElement.vue';
 
 
@@ -63,7 +68,7 @@ export default {
         },
     }),
     components: {
-        Facet, LegendEntry, FormElement,
+        Facet, LegendEntry, ColorLegend, FormElement,
     },
     watch: {
         // the state was set from outside
@@ -124,7 +129,14 @@ export default {
                 key: Object.keys(this.store.mapping(c).props).filter(k => this.store.mapping(c).props[k].visible)
             }));
 
-            this.data = markRaw(du.filter(this.store.data, this.filter));
+            // the rows of the values of `filter`, e.g. of a global of a form element,
+            // they are compared as the values of the rows, e.g. dates as timestamps
+            const values = Object.entries(def.filter ?? {}).map(([dim, v]) => ({
+                dim,
+                key: [ju.entryToValue(v, def.globals ?? {})].flat().map(k => du.convert(this.store.mapping(dim), k)),
+            }));
+
+            this.data = markRaw(du.filter(this.store.data, [...this.filter, ...values]));
 
             // stacked in the order of the categories, not of the rows
             if (axis.v && this.store.mapping(axis.v).stacked) {
@@ -160,9 +172,11 @@ export default {
         scales() {
             const def = this.store.def;
             const coord = this.store.coord;
-            if (def.facets && def.facets.scales) {
-                const scales = ju.entryToValue(def.facets.scales, def.globals);
-                const infos = scales.map(n => {
+            if (def.facets) {
+                // the scales of all facets, also the ones without orientation, e.g. of colors
+                const shared = def.facets.scales ? ju.entryToValue(def.facets.scales, def.globals) : [];
+                const colors = this.store.mappingNamesWithKey('scale').filter(n => !this.store.mapping(n).scale.orientation);
+                const infos = [...new Set([...shared, ...colors])].map(n => {
                     const info = {
                         dim: n,
                         mapping: this.store.mapping(n),

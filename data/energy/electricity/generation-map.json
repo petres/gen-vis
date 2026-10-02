@@ -1,0 +1,168 @@
+{
+    "data": "generation-map.csv",
+    "options": {
+        "coord": "geo",
+        "height": 480,
+        "margins": {
+            "top": 10,
+            "right": 10,
+            "bottom": 10,
+            "left": 10
+        },
+        "title": "Stromproduktion",
+        "subtitle": "nach Quellen, Anteile, jährlich",
+        "footer": "Source: ENTSO-E - Aggregated Generation Per Type 16.1.B C; Grenzen: © EuroGeographics"
+    },
+    "geo": {
+        "data": "../../geo/europe.json",
+        "key": "id",
+        "join": "country",
+        "fit": "data",
+        "projection": {
+            "type": "azimuthalEqualArea",
+            "rotate": [
+                -10,
+                -52
+            ]
+        }
+    },
+    "globals": {
+        "type": "Renewable",
+        "year": "2025"
+    },
+    "filter": {
+        "type": "@type",
+        "year": "@year"
+    },
+    "formElements": [
+        {
+            "id": "type",
+            "name": "Quelle",
+            "ref": "type",
+            "type": "switch",
+            "values": [
+                {
+                    "id": "Renewable",
+                    "name": "Erneuerbar",
+                    "value": "Renewable"
+                },
+                {
+                    "id": "Non-Renewable",
+                    "name": "Fossil",
+                    "value": "Non-Renewable"
+                },
+                {
+                    "id": "Nuclear",
+                    "name": "Nuklear",
+                    "value": "Nuclear"
+                }
+            ]
+        },
+        {
+            "id": "year",
+            "name": "Jahr",
+            "ref": "year",
+            "type": "select",
+            "values": [
+                {
+                    "id": "2019",
+                    "name": "2019",
+                    "value": "2019"
+                },
+                {
+                    "id": "2020",
+                    "name": "2020",
+                    "value": "2020"
+                },
+                {
+                    "id": "2021",
+                    "name": "2021",
+                    "value": "2021"
+                },
+                {
+                    "id": "2022",
+                    "name": "2022",
+                    "value": "2022"
+                },
+                {
+                    "id": "2023",
+                    "name": "2023",
+                    "value": "2023"
+                },
+                {
+                    "id": "2024",
+                    "name": "2024",
+                    "value": "2024"
+                },
+                {
+                    "id": "2025",
+                    "name": "2025",
+                    "value": "2025"
+                },
+                {
+                    "id": "2026",
+                    "name": "2026",
+                    "value": "2026"
+                }
+            ]
+        }
+    ],
+    "mapping": {
+        "country": {
+            "column": "country",
+            "type": "categorical"
+        },
+        "type": {
+            "column": "type",
+            "type": "categorical"
+        },
+        "year": {
+            "column": "year",
+            "type": "categorical"
+        },
+        "share": {
+            "name": "Anteil an der Stromproduktion",
+            "column": "share",
+            "type": "numeric",
+            "scale": {
+                "type": "threshold",
+                "domain": [
+                    0.2,
+                    0.4,
+                    0.6,
+                    0.8
+                ],
+                "scheme": "YlGnBu"
+            },
+            "legend": {
+                "format": ".0%"
+            },
+            "hover": {
+                "format": ".1%"
+            }
+        }
+    },
+    "plot": [
+        {
+            "type": "geo:features",
+            "props": {
+                "fill": "#EEE",
+                "stroke": "white",
+                "stroke-width": 0.5
+            }
+        },
+        {
+            "type": "geo:path",
+            "categories": [
+                "country"
+            ],
+            "props": {
+                "fill": "@share:scaled",
+                "stroke": "white",
+                "stroke-width": 0.5,
+                "highlight-stroke": "#333",
+                "highlight-stroke-width": 1.5
+            }
+        }
+    ]
+}

@@ -22,6 +22,32 @@
             "enum": ["csv", "tsv", "json", "parquet"],
             "description": "The format of the data, by default the one of the extension of its url, without one CSV or JSON by the content."
         },
+        "geo": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "The geometry of a map (coord geo), the rows are joined to its features.",
+            "properties": {
+                "data": { "type": ["string", "object"], "description": "Url of GeoJSON or TopoJSON, relative to the definition, or the GeoJSON or TopoJSON itself." },
+                "object": { "type": "string", "description": "The object of TopoJSON, the first one by default." },
+                "key": { "type": "string", "description": "The key of the features, id (default) or a property, e.g. NUTS_ID." },
+                "name": { "type": "string", "description": "The property of the names of the features, name by default." },
+                "join": { "type": "string", "description": "The mapping whose values are the keys of the features." },
+                "projection": {
+                    "type": "object",
+                    "description": "A d3 projection (type, mercator by default) and its parameters, e.g. rotate, center or parallels.",
+                    "properties": { "type": { "type": "string" } }
+                },
+                "fit": {
+                    "description": "The features the projection is fitted to, all (default), the ones with data or a list of keys.",
+                    "anyOf": [{ "enum": ["all", "data"] }, { "type": "array", "items": { "type": "string" } }]
+                }
+            }
+        },
+        "filter": {
+            "type": "object",
+            "description": "The rows of these values of mappings, e.g. a global of a form element: { \"year\": \"@year\" }.",
+            "additionalProperties": {}
+        },
         "options": { "$ref": "#/definitions/options" },
         "globals": {
             "type": "object",
@@ -170,8 +196,8 @@
                 },
                 "locale": { "$ref": "#/definitions/locale" },
                 "coord": {
-                    "enum": ["cartesian", "polar"],
-                    "description": "The coordinate system of the plots, cartesian (a horizontal and a vertical axis) by default, or polar (an angle and a radius)."
+                    "enum": ["cartesian", "polar", "geo"],
+                    "description": "The coordinate system of the plots, cartesian (a horizontal and a vertical axis) by default, polar (an angle and a radius) or geo (a map)."
                 },
                 "fontFamily": {
                     "type": "string",
@@ -184,17 +210,19 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "enum": ["linear", "log", "pow", "sqrt", "symlog", "time", "utc", "point", "band"],
+                    "enum": ["linear", "log", "pow", "sqrt", "symlog", "time", "utc", "point", "band", "sequential", "sequentialSqrt", "sequentialLog", "diverging", "quantize", "quantile", "threshold"],
                     "default": "linear",
-                    "description": "A d3 scale, continuous scales need a numeric or date mapping, point and band a categorical one."
+                    "description": "A d3 scale, continuous scales and the ones of classes (quantize, quantile, threshold) need a numeric or date mapping, point and band a categorical one."
                 },
                 "orientation": {
                     "enum": ["horizontal", "vertical", "angle", "radius"],
                     "description": "Places the scale on the plot."
                 },
                 "domain": {
-                    "$ref": "#/definitions/pair",
-                    "description": "Fixes the domain, null entries are taken from the data."
+                    "type": "array",
+                    "minItems": 2,
+                    "items": { "type": ["number", "string", "null"] },
+                    "description": "Fixes the domain, a null first or last entry is taken from the data, dates are parsed as the ones of the data. A diverging scale has a middle entry, a threshold scale the values between its classes."
                 },
                 "domainRel": {
                     "$ref": "#/definitions/pair",
@@ -209,7 +237,10 @@
                     "items": { "type": ["number", "string"] },
                     "description": "By default the width or height of the plot."
                 },
-                "padding": { "type": "number", "description": "For categorical scales." }
+                "padding": { "type": "number", "description": "For categorical scales." },
+                "interpolator": { "type": "string", "description": "The colors of a sequential or diverging scale, a d3 interpolator, e.g. Blues, Viridis or RdYlGn." },
+                "scheme": { "type": "string", "description": "The colors of the range, a d3 scheme, e.g. Blues or Tableau10." },
+                "classes": { "type": "number", "description": "The number of colors of a scheme of several sizes, by default the number of classes of a threshold scale or 5." }
             }
         },
         "axis": {
@@ -252,6 +283,7 @@
                     "type": "string",
                     "description": "The column of the data, can be a template of globals, e.g. \"{values}{share}\", see formElements."
                 },
+                "name": { "type": "string", "description": "The title of the legend." },
                 "type": {
                     "enum": ["numeric", "date", "categorical"],
                     "description": "Missing and invalid numeric and date values are null, dates are parsed with Date.parse or are timestamps."
@@ -274,7 +306,9 @@
                 "legend": {
                     "type": "object",
                     "additionalProperties": false,
+                    "description": "Toggles of the categories of the props, without props the colors of the scale.",
                     "properties": {
+                        "format": { "type": "string", "description": "The format of the values of the colors of a scale, by default the one of the hover." },
                         "symbol": {
                             "type": "object",
                             "additionalProperties": false,
@@ -326,7 +360,7 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "enum": ["svg:path", "svg:circle", "svg:line", "svg:rect", "svg:text", "base:area", "bar", "stackedBar", "radial:path", "radial:area", "radial:arc", "radial:circle", "radial:text"],
+                    "enum": ["svg:path", "svg:circle", "svg:line", "svg:rect", "svg:text", "base:area", "bar", "stackedBar", "radial:path", "radial:area", "radial:arc", "radial:circle", "radial:text", "geo:features", "geo:path", "geo:circle", "geo:text"],
                     "description": "svg:path, base:area, radial:path and radial:area draw a path per group, the others an element per row. The radial types are for the polar coordinate system."
                 },
                 "id": { "type": "string", "description": "The class of the plot group, plot-<index> by default." },
@@ -366,18 +400,19 @@
         },
         "formElement": {
             "type": "object",
-            "required": ["id", "ref", "type", "values"],
+            "required": ["id"],
+            "description": "Entries of a parent are patched by their id, so only the id is required.",
             "additionalProperties": false,
             "properties": {
                 "id": { "type": "string" },
                 "name": { "type": "string" },
                 "ref": { "type": "string", "description": "The global which is changed." },
-                "type": { "enum": ["switch"] },
+                "type": { "enum": ["switch", "select"], "description": "Radio buttons or a drop down list." },
                 "values": {
                     "type": "array",
                     "items": {
                         "type": "object",
-                        "required": ["id", "value"],
+                        "required": ["id"],
                         "additionalProperties": false,
                         "properties": {
                             "id": { "type": "string" },

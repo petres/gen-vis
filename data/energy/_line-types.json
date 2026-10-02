@@ -1,0 +1,27 @@
+{
+    "mapping": {
+        "type": {
+            "column": "type",
+            "legend": {
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "#000", "stroke-width": 2,
+                            "stroke-dasharray": "@stroke-dasharray"
+                        }
+                    }]
+                }
+            },
+            "hover": {}
+        }
+    },
+    "plot": {
+        "categories": ["year", "type"],
+        "props": {
+            "stroke-dasharray": "@stroke-dasharray"
+        }
+    }
+}

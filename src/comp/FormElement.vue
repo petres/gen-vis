@@ -1,7 +1,10 @@
 <template>
     <div class="formElement" :id="`container-${element.id}`">
         <div class="title">{{ element.name }}:</div>
-        <div v-if="element.type == 'switch'" class="entries">
+        <select v-if="element.type == 'select'" :id="`${uid}-${element.id}`" @change="switched(element.values[$event.target.selectedIndex])">
+            <option v-for="e of element.values" :key="e.id" :value="e.id" :selected="equal(e.value)">{{ e.name }}</option>
+        </select>
+        <div v-else-if="element.type == 'switch'" class="entries">
             <div v-for="e of element.values" :key="e.id" :id="`container-${e.id}`" @click="switched(e)">
                 <input type="radio" :id="`${uid}-${element.id}-${e.id}`" :name="`${uid}-${element.id}`" :value="e.id" :checked="equal(e.value)">
                 <label :for="`${uid}-${element.id}-${e.id}`">{{ e.name }}</label>

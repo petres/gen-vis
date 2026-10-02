@@ -1,0 +1,18 @@
+{
+    "facets": {
+        "dim": ["facet"],
+        "scales": [],
+        "cols": {
+            "prop": "steps",
+            "ref": "totalWidth",
+            "steps": [
+                {"cut":    0, "value": 1},
+                {"cut":  550, "value": 2},
+                {"cut": 1000, "value": 3}
+            ]
+        }
+    },
+    "plot": {
+        "categories": ["year", "facet"]
+    }
+}

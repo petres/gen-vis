@@ -1,0 +1,109 @@
+{
+    "options": {
+        "height": {
+            "prop": "steps",
+            "ref": "totalWidth",
+            "steps": [
+                {"cut":   0, "value": 220},
+                {"cut": 550, "value": 250},
+                {"cut": 600, "value": 280}
+            ]
+        },
+        "margins": {"top": 5, "right": 30, "bottom": 30, "left": 50}
+    },
+    "mapping": {
+        "x": {
+            "column": "date20",
+            "type": "date",
+            "scale": {
+                "type": "time",
+                "domainAbs": [-0.2, 0.2],
+                "orientation": "horizontal"
+            },
+            "axis": {
+                "ticks": {
+                    "prop": "relative",
+                    "ref": "innerWidth",
+                    "ratio": 0.017
+                },
+                "position": "bottom",
+                "rotate": 0,
+                "format": "%b"
+            },
+            "hover": {
+                "format": "%e. %b"
+            }
+        },
+        "y": {
+            "column": "value",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "domain": [0, null],
+                "domainRel": [0, 0.1],
+                "orientation": "vertical"
+            },
+            "axis": {
+                "ticks": 6,
+                "position": "left",
+                "grid": true,
+                "format": ",.0f"
+            },
+            "hover": {
+                "format": ",.1f"
+            }
+        },
+        "year": {
+            "column": "year",
+            "legend": {
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "@color", 
+                            "stroke-width": "@stroke-width",
+                            "opacity": "@opacity"
+                        }
+                    }]
+                }
+            },
+            "props": {
+                "common": {
+                    "stroke-width": 2,
+                    "highlight-stroke-width": 3,
+                    "opacity": 0.6, 
+                    "highlight-opacity": 1
+                },
+                "manual": {
+                    "2026": { "color": "#c3423f", "opacity": 1.0},
+                    "2025": { "color": "#cf8e02", "opacity": 0.7},
+                    "2024": { "color": "#f3d039", "opacity": 0.6},
+                    "2023": { "color": "#b5c969", "opacity": 0.5},
+                    "2022": { "color": "#86cae7", "opacity": 0.2},
+                    "2021": { "color": "#cf90f0", "opacity": 0.2},
+                    "2020": { "color": "#AAAAAA", "opacity": 0.2},
+                    "2019": { "color": "#BBBBBB", "opacity": 0.2}
+                }
+            },
+            "hover": {}
+        }
+    },
+    "plot": {
+        "type": "svg:path",
+        "categories": ["year"],
+        "props": {
+            "stroke-width": "@stroke-width",
+            "fill": "none",
+            "opacity": "@opacity",
+            "stroke": "@color",
+            "d": {
+                "x": "@x:scaled",
+                "y": "@y:scaled"
+            },
+            "highlight-opacity": "@highlight-opacity",
+            "highlight-stroke-width": "@highlight-stroke-width"
+        }
+    }
+}

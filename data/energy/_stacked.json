@@ -1,0 +1,53 @@
+{
+    "parent": "_timeline.json",
+    "options": {
+        "height": {
+            "prop": "steps",
+            "ref": "totalWidth",
+            "steps": [
+                {"cut":   0, "value": 220},
+                {"cut": 550, "value": 260},
+                {"cut": 600, "value": 300}
+            ]
+        },
+        "margins": {"top": 15, "right": 30, "bottom": 45, "left": 50}
+    },
+    "mapping": {
+        "y": {
+            "stacked": true
+        },
+        "type": {
+            "legend": {
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "rect",
+                        "props": {
+                            "x": 0, "y": 0, "width": 16, "height": 15,
+                            "fill": "@color", "rx": 2
+                        }
+                    }]
+                }
+            },
+            "hover": {
+            }
+        }
+    },
+    "plot": [
+        {
+            "type": "stackedBar",
+            "categories": ["type"],
+            "props": {
+                "fill": "@color",
+                "opacity": 0.9,
+                "x": "@x",
+                "y": "@y",
+                "width": {
+                    "prop": "relative",
+                    "ref": "innerWidth",
+                    "ratio": 0.008
+                }
+            }
+        }
+    ]
+}

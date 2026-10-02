@@ -4,14 +4,16 @@ import schema from '../schema.json';
 import { curveNames } from '@/utils/validate';
 import { plotTypes } from '@/plots';
 import { coords } from '@/coords';
+import { definitions } from '@/dev/definitions.js';
 import { localeNames } from '@/utils/else';
 import { dataFormats } from '@/utils/data';
 
 const validate = new Ajv({ allErrors: true, allowUnionTypes: true }).compile(schema);
 const errors = def => validate(def) ? [] : validate.errors.map(e => `${e.instancePath} ${e.message}`);
 
-// all definitions, also the shared parents
-const examples = import.meta.glob(['../data/**/def*.json', '../data/**/shared*.json'], { eager: true, import: 'default' });
+// all definitions, also the mixins and shared parents
+const examples = Object.fromEntries(definitions(import.meta.glob('../data/**/*.json', { eager: true, import: 'default' }), true)
+    .map(d => [d.path, d.def]));
 
 describe('the schema', () => {
     test.each(Object.entries(examples))('%s is valid', (file, def) => {

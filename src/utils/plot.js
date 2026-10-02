@@ -27,6 +27,16 @@ const bandCenter = s => s.bandwidth ? s.bandwidth()/2 : 0;
 
 // `coord` has the default ranges of the orientations, in the sizes of `dims`,
 // and the cyclic orientations, e.g. the angle, see coords/index.js
+// the colors of a scheme of d3, e.g. "Blues", schemes of several sizes have
+// `classes` colors, by default the number of classes of a threshold scale or 5
+const schemeRange = scaleDef => {
+    const scheme = d3[`scheme${eu.capitalize(scaleDef.scheme)}`];
+    if (typeof scheme.at(-1) == 'string')
+        return scheme;
+    const n = scaleDef.classes ?? (scaleDef.type == 'threshold' ? scaleDef.domain.length + 1 : 5);
+    return scheme[Math.min(Math.max(n, 3), scheme.length - 1)].slice(0, n);
+};
+
 const addScale = (info, dims, coord = {}) => {
     const scaleDef = info.mapping.scale;
     const ranges = coord.ranges ?? {};
@@ -35,29 +45,45 @@ const addScale = (info, dims, coord = {}) => {
 
     const s = d3[`scale${eu.capitalize(scaleDef.type)}`]()
 
+    // the colors of sequential and diverging scales, e.g. "Blues"
+    if (scaleDef.interpolator)
+        s.interpolator(d3[`interpolate${eu.capitalize(scaleDef.interpolator)}`]);
+
     // fill width and height, scales without orientation and range keep the
     // range of d3, e.g. [0, 1]
-    const range = Array.isArray(scaleDef.range) ? scaleDef.range : ranges[scaleDef.orientation];
+    const range = Array.isArray(scaleDef.range) ? scaleDef.range :
+        (scaleDef.scheme ? schemeRange(scaleDef) : ranges[scaleDef.orientation]);
     if (range)
         s.range(ju.fillDirect(range, dims))
-    if (info.extent) {
-        // dates of a fixed domain are parsed as the ones of the data, e.g. "2020-01-01"
-        info.domain = scaleDef.domain.map(v => v !== null && info.mapping.type == 'date' ? toDate(v) : v);
 
-        // without fixed values the domain is extended a bit, not if it is cyclic
-        info.domainRel = [...(scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic ? [0, 0] :
-            scaleDef.domain.map((v, i) => v === null ? (i == 0 ? -1 : 1) * 0.02 : 0)))];
+    // dates of a fixed domain are parsed as the ones of the data, e.g. "2020-01-01"
+    const fixed = () => scaleDef.domain.map(v => v !== null && info.mapping.type == 'date' ? toDate(v) : v);
+    if (scaleDef.type == 'threshold') {
+        // the values between the classes
+        info.domain = fixed();
+    } else if (scaleDef.type == 'quantile') {
+        // classes of the same number of values
+        info.domain = info.values;
+    } else if (info.extent) {
+        info.domain = fixed();
+        // the first and the last entry, a diverging domain has a middle one
+        const last = info.domain.length - 1;
+
+        // without fixed values the domain of a position is extended a bit, not
+        // if it is cyclic, e.g. not the domain of colors
+        info.domainRel = [...(scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic || !scaleDef.orientation ? [0, 0] :
+            [info.domain[0] === null ? -0.02 : 0, info.domain[last] === null ? 0.02 : 0]))];
         info.domainAbs = scaleDef.domainAbs ?? [0, 0];
 
         info.domain[0] ??= info.extent[0];
-        info.domain[1] ??= info.extent[1];
+        info.domain[last] ??= info.extent[1];
 
-        const da = info.domain[1] - info.domain[0];
+        const da = info.domain[last] - info.domain[0];
         info.domain[0] += da*info.domainRel[0];
-        info.domain[1] += da*info.domainRel[1];
+        info.domain[last] += da*info.domainRel[1];
 
         info.domain[0] += info.domainAbs[0];
-        info.domain[1] += info.domainAbs[1];
+        info.domain[last] += info.domainAbs[1];
 
         // the nearest value with data
         s.invertCustom = (v) => info.values[d3.bisectCenter(info.values, s.invert(v))];
@@ -138,14 +164,20 @@ const highlightElements = (inner, plotDefs, dataEntry = null) => {
         const elements = dataEntry && groupElements(inner, plotDef, dataEntry);
         if (!elements)
             return;
+        // the elements with the props, the path of a group or the elements of
+        // a group of elements per row, e.g. circles
         elements.classed('highlight', true)
             .raise()
             .each(function() {
-                const e = d3.select(this);
-                plotDef.highlightProps.forEach(n => {
-                    e.attr(`default-${n}`, e.attr(n))
-                     .attr(n, e.attr(`highlight-${n}`))
-                });
+                [this, ...this.querySelectorAll('*')]
+                    .filter(node => plotDef.highlightProps.some(n => node.hasAttribute(`highlight-${n}`)))
+                    .forEach(node => {
+                        const e = d3.select(node).classed('highlight', true);
+                        plotDef.highlightProps.forEach(n => {
+                            e.attr(`default-${n}`, e.attr(n))
+                             .attr(n, e.attr(`highlight-${n}`))
+                        });
+                    });
             });
     })
 }

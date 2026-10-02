@@ -30,18 +30,10 @@
 <script>
 import GenVis from '@/comp/App.vue';
 import LazyVis from '@/dev/LazyVis.vue';
+import { definitions } from '@/dev/definitions.js';
 
-// the json files in data/, also of linked directories, definitions have a
-// mapping or a parent, mixins (_*.json) and shared parents are left out
-const files = import.meta.glob('/data/**/*.json', { eager: true, import: 'default' });
-const defs = Object.entries(files)
-    .map(([file, def]) => ({ path: file.substring('/data/'.length), def }))
-    .filter(({ path, def }) => {
-        const name = path.split('/').pop();
-        return !name.startsWith('_') && !name.startsWith('shared') && def !== null
-            && typeof def == 'object' && !Array.isArray(def) && ('mapping' in def || 'parent' in def);
-    })
-    .sort((a, b) => a.path.localeCompare(b.path));
+// the json files in data/, also of linked directories
+const defs = definitions(import.meta.glob('/data/**/*.json', { eager: true, import: 'default' }));
 
 export default {
     components: { GenVis, LazyVis },

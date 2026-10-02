@@ -1,0 +1,45 @@
+{
+    "parent": ["../_years.json", "../_facets.json", "../_share-switch.json", "../_scale-switch.json", "../_facet-toggle.json", "../_monthly.json"],
+    "data": "registrations.csv",
+    "options": {
+        "height": 220,
+        "title": "Pkw-Neuzulassungen",
+        "subtitle": "nach Kraftstoffart bzw. Energiequelle, monatlich",
+        "footer": "Source: Statistik Austria - Kfz-Neuzulassungen"
+    },
+    "formElements": [{
+        "id": "values",
+        "values": [
+            { "id": "valuesAbs", "name": "Anzahl" },
+            {
+                "id": "valuesShare",
+                "mapping": {
+                    "y": {
+                        "scale": { "domain": [0, null], "domainRel": [0, 0.1] }
+                    }
+                }
+            }
+        ]
+    }],
+    "mapping": {
+        "y": {
+            "hover": {
+                "format": ",.0f"
+            }
+        },
+        "facet": {
+            "column": "type",
+            "props": {
+                "manual": {
+                    "bev":    { "name": "Elektro", "visible": true },
+                    "phev":   { "name": "Plug-in-Hybrid", "visible": true },
+                    "hybrid": { "name": "Hybrid (ohne Plug-in)", "visible": true },
+                    "petrol": { "name": "Benzin", "visible": true },
+                    "diesel": { "name": "Diesel", "visible": true },
+                    "other":  { "name": "Sonstige", "visible": false },
+                    "total":  { "name": "Gesamt", "visible": false }
+                }
+            }
+        }
+    }
+}

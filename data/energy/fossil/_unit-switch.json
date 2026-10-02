@@ -1,0 +1,15 @@
+{
+    "globals": {
+        "unit": "twh"
+    },
+    "formElements": [{
+        "id": "unit",
+        "name": "Einheit",
+        "ref": "unit",
+        "type": "switch",
+        "values": [
+            { "id": "unitTwh", "value": "twh", "name": "TWh" },
+            { "id": "unitCo2", "value": "mt.co2", "name": "Mt CO₂" }
+        ]
+    }]
+}

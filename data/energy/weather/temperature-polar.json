@@ -1,0 +1,51 @@
+{
+    "parent": "temperature.json",
+    "options": {
+        "coord": "polar",
+        "subtitle": "gewichtet nach Bevölkerung, täglich (rollierender 4-Wochen Durchschnitt), in °C, ein Jahr im Kreis",
+        "height": 520,
+        "margins": {
+            "top": 40,
+            "right": 40,
+            "bottom": 40,
+            "left": 40
+        }
+    },
+    "mapping": {
+        "x": {
+            "scale": {
+                "type": "utc",
+                "orientation": "angle",
+                "domain": [
+                    "2020-01-01",
+                    "2021-01-01"
+                ]
+            },
+            "axis": {
+                "position": "angular",
+                "ticks": 12,
+                "grid": true
+            }
+        },
+        "y": {
+            "scale": {
+                "orientation": "radius"
+            },
+            "axis": {
+                "position": "radial",
+                "angle": 15,
+                "grid": true,
+                "ticks": 5
+            }
+        }
+    },
+    "plot": {
+        "type": "radial:path",
+        "props": {
+            "d": {
+                "angle": "@x:scaled",
+                "radius": "@y:scaled"
+            }
+        }
+    }
+}

@@ -7,10 +7,13 @@ import { createApp, h, nextTick, ref } from 'vue';
 import { GenVis, mountGenVisElement, registerPlotType, pointwise } from '@/index.js';
 import { plotTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
+import { definitions } from '@/dev/definitions.js';
+import * as d3 from 'd3';
 import { clearCache } from '@/store';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const examples = Object.keys(import.meta.glob('../data/*/def*.json')).map(f => f.substring(2));
+// all definitions in data/, see the page of the dev server
+const examples = definitions(import.meta.glob('../data/**/*.json', { eager: true, import: 'default' })).map(d => `/data/${d.path}`);
 
 let errors;
 
@@ -341,6 +344,139 @@ describe('rendering', () => {
     });
 });
 
+describe('maps', () => {
+    // two squares next to each other, the rings are counterclockwise as of GeoJSON (RFC 7946)
+    const square = (id, x) => ({ type: 'Feature', id, properties: { name: `Region ${id}`, code: id.toLowerCase() },
+        geometry: { type: 'Polygon', coordinates: [[[x, 0], [x + 1, 0], [x + 1, 1], [x, 1], [x, 0]]] } });
+    const regions = { type: 'FeatureCollection', features: [square('A', 0), square('B', 1), square('C', 2)] };
+    const mapData = 'region,year,value\nA,2020,1\nB,2020,3\nA,2021,2\nB,2021,4';
+    const mapDef = () => ({
+        options: { coord: 'geo', width: 300, height: 100, margins: { top: 0, right: 0, bottom: 0, left: 0 } },
+        geo: { data: regions, join: 'region' },
+        globals: { year: '2020' },
+        filter: { year: '@year' },
+        formElements: [{ id: 'year', name: 'Jahr', ref: 'year', type: 'select', values: [
+            { id: '2020', name: '2020', value: '2020' }, { id: '2021', name: '2021', value: '2021' }] }],
+        mapping: {
+            region: { column: 'region', type: 'categorical' },
+            year: { column: 'year', type: 'categorical' },
+            value: { name: 'Wert', column: 'value', type: 'numeric', scale: { type: 'sequential', interpolator: 'Blues' }, legend: {}, hover: { format: '.1f' } },
+        },
+        plot: [
+            { type: 'geo:features', props: { fill: '#EEE' } },
+            { type: 'geo:path', categories: ['region'], props: { fill: '@value:scaled', stroke: 'none', 'highlight-stroke': 'black' } },
+            { type: 'geo:circle', categories: ['region'], props: { r: 3, fill: 'red' } },
+        ],
+    });
+    const num = (e, a) => parseFloat(e.getAttribute(a));
+    const fills = el => [...el.querySelectorAll('g.plotGroup.plot-1 path')].map(p => [p.getAttribute('data-geo-key'), p.getAttribute('fill')]);
+
+    test('the features and the rows joined to them, colored by a scale', async () => {
+        const el = await mount(GenVis, { def: mapDef(), data: mapData });
+        // all features, also the ones without rows
+        expect(el.querySelectorAll('g.plotGroup.plot-0 path')).toHaveLength(3);
+        // the domain of the colors is the one of the rows, not extended
+        expect(fills(el)).toEqual([['A', d3.interpolateBlues(0)], ['B', d3.interpolateBlues(1)]]);
+        // the rings are in the order of d3, the squares are fitted to the facet
+        const [a, b] = [...el.querySelectorAll('g.plotGroup.plot-0 path')].map(p => p.getAttribute('d'));
+        expect(a).toMatch(/^M0[.\d]*,100L/);
+        expect(b).not.toBe(a);
+        // the circles at the centers
+        const circles = [...el.querySelectorAll('g.plotGroup.plot-2 circle')].map(c => Math.round(num(c, 'cx')));
+        expect(circles).toEqual([50, 150]);
+        expect(errors).toEqual([]);
+    });
+
+    test('the rows of a global of a select', async () => {
+        const el = await mount(GenVis, { def: mapDef(), data: mapData });
+        const select = el.querySelector('.formElement select');
+        expect(select.value).toBe('2020');
+        select.selectedIndex = 1;
+        select.dispatchEvent(new Event('change'));
+        await nextTick();
+        expect(fills(el)).toEqual([['A', d3.interpolateBlues(0)], ['B', d3.interpolateBlues(1)]]);
+        expect(el.querySelector('.color-legend .title').textContent).toBe('Wert');
+        // 2 to 4 now
+        expect([...el.querySelectorAll('.color-legend text')].map(t => t.textContent)).toContain('3,0');
+        expect(errors).toEqual([]);
+    });
+
+    test('the hover of the region under the pointer', async () => {
+        const el = await mount(GenVis, { def: mapDef(), data: mapData });
+        const events = el.querySelector('rect.events');
+        const at = async x => {
+            events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: 50 }));
+            await nextTick();
+            return el.querySelector('.hover .title')?.textContent;
+        };
+        expect(await at(150)).toBe('Region B');
+        expect([...el.querySelectorAll('.hover td')].map(t => t.textContent)).toEqual(['3.0'.replace('.', ',')]);
+        // the region is highlighted
+        expect(el.querySelector('g.plotGroup.plot-1 path.highlight').getAttribute('stroke')).toBe('black');
+        // a region without rows has its name
+        expect(await at(250)).toBe('Region C');
+        expect(el.querySelectorAll('.hover tr.entry')).toHaveLength(0);
+        expect(errors).toEqual([]);
+    });
+
+    test('the key, the name and the fit of the features', async () => {
+        const def = mapDef();
+        def.geo = { data: regions, join: 'region', key: 'code', name: 'code', fit: 'data' };
+        const el = await mount(GenVis, { def, data: mapData.replace(/\n([AB])/g, (m, r) => `\n${r.toLowerCase()}`) });
+        expect(fills(el).map(f => f[0])).toEqual(['a', 'b']);
+        // a and b fill the height in the center, c is outside
+        const circles = [...el.querySelectorAll('g.plotGroup.plot-2 circle')].map(c => Math.round(num(c, 'cx')));
+        expect(circles).toEqual([100, 200]);
+        el.querySelector('rect.events').dispatchEvent(pointer('pointermove', { clientX: 225, clientY: 50 }));
+        await nextTick();
+        expect(el.querySelector('.hover .title').textContent).toBe('b');
+    });
+
+    test('classes of a threshold scale and their legend', async () => {
+        const def = mapDef();
+        def.mapping.value.scale = { type: 'threshold', domain: [2, 3.5], scheme: 'Greens' };
+        const el = await mount(GenVis, { def, data: mapData });
+        expect(fills(el)).toEqual([['A', d3.schemeGreens[3][0]], ['B', d3.schemeGreens[3][1]]]);
+        expect(el.querySelectorAll('.color-legend rect')).toHaveLength(3);
+        expect([...el.querySelectorAll('.color-legend text')].map(t => t.textContent)).toEqual(['2,0', '3,5']);
+    });
+
+    test('topojson and its objects', async () => {
+        const topo = { type: 'Topology', objects: { squares: { type: 'GeometryCollection', geometries: [
+            { type: 'Polygon', id: 'A', properties: { name: 'A' }, arcs: [[0]] },
+        ] } }, arcs: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]] };
+        const def = mapDef();
+        def.geo = { data: topo, join: 'region' };
+        let el = await mount(GenVis, { def, data: mapData });
+        // B has no feature, its path is empty
+        expect([...el.querySelectorAll('g.plotGroup.plot-1 path')].map(p => p.hasAttribute('d'))).toEqual([true, false]);
+
+        def.geo.object = 'circles';
+        el = await mount(GenVis, { def, data: mapData });
+        expect(el.querySelector('.vis-error').textContent).toBe(`Unknown object 'circles' of the TopoJSON, expected one of 'squares'`);
+    });
+
+    test('a map needs a geometry', async () => {
+        const def = mapDef();
+        delete def.geo;
+        const el = await mount(GenVis, { def, data: mapData });
+        expect(el.querySelector('.vis-error').textContent).toBe('A map needs a geometry, e.g. "geo": { "data": "regions.json" }');
+    });
+});
+
+describe('highlight', () => {
+    test('the elements of a group of elements per row, e.g. circles', async () => {
+        const def = lineDef();
+        def.plot[1].props['highlight-r'] = 6;
+        const el = await mount(GenVis, { def, data: lineData });
+        el.querySelector('.legend .entries > div').dispatchEvent(new MouseEvent('mouseenter'));
+        const circles = [...el.querySelectorAll('g.plotGroup.plot-1 g.group[data-group-c="Wien"] circle')];
+        expect(circles.map(c => c.getAttribute('r'))).toEqual(['6', '6', '6']);
+        el.querySelector('.legend .entries > div').dispatchEvent(new MouseEvent('mouseleave'));
+        expect(circles.map(c => c.getAttribute('r'))).toEqual(['3', '3', '3']);
+    });
+});
+
 describe('data formats', () => {
     test('parquet as data, integers as categories', async () => {
         const def = lineDef();
@@ -392,7 +528,7 @@ describe('extensions', () => {
 
     test('an unknown coordinate system is an error', async () => {
         const el = await mount(GenVis, { def: lineDef({ coord: 'spherical' }), data: lineData });
-        expect(el.querySelector('.vis-error').textContent).toBe(`Unknown coordinate system 'spherical', expected one of 'cartesian', 'polar'`);
+        expect(el.querySelector('.vis-error').textContent).toBe(`Unknown coordinate system 'spherical', expected one of 'cartesian', 'polar', 'geo'`);
     });
 
     test('scales without orientation and range, e.g. of colors', async () => {

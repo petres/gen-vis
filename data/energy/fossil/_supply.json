@@ -1,0 +1,34 @@
+{
+    "parent": ["../_years.json", "../_facets.json", "../_facet-toggle.json", "../_monthly.json"],
+    "options": {
+        "height": 220
+    },
+    "mapping": {
+        "y": {
+            "axis": {
+                "format": ",.1f"
+            },
+            "hover": {
+                "format": ",.2f"
+            }
+        },
+        "year": {
+            "props": {
+                "manual": {
+                    "avg14-18": { "color": "#444", "name": "Ø&nbsp'14&nbsp-&nbsp'18" }
+                }
+            }
+        },
+        "facet": {
+            "column": "product"
+        }
+    },
+    "facets": {
+        "cols": {
+            "steps": [
+                {"cut":   0, "value": 1},
+                {"cut": 550, "value": 2}
+            ]
+        }
+    }
+}

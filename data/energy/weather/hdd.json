@@ -1,0 +1,33 @@
+{
+    "parent": "../_years-cum.json",
+    "data": "hdd.csv",
+    "options": {
+        "title": "Heizgradtage",
+        "subtitle": "Raumtemperatur 20 °C, Heizgrenze 12 °C, gewichtet nach Bevölkerung",
+        "footer": "Source: Regionale Temperaturen von ERA5"
+    },
+    "mapping": {
+        "y": {
+            "axis": {
+                "format": ",.0f"
+            },
+            "hover": {
+                "format": ",.1f"
+            }
+        },
+        "facet": {
+            "props": {
+                "manual": {
+                    "rm": {
+                        "name": "Durchschnitt der letzten 28-Tage",
+                        "highlight-stroke-width": 3
+                    },
+                    "cum": {
+                        "name": "Summe seit Jahresbeginn",
+                        "highlight-stroke-width": 4
+                    }
+                }
+            }
+        }
+    }
+}

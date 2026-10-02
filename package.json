@@ -43,7 +43,8 @@
     "d3": "^7",
     "deepmerge": "^4",
     "hyparquet": "^1",
-    "hyparquet-compressors": "^1"
+    "hyparquet-compressors": "^1",
+    "topojson-client": "^3"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.9",

@@ -1,0 +1,27 @@
+{
+    "parent": ["_supply.json", "_unit-switch.json", "../_scale-switch.json"],
+    "data": "supply.csv",
+    "options": {
+        "title": "Absatz von fossilen Energieträgern",
+        "subtitle": "nach Energiegehalt in TWh bzw. Emissionen in Megatonnen CO₂",
+        "footer": "Source: eurostat, eigene Berechnungen"
+    },
+    "globals": {
+        "shareScale": ["x", "y"]
+    },
+    "mapping": {
+        "y": {
+            "column": "{unit}"
+        },
+        "facet": {
+            "props": {
+                "manual": {
+                    "total": { "name": "Gesamt", "visible": true },
+                    "oil":   { "name": "Mineralöl", "visible": true },
+                    "coal":  { "name": "Kohle", "visible": true },
+                    "gas":   { "name": "Erdgas", "visible": true }
+                }
+            }
+        }
+    }
+}

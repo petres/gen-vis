@@ -1,0 +1,150 @@
+{
+    "data": "data.csv",
+    "options": {
+        "coord": "geo",
+        "height": 300,
+        "margins": {
+            "top": 10,
+            "right": 10,
+            "bottom": 10,
+            "left": 10
+        },
+        "title": "Spritpreis",
+        "subtitle": "Durchschnitt der Tankstellen nach Bundesland, in €/l, die Farben sind die des Stichtags",
+        "footer": "<strong>Quelle:</strong> Tankstellenpreise <a target='_blank' href='https://spritpreisrechner.at'>spritpreisrechner.at</a>; Grenzen: © EuroGeographics"
+    },
+    "geo": {
+        "data": "../geo/austria.json",
+        "key": "code",
+        "join": "nuts"
+    },
+    "globals": {
+        "date": "2022-06-01"
+    },
+    "filter": {
+        "date": "@date"
+    },
+    "formElements": [
+        {
+            "id": "date",
+            "name": "Stichtag",
+            "ref": "date",
+            "type": "select",
+            "values": [
+                {
+                    "id": "2021-01-01",
+                    "name": "1. Jänner 2021",
+                    "value": "2021-01-01"
+                },
+                {
+                    "id": "2021-04-01",
+                    "name": "1. April 2021",
+                    "value": "2021-04-01"
+                },
+                {
+                    "id": "2021-07-01",
+                    "name": "1. Juli 2021",
+                    "value": "2021-07-01"
+                },
+                {
+                    "id": "2021-10-01",
+                    "name": "1. Oktober 2021",
+                    "value": "2021-10-01"
+                },
+                {
+                    "id": "2022-01-01",
+                    "name": "1. Jänner 2022",
+                    "value": "2022-01-01"
+                },
+                {
+                    "id": "2022-03-01",
+                    "name": "1. März 2022",
+                    "value": "2022-03-01"
+                },
+                {
+                    "id": "2022-06-01",
+                    "name": "1. Juni 2022",
+                    "value": "2022-06-01"
+                }
+            ]
+        }
+    ],
+    "mapping": {
+        "date": {
+            "column": "date",
+            "type": "date"
+        },
+        "type": {
+            "column": "fuelType",
+            "type": "categorical",
+            "props": {
+                "manual": {
+                    "DIE": {
+                        "name": "Diesel"
+                    },
+                    "SUP": {
+                        "name": "Benzin"
+                    }
+                }
+            }
+        },
+        "nuts": {
+            "column": "nuts2",
+            "type": "categorical"
+        },
+        "price": {
+            "column": "priceMean",
+            "type": "numeric",
+            "scale": {
+                "type": "sequential",
+                "interpolator": "YlOrRd"
+            },
+            "legend": {
+                "format": "$,.2f"
+            },
+            "hover": {
+                "format": "$,.3f"
+            },
+            "name": "Preis in €/l"
+        }
+    },
+    "facets": {
+        "dim": "type",
+        "cols": {
+            "prop": "steps",
+            "ref": "totalWidth",
+            "steps": [
+                {
+                    "cut": 0,
+                    "value": 1
+                },
+                {
+                    "cut": 700,
+                    "value": 2
+                }
+            ]
+        }
+    },
+    "plot": [
+        {
+            "type": "geo:features",
+            "props": {
+                "fill": "#EEE",
+                "stroke": "white"
+            }
+        },
+        {
+            "type": "geo:path",
+            "categories": [
+                "nuts"
+            ],
+            "props": {
+                "fill": "@price:scaled",
+                "stroke": "white",
+                "stroke-width": 1,
+                "highlight-stroke": "#333",
+                "highlight-stroke-width": 2
+            }
+        }
+    ]
+}

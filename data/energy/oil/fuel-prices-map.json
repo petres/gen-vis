@@ -1,0 +1,108 @@
+{
+    "data": "fuel-prices-map.csv",
+    "options": {
+        "coord": "geo",
+        "height": 480,
+        "margins": {
+            "top": 10,
+            "right": 10,
+            "bottom": 10,
+            "left": 10
+        },
+        "title": "Spritpreise in Europa",
+        "subtitle": "inkl. Steuern, in €/Liter, Stand 28.09.2026",
+        "footer": "Source: EC Weekly Oil Bulletin; Grenzen: © EuroGeographics"
+    },
+    "geo": {
+        "data": "../../geo/europe.json",
+        "key": "id",
+        "join": "country",
+        "fit": "data",
+        "projection": {
+            "type": "azimuthalEqualArea",
+            "rotate": [
+                -10,
+                -52
+            ]
+        }
+    },
+    "globals": {
+        "type": "euroSuper95"
+    },
+    "filter": {
+        "type": "@type"
+    },
+    "formElements": [
+        {
+            "id": "type",
+            "name": "Kraftstoff",
+            "ref": "type",
+            "type": "switch",
+            "values": [
+                {
+                    "id": "euroSuper95",
+                    "name": "Benzin",
+                    "value": "euroSuper95"
+                },
+                {
+                    "id": "gasOil",
+                    "name": "Diesel",
+                    "value": "gasOil"
+                },
+                {
+                    "id": "heatingOil",
+                    "name": "Heizöl",
+                    "value": "heatingOil"
+                }
+            ]
+        }
+    ],
+    "mapping": {
+        "country": {
+            "column": "country",
+            "type": "categorical"
+        },
+        "type": {
+            "column": "variable",
+            "type": "categorical"
+        },
+        "price": {
+            "name": "€/Liter",
+            "column": "value",
+            "type": "numeric",
+            "scale": {
+                "type": "sequential",
+                "interpolator": "YlOrRd"
+            },
+            "legend": {
+                "format": ",.1f"
+            },
+            "hover": {
+                "format": "$,.3f"
+            }
+        }
+    },
+    "plot": [
+        {
+            "type": "geo:features",
+            "props": {
+                "fill": "#EEE",
+                "stroke": "white",
+                "stroke-width": 0.5
+            }
+        },
+        {
+            "type": "geo:path",
+            "categories": [
+                "country"
+            ],
+            "props": {
+                "fill": "@price:scaled",
+                "stroke": "white",
+                "stroke-width": 0.5,
+                "highlight-stroke": "#333",
+                "highlight-stroke-width": 1.5
+            }
+        }
+    ]
+}

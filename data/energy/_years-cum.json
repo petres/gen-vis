@@ -1,0 +1,34 @@
+{
+    "parent": ["_years.json", "_facets.json"],
+    "mapping": {
+        "y": {
+            "axis": {
+                "format": ",.2f"
+            },
+            "hover": {
+                "format": ",.3r"
+            }
+        },
+        "facet": {
+            "column": "variable",
+            "props": {
+                "manual": {
+                    "rm7": {
+                        "name": "täglich (rollierender 7-Tages Durchschnitt)"
+                    },
+                    "cum": {
+                        "name": "kumuliert"
+                    }
+                }
+            }
+        }
+    },
+    "facets": {
+        "cols": {
+            "steps": [
+                {"cut":   0, "value": 1},
+                {"cut": 850, "value": 2}
+            ]
+        }
+    }
+}

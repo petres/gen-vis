@@ -4,9 +4,11 @@ import { prepareDef } from '@/utils/json';
 import { plotTypes, registerPlotType } from '@/plots';
 import { coords, registerCoord } from '@/coords';
 import { resolveParents } from '@/store';
+import { definitions } from '@/dev/definitions.js';
 import { readFileSync } from 'node:fs';
 
-const examples = import.meta.glob('../data/*/def*.json', { eager: true, import: 'default' });
+const examples = Object.fromEntries(definitions(import.meta.glob('../data/**/*.json', { eager: true, import: 'default' }))
+    .map(d => [`../data/${d.path}`, d.def]));
 
 const base = () => ({
     mapping: {
@@ -60,7 +62,7 @@ describe('validateDef', () => {
     test('coordinate systems and the plot types of them', () => {
         const def = base();
         def.options = { coord: 'spherical' };
-        expect(validateDef(def)).toEqual([`options.coord: unknown coordinate system 'spherical', expected one of 'cartesian', 'polar'`]);
+        expect(validateDef(def)).toEqual([`options.coord: unknown coordinate system 'spherical', expected one of 'cartesian', 'polar', 'geo'`]);
 
         registerCoord('test:coord', { ...coords.cartesian, ranges: { angle: [0, 6.28] }, positions: ['outer'] });
         def.options.coord = 'test:coord';
@@ -129,6 +131,31 @@ describe('validateDef', () => {
             "mapping.x.scale.type: a linear scale does not fit the type 'number'",
             "mapping.y.axis.position: unknown position 'middle', expected one of 'top', 'bottom', 'left', 'right'",
             "mapping.c.props: expected 'manual' (and optional 'common') entries",
+        ]);
+    });
+
+    test('maps, filters, form elements and scales of colors', () => {
+        const def = base();
+        def.options = { coord: 'geo' };
+        def.geo = { join: 'region', projection: { type: 'flat' } };
+        def.filter = { year: '@year' };
+        def.formElements = [{ id: 'f', type: 'slider', values: [{ id: 'a' }] }];
+        def.plot = { type: 'geo:path', props: {} };
+        delete def.mapping.x.axis;
+        delete def.mapping.y.axis;
+        def.mapping.y.scale = { type: 'threshold', scheme: 'Unknown' };
+        def.mapping.x.scale = { type: 'linear', interpolator: 'Blues' };
+        expect(validateDef(def)).toEqual([
+            "mapping.x.scale.interpolator: a linear scale has no interpolator, e.g. a sequential one has",
+            "mapping.y.scale.scheme: unknown d3 scheme 'Unknown', e.g. 'Blues'",
+            "mapping.y.scale.domain: a threshold scale needs the values between its classes",
+            "geo.data: a map needs its geometry, GeoJSON or TopoJSON or their url",
+            "geo.join: unknown mapping 'region'",
+            "geo.projection.type: unknown d3 projection 'flat', e.g. 'mercator' or 'conicConformal'",
+            "filter.year: unknown mapping 'year'",
+            "formElements[0].type: unknown type 'slider', expected one of 'switch', 'select'",
+            "formElements[0].ref: no global",
+            "formElements[0].values: no value of 'a'",
         ]);
     });
 

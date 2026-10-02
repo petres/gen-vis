@@ -1,0 +1,72 @@
+{
+    "parent": "../_timeline.json",
+    "data": "traffic.csv",
+    "options": {
+        "height": {
+            "prop": "steps",
+            "ref": "totalWidth",
+            "steps": [
+                {"cut":   0, "value": 220},
+                {"cut": 550, "value": 250},
+                {"cut": 600, "value": 280}
+            ]
+        },
+        "margins": {"top": 5, "right": 30, "bottom": 45, "left": 50},
+        "title": "Verkehrsaufkommen",
+        "subtitle": "Autobahnen und Schnellstraßen, durchschnittlicher täglicher Verkehr, monatlich, Index (2025 = 100)",
+        "footer": "Source: ASFINAG - Dauerzählstellen"
+    },
+    "mapping": {
+        "road": {
+            "column": "road",
+            "props": {
+                "manual": {
+                    "total": { "name": "Österreich" }
+                }
+            }
+        },
+        "vehicle": {
+            "column": "vehicle",
+            "legend": {
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "@color",
+                            "stroke-width": "@stroke-width"
+                        }
+                    }]
+                }
+            },
+            "props": {
+                "common": {
+                    "stroke-width": 2,
+                    "highlight-stroke-width": 3
+                },
+                "manual": {
+                    "all":   { "color": "#444444", "name": "Gesamt" },
+                    "light": { "color": "#4A96D4", "name": "Leicht (bis 3,5 t)" },
+                    "heavy": { "color": "#C3423F", "name": "Schwer (über 3,5 t)" }
+                }
+            },
+            "hover": {}
+        }
+    },
+    "plot": {
+        "type": "svg:path",
+        "curve": "monotoneX",
+        "categories": ["road", "vehicle"],
+        "props": {
+            "stroke-width": "@stroke-width",
+            "fill": "none",
+            "stroke": "@color",
+            "d": {
+                "x": "@x:scaled",
+                "y": "@y:scaled"
+            },
+            "highlight-stroke-width": "@highlight-stroke-width"
+        }
+    }
+}
