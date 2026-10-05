@@ -39,8 +39,11 @@ export default {
         innerHeight() { return this.height - (this.margins.top + this.margins.bottom) },
         // the origin of the plots and axes in the inner area, e.g. its center
         origin() { return this.store.coord.origin?.(this.innerWidth, this.innerHeight) ?? [0, 0] },
+        // the names of the references of the facet, the ones of the store and
+        // the sizes of the facet, e.g. of the ticks of an axis
         relativeBases() {
             return {
+                ...this.store.bases,
                 width: this.width,
                 innerWidth: this.innerWidth,
                 height: this.height,
@@ -122,7 +125,7 @@ export default {
                         mapping: this.store.mapping(n),
                     };
                     du.addDimInfo(info, this.data)
-                    pu.addScale(info, coord.dims(this.innerWidth, this.innerHeight), coord);
+                    pu.addScale(info, coord.dims(this.innerWidth, this.innerHeight), coord, this.relativeBases);
                     infos[n] = info;
                 });
             du.addScaledData(this.data, infos);
@@ -152,6 +155,7 @@ export default {
                 .filter(n => n != names.h && n != v && store.mapping(n).props);
 
             const marker = d3.select(this.$refs.hoverMarker).select("line");
+            const bases = store.bases;
 
             // the rows by their key, e.g. of the horizontal axis, compared as strings
             const rowsByKey = d3.group(this.data.filter(e => e[v] !== null), e => String(e[names.h]));
@@ -182,7 +186,7 @@ export default {
                 const rows = (rowsByKey.get(String(key)) ?? [])
                     .map(e => {
                         const entries = Object.fromEntries(categories.map(n =>
-                            [n, ju.fillDirect(store.mapping(n).hover.props, store.prop(n, e[n]))]));
+                            [n, ju.fillDirect(store.mapping(n).hover.props, { ...bases, ...store.prop(n, e[n]) })]));
                         entries[v] = { value: e[v], name: format.v(e[v]) };
                         const order = stacked ? (e[`${v}:start`] + e[`${v}:end`])/2 : e[v];
                         return { entries, data: e, nearest: false, order };
@@ -214,10 +218,13 @@ export default {
                 .attr("opacity", 0)
                 .style("touch-action", "pan-y")
                 .on("pointerdown pointermove", e => {
-                    this.hover.visible = true;
+                    // nothing under the pointer, e.g. the sea of a map, no empty or old hover
                     const found = at(e);
-                    if (!found)
+                    if (!found) {
+                        hide();
                         return;
+                    }
+                    this.hover.visible = true;
                     const { key, value, rows, nearest } = found;
 
                     // the same key and row as before, e.g. a move within a step of the axis

@@ -100,11 +100,6 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
 
     const defOrg = await resolveParents(JSON.parse(JSON.stringify(def)), url);
     validateDef(defOrg).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
-    const prepared = ju.prepareDef(JSON.parse(JSON.stringify(defOrg)));
-    const defaults = su.snapshot(prepared);
-    su.applyState(prepared, state);
-    ju.applyFormElements(prepared, defOrg);
-
     // the format of the data, by default the one of the extension of its url
     let format = defOrg.dataFormat;
     if (data === null) {
@@ -115,6 +110,13 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         data = await fetchData(dataUrl, format);
     }
     const rows = raw(await du.parseData(data, format));
+
+    // the form elements can have the values of the data, the state needs them
+    du.addDataValues(defOrg, rows);
+    const prepared = ju.prepareDef(JSON.parse(JSON.stringify(defOrg)));
+    const defaults = su.snapshot(prepared);
+    su.applyState(prepared, state);
+    ju.applyFormElements(prepared, defOrg);
 
     // the features of a map, see coords/geo.js, the url of GeoJSON or TopoJSON or itself
     let geo = null;
@@ -156,6 +158,8 @@ class Store {
     rows = null;
     data = null;
     defaults = null;
+    // the width of the visualisation, set by its measure
+    totalWidth = null;
     runs = 0;
     // incremented if the state is set from outside, the components update
     stateSets = 0;
@@ -189,6 +193,11 @@ class Store {
             return this.locale.time.utcFormat;
         return this.locale.number.format;
     }
+
+    // the names of the references in all parts of the definition, the globals
+    // and the width of the visualisation, a facet adds its sizes, a plot the
+    // props of the categories and the row, see README "Props"
+    get bases() { return { ...this.def.globals, totalWidth: this.totalWidth } }
 
     mapping(n) { return this.def.mapping[n] }
     prop(n, k) { return this.def.mapping[n].props[k] }

@@ -269,6 +269,36 @@ describe('rendering', () => {
     const legendVisible = el => [...el.querySelectorAll('.legend .entries > div')].map(e => e.dataset.visible);
     const checked = el => [...el.querySelectorAll('.formElement input')].map(i => i.checked);
 
+    test('the globals and the width are references everywhere, the rows replace globals', async () => {
+        const def = lineDef();
+        // the global `x` is also a mapping, in the plots `@x` is the one of the row
+        def.globals = { accent: 'green', x: 'global' };
+        def.formElements = [{ id: 'accent', name: 'Farbe', ref: 'accent', type: 'switch', values: [
+            { id: 'green', name: 'Grün', value: 'green' },
+            { id: 'black', name: 'Schwarz', value: 'black' },
+        ] }];
+        def.plot[1].props = { ...def.plot[1].props, stroke: '@accent', 'data-x': '@x', 'data-width': '@totalWidth' };
+        def.mapping.c.legend = { props: { 'data-accent': '@accent' } };
+        def.annotations = [{ type: 'line', y: 2, props: { stroke: '@accent', 'stroke-width': { prop: 'relative', ref: 'totalWidth', ratio: 0.005 } } }];
+        const el = await mount(GenVis, { def, data: lineData });
+        const circle = () => el.querySelector('g.plotGroup.plot-1 circle');
+        expect(circle().getAttribute('stroke')).toBe('green');
+        expect(circle().getAttribute('data-x')).toBe('2020');
+        expect(circle().getAttribute('data-width')).toBe('600');
+        const line = () => el.querySelector('g.annotations line');
+        expect(line().getAttribute('stroke')).toBe('green');
+        expect(line().getAttribute('stroke-width')).toBe('3');
+        const legend = () => el.querySelector('.legend .entries > div').getAttribute('data-accent');
+        expect(legend()).toBe('green');
+
+        el.querySelectorAll('.formElement .entries input')[1].click();
+        await nextTick();
+        expect(circle().getAttribute('stroke')).toBe('black');
+        expect(line().getAttribute('stroke')).toBe('black');
+        expect(legend()).toBe('black');
+        expect(errors).toEqual([]);
+    });
+
     test('a given state is applied', async () => {
         const state = { globals: { column: 'other' }, visible: { c: { Tirol: false } } };
         const el = await mount(GenVis, { def: stateDef(), data: lineData, state });
@@ -669,6 +699,44 @@ describe('maps', () => {
         expect(errors).toEqual([]);
     });
 
+    test('a slider over the values of a column of the data', async () => {
+        const def = mapDef();
+        def.formElements = [{ id: 'year', name: 'Jahr', ref: 'year', type: 'slider', values: { column: 'year' } }];
+        // without the global the last value, the latest year
+        delete def.globals;
+        const updates = [];
+        const el = await mount({ render: () => h(GenVis, { def, data: mapData, 'onUpdate:state': s => updates.push(s) }) });
+        const slider = el.querySelector('.formElement input[type="range"]');
+        const legend = () => [...el.querySelectorAll('.color-legend text')].map(t => t.textContent);
+        expect([slider.min, slider.max, slider.value]).toEqual(['0', '1', '1']);
+        expect(el.querySelector('.formElement .slider .value').textContent).toBe('2021');
+        // 2 to 4
+        expect(legend()).toContain('3,0');
+        // moved to 2020, while it is moved
+        slider.value = '0';
+        slider.dispatchEvent(new Event('input'));
+        await nextTick();
+        expect(el.querySelector('.formElement .slider .value').textContent).toBe('2020');
+        expect(legend()).toContain('2,0');
+        expect(updates.at(-1)).toEqual({ globals: { year: '2020' } });
+        expect(errors).toEqual([]);
+    });
+
+    test('the values of the data and a given state', async () => {
+        const def = mapDef();
+        def.formElements = [{ id: 'year', name: 'Jahr', ref: 'year', type: 'select', values: { column: 'year' } }];
+        // a global which is none of the values is the last one, the state is applied
+        def.globals = { year: '1999' };
+        const options = el => [...el.querySelectorAll('.formElement option')].map(o => o.textContent);
+        expect(options(await mount(GenVis, { def, data: mapData }))).toEqual(['2020', '2021']);
+        expect((await mount(GenVis, { def, data: mapData })).querySelector('.formElement select').value).toBe('2021');
+        const el = await mount(GenVis, { def, data: mapData, state: { globals: { year: '2020' } } });
+        expect(el.querySelector('.formElement select').value).toBe('2020');
+        // numbers by their value
+        expect(options(await mount(GenVis, { def, data: 'region,year,value\nA,10,1\nA,9,2\nB,100,3' }))).toEqual(['9', '10', '100']);
+        expect(errors).toEqual([]);
+    });
+
     test('the hover of the region under the pointer', async () => {
         const el = await mount(GenVis, { def: mapDef(), data: mapData });
         const events = el.querySelector('rect.events');
@@ -687,6 +755,27 @@ describe('maps', () => {
         expect(errors).toEqual([]);
     });
 
+    test('no hover where there is no region', async () => {
+        const def = mapDef();
+        // a and b in the center (50 to 250), nothing left of them
+        def.geo = { data: { type: 'FeatureCollection', features: [square('A', 0), square('B', 1)] }, join: 'region' };
+        const el = await mount(GenVis, { def, data: mapData });
+        const events = el.querySelector('rect.events');
+        const move = async x => {
+            events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: 50 }));
+            await nextTick();
+        };
+        // first outside, then a region and outside again
+        await move(25);
+        expect(el.querySelector('.hover')).toBeNull();
+        await move(200);
+        expect(el.querySelector('.hover .title').textContent).toBe('Region B');
+        await move(25);
+        expect(el.querySelector('.hover')).toBeNull();
+        expect(el.querySelector('g.plotGroup.plot-1 path.highlight')).toBeNull();
+        expect(errors).toEqual([]);
+    });
+
     test('the key, the name and the fit of the features', async () => {
         const def = mapDef();
         def.geo = { data: regions, join: 'region', key: 'code', name: 'code', fit: 'data' };
@@ -698,6 +787,64 @@ describe('maps', () => {
         el.querySelector('rect.events').dispatchEvent(pointer('pointermove', { clientX: 225, clientY: 50 }));
         await nextTick();
         expect(el.querySelector('.hover .title').textContent).toBe('b');
+    });
+
+    test('an entry of the missing values beside the colors', async () => {
+        const def = mapDef();
+        expect((await mount(GenVis, { def, data: mapData })).querySelector('.color-legend .missing')).toBeNull();
+        def.mapping.value.legend = { missing: { name: 'keine Daten', color: 'grey' } };
+        const el = await mount(GenVis, { def, data: mapData });
+        expect(el.querySelector('.color-legend .missing').textContent.trim()).toBe('keine Daten');
+        expect(el.querySelector('.color-legend .missing .swatch').style.background).toBe('grey');
+        expect(errors).toEqual([]);
+    });
+
+    test('the legend of a sqrt scale at the positions of its colors', async () => {
+        const def = mapDef();
+        def.mapping.value.scale = { type: 'sequentialSqrt', interpolator: 'Blues', domain: [0, 1] };
+        def.mapping.value.legend = { format: '.0%' };
+        const el = await mount(GenVis, { def, data: 'region,year,value\nA,2020,0.04\nB,2020,1' });
+        // A is at 20% of the colors
+        expect(fills(el)).toEqual([['A', d3.interpolateBlues(0.2)], ['B', d3.interpolateBlues(1)]]);
+        const stops = [...el.querySelectorAll('.color-legend stop')].map(s => s.getAttribute('stop-color'));
+        expect(stops[5]).toBe(d3.interpolateBlues(0.5));
+        // 1, 2, 5 steps, at least 30 pixels apart, at their positions
+        const ticks = [...el.querySelectorAll('.color-legend text')].map(t => t.textContent);
+        expect(ticks).toEqual(['0%', '2%', '10%', '20%', '50%', '100%']);
+        const x = [...el.querySelectorAll('.color-legend line')].map(l => Math.round(num(l, 'x1')));
+        expect(x).toEqual([0, 34, 76, 107, 170, 240]);
+        // without a format the digits of the smallest tick
+        delete def.mapping.value.legend.format;
+        delete def.mapping.value.hover;
+        const plain = await mount(GenVis, { def, data: 'region,year,value\nA,2020,0.04\nB,2020,1' });
+        expect([...plain.querySelectorAll('.color-legend text')].map(t => t.textContent)).toEqual(['0', '0,02', '0,1', '0,2', '0,5', '1']);
+        expect(errors).toEqual([]);
+    });
+
+    test('the ends of a domain of the data rounded by nice', async () => {
+        const def = mapDef();
+        def.mapping.value.scale = { type: 'sequentialSqrt', interpolator: 'Blues', domain: [0, null], nice: true };
+        def.mapping.value.legend = { format: '.0%' };
+        const data = 'region,year,value\nA,2020,0.04\nB,2020,0.951';
+        const el = await mount(GenVis, { def, data });
+        expect(fills(el)).toEqual([['A', d3.interpolateBlues(0.2)], ['B', d3.interpolateBlues(Math.sqrt(0.951))]]);
+        expect([...el.querySelectorAll('.color-legend text')].map(t => t.textContent).at(-1)).toBe('100%');
+        // without it the end is the one of the data, a fixed end is kept
+        def.mapping.value.scale.nice = false;
+        expect([...(await mount(GenVis, { def, data })).querySelectorAll('.color-legend text')].map(t => t.textContent).at(-1)).toBe('50%');
+        def.mapping.value.scale = { type: 'sequential', interpolator: 'Blues', domain: [0.03, null], nice: 5 };
+        // 0.03 is kept, 0.951 is 1
+        expect(fills(await mount(GenVis, { def, data })).map(f => f[1])).toEqual([d3.interpolateBlues(0.01/0.97), d3.interpolateBlues(0.921/0.97)]);
+        expect(errors).toEqual([]);
+    });
+
+    test('the legend of a diverging scale, its middle is in the center', async () => {
+        const def = mapDef();
+        def.mapping.value.scale = { type: 'diverging', interpolator: 'RdBu', domain: [-1, 0, 3] };
+        const el = await mount(GenVis, { def, data: mapData });
+        const ticks = [...el.querySelectorAll('.color-legend line')].map(l => [Math.round(num(l, 'x1')), l.nextSibling.textContent]);
+        expect(ticks).toEqual([[0, '−1,0'], [60, '−0,5'], [120, '0,0'], [160, '1,0'], [200, '2,0']]);
+        expect(errors).toEqual([]);
     });
 
     test('classes of a threshold scale and their legend', async () => {

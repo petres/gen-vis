@@ -14,13 +14,25 @@ import { dataFormats } from "@/utils/data.js";
 const curveNames = Object.keys(curves);
 
 const mappingTypes = ['numeric', 'date', 'categorical'];
-const formElementTypes = ['switch', 'select'];
+const formElementTypes = ['switch', 'select', 'slider'];
 const propKinds = ['fixed', 'ref', 'relative', 'steps'];
 
 const list = a => a.map(e => `'${e}'`).join(', ');
 
-// objects are nested props unless they have a `prop` key
-const checkProp = (value, path, warn) => {
+// a reference to a name which is not known where it is used is undefined,
+// short lists of the known names are part of the warning
+const checkRef = (ref, path, warn, names) => {
+    if (!names || names.has(ref))
+        return;
+    const known = names.size <= 12 ? `, expected one of ${list([...names])}` : '';
+    warn(path, `unknown reference '${ref}'${known}`);
+};
+
+// objects are nested props unless they have a `prop` key, `names` are the
+// names of the references known at the place of the props
+const checkProp = (value, path, warn, names = null) => {
+    if (typeof value == 'string' && value.charAt() == '@')
+        return checkRef(value.substring(1), path, warn, names);
     if (value === null || typeof value != 'object' || Array.isArray(value))
         return;
     if ('prop' in value) {
@@ -28,13 +40,29 @@ const checkProp = (value, path, warn) => {
             warn(path, `unknown prop '${value.prop}', expected one of ${list(propKinds)}`);
         else if (value.prop != 'fixed' && typeof value.ref != 'string')
             warn(path, `a '${value.prop}' prop needs a 'ref'`);
+        else if (value.prop != 'fixed')
+            checkRef(value.ref, path, warn, names);
         return;
     }
     const keys = ['ratio', 'steps', 'ref', 'mode'].filter(k => k in value);
     if (keys.length > 0)
         return warn(path, `has ${list(keys)} but no 'prop', so it is not evaluated`);
-    Object.entries(value).forEach(([k, v]) => checkProp(v, `${path}.${k}`, warn));
+    Object.entries(value).forEach(([k, v]) => checkProp(v, `${path}.${k}`, warn, names));
 };
+
+// the values of the rows of a mapping, e.g. `x:scaled`, see addScaledData and
+// addStackedData of utils/data.js
+const rowNames = (n, m) => [
+    n,
+    ...(m.scale ? [`${n}:scaled`, `${n}:scaled:0`, `${n}:scaled:min`, `${n}:scaled:max`] : []),
+    ...(m.stacked ? [`${n}:start`, `${n}:end`] : []),
+    ...(m.stacked && m.scale ? [`${n}:start:scaled`, `${n}:end:scaled`, `${n}:height:scaled`] : []),
+];
+
+// the props of the categories of a mapping, `name` and `visible` are set by default
+const categoryNames = m => m?.props ? ['name', 'visible',
+    ...Object.keys(m.props.common ?? {}),
+    ...Object.values(m.props.manual ?? {}).flatMap(e => Object.keys(e ?? {}))] : [];
 
 /**
  * Returns warnings for common mistakes in a (merged) definition, e.g. unknown
@@ -57,6 +85,28 @@ const validateDef = def => {
         warn('options.coord', `unknown coordinate system '${coordName}', expected one of ${list(Object.keys(coords))}`);
     const coord = coords[coordName] ?? coords.cartesian;
     const orientations = Object.keys(coord.ranges);
+
+    // the names of the references, see README "Props": everywhere the globals
+    // (also the ones of form elements) and the width of the visualisation, in
+    // a facet its sizes, in a plot the props of its categories and the rows,
+    // in a range the sizes of the coordinate system, e.g. `radius`
+    const globalNames = [
+        ...Object.keys(def.globals ?? {}),
+        ...(def.formElements ?? []).map(e => e.ref).filter(r => typeof r == 'string'),
+        'totalWidth',
+    ];
+    const facetNames = [...globalNames, 'width', 'innerWidth', 'height', 'innerHeight'];
+    const names = {
+        global: new Set(globalNames),
+        facet: new Set(facetNames),
+        category: n => new Set([...globalNames, ...categoryNames(mapping[n])]),
+        plot: categories => new Set([
+            ...facetNames,
+            ...Object.entries(mapping).flatMap(([n, m]) => rowNames(n, m ?? {})),
+            ...categories.flatMap(c => categoryNames(mapping[c])),
+        ]),
+        range: new Set([...facetNames, ...Object.keys(coord.dims?.(1, 1) ?? {})]),
+    };
 
     Object.entries(mapping).forEach(([n, m]) => {
         const path = `mapping.${n}`;
@@ -85,6 +135,8 @@ const validateDef = def => {
                 warn(`${path}.scale.scheme`, `unknown d3 scheme '${m.scale.scheme}', e.g. 'Blues'`);
             if (type == 'threshold' && !(Array.isArray(m.scale.domain) && m.scale.domain.every(v => v !== null)))
                 warn(`${path}.scale.domain`, `a threshold scale needs the values between its classes`);
+            if (Array.isArray(m.scale.range))
+                m.scale.range.forEach((v, j) => checkProp(v, `${path}.scale.range[${j}]`, warn, names.range));
             if (m.scale.orientation !== undefined && !orientations.includes(m.scale.orientation))
                 warn(`${path}.scale.orientation`, orientations.length > 0
                     ? `unknown orientation '${m.scale.orientation}', expected one of ${list(orientations)}`
@@ -95,7 +147,14 @@ const validateDef = def => {
                 warn(`${path}.axis`, `an axis needs a 'scale'`);
             if (!coord.positions.includes(m.axis.position))
                 warn(`${path}.axis.position`, `unknown position '${m.axis.position}', expected one of ${list(coord.positions)}`);
-            checkProp(m.axis.ticks, `${path}.axis.ticks`, warn);
+            checkProp(m.axis.ticks, `${path}.axis.ticks`, warn, names.facet);
+        }
+        // the props of the legend and the hover of the categories
+        if (m.props) {
+            checkProp(m.legend?.props, `${path}.legend.props`, warn, names.category(n));
+            checkProp(m.hover?.props, `${path}.hover.props`, warn, names.category(n));
+            [].concat(m.legend?.symbol?.elements ?? []).forEach((e, j) =>
+                checkProp(e?.props, `${path}.legend.symbol.elements[${j}].props`, warn, names.category(n)));
         }
     });
 
@@ -119,7 +178,7 @@ const validateDef = def => {
             warn(`${path}.curve`, `unknown curve '${p.curve}', expected one of ${list(curveNames)}`);
         else if (p.curve !== undefined && types.includes(p.type) && !curvePlots.includes(p.type))
             warn(`${path}.curve`, `only used by ${list(curvePlots)}`);
-        checkProp(p.props, `${path}.props`, warn);
+        checkProp(p.props, `${path}.props`, warn, names.plot((p.categories ?? []).filter(c => c in mapping)));
     });
 
     if (coordName == 'geo') {
@@ -134,6 +193,7 @@ const validateDef = def => {
 
     Object.keys(def.filter ?? {}).filter(n => !(n in mapping)).forEach(n =>
         warn(`filter.${n}`, `unknown mapping '${n}'`));
+    Object.entries(def.filter ?? {}).forEach(([n, v]) => checkProp(v, `filter.${n}`, warn, names.global));
 
     // the values of an annotation are of mappings with a scale, of maps `lon` and `lat`
     const annotationTypes = coord.annotations ?? [];
@@ -149,6 +209,7 @@ const validateDef = def => {
         });
         if (coordName == 'geo' && !(typeof a.lon == 'number' && typeof a.lat == 'number'))
             warn(path, `an annotation of a map needs 'lon' and 'lat'`);
+        checkProp(a.props, `${path}.props`, warn, names.facet);
     });
 
     (def.formElements ?? []).forEach((e, i) => {
@@ -157,7 +218,10 @@ const validateDef = def => {
         // parts of entries are patches of a parent, the merged ones are complete
         if (typeof e.ref != 'string')
             warn(`formElements[${i}].ref`, `no global`);
-        (e.values ?? []).filter(v => !('value' in v)).forEach(v =>
+        // a list of entries or the values of a column of the data
+        if (e.values !== undefined && !Array.isArray(e.values) && typeof e.values?.column != 'string')
+            warn(`formElements[${i}].values`, `expected a list of entries or the column of the values, e.g. { "column": "year" }`);
+        (Array.isArray(e.values) ? e.values : []).filter(v => !('value' in v)).forEach(v =>
             warn(`formElements[${i}].values`, `no value of '${v.id}'`));
     });
 
@@ -172,15 +236,16 @@ const validateDef = def => {
     const checkTemplate = (column, path) => templateRefs(column).filter(r => !(r in (def.globals ?? {}))).forEach(r =>
         warn(path, `unknown global '${r}' in the column template`));
     Object.entries(mapping).forEach(([n, m]) => checkTemplate(m.column, `mapping.${n}.column`));
-    (def.formElements ?? []).forEach((e, i) => (e.values ?? []).forEach((v, j) =>
+    (def.formElements ?? []).forEach((e, i) => (Array.isArray(e.values) ? e.values : []).forEach((v, j) =>
         Object.entries(v.mapping ?? {}).forEach(([n, m]) =>
             checkTemplate(m.column, `formElements[${i}].values[${j}].mapping.${n}.column`))));
 
     if (def.dataFormat !== undefined && !dataFormats.includes(def.dataFormat))
         warn('dataFormat', `unknown format '${def.dataFormat}', expected one of ${list(dataFormats)}`);
 
-    checkProp(def.options?.height, 'options.height', warn);
-    checkProp(def.facets?.cols, 'facets.cols', warn);
+    checkProp(def.options?.height, 'options.height', warn, names.global);
+    checkProp(def.facets?.cols, 'facets.cols', warn, names.global);
+    checkProp(def.facets?.scales, 'facets.scales', warn, names.global);
 
     return warnings;
 };

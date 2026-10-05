@@ -5,14 +5,14 @@
              click shows only it, the next one all entries -->
         <div class="entries" role="group" :aria-label="info.name">
             <div v-for="entry of entries" :key="entry.key" :data-visible="entry.props.visible" :data-key="entry.key"
-                v-bind='Object.assign({...entry.filled}, {name: null})'
+                v-bind='Object.assign({...filled[entry.key]}, {name: null})'
                 role="checkbox" tabindex="0" :aria-checked="String(entry.props.visible)"
                 @click="clicked(entry, $event)" @dblclick="only(entry)"
                 @keydown.enter.prevent="switched(entry)" @keydown.space.prevent="switched(entry)"
                 @pointerenter="hovered(entry, $event)" @pointerleave="hovered(null, $event)"
                 @focus="highlight(entry)" @blur="highlight(null)">
                 <LegendSymbol v-if="info.legend.symbol" :info="info.legend.symbol" :props="entry.props"/>
-                <span v-html='entry.filled.name'/>
+                <span v-html='filled[entry.key].name'/>
             </div>
         </div>
     </div>
@@ -33,12 +33,19 @@ export default {
     components: {
         LegendSymbol
     },
+    computed: {
+        // the legend props of the entries, also with the globals of the store
+        filled() {
+            const bases = this.store.bases;
+            return Object.fromEntries(this.entries.map(e =>
+                [e.key, ju.fillDirect(this.info.legend.props, { ...bases, ...e.props })]));
+        },
+    },
     mounted() {
         this.info = this.store.mapping(this.legend);
         this.entries = Object.keys(this.info.props).map(d => ({
             key: d,
             props: this.info.props[d],
-            filled: ju.fillDirect(this.info.legend.props, this.info.props[d]),
         }))
     },
     methods: {

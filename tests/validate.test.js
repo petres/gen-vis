@@ -141,7 +141,7 @@ describe('validateDef', () => {
         def.options = { coord: 'geo' };
         def.geo = { join: 'region', projection: { type: 'flat' } };
         def.filter = { year: '@year' };
-        def.formElements = [{ id: 'f', type: 'slider', values: [{ id: 'a' }] }];
+        def.formElements = [{ id: 'f', type: 'checkbox', values: [{ id: 'a' }] }, { id: 'g', ref: 'g', type: 'slider', values: { name: 'year' } }];
         def.plot = { type: 'geo:region', props: {} };
         delete def.mapping.x.axis;
         delete def.mapping.y.axis;
@@ -155,10 +155,49 @@ describe('validateDef', () => {
             "geo.join: unknown mapping 'region'",
             "geo.projection.type: unknown d3 projection 'flat', e.g. 'mercator' or 'conicConformal'",
             "filter.year: unknown mapping 'year'",
-            "formElements[0].type: unknown type 'slider', expected one of 'switch', 'select'",
+            "filter.year: unknown reference 'year', expected one of 'g', 'totalWidth'",
+            "formElements[0].type: unknown type 'checkbox', expected one of 'switch', 'select', 'slider'",
             "formElements[0].ref: no global",
             "formElements[0].values: no value of 'a'",
+            "formElements[1].values: expected a list of entries or the column of the values, e.g. { \"column\": \"year\" }",
         ]);
+    });
+
+    test('references to names which are known where they are used', () => {
+        const def = base();
+        def.globals = { g: 1 };
+        def.mapping.c.props.manual.Wien = { color: 'red' };
+        def.mapping.c.legend = { props: { title: '@color' }, symbol: { elements: [{ type: 'circle', props: { fill: '@color', r: '@g' } }] } };
+        def.mapping.x.scale.range = [0, '@width'];
+        def.mapping.y.axis.ticks = { prop: 'relative', ref: 'innerWidth', ratio: 0.01 };
+        def.plot.props = { ...def.plot.props, stroke: '@color', title: '@name', 'data-g': '@g', 'data-w': '@totalWidth', 'data-i': '@innerWidth', 'data-0': '@y:scaled:0' };
+        def.options = { height: { prop: 'steps', ref: 'totalWidth', steps: [{ cut: 0, value: 300 }] } };
+        def.filter = { c: '@g' };
+        def.annotations = [{ type: 'line', y: 1, props: { stroke: '@g', 'stroke-width': { prop: 'relative', ref: 'innerWidth', ratio: 0.01 } } }];
+        expect(validateDef(def)).toEqual([]);
+
+        def.mapping.c.legend.props.title = '@innerWidth';
+        def.mapping.x.scale.range = [0, '@radius'];
+        def.plot.props = { ...def.plot.props, fill: '@colour', y0: '@y:start:scaled' };
+        def.options.height.ref = 'innerWidth';
+        def.filter.c = '@h';
+        def.annotations[0].props.stroke = '@color';
+        expect(validateDef(def)).toEqual([
+            "mapping.x.scale.range[1]: unknown reference 'radius', expected one of 'g', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight'",
+            "mapping.c.legend.props.title: unknown reference 'innerWidth', expected one of 'g', 'totalWidth', 'name', 'visible', 'color'",
+            "plot[0].props.fill: unknown reference 'colour'",
+            "plot[0].props.y0: unknown reference 'y:start:scaled'",
+            "filter.c: unknown reference 'h', expected one of 'g', 'totalWidth'",
+            "annotations[0].props.stroke: unknown reference 'color', expected one of 'g', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight'",
+            "options.height: unknown reference 'innerWidth', expected one of 'g', 'totalWidth'",
+        ]);
+
+        // stacked values and the radius of polar plots
+        def.mapping.y.stacked = true;
+        def.options.coord = 'polar';
+        delete def.mapping.x.axis;
+        delete def.mapping.y.axis;
+        expect(validateDef(def).filter(w => w.includes("'y:start:scaled'") || w.includes("'radius'"))).toEqual([]);
     });
 
     test('annotations and the highlight of a plot', () => {

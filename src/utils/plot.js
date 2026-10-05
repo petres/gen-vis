@@ -37,7 +37,7 @@ const schemeRange = scaleDef => {
     return scheme[Math.min(Math.max(n, 3), scheme.length - 1)].slice(0, n);
 };
 
-const addScale = (info, dims, coord = {}) => {
+const addScale = (info, dims, coord = {}, bases = {}) => {
     const scaleDef = info.mapping.scale;
     const ranges = coord.ranges ?? {};
     // the end of a cyclic range is its start, e.g. of the angles of a circle
@@ -49,12 +49,12 @@ const addScale = (info, dims, coord = {}) => {
     if (scaleDef.interpolator)
         s.interpolator(d3[`interpolate${eu.capitalize(scaleDef.interpolator)}`]);
 
-    // fill width and height, scales without orientation and range keep the
-    // range of d3, e.g. [0, 1]
+    // fill width and height (of `dims`, e.g. the inner area) and the other
+    // bases, scales without orientation and range keep the range of d3, e.g. [0, 1]
     const range = Array.isArray(scaleDef.range) ? scaleDef.range :
         (scaleDef.scheme ? schemeRange(scaleDef) : ranges[scaleDef.orientation]);
     if (range)
-        s.range(ju.fillDirect(range, dims))
+        s.range(ju.fillDirect(range, { ...bases, ...dims }))
 
     // dates of a fixed domain are parsed as the ones of the data, e.g. "2020-01-01"
     const fixed = () => scaleDef.domain.map(v => v !== null && info.mapping.type == 'date' ? toDate(v) : v);
@@ -75,6 +75,8 @@ const addScale = (info, dims, coord = {}) => {
             [info.domain[0] === null ? -0.02 : 0, info.domain[last] === null ? 0.02 : 0]))];
         info.domainAbs = scaleDef.domainAbs ?? [0, 0];
 
+        // the ends taken from the data, `nice` rounds them
+        const fromData = [info.domain[0] === null, info.domain[last] === null];
         info.domain[0] ??= info.extent[0];
         info.domain[last] ??= info.extent[1];
 
@@ -84,6 +86,16 @@ const addScale = (info, dims, coord = {}) => {
 
         info.domain[0] += info.domainAbs[0];
         info.domain[last] += info.domainAbs[1];
+
+        // round values for the ends taken from the data, e.g. 0.951 to 1, `true`
+        // for steps of about a tenth of the domain or the number of steps
+        if (scaleDef.nice && info.mapping.type == 'numeric') {
+            const [lo, hi] = d3.nice(info.domain[0], info.domain[last], scaleDef.nice === true ? 10 : scaleDef.nice);
+            if (fromData[0])
+                info.domain[0] = lo;
+            if (fromData[1])
+                info.domain[last] = hi;
+        }
 
         // the nearest value with data
         s.invertCustom = (v) => info.values[d3.bisectCenter(info.values, s.invert(v))];

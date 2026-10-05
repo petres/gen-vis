@@ -11,6 +11,12 @@
                 <label :for="`${uid}-${element.id}-${e.id}`">{{ e.name }}</label>
             </div>
         </div>
+        <!-- the positions of the entries, e.g. years, the visualisation changes while it is moved -->
+        <div v-else-if="element.type == 'slider'" class="slider">
+            <input type="range" :id="`${uid}-${element.id}`" min="0" :max="element.values.length - 1" step="1" :value="index"
+                :aria-valuetext="element.values[index]?.name" @input="switched(element.values[+$event.target.value])">
+            <span class="value">{{ element.values[index]?.name }}</span>
+        </div>
     </div>
 </template>
 
@@ -27,10 +33,14 @@ export default {
         this.uid = `gen-vis-form-${count++}`;
     },
     computed: {
-        vg() { return this.globals[this.element.ref] }
+        vg() { return this.globals[this.element.ref] },
+        // the entry of the global, of a slider
+        index() { return Math.max(this.element.values.findIndex(e => this.equal(e.value)), 0) },
     },
     methods: {
         switched(entry) {
+            if (!entry || this.equal(entry.value))
+                return;
             this.globals[this.element.ref] = entry.value;
             this.$emit('changeSelected');
         },
@@ -49,6 +59,15 @@ export default {
             font-weight: bold;
             margin-right: 5px;
             display: inline-block;
+        }
+        .slider {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            vertical-align: middle;
+            input {
+                cursor: pointer;
+            }
         }
         .entries {
             display: inline-block;

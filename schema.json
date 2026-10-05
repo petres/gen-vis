@@ -107,7 +107,7 @@
                 "prop": { "enum": ["fixed", "ref", "relative", "steps"] },
                 "ref": {
                     "type": "string",
-                    "description": "e.g. totalWidth, innerWidth, innerHeight or a global"
+                    "description": "e.g. totalWidth or a global, in a facet also innerWidth or innerHeight"
                 },
                 "ratio": { "type": "number" },
                 "steps": {
@@ -259,6 +259,10 @@
                     "$ref": "#/definitions/pair",
                     "description": "Extends the domain by absolute values."
                 },
+                "nice": {
+                    "type": ["boolean", "number"],
+                    "description": "Rounds the ends of the domain taken from the data, e.g. 0.951 to 1, true for steps of about a tenth of the domain or the number of steps."
+                },
                 "range": {
                     "type": "array",
                     "items": { "type": ["number", "string"] },
@@ -336,6 +340,16 @@
                     "description": "Toggles of the categories of the props, without props the colors of the scale.",
                     "properties": {
                         "format": { "type": "string", "description": "The format of the values of the colors of a scale, by default the one of the hover." },
+                        "missing": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "description": "An entry of the regions without a value beside the colors of a scale, e.g. { \"name\": \"no data\", \"color\": \"#EEE\" }.",
+                            "properties": {
+                                "name": { "type": "string" },
+                                "color": { "type": "string", "description": "By default #EEE." }
+                            },
+                            "required": ["name"]
+                        },
                         "symbol": {
                             "type": "object",
                             "additionalProperties": false,
@@ -438,23 +452,35 @@
                 "id": { "type": "string" },
                 "name": { "type": "string" },
                 "ref": { "type": "string", "description": "The global which is changed." },
-                "type": { "enum": ["switch", "select"], "description": "Radio buttons or a drop down list." },
+                "type": { "enum": ["switch", "select", "slider"], "description": "Radio buttons, a drop down list or a slider over the entries." },
                 "values": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "required": ["id"],
-                        "additionalProperties": false,
-                        "properties": {
-                            "id": { "type": "string" },
-                            "name": { "type": "string" },
-                            "value": {},
-                            "mapping": {
-                                "type": "object",
-                                "description": "Patches the mappings while the entry is selected.",
-                                "additionalProperties": { "$ref": "#/definitions/mapping" }
-                            }
+                    "oneOf": [
+                        { "$ref": "#/definitions/formElementValues" },
+                        {
+                            "type": "object",
+                            "required": ["column"],
+                            "additionalProperties": false,
+                            "description": "The distinct values of a column of the data, ascending.",
+                            "properties": { "column": { "type": "string" } }
                         }
+                    ]
+                }
+            }
+        },
+        "formElementValues": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["id"],
+                "additionalProperties": false,
+                "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "value": {},
+                    "mapping": {
+                        "type": "object",
+                        "description": "Patches the mappings while the entry is selected.",
+                        "additionalProperties": { "$ref": "#/definitions/mapping" }
                     }
                 }
             }

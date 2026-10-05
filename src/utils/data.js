@@ -1,6 +1,7 @@
-export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, convert, filter, addDimInfo, addScaledData, addStackedData, categoryOrder, toDate };
+export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, convert, filter, addDimInfo, addScaledData, addStackedData, categoryOrder, toDate, addDataValues };
 
 import * as d3 from "d3";
+import { sameValue } from "@/utils/json";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
@@ -207,5 +208,22 @@ const filter = (data, conditions) => {
             if (!t(e))
                 return false;
         return true;
+    });
+};
+
+
+// the entries of form elements with the values of a column of the rows, e.g.
+// "values": { "column": "year" }, distinct and ascending, numbers by their
+// value, a global which is none of them (or missing) is the last value, e.g.
+// the latest year
+const addDataValues = (def, rows) => {
+    const numeric = v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v));
+    (def.formElements ?? []).filter(e => e.values && !Array.isArray(e.values)).forEach(e => {
+        const values = [...new Set(rows.map(r => r[e.values.column]))].filter(v => v !== null && v !== undefined && v !== '');
+        values.sort(values.every(numeric) ? (a, b) => a - b : (a, b) => String(a).localeCompare(String(b)));
+        e.values = values.map(v => ({ id: String(v), name: String(v), value: v }));
+        def.globals ??= {};
+        if (values.length > 0 && !values.some(v => sameValue(v, def.globals[e.ref])))
+            def.globals[e.ref] = values.at(-1);
     });
 };

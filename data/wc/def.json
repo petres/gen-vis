@@ -108,7 +108,6 @@
             "categories": ["type"],
             "props": {
                 "stroke-width": "@stroke-width",
-                "stroke-dasharray": "@stroke-dasharray",
                 "fill": "none",
                 "stroke": "@color",
                 "d": {

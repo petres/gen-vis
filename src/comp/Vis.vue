@@ -113,9 +113,8 @@ export default {
         measure() {
             const options = this.store.def.options;
             this.options.width = options.width || this.$refs.vis.getBoundingClientRect().width;
-            this.options.height = ju.entryToValue(options.height, {
-                totalWidth: this.options.width
-            });
+            this.store.totalWidth = this.options.width;
+            this.options.height = ju.entryToValue(options.height, this.store.bases);
         },
         resized() {
             const width = this.$refs.vis?.getBoundingClientRect().width;
@@ -139,7 +138,7 @@ export default {
             // they are compared as the values of the rows, e.g. dates as timestamps
             const values = Object.entries(def.filter ?? {}).map(([dim, v]) => ({
                 dim,
-                key: [ju.entryToValue(v, def.globals ?? {})].flat().map(k => du.convert(this.store.mapping(dim), k)),
+                key: [ju.entryToValue(v, this.store.bases)].flat().map(k => du.convert(this.store.mapping(dim), k)),
             }));
 
             this.data = markRaw(du.filter(this.store.data, [...this.filter, ...values]));
@@ -154,9 +153,7 @@ export default {
                 this.facets.margins = this.options.margins;
                 this.facets.height = this.options.height;
 
-                const cols = ju.entryToValue(def.facets.cols, {
-                    totalWidth: this.options.width
-                });
+                const cols = ju.entryToValue(def.facets.cols, this.store.bases);
 
                 this.facets.width = this.options.width/cols;
 
@@ -180,18 +177,20 @@ export default {
             const coord = this.store.coord;
             if (def.facets) {
                 // the scales of all facets, also the ones without orientation, e.g. of colors
-                const shared = def.facets.scales ? ju.entryToValue(def.facets.scales, def.globals) : [];
+                const shared = def.facets.scales ? ju.entryToValue(def.facets.scales, this.store.bases) : [];
                 const colors = this.store.mappingNamesWithKey('scale').filter(n => !this.store.mapping(n).scale.orientation);
+                // the sizes of a facet, as the ones of Facet.vue
+                const { width, height, margins } = this.facets;
+                const innerWidth = width - (margins.left + margins.right);
+                const innerHeight = height - (margins.top + margins.bottom);
+                const bases = { ...this.store.bases, width, innerWidth, height, innerHeight };
                 const infos = [...new Set([...shared, ...colors])].map(n => {
                     const info = {
                         dim: n,
                         mapping: this.store.mapping(n),
                     };
                     du.addDimInfo(info, this.data);
-                    pu.addScale(info, coord.dims(
-                        this.facets.width - (this.facets.margins.left + this.facets.margins.right),
-                        this.facets.height - (this.facets.margins.top + this.facets.margins.bottom),
-                    ), coord);
+                    pu.addScale(info, coord.dims(innerWidth, innerHeight), coord, bases);
 
                     return info;
                 });

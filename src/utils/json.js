@@ -1,4 +1,4 @@
-export { fillDirect, fillProps, valuesOf, propsOf, getProps, prepareDef, applyFormElements, templateRefs, fillTemplate, mergeAll, sameValue, entryToValue, toValue, entryToProp, isProp, refNames };
+export { outsideRows, fillDirect, fillProps, valuesOf, propsOf, getProps, prepareDef, applyFormElements, templateRefs, fillTemplate, mergeAll, sameValue, entryToValue, toValue, entryToProp, isProp, refNames };
 
 import merge from 'deepmerge';
 import { upgradePlot } from '@/utils/compat';
@@ -29,14 +29,20 @@ const mapObjectOrArray = (d, t) =>
     Array.isArray(d) ? d.map(t) : mapObject(d, t);
 
 
-// the props of every group are filled with globs and the props of its categories
-const getProps = (dataGrouped, plotDef, globs, mappings) => dataGrouped.map(g => ({
+// the bases without the names of the rows, the mappings and their values,
+// e.g. `x:scaled`, so a global `year` does not replace the mapping `year`
+const outsideRows = (bases, mappings) => Object.fromEntries(Object.entries(bases)
+    .filter(([k]) => !Object.hasOwn(mappings, k.split(':')[0])));
+
+// the props of every group are filled with the bases outside of the rows and
+// the props of its categories
+const getProps = (dataGrouped, plotDef, bases, mappings) => dataGrouped.map(g => ({
     group: Object.keys(g.group).map(d => ({
         dim: d,
         key: g.group[d],
     })),
     // categories without props only group the rows, e.g. a line per id
-    props: plotDef._fill(Object.assign({}, globs, ...Object.keys(g.group).map(v => mappings[v].props?.[g.group[v]]))),
+    props: plotDef._fill(Object.assign(outsideRows(bases, mappings), ...Object.keys(g.group).map(v => mappings[v].props?.[g.group[v]]))),
     values: g.entries,
 }));
 

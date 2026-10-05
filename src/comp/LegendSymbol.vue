@@ -9,12 +9,26 @@ import * as pu from "@/utils/plot";
 
 export default {
     props: ["info", "props"],
+    inject: ['store'],
+    computed: {
+        bases() { return { ...this.store.bases, ...this.props } },
+    },
+    // drawn again if the globals change, e.g. of a form element
+    watch: {
+        bases() { this.draw() },
+    },
     mounted() {
-        const svg = d3.select(this.$refs.legendSymbol)
-        this.info.elements.forEach(e => {
-            const el = svg.append(e.type);
-            pu.setProps.call(el.node(), ju.fillDirect(e.props, this.props))
-        });
+        this.draw();
+    },
+    methods: {
+        draw() {
+            const svg = d3.select(this.$refs.legendSymbol);
+            svg.selectAll("*").remove();
+            this.info.elements.forEach(e => {
+                const el = svg.append(e.type);
+                pu.setProps.call(el.node(), ju.fillDirect(e.props, this.bases))
+            });
+        },
     }
 }
 </script>

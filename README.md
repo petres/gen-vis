@@ -15,7 +15,7 @@ the styles, and provides two global functions:
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
 
-<script src="gen-vis-1.0.0.js"></script>
+<script src="gen-vis-1.1.0.js"></script>
 <script>mountGenVisByClass('genVis')</script>
 ```
 
@@ -259,7 +259,9 @@ the definition refer to these names.
   domain, `null` entries are taken from the data, dates are parsed as the ones
   of the data. `domainRel` (relative to the domain) and `domainAbs` (absolute)
   extend it, by default a domain of a position taken from the data is
-  extended by 2%. `padding` for categorical scales. A scale without
+  extended by 2%. `nice` rounds the ends taken from the data of a numeric
+  mapping, e.g. 0.951 to 1, `true` for steps of about a tenth of the domain
+  or the number of steps, e.g. so the legend of colors ends at 100%. `padding` for categorical scales. A scale without
   `orientation` has the `range` given, e.g. colors or the radius of points.
 - Scales of colors: `sequential` and `diverging` scales (a domain with a
   middle entry, e.g. `[null, 0, null]`) have an `interpolator` of d3, e.g.
@@ -290,7 +292,11 @@ the definition refer to these names.
   The entries are checkboxes of the keyboard (tab, enter or space), the mouse
   and the focus highlight their category. A mapping with a scale but
   without props has the colors of its scale as legend, a gradient or the
-  classes, `format` of the values, by default the one of the hover.
+  classes, the ticks of a gradient at the positions of their colors, e.g. of
+  a sqrt scale steps of 1, 2 and 5 with more space for the small values,
+  `format` of the values, by default the one of the hover, `missing`
+  an entry beside them, e.g. of the regions of a map without a value
+  (`{"name": "keine Daten", "color": "#DADADA"}`, the color of `geo:base`).
 - `stacked`: stacks the values of a vertical (or radial) axis, the first
   category is at the bottom. `@y:start` and `@y:end` are the start and the end
   of the stacked value, `@y:start:scaled` and `@y:end:scaled` their positions,
@@ -500,17 +506,29 @@ See `data/sprit-nuts/def.json`, `data/rechtsform/def-stacked-p.json` and
 Most values of a definition can be props:
 
 - fixed values, e.g. `3` or `"none"`
-- references `"@name"`: in a plot a column of the row (e.g. `@x`), the scaled
-  value (`@x:scaled`, `@x:scaled:0` for the position of 0, `@x:scaled:min`
-  and `@x:scaled:max` of the domain, `@y:end:scaled` for the end of a stacked
-  value, see `stacked`), a prop of the categories (e.g. `@color`) or
-  the size of the plot (`@width`, `@innerWidth`, `@height`, `@innerHeight`)
+- references `"@name"`, see below
 - `{"prop": "relative", "ref": "innerWidth", "ratio": 0.01}`: a ratio of a
   reference
 - `{"prop": "steps", "ref": "totalWidth", "steps": [{"cut": 0, "value": 220}, {"cut": 550, "value": 250}]}`:
   the value of the last step with a cut below the reference
 
 Objects without `prop` are nested props, e.g. `d` of a path.
+
+The names of the references depend on the part of the definition, the inner
+parts add names:
+
+| Part | Names |
+|------|-------|
+| everywhere | the `globals` and `totalWidth`, the width of the visualisation |
+| `options.height`, `facets.cols`, `facets.scales`, `filter` | only these |
+| the `props` of `legend` (also of the `symbol`) and `hover` of a mapping | the props of its categories, e.g. `@color` and `@name` |
+| `axis.ticks`, the `props` of annotations | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight` |
+| `scale.range` | the sizes of the coordinate system, e.g. `@radius` of polar plots, `width` and `height` are the ones of the inner area |
+| the `props` of a plot | the props of its categories and the values of the row: a mapping (e.g. `@x`), the scaled value (`@x:scaled`, `@x:scaled:0` for the position of 0, `@x:scaled:min` and `@x:scaled:max` of the domain), stacked values (`@y:start`, `@y:end:scaled`, ..., see `stacked`) |
+
+Inner names replace outer ones, in a plot the mappings replace globals of the
+same name, e.g. `@year` is the one of the row. A reference to an unknown name
+is undefined, `validateDef` warns of it.
 
 ### `facets`
 
@@ -521,7 +539,9 @@ A plot for every category of `dim` (the name of a mapping with `props`), in
 ### `formElements` and `globals`
 
 Form elements change `globals`, e.g. the shared scales of the facets, as
-radio buttons (`"type": "switch"`) or a drop down list (`"type": "select"`).
+radio buttons (`"type": "switch"`), a drop down list (`"type": "select"`) or
+a slider over the entries (`"type": "slider"`, e.g. of years, the
+visualisation changes while it is moved).
 `filter` shows only the rows of values of mappings, e.g. of a global, the
 values are compared as the ones of the rows, e.g. dates:
 
@@ -532,6 +552,16 @@ values are compared as the ones of the rows, e.g. dates:
     "id": "year", "name": "Jahr", "ref": "year", "type": "select",
     "values": [{ "id": "2024", "name": "2024", "value": "2024" }, { "id": "2025", "name": "2025", "value": "2025" }]
 }]
+```
+
+`values` can also be the distinct values of a column of the data, in
+ascending order (numbers by their value), named as the values, so new
+values of the data are added, e.g. a new year. If the global is none of them,
+e.g. it is missing, it is the last one:
+
+```json
+"filter": { "year": "@year" },
+"formElements": [{ "id": "year", "name": "Jahr", "ref": "year", "type": "slider", "values": { "column": "year" } }]
 ```
 
 An entry
@@ -613,7 +643,8 @@ registerPlotType('my:tick', {
 
 `ctx` has the `store`, the d3 selection `inner` of the plot area, the
 `data` and the scales (`info`) of the facet, `innerWidth`, `innerHeight` and
-`relativeBases`. `curve: true` passes the `curve` of the plot, `coords` limits
+`relativeBases` (the names of the references of the facet, see
+[props](#props-1)). `curve: true` passes the `curve` of the plot, `coords` limits
 a type to coordinate systems, e.g. `cartesian:bar` to `cartesian`. A
 coordinate system (`registerCoord(name, coord)`) has the default ranges of the
 orientations of its scales, the axes and the geometry of the hover, see

@@ -192,7 +192,6 @@
             "categories": ["quali", "werr", "bundesland", "wfrist"],
             "props": {
                 "stroke-width": "2",
-                "stroke-dasharray": "@stroke-dasharray",
                 "fill": "none",
                 "stroke": "@color",
                 "d": {
