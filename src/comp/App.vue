@@ -56,7 +56,7 @@ export default {
            default: false
         },
         // the width of the images, independent of the screen, the one of the
-        // definition otherwise or 1200
+        // definition otherwise or 1200, `screen` is the one on the screen
         imageWidth: {
            type: [Number, String],
            default: null
@@ -122,7 +122,9 @@ export default {
         // copy of the width of the images, see utils/export.js
         image() {
             const options = this.store.def.options;
-            const width = Number(this.imageWidth || options.width || defaultWidth);
+            const width = this.imageWidth == 'screen'
+                ? this.$el.querySelector('.vis').getBoundingClientRect().width
+                : Number(this.imageWidth || options.width || defaultWidth);
             const props = {
                 def: this.def, defFile: this.defFile, data: this.data,
                 state: JSON.parse(JSON.stringify(this.store.state)),
@@ -133,7 +135,7 @@ export default {
                 // the components and plugins of the page, e.g. of the slots
                 vnode.appContext = this.$.appContext;
                 return vnode;
-            }, { width, text: selection(this.store.def) });
+            }, { width, text: selection(this.store.def), facets: this.store.def.facets?.dim });
         },
         // the name of the file is the argument, the one of `download` or the title
         async exportPng(name) {

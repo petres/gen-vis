@@ -32,6 +32,7 @@ describe('the schema', () => {
         expect(errors({ parent: '../shared.json', options: { title: 'A' } })).toEqual([]);
         expect(errors({ plot: { props: { 'stroke-dasharray': '2 2' } } })).toEqual([]);
         expect(errors({ facets: { cols: { steps: [{ cut: 0, value: 1 }] } } })).toEqual([]);
+        expect(errors({ formElements: [{ id: 'scale', inImage: false }] })).toEqual([]);
     });
 
     test('rejects typos and wrong values', () => {

@@ -10,11 +10,17 @@ commits, the upgrade from 0.9 in the [README](README.md#upgrading-from-09).
   clipboard) at the right of the footer, at the right end of the plots
 - the image is a copy with the same state, drawn outside of the screen in
   the width of `imageWidth` (the one of the definition or 1200), so it is
-  the same on every screen, twice the size, without the form elements, their
+  the same on every screen, or `screen` for the width on the screen (the
+  layout of a phone), twice the size (narrow ones more, at least 1200
+  pixels), without the form elements, their
   selection is a line below the subtitle, e.g. "Einheit: Anteil · Jahr:
-  2024", the legends only have the entries shown
+  2024", the legends only have the entries shown, without the legend of the
+  facets (their titles name them), `"inImage": false` of a form element
+  leaves it out of the selection, e.g. of shared scales
 - the methods `exportPng(name)`, `copyPng()` and `image()` (a Blob) of the
   component, e.g. for a button of the page
+- the slot `buttons`: buttons of the page before the ones of `copy` and
+  `download`, with `save()`, `copy()` and `canCopy`, e.g. other icons
 - the events `rendered` (drawn the first time) and `error` (its message)
 - the titles of the buttons in the language of `options.locale`
 - modern-screenshot is a dependency, loaded with the first image

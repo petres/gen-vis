@@ -453,6 +453,7 @@
                 "name": { "type": "string" },
                 "ref": { "type": "string", "description": "The global which is changed." },
                 "type": { "enum": ["switch", "select", "slider"], "description": "Radio buttons, a drop down list or a slider over the entries." },
+                "inImage": { "type": "boolean", "default": true, "description": "The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales." },
                 "values": {
                     "oneOf": [
                         { "$ref": "#/definitions/formElementValues" },

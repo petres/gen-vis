@@ -10,14 +10,17 @@ import { parquetWriteBuffer } from 'hyparquet-writer';
 import { definitions } from '@/dev/definitions.js';
 import * as d3 from 'd3';
 import { clearCache } from '@/store';
+import { prepareDef } from '@/utils/json';
+import { selection } from '@/utils/export';
 
 // the image of the copy of the visualisation, the copy and the width of its
 // container are kept for the tests
-const screenshot = vi.hoisted(() => ({ copy: null, width: null }));
+const screenshot = vi.hoisted(() => ({ copy: null, width: null, scale: null }));
 vi.mock('modern-screenshot', () => ({
-    domToBlob: async node => {
+    domToBlob: async (node, options) => {
         screenshot.copy = node.cloneNode(true);
         screenshot.width = node.parentElement.style.width;
+        screenshot.scale = options.scale;
         return new Blob(['png'], { type: 'image/png' });
     },
 }));
@@ -1457,7 +1460,9 @@ describe('images', () => {
 
         const copy = screenshot.copy;
         expect(screenshot.file).toBe('chart.png');
-        expect([...copy.querySelectorAll('.subtitle')].map(e => e.textContent)).toEqual(['Untertitel', 'Einheit: Anteil']);
+        expect([...copy.querySelectorAll('.vis-header > div')].map(e => [e.className, e.textContent])).toEqual([
+            ['title', 'Titel'], ['subtitle', 'Untertitel'], ['selection', 'Einheit: Anteil'],
+        ]);
         expect(copy.querySelector('.vis-form-elements, .vis-buttons')).toBeNull();
         expect([...copy.querySelectorAll('.legend .entries > div')].map(e => e.dataset.key)).toEqual(['Wien']);
         // the copy is removed again, the visualisation keeps its state
@@ -1468,17 +1473,19 @@ describe('images', () => {
 
     test('the width of the images', async () => {
         vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-        // of the definition, the default and the prop, with the padding
-        const widths = [];
-        for (const props of [{ def: def() }, { def: fluid() }, { def: fluid(), imageWidth: 1600 }]) {
+        // of the definition, the default, the prop and the screen (800 in the
+        // tests), with the padding, narrow ones of a larger scale
+        const images = [];
+        const sizes = [{ def: def() }, { def: fluid() }, { def: fluid(), imageWidth: 1600 }, { def: fluid(), imageWidth: 'screen' }, { def: fluid(), imageWidth: 360 }];
+        for (const props of sizes) {
             const app = createApp(GenVis, { ...props, data: lineData });
             const vm = app.mount(document.body.appendChild(document.createElement('div')));
             await rendered(vm.$el);
             await vm.exportPng('chart');
-            widths.push(screenshot.width);
+            images.push([screenshot.width, screenshot.scale]);
             app.unmount();
         }
-        expect(widths).toEqual(['630px', '1230px', '1630px']);
+        expect(images).toEqual([['630px', 2], ['1230px', 2], ['1630px', 2], ['830px', 2], ['390px', 4]]);
         expect(errors).toEqual([]);
     });
 
@@ -1503,6 +1510,48 @@ describe('images', () => {
         expect(document.querySelectorAll('.vis')).toHaveLength(1);
         app.unmount();
         errors = [];
+    });
+
+    test('form elements of the presentation are not in the selection', async () => {
+        const d = def();
+        d.globals.scale = 'shared';
+        d.formElements.push({ id: 'scale', name: 'Skala', ref: 'scale', type: 'switch', inImage: false, values: [
+            { id: 'shared', name: 'Geteilt', value: 'shared' },
+            { id: 'free', name: 'Getrennt', value: 'free' },
+        ] });
+        expect(selection(prepareDef(d))).toBe('Einheit: Absolut');
+    });
+
+    test('the image has no legend of the facets, their titles name them', async () => {
+        vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+        const el = await mount(GenVis, { def: { ...def(), facets: { dim: 'c', cols: 2 } }, data: lineData, download: true });
+        expect(el.querySelector('.legend[data-dim="c"]')).not.toBeNull();
+
+        el.querySelector('.vis-download').click();
+        await vi.waitFor(() => expect(screenshot.copy).not.toBeNull());
+        expect(screenshot.copy.querySelector('.legend[data-dim="c"]')).toBeNull();
+        expect([...screenshot.copy.querySelectorAll('.facet-title')].map(e => e.textContent)).toEqual(['Wien', 'Tirol']);
+        expect(errors).toEqual([]);
+    });
+
+    test('the buttons of the slot are before the others and not in the image', async () => {
+        vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () { screenshot.file = this.download; });
+        const el = await mount({ render: () => h(GenVis, { def: def(), data: lineData, download: true }, {
+            buttons: ({ save, canCopy }) => h('button', { class: 'own', 'data-copy': String(canCopy), onClick: save }),
+        }) });
+        expect([...el.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['own', 'vis-download']);
+        expect(el.querySelector('.own').dataset.copy).toBe('false');
+
+        // the own button saves the image too, without the buttons
+        el.querySelector('.own').click();
+        await vi.waitFor(() => expect(screenshot.file).toBe('Titel.png'));
+        expect(screenshot.copy.querySelector('.vis-buttons, .own')).toBeNull();
+        expect(errors).toEqual([]);
+    });
+
+    test('only the buttons of the slot', async () => {
+        const el = await mount({ render: () => h(GenVis, { def: def(), data: lineData }, { buttons: () => h('button', { class: 'own' }) }) });
+        expect([...el.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['own']);
     });
 
     test('rendered once it is drawn', async () => {

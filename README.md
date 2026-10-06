@@ -57,7 +57,7 @@ well.
 | `state`    |                 | the changes of the user, see [state](#state) |
 | `download` | `data-download` | a button at the right of the footer to save it as a PNG, a string is the name of the file (default the title) |
 | `copy`     | `data-copy`     | a button at the right of the footer to copy the PNG to the clipboard (only on https or localhost) |
-| `imageWidth` | `data-image-width` | the width of the PNG in pixels, the one of the definition otherwise or 1200 |
+| `imageWidth` | `data-image-width` | the width of the PNG in pixels, the one of the definition otherwise or 1200, `screen` for the one on the screen (as it is seen, e.g. on a phone) |
 
 Every visualisation has its own state, several of them can be used on a page.
 If the props change, the visualisation is loaded again. Errors are shown in
@@ -80,7 +80,10 @@ of the mappings, `nearest` the row of the element under the mouse.
 
 The slots replace parts of the visualisation, `hover` the content of the
 hover (it also has `entries`, the formatted values of the default table),
-`header` the title and the subtitle and `footer` the footer:
+`header` the title and the subtitle and `footer` the footer. `buttons` adds
+buttons of the page at the right of the footer, before the ones of `copy` and
+`download`, e.g. own icons, with `save()`, `copy()` and `canCopy` of the
+[PNG](#png):
 
 ```html
 <GenVis def-file="/data/bev/def.json" @select="open">
@@ -88,6 +91,7 @@ hover (it also has `entries`, the formatted values of the default table),
         <strong>{{ title }}</strong> {{ nearest?.land }}: {{ nearest?.y }}
     </template>
     <template #footer="{ footer }"><small v-html="footer"/></template>
+    <template #buttons="{ save }"><button @click="save">PNG</button></template>
 </GenVis>
 ```
 
@@ -95,9 +99,12 @@ hover (it also has `entries`, the formatted values of the default table),
 
 The image is a copy of the visualisation with the same state, drawn outside
 of the screen in the width of `imageWidth`, so it is the same on every
-screen, e.g. the facets have the columns of this width. It is twice the size,
+screen, e.g. the facets have the columns of this width, or with `screen` in
+the width it has on the screen, e.g. the layout of a phone. It is twice the
+size, narrow ones more (at least 1200 pixels wide, e.g. four times of 360),
 has no form elements, their selection is a line below the subtitle, e.g.
-`Einheit: Anteil · Jahr: 2024`, and the legends only have the entries shown.
+`Einheit: Anteil · Jahr: 2024`, the legends only have the entries shown and
+the legend of the facets is left out, their titles name them.
 The titles of the buttons are in the language of `options.locale`.
 
 Besides the buttons of `download` and `copy`, the methods of the component
@@ -141,10 +148,11 @@ the styles, e.g.:
 .vis-header .subtitle { font-size: 15px; }
 ```
 
-The main classes are `vis`, `vis-header` (with `title` and `subtitle`),
-`vis-form-elements` (with a `formElement` for every form element),
-`vis-legends`, `facet-title` and `vis-footer` (with `vis-footer-content` and
-`vis-buttons`, the buttons `vis-copy` and `vis-download`). Styles of the page which are in
+The main classes are `vis`, `vis-header` (with `title`, `subtitle` and in
+the [PNG](#png) `selection`), `vis-form-elements` (with a `formElement` for
+every form element), `vis-legends`, `facet-title` and `vis-footer` (with
+`vis-footer-content` and `vis-buttons`, the buttons `vis-copy` and
+`vis-download`). Styles of the page which are in
 a cascade layer themselves only override the package if their layer is
 declared after it, e.g. `@layer gen-vis, page;`.
 
@@ -566,6 +574,10 @@ Form elements change `globals`, e.g. the shared scales of the facets, as
 radio buttons (`"type": "switch"`), a drop down list (`"type": "select"`) or
 a slider over the entries (`"type": "slider"`, e.g. of years, the
 visualisation changes while it is moved).
+The selected entries are named below the subtitle of the [PNG](#png),
+`"inImage": false` leaves out a form element which only changes the
+presentation, which the image shows anyway, e.g. shared or separate scales of
+the facets.
 `filter` shows only the rows of values of mappings, e.g. of a global, the
 values are compared as the ones of the rows, e.g. dates:
 

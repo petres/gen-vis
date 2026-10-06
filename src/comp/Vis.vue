@@ -32,8 +32,10 @@
                 <slot-content v-if="slots.footer" :fn="slots.footer" :props="{ footer: options.footer }"/>
                 <span v-else v-html="options.footer"/>
             </div>
-            <!-- copy, check and download of the feather icons, at the right end of the plots -->
-            <div v-if="(copy && clipboard) || download" class="vis-buttons" :style="{ marginRight: `${options.margins?.right ?? 0}px` }">
+            <!-- the buttons of the page (the slot buttons), copy, check and
+                 download of the feather icons, at the right end of the plots -->
+            <div v-if="slots.buttons || (copy && clipboard) || download" class="vis-buttons" :style="{ marginRight: `${options.margins?.right ?? 0}px` }">
+                <slot-content v-if="slots.buttons" :fn="slots.buttons" :props="{ save: image.save, copy: image.copy, canCopy: clipboard }"/>
                 <button v-if="copy && clipboard" class="vis-copy" :title="copied ? texts.copied : texts.copy" :aria-label="texts.copy" @click="copyPng">
                     <svg viewBox="0 0 24 24" width="14" height="14">
                         <path v-if="copied" d="M20 6L9 17l-5-5"/>
@@ -291,6 +293,12 @@ export default {
             font-size: 13px;
             margin-top: 3px;
         }
+
+        // the line of the selection of the form elements in the images
+        .selection {
+            font-size: 13px;
+            margin-top: 6px;
+        }
         margin-bottom: 10px;
     }
 
@@ -309,6 +317,7 @@ export default {
     .vis-buttons {
         flex: none;
         display: flex;
+        align-items: center;
         gap: 8px;
     }
 
