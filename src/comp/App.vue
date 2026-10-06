@@ -1,7 +1,7 @@
 <template>
     <div class="vis-outer">
         <div v-if="error" class="vis-error">{{ error }}</div>
-        <vis-base v-else-if="store.loaded" ref="vis" :download="download" @state-changed="$emit('update:state', store.state)"/>
+        <vis-base v-else-if="store.loaded" :download="download" :copy="copy" @state-changed="$emit('update:state', store.state)" @rendered="$emit('rendered')"/>
         <div v-if="debug && store.def">
             <h3>prepared:</h3>
             <pre style="height: 500px; overflow: auto; font-size: 11px;">{{ JSON.stringify(store.def, null, 4) }}</pre>
@@ -13,7 +13,9 @@
 
 <script>
 import { createStore } from '@/store.js';
+import { h } from 'vue';
 import { sameValue } from '@/utils/json.js';
+import { selection, renderImage, saveImage, copyImage, defaultWidth } from '@/utils/export.js';
 import VisBase from '@/comp/Vis.vue';
 
 export default {
@@ -48,10 +50,22 @@ export default {
            type: [Boolean, String],
            default: false
         },
+        // a button in the footer to copy the PNG to the clipboard
+        copy: {
+           type: Boolean,
+           default: false
+        },
+        // the width of the images, independent of the screen, the one of the
+        // definition otherwise or 1200
+        imageWidth: {
+           type: [Number, String],
+           default: null
+        },
     },
     // update:state of the changes of the user, hover and select of the rows
-    // of the hover and of a click, see Facet.vue
-    emits: ['update:state', 'hover', 'select'],
+    // of the hover and of a click, see Facet.vue, rendered once it is drawn,
+    // error with the message
+    emits: ['update:state', 'hover', 'select', 'rendered', 'error'],
     data: () => ({
         store: createStore(),
         error: null,
@@ -63,6 +77,7 @@ export default {
             store: this.store,
             slots: this.$slots,
             emit: (name, payload) => this.$emit(name, payload),
+            image: { save: () => this.exportPng(), copy: () => this.copyPng() },
         };
     },
     components: {
@@ -103,14 +118,35 @@ export default {
             if (this.store.loaded && !sameValue(this.state ?? {}, this.store.state))
                 this.store.setState(this.state);
         },
-        // the visualisation as a PNG without the form elements, also without
-        // the button, e.g. of a button of the page
-        exportPng(name) {
-            return this.$refs.vis?.exportPng(name);
+        // the visualisation as a PNG (a Blob) without the form elements, of a
+        // copy of the width of the images, see utils/export.js
+        image() {
+            const options = this.store.def.options;
+            const width = Number(this.imageWidth || options.width || defaultWidth);
+            const props = {
+                def: this.def, defFile: this.defFile, data: this.data,
+                state: JSON.parse(JSON.stringify(this.store.state)),
+                class: this.$attrs.class,
+            };
+            return renderImage(this.$el, done => {
+                const vnode = h(this.$.type, { ...props, onRendered: done.resolve, onError: done.reject }, this.$slots);
+                // the components and plugins of the page, e.g. of the slots
+                vnode.appContext = this.$.appContext;
+                return vnode;
+            }, { width, text: selection(this.store.def) });
+        },
+        // the name of the file is the argument, the one of `download` or the title
+        async exportPng(name) {
+            name ??= typeof this.download == 'string' && this.download ? this.download : (this.store.def.options.title || 'gen-vis');
+            saveImage(await this.image(), name);
+        },
+        copyPng() {
+            return copyImage(this.image());
         },
         showError(error) {
             console.error(error);
             this.error = error.message;
+            this.$emit('error', error.message);
         },
     },
 }

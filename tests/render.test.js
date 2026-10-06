@@ -11,12 +11,14 @@ import { definitions } from '@/dev/definitions.js';
 import * as d3 from 'd3';
 import { clearCache } from '@/store';
 
-// the image of the copy of the visualisation, the copy is kept for the tests
-const screenshot = vi.hoisted(() => ({ copy: null }));
+// the image of the copy of the visualisation, the copy and the width of its
+// container are kept for the tests
+const screenshot = vi.hoisted(() => ({ copy: null, width: null }));
 vi.mock('modern-screenshot', () => ({
-    domToPng: async node => {
+    domToBlob: async node => {
         screenshot.copy = node.cloneNode(true);
-        return 'data:image/png;base64,';
+        screenshot.width = node.parentElement.style.width;
+        return new Blob(['png'], { type: 'image/png' });
     },
 }));
 
@@ -1399,7 +1401,7 @@ describe('fixed bugs', () => {
     });
 });
 
-describe('download', () => {
+describe('images', () => {
     const def = () => ({
         ...lineDef({ title: 'Titel', subtitle: 'Untertitel', footer: 'Quelle' }),
         globals: { unit: 'a' },
@@ -1409,9 +1411,38 @@ describe('download', () => {
         ] }],
     });
 
-    test('the button is only shown with the prop', async () => {
-        expect((await mount(GenVis, { def: def(), data: lineData })).querySelector('.vis-footer .vis-download')).toBeNull();
-        expect((await mount(GenVis, { def: def(), data: lineData, download: true })).querySelector('.vis-footer .vis-download')).not.toBeNull();
+    // without the size of the definition, the images have their own width
+    const fluid = () => {
+        const d = def();
+        delete d.options.width;
+        return d;
+    };
+
+    const clipboard = () => {
+        const write = vi.fn(async items => { await items[0].items['image/png']; });
+        vi.stubGlobal('ClipboardItem', class { constructor(items) { this.items = items; } });
+        vi.stubGlobal('navigator', { ...navigator, clipboard: { write } });
+        return write;
+    };
+
+    beforeEach(() => {
+        screenshot.copy = screenshot.width = null;
+        URL.createObjectURL = () => 'blob:png';
+        URL.revokeObjectURL = () => {};
+    });
+
+    test('the buttons are only shown with the props', async () => {
+        clipboard();
+        expect((await mount(GenVis, { def: def(), data: lineData })).querySelector('.vis-buttons')).toBeNull();
+        const el = await mount(GenVis, { def: def(), data: lineData, download: true, copy: true });
+        expect([...el.querySelectorAll('.vis-footer .vis-buttons button')].map(b => b.className)).toEqual(['vis-copy', 'vis-download']);
+        expect(el.querySelector('.vis-download').title).toBe('Als PNG speichern');
+    });
+
+    test('no copy button without the clipboard', async () => {
+        vi.stubGlobal('ClipboardItem', undefined);
+        const el = await mount(GenVis, { def: def(), data: lineData, copy: true });
+        expect(el.querySelector('.vis-buttons')).toBeNull();
     });
 
     test('the image has the selection but not the controls and the hidden entries', async () => {
@@ -1427,10 +1458,57 @@ describe('download', () => {
         const copy = screenshot.copy;
         expect(screenshot.file).toBe('chart.png');
         expect([...copy.querySelectorAll('.subtitle')].map(e => e.textContent)).toEqual(['Untertitel', 'Einheit: Anteil']);
-        expect(copy.querySelector('.vis-form-elements, .vis-download')).toBeNull();
+        expect(copy.querySelector('.vis-form-elements, .vis-buttons')).toBeNull();
         expect([...copy.querySelectorAll('.legend .entries > div')].map(e => e.dataset.key)).toEqual(['Wien']);
-        // the copy is removed again
+        // the copy is removed again, the visualisation keeps its state
         expect(document.querySelectorAll('.vis')).toHaveLength(1);
+        expect(el.querySelector('.formElement input[value="b"]').checked).toBe(true);
         expect(errors).toEqual([]);
+    });
+
+    test('the width of the images', async () => {
+        vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+        // of the definition, the default and the prop, with the padding
+        const widths = [];
+        for (const props of [{ def: def() }, { def: fluid() }, { def: fluid(), imageWidth: 1600 }]) {
+            const app = createApp(GenVis, { ...props, data: lineData });
+            const vm = app.mount(document.body.appendChild(document.createElement('div')));
+            await rendered(vm.$el);
+            await vm.exportPng('chart');
+            widths.push(screenshot.width);
+            app.unmount();
+        }
+        expect(widths).toEqual(['630px', '1230px', '1630px']);
+        expect(errors).toEqual([]);
+    });
+
+    test('the copy button writes the image to the clipboard', async () => {
+        const write = clipboard();
+        const el = await mount(GenVis, { def: def(), data: lineData, copy: true });
+        el.querySelector('.vis-copy').click();
+        await vi.waitFor(() => expect(el.querySelector('.vis-copy').title).toBe('Kopiert'));
+        expect(write).toHaveBeenCalledTimes(1);
+        expect(await write.mock.calls[0][0][0].items['image/png']).toBeInstanceOf(Blob);
+        expect(errors).toEqual([]);
+    });
+
+    test('an error of the copy rejects the image', async () => {
+        registerPlotType('test:once', plotTypes['cartesian:line']);
+        const app = createApp(GenVis, { def: { ...def(), plot: [{ ...def().plot[0], type: 'test:once' }] }, data: lineData });
+        const vm = app.mount(document.body.appendChild(document.createElement('div')));
+        await rendered(vm.$el);
+        // the copy is drawn again, without the plot type
+        delete plotTypes['test:once'];
+        await expect(vm.image()).rejects.toThrow("Unknown plot type 'test:once'");
+        expect(document.querySelectorAll('.vis')).toHaveLength(1);
+        app.unmount();
+        errors = [];
+    });
+
+    test('rendered once it is drawn', async () => {
+        const onRendered = vi.fn();
+        const el = await mount(GenVis, { def: def(), data: lineData, onRendered });
+        expect(el.querySelector('svg.facet path')).not.toBeNull();
+        expect(onRendered).toHaveBeenCalledTimes(1);
     });
 });

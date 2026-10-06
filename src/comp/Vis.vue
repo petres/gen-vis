@@ -32,12 +32,20 @@
                 <slot-content v-if="slots.footer" :fn="slots.footer" :props="{ footer: options.footer }"/>
                 <span v-else v-html="options.footer"/>
             </div>
-            <!-- download of the feather icons, at the right end of the plots -->
-            <button v-if="download" class="vis-download" title="PNG" aria-label="PNG" :style="{ marginRight: `${options.margins?.right ?? 0}px` }" @click="exportPng()">
-                <svg viewBox="0 0 24 24" width="14" height="14">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                </svg>
-            </button>
+            <!-- copy, check and download of the feather icons, at the right end of the plots -->
+            <div v-if="(copy && clipboard) || download" class="vis-buttons" :style="{ marginRight: `${options.margins?.right ?? 0}px` }">
+                <button v-if="copy && clipboard" class="vis-copy" :title="copied ? texts.copied : texts.copy" :aria-label="texts.copy" @click="copyPng">
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                        <path v-if="copied" d="M20 6L9 17l-5-5"/>
+                        <path v-else d="M11 9h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                </button>
+                <button v-if="download" class="vis-download" :title="texts.download" :aria-label="texts.download" @click="savePng">
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 </template>
@@ -49,7 +57,7 @@ import * as d3 from "d3";
 import * as du from "@/utils/data.js";
 import * as pu from "@/utils/plot.js";
 import * as ju from "@/utils/json.js";
-import { selection, exportPng } from "@/utils/export.js";
+import { canCopy } from "@/utils/export.js";
 
 import Facet from '@/comp/Facet.vue';
 import LegendEntry from '@/comp/Legend.vue';
@@ -59,20 +67,27 @@ import FormElement from '@/comp/FormElement.vue';
 
 
 export default {
-    inject: ['store', 'slots'],
-    // the button of the footer to save the visualisation as a PNG, a string
-    // is the name of the file
+    inject: ['store', 'slots', 'image'],
+    // the buttons of the footer to save the visualisation as a PNG and to
+    // copy it, see App.vue
     props: {
         download: {
             type: [Boolean, String],
             default: false,
         },
+        copy: {
+            type: Boolean,
+            default: false,
+        },
     },
-    // the user changed the state, see store.state
-    emits: ['stateChanged'],
+    // the user changed the state, see store.state, rendered once it is drawn
+    emits: ['stateChanged', 'rendered'],
     // the options of the definition already in the first render, e.g. of the header slot
     data() { return {
         initialized: false,
+        // the check instead of the icon of the copy for a while
+        copied: false,
+        clipboard: canCopy(),
 
         options: { ...this.store.def.options },
         globals: {},
@@ -100,10 +115,15 @@ export default {
             this.scales();
         },
     },
+    computed: {
+        texts() { return this.store.locale.texts },
+    },
     mounted() {
         this.baseInit();
         this.dataInit();
         this.scales();
+        // the facets are drawn in the render of `initialized`
+        this.$nextTick(() => this.$emit('rendered'));
 
         // without a fixed width the visualisation fills its container
         if (!this.store.def.options.width) {
@@ -117,6 +137,7 @@ export default {
     unmounted() {
         this.resizeObserver?.disconnect();
         clearTimeout(this.resizeTimeout);
+        clearTimeout(this.copiedTimeout);
     },
     methods: {
         baseInit() {
@@ -227,10 +248,22 @@ export default {
             this.store.applyFormElements();
             this.changeSelected();
         },
-        // the name of the file is the one of the prop, of the argument or the title
-        exportPng(name) {
-            name ??= typeof this.download == 'string' ? this.download : (this.options.title || 'gen-vis');
-            return exportPng(this.$refs.vis, { name, text: selection(this.store.def) });
+        async savePng() {
+            try {
+                await this.image.save();
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        async copyPng() {
+            try {
+                await this.image.copy();
+                this.copied = true;
+                clearTimeout(this.copiedTimeout);
+                this.copiedTimeout = setTimeout(() => this.copied = false, 1500);
+            } catch (error) {
+                console.error(error);
+            }
         },
         highlight(info) {
             pu.highlightElements(d3.select(this.$refs.vis), this.store.def.plot, {[info.dim]: info.key})
@@ -273,8 +306,13 @@ export default {
         }
     }
 
-    .vis-download {
+    .vis-buttons {
         flex: none;
+        display: flex;
+        gap: 8px;
+    }
+
+    .vis-copy, .vis-download {
         padding: 0;
         border: 0;
         background: none;

@@ -12,7 +12,8 @@
   },
   "files": [
     "dist",
-    "schema.json"
+    "schema.json",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "dev": "vite",

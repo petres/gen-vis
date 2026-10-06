@@ -1,9 +1,16 @@
-export { selection, exportPng };
+export { selection, renderImage, saveImage, copyImage, canCopy, defaultWidth };
 
+import { render } from "vue";
 import { sameValue } from "@/utils/json";
 
 // the space around the visualisation in the image
 const padding = 15;
+
+// the width of the images, if neither the page nor the definition sets one
+const defaultWidth = 1200;
+
+// the time to wait for the copy of the visualisation
+const timeout = 20000;
 
 // the chosen entries of the form elements of a prepared definition, e.g.
 // "Einheit: Anteil · Jahr: 2024", the image has no form elements
@@ -12,12 +19,12 @@ const selection = def => (def.formElements ?? []).map(e => {
     return entry ? `${e.name}: ${entry.name}` : null;
 }).filter(Boolean).join(' · ');
 
-// a copy of the visualisation without the form elements and the button, the
+// a copy of the visualisation without the form elements and the buttons, the
 // selection is a line below the subtitle and the legends only have the
 // entries shown
 const prepare = (vis, text) => {
     const copy = vis.cloneNode(true);
-    copy.querySelectorAll('.vis-form-elements, .vis-download').forEach(e => e.remove());
+    copy.querySelectorAll('.vis-form-elements, .vis-buttons').forEach(e => e.remove());
     copy.querySelectorAll('.legend [data-visible="false"]').forEach(e => e.remove());
 
     const subtitle = copy.querySelector('.vis-header .subtitle');
@@ -31,26 +38,55 @@ const prepare = (vis, text) => {
     return copy;
 };
 
-// the visualisation (the element of the class `vis`) as a PNG of twice its
-// size, the copy is next to it outside of the screen, in an element as the
-// one of the component, so the styles of the page apply
-const exportPng = async (vis, { name, text }) => {
-    const { domToPng } = await import('modern-screenshot');
+/**
+ * The PNG (a Blob, twice the size) of a visualisation of the given `width`,
+ * independent of the size of the screen. `vnode(done)` is a GenVis of the
+ * same definition, data and state, which calls `done.resolve` once it is
+ * drawn and `done.reject` on errors. It is rendered next to `outer` (outside
+ * of the screen), so the styles of the page apply.
+ */
+const renderImage = async (outer, vnode, { width, text }) => {
+    const { domToBlob } = await import('modern-screenshot');
 
-    const outer = vis.parentElement;
-    const wrapper = outer.cloneNode(false);
-    wrapper.style.cssText = `position: fixed; top: 0; left: -100000px; margin: 0; width: ${vis.getBoundingClientRect().width + 2*padding}px;`;
-    const copy = prepare(vis, text);
-    wrapper.appendChild(copy);
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position: fixed; top: 0; left: -100000px;';
+    const holder = wrapper.appendChild(document.createElement('div'));
+    holder.style.width = `${width}px`;
     outer.after(wrapper);
 
     try {
-        const url = await domToPng(copy, { scale: 2, backgroundColor: '#FFF' });
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${name}.png`;
-        a.click();
+        await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error('The image was not rendered in time.')), timeout);
+            render(vnode({
+                resolve: () => { clearTimeout(timer); resolve(); },
+                reject: message => { clearTimeout(timer); reject(new Error(message)); },
+            }), holder);
+        });
+
+        // the copy is in an element as the one of the component, e.g. of its classes
+        const root = holder.firstElementChild;
+        const shot = wrapper.appendChild(root.cloneNode(false));
+        shot.style.cssText = `margin: 0; width: ${width + 2*padding}px;`;
+        const copy = shot.appendChild(prepare(root.querySelector('.vis'), text));
+
+        return await domToBlob(copy, { scale: 2, backgroundColor: '#FFF', type: 'image/png' });
     } finally {
+        render(null, holder);
         wrapper.remove();
     }
 };
+
+const saveImage = (blob, name) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}.png`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+// only on https (or localhost), the blob is a promise, so the clipboard is
+// written while the click is still the action of the user (as Safari needs)
+const canCopy = () => typeof ClipboardItem != 'undefined' && Boolean(globalThis.navigator?.clipboard?.write);
+
+const copyImage = blob => navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);

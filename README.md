@@ -56,6 +56,8 @@ well.
 | `debug`    | `data-debug`    | shows the prepared definition |
 | `state`    |                 | the changes of the user, see [state](#state) |
 | `download` | `data-download` | a button at the right of the footer to save it as a PNG, a string is the name of the file (default the title) |
+| `copy`     | `data-copy`     | a button at the right of the footer to copy the PNG to the clipboard (only on https or localhost) |
+| `imageWidth` | `data-image-width` | the width of the PNG in pixels, the one of the definition otherwise or 1200 |
 
 Every visualisation has its own state, several of them can be used on a page.
 If the props change, the visualisation is loaded again. Errors are shown in
@@ -63,9 +65,10 @@ place of the visualisation.
 
 ### Events and slots
 
-Besides `update:state` (see [state](#state)) the component emits `hover` and
-`select` (a click or a tap) with the rows under the mouse, `hover` with `null`
-at its end:
+Besides `update:state` (see [state](#state)) the component emits `rendered`
+once it is drawn the first time, `error` with the message of an error and
+`hover` and `select` (a click or a tap) with the rows under the mouse, `hover`
+with `null` at its end:
 
 ```js
 { key: 2023, title: "2023", rows: [{ x: 2023, y: 4, land: "Wien" }, ...], nearest: { x: 2023, y: 4, land: "Wien" } }
@@ -90,11 +93,17 @@ hover (it also has `entries`, the formatted values of the default table),
 
 ### PNG
 
-The image (twice the size of the visualisation) has no form elements, their
-selection is a line below the subtitle, e.g. `Einheit: Anteil · Jahr: 2024`,
-and the legends only have the entries shown. Besides the button of `download`,
-the method `exportPng(name)` of the component saves it, e.g. of a button of
-the page:
+The image is a copy of the visualisation with the same state, drawn outside
+of the screen in the width of `imageWidth`, so it is the same on every
+screen, e.g. the facets have the columns of this width. It is twice the size,
+has no form elements, their selection is a line below the subtitle, e.g.
+`Einheit: Anteil · Jahr: 2024`, and the legends only have the entries shown.
+The titles of the buttons are in the language of `options.locale`.
+
+Besides the buttons of `download` and `copy`, the methods of the component
+are `exportPng(name)` (saves the file), `copyPng()` (copies it, in the click
+of the user) and `image()` (the PNG as a `Blob`), e.g. for a button of the
+page:
 
 ```html
 <GenVis ref="chart" def-file="/data/bev/def.json"/>
@@ -135,7 +144,7 @@ the styles, e.g.:
 The main classes are `vis`, `vis-header` (with `title` and `subtitle`),
 `vis-form-elements` (with a `formElement` for every form element),
 `vis-legends`, `facet-title` and `vis-footer` (with `vis-footer-content` and
-the button `vis-download`). Styles of the page which are in
+`vis-buttons`, the buttons `vis-copy` and `vis-download`). Styles of the page which are in
 a cascade layer themselves only override the package if their layer is
 declared after it, e.g. `@layer gen-vis, page;`.
 
@@ -704,6 +713,13 @@ The page of the dev server (`index.html`, `src/dev/`) shows the definitions in
 without the mixins (`_*.json`). All definitions in `data/` are rendered,
 hovered and checked by the tests, so they have to stay valid. `data/energy/`
 is a selection of the energy dashboard, see its `README.md`.
+
+To try changes in an application, `npm install --no-save ../gen-vis` links the
+directory (with `npm run watch`). The `vue` of the linked package would be the
+one of its own `node_modules`, a second Vue, so the bundler of the application
+has to resolve `vue` to its own, e.g. `resolve.alias: { vue:
+path.resolve('node_modules/vue') }` of webpack or `resolve.dedupe: ['vue']` of
+vite. The changes of the versions are in `CHANGELOG.md`.
 
 ## License
 

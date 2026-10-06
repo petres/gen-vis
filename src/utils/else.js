@@ -29,6 +29,12 @@ const locales = {
             millisecond: ".%L", second: ":%S", minute: "%H:%M", hour: "%H:%M",
             day: "%a %d", week: "%d. %b", month: "%B", year: "%Y",
         },
+        // the titles of the buttons of the footer
+        texts: {
+            download: 'Als PNG speichern',
+            copy: 'Als PNG in die Zwischenablage kopieren',
+            copied: 'Kopiert',
+        },
     },
     'en': {
         number: {
@@ -50,6 +56,11 @@ const locales = {
         timeTicks: {
             millisecond: ".%L", second: ":%S", minute: "%I:%M", hour: "%I %p",
             day: "%a %d", week: "%b %d", month: "%B", year: "%Y",
+        },
+        texts: {
+            download: 'Save as PNG',
+            copy: 'Copy as PNG to the clipboard',
+            copied: 'Copied',
         },
     },
 }
@@ -92,6 +103,7 @@ const getLocale = (locale = 'de') => {
     return {
         number,
         time,
+        texts: base.texts,
         // the default format of the ticks of an axis without format, as the
         // one of d3 but in the locale, null for other scales
         tickFormat(scale, type, count = 10) {
