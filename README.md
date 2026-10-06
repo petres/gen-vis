@@ -15,7 +15,7 @@ the styles, and provides two global functions:
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
 
-<script src="gen-vis-1.1.0.js"></script>
+<script src="gen-vis-1.2.0.js"></script>
 <script>mountGenVisByClass('genVis')</script>
 ```
 
@@ -55,6 +55,7 @@ well.
 | `data`     | `data-data`     | the data as rows, a CSV/JSON string or parquet (an `ArrayBuffer`), if not given it is loaded from the `data` url of the definition |
 | `debug`    | `data-debug`    | shows the prepared definition |
 | `state`    |                 | the changes of the user, see [state](#state) |
+| `download` | `data-download` | a button at the right of the footer to save it as a PNG, a string is the name of the file (default the title) |
 
 Every visualisation has its own state, several of them can be used on a page.
 If the props change, the visualisation is loaded again. Errors are shown in
@@ -85,6 +86,19 @@ hover (it also has `entries`, the formatted values of the default table),
     </template>
     <template #footer="{ footer }"><small v-html="footer"/></template>
 </GenVis>
+```
+
+### PNG
+
+The image (twice the size of the visualisation) has no form elements, their
+selection is a line below the subtitle, e.g. `Einheit: Anteil · Jahr: 2024`,
+and the legends only have the entries shown. Besides the button of `download`,
+the method `exportPng(name)` of the component saves it, e.g. of a button of
+the page:
+
+```html
+<GenVis ref="chart" def-file="/data/bev/def.json"/>
+<button @click="$refs.chart.exportPng('bev')">PNG</button>
 ```
 
 ### State
@@ -120,7 +134,8 @@ the styles, e.g.:
 
 The main classes are `vis`, `vis-header` (with `title` and `subtitle`),
 `vis-form-elements` (with a `formElement` for every form element),
-`vis-legends`, `facet-title` and `vis-footer`. Styles of the page which are in
+`vis-legends`, `facet-title` and `vis-footer` (with `vis-footer-content` and
+the button `vis-download`). Styles of the page which are in
 a cascade layer themselves only override the package if their layer is
 declared after it, e.g. `@layer gen-vis, page;`.
 

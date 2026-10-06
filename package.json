@@ -1,6 +1,6 @@
 {
   "name": "@preschen/gen-vis",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A declarative d3 visualisation library",
   "type": "module",
   "main": "dist/gen-vis.js",
@@ -45,6 +45,7 @@
     "deepmerge": "^4",
     "hyparquet": "^1",
     "hyparquet-compressors": "^1",
+    "modern-screenshot": "^4.7.0",
     "topojson-client": "^3"
   },
   "devDependencies": {

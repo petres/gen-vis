@@ -1,7 +1,7 @@
 <template>
     <div class="vis-outer">
         <div v-if="error" class="vis-error">{{ error }}</div>
-        <vis-base v-else-if="store.loaded" @state-changed="$emit('update:state', store.state)"/>
+        <vis-base v-else-if="store.loaded" ref="vis" :download="download" @state-changed="$emit('update:state', store.state)"/>
         <div v-if="debug && store.def">
             <h3>prepared:</h3>
             <pre style="height: 500px; overflow: auto; font-size: 11px;">{{ JSON.stringify(store.def, null, 4) }}</pre>
@@ -42,6 +42,11 @@ export default {
         state: {
            type: Object,
            default: null
+        },
+        // a button in the footer to save it as a PNG, a string is the name of the file
+        download: {
+           type: [Boolean, String],
+           default: false
         },
     },
     // update:state of the changes of the user, hover and select of the rows
@@ -97,6 +102,11 @@ export default {
         syncState() {
             if (this.store.loaded && !sameValue(this.state ?? {}, this.store.state))
                 this.store.setState(this.state);
+        },
+        // the visualisation as a PNG without the form elements, also without
+        // the button, e.g. of a button of the page
+        exportPng(name) {
+            return this.$refs.vis?.exportPng(name);
         },
         showError(error) {
             console.error(error);

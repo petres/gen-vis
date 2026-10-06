@@ -11,6 +11,15 @@ import { definitions } from '@/dev/definitions.js';
 import * as d3 from 'd3';
 import { clearCache } from '@/store';
 
+// the image of the copy of the visualisation, the copy is kept for the tests
+const screenshot = vi.hoisted(() => ({ copy: null }));
+vi.mock('modern-screenshot', () => ({
+    domToPng: async node => {
+        screenshot.copy = node.cloneNode(true);
+        return 'data:image/png;base64,';
+    },
+}));
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // all definitions in data/, see the page of the dev server
 const examples = definitions(import.meta.glob('../data/**/*.json', { eager: true, import: 'default' })).map(d => `/data/${d.path}`);
@@ -1386,6 +1395,42 @@ describe('fixed bugs', () => {
             // a is at the bottom of the stack, the top of b is above it
             expect(cy('a')).toBeGreaterThan(cy('b'));
         });
+        expect(errors).toEqual([]);
+    });
+});
+
+describe('download', () => {
+    const def = () => ({
+        ...lineDef({ title: 'Titel', subtitle: 'Untertitel', footer: 'Quelle' }),
+        globals: { unit: 'a' },
+        formElements: [{ id: 'unit', name: 'Einheit', ref: 'unit', type: 'switch', values: [
+            { id: 'a', name: 'Absolut', value: 'a' },
+            { id: 'b', name: 'Anteil', value: 'b' },
+        ] }],
+    });
+
+    test('the button is only shown with the prop', async () => {
+        expect((await mount(GenVis, { def: def(), data: lineData })).querySelector('.vis-footer .vis-download')).toBeNull();
+        expect((await mount(GenVis, { def: def(), data: lineData, download: true })).querySelector('.vis-footer .vis-download')).not.toBeNull();
+    });
+
+    test('the image has the selection but not the controls and the hidden entries', async () => {
+        const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () { screenshot.file = this.download; });
+        const el = await mount(GenVis, { def: def(), data: lineData, download: 'chart' });
+
+        el.querySelector('.formElement input[value="b"]').click();
+        el.querySelector('.legend [data-key="Tirol"]').click();
+        await nextTick();
+        el.querySelector('.vis-download').click();
+        await vi.waitFor(() => expect(click).toHaveBeenCalled());
+
+        const copy = screenshot.copy;
+        expect(screenshot.file).toBe('chart.png');
+        expect([...copy.querySelectorAll('.subtitle')].map(e => e.textContent)).toEqual(['Untertitel', 'Einheit: Anteil']);
+        expect(copy.querySelector('.vis-form-elements, .vis-download')).toBeNull();
+        expect([...copy.querySelectorAll('.legend .entries > div')].map(e => e.dataset.key)).toEqual(['Wien']);
+        // the copy is removed again
+        expect(document.querySelectorAll('.vis')).toHaveLength(1);
         expect(errors).toEqual([]);
     });
 });

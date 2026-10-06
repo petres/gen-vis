@@ -28,8 +28,16 @@
             <facet v-else :key="data" :data="data" :shared="{}" :height='options.height' :width='options.width' :margins='options.margins'/>
         </div>
         <div class="vis-footer">
-            <slot-content v-if="slots.footer" :fn="slots.footer" :props="{ footer: options.footer }"/>
-            <span v-else v-html="options.footer"/>
+            <div class="vis-footer-content">
+                <slot-content v-if="slots.footer" :fn="slots.footer" :props="{ footer: options.footer }"/>
+                <span v-else v-html="options.footer"/>
+            </div>
+            <!-- download of the feather icons, at the right end of the plots -->
+            <button v-if="download" class="vis-download" title="PNG" aria-label="PNG" :style="{ marginRight: `${options.margins?.right ?? 0}px` }" @click="exportPng()">
+                <svg viewBox="0 0 24 24" width="14" height="14">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+            </button>
         </div>
     </div>
 </template>
@@ -41,6 +49,7 @@ import * as d3 from "d3";
 import * as du from "@/utils/data.js";
 import * as pu from "@/utils/plot.js";
 import * as ju from "@/utils/json.js";
+import { selection, exportPng } from "@/utils/export.js";
 
 import Facet from '@/comp/Facet.vue';
 import LegendEntry from '@/comp/Legend.vue';
@@ -51,6 +60,14 @@ import FormElement from '@/comp/FormElement.vue';
 
 export default {
     inject: ['store', 'slots'],
+    // the button of the footer to save the visualisation as a PNG, a string
+    // is the name of the file
+    props: {
+        download: {
+            type: [Boolean, String],
+            default: false,
+        },
+    },
     // the user changed the state, see store.state
     emits: ['stateChanged'],
     // the options of the definition already in the first render, e.g. of the header slot
@@ -210,6 +227,11 @@ export default {
             this.store.applyFormElements();
             this.changeSelected();
         },
+        // the name of the file is the one of the prop, of the argument or the title
+        exportPng(name) {
+            name ??= typeof this.download == 'string' ? this.download : (this.options.title || 'gen-vis');
+            return exportPng(this.$refs.vis, { name, text: selection(this.store.def) });
+        },
         highlight(info) {
             pu.highlightElements(d3.select(this.$refs.vis), this.store.def.plot, {[info.dim]: info.key})
         }
@@ -239,9 +261,34 @@ export default {
         margin-bottom: 10px;
     }
 
+    // the button at the right of the footer
     .vis-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 10px;
+
         span {
             font-size: 13px;
+        }
+    }
+
+    .vis-download {
+        flex: none;
+        padding: 0;
+        border: 0;
+        background: none;
+        cursor: pointer;
+        svg {
+            display: block;
+            fill: none;
+            stroke: #BBB;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        &:hover svg {
+            stroke: #777;
         }
     }
 
