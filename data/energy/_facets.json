@@ -1,6 +1,6 @@
 {
     "facets": {
-        "dim": ["facet"],
+        "dim": "facet",
         "scales": [],
         "cols": {
             "prop": "steps",

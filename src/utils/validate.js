@@ -6,7 +6,6 @@ import { templateRefs } from "@/utils/json.js";
 import { curves } from "@/utils/plot.js";
 import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
-import { upgradePlot } from "@/utils/compat.js";
 import { annotationKeys } from "@/coords/annotations.js";
 import { dataFormats } from "@/utils/data.js";
 
@@ -161,11 +160,8 @@ const validateDef = def => {
     const plots = [].concat(def.plot ?? []);
     if (plots.length == 0)
         warn('plot', 'missing');
-    plots.forEach((raw, i) => {
+    plots.forEach((p, i) => {
         const path = `plot[${i}]`;
-        // the names of 0.9 still work, see utils/compat.js
-        const { plot: p, notes } = upgradePlot(raw);
-        notes.forEach(n => warn(`${path}`, `deprecated, ${n}`));
         if (!types.includes(p.type))
             warn(`${path}.type`, `unknown type '${p.type}', expected one of ${list(types)}`);
         else if (plotTypes[p.type].coords && coordName in coords && !plotTypes[p.type].coords.includes(coordName))
@@ -226,10 +222,10 @@ const validateDef = def => {
     });
 
     if (def.facets) {
-        const dims = [].concat(def.facets.dim ?? []);
-        if (dims.length != 1)
-            warn('facets.dim', `expected the name of one mapping`);
-        dims.filter(d => !(d in mapping)).forEach(d => warn('facets.dim', `unknown mapping '${d}'`));
+        if (typeof def.facets.dim != 'string')
+            warn('facets.dim', `expected the name of a mapping`);
+        else if (!(def.facets.dim in mapping))
+            warn('facets.dim', `unknown mapping '${def.facets.dim}'`);
     }
 
     // column templates, e.g. "{values}{share}", need the globals

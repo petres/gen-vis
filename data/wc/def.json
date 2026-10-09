@@ -98,7 +98,7 @@
         }
     },
     "facets": {
-        "dim": ["einheit"],
+        "dim": "einheit",
         "scales": ["y"],
         "cols": 2
     },

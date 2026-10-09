@@ -695,24 +695,6 @@ orientations of its scales, the axes and the geometry of the hover, see
 `GenVis.registerPlotType`, `GenVis.registerCoord`, `GenVis.pointwise` and
 `GenVis.groupwise`. The schema only knows the built-in ones.
 
-### Upgrading from 0.9
-
-The definitions of 0.9 still work, the console warns of the old names, they
-might be removed with 2.0:
-
-| 0.9 | 1.0 |
-|-----|-----|
-| `svg:path` | `cartesian:line` |
-| `base:area` | `cartesian:area` |
-| `bar` with `cx` and `height` | `cartesian:bar` with `x` and `y1` |
-| `stackedBar` with `"x": "@x"`, `"y": "@y"` | `cartesian:bar` with `"x": "@x:scaled"`, `"y0": "@y:start:scaled"`, `"y1": "@y:end:scaled"` |
-| `@y:st:s`, `@y:st:e`, `@y:st:h` | `@y:start`, `@y:end`, `@y:height` |
-
-Some charts look a bit different: the bars of band scales are centered in
-the band, a stacked axis without a fixed domain starts at 0, negative bars are
-drawn downwards, the hover lists stacked values in the order of the stack and
-`highlight-` props of elements per row, e.g. circles, are applied.
-
 ## Development
 
 ```sh

@@ -182,7 +182,7 @@
         }
     },
     "facets": {
-        "dim": ["wrecht"],
+        "dim": "wrecht",
         "cols": 3,
         "scales": ["x", "y"]
     },

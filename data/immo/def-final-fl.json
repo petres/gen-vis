@@ -222,7 +222,7 @@
         }
     },
     "facets": {
-        "dim": ["var"],
+        "dim": "var",
         "cols": 2,
         "scales": []
     },

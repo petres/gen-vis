@@ -19,11 +19,10 @@ const base = () => ({
     plot: { type: 'cartesian:line', categories: ['c'], props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
 });
 
-test('the facets need one known mapping', () => {
+test('the facets need a known mapping', () => {
     expect(validateDef({ ...base(), facets: { dim: 'c' } })).toEqual([]);
-    expect(validateDef({ ...base(), facets: { dim: ['c'] } })).toEqual([]);
     expect(validateDef({ ...base(), facets: { dim: 'z' } })).toEqual([`facets.dim: unknown mapping 'z'`]);
-    expect(validateDef({ ...base(), facets: { dim: ['c', 'x'] } })).toEqual([`facets.dim: expected the name of one mapping`]);
+    expect(validateDef({ ...base(), facets: { dim: ['c'] } })).toEqual([`facets.dim: expected the name of a mapping`]);
 });
 
 describe('the example definitions', () => {

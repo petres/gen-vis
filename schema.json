@@ -428,10 +428,7 @@
             "properties": {
                 "dim": {
                     "description": "A plot for every category of this mapping.",
-                    "anyOf": [
-                        { "type": "string" },
-                        { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 1 }
-                    ]
+                    "type": "string"
                 },
                 "cols": { "$ref": "#/definitions/number" },
                 "scales": {

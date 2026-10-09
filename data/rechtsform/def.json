@@ -87,7 +87,7 @@
         }
     },
     "facets": {
-        "dim": ["geo"],
+        "dim": "geo",
         "scales": [],
         "cols": 2
     },

@@ -25,11 +25,6 @@ describe('props', () => {
 });
 
 describe('prepareDef', () => {
-    test('the facets dim of older definitions is a list', () => {
-        const def = ju.prepareDef({ mapping: {}, plot: [], facets: { dim: ['land'] } });
-        expect(def.facets.dim).toBe('land');
-    });
-
     test('defaults', () => {
         const def = ju.prepareDef({
             mapping: {

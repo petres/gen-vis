@@ -96,7 +96,7 @@
         }
     },
     "facets": {
-        "dim": ["type"],
+        "dim": "type",
         "cols": 2
     },
     "plot": [

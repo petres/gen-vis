@@ -549,45 +549,6 @@ describe('the highlight of a row', () => {
     });
 });
 
-describe('the names of 0.9', () => {
-    test('still work, with a warning, e.g. stacked bars', async () => {
-        const def = lineDef();
-        def.mapping.y.stacked = true;
-        def.mapping.y.scale.domain = [0, null];
-        def.mapping.type = { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } };
-        const data = 'year,value,land,type\n2020,5,Wien,a\n2020,2,Wien,b\n2021,8,Wien,a\n2021,2,Wien,b';
-        const boxes = el => [...el.querySelectorAll('g.plotGroup rect')].map(r => ['x', 'y', 'width', 'height'].map(a => Math.round(parseFloat(r.getAttribute(a)))));
-
-        def.plot = { type: 'cartesian:bar', categories: ['type'], props: { x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled', width: 10 } };
-        const now = boxes(await mount(GenVis, { def, data }));
-        def.plot = { type: 'stackedBar', categories: ['type'], props: { x: '@x', y: '@y', width: 10 } };
-        expect(boxes(await mount(GenVis, { def, data }))).toEqual(now);
-        def.plot = { type: 'svg:rect', categories: ['type'], props: { x: '@x:scaled', y: '@y:st:e:scaled', width: 10, height: '@y:st:h:scaled', transform: 'translate(-5 0)' } };
-        const rects = boxes(await mount(GenVis, { def, data }));
-        expect(rects.map(([x, ...r]) => [x - 5, ...r])).toEqual(now);
-
-        expect(errors).toEqual([
-            expect.stringMatching(/plot\[0\]: deprecated, 'stackedBar' is 'cartesian:bar' with the props "x": "@x:scaled", "y0": "@y:start:scaled" and "y1": "@y:end:scaled"/),
-            expect.stringMatching(/plot\[0\]: deprecated, the stacked values are ':start', ':end' and ':height'/),
-        ]);
-    });
-
-    test('lines, areas and bars', async () => {
-        const def = lineDef();
-        def.plot = { type: 'svg:path', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { x: '@x:scaled', y: '@y:scaled' } } };
-        let el = await mount(GenVis, { def, data: lineData });
-        expect(el.querySelectorAll('g.plotGroup path')).toHaveLength(2);
-        def.plot = { type: 'base:area', categories: ['c'], props: { fill: '@color', d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } } };
-        el = await mount(GenVis, { def, data: lineData });
-        expect(el.querySelectorAll('g.plotGroup path')).toHaveLength(2);
-        def.mapping.x = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'horizontal' }, axis: { position: 'bottom' } };
-        def.plot = { type: 'bar', categories: ['c'], props: { cx: '@x:scaled', height: '@y:scaled' } };
-        el = await mount(GenVis, { def, data: lineData });
-        expect(el.querySelectorAll('g.plotGroup rect')).toHaveLength(7);
-        expect(errors.map(e => e.match(/deprecated, '([^']+)'/)[1])).toEqual(['svg:path', 'base:area', 'bar']);
-    });
-});
-
 describe('maps', () => {
     // two squares next to each other, the rings are counterclockwise as of GeoJSON (RFC 7946)
     const square = (id, x) => ({ type: 'Feature', id, properties: { name: `Region ${id}`, code: id.toLowerCase() },
@@ -1021,7 +982,7 @@ describe('polar', () => {
 
     test('cartesian plot types are not available', async () => {
         const def = polarDef();
-        def.plot = { type: 'bar', categories: ['c'], props: { cx: '@x:scaled', height: '@y:scaled' } };
+        def.plot = { type: 'cartesian:bar', categories: ['c'], props: { x: '@x:scaled', y1: '@y:scaled' } };
         await mount(GenVis, { def, data: polarData });
         expect(errors).toContainEqual(expect.stringMatching(/plot\[0\]\.type: not available in the coordinate system 'polar'/));
     });
