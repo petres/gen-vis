@@ -1,13 +1,12 @@
 export { barScale, barWidth };
 
 import * as d3 from "@/utils/d3";
-import { entryToProp, valuesOf } from "@/utils/props";
 import { bandCenter } from "@/utils/scales";
-import { groupwise, pointwise, finite, curve } from "@/plots/elements";
+import { groupwise, pointwise, finite, curve, propScale } from "@/plots/elements";
 
 // the scale of a prop of a bar, e.g. of "@x:scaled"
-const barScale = (info, prop, type) => {
-    const scale = info[prop?.parts?.[0]]?.scale;
+const barScale = (plot, ctx, prop, type) => {
+    const scale = propScale(plot, ctx, prop);
     if (!scale)
         throw new Error(`${type}: the positions need a scaled value, e.g. "@x:scaled"`);
     return scale;
@@ -20,6 +19,12 @@ const barWidth = (scale, type) => {
     return scale.bandwidth() || scale.step()*(1 - scale.padding());
 };
 
+// the points of the path of a group, the values of `d` of its rows
+const points = g => {
+    const d = g.prop('d');
+    return g.rows.map(row => d(row) ?? {});
+};
+
 // the plot types of the cartesian coordinate system, missing values are gaps
 // in lines and areas
 export default {
@@ -27,13 +32,13 @@ export default {
     'cartesian:line': {
         curve: true,
         coords: ['cartesian'],
-        render: (groups, parent, plotDef) => groupwise(groups, parent)
-            .attr("d", d => d3.line()
-                .curve(curve(plotDef))
+        render: (groups, parent, plot) => groupwise(groups, parent)
+            .attr("d", g => d3.line()
+                .curve(curve(plot))
                 .defined(e => finite(e.x, e.y))
                 .x(e => e.x)
                 .y(e => e.y)
-                (d.values.map(valuesOf(d.props.d)))
+                (points(g))
             ),
     },
 
@@ -41,14 +46,14 @@ export default {
     'cartesian:area': {
         curve: true,
         coords: ['cartesian'],
-        render: (groups, parent, plotDef) => groupwise(groups, parent)
-            .attr("d", d => d3.area()
-                .curve(curve(plotDef))
+        render: (groups, parent, plot) => groupwise(groups, parent)
+            .attr("d", g => d3.area()
+                .curve(curve(plot))
                 .defined(e => finite(e.x, e.y0, e.y1))
                 .x(e => e.x)
                 .y1(e => e.y1)
                 .y0(e => e.y0)
-                (d.values.map(valuesOf(d.props.d)))
+                (points(g))
             ),
     },
 
@@ -58,19 +63,18 @@ export default {
     // of a band or the step of a point scale
     'cartesian:bar': {
         coords: ['cartesian'],
-        render: (groups, parent, plotDef, { info }) => pointwise(groups, parent, "rect", v => {
+        render: (groups, parent, plot, ctx) => pointwise(groups, parent, "rect", v => {
             const type = 'cartesian:bar';
-            const xScale = barScale(info, v.x, type);
-            const width = v.width?.value ?? barWidth(xScale, type);
-            const y1 = v.y1?.value;
-            const y0 = v.y0 ? v.y0.value : barScale(info, v.y1, type)(0);
+            const xScale = barScale(plot, ctx, 'x', type);
+            const width = v.width ?? barWidth(xScale, type);
+            const y0 = 'y0' in v ? v.y0 : barScale(plot, ctx, 'y1', type)(0);
             const { y0: _, y1: __, ...props } = v;
             return {
                 ...props,
-                x: entryToProp(v.x.value + bandCenter(xScale) - width/2),
-                width: entryToProp(width),
-                y: entryToProp(Math.min(y0, y1)),
-                height: entryToProp(Math.abs(y1 - y0)),
+                x: v.x + bandCenter(xScale) - width/2,
+                width,
+                y: Math.min(y0, v.y1),
+                height: Math.abs(v.y1 - y0),
             };
         }),
     },

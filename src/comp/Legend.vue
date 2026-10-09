@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import { fillDirect } from "@/utils/props";
+import { evaluate } from "@/utils/props";
 
 import LegendSymbol from '@/comp/LegendSymbol.vue';
 
@@ -36,9 +36,9 @@ export default {
     computed: {
         // the legend props of the entries, also with the globals of the store
         filled() {
-            const bases = this.store.bases;
+            const scope = this.store.scope;
             return Object.fromEntries(this.entries.map(e =>
-                [e.key, fillDirect(this.info.legend.props, { ...bases, ...e.props })]));
+                [e.key, evaluate(this.info.legend.props, { ...scope, ...e.props })]));
         },
     },
     mounted() {

@@ -1,127 +1,120 @@
-export { outsideRows, getProps, toValue, entryToValue, fillDirect, fillProps, valuesOf, propsOf, isProp, refNames, entryToProp };
-
-const mapObject = (d, t) => Object.fromEntries(
-    Object.entries(d).map(([k, v]) => [k, t(v, k)])
-);
-
-const mapObjectOrArray = (d, t) =>
-    Array.isArray(d) ? d.map(t) : mapObject(d, t);
-
-// the bases without the names of the rows, the mappings and their values,
-// e.g. `x:scaled`, so a global `year` does not replace the mapping `year`
-const outsideRows = (bases, mappings) => Object.fromEntries(Object.entries(bases)
-    .filter(([k]) => !Object.hasOwn(mappings, k.split(':')[0])));
-
-// the props of every group are filled with the bases outside of the rows and
-// the props of its categories
-const getProps = (dataGrouped, plotDef, bases, mappings) => dataGrouped.map(g => ({
-    group: Object.keys(g.group).map(d => ({
-        dim: d,
-        key: g.group[d],
-    })),
-    // categories without props only group the rows, e.g. a line per id
-    props: plotDef._fill(Object.assign(outsideRows(bases, mappings), ...Object.keys(g.group).map(v => mappings[v].props?.[g.group[v]]))),
-    values: g.entries,
-}));
-
-const toValue = (prop, base, final = true, reevaluate = false) => {
-    if (prop.value === undefined || prop.value === null || reevaluate) {
-        if (prop.prop == "ref") {
-            const value = base[prop.ref];
-            if (value !== undefined)
-                prop.value = value;
-        }
-
-        if (prop.prop == "relative") {
-            const value = base[prop.ref];
-            if (value !== undefined)
-                prop.value = prop.ratio*value;
-        }
-
-        if (prop.prop == "steps") {
-            const value = base[prop.ref];
-            if (value !== undefined) {
-                prop.steps.forEach(s => {
-                    if (value > s.cut)
-                        prop.value = s.value;
-                });
-            }
-        }
-    }
-
-    if (final)
-        return prop.value
-
-    return prop;
-}
-
-const entryToValue = (e, base) =>
-    toValue({...entryToProp(e)}, base, true);
-
-const fillDirect = (raw, base, final = true) =>
-    fillProps(mapObjectOrArray(raw, entryToProp), base, final);
-
-const fillProps = (props, base, final = false) =>
-    mapObjectOrArray(props, prop => toValue({...prop}, base, final))
-
-// the props filled of many rows, e.g. the points of a line, as fillProps with
-// the row as base, a value or a ref is prepared once
-const filler = (props, wrap) => {
-    const fillers = Object.entries(props).map(([k, p]) => {
-        if (p === null || typeof p != 'object' || !isProp(p))
-            return [k, () => p];
-        if (p.value !== undefined && p.value !== null)
-            return [k, () => wrap(p, p.value)];
-        if (p.prop == 'ref')
-            return [k, row => wrap(p, row[p.ref])];
-        return [k, row => toValue({ ...p }, row, !wrap.props)];
-    });
-    return row => {
-        const o = {};
-        for (const [k, f] of fillers)
-            o[k] = f(row);
-        return o;
-    };
-};
-
-// the values of the props of a row, e.g. of `d` of a line
-const valuesOf = props => filler(props, (p, v) => v);
-
-// the props of a row with their values, e.g. of the element of a row
-const propsOf = props => filler(props, Object.assign((p, v) => v === undefined ? { ...p } : { ...p, value: v }, { props: true }));
-
-const isProp = o => o.prop !== undefined;
-
-// the names referenced by the (nested) props, e.g. `y` for "@y:scaled"
-const refNames = props => Object.values(props).flatMap(p => {
-    if (p === null || typeof p != 'object')
-        return [];
-    if (!isProp(p))
-        return refNames(p);
-    return typeof p.ref == 'string' ? [p.ref.split(':')[0]] : [];
-});
+export { compile, evaluate, bind, constant, refNames, refOf };
 
 /**
- * Converts strings to props
+ * The props of a definition, the values of most of its parts:
+ * - a value, e.g. 3 or "none"
+ * - a reference "@name" to a name of the place of the prop, e.g. a global
+ * - { "prop": "relative", "ref": "innerWidth", "ratio": 0.5 }, a ratio of a reference
+ * - { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 1 }] },
+ *   the value of the last step with a cut below the reference
+ * - objects without `prop` (nested props, e.g. `d` of a line) and lists
+ *   (lists of props, e.g. a range)
+ *
+ * A prop is compiled once, then evaluated with a scope (the values of the
+ * names) or bound to the rows of a plot, see `bind`. An unknown name is
+ * undefined, validateDef warns of it.
  */
-const entryToProp = (value) => {
-    if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-        if (isProp(value))
-            return value;
-        return mapObject(value, entryToProp)
-    }
 
-    if ((typeof value) == "string" && value.charAt() == '@') {
-        const ref = value.substring(1);
-        return {
-            prop: "ref",
-            ref: ref,
-            parts: ref.split(':'),
-        }
-    }
+// the compiled props of objects and lists of the definition
+const compiled = new WeakMap();
 
-    return {
-        prop: "fixed",
-        value: value,
+const node = raw => {
+    if (typeof raw == 'string' && raw.startsWith('@'))
+        return { kind: 'ref', name: raw.substring(1) };
+    if (Array.isArray(raw))
+        return { kind: 'list', items: raw.map(compile) };
+    if (raw === null || typeof raw != 'object')
+        return { kind: 'fixed', value: raw };
+    if (!('prop' in raw))
+        return { kind: 'object', entries: Object.entries(raw).map(([k, v]) => [k, compile(v)]) };
+    if (raw.prop == 'ref' || raw.prop == 'relative' || raw.prop == 'steps')
+        return { kind: raw.prop, name: raw.ref, ratio: raw.ratio, steps: raw.steps ?? [] };
+    return { kind: 'fixed', value: raw.value };
+};
+
+const compile = raw => {
+    if (raw === null || typeof raw != 'object')
+        return node(raw);
+    let n = compiled.get(raw);
+    if (!n)
+        compiled.set(raw, n = node(raw));
+    return n;
+};
+
+// the value of a relative or a steps prop of the value of its reference
+const derive = (n, v) => {
+    if (v === undefined)
+        return undefined;
+    if (n.kind == 'relative')
+        return n.ratio*v;
+    if (n.kind == 'steps') {
+        let value;
+        for (const s of n.steps)
+            if (v > s.cut)
+                value = s.value;
+        return value;
     }
-}
+    return v;
+};
+
+const valueOf = (n, get) => {
+    switch (n.kind) {
+        case 'fixed': return n.value;
+        case 'list': return n.items.map(i => valueOf(i, get));
+        case 'object': return Object.fromEntries(n.entries.map(([k, e]) => [k, valueOf(e, get)]));
+        default: return derive(n, get(n.name));
+    }
+};
+
+// the value of a prop with the values of the names of the scope, e.g. the
+// globals and the sizes of a facet
+const evaluate = (raw, scope = {}) => valueOf(compile(raw), name => Object.hasOwn(scope, name) ? scope[name] : undefined);
+
+// a function of the row which is the same for all rows
+const constant = value => Object.assign(() => value, { constant: true });
+
+const bindNode = (n, resolve) => {
+    if (n.kind == 'fixed')
+        return constant(n.value);
+    if (n.kind == 'list' || n.kind == 'object') {
+        const entries = n.kind == 'list' ? n.items.map((e, i) => [i, bindNode(e, resolve)]) : n.entries.map(([k, e]) => [k, bindNode(e, resolve)]);
+        const make = n.kind == 'list' ? row => entries.map(([, f]) => f(row)) : row => {
+            const o = {};
+            for (const [k, f] of entries)
+                o[k] = f(row);
+            return o;
+        };
+        const f = entries.every(([, e]) => e.constant) ? constant(make()) : make;
+        f.entries = new Map(entries);
+        return f;
+    }
+    const value = resolve(n.name) ?? constant(undefined);
+    if (n.kind == 'ref')
+        return value;
+    return value.constant ? constant(derive(n, value())) : row => derive(n, value(row));
+};
+
+/**
+ * The prop as a function of a row, e.g. the props of a plot. `resolve(name)`
+ * is a function of the row for a name, e.g. of a value of the row, or a
+ * `constant`, e.g. of a global, undefined for unknown names. The function of
+ * an object or a list has the functions of its entries as `entries`, e.g.
+ * the ones which are the same for all rows. Values which are the same for
+ * all rows are computed once.
+ */
+const bind = (raw, resolve) => bindNode(compile(raw), resolve);
+
+// the names referenced by the (nested) props, e.g. "y:scaled" of "@y:scaled"
+const refNames = raw => {
+    const names = n => n.kind == 'list' ? n.items.flatMap(names)
+        : n.kind == 'object' ? n.entries.flatMap(([, e]) => names(e))
+        : n.kind == 'fixed' ? [] : [n.name];
+    return names(compile(raw));
+};
+
+// the name referenced by a prop, e.g. "x:scaled" of "@x:scaled", undefined if
+// it is no reference
+const refOf = raw => {
+    const n = compile(raw);
+    return n.kind == 'ref' ? n.name : undefined;
+};

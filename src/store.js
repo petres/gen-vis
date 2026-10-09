@@ -192,7 +192,7 @@ class Store {
     // the names of the references in all parts of the definition, the globals
     // and the width of the visualisation, a facet adds its sizes, a plot the
     // props of the categories and the row, see README "Props"
-    get bases() { return { ...this.def.globals, totalWidth: this.totalWidth } }
+    get scope() { return { ...this.def.globals, totalWidth: this.totalWidth } }
 
     mapping(n) { return this.def.mapping[n] }
     prop(n, k) { return this.def.mapping[n].props[k] }

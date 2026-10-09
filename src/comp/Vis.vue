@@ -14,7 +14,7 @@
             <!-- toggles of categories, the colors of a scale otherwise -->
             <template v-for="legend in legends" :key="legend">
                 <legend-entry v-if="store.mapping(legend).props" :legend="legend" @changeSelected="changeSelected" @highlight="highlight"/>
-                <color-legend v-else-if="store.mapping(legend).scale && view" :legend="legend" :info="view.colors[legend]"/>
+                <color-legend v-else-if="store.mapping(legend).scale && view" :legend="legend" :scale="view.colors[legend]"/>
             </template>
         </div>
         <div v-if="view" class="vis-body">
@@ -57,7 +57,6 @@ import { markRaw } from 'vue';
 import * as d3 from "@/utils/d3";
 
 import { fillTemplate } from "@/utils/def";
-import { entryToValue } from "@/utils/props";
 import { highlightElements } from "@/utils/draw";
 import { layout } from "@/layout";
 import { canCopy } from "@/utils/export.js";
@@ -147,10 +146,8 @@ export default {
             this.measure();
         },
         measure() {
-            const options = this.store.def.options;
-            this.options.width = options.width || this.$refs.vis.getBoundingClientRect().width;
+            this.options.width = this.store.def.options.width || this.$refs.vis.getBoundingClientRect().width;
             this.store.totalWidth = this.options.width;
-            this.options.height = entryToValue(options.height, this.store.bases);
         },
         resized() {
             const width = this.$refs.vis?.getBoundingClientRect().width;

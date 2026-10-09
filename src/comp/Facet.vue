@@ -16,10 +16,11 @@
 
 <script>
 import * as d3 from "@/utils/d3";
-import { groupBy } from "@/utils/data";
-import { fillDirect, getProps } from "@/utils/props";
+import { formatOf } from "@/utils/def";
+import { evaluate } from "@/utils/props";
 import { highlightElements } from "@/utils/draw";
 import { plotTypes } from "@/plots";
+import { plotGroups } from "@/layout";
 
 import Hover from '@/comp/Hover.vue';
 
@@ -43,19 +44,22 @@ export default {
         Hover
     },
     mounted() {
-        // the context of the plot types and the coordinate system, the scales
-        // are not reactive, they are only replaced with the facet
-        const { rows, info, innerWidth, innerHeight, scope } = this.facet;
-        this.data = rows;
+        // the context of the plot types and the coordinate system, see
+        // plots/index.js, the scales are not reactive, they are only replaced
+        // with the facet
+        const { key, rows, scales, axis, stackOf, scope, dims, innerWidth, innerHeight } = this.facet;
         this.ctx = {
             store: this.store,
             inner: d3.select(this.$refs.inner),
-            data: rows,
-            info,
-            dims: this.store.coord.dims(innerWidth, innerHeight),
+            key,
+            rows,
+            scales,
+            axis,
+            stackOf,
+            scope,
+            dims,
             innerWidth,
             innerHeight,
-            relativeBases: scope,
         };
 
         this.store.coord.prepare?.(this.ctx);
@@ -73,16 +77,14 @@ export default {
     },
     methods: {
         plot() {
-            this.store.def.plot.forEach(plotDef => {
-                if (!Object.hasOwn(plotTypes, plotDef.type))
-                    throw new Error(`Unknown plot type '${plotDef.type}'`);
-                const groups = getProps(groupBy(this.data, plotDef.categories), plotDef, this.ctx.relativeBases, this.store.def.mapping);
-
+            this.store.def.plot.forEach(plot => {
+                if (!Object.hasOwn(plotTypes, plot.type))
+                    throw new Error(`Unknown plot type '${plot.type}'`);
                 const parent = this.ctx.inner.append("g")
                     .classed("plotGroup", true)
-                    .classed(plotDef.id, true)
-                    .attr("data-plot", plotDef.id)
-                plotTypes[plotDef.type].render(groups, parent, plotDef, this.ctx);
+                    .classed(plot.id, true)
+                    .attr("data-plot", plot.id);
+                plotTypes[plot.type].render(plotGroups(plot, this.ctx.rows, this.ctx), parent, plot, this.ctx);
             });
         },
 
@@ -108,28 +110,25 @@ export default {
             const coord = store.coord;
 
             // the hover needs the mappings of the positions and of the values
-            const names = store.axis;
+            const names = ctx.axis;
             if (!names.h || !names.v)
                 return;
 
-            const formatter = n => {
-                const m = store.mapping(n);
-                const format = m.hover?.format ?? m.axis?.format ?? (['time', 'utc'].includes(m.scale?.type) ? '%x' : 'c');
-                return store.formatter(m.scale?.type)(format);
-            };
+            const formatter = n => store.formatter(store.mapping(n).scale?.type)(formatOf(store.mapping(n), 'hover'));
             const format = { h: formatter(names.h), v: formatter(names.v) };
             const v = names.v;
-            const stacked = store.mapping(v).stacked;
+            // the start and the end of a stacked value
+            const stackOf = ctx.stackOf;
 
             // categorical mappings, e.g. not a second vertical axis
             const categories = store.mappingNamesWithKey('hover')
                 .filter(n => n != names.h && n != v && store.mapping(n).props);
 
             const marker = d3.select(this.$refs.hoverMarker).select("line");
-            const bases = store.bases;
+            const scope = store.scope;
 
             // the rows by their key, e.g. of the horizontal axis, compared as strings
-            const rowsByKey = d3.group(this.data.filter(e => e[v] !== null), e => String(e[names.h]));
+            const rowsByKey = d3.group(ctx.rows.filter(e => e[v] !== null), e => String(e[names.h]));
             let last = null;
 
             const hide = () => {
@@ -157,15 +156,15 @@ export default {
                 const rows = (rowsByKey.get(String(key)) ?? [])
                     .map(e => {
                         const entries = Object.fromEntries(categories.map(n =>
-                            [n, fillDirect(store.mapping(n).hover.props, { ...bases, ...store.prop(n, e[n]) })]));
+                            [n, evaluate(store.mapping(n).hover.props, { ...scope, ...store.prop(n, e[n]) })]));
                         entries[v] = { value: e[v], name: format.v(e[v]) };
-                        const order = stacked ? (e[`${v}:start`] + e[`${v}:end`])/2 : e[v];
+                        const order = stackOf ? d3.mean(stackOf(e)) : e[v];
                         return { entries, data: e, nearest: false, order };
                     });
 
                 // stacked: the segment under the pointer, outside of the stack the closest one
-                const distance = stacked ? e => {
-                    const [lo, hi] = d3.extent([e.data[`${v}:start`], e.data[`${v}:end`]]);
+                const distance = stackOf ? e => {
+                    const [lo, hi] = d3.extent(stackOf(e.data));
                     return value < lo ? lo - value : (value > hi ? value - hi : 0);
                 } : e => Math.abs(e.data[v] - value);
                 const nearest = value === undefined ? undefined : d3.least(rows, distance);
@@ -173,9 +172,8 @@ export default {
                 return { key, value, rows, nearest, title };
             };
 
-            // the rows of the events and the slot, the values of the mappings
-            // without the computed ones, e.g. of the scales
-            const plain = row => Object.fromEntries(Object.entries(row).filter(([k]) => !k.includes(':')));
+            // the rows of the events and the slot, copies of the values of the mappings
+            const plain = row => ({ ...row });
             const payload = ({ key, title, rows, nearest }) => ({
                 key,
                 title,
@@ -251,12 +249,6 @@ export default {
             }
             .axis-title {
                 font-size: 13px;
-            }
-
-            g.group, path {
-                &[data-visible="false"] {
-                    opacity: 0.01;
-                }
             }
 
             g.grid {

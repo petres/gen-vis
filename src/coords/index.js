@@ -17,6 +17,7 @@ import geo from "@/coords/geo";
  *   [0, 0] if it is not given
  * - `names(store)`: the mappings of the hover and the stacks instead of the
  *   ones of `axis`, e.g. of a map
+ * The `ctx` is the facet, as the one of the plot types, see plots/index.js.
  * - `prepare(ctx)`: adds to the context before the axes and plots are drawn,
  *   e.g. the projection of a map
  * - `annotations`: the types of the annotations, `annotate(ctx, parent, a)`

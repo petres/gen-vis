@@ -1,27 +1,30 @@
 import * as d3 from "@/utils/d3";
-import { entryToProp, valuesOf } from "@/utils/props";
 import { bandCenter } from "@/utils/scales";
-import { groupwise, pointwise, finite, curve } from "@/plots/elements";
+import { groupwise, pointwise, finite, curve, propScale } from "@/plots/elements";
 import { barScale, barWidth } from "@/plots/cartesian";
 import { radiusRange } from "@/coords/polar";
 
 // the angles of a band scale are in the center of the band, as the ones of the axis
-const angleOffset = (info, prop) => {
-    const scale = info[prop?.parts?.[0]]?.scale;
+const angleOffset = (plot, ctx, path) => {
+    const scale = propScale(plot, ctx, path);
     return scale ? bandCenter(scale) : 0;
 };
 
-const fill = d => d.values.map(valuesOf(d.props.d));
+// the points of the path of a group, the values of `d` of its rows
+const points = g => {
+    const d = g.prop('d');
+    return g.rows.map(row => d(row) ?? {});
+};
 
 // an element of `type` per row at the `angle` and `radius` of the props, as `x` and `y`
 const positioned = (name, type, x, y) => ({
     coords: ['polar'],
-    render: (groups, parent, plotDef, { info }) => pointwise(groups, parent, type, v => {
-        if (!v.angle || !v.radius)
+    render: (groups, parent, plot, ctx) => pointwise(groups, parent, type, v => {
+        if (!('angle' in v && 'radius' in v))
             throw new Error(`${name}: the props 'angle' and 'radius' are needed`);
-        const [px, py] = d3.pointRadial(v.angle.value + angleOffset(info, v.angle), v.radius.value);
+        const [px, py] = d3.pointRadial(v.angle + angleOffset(plot, ctx, 'angle'), v.radius);
         const { angle, radius, ...props } = v;
-        return { ...props, [x]: entryToProp(px), [y]: entryToProp(py) };
+        return { ...props, [x]: px, [y]: py };
     }),
 });
 
@@ -34,15 +37,15 @@ export default {
     'polar:line': {
         curve: true,
         coords: ['polar'],
-        render(groups, parent, plotDef, { info }) {
-            const offset = angleOffset(info, plotDef.props.d?.angle);
+        render(groups, parent, plot, ctx) {
+            const offset = angleOffset(plot, ctx, 'd.angle');
             groupwise(groups, parent)
-                .attr("d", d => d3.lineRadial()
-                    .curve(curve(plotDef))
+                .attr("d", g => d3.lineRadial()
+                    .curve(curve(plot))
                     .defined(e => finite(e.angle, e.radius))
                     .angle(e => e.angle + offset)
                     .radius(e => e.radius)
-                    (fill(d))
+                    (points(g))
                 );
         },
     },
@@ -51,16 +54,16 @@ export default {
     'polar:area': {
         curve: true,
         coords: ['polar'],
-        render(groups, parent, plotDef, { info }) {
-            const offset = angleOffset(info, plotDef.props.d?.angle);
+        render(groups, parent, plot, ctx) {
+            const offset = angleOffset(plot, ctx, 'd.angle');
             groupwise(groups, parent)
-                .attr("d", d => d3.areaRadial()
-                    .curve(curve(plotDef))
+                .attr("d", g => d3.areaRadial()
+                    .curve(curve(plot))
                     .defined(e => finite(e.angle, e.innerRadius, e.outerRadius))
                     .angle(e => e.angle + offset)
                     .innerRadius(e => e.innerRadius)
                     .outerRadius(e => e.outerRadius)
-                    (fill(d))
+                    (points(g))
                 );
         },
     },
@@ -70,20 +73,21 @@ export default {
     // step of a point scale, `innerRadius` to the inner radius of the plot
     'polar:arc': {
         coords: ['polar'],
-        render: (groups, parent, plotDef, ctx) => pointwise(groups, parent, "path", v => {
-            const s = barScale(ctx.info, v.angle, 'polar:arc');
-            const width = v.width?.value ?? barWidth(s, 'polar:arc');
-            const a = v.angle.value + bandCenter(s);
+        render: (groups, parent, plot, ctx) => pointwise(groups, parent, "path", v => {
+            const s = barScale(plot, ctx, 'angle', 'polar:arc');
+            const width = v.width ?? barWidth(s, 'polar:arc');
+            const a = v.angle + bandCenter(s);
+            const [inner, outer] = radiusRange(ctx);
             const d = d3.arc()
-                .padAngle(v.padAngle?.value ?? 0)
-                .cornerRadius(v.cornerRadius?.value ?? 0)({
+                .padAngle(v.padAngle ?? 0)
+                .cornerRadius(v.cornerRadius ?? 0)({
                     startAngle: a - width/2,
                     endAngle: a + width/2,
-                    innerRadius: v.innerRadius?.value ?? radiusRange(ctx)[0],
-                    outerRadius: v.outerRadius?.value ?? radiusRange(ctx)[1],
+                    innerRadius: v.innerRadius ?? inner,
+                    outerRadius: v.outerRadius ?? outer,
                 });
             const props = Object.fromEntries(Object.entries(v).filter(([k]) => !arcProps.includes(k)));
-            return { ...props, d: entryToProp(d) };
+            return { ...props, d };
         }),
     },
 

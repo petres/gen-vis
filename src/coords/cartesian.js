@@ -1,5 +1,5 @@
 import * as d3 from "@/utils/d3";
-import { entryToValue } from "@/utils/props";
+import { evaluate } from "@/utils/props";
 import { bandCenter } from "@/utils/scales";
 import { tickValues, tickFormat } from "@/coords/ticks";
 import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
@@ -32,8 +32,8 @@ const axes = ctx => {
     store.mappingNamesWithKey('axis').forEach(n => {
         const m = store.mapping(n);
         const i = m.axis;
-        const s = ctx.info[n].scale;
-        const ticks = entryToValue(i.ticks, ctx.relativeBases);
+        const s = ctx.scales[n];
+        const ticks = evaluate(i.ticks, ctx.scope);
 
         const a = d3.axes[i.position](s)
             .tickSizeInner(9)
@@ -146,15 +146,15 @@ export default {
 
         // the nearest horizontal value with data and the vertical value at the pointer
         locate(ctx, [px, py], names) {
-            const key = ctx.info[names.h].scale.invertCustom(px);
+            const key = ctx.scales[names.h].nearest(px);
             if (key === undefined)
                 return null;
-            return { key, value: ctx.info[names.v].scale.invert?.(py) };
+            return { key, value: ctx.scales[names.v].invert?.(py) };
         },
 
         // a vertical line, the hover is beside it, on the side with more space
         marker(ctx, key, names, line) {
-            const s = ctx.info[names.h].scale;
+            const s = ctx.scales[names.h];
             const x = s(key) + bandCenter(s);
             line.attr("x1", x)
                 .attr("x2", x)

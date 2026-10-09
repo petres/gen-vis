@@ -20,7 +20,7 @@ const projection = ctx => {
     const join = joinOf(ctx.store);
     let keys = null;
     if (def.fit == 'data' && join)
-        keys = new Set(ctx.data.map(e => String(e[join])));
+        keys = new Set(ctx.rows.map(e => String(e[join])));
     else if (Array.isArray(def.fit))
         keys = new Set(def.fit.map(String));
     const fitted = keys ? features.filter(f => keys.has(key(f))) : features;

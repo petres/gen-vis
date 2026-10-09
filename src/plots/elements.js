@@ -1,25 +1,32 @@
-export { groupwise, pointwise, finite, curve };
+export { groupwise, pointwise, finite, curve, propScale };
 
 import * as d3 from "@/utils/d3";
-import { propsOf, refNames } from "@/utils/props";
+import { refOf } from "@/utils/props";
 import { curves, rowOf, setGroupData, setProps } from "@/utils/draw";
 
 const finite = (...values) => values.every(v => Number.isFinite(v));
 
-const curve = plotDef => curves[plotDef.curve ?? 'linear'] ?? d3.curveLinear;
+const curve = plot => curves[plot.curve ?? 'linear'] ?? d3.curveLinear;
 
-// a path per group, e.g. a line
+// the scale of the mapping a prop of a plot refers to, e.g. the one of `x`
+// of "@x:scaled" or of `d.angle`, undefined if it is no reference
+const propScale = (plot, ctx, path) => {
+    const ref = refOf(path.split('.').reduce((p, k) => p?.[k], plot.props));
+    return ref === undefined ? undefined : ctx.scales[ref.split(':')[0]];
+};
+
+// a path per group, e.g. a line, with the props of the group
 const groupwise = (groups, parent) => parent
     .classed("paths", true)
     .selectAll("path")
     .data(groups)
     .enter()
     .append("path")
-    .each(function(d) { setProps.call(this, d.props) })
+    .each(function(g) { setProps.call(this, g.attrs) })
     .each(setGroupData);
 
-// an element of `type` per row, `translate` changes the filled props of a row,
-// it also gets the row
+// an element of `type` per row, without the rows of missing values,
+// `translate(values, row, group)` changes the values of the props of a row
 const pointwise = (groups, parent, type, translate = v => v) => parent
     .classed(type, true)
     .selectAll(`g.group`)
@@ -29,19 +36,12 @@ const pointwise = (groups, parent, type, translate = v => v) => parent
     .attr("class", `group`)
     .each(setGroupData)
     .selectAll(type)
-    .data(d => {
-        // entries with missing values are not drawn
-        const names = refNames(d.props);
-        const fill = propsOf(d.props);
-        return d.values
-            .filter(e => names.every(n => e[n] !== null))
-            .map(e => {
-                // the row of the element, e.g. for the highlight of a row
-                const v = translate(fill(e), e);
-                v[rowOf] = e;
-                return v;
-            });
-    })
+    .data(g => g.rows.filter(g.complete).map(row => {
+        // the row of the element, e.g. for the highlight of a row
+        const v = translate(g.at(row), row, g);
+        v[rowOf] = row;
+        return v;
+    }))
     .enter()
     .append(type)
     .each(setProps);

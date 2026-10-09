@@ -663,29 +663,30 @@ console.log(validateDef(def));  // the warnings, e.g. unknown plot types
 
 Plot types and coordinate systems can be registered, before the
 visualisations are loaded. A plot type draws the groups of rows of a plot,
-every group has its `props`, filled with the props of its categories, and its
-rows as `values`. `pointwise` draws an element per row and fills its props,
-`groupwise` a path per group. The extensions are experimental, their
-interface may change in minor versions, e.g. the props are objects of the
-internal format, `{ "prop": "fixed", "value": 3 }`:
+one per combination of its categories. A group has its `rows`, the props of
+its categories (`props`) and the values of the props of the plot: of a row
+`at(row)`, of one prop `prop(name)(row)` and the ones which are the same for
+all rows `attrs`, e.g. the color of a line. The values are plain values, e.g.
+the position of `"@x:scaled"`. `pointwise` draws an element per row (without
+the rows of missing values) with the values of its props as attributes,
+`groupwise` a path per group with `attrs`:
 
 ```js
 import { registerPlotType, pointwise } from '@preschen/gen-vis';
 
 registerPlotType('my:tick', {
-    render: (groups, parent, plotDef, ctx) => pointwise(groups, parent, 'rect', v => ({
-        ...v,
-        x: { prop: 'fixed', value: v.cx.value - 1 },
-        width: { prop: 'fixed', value: 2 },
-        height: { prop: 'fixed', value: ctx.innerHeight },
+    render: (groups, parent, plot, ctx) => pointwise(groups, parent, 'rect', v => ({
+        ...v, x: v.cx - 1, width: 2, height: ctx.innerHeight,
     })),
 });
 ```
 
-`ctx` has the `store`, the d3 selection `inner` of the plot area, the
-`data` and the scales (`info`) of the facet, `innerWidth`, `innerHeight` and
-`relativeBases` (the names of the references of the facet, see
-[props](#props-1)). `curve: true` passes the `curve` of the plot, `coords` limits
+`ctx` is the facet: the `store`, the d3 selection `inner` of the plot area,
+its `rows`, the `scales` by the names of the mappings, `axis` (the names of
+the mappings of the positions and of the values), `stackOf(row)` (the start
+and the end of a stacked value), `scope` (the names of the references of the
+facet, see [props](#props-1)), `innerWidth` and `innerHeight`, of maps also
+the `projection` and the `path`. `curve: true` passes the `curve` of the plot, `coords` limits
 a type to coordinate systems, e.g. `cartesian:bar` to `cartesian`. A
 coordinate system (`registerCoord(name, coord)`) has the default ranges of the
 orientations of its scales, the axes and the geometry of the hover, see

@@ -1,7 +1,6 @@
-export { mergeAll, sameValue, prepareDef, applyFormElements, templateRefs, fillTemplate };
+export { mergeAll, sameValue, prepareDef, applyFormElements, templateRefs, fillTemplate, formatOf };
 
 import merge from 'deepmerge';
-import { entryToProp, fillProps } from '@/utils/props';
 
 // arrays whose entries all have an `id`, e.g. the form elements and their
 // values, are merged by it, entries with a new id are appended, all other
@@ -51,10 +50,6 @@ const prepareMapping = m => {
         m.axis.padding ??= 3;
     }
 
-    if (m.hover !== undefined && m.axis !== undefined) {
-        m.hover.format ??= m.axis.format;
-    }
-
     if (m.legend) {
         if (m.legend.props === undefined)
             m.legend.props = {};
@@ -85,18 +80,29 @@ const prepareDef = def => {
     def.plot = [def.plot].flat();
 
     def.plot.forEach((p, i) => {
+        p.props ??= {};
         p.categories ??= [];
         p.id ??= `plot-${i}`;
         p.highlightProps = Object.keys(p.props).filter(n => n.startsWith('highlight-')).map(n => n.substring(10));
     });
 
-    def.plot.forEach(p => {
-        p.props = entryToProp(p.props);
-        p._fill = d => fillProps(p.props, d)
-    });
-
     return def;
 }
+
+// the d3 format of the values of a mapping in a part of the visualisation:
+// of the axis its own, of the hover its own or the one of the axis, by
+// default the date of time scales and the number otherwise, of the legend of
+// colors its own or the one of the hover, undefined for the default of the
+// axis or the legend, see coords/ticks.js and ColorLegend.vue
+const formatOf = (m, part) => {
+    const axis = m.axis?.format;
+    const hover = m.hover?.format ?? axis;
+    if (part == 'axis')
+        return axis;
+    if (part == 'legend')
+        return m.legend?.format ?? hover;
+    return hover ?? (['time', 'utc'].includes(m.scale?.type) ? '%x' : 'c');
+};
 
 // the names of the globals in a column template, e.g. `values` and `share` of "{values}{share}"
 const templateRefs = column => typeof column == 'string' ?

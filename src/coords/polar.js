@@ -1,7 +1,7 @@
 export { angleOf, radiusRange };
 
 import * as d3 from "@/utils/d3";
-import { entryToValue } from "@/utils/props";
+import { evaluate } from "@/utils/props";
 import { bandCenter } from "@/utils/scales";
 import { tickValues, tickFormat } from "@/coords/ticks";
 import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
@@ -19,8 +19,8 @@ const angleDistance = (a, b) => {
 
 // the inner and outer radius of the radius scale, the circle of the facet without it
 const radiusRange = ctx => {
-    const v = ctx.store.axis.v;
-    return v ? d3.extent(ctx.info[v].scale.range()) : [0, ctx.dims.radius];
+    const v = ctx.axis.v;
+    return v ? d3.extent(ctx.scales[v].range()) : [0, ctx.dims.radius];
 };
 
 // the angles of the ticks, the values at the end of a cyclic domain are at the
@@ -88,11 +88,11 @@ const radialAxis = (ctx, g, s, values, format, axis) => {
         const grid = ctx.inner.insert("g", () => g.node())
             .attr("class", "grid")
             .attr("fill", "none");
-        const h = ctx.store.axis.h;
-        const angle = h && ctx.info[h].scale;
+        const h = ctx.axis.h;
+        const angle = h && ctx.scales[h];
         if (axis.gridShape == "polygon" && angle) {
             const hAxis = ctx.store.mapping(h).axis;
-            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, entryToValue(hAxis.ticks, ctx.relativeBases)) : angle.domain());
+            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, evaluate(hAxis.ticks, ctx.scope)) : angle.domain());
             grid.selectAll("path")
                 .data(values)
                 .join("path")
@@ -152,8 +152,8 @@ const axes = ctx => {
     store.mappingNamesWithKey('axis').forEach(n => {
         const m = store.mapping(n);
         const i = m.axis;
-        const s = ctx.info[n].scale;
-        const ticks = entryToValue(i.ticks, ctx.relativeBases);
+        const s = ctx.scales[n];
+        const ticks = evaluate(i.ticks, ctx.scope);
         const format = tickFormat(store, m, s, ticks) ?? (v => v);
 
         const g = ctx.inner.append("g")
@@ -230,19 +230,19 @@ export default {
 
         // the nearest angle with data, also across the top, and the radius
         locate(ctx, [px, py], names) {
-            const s = ctx.info[names.h].scale;
+            const s = ctx.scales[names.h];
             const a = (Math.atan2(px, -py) + tau) % tau;
-            const keys = [a - tau, a, a + tau].map(v => s.invertCustom(v)).filter(k => k !== undefined);
+            const keys = [a - tau, a, a + tau].map(v => s.nearest(v)).filter(k => k !== undefined);
             if (keys.length == 0)
                 return null;
             const key = d3.least(keys, k => angleDistance(angleOf(s, k), a));
-            return { key, value: ctx.info[names.v].scale.invert?.(Math.hypot(px, py)) };
+            return { key, value: ctx.scales[names.v].invert?.(Math.hypot(px, py)) };
         },
 
         // a line from the center, the hover is in the center, on the other
         // side than the line
         marker(ctx, key, names, line) {
-            const a = angleOf(ctx.info[names.h].scale, key);
+            const a = angleOf(ctx.scales[names.h], key);
             const [r0, r1] = radiusRange(ctx);
             const [x1, y1] = d3.pointRadial(a, r0);
             const [x2, y2] = d3.pointRadial(a, r1);

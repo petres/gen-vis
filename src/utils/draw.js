@@ -1,7 +1,6 @@
 export { curves, setProps, setGroupData, highlightElements, rowOf };
 
 import * as d3 from "@/utils/d3";
-import { isProp } from "@/utils/props";
 
 // the interpolations of the paths and areas between their points, `monotoneX`
 // is smooth without overshooting the values, e.g. for monthly data
@@ -20,34 +19,25 @@ const curves = {
     basisClosed: d3.curveBasisClosed,
 };
 
-const setProps = function(d) {
+// the values of props as the attributes of an element, `text` is its text,
+// objects are nested props, e.g. `d` of a line, null removes an attribute
+const setProps = function(values) {
     const e = d3.select(this);
-    Object.entries(d).forEach(([k, v]) => {
-        if (v instanceof Object) {
-            if (!isProp(v))
-                return;
-            v = v.value;
-        }
-        if (k == "text") {
+    for (const [k, v] of Object.entries(values)) {
+        if (v !== null && (typeof v == 'object' || typeof v == 'function'))
+            continue;
+        if (k == "text")
             e.text(v);
-            return;
-        }
-        e.attr(k, v);
-    });
-}
+        else
+            e.attr(k, v);
+    }
+};
 
-const setGroupData = function(d) {
+// the keys of the categories of the group of an element, e.g. for the highlight
+const setGroupData = function(g) {
     const element = d3.select(this);
-    d.group.forEach(e => {
-        element.attr(`data-group-${e.dim}`, e.key)
-    });
-
-    d.group.forEach(e => {
-        element.attr(`data-visible-${e.dim}`, e.visible)
-    });
-
-    element.attr(`data-visible`, d.group.reduce((s, e) => s && e.visible, true))
-}
+    Object.entries(g.categories).forEach(([dim, key]) => element.attr(`data-group-${dim}`, key));
+};
 
 // the groups of a plot, the ids are compared directly, they are not part of
 // a selector, so they can contain any character, e.g. spaces

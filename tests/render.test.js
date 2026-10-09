@@ -871,8 +871,8 @@ describe('data formats', () => {
 describe('extensions', () => {
     test('a registered plot type', async () => {
         registerPlotType('test:square', {
-            render: (groups, parent, plotDef, ctx) => pointwise(groups, parent, 'rect', v => ({
-                ...v, x: { prop: 'fixed', value: v.cx.value - 2 }, width: { prop: 'fixed', value: 4 }, height: { prop: 'fixed', value: ctx.innerHeight },
+            render: (groups, parent, plot, ctx) => pointwise(groups, parent, 'rect', v => ({
+                ...v, x: v.cx - 2, width: 4, height: ctx.innerHeight,
             })),
         });
         const def = lineDef();
@@ -885,6 +885,28 @@ describe('extensions', () => {
         expect(await hover(el)).toBe(2);
         expect(errors).toEqual([]);
         delete plotTypes['test:square'];
+    });
+
+    test('the groups of a plot type, the values of the props are plain values', async () => {
+        let seen;
+        registerPlotType('test:groups', { render: (groups, parent, plot, ctx) => { seen = { groups, ctx }; } });
+        const def = lineDef();
+        def.plot = { type: 'test:groups', categories: ['c'], props: { stroke: '@color', width: { prop: 'relative', ref: 'innerWidth', ratio: 0.1 }, d: { x: '@x:scaled', y: '@y' } } };
+        await mount(GenVis, { def, data: lineData });
+        const [wien, tirol] = seen.groups;
+        expect(wien.categories).toEqual({ c: 'Wien' });
+        expect(wien.props).toMatchObject({ color: 'red', name: 'Wien', visible: true });
+        expect(wien.rows.map(r => r.x)).toEqual([2020, 2021, 2022, 2023]);
+        // the values which are the same for all rows, and the ones of a row
+        expect(wien.attrs).toEqual({ stroke: 'red', width: 55 });
+        const x = seen.ctx.scales.x;
+        expect(tirol.at(tirol.rows[0])).toEqual({ stroke: 'blue', width: 55, d: { x: x(2020), y: 2 } });
+        expect(tirol.prop('d')(tirol.rows[3])).toEqual({ x: x(2023), y: 2 });
+        // a missing value of a mapping of the props, e.g. a point is not drawn
+        expect(wien.rows.map(wien.complete)).toEqual([true, false, true, true]);
+        expect(Object.keys(seen.ctx)).toEqual(expect.arrayContaining(['store', 'inner', 'rows', 'scales', 'axis', 'scope', 'innerWidth', 'innerHeight']));
+        expect(seen.ctx.scales.x.domain()).toEqual([2019.94, 2023.06]);
+        delete plotTypes['test:groups'];
     });
 
     test('an unknown coordinate system is an error', async () => {

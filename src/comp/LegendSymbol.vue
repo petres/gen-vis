@@ -4,18 +4,18 @@
 
 <script>
 import * as d3 from "@/utils/d3";
-import { fillDirect } from "@/utils/props";
+import { evaluate } from "@/utils/props";
 import { setProps } from "@/utils/draw";
 
 export default {
     props: ["info", "props"],
     inject: ['store'],
     computed: {
-        bases() { return { ...this.store.bases, ...this.props } },
+        scope() { return { ...this.store.scope, ...this.props } },
     },
     // drawn again if the globals change, e.g. of a form element
     watch: {
-        bases() { this.draw() },
+        scope() { this.draw() },
     },
     mounted() {
         this.draw();
@@ -26,7 +26,7 @@ export default {
             svg.selectAll("*").remove();
             this.info.elements.forEach(e => {
                 const el = svg.append(e.type);
-                setProps.call(el.node(), fillDirect(e.props, this.bases))
+                setProps.call(el.node(), evaluate(e.props, this.scope))
             });
         },
     }

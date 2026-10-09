@@ -48,8 +48,8 @@ const checkProp = (value, path, warn, names = null) => {
     Object.entries(value).forEach(([k, v]) => checkProp(v, `${path}.${k}`, warn, names));
 };
 
-// the values of the rows of a mapping, e.g. `x:scaled`, see addScaledData and
-// addStackedData of utils/data.js
+// the values of the rows of a mapping, e.g. `x:scaled`, see rowValue of
+// layout.js
 const rowNames = (n, m) => [
     n,
     ...(m.scale ? [`${n}:scaled`, `${n}:scaled:0`, `${n}:scaled:min`, `${n}:scaled:max`] : []),

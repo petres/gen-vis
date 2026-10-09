@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { addDimInfo, addStackedData, categoryOrder, dataFormat, filter, groupBy, parseData, prepareData, updateData } from '@/utils/data';
+import { categoryOrder, dataFormat, filter, groupBy, parseData, prepareData, stack, updateData } from '@/utils/data';
 
 const def = {
     mapping: {
@@ -129,33 +129,25 @@ describe('updateData', () => {
     });
 });
 
-describe('addDimInfo', () => {
-    test('continuous values are sorted, without missing ones', () => {
-        const info = { dim: 'x', mapping: { type: 'numeric' } };
-        addDimInfo(info, [{ x: 3 }, { x: null }, { x: 1 }, { x: 2 }, { x: 1 }]);
-        expect(info.values).toEqual([1, 2, 3]);
-        expect(info.extent).toEqual([1, 3]);
-    });
-
-    test('categorical values keep their order', () => {
-        const info = { dim: 'c', mapping: { type: 'categorical' } };
-        addDimInfo(info, [{ c: 'b' }, { c: 'a' }, { c: 'b' }]);
-        expect(info.values).toEqual(['b', 'a']);
-        expect(info.extent).toBeUndefined();
-    });
-});
-
-describe('addStackedData', () => {
+describe('stack', () => {
     test('positive and negative values are stacked separately', () => {
         const data = [{ x: 1, y: 2 }, { x: 1, y: -1 }, { x: 1, y: 3 }, { x: 2, y: 5 }];
-        addStackedData(data, { h: 'x', v: 'y' });
-        expect(data.map(d => [d['y:start'], d['y:end']])).toEqual([[0, 2], [0, -1], [2, 5], [0, 5]]);
+        const stacks = stack(data, { h: 'x', v: 'y' });
+        expect(data.map(d => stacks.get(d))).toEqual([[0, 2], [0, -1], [2, 5], [0, 5]]);
+        // the rows are not changed
+        expect(data[0]).toEqual({ x: 1, y: 2 });
     });
 
     test('in the order of the categories, not of the rows', () => {
         const data = [{ x: 1, y: 1, c: 'b' }, { x: 1, y: 2, c: 'a' }, { x: 1, y: 4, c: 'c' }];
-        addStackedData(data, { h: 'x', v: 'y' }, [], categoryOrder([{ dim: 'c', keys: ['a', 'b', 'c'] }]));
-        expect(data.map(d => [d.c, d['y:start'], d['y:end']])).toEqual([['b', 2, 3], ['a', 0, 2], ['c', 3, 7]]);
+        const stacks = stack(data, { h: 'x', v: 'y' }, [], categoryOrder([{ dim: 'c', keys: ['a', 'b', 'c'] }]));
+        expect(data.map(d => [d.c, ...stacks.get(d)])).toEqual([['b', 2, 3], ['a', 0, 2], ['c', 3, 7]]);
+    });
+
+    test('separately for the values of the dims, e.g. the facets', () => {
+        const data = [{ x: 1, y: 1, f: 'a' }, { x: 1, y: 2, f: 'b' }, { x: 1, y: 4, f: 'a' }];
+        const stacks = stack(data, { h: 'x', v: 'y' }, ['f']);
+        expect(data.map(d => stacks.get(d))).toEqual([[0, 1], [0, 2], [1, 5]]);
     });
 });
 

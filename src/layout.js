@@ -1,15 +1,16 @@
-export { layout, axisNames, visibleKeys };
+export { layout, axisNames, visibleKeys, plotGroups };
 
-import { addDimInfo, addScaledData, addStackedData, categoryOrder, convert, filter, groupBy } from "@/utils/data";
-import { entryToValue } from "@/utils/props";
-import { addScale } from "@/utils/scales";
+import { categoryOrder, convert, filter, groupBy, stack } from "@/utils/data";
+import { bind, constant, evaluate, refNames } from "@/utils/props";
+import { makeScale } from "@/utils/scales";
 
 /**
  * The view of a visualisation, computed from its store without Vue: the rows
  * shown, the facets with their rows, sizes and scales, and the scales of
  * colors, the components only draw it. The scales of colors and the ones of
  * `facets.scales` are the same in all facets, the others are the ones of the
- * rows of a facet.
+ * rows of a facet. The rows are not changed, values computed of them, e.g.
+ * the stacks, are kept beside them.
  */
 
 // the names of the mappings of the positions (h) and of the values (v) of
@@ -31,14 +32,6 @@ const axisNames = store => {
 const visibleKeys = def => Object.entries(def.mapping)
     .filter(([, m]) => m.props)
     .map(([dim, m]) => ({ dim, key: Object.keys(m.props).filter(k => m.props[k].visible) }));
-
-// the scale of a mapping for the rows, in the sizes of a facet
-const scaleOf = (store, name, rows, size, scope) => {
-    const info = { dim: name, mapping: store.mapping(name) };
-    addDimInfo(info, rows);
-    addScale(info, store.coord.dims(size.innerWidth, size.innerHeight), store.coord, scope);
-    return info;
-};
 
 // the facets in the order of the categories of their mapping, not of the
 // rows, only the ones with rows
@@ -67,13 +60,16 @@ const layout = (store, width) => {
     const visible = visibleKeys(def);
     const values = Object.entries(def.filter ?? {}).map(([dim, v]) => ({
         dim,
-        key: [entryToValue(v, scope)].flat().map(k => convert(store.mapping(dim), k)),
+        key: [evaluate(v, scope)].flat().map(k => convert(store.mapping(dim), k)),
     }));
     const rows = filter(store.data, [...visible, ...values]);
 
-    // stacked in the order of the categories, not of the rows
-    if (axis.v && store.mapping(axis.v).stacked)
-        addStackedData(rows, axis, def.facets ? [def.facets.dim] : [], categoryOrder(visible.map(f => ({ dim: f.dim, keys: f.key }))));
+    // the start and the end of the stacked values of the rows, stacked in the
+    // order of the categories, not of the rows
+    const stacks = axis.v && store.mapping(axis.v).stacked
+        ? stack(rows, axis, def.facets ? [def.facets.dim] : [], categoryOrder(visible.map(f => ({ dim: f.dim, keys: f.key }))))
+        : null;
+    const stackOf = stacks ? row => stacks.get(row) : null;
 
     // without facets, or if no facet has rows, one of all rows
     const entries = def.facets ? facetEntries(store, rows) : [];
@@ -81,34 +77,101 @@ const layout = (store, width) => {
 
     // the sizes of a facet
     const margins = def.options.margins;
-    const cols = faceted ? entryToValue(def.facets.cols, scope) : 1;
-    const size = { width: width/cols, height: entryToValue(def.options.height, scope) };
+    const cols = faceted ? evaluate(def.facets.cols, scope) : 1;
+    const size = { width: width/cols, height: evaluate(def.options.height, scope) };
     size.innerWidth = size.width - (margins.left + margins.right);
     size.innerHeight = size.height - (margins.top + margins.bottom);
     const facetScope = { ...scope, ...size };
+    const dims = store.coord.dims(size.innerWidth, size.innerHeight);
+
+    // the scale of a mapping for the rows, in the sizes of a facet
+    const scaleOf = (name, rows) => makeScale(name, store.mapping(name), rows,
+        { dims, coord: store.coord, scope: facetScope, stackOf: name == axis.v ? stackOf : null });
 
     // the scales of all facets: the shared ones and the ones without
     // orientation, e.g. of colors
     const scaled = Object.keys(def.mapping).filter(n => def.mapping[n].scale);
     const colors = scaled.filter(n => !def.mapping[n].scale.orientation);
-    const shared = faceted && def.facets.scales ? entryToValue(def.facets.scales, scope) : [];
-    const common = Object.fromEntries([...new Set([...shared, ...colors])]
-        .map(n => [n, scaleOf(store, n, rows, size, facetScope)]));
-    addScaledData(rows, common);
+    const shared = faceted && def.facets.scales ? evaluate(def.facets.scales, scope) : [];
+    const common = Object.fromEntries([...new Set([...shared, ...colors])].map(n => [n, scaleOf(n, rows)]));
 
-    const facets = (faceted ? entries : [{ key: undefined, name: undefined, rows }]).map(f => {
-        const own = Object.fromEntries(scaled.filter(n => !(n in common))
-            .map(n => [n, scaleOf(store, n, f.rows, size, facetScope)]));
-        addScaledData(f.rows, own);
-        return { ...f, ...size, margins, scope: facetScope, info: { ...common, ...own } };
-    });
+    const facets = (faceted ? entries : [{ key: undefined, name: undefined, rows }]).map(f => ({
+        ...f,
+        ...size,
+        margins,
+        dims,
+        axis,
+        stackOf,
+        scope: facetScope,
+        scales: {
+            ...common,
+            ...Object.fromEntries(scaled.filter(n => !(n in common)).map(n => [n, scaleOf(n, f.rows)])),
+        },
+    }));
 
     return {
         axis,
         rows,
+        stackOf,
         faceted,
         facets,
         colors: Object.fromEntries(colors.map(n => [n, common[n]])),
         height: size.height,
     };
+};
+
+// a name of the rows of a facet as a function of the row, e.g. "x" or
+// "x:scaled", undefined for other names, see README "Props"
+const rowValue = (ctx, name) => {
+    const [m, ...parts] = name.split(':');
+    if (!Object.hasOwn(ctx.store.def.mapping, m))
+        return undefined;
+    const s = ctx.scales[m];
+    const stackOf = ctx.axis.v == m ? ctx.stackOf : null;
+    const start = row => stackOf(row)?.[0];
+    const end = row => stackOf(row)?.[1];
+    const values = {
+        '': () => row => row[m],
+        'scaled': () => s && (row => s(row[m])),
+        'scaled:0': () => s && constant(s(0)),
+        'scaled:min': () => s && constant(s(s.domain()[0])),
+        'scaled:max': () => s && constant(s(s.domain().at(-1))),
+        'start': () => stackOf && start,
+        'end': () => stackOf && end,
+        'start:scaled': () => stackOf && s && (row => s(start(row))),
+        'end:scaled': () => stackOf && s && (row => s(end(row))),
+        'height:scaled': () => stackOf && s && (row => s(start(row)) - s(end(row))),
+    };
+    return values[parts.join(':')]?.() || undefined;
+};
+
+/**
+ * The groups of the rows of a plot by its categories, see plots/index.js:
+ * the props of their categories (`props`), their `rows`, the values of the
+ * props of the plot of a row (`at(row)`, `prop(name)(row)` of one prop) and
+ * the ones which are the same for all rows (`attrs`), e.g. the color of a
+ * line. The names of the props are the props of the categories, the names
+ * of the rows (see rowValue) and the ones of the facet (`ctx.scope`), in
+ * this order. `complete(row)` is false if a mapping of the props has no
+ * value, e.g. a point is not drawn.
+ */
+const plotGroups = (plot, rows, ctx) => {
+    const mapping = ctx.store.def.mapping;
+    const needed = [...new Set(refNames(plot.props).map(n => n.split(':')[0]))].filter(m => Object.hasOwn(mapping, m));
+    const complete = row => needed.every(m => row[m] !== null);
+    return groupBy(rows, plot.categories).map(g => {
+        const props = Object.assign({}, ...plot.categories.map(c => mapping[c].props?.[g.group[c]]));
+        const resolve = name => Object.hasOwn(props, name) ? constant(props[name])
+            : rowValue(ctx, name) ?? (Object.hasOwn(ctx.scope, name) ? constant(ctx.scope[name]) : undefined);
+        const at = bind(plot.props, resolve);
+        return {
+            categories: g.group,
+            props,
+            rows: g.entries,
+            at,
+            prop: name => at.entries.get(name) ?? constant(undefined),
+            attrs: Object.fromEntries([...at.entries].filter(([, f]) => f.constant).map(([k, f]) => [k, f()])),
+            complete,
+        };
+    });
 };

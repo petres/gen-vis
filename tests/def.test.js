@@ -1,29 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { sameValue, applyFormElements, fillTemplate, mergeAll, prepareDef, templateRefs } from '@/utils/def';
-import { entryToProp, entryToValue, getProps, refNames } from '@/utils/props';
-
-describe('props', () => {
-    test('fixed values and refs', () => {
-        expect(entryToValue(3, {})).toBe(3);
-        expect(entryToValue('@a', { a: 'x' })).toBe('x');
-        expect(entryToProp('@y:end:scaled')).toEqual({ prop: 'ref', ref: 'y:end:scaled', parts: ['y', 'end', 'scaled'] });
-    });
-
-    test('relative', () => {
-        expect(entryToValue({ prop: 'relative', ref: 'innerWidth', ratio: 0.5 }, { innerWidth: 100 })).toBe(50);
-    });
-
-    test('steps', () => {
-        const steps = { prop: 'steps', ref: 'totalWidth', steps: [{ cut: 0, value: 1 }, { cut: 500, value: 2 }] };
-        expect(entryToValue(steps, { totalWidth: 400 })).toBe(1);
-        expect(entryToValue(steps, { totalWidth: 600 })).toBe(2);
-    });
-
-    test('refNames of nested props', () => {
-        const props = entryToProp({ x: '@x:scaled', d: { y: '@y:end:scaled' }, fill: 'red', w: { prop: 'relative', ref: 'innerWidth', ratio: 1 } });
-        expect(refNames(props)).toEqual(['x', 'y', 'innerWidth']);
-    });
-});
+import { sameValue, applyFormElements, fillTemplate, formatOf, mergeAll, prepareDef, templateRefs } from '@/utils/def';
 
 describe('prepareDef', () => {
     test('defaults', () => {
@@ -35,26 +11,29 @@ describe('prepareDef', () => {
             plot: { type: 'svg:circle', props: { r: '@r', 'highlight-r': 5 } },
         });
         expect(def.mapping.x.scale).toMatchObject({ type: 'linear', domain: [null, null] });
-        expect(def.mapping.x.hover.format).toBe('c');
         expect(def.mapping.c.props).toEqual({ a: { r: 3, name: 'a', visible: true }, b: { r: 3, name: 'B', visible: false } });
         expect(def.plot).toHaveLength(1);
         expect(def.plot[0]).toMatchObject({ id: 'plot-0', categories: [], highlightProps: ['r'] });
+        expect(def.options.margins).toEqual({ top: 0, right: 0, bottom: 0, left: 0 });
     });
 });
 
-describe('getProps', () => {
-    test('the props of one group do not leak into others', () => {
-        const def = prepareDef({
-            mapping: { c: { column: 'c', props: { manual: { a: { color: 'red', bold: 'bold' }, b: { color: 'blue' } } } } },
-            plot: { type: 'svg:circle', categories: ['c'], props: { fill: '@color', 'font-weight': '@bold' } },
-        });
-        const groups = [{ group: { c: 'a' }, entries: [] }, { group: { c: 'b' }, entries: [] }];
-        const globs = { width: 100 };
-        const [a, b] = getProps(groups, def.plot[0], globs, def.mapping);
-        expect(a.props['font-weight'].value).toBe('bold');
-        expect(b.props['font-weight'].value).toBeUndefined();
-        expect(b.props.fill.value).toBe('blue');
-        expect(globs).toEqual({ width: 100 });
+describe('formatOf', () => {
+    test('of the axis, the hover and the legend', () => {
+        const m = { scale: { type: 'linear' }, axis: { format: '.1f' } };
+        expect(formatOf(m, 'axis')).toBe('.1f');
+        expect(formatOf(m, 'hover')).toBe('.1f');
+        expect(formatOf({ ...m, hover: { format: '.2f' } }, 'hover')).toBe('.2f');
+        expect(formatOf({ ...m, hover: { format: '.2f' } }, 'legend')).toBe('.2f');
+        expect(formatOf({ ...m, legend: { format: '.0%' } }, 'legend')).toBe('.0%');
+    });
+
+    test('the defaults', () => {
+        expect(formatOf({ scale: { type: 'linear' } }, 'axis')).toBeUndefined();
+        expect(formatOf({ scale: { type: 'linear' } }, 'legend')).toBeUndefined();
+        expect(formatOf({ scale: { type: 'linear' } }, 'hover')).toBe('c');
+        expect(formatOf({ scale: { type: 'utc' } }, 'hover')).toBe('%x');
+        expect(formatOf({ type: 'categorical' }, 'hover')).toBe('c');
     });
 });
 

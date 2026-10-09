@@ -14,6 +14,7 @@
 
 <script>
 import * as d3 from "@/utils/d3";
+import { formatOf } from "@/utils/def";
 
 // the gradients of the legends of a page have their own ids
 let count = 0;
@@ -55,7 +56,7 @@ const fixedFormat = (locale, ticks) => {
 // the classes of a threshold, quantize or quantile scale, `info` is the scale
 // of the plots, the one of all facets, see layout.js
 export default {
-    props: ["legend", "info"],
+    props: ["legend", "scale"],
     inject: ['store'],
     data: () => ({ width: 240, padding: 16 }),
     computed: {
@@ -68,12 +69,12 @@ export default {
         this.render();
     },
     watch: {
-        info: 'render',
+        scale: 'render',
     },
     methods: {
         render() {
             const m = this.store.mapping(this.legend);
-            const s = this.info.scale;
+            const s = this.scale;
 
             const svg = d3.select(this.$refs.svg);
             svg.selectAll("*").remove();
@@ -83,8 +84,8 @@ export default {
                 g.append("text").attr("x", x).attr("y", 26).attr("text-anchor", "middle").attr("fill", "currentColor").text(format(v));
             };
             // the format of the legend or the hover, by default the one of the ticks of an axis
-            const given = m.legend.format ?? m.hover?.format;
-            const formatOf = values => given
+            const given = formatOf(m, 'legend');
+            const formatter = values => given
                 ? this.store.formatter(m.scale.type)(given)
                 : this.store.locale.tickFormat(d3.scaleLinear(d3.extent(values)), 'linear', 4);
 
@@ -95,7 +96,7 @@ export default {
                 g.selectAll("rect").data(colors).join("rect")
                     .attr("x", (c, i) => i*w).attr("width", w).attr("height", 10).attr("fill", c => c);
                 const limits = colors.slice(1).map(c => s.invertExtent(c)[0]);
-                const format = formatOf(limits);
+                const format = formatter(limits);
                 limits.forEach((v, i) => label((i + 1)*w, v, format));
             } else if (s.interpolator) {
                 // sequential and diverging scales: the gradient and the ticks at
@@ -109,7 +110,7 @@ export default {
                 g.append("rect").attr("width", this.width).attr("height", 10).attr("fill", `url(#${this.uid})`);
                 const domain = s.domain();
                 const ticks = isLinear(s) ? d3.ticks(domain[0], domain.at(-1), 4) : spacedTicks(domain, position, 30);
-                const format = given || isLinear(s) ? formatOf(ticks) : fixedFormat(this.store.locale, ticks);
+                const format = given || isLinear(s) ? formatter(ticks) : fixedFormat(this.store.locale, ticks);
                 ticks.forEach(v => label(position(v), v, format));
             } else {
                 // e.g. a linear scale with a range of colors
@@ -121,7 +122,7 @@ export default {
                     .attr("stop-color", s(x.invert(i*this.width/10))));
                 g.append("rect").attr("width", this.width).attr("height", 10).attr("fill", `url(#${this.uid})`);
                 const ticks = x.ticks(4);
-                const format = formatOf(ticks);
+                const format = formatter(ticks);
                 ticks.forEach(v => label(x(v), v, format));
             }
         },

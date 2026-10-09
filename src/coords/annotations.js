@@ -2,7 +2,7 @@ export { annotationKeys, constraints, span, position, drawLabel, setAnnotationPr
 
 import * as d3 from "@/utils/d3";
 import { convert } from "@/utils/data";
-import { entryToProp, fillProps } from "@/utils/props";
+import { evaluate } from "@/utils/props";
 import { bandCenter } from "@/utils/scales";
 import { setProps } from "@/utils/draw";
 
@@ -12,14 +12,14 @@ const annotationKeys = ['type', 'props', 'label', 'text', 'above', 'facet', 'lon
 // the mappings of an annotation with their values, e.g. { "x": ["2025-07-01", null] },
 // the values are converted as the ones of the rows, e.g. dates
 const constraints = (ctx, a) => Object.entries(a)
-    .filter(([k]) => !annotationKeys.includes(k) && ctx.info[k])
+    .filter(([k]) => !annotationKeys.includes(k) && ctx.scales[k])
     .map(([name, value]) => {
         const mapping = ctx.store.mapping(name);
         const toRow = v => v === null ? null : convert(mapping, v);
         return {
             name,
             orientation: mapping.scale.orientation,
-            scale: ctx.info[name].scale,
+            scale: ctx.scales[name],
             value: Array.isArray(value) ? value.map(toRow) : toRow(value),
         };
     });
@@ -67,7 +67,7 @@ const drawLabel = (g, a, x, y, anchor = "start", baseline = "hanging") => {
 
 // the props of an annotation, svg attributes, also props of the size of the facet
 const setAnnotationProps = (element, a, ctx, defaults = {}) => {
-    const props = fillProps(entryToProp({ ...defaults, ...a.props }), ctx.relativeBases, true);
+    const props = evaluate({ ...defaults, ...a.props }, ctx.scope);
     element.each(function() { setProps.call(this, props) });
     if (a.type == 'text')
         element.text(a.text ?? '');
