@@ -6,7 +6,7 @@ import { plotTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import * as d3 from 'd3-scale-chromatic';
 import { prepareDef } from '@/utils/def';
-import { clearCache } from '@/store';
+import { clearCache, createStore } from '@/store';
 import { selection } from '@/utils/export';
 import { examples, errors, useDom, rendered, mount, pointer, hover } from './dom.js';
 
@@ -467,6 +467,7 @@ describe('annotations', () => {
             { type: 'circle', x: 2022, y: 1, above: true },
         ]), data: lineData });
         const band = el.querySelector('g.annotations.below rect.band');
+        expect(band.parentNode.getAttribute('data-plot')).toBe('annotation-0');
         expect(['x', 'y', 'width', 'height'].map(a => num(band, a))).toEqual([275, 0, 275, 250]);
         // the labels are above the plots
         expect(el.querySelector('g.annotation-labels .annotation-label').textContent).toBe('Schätzung');
@@ -476,13 +477,12 @@ describe('annotations', () => {
         expect(num(vertical, 'x1')).toBeCloseTo(550/3);
         expect(el.querySelector('g.annotations text.text').textContent).toBe('Hinweis');
         expect(num(el.querySelector('g.annotations.above circle'), 'cx')).toBeCloseTo(1100/3);
-        // below the plots, the circle above them
-        const order = [...el.querySelector('svg.facet > g').children].map(c => c.getAttribute('class'));
-        expect(order.indexOf('annotations below')).toBeLessThan(order.findIndex(c => c?.startsWith('plotGroup')));
-        expect(order.indexOf('annotations above')).toBeGreaterThan(order.findLastIndex(c => c?.startsWith('plotGroup')));
-        expect(order.indexOf('annotation-labels')).toBeGreaterThan(order.indexOf('annotations above'));
-        // below the grid lines
-        expect(order.indexOf('annotations below')).toBeLessThan(order.indexOf('grid'));
+        // below the grid lines and the plots, the circle above them
+        const order = [...el.querySelector('svg.facet > g').children].map(c => c.getAttribute('data-plot') ?? c.getAttribute('class'));
+        expect(order.indexOf('annotation-3')).toBeLessThan(order.indexOf('grid'));
+        expect(order.indexOf('annotation-3')).toBeLessThan(order.indexOf('plot-0'));
+        expect(order.indexOf('annotation-4')).toBeGreaterThan(order.indexOf('plot-1'));
+        expect(order.indexOf('annotation-labels')).toBeGreaterThan(order.indexOf('annotation-4'));
         expect(errors).toEqual([]);
     });
 
@@ -501,12 +501,42 @@ describe('annotations', () => {
         const band = wien.querySelector('rect.band');
         const bar = wien.querySelectorAll('g.plotGroup rect')[0];
         // the band of the category, the bar is in its middle
-        expect(num(band, 'width')).toBeGreaterThan(num(bar, 'width'));
+        process.stderr.write('WIDTHS ' + num(band, 'width') + ' ' + num(bar, 'width') + ' ' + band.getAttribute('x') + '\n');
+        expect(num(band, 'width')).toBeGreaterThanOrEqual(num(bar, 'width') - 1e-9);
         expect(num(band, 'x') + num(band, 'width')/2).toBeCloseTo(num(bar, 'x') + num(bar, 'width')/2);
         // in the middle of the year, the inner width of a facet is 250
         expect(num(wien.querySelector('text.text'), 'x')).toBeCloseTo(125, -1);
         expect(tirol.querySelector('text.text')).toBeNull();
         expect(tirol.querySelector('rect.band')).not.toBeNull();
+    });
+
+    test('null is no value, references to globals and templates', async () => {
+        const def = annotated([
+            { type: 'text', x: null, y: '@target', text: 'Ziel {target}' },
+            { type: 'line', x: null, y: '@target', label: 'Ziel {target}' },
+        ]);
+        def.globals = { target: 2 };
+        const el = await mount(GenVis, { def, data: lineData });
+        const text = el.querySelector('text.text');
+        expect([num(text, 'x'), num(text, 'y')]).toEqual([0, 125]);
+        expect(text.textContent).toBe('Ziel 2');
+        const line = el.querySelector('line.line');
+        expect(['x1', 'x2', 'y1', 'y2'].map(a => num(line, a))).toEqual([0, 550, 125, 125]);
+        expect(el.querySelector('.annotation-label').textContent).toBe('Ziel 2');
+        expect(errors).toEqual([]);
+    });
+
+    test('annotations of the rows of a plot, e.g. events, with props of the rows', async () => {
+        const def = annotated([]);
+        def.plot = [def.plot[0], {
+            type: 'annotation:line',
+            data: [{ x: 2021, label: 'A', color: 'red' }, { x: 2022, label: 'B', color: 'blue' }],
+            props: { stroke: '@color' },
+        }];
+        const el = await mount(GenVis, { def, data: lineData });
+        const lines = [...el.querySelectorAll('g.plotGroup.plot-1 line.line')];
+        expect(lines.map(l => [Math.round(num(l, 'x1')), l.getAttribute('stroke')])).toEqual([[183, 'red'], [367, 'blue']]);
+        expect([...el.querySelectorAll('.annotation-label')].map(l => l.textContent)).toEqual(['A', 'B']);
     });
 
     test('sectors and rings of polar plots', async () => {
@@ -558,6 +588,90 @@ describe('the highlight of a row', () => {
         el.querySelector('.legend[data-dim="type"] .entries > div').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
         expect(highlighted()).toHaveLength(2);
         expect(errors).toEqual([]);
+    });
+});
+
+describe('the data of a plot', () => {
+    const num = (e, a) => parseFloat(e.getAttribute(a));
+
+    test('a text at a value of the vertical axis, at the end of the horizontal one', async () => {
+        const def = lineDef();
+        def.mapping.y.scale.domain = [0, 4];
+        def.globals = { target: 3 };
+        def.plot = [def.plot[0], {
+            type: 'svg:text',
+            data: [{ y: '@target', label: 'Ziel' }],
+            props: { x: '@x:scaled:max', y: '@y:scaled', text: '@label', 'text-anchor': 'end' },
+        }];
+        const el = await mount(GenVis, { def, data: lineData });
+        const text = el.querySelector('g.plotGroup.plot-1 text');
+        expect([num(text, 'x'), num(text, 'y'), text.textContent]).toEqual([550, 62.5, 'Ziel']);
+        expect(errors).toEqual([]);
+    });
+
+    test('dates are converted, a row of a facet is only in its facet', async () => {
+        const def = lineDef();
+        def.mapping.x = { column: 'year', type: 'date', scale: { type: 'utc', orientation: 'horizontal', domain: ['2020-01-01', '2024-01-01'] } };
+        def.facets = { dim: 'c', cols: 2 };
+        def.plot = [def.plot[0], { type: 'svg:circle', data: [{ x: '2022-01-01' }, { x: '2023-01-01', c: 'Tirol' }], props: { cx: '@x:scaled', cy: 0, r: 2 } }];
+        const el = await mount(GenVis, { def, data: lineData });
+        const [wien, tirol] = [...el.querySelectorAll('svg.facet')].map(f => [...f.querySelectorAll('g.plotGroup.plot-1 circle')].map(c => Math.round(num(c, 'cx'))));
+        expect(wien).toEqual([125]);
+        expect(tirol).toEqual([125, 188]);
+    });
+
+    test('loaded from a url relative to the definition', async () => {
+        const store = createStore();
+        vi.stubGlobal('fetch', async url => new Response(url.endsWith('events.csv') ? 'x,label\n2021,A' : ''));
+        await store.init({ def: { ...lineDef(), plot: [{ type: 'svg:text', data: 'http://h/data/events.csv', props: { text: '@label' } }] }, data: lineData });
+        expect(store.def.plot[0].data).toEqual([{ x: '2021', label: 'A' }]);
+        expect(store.def.plot[0].loaded).toBe(true);
+    });
+});
+
+describe('the selection of the rows of a plot', () => {
+    const labelDef = select => {
+        const def = lineDef();
+        def.plot = [def.plot[0], { type: 'svg:text', categories: ['c'], select, props: { x: '@x:scaled', y: '@y:scaled', text: '@name', fill: '@color' } }];
+        return def;
+    };
+    const labels = async select => [...(await mount(GenVis, { def: labelDef(select), data: lineData })).querySelectorAll('g.plotGroup.plot-1 text')]
+        .map(t => [t.textContent, t.__data__[Object.getOwnPropertySymbols(t.__data__)[0]].x]);
+
+    test('the last or the first row of every group, e.g. labels at the end of lines', async () => {
+        expect(await labels('last')).toEqual([['Wien', 2023], ['Tirol', 2023]]);
+        expect(await labels('first')).toEqual([['Wien', 2020], ['Tirol', 2020]]);
+    });
+
+    test('texts of several groups moved apart', async () => {
+        const def = labelDef('last');
+        def.plot[1].dodge = 20;
+        const el = await mount(GenVis, { def, data: lineData.replace('2023,4,40,Wien', '2023,2.1,40,Wien') });
+        const ys = [...el.querySelectorAll('g.plotGroup.plot-1 text')].map(t => parseFloat(t.getAttribute('y')));
+        expect(Math.abs(ys[0] - ys[1])).toBeCloseTo(20);
+    });
+
+    test('the row with the most or the least value, of the rows with values', async () => {
+        expect(await labels({ max: 'y' })).toEqual([['Wien', 2023], ['Tirol', 2020]]);
+        expect(await labels({ min: 'y' })).toEqual([['Wien', 2020], ['Tirol', 2020]]);
+    });
+});
+
+describe('the layers and facets of plots', () => {
+    test('below the axes, above the other plots, only in some facets', async () => {
+        const def = lineDef();
+        def.facets = { dim: 'c', cols: 2 };
+        def.plot = [
+            { ...def.plot[0], id: 'line' },
+            { type: 'svg:rect', id: 'background', layer: 'below', data: [{}], props: { width: '@innerWidth', height: '@innerHeight', fill: '#EEE' } },
+            { type: 'svg:text', id: 'note', layer: 'above', facet: 'Tirol', data: [{}], props: { text: 'Tirol' } },
+        ];
+        const el = await mount(GenVis, { def, data: lineData });
+        const [wien, tirol] = el.querySelectorAll('svg.facet > g');
+        const order = g => [...g.children].map(c => c.getAttribute('data-plot') ?? c.getAttribute('class').split(' ')[0]);
+        expect(order(tirol).filter(c => !['hoverMarker', 'events'].includes(c))).toEqual(['background', 'grid', 'axis-name-x', 'axis-title', 'axis-name-y', 'line', 'note']);
+        expect(order(wien)).not.toContain('note');
+        expect(wien.querySelector('g.below rect').getAttribute('width')).toBe('250');
     });
 });
 

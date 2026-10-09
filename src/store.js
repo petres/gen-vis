@@ -121,6 +121,15 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     // the form elements can have the values of the data, the state needs them
     addDataValues(defOrg, rows);
     const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)));
+
+    // the data of plots of their own, e.g. events, the url relative to the def,
+    // the rows are not evaluated as the ones of the definition, see layout.js
+    await Promise.all(prepared.plot.filter(p => typeof p.data == 'string').map(async p => {
+        const dataUrl = resolveUrl(p.data, url);
+        const format = dataFormat(dataUrl, p.dataFormat);
+        p.data = raw(await parseData(await fetchData(dataUrl, format), format));
+        p.loaded = true;
+    }));
     const defaults = snapshot(prepared);
     applyState(prepared, state);
     applyFormElements(prepared, defOrg);

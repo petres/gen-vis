@@ -199,6 +199,32 @@ describe('validateDef', () => {
         expect(validateDef(def).filter(w => w.includes("'y:start:scaled'") || w.includes("'radius'"))).toEqual([]);
     });
 
+    test('the data, the selection and the layer of a plot', () => {
+        const def = base();
+        def.globals = { target: 3 };
+        def.plot = [def.plot, {
+            type: 'svg:text', data: [{ y: '@target', label: 'A' }], select: 'last', layer: 'below',
+            props: { x: '@x:scaled:max', y: '@y:scaled', text: '@label' },
+        }];
+        expect(validateDef(def)).toEqual([]);
+        def.plot[1] = { ...def.plot[1], data: [{ y: '@unknown' }], select: { top: 'y' }, layer: 'front', props: { text: '@label' } };
+        expect(validateDef(def)).toEqual([
+            "plot[1].data[0].y: unknown reference 'unknown', expected one of 'target', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight'",
+            `plot[1].select: expected 'first', 'last' or the min or max of a mapping, e.g. { "max": "x" }`,
+            "plot[1].layer: unknown layer 'front', expected one of 'below', 'above'",
+            "plot[1].props.text: unknown reference 'label'",
+        ]);
+        // the names of the rows of a url are not known
+        def.plot[1] = { type: 'svg:text', data: 'events.csv', select: { max: 'z' }, props: { text: '@label' } };
+        expect(validateDef(def)).toEqual(["plot[1].select.max: unknown mapping 'z'"]);
+        def.plot[1] = { type: 'annotation:band', data: 3 };
+        def.annotations = [{ type: 'line', y: '@target' }, { type: 'line', y: '@nope' }];
+        expect(validateDef(def)).toEqual([
+            "plot[1].data: expected a list of rows or the url of the data",
+            "annotations[1].y: unknown reference 'nope', expected one of 'target', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight'",
+        ]);
+    });
+
     test('annotations and the highlight of a plot', () => {
         const def = base();
         def.plot.highlight = 'element';

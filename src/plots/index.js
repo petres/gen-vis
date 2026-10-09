@@ -4,6 +4,7 @@ import elements from "@/plots/elements";
 import cartesian from "@/plots/cartesian";
 import polar from "@/plots/polar";
 import geo from "@/plots/geo";
+import annotations from "@/plots/annotations";
 
 /**
  * The plot types by name, the `type` of a plot:
@@ -24,7 +25,7 @@ import geo from "@/plots/geo";
  * - `curve`: the type uses the `curve` of the plot
  * - `coords`: the coordinate systems of the type, all if it is not given
  */
-const plotTypes = { ...elements, ...cartesian, ...polar, ...geo };
+const plotTypes = { ...elements, ...cartesian, ...polar, ...geo, ...annotations };
 
 const registerPlotType = (name, type) => {
     plotTypes[name] = type;

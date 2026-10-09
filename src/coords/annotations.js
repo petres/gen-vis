@@ -10,9 +10,10 @@ import { setProps } from "@/utils/draw";
 const annotationKeys = ['type', 'props', 'label', 'text', 'above', 'facet', 'lon', 'lat'];
 
 // the mappings of an annotation with their values, e.g. { "x": ["2025-07-01", null] },
-// the values are converted as the ones of the rows, e.g. dates
+// the values are converted as the ones of the rows, e.g. dates, a mapping
+// with null is one without a value, e.g. a line over the whole plot area
 const constraints = (ctx, a) => Object.entries(a)
-    .filter(([k]) => !annotationKeys.includes(k) && ctx.scales[k])
+    .filter(([k, v]) => !annotationKeys.includes(k) && ctx.scales[k] && v !== null && v !== undefined)
     .map(([name, value]) => {
         const mapping = ctx.store.mapping(name);
         const toRow = v => v === null ? null : convert(mapping, v);
@@ -65,9 +66,10 @@ const drawLabel = (g, a, x, y, anchor = "start", baseline = "hanging") => {
             .text(a.label);
 };
 
-// the props of an annotation, svg attributes, also props of the size of the facet
+// the props of an annotation, svg attributes, also props of the size of the
+// facet, of an annotation of a row (`scope`) of the names of the row
 const setAnnotationProps = (element, a, ctx, defaults = {}) => {
-    const props = evaluate({ ...defaults, ...a.props }, ctx.scope);
+    const props = evaluate({ ...defaults, ...a.props }, a.scope ?? ctx.scope);
     element.each(function() { setProps.call(this, props) });
     if (a.type == 'text')
         element.text(a.text ?? '');

@@ -20,7 +20,7 @@ import { formatOf } from "@/utils/def";
 import { evaluate } from "@/utils/props";
 import { highlightElements } from "@/utils/draw";
 import { plotTypes } from "@/plots";
-import { plotGroups } from "@/layout";
+import { plotGroups, plotRows } from "@/layout";
 
 import Hover from '@/comp/Hover.vue';
 
@@ -63,12 +63,20 @@ export default {
         };
 
         this.store.coord.prepare?.(this.ctx);
-        // the annotations below the plots are also below the grid lines and axes
-        this.annotate(false);
+        // the plots below the axes and grid lines, e.g. the bands of annotations,
+        // the ones above the other plots, e.g. labels
+        const plots = this.store.def.plot.filter(p => p.facet === undefined
+            || [p.facet].flat().map(String).includes(String(key)));
+        this.plot(plots.filter(p => p.layer == 'below'));
         this.store.coord.axes(this.ctx);
-        this.plot();
-        // also without annotations above the plots, for the labels of the ones below
-        this.annotate(true);
+        this.plot(plots.filter(p => p.layer != 'below' && p.layer != 'above'));
+        this.plot(plots.filter(p => p.layer == 'above'));
+        // the labels of the annotations are above the plots, also the ones below them
+        const labels = this.ctx.inner.selectAll(".annotation-label");
+        if (!labels.empty()) {
+            const g = this.ctx.inner.append("g").attr("class", "annotation-labels");
+            labels.each(function() { g.node().appendChild(this) });
+        }
         this.store.coord.raise?.(this.ctx);
         this.hoverInit();
     },
@@ -76,33 +84,19 @@ export default {
         document.removeEventListener("pointerdown", this.hideOnPointerOutside);
     },
     methods: {
-        plot() {
-            this.store.def.plot.forEach(plot => {
+        plot(plots) {
+            plots.forEach(plot => {
                 if (!Object.hasOwn(plotTypes, plot.type))
                     throw new Error(`Unknown plot type '${plot.type}'`);
                 const parent = this.ctx.inner.append("g")
                     .classed("plotGroup", true)
                     .classed(plot.id, true)
                     .attr("data-plot", plot.id);
-                plotTypes[plot.type].render(plotGroups(plot, this.ctx.rows, this.ctx), parent, plot, this.ctx);
+                if (plot.layer)
+                    parent.classed(plot.layer, true);
+                const rows = plotRows(this.store, plot, this.facet);
+                plotTypes[plot.type].render(plotGroups(plot, rows, this.ctx), parent, plot, this.ctx);
             });
-        },
-
-        // the annotations below or `above` the plots, of all facets or the ones
-        // of `facet`, e.g. "Wien" or a list of keys
-        annotate(above) {
-            const coord = this.store.coord;
-            const annotations = (this.store.def.annotations ?? []).filter(a => Boolean(a.above) == above
-                && (a.facet === undefined || [a.facet].flat().map(String).includes(String(this.facet.key))));
-            if (!coord.annotate || (annotations.length == 0 && !(above && this.ctx.inner.select(".annotation-label").node())))
-                return;
-            const g = this.ctx.inner.append("g").attr("class", `annotations ${above ? 'above' : 'below'}`);
-            annotations.forEach(a => coord.annotate(this.ctx, g, a));
-            // the labels are above the plots, also the ones of annotations below them
-            if (above) {
-                const labels = this.ctx.inner.append("g").attr("class", "annotation-labels");
-                this.ctx.inner.selectAll(".annotations .annotation-label").each(function() { labels.node().appendChild(this) });
-            }
         },
 
         hoverInit() {

@@ -71,13 +71,28 @@ const prepareMapping = m => {
     return m;
 }
 
+// the annotations are plots of a row of their values, of the types of
+// plots/annotations.js, below the axes and the plots, `above` above the plots
+const annotationPlots = (annotations = []) => [annotations].flat().map((a, i) => {
+    const { type, props = {}, above, facet, ...row } = a;
+    return {
+        type: `annotation:${type}`,
+        id: `annotation-${i}`,
+        data: [row],
+        props,
+        layer: above ? 'above' : 'below',
+        ...(facet === undefined ? {} : { facet }),
+    };
+});
+
 const prepareDef = def => {
     // the space around the plots of a facet, e.g. of the axes
     def.options = { ...def.options, margins: { top: 0, right: 0, bottom: 0, left: 0, ...def.options?.margins } };
 
     Object.values(def.mapping).forEach(prepareMapping);
 
-    def.plot = [def.plot].flat();
+    def.plot = [...[def.plot ?? []].flat(), ...annotationPlots(def.annotations)];
+    delete def.annotations;
 
     def.plot.forEach((p, i) => {
         p.props ??= {};

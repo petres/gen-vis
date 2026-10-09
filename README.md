@@ -382,6 +382,48 @@ A plot or a list of plots, drawn in order:
   values, e.g. for monthly data, `basis` does not pass through the points.
   `linearClosed`, `catmullRomClosed` and `basisClosed` connect the last point
   with the first one, e.g. of radar charts.
+- `data`: rows of the plot instead of the rows of the data, e.g. events or
+  a target value, see below.
+- `select`: one row of every group, of the rows with values of the mappings
+  of the props: `first` or `last` (in the order of the rows) or the one with
+  the least or the most value of a mapping, `{ "min": "y" }` or
+  `{ "max": "x" }`, e.g. labels at the ends of lines.
+- `dodge` (`svg:text`): the texts are moved apart vertically to at least
+  this distance in pixels, e.g. labels at the ends of lines.
+- `layer`: `below` draws the plot below the axes and grid lines, e.g. a
+  background, `above` above the other plots, e.g. labels, by default the
+  plots are drawn between them in their order.
+- `facet`: a key or a list of keys of the facets of the plot, by default it
+  is in all facets.
+
+Labels at the ends of lines, in the color of the line:
+
+```json
+{
+    "type": "svg:text",
+    "categories": ["nuts"],
+    "select": { "max": "x" },
+    "dodge": 12,
+    "props": { "x": "@x:scaled", "y": "@y:scaled", "dx": 4, "text": "@name", "fill": "@color" }
+}
+```
+
+The rows of `data` have the names of the mappings and others, e.g. a
+`label`, all of them are names of the props. The values of the mappings are
+converted as the ones of the data, e.g. dates, and the values of the rows
+are props, e.g. references to globals. A row with a value of the mapping of
+the facets is only in its facet. `data` can also be the url of a file of
+rows (`dataFormat` as the one of the definition), relative to the definition,
+its values are not props. A text at a value of the vertical axis, at the end
+of the horizontal one:
+
+```json
+{
+    "type": "svg:text",
+    "data": [{ "y": "@target", "label": "Ziel" }],
+    "props": { "x": "@x:scaled:max", "y": "@y:scaled", "dy": -4, "text-anchor": "end", "text": "@label" }
+}
+```
 
 ### Polar plots
 
@@ -505,8 +547,8 @@ See `data/bev/def-map.json`, `data/sprit-nuts/def-map.json` and the maps of
 
 `annotations` are bands, lines, texts and circles at values of mappings, e.g.
 estimated values or events, the keys are the names of the mappings, a value
-or a range `[from, to]`, `null` is the edge of the domain, values are
-converted as the ones of the rows, e.g. dates:
+or a range `[from, to]`, values are converted as the ones of the rows, e.g.
+dates, and can be references to globals, e.g. `"@target"`:
 
 ```json
 "annotations": [
@@ -518,12 +560,14 @@ converted as the ones of the rows, e.g. dates:
 ```
 
 - `band`: a rectangle, a mapping without value is over the whole plot area,
-  e.g. a band of the horizontal axis has the height of the plot area, a
-  category of a `band` or `point` scale is its band, `label` is its name.
+  e.g. a band of the horizontal axis has the height of the plot area, `null`
+  in a range is the edge of the domain, a category of a `band` or `point`
+  scale is its band, `label` is its name.
 - `line`: a value of the horizontal axis is a vertical line, of the vertical
-  one a horizontal line, with a `label`.
-- `text` (`text`) and `circle` at the values, without one of an axis at the
-  start of the other one.
+  one a horizontal line, with a `label` at its end.
+- `text` (`text`) and `circle` at the values, without one (or with `null`)
+  of an axis at the start of the other one.
+- `label` and `text` are templates of the globals, e.g. `"Ziel {target}"`.
 - `props` are svg attributes, e.g. `fill` or `stroke`, the defaults are grey,
   `above` draws the annotation above the plots, by default it is below the
   plots and grid lines, labels are above them. `facet` is a key or a list of
@@ -533,6 +577,16 @@ converted as the ones of the rows, e.g. dates:
   spoke, of the radius a circle. Maps: `text` and `circle` at `lon` and `lat`.
 - The classes are `annotation` and `band`, `line`, `text` or `circle`, the
   labels `annotation-label`.
+
+An annotation is a plot of the type `annotation:band`, `annotation:line`,
+`annotation:text` or `annotation:circle` of a row of its values (the plot
+`annotation-<index>`, in the layer `below` or `above`). These types draw an
+annotation per row, so the annotations can also be rows of data, e.g. a file
+of events, the props can have the names of the rows:
+
+```json
+{ "type": "annotation:line", "data": "events.json", "props": { "stroke": "@color" } }
+```
 
 See `data/sprit-nuts/def.json`, `data/rechtsform/def-stacked-p.json` and
 `data/energy/weather/temperature-polar.json`.

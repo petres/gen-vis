@@ -173,7 +173,33 @@ const validateDef = def => {
             warn(`${path}.curve`, `unknown curve '${p.curve}', expected one of ${list(curveNames)}`);
         else if (p.curve !== undefined && types.includes(p.type) && !curvePlots.includes(p.type))
             warn(`${path}.curve`, `only used by ${list(curvePlots)}`);
-        checkProp(p.props, `${path}.props`, warn, names.plot((p.categories ?? []).filter(c => c in mapping)));
+        // the data of the plot: rows of the definition, their names are known
+        // to the props, their values are props of the facet, or a url
+        const rows = Array.isArray(p.data) ? p.data : [];
+        if (p.data !== undefined && typeof p.data != 'string' && !(Array.isArray(p.data) && p.data.every(r => r !== null && typeof r == 'object' && !Array.isArray(r))))
+            warn(`${path}.data`, `expected a list of rows or the url of the data`);
+        rows.forEach((r, j) => Object.entries(r ?? {}).forEach(([k, v]) => checkProp(v, `${path}.data[${j}].${k}`, warn, names.facet)));
+        if (p.dataFormat !== undefined && !dataFormats.includes(p.dataFormat))
+            warn(`${path}.dataFormat`, `unknown format '${p.dataFormat}', expected one of ${list(dataFormats)}`);
+        if (p.select !== undefined && !['first', 'last'].includes(p.select)) {
+            const [kind, name] = Object.entries(typeof p.select == 'object' && p.select ? p.select : {})[0] ?? [];
+            if (!['min', 'max'].includes(kind))
+                warn(`${path}.select`, `expected 'first', 'last' or the min or max of a mapping, e.g. { "max": "x" }`);
+            else if (!(name in mapping))
+                warn(`${path}.select.${kind}`, `unknown mapping '${name}'`);
+        }
+        if (p.dodge !== undefined && (typeof p.dodge != 'number' || p.type != 'svg:text'))
+            warn(`${path}.dodge`, `the distance of the texts of a plot of 'svg:text', a number`);
+        if (p.layer !== undefined && !['below', 'above'].includes(p.layer))
+            warn(`${path}.layer`, `unknown layer '${p.layer}', expected one of 'below', 'above'`);
+        // the annotations of the coordinate system, e.g. no bands of maps
+        const annotation = typeof p.type == 'string' && p.type.startsWith('annotation:') && p.type.substring(11);
+        if (annotation && types.includes(p.type) && !(coord.annotations ?? []).includes(annotation))
+            warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
+        // the names of the rows of a url are not known
+        const plotNames = typeof p.data == 'string' ? null
+            : new Set([...names.plot((p.categories ?? []).filter(c => c in mapping)), ...rows.flatMap(r => Object.keys(r ?? {}))]);
+        checkProp(p.props, `${path}.props`, warn, plotNames);
     });
 
     if (coordName == 'geo') {
@@ -201,6 +227,8 @@ const validateDef = def => {
                 warn(`${path}.${k}`, `unknown mapping '${k}'`);
             else if (!mapping[k].scale)
                 warn(`${path}.${k}`, `the mapping has no scale`);
+            // the values can be references, e.g. to a global
+            [a[k]].flat().forEach(v => checkProp(v, `${path}.${k}`, warn, names.facet));
         });
         if (coordName == 'geo' && !(typeof a.lon == 'number' && typeof a.lat == 'number'))
             warn(path, `an annotation of a map needs 'lon' and 'lat'`);

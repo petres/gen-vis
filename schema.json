@@ -62,7 +62,7 @@
                     "lat": { "type": "number", "description": "The latitude of a map." }
                 },
                 "additionalProperties": {
-                    "description": "A value or a range [from, to] of the mapping, null is the edge of the domain.",
+                    "description": "A value or a range [from, to] of the mapping, a reference to a global, e.g. \"@target\", null is no value, of a range the edge of the domain.",
                     "anyOf": [
                         { "type": ["number", "string", "null"] },
                         { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": ["number", "string", "null"] } }
@@ -401,10 +401,28 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "enum": ["svg:circle", "svg:line", "svg:rect", "svg:text", "cartesian:line", "cartesian:area", "cartesian:bar", "polar:line", "polar:area", "polar:arc", "polar:circle", "polar:text", "geo:base", "geo:region", "geo:circle", "geo:text"],
-                    "description": "The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, the others an element per row."
+                    "enum": ["svg:circle", "svg:line", "svg:rect", "svg:text", "cartesian:line", "cartesian:area", "cartesian:bar", "polar:line", "polar:area", "polar:arc", "polar:circle", "polar:text", "geo:base", "geo:region", "geo:circle", "geo:text", "annotation:band", "annotation:line", "annotation:text", "annotation:circle"],
+                    "description": "The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations."
                 },
                 "id": { "type": "string", "description": "The class of the plot group, plot-<index> by default." },
+                "data": {
+                    "description": "Rows of the plot instead of the ones of the data, e.g. events, with the names of the mappings and others, e.g. a label, or the url of a file of them. The values of rows of the definition are props, e.g. references to globals.",
+                    "anyOf": [
+                        { "type": "string" },
+                        { "type": "array", "items": { "type": "object" } }
+                    ]
+                },
+                "dataFormat": { "enum": ["csv", "tsv", "json", "parquet"], "description": "The format of the url of the data, by default the one of its extension." },
+                "select": {
+                    "description": "One row of every group: the first or the last one, or the one with the least or the most value of a mapping, e.g. labels at the ends of lines.",
+                    "anyOf": [
+                        { "enum": ["first", "last"] },
+                        { "type": "object", "properties": { "min": { "type": "string" }, "max": { "type": "string" } }, "minProperties": 1, "maxProperties": 1, "additionalProperties": false }
+                    ]
+                },
+                "dodge": { "type": "number", "description": "svg:text: the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines." },
+                "layer": { "enum": ["below", "above"], "description": "below: below the axes and grid lines, above: above the other plots, between them by default." },
+                "facet": { "description": "The facets of the plot, a key or a list of them, all by default." },
                 "highlight": {
                     "enum": ["group", "row"],
                     "description": "The elements with the highlight- props, the ones of the category of the hover (group, default) or only the one of its row (row), e.g. a segment of a stacked bar."

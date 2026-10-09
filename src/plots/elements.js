@@ -1,4 +1,4 @@
-export { groupwise, pointwise, finite, curve, propScale };
+export { groupwise, pointwise, finite, curve, propScale, dodge };
 
 import * as d3 from "@/utils/d3";
 import { refOf } from "@/utils/props";
@@ -46,6 +46,29 @@ const pointwise = (groups, parent, type, translate = v => v) => parent
     .append(type)
     .each(setProps);
 
+/**
+ * The positions `ys` moved apart to at least the distance `gap`, e.g. of
+ * labels at the ends of lines, positions which are too close are a group,
+ * they are spread around the mean of their positions.
+ */
+const dodge = (ys, gap) => {
+    const order = ys.map((y, i) => i).filter(i => Number.isFinite(ys[i])).sort((a, b) => ys[a] - ys[b]);
+    const top = c => c.mean - (c.items.length - 1)*gap/2;
+    const groups = order.map(i => ({ items: [i], mean: ys[i] }));
+    for (let k = 1; k < groups.length; k++) {
+        const [a, b] = [groups[k - 1], groups[k]];
+        if (top(b) < top(a) + a.items.length*gap) {
+            const items = [...a.items, ...b.items];
+            groups.splice(k - 1, 2, { items, mean: d3.mean(items, i => ys[i]) });
+            // the merged group can be too close to the one before
+            k = Math.max(0, k - 2);
+        }
+    }
+    const moved = [...ys];
+    groups.forEach(g => g.items.forEach((i, j) => moved[i] = top(g) + j*gap));
+    return moved;
+};
+
 const element = type => ({ render: (groups, parent) => pointwise(groups, parent, type) });
 
 // the svg elements, an element per row in any coordinate system, the props are
@@ -54,5 +77,15 @@ export default {
     'svg:circle': element("circle"),
     'svg:line': element("line"),
     'svg:rect': element("rect"),
-    'svg:text': element("text"),
+    // `dodge` of the plot moves the texts apart vertically, to at least this
+    // distance, e.g. labels at the ends of lines
+    'svg:text': {
+        render(groups, parent, plot) {
+            const texts = pointwise(groups, parent, "text").nodes();
+            if (plot.dodge) {
+                const moved = dodge(texts.map(t => parseFloat(t.getAttribute('y'))), plot.dodge);
+                texts.forEach((t, i) => t.setAttribute('y', moved[i]));
+            }
+        },
+    },
 };

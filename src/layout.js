@@ -1,6 +1,7 @@
-export { layout, axisNames, visibleKeys, plotGroups };
+export { layout, axisNames, visibleKeys, plotRows, plotGroups };
 
 import { categoryOrder, convert, filter, groupBy, stack } from "@/utils/data";
+import * as d3 from "@/utils/d3";
 import { bind, constant, evaluate, refNames } from "@/utils/props";
 import { makeScale } from "@/utils/scales";
 
@@ -120,12 +121,53 @@ const layout = (store, width) => {
     };
 };
 
+// a value of a row of the data of a plot as the ones of the data, e.g. a
+// date, also the values of a range, e.g. ["2020-01-01", null] of a band
+const convertValue = (mapping, v) => Array.isArray(v)
+    ? v.map(e => e === null ? null : convert(mapping, e))
+    : (v === null ? null : convert(mapping, v));
+
+/**
+ * The rows of a plot in a facet: the rows of the facet or the ones of the
+ * `data` of the plot, e.g. events. These have the names of the mappings and
+ * others, e.g. a `label`, the values of the mappings are converted as the
+ * ones of the data, e.g. dates, the values of rows of the definition are
+ * props of the facet, e.g. references to globals. A row with a value of the
+ * mapping of the facets is only in its facet.
+ */
+const plotRows = (store, plot, facet) => {
+    if (!plot.data)
+        return facet.rows;
+    const mapping = store.def.mapping;
+    const dim = store.def.facets?.dim;
+    const inline = !plot.loaded;
+    return plot.data
+        .map(r => Object.fromEntries(Object.entries(r).map(([k, v]) => {
+            const value = inline ? evaluate(v, facet.scope) : v;
+            return [k, Object.hasOwn(mapping, k) ? convertValue(mapping[k], value) : value];
+        })))
+        .filter(r => !dim || facet.key === undefined || !Object.hasOwn(r, dim) || String(r[dim]) == String(facet.key));
+};
+
+// one row of the rows of a group: the first or the last one, in the order of
+// the rows, or the one with the least or the most value of a mapping, e.g.
+// { "max": "x" }, of the rows with values of the mappings of the props
+const selected = (rows, select) => {
+    if (select == 'first' || select == 'last')
+        return select == 'first' ? rows.slice(0, 1) : rows.slice(-1);
+    const [kind, name] = Object.entries(select ?? {})[0] ?? [];
+    const values = rows.filter(r => r[name] !== null && r[name] !== undefined);
+    const row = kind == 'min' ? d3.least(values, r => r[name]) : (kind == 'max' ? d3.greatest(values, r => r[name]) : undefined);
+    return row ? [row] : [];
+};
+
 // a name of the rows of a facet as a function of the row, e.g. "x" or
 // "x:scaled", undefined for other names, see README "Props"
-const rowValue = (ctx, name) => {
+const rowValue = (ctx, name, rows) => {
     const [m, ...parts] = name.split(':');
+    // the other names of the rows of the data of a plot, e.g. a label
     if (!Object.hasOwn(ctx.store.def.mapping, m))
-        return undefined;
+        return rows !== ctx.rows && rows.some(r => Object.hasOwn(r, name)) ? (row => row[name]) : undefined;
     const s = ctx.scales[m];
     const stackOf = ctx.axis.v == m ? ctx.stackOf : null;
     const start = row => stackOf(row)?.[0];
@@ -162,12 +204,12 @@ const plotGroups = (plot, rows, ctx) => {
     return groupBy(rows, plot.categories).map(g => {
         const props = Object.assign({}, ...plot.categories.map(c => mapping[c].props?.[g.group[c]]));
         const resolve = name => Object.hasOwn(props, name) ? constant(props[name])
-            : rowValue(ctx, name) ?? (Object.hasOwn(ctx.scope, name) ? constant(ctx.scope[name]) : undefined);
+            : rowValue(ctx, name, rows) ?? (Object.hasOwn(ctx.scope, name) ? constant(ctx.scope[name]) : undefined);
         const at = bind(plot.props, resolve);
         return {
             categories: g.group,
             props,
-            rows: g.entries,
+            rows: plot.select === undefined ? g.entries : selected(g.entries.filter(complete), plot.select),
             at,
             prop: name => at.entries.get(name) ?? constant(undefined),
             attrs: Object.fromEntries([...at.entries].filter(([, f]) => f.constant).map(([k, f]) => [k, f()])),
