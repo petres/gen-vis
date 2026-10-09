@@ -47,7 +47,7 @@ const axes = ctx => {
             a.tickFormat(format);
 
         if (i.values) {
-            a.tickValues(i.values)
+            a.tickValues(tickValues(i, s, ticks))
         }
 
         // the grid lines are at the ticks of the axis

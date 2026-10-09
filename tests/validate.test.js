@@ -237,4 +237,13 @@ describe('validateDef', () => {
             "formElements[0].values[0].mapping.y.column: unknown global 'unit' in the column template",
         ]);
     });
+
+    test('templates of the title and the subtitle need the globals', () => {
+        const def = base();
+        def.globals = { base: '2019' };
+        def.options = { title: 'Index {base}', subtitle: '{base} = 100, {unit}' };
+        expect(validateDef(def)).toEqual([
+            "options.subtitle: unknown global 'unit' in the text",
+        ]);
+    });
 });

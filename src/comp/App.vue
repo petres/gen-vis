@@ -14,7 +14,7 @@
 <script>
 import { createStore } from '@/store.js';
 import { h } from 'vue';
-import { sameValue } from '@/utils/json.js';
+import { sameValue, fillTemplate } from '@/utils/json.js';
 import { selection, renderImage, saveImage, copyImage, defaultWidth } from '@/utils/export.js';
 import VisBase from '@/comp/Vis.vue';
 
@@ -137,9 +137,12 @@ export default {
                 return vnode;
             }, { width, text: selection(this.store.def), facets: this.store.def.facets?.dim });
         },
-        // the name of the file is the argument, the one of `download` or the title
+        // the name of the file is the argument, the one of `download` or the
+        // title (with the values of the globals)
         async exportPng(name) {
-            name ??= typeof this.download == 'string' && this.download ? this.download : (this.store.def.options.title || 'gen-vis');
+            const title = this.store.def.options.title;
+            name ??= typeof this.download == 'string' && this.download ? this.download
+                : (title ? fillTemplate(title, this.store.def.globals) : 'gen-vis');
             saveImage(await this.image(), name);
         },
         copyPng() {

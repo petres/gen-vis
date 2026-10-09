@@ -1,10 +1,10 @@
 <template>
     <div class="vis" ref="vis" :style="{'--gen-vis-font-family': options.fontFamily}">
         <div class="vis-header">
-            <slot-content v-if="slots.header" :fn="slots.header" :props="{ title: options.title, subtitle: options.subtitle }"/>
+            <slot-content v-if="slots.header" :fn="slots.header" :props="header"/>
             <template v-else>
-                <div class="title">{{ options.title }}</div>
-                <div class="subtitle">{{ options.subtitle }}</div>
+                <div class="title">{{ header.title }}</div>
+                <div class="subtitle">{{ header.subtitle }}</div>
             </template>
         </div>
         <div ref="form" class="vis-form-elements">
@@ -119,6 +119,12 @@ export default {
     },
     computed: {
         texts() { return this.store.locale.texts },
+        // the title and the subtitle with the values of the globals, e.g.
+        // "Durchschnitt {base} = 100" of a form element
+        header() {
+            const fill = t => typeof t == 'string' ? ju.fillTemplate(t, this.store.def.globals) : t;
+            return { title: fill(this.options.title), subtitle: fill(this.options.subtitle) };
+        },
     },
     mounted() {
         this.baseInit();

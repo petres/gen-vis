@@ -1105,6 +1105,21 @@ describe('scales', () => {
         expect(labels.at(-1)).toBe('Jan');
         expect(errors).toEqual([]);
     });
+
+    test('the extension of a log domain is relative to its positions', async () => {
+        const def = lineDef();
+        // the values from 1 to 4, linear 10% of 3 would be 0.7 and 4.3
+        def.mapping.y.scale = { orientation: 'vertical', type: 'log', domainRel: [-0.1, 0.1] };
+        def.mapping.y.axis = { position: 'left', format: ',.0f', values: [1, 4] };
+        const el = await mount(GenVis, { def, data: lineData });
+        const ys = [...el.querySelectorAll('g.axis-position-left g.tick')].map(t => parseFloat(t.getAttribute('transform').match(/,\s*([\d.]+)/)[1]));
+        // the inner height is 250, the same space below 1 and above 4 (d3
+        // moves the ticks by 0.5 for sharp lines)
+        expect(ys).toHaveLength(2);
+        expect(ys[0] - ys[1]).toBeCloseTo(250 / 1.2);
+        expect(Math.abs((ys[0] + ys[1]) / 2 - 125)).toBeLessThanOrEqual(0.5);
+        expect(errors).toEqual([]);
+    });
 });
 
 describe('locale and font', () => {
@@ -1224,6 +1239,18 @@ describe('fixed bugs', () => {
     };
     const stackData = 'year,value,land,type\n2020,5,Wien,a\n2020,2,Wien,b\n2021,8,Wien,a\n2021,2,Wien,b';
     const rects = el => [...el.querySelectorAll('g.plotGroup rect')].map(r => ['x', 'y', 'width', 'height'].map(a => parseFloat(r.getAttribute(a))));
+
+    test('fixed values of an axis outside of its domain are not drawn', async () => {
+        const def = lineDef();
+        // the values are from 1 to 4, d3 drew the others in the margins
+        def.mapping.x.axis.grid = false;
+        def.mapping.y.scale = { orientation: 'vertical', type: 'log', domainRel: [0, 0] };
+        def.mapping.y.axis = { position: 'left', grid: true, format: ',.0f', values: [0.5, 1, 2, 5, 10] };
+        const el = await mount(GenVis, { def, data: lineData });
+        expect([...el.querySelectorAll('g.axis-position-left g.tick text')].map(t => t.textContent)).toEqual(['1', '2']);
+        expect(el.querySelectorAll('g.grid line')).toHaveLength(2);
+        expect(errors).toEqual([]);
+    });
 
     test('the domain of stacks without a fixed domain includes their start', async () => {
         const el = await mount(GenVis, { def: stackDef(), data: stackData });
@@ -1468,6 +1495,25 @@ describe('images', () => {
         // the copy is removed again, the visualisation keeps its state
         expect(document.querySelectorAll('.vis')).toHaveLength(1);
         expect(el.querySelector('.formElement input[value="b"]').checked).toBe(true);
+        expect(errors).toEqual([]);
+    });
+
+    test('the title and the subtitle with the globals, also of the image and its file', async () => {
+        const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () { screenshot.file = this.download; });
+        const d = def();
+        d.options.title = 'Titel {unit}';
+        d.options.subtitle = 'Einheit {unit}, Untertitel';
+        const el = await mount(GenVis, { def: d, data: lineData, download: true });
+        const header = e => [...e.querySelectorAll('.vis-header > div')].map(e => e.textContent);
+        expect(header(el)).toEqual(['Titel a', 'Einheit a, Untertitel']);
+
+        el.querySelector('.formElement input[value="b"]').click();
+        await nextTick();
+        expect(header(el)).toEqual(['Titel b', 'Einheit b, Untertitel']);
+        el.querySelector('.vis-download').click();
+        await vi.waitFor(() => expect(click).toHaveBeenCalled());
+        expect(screenshot.file).toBe('Titel b.png');
+        expect(header(screenshot.copy)).toEqual(['Titel b', 'Einheit b, Untertitel', 'Einheit: Anteil']);
         expect(errors).toEqual([]);
     });
 

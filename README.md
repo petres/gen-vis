@@ -236,6 +236,9 @@ years of a parquet or JSON column as keys of `props`.
 `title`, `subtitle`, `footer` (HTML), `width` (the width of the container if
 not given), `height` and `margins` (`{"top", "right", "bottom", "left"}` in
 pixels). `height` can be a prop based on `totalWidth`, see [props](#props-1).
+`{name}` in `title` and `subtitle` is replaced by the value of the global,
+e.g. `"Durchschnitt {base} = 100"` of a form element of the base year, also in
+the image and the name of its file, see [templates](#formelements-and-globals).
 
 `locale` sets the number and date formats of the axes and the hover, also of
 axes without `format`: `de` (the default) or `en`, or an object with a `base`
@@ -289,9 +292,9 @@ the definition refer to these names.
   a `categorical` one. `orientation` (`horizontal` or `vertical`) places the
   scale on the plot, `angular` or `radial` in polar plots. `domain` fixes the
   domain, `null` entries are taken from the data, dates are parsed as the ones
-  of the data. `domainRel` (relative to the domain) and `domainAbs` (absolute)
-  extend it, by default a domain of a position taken from the data is
-  extended by 2%. `nice` rounds the ends taken from the data of a numeric
+  of the data. `domainRel` (relative to the domain, of a `log` scale to its
+  positions) and `domainAbs` (absolute) extend it, by default a domain of a
+  position taken from the data is extended by 2%. `nice` rounds the ends taken from the data of a numeric
   mapping, e.g. 0.951 to 1, `true` for steps of about a tenth of the domain
   or the number of steps, e.g. so the legend of colors ends at 100%. `padding` for categorical scales. A scale without
   `orientation` has the `range` given, e.g. colors or the radius of points.
@@ -303,10 +306,11 @@ the definition refer to these names.
   colors. Scales without orientation are the same in all facets.
 - `name`: the title of the legend.
 - `axis`: `position` (`top`, `bottom`, `left`, `right`, in polar plots
-  `angular` and `radial`), `ticks`, `values`
-  (fixed ticks), `format` (d3 number or time format), `rotate` (the angle of
-  the labels in degrees, positive counterclockwise, negative clockwise), `grid`
-  (lines at the ticks), `title` (`{"name", "offset"}`) and `padding`.
+  `angular` and `radial`), `ticks`, `values` (fixed ticks, the ones outside
+  of the domain are left out), `format` (d3 number or time format), `rotate`
+  (the angle of the labels in degrees, positive counterclockwise, negative
+  clockwise), `grid` (lines at the ticks), `title` (`{"name", "offset"}`) and
+  `padding`.
 - `hover`: the hover shows the values of the vertical axis at the position of
   the mouse. On touch devices it is shown by a tap and stays until a tap
   outside of the plot, horizontal swipes move it, vertical ones scroll the
@@ -638,7 +642,8 @@ globals, e.g. the values and their shares in the columns `twh`, `co2`,
 ```
 
 `{name}` is replaced by the value of the global, unknown globals are kept and
-reported as warnings.
+reported as warnings. The title and the subtitle can be templates as well, e.g.
+`"subtitle": "Durchschnitt {base} = 100"`.
 
 ### Checks outside the browser
 

@@ -236,6 +236,9 @@ const validateDef = def => {
     const checkTemplate = (column, path) => templateRefs(column).filter(r => !(r in (def.globals ?? {}))).forEach(r =>
         warn(path, `unknown global '${r}' in the column template`));
     Object.entries(mapping).forEach(([n, m]) => checkTemplate(m.column, `mapping.${n}.column`));
+    // and the ones of the title and the subtitle, e.g. "Durchschnitt {base} = 100"
+    ['title', 'subtitle'].forEach(o => templateRefs(def.options?.[o]).filter(r => !(r in (def.globals ?? {}))).forEach(r =>
+        warn(`options.${o}`, `unknown global '${r}' in the text`)));
     (def.formElements ?? []).forEach((e, i) => (Array.isArray(e.values) ? e.values : []).forEach((v, j) =>
         Object.entries(v.mapping ?? {}).forEach(([n, m]) =>
             checkTemplate(m.column, `formElements[${i}].values[${j}].mapping.${n}.column`))));

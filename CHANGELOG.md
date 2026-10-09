@@ -3,6 +3,17 @@
 The changes of the versions on npm, the newest first. The details are in the
 commits, the upgrade from 0.9 in the [README](README.md#upgrading-from-09).
 
+## Unreleased
+
+- `{name}` of a global in `options.title` and `options.subtitle`, e.g.
+  `"Durchschnitt {base} = 100"` of a form element, also in the image, its
+  file name and the props of the slot `header`, unknown globals are warnings
+- fixed: `axis.values` outside of the domain were drawn in the margins, e.g.
+  10 of a log scale from 14, also their grid lines
+- fixed: `domainRel` of a log scale is relative to the positions, e.g. 5% of
+  the height below and above, linear it could get below 0, also the default
+  extension of 2%
+
 ## 1.2.0
 
 - PNG of a visualisation: the props `download` (a button to save it, a

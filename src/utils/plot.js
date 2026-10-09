@@ -80,9 +80,13 @@ const addScale = (info, dims, coord = {}, bases = {}) => {
         info.domain[0] ??= info.extent[0];
         info.domain[last] ??= info.extent[1];
 
-        const da = info.domain[last] - info.domain[0];
-        info.domain[0] += da*info.domainRel[0];
-        info.domain[last] += da*info.domainRel[1];
+        // of a log scale relative to its positions, e.g. 5% of the height
+        // below and above, linear values could get below 0
+        const [to, from] = scaleDef.type == 'log' ? [Math.log, Math.exp] : [v => v, v => v];
+        const [d0, d1] = [to(info.domain[0]), to(info.domain[last])];
+        const da = d1 - d0;
+        info.domain[0] = from(d0 + da*info.domainRel[0]);
+        info.domain[last] = from(d1 + da*info.domainRel[1]);
 
         info.domain[0] += info.domainAbs[0];
         info.domain[last] += info.domainAbs[1];
