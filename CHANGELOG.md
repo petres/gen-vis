@@ -41,6 +41,11 @@ New:
   locale object
 - every facet is an image named by the title, the titles of form elements are
   their labels, the prop `csv` and `exportCsv(name)` save the rows shown
+- fewer layout shifts: while a visualisation is loaded it has the space of
+  the css variable `--gen-vis-loading-height` or the height it had when it was
+  drawn before on the page (e.g. after a navigation), a changed definition is
+  drawn when it is loaded, the one before is shown until then (it was removed),
+  e.g. the CLS of a page of four charts is 0.011 instead of 0.269
 - the example bev/def-labels.json: labels at the ends of lines, a text at a
   value of the vertical axis, annotations
 

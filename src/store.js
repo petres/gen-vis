@@ -178,6 +178,10 @@ class Store {
     // the width of the visualisation, set by its measure
     totalWidth = null;
     runs = 0;
+    // the number of the definitions loaded, a new one is drawn anew, while it
+    // is loaded the one before is shown, see App.vue
+    loads = 0;
+    loading = false;
     // incremented if the state is set from outside, the components update
     stateSets = 0;
 
@@ -219,15 +223,20 @@ class Store {
      */
     async init(sources) {
         const run = ++this.runs;
-        this.def = this.data = null;
+        this.loading = true;
         try {
             const state = await load(sources);
-            if (run == this.runs)
+            if (run == this.runs) {
                 Object.assign(this, state);
+                this.loads++;
+            }
         } catch (error) {
             // a newer init was started in the meantime
             if (run == this.runs)
                 throw error;
+        } finally {
+            if (run == this.runs)
+                this.loading = false;
         }
     }
 

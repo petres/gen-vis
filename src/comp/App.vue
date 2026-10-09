@@ -1,7 +1,10 @@
 <template>
-    <div class="vis-outer">
+    <!-- the space of the visualisation is kept while it is loaded, so the page
+         does not move when it is drawn -->
+    <div class="vis-outer" :class="{ 'vis-loading': waiting }" :style="waiting && reserved ? { minHeight: `${reserved}px` } : null">
         <div v-if="error" class="vis-error">{{ error }}</div>
-        <vis-base v-else-if="store.loaded" :download="download" :copy="copy" :csv="csv" @state-changed="$emit('update:state', store.state)" @rendered="$emit('rendered')"/>
+        <!-- a new definition is drawn anew, the one before is shown while it is loaded -->
+        <vis-base v-else-if="store.loaded" :key="store.loads" :download="download" :copy="copy" :csv="csv" @state-changed="$emit('update:state', store.state)" @rendered="rendered"/>
         <div v-if="debug && store.def">
             <h3>prepared:</h3>
             <pre style="height: 500px; overflow: auto; font-size: 11px;">{{ JSON.stringify(store.def, null, 4) }}</pre>
@@ -18,6 +21,12 @@ import { sameValue } from "@/utils/def";
 import { selection, renderImage, saveFile, csvOf, copyImage, defaultWidth } from '@/utils/export.js';
 import { layout } from '@/layout';
 import VisBase from '@/comp/Vis.vue';
+
+// the heights of the visualisations drawn on the page by their definition and
+// width, one drawn again, e.g. after a navigation of the page, has the space
+// of the one before while it is loaded, the last ones are kept
+const heights = new Map();
+const keptHeights = 500;
 
 export default {
     name: 'GenVis',
@@ -75,7 +84,15 @@ export default {
     data: () => ({
         store: createStore(),
         error: null,
+        // the height of the visualisation of the same definition and width
+        // drawn before, null if there is none, see heights
+        reserved: null,
     }),
+    computed: {
+        // nothing is drawn yet, the space is the one drawn before or the css
+        // variable --gen-vis-loading-height
+        waiting() { return !this.store.loaded && !this.error },
+    },
     // the slots (hover, header, footer) and the events (hover, select) are the
     // ones of the components inside
     provide() {
@@ -99,7 +116,11 @@ export default {
         },
     },
     mounted() {
+        this.reserved = heights.get(this.sourceKey()) ?? null;
         this.init();
+    },
+    beforeUnmount() {
+        this.remember();
     },
     // errors while rendering
     errorCaptured(error) {
@@ -109,6 +130,7 @@ export default {
     methods: {
         async init() {
             this.error = null;
+            this.heightKey = this.sourceKey();
             if (this.def === null && this.defFile === null)
                 return this.showError(new Error('No definition given.'));
             try {
@@ -118,6 +140,24 @@ export default {
             } catch (error) {
                 this.showError(error);
             }
+        },
+        // the definition and the width of the visualisation, the key of its height
+        sourceKey() {
+            const source = this.defFile ?? (typeof this.def == 'string' ? this.def : JSON.stringify(this.def));
+            return `${Math.round(this.$el.getBoundingClientRect().width)} ${source}`;
+        },
+        rendered() {
+            this.remember();
+            this.$emit('rendered');
+        },
+        // the height of the visualisation drawn, see heights
+        remember() {
+            if (!this.store.loaded || this.error || this.debug)
+                return;
+            heights.delete(this.heightKey);
+            heights.set(this.heightKey, Math.round(this.$el.getBoundingClientRect().height));
+            if (heights.size > keptHeights)
+                heights.delete(heights.keys().next().value);
         },
         // only if it differs, the own updates of v-model come back unchanged
         syncState() {
@@ -172,6 +212,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+    // the space while the visualisation is loaded, e.g. 450px, set by the page
+    .vis-outer.vis-loading {
+        min-height: var(--gen-vis-loading-height, 0px);
+    }
+
     .vis-error {
         font-size: 13px;
         color: var(--gen-vis-error-color, #B00);

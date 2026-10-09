@@ -163,6 +163,22 @@ describe('Store.init', () => {
         await expect(store.init({ def: { ...def, data: undefined } })).rejects.toThrow(/^No data given/);
     });
 
+    test('the definition before is kept while a new one is loaded', async () => {
+        serve({
+            'http://h/a/def.json': JSON.stringify({ ...def, options: { title: 'a' } }),
+            'http://h/a/data.csv': csv,
+            'http://h/b/def.json': JSON.stringify({ ...def, options: { title: 'b' } }),
+            'http://h/b/data.csv': csv,
+        }, { 'http://h/b/data.csv': 30 });
+        const store = createStore();
+        await store.init({ defUrl: 'http://h/a/def.json' });
+        expect([store.loaded, store.loading, store.loads]).toEqual([true, false, 1]);
+        const loading = store.init({ defUrl: 'http://h/b/def.json' });
+        expect([store.loaded, store.loading, store.def.options.title]).toEqual([true, true, 'a']);
+        await loading;
+        expect([store.loaded, store.loading, store.loads, store.def.options.title]).toEqual([true, false, 2, 'b']);
+    });
+
     test('an outdated init does not overwrite a newer one', async () => {
         serve({
             'http://h/slow/def.json': JSON.stringify({ ...def, options: { title: 'slow' } }),

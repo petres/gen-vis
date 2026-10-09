@@ -119,6 +119,32 @@ page:
 <button @click="$refs.chart.exportPng('bev')">PNG</button>
 ```
 
+### Layout shifts
+
+The height of a visualisation is known when it is drawn, so while it is loaded
+it has the space of the css variable `--gen-vis-loading-height` (0 by default,
+the root has the class `vis-loading`), e.g. of a typical one or per chart, so
+the page does not move when it is drawn. A visualisation which was drawn
+before on the page (with the same definition and width), e.g. after a
+navigation of the page, has the height it had then. A definition which is
+changed is drawn when it is loaded, until then the one before is shown.
+
+```css
+.vis-outer { --gen-vis-loading-height: 450px; }
+```
+
+With the standalone script the page is shown before the script mounts the
+visualisations, so the space of the empty elements is set by the page:
+
+```css
+.genVis { --gen-vis-loading-height: 450px; }
+.genVis:empty { min-height: var(--gen-vis-loading-height); }
+```
+
+```html
+<div class="genVis" data-def-file="/data/map.json" style="--gen-vis-loading-height: 720px"></div>
+```
+
 ### Accessibility and the data
 
 Every facet is an image (`role="img"`) named by the title and the name of the

@@ -1574,6 +1574,52 @@ describe('accessibility and the data', () => {
     });
 });
 
+describe('layout shifts', () => {
+    const outer = el => el.querySelector('.vis-outer');
+
+    test('the space of a visualisation drawn before is kept while it is loaded', async () => {
+        const def = lineDef({ title: 'Höhe' });
+        // jsdom has no layout, the height of the drawn one is 400
+        const first = createApp(GenVis, { def, data: lineData });
+        const el = document.body.appendChild(document.createElement('div'));
+        first.mount(el);
+        expect(outer(el).classList.contains('vis-loading')).toBe(true);
+        expect(outer(el).style.minHeight).toBe('');
+        await rendered(el);
+        await nextTick();
+        expect(outer(el).classList.contains('vis-loading')).toBe(false);
+        first.unmount();
+
+        // drawn again, e.g. after a navigation of the page
+        const again = document.body.appendChild(document.createElement('div'));
+        createApp(GenVis, { def, data: lineData }).mount(again);
+        // after the mount, before the browser paints
+        await nextTick();
+        expect(outer(again).classList.contains('vis-loading')).toBe(true);
+        expect(outer(again).style.minHeight).toBe('400px');
+        await rendered(again);
+        await nextTick();
+        expect(outer(again).style.minHeight).toBe('');
+
+        // another definition has no space of its own
+        const other = document.body.appendChild(document.createElement('div'));
+        createApp(GenVis, { def: lineDef({ title: 'Andere' }), data: lineData }).mount(other);
+        expect(outer(other).style.minHeight).toBe('');
+    });
+
+    test('a new definition is drawn when it is loaded, the one before is shown until then', async () => {
+        const defFile = ref('/data/bev/def.json');
+        const el = await mount({ render: () => h(GenVis, { defFile: defFile.value }) });
+        expect(el.querySelector('.vis-title').textContent).toBe('Bevölkerung');
+        defFile.value = '/data/bev/def-bar.json';
+        await nextTick();
+        // the old one while the new one is loaded
+        expect(el.querySelector('.vis-title')?.textContent).toBe('Bevölkerung');
+        await vi.waitFor(() => expect(el.querySelector('g.vis-plot rect')).not.toBeNull());
+        expect(el.querySelectorAll('.vis')).toHaveLength(1);
+    });
+});
+
 describe('images', () => {
     const def = () => ({
         ...lineDef({ title: 'Titel', subtitle: 'Untertitel', footer: 'Quelle' }),
