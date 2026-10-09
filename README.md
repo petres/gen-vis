@@ -105,7 +105,8 @@ size, narrow ones more (at least 1200 pixels wide, e.g. four times of 360),
 has no form elements, their selection is a line below the subtitle, e.g.
 `Einheit: Anteil · Jahr: 2024`, the legends only have the entries shown and
 the legend of the facets is left out, their titles name them.
-The titles of the buttons are in the language of `options.locale`.
+The titles of the buttons are in the language of `options.locale`, see
+[options](#options).
 
 Besides the buttons of `download` and `copy`, the methods of the component
 are `exportPng(name)` (saves the file), `copyPng()` (copies it, in the click
@@ -275,8 +276,9 @@ also in the image and the name of its file, see
 [templates](#formelements-and-globals).
 
 `locale` sets the number and date formats of the axes and the hover, also of
-axes without `format`: `de` (the default) or `en`, or an object with a `base`
-locale and the parts which are changed, see d3's
+axes without `format`: `de` (the default) or `en`, a language of the browser
+(`Intl`), e.g. `fr`, `it` or `de-CH`, or an object with a `base` locale and the
+parts which are changed, see d3's
 [formatLocale](https://d3js.org/d3-format#formatLocale) and
 [timeFormatLocale](https://d3js.org/d3-time-format#timeFormatLocale):
 
@@ -284,9 +286,13 @@ locale and the parts which are changed, see d3's
 "locale": { "base": "de", "number": { "currency": ["", " EUR"] } }
 ```
 
+A language of `Intl` has its separators of numbers, the formats of dates and
+times and the names of the days and months of the browser, the currency is
+the euro and the buttons are in english (german of german languages).
 `timeTicks` of the object are the tick formats of time axes without `format`,
 by the interval of the date (`millisecond`, `second`, `minute`, `hour`, `day`,
-`week`, `month`, `year`).
+`week`, `month`, `year`), `texts` the titles of the buttons (`download`,
+`copy` and `copied`).
 
 `coord` is the coordinate system of the plots, `cartesian` (the default, a
 horizontal and a vertical axis), `polar` (an angle and a radius, see

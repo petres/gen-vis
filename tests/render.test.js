@@ -1256,7 +1256,20 @@ describe('locale and font', () => {
 
     test('an unknown locale is an error', async () => {
         const el = await mount(GenVis, { def: lineDef({ locale: 'xx' }), data: lineData });
-        expect(el.querySelector('.vis-error').textContent).toBe(`Unknown locale 'xx', expected one of 'de', 'en'`);
+        expect(el.querySelector('.vis-error').textContent).toBe(`Unknown locale 'xx', expected one of 'de', 'en' or a language of Intl, e.g. 'fr'`);
+    });
+
+    test('a language of Intl, e.g. french', async () => {
+        const def = lineDef({ locale: 'fr' });
+        def.mapping.x = { column: 'date', type: 'date', scale: { type: 'utc', orientation: 'horizontal' }, axis: { position: 'bottom', format: '%B' } };
+        def.mapping.y.axis.format = ',.1f';
+        const el = await mount(GenVis, { def, data: 'date,value,land\n2020-01-15,1000,Wien\n2020-05-15,2500,Wien' });
+        expect(labels(el, 'bottom')).toContain('mars');
+        expect(labels(el, 'left')).toContain('2\u202f000,0');
+        const { getLocale } = await import('@/utils/locale');
+        expect(getLocale('fr').number.format('$,.2f')(1234.5)).toBe('1\u202f234,50\u00a0€');
+        expect(getLocale('en-US').time.utcFormat('%x')(new Date(Date.UTC(2024, 2, 5)))).toBe('03/05/2024');
+        expect(getLocale({ base: 'it', texts: { download: 'Scarica' } }).texts).toMatchObject({ download: 'Scarica', copy: 'Copy as PNG to the clipboard' });
     });
 
     test('the currency of the german locale', async () => {

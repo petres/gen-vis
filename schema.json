@@ -167,14 +167,16 @@
             "items": { "type": ["number", "null"] }
         },
         "locale": {
-            "description": "Number and date formats, the name of a built-in locale or a d3 locale definition merged into one.",
+            "description": "Number and date formats, the name of a built-in locale, a language of Intl (e.g. fr or de-CH) or a d3 locale definition merged into one.",
             "anyOf": [
                 { "enum": ["de", "en"] },
+                { "type": "string", "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$" },
                 {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "base": { "enum": ["de", "en"], "default": "de" },
+                        "base": { "type": "string", "default": "de", "description": "de, en or a language of Intl." },
+                        "texts": { "type": "object", "description": "The titles of the buttons: download, copy and copied." },
                         "number": {
                             "type": "object",
                             "description": "See d3.formatLocale, e.g. decimal, thousands, grouping and currency ([prefix, suffix])."

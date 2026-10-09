@@ -41,7 +41,8 @@ describe('the schema', () => {
         expect(errors({ mapping: { x: { type: 'number' } } })).not.toEqual([]);
         expect(errors({ plot: [{ type: 'line' }] })).not.toEqual([]);
         expect(errors({ options: { height: { prop: 'relative', ratio: 0.5 } } })).not.toEqual([]);
-        expect(errors({ options: { locale: 'fr' } })).not.toEqual([]);
+        expect(errors({ options: { locale: 'fr' } })).toEqual([]);
+        expect(errors({ options: { locale: 'not a locale' } })).not.toEqual([]);
     });
 
     test('nested props and computed props', () => {

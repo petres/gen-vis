@@ -2,6 +2,7 @@ export { validateDef, curveNames };
 
 import * as d3 from "@/utils/d3";
 import { dataFormats } from "@/utils/data";
+import { getLocale } from "@/utils/locale";
 import { templateRefs } from "@/utils/def";
 import { curves } from "@/utils/draw";
 import { plotTypes } from "@/plots";
@@ -279,6 +280,16 @@ const validateDef = def => {
     (def.formElements ?? []).forEach((e, i) => (Array.isArray(e.values) ? e.values : []).forEach((v, j) =>
         Object.entries(v.mapping ?? {}).forEach(([n, m]) =>
             checkTemplate(m.column, `formElements[${i}].values[${j}].mapping.${n}.column`))));
+
+    // a built-in locale or a language of Intl, e.g. "fr"
+    const locale = typeof def.options?.locale == 'object' ? def.options.locale?.base : def.options?.locale;
+    if (locale !== undefined) {
+        try {
+            getLocale(locale);
+        } catch (error) {
+            warn('options.locale', error.message.replace(/^Unknown/, 'unknown'));
+        }
+    }
 
     if (def.dataFormat !== undefined && !dataFormats.includes(def.dataFormat))
         warn('dataFormat', `unknown format '${def.dataFormat}', expected one of ${list(dataFormats)}`);

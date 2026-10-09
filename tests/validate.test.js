@@ -225,6 +225,15 @@ describe('validateDef', () => {
         ]);
     });
 
+    test('a built-in locale or a language of Intl', () => {
+        const def = base();
+        for (const locale of ['de', 'fr', 'de-CH', { base: 'it' }])
+            expect(validateDef({ ...def, options: { locale } })).toEqual([]);
+        expect(validateDef({ ...def, options: { locale: 'xx' } })).toEqual([
+            "options.locale: unknown locale 'xx', expected one of 'de', 'en' or a language of Intl, e.g. 'fr'",
+        ]);
+    });
+
     test('annotations and the highlight of a plot', () => {
         const def = base();
         def.plot.highlight = 'element';
