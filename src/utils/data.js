@@ -1,7 +1,7 @@
 export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, filter, stack, categoryOrder, toDate, addDataValues };
 
 import * as d3 from "@/utils/d3";
-import { sameValue } from "@/utils/def";
+import { fillTemplate, sameValue } from "@/utils/def";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
@@ -184,9 +184,20 @@ const filter = (data, conditions) => {
 // the latest year
 const addDataValues = (def, rows) => {
     const numeric = v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v));
+    const distinct = column => {
+        const values = [...new Set(rows.map(r => r[column]))].filter(v => v !== null && v !== undefined && v !== '');
+        return values.sort(values.every(numeric) ? (a, b) => a - b : (a, b) => String(a).localeCompare(String(b)));
+    };
+
+    // the categories of the data which are not listed, after the listed ones
+    Object.values(def.mapping ?? {}).filter(m => m?.props?.fromData && typeof m.column == 'string').forEach(m => {
+        m.props.manual ??= {};
+        distinct(fillTemplate(m.column, def.globals)).map(String).filter(k => !Object.hasOwn(m.props.manual, k))
+            .forEach(k => m.props.manual[k] = {});
+    });
+
     (def.formElements ?? []).filter(e => e.values && !Array.isArray(e.values)).forEach(e => {
-        const values = [...new Set(rows.map(r => r[e.values.column]))].filter(v => v !== null && v !== undefined && v !== '');
-        values.sort(values.every(numeric) ? (a, b) => a - b : (a, b) => String(a).localeCompare(String(b)));
+        const values = distinct(e.values.column);
         e.values = values.map(v => ({ id: String(v), name: String(v), value: v }));
         def.globals ??= {};
         if (values.length > 0 && !values.some(v => sameValue(v, def.globals[e.ref])))

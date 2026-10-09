@@ -61,5 +61,16 @@ export const axes = { top: axisTop, bottom: axisBottom, left: axisLeft, right: a
 export const named = (registry, name) => typeof name == 'string' && Object.hasOwn(registry, lowerFirst(name))
     ? registry[lowerFirst(name)] : undefined;
 
+// the colors of a scheme, e.g. "Tableau10", of a scheme of several sizes, e.g.
+// "Blues", `n` colors (3 to the most of the scheme), undefined if it is unknown
+export const schemeColors = (name, n) => {
+    const scheme = named(schemes, name);
+    if (!scheme)
+        return undefined;
+    if (typeof scheme.at(-1) == 'string')
+        return scheme;
+    return scheme[Math.min(Math.max(n, 3), scheme.length - 1)].slice(0, n);
+};
+
 // the names of a registry for messages, e.g. of validateDef
 export const names = registry => Object.keys(registry);

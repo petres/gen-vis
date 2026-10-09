@@ -276,6 +276,18 @@ describe('rendering', () => {
         expect(errors).toEqual([]);
     });
 
+    test('categories of the data, colored by a scheme', async () => {
+        const def = lineDef();
+        def.mapping.c.props = { fromData: true, scheme: 'Tableau10', manual: { Tirol: {} } };
+        const data = lineData + '\n2020,3,30,Salzburg\n2021,3,30,Salzburg';
+        const el = await mount(GenVis, { def, data });
+        // the listed one first, the others of the data in ascending order
+        expect([...el.querySelectorAll('.legend .entries > div')].map(e => e.getAttribute('data-key'))).toEqual(['Tirol', 'Salzburg', 'Wien']);
+        expect([...el.querySelectorAll('g.plotGroup.plot-0 path')].map(p => [p.getAttribute('data-group-c'), p.getAttribute('stroke')]))
+            .toEqual([['Wien', '#e15759'], ['Tirol', '#4e79a7'], ['Salzburg', '#f28e2c']]);
+        expect(errors).toEqual([]);
+    });
+
     test('a given state is applied', async () => {
         const state = { globals: { column: 'other' }, visible: { c: { Tirol: false } } };
         const el = await mount(GenVis, { def: stateDef(), data: lineData, state });

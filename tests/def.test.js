@@ -18,6 +18,18 @@ describe('prepareDef', () => {
     });
 });
 
+describe('the props of categories', () => {
+    test('the colors of a scheme in the order of the categories, the given ones are kept', () => {
+        const def = prepareDef({ mapping: { c: { column: 'c', props: { scheme: 'Blues', common: { r: 2 }, manual: { a: {}, b: { color: 'red' }, c: {} } } } }, plot: [] });
+        expect(def.mapping.c.props).toEqual({
+            a: { color: '#deebf7', r: 2, name: 'a', visible: true },
+            b: { color: 'red', r: 2, name: 'b', visible: true },
+            c: { color: '#3182bd', r: 2, name: 'c', visible: true },
+        });
+        expect(() => prepareDef({ mapping: { c: { props: { scheme: 'Nope', manual: {} } } }, plot: [] })).toThrow("Unknown scheme 'Nope'");
+    });
+});
+
 describe('formatOf', () => {
     test('of the axis, the hover and the legend', () => {
         const m = { scale: { type: 'linear' }, axis: { format: '.1f' } };

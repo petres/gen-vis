@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { categoryOrder, dataFormat, filter, groupBy, parseData, prepareData, stack, updateData } from '@/utils/data';
+import { addDataValues, categoryOrder, dataFormat, filter, groupBy, parseData, prepareData, stack, updateData } from '@/utils/data';
 
 const def = {
     mapping: {
@@ -126,6 +126,16 @@ describe('updateData', () => {
         expect(updateData(rows, data, def, ['y'])).toBe(data);
         expect(data[0]).toBe(row);
         expect(row).toEqual({ x: 2020, y: 2 });
+    });
+});
+
+describe('addDataValues', () => {
+    test('the categories of the data after the listed ones, in ascending order', () => {
+        const def = { globals: { col: 'b' }, mapping: { c: { column: '{col}', props: { fromData: true, manual: { z: {} } } }, d: { column: 'a', props: { manual: { x: {} } } } } };
+        addDataValues(def, [{ a: 'y', b: 'q' }, { a: 'x', b: 'p' }, { a: 'x', b: '' }, { a: 'x', b: 'z' }]);
+        expect(Object.keys(def.mapping.c.props.manual)).toEqual(['z', 'p', 'q']);
+        // only with fromData
+        expect(Object.keys(def.mapping.d.props.manual)).toEqual(['x']);
     });
 });
 

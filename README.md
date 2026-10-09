@@ -323,6 +323,15 @@ the definition refer to these names.
   visible categories are shown. The order of the `manual` entries is the order
   of the legend, the facets and the stacks, not the order of the rows. Keys
   which are integers, e.g. years, are ordered ascending by JavaScript.
+  With `"fromData": true` the values of the column which are not listed are
+  categories as well, after the listed ones, in ascending order (numbers by
+  their value), e.g. new regions of the data. `scheme` sets the prop `color`
+  of the categories in their order, a d3 scheme, e.g. `Tableau10` or `Blues`
+  (of the number of categories), a `color` of the props is kept:
+
+  ```json
+  "land": { "column": "Bundesland", "props": { "fromData": true, "scheme": "Tableau10", "manual": { "ÖSTERREICH": { "name": "Gesamt", "color": "#000" } } } }
+  ```
 - `legend`: a toggle for every category, `symbol` draws svg `elements` (with
   props) of the given `size` before the name. A click shows or hides the
   category, a double click shows only it, the next double click all of them.

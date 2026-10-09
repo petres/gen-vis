@@ -10,13 +10,11 @@ const bandCenter = s => s.bandwidth ? s.bandwidth()/2 : 0;
 // the colors of a scheme of d3, e.g. "Blues", schemes of several sizes have
 // `classes` colors, by default the number of classes of a threshold scale or 5
 const schemeRange = scaleDef => {
-    const scheme = d3.named(d3.schemes, scaleDef.scheme);
-    if (!scheme)
-        throw new Error(`Unknown scheme '${scaleDef.scheme}', e.g. 'Blues' or 'Tableau10'`);
-    if (typeof scheme.at(-1) == 'string')
-        return scheme;
     const n = scaleDef.classes ?? (scaleDef.type == 'threshold' ? scaleDef.domain.length + 1 : 5);
-    return scheme[Math.min(Math.max(n, 3), scheme.length - 1)].slice(0, n);
+    const colors = d3.schemeColors(scaleDef.scheme, n);
+    if (!colors)
+        throw new Error(`Unknown scheme '${scaleDef.scheme}', e.g. 'Blues' or 'Tableau10'`);
+    return colors;
 };
 
 // the values of a mapping in the rows, continuous ones sorted for the lookup

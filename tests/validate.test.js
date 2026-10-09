@@ -131,7 +131,7 @@ describe('validateDef', () => {
             "mapping.x.type: unknown type 'number', expected one of 'numeric', 'date', 'categorical'",
             "mapping.x.scale.type: a linear scale does not fit the type 'number'",
             "mapping.y.axis.position: unknown position 'middle', expected one of 'top', 'bottom', 'left', 'right'",
-            "mapping.c.props: expected 'manual' (and optional 'common') entries",
+            "mapping.c.props: expected 'manual' entries or the ones of the data ('fromData'), and optional 'common' ones",
         ]);
     });
 

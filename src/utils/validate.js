@@ -57,8 +57,9 @@ const rowNames = (n, m) => [
     ...(m.stacked && m.scale ? [`${n}:start:scaled`, `${n}:end:scaled`, `${n}:height:scaled`] : []),
 ];
 
-// the props of the categories of a mapping, `name` and `visible` are set by default
-const categoryNames = m => m?.props ? ['name', 'visible',
+// the props of the categories of a mapping, `name` and `visible` are set by
+// default, `color` by a scheme
+const categoryNames = m => m?.props ? ['name', 'visible', ...(m.props.scheme ? ['color'] : []),
     ...Object.keys(m.props.common ?? {}),
     ...Object.values(m.props.manual ?? {}).flatMap(e => Object.keys(e ?? {}))] : [];
 
@@ -112,8 +113,10 @@ const validateDef = def => {
             warn(path, `no 'column'`);
         if (m.type !== undefined && !mappingTypes.includes(m.type))
             warn(`${path}.type`, `unknown type '${m.type}', expected one of ${list(mappingTypes)}`);
-        if (m.props && !m.props.manual)
-            warn(`${path}.props`, `expected 'manual' (and optional 'common') entries`);
+        if (m.props && !m.props.manual && !m.props.fromData)
+            warn(`${path}.props`, `expected 'manual' entries or the ones of the data ('fromData'), and optional 'common' ones`);
+        if (m.props?.scheme !== undefined && !d3.named(d3.schemes, m.props.scheme))
+            warn(`${path}.props.scheme`, `unknown scheme '${m.props.scheme}', e.g. 'Tableau10'`);
         if (m.scale) {
             const type = m.scale.type ?? 'linear';
             const scale = d3.named(d3.scales, type);

@@ -384,7 +384,9 @@
                         "manual": {
                             "type": "object",
                             "additionalProperties": { "$ref": "#/definitions/categoryProps" }
-                        }
+                        },
+                        "fromData": { "type": "boolean", "description": "The values of the column which are not in manual are categories as well, after them, in ascending order." },
+                        "scheme": { "type": "string", "description": "The colors of the categories in their order as the prop color, a d3 scheme, e.g. Tableau10." }
                     }
                 }
             }
