@@ -1,16 +1,80 @@
 # Changelog
 
 The changes of the versions on npm, the newest first. The details are in the
-commits, the upgrade from 0.9 in the [README](README.md#upgrading-from-09).
+commits, the upgrade from 1.x in the [README](README.md#upgrading-from-1x).
 
-## Unreleased
+## 2.0.0-alpha.0
 
-- `{name}` of a global in `options.title` and `options.subtitle`, e.g.
-  `"Durchschnitt {base} = 100"` of a form element, also in the image, its
-  file name and the props of the slot `header`, unknown globals are warnings
-- fixed: `axis.values` outside of the domain were drawn in the margins, e.g.
-  10 of a log scale from 14, also their grid lines
-- fixed: `domainRel` of a log scale is relative to the positions, e.g. 5% of
+Changes which need changes of definitions, styles or extensions, see the
+[README](README.md#upgrading-from-1x):
+
+- `facets.dim` is the name of a mapping, not a list
+- the names of 0.9 are removed (svg:path, base:area, bar, stackedBar, "@y:st:e")
+- all classes start with `vis-`, e.g. vis-title, vis-legend, vis-plot,
+  vis-axis vis-axis-left, so styles of the page for other elements, e.g.
+  `.title` of a CSS framework, do not apply to them
+- the default colors of annotations are styles, not attributes
+- plot types get plain values, the groups have `rows`, `at(row)`,
+  `prop(name)`, `attrs` and `complete(row)`, `ctx` has `rows`, `scales`,
+  `axis`, `stackOf` and `scope`
+- values of globals are the same as strings, but `0` and `""` are different
+- all texts are templates of the globals, `null` of an annotation is no value
+
+New:
+
+- plots: `data` (rows of their own or a url, e.g. events or a target value),
+  `select` (one row of a group, e.g. labels at the ends of lines), `dodge`
+  (texts moved apart), `layer` (below the axes or above the other plots) and
+  `facet` (only in some facets)
+- annotations are plots of the types annotation:band, annotation:line,
+  annotation:text and annotation:circle, so they can also be rows of data,
+  their values can be references to globals, `label` and `text` templates
+- categories of the data (`"fromData": true` of props) and the colors of a
+  scheme (`scheme`, e.g. Tableau10)
+- `{name}` of globals in all texts: title, subtitle, footer, names of
+  mappings and categories, titles of axes, labels and texts of annotations,
+  also in the image and its file name, unknown globals are warnings
+- references in `scale.domain`, e.g. `[0, "@max"]`
+- the colors are css variables, e.g. `--gen-vis-grid-color`, for a dark page,
+  `--gen-vis-background` of the PNG
+- any language of `Intl` as `options.locale`, e.g. fr or de-CH, `texts` of a
+  locale object
+- every facet is an image named by the title, the titles of form elements are
+  their labels, the prop `csv` and `exportCsv(name)` save the rows shown
+- the example bev/def-labels.json: labels at the ends of lines, a text at a
+  value of the vertical axis, annotations
+
+Faster and smaller:
+
+- only the parts of d3 which are used, the dependencies are d3 modules, the
+  standalone script is 359 kB instead of 503 kB (121 kB instead of 168 kB
+  gzipped)
+- a form element converts only the mappings it changes, e.g. a slider over
+  250,000 rows converted all mappings of all rows at every step (110 ms)
+- a slider is drawn at most once a frame
+- the projections and paths of maps are computed once, e.g. for the steps of
+  a slider (about 45 ms for the countries of Europe before)
+- the image takes the rows already loaded instead of parsing the data again
+- props are compiled once, values of the rows (e.g. `@x:scaled`) are only
+  computed if a prop needs them, the rows are not changed
+
+Inside:
+
+- the view (rows, facets, scales) is computed by src/layout.js, without Vue,
+  the legend of colors has the scale of the plots
+- the modules are named by their content (utils/def.js, props.js, scales.js,
+  draw.js, locale.js, d3.js), the defaults of formats in one place
+- snapshots of the html of all examples in tests/snapshots/
+
+Fixed:
+
+- the values of the hover are right-aligned by their role, before only a
+  mapping named `y`
+- a text annotation at `null` was not drawn, references to globals in
+  annotations were NaN
+- `axis.values` outside of the domain were drawn in the margins, e.g. 10 of
+  a log scale from 14, also their grid lines
+- `domainRel` of a log scale is relative to the positions, e.g. 5% of
   the height below and above, linear it could get below 0, also the default
   extension of 2%
 

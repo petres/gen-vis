@@ -15,7 +15,7 @@ the styles, and provides two global functions:
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
 
-<script src="gen-vis-1.2.0.js"></script>
+<script src="gen-vis-2.0.0-alpha.0.js"></script>
 <script>mountGenVisByClass('genVis')</script>
 ```
 
@@ -222,7 +222,9 @@ its `parent` (and its parent into its own parent), arrays are replaced, not
 merged, except arrays whose entries all have an `id`, e.g. the form elements
 and their values, these are merged by the ids, entries with a new id are
 appended. The merged definition is checked for common mistakes, e.g. unknown
-plot types, the findings are logged as warnings in the console.
+plot types, the findings are logged as warnings in the console. The footer
+and the names of the legends and the hover are HTML, so a definition is
+trusted, texts of users, e.g. of a form of a page, must not be part of it.
 
 `parent` can also be a list of definitions (mixins), merged in their order,
 later ones override earlier ones, e.g. a chart type and a form element:
@@ -812,6 +814,46 @@ orientations of its scales, the axes and the geometry of the hover, see
 `GenVis.registerPlotType`, `GenVis.registerCoord`, `GenVis.pointwise` and
 `GenVis.groupwise`. The schema only knows the built-in ones.
 
+## Upgrading from 1.x
+
+Definitions:
+
+- `facets.dim` is the name of a mapping, not a list: `"dim": "facet"`
+  instead of `"dim": ["facet"]`.
+- The names of 0.9 are removed: `svg:path`, `base:area`, `bar` and
+  `stackedBar` are `cartesian:line`, `cartesian:area` and `cartesian:bar`,
+  `@y:st:s`, `@y:st:e` and `@y:st:h` are `@y:start`, `@y:end` and
+  `@y:height`, see the readme of 1.x.
+- Values of globals are the same as strings, e.g. `2024` and `"2024"`, but
+  `0` and `""` are different, they were the same.
+- All texts are templates of the globals, so `{word}` in a footer or a name
+  is replaced if there is a global `word`.
+- A single value of an annotation which is `null` is no value, e.g. a text
+  at the start of the axis.
+
+Styles: all classes start with `vis-`, see [styles](#styles):
+
+| 1.x | 2.0 |
+|-----|-----|
+| `.vis-header .title`, `.subtitle`, `.selection` | `vis-title`, `vis-subtitle`, `vis-selection` |
+| `formElement` (`.title`, `.entries`, `.slider`, `.value`) | `vis-form-element` (`vis-form-element-title`, `vis-switch`, `vis-slider`, `vis-slider-value`) |
+| `legend`, `color-legend` (`.title`, `.entries`, `.scale`, `.missing`, `.swatch`) | `vis-legend`, `vis-color-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, `vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
+| `facet-title`, `vis-inner`, `svg.facet` | `vis-facet-title`, `vis-facet`, `svg.vis-svg` |
+| `plotGroup`, `group`, `highlight`, `features` | `vis-plot`, `vis-group`, `vis-highlight`, `vis-features` |
+| `axis-name-x axis-position-left`, `axis-title`, `grid` | `vis-axis vis-axis-left` (`data-mapping="x"`), `vis-axis-title`, `vis-grid` |
+| `annotations below`, `annotation band`, `annotation-label` | `vis-plot vis-annotations vis-below`, `vis-annotation vis-band`, `vis-annotation-label` |
+| `hover` (`.title`, `.entries`, `tr.entry`, `.nearest`, `td.y`, `.value`), `hoverMarker`, `events` | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-nearest`, `td[data-mapping="y"]`, `vis-value`), `vis-hover-marker`, `vis-events` |
+
+The default colors of annotations are styles, not attributes, they can be
+changed with the [css variables](#styles).
+
+Extensions: a plot type gets plain values instead of the objects of the
+internal format, the groups have `rows`, `at(row)`, `prop(name)`, `attrs` and
+`complete(row)` instead of `values` and `props`, `ctx` has `rows`, `scales`
+(the d3 scales by the names of the mappings), `axis`, `stackOf` and `scope`
+instead of `data`, `info` and `relativeBases`, the nearest value of a scale
+is `scale.nearest(position)`, see [extensions](#extensions).
+
 ## Development
 
 ```sh
@@ -821,8 +863,13 @@ npm test        # unit tests, rendering and schema check of all definitions in d
 npm run build   # es module for bundlers in dist/
 npm run watch   # rebuilds dist/ on changes, e.g. for `npm link`
 npm run lib     # standalone script in dist-lib/
-npm run deploy  # builds and uploads the standalone script
+npm run deploy  # builds and uploads the standalone script to GEN_VIS_UPLOAD (user@host:/path) of .env
 ```
+
+`tests/snapshots/` has the html of every definition in `data/`, drawn,
+hovered and with the first entry of the legend toggled, so changes of the
+code which change the charts are seen in the diff, `npx vitest -u` takes
+intended ones.
 
 The page of the dev server (`index.html`, `src/dev/`) shows the definitions in
 `data/`, also of linked directories, e.g. of the pages using the package,

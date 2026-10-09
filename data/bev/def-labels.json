@@ -2,7 +2,7 @@
     "parent": "def.json",
     "options": {
         "margins": { "top": 10, "right": 130, "bottom": 40, "left": 80 },
-        "subtitle": "nach Bundesland, mit Beschriftungen und einer Marke von {mark} Einwohnern"
+        "subtitle": "nach Bundesland, mit den Namen der Linien, einer Marke und einer Annotation"
     },
     "globals": { "mark": 1500000 },
     "plot": [
@@ -26,7 +26,7 @@
         {
             "type": "svg:text",
             "data": [{ "y": "@mark", "label": "Marke" }],
-            "props": { "x": "@x:scaled:max", "y": "@y:scaled", "dy": -4, "text-anchor": "end", "font-size": 11, "fill": "#888", "text": "@label" }
+            "props": { "x": "@x:scaled:min", "y": "@y:scaled", "dx": 4, "dy": -4, "font-size": 11, "fill": "#888", "text": "@label" }
         }
     ],
     "annotations": [
