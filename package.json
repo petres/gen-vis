@@ -21,7 +21,7 @@
     "watch": "vite build --watch",
     "lib": "vite build --mode lib",
     "test": "vitest run",
-    "upload": "rsync -arv dist-lib/ preschen@hades.wsr.ac.at:/usr/local/www/datascience/htdocs/gen-vis",
+    "upload": "[ -f .env ] && . ./.env; rsync -arv dist-lib/ \"${GEN_VIS_UPLOAD:?set GEN_VIS_UPLOAD=user@host:/path in .env}\"",
     "deploy": "npm run lib && npm run upload",
     "prepublishOnly": "npm test && npm run build"
   },
