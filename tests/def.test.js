@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { applyFormElements, fillTemplate, mergeAll, prepareDef, templateRefs } from '@/utils/def';
+import { sameValue, applyFormElements, fillTemplate, mergeAll, prepareDef, templateRefs } from '@/utils/def';
 import { entryToProp, entryToValue, getProps, refNames } from '@/utils/props';
 
 describe('props', () => {
@@ -138,5 +138,28 @@ describe('mergeAll', () => {
         ]);
         // values without ids, e.g. the ones of a switch, are replaced
         expect(mergeAll([{ v: [{ id: 'a' }, 'x'] }, { v: [{ id: 'a', n: 1 }] }]).v).toEqual([{ id: 'a', n: 1 }]);
+    });
+});
+
+describe('sameValue', () => {
+    test('scalars as strings, e.g. years of the data and of a definition', () => {
+        expect(sameValue(2024, '2024')).toBe(true);
+        expect(sameValue('a', 'a')).toBe(true);
+        expect(sameValue(true, 'true')).toBe(true);
+        expect(sameValue(1, 2)).toBe(false);
+    });
+
+    test('0, the empty string and missing values are different', () => {
+        expect(sameValue(0, '')).toBe(false);
+        expect(sameValue(0, null)).toBe(false);
+        expect(sameValue('', undefined)).toBe(false);
+        expect(sameValue(null, undefined)).toBe(true);
+    });
+
+    test('lists and objects by their content', () => {
+        expect(sameValue(['y'], ['y'])).toBe(true);
+        expect(sameValue([], ['y'])).toBe(false);
+        expect(sameValue({ a: 1 }, { a: 1 })).toBe(true);
+        expect(sameValue(['y'], 'y')).toBe(false);
     });
 });

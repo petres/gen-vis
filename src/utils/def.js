@@ -19,7 +19,17 @@ const arrayMerge = (target, source, options) => {
 
 const mergeAll = parts => merge.all(parts, { arrayMerge });
 
-const sameValue = (a, b) => a == b || JSON.stringify(a) == JSON.stringify(b);
+// values of globals and entries are the same as strings, e.g. the year 2024
+// of the data and "2024" of a definition, but not 0 and "", missing ones are
+// null, lists and objects are compared by their content
+const scalar = v => v === null || v === undefined || typeof v != 'object';
+const sameValue = (a, b) => {
+    if (!scalar(a) || !scalar(b))
+        return JSON.stringify(a) == JSON.stringify(b);
+    if (a === null || a === undefined || b === null || b === undefined)
+        return (a ?? null) === (b ?? null);
+    return String(a) === String(b);
+};
 
 const prepareMapping = m => {
     if (m.props) {
