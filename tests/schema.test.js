@@ -1,12 +1,12 @@
 import { describe, test, expect } from 'vitest';
 import Ajv from 'ajv';
+import { dataFormats } from '@/utils/data';
 import schema from '../schema.json';
 import { curveNames } from '@/utils/validate';
 import { plotTypes } from '@/plots';
 import { coords } from '@/coords';
 import { definitions } from '@/dev/definitions.js';
-import { localeNames } from '@/utils/else';
-import { dataFormats } from '@/utils/data';
+import { localeNames } from '@/utils/locale';
 
 const validate = new Ajv({ allErrors: true, allowUnionTypes: true }).compile(schema);
 const errors = def => validate(def) ? [] : validate.errors.map(e => `${e.instancePath} ${e.message}`);

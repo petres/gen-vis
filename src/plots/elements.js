@@ -1,12 +1,12 @@
 export { groupwise, pointwise, finite, curve };
 
 import * as d3 from "d3";
-import * as pu from "@/utils/plot";
-import * as ju from "@/utils/json";
+import { propsOf, refNames } from "@/utils/props";
+import { curves, rowOf, setGroupData, setProps } from "@/utils/draw";
 
 const finite = (...values) => values.every(v => Number.isFinite(v));
 
-const curve = plotDef => pu.curves[plotDef.curve ?? 'linear'] ?? d3.curveLinear;
+const curve = plotDef => curves[plotDef.curve ?? 'linear'] ?? d3.curveLinear;
 
 // a path per group, e.g. a line
 const groupwise = (groups, parent) => parent
@@ -15,8 +15,8 @@ const groupwise = (groups, parent) => parent
     .data(groups)
     .enter()
     .append("path")
-    .each(function(d) { pu.setProps.call(this, d.props) })
-    .each(pu.setGroupData);
+    .each(function(d) { setProps.call(this, d.props) })
+    .each(setGroupData);
 
 // an element of `type` per row, `translate` changes the filled props of a row,
 // it also gets the row
@@ -27,24 +27,24 @@ const pointwise = (groups, parent, type, translate = v => v) => parent
     .enter()
     .append("g")
     .attr("class", `group`)
-    .each(pu.setGroupData)
+    .each(setGroupData)
     .selectAll(type)
     .data(d => {
         // entries with missing values are not drawn
-        const names = ju.refNames(d.props);
-        const fill = ju.propsOf(d.props);
+        const names = refNames(d.props);
+        const fill = propsOf(d.props);
         return d.values
             .filter(e => names.every(n => e[n] !== null))
             .map(e => {
                 // the row of the element, e.g. for the highlight of a row
                 const v = translate(fill(e), e);
-                v[pu.rowOf] = e;
+                v[rowOf] = e;
                 return v;
             });
     })
     .enter()
     .append(type)
-    .each(pu.setProps);
+    .each(setProps);
 
 const element = type => ({ render: (groups, parent) => pointwise(groups, parent, type) });
 

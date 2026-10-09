@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
-import { prepareDef } from '@/utils/json';
 import { snapshot, diffState, applyState } from '@/utils/state';
+import { prepareDef } from '@/utils/def';
 
 const def = () => prepareDef({
     globals: { column: 'value', scales: ['y'] },

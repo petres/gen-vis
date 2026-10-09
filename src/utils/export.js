@@ -1,7 +1,7 @@
 export { selection, renderImage, saveImage, copyImage, canCopy, defaultWidth };
 
 import { render } from "vue";
-import { sameValue } from "@/utils/json";
+import { sameValue } from "@/utils/def";
 
 // the space around the visualisation in the image
 const padding = 15;

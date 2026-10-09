@@ -14,7 +14,7 @@
 <script>
 import { createStore } from '@/store.js';
 import { h } from 'vue';
-import { sameValue, fillTemplate } from '@/utils/json.js';
+import { fillTemplate, sameValue } from "@/utils/def";
 import { selection, renderImage, saveImage, copyImage, defaultWidth } from '@/utils/export.js';
 import VisBase from '@/comp/Vis.vue';
 

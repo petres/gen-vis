@@ -1,8 +1,8 @@
 export { barScale, barWidth };
 
 import * as d3 from "d3";
-import * as pu from "@/utils/plot";
-import * as ju from "@/utils/json";
+import { entryToProp, valuesOf } from "@/utils/props";
+import { bandCenter } from "@/utils/scales";
 import { groupwise, pointwise, finite, curve } from "@/plots/elements";
 
 // the scale of a prop of a bar, e.g. of "@x:scaled"
@@ -33,7 +33,7 @@ export default {
                 .defined(e => finite(e.x, e.y))
                 .x(e => e.x)
                 .y(e => e.y)
-                (d.values.map(ju.valuesOf(d.props.d)))
+                (d.values.map(valuesOf(d.props.d)))
             ),
     },
 
@@ -48,7 +48,7 @@ export default {
                 .x(e => e.x)
                 .y1(e => e.y1)
                 .y0(e => e.y0)
-                (d.values.map(ju.valuesOf(d.props.d)))
+                (d.values.map(valuesOf(d.props.d)))
             ),
     },
 
@@ -67,10 +67,10 @@ export default {
             const { y0: _, y1: __, ...props } = v;
             return {
                 ...props,
-                x: ju.entryToProp(v.x.value + pu.bandCenter(xScale) - width/2),
-                width: ju.entryToProp(width),
-                y: ju.entryToProp(Math.min(y0, y1)),
-                height: ju.entryToProp(Math.abs(y1 - y0)),
+                x: entryToProp(v.x.value + bandCenter(xScale) - width/2),
+                width: entryToProp(width),
+                y: entryToProp(Math.min(y0, y1)),
+                height: entryToProp(Math.abs(y1 - y0)),
             };
         }),
     },

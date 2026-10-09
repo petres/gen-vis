@@ -16,9 +16,10 @@
 
 <script>
 import * as d3 from "d3";
-import * as pu from "@/utils/plot";
-import * as du from "@/utils/data";
-import * as ju from "@/utils/json";
+import { addDimInfo, addScaledData, groupBy } from "@/utils/data";
+import { fillDirect, getProps } from "@/utils/props";
+import { addScale } from "@/utils/scales";
+import { highlightElements } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 
 import Hover from '@/comp/Hover.vue';
@@ -86,7 +87,7 @@ export default {
             this.store.def.plot.forEach(plotDef => {
                 if (!Object.hasOwn(plotTypes, plotDef.type))
                     throw new Error(`Unknown plot type '${plotDef.type}'`);
-                const groups = ju.getProps(du.groupBy(this.data, plotDef.categories), plotDef, this.relativeBases, this.store.def.mapping);
+                const groups = getProps(groupBy(this.data, plotDef.categories), plotDef, this.relativeBases, this.store.def.mapping);
 
                 const parent = this.ctx.inner.append("g")
                     .classed("plotGroup", true)
@@ -124,11 +125,11 @@ export default {
                         dim: n,
                         mapping: this.store.mapping(n),
                     };
-                    du.addDimInfo(info, this.data)
-                    pu.addScale(info, coord.dims(this.innerWidth, this.innerHeight), coord, this.relativeBases);
+                    addDimInfo(info, this.data)
+                    addScale(info, coord.dims(this.innerWidth, this.innerHeight), coord, this.relativeBases);
                     infos[n] = info;
                 });
-            du.addScaledData(this.data, infos);
+            addScaledData(this.data, infos);
             return {...this.shared, ...infos};
         },
 
@@ -166,7 +167,7 @@ export default {
                     this.emit('hover', null);
                 last = null;
                 this.hover.visible = false;
-                pu.highlightElements(ctx.inner, store.def.plot);
+                highlightElements(ctx.inner, store.def.plot);
             };
 
             // a touch keeps the hover until the next touch outside of the facet
@@ -186,7 +187,7 @@ export default {
                 const rows = (rowsByKey.get(String(key)) ?? [])
                     .map(e => {
                         const entries = Object.fromEntries(categories.map(n =>
-                            [n, ju.fillDirect(store.mapping(n).hover.props, { ...bases, ...store.prop(n, e[n]) })]));
+                            [n, fillDirect(store.mapping(n).hover.props, { ...bases, ...store.prop(n, e[n]) })]));
                         entries[v] = { value: e[v], name: format.v(e[v]) };
                         const order = stacked ? (e[`${v}:start`] + e[`${v}:end`])/2 : e[v];
                         return { entries, data: e, nearest: false, order };
@@ -236,7 +237,7 @@ export default {
                     // a value the elements of the key are highlighted, e.g. a region
                     if (nearest)
                         nearest.nearest = true;
-                    pu.highlightElements(ctx.inner, store.def.plot, nearest?.data ?? (value === undefined ? {[names.h]: key} : null));
+                    highlightElements(ctx.inner, store.def.plot, nearest?.data ?? (value === undefined ? {[names.h]: key} : null));
 
                     const p = payload(found);
                     Object.assign(this.hover, coord.hover.marker(ctx, key, names, marker), {

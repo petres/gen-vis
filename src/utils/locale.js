@@ -1,10 +1,6 @@
-export { capitalize, getLocale, localeNames };
+export { getLocale, localeNames };
 
 import * as d3 from "d3";
-
-
-
-const capitalize = w => w.charAt(0).toUpperCase() + w.slice(1);
 
 // d3 locale definitions, see d3.formatLocale and d3.timeFormatLocale
 const locales = {

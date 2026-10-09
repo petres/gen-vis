@@ -1,13 +1,12 @@
 import * as d3 from "d3";
-import * as pu from "@/utils/plot";
-import * as ju from "@/utils/json";
-import * as eu from "@/utils/else";
+import { entryToValue } from "@/utils/props";
+import { bandCenter, capitalize } from "@/utils/scales";
 import { tickValues, tickFormat } from "@/coords/ticks";
 import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
 
 // horizontal lines for a vertical axis and vice versa
 const grid = (ctx, s, values, vertical) => {
-    const offset = pu.bandCenter(s);
+    const offset = bandCenter(s);
     const lines = ctx.inner.append("g")
         .attr("class", "grid")
         .selectAll('line')
@@ -34,9 +33,9 @@ const axes = ctx => {
         const m = store.mapping(n);
         const i = m.axis;
         const s = ctx.info[n].scale;
-        const ticks = ju.entryToValue(i.ticks, ctx.relativeBases);
+        const ticks = entryToValue(i.ticks, ctx.relativeBases);
 
-        const a = d3[`axis${eu.capitalize(i.position)}`](s)
+        const a = d3[`axis${capitalize(i.position)}`](s)
             .tickSizeInner(9)
             .tickSizeOuter(0)
             .ticks(ticks)
@@ -156,7 +155,7 @@ export default {
         // a vertical line, the hover is beside it, on the side with more space
         marker(ctx, key, names, line) {
             const s = ctx.info[names.h].scale;
-            const x = s(key) + pu.bandCenter(s);
+            const x = s(key) + bandCenter(s);
             line.attr("x1", x)
                 .attr("x2", x)
                 .attr("y1", 0)

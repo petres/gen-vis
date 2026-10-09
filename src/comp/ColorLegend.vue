@@ -14,8 +14,8 @@
 
 <script>
 import * as d3 from "d3";
-import * as du from "@/utils/data";
-import * as pu from "@/utils/plot";
+import { addDimInfo } from "@/utils/data";
+import { addScale } from "@/utils/scales";
 
 // the gradients of the legends of a page have their own ids
 let count = 0;
@@ -76,8 +76,8 @@ export default {
         render() {
             const m = this.store.mapping(this.legend);
             const info = { dim: this.legend, mapping: m };
-            du.addDimInfo(info, this.data);
-            pu.addScale(info, {}, this.store.coord);
+            addDimInfo(info, this.data);
+            addScale(info, {}, this.store.coord);
             const s = info.scale;
 
             const svg = d3.select(this.$refs.svg);

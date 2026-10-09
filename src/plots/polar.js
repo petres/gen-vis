@@ -1,6 +1,6 @@
 import * as d3 from "d3";
-import * as pu from "@/utils/plot";
-import * as ju from "@/utils/json";
+import { entryToProp, valuesOf } from "@/utils/props";
+import { bandCenter } from "@/utils/scales";
 import { groupwise, pointwise, finite, curve } from "@/plots/elements";
 import { barScale, barWidth } from "@/plots/cartesian";
 import { radiusRange } from "@/coords/polar";
@@ -8,10 +8,10 @@ import { radiusRange } from "@/coords/polar";
 // the angles of a band scale are in the center of the band, as the ones of the axis
 const angleOffset = (info, prop) => {
     const scale = info[prop?.parts?.[0]]?.scale;
-    return scale ? pu.bandCenter(scale) : 0;
+    return scale ? bandCenter(scale) : 0;
 };
 
-const fill = d => d.values.map(ju.valuesOf(d.props.d));
+const fill = d => d.values.map(valuesOf(d.props.d));
 
 // an element of `type` per row at the `angle` and `radius` of the props, as `x` and `y`
 const positioned = (name, type, x, y) => ({
@@ -21,7 +21,7 @@ const positioned = (name, type, x, y) => ({
             throw new Error(`${name}: the props 'angle' and 'radius' are needed`);
         const [px, py] = d3.pointRadial(v.angle.value + angleOffset(info, v.angle), v.radius.value);
         const { angle, radius, ...props } = v;
-        return { ...props, [x]: ju.entryToProp(px), [y]: ju.entryToProp(py) };
+        return { ...props, [x]: entryToProp(px), [y]: entryToProp(py) };
     }),
 });
 
@@ -73,7 +73,7 @@ export default {
         render: (groups, parent, plotDef, ctx) => pointwise(groups, parent, "path", v => {
             const s = barScale(ctx.info, v.angle, 'polar:arc');
             const width = v.width?.value ?? barWidth(s, 'polar:arc');
-            const a = v.angle.value + pu.bandCenter(s);
+            const a = v.angle.value + bandCenter(s);
             const d = d3.arc()
                 .padAngle(v.padAngle?.value ?? 0)
                 .cornerRadius(v.cornerRadius?.value ?? 0)({
@@ -83,7 +83,7 @@ export default {
                     outerRadius: v.outerRadius?.value ?? radiusRange(ctx)[1],
                 });
             const props = Object.fromEntries(Object.entries(v).filter(([k]) => !arcProps.includes(k)));
-            return { ...props, d: ju.entryToProp(d) };
+            return { ...props, d: entryToProp(d) };
         }),
     },
 

@@ -1,7 +1,7 @@
 export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, convert, filter, addDimInfo, addScaledData, addStackedData, categoryOrder, toDate, addDataValues };
 
 import * as d3 from "d3";
-import { sameValue } from "@/utils/json";
+import { sameValue } from "@/utils/def";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 

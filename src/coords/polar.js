@@ -1,15 +1,15 @@
 export { angleOf, radiusRange };
 
 import * as d3 from "d3";
-import * as pu from "@/utils/plot";
-import * as ju from "@/utils/json";
+import { entryToValue } from "@/utils/props";
+import { bandCenter } from "@/utils/scales";
 import { tickValues, tickFormat } from "@/coords/ticks";
 import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
 
 const tau = 2*Math.PI;
 
 // the angle of a value, in the center of a band, clockwise from the top in radians
-const angleOf = (scale, value) => scale(value) + pu.bandCenter(scale);
+const angleOf = (scale, value) => scale(value) + bandCenter(scale);
 
 // the distance of two angles, also across the top
 const angleDistance = (a, b) => {
@@ -92,7 +92,7 @@ const radialAxis = (ctx, g, s, values, format, axis) => {
         const angle = h && ctx.info[h].scale;
         if (axis.gridShape == "polygon" && angle) {
             const hAxis = ctx.store.mapping(h).axis;
-            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, ju.entryToValue(hAxis.ticks, ctx.relativeBases)) : angle.domain());
+            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, entryToValue(hAxis.ticks, ctx.relativeBases)) : angle.domain());
             grid.selectAll("path")
                 .data(values)
                 .join("path")
@@ -153,7 +153,7 @@ const axes = ctx => {
         const m = store.mapping(n);
         const i = m.axis;
         const s = ctx.info[n].scale;
-        const ticks = ju.entryToValue(i.ticks, ctx.relativeBases);
+        const ticks = entryToValue(i.ticks, ctx.relativeBases);
         const format = tickFormat(store, m, s, ticks) ?? (v => v);
 
         const g = ctx.inner.append("g")

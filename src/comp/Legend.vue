@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import * as ju from "@/utils/json";
+import { fillDirect } from "@/utils/props";
 
 import LegendSymbol from '@/comp/LegendSymbol.vue';
 
@@ -38,7 +38,7 @@ export default {
         filled() {
             const bases = this.store.bases;
             return Object.fromEntries(this.entries.map(e =>
-                [e.key, ju.fillDirect(this.info.legend.props, { ...bases, ...e.props })]));
+                [e.key, fillDirect(this.info.legend.props, { ...bases, ...e.props })]));
         },
     },
     mounted() {

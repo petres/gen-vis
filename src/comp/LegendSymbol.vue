@@ -4,8 +4,8 @@
 
 <script>
 import * as d3 from "d3";
-import * as ju from "@/utils/json";
-import * as pu from "@/utils/plot";
+import { fillDirect } from "@/utils/props";
+import { setProps } from "@/utils/draw";
 
 export default {
     props: ["info", "props"],
@@ -26,7 +26,7 @@ export default {
             svg.selectAll("*").remove();
             this.info.elements.forEach(e => {
                 const el = svg.append(e.type);
-                pu.setProps.call(el.node(), ju.fillDirect(e.props, this.bases))
+                setProps.call(el.node(), fillDirect(e.props, this.bases))
             });
         },
     }

@@ -1,6 +1,6 @@
 export { snapshot, diffState, applyState };
 
-import { sameValue } from "@/utils/json";
+import { sameValue } from "@/utils/def";
 
 /**
  * The state of a visualisation is what the user can change: the globals of

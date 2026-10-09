@@ -5,7 +5,7 @@ import { GenVis, mountGenVisElement, registerPlotType, pointwise } from '@/index
 import { plotTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import * as d3 from 'd3';
-import { prepareDef } from '@/utils/json';
+import { prepareDef } from '@/utils/def';
 import { selection } from '@/utils/export';
 import { examples, errors, useDom, rendered, mount, pointer, hover } from './dom.js';
 
@@ -1054,7 +1054,7 @@ describe('locale and font', () => {
     });
 
     test('the currency of the german locale', async () => {
-        const { getLocale } = await import('@/utils/else');
+        const { getLocale } = await import('@/utils/locale');
         expect(getLocale().number.format('$,.2f')(1234.5)).toBe('1.234,50 €');
         expect(getLocale('en').number.format('$,.2f')(1234.5)).toBe('$1,234.50');
     });

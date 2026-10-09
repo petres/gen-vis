@@ -1,9 +1,10 @@
 export { annotationKeys, constraints, span, position, drawLabel, setAnnotationProps };
 
 import * as d3 from "d3";
-import * as du from "@/utils/data";
-import * as ju from "@/utils/json";
-import * as pu from "@/utils/plot";
+import { convert } from "@/utils/data";
+import { entryToProp, fillProps } from "@/utils/props";
+import { bandCenter } from "@/utils/scales";
+import { setProps } from "@/utils/draw";
 
 // the keys of an annotation which are not mappings
 const annotationKeys = ['type', 'props', 'label', 'text', 'above', 'facet', 'lon', 'lat'];
@@ -14,12 +15,12 @@ const constraints = (ctx, a) => Object.entries(a)
     .filter(([k]) => !annotationKeys.includes(k) && ctx.info[k])
     .map(([name, value]) => {
         const mapping = ctx.store.mapping(name);
-        const convert = v => v === null ? null : du.convert(mapping, v);
+        const toRow = v => v === null ? null : convert(mapping, v);
         return {
             name,
             orientation: mapping.scale.orientation,
             scale: ctx.info[name].scale,
-            value: Array.isArray(value) ? value.map(convert) : convert(value),
+            value: Array.isArray(value) ? value.map(toRow) : toRow(value),
         };
     });
 
@@ -30,7 +31,7 @@ const edges = s => [s.domain()[0], s.domain().at(-1)];
 const half = s => s.bandwidth ? (s.bandwidth() || s.step())/2 : 0;
 
 // the center of a value
-const center = (s, v) => s(v) + pu.bandCenter(s);
+const center = (s, v) => s(v) + bandCenter(s);
 
 // the positions of a constraint, a range or a value (e.g. a category), null
 // is an edge of the domain, they are within the range of the scale and sorted,
@@ -66,8 +67,8 @@ const drawLabel = (g, a, x, y, anchor = "start", baseline = "hanging") => {
 
 // the props of an annotation, svg attributes, also props of the size of the facet
 const setAnnotationProps = (element, a, ctx, defaults = {}) => {
-    const props = ju.fillProps(ju.entryToProp({ ...defaults, ...a.props }), ctx.relativeBases, true);
-    element.each(function() { pu.setProps.call(this, props) });
+    const props = fillProps(entryToProp({ ...defaults, ...a.props }), ctx.relativeBases, true);
+    element.each(function() { setProps.call(this, props) });
     if (a.type == 'text')
         element.text(a.text ?? '');
 };

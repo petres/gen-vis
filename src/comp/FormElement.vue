@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import * as ju from "@/utils/json";
+import { sameValue } from "@/utils/def";
 
 // the radio buttons of a form element are a group of their own, also if
 // several visualisations on a page use the same ids
@@ -44,7 +44,7 @@ export default {
             this.globals[this.element.ref] = entry.value;
             this.$emit('changeSelected');
         },
-        equal(v) { return ju.sameValue(v, this.vg) }
+        equal(v) { return sameValue(v, this.vg) }
     }
 }
 </script>

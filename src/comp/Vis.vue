@@ -56,9 +56,11 @@
 import { markRaw } from 'vue';
 import * as d3 from "d3";
 
-import * as du from "@/utils/data.js";
-import * as pu from "@/utils/plot.js";
-import * as ju from "@/utils/json.js";
+import { addDimInfo, addScaledData, addStackedData, categoryOrder, convert, filter, groupBy } from "@/utils/data";
+import { fillTemplate } from "@/utils/def";
+import { entryToValue } from "@/utils/props";
+import { addScale } from "@/utils/scales";
+import { highlightElements } from "@/utils/draw";
 import { canCopy } from "@/utils/export.js";
 
 import Facet from '@/comp/Facet.vue';
@@ -122,7 +124,7 @@ export default {
         // the title and the subtitle with the values of the globals, e.g.
         // "Durchschnitt {base} = 100" of a form element
         header() {
-            const fill = t => typeof t == 'string' ? ju.fillTemplate(t, this.store.def.globals) : t;
+            const fill = t => typeof t == 'string' ? fillTemplate(t, this.store.def.globals) : t;
             return { title: fill(this.options.title), subtitle: fill(this.options.subtitle) };
         },
     },
@@ -160,7 +162,7 @@ export default {
             const options = this.store.def.options;
             this.options.width = options.width || this.$refs.vis.getBoundingClientRect().width;
             this.store.totalWidth = this.options.width;
-            this.options.height = ju.entryToValue(options.height, this.store.bases);
+            this.options.height = entryToValue(options.height, this.store.bases);
         },
         resized() {
             const width = this.$refs.vis?.getBoundingClientRect().width;
@@ -184,29 +186,29 @@ export default {
             // they are compared as the values of the rows, e.g. dates as timestamps
             const values = Object.entries(def.filter ?? {}).map(([dim, v]) => ({
                 dim,
-                key: [ju.entryToValue(v, this.store.bases)].flat().map(k => du.convert(this.store.mapping(dim), k)),
+                key: [entryToValue(v, this.store.bases)].flat().map(k => convert(this.store.mapping(dim), k)),
             }));
 
-            this.data = markRaw(du.filter(this.store.data, [...this.filter, ...values]));
+            this.data = markRaw(filter(this.store.data, [...this.filter, ...values]));
 
             // stacked in the order of the categories, not of the rows
             if (axis.v && this.store.mapping(axis.v).stacked) {
-                const order = du.categoryOrder(this.filter.map(f => ({ dim: f.dim, keys: f.key })));
-                du.addStackedData(this.data, axis, def.facets ? [def.facets.dim] : [], order);
+                const order = categoryOrder(this.filter.map(f => ({ dim: f.dim, keys: f.key })));
+                addStackedData(this.data, axis, def.facets ? [def.facets.dim] : [], order);
             }
 
             if (def.facets) {
                 this.facets.margins = this.options.margins;
                 this.facets.height = this.options.height;
 
-                const cols = ju.entryToValue(def.facets.cols, this.store.bases);
+                const cols = entryToValue(def.facets.cols, this.store.bases);
 
                 this.facets.width = this.options.width/cols;
 
                 // in the order of the categories, not of the rows
                 const d = def.facets.dim;
                 const keys = Object.keys(this.store.mapping(d).props);
-                const dataGroupedByFacets = du.groupBy(this.data, [d]);
+                const dataGroupedByFacets = groupBy(this.data, [d]);
 
                 this.facets.entries = dataGroupedByFacets
                     .filter(e => keys.includes(String(e.group[d])))
@@ -223,7 +225,7 @@ export default {
             const coord = this.store.coord;
             if (def.facets) {
                 // the scales of all facets, also the ones without orientation, e.g. of colors
-                const shared = def.facets.scales ? ju.entryToValue(def.facets.scales, this.store.bases) : [];
+                const shared = def.facets.scales ? entryToValue(def.facets.scales, this.store.bases) : [];
                 const colors = this.store.mappingNamesWithKey('scale').filter(n => !this.store.mapping(n).scale.orientation);
                 // the sizes of a facet, as the ones of Facet.vue
                 const { width, height, margins } = this.facets;
@@ -235,13 +237,13 @@ export default {
                         dim: n,
                         mapping: this.store.mapping(n),
                     };
-                    du.addDimInfo(info, this.data);
-                    pu.addScale(info, coord.dims(innerWidth, innerHeight), coord, bases);
+                    addDimInfo(info, this.data);
+                    addScale(info, coord.dims(innerWidth, innerHeight), coord, bases);
 
                     return info;
                 });
 
-                du.addScaledData(this.data, infos);
+                addScaledData(this.data, infos);
                 this.facets.shared = Object.fromEntries(infos.map(e => [e.dim, e]));
             }
 
@@ -274,7 +276,7 @@ export default {
             }
         },
         highlight(info) {
-            pu.highlightElements(d3.select(this.$refs.vis), this.store.def.plot, {[info.dim]: info.key})
+            highlightElements(d3.select(this.$refs.vis), this.store.def.plot, {[info.dim]: info.key})
         }
     }
 }

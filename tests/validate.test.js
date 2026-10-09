@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { validateDef, curveNames } from '@/utils/validate';
-import { prepareDef } from '@/utils/json';
+import { prepareDef } from '@/utils/def';
 import { plotTypes, registerPlotType } from '@/plots';
 import { coords, registerCoord } from '@/coords';
 import { resolveParents } from '@/store';

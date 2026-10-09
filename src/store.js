@@ -3,11 +3,11 @@ export { createStore, resolveUrl, resolveParents, clearCache };
 import { reactive, markRaw, toRaw } from 'vue';
 import * as d3 from "d3";
 
-import * as du from "@/utils/data";
-import * as ju from "@/utils/json";
+import { addDataValues, dataFormat, parseData, prepareData } from "@/utils/data";
+import { applyFormElements, mergeAll, prepareDef } from "@/utils/def";
+import { applyState, diffState, snapshot } from "@/utils/state";
+import { getLocale } from "@/utils/locale";
 import { validateDef } from "@/utils/validate";
-import * as su from "@/utils/state";
-import { getLocale } from "@/utils/else";
 import { getCoord } from "@/coords";
 import { geoFeatures, geoKey } from "@/utils/geo";
 
@@ -74,7 +74,7 @@ const resolveParents = async (def, url, load = fetchText) => {
         parts.push(def);
     };
     await add(def, url, []);
-    return ju.mergeAll(parts);
+    return mergeAll(parts);
 };
 
 // the rows are not made reactive, they can be large and are only replaced as a whole
@@ -93,7 +93,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     // the data and the geometry are requested together with the parents, if the def names them
     if (data === null && typeof def.data == 'string' && !def.data.includes('{')) {
         const dataUrl = resolveUrl(def.data, url);
-        fetchData(dataUrl, du.dataFormat(dataUrl, def.dataFormat)).catch(() => {});
+        fetchData(dataUrl, dataFormat(dataUrl, def.dataFormat)).catch(() => {});
     }
     if (typeof def.geo?.data == 'string')
         fetchText(resolveUrl(def.geo.data, url)).catch(() => {});
@@ -106,17 +106,17 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         if (!defOrg.data)
             throw new Error('No data given, neither in the definition nor as attribute.');
         const dataUrl = resolveUrl(defOrg.data, url);
-        format = du.dataFormat(dataUrl, format);
+        format = dataFormat(dataUrl, format);
         data = await fetchData(dataUrl, format);
     }
-    const rows = raw(await du.parseData(data, format));
+    const rows = raw(await parseData(data, format));
 
     // the form elements can have the values of the data, the state needs them
-    du.addDataValues(defOrg, rows);
-    const prepared = ju.prepareDef(JSON.parse(JSON.stringify(defOrg)));
-    const defaults = su.snapshot(prepared);
-    su.applyState(prepared, state);
-    ju.applyFormElements(prepared, defOrg);
+    addDataValues(defOrg, rows);
+    const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)));
+    const defaults = snapshot(prepared);
+    applyState(prepared, state);
+    applyFormElements(prepared, defOrg);
 
     // the features of a map, see coords/geo.js, the url of GeoJSON or TopoJSON or itself
     let geo = null;
@@ -144,7 +144,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         rows,
         def: prepared,
         defaults,
-        data: raw(du.prepareData(rows, prepared)),
+        data: raw(prepareData(rows, prepared)),
     };
 };
 
@@ -167,7 +167,7 @@ class Store {
     get loaded() { return this.def !== null && this.data !== null }
 
     // the changes of the user compared to the definition, see utils/state.js
-    get state() { return this.loaded ? su.diffState(su.snapshot(this.def), this.defaults) : null }
+    get state() { return this.loaded ? diffState(snapshot(this.def), this.defaults) : null }
 
     // the names of the mappings of the positions (h) and of the values (v) of
     // the hover and the stacks, e.g. of the horizontal and the vertical axis
@@ -225,14 +225,14 @@ class Store {
 
     // the columns of patched mappings might have changed
     applyFormElements() {
-        if (ju.applyFormElements(this.def, this.defOrg))
-            this.data = raw(du.prepareData(this.rows, this.def));
+        if (applyFormElements(this.def, this.defOrg))
+            this.data = raw(prepareData(this.rows, this.def));
     }
 
     // replaces the state of the loaded visualisation, null for the defaults
     setState(state) {
-        su.applyState(this.def, this.defaults);
-        su.applyState(this.def, state);
+        applyState(this.def, this.defaults);
+        applyState(this.def, state);
         this.applyFormElements();
         this.stateSets++;
     }
