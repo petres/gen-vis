@@ -248,13 +248,28 @@ export default {
             }
 
             g.vis-grid {
-                stroke: #CCC;
+                stroke: var(--gen-vis-grid-color, #CCC);
                 stroke-width: 0.75px;
+            }
+            // the colors of the annotations without the ones of their props
+            .vis-annotation.vis-band:not([fill]) { fill: var(--gen-vis-band-color, #EEE); }
+            .vis-annotation.vis-line:not([stroke]) { stroke: var(--gen-vis-line-color, #999); }
+            .vis-annotation.vis-text:not([fill]) { fill: var(--gen-vis-annotation-color, #444); }
+            .vis-annotation.vis-circle:not([fill]) { fill: var(--gen-vis-annotation-color, #666); }
+            // the labels of annotations and radial axes on the plots, with a halo
+            .vis-annotation-label {
+                font-size: 11px;
+                fill: var(--gen-vis-annotation-color, #555);
+            }
+            .vis-annotation-label, g.vis-axis-radial text {
+                stroke: var(--gen-vis-halo-color, white);
+                stroke-width: 3px;
+                paint-order: stroke;
             }
             g.vis-hover-marker {
                 line {
                     stroke-width: 0.75px;
-                    stroke: #AAA;
+                    stroke: var(--gen-vis-marker-color, #AAA);
                 }
             }
         }

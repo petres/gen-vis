@@ -101,7 +101,7 @@ export default {
                 border-radius: 2px;
 
                 &:focus-visible {
-                    outline: 2px solid #1E4F77;
+                    outline: 2px solid var(--gen-vis-focus-color, #1E4F77);
                     outline-offset: 1px;
                 }
 

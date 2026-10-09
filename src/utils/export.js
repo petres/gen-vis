@@ -79,7 +79,9 @@ const renderImage = async (outer, vnode, { width, ...parts }) => {
         shot.style.cssText = `margin: 0; width: ${width + 2*padding}px;`;
         const copy = shot.appendChild(prepare(root.querySelector('.vis'), parts));
 
-        return await domToBlob(copy, { scale: scaleOf(width), backgroundColor: '#FFF', type: 'image/png' });
+        // the background of the page, e.g. a dark one
+        const background = getComputedStyle(copy).getPropertyValue('--gen-vis-background').trim() || '#FFF';
+        return await domToBlob(copy, { scale: scaleOf(width), backgroundColor: background, type: 'image/png' });
     } finally {
         render(null, holder);
         wrapper.remove();

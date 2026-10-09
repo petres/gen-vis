@@ -245,13 +245,13 @@ export default {
         svg {
             display: block;
             fill: none;
-            stroke: #BBB;
+            stroke: var(--gen-vis-button-color, #BBB);
             stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
         &:hover svg {
-            stroke: #777;
+            stroke: var(--gen-vis-button-hover-color, #777);
         }
     }
 

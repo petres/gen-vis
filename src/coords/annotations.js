@@ -49,7 +49,8 @@ const span = (c, sorted = true) => {
 // the position of a constraint, of a range its center
 const position = c => Array.isArray(c.value) ? d3.mean(span(c)) : center(c.scale, c.value);
 
-// the label of an annotation, e.g. the name of a band
+// the label of an annotation, e.g. the name of a band, its colors are the
+// ones of the styles, see Facet.vue
 const drawLabel = (g, a, x, y, anchor = "start", baseline = "hanging") => {
     if (a.label !== undefined)
         g.append("text")
@@ -58,16 +59,12 @@ const drawLabel = (g, a, x, y, anchor = "start", baseline = "hanging") => {
             .attr("y", y)
             .attr("text-anchor", anchor)
             .attr("dominant-baseline", baseline)
-            .attr("font-size", 11)
-            .attr("fill", "#555")
-            .attr("stroke", "white")
-            .attr("stroke-width", 3)
-            .attr("paint-order", "stroke")
             .text(a.label);
 };
 
 // the props of an annotation, svg attributes, also props of the size of the
-// facet, of an annotation of a row (`scope`) of the names of the row
+// facet, of an annotation of a row (`scope`) of the names of the row, the
+// colors without props are the ones of the styles, see Facet.vue
 const setAnnotationProps = (element, a, ctx, defaults = {}) => {
     const props = evaluate({ ...defaults, ...a.props }, a.scope ?? ctx.scope);
     element.each(function() { setProps.call(this, props) });

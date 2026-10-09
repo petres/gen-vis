@@ -74,10 +74,10 @@ export default {
         .vis-hover-title {
             font-weight: bold;
             padding: 1px 3px;
-            border-bottom: 2px solid #000;
+            border-bottom: 2px solid currentColor;
             text-align: center;
         }
-        background-color: #FFFFFFCC;
+        background-color: var(--gen-vis-hover-background, #FFFFFFCC);
         top: 40%;
 
         :deep(table) {

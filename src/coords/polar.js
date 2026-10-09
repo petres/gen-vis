@@ -121,9 +121,6 @@ const radialAxis = (ctx, g, s, values, format, axis) => {
         .attr("class", "tick");
     ticks.append("text")
         .attr("fill", "currentColor")
-        .attr("stroke", "white")
-        .attr("stroke-width", 3)
-        .attr("paint-order", "stroke")
         .attr("text-anchor", Math.abs(Math.cos(a)) > 0.5 ? "end" : "middle")
         .attr("dominant-baseline", Math.abs(Math.cos(a)) > 0.5 ? "middle" : "hanging")
         .each(function(v) {
@@ -182,7 +179,7 @@ const annotate = (ctx, g, a) => {
             a1 += tau;
         const [r0, r1] = radius ? span(radius) : [inner, outer];
         const arc = d3.arc().innerRadius(r0).outerRadius(r1).startAngle(a0).endAngle(a1);
-        setAnnotationProps(g.append("path").attr("class", "vis-annotation vis-band").attr("d", arc()), a, ctx, { fill: "#EEE" });
+        setAnnotationProps(g.append("path").attr("class", "vis-annotation vis-band").attr("d", arc()), a, ctx);
         const [x, y] = arc.centroid();
         drawLabel(g, a, x, y, "middle", "middle");
     } else if (a.type == 'line') {
@@ -191,19 +188,19 @@ const annotate = (ctx, g, a) => {
             const [x1, y1] = d3.pointRadial(p, inner);
             const [x2, y2] = d3.pointRadial(p, outer);
             setAnnotationProps(g.append("line").attr("class", "vis-annotation vis-line")
-                .attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2), a, ctx, { stroke: "#999" });
+                .attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2), a, ctx);
             drawLabel(g, a, x2, y2 - 4, "middle", "auto");
         } else {
             const r = radius ? position(radius) : outer;
-            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-line").attr("r", r), a, ctx, { stroke: "#999", fill: "none" });
+            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-line").attr("r", r), a, ctx, { fill: "none" });
             drawLabel(g, a, 4, -r - 4, "start", "auto");
         }
     } else if (a.type == 'text' || a.type == 'circle') {
         const [x, y] = d3.pointRadial(angle ? position(angle) : 0, radius ? position(radius) : outer);
         if (a.type == 'text')
-            setAnnotationProps(g.append("text").attr("class", "vis-annotation vis-text").attr("x", x).attr("y", y), a, ctx, { "font-size": 11, fill: "#444" });
+            setAnnotationProps(g.append("text").attr("class", "vis-annotation vis-text").attr("x", x).attr("y", y), a, ctx, { "font-size": 11 });
         else
-            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-circle").attr("cx", x).attr("cy", y), a, ctx, { r: 4, fill: "#666" });
+            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-circle").attr("cx", x).attr("cy", y), a, ctx, { r: 4 });
     }
 };
 

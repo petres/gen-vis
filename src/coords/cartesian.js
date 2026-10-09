@@ -106,7 +106,7 @@ const annotate = (ctx, g, a) => {
 
     if (a.type == 'band') {
         setAnnotationProps(g.append("rect").attr("class", "vis-annotation vis-band")
-            .attr("x", x0).attr("y", y0).attr("width", x1 - x0).attr("height", y1 - y0), a, ctx, { fill: "#EEE" });
+            .attr("x", x0).attr("y", y0).attr("width", x1 - x0).attr("height", y1 - y0), a, ctx);
         drawLabel(g, a, x0 + 4, y0 + 4);
     } else if (a.type == 'line') {
         // a value of the horizontal axis is a vertical line, of the vertical one a horizontal line
@@ -120,14 +120,14 @@ const annotate = (ctx, g, a) => {
             line.attr("x1", x0).attr("x2", x1).attr("y1", y).attr("y2", y);
             drawLabel(g, a, x1 - 4, y - 4, "end", "auto");
         }
-        setAnnotationProps(line, a, ctx, { stroke: "#999" });
+        setAnnotationProps(line, a, ctx);
     } else if (a.type == 'text' || a.type == 'circle') {
         const x = h ? position(h) : 0;
         const y = v ? position(v) : 0;
         if (a.type == 'text')
-            setAnnotationProps(g.append("text").attr("class", "vis-annotation vis-text").attr("x", x).attr("y", y), a, ctx, { "font-size": 11, fill: "#444" });
+            setAnnotationProps(g.append("text").attr("class", "vis-annotation vis-text").attr("x", x).attr("y", y), a, ctx, { "font-size": 11 });
         else
-            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-circle").attr("cx", x).attr("cy", y), a, ctx, { r: 4, fill: "#666" });
+            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-circle").attr("cx", x).attr("cy", y), a, ctx, { r: 4 });
     }
 };
 

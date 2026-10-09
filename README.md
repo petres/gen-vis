@@ -166,6 +166,29 @@ other elements do not apply to them, e.g. `.title` of a CSS framework:
 Styles of the page which are in a cascade layer themselves only override the
 package if their layer is declared after it, e.g. `@layer gen-vis, page;`.
 
+The font and the colors of the package are css variables, e.g. for a dark
+page (the default in brackets):
+
+```css
+.vis {
+    --gen-vis-font-family: Arial, sans-serif;  /* Century Gothic */
+    --gen-vis-grid-color: #444;                /* #CCC, the grid lines */
+    --gen-vis-hover-background: #222D;         /* #FFFFFFCC */
+    --gen-vis-halo-color: #111;                /* white, behind labels on the plots */
+    --gen-vis-background: #111;                /* #FFF, of the PNG */
+    color: #EEE;                               /* the texts, axes and ticks */
+}
+```
+
+The others are `--gen-vis-marker-color` (`#AAA`, the line of the hover),
+`--gen-vis-band-color` (`#EEE`), `--gen-vis-line-color` (`#999`),
+`--gen-vis-annotation-color` (`#444` of texts, `#555` of labels, `#666` of
+circles), `--gen-vis-missing-color` (`#EEE`, the missing values of a legend),
+`--gen-vis-button-color` (`#BBB`), `--gen-vis-button-hover-color` (`#777`),
+`--gen-vis-focus-color` (`#1E4F77`, the entries of legends) and
+`--gen-vis-error-color` (`#B00`). The colors of annotations are only the ones
+without a color of their `props`.
+
 ## Definition
 
 ```json
@@ -272,7 +295,7 @@ registered one, see [extensions](#extensions).
 
 `fontFamily` sets the font, by default the css variable
 `--gen-vis-font-family` or Century Gothic, so the font of all visualisations of
-a page can be set with css:
+a page can be set with css (see [styles](#styles) for the colors):
 
 ```css
 .vis { --gen-vis-font-family: Arial, sans-serif; }

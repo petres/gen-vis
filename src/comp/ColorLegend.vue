@@ -5,7 +5,7 @@
             <svg ref="svg" :width="width + 2*padding" height="34"/>
             <!-- the regions without a value, e.g. the color of geo:base -->
             <div v-if="missing" class="vis-legend-missing">
-                <span class="vis-swatch" :style="{ background: missing.color ?? '#EEE' }"/>
+                <span class="vis-swatch" :style="{ background: missing.color ?? 'var(--gen-vis-missing-color, #EEE)' }"/>
                 <span v-html="store.text(missing.name)"/>
             </div>
         </div>

@@ -161,6 +161,6 @@ export default {
 <style lang="scss" scoped>
     .vis-error {
         font-size: 13px;
-        color: #B00;
+        color: var(--gen-vis-error-color, #B00);
     }
 </style>
