@@ -81,6 +81,17 @@ describe('rendering', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the values of the hover have the class value, whatever the name of the mapping', async () => {
+        const def = lineDef();
+        def.mapping.price = def.mapping.y;
+        delete def.mapping.y;
+        def.plot = { type: 'cartesian:line', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { x: '@x:scaled', y: '@price:scaled' } } };
+        const el = await mount(GenVis, { def, data: lineData });
+        el.querySelector('rect.events').dispatchEvent(pointer('pointermove', { clientX: 300, clientY: 150 }));
+        await nextTick();
+        expect([...el.querySelector('.hover tr.entry').children].map(td => td.className)).toEqual(['c', 'price value']);
+    });
+
     test('hover at a position with only missing values', async () => {
         const el = await mount(GenVis, { def: lineDef(), data: 'year,value,land\n2020,1,Wien\n2021,,Wien\n2022,3,Wien' });
         expect(await hover(el)).toBe(1);

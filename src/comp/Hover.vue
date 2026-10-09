@@ -15,8 +15,9 @@ import SlotContent from '@/comp/SlotContent.vue';
 
 export default {
     // beside the marker, on the `side` with more space, `payload` are the rows
-    // of the slot and the events, see Facet.vue
-    props: ["title", "side", "data", "payload"],
+    // of the slot and the events, see Facet.vue, `value` is the mapping of the
+    // values, e.g. of the vertical axis, its cells have the class `value`
+    props: ["title", "side", "data", "payload", "value"],
     inject: ['slots'],
     components: { SlotContent },
     data: () => ({
@@ -55,7 +56,7 @@ export default {
             entries.selectAll("td")
                 .data(d => Object.entries(d.entries))
                 .join("td")
-                .attr('class', d => d[0])
+                .attr('class', ([name]) => name == this.value ? `${name} value` : name)
                 .html(d => typeof d[1] === 'object' ? d[1].name : d[1])
         }
     }
@@ -90,9 +91,6 @@ export default {
                     text-align: left;
                     padding: 1px 5px;
                     &.value {
-                        text-align: right;
-                    }
-                    &.y {
                         text-align: right;
                     }
                 }

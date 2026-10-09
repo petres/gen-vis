@@ -8,7 +8,7 @@
             </g>
         </svg>
         <div :style="`transform: translate(${margins.left + origin[0] + hover.x}px, ${margins.top + origin[1] + hover.y}px); position: absolute; top: 0; left: 0;`">
-            <hover v-if="hover.visible" :title="hover.title" :data="hover.data" :side="hover.side" :payload="hover.payload"/>
+            <hover v-if="hover.visible" :title="hover.title" :data="hover.data" :side="hover.side" :payload="hover.payload" :value="store.axis.v"/>
         </div>
     </div>
 </template>
