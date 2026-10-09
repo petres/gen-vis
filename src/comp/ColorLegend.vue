@@ -14,8 +14,6 @@
 
 <script>
 import * as d3 from "@/utils/d3";
-import { addDimInfo } from "@/utils/data";
-import { addScale } from "@/utils/scales";
 
 // the gradients of the legends of a page have their own ids
 let count = 0;
@@ -54,10 +52,10 @@ const fixedFormat = (locale, ticks) => {
 };
 
 // the colors of a scale without orientation, a gradient of a continuous scale,
-// the classes of a threshold, quantize or quantile scale, the scale is the one
-// of all facets
+// the classes of a threshold, quantize or quantile scale, `info` is the scale
+// of the plots, the one of all facets, see layout.js
 export default {
-    props: ["legend", "data"],
+    props: ["legend", "info"],
     inject: ['store'],
     data: () => ({ width: 240, padding: 16 }),
     computed: {
@@ -70,15 +68,12 @@ export default {
         this.render();
     },
     watch: {
-        data: 'render',
+        info: 'render',
     },
     methods: {
         render() {
             const m = this.store.mapping(this.legend);
-            const info = { dim: this.legend, mapping: m };
-            addDimInfo(info, this.data);
-            addScale(info, {}, this.store.coord);
-            const s = info.scale;
+            const s = this.info.scale;
 
             const svg = d3.select(this.$refs.svg);
             svg.selectAll("*").remove();

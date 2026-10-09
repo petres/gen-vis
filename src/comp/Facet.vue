@@ -1,13 +1,13 @@
 <template>
-    <div :style="`width: ${width}px;`" class="vis-inner">
-        <svg ref="svg" :width="width" :height="height" class="facet">
-            <g ref="inner" :transform="`translate(${margins.left + origin[0]} ${margins.top + origin[1]})`">
+    <div :style="`width: ${facet.width}px;`" class="vis-inner">
+        <svg ref="svg" :width="facet.width" :height="facet.height" class="facet">
+            <g ref="inner" :transform="`translate(${facet.margins.left + origin[0]} ${facet.margins.top + origin[1]})`">
                 <g :visibility="hover.visible ? 'visible' : 'hidden'" class="hoverMarker" ref="hoverMarker">
                     <line/>
                 </g>
             </g>
         </svg>
-        <div :style="`transform: translate(${margins.left + origin[0] + hover.x}px, ${margins.top + origin[1] + hover.y}px); position: absolute; top: 0; left: 0;`">
+        <div :style="`transform: translate(${facet.margins.left + origin[0] + hover.x}px, ${facet.margins.top + origin[1] + hover.y}px); position: absolute; top: 0; left: 0;`">
             <hover v-if="hover.visible" :title="hover.title" :data="hover.data" :side="hover.side" :payload="hover.payload" :value="store.axis.v"/>
         </div>
     </div>
@@ -16,17 +16,17 @@
 
 <script>
 import * as d3 from "@/utils/d3";
-import { addDimInfo, addScaledData, groupBy } from "@/utils/data";
+import { groupBy } from "@/utils/data";
 import { fillDirect, getProps } from "@/utils/props";
-import { addScale } from "@/utils/scales";
 import { highlightElements } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 
 import Hover from '@/comp/Hover.vue';
 
 export default {
-    // facetKey is the key of the category of the facet, e.g. for annotations
-    props: ["shared", "height", "width", "margins", "data", "facetKey"],
+    // a facet of the view, its rows, sizes and scales, see layout.js, its key
+    // is the one of its category, e.g. for annotations
+    props: ["facet"],
     inject: ['store', 'emit'],
     data: () => ({
         hover: {
@@ -36,21 +36,8 @@ export default {
         }
     }),
     computed: {
-        innerWidth() { return this.width - (this.margins.left + this.margins.right) },
-        innerHeight() { return this.height - (this.margins.top + this.margins.bottom) },
         // the origin of the plots and axes in the inner area, e.g. its center
-        origin() { return this.store.coord.origin?.(this.innerWidth, this.innerHeight) ?? [0, 0] },
-        // the names of the references of the facet, the ones of the store and
-        // the sizes of the facet, e.g. of the ticks of an axis
-        relativeBases() {
-            return {
-                ...this.store.bases,
-                width: this.width,
-                innerWidth: this.innerWidth,
-                height: this.height,
-                innerHeight: this.innerHeight,
-            }
-        }
+        origin() { return this.store.coord.origin?.(this.facet.innerWidth, this.facet.innerHeight) ?? [0, 0] },
     },
     components: {
         Hover
@@ -58,15 +45,17 @@ export default {
     mounted() {
         // the context of the plot types and the coordinate system, the scales
         // are not reactive, they are only replaced with the facet
+        const { rows, info, innerWidth, innerHeight, scope } = this.facet;
+        this.data = rows;
         this.ctx = {
             store: this.store,
             inner: d3.select(this.$refs.inner),
-            data: this.data,
-            info: this.scales(),
-            dims: this.store.coord.dims(this.innerWidth, this.innerHeight),
-            innerWidth: this.innerWidth,
-            innerHeight: this.innerHeight,
-            relativeBases: this.relativeBases,
+            data: rows,
+            info,
+            dims: this.store.coord.dims(innerWidth, innerHeight),
+            innerWidth,
+            innerHeight,
+            relativeBases: scope,
         };
 
         this.store.coord.prepare?.(this.ctx);
@@ -87,7 +76,7 @@ export default {
             this.store.def.plot.forEach(plotDef => {
                 if (!Object.hasOwn(plotTypes, plotDef.type))
                     throw new Error(`Unknown plot type '${plotDef.type}'`);
-                const groups = getProps(groupBy(this.data, plotDef.categories), plotDef, this.relativeBases, this.store.def.mapping);
+                const groups = getProps(groupBy(this.data, plotDef.categories), plotDef, this.ctx.relativeBases, this.store.def.mapping);
 
                 const parent = this.ctx.inner.append("g")
                     .classed("plotGroup", true)
@@ -102,7 +91,7 @@ export default {
         annotate(above) {
             const coord = this.store.coord;
             const annotations = (this.store.def.annotations ?? []).filter(a => Boolean(a.above) == above
-                && (a.facet === undefined || [a.facet].flat().map(String).includes(String(this.facetKey))));
+                && (a.facet === undefined || [a.facet].flat().map(String).includes(String(this.facet.key))));
             if (!coord.annotate || (annotations.length == 0 && !(above && this.ctx.inner.select(".annotation-label").node())))
                 return;
             const g = this.ctx.inner.append("g").attr("class", `annotations ${above ? 'above' : 'below'}`);
@@ -112,25 +101,6 @@ export default {
                 const labels = this.ctx.inner.append("g").attr("class", "annotation-labels");
                 this.ctx.inner.selectAll(".annotations .annotation-label").each(function() { labels.node().appendChild(this) });
             }
-        },
-
-        // the scales of the facet and the shared ones of all facets
-        scales() {
-            const coord = this.store.coord;
-            const infos = {};
-            this.store.mappingNamesWithKey('scale')
-                .filter(n => !(n in this.shared))
-                .forEach(n => {
-                    const info = {
-                        dim: n,
-                        mapping: this.store.mapping(n),
-                    };
-                    addDimInfo(info, this.data)
-                    addScale(info, coord.dims(this.innerWidth, this.innerHeight), coord, this.relativeBases);
-                    infos[n] = info;
-                });
-            addScaledData(this.data, infos);
-            return {...this.shared, ...infos};
         },
 
         hoverInit() {

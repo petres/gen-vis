@@ -8,6 +8,7 @@ import { applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { validateDef } from "@/utils/validate";
 import { getCoord } from "@/coords";
+import { axisNames } from "@/layout";
 import { geoFeatures, geoKey } from "@/utils/geo";
 
 // relative urls are resolved against `base`, e.g. the url of the def referencing them
@@ -176,20 +177,8 @@ class Store {
     get state() { return this.loaded ? diffState(snapshot(this.def), this.defaults) : null }
 
     // the names of the mappings of the positions (h) and of the values (v) of
-    // the hover and the stacks, e.g. of the horizontal and the vertical axis
-    get axis() {
-        if (this.coord.names)
-            return this.coord.names(this);
-        const axis = {};
-        this.mappingNamesWithKey('scale').forEach(n => {
-            const o = this.mapping(n).scale.orientation;
-            Object.entries(this.coord.axis).forEach(([a, orientation]) => {
-                if (o == orientation)
-                    axis[a] = n;
-            });
-        });
-        return axis;
-    }
+    // the hover and the stacks, see layout.js
+    get axis() { return axisNames(this) }
 
     // d3 format of the locale for the values of a scale type
     formatter(scaleType) {

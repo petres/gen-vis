@@ -14,18 +14,18 @@
             <!-- toggles of categories, the colors of a scale otherwise -->
             <template v-for="legend in legends" :key="legend">
                 <legend-entry v-if="store.mapping(legend).props" :legend="legend" @changeSelected="changeSelected" @highlight="highlight"/>
-                <color-legend v-else-if="store.mapping(legend).scale" :legend="legend" :data="data"/>
+                <color-legend v-else-if="store.mapping(legend).scale && view" :legend="legend" :info="view.colors[legend]"/>
             </template>
         </div>
-        <div v-if="initialized" class="vis-body">
-            <!-- the facets are rendered again if their data changes -->
-            <template v-if="facets.entries.length > 0">
-                <div v-for="e in facets.entries" :key="e.key" :style="`width: ${facets.width}px; display: inline-block;`">
-                    <div class="facet-title" :style="`margin-left: ${facets.margins.left}px`">{{ e.name }}</div>
-                    <facet :key="e.data" :data="e.data" :facet-key="e.key" :shared="facets.shared" :height='facets.height' :width='facets.width' :margins='facets.margins'/>
+        <div v-if="view" class="vis-body">
+            <!-- the facets are rendered again if their rows change -->
+            <template v-if="view.faceted">
+                <div v-for="f in view.facets" :key="f.key" :style="`width: ${f.width}px; display: inline-block;`">
+                    <div class="facet-title" :style="`margin-left: ${f.margins.left}px`">{{ f.name }}</div>
+                    <facet :key="f.rows" :facet="f"/>
                 </div>
             </template>
-            <facet v-else :key="data" :data="data" :shared="{}" :height='options.height' :width='options.width' :margins='options.margins'/>
+            <facet v-else :key="view.facets[0].rows" :facet="view.facets[0]"/>
         </div>
         <div class="vis-footer">
             <div class="vis-footer-content">
@@ -56,11 +56,10 @@
 import { markRaw } from 'vue';
 import * as d3 from "@/utils/d3";
 
-import { addDimInfo, addScaledData, addStackedData, categoryOrder, convert, filter, groupBy } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
 import { entryToValue } from "@/utils/props";
-import { addScale } from "@/utils/scales";
 import { highlightElements } from "@/utils/draw";
+import { layout } from "@/layout";
 import { canCopy } from "@/utils/export.js";
 
 import Facet from '@/comp/Facet.vue';
@@ -88,7 +87,8 @@ export default {
     emits: ['stateChanged', 'rendered'],
     // the options of the definition already in the first render, e.g. of the header slot
     data() { return {
-        initialized: false,
+        // the rows, facets and scales, see layout.js
+        view: null,
         // the check instead of the icon of the copy for a while
         copied: false,
         clipboard: canCopy(),
@@ -98,16 +98,6 @@ export default {
 
         legends: [],
         formElements: [],
-        filter: [],
-        data: [],
-
-        facets: {
-            shared: {},
-            entries: [],
-            height: 0,
-            width: 0,
-            margins: {top: 0, right: 0, bottom: 0, left: 0},
-        },
     } },
     components: {
         Facet, LegendEntry, ColorLegend, FormElement, SlotContent,
@@ -115,8 +105,7 @@ export default {
     watch: {
         // the state was set from outside
         'store.stateSets'() {
-            this.dataInit();
-            this.scales();
+            this.update();
         },
     },
     computed: {
@@ -130,9 +119,8 @@ export default {
     },
     mounted() {
         this.baseInit();
-        this.dataInit();
-        this.scales();
-        // the facets are drawn in the render of `initialized`
+        this.update();
+        // the facets are drawn in the render of the view
         this.$nextTick(() => this.$emit('rendered'));
 
         // without a fixed width the visualisation fills its container
@@ -169,89 +157,14 @@ export default {
             if (!width || width == this.options.width)
                 return;
             this.measure();
-            this.dataInit();
-            this.scales();
+            this.update();
         },
-        dataInit() {
-            const def = this.store.def;
-            const axis = this.store.axis;
-
-            // the visible categories
-            this.filter = this.store.mappingNamesWithKey('props').map(c => ({
-                dim: c,
-                key: Object.keys(this.store.mapping(c).props).filter(k => this.store.mapping(c).props[k].visible)
-            }));
-
-            // the rows of the values of `filter`, e.g. of a global of a form element,
-            // they are compared as the values of the rows, e.g. dates as timestamps
-            const values = Object.entries(def.filter ?? {}).map(([dim, v]) => ({
-                dim,
-                key: [entryToValue(v, this.store.bases)].flat().map(k => convert(this.store.mapping(dim), k)),
-            }));
-
-            this.data = markRaw(filter(this.store.data, [...this.filter, ...values]));
-
-            // stacked in the order of the categories, not of the rows
-            if (axis.v && this.store.mapping(axis.v).stacked) {
-                const order = categoryOrder(this.filter.map(f => ({ dim: f.dim, keys: f.key })));
-                addStackedData(this.data, axis, def.facets ? [def.facets.dim] : [], order);
-            }
-
-            if (def.facets) {
-                this.facets.margins = this.options.margins;
-                this.facets.height = this.options.height;
-
-                const cols = entryToValue(def.facets.cols, this.store.bases);
-
-                this.facets.width = this.options.width/cols;
-
-                // in the order of the categories, not of the rows
-                const d = def.facets.dim;
-                const keys = Object.keys(this.store.mapping(d).props);
-                const dataGroupedByFacets = groupBy(this.data, [d]);
-
-                this.facets.entries = dataGroupedByFacets
-                    .filter(e => keys.includes(String(e.group[d])))
-                    .sort((a, b) => keys.indexOf(String(a.group[d])) - keys.indexOf(String(b.group[d])))
-                    .map(e => ({
-                        key: e.group[d],
-                        name: this.store.mapping(d).props[e.group[d]].name,
-                        data: markRaw(e.entries),
-                    }))
-            }
-        },
-        scales() {
-            const def = this.store.def;
-            const coord = this.store.coord;
-            if (def.facets) {
-                // the scales of all facets, also the ones without orientation, e.g. of colors
-                const shared = def.facets.scales ? entryToValue(def.facets.scales, this.store.bases) : [];
-                const colors = this.store.mappingNamesWithKey('scale').filter(n => !this.store.mapping(n).scale.orientation);
-                // the sizes of a facet, as the ones of Facet.vue
-                const { width, height, margins } = this.facets;
-                const innerWidth = width - (margins.left + margins.right);
-                const innerHeight = height - (margins.top + margins.bottom);
-                const bases = { ...this.store.bases, width, innerWidth, height, innerHeight };
-                const infos = [...new Set([...shared, ...colors])].map(n => {
-                    const info = {
-                        dim: n,
-                        mapping: this.store.mapping(n),
-                    };
-                    addDimInfo(info, this.data);
-                    addScale(info, coord.dims(innerWidth, innerHeight), coord, bases);
-
-                    return info;
-                });
-
-                addScaledData(this.data, infos);
-                this.facets.shared = Object.fromEntries(infos.map(e => [e.dim, e]));
-            }
-
-            this.initialized = true;
+        // the rows, facets and scales of the store
+        update() {
+            this.view = markRaw(layout(this.store, this.options.width));
         },
         changeSelected() {
-            this.dataInit();
-            this.scales();
+            this.update();
             this.$emit('stateChanged');
         },
         formChanged() {
