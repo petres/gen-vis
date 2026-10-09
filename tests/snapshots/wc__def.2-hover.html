@@ -1,16 +1,16 @@
 <div class="vis">
 <div class="vis-header">
-<div class="title">Ausstattungsqualität</div>
-<div class="subtitle">Anteil der Wohnungen / Häuser mit WC im Wohnungsverband. Veränderung zwischen 1971 und 2001</div>
+<div class="vis-title">Ausstattungsqualität</div>
+<div class="vis-subtitle">Anteil der Wohnungen / Häuser mit WC im Wohnungsverband. Veränderung zwischen 1971 und 2001</div>
 </div>
 <div class="vis-form-elements">
 </div>
 <div class="vis-legends">
-<div class="legend" data-dim="type">
-<div class="title">
+<div class="vis-legend" data-dim="type">
+<div class="vis-legend-title">
 </div>
-<div class="entries" role="group">
-<div data-visible="true" data-key="Hauseigentum" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entries" role="group">
+<div class="vis-legend-entry" data-visible="true" data-key="Hauseigentum" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#BBD7EE" stroke-width="3">
 </line>
@@ -19,7 +19,7 @@
 </svg>
 <span>Hauseigentum</span>
 </div>
-<div data-visible="true" data-key="Wohnungseigentum" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Wohnungseigentum" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#5BC5F2" stroke-width="3">
 </line>
@@ -28,7 +28,7 @@
 </svg>
 <span>Wohnungseigentum</span>
 </div>
-<div data-visible="true" data-key="GBV Miete" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="GBV Miete" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#559BD5" stroke-width="3">
 </line>
@@ -37,7 +37,7 @@
 </svg>
 <span>GBV Miete</span>
 </div>
-<div data-visible="true" data-key="Kommunale Miete" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Kommunale Miete" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#C7DF71" stroke-width="3">
 </line>
@@ -46,7 +46,7 @@
 </svg>
 <span>Kommunale Miete</span>
 </div>
-<div data-visible="true" data-key="Private Miete" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Private Miete" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#4B9847" stroke-width="3">
 </line>
@@ -55,7 +55,7 @@
 </svg>
 <span>Private Miete</span>
 </div>
-<div data-visible="true" data-key="Sonstiges" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Sonstiges" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#9CE1F8" stroke-width="3">
 </line>
@@ -64,7 +64,7 @@
 </svg>
 <span>Sonstiges</span>
 </div>
-<div data-visible="true" data-key="Alle Haushalte" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Alle Haushalte" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#72BB6F" stroke-width="4">
 </line>
@@ -78,15 +78,15 @@
 </div>
 <div class="vis-body">
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 50px;">Österreich</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="400" class="facet">
+<div class="vis-facet-title" style="margin-left: 50px;">Österreich</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="400" class="vis-svg">
 <g transform="translate(50 20)">
-<g visibility="visible" class="hoverMarker">
+<g visibility="visible" class="vis-hover-marker">
 <line x1="324.762" x2="324.762" y1="0" y2="330">
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 330)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 330)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H330.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0.5,0)">
@@ -125,7 +125,7 @@
 <text fill="currentColor" y="12" dy="0.71em">2000</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="330" y1="294.118" y2="294.118">
 </line>
 <line x1="0" x2="330" y1="235.294" y2="235.294">
@@ -139,7 +139,7 @@
 <line x1="0" x2="330" y1="0" y2="0">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,330.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,294.618)">
@@ -173,7 +173,7 @@
 <text fill="currentColor" x="-12" dy="0.32em">100%</text>
 </g>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke-width="3" fill="none" stroke="#BBD7EE" data-group-type="Hauseigentum" d="M10.476,147.059L115.238,52.941L220,23.529L324.762,5.882">
 </path>
 <path stroke-width="3" fill="none" stroke="#5BC5F2" data-group-type="Wohnungseigentum" d="M10.476,0L115.238,5.882L220,11.765L324.762,0">
@@ -189,8 +189,8 @@
 <path stroke-width="4" fill="none" stroke="#72BB6F" data-group-type="Alle Haushalte" d="M10.476,176.471L115.238,82.353L220,41.176L324.762,5.882">
 </path>
 </g>
-<g class="plotGroup plot-1 circle" data-plot="plot-1">
-<g class="group" data-group-type="Hauseigentum">
+<g class="vis-plot plot-1" data-plot="plot-1">
+<g class="vis-group" data-group-type="Hauseigentum">
 <circle fill="#BBD7EE" opacity="0.6" cx="10.476" cy="147.059" r="4">
 </circle>
 <circle fill="#BBD7EE" opacity="0.6" cx="115.238" cy="52.941" r="4">
@@ -200,7 +200,7 @@
 <circle fill="#BBD7EE" opacity="0.6" cx="324.762" cy="5.882" r="4">
 </circle>
 </g>
-<g class="group" data-group-type="Wohnungseigentum">
+<g class="vis-group" data-group-type="Wohnungseigentum">
 <circle fill="#5BC5F2" opacity="0.6" cx="10.476" cy="0" r="4">
 </circle>
 <circle fill="#5BC5F2" opacity="0.6" cx="115.238" cy="5.882" r="4">
@@ -210,7 +210,7 @@
 <circle fill="#5BC5F2" opacity="0.6" cx="324.762" cy="0" r="4">
 </circle>
 </g>
-<g class="group" data-group-type="GBV Miete">
+<g class="vis-group" data-group-type="GBV Miete">
 <circle fill="#559BD5" opacity="0.6" cx="10.476" cy="17.647" r="4">
 </circle>
 <circle fill="#559BD5" opacity="0.6" cx="115.238" cy="17.647" r="4">
@@ -220,7 +220,7 @@
 <circle fill="#559BD5" opacity="0.6" cx="324.762" cy="0" r="4">
 </circle>
 </g>
-<g class="group" data-group-type="Kommunale Miete">
+<g class="vis-group" data-group-type="Kommunale Miete">
 <circle fill="#C7DF71" opacity="0.6" cx="10.476" cy="70.588" r="4">
 </circle>
 <circle fill="#C7DF71" opacity="0.6" cx="115.238" cy="47.059" r="4">
@@ -230,7 +230,7 @@
 <circle fill="#C7DF71" opacity="0.6" cx="324.762" cy="5.882" r="4">
 </circle>
 </g>
-<g class="group" data-group-type="Private Miete">
+<g class="vis-group" data-group-type="Private Miete">
 <circle fill="#4B9847" opacity="0.6" cx="10.476" cy="300" r="4">
 </circle>
 <circle fill="#4B9847" opacity="0.6" cx="115.238" cy="188.235" r="4">
@@ -240,7 +240,7 @@
 <circle fill="#4B9847" opacity="0.6" cx="324.762" cy="17.647" r="4">
 </circle>
 </g>
-<g class="group" data-group-type="Sonstiges">
+<g class="vis-group" data-group-type="Sonstiges">
 <circle fill="#9CE1F8" opacity="0.6" cx="10.476" cy="258.824" r="4">
 </circle>
 <circle fill="#9CE1F8" opacity="0.6" cx="115.238" cy="129.412" r="4">
@@ -250,7 +250,7 @@
 <circle fill="#9CE1F8" opacity="0.6" cx="324.762" cy="17.647" r="4">
 </circle>
 </g>
-<g class="group" data-group-type="Alle Haushalte">
+<g class="vis-group" data-group-type="Alle Haushalte">
 <circle fill="#72BB6F" opacity="0.6" cx="10.476" cy="176.471" r="4">
 </circle>
 <circle fill="#72BB6F" opacity="0.6" cx="115.238" cy="82.353" r="4">
@@ -261,41 +261,41 @@
 </circle>
 </g>
 </g>
-<rect width="330" height="330" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="330" height="330" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
 <div style="transform: translate(374.762px, 185px); position: absolute; top: 0px; left: 0px;">
-<div class="hover" style="left: -20px; transform: translate(-100%, -50%);">
-<div class="title">2001</div>
-<table class="entries">
-<tr class="entry">
-<td class="type">Wohnungseigentum</td>
-<td class="y value">100,0%</td>
+<div class="vis-hover" style="left: -20px; transform: translate(-100%, -50%);">
+<div class="vis-hover-title">2001</div>
+<table class="vis-hover-entries">
+<tr class="vis-hover-entry">
+<td data-mapping="type">Wohnungseigentum</td>
+<td data-mapping="y" class="vis-value">100,0%</td>
 </tr>
-<tr class="entry">
-<td class="type">GBV Miete</td>
-<td class="y value">100,0%</td>
+<tr class="vis-hover-entry">
+<td data-mapping="type">GBV Miete</td>
+<td data-mapping="y" class="vis-value">100,0%</td>
 </tr>
-<tr class="entry">
-<td class="type">Hauseigentum</td>
-<td class="y value">99,0%</td>
+<tr class="vis-hover-entry">
+<td data-mapping="type">Hauseigentum</td>
+<td data-mapping="y" class="vis-value">99,0%</td>
 </tr>
-<tr class="entry">
-<td class="type">Kommunale Miete</td>
-<td class="y value">99,0%</td>
+<tr class="vis-hover-entry">
+<td data-mapping="type">Kommunale Miete</td>
+<td data-mapping="y" class="vis-value">99,0%</td>
 </tr>
-<tr class="entry">
-<td class="type">Alle Haushalte</td>
-<td class="y value">99,0%</td>
+<tr class="vis-hover-entry">
+<td data-mapping="type">Alle Haushalte</td>
+<td data-mapping="y" class="vis-value">99,0%</td>
 </tr>
-<tr class="entry nearest">
-<td class="type">Private Miete</td>
-<td class="y value">97,0%</td>
+<tr class="vis-hover-entry vis-nearest">
+<td data-mapping="type">Private Miete</td>
+<td data-mapping="y" class="vis-value">97,0%</td>
 </tr>
-<tr class="entry">
-<td class="type">Sonstiges</td>
-<td class="y value">97,0%</td>
+<tr class="vis-hover-entry">
+<td data-mapping="type">Sonstiges</td>
+<td data-mapping="y" class="vis-value">97,0%</td>
 </tr>
 </table>
 </div>
@@ -303,15 +303,15 @@
 </div>
 </div>
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 50px;">Wien</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="400" class="facet">
+<div class="vis-facet-title" style="margin-left: 50px;">Wien</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="400" class="vis-svg">
 <g transform="translate(50 20)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 330)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 330)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H330.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0.5,0)">
@@ -350,7 +350,7 @@
 <text fill="currentColor" y="12" dy="0.71em">2000</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="330" y1="294.118" y2="294.118">
 </line>
 <line x1="0" x2="330" y1="235.294" y2="235.294">
@@ -364,7 +364,7 @@
 <line x1="0" x2="330" y1="0" y2="0">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,330.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,294.618)">
@@ -398,7 +398,7 @@
 <text fill="currentColor" x="-12" dy="0.32em">100%</text>
 </g>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke-width="3" fill="none" stroke="#BBD7EE" data-group-type="Hauseigentum" d="M10.476,94.118L115.238,41.176L220,23.529L324.762,5.882">
 </path>
 <path stroke-width="3" fill="none" stroke="#5BC5F2" data-group-type="Wohnungseigentum" d="M10.476,0L115.238,5.882L220,11.765L324.762,0">
@@ -414,8 +414,8 @@
 <path stroke-width="4" fill="none" stroke="#72BB6F" data-group-type="Alle Haushalte" d="M10.476,194.118L115.238,111.765L220,58.824L324.762,11.765">
 </path>
 </g>
-<g class="plotGroup plot-1 circle" data-plot="plot-1">
-<g class="group" data-group-type="Hauseigentum">
+<g class="vis-plot plot-1" data-plot="plot-1">
+<g class="vis-group" data-group-type="Hauseigentum">
 <circle fill="#BBD7EE" opacity="0.6" cx="10.476" cy="94.118" r="4">
 </circle>
 <circle fill="#BBD7EE" opacity="0.6" cx="115.238" cy="41.176" r="4">
@@ -425,7 +425,7 @@
 <circle fill="#BBD7EE" opacity="0.6" cx="324.762" cy="5.882" r="4">
 </circle>
 </g>
-<g class="group" data-group-type="Wohnungseigentum">
+<g class="vis-group" data-group-type="Wohnungseigentum">
 <circle fill="#5BC5F2" opacity="0.6" cx="10.476" cy="0" r="4">
 </circle>
 <circle fill="#5BC5F2" opacity="0.6" cx="115.238" cy="5.882" r="4">
@@ -435,7 +435,7 @@
 <circle fill="#5BC5F2" opacity="0.6" cx="324.762" cy="0" r="4">
 </circle>
 </g>
-<g class="group" data-group-type="GBV Miete">
+<g class="vis-group" data-group-type="GBV Miete">
 <circle fill="#559BD5" opacity="0.6" cx="10.476" cy="11.765" r="4">
 </circle>
 <circle fill="#559BD5" opacity="0.6" cx="115.238" cy="5.882" r="4">
@@ -445,7 +445,7 @@
 <circle fill="#559BD5" opacity="0.6" cx="324.762" cy="0" r="4">
 </circle>
 </g>
-<g class="group" data-group-type="Kommunale Miete">
+<g class="vis-group" data-group-type="Kommunale Miete">
 <circle fill="#C7DF71" opacity="0.6" cx="10.476" cy="23.529" r="4">
 </circle>
 <circle fill="#C7DF71" opacity="0.6" cx="115.238" cy="11.765" r="4">
@@ -455,7 +455,7 @@
 <circle fill="#C7DF71" opacity="0.6" cx="324.762" cy="0" r="4">
 </circle>
 </g>
-<g class="group" data-group-type="Private Miete">
+<g class="vis-group" data-group-type="Private Miete">
 <circle fill="#4B9847" opacity="0.6" cx="10.476" cy="317.647" r="4">
 </circle>
 <circle fill="#4B9847" opacity="0.6" cx="115.238" cy="217.647" r="4">
@@ -465,7 +465,7 @@
 <circle fill="#4B9847" opacity="0.6" cx="324.762" cy="29.412" r="4">
 </circle>
 </g>
-<g class="group" data-group-type="Sonstiges">
+<g class="vis-group" data-group-type="Sonstiges">
 <circle fill="#9CE1F8" opacity="0.6" cx="10.476" cy="323.529" r="4">
 </circle>
 <circle fill="#9CE1F8" opacity="0.6" cx="115.238" cy="176.471" r="4">
@@ -475,7 +475,7 @@
 <circle fill="#9CE1F8" opacity="0.6" cx="324.762" cy="23.529" r="4">
 </circle>
 </g>
-<g class="group" data-group-type="Alle Haushalte">
+<g class="vis-group" data-group-type="Alle Haushalte">
 <circle fill="#72BB6F" opacity="0.6" cx="10.476" cy="194.118" r="4">
 </circle>
 <circle fill="#72BB6F" opacity="0.6" cx="115.238" cy="111.765" r="4">
@@ -486,7 +486,7 @@
 </circle>
 </g>
 </g>
-<rect width="330" height="330" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="330" height="330" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>

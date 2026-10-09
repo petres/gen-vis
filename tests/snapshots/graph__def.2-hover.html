@@ -1,44 +1,44 @@
 <div class="vis">
 <div class="vis-header">
-<div class="title">Graph</div>
-<div class="subtitle">no idea</div>
+<div class="vis-title">Graph</div>
+<div class="vis-subtitle">no idea</div>
 </div>
 <div class="vis-form-elements">
 </div>
 <div class="vis-legends">
-<div class="legend" data-dim="t">
-<div class="title">
+<div class="vis-legend" data-dim="t">
+<div class="vis-legend-title">
 </div>
-<div class="entries" role="group">
-<div data-visible="true" data-key="1" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entries" role="group">
+<div class="vis-legend-entry" data-visible="true" data-key="1" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <circle cx="8" cy="8" r="3" fill="#1E4F77">
 </circle>
 </svg>
 <span>Type 1</span>
 </div>
-<div data-visible="true" data-key="2" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <circle cx="8" cy="8" r="3" fill="#BBD7EE">
 </circle>
 </svg>
 <span>Type 2</span>
 </div>
-<div data-visible="true" data-key="3" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="3" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <circle cx="8" cy="8" r="3" fill="#5BC5F2">
 </circle>
 </svg>
 <span>Type 3</span>
 </div>
-<div data-visible="true" data-key="4" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="4" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <circle cx="8" cy="8" r="3" fill="#559BD5">
 </circle>
 </svg>
 <span>Type 4</span>
 </div>
-<div data-visible="true" data-key="5" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="5" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <circle cx="8" cy="8" r="3" fill="#C7DF71">
 </circle>
@@ -49,15 +49,15 @@
 </div>
 </div>
 <div class="vis-body">
-<div style="width: 1000px;" class="vis-inner">
-<svg width="1000" height="300" class="facet">
+<div style="width: 1000px;" class="vis-facet">
+<svg width="1000" height="300" class="vis-svg">
 <g transform="translate(80 10)">
-<g visibility="visible" class="hoverMarker">
+<g visibility="visible" class="vis-hover-marker">
 <line x1="273" x2="273" y1="0" y2="250">
 </line>
 </g>
-<g class="plotGroup plot-0 circle" data-plot="plot-0">
-<g class="group" data-group-t="1">
+<g class="vis-plot plot-0" data-plot="plot-0">
+<g class="vis-group" data-group-t="1">
 <circle fill="#1E4F77" opacity="0.6" cx="91" cy="225" r="3">
 </circle>
 <circle fill="#1E4F77" opacity="0.6" cx="819" cy="25" r="4.5">
@@ -65,7 +65,7 @@
 <circle fill="#1E4F77" opacity="0.6" cx="819" cy="175" r="3">
 </circle>
 </g>
-<g class="group" data-group-t="2">
+<g class="vis-group" data-group-t="2">
 <circle fill="#BBD7EE" opacity="0.6" cx="273" cy="175" r="3.5">
 </circle>
 <circle fill="#BBD7EE" opacity="0.6" cx="455" cy="125" r="3">
@@ -75,36 +75,36 @@
 <circle fill="#BBD7EE" opacity="0.6" cx="455" cy="225" r="5">
 </circle>
 </g>
-<g class="group" data-group-t="4">
+<g class="vis-group" data-group-t="4">
 <circle fill="#559BD5" opacity="0.6" cx="273" cy="75" r="4.5">
 </circle>
 <circle fill="#559BD5" opacity="0.6" cx="273" cy="25" r="4">
 </circle>
 </g>
 </g>
-<rect width="910" height="250" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="910" height="250" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
 <div style="transform: translate(353px, 135px); position: absolute; top: 0px; left: 0px;">
-<div class="hover" style="left: 20px; transform: translate(0, -50%);">
-<div class="title">2</div>
-<table class="entries">
-<tr class="entry">
-<td class="t">Type 4</td>
-<td class="y value">5</td>
+<div class="vis-hover" style="left: 20px; transform: translate(0, -50%);">
+<div class="vis-hover-title">2</div>
+<table class="vis-hover-entries">
+<tr class="vis-hover-entry">
+<td data-mapping="t">Type 4</td>
+<td data-mapping="y" class="vis-value">5</td>
 </tr>
-<tr class="entry">
-<td class="t">Type 4</td>
-<td class="y value">4</td>
+<tr class="vis-hover-entry">
+<td data-mapping="t">Type 4</td>
+<td data-mapping="y" class="vis-value">4</td>
 </tr>
-<tr class="entry">
-<td class="t">Type 2</td>
-<td class="y value">3</td>
+<tr class="vis-hover-entry">
+<td data-mapping="t">Type 2</td>
+<td data-mapping="y" class="vis-value">3</td>
 </tr>
-<tr class="entry nearest">
-<td class="t">Type 2</td>
-<td class="y value">2</td>
+<tr class="vis-hover-entry vis-nearest">
+<td data-mapping="t">Type 2</td>
+<td data-mapping="y" class="vis-value">2</td>
 </tr>
 </table>
 </div>

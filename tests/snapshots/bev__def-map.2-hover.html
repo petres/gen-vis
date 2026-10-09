@@ -1,11 +1,11 @@
 <div class="vis">
 <div class="vis-header">
-<div class="title">Bevölkerung</div>
-<div class="subtitle">nach Bundesland, die Fläche der Kreise entspricht der Einwohnerzahl</div>
+<div class="vis-title">Bevölkerung</div>
+<div class="vis-subtitle">nach Bundesland, die Fläche der Kreise entspricht der Einwohnerzahl</div>
 </div>
 <div class="vis-form-elements">
-<div class="formElement" id="container-year">
-<div class="title">Jahr:</div>
+<div class="vis-form-element" id="container-year">
+<div class="vis-form-element-title">Jahr:</div>
 <select id="gen-vis-form-N-year">
 <option value="2002">2002</option>
 <option value="2007">2007</option>
@@ -18,14 +18,14 @@
 <div class="vis-legends">
 </div>
 <div class="vis-body">
-<div style="width: 800px;" class="vis-inner">
-<svg width="800" height="380" class="facet">
+<div style="width: 800px;" class="vis-facet">
+<svg width="800" height="380" class="vis-svg">
 <g transform="translate(10 10)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="plotGroup plot-0 features" data-plot="plot-0">
+<g class="vis-plot plot-0 vis-features" data-plot="plot-0">
 <path d="M411.995,212.041L410.287,219.994L413.948,237.875L422.816,240.937L433.049,236.462L440.916,251.148L448.924,256.771L439.517,261.441L437.452,276.357L430.305,283.603L421.381,270.882L392.607,263.413L382.563,263.719L380.372,269.475L366.234,272.548L355.014,270.586L351.402,265.345L326.73,262.66L311.485,254.865L300.65,256.999L288.633,266.774L278.841,265.259L274.158,239.113L309.876,231.929L313.228,223.534L320.395,222.05L329.712,211.319L326.38,197.511L319.297,190.523L322.187,185.083L337.831,185.994L338.314,197.67L350.059,208.959L358.92,212.917L367.032,190.455L360.249,178.49L349.954,178.144L358.395,160.803L345.453,140.755L361.901,135.079L376.502,143.641L386.154,139.224L390.857,148.252L384.096,146.802L385.027,164.047L400.019,167.13L398.396,175.56L408.552,179.713L402.938,189.425L402.119,203.834Z" data-geo-key="Salzburg" fill="#E6EEF4" stroke="white" stroke-width="1.5">
 </path>
 <path d="M319.297,190.523L326.38,197.511L329.712,211.319L320.395,222.05L313.228,223.534L309.876,231.929L274.158,239.113L278.841,265.259L259.544,271.459L243.606,280.101L232.351,274.293L219.158,274.781L212.354,280.641L204.284,277.418L189.887,280.691L176.329,307.034L150.775,304.319L152.356,299.202L144.412,293.363L134.795,297.222L126.165,295.571L127.761,284.688L118.858,276.261L111.704,286.102L105.475,285.566L104.082,293.775L96.383,296.093L92.337,286.223L97.111,275.724L95.662,264.696L102.976,255.918L99.442,239.657L113.216,234.765L126.417,217.092L125.416,200.958L135.509,203.572L138.435,199.21L154.281,206.297L164.374,203.507L174.012,222.602L184.553,222.605L193.995,217.716L199.252,222.344L214.951,206.599L227.347,206.333L230.343,198.119L266.851,191.78L284.734,193.671L281.983,181.675L290.32,177.123L290.194,183.604L306.621,182.151L312.619,191.337ZM326.73,262.66L333.008,276.777L343.388,288.028L343.892,294.663L354.979,303.114L343.836,309.652L331.881,311.604L329.901,322.072L318.597,322.575L301.966,314.118L292.678,304.744L291.334,291.709L280.695,287.822L278.022,274.742L288.633,266.774L300.65,256.999L311.485,254.865Z" data-geo-key="Tirol" fill="#E6EEF4" stroke="white" stroke-width="1.5">
@@ -45,74 +45,74 @@
 <path d="M633.131,298.187L646.402,276.493L641.915,266.286L643.63,254.758L635.91,227.05L649.173,219.184L659.147,214.641L667.652,189.187L661.884,182.389L660.834,169.717L668.667,161.888L673.636,150.353L680.971,148.39L686.739,155.104L697.259,144.903L698.092,138.948L709.514,136.245L713.777,130.7L723.247,136.622L731.331,124.006L731.94,136.168L739.961,139.384L733.312,156.827L726.642,159.317L731.387,166.017L732.164,180.215L703.292,183.709L699.085,176.69L689.559,173.257L672.145,186.03L691.33,191.262L698.673,203.187L692.758,215.761L685.717,221.16L674.546,221.741L677.654,237.793L672.6,249.473L681.3,258.138L676.814,263.673L678.403,275.77L660.295,275.286L658.399,280.581L638.661,297.537Z" data-geo-key="Burgenland" fill="#E6EEF4" stroke="white" stroke-width="1.5">
 </path>
 </g>
-<g class="plotGroup plot-1 circle" data-plot="plot-1">
-<g class="group" data-group-land="Burgenland">
+<g class="vis-plot plot-1" data-plot="plot-1">
+<g class="vis-group" data-group-land="Burgenland">
 <circle r="13.115" fill="#1E4F77" fill-opacity="0.65" stroke="white" stroke-width="1" highlight-fill-opacity="0.9" cx="681.621" cy="202.439" data-geo-key="Burgenland">
 </circle>
 </g>
-<g class="group" data-group-land="Kärnten">
+<g class="vis-group" data-group-land="Kärnten">
 <circle r="18.063" fill="#1E4F77" fill-opacity="0.65" stroke="white" stroke-width="1" highlight-fill-opacity="0.9" cx="442.583" cy="306.282" data-geo-key="Kärnten">
 </circle>
 </g>
-<g class="group" data-group-land="Niederösterreich">
+<g class="vis-group" data-group-land="Niederösterreich">
 <circle r="31.335" fill="#1E4F77" fill-opacity="0.65" stroke="white" stroke-width="1" highlight-fill-opacity="0.9" cx="610.78" cy="102.331" data-geo-key="Niederösterreich">
 </circle>
 </g>
-<g class="group" data-group-land="Oberösterreich">
+<g class="vis-group" data-group-land="Oberösterreich">
 <circle r="29.495" fill="#1E4F77" fill-opacity="0.65" stroke="white" stroke-width="1" highlight-fill-opacity="0.9" cx="447.331" cy="121.069" data-geo-key="Oberösterreich">
 </circle>
 </g>
-<g class="group" data-group-land="Salzburg">
+<g class="vis-group" data-group-land="Salzburg">
 <circle r="18.033" fill="#1E4F77" fill-opacity="0.65" stroke="white" stroke-width="1" highlight-fill-opacity="0.9" cx="366.372" cy="223.264" data-geo-key="Salzburg">
 </circle>
 </g>
-<g class="group" data-group-land="Steiermark">
+<g class="vis-group" data-group-land="Steiermark">
 <circle r="26.911" fill="#1E4F77" fill-opacity="0.65" stroke="white" stroke-width="1" highlight-fill-opacity="0.9" cx="542.744" cy="239.543" data-geo-key="Steiermark">
 </circle>
 </g>
-<g class="group" data-group-land="Tirol">
+<g class="vis-group" data-group-land="Tirol">
 <circle r="21.015" fill="#1E4F77" fill-opacity="0.65" stroke="white" stroke-width="1" highlight-fill-opacity="0.9" cx="221.41" cy="249.529" data-geo-key="Tirol">
 </circle>
 </g>
-<g class="group" data-group-land="Vorarlberg">
+<g class="vis-group" data-group-land="Vorarlberg">
 <circle r="15.237" fill="#1E4F77" fill-opacity="0.65" stroke="white" stroke-width="1" highlight-fill-opacity="0.9" cx="73.27" cy="243.284" data-geo-key="Vorarlberg">
 </circle>
 </g>
-<g class="group" data-group-land="Wien">
+<g class="vis-group" data-group-land="Wien">
 <circle r="33.413" fill="#1E4F77" fill-opacity="0.65" stroke="white" stroke-width="1" highlight-fill-opacity="0.9" cx="669.383" cy="111.875" data-geo-key="Wien">
 </circle>
 </g>
 </g>
-<g class="plotGroup plot-2 text" data-plot="plot-2">
-<g class="group" data-group-land="Burgenland">
+<g class="vis-plot plot-2" data-plot="plot-2">
+<g class="vis-group" data-group-land="Burgenland">
 <text font-size="11" text-anchor="middle" dy="0.35em" fill="#222" stroke="white" stroke-width="3" paint-order="stroke" x="681.621" y="202.439" data-geo-key="Burgenland">Burgenland</text>
 </g>
-<g class="group" data-group-land="Kärnten">
+<g class="vis-group" data-group-land="Kärnten">
 <text font-size="11" text-anchor="middle" dy="0.35em" fill="#222" stroke="white" stroke-width="3" paint-order="stroke" x="442.583" y="306.282" data-geo-key="Kärnten">Kärnten</text>
 </g>
-<g class="group" data-group-land="Niederösterreich">
+<g class="vis-group" data-group-land="Niederösterreich">
 <text font-size="11" text-anchor="middle" dy="0.35em" fill="#222" stroke="white" stroke-width="3" paint-order="stroke" x="610.78" y="102.331" data-geo-key="Niederösterreich">Niederösterreich</text>
 </g>
-<g class="group" data-group-land="Oberösterreich">
+<g class="vis-group" data-group-land="Oberösterreich">
 <text font-size="11" text-anchor="middle" dy="0.35em" fill="#222" stroke="white" stroke-width="3" paint-order="stroke" x="447.331" y="121.069" data-geo-key="Oberösterreich">Oberösterreich</text>
 </g>
-<g class="group" data-group-land="Salzburg">
+<g class="vis-group" data-group-land="Salzburg">
 <text font-size="11" text-anchor="middle" dy="0.35em" fill="#222" stroke="white" stroke-width="3" paint-order="stroke" x="366.372" y="223.264" data-geo-key="Salzburg">Salzburg</text>
 </g>
-<g class="group" data-group-land="Steiermark">
+<g class="vis-group" data-group-land="Steiermark">
 <text font-size="11" text-anchor="middle" dy="0.35em" fill="#222" stroke="white" stroke-width="3" paint-order="stroke" x="542.744" y="239.543" data-geo-key="Steiermark">Steiermark</text>
 </g>
-<g class="group" data-group-land="Tirol">
+<g class="vis-group" data-group-land="Tirol">
 <text font-size="11" text-anchor="middle" dy="0.35em" fill="#222" stroke="white" stroke-width="3" paint-order="stroke" x="221.41" y="249.529" data-geo-key="Tirol">Tirol</text>
 </g>
-<g class="group" data-group-land="Vorarlberg">
+<g class="vis-group" data-group-land="Vorarlberg">
 <text font-size="11" text-anchor="middle" dy="0.35em" fill="#222" stroke="white" stroke-width="3" paint-order="stroke" x="73.27" y="243.284" data-geo-key="Vorarlberg">Vorarlberg</text>
 </g>
-<g class="group" data-group-land="Wien">
+<g class="vis-group" data-group-land="Wien">
 <text font-size="11" text-anchor="middle" dy="0.35em" fill="#222" stroke="white" stroke-width="3" paint-order="stroke" x="669.383" y="111.875" data-geo-key="Wien">Wien</text>
 </g>
 </g>
-<rect width="780" height="360" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="780" height="360" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>

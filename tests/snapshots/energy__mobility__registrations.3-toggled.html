@@ -1,12 +1,12 @@
 <div class="vis">
 <div class="vis-header">
-<div class="title">Pkw-Neuzulassungen</div>
-<div class="subtitle">nach Kraftstoffart bzw. Energiequelle, monatlich</div>
+<div class="vis-title">Pkw-Neuzulassungen</div>
+<div class="vis-subtitle">nach Kraftstoffart bzw. Energiequelle, monatlich</div>
 </div>
 <div class="vis-form-elements">
-<div class="formElement" id="container-values">
-<div class="title">Werte:</div>
-<div class="entries">
+<div class="vis-form-element" id="container-values">
+<div class="vis-form-element-title">Werte:</div>
+<div class="vis-switch">
 <div id="container-valuesAbs">
 <input type="radio" id="gen-vis-form-N-values-valuesAbs" name="gen-vis-form-N-values" checked="" value="valuesAbs">
 <label for="gen-vis-form-N-values-valuesAbs">Anzahl</label>
@@ -17,9 +17,9 @@
 </div>
 </div>
 </div>
-<div class="formElement" id="container-scale">
-<div class="title">Y-Skala:</div>
-<div class="entries">
+<div class="vis-form-element" id="container-scale">
+<div class="vis-form-element-title">Y-Skala:</div>
+<div class="vis-switch">
 <div id="container-shareAxisOff">
 <input type="radio" id="gen-vis-form-N-scale-shareAxisOff" name="gen-vis-form-N-scale" checked="" value="shareAxisOff">
 <label for="gen-vis-form-N-scale-shareAxisOff">Getrennt</label>
@@ -32,60 +32,60 @@
 </div>
 </div>
 <div class="vis-legends">
-<div class="legend" data-dim="year">
-<div class="title">
+<div class="vis-legend" data-dim="year">
+<div class="vis-legend-title">
 </div>
-<div class="entries" role="group">
-<div data-visible="false" data-key="2019" role="checkbox" tabindex="0" aria-checked="false">
+<div class="vis-legend-entries" role="group">
+<div class="vis-legend-entry" data-visible="false" data-key="2019" role="checkbox" tabindex="0" aria-checked="false">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#BBBBBB" stroke-width="2" opacity="0.2">
 </line>
 </svg>
 <span>2019</span>
 </div>
-<div data-visible="true" data-key="2020" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2020" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#AAAAAA" stroke-width="2" opacity="0.2">
 </line>
 </svg>
 <span>2020</span>
 </div>
-<div data-visible="true" data-key="2021" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2021" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#cf90f0" stroke-width="2" opacity="0.2">
 </line>
 </svg>
 <span>2021</span>
 </div>
-<div data-visible="true" data-key="2022" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2022" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#86cae7" stroke-width="2" opacity="0.2">
 </line>
 </svg>
 <span>2022</span>
 </div>
-<div data-visible="true" data-key="2023" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2023" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#b5c969" stroke-width="2" opacity="0.5">
 </line>
 </svg>
 <span>2023</span>
 </div>
-<div data-visible="true" data-key="2024" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2024" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#f3d039" stroke-width="2" opacity="0.6">
 </line>
 </svg>
 <span>2024</span>
 </div>
-<div data-visible="true" data-key="2025" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2025" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#cf8e02" stroke-width="2" opacity="0.7">
 </line>
 </svg>
 <span>2025</span>
 </div>
-<div data-visible="true" data-key="2026" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2026" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#c3423f" stroke-width="2" opacity="1">
 </line>
@@ -94,41 +94,41 @@
 </div>
 </div>
 </div>
-<div class="legend" data-dim="facet">
-<div class="title">
+<div class="vis-legend" data-dim="facet">
+<div class="vis-legend-title">
 </div>
-<div class="entries" role="group">
-<div data-visible="true" data-key="bev" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entries" role="group">
+<div class="vis-legend-entry" data-visible="true" data-key="bev" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="0" height="0">
 </svg>
 <span>Elektro</span>
 </div>
-<div data-visible="true" data-key="phev" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="phev" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="0" height="0">
 </svg>
 <span>Plug-in-Hybrid</span>
 </div>
-<div data-visible="true" data-key="hybrid" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="hybrid" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="0" height="0">
 </svg>
 <span>Hybrid (ohne Plug-in)</span>
 </div>
-<div data-visible="true" data-key="petrol" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="petrol" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="0" height="0">
 </svg>
 <span>Benzin</span>
 </div>
-<div data-visible="true" data-key="diesel" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="diesel" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="0" height="0">
 </svg>
 <span>Diesel</span>
 </div>
-<div data-visible="false" data-key="other" role="checkbox" tabindex="0" aria-checked="false">
+<div class="vis-legend-entry" data-visible="false" data-key="other" role="checkbox" tabindex="0" aria-checked="false">
 <svg width="0" height="0">
 </svg>
 <span>Sonstige</span>
 </div>
-<div data-visible="false" data-key="total" role="checkbox" tabindex="0" aria-checked="false">
+<div class="vis-legend-entry" data-visible="false" data-key="total" role="checkbox" tabindex="0" aria-checked="false">
 <svg width="0" height="0">
 </svg>
 <span>Gesamt</span>
@@ -138,15 +138,15 @@
 </div>
 <div class="vis-body">
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 50px;">Elektro</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="220" class="facet">
+<div class="vis-facet-title" style="margin-left: 50px;">Elektro</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="220" class="vis-svg">
 <g transform="translate(50 5)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
 </path>
 <g class="tick" opacity="1" transform="translate(87.346,0)">
@@ -165,7 +165,7 @@
 <text fill="currentColor" y="12" dy="0.71em">Okt</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="320" y1="185" y2="185">
 </line>
 <line x1="0" x2="320" y1="147.597" y2="147.597">
@@ -177,7 +177,7 @@
 <line x1="0" x2="320" y1="35.389" y2="35.389">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,185.5)">
@@ -206,7 +206,7 @@
 <text fill="currentColor" x="-12" dy="0.32em">8.000</text>
 </g>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="bev" d="M0,172.003C9.871,169.328,19.741,166.654,29.612,166.654C38.846,166.654,48.08,169.649,57.313,170.937C67.184,172.313,77.055,174.583,86.925,174.583C96.478,174.583,106.03,172.857,115.582,171.254C125.453,169.599,135.323,164.709,145.194,164.709C154.746,164.709,164.299,165.102,173.851,165.102C183.721,165.102,193.592,164.709,203.463,163.924C213.333,163.138,223.204,148.607,233.075,148.607C242.627,148.607,252.179,155.489,261.731,155.489C271.602,155.489,281.473,152.291,291.343,146.456C300.896,140.81,310.448,131.197,320,121.584">
 </path>
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="bev" d="M0,159.248C9.871,157.833,19.741,156.418,29.612,150.758C38.846,145.463,48.08,121.191,57.313,121.191C67.184,121.191,77.055,140.042,86.925,140.042C96.478,140.042,106.03,137.989,115.582,134.338C125.453,130.565,135.323,117.413,145.194,117.413C154.746,117.413,164.299,147.784,173.851,147.784C183.721,147.784,193.592,130.105,203.463,125.155C213.333,120.206,223.204,117.731,233.075,117.731C242.627,117.731,252.179,141.557,261.731,141.557C271.602,141.557,281.473,119.582,291.343,119.582C300.896,119.582,310.448,120.396,320,121.209">
@@ -222,7 +222,7 @@
 <path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="bev" d="M0,97.066C9.871,99.525,19.741,101.984,29.612,101.984C38.846,101.984,48.08,31.536,57.313,31.536C67.184,31.536,77.055,46.77,86.925,51.809C96.478,56.685,106.03,61.608,115.582,61.608C125.453,61.608,135.323,16.818,145.194,16.818C154.746,16.818,164.299,44.396,173.851,52.725C183.721,61.331,193.592,64.106,203.463,66.882">
 </path>
 </g>
-<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="320" height="185" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
@@ -231,15 +231,15 @@
 </div>
 </div>
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 50px;">Plug-in-Hybrid</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="220" class="facet">
+<div class="vis-facet-title" style="margin-left: 50px;">Plug-in-Hybrid</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="220" class="vis-svg">
 <g transform="translate(50 5)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
 </path>
 <g class="tick" opacity="1" transform="translate(87.346,0)">
@@ -258,7 +258,7 @@
 <text fill="currentColor" y="12" dy="0.71em">Okt</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="320" y1="185" y2="185">
 </line>
 <line x1="0" x2="320" y1="143.371" y2="143.371">
@@ -270,7 +270,7 @@
 <line x1="0" x2="320" y1="18.483" y2="18.483">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,185.5)">
@@ -299,7 +299,7 @@
 <text fill="currentColor" x="-12" dy="0.32em">4.000</text>
 </g>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="phev" d="M0,161.813C9.871,165.091,19.741,168.37,29.612,170.305C38.846,172.115,48.08,172.447,57.313,173.385C67.184,174.389,77.055,176.091,86.925,176.091C96.478,176.091,106.03,167.434,115.582,164.269C125.453,160.998,135.323,158.58,145.194,156.942C154.746,155.356,164.299,154.444,173.851,154.444C183.721,154.444,193.592,156.838,203.463,158.565C213.333,160.293,223.204,164.81,233.075,164.81C242.627,164.81,252.179,141.289,261.731,141.289C271.602,141.289,281.473,142.372,291.343,142.372C300.896,142.372,310.448,139.999,320,137.626">
 </path>
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="phev" d="M0,145.785C9.871,144.717,19.741,143.648,29.612,139.374C38.846,135.376,48.08,114.855,57.313,114.855C67.184,114.855,77.055,130.424,86.925,130.424C96.478,130.424,106.03,122.265,115.582,122.265C125.453,122.265,135.323,124.399,145.194,126.761C154.746,129.047,164.299,134.701,173.851,136.044C183.721,137.432,193.592,137.584,203.463,138.126C213.333,138.667,223.204,139.291,233.075,139.291C242.627,139.291,252.179,137.376,261.731,137.376C271.602,137.376,281.473,137.418,291.343,137.501C300.896,137.582,310.448,140.455,320,143.329">
@@ -315,7 +315,7 @@
 <path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="phev" d="M0,71.019C9.871,83.238,19.741,95.456,29.612,95.456C38.846,95.456,48.08,53.244,57.313,53.244C67.184,53.244,77.055,58.617,86.925,60.237C96.478,61.805,106.03,62.943,115.582,62.943C125.453,62.943,135.323,16.818,145.194,16.818C154.746,16.818,164.299,28.839,173.851,38.049C183.721,47.566,193.592,60.5,203.463,73.434">
 </path>
 </g>
-<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="320" height="185" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
@@ -324,15 +324,15 @@
 </div>
 </div>
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 50px;">Hybrid (ohne Plug-in)</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="220" class="facet">
+<div class="vis-facet-title" style="margin-left: 50px;">Hybrid (ohne Plug-in)</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="220" class="vis-svg">
 <g transform="translate(50 5)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
 </path>
 <g class="tick" opacity="1" transform="translate(87.346,0)">
@@ -351,7 +351,7 @@
 <text fill="currentColor" y="12" dy="0.71em">Okt</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="320" y1="185" y2="185">
 </line>
 <line x1="0" x2="320" y1="153.005" y2="153.005">
@@ -365,7 +365,7 @@
 <line x1="0" x2="320" y1="25.025" y2="25.025">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,185.5)">
@@ -399,7 +399,7 @@
 <text fill="currentColor" x="-12" dy="0.32em">10.000</text>
 </g>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="hybrid" d="M0,157.996C9.871,157.844,19.741,157.692,29.612,157.692C38.846,157.692,48.08,167.673,57.313,168.731C67.184,169.861,77.055,170.426,86.925,170.426C96.478,170.426,106.03,159.019,115.582,155.229C125.453,151.312,135.323,149.25,145.194,147.566C154.746,145.936,164.299,145.118,173.851,145.118C183.721,145.118,193.592,151.213,203.463,151.213C213.333,151.213,223.204,146.682,233.075,143.278C242.627,139.984,252.179,131.264,261.731,131.264C271.602,131.264,281.473,142.111,291.343,142.111C300.896,142.111,310.448,137.567,320,133.024">
 </path>
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="hybrid" d="M0,151.485C9.871,149.339,19.741,147.193,29.612,138.607C38.846,130.576,48.08,101.381,57.313,101.381C67.184,101.381,77.055,128.497,86.925,128.497C96.478,128.497,106.03,123.606,115.582,120.354C125.453,116.993,135.323,108.548,145.194,108.548C154.746,108.548,164.299,118.087,173.851,122.386C183.721,126.827,193.592,134.704,203.463,134.704C213.333,134.704,223.204,133.904,233.075,133.904C242.627,133.904,252.179,134.197,261.731,134.784C271.602,135.39,281.473,138.575,291.343,138.575C300.896,138.575,310.448,136.967,320,135.36">
@@ -415,7 +415,7 @@
 <path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="hybrid" d="M0,81.08C9.871,80.63,19.741,80.179,29.612,78.377C38.846,76.69,48.08,16.818,57.313,16.818C67.184,16.818,77.055,42.378,86.925,51.165C96.478,59.668,106.03,69.194,115.582,69.194C125.453,69.194,135.323,17.474,145.194,17.474C154.746,17.474,164.299,59.357,173.851,69.946C183.721,80.888,193.592,83.624,203.463,86.359">
 </path>
 </g>
-<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="320" height="185" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
@@ -424,15 +424,15 @@
 </div>
 </div>
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 50px;">Benzin</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="220" class="facet">
+<div class="vis-facet-title" style="margin-left: 50px;">Benzin</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="220" class="vis-svg">
 <g transform="translate(50 5)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
 </path>
 <g class="tick" opacity="1" transform="translate(87.346,0)">
@@ -451,7 +451,7 @@
 <text fill="currentColor" y="12" dy="0.71em">Okt</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="320" y1="185" y2="185">
 </line>
 <line x1="0" x2="320" y1="158.844" y2="158.844">
@@ -469,7 +469,7 @@
 <line x1="0" x2="320" y1="1.909" y2="1.909">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,185.5)">
@@ -513,7 +513,7 @@
 <text fill="currentColor" x="-12" dy="0.32em">14.000</text>
 </g>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="petrol" d="M0,40.358C9.871,43.299,19.741,46.239,29.612,58C38.846,69.003,48.08,126.764,57.313,126.764C67.184,126.764,77.055,124.262,86.925,119.257C96.478,114.414,106.03,75.7,115.582,58.798C125.453,41.333,135.323,16.818,145.194,16.818C154.746,16.818,164.299,34.221,173.851,41.862C183.721,49.758,193.592,58.794,203.463,63.284C213.333,67.774,223.204,70.019,233.075,70.019C242.627,70.019,252.179,50.781,261.731,50.781C271.602,50.781,281.473,89.008,291.343,89.008C300.896,89.008,310.448,82.319,320,75.63">
 </path>
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="petrol" d="M0,105.473C9.871,93.788,19.741,82.102,29.612,69.365C38.846,57.45,48.08,31.779,57.313,31.779C67.184,31.779,77.055,63.611,86.925,67.377C96.478,71.022,106.03,72.844,115.582,72.844C125.453,72.844,135.323,52.547,145.194,52.547C154.746,52.547,164.299,74.257,173.851,82.678C183.721,91.381,193.592,103.59,203.463,103.59C213.333,103.59,223.204,97.352,233.075,97.352C242.627,97.352,252.179,119.663,261.731,119.663C271.602,119.663,281.473,110.899,291.343,110.665C300.896,110.439,310.448,110.382,320,110.325">
@@ -529,7 +529,7 @@
 <path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="petrol" d="M0,97.143C9.871,104.911,19.741,112.679,29.612,112.679C38.846,112.679,48.08,78.01,57.313,78.01C67.184,78.01,77.055,99.621,86.925,101.72C96.478,103.751,106.03,104.767,115.582,104.767C125.453,104.767,135.323,85.909,145.194,85.909C154.746,85.909,164.299,105.552,173.851,111.437C183.721,117.518,193.592,119.394,203.463,121.271">
 </path>
 </g>
-<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="320" height="185" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
@@ -538,15 +538,15 @@
 </div>
 </div>
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 50px;">Diesel</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="220" class="facet">
+<div class="vis-facet-title" style="margin-left: 50px;">Diesel</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="220" class="vis-svg">
 <g transform="translate(50 5)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
 </path>
 <g class="tick" opacity="1" transform="translate(87.346,0)">
@@ -565,7 +565,7 @@
 <text fill="currentColor" y="12" dy="0.71em">Okt</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="320" y1="185" y2="185">
 </line>
 <line x1="0" x2="320" y1="150.219" y2="150.219">
@@ -579,7 +579,7 @@
 <line x1="0" x2="320" y1="11.097" y2="11.097">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,185.5)">
@@ -613,7 +613,7 @@
 <text fill="currentColor" x="-12" dy="0.32em">10.000</text>
 </g>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="diesel" d="M0,30.209C9.871,32.006,19.741,33.803,29.612,40.991C38.846,47.715,48.08,113.056,57.313,113.056C67.184,113.056,77.055,111.045,86.925,107.022C96.478,103.129,106.03,70.875,115.582,56.016C125.453,40.662,135.323,16.818,145.194,16.818C154.746,16.818,164.299,17.833,173.851,19.861C183.721,21.958,193.592,51.286,203.463,51.286C213.333,51.286,223.204,40.521,233.075,40.521C242.627,40.521,252.179,42.37,261.731,46.069C271.602,49.89,281.473,64.468,291.343,64.468C300.896,64.468,310.448,58.607,320,52.747">
 </path>
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="diesel" d="M0,121.786C9.871,114.181,19.741,106.577,29.612,94.901C38.846,83.978,48.08,55.007,57.313,55.007C67.184,55.007,77.055,75.127,86.925,79.823C96.478,84.368,106.03,86.64,115.582,86.64C125.453,86.64,135.323,78.258,145.194,78.258C154.746,78.258,164.299,92.153,173.851,98.222C183.721,104.494,193.592,110.164,203.463,115.16C213.333,120.157,223.204,126.814,233.075,128.203C242.627,129.548,252.179,130.22,261.731,130.22C271.602,130.22,281.473,111.846,291.343,110.361C300.896,108.923,310.448,108.564,320,108.204">
@@ -629,7 +629,7 @@
 <path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="diesel" d="M0,145.437C9.871,144.494,19.741,143.552,29.612,141.472C38.846,139.527,48.08,133.646,57.313,133.646C67.184,133.646,77.055,138.457,86.925,138.829C96.478,139.188,106.03,139.368,115.582,139.368C125.453,139.368,135.323,129.803,145.194,129.803C154.746,129.803,164.299,139.146,173.851,143.211C183.721,147.411,193.592,150.963,203.463,154.515">
 </path>
 </g>
-<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="320" height="185" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>

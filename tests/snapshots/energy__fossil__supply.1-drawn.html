@@ -1,12 +1,12 @@
 <div class="vis">
 <div class="vis-header">
-<div class="title">Absatz von fossilen Energieträgern</div>
-<div class="subtitle">nach Energiegehalt in TWh bzw. Emissionen in Megatonnen CO₂</div>
+<div class="vis-title">Absatz von fossilen Energieträgern</div>
+<div class="vis-subtitle">nach Energiegehalt in TWh bzw. Emissionen in Megatonnen CO₂</div>
 </div>
 <div class="vis-form-elements">
-<div class="formElement" id="container-unit">
-<div class="title">Einheit:</div>
-<div class="entries">
+<div class="vis-form-element" id="container-unit">
+<div class="vis-form-element-title">Einheit:</div>
+<div class="vis-switch">
 <div id="container-unitTwh">
 <input type="radio" id="gen-vis-form-N-unit-unitTwh" name="gen-vis-form-N-unit" checked="" value="unitTwh">
 <label for="gen-vis-form-N-unit-unitTwh">TWh</label>
@@ -17,9 +17,9 @@
 </div>
 </div>
 </div>
-<div class="formElement" id="container-scale">
-<div class="title">Y-Skala:</div>
-<div class="entries">
+<div class="vis-form-element" id="container-scale">
+<div class="vis-form-element-title">Y-Skala:</div>
+<div class="vis-switch">
 <div id="container-shareAxisOff">
 <input type="radio" id="gen-vis-form-N-scale-shareAxisOff" name="gen-vis-form-N-scale" value="shareAxisOff">
 <label for="gen-vis-form-N-scale-shareAxisOff">Getrennt</label>
@@ -32,67 +32,67 @@
 </div>
 </div>
 <div class="vis-legends">
-<div class="legend" data-dim="year">
-<div class="title">
+<div class="vis-legend" data-dim="year">
+<div class="vis-legend-title">
 </div>
-<div class="entries" role="group">
-<div data-visible="true" data-key="2019" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entries" role="group">
+<div class="vis-legend-entry" data-visible="true" data-key="2019" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#BBBBBB" stroke-width="2" opacity="0.2">
 </line>
 </svg>
 <span>2019</span>
 </div>
-<div data-visible="true" data-key="2020" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2020" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#AAAAAA" stroke-width="2" opacity="0.2">
 </line>
 </svg>
 <span>2020</span>
 </div>
-<div data-visible="true" data-key="2021" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2021" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#cf90f0" stroke-width="2" opacity="0.2">
 </line>
 </svg>
 <span>2021</span>
 </div>
-<div data-visible="true" data-key="2022" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2022" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#86cae7" stroke-width="2" opacity="0.2">
 </line>
 </svg>
 <span>2022</span>
 </div>
-<div data-visible="true" data-key="2023" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2023" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#b5c969" stroke-width="2" opacity="0.5">
 </line>
 </svg>
 <span>2023</span>
 </div>
-<div data-visible="true" data-key="2024" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2024" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#f3d039" stroke-width="2" opacity="0.6">
 </line>
 </svg>
 <span>2024</span>
 </div>
-<div data-visible="true" data-key="2025" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2025" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#cf8e02" stroke-width="2" opacity="0.7">
 </line>
 </svg>
 <span>2025</span>
 </div>
-<div data-visible="true" data-key="2026" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2026" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#c3423f" stroke-width="2" opacity="1">
 </line>
 </svg>
 <span>2026</span>
 </div>
-<div data-visible="true" data-key="avg14-18" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="avg14-18" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#444" stroke-width="2" opacity="0.6">
 </line>
@@ -101,26 +101,26 @@
 </div>
 </div>
 </div>
-<div class="legend" data-dim="facet">
-<div class="title">
+<div class="vis-legend" data-dim="facet">
+<div class="vis-legend-title">
 </div>
-<div class="entries" role="group">
-<div data-visible="true" data-key="total" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entries" role="group">
+<div class="vis-legend-entry" data-visible="true" data-key="total" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="0" height="0">
 </svg>
 <span>Gesamt</span>
 </div>
-<div data-visible="true" data-key="oil" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="oil" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="0" height="0">
 </svg>
 <span>Mineralöl</span>
 </div>
-<div data-visible="true" data-key="coal" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="coal" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="0" height="0">
 </svg>
 <span>Kohle</span>
 </div>
-<div data-visible="true" data-key="gas" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="gas" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="0" height="0">
 </svg>
 <span>Erdgas</span>
@@ -130,15 +130,15 @@
 </div>
 <div class="vis-body">
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 50px;">Gesamt</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="220" class="facet">
+<div class="vis-facet-title" style="margin-left: 50px;">Gesamt</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="220" class="vis-svg">
 <g transform="translate(50 5)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
 </path>
 <g class="tick" opacity="1" transform="translate(87.346,0)">
@@ -157,7 +157,7 @@
 <text fill="currentColor" y="12" dy="0.71em">Okt</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="320" y1="185" y2="185">
 </line>
 <line x1="0" x2="320" y1="154.583" y2="154.583">
@@ -173,7 +173,7 @@
 <line x1="0" x2="320" y1="2.501" y2="2.501">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,185.5)">
@@ -212,7 +212,7 @@
 <text fill="currentColor" x="-12" dy="0.32em">30,0</text>
 </g>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke-width="2" fill="none" opacity="0.6" stroke="#444" highlight-opacity="1" highlight-stroke-width="3" data-group-year="avg14-18" data-group-facet="total" d="M0,31.105C9.871,37.567,19.741,44.03,29.612,44.03C38.846,44.03,48.08,41.41,57.313,41.41C67.184,41.41,77.055,62.133,86.925,66.777C96.478,71.272,106.03,71.125,115.582,73.519C125.453,75.993,135.323,81.411,145.194,81.411C154.746,81.411,164.299,76.81,173.851,76.466C183.721,76.111,193.592,76.289,203.463,75.934C213.333,75.579,223.204,73.904,233.075,69.844C242.627,65.915,252.179,51.033,261.731,48.076C271.602,45.019,281.473,46.021,291.343,43.491C300.896,41.043,310.448,37.187,320,33.332">
 </path>
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="total" d="M0,16.818C9.871,27.228,19.741,37.638,29.612,42.163C38.846,46.396,48.08,46.499,57.313,48.513C67.184,50.666,77.055,52.778,86.925,54.623C96.478,56.408,106.03,56.37,115.582,59.439C125.453,62.611,135.323,73.642,145.194,73.642C154.746,73.642,164.299,61.487,173.851,61.487C183.721,61.487,193.592,63.944,203.463,63.944C213.333,63.944,223.204,61.071,233.075,57.748C242.627,54.533,252.179,44.88,261.731,44.569C271.602,44.247,281.473,44.408,291.343,44.086C300.896,43.775,310.448,42.57,320,41.365">
@@ -232,7 +232,7 @@
 <path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="total" d="M0,43.839C9.871,55.377,19.741,66.916,29.612,67.704C38.846,68.441,48.08,68.073,57.313,68.81C67.184,69.598,77.055,78.478,86.925,83.162C96.478,87.695,106.03,96.135,115.582,96.479C125.453,96.835,135.323,97.013,145.194,97.013C154.746,97.013,164.299,94.984,173.851,92.954">
 </path>
 </g>
-<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="320" height="185" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
@@ -241,15 +241,15 @@
 </div>
 </div>
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 50px;">Mineralöl</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="220" class="facet">
+<div class="vis-facet-title" style="margin-left: 50px;">Mineralöl</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="220" class="vis-svg">
 <g transform="translate(50 5)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
 </path>
 <g class="tick" opacity="1" transform="translate(87.346,0)">
@@ -268,7 +268,7 @@
 <text fill="currentColor" y="12" dy="0.71em">Okt</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="320" y1="185" y2="185">
 </line>
 <line x1="0" x2="320" y1="154.583" y2="154.583">
@@ -284,7 +284,7 @@
 <line x1="0" x2="320" y1="2.501" y2="2.501">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,185.5)">
@@ -323,7 +323,7 @@
 <text fill="currentColor" x="-12" dy="0.32em">30,0</text>
 </g>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke-width="2" fill="none" opacity="0.6" stroke="#444" highlight-opacity="1" highlight-stroke-width="3" data-group-year="avg14-18" data-group-facet="oil" d="M0,134.422C9.871,134.337,19.741,134.253,29.612,133.915C38.846,133.599,48.08,126.387,57.313,126.387C67.184,126.387,77.055,127.616,86.925,127.616C96.478,127.616,106.03,126.725,115.582,126.477C125.453,126.221,135.323,126.349,145.194,126.093C154.746,125.845,164.299,123.132,173.851,123.132C183.721,123.132,193.592,123.25,203.463,123.396C213.333,123.543,223.204,124.011,233.075,124.011C242.627,124.011,252.179,122.18,261.731,122.18C271.602,122.18,281.473,129.077,291.343,129.916C300.896,130.729,310.448,130.932,320,131.135">
 </path>
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="oil" d="M0,128.064C9.871,129.917,19.741,131.77,29.612,131.77C38.846,131.77,48.08,127.359,57.313,126.426C67.184,125.428,77.055,125.517,86.925,124.93C96.478,124.361,106.03,122.974,115.582,122.974C125.453,122.974,135.323,122.976,145.194,122.976C154.746,122.976,164.299,115.371,173.851,115.371C183.721,115.371,193.592,121.188,203.463,121.188C213.333,121.188,223.204,121.153,233.075,121.082C242.627,121.014,252.179,119.335,261.731,119.335C271.602,119.335,281.473,126.105,291.343,128.003C300.896,129.84,310.448,130.299,320,130.758">
@@ -343,7 +343,7 @@
 <path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="oil" d="M0,141.366C9.871,141.822,19.741,142.278,29.612,142.278C38.846,142.278,48.08,132.863,57.313,132.863C67.184,132.863,77.055,136.042,86.925,137.27C96.478,138.459,106.03,140.161,115.582,140.161C125.453,140.161,135.323,137.208,145.194,135.806C154.746,134.45,164.299,131.879,173.851,131.879C183.721,131.879,193.592,133.785,203.463,135.691">
 </path>
 </g>
-<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="320" height="185" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
@@ -352,15 +352,15 @@
 </div>
 </div>
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 50px;">Kohle</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="220" class="facet">
+<div class="vis-facet-title" style="margin-left: 50px;">Kohle</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="220" class="vis-svg">
 <g transform="translate(50 5)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
 </path>
 <g class="tick" opacity="1" transform="translate(87.346,0)">
@@ -379,7 +379,7 @@
 <text fill="currentColor" y="12" dy="0.71em">Okt</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="320" y1="185" y2="185">
 </line>
 <line x1="0" x2="320" y1="154.583" y2="154.583">
@@ -395,7 +395,7 @@
 <line x1="0" x2="320" y1="2.501" y2="2.501">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,185.5)">
@@ -434,7 +434,7 @@
 <text fill="currentColor" x="-12" dy="0.32em">30,0</text>
 </g>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke-width="2" fill="none" opacity="0.6" stroke="#444" highlight-opacity="1" highlight-stroke-width="3" data-group-year="avg14-18" data-group-facet="coal" d="M0,156.555C9.871,157.283,19.741,158.01,29.612,158.01C38.846,158.01,48.08,157.936,57.313,157.936C67.184,157.936,77.055,162.033,86.925,162.044C96.478,162.056,106.03,162.05,115.582,162.061C125.453,162.073,135.323,164.826,145.194,164.826C154.746,164.826,164.299,163.926,173.851,163.875C183.721,163.822,193.592,163.848,203.463,163.795C213.333,163.742,223.204,163.573,233.075,163.129C242.627,162.7,252.179,156.731,261.731,156.731C271.602,156.731,281.473,156.764,291.343,156.764C300.896,156.764,310.448,156.573,320,156.382">
 </path>
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="coal" d="M0,156.163C9.871,157.217,19.741,158.27,29.612,158.49C38.846,158.695,48.08,158.797,57.313,158.797C67.184,158.797,77.055,156.463,86.925,156.463C96.478,156.463,106.03,157.343,115.582,158.204C125.453,159.094,135.323,161.773,145.194,161.773C154.746,161.773,164.299,159.806,173.851,159.424C183.721,159.029,193.592,158.832,203.463,158.832C213.333,158.832,223.204,162.178,233.075,162.178C242.627,162.178,252.179,160.56,261.731,160.56C271.602,160.56,281.473,160.913,291.343,161.6C300.896,162.266,310.448,163.409,320,164.553">
@@ -454,7 +454,7 @@
 <path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="coal" d="M0,164.98C9.871,166.479,19.741,167.978,29.612,167.978C38.846,167.978,48.08,165.331,57.313,165.331C67.184,165.331,77.055,165.692,86.925,165.692C96.478,165.692,106.03,165.457,115.582,165.425C125.453,165.392,135.323,165.409,145.194,165.375C154.746,165.343,164.299,165.212,173.851,165.08">
 </path>
 </g>
-<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="320" height="185" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
@@ -463,15 +463,15 @@
 </div>
 </div>
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 50px;">Erdgas</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="220" class="facet">
+<div class="vis-facet-title" style="margin-left: 50px;">Erdgas</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="220" class="vis-svg">
 <g transform="translate(50 5)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
 </path>
 <g class="tick" opacity="1" transform="translate(87.346,0)">
@@ -490,7 +490,7 @@
 <text fill="currentColor" y="12" dy="0.71em">Okt</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="320" y1="185" y2="185">
 </line>
 <line x1="0" x2="320" y1="154.583" y2="154.583">
@@ -506,7 +506,7 @@
 <line x1="0" x2="320" y1="2.501" y2="2.501">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,185.5)">
@@ -545,7 +545,7 @@
 <text fill="currentColor" x="-12" dy="0.32em">30,0</text>
 </g>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke-width="2" fill="none" opacity="0.6" stroke="#444" highlight-opacity="1" highlight-stroke-width="3" data-group-year="avg14-18" data-group-facet="gas" d="M0,110.127C9.871,114.693,19.741,119.258,29.612,122.105C38.846,124.768,48.08,123.766,57.313,127.087C67.184,130.638,77.055,142.457,86.925,147.117C96.478,151.627,106.03,152.774,115.582,154.981C125.453,157.26,135.323,160.491,145.194,160.491C154.746,160.491,164.299,159.748,173.851,159.46C183.721,159.161,193.592,159.22,203.463,158.742C213.333,158.264,223.204,156.063,233.075,152.703C242.627,149.452,252.179,143.419,261.731,139.166C271.602,134.77,281.473,130.761,291.343,126.811C300.896,122.988,310.448,119.401,320,115.814">
 </path>
 <path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="gas" d="M0,102.591C9.871,109.644,19.741,116.696,29.612,121.904C38.846,126.775,48.08,129.831,57.313,133.29C67.184,136.988,77.055,140.719,86.925,143.229C96.478,145.659,106.03,145.723,115.582,148.262C125.453,150.886,135.323,158.893,145.194,158.893C154.746,158.893,164.299,157.504,173.851,156.692C183.721,155.852,193.592,155.769,203.463,153.924C213.333,152.078,223.204,147.752,233.075,144.488C242.627,141.328,252.179,137.953,261.731,134.674C271.602,131.285,281.473,127.629,291.343,124.483C300.896,121.438,310.448,118.746,320,116.053">
@@ -565,7 +565,7 @@
 <path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="gas" d="M0,107.494C9.871,114.651,19.741,121.808,29.612,127.447C38.846,132.723,48.08,136.904,57.313,140.616C67.184,144.584,77.055,146.757,86.925,150.199C96.478,153.531,106.03,158.298,115.582,160.893C125.453,163.574,135.323,165.718,145.194,165.831C154.746,165.941,164.299,165.918,173.851,165.995C183.721,166.076,193.592,166.192,203.463,166.309">
 </path>
 </g>
-<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="320" height="185" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>

@@ -1,11 +1,11 @@
 <template>
-    <div class="legend color-legend" :data-dim="legend">
-        <div class="title">{{ store.text(store.mapping(legend).name) }}</div>
-        <div class="scale">
+    <div class="vis-legend vis-color-legend" :data-dim="legend">
+        <div class="vis-legend-title">{{ store.text(store.mapping(legend).name) }}</div>
+        <div class="vis-color-scale">
             <svg ref="svg" :width="width + 2*padding" height="34"/>
             <!-- the regions without a value, e.g. the color of geo:base -->
-            <div v-if="missing" class="missing">
-                <span class="swatch" :style="{ background: missing.color ?? '#EEE' }"/>
+            <div v-if="missing" class="vis-legend-missing">
+                <span class="vis-swatch" :style="{ background: missing.color ?? '#EEE' }"/>
                 <span v-html="store.text(missing.name)"/>
             </div>
         </div>
@@ -131,15 +131,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-    .color-legend {
+    .vis-color-legend {
         display: inline-block;
         vertical-align: top;
-        .title {
+        .vis-legend-title {
             font-weight: bold;
             font-size: 13px;
             margin: 3px;
         }
-        .scale {
+        .vis-color-scale {
             display: flex;
             align-items: flex-start;
         }
@@ -147,12 +147,12 @@ export default {
             display: block;
             font-size: 11px;
         }
-        .missing {
+        .vis-legend-missing {
             display: flex;
             align-items: center;
             gap: 5px;
             font-size: 11px;
-            .swatch {
+            .vis-swatch {
                 width: 10px;
                 height: 10px;
                 margin-top: 2px;

@@ -1,10 +1,10 @@
 <template>
-    <div class="hover" ref="hover" :style='{left: left, transform: transform}'>
+    <div class="vis-hover" ref="hover" :style='{left: left, transform: transform}'>
         <!-- the content of the hover slot of the GenVis component, e.g. a table of its own -->
         <slot-content v-if="slots.hover" :fn="slots.hover" :props="slotProps"/>
         <template v-else>
-            <div class="title">{{ title }}</div>
-            <table class="entries" ref="entries"/>
+            <div class="vis-hover-title">{{ title }}</div>
+            <table class="vis-hover-entries" ref="entries"/>
         </template>
     </div>
 </template>
@@ -16,7 +16,8 @@ import SlotContent from '@/comp/SlotContent.vue';
 export default {
     // beside the marker, on the `side` with more space, `payload` are the rows
     // of the slot and the events, see Facet.vue, `value` is the mapping of the
-    // values, e.g. of the vertical axis, its cells have the class `value`
+    // values, e.g. of the vertical axis, its cells have the class `vis-value`,
+    // the cells have the name of their mapping as `data-mapping`
     props: ["title", "side", "data", "payload", "value"],
     inject: ['slots'],
     components: { SlotContent },
@@ -46,17 +47,18 @@ export default {
             if (!this.$refs.entries || !this.data)
                 return;
             const data = [...this.data].sort((a, b) => b.order - a.order)
-            let entries = d3.select(this.$refs.entries).selectAll('tr.entry')
+            let entries = d3.select(this.$refs.entries).selectAll('tr.vis-hover-entry')
                 .data(data)
                 .join('tr')
-                .attr('class', "entry")
-                .classed('nearest', d => d.nearest)
+                .attr('class', "vis-hover-entry")
+                .classed('vis-nearest', d => d.nearest)
 
             entries.selectAll("td").remove();
             entries.selectAll("td")
                 .data(d => Object.entries(d.entries))
                 .join("td")
-                .attr('class', ([name]) => name == this.value ? `${name} value` : name)
+                .attr('data-mapping', ([name]) => name)
+                .attr('class', ([name]) => name == this.value ? 'vis-value' : null)
                 .html(d => typeof d[1] === 'object' ? d[1].name : d[1])
         }
     }
@@ -65,11 +67,11 @@ export default {
 
 
 <style lang="scss" scoped>
-    .hover {
+    .vis-hover {
         position: absolute;
         font-size: 13px;
 
-        .title {
+        .vis-hover-title {
             font-weight: bold;
             padding: 1px 3px;
             border-bottom: 2px solid #000;
@@ -82,7 +84,7 @@ export default {
             border-collapse: collapse;
 
             tr {
-                &.nearest {
+                &.vis-nearest {
                     font-weight: bold;
                 }
                 // the hover is not wider than needed, its entries are not wrapped
@@ -90,7 +92,7 @@ export default {
                     white-space: nowrap;
                     text-align: left;
                     padding: 1px 5px;
-                    &.value {
+                    &.vis-value {
                         text-align: right;
                     }
                 }

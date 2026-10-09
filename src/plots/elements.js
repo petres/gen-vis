@@ -17,7 +17,6 @@ const propScale = (plot, ctx, path) => {
 
 // a path per group, e.g. a line, with the props of the group
 const groupwise = (groups, parent) => parent
-    .classed("paths", true)
     .selectAll("path")
     .data(groups)
     .enter()
@@ -28,12 +27,11 @@ const groupwise = (groups, parent) => parent
 // an element of `type` per row, without the rows of missing values,
 // `translate(values, row, group)` changes the values of the props of a row
 const pointwise = (groups, parent, type, translate = v => v) => parent
-    .classed(type, true)
-    .selectAll(`g.group`)
+    .selectAll("g.vis-group")
     .data(groups)
     .enter()
     .append("g")
-    .attr("class", `group`)
+    .attr("class", "vis-group")
     .each(setGroupData)
     .selectAll(type)
     .data(g => g.rows.filter(g.complete).map(row => {

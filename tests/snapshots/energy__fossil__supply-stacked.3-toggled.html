@@ -1,12 +1,12 @@
 <div class="vis">
 <div class="vis-header">
-<div class="title">Absatz von fossilen Energieträgern</div>
-<div class="subtitle">monatlich, nach Energiegehalt in TWh bzw. Emissionen in Mt CO₂, oder Anteile</div>
+<div class="vis-title">Absatz von fossilen Energieträgern</div>
+<div class="vis-subtitle">monatlich, nach Energiegehalt in TWh bzw. Emissionen in Mt CO₂, oder Anteile</div>
 </div>
 <div class="vis-form-elements">
-<div class="formElement" id="container-unit">
-<div class="title">Einheit:</div>
-<div class="entries">
+<div class="vis-form-element" id="container-unit">
+<div class="vis-form-element-title">Einheit:</div>
+<div class="vis-switch">
 <div id="container-unitTwh">
 <input type="radio" id="gen-vis-form-N-unit-unitTwh" name="gen-vis-form-N-unit" checked="" value="unitTwh">
 <label for="gen-vis-form-N-unit-unitTwh">TWh</label>
@@ -17,9 +17,9 @@
 </div>
 </div>
 </div>
-<div class="formElement" id="container-values">
-<div class="title">Werte:</div>
-<div class="entries">
+<div class="vis-form-element" id="container-values">
+<div class="vis-form-element-title">Werte:</div>
+<div class="vis-switch">
 <div id="container-valuesAbs">
 <input type="radio" id="gen-vis-form-N-values-valuesAbs" name="gen-vis-form-N-values" checked="" value="valuesAbs">
 <label for="gen-vis-form-N-values-valuesAbs">Absolut</label>
@@ -32,25 +32,25 @@
 </div>
 </div>
 <div class="vis-legends">
-<div class="legend" data-dim="type">
-<div class="title">
+<div class="vis-legend" data-dim="type">
+<div class="vis-legend-title">
 </div>
-<div class="entries" role="group">
-<div data-visible="false" data-key="oil" role="checkbox" tabindex="0" aria-checked="false">
+<div class="vis-legend-entries" role="group">
+<div class="vis-legend-entry" data-visible="false" data-key="oil" role="checkbox" tabindex="0" aria-checked="false">
 <svg width="16" height="16">
 <rect x="0" y="0" width="16" height="15" fill="#6F625A" rx="2">
 </rect>
 </svg>
 <span>Mineralöl</span>
 </div>
-<div data-visible="true" data-key="coal" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="coal" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <rect x="0" y="0" width="16" height="15" fill="#8B4513" rx="2">
 </rect>
 </svg>
 <span>Kohle</span>
 </div>
-<div data-visible="true" data-key="gas" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="gas" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <rect x="0" y="0" width="16" height="15" fill="#C3423F" rx="2">
 </rect>
@@ -61,14 +61,14 @@
 </div>
 </div>
 <div class="vis-body">
-<div style="width: 800px;" class="vis-inner">
-<svg width="800" height="300" class="facet">
+<div style="width: 800px;" class="vis-facet">
+<svg width="800" height="300" class="vis-svg">
 <g transform="translate(50 15)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 240)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 240)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H720.5">
 </path>
 <g class="tick" opacity="1" transform="translate(6.475,0)">
@@ -112,7 +112,7 @@
 <text fill="currentColor" y="12" dy="0.71em" text-anchor="end" transform="rotate(-35)">Jan 26</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="720" y1="240" y2="240">
 </line>
 <line x1="0" x2="720" y1="180.345" y2="180.345">
@@ -124,7 +124,7 @@
 <line x1="0" x2="720" y1="1.38" y2="1.38">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,240.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,240.5)">
@@ -153,8 +153,8 @@
 <text fill="currentColor" x="-12" dy="0.32em">20</text>
 </g>
 </g>
-<g class="plotGroup plot-0 rect" data-plot="plot-0">
-<g class="group" data-group-type="coal">
+<g class="vis-plot plot-0" data-plot="plot-0">
+<g class="vis-group" data-group-type="coal">
 <rect fill="#8B4513" opacity="0.9" x="3.106" width="5.76" y="183.444" height="56.556">
 </rect>
 <rect fill="#8B4513" opacity="0.9" x="11.122" width="5.76" y="188.006" height="51.994">
@@ -338,7 +338,7 @@
 <rect fill="#8B4513" opacity="0.9" x="711.134" width="5.76" y="200.931" height="39.069">
 </rect>
 </g>
-<g class="group" data-group-type="gas">
+<g class="vis-group" data-group-type="gas">
 <rect fill="#C3423F" opacity="0.9" x="3.106" width="5.76" y="21.818" height="161.626">
 </rect>
 <rect fill="#C3423F" opacity="0.9" x="11.122" width="5.76" y="64.258" height="123.749">
@@ -523,7 +523,7 @@
 </rect>
 </g>
 </g>
-<rect width="720" height="240" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="720" height="240" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>

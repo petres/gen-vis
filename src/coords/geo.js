@@ -109,9 +109,9 @@ export default {
         if (!p)
             return;
         if (a.type == 'text')
-            setAnnotationProps(g.append("text").attr("class", "annotation text").attr("x", p[0]).attr("y", p[1]), a, ctx, { "font-size": 11, fill: "#444" });
+            setAnnotationProps(g.append("text").attr("class", "vis-annotation vis-text").attr("x", p[0]).attr("y", p[1]), a, ctx, { "font-size": 11, fill: "#444" });
         else if (a.type == 'circle')
-            setAnnotationProps(g.append("circle").attr("class", "annotation circle").attr("cx", p[0]).attr("cy", p[1]), a, ctx, { r: 4, fill: "#666" });
+            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-circle").attr("cx", p[0]).attr("cy", p[1]), a, ctx, { r: 4, fill: "#666" });
     },
     hover: {
         area: (ctx, parent) => parent.append("rect")

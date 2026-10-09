@@ -9,7 +9,7 @@ const annotation = type => ({
         const coord = ctx.store.coord;
         if (!coord.annotate || !(coord.annotations ?? []).includes(type))
             return;
-        parent.classed("annotations", true);
+        parent.classed("vis-annotations", true);
         groups.forEach(g => g.rows.forEach(row => coord.annotate(ctx, parent, {
             ...row,
             type,

@@ -39,7 +39,7 @@ const angularAxis = (ctx, g, s, values, format, axis) => {
 
     if (axis.grid)
         ctx.inner.insert("g", () => g.node())
-            .attr("class", "grid")
+            .attr("class", "vis-grid")
             .selectAll("line")
             .data(angles)
             .join("line")
@@ -86,7 +86,7 @@ const radialAxis = (ctx, g, s, values, format, axis) => {
 
     if (axis.grid) {
         const grid = ctx.inner.insert("g", () => g.node())
-            .attr("class", "grid")
+            .attr("class", "vis-grid")
             .attr("fill", "none");
         const h = ctx.axis.h;
         const angle = h && ctx.scales[h];
@@ -138,7 +138,7 @@ const radialAxis = (ctx, g, s, values, format, axis) => {
     if (axis.title) {
         const [x, y] = d3.pointRadial(a, r1 + axis.title.offset);
         ctx.inner.append("text")
-            .attr("class", "axis-title")
+            .attr("class", "vis-axis-title")
             .attr("x", x)
             .attr("y", y)
             .attr("text-anchor", "middle")
@@ -157,7 +157,8 @@ const axes = ctx => {
         const format = tickFormat(store, m, s, ticks) ?? (v => v);
 
         const g = ctx.inner.append("g")
-            .attr("class", `axis-name-${n} axis-position-${i.position}`)
+            .attr("class", `vis-axis vis-axis-${i.position}`)
+            .attr("data-mapping", n)
             .attr("font-size", 10)
             .attr("font-family", "sans-serif");
         const draw = { angular: angularAxis, radial: radialAxis }[i.position];
@@ -181,7 +182,7 @@ const annotate = (ctx, g, a) => {
             a1 += tau;
         const [r0, r1] = radius ? span(radius) : [inner, outer];
         const arc = d3.arc().innerRadius(r0).outerRadius(r1).startAngle(a0).endAngle(a1);
-        setAnnotationProps(g.append("path").attr("class", "annotation band").attr("d", arc()), a, ctx, { fill: "#EEE" });
+        setAnnotationProps(g.append("path").attr("class", "vis-annotation vis-band").attr("d", arc()), a, ctx, { fill: "#EEE" });
         const [x, y] = arc.centroid();
         drawLabel(g, a, x, y, "middle", "middle");
     } else if (a.type == 'line') {
@@ -189,20 +190,20 @@ const annotate = (ctx, g, a) => {
             const p = position(angle);
             const [x1, y1] = d3.pointRadial(p, inner);
             const [x2, y2] = d3.pointRadial(p, outer);
-            setAnnotationProps(g.append("line").attr("class", "annotation line")
+            setAnnotationProps(g.append("line").attr("class", "vis-annotation vis-line")
                 .attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2), a, ctx, { stroke: "#999" });
             drawLabel(g, a, x2, y2 - 4, "middle", "auto");
         } else {
             const r = radius ? position(radius) : outer;
-            setAnnotationProps(g.append("circle").attr("class", "annotation line").attr("r", r), a, ctx, { stroke: "#999", fill: "none" });
+            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-line").attr("r", r), a, ctx, { stroke: "#999", fill: "none" });
             drawLabel(g, a, 4, -r - 4, "start", "auto");
         }
     } else if (a.type == 'text' || a.type == 'circle') {
         const [x, y] = d3.pointRadial(angle ? position(angle) : 0, radius ? position(radius) : outer);
         if (a.type == 'text')
-            setAnnotationProps(g.append("text").attr("class", "annotation text").attr("x", x).attr("y", y), a, ctx, { "font-size": 11, fill: "#444" });
+            setAnnotationProps(g.append("text").attr("class", "vis-annotation vis-text").attr("x", x).attr("y", y), a, ctx, { "font-size": 11, fill: "#444" });
         else
-            setAnnotationProps(g.append("circle").attr("class", "annotation circle").attr("cx", x).attr("cy", y), a, ctx, { r: 4, fill: "#666" });
+            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-circle").attr("cx", x).attr("cy", y), a, ctx, { r: 4, fill: "#666" });
     }
 };
 
@@ -219,7 +220,7 @@ export default {
     annotations: ['band', 'line', 'text', 'circle'],
     annotate,
     // the labels of the radial axes are in the plot area, they are above the plots
-    raise: ctx => ctx.inner.selectAll(".axis-position-radial").raise(),
+    raise: ctx => ctx.inner.selectAll(".vis-axis-radial").raise(),
     hover: {
         // the whole facet, the angle is also taken outside of the circle
         area: (ctx, parent) => parent.append("rect")

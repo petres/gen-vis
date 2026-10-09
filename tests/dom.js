@@ -50,7 +50,7 @@ export const useDom = () => {
 };
 
 export const rendered = el => vi.waitFor(() => {
-    if (!el.querySelector('svg.facet, .vis-error'))
+    if (!el.querySelector('svg.vis-svg, .vis-error'))
         throw new Error('not rendered');
 }, { timeout: 20000, interval: 10 });
 
@@ -67,11 +67,11 @@ export const pointer = (type, init = {}) => new PointerEvent(type, { pointerType
 // moves the mouse over all facets, returns the most hover rows at a position
 export const hover = async el => {
     let rows = 0;
-    for (const events of el.querySelectorAll('rect.events')) {
+    for (const events of el.querySelectorAll('rect.vis-events')) {
         for (let x = 0; x <= 800; x += 25) {
             events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: 150 }));
             await nextTick();
-            rows = Math.max(rows, el.querySelectorAll('.hover tr.entry').length);
+            rows = Math.max(rows, el.querySelectorAll('.vis-hover tr.vis-hover-entry').length);
         }
         events.dispatchEvent(pointer('pointerleave'));
     }

@@ -22,19 +22,19 @@ const selection = def => (def.formElements ?? []).filter(e => e.inImage !== fals
 
 // a copy of the visualisation without the form elements, the buttons and the
 // legend of the facets (their titles name them), the selection is a line
-// below the subtitle (of the class `selection`, with the scoped styles of the
-// subtitle) and the legends only have the entries shown
+// below the subtitle (of the class `vis-selection`, with the scoped styles of
+// the subtitle) and the legends only have the entries shown
 const prepare = (vis, { text, facets }) => {
     const copy = vis.cloneNode(true);
     copy.querySelectorAll('.vis-form-elements, .vis-buttons').forEach(e => e.remove());
     if (facets)
-        copy.querySelector(`.legend[data-dim="${CSS.escape(facets)}"]`)?.remove();
-    copy.querySelectorAll('.legend [data-visible="false"]').forEach(e => e.remove());
+        copy.querySelector(`.vis-legend[data-dim="${CSS.escape(facets)}"]`)?.remove();
+    copy.querySelectorAll('.vis-legend [data-visible="false"]').forEach(e => e.remove());
 
-    const subtitle = copy.querySelector('.vis-header .subtitle');
+    const subtitle = copy.querySelector('.vis-header .vis-subtitle');
     if (text && subtitle) {
         const line = subtitle.cloneNode(false);
-        line.className = 'selection';
+        line.className = 'vis-selection';
         line.textContent = text;
         subtitle.after(line);
     }

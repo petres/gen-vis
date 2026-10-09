@@ -1,8 +1,8 @@
 <template>
-    <div :style="`width: ${facet.width}px;`" class="vis-inner">
-        <svg ref="svg" :width="facet.width" :height="facet.height" class="facet">
+    <div :style="`width: ${facet.width}px;`" class="vis-facet">
+        <svg ref="svg" :width="facet.width" :height="facet.height" class="vis-svg">
             <g ref="inner" :transform="`translate(${facet.margins.left + origin[0]} ${facet.margins.top + origin[1]})`">
-                <g :visibility="hover.visible ? 'visible' : 'hidden'" class="hoverMarker" ref="hoverMarker">
+                <g :visibility="hover.visible ? 'visible' : 'hidden'" class="vis-hover-marker" ref="hoverMarker">
                     <line/>
                 </g>
             </g>
@@ -72,9 +72,9 @@ export default {
         this.plot(plots.filter(p => p.layer != 'below' && p.layer != 'above'));
         this.plot(plots.filter(p => p.layer == 'above'));
         // the labels of the annotations are above the plots, also the ones below them
-        const labels = this.ctx.inner.selectAll(".annotation-label");
+        const labels = this.ctx.inner.selectAll(".vis-annotation-label");
         if (!labels.empty()) {
-            const g = this.ctx.inner.append("g").attr("class", "annotation-labels");
+            const g = this.ctx.inner.append("g").attr("class", "vis-annotation-labels");
             labels.each(function() { g.node().appendChild(this) });
         }
         this.store.coord.raise?.(this.ctx);
@@ -89,11 +89,11 @@ export default {
                 if (!Object.hasOwn(plotTypes, plot.type))
                     throw new Error(`Unknown plot type '${plot.type}'`);
                 const parent = this.ctx.inner.append("g")
-                    .classed("plotGroup", true)
+                    .classed("vis-plot", true)
                     .classed(plot.id, true)
                     .attr("data-plot", plot.id);
                 if (plot.layer)
-                    parent.classed(plot.layer, true);
+                    parent.classed(`vis-${plot.layer}`, true);
                 const rows = plotRows(this.store, plot, this.facet);
                 plotTypes[plot.type].render(plotGroups(plot, rows, this.ctx), parent, plot, this.ctx);
             });
@@ -179,7 +179,7 @@ export default {
 
             // mouse, touch and pen, vertical swipes still scroll the page
             coord.hover.area(ctx, ctx.inner)
-                .attr("class", "events")
+                .attr("class", "vis-events")
                 .attr("opacity", 0)
                 .style("touch-action", "pan-y")
                 .on("pointerdown pointermove", e => {
@@ -230,28 +230,28 @@ export default {
 
 
 <style lang="scss" scoped>
-    .vis-inner {
+    .vis-facet {
         position: relative;
         display: inline-block;
         :deep(svg) {
-            g.axis-position-bottom g.tick line {transform: translate(0px, -4px);}
-            g.axis-position-top g.tick line {transform: translate(0px, 5px);}
-            g.axis-position-right g.tick line {transform: translate(-4px, 0px);}
-            g.axis-position-left g.tick line {transform: translate(5px, 0px);}
+            g.vis-axis-bottom g.tick line {transform: translate(0px, -4px);}
+            g.vis-axis-top g.tick line {transform: translate(0px, 5px);}
+            g.vis-axis-right g.tick line {transform: translate(-4px, 0px);}
+            g.vis-axis-left g.tick line {transform: translate(5px, 0px);}
             g.tick {
                 text {
                     font-size: 13px;
                 }
             }
-            .axis-title {
+            .vis-axis-title {
                 font-size: 13px;
             }
 
-            g.grid {
+            g.vis-grid {
                 stroke: #CCC;
                 stroke-width: 0.75px;
             }
-            g.hoverMarker {
+            g.vis-hover-marker {
                 line {
                     stroke-width: 0.75px;
                     stroke: #AAA;

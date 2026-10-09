@@ -1,10 +1,10 @@
 <template>
-    <div class="legend" :data-dim="legend">
-        <div class="title">{{ store.text(info.name) }}</div>
+    <div class="vis-legend" :data-dim="legend">
+        <div class="vis-legend-title">{{ store.text(info.name) }}</div>
         <!-- an entry is a checkbox, also of the keyboard (enter, space), a double
              click shows only it, the next one all entries -->
-        <div class="entries" role="group" :aria-label="store.text(info.name)">
-            <div v-for="entry of entries" :key="entry.key" :data-visible="entry.props.visible" :data-key="entry.key"
+        <div class="vis-legend-entries" role="group" :aria-label="store.text(info.name)">
+            <div v-for="entry of entries" :key="entry.key" class="vis-legend-entry" :data-visible="entry.props.visible" :data-key="entry.key"
                 v-bind='Object.assign({...filled[entry.key]}, {name: null})'
                 role="checkbox" tabindex="0" :aria-checked="String(entry.props.visible)"
                 @click="clicked(entry, $event)" @dblclick="only(entry)"
@@ -84,14 +84,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-    .legend {
-        .title {
+    .vis-legend {
+        .vis-legend-title {
             font-weight: bold;
             font-size: 13px;
             margin: 3px;
             position: relative;
         }
-        .entries {
+        .vis-legend-entries {
             > div {
                 cursor: pointer;
                 display: inline-block;

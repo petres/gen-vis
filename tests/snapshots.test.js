@@ -30,7 +30,7 @@ describe('the charts of the examples', () => {
         await expect(snapshot(el)).toMatchFileSnapshot(file(def, '1-drawn'));
 
         // the hover in the middle of the first facet
-        const events = el.querySelector('rect.events');
+        const events = el.querySelector('rect.vis-events');
         if (events) {
             events.dispatchEvent(pointer('pointermove', { clientX: 300, clientY: 150 }));
             await nextTick();
@@ -38,7 +38,7 @@ describe('the charts of the examples', () => {
             events.dispatchEvent(pointer('pointerleave'));
         }
 
-        const entry = el.querySelector('.legend .entries > div');
+        const entry = el.querySelector('.vis-legend .vis-legend-entries > div');
         if (entry) {
             entry.click();
             await nextTick();

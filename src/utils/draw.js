@@ -41,7 +41,7 @@ const setGroupData = function(g) {
 
 // the groups of a plot, the ids are compared directly, they are not part of
 // a selector, so they can contain any character, e.g. spaces
-const plotGroups = (inner, plotDef) => inner.selectAll('g.plotGroup')
+const plotNodes = (inner, plotDef) => inner.selectAll('g.vis-plot')
     .filter(function() { return this.getAttribute('data-plot') === plotDef.id });
 
 // the elements of a plot in the groups of dataEntry, the values are compared
@@ -52,7 +52,7 @@ const groupElements = (inner, plotDef, dataEntry) => {
         .map(c => ({ attr: `data-group-${c}`, value: String(dataEntry[c]) }));
     if (conditions.length == 0)
         return null;
-    return plotGroups(inner, plotDef).selectAll(`[${conditions[0].attr}]`)
+    return plotNodes(inner, plotDef).selectAll(`[${conditions[0].attr}]`)
         .filter(function() { return conditions.every(c => this.getAttribute(c.attr) === c.value) });
 }
 
@@ -76,8 +76,8 @@ const targets = (plotDef, group, dataEntry) => {
 // elements, their default values are kept in default- attributes
 const highlightElements = (inner, plotDefs, dataEntry = null) => {
     plotDefs.filter(p => p.highlightProps.length > 0).forEach(plotDef => {
-        plotGroups(inner, plotDef).selectAll('.highlight')
-            .classed('highlight', false)
+        plotNodes(inner, plotDef).selectAll('.vis-highlight')
+            .classed('vis-highlight', false)
             .each(function() {
                 const e = d3.select(this);
                 plotDef.highlightProps.forEach(n => e.attr(n, e.attr(`default-${n}`)));
@@ -88,12 +88,12 @@ const highlightElements = (inner, plotDefs, dataEntry = null) => {
             return;
         // the elements with the props, the path of a group or the elements of
         // a group of elements per row, e.g. circles
-        elements.classed('highlight', true)
+        elements.classed('vis-highlight', true)
             .raise()
             .each(function() {
                 targets(plotDef, this, dataEntry)
                     .forEach(node => {
-                        const e = d3.select(node).classed('highlight', true);
+                        const e = d3.select(node).classed('vis-highlight', true);
                         plotDef.highlightProps.forEach(n => {
                             e.attr(`default-${n}`, e.attr(n))
                              .attr(n, e.attr(`highlight-${n}`))

@@ -1,16 +1,16 @@
 <div class="vis">
 <div class="vis-header">
-<div class="title">Bevölkerung</div>
-<div class="subtitle">nach Bundesland, mit Beschriftungen und einer Marke von 1500000 Einwohnern</div>
+<div class="vis-title">Bevölkerung</div>
+<div class="vis-subtitle">nach Bundesland, mit Beschriftungen und einer Marke von 1500000 Einwohnern</div>
 </div>
 <div class="vis-form-elements">
 </div>
 <div class="vis-legends">
-<div class="legend" data-dim="land">
-<div class="title">
+<div class="vis-legend" data-dim="land">
+<div class="vis-legend-title">
 </div>
-<div class="entries" role="group">
-<div data-visible="true" data-key="ÖSTERREICH" class="bold" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entries" role="group">
+<div class="vis-legend-entry bold" data-visible="true" data-key="ÖSTERREICH" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#1E4F77" stroke-width="4">
 </line>
@@ -19,7 +19,7 @@
 </svg>
 <span>Gesamt</span>
 </div>
-<div data-visible="true" data-key="Wien" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Wien" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#BBD7EE" stroke-width="2.5">
 </line>
@@ -28,7 +28,7 @@
 </svg>
 <span>Wien</span>
 </div>
-<div data-visible="true" data-key="Niederösterreich" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Niederösterreich" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#5BC5F2" stroke-width="2.5">
 </line>
@@ -37,7 +37,7 @@
 </svg>
 <span>Niederösterreich</span>
 </div>
-<div data-visible="true" data-key="Burgenland" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Burgenland" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#559BD5" stroke-width="2.5">
 </line>
@@ -46,7 +46,7 @@
 </svg>
 <span>Burgenland</span>
 </div>
-<div data-visible="true" data-key="Oberösterreich" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Oberösterreich" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#C7DF71" stroke-width="2.5">
 </line>
@@ -55,7 +55,7 @@
 </svg>
 <span>Oberösterreich</span>
 </div>
-<div data-visible="true" data-key="Salzburg" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Salzburg" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#4B9847" stroke-width="2.5">
 </line>
@@ -64,7 +64,7 @@
 </svg>
 <span>Salzburg</span>
 </div>
-<div data-visible="true" data-key="Steiermark" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Steiermark" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#9CE1F8" stroke-width="2.5">
 </line>
@@ -73,7 +73,7 @@
 </svg>
 <span>Steiermark</span>
 </div>
-<div data-visible="true" data-key="Kärnten" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Kärnten" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#72BB6F" stroke-width="2.5">
 </line>
@@ -82,7 +82,7 @@
 </svg>
 <span>Kärnten</span>
 </div>
-<div data-visible="true" data-key="Tirol" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Tirol" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#3F766B" stroke-width="2.5">
 </line>
@@ -91,7 +91,7 @@
 </svg>
 <span>Tirol</span>
 </div>
-<div data-visible="true" data-key="Vorarlberg" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Vorarlberg" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#ABD6A9" stroke-width="2.5">
 </line>
@@ -104,22 +104,22 @@
 </div>
 </div>
 <div class="vis-body">
-<div style="width: 800px;" class="vis-inner">
-<svg width="800" height="300" class="facet">
+<div style="width: 800px;" class="vis-facet">
+<svg width="800" height="300" class="vis-svg">
 <g transform="translate(80 10)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="plotGroup annotation-0 below annotations" data-plot="annotation-0">
-<line class="annotation line" x1="0" x2="590" y1="215.196" y2="215.196" stroke="#888" stroke-dasharray="3 3">
+<g class="vis-plot annotation-0 vis-below vis-annotations" data-plot="annotation-0">
+<line class="vis-annotation vis-line" x1="0" x2="590" y1="215.196" y2="215.196" stroke="#888" stroke-dasharray="3 3">
 </line>
 </g>
-<g class="plotGroup annotation-1 below annotations" data-plot="annotation-1">
-<rect class="annotation band" x="519.762" y="0" width="28.095" height="250" fill="#EEE">
+<g class="vis-plot annotation-1 vis-below vis-annotations" data-plot="annotation-1">
+<rect class="vis-annotation vis-band" x="519.762" y="0" width="28.095" height="250" fill="#EEE">
 </rect>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 250)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 250)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H590.5">
 </path>
 <g class="tick" opacity="1" transform="translate(14.548,0)">
@@ -178,7 +178,7 @@
 <text fill="currentColor" y="12" dy="0.71em">2022</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="590" y1="250" y2="250">
 </line>
 <line x1="0" x2="590" y1="203.595" y2="203.595">
@@ -192,7 +192,7 @@
 <line x1="0" x2="590" y1="17.975" y2="17.975">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,250.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,250.5)">
@@ -226,7 +226,7 @@
 <text fill="currentColor" x="-12" dy="0.32em">10.000.000</text>
 </g>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke-width="4" fill="none" opacity="0.7" stroke="#1E4F77" highlight-opacity="1" highlight-stroke-width="3" data-group-land="ÖSTERREICH" d="M14.048,62.904L42.143,62.054L70.238,61.072L98.333,59.708L126.429,58.48L154.524,57.814L182.619,57.234L210.714,56.607L238.81,56.221L266.905,55.676L295,54.911L323.095,53.896L351.19,52.598L379.286,50.809L407.381,48.128L435.476,46.448L463.571,45.302L491.667,44.455L519.762,43.473L547.857,42.74L575.952,41.667">
 </path>
 <path stroke-width="2.5" fill="none" opacity="0.7" stroke="#559BD5" highlight-opacity="1" highlight-stroke-width="3" data-group-land="Burgenland" d="M14.048,243.581L42.143,243.584L70.238,243.578L98.333,243.549L126.429,243.524L154.524,243.502L182.619,243.481L210.714,243.439L238.81,243.418L266.905,243.397L295,243.369L323.095,243.348L351.19,243.331L379.286,243.309L407.381,243.248L435.476,243.226L463.571,243.209L491.667,243.192L519.762,243.168L547.857,243.132L575.952,243.095">
@@ -248,47 +248,47 @@
 <path stroke-width="2.5" fill="none" opacity="0.7" stroke="#BBD7EE" highlight-opacity="1" highlight-stroke-width="3" data-group-land="Wien" d="M14.048,213.546L42.143,213.042L70.238,212.635L98.333,212.12L126.429,211.659L154.524,211.455L182.619,211.224L210.714,211.017L238.81,210.788L266.905,210.49L295,210.159L323.095,209.599L351.19,209.007L379.286,208.297L407.381,207.302L435.476,206.667L463.571,206.176L491.667,205.974L519.762,205.656L547.857,205.429L575.952,205.182">
 </path>
 </g>
-<g class="plotGroup plot-2 text" data-plot="plot-2">
-<g class="group">
+<g class="vis-plot plot-2" data-plot="plot-2">
+<g class="vis-group">
 <text x="590" y="215.196" dy="-4" text-anchor="end" font-size="11" fill="#888">Marke</text>
 </g>
 </g>
-<g class="plotGroup plot-1 above text" data-plot="plot-1">
-<g class="group" data-group-land="ÖSTERREICH">
+<g class="vis-plot plot-1 vis-above" data-plot="plot-1">
+<g class="vis-group" data-group-land="ÖSTERREICH">
 <text x="575.952" y="41.667" dx="6" dominant-baseline="middle" font-size="11" fill="#1E4F77">Gesamt</text>
 </g>
-<g class="group" data-group-land="Burgenland">
+<g class="vis-group" data-group-land="Burgenland">
 <text x="575.952" y="274.852" dx="6" dominant-baseline="middle" font-size="11" fill="#559BD5">Burgenland</text>
 </g>
-<g class="group" data-group-land="Kärnten">
+<g class="vis-group" data-group-land="Kärnten">
 <text x="575.952" y="238.852" dx="6" dominant-baseline="middle" font-size="11" fill="#72BB6F">Kärnten</text>
 </g>
-<g class="group" data-group-land="Niederösterreich">
+<g class="vis-group" data-group-land="Niederösterreich">
 <text x="575.952" y="190.852" dx="6" dominant-baseline="middle" font-size="11" fill="#5BC5F2">Niederösterreich</text>
 </g>
-<g class="group" data-group-land="Oberösterreich">
+<g class="vis-group" data-group-land="Oberösterreich">
 <text x="575.952" y="202.852" dx="6" dominant-baseline="middle" font-size="11" fill="#C7DF71">Oberösterreich</text>
 </g>
-<g class="group" data-group-land="Salzburg">
+<g class="vis-group" data-group-land="Salzburg">
 <text x="575.952" y="250.852" dx="6" dominant-baseline="middle" font-size="11" fill="#4B9847">Salzburg</text>
 </g>
-<g class="group" data-group-land="Steiermark">
+<g class="vis-group" data-group-land="Steiermark">
 <text x="575.952" y="214.852" dx="6" dominant-baseline="middle" font-size="11" fill="#9CE1F8">Steiermark</text>
 </g>
-<g class="group" data-group-land="Tirol">
+<g class="vis-group" data-group-land="Tirol">
 <text x="575.952" y="226.852" dx="6" dominant-baseline="middle" font-size="11" fill="#3F766B">Tirol</text>
 </g>
-<g class="group" data-group-land="Vorarlberg">
+<g class="vis-group" data-group-land="Vorarlberg">
 <text x="575.952" y="262.852" dx="6" dominant-baseline="middle" font-size="11" fill="#ABD6A9">Vorarlberg</text>
 </g>
-<g class="group" data-group-land="Wien">
+<g class="vis-group" data-group-land="Wien">
 <text x="575.952" y="178.852" dx="6" dominant-baseline="middle" font-size="11" fill="#BBD7EE">Wien</text>
 </g>
 </g>
-<g class="annotation-labels">
-<text class="annotation-label" x="523.762" y="4" text-anchor="start" dominant-baseline="hanging" font-size="11" fill="#555" stroke="white" stroke-width="3" paint-order="stroke">Pandemie</text>
+<g class="vis-annotation-labels">
+<text class="vis-annotation-label" x="523.762" y="4" text-anchor="start" dominant-baseline="hanging" font-size="11" fill="#555" stroke="white" stroke-width="3" paint-order="stroke">Pandemie</text>
 </g>
-<rect width="590" height="250" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="590" height="250" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>

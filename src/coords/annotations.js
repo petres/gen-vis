@@ -53,7 +53,7 @@ const position = c => Array.isArray(c.value) ? d3.mean(span(c)) : center(c.scale
 const drawLabel = (g, a, x, y, anchor = "start", baseline = "hanging") => {
     if (a.label !== undefined)
         g.append("text")
-            .attr("class", "annotation-label")
+            .attr("class", "vis-annotation-label")
             .attr("x", x)
             .attr("y", y)
             .attr("text-anchor", anchor)

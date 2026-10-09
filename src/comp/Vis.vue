@@ -3,8 +3,8 @@
         <div class="vis-header">
             <slot-content v-if="slots.header" :fn="slots.header" :props="header"/>
             <template v-else>
-                <div class="title">{{ header.title }}</div>
-                <div class="subtitle">{{ header.subtitle }}</div>
+                <div class="vis-title">{{ header.title }}</div>
+                <div class="vis-subtitle">{{ header.subtitle }}</div>
             </template>
         </div>
         <div ref="form" class="vis-form-elements">
@@ -21,7 +21,7 @@
             <!-- the facets are rendered again if their rows change -->
             <template v-if="view.faceted">
                 <div v-for="f in view.facets" :key="f.key" :style="`width: ${f.width}px; display: inline-block;`">
-                    <div class="facet-title" :style="`margin-left: ${f.margins.left}px`">{{ store.text(f.name) }}</div>
+                    <div class="vis-facet-title" :style="`margin-left: ${f.margins.left}px`">{{ store.text(f.name) }}</div>
                     <facet :key="f.rows" :facet="f"/>
                 </div>
             </template>
@@ -200,18 +200,18 @@ export default {
     }
 
     .vis-header {
-        .title {
+        .vis-title {
             font-size: 22px;
             font-weight: bold;
         }
 
-        .subtitle {
+        .vis-subtitle {
             font-size: 13px;
             margin-top: 3px;
         }
 
         // the line of the selection of the form elements in the images
-        .selection {
+        .vis-selection {
             font-size: 13px;
             margin-top: 6px;
         }
@@ -255,7 +255,7 @@ export default {
         }
     }
 
-    .facet-title {
+    .vis-facet-title {
         font-size: 13px;
         font-weight: bold;
         margin-top: 8px;

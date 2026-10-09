@@ -1,16 +1,16 @@
 <div class="vis">
 <div class="vis-header">
-<div class="title">Wohnungsbestände nach Rechtsform</div>
-<div class="subtitle">Anzahl Wohnungen</div>
+<div class="vis-title">Wohnungsbestände nach Rechtsform</div>
+<div class="vis-subtitle">Anzahl Wohnungen</div>
 </div>
 <div class="vis-form-elements">
 </div>
 <div class="vis-legends">
-<div class="legend" data-dim="type">
-<div class="title">
+<div class="vis-legend" data-dim="type">
+<div class="vis-legend-title">
 </div>
-<div class="entries" role="group">
-<div data-visible="false" data-key="Hauseigentum" role="checkbox" tabindex="0" aria-checked="false">
+<div class="vis-legend-entries" role="group">
+<div class="vis-legend-entry" data-visible="false" data-key="Hauseigentum" role="checkbox" tabindex="0" aria-checked="false">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#BBD7EE" stroke-width="3">
 </line>
@@ -19,7 +19,7 @@
 </svg>
 <span>Hauseigentum</span>
 </div>
-<div data-visible="true" data-key="Wohnungseigentum" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Wohnungseigentum" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#5BC5F2" stroke-width="3">
 </line>
@@ -28,7 +28,7 @@
 </svg>
 <span>Wohnungseigentum</span>
 </div>
-<div data-visible="true" data-key="GBV Miete" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="GBV Miete" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#559BD5" stroke-width="3">
 </line>
@@ -37,7 +37,7 @@
 </svg>
 <span>GBV Miete</span>
 </div>
-<div data-visible="true" data-key="Gemeinde Miete" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Gemeinde Miete" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#C7DF71" stroke-width="3">
 </line>
@@ -46,7 +46,7 @@
 </svg>
 <span>Gemeinde Miete</span>
 </div>
-<div data-visible="true" data-key="Private Miete" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Private Miete" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#4B9847" stroke-width="3">
 </line>
@@ -55,7 +55,7 @@
 </svg>
 <span>Private Miete</span>
 </div>
-<div data-visible="true" data-key="Sonstige" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Sonstige" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#9CE1F8" stroke-width="3">
 </line>
@@ -69,15 +69,15 @@
 </div>
 <div class="vis-body">
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 70px;">Österreich</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="400" class="facet">
+<div class="vis-facet-title" style="margin-left: 70px;">Österreich</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="400" class="vis-svg">
 <g transform="translate(70 20)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 330)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 330)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H310.5">
 </path>
 <g class="tick" opacity="1" transform="translate(21.879,0)">
@@ -111,7 +111,7 @@
 <text fill="currentColor" y="12" dy="0.71em">2020</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="310" y1="330" y2="330">
 </line>
 <line x1="0" x2="310" y1="265.227" y2="265.227">
@@ -125,7 +125,7 @@
 <line x1="0" x2="310" y1="6.134" y2="6.134">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,330.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,330.5)">
@@ -159,8 +159,8 @@
 <text fill="currentColor" x="-12" dy="0.32em">2.500.000</text>
 </g>
 </g>
-<g class="plotGroup plot-0 rect" data-plot="plot-0">
-<g class="group" data-group-type="Wohnungseigentum">
+<g class="vis-plot plot-0" data-plot="plot-0">
+<g class="vis-group" data-group-type="Wohnungseigentum">
 <rect fill="#5BC5F2" opacity="0.7" x="21.379" width="40" y="315.75" height="14.25" transform="translate(-20 0)">
 </rect>
 <rect fill="#5BC5F2" opacity="0.7" x="74.828" width="40" y="301.603" height="28.397" transform="translate(-20 0)">
@@ -174,7 +174,7 @@
 <rect fill="#5BC5F2" opacity="0.7" x="288.621" width="40" y="270.979" height="59.021" transform="translate(-20 0)">
 </rect>
 </g>
-<g class="group" data-group-type="Gemeinde Miete">
+<g class="vis-group" data-group-type="Gemeinde Miete">
 <rect fill="#C7DF71" opacity="0.7" x="21.379" width="40" y="257.441" height="32.27" transform="translate(-20 0)">
 </rect>
 <rect fill="#C7DF71" opacity="0.7" x="74.828" width="40" y="235.237" height="35.379" transform="translate(-20 0)">
@@ -188,7 +188,7 @@
 <rect fill="#C7DF71" opacity="0.7" x="288.621" width="40" y="148.674" height="35.858" transform="translate(-20 0)">
 </rect>
 </g>
-<g class="group" data-group-type="GBV Miete">
+<g class="vis-group" data-group-type="GBV Miete">
 <rect fill="#559BD5" opacity="0.7" x="21.379" width="40" y="289.711" height="26.039" transform="translate(-20 0)">
 </rect>
 <rect fill="#559BD5" opacity="0.7" x="74.828" width="40" y="270.616" height="30.988" transform="translate(-20 0)">
@@ -202,7 +202,7 @@
 <rect fill="#559BD5" opacity="0.7" x="288.621" width="40" y="184.532" height="86.446" transform="translate(-20 0)">
 </rect>
 </g>
-<g class="group" data-group-type="Private Miete">
+<g class="vis-group" data-group-type="Private Miete">
 <rect fill="#4B9847" opacity="0.7" x="21.379" width="40" y="174.259" height="83.182" transform="translate(-20 0)">
 </rect>
 <rect fill="#4B9847" opacity="0.7" x="74.828" width="40" y="160.877" height="74.36" transform="translate(-20 0)">
@@ -216,7 +216,7 @@
 <rect fill="#4B9847" opacity="0.7" x="288.621" width="40" y="53.768" height="94.906" transform="translate(-20 0)">
 </rect>
 </g>
-<g class="group" data-group-type="Sonstige">
+<g class="vis-group" data-group-type="Sonstige">
 <rect fill="#9CE1F8" opacity="0.7" x="21.379" width="40" y="140.02" height="34.239" transform="translate(-20 0)">
 </rect>
 <rect fill="#9CE1F8" opacity="0.7" x="74.828" width="40" y="129.812" height="31.065" transform="translate(-20 0)">
@@ -231,7 +231,7 @@
 </rect>
 </g>
 </g>
-<rect width="310" height="330" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="310" height="330" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
@@ -240,15 +240,15 @@
 </div>
 </div>
 <div style="width: 400px; display: inline-block;">
-<div class="facet-title" style="margin-left: 70px;">Wien</div>
-<div style="width: 400px;" class="vis-inner">
-<svg width="400" height="400" class="facet">
+<div class="vis-facet-title" style="margin-left: 70px;">Wien</div>
+<div style="width: 400px;" class="vis-facet">
+<svg width="400" height="400" class="vis-svg">
 <g transform="translate(70 20)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 330)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 330)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H310.5">
 </path>
 <g class="tick" opacity="1" transform="translate(21.879,0)">
@@ -282,7 +282,7 @@
 <text fill="currentColor" y="12" dy="0.71em">2020</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="310" y1="330" y2="330">
 </line>
 <line x1="0" x2="310" y1="292.389" y2="292.389">
@@ -302,7 +302,7 @@
 <line x1="0" x2="310" y1="29.112" y2="29.112">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,330.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,330.5)">
@@ -351,8 +351,8 @@
 <text fill="currentColor" x="-12" dy="0.32em">800.000</text>
 </g>
 </g>
-<g class="plotGroup plot-0 rect" data-plot="plot-0">
-<g class="group" data-group-type="Wohnungseigentum">
+<g class="vis-plot plot-0" data-plot="plot-0">
+<g class="vis-group" data-group-type="Wohnungseigentum">
 <rect fill="#5BC5F2" opacity="0.7" x="21.379" width="40" y="311.195" height="18.805" transform="translate(-20 0)">
 </rect>
 <rect fill="#5BC5F2" opacity="0.7" x="74.828" width="40" y="301.265" height="28.735" transform="translate(-20 0)">
@@ -366,7 +366,7 @@
 <rect fill="#5BC5F2" opacity="0.7" x="288.621" width="40" y="281.407" height="48.593" transform="translate(-20 0)">
 </rect>
 </g>
-<g class="group" data-group-type="Gemeinde Miete">
+<g class="vis-group" data-group-type="Gemeinde Miete">
 <rect fill="#C7DF71" opacity="0.7" x="21.379" width="40" y="234.543" height="59.726" transform="translate(-20 0)">
 </rect>
 <rect fill="#C7DF71" opacity="0.7" x="74.828" width="40" y="210.134" height="68.753" transform="translate(-20 0)">
@@ -380,7 +380,7 @@
 <rect fill="#C7DF71" opacity="0.7" x="288.621" width="40" y="131.677" height="75.711" transform="translate(-20 0)">
 </rect>
 </g>
-<g class="group" data-group-type="GBV Miete">
+<g class="vis-group" data-group-type="GBV Miete">
 <rect fill="#559BD5" opacity="0.7" x="21.379" width="40" y="294.27" height="16.925" transform="translate(-20 0)">
 </rect>
 <rect fill="#559BD5" opacity="0.7" x="74.828" width="40" y="278.887" height="22.379" transform="translate(-20 0)">
@@ -394,7 +394,7 @@
 <rect fill="#559BD5" opacity="0.7" x="288.621" width="40" y="207.388" height="74.018" transform="translate(-20 0)">
 </rect>
 </g>
-<g class="group" data-group-type="Private Miete">
+<g class="vis-group" data-group-type="Private Miete">
 <rect fill="#4B9847" opacity="0.7" x="21.379" width="40" y="104.748" height="129.795" transform="translate(-20 0)">
 </rect>
 <rect fill="#4B9847" opacity="0.7" x="74.828" width="40" y="106.14" height="103.994" transform="translate(-20 0)">
@@ -408,7 +408,7 @@
 <rect fill="#4B9847" opacity="0.7" x="288.621" width="40" y="19.822" height="111.855" transform="translate(-20 0)">
 </rect>
 </g>
-<g class="group" data-group-type="Sonstige">
+<g class="vis-group" data-group-type="Sonstige">
 <rect fill="#9CE1F8" opacity="0.7" x="21.379" width="40" y="87.108" height="17.64" transform="translate(-20 0)">
 </rect>
 <rect fill="#9CE1F8" opacity="0.7" x="74.828" width="40" y="87.936" height="18.204" transform="translate(-20 0)">
@@ -423,7 +423,7 @@
 </rect>
 </g>
 </g>
-<rect width="310" height="330" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="310" height="330" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>

@@ -144,17 +144,27 @@ of the page overrides them, regardless of its specificity and of the order of
 the styles, e.g.:
 
 ```css
-.formElement { display: block; margin: 6px 4px; }
-.vis-header .subtitle { font-size: 15px; }
+.vis-form-element { display: block; margin: 6px 4px; }
+.vis-subtitle { font-size: 15px; }
 ```
 
-The main classes are `vis`, `vis-header` (with `title`, `subtitle` and in
-the [PNG](#png) `selection`), `vis-form-elements` (with a `formElement` for
-every form element), `vis-legends`, `facet-title` and `vis-footer` (with
-`vis-footer-content` and `vis-buttons`, the buttons `vis-copy` and
-`vis-download`). Styles of the page which are in
-a cascade layer themselves only override the package if their layer is
-declared after it, e.g. `@layer gen-vis, page;`.
+All classes of the package start with `vis-`, so styles of the page for
+other elements do not apply to them, e.g. `.title` of a CSS framework:
+
+| Part | Classes |
+|------|---------|
+| the visualisation | `vis`, `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
+| form elements | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-switch`, `vis-slider`, `vis-slider-value`) |
+| legends | `vis-legends`, `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
+| facets | `vis-facet` (a facet), `vis-facet-title`, `vis-svg` |
+| plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base) |
+| axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`), `vis-axis-title`, `vis-grid` |
+| annotations | `vis-annotations` (the plot), `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or `vis-circle`, `vis-annotation-label`, `vis-annotation-labels` |
+| hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-nearest`, the cells of the values `vis-value`, the mapping of a cell as `data-mapping`), `vis-hover-marker`, `vis-events` |
+| footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-copy` and `vis-download`) |
+
+Styles of the page which are in a cascade layer themselves only override the
+package if their layer is declared after it, e.g. `@layer gen-vis, page;`.
 
 ## Definition
 

@@ -1,65 +1,65 @@
 <div class="vis">
 <div class="vis-header">
-<div class="title">Stromproduktion im Tagesverlauf</div>
-<div class="subtitle">im Jahr 2021, nach Quellen, in MWh</div>
+<div class="vis-title">Stromproduktion im Tagesverlauf</div>
+<div class="vis-subtitle">im Jahr 2021, nach Quellen, in MWh</div>
 </div>
 <div class="vis-form-elements">
 </div>
 <div class="vis-legends">
-<div class="legend" data-dim="type">
-<div class="title">
+<div class="vis-legend" data-dim="type">
+<div class="vis-legend-title">
 </div>
-<div class="entries" role="group">
-<div data-visible="false" data-key="Hydro" role="checkbox" tabindex="0" aria-checked="false">
+<div class="vis-legend-entries" role="group">
+<div class="vis-legend-entry" data-visible="false" data-key="Hydro" role="checkbox" tabindex="0" aria-checked="false">
 <svg width="16" height="16">
 <rect x="0" y="0" width="16" height="15" fill="#5BC5F2" rx="2">
 </rect>
 </svg>
 <span>Hydro</span>
 </div>
-<div data-visible="true" data-key="Wind" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Wind" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <rect x="0" y="0" width="16" height="15" fill="#BBD7EE" rx="2">
 </rect>
 </svg>
 <span>Wind</span>
 </div>
-<div data-visible="true" data-key="Solar" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Solar" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <rect x="0" y="0" width="16" height="15" fill="#F3D039" rx="2">
 </rect>
 </svg>
 <span>Solar</span>
 </div>
-<div data-visible="true" data-key="Gas" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Gas" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <rect x="0" y="0" width="16" height="15" fill="#C3423F" rx="2">
 </rect>
 </svg>
 <span>Erdgas</span>
 </div>
-<div data-visible="true" data-key="Coal" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Coal" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <rect x="0" y="0" width="16" height="15" fill="#8B4513" rx="2">
 </rect>
 </svg>
 <span>Kohle</span>
 </div>
-<div data-visible="true" data-key="Waste" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Waste" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <rect x="0" y="0" width="16" height="15" fill="#ABD6A9" rx="2">
 </rect>
 </svg>
 <span>Müll</span>
 </div>
-<div data-visible="true" data-key="Oil" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="Oil" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <rect x="0" y="0" width="16" height="15" fill="#000" rx="2">
 </rect>
 </svg>
 <span>Erdöl</span>
 </div>
-<div data-visible="true" data-key="others" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="others" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <rect x="0" y="0" width="16" height="15" fill="#CCC" rx="2">
 </rect>
@@ -70,14 +70,14 @@
 </div>
 </div>
 <div class="vis-body">
-<div style="width: 800px;" class="vis-inner">
-<svg width="800" height="350" class="facet">
+<div style="width: 800px;" class="vis-facet">
+<svg width="800" height="350" class="vis-svg">
 <g transform="translate(50 5)">
-<g visibility="hidden" class="hoverMarker">
+<g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 310)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 310)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H720.5">
 </path>
 <g class="tick" opacity="1" transform="translate(14.346,0)">
@@ -141,7 +141,7 @@
 <text fill="currentColor" y="12" dy="0.71em">22</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="720" y1="310" y2="310">
 </line>
 <line x1="0" x2="720" y1="267.554" y2="267.554">
@@ -159,7 +159,7 @@
 <line x1="0" x2="720" y1="12.88" y2="12.88">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,310.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,310.5)">
@@ -203,8 +203,8 @@
 <text fill="currentColor" x="-12" dy="0.32em">0,70</text>
 </g>
 </g>
-<g class="plotGroup plot-0 rect" data-plot="plot-0">
-<g class="group" data-group-type="Gas">
+<g class="vis-plot plot-0" data-plot="plot-0">
+<g class="vis-group" data-group-type="Gas">
 <rect fill="#C3423F" opacity="0.9" x="4.846" width="18" y="136.405" height="86.976">
 </rect>
 <rect fill="#C3423F" opacity="0.9" x="34.946" width="18" y="138.497" height="85.356">
@@ -254,7 +254,7 @@
 <rect fill="#C3423F" opacity="0.9" x="697.154" width="18" y="131.02" height="90.562">
 </rect>
 </g>
-<g class="group" data-group-type="Wind">
+<g class="vis-group" data-group-type="Wind">
 <rect fill="#BBD7EE" opacity="0.9" x="4.846" width="18" y="223.381" height="86.619">
 </rect>
 <rect fill="#BBD7EE" opacity="0.9" x="34.946" width="18" y="223.852" height="86.148">
@@ -304,7 +304,7 @@
 <rect fill="#BBD7EE" opacity="0.9" x="697.154" width="18" y="221.582" height="88.418">
 </rect>
 </g>
-<g class="group" data-group-type="Solar">
+<g class="vis-group" data-group-type="Solar">
 <rect fill="#F3D039" opacity="0.9" x="4.846" width="18" y="223.381" height="0">
 </rect>
 <rect fill="#F3D039" opacity="0.9" x="34.946" width="18" y="223.852" height="0">
@@ -354,7 +354,7 @@
 <rect fill="#F3D039" opacity="0.9" x="697.154" width="18" y="221.582" height="0">
 </rect>
 </g>
-<g class="group" data-group-type="Coal">
+<g class="vis-group" data-group-type="Coal">
 <rect fill="#8B4513" opacity="0.9" x="4.846" width="18" y="136.405" height="0">
 </rect>
 <rect fill="#8B4513" opacity="0.9" x="34.946" width="18" y="138.497" height="0">
@@ -404,7 +404,7 @@
 <rect fill="#8B4513" opacity="0.9" x="697.154" width="18" y="131.02" height="0">
 </rect>
 </g>
-<g class="group" data-group-type="Oil">
+<g class="vis-group" data-group-type="Oil">
 <rect fill="#000" opacity="0.9" x="4.846" width="18" y="136.405" height="0">
 </rect>
 <rect fill="#000" opacity="0.9" x="34.946" width="18" y="138.497" height="0">
@@ -454,7 +454,7 @@
 <rect fill="#000" opacity="0.9" x="697.154" width="18" y="131.02" height="0">
 </rect>
 </g>
-<g class="group" data-group-type="others">
+<g class="vis-group" data-group-type="others">
 <rect fill="#CCC" opacity="0.9" x="4.846" width="18" y="106.035" height="30.37">
 </rect>
 <rect fill="#CCC" opacity="0.9" x="34.946" width="18" y="108.135" height="30.362">
@@ -505,7 +505,7 @@
 </rect>
 </g>
 </g>
-<rect width="720" height="310" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="720" height="310" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>

@@ -26,7 +26,7 @@ export default {
         coords: ['geo'],
         render(groups, parent, plot, ctx) {
             const props = evaluate(plot.props, ctx.scope);
-            parent.classed("features", true)
+            parent.classed("vis-features", true)
                 .selectAll("path")
                 .data(ctx.store.geo.features)
                 .join("path")

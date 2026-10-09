@@ -1,21 +1,21 @@
 <div class="vis">
 <div class="vis-header">
-<div class="title">Bevölkerung</div>
-<div class="subtitle">im Jahr nach Bundesland</div>
+<div class="vis-title">Bevölkerung</div>
+<div class="vis-subtitle">im Jahr nach Bundesland</div>
 </div>
 <div class="vis-form-elements">
 </div>
 <div class="vis-legends">
 </div>
 <div class="vis-body">
-<div style="width: 800px;" class="vis-inner">
-<svg width="800" height="300" class="facet">
+<div style="width: 800px;" class="vis-facet">
+<svg width="800" height="300" class="vis-svg">
 <g transform="translate(80 10)">
-<g visibility="visible" class="hoverMarker">
+<g visibility="visible" class="vis-hover-marker">
 <line x1="276.111" x2="276.111" y1="0" y2="250">
 </line>
 </g>
-<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 250)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 250)">
 <path class="domain" stroke="currentColor" d="M0.5,0.5H710.5">
 </path>
 <g class="tick" opacity="1" transform="translate(39.944,0)">
@@ -64,7 +64,7 @@
 <text fill="currentColor" y="12" dy="0.71em">Wien</text>
 </g>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" x2="710" y1="250" y2="250">
 </line>
 <line x1="0" x2="710" y1="196.072" y2="196.072">
@@ -76,7 +76,7 @@
 <line x1="0" x2="710" y1="34.289" y2="34.289">
 </line>
 </g>
-<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
 <path class="domain" stroke="currentColor" d="M0.5,250.5V0.5">
 </path>
 <g class="tick" opacity="1" transform="translate(0,250.5)">
@@ -105,8 +105,8 @@
 <text fill="currentColor" x="-12" dy="0.32em">2.000.000</text>
 </g>
 </g>
-<g class="plotGroup plot-0 rect" data-plot="plot-0">
-<g class="group">
+<g class="vis-plot plot-0" data-plot="plot-0">
+<g class="vis-group">
 <rect fill="#1E4F77" opacity="0.8" x="19.722" width="39.444" y="217.904" height="32.096">
 </rect>
 <rect fill="#1E4F77" opacity="0.8" x="98.611" width="39.444" y="189.114" height="60.886">
@@ -127,16 +127,16 @@
 </rect>
 </g>
 </g>
-<rect width="710" height="250" class="events" opacity="0" style="touch-action: pan-y;">
+<rect width="710" height="250" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
 <div style="transform: translate(356.111px, 135px); position: absolute; top: 0px; left: 0px;">
-<div class="hover" style="left: 20px; transform: translate(0, -50%);">
-<div class="title">Oberösterreich</div>
-<table class="entries">
-<tr class="entry nearest">
-<td class="y value">1.505.140</td>
+<div class="vis-hover" style="left: 20px; transform: translate(0, -50%);">
+<div class="vis-hover-title">Oberösterreich</div>
+<table class="vis-hover-entries">
+<tr class="vis-hover-entry vis-nearest">
+<td data-mapping="y" class="vis-value">1.505.140</td>
 </tr>
 </table>
 </div>

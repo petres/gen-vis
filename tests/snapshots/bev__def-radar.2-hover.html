@@ -1,30 +1,30 @@
 <div class="vis">
 <div class="vis-header">
-<div class="title">Bevölkerung</div>
-<div class="subtitle">nach Bundesland</div>
+<div class="vis-title">Bevölkerung</div>
+<div class="vis-subtitle">nach Bundesland</div>
 </div>
 <div class="vis-form-elements">
 </div>
 <div class="vis-legends">
-<div class="legend" data-dim="year">
-<div class="title">
+<div class="vis-legend" data-dim="year">
+<div class="vis-legend-title">
 </div>
-<div class="entries" role="group">
-<div data-visible="true" data-key="2002" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entries" role="group">
+<div class="vis-legend-entry" data-visible="true" data-key="2002" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#BBD7EE" stroke-width="2.5">
 </line>
 </svg>
 <span>2002</span>
 </div>
-<div data-visible="true" data-key="2012" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2012" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#559BD5" stroke-width="2.5">
 </line>
 </svg>
 <span>2012</span>
 </div>
-<div data-visible="true" data-key="2022" role="checkbox" tabindex="0" aria-checked="true">
+<div class="vis-legend-entry" data-visible="true" data-key="2022" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#1E4F77" stroke-width="2.5">
 </line>
@@ -35,14 +35,14 @@
 </div>
 </div>
 <div class="vis-body">
-<div style="width: 800px;" class="vis-inner">
-<svg width="800" height="420" class="facet">
+<div style="width: 800px;" class="vis-facet">
+<svg width="800" height="420" class="vis-svg">
 <g transform="translate(400 210)">
-<g visibility="visible" class="hoverMarker">
+<g visibility="visible" class="vis-hover-marker">
 <line x1="0" y1="0" x2="178.168" y2="25.617">
 </line>
 </g>
-<g class="grid">
+<g class="vis-grid">
 <line x1="0" y1="0" x2="50.712" y2="-172.709">
 </line>
 <line x1="0" y1="0" x2="151.426" y2="-97.315">
@@ -62,7 +62,7 @@
 <line x1="0" y1="0" x2="-50.712" y2="-172.709">
 </line>
 </g>
-<g class="axis-name-land axis-position-angular" font-size="10" font-family="sans-serif">
+<g class="vis-axis vis-axis-angular" data-mapping="land" font-size="10" font-family="sans-serif">
 <circle class="domain" r="180" fill="none" stroke="currentColor">
 </circle>
 <g class="tick">
@@ -111,7 +111,7 @@
 <text fill="currentColor" x="-53.529" y="-182.304" text-anchor="end" dominant-baseline="auto">Wien</text>
 </g>
 </g>
-<g class="grid" fill="none">
+<g class="vis-grid" fill="none">
 <path d="M0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0Z">
 </path>
 <path d="M12.502,-42.577L37.331,-23.991L43.923,6.315L29.059,33.536L0,44.375L-29.059,33.536L-43.923,6.315L-37.331,-23.991L-12.502,-42.577Z">
@@ -123,16 +123,16 @@
 <path d="M50.007,-170.31L149.322,-95.964L175.693,25.261L116.238,134.145L0,177.5L-116.238,134.145L-175.693,25.261L-149.322,-95.964L-50.007,-170.31Z">
 </path>
 </g>
-<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<g class="vis-plot plot-0" data-plot="plot-0">
 <path stroke="#BBD7EE" stroke-width="2.5" fill="none" highlight-stroke-width="4" data-group-year="2002" d="M6.918,-23.56L41.805,-26.867L135.694,19.51L80.076,92.413L0,45.888L-69.052,79.69L-59.358,8.534L-26.324,-16.917L-39.284,-133.789Z">
 </path>
 <path stroke="#559BD5" stroke-width="2.5" fill="none" highlight-stroke-width="4" data-group-year="2012" d="M7.146,-24.336L41.514,-26.679L141.824,20.391L82.172,94.832L0,47.011L-70.248,81.07L-62.51,8.988L-27.694,-17.798L-42.933,-146.218Z">
 </path>
-<path stroke="#1E4F77" stroke-width="4" fill="none" highlight-stroke-width="4" data-group-year="2022" d="M7.441,-25.341L42.147,-27.086L149.233,21.457L87.477,100.954L0,49.931L-72.818,84.037L-67.124,9.651L-29.989,-19.273L-48.297,-164.485Z" class="highlight" default-stroke-width="2.5">
+<path stroke="#1E4F77" stroke-width="4" fill="none" highlight-stroke-width="4" data-group-year="2022" d="M7.441,-25.341L42.147,-27.086L149.233,21.457L87.477,100.954L0,49.931L-72.818,84.037L-67.124,9.651L-29.989,-19.273L-48.297,-164.485Z" class="vis-highlight" default-stroke-width="2.5">
 </path>
 </g>
-<g class="plotGroup plot-1 circle" data-plot="plot-1">
-<g class="group" data-group-year="2002">
+<g class="vis-plot plot-1" data-plot="plot-1">
+<g class="vis-group" data-group-year="2002">
 <circle fill="#BBD7EE" r="3.5" highlight-r="5" cx="6.918" cy="-23.56">
 </circle>
 <circle fill="#BBD7EE" r="3.5" highlight-r="5" cx="41.805" cy="-26.867">
@@ -152,7 +152,7 @@
 <circle fill="#BBD7EE" r="3.5" highlight-r="5" cx="-39.284" cy="-133.789">
 </circle>
 </g>
-<g class="group" data-group-year="2012">
+<g class="vis-group" data-group-year="2012">
 <circle fill="#559BD5" r="3.5" highlight-r="5" cx="7.146" cy="-24.336">
 </circle>
 <circle fill="#559BD5" r="3.5" highlight-r="5" cx="41.514" cy="-26.679">
@@ -172,28 +172,28 @@
 <circle fill="#559BD5" r="3.5" highlight-r="5" cx="-42.933" cy="-146.218">
 </circle>
 </g>
-<g class="group highlight" data-group-year="2022">
-<circle fill="#1E4F77" r="5" highlight-r="5" cx="7.441" cy="-25.341" class="highlight" default-r="3.5">
+<g class="vis-group vis-highlight" data-group-year="2022">
+<circle fill="#1E4F77" r="5" highlight-r="5" cx="7.441" cy="-25.341" class="vis-highlight" default-r="3.5">
 </circle>
-<circle fill="#1E4F77" r="5" highlight-r="5" cx="42.147" cy="-27.086" class="highlight" default-r="3.5">
+<circle fill="#1E4F77" r="5" highlight-r="5" cx="42.147" cy="-27.086" class="vis-highlight" default-r="3.5">
 </circle>
-<circle fill="#1E4F77" r="5" highlight-r="5" cx="149.233" cy="21.457" class="highlight" default-r="3.5">
+<circle fill="#1E4F77" r="5" highlight-r="5" cx="149.233" cy="21.457" class="vis-highlight" default-r="3.5">
 </circle>
-<circle fill="#1E4F77" r="5" highlight-r="5" cx="87.477" cy="100.954" class="highlight" default-r="3.5">
+<circle fill="#1E4F77" r="5" highlight-r="5" cx="87.477" cy="100.954" class="vis-highlight" default-r="3.5">
 </circle>
-<circle fill="#1E4F77" r="5" highlight-r="5" cx="0" cy="49.931" class="highlight" default-r="3.5">
+<circle fill="#1E4F77" r="5" highlight-r="5" cx="0" cy="49.931" class="vis-highlight" default-r="3.5">
 </circle>
-<circle fill="#1E4F77" r="5" highlight-r="5" cx="-72.818" cy="84.037" class="highlight" default-r="3.5">
+<circle fill="#1E4F77" r="5" highlight-r="5" cx="-72.818" cy="84.037" class="vis-highlight" default-r="3.5">
 </circle>
-<circle fill="#1E4F77" r="5" highlight-r="5" cx="-67.124" cy="9.651" class="highlight" default-r="3.5">
+<circle fill="#1E4F77" r="5" highlight-r="5" cx="-67.124" cy="9.651" class="vis-highlight" default-r="3.5">
 </circle>
-<circle fill="#1E4F77" r="5" highlight-r="5" cx="-29.989" cy="-19.273" class="highlight" default-r="3.5">
+<circle fill="#1E4F77" r="5" highlight-r="5" cx="-29.989" cy="-19.273" class="vis-highlight" default-r="3.5">
 </circle>
-<circle fill="#1E4F77" r="5" highlight-r="5" cx="-48.297" cy="-164.485" class="highlight" default-r="3.5">
+<circle fill="#1E4F77" r="5" highlight-r="5" cx="-48.297" cy="-164.485" class="vis-highlight" default-r="3.5">
 </circle>
 </g>
 </g>
-<g class="axis-name-y axis-position-radial" font-size="10" font-family="sans-serif">
+<g class="vis-axis vis-axis-radial" data-mapping="y" font-size="10" font-family="sans-serif">
 <line class="domain" stroke="currentColor" x1="0" y1="0" x2="0" y2="-180">
 </line>
 <g class="tick">
@@ -212,25 +212,25 @@
 <text fill="currentColor" stroke="white" stroke-width="3" paint-order="stroke" text-anchor="end" dominant-baseline="middle" x="-3" y="-177.5">2,0M</text>
 </g>
 </g>
-<rect x="-310" y="-180" width="620" height="360" class="events" opacity="0" style="touch-action: pan-y;">
+<rect x="-310" y="-180" width="620" height="360" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
 <div style="transform: translate(400px, 210px); position: absolute; top: 0px; left: 0px;">
-<div class="hover" style="left: -20px; transform: translate(-100%, -50%);">
-<div class="title">Niederösterreich</div>
-<table class="entries">
-<tr class="entry nearest">
-<td class="year">2022</td>
-<td class="y value">1.698.796</td>
+<div class="vis-hover" style="left: -20px; transform: translate(-100%, -50%);">
+<div class="vis-hover-title">Niederösterreich</div>
+<table class="vis-hover-entries">
+<tr class="vis-hover-entry vis-nearest">
+<td data-mapping="year">2022</td>
+<td data-mapping="y" class="vis-value">1.698.796</td>
 </tr>
-<tr class="entry">
-<td class="year">2012</td>
-<td class="y value">1.614.455</td>
+<tr class="vis-hover-entry">
+<td data-mapping="year">2012</td>
+<td data-mapping="y" class="vis-value">1.614.455</td>
 </tr>
-<tr class="entry">
-<td class="year">2002</td>
-<td class="y value">1.544.667</td>
+<tr class="vis-hover-entry">
+<td data-mapping="year">2002</td>
+<td data-mapping="y" class="vis-value">1.544.667</td>
 </tr>
 </table>
 </div>

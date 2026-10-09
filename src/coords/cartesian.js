@@ -8,7 +8,7 @@ import { constraints, span, position, drawLabel, setAnnotationProps } from "@/co
 const grid = (ctx, s, values, vertical) => {
     const offset = bandCenter(s);
     const lines = ctx.inner.append("g")
-        .attr("class", "grid")
+        .attr("class", "vis-grid")
         .selectAll('line')
         .data(values)
         .enter()
@@ -54,7 +54,8 @@ const axes = ctx => {
             grid(ctx, s, tickValues(i, s, ticks), ['left', 'right'].includes(i.position));
 
         const ga = inner.append("g")
-            .attr("class", `axis-name-${n} axis-position-${i.position}`)
+            .attr("class", `vis-axis vis-axis-${i.position}`)
+            .attr("data-mapping", n)
             .call(a)
 
         if (i.position == 'bottom')
@@ -71,7 +72,7 @@ const axes = ctx => {
 
         if (i.title) {
             const at = inner.append("text")
-                .attr('class', 'axis-title')
+                .attr('class', 'vis-axis-title')
                 .attr('y', 0)
                 .attr('x', 0)
                 .attr("text-anchor", "middle")
@@ -104,12 +105,12 @@ const annotate = (ctx, g, a) => {
     const [y0, y1] = v ? span(v) : [0, ctx.innerHeight];
 
     if (a.type == 'band') {
-        setAnnotationProps(g.append("rect").attr("class", "annotation band")
+        setAnnotationProps(g.append("rect").attr("class", "vis-annotation vis-band")
             .attr("x", x0).attr("y", y0).attr("width", x1 - x0).attr("height", y1 - y0), a, ctx, { fill: "#EEE" });
         drawLabel(g, a, x0 + 4, y0 + 4);
     } else if (a.type == 'line') {
         // a value of the horizontal axis is a vertical line, of the vertical one a horizontal line
-        const line = g.append("line").attr("class", "annotation line");
+        const line = g.append("line").attr("class", "vis-annotation vis-line");
         if (h) {
             const x = position(h);
             line.attr("x1", x).attr("x2", x).attr("y1", y0).attr("y2", y1);
@@ -124,9 +125,9 @@ const annotate = (ctx, g, a) => {
         const x = h ? position(h) : 0;
         const y = v ? position(v) : 0;
         if (a.type == 'text')
-            setAnnotationProps(g.append("text").attr("class", "annotation text").attr("x", x).attr("y", y), a, ctx, { "font-size": 11, fill: "#444" });
+            setAnnotationProps(g.append("text").attr("class", "vis-annotation vis-text").attr("x", x).attr("y", y), a, ctx, { "font-size": 11, fill: "#444" });
         else
-            setAnnotationProps(g.append("circle").attr("class", "annotation circle").attr("cx", x).attr("cy", y), a, ctx, { r: 4, fill: "#666" });
+            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-circle").attr("cx", x).attr("cy", y), a, ctx, { r: 4, fill: "#666" });
     }
 };
 
