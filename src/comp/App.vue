@@ -125,8 +125,9 @@ export default {
             const width = this.imageWidth == 'screen'
                 ? this.$el.querySelector('.vis').getBoundingClientRect().width
                 : Number(this.imageWidth || options.width || defaultWidth);
+            // the rows already loaded, the data is not loaded and parsed again
             const props = {
-                def: this.def, defFile: this.defFile, data: this.data,
+                def: this.def, defFile: this.defFile, data: this.store.rows,
                 state: JSON.parse(JSON.stringify(this.store.state)),
                 class: this.$attrs.class,
             };

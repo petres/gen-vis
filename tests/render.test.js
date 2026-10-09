@@ -6,6 +6,7 @@ import { plotTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import * as d3 from 'd3-scale-chromatic';
 import { prepareDef } from '@/utils/def';
+import { clearCache } from '@/store';
 import { selection } from '@/utils/export';
 import { examples, errors, useDom, rendered, mount, pointer, hover } from './dom.js';
 
@@ -1352,6 +1353,21 @@ describe('images', () => {
         screenshot.copy = screenshot.width = null;
         URL.createObjectURL = () => 'blob:png';
         URL.revokeObjectURL = () => {};
+    });
+
+    test('the image takes the rows already loaded, the data is not loaded again', async () => {
+        const vm = createApp(GenVis, { defFile: '/data/bev/def.json' }).mount(document.body.appendChild(document.createElement('div')));
+        await rendered(vm.$el);
+        const fetched = [];
+        const serve = fetch;
+        vi.stubGlobal('fetch', url => {
+            fetched.push(new URL(url).pathname);
+            return serve(url);
+        });
+        clearCache();
+        await vm.image();
+        expect(fetched).toEqual(['/data/bev/def.json']);
+        expect(screenshot.copy.querySelectorAll('g.plotGroup path').length).toBeGreaterThan(0);
     });
 
     test('the buttons are only shown with the props', async () => {
