@@ -4,12 +4,23 @@ import { setAnnotationProps } from "@/coords/annotations";
 // the mapping of the regions, its values are the keys of the features
 const joinOf = store => store.def.geo?.join;
 
-// the projection of the definition, e.g. { "type": "conicConformal", "rotate": [-10, 0] },
-// fitted to the facet, `fit` are the features of all keys (default), of the
-// keys with data ("data") or of a list of keys, e.g. ["AT"]
-const projection = ctx => {
+// the keys of the features the projection is fitted to, `fit` are the ones of
+// all keys (default, null), of the keys with data ("data") or a list of keys,
+// e.g. ["AT"], sorted
+const fitKeys = ctx => {
     const def = ctx.store.def.geo ?? {};
-    const { type = 'mercator', ...params } = def.projection ?? {};
+    const join = joinOf(ctx.store);
+    if (def.fit == 'data' && join)
+        return [...new Set(ctx.rows.map(e => String(e[join])))].sort();
+    if (Array.isArray(def.fit))
+        return [...new Set(def.fit.map(String))].sort();
+    return null;
+};
+
+// the projection of the definition, e.g. { "type": "conicConformal", "rotate": [-10, 0] },
+// fitted to the features of the keys in the facet
+const projection = (ctx, keys) => {
+    const { type = 'mercator', ...params } = ctx.store.def.geo?.projection ?? {};
     const make = d3.named(d3.projections, type);
     if (!make)
         throw new Error(`Unknown projection '${type}', e.g. 'mercator' or 'conicConformal'`);
@@ -17,14 +28,44 @@ const projection = ctx => {
     Object.entries(params).forEach(([k, v]) => p[k](v));
 
     const { features, key } = ctx.store.geo;
-    const join = joinOf(ctx.store);
-    let keys = null;
-    if (def.fit == 'data' && join)
-        keys = new Set(ctx.rows.map(e => String(e[join])));
-    else if (Array.isArray(def.fit))
-        keys = new Set(def.fit.map(String));
-    const fitted = keys ? features.filter(f => keys.has(key(f))) : features;
+    const set = keys && new Set(keys);
+    const fitted = set ? features.filter(f => set.has(key(f))) : features;
     return p.fitSize([ctx.innerWidth, ctx.innerHeight], { type: 'FeatureCollection', features: fitted.length ? fitted : features });
+};
+
+// the paths and their centers of the features of a projection, computed once
+const memoPath = p => {
+    const path = d3.geoPath(p);
+    const paths = new Map();
+    const centroids = new Map();
+    const memo = f => {
+        if (!paths.has(f))
+            paths.set(f, path(f));
+        return paths.get(f);
+    };
+    memo.centroid = f => {
+        if (!centroids.has(f))
+            centroids.set(f, path.centroid(f));
+        return centroids.get(f);
+    };
+    return memo;
+};
+
+// the last projections of a map with their paths, by the projection, the
+// fitted features and the size of the facet, e.g. a slider over the years
+// draws the paths again without computing them
+const cacheSize = 8;
+const projected = ctx => {
+    const keys = fitKeys(ctx);
+    const id = JSON.stringify([ctx.store.def.geo?.projection ?? null, keys, ctx.innerWidth, ctx.innerHeight]);
+    const cache = ctx.store.geo.projections;
+    if (!cache.has(id)) {
+        if (cache.size >= cacheSize)
+            cache.delete(cache.keys().next().value);
+        const p = projection(ctx, keys);
+        cache.set(id, { projection: p, path: memoPath(p) });
+    }
+    return cache.get(id);
 };
 
 // the element of a feature under the pointer, the browser knows it, without
@@ -56,8 +97,9 @@ export default {
     prepare(ctx) {
         if (!ctx.store.geo)
             throw new Error(`A map needs a geometry, e.g. "geo": { "data": "regions.json" }`);
-        ctx.projection = projection(ctx);
-        ctx.path = d3.geoPath(ctx.projection);
+        const { projection, path } = projected(ctx);
+        ctx.projection = projection;
+        ctx.path = path;
     },
     axes: () => {},
     // a text or a circle at `lon` and `lat`, e.g. of a city

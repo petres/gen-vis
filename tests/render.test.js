@@ -653,6 +653,21 @@ describe('maps', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the projection and the paths are computed once for the same facet', async () => {
+        const vm = createApp(GenVis, { def: mapDef(), data: mapData }).mount(document.body.appendChild(document.createElement('div')));
+        await rendered(vm.$el);
+        const paths = () => [...vm.$el.querySelectorAll('g.plotGroup.plot-0 path')].map(p => p.getAttribute('d'));
+        const before = paths();
+        const select = vm.$el.querySelector('.formElement select');
+        for (const year of ['1', '0', '1']) {
+            select.selectedIndex = +year;
+            select.dispatchEvent(new Event('change'));
+            await nextTick();
+        }
+        expect(paths()).toEqual(before);
+        expect(vm.store.geo.projections.size).toBe(1);
+    });
+
     test('the values of the data and a given state', async () => {
         const def = mapDef();
         def.formElements = [{ id: 'year', name: 'Jahr', ref: 'year', type: 'select', values: { column: 'year' } }];

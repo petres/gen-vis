@@ -139,7 +139,8 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         const exclude = new Set((defOrg.geo.exclude ?? []).map(String));
         const features = geoFeatures(json, defOrg.geo.object)
             .filter(f => (!include || include.has(key(f))) && !exclude.has(key(f)));
-        geo = markRaw({ features, key, byKey: new Map(features.map(f => [key(f), f])) });
+        // the projections of the facets, see coords/geo.js
+        geo = markRaw({ features, key, byKey: new Map(features.map(f => [key(f), f])), projections: new Map() });
     }
 
     return {
