@@ -108,8 +108,8 @@ const fillTemplate = (column, globals = {}) =>
  * an axis. Patched mappings are prepared again from the original definition
  * with the patches of the selected entries, the props are kept, so the legend
  * state survives. Columns can be templates of globals, e.g. "{values}{share}",
- * so they can depend on several form elements. Returns true if there are
- * patched or templated mappings.
+ * so they can depend on several form elements. Returns the names of the
+ * mappings whose values change, the ones of another column or type.
  */
 const applyFormElements = (def, defOrg) => {
     const elements = def.formElements ?? [];
@@ -118,22 +118,26 @@ const applyFormElements = (def, defOrg) => {
         ...Object.keys(defOrg.mapping ?? {}).filter(n => templateRefs(defOrg.mapping[n].column).length > 0),
     ]);
     if (names.size == 0)
-        return false;
+        return [];
 
     const selected = elements
         .map(e => e.values.find(v => sameValue(v.value, def.globals?.[e.ref])))
         .filter(v => v && v.mapping);
 
+    const changed = [];
     names.forEach(n => {
         const patches = selected.filter(v => v.mapping[n]).map(v => v.mapping[n]);
         const merged = mergeAll([defOrg.mapping[n] ?? {}, ...patches]);
         if (typeof merged.column == 'string')
             merged.column = fillTemplate(merged.column, def.globals);
         const m = prepareMapping(merged);
-        if (def.mapping[n] && 'props' in def.mapping[n])
-            m.props = def.mapping[n].props;
+        const before = def.mapping[n];
+        if (before && 'props' in before)
+            m.props = before.props;
+        if (before?.column !== m.column || before?.type !== m.type)
+            changed.push(n);
         def.mapping[n] = m;
     });
 
-    return true;
+    return changed;
 }

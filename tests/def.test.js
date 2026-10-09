@@ -72,13 +72,13 @@ describe('applyFormElements', () => {
     test('the selected entries patch the mappings', () => {
         const def = prepareDef(JSON.parse(JSON.stringify(defOrg)));
         def.globals.value = 'b';
-        expect(applyFormElements(def, defOrg)).toBe(true);
+        expect(applyFormElements(def, defOrg)).toEqual(['y']);
         expect(def.mapping.y).toMatchObject({ column: 'B', type: 'numeric', scale: { type: 'linear' } });
         expect(defOrg.mapping.y.column).toBe('A');
     });
 
     test('nothing to do without patches', () => {
-        expect(applyFormElements({ mapping: {} }, { mapping: {} })).toBe(false);
+        expect(applyFormElements({ mapping: {} }, { mapping: {} })).toEqual([]);
     });
 
     test('columns are filled from the globals of several form elements', () => {
@@ -95,11 +95,13 @@ describe('applyFormElements', () => {
             plot: { type: 'cartesian:line', props: {} },
         };
         const def = prepareDef(JSON.parse(JSON.stringify(org)));
-        expect(applyFormElements(def, org)).toBe(true);
+        expect(applyFormElements(def, org)).toEqual(['y']);
         expect(def.mapping.y).toMatchObject({ column: 'twh', axis: { format: ',.1f' } });
+        // the same column, e.g. a form element of other globals
+        expect(applyFormElements(def, org)).toEqual([]);
 
         Object.assign(def.globals, { values: 'co2', share: '.share' });
-        applyFormElements(def, org);
+        expect(applyFormElements(def, org)).toEqual(['y']);
         expect(def.mapping.y).toMatchObject({ column: 'co2.share', axis: { format: '.0%' } });
         expect(org.mapping.y.column).toBe('{values}{share}');
     });

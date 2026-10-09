@@ -1,4 +1,4 @@
-export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, convert, filter, addDimInfo, addScaledData, addStackedData, categoryOrder, toDate, addDataValues };
+export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, filter, addDimInfo, addScaledData, addStackedData, categoryOrder, toDate, addDataValues };
 
 import * as d3 from "@/utils/d3";
 import { sameValue } from "@/utils/def";
@@ -54,6 +54,22 @@ const converters = { numeric: toNumber, date: toDate };
 
 // a value as the ones of the rows of a mapping, e.g. "2022-06-01" of a date
 const convert = (mapping, v) => (converters[mapping?.type] ?? (v => v))(v);
+
+// the values of mappings of the parsed rows in the prepared ones, e.g. of
+// another column of a form element, the rows are the same objects
+const updateData = (rows, data, def, names) => {
+    const mapping = names.map(n => ({
+        name: n,
+        column: def.mapping[n].column,
+        convert: converters[def.mapping[n].type] ?? (v => v),
+    }));
+    rows.forEach((r, i) => {
+        const e = data[i];
+        for (const c of mapping)
+            e[c.name] = c.convert(r[c.column]);
+    });
+    return data;
+};
 
 // maps the parsed rows to the mappings, e.g. column `share` to `y`
 const prepareData = (data, def) => {

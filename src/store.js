@@ -2,7 +2,7 @@ export { createStore, resolveUrl, resolveParents, clearCache };
 
 import { reactive, markRaw, toRaw } from 'vue';
 
-import { addDataValues, dataFormat, parseData, prepareData } from "@/utils/data";
+import { addDataValues, dataFormat, parseData, prepareData, updateData } from "@/utils/data";
 import { applyFormElements, mergeAll, prepareDef } from "@/utils/def";
 import { applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
@@ -231,8 +231,9 @@ class Store {
 
     // the columns of patched mappings might have changed
     applyFormElements() {
-        if (applyFormElements(this.def, this.defOrg))
-            this.data = raw(prepareData(this.rows, this.def));
+        const changed = applyFormElements(this.def, this.defOrg);
+        if (changed.length > 0)
+            this.data = raw(updateData(this.rows, this.data, this.def, changed));
     }
 
     // replaces the state of the loaded visualisation, null for the defaults

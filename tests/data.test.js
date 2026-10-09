@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { addDimInfo, addStackedData, categoryOrder, dataFormat, filter, groupBy, parseData, prepareData } from '@/utils/data';
+import { addDimInfo, addStackedData, categoryOrder, dataFormat, filter, groupBy, parseData, prepareData, updateData } from '@/utils/data';
 
 const def = {
     mapping: {
@@ -112,6 +112,20 @@ describe('prepareData', () => {
 
     test('numbers and timestamps of json data', () => {
         expect(prepareData([{ year: 0, date: 86400000 }], def)[0]).toMatchObject({ x: 0, t: 86400000 });
+    });
+});
+
+describe('updateData', () => {
+    test('only the given mappings, in the same rows', () => {
+        const rows = [{ year: '2020', a: '1', b: '2' }];
+        const def = { mapping: { x: { column: 'year', type: 'numeric' }, y: { column: 'a', type: 'numeric' } } };
+        const data = prepareData(rows, def);
+        const row = data[0];
+        def.mapping.y.column = 'b';
+        def.mapping.x.column = 'a';
+        expect(updateData(rows, data, def, ['y'])).toBe(data);
+        expect(data[0]).toBe(row);
+        expect(row).toEqual({ x: 2020, y: 2 });
     });
 });
 
