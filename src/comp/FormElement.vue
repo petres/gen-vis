@@ -14,7 +14,7 @@
         <!-- the positions of the entries, e.g. years, the visualisation changes while it is moved -->
         <div v-else-if="element.type == 'slider'" class="slider">
             <input type="range" :id="`${uid}-${element.id}`" min="0" :max="element.values.length - 1" step="1" :value="index"
-                :aria-valuetext="element.values[index]?.name" @input="switched(element.values[+$event.target.value])">
+                :aria-valuetext="element.values[index]?.name" @input="moved(+$event.target.value)" @change="moved(+$event.target.value, true)">
             <span class="value">{{ element.values[index]?.name }}</span>
         </div>
     </div>
@@ -32,6 +32,9 @@ export default {
     created() {
         this.uid = `gen-vis-form-${count++}`;
     },
+    unmounted() {
+        cancelAnimationFrame(this.frame);
+    },
     computed: {
         vg() { return this.globals[this.element.ref] },
         // the entry of the global, of a slider
@@ -43,6 +46,20 @@ export default {
                 return;
             this.globals[this.element.ref] = entry.value;
             this.$emit('changeSelected');
+        },
+        // the entry of a slider, at most once a frame, the events of a fast
+        // move are drawn together, at its end (`change`) at once
+        moved(index, end = false) {
+            this.position = index;
+            if (end) {
+                cancelAnimationFrame(this.frame);
+                this.frame = null;
+                return this.switched(this.element.values[index]);
+            }
+            this.frame ??= requestAnimationFrame(() => {
+                this.frame = null;
+                this.switched(this.element.values[this.position]);
+            });
         },
         equal(v) { return sameValue(v, this.vg) }
     }

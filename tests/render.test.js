@@ -631,13 +631,25 @@ describe('maps', () => {
         expect(el.querySelector('.formElement .slider .value').textContent).toBe('2021');
         // 2 to 4
         expect(legend()).toContain('3,0');
-        // moved to 2020, while it is moved
+        // moved to 2020, while it is moved, in the next frame
         slider.value = '0';
         slider.dispatchEvent(new Event('input'));
         await nextTick();
+        expect(updates).toEqual([]);
+        await new Promise(r => requestAnimationFrame(r));
+        await nextTick();
         expect(el.querySelector('.formElement .slider .value').textContent).toBe('2020');
         expect(legend()).toContain('2,0');
-        expect(updates.at(-1)).toEqual({ globals: { year: '2020' } });
+        expect(updates).toEqual([{ globals: { year: '2020' } }]);
+
+        // the moves of a frame are drawn once, the end of the move at once
+        for (const v of ['1', '0', '1'])
+            slider.value = v, slider.dispatchEvent(new Event('input'));
+        slider.dispatchEvent(new Event('change'));
+        await nextTick();
+        expect(updates).toEqual([{ globals: { year: '2020' } }, {}]);
+        await new Promise(r => requestAnimationFrame(r));
+        expect(updates).toHaveLength(2);
         expect(errors).toEqual([]);
     });
 
