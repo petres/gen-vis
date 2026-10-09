@@ -1,0 +1,627 @@
+<div class="vis">
+<div class="vis-header">
+<div class="title">Absatz von fossilen Energieträgern</div>
+<div class="subtitle">nach Energiegehalt in TWh bzw. Emissionen in Megatonnen CO₂</div>
+</div>
+<div class="vis-form-elements">
+<div class="formElement" id="container-unit">
+<div class="title">Einheit:</div>
+<div class="entries">
+<div id="container-unitTwh">
+<input type="radio" id="gen-vis-form-N-unit-unitTwh" name="gen-vis-form-N-unit" checked="" value="unitTwh">
+<label for="gen-vis-form-N-unit-unitTwh">TWh</label>
+</div>
+<div id="container-unitCo2">
+<input type="radio" id="gen-vis-form-N-unit-unitCo2" name="gen-vis-form-N-unit" value="unitCo2">
+<label for="gen-vis-form-N-unit-unitCo2">Mt CO₂</label>
+</div>
+</div>
+</div>
+<div class="formElement" id="container-scale">
+<div class="title">Y-Skala:</div>
+<div class="entries">
+<div id="container-shareAxisOff">
+<input type="radio" id="gen-vis-form-N-scale-shareAxisOff" name="gen-vis-form-N-scale" value="shareAxisOff">
+<label for="gen-vis-form-N-scale-shareAxisOff">Getrennt</label>
+</div>
+<div id="container-shareAxisOn">
+<input type="radio" id="gen-vis-form-N-scale-shareAxisOn" name="gen-vis-form-N-scale" checked="" value="shareAxisOn">
+<label for="gen-vis-form-N-scale-shareAxisOn">Geteilt</label>
+</div>
+</div>
+</div>
+</div>
+<div class="vis-legends">
+<div class="legend" data-dim="year">
+<div class="title">
+</div>
+<div class="entries" role="group">
+<div data-visible="true" data-key="2019" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#BBBBBB" stroke-width="2" opacity="0.2">
+</line>
+</svg>
+<span>2019</span>
+</div>
+<div data-visible="true" data-key="2020" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#AAAAAA" stroke-width="2" opacity="0.2">
+</line>
+</svg>
+<span>2020</span>
+</div>
+<div data-visible="true" data-key="2021" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#cf90f0" stroke-width="2" opacity="0.2">
+</line>
+</svg>
+<span>2021</span>
+</div>
+<div data-visible="true" data-key="2022" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#86cae7" stroke-width="2" opacity="0.2">
+</line>
+</svg>
+<span>2022</span>
+</div>
+<div data-visible="true" data-key="2023" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#b5c969" stroke-width="2" opacity="0.5">
+</line>
+</svg>
+<span>2023</span>
+</div>
+<div data-visible="true" data-key="2024" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#f3d039" stroke-width="2" opacity="0.6">
+</line>
+</svg>
+<span>2024</span>
+</div>
+<div data-visible="true" data-key="2025" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#cf8e02" stroke-width="2" opacity="0.7">
+</line>
+</svg>
+<span>2025</span>
+</div>
+<div data-visible="true" data-key="2026" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#c3423f" stroke-width="2" opacity="1">
+</line>
+</svg>
+<span>2026</span>
+</div>
+<div data-visible="true" data-key="avg14-18" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#444" stroke-width="2" opacity="0.6">
+</line>
+</svg>
+<span>Ø&nbsp;'14&nbsp;-&nbsp;'18</span>
+</div>
+</div>
+</div>
+<div class="legend" data-dim="facet">
+<div class="title">
+</div>
+<div class="entries" role="group">
+<div data-visible="true" data-key="total" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="0" height="0">
+</svg>
+<span>Gesamt</span>
+</div>
+<div data-visible="true" data-key="oil" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="0" height="0">
+</svg>
+<span>Mineralöl</span>
+</div>
+<div data-visible="true" data-key="coal" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="0" height="0">
+</svg>
+<span>Kohle</span>
+</div>
+<div data-visible="true" data-key="gas" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="0" height="0">
+</svg>
+<span>Erdgas</span>
+</div>
+</div>
+</div>
+</div>
+<div class="vis-body">
+<div style="width: 400px; display: inline-block;">
+<div class="facet-title" style="margin-left: 50px;">Gesamt</div>
+<div style="width: 400px;" class="vis-inner">
+<svg width="400" height="220" class="facet">
+<g transform="translate(50 5)">
+<g visibility="visible" class="hoverMarker">
+<line x1="291.343" x2="291.343" y1="0" y2="185">
+</line>
+</g>
+<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
+</path>
+<g class="tick" opacity="1" transform="translate(87.346,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Apr</text>
+</g>
+<g class="tick" opacity="1" transform="translate(174.271,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Jul</text>
+</g>
+<g class="tick" opacity="1" transform="translate(262.152,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Okt</text>
+</g>
+</g>
+<g class="grid">
+<line x1="0" x2="320" y1="185" y2="185">
+</line>
+<line x1="0" x2="320" y1="154.583" y2="154.583">
+</line>
+<line x1="0" x2="320" y1="124.167" y2="124.167">
+</line>
+<line x1="0" x2="320" y1="93.75" y2="93.75">
+</line>
+<line x1="0" x2="320" y1="63.334" y2="63.334">
+</line>
+<line x1="0" x2="320" y1="32.917" y2="32.917">
+</line>
+<line x1="0" x2="320" y1="2.501" y2="2.501">
+</line>
+</g>
+<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
+</path>
+<g class="tick" opacity="1" transform="translate(0,185.5)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,155.083)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">5,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,124.667)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">10,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,94.25)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">15,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,63.834)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">20,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,33.417)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">25,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,3.001)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">30,0</text>
+</g>
+</g>
+<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#444" highlight-opacity="1" highlight-stroke-width="3" data-group-year="avg14-18" data-group-facet="total" d="M0,31.105C9.871,37.567,19.741,44.03,29.612,44.03C38.846,44.03,48.08,41.41,57.313,41.41C67.184,41.41,77.055,62.133,86.925,66.777C96.478,71.272,106.03,71.125,115.582,73.519C125.453,75.993,135.323,81.411,145.194,81.411C154.746,81.411,164.299,76.81,173.851,76.466C183.721,76.111,193.592,76.289,203.463,75.934C213.333,75.579,223.204,73.904,233.075,69.844C242.627,65.915,252.179,51.033,261.731,48.076C271.602,45.019,281.473,46.021,291.343,43.491C300.896,41.043,310.448,37.187,320,33.332">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="total" d="M0,16.818C9.871,27.228,19.741,37.638,29.612,42.163C38.846,46.396,48.08,46.499,57.313,48.513C67.184,50.666,77.055,52.778,86.925,54.623C96.478,56.408,106.03,56.37,115.582,59.439C125.453,62.611,135.323,73.642,145.194,73.642C154.746,73.642,164.299,61.487,173.851,61.487C183.721,61.487,193.592,63.944,203.463,63.944C213.333,63.944,223.204,61.071,233.075,57.748C242.627,54.533,252.179,44.88,261.731,44.569C271.602,44.247,281.473,44.408,291.343,44.086C300.896,43.775,310.448,42.57,320,41.365">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="total" d="M0,25.176C9.871,33.392,19.741,41.607,29.612,45.588C38.846,49.311,48.08,47.45,57.313,51.173C67.184,55.154,77.055,86.143,86.925,87.437C96.478,88.69,106.03,88.367,115.582,89.317C125.453,90.298,135.323,93.295,145.194,93.295C154.746,93.295,164.299,84.706,173.851,84.706C183.721,84.706,193.592,88.549,203.463,88.549C213.333,88.549,223.204,85.606,233.075,81.22C242.627,76.975,252.179,66.455,261.731,63.025C271.602,59.482,281.473,60.522,291.343,57.71C300.896,54.989,310.448,50.807,320,46.624">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="total" d="M0,46.228C9.871,52.186,19.741,58.144,29.612,58.144C38.846,58.144,48.08,49.39,57.313,49.39C67.184,49.39,77.055,58.147,86.925,62.69C96.478,67.086,106.03,72.773,115.582,76.187C125.453,79.716,135.323,83.297,145.194,83.297C154.746,83.297,164.299,80.762,173.851,80.333C183.721,79.889,193.592,80.111,203.463,79.667C213.333,79.223,223.204,78.424,233.075,75.938C242.627,73.533,252.179,60.214,261.731,54.773C271.602,49.15,281.473,45.679,291.343,43.075C300.896,40.555,310.448,39.855,320,39.155">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#86cae7" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2022" data-group-facet="total" d="M0,44.206C9.871,49.943,19.741,55.68,29.612,55.68C38.846,55.68,48.08,43.762,57.313,43.762C67.184,43.762,77.055,64.463,86.925,70.361C96.478,76.068,106.03,75.688,115.582,79.14C125.453,82.708,135.323,91.528,145.194,91.528C154.746,91.528,164.299,90.635,173.851,90.635C183.721,90.635,193.592,92.925,203.463,92.925C213.333,92.925,223.204,77.887,233.075,77.887C242.627,77.887,252.179,80.272,261.731,80.272C271.602,80.272,281.473,71.698,291.343,66.928C300.896,62.312,310.448,57.244,320,52.175">
+</path>
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#f3d039" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2024" data-group-facet="total" d="M0,54.479C9.871,66.564,19.741,78.648,29.612,78.648C38.846,78.648,48.08,76.595,57.313,76.595C67.184,76.595,77.055,81.856,86.925,84.232C96.478,86.53,106.03,89.279,115.582,90.648C125.453,92.063,135.323,92.77,145.194,92.77C154.746,92.77,164.299,92.591,173.851,92.591C183.721,92.591,193.592,93.421,203.463,93.421C213.333,93.421,223.204,92.565,233.075,90.853C242.627,89.196,252.179,82.543,261.731,77.339C271.602,71.962,281.473,60.795,291.343,58.967C300.896,57.198,310.448,56.756,320,56.313">
+</path>
+<path stroke-width="2" fill="none" opacity="0.7" stroke="#cf8e02" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2025" data-group-facet="total" d="M0,54.783C9.871,58.021,19.741,61.259,29.612,63.519C38.846,65.633,48.08,65.211,57.313,68.151C67.184,71.293,77.055,78.912,86.925,82.364C96.478,85.705,106.03,86.508,115.582,88.775C125.453,91.118,135.323,96.223,145.194,96.223C154.746,96.223,164.299,91.503,173.851,91.503C183.721,91.503,193.592,95.938,203.463,95.938C213.333,95.938,223.204,94.9,233.075,92.825C242.627,90.816,252.179,68.921,261.731,67.953C271.602,66.953,281.473,67.453,291.343,66.452C300.896,65.484,310.448,60.74,320,55.996">
+</path>
+<path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="total" d="M0,43.839C9.871,55.377,19.741,66.916,29.612,67.704C38.846,68.441,48.08,68.073,57.313,68.81C67.184,69.598,77.055,78.478,86.925,83.162C96.478,87.695,106.03,96.135,115.582,96.479C125.453,96.835,135.323,97.013,145.194,97.013C154.746,97.013,164.299,94.984,173.851,92.954">
+</path>
+<path stroke-width="3" fill="none" opacity="1" stroke="#b5c969" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2023" data-group-facet="total" d="M0,63.379C9.871,66.346,19.741,69.313,29.612,69.313C38.846,69.313,48.08,66.798,57.313,66.798C67.184,66.798,77.055,73.09,86.925,75.735C96.478,78.294,106.03,80.156,115.582,82.471C125.453,84.864,135.323,89.871,145.194,89.871C154.746,89.871,164.299,88.496,173.851,88.496C183.721,88.496,193.592,94.1,203.463,94.1C213.333,94.1,223.204,93.447,233.075,92.141C242.627,90.877,252.179,83.452,261.731,79.349C271.602,75.11,281.473,70.923,291.343,67.148C300.896,63.495,310.448,60.252,320,57.009" class="highlight" default-opacity="0.5" default-stroke-width="2">
+</path>
+</g>
+<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+</rect>
+</g>
+</svg>
+<div style="transform: translate(341.343px, 97.5px); position: absolute; top: 0px; left: 0px;">
+<div class="hover" style="left: -20px; transform: translate(-100%, -50%);">
+<div class="title">Nov</div>
+<table class="entries">
+<tr class="entry">
+<td class="year">2021</td>
+<td class="facet">Gesamt</td>
+<td class="y">23,33</td>
+</tr>
+<tr class="entry">
+<td class="year">Ø&nbsp;'14&nbsp;-&nbsp;'18</td>
+<td class="facet">Gesamt</td>
+<td class="y">23,26</td>
+</tr>
+<tr class="entry">
+<td class="year">2019</td>
+<td class="facet">Gesamt</td>
+<td class="y">23,16</td>
+</tr>
+<tr class="entry">
+<td class="year">2020</td>
+<td class="facet">Gesamt</td>
+<td class="y">20,92</td>
+</tr>
+<tr class="entry">
+<td class="year">2024</td>
+<td class="facet">Gesamt</td>
+<td class="y">20,72</td>
+</tr>
+<tr class="entry">
+<td class="year">2025</td>
+<td class="facet">Gesamt</td>
+<td class="y">19,49</td>
+</tr>
+<tr class="entry">
+<td class="year">2022</td>
+<td class="facet">Gesamt</td>
+<td class="y">19,41</td>
+</tr>
+<tr class="entry nearest">
+<td class="year">2023</td>
+<td class="facet">Gesamt</td>
+<td class="y">19,37</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div style="width: 400px; display: inline-block;">
+<div class="facet-title" style="margin-left: 50px;">Mineralöl</div>
+<div style="width: 400px;" class="vis-inner">
+<svg width="400" height="220" class="facet">
+<g transform="translate(50 5)">
+<g visibility="hidden" class="hoverMarker">
+<line>
+</line>
+</g>
+<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
+</path>
+<g class="tick" opacity="1" transform="translate(87.346,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Apr</text>
+</g>
+<g class="tick" opacity="1" transform="translate(174.271,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Jul</text>
+</g>
+<g class="tick" opacity="1" transform="translate(262.152,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Okt</text>
+</g>
+</g>
+<g class="grid">
+<line x1="0" x2="320" y1="185" y2="185">
+</line>
+<line x1="0" x2="320" y1="154.583" y2="154.583">
+</line>
+<line x1="0" x2="320" y1="124.167" y2="124.167">
+</line>
+<line x1="0" x2="320" y1="93.75" y2="93.75">
+</line>
+<line x1="0" x2="320" y1="63.334" y2="63.334">
+</line>
+<line x1="0" x2="320" y1="32.917" y2="32.917">
+</line>
+<line x1="0" x2="320" y1="2.501" y2="2.501">
+</line>
+</g>
+<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
+</path>
+<g class="tick" opacity="1" transform="translate(0,185.5)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,155.083)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">5,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,124.667)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">10,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,94.25)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">15,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,63.834)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">20,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,33.417)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">25,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,3.001)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">30,0</text>
+</g>
+</g>
+<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#444" highlight-opacity="1" highlight-stroke-width="3" data-group-year="avg14-18" data-group-facet="oil" d="M0,134.422C9.871,134.337,19.741,134.253,29.612,133.915C38.846,133.599,48.08,126.387,57.313,126.387C67.184,126.387,77.055,127.616,86.925,127.616C96.478,127.616,106.03,126.725,115.582,126.477C125.453,126.221,135.323,126.349,145.194,126.093C154.746,125.845,164.299,123.132,173.851,123.132C183.721,123.132,193.592,123.25,203.463,123.396C213.333,123.543,223.204,124.011,233.075,124.011C242.627,124.011,252.179,122.18,261.731,122.18C271.602,122.18,281.473,129.077,291.343,129.916C300.896,130.729,310.448,130.932,320,131.135">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="oil" d="M0,128.064C9.871,129.917,19.741,131.77,29.612,131.77C38.846,131.77,48.08,127.359,57.313,126.426C67.184,125.428,77.055,125.517,86.925,124.93C96.478,124.361,106.03,122.974,115.582,122.974C125.453,122.974,135.323,122.976,145.194,122.976C154.746,122.976,164.299,115.371,173.851,115.371C183.721,115.371,193.592,121.188,203.463,121.188C213.333,121.188,223.204,121.153,233.075,121.082C242.627,121.014,252.179,119.335,261.731,119.335C271.602,119.335,281.473,126.105,291.343,128.003C300.896,129.84,310.448,130.299,320,130.758">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="oil" d="M0,129.226C9.871,128.291,19.741,127.356,29.612,127.356C38.846,127.356,48.08,128.254,57.313,130.049C67.184,131.967,77.055,142.112,86.925,142.112C96.478,142.112,106.03,138.812,115.582,137.792C125.453,136.738,135.323,137.187,145.194,135.976C154.746,134.804,164.299,129.298,173.851,129.298C183.721,129.298,193.592,132.819,203.463,132.819C213.333,132.819,223.204,130.099,233.075,130.099C242.627,130.099,252.179,130.724,261.731,131.973C271.602,133.264,281.473,137.176,291.343,138.742C300.896,140.258,310.448,140.803,320,141.349">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="oil" d="M0,147.084C9.871,145.662,19.741,144.24,29.612,142.03C38.846,139.964,48.08,134.451,57.313,134.451C67.184,134.451,77.055,135.072,86.925,135.072C96.478,135.072,106.03,134.744,115.582,134.087C125.453,133.408,135.323,130.997,145.194,129.833C154.746,128.705,164.299,127.795,173.851,127.163C183.721,126.511,193.592,126.472,203.463,126.033C213.333,125.594,223.204,124.527,233.075,124.527C242.627,124.527,252.179,124.64,261.731,124.867C271.602,125.101,281.473,130.486,291.343,132.143C300.896,133.747,310.448,134.273,320,134.798">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#86cae7" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2022" data-group-facet="oil" d="M0,139.114C9.871,138.524,19.741,137.934,29.612,136.095C38.846,134.375,48.08,128.749,57.313,128.749C67.184,128.749,77.055,135.702,86.925,135.702C96.478,135.702,106.03,129.778,115.582,129.778C125.453,129.778,135.323,134.717,145.194,134.717C154.746,134.717,164.299,133.726,173.851,133.383C183.721,133.029,193.592,133.137,203.463,132.645C213.333,132.153,223.204,126.156,233.075,126.156C242.627,126.156,252.179,135.786,261.731,136.098C271.602,136.42,281.473,136.582,291.343,136.582C300.896,136.582,310.448,134.828,320,133.075">
+</path>
+<path stroke-width="2" fill="none" opacity="0.5" stroke="#b5c969" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2023" data-group-facet="oil" d="M0,142.308C9.871,141.632,19.741,140.956,29.612,139.313C38.846,137.776,48.08,133.01,57.313,133.01C67.184,133.01,77.055,133.704,86.925,133.704C96.478,133.704,106.03,131.522,115.582,130.8C125.453,130.055,135.323,129.353,145.194,129.353C154.746,129.353,164.299,129.364,173.851,129.387C183.721,129.41,193.592,130.167,203.463,130.685C213.333,131.203,223.204,132.494,233.075,132.494C242.627,132.494,252.179,130.396,261.731,130.396C271.602,130.396,281.473,134.346,291.343,134.716C300.896,135.075,310.448,135.164,320,135.254">
+</path>
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#f3d039" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2024" data-group-facet="oil" d="M0,140.702C9.871,141.286,19.741,141.871,29.612,141.871C38.846,141.871,48.08,138.308,57.313,137.207C67.184,136.029,77.055,135.54,86.925,135.23C96.478,134.93,106.03,134.989,115.582,134.779C125.453,134.563,135.323,134.501,145.194,133.943C154.746,133.403,164.299,129.365,173.851,129.365C183.721,129.365,193.592,129.6,203.463,129.904C213.333,130.209,223.204,131.194,233.075,131.194C242.627,131.194,252.179,128.476,261.731,128.476C271.602,128.476,281.473,136.048,291.343,136.669C300.896,137.27,310.448,137.42,320,137.57">
+</path>
+<path stroke-width="2" fill="none" opacity="0.7" stroke="#cf8e02" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2025" data-group-facet="oil" d="M0,142.345C9.871,142.596,19.741,142.848,29.612,142.848C38.846,142.848,48.08,138.773,57.313,137.453C67.184,136.043,77.055,135.163,86.925,134.864C96.478,134.574,106.03,134.583,115.582,134.429C125.453,134.269,135.323,134.259,145.194,133.92C154.746,133.591,164.299,132.045,173.851,132.045C183.721,132.045,193.592,135.687,203.463,135.687C213.333,135.687,223.204,135.25,233.075,134.454C242.627,133.685,252.179,131.066,261.731,131.066C271.602,131.066,281.473,140.401,291.343,140.401C300.896,140.401,310.448,138.938,320,137.476">
+</path>
+<path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="oil" d="M0,141.366C9.871,141.822,19.741,142.278,29.612,142.278C38.846,142.278,48.08,132.863,57.313,132.863C67.184,132.863,77.055,136.042,86.925,137.27C96.478,138.459,106.03,140.161,115.582,140.161C125.453,140.161,135.323,137.208,145.194,135.806C154.746,134.45,164.299,131.879,173.851,131.879C183.721,131.879,193.592,133.785,203.463,135.691">
+</path>
+</g>
+<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+</rect>
+</g>
+</svg>
+<div style="transform: translate(50px, 5px); position: absolute; top: 0px; left: 0px;">
+</div>
+</div>
+</div>
+<div style="width: 400px; display: inline-block;">
+<div class="facet-title" style="margin-left: 50px;">Kohle</div>
+<div style="width: 400px;" class="vis-inner">
+<svg width="400" height="220" class="facet">
+<g transform="translate(50 5)">
+<g visibility="hidden" class="hoverMarker">
+<line>
+</line>
+</g>
+<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
+</path>
+<g class="tick" opacity="1" transform="translate(87.346,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Apr</text>
+</g>
+<g class="tick" opacity="1" transform="translate(174.271,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Jul</text>
+</g>
+<g class="tick" opacity="1" transform="translate(262.152,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Okt</text>
+</g>
+</g>
+<g class="grid">
+<line x1="0" x2="320" y1="185" y2="185">
+</line>
+<line x1="0" x2="320" y1="154.583" y2="154.583">
+</line>
+<line x1="0" x2="320" y1="124.167" y2="124.167">
+</line>
+<line x1="0" x2="320" y1="93.75" y2="93.75">
+</line>
+<line x1="0" x2="320" y1="63.334" y2="63.334">
+</line>
+<line x1="0" x2="320" y1="32.917" y2="32.917">
+</line>
+<line x1="0" x2="320" y1="2.501" y2="2.501">
+</line>
+</g>
+<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
+</path>
+<g class="tick" opacity="1" transform="translate(0,185.5)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,155.083)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">5,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,124.667)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">10,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,94.25)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">15,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,63.834)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">20,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,33.417)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">25,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,3.001)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">30,0</text>
+</g>
+</g>
+<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#444" highlight-opacity="1" highlight-stroke-width="3" data-group-year="avg14-18" data-group-facet="coal" d="M0,156.555C9.871,157.283,19.741,158.01,29.612,158.01C38.846,158.01,48.08,157.936,57.313,157.936C67.184,157.936,77.055,162.033,86.925,162.044C96.478,162.056,106.03,162.05,115.582,162.061C125.453,162.073,135.323,164.826,145.194,164.826C154.746,164.826,164.299,163.926,173.851,163.875C183.721,163.822,193.592,163.848,203.463,163.795C213.333,163.742,223.204,163.573,233.075,163.129C242.627,162.7,252.179,156.731,261.731,156.731C271.602,156.731,281.473,156.764,291.343,156.764C300.896,156.764,310.448,156.573,320,156.382">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="coal" d="M0,156.163C9.871,157.217,19.741,158.27,29.612,158.49C38.846,158.695,48.08,158.797,57.313,158.797C67.184,158.797,77.055,156.463,86.925,156.463C96.478,156.463,106.03,157.343,115.582,158.204C125.453,159.094,135.323,161.773,145.194,161.773C154.746,161.773,164.299,159.806,173.851,159.424C183.721,159.029,193.592,158.832,203.463,158.832C213.333,158.832,223.204,162.178,233.075,162.178C242.627,162.178,252.179,160.56,261.731,160.56C271.602,160.56,281.473,160.913,291.343,161.6C300.896,162.266,310.448,163.409,320,164.553">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="coal" d="M0,161.39C9.871,161.602,19.741,161.814,29.612,162.083C38.846,162.334,48.08,162.367,57.313,162.934C67.184,163.541,77.055,167.561,86.925,167.561C96.478,167.561,106.03,166.449,115.582,166.449C125.453,166.449,135.323,167.119,145.194,167.198C154.746,167.274,164.299,167.313,173.851,167.313C183.721,167.313,193.592,166.946,203.463,166.839C213.333,166.732,223.204,166.783,233.075,166.672C242.627,166.564,252.179,164.876,261.731,164.876C271.602,164.876,281.473,165.79,291.343,165.79C300.896,165.79,310.448,164.739,320,163.688">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="coal" d="M0,163.067C9.871,164.258,19.741,165.449,29.612,165.449C38.846,165.449,48.08,163.079,57.313,163.079C67.184,163.079,77.055,164.71,86.925,164.71C96.478,164.71,106.03,162.574,115.582,162.574C125.453,162.574,135.323,163.678,145.194,163.678C154.746,163.678,164.299,163.067,173.851,163.067C183.721,163.067,193.592,163.193,203.463,163.445C213.333,163.697,223.204,165.615,233.075,165.615C242.627,165.615,252.179,163.432,261.731,163.432C271.602,163.432,281.473,163.852,291.343,163.852C300.896,163.852,310.448,163.553,320,163.253">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#86cae7" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2022" data-group-facet="coal" d="M0,162.791C9.871,164.207,19.741,165.624,29.612,165.624C38.846,165.624,48.08,162.97,57.313,162.97C67.184,162.97,77.055,164.012,86.925,164.012C96.478,164.012,106.03,163.742,115.582,163.742C125.453,163.742,135.323,165.34,145.194,165.34C154.746,165.34,164.299,164.156,173.851,164.156C183.721,164.156,193.592,164.915,203.463,165.287C213.333,165.659,223.204,166.387,233.075,166.387C242.627,166.387,252.179,164.335,261.731,164.335C271.602,164.335,281.473,165.54,291.343,165.54C300.896,165.54,310.448,165.108,320,164.676">
+</path>
+<path stroke-width="2" fill="none" opacity="0.5" stroke="#b5c969" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2023" data-group-facet="coal" d="M0,164.627C9.871,166.219,19.741,167.812,29.612,167.812C38.846,167.812,48.08,164.215,57.313,164.215C67.184,164.215,77.055,165.248,86.925,165.248C96.478,165.248,106.03,164.734,115.582,164.734C125.453,164.734,135.323,165.438,145.194,165.438C154.746,165.438,164.299,164.142,173.851,164.142C183.721,164.142,193.592,166.813,203.463,167.166C213.333,167.519,223.204,167.695,233.075,167.695C242.627,167.695,252.179,166.145,261.731,165.656C271.602,165.151,281.473,164.982,291.343,164.753C300.896,164.531,310.448,164.411,320,164.29">
+</path>
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#f3d039" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2024" data-group-facet="coal" d="M0,163.599C9.871,164.668,19.741,165.737,29.612,165.737C38.846,165.737,48.08,163.483,57.313,163.483C67.184,163.483,77.055,164.45,86.925,164.45C96.478,164.45,106.03,163.021,115.582,163.021C125.453,163.021,135.323,163.509,145.194,164.205C154.746,164.877,164.299,167.068,173.851,167.068C183.721,167.068,193.592,167.009,203.463,167.009C213.333,167.009,223.204,168.64,233.075,168.64C242.627,168.64,252.179,167.78,261.731,167.521C271.602,167.253,281.473,167.308,291.343,167.082C300.896,166.863,310.448,166.533,320,166.202">
+</path>
+<path stroke-width="2" fill="none" opacity="0.7" stroke="#cf8e02" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2025" data-group-facet="coal" d="M0,165.826C9.871,167.154,19.741,168.481,29.612,168.481C38.846,168.481,48.08,165.246,57.313,165.246C67.184,165.246,77.055,166.201,86.925,166.201C96.478,166.201,106.03,164.422,115.582,164.422C125.453,164.422,135.323,166.618,145.194,166.618C154.746,166.618,164.299,165.67,173.851,165.336C183.721,164.992,193.592,164.604,203.463,164.604C213.333,164.604,223.204,165.833,233.075,165.833C242.627,165.833,252.179,164.243,261.731,164.243C271.602,164.243,281.473,166.62,291.343,166.62C300.896,166.62,310.448,166.139,320,165.659">
+</path>
+<path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="coal" d="M0,164.98C9.871,166.479,19.741,167.978,29.612,167.978C38.846,167.978,48.08,165.331,57.313,165.331C67.184,165.331,77.055,165.692,86.925,165.692C96.478,165.692,106.03,165.457,115.582,165.425C125.453,165.392,135.323,165.409,145.194,165.375C154.746,165.343,164.299,165.212,173.851,165.08">
+</path>
+</g>
+<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+</rect>
+</g>
+</svg>
+<div style="transform: translate(50px, 5px); position: absolute; top: 0px; left: 0px;">
+</div>
+</div>
+</div>
+<div style="width: 400px; display: inline-block;">
+<div class="facet-title" style="margin-left: 50px;">Erdgas</div>
+<div style="width: 400px;" class="vis-inner">
+<svg width="400" height="220" class="facet">
+<g transform="translate(50 5)">
+<g visibility="hidden" class="hoverMarker">
+<line>
+</line>
+</g>
+<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
+</path>
+<g class="tick" opacity="1" transform="translate(87.346,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Apr</text>
+</g>
+<g class="tick" opacity="1" transform="translate(174.271,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Jul</text>
+</g>
+<g class="tick" opacity="1" transform="translate(262.152,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Okt</text>
+</g>
+</g>
+<g class="grid">
+<line x1="0" x2="320" y1="185" y2="185">
+</line>
+<line x1="0" x2="320" y1="154.583" y2="154.583">
+</line>
+<line x1="0" x2="320" y1="124.167" y2="124.167">
+</line>
+<line x1="0" x2="320" y1="93.75" y2="93.75">
+</line>
+<line x1="0" x2="320" y1="63.334" y2="63.334">
+</line>
+<line x1="0" x2="320" y1="32.917" y2="32.917">
+</line>
+<line x1="0" x2="320" y1="2.501" y2="2.501">
+</line>
+</g>
+<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
+</path>
+<g class="tick" opacity="1" transform="translate(0,185.5)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,155.083)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">5,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,124.667)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">10,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,94.25)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">15,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,63.834)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">20,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,33.417)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">25,0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,3.001)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">30,0</text>
+</g>
+</g>
+<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#444" highlight-opacity="1" highlight-stroke-width="3" data-group-year="avg14-18" data-group-facet="gas" d="M0,110.127C9.871,114.693,19.741,119.258,29.612,122.105C38.846,124.768,48.08,123.766,57.313,127.087C67.184,130.638,77.055,142.457,86.925,147.117C96.478,151.627,106.03,152.774,115.582,154.981C125.453,157.26,135.323,160.491,145.194,160.491C154.746,160.491,164.299,159.748,173.851,159.46C183.721,159.161,193.592,159.22,203.463,158.742C213.333,158.264,223.204,156.063,233.075,152.703C242.627,149.452,252.179,143.419,261.731,139.166C271.602,134.77,281.473,130.761,291.343,126.811C300.896,122.988,310.448,119.401,320,115.814">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="gas" d="M0,102.591C9.871,109.644,19.741,116.696,29.612,121.904C38.846,126.775,48.08,129.831,57.313,133.29C67.184,136.988,77.055,140.719,86.925,143.229C96.478,145.659,106.03,145.723,115.582,148.262C125.453,150.886,135.323,158.893,145.194,158.893C154.746,158.893,164.299,157.504,173.851,156.692C183.721,155.852,193.592,155.769,203.463,153.924C213.333,152.078,223.204,147.752,233.075,144.488C242.627,141.328,252.179,137.953,261.731,134.674C271.602,131.285,281.473,127.629,291.343,124.483C300.896,121.438,310.448,118.746,320,116.053">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="gas" d="M0,104.561C9.871,114.627,19.741,124.694,29.612,126.149C38.846,127.51,48.08,126.829,57.313,128.191C67.184,129.646,77.055,143.276,86.925,147.764C96.478,152.108,106.03,153.037,115.582,155.076C125.453,157.183,135.323,160.122,145.194,160.122C154.746,160.122,164.299,158.096,173.851,158.096C183.721,158.096,193.592,158.891,203.463,158.891C213.333,158.891,223.204,157.411,233.075,154.449C242.627,151.583,252.179,141.334,261.731,136.176C271.602,130.847,281.473,127.338,291.343,123.178C300.896,119.152,310.448,115.37,320,111.587">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="gas" d="M0,106.077C9.871,112.944,19.741,119.811,29.612,120.664C38.846,121.461,48.08,121.062,57.313,121.86C67.184,122.712,77.055,128.188,86.925,132.908C96.478,137.476,106.03,145.083,115.582,149.526C125.453,154.117,135.323,159.568,145.194,159.786C154.746,159.997,164.299,160.047,173.851,160.102C183.721,160.16,193.592,160.189,203.463,160.189C213.333,160.189,223.204,158.725,233.075,155.797C242.627,152.963,252.179,142.824,261.731,136.474C271.602,129.912,281.473,121.195,291.343,117.079C300.896,113.096,310.448,112.1,320,111.104">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#86cae7" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2022" data-group-facet="gas" d="M0,112.301C9.871,118.131,19.741,123.96,29.612,123.96C38.846,123.96,48.08,122.043,57.313,122.043C67.184,122.043,77.055,134.976,86.925,140.647C96.478,146.135,106.03,152.156,115.582,155.621C125.453,159.201,135.323,160.352,145.194,161.471C154.746,162.554,164.299,162.52,173.851,163.096C183.721,163.691,193.592,164.993,203.463,164.993C213.333,164.993,223.204,157.889,233.075,155.343C242.627,152.88,252.179,153.155,261.731,149.838C271.602,146.41,281.473,139.088,291.343,134.806C300.896,130.663,310.448,127.544,320,124.424">
+</path>
+<path stroke-width="2" fill="none" opacity="0.5" stroke="#b5c969" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2023" data-group-facet="gas" d="M0,126.443C9.871,128.173,19.741,129.903,29.612,132.189C38.846,134.326,48.08,137.215,57.313,139.573C67.184,142.094,77.055,143.824,86.925,146.784C96.478,149.648,106.03,153.926,115.582,156.937C125.453,160.05,135.323,165.08,145.194,165.08C154.746,165.08,164.299,164.967,173.851,164.967C183.721,164.967,193.592,166.249,203.463,166.249C213.333,166.249,223.204,164.171,233.075,161.952C242.627,159.804,252.179,157.241,261.731,153.298C271.602,149.222,281.473,142.028,291.343,137.679C300.896,133.471,310.448,130.468,320,127.464">
+</path>
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#f3d039" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2024" data-group-facet="gas" d="M0,120.178C9.871,128.876,19.741,137.573,29.612,141.04C38.846,144.284,48.08,143.764,57.313,145.905C67.184,148.194,77.055,151.682,86.925,154.551C96.478,157.329,106.03,161.703,115.582,162.848C125.453,164.031,135.323,164.063,145.194,164.623C154.746,165.164,164.299,165.932,173.851,166.158C183.721,166.391,193.592,166.508,203.463,166.508C213.333,166.508,223.204,163.613,233.075,161.019C242.627,158.509,252.179,157.126,261.731,151.342C271.602,145.365,281.473,127.059,291.343,125.216C300.896,123.433,310.448,122.987,320,122.541">
+</path>
+<path stroke-width="2" fill="none" opacity="0.7" stroke="#cf8e02" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2025" data-group-facet="gas" d="M0,116.613C9.871,117.731,19.741,118.85,29.612,122.19C38.846,125.314,48.08,130.779,57.313,135.452C67.184,140.446,77.055,147.192,86.925,151.3C96.478,155.275,106.03,157.549,115.582,159.924C125.453,162.378,135.323,165.685,145.194,165.685C154.746,165.685,164.299,164.121,173.851,164.121C183.721,164.121,193.592,165.647,203.463,165.647C213.333,165.647,223.204,164.611,233.075,162.537C242.627,160.53,252.179,148.11,261.731,142.644C271.602,136.996,281.473,132.748,291.343,129.432C300.896,126.223,310.448,124.542,320,122.862">
+</path>
+<path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="gas" d="M0,107.494C9.871,114.651,19.741,121.808,29.612,127.447C38.846,132.723,48.08,136.904,57.313,140.616C67.184,144.584,77.055,146.757,86.925,150.199C96.478,153.531,106.03,158.298,115.582,160.893C125.453,163.574,135.323,165.718,145.194,165.831C154.746,165.941,164.299,165.918,173.851,165.995C183.721,166.076,193.592,166.192,203.463,166.309">
+</path>
+</g>
+<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+</rect>
+</g>
+</svg>
+<div style="transform: translate(50px, 5px); position: absolute; top: 0px; left: 0px;">
+</div>
+</div>
+</div>
+</div>
+<div class="vis-footer">
+<div class="vis-footer-content">
+<span>Source: eurostat, eigene Berechnungen</span>
+</div>
+</div>
+</div>

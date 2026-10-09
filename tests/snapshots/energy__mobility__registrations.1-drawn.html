@@ -1,0 +1,642 @@
+<div class="vis">
+<div class="vis-header">
+<div class="title">Pkw-Neuzulassungen</div>
+<div class="subtitle">nach Kraftstoffart bzw. Energiequelle, monatlich</div>
+</div>
+<div class="vis-form-elements">
+<div class="formElement" id="container-values">
+<div class="title">Werte:</div>
+<div class="entries">
+<div id="container-valuesAbs">
+<input type="radio" id="gen-vis-form-N-values-valuesAbs" name="gen-vis-form-N-values" checked="" value="valuesAbs">
+<label for="gen-vis-form-N-values-valuesAbs">Anzahl</label>
+</div>
+<div id="container-valuesShare">
+<input type="radio" id="gen-vis-form-N-values-valuesShare" name="gen-vis-form-N-values" value="valuesShare">
+<label for="gen-vis-form-N-values-valuesShare">Anteil</label>
+</div>
+</div>
+</div>
+<div class="formElement" id="container-scale">
+<div class="title">Y-Skala:</div>
+<div class="entries">
+<div id="container-shareAxisOff">
+<input type="radio" id="gen-vis-form-N-scale-shareAxisOff" name="gen-vis-form-N-scale" checked="" value="shareAxisOff">
+<label for="gen-vis-form-N-scale-shareAxisOff">Getrennt</label>
+</div>
+<div id="container-shareAxisOn">
+<input type="radio" id="gen-vis-form-N-scale-shareAxisOn" name="gen-vis-form-N-scale" value="shareAxisOn">
+<label for="gen-vis-form-N-scale-shareAxisOn">Geteilt</label>
+</div>
+</div>
+</div>
+</div>
+<div class="vis-legends">
+<div class="legend" data-dim="year">
+<div class="title">
+</div>
+<div class="entries" role="group">
+<div data-visible="true" data-key="2019" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#BBBBBB" stroke-width="2" opacity="0.2">
+</line>
+</svg>
+<span>2019</span>
+</div>
+<div data-visible="true" data-key="2020" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#AAAAAA" stroke-width="2" opacity="0.2">
+</line>
+</svg>
+<span>2020</span>
+</div>
+<div data-visible="true" data-key="2021" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#cf90f0" stroke-width="2" opacity="0.2">
+</line>
+</svg>
+<span>2021</span>
+</div>
+<div data-visible="true" data-key="2022" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#86cae7" stroke-width="2" opacity="0.2">
+</line>
+</svg>
+<span>2022</span>
+</div>
+<div data-visible="true" data-key="2023" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#b5c969" stroke-width="2" opacity="0.5">
+</line>
+</svg>
+<span>2023</span>
+</div>
+<div data-visible="true" data-key="2024" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#f3d039" stroke-width="2" opacity="0.6">
+</line>
+</svg>
+<span>2024</span>
+</div>
+<div data-visible="true" data-key="2025" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#cf8e02" stroke-width="2" opacity="0.7">
+</line>
+</svg>
+<span>2025</span>
+</div>
+<div data-visible="true" data-key="2026" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<line x1="0" x2="16" y1="8" y2="8" stroke="#c3423f" stroke-width="2" opacity="1">
+</line>
+</svg>
+<span>2026</span>
+</div>
+</div>
+</div>
+<div class="legend" data-dim="facet">
+<div class="title">
+</div>
+<div class="entries" role="group">
+<div data-visible="true" data-key="bev" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="0" height="0">
+</svg>
+<span>Elektro</span>
+</div>
+<div data-visible="true" data-key="phev" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="0" height="0">
+</svg>
+<span>Plug-in-Hybrid</span>
+</div>
+<div data-visible="true" data-key="hybrid" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="0" height="0">
+</svg>
+<span>Hybrid (ohne Plug-in)</span>
+</div>
+<div data-visible="true" data-key="petrol" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="0" height="0">
+</svg>
+<span>Benzin</span>
+</div>
+<div data-visible="true" data-key="diesel" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="0" height="0">
+</svg>
+<span>Diesel</span>
+</div>
+<div data-visible="false" data-key="other" role="checkbox" tabindex="0" aria-checked="false">
+<svg width="0" height="0">
+</svg>
+<span>Sonstige</span>
+</div>
+<div data-visible="false" data-key="total" role="checkbox" tabindex="0" aria-checked="false">
+<svg width="0" height="0">
+</svg>
+<span>Gesamt</span>
+</div>
+</div>
+</div>
+</div>
+<div class="vis-body">
+<div style="width: 400px; display: inline-block;">
+<div class="facet-title" style="margin-left: 50px;">Elektro</div>
+<div style="width: 400px;" class="vis-inner">
+<svg width="400" height="220" class="facet">
+<g transform="translate(50 5)">
+<g visibility="hidden" class="hoverMarker">
+<line>
+</line>
+</g>
+<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
+</path>
+<g class="tick" opacity="1" transform="translate(87.346,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Apr</text>
+</g>
+<g class="tick" opacity="1" transform="translate(174.271,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Jul</text>
+</g>
+<g class="tick" opacity="1" transform="translate(262.152,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Okt</text>
+</g>
+</g>
+<g class="grid">
+<line x1="0" x2="320" y1="185" y2="185">
+</line>
+<line x1="0" x2="320" y1="147.597" y2="147.597">
+</line>
+<line x1="0" x2="320" y1="110.194" y2="110.194">
+</line>
+<line x1="0" x2="320" y1="72.792" y2="72.792">
+</line>
+<line x1="0" x2="320" y1="35.389" y2="35.389">
+</line>
+</g>
+<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
+</path>
+<g class="tick" opacity="1" transform="translate(0,185.5)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,148.097)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">2.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,110.694)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">4.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,73.292)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">6.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,35.889)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">8.000</text>
+</g>
+</g>
+<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="bev" d="M0,175.518C9.871,174.945,19.741,174.371,29.612,172.077C38.846,169.931,48.08,159.865,57.313,159.865C67.184,159.865,77.055,171.138,86.925,171.46C96.478,171.772,106.03,171.928,115.582,171.928C125.453,171.928,135.323,167.439,145.194,167.439C154.746,167.439,164.299,171.703,173.851,171.703C183.721,171.703,193.592,170.862,203.463,170.058C213.333,169.253,223.204,166.878,233.075,166.878C242.627,166.878,252.179,175.369,261.731,175.369C271.602,175.369,281.473,173.278,291.343,172.788C300.896,172.314,310.448,172.196,320,172.077">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="bev" d="M0,172.003C9.871,169.328,19.741,166.654,29.612,166.654C38.846,166.654,48.08,169.649,57.313,170.937C67.184,172.313,77.055,174.583,86.925,174.583C96.478,174.583,106.03,172.857,115.582,171.254C125.453,169.599,135.323,164.709,145.194,164.709C154.746,164.709,164.299,165.102,173.851,165.102C183.721,165.102,193.592,164.709,203.463,163.924C213.333,163.138,223.204,148.607,233.075,148.607C242.627,148.607,252.179,155.489,261.731,155.489C271.602,155.489,281.473,152.291,291.343,146.456C300.896,140.81,310.448,131.197,320,121.584">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="bev" d="M0,159.248C9.871,157.833,19.741,156.418,29.612,150.758C38.846,145.463,48.08,121.191,57.313,121.191C67.184,121.191,77.055,140.042,86.925,140.042C96.478,140.042,106.03,137.989,115.582,134.338C125.453,130.565,135.323,117.413,145.194,117.413C154.746,117.413,164.299,147.784,173.851,147.784C183.721,147.784,193.592,130.105,203.463,125.155C213.333,120.206,223.204,117.731,233.075,117.731C242.627,117.731,252.179,141.557,261.731,141.557C271.602,141.557,281.473,119.582,291.343,119.582C300.896,119.582,310.448,120.396,320,121.209">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#86cae7" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2022" data-group-facet="bev" d="M0,147.354C9.871,147.039,19.741,146.724,29.612,145.465C38.846,144.287,48.08,128.166,57.313,128.166C67.184,128.166,77.055,150.421,86.925,150.421C96.478,150.421,106.03,149.081,115.582,146.4C125.453,143.63,135.323,121.153,145.194,121.153C154.746,121.153,164.299,139.78,173.851,139.78C183.721,139.78,193.592,138.402,203.463,135.647C213.333,132.892,223.204,99.834,233.075,99.834C242.627,99.834,252.179,135.254,261.731,135.254C271.602,135.254,281.473,124.986,291.343,120.854C300.896,116.856,310.448,113.796,320,110.737">
+</path>
+<path stroke-width="2" fill="none" opacity="0.5" stroke="#b5c969" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2023" data-group-facet="bev" d="M0,133.665C9.871,131.267,19.741,128.869,29.612,121.135C38.846,113.9,48.08,90.09,57.313,90.09C67.184,90.09,77.055,121.509,86.925,121.509C96.478,121.509,106.03,111.522,115.582,107.763C125.453,103.879,135.323,98.749,145.194,98.749C154.746,98.749,164.299,122.893,173.851,122.893C183.721,122.893,193.592,114.137,203.463,111.223C213.333,108.309,223.204,106.76,233.075,105.407C242.627,104.098,252.179,103.125,261.731,103.125C271.602,103.125,281.473,103.424,291.343,104.023C300.896,104.602,310.448,107.221,320,109.839">
+</path>
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#f3d039" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2024" data-group-facet="bev" d="M0,132.206C9.871,130.59,19.741,128.974,29.612,122.874C38.846,117.168,48.08,97.908,57.313,97.908C67.184,97.908,77.055,124.557,86.925,124.557C96.478,124.557,106.03,123.211,115.582,120.518C125.453,117.735,135.323,97.178,145.194,97.178C154.746,97.178,164.299,130.149,173.851,130.149C183.721,130.149,193.592,129.108,203.463,127.026C213.333,124.944,223.204,102.321,233.075,102.321C242.627,102.321,252.179,108.265,261.731,110.381C271.602,112.568,281.473,115.113,291.343,115.113C300.896,115.113,310.448,110.194,320,105.276">
+</path>
+<path stroke-width="2" fill="none" opacity="0.7" stroke="#cf8e02" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2025" data-group-facet="bev" d="M0,113.523C9.871,112.242,19.741,110.961,29.612,105.837C38.846,101.043,48.08,70.51,57.313,70.51C67.184,70.51,77.055,76.407,86.925,78.589C96.478,80.701,106.03,83.489,115.582,83.489C125.453,83.489,135.323,68.322,145.194,68.322C154.746,68.322,164.299,87.013,173.851,92.989C183.721,99.165,193.592,104.322,203.463,104.322C213.333,104.322,223.204,84.33,233.075,84.33C242.627,84.33,252.179,86.378,261.731,88.407C271.602,90.504,281.473,95.643,291.343,96.842C300.896,98.001,310.448,98.291,320,98.581">
+</path>
+<path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="bev" d="M0,97.066C9.871,99.525,19.741,101.984,29.612,101.984C38.846,101.984,48.08,31.536,57.313,31.536C67.184,31.536,77.055,46.77,86.925,51.809C96.478,56.685,106.03,61.608,115.582,61.608C125.453,61.608,135.323,16.818,145.194,16.818C154.746,16.818,164.299,44.396,173.851,52.725C183.721,61.331,193.592,64.106,203.463,66.882">
+</path>
+</g>
+<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+</rect>
+</g>
+</svg>
+<div style="transform: translate(50px, 5px); position: absolute; top: 0px; left: 0px;">
+</div>
+</div>
+</div>
+<div style="width: 400px; display: inline-block;">
+<div class="facet-title" style="margin-left: 50px;">Plug-in-Hybrid</div>
+<div style="width: 400px;" class="vis-inner">
+<svg width="400" height="220" class="facet">
+<g transform="translate(50 5)">
+<g visibility="hidden" class="hoverMarker">
+<line>
+</line>
+</g>
+<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
+</path>
+<g class="tick" opacity="1" transform="translate(87.346,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Apr</text>
+</g>
+<g class="tick" opacity="1" transform="translate(174.271,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Jul</text>
+</g>
+<g class="tick" opacity="1" transform="translate(262.152,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Okt</text>
+</g>
+</g>
+<g class="grid">
+<line x1="0" x2="320" y1="185" y2="185">
+</line>
+<line x1="0" x2="320" y1="143.371" y2="143.371">
+</line>
+<line x1="0" x2="320" y1="101.742" y2="101.742">
+</line>
+<line x1="0" x2="320" y1="60.113" y2="60.113">
+</line>
+<line x1="0" x2="320" y1="18.483" y2="18.483">
+</line>
+</g>
+<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
+</path>
+<g class="tick" opacity="1" transform="translate(0,185.5)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,143.871)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">1.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,102.242)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">2.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,60.613)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">3.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,18.983)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">4.000</text>
+</g>
+</g>
+<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="phev" d="M0,177.465C9.871,177.838,19.741,178.211,29.612,178.464C38.846,178.701,48.08,178.964,57.313,178.964C67.184,178.964,77.055,177.673,86.925,177.673C96.478,177.673,106.03,178.647,115.582,179.172C125.453,179.714,135.323,180.879,145.194,180.879C154.746,180.879,164.299,180.823,173.851,180.795C183.721,180.767,193.592,180.768,203.463,180.712C213.333,180.657,223.204,179.893,233.075,178.256C242.627,176.671,252.179,170.721,261.731,170.721C271.602,170.721,281.473,171.994,291.343,172.636C300.896,173.257,310.448,173.883,320,174.509">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="phev" d="M0,161.813C9.871,165.091,19.741,168.37,29.612,170.305C38.846,172.115,48.08,172.447,57.313,173.385C67.184,174.389,77.055,176.091,86.925,176.091C96.478,176.091,106.03,167.434,115.582,164.269C125.453,160.998,135.323,158.58,145.194,156.942C154.746,155.356,164.299,154.444,173.851,154.444C183.721,154.444,193.592,156.838,203.463,158.565C213.333,160.293,223.204,164.81,233.075,164.81C242.627,164.81,252.179,141.289,261.731,141.289C271.602,141.289,281.473,142.372,291.343,142.372C300.896,142.372,310.448,139.999,320,137.626">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="phev" d="M0,145.785C9.871,144.717,19.741,143.648,29.612,139.374C38.846,135.376,48.08,114.855,57.313,114.855C67.184,114.855,77.055,130.424,86.925,130.424C96.478,130.424,106.03,122.265,115.582,122.265C125.453,122.265,135.323,124.399,145.194,126.761C154.746,129.047,164.299,134.701,173.851,136.044C183.721,137.432,193.592,137.584,203.463,138.126C213.333,138.667,223.204,139.291,233.075,139.291C242.627,139.291,252.179,137.376,261.731,137.376C271.602,137.376,281.473,137.418,291.343,137.501C300.896,137.582,310.448,140.455,320,143.329">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#86cae7" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2022" data-group-facet="phev" d="M0,139.041C9.871,142.726,19.741,146.41,29.612,146.41C38.846,146.41,48.08,136.086,57.313,136.086C67.184,136.086,77.055,138.732,86.925,139.583C96.478,140.405,106.03,141.164,115.582,141.164C125.453,141.164,135.323,135.378,145.194,135.378C154.746,135.378,164.299,150.448,173.851,150.448C183.721,150.448,193.592,150.129,203.463,149.49C213.333,148.852,223.204,134.462,233.075,134.462C242.627,134.462,252.179,140.79,261.731,140.79C271.602,140.79,281.473,121.016,291.343,121.016C300.896,121.016,310.448,127.406,320,133.796">
+</path>
+<path stroke-width="2" fill="none" opacity="0.5" stroke="#b5c969" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2023" data-group-facet="phev" d="M0,134.296C9.871,133.893,19.741,133.491,29.612,131.881C38.846,130.375,48.08,105.988,57.313,105.988C67.184,105.988,77.055,127.03,86.925,129.009C96.478,130.924,106.03,131.881,115.582,131.881C125.453,131.881,135.323,110.109,145.194,110.109C154.746,110.109,164.299,130.882,173.851,130.882C183.721,130.882,193.592,126.573,203.463,124.971C213.333,123.368,223.204,121.266,233.075,121.266C242.627,121.266,252.179,121.529,261.731,122.057C271.602,122.602,281.473,132.582,291.343,134.504C300.896,136.363,310.448,136.828,320,137.293">
+</path>
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#f3d039" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2024" data-group-facet="phev" d="M0,123.847C9.871,126.636,19.741,129.425,29.612,129.425C38.846,129.425,48.08,123.514,57.313,123.514C67.184,123.514,77.055,127.553,86.925,129.05C96.478,130.5,106.03,132.422,115.582,132.422C125.453,132.422,135.323,109.776,145.194,109.776C154.746,109.776,164.299,121.753,173.851,126.469C183.721,131.343,193.592,138.375,203.463,138.375C213.333,138.375,223.204,136.169,233.075,131.756C242.627,127.486,252.179,110.401,261.731,110.401C271.602,110.401,281.473,126.569,291.343,128.634C300.896,130.632,310.448,131.132,320,131.631">
+</path>
+<path stroke-width="2" fill="none" opacity="0.7" stroke="#cf8e02" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2025" data-group-facet="phev" d="M0,116.645C9.871,117.249,19.741,117.852,29.612,117.852C38.846,117.852,48.08,96.583,57.313,90.294C67.184,83.57,77.055,80.053,86.925,80.053C96.478,80.053,106.03,81.801,115.582,81.801C125.453,81.801,135.323,80.011,145.194,77.847C154.746,75.752,164.299,69.188,173.851,69.188C183.721,69.188,193.592,84.216,203.463,84.216C213.333,84.216,223.204,83.314,233.075,81.51C242.627,79.764,252.179,72.809,261.731,72.809C271.602,72.809,281.473,78.596,291.343,78.596C300.896,78.596,310.448,74.017,320,69.437">
+</path>
+<path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="phev" d="M0,71.019C9.871,83.238,19.741,95.456,29.612,95.456C38.846,95.456,48.08,53.244,57.313,53.244C67.184,53.244,77.055,58.617,86.925,60.237C96.478,61.805,106.03,62.943,115.582,62.943C125.453,62.943,135.323,16.818,145.194,16.818C154.746,16.818,164.299,28.839,173.851,38.049C183.721,47.566,193.592,60.5,203.463,73.434">
+</path>
+</g>
+<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+</rect>
+</g>
+</svg>
+<div style="transform: translate(50px, 5px); position: absolute; top: 0px; left: 0px;">
+</div>
+</div>
+</div>
+<div style="width: 400px; display: inline-block;">
+<div class="facet-title" style="margin-left: 50px;">Hybrid (ohne Plug-in)</div>
+<div style="width: 400px;" class="vis-inner">
+<svg width="400" height="220" class="facet">
+<g transform="translate(50 5)">
+<g visibility="hidden" class="hoverMarker">
+<line>
+</line>
+</g>
+<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
+</path>
+<g class="tick" opacity="1" transform="translate(87.346,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Apr</text>
+</g>
+<g class="tick" opacity="1" transform="translate(174.271,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Jul</text>
+</g>
+<g class="tick" opacity="1" transform="translate(262.152,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Okt</text>
+</g>
+</g>
+<g class="grid">
+<line x1="0" x2="320" y1="185" y2="185">
+</line>
+<line x1="0" x2="320" y1="153.005" y2="153.005">
+</line>
+<line x1="0" x2="320" y1="121.01" y2="121.01">
+</line>
+<line x1="0" x2="320" y1="89.015" y2="89.015">
+</line>
+<line x1="0" x2="320" y1="57.02" y2="57.02">
+</line>
+<line x1="0" x2="320" y1="25.025" y2="25.025">
+</line>
+</g>
+<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
+</path>
+<g class="tick" opacity="1" transform="translate(0,185.5)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,153.505)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">2.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,121.51)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">4.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,89.515)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">6.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,57.52)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">8.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,25.525)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">10.000</text>
+</g>
+</g>
+<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="hybrid" d="M0,176.025C9.871,175.956,19.741,175.887,29.612,175.609C38.846,175.35,48.08,168.939,57.313,167.163C67.184,165.264,77.055,164.315,86.925,164.315C96.478,164.315,106.03,165.643,115.582,165.643C125.453,165.643,135.323,165.323,145.194,165.323C154.746,165.323,164.299,165.579,173.851,165.579C183.721,165.579,193.592,162.811,203.463,162.811C213.333,162.811,223.204,165.627,233.075,165.627C242.627,165.627,252.179,160.876,261.731,160.876C271.602,160.876,281.473,161.596,291.343,161.596C300.896,161.596,310.448,160.74,320,159.884">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="hybrid" d="M0,157.996C9.871,157.844,19.741,157.692,29.612,157.692C38.846,157.692,48.08,167.673,57.313,168.731C67.184,169.861,77.055,170.426,86.925,170.426C96.478,170.426,106.03,159.019,115.582,155.229C125.453,151.312,135.323,149.25,145.194,147.566C154.746,145.936,164.299,145.118,173.851,145.118C183.721,145.118,193.592,151.213,203.463,151.213C213.333,151.213,223.204,146.682,233.075,143.278C242.627,139.984,252.179,131.264,261.731,131.264C271.602,131.264,281.473,142.111,291.343,142.111C300.896,142.111,310.448,137.567,320,133.024">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="hybrid" d="M0,151.485C9.871,149.339,19.741,147.193,29.612,138.607C38.846,130.576,48.08,101.381,57.313,101.381C67.184,101.381,77.055,128.497,86.925,128.497C96.478,128.497,106.03,123.606,115.582,120.354C125.453,116.993,135.323,108.548,145.194,108.548C154.746,108.548,164.299,118.087,173.851,122.386C183.721,126.827,193.592,134.704,203.463,134.704C213.333,134.704,223.204,133.904,233.075,133.904C242.627,133.904,252.179,134.197,261.731,134.784C271.602,135.39,281.473,138.575,291.343,138.575C300.896,138.575,310.448,136.967,320,135.36">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#86cae7" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2022" data-group-facet="hybrid" d="M0,142.575C9.871,139.497,19.741,136.42,29.612,133.216C38.846,130.219,48.08,124.001,57.313,124.001C67.184,124.001,77.055,130.512,86.925,130.512C96.478,130.512,106.03,129.272,115.582,127.809C125.453,126.297,135.323,121.474,145.194,121.474C154.746,121.474,164.299,138.959,173.851,138.959C183.721,138.959,193.592,129.851,203.463,129.585C213.333,129.318,223.204,129.185,233.075,129.185C242.627,129.185,252.179,134.992,261.731,134.992C271.602,134.992,281.473,124.833,291.343,124.833C300.896,124.833,310.448,127.033,320,129.233">
+</path>
+<path stroke-width="2" fill="none" opacity="0.5" stroke="#b5c969" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2023" data-group-facet="hybrid" d="M0,125.121C9.871,125.633,19.741,126.145,29.612,126.145C38.846,126.145,48.08,100.853,57.313,100.853C67.184,100.853,77.055,121.57,86.925,121.57C96.478,121.57,106.03,116.861,115.582,114.147C125.453,111.342,135.323,104.964,145.194,104.964C154.746,104.964,164.299,124.225,173.851,124.225C183.721,124.225,193.592,122.22,203.463,120.434C213.333,118.648,223.204,113.507,233.075,113.507C242.627,113.507,252.179,116.063,261.731,116.963C271.602,117.893,281.473,117.882,291.343,118.946C300.896,119.976,310.448,121.573,320,123.17">
+</path>
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#f3d039" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2024" data-group-facet="hybrid" d="M0,119.906C9.871,117.953,19.741,116,29.612,109.956C38.846,104.301,48.08,85.831,57.313,85.831C67.184,85.831,77.055,112.583,86.925,113.123C96.478,113.646,106.03,113.907,115.582,113.907C125.453,113.907,135.323,68.746,145.194,68.746C154.746,68.746,164.299,98.172,173.851,102.517C183.721,107.007,193.592,109.252,203.463,109.252C213.333,109.252,223.204,107.423,233.075,103.765C242.627,100.225,252.179,79.96,261.731,79.96C271.602,79.96,281.473,96.566,291.343,96.566C300.896,96.566,310.448,93.878,320,91.191">
+</path>
+<path stroke-width="2" fill="none" opacity="0.7" stroke="#cf8e02" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2025" data-group-facet="hybrid" d="M0,98.533C9.871,98.15,19.741,97.766,29.612,96.23C38.846,94.793,48.08,69.434,57.313,69.434C67.184,69.434,77.055,69.909,86.925,70.858C96.478,71.776,106.03,75.177,115.582,75.177C125.453,75.177,135.323,56.46,145.194,56.46C154.746,56.46,164.299,63.489,173.851,67.37C183.721,71.381,193.592,80.184,203.463,80.184C213.333,80.184,223.204,63.467,233.075,63.467C242.627,63.467,252.179,64.384,261.731,66.218C271.602,68.114,281.473,78.601,291.343,78.601C300.896,78.601,310.448,73.785,320,68.97">
+</path>
+<path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="hybrid" d="M0,81.08C9.871,80.63,19.741,80.179,29.612,78.377C38.846,76.69,48.08,16.818,57.313,16.818C67.184,16.818,77.055,42.378,86.925,51.165C96.478,59.668,106.03,69.194,115.582,69.194C125.453,69.194,135.323,17.474,145.194,17.474C154.746,17.474,164.299,59.357,173.851,69.946C183.721,80.888,193.592,83.624,203.463,86.359">
+</path>
+</g>
+<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+</rect>
+</g>
+</svg>
+<div style="transform: translate(50px, 5px); position: absolute; top: 0px; left: 0px;">
+</div>
+</div>
+</div>
+<div style="width: 400px; display: inline-block;">
+<div class="facet-title" style="margin-left: 50px;">Benzin</div>
+<div style="width: 400px;" class="vis-inner">
+<svg width="400" height="220" class="facet">
+<g transform="translate(50 5)">
+<g visibility="hidden" class="hoverMarker">
+<line>
+</line>
+</g>
+<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
+</path>
+<g class="tick" opacity="1" transform="translate(87.346,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Apr</text>
+</g>
+<g class="tick" opacity="1" transform="translate(174.271,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Jul</text>
+</g>
+<g class="tick" opacity="1" transform="translate(262.152,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Okt</text>
+</g>
+</g>
+<g class="grid">
+<line x1="0" x2="320" y1="185" y2="185">
+</line>
+<line x1="0" x2="320" y1="138.9" y2="138.9">
+</line>
+<line x1="0" x2="320" y1="92.8" y2="92.8">
+</line>
+<line x1="0" x2="320" y1="46.7" y2="46.7">
+</line>
+<line x1="0" x2="320" y1="0.6" y2="0.6">
+</line>
+</g>
+<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
+</path>
+<g class="tick" opacity="1" transform="translate(0,185.5)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,139.4)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">5.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,93.3)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">10.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,47.2)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">15.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,1.1)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">20.000</text>
+</g>
+</g>
+<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="petrol" d="M0,58.981C9.871,62.254,19.741,65.527,29.612,65.527C38.846,65.527,48.08,24.591,57.313,24.591C67.184,24.591,77.055,24.747,86.925,25.061C96.478,25.364,106.03,32.64,115.582,32.64C125.453,32.64,135.323,16.818,145.194,16.818C154.746,16.818,164.299,19.724,173.851,22.82C183.721,26.02,193.592,27.191,203.463,35.931C213.333,44.672,223.204,82.833,233.075,82.833C242.627,82.833,252.179,65.26,261.731,65.26C271.602,65.26,281.473,74.503,291.343,77.449C300.896,80.299,310.448,81.58,320,82.861">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="petrol" d="M0,83.027C9.871,85.1,19.741,87.173,29.612,95.465C38.846,103.222,48.08,143.943,57.313,143.943C67.184,143.943,77.055,142.179,86.925,138.651C96.478,135.237,106.03,107.943,115.582,96.027C125.453,83.714,135.323,66.431,145.194,66.431C154.746,66.431,164.299,78.7,173.851,84.087C183.721,89.654,193.592,96.024,203.463,99.19C213.333,102.355,223.204,103.938,233.075,103.938C242.627,103.938,252.179,90.375,261.731,90.375C271.602,90.375,281.473,117.325,291.343,117.325C300.896,117.325,310.448,112.609,320,107.893">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="petrol" d="M0,128.933C9.871,120.695,19.741,112.456,29.612,103.477C38.846,95.077,48.08,76.979,57.313,76.979C67.184,76.979,77.055,99.42,86.925,102.075C96.478,104.645,106.03,105.929,115.582,105.929C125.453,105.929,135.323,91.62,145.194,91.62C154.746,91.62,164.299,106.925,173.851,112.863C183.721,118.998,193.592,127.606,203.463,127.606C213.333,127.606,223.204,123.208,233.075,123.208C242.627,123.208,252.179,138.937,261.731,138.937C271.602,138.937,281.473,132.759,291.343,132.594C300.896,132.434,310.448,132.394,320,132.354">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#86cae7" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2022" data-group-facet="petrol" d="M0,128.445C9.871,128.818,19.741,129.191,29.612,129.191C38.846,129.191,48.08,109.285,57.313,109.285C67.184,109.285,77.055,123.669,86.925,123.669C96.478,123.669,106.03,123.374,115.582,122.784C125.453,122.174,135.323,102.251,145.194,102.251C154.746,102.251,164.299,130.215,173.851,130.215C183.721,130.215,193.592,126.936,203.463,125.467C213.333,123.997,223.204,121.401,233.075,121.401C242.627,121.401,252.179,134.318,261.731,134.318C271.602,134.318,281.473,132.594,291.343,132.594C300.896,132.594,310.448,134.295,320,135.996">
+</path>
+<path stroke-width="2" fill="none" opacity="0.5" stroke="#b5c969" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2023" data-group-facet="petrol" d="M0,118.432C9.871,124.383,19.741,130.335,29.612,130.335C38.846,130.335,48.08,103.753,57.313,103.753C67.184,103.753,77.055,126.407,86.925,126.407C96.478,126.407,106.03,124.456,115.582,122.018C125.453,119.5,135.323,111.342,145.194,111.342C154.746,111.342,164.299,135.332,173.851,135.332C183.721,135.332,193.592,134.78,203.463,133.875C213.333,132.97,223.204,129.901,233.075,129.901C242.627,129.901,252.179,133.82,261.731,133.82C271.602,133.82,281.473,131.701,291.343,131.174C300.896,130.664,310.448,130.536,320,130.408">
+</path>
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#f3d039" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2024" data-group-facet="petrol" d="M0,132.621C9.871,130.864,19.741,129.108,29.612,124.821C38.846,120.811,48.08,108.363,57.313,108.363C67.184,108.363,77.055,109.107,86.925,110.595C96.478,112.034,106.03,122.415,115.582,122.415C125.453,122.415,135.323,83.423,145.194,83.423C154.746,83.423,164.299,122.218,173.851,126.103C183.721,130.116,193.592,132.123,203.463,132.123C213.333,132.123,223.204,130.02,233.075,128.703C242.627,127.428,252.179,124.379,261.731,124.379C271.602,124.379,281.473,132.179,291.343,132.179C300.896,132.179,310.448,125.969,320,119.759">
+</path>
+<path stroke-width="2" fill="none" opacity="0.7" stroke="#cf8e02" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2025" data-group-facet="petrol" d="M0,125.024C9.871,128.569,19.741,132.114,29.612,132.114C38.846,132.114,48.08,117.27,57.313,117.27C67.184,117.27,77.055,123.401,86.925,123.401C96.478,123.401,106.03,123.011,115.582,122.23C125.453,121.424,135.323,116.09,145.194,116.09C154.746,116.09,164.299,120.317,173.851,122.977C183.721,125.726,193.592,132.391,203.463,132.391C213.333,132.391,223.204,114.412,233.075,114.412C242.627,114.412,252.179,125.144,261.731,125.144C271.602,125.144,281.473,124.369,291.343,124.369C300.896,124.369,310.448,128.177,320,131.985">
+</path>
+<path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="petrol" d="M0,123.06C9.871,128.537,19.741,134.013,29.612,134.013C38.846,134.013,48.08,109.571,57.313,109.571C67.184,109.571,77.055,124.807,86.925,126.287C96.478,127.719,106.03,128.435,115.582,128.435C125.453,128.435,135.323,115.14,145.194,115.14C154.746,115.14,164.299,128.989,173.851,133.138C183.721,137.425,193.592,138.748,203.463,140.071">
+</path>
+</g>
+<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+</rect>
+</g>
+</svg>
+<div style="transform: translate(50px, 5px); position: absolute; top: 0px; left: 0px;">
+</div>
+</div>
+</div>
+<div style="width: 400px; display: inline-block;">
+<div class="facet-title" style="margin-left: 50px;">Diesel</div>
+<div style="width: 400px;" class="vis-inner">
+<svg width="400" height="220" class="facet">
+<g transform="translate(50 5)">
+<g visibility="hidden" class="hoverMarker">
+<line>
+</line>
+</g>
+<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 185)">
+<path class="domain" stroke="currentColor" d="M0.5,0.5H320.5">
+</path>
+<g class="tick" opacity="1" transform="translate(87.346,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Apr</text>
+</g>
+<g class="tick" opacity="1" transform="translate(174.271,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Jul</text>
+</g>
+<g class="tick" opacity="1" transform="translate(262.152,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">Okt</text>
+</g>
+</g>
+<g class="grid">
+<line x1="0" x2="320" y1="185" y2="185">
+</line>
+<line x1="0" x2="320" y1="157.815" y2="157.815">
+</line>
+<line x1="0" x2="320" y1="130.629" y2="130.629">
+</line>
+<line x1="0" x2="320" y1="103.444" y2="103.444">
+</line>
+<line x1="0" x2="320" y1="76.259" y2="76.259">
+</line>
+<line x1="0" x2="320" y1="49.074" y2="49.074">
+</line>
+<line x1="0" x2="320" y1="21.888" y2="21.888">
+</line>
+</g>
+<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<path class="domain" stroke="currentColor" d="M0.5,185.5V0.5">
+</path>
+<g class="tick" opacity="1" transform="translate(0,185.5)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,158.315)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">2.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,131.129)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">4.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,103.944)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">6.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,76.759)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">8.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,49.574)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">10.000</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,22.388)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">12.000</text>
+</g>
+</g>
+<g class="plotGroup plot-0 paths" data-plot="plot-0">
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#BBBBBB" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2019" data-group-facet="diesel" d="M0,44.751C9.871,52.145,19.741,59.54,29.612,59.54C38.846,59.54,48.08,26.617,57.313,22.853C67.184,18.83,77.055,16.818,86.925,16.818C96.478,16.818,106.03,22.948,115.582,22.948C125.453,22.948,135.323,22.609,145.194,22.609C154.746,22.609,164.299,23.824,173.851,25.069C183.721,26.355,193.592,26.809,203.463,30.288C213.333,33.768,223.204,82.036,233.075,82.036C242.627,82.036,252.179,53.056,261.731,53.056C271.602,53.056,281.473,59.723,291.343,60.79C300.896,61.823,310.448,62.082,320,62.34">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#AAAAAA" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2020" data-group-facet="diesel" d="M0,64.012C9.871,65.416,19.741,66.821,29.612,72.439C38.846,77.695,48.08,128.767,57.313,128.767C67.184,128.767,77.055,127.195,86.925,124.051C96.478,121.008,106.03,95.797,115.582,84.183C125.453,72.182,135.323,53.546,145.194,53.546C154.746,53.546,164.299,54.338,173.851,55.924C183.721,57.563,193.592,80.486,203.463,80.486C213.333,80.486,223.204,72.072,233.075,72.072C242.627,72.072,252.179,73.518,261.731,76.408C271.602,79.395,281.473,90.789,291.343,90.789C300.896,90.789,310.448,86.209,320,81.628">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#cf90f0" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2021" data-group-facet="diesel" d="M0,135.591C9.871,129.647,19.741,123.703,29.612,114.576C38.846,106.039,48.08,83.395,57.313,83.395C67.184,83.395,77.055,99.121,86.925,102.792C96.478,106.344,106.03,108.12,115.582,108.12C125.453,108.12,135.323,101.568,145.194,101.568C154.746,101.568,164.299,112.429,173.851,117.173C183.721,122.075,193.592,126.506,203.463,130.412C213.333,134.318,223.204,139.52,233.075,140.606C242.627,141.658,252.179,142.183,261.731,142.183C271.602,142.183,281.473,127.821,291.343,126.66C300.896,125.537,310.448,125.256,320,124.975">
+</path>
+<path stroke-width="2" fill="none" opacity="0.2" stroke="#86cae7" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2022" data-group-facet="diesel" d="M0,134.544C9.871,134.429,19.741,134.313,29.612,133.851C38.846,133.419,48.08,125.437,57.313,125.437C67.184,125.437,77.055,139.261,86.925,139.261C96.478,139.261,106.03,137.901,115.582,135.183C125.453,132.374,135.323,114.305,145.194,114.305C154.746,114.305,164.299,130.901,173.851,130.901C183.721,130.901,193.592,126.606,203.463,125.247C213.333,123.887,223.204,122.746,233.075,122.746C242.627,122.746,252.179,134.544,261.731,134.544C271.602,134.544,281.473,133.878,291.343,133.878C300.896,133.878,310.448,134.986,320,136.094">
+</path>
+<path stroke-width="2" fill="none" opacity="0.5" stroke="#b5c969" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2023" data-group-facet="diesel" d="M0,131.676C9.871,133.898,19.741,136.121,29.612,136.121C38.846,136.121,48.08,113.489,57.313,113.489C67.184,113.489,77.055,138.214,86.925,138.214C96.478,138.214,106.03,134.894,115.582,131.241C125.453,127.467,135.323,115.664,145.194,115.664C154.746,115.664,164.299,133.919,173.851,133.919C183.721,133.919,193.592,133.062,203.463,133.062C213.333,133.062,223.204,134.514,233.075,136.026C242.627,137.488,252.179,141.884,261.731,141.884C271.602,141.884,281.473,139.778,291.343,138.921C300.896,138.092,310.448,137.446,320,136.8">
+</path>
+<path stroke-width="2" fill="none" opacity="0.6" stroke="#f3d039" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2024" data-group-facet="diesel" d="M0,137.344C9.871,134.903,19.741,132.462,29.612,128.794C38.846,125.364,48.08,116.357,57.313,116.357C67.184,116.357,77.055,125.287,86.925,127.952C96.478,130.53,106.03,132.315,115.582,132.315C125.453,132.315,135.323,104.722,145.194,104.722C154.746,104.722,164.299,138.799,173.851,143.991C183.721,149.356,193.592,152.038,203.463,152.038C213.333,152.038,223.204,144.536,233.075,144.086C242.627,143.651,252.179,143.434,261.731,143.434C271.602,143.434,281.473,147.647,291.343,147.647C300.896,147.647,310.448,144.548,320,141.449">
+</path>
+<path stroke-width="2" fill="none" opacity="0.7" stroke="#cf8e02" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2025" data-group-facet="diesel" d="M0,143.216C9.871,147.199,19.741,151.181,29.612,151.181C38.846,151.181,48.08,144.467,57.313,144.467C67.184,144.467,77.055,146,86.925,146.574C96.478,147.129,106.03,147.878,115.582,147.878C125.453,147.878,135.323,136.8,145.194,136.8C154.746,136.8,164.299,140.655,173.851,143.067C183.721,145.558,193.592,151.576,203.463,151.576C213.333,151.576,223.204,149.9,233.075,149.346C242.627,148.811,252.179,148.273,261.731,148.273C271.602,148.273,281.473,149.17,291.343,150.869C300.896,152.513,310.448,155.327,320,158.141">
+</path>
+<path stroke-width="2" fill="none" opacity="1" stroke="#c3423f" highlight-opacity="1" highlight-stroke-width="3" data-group-year="2026" data-group-facet="diesel" d="M0,154.077C9.871,153.34,19.741,152.603,29.612,150.978C38.846,149.457,48.08,144.861,57.313,144.861C67.184,144.861,77.055,148.621,86.925,148.912C96.478,149.192,106.03,149.333,115.582,149.333C125.453,149.333,135.323,141.857,145.194,141.857C154.746,141.857,164.299,149.16,173.851,152.337C183.721,155.62,193.592,158.396,203.463,161.172">
+</path>
+</g>
+<rect width="320" height="185" class="events" opacity="0" style="touch-action: pan-y;">
+</rect>
+</g>
+</svg>
+<div style="transform: translate(50px, 5px); position: absolute; top: 0px; left: 0px;">
+</div>
+</div>
+</div>
+</div>
+<div class="vis-footer">
+<div class="vis-footer-content">
+<span>Source: Statistik Austria - Kfz-Neuzulassungen</span>
+</div>
+</div>
+</div>

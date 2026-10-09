@@ -1,17 +1,13 @@
 // @vitest-environment jsdom
-import { describe, test, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { createApp, h, nextTick, ref } from 'vue';
 import { GenVis, mountGenVisElement, registerPlotType, pointwise } from '@/index.js';
 import { plotTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { definitions } from '@/dev/definitions.js';
 import * as d3 from 'd3';
-import { clearCache } from '@/store';
 import { prepareDef } from '@/utils/json';
 import { selection } from '@/utils/export';
+import { examples, errors, useDom, rendered, mount, pointer, hover } from './dom.js';
 
 // the image of the copy of the visualisation, the copy and the width of its
 // container are kept for the tests
@@ -25,71 +21,7 @@ vi.mock('modern-screenshot', () => ({
     },
 }));
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-// all definitions in data/, see the page of the dev server
-const examples = definitions(import.meta.glob('../data/**/*.json', { eager: true, import: 'default' })).map(d => `/data/${d.path}`);
-
-let errors;
-
-beforeAll(() => {
-    // jsdom has no layout
-    Element.prototype.getBoundingClientRect = () => ({ x: 0, y: 0, left: 0, top: 0, width: 800, height: 400, right: 800, bottom: 400 });
-    globalThis.ResizeObserver = class { observe() {} disconnect() {} };
-});
-
-beforeEach(() => {
-    // the files of the project, e.g. /data/bev/def.json
-    vi.stubGlobal('fetch', async url => {
-        const file = root + decodeURIComponent(new URL(url).pathname);
-        return existsSync(file)
-            ? new Response(readFileSync(file))
-            : new Response('', { status: 404, statusText: 'Not Found' });
-    });
-    errors = [];
-    // errors in event handlers, e.g. of the hover
-    window.onerror = message => {
-        errors.push(message);
-        return true;
-    };
-    vi.spyOn(console, 'error').mockImplementation((...a) => errors.push(a.join(' ')));
-    vi.spyOn(console, 'warn').mockImplementation((...a) => errors.push(a.join(' ')));
-});
-
-afterEach(() => {
-    clearCache();
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
-    document.body.innerHTML = '';
-});
-
-const rendered = el => vi.waitFor(() => {
-    if (!el.querySelector('svg.facet, .vis-error'))
-        throw new Error('not rendered');
-}, { timeout: 20000, interval: 10 });
-
-const mount = async (component, props) => {
-    const el = document.body.appendChild(document.createElement('div'));
-    createApp(component, props).mount(el);
-    await rendered(el);
-    await nextTick();
-    return el;
-};
-
-const pointer = (type, init = {}) => new PointerEvent(type, { pointerType: 'mouse', bubbles: true, ...init });
-
-// moves the mouse over all facets, returns the most hover rows at a position
-const hover = async el => {
-    let rows = 0;
-    for (const events of el.querySelectorAll('rect.events')) {
-        for (let x = 0; x <= 800; x += 25) {
-            events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: 150 }));
-            await nextTick();
-            rows = Math.max(rows, el.querySelectorAll('.hover tr.entry').length);
-        }
-        events.dispatchEvent(pointer('pointerleave'));
-    }
-    return rows;
-};
+useDom();
 
 const plotElements = el => el.querySelectorAll('g.plotGroup path, g.plotGroup circle, g.plotGroup rect, g.plotGroup text').length;
 
@@ -1555,7 +1487,7 @@ describe('images', () => {
         await expect(vm.image()).rejects.toThrow("Unknown plot type 'test:once'");
         expect(document.querySelectorAll('.vis')).toHaveLength(1);
         app.unmount();
-        errors = [];
+        errors.length = 0;
     });
 
     test('form elements of the presentation are not in the selection', async () => {

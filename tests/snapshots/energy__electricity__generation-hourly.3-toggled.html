@@ -1,0 +1,521 @@
+<div class="vis">
+<div class="vis-header">
+<div class="title">Stromproduktion im Tagesverlauf</div>
+<div class="subtitle">im Jahr 2021, nach Quellen, in MWh</div>
+</div>
+<div class="vis-form-elements">
+</div>
+<div class="vis-legends">
+<div class="legend" data-dim="type">
+<div class="title">
+</div>
+<div class="entries" role="group">
+<div data-visible="false" data-key="Hydro" role="checkbox" tabindex="0" aria-checked="false">
+<svg width="16" height="16">
+<rect x="0" y="0" width="16" height="15" fill="#5BC5F2" rx="2">
+</rect>
+</svg>
+<span>Hydro</span>
+</div>
+<div data-visible="true" data-key="Wind" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<rect x="0" y="0" width="16" height="15" fill="#BBD7EE" rx="2">
+</rect>
+</svg>
+<span>Wind</span>
+</div>
+<div data-visible="true" data-key="Solar" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<rect x="0" y="0" width="16" height="15" fill="#F3D039" rx="2">
+</rect>
+</svg>
+<span>Solar</span>
+</div>
+<div data-visible="true" data-key="Gas" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<rect x="0" y="0" width="16" height="15" fill="#C3423F" rx="2">
+</rect>
+</svg>
+<span>Erdgas</span>
+</div>
+<div data-visible="true" data-key="Coal" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<rect x="0" y="0" width="16" height="15" fill="#8B4513" rx="2">
+</rect>
+</svg>
+<span>Kohle</span>
+</div>
+<div data-visible="true" data-key="Waste" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<rect x="0" y="0" width="16" height="15" fill="#ABD6A9" rx="2">
+</rect>
+</svg>
+<span>Müll</span>
+</div>
+<div data-visible="true" data-key="Oil" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<rect x="0" y="0" width="16" height="15" fill="#000" rx="2">
+</rect>
+</svg>
+<span>Erdöl</span>
+</div>
+<div data-visible="true" data-key="others" role="checkbox" tabindex="0" aria-checked="true">
+<svg width="16" height="16">
+<rect x="0" y="0" width="16" height="15" fill="#CCC" rx="2">
+</rect>
+</svg>
+<span>Andere</span>
+</div>
+</div>
+</div>
+</div>
+<div class="vis-body">
+<div style="width: 800px;" class="vis-inner">
+<svg width="800" height="350" class="facet">
+<g transform="translate(50 5)">
+<g visibility="hidden" class="hoverMarker">
+<line>
+</line>
+</g>
+<g class="axis-name-x axis-position-bottom" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 310)">
+<path class="domain" stroke="currentColor" d="M0.5,0.5H720.5">
+</path>
+<g class="tick" opacity="1" transform="translate(14.346,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">0</text>
+</g>
+<g class="tick" opacity="1" transform="translate(74.547,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">2</text>
+</g>
+<g class="tick" opacity="1" transform="translate(134.747,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">4</text>
+</g>
+<g class="tick" opacity="1" transform="translate(194.948,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">6</text>
+</g>
+<g class="tick" opacity="1" transform="translate(255.149,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">8</text>
+</g>
+<g class="tick" opacity="1" transform="translate(315.349,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">10</text>
+</g>
+<g class="tick" opacity="1" transform="translate(375.55,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">12</text>
+</g>
+<g class="tick" opacity="1" transform="translate(435.751,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">14</text>
+</g>
+<g class="tick" opacity="1" transform="translate(495.952,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">16</text>
+</g>
+<g class="tick" opacity="1" transform="translate(556.152,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">18</text>
+</g>
+<g class="tick" opacity="1" transform="translate(616.353,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">20</text>
+</g>
+<g class="tick" opacity="1" transform="translate(676.554,0)">
+<line stroke="currentColor" y2="9">
+</line>
+<text fill="currentColor" y="12" dy="0.71em">22</text>
+</g>
+</g>
+<g class="grid">
+<line x1="0" x2="720" y1="310" y2="310">
+</line>
+<line x1="0" x2="720" y1="267.554" y2="267.554">
+</line>
+<line x1="0" x2="720" y1="225.109" y2="225.109">
+</line>
+<line x1="0" x2="720" y1="182.663" y2="182.663">
+</line>
+<line x1="0" x2="720" y1="140.217" y2="140.217">
+</line>
+<line x1="0" x2="720" y1="97.772" y2="97.772">
+</line>
+<line x1="0" x2="720" y1="55.326" y2="55.326">
+</line>
+<line x1="0" x2="720" y1="12.88" y2="12.88">
+</line>
+</g>
+<g class="axis-name-y axis-position-left" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+<path class="domain" stroke="currentColor" d="M0.5,310.5V0.5">
+</path>
+<g class="tick" opacity="1" transform="translate(0,310.5)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0,00</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,268.054)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0,10</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,225.609)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0,20</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,183.163)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0,30</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,140.717)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0,40</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,98.272)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0,50</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,55.826)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0,60</text>
+</g>
+<g class="tick" opacity="1" transform="translate(0,13.38)">
+<line stroke="currentColor" x2="-9">
+</line>
+<text fill="currentColor" x="-12" dy="0.32em">0,70</text>
+</g>
+</g>
+<g class="plotGroup plot-0 rect" data-plot="plot-0">
+<g class="group" data-group-type="Gas">
+<rect fill="#C3423F" opacity="0.9" x="4.846" width="18" y="136.405" height="86.976">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="34.946" width="18" y="138.497" height="85.356">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="65.047" width="18" y="136.899" height="86.614">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="95.147" width="18" y="131.183" height="91.997">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="125.247" width="18" y="120.653" height="102.337">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="155.348" width="18" y="113.247" height="112.064">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="185.448" width="18" y="106.315" height="118.435">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="215.548" width="18" y="96.32" height="123.115">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="245.649" width="18" y="85.061" height="126.787">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="275.749" width="18" y="74.612" height="129.341">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="305.849" width="18" y="67.469" height="130.258">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="335.95" width="18" y="66.032" height="129.436">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="366.05" width="18" y="67.913" height="127.223">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="396.151" width="18" y="73.73" height="125.695">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="426.251" width="18" y="81.869" height="124.677">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="456.351" width="18" y="89.15" height="125.076">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="486.452" width="18" y="95.064" height="125.255">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="516.552" width="18" y="97.827" height="124.907">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="546.652" width="18" y="97.971" height="123.581">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="576.753" width="18" y="98.151" height="120.943">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="606.853" width="18" y="102.903" height="115.285">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="636.953" width="18" y="110.991" height="107.744">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="667.054" width="18" y="121.95" height="98.135">
+</rect>
+<rect fill="#C3423F" opacity="0.9" x="697.154" width="18" y="131.02" height="90.562">
+</rect>
+</g>
+<g class="group" data-group-type="Wind">
+<rect fill="#BBD7EE" opacity="0.9" x="4.846" width="18" y="223.381" height="86.619">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="34.946" width="18" y="223.852" height="86.148">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="65.047" width="18" y="223.513" height="86.487">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="95.147" width="18" y="223.492" height="86.508">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="125.247" width="18" y="224.172" height="85.828">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="155.348" width="18" y="228.842" height="81.158">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="185.448" width="18" y="233.234" height="76.766">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="215.548" width="18" y="234.896" height="75.104">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="245.649" width="18" y="234.642" height="75.358">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="275.749" width="18" y="232.589" height="77.411">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="305.849" width="18" y="230.13" height="79.87">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="335.95" width="18" y="228.895" height="81.105">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="366.05" width="18" y="226.511" height="83.489">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="396.151" width="18" y="226.038" height="83.962">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="426.251" width="18" y="226.493" height="83.507">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="456.351" width="18" y="226.641" height="83.359">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="486.452" width="18" y="226.282" height="83.718">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="516.552" width="18" y="224.863" height="85.137">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="546.652" width="18" y="222.051" height="87.949">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="576.753" width="18" y="219.098" height="90.902">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="606.853" width="18" y="218.188" height="91.812">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="636.953" width="18" y="218.735" height="91.265">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="667.054" width="18" y="220.086" height="89.914">
+</rect>
+<rect fill="#BBD7EE" opacity="0.9" x="697.154" width="18" y="221.582" height="88.418">
+</rect>
+</g>
+<g class="group" data-group-type="Solar">
+<rect fill="#F3D039" opacity="0.9" x="4.846" width="18" y="223.381" height="0">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="34.946" width="18" y="223.852" height="0">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="65.047" width="18" y="223.513" height="0">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="95.147" width="18" y="223.18" height="0.313">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="125.247" width="18" y="222.99" height="1.182">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="155.348" width="18" y="225.311" height="3.531">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="185.448" width="18" y="224.751" height="8.483">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="215.548" width="18" y="219.435" height="15.461">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="245.649" width="18" y="211.848" height="22.794">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="275.749" width="18" y="203.953" height="28.635">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="305.849" width="18" y="197.727" height="32.403">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="335.95" width="18" y="195.469" height="33.426">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="366.05" width="18" y="195.136" height="31.375">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="396.151" width="18" y="199.425" height="26.613">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="426.251" width="18" y="206.546" height="19.948">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="456.351" width="18" y="214.225" height="12.416">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="486.452" width="18" y="220.319" height="5.963">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="516.552" width="18" y="222.734" height="2.13">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="546.652" width="18" y="221.551" height="0.499">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="576.753" width="18" y="219.094" height="0.005">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="606.853" width="18" y="218.188" height="0">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="636.953" width="18" y="218.735" height="0">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="667.054" width="18" y="220.086" height="0">
+</rect>
+<rect fill="#F3D039" opacity="0.9" x="697.154" width="18" y="221.582" height="0">
+</rect>
+</g>
+<g class="group" data-group-type="Coal">
+<rect fill="#8B4513" opacity="0.9" x="4.846" width="18" y="136.405" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="34.946" width="18" y="138.497" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="65.047" width="18" y="136.899" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="95.147" width="18" y="131.183" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="125.247" width="18" y="120.653" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="155.348" width="18" y="113.247" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="185.448" width="18" y="106.315" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="215.548" width="18" y="96.32" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="245.649" width="18" y="85.061" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="275.749" width="18" y="74.612" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="305.849" width="18" y="67.469" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="335.95" width="18" y="66.032" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="366.05" width="18" y="67.913" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="396.151" width="18" y="73.73" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="426.251" width="18" y="81.869" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="456.351" width="18" y="89.15" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="486.452" width="18" y="95.064" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="516.552" width="18" y="97.827" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="546.652" width="18" y="97.971" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="576.753" width="18" y="98.151" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="606.853" width="18" y="102.903" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="636.953" width="18" y="110.991" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="667.054" width="18" y="121.95" height="0">
+</rect>
+<rect fill="#8B4513" opacity="0.9" x="697.154" width="18" y="131.02" height="0">
+</rect>
+</g>
+<g class="group" data-group-type="Oil">
+<rect fill="#000" opacity="0.9" x="4.846" width="18" y="136.405" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="34.946" width="18" y="138.497" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="65.047" width="18" y="136.899" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="95.147" width="18" y="131.183" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="125.247" width="18" y="120.653" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="155.348" width="18" y="113.247" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="185.448" width="18" y="106.315" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="215.548" width="18" y="96.32" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="245.649" width="18" y="85.061" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="275.749" width="18" y="74.612" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="305.849" width="18" y="67.469" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="335.95" width="18" y="66.032" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="366.05" width="18" y="67.913" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="396.151" width="18" y="73.73" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="426.251" width="18" y="81.869" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="456.351" width="18" y="89.15" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="486.452" width="18" y="95.064" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="516.552" width="18" y="97.827" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="546.652" width="18" y="97.971" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="576.753" width="18" y="98.151" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="606.853" width="18" y="102.903" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="636.953" width="18" y="110.991" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="667.054" width="18" y="121.95" height="0">
+</rect>
+<rect fill="#000" opacity="0.9" x="697.154" width="18" y="131.02" height="0">
+</rect>
+</g>
+<g class="group" data-group-type="others">
+<rect fill="#CCC" opacity="0.9" x="4.846" width="18" y="106.035" height="30.37">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="34.946" width="18" y="108.135" height="30.362">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="65.047" width="18" y="106.523" height="30.376">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="95.147" width="18" y="100.775" height="30.408">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="125.247" width="18" y="90.221" height="30.433">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="155.348" width="18" y="82.794" height="30.453">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="185.448" width="18" y="75.859" height="30.456">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="215.548" width="18" y="65.873" height="30.447">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="245.649" width="18" y="54.642" height="30.42">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="275.749" width="18" y="44.216" height="30.396">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="305.849" width="18" y="37.088" height="30.381">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="335.95" width="18" y="35.664" height="30.369">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="366.05" width="18" y="37.555" height="30.358">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="396.151" width="18" y="43.385" height="30.345">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="426.251" width="18" y="51.511" height="30.358">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="456.351" width="18" y="58.77" height="30.379">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="486.452" width="18" y="64.673" height="30.391">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="516.552" width="18" y="67.411" height="30.416">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="546.652" width="18" y="67.532" height="30.439">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="576.753" width="18" y="67.697" height="30.454">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="606.853" width="18" y="72.454" height="30.449">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="636.953" width="18" y="80.406" height="30.585">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="667.054" width="18" y="91.536" height="30.415">
+</rect>
+<rect fill="#CCC" opacity="0.9" x="697.154" width="18" y="100.579" height="30.441">
+</rect>
+</g>
+</g>
+<rect width="720" height="310" class="events" opacity="0" style="touch-action: pan-y;">
+</rect>
+</g>
+</svg>
+<div style="transform: translate(50px, 5px); position: absolute; top: 0px; left: 0px;">
+</div>
+</div>
+</div>
+<div class="vis-footer">
+<div class="vis-footer-content">
+<span>Source: ENTSO-E - Aggregated Generation Per Type 16.1.B C</span>
+</div>
+</div>
+</div>
