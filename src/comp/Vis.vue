@@ -21,7 +21,7 @@
             <!-- the facets are rendered again if their rows change -->
             <template v-if="view.faceted">
                 <div v-for="f in view.facets" :key="f.key" :style="`width: ${f.width}px; display: inline-block;`">
-                    <div class="facet-title" :style="`margin-left: ${f.margins.left}px`">{{ f.name }}</div>
+                    <div class="facet-title" :style="`margin-left: ${f.margins.left}px`">{{ store.text(f.name) }}</div>
                     <facet :key="f.rows" :facet="f"/>
                 </div>
             </template>
@@ -29,8 +29,8 @@
         </div>
         <div class="vis-footer">
             <div class="vis-footer-content">
-                <slot-content v-if="slots.footer" :fn="slots.footer" :props="{ footer: options.footer }"/>
-                <span v-else v-html="options.footer"/>
+                <slot-content v-if="slots.footer" :fn="slots.footer" :props="{ footer: store.text(options.footer) }"/>
+                <span v-else v-html="store.text(options.footer)"/>
             </div>
             <!-- the buttons of the page (the slot buttons), copy, check and
                  download of the feather icons, at the right end of the plots -->
@@ -56,7 +56,6 @@
 import { markRaw } from 'vue';
 import * as d3 from "@/utils/d3";
 
-import { fillTemplate } from "@/utils/def";
 import { highlightElements } from "@/utils/draw";
 import { layout } from "@/layout";
 import { canCopy } from "@/utils/export.js";
@@ -112,8 +111,7 @@ export default {
         // the title and the subtitle with the values of the globals, e.g.
         // "Durchschnitt {base} = 100" of a form element
         header() {
-            const fill = t => typeof t == 'string' ? fillTemplate(t, this.store.def.globals) : t;
-            return { title: fill(this.options.title), subtitle: fill(this.options.subtitle) };
+            return { title: this.store.text(this.options.title), subtitle: this.store.text(this.options.subtitle) };
         },
     },
     mounted() {

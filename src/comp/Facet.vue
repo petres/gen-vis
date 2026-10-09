@@ -149,8 +149,10 @@ export default {
                 const { key, value } = position;
                 const rows = (rowsByKey.get(String(key)) ?? [])
                     .map(e => {
-                        const entries = Object.fromEntries(categories.map(n =>
-                            [n, evaluate(store.mapping(n).hover.props, { ...scope, ...store.prop(n, e[n]) })]));
+                        const entries = Object.fromEntries(categories.map(n => {
+                            const values = evaluate(store.mapping(n).hover.props, { ...scope, ...store.prop(n, e[n]) });
+                            return [n, Object.fromEntries(Object.entries(values).map(([k, v]) => [k, store.text(v)]))];
+                        }));
                         entries[v] = { value: e[v], name: format.v(e[v]) };
                         const order = stackOf ? d3.mean(stackOf(e)) : e[v];
                         return { entries, data: e, nearest: false, order };

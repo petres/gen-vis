@@ -236,9 +236,10 @@ years of a parquet or JSON column as keys of `props`.
 `title`, `subtitle`, `footer` (HTML), `width` (the width of the container if
 not given), `height` and `margins` (`{"top", "right", "bottom", "left"}` in
 pixels). `height` can be a prop based on `totalWidth`, see [props](#props-1).
-`{name}` in `title` and `subtitle` is replaced by the value of the global,
-e.g. `"Durchschnitt {base} = 100"` of a form element of the base year, also in
-the image and the name of its file, see [templates](#formelements-and-globals).
+`{name}` in `title`, `subtitle` and `footer` is replaced by the value of the
+global, e.g. `"Durchschnitt {base} = 100"` of a form element of the base year,
+also in the image and the name of its file, see
+[templates](#formelements-and-globals).
 
 `locale` sets the number and date formats of the axes and the hover, also of
 axes without `format`: `de` (the default) or `en`, or an object with a `base`
@@ -292,7 +293,7 @@ the definition refer to these names.
   a `categorical` one. `orientation` (`horizontal` or `vertical`) places the
   scale on the plot, `angular` or `radial` in polar plots. `domain` fixes the
   domain, `null` entries are taken from the data, dates are parsed as the ones
-  of the data. `domainRel` (relative to the domain, of a `log` scale to its
+  of the data, entries can be references, e.g. `[0, "@max"]` of a global. `domainRel` (relative to the domain, of a `log` scale to its
   positions) and `domainAbs` (absolute) extend it, by default a domain of a
   position taken from the data is extended by 2%. `nice` rounds the ends taken from the data of a numeric
   mapping, e.g. 0.951 to 1, `true` for steps of about a tenth of the domain
@@ -612,7 +613,7 @@ parts add names:
 | everywhere | the `globals` and `totalWidth`, the width of the visualisation |
 | `options.height`, `facets.cols`, `facets.scales`, `filter` | only these |
 | the `props` of `legend` (also of the `symbol`) and `hover` of a mapping | the props of its categories, e.g. `@color` and `@name` |
-| `axis.ticks`, the `props` of annotations | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight` |
+| `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight` |
 | `scale.range` | the sizes of the coordinate system, e.g. `@radius` of polar plots, `width` and `height` are the ones of the inner area |
 | the `props` of a plot | the props of its categories and the values of the row: a mapping (e.g. `@x`), the scaled value (`@x:scaled`, `@x:scaled:0` for the position of 0, `@x:scaled:min` and `@x:scaled:max` of the domain), stacked values (`@y:start`, `@y:end:scaled`, ..., see `stacked`) |
 
@@ -696,7 +697,10 @@ globals, e.g. the values and their shares in the columns `twh`, `co2`,
 ```
 
 `{name}` is replaced by the value of the global, unknown globals are kept and
-reported as warnings. The title and the subtitle can be templates as well, e.g.
+reported as warnings. All texts of a definition are templates as well: the
+title, the subtitle and the footer, the names of the mappings and of their
+categories (e.g. of the legends, the hover and the facets), the titles of the
+axes and the labels and texts of annotations, e.g.
 `"subtitle": "Durchschnitt {base} = 100"`.
 
 ### Checks outside the browser

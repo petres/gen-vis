@@ -257,6 +257,25 @@ describe('rendering', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the texts are templates of the globals, the domain can have references', async () => {
+        const def = lineDef({ footer: 'Quelle {source}' });
+        def.globals = { source: 'Statistik', unit: 'Personen', max: 10 };
+        def.mapping.y.name = 'Wert in {unit}';
+        def.mapping.y.scale.domain = [0, '@max'];
+        def.mapping.x.axis.title.name = 'Jahr ({source})';
+        def.mapping.c.name = 'Land ({unit})';
+        def.mapping.c.props.manual.Wien.name = 'Wien ({unit})';
+        def.facets = { dim: 'c', cols: 2 };
+        const el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelector('.vis-footer-content span').textContent).toBe('Quelle Statistik');
+        expect(el.querySelector('.axis-title').textContent).toBe('Jahr (Statistik)');
+        expect(el.querySelector('.legend .title').textContent).toBe('Land (Personen)');
+        expect(el.querySelector('.legend [data-key="Wien"] span').textContent).toBe('Wien (Personen)');
+        expect(el.querySelector('.facet-title').textContent).toBe('Wien (Personen)');
+        expect([...el.querySelectorAll('g.axis-position-left g.tick text')].at(-1).textContent).toBe('10');
+        expect(errors).toEqual([]);
+    });
+
     test('a given state is applied', async () => {
         const state = { globals: { column: 'other' }, visible: { c: { Tirol: false } } };
         const el = await mount(GenVis, { def: stateDef(), data: lineData, state });

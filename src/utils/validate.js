@@ -135,6 +135,8 @@ const validateDef = def => {
                 warn(`${path}.scale.domain`, `a threshold scale needs the values between its classes`);
             if (Array.isArray(m.scale.range))
                 m.scale.range.forEach((v, j) => checkProp(v, `${path}.scale.range[${j}]`, warn, names.range));
+            if (Array.isArray(m.scale.domain))
+                m.scale.domain.forEach((v, j) => checkProp(v, `${path}.scale.domain[${j}]`, warn, names.facet));
             if (m.scale.orientation !== undefined && !orientations.includes(m.scale.orientation))
                 warn(`${path}.scale.orientation`, orientations.length > 0
                     ? `unknown orientation '${m.scale.orientation}', expected one of ${list(orientations)}`
@@ -259,9 +261,18 @@ const validateDef = def => {
     const checkTemplate = (column, path) => templateRefs(column).filter(r => !(r in (def.globals ?? {}))).forEach(r =>
         warn(path, `unknown global '${r}' in the column template`));
     Object.entries(mapping).forEach(([n, m]) => checkTemplate(m.column, `mapping.${n}.column`));
-    // and the ones of the title and the subtitle, e.g. "Durchschnitt {base} = 100"
-    ['title', 'subtitle'].forEach(o => templateRefs(def.options?.[o]).filter(r => !(r in (def.globals ?? {}))).forEach(r =>
-        warn(`options.${o}`, `unknown global '${r}' in the text`)));
+    // and the ones of the texts, e.g. "Durchschnitt {base} = 100" of the subtitle
+    const checkText = (text, path) => templateRefs(text).filter(r => !(r in (def.globals ?? {}))).forEach(r =>
+        warn(path, `unknown global '${r}' in the text`));
+    ['title', 'subtitle', 'footer'].forEach(o => checkText(def.options?.[o], `options.${o}`));
+    Object.entries(mapping).forEach(([n, m]) => {
+        checkText(m.name, `mapping.${n}.name`);
+        checkText(m.axis?.title?.name, `mapping.${n}.axis.title.name`);
+        checkText(m.legend?.missing?.name, `mapping.${n}.legend.missing.name`);
+        checkText(m.props?.common?.name, `mapping.${n}.props.common.name`);
+        Object.entries(m.props?.manual ?? {}).forEach(([k, e]) => checkText(e?.name, `mapping.${n}.props.manual.${k}.name`));
+    });
+    [].concat(def.annotations ?? []).forEach((a, i) => ['label', 'text'].forEach(k => checkText(a[k], `annotations[${i}].${k}`)));
     (def.formElements ?? []).forEach((e, i) => (Array.isArray(e.values) ? e.values : []).forEach((v, j) =>
         Object.entries(v.mapping ?? {}).forEach(([n, m]) =>
             checkTemplate(m.column, `formElements[${i}].values[${j}].mapping.${n}.column`))));

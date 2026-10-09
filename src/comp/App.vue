@@ -14,7 +14,7 @@
 <script>
 import { createStore } from '@/store.js';
 import { h } from 'vue';
-import { fillTemplate, sameValue } from "@/utils/def";
+import { sameValue } from "@/utils/def";
 import { selection, renderImage, saveImage, copyImage, defaultWidth } from '@/utils/export.js';
 import VisBase from '@/comp/Vis.vue';
 
@@ -143,7 +143,7 @@ export default {
         async exportPng(name) {
             const title = this.store.def.options.title;
             name ??= typeof this.download == 'string' && this.download ? this.download
-                : (title ? fillTemplate(title, this.store.def.globals) : 'gen-vis');
+                : (title ? this.store.text(title) : 'gen-vis');
             saveImage(await this.image(), name);
         },
         copyPng() {

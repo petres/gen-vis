@@ -1,12 +1,12 @@
 <template>
     <div class="legend color-legend" :data-dim="legend">
-        <div class="title">{{ store.mapping(legend).name }}</div>
+        <div class="title">{{ store.text(store.mapping(legend).name) }}</div>
         <div class="scale">
             <svg ref="svg" :width="width + 2*padding" height="34"/>
             <!-- the regions without a value, e.g. the color of geo:base -->
             <div v-if="missing" class="missing">
                 <span class="swatch" :style="{ background: missing.color ?? '#EEE' }"/>
-                <span v-html="missing.name"/>
+                <span v-html="store.text(missing.name)"/>
             </div>
         </div>
     </div>

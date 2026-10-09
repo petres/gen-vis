@@ -76,7 +76,7 @@ const axes = ctx => {
                 .attr('x', 0)
                 .attr("text-anchor", "middle")
                 .attr("dominant-baseline", "middle")
-                .text(i.title.name)
+                .text(ctx.store.text(i.title.name))
 
             if (i.position == 'left')
                 at.attr("transform", `rotate(-90) translate(-${innerHeight/2} -${i.title.offset})`)

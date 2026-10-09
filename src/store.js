@@ -3,7 +3,7 @@ export { createStore, resolveUrl, resolveParents, clearCache };
 import { reactive, markRaw, toRaw } from 'vue';
 
 import { addDataValues, dataFormat, parseData, prepareData, updateData } from "@/utils/data";
-import { applyFormElements, mergeAll, prepareDef } from "@/utils/def";
+import { applyFormElements, fillText, mergeAll, prepareDef } from "@/utils/def";
 import { applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { validateDef } from "@/utils/validate";
@@ -205,6 +205,9 @@ class Store {
     get scope() { return { ...this.def.globals, totalWidth: this.totalWidth } }
 
     mapping(n) { return this.def.mapping[n] }
+
+    // a text of the definition with the values of the globals, e.g. "{base} = 100"
+    text(t) { return fillText(t, this.def.globals) }
     prop(n, k) { return this.def.mapping[n].props[k] }
     mappingNamesWithKey(k) { return Object.keys(this.def.mapping).filter(n => k in this.def.mapping[n]) }
 

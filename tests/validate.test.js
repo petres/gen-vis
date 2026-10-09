@@ -263,6 +263,24 @@ describe('validateDef', () => {
         ]);
     });
 
+    test('templates of the texts need the globals, domains can have references', () => {
+        const def = base();
+        def.globals = { a: 1 };
+        def.options = { footer: '{a} {b}' };
+        def.mapping.y.name = '{c}';
+        def.mapping.y.scale.domain = [0, '@a'];
+        def.mapping.c.props.manual.Wien.name = '{a}{d}';
+        def.annotations = [{ type: 'text', text: '{e}' }];
+        expect(validateDef(def)).toEqual([
+            "options.footer: unknown global 'b' in the text",
+            "mapping.y.name: unknown global 'c' in the text",
+            "mapping.c.props.manual.Wien.name: unknown global 'd' in the text",
+            "annotations[0].text: unknown global 'e' in the text",
+        ]);
+        def.mapping.y.scale.domain = [0, '@z'];
+        expect(validateDef(def)).toContainEqual(expect.stringMatching(/^mapping.y.scale.domain\[1\]: unknown reference 'z'/));
+    });
+
     test('templates of the title and the subtitle need the globals', () => {
         const def = base();
         def.globals = { base: '2019' };

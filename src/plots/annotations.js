@@ -1,5 +1,3 @@
-import { fillTemplate } from "@/utils/def";
-
 // the annotations of the coordinate systems as plot types, a band, a line, a
 // text or a circle per row at its values of the mappings, e.g. of the
 // `annotations` of a definition (see prepareDef) or of the rows of a plot of
@@ -12,12 +10,11 @@ const annotation = type => ({
         if (!coord.annotate || !(coord.annotations ?? []).includes(type))
             return;
         parent.classed("annotations", true);
-        const fill = t => typeof t == 'string' ? fillTemplate(t, ctx.store.def.globals) : t;
         groups.forEach(g => g.rows.forEach(row => coord.annotate(ctx, parent, {
             ...row,
             type,
-            label: fill(row.label),
-            text: fill(row.text),
+            label: ctx.store.text(row.label),
+            text: ctx.store.text(row.text),
             props: plot.props,
             scope: { ...ctx.scope, ...row },
         })));

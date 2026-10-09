@@ -143,7 +143,7 @@ const radialAxis = (ctx, g, s, values, format, axis) => {
             .attr("y", y)
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "middle")
-            .text(axis.title.name);
+            .text(ctx.store.text(axis.title.name));
     }
 };
 

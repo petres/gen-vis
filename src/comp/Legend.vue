@@ -1,9 +1,9 @@
 <template>
     <div class="legend" :data-dim="legend">
-        <div class="title">{{ info.name }}</div>
+        <div class="title">{{ store.text(info.name) }}</div>
         <!-- an entry is a checkbox, also of the keyboard (enter, space), a double
              click shows only it, the next one all entries -->
-        <div class="entries" role="group" :aria-label="info.name">
+        <div class="entries" role="group" :aria-label="store.text(info.name)">
             <div v-for="entry of entries" :key="entry.key" :data-visible="entry.props.visible" :data-key="entry.key"
                 v-bind='Object.assign({...filled[entry.key]}, {name: null})'
                 role="checkbox" tabindex="0" :aria-checked="String(entry.props.visible)"
@@ -12,7 +12,7 @@
                 @pointerenter="hovered(entry, $event)" @pointerleave="hovered(null, $event)"
                 @focus="highlight(entry)" @blur="highlight(null)">
                 <LegendSymbol v-if="info.legend.symbol" :info="info.legend.symbol" :props="entry.props"/>
-                <span v-html='filled[entry.key].name'/>
+                <span v-html='store.text(filled[entry.key].name)'/>
             </div>
         </div>
     </div>

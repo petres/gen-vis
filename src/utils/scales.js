@@ -64,8 +64,9 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     if (range)
         s.range(evaluate(range, { ...scope, ...dims }));
 
-    // dates of a fixed domain are parsed as the ones of the data, e.g. "2020-01-01"
-    const fixed = () => scaleDef.domain.map(v => v !== null && mapping.type == 'date' ? toDate(v) : v);
+    // dates of a fixed domain are parsed as the ones of the data, e.g. "2020-01-01",
+    // the values can be references, e.g. to a global
+    const fixed = () => evaluate(scaleDef.domain, scope).map(v => v !== null && v !== undefined && mapping.type == 'date' ? toDate(v) : (v ?? null));
     let domain;
     if (scaleDef.type == 'threshold') {
         // the values between the classes
