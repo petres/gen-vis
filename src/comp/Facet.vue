@@ -1,6 +1,6 @@
 <template>
     <div :style="`width: ${facet.width}px;`" class="vis-facet">
-        <svg ref="svg" :width="facet.width" :height="facet.height" class="vis-svg">
+        <svg ref="svg" :width="facet.width" :height="facet.height" class="vis-svg" role="img" :aria-label="label">
             <g ref="inner" :transform="`translate(${facet.margins.left + origin[0]} ${facet.margins.top + origin[1]})`">
                 <g :visibility="hover.visible ? 'visible' : 'hidden'" class="vis-hover-marker" ref="hoverMarker">
                     <line/>
@@ -37,6 +37,10 @@ export default {
         }
     }),
     computed: {
+        // the name of the chart for screen readers, the title and the facet
+        label() {
+            return [this.store.def.options.title, this.facet.name].filter(Boolean).map(t => this.store.text(t)).join(': ') || undefined;
+        },
         // the origin of the plots and axes in the inner area, e.g. its center
         origin() { return this.store.coord.origin?.(this.facet.innerWidth, this.facet.innerHeight) ?? [0, 0] },
     },

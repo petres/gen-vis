@@ -1,7 +1,7 @@
 <template>
     <div class="vis-outer">
         <div v-if="error" class="vis-error">{{ error }}</div>
-        <vis-base v-else-if="store.loaded" :download="download" :copy="copy" @state-changed="$emit('update:state', store.state)" @rendered="$emit('rendered')"/>
+        <vis-base v-else-if="store.loaded" :download="download" :copy="copy" :csv="csv" @state-changed="$emit('update:state', store.state)" @rendered="$emit('rendered')"/>
         <div v-if="debug && store.def">
             <h3>prepared:</h3>
             <pre style="height: 500px; overflow: auto; font-size: 11px;">{{ JSON.stringify(store.def, null, 4) }}</pre>
@@ -15,7 +15,8 @@
 import { createStore } from '@/store.js';
 import { h } from 'vue';
 import { sameValue } from "@/utils/def";
-import { selection, renderImage, saveImage, copyImage, defaultWidth } from '@/utils/export.js';
+import { selection, renderImage, saveFile, csvOf, copyImage, defaultWidth } from '@/utils/export.js';
+import { layout } from '@/layout';
 import VisBase from '@/comp/Vis.vue';
 
 export default {
@@ -55,6 +56,11 @@ export default {
            type: Boolean,
            default: false
         },
+        // a button in the footer to save the data shown as CSV, a string is the name of the file
+        csv: {
+           type: [Boolean, String],
+           default: false
+        },
         // the width of the images, independent of the screen, the one of the
         // definition otherwise or 1200, `screen` is the one on the screen
         imageWidth: {
@@ -77,7 +83,7 @@ export default {
             store: this.store,
             slots: this.$slots,
             emit: (name, payload) => this.$emit(name, payload),
-            image: { save: () => this.exportPng(), copy: () => this.copyPng() },
+            files: { save: () => this.exportPng(), copy: () => this.copyPng(), csv: () => this.exportCsv() },
         };
     },
     components: {
@@ -138,13 +144,20 @@ export default {
                 return vnode;
             }, { width, text: selection(this.store.def), facets: this.store.def.facets?.dim });
         },
-        // the name of the file is the argument, the one of `download` or the
+        // the name of a file, the one of the prop, e.g. `download`, or the
         // title (with the values of the globals)
-        async exportPng(name) {
+        fileName(prop) {
             const title = this.store.def.options.title;
-            name ??= typeof this.download == 'string' && this.download ? this.download
-                : (title ? this.store.text(title) : 'gen-vis');
-            saveImage(await this.image(), name);
+            return typeof prop == 'string' && prop ? prop : (title ? this.store.text(title) : 'gen-vis');
+        },
+        // the name of the file is the argument or the one of fileName
+        async exportPng(name) {
+            saveFile(await this.image(), `${name ?? this.fileName(this.download)}.png`);
+        },
+        // the rows shown in the columns of their mappings, see utils/export.js
+        exportCsv(name) {
+            const rows = layout(this.store, this.store.totalWidth).rows;
+            saveFile(new Blob([csvOf(this.store, rows)], { type: 'text/csv' }), `${name ?? this.fileName(this.csv)}.csv`);
         },
         copyPng() {
             return copyImage(this.image());

@@ -30,6 +30,7 @@ const locales = {
             download: 'Als PNG speichern',
             copy: 'Als PNG in die Zwischenablage kopieren',
             copied: 'Kopiert',
+            csv: 'Die Daten als CSV speichern',
         },
     },
     'en': {
@@ -57,6 +58,7 @@ const locales = {
             download: 'Save as PNG',
             copy: 'Copy as PNG to the clipboard',
             copied: 'Copied',
+            csv: 'Save the data as CSV',
         },
     },
 }

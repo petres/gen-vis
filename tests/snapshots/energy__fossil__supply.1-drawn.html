@@ -5,8 +5,8 @@
 </div>
 <div class="vis-form-elements">
 <div class="vis-form-element" id="container-unit">
-<div class="vis-form-element-title">Einheit:</div>
-<div class="vis-switch">
+<div class="vis-form-element-title" id="gen-vis-form-N-unit-title">Einheit:</div>
+<div class="vis-switch" role="radiogroup" aria-labelledby="gen-vis-form-N-unit-title">
 <div id="container-unitTwh">
 <input type="radio" id="gen-vis-form-N-unit-unitTwh" name="gen-vis-form-N-unit" checked="" value="unitTwh">
 <label for="gen-vis-form-N-unit-unitTwh">TWh</label>
@@ -18,8 +18,8 @@
 </div>
 </div>
 <div class="vis-form-element" id="container-scale">
-<div class="vis-form-element-title">Y-Skala:</div>
-<div class="vis-switch">
+<div class="vis-form-element-title" id="gen-vis-form-N-scale-title">Y-Skala:</div>
+<div class="vis-switch" role="radiogroup" aria-labelledby="gen-vis-form-N-scale-title">
 <div id="container-shareAxisOff">
 <input type="radio" id="gen-vis-form-N-scale-shareAxisOff" name="gen-vis-form-N-scale" value="shareAxisOff">
 <label for="gen-vis-form-N-scale-shareAxisOff">Getrennt</label>
@@ -132,7 +132,7 @@
 <div style="width: 400px; display: inline-block;">
 <div class="vis-facet-title" style="margin-left: 50px;">Gesamt</div>
 <div style="width: 400px;" class="vis-facet">
-<svg width="400" height="220" class="vis-svg">
+<svg width="400" height="220" class="vis-svg" role="img" aria-label="Absatz von fossilen Energieträgern: Gesamt">
 <g transform="translate(50 5)">
 <g visibility="hidden" class="vis-hover-marker">
 <line>
@@ -243,7 +243,7 @@
 <div style="width: 400px; display: inline-block;">
 <div class="vis-facet-title" style="margin-left: 50px;">Mineralöl</div>
 <div style="width: 400px;" class="vis-facet">
-<svg width="400" height="220" class="vis-svg">
+<svg width="400" height="220" class="vis-svg" role="img" aria-label="Absatz von fossilen Energieträgern: Mineralöl">
 <g transform="translate(50 5)">
 <g visibility="hidden" class="vis-hover-marker">
 <line>
@@ -354,7 +354,7 @@
 <div style="width: 400px; display: inline-block;">
 <div class="vis-facet-title" style="margin-left: 50px;">Kohle</div>
 <div style="width: 400px;" class="vis-facet">
-<svg width="400" height="220" class="vis-svg">
+<svg width="400" height="220" class="vis-svg" role="img" aria-label="Absatz von fossilen Energieträgern: Kohle">
 <g transform="translate(50 5)">
 <g visibility="hidden" class="vis-hover-marker">
 <line>
@@ -465,7 +465,7 @@
 <div style="width: 400px; display: inline-block;">
 <div class="vis-facet-title" style="margin-left: 50px;">Erdgas</div>
 <div style="width: 400px;" class="vis-facet">
-<svg width="400" height="220" class="vis-svg">
+<svg width="400" height="220" class="vis-svg" role="img" aria-label="Absatz von fossilen Energieträgern: Erdgas">
 <g transform="translate(50 5)">
 <g visibility="hidden" class="vis-hover-marker">
 <line>

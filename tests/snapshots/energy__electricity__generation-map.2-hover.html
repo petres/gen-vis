@@ -5,8 +5,8 @@
 </div>
 <div class="vis-form-elements">
 <div class="vis-form-element" id="container-type">
-<div class="vis-form-element-title">Quelle:</div>
-<div class="vis-switch">
+<div class="vis-form-element-title" id="gen-vis-form-N-type-title">Quelle:</div>
+<div class="vis-switch" role="radiogroup" aria-labelledby="gen-vis-form-N-type-title">
 <div id="container-Renewable">
 <input type="radio" id="gen-vis-form-N-type-Renewable" name="gen-vis-form-N-type" checked="" value="Renewable">
 <label for="gen-vis-form-N-type-Renewable">Erneuerbar</label>
@@ -22,7 +22,7 @@
 </div>
 </div>
 <div class="vis-form-element" id="container-year">
-<div class="vis-form-element-title">Jahr:</div>
+<label class="vis-form-element-title" for="gen-vis-form-N-year">Jahr:</label>
 <select id="gen-vis-form-N-year">
 <option value="2019">2019</option>
 <option value="2020">2020</option>
@@ -70,7 +70,7 @@
 </div>
 <div class="vis-body">
 <div style="width: 800px;" class="vis-facet">
-<svg width="800" height="480" class="vis-svg">
+<svg width="800" height="480" class="vis-svg" role="img" aria-label="Stromproduktion">
 <g transform="translate(10 10)">
 <g visibility="hidden" class="vis-hover-marker">
 <line>

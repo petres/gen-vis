@@ -57,6 +57,7 @@ well.
 | `state`    |                 | the changes of the user, see [state](#state) |
 | `download` | `data-download` | a button at the right of the footer to save it as a PNG, a string is the name of the file (default the title) |
 | `copy`     | `data-copy`     | a button at the right of the footer to copy the PNG to the clipboard (only on https or localhost) |
+| `csv`      | `data-csv`      | a button at the right of the footer to save the data shown as CSV, a string is the name of the file (default the title) |
 | `imageWidth` | `data-image-width` | the width of the PNG in pixels, the one of the definition otherwise or 1200, `screen` for the one on the screen (as it is seen, e.g. on a phone) |
 
 Every visualisation has its own state, several of them can be used on a page.
@@ -81,9 +82,9 @@ of the mappings, `nearest` the row of the element under the mouse.
 The slots replace parts of the visualisation, `hover` the content of the
 hover (it also has `entries`, the formatted values of the default table),
 `header` the title and the subtitle and `footer` the footer. `buttons` adds
-buttons of the page at the right of the footer, before the ones of `copy` and
-`download`, e.g. own icons, with `save()`, `copy()` and `canCopy` of the
-[PNG](#png):
+buttons of the page at the right of the footer, before the ones of `copy`,
+`csv` and `download`, e.g. own icons, with `save()`, `copy()` and `canCopy` of
+the [PNG](#png) and `csv()` of the [data](#accessibility-and-the-data):
 
 ```html
 <GenVis def-file="/data/bev/def.json" @select="open">
@@ -117,6 +118,15 @@ page:
 <GenVis ref="chart" def-file="/data/bev/def.json"/>
 <button @click="$refs.chart.exportPng('bev')">PNG</button>
 ```
+
+### Accessibility and the data
+
+Every facet is an image (`role="img"`) named by the title and the name of the
+facet, the entries of the legends are checkboxes of the keyboard, the titles
+of the form elements are their labels. The data shown can be saved as CSV:
+the button of `csv` or the method `exportCsv(name)` save the rows shown (of
+the visible categories and the filter) in the columns of the mappings, with
+the values as they are in the data.
 
 ### State
 

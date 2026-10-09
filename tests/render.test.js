@@ -1543,6 +1543,37 @@ describe('fixed bugs', () => {
     });
 });
 
+describe('accessibility and the data', () => {
+    test('the svg is an image named by the title and the facet, the form elements have labels', async () => {
+        const def = { ...lineDef({ title: 'Bevölkerung {unit}' }), globals: { unit: 'Personen', year: 'a' }, facets: { dim: 'c', cols: 2 } };
+        def.formElements = [
+            { id: 'year', name: 'Jahr', ref: 'year', type: 'select', values: [{ id: 'a', name: 'A', value: 'a' }] },
+            { id: 'unit', name: 'Einheit', ref: 'unit', type: 'switch', values: [{ id: 'p', name: 'Personen', value: 'Personen' }] },
+        ];
+        const el = await mount(GenVis, { def, data: lineData });
+        expect([...el.querySelectorAll('svg.vis-svg')].map(s => [s.getAttribute('role'), s.getAttribute('aria-label')]))
+            .toEqual([['img', 'Bevölkerung Personen: Wien'], ['img', 'Bevölkerung Personen: Tirol']]);
+        const [select, radio] = el.querySelectorAll('.vis-form-element');
+        expect(select.querySelector('label').getAttribute('for')).toBe(select.querySelector('select').id);
+        const group = radio.querySelector('[role="radiogroup"]');
+        expect(radio.querySelector(`#${group.getAttribute('aria-labelledby')}`).textContent).toBe('Einheit:');
+    });
+
+    test('the rows shown as CSV, in the columns of the mappings', async () => {
+        const saved = {};
+        URL.createObjectURL = blob => { saved.blob = blob; return 'blob:csv'; };
+        URL.revokeObjectURL = () => {};
+        vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () { saved.name = this.download; });
+        const def = lineDef({ title: 'Bevölkerung' });
+        def.mapping.c.props.manual.Tirol.visible = false;
+        const el = await mount(GenVis, { def, data: lineData, csv: true });
+        el.querySelector('.vis-buttons .vis-csv').click();
+        await vi.waitFor(() => expect(saved.name).toBe('Bevölkerung.csv'));
+        expect(await saved.blob.text()).toBe('year,value,land\n2020,1,Wien\n2021,,Wien\n2022,3,Wien\n2023,4,Wien');
+        expect(el.querySelector('.vis-csv').title).toBe('Die Daten als CSV speichern');
+    });
+});
+
 describe('images', () => {
     const def = () => ({
         ...lineDef({ title: 'Titel', subtitle: 'Untertitel', footer: 'Quelle' }),

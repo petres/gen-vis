@@ -1,6 +1,7 @@
-export { selection, renderImage, saveImage, copyImage, canCopy, defaultWidth };
+export { selection, renderImage, saveFile, csvOf, copyImage, canCopy, defaultWidth };
 
 import { render } from "vue";
+import * as d3 from "@/utils/d3";
 import { sameValue } from "@/utils/def";
 
 // the space around the visualisation in the image
@@ -88,13 +89,22 @@ const renderImage = async (outer, vnode, { width, ...parts }) => {
     }
 };
 
-const saveImage = (blob, name) => {
+// a file saved by the browser, e.g. a PNG or a CSV, `name` with the extension
+const saveFile = (blob, name) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${name}.png`;
+    a.download = name;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+// the rows shown as CSV, in the columns of the mappings, the values as the
+// ones of the data, e.g. dates as they are in the file
+const csvOf = (store, rows) => {
+    const positions = new Map(store.data.map((r, i) => [r, i]));
+    const columns = [...new Set(Object.values(store.def.mapping).map(m => m.column).filter(c => typeof c == 'string'))];
+    return d3.csvFormat(rows.map(r => store.rows[positions.get(r)]), columns);
 };
 
 // only on https (or localhost), the blob is a promise, so the clipboard is
