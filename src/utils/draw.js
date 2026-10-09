@@ -1,6 +1,6 @@
 export { curves, setProps, setGroupData, highlightElements, rowOf };
 
-import * as d3 from "d3";
+import * as d3 from "@/utils/d3";
 import { isProp } from "@/utils/props";
 
 // the interpolations of the paths and areas between their points, `monotoneX`

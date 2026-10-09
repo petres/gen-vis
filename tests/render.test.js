@@ -4,7 +4,7 @@ import { createApp, h, nextTick, ref } from 'vue';
 import { GenVis, mountGenVisElement, registerPlotType, pointwise } from '@/index.js';
 import { plotTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import * as d3 from 'd3';
+import * as d3 from 'd3-scale-chromatic';
 import { prepareDef } from '@/utils/def';
 import { selection } from '@/utils/export';
 import { examples, errors, useDom, rendered, mount, pointer, hover } from './dom.js';

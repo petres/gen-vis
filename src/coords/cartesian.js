@@ -1,6 +1,6 @@
-import * as d3 from "d3";
+import * as d3 from "@/utils/d3";
 import { entryToValue } from "@/utils/props";
-import { bandCenter, capitalize } from "@/utils/scales";
+import { bandCenter } from "@/utils/scales";
 import { tickValues, tickFormat } from "@/coords/ticks";
 import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
 
@@ -35,7 +35,7 @@ const axes = ctx => {
         const s = ctx.info[n].scale;
         const ticks = entryToValue(i.ticks, ctx.relativeBases);
 
-        const a = d3[`axis${capitalize(i.position)}`](s)
+        const a = d3.axes[i.position](s)
             .tickSizeInner(9)
             .tickSizeOuter(0)
             .ticks(ticks)

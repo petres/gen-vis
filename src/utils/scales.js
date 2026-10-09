@@ -1,11 +1,8 @@
-export { addScale, bandCenter, capitalize };
+export { addScale, bandCenter };
 
-import * as d3 from "d3";
+import * as d3 from "@/utils/d3";
 import { fillDirect } from "@/utils/props";
 import { toDate } from "@/utils/data";
-
-// the names of d3, e.g. "scaleLinear" of "linear"
-const capitalize = w => w.charAt(0).toUpperCase() + w.slice(1);
 
 // the offset of the center of a band, the position of band scales is its start
 const bandCenter = s => s.bandwidth ? s.bandwidth()/2 : 0;
@@ -15,7 +12,9 @@ const bandCenter = s => s.bandwidth ? s.bandwidth()/2 : 0;
 // the colors of a scheme of d3, e.g. "Blues", schemes of several sizes have
 // `classes` colors, by default the number of classes of a threshold scale or 5
 const schemeRange = scaleDef => {
-    const scheme = d3[`scheme${capitalize(scaleDef.scheme)}`];
+    const scheme = d3.named(d3.schemes, scaleDef.scheme);
+    if (!scheme)
+        throw new Error(`Unknown scheme '${scaleDef.scheme}', e.g. 'Blues' or 'Tableau10'`);
     if (typeof scheme.at(-1) == 'string')
         return scheme;
     const n = scaleDef.classes ?? (scaleDef.type == 'threshold' ? scaleDef.domain.length + 1 : 5);
@@ -28,11 +27,18 @@ const addScale = (info, dims, coord = {}, bases = {}) => {
     // the end of a cyclic range is its start, e.g. of the angles of a circle
     const cyclic = (coord.cyclic ?? []).includes(scaleDef.orientation);
 
-    const s = d3[`scale${capitalize(scaleDef.type)}`]()
+    const scale = d3.named(d3.scales, scaleDef.type);
+    if (!scale)
+        throw new Error(`Unknown scale '${scaleDef.type}', e.g. 'linear', 'time' or 'band'`);
+    const s = scale();
 
     // the colors of sequential and diverging scales, e.g. "Blues"
-    if (scaleDef.interpolator)
-        s.interpolator(d3[`interpolate${capitalize(scaleDef.interpolator)}`]);
+    if (scaleDef.interpolator) {
+        const interpolator = d3.named(d3.interpolators, scaleDef.interpolator);
+        if (!interpolator)
+            throw new Error(`Unknown interpolator '${scaleDef.interpolator}', e.g. 'Blues' or 'RdYlGn'`);
+        s.interpolator(interpolator);
+    }
 
     // fill width and height (of `dims`, e.g. the inner area) and the other
     // bases, scales without orientation and range keep the range of d3, e.g. [0, 1]

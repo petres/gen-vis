@@ -1,6 +1,6 @@
 export { angleOf, radiusRange };
 
-import * as d3 from "d3";
+import * as d3 from "@/utils/d3";
 import { entryToValue } from "@/utils/props";
 import { bandCenter } from "@/utils/scales";
 import { tickValues, tickFormat } from "@/coords/ticks";

@@ -1,6 +1,6 @@
 export { groupwise, pointwise, finite, curve };
 
-import * as d3 from "d3";
+import * as d3 from "@/utils/d3";
 import { propsOf, refNames } from "@/utils/props";
 import { curves, rowOf, setGroupData, setProps } from "@/utils/draw";
 

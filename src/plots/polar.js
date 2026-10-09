@@ -1,4 +1,4 @@
-import * as d3 from "d3";
+import * as d3 from "@/utils/d3";
 import { entryToProp, valuesOf } from "@/utils/props";
 import { bandCenter } from "@/utils/scales";
 import { groupwise, pointwise, finite, curve } from "@/plots/elements";

@@ -115,7 +115,7 @@ describe('validateDef', () => {
         def.mapping.y.scale.type = 'unknown';
         expect(validateDef(def)).toEqual([
             "mapping.x.scale.type: a band scale does not fit the type 'numeric'",
-            "mapping.y.scale.type: unknown d3 scale 'unknown'",
+            "mapping.y.scale.type: unknown scale 'unknown', e.g. 'linear', 'time' or 'band'",
             "mapping.c.scale.type: a linear scale does not fit the type 'categorical'",
         ]);
     });
@@ -148,11 +148,11 @@ describe('validateDef', () => {
         def.mapping.x.scale = { type: 'linear', interpolator: 'Blues' };
         expect(validateDef(def)).toEqual([
             "mapping.x.scale.interpolator: a linear scale has no interpolator, e.g. a sequential one has",
-            "mapping.y.scale.scheme: unknown d3 scheme 'Unknown', e.g. 'Blues'",
+            "mapping.y.scale.scheme: unknown scheme 'Unknown', e.g. 'Blues'",
             "mapping.y.scale.domain: a threshold scale needs the values between its classes",
             "geo.data: a map needs its geometry, GeoJSON or TopoJSON or their url",
             "geo.join: unknown mapping 'region'",
-            "geo.projection.type: unknown d3 projection 'flat', e.g. 'mercator' or 'conicConformal'",
+            expect.stringMatching(/^geo.projection.type: unknown projection 'flat', expected one of 'albers', .*'mercator'/),
             "filter.year: unknown mapping 'year'",
             "filter.year: unknown reference 'year', expected one of 'g', 'totalWidth'",
             "formElements[0].type: unknown type 'checkbox', expected one of 'switch', 'select', 'slider'",

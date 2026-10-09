@@ -1,6 +1,6 @@
 export { geoFeatures, geoKey };
 
-import * as d3 from "d3";
+import * as d3 from "@/utils/d3";
 import { feature } from "topojson-client";
 
 // the rings of d3 are clockwise, the ones of GeoJSON (RFC 7946) counterclockwise,

@@ -1,5 +1,4 @@
-import * as d3 from "d3";
-import { capitalize } from "@/utils/scales";
+import * as d3 from "@/utils/d3";
 import { setAnnotationProps } from "@/coords/annotations";
 
 // the mapping of the regions, its values are the keys of the features
@@ -11,7 +10,10 @@ const joinOf = store => store.def.geo?.join;
 const projection = ctx => {
     const def = ctx.store.def.geo ?? {};
     const { type = 'mercator', ...params } = def.projection ?? {};
-    const p = d3[`geo${capitalize(type)}`]();
+    const make = d3.named(d3.projections, type);
+    if (!make)
+        throw new Error(`Unknown projection '${type}', e.g. 'mercator' or 'conicConformal'`);
+    const p = make();
     Object.entries(params).forEach(([k, v]) => p[k](v));
 
     const { features, key } = ctx.store.geo;

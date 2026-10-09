@@ -54,7 +54,7 @@
 
 <script>
 import { markRaw } from 'vue';
-import * as d3 from "d3";
+import * as d3 from "@/utils/d3";
 
 import { addDimInfo, addScaledData, addStackedData, categoryOrder, convert, filter, groupBy } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";

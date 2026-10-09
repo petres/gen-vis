@@ -1,6 +1,6 @@
 export { annotationKeys, constraints, span, position, drawLabel, setAnnotationProps };
 
-import * as d3 from "d3";
+import * as d3 from "@/utils/d3";
 import { convert } from "@/utils/data";
 import { entryToProp, fillProps } from "@/utils/props";
 import { bandCenter } from "@/utils/scales";

@@ -1,7 +1,6 @@
 export { createStore, resolveUrl, resolveParents, clearCache };
 
 import { reactive, markRaw, toRaw } from 'vue';
-import * as d3 from "d3";
 
 import { addDataValues, dataFormat, parseData, prepareData } from "@/utils/data";
 import { applyFormElements, mergeAll, prepareDef } from "@/utils/def";
@@ -20,13 +19,20 @@ const cacheTime = 5 * 60 * 1000;
 const cache = new Map();
 const clearCache = () => cache.clear();
 
-// `type` is text or buffer, e.g. of parquet data
+// the content of a url, `type` is text or arrayBuffer, e.g. of parquet data
+const request = async (url, type) => {
+    const response = await fetch(url);
+    if (!response.ok)
+        throw new Error(`${response.status} ${response.statusText}`);
+    return response[type]();
+};
+
 const fetchCached = (url, type = 'text') => {
     const now = Date.now();
     const key = `${type} ${url}`;
     cache.forEach((c, k) => { if (now - c.time >= cacheTime) cache.delete(k) });
     if (!cache.has(key)) {
-        const content = d3[type](url).catch(error => {
+        const content = request(url, type).catch(error => {
             // failed requests are not kept
             if (cache.get(key)?.content === content)
                 cache.delete(key);
@@ -40,7 +46,7 @@ const fetchCached = (url, type = 'text') => {
 const fetchText = url => fetchCached(url);
 
 // parquet is binary, the other formats are text
-const fetchData = (url, format) => fetchCached(url, format == 'parquet' ? 'buffer' : 'text');
+const fetchData = (url, format) => fetchCached(url, format == 'parquet' ? 'arrayBuffer' : 'text');
 
 const parseDef = (text, source, what = 'definition') => {
     try {

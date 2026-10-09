@@ -42,7 +42,17 @@
     "vue": "^3"
   },
   "dependencies": {
-    "d3": "^7",
+    "d3-array": "^3",
+    "d3-axis": "^3",
+    "d3-dsv": "^3",
+    "d3-format": "^3",
+    "d3-geo": "^3",
+    "d3-scale": "^4",
+    "d3-scale-chromatic": "^3",
+    "d3-selection": "^3",
+    "d3-shape": "^3",
+    "d3-time": "^3",
+    "d3-time-format": "^4",
     "deepmerge": "^4",
     "hyparquet": "^1",
     "hyparquet-compressors": "^1",
