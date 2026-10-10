@@ -213,9 +213,12 @@ export default {
             // the start and the end of a stacked value
             const stackOf = ctx.stackOf;
 
-            // categorical mappings, e.g. not a second vertical axis
+            // categorical mappings, and other values with a hover, e.g. of a second vertical axis
             const categories = store.mappingNamesWithKey('hover')
                 .filter(n => n != names.h && n != v && store.mapping(n).props);
+            const others = store.mappingNamesWithKey('hover')
+                .filter(n => n != names.h && n != v && !store.mapping(n).props && ['numeric', 'date'].includes(store.mapping(n).type));
+            const formats = Object.fromEntries(others.map(n => [n, store.valueFormat(n, ctx.scales[n])]));
 
             const marker = d3.select(this.$refs.hoverMarker).select("line");
             const scope = store.scope;
@@ -268,6 +271,10 @@ export default {
                 }));
                 entries[v] = { value: row[v], name: format.v(row[v]) };
                 cells.push({ mapping: v, value: true, text: entries[v].name });
+                others.forEach(n => {
+                    entries[n] = { value: row[n], name: row[n] === null ? '' : formats[n](row[n]) };
+                    cells.push({ mapping: n, value: true, text: entries[n].name });
+                });
                 const order = stackOf ? d3.mean(stackOf(row)) : row[v];
                 return { entries, cells, data: row, nearest: row === nearest, order };
             });

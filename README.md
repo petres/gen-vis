@@ -486,7 +486,12 @@ the definition refer to these names.
   clockwise), `grid` (lines at the ticks), `title` (`{"name", "offset"}`) and
   `padding`.
 - `hover`: the hover shows the values of the vertical axis at the position of
-  the mouse. On touch devices it is shown by a tap and stays until a tap
+  the mouse, of horizontal bars (a horizontal mapping is stacked, or the
+  vertical one is categorical and the horizontal one is not) the values of
+  the horizontal axis at the vertical position. Of several mappings of an
+  orientation, e.g. a second vertical axis, the stacked one or the one with a
+  `hover` (or the first one) has the values of the hover, the other numeric
+  ones with a `hover` are further columns. On touch devices it is shown by a tap and stays until a tap
   outside of the plot, horizontal swipes move it, vertical ones scroll the
   page. `format` of the horizontal and vertical axis, it defaults to the
   axis format, without one dates are the date of the locale and numbers have
@@ -570,7 +575,9 @@ A plot or a list of plots, drawn in order:
     position of 0, e.g. `"y1": "@y:scaled"`, or a stacked value with
     `"y0": "@y:start:scaled", "y1": "@y:end:scaled"`. The bars are centered at
     `x`, in the middle of a band, `width` defaults to the width of a band or
-    the step of a point scale, a continuous scale needs a `width`.
+    the step of a point scale, a continuous scale needs a `width`. With `x1`
+    the bars are horizontal, from `x0` (by default 0) to `x1` at `y`, `height`
+    is their thickness, e.g. of the countries of a band scale of `y`.
   - `polar:*` of [polar plots](#polar-plots) and `geo:*` of [maps](#maps)
 - `categories`: the rows are grouped by these mappings, the props of their
   categories are available in the plot props. Mappings without `props` only

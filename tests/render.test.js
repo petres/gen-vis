@@ -1175,6 +1175,58 @@ describe('data formats', () => {
     });
 });
 
+describe('horizontal bars and several value axes', () => {
+    const barDef = () => {
+        const def = lineDef();
+        def.mapping.x = { column: 'value', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, null], domainRel: [0, 0] }, axis: { position: 'bottom' }, stacked: true, hover: { format: '.1f' } };
+        def.mapping.y = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'vertical' }, axis: { position: 'left' } };
+        def.plot = { type: 'cartesian:bar', categories: ['c'], highlight: 'row', props: { x0: '@x:start:scaled', x1: '@x:end:scaled', y: '@y:scaled', fill: '@color', 'highlight-stroke': 'black' } };
+        return def;
+    };
+
+    test('stacked horizontal bars, the hover of a row of bars', async () => {
+        const el = await mount(GenVis, { def: barDef(), data: lineData });
+        // 2023: Wien 4, Tirol 2, stacked from 0 to 6 of the width 550
+        const bars = [...el.querySelectorAll('g.vis-plot rect')].filter(r => r.getAttribute('fill') && r.__data__);
+        const wien = el.querySelectorAll('g.vis-group[data-group-c="Wien"] rect');
+        expect(wien).toHaveLength(3);
+        const last = [...wien].at(-1);
+        expect([last.getAttribute('x'), Math.round(last.getAttribute('width'))]).toEqual(['0', 367]);
+        const tirol = [...el.querySelectorAll('g.vis-group[data-group-c="Tirol"] rect')].at(-1);
+        expect(Math.round(tirol.getAttribute('x'))).toBe(367);
+        expect(bars.every(r => +r.getAttribute('height') > 0)).toBe(true);
+
+        // the positions of the hover are the years, vertical, the values horizontal
+        const y = +last.getAttribute('y') + last.getAttribute('height')/2;
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 500, clientY: 10 + y }));
+        await nextTick();
+        expect(el.querySelector('.vis-hover-title').textContent).toBe('2023');
+        expect([...el.querySelectorAll('.vis-hover tr')].map(tr => tr.textContent)).toEqual(['Tirol2,0', 'Wien4,0']);
+        // the segment under the pointer, Tirol from 4 to 6
+        expect(el.querySelector('.vis-hover tr.vis-nearest').textContent).toBe('Tirol2,0');
+        expect(el.querySelectorAll('rect[stroke="black"]')).toHaveLength(1);
+        const line = el.querySelector('.vis-hover-marker line');
+        expect(line.getAttribute('y1')).toBe(line.getAttribute('y2'));
+        expect(el.querySelector('.vis-hover').style.transform).toContain('-50%');
+        expect(errors).toEqual([]);
+    });
+
+    test('of two vertical axes the one with a hover, the other values with a hover are columns', async () => {
+        const def = lineDef();
+        def.mapping.y2 = { column: 'other', type: 'numeric', scale: { orientation: 'vertical' }, axis: { position: 'right' } };
+        def.plot.push({ type: 'svg:circle', categories: ['c'], props: { cx: '@x:scaled', cy: '@y2:scaled', r: 2 } });
+        const values = async def => {
+            const el = await mount(GenVis, { def, data: lineData });
+            el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+            await nextTick();
+            return [...el.querySelectorAll('.vis-hover tr')].map(tr => [...tr.cells].map(td => td.textContent));
+        };
+        expect(await values(def)).toEqual([['Tirol', '2,0'], ['Wien', '1,0']]);
+        def.mapping.y2.hover = { format: '.0f' };
+        expect(await values(def)).toEqual([['Tirol', '2,0', '20'], ['Wien', '1,0', '10']]);
+    });
+});
+
 describe('transforms', () => {
     test('an index of the base year of a slider, the values of the hover and the csv', async () => {
         const def = lineDef();

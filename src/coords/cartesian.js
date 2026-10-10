@@ -3,6 +3,9 @@ import { bandCenter } from "@/utils/scales";
 import { tickValues, tickFormat, tickCount } from "@/coords/ticks";
 import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
 
+// the positions of the hover are vertical, e.g. of horizontal bars
+const isVertical = (ctx, names) => ctx.store.mapping(names.h).scale?.orientation == 'vertical';
+
 // horizontal lines for a vertical axis and vice versa
 const grid = (ctx, s, values, vertical) => {
     const offset = bandCenter(s);
@@ -139,28 +142,38 @@ export default {
     axes,
     annotations: ['band', 'line', 'text', 'circle'],
     annotate,
+    // the positions can be the vertical ones, e.g. of horizontal bars, see axisNames of layout.js
+    flip: true,
     hover: {
         area: (ctx, parent) => parent.append("rect")
             .attr("width", ctx.innerWidth)
             .attr("height", ctx.innerHeight),
 
-        // the nearest horizontal value with data and the vertical value at the pointer
+        // the nearest position with data, e.g. horizontal, and the value at
+        // the pointer, e.g. vertical
         locate(ctx, [px, py], names) {
-            const key = ctx.scales[names.h].nearest(px);
+            const vertical = isVertical(ctx, names);
+            const key = ctx.scales[names.h].nearest(vertical ? py : px);
             if (key === undefined)
                 return null;
-            return { key, value: ctx.scales[names.v].invert?.(py) };
+            return { key, value: ctx.scales[names.v].invert?.(vertical ? px : py) };
         },
 
-        // a vertical line, the hover is beside it, on the side with more space
+        // a vertical line, the hover is beside it, on the side with more
+        // space, of vertical positions a horizontal line, the hover above or
+        // below it
         marker(ctx, key, names, line) {
             const s = ctx.scales[names.h];
-            const x = s(key) + bandCenter(s);
-            line.attr("x1", x)
-                .attr("x2", x)
+            const p = s(key) + bandCenter(s);
+            if (isVertical(ctx, names)) {
+                line.attr("x1", 0).attr("x2", ctx.innerWidth).attr("y1", p).attr("y2", p);
+                return { x: ctx.innerWidth/2, y: p, side: p > ctx.innerHeight/2 ? "above" : "below" };
+            }
+            line.attr("x1", p)
+                .attr("x2", p)
                 .attr("y1", 0)
                 .attr("y2", ctx.innerHeight);
-            return { x, y: ctx.innerHeight/2, side: x > ctx.innerWidth/2 ? "left" : "right" };
+            return { x: p, y: ctx.innerHeight/2, side: p > ctx.innerWidth/2 ? "left" : "right" };
         },
     },
 };

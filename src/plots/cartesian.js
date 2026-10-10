@@ -62,23 +62,40 @@ export default {
     // a bar per row from `y0` (by default the position of 0 of the scale of `y1`)
     // to `y1`, e.g. "@y:start:scaled" and "@y:end:scaled" of stacked values,
     // centered at `x`, in the middle of a band, `width` defaults to the width
-    // of a band or the step of a point scale
+    // of a band or the step of a point scale. With `x1` a horizontal bar from
+    // `x0` to `x1` centered at `y`, `height` is its thickness.
     'cartesian:bar': {
         coords: ['cartesian'],
         update: true,
-        render: (groups, parent, plot, ctx) => pointwise(groups, parent, "rect", v => {
+        render(groups, parent, plot, ctx) {
             const type = 'cartesian:bar';
-            const xScale = barScale(plot, ctx, 'x', type);
-            const width = v.width ?? barWidth(xScale, type);
-            const y0 = 'y0' in v ? v.y0 : barScale(plot, ctx, 'y1', type)(0);
-            const { y0: _, y1: __, ...props } = v;
-            return {
-                ...props,
-                x: v.x + bandCenter(xScale) - width/2,
-                width,
-                y: Math.min(y0, v.y1),
-                height: Math.abs(v.y1 - y0),
-            };
-        }),
+            if ('x1' in plot.props)
+                return pointwise(groups, parent, "rect", v => {
+                    const yScale = barScale(plot, ctx, 'y', type);
+                    const height = v.height ?? barWidth(yScale, type);
+                    const x0 = 'x0' in v ? v.x0 : barScale(plot, ctx, 'x1', type)(0);
+                    const { x0: _, x1: __, ...props } = v;
+                    return {
+                        ...props,
+                        x: Math.min(x0, v.x1),
+                        width: Math.abs(v.x1 - x0),
+                        y: v.y + bandCenter(yScale) - height/2,
+                        height,
+                    };
+                });
+            return pointwise(groups, parent, "rect", v => {
+                const xScale = barScale(plot, ctx, 'x', type);
+                const width = v.width ?? barWidth(xScale, type);
+                const y0 = 'y0' in v ? v.y0 : barScale(plot, ctx, 'y1', type)(0);
+                const { y0: _, y1: __, ...props } = v;
+                return {
+                    ...props,
+                    x: v.x + bandCenter(xScale) - width/2,
+                    width,
+                    y: Math.min(y0, v.y1),
+                    height: Math.abs(v.y1 - y0),
+                };
+            });
+        },
     },
 };

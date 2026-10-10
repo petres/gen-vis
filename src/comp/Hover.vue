@@ -31,8 +31,16 @@ export default {
         space: 20
     }),
     computed: {
-        left() { return (this.side == "left") ? `${-this.space}px` : `${this.space}px` },
-        transform() { return (this.side == "left") ? `translate(-100%, -50%)` : `translate(0, -50%)` },
+        left() { return { left: `${-this.space}px`, right: `${this.space}px` }[this.side] ?? '0px' },
+        // beside the marker or above or below it, e.g. of horizontal bars
+        transform() {
+            return {
+                left: 'translate(-100%, -50%)',
+                right: 'translate(0, -50%)',
+                above: `translate(-50%, calc(-100% - ${this.space}px))`,
+                below: `translate(-50%, ${this.space}px)`,
+            }[this.side];
+        },
         // the templates of the title and of a row, see README "hover"
         template() { return this.store.def.options.hover ?? {} },
         filledTitle() {

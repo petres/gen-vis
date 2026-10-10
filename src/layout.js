@@ -15,18 +15,27 @@ import { makeScale } from "@/utils/scales";
  */
 
 // the names of the mappings of the positions (h) and of the values (v) of
-// the hover and the stacks, e.g. of the horizontal and the vertical axis
+// the hover and the stacks, e.g. of the horizontal and the vertical axis.
+// Of several mappings of an orientation the stacked one, the one with a
+// hover or the first one. In a coordinate system with `flip` the positions
+// are the vertical ones and the values the horizontal ones if these are
+// stacked or the vertical ones are categories and the horizontal ones not,
+// e.g. of horizontal bars.
 const axisNames = store => {
     if (store.coord.names)
         return store.coord.names(store);
-    const axis = {};
-    Object.entries(store.def.mapping).filter(([, m]) => m.scale).forEach(([n, m]) => {
-        Object.entries(store.coord.axis).forEach(([a, orientation]) => {
-            if (m.scale.orientation == orientation)
-                axis[a] = n;
-        });
-    });
-    return axis;
+    const mapping = store.def.mapping;
+    const of = orientation => {
+        const names = Object.keys(mapping).filter(n => mapping[n].scale?.orientation == orientation);
+        return names.find(n => mapping[n].stacked) ?? names.find(n => mapping[n].hover) ?? names[0];
+    };
+    let h = of(store.coord.axis.h);
+    let v = of(store.coord.axis.v);
+    const categorical = n => n !== undefined && !['numeric', 'date'].includes(mapping[n].type);
+    if (store.coord.flip && h !== undefined && v !== undefined
+        && ((mapping[h].stacked && !mapping[v].stacked) || (categorical(v) && !categorical(h))))
+        [h, v] = [v, h];
+    return { ...(h === undefined ? {} : { h }), ...(v === undefined ? {} : { v }) };
 };
 
 // the visible categories of the mappings with props, e.g. of the legends,
