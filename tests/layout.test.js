@@ -1,6 +1,10 @@
-import { describe, test, expect } from 'vitest';
+import { loadColors } from '@/utils/d3';
+import { describe, test, expect, beforeAll } from 'vitest';
 import { createStore } from '@/store';
 import { layout, plotGroups } from '@/layout';
+
+// the colors of d3 are loaded by the store, see loadColors
+beforeAll(loadColors);
 
 const mapping = () => ({
     x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' } },

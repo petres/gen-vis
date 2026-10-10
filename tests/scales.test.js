@@ -1,6 +1,10 @@
-import { describe, test, expect } from 'vitest';
+import { loadColors } from '@/utils/d3';
+import { describe, test, expect, beforeAll } from 'vitest';
 import { makeScale, bandCenter } from '@/utils/scales';
 import coord from '@/coords/cartesian';
+
+// the colors of d3 are loaded by the store, see loadColors
+beforeAll(loadColors);
 
 const options = { dims: { width: 100, height: 50 }, coord };
 

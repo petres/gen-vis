@@ -1,19 +1,15 @@
 // the parts of d3 the package uses, so a bundle has only them, not all of
 // d3, e.g. without forces and zoom. The names of the definitions, e.g. of
-// scales and interpolators, are looked up in the registries below.
+// scales and interpolators, are looked up in the registries below. The
+// colors of d3-scale-chromatic are only loaded for definitions which name
+// one (see loadColors), the projections of maps with the first map (see
+// coords/geo.js).
 import * as d3Scale from 'd3-scale';
-import * as chromatic from 'd3-scale-chromatic';
-import {
-    geoAlbers, geoAlbersUsa, geoAzimuthalEqualArea, geoAzimuthalEquidistant, geoConicConformal,
-    geoConicEqualArea, geoConicEquidistant, geoEqualEarth, geoEquirectangular, geoGnomonic, geoIdentity,
-    geoMercator, geoNaturalEarth1, geoOrthographic, geoStereographic, geoTransverseMercator,
-} from 'd3-geo';
 import { axisTop, axisBottom, axisLeft, axisRight } from 'd3-axis';
 
 export { bisectCenter, extent, greatest, group, least, max, mean, min, nice, range, tickStep, ticks } from 'd3-array';
 export { csvFormat, csvParse, tsvParse } from 'd3-dsv';
 export { formatLocale, precisionFixed } from 'd3-format';
-export { geoArea, geoContains, geoPath } from 'd3-geo';
 export { scaleLinear } from 'd3-scale';
 export { pointer, select } from 'd3-selection';
 export {
@@ -31,27 +27,42 @@ const lowerFirst = w => w.charAt(0).toLowerCase() + w.slice(1);
 
 // the exports of a module of d3 with a prefix, by their names without it,
 // e.g. "linear" of scaleLinear
-const byPrefix = (module, prefix) => Object.fromEntries(Object.entries(module)
+export const byPrefix = (module, prefix) => Object.fromEntries(Object.entries(module)
     .filter(([k]) => k.startsWith(prefix) && k.length > prefix.length)
     .map(([k, v]) => [lowerFirst(k.slice(prefix.length)), v]));
 
 // the scales (`scale.type`), e.g. linear, time, band or sequential
 export const scales = byPrefix(d3Scale, 'scale');
 
-// the colors of sequential and diverging scales (`scale.interpolator`), e.g.
-// Blues or RdYlGn, and the schemes of the ranges (`scale.scheme`), e.g. Tableau10
-export const interpolators = byPrefix(chromatic, 'interpolate');
-export const schemes = byPrefix(chromatic, 'scheme');
+// the names of the colors of sequential and diverging scales
+// (`scale.interpolator`), e.g. Blues or RdYlGn, and of the schemes of the
+// ranges and categories (`scheme`), e.g. Tableau10, known before the colors
+// are loaded, e.g. to validateDef
+const registry = names => Object.fromEntries(names.map(n => [n, true]));
+export const interpolatorNames = registry([
+    'blues', 'brBG', 'buGn', 'buPu', 'cividis', 'cool', 'cubehelixDefault', 'gnBu', 'greens',
+    'greys', 'inferno', 'magma', 'orRd', 'oranges', 'pRGn', 'piYG', 'plasma', 'puBu', 'puBuGn',
+    'puOr', 'puRd', 'purples', 'rainbow', 'rdBu', 'rdGy', 'rdPu', 'rdYlBu', 'rdYlGn', 'reds',
+    'sinebow', 'spectral', 'turbo', 'viridis', 'warm', 'ylGn', 'ylGnBu', 'ylOrBr', 'ylOrRd',
+]);
+export const schemeNames = registry([
+    'accent', 'blues', 'brBG', 'buGn', 'buPu', 'category10', 'dark2', 'gnBu', 'greens', 'greys',
+    'observable10', 'orRd', 'oranges', 'pRGn', 'paired', 'pastel1', 'pastel2', 'piYG', 'puBu',
+    'puBuGn', 'puOr', 'puRd', 'purples', 'rdBu', 'rdGy', 'rdPu', 'rdYlBu', 'rdYlGn', 'reds',
+    'set1', 'set2', 'set3', 'spectral', 'tableau10', 'ylGn', 'ylGnBu', 'ylOrBr', 'ylOrRd',
+]);
 
-// the projections of maps (`geo.projection.type`), e.g. mercator
-export const projections = {
-    albers: geoAlbers, albersUsa: geoAlbersUsa, azimuthalEqualArea: geoAzimuthalEqualArea,
-    azimuthalEquidistant: geoAzimuthalEquidistant, conicConformal: geoConicConformal,
-    conicEqualArea: geoConicEqualArea, conicEquidistant: geoConicEquidistant, equalEarth: geoEqualEarth,
-    equirectangular: geoEquirectangular, gnomonic: geoGnomonic, identity: geoIdentity, mercator: geoMercator,
-    naturalEarth1: geoNaturalEarth1, orthographic: geoOrthographic, stereographic: geoStereographic,
-    transverseMercator: geoTransverseMercator,
+// the colors of d3-scale-chromatic, loaded once by loadColors
+let colors = null;
+export const loadColors = async () => colors ??= await import('@/utils/colors.js');
+const loaded = () => {
+    if (!colors)
+        throw new Error('The colors of d3 are not loaded, see loadColors');
+    return colors;
 };
+
+// the interpolator of a name, e.g. "Blues", undefined if it is unknown
+export const interpolator = name => named(loaded().interpolators, name);
 
 // the axes of the cartesian coordinate system by their position
 export const axes = { top: axisTop, bottom: axisBottom, left: axisLeft, right: axisRight };
@@ -64,13 +75,10 @@ export const named = (registry, name) => typeof name == 'string' && Object.hasOw
 // the colors of a scheme, e.g. "Tableau10", of a scheme of several sizes, e.g.
 // "Blues", `n` colors (3 to the most of the scheme), undefined if it is unknown
 export const schemeColors = (name, n) => {
-    const scheme = named(schemes, name);
+    const scheme = named(loaded().schemes, name);
     if (!scheme)
         return undefined;
     if (typeof scheme.at(-1) == 'string')
         return scheme;
     return scheme[Math.min(Math.max(n, 3), scheme.length - 1)].slice(0, n);
 };
-
-// the names of a registry for messages, e.g. of validateDef
-export const names = registry => Object.keys(registry);

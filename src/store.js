@@ -7,9 +7,9 @@ import { applyFormElements, fillText, formatOf, mergeAll, prepareDef } from "@/u
 import { applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { validateDef } from "@/utils/validate";
-import { getCoord } from "@/coords";
+import { loadCoord } from "@/coords";
 import { axisNames } from "@/layout";
-import { geoFeatures, geoKey } from "@/utils/geo";
+import { loadColors } from "@/utils/d3";
 
 // relative urls are resolved against `base`, e.g. the url of the def referencing them
 const resolveUrl = (url, base = document.baseURI) => new URL(url, base).href;
@@ -107,6 +107,15 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
 
     const defOrg = await resolveParents(JSON.parse(JSON.stringify(def)), url);
     validateDef(defOrg).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
+    // the colors of d3 are only loaded if the mappings name one, also the
+    // patches of form elements, and the parts of the coordinate system, e.g.
+    // of maps, with the data
+    const parts = Promise.all([
+        /"(scheme|interpolator)":/.test(JSON.stringify([defOrg.mapping, defOrg.formElements])) ? loadColors() : null,
+        loadCoord(defOrg.options?.coord),
+        defOrg.geo?.data ? import('@/utils/geo.js') : null,
+    ]);
+    parts.catch(() => {});
     // the format of the data, by default the one of the extension of its url
     let format = defOrg.dataFormat;
     if (data === null) {
@@ -117,6 +126,8 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         data = await fetchData(dataUrl, format);
     }
     const rows = raw(await parseData(data, format));
+
+    const [, coord, geoModule] = await parts;
 
     // the form elements can have the values of the data, the state needs them
     addDataValues(defOrg, rows);
@@ -142,6 +153,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
             const geoUrl = resolveUrl(json, url);
             json = parseDef(await fetchText(geoUrl), `'${geoUrl}'`, 'geometry');
         }
+        const { geoFeatures, geoKey } = geoModule;
         const key = geoKey(defOrg.geo.key ?? 'id');
         // only the features of `include`, without the ones of `exclude`, they are not drawn at all
         const include = defOrg.geo.include && new Set(defOrg.geo.include.map(String));
@@ -156,7 +168,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         defUrl: url ?? null,
         defOrg,
         locale: markRaw(getLocale(defOrg.options?.locale)),
-        coord: markRaw(getCoord(defOrg.options?.coord)),
+        coord: markRaw(coord),
         geo,
         rows,
         def: prepared,

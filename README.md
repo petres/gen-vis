@@ -50,6 +50,13 @@ locally instead. `vue` is a peer dependency, the package uses the Vue of the
 application. `mountGenVisElement` and `mountGenVisByClass` are exported as
 well.
 
+Parts which not every chart needs are loaded when a chart needs them, so a
+bundler of the application puts them into chunks of their own: the colors of
+d3 (`d3-scale-chromatic`, ~8 kB gzipped) for definitions which name a scheme
+or an interpolator, the parts of maps (`d3-geo`, `topojson-client`, ~13 kB)
+with the first map, the parquet reader for parquet data and the screenshot
+of the PNG with the first image.
+
 ### Props
 
 | Prop       | Attribute       | Description |
@@ -872,7 +879,9 @@ system, `create()` appends a new one to `ctx.inner`.
 A
 coordinate system (`registerCoord(name, coord)`) has the default ranges of the
 orientations of its scales, the axes and the geometry of the hover, see
-`src/coords/index.js` and e.g. `src/coords/polar.js`. Both are known to
+`src/coords/index.js` and e.g. `src/coords/polar.js`, `load()` of a
+coordinate system loads its parts with its first chart, e.g. the ones of maps
+(`src/coords/geo.js`). Both are known to
 `validateDef`, `@preschen/gen-vis/check` exports `registerPlotType` and
 `registerCoord` as well, the standalone script has them as
 `GenVis.registerPlotType`, `GenVis.registerCoord`, `GenVis.pointwise` and

@@ -1,5 +1,9 @@
-import { describe, test, expect } from 'vitest';
+import { loadColors } from '@/utils/d3';
+import { describe, test, expect, beforeAll } from 'vitest';
 import { sameValue, applyFormElements, fillTemplate, formatOf, mergeAll, prepareDef, templateRefs } from '@/utils/def';
+
+// the colors of d3 are loaded by the store, see loadColors
+beforeAll(loadColors);
 
 describe('prepareDef', () => {
     test('defaults', () => {

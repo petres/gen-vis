@@ -1,11 +1,12 @@
 export { geoFeatures, geoKey };
 
-import * as d3 from "@/utils/d3";
+// the features of the geometry of maps, loaded with the first map
+import { geoArea } from 'd3-geo';
 import { feature } from "topojson-client";
 
 // the rings of d3 are clockwise, the ones of GeoJSON (RFC 7946) counterclockwise,
 // a polygon of the wrong order covers the rest of the globe, it is reversed
-const rewindPolygon = rings => d3.geoArea({ type: 'Polygon', coordinates: rings }) > 2*Math.PI
+const rewindPolygon = rings => geoArea({ type: 'Polygon', coordinates: rings }) > 2*Math.PI
     ? rings.map(r => [...r].reverse()) : rings;
 
 const rewind = f => {

@@ -8,6 +8,7 @@ import { curves } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
 import { annotationKeys } from "@/coords/annotations.js";
+import { projectionNames } from "@/coords/geo.js";
 
 // the interpolations of the plot types with a curve, e.g. cartesian:line
 const curveNames = Object.keys(curves);
@@ -119,7 +120,7 @@ const validateDef = def => {
             warn(`${path}.props.manual`, `renamed to 'categories'`);
         else if (m.props && !m.props.categories && !m.props.fromData)
             warn(`${path}.props`, `expected 'categories' or the ones of the data ('fromData'), and optional 'common' props`);
-        if (m.props?.scheme !== undefined && !d3.named(d3.schemes, m.props.scheme))
+        if (m.props?.scheme !== undefined && !d3.named(d3.schemeNames, m.props.scheme))
             warn(`${path}.props.scheme`, `unknown scheme '${m.props.scheme}', e.g. 'Tableau10'`);
         if (m.scale) {
             const type = m.scale.type ?? 'linear';
@@ -134,9 +135,9 @@ const validateDef = def => {
                 if (m.scale.interpolator !== undefined && typeof scale().interpolator != 'function')
                     warn(`${path}.scale.interpolator`, `a ${type} scale has no interpolator, e.g. a sequential one has`);
             }
-            if (m.scale.interpolator !== undefined && !d3.named(d3.interpolators, m.scale.interpolator))
+            if (m.scale.interpolator !== undefined && !d3.named(d3.interpolatorNames, m.scale.interpolator))
                 warn(`${path}.scale.interpolator`, `unknown interpolator '${m.scale.interpolator}', e.g. 'Blues'`);
-            if (m.scale.scheme !== undefined && !d3.named(d3.schemes, m.scale.scheme))
+            if (m.scale.scheme !== undefined && !d3.named(d3.schemeNames, m.scale.scheme))
                 warn(`${path}.scale.scheme`, `unknown scheme '${m.scale.scheme}', e.g. 'Blues'`);
             if (type == 'threshold' && !(Array.isArray(m.scale.domain) && m.scale.domain.every(v => v !== null)))
                 warn(`${path}.scale.domain`, `a threshold scale needs the values between its classes`);
@@ -217,8 +218,8 @@ const validateDef = def => {
         if (def.geo?.join !== undefined && !(def.geo.join in mapping))
             warn('geo.join', `unknown mapping '${def.geo.join}'`);
         const projection = def.geo?.projection?.type ?? 'mercator';
-        if (!d3.named(d3.projections, projection))
-            warn('geo.projection.type', `unknown projection '${projection}', expected one of ${list(d3.names(d3.projections))}`);
+        if (!d3.named(Object.fromEntries(projectionNames.map(n => [n, true])), projection))
+            warn('geo.projection.type', `unknown projection '${projection}', expected one of ${list(projectionNames)}`);
     }
 
     Object.keys(def.filter ?? {}).filter(n => !(n in mapping)).forEach(n =>

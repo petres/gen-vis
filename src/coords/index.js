@@ -1,4 +1,4 @@
-export { coords, getCoord, registerCoord };
+export { coords, getCoord, loadCoord, registerCoord };
 
 import cartesian from "@/coords/cartesian";
 import polar from "@/coords/polar";
@@ -31,6 +31,9 @@ import geo from "@/coords/geo";
  *   `hover.marker(ctx, key, names, line)` places the marker line of the key and
  *   returns the position of the hover, `{x, y, side}`, `hover.title(ctx, key,
  *   names)` the title of the hover, the formatted key by default
+ * - `load()`: the module of the parts which are loaded with the first
+ *   visualisation of the coordinate system, e.g. the ones of maps with
+ *   d3-geo, its default export completes the coordinate system
  */
 const coords = { cartesian, polar, geo };
 
@@ -38,6 +41,14 @@ const getCoord = (name = 'cartesian') => {
     if (!Object.hasOwn(coords, name))
         throw new Error(`Unknown coordinate system '${name}', expected one of ${Object.keys(coords).map(n => `'${n}'`).join(', ')}`);
     return coords[name];
+};
+
+// the coordinate system completed by the module it loads, once
+const loadCoord = async name => {
+    const coord = getCoord(name);
+    if (coord.load)
+        await (coord.loaded ??= coord.load().then(m => Object.assign(coord, m.default ?? m)));
+    return coord;
 };
 
 const registerCoord = (name, coord) => {

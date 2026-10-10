@@ -50,7 +50,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
 
     // the colors of sequential and diverging scales, e.g. "Blues"
     if (scaleDef.interpolator) {
-        const interpolator = d3.named(d3.interpolators, scaleDef.interpolator);
+        const interpolator = d3.interpolator(scaleDef.interpolator);
         if (!interpolator)
             throw new Error(`Unknown interpolator '${scaleDef.interpolator}', e.g. 'Blues' or 'RdYlGn'`);
         s.interpolator(interpolator);
