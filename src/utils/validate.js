@@ -302,6 +302,8 @@ const validateDef = def => {
         warn(path, `unknown name '${r}' in the template`));
     const isGlobal = r => r in (def.globals ?? {});
     checkHover(hover.title, 'options.hover.title', r => r == 'title' || isGlobal(r));
+    if (hover.mode !== undefined && !['position', 'point'].includes(hover.mode))
+        warn('options.hover.mode', `unknown mode '${hover.mode}', expected one of 'position', 'point'`);
     checkHover(hover.row, 'options.hover.row', r => isGlobal(r) || r.split('.')[0] in mapping);
     Object.entries(mapping).forEach(([n, m]) => {
         checkText(m.name, `mapping.${n}.name`);

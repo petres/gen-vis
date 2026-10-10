@@ -1175,6 +1175,33 @@ describe('data formats', () => {
     });
 });
 
+describe('the hover of the nearest point', () => {
+    test('the row of the nearest point within the radius, in cartesian and polar plots', async () => {
+        const def = lineDef({ hover: { mode: 'point', radius: 20 } });
+        def.plot = def.plot.slice(1);
+        const el = await mount(GenVis, { def, data: lineData });
+        const circle = el.querySelector('g.vis-group[data-group-c="Wien"] circle:last-child');
+        const [cx, cy] = [+circle.getAttribute('cx'), +circle.getAttribute('cy')];
+        const events = el.querySelector('rect.vis-events');
+        // the plot area is at 0, 0 in jsdom, see tests/dom.js
+        events.dispatchEvent(pointer('pointermove', { clientX: cx + 5, clientY: cy - 5 }));
+        await nextTick();
+        expect(el.querySelector('.vis-hover-title').textContent).toBe('2023');
+        expect([...el.querySelectorAll('.vis-hover tr')].map(tr => tr.textContent)).toEqual(['Wien4,0']);
+        expect(el.querySelector('.vis-hover-marker line').hasAttribute('x1')).toBe(false);
+        // too far from every point
+        events.dispatchEvent(pointer('pointermove', { clientX: cx - 60, clientY: cy }));
+        await nextTick();
+        expect(el.querySelector('.vis-hover')).toBeNull();
+
+        const { default: polar } = await import('@/coords/polar');
+        const { scaleLinear } = await import('d3-scale');
+        const ctx = { scales: { a: scaleLinear([0, 4], [0, Math.PI*2]), r: scaleLinear([0, 10], [0, 100]) }, stackOf: null };
+        const [x, y] = polar.hover.point(ctx, { a: 1, r: 5 }, { h: 'a', v: 'r' });
+        expect([Math.round(x), Math.round(y)]).toEqual([50, 0]);
+    });
+});
+
 describe('formatted values', () => {
     test('labels of the format of the hover or of a format prop, dates of a format of times', async () => {
         const def = lineDef();

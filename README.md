@@ -126,6 +126,11 @@ of the table, with `{land}` (the name of the category of the mapping
 "options": { "hover": { "title": "<b>{title}</b>", "row": "{land}: {y} <small>{land.unit}</small>" } }
 ```
 
+`"mode": "point"` of the `hover` of the options shows the row of the point
+nearest to the mouse (within `radius` pixels, 30 by default) instead of the
+rows of the nearest position of the axis, e.g. of a scatter plot, in
+cartesian and polar plots.
+
 ### PNG
 
 The image is a copy of the visualisation with the same state, drawn outside

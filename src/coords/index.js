@@ -30,7 +30,9 @@ import geo from "@/coords/geo";
  *   key, without a value the elements of the key are highlighted,
  *   `hover.marker(ctx, key, names, line)` places the marker line of the key and
  *   returns the position of the hover, `{x, y, side}`, `hover.title(ctx, key,
- *   names)` the title of the hover, the formatted key by default
+ *   names)` the title of the hover, the formatted key by default,
+ *   `hover.point(ctx, row, names)` the position of the point of a row, of
+ *   the hover of the nearest point (`"mode": "point"` of the hover)
  * - `load()`: the module of the parts which are loaded with the first
  *   visualisation of the coordinate system, e.g. the ones of maps with
  *   d3-geo, its default export completes the coordinate system

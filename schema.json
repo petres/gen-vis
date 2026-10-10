@@ -225,6 +225,8 @@
                     "additionalProperties": false,
                     "description": "The content of the hover without the hover slot, templates of html.",
                     "properties": {
+                        "mode": { "enum": ["position", "point"], "description": "The rows of the nearest position of the axis (position, by default) or the row of the nearest point, e.g. of a scatter plot." },
+                        "radius": { "type": "number", "description": "The distance of the nearest point in pixels, 30 by default." },
                         "title": { "type": "string", "description": "The title, {title} is the default one, e.g. the date, and the globals." },
                         "row": { "type": "string", "description": "A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, and the globals." }
                     }

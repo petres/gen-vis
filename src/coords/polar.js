@@ -239,6 +239,12 @@ export default {
             return { key, value: ctx.scales[names.v].invert?.(Math.hypot(px, py)) };
         },
 
+        // the position of the point of a row, of the hover of the nearest point
+        point(ctx, row, names) {
+            const value = ctx.stackOf ? d3.mean(ctx.stackOf(row)) : row[names.v];
+            return d3.pointRadial(angleOf(ctx.scales[names.h], row[names.h]), ctx.scales[names.v](value));
+        },
+
         // a line from the center, the hover is in the center, on the other
         // side than the line
         marker(ctx, key, names, line) {

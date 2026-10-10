@@ -159,6 +159,15 @@ export default {
             return { key, value: ctx.scales[names.v].invert?.(vertical ? px : py) };
         },
 
+        // the position of the point of a row, of the hover of the nearest
+        // point, stacked values at the middle of their stack
+        point(ctx, row, names) {
+            const [h, v] = [ctx.scales[names.h], ctx.scales[names.v]];
+            const value = ctx.stackOf ? d3.mean(ctx.stackOf(row)) : row[names.v];
+            const p = [h(row[names.h]) + bandCenter(h), v(value) + bandCenter(v)];
+            return isVertical(ctx, names) ? [p[1], p[0]] : p;
+        },
+
         // a vertical line, the hover is beside it, on the side with more
         // space, of vertical positions a horizontal line, the hover above or
         // below it

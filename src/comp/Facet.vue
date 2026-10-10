@@ -241,7 +241,24 @@ export default {
             // the rows at the pointer and the nearest one, stacked: the segment
             // under the pointer, outside of the stack the closest one, null
             // without a key, the rows are not formatted yet
+            // the hover of the nearest point, e.g. of a scatter plot, within
+            // `radius` pixels, of the coordinate systems with points of rows
+            const hoverOptions = store.def.options.hover ?? {};
+            const pointMode = hoverOptions.mode == 'point' && coord.hover.point;
+            let points = null;
+            const nearestPoint = ([px, py]) => {
+                points ??= ctx.rows.filter(row => row[names.h] !== null && row[v] !== null)
+                    .map(row => [...coord.hover.point(ctx, row, names), row]);
+                const radius = hoverOptions.radius ?? 30;
+                const best = d3.least(points, ([x, y]) => (x - px)**2 + (y - py)**2);
+                return best && (best[0] - px)**2 + (best[1] - py)**2 <= radius**2 ? best : null;
+            };
+
             const at = e => {
+                if (pointMode) {
+                    const point = nearestPoint(d3.pointer(e, ctx.inner.node()));
+                    return point && { key: point[2][names.h], rows: [point[2]], nearest: point[2], point };
+                }
                 const position = coord.hover.locate(ctx, d3.pointer(e, ctx.inner.node()), names, e);
                 if (!position)
                     return null;
@@ -312,7 +329,12 @@ export default {
                 this.highlight(nearest ?? (value === undefined ? {[names.h]: key} : null));
 
                 const p = payload(found);
-                Object.assign(this.hover, coord.hover.marker(ctx, key, names, marker), {
+                // a point has no line, the hover is beside it
+                const position = found.point
+                    ? (marker.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null),
+                        { x: found.point[0], y: found.point[1], side: found.point[0] > ctx.innerWidth/2 ? "left" : "right" })
+                    : coord.hover.marker(ctx, key, names, marker);
+                Object.assign(this.hover, position, {
                     data: entriesOf(rows, nearest),
                     title: p.title,
                     payload: p,
