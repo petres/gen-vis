@@ -532,7 +532,6 @@ describe('annotations', () => {
         const band = wien.querySelector('rect.vis-band');
         const bar = wien.querySelectorAll('g.vis-plot rect')[0];
         // the band of the category, the bar is in its middle
-        process.stderr.write('WIDTHS ' + num(band, 'width') + ' ' + num(bar, 'width') + ' ' + band.getAttribute('x') + '\n');
         expect(num(band, 'width')).toBeGreaterThanOrEqual(num(bar, 'width') - 1e-9);
         expect(num(band, 'x') + num(band, 'width')/2).toBeCloseTo(num(bar, 'x') + num(bar, 'width')/2);
         // in the middle of the year, the inner width of a facet is 250
