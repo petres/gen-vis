@@ -6,7 +6,8 @@
         "footer": "Source: Statistik Austria",
         "locale": "en",
         "height": 320,
-        "margins": { "top": 8, "right": 44, "bottom": 30, "left": 8 }
+        "margins": { "top": 8, "right": 44, "bottom": 30, "left": 8 },
+        "transition": 400
     },
     "mapping": {
         "x": {

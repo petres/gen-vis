@@ -7,7 +7,8 @@
         "footer": "Source: ENTSO-E Transparency Platform · Boundaries © EuroGeographics",
         "locale": "en",
         "height": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 380 }, { "cut": 560, "value": 500 }] },
-        "margins": { "top": 0, "right": 0, "bottom": 0, "left": 0 }
+        "margins": { "top": 0, "right": 0, "bottom": 0, "left": 0 },
+        "transition": 400
     },
     "geo": {
         "data": "data/europe.json",

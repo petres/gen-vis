@@ -6,7 +6,8 @@
         "footer": "Source: Eurostat, calculations of the WIFO energy dashboard",
         "locale": "en",
         "height": 300,
-        "margins": { "top": 10, "right": 6, "bottom": 28, "left": 44 }
+        "margins": { "top": 10, "right": 6, "bottom": 28, "left": 44 },
+        "transition": 400
     },
     "globals": { "unit": "twh", "share": "" },
     "formElements": [
