@@ -6,6 +6,8 @@
 // coords/geo.js).
 import * as d3Scale from 'd3-scale';
 import { axisTop, axisBottom, axisLeft, axisRight } from 'd3-axis';
+// the transitions of selections, e.g. of options.transition
+import 'd3-transition';
 
 export { bisectCenter, extent, greatest, group, least, max, mean, min, nice, range, tickStep, ticks } from 'd3-array';
 export { csvFormat, csvParse, tsvParse } from 'd3-dsv';

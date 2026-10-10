@@ -119,7 +119,7 @@ export default {
     watch: {
         // the state was set from outside
         'store.stateSets'() {
-            this.update();
+            this.update(true);
         },
     },
     computed: {
@@ -170,12 +170,18 @@ export default {
             this.measure();
             this.update();
         },
-        // the rows, facets and scales of the store
-        update() {
-            this.view = markRaw(layout(this.store, this.options.width));
+        // the rows, facets and scales of the store, `animated` of a change of
+        // the user or the state, the elements move with the transition of
+        // the definition, not the ones of a new width
+        update(animated = false) {
+            const view = layout(this.store, this.options.width);
+            const transition = this.store.def.options.transition;
+            const duration = animated ? (transition === true ? 300 : (Number(transition) || 0)) : 0;
+            view.facets.forEach(f => f.transition = duration);
+            this.view = markRaw(view);
         },
         changeSelected() {
-            this.update();
+            this.update(true);
             this.$emit('stateChanged');
         },
         formChanged() {

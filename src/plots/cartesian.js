@@ -33,14 +33,13 @@ export default {
         curve: true,
         coords: ['cartesian'],
         update: true,
-        render: (groups, parent, plot) => groupwise(groups, parent)
-            .attr("d", g => d3.line()
-                .curve(curve(plot))
-                .defined(e => finite(e.x, e.y))
-                .x(e => e.x)
-                .y(e => e.y)
-                (points(g))
-            ),
+        render: (groups, parent, plot) => groupwise(groups, parent, g => d3.line()
+            .curve(curve(plot))
+            .defined(e => finite(e.x, e.y))
+            .x(e => e.x)
+            .y(e => e.y)
+            (points(g))
+        ),
     },
 
     // an area per group, `d` with `x`, `y0` and `y1`
@@ -48,15 +47,14 @@ export default {
         curve: true,
         coords: ['cartesian'],
         update: true,
-        render: (groups, parent, plot) => groupwise(groups, parent)
-            .attr("d", g => d3.area()
-                .curve(curve(plot))
-                .defined(e => finite(e.x, e.y0, e.y1))
-                .x(e => e.x)
-                .y1(e => e.y1)
-                .y0(e => e.y0)
-                (points(g))
-            ),
+        render: (groups, parent, plot) => groupwise(groups, parent, g => d3.area()
+            .curve(curve(plot))
+            .defined(e => finite(e.x, e.y0, e.y1))
+            .x(e => e.x)
+            .y1(e => e.y1)
+            .y0(e => e.y0)
+            (points(g))
+        ),
     },
 
     // a bar per row from `y0` (by default the position of 0 of the scale of `y1`)

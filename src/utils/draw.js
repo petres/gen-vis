@@ -1,4 +1,4 @@
-export { curves, setProps, setGroupData, highlighter, rowOf };
+export { curves, setProps, setGroupData, groupAttrs, highlighter, rowOf, motion, withMotion };
 
 import * as d3 from "@/utils/d3";
 
@@ -19,11 +19,28 @@ const curves = {
     basisClosed: d3.curveBasisClosed,
 };
 
+// the transition of the elements of a draw in milliseconds, 0 without, see
+// options.transition and Facet.vue
+const motion = { duration: 0 };
+const withMotion = (duration, draw) => {
+    motion.duration = duration;
+    try {
+        draw();
+    } finally {
+        motion.duration = 0;
+    }
+};
+
 // the values of props as the attributes of an element, `text` is its text,
 // objects are nested props, e.g. `d` of a line, null removes an attribute,
 // only the attributes which change are set, e.g. of an element of the draw
-// before, as setting one costs the browser its style
+// before, as setting one costs the browser its style. With a transition the
+// attributes an element has move to their values, e.g. of the draw before,
+// new ones are set at once, a transition of the draw before stops where it is.
 const setProps = function(values) {
+    if (this.__transition)
+        d3.select(this).interrupt('vis');
+    let transition = null;
     for (const k in values) {
         const v = values[k];
         if (v !== null && (typeof v == 'object' || typeof v == 'function'))
@@ -39,11 +56,19 @@ const setProps = function(values) {
             this.removeAttribute(k);
         } else {
             const value = String(v);
-            if (this.getAttribute(k) !== value)
+            const before = this.getAttribute(k);
+            if (before === value)
+                continue;
+            if (motion.duration > 0 && before !== null)
+                (transition ??= d3.select(this).transition('vis').duration(motion.duration)).attr(k, value);
+            else
                 this.setAttribute(k, value);
         }
     }
 };
+
+// the attributes of the keys of the categories of a group, e.g. for the highlight
+const groupAttrs = g => Object.fromEntries(Object.entries(g.categories).map(([dim, key]) => [`data-group-${dim}`, key]));
 
 // the keys of the categories of the group of an element, e.g. for the highlight
 const setGroupData = function(g) {

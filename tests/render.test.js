@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { describe, test, expect, vi, beforeEach, onTestFinished } from 'vitest';
 import { createApp, h, nextTick, ref } from 'vue';
 import { GenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, pointwise } from '@/index.js';
 import { plotTypes } from '@/plots';
@@ -1445,6 +1445,31 @@ describe('the update of the facets', () => {
         await toggle(el, 'Tirol');
         expect(el.querySelectorAll('g.vis-plot rect')).toHaveLength(8);
         delete plotTypes['test:append'];
+    });
+
+    test('a transition moves the elements of a change, its end is the one of a new chart', async () => {
+        // jsdom has no transforms of svg, d3 interpolates the translations of the ticks of axes by them
+        Object.defineProperty(SVGElement.prototype, 'transform', { configurable: true, get() {
+            const [x = 0, y = 0] = (this.getAttribute('transform')?.match(/-?\d*\.?\d+(?:e-?\d+)?/g) ?? []).map(Number);
+            return { baseVal: { consolidate: () => ({ matrix: { a: 1, b: 0, c: 0, d: 1, e: x, f: y } }) } };
+        } });
+        onTestFinished(() => delete SVGElement.prototype.transform);
+        const el = await mount(GenVis, { def: lineDef({ transition: 80 }), data: lineData });
+        const circle = el.querySelector('g.vis-group[data-group-c="Tirol"] circle');
+        const line = el.querySelector('path[data-group-c="Tirol"]');
+        const [cy, d] = [circle.getAttribute('cy'), line.getAttribute('d')];
+        await toggle(el, 'Wien');
+        // the elements of the draw before, not moved yet
+        expect(el.querySelector('g.vis-group[data-group-c="Tirol"] circle')).toBe(circle);
+        expect(circle.getAttribute('cy')).toBe(cy);
+        expect(line.getAttribute('d')).toBe(d);
+        await vi.waitFor(() => expect(circle.getAttribute('cy')).not.toBe(cy), { timeout: 2000, interval: 5 });
+        await new Promise(resolve => setTimeout(resolve, 250));
+        const fresh = await mount(GenVis, { def: lineDef(), data: lineData, state: { visible: { c: { Wien: false } } } });
+        // the transition of a transform ends with "translate(x, y)", the axis writes "translate(x,y)"
+        const html = el => el.querySelector('svg.vis-svg').outerHTML.replace(/translate\(([^,)]+), /g, 'translate($1,');
+        expect(html(el)).toBe(html(fresh));
+        expect(errors).toEqual([]);
     });
 
     test('the built-in plot types update their elements, the annotations are drawn anew', () => {

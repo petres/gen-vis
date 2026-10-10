@@ -220,6 +220,7 @@
                 "title": { "type": "string" },
                 "subtitle": { "type": "string" },
                 "footer": { "type": "string", "description": "HTML" },
+                "transition": { "type": ["number", "boolean"], "description": "The elements move to their new values in this many milliseconds (true for 300) after a change of a legend, a form element or the state." },
                 "hover": {
                     "type": "object",
                     "additionalProperties": false,

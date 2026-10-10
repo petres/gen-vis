@@ -20,7 +20,7 @@
 <script>
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/props";
-import { highlighter } from "@/utils/draw";
+import { highlighter, withMotion } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 import { plotGroups, plotRows } from "@/layout";
 
@@ -144,13 +144,16 @@ export default {
 
             this.store.coord.prepare?.(this.ctx);
             // the plots below the axes and grid lines, e.g. the bands of annotations,
-            // the ones above the other plots, e.g. labels
+            // the ones above the other plots, e.g. labels, the elements of the
+            // draw before move with the transition of the view, see utils/draw.js
             const plots = this.store.def.plot.filter(p => p.facet === undefined
                 || [p.facet].flat().map(String).includes(String(key)));
-            this.plot(plots.filter(p => p.layer == 'below'));
-            this.place(ctx => this.store.coord.axes(ctx));
-            this.plot(plots.filter(p => p.layer != 'below' && p.layer != 'above'));
-            this.plot(plots.filter(p => p.layer == 'above'));
+            withMotion(this.facet.transition ?? 0, () => {
+                this.plot(plots.filter(p => p.layer == 'below'));
+                this.place(ctx => this.store.coord.axes(ctx));
+                this.plot(plots.filter(p => p.layer != 'below' && p.layer != 'above'));
+                this.plot(plots.filter(p => p.layer == 'above'));
+            });
             // the labels of the annotations are above the plots, also the ones below them
             const labels = this.ctx.inner.selectAll(".vis-annotation-label");
             if (!labels.empty()) {

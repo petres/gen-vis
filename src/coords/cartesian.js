@@ -1,32 +1,25 @@
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
+import { motion, setProps } from "@/utils/draw";
 import { tickValues, tickFormat, tickCount } from "@/coords/ticks";
 import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
 
 // the positions of the hover are vertical, e.g. of horizontal bars
 const isVertical = (ctx, names) => ctx.store.mapping(names.h).scale?.orientation == 'vertical';
 
-// horizontal lines for a vertical axis and vice versa
-const grid = (ctx, s, values, vertical) => {
+// horizontal lines for a vertical axis and vice versa, the lines of the
+// draw before are moved, e.g. with a transition
+const grid = (ctx, n, s, values, vertical) => {
     const offset = bandCenter(s);
-    const lines = ctx.inner.append("g")
-        .attr("class", "vis-grid")
-        .selectAll('line')
-        .data(values)
-        .enter()
-        .append("line")
-
-    if (vertical) {
-        lines.attr('x1', 0)
-            .attr('x2', ctx.innerWidth)
-            .attr('y1', d => s(d) + offset)
-            .attr('y2', d => s(d) + offset)
-    } else {
-        lines.attr('y1', 0)
-            .attr('y2', ctx.innerHeight)
-            .attr('x1', d => s(d) + offset)
-            .attr('x2', d => s(d) + offset)
-    }
+    ctx.keep(`grid ${n}`, () => ctx.inner.append("g").attr("class", "vis-grid"))
+        .selectChildren('line')
+        .data(values, v => String(+v === +v ? +v : v))
+        .join("line")
+        .order()
+        .each(function(d) {
+            const p = s(d) + offset;
+            setProps.call(this, vertical ? { x1: 0, x2: ctx.innerWidth, y1: p, y2: p } : { y1: 0, y2: ctx.innerHeight, x1: p, x2: p });
+        });
 };
 
 const axes = ctx => {
@@ -53,12 +46,14 @@ const axes = ctx => {
 
         // the grid lines are at the ticks of the axis
         if (i.grid)
-            grid(ctx, s, tickValues(i, s, ticks), ['left', 'right'].includes(i.position));
+            grid(ctx, n, s, tickValues(i, s, ticks), ['left', 'right'].includes(i.position));
 
-        const ga = inner.append("g")
+        // the axis of the draw before, its ticks are moved with a transition
+        const ga = ctx.keep(`axis ${n}`, () => inner.append("g"))
             .attr("class", `vis-axis vis-axis-${i.position}`)
-            .attr("data-mapping", n)
-            .call(a)
+            .attr("data-mapping", n);
+        ga.interrupt('vis').selectAll('*').interrupt('vis');
+        (motion.duration > 0 && ga.node().hasChildNodes() ? ga.transition('vis').duration(motion.duration) : ga).call(a);
 
         if (i.position == 'bottom')
             ga.attr('transform', `translate(0, ${innerHeight})`)
@@ -73,7 +68,7 @@ const axes = ctx => {
                 .attr("transform", `rotate(${-i.rotate})`)
 
         if (i.title) {
-            const at = inner.append("text")
+            const at = ctx.keep(`axis title ${n}`, () => inner.append("text"))
                 .attr('class', 'vis-axis-title')
                 .attr('y', 0)
                 .attr('x', 0)

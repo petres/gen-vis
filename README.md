@@ -433,6 +433,12 @@ horizontal and a vertical axis), `polar` (an angle and a radius, see
 [polar plots](#polar-plots)), `geo` (a map, see [maps](#maps)) or a
 registered one, see [extensions](#extensions).
 
+`transition` moves the elements to their new values in this many
+milliseconds (`true` for 300) after a change of a legend, a form element or
+the state, e.g. `"transition": 400`: the points, bars and lines of the draw
+before and the axes of cartesian plots move, new elements are drawn at once,
+a new width is drawn at once.
+
 `fontFamily` sets the font, by default the css variable
 `--gen-vis-font-family` or Century Gothic, so the font of all visualisations of
 a page can be set with css (see [styles](#styles) for the colors):
@@ -961,7 +967,8 @@ its categories (`props`) and the values of the props of the plot: of a row
 all rows `attrs`, e.g. the color of a line. The values are plain values, e.g.
 the position of `"@x:scaled"`. `pointwise` draws an element per row (without
 the rows of missing values) with the values of its props as attributes,
-`groupwise` a path per group with `attrs`:
+`groupwise(groups, parent, d)` a path per group with `attrs` and the path
+`d(group)`, both move their elements with the `transition` of the options:
 
 ```js
 import { registerPlotType, pointwise } from '@preschen/gen-vis';

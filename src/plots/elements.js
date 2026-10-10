@@ -2,7 +2,7 @@ export { groupwise, pointwise, finite, curve, propScale, dodge };
 
 import * as d3 from "@/utils/d3";
 import { refOf } from "@/utils/props";
-import { curves, rowOf, setGroupData, setProps } from "@/utils/draw";
+import { curves, groupAttrs, rowOf, setGroupData, setProps } from "@/utils/draw";
 
 const finite = (...values) => values.every(v => Number.isFinite(v));
 
@@ -30,15 +30,14 @@ const rowKey = v => {
     return ids.get(row);
 };
 
-// a path per group, e.g. a line, with the props of the group, the paths of
-// the draw before are updated, the type sets `d`
-const groupwise = (groups, parent) => parent
+// a path per group, e.g. a line, with the props of the group and `d(group)`,
+// the path, the paths of the draw before are updated
+const groupwise = (groups, parent, d) => parent
     .selectChildren("path")
     .data(groups, groupKey)
     .join("path")
     .order()
-    .each(function(g) { setProps.call(this, g.attrs) })
-    .each(setGroupData);
+    .each(function(g) { setProps.call(this, { ...g.attrs, ...groupAttrs(g), ...(d ? { d: d(g) } : {}) }) });
 
 // an element of `type` per row, without the rows of missing values,
 // `translate(values, row, group)` changes the values of the props of a row,
@@ -96,11 +95,13 @@ export default {
     'svg:text': {
         update: true,
         render(groups, parent, plot) {
-            const texts = pointwise(groups, parent, "text").nodes();
-            if (plot.dodge) {
-                const moved = dodge(texts.map(t => parseFloat(t.getAttribute('y'))), plot.dodge);
-                texts.forEach((t, i) => t.setAttribute('y', moved[i]));
-            }
+            if (!plot.dodge)
+                return pointwise(groups, parent, "text");
+            // the positions of the texts of all groups, moved apart
+            const rows = groups.flatMap(g => g.rows.filter(g.complete).map(row => [row, parseFloat(g.at(row).y)]));
+            const moved = dodge(rows.map(([, y]) => y), plot.dodge);
+            const ys = new Map(rows.map(([row], i) => [row, moved[i]]));
+            return pointwise(groups, parent, "text", (v, row) => ({ ...v, y: ys.get(row) }));
         },
     },
 };

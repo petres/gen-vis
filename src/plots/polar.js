@@ -41,14 +41,13 @@ export default {
         update: true,
         render(groups, parent, plot, ctx) {
             const offset = angleOffset(plot, ctx, 'd.angle');
-            groupwise(groups, parent)
-                .attr("d", g => d3.lineRadial()
-                    .curve(curve(plot))
-                    .defined(e => finite(e.angle, e.radius))
-                    .angle(e => e.angle + offset)
-                    .radius(e => e.radius)
-                    (points(g))
-                );
+            groupwise(groups, parent, g => d3.lineRadial()
+                .curve(curve(plot))
+                .defined(e => finite(e.angle, e.radius))
+                .angle(e => e.angle + offset)
+                .radius(e => e.radius)
+                (points(g))
+            );
         },
     },
 
@@ -59,15 +58,14 @@ export default {
         update: true,
         render(groups, parent, plot, ctx) {
             const offset = angleOffset(plot, ctx, 'd.angle');
-            groupwise(groups, parent)
-                .attr("d", g => d3.areaRadial()
-                    .curve(curve(plot))
-                    .defined(e => finite(e.angle, e.innerRadius, e.outerRadius))
-                    .angle(e => e.angle + offset)
-                    .innerRadius(e => e.innerRadius)
-                    .outerRadius(e => e.outerRadius)
-                    (points(g))
-                );
+            groupwise(groups, parent, g => d3.areaRadial()
+                .curve(curve(plot))
+                .defined(e => finite(e.angle, e.innerRadius, e.outerRadius))
+                .angle(e => e.angle + offset)
+                .innerRadius(e => e.innerRadius)
+                .outerRadius(e => e.outerRadius)
+                (points(g))
+            );
         },
     },
 
