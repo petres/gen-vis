@@ -63,6 +63,7 @@ const rowNames = (n, m) => [
 // default, `color` by a scheme
 const categoryNames = m => m?.props ? ['name', 'visible', ...(m.props.scheme ? ['color'] : []),
     ...Object.keys(m.props.common ?? {}),
+    ...[m.props.ranks ?? []].flat().flatMap(e => Object.keys(e ?? {})),
     ...Object.values(m.props.categories ?? {}).flatMap(e => Object.keys(e ?? {}))] : [];
 
 /**
@@ -120,6 +121,11 @@ const validateDef = def => {
             warn(`${path}.props.manual`, `renamed to 'categories'`);
         else if (m.props && !m.props.categories && !m.props.fromData)
             warn(`${path}.props`, `expected 'categories' or the ones of the data ('fromData'), and optional 'common' props`);
+        const order = m.props?.order;
+        if (order !== undefined && order != 'ascending' && order != 'descending' && !Array.isArray(order))
+            warn(`${path}.props.order`, `expected 'ascending', 'descending' or a list of keys`);
+        if (m.props?.ranks !== undefined && !(Array.isArray(m.props.ranks) && m.props.ranks.every(r => r !== null && typeof r == 'object' && !Array.isArray(r))))
+            warn(`${path}.props.ranks`, `expected a list of props, of the first category, the second one, ...`);
         if (m.props?.scheme !== undefined && !d3.named(d3.schemeNames, m.props.scheme))
             warn(`${path}.props.scheme`, `unknown scheme '${m.props.scheme}', e.g. 'Tableau10'`);
         if (m.scale) {

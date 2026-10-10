@@ -389,6 +389,18 @@
                             "additionalProperties": { "$ref": "#/definitions/categoryProps" }
                         },
                         "fromData": { "type": "boolean", "description": "The values of the column which are not in categories are categories as well, after them, in ascending order." },
+                        "order": {
+                            "description": "The order of the categories: the one of categories (keys which are integers ascending first), ascending, descending (numbers by their value) or a list of keys which are first.",
+                            "anyOf": [
+                                { "enum": ["ascending", "descending"] },
+                                { "type": "array", "items": { "type": ["string", "number"] } }
+                            ]
+                        },
+                        "ranks": {
+                            "type": "array",
+                            "description": "The props of the categories by their rank in the order: of the first one, the second one, ..., the last entry is the one of all others, e.g. the newest year red.",
+                            "items": { "$ref": "#/definitions/categoryProps" }
+                        },
                         "scheme": { "type": "string", "description": "The colors of the categories in their order as the prop color, a d3 scheme, e.g. Tableau10." }
                     }
                 }

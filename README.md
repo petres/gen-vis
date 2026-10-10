@@ -436,7 +436,19 @@ the definition refer to these names.
   used for all `categories`, `name` and `visible` are set by default. Only
   visible categories are shown. The order of the `categories` is the order
   of the legend, the facets and the stacks, not the order of the rows. Keys
-  which are integers, e.g. years, are ordered ascending by JavaScript.
+  which are integers, e.g. years, are ordered ascending by JavaScript, first.
+  `order` sets the order: `"ascending"`, `"descending"` (numbers by their
+  value, e.g. the newest year first) or a list of keys, which are first, the
+  others after them. `ranks` are the props of the categories by their place
+  in the order, of the first one, the second one, ..., the last entry of all
+  others, e.g. the newest year is red, whichever year it is, the props of a
+  category override them, they override `common`:
+
+  ```json
+  "year": { "column": "year", "props": { "fromData": true, "order": "descending", "common": { "stroke-width": 2 },
+      "ranks": [{ "color": "#C3423F", "opacity": 1 }, { "color": "#CF8E02", "opacity": 0.7 }, { "color": "#BBB", "opacity": 0.3 }] } }
+  ```
+
   With `"fromData": true` the values of the column which are not listed are
   categories as well, after the listed ones, in ascending order (numbers by
   their value), e.g. new regions of the data. `scheme` sets the prop `color`

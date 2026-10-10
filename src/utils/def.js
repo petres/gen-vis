@@ -31,16 +31,45 @@ const sameValue = (a, b) => {
     return String(a) === String(b);
 };
 
+// keys of categories ascending or descending, numbers by their value
+const numeric = v => v.trim() !== '' && !isNaN(+v);
+const sortKeys = (keys, descending) => {
+    const compare = keys.every(numeric) ? (a, b) => a - b : (a, b) => a.localeCompare(b);
+    return [...keys].sort(descending ? (a, b) => compare(b, a) : compare);
+};
+
+/**
+ * The keys of the categories in their order: the one of `categories` (keys
+ * which are integers, e.g. years, are first and ascending, as JavaScript
+ * orders them), `"ascending"` or `"descending"` (numbers by their value) or
+ * a list of keys, which are first, the others after them.
+ */
+const orderKeys = (keys, order) => {
+    if (order == 'ascending' || order == 'descending')
+        return sortKeys(keys, order == 'descending');
+    if (Array.isArray(order)) {
+        const listed = order.map(String).filter(k => keys.includes(k));
+        return [...new Set(listed), ...keys.filter(k => !listed.includes(k))];
+    }
+    return keys;
+};
+
 const prepareMapping = m => {
     if (m.props) {
-        // the colors of a scheme in the order of the categories, e.g. Tableau10
+        // the props of a category: the color of a scheme in the order of the
+        // categories, e.g. Tableau10, the common ones, the ones of its rank,
+        // e.g. the newest year, and its own ones, `keys` is the order of the
+        // categories, the one of the legend, the facets and the stacks
         const props = m.props;
-        const keys = Object.keys(props.categories ?? {});
+        const keys = orderKeys(Object.keys(props.categories ?? {}), props.order);
         const colors = props.scheme ? schemeColors(props.scheme, keys.length) : undefined;
         if (props.scheme && !colors)
             throw new Error(`Unknown scheme '${props.scheme}', e.g. 'Tableau10' or 'Blues'`);
+        const ranks = props.ranks ?? [];
+        m.keys = keys;
         m.props = Object.fromEntries(keys.map((k, i) => {
-            const t = Object.assign({}, colors ? { color: colors[i % colors.length] } : {}, props.common, props.categories[k]);
+            const rank = ranks.length > 0 ? ranks[Math.min(i, ranks.length - 1)] : {};
+            const t = Object.assign({}, colors ? { color: colors[i % colors.length] } : {}, props.common, rank, props.categories[k]);
             t.name ??= k;
             t.visible ??= true;
             return [k, t];
@@ -161,8 +190,10 @@ const applyFormElements = (def, defOrg) => {
             merged.column = fillTemplate(merged.column, def.globals);
         const m = prepareMapping(merged);
         const before = def.mapping[n];
-        if (before && 'props' in before)
+        if (before && 'props' in before) {
             m.props = before.props;
+            m.keys = before.keys;
+        }
         if (before?.column !== m.column || before?.type !== m.type)
             changed.push(n);
         def.mapping[n] = m;

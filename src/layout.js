@@ -29,17 +29,17 @@ const axisNames = store => {
     return axis;
 };
 
-// the visible categories of the mappings with props, e.g. of the legends
+// the visible categories of the mappings with props, e.g. of the legends,
+// in the order of the categories
 const visibleKeys = def => Object.entries(def.mapping)
     .filter(([, m]) => m.props)
-    .map(([dim, m]) => ({ dim, key: Object.keys(m.props).filter(k => m.props[k].visible) }));
+    .map(([dim, m]) => ({ dim, key: m.keys.filter(k => m.props[k].visible) }));
 
 // the facets in the order of the categories of their mapping, not of the
 // rows, only the ones with rows
 const facetEntries = (store, rows) => {
     const d = store.def.facets.dim;
-    const props = store.mapping(d).props;
-    const keys = Object.keys(props);
+    const { props, keys } = store.mapping(d);
     return groupBy(rows, [d])
         .filter(g => keys.includes(String(g.group[d])))
         .sort((a, b) => keys.indexOf(String(a.group[d])) - keys.indexOf(String(b.group[d])))

@@ -1128,6 +1128,26 @@ describe('data formats', () => {
     });
 });
 
+describe('the order and the ranks of categories', () => {
+    test('the newest year first and red, in the legend, the stacks and the facets', async () => {
+        const def = lineDef();
+        def.mapping.c = { column: 'year', type: 'categorical', legend: {}, hover: {}, props: {
+            fromData: true, order: 'descending', ranks: [{ color: 'red' }, { color: 'orange' }, { color: 'grey' }] } };
+        def.mapping.x = { column: 'land', type: 'categorical', scale: { type: 'band', orientation: 'horizontal' } };
+        def.mapping.y.stacked = true;
+        def.mapping.y.scale.domain = [0, null];
+        def.mapping.f = { column: 'year', type: 'categorical', props: { fromData: true, order: 'descending' } };
+        def.facets = { dim: 'f', cols: 4 };
+        def.plot = { type: 'cartesian:bar', categories: ['c'], props: { x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled', fill: '@color' } };
+        const el = await mount(GenVis, { def, data: lineData });
+        expect([...el.querySelectorAll('.vis-legend-entry')].map(e => e.dataset.key)).toEqual(['2023', '2022', '2021', '2020']);
+        expect([...el.querySelectorAll('.vis-facet-title')].map(e => e.textContent)).toEqual(['2023', '2022', '2021', '2020']);
+        expect([...el.querySelectorAll('svg.vis-svg')[0].querySelectorAll('rect[fill]')].map(r => r.getAttribute('fill'))).toEqual(['red', 'red']);
+        expect([...el.querySelectorAll('svg.vis-svg')[3].querySelectorAll('rect[fill]')].map(r => r.getAttribute('fill'))).toEqual(['grey', 'grey']);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('the update of the facets', () => {
     const toggle = async (el, key) => {
         el.querySelector(`.vis-legend-entry[data-key="${key}"]`).click();

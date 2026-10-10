@@ -43,7 +43,7 @@ export default {
     },
     mounted() {
         this.info = this.store.mapping(this.legend);
-        this.entries = Object.keys(this.info.props).map(d => ({
+        this.entries = this.info.keys.map(d => ({
             key: d,
             props: this.info.props[d],
         }))

@@ -23,6 +23,31 @@ describe('prepareDef', () => {
 });
 
 describe('the props of categories', () => {
+    const prepared = props => prepareDef({ mapping: { c: { column: 'c', props } }, plot: [] }).mapping.c;
+
+    test('the order of the categories, of integers ascending as JavaScript orders them', () => {
+        const categories = { 2024: {}, 2026: {}, 2025: {} };
+        expect(prepared({ categories }).keys).toEqual(['2024', '2025', '2026']);
+        expect(prepared({ categories, order: 'descending' }).keys).toEqual(['2026', '2025', '2024']);
+        expect(prepared({ categories: { b: {}, c: {}, a: {} }, order: 'ascending' }).keys).toEqual(['a', 'b', 'c']);
+        expect(prepared({ categories: { 9: {}, 10: {}, 100: {} }, order: 'descending' }).keys).toEqual(['100', '10', '9']);
+        // the listed keys first, unknown ones are left out
+        expect(prepared({ categories: { a: {}, b: {}, c: {} }, order: ['c', 'x', 'a'] }).keys).toEqual(['c', 'a', 'b']);
+    });
+
+    test('the props of the ranks of the categories, the last one of all others', () => {
+        const c = prepared({
+            categories: { 2023: {}, 2024: {}, 2025: { opacity: 0.9 }, 2026: {} },
+            order: 'descending',
+            common: { opacity: 0.5, width: 2 },
+            ranks: [{ color: 'red', opacity: 1 }, { color: 'orange' }, { color: 'grey', opacity: 0.2 }],
+        });
+        expect(c.keys).toEqual(['2026', '2025', '2024', '2023']);
+        expect(c.keys.map(k => [c.props[k].color, c.props[k].opacity, c.props[k].width])).toEqual([
+            ['red', 1, 2], ['orange', 0.9, 2], ['grey', 0.2, 2], ['grey', 0.2, 2],
+        ]);
+    });
+
     test('the colors of a scheme in the order of the categories, the given ones are kept', () => {
         const def = prepareDef({ mapping: { c: { column: 'c', props: { scheme: 'Blues', common: { r: 2 }, categories: { a: {}, b: { color: 'red' }, c: {} } } } }, plot: [] });
         expect(def.mapping.c.props).toEqual({
