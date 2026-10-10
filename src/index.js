@@ -47,8 +47,8 @@ const mountGenVisElement = (element, props = {}) => {
 
 const mountGenVisByClass = cl => {
     for (const e of document.getElementsByClassName(cl)) {
-        if (!e.classList.contains('gen-vis-attached')) {
-            e.classList.add('gen-vis-attached')
+        if (!e.classList.contains('vis-mounted')) {
+            e.classList.add('vis-mounted')
             mountGenVisElement(e);
         }
     }

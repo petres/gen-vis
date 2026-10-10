@@ -24,7 +24,7 @@ the styles, and provides two global functions:
 ```
 
 `mountGenVisByClass(className)` mounts all elements with the class which are
-not mounted yet, `mountGenVisElement(element, props)` mounts a single element.
+not mounted yet (they get the class `vis-mounted`), `mountGenVisElement(element, props)` mounts a single element.
 The props are taken from the `data-` attributes, see below, and from `props`,
 e.g. the events:
 
@@ -205,7 +205,7 @@ other elements do not apply to them, e.g. `.title` of a CSS framework:
 
 | Part | Classes |
 |------|---------|
-| the visualisation | `vis`, `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
+| the visualisation | `vis-mounted` (an element mounted by `mountGenVisByClass`), `vis`, `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
 | form elements | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-switch`, `vis-slider`, `vis-slider-value`), the `id` of a form element and of its entries as `data-id`, e.g. `.vis-form-element[data-id="scale"]` |
 | legends | `vis-legends`, `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
 | facets | `vis-facet` (a facet), `vis-facet-title`, `vis-svg` |
