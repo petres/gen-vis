@@ -15,10 +15,10 @@ import SlotContent from '@/comp/SlotContent.vue';
 
 export default {
     // beside the marker, on the `side` with more space, `payload` are the rows
-    // of the slot and the events, see Facet.vue, `value` is the mapping of the
-    // values, e.g. of the vertical axis, its cells have the class `vis-value`,
-    // the cells have the name of their mapping as `data-mapping`
-    props: ["title", "side", "data", "payload", "value"],
+    // of the slot and the events, see Facet.vue, the `cells` of a row are the
+    // hover props of its categories (`data-mapping`, other props than the
+    // name as `data-prop`) and the value (`vis-value`)
+    props: ["title", "side", "data", "payload"],
     inject: ['slots'],
     components: { SlotContent },
     data: () => ({
@@ -55,11 +55,12 @@ export default {
 
             entries.selectAll("td").remove();
             entries.selectAll("td")
-                .data(d => Object.entries(d.entries))
+                .data(d => d.cells)
                 .join("td")
-                .attr('data-mapping', ([name]) => name)
-                .attr('class', ([name]) => name == this.value ? 'vis-value' : null)
-                .html(d => typeof d[1] === 'object' ? d[1].name : d[1])
+                .attr('data-mapping', c => c.mapping)
+                .attr('data-prop', c => c.prop)
+                .attr('class', c => c.value ? 'vis-value' : null)
+                .html(c => c.text)
         }
     }
 }

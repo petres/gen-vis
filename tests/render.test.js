@@ -467,6 +467,28 @@ describe('controls', () => {
 });
 
 describe('events and slots', () => {
+    test('the hover props of the categories are the columns of the hover', async () => {
+        const def = lineDef();
+        def.mapping.c.props.manual.Wien.unit = 'Mio.';
+        def.mapping.c.props.manual.Tirol.unit = 'Tsd.';
+        def.mapping.c.hover = { props: { unit: '@unit' } };
+        const el = await mount(GenVis, { def, data: lineData });
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+        await nextTick();
+        const cells = [...el.querySelectorAll('.vis-hover tr.vis-hover-entry')].map(tr => [...tr.cells].map(td => [td.dataset.mapping, td.dataset.prop ?? null, td.textContent]));
+        expect(cells).toEqual([
+            [['c', null, 'Tirol'], ['c', 'unit', 'Tsd.'], ['y', null, '2,0']],
+            [['c', null, 'Wien'], ['c', 'unit', 'Mio.'], ['y', null, '1,0']],
+        ]);
+
+        // without the name
+        def.mapping.c.hover = { props: { name: null, unit: '@unit' } };
+        const other = await mount(GenVis, { def, data: lineData });
+        other.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+        await nextTick();
+        expect([...other.querySelectorAll('.vis-hover tr.vis-hover-entry')].map(tr => tr.textContent)).toEqual(['Tsd.2,0', 'Mio.1,0']);
+    });
+
     test('hover and select with the rows of the mappings', async () => {
         const hovers = [], selects = [];
         const el = await mount({ render: () => h(GenVis, { def: lineDef(), data: lineData,

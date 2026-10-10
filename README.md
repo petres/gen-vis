@@ -208,7 +208,7 @@ other elements do not apply to them, e.g. `.title` of a CSS framework:
 | plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base) |
 | axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`), `vis-axis-title`, `vis-grid` |
 | annotations | `vis-annotations` (the plot), `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or `vis-circle`, `vis-annotation-label`, `vis-annotation-labels` |
-| hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-nearest`, the cells of the values `vis-value`, the mapping of a cell as `data-mapping`), `vis-hover-marker`, `vis-events` |
+| hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-nearest`, the cells of the values `vis-value`, the mapping of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`), `vis-hover-marker`, `vis-events` |
 | footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-copy` and `vis-download`) |
 
 Styles of the page which are in a cascade layer themselves only override the
@@ -413,8 +413,9 @@ the definition refer to these names.
   axis format, without one dates are the date of the locale and numbers have
   its decimal mark and up to 6 decimals (without trailing zeros), thousands
   separators only if the domain reaches 10 000, so years are e.g. `2024`.
-  For categorical mappings `props` are the columns of the entries, `name` by
-  default.
+  For categorical mappings `props` are the columns of the entries, the
+  `name` of the category first, e.g. `{"unit": "@unit"}` adds a column of
+  the prop `unit` of the categories, `"name": null` leaves out the name.
 - `props`: the categories and their props, e.g. colors. `common` props are
   used for all `manual` entries, `name` and `visible` are set by default. Only
   visible categories are shown. The order of the `manual` entries is the order

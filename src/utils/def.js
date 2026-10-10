@@ -65,14 +65,9 @@ const prepareMapping = m => {
         }
     }
 
-    if (m.hover) {
-        if (m.hover.props === undefined)
-            m.hover.props = {};
-
-        if (!('name' in m.hover.props)) {
-             m.hover.props.name = "@name"
-        }
-    }
+    // the name of the category is the first column of the hover, `null` leaves it out
+    if (m.hover)
+        m.hover.props = { name: '@name', ...m.hover.props };
 
     return m;
 }

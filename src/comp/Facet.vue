@@ -8,7 +8,7 @@
             </g>
         </svg>
         <div :style="`transform: translate(${facet.margins.left + origin[0] + hover.x}px, ${facet.margins.top + origin[1] + hover.y}px); position: absolute; top: 0; left: 0;`">
-            <hover v-if="hover.visible" :title="hover.title" :data="hover.data" :side="hover.side" :payload="hover.payload" :value="store.axis.v"/>
+            <hover v-if="hover.visible" :title="hover.title" :data="hover.data" :side="hover.side" :payload="hover.payload"/>
         </div>
     </div>
 </template>
@@ -151,13 +151,20 @@ export default {
                 const { key, value } = position;
                 const rows = (rowsByKey.get(String(key)) ?? [])
                     .map(e => {
+                        // the cells of the table, a cell per hover prop of the
+                        // categories, e.g. their name, and the value
+                        const cells = [];
                         const entries = Object.fromEntries(categories.map(n => {
                             const values = evaluate(store.mapping(n).hover.props, { ...scope, ...store.prop(n, e[n]) });
-                            return [n, Object.fromEntries(Object.entries(values).map(([k, v]) => [k, store.text(v)]))];
+                            const texts = Object.fromEntries(Object.entries(values).map(([k, v]) => [k, store.text(v)]));
+                            Object.entries(texts).filter(([, t]) => t !== null && t !== undefined)
+                                .forEach(([k, t]) => cells.push({ mapping: n, prop: k == 'name' ? null : k, text: t }));
+                            return [n, texts];
                         }));
                         entries[v] = { value: e[v], name: format.v(e[v]) };
+                        cells.push({ mapping: v, value: true, text: entries[v].name });
                         const order = stackOf ? d3.mean(stackOf(e)) : e[v];
-                        return { entries, data: e, nearest: false, order };
+                        return { entries, cells, data: e, nearest: false, order };
                     });
 
                 // stacked: the segment under the pointer, outside of the stack the closest one
