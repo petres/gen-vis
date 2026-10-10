@@ -17,7 +17,7 @@
 <script>
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/props";
-import { highlightElements } from "@/utils/draw";
+import { highlighter } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 import { plotGroups, plotRows } from "@/layout";
 
@@ -102,9 +102,16 @@ export default {
             });
         },
 
+        // the highlight of the elements of the categories of a row, e.g. of
+        // an entry of a legend, null ends it, see utils/draw.js
+        highlight(dataEntry) {
+            this.highlighter?.(dataEntry);
+        },
+
         hoverInit() {
             const { store, ctx } = this;
             const coord = store.coord;
+            this.highlighter = highlighter(this.$refs.inner, store.def.plot);
 
             // the hover needs the mappings of the positions and of the values
             const names = ctx.axis;
@@ -132,7 +139,7 @@ export default {
                     this.emit('hover', null);
                 last = null;
                 this.hover.visible = false;
-                highlightElements(ctx.inner, store.def.plot);
+                this.highlight(null);
             };
 
             // a touch keeps the hover until the next touch outside of the facet
@@ -142,48 +149,50 @@ export default {
             };
             document.addEventListener("pointerdown", this.hideOnPointerOutside);
 
-            // the rows at the pointer from the top to the bottom, stacks as they
-            // are drawn, the nearest one, null without a key
+            // the rows at the pointer and the nearest one, stacked: the segment
+            // under the pointer, outside of the stack the closest one, null
+            // without a key, the rows are not formatted yet
             const at = e => {
                 const position = coord.hover.locate(ctx, d3.pointer(e), names, e);
                 if (!position)
                     return null;
                 const { key, value } = position;
-                const rows = (rowsByKey.get(String(key)) ?? [])
-                    .map(e => {
-                        // the cells of the table, a cell per hover prop of the
-                        // categories, e.g. their name, and the value
-                        const cells = [];
-                        const entries = Object.fromEntries(categories.map(n => {
-                            const values = evaluate(store.mapping(n).hover.props, { ...scope, ...store.prop(n, e[n]) });
-                            const texts = Object.fromEntries(Object.entries(values).map(([k, v]) => [k, store.text(v)]));
-                            Object.entries(texts).filter(([, t]) => t !== null && t !== undefined)
-                                .forEach(([k, t]) => cells.push({ mapping: n, prop: k == 'name' ? null : k, text: t }));
-                            return [n, texts];
-                        }));
-                        entries[v] = { value: e[v], name: format.v(e[v]) };
-                        cells.push({ mapping: v, value: true, text: entries[v].name });
-                        const order = stackOf ? d3.mean(stackOf(e)) : e[v];
-                        return { entries, cells, data: e, nearest: false, order };
-                    });
-
-                // stacked: the segment under the pointer, outside of the stack the closest one
-                const distance = stackOf ? e => {
-                    const [lo, hi] = d3.extent(stackOf(e.data));
+                const rows = rowsByKey.get(String(key)) ?? [];
+                const distance = stackOf ? row => {
+                    const [lo, hi] = d3.extent(stackOf(row));
                     return value < lo ? lo - value : (value > hi ? value - hi : 0);
-                } : e => Math.abs(e.data[v] - value);
+                } : row => Math.abs(row[v] - value);
                 const nearest = value === undefined ? undefined : d3.least(rows, distance);
-                const title = coord.hover.title ? coord.hover.title(ctx, key, names) : format.h(key);
-                return { key, value, rows, nearest, title };
+                return { key, value, rows, nearest };
             };
+
+            const titleOf = key => coord.hover.title ? coord.hover.title(ctx, key, names) : format.h(key);
+
+            // the rows of the table from the top to the bottom, stacks as they
+            // are drawn, the cells are a cell per hover prop of the categories,
+            // e.g. their name, and the value
+            const entriesOf = (rows, nearest) => rows.map(row => {
+                const cells = [];
+                const entries = Object.fromEntries(categories.map(n => {
+                    const values = evaluate(store.mapping(n).hover.props, { ...scope, ...store.prop(n, row[n]) });
+                    const texts = Object.fromEntries(Object.entries(values).map(([k, t]) => [k, store.text(t)]));
+                    Object.entries(texts).filter(([, t]) => t !== null && t !== undefined)
+                        .forEach(([k, t]) => cells.push({ mapping: n, prop: k == 'name' ? null : k, text: t }));
+                    return [n, texts];
+                }));
+                entries[v] = { value: row[v], name: format.v(row[v]) };
+                cells.push({ mapping: v, value: true, text: entries[v].name });
+                const order = stackOf ? d3.mean(stackOf(row)) : row[v];
+                return { entries, cells, data: row, nearest: row === nearest, order };
+            });
 
             // the rows of the events and the slot, copies of the values of the mappings
             const plain = row => ({ ...row });
-            const payload = ({ key, title, rows, nearest }) => ({
+            const payload = ({ key, rows, nearest }) => ({
                 key,
-                title,
-                rows: rows.map(r => plain(r.data)),
-                nearest: nearest ? plain(nearest.data) : null,
+                title: titleOf(key),
+                rows: rows.map(plain),
+                nearest: nearest ? plain(nearest) : null,
             });
 
             // mouse, touch and pen, vertical swipes still scroll the page
@@ -201,21 +210,20 @@ export default {
                     this.hover.visible = true;
                     const { key, value, rows, nearest } = found;
 
-                    // the same key and row as before, e.g. a move within a step of the axis
-                    if (last && last.key === key && last.nearest === nearest?.data)
+                    // the same key and row as before, e.g. a move within a step
+                    // of the axis, nothing is formatted or drawn
+                    if (last && last.key === key && last.nearest === nearest)
                         return;
-                    last = { key, nearest: nearest?.data };
+                    last = { key, nearest };
 
                     // there is no entry e.g. if all categories are hidden, without
                     // a value the elements of the key are highlighted, e.g. a region
-                    if (nearest)
-                        nearest.nearest = true;
-                    highlightElements(ctx.inner, store.def.plot, nearest?.data ?? (value === undefined ? {[names.h]: key} : null));
+                    this.highlight(nearest ?? (value === undefined ? {[names.h]: key} : null));
 
                     const p = payload(found);
                     Object.assign(this.hover, coord.hover.marker(ctx, key, names, marker), {
-                        data: rows,
-                        title: found.title,
+                        data: entriesOf(rows, nearest),
+                        title: p.title,
                         payload: p,
                     });
                     this.emit('hover', p);

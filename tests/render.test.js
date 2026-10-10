@@ -1064,6 +1064,38 @@ describe('highlight', () => {
         el.querySelector('.vis-legend .vis-legend-entries > div').dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
         expect(circles.map(c => c.getAttribute('r'))).toEqual(['3', '3', '3']);
     });
+
+    test('the attributes are restored as they were, a missing one is removed', async () => {
+        const def = lineDef();
+        def.plot[1].props['highlight-r'] = 6;
+        def.plot[1].props['highlight-stroke'] = 'black';
+        def.plot[0].props['highlight-stroke-width'] = 3;
+        const el = await mount(GenVis, { def, data: lineData });
+        const html = el.querySelector('svg.vis-svg').outerHTML.replace(/ class=""/g, '');
+        const entry = el.querySelector('.vis-legend-entry[data-key="Tirol"]');
+        entry.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+        expect([...el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle')].map(c => c.getAttribute('stroke'))).toEqual(['black', 'black', 'black', 'black']);
+        expect(el.querySelector('path[data-group-c="Tirol"]').getAttribute('stroke-width')).toBe('3');
+        entry.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
+        expect(el.querySelectorAll('[default-r], [stroke="black"], .vis-highlight')).toHaveLength(0);
+        // the groups are in their order again after the next draw, see the update of the facets
+        expect(el.querySelector('svg.vis-svg').outerHTML.replace(/ class=""/g, '').length).toBe(html.length);
+    });
+
+    test('an entry of the legend highlights its category in all facets', async () => {
+        const def = lineDef();
+        def.plot[1].props['highlight-r'] = 6;
+        def.mapping.f = { column: 'land', type: 'categorical', props: { categories: { Wien: {}, Tirol: {} } } };
+        def.facets = { dim: 'f', cols: 2 };
+        def.plot.forEach(p => p.categories = ['c']);
+        const el = await mount(GenVis, { def, data: lineData });
+        el.querySelector('.vis-legend[data-dim="c"] .vis-legend-entry[data-key="Wien"]').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+        const facets = [...el.querySelectorAll('svg.vis-svg')];
+        expect(facets).toHaveLength(2);
+        expect(facets.map(f => f.querySelectorAll('circle[r="6"]').length)).toEqual([3, 0]);
+        el.querySelector('.vis-legend[data-dim="c"] .vis-legend-entry[data-key="Tirol"]').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+        expect(facets.map(f => f.querySelectorAll('circle[r="6"]').length)).toEqual([0, 4]);
+    });
 });
 
 describe('data formats', () => {

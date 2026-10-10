@@ -1,4 +1,4 @@
-export { curves, setProps, setGroupData, highlightElements, rowOf };
+export { curves, setProps, setGroupData, highlighter, rowOf };
 
 import * as d3 from "@/utils/d3";
 
@@ -39,66 +39,95 @@ const setGroupData = function(g) {
     Object.entries(g.categories).forEach(([dim, key]) => element.attr(`data-group-${dim}`, key));
 };
 
-// the groups of a plot, the ids are compared directly, they are not part of
-// a selector, so they can contain any character, e.g. spaces
-const plotNodes = (inner, plotDef) => inner.selectAll('g.vis-plot')
-    .filter(function() { return this.getAttribute('data-plot') === plotDef.id });
-
-// the elements of a plot in the groups of dataEntry, the values are compared
-// directly as well
-const groupElements = (inner, plotDef, dataEntry) => {
-    const conditions = plotDef.categories
-        .filter(c => c in dataEntry)
-        .map(c => ({ attr: `data-group-${c}`, value: String(dataEntry[c]) }));
-    if (conditions.length == 0)
-        return null;
-    return plotNodes(inner, plotDef).selectAll(`[${conditions[0].attr}]`)
-        .filter(function() { return conditions.every(c => this.getAttribute(c.attr) === c.value) });
-}
-
 // the row of an element per row, a symbol, so it is not an attribute
 const rowOf = Symbol('row');
 
-// the elements with highlight- props of a group, the path of a group or its
-// elements per row, e.g. circles, with `"highlight": "row"` only the element of
-// the row of the hover, e.g. the segment of a stacked bar, the entry of a
-// legend highlights all
-const targets = (plotDef, group, dataEntry) => {
-    const nodes = [group, ...group.querySelectorAll('*')]
-        .filter(node => plotDef.highlightProps.some(n => node.hasAttribute(`highlight-${n}`)));
-    if (plotDef.highlight != 'row')
-        return nodes;
-    const rows = nodes.filter(node => node.__data__?.[rowOf] === dataEntry);
-    return rows.length > 0 ? rows : nodes;
-};
+/**
+ * The highlight of the elements of a facet: the highlight- props of the
+ * plots replace the props of the elements of the categories of a row, e.g.
+ * of the hover or of an entry of a legend, their values are kept in
+ * default- attributes. With `"highlight": "row"` only the element of the
+ * row is highlighted, e.g. the segment of a stacked bar, if it has one.
+ * The groups of the plots (the elements with the keys of their categories
+ * as data-group- attributes) and their elements with highlight- props are
+ * found once, at the first highlight, so a highlight does not search the
+ * elements of the facet. `inner` is the element of the plots.
+ */
+const highlighter = (inner, plotDefs) => {
+    const plots = plotDefs.filter(p => p.highlightProps.length > 0 && p.categories.length > 0);
+    let index = null;
+    // the highlighted groups and elements
+    let groups = [];
+    let elements = [];
 
-// the highlight- props of the plots replace the props of the highlighted
-// elements, their default values are kept in default- attributes
-const highlightElements = (inner, plotDefs, dataEntry = null) => {
-    plotDefs.filter(p => p.highlightProps.length > 0).forEach(plotDef => {
-        plotNodes(inner, plotDef).selectAll('.vis-highlight')
-            .classed('vis-highlight', false)
-            .each(function() {
-                const e = d3.select(this);
-                plotDef.highlightProps.forEach(n => e.attr(n, e.attr(`default-${n}`)));
+    const build = () => plots.map(plot => {
+        // the ids are compared directly, they are not part of a selector, so
+        // they can contain any character, e.g. spaces
+        const node = [...inner.children].find(c => c.getAttribute('data-plot') === plot.id);
+        const attrs = plot.categories.map(c => `data-group-${c}`);
+        return {
+            plot,
+            groups: node ? [...node.querySelectorAll('*')].filter(g => attrs.some(a => g.hasAttribute(a))).map(node => ({
+                node,
+                keys: Object.fromEntries(plot.categories.map((c, i) => [c, node.getAttribute(attrs[i])])),
+                targets: null,
+            })) : [],
+        };
+    });
+
+    // the path of a group or its elements per row with highlight- props, e.g. circles
+    const targetsOf = (plot, group, dataEntry) => {
+        group.targets ??= [group.node, ...group.node.querySelectorAll('*')]
+            .filter(node => plot.highlightProps.some(n => node.hasAttribute(`highlight-${n}`)));
+        if (plot.highlight != 'row')
+            return group.targets;
+        const rows = group.targets.filter(node => node.__data__?.[rowOf] === dataEntry);
+        return rows.length > 0 ? rows : group.targets;
+    };
+
+    return dataEntry => {
+        groups.forEach(node => node.classList.remove('vis-highlight'));
+        elements.forEach(({ node, props }) => {
+            node.classList.remove('vis-highlight');
+            props.forEach(n => {
+                const value = node.getAttribute(`default-${n}`);
+                if (value === null)
+                    node.removeAttribute(n);
+                else
+                    node.setAttribute(n, value);
+                node.removeAttribute(`default-${n}`);
             });
-
-        const elements = dataEntry && groupElements(inner, plotDef, dataEntry);
-        if (!elements)
+        });
+        groups = [];
+        elements = [];
+        if (!dataEntry)
             return;
-        // the elements with the props, the path of a group or the elements of
-        // a group of elements per row, e.g. circles
-        elements.classed('vis-highlight', true)
-            .raise()
-            .each(function() {
-                targets(plotDef, this, dataEntry)
-                    .forEach(node => {
-                        const e = d3.select(node).classed('vis-highlight', true);
-                        plotDef.highlightProps.forEach(n => {
-                            e.attr(`default-${n}`, e.attr(n))
-                             .attr(n, e.attr(`highlight-${n}`))
-                        });
+
+        index ??= build();
+        index.forEach(({ plot, groups: all }) => {
+            // the values are compared as strings, as the ones of the attributes
+            const conditions = plot.categories.filter(c => c in dataEntry).map(c => [c, String(dataEntry[c])]);
+            if (conditions.length == 0)
+                return;
+            all.filter(g => conditions.every(([c, v]) => g.keys[c] === v)).forEach(g => {
+                g.node.classList.add('vis-highlight');
+                g.node.parentNode.appendChild(g.node);
+                groups.push(g.node);
+                targetsOf(plot, g, dataEntry).forEach(node => {
+                    node.classList.add('vis-highlight');
+                    plot.highlightProps.forEach(n => {
+                        const value = node.getAttribute(n);
+                        const highlight = node.getAttribute(`highlight-${n}`);
+                        if (value !== null)
+                            node.setAttribute(`default-${n}`, value);
+                        if (highlight === null)
+                            node.removeAttribute(n);
+                        else
+                            node.setAttribute(n, highlight);
                     });
+                    elements.push({ node, props: plot.highlightProps });
+                });
             });
-    })
-}
+        });
+    };
+};

@@ -22,10 +22,10 @@
             <template v-if="view.faceted">
                 <div v-for="f in view.facets" :key="f.key" :style="`width: ${f.width}px; display: inline-block;`">
                     <div class="vis-facet-title" :style="`margin-left: ${f.margins.left}px`">{{ store.text(f.name) }}</div>
-                    <facet :key="f.rows" :facet="f"/>
+                    <facet ref="facets" :key="f.rows" :facet="f"/>
                 </div>
             </template>
-            <facet v-else :key="view.facets[0].rows" :facet="view.facets[0]"/>
+            <facet v-else ref="facets" :key="view.facets[0].rows" :facet="view.facets[0]"/>
         </div>
         <div class="vis-footer">
             <div class="vis-footer-content">
@@ -60,9 +60,7 @@
 
 <script>
 import { markRaw } from 'vue';
-import * as d3 from "@/utils/d3";
 
-import { highlightElements } from "@/utils/draw";
 import { layout } from "@/layout";
 import { canCopy } from "@/utils/export.js";
 
@@ -201,8 +199,9 @@ export default {
                 console.error(error);
             }
         },
+        // the elements of the category of an entry of a legend in all facets
         highlight(info) {
-            highlightElements(d3.select(this.$refs.vis), this.store.def.plot, {[info.dim]: info.key})
+            [this.$refs.facets ?? []].flat().forEach(f => f.highlight(info.dim === undefined ? null : {[info.dim]: info.key}));
         }
     }
 }
