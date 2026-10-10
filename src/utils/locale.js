@@ -189,5 +189,22 @@ const getLocale = (locale = 'de') => {
                 return timeTickFormat(time.utcFormat, timeTicks, timeIntervals.utc);
             return null;
         },
+        // the default format of the values of the hover and of labels: dates
+        // as the date of the locale, numbers with its decimal mark and up to
+        // 6 decimals without trailing zeros, with thousands separators if the
+        // domain of the scale reaches 10 000, so years are e.g. 2024, other
+        // values as they are
+        valueFormat(mapping, scale) {
+            if (mapping.type == 'date')
+                return (mapping.scale?.type == 'utc' ? time.utcFormat : time.format)('%x');
+            if (mapping.type != 'numeric')
+                return v => v;
+            const plain = number.format('.6~f');
+            const grouped = number.format(',.6~f');
+            const domain = (scale?.domain?.() ?? []).filter(Number.isFinite);
+            if (domain.length > 0)
+                return d3.max(domain, Math.abs) >= 1e4 ? grouped : plain;
+            return v => (Math.abs(v) >= 1e4 ? grouped : plain)(v);
+        },
     };
 };

@@ -1303,6 +1303,26 @@ describe('locale and font', () => {
         expect(getLocale('en').number.format('$,.2f')(1234.5)).toBe('$1,234.50');
     });
 
+    test('the values of the hover without format in the locale, years without separators', async () => {
+        const def = lineDef();
+        delete def.mapping.y.hover.format;
+        const values = async (data, locale) => {
+            const el = await mount(GenVis, { def: { ...def, options: { ...def.options, locale } }, data });
+            el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+            await nextTick();
+            return [el.querySelector('.vis-hover-title').textContent, ...[...el.querySelectorAll('.vis-hover td.vis-value')].map(td => td.textContent)];
+        };
+        expect(await values('year,value,land\n2020,1234.5,Wien\n2021,0.25,Wien')).toEqual(['2020', '1234,5']);
+        expect(await values('year,value,land\n2020,12345.678,Wien\n2021,0.25,Wien')).toEqual(['2020', '12.345,678']);
+        expect(await values('year,value,land\n2020,12345.678,Wien\n2021,0.25,Wien', 'en')).toEqual(['2020', '12,345.678']);
+        expect(await values('year,value,land\n2020,0.1234567891,Wien\n2021,0.25,Wien')).toEqual(['2020', '0,123457']);
+
+        const { getLocale } = await import('@/utils/locale');
+        const date = getLocale().valueFormat({ type: 'date', scale: { type: 'time' } });
+        expect(date(new Date(2024, 2, 5))).toBe('05.03.2024');
+        expect(getLocale().valueFormat({ type: 'categorical' })('Wien')).toBe('Wien');
+    });
+
     test('the font', async () => {
         const el = await mount(GenVis, { def: lineDef({ fontFamily: 'Arial' }), data: lineData });
         expect(el.querySelector('.vis').style.getPropertyValue('--gen-vis-font-family')).toBe('Arial');

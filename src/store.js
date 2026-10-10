@@ -3,7 +3,7 @@ export { createStore, resolveUrl, resolveParents, clearCache };
 import { reactive, markRaw, toRaw } from 'vue';
 
 import { addDataValues, dataFormat, parseData, prepareData, updateData } from "@/utils/data";
-import { applyFormElements, fillText, mergeAll, prepareDef } from "@/utils/def";
+import { applyFormElements, fillText, formatOf, mergeAll, prepareDef } from "@/utils/def";
 import { applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { validateDef } from "@/utils/validate";
@@ -201,6 +201,15 @@ class Store {
         if (scaleType == 'utc')
             return this.locale.time.utcFormat;
         return this.locale.number.format;
+    }
+
+    // the format of the values of a mapping in the hover and in labels: its
+    // own, the one of its axis or the default of the locale, `scale` is the
+    // one of the facet, see valueFormat of utils/locale.js
+    valueFormat(n, scale) {
+        const m = this.def.mapping[n];
+        const format = formatOf(m, 'hover');
+        return format ? this.formatter(m.scale?.type)(format) : this.locale.valueFormat(m, scale);
     }
 
     // the names of the references in all parts of the definition, the globals

@@ -16,7 +16,6 @@
 
 <script>
 import * as d3 from "@/utils/d3";
-import { formatOf } from "@/utils/def";
 import { evaluate } from "@/utils/props";
 import { highlightElements } from "@/utils/draw";
 import { plotTypes } from "@/plots";
@@ -112,8 +111,7 @@ export default {
             if (!names.h || !names.v)
                 return;
 
-            const formatter = n => store.formatter(store.mapping(n).scale?.type)(formatOf(store.mapping(n), 'hover'));
-            const format = { h: formatter(names.h), v: formatter(names.v) };
+            const format = { h: store.valueFormat(names.h, ctx.scales[names.h]), v: store.valueFormat(names.v, ctx.scales[names.v]) };
             const v = names.v;
             // the start and the end of a stacked value
             const stackOf = ctx.stackOf;

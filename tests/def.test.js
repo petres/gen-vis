@@ -43,9 +43,9 @@ describe('formatOf', () => {
     test('the defaults', () => {
         expect(formatOf({ scale: { type: 'linear' } }, 'axis')).toBeUndefined();
         expect(formatOf({ scale: { type: 'linear' } }, 'legend')).toBeUndefined();
-        expect(formatOf({ scale: { type: 'linear' } }, 'hover')).toBe('c');
-        expect(formatOf({ scale: { type: 'utc' } }, 'hover')).toBe('%x');
-        expect(formatOf({ type: 'categorical' }, 'hover')).toBe('c');
+        // the default of the hover is the one of the locale, see valueFormat
+        expect(formatOf({ scale: { type: 'linear' } }, 'hover')).toBeUndefined();
+        expect(formatOf({ scale: { type: 'utc' } }, 'hover')).toBeUndefined();
     });
 });
 

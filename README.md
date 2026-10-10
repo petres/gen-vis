@@ -410,8 +410,11 @@ the definition refer to these names.
   the mouse. On touch devices it is shown by a tap and stays until a tap
   outside of the plot, horizontal swipes move it, vertical ones scroll the
   page. `format` of the horizontal and vertical axis, it defaults to the
-  axis format. For categorical mappings `props` are the columns of the entries,
-  `name` by default.
+  axis format, without one dates are the date of the locale and numbers have
+  its decimal mark and up to 6 decimals (without trailing zeros), thousands
+  separators only if the domain reaches 10 000, so years are e.g. `2024`.
+  For categorical mappings `props` are the columns of the entries, `name` by
+  default.
 - `props`: the categories and their props, e.g. colors. `common` props are
   used for all `manual` entries, `name` and `visible` are set by default. Only
   visible categories are shown. The order of the `manual` entries is the order
