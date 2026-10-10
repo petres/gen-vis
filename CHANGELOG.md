@@ -3,6 +3,22 @@
 The changes of the versions on npm, the newest first. The details are in the
 commits, the upgrade from 1.x in the [README](README.md#upgrading-from-1x).
 
+## 2.0.0-alpha.1
+
+- a date without a time, e.g. `2024-06-01`, is the midnight of the time zone
+  of the scale, local (`time`) or UTC (`utc`), so it is the same day in every
+  time zone, it was midnight UTC, so west of UTC the day before in the hover
+  and the axis of a `time` scale, e.g. "April" for the 1st of May; dates of
+  parquet are strings as the ones of csv. The first tick of a time axis, e.g.
+  "Jan" of a year, is drawn now if the data starts at it
+- the charts fill the width of `.vis` inside its padding and border, so the
+  page can style it as a card, the svg was wider than the padding left
+- a definition which could not be drawn, e.g. of an unknown plot type, is
+  replaced by a new valid one, its error was kept
+- the page of the examples on GitHub Pages: five charts of different looks,
+  their definitions and CSS can be edited, the chart follows
+- the tests run in the time zone of Vienna, the one of their snapshots
+
 ## 2.0.0-alpha.0
 
 Changes which need changes of definitions, styles or extensions, see the
