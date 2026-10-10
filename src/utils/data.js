@@ -43,17 +43,58 @@ const toNumber = v => {
     return isNaN(n) ? null : n;
 };
 
-// dates are strings, timestamps or Date objects
-const toDate = v => {
-    const t = missing(v) ? NaN :
-        (v instanceof Date ? v.getTime() : (typeof v == 'number' || typeof v == 'bigint' ? Number(v) : Date.parse(v)));
+// a date without a time, e.g. "2022-06-01", "2022-06" or "2022"
+const dateOnly = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/;
+
+// the midnight of a date without a time, local or UTC, NaN if it does not
+// exist, e.g. "2022-02-30", which Date.parse reads as the 2nd of March
+const midnight = ([, y, m = 1, d = 1], utc) => {
+    // years before 100 are not the ones of 1900, as of new Date(y, m, d)
+    const date = new Date(0);
+    if (utc) {
+        date.setUTCFullYear(+y, m - 1, +d);
+    } else {
+        date.setFullYear(+y, m - 1, +d);
+        date.setHours(0, 0, 0, 0);
+    }
+    const [year, month, day] = utc
+        ? [date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()]
+        : [date.getFullYear(), date.getMonth(), date.getDate()];
+    return year == +y && month == m - 1 && day == +d ? date.getTime() : NaN;
+};
+
+// dates are strings, timestamps or Date objects. Date.parse reads a date
+// without a time as midnight UTC, so it is the day before west of UTC in the
+// local time of a `time` scale, it is the midnight of the time zone of the
+// scale, local or UTC (`utc`), so it is the same day everywhere
+const toDate = (v, utc = false) => {
+    if (missing(v))
+        return null;
+    let t;
+    if (v instanceof Date)
+        t = v.getTime();
+    else if (typeof v == 'number' || typeof v == 'bigint')
+        t = Number(v);
+    else {
+        const day = dateOnly.exec(String(v).trim());
+        t = day ? midnight(day, utc) : Date.parse(v);
+    }
     return isNaN(t) ? null : t;
 };
 
-const converters = { numeric: toNumber, date: toDate };
+// the conversion of the values of a mapping, e.g. the dates of a `utc` scale
+const converter = mapping => {
+    if (mapping?.type == 'numeric')
+        return toNumber;
+    if (mapping?.type == 'date') {
+        const utc = mapping.scale?.type == 'utc';
+        return v => toDate(v, utc);
+    }
+    return v => v;
+};
 
 // a value as the ones of the rows of a mapping, e.g. "2022-06-01" of a date
-const convert = (mapping, v) => (converters[mapping?.type] ?? (v => v))(v);
+const convert = (mapping, v) => converter(mapping)(v);
 
 // the values of mappings of the parsed rows in the prepared ones, e.g. of
 // another column of a form element, the rows are the same objects
@@ -61,7 +102,7 @@ const updateData = (rows, data, def, names) => {
     const mapping = names.map(n => ({
         name: n,
         column: def.mapping[n].column,
-        convert: converters[def.mapping[n].type] ?? (v => v),
+        convert: converter(def.mapping[n]),
     }));
     rows.forEach((r, i) => {
         const e = data[i];
@@ -76,7 +117,7 @@ const prepareData = (data, def) => {
     const mapping = Object.keys(def.mapping).map(n => ({
         name: n,
         column: def.mapping[n].column,
-        convert: converters[def.mapping[n].type] ?? (v => v),
+        convert: converter(def.mapping[n]),
     }));
 
     return data.map(d => {

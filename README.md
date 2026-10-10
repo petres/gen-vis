@@ -302,8 +302,10 @@ CSV or JSON by the content. `dataFormat` sets it, e.g. for an url of an api:
 
 Parquet is read with [hyparquet](https://github.com/hyparam/hyparquet) (no
 wasm), it is only loaded for parquet data. Integers of 64 bits are numbers,
-unless they are too large for them, e.g. ids, then they are strings, dates and
-timestamps are timestamps as the ones of the other formats. Snappy, the
+unless they are too large for them, e.g. ids, then they are strings,
+timestamps are the ones of the other formats and dates (without a time) are
+strings as the ones of csv, e.g. `2024-06-01`, see `type` of
+[mapping](#mapping). Snappy, the
 default of arrow (R, Python), pandas and duckdb, is read directly, other
 compressions, e.g. zstd of polars, load the decompressors of
 `hyparquet-compressors` (~70 kB), the standalone script reads only snappy and
@@ -371,7 +373,11 @@ the definition refer to these names.
 - `type`: `numeric`, `date` or `categorical`. Numeric and date values which
   are missing or invalid are `null`: they are gaps in lines and areas, points
   and bars are not drawn, and they are not shown in the hover. Dates are
-  parsed with `Date.parse` or are timestamps.
+  parsed with `Date.parse` or are timestamps. A date without a time, e.g.
+  `2024-06-01`, `2024-06` or `2024`, is the midnight of the time zone of the
+  scale, local of a `time` scale (and the other ones) and UTC of a `utc`
+  scale, so it is the same day in every time zone (`Date.parse` reads it as
+  midnight UTC, the day before west of UTC in local time).
 - `scale`: `type` is a d3 scale (`linear`, `time`, `log`, `point`, `band`,
   ...), continuous scales need a `numeric` or `date` type, `point` and `band`
   a `categorical` one. `orientation` (`horizontal` or `vertical`) places the
@@ -902,7 +908,9 @@ npm run deploy  # builds and uploads the standalone script to GEN_VIS_UPLOAD (us
 `tests/snapshots/` has the html of every definition in `data/`, drawn,
 hovered and with the first entry of the legend toggled, so changes of the
 code which change the charts are seen in the diff, `npx vitest -u` takes
-intended ones.
+intended ones. The tests run in the time zone of Vienna (`vite.config.js`),
+the positions of the days of time scales differ a little in other zones, by
+their changes of the daylight saving time.
 
 The page of the dev server (`index.html`, `src/dev/`) shows the definitions in
 `data/`, also of linked directories, e.g. of the pages using the package,

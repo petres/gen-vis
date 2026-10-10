@@ -18,14 +18,19 @@ const loadCompressors = async codecs => {
 };
 
 // integers of 64 bits are numbers if they are exact, e.g. years, otherwise
-// strings, e.g. ids, dates are timestamps, as the ones of Date.parse
-const normalize = v => {
+// strings, e.g. ids, timestamps are the ones of Date.parse, dates (without a
+// time) are strings as the ones of csv, e.g. "2024-06-01", so they are the
+// same day in every time zone, see toDate of utils/data.js
+const normalize = (v, date) => {
     if (typeof v == 'bigint')
         return Number.isSafeInteger(Number(v)) ? Number(v) : String(v);
     if (v instanceof Date)
-        return v.getTime();
+        return date ? v.toISOString().slice(0, 10) : v.getTime();
     return v;
 };
+
+// the columns of dates without a time, read as midnight UTC
+const isDate = e => e.converted_type == 'DATE' || e.logical_type?.type == 'DATE';
 
 // the rows of a parquet file, an ArrayBuffer or a view of one
 const parseParquet = async data => {
@@ -33,6 +38,7 @@ const parseParquet = async data => {
     const metadata = parquetMetadata(file);
     const codecs = [...new Set(metadata.row_groups.flatMap(g => g.columns.map(c => c.meta_data?.codec)))];
     const rows = await parquetReadObjects({ file, metadata, compressors: await loadCompressors(codecs) });
-    rows.forEach(row => Object.keys(row).forEach(k => row[k] = normalize(row[k])));
+    const dates = new Set(metadata.schema.filter(isDate).map(e => e.name));
+    rows.forEach(row => Object.keys(row).forEach(k => row[k] = normalize(row[k], dates.has(k))));
     return rows;
 };

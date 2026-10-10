@@ -46,7 +46,7 @@ describe('parseData', () => {
         expect(dataFormat('/api/data', 'csv')).toBe('csv');
     });
 
-    test('parquet, integers of 64 bits are numbers and dates are timestamps', async () => {
+    test('parquet, integers of 64 bits are numbers and timestamps are the ones of Date.parse', async () => {
         const buffer = parquetWriteBuffer({ columnData: [
             { name: 'year', data: [2020n, 2021n, null], type: 'INT64' },
             { name: 'id', data: [2n**60n, 1n, 2n], type: 'INT64' },
@@ -61,6 +61,14 @@ describe('parseData', () => {
         ]);
         // also a view of a buffer
         expect(await parseData(new Uint8Array(buffer))).toHaveLength(3);
+    });
+
+    test('parquet, dates without a time are the strings of csv, so they are the same day everywhere', async () => {
+        const buffer = parquetWriteBuffer({
+            columnData: [{ name: 'day', data: [new Date('2020-01-01'), new Date('2021-06-15'), null] }],
+            schema: [{ name: 'root', num_children: 1 }, { name: 'day', type: 'INT32', converted_type: 'DATE', repetition_type: 'OPTIONAL' }],
+        });
+        expect(await parseData(buffer)).toEqual([{ day: '2020-01-01' }, { day: '2021-06-15' }, { day: null }]);
     });
 
     test('parquet with other compressions than snappy, e.g. zstd of polars', async () => {
@@ -95,7 +103,25 @@ describe('values of other formats than csv', () => {
 describe('prepareData', () => {
     test('maps the columns and converts the values', () => {
         expect(prepareData([{ year: '2020', date: '2020-01-01', land: 'Wien' }], def))
-            .toEqual([{ x: 2020, t: Date.parse('2020-01-01'), c: 'Wien' }]);
+            .toEqual([{ x: 2020, t: new Date(2020, 0, 1).getTime(), c: 'Wien' }]);
+    });
+
+    test('a date without a time is the midnight of the time zone of the scale, the same day everywhere', () => {
+        const zone = process.env.TZ;
+        try {
+            // west of UTC, where the midnight of UTC is the day before
+            process.env.TZ = 'America/New_York';
+            const mapping = type => ({ mapping: { t: { column: 'date', type: 'date', scale: { type } } } });
+            const rows = [{ date: '2023-05-01' }, { date: '2023-05' }, { date: '2023' }, { date: '2023-02-30' }, { date: '2023-05-01T12:00:00Z' }];
+            const local = prepareData(rows, mapping('time')).map(r => r.t);
+            expect(local.slice(0, 3).map(t => new Date(t).toString().slice(4, 24)))
+                .toEqual(['May 01 2023 00:00:00', 'May 01 2023 00:00:00', 'Jan 01 2023 00:00:00']);
+            expect(local.slice(3)).toEqual([null, Date.parse('2023-05-01T12:00:00Z')]);
+            expect(prepareData(rows, mapping('utc')).map(r => r.t))
+                .toEqual([Date.UTC(2023, 4, 1), Date.UTC(2023, 4, 1), Date.UTC(2023, 0, 1), null, Date.parse('2023-05-01T12:00:00Z')]);
+        } finally {
+            process.env.TZ = zone;
+        }
     });
 
     test('missing and invalid values are null, not 0', () => {

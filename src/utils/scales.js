@@ -2,7 +2,7 @@ export { makeScale, bandCenter };
 
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/props";
-import { toDate } from "@/utils/data";
+import { convert } from "@/utils/data";
 
 // the offset of the center of a band, the position of band scales is its start
 const bandCenter = s => s.bandwidth ? s.bandwidth()/2 : 0;
@@ -64,7 +64,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
 
     // dates of a fixed domain are parsed as the ones of the data, e.g. "2020-01-01",
     // the values can be references, e.g. to a global
-    const fixed = () => evaluate(scaleDef.domain, scope).map(v => v !== null && v !== undefined && mapping.type == 'date' ? toDate(v) : (v ?? null));
+    const fixed = () => evaluate(scaleDef.domain, scope).map(v => v !== null && v !== undefined && mapping.type == 'date' ? convert(mapping, v) : (v ?? null));
     let domain;
     if (scaleDef.type == 'threshold') {
         // the values between the classes
