@@ -211,6 +211,15 @@
                 "title": { "type": "string" },
                 "subtitle": { "type": "string" },
                 "footer": { "type": "string", "description": "HTML" },
+                "hover": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "description": "The content of the hover without the hover slot, templates of html.",
+                    "properties": {
+                        "title": { "type": "string", "description": "The title, {title} is the default one, e.g. the date, and the globals." },
+                        "row": { "type": "string", "description": "A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, and the globals." }
+                    }
+                },
                 "width": { "type": "number", "description": "The width of the container if not given." },
                 "height": { "$ref": "#/definitions/number" },
                 "margins": {

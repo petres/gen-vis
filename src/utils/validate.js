@@ -19,6 +19,9 @@ const propKinds = ['fixed', 'ref', 'relative', 'steps'];
 
 const list = a => a.map(e => `'${e}'`).join(', ');
 
+// the names of a template of html, e.g. "land.unit" of "{land.unit}"
+const templateNames = text => typeof text == 'string' ? [...text.matchAll(/\{([\w.-]+)\}/g)].map(m => m[1]) : [];
+
 // a reference to a name which is not known where it is used is undefined,
 // short lists of the known names are part of the warning
 const checkRef = (ref, path, warn, names) => {
@@ -289,6 +292,13 @@ const validateDef = def => {
     const checkText = (text, path) => templateRefs(text).filter(r => !(r in (def.globals ?? {}))).forEach(r =>
         warn(path, `unknown global '${r}' in the text`));
     ['title', 'subtitle', 'footer'].forEach(o => checkText(def.options?.[o], `options.${o}`));
+    // the templates of the hover, the names of the title and of a row, e.g. {land.unit}
+    const hover = def.options?.hover ?? {};
+    const checkHover = (template, path, known) => templateNames(template).filter(r => !known(r)).forEach(r =>
+        warn(path, `unknown name '${r}' in the template`));
+    const isGlobal = r => r in (def.globals ?? {});
+    checkHover(hover.title, 'options.hover.title', r => r == 'title' || isGlobal(r));
+    checkHover(hover.row, 'options.hover.row', r => isGlobal(r) || r.split('.')[0] in mapping);
     Object.entries(mapping).forEach(([n, m]) => {
         checkText(m.name, `mapping.${n}.name`);
         checkText(m.axis?.title?.name, `mapping.${n}.axis.title.name`);

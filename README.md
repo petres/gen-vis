@@ -115,6 +115,17 @@ the [PNG](#png) and `csv()` of the [data](#accessibility-and-the-data):
 </GenVis>
 ```
 
+Without the slot, e.g. with the standalone script, `hover` of the
+[options](#options) are templates of HTML of the hover: `title`, with
+`{title}`, the default one, e.g. the date, and `row`, a line per row instead
+of the table, with `{land}` (the name of the category of the mapping
+`land`), `{land.unit}` (another hover prop), `{y}` (the formatted value) and
+`{y.value}` (the value). Both have the globals, the values are text:
+
+```json
+"options": { "hover": { "title": "<b>{title}</b>", "row": "{land}: {y} <small>{land.unit}</small>" } }
+```
+
 ### PNG
 
 The image is a copy of the visualisation with the same state, drawn outside
@@ -223,7 +234,7 @@ other elements do not apply to them, e.g. `.title` of a CSS framework:
 | plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base) |
 | axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`), `vis-axis-title`, `vis-grid` |
 | annotations | `vis-annotations` (the plot), `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or `vis-circle`, `vis-annotation-label`, `vis-annotation-labels` |
-| hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-nearest`, the cells of the values `vis-value`, the mapping of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`), `vis-hover-marker`, `vis-events` |
+| hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-hover-row` of a template, `vis-nearest`, the cells of the values `vis-value`, the mapping of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`), `vis-hover-marker`, `vis-events` |
 | footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-copy` and `vis-download`) |
 
 Styles of the page which are in a cascade layer themselves only override the

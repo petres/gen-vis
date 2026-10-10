@@ -514,6 +514,27 @@ describe('controls', () => {
 });
 
 describe('events and slots', () => {
+    test('the templates of the hover of the definition, the values are text', async () => {
+        const def = lineDef({ hover: { title: '<b>{title}</b> ({unit})', row: '{c}: <i>{y}</i> {c.unit} ({y.value})' } });
+        def.globals = { unit: 'Mio.' };
+        def.mapping.c.props.categories.Wien.unit = '<u>';
+        def.mapping.c.hover = { props: { unit: '@unit' } };
+        const el = await mount(GenVis, { def, data: lineData });
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+        await nextTick();
+        expect(el.querySelector('.vis-hover-title').innerHTML).toBe('<b>2020</b> (Mio.)');
+        expect(el.querySelector('.vis-hover table')).toBeNull();
+        const rows = [...el.querySelectorAll('.vis-hover-row')];
+        expect(rows.map(r => r.innerHTML)).toEqual(['Tirol: <i>2,0</i> Mio. (2)', 'Wien: <i>1,0</i> &lt;u&gt; (1)']);
+        expect(rows.map(r => r.classList.contains('vis-nearest'))).toEqual([true, false]);
+
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef({ ...def, options: { hover: { title: '{titel}', row: '{c.unit} {z}' } } })).toEqual([
+            "options.hover.title: unknown name 'titel' in the template",
+            "options.hover.row: unknown name 'z' in the template",
+        ]);
+    });
+
     test('the hover props of the categories are the columns of the hover', async () => {
         const def = lineDef();
         def.mapping.c.props.categories.Wien.unit = 'Mio.';

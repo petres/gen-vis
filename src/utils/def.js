@@ -1,4 +1,4 @@
-export { mergeAll, sameValue, prepareDef, applyFormElements, templateRefs, fillTemplate, fillText, formatOf, symbolShortcuts };
+export { mergeAll, sameValue, prepareDef, applyFormElements, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts };
 
 import merge from 'deepmerge';
 import { schemeColors } from '@/utils/d3';
@@ -183,6 +183,14 @@ const fillTemplate = (column, globals = {}) =>
 // a text of the definition with the values of the globals, e.g. a title or
 // a name, other values are kept, e.g. undefined
 const fillText = (text, globals) => typeof text == 'string' ? fillTemplate(text, globals) : text;
+
+const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+const escapeHtml = text => String(text).replace(/[&<>"']/g, c => escapes[c]);
+
+// a template of html, e.g. of the hover, with the values of `names` as text,
+// e.g. {land.unit}, unknown names are kept
+const fillHtml = (template, names) => template.replace(/\{([\w.-]+)\}/g, (t, name) =>
+    Object.hasOwn(names, name) && names[name] !== null && names[name] !== undefined ? escapeHtml(names[name]) : t);
 
 /**
  * Entries of form elements can patch mappings, e.g. to switch the column of

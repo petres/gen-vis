@@ -2,6 +2,11 @@
     <div class="vis-hover" ref="hover" :style='{left: left, transform: transform}'>
         <!-- the content of the hover slot of the GenVis component, e.g. a table of its own -->
         <slot-content v-if="slots.hover" :fn="slots.hover" :props="slotProps"/>
+        <!-- the templates of the definition, options.hover, html -->
+        <template v-else-if="template.row">
+            <div class="vis-hover-title" v-html="filledTitle"/>
+            <div v-for="(row, i) in rows" :key="i" class="vis-hover-row" :class="{ 'vis-nearest': row.nearest }" v-html="row.html"/>
+        </template>
         <template v-else>
             <div class="vis-hover-title">{{ title }}</div>
             <table class="vis-hover-entries" ref="entries"/>
@@ -11,6 +16,7 @@
 
 <script>
 import * as d3 from "@/utils/d3";
+import { fillHtml } from "@/utils/def";
 import SlotContent from '@/comp/SlotContent.vue';
 
 export default {
@@ -19,7 +25,7 @@ export default {
     // hover props of its categories (`data-mapping`, other props than the
     // name as `data-prop`) and the value (`vis-value`)
     props: ["title", "side", "data", "payload"],
-    inject: ['slots'],
+    inject: ['slots', 'store'],
     components: { SlotContent },
     data: () => ({
         space: 20
@@ -27,6 +33,25 @@ export default {
     computed: {
         left() { return (this.side == "left") ? `${-this.space}px` : `${this.space}px` },
         transform() { return (this.side == "left") ? `translate(-100%, -50%)` : `translate(0, -50%)` },
+        // the templates of the title and of a row, see README "hover"
+        template() { return this.store.def.options.hover ?? {} },
+        filledTitle() {
+            const template = this.template.title ?? '{title}';
+            return fillHtml(template, { ...this.store.def.globals, title: this.title });
+        },
+        // the rows of the template, its names are the ones of the entries of
+        // the slot: {land} is the name of the category, {land.unit} another
+        // hover prop, {y} the formatted value and {y.value} the value, and the globals
+        rows() {
+            return [...(this.data ?? [])].sort((a, b) => b.order - a.order).map(d => {
+                const names = { ...this.store.def.globals };
+                Object.entries(d.entries).forEach(([n, e]) => {
+                    names[n] = e.name;
+                    Object.entries(e).forEach(([k, v]) => names[`${n}.${k}`] = v);
+                });
+                return { nearest: d.nearest, html: fillHtml(this.template.row, names) };
+            });
+        },
         // the rows and their formatted values, as the ones of the default table
         slotProps() {
             return {
@@ -80,6 +105,15 @@ export default {
         }
         background-color: var(--gen-vis-hover-background, #FFFFFFCC);
         top: 40%;
+
+        // the rows of the template of the definition
+        .vis-hover-row {
+            white-space: nowrap;
+            padding: 1px 5px;
+            &.vis-nearest {
+                font-weight: bold;
+            }
+        }
 
         :deep(table) {
             border-collapse: collapse;
