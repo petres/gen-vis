@@ -58,11 +58,15 @@ well.
 | `def`      | `data-def`      | the definition, an object or a JSON string |
 | `data`     | `data-data`     | the data as rows, a CSV/JSON string or parquet (an `ArrayBuffer`), if not given it is loaded from the `data` url of the definition |
 | `debug`    | `data-debug`    | shows the prepared definition |
-| `state`    |                 | the changes of the user, see [state](#state) |
+| `state`    | `data-state`    | the changes of the user, see [state](#state), the attribute is JSON |
 | `download` | `data-download` | a button at the right of the footer to save it as a PNG, a string is the name of the file (default the title) |
 | `copy`     | `data-copy`     | a button at the right of the footer to copy the PNG to the clipboard (only on https or localhost) |
 | `csv`      | `data-csv`      | a button at the right of the footer to save the data shown as CSV, a string is the name of the file (default the title) |
 | `imageWidth` | `data-image-width` | the width of the PNG in pixels, the one of the definition otherwise or 1200, `screen` for the one on the screen (as it is seen, e.g. on a phone) |
+
+The attributes are strings: `data-download`, `data-csv`, `data-copy` and
+`data-debug` without a value or `"true"` are on, `"false"` is off, another
+value of `data-download` or `data-csv` is the name of the file.
 
 Every visualisation has its own state, several of them can be used on a page.
 If the props change, the visualisation is loaded again. Errors are shown in

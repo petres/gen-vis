@@ -387,6 +387,27 @@ describe('rendering', () => {
         await rendered(el);
         expect(el.querySelector('.vis-header .vis-title').textContent).toBe('Bevölkerung');
     });
+
+    test('the values of the data attributes: flags, names of files and the state as JSON', async () => {
+        const vis = (attributes, props) => {
+            const el = document.body.appendChild(document.createElement('div'));
+            Object.entries(attributes).forEach(([k, v]) => el.setAttribute(`data-${k}`, v));
+            return mountGenVisElement(el, { def: lineDef(), data: lineData, ...props });
+        };
+        expect(vis({ download: 'false', csv: 'true', copy: 'false', debug: 'false' }).$props).toMatchObject({ download: false, csv: true, copy: false, debug: false });
+        expect(vis({ download: '', csv: 'werte', copy: '' }).$props).toMatchObject({ download: true, csv: 'werte', copy: true });
+
+        const state = { globals: {}, visible: { c: { Wien: false } } };
+        const chart = vis({ state: JSON.stringify(state) });
+        expect(chart.$props.state).toEqual(state);
+        await rendered(chart.$el.parentElement);
+        await nextTick();
+        expect([...chart.$el.querySelectorAll('.vis-legend-entry')].map(e => e.dataset.visible)).toEqual(['false', 'true']);
+
+        expect(vis({ state: '{ no json' }).$props.state).toBeNull();
+        expect(errors.join()).toContain('invalid JSON in data-state');
+        errors.length = 0;
+    });
 });
 
 describe('controls', () => {
