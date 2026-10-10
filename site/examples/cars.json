@@ -1,0 +1,63 @@
+{
+    "data": "data/cars.csv",
+    "options": {
+        "title": "Diesel out, electric in",
+        "subtitle": "New passenger cars in Austria by powertrain, share of the registrations of each month",
+        "footer": "Source: Statistik Austria",
+        "locale": "en",
+        "height": 320,
+        "margins": { "top": 8, "right": 44, "bottom": 30, "left": 8 }
+    },
+    "mapping": {
+        "x": {
+            "column": "month",
+            "type": "date",
+            "scale": { "type": "utc", "orientation": "horizontal", "domainRel": [0, 0] },
+            "axis": { "position": "bottom", "ticks": 8, "format": "%Y" },
+            "hover": { "format": "%B %Y" }
+        },
+        "y": {
+            "column": "share",
+            "type": "numeric",
+            "stacked": true,
+            "scale": { "type": "linear", "orientation": "vertical", "domain": [0, 1] },
+            "axis": { "position": "right", "ticks": 4, "grid": true, "format": ".0%" },
+            "hover": { "format": ".1%" }
+        },
+        "powertrain": {
+            "column": "powertrain",
+            "type": "categorical",
+            "legend": {
+                "symbol": {
+                    "size": 14,
+                    "elements": [{ "type": "circle", "props": { "cx": 7, "cy": 7, "r": 5, "fill": "@color" } }]
+                }
+            },
+            "props": {
+                "manual": {
+                    "bev":    { "name": "Battery electric", "color": "#0E9F8E" },
+                    "phev":   { "name": "Plug-in hybrid",   "color": "#4C8FE0" },
+                    "hybrid": { "name": "Hybrid",           "color": "#D4A017" },
+                    "petrol": { "name": "Petrol",           "color": "#9B7BE0" },
+                    "diesel": { "name": "Diesel",           "color": "#E0607E" },
+                    "other":  { "name": "Other",            "color": "#B8BEC8" }
+                }
+            },
+            "hover": {}
+        }
+    },
+    "plot": {
+        "type": "cartesian:area",
+        "categories": ["powertrain"],
+        "curve": "monotoneX",
+        "layer": "below",
+        "props": {
+            "d": { "x": "@x:scaled", "y0": "@y:start:scaled", "y1": "@y:end:scaled" },
+            "fill": "@color",
+            "fill-opacity": 0.85,
+            "stroke": "#FFFFFF",
+            "stroke-width": 1.5,
+            "highlight-fill-opacity": 1
+        }
+    }
+}

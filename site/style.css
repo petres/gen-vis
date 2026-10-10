@@ -1,0 +1,207 @@
+/* the page around the examples, neutral, the examples have their own looks */
+:root {
+    --ink: #1C1917;
+    --muted: #57534E;
+    --faint: #A8A29E;
+    --line: #E7E5E4;
+    --plane: #F5F5F4;
+    --accent: #1C1917;
+    --ok: #15803D;
+    --warning: #B45309;
+    --error: #B91C1C;
+    color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--plane);
+    color: var(--ink);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+a { color: inherit; text-underline-offset: 3px; }
+code, pre, kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+.page {
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 0 28px;
+}
+
+/* the header */
+.hero { padding: 36px 0 28px; }
+.brand { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.wordmark { font-weight: 800; font-size: 18px; letter-spacing: -0.02em; }
+.version {
+    font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--ink);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+.links { margin-left: auto; display: flex; gap: 18px; font-size: 14px; }
+.links a { text-decoration: none; color: var(--muted); }
+.links a:hover { color: var(--ink); text-decoration: underline; }
+
+.hero h1 {
+    font-size: clamp(36px, 6vw, 64px);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    margin: 44px 0 18px;
+}
+.lead { max-width: 44em; font-size: 17px; color: var(--muted); margin: 0 0 10px; }
+
+.install {
+    display: inline-block;
+    margin: 14px 0 0;
+    padding: 10px 16px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14px;
+}
+.install code::before { content: "$ "; color: var(--faint); }
+
+.toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
+.toc a {
+    text-decoration: none;
+    font-size: 14px;
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+}
+.toc a span { color: var(--faint); font-variant-numeric: tabular-nums; margin-right: 2px; }
+.toc a:hover { border-color: var(--ink); }
+
+/* an example: the text, the chart and the editor */
+.example {
+    padding: 44px 0;
+    border-top: 1px solid var(--line);
+    scroll-margin-top: 12px;
+}
+.example-head { max-width: 52em; margin-bottom: 22px; }
+.example-kicker { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.example-kicker span { color: var(--faint); font-variant-numeric: tabular-nums; margin-right: 6px; }
+.example h2 { font-size: 30px; letter-spacing: -0.02em; margin: 4px 0 8px; }
+.example-head p { margin: 0 0 12px; color: var(--muted); }
+.example-features { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0; }
+.example-features code {
+    font-size: 12px;
+    padding: 2px 8px;
+    background: #E7E5E4;
+    border-radius: 4px;
+}
+
+.example-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: stretch;
+}
+.stage { min-width: 0; align-self: start; }
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 540px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.panel-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--line);
+    background: #FAFAF9;
+}
+.tabs, .actions { display: flex; gap: 2px; }
+.panel button {
+    font: inherit;
+    font-size: 13px;
+    padding: 5px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+}
+.panel button:hover:not(:disabled) { background: #F0EFED; color: var(--ink); }
+.panel button[aria-selected="true"] { background: var(--ink); color: white; }
+.panel button:disabled { color: var(--faint); cursor: default; }
+.panel button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+.editor-wrap { position: relative; flex: 1; min-height: 0; }
+.tab-panel { position: absolute; inset: 0; }
+
+.data-preview { overflow: auto; padding: 10px 14px; }
+.data-info { font-size: 13px; color: var(--muted); margin: 0 0 8px; }
+.data-error { font-size: 13px; color: var(--error); }
+.data table { border-collapse: collapse; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.data th, .data td { text-align: left; padding: 2px 12px 2px 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.data th { position: sticky; top: -10px; background: white; border-bottom: 1px solid var(--line); }
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    font-size: 13px;
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+}
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+.status.warning .status-dot { background: var(--warning); }
+.status.error { color: var(--error); }
+.status.error .status-dot { background: var(--error); }
+.warnings {
+    margin: 0;
+    padding: 0 12px 10px 28px;
+    font-size: 12px;
+    color: var(--warning);
+    max-height: 96px;
+    overflow: auto;
+}
+
+/* how it is used */
+.usage { padding: 44px 0; border-top: 1px solid var(--line); }
+.usage h2 { font-size: 30px; letter-spacing: -0.02em; margin: 0 0 18px; }
+.usage h3 { font-size: 15px; margin: 0 0 8px; }
+.usage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.usage pre {
+    margin: 0;
+    padding: 14px 16px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 13px;
+    overflow-x: auto;
+}
+.usage p { max-width: 52em; color: var(--muted); margin-top: 20px; }
+.usage code { font-size: 0.92em; }
+kbd {
+    font-size: 12px;
+    padding: 1px 5px;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: white;
+}
+
+.footer { padding: 24px 0 40px; border-top: 1px solid var(--line); font-size: 13px; color: var(--faint); }
+
+@media (max-width: 1080px) {
+    .example-body { grid-template-columns: minmax(0, 1fr); }
+    .panel { min-height: 460px; }
+}
+@media (max-width: 720px) {
+    .page { padding: 0 16px; }
+    .usage-grid { grid-template-columns: minmax(0, 1fr); }
+    .links { margin-left: 0; width: 100%; }
+}

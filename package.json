@@ -20,6 +20,8 @@
     "build": "vite build",
     "watch": "vite build --watch",
     "lib": "vite build --mode lib",
+    "site": "npm run build && vite --config site/vite.config.js",
+    "site:build": "npm run build && vite build --config site/vite.config.js",
     "test": "vitest run",
     "upload": "[ -f .env ] && . ./.env; rsync -arv dist-lib/ \"${GEN_VIS_UPLOAD:?set GEN_VIS_UPLOAD=user@host:/path in .env}\"",
     "deploy": "npm run lib && npm run upload",
@@ -60,8 +62,13 @@
     "topojson-client": "^3"
   },
   "devDependencies": {
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/lint": "^6.9.7",
     "@vitejs/plugin-vue": "^6.0.9",
     "ajv": "^8.20.0",
+    "codemirror": "^6.0.2",
     "hyparquet-writer": "^0.16.10",
     "jsdom": "^30.1.1",
     "sass": "^1.105.0",

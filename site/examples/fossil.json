@@ -1,0 +1,84 @@
+{
+    "data": "data/fossil.csv",
+    "options": {
+        "title": "Fossil fuel sales in Austria",
+        "subtitle": "Monthly, by energy content or by the CO₂ emitted when burned",
+        "footer": "Source: Eurostat, calculations of the WIFO energy dashboard",
+        "locale": "en",
+        "height": 300,
+        "margins": { "top": 10, "right": 6, "bottom": 28, "left": 44 }
+    },
+    "globals": { "unit": "twh", "share": "" },
+    "formElements": [
+        {
+            "id": "unit", "name": "Unit", "ref": "unit", "type": "switch",
+            "values": [
+                { "id": "twh", "name": "TWh", "value": "twh" },
+                { "id": "co2", "name": "Mt CO₂", "value": "mt.co2" }
+            ]
+        },
+        {
+            "id": "share", "name": "Values", "ref": "share", "type": "switch",
+            "values": [
+                { "id": "absolute", "name": "Absolute", "value": "" },
+                {
+                    "id": "share", "name": "Share", "value": ".share",
+                    "mapping": { "y": { "scale": { "domain": [0, 1] }, "axis": { "format": ".0%" }, "hover": { "format": ".1%" } } }
+                }
+            ]
+        }
+    ],
+    "mapping": {
+        "x": {
+            "column": "date",
+            "type": "date",
+            "scale": { "type": "utc", "orientation": "horizontal" },
+            "axis": { "position": "bottom", "ticks": 8, "format": "%Y" },
+            "hover": { "format": "%B %Y" }
+        },
+        "y": {
+            "column": "{unit}{share}",
+            "type": "numeric",
+            "stacked": true,
+            "scale": { "type": "linear", "orientation": "vertical", "domain": [0, null], "nice": true },
+            "axis": { "position": "left", "ticks": 5, "grid": true, "format": ",.0f" },
+            "hover": { "format": ",.2f" }
+        },
+        "product": {
+            "column": "product",
+            "type": "categorical",
+            "legend": {
+                "symbol": {
+                    "size": 12,
+                    "elements": [{ "type": "rect", "props": { "x": 0, "y": 1, "width": 10, "height": 10, "rx": 2, "fill": "@color" } }]
+                }
+            },
+            "props": {
+                "manual": {
+                    "oil":  { "name": "Oil",  "color": "#D97706" },
+                    "gas":  { "name": "Gas",  "color": "#0EA5A4" },
+                    "coal": { "name": "Coal", "color": "#8B5CF6" }
+                }
+            },
+            "hover": {}
+        }
+    },
+    "plot": {
+        "type": "cartesian:bar",
+        "categories": ["product"],
+        "highlight": "row",
+        "props": {
+            "x": "@x:scaled",
+            "y0": "@y:start:scaled",
+            "y1": "@y:end:scaled",
+            "width": { "prop": "relative", "ref": "innerWidth", "ratio": 0.0075 },
+            "fill": "@color",
+            "stroke": "#0F172A",
+            "stroke-width": 1,
+            "opacity": 0.9,
+            "highlight-opacity": 1,
+            "highlight-stroke": "#E2E8F0",
+            "highlight-stroke-width": 1
+        }
+    }
+}

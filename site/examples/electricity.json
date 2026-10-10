@@ -1,0 +1,65 @@
+{
+    "data": "data/electricity.csv",
+    "options": {
+        "coord": "geo",
+        "title": "Where Europe's electricity comes from",
+        "subtitle": "Share of a source in the electricity generated in each country, by year (2026: year to date)",
+        "footer": "Source: ENTSO-E Transparency Platform · Boundaries © EuroGeographics",
+        "locale": "en",
+        "height": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 380 }, { "cut": 560, "value": 500 }] },
+        "margins": { "top": 0, "right": 0, "bottom": 0, "left": 0 }
+    },
+    "geo": {
+        "data": "data/europe.json",
+        "key": "id",
+        "join": "country",
+        "fit": "data",
+        "projection": { "type": "azimuthalEqualArea", "rotate": [-10, -52] }
+    },
+    "globals": { "source": "renewable", "year": "2025" },
+    "filter": { "source": "@source", "year": "@year" },
+    "formElements": [
+        {
+            "id": "source", "name": "Source", "ref": "source", "type": "switch",
+            "values": [
+                { "id": "renewable", "name": "Renewables", "value": "renewable" },
+                {
+                    "id": "nuclear", "name": "Nuclear", "value": "nuclear",
+                    "mapping": { "share": { "scale": { "range": ["#E4DDF4", "#B8A6E3", "#8C70CC", "#6247AD", "#3B2A7C"] } } }
+                },
+                {
+                    "id": "fossil", "name": "Fossil", "value": "non-renewable",
+                    "mapping": { "share": { "scale": { "range": ["#EEDCC4", "#D6AE80", "#B07A47", "#875529", "#5C3714"] } } }
+                }
+            ]
+        },
+        { "id": "year", "name": "Year", "ref": "year", "type": "slider", "values": { "column": "year" } }
+    ],
+    "mapping": {
+        "country": { "column": "country", "type": "categorical" },
+        "source": { "column": "source", "type": "categorical" },
+        "year": { "column": "year", "type": "categorical" },
+        "share": {
+            "name": "Share of the electricity generated",
+            "column": "share",
+            "type": "numeric",
+            "scale": { "type": "threshold", "domain": [0.2, 0.4, 0.6, 0.8], "range": ["#D5EBC6", "#9ED08F", "#5FAF6E", "#2A7D55", "#11573C"] },
+            "legend": { "format": ".0%", "missing": { "name": "No data", "color": "#E9E4DA" } },
+            "hover": { "format": ".1%" }
+        }
+    },
+    "plot": [
+        { "type": "geo:base", "props": { "fill": "#E9E4DA", "stroke": "#FFFFFF", "stroke-width": 0.6 } },
+        {
+            "type": "geo:region",
+            "categories": ["country"],
+            "props": {
+                "fill": "@share:scaled",
+                "stroke": "#FFFFFF",
+                "stroke-width": 0.6,
+                "highlight-stroke": "#0B2B26",
+                "highlight-stroke-width": 1.6
+            }
+        }
+    ]
+}

@@ -1,0 +1,51 @@
+/* An atlas plate: paper, a small-caps headline, the map in a frame */
+.theme-atlas {
+    background: #F4F1E8;
+    padding: 22px 24px 14px;
+    border-radius: 4px;
+}
+
+.theme-atlas .vis {
+    --gen-vis-font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --gen-vis-hover-background: #FFFFFFF0;
+    --gen-vis-background: #F4F1E8;
+    --gen-vis-button-color: #6B8A94;
+    --gen-vis-button-hover-color: #0B2B26;
+    --gen-vis-focus-color: #11573C;
+    color: #0B2B26;
+}
+
+/* the sea and the neat line of the map */
+.theme-atlas .vis-svg {
+    display: block;
+    background: #D3E3EA;
+    outline: 1px solid #0B2B26;
+    outline-offset: -1px;
+}
+
+.theme-atlas .vis-header::before {
+    content: "Atlas of energy · Plate 5";
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #4E6E78;
+    margin-bottom: 6px;
+}
+.theme-atlas .vis-title { font-size: 25px; font-weight: 600; font-variant: small-caps; letter-spacing: 0.02em; }
+.theme-atlas .vis-subtitle { font-size: 13px; color: #35535C; }
+
+.theme-atlas .vis-form-element-title { font-weight: 600; }
+.theme-atlas .vis-slider input { accent-color: #11573C; width: 150px; }
+.theme-atlas .vis-slider-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+.theme-atlas .vis-switch input { accent-color: #11573C; }
+
+.theme-atlas .vis-legends { margin: 8px 0 10px; }
+.theme-atlas .vis-legend-title { font-size: 11px; font-weight: 600; }
+.theme-atlas .vis-color-scale svg { font-size: 10px; }
+
+.theme-atlas .vis-hover { border-radius: 4px; box-shadow: 0 2px 10px #0B2B2633; }
+.theme-atlas .vis-hover-title { border-bottom: 1px solid #0B2B26; }
+
+.theme-atlas .vis-footer { margin-top: 8px; }
+.theme-atlas .vis-footer span { font-size: 11px; color: #4E6E78; }

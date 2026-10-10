@@ -903,7 +903,19 @@ npm run build   # es module for bundlers in dist/
 npm run watch   # rebuilds dist/ on changes, e.g. for `npm link`
 npm run lib     # standalone script in dist-lib/
 npm run deploy  # builds and uploads the standalone script to GEN_VIS_UPLOAD (user@host:/path) of .env
+npm run site    # dev server of the page of the examples (site/), with the package built in dist/
+npm run site:build  # the page of the examples in dist-site/
 ```
+
+The page of the examples (`site/`) is the one of GitHub Pages, built and
+deployed by `.github/workflows/pages.yml` on every push to `main` and `v2`. It
+uses the package as it is published, the es module of `dist/`, so its styles
+are in the cascade layer as in the applications. Every example is a
+definition and the CSS of its look in `site/examples/` (listed in
+`site/examples/index.js`), its data is in `site/public/data/`, the urls are
+relative to the page. The definitions and the CSS can be edited on the page,
+the editor completes the keys and values of the JSON Schema. The tests check
+and draw the examples, as the ones of `data/`.
 
 `tests/snapshots/` has the html of every definition in `data/`, drawn,
 hovered and with the first entry of the legend toggled, so changes of the

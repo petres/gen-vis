@@ -1,0 +1,50 @@
+/* A soft product look: a white card on a pastel gradient, rounded everything */
+.theme-soft {
+    background: linear-gradient(135deg, #FDF2F8 0%, #EEF2FF 55%, #ECFEFF 100%);
+    padding: 26px;
+    border-radius: 24px;
+}
+
+.theme-soft .vis {
+    --gen-vis-font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, sans-serif;
+    --gen-vis-grid-color: #FFFFFFB3;
+    --gen-vis-marker-color: #1E1B4B;
+    --gen-vis-hover-background: #FFFFFF;
+    --gen-vis-button-color: #A5B4FC;
+    --gen-vis-button-hover-color: #4338CA;
+    --gen-vis-focus-color: #6366F1;
+    color: #312E81;
+    /* the white card, the chart fills it inside its padding */
+    background: #FFFFFF;
+    padding: 22px 22px 14px;
+    border-radius: 18px;
+    box-shadow: 0 12px 40px -12px #4338CA33, 0 2px 6px #4338CA0F;
+}
+
+.theme-soft .vis-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #1E1B4B; }
+.theme-soft .vis-subtitle { font-size: 13px; color: #6B7280; }
+
+/* the axes without lines, the grid is white above the areas (layer below) */
+.theme-soft .vis-axis path.domain, .theme-soft .vis-axis .tick line { display: none; }
+.theme-soft .vis-axis text { fill: #9CA3AF; font-size: 12px; }
+
+/* the legend as chips */
+.theme-soft .vis-legends { margin: 4px 0 12px; }
+.theme-soft .vis-legend-title { display: none; }
+.theme-soft .vis-legend-entry {
+    background: #F5F3FF;
+    border-radius: 999px;
+    padding: 3px 10px 3px 6px;
+    margin: 3px 2px !important;
+}
+.theme-soft .vis-legend-entry span { font-size: 12px; top: -2px; color: #3730A3; }
+.theme-soft .vis-legend-entry[data-visible="false"] { opacity: 0.45; }
+
+.theme-soft .vis-hover {
+    border-radius: 12px;
+    padding: 6px 4px;
+    box-shadow: 0 8px 24px -6px #1E1B4B40;
+}
+.theme-soft .vis-hover-title { border: 0; color: #6B7280; font-weight: 600; }
+
+.theme-soft .vis-footer span { font-size: 11px; color: #9CA3AF; }

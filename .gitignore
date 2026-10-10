@@ -3,3 +3,4 @@ dist
 dist-lib
 *.tgz
 .env
+dist-site

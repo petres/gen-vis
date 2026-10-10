@@ -1,0 +1,73 @@
+/* A dark dashboard: monospace, the form elements as segmented controls */
+.theme-dashboard {
+    background: #0F172A;
+    padding: 20px 22px 14px;
+    border-radius: 14px;
+    box-shadow: inset 0 0 0 1px #1E293B;
+}
+
+.theme-dashboard .vis {
+    --gen-vis-font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --gen-vis-grid-color: #1E293B;
+    --gen-vis-marker-color: #64748B;
+    --gen-vis-hover-background: #020617E6;
+    --gen-vis-halo-color: #0F172A;
+    --gen-vis-background: #0F172A;
+    --gen-vis-button-color: #475569;
+    --gen-vis-button-hover-color: #E2E8F0;
+    --gen-vis-focus-color: #38BDF8;
+    color: #94A3B8;
+}
+
+.theme-dashboard .vis-title {
+    color: #F1F5F9;
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.theme-dashboard .vis-subtitle { font-size: 12px; color: #64748B; }
+
+.theme-dashboard .vis-axis path.domain { stroke: #334155; }
+.theme-dashboard .vis-axis .tick line { stroke: #334155; }
+.theme-dashboard .vis-axis text { fill: #64748B; font-size: 11px; }
+
+/* the radio buttons as a segmented control */
+.theme-dashboard .vis-form-elements { margin: 4px 0 8px; }
+.theme-dashboard .vis-form-element { margin: 4px 18px 4px 0; }
+.theme-dashboard .vis-form-element-title {
+    font-weight: normal;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748B;
+}
+.theme-dashboard .vis-switch {
+    background: #1E293B;
+    border-radius: 8px;
+    padding: 3px;
+}
+.theme-dashboard .vis-switch > div { margin: 0; }
+.theme-dashboard .vis-switch input { position: absolute; opacity: 0; }
+.theme-dashboard .vis-switch label {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #94A3B8;
+}
+.theme-dashboard .vis-switch input:checked + label { background: #334155; color: #F8FAFC; }
+.theme-dashboard .vis-switch input:focus-visible + label { outline: 2px solid #38BDF8; }
+
+.theme-dashboard .vis-legend-title { display: none; }
+.theme-dashboard .vis-legend-entry span { font-size: 12px; color: #CBD5E1; top: -1px; }
+
+.theme-dashboard .vis-hover {
+    color: #E2E8F0;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 4px 2px;
+}
+.theme-dashboard .vis-hover-title { border-bottom: 1px solid #334155; font-weight: 600; }
+
+.theme-dashboard .vis-footer span { font-size: 11px; color: #475569; }

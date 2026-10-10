@@ -1,0 +1,46 @@
+/* A risograph poster: two inks on warm paper, a big condensed headline */
+.theme-poster {
+    background: #F4EEE1;
+    padding: 26px 26px 16px;
+    border: 2px solid #1B1B1B;
+    box-shadow: 8px 8px 0 #0078BF;
+}
+
+.theme-poster .vis {
+    --gen-vis-font-family: "Avenir Next", "Avenir", "Futura", "Trebuchet MS", sans-serif;
+    --gen-vis-grid-color: #1B1B1B26;
+    --gen-vis-marker-color: #E4572E;
+    --gen-vis-hover-background: #F4EEE1F2;
+    --gen-vis-halo-color: #F4EEE1;
+    --gen-vis-background: #F4EEE1;
+    --gen-vis-annotation-color: #1B1B1B;
+    --gen-vis-button-color: #1B1B1B66;
+    --gen-vis-button-hover-color: #E4572E;
+    --gen-vis-focus-color: #E4572E;
+    color: #1B1B1B;
+}
+
+.theme-poster .vis-title {
+    font-family: "Avenir Next Condensed", "Arial Narrow", "Roboto Condensed", "Liberation Sans Narrow", "Helvetica Neue", sans-serif;
+    font-stretch: condensed;
+    font-size: 46px;
+    font-weight: 800;
+    line-height: 0.95;
+    text-transform: uppercase;
+    color: #E4572E;
+}
+.theme-poster .vis-subtitle { font-size: 13px; max-width: 34em; margin-top: 8px; }
+
+.theme-poster .vis-axis-angular text { font-size: 12px; font-weight: 600; text-transform: uppercase; }
+.theme-poster .vis-axis-radial text { font-size: 11px; fill: #0078BF; }
+
+.theme-poster .vis-legends { margin-top: 6px; }
+.theme-poster .vis-legend-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }
+.theme-poster .vis-legend-entry span { font-size: 12px; }
+
+.theme-poster .vis-annotation-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.theme-poster .vis-hover { border: 2px solid #1B1B1B; }
+.theme-poster .vis-hover-title { border-bottom: 2px solid #E4572E; }
+
+.theme-poster .vis-footer span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
