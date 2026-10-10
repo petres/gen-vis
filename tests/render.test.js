@@ -1175,6 +1175,32 @@ describe('data formats', () => {
     });
 });
 
+describe('formatted values', () => {
+    test('labels of the format of the hover or of a format prop, dates of a format of times', async () => {
+        const def = lineDef();
+        def.mapping.y.hover.format = ',.2f';
+        def.plot = [{ type: 'svg:text', categories: ['c'], select: 'last', props: {
+            x: '@x:scaled', y: '@y:scaled', text: '@y:formatted',
+            'data-x': { prop: 'format', ref: 'x', format: '.1f' }, 'data-g': { prop: 'format', ref: 'g', format: '.0%' } } }];
+        def.globals = { g: 0.25 };
+        const el = await mount(GenVis, { def, data: lineData.replace('2023,4,40,Wien', '2023,1234.5,40,Wien') });
+        const texts = [...el.querySelectorAll('g.vis-plot text')];
+        expect(texts.map(t => t.textContent)).toEqual(['1.234,50', '2,00']);
+        expect(texts.map(t => t.getAttribute('data-x'))).toEqual(['2023,0', '2023,0']);
+        expect(texts[0].getAttribute('data-g')).toBe('25%');
+
+        // the default of the locale, dates
+        const dates = lineDef();
+        dates.mapping.x = { column: 'date', type: 'date', scale: { type: 'time', orientation: 'horizontal' } };
+        delete dates.mapping.y.hover.format;
+        dates.plot = { type: 'svg:text', categories: ['c'], props: { x: '@x:scaled', y: '@y:scaled', text: '@y:formatted', 'data-d': '@x:formatted', 'data-m': { prop: 'format', ref: 'x', format: '%b %Y' } } };
+        const other = await mount(GenVis, { def: dates, data: 'date,value,land\n2020-03-15,1234.5,Wien' });
+        const text = other.querySelector('g.vis-plot text');
+        expect([text.textContent, text.getAttribute('data-d'), text.getAttribute('data-m')]).toEqual(['1234,5', '15.03.2020', 'Mrz 2020']);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('horizontal bars and several value axes', () => {
     const barDef = () => {
         const def = lineDef();

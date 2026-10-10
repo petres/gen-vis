@@ -107,11 +107,12 @@
     },
     "definitions": {
         "prop": {
-            "description": "A computed value: a reference, a ratio of a reference or steps based on a reference. The prop is required unless the object is merged into a prop of the parent definition.",
+            "description": "A computed value: a reference, a ratio of a reference, steps based on a reference or a reference as a text of a format. The prop is required unless the object is merged into a prop of the parent definition.",
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "prop": { "enum": ["fixed", "ref", "relative", "steps"] },
+                "prop": { "enum": ["fixed", "ref", "relative", "steps", "format"] },
+                "format": { "type": "string", "description": "The d3 format of a format prop, e.g. \",.1f\" or \"%Y\" of dates, in the locale." },
                 "ref": {
                     "type": "string",
                     "description": "e.g. totalWidth or a global, in a facet also innerWidth or innerHeight"
@@ -135,7 +136,8 @@
             "allOf": [
                 { "if": { "required": ["prop"], "properties": { "prop": { "const": "ref" } } }, "then": { "required": ["ref"] } },
                 { "if": { "required": ["prop"], "properties": { "prop": { "const": "relative" } } }, "then": { "required": ["ref", "ratio"] } },
-                { "if": { "required": ["prop"], "properties": { "prop": { "const": "steps" } } }, "then": { "required": ["ref", "steps"] } }
+                { "if": { "required": ["prop"], "properties": { "prop": { "const": "steps" } } }, "then": { "required": ["ref", "steps"] } },
+                { "if": { "required": ["prop"], "properties": { "prop": { "const": "format" } } }, "then": { "required": ["ref", "format"] } }
             ]
         },
         "value": {

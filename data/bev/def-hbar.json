@@ -1,0 +1,48 @@
+{
+    "data": "data.csv",
+    "options": {
+        "height": 320,
+        "margins": {"top": 5, "right": 70, "bottom": 25, "left": 120},
+        "title": "Bevölkerung {year}",
+        "subtitle": "nach Bundesland",
+        "footer": "Q: Statistik Austria"
+    },
+    "globals": { "year": "2022" },
+    "filter": { "year": "@year" },
+    "formElements": [{
+        "id": "year", "name": "Jahr", "ref": "year", "type": "slider", "inImage": false,
+        "values": { "column": "Jahr" }
+    }],
+    "mapping": {
+        "year": { "column": "Jahr", "type": "numeric" },
+        "x": {
+            "column": "Einwohner",
+            "type": "numeric",
+            "scale": { "orientation": "horizontal", "domain": [0, null] },
+            "axis": { "position": "bottom", "grid": true, "format": ",.0f", "tickSpacing": 110 },
+            "hover": { "format": ",.0f" }
+        },
+        "y": {
+            "column": "Bundesland",
+            "type": "categorical",
+            "scale": { "type": "band", "orientation": "vertical", "padding": 0.25 },
+            "axis": { "position": "left" },
+            "props": { "fromData": true, "categories": { "ÖSTERREICH": { "visible": false } } }
+        }
+    },
+    "plot": [
+        {
+            "type": "cartesian:bar",
+            "categories": ["y"],
+            "props": { "x1": "@x:scaled", "y": "@y:scaled", "fill": "#1E4F77", "highlight-fill": "#5BC5F2" }
+        },
+        {
+            "type": "svg:text",
+            "categories": ["y"],
+            "props": {
+                "x": "@x:scaled", "dx": 4, "y": "@y:scaled:center", "dominant-baseline": "middle",
+                "font-size": 11, "text": "@x:formatted"
+            }
+        }
+    ]
+}

@@ -139,7 +139,7 @@ describe('validateDef', () => {
         expect(validateDef(def)).toEqual([
             "mapping.x.axis.ticks: has 'ratio', 'mode' but no 'prop', so it is not evaluated",
             "plot[0].props.r: a 'relative' prop needs a 'ref'",
-            "plot[0].props.fill: unknown prop 'color', expected one of 'fixed', 'ref', 'relative', 'steps'",
+            "plot[0].props.fill: unknown prop 'color', expected one of 'fixed', 'ref', 'relative', 'steps', 'format'",
         ]);
     });
 

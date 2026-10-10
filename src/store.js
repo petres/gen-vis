@@ -8,6 +8,7 @@ import { applyFormElements, fillText, formatOf, mergeAll, prepareDef } from "@/u
 import { applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { validateDef } from "@/utils/validate";
+import { formatter } from "@/utils/props";
 import { loadCoord } from "@/coords";
 import { axisNames } from "@/layout";
 import { loadColors } from "@/utils/d3";
@@ -238,7 +239,14 @@ class Store {
     // the names of the references in all parts of the definition, the globals
     // and the width of the visualisation, a facet adds its sizes, a plot the
     // props of the categories and the row, see README "Props"
-    get scope() { return { ...this.def.globals, totalWidth: this.totalWidth } }
+    get scope() { return { ...this.def.globals, totalWidth: this.totalWidth, [formatter]: (format, name) => this.format(format, name) } }
+
+    // a d3 format of the values of a reference, of times if it is a mapping of
+    // dates, e.g. "%Y", see the prop format of utils/props.js
+    format(format, name) {
+        const m = this.def.mapping[name];
+        return this.formatter(m?.type == 'date' ? (m.scale?.type == 'utc' ? 'utc' : 'time') : m?.scale?.type)(format);
+    }
 
     mapping(n) { return this.def.mapping[n] }
 

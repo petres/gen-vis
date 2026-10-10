@@ -16,7 +16,7 @@ const curveNames = Object.keys(curves);
 
 const mappingTypes = ['numeric', 'date', 'categorical'];
 const formElementTypes = ['radio', 'select', 'slider'];
-const propKinds = ['fixed', 'ref', 'relative', 'steps'];
+const propKinds = ['fixed', 'ref', 'relative', 'steps', 'format'];
 
 const list = a => a.map(e => `'${e}'`).join(', ');
 
@@ -44,11 +44,13 @@ const checkProp = (value, path, warn, names = null) => {
             warn(path, `unknown prop '${value.prop}', expected one of ${list(propKinds)}`);
         else if (value.prop != 'fixed' && typeof value.ref != 'string')
             warn(path, `a '${value.prop}' prop needs a 'ref'`);
+        else if (value.prop == 'format' && typeof value.format != 'string')
+            warn(path, `a 'format' prop needs a 'format', e.g. ",.1f"`);
         else if (value.prop != 'fixed')
             checkRef(value.ref, path, warn, names);
         return;
     }
-    const keys = ['ratio', 'steps', 'ref', 'mode'].filter(k => k in value);
+    const keys = ['ratio', 'steps', 'ref', 'mode', 'format'].filter(k => k in value);
     if (keys.length > 0)
         return warn(path, `has ${list(keys)} but no 'prop', so it is not evaluated`);
     Object.entries(value).forEach(([k, v]) => checkProp(v, `${path}.${k}`, warn, names));
@@ -58,7 +60,8 @@ const checkProp = (value, path, warn, names = null) => {
 // layout.js
 const rowNames = (n, m) => [
     n,
-    ...(m.scale ? [`${n}:scaled`, `${n}:scaled:0`, `${n}:scaled:min`, `${n}:scaled:max`] : []),
+    `${n}:formatted`,
+    ...(m.scale ? [`${n}:scaled`, `${n}:scaled:center`, `${n}:scaled:0`, `${n}:scaled:min`, `${n}:scaled:max`] : []),
     ...(m.stacked ? [`${n}:start`, `${n}:end`] : []),
     ...(m.stacked && m.scale ? [`${n}:start:scaled`, `${n}:end:scaled`, `${n}:height:scaled`] : []),
 ];

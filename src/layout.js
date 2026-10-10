@@ -2,8 +2,8 @@ export { layout, axisNames, visibleKeys, plotRows, plotGroups };
 
 import { categoryOrder, convert, filter, groupBy, stack } from "@/utils/data";
 import * as d3 from "@/utils/d3";
-import { bind, constant, evaluate, refNames } from "@/utils/props";
-import { makeScale } from "@/utils/scales";
+import { bind, constant, evaluate, formatter, refNames } from "@/utils/props";
+import { bandCenter, makeScale } from "@/utils/scales";
 
 /**
  * The view of a visualisation, computed from its store without Vue: the rows
@@ -62,7 +62,7 @@ const facetEntries = (store, rows) => {
 const layout = (store, width) => {
     const def = store.def;
     const axis = axisNames(store);
-    const scope = { ...def.globals, totalWidth: width };
+    const scope = { ...def.globals, totalWidth: width, [formatter]: store.scope[formatter] };
 
     // the rows of the visible categories and of the values of `filter`, e.g.
     // of a global of a form element, they are compared as the values of the
@@ -179,11 +179,19 @@ const rowValue = (ctx, name, rows) => {
         return rows !== ctx.rows && rows.some(r => Object.hasOwn(r, name)) ? (row => row[name]) : undefined;
     const s = ctx.scales[m];
     const stackOf = ctx.axis.v == m ? ctx.stackOf : null;
+    // the format of the hover of the mapping or the one of the locale
+    const format = () => {
+        const f = ctx.store.valueFormat(m, s);
+        return row => row[m] === null || row[m] === undefined ? '' : f(row[m]);
+    };
     const start = row => stackOf(row)?.[0];
     const end = row => stackOf(row)?.[1];
     const values = {
         '': () => row => row[m],
+        'formatted': format,
         'scaled': () => s && (row => s(row[m])),
+        // the center of a band, e.g. of a label of a bar
+        'scaled:center': () => s && (row => s(row[m]) + bandCenter(s)),
         'scaled:0': () => s && constant(s(0)),
         'scaled:min': () => s && constant(s(s.domain()[0])),
         'scaled:max': () => s && constant(s(s.domain().at(-1))),
@@ -212,8 +220,9 @@ const plotGroups = (plot, rows, ctx) => {
     const complete = row => needed.every(m => row[m] !== null);
     return groupBy(rows, plot.categories).map(g => {
         const props = Object.assign({}, ...plot.categories.map(c => mapping[c].props?.[g.group[c]]));
-        const resolve = name => Object.hasOwn(props, name) ? constant(props[name])
-            : rowValue(ctx, name, rows) ?? (Object.hasOwn(ctx.scope, name) ? constant(ctx.scope[name]) : undefined);
+        const scoped = name => Object.hasOwn(ctx.scope, name) ? constant(ctx.scope[name]) : undefined;
+        const resolve = name => typeof name == 'symbol' ? scoped(name) : (Object.hasOwn(props, name) ? constant(props[name])
+            : rowValue(ctx, name, rows) ?? scoped(name));
         const at = bind(plot.props, resolve);
         return {
             categories: g.group,

@@ -607,6 +607,17 @@ A plot or a list of plots, drawn in order:
 - `facet`: a key or a list of keys of the facets of the plot, by default it
   is in all facets.
 
+Labels of values, of the bars of a band scale at their center, with the
+format of the hover of the mapping (`@x:formatted`), see
+`data/bev/def-hbar.json`:
+
+```json
+{
+    "type": "svg:text",
+    "props": { "x": "@x:scaled", "dx": 4, "y": "@y:scaled:center", "dominant-baseline": "middle", "text": "@x:formatted" }
+}
+```
+
 Labels at the ends of lines, in the color of the line:
 
 ```json
@@ -812,6 +823,9 @@ Most values of a definition can be props:
   reference
 - `{"prop": "steps", "ref": "totalWidth", "steps": [{"cut": 0, "value": 220}, {"cut": 550, "value": 250}]}`:
   the value of the last step with a cut below the reference
+- `{"prop": "format", "ref": "y", "format": ",.1f"}`: the reference as a text
+  of a d3 format in the locale, of a date mapping a time format, e.g.
+  `"%b %Y"`, e.g. a label of a value
 
 Objects without `prop` are nested props, e.g. `d` of a path.
 
@@ -825,7 +839,7 @@ parts add names:
 | the `props` of `legend` (also of the `symbol`) and `hover` of a mapping | the props of its categories, e.g. `@color` and `@name` |
 | `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight` |
 | `scale.range` | the sizes of the coordinate system, e.g. `@radius` of polar plots, `width` and `height` are the ones of the inner area |
-| the `props` of a plot | the props of its categories and the values of the row: a mapping (e.g. `@x`), the scaled value (`@x:scaled`, `@x:scaled:0` for the position of 0, `@x:scaled:min` and `@x:scaled:max` of the domain), stacked values (`@y:start`, `@y:end:scaled`, ..., see `stacked`) |
+| the `props` of a plot | the props of its categories and the values of the row: a mapping (e.g. `@x`), the value as a text of the format of its hover (`@x:formatted`, e.g. `1.234,5`, a label), the scaled value (`@x:scaled`, `@x:scaled:center` for the center of a band, `@x:scaled:0` for the position of 0, `@x:scaled:min` and `@x:scaled:max` of the domain), stacked values (`@y:start`, `@y:end:scaled`, ..., see `stacked`) |
 
 Inner names replace outer ones, in a plot the mappings replace globals of the
 same name, e.g. `@year` is the one of the row. A reference to an unknown name

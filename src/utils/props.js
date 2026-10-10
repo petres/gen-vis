@@ -1,4 +1,4 @@
-export { compile, evaluate, bind, constant, refNames, refOf };
+export { compile, evaluate, bind, constant, refNames, refOf, formatter };
 
 /**
  * The props of a definition, the values of most of its parts:
@@ -7,6 +7,8 @@ export { compile, evaluate, bind, constant, refNames, refOf };
  * - { "prop": "relative", "ref": "innerWidth", "ratio": 0.5 }, a ratio of a reference
  * - { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 1 }] },
  *   the value of the last step with a cut below the reference
+ * - { "prop": "format", "ref": "y", "format": ",.1f" }, the reference as a text
+ *   of a d3 format in the locale, e.g. a label of a value
  * - objects without `prop` (nested props, e.g. `d` of a line) and lists
  *   (lists of props, e.g. a range)
  *
@@ -18,6 +20,10 @@ export { compile, evaluate, bind, constant, refNames, refOf };
 // the compiled props of objects and lists of the definition
 const compiled = new WeakMap();
 
+// the name of the formatter of a scope, `(format, name) => function`, e.g. of
+// the locale and the type of the mapping of `name`, see layout.js
+const formatter = Symbol('formatter');
+
 const node = raw => {
     if (typeof raw == 'string' && raw.startsWith('@'))
         return { kind: 'ref', name: raw.substring(1) };
@@ -27,8 +33,8 @@ const node = raw => {
         return { kind: 'fixed', value: raw };
     if (!('prop' in raw))
         return { kind: 'object', entries: Object.entries(raw).map(([k, v]) => [k, compile(v)]) };
-    if (raw.prop == 'ref' || raw.prop == 'relative' || raw.prop == 'steps')
-        return { kind: raw.prop, name: raw.ref, ratio: raw.ratio, steps: raw.steps ?? [] };
+    if (raw.prop == 'ref' || raw.prop == 'relative' || raw.prop == 'steps' || raw.prop == 'format')
+        return { kind: raw.prop, name: raw.ref, ratio: raw.ratio, steps: raw.steps ?? [], format: raw.format };
     return { kind: 'fixed', value: raw.value };
 };
 
@@ -41,8 +47,11 @@ const compile = raw => {
     return n;
 };
 
-// the value of a relative or a steps prop of the value of its reference
-const derive = (n, v) => {
+// the value of a relative, a steps or a format prop of the value of its
+// reference, `format` is the formatter of the scope
+const derive = (n, v, format) => {
+    if (n.kind == 'format')
+        return v === undefined || v === null ? '' : (format ? format(n.format, n.name)(v) : String(v));
     if (v === undefined)
         return undefined;
     if (n.kind == 'relative')
@@ -62,7 +71,7 @@ const valueOf = (n, get) => {
         case 'fixed': return n.value;
         case 'list': return n.items.map(i => valueOf(i, get));
         case 'object': return Object.fromEntries(n.entries.map(([k, e]) => [k, valueOf(e, get)]));
-        default: return derive(n, get(n.name));
+        default: return derive(n, get(n.name), get(formatter));
     }
 };
 
@@ -91,7 +100,8 @@ const bindNode = (n, resolve) => {
     const value = resolve(n.name) ?? constant(undefined);
     if (n.kind == 'ref')
         return value;
-    return value.constant ? constant(derive(n, value())) : row => derive(n, value(row));
+    const format = n.kind == 'format' ? resolve(formatter)?.() : undefined;
+    return value.constant ? constant(derive(n, value(), format)) : row => derive(n, value(row), format);
 };
 
 /**
