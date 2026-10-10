@@ -6,7 +6,7 @@
         "id": "unit",
         "name": "Einheit",
         "ref": "unit",
-        "type": "switch",
+        "type": "radio",
         "values": [
             { "id": "unitTwh", "value": "twh", "name": "TWh" },
             { "id": "unitCo2", "value": "mt.co2", "name": "Mt CO₂" }

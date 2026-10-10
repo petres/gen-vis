@@ -157,11 +157,11 @@ describe('updateData', () => {
 
 describe('addDataValues', () => {
     test('the categories of the data after the listed ones, in ascending order', () => {
-        const def = { globals: { col: 'b' }, mapping: { c: { column: '{col}', props: { fromData: true, manual: { z: {} } } }, d: { column: 'a', props: { manual: { x: {} } } } } };
+        const def = { globals: { col: 'b' }, mapping: { c: { column: '{col}', props: { fromData: true, categories: { z: {} } } }, d: { column: 'a', props: { categories: { x: {} } } } } };
         addDataValues(def, [{ a: 'y', b: 'q' }, { a: 'x', b: 'p' }, { a: 'x', b: '' }, { a: 'x', b: 'z' }]);
-        expect(Object.keys(def.mapping.c.props.manual)).toEqual(['z', 'p', 'q']);
+        expect(Object.keys(def.mapping.c.props.categories)).toEqual(['z', 'p', 'q']);
         // only with fromData
-        expect(Object.keys(def.mapping.d.props.manual)).toEqual(['x']);
+        expect(Object.keys(def.mapping.d.props.categories)).toEqual(['x']);
     });
 });
 

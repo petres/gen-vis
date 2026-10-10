@@ -14,7 +14,7 @@ const base = () => ({
     mapping: {
         x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' }, axis: { position: 'bottom' } },
         y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' }, axis: { position: 'left' } },
-        c: { column: 'land', type: 'categorical', props: { manual: { Wien: {} } } },
+        c: { column: 'land', type: 'categorical', props: { categories: { Wien: {} } } },
     },
     plot: { type: 'cartesian:line', categories: ['c'], props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
 });
@@ -23,6 +23,17 @@ test('the facets need a known mapping', () => {
     expect(validateDef({ ...base(), facets: { dim: 'c' } })).toEqual([]);
     expect(validateDef({ ...base(), facets: { dim: 'z' } })).toEqual([`facets.dim: unknown mapping 'z'`]);
     expect(validateDef({ ...base(), facets: { dim: ['c'] } })).toEqual([`facets.dim: expected the name of a mapping`]);
+});
+
+test('the names of the alphas before are named', () => {
+    const def = base();
+    def.mapping.c.props = { manual: { Wien: {} } };
+    def.globals = { g: 'a' };
+    def.formElements = [{ id: 'g', name: 'G', ref: 'g', type: 'switch', values: [{ id: 'a', name: 'A', value: 'a' }] }];
+    expect(validateDef(def)).toEqual([
+        "mapping.c.props.manual: renamed to 'categories'",
+        "formElements[0].type: 'switch' is renamed to 'radio'",
+    ]);
 });
 
 describe('the example definitions', () => {
@@ -131,7 +142,7 @@ describe('validateDef', () => {
             "mapping.x.type: unknown type 'number', expected one of 'numeric', 'date', 'categorical'",
             "mapping.x.scale.type: a linear scale does not fit the type 'number'",
             "mapping.y.axis.position: unknown position 'middle', expected one of 'top', 'bottom', 'left', 'right'",
-            "mapping.c.props: expected 'manual' entries or the ones of the data ('fromData'), and optional 'common' ones",
+            "mapping.c.props: expected 'categories' or the ones of the data ('fromData'), and optional 'common' props",
         ]);
     });
 
@@ -155,7 +166,7 @@ describe('validateDef', () => {
             expect.stringMatching(/^geo.projection.type: unknown projection 'flat', expected one of 'albers', .*'mercator'/),
             "filter.year: unknown mapping 'year'",
             "filter.year: unknown reference 'year', expected one of 'g', 'totalWidth'",
-            "formElements[0].type: unknown type 'checkbox', expected one of 'switch', 'select', 'slider'",
+            "formElements[0].type: unknown type 'checkbox', expected one of 'radio', 'select', 'slider'",
             "formElements[0].ref: no global",
             "formElements[0].values: no value of 'a'",
             "formElements[1].values: expected a list of entries or the column of the values, e.g. { \"column\": \"year\" }",
@@ -165,7 +176,7 @@ describe('validateDef', () => {
     test('references to names which are known where they are used', () => {
         const def = base();
         def.globals = { g: 1 };
-        def.mapping.c.props.manual.Wien = { color: 'red' };
+        def.mapping.c.props.categories.Wien = { color: 'red' };
         def.mapping.c.legend = { props: { title: '@color' }, symbol: { elements: [{ type: 'circle', props: { fill: '@color', r: '@g' } }] } };
         def.mapping.x.scale.range = [0, '@width'];
         def.mapping.y.axis.ticks = { prop: 'relative', ref: 'innerWidth', ratio: 0.01 };
@@ -263,7 +274,7 @@ describe('validateDef', () => {
         const def = base();
         def.globals = { values: 'value' };
         def.mapping.y.column = '{values}{share}';
-        def.formElements = [{ id: 'f', ref: 'values', type: 'switch', values: [
+        def.formElements = [{ id: 'f', ref: 'values', type: 'radio', values: [
             { id: 'a', value: 'value', mapping: { y: { column: '{unit}' } } },
         ] }];
         expect(validateDef(def)).toEqual([
@@ -278,12 +289,12 @@ describe('validateDef', () => {
         def.options = { footer: '{a} {b}' };
         def.mapping.y.name = '{c}';
         def.mapping.y.scale.domain = [0, '@a'];
-        def.mapping.c.props.manual.Wien.name = '{a}{d}';
+        def.mapping.c.props.categories.Wien.name = '{a}{d}';
         def.annotations = [{ type: 'text', text: '{e}' }];
         expect(validateDef(def)).toEqual([
             "options.footer: unknown global 'b' in the text",
             "mapping.y.name: unknown global 'c' in the text",
-            "mapping.c.props.manual.Wien.name: unknown global 'd' in the text",
+            "mapping.c.props.categories.Wien.name: unknown global 'd' in the text",
             "annotations[0].text: unknown global 'e' in the text",
         ]);
         def.mapping.y.scale.domain = [0, '@z'];

@@ -32,7 +32,7 @@
                     "stroke-width": 3,
                     "r": 4
                 },
-                "manual": {
+                "categories": {
                     "1971": { "color": "#BBD7EE"},
                     "1981": { "color": "#5BC5F2"},
                     "1991": { "color": "#559BD5"},
@@ -89,7 +89,7 @@
                     "stroke-width": 3,
                     "r": 4
                 },
-                "manual": {
+                "categories": {
                     "Hauseigentum":     { "color": "#BBD7EE"},
                     "Wohnungseigentum": { "color": "#5BC5F2"},
                     "GBV Miete":        { "color": "#559BD5"},
@@ -106,7 +106,7 @@
             "column": "Geo",
             "type": "categorical",
             "props": {
-                "manual": {
+                "categories": {
                     "Österreich": { "name": "Österreich"},
                     "Wien": { "name": "Wien"}
                 }

@@ -5,19 +5,19 @@ import { prepareDef } from '@/utils/def';
 const def = () => prepareDef({
     globals: { column: 'value', scales: ['y'] },
     formElements: [
-        { id: 'column', name: 'Wert', ref: 'column', type: 'switch', values: [
+        { id: 'column', name: 'Wert', ref: 'column', type: 'radio', values: [
             { id: 'value', name: 'Value', value: 'value' },
             { id: 'other', name: 'Other', value: 'other' },
         ] },
-        { id: 'scales', name: 'Skala', ref: 'scales', type: 'switch', values: [
+        { id: 'scales', name: 'Skala', ref: 'scales', type: 'radio', values: [
             { id: 'shared', name: 'Geteilt', value: ['y'] },
             { id: 'free', name: 'Getrennt', value: [] },
         ] },
     ],
     mapping: {
         x: { column: 'year', type: 'numeric' },
-        c: { column: 'land', type: 'categorical', legend: {}, props: { manual: { Wien: {}, Tirol: { visible: false } } } },
-        f: { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } },
+        c: { column: 'land', type: 'categorical', legend: {}, props: { categories: { Wien: {}, Tirol: { visible: false } } } },
+        f: { column: 'type', type: 'categorical', props: { categories: { a: {}, b: {} } } },
     },
     plot: { type: 'cartesian:line', props: {} },
 });

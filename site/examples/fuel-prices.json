@@ -33,7 +33,7 @@
                 }
             },
             "props": {
-                "manual": {
+                "categories": {
                     "diesel": { "name": "Diesel", "color": "#C0392B" },
                     "petrol": { "name": "Petrol", "color": "#2563A8" }
                 }

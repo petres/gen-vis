@@ -53,7 +53,7 @@
                 "common": {
                     "visible": true
                 },
-                "manual": {
+                "categories": {
                     "DIE": { "name": "Diesel"},
                     "SUP": { "name": "Benzin"}
                 }
@@ -78,7 +78,7 @@
                     "stroke-width": 1.5,
                     "visible": false
                 },
-                "manual": {
+                "categories": {
                     "W":  { "color": "#1E4F77", "name": "Wien" },
                     "N":  { "color": "#BBD7EE", "name": "Niederösterreich" },
                     "B":  { "color": "#5BC5F2", "name": "Burgenland", "visible": true },

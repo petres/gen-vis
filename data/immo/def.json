@@ -57,7 +57,7 @@
                 "common": {
                     "visible": false
                 },
-                "manual": {
+                "categories": {
                     "A":  { "visible": true },
                     "B":  {  },
                     "C":  {  },
@@ -85,7 +85,7 @@
                 "common": {
                     "visible": false
                 },
-                "manual": {
+                "categories": {
                     "1918 und davor": { "visible": true},
                     "1919 - 1944":    { },
                     "1945 - 1960":    { },
@@ -119,7 +119,7 @@
                 "common": {
                     "visible": false
                 },
-                "manual": {
+                "categories": {
                     "gbv": { "name": "GBV", "stroke-dasharray": null, "visible": true },
                     "pub": { "name": "öffentlich", "stroke-dasharray": 2 },
                     "priv": { "name": "privat", "stroke-dasharray": 4 },
@@ -147,7 +147,7 @@
                     "stroke-width": 1.5,
                     "visible": false
                 },
-                "manual": {
+                "categories": {
                     "Wien":  { "color": "#1E4F77", "name": "Wien", "visible": true  },
                     "Niederösterreich":  { "color": "#BBD7EE", "name": "Niederösterreich" },
                     "Burgenland":  { "color": "#5BC5F2", "name": "Burgenland"},

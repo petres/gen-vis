@@ -34,7 +34,7 @@
                 }
             },
             "props": {
-                "manual": {
+                "categories": {
                     "bev":    { "name": "Battery electric", "color": "#0E9F8E" },
                     "phev":   { "name": "Plug-in hybrid",   "color": "#4C8FE0" },
                     "hybrid": { "name": "Hybrid",           "color": "#D4A017" },

@@ -13,7 +13,7 @@ import { annotationKeys } from "@/coords/annotations.js";
 const curveNames = Object.keys(curves);
 
 const mappingTypes = ['numeric', 'date', 'categorical'];
-const formElementTypes = ['switch', 'select', 'slider'];
+const formElementTypes = ['radio', 'select', 'slider'];
 const propKinds = ['fixed', 'ref', 'relative', 'steps'];
 
 const list = a => a.map(e => `'${e}'`).join(', ');
@@ -62,7 +62,7 @@ const rowNames = (n, m) => [
 // default, `color` by a scheme
 const categoryNames = m => m?.props ? ['name', 'visible', ...(m.props.scheme ? ['color'] : []),
     ...Object.keys(m.props.common ?? {}),
-    ...Object.values(m.props.manual ?? {}).flatMap(e => Object.keys(e ?? {}))] : [];
+    ...Object.values(m.props.categories ?? {}).flatMap(e => Object.keys(e ?? {}))] : [];
 
 /**
  * Returns warnings for common mistakes in a (merged) definition, e.g. unknown
@@ -114,8 +114,11 @@ const validateDef = def => {
             warn(path, `no 'column'`);
         if (m.type !== undefined && !mappingTypes.includes(m.type))
             warn(`${path}.type`, `unknown type '${m.type}', expected one of ${list(mappingTypes)}`);
-        if (m.props && !m.props.manual && !m.props.fromData)
-            warn(`${path}.props`, `expected 'manual' entries or the ones of the data ('fromData'), and optional 'common' ones`);
+        // the names of the alphas before, the categories were `manual`
+        if (m.props?.manual !== undefined)
+            warn(`${path}.props.manual`, `renamed to 'categories'`);
+        else if (m.props && !m.props.categories && !m.props.fromData)
+            warn(`${path}.props`, `expected 'categories' or the ones of the data ('fromData'), and optional 'common' props`);
         if (m.props?.scheme !== undefined && !d3.named(d3.schemes, m.props.scheme))
             warn(`${path}.props.scheme`, `unknown scheme '${m.props.scheme}', e.g. 'Tableau10'`);
         if (m.scale) {
@@ -242,7 +245,10 @@ const validateDef = def => {
     });
 
     (def.formElements ?? []).forEach((e, i) => {
-        if (!formElementTypes.includes(e.type))
+        // radio buttons were `switch` in the alphas before
+        if (e.type == 'switch')
+            warn(`formElements[${i}].type`, `'switch' is renamed to 'radio'`);
+        else if (!formElementTypes.includes(e.type))
             warn(`formElements[${i}].type`, `unknown type '${e.type}', expected one of ${list(formElementTypes)}`);
         // parts of entries are patches of a parent, the merged ones are complete
         if (typeof e.ref != 'string')
@@ -274,7 +280,7 @@ const validateDef = def => {
         checkText(m.axis?.title?.name, `mapping.${n}.axis.title.name`);
         checkText(m.legend?.missing?.name, `mapping.${n}.legend.missing.name`);
         checkText(m.props?.common?.name, `mapping.${n}.props.common.name`);
-        Object.entries(m.props?.manual ?? {}).forEach(([k, e]) => checkText(e?.name, `mapping.${n}.props.manual.${k}.name`));
+        Object.entries(m.props?.categories ?? {}).forEach(([k, e]) => checkText(e?.name, `mapping.${n}.props.categories.${k}.name`));
     });
     [].concat(def.annotations ?? []).forEach((a, i) => ['label', 'text'].forEach(k => checkText(a[k], `annotations[${i}].${k}`)));
     (def.formElements ?? []).forEach((e, i) => (Array.isArray(e.values) ? e.values : []).forEach((v, j) =>

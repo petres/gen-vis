@@ -31,7 +31,7 @@ const lineDef = (options = {}) => ({
     mapping: {
         x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' }, axis: { position: 'bottom', ticks: 5, grid: true, title: { name: 'Jahr', offset: 30 } } },
         y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' }, axis: { position: 'left', ticks: 5 }, hover: { format: ',.1f' } },
-        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, props: { manual: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } } },
+        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, props: { categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } } },
     },
     plot: [
         { type: 'cartesian:line', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { x: '@x:scaled', y: '@y:scaled' } } },
@@ -163,7 +163,7 @@ describe('rendering', () => {
     test('form elements patch the mappings', async () => {
         const def = lineDef();
         def.globals = { column: 'value' };
-        def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'switch', values: [
+        def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'radio', values: [
             { id: 'value', name: 'Value', value: 'value', mapping: { y: { column: 'value' } } },
             { id: 'other', name: 'Other', value: 'other', mapping: { y: { column: 'other' } } },
         ] }];
@@ -171,7 +171,7 @@ describe('rendering', () => {
         const ticks = () => [...el.querySelectorAll('g.vis-axis-left g.tick text')].map(t => parseFloat(t.textContent));
         expect(ticks().at(-1)).toBe(4);
 
-        el.querySelectorAll('.vis-form-element .vis-switch input')[1].click();
+        el.querySelectorAll('.vis-form-element .vis-radio input')[1].click();
         await nextTick();
         expect(ticks().at(-1)).toBe(40);
         expect(el.querySelectorAll('g.vis-plot.plot-1 circle')).toHaveLength(8);
@@ -184,18 +184,18 @@ describe('rendering', () => {
         def.mapping.y.column = '{column}{share}';
         def.globals = { column: 'value', share: '' };
         def.formElements = [
-            { id: 'column', name: 'Wert', ref: 'column', type: 'switch', values: [
+            { id: 'column', name: 'Wert', ref: 'column', type: 'radio', values: [
                 { id: 'value', name: 'Value', value: 'value' },
                 { id: 'other', name: 'Other', value: 'other' },
             ] },
-            { id: 'share', name: 'Anteil', ref: 'share', type: 'switch', values: [
+            { id: 'share', name: 'Anteil', ref: 'share', type: 'radio', values: [
                 { id: 'abs', name: 'Absolut', value: '' },
                 { id: 'rel', name: 'Anteil', value: '.share', mapping: { y: { axis: { format: '.0%' } } } },
             ] },
         ];
         const el = await mount(GenVis, { def, data });
         const ticks = () => [...el.querySelectorAll('g.vis-axis-left g.tick text')].map(t => t.textContent);
-        const entries = i => el.querySelectorAll('.vis-form-element')[i].querySelectorAll('.vis-switch input');
+        const entries = i => el.querySelectorAll('.vis-form-element')[i].querySelectorAll('.vis-radio input');
         expect(ticks().at(-1)).toBe('2,0');
 
         entries(0)[1].click();
@@ -217,7 +217,7 @@ describe('rendering', () => {
     const stateDef = () => {
         const def = lineDef();
         def.globals = { column: 'value' };
-        def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'switch', values: [
+        def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'radio', values: [
             { id: 'value', name: 'Value', value: 'value', mapping: { y: { column: 'value' } } },
             { id: 'other', name: 'Other', value: 'other', mapping: { y: { column: 'other' } } },
         ] }];
@@ -231,7 +231,7 @@ describe('rendering', () => {
         const def = lineDef();
         // the global `x` is also a mapping, in the plots `@x` is the one of the row
         def.globals = { accent: 'green', x: 'global' };
-        def.formElements = [{ id: 'accent', name: 'Farbe', ref: 'accent', type: 'switch', values: [
+        def.formElements = [{ id: 'accent', name: 'Farbe', ref: 'accent', type: 'radio', values: [
             { id: 'green', name: 'Grün', value: 'green' },
             { id: 'black', name: 'Schwarz', value: 'black' },
         ] }];
@@ -249,7 +249,7 @@ describe('rendering', () => {
         const legend = () => el.querySelector('.vis-legend .vis-legend-entries > div').getAttribute('data-accent');
         expect(legend()).toBe('green');
 
-        el.querySelectorAll('.vis-form-element .vis-switch input')[1].click();
+        el.querySelectorAll('.vis-form-element .vis-radio input')[1].click();
         await nextTick();
         expect(circle().getAttribute('stroke')).toBe('black');
         expect(line().getAttribute('stroke')).toBe('black');
@@ -264,7 +264,7 @@ describe('rendering', () => {
         def.mapping.y.scale.domain = [0, '@max'];
         def.mapping.x.axis.title.name = 'Jahr ({source})';
         def.mapping.c.name = 'Land ({unit})';
-        def.mapping.c.props.manual.Wien.name = 'Wien ({unit})';
+        def.mapping.c.props.categories.Wien.name = 'Wien ({unit})';
         def.facets = { dim: 'c', cols: 2 };
         const el = await mount(GenVis, { def, data: lineData });
         expect(el.querySelector('.vis-footer-content span').textContent).toBe('Quelle Statistik');
@@ -278,7 +278,7 @@ describe('rendering', () => {
 
     test('categories of the data, colored by a scheme', async () => {
         const def = lineDef();
-        def.mapping.c.props = { fromData: true, scheme: 'Tableau10', manual: { Tirol: {} } };
+        def.mapping.c.props = { fromData: true, scheme: 'Tableau10', categories: { Tirol: {} } };
         const data = lineData + '\n2020,3,30,Salzburg\n2021,3,30,Salzburg';
         const el = await mount(GenVis, { def, data });
         // the listed one first, the others of the data in ascending order
@@ -311,7 +311,7 @@ describe('rendering', () => {
             } }),
         });
 
-        el.querySelectorAll('.vis-form-element .vis-switch input')[1].click();
+        el.querySelectorAll('.vis-form-element .vis-radio input')[1].click();
         await nextTick();
         el.querySelectorAll('.vis-legend .vis-legend-entries > div')[1].click();
         await nextTick();
@@ -414,7 +414,7 @@ describe('controls', () => {
     const switchDef = () => {
         const def = lineDef();
         def.globals = { column: 'value' };
-        def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'switch', values: [
+        def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'radio', values: [
             { id: 'value', name: 'Value', value: 'value', mapping: { y: { column: 'value' } } },
             { id: 'other', name: 'Other', value: 'other', mapping: { y: { column: 'other' } } },
         ] }];
@@ -458,7 +458,7 @@ describe('controls', () => {
 
     test('a double click shows only the entry, the next one all', async () => {
         const def = switchDef();
-        def.mapping.c.props.manual.Salzburg = { color: 'green' };
+        def.mapping.c.props.categories.Salzburg = { color: 'green' };
         const { el } = await mountWithUpdates(def);
         const tirol = el.querySelectorAll('.vis-legend .vis-legend-entries > div')[1];
         const double = async e => {
@@ -490,8 +490,8 @@ describe('controls', () => {
 describe('events and slots', () => {
     test('the hover props of the categories are the columns of the hover', async () => {
         const def = lineDef();
-        def.mapping.c.props.manual.Wien.unit = 'Mio.';
-        def.mapping.c.props.manual.Tirol.unit = 'Tsd.';
+        def.mapping.c.props.categories.Wien.unit = 'Mio.';
+        def.mapping.c.props.categories.Tirol.unit = 'Tsd.';
         def.mapping.c.hover = { props: { unit: '@unit' } };
         const el = await mount(GenVis, { def, data: lineData });
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
@@ -671,7 +671,7 @@ describe('the highlight of a row', () => {
         const def = lineDef();
         def.mapping.y.stacked = true;
         def.mapping.y.scale.domain = [0, null];
-        def.mapping.type = { column: 'type', type: 'categorical', legend: {}, props: { manual: { a: {}, b: {} } } };
+        def.mapping.type = { column: 'type', type: 'categorical', legend: {}, props: { categories: { a: {}, b: {} } } };
         def.plot = { type: 'cartesian:bar', categories: ['type'], highlight: 'row',
             props: { x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled', width: 10, stroke: 'none', 'highlight-stroke': 'black' } };
         const data = 'year,value,land,type\n2020,1,Wien,a\n2020,2,Wien,b\n2023,3,Wien,a\n2023,1,Wien,b';
@@ -1069,7 +1069,7 @@ describe('highlight', () => {
 describe('data formats', () => {
     test('parquet as data, integers as categories', async () => {
         const def = lineDef();
-        def.mapping.c = { column: 'year', type: 'categorical', legend: {}, hover: {}, props: { manual: { 2020: { color: 'red' }, 2021: { color: 'blue' } } } };
+        def.mapping.c = { column: 'year', type: 'categorical', legend: {}, hover: {}, props: { categories: { 2020: { color: 'red' }, 2021: { color: 'blue' } } } };
         def.mapping.x.column = 'month';
         const data = parquetWriteBuffer({ columnData: [
             { name: 'year', data: [2020n, 2020n, 2021n, 2021n, 2022n], type: 'INT64' },
@@ -1433,7 +1433,7 @@ describe('fixed bugs', () => {
     const stackDef = () => {
         const def = lineDef();
         def.mapping.y.stacked = true;
-        def.mapping.type = { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } };
+        def.mapping.type = { column: 'type', type: 'categorical', props: { categories: { a: {}, b: {} } } };
         def.plot = { type: 'cartesian:bar', categories: ['type'], props: { x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled', width: 10, fill: 'red' } };
         return def;
     };
@@ -1500,7 +1500,7 @@ describe('fixed bugs', () => {
     test('the hover lists stacked values in the order of the stack', async () => {
         const def = stackDef();
         def.mapping.type.hover = {};
-        def.mapping.type.props.manual = { a: {}, b: {}, n: {}, m: {} };
+        def.mapping.type.props.categories = { a: {}, b: {}, n: {}, m: {} };
         // a is at the bottom, but larger than b, n and m are below 0
         const data = 'year,value,land,type\n2020,5,Wien,a\n2020,2,Wien,b\n2020,-1,Wien,n\n2020,-3,Wien,m';
         const el = await mount(GenVis, { def, data });
@@ -1555,7 +1555,7 @@ describe('fixed bugs', () => {
     test('the labels of the form elements belong to their radio buttons', async () => {
         const def = lineDef();
         def.globals = { column: 'value' };
-        def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'switch', values: [
+        def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'radio', values: [
             { id: 'value', name: 'Value', value: 'value' },
             { id: 'other', name: 'Other', value: 'other' },
         ] }];
@@ -1568,7 +1568,7 @@ describe('fixed bugs', () => {
 
     test('categories with quotes are highlighted', async () => {
         const def = lineDef();
-        def.mapping.c.props.manual = { "O'Brien": { color: 'red' }, 'Say "hi"': { color: 'blue' } };
+        def.mapping.c.props.categories = { "O'Brien": { color: 'red' }, 'Say "hi"': { color: 'blue' } };
         def.plot[0].props['stroke-width'] = 1;
         def.plot[0].props['highlight-stroke-width'] = 3;
         const data = lineData.replaceAll('Wien', `O'Brien`).replaceAll('Tirol', '"Say ""hi"""');
@@ -1591,7 +1591,7 @@ describe('fixed bugs', () => {
     test('stacked facets, the dim is a name', async () => {
         const def = lineDef();
         def.mapping.y.stacked = true;
-        def.mapping.type = { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } };
+        def.mapping.type = { column: 'type', type: 'categorical', props: { categories: { a: {}, b: {} } } };
         def.facets = { dim: 'c', cols: 2 };
         def.mapping.facet = def.mapping.c;
         def.plot = { type: 'svg:circle', categories: ['type'], props: { r: 2, cx: '@x:scaled', cy: '@y:end:scaled' } };
@@ -1615,7 +1615,7 @@ describe('fixed bugs', () => {
     test('facets and stacks in the order of the categories, not of the rows', async () => {
         const def = lineDef();
         def.mapping.y.stacked = true;
-        def.mapping.type = { column: 'type', type: 'categorical', props: { manual: { a: {}, b: {} } } };
+        def.mapping.type = { column: 'type', type: 'categorical', props: { categories: { a: {}, b: {} } } };
         def.facets = { dim: 'c', cols: 2 };
         def.plot = { type: 'svg:circle', categories: ['type'], props: { r: 2, cx: '@x:scaled', cy: '@y:end:scaled' } };
         const data = 'year,value,land,type\n2020,2,Tirol,b\n2020,1,Tirol,a\n2020,2,Wien,b\n2020,1,Wien,a';
@@ -1634,7 +1634,7 @@ describe('fixed bugs', () => {
 describe('accessibility and the data', () => {
     test('only the footer is html, the names are text', async () => {
         const def = lineDef({ title: '<b>Titel</b>', footer: '<a href="#q">Quelle</a>' });
-        def.mapping.c.props.manual.Wien.name = '<i>Wien</i> & Umgebung';
+        def.mapping.c.props.categories.Wien.name = '<i>Wien</i> & Umgebung';
         const el = await mount(GenVis, { def, data: lineData });
         expect(el.querySelector('.vis-footer-content a').textContent).toBe('Quelle');
         expect(el.querySelector('.vis-title').textContent).toBe('<b>Titel</b>');
@@ -1651,7 +1651,7 @@ describe('accessibility and the data', () => {
     test('the ids of the elements are unique, also of charts with the same form elements', async () => {
         const def = lineDef();
         def.globals = { col: 'value' };
-        def.formElements = [{ id: 'col', name: 'Wert', ref: 'col', type: 'switch', values: [
+        def.formElements = [{ id: 'col', name: 'Wert', ref: 'col', type: 'radio', values: [
             { id: 'value', name: 'Wert', value: 'value' }, { id: 'other', name: 'Anderer', value: 'other', mapping: { y: { column: 'other' } } }] }];
         await mount(GenVis, { def, data: lineData });
         await mount(GenVis, { def, data: lineData });
@@ -1659,14 +1659,14 @@ describe('accessibility and the data', () => {
         expect(ids.length).toBeGreaterThan(0);
         expect(new Set(ids).size).toBe(ids.length);
         expect([...document.querySelectorAll('.vis-form-element')].map(e => e.dataset.id)).toEqual(['col', 'col']);
-        expect([...document.querySelectorAll('.vis-switch > div')].map(e => e.dataset.id)).toEqual(['value', 'other', 'value', 'other']);
+        expect([...document.querySelectorAll('.vis-radio > div')].map(e => e.dataset.id)).toEqual(['value', 'other', 'value', 'other']);
     });
 
     test('the svg is an image named by the title and the facet, the form elements have labels', async () => {
         const def = { ...lineDef({ title: 'Bevölkerung {unit}' }), globals: { unit: 'Personen', year: 'a' }, facets: { dim: 'c', cols: 2 } };
         def.formElements = [
             { id: 'year', name: 'Jahr', ref: 'year', type: 'select', values: [{ id: 'a', name: 'A', value: 'a' }] },
-            { id: 'unit', name: 'Einheit', ref: 'unit', type: 'switch', values: [{ id: 'p', name: 'Personen', value: 'Personen' }] },
+            { id: 'unit', name: 'Einheit', ref: 'unit', type: 'radio', values: [{ id: 'p', name: 'Personen', value: 'Personen' }] },
         ];
         const el = await mount(GenVis, { def, data: lineData });
         expect([...el.querySelectorAll('svg.vis-svg')].map(s => [s.getAttribute('role'), s.getAttribute('aria-label')]))
@@ -1683,7 +1683,7 @@ describe('accessibility and the data', () => {
         URL.revokeObjectURL = () => {};
         vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () { saved.name = this.download; });
         const def = lineDef({ title: 'Bevölkerung' });
-        def.mapping.c.props.manual.Tirol.visible = false;
+        def.mapping.c.props.categories.Tirol.visible = false;
         const el = await mount(GenVis, { def, data: lineData, csv: true });
         el.querySelector('.vis-buttons .vis-csv').click();
         await vi.waitFor(() => expect(saved.name).toBe('Bevölkerung.csv'));
@@ -1742,7 +1742,7 @@ describe('images', () => {
     const def = () => ({
         ...lineDef({ title: 'Titel', subtitle: 'Untertitel', footer: 'Quelle' }),
         globals: { unit: 'a' },
-        formElements: [{ id: 'unit', name: 'Einheit', ref: 'unit', type: 'switch', values: [
+        formElements: [{ id: 'unit', name: 'Einheit', ref: 'unit', type: 'radio', values: [
             { id: 'a', name: 'Absolut', value: 'a' },
             { id: 'b', name: 'Anteil', value: 'b' },
         ] }],
@@ -1883,7 +1883,7 @@ describe('images', () => {
     test('form elements of the presentation are not in the selection', async () => {
         const d = def();
         d.globals.scale = 'shared';
-        d.formElements.push({ id: 'scale', name: 'Skala', ref: 'scale', type: 'switch', inImage: false, values: [
+        d.formElements.push({ id: 'scale', name: 'Skala', ref: 'scale', type: 'radio', inImage: false, values: [
             { id: 'shared', name: 'Geteilt', value: 'shared' },
             { id: 'free', name: 'Getrennt', value: 'free' },
         ] });

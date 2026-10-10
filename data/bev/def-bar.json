@@ -26,7 +26,7 @@
             },
             "props": {
                 "common": {},
-                "manual": {
+                "categories": {
                     "Wien":             { "name": "#BBD7EE" },
                     "Niederösterreich": { "name": "#5BC5F2" },
                     "Burgenland":       { "name": "#559BD5" },

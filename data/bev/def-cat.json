@@ -70,7 +70,7 @@
                     "stroke-width": 2.5,
                     "visible": true
                 },
-                "manual": {
+                "categories": {
                     "ÖSTERREICH":       { "color": "#1E4F77", "stroke-width": 3, "name": "Gesamt" },
                     "Wien":             { "color": "#BBD7EE" },
                     "Niederösterreich": { "color": "#5BC5F2" },

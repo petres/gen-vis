@@ -6,7 +6,7 @@ describe('prepareDef', () => {
         const def = prepareDef({
             mapping: {
                 x: { column: 'a', scale: { orientation: 'horizontal' }, axis: { format: 'c' }, hover: {} },
-                c: { column: 'b', props: { common: { r: 3 }, manual: { a: {}, b: { visible: false, name: 'B' } } } },
+                c: { column: 'b', props: { common: { r: 3 }, categories: { a: {}, b: { visible: false, name: 'B' } } } },
             },
             plot: { type: 'svg:circle', props: { r: '@r', 'highlight-r': 5 } },
         });
@@ -20,13 +20,13 @@ describe('prepareDef', () => {
 
 describe('the props of categories', () => {
     test('the colors of a scheme in the order of the categories, the given ones are kept', () => {
-        const def = prepareDef({ mapping: { c: { column: 'c', props: { scheme: 'Blues', common: { r: 2 }, manual: { a: {}, b: { color: 'red' }, c: {} } } } }, plot: [] });
+        const def = prepareDef({ mapping: { c: { column: 'c', props: { scheme: 'Blues', common: { r: 2 }, categories: { a: {}, b: { color: 'red' }, c: {} } } } }, plot: [] });
         expect(def.mapping.c.props).toEqual({
             a: { color: '#deebf7', r: 2, name: 'a', visible: true },
             b: { color: 'red', r: 2, name: 'b', visible: true },
             c: { color: '#3182bd', r: 2, name: 'c', visible: true },
         });
-        expect(() => prepareDef({ mapping: { c: { props: { scheme: 'Nope', manual: {} } } }, plot: [] })).toThrow("Unknown scheme 'Nope'");
+        expect(() => prepareDef({ mapping: { c: { props: { scheme: 'Nope', categories: {} } } }, plot: [] })).toThrow("Unknown scheme 'Nope'");
     });
 });
 
@@ -52,7 +52,7 @@ describe('formatOf', () => {
 describe('applyFormElements', () => {
     const defOrg = {
         globals: { value: 'a' },
-        formElements: [{ ref: 'value', type: 'switch', values: [
+        formElements: [{ ref: 'value', type: 'radio', values: [
             { value: 'a', mapping: { y: { column: 'A' } } },
             { value: 'b', mapping: { y: { column: 'B' } } },
         ] }],
@@ -76,8 +76,8 @@ describe('applyFormElements', () => {
         const org = {
             globals: { values: 'twh', share: '' },
             formElements: [
-                { ref: 'values', type: 'switch', values: [{ value: 'twh' }, { value: 'co2' }] },
-                { ref: 'share', type: 'switch', values: [
+                { ref: 'values', type: 'radio', values: [{ value: 'twh' }, { value: 'co2' }] },
+                { ref: 'share', type: 'radio', values: [
                     { value: '' },
                     { value: '.share', mapping: { y: { axis: { format: '.0%' } } } },
                 ] },

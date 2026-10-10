@@ -3,7 +3,7 @@
         "type": {
             "column": "source.group",
             "props": {
-                "manual": {
+                "categories": {
                     "Hydro": { "color": "#5BC5F2", "name": "Hydro" },
                     "Wind":  { "color": "#BBD7EE", "name": "Wind" },
                     "Solar": { "color": "#F3D039", "name": "Solar" },

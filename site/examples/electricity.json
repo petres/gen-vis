@@ -20,7 +20,7 @@
     "filter": { "source": "@source", "year": "@year" },
     "formElements": [
         {
-            "id": "source", "name": "Source", "ref": "source", "type": "switch",
+            "id": "source", "name": "Source", "ref": "source", "type": "radio",
             "values": [
                 { "id": "renewable", "name": "Renewables", "value": "renewable" },
                 {

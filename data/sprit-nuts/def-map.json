@@ -78,7 +78,7 @@
             "column": "fuelType",
             "type": "categorical",
             "props": {
-                "manual": {
+                "categories": {
                     "DIE": {
                         "name": "Diesel"
                     },

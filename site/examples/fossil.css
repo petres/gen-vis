@@ -42,15 +42,15 @@
     letter-spacing: 0.08em;
     color: #64748B;
 }
-.theme-dashboard .vis-switch {
+.theme-dashboard .vis-radio {
     background: #1E293B;
     border-radius: 8px;
     padding: 3px;
 }
 /* the radio button is invisible over its label, in its entry, so the focus of
    a click does not scroll the page to it */
-.theme-dashboard .vis-switch > div { margin: 0; position: relative; }
-.theme-dashboard .vis-switch input {
+.theme-dashboard .vis-radio > div { margin: 0; position: relative; }
+.theme-dashboard .vis-radio input {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -58,15 +58,15 @@
     margin: 0;
     opacity: 0;
 }
-.theme-dashboard .vis-switch label {
+.theme-dashboard .vis-radio label {
     display: inline-block;
     padding: 4px 10px;
     border-radius: 6px;
     font-size: 12px;
     color: #94A3B8;
 }
-.theme-dashboard .vis-switch input:checked + label { background: #334155; color: #F8FAFC; }
-.theme-dashboard .vis-switch input:focus-visible + label { outline: 2px solid #38BDF8; }
+.theme-dashboard .vis-radio input:checked + label { background: #334155; color: #F8FAFC; }
+.theme-dashboard .vis-radio input:focus-visible + label { outline: 2px solid #38BDF8; }
 
 .theme-dashboard .vis-legend-title { display: none; }
 .theme-dashboard .vis-legend-entry span { font-size: 12px; color: #CBD5E1; top: -1px; }

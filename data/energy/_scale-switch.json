@@ -6,7 +6,7 @@
         "id": "scale",
         "name": "Y-Skala",
         "ref": "shareScale",
-        "type": "switch",
+        "type": "radio",
         "inImage": false,
         "values": [
             { "id": "shareAxisOff", "value": ["x"], "name": "Getrennt" },

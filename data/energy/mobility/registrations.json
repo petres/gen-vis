@@ -30,7 +30,7 @@
         "facet": {
             "column": "type",
             "props": {
-                "manual": {
+                "categories": {
                     "bev":    { "name": "Elektro", "visible": true },
                     "phev":   { "name": "Plug-in-Hybrid", "visible": true },
                     "hybrid": { "name": "Hybrid (ohne Plug-in)", "visible": true },

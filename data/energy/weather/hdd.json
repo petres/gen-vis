@@ -17,7 +17,7 @@
         },
         "facet": {
             "props": {
-                "manual": {
+                "categories": {
                     "rm": {
                         "name": "Durchschnitt der letzten 28-Tage",
                         "highlight-stroke-width": 3

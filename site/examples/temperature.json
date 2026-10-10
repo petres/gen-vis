@@ -42,7 +42,7 @@
             },
             "props": {
                 "common": { "color": "#0078BF", "width": 1.5 },
-                "manual": {
+                "categories": {
                     "1991–2020": { "name": "Ø 1991–2020", "color": "#1B1B1B", "dash": "4 3", "opacity": 1, "width": 2 },
                     "2019": { "opacity": 0.25 },
                     "2020": { "opacity": 0.3 },

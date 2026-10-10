@@ -76,7 +76,7 @@
                     "opacity": 0.6, 
                     "highlight-opacity": 1
                 },
-                "manual": {
+                "categories": {
                     "2026": { "color": "#c3423f", "opacity": 1.0},
                     "2025": { "color": "#cf8e02", "opacity": 0.7},
                     "2024": { "color": "#f3d039", "opacity": 0.6},

@@ -15,7 +15,7 @@
         },
         "facet": {
             "props": {
-                "manual": {
+                "categories": {
                     "total": { "name": "Gesamt", "visible": true },
                     "oil":   { "name": "Mineralöl", "visible": true },
                     "coal":  { "name": "Kohle", "visible": true },

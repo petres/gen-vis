@@ -12,7 +12,7 @@
         "facet": {
             "column": "variable",
             "props": {
-                "manual": {
+                "categories": {
                     "rm7": {
                         "name": "täglich (rollierender 7-Tages Durchschnitt)"
                     },

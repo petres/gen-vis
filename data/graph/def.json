@@ -53,7 +53,7 @@
                     "stroke-width": 2.5,
                     "visible": true
                 },
-                "manual": {
+                "categories": {
                     "1": { "color": "#1E4F77", "name": "Type 1" },
                     "2": { "color": "#BBD7EE", "name": "Type 2" },
                     "3": { "color": "#5BC5F2", "name": "Type 3" },

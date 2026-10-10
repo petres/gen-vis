@@ -130,7 +130,7 @@ const prepareData = (data, def) => {
 };
 
 // compares rows by the order of the categories in the definition, e.g. the
-// order of the `manual` props, `orders` are the dims with their ordered keys
+// order of the `categories` of the props, `orders` are the dims with their ordered keys
 const categoryOrder = orders => {
     const ranks = orders.map(({ dim, keys }) => ({ dim, rank: new Map(keys.map((k, i) => [String(k), i])) }));
     return (a, b) => {
@@ -232,9 +232,9 @@ const addDataValues = (def, rows) => {
 
     // the categories of the data which are not listed, after the listed ones
     Object.values(def.mapping ?? {}).filter(m => m?.props?.fromData && typeof m.column == 'string').forEach(m => {
-        m.props.manual ??= {};
-        distinct(fillTemplate(m.column, def.globals)).map(String).filter(k => !Object.hasOwn(m.props.manual, k))
-            .forEach(k => m.props.manual[k] = {});
+        m.props.categories ??= {};
+        distinct(fillTemplate(m.column, def.globals)).map(String).filter(k => !Object.hasOwn(m.props.categories, k))
+            .forEach(k => m.props.categories[k] = {});
     });
 
     (def.formElements ?? []).filter(e => e.values && !Array.isArray(e.values)).forEach(e => {

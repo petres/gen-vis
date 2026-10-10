@@ -38,7 +38,7 @@
 .theme-atlas .vis-form-element-title { font-weight: 600; }
 .theme-atlas .vis-slider input { accent-color: #11573C; width: 150px; }
 .theme-atlas .vis-slider-value { font-weight: 700; font-variant-numeric: tabular-nums; }
-.theme-atlas .vis-switch input { accent-color: #11573C; }
+.theme-atlas .vis-radio input { accent-color: #11573C; }
 
 .theme-atlas .vis-legends { margin: 8px 0 10px; }
 .theme-atlas .vis-legend-title { font-size: 11px; font-weight: 600; }

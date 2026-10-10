@@ -6,7 +6,7 @@
         "id": "values",
         "name": "Werte",
         "ref": "values",
-        "type": "switch",
+        "type": "radio",
         "values": [
             { "id": "valuesAbs", "value": "abs", "name": "Absolut" },
             {

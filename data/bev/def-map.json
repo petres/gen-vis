@@ -68,7 +68,7 @@
             "column": "Bundesland",
             "type": "categorical",
             "props": {
-                "manual": {
+                "categories": {
                     "ÖSTERREICH": {
                         "visible": false
                     },

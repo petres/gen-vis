@@ -39,7 +39,7 @@
             "id": "type",
             "name": "Quelle",
             "ref": "type",
-            "type": "switch",
+            "type": "radio",
             "values": [
                 {
                     "id": "Renewable",

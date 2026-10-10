@@ -57,7 +57,7 @@
                 "common": {
                     "visible": false
                 },
-                "manual": {
+                "categories": {
                     "A":  {  },
                     "B":  {  },
                     "C":  {  },
@@ -86,7 +86,7 @@
                 "common": {
                     "visible": false
                 },
-                "manual": {
+                "categories": {
                     "1918 und davor": { },
                     "1919 - 1944":    { },
                     "1945 - 1960":    { },
@@ -120,7 +120,7 @@
                 "common": {
                     "visible": false
                 },
-                "manual": {
+                "categories": {
                     "unbefristet": { },
                     "befristet": { },
                     "NA": {  },
@@ -135,7 +135,7 @@
                 "common": {
                     "visible": true
                 },
-                "manual": {
+                "categories": {
                     "gbv": { "name": "GBV", "stroke-dasharray": null },
                     "pub": { "name": "öffentlich", "stroke-dasharray": 2 },
                     "priv": { "name": "privat", "stroke-dasharray": 4 },
@@ -164,7 +164,7 @@
                     "stroke-width": 1.5,
                     "visible": false
                 },
-                "manual": {
+                "categories": {
                     "Wien":  { "color": "#1E4F77", "name": "Wien" },
                     "Niederösterreich":  { "color": "#BBD7EE", "name": "Niederösterreich" },
                     "Burgenland":  { "color": "#5BC5F2", "name": "Burgenland"},

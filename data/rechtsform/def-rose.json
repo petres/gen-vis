@@ -57,7 +57,7 @@
                 }
             },
             "props": {
-                "manual": {
+                "categories": {
                     "Hauseigentum":     { "color": "#BBD7EE" },
                     "Wohnungseigentum": { "color": "#5BC5F2" },
                     "GBV Miete":        { "color": "#559BD5" },
@@ -72,7 +72,7 @@
             "column": "Geo",
             "type": "categorical",
             "props": {
-                "manual": {
+                "categories": {
                     "Österreich": {},
                     "Wien": {}
                 }

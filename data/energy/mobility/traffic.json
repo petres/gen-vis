@@ -20,7 +20,7 @@
         "road": {
             "column": "road",
             "props": {
-                "manual": {
+                "categories": {
                     "total": { "name": "Österreich" }
                 }
             }
@@ -45,7 +45,7 @@
                     "stroke-width": 2,
                     "highlight-stroke-width": 3
                 },
-                "manual": {
+                "categories": {
                     "all":   { "color": "#444444", "name": "Gesamt" },
                     "light": { "color": "#4A96D4", "name": "Leicht (bis 3,5 t)" },
                     "heavy": { "color": "#C3423F", "name": "Schwer (über 3,5 t)" }

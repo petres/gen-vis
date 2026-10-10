@@ -35,12 +35,12 @@ const prepareMapping = m => {
     if (m.props) {
         // the colors of a scheme in the order of the categories, e.g. Tableau10
         const props = m.props;
-        const keys = Object.keys(props.manual ?? {});
+        const keys = Object.keys(props.categories ?? {});
         const colors = props.scheme ? schemeColors(props.scheme, keys.length) : undefined;
         if (props.scheme && !colors)
             throw new Error(`Unknown scheme '${props.scheme}', e.g. 'Tableau10' or 'Blues'`);
         m.props = Object.fromEntries(keys.map((k, i) => {
-            const t = Object.assign({}, colors ? { color: colors[i % colors.length] } : {}, props.common, props.manual[k]);
+            const t = Object.assign({}, colors ? { color: colors[i % colors.length] } : {}, props.common, props.categories[k]);
             t.name ??= k;
             t.visible ??= true;
             return [k, t];

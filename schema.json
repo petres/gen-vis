@@ -383,11 +383,12 @@
                     "additionalProperties": false,
                     "properties": {
                         "common": { "$ref": "#/definitions/categoryProps" },
-                        "manual": {
+                        "categories": {
                             "type": "object",
+                            "description": "The categories by their key (the value of the column) and their props, in the order of the legend, the facets and the stacks.",
                             "additionalProperties": { "$ref": "#/definitions/categoryProps" }
                         },
-                        "fromData": { "type": "boolean", "description": "The values of the column which are not in manual are categories as well, after them, in ascending order." },
+                        "fromData": { "type": "boolean", "description": "The values of the column which are not in categories are categories as well, after them, in ascending order." },
                         "scheme": { "type": "string", "description": "The colors of the categories in their order as the prop color, a d3 scheme, e.g. Tableau10." }
                     }
                 }
@@ -471,7 +472,7 @@
                 "id": { "type": "string" },
                 "name": { "type": "string" },
                 "ref": { "type": "string", "description": "The global which is changed." },
-                "type": { "enum": ["switch", "select", "slider"], "description": "Radio buttons, a drop down list or a slider over the entries." },
+                "type": { "enum": ["radio", "select", "slider"], "description": "Radio buttons, a drop down list or a slider over the entries." },
                 "inImage": { "type": "boolean", "default": true, "description": "The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales." },
                 "values": {
                     "oneOf": [

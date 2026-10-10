@@ -206,7 +206,7 @@ other elements do not apply to them, e.g. `.title` of a CSS framework:
 | Part | Classes |
 |------|---------|
 | the visualisation | `vis-mounted` (an element mounted by `mountGenVisByClass`), `vis`, `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
-| form elements | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-switch`, `vis-slider`, `vis-slider-value`), the `id` of a form element and of its entries as `data-id`, e.g. `.vis-form-element[data-id="scale"]` |
+| form elements | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`), the `id` of a form element and of its entries as `data-id`, e.g. `.vis-form-element[data-id="scale"]` |
 | legends | `vis-legends`, `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
 | facets | `vis-facet` (a facet), `vis-facet-title`, `vis-svg` |
 | plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base) |
@@ -423,8 +423,8 @@ the definition refer to these names.
   `name` of the category first, e.g. `{"unit": "@unit"}` adds a column of
   the prop `unit` of the categories, `"name": null` leaves out the name.
 - `props`: the categories and their props, e.g. colors. `common` props are
-  used for all `manual` entries, `name` and `visible` are set by default. Only
-  visible categories are shown. The order of the `manual` entries is the order
+  used for all `categories`, `name` and `visible` are set by default. Only
+  visible categories are shown. The order of the `categories` is the order
   of the legend, the facets and the stacks, not the order of the rows. Keys
   which are integers, e.g. years, are ordered ascending by JavaScript.
   With `"fromData": true` the values of the column which are not listed are
@@ -434,7 +434,7 @@ the definition refer to these names.
   (of the number of categories), a `color` of the props is kept:
 
   ```json
-  "land": { "column": "Bundesland", "props": { "fromData": true, "scheme": "Tableau10", "manual": { "ÖSTERREICH": { "name": "Gesamt", "color": "#000" } } } }
+  "land": { "column": "Bundesland", "props": { "fromData": true, "scheme": "Tableau10", "categories": { "ÖSTERREICH": { "name": "Gesamt", "color": "#000" } } } }
   ```
 - `legend`: a toggle for every category, `symbol` draws svg `elements` (with
   props) of the given `size` before the name. A click shows or hides the
@@ -743,7 +743,7 @@ A plot for every category of `dim` (the name of a mapping with `props`), in
 ### `formElements` and `globals`
 
 Form elements change `globals`, e.g. the shared scales of the facets, as
-radio buttons (`"type": "switch"`), a drop down list (`"type": "select"`) or
+radio buttons (`"type": "radio"`), a drop down list (`"type": "select"`) or
 a slider over the entries (`"type": "slider"`, e.g. of years, the
 visualisation changes while it is moved).
 The selected entries are named below the subtitle of the [PNG](#png),
@@ -779,7 +779,7 @@ the column of an axis:
 ```json
 "globals": { "column": "value" },
 "formElements": [{
-    "id": "column", "name": "Wert", "ref": "column", "type": "switch",
+    "id": "column", "name": "Wert", "ref": "column", "type": "radio",
     "values": [
         { "id": "value", "name": "Wert", "value": "value" },
         { "id": "share", "name": "Anteil", "value": "share", "mapping": { "y": { "column": "share" } } }
@@ -794,13 +794,13 @@ globals, e.g. the values and their shares in the columns `twh`, `co2`,
 ```json
 "globals": { "values": "twh", "share": "" },
 "formElements": [{
-    "id": "values", "name": "Werte", "ref": "values", "type": "switch",
+    "id": "values", "name": "Werte", "ref": "values", "type": "radio",
     "values": [
         { "id": "twh", "name": "TWh", "value": "twh" },
         { "id": "co2", "name": "CO₂", "value": "co2" }
     ]
 }, {
-    "id": "share", "name": "Darstellung", "ref": "share", "type": "switch",
+    "id": "share", "name": "Darstellung", "ref": "share", "type": "radio",
     "values": [
         { "id": "abs", "name": "Absolut", "value": "" },
         { "id": "rel", "name": "Anteil", "value": ".share", "mapping": { "y": { "axis": { "format": ".0%" } } } }
@@ -883,6 +883,9 @@ Definitions:
   is replaced if there is a global `word`.
 - A single value of an annotation which is `null` is no value, e.g. a text
   at the start of the axis.
+- The categories of the props of a mapping are `categories`, they were
+  `manual`, radio buttons are `"type": "radio"`, they were `"switch"`,
+  `validateDef` names the old ones.
 - Only the footer is HTML, the names of the legends and the hover are text,
   an entity is the character itself, e.g. `"Ø\u00a01991\u00a0-\u00a02020"`
   instead of `"Ø&nbsp;1991&nbsp;-&nbsp;2020"`.
@@ -892,7 +895,7 @@ Styles: all classes start with `vis-`, see [styles](#styles):
 | 1.x | 2.0 |
 |-----|-----|
 | `.vis-header .title`, `.subtitle`, `.selection` | `vis-title`, `vis-subtitle`, `vis-selection` |
-| `formElement` (`.title`, `.entries`, `.slider`, `.value`) | `vis-form-element` (`vis-form-element-title`, `vis-switch`, `vis-slider`, `vis-slider-value`) |
+| `formElement` (`.title`, `.entries`, `.slider`, `.value`) | `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`) |
 | `legend`, `color-legend` (`.title`, `.entries`, `.scale`, `.missing`, `.swatch`) | `vis-legend`, `vis-color-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, `vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
 | `facet-title`, `vis-inner`, `svg.facet` | `vis-facet-title`, `vis-facet`, `svg.vis-svg` |
 | `plotGroup`, `group`, `highlight`, `features` | `vis-plot`, `vis-group`, `vis-highlight`, `vis-features` |

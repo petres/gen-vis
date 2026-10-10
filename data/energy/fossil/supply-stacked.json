@@ -13,7 +13,7 @@
         "id": "values",
         "name": "Werte",
         "ref": "share",
-        "type": "switch",
+        "type": "radio",
         "values": [
             { "id": "valuesAbs", "value": "", "name": "Absolut" },
             {
@@ -38,7 +38,7 @@
         "type": {
             "column": "product",
             "props": {
-                "manual": {
+                "categories": {
                     "oil":  { "color": "#6F625A", "name": "Mineralöl" },
                     "coal": { "color": "#8B4513", "name": "Kohle" },
                     "gas":  { "color": "#C3423F", "name": "Erdgas" }

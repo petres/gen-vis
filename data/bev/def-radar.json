@@ -22,7 +22,7 @@
                 "padding": 4
             },
             "props": {
-                "manual": {
+                "categories": {
                     "ÖSTERREICH":       { "visible": false },
                     "Wien":             {},
                     "Niederösterreich": {},
@@ -69,7 +69,7 @@
                 }
             },
             "props": {
-                "manual": {
+                "categories": {
                     "2002": { "color": "#BBD7EE" },
                     "2012": { "color": "#559BD5" },
                     "2022": { "color": "#1E4F77" }

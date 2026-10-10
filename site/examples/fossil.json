@@ -11,14 +11,14 @@
     "globals": { "unit": "twh", "share": "" },
     "formElements": [
         {
-            "id": "unit", "name": "Unit", "ref": "unit", "type": "switch",
+            "id": "unit", "name": "Unit", "ref": "unit", "type": "radio",
             "values": [
                 { "id": "twh", "name": "TWh", "value": "twh" },
                 { "id": "co2", "name": "Mt CO₂", "value": "mt.co2" }
             ]
         },
         {
-            "id": "share", "name": "Values", "ref": "share", "type": "switch",
+            "id": "share", "name": "Values", "ref": "share", "type": "radio",
             "values": [
                 { "id": "absolute", "name": "Absolute", "value": "" },
                 {
@@ -54,7 +54,7 @@
                 }
             },
             "props": {
-                "manual": {
+                "categories": {
                     "oil":  { "name": "Oil",  "color": "#D97706" },
                     "gas":  { "name": "Gas",  "color": "#0EA5A4" },
                     "coal": { "name": "Coal", "color": "#8B5CF6" }

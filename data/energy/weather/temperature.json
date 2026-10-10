@@ -31,7 +31,7 @@
                 }
             },
             "props": {
-                "manual": {
+                "categories": {
                     "avg40-60": { "color": "#BBB", "opacity": 0.9, "stroke-dasharray": "1, 3", "name": "Ø\u00a01940\u00a0-\u00a01960"},
                     "avg60-90": { "color": "#888", "opacity": 0.9, "stroke-dasharray": "4, 3", "name": "Ø\u00a01961\u00a0-\u00a01990"},
                     "avg90-20": { "color": "#444", "opacity": 0.9, "stroke-dasharray": "8, 3", "name": "Ø\u00a01991\u00a0-\u00a02020"}
