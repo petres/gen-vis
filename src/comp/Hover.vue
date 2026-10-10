@@ -60,7 +60,7 @@ export default {
                 .attr('data-mapping', c => c.mapping)
                 .attr('data-prop', c => c.prop)
                 .attr('class', c => c.value ? 'vis-value' : null)
-                .html(c => c.text)
+                .text(c => c.text)
         }
     }
 }

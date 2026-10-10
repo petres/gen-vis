@@ -12,7 +12,7 @@
                 @pointerenter="hovered(entry, $event)" @pointerleave="hovered(null, $event)"
                 @focus="highlight(entry)" @blur="highlight(null)">
                 <LegendSymbol v-if="info.legend.symbol" :info="info.legend.symbol" :props="entry.props"/>
-                <span v-html='store.text(filled[entry.key].name)'/>
+                <span>{{ store.text(filled[entry.key].name) }}</span>
             </div>
         </div>
     </div>

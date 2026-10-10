@@ -1632,6 +1632,22 @@ describe('fixed bugs', () => {
 });
 
 describe('accessibility and the data', () => {
+    test('only the footer is html, the names are text', async () => {
+        const def = lineDef({ title: '<b>Titel</b>', footer: '<a href="#q">Quelle</a>' });
+        def.mapping.c.props.manual.Wien.name = '<i>Wien</i> & Umgebung';
+        const el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelector('.vis-footer-content a').textContent).toBe('Quelle');
+        expect(el.querySelector('.vis-title').textContent).toBe('<b>Titel</b>');
+        const entry = el.querySelector('.vis-legend-entry[data-key="Wien"] span');
+        expect(entry.textContent).toBe('<i>Wien</i> & Umgebung');
+        expect(entry.querySelector('i')).toBeNull();
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+        await nextTick();
+        const cell = [...el.querySelectorAll('.vis-hover td')].find(td => td.textContent.includes('Wien'));
+        expect(cell.textContent).toBe('<i>Wien</i> & Umgebung');
+        expect(cell.querySelector('i')).toBeNull();
+    });
+
     test('the ids of the elements are unique, also of charts with the same form elements', async () => {
         const def = lineDef();
         def.globals = { col: 'value' };

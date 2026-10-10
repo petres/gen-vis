@@ -263,9 +263,11 @@ its `parent` (and its parent into its own parent), arrays are replaced, not
 merged, except arrays whose entries all have an `id`, e.g. the form elements
 and their values, these are merged by the ids, entries with a new id are
 appended. The merged definition is checked for common mistakes, e.g. unknown
-plot types, the findings are logged as warnings in the console. The footer
-and the names of the legends and the hover are HTML, so a definition is
-trusted, texts of users, e.g. of a form of a page, must not be part of it.
+plot types, the findings are logged as warnings in the console. Only the
+footer is HTML, e.g. the link of a source, so a definition is trusted, texts
+of users, e.g. of a form of a page, must not be part of it. All other texts,
+e.g. the title, the names of the legends and the hover and the titles of the
+axes, are text, `<` is shown as it is.
 
 `parent` can also be a list of definitions (mixins), merged in their order,
 later ones override earlier ones, e.g. a chart type and a form element:
@@ -881,6 +883,9 @@ Definitions:
   is replaced if there is a global `word`.
 - A single value of an annotation which is `null` is no value, e.g. a text
   at the start of the axis.
+- Only the footer is HTML, the names of the legends and the hover are text,
+  an entity is the character itself, e.g. `"Ø\u00a01991\u00a0-\u00a02020"`
+  instead of `"Ø&nbsp;1991&nbsp;-&nbsp;2020"`.
 
 Styles: all classes start with `vis-`, see [styles](#styles):
 

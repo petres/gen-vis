@@ -15,7 +15,7 @@
         "year": {
             "props": {
                 "manual": {
-                    "avg14-18": { "color": "#444", "name": "Ø&nbsp'14&nbsp-&nbsp'18" }
+                    "avg14-18": { "color": "#444", "name": "Ø\u00a0'14\u00a0-\u00a0'18" }
                 }
             }
         },
