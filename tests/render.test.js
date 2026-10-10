@@ -913,6 +913,19 @@ describe('maps', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the region of a feature is the element of the draw before, also of another row', async () => {
+        const el = await mount(GenVis, { def: mapDef(), data: mapData });
+        const paths = () => [...el.querySelectorAll('g.vis-plot.plot-1 path')];
+        const before = paths();
+        const select = el.querySelector('.vis-form-element select');
+        select.selectedIndex = 1;
+        select.dispatchEvent(new Event('change'));
+        await nextTick();
+        // the same elements, not equal new ones
+        expect(paths().map((p, i) => p === before[i])).toEqual([true, true]);
+        expect(errors).toEqual([]);
+    });
+
     test('the projection and the paths are computed once for the same facet', async () => {
         const vm = createApp(GenVis, { def: mapDef(), data: mapData }).mount(document.body.appendChild(document.createElement('div')));
         await rendered(vm.$el);

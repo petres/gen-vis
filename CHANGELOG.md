@@ -43,7 +43,8 @@ New:
 - every hover prop of a category is a column of the hover
 - the hover by the keyboard: a facet is in the order of the tab key, the arrows
   move the hover, screen readers read it
-- `options.transition`: the elements move after a change of the user
+- `options.transition`: the elements move after a change of the user, the
+  regions of a map change their colors also after a filter, e.g. of a slider
 - `unmountGenVisElement`, the mount functions return the components
 
 Faster and smaller:

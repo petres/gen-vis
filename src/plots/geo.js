@@ -39,14 +39,16 @@ export default {
     },
 
     // the feature of every row, e.g. colored by its value, rows without a
-    // feature are not drawn
+    // feature are not drawn, the element of a feature is the one of the draw
+    // before, also of another row, e.g. of another year of a slider, so its
+    // color moves with a transition
     'geo:region': {
         coords: ['geo'],
         update: true,
         render: (groups, parent, plot, ctx) => pointwise(groups, parent, "path", (v, row) => {
             const f = featureOf(ctx, row);
             return { ...v, d: f ? ctx.path(f) : null, 'data-geo-key': keyOf(ctx, row) };
-        }),
+        }, v => v['data-geo-key']),
     },
 
     'geo:circle': positioned('circle', 'cx', 'cy'),

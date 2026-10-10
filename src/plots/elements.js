@@ -41,8 +41,9 @@ const groupwise = (groups, parent, d) => parent
 
 // an element of `type` per row, without the rows of missing values,
 // `translate(values, row, group)` changes the values of the props of a row,
-// the elements of the draw before are updated
-const pointwise = (groups, parent, type, translate = v => v) => parent
+// the elements of the draw before are updated, the ones of the same rows or
+// of the same `key(values)`, e.g. the feature of a map in another year
+const pointwise = (groups, parent, type, translate = v => v, key = rowKey) => parent
     .selectChildren("g.vis-group")
     .data(groups, groupKey)
     .join(enter => enter.append("g").attr("class", "vis-group"))
@@ -54,7 +55,7 @@ const pointwise = (groups, parent, type, translate = v => v) => parent
         const v = translate(g.at(row), row, g);
         v[rowOf] = row;
         return v;
-    }), rowKey)
+    }), key)
     .join(type)
     .order()
     .each(setProps);

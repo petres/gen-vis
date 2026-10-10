@@ -992,7 +992,9 @@ A new view, e.g. of a toggle of a legend, a form element or a new width, is
 drawn into the elements of the one before, only the attributes which change
 are set. With `update: true` a type draws into the elements of the draw
 before, as `pointwise` and `groupwise` do (the groups are the ones of the same
-categories, the elements per row the ones of the same rows), the elements of
+categories, the elements per row the ones of the same rows or, of
+`pointwise(groups, parent, type, translate, key)`, of the same `key(values)`,
+e.g. `geo:region` the one of the same feature after a filter), the elements of
 other types are removed before they are drawn again. `ctx.keep(key, create)`
 is an element kept from one draw to the next, e.g. an axis of a coordinate
 system, `create()` appends a new one to `ctx.inner`.
