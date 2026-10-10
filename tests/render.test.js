@@ -1413,6 +1413,26 @@ describe('scales', () => {
     });
 });
 
+describe('the space of the ticks', () => {
+    test('a tick per tickSpacing pixels of the axis, also of polar axes', async () => {
+        const def = lineDef({ width: 600 });
+        def.mapping.y.axis = { position: 'left', tickSpacing: 50 };
+        def.mapping.x.axis = { position: 'bottom', tickSpacing: 1000 };
+        const data = 'year,value,land\n2000,0,Wien\n2100,100,Wien';
+        const el = await mount(GenVis, { def, data });
+        // 250 pixels of the height, 5 ticks of d3, it rounds to nice values
+        expect(el.querySelectorAll('g.vis-axis-left g.tick').length).toBe(6);
+        // at least 2
+        expect(el.querySelectorAll('g.vis-axis-bottom g.tick').length).toBeLessThanOrEqual(3);
+
+        const { tickCount } = await import('@/coords/ticks');
+        expect(tickCount({ tickSpacing: 80 }, {}, 800)).toBe(10);
+        expect(tickCount({ tickSpacing: 80, ticks: 3 }, {}, 800)).toBe(3);
+        expect(tickCount({ tickSpacing: 80 }, {}, 50)).toBe(2);
+        expect(tickCount({}, {}, 800)).toBeUndefined();
+    });
+});
+
 describe('locale and font', () => {
     const labels = (el, position) => [...el.querySelectorAll(`g.vis-axis-${position} g.tick text`)].map(t => t.textContent);
     const bigData = 'year,value,land\n2020,1000,Wien\n2021,2500,Wien';

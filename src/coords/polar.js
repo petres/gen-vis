@@ -1,9 +1,8 @@
 export { angleOf, radiusRange };
 
 import * as d3 from "@/utils/d3";
-import { evaluate } from "@/utils/props";
 import { bandCenter } from "@/utils/scales";
-import { tickValues, tickFormat } from "@/coords/ticks";
+import { tickValues, tickFormat, tickCount } from "@/coords/ticks";
 import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
 
 const tau = 2*Math.PI;
@@ -92,7 +91,8 @@ const radialAxis = (ctx, g, s, values, format, axis) => {
         const angle = h && ctx.scales[h];
         if (axis.gridShape == "polygon" && angle) {
             const hAxis = ctx.store.mapping(h).axis;
-            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, evaluate(hAxis.ticks, ctx.scope)) : angle.domain());
+            const arc = Math.abs(angle.range()[1] - angle.range()[0])*radiusRange(ctx)[1];
+            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, tickCount(hAxis, ctx.scope, arc)) : angle.domain());
             grid.selectAll("path")
                 .data(values)
                 .join("path")
@@ -150,7 +150,9 @@ const axes = ctx => {
         const m = store.mapping(n);
         const i = m.axis;
         const s = ctx.scales[n];
-        const ticks = evaluate(i.ticks, ctx.scope);
+        // the length of a radial axis, of an angular one the arc at the outer radius
+        const span = Math.abs(s.range()[1] - s.range()[0]);
+        const ticks = tickCount(i, ctx.scope, i.position == 'angular' ? span*radiusRange(ctx)[1] : span);
         const format = tickFormat(store, m, s, ticks) ?? (v => v);
 
         const g = ctx.inner.append("g")

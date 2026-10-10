@@ -62,6 +62,17 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     if (range)
         s.range(evaluate(range, { ...scope, ...dims }));
 
+    // the space at the start and the end of a range of numbers, of positions
+    // in pixels, e.g. so the first and the last point are not at the edges
+    if (scaleDef.inset !== undefined) {
+        const [i0, i1 = i0] = [evaluate(scaleDef.inset, { ...scope, ...dims })].flat();
+        const [r0, r1, ...others] = s.range();
+        if (others.length == 0 && [r0, r1, i0, i1].every(Number.isFinite)) {
+            const direction = Math.sign(r1 - r0) || 1;
+            s.range([r0 + direction*i0, r1 - direction*i1]);
+        }
+    }
+
     // dates of a fixed domain are parsed as the ones of the data, e.g. "2020-01-01",
     // the values can be references, e.g. to a global
     const fixed = () => evaluate(scaleDef.domain, scope).map(v => v !== null && v !== undefined && mapping.type == 'date' ? convert(mapping, v) : (v ?? null));

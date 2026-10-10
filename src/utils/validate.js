@@ -149,6 +149,7 @@ const validateDef = def => {
                 warn(`${path}.scale.domain`, `a threshold scale needs the values between its classes`);
             if (Array.isArray(m.scale.range))
                 m.scale.range.forEach((v, j) => checkProp(v, `${path}.scale.range[${j}]`, warn, names.range));
+            [m.scale.inset].flat().forEach((v, j) => checkProp(v, `${path}.scale.inset`, warn, names.range));
             if (Array.isArray(m.scale.domain))
                 m.scale.domain.forEach((v, j) => checkProp(v, `${path}.scale.domain[${j}]`, warn, names.facet));
             if (m.scale.orientation !== undefined && !orientations.includes(m.scale.orientation))
@@ -162,6 +163,7 @@ const validateDef = def => {
             if (!coord.positions.includes(m.axis.position))
                 warn(`${path}.axis.position`, `unknown position '${m.axis.position}', expected one of ${list(coord.positions)}`);
             checkProp(m.axis.ticks, `${path}.axis.ticks`, warn, names.facet);
+            checkProp(m.axis.tickSpacing, `${path}.axis.tickSpacing`, warn, names.facet);
         }
         // the props of the legend and the hover of the categories
         if (m.props) {

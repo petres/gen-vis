@@ -1,6 +1,7 @@
-export { tickValues, tickFormat };
+export { tickValues, tickFormat, tickCount };
 
 import { formatOf } from "@/utils/def";
+import { evaluate } from "@/utils/props";
 
 // fixed values outside of the range of the scale are not drawn, e.g. 10 of a
 // log scale from 14, d3 would draw them in the margins, values without a
@@ -11,6 +12,15 @@ const inRange = (scale, v) => {
         return true;
     const [a, b] = [...scale.range()].sort((x, y) => x - y);
     return p >= a - 0.5 && p <= b + 0.5;
+};
+
+// the number of the ticks of an axis, its `ticks` or one per `tickSpacing`
+// pixels of its `length`, e.g. of the width of the plot area, at least 2
+const tickCount = (axis, scope, length) => {
+    const ticks = evaluate(axis.ticks, scope);
+    if (ticks !== undefined || !axis.tickSpacing)
+        return ticks;
+    return Math.max(2, Math.round(length / evaluate(axis.tickSpacing, scope)));
 };
 
 // the values of the ticks of an axis, also of the grid lines

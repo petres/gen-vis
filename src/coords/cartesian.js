@@ -1,7 +1,6 @@
 import * as d3 from "@/utils/d3";
-import { evaluate } from "@/utils/props";
 import { bandCenter } from "@/utils/scales";
-import { tickValues, tickFormat } from "@/coords/ticks";
+import { tickValues, tickFormat, tickCount } from "@/coords/ticks";
 import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
 
 // horizontal lines for a vertical axis and vice versa
@@ -33,7 +32,7 @@ const axes = ctx => {
         const m = store.mapping(n);
         const i = m.axis;
         const s = ctx.scales[n];
-        const ticks = evaluate(i.ticks, ctx.scope);
+        const ticks = tickCount(i, ctx.scope, Math.abs(s.range()[1] - s.range()[0]));
 
         const a = d3.axes[i.position](s)
             .tickSizeInner(9)

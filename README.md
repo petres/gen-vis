@@ -407,7 +407,11 @@ the definition refer to these names.
   positions) and `domainAbs` (absolute) extend it, by default a domain of a
   position taken from the data is extended by 2%. `nice` rounds the ends taken from the data of a numeric
   mapping, e.g. 0.951 to 1, `true` for steps of about a tenth of the domain
-  or the number of steps, e.g. so the legend of colors ends at 100%. `padding` for categorical scales. A scale without
+  or the number of steps, e.g. so the legend of colors ends at 100%. `padding` for categorical scales. `inset` is
+  the space at the start and the end of the range in pixels (of positions), a
+  number for both or `[start, end]`, e.g. `10` so the first and the last point
+  are not at the edges, of every type of scale, also of dates, e.g. instead of
+  a `domainAbs` of milliseconds. A scale without
   `orientation` has the `range` given, e.g. colors or the radius of points.
 - Scales of colors: `sequential` and `diverging` scales (a domain with a
   middle entry, e.g. `[null, 0, null]`) have an `interpolator` of d3, e.g.
@@ -417,7 +421,9 @@ the definition refer to these names.
   colors. Scales without orientation are the same in all facets.
 - `name`: the title of the legend.
 - `axis`: `position` (`top`, `bottom`, `left`, `right`, in polar plots
-  `angular` and `radial`), `ticks`, `values` (fixed ticks, the ones outside
+  `angular` and `radial`), `ticks`, `tickSpacing` (without `ticks` a tick per
+  this many pixels of the axis, e.g. `80`, so a narrow chart has fewer ticks,
+  instead of a `relative` prop of `ticks`), `values` (fixed ticks, the ones outside
   of the domain are left out), `format` (d3 number or time format), `rotate`
   (the angle of the labels in degrees, positive counterclockwise, negative
   clockwise), `grid` (lines at the ticks), `title` (`{"name", "offset"}`) and

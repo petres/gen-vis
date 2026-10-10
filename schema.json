@@ -271,6 +271,10 @@
                     "description": "By default the width or height of the plot."
                 },
                 "padding": { "type": "number", "description": "For categorical scales." },
+                "inset": {
+                    "description": "The space at the start and the end of the range in pixels (of positions), a number for both or [start, end], e.g. so the first and the last point are not at the edges of the plot area.",
+                    "anyOf": [{ "$ref": "#/definitions/number" }, { "type": "array", "items": { "$ref": "#/definitions/number" }, "minItems": 2, "maxItems": 2 }]
+                },
                 "interpolator": { "type": "string", "description": "The colors of a sequential or diverging scale, a d3 interpolator, e.g. Blues, Viridis or RdYlGn." },
                 "scheme": { "type": "string", "description": "The colors of the range, a d3 scheme, e.g. Blues or Tableau10." },
                 "classes": { "type": "number", "description": "The number of colors of a scheme of several sizes, by default the number of classes of a threshold scale or 5." }
@@ -290,6 +294,7 @@
                     "description": "The grid lines of a radial axis, circles or polygons through the ticks of the angle, e.g. of radar charts."
                 },
                 "ticks": { "$ref": "#/definitions/number" },
+                "tickSpacing": { "$ref": "#/definitions/number", "description": "Without ticks, a tick per this many pixels of the length of the axis, e.g. 80." },
                 "values": { "type": "array", "description": "Fixed ticks." },
                 "format": { "type": "string", "description": "A d3 number or time format." },
                 "rotate": {
