@@ -354,6 +354,18 @@ describe('rendering', () => {
         expect(errors).toHaveLength(1);
     });
 
+    test('a definition which could not be drawn is replaced by a valid one', async () => {
+        // the one which failed is not drawn again while the new one is loaded
+        const def = ref({ ...lineDef(), plot: { type: 'cartesian:lines', props: {} } });
+        const el = await mount({ render: () => h(GenVis, { def: def.value, data: lineData }) });
+        expect(el.querySelector('.vis-error').textContent).toBe("Unknown plot type 'cartesian:lines'");
+
+        def.value = lineDef();
+        await vi.waitFor(() => expect(el.querySelector('svg.vis-svg')).not.toBeNull(), { timeout: 2000 });
+        expect(el.querySelector('.vis-error')).toBeNull();
+        expect(plotElements(el)).toBeGreaterThan(0);
+    });
+
     test('mountGenVisElement takes the props from the data attributes', async () => {
         const el = document.body.appendChild(document.createElement('div'));
         el.dataset.defFile = '/data/bev/def.json';

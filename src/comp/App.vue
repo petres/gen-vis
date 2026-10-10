@@ -129,12 +129,14 @@ export default {
     },
     methods: {
         async init() {
-            this.error = null;
             this.heightKey = this.sourceKey();
             if (this.def === null && this.defFile === null)
                 return this.showError(new Error('No definition given.'));
             try {
                 await this.store.init({ def: this.def, defUrl: this.defFile, data: this.data, state: this.state });
+                // the error is kept while the new definition is loaded, a
+                // definition which could not be drawn is not drawn again meanwhile
+                this.error = null;
                 // the state might have changed while loading
                 this.syncState();
             } catch (error) {
