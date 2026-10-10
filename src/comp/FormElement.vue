@@ -1,5 +1,5 @@
 <template>
-    <div class="vis-form-element" :id="`container-${element.id}`">
+    <div class="vis-form-element" :data-id="element.id">
         <!-- the title is the label of the select and the slider, the name of the radio buttons -->
         <div v-if="element.type == 'switch'" class="vis-form-element-title" :id="`${uid}-${element.id}-title`">{{ element.name }}:</div>
         <label v-else class="vis-form-element-title" :for="`${uid}-${element.id}`">{{ element.name }}:</label>
@@ -8,7 +8,7 @@
         </select>
         <div v-else-if="element.type == 'switch'" class="vis-switch" role="radiogroup" :aria-labelledby="`${uid}-${element.id}-title`">
             <!-- the change of the radio button, by its label, a click or the keyboard -->
-            <div v-for="e of element.values" :key="e.id" :id="`container-${e.id}`">
+            <div v-for="e of element.values" :key="e.id" :data-id="e.id">
                 <input type="radio" :id="`${uid}-${element.id}-${e.id}`" :name="`${uid}-${element.id}`" :value="e.id" :checked="equal(e.value)" @change="switched(e)">
                 <label :for="`${uid}-${element.id}-${e.id}`">{{ e.name }}</label>
             </div>

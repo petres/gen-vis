@@ -1589,6 +1589,20 @@ describe('fixed bugs', () => {
 });
 
 describe('accessibility and the data', () => {
+    test('the ids of the elements are unique, also of charts with the same form elements', async () => {
+        const def = lineDef();
+        def.globals = { col: 'value' };
+        def.formElements = [{ id: 'col', name: 'Wert', ref: 'col', type: 'switch', values: [
+            { id: 'value', name: 'Wert', value: 'value' }, { id: 'other', name: 'Anderer', value: 'other', mapping: { y: { column: 'other' } } }] }];
+        await mount(GenVis, { def, data: lineData });
+        await mount(GenVis, { def, data: lineData });
+        const ids = [...document.querySelectorAll('[id]')].map(e => e.id);
+        expect(ids.length).toBeGreaterThan(0);
+        expect(new Set(ids).size).toBe(ids.length);
+        expect([...document.querySelectorAll('.vis-form-element')].map(e => e.dataset.id)).toEqual(['col', 'col']);
+        expect([...document.querySelectorAll('.vis-switch > div')].map(e => e.dataset.id)).toEqual(['value', 'other', 'value', 'other']);
+    });
+
     test('the svg is an image named by the title and the facet, the form elements have labels', async () => {
         const def = { ...lineDef({ title: 'Bevölkerung {unit}' }), globals: { unit: 'Personen', year: 'a' }, facets: { dim: 'c', cols: 2 } };
         def.formElements = [
