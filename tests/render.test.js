@@ -1175,6 +1175,39 @@ describe('data formats', () => {
     });
 });
 
+describe('transforms', () => {
+    test('an index of the base year of a slider, the values of the hover and the csv', async () => {
+        const def = lineDef();
+        def.globals = { base: '2020' };
+        def.transform = { type: 'index', column: 'value', as: 'index', by: 'land', base: { year: '{base}' } };
+        def.mapping.y.column = 'index';
+        def.formElements = [{ id: 'base', name: 'Basis', ref: 'base', type: 'slider', values: { column: 'year' } }];
+        const el = await mount(GenVis, { def, data: lineData, csv: true });
+        const values = async () => {
+            el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 550, clientY: 150 }));
+            await nextTick();
+            return [...el.querySelectorAll('.vis-hover tr.vis-hover-entry')].map(tr => tr.textContent);
+        };
+        // 2023 of 2020 = 100: Wien 4 of 1, Tirol 2 of 2
+        expect(await values()).toEqual(['Wien400,0', 'Tirol100,0']);
+        const slider = el.querySelector('.vis-slider input');
+        slider.value = 2;
+        slider.dispatchEvent(new Event('change'));
+        await nextTick();
+        // of 2022: Wien 4 of 3
+        expect(await values()).toEqual(['Wien133,3', 'Tirol100,0']);
+
+        const saved = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+        const blobs = [];
+        vi.spyOn(URL, 'createObjectURL').mockImplementation(b => { blobs.push(b); return 'blob:x'; });
+        el.querySelector('.vis-csv').click();
+        const csv = await blobs[0].text();
+        expect(csv.split('\n').slice(0, 3)).toEqual(['year,index,land', '2020,33.33333333333333,Wien', '2021,,Wien']);
+        saved.mockRestore();
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('the order and the ranks of categories', () => {
     test('a symbol of a legend by its shortcut', async () => {
         const def = lineDef();

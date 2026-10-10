@@ -70,6 +70,13 @@
                 }
             }
         },
+        "transform": {
+            "description": "Columns computed of the data, e.g. an index of a base year, in their order, see the readme.",
+            "anyOf": [
+                { "$ref": "#/definitions/transform" },
+                { "type": "array", "items": { "$ref": "#/definitions/transform" } }
+            ]
+        },
         "filter": {
             "type": "object",
             "description": "The rows of these values of mappings, e.g. a global of a form element: { \"year\": \"@year\" }.",
@@ -417,6 +424,33 @@
                         "scheme": { "type": "string", "description": "The colors of the categories in their order as the prop color, a d3 scheme, e.g. Tableau10." }
                     }
                 }
+            }
+        },
+        "transform": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "column"],
+            "properties": {
+                "type": {
+                    "enum": ["year", "align", "index", "share", "rolling", "cumulative"],
+                    "description": "year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row."
+                },
+                "column": { "type": "string", "description": "The column of the values, a template of the globals." },
+                "as": { "type": "string", "description": "The name of the new column, by default the one of `column`, which it replaces." },
+                "by": {
+                    "description": "The groups of the rows of the same values of these columns, e.g. a line per category.",
+                    "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+                },
+                "order": { "type": "string", "description": "The column of the order of the rows of rolling and cumulative, e.g. the date, the order of the rows by default." },
+                "base": {
+                    "type": "object",
+                    "description": "The rows of the base of an index: a column and its value, e.g. { \"year\": \"{base}\" }, or a range [from, to], e.g. of dates.",
+                    "additionalProperties": true
+                },
+                "scale": { "type": "number", "description": "The value of the base of an index, 100 by default." },
+                "size": { "type": "integer", "minimum": 1, "description": "The number of the rows of the window of rolling." },
+                "align": { "enum": ["end", "center"], "description": "The window of rolling: the rows before the row (end, by default) or around it." },
+                "year": { "type": "integer", "description": "The year of align, 2020 by default." }
             }
         },
         "symbolElements": {

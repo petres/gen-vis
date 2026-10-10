@@ -1,7 +1,8 @@
-export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, filter, stack, categoryOrder, toDate, addDataValues, usedColumns };
+export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, filter, stack, categoryOrder, toDate, addDataValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { fillTemplate, sameValue, templateRefs } from "@/utils/def";
+import { transformColumns } from "@/utils/transform";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
@@ -96,34 +97,41 @@ const converter = mapping => {
 // a value as the ones of the rows of a mapping, e.g. "2022-06-01" of a date
 const convert = (mapping, v) => converter(mapping)(v);
 
+// the values of a column of the data by the index of a row, of a transform
+// (`columns`, see utils/transform.js) or of the rows
+const columnValues = (rows, columns, column) => columns?.has(column)
+    ? (values => i => values[i])(columns.get(column))
+    : i => rows[i]?.[column];
+
 // the values of mappings of the parsed rows in the prepared ones, e.g. of
 // another column of a form element, the rows are the same objects
-const updateData = (rows, data, def, names) => {
+const updateData = (rows, data, def, names, columns = null) => {
     const mapping = names.map(n => ({
         name: n,
-        column: def.mapping[n].column,
+        value: columnValues(rows, columns, def.mapping[n].column),
         convert: converter(def.mapping[n]),
     }));
     rows.forEach((r, i) => {
         const e = data[i];
         for (const c of mapping)
-            e[c.name] = c.convert(r[c.column]);
+            e[c.name] = c.convert(c.value(i));
     });
     return data;
 };
 
-// maps the parsed rows to the mappings, e.g. column `share` to `y`
-const prepareData = (data, def) => {
+// maps the parsed rows to the mappings, e.g. column `share` to `y`, also the
+// columns of transforms
+const prepareData = (data, def, columns = null) => {
     const mapping = Object.keys(def.mapping).map(n => ({
         name: n,
-        column: def.mapping[n].column,
+        value: columnValues(data, columns, def.mapping[n].column),
         convert: converter(def.mapping[n]),
     }));
 
-    return data.map(d => {
+    return data.map((d, i) => {
         const e = {};
         mapping.forEach(c => {
-            e[c.name] = c.convert(d[c.column]);
+            e[c.name] = c.convert(c.value(i));
         });
         return e;
     })
@@ -250,6 +258,7 @@ const usedColumns = def => {
     const columns = [
         ...Object.values(def.mapping ?? {}).map(m => m?.column),
         ...elements.flatMap(e => Array.isArray(e.values) ? e.values.flatMap(v => Object.values(v.mapping ?? {}).map(m => m?.column)) : []),
+        ...transformColumns(def.transform),
     ].map(expand);
     if (columns.includes(null))
         return null;
@@ -260,10 +269,11 @@ const usedColumns = def => {
 // "values": { "column": "year" }, distinct and ascending, numbers by their
 // value, a global which is none of them (or missing) is the last value, e.g.
 // the latest year
-const addDataValues = (def, rows) => {
+const addDataValues = (def, rows, columns = null) => {
     const numeric = v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v));
     const distinct = column => {
-        const values = [...new Set(rows.map(r => r[column]))].filter(v => v !== null && v !== undefined && v !== '');
+        const value = columnValues(rows, columns, column);
+        const values = [...new Set(rows.map((r, i) => value(i)))].filter(v => v !== null && v !== undefined && v !== '');
         return values.sort(values.every(numeric) ? (a, b) => a - b : (a, b) => String(a).localeCompare(String(b)));
     };
 

@@ -1,4 +1,5 @@
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, beforeAll } from 'vitest';
+import { loadColors } from '@/utils/d3';
 import { validateDef, curveNames } from '@/utils/validate';
 import { prepareDef } from '@/utils/def';
 import { plotTypes, registerPlotType } from '@/plots';
@@ -6,6 +7,9 @@ import { coords, registerCoord } from '@/coords';
 import { resolveParents } from '@/store';
 import { definitions } from '@/dev/definitions.js';
 import { readFileSync } from 'node:fs';
+
+// the colors of d3 are loaded by the store, see loadColors
+beforeAll(loadColors);
 
 const examples = Object.fromEntries(definitions(import.meta.glob('../data/**/*.json', { eager: true, import: 'default' }))
     .map(d => [`../data/${d.path}`, d.def]));

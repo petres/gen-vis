@@ -269,6 +269,7 @@ without a color of their `props`.
 {
     "parent": "../shared/def.json",
     "data": "data.csv",
+    "transform": [ ... ],
     "options": { ... },
     "globals": { ... },
     "mapping": { ... },
@@ -346,6 +347,47 @@ compressions, e.g. zstd of polars, load the decompressors of
 `hyparquet-compressors` (~70 kB), the standalone script reads only snappy and
 uncompressed parquet. Keys of categories are compared as strings, e.g. the
 years of a parquet or JSON column as keys of `props`.
+
+### `transform`
+
+Transforms compute columns of the data in the browser, e.g. an index of a
+base year which a slider changes, instead of columns of every base year in the
+file. A transform (or a list of them, in their order) computes the column
+`as` (by default its `column`, which it replaces) of the values of `column`,
+in groups of the rows of the same values of the columns `by` (a column or a
+list), the mappings and the later transforms can use the new column:
+
+```json
+"globals": { "base": "2019" },
+"transform": [
+    { "type": "year", "column": "date", "as": "year" },
+    { "type": "index", "column": "value", "as": "index", "by": "type", "base": { "year": "{base}" } }
+],
+"formElements": [{ "id": "base", "name": "Basisjahr", "ref": "base", "type": "slider", "values": { "column": "year" } }],
+"mapping": { "y": { "column": "index", "type": "numeric", ... } }
+```
+
+- `year`: the year of a date, e.g. `2024` of `2024-06-01`.
+- `align`: the same day of a date in the year `year` (2020 by default, a
+  leap year), e.g. to compare the years of daily data on one axis, with
+  `year` as the categories.
+- `index`: the values relative to the mean of the values of the rows of
+  `base` in the group, times `scale` (100 by default). `base` is a column and
+  its value, e.g. `{"year": "{base}"}`, or a range `[from, to]` (`null` is
+  open), e.g. of dates `{"date": ["2019-01-01", "2019-12-31"]}`.
+- `share`: the share of the value of the sum of the values of the group, e.g.
+  `"by": "date"` for the shares of the categories of a date.
+- `rolling`: the mean of the values of `size` rows of the group, the ones
+  before the row (`"align": "end"`, the default) or around it (`"center"`),
+  only of whole windows, missing values are left out, in the order of the
+  column `order`, e.g. `{"type": "rolling", "column": "value", "as": "mean28",
+  "by": "country", "order": "date", "size": 28}`.
+- `cumulative`: the sum of the values of the group up to the row, in the order
+  of `order`, e.g. the sum of a year so far with `"by": "year"`.
+
+The strings of a transform are templates of the globals, e.g. `{base}`, the
+transforms are computed again when the globals change. The CSV of the data
+has the computed values. See `data/bev/def-index.json`.
 
 ### `options`
 

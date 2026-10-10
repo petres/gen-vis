@@ -9,6 +9,7 @@ import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
 import { annotationKeys } from "@/coords/annotations.js";
 import { projectionNames } from "@/coords/geo.js";
+import { transformTypes } from "@/utils/transform";
 
 // the interpolations of the plot types with a curve, e.g. cartesian:line
 const curveNames = Object.keys(curves);
@@ -320,6 +321,28 @@ const validateDef = def => {
             warn('options.locale', error.message.replace(/^Unknown/, 'unknown'));
         }
     }
+
+    // the transforms, a column of the values, the globals of their templates
+    const transformNames = Object.keys(transformTypes);
+    [def.transform ?? []].flat().forEach((t, i) => {
+        const path = `transform[${i}]`;
+        if (t === null || typeof t != 'object')
+            return warn(path, `expected a transform, e.g. { "type": "index", "column": "value", "base": { "year": "{base}" } }`);
+        if (!transformNames.includes(t.type))
+            warn(`${path}.type`, `unknown transform '${t.type}', expected one of ${list(transformNames)}`);
+        if (typeof t.column != 'string')
+            warn(`${path}.column`, `the column of the values is needed`);
+        if (t.by !== undefined && ![t.by].flat().every(c => typeof c == 'string'))
+            warn(`${path}.by`, `expected a column or a list of columns`);
+        if (t.type == 'rolling' && !(Number.isInteger(t.size) && t.size > 0))
+            warn(`${path}.size`, `the number of the rows of the window is needed, e.g. 7`);
+        if (t.type == 'index' && (t.base === null || typeof t.base != 'object' || Array.isArray(t.base)))
+            warn(`${path}.base`, `the rows of the base are needed, e.g. { "year": "{base}" }`);
+        if (t.align !== undefined && !['end', 'center'].includes(t.align))
+            warn(`${path}.align`, `expected 'end' or 'center'`);
+        templateRefs(JSON.stringify(t)).filter(r => !(r in (def.globals ?? {}))).forEach(r =>
+            warn(path, `unknown global '${r}' in the template`));
+    });
 
     if (def.dataFormat !== undefined && !dataFormats.includes(def.dataFormat))
         warn('dataFormat', `unknown format '${def.dataFormat}', expected one of ${list(dataFormats)}`);

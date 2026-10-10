@@ -3,6 +3,7 @@ export { createStore, resolveUrl, resolveParents, clearCache };
 import { reactive, markRaw, toRaw } from 'vue';
 
 import { addDataValues, dataFormat, parseData, prepareData, updateData, usedColumns } from "@/utils/data";
+import { applyTransforms, transformGlobals } from "@/utils/transform";
 import { applyFormElements, fillText, formatOf, mergeAll, prepareDef } from "@/utils/def";
 import { applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
@@ -130,8 +131,11 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
 
     const [, coord, geoModule] = await parts;
 
+    // the columns of the transforms, the form elements can have their values
+    let columns = applyTransforms(rows, defOrg.transform, defOrg.globals);
+
     // the form elements can have the values of the data, the state needs them
-    addDataValues(defOrg, rows);
+    addDataValues(defOrg, rows, columns);
     const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)));
 
     // the data of plots of their own, e.g. events, the url relative to the def,
@@ -145,6 +149,9 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     const defaults = snapshot(prepared);
     applyState(prepared, state);
     applyFormElements(prepared, defOrg);
+    // the transforms of the globals of the form elements and the state
+    if (transformGlobals(prepared.transform).length > 0)
+        columns = applyTransforms(rows, prepared.transform, prepared.globals);
 
     // the features of a map, see coords/geo.js, the url of GeoJSON or TopoJSON or itself
     let geo = null;
@@ -172,9 +179,10 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         coord: markRaw(coord),
         geo,
         rows,
+        columns: markRaw(columns),
         def: prepared,
         defaults,
-        data: raw(prepareData(rows, prepared)),
+        data: raw(prepareData(rows, prepared, columns)),
     };
 };
 
@@ -186,6 +194,8 @@ class Store {
     geo = null;
     def = null;
     rows = null;
+    // the columns of the transforms, see utils/transform.js
+    columns = null;
     data = null;
     defaults = null;
     // the width of the visualisation, set by its measure
@@ -262,11 +272,17 @@ class Store {
         }
     }
 
-    // the columns of patched mappings might have changed
+    // the columns of patched mappings might have changed, and the ones of
+    // transforms of the globals, e.g. an index of a base year
     applyFormElements() {
         const changed = applyFormElements(this.def, this.defOrg);
+        if (transformGlobals(this.def.transform).length > 0) {
+            this.columns = markRaw(applyTransforms(this.rows, this.def.transform, this.def.globals));
+            Object.keys(this.def.mapping).filter(n => this.columns.has(this.def.mapping[n].column) && !changed.includes(n))
+                .forEach(n => changed.push(n));
+        }
         if (changed.length > 0)
-            this.data = raw(updateData(this.rows, this.data, this.def, changed));
+            this.data = raw(updateData(this.rows, this.data, this.def, changed, this.columns));
     }
 
     // replaces the state of the loaded visualisation, null for the defaults

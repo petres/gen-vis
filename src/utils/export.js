@@ -3,6 +3,7 @@ export { selection, renderImage, saveFile, csvOf, copyImage, canCopy, defaultWid
 import { render } from "vue";
 import * as d3 from "@/utils/d3";
 import { sameValue } from "@/utils/def";
+import { columnValues } from "@/utils/data";
 
 // the space around the visualisation in the image
 const padding = 15;
@@ -100,11 +101,16 @@ const saveFile = (blob, name) => {
 };
 
 // the rows shown as CSV, in the columns of the mappings, the values as the
-// ones of the data, e.g. dates as they are in the file
+// ones of the data, e.g. dates as they are in the file, also the columns of
+// transforms
 const csvOf = (store, rows) => {
     const positions = new Map(store.data.map((r, i) => [r, i]));
     const columns = [...new Set(Object.values(store.def.mapping).map(m => m.column).filter(c => typeof c == 'string'))];
-    return d3.csvFormat(rows.map(r => store.rows[positions.get(r)]), columns);
+    const values = columns.map(c => columnValues(store.rows, store.columns, c));
+    return d3.csvFormat(rows.map(r => {
+        const i = positions.get(r);
+        return Object.fromEntries(columns.map((c, j) => [c, values[j](i)]));
+    }), columns);
 };
 
 // only on https (or localhost), the blob is a promise, so the clipboard is
