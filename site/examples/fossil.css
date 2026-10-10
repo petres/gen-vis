@@ -47,8 +47,17 @@
     border-radius: 8px;
     padding: 3px;
 }
-.theme-dashboard .vis-switch > div { margin: 0; }
-.theme-dashboard .vis-switch input { position: absolute; opacity: 0; }
+/* the radio button is invisible over its label, in its entry, so the focus of
+   a click does not scroll the page to it */
+.theme-dashboard .vis-switch > div { margin: 0; position: relative; }
+.theme-dashboard .vis-switch input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+}
 .theme-dashboard .vis-switch label {
     display: inline-block;
     padding: 4px 10px;
