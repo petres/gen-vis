@@ -3,7 +3,7 @@ export { validateDef, curveNames };
 import * as d3 from "@/utils/d3";
 import { dataFormats } from "@/utils/data";
 import { getLocale } from "@/utils/locale";
-import { templateRefs } from "@/utils/def";
+import { symbolShortcuts, templateRefs } from "@/utils/def";
 import { curves } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
@@ -169,6 +169,11 @@ const validateDef = def => {
             checkProp(m.hover?.props, `${path}.hover.props`, warn, names.category(n));
             [].concat(m.legend?.symbol?.elements ?? []).forEach((e, j) =>
                 checkProp(e?.props, `${path}.legend.symbol.elements[${j}].props`, warn, names.category(n)));
+            const symbol = m.legend?.symbol;
+            const shortcut = typeof symbol == 'string' ? symbol : symbol?.type;
+            if (shortcut !== undefined && !symbolShortcuts.includes(shortcut))
+                warn(`${path}.legend.symbol`, `unknown symbol '${shortcut}', expected one of ${list(symbolShortcuts)} or the svg 'elements'`);
+            checkProp(symbol?.props, `${path}.legend.symbol.props`, warn, names.category(n));
         }
     });
 

@@ -33,6 +33,10 @@ describe('the schema', () => {
         expect(errors({ plot: { props: { 'stroke-dasharray': '2 2' } } })).toEqual([]);
         expect(errors({ facets: { cols: { steps: [{ cut: 0, value: 1 }] } } })).toEqual([]);
         expect(errors({ formElements: [{ id: 'scale', inImage: false }] })).toEqual([]);
+        expect(errors({ mapping: { c: { legend: { symbol: 'line' } } } })).toEqual([]);
+        expect(errors({ mapping: { c: { legend: { symbol: { type: 'rect', size: 12, props: { rx: 0 } } } } } })).toEqual([]);
+        expect(errors({ mapping: { c: { legend: { symbol: 'star' } } } })).not.toEqual([]);
+        expect(errors({ mapping: { c: { props: { order: 'descending', ranks: [{ color: 'red' }] } } } })).toEqual([]);
     });
 
     test('rejects typos and wrong values', () => {

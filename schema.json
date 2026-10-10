@@ -353,23 +353,21 @@
                             "required": ["name"]
                         },
                         "symbol": {
-                            "type": "object",
-                            "additionalProperties": false,
-                            "properties": {
-                                "size": { "type": "number" },
-                                "elements": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "required": ["type"],
-                                        "additionalProperties": false,
-                                        "properties": {
-                                            "type": { "type": "string", "description": "An svg element, e.g. line or circle." },
-                                            "props": { "$ref": "#/definitions/props" }
-                                        }
+                            "description": "The symbol before the name of a category: line, rect or circle in its color, or the svg elements.",
+                            "anyOf": [
+                                { "enum": ["line", "rect", "circle"] },
+                                {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": ["type"],
+                                    "properties": {
+                                        "type": { "enum": ["line", "rect", "circle"] },
+                                        "size": { "type": "number", "default": 16 },
+                                        "props": { "$ref": "#/definitions/props" }
                                     }
-                                }
-                            }
+                                },
+                                { "$ref": "#/definitions/symbolElements" }
+                            ]
                         },
                         "props": {
                             "type": "object",
@@ -377,6 +375,7 @@
                         }
                     }
                 },
+
                 "props": {
                     "type": "object",
                     "description": "The categories and their props, e.g. colors. Only visible categories are shown.",
@@ -402,6 +401,25 @@
                             "items": { "$ref": "#/definitions/categoryProps" }
                         },
                         "scheme": { "type": "string", "description": "The colors of the categories in their order as the prop color, a d3 scheme, e.g. Tableau10." }
+                    }
+                }
+            }
+        },
+        "symbolElements": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "size": { "type": "number" },
+                "elements": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["type"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "type": { "type": "string", "description": "An svg element, e.g. line or circle." },
+                            "props": { "$ref": "#/definitions/props" }
+                        }
                     }
                 }
             }

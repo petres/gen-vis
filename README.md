@@ -459,7 +459,12 @@ the definition refer to these names.
   "land": { "column": "Bundesland", "props": { "fromData": true, "scheme": "Tableau10", "categories": { "ÖSTERREICH": { "name": "Gesamt", "color": "#000" } } } }
   ```
 - `legend`: a toggle for every category, `symbol` draws svg `elements` (with
-  props) of the given `size` before the name. A click shows or hides the
+  props) of the given `size` before the name, or is a shortcut in the color
+  of the category (`@color`): `"line"` (with the `stroke-width`,
+  `stroke-dasharray` and `opacity` of the categories if they have them, a
+  width of 2 otherwise), `"rect"` or `"circle"` (with their `opacity`), the
+  object `{"type": "line", "size": 20, "props": {"stroke-width": 3}}` sets
+  the size (16 by default) and props of the element. A click shows or hides the
   category, a double click shows only it, the next double click all of them.
   The entries are checkboxes of the keyboard (tab, enter or space), the mouse
   and the focus highlight their category. A mapping with a scale but

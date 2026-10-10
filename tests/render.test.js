@@ -1129,6 +1129,17 @@ describe('data formats', () => {
 });
 
 describe('the order and the ranks of categories', () => {
+    test('a symbol of a legend by its shortcut', async () => {
+        const def = lineDef();
+        def.mapping.c.legend = { symbol: 'line' };
+        def.mapping.c.props.categories.Tirol['stroke-dasharray'] = '2 2';
+        const el = await mount(GenVis, { def, data: lineData });
+        const lines = [...el.querySelectorAll('.vis-legend-entry svg line')];
+        expect(lines.map(l => [l.getAttribute('stroke'), l.getAttribute('stroke-width'), l.getAttribute('stroke-dasharray')])).toEqual([['red', '2', null], ['blue', '2', '2 2']]);
+        expect(el.querySelector('.vis-legend-entry svg').getAttribute('width')).toBe('16');
+    });
+
+
     test('the newest year first and red, in the legend, the stacks and the facets', async () => {
         const def = lineDef();
         def.mapping.c = { column: 'year', type: 'categorical', legend: {}, hover: {}, props: {

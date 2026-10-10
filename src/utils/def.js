@@ -1,4 +1,4 @@
-export { mergeAll, sameValue, prepareDef, applyFormElements, templateRefs, fillTemplate, fillText, formatOf };
+export { mergeAll, sameValue, prepareDef, applyFormElements, templateRefs, fillTemplate, fillText, formatOf, symbolShortcuts };
 
 import merge from 'deepmerge';
 import { schemeColors } from '@/utils/d3';
@@ -54,6 +54,25 @@ const orderKeys = (keys, order) => {
     return keys;
 };
 
+/**
+ * The svg elements of the symbol of a legend of a shortcut, `"line"`,
+ * `"rect"` or `"circle"` in the color of the categories (`@color`), with
+ * their `stroke-width`, `stroke-dasharray` and `opacity` if the categories
+ * have them, `names` are the props of the categories. The object form has
+ * the `size` (16 by default) and `props` of the element, e.g. a width.
+ */
+const symbolShortcuts = ['line', 'rect', 'circle'];
+const symbolOf = (symbol, names) => {
+    const { type, size = 16, props = {} } = typeof symbol == 'string' ? { type: symbol } : symbol;
+    const own = keys => Object.fromEntries(keys.filter(k => names.has(k)).map(k => [k, `@${k}`]));
+    const shapes = {
+        line: { x1: 0, x2: size, y1: size/2, y2: size/2, stroke: '@color', 'stroke-width': 2, ...own(['stroke-width', 'stroke-dasharray', 'opacity']) },
+        rect: { x: 0, y: 0, width: size, height: size - 1, rx: 2, fill: '@color', ...own(['opacity']) },
+        circle: { cx: size/2, cy: size/2, r: size/2 - 2, fill: '@color', ...own(['opacity']) },
+    };
+    return { size, elements: [{ type, props: { ...shapes[type], ...props } }] };
+};
+
 const prepareMapping = m => {
     if (m.props) {
         // the props of a category: the color of a scheme in the order of the
@@ -88,6 +107,10 @@ const prepareMapping = m => {
     if (m.legend) {
         if (m.legend.props === undefined)
             m.legend.props = {};
+
+        const symbol = m.legend.symbol;
+        if (typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type))
+            m.legend.symbol = symbolOf(symbol, new Set(Object.values(m.props ?? {}).flatMap(p => Object.keys(p))));
 
         if (!('name' in m.legend.props)) {
              m.legend.props.name = "@name"

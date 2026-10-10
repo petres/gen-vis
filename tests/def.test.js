@@ -35,6 +35,19 @@ describe('the props of categories', () => {
         expect(prepared({ categories: { a: {}, b: {}, c: {} }, order: ['c', 'x', 'a'] }).keys).toEqual(['c', 'a', 'b']);
     });
 
+    test('the shortcuts of the symbols of legends, with the props the categories have', () => {
+        const symbol = (symbol, props = {}) => prepareDef({ mapping: { c: { column: 'c', legend: { symbol }, props: { categories: { a: props } } } }, plot: [] }).mapping.c.legend.symbol;
+        expect(symbol('line')).toEqual({ size: 16, elements: [{ type: 'line', props: { x1: 0, x2: 16, y1: 8, y2: 8, stroke: '@color', 'stroke-width': 2 } }] });
+        expect(symbol('line', { 'stroke-width': 3, 'stroke-dasharray': '2 2', opacity: 0.5 }).elements[0].props).toEqual({
+            x1: 0, x2: 16, y1: 8, y2: 8, stroke: '@color', 'stroke-width': '@stroke-width', 'stroke-dasharray': '@stroke-dasharray', opacity: '@opacity',
+        });
+        expect(symbol('rect')).toEqual({ size: 16, elements: [{ type: 'rect', props: { x: 0, y: 0, width: 16, height: 15, rx: 2, fill: '@color' } }] });
+        expect(symbol({ type: 'circle', size: 12, props: { stroke: 'white' } })).toEqual({ size: 12, elements: [{ type: 'circle', props: { cx: 6, cy: 6, r: 4, fill: '@color', stroke: 'white' } }] });
+        // the svg elements are kept
+        const elements = { size: 10, elements: [{ type: 'rect', props: { width: 10 } }] };
+        expect(symbol(elements)).toEqual(elements);
+    });
+
     test('the props of the ranks of the categories, the last one of all others', () => {
         const c = prepared({
             categories: { 2023: {}, 2024: {}, 2025: { opacity: 0.9 }, 2026: {} },

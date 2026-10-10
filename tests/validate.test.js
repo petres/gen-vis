@@ -25,6 +25,26 @@ test('the facets need a known mapping', () => {
     expect(validateDef({ ...base(), facets: { dim: ['c'] } })).toEqual([`facets.dim: expected the name of a mapping`]);
 });
 
+test('the symbols of legends, the order and the ranks of categories', () => {
+    const def = base();
+    def.mapping.c.legend = { symbol: 'line' };
+    def.mapping.c.props.ranks = [{ dash: '2 2' }];
+    def.mapping.c.props.order = 'descending';
+    def.plot.props.stroke = '@dash';
+    expect(validateDef(def)).toEqual([]);
+    def.mapping.c.legend = { symbol: { type: 'star', props: { fill: '@nope' } } };
+    def.mapping.c.props.order = 'down';
+    def.mapping.c.props.ranks = { color: 'red' };
+    expect(validateDef(def)).toEqual([
+        "mapping.c.props.order: expected 'ascending', 'descending' or a list of keys",
+        "mapping.c.props.ranks: expected a list of props, of the first category, the second one, ...",
+        "mapping.c.legend.symbol: unknown symbol 'star', expected one of 'line', 'rect', 'circle' or the svg 'elements'",
+        expect.stringMatching(/^mapping.c.legend.symbol.props.fill: unknown reference 'nope'/),
+        // the ranks are no list, so their props are unknown
+        expect.stringMatching(/^plot\[0\].props.stroke: unknown reference 'dash'/),
+    ]);
+});
+
 test('the names of the alphas before are named', () => {
     const def = base();
     def.mapping.c.props = { manual: { Wien: {} } };
