@@ -858,7 +858,18 @@ the mappings of the positions and of the values), `stackOf(row)` (the start
 and the end of a stacked value), `scope` (the names of the references of the
 facet, see [props](#props-1)), `innerWidth` and `innerHeight`, of maps also
 the `projection` and the `path`. `curve: true` passes the `curve` of the plot, `coords` limits
-a type to coordinate systems, e.g. `cartesian:bar` to `cartesian`. A
+a type to coordinate systems, e.g. `cartesian:bar` to `cartesian`.
+
+A new view, e.g. of a toggle of a legend, a form element or a new width, is
+drawn into the elements of the one before, only the attributes which change
+are set. With `update: true` a type draws into the elements of the draw
+before, as `pointwise` and `groupwise` do (the groups are the ones of the same
+categories, the elements per row the ones of the same rows), the elements of
+other types are removed before they are drawn again. `ctx.keep(key, create)`
+is an element kept from one draw to the next, e.g. an axis of a coordinate
+system, `create()` appends a new one to `ctx.inner`.
+
+A
 coordinate system (`registerCoord(name, coord)`) has the default ranges of the
 orientations of its scales, the axes and the geometry of the hover, see
 `src/coords/index.js` and e.g. `src/coords/polar.js`. Both are known to

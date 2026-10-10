@@ -25,7 +25,8 @@ import Hover from '@/comp/Hover.vue';
 
 export default {
     // a facet of the view, its rows, sizes and scales, see layout.js, its key
-    // is the one of its category, e.g. for annotations
+    // is the one of its category, e.g. for annotations. A new view, e.g. of
+    // a toggle of a legend, is drawn into the elements of the one before.
     props: ["facet"],
     inject: ['store', 'emit'],
     data: () => ({
@@ -46,59 +47,145 @@ export default {
     components: {
         Hover
     },
+    watch: {
+        facet() {
+            this.draw();
+        },
+    },
+    created() {
+        // the elements which are kept from one draw to the next by their key,
+        // e.g. the groups of the plots, see keep
+        this.kept = new Map();
+    },
     mounted() {
-        // the context of the plot types and the coordinate system, see
-        // plots/index.js, the scales are not reactive, they are only replaced
-        // with the facet
-        const { key, rows, scales, axis, stackOf, scope, dims, innerWidth, innerHeight } = this.facet;
-        this.ctx = {
-            store: this.store,
-            inner: d3.select(this.$refs.inner),
-            key,
-            rows,
-            scales,
-            axis,
-            stackOf,
-            scope,
-            dims,
-            innerWidth,
-            innerHeight,
+        // a touch keeps the hover until the next touch outside of the facet
+        this.hideOnPointerOutside = e => {
+            if (this.hover.visible && !this.$refs.svg.contains(e.target))
+                this.hide?.();
         };
-
-        this.store.coord.prepare?.(this.ctx);
-        // the plots below the axes and grid lines, e.g. the bands of annotations,
-        // the ones above the other plots, e.g. labels
-        const plots = this.store.def.plot.filter(p => p.facet === undefined
-            || [p.facet].flat().map(String).includes(String(key)));
-        this.plot(plots.filter(p => p.layer == 'below'));
-        this.store.coord.axes(this.ctx);
-        this.plot(plots.filter(p => p.layer != 'below' && p.layer != 'above'));
-        this.plot(plots.filter(p => p.layer == 'above'));
-        // the labels of the annotations are above the plots, also the ones below them
-        const labels = this.ctx.inner.selectAll(".vis-annotation-label");
-        if (!labels.empty()) {
-            const g = this.ctx.inner.append("g").attr("class", "vis-annotation-labels");
-            labels.each(function() { g.node().appendChild(this) });
-        }
-        this.store.coord.raise?.(this.ctx);
-        this.hoverInit();
+        document.addEventListener("pointerdown", this.hideOnPointerOutside);
+        this.draw();
     },
     unmounted() {
         document.removeEventListener("pointerdown", this.hideOnPointerOutside);
     },
     methods: {
+        // the element of `key` of the draw before or a new one, `create()`
+        // appends it to the plot area, it is placed after the element drawn
+        // before (the cursor), so the elements are in the order of the draw,
+        // an element in its place is not moved, as a move costs the browser
+        // the style of all its elements, e.g. of the circles of a plot
+        keep(key, create) {
+            let node = this.kept.get(key);
+            if (!node)
+                this.kept.set(key, node = create().node());
+            if (this.holder)
+                this.holder.appendChild(node);
+            else if (this.cursor.nextSibling !== node)
+                this.$refs.inner.insertBefore(node, this.cursor.nextSibling);
+            if (!this.holder)
+                this.cursor = node;
+            this.used.add(key);
+            return d3.select(node);
+        },
+
+        // the elements which `draw(ctx)` appends to the plot area, e.g. the
+        // axes, are placed after the cursor, not at the end of the plot area
+        place(draw) {
+            const inner = this.$refs.inner;
+            const holder = this.holder = inner.insertBefore(document.createElementNS('http://www.w3.org/2000/svg', 'g'), this.cursor.nextSibling);
+            const plotArea = this.ctx.inner;
+            this.ctx.inner = d3.select(holder);
+            try {
+                draw(this.ctx);
+            } finally {
+                this.ctx.inner = plotArea;
+                this.holder = null;
+                for (const node of [...holder.childNodes]) {
+                    inner.insertBefore(node, holder);
+                    this.cursor = node;
+                }
+                holder.remove();
+            }
+        },
+
+        draw() {
+            this.highlight(null);
+            // the elements which are not kept are drawn anew, e.g. the axes
+            const inner = this.$refs.inner;
+            const kept = new Set(this.kept.values());
+            [...inner.children].filter(c => c !== this.$refs.hoverMarker && !kept.has(c)).forEach(c => c.remove());
+            this.used = new Set();
+            this.cursor = this.$refs.hoverMarker;
+
+            // the context of the plot types and the coordinate system, see
+            // plots/index.js, the scales are not reactive, they are only replaced
+            // with the facet
+            const { key, rows, scales, axis, stackOf, scope, dims, innerWidth, innerHeight } = this.facet;
+            this.ctx = {
+                store: this.store,
+                inner: d3.select(inner),
+                key,
+                rows,
+                scales,
+                axis,
+                stackOf,
+                scope,
+                dims,
+                innerWidth,
+                innerHeight,
+                keep: (key, create) => this.keep(key, create),
+            };
+
+            this.store.coord.prepare?.(this.ctx);
+            // the plots below the axes and grid lines, e.g. the bands of annotations,
+            // the ones above the other plots, e.g. labels
+            const plots = this.store.def.plot.filter(p => p.facet === undefined
+                || [p.facet].flat().map(String).includes(String(key)));
+            this.plot(plots.filter(p => p.layer == 'below'));
+            this.place(ctx => this.store.coord.axes(ctx));
+            this.plot(plots.filter(p => p.layer != 'below' && p.layer != 'above'));
+            this.plot(plots.filter(p => p.layer == 'above'));
+            // the labels of the annotations are above the plots, also the ones below them
+            const labels = this.ctx.inner.selectAll(".vis-annotation-label");
+            if (!labels.empty()) {
+                const g = this.ctx.inner.append("g").attr("class", "vis-annotation-labels");
+                labels.each(function() { g.node().appendChild(this) });
+            }
+            this.store.coord.raise?.(this.ctx);
+
+            // the elements of the draw before which are not drawn again
+            this.kept.forEach((node, k) => {
+                if (!this.used.has(k)) {
+                    node.remove();
+                    this.kept.delete(k);
+                }
+            });
+            this.highlighter = highlighter(inner, this.store.def.plot);
+            this.hoverInit();
+        },
+
+        // a group per plot, kept from one draw to the next, the plot types
+        // with `update` draw into the elements of the draw before, e.g. with
+        // pointwise, the elements of the others are removed
         plot(plots) {
             plots.forEach(plot => {
                 if (!Object.hasOwn(plotTypes, plot.type))
                     throw new Error(`Unknown plot type '${plot.type}'`);
-                const parent = this.ctx.inner.append("g")
-                    .classed("vis-plot", true)
-                    .classed(plot.id, true)
-                    .attr("data-plot", plot.id);
-                if (plot.layer)
-                    parent.classed(`vis-${plot.layer}`, true);
+                const type = plotTypes[plot.type];
+                const parent = this.keep(`plot ${plot.id}`, () => {
+                    const g = this.ctx.inner.append("g")
+                        .classed("vis-plot", true)
+                        .classed(plot.id, true)
+                        .attr("data-plot", plot.id);
+                    if (plot.layer)
+                        g.classed(`vis-${plot.layer}`, true);
+                    return g;
+                });
+                if (!type.update)
+                    parent.selectAll("*").remove();
                 const rows = plotRows(this.store, plot, this.facet);
-                plotTypes[plot.type].render(plotGroups(plot, rows, this.ctx), parent, plot, this.ctx);
+                type.render(plotGroups(plot, rows, this.ctx), parent, plot, this.ctx);
             });
         },
 
@@ -111,12 +198,15 @@ export default {
         hoverInit() {
             const { store, ctx } = this;
             const coord = store.coord;
-            this.highlighter = highlighter(this.$refs.inner, store.def.plot);
+            this.hide = null;
+            this.move = null;
 
             // the hover needs the mappings of the positions and of the values
             const names = ctx.axis;
-            if (!names.h || !names.v)
+            if (!names.h || !names.v) {
+                this.hover.visible = false;
                 return;
+            }
 
             const format = { h: store.valueFormat(names.h, ctx.scales[names.h]), v: store.valueFormat(names.v, ctx.scales[names.v]) };
             const v = names.v;
@@ -134,26 +224,22 @@ export default {
             const rowsByKey = d3.group(ctx.rows.filter(e => e[v] !== null), e => String(e[names.h]));
             let last = null;
 
-            const hide = () => {
+            // a hidden hover has no position, as the one of a new facet
+            const hide = this.hide = () => {
                 if (this.hover.visible)
                     this.emit('hover', null);
                 last = null;
-                this.hover.visible = false;
+                this.lastEvent = null;
+                Object.assign(this.hover, { visible: false, x: 0, y: 0 });
+                marker.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null);
                 this.highlight(null);
             };
-
-            // a touch keeps the hover until the next touch outside of the facet
-            this.hideOnPointerOutside = e => {
-                if (this.hover.visible && !this.$refs.svg.contains(e.target))
-                    hide();
-            };
-            document.addEventListener("pointerdown", this.hideOnPointerOutside);
 
             // the rows at the pointer and the nearest one, stacked: the segment
             // under the pointer, outside of the stack the closest one, null
             // without a key, the rows are not formatted yet
             const at = e => {
-                const position = coord.hover.locate(ctx, d3.pointer(e), names, e);
+                const position = coord.hover.locate(ctx, d3.pointer(e, ctx.inner.node()), names, e);
                 if (!position)
                     return null;
                 const { key, value } = position;
@@ -195,39 +281,44 @@ export default {
                 nearest: nearest ? plain(nearest) : null,
             });
 
+            // the hover of the pointer, also the one of the draw before at its
+            // position, e.g. after a toggle by the keyboard
+            const move = this.move = e => {
+                // nothing under the pointer, e.g. the sea of a map, no empty or old hover
+                const found = at(e);
+                if (!found) {
+                    hide();
+                    return;
+                }
+                this.hover.visible = true;
+                this.lastEvent = e;
+                const { key, value, rows, nearest } = found;
+
+                // the same key and row as before, e.g. a move within a step
+                // of the axis, nothing is formatted or drawn
+                if (last && last.key === key && last.nearest === nearest)
+                    return;
+                last = { key, nearest };
+
+                // there is no entry e.g. if all categories are hidden, without
+                // a value the elements of the key are highlighted, e.g. a region
+                this.highlight(nearest ?? (value === undefined ? {[names.h]: key} : null));
+
+                const p = payload(found);
+                Object.assign(this.hover, coord.hover.marker(ctx, key, names, marker), {
+                    data: entriesOf(rows, nearest),
+                    title: p.title,
+                    payload: p,
+                });
+                this.emit('hover', p);
+            };
+
             // mouse, touch and pen, vertical swipes still scroll the page
             coord.hover.area(ctx, ctx.inner)
                 .attr("class", "vis-events")
                 .attr("opacity", 0)
                 .style("touch-action", "pan-y")
-                .on("pointerdown pointermove", e => {
-                    // nothing under the pointer, e.g. the sea of a map, no empty or old hover
-                    const found = at(e);
-                    if (!found) {
-                        hide();
-                        return;
-                    }
-                    this.hover.visible = true;
-                    const { key, value, rows, nearest } = found;
-
-                    // the same key and row as before, e.g. a move within a step
-                    // of the axis, nothing is formatted or drawn
-                    if (last && last.key === key && last.nearest === nearest)
-                        return;
-                    last = { key, nearest };
-
-                    // there is no entry e.g. if all categories are hidden, without
-                    // a value the elements of the key are highlighted, e.g. a region
-                    this.highlight(nearest ?? (value === undefined ? {[names.h]: key} : null));
-
-                    const p = payload(found);
-                    Object.assign(this.hover, coord.hover.marker(ctx, key, names, marker), {
-                        data: entriesOf(rows, nearest),
-                        title: p.title,
-                        payload: p,
-                    });
-                    this.emit('hover', p);
-                })
+                .on("pointerdown pointermove", move)
                 // a click or a tap, e.g. on a region of a map
                 .on("click", e => {
                     const found = at(e);
@@ -239,7 +330,13 @@ export default {
                         hide();
                 })
                 // the browser scrolls the page instead
-                .on("pointercancel", hide)
+                .on("pointercancel", hide);
+
+            // the hover of the draw before with the rows of this one
+            if (this.hover.visible && this.lastEvent)
+                move(this.lastEvent);
+            else
+                this.hover.visible = false;
         }
     }
 }

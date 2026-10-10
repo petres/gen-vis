@@ -1128,6 +1128,67 @@ describe('data formats', () => {
     });
 });
 
+describe('the update of the facets', () => {
+    const toggle = async (el, key) => {
+        el.querySelector(`.vis-legend-entry[data-key="${key}"]`).click();
+        await nextTick();
+    };
+
+    test('a toggle draws into the elements of the draw before', async () => {
+        const el = await mount(GenVis, { def: lineDef(), data: lineData });
+        const svg = el.querySelector('svg.vis-svg');
+        const tirol = [...el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle')];
+        const line = el.querySelector('path[data-group-c="Tirol"]');
+        const y = tirol.map(c => c.getAttribute('cy'));
+        await toggle(el, 'Wien');
+        expect(el.querySelector('svg.vis-svg')).toBe(svg);
+        expect([...el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle')]).toEqual(tirol);
+        expect(el.querySelector('path[data-group-c="Tirol"]')).toBe(line);
+        expect(el.querySelectorAll('g.vis-group[data-group-c="Wien"]')).toHaveLength(0);
+        // the scale of the values of Tirol only
+        expect(tirol.map(c => c.getAttribute('cy'))).not.toEqual(y);
+
+        await toggle(el, 'Wien');
+        expect(tirol.map(c => c.getAttribute('cy'))).toEqual(y);
+        // the groups in the order of the categories, as in a new draw
+        expect([...el.querySelectorAll('g.plot-1 g.vis-group')].map(g => g.dataset.groupC)).toEqual(['Wien', 'Tirol']);
+        const fresh = await mount(GenVis, { def: lineDef(), data: lineData });
+        expect(el.querySelector('svg.vis-svg').outerHTML).toBe(fresh.querySelector('svg.vis-svg').outerHTML);
+        expect(errors).toEqual([]);
+    });
+
+    test('the elements of a plot type without update are drawn anew', async () => {
+        registerPlotType('test:append', {
+            render: (groups, parent) => groups.forEach(g => g.rows.filter(g.complete).forEach(row => parent.append('rect').attr('x', g.at(row).x))),
+        });
+        const def = lineDef();
+        def.plot = { type: 'test:append', categories: ['c'], props: { x: '@x:scaled' } };
+        const el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelectorAll('g.vis-plot rect')).toHaveLength(8);
+        await toggle(el, 'Tirol');
+        expect(el.querySelectorAll('g.vis-plot rect')).toHaveLength(4);
+        await toggle(el, 'Tirol');
+        expect(el.querySelectorAll('g.vis-plot rect')).toHaveLength(8);
+        delete plotTypes['test:append'];
+    });
+
+    test('the built-in plot types update their elements, the annotations are drawn anew', () => {
+        const types = Object.entries(plotTypes).filter(([, t]) => !t.update).map(([n]) => n);
+        expect(types).toEqual(['annotation:band', 'annotation:line', 'annotation:text', 'annotation:circle']);
+    });
+
+    test('an open hover shows the rows of the new draw, e.g. of a toggle by the keyboard', async () => {
+        const el = await mount(GenVis, { def: lineDef(), data: lineData });
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+        await nextTick();
+        expect(el.querySelectorAll('.vis-hover tr.vis-hover-entry')).toHaveLength(2);
+        el.querySelector('.vis-legend-entry[data-key="Tirol"]').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+        await nextTick();
+        expect(el.querySelectorAll('.vis-hover tr.vis-hover-entry')).toHaveLength(1);
+        expect(el.querySelector('.vis-hover td').textContent).toBe('Wien');
+    });
+});
+
 describe('extensions', () => {
     test('a registered plot type', async () => {
         registerPlotType('test:square', {

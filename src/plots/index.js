@@ -22,6 +22,9 @@ import annotations from "@/plots/annotations";
  *   names of the references of the facet), `innerWidth`, `innerHeight` and
  *   `dims` (the sizes of the coordinate system), maps also `projection` and
  *   `path`
+ * - `update`: the type draws into the elements of the draw before, e.g.
+ *   with pointwise and groupwise, the elements of the others are removed
+ *   before they are drawn again, see Facet.vue
  * - `curve`: the type uses the `curve` of the plot
  * - `coords`: the coordinate systems of the type, all if it is not given
  */

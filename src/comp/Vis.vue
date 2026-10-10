@@ -18,14 +18,14 @@
             </template>
         </div>
         <div v-if="view" class="vis-body">
-            <!-- the facets are rendered again if their rows change -->
+            <!-- a new view is drawn into the facets of the one before, see Facet.vue -->
             <template v-if="view.faceted">
-                <div v-for="f in view.facets" :key="f.key" :style="`width: ${f.width}px; display: inline-block;`">
+                <div v-for="f in view.facets" :key="String(f.key)" :style="`width: ${f.width}px; display: inline-block;`">
                     <div class="vis-facet-title" :style="`margin-left: ${f.margins.left}px`">{{ store.text(f.name) }}</div>
-                    <facet ref="facets" :key="f.rows" :facet="f"/>
+                    <facet ref="facets" :facet="f"/>
                 </div>
             </template>
-            <facet v-else ref="facets" :key="view.facets[0].rows" :facet="view.facets[0]"/>
+            <facet v-else ref="facets" :facet="view.facets[0]"/>
         </div>
         <div class="vis-footer">
             <div class="vis-footer-content">

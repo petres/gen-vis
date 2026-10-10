@@ -32,6 +32,7 @@ export default {
     'cartesian:line': {
         curve: true,
         coords: ['cartesian'],
+        update: true,
         render: (groups, parent, plot) => groupwise(groups, parent)
             .attr("d", g => d3.line()
                 .curve(curve(plot))
@@ -46,6 +47,7 @@ export default {
     'cartesian:area': {
         curve: true,
         coords: ['cartesian'],
+        update: true,
         render: (groups, parent, plot) => groupwise(groups, parent)
             .attr("d", g => d3.area()
                 .curve(curve(plot))
@@ -63,6 +65,7 @@ export default {
     // of a band or the step of a point scale
     'cartesian:bar': {
         coords: ['cartesian'],
+        update: true,
         render: (groups, parent, plot, ctx) => pointwise(groups, parent, "rect", v => {
             const type = 'cartesian:bar';
             const xScale = barScale(plot, ctx, 'x', type);

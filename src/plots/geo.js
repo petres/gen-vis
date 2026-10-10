@@ -10,6 +10,7 @@ const keyOf = (ctx, row) => String(row[ctx.store.def.geo.join]);
 // center of its feature, as `x` and `y`
 const positioned = (type, x, y) => ({
     coords: ['geo'],
+    update: true,
     render: (groups, parent, plot, ctx) => pointwise(groups, parent, type, (v, row) => {
         const { lon, lat, ...props } = v;
         const f = featureOf(ctx, row);
@@ -24,6 +25,7 @@ export default {
     // the facet, e.g. of the globals
     'geo:base': {
         coords: ['geo'],
+        update: true,
         render(groups, parent, plot, ctx) {
             const props = evaluate(plot.props, ctx.scope);
             parent.classed("vis-features", true)
@@ -40,6 +42,7 @@ export default {
     // feature are not drawn
     'geo:region': {
         coords: ['geo'],
+        update: true,
         render: (groups, parent, plot, ctx) => pointwise(groups, parent, "path", (v, row) => {
             const f = featureOf(ctx, row);
             return { ...v, d: f ? ctx.path(f) : null, 'data-geo-key': keyOf(ctx, row) };

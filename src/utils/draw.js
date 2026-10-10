@@ -20,16 +20,28 @@ const curves = {
 };
 
 // the values of props as the attributes of an element, `text` is its text,
-// objects are nested props, e.g. `d` of a line, null removes an attribute
+// objects are nested props, e.g. `d` of a line, null removes an attribute,
+// only the attributes which change are set, e.g. of an element of the draw
+// before, as setting one costs the browser its style
 const setProps = function(values) {
-    const e = d3.select(this);
-    for (const [k, v] of Object.entries(values)) {
+    for (const k in values) {
+        const v = values[k];
         if (v !== null && (typeof v == 'object' || typeof v == 'function'))
             continue;
-        if (k == "text")
-            e.text(v);
-        else
-            e.attr(k, v);
+        if (k == "text") {
+            const text = v === null || v === undefined ? '' : String(v);
+            if (this.textContent !== text)
+                this.textContent = text;
+        } else if (k.includes(':')) {
+            // a namespace, e.g. xlink:href
+            d3.select(this).attr(k, v);
+        } else if (v === null || v === undefined) {
+            this.removeAttribute(k);
+        } else {
+            const value = String(v);
+            if (this.getAttribute(k) !== value)
+                this.setAttribute(k, value);
+        }
     }
 };
 
@@ -85,10 +97,17 @@ const highlighter = (inner, plotDefs) => {
         return rows.length > 0 ? rows : group.targets;
     };
 
+    // without an empty class, so an element is the same as a new one
+    const unclass = node => {
+        node.classList.remove('vis-highlight');
+        if (node.classList.length == 0)
+            node.removeAttribute('class');
+    };
+
     return dataEntry => {
-        groups.forEach(node => node.classList.remove('vis-highlight'));
+        groups.forEach(unclass);
         elements.forEach(({ node, props }) => {
-            node.classList.remove('vis-highlight');
+            unclass(node);
             props.forEach(n => {
                 const value = node.getAttribute(`default-${n}`);
                 if (value === null)

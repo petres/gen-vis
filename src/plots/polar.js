@@ -19,6 +19,7 @@ const points = g => {
 // an element of `type` per row at the `angle` and `radius` of the props, as `x` and `y`
 const positioned = (name, type, x, y) => ({
     coords: ['polar'],
+    update: true,
     render: (groups, parent, plot, ctx) => pointwise(groups, parent, type, v => {
         if (!('angle' in v && 'radius' in v))
             throw new Error(`${name}: the props 'angle' and 'radius' are needed`);
@@ -37,6 +38,7 @@ export default {
     'polar:line': {
         curve: true,
         coords: ['polar'],
+        update: true,
         render(groups, parent, plot, ctx) {
             const offset = angleOffset(plot, ctx, 'd.angle');
             groupwise(groups, parent)
@@ -54,6 +56,7 @@ export default {
     'polar:area': {
         curve: true,
         coords: ['polar'],
+        update: true,
         render(groups, parent, plot, ctx) {
             const offset = angleOffset(plot, ctx, 'd.angle');
             groupwise(groups, parent)
@@ -73,6 +76,7 @@ export default {
     // step of a point scale, `innerRadius` to the inner radius of the plot
     'polar:arc': {
         coords: ['polar'],
+        update: true,
         render: (groups, parent, plot, ctx) => pointwise(groups, parent, "path", v => {
             const s = barScale(plot, ctx, 'angle', 'polar:arc');
             const width = v.width ?? barWidth(s, 'polar:arc');
