@@ -3,6 +3,60 @@
 The changes of the versions on npm, the newest first. The details are in the
 commits, the upgrade from 1.x in the [README](README.md#upgrading-from-1x).
 
+## 2.0.0-alpha.2
+
+Changes which need changes of definitions, styles or pages, see the
+[README](README.md#upgrading-from-1x):
+
+- the categories of props are `categories` (they were `manual`), radio
+  buttons are `"type": "radio"` (they were `"switch"`, the class `vis-radio`
+  was `vis-switch`), validateDef names the old ones
+- only the footer is HTML, the names of the legends and the hover are text,
+  e.g. `\u00a0` instead of `&nbsp;`
+- form elements and their entries have their id as `data-id`, not the id
+  `container-<id>`, which was twice on a page of charts with the same form
+  elements; the class of mounted elements is `vis-mounted` (`gen-vis-attached`)
+- the hover without format has the decimal mark of the locale, e.g. `1234,5`
+  in German, it was `1234.5`; of several vertical mappings the one with a
+  hover has the values of the hover, it was the last one
+- the data attributes of the standalone script are read as their props,
+  e.g. `data-copy="false"` is off, `data-state` is JSON
+- plot types: `groupwise(groups, parent, d)` sets the path, a type with
+  `update: true` draws into its elements of the draw before, the elements of
+  the others are removed before
+
+New:
+
+- `transform`: columns computed in the browser, `year`, `align` (the day in
+  one year), `index` (e.g. of a base year of a slider), `share`, `rolling`
+  and `cumulative`, templates of the globals, see data/bev/def-index.json
+- horizontal bars (`x1` of cartesian:bar), the hover and the stacks of
+  horizontal values, the values of a second axis with a hover in the hover
+- `@y:formatted` and the prop `format` for labels of values, `@y:scaled:center`
+  the center of a band, see data/bev/def-hbar.json
+- `order` and `ranks` of the props of categories, e.g. the newest year first
+  and red, whichever year it is
+- `"symbol": "line"`, `"rect"` or `"circle"` of legends
+- `scale.inset` and `axis.tickSpacing` in pixels
+- `options.hover`: templates of the title and the rows (also without the slot
+  of Vue), `"mode": "point"` the row of the nearest point, e.g. of a scatter plot
+- every hover prop of a category is a column of the hover
+- the hover by the keyboard: a facet is in the order of the tab key, the arrows
+  move the hover, screen readers read it
+- `options.transition`: the elements move after a change of the user
+- `unmountGenVisElement`, the mount functions return the components
+
+Faster and smaller:
+
+- a change, e.g. a toggle, draws into the elements of the draw before and sets
+  only the attributes which change, a toggle of 40 lines of 1000 circles
+  340 -> 145 ms in Chrome; the hover formats only the rows it shows, the
+  highlight finds its elements once
+- the colors of d3 and the parts of maps are loaded when a chart needs them,
+  20.7 kB gzipped of a bundle of an application in chunks of their own
+- parquet is read in the columns the definition uses, 3 of 10 columns of
+  200 000 rows ~250 -> ~70 ms
+
 ## 2.0.0-alpha.1
 
 - a date without a time, e.g. `2024-06-01`, is the midnight of the time zone

@@ -19,7 +19,7 @@ the styles, and provides three global functions:
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
 
-<script src="gen-vis-2.0.0-alpha.1.js"></script>
+<script src="gen-vis-2.0.0-alpha.2.js"></script>
 <script>mountGenVisByClass('genVis')</script>
 ```
 
@@ -1027,6 +1027,9 @@ Definitions:
 - The categories of the props of a mapping are `categories`, they were
   `manual`, radio buttons are `"type": "radio"`, they were `"switch"`,
   `validateDef` names the old ones.
+- The hover without format has the decimal mark of the locale, e.g. `1234,5`
+  in German, and of several vertical mappings the one with a `hover` has the
+  values of the hover, it was the last one.
 - Only the footer is HTML, the names of the legends and the hover are text,
   an entity is the character itself, e.g. `"Ø\u00a01991\u00a0-\u00a02020"`
   instead of `"Ø&nbsp;1991&nbsp;-&nbsp;2020"`.
@@ -1043,6 +1046,8 @@ Styles: all classes start with `vis-`, see [styles](#styles):
 | `axis-name-x axis-position-left`, `axis-title`, `grid` | `vis-axis vis-axis-left` (`data-mapping="x"`), `vis-axis-title`, `vis-grid` |
 | `annotations below`, `annotation band`, `annotation-label` | `vis-plot vis-annotations vis-below`, `vis-annotation vis-band`, `vis-annotation-label` |
 | `hover` (`.title`, `.entries`, `tr.entry`, `.nearest`, `td.y`, `.value`), `hoverMarker`, `events` | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-nearest`, `td[data-mapping="y"]`, `vis-value`), `vis-hover-marker`, `vis-events` |
+| `#container-<id>` of form elements and their entries | `[data-id="<id>"]` |
+| `gen-vis-attached` (mountGenVisByClass) | `vis-mounted` |
 
 The default colors of annotations are styles, not attributes, they can be
 changed with the [css variables](#styles).
@@ -1052,7 +1057,10 @@ internal format, the groups have `rows`, `at(row)`, `prop(name)`, `attrs` and
 `complete(row)` instead of `values` and `props`, `ctx` has `rows`, `scales`
 (the d3 scales by the names of the mappings), `axis`, `stackOf` and `scope`
 instead of `data`, `info` and `relativeBases`, the nearest value of a scale
-is `scale.nearest(position)`, see [extensions](#extensions).
+is `scale.nearest(position)`, see [extensions](#extensions). `groupwise` sets
+the path of its third argument, `d(group)`, a type with `update: true` draws
+into its elements of the draw before, the elements of other types are
+removed before they are drawn again.
 
 ## Development
 
