@@ -1175,6 +1175,65 @@ describe('data formats', () => {
     });
 });
 
+describe('the hover by the keyboard', () => {
+    const press = async (el, key) => {
+        el.querySelector('svg.vis-svg').dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+        await nextTick();
+    };
+    const shown = el => [el.querySelector('.vis-hover-title')?.textContent, el.querySelector('.vis-hover tr.vis-nearest')?.textContent];
+
+    test('the arrows move the hover over the positions and the rows, escape hides it', async () => {
+        const el = await mount(GenVis, { def: lineDef(), data: lineData });
+        expect(el.querySelector('svg.vis-svg').getAttribute('tabindex')).toBe('0');
+        await press(el, 'ArrowRight');
+        // the first position, the top row
+        expect(shown(el)).toEqual(['2020', 'Tirol2,0']);
+        await press(el, 'ArrowDown');
+        expect(shown(el)).toEqual(['2020', 'Wien1,0']);
+        await press(el, 'ArrowDown');
+        expect(shown(el)).toEqual(['2020', 'Wien1,0']);
+        await press(el, 'ArrowRight');
+        // 2021 has no value of Wien
+        expect(shown(el)).toEqual(['2021', 'Tirol2,0']);
+        await press(el, 'End');
+        expect(shown(el)).toEqual(['2023', 'Wien4,0']);
+        await press(el, 'ArrowRight');
+        expect(shown(el)).toEqual(['2023', 'Wien4,0']);
+        expect(el.querySelector('[aria-live="polite"] .vis-hover')).not.toBeNull();
+
+        // a toggle by the keyboard keeps the position
+        el.querySelector('.vis-legend-entry[data-key="Wien"]').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+        await nextTick();
+        expect(shown(el)).toEqual(['2023', 'Tirol2,0']);
+
+        await press(el, 'Escape');
+        expect(el.querySelector('.vis-hover')).toBeNull();
+        await press(el, 'ArrowLeft');
+        expect(shown(el)).toEqual(['2023', 'Tirol2,0']);
+        el.querySelector('svg.vis-svg').dispatchEvent(new FocusEvent('blur'));
+        await nextTick();
+        expect(el.querySelector('.vis-hover')).toBeNull();
+    });
+
+    test('the regions of a map by their names', async () => {
+        const el = await mount(GenVis, { defFile: '/data/bev/def-map.json' });
+        await press(el, 'Home');
+        const first = shown(el)[0];
+        await press(el, 'ArrowRight');
+        const second = shown(el)[0];
+        expect([first, second].every(Boolean)).toBe(true);
+        expect(first.localeCompare(second)).toBeLessThan(0);
+    });
+
+    test('a facet without a hover is not in the order of the tab key', async () => {
+        const def = lineDef();
+        def.mapping.y.scale.orientation = undefined;
+        delete def.mapping.y.axis;
+        const el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelector('svg.vis-svg').hasAttribute('tabindex')).toBe(false);
+    });
+});
+
 describe('the hover of the nearest point', () => {
     test('the row of the nearest point within the radius, in cartesian and polar plots', async () => {
         const def = lineDef({ hover: { mode: 'point', radius: 20 } });

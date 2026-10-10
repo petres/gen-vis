@@ -184,7 +184,12 @@ visualisations, so the space of the empty elements is set by the page:
 
 Every facet is an image (`role="img"`) named by the title and the name of the
 facet, the entries of the legends are checkboxes of the keyboard, the titles
-of the form elements are their labels. The data shown can be saved as CSV:
+of the form elements are their labels. A facet with a hover is in the order
+of the tab key: the arrows to the left and the right move the hover to the
+position before and after (of a map the regions by their names, of the
+`point` mode the points from the left), the ones up and down to the row above
+and below, home and end to the first and the last position, escape hides it.
+Screen readers read the hover when it changes (`aria-live`). The data shown can be saved as CSV:
 the button of `csv` or the method `exportCsv(name)` save the rows shown (of
 the visible categories and the filter) in the columns of the mappings, with
 the values as they are in the data.
@@ -264,7 +269,7 @@ The others are `--gen-vis-marker-color` (`#AAA`, the line of the hover),
 `--gen-vis-annotation-color` (`#444` of texts, `#555` of labels, `#666` of
 circles), `--gen-vis-missing-color` (`#EEE`, the missing values of a legend),
 `--gen-vis-button-color` (`#BBB`), `--gen-vis-button-hover-color` (`#777`),
-`--gen-vis-focus-color` (`#1E4F77`, the entries of legends) and
+`--gen-vis-focus-color` (`#1E4F77`, the entries of legends and the facets) and
 `--gen-vis-error-color` (`#B00`). The colors of annotations are only the ones
 without a color of their `props`.
 

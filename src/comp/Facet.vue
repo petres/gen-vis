@@ -1,13 +1,16 @@
 <template>
     <div :style="`width: ${facet.width}px;`" class="vis-facet">
-        <svg ref="svg" :width="facet.width" :height="facet.height" class="vis-svg" role="img" :aria-label="label">
+        <!-- with a hover the facet is in the order of the tab key, the arrow keys move the hover -->
+        <svg ref="svg" :width="facet.width" :height="facet.height" class="vis-svg" role="img" :aria-label="label"
+            :tabindex="keyboard ? 0 : undefined" @keydown="key" @blur="hide?.()">
             <g ref="inner" :transform="`translate(${facet.margins.left + origin[0]} ${facet.margins.top + origin[1]})`">
                 <g :visibility="hover.visible ? 'visible' : 'hidden'" class="vis-hover-marker" ref="hoverMarker">
                     <line/>
                 </g>
             </g>
         </svg>
-        <div :style="`transform: translate(${facet.margins.left + origin[0] + hover.x}px, ${facet.margins.top + origin[1] + hover.y}px); position: absolute; top: 0; left: 0;`">
+        <!-- the hover is read by screen readers when it changes, e.g. by the keyboard -->
+        <div aria-live="polite" :style="`transform: translate(${facet.margins.left + origin[0] + hover.x}px, ${facet.margins.top + origin[1] + hover.y}px); position: absolute; top: 0; left: 0;`">
             <hover v-if="hover.visible" :title="hover.title" :data="hover.data" :side="hover.side" :payload="hover.payload"/>
         </div>
     </div>
@@ -34,7 +37,9 @@ export default {
             visible: false,
             x: 0,
             y: 0,
-        }
+        },
+        // the facet has a hover, it can be moved by the keyboard
+        keyboard: false,
     }),
     computed: {
         // the name of the chart for screen readers, the title and the facet
@@ -195,14 +200,30 @@ export default {
             this.highlighter?.(dataEntry);
         },
 
+        // the keys of the hover: the arrows to the left and the right move it
+        // to the position before and after, the ones up and down to the row
+        // above and below, home and end to the first and the last position,
+        // escape hides it
+        key(e) {
+            const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 'down', ArrowUp: 'up', Home: 'first', End: 'last' }[e.key];
+            if (e.key == 'Escape')
+                this.hide?.();
+            else if (step !== undefined && this.step) {
+                e.preventDefault();
+                this.step(step);
+            }
+        },
+
         hoverInit() {
             const { store, ctx } = this;
             const coord = store.coord;
             this.hide = null;
             this.move = null;
+            this.step = null;
 
             // the hover needs the mappings of the positions and of the values
             const names = ctx.axis;
+            this.keyboard = Boolean(names.h && names.v);
             if (!names.h || !names.v) {
                 this.hover.visible = false;
                 return;
@@ -233,6 +254,7 @@ export default {
                     this.emit('hover', null);
                 last = null;
                 this.lastEvent = null;
+                this.lastKey = null;
                 Object.assign(this.hover, { visible: false, x: 0, y: 0 });
                 marker.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null);
                 this.highlight(null);
@@ -305,17 +327,9 @@ export default {
                 nearest: nearest ? plain(nearest) : null,
             });
 
-            // the hover of the pointer, also the one of the draw before at its
-            // position, e.g. after a toggle by the keyboard
-            const move = this.move = e => {
-                // nothing under the pointer, e.g. the sea of a map, no empty or old hover
-                const found = at(e);
-                if (!found) {
-                    hide();
-                    return;
-                }
+            // the hover of the rows of a position and the nearest one
+            const show = found => {
                 this.hover.visible = true;
-                this.lastEvent = e;
                 const { key, value, rows, nearest } = found;
 
                 // the same key and row as before, e.g. a move within a step
@@ -342,6 +356,59 @@ export default {
                 this.emit('hover', p);
             };
 
+            // the hover of the pointer, also the one of the draw before at its
+            // position, e.g. after a toggle by the keyboard
+            const move = this.move = e => {
+                // nothing under the pointer, e.g. the sea of a map, no empty or old hover
+                const found = at(e);
+                if (!found) {
+                    hide();
+                    return;
+                }
+                this.lastEvent = e;
+                this.lastKey = null;
+                show(found);
+            };
+
+            // the positions with rows in their order, e.g. from the left to
+            // the right, the ones of a map by their titles, and of the points
+            // their order from the left, the rows of a position as in the table
+            let positions = null;
+            const positionsOf = () => {
+                if (pointMode) {
+                    nearestPoint([0, 0]);
+                    return [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1])
+                        .map(point => ({ key: point[2][names.h], rows: [point[2]], point }));
+                }
+                const s = ctx.scales[names.h];
+                const order = stackOf ? row => d3.mean(stackOf(row)) : row => row[v];
+                const all = [...rowsByKey.values()].map(rows => ({
+                    key: rows[0][names.h],
+                    rows: [...rows].sort((a, b) => order(b) - order(a)),
+                }));
+                return s ? all.sort((a, b) => s(a.key) - s(b.key))
+                    : all.sort((a, b) => String(titleOf(a.key)).localeCompare(String(titleOf(b.key))));
+            };
+            const showKey = (index, row) => {
+                positions ??= positionsOf();
+                if (positions.length == 0)
+                    return;
+                const i = Math.max(0, Math.min(positions.length - 1, index));
+                const { key, rows, point } = positions[i];
+                const r = Math.max(0, Math.min(rows.length - 1, row));
+                this.lastEvent = null;
+                this.lastKey = { index: i, row: r };
+                show({ key, rows, nearest: rows[r], point });
+            };
+            this.step = step => {
+                const current = this.lastKey;
+                if (step == 'first' || step == 'last')
+                    return showKey(step == 'first' ? 0 : Infinity, 0);
+                if (step == 'up' || step == 'down')
+                    return current ? showKey(current.index, current.row + (step == 'down' ? 1 : -1)) : showKey(0, 0);
+                showKey(current ? current.index + step : (step > 0 ? 0 : Infinity), 0);
+            };
+
             // mouse, touch and pen, vertical swipes still scroll the page
             coord.hover.area(ctx, ctx.inner)
                 .attr("class", "vis-events")
@@ -364,6 +431,8 @@ export default {
             // the hover of the draw before with the rows of this one
             if (this.hover.visible && this.lastEvent)
                 move(this.lastEvent);
+            else if (this.hover.visible && this.lastKey)
+                showKey(this.lastKey.index, this.lastKey.row);
             else
                 this.hover.visible = false;
         }
@@ -376,6 +445,11 @@ export default {
     .vis-facet {
         position: relative;
         display: inline-block;
+        // the focus of the keyboard, e.g. to move the hover
+        .vis-svg:focus-visible {
+            outline: 2px solid var(--gen-vis-focus-color, #1E4F77);
+            outline-offset: 1px;
+        }
         :deep(svg) {
             g.vis-axis-bottom g.tick line {transform: translate(0px, -4px);}
             g.vis-axis-top g.tick line {transform: translate(0px, 5px);}
