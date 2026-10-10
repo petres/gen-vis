@@ -318,7 +318,10 @@ CSV or JSON by the content. `dataFormat` sets it, e.g. for an url of an api:
 ```
 
 Parquet is read with [hyparquet](https://github.com/hyparam/hyparquet) (no
-wasm), it is only loaded for parquet data. Integers of 64 bits are numbers,
+wasm), it is only loaded for parquet data. Only the columns the definition
+can use are read: the ones of the mappings (also of the patches of form
+elements, a column template in every value of its globals) and of the values
+of form elements, so a wide file costs only its columns which are used. Integers of 64 bits are numbers,
 unless they are too large for them, e.g. ids, then they are strings,
 timestamps are the ones of the other formats and dates (without a time) are
 strings as the ones of csv, e.g. `2024-06-01`, see `type` of

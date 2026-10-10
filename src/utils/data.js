@@ -1,7 +1,7 @@
-export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, filter, stack, categoryOrder, toDate, addDataValues };
+export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, filter, stack, categoryOrder, toDate, addDataValues, usedColumns };
 
 import * as d3 from "@/utils/d3";
-import { fillTemplate, sameValue } from "@/utils/def";
+import { fillTemplate, sameValue, templateRefs } from "@/utils/def";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
@@ -16,12 +16,12 @@ const isBinary = data => data instanceof ArrayBuffer || ArrayBuffer.isView(data)
  * The rows of the data: binary data is parquet, strings are parsed in their
  * `format`, without one as JSON (a list of rows) or CSV by their content,
  * already parsed rows are passed through. The parquet reader is only loaded
- * for parquet data.
+ * for parquet data, it reads only the `columns` given, all without them.
  */
-const parseData = async (data, format) => {
+const parseData = async (data, format, columns = null) => {
     if (isBinary(data)) {
         const { parseParquet } = await import('@/utils/parquet.js');
-        return parseParquet(data);
+        return parseParquet(data, columns);
     }
     if (typeof data != "string")
         return data;
@@ -218,6 +218,43 @@ const filter = (data, conditions) => {
     });
 };
 
+
+/**
+ * The columns of the data a definition can use, null if they are not known:
+ * the ones of the mappings, also of the patches of form elements, and of the
+ * values of form elements. A column template is a column of every value of
+ * its globals, e.g. "{values}{share}" of the entries of two form elements,
+ * a global of a form element with the values of a column has unknown ones.
+ */
+const usedColumns = def => {
+    const elements = def.formElements ?? [];
+    // the values of a global, the one of the definition and the ones of its form elements
+    const valuesOf = ref => {
+        const own = elements.filter(e => e.ref == ref);
+        if (own.some(e => !Array.isArray(e.values)))
+            return null;
+        return [...new Set([def.globals?.[ref], ...own.flatMap(e => e.values.map(v => v.value))].map(String))];
+    };
+    const expand = column => {
+        if (typeof column != 'string')
+            return [];
+        let columns = [column];
+        for (const ref of new Set(templateRefs(column))) {
+            const values = valuesOf(ref);
+            if (values === null)
+                return null;
+            columns = columns.flatMap(c => values.map(v => c.replaceAll(`{${ref}}`, v)));
+        }
+        return columns;
+    };
+    const columns = [
+        ...Object.values(def.mapping ?? {}).map(m => m?.column),
+        ...elements.flatMap(e => Array.isArray(e.values) ? e.values.flatMap(v => Object.values(v.mapping ?? {}).map(m => m?.column)) : []),
+    ].map(expand);
+    if (columns.includes(null))
+        return null;
+    return [...new Set([...columns.flat(), ...elements.map(e => e.values?.column).filter(c => typeof c == 'string')])];
+};
 
 // the entries of form elements with the values of a column of the rows, e.g.
 // "values": { "column": "year" }, distinct and ascending, numbers by their

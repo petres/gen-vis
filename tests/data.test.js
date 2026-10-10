@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { addDataValues, categoryOrder, dataFormat, filter, groupBy, parseData, prepareData, stack, updateData } from '@/utils/data';
+import { addDataValues, categoryOrder, dataFormat, filter, groupBy, parseData, prepareData, stack, updateData, usedColumns } from '@/utils/data';
 
 const def = {
     mapping: {
@@ -82,6 +82,45 @@ describe('parseData', () => {
             const buffer = parquetWriteBuffer({ codec, compressors, columnData: [{ name: 'a', data: [1, 2], type: 'INT32' }] });
             expect(await parseData(buffer)).toEqual([{ a: 1 }, { a: 2 }]);
         }
+    });
+
+    test('parquet in the columns which are used, all without them or if none is in the file', async () => {
+        const buffer = parquetWriteBuffer({ columnData: [
+            { name: 'a', data: [1, 2], type: 'INT32' },
+            { name: 'b', data: ['x', 'y'], type: 'STRING' },
+            { name: 'c', data: [1.5, 2.5], type: 'DOUBLE' },
+        ] });
+        expect(await parseData(buffer, 'parquet', ['a', 'c', 'missing'])).toEqual([{ a: 1, c: 1.5 }, { a: 2, c: 2.5 }]);
+        expect(await parseData(buffer, 'parquet')).toEqual([{ a: 1, b: 'x', c: 1.5 }, { a: 2, b: 'y', c: 2.5 }]);
+        expect(await parseData(buffer, 'parquet', ['missing'])).toHaveLength(2);
+    });
+});
+
+describe('the columns a definition uses', () => {
+    test('of the mappings, the patches and the values of form elements', () => {
+        expect(usedColumns({
+            mapping: { x: { column: 'year' }, y: { column: 'value' }, c: { column: 'land' } },
+            formElements: [
+                { ref: 'col', values: [{ value: 'a' }, { value: 'b', mapping: { y: { column: 'share' } } }] },
+                { ref: 'year', values: { column: 'jahr' } },
+            ],
+        })).toEqual(['year', 'value', 'land', 'share', 'jahr']);
+    });
+
+    test('a template is a column of every value of its globals', () => {
+        expect(usedColumns({
+            globals: { values: 'twh', share: '', other: 'x' },
+            mapping: { y: { column: '{values}{share}' }, z: { column: 'z.{other}' } },
+            formElements: [
+                { ref: 'values', values: [{ value: 'twh' }, { value: 'co2' }] },
+                { ref: 'share', values: [{ value: '' }, { value: '.share' }] },
+            ],
+        })).toEqual(['twh', 'twh.share', 'co2', 'co2.share', 'z.x']);
+        // the values of a column are not known before the data
+        expect(usedColumns({
+            mapping: { y: { column: 'value.{year}' } },
+            formElements: [{ ref: 'year', values: { column: 'year' } }],
+        })).toBeNull();
     });
 });
 

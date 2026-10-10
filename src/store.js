@@ -2,7 +2,7 @@ export { createStore, resolveUrl, resolveParents, clearCache };
 
 import { reactive, markRaw, toRaw } from 'vue';
 
-import { addDataValues, dataFormat, parseData, prepareData, updateData } from "@/utils/data";
+import { addDataValues, dataFormat, parseData, prepareData, updateData, usedColumns } from "@/utils/data";
 import { applyFormElements, fillText, formatOf, mergeAll, prepareDef } from "@/utils/def";
 import { applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
@@ -125,7 +125,8 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         format = dataFormat(dataUrl, format);
         data = await fetchData(dataUrl, format);
     }
-    const rows = raw(await parseData(data, format));
+    // parquet is read in the columns which are used
+    const rows = raw(await parseData(data, format, usedColumns(defOrg)));
 
     const [, coord, geoModule] = await parts;
 
