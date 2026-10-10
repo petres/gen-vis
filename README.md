@@ -1,5 +1,9 @@
 # gen-vis
 
+**[Examples](https://petres.github.io/gen-vis/)**: five charts of different
+looks, their definitions and CSS can be edited on the page, the charts follow
+as you type.
+
 A declarative d3 visualisation library: a chart is described by a JSON
 definition (the *def*) and a data file (CSV, TSV, JSON or parquet). Line,
 point, bar, stacked bar and area charts, polar plots (e.g. radar and rose
