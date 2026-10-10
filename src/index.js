@@ -1,4 +1,4 @@
-export { GenVis, mountGenVisElement, mountGenVisByClass, registerPlotType, registerCoord, groupwise, pointwise };
+export { GenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, registerCoord, groupwise, pointwise };
 
 import { createApp } from 'vue'
 import GenVis from '@/comp/App.vue'
@@ -36,20 +36,36 @@ const attributeValue = (name, value) => {
     return value;
 };
 
+// the apps of the mounted elements, see unmountGenVisElement
+const apps = new WeakMap();
+
 // the props are taken from the data attributes, e.g. data-def-file="def.json",
-// and `props`, e.g. { onSelect: e => ... } of the events
+// and `props`, e.g. { onSelect: e => ... } of the events, returns the
+// component, e.g. for its methods, an element mounted before is mounted anew
 const mountGenVisElement = (element, props = {}) => {
+    unmountGenVisElement(element);
     const attributes = Object.fromEntries(element.getAttributeNames()
         .filter(name => name.startsWith('data-'))
         .map(name => [name.substring(5), attributeValue(name.substring(5), element.getAttribute(name))]));
-    return createApp(GenVis, { ...attributes, ...props }).mount(element);
+    const app = createApp(GenVis, { ...attributes, ...props });
+    apps.set(element, app);
+    element.classList.add('vis-mounted');
+    return app.mount(element);
 }
 
-const mountGenVisByClass = cl => {
-    for (const e of document.getElementsByClassName(cl)) {
-        if (!e.classList.contains('vis-mounted')) {
-            e.classList.add('vis-mounted')
-            mountGenVisElement(e);
-        }
-    }
+// removes the visualisation of a mounted element, e.g. before a page removes
+// the element, false if it is not mounted
+const unmountGenVisElement = element => {
+    const app = apps.get(element);
+    if (!app)
+        return false;
+    app.unmount();
+    apps.delete(element);
+    element.classList.remove('vis-mounted');
+    return true;
 }
+
+// the elements of the class which are not mounted yet, returns their components
+const mountGenVisByClass = cl => [...document.getElementsByClassName(cl)]
+    .filter(e => !e.classList.contains('vis-mounted'))
+    .map(e => mountGenVisElement(e));

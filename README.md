@@ -14,7 +14,7 @@ charts) and maps with legends, hover, facets and form elements are supported.
 ### Standalone script
 
 `npm run lib` builds `dist-lib/gen-vis-<version>.js`. It includes Vue, d3 and
-the styles, and provides two global functions:
+the styles, and provides three global functions:
 
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
@@ -24,7 +24,11 @@ the styles, and provides two global functions:
 ```
 
 `mountGenVisByClass(className)` mounts all elements with the class which are
-not mounted yet (they get the class `vis-mounted`), `mountGenVisElement(element, props)` mounts a single element.
+not mounted yet (they get the class `vis-mounted`) and returns their
+components, `mountGenVisElement(element, props)` mounts a single element
+(again, if it is mounted) and returns its component, e.g. for its
+[methods](#png), `unmountGenVisElement(element)` removes the visualisation,
+e.g. before a page of a single page application removes the element.
 The props are taken from the `data-` attributes, see below, and from `props`,
 e.g. the events:
 
@@ -47,8 +51,8 @@ app.use(GenVis);
 
 `import { GenVis } from '@preschen/gen-vis'` registers the component
 locally instead. `vue` is a peer dependency, the package uses the Vue of the
-application. `mountGenVisElement` and `mountGenVisByClass` are exported as
-well.
+application. `mountGenVisElement`, `mountGenVisByClass` and
+`unmountGenVisElement` are exported as well.
 
 Parts which not every chart needs are loaded when a chart needs them, so a
 bundler of the application puts them into chunks of their own: the colors of

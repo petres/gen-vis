@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { createApp, h, nextTick, ref } from 'vue';
-import { GenVis, mountGenVisElement, registerPlotType, pointwise } from '@/index.js';
+import { GenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, pointwise } from '@/index.js';
 import { plotTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import * as d3 from 'd3-scale-chromatic';
@@ -386,6 +386,32 @@ describe('rendering', () => {
         mountGenVisElement(el);
         await rendered(el);
         expect(el.querySelector('.vis-header .vis-title').textContent).toBe('Bevölkerung');
+    });
+
+    test('the elements of a class are mounted once, an element is unmounted', async () => {
+        const els = [1, 2].map(() => {
+            const el = document.body.appendChild(document.createElement('div'));
+            el.className = 'chart';
+            el.dataset.defFile = '/data/bev/def.json';
+            return el;
+        });
+        const charts = mountGenVisByClass('chart');
+        expect(charts).toHaveLength(2);
+        expect(mountGenVisByClass('chart')).toHaveLength(0);
+        await Promise.all(els.map(rendered));
+        expect(els.every(e => e.classList.contains('vis-mounted'))).toBe(true);
+        const removed = vi.spyOn(document, 'removeEventListener');
+
+        expect(unmountGenVisElement(els[0])).toBe(true);
+        expect(els[0].innerHTML).toBe('');
+        expect(els[0].classList.contains('vis-mounted')).toBe(false);
+        // the listener of the hover of the facet
+        expect(removed).toHaveBeenCalledWith('pointerdown', expect.any(Function));
+        expect(unmountGenVisElement(els[0])).toBe(false);
+        // again
+        expect(mountGenVisByClass('chart')).toHaveLength(1);
+        await rendered(els[0]);
+        expect(els[0].querySelector('.vis-title').textContent).toBe('Bevölkerung');
     });
 
     test('the values of the data attributes: flags, names of files and the state as JSON', async () => {
