@@ -185,6 +185,13 @@ the styles, e.g.:
 .vis-subtitle { font-size: 15px; }
 ```
 
+The charts fill the width of `.vis` inside its padding and border, so the
+page can style it as a card:
+
+```css
+.vis { padding: 20px; border-radius: 12px; background: white; }
+```
+
 All classes of the package start with `vis-`, so styles of the page for
 other elements do not apply to them, e.g. `.title` of a CSS framework:
 

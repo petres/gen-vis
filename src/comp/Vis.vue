@@ -71,6 +71,14 @@ import ColorLegend from '@/comp/ColorLegend.vue';
 import SlotContent from '@/comp/SlotContent.vue';
 import FormElement from '@/comp/FormElement.vue';
 
+// the width of the visualisation inside its padding and border, e.g. of a card
+// styled by the page, the svg fills only this part
+const innerWidth = el => {
+    const style = getComputedStyle(el);
+    const sides = ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth']
+        .reduce((sum, p) => sum + (parseFloat(style[p]) || 0), 0);
+    return el.getBoundingClientRect().width - sides;
+};
 
 export default {
     inject: ['store', 'slots', 'files'],
@@ -153,11 +161,11 @@ export default {
             this.measure();
         },
         measure() {
-            this.options.width = this.store.def.options.width || this.$refs.vis.getBoundingClientRect().width;
+            this.options.width = this.store.def.options.width || innerWidth(this.$refs.vis);
             this.store.totalWidth = this.options.width;
         },
         resized() {
-            const width = this.$refs.vis?.getBoundingClientRect().width;
+            const width = this.$refs.vis && innerWidth(this.$refs.vis);
             if (!width || width == this.options.width)
                 return;
             this.measure();

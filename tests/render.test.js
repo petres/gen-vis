@@ -366,6 +366,20 @@ describe('rendering', () => {
         expect(plotElements(el)).toBeGreaterThan(0);
     });
 
+    test('the svg fills the visualisation inside its padding and border, e.g. of a card of the page', async () => {
+        const style = document.head.appendChild(document.createElement('style'));
+        style.textContent = '.vis { padding: 10px 20px; border: 3px solid black; }';
+        try {
+            const def = lineDef();
+            delete def.options.width;
+            const el = await mount(GenVis, { def, data: lineData });
+            // the elements are 800 pixels wide in the tests
+            expect(el.querySelector('svg.vis-svg').getAttribute('width')).toBe(String(800 - 2*20 - 2*3));
+        } finally {
+            style.remove();
+        }
+    });
+
     test('mountGenVisElement takes the props from the data attributes', async () => {
         const el = document.body.appendChild(document.createElement('div'));
         el.dataset.defFile = '/data/bev/def.json';
