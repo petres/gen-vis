@@ -71,6 +71,14 @@ describe('parseData', () => {
         expect(await parseData(buffer)).toEqual([{ day: '2020-01-01' }, { day: '2021-06-15' }, { day: null }]);
     });
 
+    test('parquet, timestamps without a time zone are the strings of csv, so they are the same time everywhere', async () => {
+        const buffer = parquetWriteBuffer({
+            columnData: [{ name: 'ts', data: [BigInt(Date.UTC(2024, 5, 1, 13)), null] }],
+            schema: [{ name: 'root', num_children: 1 }, { name: 'ts', type: 'INT64', logical_type: { type: 'TIMESTAMP', isAdjustedToUTC: false, unit: 'MILLIS' }, repetition_type: 'OPTIONAL' }],
+        });
+        expect(await parseData(buffer)).toEqual([{ ts: '2024-06-01T13:00:00.000' }, { ts: null }]);
+    });
+
     test('parquet with other compressions than snappy, e.g. zstd of polars', async () => {
         // the writer only has snappy
         const compressors = {
@@ -161,6 +169,29 @@ describe('prepareData', () => {
         } finally {
             process.env.TZ = zone;
         }
+    });
+
+    test('a date and a time without a time zone are the ones of the time zone of the scale', () => {
+        const zone = process.env.TZ;
+        try {
+            process.env.TZ = 'America/New_York';
+            const mapping = type => ({ mapping: { t: { column: 'date', type: 'date', scale: { type } } } });
+            const rows = ['2024-06-01 13:00', '2024-06-01T13:00:00', '2024-06-01T13:00:00.5', '2024-06-01 25:00', '2024-06-01T13:00:00+02:00'].map(date => ({ date }));
+            expect(prepareData(rows, mapping('utc')).map(r => r.t)).toEqual([
+                Date.UTC(2024, 5, 1, 13), Date.UTC(2024, 5, 1, 13), Date.UTC(2024, 5, 1, 13, 0, 0, 500), null, Date.UTC(2024, 5, 1, 11),
+            ]);
+            expect(prepareData(rows, mapping('time')).map(r => r.t)).toEqual([
+                new Date(2024, 5, 1, 13).getTime(), new Date(2024, 5, 1, 13).getTime(), new Date(2024, 5, 1, 13, 0, 0, 500).getTime(), null, Date.UTC(2024, 5, 1, 11),
+            ]);
+        } finally {
+            process.env.TZ = zone;
+        }
+    });
+
+    test('dates of the day first, e.g. German, not the month as of Date.parse', () => {
+        const mapping = { mapping: { t: { column: 'date', type: 'date', scale: { type: 'utc' } } } };
+        expect(prepareData(['01.06.2024', '1.6.2024 13:05', '31.02.2024'].map(date => ({ date })), mapping).map(r => r.t))
+            .toEqual([Date.UTC(2024, 5, 1), Date.UTC(2024, 5, 1, 13, 5), null]);
     });
 
     test('missing and invalid values are null, not 0', () => {

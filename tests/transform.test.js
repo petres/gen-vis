@@ -23,6 +23,22 @@ describe('transforms', () => {
             .toEqual(['2024-02-28T13:05:00', '2024-02-29']);
     });
 
+    test('the year and the day of dates of a utc scale are the ones of UTC', () => {
+        const zone = process.env.TZ;
+        try {
+            process.env.TZ = 'Europe/Vienna';
+            const dates = [{ d: '2023-12-31T23:30:00Z' }, { d: '2024-03-30T23:30:00Z' }, { d: '2024-06-01 13:00' }];
+            const transforms = [{ type: 'year', column: 'd', as: 'year' }, { type: 'align', column: 'd', as: 'day' }];
+            const local = applyTransforms(dates, transforms);
+            expect(local.get('year')).toEqual([2024, 2024, 2024]);
+            const utc = applyTransforms(dates, transforms, {}, new Set(['d']));
+            expect(utc.get('year')).toEqual([2023, 2024, 2024]);
+            expect(utc.get('day')).toEqual(['2020-12-31T23:30:00', '2020-03-30T23:30:00', '2020-06-01T13:00:00']);
+        } finally {
+            process.env.TZ = zone;
+        }
+    });
+
     test('an index of the mean of the base in the groups, a column of a transform before, a global', () => {
         const transforms = [
             { type: 'year', column: 'date', as: 'year' },

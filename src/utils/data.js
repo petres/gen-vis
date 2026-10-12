@@ -44,30 +44,38 @@ const toNumber = v => {
     return isNaN(n) ? null : n;
 };
 
-// a date without a time, e.g. "2022-06-01", "2022-06" or "2022"
-const dateOnly = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/;
+// a date without a time zone: of ISO, e.g. "2022-06-01", "2022-06", "2022"
+// or "2022-06-01 13:00:00" (also with a T and the fraction of a second), and
+// the day first of German and other languages, e.g. "01.06.2022 13:00"
+const isoDate = /^(\d{4})(?:-(\d{2})(?:-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:[.,](\d+))?)?)?)?)?$/;
+const dayFirst = /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2})(?:[.,](\d+))?)?)?$/;
 
-// the midnight of a date without a time, local or UTC, NaN if it does not
-// exist, e.g. "2022-02-30", which Date.parse reads as the 2nd of March
-const midnight = ([, y, m = 1, d = 1], utc) => {
+// the time of a date and a time of the time zone of a scale, local or UTC,
+// NaN if it does not exist, e.g. "2022-02-30", which Date.parse reads as the
+// 2nd of March
+const wallTime = (utc, y, m = 1, d = 1, h = 0, mi = 0, s = 0, fraction = '') => {
     // years before 100 are not the ones of 1900, as of new Date(y, m, d)
     const date = new Date(0);
+    const ms = Math.round(Number(`0.${fraction || 0}`)*1000);
     if (utc) {
         date.setUTCFullYear(+y, m - 1, +d);
+        date.setUTCHours(+h, +mi, +s, ms);
     } else {
         date.setFullYear(+y, m - 1, +d);
-        date.setHours(0, 0, 0, 0);
+        date.setHours(+h, +mi, +s, ms);
     }
     const [year, month, day] = utc
         ? [date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()]
         : [date.getFullYear(), date.getMonth(), date.getDate()];
-    return year == +y && month == m - 1 && day == +d ? date.getTime() : NaN;
+    const valid = year == +y && month == m - 1 && day == +d && +h < 24 && +mi < 60 && +s < 60;
+    return valid ? date.getTime() : NaN;
 };
 
-// dates are strings, timestamps or Date objects. Date.parse reads a date
-// without a time as midnight UTC, so it is the day before west of UTC in the
-// local time of a `time` scale, it is the midnight of the time zone of the
-// scale, local or UTC (`utc`), so it is the same day everywhere
+// dates are strings, timestamps or Date objects. A date without a time zone,
+// e.g. "2024-06-01" or "2024-06-01 13:00", is the one of the time zone of the
+// scale, local or UTC (`utc`), so it is the same day everywhere (Date.parse
+// reads a date without a time as midnight UTC, the day before west of UTC
+// in local time). Others are read by Date.parse, e.g. with a time zone.
 const toDate = (v, utc = false) => {
     if (missing(v))
         return null;
@@ -77,8 +85,11 @@ const toDate = (v, utc = false) => {
     else if (typeof v == 'number' || typeof v == 'bigint')
         t = Number(v);
     else {
-        const day = dateOnly.exec(String(v).trim());
-        t = day ? midnight(day, utc) : Date.parse(v);
+        const text = String(v).trim();
+        const iso = isoDate.exec(text);
+        const day = !iso && dayFirst.exec(text);
+        t = iso ? wallTime(utc, ...iso.slice(1).map(p => p ?? undefined))
+            : (day ? wallTime(utc, day[3], day[2], day[1], ...day.slice(4).map(p => p ?? undefined)) : Date.parse(text));
     }
     return isNaN(t) ? null : t;
 };

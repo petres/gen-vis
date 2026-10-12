@@ -1,4 +1,4 @@
-export { applyTransforms, transformTypes, transformColumns, transformGlobals };
+export { applyTransforms, transformTypes, transformColumns, transformGlobals, utcColumns };
 
 import { toDate } from "@/utils/data";
 import { fillTemplate, templateRefs } from "@/utils/def";
@@ -12,7 +12,8 @@ import { fillTemplate, templateRefs } from "@/utils/def";
  * in the order of the column `order` (by default the one of the rows). The
  * columns of the transforms before are columns of the later ones and of the
  * mappings. Strings of a transform are templates of the globals, e.g.
- * "{base}", it is computed again if the globals change.
+ * "{base}", it is computed again if the globals change. Dates are the ones
+ * of the time zone of the scale of `column` or `as`, local or UTC (`utc`).
  */
 
 const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
@@ -24,18 +25,26 @@ const toNumber = v => {
 
 // the comparable values of a column: numbers if all are numbers, otherwise
 // timestamps of dates if all are dates, otherwise strings
-const comparable = values => {
+const comparable = (values, utc = false) => {
     const present = values.filter(v => !missing(v));
     if (present.every(v => toNumber(v) !== null))
         return v => toNumber(v);
-    if (present.every(v => toDate(v) !== null))
-        return v => toDate(v);
+    if (present.every(v => toDate(v, utc) !== null))
+        return v => toDate(v, utc);
     return v => missing(v) ? null : String(v);
+};
+
+// the parts of a date in the time zone of the scale, local or UTC
+const partsOf = (time, utc) => {
+    const d = new Date(time);
+    return utc
+        ? { year: d.getUTCFullYear(), month: d.getUTCMonth(), day: d.getUTCDate(), hours: d.getUTCHours(), minutes: d.getUTCMinutes(), seconds: d.getUTCSeconds() }
+        : { year: d.getFullYear(), month: d.getMonth(), day: d.getDate(), hours: d.getHours(), minutes: d.getMinutes(), seconds: d.getSeconds() };
 };
 
 // the indexes of the rows by the values of the columns `by`, as strings, in
 // the order of the column `order`, rows without a value of it at the end
-const groupsOf = (n, get, by, order) => {
+const groupsOf = (n, get, by, order, utc) => {
     const groups = new Map();
     for (let i = 0; i < n; i++) {
         const key = JSON.stringify(by.map(c => String(get(i, c) ?? '')));
@@ -45,7 +54,7 @@ const groupsOf = (n, get, by, order) => {
     }
     if (order) {
         const values = Array.from({ length: n }, (_, i) => get(i, order));
-        const value = comparable(values);
+        const value = comparable(values, utc);
         const keys = values.map(value);
         const rank = v => v === null ? Infinity : v;
         groups.forEach(g => g.sort((a, b) => {
@@ -64,23 +73,23 @@ const dateOnly = /^\d{4}(-\d{2}(-\d{2})?)?$/;
 
 const transformTypes = {
     // the year of a date, e.g. 2024 of "2024-06-01"
-    year: (t, { n, values }) => Array.from({ length: n }, (_, i) => {
-        const time = toDate(values(i));
-        return time === null ? null : new Date(time).getFullYear();
+    year: (t, { n, values, utc }) => Array.from({ length: n }, (_, i) => {
+        const time = toDate(values(i), utc);
+        return time === null ? null : partsOf(time, utc).year;
     }),
 
     // the same day and time of a date in the year `year` (2020 by default,
     // a leap year, so the 29th of February is kept), e.g. to compare the
     // years of daily data, a date without a time is one without a time
-    align: (t, { n, values }) => Array.from({ length: n }, (_, i) => {
+    align: (t, { n, values, utc }) => Array.from({ length: n }, (_, i) => {
         const v = values(i);
-        const time = toDate(v);
+        const time = toDate(v, utc);
         if (time === null)
             return null;
-        const d = new Date(time);
-        const day = `${pad(t.year ?? 2020, 4)}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const d = partsOf(time, utc);
+        const day = `${pad(t.year ?? 2020, 4)}-${pad(d.month + 1)}-${pad(d.day)}`;
         return typeof v == 'string' && dateOnly.test(v.trim()) ? day
-            : `${day}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+            : `${day}T${pad(d.hours)}:${pad(d.minutes)}:${pad(d.seconds)}`;
     }),
 
     // the values relative to the mean of the values of the rows of `base`
@@ -157,9 +166,10 @@ const transformGlobals = transforms => [...new Set(templateRefs(JSON.stringify(t
 
 /**
  * The columns of the transforms, a Map of the names of the columns to their
- * values, one per row, `globals` are the values of the templates.
+ * values, one per row, `globals` are the values of the templates, `utc` the
+ * columns of dates of `utc` scales, see utcColumns.
  */
-const applyTransforms = (rows, transforms = [], globals = {}) => {
+const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set()) => {
     const columns = new Map();
     const get = (i, c) => columns.has(c) ? columns.get(c)[i] : rows[i][c];
     for (const raw of [transforms].flat()) {
@@ -169,13 +179,14 @@ const applyTransforms = (rows, transforms = [], globals = {}) => {
             throw new Error(`Unknown transform '${t.type}', expected one of ${Object.keys(transformTypes).map(n => `'${n}'`).join(', ')}`);
         const n = rows.length;
         const values = i => get(i, t.column);
+        const inUtc = utc.has(t.column) || utc.has(t.as ?? t.column);
         const by = [t.by ?? []].flat();
         // the rows of the base of an index, e.g. { "year": "2019" } or a range
         // of the comparable values of a column, e.g. { "date": ["2019-01-01", "2019-12-31"] }
         const conditions = Object.entries(t.base ?? {}).map(([c, v]) => {
             if (!Array.isArray(v))
                 return i => String(get(i, c)) === String(v);
-            const value = comparable([...Array.from({ length: n }, (_, i) => get(i, c)), ...v.filter(e => e !== null)]);
+            const value = comparable([...Array.from({ length: n }, (_, i) => get(i, c)), ...v.filter(e => e !== null)], inUtc);
             const [from, to] = v.map(e => e === null ? null : value(e));
             return i => {
                 const x = value(get(i, c));
@@ -186,12 +197,19 @@ const applyTransforms = (rows, transforms = [], globals = {}) => {
             n,
             values,
             numbers: i => toNumber(values(i)),
-            groups: groupsOf(n, get, by, t.order),
+            groups: groupsOf(n, get, by, t.order, inUtc),
             matches: i => conditions.every(c => c(i)),
+            utc: inUtc,
         }));
     }
     return columns;
 };
+
+// the columns of the mappings of dates of `utc` scales, with the values of
+// the globals, the transforms of them are in UTC
+const utcColumns = def => new Set(Object.values(def.mapping ?? {})
+    .filter(m => m?.scale?.type == 'utc' && typeof m.column == 'string')
+    .map(m => fillTemplate(m.column, def.globals ?? {})));
 
 // the columns of the data the transforms use, e.g. for parquet, the ones of
 // the transforms themselves are no columns of the data
