@@ -1900,6 +1900,37 @@ describe('fixed bugs', () => {
     const stackData = 'year,value,land,type\n2020,5,Wien,a\n2020,2,Wien,b\n2021,8,Wien,a\n2021,2,Wien,b';
     const rects = el => [...el.querySelectorAll('g.vis-plot rect')].map(r => ['x', 'y', 'width', 'height'].map(a => parseFloat(r.getAttribute(a))));
 
+    test('the defaults of the height, the columns of the facets and the offset of the title of an axis', async () => {
+        const def = lineDef();
+        delete def.options.height;
+        delete def.mapping.x.axis.title.offset;
+        def.facets = { dim: 'c' };
+        const el = await mount(GenVis, { def, data: lineData });
+        expect([...el.querySelectorAll('svg.vis-svg')].map(s => [s.getAttribute('width'), s.getAttribute('height')])).toEqual([['600', '400'], ['600', '400']]);
+        // 8 pixels above the bottom of the margin of 40
+        expect(el.querySelector('.vis-axis-title').getAttribute('transform')).toBe('translate(275 382)');
+        expect(errors).toEqual([]);
+    });
+
+    test('a definition which can not be drawn is an error of the part', async () => {
+        const message = async def => (await mount(GenVis, { def, data: lineData })).querySelector('.vis-error')?.textContent;
+        const def = lineDef();
+        def.mapping.y.hover = true;
+        expect(await message(def)).toBe('mapping.y.hover: expected an object, e.g. {}');
+        expect(await message({ ...lineDef(), facets: { dim: 'x' } })).toMatch(/^facets.dim: the facets are the categories of a mapping with props/);
+        expect(await message({ ...lineDef(), plot: [null] })).toMatch(/^plot\[0\]: expected a plot/);
+    });
+
+    test('a legend of a mapping of positions, a locale of null', async () => {
+        const def = lineDef({ locale: null });
+        def.mapping.y.legend = {};
+        def.plot[0].categories = 'c';
+        const el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelector('.vis-error')).toBeNull();
+        expect(el.querySelectorAll('g.vis-plot path')).toHaveLength(2);
+        expect(errors.filter(e => !e.includes('validateDef') && !e.includes('a legend needs'))).toEqual([]);
+    });
+
     test('form elements of a definition without globals', async () => {
         const def = lineDef();
         def.formElements = [{ id: 'col', name: 'Wert', ref: 'col', type: 'radio', values: [

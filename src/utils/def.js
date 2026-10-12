@@ -73,7 +73,20 @@ const symbolOf = (symbol, names) => {
     return { size, elements: [{ type, props: { ...shapes[type], ...props } }] };
 };
 
-const prepareMapping = m => {
+const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
+
+// an entry of a definition which is an object, e.g. a mapping or a plot, an
+// error otherwise, e.g. of null, `path` names it
+const object = (v, path, expected) => {
+    if (!isObject(v))
+        throw new Error(`${path}: expected ${expected}`);
+    return v;
+};
+
+const prepareMapping = (m, name) => {
+    object(m, `mapping.${name}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`);
+    ['scale', 'axis', 'legend', 'hover', 'props'].filter(k => m[k] !== undefined)
+        .forEach(k => object(m[k], `mapping.${name}.${k}`, 'an object, e.g. {}'));
     if (m.props) {
         // the props of a category: the color of a scheme in the order of the
         // categories, e.g. Tableau10, the common ones, the ones of its rank,
@@ -127,7 +140,7 @@ const prepareMapping = m => {
 // the annotations are plots of a row of their values, of the types of
 // plots/annotations.js, below the axes and the plots, `above` above the plots
 const annotationPlots = (annotations = []) => [annotations].flat().map((a, i) => {
-    const { type, props = {}, above, facet, ...row } = a;
+    const { type, props = {}, above, facet, ...row } = object(a, `annotations[${i}]`, 'an annotation, e.g. { "type": "line", "y": 0 }');
     return {
         type: `annotation:${type}`,
         id: `annotation-${i}`,
@@ -141,17 +154,29 @@ const annotationPlots = (annotations = []) => [annotations].flat().map((a, i) =>
 const prepareDef = def => {
     // the values of the form elements, also without globals of the definition
     def.globals ??= {};
-    // the space around the plots of a facet, e.g. of the axes
-    def.options = { ...def.options, margins: { top: 0, right: 0, bottom: 0, left: 0, ...def.options?.margins } };
+    // the height of a facet and the space around its plots, e.g. of the axes
+    def.options = { height: 400, ...def.options, margins: { top: 0, right: 0, bottom: 0, left: 0, ...def.options?.margins } };
+    if (def.facets)
+        def.facets.cols ??= 1;
 
-    Object.values(def.mapping).forEach(prepareMapping);
+    def.mapping ??= {};
+    Object.entries(def.mapping).forEach(([n, m]) => prepareMapping(m, n));
+
+    // a form element without entries has none
+    def.formElements = (def.formElements ?? []).map((e, i) => object(e, `formElements[${i}]`, 'a form element'));
+    def.formElements.forEach(e => {
+        if (!Array.isArray(e.values))
+            e.values = [];
+    });
 
     def.plot = [...[def.plot ?? []].flat(), ...annotationPlots(def.annotations)];
     delete def.annotations;
 
     def.plot.forEach((p, i) => {
+        object(p, `plot[${i}]`, 'a plot, e.g. { "type": "svg:circle", "props": {} }');
         p.props ??= {};
-        p.categories ??= [];
+        // a mapping or a list of them
+        p.categories = [p.categories ?? []].flat();
         p.id ??= `plot-${i}`;
         p.highlightProps = Object.keys(p.props).filter(n => n.startsWith('highlight-')).map(n => n.substring(10));
     });
@@ -221,7 +246,7 @@ const applyFormElements = (def, defOrg) => {
         const merged = mergeAll([defOrg.mapping[n] ?? {}, ...patches]);
         if (typeof merged.column == 'string')
             merged.column = fillTemplate(merged.column, def.globals);
-        const m = prepareMapping(merged);
+        const m = prepareMapping(merged, n);
         const before = def.mapping[n];
         if (before && 'props' in before) {
             m.props = before.props;

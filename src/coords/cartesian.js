@@ -68,6 +68,9 @@ const axes = ctx => {
                 .attr("transform", `rotate(${-i.rotate})`)
 
         if (i.title) {
+            // the distance of the title from the axis, by default near the
+            // edge of the margin, e.g. outside of the labels of the ticks
+            const offset = i.title.offset ?? Math.max(0, store.def.options.margins[i.position] - 8);
             const at = ctx.keep(`axis title ${n}`, () => inner.append("text"))
                 .attr('class', 'vis-axis-title')
                 .attr('y', 0)
@@ -77,16 +80,16 @@ const axes = ctx => {
                 .text(ctx.store.text(i.title.name))
 
             if (i.position == 'left')
-                at.attr("transform", `rotate(-90) translate(-${innerHeight/2} -${i.title.offset})`)
+                at.attr("transform", `rotate(-90) translate(-${innerHeight/2} -${offset})`)
 
             if (i.position == 'right')
-                at.attr("transform", `rotate(90) translate(${innerHeight/2} -${innerWidth + i.title.offset})`)
+                at.attr("transform", `rotate(90) translate(${innerHeight/2} -${innerWidth + offset})`)
 
             if (i.position == 'top')
-                at.attr("transform", `translate(${innerWidth/2} -${i.title.offset})`)
+                at.attr("transform", `translate(${innerWidth/2} -${offset})`)
 
             if (i.position == 'bottom')
-                at.attr("transform", `translate(${innerWidth/2} ${innerHeight + i.title.offset})`)
+                at.attr("transform", `translate(${innerWidth/2} ${innerHeight + offset})`)
         }
     });
 };

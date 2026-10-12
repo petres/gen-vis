@@ -166,7 +166,7 @@ const localeOf = tag => {
  * `texts` parts which are merged into it.
  */
 const getLocale = (locale = 'de') => {
-    const custom = typeof locale == 'string' ? { base: locale } : locale;
+    const custom = typeof locale == 'string' ? { base: locale } : (locale ?? {});
     const base = localeOf(custom.base ?? 'de');
     const number = d3.formatLocale({ ...base.number, ...custom.number });
     const time = d3.timeFormatLocale({ ...base.time, ...custom.time });

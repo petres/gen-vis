@@ -14,7 +14,7 @@
             <!-- toggles of categories, the colors of a scale otherwise -->
             <template v-for="legend in legends" :key="legend">
                 <legend-entry v-if="store.mapping(legend).props" :legend="legend" @changeSelected="changeSelected" @highlight="highlight"/>
-                <color-legend v-else-if="store.mapping(legend).scale && view" :legend="legend" :scale="view.colors[legend]"/>
+                <color-legend v-else-if="view?.colors[legend]" :legend="legend" :scale="view.colors[legend]"/>
             </template>
         </div>
         <div v-if="view" class="vis-body">

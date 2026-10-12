@@ -179,6 +179,51 @@ describe('validateDef', () => {
         ]);
     });
 
+    test('entries which are no objects are warnings, not errors', () => {
+        const def = base();
+        def.mapping.n = null;
+        def.mapping.y.hover = true;
+        def.mapping.x.scale.type = 'implicit';
+        def.plot = [null, { ...def.plot, categories: 'c' }, { ...def.plot, categories: [1] }];
+        def.annotations = [null];
+        def.formElements = [null, { id: 'g', name: 'G', ref: 'g', type: 'radio', values: [null] }, { id: 'h', name: 'H', ref: 'h', type: 'radio' }];
+        def.options = { locale: 5 };
+        expect(validateDef(def)).toEqual([
+            `mapping.n: expected a mapping, e.g. { "column": "value", "type": "numeric" }`,
+            'mapping.y.hover: expected an object, e.g. {}',
+            'formElements[0]: expected a form element',
+            "mapping.x.scale.type: unknown scale 'implicit', e.g. 'linear', 'time' or 'band'",
+            `plot[0]: expected a plot, e.g. { "type": "svg:circle", "props": {} }`,
+            'plot[2].categories: expected a mapping or a list of mappings, e.g. ["land"]',
+            `annotations[0]: expected an annotation, e.g. { "type": "line", "y": 0 }`,
+            `formElements[1].values[0]: expected an entry, e.g. { "id": "a", "name": "A", "value": "a" }`,
+            `formElements[2].values: expected a list of entries or the column of the values, e.g. { "column": "year" }`,
+            "options.locale: expected 'de', 'en', a language of Intl, e.g. 'fr', or an object with a 'base' locale",
+        ]);
+    });
+
+    test('definitions which can not be drawn', () => {
+        const def = base();
+        def.mapping.d = { column: 'date', type: 'date', scale: { type: 'linear', orientation: 'horizontal' } };
+        def.mapping.b = { column: 'land', type: 'categorical', scale: { type: 'band', orientation: 'vertical', domain: ['Wien', null] } };
+        def.mapping.y.legend = {};
+        def.facets = { dim: 'x' };
+        expect(validateDef(def)).toEqual([
+            "mapping.y.legend: a legend needs the props of the categories or a scale of colors, without an orientation",
+            "mapping.d.scale.type: the positions of dates need a 'time' or a 'utc' scale",
+            "mapping.b.scale.domain: the categories of a band scale are all the ones of the data (null) or a list of them",
+            `facets.dim: the mapping 'x' needs the props of its categories, e.g. { "fromData": true }`,
+        ]);
+    });
+
+    test('the globals of form elements of the values of a column are known in templates', () => {
+        const def = base();
+        def.options = { title: 'Jahr {year}' };
+        def.mapping.y.column = '{year}';
+        def.formElements = [{ id: 'year', name: 'Jahr', ref: 'year', type: 'slider', values: { column: 'year' } }];
+        expect(validateDef(def)).toEqual([]);
+    });
+
     test('maps, filters, form elements and scales of colors', () => {
         const def = base();
         def.options = { coord: 'geo' };
@@ -231,7 +276,7 @@ describe('validateDef', () => {
             "plot[0].props.fill: unknown reference 'colour'",
             "plot[0].props.y0: unknown reference 'y:start:scaled'",
             "filter.c: unknown reference 'h', expected one of 'g', 'totalWidth'",
-            "annotations[0].props.stroke: unknown reference 'color', expected one of 'g', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight'",
+            "annotations[0].props.stroke: unknown reference 'color', expected one of 'g', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'y'",
             "options.height: unknown reference 'innerWidth', expected one of 'g', 'totalWidth'",
         ]);
 

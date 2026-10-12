@@ -52,7 +52,10 @@ const ownProp = (props, key) => props && Object.hasOwn(props, key) ? props[key] 
 // rows, only the ones with rows
 const facetEntries = (store, rows) => {
     const d = store.def.facets.dim;
-    const { props, keys } = store.mapping(d);
+    const m = Object.hasOwn(store.def.mapping, d) ? store.mapping(d) : null;
+    if (!m?.props)
+        throw new Error(`facets.dim: the facets are the categories of a mapping with props, e.g. { "fromData": true }, not '${d}'`);
+    const { props, keys } = m;
     return groupBy(rows, [d])
         .filter(g => keys.includes(String(g.group[d])))
         .sort((a, b) => keys.indexOf(String(a.group[d])) - keys.indexOf(String(b.group[d])))

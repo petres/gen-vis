@@ -20,6 +20,11 @@ const propKinds = ['fixed', 'ref', 'relative', 'steps', 'format'];
 
 const list = a => a.map(e => `'${e}'`).join(', ');
 
+const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
+
+// the parts of a mapping which are objects, see prepareMapping of utils/def.js
+const mappingParts = ['scale', 'axis', 'legend', 'hover', 'props'];
+
 // the names of a template of html, e.g. "land.unit" of "{land.unit}"
 const templateNames = text => typeof text == 'string' ? [...text.matchAll(/\{([\w.-]+)\}/g)].map(m => m[1]) : [];
 
@@ -80,10 +85,21 @@ const categoryNames = m => m?.props ? ['name', 'visible', ...(m.props.scheme ? [
 const validateDef = def => {
     const warnings = [];
     const warn = (path, message) => warnings.push(`${path}: ${message}`);
-    const mapping = def.mapping ?? {};
 
+    // the entries which are objects, the others are warnings, e.g. null
+    const objects = (entries, path, expected) => entries.filter(([k, e]) => isObject(e) || (warn(path(k), `expected ${expected}`), false));
     if (!def.mapping)
         warn('mapping', 'missing');
+    // the mappings, their parts which are no objects are left out of the checks below
+    const mapping = Object.fromEntries(objects(Object.entries(def.mapping ?? {}), n => `mapping.${n}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`)
+        .map(([n, m]) => [n, Object.fromEntries(Object.entries(m).filter(([k, v]) => {
+            if (!mappingParts.includes(k) || isObject(v))
+                return true;
+            warn(`mapping.${n}.${k}`, `expected an object, e.g. {}`);
+            return false;
+        }))]));
+    // the form elements with their index
+    const formElements = objects([...(def.formElements ?? []).entries()], i => `formElements[${i}]`, 'a form element');
 
     // the plot types and coordinate systems known at the time of the check,
     // also registered ones
@@ -99,11 +115,11 @@ const validateDef = def => {
     // (also the ones of form elements) and the width of the visualisation, in
     // a facet its sizes, in a plot the props of its categories and the rows,
     // in a range the sizes of the coordinate system, e.g. `radius`
-    const globalNames = [
+    const globals = new Set([
         ...Object.keys(def.globals ?? {}),
-        ...(def.formElements ?? []).map(e => e.ref).filter(r => typeof r == 'string'),
-        'totalWidth',
-    ];
+        ...formElements.map(([, e]) => e.ref).filter(r => typeof r == 'string'),
+    ]);
+    const globalNames = [...globals, 'totalWidth'];
     const facetNames = [...globalNames, 'width', 'innerWidth', 'height', 'innerHeight'];
     const names = {
         global: new Set(globalNames),
@@ -153,6 +169,11 @@ const validateDef = def => {
                 warn(`${path}.scale.scheme`, `unknown scheme '${m.scale.scheme}', e.g. 'Blues'`);
             if (type == 'threshold' && !(Array.isArray(m.scale.domain) && m.scale.domain.every(v => v !== null)))
                 warn(`${path}.scale.domain`, `a threshold scale needs the values between its classes`);
+            if (m.type == 'date' && m.scale.orientation !== undefined && !['time', 'utc'].includes(type))
+                warn(`${path}.scale.type`, `the positions of dates need a 'time' or a 'utc' scale`);
+            const domain = Array.isArray(m.scale.domain) ? m.scale.domain : [];
+            if (scale && typeof scale().step == 'function' && domain.some(v => v === null) && domain.some(v => v !== null))
+                warn(`${path}.scale.domain`, `the categories of a ${type} scale are all the ones of the data (null) or a list of them`);
             if (Array.isArray(m.scale.range))
                 m.scale.range.forEach((v, j) => checkProp(v, `${path}.scale.range[${j}]`, warn, names.range));
             [m.scale.inset].flat().forEach((v, j) => checkProp(v, `${path}.scale.inset`, warn, names.range));
@@ -171,6 +192,8 @@ const validateDef = def => {
             checkProp(m.axis.ticks, `${path}.axis.ticks`, warn, names.facet);
             checkProp(m.axis.tickSpacing, `${path}.axis.tickSpacing`, warn, names.facet);
         }
+        if (m.legend && !m.props && m.scale?.orientation !== undefined)
+            warn(`${path}.legend`, `a legend needs the props of the categories or a scale of colors, without an orientation`);
         // the props of the legend and the hover of the categories
         if (m.props) {
             checkProp(m.legend?.props, `${path}.legend.props`, warn, names.category(n));
@@ -185,22 +208,26 @@ const validateDef = def => {
         }
     });
 
-    const plots = [].concat(def.plot ?? []);
-    if (plots.length == 0)
+    const plotList = [].concat(def.plot ?? []);
+    const plots = objects([...plotList.entries()], i => `plot[${i}]`, 'a plot, e.g. { "type": "svg:circle", "props": {} }');
+    if (plotList.length == 0)
         warn('plot', 'missing');
     // the ids name the plots, e.g. of their classes and of the merge with a parent
-    const ids = plots.map((p, i) => p?.id ?? `plot-${i}`);
+    const ids = plotList.map((p, i) => p?.id ?? `plot-${i}`);
     ids.forEach((id, i) => {
         if (ids.indexOf(id) < i)
             warn(`plot[${i}].id`, `the id '${id}' is the one of plot[${ids.indexOf(id)}]`);
     });
-    plots.forEach((p, i) => {
+    plots.forEach(([i, p]) => {
         const path = `plot[${i}]`;
         if (!types.includes(p.type))
             warn(`${path}.type`, `unknown type '${p.type}', expected one of ${list(types)}`);
         else if (plotTypes[p.type].coords && coordName in coords && !plotTypes[p.type].coords.includes(coordName))
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
-        (p.categories ?? []).filter(c => !Object.hasOwn(mapping, c)).forEach(c =>
+        if (![p.categories ?? []].flat().every(c => typeof c == 'string'))
+            warn(`${path}.categories`, `expected a mapping or a list of mappings, e.g. ["land"]`);
+        const categories = [p.categories ?? []].flat().filter(c => typeof c == 'string');
+        categories.filter(c => !Object.hasOwn(mapping, c)).forEach(c =>
             warn(`${path}.categories`, `unknown mapping '${c}'`));
         if (p.highlight !== undefined && !['group', 'row'].includes(p.highlight))
             warn(`${path}.highlight`, `unknown highlight '${p.highlight}', expected one of 'group', 'row'`);
@@ -233,7 +260,7 @@ const validateDef = def => {
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
         // the names of the rows of a url are not known
         const plotNames = typeof p.data == 'string' ? null
-            : new Set([...names.plot((p.categories ?? []).filter(c => Object.hasOwn(mapping, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
+            : new Set([...names.plot(categories.filter(c => Object.hasOwn(mapping, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
         checkProp(p.props, `${path}.props`, warn, plotNames);
     });
 
@@ -253,7 +280,8 @@ const validateDef = def => {
 
     // the values of an annotation are of mappings with a scale, of maps `lon` and `lat`
     const annotationTypes = coord.annotations ?? [];
-    [].concat(def.annotations ?? []).forEach((a, i) => {
+    const annotations = objects([...[].concat(def.annotations ?? []).entries()], i => `annotations[${i}]`, 'an annotation, e.g. { "type": "line", "y": 0 }');
+    annotations.forEach(([i, a]) => {
         const path = `annotations[${i}]`;
         if (!annotationTypes.includes(a.type))
             warn(`${path}.type`, `unknown type '${a.type}', expected one of ${list(annotationTypes)}`);
@@ -267,20 +295,26 @@ const validateDef = def => {
         });
         if (coordName == 'geo' && !(typeof a.lon == 'number' && typeof a.lat == 'number'))
             warn(path, `an annotation of a map needs 'lon' and 'lat'`);
-        checkProp(a.props, `${path}.props`, warn, names.facet);
+        // the names of the facet and the ones of the row of the annotation, e.g. its value
+        const row = Object.keys(a).filter(k => !['type', 'props', 'above', 'facet'].includes(k));
+        checkProp(a.props, `${path}.props`, warn, new Set([...facetNames, ...row]));
     });
 
-    (def.formElements ?? []).forEach((e, i) => {
+    formElements.forEach(([i, e]) => {
         if (!formElementTypes.includes(e.type))
             warn(`formElements[${i}].type`, `unknown type '${e.type}', expected one of ${list(formElementTypes)}`);
         // parts of entries are patches of a parent, the merged ones are complete
         if (typeof e.ref != 'string')
             warn(`formElements[${i}].ref`, `no global`);
         // a list of entries or the values of a column of the data
-        if (e.values !== undefined && !Array.isArray(e.values) && typeof e.values?.column != 'string')
+        if (!Array.isArray(e.values) && typeof e.values?.column != 'string')
             warn(`formElements[${i}].values`, `expected a list of entries or the column of the values, e.g. { "column": "year" }`);
-        (Array.isArray(e.values) ? e.values : []).filter(v => !('value' in v)).forEach(v =>
-            warn(`formElements[${i}].values`, `no value of '${v.id}'`));
+        (Array.isArray(e.values) ? e.values : []).forEach((v, j) => {
+            if (!isObject(v))
+                warn(`formElements[${i}].values[${j}]`, `expected an entry, e.g. { "id": "a", "name": "A", "value": "a" }`);
+            else if (!('value' in v))
+                warn(`formElements[${i}].values`, `no value of '${v.id}'`);
+        });
     });
 
     if (def.facets) {
@@ -288,21 +322,24 @@ const validateDef = def => {
             warn('facets.dim', `expected the name of a mapping`);
         else if (!Object.hasOwn(mapping, def.facets.dim))
             warn('facets.dim', `unknown mapping '${def.facets.dim}'`);
+        else if (!mapping[def.facets.dim].props)
+            warn('facets.dim', `the mapping '${def.facets.dim}' needs the props of its categories, e.g. { "fromData": true }`);
     }
 
-    // column templates, e.g. "{values}{share}", need the globals
-    const checkTemplate = (column, path) => templateRefs(column).filter(r => !Object.hasOwn(def.globals ?? {}, r)).forEach(r =>
+    // column templates, e.g. "{values}{share}", need the globals, also the
+    // ones of form elements, e.g. of the values of a column
+    const checkTemplate = (column, path) => templateRefs(column).filter(r => !globals.has(r)).forEach(r =>
         warn(path, `unknown global '${r}' in the column template`));
     Object.entries(mapping).forEach(([n, m]) => checkTemplate(m.column, `mapping.${n}.column`));
     // and the ones of the texts, e.g. "Durchschnitt {base} = 100" of the subtitle
-    const checkText = (text, path) => templateRefs(text).filter(r => !Object.hasOwn(def.globals ?? {}, r)).forEach(r =>
+    const checkText = (text, path) => templateRefs(text).filter(r => !globals.has(r)).forEach(r =>
         warn(path, `unknown global '${r}' in the text`));
     ['title', 'subtitle', 'footer'].forEach(o => checkText(def.options?.[o], `options.${o}`));
     // the templates of the hover, the names of the title and of a row, e.g. {land.unit}
     const hover = def.options?.hover ?? {};
     const checkHover = (template, path, known) => templateNames(template).filter(r => !known(r)).forEach(r =>
         warn(path, `unknown name '${r}' in the template`));
-    const isGlobal = r => Object.hasOwn(def.globals ?? {}, r);
+    const isGlobal = r => globals.has(r);
     checkHover(hover.title, 'options.hover.title', r => r == 'title' || isGlobal(r));
     const transition = def.options?.transition;
     if (transition !== undefined && typeof transition != 'boolean' && !(typeof transition == 'number' && transition >= 0))
@@ -317,14 +354,16 @@ const validateDef = def => {
         checkText(m.props?.common?.name, `mapping.${n}.props.common.name`);
         Object.entries(m.props?.categories ?? {}).forEach(([k, e]) => checkText(e?.name, `mapping.${n}.props.categories.${k}.name`));
     });
-    [].concat(def.annotations ?? []).forEach((a, i) => ['label', 'text'].forEach(k => checkText(a[k], `annotations[${i}].${k}`)));
-    (def.formElements ?? []).forEach((e, i) => (Array.isArray(e.values) ? e.values : []).forEach((v, j) =>
+    annotations.forEach(([i, a]) => ['label', 'text'].forEach(k => checkText(a[k], `annotations[${i}].${k}`)));
+    formElements.forEach(([i, e]) => (Array.isArray(e.values) ? e.values : []).forEach((v, j) => isObject(v) &&
         Object.entries(v.mapping ?? {}).forEach(([n, m]) =>
             checkTemplate(m.column, `formElements[${i}].values[${j}].mapping.${n}.column`))));
 
-    // a built-in locale or a language of Intl, e.g. "fr"
-    const locale = typeof def.options?.locale == 'object' ? def.options.locale?.base : def.options?.locale;
-    if (locale !== undefined) {
+    // a built-in locale or a language of Intl, e.g. "fr", null is the default
+    const locale = isObject(def.options?.locale) ? def.options.locale.base : (def.options?.locale ?? undefined);
+    if (locale !== undefined && typeof locale != 'string')
+        warn('options.locale', `expected 'de', 'en', a language of Intl, e.g. 'fr', or an object with a 'base' locale`);
+    else if (locale !== undefined) {
         try {
             getLocale(locale);
         } catch (error) {
@@ -350,7 +389,7 @@ const validateDef = def => {
             warn(`${path}.base`, `the rows of the base are needed, e.g. { "year": "{base}" }`);
         if (t.align !== undefined && !['end', 'center'].includes(t.align))
             warn(`${path}.align`, `expected 'end' or 'center'`);
-        templateRefs(JSON.stringify(t)).filter(r => !Object.hasOwn(def.globals ?? {}, r)).forEach(r =>
+        templateRefs(JSON.stringify(t)).filter(r => !globals.has(r)).forEach(r =>
             warn(path, `unknown global '${r}' in the template`));
     });
 

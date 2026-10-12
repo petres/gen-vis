@@ -133,7 +133,7 @@ const radialAxis = (ctx, g, s, values, format, axis) => {
         .text(format);
 
     if (axis.title) {
-        const [x, y] = d3.pointRadial(a, r1 + axis.title.offset);
+        const [x, y] = d3.pointRadial(a, r1 + (axis.title.offset ?? 16));
         ctx.inner.append("text")
             .attr("class", "vis-axis-title")
             .attr("x", x)
