@@ -6,7 +6,7 @@ import { addDataValues, dataFormat, distinctValues, parseData, prepareData, upda
 import { applyTransforms, loadTransforms, transformGlobals, utcColumns } from "@/utils/transform";
 import { applyFormElements, fillHtml, fillText, formatOf, mergeAll, prepareDef } from "@/utils/def";
 import { applyState, diffState, snapshot } from "@/utils/state";
-import { getLocale } from "@/utils/locale";
+import { getLocale, loadLocale } from "@/utils/locale";
 import { formatter } from "@/utils/props";
 import { loadCoord } from "@/coords";
 import { axisNames } from "@/layout";
@@ -150,6 +150,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         defOrg.geo?.data ? lazy.geo() : null,
         defOrg.options?.transition ? loadTransition() : null,
         defOrg.transform ? loadTransforms() : null,
+        loadLocale(defOrg.options?.locale ?? undefined),
     ]);
     parts.catch(() => {});
     // the format of the data, by default the one of the extension of its url

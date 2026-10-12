@@ -2,7 +2,7 @@ export { validateDef, curveNames };
 
 import * as d3 from "@/utils/d3";
 import { dataFormats } from "@/utils/data";
-import { getLocale } from "@/utils/locale";
+import { checkLocale } from "@/utils/locale";
 import { symbolShortcuts, templateRefs } from "@/utils/def";
 import { curves } from "@/utils/draw";
 import { plotTypes } from "@/plots";
@@ -365,7 +365,7 @@ const validateDef = def => {
         warn('options.locale', `expected 'de', 'en', a language of Intl, e.g. 'fr', or an object with a 'base' locale`);
     else if (locale !== undefined) {
         try {
-            getLocale(locale);
+            checkLocale(locale);
         } catch (error) {
             warn('options.locale', error.message.replace(/^Unknown/, 'unknown'));
         }

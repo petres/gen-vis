@@ -1869,7 +1869,10 @@ describe('locale and font', () => {
         const el = await mount(GenVis, { def, data: 'date,value,land\n2020-01-15,1000,Wien\n2020-05-15,2500,Wien' });
         expect(labels(el, 'bottom')).toContain('mars');
         expect(labels(el, 'left')).toContain('2\u202f000,0');
-        const { getLocale } = await import('@/utils/locale');
+        const { getLocale, loadLocale } = await import('@/utils/locale');
+        // the languages of Intl are loaded before, e.g. by the store
+        for (const tag of ['en-US', 'it', 'fa', 'ar-EG'])
+            await loadLocale(tag);
         expect(getLocale('fr').number.format('$,.2f')(1234.5)).toBe('1\u202f234,50\u00a0€');
         expect(getLocale('en-US').time.utcFormat('%x')(new Date(Date.UTC(2024, 2, 5)))).toBe('03/05/2024');
         expect(getLocale({ base: 'it', texts: { download: 'Scarica' } }).texts).toMatchObject({ download: 'Scarica', copy: 'Copy as PNG to the clipboard' });
