@@ -11,24 +11,30 @@ charts) and maps with legends, hover, facets and form elements are supported.
 
 ## Usage
 
+```sh
+npm install @preschen/gen-vis vue
+```
+
 ### Standalone script
 
-`npm run lib` builds `dist-lib/gen-vis-<version>.js`. It includes Vue, d3 and
-the styles, and provides three global functions:
+The standalone script includes Vue, d3 and the styles (412 kB, 141 kB
+gzipped), the package has it as `dist-lib/gen-vis.js`, e.g. of a CDN, `npm run
+lib` builds it as `dist-lib/gen-vis.js` and `dist-lib/gen-vis-<version>.js`.
+It provides three global functions:
 
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
 
-<script src="gen-vis-2.0.0-alpha.2.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@2/dist-lib/gen-vis.js"></script>
 <script>mountGenVisByClass('genVis')</script>
 ```
 
 `mountGenVisByClass(className)` mounts all elements with the class which are
-not mounted yet (they get the class `vis-mounted`) and returns their
-components, `mountGenVisElement(element, props)` mounts a single element
-(again, if it is mounted) and returns its component, e.g. for its
-[methods](#png), `unmountGenVisElement(element)` removes the visualisation,
-e.g. before a page of a single page application removes the element.
+not mounted yet and returns their components, `mountGenVisElement(element,
+props)` mounts a single element (again, if it is mounted) and returns its
+component, e.g. for its [methods](#png), both set the class `vis-mounted` of
+the element. `unmountGenVisElement(element)` removes the visualisation, e.g.
+before a page of a single page application removes the element.
 The props are taken from the `data-` attributes, see below, and from `props`,
 e.g. the events:
 
@@ -52,14 +58,17 @@ app.use(GenVis);
 `import { GenVis } from '@preschen/gen-vis'` registers the component
 locally instead. `vue` is a peer dependency, the package uses the Vue of the
 application. `mountGenVisElement`, `mountGenVisByClass` and
-`unmountGenVisElement` are exported as well.
+`unmountGenVisElement` are exported as well. The package has the types of
+TypeScript, e.g. of the props, the events and the methods.
 
 Parts which not every chart needs are loaded when a chart needs them, so a
-bundler of the application puts them into chunks of their own: the colors of
-d3 (`d3-scale-chromatic`, ~8 kB gzipped) for definitions which name a scheme
-or an interpolator, the parts of maps (`d3-geo`, `topojson-client`, ~13 kB)
-with the first map, the parquet reader for parquet data and the screenshot
-of the PNG with the first image.
+bundler of the application puts them into chunks of their own (the sizes are
+gzipped): the colors of d3 (`d3-scale-chromatic`, ~8 kB) for definitions
+which name a scheme or an interpolator, the parts of maps (`d3-geo`,
+`topojson-client`, ~13 kB) with the first map, the transitions
+(`d3-transition`, ~5 kB) for definitions with a `transition`, the parquet
+reader (~17 kB) for parquet data and the screenshot of the PNG (~10 kB)
+with the first image. The standalone script has all of them in itself.
 
 ### Props
 
@@ -67,7 +76,7 @@ of the PNG with the first image.
 |------------|-----------------|-------------|
 | `defFile`  | `data-def-file` | url of the definition |
 | `def`      | `data-def`      | the definition, an object or a JSON string |
-| `data`     | `data-data`     | the data as rows, a CSV/JSON string or parquet (an `ArrayBuffer`), if not given it is loaded from the `data` url of the definition |
+| `data`     | `data-data`     | the data as rows, a CSV/JSON string or parquet (an `ArrayBuffer` or `Uint8Array`), if not given it is loaded from the `data` url of the definition |
 | `debug`    | `data-debug`    | shows the prepared definition |
 | `state`    | `data-state`    | the changes of the user, see [state](#state), the attribute is JSON |
 | `download` | `data-download` | a button at the right of the footer to save it as a PNG, a string is the name of the file (default the title) |
@@ -80,15 +89,16 @@ The attributes are strings: `data-download`, `data-csv`, `data-copy` and
 value of `data-download` or `data-csv` is the name of the file.
 
 Every visualisation has its own state, several of them can be used on a page.
-If the props change, the visualisation is loaded again. Errors are shown in
-place of the visualisation.
+If `def`, `defFile` or `data` change, the visualisation is loaded again, a new
+`state` is applied without loading it again. Errors are shown in place of
+the visualisation, e.g. of a definition which can not be drawn.
 
 ### Events and slots
 
 Besides `update:state` (see [state](#state)) the component emits `rendered`
 once it is drawn the first time, `error` with the message of an error and
-`hover` and `select` (a click or a tap) with the rows under the mouse, `hover`
-with `null` at its end:
+`hover` and `select` (a click, a tap or enter and space of the hover by the
+keyboard) with the rows under the mouse, `hover` with `null` at its end:
 
 ```js
 { key: 2023, title: "2023", rows: [{ x: 2023, y: 4, land: "Wien" }, ...], nearest: { x: 2023, y: 4, land: "Wien" } }
@@ -117,10 +127,11 @@ the [PNG](#png) and `csv()` of the [data](#accessibility-and-the-data):
 
 Without the slot, e.g. with the standalone script, `hover` of the
 [options](#options) are templates of HTML of the hover: `title`, with
-`{title}`, the default one, e.g. the date, and `row`, a line per row instead
-of the table, with `{land}` (the name of the category of the mapping
-`land`), `{land.unit}` (another hover prop), `{y}` (the formatted value) and
-`{y.value}` (the value). Both have the globals, the values are text:
+`{title}`, the default one, e.g. the date, above the table or the rows, and
+`row`, a line per row instead of the table, with `{land}` (the name of the
+category of the mapping `land`), `{land.unit}` (another hover prop), `{y}`
+(the formatted value) and `{y.value}` (the value). Both have the globals,
+the values are text, e.g. `<` of the data is shown as it is:
 
 ```json
 "options": { "hover": { "title": "<b>{title}</b>", "row": "{land}: {y} <small>{land.unit}</small>" } }
@@ -182,17 +193,23 @@ visualisations, so the space of the empty elements is set by the page:
 
 ### Accessibility and the data
 
-Every facet is an image (`role="img"`) named by the title and the name of the
-facet, the entries of the legends are checkboxes of the keyboard, the titles
-of the form elements are their labels. A facet with a hover is in the order
-of the tab key: the arrows to the left and the right move the hover to the
-position before and after (of a map the regions by their names, of the
-`point` mode the points from the left), the ones up and down to the row above
-and below, home and end to the first and the last position, escape hides it.
-Screen readers read the hover when it changes (`aria-live`). The data shown can be saved as CSV:
-the button of `csv` or the method `exportCsv(name)` save the rows shown (of
-the visible categories and the filter) in the columns of the mappings, with
-the values as they are in the data.
+Every facet is named by the title and the name of the facet, the entries of
+the legends are checkboxes of the keyboard, the titles of the form elements
+are their labels. A facet with a hover is in the order of the tab key: the
+arrows to the left and the right move the hover to the position before and
+after (of a map the regions by their names, of the `point` mode the points
+from the left), the ones up and down to the row above and below, home and
+end to the first and the last position, enter and space select it (the
+event `select`, as a click), escape hides it. For screen readers it is an
+application (`role="application"`, `aria-roledescription` of the `chart`
+of the locale), so they pass the keys to it, its description names the
+keys (`keys` of the locale), and they read the hover when it changes
+(`aria-live`). A facet without a hover is an image (`role="img"`).
+
+The data shown can be saved as CSV: the button of `csv` or the method
+`exportCsv(name)` save the rows shown (of the visible categories and the
+filter) in the columns of the mappings, with the values as they are in the
+data.
 
 ### State
 
@@ -226,26 +243,28 @@ the styles, e.g.:
 ```
 
 The charts fill the width of `.vis` inside its padding and border, so the
-page can style it as a card:
+page can style it as a card (`vis-outer` is the root of the component):
 
 ```css
 .vis { padding: 20px; border-radius: 12px; background: white; }
 ```
 
 All classes of the package start with `vis-`, so styles of the page for
-other elements do not apply to them, e.g. `.title` of a CSS framework:
+other elements do not apply to them, e.g. `.title` of a CSS framework, the
+others are the `id` of a plot, e.g. `plot-0`, and the classes of the axes of
+d3, `tick` and `domain`:
 
 | Part | Classes |
 |------|---------|
-| the visualisation | `vis-mounted` (an element mounted by `mountGenVisByClass`), `vis`, `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
+| the visualisation | `vis-mounted` (an element mounted by `mountGenVisByClass` or `mountGenVisElement`), `vis-outer` (the root, `vis-loading` while it is loaded), `vis`, `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
 | form elements | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`), the `id` of a form element and of its entries as `data-id`, e.g. `.vis-form-element[data-id="scale"]` |
-| legends | `vis-legends`, `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
+| legends | `vis-legends`, `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, the mapping as `data-dim`, an entry with `data-key` and `data-visible`), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
 | facets | `vis-facet` (a facet), `vis-facet-title`, `vis-svg` |
-| plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base) |
+| plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base), the keys of the features of maps as `data-geo-key` |
 | axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`), `vis-axis-title`, `vis-grid` |
 | annotations | `vis-annotations` (the plot), `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or `vis-circle`, `vis-annotation-label`, `vis-annotation-labels` |
 | hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-hover-row` of a template, `vis-nearest`, the cells of the values `vis-value`, the mapping of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`), `vis-hover-marker`, `vis-events` |
-| footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-copy` and `vis-download`) |
+| footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-copy`, `vis-csv` and `vis-download`) |
 
 Styles of the page which are in a cascade layer themselves only override the
 package if their layer is declared after it, e.g. `@layer gen-vis, page;`.
@@ -277,17 +296,27 @@ without a color of their `props`.
 
 ```json
 {
+    "$schema": "https://unpkg.com/@preschen/gen-vis@2/schema.json",
     "parent": "../shared/def.json",
     "data": "data.csv",
+    "dataFormat": "csv",
     "transform": [ ... ],
     "options": { ... },
     "globals": { ... },
+    "filter": { ... },
     "mapping": { ... },
     "plot": [ ... ],
+    "annotations": [ ... ],
     "facets": { ... },
-    "formElements": [ ... ]
+    "formElements": [ ... ],
+    "geo": { ... }
 }
 ```
+
+See [data](#data) (also `dataFormat`), [`transform`](#transform),
+[`options`](#options), [`mapping`](#mapping), [`plot`](#plot),
+[annotations](#annotations), [`facets`](#facets), [`formElements`, `globals`
+and `filter`](#formelements-and-globals) and [maps](#maps) (`geo`).
 
 Relative urls are resolved against the definition referencing them, e.g.
 `data.csv` is next to the definition file, the `data` of a parent against the
@@ -296,9 +325,12 @@ its `parent` (and its parent into its own parent), arrays are replaced, not
 merged, except arrays whose entries all have an `id`, e.g. the form elements
 and their values, these are merged by the ids, entries with a new id are
 appended. The merged definition is checked for common mistakes, e.g. unknown
-plot types, the findings are logged as warnings in the console. Only the
-footer is HTML, e.g. the link of a source, so a definition is trusted, texts
-of users, e.g. of a form of a page, must not be part of it. All other texts,
+plot types, the findings are logged as warnings in the console, a definition
+which can not be drawn, e.g. a mapping which is no object, is an error which
+names the part. Only the footer and the templates of the hover
+(`options.hover`) are HTML, e.g. the link of a source, so a definition is
+trusted, texts of users, e.g. of a form of a page, must not be part of it,
+the values of the globals and of the data in them are text. All other texts,
 e.g. the title, the names of the legends and the hover and the titles of the
 axes, are text, `<` is shown as it is.
 
@@ -325,7 +357,7 @@ The package contains a JSON Schema of the definitions, `schema.json`. With
 
 ```json
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@2/schema.json",
     ...
 }
 ```
@@ -337,7 +369,8 @@ The schema also allows parts of definitions, e.g. definitions with a `parent`.
 
 `data` is CSV, TSV, JSON (a list of rows) or [parquet](https://parquet.apache.org/),
 by the extension of the url (`.csv`, `.tsv`, `.json`, `.parquet`), without one
-CSV or JSON by the content. `dataFormat` sets it, e.g. for an url of an api:
+CSV or JSON by the content. `dataFormat` sets it, e.g. for an url of an api,
+also the one of a parent, data which can not be read is an error of its url:
 
 ```json
 { "data": "/api/prices?year=2024", "dataFormat": "json" }
@@ -346,17 +379,19 @@ CSV or JSON by the content. `dataFormat` sets it, e.g. for an url of an api:
 Parquet is read with [hyparquet](https://github.com/hyparam/hyparquet) (no
 wasm), it is only loaded for parquet data. Only the columns the definition
 can use are read: the ones of the mappings (also of the patches of form
-elements, a column template in every value of its globals) and of the values
-of form elements, so a wide file costs only its columns which are used. Integers of 64 bits are numbers,
-unless they are too large for them, e.g. ids, then they are strings,
-timestamps are the ones of the other formats and dates (without a time) are
-strings as the ones of csv, e.g. `2024-06-01`, see `type` of
-[mapping](#mapping). Snappy, the
-default of arrow (R, Python), pandas and duckdb, is read directly, other
-compressions, e.g. zstd of polars, load the decompressors of
-`hyparquet-compressors` (~70 kB), the standalone script reads only snappy and
-uncompressed parquet. Keys of categories are compared as strings, e.g. the
-years of a parquet or JSON column as keys of `props`.
+elements, a column template in every value of its globals), of the
+transforms and of the values of form elements, so a wide file costs only its
+columns which are used. Integers of 64 bits are numbers, unless they are too
+large for them, e.g. ids, then they are strings, timestamps are the ones of
+the other formats, dates (without a time) and timestamps without a time zone
+(e.g. of pandas, polars and duckdb) are strings as the ones of csv, e.g.
+`2024-06-01` and `2024-06-01T13:00:00.000`, see `type` of
+[mapping](#mapping). Snappy, the default of arrow (R, Python), pandas and
+duckdb, is read directly, other compressions, e.g. zstd of polars, load the
+decompressors of `hyparquet-compressors` (~75 kB gzipped), the standalone
+script reads only snappy and uncompressed parquet. Keys of categories are
+compared as strings, e.g. the years of a parquet or JSON column as keys of
+`props`.
 
 ### `transform`
 
@@ -381,6 +416,8 @@ list), the mappings and the later transforms can use the new column:
 - `align`: the same day of a date in the year `year` (2020 by default, a
   leap year), e.g. to compare the years of daily data on one axis, with
   `year` as the categories.
+- The dates of `year` and `align` are the ones of the time zone of the
+  scale of the column (`column` or `as`), local or UTC of a `utc` scale.
 - `index`: the values relative to the mean of the values of the rows of
   `base` in the group, times `scale` (100 by default). `base` is a column and
   its value, e.g. `{"year": "{base}"}`, or a range `[from, to]` (`null` is
@@ -396,14 +433,16 @@ list), the mappings and the later transforms can use the new column:
   of `order`, e.g. the sum of a year so far with `"by": "year"`.
 
 The strings of a transform are templates of the globals, e.g. `{base}`, the
-transforms are computed again when the globals change. The CSV of the data
-has the computed values. See `data/bev/def-index.json`.
+transforms are computed again when the globals change, from the first one
+which they change. The CSV of the data has the computed values. See
+`data/bev/def-index.json`.
 
 ### `options`
 
 `title`, `subtitle`, `footer` (HTML), `width` (the width of the container if
-not given), `height` and `margins` (`{"top", "right", "bottom", "left"}` in
-pixels). `height` can be a prop based on `totalWidth`, see [props](#props-1).
+not given), `height` (of a facet, 400 by default) and `margins` (`{"top",
+"right", "bottom", "left"}` in pixels). `height` can be a prop based on
+`totalWidth`, see [props](#props-of-the-definition).
 `{name}` in `title`, `subtitle` and `footer` is replaced by the value of the
 global, e.g. `"Durchschnitt {base} = 100"` of a form element of the base year,
 also in the image and the name of its file, see
@@ -421,12 +460,14 @@ parts which are changed, see d3's
 ```
 
 A language of `Intl` has its separators of numbers, the formats of dates and
-times and the names of the days and months of the browser, the currency is
-the euro and the buttons are in english (german of german languages).
-`timeTicks` of the object are the tick formats of time axes without `format`,
-by the interval of the date (`millisecond`, `second`, `minute`, `hour`, `day`,
-`week`, `month`, `year`), `texts` the titles of the buttons (`download`,
-`copy` and `copied`).
+times and the names of the days and months (of the gregorian calendar) of
+the browser, the currency is the euro and the texts are in English (German
+for German languages). `timeTicks` of the object are the tick formats of
+time axes without `format`, by the interval of the date (`millisecond`,
+`second`, `minute`, `hour`, `day`, `week`, `month`, `year`), `texts` the
+titles of the buttons (`download`, `copy`, `copied` and `csv`) and the texts
+of screen readers (`chart`, the kind of a facet with a hover, and `keys`,
+the description of its keys).
 
 `coord` is the coordinate system of the plots, `cartesian` (the default, a
 horizontal and a vertical axis), `polar` (an angle and a radius, see
@@ -437,7 +478,8 @@ registered one, see [extensions](#extensions).
 milliseconds (`true` for 300) after a change of a legend, a form element or
 the state, e.g. `"transition": 400`: the points, bars and lines of the draw
 before and the axes of cartesian plots move, new elements are drawn at once,
-a new width is drawn at once.
+a new width is drawn at once, nothing moves if the user prefers less motion
+(`prefers-reduced-motion` of the system).
 
 `fontFamily` sets the font, by default the css variable
 `--gen-vis-font-family` or Century Gothic, so the font of all visualisations of
@@ -466,53 +508,66 @@ the definition refer to these names.
 - `type`: `numeric`, `date` or `categorical`. Numeric and date values which
   are missing or invalid are `null`: they are gaps in lines and areas, points
   and bars are not drawn, and they are not shown in the hover. Dates are
-  parsed with `Date.parse` or are timestamps. A date without a time, e.g.
-  `2024-06-01`, `2024-06` or `2024`, is the midnight of the time zone of the
+  timestamps or strings. A date without a time zone, e.g. `2024-06-01`,
+  `2024-06`, `2024`, `2024-06-01 13:00` (also with a `T`) or `01.06.2024`
+  (the day first, also with a time), is the one of the time zone of the
   scale, local of a `time` scale (and the other ones) and UTC of a `utc`
-  scale, so it is the same day in every time zone (`Date.parse` reads it as
-  midnight UTC, the day before west of UTC in local time).
+  scale, so it is the same day and time in every time zone (`Date.parse`
+  reads a date without a time as midnight UTC, the day before west of UTC in
+  local time, and `01.06.2024` as the 6th of January), the others are read
+  by `Date.parse`, e.g. `2024-06-01T13:00:00Z`.
 - `scale`: `type` is a d3 scale (`linear`, `time`, `log`, `point`, `band`,
-  ...), continuous scales need a `numeric` or `date` type, `point` and `band`
-  a `categorical` one. `orientation` (`horizontal` or `vertical`) places the
-  scale on the plot, `angular` or `radial` in polar plots. `domain` fixes the
-  domain, `null` entries are taken from the data, dates are parsed as the ones
-  of the data, entries can be references, e.g. `[0, "@max"]` of a global. `domainRel` (relative to the domain, of a `log` scale to its
-  positions) and `domainAbs` (absolute) extend it, by default a domain of a
-  position taken from the data is extended by 2%. `nice` rounds the ends taken from the data of a numeric
-  mapping, e.g. 0.951 to 1, `true` for steps of about a tenth of the domain
-  or the number of steps, e.g. so the legend of colors ends at 100%. `padding` for categorical scales. `inset` is
-  the space at the start and the end of the range in pixels (of positions), a
-  number for both or `[start, end]`, e.g. `10` so the first and the last point
-  are not at the edges, of every type of scale, also of dates, e.g. instead of
-  a `domainAbs` of milliseconds. A scale without
-  `orientation` has the `range` given, e.g. colors or the radius of points.
+  ...), continuous scales need a `numeric` or `date` type (positions of dates
+  a `time` or `utc` one), `point` and `band` a `categorical` one, `ordinal`
+  scales are of any values, e.g. the colors of categories (`range`).
+  `orientation` (`horizontal` or `vertical`) places the scale on the plot,
+  `angular` or `radial` in polar plots. `domain` fixes the domain, `null`
+  entries are taken from the data, the values are converted as the ones of
+  the data, e.g. dates or numbers of strings, entries can be references,
+  e.g. `[0, "@max"]` of a global, the domain of a `point` or `band` scale
+  are its categories in their order. `domainRel` (relative to the positions,
+  e.g. of a `log` or a `sqrt` scale) and `domainAbs` (absolute) extend it, by
+  default a domain of a position taken from the data is extended by 2%.
+  `nice` rounds the ends taken from the data of a numeric mapping, e.g. 0.951
+  to 1, of a `log` scale to powers of 10, `true` for steps of about a tenth
+  of the domain or the number of steps, e.g. so the legend of colors ends at
+  100%. `padding` for categorical scales. `inset` is the space at the start
+  and the end of the range in pixels (of positions), a number for both or
+  `[start, end]`, e.g. `10` so the first and the last point are not at the
+  edges, of every type of scale, also of dates, e.g. instead of a
+  `domainAbs` of milliseconds. A scale without `orientation` has the
+  `range` given, e.g. colors or the radius of points.
 - Scales of colors: `sequential` and `diverging` scales (a domain with a
   middle entry, e.g. `[null, 0, null]`) have an `interpolator` of d3, e.g.
-  `Blues`, `Viridis` or `RdYlGn`. `quantize`, `quantile` and `threshold`
-  scales (the `domain` are the values between the classes) are classes of
-  colors, the `range` or a `scheme` of d3, e.g. `Blues`, with `classes`
-  colors. Scales without orientation are the same in all facets.
+  `Blues`, `Viridis` or `RdYlGn`, `sequentialQuantile` the colors of the
+  quantiles of the values. `quantize`, `quantile` and `threshold` scales (the
+  `domain` are the values between the classes) are classes of colors, the
+  `range` or a `scheme` of d3, e.g. `Blues`, with `classes` colors, `ordinal`
+  scales the colors of categories. Scales without orientation are the same in
+  all facets.
 - `name`: the title of the legend.
 - `axis`: `position` (`top`, `bottom`, `left`, `right`, in polar plots
   `angular` and `radial`), `ticks`, `tickSpacing` (without `ticks` a tick per
   this many pixels of the axis, e.g. `80`, so a narrow chart has fewer ticks,
-  instead of a `relative` prop of `ticks`), `values` (fixed ticks, the ones outside
-  of the domain are left out), `format` (d3 number or time format), `rotate`
-  (the angle of the labels in degrees, positive counterclockwise, negative
-  clockwise), `grid` (lines at the ticks), `title` (`{"name", "offset"}`) and
-  `padding`.
+  instead of a `relative` prop of `ticks`), `values` (fixed ticks, the ones
+  outside of the domain are left out), `format` (d3 number or time format),
+  `rotate` (the angle of the labels in degrees, positive counterclockwise,
+  negative clockwise), `grid` (lines at the ticks), `title` (`{"name",
+  "offset"}`, the distance from the axis, by default 8 pixels inside the
+  edge of the margin) and `padding`.
 - `hover`: the hover shows the values of the vertical axis at the position of
   the mouse, of horizontal bars (a horizontal mapping is stacked, or the
   vertical one is categorical and the horizontal one is not) the values of
   the horizontal axis at the vertical position. Of several mappings of an
   orientation, e.g. a second vertical axis, the stacked one or the one with a
   `hover` (or the first one) has the values of the hover, the other numeric
-  ones with a `hover` are further columns. On touch devices it is shown by a tap and stays until a tap
-  outside of the plot, horizontal swipes move it, vertical ones scroll the
-  page. `format` of the horizontal and vertical axis, it defaults to the
-  axis format, without one dates are the date of the locale and numbers have
-  its decimal mark and up to 6 decimals (without trailing zeros), thousands
-  separators only if the domain reaches 10 000, so years are e.g. `2024`.
+  ones with a `hover` are further columns. On touch devices it is shown by a
+  tap and stays until a tap outside of the plot, horizontal swipes move it,
+  vertical ones scroll the page. `format` of the horizontal and vertical
+  axis, it defaults to the axis format, without one dates are the date of
+  the locale and numbers have its decimal mark and up to 6 decimals (without
+  trailing zeros), thousands separators only if the domain reaches 10 000,
+  so years are e.g. `2024`.
   For categorical mappings `props` are the columns of the entries, the
   `name` of the category first, e.g. `{"unit": "@unit"}` adds a column of
   the prop `unit` of the categories, `"name": null` leaves out the name.
@@ -523,7 +578,9 @@ the definition refer to these names.
   which are integers, e.g. years, are ordered ascending by JavaScript, first.
   `order` sets the order: `"ascending"`, `"descending"` (numbers by their
   value, e.g. the newest year first) or a list of keys, which are first, the
-  others after them. `ranks` are the props of the categories by their place
+  others after them. A patch of the props by a form element, e.g. other
+  colors, replaces them, the entries of the legend keep their state.
+  `ranks` are the props of the categories by their place
   in the order, of the first one, the second one, ..., the last entry of all
   others, e.g. the newest year is red, whichever year it is, the props of a
   category override them, they override `common`:
@@ -535,7 +592,8 @@ the definition refer to these names.
 
   With `"fromData": true` the values of the column which are not listed are
   categories as well, after the listed ones, in ascending order (numbers by
-  their value), e.g. new regions of the data. `scheme` sets the prop `color`
+  their value), e.g. new regions of the data, also of the column of a form
+  element, e.g. of a template `{col}`. `scheme` sets the prop `color`
   of the categories in their order, a d3 scheme, e.g. `Tableau10` or `Blues`
   (of the number of categories), a `color` of the props is kept:
 
@@ -558,8 +616,9 @@ the definition refer to these names.
   `format` of the values, by default the one of the hover, `missing`
   an entry beside them, e.g. of the regions of a map without a value
   (`{"name": "keine Daten", "color": "#DADADA"}`, the color of `geo:base`).
-- `stacked`: stacks the values of a vertical (or radial) axis, the first
-  category is at the bottom. `@y:start` and `@y:end` are the start and the end
+- `stacked`: stacks the values of the axis of the values, a vertical, a
+  horizontal (of horizontal bars) or a radial one, the first category is at
+  the bottom. `@y:start` and `@y:end` are the start and the end
   of the stacked value, `@y:start:scaled` and `@y:end:scaled` their positions,
   e.g. `y0` and `y1` of `cartesian:bar`, `@y:height:scaled` the difference,
   e.g. the height of an `svg:rect`.
@@ -576,7 +635,7 @@ A plot or a list of plots, drawn in order:
         "stroke": "@color",
         "fill": "none",
         "d": { "x": "@x:scaled", "y": "@y:scaled" },
-        "highlight-stroke-width": "@highlight-stroke-width"
+        "highlight-stroke-width": 3
     }
 }
 ```
@@ -595,9 +654,12 @@ A plot or a list of plots, drawn in order:
     the bars are horizontal, from `x0` (by default 0) to `x1` at `y`, `height`
     is their thickness, e.g. of the countries of a band scale of `y`.
   - `polar:*` of [polar plots](#polar-plots) and `geo:*` of [maps](#maps)
-- `categories`: the rows are grouped by these mappings, the props of their
-  categories are available in the plot props. Mappings without `props` only
-  group the rows, e.g. a line per id.
+- `categories`: the rows are grouped by this mapping or these mappings, the
+  props of their categories are available in the plot props. Mappings
+  without `props` only group the rows, e.g. a line per id.
+- `id`: the class and the `data-plot` of the group of the plot, `plot-<index>`
+  by default, the plots of a parent are merged by their ids (if all of them
+  have one).
 - `props`: svg attributes (and `text`). Props starting with `highlight-` are
   used for the elements of the category under the mouse or the legend entry.
 - `highlight`: `group` (default) highlights the elements of the category under
@@ -672,6 +734,7 @@ margins are the space of the labels:
 
 ```json
 "options": { "coord": "polar", "height": 400, "margins": {"top": 30, "right": 60, "bottom": 30, "left": 60} },
+"transform": [{ "type": "year", "column": "date", "as": "year" }, { "type": "align", "column": "date" }],
 "mapping": {
     "x": {
         "column": "date", "type": "date",
@@ -682,10 +745,13 @@ margins are the space of the labels:
         "column": "value", "type": "numeric",
         "scale": { "orientation": "radial", "domain": [0, null] },
         "axis": { "position": "radial", "ticks": 4, "grid": true }
-    }
+    },
+    "year": { "column": "year", "type": "categorical", "legend": {}, "props": { "fromData": true, "scheme": "Tableau10" } }
 },
 "plot": { "type": "polar:line", "categories": ["year"], "props": { "stroke": "@color", "fill": "none", "d": { "angle": "@x:scaled", "radius": "@y:scaled" } } }
 ```
+
+The years of daily data, the dates aligned to 2020, a line per year.
 
 - The angle is a cycle, the end of its domain is at the angle of its start,
   e.g. a year from `2020-01-01` to `2021-01-01`, a domain taken from the data
@@ -771,8 +837,9 @@ mapping (`join`) whose values are the keys of the features:
   and `lat` of its props, e.g. proportional circles with a `sqrt` scale of
   `r`).
 - The hover shows the region under the mouse: its name (the `name` of the
-  props of the `join` mapping, of the feature or the key) and the rows of it,
-  the region is highlighted.
+  props of the `join` mapping, of the feature or the key) and the rows of it
+  with the values of the first numeric mapping with a `hover`, the region is
+  highlighted.
 - One row per region is usually shown, `filter` (see
   [formElements](#formelements-and-globals)) or facets select them, e.g. a map
   per fuel type.
@@ -783,10 +850,11 @@ See `data/bev/def-map.json`, `data/sprit-nuts/def-map.json` and the maps of
 
 ### Annotations
 
-`annotations` are bands, lines, texts and circles at values of mappings, e.g.
-estimated values or events, the keys are the names of the mappings, a value
-or a range `[from, to]`, values are converted as the ones of the rows, e.g.
-dates, and can be references to globals, e.g. `"@target"`:
+`annotations` (an annotation or a list) are bands, lines, texts and circles
+at values of mappings, e.g. estimated values or events, the keys are the
+names of the mappings, a value or a range `[from, to]`, values are converted
+as the ones of the rows, e.g. dates, and can be references to globals, e.g.
+`"@target"`:
 
 ```json
 "annotations": [
@@ -807,14 +875,15 @@ dates, and can be references to globals, e.g. `"@target"`:
   of an axis at the start of the other one.
 - `label` and `text` are templates of the globals, e.g. `"Ziel {target}"`.
 - `props` are svg attributes, e.g. `fill` or `stroke`, the defaults are grey,
+  their names are the ones of the facet and of the annotation, e.g. `@y`,
   `above` draws the annotation above the plots, by default it is below the
   plots and grid lines, labels are above them. `facet` is a key or a list of
   keys of the facets of the annotation, by default it is in all facets.
 - Polar plots: a `band` of the angle is a sector (also across the top, e.g.
   from November to February), of the radius a ring, a `line` of the angle a
   spoke, of the radius a circle. Maps: `text` and `circle` at `lon` and `lat`.
-- The classes are `annotation` and `band`, `line`, `text` or `circle`, the
-  labels `annotation-label`.
+- The classes are `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or
+  `vis-circle`, the labels `vis-annotation-label`, see [styles](#styles).
 
 An annotation is a plot of the type `annotation:band`, `annotation:line`,
 `annotation:text` or `annotation:circle` of a row of its values (the plot
@@ -829,12 +898,14 @@ of events, the props can have the names of the rows:
 See `data/sprit-nuts/def.json`, `data/rechtsform/def-stacked-p.json` and
 `data/energy/weather/temperature-polar.json`.
 
-### Props
+### Props of the definition
 
 Most values of a definition can be props:
 
 - fixed values, e.g. `3` or `"none"`
-- references `"@name"`, see below
+- references `"@name"`, see below, also as `{"prop": "ref", "ref": "name"}`
+- `{"prop": "fixed", "value": ...}`: a value which is not a prop, e.g. an
+  object or a text starting with `@`
 - `{"prop": "relative", "ref": "innerWidth", "ratio": 0.01}`: a ratio of a
   reference
 - `{"prop": "steps", "ref": "totalWidth", "steps": [{"cut": 0, "value": 220}, {"cut": 550, "value": 250}]}`:
@@ -864,8 +935,9 @@ is undefined, `validateDef` warns of it.
 ### `facets`
 
 A plot for every category of `dim` (the name of a mapping with `props`), in
-`cols` columns. The mappings listed in `scales` share their scale across all facets.
-`cols` can be a prop based on `totalWidth`, `scales` a reference to `globals`.
+`cols` columns (1 by default). The mappings listed in `scales` share their
+scale across all facets. `cols` can be a prop based on `totalWidth`,
+`scales` a reference to `globals`.
 
 ### `formElements` and `globals`
 
@@ -877,8 +949,9 @@ The selected entries are named below the subtitle of the [PNG](#png),
 `"inImage": false` leaves out a form element which only changes the
 presentation, which the image shows anyway, e.g. shared or separate scales of
 the facets.
-`filter` shows only the rows of values of mappings, e.g. of a global, the
-values are compared as the ones of the rows, e.g. dates:
+`filter` shows only the rows of values of mappings, e.g. of a global, a value
+or a list of them, the values are compared as the ones of the rows, e.g.
+dates:
 
 ```json
 "globals": { "year": "2025" },
@@ -949,6 +1022,8 @@ axes and the labels and texts of annotations, e.g.
 definitions of a page before a deploy, `load` reads the file of an url:
 
 ```js
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { resolveParents, validateDef } from '@preschen/gen-vis/check';
 
 const url = pathToFileURL('data/gas/price.json').href;
@@ -961,12 +1036,14 @@ console.log(validateDef(def));  // the warnings, e.g. unknown plot types
 
 Plot types and coordinate systems can be registered, before the
 visualisations are loaded. A plot type draws the groups of rows of a plot,
-one per combination of its categories. A group has its `rows`, the props of
-its categories (`props`) and the values of the props of the plot: of a row
-`at(row)`, of one prop `prop(name)(row)` and the ones which are the same for
-all rows `attrs`, e.g. the color of a line. The values are plain values, e.g.
-the position of `"@x:scaled"`. `pointwise` draws an element per row (without
-the rows of missing values) with the values of its props as attributes,
+one per combination of its categories. A group has its `rows`, the keys of
+its categories (`categories`), their props (`props`) and the values of the
+props of the plot: of a row `at(row)`, of one prop `prop(name)(row)` and the
+ones which are the same for all rows `attrs`, e.g. the color of a line,
+`complete(row)` is false if a mapping of the props has no value. The values
+are plain values, e.g. the position of `"@x:scaled"`. `pointwise` draws an
+element per row (without the rows of missing values) with the values of its
+props as attributes,
 `groupwise(groups, parent, d)` a path per group with `attrs` and the path
 `d(group)`, both move their elements with the `transition` of the options:
 
@@ -981,12 +1058,15 @@ registerPlotType('my:tick', {
 ```
 
 `ctx` is the facet: the `store`, the d3 selection `inner` of the plot area,
-its `rows`, the `scales` by the names of the mappings, `axis` (the names of
-the mappings of the positions and of the values), `stackOf(row)` (the start
-and the end of a stacked value), `scope` (the names of the references of the
-facet, see [props](#props-1)), `innerWidth` and `innerHeight`, of maps also
-the `projection` and the `path`. `curve: true` passes the `curve` of the plot, `coords` limits
-a type to coordinate systems, e.g. `cartesian:bar` to `cartesian`.
+the `key` of the facet, its `rows`, the `scales` by the names of the
+mappings, `axis` (the names of the mappings of the positions and of the
+values), `stackOf(row)` (the start and the end of a stacked value), `scope`
+(the names of the references of the facet, see
+[props](#props-of-the-definition)), `innerWidth`, `innerHeight` and `dims`
+(the sizes of the coordinate system, e.g. its `radius`), of maps also the
+`projection` and the `path`. `curve: true` passes the `curve` of the plot,
+`coords` limits a type to coordinate systems, e.g. `cartesian:bar` to
+`cartesian`. The types of `PlotType` and `PlotGroup` are in the package.
 
 A new view, e.g. of a toggle of a legend, a form element or a new width, is
 drawn into the elements of the one before, only the attributes which change
@@ -999,12 +1079,11 @@ other types are removed before they are drawn again. `ctx.keep(key, create)`
 is an element kept from one draw to the next, e.g. an axis of a coordinate
 system, `create()` appends a new one to `ctx.inner`.
 
-A
-coordinate system (`registerCoord(name, coord)`) has the default ranges of the
-orientations of its scales, the axes and the geometry of the hover, see
+A coordinate system (`registerCoord(name, coord)`) has the default ranges of
+the orientations of its scales, the axes and the geometry of the hover, see
 `src/coords/index.js` and e.g. `src/coords/polar.js`, `load()` of a
 coordinate system loads its parts with its first chart, e.g. the ones of maps
-(`src/coords/geo.js`). Both are known to
+(`src/coords/geo.js`), again with the next one if it failed. Both are known to
 `validateDef`, `@preschen/gen-vis/check` exports `registerPlotType` and
 `registerCoord` as well, the standalone script has them as
 `GenVis.registerPlotType`, `GenVis.registerCoord`, `GenVis.pointwise` and
@@ -1018,22 +1097,45 @@ Definitions:
   instead of `"dim": ["facet"]`.
 - The names of 0.9 are removed: `svg:path`, `base:area`, `bar` and
   `stackedBar` are `cartesian:line`, `cartesian:area` and `cartesian:bar`,
-  `@y:st:s`, `@y:st:e` and `@y:st:h` are `@y:start`, `@y:end` and
-  `@y:height`, see the readme of 1.x.
+  `@y:st:s`, `@y:st:e` and `@y:st:h:scaled` are `@y:start`, `@y:end` and
+  `@y:height:scaled`, see the readme of 1.x.
 - Values of globals are the same as strings, e.g. `2024` and `"2024"`, but
   `0` and `""` are different, they were the same.
 - All texts are templates of the globals, so `{word}` in a footer or a name
-  is replaced if there is a global `word`.
+  is replaced if there is a global `word`, its value is text, also in the
+  footer.
 - A single value of an annotation which is `null` is no value, e.g. a text
   at the start of the axis.
 - The categories of the props of a mapping are `categories`, they were
   `manual`, radio buttons are `"type": "radio"`, they were `"switch"`.
 - The hover without format has the decimal mark of the locale, e.g. `1234,5`
   in German, and of several vertical mappings the one with a `hover` has the
-  values of the hover, it was the last one.
-- Only the footer is HTML, the names of the legends and the hover are text,
-  an entity is the character itself, e.g. `"Ø\u00a01991\u00a0-\u00a02020"`
-  instead of `"Ø&nbsp;1991&nbsp;-&nbsp;2020"`.
+  values of the hover, it was the last one. Every hover prop of a category
+  is a column of the hover.
+- Only the footer and the templates of the hover are HTML, the names of the
+  legends and the hover are text, an entity is the character itself, e.g.
+  `"Ø\u00a01991\u00a0-\u00a02020"` instead of `"Ø&nbsp;1991&nbsp;-&nbsp;2020"`.
+- A date without a time, e.g. `2024-06-01`, is the midnight of the time zone
+  of the scale, local of a `time` scale, it was midnight UTC, so the day
+  before west of UTC, also the values of the events `hover` and `select`
+  differ, a `utc` scale has the one of UTC. Dates and times without a time
+  zone, e.g. `2024-06-01 13:00`, are UTC of a `utc` scale, they were local,
+  dates of parquet and its timestamps without a time zone are strings.
+- The extension of a domain taken from the data (`domainRel`, 2% by
+  default) is relative to the positions of `log`, `sqrt` and `symlog`
+  scales, e.g. of the radius of a rose chart, it was relative to the values,
+  except of `log` scales.
+
+Pages:
+
+- The standalone script reads the data attributes as their props:
+  `data-download="false"` and `data-copy="false"` are off (they were on, a
+  download of a file named "false"), `data-state` is JSON.
+  `mountGenVisElement` mounts an element which is mounted already again.
+- The charts fill the width of `.vis` inside its padding and border, a page
+  which made `.vis` wider for its padding does not need to.
+- The package depends on the modules of d3 which it uses, not on `d3`, an
+  application which imports `d3` needs its own dependency.
 
 Styles: all classes start with `vis-`, see [styles](#styles):
 
@@ -1043,15 +1145,16 @@ Styles: all classes start with `vis-`, see [styles](#styles):
 | `formElement` (`.title`, `.entries`, `.slider`, `.value`) | `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`) |
 | `legend`, `color-legend` (`.title`, `.entries`, `.scale`, `.missing`, `.swatch`) | `vis-legend`, `vis-color-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, `vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
 | `facet-title`, `vis-inner`, `svg.facet` | `vis-facet-title`, `vis-facet`, `svg.vis-svg` |
-| `plotGroup`, `group`, `highlight`, `features` | `vis-plot`, `vis-group`, `vis-highlight`, `vis-features` |
+| `plotGroup`, `paths`, `group`, `highlight`, `features` | `vis-plot` (`data-plot`), `vis-plot`, `vis-group`, `vis-highlight`, `vis-features` |
 | `axis-name-x axis-position-left`, `axis-title`, `grid` | `vis-axis vis-axis-left` (`data-mapping="x"`), `vis-axis-title`, `vis-grid` |
-| `annotations below`, `annotation band`, `annotation-label` | `vis-plot vis-annotations vis-below`, `vis-annotation vis-band`, `vis-annotation-label` |
+| `annotations below`, `annotation band`, `annotation-label`, `annotation-labels` | `vis-plot vis-annotations vis-below`, `vis-annotation vis-band`, `vis-annotation-label`, `vis-annotation-labels` |
 | `hover` (`.title`, `.entries`, `tr.entry`, `.nearest`, `td.y`, `.value`), `hoverMarker`, `events` | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-nearest`, `td[data-mapping="y"]`, `vis-value`), `vis-hover-marker`, `vis-events` |
 | `#container-<id>` of form elements and their entries | `[data-id="<id>"]` |
 | `gen-vis-attached` (mountGenVisByClass) | `vis-mounted` |
 
 The default colors of annotations are styles, not attributes, they can be
-changed with the [css variables](#styles).
+changed with the [css variables](#styles). A facet with a hover is an
+application of screen readers (`role="application"`), not an image.
 
 Extensions: a plot type gets plain values instead of the objects of the
 internal format, the groups have `rows`, `at(row)`, `prop(name)`, `attrs` and
@@ -1071,7 +1174,7 @@ npm run dev     # dev server with all definitions in data/, ?def=bev/def.json sh
 npm test        # unit tests, rendering and schema check of all definitions in data/
 npm run build   # es module for bundlers in dist/
 npm run watch   # rebuilds dist/ on changes, e.g. for `npm link`
-npm run lib     # standalone script in dist-lib/
+npm run lib     # standalone script in dist-lib/, gen-vis.js (of the package) and gen-vis-<version>.js
 npm run deploy  # builds and uploads the standalone script to GEN_VIS_UPLOAD (user@host:/path) of .env
 npm run site    # dev server of the page of the examples (site/), with the package built in dist/
 npm run site:build  # the page of the examples in dist-site/
@@ -1105,7 +1208,8 @@ directory (with `npm run watch`). The `vue` of the linked package would be the
 one of its own `node_modules`, a second Vue, so the bundler of the application
 has to resolve `vue` to its own, e.g. `resolve.alias: { vue:
 path.resolve('node_modules/vue') }` of webpack or `resolve.dedupe: ['vue']` of
-vite. The changes of the versions are in `CHANGELOG.md`.
+vite. The changes of the versions are in `CHANGELOG.md`. `npm publish` runs
+the tests and builds `dist/` and the standalone script of the package.
 
 ## License
 
