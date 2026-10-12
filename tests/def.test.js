@@ -150,6 +150,8 @@ describe('column templates', () => {
     test('unknown globals are kept', () => {
         expect(fillTemplate('{a}.{b}', { a: 'x' })).toBe('x.{b}');
         expect(fillTemplate('{a}', { a: 1 })).toBe('1');
+        // only the own globals, not the keys of the prototype of objects
+        expect(fillTemplate('{constructor} {toString}', {})).toBe('{constructor} {toString}');
     });
 });
 

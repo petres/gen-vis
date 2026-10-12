@@ -164,7 +164,7 @@ const applyTransforms = (rows, transforms = [], globals = {}) => {
     const get = (i, c) => columns.has(c) ? columns.get(c)[i] : rows[i][c];
     for (const raw of [transforms].flat()) {
         const t = filled(raw, globals);
-        const compute = transformTypes[t.type];
+        const compute = Object.hasOwn(transformTypes, t.type) ? transformTypes[t.type] : undefined;
         if (!compute)
             throw new Error(`Unknown transform '${t.type}', expected one of ${Object.keys(transformTypes).map(n => `'${n}'`).join(', ')}`);
         const n = rows.length;

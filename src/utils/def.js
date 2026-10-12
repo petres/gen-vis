@@ -178,7 +178,7 @@ const templateRefs = column => typeof column == 'string' ?
 
 // unknown globals are kept as they are
 const fillTemplate = (column, globals = {}) =>
-    column.replace(/\{(\w+)\}/g, (t, n) => n in globals ? String(globals[n]) : t);
+    column.replace(/\{(\w+)\}/g, (t, n) => Object.hasOwn(globals, n) ? String(globals[n]) : t);
 
 // a text of the definition with the values of the globals, e.g. a title or
 // a name, other values are kept, e.g. undefined

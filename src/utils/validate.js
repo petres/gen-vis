@@ -192,7 +192,7 @@ const validateDef = def => {
             warn(`${path}.type`, `unknown type '${p.type}', expected one of ${list(types)}`);
         else if (plotTypes[p.type].coords && coordName in coords && !plotTypes[p.type].coords.includes(coordName))
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
-        (p.categories ?? []).filter(c => !(c in mapping)).forEach(c =>
+        (p.categories ?? []).filter(c => !Object.hasOwn(mapping, c)).forEach(c =>
             warn(`${path}.categories`, `unknown mapping '${c}'`));
         if (p.highlight !== undefined && !['group', 'row'].includes(p.highlight))
             warn(`${path}.highlight`, `unknown highlight '${p.highlight}', expected one of 'group', 'row'`);
@@ -212,7 +212,7 @@ const validateDef = def => {
             const [kind, name] = Object.entries(typeof p.select == 'object' && p.select ? p.select : {})[0] ?? [];
             if (!['min', 'max'].includes(kind))
                 warn(`${path}.select`, `expected 'first', 'last' or the min or max of a mapping, e.g. { "max": "x" }`);
-            else if (!(name in mapping))
+            else if (!Object.hasOwn(mapping, name))
                 warn(`${path}.select.${kind}`, `unknown mapping '${name}'`);
         }
         if (p.dodge !== undefined && (typeof p.dodge != 'number' || p.type != 'svg:text'))
@@ -225,21 +225,21 @@ const validateDef = def => {
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
         // the names of the rows of a url are not known
         const plotNames = typeof p.data == 'string' ? null
-            : new Set([...names.plot((p.categories ?? []).filter(c => c in mapping)), ...rows.flatMap(r => Object.keys(r ?? {}))]);
+            : new Set([...names.plot((p.categories ?? []).filter(c => Object.hasOwn(mapping, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
         checkProp(p.props, `${path}.props`, warn, plotNames);
     });
 
     if (coordName == 'geo') {
         if (typeof def.geo?.data != 'string' && typeof def.geo?.data != 'object')
             warn('geo.data', `a map needs its geometry, GeoJSON or TopoJSON or their url`);
-        if (def.geo?.join !== undefined && !(def.geo.join in mapping))
+        if (def.geo?.join !== undefined && !Object.hasOwn(mapping, def.geo.join))
             warn('geo.join', `unknown mapping '${def.geo.join}'`);
         const projection = def.geo?.projection?.type ?? 'mercator';
         if (!d3.named(Object.fromEntries(projectionNames.map(n => [n, true])), projection))
             warn('geo.projection.type', `unknown projection '${projection}', expected one of ${list(projectionNames)}`);
     }
 
-    Object.keys(def.filter ?? {}).filter(n => !(n in mapping)).forEach(n =>
+    Object.keys(def.filter ?? {}).filter(n => !Object.hasOwn(mapping, n)).forEach(n =>
         warn(`filter.${n}`, `unknown mapping '${n}'`));
     Object.entries(def.filter ?? {}).forEach(([n, v]) => checkProp(v, `filter.${n}`, warn, names.global));
 
@@ -250,7 +250,7 @@ const validateDef = def => {
         if (!annotationTypes.includes(a.type))
             warn(`${path}.type`, `unknown type '${a.type}', expected one of ${list(annotationTypes)}`);
         Object.keys(a).filter(k => !annotationKeys.includes(k)).forEach(k => {
-            if (!(k in mapping))
+            if (!Object.hasOwn(mapping, k))
                 warn(`${path}.${k}`, `unknown mapping '${k}'`);
             else if (!mapping[k].scale)
                 warn(`${path}.${k}`, `the mapping has no scale`);
@@ -278,30 +278,30 @@ const validateDef = def => {
     if (def.facets) {
         if (typeof def.facets.dim != 'string')
             warn('facets.dim', `expected the name of a mapping`);
-        else if (!(def.facets.dim in mapping))
+        else if (!Object.hasOwn(mapping, def.facets.dim))
             warn('facets.dim', `unknown mapping '${def.facets.dim}'`);
     }
 
     // column templates, e.g. "{values}{share}", need the globals
-    const checkTemplate = (column, path) => templateRefs(column).filter(r => !(r in (def.globals ?? {}))).forEach(r =>
+    const checkTemplate = (column, path) => templateRefs(column).filter(r => !Object.hasOwn(def.globals ?? {}, r)).forEach(r =>
         warn(path, `unknown global '${r}' in the column template`));
     Object.entries(mapping).forEach(([n, m]) => checkTemplate(m.column, `mapping.${n}.column`));
     // and the ones of the texts, e.g. "Durchschnitt {base} = 100" of the subtitle
-    const checkText = (text, path) => templateRefs(text).filter(r => !(r in (def.globals ?? {}))).forEach(r =>
+    const checkText = (text, path) => templateRefs(text).filter(r => !Object.hasOwn(def.globals ?? {}, r)).forEach(r =>
         warn(path, `unknown global '${r}' in the text`));
     ['title', 'subtitle', 'footer'].forEach(o => checkText(def.options?.[o], `options.${o}`));
     // the templates of the hover, the names of the title and of a row, e.g. {land.unit}
     const hover = def.options?.hover ?? {};
     const checkHover = (template, path, known) => templateNames(template).filter(r => !known(r)).forEach(r =>
         warn(path, `unknown name '${r}' in the template`));
-    const isGlobal = r => r in (def.globals ?? {});
+    const isGlobal = r => Object.hasOwn(def.globals ?? {}, r);
     checkHover(hover.title, 'options.hover.title', r => r == 'title' || isGlobal(r));
     const transition = def.options?.transition;
     if (transition !== undefined && typeof transition != 'boolean' && !(typeof transition == 'number' && transition >= 0))
         warn('options.transition', `expected the milliseconds of the transition, e.g. 300, or true`);
     if (hover.mode !== undefined && !['position', 'point'].includes(hover.mode))
         warn('options.hover.mode', `unknown mode '${hover.mode}', expected one of 'position', 'point'`);
-    checkHover(hover.row, 'options.hover.row', r => isGlobal(r) || r.split('.')[0] in mapping);
+    checkHover(hover.row, 'options.hover.row', r => isGlobal(r) || Object.hasOwn(mapping, r.split('.')[0]));
     Object.entries(mapping).forEach(([n, m]) => {
         checkText(m.name, `mapping.${n}.name`);
         checkText(m.axis?.title?.name, `mapping.${n}.axis.title.name`);
@@ -342,7 +342,7 @@ const validateDef = def => {
             warn(`${path}.base`, `the rows of the base are needed, e.g. { "year": "{base}" }`);
         if (t.align !== undefined && !['end', 'center'].includes(t.align))
             warn(`${path}.align`, `expected 'end' or 'center'`);
-        templateRefs(JSON.stringify(t)).filter(r => !(r in (def.globals ?? {}))).forEach(r =>
+        templateRefs(JSON.stringify(t)).filter(r => !Object.hasOwn(def.globals ?? {}, r)).forEach(r =>
             warn(path, `unknown global '${r}' in the template`));
     });
 

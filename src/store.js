@@ -255,8 +255,9 @@ class Store {
     // html of the definition, e.g. the footer, with the values of the globals
     // as text, they can be values of the data, e.g. of a form element
     html(t) { return typeof t == 'string' ? fillHtml(t, this.def.globals) : t }
-    prop(n, k) { return this.def.mapping[n].props[k] }
-    mappingNamesWithKey(k) { return Object.keys(this.def.mapping).filter(n => k in this.def.mapping[n]) }
+    // the props of a category, e.g. of a value of the data, undefined for other values
+    prop(n, k) { const props = this.def.mapping[n].props; return Object.hasOwn(props, k) ? props[k] : undefined }
+    mappingNamesWithKey(k) { return Object.keys(this.def.mapping).filter(n => Boolean(this.def.mapping[n][k])) }
 
     /**
      * def is an object or a JSON string, if it is null the def is loaded from

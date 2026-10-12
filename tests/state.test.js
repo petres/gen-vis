@@ -68,6 +68,14 @@ describe('applyState', () => {
         expect(d.mapping.f.props.a.visible).toBe(true);
     });
 
+    test('the keys of the prototype of objects are unknown, e.g. of a state of a url', () => {
+        const d = def();
+        applyState(d, JSON.parse('{ "visible": { "c": { "__proto__": false, "toString": false }, "__proto__": { "a": false } } }'));
+        expect(Object.prototype.visible).toBeUndefined();
+        expect(Object.prototype.toString.visible).toBeUndefined();
+        expect(snapshot(d)).toEqual(snapshot(def()));
+    });
+
     test('null and empty states', () => {
         const d = def();
         applyState(d, null);

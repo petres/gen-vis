@@ -44,11 +44,11 @@ const applyState = (def, state) => {
     });
 
     Object.entries(state?.visible ?? {}).forEach(([n, keys]) => {
-        const m = def.mapping[n];
+        const m = Object.hasOwn(def.mapping, n) ? def.mapping[n] : null;
         if (!m?.legend || !m.props)
             return;
-        Object.entries(keys).forEach(([k, v]) => {
-            if (k in m.props)
+        Object.entries(keys ?? {}).forEach(([k, v]) => {
+            if (Object.hasOwn(m.props, k))
                 m.props[k].visible = Boolean(v);
         });
     });
