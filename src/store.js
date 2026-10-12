@@ -11,7 +11,8 @@ import { validateDef } from "@/utils/validate";
 import { formatter } from "@/utils/props";
 import { loadCoord } from "@/coords";
 import { axisNames } from "@/layout";
-import { loadColors } from "@/utils/d3";
+import { loadColors, loadTransition } from "@/utils/d3";
+import { lazy } from "@/utils/lazy";
 
 // relative urls are resolved against `base`, e.g. the url of the def referencing them
 const resolveUrl = (url, base = document.baseURI) => new URL(url, base).href;
@@ -138,7 +139,8 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     const parts = Promise.all([
         /"(scheme|interpolator)":/.test(JSON.stringify([defOrg.mapping, defOrg.formElements])) ? loadColors() : null,
         loadCoord(defOrg.options?.coord),
-        defOrg.geo?.data ? import('@/utils/geo.js') : null,
+        defOrg.geo?.data ? lazy.geo() : null,
+        defOrg.options?.transition ? loadTransition() : null,
     ]);
     parts.catch(() => {});
     // the format of the data, by default the one of the extension of its url

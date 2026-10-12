@@ -26,9 +26,12 @@ const injectCss = () => ({
 export default defineConfig(({ mode }) => ({
     plugins: [vue(), injectCss()],
     resolve: {
-        alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url)),
-        },
+        alias: [
+            // the standalone script is one file, the parts which are loaded
+            // when a chart needs them are imported directly, see utils/lazy.js
+            ...(mode == 'lib' ? [{ find: /^@\/utils\/lazy$/, replacement: fileURLToPath(new URL('./src/utils/lazy-static.js', import.meta.url)) }] : []),
+            { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+        ],
     },
     server: {
         open: '/',

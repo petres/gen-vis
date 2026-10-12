@@ -3,6 +3,8 @@
 // projection, the annotations and the hover, with d3-geo, are loaded with the
 // first map, see coords/geo-map.js and loadCoord of coords/index.js.
 
+import { lazy } from '@/utils/lazy';
+
 // the mapping of the regions, its values are the keys of the features
 const joinOf = store => store.def.geo?.join;
 
@@ -28,5 +30,5 @@ export default {
     axes: () => {},
     // a text or a circle at `lon` and `lat`, e.g. of a city
     annotations: ['text', 'circle'],
-    load: () => import('@/coords/geo-map.js'),
+    load: () => lazy.geoMap(),
 };

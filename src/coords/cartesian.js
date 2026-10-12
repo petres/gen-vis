@@ -52,8 +52,10 @@ const axes = ctx => {
         const ga = ctx.keep(`axis ${n}`, () => inner.append("g"))
             .attr("class", `vis-axis vis-axis-${i.position}`)
             .attr("data-mapping", n);
-        ga.interrupt('vis').selectAll('*').interrupt('vis');
-        (motion.duration > 0 && ga.node().hasChildNodes() ? ga.transition('vis').duration(motion.duration) : ga).call(a);
+        // the transitions are loaded for definitions with a transition, see loadTransition
+        if (d3.hasTransitions(ga))
+            ga.interrupt('vis').selectAll('*').interrupt('vis');
+        (motion.duration > 0 && ga.node().hasChildNodes() && d3.hasTransitions(ga) ? ga.transition('vis').duration(motion.duration) : ga).call(a);
 
         if (i.position == 'bottom')
             ga.attr('transform', `translate(0, ${innerHeight})`)

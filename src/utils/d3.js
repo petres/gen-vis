@@ -2,12 +2,12 @@
 // d3, e.g. without forces and zoom. The names of the definitions, e.g. of
 // scales and interpolators, are looked up in the registries below. The
 // colors of d3-scale-chromatic are only loaded for definitions which name
-// one (see loadColors), the projections of maps with the first map (see
+// one (see loadColors), the transitions for the ones with a transition (see
+// loadTransition), the projections of maps with the first map (see
 // coords/geo.js).
 import * as d3Scale from 'd3-scale';
 import { axisTop, axisBottom, axisLeft, axisRight } from 'd3-axis';
-// the transitions of selections, e.g. of options.transition
-import 'd3-transition';
+import { byPrefix, named } from '@/utils/registry';
 
 export { bisectCenter, extent, greatest, group, least, max, mean, min, nice, range, tickStep, ticks } from 'd3-array';
 export { csvFormat, csvParse, tsvParse } from 'd3-dsv';
@@ -24,14 +24,9 @@ export {
     utcSecond, utcMinute, utcHour, utcDay, utcWeek, utcMonth, utcYear,
 } from 'd3-time';
 export { timeFormatLocale } from 'd3-time-format';
+import { lazy } from '@/utils/lazy';
 
-const lowerFirst = w => w.charAt(0).toLowerCase() + w.slice(1);
-
-// the exports of a module of d3 with a prefix, by their names without it,
-// e.g. "linear" of scaleLinear
-export const byPrefix = (module, prefix) => Object.fromEntries(Object.entries(module)
-    .filter(([k]) => k.startsWith(prefix) && k.length > prefix.length)
-    .map(([k, v]) => [lowerFirst(k.slice(prefix.length)), v]));
+export { byPrefix, named };
 
 // the scales (`scale.type`), e.g. linear, time, band or sequential, not the
 // value scaleImplicit
@@ -57,7 +52,16 @@ export const schemeNames = registry([
 
 // the colors of d3-scale-chromatic, loaded once by loadColors
 let colors = null;
-export const loadColors = async () => colors ??= await import('@/utils/colors.js');
+export const loadColors = async () => colors ??= await lazy.colors();
+
+// the transitions of selections, e.g. of options.transition, d3-transition
+// adds them to the selections of d3, e.g. `transition()` and `interrupt()`
+let transitions = null;
+export const loadTransition = () => transitions ??= lazy.transition().catch(error => {
+    transitions = null;
+    throw error;
+});
+export const hasTransitions = selection => typeof selection.interrupt == 'function';
 const loaded = () => {
     if (!colors)
         throw new Error('The colors of d3 are not loaded, see loadColors');
@@ -70,10 +74,6 @@ export const interpolator = name => named(loaded().interpolators, name);
 // the axes of the cartesian coordinate system by their position
 export const axes = { top: axisTop, bottom: axisBottom, left: axisLeft, right: axisRight };
 
-// an entry of a registry, the first letter in any case, e.g. "Blues" or
-// "blues", undefined for unknown names
-export const named = (registry, name) => typeof name == 'string' && Object.hasOwn(registry, lowerFirst(name))
-    ? registry[lowerFirst(name)] : undefined;
 
 // the colors of a scheme, e.g. "Tableau10", of a scheme of several sizes, e.g.
 // "Blues", `n` colors (3 to the most of the scheme), undefined if it is unknown

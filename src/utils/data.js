@@ -3,6 +3,7 @@ export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, upd
 import * as d3 from "@/utils/d3";
 import { sameValue, templateRefs } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
+import { lazy } from "@/utils/lazy";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
@@ -21,7 +22,7 @@ const isBinary = data => data instanceof ArrayBuffer || ArrayBuffer.isView(data)
  */
 const parseData = async (data, format, columns = null) => {
     if (isBinary(data)) {
-        const { parseParquet } = await import('@/utils/parquet.js');
+        const { parseParquet } = await lazy.parquet();
         return parseParquet(data, columns);
     }
     if (Array.isArray(data))

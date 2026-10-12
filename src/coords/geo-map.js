@@ -4,7 +4,7 @@ import {
     geoConicEqualArea, geoConicEquidistant, geoContains, geoEqualEarth, geoEquirectangular, geoGnomonic,
     geoIdentity, geoMercator, geoNaturalEarth1, geoOrthographic, geoPath, geoStereographic, geoTransverseMercator,
 } from 'd3-geo';
-import { named } from "@/utils/d3";
+import { named } from "@/utils/registry";
 import { setAnnotationProps } from "@/coords/annotations";
 
 // the projections of maps (`geo.projection.type`), e.g. mercator

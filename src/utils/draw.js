@@ -75,7 +75,7 @@ const setProps = function(values) {
             const before = this.getAttribute(k);
             if (before === value)
                 continue;
-            if (motion.duration > 0 && before !== null) {
+            if (motion.duration > 0 && before !== null && d3.hasTransitions(d3.select(this))) {
                 (transition ??= d3.select(this).transition('vis').duration(motion.duration)).attr(k, value);
                 (this[targets] ??= {})[k] = value;
             } else {

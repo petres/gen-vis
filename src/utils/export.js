@@ -4,6 +4,7 @@ import { render } from "vue";
 import * as d3 from "@/utils/d3";
 import { sameValue } from "@/utils/def";
 import { columnValues } from "@/utils/data";
+import { lazy } from "@/utils/lazy";
 
 // the space around the visualisation in the image
 const padding = 15;
@@ -58,7 +59,7 @@ const scaleOf = width => Math.max(2, Math.ceil(defaultWidth / width));
  * `facets` the mapping of the facets.
  */
 const renderImage = async (outer, vnode, { width, ...parts }) => {
-    const { domToBlob } = await import('modern-screenshot');
+    const { domToBlob } = await lazy.screenshot();
 
     const wrapper = document.createElement('div');
     wrapper.style.cssText = 'position: fixed; top: 0; left: -100000px;';
