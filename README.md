@@ -1201,7 +1201,7 @@ npm run site:build  # the page of the examples in dist-site/
 ```
 
 The page of the examples (`site/`) is the one of GitHub Pages, built and
-deployed by `.github/workflows/pages.yml` on every push to `main` and `v2`. It
+deployed by `.github/workflows/pages.yml` on every push to `main`. It
 uses the package as it is published, the es module of `dist/`, so its styles
 are in the cascade layer as in the applications. Every example is a
 definition and the CSS of its look in `site/examples/` (listed in
