@@ -45,10 +45,11 @@ const parseData = async (data, format, columns = null) => {
 
 const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
 
-// missing and invalid values are null, also integers of 64 bits, e.g. of parquet
+// missing, invalid and infinite values are null, integers of 64 bits are
+// numbers, e.g. of parquet
 const toNumber = v => {
     const n = missing(v) ? NaN : Number(v);
-    return isNaN(n) ? null : n;
+    return Number.isFinite(n) ? n : null;
 };
 
 // a date without a time zone: of ISO, e.g. "2022-06-01", "2022-06", "2022"
@@ -59,22 +60,26 @@ const dayFirst = /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[T ](\d{1,2}):(\d{2})(?::(\d{
 
 // the time of a date and a time of the time zone of a scale, local or UTC,
 // NaN if it does not exist, e.g. "2022-02-30", which Date.parse reads as the
-// 2nd of March
+// 2nd of March, 24:00 is the midnight at the end of the day, a fraction of a
+// second is cut to milliseconds, e.g. of pandas
 const wallTime = (utc, y, m = 1, d = 1, h = 0, mi = 0, s = 0, fraction = '') => {
     // years before 100 are not the ones of 1900, as of new Date(y, m, d)
     const date = new Date(0);
-    const ms = Math.round(Number(`0.${fraction || 0}`)*1000);
+    const ms = +`${fraction ?? ''}000`.slice(0, 3);
+    const end = +h == 24 && +mi == 0 && +s == 0 && ms == 0;
     if (utc) {
         date.setUTCFullYear(+y, m - 1, +d);
-        date.setUTCHours(+h, +mi, +s, ms);
+        date.setUTCHours(end ? 0 : +h, +mi, +s, ms);
     } else {
         date.setFullYear(+y, m - 1, +d);
-        date.setHours(+h, +mi, +s, ms);
+        date.setHours(end ? 0 : +h, +mi, +s, ms);
     }
     const [year, month, day] = utc
         ? [date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()]
         : [date.getFullYear(), date.getMonth(), date.getDate()];
-    const valid = year == +y && month == m - 1 && day == +d && +h < 24 && +mi < 60 && +s < 60;
+    const valid = year == +y && month == m - 1 && day == +d && (end || +h < 24) && +mi < 60 && +s < 60;
+    if (valid && end)
+        utc ? date.setUTCDate(date.getUTCDate() + 1) : date.setDate(date.getDate() + 1);
     return valid ? date.getTime() : NaN;
 };
 

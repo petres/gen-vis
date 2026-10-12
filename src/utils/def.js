@@ -87,8 +87,13 @@ const object = (v, path, expected) => {
 // strings, see distinctValues of utils/data.js, the categories of `fromData`
 const prepareMapping = (m, name, dataKeys = () => [], globals = {}) => {
     object(m, `mapping.${name}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`);
-    ['scale', 'axis', 'legend', 'hover', 'props'].filter(k => m[k] !== undefined)
-        .forEach(k => object(m[k], `mapping.${name}.${k}`, 'an object, e.g. {}'));
+    // null or false removes a part, e.g. the hover of a parent
+    ['scale', 'axis', 'legend', 'hover', 'props'].forEach(k => {
+        if (m[k] === null || m[k] === false)
+            delete m[k];
+        else if (m[k] !== undefined)
+            object(m[k], `mapping.${name}.${k}`, 'an object, e.g. {}');
+    });
     if (m.props) {
         // the props of a category: the color of a scheme in the order of the
         // categories, e.g. Tableau10, the common ones, the ones of its rank,
@@ -236,7 +241,7 @@ const fillHtml = (template, names) => template.replace(/\{([\p{L}\p{N}_.-]+)\}/g
  * they can depend on several form elements. Returns the names of the
  * mappings whose values change, the ones of another column or type.
  */
-const applyFormElements = (def, defOrg, dataKeys = () => []) => {
+const applyFormElements = (def, defOrg, dataKeys = () => [], keepVisible = true) => {
     const elements = def.formElements ?? [];
     const names = new Set([
         ...elements.flatMap(e => e.values.flatMap(v => Object.keys(v.mapping ?? {}))),
@@ -257,7 +262,7 @@ const applyFormElements = (def, defOrg, dataKeys = () => []) => {
             merged.column = fillTemplate(merged.column, def.globals);
         const m = prepareMapping(merged, n, dataKeys);
         const before = def.mapping[n];
-        if (before?.props && m.props)
+        if (keepVisible && before?.props && m.props)
             m.keys.filter(k => Object.hasOwn(before.props, k)).forEach(k => m.props[k].visible = before.props[k].visible);
         if (before?.column !== m.column || before?.type !== m.type)
             changed.push(n);

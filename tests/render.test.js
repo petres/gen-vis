@@ -2058,6 +2058,63 @@ describe('fixed bugs', () => {
         expect(errors).toEqual([]);
     });
 
+    test('null removes a part of a mapping, also by a patch of a form element', async () => {
+        const def = lineDef();
+        def.mapping.c.hover = null;
+        def.mapping.y.axis = null;
+        let el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelectorAll('g.vis-axis')).toHaveLength(1);
+        expect(el.querySelectorAll('g.vis-plot circle')).toHaveLength(7);
+
+        const patched = lineDef();
+        patched.globals = { mode: 'a' };
+        patched.formElements = [{ id: 'mode', name: 'Modus', ref: 'mode', type: 'radio', values: [
+            { id: 'a', name: 'A', value: 'a' }, { id: 'b', name: 'B', value: 'b', mapping: { c: { legend: null } } },
+        ] }];
+        el = await mount(GenVis, { def: patched, data: lineData });
+        el.querySelector('.vis-form-element input[value="b"]').click();
+        await nextTick();
+        expect(el.querySelector('.vis-error')).toBeNull();
+        expect(errors).toEqual([]);
+    });
+
+    test('a new state resets the entries of the legends of the categories of another column', async () => {
+        const def = lineDef();
+        def.globals = { col: 'land' };
+        def.mapping.c = { column: '{col}', type: 'categorical', legend: {}, props: { fromData: true } };
+        def.formElements = [{ id: 'col', name: 'Spalte', ref: 'col', type: 'radio', values: [
+            { id: 'land', name: 'Land', value: 'land' }, { id: 'other', name: 'Anderer', value: 'other' },
+        ] }];
+        const vm = createApp(GenVis, { def, data: lineData }).mount(document.body.appendChild(document.createElement('div')));
+        await rendered(vm.$el);
+        vm.store.setState({ globals: { col: 'other' }, visible: { c: { 20: false } } });
+        await nextTick();
+        expect(vm.store.state).toEqual({ globals: { col: 'other' }, visible: { c: { 20: false } } });
+        vm.store.setState({ globals: { col: 'other' } });
+        await nextTick();
+        expect(vm.store.state).toEqual({ globals: { col: 'other' } });
+        expect(vm.$el.querySelector('.vis-legend-entry[data-key="20"]').dataset.visible).toBe('true');
+    });
+
+    test('the categories of the data of a transform of a global', async () => {
+        const def = lineDef();
+        def.globals = { date: 'd1' };
+        def.transform = { type: 'year', column: '{date}', as: 'yr' };
+        def.mapping.c = { column: 'yr', type: 'categorical', legend: {}, props: { fromData: true } };
+        def.plot[1].categories = ['c'];
+        def.formElements = [{ id: 'date', name: 'Datum', ref: 'date', type: 'radio', values: [
+            { id: 'd1', name: 'D1', value: 'd1' }, { id: 'd2', name: 'D2', value: 'd2', mapping: { c: { name: 'Jahr' } } },
+        ] }];
+        const data = 'year,value,land,d1,d2\n2020,1,Wien,2020-01-01,2030-01-01\n2021,2,Wien,2021-01-01,2031-01-01';
+        const el = await mount(GenVis, { def, data });
+        const keys = () => [...el.querySelectorAll('.vis-legend-entry')].map(e => e.dataset.key);
+        expect(keys()).toEqual(['2020', '2021']);
+        el.querySelector('.vis-form-element input[value="d2"]').click();
+        await nextTick();
+        expect(keys()).toEqual(['2030', '2031']);
+        expect(el.querySelectorAll('g.plot-1 circle')).toHaveLength(2);
+    });
+
     test('form elements of a definition without globals', async () => {
         const def = lineDef();
         def.formElements = [{ id: 'col', name: 'Wert', ref: 'col', type: 'radio', values: [

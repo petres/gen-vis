@@ -81,6 +81,18 @@ describe('the domains of scales', () => {
         expect(Math.abs(negative(-1.3) - negative(-870))).toBeCloseTo(50/1.04, 5);
     });
 
+    test('fixed ends are exact, also of sqrt, log and sequential scales', () => {
+        expect(scale({ type: 'sqrt', domain: [0, 3] }, [{ y: 1 }]).domain()).toEqual([0, 3]);
+        expect(scale({ type: 'log', domain: [1, 1000] }, [{ y: 5 }]).domain()).toEqual([1, 1000]);
+        const colors = makeScale('v', { type: 'numeric', scale: { type: 'sequentialLog', interpolator: 'Blues', domain: [null, null] } }, [{ v: 1 }, { v: 1000 }], options);
+        expect(colors.domain()).toEqual([1, 1000]);
+    });
+
+    test('an ordinal scale of numbers, the values in their order', () => {
+        const s = makeScale('v', { type: 'numeric', scale: { type: 'ordinal', range: ['red', 'green', 'blue'], domain: [null, null] } }, [{ v: 3 }, { v: 1 }, { v: 2 }], options);
+        expect([s(1), s(2), s(3)]).toEqual(['red', 'green', 'blue']);
+    });
+
     test('a sqrt scale is extended by its positions, 0 is 2% above the bottom', () => {
         const s = scale({ type: 'sqrt' }, [{ y: 0 }, { y: 870 }]);
         expect((50 - s(0))/50).toBeCloseTo(0.02/1.04, 5);

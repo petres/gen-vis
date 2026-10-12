@@ -492,7 +492,8 @@ a page can be set with css (see [styles](#styles) for the colors):
 ### `mapping`
 
 Maps columns of the data to named dimensions, the plots and all other parts of
-the definition refer to these names.
+the definition refer to these names. `null` removes a part of a mapping of a
+parent or of a patch, e.g. `"hover": null`.
 
 ```json
 "y": {
@@ -506,11 +507,12 @@ the definition refer to these names.
 ```
 
 - `type`: `numeric`, `date` or `categorical`. Numeric and date values which
-  are missing or invalid are `null`: they are gaps in lines and areas, points
-  and bars are not drawn, and they are not shown in the hover. Dates are
+  are missing, invalid or infinite are `null`: they are gaps in lines and
+  areas, points and bars are not drawn, and they are not shown in the hover. Dates are
   timestamps or strings. A date without a time zone, e.g. `2024-06-01`,
-  `2024-06`, `2024`, `2024-06-01 13:00` (also with a `T`) or `01.06.2024`
-  (the day first, also with a time), is the one of the time zone of the
+  `2024-06`, `2024`, `2024-06-01 13:00` (also with a `T`, seconds and their
+  fraction, `24:00` is the end of the day) or `01.06.2024` (the day first,
+  also with a time), is the one of the time zone of the
   scale, local of a `time` scale (and the other ones) and UTC of a `utc`
   scale, so it is the same day and time in every time zone (`Date.parse`
   reads a date without a time as midnight UTC, the day before west of UTC in
@@ -554,7 +556,8 @@ the definition refer to these names.
   `rotate` (the angle of the labels in degrees, positive counterclockwise,
   negative clockwise), `grid` (lines at the ticks), `title` (`{"name",
   "offset"}`, the distance from the axis, by default 8 pixels inside the
-  edge of the margin) and `padding`.
+  edge of the margin, of a radial axis 16 pixels outside of the circle) and
+  `padding`.
 - `hover`: the hover shows the values of the vertical axis at the position of
   the mouse, of horizontal bars (a horizontal mapping is stacked, or the
   vertical one is categorical and the horizontal one is not) the values of

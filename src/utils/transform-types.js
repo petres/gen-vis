@@ -20,9 +20,10 @@ import { fillTemplate } from "@/utils/def";
 
 const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
 
+// missing, invalid and infinite values are null
 const toNumber = v => {
     const n = missing(v) ? NaN : Number(v);
-    return isNaN(n) ? null : n;
+    return Number.isFinite(n) ? n : null;
 };
 
 // the comparable values of a column: numbers if all are numbers, otherwise
@@ -125,28 +126,37 @@ const transformTypes = {
 
     // the mean of the values of `size` rows of the group in their order, the
     // ones before (`"align": "end"`, by default) or around the row
-    // (`"center"`), missing values are left out, only of whole windows, of
-    // the sums and the numbers of the values up to the rows of the group
+    // (`"center"`), missing values are left out, only of whole windows. The
+    // window moves along the rows, its sum is compensated (Neumaier), so small
+    // values beside large ones are kept, e.g. 1 beside 1e17.
     rolling: (t, { n, numbers, groups }) => {
         const result = new Array(n).fill(null);
         const size = Math.max(1, Math.round(t.size ?? 1));
         const before = t.align == 'center' ? Math.floor((size - 1)/2) : size - 1;
         groups.forEach(g => {
-            const sums = new Float64Array(g.length + 1);
-            const counts = new Uint32Array(g.length + 1);
-            g.forEach((i, j) => {
-                const v = numbers(i);
-                sums[j + 1] = sums[j] + (v ?? 0);
-                counts[j + 1] = counts[j] + (v === null ? 0 : 1);
-            });
-            g.forEach((i, j) => {
-                const start = j - before;
-                const end = start + size;
-                if (start < 0 || end > g.length)
-                    return;
-                const count = counts[end] - counts[start];
-                result[i] = count ? (sums[end] - sums[start])/count : null;
-            });
+            const values = g.map(numbers);
+            let sum = 0;
+            let compensation = 0;
+            let count = 0;
+            const add = x => {
+                const s = sum + x;
+                compensation += Math.abs(sum) >= Math.abs(x) ? (sum - s) + x : (x - s) + sum;
+                sum = s;
+            };
+            for (let end = 0; end < values.length; end++) {
+                if (values[end] !== null) {
+                    add(values[end]);
+                    count++;
+                }
+                const start = end - size + 1;
+                if (start > 0 && values[start - 1] !== null) {
+                    add(-values[start - 1]);
+                    count--;
+                }
+                // the window of the row `start + before`
+                if (start >= 0)
+                    result[g[start + before]] = count ? (sum + compensation)/count : null;
+            }
         });
         return result;
     },
@@ -201,7 +211,8 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
     const kept = steps.slice(0, first);
     kept.forEach(s => columns.set(s.name, s.values));
     columns.steps = [...kept];
-    columns.changed = new Set();
+    // also the columns which are not computed anymore, e.g. of another `as`
+    columns.changed = new Set(steps.slice(first).map(s => s.name));
     const get = (i, c) => columns.has(c) ? columns.get(c)[i] : rows[i][c];
     for (const [k, { t, inUtc }] of list.entries()) {
         if (k < first)

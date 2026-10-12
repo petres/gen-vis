@@ -189,6 +189,12 @@ describe('prepareData', () => {
         }
     });
 
+    test('fractions of seconds are cut to milliseconds, 24:00 is the end of a day', () => {
+        const mapping = { mapping: { t: { column: 'date', type: 'date', scale: { type: 'utc' } } } };
+        expect(prepareData(['2024-12-31T23:59:59.9999', '2024-06-01 13:00:00.123456', '2024-06-01T24:00', '2024-06-01T24:01'].map(date => ({ date })), mapping).map(r => r.t))
+            .toEqual([Date.UTC(2024, 11, 31, 23, 59, 59, 999), Date.UTC(2024, 5, 1, 13, 0, 0, 123), Date.UTC(2024, 5, 2), null]);
+    });
+
     test('dates of the day first, e.g. German, not the month as of Date.parse', () => {
         const mapping = { mapping: { t: { column: 'date', type: 'date', scale: { type: 'utc' } } } };
         expect(prepareData(['01.06.2024', '1.6.2024 13:05', '31.02.2024'].map(date => ({ date })), mapping).map(r => r.t))

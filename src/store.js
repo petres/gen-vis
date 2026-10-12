@@ -190,13 +190,19 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     }));
     const defaults = snapshot(prepared);
     applyState(prepared, state);
+    // the transforms of the globals of the state, before the mappings, their
+    // categories can be the ones of a transform, and again after them, e.g.
+    // of a patch of a scale of dates to utc
+    const transform = () => {
+        if (transformGlobals(prepared.transform).length > 0)
+            columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns);
+    };
+    transform();
     // the mappings of the globals of the state, the entries of their legends
     // of the state, e.g. of the categories of another column
     applyFormElements(prepared, defOrg, keysOf);
     applyState(prepared, { visible: state?.visible });
-    // the transforms of the globals of the form elements and the state
-    if (transformGlobals(prepared.transform).length > 0)
-        columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns);
+    transform();
 
     // the features of a map, see coords/geo.js, the url of GeoJSON or TopoJSON or itself
     let geo = null;
@@ -337,16 +343,25 @@ class Store {
     // the columns of patched mappings might have changed, and the ones of
     // transforms of the globals, e.g. an index of a base year, the transforms
     // are computed from the first one of a changed global
-    applyFormElements() {
-        const changed = applyFormElements(this.def, this.defOrg, column => this.dataKeys(column));
-        if (transformGlobals(this.def.transform).length > 0) {
+    // before the mappings, their categories can be the ones of a transform, and
+    // again after them, e.g. of a patch of a scale of dates to utc, `keepVisible`
+    // keeps the entries shown or hidden of the mappings prepared again
+    applyFormElements(keepVisible = true) {
+        const changedColumns = new Set();
+        const transform = () => {
+            if (transformGlobals(this.def.transform).length == 0)
+                return;
             const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns);
             if (columns !== this.columns) {
                 this.columns = markRaw(columns);
-                Object.keys(this.def.mapping).filter(n => columns.changed.has(this.def.mapping[n].column) && !changed.includes(n))
-                    .forEach(n => changed.push(n));
+                columns.changed.forEach(c => changedColumns.add(c));
             }
-        }
+        };
+        transform();
+        const changed = applyFormElements(this.def, this.defOrg, column => this.dataKeys(column), keepVisible);
+        transform();
+        Object.keys(this.def.mapping).filter(n => changedColumns.has(this.def.mapping[n].column) && !changed.includes(n))
+            .forEach(n => changed.push(n));
         if (changed.length > 0)
             this.data = raw(updateData(this.rows, this.data, this.def, changed, this.columns));
     }
@@ -364,7 +379,9 @@ class Store {
     setState(state) {
         applyState(this.def, this.defaults);
         applyState(this.def, state);
-        this.applyFormElements();
+        // the entries of the legends of the mappings prepared again are the
+        // ones of the definition and of the state, not the ones before
+        this.applyFormElements(false);
         applyState(this.def, { visible: state?.visible });
         this.stateSets++;
     }

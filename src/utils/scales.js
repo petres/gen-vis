@@ -107,7 +107,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     } else if (scaleDef.type == 'quantile' || scaleDef.type == 'sequentialQuantile') {
         // classes of the same number of values
         domain = values;
-    } else if (extent) {
+    } else if (extent && scaleDef.type != 'ordinal') {
         domain = fixed();
         // the first and the last entry, a diverging domain has a middle one
         const last = domain.length - 1;
@@ -126,10 +126,15 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         // relative to the positions, e.g. of a log or a sqrt scale 2% of the
         // height below and above, values of a log scale do not get below 0
         const [to, from] = transformOf(scaleDef.type, Math.sign(domain[0] || domain[last]) || 1);
+        // only the ends which are extended, so fixed ones stay exact, e.g. 3 of a sqrt scale
         const [d0, d1] = [to(domain[0]), to(domain[last])];
         const da = d1 - d0;
-        domain[0] = from(d0 + da*domainRel[0]) + domainAbs[0];
-        domain[last] = from(d1 + da*domainRel[1]) + domainAbs[1];
+        if (domainRel[0])
+            domain[0] = from(d0 + da*domainRel[0]);
+        if (domainRel[1])
+            domain[last] = from(d1 + da*domainRel[1]);
+        domain[0] += domainAbs[0];
+        domain[last] += domainAbs[1];
 
         // round values for the ends taken from the data, e.g. 0.951 to 1, `true`
         // for steps of about a tenth of the domain or the number of steps

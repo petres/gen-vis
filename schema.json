@@ -93,6 +93,10 @@
         }
     },
     "definitions": {
+        "none": {
+            "type": "null",
+            "description": "Removes the part of a parent."
+        },
         "key": {
             "description": "A key of a feature of a map or of a category, compared as a string.",
             "anyOf": [{ "type": "string" }, { "type": "number" }]
@@ -380,9 +384,9 @@
                     "description": "Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc)."
                 },
                 "stacked": { "type": "boolean", "description": "Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars) or a radial one." },
-                "scale": { "$ref": "#/definitions/scale" },
-                "axis": { "$ref": "#/definitions/axis" },
-                "hover": {
+                "scale": { "anyOf": [{ "$ref": "#/definitions/scale" }, { "$ref": "#/definitions/none" }] },
+                "axis": { "anyOf": [{ "$ref": "#/definitions/axis" }, { "$ref": "#/definitions/none" }] },
+                "hover": { "anyOf": [{ "$ref": "#/definitions/none" }, {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
@@ -393,8 +397,8 @@
                             "additionalProperties": { "$ref": "#/definitions/value" }
                         }
                     }
-                },
-                "legend": {
+                }] },
+                "legend": { "anyOf": [{ "$ref": "#/definitions/none" }, {
                     "type": "object",
                     "additionalProperties": false,
                     "description": "Toggles of the categories of the props, without props the colors of the scale.",
@@ -432,11 +436,11 @@
                             "additionalProperties": { "$ref": "#/definitions/value" }
                         }
                     }
-                },
+                }] },
 
-                "props": {
+                "props": { "anyOf": [{ "$ref": "#/definitions/none" }, {
                     "type": "object",
-                    "description": "The categories and their props, e.g. colors. Only visible categories are shown.",
+                    "description": "The categories and their props, e.g. colors. Only visible categories are shown, null removes the ones of a parent.",
                     "additionalProperties": false,
                     "properties": {
                         "common": { "$ref": "#/definitions/categoryProps" },
@@ -460,7 +464,7 @@
                         },
                         "scheme": { "type": "string", "description": "The colors of the categories in their order as the prop color, a d3 scheme, e.g. Tableau10." }
                     }
-                }
+                }] }
             }
         },
         "transform": {

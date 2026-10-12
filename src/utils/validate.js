@@ -95,7 +95,9 @@ const validateDef = def => {
         .map(([n, m]) => [n, Object.fromEntries(Object.entries(m).filter(([k, v]) => {
             if (!mappingParts.includes(k) || isObject(v))
                 return true;
-            warn(`mapping.${n}.${k}`, `expected an object, e.g. {}`);
+            // null or false removes a part, e.g. the hover of a parent
+            if (v !== null && v !== false)
+                warn(`mapping.${n}.${k}`, `expected an object, e.g. {}`);
             return false;
         }))]));
     // the form elements with their index

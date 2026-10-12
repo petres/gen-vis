@@ -71,6 +71,15 @@ describe('transforms', () => {
         expect(after.get('sum')).toEqual(applyTransforms(rows, transforms, { base: 2020 }).get('sum'));
     });
 
+    test('a rolling mean of large and small values, infinite values are missing', () => {
+        const values = v => v.map(value => ({ value: String(value) }));
+        expect(applyTransforms(values([1e17, 1, 1, 1]), { type: 'rolling', column: 'value', size: 2 }).get('value').slice(2)).toEqual([1, 1]);
+        expect(applyTransforms(values([1, 'Infinity', 3, 4, 5]), { type: 'rolling', column: 'value', size: 2 }).get('value')).toEqual([null, 1, 3, 3.5, 4.5]);
+        const [zero, mean] = applyTransforms(values([0.1, 0.2, -0.3, 0]), { type: 'rolling', column: 'value', size: 3 }).get('value').slice(2);
+        expect(zero).toBeCloseTo(0, 15);
+        expect(mean).toBeCloseTo(-1/30, 15);
+    });
+
     test('a rolling mean of many rows and a large window is fast', () => {
         const many = Array.from({ length: 250000 }, (_, i) => ({ v: i % 7 == 0 ? '' : String(i % 100) }));
         const start = performance.now();
