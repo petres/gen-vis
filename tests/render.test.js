@@ -801,6 +801,18 @@ describe('the selection of the rows of a plot', () => {
         expect(await labels({ max: 'y' })).toEqual([['Wien', 2023], ['Tirol', 2020]]);
         expect(await labels({ min: 'y' })).toEqual([['Wien', 2020], ['Tirol', 2020]]);
     });
+
+    test('plots of the same id have their own elements, also of the id of another plot', async () => {
+        const def = labelDef('first');
+        def.plot = [{ ...def.plot[1], id: 'labels' }, { ...def.plot[1], id: 'labels', select: 'last' }];
+        let el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelectorAll('g.vis-plot[data-plot="labels"]')).toHaveLength(2);
+        expect(el.querySelectorAll('g.vis-plot text')).toHaveLength(4);
+
+        def.plot = [{ ...lineDef().plot[1], id: 'plot-1' }, { ...lineDef().plot[1], r: 5 }];
+        el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelectorAll('g.vis-plot circle')).toHaveLength(14);
+    });
 });
 
 describe('the layers and facets of plots', () => {

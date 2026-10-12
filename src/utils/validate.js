@@ -186,6 +186,12 @@ const validateDef = def => {
     const plots = [].concat(def.plot ?? []);
     if (plots.length == 0)
         warn('plot', 'missing');
+    // the ids name the plots, e.g. of their classes and of the merge with a parent
+    const ids = plots.map((p, i) => p?.id ?? `plot-${i}`);
+    ids.forEach((id, i) => {
+        if (ids.indexOf(id) < i)
+            warn(`plot[${i}].id`, `the id '${id}' is the one of plot[${ids.indexOf(id)}]`);
+    });
     plots.forEach((p, i) => {
         const path = `plot[${i}]`;
         if (!types.includes(p.type))

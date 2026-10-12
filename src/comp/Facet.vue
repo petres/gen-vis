@@ -169,8 +169,14 @@ export default {
                     this.kept.delete(k);
                 }
             });
-            this.highlighter = highlighter(inner, this.store.def.plot);
+            this.highlighter = highlighter(this.store.def.plot, plot => this.kept.get(this.plotKey(plot)));
             this.hoverInit();
+        },
+
+        // the key of the group of a plot, its place in the definition, the ids
+        // of two plots can be the same, e.g. of a parent
+        plotKey(plot) {
+            return `plot ${this.store.def.plot.indexOf(plot)}`;
         },
 
         // a group per plot, kept from one draw to the next, the plot types
@@ -181,7 +187,7 @@ export default {
                 if (!Object.hasOwn(plotTypes, plot.type))
                     throw new Error(`Unknown plot type '${plot.type}'`);
                 const type = plotTypes[plot.type];
-                const parent = this.keep(`plot ${plot.id}`, () => {
+                const parent = this.keep(this.plotKey(plot), () => {
                     const g = this.ctx.inner.append("g")
                         .classed("vis-plot", true)
                         .classed(plot.id, true)

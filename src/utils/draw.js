@@ -88,9 +88,9 @@ const rowOf = Symbol('row');
  * The groups of the plots (the elements with the keys of their categories
  * as data-group- attributes) and their elements with highlight- props are
  * found once, at the first highlight, so a highlight does not search the
- * elements of the facet. `inner` is the element of the plots.
+ * elements of the facet. `nodeOf(plot)` is the element of a plot.
  */
-const highlighter = (inner, plotDefs) => {
+const highlighter = (plotDefs, nodeOf) => {
     const plots = plotDefs.filter(p => p.highlightProps.length > 0 && p.categories.length > 0);
     let index = null;
     // the highlighted groups and elements
@@ -98,9 +98,7 @@ const highlighter = (inner, plotDefs) => {
     let elements = [];
 
     const build = () => plots.map(plot => {
-        // the ids are compared directly, they are not part of a selector, so
-        // they can contain any character, e.g. spaces
-        const node = [...inner.children].find(c => c.getAttribute('data-plot') === plot.id);
+        const node = nodeOf(plot);
         const attrs = plot.categories.map(c => `data-group-${c}`);
         return {
             plot,

@@ -122,6 +122,15 @@ describe('validateDef', () => {
         delete plotTypes['test:type'];
     });
 
+    test('the ids of the plots are unique', () => {
+        const def = base();
+        def.plot = [{ ...def.plot, id: 'plot-1' }, { ...def.plot }, { ...def.plot, id: 'plot-1' }];
+        expect(validateDef(def)).toEqual([
+            "plot[1].id: the id 'plot-1' is the one of plot[0]",
+            "plot[2].id: the id 'plot-1' is the one of plot[0]",
+        ]);
+    });
+
     test('unknown plot types and categories', () => {
         const def = base();
         def.plot = [{ ...def.plot, type: 'path', categories: ['land'] }];
