@@ -24,15 +24,21 @@ const parseData = async (data, format, columns = null) => {
         const { parseParquet } = await import('@/utils/parquet.js');
         return parseParquet(data, columns);
     }
-    if (typeof data != "string")
+    if (Array.isArray(data))
         return data;
+    if (typeof data != "string")
+        throw new Error('expected rows, a string of CSV, TSV or JSON or parquet');
     if (format == 'parquet')
         throw new Error('Parquet data needs to be binary, e.g. an ArrayBuffer.');
     data = data.replace(/^\uFEFF/, '');
     if (format == 'tsv')
         return d3.tsvParse(data);
-    if (format == 'json' || (format != 'csv' && /^\s*\[/.test(data)))
-        return JSON.parse(data);
+    if (format == 'json' || (format != 'csv' && /^\s*[[{]/.test(data))) {
+        const rows = JSON.parse(data);
+        if (!Array.isArray(rows))
+            throw new Error('the JSON is not a list of rows');
+        return rows;
+    }
     return d3.csvParse(data);
 };
 

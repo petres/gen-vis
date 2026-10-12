@@ -17,10 +17,14 @@ import { loadColors } from "@/utils/d3";
 const resolveUrl = (url, base = document.baseURI) => new URL(url, base).href;
 
 // requests of the last minutes are shared, e.g. the parents of the charts of a
-// page or a csv of two charts, later ones load again, e.g. for updated data
+// page or a csv of two charts, later ones load again, e.g. for updated data,
+// the content is not kept longer, e.g. after the charts of a page are removed
 const cacheTime = 5 * 60 * 1000;
 const cache = new Map();
-const clearCache = () => cache.clear();
+const clearCache = () => {
+    cache.forEach(c => clearTimeout(c.timer));
+    cache.clear();
+};
 
 // the content of a url, `type` is text or arrayBuffer, e.g. of parquet data
 const request = async (url, type) => {
@@ -31,17 +35,24 @@ const request = async (url, type) => {
 };
 
 const fetchCached = (url, type = 'text') => {
-    const now = Date.now();
     const key = `${type} ${url}`;
-    cache.forEach((c, k) => { if (now - c.time >= cacheTime) cache.delete(k) });
     if (!cache.has(key)) {
-        const content = request(url, type).catch(error => {
-            // failed requests are not kept
-            if (cache.get(key)?.content === content)
+        const forget = entry => {
+            if (cache.get(key) === entry) {
+                clearTimeout(entry.timer);
                 cache.delete(key);
+            }
+        };
+        const entry = {};
+        entry.content = request(url, type).catch(error => {
+            // failed requests are not kept
+            forget(entry);
             throw new Error(`Could not load '${url}': ${error.message}`);
         });
-        cache.set(key, { content, time: now });
+        entry.timer = setTimeout(() => forget(entry), cacheTime);
+        // the timer does not keep a script of node running, e.g. a check
+        entry.timer.unref?.();
+        cache.set(key, entry);
     }
     return cache.get(key).content;
 };
@@ -86,6 +97,15 @@ const resolveParents = async (def, url, load = fetchText) => {
     return mergeAll(parts);
 };
 
+// the rows of data, errors name its url (`source`)
+const readData = async (data, format, source, columns = null) => {
+    try {
+        return await parseData(data, format, columns);
+    } catch (error) {
+        throw new Error(`Could not read the data ${source}: ${error.message}`);
+    }
+};
+
 // the rows are not made reactive, they can be large and are only replaced as a whole
 const raw = rows => markRaw(Array.from(toRaw(rows)));
 
@@ -99,10 +119,13 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         def = parseDef(def, 'attribute');
     }
 
-    // the data and the geometry are requested together with the parents, if the def names them
+    // the data and the geometry are requested together with the parents, if the
+    // def names them, the data if its format is known, it can be the one of a parent
     if (data === null && typeof def.data == 'string' && !def.data.includes('{')) {
         const dataUrl = resolveUrl(def.data, url);
-        fetchData(dataUrl, dataFormat(dataUrl, def.dataFormat)).catch(() => {});
+        const format = dataFormat(dataUrl, def.dataFormat);
+        if (format !== undefined || def.parent === undefined)
+            fetchData(dataUrl, format).catch(() => {});
     }
     if (typeof def.geo?.data == 'string')
         fetchText(resolveUrl(def.geo.data, url)).catch(() => {});
@@ -120,15 +143,17 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     parts.catch(() => {});
     // the format of the data, by default the one of the extension of its url
     let format = defOrg.dataFormat;
+    let source = 'of the attribute';
     if (data === null) {
         if (!defOrg.data)
             throw new Error('No data given, neither in the definition nor as attribute.');
         const dataUrl = resolveUrl(defOrg.data, url);
         format = dataFormat(dataUrl, format);
         data = await fetchData(dataUrl, format);
+        source = `'${dataUrl}'`;
     }
     // parquet is read in the columns which are used
-    const rows = raw(await parseData(data, format, usedColumns(defOrg)));
+    const rows = raw(await readData(data, format, source, usedColumns(defOrg)));
 
     const [, coord, geoModule] = await parts;
 
@@ -145,7 +170,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     await Promise.all(prepared.plot.filter(p => typeof p.data == 'string').map(async p => {
         const dataUrl = resolveUrl(p.data, url);
         const format = dataFormat(dataUrl, p.dataFormat);
-        p.data = raw(await parseData(await fetchData(dataUrl, format), format));
+        p.data = raw(await readData(await fetchData(dataUrl, format), format, `'${dataUrl}'`));
         p.loaded = true;
     }));
     const defaults = snapshot(prepared);

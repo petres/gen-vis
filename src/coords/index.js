@@ -45,11 +45,15 @@ const getCoord = (name = 'cartesian') => {
     return coords[name];
 };
 
-// the coordinate system completed by the module it loads, once
+// the coordinate system completed by the module it loads, once, a load which
+// failed is tried again by the next visualisation, e.g. after a network error
 const loadCoord = async name => {
     const coord = getCoord(name);
     if (coord.load)
-        await (coord.loaded ??= coord.load().then(m => Object.assign(coord, m.default ?? m)));
+        await (coord.loaded ??= coord.load().then(m => Object.assign(coord, m.default ?? m)).catch(error => {
+            coord.loaded = null;
+            throw error;
+        }));
     return coord;
 };
 

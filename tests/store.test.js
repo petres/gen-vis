@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
-import { describe, test, expect, vi, afterEach } from 'vitest';
+import { describe, test, expect, vi, afterEach, onTestFinished } from 'vitest';
 import { isReactive } from 'vue';
 import { createStore, resolveUrl, resolveParents, clearCache } from '@/store';
+import { parquetWriteBuffer } from 'hyparquet-writer';
+import { coords, loadCoord, registerCoord } from '@/coords';
 
 // serves files, a delay per url simulates slow responses
 const serve = (files, delays = {}) => vi.stubGlobal('fetch', async url => {
@@ -105,16 +107,51 @@ describe('Store.init', () => {
             requested.push(url);
             return new Response(files[url]);
         });
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+        onTestFinished(() => vi.useRealTimers());
         const stores = [createStore(), createStore()];
         await Promise.all(stores.map(s => s.init({ defUrl: 'http://h/data/def.json' })));
         expect(requested).toEqual(['http://h/data/def.json', 'http://h/data/data.csv', 'http://h/data/base.json']);
         expect(stores.map(s => s.def.options.title)).toEqual(['base', 'base']);
 
-        // later ones load again
-        const now = Date.now();
-        vi.spyOn(Date, 'now').mockReturnValue(now + 5 * 60 * 1000);
+        // later ones load again, the content is not kept
+        vi.advanceTimersByTime(5 * 60 * 1000);
         await createStore().init({ defUrl: 'http://h/data/def.json' });
         expect(requested.length).toBe(6);
+    });
+
+    test('data of a format of a parent is requested once, e.g. parquet', async () => {
+        const requested = [];
+        const files = {
+            'http://h/data/def.json': JSON.stringify({ ...def, data: '/api/rows', parent: 'base.json' }),
+            'http://h/data/base.json': JSON.stringify({ dataFormat: 'parquet' }),
+            'http://h/api/rows': parquetWriteBuffer({ columnData: [{ name: 'year', data: [2020, 2021], type: 'INT32' }, { name: 'value', data: [1, 2], type: 'INT32' }] }),
+        };
+        vi.stubGlobal('fetch', async url => {
+            requested.push(url);
+            return new Response(files[url]);
+        });
+        const store = createStore();
+        await store.init({ defUrl: 'http://h/data/def.json' });
+        expect(requested.filter(u => u.endsWith('/api/rows'))).toHaveLength(1);
+        expect(store.data).toHaveLength(2);
+    });
+
+    test('data which is no list of rows is an error of its url', async () => {
+        serve({ 'http://h/data/def.json': JSON.stringify({ ...def, data: 'data.json' }), 'http://h/data/data.json': '{ "rows": [] }' });
+        await expect(createStore().init({ defUrl: 'http://h/data/def.json' })).rejects
+            .toThrow("Could not read the data 'http://h/data/data.json': the JSON is not a list of rows");
+        await expect(createStore().init({ def, data: { rows: [] } })).rejects.toThrow('Could not read the data of the attribute: expected rows');
+    });
+
+    test('the parts of a coordinate system which could not be loaded are loaded again', async () => {
+        const load = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue({ default: { loadedPart: true } });
+        registerCoord('test:lazy', { ...coords.cartesian, load });
+        await expect(loadCoord('test:lazy')).rejects.toThrow('offline');
+        expect((await loadCoord('test:lazy')).loadedPart).toBe(true);
+        await loadCoord('test:lazy');
+        expect(load).toHaveBeenCalledTimes(2);
+        delete coords['test:lazy'];
     });
 
     test('failed requests are not kept', async () => {
