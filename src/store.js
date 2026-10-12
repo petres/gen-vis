@@ -7,7 +7,6 @@ import { applyTransforms, transformGlobals, utcColumns } from "@/utils/transform
 import { applyFormElements, fillHtml, fillText, formatOf, mergeAll, prepareDef } from "@/utils/def";
 import { applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
-import { validateDef } from "@/utils/validate";
 import { formatter } from "@/utils/props";
 import { loadCoord } from "@/coords";
 import { axisNames } from "@/layout";
@@ -110,8 +109,17 @@ const readData = async (data, format, source, columns = null) => {
 // the rows are not made reactive, they can be large and are only replaced as a whole
 const raw = rows => markRaw(Array.from(toRaw(rows)));
 
+// the check of the definitions, loaded with the first one, together with its
+// parents, a definition is drawn without it if it could not be loaded
+let validator = null;
+const loadValidator = () => validator ??= lazy.validate().catch(() => {
+    validator = null;
+    return null;
+});
+
 // see Store.init, urls of inline defs are relative to the page
 const load = async ({ def = null, defUrl = null, data = null, state = null }) => {
+    const checks = loadValidator();
     let url;
     if (def === null) {
         url = resolveUrl(defUrl);
@@ -132,7 +140,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         fetchText(resolveUrl(def.geo.data, url)).catch(() => {});
 
     const defOrg = await resolveParents(JSON.parse(JSON.stringify(def)), url);
-    validateDef(defOrg).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
+    (await checks)?.validateDef(defOrg).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
     // the colors of d3 are only loaded if the mappings name one, also the
     // patches of form elements, and the parts of the coordinate system, e.g.
     // of maps, with the data
