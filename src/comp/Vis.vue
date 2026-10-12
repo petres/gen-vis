@@ -14,7 +14,7 @@
             <!-- toggles of categories, the colors of a scale otherwise -->
             <template v-for="legend in legends" :key="legend">
                 <legend-entry v-if="store.mapping(legend).props" :legend="legend" @changeSelected="changeSelected" @highlight="highlight"/>
-                <color-legend v-else-if="view?.colors[legend]" :legend="legend" :scale="view.colors[legend]"/>
+                <component :is="store.colorLegend" v-else-if="store.colorLegend && view?.colors[legend]" :legend="legend" :scale="view.colors[legend]"/>
             </template>
         </div>
         <div v-if="view" class="vis-body">
@@ -66,7 +66,6 @@ import { canCopy } from "@/utils/clipboard.js";
 
 import Facet from '@/comp/Facet.vue';
 import LegendEntry from '@/comp/Legend.vue';
-import ColorLegend from '@/comp/ColorLegend.vue';
 import SlotContent from '@/comp/SlotContent.vue';
 import FormElement from '@/comp/FormElement.vue';
 
@@ -113,7 +112,7 @@ export default {
         formElements: [],
     } },
     components: {
-        Facet, LegendEntry, ColorLegend, FormElement, SlotContent,
+        Facet, LegendEntry, FormElement, SlotContent,
     },
     watch: {
         // the state was set from outside

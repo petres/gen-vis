@@ -7,6 +7,7 @@ export const lazy = {
     validate: () => import('@/utils/validate.js'),
     transform: () => import('@/utils/transform-types.js'),
     intl: () => import('@/utils/locale-intl.js'),
+    colorLegend: () => import('@/comp/ColorLegend.vue'),
     colors: () => import('@/utils/colors.js'),
     geoMap: () => import('@/coords/geo-map.js'),
     polar: () => import('@/coords/polar-plot.js'),

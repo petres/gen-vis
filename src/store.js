@@ -150,6 +150,9 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         defOrg.geo?.data ? lazy.geo() : null,
         defOrg.options?.transition ? loadTransition() : null,
         defOrg.transform ? loadTransforms() : null,
+        // the legend of a scale of colors, a mapping with a legend without props, also of a patch
+        [defOrg.mapping, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.mapping) : [])]
+            .some(ms => Object.values(ms ?? {}).some(m => m?.legend && !m.props)) ? lazy.colorLegend() : null,
         loadLocale(defOrg.options?.locale ?? undefined),
     ]);
     parts.catch(() => {});
@@ -167,7 +170,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     // parquet is read in the columns which are used
     const rows = raw(await readData(data, format, source, usedColumns(defOrg)));
 
-    const [, coord, geoModule] = await parts;
+    const [, coord, geoModule, , , colorLegend] = await parts;
 
     // the columns of the transforms, the form elements can have their values
     let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg));
@@ -218,6 +221,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         defUrl: url ?? null,
         defOrg,
         locale: markRaw(getLocale(defOrg.options?.locale)),
+        colorLegend: colorLegend ? markRaw(colorLegend.default) : null,
         coord: markRaw(coord),
         geo,
         rows,
@@ -251,6 +255,8 @@ class Store {
     stateSets = 0;
     // the categories of the data of the last column, see dataKeys
     keyCache = null;
+    // the component of the legends of scales of colors, loaded for definitions with one
+    colorLegend = null;
 
     get loaded() { return this.def !== null && this.data !== null }
 
