@@ -53,6 +53,30 @@ describe('transforms', () => {
             .toEqual([10/35, 30/35, 40/35, 5/15, null, 1]);
     });
 
+    test('the transforms are computed again from the first one which a global changes', () => {
+        const transforms = [
+            { type: 'year', column: 'date', as: 'year' },
+            { type: 'index', column: 'value', as: 'index', by: 'type', base: { year: '{base}' } },
+            { type: 'cumulative', column: 'index', as: 'sum', by: 'type' },
+        ];
+        const before = applyTransforms(rows, transforms, { base: 2019 });
+        expect(applyTransforms(rows, transforms, { base: 2019 }, new Set(), before)).toBe(before);
+        const after = applyTransforms(rows, transforms, { base: 2020 }, new Set(), before);
+        expect(after.get('year')).toBe(before.get('year'));
+        expect([...after.changed]).toEqual(['index', 'sum']);
+        expect(after.get('sum')).toEqual(applyTransforms(rows, transforms, { base: 2020 }).get('sum'));
+    });
+
+    test('a rolling mean of many rows and a large window is fast', () => {
+        const many = Array.from({ length: 250000 }, (_, i) => ({ v: i % 7 == 0 ? '' : String(i % 100) }));
+        const start = performance.now();
+        const means = applyTransforms(many, { type: 'rolling', column: 'v', size: 365 }).get('v');
+        expect(performance.now() - start).toBeLessThan(1000);
+        const window = many.slice(0, 365).map(r => r.v).filter(v => v !== '').map(Number);
+        expect(means[364]).toBeCloseTo(window.reduce((a, b) => a + b, 0)/window.length, 9);
+        expect(means[363]).toBeNull();
+    });
+
     test('the share of the sum of the group', () => {
         expect(column({ type: 'share', column: 'value', as: 'share', by: 'date' }, 'share')).toEqual([10/15, 30/45, 1, 5/15, null, 15/45]);
         expect(column({ type: 'share', column: 'value', as: 'share' }, 'share')).toEqual([0.1, 0.3, 0.4, 0.05, null, 0.15]);

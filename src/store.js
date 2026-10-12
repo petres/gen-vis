@@ -152,7 +152,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     applyFormElements(prepared, defOrg);
     // the transforms of the globals of the form elements and the state
     if (transformGlobals(prepared.transform).length > 0)
-        columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared));
+        columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns);
 
     // the features of a map, see coords/geo.js, the url of GeoJSON or TopoJSON or itself
     let geo = null;
@@ -286,13 +286,17 @@ class Store {
     }
 
     // the columns of patched mappings might have changed, and the ones of
-    // transforms of the globals, e.g. an index of a base year
+    // transforms of the globals, e.g. an index of a base year, the transforms
+    // are computed from the first one of a changed global
     applyFormElements() {
         const changed = applyFormElements(this.def, this.defOrg);
         if (transformGlobals(this.def.transform).length > 0) {
-            this.columns = markRaw(applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def)));
-            Object.keys(this.def.mapping).filter(n => this.columns.has(this.def.mapping[n].column) && !changed.includes(n))
-                .forEach(n => changed.push(n));
+            const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns);
+            if (columns !== this.columns) {
+                this.columns = markRaw(columns);
+                Object.keys(this.def.mapping).filter(n => columns.changed.has(this.def.mapping[n].column) && !changed.includes(n))
+                    .forEach(n => changed.push(n));
+            }
         }
         if (changed.length > 0)
             this.data = raw(updateData(this.rows, this.data, this.def, changed, this.columns));

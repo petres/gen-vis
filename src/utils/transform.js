@@ -123,18 +123,29 @@ const transformTypes = {
 
     // the mean of the values of `size` rows of the group in their order, the
     // ones before (`"align": "end"`, by default) or around the row
-    // (`"center"`), missing values are left out, only of whole windows
+    // (`"center"`), missing values are left out, only of whole windows, of
+    // the sums and the numbers of the values up to the rows of the group
     rolling: (t, { n, numbers, groups }) => {
         const result = new Array(n).fill(null);
         const size = Math.max(1, Math.round(t.size ?? 1));
         const before = t.align == 'center' ? Math.floor((size - 1)/2) : size - 1;
-        groups.forEach(g => g.forEach((i, j) => {
-            const start = j - before;
-            if (start < 0 || start + size > g.length)
-                return;
-            const values = g.slice(start, start + size).map(numbers).filter(v => v !== null);
-            result[i] = values.length ? values.reduce((a, b) => a + b, 0)/values.length : null;
-        }));
+        groups.forEach(g => {
+            const sums = new Float64Array(g.length + 1);
+            const counts = new Uint32Array(g.length + 1);
+            g.forEach((i, j) => {
+                const v = numbers(i);
+                sums[j + 1] = sums[j] + (v ?? 0);
+                counts[j + 1] = counts[j] + (v === null ? 0 : 1);
+            });
+            g.forEach((i, j) => {
+                const start = j - before;
+                const end = start + size;
+                if (start < 0 || end > g.length)
+                    return;
+                const count = counts[end] - counts[start];
+                result[i] = count ? (sums[end] - sums[start])/count : null;
+            });
+        });
         return result;
     },
 
@@ -167,19 +178,40 @@ const transformGlobals = transforms => [...new Set(templateRefs(JSON.stringify(t
 /**
  * The columns of the transforms, a Map of the names of the columns to their
  * values, one per row, `globals` are the values of the templates, `utc` the
- * columns of dates of `utc` scales, see utcColumns.
+ * columns of dates of `utc` scales, see utcColumns. With the columns of the
+ * rows `before`, e.g. before a change of a global, the transforms are
+ * computed from the first one which changes, e.g. by the global, the ones
+ * before it are kept, `changed` are the names of the columns computed again,
+ * without changes the columns are the ones before.
  */
-const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set()) => {
-    const columns = new Map();
-    const get = (i, c) => columns.has(c) ? columns.get(c)[i] : rows[i][c];
-    for (const raw of [transforms].flat()) {
+const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null) => {
+    const list = [transforms].flat().map(raw => {
         const t = filled(raw, globals);
+        return { t, inUtc: utc.has(t.column) || utc.has(t.as ?? t.column) };
+    });
+    const keys = list.map(({ t, inUtc }) => JSON.stringify([t, inUtc]));
+    const steps = before?.steps ?? [];
+    let first = 0;
+    while (first < list.length && first < steps.length && steps[first].key === keys[first])
+        first++;
+    if (before && first == list.length && steps.length == list.length)
+        return before;
+
+    // the columns of the transforms which are kept, in their order
+    const columns = new Map();
+    const kept = steps.slice(0, first);
+    kept.forEach(s => columns.set(s.name, s.values));
+    columns.steps = [...kept];
+    columns.changed = new Set();
+    const get = (i, c) => columns.has(c) ? columns.get(c)[i] : rows[i][c];
+    for (const [k, { t, inUtc }] of list.entries()) {
+        if (k < first)
+            continue;
         const compute = Object.hasOwn(transformTypes, t.type) ? transformTypes[t.type] : undefined;
         if (!compute)
             throw new Error(`Unknown transform '${t.type}', expected one of ${Object.keys(transformTypes).map(n => `'${n}'`).join(', ')}`);
         const n = rows.length;
         const values = i => get(i, t.column);
-        const inUtc = utc.has(t.column) || utc.has(t.as ?? t.column);
         const by = [t.by ?? []].flat();
         // the rows of the base of an index, e.g. { "year": "2019" } or a range
         // of the comparable values of a column, e.g. { "date": ["2019-01-01", "2019-12-31"] }
@@ -193,14 +225,20 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set()) =
                 return x !== null && (from === null || x >= from) && (to === null || x <= to);
             };
         });
-        columns.set(t.as ?? t.column, compute(t, {
+        const name = t.as ?? t.column;
+        let groups = null;
+        const result = compute(t, {
             n,
             values,
             numbers: i => toNumber(values(i)),
-            groups: groupsOf(n, get, by, t.order, inUtc),
+            // only of the types which need them, e.g. not of the year
+            get groups() { return groups ??= groupsOf(n, get, by, t.order, inUtc); },
             matches: i => conditions.every(c => c(i)),
             utc: inUtc,
-        }));
+        });
+        columns.set(name, result);
+        columns.steps.push({ key: keys[k], name, values: result });
+        columns.changed.add(name);
     }
     return columns;
 };
