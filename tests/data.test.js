@@ -1,7 +1,8 @@
 import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { addDataValues, categoryOrder, dataFormat, filter, groupBy, parseData, prepareData, stack, updateData, usedColumns } from '@/utils/data';
+import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, parseData, prepareData, stack, updateData, usedColumns } from '@/utils/data';
+import { prepareDef } from '@/utils/def';
 
 const def = {
     mapping: {
@@ -225,13 +226,21 @@ describe('updateData', () => {
     });
 });
 
-describe('addDataValues', () => {
-    test('the categories of the data after the listed ones, in ascending order', () => {
-        const def = { globals: { col: 'b' }, mapping: { c: { column: '{col}', props: { fromData: true, categories: { z: {} } } }, d: { column: 'a', props: { categories: { x: {} } } } } };
-        addDataValues(def, [{ a: 'y', b: 'q' }, { a: 'x', b: 'p' }, { a: 'x', b: '' }, { a: 'x', b: 'z' }]);
-        expect(Object.keys(def.mapping.c.props.categories)).toEqual(['z', 'p', 'q']);
+describe('the categories of the data', () => {
+    test('after the listed ones, in ascending order', () => {
+        const rows = [{ a: 'y', b: 'q' }, { a: 'x', b: 'p' }, { a: 'x', b: '' }, { a: 'x', b: 'z' }];
+        const keysOf = column => distinctValues(rows, null, column).map(String);
+        const def = prepareDef({ globals: { col: 'b' }, mapping: { c: { column: '{col}', props: { fromData: true, categories: { z: {} } } }, d: { column: 'a', props: { categories: { x: {} } } } } }, keysOf);
+        expect(def.mapping.c.keys).toEqual(['z', 'p', 'q']);
         // only with fromData
-        expect(Object.keys(def.mapping.d.props.categories)).toEqual(['x']);
+        expect(def.mapping.d.keys).toEqual(['x']);
+    });
+
+    test('the values of a column of a form element', () => {
+        const def = { formElements: [{ id: 'y', ref: 'y', values: { column: 'year' } }] };
+        addDataValues(def, [{ year: '2021' }, { year: '2019' }, { year: '' }]);
+        expect(def.formElements[0].values.map(v => v.value)).toEqual(['2019', '2021']);
+        expect(def.globals.y).toBe('2021');
     });
 });
 

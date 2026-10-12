@@ -1,7 +1,7 @@
-export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, filter, stack, categoryOrder, toDate, addDataValues, usedColumns, columnValues };
+export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, filter, stack, categoryOrder, toDate, addDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
-import { fillTemplate, sameValue, templateRefs } from "@/utils/def";
+import { sameValue, templateRefs } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
@@ -276,27 +276,22 @@ const usedColumns = def => {
     return [...new Set([...columns.flat(), ...elements.map(e => e.values?.column).filter(c => typeof c == 'string')])];
 };
 
+// the distinct values of a column of the rows (or of a transform, see
+// columnValues), without missing ones, ascending, numbers by their value
+const distinctValues = (rows, columns, column) => {
+    const numeric = v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v));
+    const value = columnValues(rows, columns, column);
+    const values = [...new Set(rows.map((r, i) => value(i)))].filter(v => v !== null && v !== undefined && v !== '');
+    return values.sort(values.every(numeric) ? (a, b) => a - b : (a, b) => String(a).localeCompare(String(b)));
+};
+
 // the entries of form elements with the values of a column of the rows, e.g.
 // "values": { "column": "year" }, distinct and ascending, numbers by their
 // value, a global which is none of them (or missing) is the last value, e.g.
 // the latest year
 const addDataValues = (def, rows, columns = null) => {
-    const numeric = v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v));
-    const distinct = column => {
-        const value = columnValues(rows, columns, column);
-        const values = [...new Set(rows.map((r, i) => value(i)))].filter(v => v !== null && v !== undefined && v !== '');
-        return values.sort(values.every(numeric) ? (a, b) => a - b : (a, b) => String(a).localeCompare(String(b)));
-    };
-
-    // the categories of the data which are not listed, after the listed ones
-    Object.values(def.mapping ?? {}).filter(m => m?.props?.fromData && typeof m.column == 'string').forEach(m => {
-        m.props.categories ??= {};
-        distinct(fillTemplate(m.column, def.globals)).map(String).filter(k => !Object.hasOwn(m.props.categories, k))
-            .forEach(k => m.props.categories[k] = {});
-    });
-
-    (def.formElements ?? []).filter(e => e.values && !Array.isArray(e.values)).forEach(e => {
-        const values = distinct(e.values.column);
+    (def.formElements ?? []).filter(e => e?.values && !Array.isArray(e.values)).forEach(e => {
+        const values = distinctValues(rows, columns, e.values.column);
         e.values = values.map(v => ({ id: String(v), name: String(v), value: v }));
         def.globals ??= {};
         if (values.length > 0 && !values.some(v => sameValue(v, def.globals[e.ref])))

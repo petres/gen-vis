@@ -110,7 +110,6 @@ export default {
         options: { ...this.store.def.options },
         globals: {},
 
-        legends: [],
         formElements: [],
     } },
     components: {
@@ -124,6 +123,8 @@ export default {
     },
     computed: {
         texts() { return this.store.locale.texts },
+        // the mappings of the legends, a form element can patch them
+        legends() { return this.store.mappingNamesWithKey('legend') },
         // the title and the subtitle with the values of the globals, e.g.
         // "Durchschnitt {base} = 100" of a form element
         header() {
@@ -152,7 +153,6 @@ export default {
     },
     methods: {
         baseInit() {
-            this.legends = this.store.mappingNamesWithKey('legend')
             this.formElements = this.store.def.formElements;
             this.globals = this.store.def.globals;
 

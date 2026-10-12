@@ -25,7 +25,7 @@ const diffState = (state, defaults) => {
         diff.globals = globals;
 
     const visible = Object.fromEntries(Object.entries(state.visible)
-        .map(([n, keys]) => [n, Object.fromEntries(Object.entries(keys).filter(([k, v]) => v != defaults.visible[n]?.[k]))])
+        .map(([n, keys]) => [n, Object.fromEntries(Object.entries(keys).filter(([k, v]) => v != (defaults.visible[n]?.[k] ?? true)))])
         .filter(([n, keys]) => Object.keys(keys).length > 0));
     if (Object.keys(visible).length > 0)
         diff.visible = visible;

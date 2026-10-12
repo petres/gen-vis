@@ -26,27 +26,19 @@ import LegendSymbol from '@/comp/LegendSymbol.vue';
 export default {
     props: ["legend"],
     inject: ['store'],
-    data: () => ({
-        info: {},
-        entries: [],
-    }),
     components: {
         LegendSymbol
     },
     computed: {
+        // the mapping, a form element can replace it, e.g. by another column
+        info() { return this.store.mapping(this.legend) },
+        entries() { return this.info.keys.map(key => ({ key, props: this.info.props[key] })) },
         // the legend props of the entries, also with the globals of the store
         filled() {
             const scope = this.store.scope;
             return Object.fromEntries(this.entries.map(e =>
                 [e.key, evaluate(this.info.legend.props, { ...scope, ...e.props })]));
         },
-    },
-    mounted() {
-        this.info = this.store.mapping(this.legend);
-        this.entries = this.info.keys.map(d => ({
-            key: d,
-            props: this.info.props[d],
-        }))
     },
     methods: {
         // the second click of a double click is the one of `only`, the

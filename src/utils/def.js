@@ -83,7 +83,9 @@ const object = (v, path, expected) => {
     return v;
 };
 
-const prepareMapping = (m, name) => {
+// `dataKeys(column)` are the distinct values of a column of the data as
+// strings, see distinctValues of utils/data.js, the categories of `fromData`
+const prepareMapping = (m, name, dataKeys = () => [], globals = {}) => {
     object(m, `mapping.${name}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`);
     ['scale', 'axis', 'legend', 'hover', 'props'].filter(k => m[k] !== undefined)
         .forEach(k => object(m[k], `mapping.${name}.${k}`, 'an object, e.g. {}'));
@@ -91,9 +93,13 @@ const prepareMapping = (m, name) => {
         // the props of a category: the color of a scheme in the order of the
         // categories, e.g. Tableau10, the common ones, the ones of its rank,
         // e.g. the newest year, and its own ones, `keys` is the order of the
-        // categories, the one of the legend, the facets and the stacks
+        // categories, the one of the legend, the facets and the stacks. The
+        // categories of the data which are not listed are after the listed ones.
         const props = m.props;
-        const keys = orderKeys(Object.keys(props.categories ?? {}), props.order);
+        const categories = { ...props.categories };
+        if (props.fromData && typeof m.column == 'string')
+            dataKeys(fillTemplate(m.column, globals)).filter(k => !Object.hasOwn(categories, k)).forEach(k => categories[k] = {});
+        const keys = orderKeys(Object.keys(categories), props.order);
         const colors = props.scheme ? schemeColors(props.scheme, keys.length) : undefined;
         if (props.scheme && !colors)
             throw new Error(`Unknown scheme '${props.scheme}', e.g. 'Tableau10' or 'Blues'`);
@@ -101,7 +107,7 @@ const prepareMapping = (m, name) => {
         m.keys = keys;
         m.props = Object.fromEntries(keys.map((k, i) => {
             const rank = ranks.length > 0 ? ranks[Math.min(i, ranks.length - 1)] : {};
-            const t = Object.assign({}, colors ? { color: colors[i % colors.length] } : {}, props.common, rank, props.categories[k]);
+            const t = Object.assign({}, colors ? { color: colors[i % colors.length] } : {}, props.common, rank, categories[k]);
             t.name ??= k;
             t.visible ??= true;
             return [k, t];
@@ -151,7 +157,7 @@ const annotationPlots = (annotations = []) => [annotations].flat().map((a, i) =>
     };
 });
 
-const prepareDef = def => {
+const prepareDef = (def, dataKeys = () => []) => {
     // the values of the form elements, also without globals of the definition
     def.globals ??= {};
     // the height of a facet and the space around its plots, e.g. of the axes
@@ -160,7 +166,7 @@ const prepareDef = def => {
         def.facets.cols ??= 1;
 
     def.mapping ??= {};
-    Object.entries(def.mapping).forEach(([n, m]) => prepareMapping(m, n));
+    Object.entries(def.mapping).forEach(([n, m]) => prepareMapping(m, n, dataKeys, def.globals));
 
     // a form element without entries has none
     def.formElements = (def.formElements ?? []).map((e, i) => object(e, `formElements[${i}]`, 'a form element'));
@@ -222,12 +228,14 @@ const fillHtml = (template, names) => template.replace(/\{([\w.-]+)\}/g, (t, nam
 /**
  * Entries of form elements can patch mappings, e.g. to switch the column of
  * an axis. Patched mappings are prepared again from the original definition
- * with the patches of the selected entries, the props are kept, so the legend
- * state survives. Columns can be templates of globals, e.g. "{values}{share}",
- * so they can depend on several form elements. Returns the names of the
+ * with the patches of the selected entries, also their props, e.g. the
+ * categories of the data of another column (`dataKeys`, see prepareMapping),
+ * the entries of the legend of the same categories keep the state shown or
+ * hidden. Columns can be templates of globals, e.g. "{values}{share}", so
+ * they can depend on several form elements. Returns the names of the
  * mappings whose values change, the ones of another column or type.
  */
-const applyFormElements = (def, defOrg) => {
+const applyFormElements = (def, defOrg, dataKeys = () => []) => {
     const elements = def.formElements ?? [];
     const names = new Set([
         ...elements.flatMap(e => e.values.flatMap(v => Object.keys(v.mapping ?? {}))),
@@ -246,12 +254,10 @@ const applyFormElements = (def, defOrg) => {
         const merged = mergeAll([defOrg.mapping[n] ?? {}, ...patches]);
         if (typeof merged.column == 'string')
             merged.column = fillTemplate(merged.column, def.globals);
-        const m = prepareMapping(merged, n);
+        const m = prepareMapping(merged, n, dataKeys);
         const before = def.mapping[n];
-        if (before && 'props' in before) {
-            m.props = before.props;
-            m.keys = before.keys;
-        }
+        if (before?.props && m.props)
+            m.keys.filter(k => Object.hasOwn(before.props, k)).forEach(k => m.props[k].visible = before.props[k].visible);
         if (before?.column !== m.column || before?.type !== m.type)
             changed.push(n);
         def.mapping[n] = m;

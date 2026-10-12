@@ -1931,6 +1931,52 @@ describe('fixed bugs', () => {
         expect(errors.filter(e => !e.includes('validateDef') && !e.includes('a legend needs'))).toEqual([]);
     });
 
+    test('an entry of a form element patches the props of the categories', async () => {
+        const def = lineDef();
+        def.globals = { colors: 'a' };
+        def.formElements = [{ id: 'colors', name: 'Farben', ref: 'colors', type: 'radio', values: [
+            { id: 'a', name: 'A', value: 'a' },
+            { id: 'b', name: 'B', value: 'b', mapping: { c: { props: { categories: { Wien: { color: 'green' } } } } } },
+        ] }];
+        const el = await mount(GenVis, { def, data: lineData });
+        const fills = () => [...el.querySelectorAll('g.plot-1 g.vis-group')].map(g => [g.dataset.groupC, g.querySelector('circle').getAttribute('fill')]);
+        expect(fills()).toEqual([['Wien', 'red'], ['Tirol', 'blue']]);
+        el.querySelector('.vis-legend-entry[data-key="Tirol"]').click();
+        el.querySelector('.vis-form-element input[value="b"]').click();
+        await nextTick();
+        // the patched color, the legend keeps its state
+        expect(fills()).toEqual([['Wien', 'green']]);
+        expect(el.querySelector('.vis-legend-entry[data-key="Tirol"]').dataset.visible).toBe('false');
+        expect(errors).toEqual([]);
+    });
+
+    test('the categories of the data of another column of a form element', async () => {
+        const def = lineDef();
+        def.globals = { col: 'land' };
+        def.mapping.c = { column: '{col}', type: 'categorical', legend: {}, hover: {}, props: { fromData: true, scheme: 'Tableau10' } };
+        def.formElements = [{ id: 'col', name: 'Spalte', ref: 'col', type: 'radio', values: [
+            { id: 'land', name: 'Land', value: 'land' },
+            { id: 'other', name: 'Anderer', value: 'other' },
+        ] }];
+        const updates = [];
+        const el = await mount(GenVis, { def, data: lineData, 'onUpdate:state': s => updates.push(s) });
+        const keys = () => [...el.querySelectorAll('.vis-legend-entry')].map(e => e.dataset.key);
+        expect(keys()).toEqual(['Tirol', 'Wien']);
+        el.querySelector('.vis-form-element input[value="other"]').click();
+        await nextTick();
+        expect(keys()).toEqual(['10', '20', '30', '40']);
+        expect(el.querySelectorAll('g.plot-0 path')).toHaveLength(4);
+        el.querySelector('.vis-legend-entry[data-key="20"]').click();
+        await nextTick();
+        expect(updates.at(-1)).toEqual({ globals: { col: 'other' }, visible: { c: { 20: false } } });
+
+        // the state of the other column, also when it is loaded
+        const again = await mount(GenVis, { def, data: lineData, state: updates.at(-1) });
+        expect([...again.querySelectorAll('.vis-legend-entry')].map(e => [e.dataset.key, e.dataset.visible]))
+            .toEqual([['10', 'true'], ['20', 'false'], ['30', 'true'], ['40', 'true']]);
+        expect(errors).toEqual([]);
+    });
+
     test('form elements of a definition without globals', async () => {
         const def = lineDef();
         def.formElements = [{ id: 'col', name: 'Wert', ref: 'col', type: 'radio', values: [

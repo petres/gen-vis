@@ -2,7 +2,7 @@ export { createStore, resolveUrl, resolveParents, clearCache };
 
 import { reactive, markRaw, toRaw } from 'vue';
 
-import { addDataValues, dataFormat, parseData, prepareData, updateData, usedColumns } from "@/utils/data";
+import { addDataValues, dataFormat, distinctValues, parseData, prepareData, updateData, usedColumns } from "@/utils/data";
 import { applyTransforms, transformGlobals, utcColumns } from "@/utils/transform";
 import { applyFormElements, fillHtml, fillText, formatOf, mergeAll, prepareDef } from "@/utils/def";
 import { applyState, diffState, snapshot } from "@/utils/state";
@@ -137,7 +137,8 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
 
     // the form elements can have the values of the data, the state needs them
     addDataValues(defOrg, rows, columns);
-    const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)));
+    const keysOf = column => distinctValues(rows, columns, column).map(String);
+    const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), keysOf);
 
     // the data of plots of their own, e.g. events, the url relative to the def,
     // the rows are not evaluated as the ones of the definition, see layout.js
@@ -149,7 +150,10 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     }));
     const defaults = snapshot(prepared);
     applyState(prepared, state);
-    applyFormElements(prepared, defOrg);
+    // the mappings of the globals of the state, the entries of their legends
+    // of the state, e.g. of the categories of another column
+    applyFormElements(prepared, defOrg, keysOf);
+    applyState(prepared, { visible: state?.visible });
     // the transforms of the globals of the form elements and the state
     if (transformGlobals(prepared.transform).length > 0)
         columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns);
@@ -208,6 +212,8 @@ class Store {
     loading = false;
     // incremented if the state is set from outside, the components update
     stateSets = 0;
+    // the categories of the data of the last column, see dataKeys
+    keyCache = null;
 
     get loaded() { return this.def !== null && this.data !== null }
 
@@ -289,7 +295,7 @@ class Store {
     // transforms of the globals, e.g. an index of a base year, the transforms
     // are computed from the first one of a changed global
     applyFormElements() {
-        const changed = applyFormElements(this.def, this.defOrg);
+        const changed = applyFormElements(this.def, this.defOrg, column => this.dataKeys(column));
         if (transformGlobals(this.def.transform).length > 0) {
             const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns);
             if (columns !== this.columns) {
@@ -302,11 +308,21 @@ class Store {
             this.data = raw(updateData(this.rows, this.data, this.def, changed, this.columns));
     }
 
+    // the categories of the data of a column, e.g. of a column of a form
+    // element, the last ones are kept, the rows are not reactive
+    dataKeys(column) {
+        const source = this.columns?.get(column) ?? this.rows;
+        if (this.keyCache?.column !== column || this.keyCache.source !== source)
+            this.keyCache = markRaw({ column, source, keys: distinctValues(this.rows, this.columns, column).map(String) });
+        return this.keyCache.keys;
+    }
+
     // replaces the state of the loaded visualisation, null for the defaults
     setState(state) {
         applyState(this.def, this.defaults);
         applyState(this.def, state);
         this.applyFormElements();
+        applyState(this.def, { visible: state?.visible });
         this.stateSets++;
     }
 }
