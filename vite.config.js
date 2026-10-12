@@ -23,8 +23,21 @@ const injectCss = () => ({
     },
 });
 
+// the standalone script also as gen-vis.js, the one of the package, e.g. of a
+// CDN, beside the one of the version for the upload, see the readme
+const unversioned = () => ({
+    name: 'unversioned',
+    apply: 'build',
+    // after injectCss, with the styles
+    enforce: 'post',
+    generateBundle(options, bundle) {
+        const entry = Object.values(bundle).find(f => f.type == 'chunk' && f.isEntry);
+        this.emitFile({ type: 'asset', fileName: 'gen-vis.js', source: entry.code });
+    },
+});
+
 export default defineConfig(({ mode }) => ({
-    plugins: [vue(), injectCss()],
+    plugins: [vue(), injectCss(), ...(mode == 'lib' ? [unversioned()] : [])],
     resolve: {
         alias: [
             // the standalone script is one file, the parts which are loaded
