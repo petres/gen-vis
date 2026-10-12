@@ -23,6 +23,26 @@ const injectCss = () => ({
     },
 });
 
+// the modules of the module build of the standalone script which a page loads
+// at once, the static imports of the entry, in one chunk, so a page loads two
+// files and not one for every module shared with a part loaded later
+const atOnce = entry => {
+    let reached = null;
+    return (id, ctx) => {
+        if (!reached) {
+            reached = new Set();
+            const visit = m => {
+                if (reached.has(m))
+                    return;
+                reached.add(m);
+                (ctx.getModuleInfo(m)?.importedIds ?? []).forEach(visit);
+            };
+            visit(entry);
+        }
+        return reached.has(id) ? 'base' : null;
+    };
+};
+
 // the standalone script also as gen-vis.js, the one of the package, e.g. of a
 // CDN, beside the one of the version for the upload, see the readme
 const unversioned = () => ({
@@ -53,10 +73,26 @@ export default defineConfig(({ mode }) => ({
         // the standalone script reads parquet without the decompressors of
         // other compressions than snappy, see src/utils/parquet.js
         __GEN_VIS_STANDALONE__: JSON.stringify(mode == 'lib'),
-        // the standalone script includes vue, which checks the environment
-        ...(mode == 'lib' ? { 'process.env.NODE_ENV': JSON.stringify('production') } : {}),
+        // the standalone scripts include vue, which checks the environment
+        ...(mode == 'lib' || mode == 'module' ? { 'process.env.NODE_ENV': JSON.stringify('production') } : {}),
     },
-    build: mode == 'lib' ? {
+    build: mode == 'module' ? {
+        // the standalone script as a module of a page, with vue and d3, the
+        // parts which are loaded when a chart needs them are files of their own
+        // next to it, e.g. the ones of maps, see the readme
+        outDir: 'dist-lib/esm',
+        lib: {
+            entry: { 'gen-vis': 'src/lib.js' },
+            formats: ['es'],
+            fileName: (format, name) => `${name}.js`,
+        },
+        rolldownOptions: {
+            output: {
+                chunkFileNames: 'chunks/[name]-[hash].js',
+                codeSplitting: { groups: [{ name: atOnce(fileURLToPath(new URL('./src/lib.js', import.meta.url))) }] },
+            },
+        },
+    } : mode == 'lib' ? {
         // standalone script for embedding, see the readme
         outDir: 'dist-lib',
         lib: {

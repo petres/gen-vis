@@ -24,6 +24,7 @@
   "files": [
     "dist",
     "dist-lib/gen-vis.js",
+    "dist-lib/esm",
     "types",
     "schema.json",
     "CHANGELOG.md"
@@ -32,7 +33,7 @@
     "dev": "vite",
     "build": "vite build",
     "watch": "vite build --watch",
-    "lib": "vite build --mode lib",
+    "lib": "vite build --mode lib && vite build --mode module",
     "site": "npm run build && vite --config site/vite.config.js",
     "site:build": "npm run build && vite build --config site/vite.config.js",
     "test": "vitest run",
