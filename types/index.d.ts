@@ -48,7 +48,7 @@ export interface GenVisMethods {
     exportPng(name?: string): Promise<void>;
     copyPng(): Promise<void>;
     image(): Promise<Blob>;
-    exportCsv(name?: string): void;
+    exportCsv(name?: string): Promise<void>;
 }
 
 export type GenVisInstance = ComponentPublicInstance<GenVisProps> & GenVisMethods;

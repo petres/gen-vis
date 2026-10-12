@@ -17,17 +17,31 @@ npm install @preschen/gen-vis vue
 
 ### Standalone script
 
-The standalone script includes Vue, d3 and the styles (412 kB, 141 kB
-gzipped), the package has it as `dist-lib/gen-vis.js`, e.g. of a CDN, `npm run
-lib` builds it as `dist-lib/gen-vis.js` and `dist-lib/gen-vis-<version>.js`.
-It provides three global functions:
+The standalone script includes Vue, d3 and the styles, for pages without a
+bundler, e.g. of a CDN. As a module of the page (`dist-lib/esm/gen-vis.js`)
+it loads 90 kB (gzipped) at first and the parts which not every chart needs
+when a chart needs them, e.g. the ones of maps, from the files next to it:
 
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
 
+<script type="module">
+import { mountGenVisByClass } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@2/dist-lib/esm/gen-vis.js';
+mountGenVisByClass('genVis');
+</script>
+```
+
+As a single file (`dist-lib/gen-vis.js`, 415 kB, 141 kB gzipped) it has all
+parts in itself and provides the functions as globals, e.g. of a page which
+loads its scripts without modules:
+
+```html
 <script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@2/dist-lib/gen-vis.js"></script>
 <script>mountGenVisByClass('genVis')</script>
 ```
+
+`npm run lib` builds both in `dist-lib/`, the single file also as
+`gen-vis-<version>.js`, e.g. for an upload to a server of its own.
 
 `mountGenVisByClass(className)` mounts all elements with the class which are
 not mounted yet and returns their components, `mountGenVisElement(element,
@@ -62,13 +76,16 @@ application. `mountGenVisElement`, `mountGenVisByClass` and
 TypeScript, e.g. of the props, the events and the methods.
 
 Parts which not every chart needs are loaded when a chart needs them, so a
-bundler of the application puts them into chunks of their own (the sizes are
-gzipped): the colors of d3 (`d3-scale-chromatic`, ~8 kB) for definitions
-which name a scheme or an interpolator, the parts of maps (`d3-geo`,
-`topojson-client`, ~13 kB) with the first map, the transitions
-(`d3-transition`, ~5 kB) for definitions with a `transition`, the parquet
-reader (~17 kB) for parquet data and the screenshot of the PNG (~10 kB)
-with the first image. The standalone script has all of them in itself.
+bundler of the application puts them into chunks of their own, the rest is
+~65 kB gzipped (without Vue). The sizes are gzipped: the check of the
+definitions (~5 kB) with the first one, the colors of d3
+(`d3-scale-chromatic`, ~8 kB) for definitions which name a scheme or an
+interpolator, the parts of maps (`d3-geo`, `topojson-client`, ~13 kB) with
+the first map, the parts of polar plots (~5 kB) with the first one, the
+transitions (`d3-transition`, ~5 kB) for definitions with a `transition`, the
+transforms (~2 kB), the legend of scales of colors (~2 kB), the languages of
+`Intl` (~1 kB) other than `de` and `en`, the parquet reader (~17 kB) for
+parquet data and the PNG and the CSV (~11 kB) with the first one.
 
 ### Props
 

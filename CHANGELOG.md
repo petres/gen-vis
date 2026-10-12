@@ -59,16 +59,20 @@ New:
 - the CSV of the data shown, the colors as css variables, fewer layout
   shifts while a chart is loaded
 - `unmountGenVisElement`, the mount functions return the components, the
-  types of TypeScript, the standalone script in the package
-  (`dist-lib/gen-vis.js`, e.g. of a CDN)
+  types of TypeScript, the standalone script in the package, also as a module
+  of a page (`dist-lib/esm/gen-vis.js`, e.g. of a CDN)
 - the page of the examples, https://petres.github.io/gen-vis/
 
 Faster and smaller:
 
-- the standalone script is 412 kB instead of 503 kB (141 kB instead of 168
-  kB gzipped), the colors of d3, the parts of maps, the transitions, the
-  parquet reader and the screenshot are chunks of their own of a bundle of
-  an application
+- the standalone script is 415 kB instead of 503 kB (141 kB instead of 168
+  kB gzipped), as a module of a page it loads 90 kB gzipped at first
+- the parts which not every chart needs are loaded when a chart needs them,
+  chunks of their own of a bundle of an application: the check of the
+  definitions, the colors of d3, the parts of maps and of polar plots, the
+  transitions, the transforms, the legend of scales of colors, the languages
+  of Intl, the parquet reader, the PNG and the CSV, the rest is ~65 kB
+  gzipped (without Vue)
 - a change draws into the elements of the draw before, the hover formats
   only the rows it shows, the view is computed without Vue, a slider is drawn
   at most once a frame, a change of a global computes the transforms from
@@ -101,6 +105,8 @@ Since 2.0.0-alpha.2:
 - the schema has references of numbers, all scales and projections, it is
   valid in the strict mode of ajv
 - the names of templates of letters of any language, e.g. `{größe}`
+- `null` removes a part of a mapping of a parent or a patch, e.g. its hover,
+  infinite values are missing, `exportCsv` returns a promise
 - rolling means of large windows, e.g. 365 days of 250 000 rows 8.7 s ->
   ~0.1 s, the requests are kept 5 minutes, data of the format of a parent is
   requested once, data which is no list of rows is an error of its url
