@@ -16,7 +16,7 @@ useDom();
 const normalize = html => html
     .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/ data-v-[0-9a-f]+=""/g, '')
-    .replace(/gen-vis-(gradient|form)-\d+/g, 'gen-vis-$1-N')
+    .replace(/gen-vis-(gradient|form|facet)-\d+/g, 'gen-vis-$1-N')
     .replace(/-?\d+\.\d{4,}(e-?\d+)?/g, n => String(+Number(n).toFixed(3)))
     .replace(/></g, '>\n<');
 

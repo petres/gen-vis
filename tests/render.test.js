@@ -1240,6 +1240,46 @@ describe('the hover by the keyboard', () => {
         expect(el.querySelector('.vis-hover')).toBeNull();
     });
 
+    test('enter and space select the rows of the hover, as a click', async () => {
+        const selected = [];
+        const el = await mount(GenVis, { def: lineDef(), data: lineData, onSelect: e => selected.push(e) });
+        await press(el, 'Enter');
+        expect(selected).toEqual([]);
+        await press(el, 'ArrowRight');
+        await press(el, 'Enter');
+        await press(el, 'ArrowDown');
+        await press(el, ' ');
+        expect(selected.map(s => [s.key, s.nearest.c])).toEqual([[2020, 'Tirol'], [2020, 'Wien']]);
+    });
+
+    test('after a change the hover is at the same position or hidden without any', async () => {
+        const vm = createApp(GenVis, { def: lineDef(), data: lineData }).mount(document.body.appendChild(document.createElement('div')));
+        await rendered(vm.$el);
+        const el = vm.$el.parentNode;
+        await press(el, 'End');
+        await press(el, 'ArrowLeft');
+        expect(shown(el)).toEqual(['2022', 'Wien3,0']);
+        // without the values of 2021, the position is the one of 2022
+        vm.store.setState({ visible: { c: { Tirol: false } } });
+        await nextTick();
+        expect(shown(el)).toEqual(['2022', 'Wien3,0']);
+        vm.store.setState({ visible: { c: { Tirol: false, Wien: false } } });
+        await nextTick();
+        expect(el.querySelector('.vis-hover')).toBeNull();
+        expect(el.querySelector('.vis-hover-marker line').hasAttribute('x1')).toBe(false);
+        expect(errors).toEqual([]);
+    });
+
+    test('no motion if the user prefers it', async () => {
+        vi.stubGlobal('matchMedia', query => ({ matches: query == '(prefers-reduced-motion: reduce)' }));
+        const el = await mount(GenVis, { def: lineDef({ transition: 500 }), data: lineData });
+        const circle = el.querySelector('g.vis-group[data-group-c="Tirol"] circle');
+        const cy = circle.getAttribute('cy');
+        el.querySelector('.vis-legend-entry[data-key="Wien"]').click();
+        await nextTick();
+        expect(circle.getAttribute('cy')).not.toBe(cy);
+    });
+
     test('the regions of a map by their names', async () => {
         const el = await mount(GenVis, { defFile: '/data/bev/def-map.json' });
         await press(el, 'Home');
@@ -1428,6 +1468,9 @@ describe('the order and the ranks of categories', () => {
     });
 });
 
+// the svg of a chart without the ids of its page, e.g. to compare it with a new one
+const svgHtml = el => el.querySelector('svg.vis-svg').outerHTML.replace(/gen-vis-facet-\d+/g, 'gen-vis-facet-N');
+
 describe('the update of the facets', () => {
     const toggle = async (el, key) => {
         el.querySelector(`.vis-legend-entry[data-key="${key}"]`).click();
@@ -1453,7 +1496,7 @@ describe('the update of the facets', () => {
         // the groups in the order of the categories, as in a new draw
         expect([...el.querySelectorAll('g.plot-1 g.vis-group')].map(g => g.dataset.groupC)).toEqual(['Wien', 'Tirol']);
         const fresh = await mount(GenVis, { def: lineDef(), data: lineData });
-        expect(el.querySelector('svg.vis-svg').outerHTML).toBe(fresh.querySelector('svg.vis-svg').outerHTML);
+        expect(svgHtml(el)).toBe(svgHtml(fresh));
         expect(errors).toEqual([]);
     });
 
@@ -1496,7 +1539,7 @@ describe('the update of the facets', () => {
         await new Promise(resolve => setTimeout(resolve, 250));
         const fresh = await mount(GenVis, { def: lineDef(), data: lineData, state: { visible: { c: { Wien: false } } } });
         // the transition of a transform ends with "translate(x, y)", the axis writes "translate(x,y)"
-        const html = el => el.querySelector('svg.vis-svg').outerHTML.replace(/translate\(([^,)]+), /g, 'translate($1,');
+        const html = el => svgHtml(el).replace(/translate\(([^,)]+), /g, 'translate($1,');
         expect(html(el)).toBe(html(fresh));
         expect(errors).toEqual([]);
     });
@@ -2235,15 +2278,24 @@ describe('accessibility and the data', () => {
         expect([...document.querySelectorAll('.vis-radio > div')].map(e => e.dataset.id)).toEqual(['value', 'other', 'value', 'other']);
     });
 
-    test('the svg is an image named by the title and the facet, the form elements have labels', async () => {
+    test('the svg is an application of the keys named by the title and the facet, the form elements have labels', async () => {
         const def = { ...lineDef({ title: 'Bevölkerung {unit}' }), globals: { unit: 'Personen', year: 'a' }, facets: { dim: 'c', cols: 2 } };
         def.formElements = [
             { id: 'year', name: 'Jahr', ref: 'year', type: 'select', values: [{ id: 'a', name: 'A', value: 'a' }] },
             { id: 'unit', name: 'Einheit', ref: 'unit', type: 'radio', values: [{ id: 'p', name: 'Personen', value: 'Personen' }] },
         ];
         const el = await mount(GenVis, { def, data: lineData });
-        expect([...el.querySelectorAll('svg.vis-svg')].map(s => [s.getAttribute('role'), s.getAttribute('aria-label')]))
-            .toEqual([['img', 'Bevölkerung Personen: Wien'], ['img', 'Bevölkerung Personen: Tirol']]);
+        expect([...el.querySelectorAll('svg.vis-svg')].map(s => [s.getAttribute('role'), s.getAttribute('aria-label'), s.getAttribute('aria-roledescription')]))
+            .toEqual([['application', 'Bevölkerung Personen: Wien', 'Diagramm'], ['application', 'Bevölkerung Personen: Tirol', 'Diagramm']]);
+        // the description of the keys, of the language of the locale
+        const svg = el.querySelector('svg.vis-svg');
+        expect(document.getElementById(svg.getAttribute('aria-describedby')).textContent).toMatch(/^Die Pfeiltasten/);
+        // without a hover an image
+        def.mapping.y.scale.orientation = undefined;
+        delete def.mapping.y.axis;
+        const image = await mount(GenVis, { def, data: lineData });
+        expect(image.querySelector('svg.vis-svg').getAttribute('role')).toBe('img');
+        expect(image.querySelector('svg.vis-svg').hasAttribute('aria-describedby')).toBe(false);
         const [select, radio] = el.querySelectorAll('.vis-form-element');
         expect(select.querySelector('label').getAttribute('for')).toBe(select.querySelector('select').id);
         const group = radio.querySelector('[role="radiogroup"]');

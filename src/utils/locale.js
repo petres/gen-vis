@@ -25,12 +25,15 @@ const locales = {
             millisecond: ".%L", second: ":%S", minute: "%H:%M", hour: "%H:%M",
             day: "%a %d", week: "%d. %b", month: "%B", year: "%Y",
         },
-        // the titles of the buttons of the footer
+        // the titles of the buttons of the footer, the kind of the facets
+        // with a hover and the description of their keys, of screen readers
         texts: {
             download: 'Als PNG speichern',
             copy: 'Als PNG in die Zwischenablage kopieren',
             copied: 'Kopiert',
             csv: 'Die Daten als CSV speichern',
+            chart: 'Diagramm',
+            keys: 'Die Pfeiltasten zeigen die Werte der Positionen und Zeilen, die Eingabetaste wählt sie aus, Escape schließt sie.',
         },
     },
     'en': {
@@ -59,6 +62,8 @@ const locales = {
             copy: 'Copy as PNG to the clipboard',
             copied: 'Copied',
             csv: 'Save the data as CSV',
+            chart: 'chart',
+            keys: 'The arrow keys show the values of the positions and rows, enter selects them, escape hides them.',
         },
     },
 }

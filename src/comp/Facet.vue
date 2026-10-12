@@ -1,7 +1,9 @@
 <template>
     <div :style="`width: ${facet.width}px;`" class="vis-facet">
-        <!-- with a hover the facet is in the order of the tab key, the arrow keys move the hover -->
-        <svg ref="svg" :width="facet.width" :height="facet.height" class="vis-svg" role="img" :aria-label="label"
+        <!-- with a hover the facet is in the order of the tab key, the arrow keys move the
+             hover, it is an application of screen readers, so they pass the keys to it -->
+        <svg ref="svg" :width="facet.width" :height="facet.height" class="vis-svg" :role="keyboard ? 'application' : 'img'" :aria-label="label"
+            :aria-roledescription="keyboard ? store.locale.texts.chart : undefined" :aria-describedby="keyboard ? `${uid}-keys` : undefined"
             :tabindex="keyboard ? 0 : undefined" @keydown="key" @blur="hide?.()">
             <g ref="inner" :transform="`translate(${facet.margins.left + origin[0]} ${facet.margins.top + origin[1]})`">
                 <g :visibility="hover.visible ? 'visible' : 'hidden'" class="vis-hover-marker" ref="hoverMarker">
@@ -9,6 +11,7 @@
                 </g>
             </g>
         </svg>
+        <span v-if="keyboard" :id="`${uid}-keys`" hidden>{{ store.locale.texts.keys }}</span>
         <!-- the hover is read by screen readers when it changes, e.g. by the keyboard -->
         <div aria-live="polite" :style="`transform: translate(${facet.margins.left + origin[0] + hover.x}px, ${facet.margins.top + origin[1] + hover.y}px); position: absolute; top: 0; left: 0;`">
             <hover v-if="hover.visible" :title="hover.title" :data="hover.data" :side="hover.side" :payload="hover.payload"/>
@@ -25,6 +28,9 @@ import { plotTypes } from "@/plots";
 import { plotGroups, plotRows } from "@/layout";
 
 import Hover from '@/comp/Hover.vue';
+
+// the descriptions of the keys of the facets of a page have their own ids
+let count = 0;
 
 export default {
     // a facet of the view, its rows, sizes and scales, see layout.js, its key
@@ -61,6 +67,7 @@ export default {
         // the elements which are kept from one draw to the next by their key,
         // e.g. the groups of the plots, see keep
         this.kept = new Map();
+        this.uid = `gen-vis-facet-${count++}`;
     },
     mounted() {
         // a touch keeps the hover until the next touch outside of the facet
@@ -212,12 +219,15 @@ export default {
         // the keys of the hover: the arrows to the left and the right move it
         // to the position before and after, the ones up and down to the row
         // above and below, home and end to the first and the last position,
-        // escape hides it
+        // enter and space select it, as a click, escape hides it
         key(e) {
             const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 'down', ArrowUp: 'up', Home: 'first', End: 'last' }[e.key];
-            if (e.key == 'Escape')
+            if (e.key == 'Escape') {
                 this.hide?.();
-            else if (step !== undefined && this.step) {
+            } else if ((e.key == 'Enter' || e.key == ' ') && this.selectShown) {
+                e.preventDefault();
+                this.selectShown();
+            } else if (step !== undefined && this.step) {
                 e.preventDefault();
                 this.step(step);
             }
@@ -229,6 +239,7 @@ export default {
             this.hide = null;
             this.move = null;
             this.step = null;
+            this.selectShown = null;
 
             // the hover needs the mappings of the positions and of the values
             const names = ctx.axis;
@@ -256,12 +267,15 @@ export default {
             // the rows by their key, e.g. of the horizontal axis, compared as strings
             const rowsByKey = d3.group(ctx.rows.filter(e => e[v] !== null), e => String(e[names.h]));
             let last = null;
+            // the rows of the hover shown, e.g. for a select by the keyboard
+            let current = null;
 
             // a hidden hover has no position, as the one of a new facet
             const hide = this.hide = () => {
                 if (this.hover.visible)
                     this.emit('hover', null);
                 last = null;
+                current = null;
                 this.lastEvent = null;
                 this.lastKey = null;
                 Object.assign(this.hover, { visible: false, x: 0, y: 0 });
@@ -339,6 +353,7 @@ export default {
             // the hover of the rows of a position and the nearest one
             const show = found => {
                 this.hover.visible = true;
+                current = found;
                 const { key, value, rows, nearest } = found;
 
                 // the same key and row as before, e.g. a move within a step
@@ -398,16 +413,25 @@ export default {
                 return s ? all.sort((a, b) => s(a.key) - s(b.key))
                     : all.sort((a, b) => String(titleOf(a.key)).localeCompare(String(titleOf(b.key))));
             };
-            const showKey = (index, row) => {
+            // the position of an index, of a key before, e.g. of the draw before
+            // with other positions, at its index if it has none anymore
+            const showKey = (index, row, before) => {
                 positions ??= positionsOf();
-                if (positions.length == 0)
+                if (positions.length == 0) {
+                    hide();
                     return;
-                const i = Math.max(0, Math.min(positions.length - 1, index));
+                }
+                const same = before === undefined ? -1 : positions.findIndex(p => String(p.key) === String(before));
+                const i = same >= 0 ? same : Math.max(0, Math.min(positions.length - 1, index));
                 const { key, rows, point } = positions[i];
                 const r = Math.max(0, Math.min(rows.length - 1, row));
                 this.lastEvent = null;
-                this.lastKey = { index: i, row: r };
+                this.lastKey = { index: i, row: r, key };
                 show({ key, rows, nearest: rows[r], point });
+            };
+            this.selectShown = () => {
+                if (current)
+                    this.emit('select', payload(current));
             };
             this.step = step => {
                 const current = this.lastKey;
@@ -441,7 +465,7 @@ export default {
             if (this.hover.visible && this.lastEvent)
                 move(this.lastEvent);
             else if (this.hover.visible && this.lastKey)
-                showKey(this.lastKey.index, this.lastKey.row);
+                showKey(this.lastKey.index, this.lastKey.row, this.lastKey.key);
             else
                 this.hover.visible = false;
         }

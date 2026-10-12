@@ -176,7 +176,9 @@ export default {
         update(animated = false) {
             const view = layout(this.store, this.options.width);
             const transition = this.store.def.options.transition;
-            const duration = animated ? (transition === true ? 300 : (Number(transition) || 0)) : 0;
+            // no motion if the user prefers it, a setting of the system
+            const still = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+            const duration = animated && !still ? (transition === true ? 300 : (Number(transition) || 0)) : 0;
             view.facets.forEach(f => f.transition = duration);
             this.view = markRaw(view);
         },
