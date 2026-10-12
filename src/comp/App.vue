@@ -133,7 +133,9 @@ export default {
             if (this.def === null && this.defFile === null)
                 return this.showError(new Error('No definition given.'));
             try {
-                await this.store.init({ def: this.def, defUrl: this.defFile, data: this.data, state: this.state });
+                // a definition loaded after a newer one was given is not shown
+                if (!await this.store.init({ def: this.def, defUrl: this.defFile, data: this.data, state: this.state }))
+                    return;
                 // the error is kept while the new definition is loaded, a
                 // definition which could not be drawn is not drawn again meanwhile
                 this.error = null;

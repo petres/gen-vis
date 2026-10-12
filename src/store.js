@@ -263,21 +263,24 @@ class Store {
      * def is an object or a JSON string, if it is null the def is loaded from
      * defUrl. data are rows or a CSV/JSON string, if it is null it is loaded
      * from the url given in the def. state is applied to the def, see
-     * utils/state.js.
+     * utils/state.js. Returns false if a newer init was started meanwhile,
+     * its result (or its error) is the one of the store.
      */
     async init(sources) {
         const run = ++this.runs;
         this.loading = true;
         try {
             const state = await load(sources);
-            if (run == this.runs) {
-                Object.assign(this, state);
-                this.loads++;
-            }
+            if (run != this.runs)
+                return false;
+            Object.assign(this, state);
+            this.loads++;
+            return true;
         } catch (error) {
             // a newer init was started in the meantime
             if (run == this.runs)
                 throw error;
+            return false;
         } finally {
             if (run == this.runs)
                 this.loading = false;

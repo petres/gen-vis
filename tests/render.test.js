@@ -2162,6 +2162,29 @@ describe('layout shifts', () => {
         expect(outer(other).style.minHeight).toBe('');
     });
 
+    test('a definition loaded after a newer one was given is not shown, also not instead of its error', async () => {
+        const serve = fetch;
+        let release;
+        const slow = new Promise(resolve => release = resolve);
+        vi.stubGlobal('fetch', async url => {
+            if (url.endsWith('/data/bev/def-bar.json'))
+                await slow;
+            return serve(url);
+        });
+        const defFile = ref('/data/bev/def-bar.json');
+        const el = document.body.appendChild(document.createElement('div'));
+        createApp({ render: () => h(GenVis, { defFile: defFile.value }) }).mount(el);
+        await nextTick();
+        defFile.value = '/data/missing.json';
+        await vi.waitFor(() => expect(el.querySelector('.vis-error')).not.toBeNull());
+        release();
+        await new Promise(resolve => setTimeout(resolve, 50));
+        await nextTick();
+        expect(el.querySelector('.vis-error').textContent).toMatch(/missing\.json/);
+        expect(el.querySelector('.vis-outer').classList.contains('vis-loading')).toBe(false);
+        expect(el.querySelector('svg.vis-svg')).toBeNull();
+    });
+
     test('a new definition is drawn when it is loaded, the one before is shown until then', async () => {
         const defFile = ref('/data/bev/def.json');
         const el = await mount({ render: () => h(GenVis, { defFile: defFile.value }) });
