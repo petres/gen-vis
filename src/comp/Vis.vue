@@ -29,9 +29,9 @@
         </div>
         <div class="vis-footer">
             <div class="vis-footer-content">
-                <slot-content v-if="slots.footer" :fn="slots.footer" :props="{ footer: store.text(options.footer) }"/>
-                <!-- the only html of the definition, e.g. a link of the source -->
-                <span v-else v-html="store.text(options.footer)"/>
+                <slot-content v-if="slots.footer" :fn="slots.footer" :props="{ footer: store.html(options.footer) }"/>
+                <!-- html of the definition, e.g. a link of the source, the values of the globals are text -->
+                <span v-else v-html="store.html(options.footer)"/>
             </div>
             <!-- the buttons of the page (the slot buttons), copy, check, file-text
                  and download of the feather icons, at the right end of the plots -->

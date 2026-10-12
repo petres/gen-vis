@@ -4,7 +4,7 @@ import { reactive, markRaw, toRaw } from 'vue';
 
 import { addDataValues, dataFormat, parseData, prepareData, updateData, usedColumns } from "@/utils/data";
 import { applyTransforms, transformGlobals } from "@/utils/transform";
-import { applyFormElements, fillText, formatOf, mergeAll, prepareDef } from "@/utils/def";
+import { applyFormElements, fillHtml, fillText, formatOf, mergeAll, prepareDef } from "@/utils/def";
 import { applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { validateDef } from "@/utils/validate";
@@ -252,6 +252,9 @@ class Store {
 
     // a text of the definition with the values of the globals, e.g. "{base} = 100"
     text(t) { return fillText(t, this.def.globals) }
+    // html of the definition, e.g. the footer, with the values of the globals
+    // as text, they can be values of the data, e.g. of a form element
+    html(t) { return typeof t == 'string' ? fillHtml(t, this.def.globals) : t }
     prop(n, k) { return this.def.mapping[n].props[k] }
     mappingNamesWithKey(k) { return Object.keys(this.def.mapping).filter(n => k in this.def.mapping[n]) }
 

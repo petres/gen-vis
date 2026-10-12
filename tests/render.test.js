@@ -2074,6 +2074,17 @@ describe('accessibility and the data', () => {
         expect(cell.querySelector('i')).toBeNull();
     });
 
+    test('the values of the globals in the footer are text, e.g. of the data', async () => {
+        const def = lineDef({ footer: '<b>Land</b>: {land}' });
+        def.formElements = [{ id: 'land', name: 'Land', ref: 'land', type: 'select', values: { column: 'land' } }];
+        const data = `${lineData}\n2020,5,1,<img src=x onerror=alert(1)>`;
+        const el = await mount(GenVis, { def, data, state: { globals: { land: '<img src=x onerror=alert(1)>' } } });
+        const footer = el.querySelector('.vis-footer-content span');
+        expect(footer.querySelector('b').textContent).toBe('Land');
+        expect(footer.querySelector('img')).toBeNull();
+        expect(footer.textContent).toBe('Land: <img src=x onerror=alert(1)>');
+    });
+
     test('the ids of the elements are unique, also of charts with the same form elements', async () => {
         const def = lineDef();
         def.globals = { col: 'value' };
