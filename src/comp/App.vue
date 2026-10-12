@@ -18,7 +18,8 @@
 import { createStore } from '@/store.js';
 import { h } from 'vue';
 import { sameValue } from "@/utils/def";
-import { selection, renderImage, saveFile, csvOf, copyImage, defaultWidth } from '@/utils/export.js';
+import { copyImage } from '@/utils/clipboard.js';
+import { lazy } from '@/utils/lazy';
 import { layout } from '@/layout';
 import VisBase from '@/comp/Vis.vue';
 
@@ -170,7 +171,8 @@ export default {
         },
         // the visualisation as a PNG (a Blob) without the form elements, of a
         // copy of the width of the images, see utils/export.js
-        image() {
+        async image() {
+            const { renderImage, selection, defaultWidth } = await lazy.exporting();
             const options = this.store.def.options;
             const width = this.imageWidth == 'screen'
                 ? this.$el.querySelector('.vis').getBoundingClientRect().width
@@ -181,7 +183,7 @@ export default {
                 state: JSON.parse(JSON.stringify(this.store.state)),
                 class: this.$attrs.class,
             };
-            return renderImage(this.$el, done => {
+            return await renderImage(this.$el, done => {
                 const vnode = h(this.$.type, { ...props, onRendered: done.resolve, onError: done.reject }, this.$slots);
                 // the components and plugins of the page, e.g. of the slots
                 vnode.appContext = this.$.appContext;
@@ -196,10 +198,13 @@ export default {
         },
         // the name of the file is the argument or the one of fileName
         async exportPng(name) {
-            saveFile(await this.image(), `${name ?? this.fileName(this.download)}.png`);
+            const image = await this.image();
+            const { saveFile } = await lazy.exporting();
+            saveFile(image, `${name ?? this.fileName(this.download)}.png`);
         },
         // the rows shown in the columns of their mappings, see utils/export.js
-        exportCsv(name) {
+        async exportCsv(name) {
+            const { saveFile, csvOf } = await lazy.exporting();
             const rows = layout(this.store, this.store.totalWidth).rows;
             saveFile(new Blob([csvOf(this.store, rows)], { type: 'text/csv' }), `${name ?? this.fileName(this.csv)}.csv`);
         },

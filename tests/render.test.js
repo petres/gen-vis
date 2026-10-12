@@ -1440,6 +1440,8 @@ describe('transforms', () => {
         const blobs = [];
         vi.spyOn(URL, 'createObjectURL').mockImplementation(b => { blobs.push(b); return 'blob:x'; });
         el.querySelector('.vis-csv').click();
+        // the export is loaded with the first one
+        await vi.waitFor(() => expect(blobs).toHaveLength(1));
         const csv = await blobs[0].text();
         expect(csv.split('\n').slice(0, 3)).toEqual(['year,index,land', '2020,33.33333333333333,Wien', '2021,,Wien']);
         saved.mockRestore();

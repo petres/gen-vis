@@ -8,6 +8,7 @@ import * as geoMap from '@/coords/geo-map.js';
 import * as polar from '@/coords/polar-plot.js';
 import * as geo from '@/utils/geo.js';
 import * as parquet from '@/utils/parquet.js';
+import * as exporting from '@/utils/export.js';
 import * as screenshot from 'modern-screenshot';
 import 'd3-transition';
 
@@ -19,6 +20,7 @@ export const lazy = {
     polar: async () => polar,
     geo: async () => geo,
     parquet: async () => parquet,
+    exporting: async () => exporting,
     screenshot: async () => screenshot,
     transition: async () => ({}),
 };

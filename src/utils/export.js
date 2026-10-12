@@ -1,4 +1,5 @@
-export { selection, renderImage, saveFile, csvOf, copyImage, canCopy, defaultWidth };
+// the image and the CSV of a visualisation, loaded with the first one, see App.vue
+export { selection, renderImage, saveFile, csvOf, defaultWidth };
 
 import { render } from "vue";
 import * as d3 from "@/utils/d3";
@@ -114,8 +115,3 @@ const csvOf = (store, rows) => {
     }), columns);
 };
 
-// only on https (or localhost), the blob is a promise, so the clipboard is
-// written while the click is still the action of the user (as Safari needs)
-const canCopy = () => typeof ClipboardItem != 'undefined' && Boolean(globalThis.navigator?.clipboard?.write);
-
-const copyImage = blob => navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);

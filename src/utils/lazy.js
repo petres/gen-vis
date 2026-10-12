@@ -11,6 +11,7 @@ export const lazy = {
     polar: () => import('@/coords/polar-plot.js'),
     geo: () => import('@/utils/geo.js'),
     parquet: () => import('@/utils/parquet.js'),
+    exporting: () => import('@/utils/export.js'),
     screenshot: () => import('modern-screenshot'),
     transition: () => import('d3-transition'),
 };

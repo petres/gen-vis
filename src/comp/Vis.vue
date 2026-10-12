@@ -62,7 +62,7 @@
 import { markRaw } from 'vue';
 
 import { layout } from "@/layout";
-import { canCopy } from "@/utils/export.js";
+import { canCopy } from "@/utils/clipboard.js";
 
 import Facet from '@/comp/Facet.vue';
 import LegendEntry from '@/comp/Legend.vue';
