@@ -22,7 +22,7 @@
                 marks and colors come from the definition, everything else from the CSS of the
                 page. Edit either one and the chart follows as you type.
             </p>
-            <pre class="install"><code>npm install @preschen/gen-vis@alpha</code></pre>
+            <pre class="install"><code>npm install @preschen/gen-vis</code></pre>
             <nav class="toc" aria-label="Examples">
                 <a v-for="(e, i) in examples" :key="e.id" :href="`#${e.id}`">
                     <span>{{ String(i + 1).padStart(2, '0') }}</span> {{ e.name }}

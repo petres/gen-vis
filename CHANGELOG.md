@@ -1,7 +1,109 @@
 # Changelog
 
-The changes of the versions on npm, the newest first. The details are in the
-commits, the upgrade from 1.x in the [README](README.md#upgrading-from-1x).
+The changes of the versions, the newest first, the ones on npm without
+0.7.0 and 2.0.0-alpha.1. The details are in the commits, the upgrade from 1.x
+in the [README](README.md#upgrading-from-1x).
+
+## 2.0.0
+
+The changes since 1.2.0, the ones of the pre-releases below in one, and the
+ones since 2.0.0-alpha.2 at the end.
+
+Changes which need changes of definitions, styles or pages, see the
+[README](README.md#upgrading-from-1x):
+
+- definitions: `facets.dim` is the name of a mapping, not a list; the names
+  of 0.9 are removed (svg:path, base:area, bar, stackedBar, "@y:st:e"); the
+  categories of props are `categories` (they were `manual`), radio buttons
+  `"type": "radio"` (`"switch"`); values of globals are the same as strings,
+  but `0` and `""` are different; all texts are templates of the globals;
+  `null` of an annotation is no value; only the footer and the templates of
+  the hover are HTML, the names are text, the values of the globals in them
+  too
+- dates: a date without a time is the midnight of the time zone of the
+  scale, local of `time` scales (it was midnight UTC), dates and times
+  without a time zone are UTC of `utc` scales (they were local), dates of
+  parquet and its timestamps without a time zone are strings
+- the extension of a domain taken from the data is relative to the
+  positions of `log`, `sqrt` and `symlog` scales
+- styles: all classes start with `vis-`, e.g. vis-title, vis-legend, the
+  form elements are named by `data-id`, mounted elements have `vis-mounted`,
+  the default colors of annotations are styles, the charts fill `.vis`
+  inside its padding and border, a facet with a hover is an application of
+  screen readers (`role="application"`)
+- pages: the data attributes of the standalone script are read as their
+  props, e.g. `data-copy="false"` is off, `data-state` is JSON; the package
+  depends on the modules of d3, not on `d3`
+- extensions: plot types get plain values, the groups have `rows`,
+  `at(row)`, `prop(name)`, `attrs` and `complete(row)`, `ctx` has `rows`,
+  `scales`, `axis`, `stackOf` and `scope`, `groupwise(groups, parent, d)`,
+  a type with `update: true` draws into its elements of the draw before
+
+New:
+
+- data: `transform` (year, align, index, share, rolling, cumulative, of the
+  globals), parquet in the columns the definition uses
+- plots: `data` (rows of their own or a url), `select`, `dodge`, `layer`,
+  `facet`, horizontal bars, `@y:formatted`, the prop `format`,
+  `@y:scaled:center`, annotations as plots of rows
+- categories: of the data (`fromData`), the colors of a scheme, `order`,
+  `ranks`, the symbols `line`, `rect` and `circle` of legends
+- scales: references in `domain`, `inset`, `axis.tickSpacing`, all scales
+  of d3, e.g. `ordinal` and `sequentialQuantile`, fixed categories of `band`
+  and `point` scales
+- hover: templates (`options.hover`), `"mode": "point"`, every hover prop
+  of a category is a column, the keyboard (the arrows, enter and space
+  select it), screen readers read it
+- `options.transition`, without motion if the user prefers it
+- any language of `Intl` as the locale, `texts` of a locale
+- the CSV of the data shown, the colors as css variables, fewer layout
+  shifts while a chart is loaded
+- `unmountGenVisElement`, the mount functions return the components, the
+  types of TypeScript, the standalone script in the package
+  (`dist-lib/gen-vis.js`, e.g. of a CDN)
+- the page of the examples, https://petres.github.io/gen-vis/
+
+Faster and smaller:
+
+- the standalone script is 412 kB instead of 503 kB (141 kB instead of 168
+  kB gzipped), the colors of d3, the parts of maps, the transitions, the
+  parquet reader and the screenshot are chunks of their own of a bundle of
+  an application
+- a change draws into the elements of the draw before, the hover formats
+  only the rows it shows, the view is computed without Vue, a slider is drawn
+  at most once a frame, a change of a global computes the transforms from
+  the first one it changes
+
+Since 2.0.0-alpha.2:
+
+- validateDef does not name the names of 1.x (`manual`, `switch`), they are
+  unknown
+- fixed: the values of the globals in the footer are text (also of the data,
+  e.g. of a select of the values of a column); a state of a url can not
+  change the prototype of objects (`__proto__`); a definition loaded after a
+  newer one was given replaced it or its error; plots of the same id shared
+  their elements; a fixed domain of a string of a global, e.g. "100", was
+  "10000"; a highlight during a transition kept the values before it; a log
+  scale with `nice`, of negative values; form elements of definitions
+  without globals; formats of dates of mappings without a time scale; a
+  patch of the props of a form element; the categories of the data of
+  another column of a form element; the keyboard hover without positions
+  after a change; the hover after a new width of a polar plot; the title
+  template of the hover without the one of the rows; a coordinate system
+  whose parts could not be loaded once; the gregorian calendar of Intl
+- dates and times without a time zone, e.g. "2024-06-01 13:00", are the ones
+  of the scale, also of parquet, German dates of the day first, e.g.
+  "01.06.2024", year and align in UTC of `utc` scales
+- validateDef warns of entries which are no objects (they were errors) and
+  of definitions which can not be drawn, these are errors which name the
+  part, the defaults of `options.height` (400), `facets.cols` (1) and the
+  offset of the titles of axes
+- the schema has references of numbers, all scales and projections, it is
+  valid in the strict mode of ajv
+- the names of templates of letters of any language, e.g. `{größe}`
+- rolling means of large windows, e.g. 365 days of 250 000 rows 8.7 s ->
+  ~0.1 s, the requests are kept 5 minutes, data of the format of a parent is
+  requested once, data which is no list of rows is an error of its url
 
 ## 2.0.0-alpha.2
 
@@ -58,7 +160,7 @@ Faster and smaller:
 - parquet is read in the columns the definition uses, 3 of 10 columns of
   200 000 rows ~250 -> ~70 ms
 
-## 2.0.0-alpha.1
+## 2.0.0-alpha.1 (not published)
 
 - a date without a time, e.g. `2024-06-01`, is the midnight of the time zone
   of the scale, local (`time`) or UTC (`utc`), so it is the same day in every
@@ -123,7 +225,7 @@ New:
 Faster and smaller:
 
 - only the parts of d3 which are used, the dependencies are d3 modules, the
-  standalone script is 359 kB instead of 503 kB (121 kB instead of 168 kB
+  standalone script is 369 kB instead of 503 kB (125 kB instead of 168 kB
   gzipped)
 - a form element converts only the mappings it changes, e.g. a slider over
   250,000 rows converted all mappings of all rows at every step (110 ms)
@@ -225,7 +327,7 @@ Fixed:
 - `parent` can be a list of definitions, merged as mixins
 - the radio buttons of a form element are a group per visualisation
 
-## 0.7.0
+## 0.7.0 (not published)
 
 - the state of the user (globals and visible entries) as the prop `state`
   and the event `update:state`, e.g. for `v-model:state`
