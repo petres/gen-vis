@@ -1900,6 +1900,31 @@ describe('fixed bugs', () => {
     const stackData = 'year,value,land,type\n2020,5,Wien,a\n2020,2,Wien,b\n2021,8,Wien,a\n2021,2,Wien,b';
     const rects = el => [...el.querySelectorAll('g.vis-plot rect')].map(r => ['x', 'y', 'width', 'height'].map(a => parseFloat(r.getAttribute(a))));
 
+    test('form elements of a definition without globals', async () => {
+        const def = lineDef();
+        def.formElements = [{ id: 'col', name: 'Wert', ref: 'col', type: 'radio', values: [
+            { id: 'value', name: 'Wert', value: 'value' },
+            { id: 'other', name: 'Anderer', value: 'other', mapping: { y: { column: 'other' } } },
+        ] }];
+        const el = await mount(GenVis, { def, data: lineData });
+        el.querySelector('.vis-form-element input[value="other"]').click();
+        await nextTick();
+        expect(el.querySelector('.vis-form-element input[value="other"]').checked).toBe(true);
+        expect(el.querySelector('.vis-error')).toBeNull();
+        expect(errors).toEqual([]);
+    });
+
+    test('the format of a date of the hover without a time scale', async () => {
+        const def = lineDef();
+        def.mapping.d = { column: 'day', type: 'date', hover: { format: '%d.%m.%Y' } };
+        const data = lineData.split('\n').map((l, i) => `${l},${i == 0 ? 'day' : '2024-06-01'}`).join('\n');
+        const el = await mount(GenVis, { def, data });
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+        await nextTick();
+        expect([...el.querySelectorAll('.vis-hover td[data-mapping="d"]')].map(td => td.textContent)).toEqual(['01.06.2024', '01.06.2024']);
+        expect(errors).toEqual([]);
+    });
+
     test('fixed values of an axis outside of its domain are not drawn', async () => {
         const def = lineDef();
         // the values are from 1 to 4, d3 drew the others in the margins

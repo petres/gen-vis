@@ -218,22 +218,13 @@ class Store {
     // the hover and the stacks, see layout.js
     get axis() { return axisNames(this) }
 
-    // d3 format of the locale for the values of a scale type
-    formatter(scaleType) {
-        if (scaleType == 'time')
-            return this.locale.time.format;
-        if (scaleType == 'utc')
-            return this.locale.time.utcFormat;
-        return this.locale.number.format;
-    }
-
     // the format of the values of a mapping in the hover and in labels: its
     // own, the one of its axis or the default of the locale, `scale` is the
     // one of the facet, see valueFormat of utils/locale.js
     valueFormat(n, scale) {
         const m = this.def.mapping[n];
         const format = formatOf(m, 'hover');
-        return format ? this.formatter(m.scale?.type)(format) : this.locale.valueFormat(m, scale);
+        return format ? this.format(format, n) : this.locale.valueFormat(m, scale);
     }
 
     // the names of the references in all parts of the definition, the globals
@@ -241,11 +232,18 @@ class Store {
     // props of the categories and the row, see README "Props"
     get scope() { return { ...this.def.globals, totalWidth: this.totalWidth, [formatter]: (format, name) => this.format(format, name) } }
 
-    // a d3 format of the values of a reference, of times if it is a mapping of
-    // dates, e.g. "%Y", see the prop format of utils/props.js
+    // a d3 format in the locale of the values of a mapping, of times if it is
+    // a mapping of dates or of a time scale, e.g. "%Y", local or UTC of a
+    // `utc` scale, of numbers otherwise, see also the prop format of
+    // utils/props.js
     format(format, name) {
-        const m = this.def.mapping[name];
-        return this.formatter(m?.type == 'date' ? (m.scale?.type == 'utc' ? 'utc' : 'time') : m?.scale?.type)(format);
+        const m = Object.hasOwn(this.def.mapping, name) ? this.def.mapping[name] : undefined;
+        const type = m?.scale?.type;
+        if (type == 'utc')
+            return this.locale.time.utcFormat(format);
+        if (type == 'time' || m?.type == 'date')
+            return this.locale.time.format(format);
+        return this.locale.number.format(format);
     }
 
     mapping(n) { return this.def.mapping[n] }

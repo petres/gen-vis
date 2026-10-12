@@ -36,7 +36,7 @@ const axes = ctx => {
             .ticks(ticks)
             .tickPadding(i.padding)
 
-        const format = tickFormat(store, m, s, ticks);
+        const format = tickFormat(store, n, s, ticks);
         if (format)
             a.tickFormat(format);
 

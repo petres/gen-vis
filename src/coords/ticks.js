@@ -28,12 +28,13 @@ const tickValues = (axis, scale, ticks) => axis.values
     ? axis.values.filter(v => inRange(scale, v))
     : (scale.ticks ? scale.ticks(ticks) : scale.domain());
 
-// the format of the ticks of an axis, by default as the one of d3 but in the
-// locale, null for the default of d3
-const tickFormat = (store, mapping, scale, ticks) => {
+// the format of the ticks of the axis of a mapping, by default as the one of
+// d3 but in the locale, null for the default of d3
+const tickFormat = (store, name, scale, ticks) => {
+    const mapping = store.mapping(name);
     const format = formatOf(mapping, 'axis');
     if (format)
-        return store.formatter(mapping.scale.type)(format);
+        return store.format(format, name);
     if (mapping.axis.values)
         return null;
     return store.locale.tickFormat(scale, mapping.scale.type, ticks);

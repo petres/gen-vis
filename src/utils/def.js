@@ -139,6 +139,8 @@ const annotationPlots = (annotations = []) => [annotations].flat().map((a, i) =>
 });
 
 const prepareDef = def => {
+    // the values of the form elements, also without globals of the definition
+    def.globals ??= {};
     // the space around the plots of a facet, e.g. of the axes
     def.options = { ...def.options, margins: { top: 0, right: 0, bottom: 0, left: 0, ...def.options?.margins } };
 

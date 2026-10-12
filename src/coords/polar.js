@@ -153,7 +153,7 @@ const axes = ctx => {
         // the length of a radial axis, of an angular one the arc at the outer radius
         const span = Math.abs(s.range()[1] - s.range()[0]);
         const ticks = tickCount(i, ctx.scope, i.position == 'angular' ? span*radiusRange(ctx)[1] : span);
-        const format = tickFormat(store, m, s, ticks) ?? (v => v);
+        const format = tickFormat(store, n, s, ticks) ?? (v => v);
 
         const g = ctx.inner.append("g")
             .attr("class", `vis-axis vis-axis-${i.position}`)

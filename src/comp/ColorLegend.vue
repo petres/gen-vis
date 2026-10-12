@@ -86,7 +86,7 @@ export default {
             // the format of the legend or the hover, by default the one of the ticks of an axis
             const given = formatOf(m, 'legend');
             const formatter = values => given
-                ? this.store.formatter(m.scale.type)(given)
+                ? this.store.format(given, this.legend)
                 : this.store.locale.tickFormat(d3.scaleLinear(d3.extent(values)), 'linear', 4);
 
             if (!s.ticks && !s.invertExtent && !s.interpolator) {
