@@ -7,6 +7,7 @@ export const lazy = {
     validate: () => import('@/utils/validate.js'),
     colors: () => import('@/utils/colors.js'),
     geoMap: () => import('@/coords/geo-map.js'),
+    polar: () => import('@/coords/polar-plot.js'),
     geo: () => import('@/utils/geo.js'),
     parquet: () => import('@/utils/parquet.js'),
     screenshot: () => import('modern-screenshot'),

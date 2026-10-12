@@ -2,7 +2,6 @@ export { plotTypes, registerPlotType };
 
 import elements from "@/plots/elements";
 import cartesian from "@/plots/cartesian";
-import polar from "@/plots/polar";
 import geo from "@/plots/geo";
 import annotations from "@/plots/annotations";
 
@@ -28,6 +27,22 @@ import annotations from "@/plots/annotations";
  * - `curve`: the type uses the `curve` of the plot
  * - `coords`: the coordinate systems of the type, all if it is not given
  */
+// the plot types of polar plots are loaded with the first one, until then
+// they are known by their names, e.g. to validateDef, see coords/polar.js
+const later = (name, parts) => ({
+    ...parts,
+    coords: ['polar'],
+    update: true,
+    render() { throw new Error(`${name}: a plot type of polar plots, of "coord": "polar"`); },
+});
+const polar = {
+    'polar:line': later('polar:line', { curve: true }),
+    'polar:area': later('polar:area', { curve: true }),
+    'polar:arc': later('polar:arc'),
+    'polar:circle': later('polar:circle'),
+    'polar:text': later('polar:text'),
+};
+
 const plotTypes = { ...elements, ...cartesian, ...polar, ...geo, ...annotations };
 
 const registerPlotType = (name, type) => {

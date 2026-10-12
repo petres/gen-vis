@@ -15,7 +15,7 @@ export { formatLocale, precisionFixed } from 'd3-format';
 export { scaleLinear } from 'd3-scale';
 export { pointer, select } from 'd3-selection';
 export {
-    arc, area, areaRadial, line, lineRadial, pointRadial,
+    area, line,
     curveBasis, curveBasisClosed, curveCatmullRom, curveCatmullRomClosed, curveLinear, curveLinearClosed,
     curveMonotoneX, curveNatural, curveStep, curveStepAfter, curveStepBefore,
 } from 'd3-shape';

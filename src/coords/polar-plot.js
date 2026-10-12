@@ -1,0 +1,255 @@
+// the axes, the annotations and the hover of polar plots and their plot
+// types, loaded with the first polar plot, see coords/polar.js
+export { angleOf, radiusRange, plotTypes };
+
+import * as d3 from "@/utils/d3";
+import { arc as arcShape, lineRadial, pointRadial } from 'd3-shape';
+import plotTypes from "@/plots/polar";
+import { bandCenter } from "@/utils/scales";
+import { tickValues, tickFormat, tickCount } from "@/coords/ticks";
+import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
+
+const tau = 2*Math.PI;
+
+// the angle of a value, in the center of a band, clockwise from the top in radians
+const angleOf = (scale, value) => scale(value) + bandCenter(scale);
+
+// the distance of two angles, also across the top
+const angleDistance = (a, b) => {
+    const d = Math.abs(a - b) % tau;
+    return Math.min(d, tau - d);
+};
+
+// the inner and outer radius of the radius scale, the circle of the facet without it
+const radiusRange = ctx => {
+    const v = ctx.axis.v;
+    return v ? d3.extent(ctx.scales[v].range()) : [0, ctx.dims.radius];
+};
+
+// the angles of the ticks, the values at the end of a cyclic domain are at the
+// angle of the start, e.g. 0 and 360 degrees, they are omitted
+const angleTicks = (scale, values) => values.filter((v, i) =>
+    !values.slice(0, i).some(w => angleDistance(angleOf(scale, v), angleOf(scale, w)) < 1e-6));
+
+// the anchor of a label outside of the circle at an angle
+const anchor = a => Math.sin(a) > 0.01 ? "start" : (Math.sin(a) < -0.01 ? "end" : "middle");
+const baseline = a => Math.cos(a) > 0.5 ? "auto" : (Math.cos(a) < -0.5 ? "hanging" : "middle");
+
+// the categories or ticks around the circle, spokes as grid lines
+const angularAxis = (ctx, g, s, values, format, axis) => {
+    const [r0, r1] = radiusRange(ctx);
+    const angles = angleTicks(s, values);
+
+    if (axis.grid)
+        ctx.inner.insert("g", () => g.node())
+            .attr("class", "vis-grid")
+            .selectAll("line")
+            .data(angles)
+            .join("line")
+            .each(function(v) {
+                const [x1, y1] = pointRadial(angleOf(s, v), r0);
+                const [x2, y2] = pointRadial(angleOf(s, v), r1);
+                d3.select(this).attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2);
+            });
+
+    g.append("circle")
+        .attr("class", "domain")
+        .attr("r", r1)
+        .attr("fill", "none")
+        .attr("stroke", "currentColor");
+
+    const ticks = g.selectAll("g.tick")
+        .data(angles)
+        .join("g")
+        .attr("class", "tick");
+    ticks.append("line")
+        .attr("stroke", "currentColor")
+        .each(function(v) {
+            const [x1, y1] = pointRadial(angleOf(s, v), r1);
+            const [x2, y2] = pointRadial(angleOf(s, v), r1 + 6);
+            d3.select(this).attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2);
+        });
+    ticks.append("text")
+        .attr("fill", "currentColor")
+        .each(function(v) {
+            const a = angleOf(s, v);
+            const [x, y] = pointRadial(a, r1 + 6 + axis.padding);
+            d3.select(this).attr("x", x).attr("y", y)
+                .attr("text-anchor", anchor(a))
+                .attr("dominant-baseline", baseline(a));
+        })
+        .text(format);
+};
+
+// the values along a line from the center, circles (or polygons through the
+// ticks of the angle) as grid lines, `angle` of the axis in degrees
+const radialAxis = (ctx, g, s, values, format, axis) => {
+    const a = (axis.angle ?? 0)/180*Math.PI;
+    const [r0, r1] = d3.extent(s.range());
+
+    if (axis.grid) {
+        const grid = ctx.inner.insert("g", () => g.node())
+            .attr("class", "vis-grid")
+            .attr("fill", "none");
+        const h = ctx.axis.h;
+        const angle = h && ctx.scales[h];
+        if (axis.gridShape == "polygon" && angle) {
+            const hAxis = ctx.store.mapping(h).axis;
+            const arc = Math.abs(angle.range()[1] - angle.range()[0])*radiusRange(ctx)[1];
+            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, tickCount(hAxis, ctx.scope, arc)) : angle.domain());
+            grid.selectAll("path")
+                .data(values)
+                .join("path")
+                .attr("d", v => lineRadial().curve(d3.curveLinearClosed)
+                    .angle(w => angleOf(angle, w))
+                    .radius(() => s(v))(angles));
+        } else {
+            grid.selectAll("circle")
+                .data(values)
+                .join("circle")
+                .attr("r", v => s(v));
+        }
+    }
+
+    const [x0, y0] = pointRadial(a, r0);
+    const [x1, y1] = pointRadial(a, r1);
+    g.append("line")
+        .attr("class", "domain")
+        .attr("stroke", "currentColor")
+        .attr("x1", x0).attr("y1", y0).attr("x2", x1).attr("y2", y1);
+
+    // the labels on the left of the line, below it if it is horizontal
+    const ticks = g.selectAll("g.tick")
+        .data(values)
+        .join("g")
+        .attr("class", "tick");
+    ticks.append("text")
+        .attr("fill", "currentColor")
+        .attr("text-anchor", Math.abs(Math.cos(a)) > 0.5 ? "end" : "middle")
+        .attr("dominant-baseline", Math.abs(Math.cos(a)) > 0.5 ? "middle" : "hanging")
+        .each(function(v) {
+            const [x, y] = pointRadial(a, s(v));
+            const horizontal = Math.abs(Math.cos(a)) <= 0.5;
+            d3.select(this)
+                .attr("x", x - (horizontal ? 0 : axis.padding))
+                .attr("y", y + (horizontal ? axis.padding : 0));
+        })
+        .text(format);
+
+    if (axis.title) {
+        const [x, y] = pointRadial(a, r1 + (axis.title.offset ?? 16));
+        ctx.inner.append("text")
+            .attr("class", "vis-axis-title")
+            .attr("x", x)
+            .attr("y", y)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .text(ctx.store.text(axis.title.name));
+    }
+};
+
+const axes = ctx => {
+    const { store } = ctx;
+    store.mappingNamesWithKey('axis').forEach(n => {
+        const m = store.mapping(n);
+        const i = m.axis;
+        const s = ctx.scales[n];
+        // the length of a radial axis, of an angular one the arc at the outer radius
+        const span = Math.abs(s.range()[1] - s.range()[0]);
+        const ticks = tickCount(i, ctx.scope, i.position == 'angular' ? span*radiusRange(ctx)[1] : span);
+        const format = tickFormat(store, n, s, ticks) ?? (v => v);
+
+        const g = ctx.inner.append("g")
+            .attr("class", `vis-axis vis-axis-${i.position}`)
+            .attr("data-mapping", n)
+            .attr("font-size", 10)
+            .attr("font-family", "sans-serif");
+        const draw = { angular: angularAxis, radial: radialAxis }[i.position];
+        draw(ctx, g, s, tickValues(i, s, ticks), format, i);
+    });
+};
+
+// a sector or a ring (band), a spoke or a circle (line), a text or a circle at
+// values of the angle and the radius, without a value of the angle around the
+// whole circle, without one of the radius from its inner to its outer radius
+const annotate = (ctx, g, a) => {
+    const c = constraints(ctx, a);
+    const angle = c.find(e => e.orientation == 'angular');
+    const radius = c.find(e => e.orientation == 'radial');
+    const [inner, outer] = radiusRange(ctx);
+
+    if (a.type == 'band') {
+        // a range of angles can be across the top, e.g. from November to February
+        let [a0, a1] = angle ? span(angle, false) : [0, tau];
+        if (a1 < a0)
+            a1 += tau;
+        const [r0, r1] = radius ? span(radius) : [inner, outer];
+        const arc = arcShape().innerRadius(r0).outerRadius(r1).startAngle(a0).endAngle(a1);
+        setAnnotationProps(g.append("path").attr("class", "vis-annotation vis-band").attr("d", arc()), a, ctx);
+        const [x, y] = arc.centroid();
+        drawLabel(g, a, x, y, "middle", "middle");
+    } else if (a.type == 'line') {
+        if (angle) {
+            const p = position(angle);
+            const [x1, y1] = pointRadial(p, inner);
+            const [x2, y2] = pointRadial(p, outer);
+            setAnnotationProps(g.append("line").attr("class", "vis-annotation vis-line")
+                .attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2), a, ctx);
+            drawLabel(g, a, x2, y2 - 4, "middle", "auto");
+        } else {
+            const r = radius ? position(radius) : outer;
+            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-line").attr("r", r), a, ctx, { fill: "none" });
+            drawLabel(g, a, 4, -r - 4, "start", "auto");
+        }
+    } else if (a.type == 'text' || a.type == 'circle') {
+        const [x, y] = pointRadial(angle ? position(angle) : 0, radius ? position(radius) : outer);
+        if (a.type == 'text')
+            setAnnotationProps(g.append("text").attr("class", "vis-annotation vis-text").attr("x", x).attr("y", y), a, ctx, { "font-size": 11 });
+        else
+            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-circle").attr("cx", x).attr("cy", y), a, ctx, { r: 4 });
+    }
+};
+
+// the parts of the polar coordinate system which are loaded, see coords/polar.js
+export default {
+    axes,
+    annotate,
+    // the labels of the radial axes are in the plot area, they are above the plots
+    raise: ctx => ctx.inner.selectAll(".vis-axis-radial").raise(),
+    hover: {
+        // the whole facet, the angle is also taken outside of the circle
+        area: (ctx, parent) => parent.append("rect")
+            .attr("x", -ctx.innerWidth/2)
+            .attr("y", -ctx.innerHeight/2)
+            .attr("width", ctx.innerWidth)
+            .attr("height", ctx.innerHeight),
+
+        // the nearest angle with data, also across the top, and the radius
+        locate(ctx, [px, py], names) {
+            const s = ctx.scales[names.h];
+            const a = (Math.atan2(px, -py) + tau) % tau;
+            const keys = [a - tau, a, a + tau].map(v => s.nearest(v)).filter(k => k !== undefined);
+            if (keys.length == 0)
+                return null;
+            const key = d3.least(keys, k => angleDistance(angleOf(s, k), a));
+            return { key, value: ctx.scales[names.v].invert?.(Math.hypot(px, py)) };
+        },
+
+        // the position of the point of a row, of the hover of the nearest point
+        point(ctx, row, names) {
+            const value = ctx.stackOf ? d3.mean(ctx.stackOf(row)) : row[names.v];
+            return pointRadial(angleOf(ctx.scales[names.h], row[names.h]), ctx.scales[names.v](value));
+        },
+
+        // a line from the center, the hover is in the center, on the other
+        // side than the line
+        marker(ctx, key, names, line) {
+            const a = angleOf(ctx.scales[names.h], key);
+            const [r0, r1] = radiusRange(ctx);
+            const [x1, y1] = pointRadial(a, r0);
+            const [x2, y2] = pointRadial(a, r1);
+            line.attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2);
+            return { x: 0, y: 0, side: Math.sin(a) >= 0 ? "left" : "right" };
+        },
+    },
+};

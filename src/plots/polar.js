@@ -1,8 +1,9 @@
-import * as d3 from "@/utils/d3";
+// the plot types of polar plots, loaded with the first one, see coords/polar.js
+import { arc, areaRadial, lineRadial, pointRadial } from 'd3-shape';
 import { bandCenter } from "@/utils/scales";
 import { groupwise, pointwise, finite, curve, propScale } from "@/plots/elements";
 import { barScale, barWidth } from "@/plots/cartesian";
-import { radiusRange } from "@/coords/polar";
+import { radiusRange } from "@/coords/polar-plot";
 
 // the angles of a band scale are in the center of the band, as the ones of the axis
 const angleOffset = (plot, ctx, path) => {
@@ -23,7 +24,7 @@ const positioned = (name, type, x, y) => ({
     render: (groups, parent, plot, ctx) => pointwise(groups, parent, type, v => {
         if (!('angle' in v && 'radius' in v))
             throw new Error(`${name}: the props 'angle' and 'radius' are needed`);
-        const [px, py] = d3.pointRadial(v.angle + angleOffset(plot, ctx, 'angle'), v.radius);
+        const [px, py] = pointRadial(v.angle + angleOffset(plot, ctx, 'angle'), v.radius);
         const { angle, radius, ...props } = v;
         return { ...props, [x]: px, [y]: py };
     }),
@@ -41,7 +42,7 @@ export default {
         update: true,
         render(groups, parent, plot, ctx) {
             const offset = angleOffset(plot, ctx, 'd.angle');
-            groupwise(groups, parent, g => d3.lineRadial()
+            groupwise(groups, parent, g => lineRadial()
                 .curve(curve(plot))
                 .defined(e => finite(e.angle, e.radius))
                 .angle(e => e.angle + offset)
@@ -58,7 +59,7 @@ export default {
         update: true,
         render(groups, parent, plot, ctx) {
             const offset = angleOffset(plot, ctx, 'd.angle');
-            groupwise(groups, parent, g => d3.areaRadial()
+            groupwise(groups, parent, g => areaRadial()
                 .curve(curve(plot))
                 .defined(e => finite(e.angle, e.innerRadius, e.outerRadius))
                 .angle(e => e.angle + offset)
@@ -80,7 +81,7 @@ export default {
             const width = v.width ?? barWidth(s, 'polar:arc');
             const a = v.angle + bandCenter(s);
             const [inner, outer] = radiusRange(ctx);
-            const d = d3.arc()
+            const d = arc()
                 .padAngle(v.padAngle ?? 0)
                 .cornerRadius(v.cornerRadius ?? 0)({
                     startAngle: a - width/2,
