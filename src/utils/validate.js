@@ -9,7 +9,7 @@ import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
 import { annotationKeys } from "@/coords/annotations.js";
 import { projectionNames } from "@/coords/geo.js";
-import { transformTypes } from "@/utils/transform";
+import { transformNames } from "@/utils/transform";
 
 // the interpolations of the plot types with a curve, e.g. cartesian:line
 const curveNames = Object.keys(curves);
@@ -372,7 +372,6 @@ const validateDef = def => {
     }
 
     // the transforms, a column of the values, the globals of their templates
-    const transformNames = Object.keys(transformTypes);
     [def.transform ?? []].flat().forEach((t, i) => {
         const path = `transform[${i}]`;
         if (t === null || typeof t != 'object')

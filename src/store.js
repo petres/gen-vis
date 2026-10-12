@@ -3,7 +3,7 @@ export { createStore, resolveUrl, resolveParents, clearCache };
 import { reactive, markRaw, toRaw } from 'vue';
 
 import { addDataValues, dataFormat, distinctValues, parseData, prepareData, updateData, usedColumns } from "@/utils/data";
-import { applyTransforms, transformGlobals, utcColumns } from "@/utils/transform";
+import { applyTransforms, loadTransforms, transformGlobals, utcColumns } from "@/utils/transform";
 import { applyFormElements, fillHtml, fillText, formatOf, mergeAll, prepareDef } from "@/utils/def";
 import { applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
@@ -149,6 +149,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         loadCoord(defOrg.options?.coord),
         defOrg.geo?.data ? lazy.geo() : null,
         defOrg.options?.transition ? loadTransition() : null,
+        defOrg.transform ? loadTransforms() : null,
     ]);
     parts.catch(() => {});
     // the format of the data, by default the one of the extension of its url

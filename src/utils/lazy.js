@@ -5,6 +5,7 @@
 // them in itself, see lazy-static.js.
 export const lazy = {
     validate: () => import('@/utils/validate.js'),
+    transform: () => import('@/utils/transform-types.js'),
     colors: () => import('@/utils/colors.js'),
     geoMap: () => import('@/coords/geo-map.js'),
     polar: () => import('@/coords/polar-plot.js'),

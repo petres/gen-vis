@@ -1,5 +1,6 @@
-import { describe, test, expect } from 'vitest';
-import { applyTransforms, transformColumns, transformGlobals, transformTypes } from '@/utils/transform';
+import { describe, test, expect, beforeAll } from 'vitest';
+import { applyTransforms, loadTransforms, transformColumns, transformGlobals, transformNames } from '@/utils/transform';
+import { transformTypes } from '@/utils/transform-types';
 import { usedColumns } from '@/utils/data';
 import { validateDef } from '@/utils/validate';
 import schema from '../schema.json';
@@ -12,6 +13,9 @@ const rows = [
     { date: '2020-01-01', type: 'oil', value: '' },
     { date: '2019-07-01', type: 'oil', value: '15' },
 ];
+
+// the transforms are loaded by the store for definitions with transforms
+beforeAll(loadTransforms);
 
 const column = (transforms, name, globals) => applyTransforms(rows, transforms, globals).get(name);
 
@@ -117,5 +121,6 @@ describe('transforms', () => {
             "transform[2].column: the column of the values is needed",
         ]);
         expect(schema.definitions.transform.properties.type.enum).toEqual(Object.keys(transformTypes));
+        expect(transformNames).toEqual(Object.keys(transformTypes));
     });
 });
