@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://unpkg.com/@preschen/gen-vis/schema.json",
+    "$id": "https://unpkg.com/@preschen/gen-vis@2/schema.json",
     "title": "gen-vis definition",
-    "description": "A chart of gen-vis, see https://github.com/petres/gen-vis. A definition can be a part which is merged into its parent, so no entry is required.",
+    "description": "A chart of gen-vis 2, see https://github.com/petres/gen-vis. A definition can be a part which is merged into its parent, so no entry is required.",
     "type": "object",
     "additionalProperties": false,
     "properties": {
@@ -27,48 +27,35 @@
             "additionalProperties": false,
             "description": "The geometry of a map (coord geo), the rows are joined to its features.",
             "properties": {
-                "data": { "type": ["string", "object"], "description": "Url of GeoJSON or TopoJSON, relative to the definition, or the GeoJSON or TopoJSON itself." },
+                "data": { "anyOf": [{ "type": "string" }, { "type": "object" }], "description": "Url of GeoJSON or TopoJSON, relative to the definition, or the GeoJSON or TopoJSON itself." },
                 "object": { "type": "string", "description": "The object of TopoJSON, the first one by default." },
                 "key": { "type": "string", "description": "The key of the features, id (default) or a property, e.g. NUTS_ID." },
                 "name": { "type": "string", "description": "The property of the names of the features, name by default." },
                 "join": { "type": "string", "description": "The mapping whose values are the keys of the features." },
-                "include": { "type": "array", "items": { "type": "string" }, "description": "Only the features of these keys, e.g. the countries of the EU." },
-                "exclude": { "type": "array", "items": { "type": "string" }, "description": "The features of these keys are not drawn at all, e.g. [\"RU\", \"BY\"]." },
+                "include": { "type": "array", "items": { "$ref": "#/definitions/key" }, "description": "Only the features of these keys, e.g. the countries of the EU." },
+                "exclude": { "type": "array", "items": { "$ref": "#/definitions/key" }, "description": "The features of these keys are not drawn at all, e.g. [\"RU\", \"BY\"]." },
                 "projection": {
                     "type": "object",
                     "description": "A d3 projection (type, mercator by default) and its parameters, e.g. rotate, center or parallels.",
-                    "properties": { "type": { "type": "string" } }
+                    "properties": {
+                        "type": {
+                            "enum": ["albers", "albersUsa", "azimuthalEqualArea", "azimuthalEquidistant", "conicConformal", "conicEqualArea", "conicEquidistant", "equalEarth", "equirectangular", "gnomonic", "identity", "mercator", "naturalEarth1", "orthographic", "stereographic", "transverseMercator"],
+                            "default": "mercator"
+                        }
+                    }
                 },
                 "fit": {
                     "description": "The features the projection is fitted to, all (default), the ones with data or a list of keys.",
-                    "anyOf": [{ "enum": ["all", "data"] }, { "type": "array", "items": { "type": "string" } }]
+                    "anyOf": [{ "enum": ["all", "data"] }, { "type": "array", "items": { "$ref": "#/definitions/key" } }]
                 }
             }
         },
         "annotations": {
-            "type": "array",
-            "description": "Bands, lines, texts and circles at values of the mappings, e.g. { \"type\": \"band\", \"x\": [\"2025-07-01\", null], \"label\": \"Schätzung\" }.",
-            "items": {
-                "type": "object",
-                "required": ["type"],
-                "properties": {
-                    "type": { "enum": ["band", "line", "text", "circle"] },
-                    "props": { "$ref": "#/definitions/props" },
-                    "label": { "type": "string", "description": "A label of a band or a line." },
-                    "text": { "type": "string", "description": "The text of a text." },
-                    "above": { "type": "boolean", "description": "Above the plots, below them by default." },
-                    "facet": { "description": "The facets of the annotation, a key or a list of them, all by default." },
-                    "lon": { "type": "number", "description": "The longitude of a map." },
-                    "lat": { "type": "number", "description": "The latitude of a map." }
-                },
-                "additionalProperties": {
-                    "description": "A value or a range [from, to] of the mapping, a reference to a global, e.g. \"@target\", null is no value, of a range the edge of the domain.",
-                    "anyOf": [
-                        { "type": ["number", "string", "null"] },
-                        { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": ["number", "string", "null"] } }
-                    ]
-                }
-            }
+            "description": "An annotation or a list of them, bands, lines, texts and circles at values of the mappings, e.g. { \"type\": \"band\", \"x\": [\"2025-07-01\", null], \"label\": \"Schätzung\" }.",
+            "anyOf": [
+                { "$ref": "#/definitions/annotation" },
+                { "type": "array", "items": { "$ref": "#/definitions/annotation" } }
+            ]
         },
         "transform": {
             "description": "Columns computed of the data, e.g. an index of a base year, in their order, see the readme.",
@@ -106,6 +93,35 @@
         }
     },
     "definitions": {
+        "key": {
+            "description": "A key of a feature of a map or of a category, compared as a string.",
+            "anyOf": [{ "type": "string" }, { "type": "number" }]
+        },
+        "annotation": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+                "type": { "enum": ["band", "line", "text", "circle"] },
+                "props": { "$ref": "#/definitions/props" },
+                "label": { "type": "string", "description": "A label of a band or a line, a template of the globals." },
+                "text": { "type": "string", "description": "The text of a text, a template of the globals." },
+                "above": { "type": "boolean", "description": "Above the plots, below them by default." },
+                "facet": { "description": "The facets of the annotation, a key or a list of them, all by default." },
+                "lon": { "type": "number", "description": "The longitude of a map." },
+                "lat": { "type": "number", "description": "The latitude of a map." }
+            },
+            "additionalProperties": {
+                "description": "A value or a range [from, to] of the mapping, a reference to a global, e.g. \"@target\", or a computed prop, null is no value, of a range the edge of the domain.",
+                "anyOf": [
+                    { "$ref": "#/definitions/domainValue" },
+                    { "type": "array", "minItems": 2, "maxItems": 2, "items": { "$ref": "#/definitions/domainValue" } }
+                ]
+            }
+        },
+        "domainValue": {
+            "description": "A value of a mapping, e.g. a date of a string, a reference \"@name\", e.g. to a global, or a computed prop, null is taken from the data.",
+            "anyOf": [{ "type": "number" }, { "type": "string" }, { "type": "null" }, { "$ref": "#/definitions/prop" }]
+        },
         "prop": {
             "description": "A computed value: a reference, a ratio of a reference, steps based on a reference or a reference as a text of a format. The prop is required unless the object is merged into a prop of the parent definition.",
             "type": "object",
@@ -131,26 +147,30 @@
                         }
                     }
                 },
-                "value": { "description": "Used instead of the computed value." }
+                "value": { "description": "The value of a fixed prop, e.g. an object which is not a nested prop." }
             },
             "allOf": [
-                { "if": { "required": ["prop"], "properties": { "prop": { "const": "ref" } } }, "then": { "required": ["ref"] } },
-                { "if": { "required": ["prop"], "properties": { "prop": { "const": "relative" } } }, "then": { "required": ["ref", "ratio"] } },
-                { "if": { "required": ["prop"], "properties": { "prop": { "const": "steps" } } }, "then": { "required": ["ref", "steps"] } },
-                { "if": { "required": ["prop"], "properties": { "prop": { "const": "format" } } }, "then": { "required": ["ref", "format"] } }
+                { "if": { "required": ["prop"], "properties": { "prop": { "const": "ref" } } }, "then": { "required": ["ref"], "properties": { "ref": true } } },
+                { "if": { "required": ["prop"], "properties": { "prop": { "const": "relative" } } }, "then": { "required": ["ref", "ratio"], "properties": { "ref": true, "ratio": true } } },
+                { "if": { "required": ["prop"], "properties": { "prop": { "const": "steps" } } }, "then": { "required": ["ref", "steps"], "properties": { "ref": true, "steps": true } } },
+                { "if": { "required": ["prop"], "properties": { "prop": { "const": "format" } } }, "then": { "required": ["ref", "format"], "properties": { "ref": true, "format": true } } }
             ]
         },
         "value": {
             "description": "A fixed value, a reference \"@name\" or a computed prop.",
             "anyOf": [
-                { "type": ["string", "number", "boolean", "null"] },
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" },
+                { "type": "null" },
                 { "$ref": "#/definitions/prop" }
             ]
         },
         "number": {
-            "description": "A number or a computed prop, e.g. based on totalWidth.",
+            "description": "A number, a reference \"@name\", e.g. to a global, or a computed prop, e.g. based on totalWidth.",
             "anyOf": [
                 { "type": "number" },
+                { "type": "string", "pattern": "^@" },
                 { "$ref": "#/definitions/prop" }
             ]
         },
@@ -164,7 +184,7 @@
                 { "$ref": "#/definitions/value" },
                 {
                     "type": "object",
-                    "not": { "required": ["prop"] },
+                    "not": { "required": ["prop"], "properties": { "prop": true } },
                     "additionalProperties": { "$ref": "#/definitions/propEntry" }
                 }
             ]
@@ -173,7 +193,7 @@
             "type": "array",
             "minItems": 2,
             "maxItems": 2,
-            "items": { "type": ["number", "null"] }
+            "items": { "anyOf": [{ "type": "number" }, { "type": "null" }] }
         },
         "locale": {
             "description": "Number and date formats, the name of a built-in locale, a language of Intl (e.g. fr or de-CH) or a d3 locale definition merged into one.",
@@ -185,7 +205,19 @@
                     "additionalProperties": false,
                     "properties": {
                         "base": { "type": "string", "default": "de", "description": "de, en or a language of Intl." },
-                        "texts": { "type": "object", "description": "The titles of the buttons: download, copy and copied." },
+                        "texts": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "description": "The titles of the buttons and the texts of screen readers.",
+                            "properties": {
+                                "download": { "type": "string", "description": "The button of the PNG." },
+                                "copy": { "type": "string", "description": "The button of the copy of the PNG." },
+                                "copied": { "type": "string", "description": "The title of the copy after a copy." },
+                                "csv": { "type": "string", "description": "The button of the CSV." },
+                                "chart": { "type": "string", "description": "The kind of a facet with a hover, e.g. chart." },
+                                "keys": { "type": "string", "description": "The description of the keys of the hover." }
+                            }
+                        },
                         "number": {
                             "type": "object",
                             "description": "See d3.formatLocale, e.g. decimal, thousands, grouping and currency ([prefix, suffix])."
@@ -219,12 +251,12 @@
             "properties": {
                 "title": { "type": "string" },
                 "subtitle": { "type": "string" },
-                "footer": { "type": "string", "description": "HTML" },
-                "transition": { "type": ["number", "boolean"], "description": "The elements move to their new values in this many milliseconds (true for 300) after a change of a legend, a form element or the state." },
+                "footer": { "type": "string", "description": "HTML, e.g. a link of the source, a template of the globals, their values are text." },
+                "transition": { "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "boolean" }], "description": "The elements move to their new values in this many milliseconds (true for 300) after a change of a legend, a form element or the state." },
                 "hover": {
                     "type": "object",
                     "additionalProperties": false,
-                    "description": "The content of the hover without the hover slot, templates of html.",
+                    "description": "The content of the hover without the hover slot, templates of html, their values are text.",
                     "properties": {
                         "mode": { "enum": ["position", "point"], "description": "The rows of the nearest position of the axis (position, by default) or the row of the nearest point, e.g. of a scatter plot." },
                         "radius": { "type": "number", "description": "The distance of the nearest point in pixels, 30 by default." },
@@ -233,7 +265,7 @@
                     }
                 },
                 "width": { "type": "number", "description": "The width of the container if not given." },
-                "height": { "$ref": "#/definitions/number" },
+                "height": { "$ref": "#/definitions/number", "description": "The height of a facet in pixels, 400 by default." },
                 "margins": {
                     "type": "object",
                     "additionalProperties": false,
@@ -260,9 +292,9 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "enum": ["linear", "log", "pow", "sqrt", "symlog", "time", "utc", "point", "band", "sequential", "sequentialSqrt", "sequentialLog", "diverging", "quantize", "quantile", "threshold"],
+                    "enum": ["band", "diverging", "divergingLog", "divergingPow", "divergingSqrt", "divergingSymlog", "identity", "linear", "log", "ordinal", "point", "pow", "quantile", "quantize", "radial", "sequential", "sequentialLog", "sequentialPow", "sequentialQuantile", "sequentialSqrt", "sequentialSymlog", "sqrt", "symlog", "threshold", "time", "utc"],
                     "default": "linear",
-                    "description": "A d3 scale, continuous scales and the ones of classes (quantize, quantile, threshold) need a numeric or date mapping, point and band a categorical one."
+                    "description": "A d3 scale, continuous scales and the ones of classes (quantize, quantile, threshold) need a numeric or date mapping, point and band a categorical one, ordinal ones are of any values, e.g. colors of categories, positions of dates need a time or utc scale."
                 },
                 "orientation": {
                     "enum": ["horizontal", "vertical", "angular", "radial"],
@@ -270,9 +302,9 @@
                 },
                 "domain": {
                     "type": "array",
-                    "minItems": 2,
-                    "items": { "type": ["number", "string", "null"] },
-                    "description": "Fixes the domain, a null first or last entry is taken from the data, dates are parsed as the ones of the data. A diverging scale has a middle entry, a threshold scale the values between its classes."
+                    "minItems": 1,
+                    "items": { "$ref": "#/definitions/domainValue" },
+                    "description": "Fixes the domain, a null first or last entry is taken from the data, the values are converted as the ones of the data, e.g. dates, and can be references, e.g. to a global. A diverging scale has a middle entry, a threshold scale the values between its classes, a point or band scale its categories in their order."
                 },
                 "domainRel": {
                     "$ref": "#/definitions/pair",
@@ -283,13 +315,13 @@
                     "description": "Extends the domain by absolute values."
                 },
                 "nice": {
-                    "type": ["boolean", "number"],
+                    "anyOf": [{ "type": "boolean" }, { "type": "number" }],
                     "description": "Rounds the ends of the domain taken from the data, e.g. 0.951 to 1, true for steps of about a tenth of the domain or the number of steps."
                 },
                 "range": {
                     "type": "array",
-                    "items": { "type": ["number", "string"] },
-                    "description": "By default the width or height of the plot."
+                    "items": { "anyOf": [{ "type": "number" }, { "type": "string" }, { "$ref": "#/definitions/prop" }] },
+                    "description": "By default the width or height of the plot, e.g. colors, references to the sizes of the coordinate system, e.g. \"@radius\"."
                 },
                 "padding": { "type": "number", "description": "For categorical scales." },
                 "inset": {
@@ -328,7 +360,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "name": { "type": "string" },
-                        "offset": { "type": "number" }
+                        "offset": { "type": "number", "description": "The distance from the axis in pixels, by default near the edge of the margin." }
                     }
                 },
                 "padding": { "type": "number" }
@@ -345,9 +377,9 @@
                 "name": { "type": "string", "description": "The title of the legend." },
                 "type": {
                     "enum": ["numeric", "date", "categorical"],
-                    "description": "Missing and invalid numeric and date values are null, dates are parsed with Date.parse or are timestamps."
+                    "description": "Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc)."
                 },
-                "stacked": { "type": "boolean", "description": "Stacks the values of a vertical axis." },
+                "stacked": { "type": "boolean", "description": "Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars) or a radial one." },
                 "scale": { "$ref": "#/definitions/scale" },
                 "axis": { "$ref": "#/definitions/axis" },
                 "hover": {
@@ -418,7 +450,7 @@
                             "description": "The order of the categories: the one of categories (keys which are integers ascending first), ascending, descending (numbers by their value) or a list of keys which are first.",
                             "anyOf": [
                                 { "enum": ["ascending", "descending"] },
-                                { "type": "array", "items": { "type": ["string", "number"] } }
+                                { "type": "array", "items": { "$ref": "#/definitions/key" } }
                             ]
                         },
                         "ranks": {
@@ -492,7 +524,7 @@
                     "enum": ["svg:circle", "svg:line", "svg:rect", "svg:text", "cartesian:line", "cartesian:area", "cartesian:bar", "polar:line", "polar:area", "polar:arc", "polar:circle", "polar:text", "geo:base", "geo:region", "geo:circle", "geo:text", "annotation:band", "annotation:line", "annotation:text", "annotation:circle"],
                     "description": "The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations."
                 },
-                "id": { "type": "string", "description": "The class of the plot group, plot-<index> by default." },
+                "id": { "type": "string", "description": "The class and the data-plot of the group of the plot, plot-<index> by default, the plots of a parent are merged by their ids." },
                 "data": {
                     "description": "Rows of the plot instead of the ones of the data, e.g. events, with the names of the mappings and others, e.g. a label, or the url of a file of them. The values of rows of the definition are props, e.g. references to globals.",
                     "anyOf": [
@@ -521,9 +553,8 @@
                     "description": "The interpolation of the paths and areas between their points, monotoneX is smooth without overshooting the values, the closed ones connect the last point with the first one, e.g. of radar charts."
                 },
                 "categories": {
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "description": "The rows are grouped by these mappings, the props of their categories are available in the props."
+                    "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }],
+                    "description": "The rows are grouped by this mapping or these mappings, the props of their categories are available in the props."
                 },
                 "props": { "$ref": "#/definitions/props" }
             }
@@ -536,11 +567,12 @@
                     "description": "A plot for every category of this mapping.",
                     "type": "string"
                 },
-                "cols": { "$ref": "#/definitions/number" },
+                "cols": { "$ref": "#/definitions/number", "description": "The number of the columns of the facets, 1 by default." },
                 "scales": {
                     "description": "The mappings which share their scale across all facets, or a reference to a global.",
                     "anyOf": [
                         { "type": "array", "items": { "type": "string" } },
+                        { "type": "string", "pattern": "^@" },
                         { "$ref": "#/definitions/prop" }
                     ]
                 }

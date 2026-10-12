@@ -6,7 +6,7 @@ import schema from '@preschen/gen-vis/schema.json';
 
 export { schemaErrors };
 
-const validate = new Ajv({ allErrors: true, allowUnionTypes: true, strict: false, verbose: true }).compile(schema);
+const validate = new Ajv({ allErrors: true, strict: false, verbose: true }).compile(schema);
 
 const message = e => {
     const path = e.instancePath || 'the definition';
@@ -25,10 +25,17 @@ const schemaErrors = (def, warnings = []) => {
     if (validate(def))
         return [];
     const errors = validate.errors.filter(e => !['oneOf', 'anyOf', 'if'].includes(e.keyword));
+    // the types of the alternatives of a value are one error, e.g. a number or
+    // a boolean, also a reference of a string, e.g. "@height"
+    const types = new Map();
+    const reference = e => e.keyword == 'pattern' && e.params.pattern == '^@';
+    errors.filter(e => e.keyword == 'type' || reference(e)).forEach(e =>
+        types.set(e.instancePath, [...(types.get(e.instancePath) ?? []), reference(e) ? 'a reference "@name"' : e.params.type]));
     return [...new Set(errors
+        .filter(e => !reference(e) || !errors.some(o => o.keyword == 'type' && o.instancePath == e.instancePath))
         // the type of an alternative which is not taken, e.g. a plot of a list of plots
         .filter(e => !(e.keyword == 'type' && errors.some(o => o.instancePath.startsWith(`${e.instancePath}/`))))
         .filter(e => !(e.keyword == 'enum' && warnings.some(w => w.includes(`'${e.data}'`))))
-        .map(message))]
+        .map(e => e.keyword == 'type' || reference(e) ? `${e.instancePath || 'the definition'}: must be ${types.get(e.instancePath).join(' or ')}` : message(e)))]
         .slice(0, 8);
 };
