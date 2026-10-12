@@ -152,6 +152,9 @@ describe('column templates', () => {
         expect(fillTemplate('{a}', { a: 1 })).toBe('1');
         // only the own globals, not the keys of the prototype of objects
         expect(fillTemplate('{constructor} {toString}', {})).toBe('{constructor} {toString}');
+        // names of letters of any language
+        expect(fillTemplate('{größe} {año}', { größe: 'groß', año: 2024 })).toBe('groß 2024');
+        expect(templateRefs('{größe}{x_1}')).toEqual(['größe', 'x_1']);
     });
 });
 

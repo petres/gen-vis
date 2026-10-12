@@ -205,13 +205,14 @@ const formatOf = (m, part) => {
     return hover;
 };
 
-// the names of the globals in a column template, e.g. `values` and `share` of "{values}{share}"
+// the names of the globals in a column template, e.g. `values` and `share` of
+// "{values}{share}", of letters of any language, digits and _, e.g. {größe}
 const templateRefs = column => typeof column == 'string' ?
-    [...column.matchAll(/\{(\w+)\}/g)].map(m => m[1]) : [];
+    [...column.matchAll(/\{([\p{L}\p{N}_]+)\}/gu)].map(m => m[1]) : [];
 
 // unknown globals are kept as they are
 const fillTemplate = (column, globals = {}) =>
-    column.replace(/\{(\w+)\}/g, (t, n) => Object.hasOwn(globals, n) ? String(globals[n]) : t);
+    column.replace(/\{([\p{L}\p{N}_]+)\}/gu, (t, n) => Object.hasOwn(globals, n) ? String(globals[n]) : t);
 
 // a text of the definition with the values of the globals, e.g. a title or
 // a name, other values are kept, e.g. undefined
@@ -222,7 +223,7 @@ const escapeHtml = text => String(text).replace(/[&<>"']/g, c => escapes[c]);
 
 // a template of html, e.g. of the hover, with the values of `names` as text,
 // e.g. {land.unit}, unknown names are kept
-const fillHtml = (template, names) => template.replace(/\{([\w.-]+)\}/g, (t, name) =>
+const fillHtml = (template, names) => template.replace(/\{([\p{L}\p{N}_.-]+)\}/gu, (t, name) =>
     Object.hasOwn(names, name) && names[name] !== null && names[name] !== undefined ? escapeHtml(names[name]) : t);
 
 /**

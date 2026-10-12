@@ -26,7 +26,7 @@ const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
 const mappingParts = ['scale', 'axis', 'legend', 'hover', 'props'];
 
 // the names of a template of html, e.g. "land.unit" of "{land.unit}"
-const templateNames = text => typeof text == 'string' ? [...text.matchAll(/\{([\w.-]+)\}/g)].map(m => m[1]) : [];
+const templateNames = text => typeof text == 'string' ? [...text.matchAll(/\{([\p{L}\p{N}_.-]+)\}/gu)].map(m => m[1]) : [];
 
 // a reference to a name which is not known where it is used is undefined,
 // short lists of the known names are part of the warning

@@ -93,8 +93,12 @@ const timeTickFormat = (format, formats, intervals) => {
 // the d3 format of the parts of a date of Intl, e.g. "%d.%m.%Y" of de
 const pattern = (parts, codes) => parts.map(p => codes[p.type] ?? (p.type == 'literal' ? p.value.replace(/%/g, '%%') : '')).join('');
 
+// the dates and numbers of Intl in the calendar and the digits of d3, e.g.
+// the months of the gregorian calendar of Persian, not of its own one
+const intlDates = { calendar: 'gregory', numberingSystem: 'latn', timeZone: 'UTC' };
+
 // the names of the days (from Sunday) and the months of a language
-const names = (tag, key, style, dates) => dates.map(d => new Intl.DateTimeFormat(tag, { [key]: style, timeZone: 'UTC' }).format(d));
+const names = (tag, key, style, dates) => dates.map(d => new Intl.DateTimeFormat(tag, { [key]: style, ...intlDates }).format(d));
 
 /**
  * The d3 locale definitions of a language tag of Intl, e.g. "fr" or "de-CH":
@@ -104,21 +108,21 @@ const names = (tag, key, style, dates) => dates.map(d => new Intl.DateTimeFormat
  * tags, english otherwise), the currency is the euro.
  */
 const intlLocale = tag => {
-    const number = new Intl.NumberFormat(tag, { useGrouping: true });
+    const number = new Intl.NumberFormat(tag, { useGrouping: true, numberingSystem: 'latn' });
     const part = (parts, type, fallback) => parts.find(p => p.type == type)?.value ?? fallback;
     // the symbol of the currency before or after the number, with the space between them
-    const currency = new Intl.NumberFormat(tag, { style: 'currency', currency: 'EUR' }).formatToParts(1);
+    const currency = new Intl.NumberFormat(tag, { style: 'currency', currency: 'EUR', numberingSystem: 'latn' }).formatToParts(1);
     const symbol = currency.findIndex(p => p.type == 'currency');
     const before = symbol < currency.findIndex(p => p.type == 'integer');
     const next = currency[before ? symbol + 1 : symbol - 1];
     const space = next?.type == 'literal' ? next.value : '';
     const german = tag.toLowerCase().startsWith('de');
 
-    const date = new Intl.DateTimeFormat(tag, { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).formatToParts(Date.UTC(2020, 10, 22));
-    const clock = new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'UTC' });
+    const date = new Intl.DateTimeFormat(tag, { day: '2-digit', month: '2-digit', year: 'numeric', ...intlDates }).formatToParts(Date.UTC(2020, 10, 22));
+    const clock = new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit', second: '2-digit', ...intlDates });
     const hour12 = clock.resolvedOptions().hourCycle?.startsWith('h1');
     const time = clock.formatToParts(Date.UTC(2020, 10, 22, 13, 5, 9));
-    const periods = [1, 13].map(h => part(new Intl.DateTimeFormat(tag, { hour: 'numeric', hour12: true, timeZone: 'UTC' })
+    const periods = [1, 13].map(h => part(new Intl.DateTimeFormat(tag, { hour: 'numeric', hour12: true, ...intlDates })
         .formatToParts(Date.UTC(2020, 0, 1, h)), 'dayPeriod', h < 12 ? 'AM' : 'PM'));
     const dayFirst = date.findIndex(p => p.type == 'day') < date.findIndex(p => p.type == 'month');
 

@@ -1841,6 +1841,9 @@ describe('locale and font', () => {
         expect(getLocale('fr').number.format('$,.2f')(1234.5)).toBe('1\u202f234,50\u00a0€');
         expect(getLocale('en-US').time.utcFormat('%x')(new Date(Date.UTC(2024, 2, 5)))).toBe('03/05/2024');
         expect(getLocale({ base: 'it', texts: { download: 'Scarica' } }).texts).toMatchObject({ download: 'Scarica', copy: 'Copy as PNG to the clipboard' });
+        // the months of the gregorian calendar and the digits of d3, e.g. of Persian and Arabic
+        expect(getLocale('fa').time.utcFormat('%B')(new Date(Date.UTC(2024, 0, 15)))).toBe(new Intl.DateTimeFormat('fa', { month: 'long', calendar: 'gregory', timeZone: 'UTC' }).format(Date.UTC(2024, 0, 15)));
+        expect(getLocale('ar-EG').number.format(',.1f')(1234.5)).toMatch(/^1.234.5$/);
     });
 
     test('the currency of the german locale', async () => {
