@@ -8,7 +8,8 @@
             <div v-for="(row, i) in rows" :key="i" class="vis-hover-row" :class="{ 'vis-nearest': row.nearest }" v-html="row.html"/>
         </template>
         <template v-else>
-            <div class="vis-hover-title">{{ title }}</div>
+            <div v-if="template.title" class="vis-hover-title" v-html="filledTitle"/>
+            <div v-else class="vis-hover-title">{{ title }}</div>
             <table class="vis-hover-entries" ref="entries"/>
         </template>
     </div>

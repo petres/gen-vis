@@ -5,7 +5,7 @@
         <svg ref="svg" :width="facet.width" :height="facet.height" class="vis-svg" :role="keyboard ? 'application' : 'img'" :aria-label="label"
             :aria-roledescription="keyboard ? store.locale.texts.chart : undefined" :aria-describedby="keyboard ? `${uid}-keys` : undefined"
             :tabindex="keyboard ? 0 : undefined" @keydown="key" @blur="hide?.()">
-            <g ref="inner" :transform="`translate(${facet.margins.left + origin[0]} ${facet.margins.top + origin[1]})`">
+            <g ref="inner" :transform="innerTransform">
                 <g :visibility="hover.visible ? 'visible' : 'hidden'" class="vis-hover-marker" ref="hoverMarker">
                     <line/>
                 </g>
@@ -54,6 +54,7 @@ export default {
         },
         // the origin of the plots and axes in the inner area, e.g. its center
         origin() { return this.store.coord.origin?.(this.facet.innerWidth, this.facet.innerHeight) ?? [0, 0] },
+        innerTransform() { return `translate(${this.facet.margins.left + this.origin[0]} ${this.facet.margins.top + this.origin[1]})` },
     },
     components: {
         Hover
@@ -125,6 +126,10 @@ export default {
             this.highlight(null);
             // the elements which are not kept are drawn anew, e.g. the axes
             const inner = this.$refs.inner;
+            // the position of the plots of the new facet already, before vue
+            // renders it, e.g. of the hover of the draw before at its pointer
+            // in the center of a polar plot of a new width
+            inner.setAttribute('transform', this.innerTransform);
             const kept = new Set(this.kept.values());
             [...inner.children].filter(c => c !== this.$refs.hoverMarker && !kept.has(c)).forEach(c => c.remove());
             this.used = new Set();

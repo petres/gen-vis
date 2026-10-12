@@ -535,6 +535,16 @@ describe('events and slots', () => {
         ]);
     });
 
+    test('the template of the title of the hover without one of the rows, the table below it', async () => {
+        const def = lineDef({ hover: { title: '<b>{title}</b> ({unit})' } });
+        def.globals = { unit: '<Mio.>' };
+        const el = await mount(GenVis, { def, data: lineData });
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+        await nextTick();
+        expect(el.querySelector('.vis-hover-title').innerHTML).toBe('<b>2020</b> (&lt;Mio.&gt;)');
+        expect(el.querySelectorAll('.vis-hover tr.vis-hover-entry')).toHaveLength(2);
+    });
+
     test('the hover props of the categories are the columns of the hover', async () => {
         const def = lineDef();
         def.mapping.c.props.categories.Wien.unit = 'Mio.';
@@ -1560,6 +1570,26 @@ describe('the update of the facets', () => {
         const cys = el => [...el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle')].map(c => c.getAttribute('cy'));
         expect(cys(el)).toEqual(cys(fresh));
         expect(errors).toEqual([]);
+    });
+
+    test('a new width moves the plots before they are drawn, e.g. the center of a polar plot', async () => {
+        const seen = [];
+        registerPlotType('test:origin', { render: (groups, parent, plot, ctx) => seen.push(ctx.inner.node().getAttribute('transform')) });
+        onTestFinished(() => delete plotTypes['test:origin']);
+        const def = lineDef({ coord: 'polar', width: undefined, margins: { top: 0, right: 0, bottom: 0, left: 0 } });
+        def.mapping.x.scale.orientation = 'angular';
+        def.mapping.y.scale.orientation = 'radial';
+        delete def.mapping.x.axis;
+        delete def.mapping.y.axis;
+        def.plot = { type: 'test:origin' };
+        const el = await mount(GenVis, { def, data: lineData });
+        expect(seen).toEqual(['translate(400 150)']);
+        const measure = Element.prototype.getBoundingClientRect;
+        Element.prototype.getBoundingClientRect = () => ({ x: 0, y: 0, left: 0, top: 0, width: 600, height: 400, right: 600, bottom: 400 });
+        onTestFinished(() => Element.prototype.getBoundingClientRect = measure);
+        el.querySelector('.vis').__vueParentComponent.proxy.resized();
+        await nextTick();
+        expect(seen).toEqual(['translate(400 150)', 'translate(300 150)']);
     });
 
     test('the built-in plot types update their elements, the annotations are drawn anew', () => {
