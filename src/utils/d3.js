@@ -33,8 +33,9 @@ export const byPrefix = (module, prefix) => Object.fromEntries(Object.entries(mo
     .filter(([k]) => k.startsWith(prefix) && k.length > prefix.length)
     .map(([k, v]) => [lowerFirst(k.slice(prefix.length)), v]));
 
-// the scales (`scale.type`), e.g. linear, time, band or sequential
-export const scales = byPrefix(d3Scale, 'scale');
+// the scales (`scale.type`), e.g. linear, time, band or sequential, not the
+// value scaleImplicit
+export const scales = Object.fromEntries(Object.entries(byPrefix(d3Scale, 'scale')).filter(([, v]) => typeof v == 'function'));
 
 // the names of the colors of sequential and diverging scales
 // (`scale.interpolator`), e.g. Blues or RdYlGn, and of the schemes of the

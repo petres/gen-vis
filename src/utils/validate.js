@@ -138,9 +138,11 @@ const validateDef = def => {
             if (!scale) {
                 warn(`${path}.scale.type`, `unknown scale '${type}', e.g. 'linear', 'time' or 'band'`);
             } else {
-                // e.g. linear, time or threshold vs. point or band
-                const continuous = typeof scale().ticks == 'function' || typeof scale().invertExtent == 'function';
-                if (continuous != ['numeric', 'date'].includes(m.type))
+                // e.g. linear, time, threshold or sequentialQuantile vs. point or
+                // band, ordinal scales are of any values, e.g. colors of numbers
+                const s = scale();
+                const continuous = ['ticks', 'invertExtent', 'interpolator'].some(f => typeof s[f] == 'function');
+                if (type != 'ordinal' && continuous != ['numeric', 'date'].includes(m.type))
                     warn(`${path}.scale.type`, `a ${type} scale does not fit the type '${m.type}'`);
                 if (m.scale.interpolator !== undefined && typeof scale().interpolator != 'function')
                     warn(`${path}.scale.interpolator`, `a ${type} scale has no interpolator, e.g. a sequential one has`);

@@ -60,3 +60,46 @@ describe('makeScale', () => {
         expect(() => makeScale('x', { type: 'numeric', scale: { type: 'sequential', interpolator: 'Nope', domain: [null, null] } }, [], options)).toThrow("Unknown interpolator 'Nope'");
     });
 });
+
+describe('the domains of scales', () => {
+    const scale = (scaleDef, rows, type = 'numeric', scope = {}) =>
+        makeScale('y', { type, scale: { type: 'linear', orientation: 'vertical', domain: [null, null], ...scaleDef } }, rows, { ...options, scope });
+
+    test('the values of a fixed domain are the ones of the data, e.g. of a global of a string', () => {
+        expect(scale({ domain: [0, '@max'] }, [{ y: 5 }], 'numeric', { max: '100' }).domain()).toEqual([0, 100]);
+        expect(scale({ domain: ['@min', 10] }, [{ y: 5 }], 'numeric', { min: '-50' }).domain()).toEqual([-50, 10]);
+    });
+
+    test('a log scale is extended by its positions, also of negative values, nice are powers of 10', () => {
+        const rows = [{ y: 1.3 }, { y: 870 }];
+        const log = scale({ type: 'log' }, rows);
+        expect(log.domain()[0]).toBeGreaterThan(0);
+        expect(log(1.3) - log(870)).toBeCloseTo(50/1.04, 5);
+        expect(scale({ type: 'log', nice: true }, rows).domain()).toEqual([1, 1000]);
+        const negative = scale({ type: 'log' }, rows.map(r => ({ y: -r.y })));
+        expect(negative.domain().every(v => v < 0)).toBe(true);
+        expect(Math.abs(negative(-1.3) - negative(-870))).toBeCloseTo(50/1.04, 5);
+    });
+
+    test('a sqrt scale is extended by its positions, 0 is 2% above the bottom', () => {
+        const s = scale({ type: 'sqrt' }, [{ y: 0 }, { y: 870 }]);
+        expect((50 - s(0))/50).toBeCloseTo(0.02/1.04, 5);
+    });
+
+    test('a fixed domain of categories is their order, as the values of the data', () => {
+        const s = makeScale('c', { type: 'categorical', scale: { type: 'band', orientation: 'horizontal', domain: ['2021', 2019, 'later'] } },
+            [{ c: 2019 }, { c: 2020 }, { c: 2021 }], options);
+        expect(s.domain()).toEqual([2021, 2019, 'later']);
+        expect(s.nearest(s(2019) + bandCenter(s))).toBe(2019);
+    });
+
+    test('ordinal scales of colors and quantiles of the values', () => {
+        const ordinal = makeScale('c', { type: 'categorical', scale: { type: 'ordinal', range: ['red', 'blue'], domain: [null, null] } },
+            [{ c: 'a' }, { c: 'b' }], options);
+        expect([ordinal('a'), ordinal('b')]).toEqual(['red', 'blue']);
+        const quantile = makeScale('v', { type: 'numeric', scale: { type: 'sequentialQuantile', interpolator: 'Blues', domain: [null, null] } },
+            [{ v: 1 }, { v: 2 }, { v: 10 }], options);
+        expect(quantile.domain()).toEqual([1, 2, 10]);
+        expect(quantile(2)).toBe(quantile.interpolator()(0.5));
+    });
+});

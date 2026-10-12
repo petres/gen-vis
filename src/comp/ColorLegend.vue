@@ -89,7 +89,15 @@ export default {
                 ? this.store.formatter(m.scale.type)(given)
                 : this.store.locale.tickFormat(d3.scaleLinear(d3.extent(values)), 'linear', 4);
 
-            if (s.invertExtent) {
+            if (!s.ticks && !s.invertExtent && !s.interpolator) {
+                // the categories of an ordinal scale, a box per category with its name
+                const categories = s.domain();
+                const w = this.width/Math.max(categories.length, 1);
+                g.selectAll("rect").data(categories).join("rect")
+                    .attr("x", (c, i) => i*w).attr("width", w).attr("height", 10).attr("fill", c => s(c));
+                categories.forEach((c, i) => g.append("text").attr("x", (i + 0.5)*w).attr("y", 26)
+                    .attr("text-anchor", "middle").attr("fill", "currentColor").text(c));
+            } else if (s.invertExtent) {
                 // a box per class, the limits between them
                 const colors = s.range();
                 const w = this.width/colors.length;

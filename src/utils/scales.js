@@ -17,6 +17,28 @@ const schemeRange = scaleDef => {
     return colors;
 };
 
+// the transform of the positions of a type of scale and its inverse, e.g.
+// the log of log, sequentialLog and divergingLog, of the values of a domain
+// of `sign` (the one of a log scale, its values are all positive or all
+// negative), linear for the others
+const transformOf = (type, sign) => {
+    const t = type.toLowerCase();
+    const sym = f => v => Math.sign(v)*f(Math.abs(v));
+    if (t.endsWith('symlog'))
+        return [sym(Math.log1p), sym(Math.expm1)];
+    if (t.endsWith('log'))
+        return [v => Math.log(sign*v), v => sign*Math.exp(v)];
+    if (t.endsWith('sqrt'))
+        return [sym(Math.sqrt), sym(v => v*v)];
+    return [v => v, v => v];
+};
+
+// rounded ends of a domain, of log scales powers of 10, e.g. 1 and 1000 of
+// 1.3 and 870, `count` is the number of steps of the others
+const niceEnds = (type, lo, hi, count) => type.toLowerCase().endsWith('log') && !type.toLowerCase().endsWith('symlog')
+    ? d3.scales.log().domain([lo, hi]).nice().domain()
+    : d3.nice(lo, hi, count);
+
 // the values of a mapping in the rows, continuous ones sorted for the lookup
 // of the nearest value, and their extent, of stacked values (`stackOf`, see
 // layout.js) the one of the stacks, e.g. from 0
@@ -73,14 +95,16 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         }
     }
 
-    // dates of a fixed domain are parsed as the ones of the data, e.g. "2020-01-01",
-    // the values can be references, e.g. to a global
-    const fixed = () => evaluate(scaleDef.domain, scope).map(v => v !== null && v !== undefined && mapping.type == 'date' ? convert(mapping, v) : (v ?? null));
+    // the values of a fixed domain are converted as the ones of the data, e.g.
+    // dates of "2020-01-01" or numbers of a global "100", the values can be
+    // references, e.g. to a global, categories are kept
+    const continuous = mapping.type == 'numeric' || mapping.type == 'date';
+    const fixed = () => (evaluate(scaleDef.domain, scope) ?? []).map(v => v === null || v === undefined ? null : (continuous ? convert(mapping, v) : v));
     let domain;
     if (scaleDef.type == 'threshold') {
         // the values between the classes
         domain = fixed();
-    } else if (scaleDef.type == 'quantile') {
+    } else if (scaleDef.type == 'quantile' || scaleDef.type == 'sequentialQuantile') {
         // classes of the same number of values
         domain = values;
     } else if (extent) {
@@ -99,9 +123,9 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         domain[0] ??= extent[0];
         domain[last] ??= extent[1];
 
-        // of a log scale relative to its positions, e.g. 5% of the height
-        // below and above, linear values could get below 0
-        const [to, from] = scaleDef.type == 'log' ? [Math.log, Math.exp] : [v => v, v => v];
+        // relative to the positions, e.g. of a log or a sqrt scale 2% of the
+        // height below and above, values of a log scale do not get below 0
+        const [to, from] = transformOf(scaleDef.type, Math.sign(domain[0] || domain[last]) || 1);
         const [d0, d1] = [to(domain[0]), to(domain[last])];
         const da = d1 - d0;
         domain[0] = from(d0 + da*domainRel[0]) + domainAbs[0];
@@ -110,7 +134,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         // round values for the ends taken from the data, e.g. 0.951 to 1, `true`
         // for steps of about a tenth of the domain or the number of steps
         if (scaleDef.nice && mapping.type == 'numeric') {
-            const [lo, hi] = d3.nice(domain[0], domain[last], scaleDef.nice === true ? 10 : scaleDef.nice);
+            const [lo, hi] = niceEnds(scaleDef.type, domain[0], domain[last], scaleDef.nice === true ? 10 : scaleDef.nice);
             if (fromData[0])
                 domain[0] = lo;
             if (fromData[1])
@@ -118,17 +142,28 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         }
 
         // the nearest value with data
-        s.nearest = p => values[d3.bisectCenter(values, s.invert(p))];
+        if (s.invert)
+            s.nearest = p => values[d3.bisectCenter(values, s.invert(p))];
     } else {
-        domain = values;
-        // the categories of a cyclic range have the same distance, also the
-        // last and the first one
-        const padding = scaleDef.padding ?? (cyclic && !s.bandwidth ? 0.5 : 0.4);
-        s.padding(padding);
-        if (cyclic && s.paddingOuter)
-            s.paddingOuter(padding/2);
-        // the category with the nearest position, e.g. the center of a band
-        s.nearest = p => d3.least(s.domain(), d => Math.abs(s(d) + bandCenter(s) - p));
+        // the categories of the data or a fixed list of them, in its order,
+        // as the values of the rows, e.g. the numbers of a JSON column
+        const given = fixed();
+        const byText = new Map(values.map(v => [String(v), v]));
+        domain = given.length > 0 && given.every(v => v !== null)
+            ? [...new Set(given.map(v => byText.get(String(v)) ?? v))]
+            : values;
+        // the positions of the categories, e.g. of a band scale, not the
+        // colors of an ordinal scale
+        if (s.step) {
+            // the categories of a cyclic range have the same distance, also the
+            // last and the first one
+            const padding = scaleDef.padding ?? (cyclic && !s.bandwidth ? 0.5 : 0.4);
+            s.padding(padding);
+            if (cyclic && s.paddingOuter)
+                s.paddingOuter(padding/2);
+            // the category with the nearest position, e.g. the center of a band
+            s.nearest = p => d3.least(s.domain(), d => Math.abs(s(d) + bandCenter(s) - p));
+        }
     }
 
     s.domain(domain);
