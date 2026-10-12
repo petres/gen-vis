@@ -13,8 +13,15 @@ useDom();
 
 const validate = new Ajv({ allErrors: true, allowUnionTypes: true }).compile(schema);
 
-const examples = readdirSync(`${root}/site/examples`).filter(f => f.endsWith('.json'))
-    .map(file => [file, JSON.parse(readFileSync(`${root}/site/examples/${file}`, 'utf8'))]);
+// the examples and the chart of the examples of the use (public/charts/), its
+// urls are relative to the definition, as the url of the page
+const examples = [
+    ...readdirSync(`${root}/site/examples`).filter(f => f.endsWith('.json'))
+        .map(file => [file, JSON.parse(readFileSync(`${root}/site/examples/${file}`, 'utf8'))]),
+    ...readdirSync(`${root}/site/public/charts`).filter(f => f.endsWith('.json'))
+        .map(file => [`charts/${file}`, { ...JSON.parse(readFileSync(`${root}/site/public/charts/${file}`, 'utf8')), data: undefined }]),
+];
+const chartData = readFileSync(`${root}/site/public/data/fuel-prices.csv`, 'utf8');
 
 // the urls of the examples are relative to the page, its files are the ones of site/public
 beforeEach(() => {
@@ -34,7 +41,7 @@ describe('the examples of the page', () => {
     test.each(examples)('%s is valid and drawn', async (file, def) => {
         expect(validate(def) ? [] : validate.errors).toEqual([]);
         expect(validateDef(def)).toEqual([]);
-        const el = await mount(GenVis, { def });
+        const el = await mount(GenVis, file.startsWith('charts/') ? { def, data: chartData } : { def });
         expect(el.querySelector('.vis-error')).toBeNull();
         expect(el.querySelectorAll('svg.vis-svg g.vis-plot').length).toBeGreaterThan(0);
         expect(errors).toEqual([]);

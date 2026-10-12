@@ -1,7 +1,7 @@
 <template>
     <section :id="example.id" class="example">
         <header class="example-head">
-            <div class="example-kicker"><span>{{ number }}</span> {{ example.look }}</div>
+            <div class="example-kicker"><span>{{ number }}</span></div>
             <h2>{{ example.name }}</h2>
             <p>{{ example.description }}</p>
             <ul class="example-features">

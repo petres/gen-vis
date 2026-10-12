@@ -1,0 +1,45 @@
+{
+    "data": "../data/fuel-prices.csv",
+    "options": {
+        "title": "Fuel prices in Austria",
+        "subtitle": "Weekly mean, euros per litre",
+        "footer": "Source: spritpreisrechner.at",
+        "locale": "en",
+        "height": 300,
+        "margins": { "top": 10, "right": 16, "bottom": 30, "left": 44 },
+        "transition": 300
+    },
+    "globals": { "scale": "zoom" },
+    "formElements": [{
+        "id": "scale", "name": "Scale", "ref": "scale", "type": "radio",
+        "values": [
+            { "id": "zoom", "name": "Zoomed", "value": "zoom" },
+            { "id": "zero", "name": "From 0", "value": "zero", "mapping": { "y": { "scale": { "domain": [0, null] } } } }
+        ]
+    }],
+    "mapping": {
+        "x": {
+            "column": "week", "type": "date",
+            "scale": { "type": "utc", "orientation": "horizontal" },
+            "axis": { "position": "bottom", "tickSpacing": 90, "format": "%b %Y" },
+            "hover": { "format": "%b %-d, %Y" }
+        },
+        "y": {
+            "column": "price", "type": "numeric",
+            "scale": { "type": "linear", "orientation": "vertical" },
+            "axis": { "position": "left", "ticks": 5, "grid": true, "format": ".2f" },
+            "hover": { "format": ".3f" }
+        },
+        "fuel": {
+            "column": "fuel", "type": "categorical",
+            "legend": { "symbol": "line" },
+            "hover": {},
+            "props": { "categories": { "diesel": { "name": "Diesel", "color": "#B91C1C" }, "petrol": { "name": "Petrol", "color": "#1D4ED8" } } }
+        }
+    },
+    "plot": {
+        "type": "cartesian:line",
+        "categories": ["fuel"],
+        "props": { "d": { "x": "@x:scaled", "y": "@y:scaled" }, "stroke": "@color", "stroke-width": 2, "fill": "none", "highlight-stroke-width": 3 }
+    }
+}

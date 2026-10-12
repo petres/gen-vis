@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>gen-vis without a bundler</title>
+    <style>
+        body { margin: 0; padding: 16px; font: 14px system-ui, sans-serif; }
+        .chart { --gen-vis-loading-height: 420px; }
+    </style>
+</head>
+<body>
+    <div class="chart" data-def-file="charts/prices.json" data-download data-csv></div>
+
+    <script type="module">
+        import { mountGenVisByClass } from './lib/esm/gen-vis.js';
+        mountGenVisByClass('chart');
+    </script>
+</body>
+</html>
