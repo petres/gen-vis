@@ -1472,13 +1472,17 @@ describe('the update of the facets', () => {
         delete plotTypes['test:append'];
     });
 
-    test('a transition moves the elements of a change, its end is the one of a new chart', async () => {
-        // jsdom has no transforms of svg, d3 interpolates the translations of the ticks of axes by them
+    // jsdom has no transforms of svg, d3 interpolates the translations of the ticks of axes by them
+    const svgTransforms = () => {
         Object.defineProperty(SVGElement.prototype, 'transform', { configurable: true, get() {
             const [x = 0, y = 0] = (this.getAttribute('transform')?.match(/-?\d*\.?\d+(?:e-?\d+)?/g) ?? []).map(Number);
             return { baseVal: { consolidate: () => ({ matrix: { a: 1, b: 0, c: 0, d: 1, e: x, f: y } }) } };
         } });
         onTestFinished(() => delete SVGElement.prototype.transform);
+    };
+
+    test('a transition moves the elements of a change, its end is the one of a new chart', async () => {
+        svgTransforms();
         const el = await mount(GenVis, { def: lineDef({ transition: 80 }), data: lineData });
         const circle = el.querySelector('g.vis-group[data-group-c="Tirol"] circle');
         const line = el.querySelector('path[data-group-c="Tirol"]');
@@ -1494,6 +1498,24 @@ describe('the update of the facets', () => {
         // the transition of a transform ends with "translate(x, y)", the axis writes "translate(x,y)"
         const html = el => el.querySelector('svg.vis-svg').outerHTML.replace(/translate\(([^,)]+), /g, 'translate($1,');
         expect(html(el)).toBe(html(fresh));
+        expect(errors).toEqual([]);
+    });
+
+    test('a highlight during a transition keeps the values of its end', async () => {
+        svgTransforms();
+        const def = lineDef({ transition: 80 });
+        def.plot[1].props['highlight-cy'] = 5;
+        const el = await mount(GenVis, { def, data: lineData });
+        await toggle(el, 'Wien');
+        const tirol = el.querySelector('.vis-legend-entry[data-key="Tirol"]');
+        tirol.dispatchEvent(pointer('pointerenter'));
+        await new Promise(resolve => setTimeout(resolve, 250));
+        // the highlight, not the end of the transition
+        expect(el.querySelector('g.vis-group[data-group-c="Tirol"] circle').getAttribute('cy')).toBe('5');
+        tirol.dispatchEvent(pointer('pointerleave'));
+        const fresh = await mount(GenVis, { def: lineDef(), data: lineData, state: { visible: { c: { Wien: false } } } });
+        const cys = el => [...el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle')].map(c => c.getAttribute('cy'));
+        expect(cys(el)).toEqual(cys(fresh));
         expect(errors).toEqual([]);
     });
 

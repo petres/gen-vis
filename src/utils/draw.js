@@ -19,6 +19,20 @@ const curves = {
     basisClosed: d3.curveBasisClosed,
 };
 
+// the values of the attributes an element moves to with a transition, see setProps
+const targets = Symbol('targets');
+
+// an element moving with a transition is at its end at once, e.g. before
+// the values of its highlight replace its values, so it keeps the new ones
+const finish = node => {
+    if (!node[targets])
+        return;
+    if (node.__transition)
+        d3.select(node).interrupt('vis');
+    Object.entries(node[targets]).forEach(([k, v]) => node.setAttribute(k, v));
+    node[targets] = null;
+};
+
 // the transition of the elements of a draw in milliseconds, 0 without, see
 // options.transition and Facet.vue
 const motion = { duration: 0 };
@@ -36,10 +50,12 @@ const withMotion = (duration, draw) => {
 // only the attributes which change are set, e.g. of an element of the draw
 // before, as setting one costs the browser its style. With a transition the
 // attributes an element has move to their values, e.g. of the draw before,
-// new ones are set at once, a transition of the draw before stops where it is.
+// new ones are set at once, a transition of the draw before stops where it
+// is. The values of a transition are kept, see finish.
 const setProps = function(values) {
     if (this.__transition)
         d3.select(this).interrupt('vis');
+    this[targets] = null;
     let transition = null;
     for (const k in values) {
         const v = values[k];
@@ -59,10 +75,12 @@ const setProps = function(values) {
             const before = this.getAttribute(k);
             if (before === value)
                 continue;
-            if (motion.duration > 0 && before !== null)
+            if (motion.duration > 0 && before !== null) {
                 (transition ??= d3.select(this).transition('vis').duration(motion.duration)).attr(k, value);
-            else
+                (this[targets] ??= {})[k] = value;
+            } else {
                 this.setAttribute(k, value);
+            }
         }
     }
 };
@@ -156,6 +174,7 @@ const highlighter = (plotDefs, nodeOf) => {
                 g.node.parentNode.appendChild(g.node);
                 groups.push(g.node);
                 targetsOf(plot, g, dataEntry).forEach(node => {
+                    finish(node);
                     node.classList.add('vis-highlight');
                     plot.highlightProps.forEach(n => {
                         const value = node.getAttribute(n);
