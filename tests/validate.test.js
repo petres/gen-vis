@@ -49,14 +49,14 @@ test('the symbols of legends, the order and the ranks of categories', () => {
     ]);
 });
 
-test('the names of the alphas before are named', () => {
+test('the names of 1.x are unknown', () => {
     const def = base();
     def.mapping.c.props = { manual: { Wien: {} } };
     def.globals = { g: 'a' };
     def.formElements = [{ id: 'g', name: 'G', ref: 'g', type: 'switch', values: [{ id: 'a', name: 'A', value: 'a' }] }];
     expect(validateDef(def)).toEqual([
-        "mapping.c.props.manual: renamed to 'categories'",
-        "formElements[0].type: 'switch' is renamed to 'radio'",
+        "mapping.c.props: expected 'categories' or the ones of the data ('fromData'), and optional 'common' props",
+        "formElements[0].type: unknown type 'switch', expected one of 'radio', 'select', 'slider'",
     ]);
 });
 

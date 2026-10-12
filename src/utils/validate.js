@@ -123,10 +123,7 @@ const validateDef = def => {
             warn(path, `no 'column'`);
         if (m.type !== undefined && !mappingTypes.includes(m.type))
             warn(`${path}.type`, `unknown type '${m.type}', expected one of ${list(mappingTypes)}`);
-        // the names of the alphas before, the categories were `manual`
-        if (m.props?.manual !== undefined)
-            warn(`${path}.props.manual`, `renamed to 'categories'`);
-        else if (m.props && !m.props.categories && !m.props.fromData)
+        if (m.props && !m.props.categories && !m.props.fromData)
             warn(`${path}.props`, `expected 'categories' or the ones of the data ('fromData'), and optional 'common' props`);
         const order = m.props?.order;
         if (order !== undefined && order != 'ascending' && order != 'descending' && !Array.isArray(order))
@@ -266,10 +263,7 @@ const validateDef = def => {
     });
 
     (def.formElements ?? []).forEach((e, i) => {
-        // radio buttons were `switch` in the alphas before
-        if (e.type == 'switch')
-            warn(`formElements[${i}].type`, `'switch' is renamed to 'radio'`);
-        else if (!formElementTypes.includes(e.type))
+        if (!formElementTypes.includes(e.type))
             warn(`formElements[${i}].type`, `unknown type '${e.type}', expected one of ${list(formElementTypes)}`);
         // parts of entries are patches of a parent, the merged ones are complete
         if (typeof e.ref != 'string')

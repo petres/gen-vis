@@ -1027,8 +1027,7 @@ Definitions:
 - A single value of an annotation which is `null` is no value, e.g. a text
   at the start of the axis.
 - The categories of the props of a mapping are `categories`, they were
-  `manual`, radio buttons are `"type": "radio"`, they were `"switch"`,
-  `validateDef` names the old ones.
+  `manual`, radio buttons are `"type": "radio"`, they were `"switch"`.
 - The hover without format has the decimal mark of the locale, e.g. `1234,5`
   in German, and of several vertical mappings the one with a `hover` has the
   values of the hover, it was the last one.
