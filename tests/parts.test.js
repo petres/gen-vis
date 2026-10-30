@@ -572,3 +572,26 @@ describe('patches of the plots', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the locale of a patch', () => {
+    test('a form element of the language changes the formats', async () => {
+        const def = lineDef({ locale: 'de' });
+        def.mapping.y.hover = { format: ',.1f' };
+        def.globals = { lang: 'de' };
+        def.formElements = [{ id: 'lang', name: 'Sprache', ref: 'lang', type: 'radio', values: [
+            { id: 'de', name: 'Deutsch', value: 'de' },
+            { id: 'en', name: 'English', value: 'en', patch: { options: { locale: 'en' } } },
+        ] }];
+        const el = await mount(GenVis, { def, data: lineData });
+        const { pointer } = await import('./dom.js');
+        const value = async () => {
+            el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
+            await nextTick();
+            return el.querySelector('.vis-hover td.vis-value').textContent;
+        };
+        expect(await value()).toBe('2,0');
+        await select(el, 'en');
+        expect(await value()).toBe('2.0');
+        expect(errors).toEqual([]);
+    });
+});

@@ -180,7 +180,10 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
         // the legend of a scale of colors, a mapping with a legend without props, also of a patch
         [defOrg.mapping, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.mapping) : [])]
             .some(ms => Object.values(ms ?? {}).some(m => m?.legend && !m.props)) ? lazy.colorLegend() : null,
-        loadLocale(defOrg.options?.locale ?? undefined),
+        // the locale of the definition and of the patches of form elements
+        ...[defOrg, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.patch) : [])]
+            .filter((d, i) => i == 0 || d?.options?.locale !== undefined)
+            .map(d => loadLocale(d?.options?.locale ?? undefined)),
     ]);
     parts.catch(() => {});
     // the format of the data, by default the one of the extension of its url
@@ -251,7 +254,6 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     return {
         defUrl: url ?? null,
         defOrg,
-        locale: markRaw(getLocale(defOrg.options?.locale)),
         colorLegend: colorLegend ? markRaw(colorLegend.default) : null,
         coord: markRaw(coord),
         geo,
@@ -264,10 +266,21 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     };
 };
 
+// the formatters of the locales by their definition, the last ones are kept
+const locales = new Map();
+const localeOf = locale => {
+    const key = JSON.stringify(locale ?? null);
+    if (!locales.has(key)) {
+        if (locales.size >= 20)
+            locales.delete(locales.keys().next().value);
+        locales.set(key, markRaw(getLocale(locale ?? undefined)));
+    }
+    return locales.get(key);
+};
+
 class Store {
     defUrl = null;
     defOrg = null;
-    locale = null;
     coord = null;
     geo = null;
     def = null;
@@ -297,6 +310,10 @@ class Store {
     colorLegend = null;
 
     get loaded() { return this.def !== null && this.data !== null }
+
+    // the formatters of the locale of the definition, also of a patch, e.g.
+    // of a form element of the language, see utils/locale.js
+    get locale() { return localeOf(this.def?.options?.locale) }
 
     // the changes of the user compared to the definition, see utils/state.js
     get state() { return this.loaded ? diffState(snapshot(this.def), this.defaults) : null }

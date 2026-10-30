@@ -29,7 +29,9 @@ New:
   (`options`, `mapping`, `plot`, `annotations`, `filter`, `facets`, `geo`,
   `transform`), e.g. the section of a map, `null` removes a part, e.g. a
   mapping; `globals` of an entry are set when it is selected; the templates
-  name the fields of the selected entries, e.g. `{group:name}`
+  name the fields of the selected entries, e.g. `{group:name}`, a patch of
+  `options.locale` changes the formats, e.g. of a form element of the
+  language
 - the globals of the page: the prop `globals` (`data-globals`), e.g. of a
   menu of the page, and hidden form elements (`"type": "hidden"`), entries
   with `globals` and a `patch` without an element, e.g. of the language

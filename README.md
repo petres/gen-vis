@@ -1163,7 +1163,8 @@ again, the entries of the legends of the same categories keep their state:
 }]
 ```
 
-A patch can change any part, e.g. the section of a map and its height:
+A patch can change any part, e.g. the section of a map and its height, or
+the language with `options.locale` and the texts:
 
 ```json
 { "id": "europe", "name": "Europa", "value": "europe", "patch": { "geo": { "fit": "data" }, "options": { "height": 600 }, "filter": { "region": "Europe" } } }
