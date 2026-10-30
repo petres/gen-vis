@@ -622,6 +622,10 @@ parent or of a patch, e.g. `"hover": null`.
   `[0, 100]`, around `center` it is symmetric, e.g. `0` of changes, e.g.
   `"include": 0, "domainRel": [-0.4, 0.4]` is the domain of the values and 0
   extended by 40% of its size on both sides.
+  `order` of a `band`, `point` or `ordinal` scale is the order of
+  its categories taken from the data: the one of the rows (by default),
+  `ascending`, `descending` or by the value of a mapping of their first row,
+  e.g. bars by their length, `{"by": "x", "descending": true}`.
   `groups` of a `band` or `point` scale are the groups of its
   categories, of the values of a mapping (`by`) of their rows, with a space
   of `padding` steps between them (1 by default), e.g. the rows of horizontal

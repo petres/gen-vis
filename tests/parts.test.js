@@ -595,3 +595,18 @@ describe('the locale of a patch', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the order of the categories of a scale', () => {
+    test('of the data, ascending, descending or by a mapping, also in groups', async () => {
+        const { makeScale } = await import('@/utils/scales');
+        const rows = [{ y: 'b', x: 2, g: 'one' }, { y: 'a', x: 3, g: 'two' }, { y: 'c', x: 1, g: 'one' }, { y: 'd', x: null, g: 'two' }];
+        const domain = (order, groups) => makeScale('y', { type: 'categorical', scale: { type: 'band', domain: [null, null], range: [0, 100], order, groups } }, rows).domain();
+        expect(domain()).toEqual(['b', 'a', 'c', 'd']);
+        expect(domain('ascending')).toEqual(['a', 'b', 'c', 'd']);
+        expect(domain('descending')).toEqual(['d', 'c', 'b', 'a']);
+        expect(domain({ by: 'x' })).toEqual(['c', 'b', 'a', 'd']);
+        expect(domain({ by: 'x', descending: true })).toEqual(['a', 'b', 'c', 'd']);
+        // the groups in the order of their first category
+        expect(domain({ by: 'x', descending: true }, { by: 'g' })).toEqual(['a', 'd', 'b', 'c']);
+    });
+});

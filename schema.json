@@ -369,6 +369,13 @@
                     "description": "By default the width or height of the plot, e.g. colors, references to the sizes of the coordinate system, e.g. \"@radius\"."
                 },
                 "padding": { "type": "number", "description": "For categorical scales." },
+                "order": {
+                    "description": "The order of the categories of the data of a band, point or ordinal scale: of the rows (default), ascending, descending or by the value of a mapping of their first row, e.g. bars by their length.",
+                    "anyOf": [
+                        { "enum": ["ascending", "descending"] },
+                        { "type": "object", "required": ["by"], "additionalProperties": false, "properties": { "by": { "type": "string" }, "descending": { "type": "boolean" } } }
+                    ]
+                },
                 "groups": {
                     "type": "object",
                     "description": "The categories of a band or point scale in groups of the values of a mapping of their rows, with a space between the groups.",

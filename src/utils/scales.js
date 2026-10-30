@@ -99,6 +99,35 @@ const grouped = (s, rows, name, { by, padding: gap = 1 }) => {
     return f;
 };
 
+/**
+ * The categories of the data in the `order` of a scale: in the order of the
+ * rows (by default), `"ascending"` or `"descending"` (numbers by their value)
+ * or by the value of a mapping of their first row, e.g. bars by their length,
+ * `{ "by": "x", "descending": true }`, categories without a value last.
+ */
+const sortCategories = (values, rows, name, order) => {
+    if (order === undefined)
+        return values;
+    const numeric = vs => vs.every(v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v)));
+    const compare = vs => numeric(vs) ? (a, b) => a - b : (a, b) => String(a).localeCompare(String(b));
+    if (order == 'ascending' || order == 'descending') {
+        const c = compare(values);
+        return [...values].sort(order == 'descending' ? (a, b) => c(b, a) : c);
+    }
+    const by = order?.by;
+    if (typeof by != 'string')
+        return values;
+    const first = new Map();
+    rows.forEach(r => {
+        if (!first.has(r[name]) && r[by] !== null && r[by] !== undefined)
+            first.set(r[name], r[by]);
+    });
+    const keyed = values.filter(v => first.has(v));
+    const c = compare(keyed.map(v => first.get(v)));
+    keyed.sort((a, b) => order.descending ? c(first.get(b), first.get(a)) : c(first.get(a), first.get(b)));
+    return [...keyed, ...values.filter(v => !first.has(v))];
+};
+
 // the values of a mapping in the rows, continuous ones sorted for the lookup
 // of the nearest value, and their extent, of stacked values (`stackOf`, see
 // layout.js) the one of the stacks, e.g. from 0
@@ -230,7 +259,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         const byText = new Map(values.map(v => [String(v), v]));
         domain = given.length > 0 && given.every(v => v !== null)
             ? [...new Set(given.map(v => byText.get(String(v)) ?? v))]
-            : values;
+            : sortCategories(values, rows, name, scaleDef.order);
         // the positions of the categories, e.g. of a band scale, not the
         // colors of an ordinal scale
         if (s.step) {

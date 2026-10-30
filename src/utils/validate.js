@@ -235,6 +235,11 @@ const validateDef = def => {
             checkProp(m.scale.center, `${path}.scale.center`, warn, names.facet);
             if ((m.scale.include !== undefined || m.scale.center !== undefined) && !['numeric', 'date'].includes(m.type))
                 warn(`${path}.scale`, `'include' and 'center' are values of numeric or date mappings`);
+            const order = m.scale.order;
+            if (order !== undefined && !['ascending', 'descending'].includes(order) && !(isObject(order) && typeof order.by == 'string'))
+                warn(`${path}.scale.order`, `expected 'ascending', 'descending' or the mapping of the values, e.g. { "by": "x", "descending": true }`);
+            else if (isObject(order) && !Object.hasOwn(def.mapping ?? {}, order.by))
+                warn(`${path}.scale.order.by`, `unknown mapping '${order.by}'`);
             if (m.scale.groups !== undefined && (!['band', 'point'].includes(type) || !isObject(m.scale.groups)))
                 warn(`${path}.scale.groups`, `the groups of the categories of a band or a point scale, e.g. { "by": "group", "padding": 1 }`);
             else if (m.scale.groups !== undefined && !Object.hasOwn(def.mapping ?? {}, m.scale.groups.by))
