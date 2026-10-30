@@ -12,6 +12,16 @@ highlight have more options, legends their place, texts a width, three new
 transforms, messages instead of the plots and linked charts. See the
 `data/fti/` charts of the FTI Monitor, they need no workarounds anymore.
 
+Fixed: a definition is the same for CSV, JSON and parquet data, the fixed
+values of categorical mappings (the `values` of an axis, annotations, the
+`data` of plots, `"@x:scaled:2004"`) were only the categories of the data of
+the same type, e.g. the ticks `["2004", "2008"]` of a band scale of years
+were all at 0 with parquet data and `[2004, 2008]` with csv data, now
+strings and numbers are the same categories; fixed ticks which are no
+category of a band or a point scale are left out (they were at 0); the
+categories which are numbers are compared by their value in `range` of a
+filter and `select` of a plot, e.g. `"9"` before `"10"`.
+
 Fixed: `"ticks": null` of an axis is the number of `tickSpacing`, e.g. a
 patch of the ticks of a parent, it was no number. The fixed ticks of an axis of dates (`axis.values`, e.g.
 `"2020-04-01"`) are converted as the dates of the data, they had no
@@ -23,6 +33,11 @@ Changes which need changes of definitions:
 - `"ratio"` of `relative` props is 1 by default (it was required)
 - the hover: a position without rows has no hover, e.g. a region of a map
   without a value (`"empty": true` shows its name as before)
+- the values of categorical mappings (and of mappings without a `type`)
+  are strings of every format of the data, as the ones of CSV, also the
+  rows and the `key` of the events `hover` and `select` of JSON and parquet
+  data, e.g. `"2004"` instead of `2004`, and the values of form elements of
+  the values of a column (also their globals and the state)
 - form elements: the patches of an entry are `patch`, e.g.
   `"patch": { "mapping": { "y": { "column": "share" } } }` instead of
   `"mapping": { "y": { "column": "share" } }`

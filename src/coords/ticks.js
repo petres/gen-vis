@@ -5,12 +5,12 @@ import { evaluate } from "@/utils/props";
 import { convert } from "@/utils/data";
 
 // fixed values outside of the range of the scale are not drawn, e.g. 10 of a
-// log scale from 14, d3 would draw them in the margins, values without a
-// position (e.g. of a band scale) are kept as they are
+// log scale from 14, d3 would draw them in the margins, also the ones which
+// are no category of a band or point scale, they have no position
 const inRange = (scale, v) => {
     const p = scale(v);
     if (typeof p != 'number' || !isFinite(p))
-        return true;
+        return !scale.step;
     const [a, b] = [...scale.range()].sort((x, y) => x - y);
     return p >= a - 0.5 && p <= b + 0.5;
 };
@@ -27,12 +27,13 @@ const tickCount = (axis, scope, length) => {
 
 // the values of the ticks of an axis, also of the grid lines, fixed ones are
 // converted as the values of the data of the `mapping`, e.g. dates of
-// "2020-04-01", they can be a prop of the names of the facet (`scope`)
+// "2020-04-01" or the categories as strings, e.g. "2004" of 2004, they can be
+// a prop of the names of the facet (`scope`)
 const tickValues = (axis, scale, ticks, mapping, scope = {}) => {
     // a list or a prop, e.g. steps of the width
     const values = axis.values === undefined ? undefined : evaluate(axis.values, scope);
     return Array.isArray(values)
-        ? values.map(v => mapping && ['numeric', 'date'].includes(mapping.type) ? convert(mapping, v) : v).filter(v => v !== null && inRange(scale, v))
+        ? values.map(v => mapping ? convert(mapping, v) : v).filter(v => v !== null && inRange(scale, v))
         : (scale.ticks ? scale.ticks(ticks) : scale.domain());
 };
 

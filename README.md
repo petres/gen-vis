@@ -128,12 +128,13 @@ once it is drawn the first time, `error` with the message of an error and
 keyboard) with the rows under the mouse, `hover` with `null` at its end:
 
 ```js
-{ key: 2023, title: "2023", rows: [{ x: 2023, y: 4, land: "Wien" }, ...], nearest: { x: 2023, y: 4, land: "Wien" } }
+{ key: "2023", title: "2023", rows: [{ x: "2023", y: 4, land: "Wien" }, ...], nearest: { x: "2023", y: 4, land: "Wien" } }
 ```
 
 `key` is the value of the position, e.g. of the horizontal axis or the key of
 the region of a map, `title` the title of the hover, the rows are the values
-of the mappings, `nearest` the row of the element under the mouse.
+of the mappings (the categories as strings, of every format of the data, see
+[data](#data)), `nearest` the row of the element under the mouse.
 
 The slots replace parts of the visualisation, `hover` the content of the
 hover (it also has `entries`, the formatted values of the default table),
@@ -452,9 +453,18 @@ the other formats, dates (without a time) and timestamps without a time zone
 [mapping](#mapping). Snappy, the default of arrow (R, Python), pandas and
 duckdb, is read directly, other compressions, e.g. zstd of polars, load the
 decompressors of `hyparquet-compressors` (~75 kB gzipped), the standalone
-script reads only snappy and uncompressed parquet. Keys of categories are
-compared as strings, e.g. the years of a parquet or JSON column as keys of
-`props`.
+script reads only snappy and uncompressed parquet.
+
+The values of a `categorical` mapping (and of a mapping without a `type`)
+are strings, as the ones of CSV, whatever the format of the data, e.g. the
+year 2004 of a parquet or JSON column is `"2004"`, so a definition is the same
+for every format. The values of the definition are converted the same way,
+the keys of `props`, the fixed `values` of an axis, the `domain` of a scale,
+the values of annotations, of the `data` of plots, of `filter` and of
+references such as `"@x:scaled:2004"`, so they can be strings or numbers,
+e.g. `"values": ["2004", "2008"]` or `[2004, 2008]`. Categories which are
+numbers are compared by their value, e.g. `"9"` before `"10"` (the order of
+a scale, `range` of a filter, `select` of a plot).
 
 ### `transform`
 
@@ -621,7 +631,8 @@ parent or of a patch, e.g. `"hover": null`.
   `orientation` (`horizontal` or `vertical`) places the scale on the plot,
   `angular` or `radial` in polar plots. `domain` fixes the domain, `null`
   entries are taken from the data, the values are converted as the ones of
-  the data, e.g. dates or numbers of strings, entries can be references,
+  the data, e.g. dates or numbers of strings, categories as strings, e.g.
+  `[2004, 2008]` of the years of any data, entries can be references,
   e.g. `[0, "@max"]` of a global, the domain of a `point` or `band` scale
   are its categories in their order. `domainRel` (relative to the positions,
   e.g. of a `log` or a `sqrt` scale) and `domainAbs` (absolute) extend it, by
@@ -673,9 +684,13 @@ parent or of a patch, e.g. `"hover": null`.
 - `axis`: `position` (`top`, `bottom`, `left`, `right`, in polar plots
   `angular` and `radial`), `ticks`, `tickSpacing` (without `ticks` a tick per
   this many pixels of the axis, e.g. `80`, so a narrow chart has fewer ticks,
-  instead of a `relative` prop of `ticks`), `values` (fixed ticks, the ones
-  outside of the domain are left out, also a prop of the names of the facet,
-  e.g. steps of `totalWidth`), `format` (d3 number or time format),
+  instead of a `relative` prop of `ticks`), `values` (fixed ticks, converted
+  as the values of the data, e.g. dates of strings or categories as strings,
+  so `["2004", "2008"]` and `[2004, 2008]` are the same ticks of a band
+  scale of years, the ones outside of the domain are left out, also the ones
+  which are no category of a `band` or `point` scale, also a prop of the
+  names of the facet, e.g. steps of `totalWidth`), `format` (d3 number or
+  time format),
   `rotate` (the angle of the labels in degrees, positive counterclockwise,
   negative clockwise), `labels` (of all axes, also of polar plots: the
   `props` of the labels, svg attributes and `text`, e.g. `{"font-weight":
@@ -839,7 +854,8 @@ A plot or a list of plots, drawn in order:
 - `select`: one row of every group, of the rows with values of the mappings
   of the props: `first` or `last` (in the order of the rows) or the one with
   the least or the most value of a mapping, `{ "min": "y" }` or
-  `{ "max": "x" }`, e.g. labels at the ends of lines.
+  `{ "max": "x" }` (categories which are numbers by their value, e.g. `"10"`
+  after `"9"`), e.g. labels at the ends of lines.
 - `dodge` (`svg:text`): the texts are moved apart vertically to at least
   this distance in pixels, e.g. labels at the ends of lines.
 
@@ -1073,8 +1089,9 @@ See `data/bev/def-map.json`, `data/sprit-nuts/def-map.json` and the maps of
 `annotations` (an annotation or a list) are bands, lines, texts and circles
 at values of mappings, e.g. estimated values or events, the keys are the
 names of the mappings, a value or a range `[from, to]`, values are converted
-as the ones of the rows, e.g. dates, and can be references to globals, e.g.
-`"@target"`:
+as the ones of the rows, e.g. dates or categories as strings (`"x": 2020` is
+the category `"2020"` of every format of the data), and can be references to
+globals, e.g. `"@target"`:
 
 ```json
 "annotations": [
@@ -1193,7 +1210,8 @@ the facets.
 list of them, e.g. of a global, `null` (the rows without a value),
 `{"not": ...}` (the rows which do not fulfil the condition) or `{"range":
 [from, to]}` (from and to included, `null` is open), the values are compared
-as the ones of the rows, e.g. dates, and can be references, e.g. `"@year"`
+as the ones of the rows, e.g. dates, categories as strings and the ones which
+are numbers by their value, and can be references, e.g. `"@year"`
 or `{"range": [null, "@max"]}`. The same conditions are the `filter` of a
 plot (its rows) and of the hover (`options.hover.filter`, the rows with a
 hover):
@@ -1208,7 +1226,9 @@ hover):
 ```
 
 `values` can also be the distinct values of a column of the data, in
-ascending order (numbers by their value), named as the values, so new
+ascending order (numbers by their value), named as the values, strings as
+the ones of CSV of every format of the data (also the globals and the state
+of them), so new
 values of the data are added, e.g. a new year. If the global is none of them,
 e.g. it is missing, it is the last one:
 

@@ -5,6 +5,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { nextTick } from 'vue';
 import { GenVis } from '@/index.js';
+import { parquetWriteBuffer } from 'hyparquet-writer';
 import { errors, useDom, mount } from './dom.js';
 
 useDom();
@@ -830,6 +831,108 @@ describe('the props of the labels and of the line of an axis, the titles of face
         polar.facets = { dim: 'c', cols: 2 };
         const circles = await mount(GenVis, { def: polar, data: lineData });
         expect([...circles.querySelectorAll('.vis-facet-title')].map(t => t.classList.contains('vis-facet-title-center'))).toEqual([true, true]);
+        expect(errors).toEqual([]);
+    });
+});
+
+// parquet of columns, the strings are bytes of node, the TextEncoder of jsdom
+// has arrays of its own, which the writer does not take
+const parquetOf = columns => parquetWriteBuffer({ columnData: columns.map(c => c.type == 'STRING'
+    ? { ...c, data: c.data.map(v => new Uint8Array(Buffer.from(v))) } : c) });
+
+describe('the categories of every format of the data', () => {
+    // the same rows as csv, JSON and parquet (the years as INT32, as of R arrow)
+    const years = [2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012];
+    const rows = years.map((year, i) => ({ measure: 'passengers', year, value: 200 + i }));
+    const formats = {
+        csv: () => `measure,year,value\n${rows.map(r => `${r.measure},${r.year},${r.value}`).join('\n')}`,
+        json: () => JSON.stringify(rows),
+        parquet: () => parquetOf([
+            { name: 'measure', data: rows.map(r => r.measure), type: 'STRING' },
+            { name: 'year', data: rows.map(r => r.year), type: 'INT32' },
+            { name: 'value', data: rows.map(r => r.value), type: 'DOUBLE' },
+        ]),
+    };
+    // the fixed values of the definition as strings or as numbers: the order
+    // of the domain, the ticks (2016 is no category), the annotations, the
+    // rows of a plot and a position of a reference
+    const barsDef = fixed => ({
+        options: { width: 600, height: 300, margins: { top: 10, right: 10, bottom: 40, left: 40 } },
+        mapping: {
+            x: { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'horizontal', padding: 0.2, domain: fixed([...years].reverse()) },
+                axis: { position: 'bottom', values: fixed([2004, 2008, 2012, 2016]) }, hover: {} },
+            y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical', domain: [0, null] }, axis: { position: 'left' }, hover: {} },
+        },
+        plot: [
+            { id: 'bars', type: 'cartesian:bar', props: { x: '@x:scaled', y1: '@y:scaled' } },
+            { id: 'label', type: 'svg:text', data: [{ x: fixed([2010])[0], label: 'mark' }], props: { x: '@x:scaled', y: 0, text: '@label' } },
+            { id: 'rule', type: 'svg:line', data: [{}], props: { x1: `@x:scaled:${2008}`, x2: `@x:scaled:${2008}`, y1: 0, y2: 10 } },
+        ],
+        annotations: [{ type: 'band', x: fixed([2006, 2008]) }, { type: 'line', x: fixed([2010])[0] }],
+    });
+    const drawn = el => ({
+        ticks: [...el.querySelectorAll('.vis-axis-bottom .tick')].map(t => [t.textContent, t.getAttribute('transform')]),
+        bars: [...el.querySelectorAll('g.vis-plot.bars rect')].map(r => r.getAttribute('x')),
+        label: el.querySelector('g.vis-plot.label text').getAttribute('x'),
+        rule: el.querySelector('g.vis-plot.rule line').getAttribute('x1'),
+        band: ['x', 'width'].map(a => el.querySelector('.vis-annotation.vis-band').getAttribute(a)),
+        line: el.querySelector('.vis-annotation.vis-line').getAttribute('x1'),
+    });
+
+    test('the same chart of csv, JSON and parquet, the fixed values as strings or as numbers', async () => {
+        const results = {};
+        const hovers = {};
+        for (const [format, data] of Object.entries(formats))
+            for (const [kind, fixed] of Object.entries({ strings: v => v.map(String), numbers: v => v })) {
+                const el = await mount(GenVis, { def: barsDef(fixed), data: data(), onHover: e => hovers[format] = e });
+                results[`${format} ${kind}`] = drawn(el);
+                const { pointer } = await import('./dom.js');
+                el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 500, clientY: 100 }));
+                await nextTick();
+            }
+        const csv = results['csv strings'];
+        Object.entries(results).forEach(([k, r]) => expect([k, r]).toEqual([k, csv]));
+        // the ticks of the categories in the order of the fixed domain, the years from the right
+        expect(csv.ticks.map(([text]) => text)).toEqual(['2004', '2008', '2012']);
+        const at = csv.ticks.map(([, t]) => parseFloat(t.slice(10)));
+        expect(at[0]).toBeGreaterThan(at[1]);
+        expect(at[1]).toBeGreaterThan(at[2]);
+        expect(new Set(csv.bars).size).toBe(9);
+        // the categories of the events are strings of every format
+        expect(Object.values(hovers).map(e => [e.key, e.rows[0].x])).toEqual(Array(3).fill(['2004', '2004']));
+        expect(errors).toEqual([]);
+    });
+
+    test('ranges and the most of categories by their numbers, the values of form elements as strings', async () => {
+        const { filter, rowFilter, compareCategories } = await import('@/utils/data');
+        const mapping = { m: { column: 'month', type: 'categorical' } };
+        const months = ['8', '9', '10', '11'].map(m => ({ m }));
+        expect(filter(months, rowFilter({ m: { range: [9, 10] } }, mapping)).map(r => r.m)).toEqual(['9', '10']);
+        expect(['10', '9', 'b', 'a'].sort(compareCategories)).toEqual(['9', '10', 'a', 'b']);
+
+        // labels at the last month, "10" after "9"
+        const def = lineDef();
+        def.mapping.x = { column: 'year', type: 'categorical', scale: { type: 'point', orientation: 'horizontal' } };
+        def.plot = { id: 'last', type: 'svg:text', categories: ['c'], select: { max: 'x' }, props: { x: '@x:scaled', y: 0, text: '@x' } };
+        const el = await mount(GenVis, { def, data: 'year,value,land\n9,1,Wien\n10,2,Wien' });
+        expect(el.querySelector('g.vis-plot.last text').textContent).toBe('10');
+
+        // a slider of the years of parquet data, its values are the strings of csv
+        const years = lineDef();
+        years.formElements = [{ id: 'year', name: 'Jahr', ref: 'year', type: 'select', values: { column: 'year' } }];
+        let state;
+        const parquet = parquetOf([
+            { name: 'year', data: [2020, 2021], type: 'INT32' },
+            { name: 'value', data: [1, 2], type: 'DOUBLE' },
+            { name: 'land', data: ['Wien', 'Wien'], type: 'STRING' },
+        ]);
+        const chart = await mount(GenVis, { def: years, data: parquet, 'onUpdate:state': s => state = s });
+        expect([...chart.querySelectorAll('.vis-form-element option')].map(o => o.value)).toEqual(['2020', '2021']);
+        const select = chart.querySelector('.vis-form-element select');
+        select.value = '2020';
+        select.dispatchEvent(new Event('change'));
+        await nextTick();
+        expect(state.globals.year).toBe('2020');
         expect(errors).toEqual([]);
     });
 });

@@ -1,6 +1,6 @@
 export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor };
 
-import { categoryOrder, convert, filter, groupBy, rowFilter, stack } from "@/utils/data";
+import { categoryOrder, compareCategories, continuous, convert, filter, groupBy, rowFilter, stack } from "@/utils/data";
 import * as d3 from "@/utils/d3";
 import { bind, constant, evaluate, formatter, refNames } from "@/utils/props";
 import { bandCenter, makeScale } from "@/utils/scales";
@@ -210,13 +210,17 @@ const plotRows = (store, plot, facet) => {
 
 // one row of the rows of a group: the first or the last one, in the order of
 // the rows, or the one with the least or the most value of a mapping, e.g.
-// { "max": "x" }, of the rows with values of the mappings of the props
-const selected = (rows, select) => {
+// { "max": "x" }, of the rows with values of the mappings of the props,
+// categories as numbers if they are numbers, e.g. "10" after "9"
+const selected = (rows, select, mapping) => {
     if (select == 'first' || select == 'last')
         return select == 'first' ? rows.slice(0, 1) : rows.slice(-1);
     const [kind, name] = Object.entries(select ?? {})[0] ?? [];
     const values = rows.filter(r => r[name] !== null && r[name] !== undefined);
-    const row = kind == 'min' ? d3.least(values, r => r[name]) : (kind == 'max' ? d3.greatest(values, r => r[name]) : undefined);
+    const compare = Object.hasOwn(mapping, name) && !continuous(mapping[name])
+        ? (a, b) => compareCategories(a[name], b[name])
+        : r => r[name];
+    const row = kind == 'min' ? d3.least(values, compare) : (kind == 'max' ? d3.greatest(values, compare) : undefined);
     return row ? [row] : [];
 };
 
@@ -305,7 +309,7 @@ const plotGroups = (plot, rows, ctx) => {
         return {
             categories: g.group,
             props,
-            rows: plot.select === undefined ? g.entries : selected(g.entries.filter(complete), plot.select),
+            rows: plot.select === undefined ? g.entries : selected(g.entries.filter(complete), plot.select, mapping),
             at,
             prop: name => at.entries.get(name) ?? constant(undefined),
             attrs: Object.fromEntries([...at.entries].filter(([, f]) => f.constant).map(([k, f]) => [k, f()])),

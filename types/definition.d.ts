@@ -562,7 +562,7 @@ export interface MappingEntry {
      */
     name?: string;
     /**
-     * Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc).
+     * Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values (also of a mapping without a type) are strings of every format of the data, e.g. "2004" of the number 2004 of JSON or parquet.
      */
     type?: 'numeric' | 'date' | 'categorical';
     /**
@@ -797,7 +797,7 @@ export interface Axis {
      */
     tickSpacing?: number | string | Prop;
     /**
-     * Fixed ticks, the ones outside of the domain are left out, also a prop, e.g. steps of totalWidth.
+     * Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or ["2004", "2008"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also a prop, e.g. steps of totalWidth.
      */
     values?: unknown[] | Prop;
     /**

@@ -155,8 +155,8 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     let { values, extent } = valuesOf(name, mapping, rows, stackOf);
     // the extent of the data includes the values of `include`, e.g. 0 or
     // 100, around `center` it is symmetric, e.g. of 0 of changes
-    const continuous = mapping.type == 'numeric' || mapping.type == 'date';
-    const valueOf = v => v === null || v === undefined ? null : (continuous ? convert(mapping, v) : v);
+    // a value of the definition as the ones of the data, e.g. a date or a category as a string
+    const valueOf = v => v === null || v === undefined ? null : convert(mapping, v);
     if (extent && scaleDef.include !== undefined) {
         const included = [evaluate(scaleDef.include, scope)].flat().map(valueOf).filter(v => v !== null);
         extent = d3.extent([...extent, ...included].filter(v => v !== undefined && v !== null));

@@ -1,4 +1,4 @@
-export { groupBy, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, filter, stack, categoryOrder, toDate, addDataValues, distinctValues, usedColumns, columnValues };
+export { groupBy, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, compareCategories, filter, stack, categoryOrder, toDate, addDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { sameValue, templateRefs } from "@/utils/def";
@@ -107,7 +107,21 @@ const toDate = (v, utc = false) => {
     return isNaN(t) ? null : t;
 };
 
+// the values of the mapping are numbers or dates (timestamps), the others,
+// also of a mapping without a type, are categories
+const continuous = mapping => mapping?.type == 'numeric' || mapping?.type == 'date';
+
+// the categories are strings, as the values of csv, so the values of JSON and
+// parquet are the same ones, e.g. the year 2004 is "2004" of every format
+const toCategory = v => v === null || v === undefined ? v : String(v);
+
+// categories compared as numbers if both are numbers, e.g. "9" before "10",
+// otherwise as texts
+const numericText = v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v));
+const compareCategories = (a, b) => numericText(a) && numericText(b) ? a - b : String(a).localeCompare(String(b));
+
 // the conversion of the values of a mapping, e.g. the dates of a `utc` scale
+// or the categories as strings
 const converter = mapping => {
     if (mapping?.type == 'numeric')
         return toNumber;
@@ -115,7 +129,7 @@ const converter = mapping => {
         const utc = mapping.scale?.type == 'utc';
         return v => toDate(v, utc);
     }
-    return v => v;
+    return toCategory;
 };
 
 // a value as the ones of the rows of a mapping, e.g. "2022-06-01" of a date
@@ -269,8 +283,10 @@ const condition = (m, c, path) => {
             return v => !test(v);
         }
         if (Array.isArray(c.range)) {
+            // categories as numbers if they are numbers, e.g. "9" is below "10"
             const [from, to] = c.range.map(e => missingValue(e) ? null : convert(m, e));
-            return v => !missingValue(v) && (from === null || v >= from) && (to === null || v <= to);
+            const compare = continuous(m) ? (a, b) => a - b : compareCategories;
+            return v => !missingValue(v) && (from === null || compare(v, from) >= 0) && (to === null || compare(v, to) <= 0);
         }
         throw new Error(`${path}: expected a value, a list of values, null, { "not": ... } or { "range": [from, to] }`);
     }
@@ -338,12 +354,13 @@ const distinctValues = (rows, columns, column) => {
 
 // the entries of form elements with the values of a column of the rows, e.g.
 // "values": { "column": "year" }, distinct and ascending, numbers by their
-// value, a global which is none of them (or missing) is the last value, e.g.
-// the latest year
+// value, the values are strings, as the ones of csv, of every format, a
+// global which is none of them (or missing) is the last value, e.g. the
+// latest year
 const addDataValues = (def, rows, columns = null) => {
     (def.formElements ?? []).filter(e => e?.values && !Array.isArray(e.values)).forEach(e => {
-        const values = distinctValues(rows, columns, e.values.column);
-        e.values = values.map(v => ({ id: String(v), name: String(v), value: v }));
+        const values = distinctValues(rows, columns, e.values.column).map(String);
+        e.values = values.map(v => ({ id: v, name: v, value: v }));
         def.globals ??= {};
         if (values.length > 0 && !values.some(v => sameValue(v, def.globals[e.ref])))
             def.globals[e.ref] = values.at(-1);
