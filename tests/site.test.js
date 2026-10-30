@@ -21,7 +21,7 @@ const examples = [
     ...readdirSync(`${root}/site/public/charts`).filter(f => f.endsWith('.json'))
         .map(file => [`charts/${file}`, { ...JSON.parse(readFileSync(`${root}/site/public/charts/${file}`, 'utf8')), data: undefined }]),
 ];
-const chartData = readFileSync(`${root}/site/public/data/fuel-prices.csv`, 'utf8');
+const chartData = readFileSync(`${root}/site/public/data/fossil.csv`, 'utf8');
 
 // the urls of the examples are relative to the page, its files are the ones of site/public
 beforeEach(() => {

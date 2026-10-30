@@ -1405,7 +1405,7 @@ relative to the page. The definitions and the CSS can be edited on the page,
 the editor completes the keys and values of the JSON Schema. The examples of
 the use are `site/components/VueDemo.vue` and `site/public/standalone.html`
 (with the module of the standalone script of `dist-lib/esm/`, copied to
-`lib/esm/` of the page) of the chart `site/public/charts/prices.json`, the
+`lib/esm/` of the page) of the chart `site/public/charts/seasons.json`, the
 comparison with other libraries is `site/components/Comparison.vue`. The
 tests check and draw the examples, as the ones of `data/`.
 

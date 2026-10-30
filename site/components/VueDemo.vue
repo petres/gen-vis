@@ -1,11 +1,11 @@
 <template>
     <div class="vue-demo">
-        <GenVis def-file="charts/prices.json" v-model:state="state" csv @select="selected = $event"/>
+        <GenVis def-file="charts/seasons.json" v-model:state="state" csv @select="selected = $event"/>
         <dl>
             <dt>v-model:state <button type="button" :disabled="!state" @click="state = null">Reset</button></dt>
             <dd><pre>{{ JSON.stringify(state) }}</pre></dd>
             <dt>@select, a click or enter</dt>
-            <dd><pre>{{ selected ? `${selected.title}: ${selected.nearest?.fuel} ${selected.nearest?.y}` : '–' }}</pre></dd>
+            <dd><pre>{{ selected?.nearest ? `${selected.nearest.product} ${selected.nearest.year}, ${selected.title}: ${selected.nearest.y}` : '–' }}</pre></dd>
         </dl>
     </div>
 </template>
