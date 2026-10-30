@@ -23,6 +23,12 @@ describe('the schema', () => {
         expect(errors(def)).toEqual([]);
     });
 
+    test('the types of TypeScript of the definitions are the ones of the schema, see npm run types', async () => {
+        const { readFileSync } = await import('node:fs');
+        const { definitionTypes } = await import('../scripts/types.js');
+        expect(readFileSync(new URL('../types/definition.d.ts', import.meta.url), 'utf8')).toBe(await definitionTypes());
+    });
+
     test('knows the plot types, coordinate systems and locales', () => {
         expect(schema.definitions.plot.properties.type.enum).toEqual(Object.keys(plotTypes));
         expect(schema.definitions.options.properties.coord.enum).toEqual(Object.keys(coords));

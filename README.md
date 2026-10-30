@@ -73,7 +73,15 @@ app.use(GenVis);
 locally instead. `vue` is a peer dependency, the package uses the Vue of the
 application. `mountGenVisElement`, `mountGenVisByClass` and
 `unmountGenVisElement` are exported as well. The package has the types of
-TypeScript, e.g. of the props, the events and the methods.
+TypeScript, e.g. of the props, the events and the methods, and of the
+definitions (`Definition` and its parts, e.g. `MappingEntry` and `Plot`), of
+the [schema](#definition), so an editor checks a definition of the code:
+
+```ts
+import type { Definition } from '@preschen/gen-vis';
+
+const def: Definition = { data: 'data.csv', mapping: { ... }, plot: { ... } };
+```
 
 Parts which not every chart needs are loaded when a chart needs them, so a
 bundler of the application puts them into chunks of their own, the rest is
@@ -1326,6 +1334,7 @@ coordinate system loads its parts with its first chart, e.g. the ones of maps
 npm install
 npm run dev     # dev server with all definitions in data/, ?def=bev/def.json shows one with the prepared definition
 npm test        # unit tests, rendering and schema check of all definitions in data/
+npm run types   # the types of the definitions (types/definition.d.ts) of schema.json, a test checks them
 npm run build   # es module for bundlers in dist/
 npm run watch   # rebuilds dist/ on changes, e.g. for `npm link`
 npm run lib     # standalone script in dist-lib/, gen-vis.js (of the package) and gen-vis-<version>.js

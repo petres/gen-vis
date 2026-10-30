@@ -92,6 +92,8 @@ New:
   `polar:arc` from `startAngle` to `endAngle`, the hover of the slice under
   the pointer, a ring per category of a radial mapping; `radius` is a name
   of the facets of polar plots, e.g. of the hole of a donut
+- the types of TypeScript of the definitions, `Definition` and its parts,
+  generated of the schema (`npm run types`)
 - `validateDef` warns of unknown keys of form elements and of their
   entries, e.g. a `mapping` of an entry which is not part of its `patch`
 

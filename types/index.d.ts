@@ -1,9 +1,13 @@
 // the types of @preschen/gen-vis, a definition is the JSON of schema.json,
 // see the readme
 import type { ComponentPublicInstance, DefineComponent, Plugin } from 'vue';
+import type { GenVisDefinition } from './definition';
+
+// the types of the parts of a definition, e.g. MappingEntry or Plot
+export type * from './definition';
 
 /** A definition of a visualisation, see schema.json and the readme. */
-export type Definition = Record<string, unknown>;
+export type Definition = GenVisDefinition;
 
 /** A row of the data, the values of its columns. */
 export type Row = Record<string, unknown>;
