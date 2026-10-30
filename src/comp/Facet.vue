@@ -126,8 +126,9 @@ export default {
         },
 
         draw() {
-            // the elements are the ones without a highlight, also the one of the page
-            this.highlighter?.(null);
+            // the elements are the ones without a highlight, also the one of
+            // the page, at once, a transition would replace the new values
+            this.highlighter?.(null, true);
             // the elements which are not kept are drawn anew, e.g. the axes
             const inner = this.$refs.inner;
             // the position of the plots of the new facet already, before vue

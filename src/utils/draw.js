@@ -111,6 +111,12 @@ const rowOf = Symbol('row');
  * `nodeOf(plot)` is the element of a plot, the attributes move in `duration`
  * milliseconds to their values, if the transitions are loaded.
  */
+// the values of the definition of the attributes of an element which the
+// highlight changed, see highlighter
+const originals = Symbol('originals');
+// the values of the attributes of the transition of the highlight of an element
+const pending = Symbol('pending');
+
 const highlighter = (plotDefs, nodeOf, duration = 0) => {
     const plots = plotDefs.filter(p => p.highlightProps.length > 0 && p.categories.length > 0);
     const others = plotDefs.filter(p => p.othersProps?.length > 0);
@@ -155,68 +161,108 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
             node.removeAttribute('class');
     };
 
-    // an attribute, with a transition if it has a value before and after
-    const set = (node, n, value) => {
-        if (duration > 0 && d3.hasTransitions(d3.select(node))) {
+    // the attributes of the elements of an update of the highlight, at once
+    // or in one transition per element (one of an element would interrupt
+    // the one before), of the attributes with a value before and after
+    const apply = (targets, now) => targets.forEach((changes, node) => {
+        const moving = !now && duration > 0 && d3.hasTransitions(d3.select(node));
+        // the attributes of a transition of the element which is interrupted
+        // move on to their values, e.g. its color back to its own while its
+        // opacity is the one of the others
+        const values = { ...node[pending], ...changes };
+        if (node[pending]) {
             d3.select(node).interrupt('highlight');
-            if (value !== null && node.getAttribute(n) !== null)
-                return d3.select(node).transition('highlight').duration(duration).attr(n, value);
+            node[pending] = null;
         }
-        if (value === null)
-            node.removeAttribute(n);
-        else
-            node.setAttribute(n, value);
-    };
-
-    // the values of the props of `prefix`, the ones before are kept
-    const replace = (node, props, prefix) => {
-        finish(node);
-        props.forEach(n => {
-            const value = node.getAttribute(n);
-            if (value !== null)
-                node.setAttribute(`default-${n}`, value);
-            set(node, n, node.getAttribute(`${prefix}-${n}`));
+        let transition = null;
+        Object.entries(values).forEach(([n, value]) => {
+            if (moving && value !== null && node.getAttribute(n) !== null) {
+                (transition ??= d3.select(node).transition('highlight').duration(duration)).attr(n, value);
+                (node[pending] ??= {})[n] = value;
+            } else if (value === null)
+                node.removeAttribute(n);
+            else
+                node.setAttribute(n, value);
         });
+        transition?.on('end.pending', () => node[pending] = null);
+        // the values of the definition are kept until they are back, e.g. if
+        // the element is highlighted again while it moves back
+        if (!changed.has(node)) {
+            if (transition)
+                transition.on('end.originals', () => {
+                    if (!changed.has(node))
+                        node[originals] = null;
+                });
+            else
+                node[originals] = null;
+        }
+    });
+
+    // the elements whose attributes are the ones of the highlight
+    let changed = new Set();
+
+    // the values of the props of `prefix` of an element, the ones of the
+    // definition are kept, also as default- attributes
+    const replace = (targets, node, props, prefix) => {
+        finish(node);
+        node[originals] ??= {};
+        const values = targets.get(node) ?? {};
+        props.forEach(n => {
+            if (!Object.hasOwn(node[originals], n))
+                node[originals][n] = node.getAttribute(n);
+            if (node[originals][n] !== null)
+                node.setAttribute(`default-${n}`, node[originals][n]);
+            values[n] = node.getAttribute(`${prefix}-${n}`);
+        });
+        targets.set(node, values);
+        changed.add(node);
         elements.push({ node, props });
     };
 
-    return dataEntry => {
+    // `now` ends the highlight without a transition, e.g. before a draw
+    return (dataEntry, now = false) => {
+        // the values of the definition of the elements changed before
+        const targets = new Map();
         groups.forEach(unclass);
         elements.forEach(({ node, props }) => {
             unclass(node);
+            const values = targets.get(node) ?? {};
             props.forEach(n => {
-                set(node, n, node.getAttribute(`default-${n}`));
+                values[n] = node[originals]?.[n] ?? null;
                 node.removeAttribute(`default-${n}`);
             });
+            targets.set(node, values);
         });
         groups = [];
         elements = [];
-        if (!dataEntry)
-            return;
+        changed = new Set();
 
-        index ??= build();
-        const highlighted = new Set();
-        index.forEach(({ plot, groups: all }) => {
-            // the values are compared as strings, as the ones of the attributes
-            const conditions = plot.categories.filter(c => c in dataEntry).map(c => [c, String(dataEntry[c])]);
-            if (conditions.length == 0)
-                return;
-            all.filter(g => conditions.every(([c, v]) => g.keys[c] === v)).forEach(g => {
-                g.node.classList.add('vis-highlight');
-                g.node.parentNode.appendChild(g.node);
-                groups.push(g.node);
-                targetsOf(plot, g, dataEntry).forEach(node => {
-                    node.classList.add('vis-highlight');
-                    highlighted.add(node);
-                    replace(node, plot.highlightProps, 'highlight');
+        if (dataEntry) {
+            index ??= build();
+            const highlighted = new Set();
+            index.forEach(({ plot, groups: all }) => {
+                // the values are compared as strings, as the ones of the attributes
+                const conditions = plot.categories.filter(c => c in dataEntry).map(c => [c, String(dataEntry[c])]);
+                if (conditions.length == 0)
+                    return;
+                all.filter(g => conditions.every(([c, v]) => g.keys[c] === v)).forEach(g => {
+                    g.node.classList.add('vis-highlight');
+                    g.node.parentNode.appendChild(g.node);
+                    groups.push(g.node);
+                    targetsOf(plot, g, dataEntry).forEach(node => {
+                        node.classList.add('vis-highlight');
+                        highlighted.add(node);
+                        replace(targets, node, plot.highlightProps, 'highlight');
+                    });
                 });
             });
-        });
-        // the other elements, e.g. a label of the last value which is hidden
-        // while the one of another value is highlighted
-        otherIndex ??= buildOthers();
-        otherIndex.forEach(({ plot, nodes }) => nodes.filter(node => !highlighted.has(node))
-            .forEach(node => replace(node, plot.othersProps, 'others')));
+            // the other elements, e.g. a label of the last value which is hidden
+            // while the one of another value is highlighted
+            otherIndex ??= buildOthers();
+            otherIndex.forEach(({ plot, nodes }) => nodes.filter(node => !highlighted.has(node))
+                .forEach(node => replace(targets, node, plot.othersProps, 'others')));
+        }
+        apply(targets, now);
     };
 };
 

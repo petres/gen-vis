@@ -359,6 +359,26 @@ describe('the highlight', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the transitions of quick changes of the highlight end at the values of the definition', async () => {
+        const def = lineDef();
+        def.options.highlight = { transition: 40 };
+        def.plot[1] = { ...def.plot[1], highlight: 'row', props: { ...def.plot[1].props, fill: 'red', 'highlight-fill': 'black', 'others-opacity': 0.3 } };
+        delete def.mapping.c.props.categories.Wien.color;
+        const el = await mount(GenVis, { def, data: lineData });
+        const { pointer } = await import('./dom.js');
+        const events = el.querySelector('rect.vis-events');
+        // other rows, back to the first one and away, while the transitions run
+        for (const x of [100, 300, 500, 100, 300, 100, 500]) {
+            events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: 100 }));
+            await new Promise(r => setTimeout(r, 15));
+        }
+        events.dispatchEvent(pointer('pointerleave'));
+        const circles = [...el.querySelectorAll('g.vis-plot[data-plot="dots"] circle')];
+        await vi.waitFor(() => expect(circles.map(c => [c.getAttribute('fill'), c.getAttribute('opacity')]).filter(([f, o]) => !['red', 'rgb(255, 0, 0)'].includes(f) || o !== null)).toEqual([]));
+        expect(circles.every(c => !c.hasAttribute('default-fill'))).toBe(true);
+        expect(errors).toEqual([]);
+    });
+
     test('a transition of the highlight', async () => {
         const def = lineDef();
         def.options.highlight = { transition: 50 };
