@@ -1,7 +1,7 @@
 export { drawAxis };
 
 import * as d3 from "@/utils/d3";
-import { fitText, motion, setProps } from "@/utils/draw";
+import { fitText, motion, setAttrs } from "@/utils/draw";
 
 /**
  * The ticks of an axis of the positions top, right, bottom or left, as the
@@ -142,13 +142,13 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
     const moving = motion.duration > 0 && ga.node().hasChildNodes() && d3.hasTransitions(ga);
     const drawn = moving ? ga.transition('vis').duration(motion.duration) : ga;
     ticks(drawn, position, scale, { values, format, tickSizeInner: 9, tickSizeOuter: 0, tickPadding: +padding });
-    // the props of the line at once, its path moves with the transition
+    // the props of the line and of the labels at once, the transitions of
+    // the path and of the texts (their positions and texts) go on
     if (domain)
-        Object.entries(domain).filter(([, v]) => v === null || (typeof v != 'object' && typeof v != 'function'))
-            .forEach(([k, v]) => ga.select('.domain').attr(k, v));
+        ga.select('.domain').each(function() { setAttrs(this, domain) });
     if (labels) {
         const texts = ga.selectAll('.tick text');
-        texts.each(function(d) { setProps.call(this, labels(d)) });
+        texts.each(function(d) { setAttrs(this, labels(d)) });
         // texts in a width, at once or at the end of the transition of their texts
         const fit = () => texts.filter(function() { return this.hasAttribute('max-width') }).each(function() { fitText(this) });
         if (moving)

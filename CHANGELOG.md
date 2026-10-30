@@ -37,7 +37,10 @@ Changes which need changes of definitions:
   are strings of every format of the data, as the ones of CSV, also the
   rows and the `key` of the events `hover` and `select` of JSON and parquet
   data, e.g. `"2004"` instead of `2004`, and the values of form elements of
-  the values of a column (also their globals and the state)
+  the values of a column (also their globals and the state); a missing
+  category is `null` of every format, also an empty cell of CSV (it was an
+  empty string), so `null` of a `filter` is it, and a row without the
+  category of a mapping of the props of a plot is not drawn, as one of JSON
 - form elements: the patches of an entry are `patch`, e.g.
   `"patch": { "mapping": { "y": { "column": "share" } } }` instead of
   `"mapping": { "y": { "column": "share" } }`

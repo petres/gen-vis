@@ -112,8 +112,9 @@ const toDate = (v, utc = false) => {
 const continuous = mapping => mapping?.type == 'numeric' || mapping?.type == 'date';
 
 // the categories are strings, as the values of csv, so the values of JSON and
-// parquet are the same ones, e.g. the year 2004 is "2004" of every format
-const toCategory = v => v === null || v === undefined ? v : String(v);
+// parquet are the same ones, e.g. the year 2004 is "2004" of every format, a
+// missing one is null, also an empty cell of csv, as the null of JSON
+const toCategory = v => missing(v) ? null : String(v);
 
 // categories compared as numbers if both are numbers, e.g. "9" before "10",
 // otherwise as texts

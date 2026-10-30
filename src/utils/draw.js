@@ -1,4 +1,4 @@
-export { curves, setProps, groupAttrs, groupKey, highlighter, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, fitText };
+export { curves, setProps, setAttrs, groupAttrs, groupKey, highlighter, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, fitText };
 
 import * as d3 from "@/utils/d3";
 
@@ -120,21 +120,27 @@ const rowKey = v => {
     return ids.get(row);
 };
 
-// the attributes of an item: the ones which are set at once (`directOf`, in
-// their order, null removes one), e.g. the path of a feature, then its props
-// (see setProps), which move with the transition of the draw, the elements
-// of its children (`childrenOf`) are appended to a new element, e.g. the line
-// and the label of a tick
+// the attributes of an element at once, without a transition and without
+// stopping one of the element, in their order, null removes one, objects and
+// functions are left out, e.g. nested props
+const setAttrs = (node, attrs) => {
+    for (const k in attrs) {
+        const v = attrs[k];
+        if (v === null || v === undefined)
+            node.removeAttribute(k);
+        else if (typeof v != 'object' && typeof v != 'function')
+            node.setAttribute(k, v);
+    }
+};
+
+// the attributes of an item: the ones which are set at once (`directOf`), e.g.
+// the path of a feature, then its props (see setProps), which move with the
+// transition of the draw, the elements of its children (`childrenOf`) are
+// appended to a new element, e.g. the line and the label of a tick
 function drawItem(item) {
     const direct = item[directOf];
     if (direct)
-        for (const k in direct) {
-            const v = direct[k];
-            if (v === null || v === undefined)
-                this.removeAttribute(k);
-            else
-                this.setAttribute(k, v);
-        }
+        setAttrs(this, direct);
     setProps.call(this, item);
     const children = item[childrenOf];
     if (children && !this.hasChildNodes())

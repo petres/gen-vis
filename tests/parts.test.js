@@ -2,7 +2,7 @@
 // the parts of 3.0 which make definitions more flexible: patches of all parts
 // of a definition, globals of the page, filters, props, scales, the hover,
 // the highlight, legends, texts, transforms and messages
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect, vi, onTestFinished } from 'vitest';
 import { nextTick } from 'vue';
 import { GenVis } from '@/index.js';
 import { parquetWriteBuffer } from 'hyparquet-writer';
@@ -933,6 +933,31 @@ describe('the categories of every format of the data', () => {
         select.dispatchEvent(new Event('change'));
         await nextTick();
         expect(state.globals.year).toBe('2020');
+        expect(errors).toEqual([]);
+    });
+});
+
+describe('the labels of an axis with a transition', () => {
+    test('the ticks of the same positions have the texts of their new values, also with props of the labels', async () => {
+        // jsdom has no transforms of svg, d3 interpolates the translations of the ticks by them
+        Object.defineProperty(SVGElement.prototype, 'transform', { configurable: true, get() {
+            const [x = 0, y = 0] = (this.getAttribute('transform')?.match(/-?\d*\.?\d+(?:e-?\d+)?/g) ?? []).map(Number);
+            return { baseVal: { consolidate: () => ({ matrix: { a: 1, b: 0, c: 0, d: 1, e: x, f: y } }) } };
+        } });
+        onTestFinished(() => delete SVGElement.prototype.transform);
+        const def = lineDef({ transition: 40 });
+        def.globals = { col: 'a' };
+        def.mapping.x = { column: '{col}', type: 'categorical', scale: { type: 'band', orientation: 'horizontal' },
+            axis: { position: 'bottom', labels: { props: { 'font-weight': 'bold' } } } };
+        delete def.mapping.c;
+        def.formElements = [{ id: 'col', name: 'Spalte', ref: 'col', type: 'radio', values: [{ id: 'a', name: 'A', value: 'a' }, { id: 'b', name: 'B', value: 'b' }] }];
+        def.plot = { type: 'cartesian:bar', props: { x: '@x:scaled', y1: '@y:scaled' } };
+        const el = await mount(GenVis, { def, data: 'a,b,value\nA,C,1\nB,D,2' });
+        const labels = () => [...el.querySelectorAll('.vis-axis-bottom .tick text')].map(t => [t.textContent, t.getAttribute('font-weight')]);
+        expect(labels()).toEqual([['A', 'bold'], ['B', 'bold']]);
+        await select(el, 'b');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        expect(labels()).toEqual([['C', 'bold'], ['D', 'bold']]);
         expect(errors).toEqual([]);
     });
 });

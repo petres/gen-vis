@@ -201,15 +201,17 @@ describe('prepareData', () => {
             .toEqual([Date.UTC(2024, 5, 1), Date.UTC(2024, 5, 1, 13, 5), null]);
     });
 
-    test('missing and invalid values are null, not 0', () => {
+    test('missing and invalid values are null, not 0, missing categories too, e.g. an empty cell of csv as null of JSON', () => {
         expect(prepareData([
             { year: '', date: '', land: '' },
             { year: 'NA', date: 'unknown', land: 'Tirol' },
             { year: null },
+            { land: ' ' },
         ], def)).toEqual([
-            { x: null, t: null, c: '' },
+            { x: null, t: null, c: null },
             { x: null, t: null, c: 'Tirol' },
-            { x: null, t: null, c: undefined },
+            { x: null, t: null, c: null },
+            { x: null, t: null, c: null },
         ]);
     });
 

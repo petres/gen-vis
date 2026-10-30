@@ -458,7 +458,7 @@ script reads only snappy and uncompressed parquet.
 The values of a `categorical` mapping (and of a mapping without a `type`)
 are strings, as the ones of CSV, whatever the format of the data, e.g. the
 year 2004 of a parquet or JSON column is `"2004"`, so a definition is the same
-for every format. The values of the definition are converted the same way,
+for every format. A missing category is `null`, also an empty cell of CSV. The values of the definition are converted the same way,
 the keys of `props`, the fixed `values` of an axis, the `domain` of a scale,
 the values of annotations, of the `data` of plots, of `filter` and of
 references such as `"@x:scaled:2004"`, so they can be strings or numbers,
