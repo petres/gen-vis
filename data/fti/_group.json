@@ -1,0 +1,11 @@
+{
+    "globals": { "group": "inno" },
+    "formElements": [{
+        "id": "group", "name": "In relation to", "ref": "group", "type": "radio",
+        "values": [
+            { "id": "inno", "name": "Innovation Leaders (2025)", "value": "inno" },
+            { "id": "top3", "name": "Top 3", "value": "top3" },
+            { "id": "eu", "name": "EU-27", "value": "eu" }
+        ]
+    }]
+}

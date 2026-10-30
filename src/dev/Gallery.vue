@@ -15,11 +15,13 @@
         </header>
 
         <!-- a single definition with the prepared and the original one -->
-        <GenVis v-if="single" :def-file="`/data/${single}`" debug/>
+        <div v-if="single" :data-dir="dirOf(single)" :data-def="single">
+            <GenVis :def-file="`/data/${single}`" debug/>
+        </div>
 
         <section v-else v-for="g in groups" :key="g.dir" :id="g.dir">
             <h2>{{ g.dir }}</h2>
-            <article v-for="d in g.defs" :key="d.path">
+            <article v-for="d in g.defs" :key="d.path" :data-dir="g.dir" :data-def="d.path">
                 <a class="path" :href="`?def=${d.path}`" title="with the prepared definition">{{ d.path }}</a>
                 <LazyVis :def-file="`/data/${d.path}`"/>
             </article>
@@ -34,6 +36,13 @@ import { definitions } from '@/dev/definitions.js';
 
 // the json files in data/, also of linked directories
 const defs = definitions(import.meta.glob('/data/**/*.json', { eager: true, import: 'default' }));
+
+// the styles of the charts of a directory, e.g. data/fti/style.css, the
+// charts are in elements with its path (data-dir) and the one of their
+// definition (data-def)
+import.meta.glob('/data/**/*.css', { eager: true });
+
+const dirOf = path => path.split('/').slice(0, -1).join('/');
 
 export default {
     components: { GenVis, LazyVis },
@@ -55,12 +64,13 @@ export default {
         groups() {
             const groups = new Map();
             this.shown.forEach(d => {
-                const dir = d.path.split('/').slice(0, -1).join('/');
+                const dir = dirOf(d.path);
                 groups.set(dir, [...(groups.get(dir) ?? []), d]);
             });
             return [...groups].map(([dir, defs]) => ({ dir, defs }));
         },
     },
+    methods: { dirOf },
 };
 </script>
 

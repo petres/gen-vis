@@ -1,0 +1,55 @@
+{
+    "data": "d2-map.csv",
+    "options": {
+        "locale": { "base": "en", "number": { "currency": ["", " %"] } },
+        "coord": "geo",
+        "height": 420,
+        "margins": { "top": 5, "right": 5, "bottom": 5, "left": 5 },
+        "title": "Efficiency",
+        "subtitle": "International comparison, relative to the comparison group (= 100)",
+        "footer": "Source: <a href=\"https://fti-monitor.forwit.at/en/B/D.2\">FTI Monitor D.2</a>, FORWIT; map: Natural Earth",
+        "hover": { "title": "<small>In relation to {group}</small>{title}: " }
+    },
+    "geo": {
+        "data": "../geo/world.json",
+        "join": "country",
+        "fit": "data",
+        "exclude": ["AQ"],
+        "projection": { "type": "mercator" }
+    },
+    "globals": { "group": "Innovation Leaders (2025)", "view": "World" },
+    "filter": { "view": "@view" },
+    "formElements": [{
+        "id": "group", "name": "In relation to", "ref": "group", "type": "radio",
+        "values": [
+            { "id": "inno", "name": "Innovation Leaders (2025)", "value": "Innovation Leaders (2025)" },
+            { "id": "eu", "name": "EU-27", "value": "the EU-Average" }
+        ]
+    }, {
+        "id": "view", "name": "Map", "ref": "view", "type": "radio", "inImage": false,
+        "values": [
+            { "id": "Europe", "name": "Europe", "value": "Europe" },
+            { "id": "World", "name": "World", "value": "World" }
+        ]
+    }],
+    "mapping": {
+        "country": { "column": "country", "type": "categorical" },
+        "view": { "column": "view", "type": "categorical" },
+        "value": {
+            "name": "Relative to the comparison group",
+            "column": "{group}",
+            "type": "numeric",
+            "scale": {
+                "type": "threshold",
+                "domain": [74.5, 89.5, 99.5, 109.5],
+                "range": ["#EA4B55", "#F59036", "#F9EB00", "#AFD24B", "#3CAF55"]
+            },
+            "legend": { "format": ".0f" },
+            "hover": { "format": "$.0f" }
+        }
+    },
+    "plot": [
+        { "type": "geo:base", "props": { "fill": "#D2D2D2", "stroke": "white", "stroke-width": 0.5 } },
+        { "type": "geo:region", "categories": ["country"], "props": { "fill": "@value:scaled", "stroke": "white", "stroke-width": 0.5, "highlight-opacity": 0.7 } }
+    ]
+}

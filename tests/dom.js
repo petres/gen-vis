@@ -68,11 +68,19 @@ export const pointer = (type, init = {}) => new PointerEvent(type, { pointerType
 export const hover = async el => {
     let rows = 0;
     for (const events of el.querySelectorAll('rect.vis-events')) {
-        for (let x = 0; x <= 800; x += 25) {
-            events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: 150 }));
-            await nextTick();
-            rows = Math.max(rows, el.querySelectorAll('.vis-hover tr.vis-hover-entry').length);
+        // other heights only if the line at 150 has no hover, e.g. the space
+        // between the groups of the rows of horizontal bars
+        let found = 0;
+        for (const y of [150, 100, 200, 50, 250, 300, 350]) {
+            for (let x = 0; x <= 800; x += 25) {
+                events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: y }));
+                await nextTick();
+                found = Math.max(found, el.querySelectorAll('.vis-hover tr.vis-hover-entry').length);
+            }
+            if (found > 0)
+                break;
         }
+        rows = Math.max(rows, found);
         events.dispatchEvent(pointer('pointerleave'));
     }
     return rows;

@@ -1,0 +1,48 @@
+/* The look of the FTI Monitor (fti-monitor.forwit.at) on the dev page, its
+   charts are in elements with data-dir="fti" and data-def="fti/<file>" */
+[data-dir="fti"] .vis {
+    --gen-vis-font-family: "TT Norms Pro", "TTNormsPro", "Outfit", "Segoe UI", system-ui, sans-serif;
+    --gen-vis-grid-color: #DDD;
+    background: #F5F6FA;
+    padding: 16px 16px 12px;
+    color: #222;
+    /* the legend below the chart, the footer at the end */
+    display: flex;
+    flex-direction: column;
+}
+[data-dir="fti"] .vis-legends { order: 1; text-align: center; }
+[data-dir="fti"] .vis-footer { order: 2; }
+[data-dir="fti"] .vis-legend-title { display: none; }
+[data-dir="fti"] .vis-title { font-size: 18px; }
+
+/* the axes without lines, the labels of the axis at the top bold */
+[data-dir="fti"] .vis-axis path.domain, [data-dir="fti"] .vis-axis .tick line { display: none; }
+[data-dir="fti"] .vis-axis-top text { font-size: 13px; font-weight: bold; }
+
+/* the bars and the lines have no hover box and no line of the hover, the
+   hover highlights the elements of its row, of the bars a larger circle
+   with the value, of the lines the ring of the year */
+[data-def$="-bars.json"] .vis-hover, [data-def$="-series.json"] .vis-hover,
+[data-def$="-bars.json"] .vis-hover-marker, [data-def$="-series.json"] .vis-hover-marker { display: none; }
+
+/* the ring of the last year while the hover shows the one of another year */
+[data-def$="-series.json"] .vis-svg:has([data-plot="ring"] .vis-highlight)
+    :is([data-plot="last"], [data-plot="last-value"], [data-plot="last-year"]) { display: none; }
+
+/* the hover of the map: bold text above the country, without a box, only of
+   the countries with a value */
+[data-def$="-map.json"] .vis .vis-hover {
+    left: 0 !important;
+    transform: translate(-50%, calc(-100% - 10px)) !important;
+    width: 200px;
+    background: none;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #222;
+}
+[data-def$="-map.json"] .vis .vis-hover:not(:has(.vis-hover-entry)) { display: none; }
+[data-def$="-map.json"] .vis .vis-hover .vis-hover-title { display: inline; border: none; padding: 0; }
+[data-def$="-map.json"] .vis .vis-hover .vis-hover-title small { display: block; font-size: 10px; line-height: 12px; }
+[data-def$="-map.json"] .vis .vis-hover .vis-hover-entries { display: inline-table; }
+[data-def$="-map.json"] .vis .vis-hover .vis-hover-entries td { padding: 0; }

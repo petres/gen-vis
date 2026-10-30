@@ -1,0 +1,29 @@
+label,short,level,io,inno,top3,eu
+AI use - individuals,AI use - individuals,header,output,87.36,70.38,119.61
+AI use in the last 3 months,AI use in the last 3 months,item,output,86.91,77.92,107.31
+AI use for the purpose of formal education,AI use for the purpose of formal education,item,output,84.94,63.93,122.2
+AI use for professional purposes,AI use for professional purposes,item,output,90.22,69.31,129.31
+gap1,,item,output,,,
+AI usage in SMEs,AI usage in SMEs,header,output,80.42,77.63,145.77
+gap2,,item,output,,,
+Used AI technologies in companies,Used AI technologies in companies,header,output,74.01,70.32,143.22
+At least one AI technology used,At least one AI technology used,item,output,80.89,78.21,144.48
+AI heavy user: at least 3 AI technologies used,AI heavy user: at least 3 AI technologies…,item,output,67.13,62.44,141.95
+gap3,,item,output,,,
+Breadth of AI application in companies,Breadth of AI application in companies,header,output,81.17,76.56,145.46
+AI use for R&D,AI use for R&D,item,output,70.04,62.8,127.1
+AI use for at least 1 business function,AI use for at least 1 business function,item,output,107.43,103.14,180.49
+AI use for at least 3 business functions,AI use for at least 3 business functions,item,output,66.05,63.73,128.77
+gap4,,item,input,,,
+Type of AI implementation in companies,Type of AI implementation in companies,header,input,78.31,72.53,136.32
+Own development,Own development,item,input,73.1,71.48,128.65
+External purchase,External purchase,item,input,83.52,73.58,143.98
+gap5,,item,input,,,
+Barriers to AI use in companies,Barriers to AI use in companies,header,input,80.93,35.02,73.65
+Costs,Costs,item,input,72.1,49.19,98.7
+Lack of skills,Lack of skills,item,input,96.13,31.34,70.44
+Technical problems (incompatibility),Technical problems (incompatibility),item,input,91.05,40.29,80.0
+Data availability or quality,Data availability or quality,item,input,87.6,32.68,72.21
+Data protection concerns,Data protection concerns,item,input,81.49,29.32,67.33
+Legal concerns,Legal concerns,item,input,75,32.32,68.79
+No benefit,No benefit,item,input,63.13,29.99,58.1

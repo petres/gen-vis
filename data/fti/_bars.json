@@ -1,0 +1,109 @@
+{
+    "parent": "_group.json",
+    "options": {
+        "locale": { "base": "en", "number": { "currency": ["", "%"] } },
+        "margins": { "top": 34, "right": 50, "bottom": 6, "left": 320 },
+        "subtitle": "Sub-indicators, Austria relative to the comparison group (= 100)"
+    },
+    "mapping": {
+        "x": {
+            "column": "{group}",
+            "type": "numeric",
+            "scale": { "type": "linear", "orientation": "horizontal", "domain": [0, null] },
+            "axis": { "position": "top", "values": [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200], "format": "d" },
+            "hover": { "format": ".1f" }
+        },
+        "y": {
+            "column": "label",
+            "type": "categorical",
+            "scale": { "type": "band", "orientation": "vertical", "padding": 0.45, "range": [0, "@height"] }
+        },
+        "short": { "column": "short", "type": "categorical" },
+        "color": {
+            "column": "{group}",
+            "type": "numeric",
+            "scale": {
+                "type": "threshold",
+                "domain": [74.5, 89.5, 99.5, 109.5],
+                "range": ["#EA4B55", "#F59036", "#F9EB00", "#AFD24B", "#3CAF55"]
+            }
+        },
+        "level": {
+            "column": "level",
+            "type": "categorical",
+            "props": { "categories": {
+                "header": { "bar": "#C2C2C2", "barHover": "#9A9A9A", "weight": "bold", "hole": 4.5, "marker": 5 },
+                "item": { "bar": "#DCDCDC", "barHover": "#A6A6A6", "weight": "normal", "hole": 0, "marker": 5 }
+            } }
+        },
+        "io": {
+            "column": "io",
+            "type": "categorical",
+            "props": { "categories": {
+                "input": { "name": "Input", "fill": "white" },
+                "output": { "name": "Output", "fill": "black" }
+            } },
+            "legend": { "symbol": { "type": "circle", "size": 14, "props": { "fill": "@fill", "stroke": "black", "stroke-width": 1.5 } } }
+        }
+    },
+    "plot": [
+        {
+            "id": "bars",
+            "type": "cartesian:bar",
+            "categories": ["level"],
+            "highlight": "row",
+            "props": { "x1": "@x:scaled", "y": "@y:scaled", "fill": "@bar", "highlight-fill": "@barHover" }
+        },
+        {
+            "id": "axis",
+            "type": "svg:line",
+            "props": { "x1": "@x:scaled:0", "x2": 1.5, "y1": "@y:scaled:center", "y2": "@y:scaled:center", "stroke": "black" }
+        },
+        {
+            "id": "dots",
+            "type": "svg:circle",
+            "categories": ["level"],
+            "highlight": "row",
+            "props": { "cx": "@x:scaled", "cy": "@y:scaled:center", "r": 7.5, "fill": "@color:scaled", "highlight-r": 11 }
+        },
+        {
+            "id": "holes",
+            "type": "svg:circle",
+            "categories": ["level"],
+            "highlight": "row",
+            "props": { "cx": "@x:scaled", "cy": "@y:scaled:center", "r": "@hole", "fill": "white", "highlight-r": 0 }
+        },
+        {
+            "id": "io",
+            "type": "svg:circle",
+            "categories": ["io", "level"],
+            "props": {
+                "cx": "@x:scaled:0", "cy": "@y:scaled:center", "r": "@marker", "transform": "translate(-14 0)",
+                "fill": "@fill", "stroke": "black", "stroke-width": 1.5
+            }
+        },
+        {
+            "id": "labels",
+            "type": "svg:text",
+            "categories": ["level"],
+            "props": {
+                "x": "@x:scaled:0", "dx": -28, "y": "@y:scaled:center", "dominant-baseline": "central",
+                "text-anchor": "end", "font-size": 13, "font-weight": "@weight", "text": "@short"
+            }
+        },
+        {
+            "id": "value",
+            "type": "svg:text",
+            "categories": ["level"],
+            "highlight": "row",
+            "props": {
+                "x": "@x:scaled", "dx": 15, "y": "@y:scaled:center", "dominant-baseline": "central",
+                "font-size": 13, "font-weight": "bold", "text": { "prop": "format", "ref": "x", "format": "$.0f" },
+                "visibility": "hidden", "highlight-visibility": "visible"
+            }
+        }
+    ],
+    "annotations": [
+        { "type": "line", "x": 100, "props": { "stroke": "#BBB", "stroke-width": 1.5 } }
+    ]
+}

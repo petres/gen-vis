@@ -1234,7 +1234,10 @@ their changes of the daylight saving time.
 
 The page of the dev server (`index.html`, `src/dev/`) shows the definitions in
 `data/`, also of linked directories, e.g. of the pages using the package,
-without the mixins (`_*.json`). All definitions in `data/` are rendered,
+without the mixins (`_*.json`). The CSS files in `data/` style the charts of
+the page, the charts are in elements with the path of their directory
+(`data-dir`) and of their definition (`data-def`), e.g. `data/fti/style.css`
+is the look of the charts of `data/fti/` (`[data-dir="fti"]`). All definitions in `data/` are rendered,
 hovered and checked by the tests, so they have to stay valid. `data/energy/`
 is a selection of the energy dashboard, see its `README.md`.
 
