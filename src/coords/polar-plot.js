@@ -96,7 +96,7 @@ const radialAxis = (ctx, g, s, values, format, axis) => {
         if (axis.gridShape == "polygon" && angle) {
             const hAxis = ctx.store.mapping(h).axis;
             const arc = Math.abs(angle.range()[1] - angle.range()[0])*radiusRange(ctx)[1];
-            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, tickCount(hAxis, ctx.scope, arc), ctx.store.mapping(h)) : angle.domain());
+            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, tickCount(hAxis, ctx.scope, arc), ctx.store.mapping(h), ctx.scope) : angle.domain());
             grid.selectAll("path")
                 .data(values)
                 .join("path")
@@ -165,7 +165,7 @@ const axes = ctx => {
             .attr("font-size", 10)
             .attr("font-family", "sans-serif");
         const draw = { angular: angularAxis, radial: radialAxis }[i.position];
-        draw(ctx, g, s, tickValues(i, s, ticks, m), format, i);
+        draw(ctx, g, s, tickValues(i, s, ticks, m, ctx.scope), format, i);
     });
 };
 

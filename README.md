@@ -661,7 +661,8 @@ parent or of a patch, e.g. `"hover": null`.
   `angular` and `radial`), `ticks`, `tickSpacing` (without `ticks` a tick per
   this many pixels of the axis, e.g. `80`, so a narrow chart has fewer ticks,
   instead of a `relative` prop of `ticks`), `values` (fixed ticks, the ones
-  outside of the domain are left out), `format` (d3 number or time format),
+  outside of the domain are left out, also a prop of the names of the facet,
+  e.g. steps of `totalWidth`), `format` (d3 number or time format),
   `rotate` (the angle of the labels in degrees, positive counterclockwise,
   negative clockwise), `labels` (of cartesian axes: the `props` of the
   labels, svg attributes and `text`, e.g. `{"font-weight": "@weight",
@@ -755,7 +756,8 @@ parent or of a patch, e.g. `"hover": null`.
   the bottom. `@y:start` and `@y:end` are the start and the end
   of the stacked value, `@y:start:scaled` and `@y:end:scaled` their positions,
   e.g. `y0` and `y1` of `cartesian:bar`, `@y:height:scaled` the difference,
-  e.g. the height of an `svg:rect`.
+  e.g. the height of an `svg:rect`, `@y:mid` and `@y:mid:scaled` the middle,
+  e.g. of a label in its stack.
 
 ### `plot`
 

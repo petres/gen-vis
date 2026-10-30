@@ -87,9 +87,10 @@ describe('plotGroups', () => {
         const def = { mapping: { ...mapping(), y: { ...mapping().y, stacked: true } } };
         const { groups: [wien, tirol], facet } = await groups({ type: 'svg:rect', categories: ['c'], props: {
             v: '@y', x: '@x:scaled', zero: '@y:scaled:0', max: '@y:scaled:max', start: '@y:start', end: '@y:end', top: '@y:end:scaled', h: '@y:height:scaled',
+            mid: '@y:mid', midY: '@y:mid:scaled',
         } }, def);
         const y = facet.scales.y;
-        expect(tirol.at(tirol.rows[0])).toEqual({ v: 10, x: facet.scales.x(2020), zero: y(0), max: y(y.domain()[1]), start: 1, end: 11, top: y(11), h: y(1) - y(11) });
+        expect(tirol.at(tirol.rows[0])).toEqual({ v: 10, x: facet.scales.x(2020), zero: y(0), max: y(y.domain()[1]), start: 1, end: 11, top: y(11), h: y(1) - y(11), mid: 6, midY: y(6) });
         expect(wien.at(wien.rows[0])).toMatchObject({ start: 0, end: 1 });
         // the rows are not changed
         expect(Object.keys(tirol.rows[0])).toEqual(['x', 'y', 'c', 'color']);

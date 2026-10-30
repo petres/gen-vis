@@ -27,10 +27,14 @@ const tickCount = (axis, scope, length) => {
 
 // the values of the ticks of an axis, also of the grid lines, fixed ones are
 // converted as the values of the data of the `mapping`, e.g. dates of
-// "2020-04-01"
-const tickValues = (axis, scale, ticks, mapping) => axis.values
-    ? axis.values.map(v => mapping && ['numeric', 'date'].includes(mapping.type) ? convert(mapping, v) : v).filter(v => v !== null && inRange(scale, v))
-    : (scale.ticks ? scale.ticks(ticks) : scale.domain());
+// "2020-04-01", they can be a prop of the names of the facet (`scope`)
+const tickValues = (axis, scale, ticks, mapping, scope = {}) => {
+    // a list or a prop, e.g. steps of the width
+    const values = axis.values === undefined ? undefined : evaluate(axis.values, scope);
+    return Array.isArray(values)
+        ? values.map(v => mapping && ['numeric', 'date'].includes(mapping.type) ? convert(mapping, v) : v).filter(v => v !== null && inRange(scale, v))
+        : (scale.ticks ? scale.ticks(ticks) : scale.domain());
+};
 
 // the format of the ticks of the axis of a mapping, by default as the one of
 // d3 but in the locale, null for the default of d3

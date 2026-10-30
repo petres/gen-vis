@@ -76,12 +76,12 @@ const axes = ctx => {
             });
 
         if (i.values) {
-            a.tickValues(tickValues(i, s, ticks, m))
+            a.tickValues(tickValues(i, s, ticks, m, ctx.scope))
         }
 
         // the grid lines are at the ticks of the axis
         if (i.grid)
-            grid(ctx, n, s, tickValues(i, s, ticks, m), ['left', 'right'].includes(i.position));
+            grid(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope), ['left', 'right'].includes(i.position));
 
         // the axis of the draw before, its ticks are moved with a transition
         const ga = ctx.keep(`axis ${n}`, () => inner.append("g"))

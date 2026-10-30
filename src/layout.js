@@ -222,6 +222,9 @@ const rowValue = (ctx, name, rows) => {
         'start:scaled': () => stackOf && s && (row => s(start(row))),
         'end:scaled': () => stackOf && s && (row => s(end(row))),
         'height:scaled': () => stackOf && s && (row => s(start(row)) - s(end(row))),
+        // the middle of a stacked value, e.g. of a label in its stack
+        'mid': () => stackOf && (row => (start(row) + end(row))/2),
+        'mid:scaled': () => stackOf && s && (row => s((start(row) + end(row))/2)),
     };
     const kind = parts.join(':');
     // the position of a value, e.g. "@x:scaled:0" or "@y:scaled:100"

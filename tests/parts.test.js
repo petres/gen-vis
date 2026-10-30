@@ -677,3 +677,13 @@ describe('ticks of null', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('fixed ticks as a prop', () => {
+    test('e.g. fewer of a narrow visualisation', async () => {
+        const def = lineDef({ width: 400 });
+        def.mapping.x.axis = { position: 'bottom', format: 'd', values: { prop: 'steps', ref: 'totalWidth', steps: [{ cut: 0, value: [2020, 2023] }, { cut: 500, value: [2020, 2021, 2022, 2023] }] } };
+        const el = await mount(GenVis, { def, data: lineData });
+        expect([...el.querySelectorAll('.vis-axis-bottom .tick text')].map(t => t.textContent)).toEqual(['2020', '2023']);
+        expect(errors).toEqual([]);
+    });
+});

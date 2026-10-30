@@ -49,7 +49,10 @@ New:
 - scales: `include` (values of the domain taken from the data, e.g. 0),
   `center` (a symmetric domain), `"closed": "right"` of threshold scales
   (`value > limit`); the references `@y:bandwidth`, `@y:step` (also of
-  annotations) and the position of any value, e.g. `@x:scaled:100`
+  annotations) and the position of any value, e.g. `@x:scaled:100`, the
+  middle of a stacked value (`@y:mid`, `@y:mid:scaled`), e.g. of labels
+  in the stacks; the fixed ticks of an axis (`axis.values`) are a prop, e.g.
+  fewer on a phone
 - the order of the categories of the data of a scale (`scale.order`),
   ascending, descending or by the value of a mapping, e.g. sorted bars
 - groups of the categories of band and point scales (`scale.groups`), with

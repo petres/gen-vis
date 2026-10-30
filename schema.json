@@ -410,7 +410,7 @@
                 },
                 "ticks": { "anyOf": [{ "$ref": "#/definitions/number" }, { "$ref": "#/definitions/none" }], "description": "The number of the ticks, null for the ones of tickSpacing, e.g. of a parent." },
                 "tickSpacing": { "$ref": "#/definitions/number", "description": "Without ticks, a tick per this many pixels of the length of the axis, e.g. 80." },
-                "values": { "type": "array", "description": "Fixed ticks." },
+                "values": { "anyOf": [{ "type": "array" }, { "$ref": "#/definitions/prop" }], "description": "Fixed ticks, the ones outside of the domain are left out, also a prop, e.g. steps of totalWidth." },
                 "format": { "type": "string", "description": "A d3 number or time format." },
                 "labels": {
                     "type": "object",

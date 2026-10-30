@@ -80,8 +80,8 @@ const rowNames = (n, m) => [
     `${n}:formatted`,
     ...(m.scale ? [`${n}:scaled`, `${n}:scaled:center`, `${n}:scaled:min`, `${n}:scaled:max`, `${n}:bandwidth`, `${n}:step`] : []),
     ...(['band', 'point'].includes(m.scale?.type) ? [`${n}:group:start`, `${n}:group:end`] : []),
-    ...(m.stacked ? [`${n}:start`, `${n}:end`] : []),
-    ...(m.stacked && m.scale ? [`${n}:start:scaled`, `${n}:end:scaled`, `${n}:height:scaled`] : []),
+    ...(m.stacked ? [`${n}:start`, `${n}:end`, `${n}:mid`] : []),
+    ...(m.stacked && m.scale ? [`${n}:start:scaled`, `${n}:end:scaled`, `${n}:height:scaled`, `${n}:mid:scaled`] : []),
 ];
 
 // the props of the categories of a mapping, `name` and `visible` are set by
@@ -257,6 +257,8 @@ const validateDef = def => {
             if (!coord.positions.includes(m.axis.position))
                 warn(`${path}.axis.position`, `unknown position '${m.axis.position}', expected one of ${list(coord.positions)}`);
             checkProp(m.axis.ticks, `${path}.axis.ticks`, warn, names.facet);
+            if (m.axis.values !== undefined && !Array.isArray(m.axis.values))
+                checkProp(m.axis.values, `${path}.axis.values`, warn, names.facet);
             const labels = m.axis.labels;
             if (labels !== undefined && !isObject(labels))
                 warn(`${path}.axis.labels`, `expected the props of the labels, e.g. { "props": { "font-weight": "bold" } }`);
