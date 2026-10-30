@@ -1387,6 +1387,13 @@ describe('the hover of the nearest point', () => {
         events.dispatchEvent(pointer('pointermove', { clientX: cx - 60, clientY: cy }));
         await nextTick();
         expect(el.querySelector('.vis-hover')).toBeNull();
+        // a point of the cell beside the one of the pointer, the points are in
+        // cells of the size of the radius
+        const across = cx % 20 > 0 ? cx + 20 - cx % 20 + 0.5 : cx - 0.5;
+        expect(Math.floor(across/20)).not.toBe(Math.floor(cx/20));
+        events.dispatchEvent(pointer('pointermove', { clientX: across, clientY: cy + 1 }));
+        await nextTick();
+        expect([...el.querySelectorAll('.vis-hover tr')].map(tr => tr.textContent)).toEqual(['Wien4,0']);
 
         const { default: polar } = await import('@/coords/polar');
         const { scaleLinear } = await import('d3-scale');

@@ -67,28 +67,40 @@ export default {
         update: true,
         render(groups, parent, plot, ctx) {
             const type = 'cartesian:bar';
-            if ('x1' in plot.props)
+            // the scales, the default width and the base of the bars are the
+            // same for all rows, they are taken at the first row which needs
+            // them, e.g. the error of a missing width only with rows
+            const once = f => {
+                let value;
+                return () => value ??= f();
+            };
+            if ('x1' in plot.props) {
+                const yScale = once(() => barScale(plot, ctx, 'y', type));
+                const thickness = once(() => barWidth(yScale(), type));
+                const base = once(() => barScale(plot, ctx, 'x1', type)(0));
                 return pointwise(groups, parent, "rect", v => {
-                    const yScale = barScale(plot, ctx, 'y', type);
-                    const height = v.height ?? barWidth(yScale, type);
-                    const x0 = 'x0' in v ? v.x0 : barScale(plot, ctx, 'x1', type)(0);
+                    const height = v.height ?? thickness();
+                    const x0 = 'x0' in v ? v.x0 : base();
                     const { x0: _, x1: __, ...props } = v;
                     return {
                         ...props,
                         x: Math.min(x0, v.x1),
                         width: Math.abs(v.x1 - x0),
-                        y: v.y + bandCenter(yScale) - height/2,
+                        y: v.y + bandCenter(yScale()) - height/2,
                         height,
                     };
                 });
+            }
+            const xScale = once(() => barScale(plot, ctx, 'x', type));
+            const thickness = once(() => barWidth(xScale(), type));
+            const base = once(() => barScale(plot, ctx, 'y1', type)(0));
             return pointwise(groups, parent, "rect", v => {
-                const xScale = barScale(plot, ctx, 'x', type);
-                const width = v.width ?? barWidth(xScale, type);
-                const y0 = 'y0' in v ? v.y0 : barScale(plot, ctx, 'y1', type)(0);
+                const width = v.width ?? thickness();
+                const y0 = 'y0' in v ? v.y0 : base();
                 const { y0: _, y1: __, ...props } = v;
                 return {
                     ...props,
-                    x: v.x + bandCenter(xScale) - width/2,
+                    x: v.x + bandCenter(xScale()) - width/2,
                     width,
                     y: Math.min(y0, v.y1),
                     height: Math.abs(v.y1 - y0),

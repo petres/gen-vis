@@ -219,8 +219,38 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
         elements.push({ node, props });
     };
 
+    // the groups and the elements of the plots of a highlight, see targetsOf
+    const selection = dataEntry => {
+        const found = { active: Boolean(dataEntry), groups: [], targets: [] };
+        if (!dataEntry)
+            return found;
+        index ??= build();
+        index.forEach(({ plot, groups: all }) => {
+            // the values are compared as strings, as the ones of the attributes
+            const conditions = plot.categories.filter(c => c in dataEntry).map(c => [c, String(dataEntry[c])]);
+            if (conditions.length == 0)
+                return;
+            all.filter(g => conditions.every(([c, v]) => g.keys[c] === v)).forEach(g => {
+                found.groups.push(g.node);
+                found.targets.push([plot, targetsOf(plot, g, dataEntry)]);
+            });
+        });
+        return found;
+    };
+    const same = (a, b) => a === b || (a.length == b.length && a.every((e, i) => e === b[i]));
+    // the selection shown, a highlight of the same elements changes nothing,
+    // e.g. of another row of the group of a line or of the points of a group
+    let shown = { active: false, groups: [], targets: [] };
+    const unchanged = next => next.active == shown.active && same(next.groups, shown.groups)
+        && next.targets.length == shown.targets.length
+        && next.targets.every(([plot, nodes], i) => plot === shown.targets[i][0] && same(nodes, shown.targets[i][1]));
+
     // `now` ends the highlight without a transition, e.g. before a draw
     return (dataEntry, now = false) => {
+        const next = selection(dataEntry);
+        if (!now && unchanged(next))
+            return;
+        shown = next;
         // the values of the definition of the elements changed before
         const targets = new Map();
         groups.forEach(unclass);
@@ -238,24 +268,17 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
         changed = new Set();
 
         if (dataEntry) {
-            index ??= build();
             const highlighted = new Set();
-            index.forEach(({ plot, groups: all }) => {
-                // the values are compared as strings, as the ones of the attributes
-                const conditions = plot.categories.filter(c => c in dataEntry).map(c => [c, String(dataEntry[c])]);
-                if (conditions.length == 0)
-                    return;
-                all.filter(g => conditions.every(([c, v]) => g.keys[c] === v)).forEach(g => {
-                    g.node.classList.add('vis-highlight');
-                    g.node.parentNode.appendChild(g.node);
-                    groups.push(g.node);
-                    targetsOf(plot, g, dataEntry).forEach(node => {
-                        node.classList.add('vis-highlight');
-                        highlighted.add(node);
-                        replace(targets, node, plot.highlightProps, 'highlight');
-                    });
-                });
+            next.groups.forEach(node => {
+                node.classList.add('vis-highlight');
+                node.parentNode.appendChild(node);
+                groups.push(node);
             });
+            next.targets.forEach(([plot, nodes]) => nodes.forEach(node => {
+                node.classList.add('vis-highlight');
+                highlighted.add(node);
+                replace(targets, node, plot.highlightProps, 'highlight');
+            }));
             // the other elements, e.g. a label of the last value which is hidden
             // while the one of another value is highlighted
             otherIndex ??= buildOthers();

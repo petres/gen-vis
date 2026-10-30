@@ -21,6 +21,7 @@
 
 
 <script>
+import { toRaw } from 'vue';
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/props";
 import { highlighter, withMotion } from "@/utils/draw";
@@ -191,7 +192,8 @@ export default {
             // not if the user prefers less motion
             const still = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
             const duration = still ? 0 : Number(this.store.def.options.highlight?.transition) || 0;
-            this.highlighter = highlighter(this.store.def.plot, plot => this.kept.get(this.plotKey(plot)), duration);
+            // the plots without the proxies of vue, the highlighter reads their props per element
+            this.highlighter = highlighter(toRaw(this.store.def.plot), plot => this.kept.get(this.plotKey(plot)), duration);
             this.hoverInit();
             // the highlight of the page
             if (this.store.highlighted)
@@ -312,12 +314,22 @@ export default {
             // the hover of the nearest point, e.g. of a scatter plot, within
             // `radius` pixels, of the coordinate systems with points of rows
             const pointMode = hoverOptions.mode == 'point' && coord.hover.point;
+            // the points are in cells of the size of the radius, so only the
+            // ones of the nine cells around the pointer are compared
+            const radius = hoverOptions.radius ?? 30;
+            const size = Math.max(radius, 1);
             let points = null;
+            let cells = null;
+            const cellOf = (x, y) => `${Math.floor(x/size)} ${Math.floor(y/size)}`;
             const nearestPoint = ([px, py]) => {
-                points ??= hoverRows.filter(row => row[names.h] !== null)
-                    .map(row => [...coord.hover.point(ctx, row, names), row]);
-                const radius = hoverOptions.radius ?? 30;
-                const best = d3.least(points, ([x, y]) => (x - px)**2 + (y - py)**2);
+                if (!points) {
+                    points = hoverRows.filter(row => row[names.h] !== null)
+                        .map(row => [...coord.hover.point(ctx, row, names), row]);
+                    cells = d3.group(points.filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y)), ([x, y]) => cellOf(x, y));
+                }
+                const [cx, cy] = [Math.floor(px/size), Math.floor(py/size)];
+                const near = [-1, 0, 1].flatMap(dx => [-1, 0, 1].flatMap(dy => cells.get(`${cx + dx} ${cy + dy}`) ?? []));
+                const best = d3.least(near, ([x, y]) => (x - px)**2 + (y - py)**2);
                 return best && (best[0] - px)**2 + (best[1] - py)**2 <= radius**2 ? best : null;
             };
 
@@ -498,8 +510,10 @@ export default {
             // utils/draw.js) is the title of the area, it is above the texts,
             // so the browser shows it as their tooltip
             let tooltip = null;
+            // the texts are cut in the draw, before the hover, so they are searched once
+            const anyCut = Boolean(this.$refs.inner.querySelector('text > title'));
             const cutText = e => {
-                const text = e.pointerType == 'mouse' && this.$refs.inner.querySelector('text > title')
+                const text = e.pointerType == 'mouse' && anyCut
                     ? document.elementsFromPoint?.(e.clientX, e.clientY)
                         .find(el => el.tagName == 'text' && this.$refs.inner.contains(el) && el.querySelector(':scope > title'))
                     : null;

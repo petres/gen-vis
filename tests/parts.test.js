@@ -359,6 +359,48 @@ describe('the highlight', () => {
         expect(errors).toEqual([]);
     });
 
+    test('a highlight of the same elements changes nothing, others- props also without highlight- props', async () => {
+        const def = lineDef();
+        def.plot[1] = { ...def.plot[1], props: { ...def.plot[1].props, 'highlight-r': 6 } };
+        const el = await mount(GenVis, { def, data: lineData });
+        const { pointer } = await import('./dom.js');
+        const events = el.querySelector('rect.vis-events');
+        // the position of a circle of a group, Wien has no value of 2021
+        const at = (land, i) => {
+            const c = el.querySelectorAll(`g.vis-group[data-group-c="${land}"] circle`)[i];
+            return { clientX: +c.getAttribute('cx'), clientY: +c.getAttribute('cy') };
+        };
+        events.dispatchEvent(pointer('pointermove', at('Wien', 0)));
+        await nextTick();
+        expect(el.querySelectorAll('g.vis-group[data-group-c="Wien"] circle[r="6"]')).toHaveLength(3);
+        // another row of the same group
+        const plots = el.querySelector('g.vis-plot[data-plot="dots"]');
+        const changes = [];
+        const observer = new MutationObserver(records => changes.push(...records));
+        observer.observe(plots, { attributes: true, subtree: true, childList: true });
+        events.dispatchEvent(pointer('pointermove', at('Wien', 2)));
+        await nextTick();
+        changes.push(...observer.takeRecords());
+        expect(el.querySelector('.vis-hover-title').textContent).toBe('2023');
+        expect(changes).toEqual([]);
+        // another group
+        events.dispatchEvent(pointer('pointermove', at('Tirol', 3)));
+        await nextTick();
+        changes.push(...observer.takeRecords());
+        expect(changes.length).toBeGreaterThan(0);
+        expect(el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle[r="6"]')).toHaveLength(4);
+        observer.disconnect();
+
+        // the others- props of a highlight without elements of highlight- props
+        const others = lineDef();
+        others.plot[1] = { ...others.plot[1], props: { ...others.plot[1].props, 'others-opacity': 0.3 } };
+        const el2 = await mount(GenVis, { def: others, data: lineData });
+        el2.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
+        await nextTick();
+        expect(el2.querySelectorAll('g.vis-plot[data-plot="dots"] circle[opacity="0.3"]')).toHaveLength(7);
+        expect(errors).toEqual([]);
+    });
+
     test('the transitions of quick changes of the highlight end at the values of the definition', async () => {
         const def = lineDef();
         def.options.highlight = { transition: 40 };

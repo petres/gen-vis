@@ -142,6 +142,7 @@ export default {
     },
     beforeUnmount() {
         this.remember();
+        this.removed = true;
     },
     // errors while rendering
     errorCaptured(error) {
@@ -172,8 +173,14 @@ export default {
             const source = this.defFile ?? (typeof this.def == 'string' ? this.def : JSON.stringify(this.def));
             return `${Math.round(this.$el.getBoundingClientRect().width)} ${source}`;
         },
+        // the height is measured at the next frame, when the browser lays the
+        // page out anyway, a measure now would lay it out once more, e.g. of
+        // every chart of a page drawn at once
         rendered() {
-            this.remember();
+            requestAnimationFrame(() => {
+                if (!this.removed)
+                    this.remember();
+            });
             this.$emit('rendered');
         },
         // the height of the visualisation drawn, see heights

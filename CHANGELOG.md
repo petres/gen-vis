@@ -95,6 +95,14 @@ Faster and smaller:
 
 - the module of the standalone script is minified, 86 kB (gzipped) at first
   instead of 95 kB
+- a highlight of the elements which are highlighted already changes
+  nothing, e.g. the hover of another point of the group of a scatter plot,
+  the highlight reads the plots without the proxies of Vue
+- the hover of the nearest point (`"mode": "point"`) compares the points
+  near the pointer, not all of them
+- the hover searches the cut texts once per draw, not at every move of the
+  pointer; the bars take their scales and width once, not per row; the
+  height of a drawn visualisation is measured at the next frame
 
 ## 2.1.0
 
