@@ -15,7 +15,8 @@ describe('prepareDef', () => {
             plot: { type: 'svg:circle', props: { r: '@r', 'highlight-r': 5 } },
         });
         expect(def.mapping.x.scale).toMatchObject({ type: 'linear', domain: [null, null] });
-        expect(def.mapping.c.props).toEqual({ a: { r: 3, name: 'a', visible: true }, b: { r: 3, name: 'B', visible: false } });
+        // without colors of the categories the default colors, see withColor of layout.js
+        expect(def.mapping.c.props).toEqual({ a: { r: 3, name: 'a', visible: true, defaultColor: '#4269D0' }, b: { r: 3, name: 'B', visible: false, defaultColor: '#EFB118' } });
         expect(def.plot).toHaveLength(1);
         expect(def.plot[0]).toMatchObject({ id: 'plot-0', categories: [], highlightProps: ['r'] });
         expect(def.options.margins).toEqual({ top: 0, right: 0, bottom: 0, left: 0 });

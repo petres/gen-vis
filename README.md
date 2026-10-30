@@ -709,6 +709,11 @@ parent or of a patch, e.g. `"hover": null`.
       "ranks": [{ "color": "#C3423F", "opacity": 1 }, { "color": "#CF8E02", "opacity": 0.7 }, { "color": "#BBB", "opacity": 0.3 }] } }
   ```
 
+  Categories without a `color` (none of the mapping has one, no `scheme`)
+  have the default colors of d3's scheme Observable10 in their order, a plot
+  or a legend uses the default color of the first of its categories if none
+  of them has a color, e.g. the colors of the lines of the categories of the
+  data.
   With `"fromData": true` the values of the column which are not listed are
   categories as well, after the listed ones, in ascending order (numbers by
   their value), e.g. new regions of the data, also of the column of a form

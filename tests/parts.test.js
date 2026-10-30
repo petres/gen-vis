@@ -687,3 +687,19 @@ describe('fixed ticks as a prop', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('default colors', () => {
+    test('of categories without colors, the colors of the categories of a plot first', async () => {
+        const def = lineDef();
+        delete def.mapping.c.props.categories.Wien.color;
+        delete def.mapping.c.props.categories.Tirol.color;
+        def.mapping.g = { column: 'land', type: 'categorical', props: { categories: { Wien: { color: 'black' }, Tirol: {} } } };
+        def.plot[1].categories = ['c', 'g'];
+        const el = await mount(GenVis, { def, data: lineData });
+        // the lines of the default colors, a color of a category of the plot before them
+        expect([...el.querySelectorAll('g.vis-plot[data-plot="lines"] path')].map(p => p.getAttribute('stroke'))).toEqual(['#4269D0', '#EFB118']);
+        expect([...el.querySelectorAll('g.vis-plot[data-plot="dots"] g.vis-group')].map(g => g.querySelector('circle').getAttribute('fill'))).toEqual(['black', '#EFB118']);
+        expect(el.querySelector('.vis-legend-entry[data-key="Tirol"]').textContent).toBe('Tirol');
+        expect(errors).toEqual([]);
+    });
+});

@@ -1,4 +1,4 @@
-export { layout, axisNames, visibleKeys, plotRows, plotGroups };
+export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor };
 
 import { categoryOrder, convert, filter, groupBy, rowFilter, stack } from "@/utils/data";
 import * as d3 from "@/utils/d3";
@@ -234,6 +234,19 @@ const rowValue = (ctx, name, rows) => {
     return Object.hasOwn(values, kind) ? values[kind]() || undefined : undefined;
 };
 
+// the props of categories (a list of them, the later ones override the ones
+// before) and, if none of them has a color, the default color of the first
+// one which has one, see prepareMapping of utils/def.js
+const withColor = parts => {
+    const props = Object.assign({}, ...parts);
+    if (props.color === undefined) {
+        const first = parts.find(p => p?.defaultColor !== undefined);
+        if (first)
+            props.color = first.defaultColor;
+    }
+    return props;
+};
+
 /**
  * The groups of the rows of a plot by its categories, see plots/index.js:
  * the props of their categories (`props`), their `rows`, the values of the
@@ -249,7 +262,7 @@ const plotGroups = (plot, rows, ctx) => {
     const needed = [...new Set(refNames(plot.props).map(n => n.split(':')[0]))].filter(m => Object.hasOwn(mapping, m));
     const complete = row => needed.every(m => row[m] !== null);
     return groupBy(rows, plot.categories).map(g => {
-        const props = Object.assign({}, ...plot.categories.map(c => ownProp(mapping[c].props, g.group[c])));
+        const props = withColor(plot.categories.map(c => ownProp(mapping[c].props, g.group[c])));
         const scoped = name => Object.hasOwn(ctx.scope, name) ? constant(ctx.scope[name]) : undefined;
         const resolve = name => typeof name == 'symbol' ? scoped(name) : (Object.hasOwn(props, name) ? constant(props[name])
             : rowValue(ctx, name, rows) ?? scoped(name));

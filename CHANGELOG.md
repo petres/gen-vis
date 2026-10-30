@@ -65,6 +65,8 @@ New:
 - the highlight: `others-` props of the elements which are not highlighted
   while an element is, `options.highlight.transition` (the elements end at
   their values also after quick changes of the highlight)
+- default colors: categories without colors have the ones of d3's scheme
+  Observable10, e.g. the lines of the categories of the data are not black
 - legends: `"legend": false` of a category (no entry), `position` (`top`,
   `bottom`, `left`, `right`), of the scales of colors `orientation`
   (`vertical`), `size`, `values` (ticks) and `labels` (`before`), the

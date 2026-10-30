@@ -85,8 +85,8 @@ const rowNames = (n, m) => [
 ];
 
 // the props of the categories of a mapping, `name` and `visible` are set by
-// default, `color` by a scheme
-const categoryNames = m => m?.props ? ['name', 'visible', ...(m.props.scheme ? ['color'] : []),
+// default, `color` by a scheme or the default colors
+const categoryNames = m => m?.props ? ['name', 'visible', 'color',
     ...Object.keys(m.props.common ?? {}),
     ...[m.props.ranks ?? []].flat().flatMap(e => Object.keys(e ?? {})),
     ...Object.values(m.props.categories ?? {}).flatMap(e => Object.keys(e ?? {}))] : [];

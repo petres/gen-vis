@@ -75,6 +75,10 @@ const symbolOf = (symbol, names) => {
 
 const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
 
+// the colors of the categories without colors, of d3's scheme Observable10,
+// distinct colors which are also distinct for most color vision deficiencies
+const defaultColors = ['#4269D0', '#EFB118', '#FF725C', '#6CC5B0', '#3CA951', '#FF8AB7', '#A463F2', '#97BBF5', '#9C6B4E', '#9498A0'];
+
 // an entry of a definition which is an object, e.g. a mapping or a plot, an
 // error otherwise, e.g. of null, `path` names it
 const object = (v, path, expected) => {
@@ -105,6 +109,10 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}) => {
         if (props.fromData && typeof m.column == 'string')
             dataKeys(fillTemplate(m.column, globals)).filter(k => !Object.hasOwn(categories, k)).forEach(k => categories[k] = {});
         const keys = orderKeys(Object.keys(categories), props.order);
+        // the colors of a scheme, without one and without colors of the
+        // categories the default colors, `defaultColor`, the color of a plot
+        // or a legend if no category of it has a color, see plotGroups
+        const given = [props.common, ...[props.ranks ?? []].flat(), ...Object.values(categories)].some(c => c?.color !== undefined);
         const colors = props.scheme ? schemeColors(props.scheme, keys.length) : undefined;
         if (props.scheme && !colors)
             throw new Error(`Unknown scheme '${props.scheme}', e.g. 'Tableau10' or 'Blues'`);
@@ -115,6 +123,8 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}) => {
             const t = Object.assign({}, colors ? { color: colors[i % colors.length] } : {}, props.common, rank, categories[k]);
             t.name ??= k;
             t.visible ??= true;
+            if (!colors && !given)
+                t.defaultColor = defaultColors[i % defaultColors.length];
             return [k, t];
         }))
     }

@@ -11,7 +11,7 @@
                 @keydown.enter.prevent="switched(entry)" @keydown.space.prevent="switched(entry)"
                 @pointerenter="hovered(entry, $event)" @pointerleave="hovered(null, $event)"
                 @focus="highlight(entry)" @blur="highlight(null)">
-                <LegendSymbol v-if="info.legend.symbol" :info="info.legend.symbol" :props="entry.props"/>
+                <LegendSymbol v-if="info.legend.symbol" :info="info.legend.symbol" :props="colored[entry.key]"/>
                 <span>{{ store.text(filled[entry.key].name) }}</span>
             </div>
         </div>
@@ -20,6 +20,7 @@
 
 <script>
 import { evaluate } from "@/utils/props";
+import { withColor } from "@/layout";
 
 import LegendSymbol from '@/comp/LegendSymbol.vue';
 
@@ -34,11 +35,13 @@ export default {
         info() { return this.store.mapping(this.legend) },
         // without the categories with `"legend": false`, e.g. headers, they stay visible
         entries() { return this.info.keys.filter(key => this.info.props[key].legend !== false).map(key => ({ key, props: this.info.props[key] })) },
+        // the props of the entries with their default colors, see withColor of layout.js
+        colored() { return Object.fromEntries(this.entries.map(e => [e.key, withColor([e.props])])) },
         // the legend props of the entries, also with the globals of the store
         filled() {
             const scope = this.store.scope;
             return Object.fromEntries(this.entries.map(e =>
-                [e.key, evaluate(this.info.legend.props, { ...scope, ...e.props })]));
+                [e.key, evaluate(this.info.legend.props, { ...scope, ...this.colored[e.key] })]));
         },
     },
     methods: {
