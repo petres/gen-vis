@@ -58,6 +58,9 @@ New:
 - `options.message` (a text instead of the plots, a prop, e.g. of a narrow
   screen or of an entry), `options.empty` (the text without rows),
   `options.class` and the globals as `data-global-` attributes of `.vis`
+- linked charts: the prop `highlight` (`data-highlight`) and the method
+  `setHighlight`, the rows of values of mappings highlighted by the page,
+  e.g. of the hover of another chart
 
 ## 2.1.0
 

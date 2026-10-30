@@ -18,14 +18,14 @@ export default {
 const flags = ['debug', 'copy', 'download', 'csv'];
 
 // the value of a data attribute as the one of its prop, e.g. "false" of
-// data-copy, the state and the globals are JSON
+// data-copy, the state, the globals and the highlight are JSON
 const attributeValue = (name, value) => {
     if (flags.includes(name)) {
         if (value === 'false')
             return false;
         return value === '' || value === 'true' || name == 'debug' || name == 'copy' ? true : value;
     }
-    if (name == 'state' || name == 'globals') {
+    if (name == 'state' || name == 'globals' || name == 'highlight') {
         try {
             return JSON.parse(value);
         } catch (error) {

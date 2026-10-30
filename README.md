@@ -96,6 +96,7 @@ parquet data and the PNG and the CSV (~11 kB) with the first one.
 | `data`     | `data-data`     | the data as rows, a CSV/JSON string or parquet (an `ArrayBuffer` or `Uint8Array`), if not given it is loaded from the `data` url of the definition |
 | `debug`    | `data-debug`    | shows the prepared definition |
 | `state`    | `data-state`    | the changes of the user, see [state](#state), the attribute is JSON |
+| `highlight` | `data-highlight` | the rows highlighted by the page, values of mappings, e.g. `{"country": "AT"}` of the hover of another chart, see [linked charts](#linked-charts), the attribute is JSON |
 | `globals`  | `data-globals`  | the globals of the page, e.g. the language or the year of a menu of the page, also of hidden form elements, see [globals](#formelements-and-globals), the attribute is JSON |
 | `download` | `data-download` | a button at the right of the footer to save it as a PNG, a string is the name of the file (default the title) |
 | `copy`     | `data-copy`     | a button at the right of the footer to copy the PNG to the clipboard (only on https or localhost) |
@@ -179,6 +180,22 @@ of every region. The other options of the hover:
 nearest to the mouse (within `radius` pixels, 30 by default) instead of the
 rows of the nearest position of the axis, e.g. of a scatter plot, in
 cartesian and polar plots.
+
+### Linked charts
+
+The charts of a page can be linked by their events and props, e.g. a map
+and a list of the countries beside it: the hover of one chart highlights the
+row of the other one (the prop `highlight`, values of mappings, as an entry
+of a legend highlights its category, see the `highlight-` and `others-`
+props of the [plots](#plot)), a hover of the chart itself replaces it while
+it is shown, the method `setHighlight(entry)` does the same. With
+`v-model:state` and `globals` they share their form elements and the
+globals of the page:
+
+```html
+<GenVis def-file="/data/map.json" :highlight="country" @hover="e => country = e && { country: e.key }"/>
+<GenVis def-file="/data/ranking.json" :highlight="country" @hover="e => country = e?.nearest && { country: e.nearest.country }"/>
+```
 
 ### PNG
 

@@ -27,6 +27,8 @@ export interface GenVisProps {
     state?: State | null;
     /** The globals of the page, e.g. the language, also of hidden form elements. */
     globals?: Record<string, unknown> | null;
+    /** The rows highlighted by the page, values of mappings, e.g. `{ country: 'AT' }` of another chart. */
+    highlight?: Record<string, unknown> | null;
     /** A button to save the PNG, a string is the name of the file. */
     download?: boolean | string;
     /** A button to copy the PNG to the clipboard. */
@@ -51,6 +53,8 @@ export interface GenVisMethods {
     copyPng(): Promise<void>;
     image(): Promise<Blob>;
     exportCsv(name?: string): Promise<void>;
+    /** Highlights the rows of the values of mappings, e.g. `{ country: 'AT' }`, null ends it. */
+    setHighlight(entry: Record<string, unknown> | null): void;
 }
 
 export type GenVisInstance = ComponentPublicInstance<GenVisProps> & GenVisMethods;

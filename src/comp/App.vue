@@ -4,7 +4,7 @@
     <div class="vis-outer" :class="{ 'vis-loading': waiting }" :style="waiting && reserved ? { minHeight: `${reserved}px` } : null">
         <div v-if="error" class="vis-error">{{ error }}</div>
         <!-- a new definition is drawn anew, the one before is shown while it is loaded -->
-        <vis-base v-else-if="store.loaded" :key="store.loads" :download="download" :copy="copy" :csv="csv" @state-changed="$emit('update:state', store.state)" @rendered="rendered"/>
+        <vis-base v-else-if="store.loaded" ref="vis" :key="store.loads" :download="download" :copy="copy" :csv="csv" @state-changed="$emit('update:state', store.state)" @rendered="rendered"/>
         <div v-if="debug && store.def">
             <h3>prepared:</h3>
             <pre style="height: 500px; overflow: auto; font-size: 11px;">{{ JSON.stringify(store.def, null, 4) }}</pre>
@@ -59,6 +59,12 @@ export default {
         // the globals of the page, e.g. the language, also of hidden form
         // elements, they are applied without loading it again
         globals: {
+           type: Object,
+           default: null
+        },
+        // the rows highlighted by the page, values of mappings, e.g. the
+        // country under the mouse of another chart, { "country": "AT" }
+        highlight: {
            type: Object,
            default: null
         },
@@ -125,6 +131,10 @@ export default {
             handler: 'syncGlobals',
             deep: true,
         },
+        highlight: {
+            handler(entry) { this.setHighlight(entry) },
+            deep: true,
+        },
     },
     mounted() {
         this.reserved = heights.get(this.sourceKey()) ?? null;
@@ -147,6 +157,7 @@ export default {
                 // a definition loaded after a newer one was given is not shown
                 if (!await this.store.init({ def: this.def, defUrl: this.defFile, data: this.data, state: this.state, globals: this.globals }))
                     return;
+                this.store.highlighted = this.highlight ? JSON.parse(JSON.stringify(this.highlight)) : null;
                 // the error is kept while the new definition is loaded, a
                 // definition which could not be drawn is not drawn again meanwhile
                 this.error = null;
@@ -178,6 +189,13 @@ export default {
         syncState() {
             if (this.store.loaded && !sameValue(this.state ?? {}, this.store.state))
                 this.store.setState(this.state);
+        },
+        // the elements of the rows of the values of mappings in all facets,
+        // e.g. { "country": "AT" }, null ends it, the hover of the chart
+        // replaces it while it is shown
+        setHighlight(entry) {
+            this.store.highlighted = entry ? JSON.parse(JSON.stringify(entry)) : null;
+            this.$refs.vis?.highlight({});
         },
         syncGlobals() {
             if (this.store.loaded && !sameValue(this.globals ?? {}, this.store.globals ?? {}))

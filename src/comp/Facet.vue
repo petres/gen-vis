@@ -126,7 +126,8 @@ export default {
         },
 
         draw() {
-            this.highlight(null);
+            // the elements are the ones without a highlight, also the one of the page
+            this.highlighter?.(null);
             // the elements which are not kept are drawn anew, e.g. the axes
             const inner = this.$refs.inner;
             // the position of the plots of the new facet already, before vue
@@ -191,6 +192,9 @@ export default {
             const duration = still ? 0 : Number(this.store.def.options.highlight?.transition) || 0;
             this.highlighter = highlighter(this.store.def.plot, plot => this.kept.get(this.plotKey(plot)), duration);
             this.hoverInit();
+            // the highlight of the page
+            if (this.store.highlighted)
+                this.highlight(null);
         },
 
         // the key of the group of a plot, its place in the definition, the ids
@@ -225,8 +229,9 @@ export default {
 
         // the highlight of the elements of the categories of a row, e.g. of
         // an entry of a legend, null ends it, see utils/draw.js
+        // without one the one of the page, see the prop highlight of App.vue
         highlight(dataEntry) {
-            this.highlighter?.(dataEntry);
+            this.highlighter?.(dataEntry ?? this.store.highlighted ?? null);
         },
 
         // the keys of the hover: the arrows to the left and the right move it

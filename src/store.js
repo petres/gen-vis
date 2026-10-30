@@ -289,6 +289,8 @@ class Store {
     stateSets = 0;
     // the globals of the page, see setGlobals
     globals = null;
+    // the rows highlighted by the page, values of mappings, see App.vue
+    highlighted = null;
     // the categories of the data of the last column, see dataKeys
     keyCache = null;
     // the component of the legends of scales of colors, loaded for definitions with one

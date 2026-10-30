@@ -514,3 +514,43 @@ describe('messages and the classes of the root', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('linked charts', () => {
+    test('the highlight of the page, e.g. the row under the mouse of another chart', async () => {
+        const { createApp, h, ref } = await import('vue');
+        const { pointer, rendered } = await import('./dom.js');
+        const def = lineDef();
+        def.plot[1].props['highlight-r'] = 6;
+        const row = ref(null);
+        const el = document.body.appendChild(document.createElement('div'));
+        createApp({ render: () => h('div', [
+            h(GenVis, { class: 'a', def, data: lineData, onHover: e => row.value = e?.nearest ? { c: e.nearest.c } : null }),
+            h(GenVis, { class: 'b', def, data: lineData, highlight: row.value }),
+        ]) }).mount(el);
+        await rendered(el.querySelector('.a'));
+        await rendered(el.querySelector('.b'));
+        await nextTick();
+        const highlighted = () => [...el.querySelectorAll('.b circle.vis-highlight')].map(c => c.parentNode.dataset.groupC);
+        expect(highlighted()).toEqual([]);
+
+        // the hover of the first chart highlights the category in the second one
+        el.querySelector('.a rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
+        await nextTick();
+        await nextTick();
+        const key = row.value.c;
+        expect(new Set(highlighted())).toEqual(new Set([key]));
+
+        // its own hover replaces it while it is shown
+        el.querySelector('.b rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
+        await nextTick();
+        el.querySelector('.b rect.vis-events').dispatchEvent(pointer('pointerleave'));
+        await nextTick();
+        expect(new Set(highlighted())).toEqual(new Set([key]));
+
+        el.querySelector('.a rect.vis-events').dispatchEvent(pointer('pointerleave'));
+        await nextTick();
+        await nextTick();
+        expect(highlighted()).toEqual([]);
+        expect(errors).toEqual([]);
+    });
+});
