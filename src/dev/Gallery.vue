@@ -112,11 +112,15 @@ export default {
                 color: #666;
                 margin-left: 12px;
             }
+            // the links wrap as items, the template has no space between
+            // them where a line could break
             nav {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 2px 12px;
                 margin-top: 8px;
                 font-size: 13px;
                 a {
-                    margin-right: 12px;
                     color: #1E4F77;
                     white-space: nowrap;
                 }
