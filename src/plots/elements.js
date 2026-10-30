@@ -1,8 +1,8 @@
-export { groupwise, pointwise, finite, curve, propScale, dodge };
+export { perRow, perGroup, finite, curve, propScale, dodge };
 
 import * as d3 from "@/utils/d3";
 import { refOf } from "@/utils/props";
-import { curves, fitText, groupAttrs, rowOf, setGroupData, setProps } from "@/utils/draw";
+import { curves, groupAttrs, groupKey, keyOf, rowOf } from "@/utils/draw";
 
 const finite = (...values) => values.every(v => Number.isFinite(v));
 
@@ -15,50 +15,33 @@ const propScale = (plot, ctx, path) => {
     return ref === undefined ? undefined : ctx.scales[ref.split(':')[0]];
 };
 
-// the key of a group of a plot, the keys of its categories, so an element
-// of a group is the one of the same group of the draw before
-const groupKey = g => JSON.stringify(Object.values(g.categories));
+// the layer of a path per group, e.g. a line, with the props of the group
+// and `d(group)`, the path, the paths of the draw before are updated, see
+// drawLayer of utils/draw.js
+const perGroup = (groups, d) => ({
+    element: 'path',
+    key: item => item[keyOf],
+    items: groups.map(g => ({ ...g.attrs, ...groupAttrs(g), ...(d ? { d: d(g) } : {}), [keyOf]: groupKey(g) })),
+});
 
-// the key of an element per row, the row, the rows of the data are the same
-// objects in every draw, e.g. after a toggle of a legend
-const ids = new WeakMap();
-let id = 0;
-const rowKey = v => {
-    const row = v[rowOf];
-    if (!ids.has(row))
-        ids.set(row, ++id);
-    return ids.get(row);
-};
-
-// a path per group, e.g. a line, with the props of the group and `d(group)`,
-// the path, the paths of the draw before are updated
-const groupwise = (groups, parent, d) => parent
-    .selectChildren("path")
-    .data(groups, groupKey)
-    .join("path")
-    .order()
-    .each(function(g) { setProps.call(this, { ...g.attrs, ...groupAttrs(g), ...(d ? { d: d(g) } : {}) }) });
-
-// an element of `type` per row, without the rows of missing values,
-// `translate(values, row, group)` changes the values of the props of a row,
-// the elements of the draw before are updated, the ones of the same rows or
-// of the same `key(values)`, e.g. the feature of a map in another year
-const pointwise = (groups, parent, type, translate = v => v, key = rowKey) => parent
-    .selectChildren("g.vis-group")
-    .data(groups, groupKey)
-    .join(enter => enter.append("g").attr("class", "vis-group"))
-    .order()
-    .each(setGroupData)
-    .selectChildren(type)
-    .data(g => g.rows.filter(g.complete).map(row => {
-        // the row of the element, e.g. for the highlight of a row
-        const v = translate(g.at(row), row, g);
-        v[rowOf] = row;
-        return v;
-    }), key)
-    .join(type)
-    .order()
-    .each(setProps);
+// the layer of an element of `element` per row, without the rows of missing
+// values, `translate(values, row, group)` changes the values of the props of
+// a row, the elements of the draw before are updated, the ones of the same
+// rows or of the same `key(values)`, e.g. the feature of a map in another
+// year, see drawLayer of utils/draw.js
+const perRow = (groups, element, translate = v => v, key) => ({
+    element,
+    key,
+    groups: groups.map(g => ({
+        categories: g.categories,
+        items: g.rows.filter(g.complete).map(row => {
+            // the row of the element, e.g. for the highlight of a row
+            const v = translate(g.at(row), row, g);
+            v[rowOf] = row;
+            return v;
+        }),
+    })),
+});
 
 /**
  * The positions `ys` moved apart to at least the distance `gap`, e.g. of
@@ -83,7 +66,7 @@ const dodge = (ys, gap) => {
     return moved;
 };
 
-const element = type => ({ update: true, render: (groups, parent) => pointwise(groups, parent, type) });
+const element = type => ({ update: true, marks: groups => perRow(groups, type) });
 
 // the svg elements, an element per row in any coordinate system, the props are
 // its attributes, e.g. "@x:scaled" of cx
@@ -96,16 +79,14 @@ export default {
     // `max-width` of the props cuts or wraps the texts, see fitText
     'svg:text': {
         update: true,
-        render(groups, parent, plot) {
-            const fit = texts => texts.filter(function() { return this.hasAttribute('max-width') })
-                .each(function(v) { fitText(this, v.text === null || v.text === undefined ? '' : String(v.text)) });
+        marks(groups, plot) {
             if (!plot.dodge)
-                return fit(pointwise(groups, parent, "text"));
+                return { ...perRow(groups, "text"), fit: true };
             // the positions of the texts of all groups, moved apart
             const rows = groups.flatMap(g => g.rows.filter(g.complete).map(row => [row, parseFloat(g.at(row).y)]));
             const moved = dodge(rows.map(([, y]) => y), plot.dodge);
             const ys = new Map(rows.map(([row], i) => [row, moved[i]]));
-            return fit(pointwise(groups, parent, "text", (v, row) => ({ ...v, y: ys.get(row) })));
+            return { ...perRow(groups, "text", (v, row) => ({ ...v, y: ys.get(row) })), fit: true };
         },
     },
 };

@@ -1,10 +1,10 @@
-export { annotationKeys, constraints, span, position, drawLabel, setAnnotationProps };
+export { annotationKeys, constraints, span, position, annotationItem, labelItems };
 
 import * as d3 from "@/utils/d3";
 import { convert } from "@/utils/data";
 import { evaluate } from "@/utils/props";
 import { bandCenter } from "@/utils/scales";
-import { setProps } from "@/utils/draw";
+import { directOf, elementOf } from "@/utils/draw";
 
 // the keys of an annotation which are not mappings
 const annotationKeys = ['type', 'props', 'label', 'text', 'above', 'facet', 'lon', 'lat'];
@@ -50,24 +50,23 @@ const span = (c, sorted = true) => {
 const position = c => Array.isArray(c.value) ? d3.mean(span(c)) : center(c.scale, c.value);
 
 // the label of an annotation, e.g. the name of a band, its colors are the
-// ones of the styles, see Facet.vue
-const drawLabel = (g, a, x, y, anchor = "start", baseline = "hanging") => {
-    if (a.label !== undefined)
-        g.append("text")
-            .attr("class", "vis-annotation-label")
-            .attr("x", x)
-            .attr("y", y)
-            .attr("text-anchor", anchor)
-            .attr("dominant-baseline", baseline)
-            .text(a.label);
-};
+// ones of the styles, see Facet.vue, the items of a layer (see drawLayer of
+// utils/draw.js), none without a label
+const labelItems = (a, x, y, anchor = "start", baseline = "hanging") => a.label === undefined ? [] : [{
+    [elementOf]: "text",
+    [directOf]: { class: "vis-annotation-label", x, y, "text-anchor": anchor, "dominant-baseline": baseline },
+    text: a.label,
+}];
 
-// the props of an annotation, svg attributes, also props of the size of the
+// the item of an annotation (see drawLayer of utils/draw.js): the svg
+// `element`, its attributes `direct`, e.g. the class and the position, and
+// the props of the annotation, svg attributes, also props of the size of the
 // facet, of an annotation of a row (`scope`) of the names of the row, the
-// colors without props are the ones of the styles, see Facet.vue
-const setAnnotationProps = (element, a, ctx, defaults = {}) => {
-    const props = evaluate({ ...defaults, ...a.props }, a.scope ?? ctx.scope);
-    element.each(function() { setProps.call(this, props) });
-    if (a.type == 'text')
-        element.text(a.text ?? '');
-};
+// colors without props are the ones of the styles, see Facet.vue, of a text
+// its text
+const annotationItem = (element, direct, a, ctx, defaults = {}) => ({
+    [elementOf]: element,
+    [directOf]: direct,
+    ...evaluate({ ...defaults, ...a.props }, a.scope ?? ctx.scope),
+    ...(a.type == 'text' ? { text: a.text ?? '' } : {}),
+});

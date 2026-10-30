@@ -7,7 +7,7 @@ import { arc as arcShape, lineRadial, pointRadial } from 'd3-shape';
 import plotTypes from "@/plots/polar";
 import { bandCenter } from "@/utils/scales";
 import { tickValues, tickFormat, tickCount } from "@/coords/ticks";
-import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
+import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
 
 const tau = 2*Math.PI;
 
@@ -194,8 +194,9 @@ const axes = ctx => {
 
 // a sector or a ring (band), a spoke or a circle (line), a text or a circle at
 // values of the angle and the radius, without a value of the angle around the
-// whole circle, without one of the radius from its inner to its outer radius
-const annotate = (ctx, g, a) => {
+// whole circle, without one of the radius from its inner to its outer radius,
+// the items of a layer
+const annotate = (ctx, a) => {
     const c = constraints(ctx, a);
     const angle = c.find(e => e.orientation == 'angular');
     const radius = c.find(e => e.orientation == 'radial');
@@ -208,29 +209,25 @@ const annotate = (ctx, g, a) => {
             a1 += tau;
         const [r0, r1] = radius ? span(radius) : [inner, outer];
         const arc = arcShape().innerRadius(r0).outerRadius(r1).startAngle(a0).endAngle(a1);
-        setAnnotationProps(g.append("path").attr("class", "vis-annotation vis-band").attr("d", arc()), a, ctx);
         const [x, y] = arc.centroid();
-        drawLabel(g, a, x, y, "middle", "middle");
-    } else if (a.type == 'line') {
+        return [annotationItem("path", { class: "vis-annotation vis-band", d: arc() }, a, ctx), ...labelItems(a, x, y, "middle", "middle")];
+    }
+    if (a.type == 'line') {
         if (angle) {
             const p = position(angle);
             const [x1, y1] = pointRadial(p, inner);
             const [x2, y2] = pointRadial(p, outer);
-            setAnnotationProps(g.append("line").attr("class", "vis-annotation vis-line")
-                .attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2), a, ctx);
-            drawLabel(g, a, x2, y2 - 4, "middle", "auto");
-        } else {
-            const r = radius ? position(radius) : outer;
-            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-line").attr("r", r), a, ctx, { fill: "none" });
-            drawLabel(g, a, 4, -r - 4, "start", "auto");
+            return [annotationItem("line", { class: "vis-annotation vis-line", x1, y1, x2, y2 }, a, ctx), ...labelItems(a, x2, y2 - 4, "middle", "auto")];
         }
-    } else if (a.type == 'text' || a.type == 'circle') {
-        const [x, y] = pointRadial(angle ? position(angle) : 0, radius ? position(radius) : outer);
-        if (a.type == 'text')
-            setAnnotationProps(g.append("text").attr("class", "vis-annotation vis-text").attr("x", x).attr("y", y), a, ctx, { "font-size": 11 });
-        else
-            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-circle").attr("cx", x).attr("cy", y), a, ctx, { r: 4 });
+        const r = radius ? position(radius) : outer;
+        return [annotationItem("circle", { class: "vis-annotation vis-line", r }, a, ctx, { fill: "none" }), ...labelItems(a, 4, -r - 4, "start", "auto")];
     }
+    const [x, y] = pointRadial(angle ? position(angle) : 0, radius ? position(radius) : outer);
+    if (a.type == 'text')
+        return [annotationItem("text", { class: "vis-annotation vis-text", x, y }, a, ctx, { "font-size": 11 })];
+    if (a.type == 'circle')
+        return [annotationItem("circle", { class: "vis-annotation vis-circle", cx: x, cy: y }, a, ctx, { r: 4 })];
+    return [];
 };
 
 // the parts of the polar coordinate system which are loaded, see coords/polar.js

@@ -1274,49 +1274,58 @@ console.log(validateDef(def));  // the warnings, e.g. unknown plot types
 ### Extensions
 
 Plot types and coordinate systems can be registered, before the
-visualisations are loaded. A plot type draws the groups of rows of a plot,
-one per combination of its categories. A group has its `rows`, the keys of
-its categories (`categories`), their props (`props`) and the values of the
-props of the plot: of a row `at(row)`, of one prop `prop(name)(row)` and the
-ones which are the same for all rows `attrs`, e.g. the color of a line,
-`complete(row)` is false if a mapping of the props has no value. The values
-are plain values, e.g. the position of `"@x:scaled"`. `pointwise` draws an
+visualisations are loaded. A plot type returns the marks of the groups of
+rows of a plot (`marks(groups, plot, ctx)`), one group per combination of
+its categories, the package draws them, it does not draw itself. A group has
+its `rows`, the keys of its categories (`categories`), their props (`props`)
+and the values of the props of the plot: of a row `at(row)`, of one prop
+`prop(name)(row)` and the ones which are the same for all rows `attrs`,
+e.g. the color of a line, `complete(row)` is false if a mapping of the props
+has no value. The values are plain values, e.g. the position of
+`"@x:scaled"`. `perRow(groups, element, translate, key)` are the marks of an
 element per row (without the rows of missing values) with the values of its
-props as attributes,
-`groupwise(groups, parent, d)` a path per group with `attrs` and the path
+props as attributes, `translate(values, row, group)` changes them,
+`perGroup(groups, d)` the ones of a path per group with `attrs` and the path
 `d(group)`, both move their elements with the `transition` of the options:
 
 ```js
-import { registerPlotType, pointwise } from '@preschen/gen-vis';
+import { registerPlotType, perRow } from '@preschen/gen-vis';
 
 registerPlotType('my:tick', {
-    render: (groups, parent, plot, ctx) => pointwise(groups, parent, 'rect', v => ({
+    update: true,
+    marks: (groups, plot, ctx) => perRow(groups, 'rect', v => ({
         ...v, x: v.cx - 1, width: 2, height: ctx.innerHeight,
     })),
 });
 ```
 
-`ctx` is the facet: the `store`, the d3 selection `inner` of the plot area,
-the `key` of the facet, its `rows`, the `scales` by the names of the
-mappings, `axis` (the names of the mappings of the positions and of the
-values), `stackOf(row)` (the start and the end of a stacked value), `scope`
-(the names of the references of the facet, see
+The marks are a layer, `{ element, groups: [{ categories, items }] }` (an
+element per item in a `g.vis-group` per group) or `{ element, items }` (the
+elements directly in the group of the plot), an item has the attributes of
+its element (`text` is its text), `key(item)` of the layer is the key of its
+element, by default its row or its index, `class` is a class of the group of
+the plot and `fit` cuts or wraps the texts with a `max-width`, null draws
+nothing, see `drawLayer` of `src/utils/draw.js`.
+
+`ctx` is the facet: the `store`, the `key` of the facet, its `rows`, the
+`scales` by the names of the mappings, `axis` (the names of the mappings of
+the positions and of the values), `stackOf(row)` (the start and the end of a
+stacked value), `scope` (the names of the references of the facet, see
 [props](#props-of-the-definition)), `innerWidth`, `innerHeight` and `dims`
 (the sizes of the coordinate system, e.g. its `radius`), of maps also the
 `projection` and the `path`. `curve: true` passes the `curve` of the plot,
 `coords` limits a type to coordinate systems, e.g. `cartesian:bar` to
-`cartesian`. The types of `PlotType` and `PlotGroup` are in the package.
+`cartesian`. The types of `PlotType`, `PlotGroup` and `Layer` are in the
+package.
 
 A new view, e.g. of a toggle of a legend, a form element or a new width, is
 drawn into the elements of the one before, only the attributes which change
-are set. With `update: true` a type draws into the elements of the draw
-before, as `pointwise` and `groupwise` do (the groups are the ones of the same
+are set. With `update: true` the marks of a type are drawn into the
+elements of the draw before (the groups are the ones of the same
 categories, the elements per row the ones of the same rows or, of
-`pointwise(groups, parent, type, translate, key)`, of the same `key(values)`,
-e.g. `geo:region` the one of the same feature after a filter), the elements of
-other types are removed before they are drawn again. `ctx.keep(key, create)`
-is an element kept from one draw to the next, e.g. an axis of a coordinate
-system, `create()` appends a new one to `ctx.inner`.
+`perRow(groups, element, translate, key)`, of the same `key(values)`, e.g.
+`geo:region` the one of the same feature after a filter), the elements of
+other types are removed before they are drawn again.
 
 A coordinate system (`registerCoord(name, coord)`) has the default ranges of
 the orientations of its scales, the axes and the geometry of the hover, see
@@ -1325,8 +1334,8 @@ coordinate system loads its parts with its first chart, e.g. the ones of maps
 (`src/coords/geo.js`), again with the next one if it failed. Both are known to
 `validateDef`, `@preschen/gen-vis/check` exports `registerPlotType` and
 `registerCoord` as well, the standalone script has them as
-`GenVis.registerPlotType`, `GenVis.registerCoord`, `GenVis.pointwise` and
-`GenVis.groupwise`. The schema only knows the built-in ones.
+`GenVis.registerPlotType`, `GenVis.registerCoord`, `GenVis.perRow` and
+`GenVis.perGroup`. The schema only knows the built-in ones.
 
 ## Development
 

@@ -2,7 +2,7 @@ export { barScale, barWidth };
 
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { groupwise, pointwise, finite, curve, propScale } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, propScale } from "@/plots/elements";
 
 // the scale of a prop of a bar, e.g. of "@x:scaled"
 const barScale = (plot, ctx, prop, type) => {
@@ -33,7 +33,7 @@ export default {
         curve: true,
         coords: ['cartesian'],
         update: true,
-        render: (groups, parent, plot) => groupwise(groups, parent, g => d3.line()
+        marks: (groups, plot) => perGroup(groups, g => d3.line()
             .curve(curve(plot))
             .defined(e => finite(e.x, e.y))
             .x(e => e.x)
@@ -47,7 +47,7 @@ export default {
         curve: true,
         coords: ['cartesian'],
         update: true,
-        render: (groups, parent, plot) => groupwise(groups, parent, g => d3.area()
+        marks: (groups, plot) => perGroup(groups, g => d3.area()
             .curve(curve(plot))
             .defined(e => finite(e.x, e.y0, e.y1))
             .x(e => e.x)
@@ -65,7 +65,7 @@ export default {
     'cartesian:bar': {
         coords: ['cartesian'],
         update: true,
-        render(groups, parent, plot, ctx) {
+        marks(groups, plot, ctx) {
             const type = 'cartesian:bar';
             // the scales, the default width and the base of the bars are the
             // same for all rows, they are taken at the first row which needs
@@ -78,7 +78,7 @@ export default {
                 const yScale = once(() => barScale(plot, ctx, 'y', type));
                 const thickness = once(() => barWidth(yScale(), type));
                 const base = once(() => barScale(plot, ctx, 'x1', type)(0));
-                return pointwise(groups, parent, "rect", v => {
+                return perRow(groups, "rect", v => {
                     const height = v.height ?? thickness();
                     const x0 = 'x0' in v ? v.x0 : base();
                     const { x0: _, x1: __, ...props } = v;
@@ -94,7 +94,7 @@ export default {
             const xScale = once(() => barScale(plot, ctx, 'x', type));
             const thickness = once(() => barWidth(xScale(), type));
             const base = once(() => barScale(plot, ctx, 'y1', type)(0));
-            return pointwise(groups, parent, "rect", v => {
+            return perRow(groups, "rect", v => {
                 const width = v.width ?? thickness();
                 const y0 = 'y0' in v ? v.y0 : base();
                 const { y0: _, y1: __, ...props } = v;

@@ -1,4 +1,4 @@
-export { curves, setProps, setGroupData, groupAttrs, highlighter, rowOf, motion, withMotion, fitText };
+export { curves, setProps, groupAttrs, groupKey, highlighter, rowOf, keyOf, elementOf, directOf, drawLayer, motion, withMotion, fitText };
 
 import * as d3 from "@/utils/d3";
 
@@ -96,6 +96,85 @@ const setGroupData = function(g) {
 
 // the row of an element per row, a symbol, so it is not an attribute
 const rowOf = Symbol('row');
+
+// the key of the element of an item of a layer, its element, e.g. of the
+// items of annotations, and its attributes which are set at once, see drawLayer
+const keyOf = Symbol('key');
+const elementOf = Symbol('element');
+const directOf = Symbol('direct');
+
+// the key of a group of a plot, the keys of its categories, so an element
+// of a group is the one of the same group of the draw before
+const groupKey = g => JSON.stringify(Object.values(g.categories));
+
+// the key of an element per row, the row, the rows of the data are the same
+// objects in every draw, e.g. after a toggle of a legend
+const ids = new WeakMap();
+let id = 0;
+const rowKey = v => {
+    const row = v[rowOf];
+    if (!ids.has(row))
+        ids.set(row, ++id);
+    return ids.get(row);
+};
+
+// the attributes of an item: the ones which are set at once (`directOf`, in
+// their order, null removes one), e.g. the path of a feature, then its props
+// (see setProps), which move with the transition of the draw
+function drawItem(item) {
+    const direct = item[directOf];
+    if (direct)
+        for (const k in direct) {
+            const v = direct[k];
+            if (v === null || v === undefined)
+                this.removeAttribute(k);
+            else
+                this.setAttribute(k, v);
+        }
+    setProps.call(this, item);
+}
+
+/**
+ * Draws a layer of a plot (see `marks` of the plot types, plots/index.js)
+ * into the group of the plot `parent`, a d3 selection, into the elements of
+ * the draw before, returns the elements of the items:
+ * - `groups`: an element `g.vis-group` per group (its `categories` are its
+ *   data-group- attributes), in it an element `element` per item of its
+ *   `items`, e.g. a circle per row, the ones of the same group and of the
+ *   same `key(item)` (by default the row of the item) are the ones of the
+ *   draw before
+ * - `items`: an element per item directly in the group of the plot, e.g. a
+ *   path per group of a line, `element` or the one of an item (`elementOf`),
+ *   the ones of the same `key(item)` or index are the ones of the draw before
+ * - `class`: a class of the group of the plot, e.g. `vis-features`
+ * - `fit`: the texts with a `max-width` are cut or wrapped, see fitText
+ * An item has the props of its element (see setProps, `text` is its text),
+ * its row (`rowOf`, e.g. of the highlight of a row) and the attributes which
+ * are set at once (`directOf`). Null draws nothing.
+ */
+const drawLayer = (parent, layer) => {
+    if (!layer)
+        return null;
+    if (layer.class)
+        parent.classed(layer.class, true);
+    const elements = layer.groups
+        ? parent.selectChildren("g.vis-group")
+            .data(layer.groups, groupKey)
+            .join(enter => enter.append("g").attr("class", "vis-group"))
+            .order()
+            .each(setGroupData)
+            .selectChildren(layer.element)
+            .data(g => g.items, layer.key ?? rowKey)
+            .join(layer.element)
+        : parent.selectChildren(layer.element)
+            .data(layer.items ?? [], layer.key)
+            .join(layer.element ?? (enter => enter.append(item => document.createElementNS('http://www.w3.org/2000/svg', item[elementOf]))));
+    elements.order().each(drawItem);
+    if (layer.fit)
+        elements.filter(function() { return this.hasAttribute('max-width') })
+            .each(function(item) { fitText(this, item.text === null || item.text === undefined ? '' : String(item.text)) });
+    return elements;
+};
 
 /**
  * The highlight of the elements of a facet: the highlight- props of the

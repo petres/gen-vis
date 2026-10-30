@@ -3,7 +3,7 @@ import { bandCenter } from "@/utils/scales";
 import { fitText, motion, setProps } from "@/utils/draw";
 import { evaluate } from "@/utils/props";
 import { tickValues, tickFormat, tickCount } from "@/coords/ticks";
-import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
+import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
 
 // the positions of the hover are vertical, e.g. of horizontal bars
 const isVertical = (ctx, names) => ctx.store.mapping(names.h).scale?.orientation == 'vertical';
@@ -148,39 +148,41 @@ const axes = ctx => {
 
 // a band, a line, a text or a circle at values of the mappings of the axes,
 // without a value of an axis over the whole plot area, e.g. a band of the
-// horizontal axis has the height of the plot area
-const annotate = (ctx, g, a) => {
+// horizontal axis has the height of the plot area, the items of a layer
+const annotate = (ctx, a) => {
     const c = constraints(ctx, a);
     const h = c.find(e => e.orientation == 'horizontal');
     const v = c.find(e => e.orientation == 'vertical');
     const [x0, x1] = h ? span(h) : [0, ctx.innerWidth];
     const [y0, y1] = v ? span(v) : [0, ctx.innerHeight];
 
-    if (a.type == 'band') {
-        setAnnotationProps(g.append("rect").attr("class", "vis-annotation vis-band")
-            .attr("x", x0).attr("y", y0).attr("width", x1 - x0).attr("height", y1 - y0), a, ctx);
-        drawLabel(g, a, x0 + 4, y0 + 4);
-    } else if (a.type == 'line') {
+    if (a.type == 'band')
+        return [
+            annotationItem("rect", { class: "vis-annotation vis-band", x: x0, y: y0, width: x1 - x0, height: y1 - y0 }, a, ctx),
+            ...labelItems(a, x0 + 4, y0 + 4),
+        ];
+    if (a.type == 'line') {
         // a value of the horizontal axis is a vertical line, of the vertical one a horizontal line
-        const line = g.append("line").attr("class", "vis-annotation vis-line");
         if (h) {
             const x = position(h);
-            line.attr("x1", x).attr("x2", x).attr("y1", y0).attr("y2", y1);
-            drawLabel(g, a, x + 4, y0 + 4);
-        } else {
-            const y = v ? position(v) : 0;
-            line.attr("x1", x0).attr("x2", x1).attr("y1", y).attr("y2", y);
-            drawLabel(g, a, x1 - 4, y - 4, "end", "auto");
+            return [
+                annotationItem("line", { class: "vis-annotation vis-line", x1: x, x2: x, y1: y0, y2: y1 }, a, ctx),
+                ...labelItems(a, x + 4, y0 + 4),
+            ];
         }
-        setAnnotationProps(line, a, ctx);
-    } else if (a.type == 'text' || a.type == 'circle') {
-        const x = h ? position(h) : 0;
         const y = v ? position(v) : 0;
-        if (a.type == 'text')
-            setAnnotationProps(g.append("text").attr("class", "vis-annotation vis-text").attr("x", x).attr("y", y), a, ctx, { "font-size": 11 });
-        else
-            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-circle").attr("cx", x).attr("cy", y), a, ctx, { r: 4 });
+        return [
+            annotationItem("line", { class: "vis-annotation vis-line", x1: x0, x2: x1, y1: y, y2: y }, a, ctx),
+            ...labelItems(a, x1 - 4, y - 4, "end", "auto"),
+        ];
     }
+    const x = h ? position(h) : 0;
+    const y = v ? position(v) : 0;
+    if (a.type == 'text')
+        return [annotationItem("text", { class: "vis-annotation vis-text", x, y }, a, ctx, { "font-size": 11 })];
+    if (a.type == 'circle')
+        return [annotationItem("circle", { class: "vis-annotation vis-circle", cx: x, cy: y }, a, ctx, { r: 4 })];
+    return [];
 };
 
 // the plot area of the facet with a horizontal and a vertical axis

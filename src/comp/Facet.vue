@@ -24,7 +24,7 @@
 import { toRaw } from 'vue';
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/props";
-import { highlighter, withMotion } from "@/utils/draw";
+import { drawLayer, highlighter, withMotion } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 import { plotGroups, plotRows } from "@/layout";
 import { filter, rowFilter } from "@/utils/data";
@@ -207,9 +207,10 @@ export default {
             return `plot ${this.store.def.plot.indexOf(plot)} ${plot.id} ${plot.type}`;
         },
 
-        // a group per plot, kept from one draw to the next, the plot types
-        // with `update` draw into the elements of the draw before, e.g. with
-        // pointwise, the elements of the others are removed
+        // a group per plot, kept from one draw to the next, the layer of the
+        // marks of its type (see plots/index.js) is drawn into it, of the
+        // types with `update` into the elements of the draw before, the
+        // elements of the others are removed
         plot(plots) {
             plots.forEach(plot => {
                 if (!Object.hasOwn(plotTypes, plot.type))
@@ -227,7 +228,7 @@ export default {
                 if (!type.update)
                     parent.selectAll("*").remove();
                 const rows = plotRows(this.store, plot, this.facet);
-                type.render(plotGroups(plot, rows, this.ctx), parent, plot, this.ctx);
+                drawLayer(parent, type.marks(plotGroups(plot, rows, this.ctx), plot, this.ctx));
             });
         },
 

@@ -77,9 +77,29 @@ export interface PlotGroup {
     complete(row: Row): boolean;
 }
 
+/** An element of a layer, the values of its attributes (`text` is its text). */
+export type LayerItem = Record<string, unknown>;
+
+/** The marks of a plot, drawn by the package, see the readme "Extensions" and drawLayer of src/utils/draw.js. */
+export interface Layer {
+    /** The svg element of the items, e.g. "rect". */
+    element?: string;
+    /** An element per item in a `g.vis-group` per group, its categories are its `data-group-` attributes. */
+    groups?: { categories: Record<string, unknown>; items: LayerItem[] }[];
+    /** The elements directly in the group of the plot, e.g. a path per group. */
+    items?: LayerItem[];
+    /** The key of the element of an item, of the draw before, by default its row or its index. */
+    key?: (item: LayerItem) => unknown;
+    /** A class of the group of the plot. */
+    class?: string;
+    /** The texts with a `max-width` are cut or wrapped. */
+    fit?: boolean;
+}
+
 /** A plot type, see the readme "Extensions" and src/plots/index.js. */
 export interface PlotType {
-    render(groups: PlotGroup[], parent: any, plot: Record<string, any>, ctx: Record<string, any>): unknown;
+    /** The marks of the groups of rows of a plot, null draws nothing. */
+    marks(groups: PlotGroup[], plot: Record<string, any>, ctx: Record<string, any>): Layer | null;
     update?: boolean;
     curve?: boolean;
     coords?: string[];
@@ -93,12 +113,12 @@ export declare function mountGenVisByClass(className: string): GenVisInstance[];
 export declare function unmountGenVisElement(element: Element): boolean;
 export declare function registerPlotType(name: string, type: PlotType): void;
 export declare function registerCoord(name: string, coord: Record<string, unknown>): void;
-/** An element of `type` per row, the elements of the draw before are updated. */
-export declare function pointwise(groups: PlotGroup[], parent: any, type: string,
+/** The marks of an element of `element` per row, the elements of the draw before are updated. */
+export declare function perRow(groups: PlotGroup[], element: string,
     translate?: (values: Record<string, unknown>, row: Row, group: PlotGroup) => Record<string, unknown>,
-    key?: (values: Record<string, unknown>) => unknown): any;
-/** A path per group with the `attrs` of the group and the path `d(group)`. */
-export declare function groupwise(groups: PlotGroup[], parent: any, d?: (group: PlotGroup) => string | null): any;
+    key?: (item: LayerItem) => unknown): Layer;
+/** The marks of a path per group with the `attrs` of the group and the path `d(group)`. */
+export declare function perGroup(groups: PlotGroup[], d?: (group: PlotGroup) => string | null): Layer;
 
 /** The plugin of Vue, registers the component <GenVis>. */
 declare const plugin: Plugin;

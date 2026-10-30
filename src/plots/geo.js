@@ -1,6 +1,6 @@
 import { evaluate } from "@/utils/props";
-import { setProps } from "@/utils/draw";
-import { pointwise } from "@/plots/elements";
+import { directOf } from "@/utils/draw";
+import { perRow } from "@/plots/elements";
 
 // the feature of a row, joined by the mapping `join` of the geometry
 const featureOf = (ctx, row) => ctx.store.geo.byKey.get(String(row[ctx.store.def.geo.join]));
@@ -11,7 +11,7 @@ const keyOf = (ctx, row) => String(row[ctx.store.def.geo.join]);
 const positioned = (type, x, y) => ({
     coords: ['geo'],
     update: true,
-    render: (groups, parent, plot, ctx) => pointwise(groups, parent, type, (v, row) => {
+    marks: (groups, plot, ctx) => perRow(groups, type, (v, row) => {
         const { lon, lat, ...props } = v;
         const f = featureOf(ctx, row);
         const p = 'lon' in v && 'lat' in v ? ctx.projection([lon, lat]) : (f ? ctx.path.centroid(f) : [NaN, NaN]);
@@ -26,15 +26,14 @@ export default {
     'geo:base': {
         coords: ['geo'],
         update: true,
-        render(groups, parent, plot, ctx) {
+        marks(groups, plot, ctx) {
             const props = evaluate(plot.props, ctx.scope);
-            parent.classed("vis-features", true)
-                .selectAll("path")
-                .data(ctx.store.geo.features)
-                .join("path")
-                .attr("d", ctx.path)
-                .attr("data-geo-key", ctx.store.geo.key)
-                .each(function() { setProps.call(this, props) });
+            const { features, key } = ctx.store.geo;
+            return {
+                class: "vis-features",
+                element: "path",
+                items: features.map(f => ({ [directOf]: { d: ctx.path(f), 'data-geo-key': key(f) }, ...props })),
+            };
         },
     },
 
@@ -45,7 +44,7 @@ export default {
     'geo:region': {
         coords: ['geo'],
         update: true,
-        render: (groups, parent, plot, ctx) => pointwise(groups, parent, "path", (v, row) => {
+        marks: (groups, plot, ctx) => perRow(groups, "path", (v, row) => {
             const f = featureOf(ctx, row);
             return { ...v, d: f ? ctx.path(f) : null, 'data-geo-key': keyOf(ctx, row) };
         }, v => v['data-geo-key']),
@@ -61,15 +60,10 @@ export default {
     'geo:mesh': {
         coords: ['geo'],
         update: true,
-        render(groups, parent, plot, ctx) {
+        marks(groups, plot, ctx) {
             const props = evaluate(plot.props, ctx.scope);
-            parent.classed("vis-mesh", true)
-                .selectAll("path")
-                .data([ctx.store.geo.mesh(plot.object, plot.borders)])
-                .join("path")
-                .attr("d", ctx.path)
-                .attr("fill", "none")
-                .each(function() { setProps.call(this, props) });
+            const mesh = ctx.store.geo.mesh(plot.object, plot.borders);
+            return { class: "vis-mesh", element: "path", items: [{ [directOf]: { d: ctx.path(mesh), fill: "none" }, ...props }] };
         },
     },
 };

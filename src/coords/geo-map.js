@@ -5,7 +5,7 @@ import {
     geoIdentity, geoMercator, geoNaturalEarth1, geoOrthographic, geoPath, geoStereographic, geoTransverseMercator,
 } from 'd3-geo';
 import { named } from "@/utils/registry";
-import { setAnnotationProps } from "@/coords/annotations";
+import { annotationItem } from "@/coords/annotations";
 
 // the projections of maps (`geo.projection.type`), e.g. mercator
 export const projections = {
@@ -102,14 +102,16 @@ export default {
         ctx.projection = projection;
         ctx.path = path;
     },
-    annotate(ctx, g, a) {
+    // a text or a circle at `lon` and `lat`, the items of a layer
+    annotate(ctx, a) {
         const p = ctx.projection([a.lon, a.lat]);
         if (!p)
-            return;
+            return [];
         if (a.type == 'text')
-            setAnnotationProps(g.append("text").attr("class", "vis-annotation vis-text").attr("x", p[0]).attr("y", p[1]), a, ctx, { "font-size": 11 });
-        else if (a.type == 'circle')
-            setAnnotationProps(g.append("circle").attr("class", "vis-annotation vis-circle").attr("cx", p[0]).attr("cy", p[1]), a, ctx, { r: 4 });
+            return [annotationItem("text", { class: "vis-annotation vis-text", x: p[0], y: p[1] }, a, ctx, { "font-size": 11 })];
+        if (a.type == 'circle')
+            return [annotationItem("circle", { class: "vis-annotation vis-circle", cx: p[0], cy: p[1] }, a, ctx, { r: 4 })];
+        return [];
     },
     hover: {
         area: (ctx, parent) => parent.append("rect")

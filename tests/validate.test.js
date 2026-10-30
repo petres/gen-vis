@@ -90,7 +90,7 @@ describe('validateDef', () => {
     });
 
     test('all plot types are implemented', () => {
-        expect(Object.keys(plotTypes).filter(t => typeof plotTypes[t].render != 'function')).toEqual([]);
+        expect(Object.keys(plotTypes).filter(t => typeof plotTypes[t].marks != 'function')).toEqual([]);
     });
 
     test('coordinate systems and the plot types of them', () => {
@@ -117,7 +117,7 @@ describe('validateDef', () => {
         const def = base();
         def.plot.type = 'test:type';
         expect(validateDef(def)).toEqual([expect.stringMatching(/^plot\[0\]\.type: unknown type 'test:type'/)]);
-        registerPlotType('test:type', { render() {} });
+        registerPlotType('test:type', { marks() {} });
         expect(validateDef(def)).toEqual([]);
         delete plotTypes['test:type'];
     });

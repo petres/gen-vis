@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi, beforeEach, onTestFinished } from 'vitest';
 import { createApp, h, nextTick, ref } from 'vue';
-import { GenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, pointwise } from '@/index.js';
+import { GenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, perRow } from '@/index.js';
 import { plotTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import * as d3 from 'd3-scale-chromatic';
@@ -1583,7 +1583,7 @@ describe('the update of the facets', () => {
 
     test('the elements of a plot type without update are drawn anew', async () => {
         registerPlotType('test:append', {
-            render: (groups, parent) => groups.forEach(g => g.rows.filter(g.complete).forEach(row => parent.append('rect').attr('x', g.at(row).x))),
+            marks: groups => ({ element: 'rect', items: groups.flatMap(g => g.rows.filter(g.complete).map(row => ({ x: g.at(row).x }))) }),
         });
         const def = lineDef();
         def.plot = { type: 'test:append', categories: ['c'], props: { x: '@x:scaled' } };
@@ -1645,7 +1645,7 @@ describe('the update of the facets', () => {
 
     test('a new width moves the plots before they are drawn, e.g. the center of a polar plot', async () => {
         const seen = [];
-        registerPlotType('test:origin', { render: (groups, parent, plot, ctx) => seen.push(ctx.inner.node().getAttribute('transform')) });
+        registerPlotType('test:origin', { marks: (groups, plot, ctx) => { seen.push(ctx.inner.node().getAttribute('transform')); return null; } });
         onTestFinished(() => delete plotTypes['test:origin']);
         const def = lineDef({ coord: 'polar', width: undefined, margins: { top: 0, right: 0, bottom: 0, left: 0 } });
         def.mapping.x.scale.orientation = 'angular';
@@ -1683,7 +1683,7 @@ describe('the update of the facets', () => {
 describe('extensions', () => {
     test('a registered plot type', async () => {
         registerPlotType('test:square', {
-            render: (groups, parent, plot, ctx) => pointwise(groups, parent, 'rect', v => ({
+            marks: (groups, plot, ctx) => perRow(groups, 'rect', v => ({
                 ...v, x: v.cx - 2, width: 4, height: ctx.innerHeight,
             })),
         });
@@ -1701,7 +1701,7 @@ describe('extensions', () => {
 
     test('the groups of a plot type, the values of the props are plain values', async () => {
         let seen;
-        registerPlotType('test:groups', { render: (groups, parent, plot, ctx) => { seen = { groups, ctx }; } });
+        registerPlotType('test:groups', { marks: (groups, plot, ctx) => { seen = { groups, ctx }; return null; } });
         const def = lineDef();
         def.plot = { type: 'test:groups', categories: ['c'], props: { stroke: '@color', width: { prop: 'relative', ref: 'innerWidth', ratio: 0.1 }, d: { x: '@x:scaled', y: '@y' } } };
         await mount(GenVis, { def, data: lineData });

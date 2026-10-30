@@ -110,6 +110,17 @@ Faster and smaller:
   pointer; the bars take their scales and width once, not per row; the
   height of a drawn visualisation is measured at the next frame
 
+Extensions, the charts are drawn as before:
+
+- a plot type returns its marks (`marks(groups, plot, ctx)`, a layer of
+  elements per row or per group, see `drawLayer` of `src/utils/draw.js`),
+  the package draws them, instead of drawing them itself (`render(groups,
+  parent, plot, ctx)`); `perRow` and `perGroup` are the marks of an element
+  per row and of a path per group (they were `pointwise` and `groupwise`,
+  which drew them)
+- coordinate systems: `annotate(ctx, a)` returns the items of an annotation,
+  the package draws them
+
 ## 2.1.0
 
 - maps: the plot type `geo:mesh`, the borders of an object of TopoJSON as one

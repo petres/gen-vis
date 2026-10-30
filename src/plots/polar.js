@@ -1,7 +1,7 @@
 // the plot types of polar plots, loaded with the first one, see coords/polar.js
 import { arc, areaRadial, lineRadial, pointRadial } from 'd3-shape';
 import { bandCenter } from "@/utils/scales";
-import { groupwise, pointwise, finite, curve, propScale } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, propScale } from "@/plots/elements";
 import { barScale, barWidth } from "@/plots/cartesian";
 import { radiusRange } from "@/coords/polar-plot";
 
@@ -21,7 +21,7 @@ const points = g => {
 const positioned = (name, type, x, y) => ({
     coords: ['polar'],
     update: true,
-    render: (groups, parent, plot, ctx) => pointwise(groups, parent, type, v => {
+    marks: (groups, plot, ctx) => perRow(groups, type, v => {
         if (!('angle' in v && 'radius' in v))
             throw new Error(`${name}: the props 'angle' and 'radius' are needed`);
         const [px, py] = pointRadial(v.angle + angleOffset(plot, ctx, 'angle'), v.radius);
@@ -40,9 +40,9 @@ export default {
         curve: true,
         coords: ['polar'],
         update: true,
-        render(groups, parent, plot, ctx) {
+        marks(groups, plot, ctx) {
             const offset = angleOffset(plot, ctx, 'd.angle');
-            groupwise(groups, parent, g => lineRadial()
+            return perGroup(groups, g => lineRadial()
                 .curve(curve(plot))
                 .defined(e => finite(e.angle, e.radius))
                 .angle(e => e.angle + offset)
@@ -57,9 +57,9 @@ export default {
         curve: true,
         coords: ['polar'],
         update: true,
-        render(groups, parent, plot, ctx) {
+        marks(groups, plot, ctx) {
             const offset = angleOffset(plot, ctx, 'd.angle');
-            groupwise(groups, parent, g => areaRadial()
+            return perGroup(groups, g => areaRadial()
                 .curve(curve(plot))
                 .defined(e => finite(e.angle, e.innerRadius, e.outerRadius))
                 .angle(e => e.angle + offset)
@@ -78,7 +78,7 @@ export default {
     'polar:arc': {
         coords: ['polar'],
         update: true,
-        render: (groups, parent, plot, ctx) => pointwise(groups, parent, "path", v => {
+        marks: (groups, plot, ctx) => perRow(groups, "path", v => {
             let [start, end] = [v.startAngle, v.endAngle];
             if (!('startAngle' in v && 'endAngle' in v)) {
                 if (!('angle' in v))
