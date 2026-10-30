@@ -32,7 +32,14 @@ const keptHeights = 500;
 export default {
     name: 'GenVis',
     props: {
+        // shows the prepared definition, its warnings are logged, see check
         debug: {
+           type: Boolean,
+           default: false
+        },
+        // the warnings of the check of the definition in the console, e.g.
+        // unknown plot types, while it is written, the check is only loaded then
+        check: {
            type: Boolean,
            default: false
         },
@@ -156,7 +163,7 @@ export default {
                 return this.showError(new Error('No definition given.'));
             try {
                 // a definition loaded after a newer one was given is not shown
-                if (!await this.store.init({ def: this.def, defUrl: this.defFile, data: this.data, state: this.state, globals: this.globals }))
+                if (!await this.store.init({ def: this.def, defUrl: this.defFile, data: this.data, state: this.state, globals: this.globals, check: this.check || this.debug }))
                     return;
                 this.store.highlighted = this.highlight ? JSON.parse(JSON.stringify(this.highlight)) : null;
                 // the error is kept while the new definition is loaded, a

@@ -218,10 +218,14 @@ describe('Store.init', () => {
         expect(store.data.map(r => r.y)).toEqual([1, 3]);
     });
 
+    // only with `check`, the check is not loaded otherwise
     test('warnings for the definition', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const wrong = { ...def, plot: { ...def.plot, type: 'path' } };
+        await createStore().init({ def: wrong, data: csv });
+        expect(warn).not.toHaveBeenCalled();
         const store = createStore();
-        await store.init({ def: { ...def, plot: { ...def.plot, type: 'path' } }, data: csv });
+        await store.init({ def: wrong, data: csv, check: true });
         expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition: plot\[0\]\.type: unknown type 'path'/));
     });
 

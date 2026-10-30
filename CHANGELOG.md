@@ -34,6 +34,17 @@ patch of the ticks of a parent, it was no number. The fixed ticks of an axis of 
 `"2020-04-01"`) are converted as the dates of the data, they had no
 position.
 
+Fixed: the parts a patch of a form element needs are loaded, also if the
+definition has none of them, e.g. a transform or the legend of a scale of
+colors only of a patch (the transforms were not loaded, the legend was not
+shown).
+
+The check of the definitions (`validateDef`) is only loaded and its warnings
+are only logged with the prop `check` (`data-check`) or `debug`, e.g. while
+a definition is written, a page loads less; a plot type of another
+coordinate system is an error, e.g. `cartesian:bar` of a polar plot (it was
+a warning of the check).
+
 Changes which need changes of definitions:
 
 - `filter`: `null` is the rows without a value (it was no row)

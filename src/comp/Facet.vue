@@ -215,6 +215,10 @@ export default {
                 if (!Object.hasOwn(plotTypes, plot.type))
                     throw new Error(`Unknown plot type '${plot.type}'`);
                 const type = plotTypes[plot.type];
+                // the types of a coordinate system, e.g. no bars in a map
+                const coord = this.store.def.options.coord ?? 'cartesian';
+                if (type.coords && !type.coords.includes(coord))
+                    throw new Error(`The plot type '${plot.type}' is not available in the coordinate system '${coord}'`);
                 const parent = this.keep(this.plotKey(plot), () => {
                     const g = this.ctx.inner.append("g")
                         .classed("vis-plot", true)

@@ -102,7 +102,8 @@ parquet data and the PNG and the CSV (~11 kB) with the first one.
 | `defFile`  | `data-def-file` | url of the definition |
 | `def`      | `data-def`      | the definition, an object or a JSON string |
 | `data`     | `data-data`     | the data as rows, a CSV/JSON string or parquet (an `ArrayBuffer` or `Uint8Array`), if not given it is loaded from the `data` url of the definition |
-| `debug`    | `data-debug`    | shows the prepared definition |
+| `debug`    | `data-debug`    | shows the prepared definition, with the warnings of `check` |
+| `check`    | `data-check`    | logs the warnings of the check of the definition in the console, e.g. unknown plot types, while it is written, the check is only loaded then |
 | `state`    | `data-state`    | the changes of the user, see [state](#state), the attribute is JSON |
 | `highlight` | `data-highlight` | the rows highlighted by the page, values of mappings, e.g. `{"country": "AT"}` of the hover of another chart, see [linked charts](#linked-charts), the attribute is JSON |
 | `globals`  | `data-globals`  | the globals of the page, e.g. the language or the year of a menu of the page, also of hidden form elements, see [globals](#formelements-and-globals), the attribute is JSON |
@@ -111,8 +112,8 @@ parquet data and the PNG and the CSV (~11 kB) with the first one.
 | `csv`      | `data-csv`      | a button at the right of the footer to save the data shown as CSV, a string is the name of the file (default the title) |
 | `imageWidth` | `data-image-width` | the width of the PNG in pixels, the one of the definition otherwise or 1200, `screen` for the one on the screen (as it is seen, e.g. on a phone) |
 
-The attributes are strings: `data-download`, `data-csv`, `data-copy` and
-`data-debug` without a value or `"true"` are on, `"false"` is off, another
+The attributes are strings: `data-download`, `data-csv`, `data-copy`,
+`data-check` and `data-debug` without a value or `"true"` are on, `"false"` is off, another
 value of `data-download` or `data-csv` is the name of the file.
 
 Every visualisation has its own state, several of them can be used on a page.
@@ -401,8 +402,10 @@ loaded definition. A definition is deep merged into
 its `parent` (and its parent into its own parent), arrays are replaced, not
 merged, except arrays whose entries all have an `id`, e.g. the form elements
 and their values, these are merged by the ids, entries with a new id are
-appended. The merged definition is checked for common mistakes, e.g. unknown
-plot types, the findings are logged as warnings in the console, a definition
+appended. With `check` (or `debug`) the merged definition is checked for
+common mistakes, e.g. unknown plot types, the findings are logged as
+warnings in the console, the check is only loaded then, see also [checks
+outside the browser](#checks-outside-the-browser), a definition
 which can not be drawn, e.g. a mapping which is no object, is an error which
 names the part. Only the footer and the templates of the hover
 (`options.hover`) are HTML, e.g. the link of a source, so a definition is

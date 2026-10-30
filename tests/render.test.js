@@ -422,6 +422,7 @@ describe('rendering', () => {
         };
         expect(vis({ download: 'false', csv: 'true', copy: 'false', debug: 'false' }).$props).toMatchObject({ download: false, csv: true, copy: false, debug: false });
         expect(vis({ download: '', csv: 'werte', copy: '' }).$props).toMatchObject({ download: true, csv: 'werte', copy: true });
+        expect(vis({ check: '' }).$props).toMatchObject({ check: true });
 
         const state = { globals: {}, visible: { c: { Wien: false } } };
         const chart = vis({ state: JSON.stringify(state) });
@@ -1898,8 +1899,8 @@ describe('polar', () => {
     test('cartesian plot types are not available', async () => {
         const def = polarDef();
         def.plot = { type: 'cartesian:bar', categories: ['c'], props: { x: '@x:scaled', y1: '@y:scaled' } };
-        await mount(GenVis, { def, data: polarData });
-        expect(errors).toContainEqual(expect.stringMatching(/plot\[0\]\.type: not available in the coordinate system 'polar'/));
+        const el = await mount(GenVis, { def, data: polarData });
+        expect(el.querySelector('.vis-error').textContent).toBe("The plot type 'cartesian:bar' is not available in the coordinate system 'polar'");
     });
 });
 

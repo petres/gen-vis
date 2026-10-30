@@ -110,7 +110,8 @@ const readData = async (data, format, source, columns = null) => {
 // the rows are not made reactive, they can be large and are only replaced as a whole
 const raw = rows => markRaw(Array.from(toRaw(rows)));
 
-// the check of the definitions, loaded with the first one, together with its
+// the check of the definitions (`check` of Store.init, e.g. while a
+// definition is written), loaded with the first one, together with its
 // parents, a definition is drawn without it if it could not be loaded
 let validator = null;
 const loadValidator = () => validator ??= lazy.validate().catch(() => {
@@ -186,11 +187,11 @@ const loadParts = need => {
 };
 
 // the definition of the attribute or of its url, with its parents, the
-// warnings of its check, the data and the geometry are requested together
+// warnings of its check (`check`), the data and the geometry are requested together
 // with the parents, if the def names them, the data if its format is known,
 // it can be the one of a parent, `url` is undefined for inline definitions
-const resolveDef = async ({ def, defUrl, data }) => {
-    const checks = loadValidator();
+const resolveDef = async ({ def, defUrl, data, check }) => {
+    const checks = check ? loadValidator() : null;
     let url;
     if (def === null) {
         url = resolveUrl(defUrl);
@@ -290,8 +291,8 @@ const loadGeo = async (defOrg, url, module, prepared) => {
 // see Store.init, urls of inline defs are relative to the page: the
 // definition, the parts it needs together with its data, the files of its
 // plots and transforms, the prepared definition and the geometry of a map
-const load = async ({ def = null, defUrl = null, data = null, state = null, globals = null }) => {
-    const { url, defOrg } = await resolveDef({ def, defUrl, data });
+const load = async ({ def = null, defUrl = null, data = null, state = null, globals = null, check = false }) => {
+    const { url, defOrg } = await resolveDef({ def, defUrl, data, check });
     const parts = loadParts(requirements(defOrg));
     const rows = await loadRows(defOrg, url, data);
     const { coord, geo: geoModule, colorLegend } = await parts;
@@ -419,7 +420,9 @@ class Store {
      * def is an object or a JSON string, if it is null the def is loaded from
      * defUrl. data are rows or a CSV/JSON string, if it is null it is loaded
      * from the url given in the def. state is applied to the def, see
-     * utils/state.js. Returns false if a newer init was started meanwhile,
+     * utils/state.js. check logs the warnings of the check of the definition
+     * (validateDef) in the console, it is only loaded then. Returns false if
+     * a newer init was started meanwhile,
      * its result (or its error) is the one of the store.
      */
     async init(sources) {

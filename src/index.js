@@ -15,7 +15,7 @@ export default {
 
 // the props of the buttons and the debug output, "false" is false, a
 // string other than "true" and "" is the name of the file, e.g. of download
-const flags = ['debug', 'copy', 'download', 'csv'];
+const flags = ['debug', 'check', 'copy', 'download', 'csv'];
 
 // the value of a data attribute as the one of its prop, e.g. "false" of
 // data-copy, the state, the globals and the highlight are JSON
@@ -23,7 +23,7 @@ const attributeValue = (name, value) => {
     if (flags.includes(name)) {
         if (value === 'false')
             return false;
-        return value === '' || value === 'true' || name == 'debug' || name == 'copy' ? true : value;
+        return value === '' || value === 'true' || ['debug', 'check', 'copy'].includes(name) ? true : value;
     }
     if (name == 'state' || name == 'globals' || name == 'highlight') {
         try {

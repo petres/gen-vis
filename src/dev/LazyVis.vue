@@ -1,6 +1,6 @@
 <template>
     <div ref="el" class="lazy-vis" :style="{ minHeight: visible ? null : '320px' }">
-        <GenVis v-if="visible" :def-file="defFile" :debug="debug"/>
+        <GenVis v-if="visible" :def-file="defFile" :debug="debug" check/>
     </div>
 </template>
 
