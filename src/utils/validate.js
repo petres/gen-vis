@@ -15,7 +15,7 @@ import { transformNames } from "@/utils/transform";
 const curveNames = Object.keys(curves);
 
 const mappingTypes = ['numeric', 'date', 'categorical'];
-const formElementTypes = ['radio', 'select', 'slider'];
+const formElementTypes = ['radio', 'select', 'slider', 'hidden'];
 const propKinds = ['fixed', 'ref', 'relative', 'steps', 'format'];
 
 const list = a => a.map(e => `'${e}'`).join(', ');

@@ -25,6 +25,8 @@ export interface GenVisProps {
     debug?: boolean;
     /** The changes of the user, with v-model:state. */
     state?: State | null;
+    /** The globals of the page, e.g. the language, also of hidden form elements. */
+    globals?: Record<string, unknown> | null;
     /** A button to save the PNG, a string is the name of the file. */
     download?: boolean | string;
     /** A button to copy the PNG to the clipboard. */

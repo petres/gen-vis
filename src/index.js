@@ -18,18 +18,18 @@ export default {
 const flags = ['debug', 'copy', 'download', 'csv'];
 
 // the value of a data attribute as the one of its prop, e.g. "false" of
-// data-copy, the state is JSON
+// data-copy, the state and the globals are JSON
 const attributeValue = (name, value) => {
     if (flags.includes(name)) {
         if (value === 'false')
             return false;
         return value === '' || value === 'true' || name == 'debug' || name == 'copy' ? true : value;
     }
-    if (name == 'state') {
+    if (name == 'state' || name == 'globals') {
         try {
             return JSON.parse(value);
         } catch (error) {
-            console.error(`gen-vis: invalid JSON in data-state: ${error.message}`);
+            console.error(`gen-vis: invalid JSON in data-${name}: ${error.message}`);
             return null;
         }
     }

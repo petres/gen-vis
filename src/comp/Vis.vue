@@ -155,7 +155,8 @@ export default {
     },
     methods: {
         baseInit() {
-            this.formElements = this.store.def.formElements;
+            // hidden form elements have no element, their globals are set by the page
+            this.formElements = this.store.def.formElements.filter(e => e.type != 'hidden');
             this.globals = this.store.def.globals;
 
             this.measure();

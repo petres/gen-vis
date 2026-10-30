@@ -56,6 +56,12 @@ export default {
            type: Object,
            default: null
         },
+        // the globals of the page, e.g. the language, also of hidden form
+        // elements, they are applied without loading it again
+        globals: {
+           type: Object,
+           default: null
+        },
         // a button in the footer to save it as a PNG, a string is the name of the file
         download: {
            type: [Boolean, String],
@@ -115,6 +121,10 @@ export default {
             handler: 'syncState',
             deep: true,
         },
+        globals: {
+            handler: 'syncGlobals',
+            deep: true,
+        },
     },
     mounted() {
         this.reserved = heights.get(this.sourceKey()) ?? null;
@@ -135,7 +145,7 @@ export default {
                 return this.showError(new Error('No definition given.'));
             try {
                 // a definition loaded after a newer one was given is not shown
-                if (!await this.store.init({ def: this.def, defUrl: this.defFile, data: this.data, state: this.state }))
+                if (!await this.store.init({ def: this.def, defUrl: this.defFile, data: this.data, state: this.state, globals: this.globals }))
                     return;
                 // the error is kept while the new definition is loaded, a
                 // definition which could not be drawn is not drawn again meanwhile
@@ -169,6 +179,10 @@ export default {
             if (this.store.loaded && !sameValue(this.state ?? {}, this.store.state))
                 this.store.setState(this.state);
         },
+        syncGlobals() {
+            if (this.store.loaded && !sameValue(this.globals ?? {}, this.store.globals ?? {}))
+                this.store.setGlobals(this.globals ? JSON.parse(JSON.stringify(this.globals)) : null);
+        },
         // the visualisation as a PNG (a Blob) without the form elements, of a
         // copy of the width of the images, see utils/export.js
         async image() {
@@ -181,6 +195,7 @@ export default {
             const props = {
                 def: this.def, defFile: this.defFile, data: this.store.rows,
                 state: JSON.parse(JSON.stringify(this.store.state)),
+                globals: this.globals,
                 class: this.$attrs.class,
             };
             return await renderImage(this.$el, done => {

@@ -1,4 +1,4 @@
-export { snapshot, diffState, applyState };
+export { snapshot, diffState, applyState, applyGlobals };
 
 import { sameValue } from "@/utils/def";
 
@@ -8,9 +8,13 @@ import { sameValue } from "@/utils/def";
  * { globals: { column: "share" }, visible: { year: { "2019": false } } }
  */
 
+// the form elements of the user, not the hidden ones, their globals are set
+// by the page, see applyGlobals
+const userElements = def => (def.formElements ?? []).filter(e => e.type != 'hidden');
+
 // the complete state of a prepared definition
 const snapshot = def => ({
-    globals: Object.fromEntries((def.formElements ?? []).map(e => [e.ref, def.globals?.[e.ref]])),
+    globals: Object.fromEntries(userElements(def).map(e => [e.ref, def.globals?.[e.ref]])),
     visible: Object.fromEntries(Object.entries(def.mapping)
         .filter(([n, m]) => m.legend && m.props)
         .map(([n, m]) => [n, Object.fromEntries(Object.entries(m.props).map(([k, p]) => [k, p.visible]))])),
@@ -37,7 +41,7 @@ const diffState = (state, defaults) => {
 // values, mappings and entries are ignored, e.g. of an older definition
 const applyState = (def, state) => {
     Object.entries(state?.globals ?? {}).forEach(([r, v]) => {
-        const entry = (def.formElements ?? []).filter(e => e.ref == r)
+        const entry = userElements(def).filter(e => e.ref == r)
             .flatMap(e => e.values).find(e => sameValue(e.value, v));
         if (entry && def.globals)
             def.globals[r] = entry.value;
@@ -51,5 +55,21 @@ const applyState = (def, state) => {
             if (Object.hasOwn(m.props, k))
                 m.props[k].visible = Boolean(v);
         });
+    });
+};
+
+// the globals of the page, e.g. the language, of a form element (also a
+// hidden one) only one of its values, other globals are set as they are,
+// e.g. ones of the texts
+const applyGlobals = (def, globals) => {
+    Object.entries(globals ?? {}).forEach(([r, v]) => {
+        const elements = (def.formElements ?? []).filter(e => e.ref == r);
+        if (elements.length == 0) {
+            def.globals[r] = v;
+            return;
+        }
+        const entry = elements.flatMap(e => e.values).find(e => sameValue(e.value, v));
+        if (entry)
+            def.globals[r] = entry.value;
     });
 };

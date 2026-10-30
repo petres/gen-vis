@@ -593,7 +593,7 @@
                 "id": { "type": "string" },
                 "name": { "type": "string" },
                 "ref": { "type": "string", "description": "The global which is changed." },
-                "type": { "enum": ["radio", "select", "slider"], "description": "Radio buttons, a drop down list or a slider over the entries." },
+                "type": { "enum": ["radio", "select", "slider", "hidden"], "description": "Radio buttons, a drop down list, a slider over the entries or hidden, the global is set by the page (the prop globals)." },
                 "inImage": { "type": "boolean", "default": true, "description": "The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales." },
                 "values": {
                     "oneOf": [

@@ -94,3 +94,52 @@ describe('patches of the entries of form elements', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('globals of the page', () => {
+    const def = () => ({
+        ...lineDef({ title: '{titleText}{suffix}' }),
+        globals: { lang: 'de', titleText: 'Werte', suffix: '' },
+        formElements: [{ id: 'lang', ref: 'lang', type: 'hidden', values: [
+            { id: 'de', value: 'de', globals: { titleText: 'Werte' } },
+            { id: 'en', value: 'en', globals: { titleText: 'Values' }, patch: { mapping: { c: { props: { categories: { Wien: { name: 'Vienna' } } } } } } },
+        ] }],
+    });
+
+    test('a hidden form element is set by the page, not by the user', async () => {
+        const { createApp, h, ref } = await import('vue');
+        const globals = ref({ lang: 'en' });
+        const states = [];
+        const el = document.body.appendChild(document.createElement('div'));
+        createApp({ render: () => h(GenVis, { def: def(), data: lineData, globals: globals.value, 'onUpdate:state': s => states.push(s) }) }).mount(el);
+        await (await import('./dom.js')).rendered(el);
+        await nextTick();
+        expect(el.querySelector('.vis-form-element')).toBeNull();
+        expect(el.querySelector('.vis-title').textContent).toBe('Values');
+        expect(el.querySelector('.vis-legend-entry[data-key="Wien"]').textContent).toBe('Vienna');
+
+        globals.value = { lang: 'de' };
+        await nextTick();
+        await nextTick();
+        expect(el.querySelector('.vis-title').textContent).toBe('Werte');
+        expect(el.querySelector('.vis-legend-entry[data-key="Wien"]').textContent).toBe('Wien');
+        // an unknown value of a form element is ignored, other globals are set
+        globals.value = { lang: 'fr', suffix: '!' };
+        await nextTick();
+        await nextTick();
+        expect(el.querySelector('.vis-title').textContent).toBe('Werte!');
+        // not a change of the user
+        expect(states).toEqual([]);
+        expect(errors).toEqual([]);
+    });
+
+    test('data-globals of the standalone script', async () => {
+        const { mountGenVisElement } = await import('@/index.js');
+        const el = document.body.appendChild(document.createElement('div'));
+        el.dataset.def = JSON.stringify(def());
+        el.dataset.data = lineData;
+        el.dataset.globals = '{"lang": "en"}';
+        mountGenVisElement(el);
+        await (await import('./dom.js')).rendered(el);
+        expect(el.querySelector('.vis-title').textContent).toBe('Values');
+    });
+});

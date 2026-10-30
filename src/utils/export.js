@@ -19,7 +19,7 @@ const timeout = 20000;
 // the chosen entries of the form elements of a prepared definition, e.g.
 // "Einheit: Anteil · Jahr: 2024", the image has no form elements, the ones
 // with `"inImage": false` only change the presentation, e.g. shared scales
-const selection = def => (def.formElements ?? []).filter(e => e.inImage !== false).map(e => {
+const selection = def => (def.formElements ?? []).filter(e => e.inImage !== false && e.type != 'hidden').map(e => {
     const entry = e.values.find(v => sameValue(v.value, def.globals?.[e.ref]));
     return entry ? `${e.name}: ${entry.name}` : null;
 }).filter(Boolean).join(' · ');

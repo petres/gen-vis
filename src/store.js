@@ -5,7 +5,7 @@ import { reactive, markRaw, toRaw } from 'vue';
 import { addDataValues, dataFormat, distinctValues, parseData, prepareData, updateData, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
 import { applyPatches, fillHtml, fillText, formatOf, mergeAll, prepareDef, templateNames } from "@/utils/def";
-import { applyState, diffState, snapshot } from "@/utils/state";
+import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale, loadLocale } from "@/utils/locale";
 import { formatter } from "@/utils/props";
 import { loadCoord } from "@/coords";
@@ -145,7 +145,7 @@ const geoOf = (module, json, def = {}) => {
 };
 
 // see Store.init, urls of inline defs are relative to the page
-const load = async ({ def = null, defUrl = null, data = null, state = null }) => {
+const load = async ({ def = null, defUrl = null, data = null, state = null, globals = null }) => {
     const checks = loadValidator();
     let url;
     if (def === null) {
@@ -225,6 +225,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), { dataKeys: keysOf, files });
     const defaults = snapshot(prepared);
     applyState(prepared, state);
+    applyGlobals(prepared, globals);
     // the mappings of the globals of the state, the entries of their legends
     // of the state, e.g. of the categories of another column
     applyPatches(prepared, defOrg, { dataKeys: keysOf, files, transform });
@@ -280,8 +281,10 @@ class Store {
     // is loaded the one before is shown, see App.vue
     loads = 0;
     loading = false;
-    // incremented if the state is set from outside, the components update
+    // incremented if the state or the globals are set from outside, the components update
     stateSets = 0;
+    // the globals of the page, see setGlobals
+    globals = null;
     // the categories of the data of the last column, see dataKeys
     keyCache = null;
     // the component of the legends of scales of colors, loaded for definitions with one
@@ -353,7 +356,7 @@ class Store {
             const state = await load(sources);
             if (run != this.runs)
                 return false;
-            Object.assign(this, state);
+            Object.assign(this, state, { globals: sources.globals ?? null });
             this.loads++;
             return true;
         } catch (error) {
@@ -404,14 +407,25 @@ class Store {
         return this.keyCache.keys;
     }
 
-    // replaces the state of the loaded visualisation, null for the defaults
+    // replaces the state of the loaded visualisation, null for the defaults,
+    // the globals of the page are kept
     setState(state) {
         applyState(this.def, this.defaults);
         applyState(this.def, state);
+        applyGlobals(this.def, this.globals);
         // the entries of the legends of the mappings prepared again are the
         // ones of the definition and of the state, not the ones before
         this.applyFormElements(false);
         applyState(this.def, { visible: state?.visible });
+        this.stateSets++;
+    }
+
+    // the globals of the page, e.g. the language, see applyGlobals, they
+    // are kept for a new state
+    setGlobals(globals) {
+        this.globals = globals;
+        applyGlobals(this.def, globals);
+        this.applyFormElements();
         this.stateSets++;
     }
 }

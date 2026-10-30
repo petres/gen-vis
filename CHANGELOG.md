@@ -19,6 +19,9 @@ New:
   `transform`), e.g. the section of a map, `null` removes a part, e.g. a
   mapping; `globals` of an entry are set when it is selected; the templates
   name the fields of the selected entries, e.g. `{group:name}`
+- the globals of the page: the prop `globals` (`data-globals`), e.g. of a
+  menu of the page, and hidden form elements (`"type": "hidden"`), entries
+  with `globals` and a `patch` without an element, e.g. of the language
 
 ## 2.1.0
 

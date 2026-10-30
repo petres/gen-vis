@@ -56,7 +56,7 @@ test('the names of 1.x are unknown', () => {
     def.formElements = [{ id: 'g', name: 'G', ref: 'g', type: 'switch', values: [{ id: 'a', name: 'A', value: 'a' }] }];
     expect(validateDef(def)).toEqual([
         "mapping.c.props: expected 'categories' or the ones of the data ('fromData'), and optional 'common' props",
-        "formElements[0].type: unknown type 'switch', expected one of 'radio', 'select', 'slider'",
+        "formElements[0].type: unknown type 'switch', expected one of 'radio', 'select', 'slider', 'hidden'",
     ]);
 });
 
@@ -244,7 +244,7 @@ describe('validateDef', () => {
             expect.stringMatching(/^geo.projection.type: unknown projection 'flat', expected one of 'albers', .*'mercator'/),
             "filter.year: unknown mapping 'year'",
             "filter.year: unknown reference 'year', expected one of 'g', 'totalWidth'",
-            "formElements[0].type: unknown type 'checkbox', expected one of 'radio', 'select', 'slider'",
+            "formElements[0].type: unknown type 'checkbox', expected one of 'radio', 'select', 'slider', 'hidden'",
             "formElements[0].ref: no global",
             "formElements[0].values: no value of 'a'",
             "formElements[1].values: expected a list of entries or the column of the values, e.g. { \"column\": \"year\" }",

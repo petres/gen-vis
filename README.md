@@ -96,6 +96,7 @@ parquet data and the PNG and the CSV (~11 kB) with the first one.
 | `data`     | `data-data`     | the data as rows, a CSV/JSON string or parquet (an `ArrayBuffer` or `Uint8Array`), if not given it is loaded from the `data` url of the definition |
 | `debug`    | `data-debug`    | shows the prepared definition |
 | `state`    | `data-state`    | the changes of the user, see [state](#state), the attribute is JSON |
+| `globals`  | `data-globals`  | the globals of the page, e.g. the language or the year of a menu of the page, also of hidden form elements, see [globals](#formelements-and-globals), the attribute is JSON |
 | `download` | `data-download` | a button at the right of the footer to save it as a PNG, a string is the name of the file (default the title) |
 | `copy`     | `data-copy`     | a button at the right of the footer to copy the PNG to the clipboard (only on https or localhost) |
 | `csv`      | `data-csv`      | a button at the right of the footer to save the data shown as CSV, a string is the name of the file (default the title) |
@@ -107,7 +108,7 @@ value of `data-download` or `data-csv` is the name of the file.
 
 Every visualisation has its own state, several of them can be used on a page.
 If `def`, `defFile` or `data` change, the visualisation is loaded again, a new
-`state` is applied without loading it again. Errors are shown in place of
+`state` or new `globals` are applied without loading it again. Errors are shown in place of
 the visualisation, e.g. of a definition which can not be drawn.
 
 ### Events and slots
@@ -975,7 +976,12 @@ scale across all facets. `cols` can be a prop based on `totalWidth`,
 Form elements change `globals`, e.g. the shared scales of the facets, as
 radio buttons (`"type": "radio"`), a drop down list (`"type": "select"`) or
 a slider over the entries (`"type": "slider"`, e.g. of years, the
-visualisation changes while it is moved).
+visualisation changes while it is moved). A hidden form element (`"type":
+"hidden"`) has no element, its global is set by the page (the prop
+`globals`), e.g. the language or the year of a menu of the page, with the
+`globals` and the `patch` of its entries, it is not part of the state of
+the user. The page can also set globals without a form element, e.g. a
+text, the globals of the selected entries override them.
 The selected entries are named below the subtitle of the [PNG](#png),
 `"inImage": false` leaves out a form element which only changes the
 presentation, which the image shows anyway, e.g. shared or separate scales of
