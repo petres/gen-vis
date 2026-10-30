@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi, afterEach, onTestFinished } from 'vitest';
 import { isReactive } from 'vue';
-import { createStore, resolveUrl, resolveParents, clearCache } from '@/store';
+import { createStore, resolveUrl, resolveParents, clearCache, requirements } from '@/store';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import { coords, loadCoord, registerCoord } from '@/coords';
 
@@ -205,6 +205,19 @@ describe('Store.init', () => {
         expect(without.colorLegend).toBe(null);
     });
 
+    // the transforms of a patch, the definition has none
+    test('the transforms of a patch of a form element', async () => {
+        const store = createStore();
+        await store.init({ def: { ...def, data: undefined,
+            mapping: { ...def.mapping, y: { column: 'sum', type: 'numeric', scale: { orientation: 'vertical' } } },
+            globals: { mode: 'sum' },
+            formElements: [{ id: 'mode', ref: 'mode', type: 'radio', values: [
+                { id: 'value', value: 'value' },
+                { id: 'sum', value: 'sum', patch: { transform: [{ type: 'cumulative', column: 'value', as: 'sum' }] } },
+            ] }] }, data: 'year,value\n2020,1\n2021,2' });
+        expect(store.data.map(r => r.y)).toEqual([1, 3]);
+    });
+
     test('warnings for the definition', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const store = createStore();
@@ -249,6 +262,48 @@ describe('Store.init', () => {
         await store.init({ defUrl: 'http://h/fast/def.json' });
         await slow;
         expect(store.def.options.title).toBe('fast');
+    });
+});
+
+describe('requirements', () => {
+    const entries = patches => [{ id: 'e', ref: 'e', values: patches.map((patch, i) => ({ value: String(i), patch })) }];
+
+    test('nothing of a plain definition but the coordinate system and the locale', () => {
+        expect(requirements(def)).toEqual({
+            colors: false, coord: undefined, geo: false, transition: false, transforms: false, colorLegend: false, locales: [undefined],
+        });
+    });
+
+    test('the parts of the definition', () => {
+        const need = requirements({
+            options: { coord: 'polar', transition: 300, locale: 'de' },
+            geo: { data: 'map.json' },
+            transform: { type: 'share', column: 'value', as: 'share' },
+            mapping: {
+                c: { column: 'c', scale: { type: 'sequential', interpolator: 'Blues' }, legend: {} },
+                k: { column: 'k', props: { scheme: 'Tableau10', fromData: true }, legend: {} },
+            },
+        });
+        expect(need).toEqual({ colors: true, coord: 'polar', geo: true, transition: true, transforms: true, colorLegend: true, locales: ['de'] });
+        expect(requirements({ mapping: { c: { scale: { scheme: 'Blues' } } } }).colors).toBe(true);
+        expect(requirements({ mapping: { k: { props: { scheme: 'Tableau10' } } } }).colors).toBe(true);
+        // a legend of categories is no legend of colors
+        expect(requirements({ mapping: { k: { props: {}, legend: {} } } }).colorLegend).toBe(false);
+        expect(requirements({ options: { highlight: { transition: 200 } } }).transition).toBe(true);
+    });
+
+    test('the parts of the patches of form elements', () => {
+        const need = requirements({ ...def, formElements: entries([
+            { mapping: { c: { scale: { interpolator: 'Reds' }, legend: {} } } },
+            { transform: [{ type: 'rank', column: 'value', as: 'rank' }], options: { transition: true, locale: 'en' } },
+            null,
+            { mapping: { y: null } },
+        ]) });
+        expect(need).toEqual({ colors: true, coord: undefined, geo: false, transition: true, transforms: true, colorLegend: true, locales: [undefined, 'en'] });
+    });
+
+    test('a name of a color which is no part of a scale or of props needs no colors', () => {
+        expect(requirements({ options: { title: '"scheme": "Blues"' }, mapping: { c: { column: 'interpolator' } } }).colors).toBe(false);
     });
 });
 

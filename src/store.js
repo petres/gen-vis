@@ -1,4 +1,4 @@
-export { createStore, resolveUrl, resolveParents, clearCache };
+export { createStore, resolveUrl, resolveParents, clearCache, requirements };
 
 import { reactive, markRaw, toRaw } from 'vue';
 
@@ -12,6 +12,7 @@ import { loadCoord } from "@/coords";
 import { axisNames } from "@/layout";
 import { loadColors, loadTransition } from "@/utils/d3";
 import { lazy } from "@/utils/lazy";
+import { isObject } from "@/utils/values";
 
 // relative urls are resolved against `base`, e.g. the url of the def referencing them
 const resolveUrl = (url, base = document.baseURI) => new URL(url, base).href;
@@ -144,8 +145,51 @@ const geoOf = (module, json, def = {}) => {
     return markRaw({ json, module, source: geoParts(def), features, key, byKey: new Map(features.map(f => [key(f), f])), mesh, projections: new Map() });
 };
 
-// see Store.init, urls of inline defs are relative to the page
-const load = async ({ def = null, defUrl = null, data = null, state = null, globals = null }) => {
+/**
+ * The parts of the package a definition needs, loaded with its data, also
+ * the ones of the patches of the entries of its form elements (see
+ * variants): the colors of d3 (`colors`, of schemes and interpolators), the
+ * coordinate system (`coord`), the parts of maps (`geo`), the transitions,
+ * the transforms, the legend of a scale of colors (`colorLegend`, a mapping
+ * with a legend without props) and the locales (`locales`, the one of the
+ * definition first).
+ */
+const requirements = defOrg => {
+    const all = variants(defOrg);
+    const mappings = all.flatMap(d => Object.values(d.mapping ?? {})).filter(isObject);
+    return {
+        colors: mappings.some(m => Boolean(m.scale?.scheme || m.scale?.interpolator || m.props?.scheme)),
+        coord: defOrg.options?.coord,
+        geo: Boolean(defOrg.geo?.data),
+        transition: all.some(d => Boolean(d.options?.transition || d.options?.highlight?.transition)),
+        transforms: all.some(d => Boolean(d.transform)),
+        colorLegend: mappings.some(m => m.legend && !m.props),
+        locales: all.filter((d, i) => i == 0 || d.options?.locale !== undefined).map(d => d.options?.locale ?? undefined),
+    };
+};
+
+// the parts of the requirements, loaded at once, the coordinate system, the
+// module of maps and the legend of colors are the result
+const loadParts = need => {
+    const parts = Promise.all([
+        need.colors ? loadColors() : null,
+        loadCoord(need.coord),
+        need.geo ? lazy.geo() : null,
+        need.transition ? loadTransition() : null,
+        need.transforms ? loadTransforms() : null,
+        need.colorLegend ? lazy.colorLegend() : null,
+        ...need.locales.map(locale => loadLocale(locale)),
+    ]).then(([, coord, geo, , , colorLegend]) => ({ coord, geo, colorLegend }));
+    // the errors are the ones of the load, not unhandled ones
+    parts.catch(() => {});
+    return parts;
+};
+
+// the definition of the attribute or of its url, with its parents, the
+// warnings of its check, the data and the geometry are requested together
+// with the parents, if the def names them, the data if its format is known,
+// it can be the one of a parent, `url` is undefined for inline definitions
+const resolveDef = async ({ def, defUrl, data }) => {
     const checks = loadValidator();
     let url;
     if (def === null) {
@@ -155,8 +199,6 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
         def = parseDef(def, 'attribute');
     }
 
-    // the data and the geometry are requested together with the parents, if the
-    // def names them, the data if its format is known, it can be the one of a parent
     if (data === null && typeof def.data == 'string' && !def.data.includes('{')) {
         const dataUrl = resolveUrl(def.data, url);
         const format = dataFormat(dataUrl, def.dataFormat);
@@ -168,25 +210,13 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
 
     const defOrg = await resolveParents(JSON.parse(JSON.stringify(def)), url);
     (await checks)?.validateDef(defOrg).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
-    // the colors of d3 are only loaded if the mappings name one, also the
-    // patches of form elements, and the parts of the coordinate system, e.g.
-    // of maps, with the data
-    const parts = Promise.all([
-        /"(scheme|interpolator)":/.test(JSON.stringify([defOrg.mapping, defOrg.formElements])) ? loadColors() : null,
-        loadCoord(defOrg.options?.coord),
-        defOrg.geo?.data ? lazy.geo() : null,
-        defOrg.options?.transition || defOrg.options?.highlight?.transition ? loadTransition() : null,
-        defOrg.transform ? loadTransforms() : null,
-        // the legend of a scale of colors, a mapping with a legend without props, also of a patch
-        variants(defOrg).map(d => d.mapping)
-            .some(ms => Object.values(ms ?? {}).some(m => m?.legend && !m.props)) ? lazy.colorLegend() : null,
-        // the locale of the definition and of the patches of form elements
-        ...variants(defOrg)
-            .filter((d, i) => i == 0 || d.options?.locale !== undefined)
-            .map(d => loadLocale(d?.options?.locale ?? undefined)),
-    ]);
-    parts.catch(() => {});
-    // the format of the data, by default the one of the extension of its url
+    return { url, defOrg };
+};
+
+// the rows of the data of the attribute or of the url of the definition,
+// the format by default the one of the extension of its url, parquet is
+// read in the columns which are used
+const loadRows = async (defOrg, url, data) => {
     let format = defOrg.dataFormat;
     let source = 'of the attribute';
     if (data === null) {
@@ -197,35 +227,40 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
         data = await fetchData(dataUrl, format);
         source = `'${dataUrl}'`;
     }
-    // parquet is read in the columns which are used
-    const rows = raw(await readData(data, format, source, usedColumns(defOrg)));
+    return raw(await readData(data, format, source, usedColumns(defOrg)));
+};
 
-    const [, coord, geoModule, , , colorLegend] = await parts;
-
-    // the data of plots of their own, e.g. events, and of the lookups of
-    // transforms, also of the patches of form elements, the url relative to
-    // the def, the rows are not evaluated as the ones of the definition, see
-    // layout.js
-    const sources = variants(defOrg);
+// the data of plots of their own, e.g. events, and of the lookups of
+// transforms, also of the patches of form elements, by their url relative
+// to the def, the rows are not evaluated as the ones of the definition, see
+// layout.js
+const loadFiles = async (defOrg, url) => {
+    const all = variants(defOrg);
     const withFiles = [
-        ...sources.flatMap(d => [d?.plot ?? []].flat()).filter(p => typeof p?.data == 'string'),
-        ...sources.flatMap(d => [d?.transform ?? []].flat()).filter(t => t?.type == 'lookup' && typeof t.data == 'string'),
+        ...all.flatMap(d => [d.plot ?? []].flat()).filter(p => typeof p?.data == 'string'),
+        ...all.flatMap(d => [d.transform ?? []].flat()).filter(t => t?.type == 'lookup' && typeof t.data == 'string'),
     ];
-    const files = new Map(await Promise.all([...new Set(withFiles.map(p => p.data))].map(async data => {
+    return new Map(await Promise.all([...new Set(withFiles.map(p => p.data))].map(async data => {
         const dataUrl = resolveUrl(data, url);
         const format = dataFormat(dataUrl, withFiles.find(p => p.data == data).dataFormat);
         return [data, raw(await readData(await fetchData(dataUrl, format), format, `'${dataUrl}'`))];
     })));
+};
 
-    // the columns of the transforms, the form elements can have their values
+/**
+ * The prepared definition of the rows with the state and the globals of the
+ * page, its defaults (the state of the definition, see utils/state.js) and
+ * the columns of the transforms. The form elements can have the values of
+ * the data, the state needs them. The transforms of the globals of the
+ * state are computed before the mappings, their categories can be the ones
+ * of a transform, and again after them, e.g. of a patch of a scale of dates
+ * to utc, the entries of the legends are the ones of the state, e.g. of the
+ * categories of another column.
+ */
+const prepare = (defOrg, rows, files, state, globals) => {
     let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files);
-
-    // the form elements can have the values of the data, the state needs them
     addDataValues(defOrg, rows, columns);
     const keysOf = column => distinctValues(rows, columns, column).map(String);
-    // the transforms of the globals of the state, before the mappings, their
-    // categories can be the ones of a transform, and again after them, e.g.
-    // of a patch of a scale of dates to utc
     const transform = () => {
         columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns, files);
     };
@@ -233,23 +268,36 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     const defaults = snapshot(prepared);
     applyState(prepared, state);
     applyGlobals(prepared, globals);
-    // the mappings of the globals of the state, the entries of their legends
-    // of the state, e.g. of the categories of another column
     applyPatches(prepared, defOrg, { dataKeys: keysOf, files, transform });
     applyState(prepared, { visible: state?.visible });
     transform();
+    return { prepared, defaults, columns };
+};
 
-    // the geometry of a map, see coords/geo.js, the url of GeoJSON or TopoJSON
-    // or itself, its features are the ones of the prepared definition
-    let geo = null;
-    if (defOrg.geo?.data) {
-        let json = defOrg.geo.data;
-        if (typeof json == 'string') {
-            const geoUrl = resolveUrl(json, url);
-            json = parseDef(await fetchText(geoUrl), `'${geoUrl}'`, 'geometry');
-        }
-        geo = geoOf(geoModule, markRaw(json), prepared.geo);
+// the geometry of a map, see coords/geo.js, of the url of GeoJSON or
+// TopoJSON or itself, its features are the ones of the prepared definition
+const loadGeo = async (defOrg, url, module, prepared) => {
+    if (!defOrg.geo?.data)
+        return null;
+    let json = defOrg.geo.data;
+    if (typeof json == 'string') {
+        const geoUrl = resolveUrl(json, url);
+        json = parseDef(await fetchText(geoUrl), `'${geoUrl}'`, 'geometry');
     }
+    return geoOf(module, markRaw(json), prepared.geo);
+};
+
+// see Store.init, urls of inline defs are relative to the page: the
+// definition, the parts it needs together with its data, the files of its
+// plots and transforms, the prepared definition and the geometry of a map
+const load = async ({ def = null, defUrl = null, data = null, state = null, globals = null }) => {
+    const { url, defOrg } = await resolveDef({ def, defUrl, data });
+    const parts = loadParts(requirements(defOrg));
+    const rows = await loadRows(defOrg, url, data);
+    const { coord, geo: geoModule, colorLegend } = await parts;
+    const files = await loadFiles(defOrg, url);
+    const { prepared, defaults, columns } = prepare(defOrg, rows, files, state, globals);
+    const geo = await loadGeo(defOrg, url, geoModule, prepared);
 
     return {
         defUrl: url ?? null,
