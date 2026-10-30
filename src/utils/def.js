@@ -1,4 +1,4 @@
-export { mergeAll, sameValue, prepareDef, applyFormElements, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts };
+export { mergeAll, sameValue, prepareDef, applyPatches, patchable, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts };
 
 import merge from 'deepmerge';
 import { schemeColors } from '@/utils/d3';
@@ -162,38 +162,138 @@ const annotationPlots = (annotations = []) => [annotations].flat().map((a, i) =>
     };
 });
 
-const prepareDef = (def, dataKeys = () => []) => {
+// the options of the definition, the height of a facet and the space around
+// its plots, e.g. of the axes
+const prepareOptions = options => ({ height: 400, ...options, margins: { top: 0, right: 0, bottom: 0, left: 0, ...options?.margins } });
+
+// the plots and the annotations, which are plots of their own, the rows of
+// files of plots are the ones loaded, see `files` of applyPatches
+const preparePlots = (plot, annotations, files) => {
+    const plots = [...[plot ?? []].flat(), ...annotationPlots(annotations ?? [])];
+    return plots.map((raw, i) => {
+        const p = { ...object(raw, `plot[${i}]`, 'a plot, e.g. { "type": "svg:circle", "props": {} }') };
+        p.props ??= {};
+        // a mapping or a list of them
+        p.categories = [p.categories ?? []].flat();
+        p.id ??= `plot-${i}`;
+        p.highlightProps = Object.keys(p.props).filter(n => n.startsWith('highlight-')).map(n => n.substring(10));
+        if (typeof p.data == 'string' && files?.has(p.data)) {
+            p.data = files.get(p.data);
+            p.loaded = true;
+        }
+        return p;
+    });
+};
+
+/**
+ * The prepared definition: the globals, the form elements and the parts
+ * which they can patch with the selected entries, see applyPatches, the
+ * definition is changed, `options` are the ones of applyPatches.
+ */
+const prepareDef = (def, options = {}) => {
+    const org = JSON.parse(JSON.stringify(def));
     // the values of the form elements, also without globals of the definition
     def.globals ??= {};
-    // the height of a facet and the space around its plots, e.g. of the axes
-    def.options = { height: 400, ...def.options, margins: { top: 0, right: 0, bottom: 0, left: 0, ...def.options?.margins } };
-    if (def.facets)
-        def.facets.cols ??= 1;
-
-    def.mapping ??= {};
-    Object.entries(def.mapping).forEach(([n, m]) => prepareMapping(m, n, dataKeys, def.globals));
-
     // a form element without entries has none
     def.formElements = (def.formElements ?? []).map((e, i) => object(e, `formElements[${i}]`, 'a form element'));
     def.formElements.forEach(e => {
         if (!Array.isArray(e.values))
             e.values = [];
     });
-
-    def.plot = [...[def.plot ?? []].flat(), ...annotationPlots(def.annotations)];
-    delete def.annotations;
-
-    def.plot.forEach((p, i) => {
-        object(p, `plot[${i}]`, 'a plot, e.g. { "type": "svg:circle", "props": {} }');
-        p.props ??= {};
-        // a mapping or a list of them
-        p.categories = [p.categories ?? []].flat();
-        p.id ??= `plot-${i}`;
-        p.highlightProps = Object.keys(p.props).filter(n => n.startsWith('highlight-')).map(n => n.substring(10));
-    });
-
+    def.mapping ??= {};
+    applyPatches(def, org, options);
     return def;
-}
+};
+
+// the parts of a definition which the entries of form elements can patch
+const patchable = ['options', 'mapping', 'plot', 'annotations', 'filter', 'facets', 'geo', 'transform'];
+
+// the entries of the form elements of the values of their globals
+const selectedEntries = def => (def.formElements ?? [])
+    .map(e => e.values.find(v => sameValue(v.value, def.globals?.[e.ref])))
+    .filter(Boolean);
+
+// the sources of the prepared parts of a definition, a part whose source is
+// the same is kept, e.g. a mapping with its categories of the data
+const sources = Symbol('sources');
+
+/**
+ * The parts of a definition with the patches of the selected entries of the
+ * form elements (`patch`, e.g. { "mapping": { "y": { "column": "share" } } }
+ * or { "geo": { "fit": "data" } }), merged into the original definition
+ * `defOrg` in the order of the form elements, `null` removes a part. An
+ * entry can also set globals (`globals`). Column templates are filled with
+ * the globals, e.g. "{values}{share}". Only the parts which differ from the
+ * ones prepared before are prepared again, e.g. a mapping with the categories
+ * of the data of another column (`dataKeys`, see prepareMapping), the
+ * entries of the legends of the same categories keep their state shown or
+ * hidden (`keepVisible`). `transform()` is called once the transforms are
+ * the new ones, before the mappings, their categories can be the ones of a
+ * transform, `files` are the rows of the files of plots, by their url.
+ * Returns the names of the mappings whose values change, the ones of another
+ * column or type.
+ */
+const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null } = {}) => {
+    const selected = selectedEntries(def);
+    selected.filter(v => isObject(v.globals)).forEach(v => Object.assign(def.globals, v.globals));
+    const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));
+    const patched = mergeAll([pick(defOrg), ...selected.filter(v => isObject(v.patch)).map(v => pick(v.patch))]);
+    const before = def[sources] ?? {};
+    const after = { mapping: {} };
+    // a part prepared again if its source differs from the one before
+    const part = (name, raw, prepare) => {
+        const source = JSON.stringify(raw ?? null);
+        after[name] = source;
+        if (before[name] !== source || !(name in def))
+            def[name] = prepare(raw);
+    };
+
+    part('options', patched.options, prepareOptions);
+    part('facets', patched.facets ?? null, f => f && isObject(f) ? { cols: 1, ...f } : undefined);
+    if (!def.facets)
+        delete def.facets;
+    part('filter', patched.filter ?? null, f => f ?? undefined);
+    if (!def.filter)
+        delete def.filter;
+    part('geo', patched.geo ?? null, g => g ?? undefined);
+    if (!def.geo)
+        delete def.geo;
+    part('plot', [patched.plot ?? null, patched.annotations ?? null], ([p, a]) => preparePlots(p, a, files));
+    delete def.annotations;
+    part('transform', patched.transform ?? null, t => t ?? undefined);
+    if (!def.transform)
+        delete def.transform;
+    def[sources] = after;
+    transform();
+
+    const changed = [];
+    const mapping = {};
+    const names = templateNames(def);
+    Object.entries(patched.mapping ?? {}).forEach(([n, raw]) => {
+        if (raw === null || raw === undefined)
+            return;
+        object(raw, `mapping.${n}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`);
+        const merged = JSON.parse(JSON.stringify(raw));
+        if (typeof merged.column == 'string')
+            merged.column = fillTemplate(merged.column, names);
+        const source = JSON.stringify(merged);
+        after.mapping[n] = source;
+        const old = def.mapping?.[n];
+        // without `keepVisible` the entries of the legend are the ones of the definition
+        if (old && keepVisible && before.mapping?.[n] === source) {
+            mapping[n] = old;
+            return;
+        }
+        const m = prepareMapping(merged, n, dataKeys);
+        if (keepVisible && old?.props && m.props)
+            m.keys.filter(k => Object.hasOwn(old.props, k)).forEach(k => m.props[k].visible = old.props[k].visible);
+        if (old?.column !== m.column || old?.type !== m.type)
+            changed.push(n);
+        mapping[n] = m;
+    });
+    def.mapping = mapping;
+    return changed;
+};
 
 // the d3 format of the values of a mapping in a part of the visualisation:
 // of the axis its own, of the hover its own or the one of the axis, of the
@@ -210,14 +310,32 @@ const formatOf = (m, part) => {
     return hover;
 };
 
-// the names of the globals in a column template, e.g. `values` and `share` of
-// "{values}{share}", of letters of any language, digits and _, e.g. {größe}
-const templateRefs = column => typeof column == 'string' ?
-    [...column.matchAll(/\{([\p{L}\p{N}_]+)\}/gu)].map(m => m[1]) : [];
+// a name of a template, a global or a field of the entry of a form element
+// selected by it, e.g. `group` or `group:name`, of letters of any language,
+// digits and _, e.g. {größe}
+const templateName = /\{([\p{L}\p{N}_]+(?::[\p{L}\p{N}_]+)?)\}/gu;
 
-// unknown globals are kept as they are
-const fillTemplate = (column, globals = {}) =>
-    column.replace(/\{([\p{L}\p{N}_]+)\}/gu, (t, n) => Object.hasOwn(globals, n) ? String(globals[n]) : t);
+// the names of the globals in a column template, e.g. `values` and `share` of
+// "{values}{share}", `group` of "{group:name}"
+const templateRefs = column => typeof column == 'string' ?
+    [...column.matchAll(templateName)].map(m => m[1].split(':')[0]) : [];
+
+// unknown names are kept as they are
+const fillTemplate = (column, names = {}) =>
+    column.replace(templateName, (t, n) => Object.hasOwn(names, n) ? String(names[n]) : t);
+
+// the names of the templates of a prepared definition: the globals and the
+// fields of the selected entries of the form elements, e.g. `group:name` of
+// the name of the entry of the global `group`
+const templateNames = def => {
+    const names = { ...def.globals };
+    (def.formElements ?? []).forEach(e => {
+        const entry = e.values.find(v => sameValue(v.value, def.globals?.[e.ref]));
+        Object.entries(entry ?? {}).filter(([, v]) => v === null || typeof v != 'object')
+            .forEach(([k, v]) => names[`${e.ref}:${k}`] ??= v);
+    });
+    return names;
+};
 
 // a text of the definition with the values of the globals, e.g. a title or
 // a name, other values are kept, e.g. undefined
@@ -228,46 +346,5 @@ const escapeHtml = text => String(text).replace(/[&<>"']/g, c => escapes[c]);
 
 // a template of html, e.g. of the hover, with the values of `names` as text,
 // e.g. {land.unit}, unknown names are kept
-const fillHtml = (template, names) => template.replace(/\{([\p{L}\p{N}_.-]+)\}/gu, (t, name) =>
+const fillHtml = (template, names) => template.replace(/\{([\p{L}\p{N}_.:-]+)\}/gu, (t, name) =>
     Object.hasOwn(names, name) && names[name] !== null && names[name] !== undefined ? escapeHtml(names[name]) : t);
-
-/**
- * Entries of form elements can patch mappings, e.g. to switch the column of
- * an axis. Patched mappings are prepared again from the original definition
- * with the patches of the selected entries, also their props, e.g. the
- * categories of the data of another column (`dataKeys`, see prepareMapping),
- * the entries of the legend of the same categories keep the state shown or
- * hidden. Columns can be templates of globals, e.g. "{values}{share}", so
- * they can depend on several form elements. Returns the names of the
- * mappings whose values change, the ones of another column or type.
- */
-const applyFormElements = (def, defOrg, dataKeys = () => [], keepVisible = true) => {
-    const elements = def.formElements ?? [];
-    const names = new Set([
-        ...elements.flatMap(e => e.values.flatMap(v => Object.keys(v.mapping ?? {}))),
-        ...Object.keys(defOrg.mapping ?? {}).filter(n => templateRefs(defOrg.mapping[n].column).length > 0),
-    ]);
-    if (names.size == 0)
-        return [];
-
-    const selected = elements
-        .map(e => e.values.find(v => sameValue(v.value, def.globals?.[e.ref])))
-        .filter(v => v && v.mapping);
-
-    const changed = [];
-    names.forEach(n => {
-        const patches = selected.filter(v => v.mapping[n]).map(v => v.mapping[n]);
-        const merged = mergeAll([defOrg.mapping[n] ?? {}, ...patches]);
-        if (typeof merged.column == 'string')
-            merged.column = fillTemplate(merged.column, def.globals);
-        const m = prepareMapping(merged, n, dataKeys);
-        const before = def.mapping[n];
-        if (keepVisible && before?.props && m.props)
-            m.keys.filter(k => Object.hasOwn(before.props, k)).forEach(k => m.props[k].visible = before.props[k].visible);
-        if (before?.column !== m.column || before?.type !== m.type)
-            changed.push(n);
-        def.mapping[n] = m;
-    });
-
-    return changed;
-}

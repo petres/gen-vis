@@ -4,6 +4,22 @@ The changes of the versions, the newest first, the ones on npm without
 0.7.0 and 2.0.0-alpha.1. The details are in the commits, the upgrade from 1.x
 in the [README](README.md#upgrading-from-1x).
 
+## 3.0.0 (unreleased)
+
+Changes which need changes of definitions:
+
+- form elements: the patches of an entry are `patch`, e.g.
+  `"patch": { "mapping": { "y": { "column": "share" } } }` instead of
+  `"mapping": { "y": { "column": "share" } }`
+
+New:
+
+- form elements: a `patch` of an entry changes any part of the definition
+  (`options`, `mapping`, `plot`, `annotations`, `filter`, `facets`, `geo`,
+  `transform`), e.g. the section of a map, `null` removes a part, e.g. a
+  mapping; `globals` of an entry are set when it is selected; the templates
+  name the fields of the selected entries, e.g. `{group:name}`
+
 ## 2.1.0
 
 - maps: the plot type `geo:mesh`, the borders of an object of TopoJSON as one

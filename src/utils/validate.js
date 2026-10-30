@@ -3,7 +3,7 @@ export { validateDef, curveNames };
 import * as d3 from "@/utils/d3";
 import { dataFormats } from "@/utils/data";
 import { checkLocale } from "@/utils/locale";
-import { symbolShortcuts, templateRefs } from "@/utils/def";
+import { patchable, symbolShortcuts, templateRefs } from "@/utils/def";
 import { curves } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
@@ -26,7 +26,7 @@ const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
 const mappingParts = ['scale', 'axis', 'legend', 'hover', 'props'];
 
 // the names of a template of html, e.g. "land.unit" of "{land.unit}"
-const templateNames = text => typeof text == 'string' ? [...text.matchAll(/\{([\p{L}\p{N}_.-]+)\}/gu)].map(m => m[1]) : [];
+const templateNames = text => typeof text == 'string' ? [...text.matchAll(/\{([\p{L}\p{N}_.:-]+)\}/gu)].map(m => m[1]) : [];
 
 // a reference to a name which is not known where it is used is undefined,
 // short lists of the known names are part of the warning
@@ -320,6 +320,12 @@ const validateDef = def => {
                 warn(`formElements[${i}].values[${j}]`, `expected an entry, e.g. { "id": "a", "name": "A", "value": "a" }`);
             else if (!('value' in v))
                 warn(`formElements[${i}].values`, `no value of '${v.id}'`);
+            if (isObject(v) && v.patch !== undefined && !isObject(v.patch))
+                warn(`formElements[${i}].values[${j}].patch`, `expected the parts of the definition, e.g. { "mapping": { "y": { "column": "share" } } }`);
+            Object.keys(isObject(v?.patch) ? v.patch : {}).filter(k => !patchable.includes(k)).forEach(k =>
+                warn(`formElements[${i}].values[${j}].patch.${k}`, `can not be patched, expected one of ${list(patchable)}`));
+            if (isObject(v) && v.globals !== undefined && !isObject(v.globals))
+                warn(`formElements[${i}].values[${j}].globals`, `expected the values of globals, e.g. { "label": "EU-27" }`);
         });
     });
 
@@ -345,7 +351,8 @@ const validateDef = def => {
     const hover = def.options?.hover ?? {};
     const checkHover = (template, path, known) => templateNames(template).filter(r => !known(r)).forEach(r =>
         warn(path, `unknown name '${r}' in the template`));
-    const isGlobal = r => globals.has(r);
+    // a global or a field of its entry, e.g. `group:name`
+    const isGlobal = r => globals.has(r) || (r.includes(':') && globals.has(r.split(':')[0]));
     checkHover(hover.title, 'options.hover.title', r => r == 'title' || isGlobal(r));
     const transition = def.options?.transition;
     if (transition !== undefined && typeof transition != 'boolean' && !(typeof transition == 'number' && transition >= 0))
@@ -362,8 +369,8 @@ const validateDef = def => {
     });
     annotations.forEach(([i, a]) => ['label', 'text'].forEach(k => checkText(a[k], `annotations[${i}].${k}`)));
     formElements.forEach(([i, e]) => (Array.isArray(e.values) ? e.values : []).forEach((v, j) => isObject(v) &&
-        Object.entries(v.mapping ?? {}).forEach(([n, m]) =>
-            checkTemplate(m.column, `formElements[${i}].values[${j}].mapping.${n}.column`))));
+        Object.entries(v.patch?.mapping ?? {}).forEach(([n, m]) =>
+            checkTemplate(m?.column, `formElements[${i}].values[${j}].patch.mapping.${n}.column`))));
 
     // a built-in locale or a language of Intl, e.g. "fr", null is the default
     const locale = isObject(def.options?.locale) ? def.options.locale.base : (def.options?.locale ?? undefined);

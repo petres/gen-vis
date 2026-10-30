@@ -46,14 +46,14 @@ export default {
         template() { return this.store.def.options.hover ?? {} },
         filledTitle() {
             const template = this.template.title ?? '{title}';
-            return fillHtml(template, { ...this.store.def.globals, title: this.title });
+            return fillHtml(template, { ...this.store.names, title: this.title });
         },
         // the rows of the template, its names are the ones of the entries of
         // the slot: {land} is the name of the category, {land.unit} another
         // hover prop, {y} the formatted value and {y.value} the value, and the globals
         rows() {
             return [...(this.data ?? [])].sort((a, b) => b.order - a.order).map(d => {
-                const names = { ...this.store.def.globals };
+                const names = { ...this.store.names };
                 Object.entries(d.entries).forEach(([n, e]) => {
                     names[n] = e.name;
                     Object.entries(e).forEach(([k, v]) => names[`${n}.${k}`] = v);

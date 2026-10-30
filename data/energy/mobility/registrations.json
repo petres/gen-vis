@@ -13,11 +13,11 @@
             { "id": "valuesAbs", "name": "Anzahl" },
             {
                 "id": "valuesShare",
-                "mapping": {
+                "patch": { "mapping": {
                     "y": {
                         "scale": { "domain": [0, null], "domainRel": [0, 0.1] }
                     }
-                }
+                } }
             }
         ]
     }],

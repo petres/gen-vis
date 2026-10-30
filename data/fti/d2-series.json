@@ -12,9 +12,9 @@
     "formElements": [{
         "id": "group",
         "values": [
-            { "id": "inno", "mapping": { "y": { "scale": { "domain": [null, 100] } } } },
-            { "id": "top3", "mapping": { "y": { "scale": { "domain": [null, 100] } } } },
-            { "id": "eu", "mapping": { "y": { "scale": { "domain": [100, null] } } } }
+            { "id": "inno", "patch": { "mapping": { "y": { "scale": { "domain": [null, 100] } } } } },
+            { "id": "top3", "patch": { "mapping": { "y": { "scale": { "domain": [null, 100] } } } } },
+            { "id": "eu", "patch": { "mapping": { "y": { "scale": { "domain": [100, null] } } } } }
         ]
     }],
     "mapping": {

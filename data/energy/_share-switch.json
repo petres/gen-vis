@@ -11,14 +11,14 @@
             { "id": "valuesAbs", "value": "abs", "name": "Absolut" },
             {
                 "id": "valuesShare", "value": "share", "name": "Anteil",
-                "mapping": {
+                "patch": { "mapping": {
                     "y": {
                         "column": "value.share",
                         "scale": { "domain": [0, 1], "domainRel": [0, 0] },
                         "axis": { "format": ".0%" },
                         "hover": { "format": ".1%" }
                     }
-                }
+                } }
             }
         ]
     }]

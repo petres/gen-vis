@@ -106,7 +106,8 @@ export default {
         copied: false,
         clipboard: canCopy(),
 
-        options: { ...this.store.def.options },
+        // the width of the visualisation, see measure
+        width: null,
         globals: {},
 
         formElements: [],
@@ -122,6 +123,8 @@ export default {
     },
     computed: {
         texts() { return this.store.locale.texts },
+        // the options of the definition, a form element can patch them
+        options() { return this.store.def.options },
         // the mappings of the legends, a form element can patch them
         legends() { return this.store.mappingNamesWithKey('legend') },
         // the title and the subtitle with the values of the globals, e.g.
@@ -155,16 +158,15 @@ export default {
             this.formElements = this.store.def.formElements;
             this.globals = this.store.def.globals;
 
-            this.options = Object.assign({}, this.store.def.options);
             this.measure();
         },
         measure() {
-            this.options.width = this.store.def.options.width || innerWidth(this.$refs.vis);
-            this.store.totalWidth = this.options.width;
+            this.width = this.store.def.options.width || innerWidth(this.$refs.vis);
+            this.store.totalWidth = this.width;
         },
         resized() {
             const width = this.$refs.vis && innerWidth(this.$refs.vis);
-            if (!width || width == this.options.width)
+            if (!width || width == this.width)
                 return;
             this.measure();
             this.update();
@@ -173,7 +175,7 @@ export default {
         // the user or the state, the elements move with the transition of
         // the definition, not the ones of a new width
         update(animated = false) {
-            const view = layout(this.store, this.options.width);
+            const view = layout(this.store, this.width);
             const transition = this.store.def.options.transition;
             // no motion if the user prefers it, a setting of the system
             const still = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;

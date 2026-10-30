@@ -1003,9 +1003,13 @@ e.g. it is missing, it is the last one:
 "formElements": [{ "id": "year", "name": "Jahr", "ref": "year", "type": "slider", "values": { "column": "year" } }]
 ```
 
-An entry
-with a `mapping` also patches the mappings while it is selected, e.g. to switch
-the column of an axis:
+An entry with a `patch` changes the definition while it is selected, e.g.
+the column of an axis. A patch has the parts `options`, `mapping`, `plot`,
+`annotations`, `filter`, `facets`, `geo` and `transform`, it is merged into
+the definition as a parent is (plots and other lists of entries with an `id`
+by their ids), the patches of several form elements in their order, `null`
+removes a part, e.g. a mapping. Only the parts which change are prepared
+again, the entries of the legends of the same categories keep their state:
 
 ```json
 "globals": { "column": "value" },
@@ -1013,10 +1017,21 @@ the column of an axis:
     "id": "column", "name": "Wert", "ref": "column", "type": "radio",
     "values": [
         { "id": "value", "name": "Wert", "value": "value" },
-        { "id": "share", "name": "Anteil", "value": "share", "mapping": { "y": { "column": "share" } } }
+        { "id": "share", "name": "Anteil", "value": "share", "patch": { "mapping": { "y": { "column": "share" } } } }
     ]
 }]
 ```
+
+A patch can change any part, e.g. the section of a map and its height:
+
+```json
+{ "id": "europe", "name": "Europa", "value": "europe", "patch": { "geo": { "fit": "data" }, "options": { "height": 600 }, "filter": { "region": "Europe" } } }
+```
+
+`globals` of an entry are set when it is selected, e.g. texts of other
+globals, `{group:name}` is a field of the entry selected of the global
+`group` (its `name`, `id`, `value` or another one) in all templates, e.g.
+`"title": "Relative to {group:name}"`.
 
 If the column depends on several form elements, it can be a template of the
 globals, e.g. the values and their shares in the columns `twh`, `co2`,
@@ -1034,7 +1049,7 @@ globals, e.g. the values and their shares in the columns `twh`, `co2`,
     "id": "share", "name": "Darstellung", "ref": "share", "type": "radio",
     "values": [
         { "id": "abs", "name": "Absolut", "value": "" },
-        { "id": "rel", "name": "Anteil", "value": ".share", "mapping": { "y": { "axis": { "format": ".0%" } } } }
+        { "id": "rel", "name": "Anteil", "value": ".share", "patch": { "mapping": { "y": { "axis": { "format": ".0%" } } } } }
     ]
 }],
 "mapping": { "y": { "column": "{values}{share}" } }

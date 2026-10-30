@@ -1,6 +1,6 @@
 import { loadColors } from '@/utils/d3';
 import { describe, test, expect, beforeAll } from 'vitest';
-import { sameValue, applyFormElements, fillTemplate, formatOf, mergeAll, prepareDef, templateRefs } from '@/utils/def';
+import { sameValue, applyPatches, fillTemplate, formatOf, mergeAll, prepareDef, templateNames, templateRefs } from '@/utils/def';
 
 // the colors of d3 are loaded by the store, see loadColors
 beforeAll(loadColors);
@@ -91,12 +91,12 @@ describe('formatOf', () => {
     });
 });
 
-describe('applyFormElements', () => {
+describe('applyPatches', () => {
     const defOrg = {
         globals: { value: 'a' },
         formElements: [{ ref: 'value', type: 'radio', values: [
-            { value: 'a', mapping: { y: { column: 'A' } } },
-            { value: 'b', mapping: { y: { column: 'B' } } },
+            { value: 'a', patch: { mapping: { y: { column: 'A' } } } },
+            { value: 'b', patch: { mapping: { y: { column: 'B' } } } },
         ] }],
         mapping: { y: { column: 'A', type: 'numeric', scale: { orientation: 'vertical' } } },
         plot: { type: 'cartesian:line', props: {} },
@@ -105,13 +105,69 @@ describe('applyFormElements', () => {
     test('the selected entries patch the mappings', () => {
         const def = prepareDef(JSON.parse(JSON.stringify(defOrg)));
         def.globals.value = 'b';
-        expect(applyFormElements(def, defOrg)).toEqual(['y']);
+        expect(applyPatches(def, defOrg)).toEqual(['y']);
         expect(def.mapping.y).toMatchObject({ column: 'B', type: 'numeric', scale: { type: 'linear' } });
         expect(defOrg.mapping.y.column).toBe('A');
     });
 
     test('nothing to do without patches', () => {
-        expect(applyFormElements({ mapping: {} }, { mapping: {} })).toEqual([]);
+        const def = prepareDef({ mapping: {} });
+        expect(applyPatches(def, { mapping: {} })).toEqual([]);
+    });
+
+    test('the other parts of the definition, unchanged ones are kept', () => {
+        const org = {
+            globals: { view: 'world' },
+            formElements: [{ ref: 'view', type: 'radio', values: [
+                { value: 'world' },
+                { value: 'europe', patch: {
+                    options: { height: 300, title: 'Europe' },
+                    geo: { fit: 'data' },
+                    filter: { region: 'EU' },
+                    plot: [{ id: 'dots', props: { r: 2 } }],
+                    mapping: { x: null },
+                } },
+            ] }],
+            options: { title: 'World' },
+            geo: { data: 'world.json' },
+            mapping: { x: { column: 'x', type: 'numeric' }, region: { column: 'r', props: { fromData: true } } },
+            plot: [{ id: 'dots', type: 'svg:circle', props: { r: 4, fill: 'red' } }],
+        };
+        const def = prepareDef(JSON.parse(JSON.stringify(org)));
+        const region = def.mapping.region;
+        expect(def.options).toMatchObject({ title: 'World', height: 400 });
+        expect(def.filter).toBeUndefined();
+
+        def.globals.view = 'europe';
+        applyPatches(def, org);
+        expect(def.options).toMatchObject({ title: 'Europe', height: 300, margins: { top: 0 } });
+        expect(def.geo).toEqual({ data: 'world.json', fit: 'data' });
+        expect(def.filter).toEqual({ region: 'EU' });
+        expect(def.plot[0].props).toEqual({ r: 2, fill: 'red' });
+        // null removes a part, the mappings which are the same are kept
+        expect(Object.keys(def.mapping)).toEqual(['region']);
+        expect(def.mapping.region).toBe(region);
+
+        def.globals.view = 'world';
+        applyPatches(def, org);
+        expect(def.geo).toEqual({ data: 'world.json' });
+        expect(def.filter).toBeUndefined();
+        expect(Object.keys(def.mapping)).toEqual(['x', 'region']);
+    });
+
+    test('an entry sets globals', () => {
+        const org = {
+            globals: { group: 'inno', label: 'Innovation Leaders' },
+            formElements: [{ ref: 'group', type: 'radio', values: [
+                { value: 'inno', globals: { label: 'Innovation Leaders' } },
+                { value: 'eu', globals: { label: 'EU-27' } },
+            ] }],
+            mapping: {},
+        };
+        const def = prepareDef(JSON.parse(JSON.stringify(org)));
+        def.globals.group = 'eu';
+        applyPatches(def, org);
+        expect(def.globals).toEqual({ group: 'eu', label: 'EU-27' });
     });
 
     test('columns are filled from the globals of several form elements', () => {
@@ -121,20 +177,19 @@ describe('applyFormElements', () => {
                 { ref: 'values', type: 'radio', values: [{ value: 'twh' }, { value: 'co2' }] },
                 { ref: 'share', type: 'radio', values: [
                     { value: '' },
-                    { value: '.share', mapping: { y: { axis: { format: '.0%' } } } },
+                    { value: '.share', patch: { mapping: { y: { axis: { format: '.0%' } } } } },
                 ] },
             ],
             mapping: { y: { column: '{values}{share}', type: 'numeric', axis: { format: ',.1f' } } },
             plot: { type: 'cartesian:line', props: {} },
         };
         const def = prepareDef(JSON.parse(JSON.stringify(org)));
-        expect(applyFormElements(def, org)).toEqual(['y']);
         expect(def.mapping.y).toMatchObject({ column: 'twh', axis: { format: ',.1f' } });
         // the same column, e.g. a form element of other globals
-        expect(applyFormElements(def, org)).toEqual([]);
+        expect(applyPatches(def, org)).toEqual([]);
 
         Object.assign(def.globals, { values: 'co2', share: '.share' });
-        expect(applyFormElements(def, org)).toEqual(['y']);
+        expect(applyPatches(def, org)).toEqual(['y']);
         expect(def.mapping.y).toMatchObject({ column: 'co2.share', axis: { format: '.0%' } });
         expect(org.mapping.y.column).toBe('{values}{share}');
     });
@@ -155,6 +210,22 @@ describe('column templates', () => {
         // names of letters of any language
         expect(fillTemplate('{größe} {año}', { größe: 'groß', año: 2024 })).toBe('groß 2024');
         expect(templateRefs('{größe}{x_1}')).toEqual(['größe', 'x_1']);
+    });
+
+    test('the fields of the selected entries of the form elements', () => {
+        const def = prepareDef({
+            globals: { group: 'eu' },
+            formElements: [{ ref: 'group', type: 'radio', values: [
+                { id: 'inno', name: 'Innovation Leaders', value: 'inno' },
+                { id: 'eu', name: 'EU-27', value: 'eu', short: 'EU', patch: { mapping: {} } },
+            ] }],
+            mapping: {},
+        });
+        const names = templateNames(def);
+        expect(names).toMatchObject({ group: 'eu', 'group:name': 'EU-27', 'group:id': 'eu', 'group:short': 'EU' });
+        expect(names).not.toHaveProperty('group:patch');
+        expect(fillTemplate('relative to {group:name} ({group})', names)).toBe('relative to EU-27 (eu)');
+        expect(templateRefs('{group:name}')).toEqual(['group']);
     });
 });
 

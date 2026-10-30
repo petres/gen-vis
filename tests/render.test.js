@@ -164,8 +164,8 @@ describe('rendering', () => {
         const def = lineDef();
         def.globals = { column: 'value' };
         def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'radio', values: [
-            { id: 'value', name: 'Value', value: 'value', mapping: { y: { column: 'value' } } },
-            { id: 'other', name: 'Other', value: 'other', mapping: { y: { column: 'other' } } },
+            { id: 'value', name: 'Value', value: 'value', patch: { mapping: { y: { column: 'value' } } } },
+            { id: 'other', name: 'Other', value: 'other', patch: { mapping: { y: { column: 'other' } } } },
         ] }];
         const el = await mount(GenVis, { def, data: lineData });
         const ticks = () => [...el.querySelectorAll('g.vis-axis-left g.tick text')].map(t => parseFloat(t.textContent));
@@ -190,7 +190,7 @@ describe('rendering', () => {
             ] },
             { id: 'share', name: 'Anteil', ref: 'share', type: 'radio', values: [
                 { id: 'abs', name: 'Absolut', value: '' },
-                { id: 'rel', name: 'Anteil', value: '.share', mapping: { y: { axis: { format: '.0%' } } } },
+                { id: 'rel', name: 'Anteil', value: '.share', patch: { mapping: { y: { axis: { format: '.0%' } } } } },
             ] },
         ];
         const el = await mount(GenVis, { def, data });
@@ -218,8 +218,8 @@ describe('rendering', () => {
         const def = lineDef();
         def.globals = { column: 'value' };
         def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'radio', values: [
-            { id: 'value', name: 'Value', value: 'value', mapping: { y: { column: 'value' } } },
-            { id: 'other', name: 'Other', value: 'other', mapping: { y: { column: 'other' } } },
+            { id: 'value', name: 'Value', value: 'value', patch: { mapping: { y: { column: 'value' } } } },
+            { id: 'other', name: 'Other', value: 'other', patch: { mapping: { y: { column: 'other' } } } },
         ] }];
         return def;
     };
@@ -441,8 +441,8 @@ describe('controls', () => {
         const def = lineDef();
         def.globals = { column: 'value' };
         def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'radio', values: [
-            { id: 'value', name: 'Value', value: 'value', mapping: { y: { column: 'value' } } },
-            { id: 'other', name: 'Other', value: 'other', mapping: { y: { column: 'other' } } },
+            { id: 'value', name: 'Value', value: 'value', patch: { mapping: { y: { column: 'value' } } } },
+            { id: 'other', name: 'Other', value: 'other', patch: { mapping: { y: { column: 'other' } } } },
         ] }];
         def.plot[0].props['highlight-stroke-width'] = 3;
         return def;
@@ -2070,7 +2070,7 @@ describe('fixed bugs', () => {
         def.globals = { colors: 'a' };
         def.formElements = [{ id: 'colors', name: 'Farben', ref: 'colors', type: 'radio', values: [
             { id: 'a', name: 'A', value: 'a' },
-            { id: 'b', name: 'B', value: 'b', mapping: { c: { props: { categories: { Wien: { color: 'green' } } } } } },
+            { id: 'b', name: 'B', value: 'b', patch: { mapping: { c: { props: { categories: { Wien: { color: 'green' } } } } } } },
         ] }];
         const el = await mount(GenVis, { def, data: lineData });
         const fills = () => [...el.querySelectorAll('g.plot-1 g.vis-group')].map(g => [g.dataset.groupC, g.querySelector('circle').getAttribute('fill')]);
@@ -2122,7 +2122,7 @@ describe('fixed bugs', () => {
         const patched = lineDef();
         patched.globals = { mode: 'a' };
         patched.formElements = [{ id: 'mode', name: 'Modus', ref: 'mode', type: 'radio', values: [
-            { id: 'a', name: 'A', value: 'a' }, { id: 'b', name: 'B', value: 'b', mapping: { c: { legend: null } } },
+            { id: 'a', name: 'A', value: 'a' }, { id: 'b', name: 'B', value: 'b', patch: { mapping: { c: { legend: null } } } },
         ] }];
         el = await mount(GenVis, { def: patched, data: lineData });
         el.querySelector('.vis-form-element input[value="b"]').click();
@@ -2156,7 +2156,7 @@ describe('fixed bugs', () => {
         def.mapping.c = { column: 'yr', type: 'categorical', legend: {}, props: { fromData: true } };
         def.plot[1].categories = ['c'];
         def.formElements = [{ id: 'date', name: 'Datum', ref: 'date', type: 'radio', values: [
-            { id: 'd1', name: 'D1', value: 'd1' }, { id: 'd2', name: 'D2', value: 'd2', mapping: { c: { name: 'Jahr' } } },
+            { id: 'd1', name: 'D1', value: 'd1' }, { id: 'd2', name: 'D2', value: 'd2', patch: { mapping: { c: { name: 'Jahr' } } } },
         ] }];
         const data = 'year,value,land,d1,d2\n2020,1,Wien,2020-01-01,2030-01-01\n2021,2,Wien,2021-01-01,2031-01-01';
         const el = await mount(GenVis, { def, data });
@@ -2172,7 +2172,7 @@ describe('fixed bugs', () => {
         const def = lineDef();
         def.formElements = [{ id: 'col', name: 'Wert', ref: 'col', type: 'radio', values: [
             { id: 'value', name: 'Wert', value: 'value' },
-            { id: 'other', name: 'Anderer', value: 'other', mapping: { y: { column: 'other' } } },
+            { id: 'other', name: 'Anderer', value: 'other', patch: { mapping: { y: { column: 'other' } } } },
         ] }];
         const el = await mount(GenVis, { def, data: lineData });
         el.querySelector('.vis-form-element input[value="other"]').click();
@@ -2416,7 +2416,7 @@ describe('accessibility and the data', () => {
         const def = lineDef();
         def.globals = { col: 'value' };
         def.formElements = [{ id: 'col', name: 'Wert', ref: 'col', type: 'radio', values: [
-            { id: 'value', name: 'Wert', value: 'value' }, { id: 'other', name: 'Anderer', value: 'other', mapping: { y: { column: 'other' } } }] }];
+            { id: 'value', name: 'Wert', value: 'value' }, { id: 'other', name: 'Anderer', value: 'other', patch: { mapping: { y: { column: 'other' } } } }] }];
         await mount(GenVis, { def, data: lineData });
         await mount(GenVis, { def, data: lineData });
         const ids = [...document.querySelectorAll('[id]')].map(e => e.id);

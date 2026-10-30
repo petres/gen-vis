@@ -24,7 +24,7 @@
                 { "id": "absolute", "name": "Absolute", "value": "" },
                 {
                     "id": "share", "name": "Share", "value": ".share",
-                    "mapping": { "y": { "scale": { "domain": [0, 1] }, "axis": { "format": ".0%" }, "hover": { "format": ".1%" } } }
+                    "patch": { "mapping": { "y": { "scale": { "domain": [0, 1] }, "axis": { "format": ".0%" }, "hover": { "format": ".1%" } } } }
                 }
             ]
         }

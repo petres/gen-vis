@@ -26,11 +26,11 @@
                 { "id": "renewable", "name": "Renewables", "value": "renewable" },
                 {
                     "id": "nuclear", "name": "Nuclear", "value": "nuclear",
-                    "mapping": { "share": { "scale": { "range": ["#E4DDF4", "#B8A6E3", "#8C70CC", "#6247AD", "#3B2A7C"] } } }
+                    "patch": { "mapping": { "share": { "scale": { "range": ["#E4DDF4", "#B8A6E3", "#8C70CC", "#6247AD", "#3B2A7C"] } } } }
                 },
                 {
                     "id": "fossil", "name": "Fossil", "value": "non-renewable",
-                    "mapping": { "share": { "scale": { "range": ["#EEDCC4", "#D6AE80", "#B07A47", "#875529", "#5C3714"] } } }
+                    "patch": { "mapping": { "share": { "scale": { "range": ["#EEDCC4", "#D6AE80", "#B07A47", "#875529", "#5C3714"] } } } }
                 }
             ]
         },

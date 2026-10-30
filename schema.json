@@ -76,8 +76,8 @@
         },
         "mapping": {
             "type": "object",
-            "description": "Maps columns of the data to named dimensions, the plots and all other parts of the definition refer to these names.",
-            "additionalProperties": { "$ref": "#/definitions/mapping" }
+            "description": "Maps columns of the data to named dimensions, the plots and all other parts of the definition refer to these names, null removes a mapping, e.g. of a parent.",
+            "additionalProperties": { "anyOf": [{ "$ref": "#/definitions/mapping" }, { "$ref": "#/definitions/none" }] }
         },
         "plot": {
             "description": "A plot or a list of plots, drawn in order.",
@@ -619,10 +619,24 @@
                     "id": { "type": "string" },
                     "name": { "type": "string" },
                     "value": {},
-                    "mapping": {
+                    "globals": {
                         "type": "object",
-                        "description": "Patches the mappings while the entry is selected.",
-                        "additionalProperties": { "$ref": "#/definitions/mapping" }
+                        "description": "Globals which are set when the entry is selected, e.g. a name used by the texts."
+                    },
+                    "patch": {
+                        "type": "object",
+                        "description": "Patches the definition while the entry is selected, merged in the order of the form elements, null removes a part.",
+                        "additionalProperties": false,
+                        "properties": {
+                            "options": { "$ref": "#/properties/options" },
+                            "mapping": { "$ref": "#/properties/mapping" },
+                            "plot": { "$ref": "#/properties/plot" },
+                            "annotations": { "$ref": "#/properties/annotations" },
+                            "filter": { "$ref": "#/properties/filter" },
+                            "facets": { "$ref": "#/properties/facets" },
+                            "geo": { "$ref": "#/properties/geo" },
+                            "transform": { "$ref": "#/properties/transform" }
+                        }
                     }
                 }
             }

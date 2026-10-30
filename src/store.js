@@ -3,8 +3,8 @@ export { createStore, resolveUrl, resolveParents, clearCache };
 import { reactive, markRaw, toRaw } from 'vue';
 
 import { addDataValues, dataFormat, distinctValues, parseData, prepareData, updateData, usedColumns } from "@/utils/data";
-import { applyTransforms, loadTransforms, transformGlobals, utcColumns } from "@/utils/transform";
-import { applyFormElements, fillHtml, fillText, formatOf, mergeAll, prepareDef } from "@/utils/def";
+import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
+import { applyPatches, fillHtml, fillText, formatOf, mergeAll, prepareDef, templateNames } from "@/utils/def";
 import { applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale, loadLocale } from "@/utils/locale";
 import { formatter } from "@/utils/props";
@@ -117,6 +117,33 @@ const loadValidator = () => validator ??= lazy.validate().catch(() => {
     return null;
 });
 
+// the features of a map of the geometry `json` and the part `geo` of a
+// prepared definition: only the ones of `include`, without the ones of
+// `exclude`, they are not drawn at all, the borders of the objects of
+// TopoJSON (`mesh`) and the projections of the facets, see coords/geo.js,
+// `source` are the parts it depends on, a patch of them makes a new one
+const geoParts = g => JSON.stringify([g?.key ?? 'id', g?.object ?? null, g?.include ?? null, g?.exclude ?? null]);
+const geoOf = (module, json, def = {}) => {
+    const { geoFeatures, geoKey, geoMesh } = module;
+    const key = geoKey(def.key ?? 'id');
+    const include = def.include && new Set(def.include.map(String));
+    const exclude = new Set((def.exclude ?? []).map(String));
+    const keep = f => (!include || include.has(key(f))) && !exclude.has(key(f));
+    const features = geoFeatures(json, def.object).filter(keep);
+    // the borders of an object of TopoJSON by the plots of geo:mesh, of the
+    // object of the features also without the ones left out
+    const objectName = object => object ?? def.object ?? Object.keys(json.objects ?? {})[0];
+    const meshes = new Map();
+    const mesh = (object, borders = 'all') => {
+        const id = JSON.stringify([objectName(object), borders]);
+        if (!meshes.has(id))
+            meshes.set(id, geoMesh(json, objectName(object), borders,
+                objectName(object) == objectName(undefined) ? keep : undefined));
+        return meshes.get(id);
+    };
+    return markRaw({ json, module, source: geoParts(def), features, key, byKey: new Map(features.map(f => [key(f), f])), mesh, projections: new Map() });
+};
+
 // see Store.init, urls of inline defs are relative to the page
 const load = async ({ def = null, defUrl = null, data = null, state = null }) => {
     const checks = loadValidator();
@@ -178,33 +205,34 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
     // the form elements can have the values of the data, the state needs them
     addDataValues(defOrg, rows, columns);
     const keysOf = column => distinctValues(rows, columns, column).map(String);
-    const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), keysOf);
+    // the data of plots of their own, e.g. events, also of the patches of
+    // form elements, the url relative to the def, the rows are not evaluated
+    // as the ones of the definition, see layout.js
+    const plotsOfFiles = [defOrg, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.patch) : [])]
+        .flatMap(d => [d?.plot ?? []].flat()).filter(p => typeof p?.data == 'string');
+    const files = new Map(await Promise.all([...new Set(plotsOfFiles.map(p => p.data))].map(async data => {
+        const dataUrl = resolveUrl(data, url);
+        const format = dataFormat(dataUrl, plotsOfFiles.find(p => p.data == data).dataFormat);
+        return [data, raw(await readData(await fetchData(dataUrl, format), format, `'${dataUrl}'`))];
+    })));
 
-    // the data of plots of their own, e.g. events, the url relative to the def,
-    // the rows are not evaluated as the ones of the definition, see layout.js
-    await Promise.all(prepared.plot.filter(p => typeof p.data == 'string').map(async p => {
-        const dataUrl = resolveUrl(p.data, url);
-        const format = dataFormat(dataUrl, p.dataFormat);
-        p.data = raw(await readData(await fetchData(dataUrl, format), format, `'${dataUrl}'`));
-        p.loaded = true;
-    }));
-    const defaults = snapshot(prepared);
-    applyState(prepared, state);
     // the transforms of the globals of the state, before the mappings, their
     // categories can be the ones of a transform, and again after them, e.g.
     // of a patch of a scale of dates to utc
     const transform = () => {
-        if (transformGlobals(prepared.transform).length > 0)
-            columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns);
+        columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns);
     };
-    transform();
+    const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), { dataKeys: keysOf, files });
+    const defaults = snapshot(prepared);
+    applyState(prepared, state);
     // the mappings of the globals of the state, the entries of their legends
     // of the state, e.g. of the categories of another column
-    applyFormElements(prepared, defOrg, keysOf);
+    applyPatches(prepared, defOrg, { dataKeys: keysOf, files, transform });
     applyState(prepared, { visible: state?.visible });
     transform();
 
-    // the features of a map, see coords/geo.js, the url of GeoJSON or TopoJSON or itself
+    // the geometry of a map, see coords/geo.js, the url of GeoJSON or TopoJSON
+    // or itself, its features are the ones of the prepared definition
     let geo = null;
     if (defOrg.geo?.data) {
         let json = defOrg.geo.data;
@@ -212,26 +240,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
             const geoUrl = resolveUrl(json, url);
             json = parseDef(await fetchText(geoUrl), `'${geoUrl}'`, 'geometry');
         }
-        const { geoFeatures, geoKey, geoMesh } = geoModule;
-        const key = geoKey(defOrg.geo.key ?? 'id');
-        // only the features of `include`, without the ones of `exclude`, they are not drawn at all
-        const include = defOrg.geo.include && new Set(defOrg.geo.include.map(String));
-        const exclude = new Set((defOrg.geo.exclude ?? []).map(String));
-        const keep = f => (!include || include.has(key(f))) && !exclude.has(key(f));
-        const features = geoFeatures(json, defOrg.geo.object).filter(keep);
-        // the borders of an object of TopoJSON by the plots of geo:mesh, of the
-        // object of the features also without the ones left out
-        const objectName = object => object ?? defOrg.geo.object ?? Object.keys(json.objects ?? {})[0];
-        const meshes = new Map();
-        const mesh = (object, borders = 'all') => {
-            const id = JSON.stringify([objectName(object), borders]);
-            if (!meshes.has(id))
-                meshes.set(id, geoMesh(json, objectName(object), borders,
-                    objectName(object) == objectName(undefined) ? keep : undefined));
-            return meshes.get(id);
-        };
-        // the projections of the facets, see coords/geo.js
-        geo = markRaw({ features, key, byKey: new Map(features.map(f => [key(f), f])), mesh, projections: new Map() });
+        geo = geoOf(geoModule, markRaw(json), prepared.geo);
     }
 
     return {
@@ -241,6 +250,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
         colorLegend: colorLegend ? markRaw(colorLegend.default) : null,
         coord: markRaw(coord),
         geo,
+        files: markRaw(files),
         rows,
         columns: markRaw(columns),
         def: prepared,
@@ -259,6 +269,8 @@ class Store {
     rows = null;
     // the columns of the transforms, see utils/transform.js
     columns = null;
+    // the rows of the files of plots by their url, see applyPatches
+    files = null;
     data = null;
     defaults = null;
     // the width of the visualisation, set by its measure
@@ -296,7 +308,7 @@ class Store {
     // the names of the references in all parts of the definition, the globals
     // and the width of the visualisation, a facet adds its sizes, a plot the
     // props of the categories and the row, see README "Props"
-    get scope() { return { ...this.def.globals, totalWidth: this.totalWidth, [formatter]: (format, name) => this.format(format, name) } }
+    get scope() { return { ...this.names, totalWidth: this.totalWidth, [formatter]: (format, name) => this.format(format, name) } }
 
     // a d3 format in the locale of the values of a mapping, of times if it is
     // a mapping of dates or of a time scale, e.g. "%Y", local or UTC of a
@@ -314,11 +326,15 @@ class Store {
 
     mapping(n) { return this.def.mapping[n] }
 
+    // the names of the templates, the globals and the fields of the selected
+    // entries of the form elements, e.g. `group:name`, see templateNames
+    get names() { return templateNames(this.def) }
+
     // a text of the definition with the values of the globals, e.g. "{base} = 100"
-    text(t) { return fillText(t, this.def.globals) }
+    text(t) { return fillText(t, this.names) }
     // html of the definition, e.g. the footer, with the values of the globals
     // as text, they can be values of the data, e.g. of a form element
-    html(t) { return typeof t == 'string' ? fillHtml(t, this.def.globals) : t }
+    html(t) { return typeof t == 'string' ? fillHtml(t, this.names) : t }
     // the props of a category, e.g. of a value of the data, undefined for other values
     prop(n, k) { const props = this.def.mapping[n].props; return Object.hasOwn(props, k) ? props[k] : undefined }
     mappingNamesWithKey(k) { return Object.keys(this.def.mapping).filter(n => Boolean(this.def.mapping[n][k])) }
@@ -351,30 +367,32 @@ class Store {
         }
     }
 
-    // the columns of patched mappings might have changed, and the ones of
-    // transforms of the globals, e.g. an index of a base year, the transforms
-    // are computed from the first one of a changed global
-    // before the mappings, their categories can be the ones of a transform, and
-    // again after them, e.g. of a patch of a scale of dates to utc, `keepVisible`
-    // keeps the entries shown or hidden of the mappings prepared again
+    // the parts of the definition patched by the entries of the form
+    // elements, see applyPatches, the columns of patched mappings might have
+    // changed, and the ones of transforms of the globals, e.g. an index of a
+    // base year, the transforms are computed from the first one of a changed
+    // global before the mappings, their categories can be the ones of a
+    // transform, and again after them, e.g. of a patch of a scale of dates to
+    // utc, `keepVisible` keeps the entries shown or hidden of the mappings
+    // prepared again
     applyFormElements(keepVisible = true) {
         const changedColumns = new Set();
         const transform = () => {
-            if (transformGlobals(this.def.transform).length == 0)
-                return;
             const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns);
             if (columns !== this.columns) {
                 this.columns = markRaw(columns);
                 columns.changed.forEach(c => changedColumns.add(c));
             }
         };
-        transform();
-        const changed = applyFormElements(this.def, this.defOrg, column => this.dataKeys(column), keepVisible);
+        const changed = applyPatches(this.def, this.defOrg, { dataKeys: column => this.dataKeys(column), keepVisible, transform, files: this.files });
         transform();
         Object.keys(this.def.mapping).filter(n => changedColumns.has(this.def.mapping[n].column) && !changed.includes(n))
             .forEach(n => changed.push(n));
         if (changed.length > 0)
             this.data = raw(updateData(this.rows, this.data, this.def, changed, this.columns));
+        // the features of another part of a map, e.g. of other countries
+        if (this.geo && this.geo.source != geoParts(this.def.geo))
+            this.geo = geoOf(this.geo.module, this.geo.json, this.def.geo);
     }
 
     // the categories of the data of a column, e.g. of a column of a form

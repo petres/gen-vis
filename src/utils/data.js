@@ -280,7 +280,7 @@ const usedColumns = def => {
     };
     const columns = [
         ...Object.values(def.mapping ?? {}).map(m => m?.column),
-        ...elements.flatMap(e => Array.isArray(e.values) ? e.values.flatMap(v => Object.values(v.mapping ?? {}).map(m => m?.column)) : []),
+        ...elements.flatMap(e => Array.isArray(e.values) ? e.values.flatMap(v => Object.values(v?.patch?.mapping ?? {}).map(m => m?.column)) : []),
         ...transformColumns(def.transform),
     ].map(expand);
     if (columns.includes(null))

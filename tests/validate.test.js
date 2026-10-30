@@ -366,11 +366,11 @@ describe('validateDef', () => {
         def.globals = { values: 'value' };
         def.mapping.y.column = '{values}{share}';
         def.formElements = [{ id: 'f', ref: 'values', type: 'radio', values: [
-            { id: 'a', value: 'value', mapping: { y: { column: '{unit}' } } },
+            { id: 'a', value: 'value', patch: { mapping: { y: { column: '{unit}' } } } },
         ] }];
         expect(validateDef(def)).toEqual([
             "mapping.y.column: unknown global 'share' in the column template",
-            "formElements[0].values[0].mapping.y.column: unknown global 'unit' in the column template",
+            "formElements[0].values[0].patch.mapping.y.column: unknown global 'unit' in the column template",
         ]);
     });
 

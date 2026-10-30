@@ -14,7 +14,7 @@
         "id": "scale", "name": "Scale", "ref": "scale", "type": "radio",
         "values": [
             { "id": "zoom", "name": "Zoomed", "value": "zoom" },
-            { "id": "zero", "name": "From 0", "value": "zero", "mapping": { "y": { "scale": { "domain": [0, null] } } } }
+            { "id": "zero", "name": "From 0", "value": "zero", "patch": { "mapping": { "y": { "scale": { "domain": [0, null] } } } } }
         ]
     }],
     "mapping": {
