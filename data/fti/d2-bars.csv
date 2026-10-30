@@ -1,24 +1,22 @@
-label,short,level,io,inno,top3,eu
-Efficiency science,Efficiency science,header,output,76.61,34.41,87.94
-"R&D expenditure (government and higher education sectors) per 1,000 inhabitants",R&D expenditure (government and higher ed…,item,input,106.47,85.18,176.34
-Number of researchers (HEI & GOV),Number of researchers (HEI & GOV),item,input,82.03,64.01,99.91
-University ranking research performance,University ranking research performance,item,output,31.56,15.19,119.45
-Quality of publications,Quality of publications,item,output,78.74,71.64,124.84
-"Number of publications per 1,000 inhabitants","Number of publications per 1,000 inhabita…",item,output,74.39,60.16,120.6
-gap1,,item,output,,,
-Efficiency technology,Efficiency technology,header,output,70.0,28.02,166.56
-"R&D expenditure (business sector) per 1,000 inhabitants","R&D expenditure (business sector) per 1,0…",item,input,110.05,63.23,202.88
-Number of business researchers,Number of business researchers,item,input,75.41,62.64,164.84
-Patent applications,Patent applications,item,output,77.2,62.81,220.22
-Triadic patent applications,Triadic patent applications,item,output,60.49,29.71,179.6
-gap2,,item,output,,,
-Efficiency innovation,Efficiency innovation,header,output,105.49,54.35,98.23
-Number of researchers,Number of researchers,item,input,77.85,70.4,137.87
-R&D expenditure (GERD),R&D expenditure (GERD),item,input,109.19,76.46,193.65
-University graduates ISCED 5-8,University graduates ISCED 5-8,item,input,88.29,64.66,96.27
-Innovation turnover SMEs,Innovation turnover SMEs,item,output,49.53,31.8,72.1
-Innovation-intensive sectors,Innovation-intensive sectors,item,output,103.05,68.01,101.85
-Knowledge intensity export,Knowledge intensity export,item,output,113.55,81.45,113.66
-Export complexity,Export complexity,item,output,114.11,74.69,139.46
-Export quality,Export quality,item,output,108.39,92.68,107.93
-"Unicorn valuation, % of GDP","Unicorn valuation, % of GDP",item,output,42.72,9.81,57.23
+label,group,level,io,inno,top3,eu
+Efficiency science,1,header,none,76.61,34.41,87.94
+"R&D expenditure (government and higher education sectors) per 1,000 inhabitants",1,item,input,106.47,85.18,176.34
+Number of researchers (HEI & GOV),1,item,input,82.03,64.01,99.91
+University ranking research performance,1,item,output,31.56,15.19,119.45
+Quality of publications,1,item,output,78.74,71.64,124.84
+"Number of publications per 1,000 inhabitants",1,item,output,74.39,60.16,120.6
+Efficiency technology,2,header,none,70.0,28.02,166.56
+"R&D expenditure (business sector) per 1,000 inhabitants",2,item,input,110.05,63.23,202.88
+Number of business researchers,2,item,input,75.41,62.64,164.84
+Patent applications,2,item,output,77.2,62.81,220.22
+Triadic patent applications,2,item,output,60.49,29.71,179.6
+Efficiency innovation,3,header,none,105.49,54.35,98.23
+Number of researchers,3,item,input,77.85,70.4,137.87
+R&D expenditure (GERD),3,item,input,109.19,76.46,193.65
+University graduates ISCED 5-8,3,item,input,88.29,64.66,96.27
+Innovation turnover SMEs,3,item,output,49.53,31.8,72.1
+Innovation-intensive sectors,3,item,output,103.05,68.01,101.85
+Knowledge intensity export,3,item,output,113.55,81.45,113.66
+Export complexity,3,item,output,114.11,74.69,139.46
+Export quality,3,item,output,108.39,92.68,107.93
+"Unicorn valuation, % of GDP",3,item,output,42.72,9.81,57.23

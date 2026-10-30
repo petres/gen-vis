@@ -1,78 +1,46 @@
-country,name,view,Innovation Leaders (2025),the EU-Average
-AT,Austria,World,83.5,134.93
-AU,Australia,World,66.82,130.85
-BE,Belgium,World,85.11,139.03
-BG,Bulgaria,World,35.09,44.38
-CA,Canada,World,64.51,107.52
-CH,Switzerland,World,126.33,255.3
-CL,Chile,World,13.26,17.96
-CN,China,World,38.18,63.53
-CO,Colombia,World,19.83,24.62
-CR,Costa Rica,World,13.21,16.64
-CY,Cyprus,World,48.52,61.71
-CZ,Czechia,World,62.18,82.3
-DE,Germany,World,84.49,134.14
-DK,Denmark,World,106.45,185.6
-EE,Estonia,World,94.81,130.72
-GR,Greece,World,53.33,72.94
-ES,Spain,World,52.53,72.55
-FI,Finland,World,94.94,154.08
-FR,France,World,65.25,98.41
-HR,Croatia,World,48.76,64.28
-HU,Hungary,World,51.34,67.74
-IE,Ireland,World,87.08,137.17
-IL,Israel,World,117.2,197.03
-IN,India,World,34.17,45.72
-IS,Iceland,World,59.21,98.48
-IT,Italy,World,56.91,83.21
-JP,Japan,World,75.09,136.34
-KR,South Korea,World,97.78,168.59
-LT,Lithuania,World,59.55,79.5
-LU,Luxembourg,World,78.77,128.51
-LV,Latvia,World,37.13,47.66
-MT,Malta,World,56.7,72.85
-MX,Mexico,World,34.24,38.55
-NL,Netherlands,World,91.12,171.96
-NO,Norway,World,67.77,111.94
-NZ,New Zealand,World,42.92,67.57
-PL,Poland,World,45.36,60.42
-PT,Portugal,World,54.63,76.63
-RO,Romania,World,34.74,41.52
-SE,Sweden,World,107.5,185.11
-SI,Slovenia,World,63.96,90.05
-SK,Slovakia,World,49.55,63
-TR,Turkey,World,44.2,58.86
-GB,United Kingdom,World,91.53,160.62
-US,United States,World,95.94,166.88
-AT,Austria,Europe,83.5,134.93
-BE,Belgium,Europe,85.11,139.03
-BG,Bulgaria,Europe,35.09,44.38
-CH,Switzerland,Europe,126.33,255.3
-CY,Cyprus,Europe,48.52,61.71
-CZ,Czechia,Europe,62.18,82.3
-DE,Germany,Europe,84.49,134.14
-DK,Denmark,Europe,106.45,185.6
-EE,Estonia,Europe,94.81,130.72
-GR,Greece,Europe,53.33,72.94
-ES,Spain,Europe,52.53,72.55
-FI,Finland,Europe,94.94,154.08
-FR,France,Europe,65.25,98.41
-HR,Croatia,Europe,48.76,64.28
-HU,Hungary,Europe,51.34,67.74
-IE,Ireland,Europe,87.08,137.17
-IS,Iceland,Europe,59.21,98.48
-IT,Italy,Europe,56.91,83.21
-LT,Lithuania,Europe,59.55,79.5
-LU,Luxembourg,Europe,78.77,128.51
-LV,Latvia,Europe,37.13,47.66
-MT,Malta,Europe,56.7,72.85
-NL,Netherlands,Europe,91.12,171.96
-NO,Norway,Europe,67.77,111.94
-PL,Poland,Europe,45.36,60.42
-PT,Portugal,Europe,54.63,76.63
-RO,Romania,Europe,34.74,41.52
-SE,Sweden,Europe,107.5,185.11
-SI,Slovenia,Europe,63.96,90.05
-SK,Slovakia,Europe,49.55,63
-TR,Turkey,Europe,44.2,58.86
-GB,United Kingdom,Europe,91.53,160.62
+country,name,europe,inno,eu
+AT,Austria,yes,83.5,134.93
+AU,Australia,no,66.82,130.85
+BE,Belgium,yes,85.11,139.03
+BG,Bulgaria,yes,35.09,44.38
+CA,Canada,no,64.51,107.52
+CH,Switzerland,yes,126.33,255.3
+CL,Chile,no,13.26,17.96
+CN,China,no,38.18,63.53
+CO,Colombia,no,19.83,24.62
+CR,Costa Rica,no,13.21,16.64
+CY,Cyprus,yes,48.52,61.71
+CZ,Czechia,yes,62.18,82.3
+DE,Germany,yes,84.49,134.14
+DK,Denmark,yes,106.45,185.6
+EE,Estonia,yes,94.81,130.72
+ES,Spain,yes,52.53,72.55
+FI,Finland,yes,94.94,154.08
+FR,France,yes,65.25,98.41
+GB,United Kingdom,yes,91.53,160.62
+GR,Greece,yes,53.33,72.94
+HR,Croatia,yes,48.76,64.28
+HU,Hungary,yes,51.34,67.74
+IE,Ireland,yes,87.08,137.17
+IL,Israel,no,117.2,197.03
+IN,India,no,34.17,45.72
+IS,Iceland,yes,59.21,98.48
+IT,Italy,yes,56.91,83.21
+JP,Japan,no,75.09,136.34
+KR,South Korea,no,97.78,168.59
+LT,Lithuania,yes,59.55,79.5
+LU,Luxembourg,yes,78.77,128.51
+LV,Latvia,yes,37.13,47.66
+MT,Malta,yes,56.7,72.85
+MX,Mexico,no,34.24,38.55
+NL,Netherlands,yes,91.12,171.96
+NO,Norway,yes,67.77,111.94
+NZ,New Zealand,no,42.92,67.57
+PL,Poland,yes,45.36,60.42
+PT,Portugal,yes,54.63,76.63
+RO,Romania,yes,34.74,41.52
+SE,Sweden,yes,107.5,185.11
+SI,Slovenia,yes,63.96,90.05
+SK,Slovakia,yes,49.55,63
+TR,Turkey,yes,44.2,58.86
+US,United States,no,95.94,166.88

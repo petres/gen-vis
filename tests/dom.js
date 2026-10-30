@@ -64,18 +64,25 @@ export const mount = async (component, props) => {
 
 export const pointer = (type, init = {}) => new PointerEvent(type, { pointerType: 'mouse', bubbles: true, ...init });
 
+// the rows of the hover shown, of a hover without a box (`"box": false`) 1
+// if it highlights elements
+const hoverRows = el => {
+    const rows = el.querySelectorAll('.vis-hover tr.vis-hover-entry, .vis-hover .vis-hover-row').length;
+    return rows > 0 || el.querySelector('.vis-hover') ? rows : (el.querySelector('.vis-plot .vis-highlight') ? 1 : 0);
+};
+
 // moves the mouse over all facets, returns the most hover rows at a position
 export const hover = async el => {
     let rows = 0;
     for (const events of el.querySelectorAll('rect.vis-events')) {
         // other heights only if the line at 150 has no hover, e.g. the space
-        // between the groups of the rows of horizontal bars
+        // between the groups of the rows of horizontal bars or a narrow list
         let found = 0;
         for (const y of [150, 100, 200, 50, 250, 300, 350]) {
             for (let x = 0; x <= 800; x += 25) {
                 events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: y }));
                 await nextTick();
-                found = Math.max(found, el.querySelectorAll('.vis-hover tr.vis-hover-entry').length);
+                found = Math.max(found, hoverRows(el));
             }
             if (found > 0)
                 break;

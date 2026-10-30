@@ -2,21 +2,15 @@
     "parent": "_group.json",
     "data": "d2-series.csv",
     "options": {
+        "class": "fti fti-series",
         "locale": { "base": "en", "number": { "currency": ["", "%"] } },
         "height": 220,
         "margins": { "top": 24, "right": 20, "bottom": 40, "left": 50 },
         "title": "Efficiency",
         "subtitle": "Aggregated indicator over time, Austria relative to the comparison group",
-        "footer": "Source: <a href=\"https://fti-monitor.forwit.at/en/B/D.2\">FTI Monitor D.2</a>, FORWIT"
+        "footer": "Source: <a href=\"https://fti-monitor.forwit.at/en/B/D.2\">FTI Monitor D.2</a>, FORWIT",
+        "hover": { "box": false, "marker": false }
     },
-    "formElements": [{
-        "id": "group",
-        "values": [
-            { "id": "inno", "patch": { "mapping": { "y": { "scale": { "domain": [null, 100] } } } } },
-            { "id": "top3", "patch": { "mapping": { "y": { "scale": { "domain": [null, 100] } } } } },
-            { "id": "eu", "patch": { "mapping": { "y": { "scale": { "domain": [100, null] } } } } }
-        ]
-    }],
     "mapping": {
         "x": {
             "column": "year",
@@ -27,7 +21,7 @@
         "y": {
             "column": "{group}",
             "type": "numeric",
-            "scale": { "type": "linear", "orientation": "vertical", "domain": [null, 100] },
+            "scale": { "type": "linear", "orientation": "vertical", "include": 100 },
             "axis": { "position": "left", "ticks": 3, "format": "$.0f", "grid": true },
             "hover": { "format": "$.0f" }
         },
@@ -37,6 +31,7 @@
             "scale": {
                 "type": "threshold",
                 "domain": [74.5, 89.5, 99.5, 109.5],
+                "closed": "right",
                 "range": ["#EA4B55", "#F59036", "#F9EB00", "#AFD24B", "#3CAF55"]
             }
         },
@@ -44,20 +39,15 @@
             "column": "type",
             "type": "categorical",
             "props": { "categories": {
-                "total": { "name": "Total", "dash": "none", "fill": "white", "r": 5, "total": "visible", "other": "hidden" },
-                "input": { "name": "Input", "dash": "2 2", "fill": "#F5F6FA", "r": 4, "total": "hidden", "other": "visible" },
-                "output": { "name": "Output", "dash": "6 3", "fill": "#888", "r": 4, "total": "hidden", "other": "visible" }
+                "total": { "name": "Total", "dash": "none", "fill": "white", "r": 5 },
+                "input": { "name": "Input", "dash": "2 2", "fill": "#F5F6FA", "r": 4 },
+                "output": { "name": "Output", "dash": "6 3", "fill": "#888", "r": 4 }
             } },
-            "legend": { "symbol": { "size": 24, "elements": [
+            "legend": { "position": "bottom", "symbol": { "size": 24, "elements": [
                 { "type": "line", "props": { "x1": 0, "x2": 24, "y1": 12, "y2": 12, "stroke": "#888", "stroke-dasharray": "@dash" } },
                 { "type": "circle", "props": { "cx": 12, "cy": 12, "r": "@r", "fill": "@fill", "stroke": "#888", "stroke-width": 1.5 } }
             ] } },
             "hover": {}
-        },
-        "ring": {
-            "column": "type",
-            "type": "categorical",
-            "scale": { "type": "ordinal", "domain": ["total", "input", "output"], "range": ["visible", "hidden", "hidden"] }
         }
     },
     "plot": [
@@ -71,26 +61,26 @@
             "id": "points",
             "type": "svg:circle",
             "categories": ["type"],
-            "props": { "cx": "@x:scaled", "cy": "@y:scaled", "r": "@r", "fill": "@fill", "stroke": "#888", "visibility": "@other" }
+            "filter": { "type": { "not": "total" } },
+            "props": { "cx": "@x:scaled", "cy": "@y:scaled", "r": "@r", "fill": "@fill", "stroke": "#888" }
         },
         {
             "id": "total",
             "type": "svg:circle",
             "categories": ["type"],
-            "props": {
-                "cx": "@x:scaled", "cy": "@y:scaled", "r": "@r", "fill": "white",
-                "stroke": "@color:scaled", "stroke-width": 3, "visibility": "@total"
-            }
+            "filter": { "type": "total" },
+            "props": { "cx": "@x:scaled", "cy": "@y:scaled", "r": "@r", "fill": "white", "stroke": "@color:scaled", "stroke-width": 3 }
         },
         {
             "id": "last",
             "type": "svg:circle",
             "categories": ["type"],
             "select": "last",
+            "filter": { "type": "total" },
             "layer": "above",
             "props": {
                 "cx": "@x:scaled", "cy": "@y:scaled", "r": 17, "fill": "white",
-                "stroke": "@color:scaled", "stroke-width": 5, "visibility": "@total"
+                "stroke": "@color:scaled", "stroke-width": 5, "others-visibility": "hidden"
             }
         },
         {
@@ -98,10 +88,11 @@
             "type": "svg:text",
             "categories": ["type"],
             "select": "last",
+            "filter": { "type": "total" },
             "layer": "above",
             "props": {
                 "x": "@x:scaled", "y": "@y:scaled", "text-anchor": "middle", "dominant-baseline": "central",
-                "font-size": 11, "font-weight": "bold", "text": "@y:formatted", "visibility": "@total"
+                "font-size": 11, "font-weight": "bold", "text": "@y:formatted", "others-visibility": "hidden"
             }
         },
         {
@@ -109,42 +100,46 @@
             "type": "svg:text",
             "categories": ["type"],
             "select": "last",
+            "filter": { "type": "total" },
             "layer": "above",
             "props": {
                 "x": "@x:scaled", "y": "@y:scaled", "dy": 30, "text-anchor": "middle", "dominant-baseline": "central",
-                "font-size": 11, "text": "@x:formatted", "visibility": "@total"
+                "font-size": 11, "text": "@x:formatted", "others-visibility": "hidden"
             }
         },
         {
             "id": "ring",
             "type": "svg:circle",
             "categories": ["x"],
+            "filter": { "type": "total" },
             "layer": "above",
             "props": {
                 "cx": "@x:scaled", "cy": "@y:scaled", "r": 17, "fill": "white", "stroke": "@color:scaled", "stroke-width": 5,
-                "visibility": "hidden", "highlight-visibility": "@ring:scaled"
+                "visibility": "hidden", "highlight-visibility": "visible"
             }
         },
         {
             "id": "ring-value",
             "type": "svg:text",
             "categories": ["x"],
+            "filter": { "type": "total" },
             "layer": "above",
             "props": {
                 "x": "@x:scaled", "y": "@y:scaled", "text-anchor": "middle", "dominant-baseline": "central",
                 "font-size": 11, "font-weight": "bold", "text": "@y:formatted",
-                "visibility": "hidden", "highlight-visibility": "@ring:scaled"
+                "visibility": "hidden", "highlight-visibility": "visible"
             }
         },
         {
             "id": "ring-year",
             "type": "svg:text",
             "categories": ["x"],
+            "filter": { "type": "total" },
             "layer": "above",
             "props": {
                 "x": "@x:scaled", "y": "@y:scaled", "dy": 30, "text-anchor": "middle", "dominant-baseline": "central",
                 "font-size": 11, "text": "@x:formatted",
-                "visibility": "hidden", "highlight-visibility": "@ring:scaled"
+                "visibility": "hidden", "highlight-visibility": "visible"
             }
         }
     ],

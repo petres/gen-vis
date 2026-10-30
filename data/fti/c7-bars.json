@@ -5,8 +5,5 @@
         "height": 700,
         "title": "Artificial Intelligence",
         "footer": "Source: <a href=\"https://fti-monitor.forwit.at/en/B/C.7\">FTI Monitor C.7</a>, FORWIT"
-    },
-    "plot": [
-        { "id": "axis", "props": { "stroke-width": { "prop": "relative", "ref": "innerHeight", "ratio": 0.03515 } } }
-    ]
+    }
 }
