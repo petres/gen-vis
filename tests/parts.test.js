@@ -654,3 +654,15 @@ describe('the full text of a cut text', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('fixed ticks of dates', () => {
+    test('are converted as the dates of the data', async () => {
+        const def = lineDef();
+        def.mapping.x = { column: 'day', type: 'date', scale: { type: 'utc', orientation: 'horizontal' },
+            axis: { position: 'bottom', values: ['2020-02-01', '2020-03-01', '2030-01-01'], format: '%b', grid: true } };
+        const el = await mount(GenVis, { def, data: 'day,value,land\n2020-01-01,1,Wien\n2020-04-01,2,Wien' });
+        expect([...el.querySelectorAll('.vis-axis-bottom .tick text')].map(t => t.textContent)).toEqual(['Feb', 'Mrz']);
+        expect(el.querySelectorAll('.vis-grid line')).toHaveLength(2);
+        expect(errors).toEqual([]);
+    });
+});

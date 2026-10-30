@@ -13,6 +13,10 @@ highlight have more options, legends their place, texts a width, three new
 transforms, messages instead of the plots and linked charts. See the
 `data/fti/` charts of the FTI Monitor, they need no workarounds anymore.
 
+Fixed: the fixed ticks of an axis of dates (`axis.values`, e.g.
+`"2020-04-01"`) are converted as the dates of the data, they had no
+position.
+
 Changes which need changes of definitions:
 
 - `filter`: `null` is the rows without a value (it was no row)

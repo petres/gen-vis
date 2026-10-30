@@ -2,6 +2,7 @@ export { tickValues, tickFormat, tickCount };
 
 import { formatOf } from "@/utils/def";
 import { evaluate } from "@/utils/props";
+import { convert } from "@/utils/data";
 
 // fixed values outside of the range of the scale are not drawn, e.g. 10 of a
 // log scale from 14, d3 would draw them in the margins, values without a
@@ -23,9 +24,11 @@ const tickCount = (axis, scope, length) => {
     return Math.max(2, Math.round(length / evaluate(axis.tickSpacing, scope)));
 };
 
-// the values of the ticks of an axis, also of the grid lines
-const tickValues = (axis, scale, ticks) => axis.values
-    ? axis.values.filter(v => inRange(scale, v))
+// the values of the ticks of an axis, also of the grid lines, fixed ones are
+// converted as the values of the data of the `mapping`, e.g. dates of
+// "2020-04-01"
+const tickValues = (axis, scale, ticks, mapping) => axis.values
+    ? axis.values.map(v => mapping && ['numeric', 'date'].includes(mapping.type) ? convert(mapping, v) : v).filter(v => v !== null && inRange(scale, v))
     : (scale.ticks ? scale.ticks(ticks) : scale.domain());
 
 // the format of the ticks of the axis of a mapping, by default as the one of
