@@ -961,3 +961,45 @@ describe('the labels of an axis with a transition', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the scale of another mapping', () => {
+    test('a band between two columns on the scale of y, its domain includes them, dates of a utc scale', async () => {
+        const def = lineDef();
+        def.mapping.lo = { column: 'other', type: 'numeric', scale: { of: 'y' }, hover: {} };
+        def.mapping.hi = { column: 'top', type: 'numeric', scale: { of: 'y' } };
+        def.mapping.y.scale.domain = [0, null];
+        def.mapping.y.scale.nice = true;
+        delete def.mapping.c;
+        def.plot = { type: 'cartesian:area', props: { fill: 'gray', d: { x: '@x:scaled', y0: '@lo:scaled', y1: '@hi:scaled' } } };
+        const data = 'year,value,other,top\n2020,1,0.5,2\n2021,2,1,10\n2022,3,2,4';
+        const el = await mount(GenVis, { def, data });
+        // the axis of y reaches the largest value of hi
+        const ticks = [...el.querySelectorAll('.vis-axis-left .tick text')].map(t => t.textContent);
+        expect(ticks.at(-1)).toBe('10');
+        // the point of 10 of hi is at the tick of 10 of y (the ticks are moved by half a pixel)
+        const tick = el.querySelectorAll('.vis-axis-left .tick')[ticks.length - 1].getAttribute('transform');
+        const at = +tick.match(/,([\d.]+)\)/)[1] - 0.5;
+        const second = el.querySelector('g.vis-plot path').getAttribute('d').split('L')[1].split(',').map(Number);
+        expect(second[1]).toBeCloseTo(at, 2);
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef(def)).toEqual([]);
+
+        // a second date of a utc scale is a date of UTC as well, e.g. the end of a range
+        const dates = lineDef();
+        dates.mapping.x = { column: 'start', type: 'date', scale: { type: 'utc', orientation: 'horizontal' } };
+        dates.mapping.end = { column: 'end', type: 'date', scale: { of: 'x' } };
+        dates.plot = { type: 'svg:line', props: { x1: '@x:scaled', x2: '@end:scaled', y1: 0, y2: 0 } };
+        const lines = await mount(GenVis, { def: dates, data: 'start,end,value,land\n2020-01-01,2020-01-01,1,Wien\n2020-06-01,2020-12-31,2,Wien' });
+        const first = lines.querySelector('g.vis-plot line');
+        expect(first.getAttribute('x2')).toBe(first.getAttribute('x1'));
+
+        def.mapping.lo.scale = { of: 'hi', type: 'log' };
+        def.mapping.hi.scale = { of: 'z' };
+        expect(validateDef(def)).toEqual([
+            `mapping.lo.scale.of: expected a mapping with a scale of its own, e.g. "y"`,
+            `mapping.lo.scale.type: not used, the scale is the one of 'hi'`,
+            `mapping.hi.scale.of: expected a mapping with a scale of its own, e.g. "y"`,
+        ]);
+        expect(errors).toEqual([]);
+    });
+});

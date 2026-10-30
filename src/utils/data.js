@@ -1,4 +1,4 @@
-export { groupBy, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, compareCategories, filter, stack, categoryOrder, toDate, addDataValues, distinctValues, usedColumns, columnValues };
+export { groupBy, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, compareCategories, filter, stack, categoryOrder, toDate, addDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { sameValue, templateRefs } from "@/utils/def";
@@ -121,13 +121,19 @@ const toCategory = v => missing(v) ? null : String(v);
 const numericText = v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v));
 const compareCategories = (a, b) => numericText(a) && numericText(b) ? a - b : String(a).localeCompare(String(b));
 
+// the definition of the scale of a mapping, of a mapping with the scale of
+// another one (`"scale": { "of": "y" }`) the one of the other one, of the
+// `mappings` of the definition
+const scaleDef = (mappings, m) => m?.scale?.of !== undefined ? mappings?.[m.scale.of]?.scale : m?.scale;
+
 // the conversion of the values of a mapping, e.g. the dates of a `utc` scale
-// or the categories as strings
-const converter = mapping => {
+// (also the one of another mapping, of the `mappings` of the definition) or
+// the categories as strings
+const converter = (mapping, mappings) => {
     if (mapping?.type == 'numeric')
         return toNumber;
     if (mapping?.type == 'date') {
-        const utc = mapping.scale?.type == 'utc';
+        const utc = scaleDef(mappings, mapping)?.type == 'utc';
         return v => toDate(v, utc);
     }
     return toCategory;
@@ -148,7 +154,7 @@ const updateData = (rows, data, def, names, columns = null) => {
     const mapping = names.map(n => ({
         name: n,
         value: columnValues(rows, columns, def.mapping[n].column),
-        convert: converter(def.mapping[n]),
+        convert: converter(def.mapping[n], def.mapping),
     }));
     rows.forEach((r, i) => {
         const e = data[i];
@@ -164,7 +170,7 @@ const prepareData = (data, def, columns = null) => {
     const mapping = Object.keys(def.mapping).map(n => ({
         name: n,
         value: columnValues(data, columns, def.mapping[n].column),
-        convert: converter(def.mapping[n]),
+        convert: converter(def.mapping[n], def.mapping),
     }));
 
     return data.map((d, i) => {

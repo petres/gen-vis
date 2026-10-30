@@ -15,6 +15,8 @@ import { transformNames } from "@/utils/transform";
 const curveNames = Object.keys(curves);
 
 const mappingTypes = ['numeric', 'date', 'categorical'];
+// the operations of the calc transform, see utils/transform-types.js
+const calcOps = ['add', 'subtract', 'multiply', 'divide', 'min', 'max'];
 const formElementTypes = ['radio', 'select', 'slider', 'hidden'];
 // the keys of a form element and of its entries, e.g. a mapping of an entry is part of its patch
 const formElementKeys = ['id', 'name', 'ref', 'type', 'inImage', 'values'];
@@ -203,7 +205,14 @@ const validateDef = def => {
             warn(`${path}.props.ranks`, `expected a list of props, of the first category, the second one, ...`);
         if (m.props?.scheme !== undefined && !d3.named(d3.schemeNames, m.props.scheme))
             warn(`${path}.props.scheme`, `unknown scheme '${m.props.scheme}', e.g. 'Tableau10'`);
-        if (m.scale) {
+        // the scale of another mapping, of the positions of its values
+        if (m.scale && m.scale.of !== undefined) {
+            const other = Object.hasOwn(def.mapping ?? {}, m.scale.of) ? def.mapping[m.scale.of] : undefined;
+            if (!other?.scale || other.scale.of !== undefined)
+                warn(`${path}.scale.of`, `expected a mapping with a scale of its own, e.g. "y"`);
+            Object.keys(m.scale).filter(k => k != 'of').forEach(k =>
+                warn(`${path}.scale.${k}`, `not used, the scale is the one of '${m.scale.of}'`));
+        } else if (m.scale) {
             const type = m.scale.type ?? 'linear';
             const scale = d3.named(d3.scales, type);
             if (!scale) {
@@ -505,8 +514,8 @@ const validateDef = def => {
         if (t.type == 'calc') {
             if (!Array.isArray(t.columns) || t.columns.length == 0 || !t.columns.every(c => typeof c == 'string'))
                 warn(`${path}.columns`, `the columns of the values are needed, e.g. ["value", "base"]`);
-            if (!['add', 'subtract', 'multiply', 'divide'].includes(t.op))
-                warn(`${path}.op`, `expected one of 'add', 'subtract', 'multiply', 'divide'`);
+            if (!calcOps.includes(t.op))
+                warn(`${path}.op`, `expected one of ${list(calcOps)}`);
             if (typeof t.as != 'string')
                 warn(`${path}.as`, `the name of the new column is needed`);
         } else if (typeof t.column != 'string')
@@ -522,6 +531,10 @@ const validateDef = def => {
             warn(`${path}.size`, `the number of the rows of the window is needed, e.g. 7`);
         if (t.type == 'index' && (t.base === null || typeof t.base != 'object' || Array.isArray(t.base)))
             warn(`${path}.base`, `the rows of the base are needed, e.g. { "year": "{base}" }`);
+        if (t.type == 'mean' && t.base !== undefined && (t.base === null || typeof t.base != 'object' || Array.isArray(t.base)))
+            warn(`${path}.base`, `the rows of the mean, e.g. { "year": [1961, 1990] }`);
+        if (t.min !== undefined && !(t.type == 'mean' && Number.isInteger(t.min) && t.min > 0))
+            warn(`${path}.min`, `the least number of values of a mean, e.g. 22`);
         if (t.align !== undefined && !['end', 'center'].includes(t.align))
             warn(`${path}.align`, `expected 'end' or 'center'`);
         templateRefs(JSON.stringify(t)).filter(r => !globals.has(r)).forEach(r =>

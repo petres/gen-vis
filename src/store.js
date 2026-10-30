@@ -2,7 +2,7 @@ export { createStore, resolveUrl, resolveParents, clearCache };
 
 import { reactive, markRaw, toRaw } from 'vue';
 
-import { addDataValues, dataFormat, distinctValues, parseData, prepareData, updateData, usedColumns } from "@/utils/data";
+import { addDataValues, dataFormat, distinctValues, parseData, prepareData, scaleDef, updateData, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
 import { applyPatches, fillHtml, fillText, formatOf, mergeAll, prepareDef, templateNames } from "@/utils/def";
 import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
@@ -344,7 +344,7 @@ class Store {
     // utils/props.js
     format(format, name) {
         const m = Object.hasOwn(this.def.mapping, name) ? this.def.mapping[name] : undefined;
-        const type = m?.scale?.type;
+        const type = scaleDef(this.def.mapping, m)?.type;
         if (type == 'utc')
             return this.locale.time.utcFormat(format);
         if (type == 'time' || m?.type == 'date')

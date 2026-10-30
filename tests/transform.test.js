@@ -122,6 +122,29 @@ describe('transforms', () => {
         expect(applyTransforms(wide, { type: 'calc', op: 'subtract', columns: ['base', 'v'], as: 'd' }).get('d')).toEqual([150, -3, null]);
         expect(applyTransforms(wide, { type: 'calc', op: 'add', columns: ['v', 'base', 'v'], as: 's' }).get('s')).toEqual([300, 6, null]);
         expect(() => applyTransforms(wide, { type: 'calc', op: 'power', columns: ['v'], as: 'p' })).toThrow("calc: unknown op 'power'");
+        // the least and the largest value, e.g. the ends of a band above or below a mean
+        expect(applyTransforms(wide, { type: 'calc', op: 'min', columns: ['v', 'base'], as: 'lo' }).get('lo')).toEqual([50, 0, null]);
+        expect(applyTransforms(wide, { type: 'calc', op: 'max', columns: ['v', 'base'], as: 'hi' }).get('hi')).toEqual([200, 3, null]);
+    });
+
+    test('mean, of the group, of the base and of at least `min` values', () => {
+        // the mean of all rows of a type, the missing value of oil is left out
+        expect(column({ type: 'mean', column: 'value', by: 'type', as: 'm' }, 'm')).toEqual([80/3, 80/3, 80/3, 10, 10, 10]);
+        // of the dates of a day of the year (the day of align), e.g. the mean of a day of all years
+        expect(applyTransforms(rows, [{ type: 'align', column: 'date', as: 'day' }, { type: 'mean', column: 'value', by: 'day', as: 'm' }]).get('m'))
+            .toEqual([55/3, 22.5, 55/3, 55/3, 55/3, 22.5]);
+        // of the rows of a period, of all rows without groups
+        expect(applyTransforms(rows, [{ type: 'year', column: 'date', as: 'year' }, { type: 'mean', column: 'value', base: { year: [2019, 2019] }, as: 'm' }]).get('m'))
+            .toEqual(Array(6).fill(15));
+        // without the least number of values none
+        expect(column({ type: 'mean', column: 'value', by: 'type', min: 3, as: 'm' }, 'm')).toEqual([80/3, 80/3, 80/3, null, null, null]);
+        expect(validateDef({ mapping: { y: { column: 'm', type: 'numeric' } }, transform: [
+            { type: 'mean', column: 'value', base: [2019], as: 'm' },
+            { type: 'share', column: 'value', min: 2, as: 's' },
+        ] }).filter(w => w.startsWith('transform'))).toEqual([
+            `transform[0].base: the rows of the mean, e.g. { "year": [1961, 1990] }`,
+            'transform[1].min: the least number of values of a mean, e.g. 22',
+        ]);
     });
 
     test('rank, the same values have the same rank', () => {
@@ -150,7 +173,7 @@ describe('transforms', () => {
             "transform[0]: unknown global 'base' in the template",
             "transform[1].size: the number of the rows of the window is needed, e.g. 7",
             "transform[1].align: expected 'end' or 'center'",
-            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'share', 'rolling', 'cumulative', 'calc', 'rank', 'lookup'",
+            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'rank', 'lookup'",
             "transform[2].column: the column of the values is needed",
         ]);
         expect(schema.definitions.transform.properties.type.enum).toEqual(Object.keys(transformTypes));

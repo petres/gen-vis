@@ -323,6 +323,7 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
+                "of": { "type": "string", "description": "The scale of another mapping, e.g. \"y\", the values of this one are positions on it too, e.g. the other end of a band, and they are in its domain, without the other parts of a scale." },
                 "type": {
                     "enum": ["band", "diverging", "divergingLog", "divergingPow", "divergingSqrt", "divergingSymlog", "identity", "linear", "log", "ordinal", "point", "pow", "quantile", "quantize", "radial", "sequential", "sequentialLog", "sequentialPow", "sequentialQuantile", "sequentialSqrt", "sequentialSymlog", "sqrt", "symlog", "threshold", "time", "utc"],
                     "default": "linear",
@@ -560,12 +561,13 @@
             "required": ["type"],
             "properties": {
                 "type": {
-                    "enum": ["year", "align", "index", "share", "rolling", "cumulative", "calc", "rank", "lookup"],
-                    "description": "year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the values of `columns` combined by `op`, rank: the rank in the group, lookup: the `value` of the row of a file of `data` of the `key`."
+                    "enum": ["year", "align", "index", "mean", "share", "rolling", "cumulative", "calc", "rank", "lookup"],
+                    "description": "year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the values of `columns` combined by `op`, rank: the rank in the group, lookup: the `value` of the row of a file of `data` of the `key`."
                 },
                 "column": { "type": "string", "description": "The column of the values, a template of the globals, of a lookup the one of the keys." },
                 "columns": { "type": "array", "items": { "type": "string" }, "description": "calc: the columns of the values, combined from the first one." },
-                "op": { "enum": ["add", "subtract", "multiply", "divide"], "description": "calc: the operation of the values of the columns." },
+                "op": { "enum": ["add", "subtract", "multiply", "divide", "min", "max"], "description": "calc: the operation of the values of the columns, min and max the least and the largest one." },
+                "min": { "type": "integer", "minimum": 1, "description": "mean: the least number of values, without as many values the mean is missing, 1 by default." },
                 "descending": { "type": "boolean", "default": false, "description": "rank: the largest value is the first one." },
                 "data": { "type": "string", "description": "lookup: the url of a file of rows, relative to the definition, not a template." },
                 "dataFormat": { "enum": ["csv", "tsv", "json", "parquet"], "description": "lookup: the format of the file, by default the one of the extension of its url." },
@@ -579,7 +581,7 @@
                 "order": { "type": "string", "description": "The column of the order of the rows of rolling and cumulative, e.g. the date, the order of the rows by default." },
                 "base": {
                     "type": "object",
-                    "description": "The rows of the base of an index: a column and its value, e.g. { \"year\": \"{base}\" }, or a range [from, to], e.g. of dates.",
+                    "description": "The rows of the base of an index or of a mean: a column and its value, e.g. { \"year\": \"{base}\" }, or a range [from, to], e.g. of dates or years, { \"year\": [1961, 1990] }.",
                     "additionalProperties": true
                 },
                 "scale": { "type": "number", "description": "The value of the base of an index (100 by default), the factor of calc (1 by default)." },

@@ -495,6 +495,13 @@ list), the mappings and the later transforms can use the new column:
   `base` in the group, times `scale` (100 by default). `base` is a column and
   its value, e.g. `{"year": "{base}"}`, or a range `[from, to]` (`null` is
   open), e.g. of dates `{"date": ["2019-01-01", "2019-12-31"]}`.
+- `mean`: the mean of the values of the rows of `base` (all rows by default,
+  a column and its value or a range, as the `base` of `index`) in the group,
+  a value of every row of the group, without one if there are less than
+  `min` values (1 by default), e.g. the mean of a day of all years (`"by":
+  "day"`, the day of `align`) or the one of a period, `{"type": "mean",
+  "column": "value", "base": {"year": [1961, 1990]}, "min": 22, "as":
+  "p1"}`.
 - `share`: the share of the value of the sum of the values of the group, e.g.
   `"by": "date"` for the shares of the categories of a date.
 - `rolling`: the mean of the values of `size` rows of the group, the ones
@@ -505,10 +512,11 @@ list), the mappings and the later transforms can use the new column:
 - `cumulative`: the sum of the values of the group up to the row, in the order
   of `order`, e.g. the sum of a year so far with `"by": "year"`.
 - `calc`: the values of the columns `columns` combined by `op` (`add`,
-  `subtract`, `multiply` or `divide`, from the first one) times `scale` (1
-  by default) in the column `as`, without a value if one is missing or of a
-  division by 0, e.g. a value relative to the one of a group in another
-  column: `{"type": "calc", "op": "divide", "columns": ["value", "inno"],
+  `subtract`, `multiply`, `divide`, `min` or `max`, from the first one)
+  times `scale` (1 by default) in the column `as`, without a value if one is
+  missing or of a division by 0, e.g. a value relative to the one of a group
+  in another column (or the larger one of two columns with `max`, e.g. the
+  end of a band above a mean): `{"type": "calc", "op": "divide", "columns": ["value", "inno"],
   "scale": 100, "as": "rel"}`.
 - `rank`: the rank of the value in its group, 1 of the least one or of the
   largest one with `"descending": true`, the same values have the same
@@ -628,6 +636,11 @@ parent or of a patch, e.g. `"hover": null`.
   ...), continuous scales need a `numeric` or `date` type (positions of dates
   a `time` or `utc` one), `point` and `band` a `categorical` one, `ordinal`
   scales are of any values, e.g. the colors of categories (`range`).
+  `"scale": {"of": "y"}` is the scale of another mapping, the values of this
+  one are positions on it too and they are in its domain, e.g. the other end
+  of a band between two columns, `"y0": "@low:scaled", "y1": "@high:scaled"`,
+  or a second date of a `utc` scale (it is read in UTC as well), without
+  the other parts of a scale.
   `orientation` (`horizontal` or `vertical`) places the scale on the plot,
   `angular` or `radial` in polar plots. `domain` fixes the domain, `null`
   entries are taken from the data, the values are converted as the ones of

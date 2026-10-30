@@ -1,6 +1,7 @@
 export { applyTransforms, loadTransforms, transformNames, transformColumns, transformGlobals, utcColumns };
 
 import { fillTemplate, templateRefs } from "@/utils/def";
+import { scaleDef } from "@/utils/data";
 import { lazy } from "@/utils/lazy";
 
 /**
@@ -10,7 +11,7 @@ import { lazy } from "@/utils/lazy";
  */
 
 // the types of the transforms, e.g. for validateDef
-const transformNames = ['year', 'align', 'index', 'share', 'rolling', 'cumulative', 'calc', 'rank', 'lookup'];
+const transformNames = ['year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'rank', 'lookup'];
 
 const list = transforms => [transforms ?? []].flat();
 
@@ -35,7 +36,7 @@ const transformGlobals = transforms => [...new Set(templateRefs(JSON.stringify(t
 // the columns of the mappings of dates of `utc` scales, with the values of
 // the globals, the transforms of them are in UTC
 const utcColumns = def => new Set(Object.values(def.mapping ?? {})
-    .filter(m => m?.scale?.type == 'utc' && typeof m.column == 'string')
+    .filter(m => scaleDef(def.mapping, m)?.type == 'utc' && typeof m.column == 'string')
     .map(m => fillTemplate(m.column, def.globals ?? {})));
 
 // the columns of the data the transforms use, e.g. for parquet, the ones of

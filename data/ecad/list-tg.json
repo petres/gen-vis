@@ -1,0 +1,71 @@
+{
+    "data": "16-tg-y.csv",
+    "options": {
+        "title": "Wien Hohe Warte: warmer by the difference of the periods",
+        "subtitle": "The mean temperature of the years since 1959, the means of 1961–1990 and 1991–2020 (at least 22 years with values)",
+        "height": 130,
+        "margins": { "top": 26, "right": 8, "bottom": 10, "left": 62 },
+        "locale": { "base": "en", "number": { "currency": ["", " °C"] } },
+        "footer": "Source: <a href=\"https://www.ecad.eu/\">ECA&amp;D</a>, the original charts on <a href=\"https://ecad.abteil.org/\">ecad.abteil.org</a>"
+    },
+    "transform": [
+        { "type": "calc", "op": "multiply", "columns": ["value"], "scale": 0.1, "as": "v" },
+        { "type": "mean", "column": "v", "base": { "date": [1959, null] }, "as": "avg" },
+        { "type": "mean", "column": "v", "base": { "date": [1961, 1990] }, "min": 22, "as": "p1" },
+        { "type": "mean", "column": "v", "base": { "date": [1991, 2020] }, "min": 22, "as": "p2" }
+    ],
+    "filter": { "x": { "range": [1959, null] } },
+    "mapping": {
+        "x": {
+            "column": "date", "type": "numeric",
+            "scale": { "orientation": "horizontal", "domain": [1959, null], "domainRel": [0, 0] },
+            "axis": { "position": "top", "ticks": 7, "format": "d", "grid": true, "padding": 5 },
+            "hover": { "format": "d" }
+        },
+        "y": {
+            "column": "v", "type": "numeric",
+            "scale": { "orientation": "vertical", "domainRel": [0, 0] },
+            "axis": { "position": "left", "ticks": 2, "format": "$.1f", "grid": true },
+            "hover": { "format": "$.1f" }
+        },
+        "avg": { "column": "avg", "type": "numeric", "scale": { "of": "y" } },
+        "p1": { "column": "p1", "type": "numeric", "scale": { "of": "y" }, "hover": { "format": "$.1f" } },
+        "p2": { "column": "p2", "type": "numeric", "scale": { "of": "y" }, "hover": { "format": "$.1f" } }
+    },
+    "annotations": [
+        { "type": "band", "x": [1961, 1990], "props": { "fill": "#35d3da", "fill-opacity": 0.1 } },
+        { "type": "band", "x": [1991, 2020], "props": { "fill": "#f23c06", "fill-opacity": 0.1 } }
+    ],
+    "plot": [
+        {
+            "id": "avg", "type": "cartesian:line",
+            "props": { "fill": "none", "stroke": "#9cb806", "stroke-width": 1.5, "stroke-opacity": 0.5, "d": { "x": "@x:scaled", "y": "@avg:scaled" } }
+        },
+        {
+            "id": "p1", "type": "cartesian:line", "filter": { "x": { "range": [1961, 1990] } },
+            "props": { "fill": "none", "stroke": "#35d3da", "stroke-width": 1.5, "stroke-opacity": 0.7, "d": { "x": "@x:scaled", "y": "@p1:scaled" } }
+        },
+        {
+            "id": "p2", "type": "cartesian:line", "filter": { "x": { "range": [1991, 2020] } },
+            "props": { "fill": "none", "stroke": "#f23c06", "stroke-width": 1.5, "stroke-opacity": 0.7, "d": { "x": "@x:scaled", "y": "@p2:scaled" } }
+        },
+        {
+            "id": "line", "type": "cartesian:line",
+            "props": { "fill": "none", "stroke": "#444", "stroke-width": 1.5, "d": { "x": "@x:scaled", "y": "@y:scaled" } }
+        },
+        {
+            "id": "points", "type": "svg:circle",
+            "props": { "cx": "@x:scaled", "cy": "@y:scaled", "r": 1.5, "fill": "#333", "fill-opacity": 0.8 }
+        },
+        {
+            "id": "p1-label", "type": "svg:text", "filter": { "x": { "range": [1961, 1990] } }, "select": "last", "layer": "above",
+            "props": { "x": "@x:scaled", "dx": 6, "y": "@p1:scaled", "text": "@p1:formatted", "font-size": 12, "dominant-baseline": "middle",
+                "fill": "#126064", "stroke": "white", "stroke-width": 4, "stroke-opacity": 0.8, "paint-order": "stroke" }
+        },
+        {
+            "id": "p2-label", "type": "svg:text", "filter": { "x": { "range": [1991, 2020] } }, "select": "first", "layer": "above",
+            "props": { "x": "@x:scaled", "dx": -6, "y": "@p2:scaled", "text": "@p2:formatted", "font-size": 12, "dominant-baseline": "middle", "text-anchor": "end",
+                "fill": "#5d1702", "stroke": "white", "stroke-width": 4, "stroke-opacity": 0.8, "paint-order": "stroke" }
+        }
+    ]
+}

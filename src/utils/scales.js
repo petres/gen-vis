@@ -130,14 +130,17 @@ const sortCategories = (values, rows, name, order) => {
 
 // the values of a mapping in the rows, continuous ones sorted for the lookup
 // of the nearest value, and their extent, of stacked values (`stackOf`, see
-// layout.js) the one of the stacks, e.g. from 0
-const valuesOf = (name, mapping, rows, stackOf) => {
+// layout.js) the one of the stacks, e.g. from 0, the extent and the
+// categories include the values of the mappings with this scale (`also`,
+// `"scale": { "of": ... }`), e.g. of a band between two columns
+const valuesOf = (name, mapping, rows, stackOf, also = []) => {
     const values = [...new Set(rows.map(d => d[name]))];
+    const others = also.flatMap(n => rows.map(d => d[n])).filter(v => v !== null && v !== undefined);
     if (mapping.type != 'numeric' && mapping.type != 'date')
-        return { values };
+        return { values: others.length ? [...new Set([...values, ...others])] : values };
     const sorted = values.filter(v => v !== null).sort((a, b) => a - b);
     const extent = mapping.stacked && stackOf ? d3.extent(rows.flatMap(stackOf)) : d3.extent(sorted);
-    return { values: sorted, extent };
+    return { values: sorted, extent: others.length ? d3.extent([...extent, ...others]) : extent };
 };
 
 /**
@@ -147,12 +150,12 @@ const valuesOf = (name, mapping, rows, stackOf) => {
  * system (`coord`), the references of the range are the names of `scope`
  * and the sizes `dims` of the coordinate system, e.g. its `radius`.
  */
-const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, stackOf } = {}) => {
+const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, stackOf, also = [] } = {}) => {
     const scaleDef = mapping.scale;
     const ranges = coord.ranges ?? {};
     // the end of a cyclic range is its start, e.g. of the angles of a circle
     const cyclic = (coord.cyclic ?? []).includes(scaleDef.orientation);
-    let { values, extent } = valuesOf(name, mapping, rows, stackOf);
+    let { values, extent } = valuesOf(name, mapping, rows, stackOf, also);
     // the extent of the data includes the values of `include`, e.g. 0 or
     // 100, around `center` it is symmetric, e.g. of 0 of changes
     // a value of the definition as the ones of the data, e.g. a date or a category as a string

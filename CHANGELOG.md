@@ -97,9 +97,16 @@ New:
   hover) or wraps them (`"text-overflow": "wrap"`); the props of the
   labels of cartesian axes (`axis.labels`), e.g. bold ones of headers or
   other texts of another mapping
-- transforms: `calc` (columns added, subtracted, multiplied or divided),
-  `rank` (in groups) and `lookup` (a value of a file of rows by a key, e.g.
-  names in a language)
+- transforms: `calc` (columns added, subtracted, multiplied, divided, the
+  least or the largest one), `rank` (in groups), `lookup` (a value of a file
+  of rows by a key, e.g. names in a language) and `mean` (the mean of the
+  group, of the rows of a `base`, of at least `min` values, e.g. the mean of
+  a day of all years or of a period)
+- the scale of another mapping (`"scale": {"of": "y"}`), e.g. the other end
+  of a band between two columns, its values are in the domain
+- examples (`data/ecad/`): the charts of ecad.abteil.org, the days of a
+  year in a circle with the band above or below the mean of the day, the
+  years and the means of two periods
 - `options.message` (a text instead of the plots, a prop, e.g. of a narrow
   screen or of an entry), `options.empty` (the text without rows),
   `options.class` and the globals as `data-global-` attributes of `.vis`

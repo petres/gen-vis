@@ -129,7 +129,8 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}) => {
         }))
     }
 
-    if (m.scale) {
+    // the scale of another mapping (`of`) has no parts of its own
+    if (m.scale && m.scale.of === undefined) {
         m.scale.type ??= "linear";
         m.scale.domain ??= [null, null];
     }

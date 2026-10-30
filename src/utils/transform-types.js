@@ -110,6 +110,22 @@ const transformTypes = {
         return result;
     },
 
+    // the mean of the values of the rows of `base` (all of them by default)
+    // in the group, a value of every row of the group, e.g. the mean of a day
+    // of all years with "by": "day" (the day of `align`) or the one of the
+    // years of a period with "base": { "year": [1961, 1990] }, without one if
+    // there are less than `min` values (1 by default)
+    mean: (t, { n, numbers, groups, matches }) => {
+        const result = new Array(n).fill(null);
+        const least = Math.max(1, Number(t.min) || 1);
+        groups.forEach(g => {
+            const base = g.filter(matches).map(numbers).filter(v => v !== null);
+            const mean = base.length >= least ? base.reduce((a, b) => a + b, 0)/base.length : null;
+            g.forEach(i => result[i] = mean);
+        });
+        return result;
+    },
+
     // the share of the value of the sum of the values of the group, e.g. of
     // a date by "by": ["date"]
     share: (t, { n, numbers, groups }) => {
@@ -177,11 +193,12 @@ const transformTypes = {
     },
 
     // the values of the columns `columns` combined by `op` (add, subtract,
-    // multiply or divide, from the first one), times `scale` (1 by default),
-    // e.g. a value relative to the one of a group, without a value if one is
-    // missing or of a division by 0
+    // multiply, divide, min or max, from the first one), times `scale` (1 by
+    // default), e.g. a value relative to the one of a group or the larger one
+    // of two columns, without a value if one is missing or of a division by 0
     calc: (t, { n, get }) => {
-        const ops = { add: (a, b) => a + b, subtract: (a, b) => a - b, multiply: (a, b) => a*b, divide: (a, b) => b === 0 ? null : a/b };
+        const ops = { add: (a, b) => a + b, subtract: (a, b) => a - b, multiply: (a, b) => a*b, divide: (a, b) => b === 0 ? null : a/b,
+            min: (a, b) => Math.min(a, b), max: (a, b) => Math.max(a, b) };
         const op = ops[t.op];
         if (!op)
             throw new Error(`calc: unknown op '${t.op}', expected one of ${Object.keys(ops).map(o => `'${o}'`).join(', ')}`);

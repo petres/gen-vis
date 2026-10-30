@@ -137,13 +137,18 @@ const layout = (store, width) => {
     // the radius of polar plots is a size of the facet, e.g. of the hole of a donut
     const facetScope = { ...scope, ...size, ...(dims.radius === undefined ? {} : { radius: dims.radius }) };
 
+    // the mappings with the scale of another one (`"scale": { "of": "y" }`),
+    // e.g. the end of a band, their values are in its domain
+    const borrowed = Object.keys(def.mapping).filter(n => def.mapping[n].scale?.of !== undefined);
+    const also = name => borrowed.filter(n => def.mapping[n].scale.of === name);
+
     // the scale of a mapping for the rows, in the sizes of a facet
     const scaleOf = (name, rows) => makeScale(name, store.mapping(name), rows,
-        { dims, coord: store.coord, scope: facetScope, stackOf: name == axis.v ? stackOf : null });
+        { dims, coord: store.coord, scope: facetScope, stackOf: name == axis.v ? stackOf : null, also: also(name) });
 
     // the scales of all facets: the shared ones and the ones without
     // orientation, e.g. of colors
-    const scaled = Object.keys(def.mapping).filter(n => def.mapping[n].scale);
+    const scaled = Object.keys(def.mapping).filter(n => def.mapping[n].scale && !borrowed.includes(n));
     const colors = scaled.filter(n => !def.mapping[n].scale.orientation);
     const shared = faceted && def.facets.scales ? evaluate(def.facets.scales, scope) : [];
     const common = Object.fromEntries([...new Set([...shared, ...colors])].map(n => [n, scaleOf(n, rows)]));
@@ -153,6 +158,7 @@ const layout = (store, width) => {
             ...common,
             ...Object.fromEntries(scaled.filter(n => !Object.hasOwn(common, n)).map(n => [n, scaleOf(n, f.rows)])),
         };
+        borrowed.filter(n => Object.hasOwn(scales, def.mapping[n].scale.of)).forEach(n => scales[n] = scales[def.mapping[n].scale.of]);
         return {
             ...f,
             ...size,

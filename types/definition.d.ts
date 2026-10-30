@@ -361,9 +361,9 @@ export interface Props {
 }
 export interface Transform {
     /**
-     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the values of `columns` combined by `op`, rank: the rank in the group, lookup: the `value` of the row of a file of `data` of the `key`.
+     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the values of `columns` combined by `op`, rank: the rank in the group, lookup: the `value` of the row of a file of `data` of the `key`.
      */
-    type: 'year' | 'align' | 'index' | 'share' | 'rolling' | 'cumulative' | 'calc' | 'rank' | 'lookup';
+    type: 'year' | 'align' | 'index' | 'mean' | 'share' | 'rolling' | 'cumulative' | 'calc' | 'rank' | 'lookup';
     /**
      * The column of the values, a template of the globals, of a lookup the one of the keys.
      */
@@ -373,9 +373,13 @@ export interface Transform {
      */
     columns?: string[];
     /**
-     * calc: the operation of the values of the columns.
+     * calc: the operation of the values of the columns, min and max the least and the largest one.
      */
-    op?: 'add' | 'subtract' | 'multiply' | 'divide';
+    op?: 'add' | 'subtract' | 'multiply' | 'divide' | 'min' | 'max';
+    /**
+     * mean: the least number of values, without as many values the mean is missing, 1 by default.
+     */
+    min?: number;
     /**
      * rank: the largest value is the first one.
      */
@@ -409,7 +413,7 @@ export interface Transform {
      */
     order?: string;
     /**
-     * The rows of the base of an index: a column and its value, e.g. { "year": "{base}" }, or a range [from, to], e.g. of dates.
+     * The rows of the base of an index or of a mean: a column and its value, e.g. { "year": "{base}" }, or a range [from, to], e.g. of dates or years, { "year": [1961, 1990] }.
      */
     base?: {
         [k: string]: unknown;
@@ -666,6 +670,10 @@ export interface MappingEntry {
           };
 }
 export interface Scale {
+    /**
+     * The scale of another mapping, e.g. "y", the values of this one are positions on it too, e.g. the other end of a band, and they are in its domain, without the other parts of a scale.
+     */
+    of?: string;
     /**
      * A d3 scale, continuous scales and the ones of classes (quantize, quantile, threshold) need a numeric or date mapping, point and band a categorical one, ordinal ones are of any values, e.g. colors of categories, positions of dates need a time or utc scale.
      */
