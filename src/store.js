@@ -199,28 +199,32 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
 
     const [, coord, geoModule, , , colorLegend] = await parts;
 
+    // the data of plots of their own, e.g. events, and of the lookups of
+    // transforms, also of the patches of form elements, the url relative to
+    // the def, the rows are not evaluated as the ones of the definition, see
+    // layout.js
+    const sources = [defOrg, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.patch) : [])];
+    const withFiles = [
+        ...sources.flatMap(d => [d?.plot ?? []].flat()).filter(p => typeof p?.data == 'string'),
+        ...sources.flatMap(d => [d?.transform ?? []].flat()).filter(t => t?.type == 'lookup' && typeof t.data == 'string'),
+    ];
+    const files = new Map(await Promise.all([...new Set(withFiles.map(p => p.data))].map(async data => {
+        const dataUrl = resolveUrl(data, url);
+        const format = dataFormat(dataUrl, withFiles.find(p => p.data == data).dataFormat);
+        return [data, raw(await readData(await fetchData(dataUrl, format), format, `'${dataUrl}'`))];
+    })));
+
     // the columns of the transforms, the form elements can have their values
-    let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg));
+    let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files);
 
     // the form elements can have the values of the data, the state needs them
     addDataValues(defOrg, rows, columns);
     const keysOf = column => distinctValues(rows, columns, column).map(String);
-    // the data of plots of their own, e.g. events, also of the patches of
-    // form elements, the url relative to the def, the rows are not evaluated
-    // as the ones of the definition, see layout.js
-    const plotsOfFiles = [defOrg, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.patch) : [])]
-        .flatMap(d => [d?.plot ?? []].flat()).filter(p => typeof p?.data == 'string');
-    const files = new Map(await Promise.all([...new Set(plotsOfFiles.map(p => p.data))].map(async data => {
-        const dataUrl = resolveUrl(data, url);
-        const format = dataFormat(dataUrl, plotsOfFiles.find(p => p.data == data).dataFormat);
-        return [data, raw(await readData(await fetchData(dataUrl, format), format, `'${dataUrl}'`))];
-    })));
-
     // the transforms of the globals of the state, before the mappings, their
     // categories can be the ones of a transform, and again after them, e.g.
     // of a patch of a scale of dates to utc
     const transform = () => {
-        columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns);
+        columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns, files);
     };
     const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), { dataKeys: keysOf, files });
     const defaults = snapshot(prepared);
@@ -381,7 +385,7 @@ class Store {
     applyFormElements(keepVisible = true) {
         const changedColumns = new Set();
         const transform = () => {
-            const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns);
+            const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns, this.files);
             if (columns !== this.columns) {
                 this.columns = markRaw(columns);
                 columns.changed.forEach(c => changedColumns.add(c));

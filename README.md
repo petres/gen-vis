@@ -469,6 +469,22 @@ list), the mappings and the later transforms can use the new column:
   "by": "country", "order": "date", "size": 28}`.
 - `cumulative`: the sum of the values of the group up to the row, in the order
   of `order`, e.g. the sum of a year so far with `"by": "year"`.
+- `calc`: the values of the columns `columns` combined by `op` (`add`,
+  `subtract`, `multiply` or `divide`, from the first one) times `scale` (1
+  by default) in the column `as`, without a value if one is missing or of a
+  division by 0, e.g. a value relative to the one of a group in another
+  column: `{"type": "calc", "op": "divide", "columns": ["value", "inno"],
+  "scale": 100, "as": "rel"}`.
+- `rank`: the rank of the value in its group, 1 of the least one or of the
+  largest one with `"descending": true`, the same values have the same
+  rank, e.g. the place of a country in a year with `"by": "year"`.
+- `lookup`: the value of the column `value` of the row of a file of rows
+  (`data`, its url relative to the definition, the format of its extension
+  or `dataFormat`) whose column `key` is the value of `column`, e.g. the
+  names of the countries of the codes of the data in the language of the
+  page: `{"type": "lookup", "column": "country", "data": "countries.csv",
+  "key": "code", "value": "name_{lang}", "as": "countryName"}`. The file is
+  loaded with the data, its url is no template.
 
 The strings of a transform are templates of the globals, e.g. `{base}`, the
 transforms are computed again when the globals change, from the first one

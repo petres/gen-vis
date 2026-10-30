@@ -175,6 +175,58 @@ const transformTypes = {
         });
         return result;
     },
+
+    // the values of the columns `columns` combined by `op` (add, subtract,
+    // multiply or divide, from the first one), times `scale` (1 by default),
+    // e.g. a value relative to the one of a group, without a value if one is
+    // missing or of a division by 0
+    calc: (t, { n, get }) => {
+        const ops = { add: (a, b) => a + b, subtract: (a, b) => a - b, multiply: (a, b) => a*b, divide: (a, b) => b === 0 ? null : a/b };
+        const op = ops[t.op];
+        if (!op)
+            throw new Error(`calc: unknown op '${t.op}', expected one of ${Object.keys(ops).map(o => `'${o}'`).join(', ')}`);
+        const columns = [t.columns ?? []].flat();
+        return Array.from({ length: n }, (_, i) => {
+            const values = columns.map(c => toNumber(get(i, c)));
+            if (values.length == 0 || values.includes(null))
+                return null;
+            const v = values.slice(1).reduce((a, b) => a === null ? null : op(a, b), values[0]);
+            return v === null || !Number.isFinite(v) ? null : v*(t.scale ?? 1);
+        });
+    },
+
+    // the rank of the value in its group, 1 of the least one or of the
+    // largest one (`"descending": true`), the same values have the same
+    // rank, e.g. 1, 2, 2, 4, rows without a value have none
+    rank: (t, { n, numbers, groups }) => {
+        const result = new Array(n).fill(null);
+        groups.forEach(g => {
+            const values = g.filter(i => numbers(i) !== null).sort((a, b) => t.descending ? numbers(b) - numbers(a) : numbers(a) - numbers(b));
+            values.forEach((i, k) => {
+                result[i] = k > 0 && numbers(values[k - 1]) === numbers(i) ? result[values[k - 1]] : k + 1;
+            });
+        });
+        return result;
+    },
+
+    // the value of the column `value` of the row of a file of rows (`data`)
+    // whose column `key` is the value of the column, e.g. the name of a
+    // country in a language, "value": "name_{lang}", missing ones have none
+    lookup: (t, { n, values, files }) => {
+        const rows = files?.get(t.data);
+        if (!rows)
+            throw new Error(`lookup: the rows of '${t.data}' are not loaded, the url of the data can not be a template`);
+        const byKey = new Map();
+        rows.forEach(r => {
+            const k = String(r[t.key]);
+            if (!byKey.has(k))
+                byKey.set(k, r[t.value]);
+        });
+        return Array.from({ length: n }, (_, i) => {
+            const v = values(i);
+            return missing(v) ? null : byKey.get(String(v)) ?? null;
+        });
+    },
 };
 
 // the strings of a transform with the values of the globals
@@ -191,9 +243,10 @@ const filled = (t, globals) => {
  * rows `before`, e.g. before a change of a global, the transforms are
  * computed from the first one which changes, e.g. by the global, the ones
  * before it are kept, `changed` are the names of the columns computed again,
- * without changes the columns are the ones before.
+ * without changes the columns are the ones before. `files` are the rows of
+ * the files of lookups by their url, see the store.
  */
-const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null) => {
+const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null) => {
     const list = [transforms].flat().map(raw => {
         const t = filled(raw, globals);
         return { t, inUtc: utc.has(t.column) || utc.has(t.as ?? t.column) };
@@ -235,10 +288,12 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
                 return x !== null && (from === null || x >= from) && (to === null || x <= to);
             };
         });
-        const name = t.as ?? t.column;
+        const name = t.as ?? t.column ?? [t.columns ?? []].flat()[0];
         let groups = null;
         const result = compute(t, {
             n,
+            get,
+            files,
             values,
             numbers: i => toNumber(values(i)),
             // only of the types which need them, e.g. not of the year

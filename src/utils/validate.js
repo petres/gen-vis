@@ -474,8 +474,20 @@ const validateDef = def => {
             return warn(path, `expected a transform, e.g. { "type": "index", "column": "value", "base": { "year": "{base}" } }`);
         if (!transformNames.includes(t.type))
             warn(`${path}.type`, `unknown transform '${t.type}', expected one of ${list(transformNames)}`);
-        if (typeof t.column != 'string')
+        if (t.type == 'calc') {
+            if (!Array.isArray(t.columns) || t.columns.length == 0 || !t.columns.every(c => typeof c == 'string'))
+                warn(`${path}.columns`, `the columns of the values are needed, e.g. ["value", "base"]`);
+            if (!['add', 'subtract', 'multiply', 'divide'].includes(t.op))
+                warn(`${path}.op`, `expected one of 'add', 'subtract', 'multiply', 'divide'`);
+            if (typeof t.as != 'string')
+                warn(`${path}.as`, `the name of the new column is needed`);
+        } else if (typeof t.column != 'string')
             warn(`${path}.column`, `the column of the values is needed`);
+        if (t.type == 'lookup') {
+            if (typeof t.data != 'string' || t.data.includes('{'))
+                warn(`${path}.data`, `the url of the rows is needed, not a template`);
+            ['key', 'value'].filter(k => typeof t[k] != 'string').forEach(k => warn(`${path}.${k}`, `the column of the ${k}s of the rows is needed`));
+        }
         if (t.by !== undefined && ![t.by].flat().every(c => typeof c == 'string'))
             warn(`${path}.by`, `expected a column or a list of columns`);
         if (t.type == 'rolling' && !(Number.isInteger(t.size) && t.size > 0))

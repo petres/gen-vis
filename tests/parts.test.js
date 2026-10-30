@@ -439,3 +439,41 @@ describe('texts', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('transforms', () => {
+    test('a lookup of a file, e.g. the names of a language of the page, and ranks', async () => {
+        const { readFileSync, writeFileSync, mkdirSync, rmSync } = await import('node:fs');
+        const { root } = await import('./dom.js');
+        mkdirSync(`${root}/tests/tmp-lookup`, { recursive: true });
+        writeFileSync(`${root}/tests/tmp-lookup/names.csv`, 'code,de,en\nWien,Wien,Vienna\nTirol,Tirol,Tyrol\n');
+        writeFileSync(`${root}/tests/tmp-lookup/def.json`, JSON.stringify({
+            ...lineDef(),
+            globals: { lang: 'de' },
+            formElements: [{ id: 'lang', ref: 'lang', type: 'hidden', values: [{ id: 'de', value: 'de' }, { id: 'en', value: 'en' }] }],
+            transform: [
+                { type: 'lookup', column: 'land', data: 'names.csv', key: 'code', value: '{lang}', as: 'label' },
+                { type: 'rank', column: 'value', by: 'year', descending: true, as: 'rank' },
+            ],
+            mapping: { ...lineDef().mapping, label: { column: 'label', type: 'categorical' }, rank: { column: 'rank', type: 'numeric' } },
+            plot: [{ id: 'labels', type: 'svg:text', select: 'last', categories: ['c'], props: { x: 0, y: 0, text: '@label', 'data-rank': '@rank' } }],
+        }));
+        try {
+            const { createApp, h, ref } = await import('vue');
+            const globals = ref({ lang: 'en' });
+            const el = document.body.appendChild(document.createElement('div'));
+            createApp({ render: () => h(GenVis, { defFile: '/tests/tmp-lookup/def.json', data: lineData, globals: globals.value }) }).mount(el);
+            await (await import('./dom.js')).rendered(el);
+            await nextTick();
+            const texts = () => [...el.querySelectorAll('g.vis-plot[data-plot="labels"] text')].map(t => [t.textContent, t.getAttribute('data-rank')]);
+            // 2023: Wien 4, Tirol 2
+            expect(texts()).toEqual([['Vienna', '1'], ['Tyrol', '2']]);
+            globals.value = { lang: 'de' };
+            await nextTick();
+            await nextTick();
+            expect(texts()).toEqual([['Wien', '1'], ['Tirol', '2']]);
+            expect(errors).toEqual([]);
+        } finally {
+            rmSync(`${root}/tests/tmp-lookup`, { recursive: true });
+        }
+    });
+});

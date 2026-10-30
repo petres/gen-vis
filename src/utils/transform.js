@@ -10,7 +10,7 @@ import { lazy } from "@/utils/lazy";
  */
 
 // the types of the transforms, e.g. for validateDef
-const transformNames = ['year', 'align', 'index', 'share', 'rolling', 'cumulative'];
+const transformNames = ['year', 'align', 'index', 'share', 'rolling', 'cumulative', 'calc', 'rank', 'lookup'];
 
 const list = transforms => [transforms ?? []].flat();
 
@@ -21,12 +21,12 @@ const loadTransforms = async () => types ??= await lazy.transform();
  * The columns of the transforms, see applyTransforms of utils/transform-types.js,
  * without transforms none, otherwise they are loaded, see loadTransforms.
  */
-const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null) => {
+const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null) => {
     if (list(transforms).length == 0)
         return Object.assign(new Map(), { steps: [], changed: new Set() });
     if (!types)
         throw new Error('The transforms are not loaded, see loadTransforms');
-    return types.applyTransforms(rows, transforms, globals, utc, before);
+    return types.applyTransforms(rows, transforms, globals, utc, before, files);
 };
 
 // the names of the globals of the transforms, e.g. `base` of "{base}"
@@ -44,7 +44,7 @@ const transformColumns = transforms => {
     const own = new Set();
     const used = new Set();
     list(transforms).forEach(t => {
-        [t.column, ...[t.by ?? []].flat(), t.order, ...Object.keys(t.base ?? {})]
+        [t.column, ...[t.columns ?? []].flat(), ...[t.by ?? []].flat(), t.order, ...Object.keys(t.base ?? {})]
             .filter(c => typeof c == 'string' && !own.has(c)).forEach(c => used.add(c));
         own.add(t.as ?? t.column);
     });

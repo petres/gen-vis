@@ -116,6 +116,30 @@ describe('transforms', () => {
         expect(usedColumns({ mapping: { y: { column: 'index' } }, transform: transforms })).toEqual(['index', 'date', 'value', 'type']);
     });
 
+    test('calc, the values of columns combined', () => {
+        const wide = [{ v: '50', base: '200' }, { v: '3', base: '0' }, { v: '', base: '1' }];
+        expect(applyTransforms(wide, { type: 'calc', op: 'divide', columns: ['v', 'base'], scale: 100, as: 'rel' }).get('rel')).toEqual([25, null, null]);
+        expect(applyTransforms(wide, { type: 'calc', op: 'subtract', columns: ['base', 'v'], as: 'd' }).get('d')).toEqual([150, -3, null]);
+        expect(applyTransforms(wide, { type: 'calc', op: 'add', columns: ['v', 'base', 'v'], as: 's' }).get('s')).toEqual([300, 6, null]);
+        expect(() => applyTransforms(wide, { type: 'calc', op: 'power', columns: ['v'], as: 'p' })).toThrow("calc: unknown op 'power'");
+    });
+
+    test('rank, the same values have the same rank', () => {
+        const values = [{ g: 'a', v: '3' }, { g: 'a', v: '1' }, { g: 'a', v: '3' }, { g: 'a', v: '' }, { g: 'b', v: '7' }, { g: 'a', v: '0' }];
+        expect(applyTransforms(values, { type: 'rank', column: 'v', by: 'g', as: 'r' }).get('r')).toEqual([3, 2, 3, null, 1, 1]);
+        expect(applyTransforms(values, { type: 'rank', column: 'v', by: 'g', descending: true, as: 'r' }).get('r')).toEqual([1, 3, 1, null, 1, 4]);
+    });
+
+    test('lookup, the value of the row of a file of the key', () => {
+        const countries = [{ code: 'AT', name_de: 'Österreich', name_en: 'Austria' }, { code: 'SE', name_de: 'Schweden', name_en: 'Sweden' }];
+        const files = new Map([['countries.json', countries]]);
+        const data = [{ c: 'SE' }, { c: 'AT' }, { c: 'XX' }, { c: '' }];
+        const lookup = { type: 'lookup', column: 'c', data: 'countries.json', key: 'code', value: 'name_{lang}', as: 'name' };
+        expect(applyTransforms(data, lookup, { lang: 'en' }, new Set(), null, files).get('name')).toEqual(['Sweden', 'Austria', null, null]);
+        expect(applyTransforms(data, lookup, { lang: 'de' }, new Set(), null, files).get('name')).toEqual(['Schweden', 'Österreich', null, null]);
+        expect(() => applyTransforms(data, lookup, { lang: 'de' })).toThrow("lookup: the rows of 'countries.json' are not loaded");
+    });
+
     test('the checks of validateDef and the schema', () => {
         const def = {
             mapping: { y: { column: 'index', type: 'numeric' } },
@@ -126,7 +150,7 @@ describe('transforms', () => {
             "transform[0]: unknown global 'base' in the template",
             "transform[1].size: the number of the rows of the window is needed, e.g. 7",
             "transform[1].align: expected 'end' or 'center'",
-            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'share', 'rolling', 'cumulative'",
+            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'share', 'rolling', 'cumulative', 'calc', 'rank', 'lookup'",
             "transform[2].column: the column of the values is needed",
         ]);
         expect(schema.definitions.transform.properties.type.enum).toEqual(Object.keys(transformTypes));

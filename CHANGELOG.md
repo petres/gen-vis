@@ -52,6 +52,9 @@ New:
   an ellipsis or wraps them (`"text-overflow": "wrap"`); the props of the
   labels of cartesian axes (`axis.labels`), e.g. bold ones of headers or
   other texts of another mapping
+- transforms: `calc` (columns added, subtracted, multiplied or divided),
+  `rank` (in groups) and `lookup` (a value of a file of rows by a key, e.g.
+  names in a language)
 
 ## 2.1.0
 
