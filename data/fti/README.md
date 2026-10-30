@@ -10,7 +10,9 @@ with gen-vis, the data of its files (`/data/hierarchy.json`, `labels.json`,
   column `group` (`groups` of the band scale), the black line at 0 is a line
   per group (`@y:group:start` to `@y:group:end`), the headers are bold
   (`axis.labels`), long labels are cut (`max-width`), the headers of D.2 have
-  no input or output (`none`, without an entry in the legend)
+  no input or output (`none`, without an entry in the legend), a row is 23
+  pixels high (`step` of the scale), a toggle of the legend makes the chart
+  less high, the bars keep their size
 - `d2-series.json`: the aggregated indicator over time, the circle of the
   last year, hidden while another year is highlighted (`others-visibility`),
   the domain includes 100 (`include`)

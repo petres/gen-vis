@@ -369,6 +369,7 @@
                     "description": "By default the width or height of the plot, e.g. colors, references to the sizes of the coordinate system, e.g. \"@radius\"."
                 },
                 "padding": { "type": "number", "description": "For categorical scales." },
+                "step": { "$ref": "#/definitions/number", "description": "The pixels of a category of a vertical band or point scale, the height of the plot is the one of its categories (instead of options.height), e.g. the rows of horizontal bars keep their size if some are hidden." },
                 "order": {
                     "description": "The order of the categories of the data of a band, point or ordinal scale: of the rows (default), ascending, descending or by the value of a mapping of their first row, e.g. bars by their length.",
                     "anyOf": [

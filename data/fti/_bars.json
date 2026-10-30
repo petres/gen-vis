@@ -25,7 +25,7 @@
         "y": {
             "column": "label",
             "type": "categorical",
-            "scale": { "type": "band", "orientation": "vertical", "padding": 0.45, "range": [0, "@height"], "groups": { "by": "group", "padding": 1 } },
+            "scale": { "type": "band", "orientation": "vertical", "padding": 0.45, "step": 23, "range": [0, "@height"], "groups": { "by": "group", "padding": 1 } },
             "axis": {
                 "position": "left", "padding": 19,
                 "labels": { "categories": ["level"], "props": {

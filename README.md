@@ -622,6 +622,11 @@ parent or of a patch, e.g. `"hover": null`.
   `[0, 100]`, around `center` it is symmetric, e.g. `0` of changes, e.g.
   `"include": 0, "domainRel": [-0.4, 0.4]` is the domain of the values and 0
   extended by 40% of its size on both sides.
+  `step` of a vertical `band` or `point` scale are the pixels of a
+  category (also a prop of the globals and `totalWidth`), the height of the
+  plot is the one of its categories (and the space of their `groups`), not
+  `options.height`, e.g. the rows of horizontal bars keep their size if
+  some of them are hidden, the plot is less high.
   `order` of a `band`, `point` or `ordinal` scale is the order of
   its categories taken from the data: the one of the rows (by default),
   `ascending`, `descending` or by the value of a mapping of their first row,

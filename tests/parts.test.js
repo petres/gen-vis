@@ -703,3 +703,22 @@ describe('default colors', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the step of a band scale', () => {
+    test('the height of the plot follows the categories, the bars keep their size', async () => {
+        const def = lineDef();
+        def.options.margins = { top: 10, right: 10, bottom: 20, left: 40 };
+        def.mapping.x = { column: 'value', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, null] } };
+        def.mapping.y = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'vertical', padding: 0, step: 20 } };
+        def.plot = { type: 'cartesian:bar', categories: ['c'], props: { x1: '@x:scaled', y: '@y:scaled' } };
+        const el = await mount(GenVis, { def, data: lineData });
+        // 4 years of 20 pixels, the margins
+        const svg = el.querySelector('svg.vis-svg');
+        expect(svg.getAttribute('height')).toBe('110');
+        const data = lineData.split('\n').filter(l => !l.startsWith('2023')).join('\n');
+        const less = await mount(GenVis, { def, data });
+        expect(less.querySelector('svg.vis-svg').getAttribute('height')).toBe('90');
+        expect(less.querySelector('g.vis-plot rect').getAttribute('height')).toBe('20');
+        expect(errors).toEqual([]);
+    });
+});

@@ -68,6 +68,33 @@ const scaleSizes = scales => Object.fromEntries(Object.entries(scales).filter(([
     .flatMap(([n, s]) => [[`${n}:bandwidth`, s.bandwidth?.() ?? 0], [`${n}:step`, s.step()]]));
 
 /**
+ * The inner height of the facets of a vertical band or point scale with a
+ * `step`, the pixels of a category, e.g. of a row of horizontal bars, so
+ * the bars keep their size if categories are hidden and the plot is less
+ * high, of the most categories of the rows of the facets (`rowsOf`), also
+ * with the space of the groups of the scale, undefined without one.
+ */
+const stepHeight = (store, rowsOf, scope) => {
+    const mapping = store.def.mapping;
+    const name = Object.keys(mapping).find(n => mapping[n].scale?.step !== undefined && mapping[n].scale.orientation == 'vertical'
+        && ['band', 'point'].includes(mapping[n].scale.type));
+    if (name === undefined)
+        return undefined;
+    const m = mapping[name];
+    const step = Number(evaluate(m.scale.step, scope));
+    if (!(step > 0))
+        return undefined;
+    // the steps of the categories of a range of the length 1, e.g. the
+    // categories, their padding and the space between groups
+    const unit = { ...m, scale: { ...m.scale, range: [0, 1], inset: undefined } };
+    const steps = Math.max(0, ...rowsOf.map(rows => {
+        const s = makeScale(name, unit, rows, { scope });
+        return s.domain().length > 0 ? 1/s.step() : 0;
+    }));
+    return Math.round(steps*step);
+};
+
+/**
  * The view of the store in the `width` of the visualisation, the globals
  * and the width are the references of the definition, e.g. of the height.
  */
@@ -96,7 +123,10 @@ const layout = (store, width) => {
     // the margins can be props, e.g. steps of the width of the visualisation
     const margins = Object.fromEntries(Object.entries(def.options.margins).map(([k, v]) => [k, Number(evaluate(v, scope)) || 0]));
     const cols = faceted ? evaluate(def.facets.cols, scope) : 1;
-    const size = { width: width/cols, height: evaluate(def.options.height, scope) };
+    // the height of the categories of a scale with a `step`, e.g. of the rows
+    // of horizontal bars, the height of the definition otherwise
+    const stepped = stepHeight(store, faceted ? entries.map(f => f.rows) : [rows], scope);
+    const size = { width: width/cols, height: stepped === undefined ? evaluate(def.options.height, scope) : stepped + margins.top + margins.bottom };
     size.innerWidth = size.width - (margins.left + margins.right);
     size.innerHeight = size.height - (margins.top + margins.bottom);
     const facetScope = { ...scope, ...size };

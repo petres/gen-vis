@@ -235,6 +235,9 @@ const validateDef = def => {
             checkProp(m.scale.center, `${path}.scale.center`, warn, names.facet);
             if ((m.scale.include !== undefined || m.scale.center !== undefined) && !['numeric', 'date'].includes(m.type))
                 warn(`${path}.scale`, `'include' and 'center' are values of numeric or date mappings`);
+            if (m.scale.step !== undefined && (!['band', 'point'].includes(type) || m.scale.orientation != 'vertical'))
+                warn(`${path}.scale.step`, `the pixels of a category of a vertical band or point scale`);
+            checkProp(m.scale.step, `${path}.scale.step`, warn, names.global);
             const order = m.scale.order;
             if (order !== undefined && !['ascending', 'descending'].includes(order) && !(isObject(order) && typeof order.by == 'string'))
                 warn(`${path}.scale.order`, `expected 'ascending', 'descending' or the mapping of the values, e.g. { "by": "x", "descending": true }`);

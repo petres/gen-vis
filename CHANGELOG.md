@@ -53,6 +53,9 @@ New:
   middle of a stacked value (`@y:mid`, `@y:mid:scaled`), e.g. of labels
   in the stacks; the fixed ticks of an axis (`axis.values`) are a prop, e.g.
   fewer on a phone
+- `step` of a vertical band or point scale: the pixels of a category, the
+  height of the plot follows the number of categories, e.g. the bars keep
+  their size if some are hidden
 - the order of the categories of the data of a scale (`scale.order`),
   ascending, descending or by the value of a mapping, e.g. sorted bars
 - groups of the categories of band and point scales (`scale.groups`), with
