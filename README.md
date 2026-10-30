@@ -277,7 +277,7 @@ d3, `tick` and `domain`:
 | form elements | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`), the `id` of a form element and of its entries as `data-id`, e.g. `.vis-form-element[data-id="scale"]` |
 | legends | `vis-legends`, `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, the mapping as `data-dim`, an entry with `data-key` and `data-visible`), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
 | facets | `vis-facet` (a facet), `vis-facet-title`, `vis-svg` |
-| plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base), the keys of the features of maps as `data-geo-key` |
+| plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base), `vis-mesh` (geo:mesh), the keys of the features of maps as `data-geo-key` |
 | axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`), `vis-axis-title`, `vis-grid` |
 | annotations | `vis-annotations` (the plot), `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or `vis-circle`, `vis-annotation-label`, `vis-annotation-labels` |
 | hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-hover-row` of a template, `vis-nearest`, the cells of the values `vis-value`, the mapping of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`), `vis-hover-marker`, `vis-events` |
@@ -855,7 +855,18 @@ mapping (`join`) whose values are the keys of the features:
   are fixed), `geo:region` (the feature of every row), `geo:circle` and
   `geo:text` (an element per row at the center of its feature or at the `lon`
   and `lat` of its props, e.g. proportional circles with a `sqrt` scale of
-  `r`).
+  `r`) and `geo:mesh` (the borders of an object of TopoJSON as one path,
+  every border once, the props are fixed).
+- `geo:mesh` draws the borders of `object`, by default the one of the
+  features (without the ones left out by `include` and `exclude`), e.g. the
+  states above their districts, `borders` are all of them (`all`, default),
+  the ones between two features (`inner`) or the outline (`outer`). The
+  objects share the arcs of the topology, so the borders are the same lines:
+
+  ```json
+  { "type": "geo:region", "categories": ["district"], "props": { "fill": "@value:scaled", "stroke": "white", "stroke-width": 0.5 } },
+  { "type": "geo:mesh", "object": "states", "borders": "inner", "props": { "stroke": "white", "stroke-width": 1.5 } }
+  ```
 - The hover shows the region under the mouse: its name (the `name` of the
   props of the `join` mapping, of the feature or the key) and the rows of it
   with the values of the first numeric mapping with a `hover`, the region is

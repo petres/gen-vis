@@ -212,15 +212,26 @@ const load = async ({ def = null, defUrl = null, data = null, state = null }) =>
             const geoUrl = resolveUrl(json, url);
             json = parseDef(await fetchText(geoUrl), `'${geoUrl}'`, 'geometry');
         }
-        const { geoFeatures, geoKey } = geoModule;
+        const { geoFeatures, geoKey, geoMesh } = geoModule;
         const key = geoKey(defOrg.geo.key ?? 'id');
         // only the features of `include`, without the ones of `exclude`, they are not drawn at all
         const include = defOrg.geo.include && new Set(defOrg.geo.include.map(String));
         const exclude = new Set((defOrg.geo.exclude ?? []).map(String));
-        const features = geoFeatures(json, defOrg.geo.object)
-            .filter(f => (!include || include.has(key(f))) && !exclude.has(key(f)));
+        const keep = f => (!include || include.has(key(f))) && !exclude.has(key(f));
+        const features = geoFeatures(json, defOrg.geo.object).filter(keep);
+        // the borders of an object of TopoJSON by the plots of geo:mesh, of the
+        // object of the features also without the ones left out
+        const objectName = object => object ?? defOrg.geo.object ?? Object.keys(json.objects ?? {})[0];
+        const meshes = new Map();
+        const mesh = (object, borders = 'all') => {
+            const id = JSON.stringify([objectName(object), borders]);
+            if (!meshes.has(id))
+                meshes.set(id, geoMesh(json, objectName(object), borders,
+                    objectName(object) == objectName(undefined) ? keep : undefined));
+            return meshes.get(id);
+        };
         // the projections of the facets, see coords/geo.js
-        geo = markRaw({ features, key, byKey: new Map(features.map(f => [key(f), f])), projections: new Map() });
+        geo = markRaw({ features, key, byKey: new Map(features.map(f => [key(f), f])), mesh, projections: new Map() });
     }
 
     return {

@@ -53,4 +53,23 @@ export default {
 
     'geo:circle': positioned('circle', 'cx', 'cy'),
     'geo:text': positioned('text', 'x', 'y'),
+
+    // the borders of an object of TopoJSON (`object`, the one of the geometry
+    // by default) as one path, every border once, e.g. the ones of the states
+    // above the districts, `borders` all (default), the ones between features
+    // (inner) or the outline (outer), the props are fixed as of geo:base
+    'geo:mesh': {
+        coords: ['geo'],
+        update: true,
+        render(groups, parent, plot, ctx) {
+            const props = evaluate(plot.props, ctx.scope);
+            parent.classed("vis-mesh", true)
+                .selectAll("path")
+                .data([ctx.store.geo.mesh(plot.object, plot.borders)])
+                .join("path")
+                .attr("d", ctx.path)
+                .attr("fill", "none")
+                .each(function() { setProps.call(this, props) });
+        },
+    },
 };

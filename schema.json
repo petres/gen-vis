@@ -525,8 +525,8 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "enum": ["svg:circle", "svg:line", "svg:rect", "svg:text", "cartesian:line", "cartesian:area", "cartesian:bar", "polar:line", "polar:area", "polar:arc", "polar:circle", "polar:text", "geo:base", "geo:region", "geo:circle", "geo:text", "annotation:band", "annotation:line", "annotation:text", "annotation:circle"],
-                    "description": "The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations."
+                    "enum": ["svg:circle", "svg:line", "svg:rect", "svg:text", "cartesian:line", "cartesian:area", "cartesian:bar", "polar:line", "polar:area", "polar:arc", "polar:circle", "polar:text", "geo:base", "geo:region", "geo:circle", "geo:text", "geo:mesh", "annotation:band", "annotation:line", "annotation:text", "annotation:circle"],
+                    "description": "The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations."
                 },
                 "id": { "type": "string", "description": "The class and the data-plot of the group of the plot, plot-<index> by default, the plots of a parent are merged by their ids." },
                 "data": {
@@ -544,6 +544,8 @@
                         { "type": "object", "properties": { "min": { "type": "string" }, "max": { "type": "string" } }, "minProperties": 1, "maxProperties": 1, "additionalProperties": false }
                     ]
                 },
+                "object": { "type": "string", "description": "geo:mesh: the object of the TopoJSON of the borders, the one of the geometry by default, e.g. the states above the districts." },
+                "borders": { "enum": ["all", "inner", "outer"], "default": "all", "description": "geo:mesh: all borders, the ones between two features (inner) or the outline (outer)." },
                 "dodge": { "type": "number", "description": "svg:text: the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines." },
                 "layer": { "enum": ["below", "above"], "description": "below: below the axes and grid lines, above: above the other plots, between them by default." },
                 "facet": { "description": "The facets of the plot, a key or a list of them, all by default." },

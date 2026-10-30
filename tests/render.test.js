@@ -1030,6 +1030,59 @@ describe('maps', () => {
         expect(el.querySelector('.vis-hover .vis-hover-title').textContent).toBe('b');
     });
 
+    test('the borders of an object of TopoJSON, all, inner or outer, every border once', async () => {
+        // the squares A, B and C as TopoJSON, the groups AB and C of them
+        const topology = {
+            type: 'Topology',
+            objects: {
+                regions: { type: 'GeometryCollection', geometries: [
+                    { type: 'Polygon', id: 'A', arcs: [[0, 2]] },
+                    { type: 'Polygon', id: 'B', arcs: [[3, -2, 4, 0]] },
+                    { type: 'Polygon', id: 'C', arcs: [[1, 5]] }] },
+                groups: { type: 'GeometryCollection', geometries: [
+                    { type: 'Polygon', id: 'AB', arcs: [[2, -5, 1, -4]] },
+                    { type: 'Polygon', id: 'C', arcs: [[1, 5]] }] },
+            },
+            arcs: [
+                [[1, 0], [1, 1]], [[2, 0], [2, 1]], [[1, 1], [0, 1], [0, 0], [1, 0]],
+                [[1, 1], [2, 1]], [[2, 0], [1, 0]], [[2, 1], [3, 1], [3, 0], [2, 0]],
+            ],
+        };
+        const def = mapDef();
+        def.geo = { data: topology, join: 'region' };
+        def.plot = [
+            ...def.plot,
+            { type: 'geo:mesh', props: { stroke: 'black' } },
+            { type: 'geo:mesh', borders: 'inner', props: { stroke: 'black' } },
+            { type: 'geo:mesh', object: 'groups', borders: 'inner', props: { stroke: 'black', 'stroke-width': 2 } },
+            { type: 'geo:mesh', object: 'groups', borders: 'outer', props: { stroke: 'black' } },
+        ];
+        let el = await mount(GenVis, { def, data: mapData });
+        const mesh = i => el.querySelectorAll(`g.vis-plot.plot-${i} path`);
+        const lines = i => mesh(i)[0].getAttribute('d').match(/M/g).length;
+        // the features of the TopoJSON
+        expect(el.querySelectorAll('g.vis-plot.plot-0 path')).toHaveLength(3);
+        // one path, not filled
+        expect(mesh(3)).toHaveLength(1);
+        expect(mesh(3)[0].getAttribute('fill')).toBe('none');
+        expect(mesh(3)[0].closest('g').classList.contains('vis-mesh')).toBe(true);
+        // the borders between A and B and between B and C, of the groups only the one of AB and C
+        expect(lines(4)).toBe(2);
+        expect(lines(5)).toBe(1);
+        expect(mesh(5)[0].getAttribute('stroke-width')).toBe('2');
+        // the outline of the groups
+        expect(lines(6)).toBeGreaterThan(0);
+        expect(mesh(6)[0].getAttribute('d')).not.toBe(mesh(5)[0].getAttribute('d'));
+        expect(errors).toEqual([]);
+
+        // without the features left out of the object of the geometry, not of others
+        def.geo.exclude = ['C'];
+        el = await mount(GenVis, { def, data: mapData });
+        expect(lines(4)).toBe(1);
+        expect(lines(5)).toBe(1);
+        expect(errors).toEqual([]);
+    });
+
     test('an entry of the missing values beside the colors', async () => {
         const def = mapDef();
         expect((await mount(GenVis, { def, data: mapData })).querySelector('.vis-color-legend .vis-legend-missing')).toBeNull();

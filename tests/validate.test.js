@@ -346,6 +346,19 @@ describe('validateDef', () => {
             "annotations[0]: an annotation of a map needs 'lon' and 'lat'",
             "mapping.x.scale.orientation: the coordinate system 'geo' has no orientations, e.g. a scale of colors has none",
         ].sort());
+           // the object and the borders of geo:mesh
+        def.annotations = [];
+        def.plot = [
+            { type: 'geo:mesh', object: 'states', borders: 'inner', props: {} },
+            { type: 'geo:mesh', object: 1, borders: 'between', props: {} },
+            { type: 'geo:region', object: 'states', borders: 'all', props: {} },
+        ];
+        expect(validateDef(def).filter(w => w.startsWith('plot'))).toEqual([
+            "plot[1].object: the object of the TopoJSON of a plot of 'geo:mesh', a string",
+            "plot[1].borders: the borders of a plot of 'geo:mesh', one of 'all', 'inner', 'outer'",
+            "plot[2].object: the object of the TopoJSON of a plot of 'geo:mesh', a string",
+            "plot[2].borders: the borders of a plot of 'geo:mesh', one of 'all', 'inner', 'outer'",
+        ]);
     });
 
     test('column templates need the globals', () => {

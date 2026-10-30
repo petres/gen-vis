@@ -254,6 +254,10 @@ const validateDef = def => {
         }
         if (p.dodge !== undefined && (typeof p.dodge != 'number' || p.type != 'svg:text'))
             warn(`${path}.dodge`, `the distance of the texts of a plot of 'svg:text', a number`);
+        if (p.object !== undefined && (typeof p.object != 'string' || p.type != 'geo:mesh'))
+            warn(`${path}.object`, `the object of the TopoJSON of a plot of 'geo:mesh', a string`);
+        if (p.borders !== undefined && (!['all', 'inner', 'outer'].includes(p.borders) || p.type != 'geo:mesh'))
+            warn(`${path}.borders`, `the borders of a plot of 'geo:mesh', one of 'all', 'inner', 'outer'`);
         if (p.layer !== undefined && !['below', 'above'].includes(p.layer))
             warn(`${path}.layer`, `unknown layer '${p.layer}', expected one of 'below', 'above'`);
         // the annotations of the coordinate system, e.g. no bands of maps
