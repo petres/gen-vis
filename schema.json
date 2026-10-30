@@ -745,12 +745,12 @@
                         "properties": {
                             "options": { "$ref": "#/properties/options" },
                             "mapping": { "$ref": "#/properties/mapping" },
-                            "plot": { "$ref": "#/properties/plot" },
-                            "annotations": { "$ref": "#/properties/annotations" },
-                            "filter": { "$ref": "#/properties/filter" },
-                            "facets": { "$ref": "#/properties/facets" },
-                            "geo": { "$ref": "#/properties/geo" },
-                            "transform": { "$ref": "#/properties/transform" }
+                            "plot": { "anyOf": [{ "$ref": "#/properties/plot" }, { "type": "null" }] },
+                            "annotations": { "anyOf": [{ "$ref": "#/properties/annotations" }, { "type": "null" }] },
+                            "filter": { "anyOf": [{ "$ref": "#/properties/filter" }, { "type": "null" }] },
+                            "facets": { "anyOf": [{ "$ref": "#/properties/facets" }, { "type": "null" }] },
+                            "geo": { "anyOf": [{ "$ref": "#/properties/geo" }, { "type": "null" }] },
+                            "transform": { "anyOf": [{ "$ref": "#/properties/transform" }, { "type": "null" }] }
                         }
                     }
                 }

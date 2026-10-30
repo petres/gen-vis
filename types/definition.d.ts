@@ -181,21 +181,12 @@ export type FormElementValues = {
     patch?: {
         options?: Options;
         mapping?: Mapping;
-        /**
-         * A plot or a list of plots, drawn in order.
-         */
-        plot?: Plot | Plot[];
-        /**
-         * An annotation or a list of them, bands, lines, texts and circles at values of the mappings, e.g. { "type": "band", "x": ["2025-07-01", null], "label": "Schätzung" }.
-         */
-        annotations?: Annotation | Annotation[];
-        filter?: Filter;
-        facets?: Facets;
-        geo?: Geo;
-        /**
-         * Columns computed of the data, e.g. an index of a base year, in their order, see the readme.
-         */
-        transform?: Transform | Transform[];
+        plot?: (Plot | Plot[]) | null;
+        annotations?: (Annotation | Annotation[]) | null;
+        filter?: Filter | null;
+        facets?: Facets | null;
+        geo?: Geo | null;
+        transform?: (Transform | Transform[]) | null;
     };
 }[];
 
