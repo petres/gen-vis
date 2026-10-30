@@ -8,6 +8,7 @@ import plotTypes from "@/plots/polar";
 import { bandCenter } from "@/utils/scales";
 import { tickValues, tickFormat, tickCount } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
+import { childrenOf, directOf, elementOf } from "@/utils/draw";
 
 const tau = 2*Math.PI;
 
@@ -58,122 +59,115 @@ const angleTicks = (scale, values) => values.filter((v, i) =>
 const anchor = a => Math.sin(a) > 0.01 ? "start" : (Math.sin(a) < -0.01 ? "end" : "middle");
 const baseline = a => Math.cos(a) > 0.5 ? "auto" : (Math.cos(a) < -0.5 ? "hanging" : "middle");
 
-// the categories or ticks around the circle, spokes as grid lines
-const angularAxis = (ctx, g, s, values, format, axis) => {
+// the categories or ticks around the circle, spokes as grid lines, the
+// parts of the axes (see `axes` of coords/index.js), drawn anew
+const angularAxis = (ctx, n, s, values, format, axis) => {
     const [r0, r1] = radiusRange(ctx);
     const angles = angleTicks(s, values);
+    const parts = [];
 
     if (axis.grid)
-        ctx.inner.insert("g", () => g.node())
-            .attr("class", "vis-grid")
-            .selectAll("line")
-            .data(angles)
-            .join("line")
-            .each(function(v) {
-                const [x1, y1] = pointRadial(angleOf(s, v), r0);
-                const [x2, y2] = pointRadial(angleOf(s, v), r1);
-                d3.select(this).attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2);
-            });
-
-    g.append("circle")
-        .attr("class", "domain")
-        .attr("r", r1)
-        .attr("fill", "none")
-        .attr("stroke", "currentColor");
-
-    const ticks = g.selectAll("g.tick")
-        .data(angles)
-        .join("g")
-        .attr("class", "tick");
-    ticks.append("line")
-        .attr("stroke", "currentColor")
-        .each(function(v) {
-            const [x1, y1] = pointRadial(angleOf(s, v), r1);
-            const [x2, y2] = pointRadial(angleOf(s, v), r1 + 6);
-            d3.select(this).attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2);
+        parts.push({
+            key: `grid ${n}`,
+            fresh: true,
+            element: "g",
+            attrs: { class: "vis-grid" },
+            layer: {
+                items: angles.map(v => {
+                    const [x1, y1] = pointRadial(angleOf(s, v), r0);
+                    const [x2, y2] = pointRadial(angleOf(s, v), r1);
+                    return { [elementOf]: "line", [directOf]: { x1, y1, x2, y2 } };
+                }),
+            },
         });
-    ticks.append("text")
-        .attr("fill", "currentColor")
-        .each(function(v) {
-            const a = angleOf(s, v);
-            const [x, y] = pointRadial(a, r1 + 6 + axis.padding);
-            d3.select(this).attr("x", x).attr("y", y)
-                .attr("text-anchor", anchor(a))
-                .attr("dominant-baseline", baseline(a));
-        })
-        .text(format);
+
+    const domain = { [elementOf]: "circle", [directOf]: { class: "domain", r: r1, fill: "none", stroke: "currentColor" } };
+    const ticks = angles.map(v => {
+        const a = angleOf(s, v);
+        const [x1, y1] = pointRadial(a, r1);
+        const [x2, y2] = pointRadial(a, r1 + 6);
+        const [x, y] = pointRadial(a, r1 + 6 + axis.padding);
+        return {
+            [elementOf]: "g",
+            [directOf]: { class: "tick" },
+            [childrenOf]: [
+                { [elementOf]: "line", [directOf]: { stroke: "currentColor", x1, y1, x2, y2 } },
+                { [elementOf]: "text", [directOf]: { fill: "currentColor", x, y, "text-anchor": anchor(a), "dominant-baseline": baseline(a) }, text: format(v) },
+            ],
+        };
+    });
+    return [parts, [domain, ...ticks]];
 };
 
 // the values along a line from the center, circles (or polygons through the
-// ticks of the angle) as grid lines, `angle` of the axis in degrees
-const radialAxis = (ctx, g, s, values, format, axis) => {
+// ticks of the angle) as grid lines, `angle` of the axis in degrees, the
+// parts of the axes, drawn anew
+const radialAxis = (ctx, n, s, values, format, axis) => {
     const a = (axis.angle ?? 0)/180*Math.PI;
     const [r0, r1] = d3.extent(s.range());
+    const parts = [];
 
     if (axis.grid) {
-        const grid = ctx.inner.insert("g", () => g.node())
-            .attr("class", "vis-grid")
-            .attr("fill", "none");
         const h = nameOf(ctx, 'angular');
         const angle = h && ctx.scales[h];
+        let items;
         if (axis.gridShape == "polygon" && angle) {
             const hAxis = ctx.store.mapping(h).axis;
             const arc = Math.abs(angle.range()[1] - angle.range()[0])*radiusRange(ctx)[1];
             const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, tickCount(hAxis, ctx.scope, arc), ctx.store.mapping(h), ctx.scope) : angle.domain());
-            grid.selectAll("path")
-                .data(values)
-                .join("path")
-                .attr("d", v => lineRadial().curve(d3.curveLinearClosed)
-                    .angle(w => angleOf(angle, w))
-                    .radius(() => s(v))(angles));
+            items = values.map(v => ({ [elementOf]: "path", [directOf]: { d: lineRadial().curve(d3.curveLinearClosed)
+                .angle(w => angleOf(angle, w))
+                .radius(() => s(v))(angles) } }));
         } else {
-            grid.selectAll("circle")
-                .data(values)
-                .join("circle")
-                .attr("r", v => s(v));
+            items = values.map(v => ({ [elementOf]: "circle", [directOf]: { r: s(v) } }));
         }
+        parts.push({ key: `grid ${n}`, fresh: true, element: "g", attrs: { class: "vis-grid", fill: "none" }, layer: { items } });
     }
 
     const [x0, y0] = pointRadial(a, r0);
     const [x1, y1] = pointRadial(a, r1);
-    g.append("line")
-        .attr("class", "domain")
-        .attr("stroke", "currentColor")
-        .attr("x1", x0).attr("y1", y0).attr("x2", x1).attr("y2", y1);
+    const domain = { [elementOf]: "line", [directOf]: { class: "domain", stroke: "currentColor", x1: x0, y1: y0, x2: x1, y2: y1 } };
 
     // the labels on the left of the line, below it if it is horizontal
-    const ticks = g.selectAll("g.tick")
-        .data(values)
-        .join("g")
-        .attr("class", "tick");
-    ticks.append("text")
-        .attr("fill", "currentColor")
-        .attr("text-anchor", Math.abs(Math.cos(a)) > 0.5 ? "end" : "middle")
-        .attr("dominant-baseline", Math.abs(Math.cos(a)) > 0.5 ? "middle" : "hanging")
-        .each(function(v) {
-            const [x, y] = pointRadial(a, s(v));
-            const horizontal = Math.abs(Math.cos(a)) <= 0.5;
-            d3.select(this)
-                .attr("x", x - (horizontal ? 0 : axis.padding))
-                .attr("y", y + (horizontal ? axis.padding : 0));
-        })
-        .text(format);
+    const horizontal = Math.abs(Math.cos(a)) <= 0.5;
+    const ticks = values.map(v => {
+        const [x, y] = pointRadial(a, s(v));
+        return {
+            [elementOf]: "g",
+            [directOf]: { class: "tick" },
+            [childrenOf]: [{
+                [elementOf]: "text",
+                [directOf]: {
+                    fill: "currentColor",
+                    "text-anchor": horizontal ? "middle" : "end",
+                    "dominant-baseline": horizontal ? "hanging" : "middle",
+                    x: x - (horizontal ? 0 : axis.padding),
+                    y: y + (horizontal ? axis.padding : 0),
+                },
+                text: format(v),
+            }],
+        };
+    });
 
+    const after = [];
     if (axis.title) {
         const [x, y] = pointRadial(a, r1 + (axis.title.offset ?? 16));
-        ctx.inner.append("text")
-            .attr("class", "vis-axis-title")
-            .attr("x", x)
-            .attr("y", y)
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "middle")
-            .text(ctx.store.text(axis.title.name));
+        after.push({
+            key: `axis title ${n}`,
+            fresh: true,
+            element: "text",
+            attrs: { class: "vis-axis-title", x, y, "text-anchor": "middle", "dominant-baseline": "middle" },
+            text: ctx.store.text(axis.title.name),
+        });
     }
+    return [parts, [domain, ...ticks], after];
 };
 
+// the parts of the axes: the grid lines, the axis, its domain and ticks, and
+// of radial axes the title, see `axes` of coords/index.js
 const axes = ctx => {
     const { store } = ctx;
-    store.mappingNamesWithKey('axis').forEach(n => {
+    return store.mappingNamesWithKey('axis').flatMap(n => {
         const m = store.mapping(n);
         const i = m.axis;
         const s = ctx.scales[n];
@@ -181,14 +175,19 @@ const axes = ctx => {
         const span = Math.abs(s.range()[1] - s.range()[0]);
         const ticks = tickCount(i, ctx.scope, i.position == 'angular' ? span*radiusRange(ctx)[1] : span);
         const format = tickFormat(store, n, s, ticks) ?? (v => v);
-
-        const g = ctx.inner.append("g")
-            .attr("class", `vis-axis vis-axis-${i.position}`)
-            .attr("data-mapping", n)
-            .attr("font-size", 10)
-            .attr("font-family", "sans-serif");
         const draw = { angular: angularAxis, radial: radialAxis }[i.position];
-        draw(ctx, g, s, tickValues(i, s, ticks, m, ctx.scope), format, i);
+        const [before, items, after = []] = draw(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope), format, i);
+        return [
+            ...before,
+            {
+                key: `axis ${n}`,
+                fresh: true,
+                element: "g",
+                attrs: { class: `vis-axis vis-axis-${i.position}`, "data-mapping": n, "font-size": 10, "font-family": "sans-serif" },
+                layer: { items },
+            },
+            ...after,
+        ];
     });
 };
 

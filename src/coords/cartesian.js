@@ -1,6 +1,6 @@
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { fitText, motion, setProps } from "@/utils/draw";
+import { keyOf } from "@/utils/draw";
 import { evaluate } from "@/utils/props";
 import { tickValues, tickFormat, tickCount } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
@@ -8,19 +8,26 @@ import { constraints, span, position, annotationItem, labelItems } from "@/coord
 // the positions of the hover are vertical, e.g. of horizontal bars
 const isVertical = (ctx, names) => ctx.store.mapping(names.h).scale?.orientation == 'vertical';
 
-// horizontal lines for a vertical axis and vice versa, the lines of the
-// draw before are moved, e.g. with a transition
+// horizontal lines for a vertical axis and vice versa, the part of the
+// axes, the lines of the draw before are moved, e.g. with a transition
 const grid = (ctx, n, s, values, vertical) => {
     const offset = bandCenter(s);
-    ctx.keep(`grid ${n}`, () => ctx.inner.append("g").attr("class", "vis-grid"))
-        .selectChildren('line')
-        .data(values, v => String(+v === +v ? +v : v))
-        .join("line")
-        .order()
-        .each(function(d) {
-            const p = s(d) + offset;
-            setProps.call(this, vertical ? { x1: 0, x2: ctx.innerWidth, y1: p, y2: p } : { y1: 0, y2: ctx.innerHeight, x1: p, x2: p });
-        });
+    return {
+        key: `grid ${n}`,
+        element: "g",
+        attrs: { class: "vis-grid" },
+        layer: {
+            element: "line",
+            key: item => item[keyOf],
+            items: values.map(d => {
+                const p = s(d) + offset;
+                return {
+                    ...(vertical ? { x1: 0, x2: ctx.innerWidth, y1: p, y2: p } : { y1: 0, y2: ctx.innerHeight, x1: p, x2: p }),
+                    [keyOf]: String(+d === +d ? +d : d),
+                };
+            }),
+        },
+    };
 };
 
 /**
@@ -50,99 +57,71 @@ const labelProps = (ctx, n, labels) => {
     };
 };
 
+// the parts of the axes of the mappings with an axis (see `axes` of
+// coords/index.js): the grid lines, the axis, its ticks are its values and
+// their labels (see drawAxis of utils/axis.js), and its title
 const axes = ctx => {
-    const { store, inner, innerWidth, innerHeight } = ctx;
-    store.mappingNamesWithKey('axis').forEach(n => {
+    const { store, innerWidth, innerHeight } = ctx;
+    return store.mappingNamesWithKey('axis').flatMap(n => {
         const m = store.mapping(n);
         const i = m.axis;
         const s = ctx.scales[n];
         const ticks = tickCount(i, ctx.scope, Math.abs(s.range()[1] - s.range()[0]));
 
-        const a = d3.axes[i.position](s)
-            .tickSizeInner(9)
-            .tickSizeOuter(0)
-            .ticks(ticks)
-            .tickPadding(i.padding)
-
-        const format = tickFormat(store, n, s, ticks);
-        if (format)
-            a.tickFormat(format);
+        // the format of the labels, the one of d3 of the scale for fixed
+        // values without a format
+        let format = tickFormat(store, n, s, ticks) || (s.tickFormat ? s.tickFormat(ticks) : d => d);
         // the props of the labels, e.g. their texts, see labelProps
         const labelsOf = labelProps(ctx, n, i.labels);
         if (labelsOf && 'text' in i.labels.props)
-            a.tickFormat(d => {
+            format = d => {
                 const text = labelsOf(d).text;
                 return text === null || text === undefined ? '' : String(text);
-            });
+            };
 
-        if (i.values) {
-            a.tickValues(tickValues(i, s, ticks, m, ctx.scope))
-        }
-
+        const parts = [];
         // the grid lines are at the ticks of the axis
         if (i.grid)
-            grid(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope), ['left', 'right'].includes(i.position));
+            parts.push(grid(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope), ['left', 'right'].includes(i.position)));
 
         // the axis of the draw before, its ticks are moved with a transition
-        const ga = ctx.keep(`axis ${n}`, () => inner.append("g"))
-            .attr("class", `vis-axis vis-axis-${i.position}`)
-            .attr("data-mapping", n);
-        // the transitions are loaded for definitions with a transition, see loadTransition
-        if (d3.hasTransitions(ga))
-            ga.interrupt('vis').selectAll('*').interrupt('vis');
-        const moving = motion.duration > 0 && ga.node().hasChildNodes() && d3.hasTransitions(ga);
-        const drawn = moving ? ga.transition('vis').duration(motion.duration) : ga;
-        drawn.call(a);
-        if (labelsOf) {
-            const texts = ga.selectAll('.tick text');
-            texts.each(function(d) {
-                const { text, ...attrs } = labelsOf(d);
-                setProps.call(this, attrs);
-            });
-            // texts in a width, at once or at the end of the transition of their texts
-            const fit = () => texts.filter(function() { return this.hasAttribute('max-width') }).each(function() { fitText(this) });
-            if (moving)
-                drawn.on('end.labels', fit);
-            else
-                fit();
-        }
-
-        if (i.position == 'bottom')
-            ga.attr('transform', `translate(0, ${innerHeight})`)
-        if (i.position == 'right')
-            ga.attr('transform', `translate(${innerWidth}, 0)`)
-
-        // positive angles rotate counterclockwise, negative ones
-        // clockwise, the labels start at their tick in both cases
-        if (i.rotate)
-            ga.selectAll("text")
-                .attr("text-anchor", i.rotate > 0 ? "end" : "start")
-                .attr("transform", `rotate(${-i.rotate})`)
+        parts.push({
+            key: `axis ${n}`,
+            axis: {
+                name: n,
+                position: i.position,
+                scale: s,
+                values: i.values ? tickValues(i, s, ticks, m, ctx.scope) : (s.ticks ? s.ticks(ticks) : s.domain()),
+                format,
+                labels: labelsOf && (d => {
+                    const { text, ...attrs } = labelsOf(d);
+                    return attrs;
+                }),
+                padding: i.padding,
+                rotate: i.rotate,
+                width: innerWidth,
+                height: innerHeight,
+            },
+        });
 
         if (i.title) {
             // the distance of the title from the axis, by default near the
             // edge of the margin, e.g. outside of the labels of the ticks
             const offset = i.title.offset ?? Math.max(0, ctx.margins[i.position] - 8);
-            const at = ctx.keep(`axis title ${n}`, () => inner.append("text"))
-                .attr('class', 'vis-axis-title')
-                .attr('y', 0)
-                .attr('x', 0)
-                .attr("text-anchor", "middle")
-                .attr("dominant-baseline", "middle")
-                .text(ctx.store.text(i.title.name))
-
-            if (i.position == 'left')
-                at.attr("transform", `rotate(-90) translate(-${innerHeight/2} -${offset})`)
-
-            if (i.position == 'right')
-                at.attr("transform", `rotate(90) translate(${innerHeight/2} -${innerWidth + offset})`)
-
-            if (i.position == 'top')
-                at.attr("transform", `translate(${innerWidth/2} -${offset})`)
-
-            if (i.position == 'bottom')
-                at.attr("transform", `translate(${innerWidth/2} ${innerHeight + offset})`)
+            const transform = {
+                left: `rotate(-90) translate(-${innerHeight/2} -${offset})`,
+                right: `rotate(90) translate(${innerHeight/2} -${innerWidth + offset})`,
+                top: `translate(${innerWidth/2} -${offset})`,
+                bottom: `translate(${innerWidth/2} ${innerHeight + offset})`,
+            }[i.position];
+            parts.push({
+                key: `axis title ${n}`,
+                element: "text",
+                attrs: { class: "vis-axis-title", y: 0, x: 0, "text-anchor": "middle", "dominant-baseline": "middle", ...(transform ? { transform } : {}) },
+                text: ctx.store.text(i.title.name),
+            });
         }
+        return parts;
     });
 };
 

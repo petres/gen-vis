@@ -314,8 +314,8 @@ page can style it as a card (`vis-outer` is the root of the component):
 
 All classes of the package start with `vis-`, so styles of the page for
 other elements do not apply to them, e.g. `.title` of a CSS framework, the
-others are the `id` of a plot, e.g. `plot-0`, and the classes of the axes of
-d3, `tick` and `domain`:
+others are the `id` of a plot, e.g. `plot-0`, and the classes of the ticks
+and the lines of the axes, `tick` and `domain`, as the ones of d3:
 
 | Part | Classes |
 |------|---------|
@@ -1328,7 +1328,9 @@ categories, the elements per row the ones of the same rows or, of
 other types are removed before they are drawn again.
 
 A coordinate system (`registerCoord(name, coord)`) has the default ranges of
-the orientations of its scales, the axes and the geometry of the hover, see
+the orientations of its scales, the parts of its axes (the ticks, labels and
+lines as layers or an axis of a side, also marks, drawn by the package), the
+items of its annotations and the geometry of the hover, see
 `src/coords/index.js` and e.g. `src/coords/polar.js`, `load()` of a
 coordinate system loads its parts with its first chart, e.g. the ones of maps
 (`src/coords/geo.js`), again with the next one if it failed. Both are known to

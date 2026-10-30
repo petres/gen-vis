@@ -25,6 +25,7 @@ import { toRaw } from 'vue';
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/props";
 import { drawLayer, highlighter, withMotion } from "@/utils/draw";
+import { drawAxis } from "@/utils/axis";
 import { plotTypes } from "@/plots";
 import { plotGroups, plotRows } from "@/layout";
 import { filter, rowFilter } from "@/utils/data";
@@ -96,34 +97,32 @@ export default {
             let node = this.kept.get(key);
             if (!node)
                 this.kept.set(key, node = create().node());
-            if (this.holder)
-                this.holder.appendChild(node);
-            else if (this.cursor.nextSibling !== node)
+            if (this.cursor.nextSibling !== node)
                 this.$refs.inner.insertBefore(node, this.cursor.nextSibling);
-            if (!this.holder)
-                this.cursor = node;
+            this.cursor = node;
             this.used.add(key);
             return d3.select(node);
         },
 
-        // the elements which `draw(ctx)` appends to the plot area, e.g. the
-        // axes, are placed after the cursor, not at the end of the plot area
-        place(draw) {
-            const inner = this.$refs.inner;
-            const holder = this.holder = inner.insertBefore(document.createElementNS('http://www.w3.org/2000/svg', 'g'), this.cursor.nextSibling);
-            const plotArea = this.ctx.inner;
-            this.ctx.inner = d3.select(holder);
-            try {
-                draw(this.ctx);
-            } finally {
-                this.ctx.inner = plotArea;
-                this.holder = null;
-                for (const node of [...holder.childNodes]) {
-                    inner.insertBefore(node, holder);
-                    this.cursor = node;
+        // the parts of the axes of the coordinate system (see `axes` of
+        // coords/index.js), an element per part, kept from one draw to the next
+        // by its key, after the elements drawn before: an axis (see drawAxis),
+        // or an element with the attributes `attrs`, the `text` and the
+        // elements of a `layer` (see drawLayer), of a `fresh` part drawn anew
+        drawParts(parts) {
+            (parts ?? []).forEach(part => {
+                const node = this.keep(part.key, () => this.ctx.inner.append(part.element ?? "g"));
+                if (part.axis)
+                    return drawAxis(node, part.axis);
+                Object.entries(part.attrs ?? {}).forEach(([k, v]) => node.attr(k, v));
+                if (part.text !== undefined)
+                    node.text(part.text);
+                if (part.layer) {
+                    if (part.fresh)
+                        node.selectAll("*").remove();
+                    drawLayer(node, part.layer);
                 }
-                holder.remove();
-            }
+            });
         },
 
         draw() {
@@ -158,7 +157,6 @@ export default {
                 innerWidth,
                 innerHeight,
                 margins,
-                keep: (key, create) => this.keep(key, create),
             };
 
             this.store.coord.prepare?.(this.ctx);
@@ -169,7 +167,7 @@ export default {
                 || [p.facet].flat().map(String).includes(String(key)));
             withMotion(this.facet.transition ?? 0, () => {
                 this.plot(plots.filter(p => p.layer == 'below'));
-                this.place(ctx => this.store.coord.axes(ctx));
+                this.drawParts(this.store.coord.axes(this.ctx));
                 this.plot(plots.filter(p => p.layer != 'below' && p.layer != 'above'));
                 this.plot(plots.filter(p => p.layer == 'above'));
             });

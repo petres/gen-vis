@@ -1,4 +1,4 @@
-export { curves, setProps, groupAttrs, groupKey, highlighter, rowOf, keyOf, elementOf, directOf, drawLayer, motion, withMotion, fitText };
+export { curves, setProps, groupAttrs, groupKey, highlighter, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, fitText };
 
 import * as d3 from "@/utils/d3";
 
@@ -98,10 +98,12 @@ const setGroupData = function(g) {
 const rowOf = Symbol('row');
 
 // the key of the element of an item of a layer, its element, e.g. of the
-// items of annotations, and its attributes which are set at once, see drawLayer
+// items of annotations, its attributes which are set at once and the items
+// of its children, see drawLayer
 const keyOf = Symbol('key');
 const elementOf = Symbol('element');
 const directOf = Symbol('direct');
+const childrenOf = Symbol('children');
 
 // the key of a group of a plot, the keys of its categories, so an element
 // of a group is the one of the same group of the draw before
@@ -120,7 +122,9 @@ const rowKey = v => {
 
 // the attributes of an item: the ones which are set at once (`directOf`, in
 // their order, null removes one), e.g. the path of a feature, then its props
-// (see setProps), which move with the transition of the draw
+// (see setProps), which move with the transition of the draw, the elements
+// of its children (`childrenOf`) are appended to a new element, e.g. the line
+// and the label of a tick
 function drawItem(item) {
     const direct = item[directOf];
     if (direct)
@@ -132,6 +136,9 @@ function drawItem(item) {
                 this.setAttribute(k, v);
         }
     setProps.call(this, item);
+    const children = item[childrenOf];
+    if (children && !this.hasChildNodes())
+        children.forEach(child => drawItem.call(this.appendChild(document.createElementNS('http://www.w3.org/2000/svg', child[elementOf])), child));
 }
 
 /**
@@ -149,8 +156,10 @@ function drawItem(item) {
  * - `class`: a class of the group of the plot, e.g. `vis-features`
  * - `fit`: the texts with a `max-width` are cut or wrapped, see fitText
  * An item has the props of its element (see setProps, `text` is its text),
- * its row (`rowOf`, e.g. of the highlight of a row) and the attributes which
- * are set at once (`directOf`). Null draws nothing.
+ * its row (`rowOf`, e.g. of the highlight of a row), the attributes which
+ * are set at once (`directOf`) and the items of the elements in its element
+ * (`childrenOf`, only of a new element, e.g. of the layers which are drawn
+ * anew). Null draws nothing.
  */
 const drawLayer = (parent, layer) => {
     if (!layer)

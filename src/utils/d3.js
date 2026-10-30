@@ -6,7 +6,6 @@
 // loadTransition), the projections of maps with the first map (see
 // coords/geo.js).
 import * as d3Scale from 'd3-scale';
-import { axisTop, axisBottom, axisLeft, axisRight } from 'd3-axis';
 import { byPrefix, named } from '@/utils/registry';
 
 export { bisectCenter, bisectLeft, extent, greatest, group, least, max, mean, min, nice, range, tickStep, ticks } from 'd3-array';
@@ -71,8 +70,6 @@ const loaded = () => {
 // the interpolator of a name, e.g. "Blues", undefined if it is unknown
 export const interpolator = name => named(loaded().interpolators, name);
 
-// the axes of the cartesian coordinate system by their position
-export const axes = { top: axisTop, bottom: axisBottom, left: axisLeft, right: axisRight };
 
 
 // the colors of a scheme, e.g. "Tableau10", of a scheme of several sizes, e.g.

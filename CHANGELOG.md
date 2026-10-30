@@ -119,7 +119,11 @@ Extensions, the charts are drawn as before:
   per row and of a path per group (they were `pointwise` and `groupwise`,
   which drew them)
 - coordinate systems: `annotate(ctx, a)` returns the items of an annotation,
-  the package draws them
+  `axes(ctx)` the parts of the axes (layers of the ticks, labels and grid
+  lines, the axes of the sides), the package draws them; `ctx.keep` is left
+  out
+- the axes of the sides are drawn by the package, as the ones of d3-axis,
+  also their transitions, `d3-axis` is no dependency anymore
 
 ## 2.1.0
 

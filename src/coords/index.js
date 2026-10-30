@@ -24,8 +24,14 @@ import geo from "@/coords/geo";
  * - `annotations`: the types of the annotations, `annotate(ctx, a)` returns
  *   the items of one (see drawLayer of utils/draw.js), see
  *   coords/annotations.js
- * - `axes(ctx)`: draws the axes and grid lines of the mappings, `raise(ctx)`
- *   is called after the plots, e.g. to raise axes in the plot area above them
+ * - `axes(ctx)`: the parts of the axes and grid lines of the mappings, in
+ *   their order, an element per part (`key`), kept from one draw to the
+ *   next: an axis of the positions top, right, bottom or left (`axis`, see
+ *   drawAxis of utils/axis.js) or an element (`element`, `g` by default)
+ *   with the attributes `attrs`, the `text` and the elements of a `layer`
+ *   (see drawLayer of utils/draw.js), `fresh` ones are drawn anew, see
+ *   drawParts of Facet.vue, `raise(ctx)` is called after the plots, e.g. to
+ *   raise axes in the plot area above them
  * - `hover.area(ctx, parent)`: appends the element of the pointer events,
  *   `hover.locate(ctx, pointer, names, event)` returns the `key` (a value of
  *   the position mapping) and the `value` at the pointer, null if there is no
