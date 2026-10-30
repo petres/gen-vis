@@ -6,7 +6,7 @@ import * as d3 from "@/utils/d3";
 import { arc as arcShape, lineRadial, pointRadial } from 'd3-shape';
 import plotTypes from "@/plots/polar";
 import { bandCenter } from "@/utils/scales";
-import { tickValues, tickFormat, tickCount, labelProps, domainProps } from "@/coords/ticks";
+import { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
 import { childrenOf, directOf, elementOf } from "@/utils/draw";
 
@@ -62,8 +62,11 @@ const baseline = a => Math.cos(a) > 0.5 ? "auto" : (Math.cos(a) < -0.5 ? "hangin
 // the categories or ticks around the circle, spokes as grid lines, the
 // parts of the axes (see `axes` of coords/index.js), drawn anew, `label(v)`
 // is the text and the props of the label of a tick, `domain` the props of
-// the circle
+// the circle, the tick marks (`axis.tickMarks`, see tickMarks) are 6 pixels
+// outside of the circle by default, the labels after them
 const angularAxis = (ctx, n, s, values, label, domain, axis) => {
+    const marks = tickMarks(ctx, axis);
+    const size = marks?.size ?? 6;
     const [r0, r1] = radiusRange(ctx);
     const angles = angleTicks(s, values);
     const parts = [];
@@ -88,13 +91,13 @@ const angularAxis = (ctx, n, s, values, label, domain, axis) => {
         const a = angleOf(s, v);
         const { text, props } = label(v);
         const [x1, y1] = pointRadial(a, r1);
-        const [x2, y2] = pointRadial(a, r1 + 6);
-        const [x, y] = pointRadial(a, r1 + 6 + axis.padding);
+        const [x2, y2] = pointRadial(a, r1 + size);
+        const [x, y] = pointRadial(a, r1 + size + axis.padding);
         return {
             [elementOf]: "g",
             [directOf]: { class: "tick" },
             [childrenOf]: [
-                { [elementOf]: "line", [directOf]: { stroke: "currentColor", x1, y1, x2, y2 } },
+                ...(marks === false ? [] : [{ [elementOf]: "line", [directOf]: { stroke: "currentColor", x1, y1, x2, y2 }, ...marks.props }]),
                 { [elementOf]: "text", [directOf]: { fill: "currentColor", x, y, "text-anchor": anchor(a), "dominant-baseline": baseline(a) }, ...props, text },
             ],
         };

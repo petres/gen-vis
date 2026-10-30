@@ -1,4 +1,4 @@
-export { tickValues, tickFormat, tickCount, labelProps, domainProps };
+export { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks };
 
 import { formatOf } from "@/utils/def";
 import { evaluate } from "@/utils/props";
@@ -81,3 +81,12 @@ const labelProps = (ctx, n, labels) => {
 // `domain`), e.g. its stroke-opacity, of the names of the facet, null
 // without props
 const domainProps = (ctx, axis) => axis.domain?.props ? evaluate(axis.domain.props, ctx.scope) : null;
+
+// the tick marks of an axis (`axis.tickMarks`): false without them, the
+// labels stay at their places, otherwise their length (`size`, by default
+// the one of the coordinate system) and their props of the names of the
+// facet (`props`, null without), e.g. their stroke
+const tickMarks = (ctx, axis) => axis.tickMarks === false ? false : {
+    size: Number.isFinite(axis.tickMarks?.size) ? axis.tickMarks.size : null,
+    props: axis.tickMarks?.props ? evaluate(axis.tickMarks.props, ctx.scope) : null,
+};

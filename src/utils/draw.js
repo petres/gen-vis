@@ -22,6 +22,33 @@ const curves = {
 // the values of the attributes an element moves to with a transition, see setProps
 const targets = Symbol('targets');
 
+// the props whose values are styles of an element, not attributes, values
+// with css variables, e.g. "var(--gen-vis-grid-color)", svg attributes do not
+// know them, the names of the highlight and of data are attributes
+const styles = Symbol('styles');
+const isStyle = (k, v) => typeof v == 'string' && v.includes('var(') && !/^(highlight|others|default|data)-/.test(k);
+
+// the value of a prop of an element, a style or an attribute, null without one
+const readValue = (node, k) => node[styles]?.has(k) ? node.style.getPropertyValue(k) : node.getAttribute(k);
+
+// the value of a prop of an element at once, a value with a css variable as
+// its style, another one as its attribute (without a style of it), null
+// removes it
+const writeValue = (node, k, v) => {
+    if (node[styles]?.has(k) && !isStyle(k, v)) {
+        node.style.removeProperty(k);
+        node[styles].delete(k);
+    }
+    if (v === null || v === undefined)
+        node.removeAttribute(k);
+    else if (isStyle(k, v)) {
+        node.style.setProperty(k, v);
+        node.removeAttribute(k);
+        (node[styles] ??= new Set()).add(k);
+    } else
+        node.setAttribute(k, v);
+};
+
 // an element moving with a transition is at its end at once, e.g. before
 // the values of its highlight replace its values, so it keeps the new ones
 const finish = node => {
@@ -29,7 +56,7 @@ const finish = node => {
         return;
     if (node.__transition)
         d3.select(node).interrupt('vis');
-    Object.entries(node[targets]).forEach(([k, v]) => node.setAttribute(k, v));
+    Object.entries(node[targets]).forEach(([k, v]) => writeValue(node, k, v));
     node[targets] = null;
 };
 
@@ -51,7 +78,8 @@ const withMotion = (duration, draw) => {
 // before, as setting one costs the browser its style. With a transition the
 // attributes an element has move to their values, e.g. of the draw before,
 // new ones are set at once, a transition of the draw before stops where it
-// is. The values of a transition are kept, see finish.
+// is. The values of a transition are kept, see finish. Values with css
+// variables are styles, set at once, see writeValue.
 const setProps = function(values) {
     if (this.__transition)
         d3.select(this).interrupt('vis');
@@ -69,17 +97,17 @@ const setProps = function(values) {
             // a namespace, e.g. xlink:href
             d3.select(this).attr(k, v);
         } else if (v === null || v === undefined) {
-            this.removeAttribute(k);
+            writeValue(this, k, null);
         } else {
             const value = String(v);
-            const before = this.getAttribute(k);
+            const before = readValue(this, k);
             if (before === value)
                 continue;
-            if (motion.duration > 0 && before !== null && d3.hasTransitions(d3.select(this))) {
+            if (motion.duration > 0 && before !== null && !isStyle(k, value) && !this[styles]?.has(k) && d3.hasTransitions(d3.select(this))) {
                 (transition ??= d3.select(this).transition('vis').duration(motion.duration)).attr(k, value);
                 (this[targets] ??= {})[k] = value;
             } else {
-                this.setAttribute(k, value);
+                writeValue(this, k, value);
             }
         }
     }
@@ -122,14 +150,13 @@ const rowKey = v => {
 
 // the attributes of an element at once, without a transition and without
 // stopping one of the element, in their order, null removes one, objects and
-// functions are left out, e.g. nested props
+// functions are left out, e.g. nested props, values with css variables are
+// styles, see writeValue
 const setAttrs = (node, attrs) => {
     for (const k in attrs) {
         const v = attrs[k];
-        if (v === null || v === undefined)
-            node.removeAttribute(k);
-        else if (typeof v != 'object' && typeof v != 'function')
-            node.setAttribute(k, v);
+        if (v === null || v === undefined || (typeof v != 'object' && typeof v != 'function'))
+            writeValue(node, k, v);
     }
 };
 
@@ -274,13 +301,12 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
         }
         let transition = null;
         Object.entries(values).forEach(([n, value]) => {
-            if (moving && value !== null && node.getAttribute(n) !== null) {
+            // values with css variables at once, see writeValue
+            if (moving && value !== null && !isStyle(n, value) && !node[styles]?.has(n) && node.getAttribute(n) !== null) {
                 (transition ??= d3.select(node).transition('highlight').duration(duration)).attr(n, value);
                 (node[pending] ??= {})[n] = value;
-            } else if (value === null)
-                node.removeAttribute(n);
-            else
-                node.setAttribute(n, value);
+            } else
+                writeValue(node, n, value);
         });
         transition?.on('end.pending', () => node[pending] = null);
         // the values of the definition are kept until they are back, e.g. if
@@ -307,7 +333,7 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
         const values = targets.get(node) ?? {};
         props.forEach(n => {
             if (!Object.hasOwn(node[originals], n))
-                node[originals][n] = node.getAttribute(n);
+                node[originals][n] = readValue(node, n);
             if (node[originals][n] !== null)
                 node.setAttribute(`default-${n}`, node[originals][n]);
             values[n] = node.getAttribute(`${prefix}-${n}`);

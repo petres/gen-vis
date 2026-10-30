@@ -356,6 +356,16 @@ circles), `--gen-vis-missing-color` (`#EEE`, the missing values of a legend),
 `--gen-vis-error-color` (`#B00`). The colors of annotations are only the ones
 without a color of their `props`.
 
+The props of a definition can be css variables, e.g. the ones of the page or
+of the package, `"stroke": "var(--gen-vis-grid-color)"` is the color of the
+grid lines, also after the page changes it. Svg attributes do not know
+variables, so a value with `var(` is a style of the element, not an
+attribute, it is set at once, also with a transition, and it works for the
+props which are css properties of svg, e.g. colors, widths, opacities and
+fonts, not for positions, e.g. `x`. Of all props: of plots, annotations,
+axes (`labels`, `domain`, `tickMarks`), legends and the highlight
+(`highlight-` and `others-` props).
+
 ## Definition
 
 ```json
@@ -714,7 +724,12 @@ parent or of a patch, e.g. `"hover": null`.
   `@weight` of the categories of a level, a `font-size` replaces the one of
   the styles), `domain` (the `props` of the line of the axis, svg
   attributes of the names of the facet, e.g. `{"props": {"stroke-opacity":
-  0.4}}`, of an angular axis the circle), `grid` (lines at the ticks),
+  0.4}}`, of an angular axis the circle), `tickMarks` (the short lines of
+  the ticks: `false` leaves them out, the labels stay at their places, their
+  length `size`, 9 pixels across the line of a cartesian axis, 6 outside of
+  the circle of an angular axis by default, the labels move with it, and
+  their `props`, as the ones of `domain`, radial axes have none), `grid`
+  (lines at the ticks),
   `title` (`{"name", "offset"}`, the distance from the axis, by default 8
   pixels inside the edge of the margin, of a radial axis 16 pixels outside
   of the circle) and `padding`.
@@ -969,15 +984,22 @@ The years of daily data, the dates aligned to 2020, a line per year.
   of radar charts. The labels of radial axes are above the plots, with a
   halo (`--gen-vis-halo-color`, see [styles](#styles)), the `props` of the
   `labels` of an axis style them, as the ones of cartesian axes, a `stroke`
-  and a `stroke-width` replace the halo, `domain` the line of the axis, e.g.
-  the values of a radial axis in the background:
+  and a `stroke-width` replace the halo, `domain` the line of the axis,
+  `tickMarks` the tick marks (of angular axes), e.g. the values of a radial
+  axis in the background and the circle and the marks of the angle in the
+  color of the grid lines:
 
   ```json
-  "axis": {
+  "x": { "axis": {
+      "position": "angular", "values": [0, 6, 12, 18], "grid": true,
+      "domain": { "props": { "stroke": "var(--gen-vis-grid-color)", "stroke-width": 0.75 } },
+      "tickMarks": { "props": { "stroke": "var(--gen-vis-grid-color)", "stroke-width": 0.75 } }
+  } },
+  "y": { "axis": {
       "position": "radial", "angle": 90, "ticks": 3, "grid": true,
       "labels": { "props": { "fill": "#777", "font-size": 10, "stroke-width": 2, "stroke-opacity": 0.5 } },
       "domain": { "props": { "stroke-opacity": 0.4 } }
-  }
+  } }
   ```
 - The titles of the facets are centered above the circles.
 - The plot types: `polar:line` (a line per group, `d` with `angle` and

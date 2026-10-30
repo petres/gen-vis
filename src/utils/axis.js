@@ -129,10 +129,12 @@ const ticks = (context, orient, scale, { values, format, tickSizeInner, tickSize
  * (`format(value)`), the props of the labels (`labels(value)`, e.g. their
  * font weight or a `max-width`), the `padding` of the labels, their angle
  * (`rotate`, degrees, positive ones counterclockwise), the props of the
- * line of the axis (`domain`, e.g. its stroke-opacity) and the size of the
- * plot area (`width`, `height`).
+ * line of the axis (`domain`, e.g. its stroke-opacity), the tick marks
+ * (`marks`, false without them, their `size`, 9 pixels across the line of
+ * the axis by default, the labels are moved by it, and their `props`) and the
+ * size of the plot area (`width`, `height`).
  */
-const drawAxis = (ga, { name, position, scale, values, format, labels, padding, rotate, domain, width, height }) => {
+const drawAxis = (ga, { name, position, scale, values, format, labels, padding, rotate, domain, marks, width, height }) => {
     ga.attr("class", `vis-axis vis-axis-${position}`)
         .attr("data-mapping", name);
     // the transitions are loaded for definitions with a transition, see loadTransition
@@ -141,11 +143,16 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
     // the ticks of the draw before move with a transition
     const moving = motion.duration > 0 && ga.node().hasChildNodes() && d3.hasTransitions(ga);
     const drawn = moving ? ga.transition('vis').duration(motion.duration) : ga;
-    ticks(drawn, position, scale, { values, format, tickSizeInner: 9, tickSizeOuter: 0, tickPadding: +padding });
+    ticks(drawn, position, scale, { values, format, tickSizeInner: marks?.size ?? 9, tickSizeOuter: 0, tickPadding: +padding });
     // the props of the line and of the labels at once, the transitions of
     // the path and of the texts (their positions and texts) go on
     if (domain)
         ga.select('.domain').each(function() { setAttrs(this, domain) });
+    // without tick marks the labels are at their places of marks
+    if (marks === false)
+        ga.selectAll('.tick line').remove();
+    else if (marks?.props)
+        ga.selectAll('.tick line').each(function() { setAttrs(this, marks.props) });
     if (labels) {
         const texts = ga.selectAll('.tick text');
         texts.each(function(d) { setAttrs(this, labels(d)) });

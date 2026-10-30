@@ -284,6 +284,16 @@ const validateDef = def => {
                     ...categoryNames(m), ...categories.flatMap(c => categoryNames(mapping[c]))]));
             }
             checkProp(m.axis.tickSpacing, `${path}.axis.tickSpacing`, warn, names.facet);
+            const marks = m.axis.tickMarks;
+            if (marks !== undefined && marks !== false && !isObject(marks))
+                warn(`${path}.axis.tickMarks`, `expected false (no tick marks) or their size and props, e.g. { "size": 4, "props": { "stroke-opacity": 0.5 } }`);
+            else if (isObject(marks)) {
+                if (marks.size !== undefined && !(typeof marks.size == 'number' && marks.size >= 0))
+                    warn(`${path}.axis.tickMarks.size`, `expected the length of the tick marks in pixels, e.g. 4`);
+                checkProp(marks.props, `${path}.axis.tickMarks.props`, warn, names.facet);
+            }
+            if (marks !== undefined && m.axis.position == 'radial')
+                warn(`${path}.axis.tickMarks`, `a radial axis has no tick marks, the circles of the grid mark its values`);
             const domain = m.axis.domain;
             if (domain !== undefined && !isObject(domain))
                 warn(`${path}.axis.domain`, `expected the props of the line of the axis, e.g. { "props": { "stroke-opacity": 0.4 } }`);

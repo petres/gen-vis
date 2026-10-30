@@ -1,7 +1,7 @@
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
 import { keyOf } from "@/utils/draw";
-import { tickValues, tickFormat, tickCount, labelProps, domainProps } from "@/coords/ticks";
+import { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
 
 // the positions of the hover are vertical, e.g. of horizontal bars
@@ -72,6 +72,7 @@ const axes = ctx => {
                 padding: i.padding,
                 rotate: i.rotate,
                 domain: domainProps(ctx, i),
+                marks: tickMarks(ctx, i),
                 width: innerWidth,
                 height: innerHeight,
             },

@@ -119,6 +119,11 @@ New:
   of the facets of polar plots, e.g. of the hole of a donut
 - the types of TypeScript of the definitions, `Definition` and its parts,
   generated of the schema (`npm run types`)
+- css variables in props, e.g. `"stroke": "var(--gen-vis-grid-color)"`, a
+  value with `var(` is a style of the element, svg attributes do not know
+  them, of plots, annotations, axes, legends and the highlight
+- the tick marks of axes (`axis.tickMarks`): `false` leaves them out, their
+  length (`size`) and their `props`, of cartesian and angular axes
 - axes: the `props` of the `labels` (`axis.labels`) also of the axes of
   polar plots, `angular` and `radial`, e.g. the values of a radial axis in
   the background, a `stroke` and a `stroke-width` replace the halo of the

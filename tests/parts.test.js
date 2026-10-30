@@ -1003,3 +1003,80 @@ describe('the scale of another mapping', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the tick marks of axes', () => {
+    test('their props, their size and none, of cartesian and angular axes', async () => {
+        const def = lineDef();
+        def.mapping.x.axis = { ...def.mapping.x.axis, tickMarks: { size: 4, props: { 'stroke-opacity': 0.4 } } };
+        def.mapping.y.axis = { ...def.mapping.y.axis, tickMarks: false };
+        const el = await mount(GenVis, { def, data: lineData });
+        const bottom = [...el.querySelectorAll('.vis-axis-bottom .tick line')];
+        expect(bottom.length).toBeGreaterThan(0);
+        expect(bottom.every(l => l.getAttribute('y2') == '4' && l.getAttribute('stroke-opacity') == '0.4')).toBe(true);
+        // the labels after the marks of 4 pixels, 3 of the padding
+        expect(el.querySelector('.vis-axis-bottom .tick text').getAttribute('y')).toBe('7');
+        // without marks the labels are at their places, 9 pixels of the marks and the padding
+        expect(el.querySelectorAll('.vis-axis-left .tick line')).toHaveLength(0);
+        expect(el.querySelector('.vis-axis-left .tick text').getAttribute('x')).toBe('-12');
+
+        // the marks of an angular axis outside of the circle of 150 pixels, a css variable is a style
+        const polar = lineDef({ coord: 'polar', width: 400, height: 400, margins: { top: 50, right: 50, bottom: 50, left: 50 } });
+        polar.mapping.x = { column: 'year', type: 'numeric', scale: { orientation: 'angular', domain: [2020, 2024] }, axis: { position: 'angular',
+            values: [2020, 2022], tickMarks: { size: 10, props: { stroke: 'var(--gen-vis-grid-color)', 'stroke-width': 0.75 } } } };
+        polar.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radial', domain: [0, 4] } };
+        polar.plot = { type: 'polar:line', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
+        const circle = await mount(GenVis, { def: polar, data: lineData });
+        const marks = [...circle.querySelectorAll('.vis-axis-angular .tick line')];
+        expect(marks.map(l => [+l.getAttribute('y1'), +l.getAttribute('y2')])).toEqual([[-150, -160], [150, 160]].map(([a, b], i) => i == 0 ? [a, b] : [expect.closeTo(a, 6), expect.closeTo(b, 6)]));
+        expect(marks.every(l => !l.hasAttribute('stroke') && l.style.getPropertyValue('stroke') == 'var(--gen-vis-grid-color)' && l.getAttribute('stroke-width') == '0.75')).toBe(true);
+        polar.mapping.x.axis.tickMarks = false;
+        const without = await mount(GenVis, { def: polar, data: lineData });
+        expect(without.querySelectorAll('.vis-axis-angular .tick line')).toHaveLength(0);
+        expect(without.querySelectorAll('.vis-axis-angular .tick text')).toHaveLength(2);
+
+        const { validateDef } = await import('@/utils/validate');
+        polar.mapping.x.axis.tickMarks = { size: -1, props: { stroke: '@colour' } };
+        polar.mapping.y.axis = { position: 'radial', tickMarks: { size: 4 } };
+        expect(validateDef(polar)).toEqual([
+            'mapping.x.axis.tickMarks.size: expected the length of the tick marks in pixels, e.g. 4',
+            "mapping.x.axis.tickMarks.props.stroke: unknown reference 'colour', expected one of 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'radius'",
+            'mapping.y.axis.tickMarks: a radial axis has no tick marks, the circles of the grid mark its values',
+        ]);
+        expect(errors).toEqual([]);
+    });
+});
+
+describe('css variables in props', () => {
+    test('a value with a css variable is a style, also of the highlight, annotations, lines of axes and legends', async () => {
+        const def = lineDef();
+        def.globals = { lineColor: 'var(--line-color)' };
+        def.plot[1] = { ...def.plot[1], props: { ...def.plot[1].props, fill: '@color', stroke: '@lineColor', 'highlight-stroke': 'black', 'highlight-fill': 'var(--highlight-color)' } };
+        def.mapping.c.props.categories.Wien.color = 'var(--wien-color)';
+        def.mapping.c.legend = { symbol: { size: 16, elements: [{ type: 'rect', props: { width: 12, height: 12, fill: '@color' } }] } };
+        def.mapping.y.axis = { ...def.mapping.y.axis, domain: { props: { stroke: 'var(--gen-vis-grid-color)' } } };
+        def.annotations = [{ type: 'band', x: [2021, 2022], props: { fill: 'var(--band-color)' } }];
+        const el = await mount(GenVis, { def, data: lineData });
+        const style = (e, k) => e.style.getPropertyValue(k);
+        const circle = el.querySelector('g.vis-group[data-group-c="Wien"] circle');
+        // the props of a category, of a global and of the highlight, which are attributes of data
+        expect([style(circle, 'fill'), circle.hasAttribute('fill'), circle.getAttribute('stroke'), style(circle, 'stroke')])
+            .toEqual(['var(--wien-color)', false, null, 'var(--line-color)']);
+        expect(circle.getAttribute('highlight-fill')).toBe('var(--highlight-color)');
+        expect(style(el.querySelector('g.vis-group[data-group-c="Tirol"] circle'), 'fill')).toBe('');
+        expect(el.querySelector('g.vis-group[data-group-c="Tirol"] circle').getAttribute('fill')).toBe('blue');
+        expect(style(el.querySelector('.vis-axis-left path.domain'), 'stroke')).toBe('var(--gen-vis-grid-color)');
+        expect(style(el.querySelector('.vis-annotation.vis-band'), 'fill')).toBe('var(--band-color)');
+        expect(style(el.querySelector('.vis-legend-entry[data-key="Wien"] rect'), 'fill')).toBe('var(--wien-color)');
+
+        // the highlight replaces the styles, its end restores them
+        const entry = el.querySelector('.vis-legend-entry[data-key="Wien"]');
+        entry.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+        await nextTick();
+        expect([circle.getAttribute('stroke'), style(circle, 'stroke'), style(circle, 'fill'), circle.hasAttribute('fill')])
+            .toEqual(['black', '', 'var(--highlight-color)', false]);
+        entry.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
+        await nextTick();
+        expect([circle.getAttribute('stroke'), style(circle, 'stroke'), style(circle, 'fill')]).toEqual([null, 'var(--line-color)', 'var(--wien-color)']);
+        expect(errors).toEqual([]);
+    });
+});
