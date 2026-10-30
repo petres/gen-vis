@@ -143,7 +143,7 @@ export default {
             // the context of the plot types and the coordinate system, see
             // plots/index.js, the scales are not reactive, they are only replaced
             // with the facet
-            const { key, rows, scales, axis, stackOf, scope, dims, innerWidth, innerHeight, margins } = this.facet;
+            const { key, rows, scales, axis, stackOf, isStacked, stackOrder, scope, dims, innerWidth, innerHeight, margins } = this.facet;
             this.ctx = {
                 store: this.store,
                 inner: d3.select(inner),
@@ -152,6 +152,8 @@ export default {
                 scales,
                 axis,
                 stackOf,
+                isStacked,
+                stackOrder,
                 scope,
                 dims,
                 innerWidth,
@@ -276,6 +278,19 @@ export default {
             const v = names.v;
             // the start and the end of a stacked value
             const stackOf = ctx.stackOf;
+            // the place of a row in the hover, from the top, of the rows of its
+            // position: of a stacked value the middle of its stack, a row which
+            // is not stacked, e.g. a total, is above the stacked ones of the
+            // categories before it, below the ones of the categories after it
+            const orderOf = (row, rows) => {
+                if (!stackOf)
+                    return row[v];
+                if (ctx.isStacked(row))
+                    return d3.mean(stackOf(row));
+                const stacked = rows.filter(ctx.isStacked);
+                const before = stacked.filter(s => ctx.stackOrder(s, row) < 0).length;
+                return stacked.length == 0 || (before > 0 && before < stacked.length) ? row[v] : (before > 0 ? Infinity : -Infinity);
+            };
 
             // categorical mappings, and other values with a hover, e.g. of a second vertical axis
             const categories = store.mappingNamesWithKey('hover')
@@ -372,8 +387,7 @@ export default {
                     entries[n] = { value: row[n], name: row[n] === null ? '' : formats[n](row[n]) };
                     cells.push({ mapping: n, value: true, text: entries[n].name });
                 });
-                const order = stackOf ? d3.mean(stackOf(row)) : row[v];
-                return { entries, cells, data: row, nearest: row === nearest, order };
+                return { entries, cells, data: row, nearest: row === nearest, order: orderOf(row, rows) };
             });
 
             // the rows of the events and the slot, copies of the values of the mappings
@@ -462,10 +476,9 @@ export default {
                         .map(point => ({ key: point[2][names.h], rows: [point[2]], point }));
                 }
                 const s = ctx.scales[names.h];
-                const order = stackOf ? row => d3.mean(stackOf(row)) : row => row[v];
                 const all = [...rowsByKey.values()].map(rows => ({
                     key: rows[0][names.h],
-                    rows: [...rows].sort((a, b) => order(b) - order(a)),
+                    rows: [...rows].sort((a, b) => orderOf(b, rows) - orderOf(a, rows)),
                 }));
                 return s ? all.sort((a, b) => s(a.key) - s(b.key))
                     : all.sort((a, b) => String(titleOf(a.key)).localeCompare(String(titleOf(b.key))));

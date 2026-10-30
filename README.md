@@ -742,7 +742,11 @@ parent or of a patch, e.g. `"hover": null`.
   the horizontal axis at the vertical position. Of several mappings of an
   orientation, e.g. a second vertical axis, the stacked one or the one with a
   `hover` (or the first one) has the values of the hover, the other numeric
-  ones with a `hover` are further columns. On touch devices it is shown by a
+  ones with a `hover` are further columns. The rows of stacked values are in
+  the order of the stacks, from the top, a row which is not stacked (see
+  `stacked`) is above them if its category is after theirs in the order of
+  the categories, below them if it is before them, e.g. the consumption
+  above the sources. On touch devices it is shown by a
   tap and stays until a tap outside of the plot, horizontal swipes move it,
   vertical ones scroll the page. `format` of the horizontal and vertical
   axis, it defaults to the axis format, without one dates are the date of
@@ -824,7 +828,20 @@ parent or of a patch, e.g. `"hover": null`.
   of the stacked value, `@y:start:scaled` and `@y:end:scaled` their positions,
   e.g. `y0` and `y1` of `cartesian:bar`, `@y:height:scaled` the difference,
   e.g. the height of an `svg:rect`, `@y:mid` and `@y:mid:scaled` the middle,
-  e.g. of a label in its stack.
+  e.g. of a label in its stack. `true` stacks all rows, conditions of
+  mappings, as the ones of [`filter`](#formelements-and-globals), only the
+  rows of them, the other rows are not stacked, their start and end are
+  their value, e.g. a line of the consumption or a total on stacked areas of
+  the same mapping, also of a patch of its column, e.g. the share of the
+  consumption, their values are in the domain and in the hover:
+
+  ```json
+  "y": { "column": "value", "type": "numeric", "stacked": { "type": { "not": "load" } }, ... },
+  "plot": [
+      { "type": "cartesian:area", "categories": ["type"], "filter": { "type": { "not": "load" } }, "props": { "d": { "x": "@x:scaled", "y0": "@y:start:scaled", "y1": "@y:end:scaled" } } },
+      { "type": "cartesian:line", "filter": { "type": "load" }, "props": { "d": { "x": "@x:scaled", "y": "@y:scaled" } } }
+  ]
+  ```
 
 ### `plot`
 

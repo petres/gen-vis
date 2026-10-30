@@ -118,7 +118,8 @@ const validateDef = def => {
     if (!def.mapping)
         warn('mapping', 'missing');
     // the mappings, their parts which are no objects are left out of the checks below
-    const mapping = Object.fromEntries(objects(Object.entries(def.mapping ?? {}), n => `mapping.${n}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`)
+    // null removes a mapping, e.g. of a parent
+    const mapping = Object.fromEntries(objects(Object.entries(def.mapping ?? {}).filter(([, m]) => m !== null), n => `mapping.${n}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`)
         .map(([n, m]) => [n, Object.fromEntries(Object.entries(m).filter(([k, v]) => {
             if (!mappingParts.includes(k) || isObject(v))
                 return true;
@@ -392,6 +393,10 @@ const validateDef = def => {
     }
 
     checkFilter(def.filter, 'filter', names.global);
+    // the rows which are stacked, `true` all, the conditions of mappings, e.g. { "type": { "not": "load" } }
+    Object.entries(mapping).filter(([, m]) => m.stacked !== undefined && typeof m.stacked != 'boolean').forEach(([n, m]) => isObject(m.stacked)
+        ? checkFilter(m.stacked, `mapping.${n}.stacked`, names.global)
+        : warn(`mapping.${n}.stacked`, `expected true or the conditions of the rows which are stacked, e.g. { "type": { "not": "load" } }`));
     plots.forEach(([i, p]) => checkFilter(p.filter, `plot[${i}].filter`, names.facet));
     checkFilter(def.options?.hover?.filter, 'options.hover.filter', names.facet);
 

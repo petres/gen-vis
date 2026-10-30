@@ -113,11 +113,17 @@ const layout = (store, width) => {
     const rows = filter(store.data, [...visible, ...rowFilter(def.filter, def.mapping, scope)]);
 
     // the start and the end of the stacked values of the rows, stacked in the
-    // order of the categories, not of the rows
-    const stacks = axis.v && store.mapping(axis.v).stacked
-        ? stack(rows, axis, def.facets ? [def.facets.dim] : [], categoryOrder(visible.map(f => ({ dim: f.dim, keys: f.key }))))
-        : null;
-    const stackOf = stacks ? row => stacks.get(row) : null;
+    // order of the categories, not of the rows, the rows of the conditions of
+    // `stacked` (all of `true`), e.g. { "type": { "not": "load" } }, the
+    // others have their own value as start and end, e.g. a line of a total
+    // on stacked areas
+    const stacked = axis.v ? store.mapping(axis.v).stacked : undefined;
+    const stackOrder = categoryOrder(visible.map(f => ({ dim: f.dim, keys: f.key })));
+    const stackedRows = stacked && stacked !== true
+        ? filter(rows, rowFilter(stacked, def.mapping, scope, `mapping.${axis.v}.stacked`)) : rows;
+    const stacks = stacked ? stack(stackedRows, axis, def.facets ? [def.facets.dim] : [], stackOrder) : null;
+    const stackOf = stacks ? row => stacks.get(row) ?? [row[axis.v], row[axis.v]] : null;
+    const isStacked = stacks ? row => stacks.has(row) : null;
 
     // without facets, or if no facet has rows, one of all rows
     const entries = def.facets ? facetEntries(store, rows) : [];
@@ -166,6 +172,8 @@ const layout = (store, width) => {
             dims,
             axis,
             stackOf,
+            isStacked,
+            stackOrder,
             // the sizes of the bands of the scales, e.g. "@y:bandwidth" of annotations
             scope: { ...facetScope, ...scaleSizes(scales) },
             scales,

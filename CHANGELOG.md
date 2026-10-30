@@ -26,6 +26,9 @@ Fixed: the categories of a `point` scale of angles (polar plots) have the
 same distance, also the last and the first one, as the ones of `band`
 scales (it was 0.8 of a step, e.g. the radar of `data/bev/def-radar.json`).
 
+Fixed: `validateDef` does not warn of a mapping which is removed by `null`,
+e.g. one of a parent.
+
 Fixed: `"ticks": null` of an axis is the number of `tickSpacing`, e.g. a
 patch of the ticks of a parent, it was no number. The fixed ticks of an axis of dates (`axis.values`, e.g.
 `"2020-04-01"`) are converted as the dates of the data, they had no
@@ -133,6 +136,12 @@ New:
 - css variables in props, e.g. `"stroke": "var(--gen-vis-grid-color)"`, a
   value with `var(` is a style of the element, svg attributes do not know
   them, of plots, annotations, axes, legends and the highlight
+- rows which are not stacked on a stacked mapping: `stacked` are the
+  conditions of the rows which are stacked, as the ones of `filter`, e.g.
+  `{"type": {"not": "load"}}`, the others have their own value as start and
+  end, e.g. a line of the consumption on stacked areas, their values are in
+  the domain and in the hover, above or below the stacked rows in the order
+  of the categories
 - the tick marks of axes (`axis.tickMarks`): `false` leaves them out, their
   length (`size`) and their `props`, of cartesian and angular axes
 - axes: the `props` of the `labels` (`axis.labels`) also of the axes of

@@ -474,7 +474,10 @@
                     "enum": ["numeric", "date", "categorical"],
                     "description": "Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values (also of a mapping without a type) are strings of every format of the data, e.g. \"2004\" of the number 2004 of JSON or parquet."
                 },
-                "stacked": { "type": "boolean", "description": "Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars), a radial or an angular one (of pies, polar:arc from @<name>:start:scaled to @<name>:end:scaled)." },
+                "stacked": {
+                    "anyOf": [{ "type": "boolean" }, { "$ref": "#/definitions/filter" }],
+                    "description": "Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars), a radial or an angular one (of pies, polar:arc from @<name>:start:scaled to @<name>:end:scaled), true all rows or the conditions of mappings of the rows which are stacked, as the ones of filter, e.g. { \"type\": { \"not\": \"load\" } }, the others have their own value as start and end, e.g. a line of a total on stacked areas."
+                },
                 "scale": { "anyOf": [{ "$ref": "#/definitions/scale" }, { "$ref": "#/definitions/none" }] },
                 "axis": { "anyOf": [{ "$ref": "#/definitions/axis" }, { "$ref": "#/definitions/none" }] },
                 "hover": { "anyOf": [{ "$ref": "#/definitions/none" }, {

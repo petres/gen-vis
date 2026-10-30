@@ -570,9 +570,9 @@ export interface MappingEntry {
      */
     type?: 'numeric' | 'date' | 'categorical';
     /**
-     * Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars), a radial or an angular one (of pies, polar:arc from @<name>:start:scaled to @<name>:end:scaled).
+     * Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars), a radial or an angular one (of pies, polar:arc from @<name>:start:scaled to @<name>:end:scaled), true all rows or the conditions of mappings of the rows which are stacked, as the ones of filter, e.g. { "type": { "not": "load" } }, the others have their own value as start and end, e.g. a line of a total on stacked areas.
      */
-    stacked?: boolean;
+    stacked?: boolean | Filter;
     scale?: Scale | None;
     axis?: Axis | None;
     hover?:

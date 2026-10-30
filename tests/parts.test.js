@@ -1103,3 +1103,81 @@ describe('radar charts', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('rows which are not stacked', () => {
+    // the generation of two sources by hour, stacked, and the consumption as a line on them
+    const data = `hour,type,value,share
+0,hydro,1,0.25
+0,wind,3,0.75
+0,load,4,1
+1,hydro,2,0.4
+1,wind,3,0.6
+1,load,8,1.6`;
+    const loadDef = (order = ['hydro', 'wind', 'load']) => ({
+        options: { width: 600, height: 300, margins: { top: 10, right: 10, bottom: 40, left: 40 } },
+        globals: { values: 'value' },
+        formElements: [{ id: 'values', name: 'Werte', ref: 'values', type: 'radio', values: [
+            { id: 'abs', name: 'absolut', value: 'value' },
+            { id: 'share', name: 'Anteil', value: 'share' }
+        ] }],
+        mapping: {
+            x: { column: 'hour', type: 'numeric', scale: { orientation: 'horizontal' }, axis: { position: 'bottom' } },
+            y: { column: '{values}', type: 'numeric', stacked: { type: { not: 'load' } }, scale: { orientation: 'vertical', domain: [0, null], domainRel: [0, 0] },
+                axis: { position: 'left', ticks: 4 }, hover: { format: '.1f' } },
+            type: { column: 'type', type: 'categorical', legend: {}, hover: {},
+                props: { categories: Object.fromEntries(order.map(k => [k, { name: { hydro: 'Wasser', wind: 'Wind', load: 'Verbrauch' }[k] }])) } },
+        },
+        plot: [
+            { id: 'areas', type: 'cartesian:area', categories: ['type'], filter: { type: { not: 'load' } },
+                props: { fill: 'gray', d: { x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' } } },
+            { id: 'load', type: 'cartesian:line', categories: ['type'], filter: { type: 'load' },
+                props: { fill: 'none', stroke: 'black', d: { x: '@x:scaled', y: '@y:scaled' } } },
+            { id: 'labels', type: 'svg:text', filter: { type: 'load' },
+                props: { x: '@x:scaled', y: '@y:end:scaled', 'data-start': '@y:start', 'data-mid': '@y:mid:scaled', text: '@y' } },
+        ],
+    });
+    const points = path => path.slice(1).split('L').map(p => p.split(',').map(Number));
+
+    test('a line of the consumption on the stacked generation, its domain, its own values and its place in the hover', async () => {
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef(loadDef())).toEqual([]);
+        const el = await mount(GenVis, { def: loadDef(), data });
+        // the domain reaches 8 of the consumption (the stacks reach 5), 0 at 250, 8 at 0 pixels
+        const line = points(el.querySelector('g.vis-plot.load path').getAttribute('d'));
+        expect(line.map(([, y]) => y)).toEqual([125, 0]);
+        // the top of the stack of 4 at 0 is where the consumption of 4 is
+        const wind = el.querySelector('g.vis-plot.areas path[data-group-type="wind"]').getAttribute('d');
+        expect(points(wind.split('Z')[0])[0][1]).toBe(125);
+        // the start and the end of a row which is not stacked are its value
+        const labels = [...el.querySelectorAll('g.vis-plot.labels text')];
+        expect(labels.map(t => [t.textContent, t.getAttribute('y'), t.getAttribute('data-start'), t.getAttribute('data-mid')]))
+            .toEqual([['4', '125', '4', '125'], ['8', '0', '8', '0']]);
+        // the hover, the consumption above the sources, the category after them
+        const events = el.querySelector('rect.vis-events');
+        const { pointer } = await import('./dom.js');
+        events.dispatchEvent(pointer('pointermove', { clientX: 10, clientY: 100 }));
+        await nextTick();
+        const rows = () => [...el.querySelectorAll('.vis-hover tr')].map(tr => tr.textContent);
+        expect(rows()).toEqual(['Verbrauch4,0', 'Wind3,0', 'Wasser1,0']);
+
+        // the share of the consumption of the column of the patch, its own value
+        el.querySelector('.vis-form-element input[value="share"]').click();
+        await nextTick();
+        expect(points(el.querySelector('g.vis-plot.load path').getAttribute('d')).map(([, y]) => y)).toEqual([250 - 250/1.6, 0]);
+
+        // the consumption before the sources is below them in the hover
+        const below = await mount(GenVis, { def: loadDef(['load', 'hydro', 'wind']), data });
+        below.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 10, clientY: 100 }));
+        await nextTick();
+        expect([...below.querySelectorAll('.vis-hover tr')].map(tr => tr.textContent)).toEqual(['Wind3,0', 'Wasser1,0', 'Verbrauch4,0']);
+
+        const wrong = loadDef();
+        wrong.mapping.y.stacked = { kind: 'load' };
+        wrong.mapping.x.stacked = 'yes';
+        expect(validateDef(wrong)).toEqual([
+            `mapping.x.stacked: expected true or the conditions of the rows which are stacked, e.g. { "type": { "not": "load" } }`,
+            "mapping.y.stacked.kind: unknown mapping 'kind'",
+        ]);
+        expect(errors).toEqual([]);
+    });
+});

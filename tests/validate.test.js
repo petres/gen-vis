@@ -195,7 +195,9 @@ describe('validateDef', () => {
 
     test('entries which are no objects are warnings, not errors', () => {
         const def = base();
-        def.mapping.n = null;
+        def.mapping.n = 5;
+        // null removes a mapping, e.g. of a parent
+        def.mapping.removed = null;
         def.mapping.y.hover = true;
         def.mapping.x.scale.type = 'implicit';
         def.plot = [null, { ...def.plot, categories: 'c' }, { ...def.plot, categories: [1] }];
