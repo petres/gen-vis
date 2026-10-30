@@ -175,7 +175,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
         /"(scheme|interpolator)":/.test(JSON.stringify([defOrg.mapping, defOrg.formElements])) ? loadColors() : null,
         loadCoord(defOrg.options?.coord),
         defOrg.geo?.data ? lazy.geo() : null,
-        defOrg.options?.transition ? loadTransition() : null,
+        defOrg.options?.transition || defOrg.options?.highlight?.transition ? loadTransition() : null,
         defOrg.transform ? loadTransforms() : null,
         // the legend of a scale of colors, a mapping with a legend without props, also of a patch
         [defOrg.mapping, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.mapping) : [])]

@@ -177,6 +177,7 @@ const preparePlots = (plot, annotations, files) => {
         p.categories = [p.categories ?? []].flat();
         p.id ??= `plot-${i}`;
         p.highlightProps = Object.keys(p.props).filter(n => n.startsWith('highlight-')).map(n => n.substring(10));
+        p.othersProps = Object.keys(p.props).filter(n => n.startsWith('others-')).map(n => n.substring(7));
         if (typeof p.data == 'string' && files?.has(p.data)) {
             p.data = files.get(p.data);
             p.loaded = true;

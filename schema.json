@@ -263,6 +263,14 @@
                 "subtitle": { "type": "string" },
                 "footer": { "type": "string", "description": "HTML, e.g. a link of the source, a template of the globals, their values are text." },
                 "transition": { "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "boolean" }], "description": "The elements move to their new values in this many milliseconds (true for 300) after a change of a legend, a form element or the state." },
+                "highlight": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "description": "The highlight of the elements, see the highlight- and others- props of the plots.",
+                    "properties": {
+                        "transition": { "type": "number", "minimum": 0, "description": "The attributes move to the ones of the highlight in this many milliseconds, e.g. 50." }
+                    }
+                },
                 "hover": {
                     "type": "object",
                     "additionalProperties": false,

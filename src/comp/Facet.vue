@@ -185,7 +185,11 @@ export default {
                     this.kept.delete(k);
                 }
             });
-            this.highlighter = highlighter(this.store.def.plot, plot => this.kept.get(this.plotKey(plot)));
+            // the highlight moves in the milliseconds of `options.highlight.transition`,
+            // not if the user prefers less motion
+            const still = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+            const duration = still ? 0 : Number(this.store.def.options.highlight?.transition) || 0;
+            this.highlighter = highlighter(this.store.def.plot, plot => this.kept.get(this.plotKey(plot)), duration);
             this.hoverInit();
         },
 

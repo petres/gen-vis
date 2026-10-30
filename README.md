@@ -720,7 +720,13 @@ A plot or a list of plots, drawn in order:
   by default, the plots of a parent are merged by their ids (if all of them
   have one).
 - `props`: svg attributes (and `text`). Props starting with `highlight-` are
-  used for the elements of the category under the mouse or the legend entry.
+  used for the elements of the category under the mouse or the legend entry,
+  props starting with `others-` for the other elements of the plot while an
+  element is highlighted, also of plots without categories, e.g.
+  `"others-opacity": 0.3` fades the others, `"others-visibility": "hidden"`
+  hides the label of the last value while the one of another value is
+  shown. `options.highlight.transition` moves the attributes to the ones of
+  the highlight in this many milliseconds, e.g. `{"transition": 50}`.
 - `highlight`: `group` (default) highlights the elements of the category under
   the mouse, `row` only the element of its row, e.g. the segment of a stacked
   bar, an entry of the legend highlights all of its category.

@@ -2,7 +2,7 @@
 // the parts of 3.0 which make definitions more flexible: patches of all parts
 // of a definition, globals of the page, filters, props, scales, the hover,
 // the highlight, legends, texts, transforms and messages
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import { nextTick } from 'vue';
 import { GenVis } from '@/index.js';
 import { errors, useDom, mount } from './dom.js';
@@ -328,6 +328,47 @@ describe('the hover', () => {
         const el = await mount(GenVis, { def, data: lineData });
         const area = el.querySelector('rect.vis-events');
         expect(['x', 'y', 'width', 'height'].map(a => area.getAttribute(a))).toEqual(['-40', '-10', '600', '300']);
+        expect(errors).toEqual([]);
+    });
+});
+
+describe('the highlight', () => {
+    test('others- props of the elements which are not highlighted, also of plots without categories', async () => {
+        const def = lineDef();
+        def.plot[1] = { ...def.plot[1], highlight: 'row', props: { ...def.plot[1].props, 'highlight-r': 6, 'others-opacity': 0.3 } };
+        def.plot.push({ id: 'last', type: 'svg:text', select: 'last', props: { x: '@x:scaled', y: '@y:scaled', text: 'last', 'others-visibility': 'hidden' } });
+        const el = await mount(GenVis, { def, data: lineData });
+        const { pointer } = await import('./dom.js');
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
+        await nextTick();
+        const circles = [...el.querySelectorAll('g.vis-plot[data-plot="dots"] circle')];
+        expect(circles.filter(c => c.getAttribute('r') == '6')).toHaveLength(1);
+        expect(circles.filter(c => c.getAttribute('opacity') == '0.3')).toHaveLength(circles.length - 1);
+        expect(el.querySelector('g.vis-plot[data-plot="last"] text').getAttribute('visibility')).toBe('hidden');
+
+        // the end of the highlight restores the values
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointerleave'));
+        await nextTick();
+        expect(circles.every(c => c.getAttribute('opacity') === null && c.getAttribute('r') == '3')).toBe(true);
+        expect(el.querySelector('g.vis-plot[data-plot="last"] text').getAttribute('visibility')).toBeNull();
+
+        // an entry of the legend highlights its category
+        el.querySelector('.vis-legend-entry[data-key="Wien"]').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+        await nextTick();
+        expect(el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle[opacity="0.3"]')).toHaveLength(4);
+        expect(errors).toEqual([]);
+    });
+
+    test('a transition of the highlight', async () => {
+        const def = lineDef();
+        def.options.highlight = { transition: 50 };
+        def.plot[1].props['highlight-r'] = 6;
+        const el = await mount(GenVis, { def, data: lineData });
+        const { pointer } = await import('./dom.js');
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
+        await nextTick();
+        const circle = el.querySelector('circle.vis-highlight');
+        await vi.waitFor(() => expect(circle.getAttribute('r')).toBe('6'));
         expect(errors).toEqual([]);
     });
 });

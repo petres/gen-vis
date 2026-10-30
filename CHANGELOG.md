@@ -43,6 +43,8 @@ New:
   the highlight and the events stay), `position` (`pointer`), `side`,
   `offset`, `area` (`facet`, also the margins, e.g. the labels of rows),
   `empty`
+- the highlight: `others-` props of the elements which are not highlighted
+  while an element is, `options.highlight.transition`
 
 ## 2.1.0
 

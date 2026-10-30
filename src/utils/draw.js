@@ -100,18 +100,23 @@ const rowOf = Symbol('row');
 /**
  * The highlight of the elements of a facet: the highlight- props of the
  * plots replace the props of the elements of the categories of a row, e.g.
- * of the hover or of an entry of a legend, their values are kept in
- * default- attributes. With `"highlight": "row"` only the element of the
- * row is highlighted, e.g. the segment of a stacked bar, if it has one.
- * The groups of the plots (the elements with the keys of their categories
- * as data-group- attributes) and their elements with highlight- props are
- * found once, at the first highlight, so a highlight does not search the
- * elements of the facet. `nodeOf(plot)` is the element of a plot.
+ * of the hover or of an entry of a legend, the others- props the ones of
+ * the other elements of their plots while a highlight is shown, e.g. a
+ * label which is hidden, their values are kept in default- attributes. With
+ * `"highlight": "row"` only the element of the row is highlighted, e.g. the
+ * segment of a stacked bar, if it has one. The groups of the plots (the
+ * elements with the keys of their categories as data-group- attributes) and
+ * their elements with highlight- and others- props are found once, at the
+ * first highlight, so a highlight does not search the elements of the facet.
+ * `nodeOf(plot)` is the element of a plot, the attributes move in `duration`
+ * milliseconds to their values, if the transitions are loaded.
  */
-const highlighter = (plotDefs, nodeOf) => {
+const highlighter = (plotDefs, nodeOf, duration = 0) => {
     const plots = plotDefs.filter(p => p.highlightProps.length > 0 && p.categories.length > 0);
+    const others = plotDefs.filter(p => p.othersProps?.length > 0);
     let index = null;
-    // the highlighted groups and elements
+    let otherIndex = null;
+    // the highlighted groups and the changed elements
     let groups = [];
     let elements = [];
 
@@ -126,6 +131,11 @@ const highlighter = (plotDefs, nodeOf) => {
                 targets: null,
             })) : [],
         };
+    });
+    // the elements of the plots with others- props
+    const buildOthers = () => others.map(plot => {
+        const node = nodeOf(plot);
+        return { plot, nodes: node ? [node, ...node.querySelectorAll('*')].filter(e => plot.othersProps.some(n => e.hasAttribute(`others-${n}`))) : [] };
     });
 
     // the path of a group or its elements per row with highlight- props, e.g. circles
@@ -145,16 +155,37 @@ const highlighter = (plotDefs, nodeOf) => {
             node.removeAttribute('class');
     };
 
+    // an attribute, with a transition if it has a value before and after
+    const set = (node, n, value) => {
+        if (duration > 0 && d3.hasTransitions(d3.select(node))) {
+            d3.select(node).interrupt('highlight');
+            if (value !== null && node.getAttribute(n) !== null)
+                return d3.select(node).transition('highlight').duration(duration).attr(n, value);
+        }
+        if (value === null)
+            node.removeAttribute(n);
+        else
+            node.setAttribute(n, value);
+    };
+
+    // the values of the props of `prefix`, the ones before are kept
+    const replace = (node, props, prefix) => {
+        finish(node);
+        props.forEach(n => {
+            const value = node.getAttribute(n);
+            if (value !== null)
+                node.setAttribute(`default-${n}`, value);
+            set(node, n, node.getAttribute(`${prefix}-${n}`));
+        });
+        elements.push({ node, props });
+    };
+
     return dataEntry => {
         groups.forEach(unclass);
         elements.forEach(({ node, props }) => {
             unclass(node);
             props.forEach(n => {
-                const value = node.getAttribute(`default-${n}`);
-                if (value === null)
-                    node.removeAttribute(n);
-                else
-                    node.setAttribute(n, value);
+                set(node, n, node.getAttribute(`default-${n}`));
                 node.removeAttribute(`default-${n}`);
             });
         });
@@ -164,6 +195,7 @@ const highlighter = (plotDefs, nodeOf) => {
             return;
 
         index ??= build();
+        const highlighted = new Set();
         index.forEach(({ plot, groups: all }) => {
             // the values are compared as strings, as the ones of the attributes
             const conditions = plot.categories.filter(c => c in dataEntry).map(c => [c, String(dataEntry[c])]);
@@ -174,21 +206,16 @@ const highlighter = (plotDefs, nodeOf) => {
                 g.node.parentNode.appendChild(g.node);
                 groups.push(g.node);
                 targetsOf(plot, g, dataEntry).forEach(node => {
-                    finish(node);
                     node.classList.add('vis-highlight');
-                    plot.highlightProps.forEach(n => {
-                        const value = node.getAttribute(n);
-                        const highlight = node.getAttribute(`highlight-${n}`);
-                        if (value !== null)
-                            node.setAttribute(`default-${n}`, value);
-                        if (highlight === null)
-                            node.removeAttribute(n);
-                        else
-                            node.setAttribute(n, highlight);
-                    });
-                    elements.push({ node, props: plot.highlightProps });
+                    highlighted.add(node);
+                    replace(node, plot.highlightProps, 'highlight');
                 });
             });
         });
+        // the other elements, e.g. a label of the last value which is hidden
+        // while the one of another value is highlighted
+        otherIndex ??= buildOthers();
+        otherIndex.forEach(({ plot, nodes }) => nodes.filter(node => !highlighted.has(node))
+            .forEach(node => replace(node, plot.othersProps, 'others')));
     };
 };

@@ -414,6 +414,10 @@ const validateDef = def => {
     // a global or a field of its entry, e.g. `group:name`
     const isGlobal = r => globals.has(r) || (r.includes(':') && globals.has(r.split(':')[0]));
     checkHover(hover.title, 'options.hover.title', r => r == 'title' || isGlobal(r));
+    const highlightOptions = def.options?.highlight;
+    if (highlightOptions !== undefined && !(isObject(highlightOptions) && (highlightOptions.transition === undefined
+        || (typeof highlightOptions.transition == 'number' && highlightOptions.transition >= 0))))
+        warn('options.highlight', `expected { "transition": milliseconds }, e.g. { "transition": 50 }`);
     const transition = def.options?.transition;
     if (transition !== undefined && typeof transition != 'boolean' && !(typeof transition == 'number' && transition >= 0))
         warn('options.transition', `expected the milliseconds of the transition, e.g. 300, or true`);
