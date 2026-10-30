@@ -45,6 +45,9 @@ New:
   `empty`
 - the highlight: `others-` props of the elements which are not highlighted
   while an element is, `options.highlight.transition`
+- legends: `"legend": false` of a category (no entry), `position` (`top`,
+  `bottom`, `left`, `right`), of the scales of colors `orientation`
+  (`vertical`), `size`, `values` (ticks) and `labels` (`before`)
 
 ## 2.1.0
 

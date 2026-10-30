@@ -372,3 +372,29 @@ describe('the highlight', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('legends', () => {
+    test('categories without an entry, legends below and beside the plots', async () => {
+        const def = lineDef();
+        def.mapping.c.props.categories.Tirol.legend = false;
+        def.mapping.c.legend = { position: 'bottom' };
+        def.mapping.v = { column: 'value', type: 'numeric', name: 'Wert', scale: { type: 'sequential', interpolator: 'Blues' }, legend: { position: 'left', orientation: 'vertical', size: 120, values: [1, 2, 3], labels: 'before' } };
+        delete def.options.width;
+        const el = await mount(GenVis, { def, data: lineData });
+        expect([...el.querySelectorAll('.vis-legends-bottom .vis-legend-entry')].map(e => e.dataset.key)).toEqual(['Wien']);
+        // Tirol stays visible
+        expect(el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle')).toHaveLength(4);
+        // the legend of the colors left of the plots
+        const body = el.querySelector('.vis-body');
+        expect([...body.children].map(c => c.className)).toEqual(['vis-legends vis-legends-left', 'vis-plots']);
+        const svg = el.querySelector('.vis-legends-left .vis-color-legend svg');
+        expect([svg.getAttribute('width'), svg.getAttribute('height')]).toEqual(['64', '152']);
+        // the ticks of the definition, the high values at the top, the labels left of the scale
+        const labels = [...svg.querySelectorAll('text')];
+        expect(labels.map(t => t.textContent)).toEqual(['1,0', '2,0', '3,0']);
+        expect(labels.map(t => t.getAttribute('text-anchor'))).toEqual(['end', 'end', 'end']);
+        expect(+labels[0].getAttribute('y')).toBeGreaterThan(+labels[2].getAttribute('y'));
+        expect(svg.querySelector('linearGradient').getAttribute('y1')).toBe('1');
+        expect(errors).toEqual([]);
+    });
+});

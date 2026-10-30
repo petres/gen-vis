@@ -32,7 +32,8 @@ export default {
     computed: {
         // the mapping, a form element can replace it, e.g. by another column
         info() { return this.store.mapping(this.legend) },
-        entries() { return this.info.keys.map(key => ({ key, props: this.info.props[key] })) },
+        // without the categories with `"legend": false`, e.g. headers, they stay visible
+        entries() { return this.info.keys.filter(key => this.info.props[key].legend !== false).map(key => ({ key, props: this.info.props[key] })) },
         // the legend props of the entries, also with the globals of the store
         filled() {
             const scope = this.store.scope;

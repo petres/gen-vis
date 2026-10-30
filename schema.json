@@ -448,6 +448,11 @@
                     "additionalProperties": false,
                     "description": "Toggles of the categories of the props, without props the colors of the scale.",
                     "properties": {
+                        "position": { "enum": ["top", "bottom", "left", "right"], "default": "top", "description": "The place of the legend, above or below the plots or beside them, the plots have the rest of the width." },
+                        "orientation": { "enum": ["horizontal", "vertical"], "default": "horizontal", "description": "The direction of the scale of the colors, a vertical one has the high values at the top." },
+                        "size": { "type": "number", "default": 240, "description": "The length of the scale of the colors in pixels." },
+                        "values": { "type": "array", "items": { "type": "number" }, "description": "The ticks of a gradient of colors, e.g. [0, 50, 100]." },
+                        "labels": { "enum": ["before", "after"], "default": "after", "description": "The labels of the scale of colors after it (below, right of a vertical one) or before it." },
                         "format": { "type": "string", "description": "The format of the values of the colors of a scale, by default the one of the hover." },
                         "missing": {
                             "type": "object",
@@ -562,7 +567,8 @@
             "type": "object",
             "properties": {
                 "name": { "type": "string", "description": "The key by default." },
-                "visible": { "type": "boolean", "default": true }
+                "visible": { "type": "boolean", "default": true },
+                "legend": { "type": "boolean", "default": true, "description": "false: the category has no entry in the legend, it stays visible, e.g. headers." }
             }
         },
         "plot": {

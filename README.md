@@ -296,7 +296,7 @@ d3, `tick` and `domain`:
 |------|---------|
 | the visualisation | `vis-mounted` (an element mounted by `mountGenVisByClass` or `mountGenVisElement`), `vis-outer` (the root, `vis-loading` while it is loaded), `vis`, `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
 | form elements | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`), the `id` of a form element and of its entries as `data-id`, e.g. `.vis-form-element[data-id="scale"]` |
-| legends | `vis-legends`, `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, the mapping as `data-dim`, an entry with `data-key` and `data-visible`), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
+| legends | `vis-legends` (above the plots, `vis-legends-bottom`, `vis-legends-left` and `vis-legends-right`, the plots beside them are in `vis-plots`), `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, the mapping as `data-dim`, an entry with `data-key` and `data-visible`), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
 | facets | `vis-facet` (a facet), `vis-facet-title`, `vis-svg` |
 | plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base), `vis-mesh` (geo:mesh), the keys of the features of maps as `data-geo-key` |
 | axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`), `vis-axis-title`, `vis-grid` |
@@ -675,6 +675,19 @@ parent or of a patch, e.g. `"hover": null`.
   `format` of the values, by default the one of the hover, `missing`
   an entry beside them, e.g. of the regions of a map without a value
   (`{"name": "keine Daten", "color": "#DADADA"}`, the color of `geo:base`).
+  The scale of the colors is horizontal or vertical (`orientation`, the high
+  values at the top), `size` pixels long (240 by default), its labels are
+  after it (`labels`, below or right of it) or `before` it, `values` are the
+  ticks of a gradient, e.g. `[0, 50, 100]`. A category with `"legend":
+  false` in its props has no entry, it stays visible, e.g. headers.
+  `position` places the legend above the plots (`top`, the default), below
+  them (`bottom`) or beside them (`left`, `right`, the plots have the rest
+  of the width, the class of the legends is `vis-legends-left` or
+  `vis-legends-right`), e.g. a vertical scale of colors left of a map:
+
+  ```json
+  "legend": { "position": "left", "orientation": "vertical", "size": 160, "labels": "before" }
+  ```
 - `stacked`: stacks the values of the axis of the values, a vertical, a
   horizontal (of horizontal bars) or a radial one, the first category is at
   the bottom. `@y:start` and `@y:end` are the start and the end

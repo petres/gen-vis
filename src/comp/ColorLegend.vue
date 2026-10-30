@@ -2,7 +2,7 @@
     <div class="vis-legend vis-color-legend" :data-dim="legend">
         <div class="vis-legend-title">{{ store.text(store.mapping(legend).name) }}</div>
         <div class="vis-color-scale">
-            <svg ref="svg" :width="width + 2*padding" height="34"/>
+            <svg ref="svg" :width="vertical ? 64 : size + 2*padding" :height="vertical ? size + 2*padding : 34"/>
             <!-- the regions without a value, e.g. the color of geo:base -->
             <div v-if="missing" class="vis-legend-missing">
                 <span class="vis-swatch" :style="{ background: missing.color ?? 'var(--gen-vis-missing-color, #EEE)' }"/>
@@ -58,9 +58,14 @@ const fixedFormat = (locale, ticks) => {
 export default {
     props: ["legend", "scale"],
     inject: ['store'],
-    data: () => ({ width: 240, padding: 16 }),
+    data: () => ({ padding: 16 }),
     computed: {
-        missing() { return this.store.mapping(this.legend).legend?.missing },
+        options() { return this.store.mapping(this.legend).legend ?? {} },
+        missing() { return this.options.missing },
+        // the length of the scale, 240 pixels by default
+        size() { return Number(this.options.size) || 240 },
+        // a vertical scale has the high values at the top
+        vertical() { return this.options.orientation == 'vertical' },
     },
     created() {
         this.uid = `gen-vis-gradient-${count++}`;
@@ -75,34 +80,59 @@ export default {
         render() {
             const m = this.store.mapping(this.legend);
             const s = this.scale;
-
             const svg = d3.select(this.$refs.svg);
             svg.selectAll("*").remove();
-            const g = svg.append("g").attr("transform", `translate(${this.padding}, 2)`);
+            const width = this.size;
+            const { vertical } = this;
+            // the labels after the scale (below it, right of a vertical one) or before it
+            const before = this.options.labels == 'before';
+            const along = vertical ? (vertical && before ? 48 : 2) : this.padding;
+            const g = svg.append("g").attr("transform", vertical ? `translate(${along}, ${this.padding})` : `translate(${this.padding}, ${before ? 20 : 2})`);
+            // a position along the scale, of a vertical one from the bottom
+            const at = x => vertical ? width - x : x;
+            // a box from `x` of the length `w` in the color `fill`
+            const box = (x, w, fill) => g.append("rect")
+                .attr(vertical ? "y" : "x", vertical ? at(x + w) : x).attr(vertical ? "x" : "y", 0)
+                .attr(vertical ? "height" : "width", w).attr(vertical ? "width" : "height", 10).attr("fill", fill);
             const label = (x, v, format) => {
-                g.append("line").attr("x1", x).attr("x2", x).attr("y1", 10).attr("y2", 14).attr("stroke", "currentColor");
-                g.append("text").attr("x", x).attr("y", 26).attr("text-anchor", "middle").attr("fill", "currentColor").text(format(v));
+                const p = at(x);
+                const [t0, t1] = before ? [-4, 0] : [10, 14];
+                if (vertical) {
+                    g.append("line").attr("y1", p).attr("y2", p).attr("x1", t0).attr("x2", t1).attr("stroke", "currentColor");
+                    g.append("text").attr("y", p).attr("x", before ? -6 : 16).attr("text-anchor", before ? "end" : "start")
+                        .attr("dominant-baseline", "middle").attr("fill", "currentColor").text(format(v));
+                } else {
+                    g.append("line").attr("x1", p).attr("x2", p).attr("y1", t0).attr("y2", t1).attr("stroke", "currentColor");
+                    g.append("text").attr("x", p).attr("y", before ? -8 : 26).attr("text-anchor", "middle").attr("fill", "currentColor").text(format(v));
+                }
+            };
+            // a gradient of `color(t)` of t from 0 to 1 along the scale
+            const gradient = color => {
+                const defs = svg.append("defs").append("linearGradient").attr("id", this.uid);
+                if (vertical)
+                    defs.attr("x1", 0).attr("x2", 0).attr("y1", 1).attr("y2", 0);
+                d3.range(11).forEach(i => defs.append("stop").attr("offset", `${i*10}%`).attr("stop-color", color(i/10)));
+                box(0, width, `url(#${this.uid})`);
             };
             // the format of the legend or the hover, by default the one of the ticks of an axis
             const given = formatOf(m, 'legend');
             const formatter = values => given
                 ? this.store.format(given, this.legend)
                 : this.store.locale.tickFormat(d3.scaleLinear(d3.extent(values)), 'linear', 4);
-
+            // the ticks of the definition, the ones in the domain
+            const fixed = domain => this.options.values?.filter(v => v >= d3.min(domain) && v <= d3.max(domain));
             if (!s.ticks && !s.invertExtent && !s.interpolator) {
                 // the categories of an ordinal scale, a box per category with its name
                 const categories = s.domain();
-                const w = this.width/Math.max(categories.length, 1);
-                g.selectAll("rect").data(categories).join("rect")
-                    .attr("x", (c, i) => i*w).attr("width", w).attr("height", 10).attr("fill", c => s(c));
-                categories.forEach((c, i) => g.append("text").attr("x", (i + 0.5)*w).attr("y", 26)
-                    .attr("text-anchor", "middle").attr("fill", "currentColor").text(c));
+                const w = width/Math.max(categories.length, 1);
+                categories.forEach((c, i) => box(i*w, w, s(c)));
+                categories.forEach((c, i) => label((i + 0.5)*w, c, String));
+                g.selectAll("line").remove();
             } else if (s.invertExtent) {
                 // a box per class, the limits between them
                 const colors = s.range();
-                const w = this.width/colors.length;
-                g.selectAll("rect").data(colors).join("rect")
-                    .attr("x", (c, i) => i*w).attr("width", w).attr("height", 10).attr("fill", c => c);
+                const w = width/colors.length;
+                colors.forEach((c, i) => box(i*w, w, c));
                 const limits = colors.slice(1).map(c => s.invertExtent(c)[0]);
                 const format = formatter(limits);
                 limits.forEach((v, i) => label((i + 1)*w, v, format));
@@ -110,26 +140,18 @@ export default {
                 // sequential and diverging scales: the gradient and the ticks at
                 // the positions of the colors, e.g. of a sqrt or a log scale, the
                 // middle of a diverging domain is in the middle
-                const position = s.copy().interpolator(t => t*this.width);
-                const gradient = svg.append("defs").append("linearGradient").attr("id", this.uid);
-                d3.range(11).forEach(i => gradient.append("stop")
-                    .attr("offset", `${i*10}%`)
-                    .attr("stop-color", s.interpolator()(i/10)));
-                g.append("rect").attr("width", this.width).attr("height", 10).attr("fill", `url(#${this.uid})`);
+                const position = s.copy().interpolator(t => t*width);
+                gradient(t => s.interpolator()(t));
                 const domain = s.domain();
-                const ticks = isLinear(s) ? d3.ticks(domain[0], domain.at(-1), 4) : spacedTicks(domain, position, 30);
+                const ticks = fixed(domain) ?? (isLinear(s) ? d3.ticks(domain[0], domain.at(-1), 4) : spacedTicks(domain, position, 30));
                 const format = given || isLinear(s) ? formatter(ticks) : fixedFormat(this.store.locale, ticks);
                 ticks.forEach(v => label(position(v), v, format));
             } else {
                 // e.g. a linear scale with a range of colors
                 const domain = s.domain();
-                const x = d3.scaleLinear([domain[0], domain.at(-1)], [0, this.width]);
-                const gradient = svg.append("defs").append("linearGradient").attr("id", this.uid);
-                d3.range(11).forEach(i => gradient.append("stop")
-                    .attr("offset", `${i*10}%`)
-                    .attr("stop-color", s(x.invert(i*this.width/10))));
-                g.append("rect").attr("width", this.width).attr("height", 10).attr("fill", `url(#${this.uid})`);
-                const ticks = x.ticks(4);
+                const x = d3.scaleLinear([domain[0], domain.at(-1)], [0, width]);
+                gradient(t => s(x.invert(t*width)));
+                const ticks = fixed(domain) ?? x.ticks(4);
                 const format = formatter(ticks);
                 ticks.forEach(v => label(x(v), v, format));
             }

@@ -10,22 +10,26 @@
         <div ref="form" class="vis-form-elements">
             <form-element v-for="element in formElements" :key="element.id" :element="element" :globals="globals" @changeSelected="formChanged"/>
         </div>
-        <div ref="legends" class="vis-legends">
-            <!-- toggles of categories, the colors of a scale otherwise -->
-            <template v-for="legend in legends" :key="legend">
-                <legend-entry v-if="store.mapping(legend).props" :legend="legend" @changeSelected="changeSelected" @highlight="highlight"/>
-                <component :is="store.colorLegend" v-else-if="store.colorLegend && view?.colors[legend]" :legend="legend" :scale="view.colors[legend]"/>
-            </template>
+        <div class="vis-legends">
+            <legends :names="legendsAt.top" :view="view" @changeSelected="changeSelected" @highlight="highlight"/>
         </div>
-        <div v-if="view" class="vis-body">
-            <!-- a new view is drawn into the facets of the one before, see Facet.vue -->
-            <template v-if="view.faceted">
-                <div v-for="f in view.facets" :key="String(f.key)" :style="`width: ${f.width}px; display: inline-block;`">
-                    <div class="vis-facet-title" :style="`margin-left: ${f.margins.left}px`">{{ store.text(f.name) }}</div>
-                    <facet ref="facets" :facet="f"/>
-                </div>
-            </template>
-            <facet v-else ref="facets" :facet="view.facets[0]"/>
+        <!-- the legends beside the plots, the plots have the width of the rest -->
+        <div v-if="sides" class="vis-body vis-body-sides">
+            <div v-if="legendsAt.left.length" class="vis-legends vis-legends-left">
+                <legends :names="legendsAt.left" :view="view" @changeSelected="changeSelected" @highlight="highlight"/>
+            </div>
+            <div ref="plots" class="vis-plots">
+                <facets v-if="view" ref="facets" :view="view"/>
+            </div>
+            <div v-if="legendsAt.right.length" class="vis-legends vis-legends-right">
+                <legends :names="legendsAt.right" :view="view" @changeSelected="changeSelected" @highlight="highlight"/>
+            </div>
+        </div>
+        <div v-else-if="view" class="vis-body">
+            <facets ref="facets" :view="view"/>
+        </div>
+        <div v-if="legendsAt.bottom.length" class="vis-legends vis-legends-bottom">
+            <legends :names="legendsAt.bottom" :view="view" @changeSelected="changeSelected" @highlight="highlight"/>
         </div>
         <div class="vis-footer">
             <div class="vis-footer-content">
@@ -64,8 +68,8 @@ import { markRaw } from 'vue';
 import { layout } from "@/layout";
 import { canCopy } from "@/utils/clipboard.js";
 
-import Facet from '@/comp/Facet.vue';
-import LegendEntry from '@/comp/Legend.vue';
+import Facets from '@/comp/Facets.vue';
+import Legends from '@/comp/Legends.vue';
 import SlotContent from '@/comp/SlotContent.vue';
 import FormElement from '@/comp/FormElement.vue';
 
@@ -113,7 +117,7 @@ export default {
         formElements: [],
     } },
     components: {
-        Facet, LegendEntry, FormElement, SlotContent,
+        Facets, Legends, FormElement, SlotContent,
     },
     watch: {
         // the state was set from outside
@@ -125,8 +129,15 @@ export default {
         texts() { return this.store.locale.texts },
         // the options of the definition, a form element can patch them
         options() { return this.store.def.options },
-        // the mappings of the legends, a form element can patch them
-        legends() { return this.store.mappingNamesWithKey('legend') },
+        // the mappings of the legends by their position, `top` by default, a
+        // form element can patch them
+        legendsAt() {
+            const at = { top: [], bottom: [], left: [], right: [] };
+            this.store.mappingNamesWithKey('legend').forEach(n => at[this.store.mapping(n).legend.position ?? 'top']?.push(n));
+            return at;
+        },
+        // legends beside the plots
+        sides() { return this.legendsAt.left.length > 0 || this.legendsAt.right.length > 0 },
         // the title and the subtitle with the values of the globals, e.g.
         // "Durchschnitt {base} = 100" of a form element
         header() {
@@ -147,6 +158,10 @@ export default {
             });
             this.resizeObserver.observe(this.$refs.vis);
         }
+        // the plots beside legends have the width of the rest, e.g. after the
+        // first draw of a legend of colors
+        if (this.sides)
+            this.$nextTick(() => this.resized());
     },
     unmounted() {
         this.resizeObserver?.disconnect();
@@ -161,12 +176,23 @@ export default {
 
             this.measure();
         },
+        // the width of the plots, of the visualisation or of the definition,
+        // beside legends the rest of it
+        plotsWidth() {
+            const total = this.store.def.options.width || innerWidth(this.$refs.vis);
+            if (!this.sides)
+                return total;
+            const legends = [...this.$refs.vis.querySelectorAll(':scope > .vis-body-sides > .vis-legends')]
+                .reduce((sum, e) => sum + e.getBoundingClientRect().width + 10, 0);
+            return this.store.def.options.width || !this.$refs.plots
+                ? Math.max(0, total - legends) : innerWidth(this.$refs.plots);
+        },
         measure() {
-            this.width = this.store.def.options.width || innerWidth(this.$refs.vis);
+            this.width = this.plotsWidth();
             this.store.totalWidth = this.width;
         },
         resized() {
-            const width = this.$refs.vis && innerWidth(this.$refs.vis);
+            const width = this.$refs.vis && this.plotsWidth();
             if (!width || width == this.width)
                 return;
             this.measure();
@@ -211,7 +237,7 @@ export default {
         },
         // the elements of the category of an entry of a legend in all facets
         highlight(info) {
-            [this.$refs.facets ?? []].flat().forEach(f => f.highlight(info.dim === undefined ? null : {[info.dim]: info.key}));
+            this.$refs.facets?.highlight(info.dim === undefined ? null : {[info.dim]: info.key});
         }
     }
 }
@@ -282,9 +308,17 @@ export default {
         }
     }
 
-    .vis-facet-title {
-        font-size: 13px;
-        font-weight: bold;
-        margin-top: 8px;
+    // the legends beside the plots, the plots have the rest of the width
+    .vis-body-sides {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        .vis-plots {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+        .vis-legends-left, .vis-legends-right {
+            flex: none;
+        }
     }
 </style>
