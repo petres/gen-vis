@@ -20,7 +20,10 @@ import { bandCenter, makeScale } from "@/utils/scales";
 // hover or the first one. In a coordinate system with `flip` the positions
 // are the vertical ones and the values the horizontal ones if these are
 // stacked or the vertical ones are categories and the horizontal ones not,
-// e.g. of horizontal bars.
+// e.g. of horizontal bars, with `"flip": "stacked"` only if they are
+// stacked, e.g. the angles of a pie in polar plots. A stacked mapping of the
+// positions without one of the values is the one of the values, e.g. the
+// angle of a pie without a radius.
 const axisNames = store => {
     if (store.coord.names)
         return store.coord.names(store);
@@ -32,8 +35,9 @@ const axisNames = store => {
     let h = of(store.coord.axis.h);
     let v = of(store.coord.axis.v);
     const categorical = n => n !== undefined && !['numeric', 'date'].includes(mapping[n].type);
-    if (store.coord.flip && h !== undefined && v !== undefined
-        && ((mapping[h].stacked && !mapping[v].stacked) || (categorical(v) && !categorical(h))))
+    const flip = store.coord.flip;
+    if (flip && h !== undefined && (v === undefined ? mapping[h].stacked
+        : (mapping[h].stacked && !mapping[v].stacked) || (flip !== 'stacked' && categorical(v) && !categorical(h))))
         [h, v] = [v, h];
     return { ...(h === undefined ? {} : { h }), ...(v === undefined ? {} : { v }) };
 };
@@ -129,8 +133,9 @@ const layout = (store, width) => {
     const size = { width: width/cols, height: stepped === undefined ? evaluate(def.options.height, scope) : stepped + margins.top + margins.bottom };
     size.innerWidth = size.width - (margins.left + margins.right);
     size.innerHeight = size.height - (margins.top + margins.bottom);
-    const facetScope = { ...scope, ...size };
     const dims = store.coord.dims(size.innerWidth, size.innerHeight);
+    // the radius of polar plots is a size of the facet, e.g. of the hole of a donut
+    const facetScope = { ...scope, ...size, ...(dims.radius === undefined ? {} : { radius: dims.radius }) };
 
     // the scale of a mapping for the rows, in the sizes of a facet
     const scaleOf = (name, rows) => makeScale(name, store.mapping(name), rows,

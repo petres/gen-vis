@@ -762,8 +762,8 @@ parent or of a patch, e.g. `"hover": null`.
   "legend": { "position": "left", "orientation": "vertical", "size": 160, "labels": "before" }
   ```
 - `stacked`: stacks the values of the axis of the values, a vertical, a
-  horizontal (of horizontal bars) or a radial one, the first category is at
-  the bottom. `@y:start` and `@y:end` are the start and the end
+  horizontal (of horizontal bars), a radial or an angular one (of pies, see
+  [polar plots](#polar-plots)), the first category is at the bottom. `@y:start` and `@y:end` are the start and the end
   of the stacked value, `@y:start:scaled` and `@y:end:scaled` their positions,
   e.g. `y0` and `y1` of `cartesian:bar`, `@y:height:scaled` the difference,
   e.g. the height of an `svg:rect`, `@y:mid` and `@y:mid:scaled` the middle,
@@ -931,7 +931,9 @@ The years of daily data, the dates aligned to 2020, a line per year.
   `radius`), `polar:area` (an area per group, `d` with `angle`,
   `innerRadius` and `outerRadius`), `polar:arc` (a segment of a ring per row,
   props `angle`, `innerRadius` and `outerRadius`, optional `width` in radians,
-  `padAngle` and `cornerRadius`, e.g. the bars of a rose chart), and
+  `padAngle` and `cornerRadius`, e.g. the bars of a rose chart, or from
+  `startAngle` to `endAngle` instead of `angle` and `width`, e.g. the slices
+  of a pie), and
   `polar:circle` and `polar:text` (an element per row at `angle` and
   `radius`). The angles of a band scale are in the center of the band. The
   `svg:` types draw with the center as origin, the `cartesian:` types are
@@ -942,7 +944,28 @@ The years of daily data, the dates aligned to 2020, a line per year.
 - The hover shows the values of the angle nearest to the mouse, also across
   the top, it is in the center, on the other side of the marker.
 
-See `data/bev/def-radar.json` and `data/rechtsform/def-rose.json`.
+Pies and donuts are stacked angles: the mapping of the angle is `stacked`,
+its values are the ones of the hover, the slices are `polar:arc` from
+`@<angle>:start:scaled` to `@<angle>:end:scaled`, `innerRadius` leaves a hole:
+
+```json
+"options": { "coord": "polar", "height": 360 },
+"mapping": {
+    "value": { "column": "value", "type": "numeric", "stacked": true, "scale": { "orientation": "angular" }, "hover": {} },
+    "type": { "column": "type", "type": "categorical", "legend": {}, "hover": {}, "props": { "fromData": true, "scheme": "Tableau10" } }
+},
+"plot": { "type": "polar:arc", "categories": ["type"], "props": { "fill": "@color", "stroke": "white", "startAngle": "@value:start:scaled", "endAngle": "@value:end:scaled", "innerRadius": 60, "highlight-opacity": 0.8 } }
+```
+
+The circle is the sum of the values. The hover shows the slice under the
+pointer and the values of all slices, beside the slice. With a mapping of
+the radius, e.g. a `band` scale of years, every ring is stacked by itself,
+the slices are from `@year:scaled` to `@year:group:end` (`innerRadius` and
+`outerRadius`), the hover shows the ring under the pointer, the circle is
+the largest sum, a `share` transform by year closes every ring.
+
+See `data/bev/def-radar.json`, `data/rechtsform/def-rose.json` and
+`data/rechtsform/def-pie.json`.
 
 ### Maps
 
@@ -1106,7 +1129,7 @@ parts add names:
 | everywhere | the `globals` and `totalWidth`, the width of the visualisation |
 | `options.height`, `options.margins`, `options.message`, `facets.cols`, `facets.scales`, `filter` | only these |
 | the `props` of `legend` (also of the `symbol`) and `hover` of a mapping | the props of its categories, e.g. `@color` and `@name` |
-| `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight`, the sizes of the band and point scales, e.g. `y:bandwidth` and `y:step` |
+| `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight`, of polar plots `radius` (e.g. of the hole of a donut), the sizes of the band and point scales, e.g. `y:bandwidth` and `y:step` |
 | `scale.range` | the sizes of the coordinate system, e.g. `@radius` of polar plots, `width` and `height` are the ones of the inner area |
 | the `props` of a plot | the props of its categories and the values of the row: a mapping (e.g. `@x`), the value as a text of the format of its hover (`@x:formatted`, e.g. `1.234,5`, a label), the scaled value (`@x:scaled`, `@x:scaled:center` for the center of a band, the position of a value, e.g. `@x:scaled:0` or `@x:scaled:100`, `@x:scaled:min` and `@x:scaled:max` of the domain), the size of a band and the distance of the categories (`@y:bandwidth`, `@y:step`), the extent of the group of the row (`@y:group:start`, `@y:group:end`, see `groups` of scales), stacked values (`@y:start`, `@y:end:scaled`, ..., see `stacked`) |
 

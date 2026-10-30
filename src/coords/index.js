@@ -16,7 +16,8 @@ import geo from "@/coords/geo";
  *   `origin(innerWidth, innerHeight)` is the origin of the plots and axes,
  *   [0, 0] if it is not given
  * - `names(store)`: the mappings of the hover and the stacks instead of the
- *   ones of `axis`, e.g. of a map
+ *   ones of `axis`, e.g. of a map, `flip` swaps them, see axisNames of
+ *   layout.js
  * The `ctx` is the facet, as the one of the plot types, see plots/index.js.
  * - `prepare(ctx)`: adds to the context before the axes and plots are drawn,
  *   e.g. the projection of a map
@@ -28,8 +29,10 @@ import geo from "@/coords/geo";
  *   `hover.locate(ctx, pointer, names, event)` returns the `key` (a value of
  *   the position mapping) and the `value` at the pointer, null if there is no
  *   key, without a value the elements of the key are highlighted,
- *   `hover.marker(ctx, key, names, line)` places the marker line of the key and
- *   returns the position of the hover, `{x, y, side}`, `hover.title(ctx, key,
+ *   `hover.marker(ctx, key, names, line, nearest)` places the marker line of
+ *   the key (and of the nearest row) and returns the position of the hover,
+ *   `{x, y, side}`, `hover.values`: the hover of the values without a mapping
+ *   of the positions, e.g. of a pie, the key is undefined, `hover.title(ctx, key,
  *   names)` the title of the hover, the formatted key by default,
  *   `hover.point(ctx, row, names)` the position of the point of a row, of
  *   the hover of the nearest point (`"mode": "point"` of the hover)

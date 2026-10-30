@@ -312,7 +312,10 @@ describe('validateDef', () => {
         def.options.coord = 'polar';
         delete def.mapping.x.axis;
         delete def.mapping.y.axis;
-        expect(validateDef(def).filter(w => w.includes("'y:start:scaled'") || w.includes("'radius'"))).toEqual([]);
+        expect(validateDef(def).filter(w => w.includes("reference 'y:start:scaled'") || w.includes("reference 'radius'"))).toEqual([]);
+        // the radius is a name of the facets of polar plots, e.g. of the hole of a donut
+        def.plot.props.innerRadius = { prop: 'relative', ref: 'radius', ratio: 0.5 };
+        expect(validateDef(def).filter(w => w.includes('innerRadius'))).toEqual([]);
     });
 
     test('the data, the selection and the layer of a plot', () => {

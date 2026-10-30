@@ -11,6 +11,8 @@ export default {
     ranges: { angular: [0, tau], radial: [0, "@radius"] },
     cyclic: ['angular'],
     axis: { h: 'angular', v: 'radial' },
+    // a stacked angle is the one of the values, e.g. of a pie, see axisNames of layout.js
+    flip: 'stacked',
     positions: ['angular', 'radial'],
     dims: (width, height) => ({ width, height, radius: Math.min(width, height)/2 }),
     origin: (width, height) => [width/2, height/2],

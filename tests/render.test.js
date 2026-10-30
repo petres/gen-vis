@@ -1397,7 +1397,9 @@ describe('the hover of the nearest point', () => {
 
         const { default: polar } = await import('@/coords/polar');
         const { scaleLinear } = await import('d3-scale');
-        const ctx = { scales: { a: scaleLinear([0, 4], [0, Math.PI*2]), r: scaleLinear([0, 10], [0, 100]) }, stackOf: null };
+        const orientations = { a: 'angular', r: 'radial' };
+        const ctx = { scales: { a: scaleLinear([0, 4], [0, Math.PI*2]), r: scaleLinear([0, 10], [0, 100]) }, stackOf: null,
+            store: { mapping: n => ({ scale: { orientation: orientations[n] } }) } };
         const [x, y] = polar.hover.point(ctx, { a: 1, r: 5 }, { h: 'a', v: 'r' });
         expect([Math.round(x), Math.round(y)]).toEqual([50, 0]);
     });
@@ -1833,6 +1835,63 @@ describe('polar', () => {
         const step = 2*Math.PI/12;
         expect(angles[0]).toBeCloseTo(step/2);
         expect(angles[1] - angles[0]).toBeCloseTo(step);
+        expect(errors).toEqual([]);
+    });
+
+    test('pies and donuts: arcs of stacked angles, the hover of the slice under the pointer', async () => {
+        const def = lineDef({ coord: 'polar', width: 400, height: 400, margins: { top: 50, right: 50, bottom: 50, left: 50 } });
+        def.mapping = {
+            share: { column: 'share', type: 'numeric', stacked: true, scale: { orientation: 'angular' }, hover: { format: '.0f' } },
+            c: { column: 'c', type: 'categorical', legend: {}, hover: {}, props: { categories: { A: { color: 'red' }, B: { color: 'blue' }, C: { color: 'green' } } } },
+        };
+        def.plot = { type: 'polar:arc', categories: ['c'], props: { fill: '@color', startAngle: '@share:start:scaled', endAngle: '@share:end:scaled', innerRadius: 50, 'highlight-stroke': 'black' } };
+        const data = 'c,share\nA,1\nB,2\nC,1';
+        const el = await mount(GenVis, { def, data });
+        const arcs = [...el.querySelectorAll('g.vis-plot path')];
+        expect(arcs).toHaveLength(3);
+        // the whole circle, A from the top to the right, B to the left, C to the top
+        const { arc } = await import('d3-shape');
+        const slice = (a0, a1) => arc()({ startAngle: a0*Math.PI, endAngle: a1*Math.PI, innerRadius: 50, outerRadius: 150 });
+        expect(arcs.map(a => a.getAttribute('d'))).toEqual([slice(0, 0.5), slice(0.5, 1.5), slice(1.5, 2)]);
+
+        // the pointer relative to the center, jsdom has no transforms
+        const events = el.querySelector('rect.vis-events');
+        const at = async (x, y) => {
+            events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: y }));
+            await nextTick();
+            return el.querySelector('.vis-hover .vis-nearest')?.textContent ?? null;
+        };
+        expect(await at(-100, 10)).toBe('B2');
+        expect(el.querySelectorAll('.vis-hover tr.vis-hover-entry')).toHaveLength(3);
+        expect(el.querySelector('path.vis-highlight').getAttribute('fill')).toBe('blue');
+        expect(await at(-30, -100)).toBe('C1');
+        // outside of the circle
+        expect(await at(160, 0)).toBeNull();
+        expect(el.querySelector('.vis-hover')).toBeNull();
+
+        // a ring per year, the slices of the ring under the pointer
+        def.mapping.year = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'radial', padding: 0 } };
+        def.plot.props = { ...def.plot.props, innerRadius: '@year:scaled', outerRadius: '@year:group:end' };
+        const rings = await mount(GenVis, { def, data: 'c,share,year\nA,1,2023\nB,1,2023\nA,1,2024\nB,3,2024' });
+        // the rings from the center, of 75 pixels, stacked per year, the circle
+        // is the largest sum (a share of every year closes every ring)
+        // the arcs of A, then the ones of B, of the years in their order
+        const ringArcs = [...rings.querySelectorAll('g.vis-plot path')];
+        expect(ringArcs.map(a => a.getAttribute('d'))).toEqual([
+            arc()({ startAngle: 0, endAngle: Math.PI/2, innerRadius: 0, outerRadius: 75 }),
+            arc()({ startAngle: 0, endAngle: Math.PI/2, innerRadius: 75, outerRadius: 150 }),
+            arc()({ startAngle: Math.PI/2, endAngle: Math.PI, innerRadius: 0, outerRadius: 75 }),
+            arc()({ startAngle: Math.PI/2, endAngle: 2*Math.PI, innerRadius: 75, outerRadius: 150 }),
+        ]);
+        const ringEvents = rings.querySelector('rect.vis-events');
+        ringEvents.dispatchEvent(pointer('pointermove', { clientX: -40, clientY: 10 }));
+        await nextTick();
+        expect(rings.querySelector('.vis-hover-title').textContent).toBe('2023');
+        expect(rings.querySelector('.vis-hover .vis-nearest').textContent).toBe('B1');
+        ringEvents.dispatchEvent(pointer('pointermove', { clientX: -120, clientY: 10 }));
+        await nextTick();
+        expect(rings.querySelector('.vis-hover-title').textContent).toBe('2024');
+        expect(rings.querySelector('.vis-hover .vis-nearest').textContent).toBe('B3');
         expect(errors).toEqual([]);
     });
 

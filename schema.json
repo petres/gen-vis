@@ -451,7 +451,7 @@
                     "enum": ["numeric", "date", "categorical"],
                     "description": "Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc)."
                 },
-                "stacked": { "type": "boolean", "description": "Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars) or a radial one." },
+                "stacked": { "type": "boolean", "description": "Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars), a radial or an angular one (of pies, polar:arc from @<name>:start:scaled to @<name>:end:scaled)." },
                 "scale": { "anyOf": [{ "$ref": "#/definitions/scale" }, { "$ref": "#/definitions/none" }] },
                 "axis": { "anyOf": [{ "$ref": "#/definitions/axis" }, { "$ref": "#/definitions/none" }] },
                 "hover": { "anyOf": [{ "$ref": "#/definitions/none" }, {

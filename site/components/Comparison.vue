@@ -63,7 +63,7 @@ const rows = [
     },
     {
         label: 'Kinds of charts',
-        cells: ['lines, areas, bars, points, texts, polar plots, maps', 'many (a grammar of marks)', 'many, also graphs, sankey, 3D (GL)', 'many, also 3D and statistical', 'many, also stock and Gantt', '8 types', 'many (a grammar of marks)'],
+        cells: ['lines, areas, bars, points, texts, polar plots, pies, maps', 'many (a grammar of marks)', 'many, also graphs, sankey, 3D (GL)', 'many, also 3D and statistical', 'many, also stock and Gantt', '8 types', 'many (a grammar of marks)'],
     },
     {
         label: 'Maps',

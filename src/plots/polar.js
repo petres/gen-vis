@@ -30,7 +30,7 @@ const positioned = (name, type, x, y) => ({
     }),
 });
 
-const arcProps = ['angle', 'width', 'innerRadius', 'outerRadius', 'padAngle', 'cornerRadius'];
+const arcProps = ['angle', 'width', 'startAngle', 'endAngle', 'innerRadius', 'outerRadius', 'padAngle', 'cornerRadius'];
 
 // the plot types of the polar coordinate system, the angles are in radians,
 // clockwise from the top, missing values are gaps in paths and areas
@@ -72,20 +72,28 @@ export default {
 
     // a segment of a ring per row, e.g. the bars of a rose or a stacked one,
     // centered at the `angle`, `width` defaults to the width of a band or the
-    // step of a point scale, `innerRadius` to the inner radius of the plot
+    // step of a point scale, or from `startAngle` to `endAngle`, e.g. the
+    // slices of a pie of stacked angles, `innerRadius` defaults to the inner
+    // radius of the plot, `outerRadius` to its outer radius
     'polar:arc': {
         coords: ['polar'],
         update: true,
         render: (groups, parent, plot, ctx) => pointwise(groups, parent, "path", v => {
-            const s = barScale(plot, ctx, 'angle', 'polar:arc');
-            const width = v.width ?? barWidth(s, 'polar:arc');
-            const a = v.angle + bandCenter(s);
+            let [start, end] = [v.startAngle, v.endAngle];
+            if (!('startAngle' in v && 'endAngle' in v)) {
+                if (!('angle' in v))
+                    throw new Error(`polar:arc: the props 'angle' or 'startAngle' and 'endAngle' are needed`);
+                const s = barScale(plot, ctx, 'angle', 'polar:arc');
+                const width = v.width ?? barWidth(s, 'polar:arc');
+                const a = v.angle + bandCenter(s);
+                [start, end] = [a - width/2, a + width/2];
+            }
             const [inner, outer] = radiusRange(ctx);
             const d = arc()
                 .padAngle(v.padAngle ?? 0)
                 .cornerRadius(v.cornerRadius ?? 0)({
-                    startAngle: a - width/2,
-                    endAngle: a + width/2,
+                    startAngle: start,
+                    endAngle: end,
                     innerRadius: v.innerRadius ?? inner,
                     outerRadius: v.outerRadius ?? outer,
                 });

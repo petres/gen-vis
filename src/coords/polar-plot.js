@@ -20,10 +20,33 @@ const angleDistance = (a, b) => {
     return Math.min(d, tau - d);
 };
 
+// the mapping of an orientation, `angular` or `radial`, the one of the
+// positions or the values (e.g. of a stacked angle) or another one
+const nameOf = (ctx, orientation) => [ctx.axis.v, ctx.axis.h, ...Object.keys(ctx.scales)]
+    .find(n => n !== undefined && ctx.store.mapping(n).scale?.orientation == orientation);
+
 // the inner and outer radius of the radius scale, the circle of the facet without it
 const radiusRange = ctx => {
-    const v = ctx.axis.v;
-    return v ? d3.extent(ctx.scales[v].range()) : [0, ctx.dims.radius];
+    const r = nameOf(ctx, 'radial');
+    return r ? d3.extent(ctx.scales[r].range()) : [0, ctx.dims.radius];
+};
+
+// the values are the angles, they are stacked, e.g. the slices of a pie, the
+// positions are the rings of the radius, if there is one
+const flipped = (ctx, names) => ctx.store.mapping(names.v).scale?.orientation == 'angular';
+
+// the angles of the slice of a row of stacked angles, its inner and outer
+// radius, the ones of its ring or of the circle
+const sliceOf = (ctx, row, names) => {
+    const s = ctx.scales[names.v];
+    const [a0, a1] = (ctx.stackOf?.(row) ?? [0, row[names.v]]).map(v => s(v));
+    let [inner, outer] = radiusRange(ctx);
+    if (names.h) {
+        const r = ctx.scales[names.h];
+        inner = r(row[names.h]);
+        outer = inner + (r.bandwidth?.() ?? 0);
+    }
+    return { a0, a1, inner, outer };
 };
 
 // the angles of the ticks, the values at the end of a cyclic domain are at the
@@ -91,7 +114,7 @@ const radialAxis = (ctx, g, s, values, format, axis) => {
         const grid = ctx.inner.insert("g", () => g.node())
             .attr("class", "vis-grid")
             .attr("fill", "none");
-        const h = ctx.axis.h;
+        const h = nameOf(ctx, 'angular');
         const angle = h && ctx.scales[h];
         if (axis.gridShape == "polygon" && angle) {
             const hAxis = ctx.store.mapping(h).axis;
@@ -224,10 +247,24 @@ export default {
             .attr("width", ctx.innerWidth)
             .attr("height", ctx.innerHeight),
 
-        // the nearest angle with data, also across the top, and the radius
+        // the values of stacked angles without the radius, e.g. of a pie
+        values: true,
+
+        // the nearest angle with data, also across the top, and the radius,
+        // of stacked angles the ring of the radius and the angle, e.g. the
+        // slice of a pie under the pointer, not outside of the circle
         locate(ctx, [px, py], names) {
-            const s = ctx.scales[names.h];
             const a = (Math.atan2(px, -py) + tau) % tau;
+            if (flipped(ctx, names)) {
+                const r = Math.hypot(px, py);
+                if (!names.h && r > radiusRange(ctx)[1])
+                    return null;
+                const key = names.h ? ctx.scales[names.h].nearest?.(r) : undefined;
+                if (names.h && key === undefined)
+                    return null;
+                return { key, value: ctx.scales[names.v].invert?.(a) };
+            }
+            const s = ctx.scales[names.h];
             const keys = [a - tau, a, a + tau].map(v => s.nearest(v)).filter(k => k !== undefined);
             if (keys.length == 0)
                 return null;
@@ -237,13 +274,26 @@ export default {
 
         // the position of the point of a row, of the hover of the nearest point
         point(ctx, row, names) {
+            if (flipped(ctx, names)) {
+                const { a0, a1, inner, outer } = sliceOf(ctx, row, names);
+                return pointRadial((a0 + a1)/2, (inner + outer)/2);
+            }
             const value = ctx.stackOf ? d3.mean(ctx.stackOf(row)) : row[names.v];
             return pointRadial(angleOf(ctx.scales[names.h], row[names.h]), ctx.scales[names.v](value));
         },
 
         // a line from the center, the hover is in the center, on the other
-        // side than the line
-        marker(ctx, key, names, line) {
+        // side than the line, of a slice of stacked angles beside its middle,
+        // towards the center, e.g. over the hole of a donut
+        marker(ctx, key, names, line, nearest) {
+            if (flipped(ctx, names)) {
+                line.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null);
+                if (!nearest)
+                    return { x: 0, y: 0, side: "right" };
+                const { a0, a1, inner, outer } = sliceOf(ctx, nearest, names);
+                const [x, y] = pointRadial((a0 + a1)/2, (inner + outer)/2);
+                return { x, y, side: Math.sin((a0 + a1)/2) >= 0 ? "left" : "right" };
+            }
             const a = angleOf(ctx.scales[names.h], key);
             const [r0, r1] = radiusRange(ctx);
             const [x1, y1] = pointRadial(a, r0);

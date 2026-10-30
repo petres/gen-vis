@@ -263,15 +263,17 @@ export default {
             this.step = null;
             this.selectShown = null;
 
-            // the hover needs the mappings of the positions and of the values
+            // the hover needs the mappings of the positions and of the values,
+            // of a coordinate system with `values` of the hover only the ones
+            // of the values, e.g. of a pie without rings, all rows are one position
             const names = ctx.axis;
-            this.keyboard = Boolean(names.h && names.v);
-            if (!names.h || !names.v) {
+            this.keyboard = Boolean(names.v && (names.h || coord.hover.values));
+            if (!this.keyboard) {
                 this.hover.visible = false;
                 return;
             }
 
-            const format = { h: store.valueFormat(names.h, ctx.scales[names.h]), v: store.valueFormat(names.v, ctx.scales[names.v]) };
+            const format = { h: names.h ? store.valueFormat(names.h, ctx.scales[names.h]) : () => '', v: store.valueFormat(names.v, ctx.scales[names.v]) };
             const v = names.v;
             // the start and the end of a stacked value
             const stackOf = ctx.stackOf;
@@ -425,7 +427,7 @@ export default {
                 const position = found.point
                     ? (marker.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null),
                         { x: found.point[0], y: found.point[1], side: found.point[0] > ctx.innerWidth/2 ? "left" : "right" })
-                    : coord.hover.marker(ctx, key, names, marker);
+                    : coord.hover.marker(ctx, key, names, marker, nearest);
                 last = { key, nearest, position };
                 Object.assign(this.hover, placed(found, position), {
                     data: entriesOf(rows, nearest),

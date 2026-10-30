@@ -150,7 +150,7 @@ const validateDef = def => {
     // the sizes of the bands of the scales of positions, e.g. `y:bandwidth`
     const bandNames = Object.entries(def.mapping ?? {}).filter(([, m]) => m?.scale?.orientation !== undefined && ['band', 'point'].includes(m.scale.type))
         .flatMap(([n]) => [`${n}:bandwidth`, `${n}:step`]);
-    const facetNames = [...globalNames, 'width', 'innerWidth', 'height', 'innerHeight', ...bandNames];
+    const facetNames = [...globalNames, 'width', 'innerWidth', 'height', 'innerHeight', ...(coordName == 'polar' ? ['radius'] : []), ...bandNames];
     const names = {
         global: new Set(globalNames),
         facet: new Set(facetNames),
