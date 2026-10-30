@@ -9,6 +9,7 @@ in the [README](README.md#upgrading-from-1x).
 Changes which need changes of definitions:
 
 - `filter`: `null` is the rows without a value (it was no row)
+- `"ratio"` of `relative` props is 1 by default (it was required)
 - form elements: the patches of an entry are `patch`, e.g.
   `"patch": { "mapping": { "y": { "column": "share" } } }` instead of
   `"mapping": { "y": { "column": "share" } }`
@@ -29,6 +30,10 @@ New:
 - props: `offset` of `relative` props (the `ratio` is 1 by default), the
   prop `match` (the prop of the case of a value), a prop `of` instead of a
   reference, the margins are props, e.g. steps of `totalWidth`
+- scales: `include` (values of the domain taken from the data, e.g. 0),
+  `center` (a symmetric domain), `"closed": "right"` of threshold scales
+  (`value > limit`); the references `@y:bandwidth`, `@y:step` (also of
+  annotations) and the position of any value, e.g. `@x:scaled:100`
 
 ## 2.1.0
 

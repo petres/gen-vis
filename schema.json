@@ -317,6 +317,19 @@
                     "items": { "$ref": "#/definitions/domainValue" },
                     "description": "Fixes the domain, a null first or last entry is taken from the data, the values are converted as the ones of the data, e.g. dates, and can be references, e.g. to a global. A diverging scale has a middle entry, a threshold scale the values between its classes, a point or band scale its categories in their order."
                 },
+                "include": {
+                    "description": "Values the domain taken from the data includes, e.g. 0 or 100, a value or a list, also references.",
+                    "anyOf": [{ "$ref": "#/definitions/domainValue" }, { "type": "array", "items": { "$ref": "#/definitions/domainValue" } }]
+                },
+                "center": {
+                    "$ref": "#/definitions/domainValue",
+                    "description": "The domain taken from the data is symmetric around this value, e.g. 0 of changes."
+                },
+                "closed": {
+                    "enum": ["left", "right"],
+                    "default": "left",
+                    "description": "The end of the classes of a threshold scale they include, the lower one (left, value >= limit) or the upper one (right, value > limit)."
+                },
                 "domainRel": {
                     "$ref": "#/definitions/pair",
                     "description": "Extends the domain relative to its size."

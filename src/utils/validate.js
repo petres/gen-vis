@@ -78,7 +78,7 @@ const checkProp = (value, path, warn, names = null) => {
 const rowNames = (n, m) => [
     n,
     `${n}:formatted`,
-    ...(m.scale ? [`${n}:scaled`, `${n}:scaled:center`, `${n}:scaled:0`, `${n}:scaled:min`, `${n}:scaled:max`] : []),
+    ...(m.scale ? [`${n}:scaled`, `${n}:scaled:center`, `${n}:scaled:min`, `${n}:scaled:max`, `${n}:bandwidth`, `${n}:step`] : []),
     ...(m.stacked ? [`${n}:start`, `${n}:end`] : []),
     ...(m.stacked && m.scale ? [`${n}:start:scaled`, `${n}:end:scaled`, `${n}:height:scaled`] : []),
 ];
@@ -89,6 +89,15 @@ const categoryNames = m => m?.props ? ['name', 'visible', ...(m.props.scheme ? [
     ...Object.keys(m.props.common ?? {}),
     ...[m.props.ranks ?? []].flat().flatMap(e => Object.keys(e ?? {})),
     ...Object.values(m.props.categories ?? {}).flatMap(e => Object.keys(e ?? {}))] : [];
+
+// the names of a plot, also the positions of values of the scaled mappings,
+// e.g. `x:scaled:0` or `y:scaled:100`
+class PlotNames extends Set {
+    has(name) {
+        const at = /^(.+):scaled:-?\d+(?:\.\d+)?$/.exec(name);
+        return super.has(name) || (at !== null && super.has(`${at[1]}:scaled`));
+    }
+}
 
 /**
  * Returns warnings for common mistakes in a (merged) definition, e.g. unknown
@@ -134,12 +143,15 @@ const validateDef = def => {
         ...formElements.map(([, e]) => e.ref).filter(r => typeof r == 'string'),
     ]);
     const globalNames = [...globals, 'totalWidth'];
-    const facetNames = [...globalNames, 'width', 'innerWidth', 'height', 'innerHeight'];
+    // the sizes of the bands of the scales of positions, e.g. `y:bandwidth`
+    const bandNames = Object.entries(def.mapping ?? {}).filter(([, m]) => m?.scale?.orientation !== undefined && ['band', 'point'].includes(m.scale.type))
+        .flatMap(([n]) => [`${n}:bandwidth`, `${n}:step`]);
+    const facetNames = [...globalNames, 'width', 'innerWidth', 'height', 'innerHeight', ...bandNames];
     const names = {
         global: new Set(globalNames),
         facet: new Set(facetNames),
         category: n => new Set([...globalNames, ...categoryNames(mapping[n])]),
-        plot: categories => new Set([
+        plot: categories => new PlotNames([
             ...facetNames,
             ...Object.entries(mapping).flatMap(([n, m]) => rowNames(n, m ?? {})),
             ...categories.flatMap(c => categoryNames(mapping[c])),
@@ -218,6 +230,12 @@ const validateDef = def => {
             [m.scale.inset].flat().forEach((v, j) => checkProp(v, `${path}.scale.inset`, warn, names.range));
             if (Array.isArray(m.scale.domain))
                 m.scale.domain.forEach((v, j) => checkProp(v, `${path}.scale.domain[${j}]`, warn, names.facet));
+            [m.scale.include ?? []].flat().forEach((v, j) => checkProp(v, `${path}.scale.include`, warn, names.facet));
+            checkProp(m.scale.center, `${path}.scale.center`, warn, names.facet);
+            if ((m.scale.include !== undefined || m.scale.center !== undefined) && !['numeric', 'date'].includes(m.type))
+                warn(`${path}.scale`, `'include' and 'center' are values of numeric or date mappings`);
+            if (m.scale.closed !== undefined && (type != 'threshold' || !['left', 'right'].includes(m.scale.closed)))
+                warn(`${path}.scale.closed`, `the side of the classes of a threshold scale, 'left' (default) or 'right'`);
             if (m.scale.orientation !== undefined && !orientations.includes(m.scale.orientation))
                 warn(`${path}.scale.orientation`, orientations.length > 0
                     ? `unknown orientation '${m.scale.orientation}', expected one of ${list(orientations)}`
@@ -303,7 +321,7 @@ const validateDef = def => {
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
         // the names of the rows of a url are not known
         const plotNames = typeof p.data == 'string' ? null
-            : new Set([...names.plot(categories.filter(c => Object.hasOwn(mapping, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
+            : new PlotNames([...names.plot(categories.filter(c => Object.hasOwn(mapping, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
         checkProp(p.props, `${path}.props`, warn, plotNames);
     });
 

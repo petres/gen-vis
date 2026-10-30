@@ -553,6 +553,10 @@ parent or of a patch, e.g. `"hover": null`.
   are its categories in their order. `domainRel` (relative to the positions,
   e.g. of a `log` or a `sqrt` scale) and `domainAbs` (absolute) extend it, by
   default a domain of a position taken from the data is extended by 2%.
+  `include` are values the domain taken from the data includes, e.g. `0` or
+  `[0, 100]`, around `center` it is symmetric, e.g. `0` of changes, e.g.
+  `"include": 0, "domainRel": [-0.4, 0.4]` is the domain of the values and 0
+  extended by 40% of its size on both sides.
   `nice` rounds the ends taken from the data of a numeric mapping, e.g. 0.951
   to 1, of a `log` scale to powers of 10, `true` for steps of about a tenth
   of the domain or the number of steps, e.g. so the legend of colors ends at
@@ -567,7 +571,9 @@ parent or of a patch, e.g. `"hover": null`.
   `Blues`, `Viridis` or `RdYlGn`, `sequentialQuantile` the colors of the
   quantiles of the values. `quantize`, `quantile` and `threshold` scales (the
   `domain` are the values between the classes) are classes of colors, the
-  `range` or a `scheme` of d3, e.g. `Blues`, with `classes` colors, `ordinal`
+  `range` or a `scheme` of d3, e.g. `Blues`, with `classes` colors, the
+  classes of a `threshold` scale include their lower limit (`value >= limit`),
+  with `"closed": "right"` their upper one (`value > limit`), `ordinal`
   scales the colors of categories. Scales without orientation are the same in
   all facets.
 - `name`: the title of the legend.
@@ -973,9 +979,9 @@ parts add names:
 | everywhere | the `globals` and `totalWidth`, the width of the visualisation |
 | `options.height`, `options.margins`, `facets.cols`, `facets.scales`, `filter` | only these |
 | the `props` of `legend` (also of the `symbol`) and `hover` of a mapping | the props of its categories, e.g. `@color` and `@name` |
-| `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight` |
+| `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight`, the sizes of the band and point scales, e.g. `y:bandwidth` and `y:step` |
 | `scale.range` | the sizes of the coordinate system, e.g. `@radius` of polar plots, `width` and `height` are the ones of the inner area |
-| the `props` of a plot | the props of its categories and the values of the row: a mapping (e.g. `@x`), the value as a text of the format of its hover (`@x:formatted`, e.g. `1.234,5`, a label), the scaled value (`@x:scaled`, `@x:scaled:center` for the center of a band, `@x:scaled:0` for the position of 0, `@x:scaled:min` and `@x:scaled:max` of the domain), stacked values (`@y:start`, `@y:end:scaled`, ..., see `stacked`) |
+| the `props` of a plot | the props of its categories and the values of the row: a mapping (e.g. `@x`), the value as a text of the format of its hover (`@x:formatted`, e.g. `1.234,5`, a label), the scaled value (`@x:scaled`, `@x:scaled:center` for the center of a band, the position of a value, e.g. `@x:scaled:0` or `@x:scaled:100`, `@x:scaled:min` and `@x:scaled:max` of the domain), the size of a band and the distance of the categories (`@y:bandwidth`, `@y:step`), stacked values (`@y:start`, `@y:end:scaled`, ..., see `stacked`) |
 
 Inner names replace outer ones, in a plot the mappings replace globals of the
 same name, e.g. `@year` is the one of the row. A reference to an unknown name

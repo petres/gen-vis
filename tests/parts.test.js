@@ -195,3 +195,39 @@ describe('props', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('scales', () => {
+    test('include, center and the classes closed on the right', async () => {
+        const { makeScale } = await import('@/utils/scales');
+        const rows = [{ v: 2 }, { v: 6 }];
+        const scale = (s, type = 'numeric') => makeScale('v', { type, scale: { type: 'linear', orientation: 'horizontal', domain: [null, null], domainRel: [0, 0], ...s } }, rows, { coord: { ranges: { horizontal: [0, 100] } } });
+        expect(scale({ include: 0 }).domain()).toEqual([0, 6]);
+        expect(scale({ include: [10, '@max'] }).domain()).toEqual([2, 10]);
+        expect(makeScale('v', { type: 'numeric', scale: { type: 'linear', domain: [null, null], include: ['@max'] } }, rows, { scope: { max: 20 } }).domain()).toEqual([2, 20]);
+        expect(scale({ center: 0 }).domain()).toEqual([-6, 6]);
+        expect(scale({ include: 0, domainRel: [-0.5, 0.5] }).domain()).toEqual([-3, 9]);
+        // fixed ends stay
+        expect(scale({ include: 10, domain: [null, 8] }).domain()).toEqual([2, 8]);
+
+        const classes = closed => makeScale('v', { type: 'numeric', scale: { type: 'threshold', domain: [74.5, 89.5], range: ['red', 'orange', 'green'], closed } }, rows);
+        expect([74.5, 74.6, 89.5, 90].map(classes())).toEqual(['orange', 'orange', 'green', 'green']);
+        const right = classes('right');
+        expect([74.4, 74.5, 74.6, 89.5, 90].map(right)).toEqual(['red', 'red', 'orange', 'orange', 'green']);
+        expect(right.invertExtent('orange')).toEqual([74.5, 89.5]);
+        expect(right.copy()(74.5)).toBe('red');
+    });
+
+    test('the sizes of bands and the positions of values as references', async () => {
+        const def = lineDef();
+        def.mapping.y = { column: 'land', type: 'categorical', scale: { type: 'band', orientation: 'vertical', padding: 0 } };
+        def.mapping.x.scale.domainRel = [0, 0];
+        def.plot = [{ id: 'zero', type: 'svg:rect', props: { x: '@x:scaled:2021', y: '@y:scaled', height: '@y:bandwidth', width: '@y:step' } }];
+        def.annotations = [{ type: 'text', x: 2020, y: 'Wien', text: 'a', props: { dy: '@y:bandwidth' } }];
+        const el = await mount(GenVis, { def, data: lineData });
+        // 250 pixels, two bands
+        const rect = el.querySelector('g.vis-plot[data-plot="zero"] rect');
+        expect(['x', 'height', 'width'].map(a => Math.round(rect.getAttribute(a)))).toEqual([183, 125, 125]);
+        expect(el.querySelector('.vis-annotation.vis-text').getAttribute('dy')).toBe('125');
+        expect(errors).toEqual([]);
+    });
+});

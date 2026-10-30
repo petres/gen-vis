@@ -9,7 +9,7 @@ import * as d3Scale from 'd3-scale';
 import { axisTop, axisBottom, axisLeft, axisRight } from 'd3-axis';
 import { byPrefix, named } from '@/utils/registry';
 
-export { bisectCenter, extent, greatest, group, least, max, mean, min, nice, range, tickStep, ticks } from 'd3-array';
+export { bisectCenter, bisectLeft, extent, greatest, group, least, max, mean, min, nice, range, tickStep, ticks } from 'd3-array';
 export { csvFormat, csvParse, tsvParse } from 'd3-dsv';
 export { formatLocale, precisionFixed } from 'd3-format';
 export { scaleLinear } from 'd3-scale';

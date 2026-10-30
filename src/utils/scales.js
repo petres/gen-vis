@@ -39,6 +39,18 @@ const niceEnds = (type, lo, hi, count) => type.toLowerCase().endsWith('log') && 
     ? d3.scales.log().domain([lo, hi]).nice().domain()
     : d3.nice(lo, hi, count);
 
+// a threshold scale whose classes include their upper end, e.g. `value > 74.5`
+// of the second class, d3 includes the lower end (`closed: "left"`)
+const rightClosed = s => {
+    const f = x => x !== null && x !== undefined && x <= x ? s.range()[d3.bisectLeft(s.domain(), x)] : s.unknown();
+    ['domain', 'range', 'unknown', 'invertExtent'].forEach(k => f[k] = (...a) => {
+        const r = s[k](...a);
+        return r === s ? f : r;
+    });
+    f.copy = () => rightClosed(s.copy());
+    return f;
+};
+
 // the values of a mapping in the rows, continuous ones sorted for the lookup
 // of the nearest value, and their extent, of stacked values (`stackOf`, see
 // layout.js) the one of the stacks, e.g. from 0
@@ -63,7 +75,22 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     const ranges = coord.ranges ?? {};
     // the end of a cyclic range is its start, e.g. of the angles of a circle
     const cyclic = (coord.cyclic ?? []).includes(scaleDef.orientation);
-    const { values, extent } = valuesOf(name, mapping, rows, stackOf);
+    let { values, extent } = valuesOf(name, mapping, rows, stackOf);
+    // the extent of the data includes the values of `include`, e.g. 0 or
+    // 100, around `center` it is symmetric, e.g. of 0 of changes
+    const continuous = mapping.type == 'numeric' || mapping.type == 'date';
+    const valueOf = v => v === null || v === undefined ? null : (continuous ? convert(mapping, v) : v);
+    if (extent && scaleDef.include !== undefined) {
+        const included = [evaluate(scaleDef.include, scope)].flat().map(valueOf).filter(v => v !== null);
+        extent = d3.extent([...extent, ...included].filter(v => v !== undefined && v !== null));
+    }
+    if (extent && scaleDef.center !== undefined && extent[0] !== undefined) {
+        const c = valueOf(evaluate(scaleDef.center, scope));
+        if (c !== null) {
+            const d = Math.max(Math.abs(extent[0] - c), Math.abs(extent[1] - c));
+            extent = [c - d, c + d];
+        }
+    }
 
     const scale = d3.named(d3.scales, scaleDef.type);
     if (!scale)
@@ -98,8 +125,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     // the values of a fixed domain are converted as the ones of the data, e.g.
     // dates of "2020-01-01" or numbers of a global "100", the values can be
     // references, e.g. to a global, categories are kept
-    const continuous = mapping.type == 'numeric' || mapping.type == 'date';
-    const fixed = () => (evaluate(scaleDef.domain, scope) ?? []).map(v => v === null || v === undefined ? null : (continuous ? convert(mapping, v) : v));
+    const fixed = () => (evaluate(scaleDef.domain, scope) ?? []).map(valueOf);
     let domain;
     if (scaleDef.type == 'threshold') {
         // the values between the classes
@@ -172,5 +198,5 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     }
 
     s.domain(domain);
-    return s;
+    return scaleDef.type == 'threshold' && scaleDef.closed == 'right' ? rightClosed(s) : s;
 };

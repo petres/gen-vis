@@ -62,6 +62,11 @@ const facetEntries = (store, rows) => {
         .map(g => ({ key: g.group[d], name: props[String(g.group[d])].name, rows: g.entries }));
 };
 
+// the sizes of the categories of the scales of positions, e.g. `y:bandwidth`
+// and `y:step` of a band scale, for the names of a facet
+const scaleSizes = scales => Object.fromEntries(Object.entries(scales).filter(([, s]) => s.step)
+    .flatMap(([n, s]) => [[`${n}:bandwidth`, s.bandwidth?.() ?? 0], [`${n}:step`, s.step()]]));
+
 /**
  * The view of the store in the `width` of the visualisation, the globals
  * and the width are the references of the definition, e.g. of the height.
@@ -108,19 +113,23 @@ const layout = (store, width) => {
     const shared = faceted && def.facets.scales ? evaluate(def.facets.scales, scope) : [];
     const common = Object.fromEntries([...new Set([...shared, ...colors])].map(n => [n, scaleOf(n, rows)]));
 
-    const facets = (faceted ? entries : [{ key: undefined, name: undefined, rows }]).map(f => ({
-        ...f,
-        ...size,
-        margins,
-        dims,
-        axis,
-        stackOf,
-        scope: facetScope,
-        scales: {
+    const facets = (faceted ? entries : [{ key: undefined, name: undefined, rows }]).map(f => {
+        const scales = {
             ...common,
             ...Object.fromEntries(scaled.filter(n => !Object.hasOwn(common, n)).map(n => [n, scaleOf(n, f.rows)])),
-        },
-    }));
+        };
+        return {
+            ...f,
+            ...size,
+            margins,
+            dims,
+            axis,
+            stackOf,
+            // the sizes of the bands of the scales, e.g. "@y:bandwidth" of annotations
+            scope: { ...facetScope, ...scaleSizes(scales) },
+            scales,
+        };
+    });
 
     return {
         axis,
@@ -198,9 +207,11 @@ const rowValue = (ctx, name, rows) => {
         'scaled': () => s && (row => s(row[m])),
         // the center of a band, e.g. of a label of a bar
         'scaled:center': () => s && (row => s(row[m]) + bandCenter(s)),
-        'scaled:0': () => s && constant(s(0)),
         'scaled:min': () => s && constant(s(s.domain()[0])),
         'scaled:max': () => s && constant(s(s.domain().at(-1))),
+        // the size of a band and the distance of the categories, e.g. of a band scale
+        'bandwidth': () => s && constant(s.bandwidth?.() ?? 0),
+        'step': () => s && constant(s.step?.() ?? 0),
         'start': () => stackOf && start,
         'end': () => stackOf && end,
         'start:scaled': () => stackOf && s && (row => s(start(row))),
@@ -208,6 +219,10 @@ const rowValue = (ctx, name, rows) => {
         'height:scaled': () => stackOf && s && (row => s(start(row)) - s(end(row))),
     };
     const kind = parts.join(':');
+    // the position of a value, e.g. "@x:scaled:0" or "@y:scaled:100"
+    const at = /^scaled:(-?\d+(?:\.\d+)?)$/.exec(kind);
+    if (at)
+        return s ? constant(s(convert(ctx.store.mapping(m), at[1]))) : undefined;
     return Object.hasOwn(values, kind) ? values[kind]() || undefined : undefined;
 };
 
