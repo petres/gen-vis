@@ -143,3 +143,39 @@ describe('globals of the page', () => {
         expect(el.querySelector('.vis-title').textContent).toBe('Values');
     });
 });
+
+describe('filters of rows', () => {
+    test('values, lists, missing values, not and ranges, also of references', async () => {
+        const { rowFilter, filter } = await import('@/utils/data');
+        const mapping = { x: { type: 'numeric' }, d: { type: 'date' }, c: { type: 'categorical' } };
+        const rows = [
+            { x: 1, d: new Date(2020, 0, 1).getTime(), c: 'a' },
+            { x: 2, d: new Date(2021, 0, 1).getTime(), c: 'b' },
+            { x: null, d: null, c: 'c' },
+        ];
+        const keep = (conditions, scope) => filter(rows, rowFilter(conditions, mapping, scope)).map(r => r.c);
+        expect(keep({ x: 1 })).toEqual(['a']);
+        expect(keep({ x: '2' })).toEqual(['b']);
+        expect(keep({ c: ['a', 'c'] })).toEqual(['a', 'c']);
+        expect(keep({ x: null })).toEqual(['c']);
+        expect(keep({ x: { not: null } })).toEqual(['a', 'b']);
+        expect(keep({ c: { not: ['a'] } })).toEqual(['b', 'c']);
+        expect(keep({ d: { range: ['2020-06-01', null] } })).toEqual(['b']);
+        expect(keep({ x: { range: [null, '@max'] } }, { max: 1 })).toEqual(['a']);
+        expect(keep({ c: '@c', x: { not: null } }, { c: 'b' })).toEqual(['b']);
+        expect(() => rowFilter({ x: { from: 1 } }, mapping)).toThrow('filter.x: expected');
+    });
+
+    test('of a plot and of the hover', async () => {
+        const def = lineDef();
+        def.plot[1].filter = { c: 'Wien', y: { not: null } };
+        def.options.hover = { filter: { c: 'Tirol' } };
+        const el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelectorAll('g.vis-plot[data-plot="dots"] circle')).toHaveLength(3);
+        const { pointer } = await import('./dom.js');
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
+        await nextTick();
+        expect([...el.querySelectorAll('.vis-hover tr.vis-hover-entry')].map(r => r.textContent)).toEqual(['Tirol2,0']);
+        expect(errors).toEqual([]);
+    });
+});

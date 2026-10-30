@@ -1,9 +1,10 @@
-export { groupBy, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, filter, stack, categoryOrder, toDate, addDataValues, distinctValues, usedColumns, columnValues };
+export { groupBy, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, filter, stack, categoryOrder, toDate, addDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { sameValue, templateRefs } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
+import { evaluate } from "@/utils/props";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
@@ -249,6 +250,44 @@ const filter = (data, conditions) => {
     });
 };
 
+
+// a condition of the values of a mapping `m` of a filter: a value or a list
+// of values, compared as the ones of the rows, e.g. dates, `null` the rows
+// without a value, `{ "not": condition }` and `{ "range": [from, to] }`
+// (`null` is open), the values are evaluated already, e.g. of globals
+const missingValue = v => v === null || v === undefined;
+const condition = (m, c, path) => {
+    if (missingValue(c))
+        return missingValue;
+    if (Array.isArray(c)) {
+        const keys = new Set(c.map(k => String(convert(m, k))));
+        return v => !missingValue(v) && keys.has(String(v));
+    }
+    if (typeof c == 'object') {
+        if ('not' in c) {
+            const test = condition(m, c.not, path);
+            return v => !test(v);
+        }
+        if (Array.isArray(c.range)) {
+            const [from, to] = c.range.map(e => missingValue(e) ? null : convert(m, e));
+            return v => !missingValue(v) && (from === null || v >= from) && (to === null || v <= to);
+        }
+        throw new Error(`${path}: expected a value, a list of values, null, { "not": ... } or { "range": [from, to] }`);
+    }
+    const key = String(convert(m, c));
+    return v => !missingValue(v) && String(v) === key;
+};
+
+/**
+ * The test of the rows of a filter, e.g. { "year": "@year", "value": { "not":
+ * null } }, the conditions of the values of mappings, see `condition`, as
+ * props of the `scope`, e.g. the globals, `mapping` are the mappings of the
+ * definition, `path` names it in errors, a list of { dim, key } of `filter`.
+ */
+const rowFilter = (conditions, mapping, scope = {}, path = 'filter') => Object.entries(conditions ?? {}).map(([dim, c]) => ({
+    dim,
+    key: condition(Object.hasOwn(mapping, dim) ? mapping[dim] : undefined, evaluate(c, scope), `${path}.${dim}`),
+}));
 
 /**
  * The columns of the data a definition can use, null if they are not known:

@@ -26,6 +26,7 @@ import { evaluate } from "@/utils/props";
 import { highlighter, withMotion } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 import { plotGroups, plotRows } from "@/layout";
+import { filter, rowFilter } from "@/utils/data";
 
 import Hover from '@/comp/Hover.vue';
 
@@ -269,8 +270,11 @@ export default {
             const marker = d3.select(this.$refs.hoverMarker).select("line");
             const scope = store.scope;
 
-            // the rows by their key, e.g. of the horizontal axis, compared as strings
-            const rowsByKey = d3.group(ctx.rows.filter(e => e[v] !== null), e => String(e[names.h]));
+            // the rows of the hover, with a value and of its `filter`, by their
+            // key, e.g. of the horizontal axis, compared as strings
+            const hoverOptions = store.def.options.hover ?? {};
+            const hoverRows = filter(ctx.rows.filter(e => e[v] !== null), rowFilter(hoverOptions.filter, store.def.mapping, ctx.scope, 'options.hover.filter'));
+            const rowsByKey = d3.group(hoverRows, e => String(e[names.h]));
             let last = null;
             // the rows of the hover shown, e.g. for a select by the keyboard
             let current = null;
@@ -293,11 +297,10 @@ export default {
             // without a key, the rows are not formatted yet
             // the hover of the nearest point, e.g. of a scatter plot, within
             // `radius` pixels, of the coordinate systems with points of rows
-            const hoverOptions = store.def.options.hover ?? {};
             const pointMode = hoverOptions.mode == 'point' && coord.hover.point;
             let points = null;
             const nearestPoint = ([px, py]) => {
-                points ??= ctx.rows.filter(row => row[names.h] !== null && row[v] !== null)
+                points ??= hoverRows.filter(row => row[names.h] !== null)
                     .map(row => [...coord.hover.point(ctx, row, names), row]);
                 const radius = hoverOptions.radius ?? 30;
                 const best = d3.least(points, ([x, y]) => (x - px)**2 + (y - py)**2);

@@ -1,6 +1,6 @@
 export { layout, axisNames, visibleKeys, plotRows, plotGroups };
 
-import { categoryOrder, convert, filter, groupBy, stack } from "@/utils/data";
+import { categoryOrder, convert, filter, groupBy, rowFilter, stack } from "@/utils/data";
 import * as d3 from "@/utils/d3";
 import { bind, constant, evaluate, formatter, refNames } from "@/utils/props";
 import { bandCenter, makeScale } from "@/utils/scales";
@@ -71,15 +71,10 @@ const layout = (store, width) => {
     const axis = axisNames(store);
     const scope = { ...def.globals, totalWidth: width, [formatter]: store.scope[formatter] };
 
-    // the rows of the visible categories and of the values of `filter`, e.g.
-    // of a global of a form element, they are compared as the values of the
-    // rows, e.g. dates as timestamps
+    // the rows of the visible categories and of the conditions of `filter`,
+    // e.g. of a global of a form element, see rowFilter
     const visible = visibleKeys(def);
-    const values = Object.entries(def.filter ?? {}).map(([dim, v]) => ({
-        dim,
-        key: [evaluate(v, scope)].flat().map(k => convert(store.mapping(dim), k)),
-    }));
-    const rows = filter(store.data, [...visible, ...values]);
+    const rows = filter(store.data, [...visible, ...rowFilter(def.filter, def.mapping, scope)]);
 
     // the start and the end of the stacked values of the rows, stacked in the
     // order of the categories, not of the rows
@@ -149,20 +144,23 @@ const convertValue = (mapping, v) => Array.isArray(v)
  * others, e.g. a `label`, the values of the mappings are converted as the
  * ones of the data, e.g. dates, the values of rows of the definition are
  * props of the facet, e.g. references to globals. A row with a value of the
- * mapping of the facets is only in its facet.
+ * mapping of the facets is only in its facet. `filter` of the plot leaves
+ * out rows, see rowFilter.
  */
 const plotRows = (store, plot, facet) => {
+    const conditions = rowFilter(plot.filter, store.def.mapping, facet.scope, `plot ${plot.id}: filter`);
     if (!plot.data)
-        return facet.rows;
+        return conditions.length > 0 ? filter(facet.rows, conditions) : facet.rows;
     const mapping = store.def.mapping;
     const dim = store.def.facets?.dim;
     const inline = !plot.loaded;
-    return plot.data
+    const rows = plot.data
         .map(r => Object.fromEntries(Object.entries(r).map(([k, v]) => {
             const value = inline ? evaluate(v, facet.scope) : v;
             return [k, Object.hasOwn(mapping, k) ? convertValue(mapping[k], value) : value];
         })))
         .filter(r => !dim || facet.key === undefined || !Object.hasOwn(r, dim) || String(r[dim]) == String(facet.key));
+    return conditions.length > 0 ? filter(rows, conditions) : rows;
 };
 
 // one row of the rows of a group: the first or the last one, in the order of

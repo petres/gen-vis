@@ -155,6 +155,10 @@ the values are text, e.g. `<` of the data is shown as it is:
 "options": { "hover": { "title": "<b>{title}</b>", "row": "{land}: {y} <small>{land.unit}</small>" } }
 ```
 
+`filter` of the `hover` of the options are the rows with a hover, the
+conditions of mappings as the ones of [filter](#formelements-and-globals),
+e.g. `{"level": "item"}`.
+
 `"mode": "point"` of the `hover` of the options shows the row of the point
 nearest to the mouse (within `radius` pixels, 30 by default) instead of the
 rows of the nearest position of the axis, e.g. of a scatter plot, in
@@ -705,6 +709,9 @@ A plot or a list of plots, drawn in order:
   plots are drawn between them in their order.
 - `facet`: a key or a list of keys of the facets of the plot, by default it
   is in all facets.
+- `filter`: only the rows of the conditions of mappings, see
+  [filter](#formelements-and-globals), e.g. `{"level": "header"}` or `{"y":
+  {"not": null}}`, the references are the names of the facet.
 
 Labels of values, of the bars of a band scale at their center, with the
 format of the hover of the mapping (`@x:formatted`), see
@@ -986,9 +993,14 @@ The selected entries are named below the subtitle of the [PNG](#png),
 `"inImage": false` leaves out a form element which only changes the
 presentation, which the image shows anyway, e.g. shared or separate scales of
 the facets.
-`filter` shows only the rows of values of mappings, e.g. of a global, a value
-or a list of them, the values are compared as the ones of the rows, e.g.
-dates:
+`filter` shows only the rows of the conditions of mappings: a value or a
+list of them, e.g. of a global, `null` (the rows without a value),
+`{"not": ...}` (the rows which do not fulfil the condition) or `{"range":
+[from, to]}` (from and to included, `null` is open), the values are compared
+as the ones of the rows, e.g. dates, and can be references, e.g. `"@year"`
+or `{"range": [null, "@max"]}`. The same conditions are the `filter` of a
+plot (its rows) and of the hover (`options.hover.filter`, the rows with a
+hover):
 
 ```json
 "globals": { "year": "2025" },

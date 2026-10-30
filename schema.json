@@ -64,11 +64,7 @@
                 { "type": "array", "items": { "$ref": "#/definitions/transform" } }
             ]
         },
-        "filter": {
-            "type": "object",
-            "description": "The rows of these values of mappings, e.g. a global of a form element: { \"year\": \"@year\" }.",
-            "additionalProperties": {}
-        },
+        "filter": { "$ref": "#/definitions/filter" },
         "options": { "$ref": "#/definitions/options" },
         "globals": {
             "type": "object",
@@ -93,6 +89,11 @@
         }
     },
     "definitions": {
+        "filter": {
+            "type": "object",
+            "description": "The rows of the conditions of mappings: a value or a list of values, e.g. a global of a form element { \"year\": \"@year\" }, null (no value), { \"not\": ... } or { \"range\": [from, to] } (null is open).",
+            "additionalProperties": {}
+        },
         "none": {
             "type": "null",
             "description": "Removes the part of a parent."
@@ -264,6 +265,7 @@
                     "properties": {
                         "mode": { "enum": ["position", "point"], "description": "The rows of the nearest position of the axis (position, by default) or the row of the nearest point, e.g. of a scatter plot." },
                         "radius": { "type": "number", "description": "The distance of the nearest point in pixels, 30 by default." },
+                        "filter": { "$ref": "#/definitions/filter", "description": "The rows with a hover, e.g. not the ones of headers." },
                         "title": { "type": "string", "description": "The title, {title} is the default one, e.g. the date, and the globals." },
                         "row": { "type": "string", "description": "A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, and the globals." }
                     }
@@ -537,6 +539,7 @@
                     ]
                 },
                 "dataFormat": { "enum": ["csv", "tsv", "json", "parquet"], "description": "The format of the url of the data, by default the one of its extension." },
+                "filter": { "$ref": "#/definitions/filter", "description": "The rows of the plot, of the conditions of mappings, see filter of the definition." },
                 "select": {
                     "description": "One row of every group: the first or the last one, or the one with the least or the most value of a mapping, e.g. labels at the ends of lines.",
                     "anyOf": [

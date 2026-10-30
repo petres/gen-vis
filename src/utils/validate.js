@@ -135,6 +135,31 @@ const validateDef = def => {
         range: new Set([...facetNames, ...Object.keys(coord.dims?.(1, 1) ?? {})]),
     };
 
+    // the conditions of the rows of mappings, see rowFilter of utils/data.js:
+    // values, lists, null, { "not": ... } and { "range": [from, to] }, props
+    // of the names `known`
+    const checkCondition = (c, path, known) => {
+        if (isObject(c) && !('prop' in c)) {
+            if ('not' in c)
+                return checkCondition(c.not, `${path}.not`, known);
+            if (Array.isArray(c.range) && c.range.length == 2)
+                return c.range.forEach((v, j) => checkProp(v, `${path}.range[${j}]`, warn, known));
+            return warn(path, `expected a value, a list of values, null, { "not": ... } or { "range": [from, to] }`);
+        }
+        checkProp(c, path, warn, known);
+    };
+    const checkFilter = (conditions, path, known) => {
+        if (conditions === undefined)
+            return;
+        if (!isObject(conditions))
+            return warn(path, `expected the conditions of mappings, e.g. { "year": "@year" }`);
+        Object.entries(conditions).forEach(([n, c]) => {
+            if (!Object.hasOwn(mapping, n))
+                warn(`${path}.${n}`, `unknown mapping '${n}'`);
+            checkCondition(c, `${path}.${n}`, known);
+        });
+    };
+
     Object.entries(mapping).forEach(([n, m]) => {
         const path = `mapping.${n}`;
         if (typeof m.column != 'string')
@@ -280,9 +305,9 @@ const validateDef = def => {
             warn('geo.projection.type', `unknown projection '${projection}', expected one of ${list(projectionNames)}`);
     }
 
-    Object.keys(def.filter ?? {}).filter(n => !Object.hasOwn(mapping, n)).forEach(n =>
-        warn(`filter.${n}`, `unknown mapping '${n}'`));
-    Object.entries(def.filter ?? {}).forEach(([n, v]) => checkProp(v, `filter.${n}`, warn, names.global));
+    checkFilter(def.filter, 'filter', names.global);
+    plots.forEach(([i, p]) => checkFilter(p.filter, `plot[${i}].filter`, names.facet));
+    checkFilter(def.options?.hover?.filter, 'options.hover.filter', names.facet);
 
     // the values of an annotation are of mappings with a scale, of maps `lon` and `lat`
     const annotationTypes = coord.annotations ?? [];

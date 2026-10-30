@@ -8,6 +8,7 @@ in the [README](README.md#upgrading-from-1x).
 
 Changes which need changes of definitions:
 
+- `filter`: `null` is the rows without a value (it was no row)
 - form elements: the patches of an entry are `patch`, e.g.
   `"patch": { "mapping": { "y": { "column": "share" } } }` instead of
   `"mapping": { "y": { "column": "share" } }`
@@ -22,6 +23,9 @@ New:
 - the globals of the page: the prop `globals` (`data-globals`), e.g. of a
   menu of the page, and hidden form elements (`"type": "hidden"`), entries
   with `globals` and a `patch` without an element, e.g. of the language
+- filters: the conditions of `filter` are also `null` (no value), `{"not":
+  ...}` and `{"range": [from, to]}`, a plot (`filter` of the plot) and the
+  hover (`options.hover.filter`) have their own
 
 ## 2.1.0
 
