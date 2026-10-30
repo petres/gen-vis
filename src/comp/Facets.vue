@@ -2,7 +2,9 @@
     <!-- a new view is drawn into the facets of the one before, see Facet.vue -->
     <template v-if="view.faceted">
         <div v-for="f in view.facets" :key="String(f.key)" :style="`width: ${f.width}px; display: inline-block;`">
-            <div class="vis-facet-title" :style="`margin-left: ${f.margins.left}px`">{{ store.text(f.name) }}</div>
+            <!-- the title spans the plot area, its margins are the ones of the facet, a style of the page can replace them -->
+            <div class="vis-facet-title" :class="{ 'vis-facet-title-center': store.coord.centered }"
+                :style="{ '--gen-vis-margin-left': `${f.margins.left}px`, '--gen-vis-margin-right': `${f.margins.right}px` }">{{ store.text(f.name) }}</div>
             <facet ref="facets" :facet="f"/>
         </div>
     </template>
@@ -31,5 +33,11 @@ export default {
         font-size: 13px;
         font-weight: bold;
         margin-top: 8px;
+        margin-left: var(--gen-vis-margin-left);
+        margin-right: var(--gen-vis-margin-right);
+    }
+    // above the center of the plot area, e.g. of the circle of a polar plot
+    .vis-facet-title-center {
+        text-align: center;
     }
 </style>

@@ -764,3 +764,72 @@ describe('the step of a band scale', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the props of the labels and of the line of an axis, the titles of facets', () => {
+    // the years around the circle, the values from the center
+    const polarDef = () => {
+        const def = lineDef({ coord: 'polar', width: 400, height: 400, margins: { top: 50, right: 50, bottom: 50, left: 50 } });
+        def.mapping.x = { column: 'year', type: 'numeric', scale: { orientation: 'angular', domain: [2020, 2024] }, axis: { position: 'angular',
+            values: [2020, 2021, 2022, 2023], labels: { props: { fill: '#777', 'font-size': 10, text: '@x', 'max-width': 15 } },
+            domain: { props: { 'stroke-opacity': 0.4 } } } };
+        def.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radial', domain: [0, 4] }, axis: { position: 'radial', angle: 90,
+            ticks: 2, labels: { props: { fill: '#777', 'stroke-width': 2, 'stroke-opacity': 0.5 } }, domain: { props: { 'stroke-opacity': '@opacity' } } }, hover: {} };
+        def.globals = { opacity: 0.4 };
+        def.plot = { type: 'polar:line', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
+        return def;
+    };
+
+    test('the labels and the lines of the axes of polar plots', async () => {
+        const { validateDef } = await import('@/utils/validate');
+        const def = polarDef();
+        expect(validateDef(def)).toEqual([]);
+        const el = await mount(GenVis, { def, data: lineData });
+        // the texts of the props, 10 pixels high and cut at 15 pixels, estimated without layout
+        const angular = [...el.querySelectorAll('.vis-axis-angular .tick text')];
+        expect(angular.map(t => t.childNodes[0].textContent)).toEqual(['2…', '2…', '2…', '2…']);
+        expect(angular.map(t => t.querySelector('title').textContent)).toEqual(['2020', '2021', '2022', '2023']);
+        expect(angular.every(t => t.getAttribute('fill') == '#777' && t.getAttribute('font-size') == '10')).toBe(true);
+        expect(el.querySelector('.vis-axis-angular circle.domain').getAttribute('stroke-opacity')).toBe('0.4');
+        // the values of the format, the halo of the props
+        const radial = [...el.querySelectorAll('.vis-axis-radial .tick text')];
+        expect(radial.map(t => t.textContent)).toEqual(['0', '2', '4']);
+        expect(radial.map(t => [t.getAttribute('fill'), t.getAttribute('stroke-width'), t.getAttribute('stroke-opacity')]))
+            .toEqual(Array(3).fill(['#777', '2', '0.5']));
+        expect(el.querySelector('.vis-axis-radial line.domain').getAttribute('stroke-opacity')).toBe('0.4');
+        expect(errors).toEqual([]);
+    });
+
+    test('the line of a cartesian axis and the size of its labels', async () => {
+        const def = lineDef();
+        def.mapping.y.axis = { ...def.mapping.y.axis, labels: { props: { 'font-size': 9 } }, domain: { props: { 'stroke-opacity': 0.4 } } };
+        const el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelector('.vis-axis-left path.domain').getAttribute('stroke-opacity')).toBe('0.4');
+        expect([...el.querySelectorAll('.vis-axis-left .tick text')].every(t => t.getAttribute('font-size') == '9')).toBe(true);
+
+        const { validateDef } = await import('@/utils/validate');
+        def.mapping.y.axis.domain = { props: { stroke: '@colour' } };
+        def.mapping.x.axis.domain = 'none';
+        expect(validateDef(def)).toEqual([
+            `mapping.x.axis.domain: expected the props of the line of the axis, e.g. { "props": { "stroke-opacity": 0.4 } }`,
+            "mapping.y.axis.domain.props.stroke: unknown reference 'colour', expected one of 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight'",
+        ]);
+        expect(errors).toEqual([]);
+    });
+
+    test('the titles of the facets span their plot areas, the ones of polar plots are centered', async () => {
+        const def = lineDef();
+        def.facets = { dim: 'c', cols: 2 };
+        const el = await mount(GenVis, { def, data: lineData });
+        const titles = [...el.querySelectorAll('.vis-facet-title')];
+        expect(titles.map(t => [t.style.getPropertyValue('--gen-vis-margin-left'), t.style.getPropertyValue('--gen-vis-margin-right')]))
+            .toEqual([['40px', '10px'], ['40px', '10px']]);
+        // no margin of their own, so a style of the page replaces it
+        expect(titles.every(t => t.style.marginLeft === '' && !t.classList.contains('vis-facet-title-center'))).toBe(true);
+
+        const polar = polarDef();
+        polar.facets = { dim: 'c', cols: 2 };
+        const circles = await mount(GenVis, { def: polar, data: lineData });
+        expect([...circles.querySelectorAll('.vis-facet-title')].map(t => t.classList.contains('vis-facet-title-center'))).toEqual([true, true]);
+        expect(errors).toEqual([]);
+    });
+});

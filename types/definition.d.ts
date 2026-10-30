@@ -805,10 +805,16 @@ export interface Axis {
      */
     format?: string;
     /**
-     * The props of the labels of the ticks (svg attributes and text), of the props of the categories of the tick and of the mappings of the categories of its row, its values and the names of the facet, e.g. { "categories": ["level"], "props": { "font-weight": "@weight", "text": "@short", "max-width": 300 } } (cartesian).
+     * The props of the labels of the ticks (svg attributes and text), of the props of the categories of the tick and of the mappings of the categories of its row, its values and the names of the facet, e.g. { "categories": ["level"], "props": { "font-weight": "@weight", "text": "@short", "max-width": 300 } }, of all axes, e.g. { "props": { "fill": "#777", "font-size": 10, "stroke-width": 2 } } of the values of a radial axis in the background, the stroke and its width replace the halo of the labels of radial axes.
      */
     labels?: {
         categories?: string | string[];
+        props?: Props;
+    };
+    /**
+     * The props of the line of the axis (svg attributes, its class is domain, a circle of an angular axis) of the names of the facet, e.g. { "props": { "stroke-opacity": 0.4 } }.
+     */
+    domain?: {
         props?: Props;
     };
     /**

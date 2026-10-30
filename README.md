@@ -322,7 +322,7 @@ and the lines of the axes, `tick` and `domain`, as the ones of d3:
 | the visualisation | `vis-mounted` (an element mounted by `mountGenVisByClass` or `mountGenVisElement`), `vis-outer` (the root, `vis-loading` while it is loaded), `vis` (with `options.class` and the globals as `data-global-` attributes), `vis-message` (the text instead of the plots), `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
 | form elements | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`), the `id` of a form element and of its entries as `data-id`, e.g. `.vis-form-element[data-id="scale"]` |
 | legends | `vis-legends` (above the plots, `vis-legends-bottom`, `vis-legends-left` and `vis-legends-right`, the plots beside them are in `vis-plots`), `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, the mapping as `data-dim`, an entry with `data-key` and `data-visible`), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
-| facets | `vis-facet` (a facet), `vis-facet-title`, `vis-svg` |
+| facets | `vis-facet` (a facet), `vis-facet-title` (`vis-facet-title-center` of polar plots, centered), `vis-svg` |
 | plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base), `vis-mesh` (geo:mesh), the keys of the features of maps as `data-geo-key` |
 | axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`), `vis-axis-title`, `vis-grid` |
 | annotations | `vis-annotations` (the plot), `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or `vis-circle`, `vis-annotation-label`, `vis-annotation-labels` |
@@ -677,16 +677,19 @@ parent or of a patch, e.g. `"hover": null`.
   outside of the domain are left out, also a prop of the names of the facet,
   e.g. steps of `totalWidth`), `format` (d3 number or time format),
   `rotate` (the angle of the labels in degrees, positive counterclockwise,
-  negative clockwise), `labels` (of cartesian axes: the `props` of the
-  labels, svg attributes and `text`, e.g. `{"font-weight": "@weight",
-  "text": "@short", "max-width": 300}`, their names are the ones of the
-  facet, the values of the first row of the tick, e.g. `@short` of another
-  mapping, the props of the categories of the tick and of the mappings
-  `categories` of its row, e.g. `"categories": ["level"]` for `@weight` of
-  the categories of a level), `grid` (lines at the ticks), `title` (`{"name",
-  "offset"}`, the distance from the axis, by default 8 pixels inside the
-  edge of the margin, of a radial axis 16 pixels outside of the circle) and
-  `padding`.
+  negative clockwise), `labels` (of all axes, also of polar plots: the
+  `props` of the labels, svg attributes and `text`, e.g. `{"font-weight":
+  "@weight", "text": "@short", "max-width": 300}`, their names are the ones
+  of the facet, the values of the first row of the tick, e.g. `@short` of
+  another mapping, the props of the categories of the tick and of the
+  mappings `categories` of its row, e.g. `"categories": ["level"]` for
+  `@weight` of the categories of a level, a `font-size` replaces the one of
+  the styles), `domain` (the `props` of the line of the axis, svg
+  attributes of the names of the facet, e.g. `{"props": {"stroke-opacity":
+  0.4}}`, of an angular axis the circle), `grid` (lines at the ticks),
+  `title` (`{"name", "offset"}`, the distance from the axis, by default 8
+  pixels inside the edge of the margin, of a radial axis 16 pixels outside
+  of the circle) and `padding`.
 - `hover`: the hover shows the values of the vertical axis at the position of
   the mouse, of horizontal bars (a horizontal mapping is stacked, or the
   vertical one is categorical and the horizontal one is not) the values of
@@ -934,7 +937,20 @@ The years of daily data, the dates aligned to 2020, a line per year.
   `radial` axes go from the center outwards, at the `angle` of the axis
   (degrees, clockwise from the top, 0 by default), `grid` draws circles, or
   polygons through the ticks of the angle with `"gridShape": "polygon"`, e.g.
-  of radar charts. The labels of radial axes are above the plots.
+  of radar charts. The labels of radial axes are above the plots, with a
+  halo (`--gen-vis-halo-color`, see [styles](#styles)), the `props` of the
+  `labels` of an axis style them, as the ones of cartesian axes, a `stroke`
+  and a `stroke-width` replace the halo, `domain` the line of the axis, e.g.
+  the values of a radial axis in the background:
+
+  ```json
+  "axis": {
+      "position": "radial", "angle": 90, "ticks": 3, "grid": true,
+      "labels": { "props": { "fill": "#777", "font-size": 10, "stroke-width": 2, "stroke-opacity": 0.5 } },
+      "domain": { "props": { "stroke-opacity": 0.4 } }
+  }
+  ```
+- The titles of the facets are centered above the circles.
 - The plot types: `polar:line` (a line per group, `d` with `angle` and
   `radius`), `polar:area` (an area per group, `d` with `angle`,
   `innerRadius` and `outerRadius`), `polar:arc` (a segment of a ring per row,
@@ -1150,7 +1166,13 @@ is undefined, `validateDef` warns of it.
 A plot for every category of `dim` (the name of a mapping with `props`), in
 `cols` columns (1 by default). The mappings listed in `scales` share their
 scale across all facets. `cols` can be a prop based on `totalWidth`,
-`scales` a reference to `globals`.
+`scales` a reference to `globals`. The title of a facet (`vis-facet-title`)
+spans its plot area, it has the margins of the facet (the css variables
+`--gen-vis-margin-left` and `--gen-vis-margin-right` of its style), so a
+title centered by the page, `.vis-facet-title { text-align: center }`, is
+above the center of the plot area, the ones of polar plots are centered
+(`vis-facet-title-center`), a style of the page replaces both, e.g. its
+`margin-left`.
 
 ### `formElements` and `globals`
 

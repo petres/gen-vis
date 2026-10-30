@@ -128,10 +128,11 @@ const ticks = (context, orient, scale, { values, format, tickSizeInner, tickSize
  * left), `scale`, the `values` of the ticks and their labels
  * (`format(value)`), the props of the labels (`labels(value)`, e.g. their
  * font weight or a `max-width`), the `padding` of the labels, their angle
- * (`rotate`, degrees, positive ones counterclockwise) and the size of the
+ * (`rotate`, degrees, positive ones counterclockwise), the props of the
+ * line of the axis (`domain`, e.g. its stroke-opacity) and the size of the
  * plot area (`width`, `height`).
  */
-const drawAxis = (ga, { name, position, scale, values, format, labels, padding, rotate, width, height }) => {
+const drawAxis = (ga, { name, position, scale, values, format, labels, padding, rotate, domain, width, height }) => {
     ga.attr("class", `vis-axis vis-axis-${position}`)
         .attr("data-mapping", name);
     // the transitions are loaded for definitions with a transition, see loadTransition
@@ -141,6 +142,10 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
     const moving = motion.duration > 0 && ga.node().hasChildNodes() && d3.hasTransitions(ga);
     const drawn = moving ? ga.transition('vis').duration(motion.duration) : ga;
     ticks(drawn, position, scale, { values, format, tickSizeInner: 9, tickSizeOuter: 0, tickPadding: +padding });
+    // the props of the line at once, its path moves with the transition
+    if (domain)
+        Object.entries(domain).filter(([, v]) => v === null || (typeof v != 'object' && typeof v != 'function'))
+            .forEach(([k, v]) => ga.select('.domain').attr(k, v));
     if (labels) {
         const texts = ga.selectAll('.tick text');
         texts.each(function(d) { setProps.call(this, labels(d)) });

@@ -1,4 +1,4 @@
-export { tickValues, tickFormat, tickCount };
+export { tickValues, tickFormat, tickCount, labelProps, domainProps };
 
 import { formatOf } from "@/utils/def";
 import { evaluate } from "@/utils/props";
@@ -47,3 +47,36 @@ const tickFormat = (store, name, scale, ticks) => {
         return null;
     return store.locale.tickFormat(scale, mapping.scale.type, ticks);
 };
+
+/**
+ * The props of the labels of the ticks of the axis of the mapping `n` as a
+ * function of the tick, `axis.labels.props`, e.g. { "font-weight": "@weight",
+ * "text": "@short", "max-width": 300 }, of the names of the facet, the values
+ * of the first row of the tick (e.g. `@short`), the props of the categories
+ * of the tick and of the mappings `axis.labels.categories` of its row (e.g.
+ * `@weight` of a category of a level), null without props, of the axes of
+ * all coordinate systems.
+ */
+const labelProps = (ctx, n, labels) => {
+    if (!labels?.props)
+        return null;
+    const store = ctx.store;
+    const categories = [labels.categories ?? []].flat().filter(c => store.mapping(c)?.props);
+    const rows = new Map();
+    ctx.rows.forEach(r => {
+        const k = String(r[n]);
+        if (!rows.has(k))
+            rows.set(k, r);
+    });
+    return d => {
+        const row = rows.get(String(d)) ?? {};
+        const props = Object.assign({}, store.mapping(n).props ? store.prop(n, String(d)) : undefined,
+            ...categories.map(c => store.prop(c, String(row[c]))));
+        return evaluate(labels.props, { ...ctx.scope, ...row, [n]: d, ...props });
+    };
+};
+
+// the props of the line of an axis (`axis.domain.props`, its class is
+// `domain`), e.g. its stroke-opacity, of the names of the facet, null
+// without props
+const domainProps = (ctx, axis) => axis.domain?.props ? evaluate(axis.domain.props, ctx.scope) : null;

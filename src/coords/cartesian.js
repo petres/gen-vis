@@ -1,8 +1,7 @@
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
 import { keyOf } from "@/utils/draw";
-import { evaluate } from "@/utils/props";
-import { tickValues, tickFormat, tickCount } from "@/coords/ticks";
+import { tickValues, tickFormat, tickCount, labelProps, domainProps } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
 
 // the positions of the hover are vertical, e.g. of horizontal bars
@@ -27,33 +26,6 @@ const grid = (ctx, n, s, values, vertical) => {
                 };
             }),
         },
-    };
-};
-
-/**
- * The props of the labels of the ticks of the axis of the mapping `n` as a
- * function of the tick, `axis.labels.props`, e.g. { "font-weight": "@weight",
- * "text": "@short", "max-width": 300 }, of the names of the facet, the values
- * of the first row of the tick (e.g. `@short`), the props of the categories
- * of the tick and of the mappings `axis.labels.categories` of its row (e.g.
- * `@weight` of a category of a level), null without props.
- */
-const labelProps = (ctx, n, labels) => {
-    if (!labels?.props)
-        return null;
-    const store = ctx.store;
-    const categories = [labels.categories ?? []].flat().filter(c => store.mapping(c)?.props);
-    const rows = new Map();
-    ctx.rows.forEach(r => {
-        const k = String(r[n]);
-        if (!rows.has(k))
-            rows.set(k, r);
-    });
-    return d => {
-        const row = rows.get(String(d)) ?? {};
-        const props = Object.assign({}, store.mapping(n).props ? store.prop(n, String(d)) : undefined,
-            ...categories.map(c => store.prop(c, String(row[c]))));
-        return evaluate(labels.props, { ...ctx.scope, ...row, [n]: d, ...props });
     };
 };
 
@@ -99,6 +71,7 @@ const axes = ctx => {
                 }),
                 padding: i.padding,
                 rotate: i.rotate,
+                domain: domainProps(ctx, i),
                 width: innerWidth,
                 height: innerHeight,
             },

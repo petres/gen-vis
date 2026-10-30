@@ -275,6 +275,11 @@ const validateDef = def => {
                     ...categoryNames(m), ...categories.flatMap(c => categoryNames(mapping[c]))]));
             }
             checkProp(m.axis.tickSpacing, `${path}.axis.tickSpacing`, warn, names.facet);
+            const domain = m.axis.domain;
+            if (domain !== undefined && !isObject(domain))
+                warn(`${path}.axis.domain`, `expected the props of the line of the axis, e.g. { "props": { "stroke-opacity": 0.4 } }`);
+            else if (domain)
+                checkProp(domain.props, `${path}.axis.domain.props`, warn, names.facet);
         }
         const legendChoices = { position: ['top', 'bottom', 'left', 'right'], orientation: ['horizontal', 'vertical'], labels: ['before', 'after'] };
         checkProp(m.legend?.position, `${path}.legend.position`, warn, names.global);

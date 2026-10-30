@@ -14,7 +14,8 @@ import geo from "@/coords/geo";
  * - `positions`: the positions of the axes
  * - `dims(innerWidth, innerHeight)`: the sizes of a facet the ranges refer to,
  *   `origin(innerWidth, innerHeight)` is the origin of the plots and axes,
- *   [0, 0] if it is not given
+ *   [0, 0] if it is not given, `centered`: the plots are in the center of
+ *   the facet, its title is centered, e.g. above the circle of a polar plot
  * - `names(store)`: the mappings of the hover and the stacks instead of the
  *   ones of `axis`, e.g. of a map, `flip` swaps them, see axisNames of
  *   layout.js

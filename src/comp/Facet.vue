@@ -570,10 +570,9 @@ export default {
             g.vis-axis-top g.tick line {transform: translate(0px, 5px);}
             g.vis-axis-right g.tick line {transform: translate(-4px, 0px);}
             g.vis-axis-left g.tick line {transform: translate(5px, 0px);}
-            g.tick {
-                text {
-                    font-size: 13px;
-                }
+            // the size of the labels of the ticks without one of their props, see `axis.labels`
+            g.tick text:not([font-size]) {
+                font-size: 13px;
             }
             .vis-axis-title {
                 font-size: 13px;
@@ -588,15 +587,17 @@ export default {
             .vis-annotation.vis-line:not([stroke]) { stroke: var(--gen-vis-line-color, #999); }
             .vis-annotation.vis-text:not([fill]) { fill: var(--gen-vis-annotation-color, #444); }
             .vis-annotation.vis-circle:not([fill]) { fill: var(--gen-vis-annotation-color, #666); }
-            // the labels of annotations and radial axes on the plots, with a halo
+            // the labels of annotations and radial axes on the plots, with a
+            // halo, the props of the labels of an axis replace its stroke and
+            // its width, see `axis.labels`
             .vis-annotation-label {
                 font-size: 11px;
                 fill: var(--gen-vis-annotation-color, #555);
             }
             .vis-annotation-label, g.vis-axis-radial text {
-                stroke: var(--gen-vis-halo-color, white);
-                stroke-width: 3px;
                 paint-order: stroke;
+                &:not([stroke]) { stroke: var(--gen-vis-halo-color, white); }
+                &:not([stroke-width]) { stroke-width: 3px; }
             }
             g.vis-hover-marker {
                 line {

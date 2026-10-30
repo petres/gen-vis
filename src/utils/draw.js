@@ -154,7 +154,8 @@ function drawItem(item) {
  *   path per group of a line, `element` or the one of an item (`elementOf`),
  *   the ones of the same `key(item)` or index are the ones of the draw before
  * - `class`: a class of the group of the plot, e.g. `vis-features`
- * - `fit`: the texts with a `max-width` are cut or wrapped, see fitText
+ * - `fit`: the texts with a `max-width` are cut or wrapped, also the ones
+ *   in the elements, e.g. the labels of the ticks of an axis, see fitText
  * An item has the props of its element (see setProps, `text` is its text),
  * its row (`rowOf`, e.g. of the highlight of a row), the attributes which
  * are set at once (`directOf`) and the items of the elements in its element
@@ -179,9 +180,12 @@ const drawLayer = (parent, layer) => {
             .data(layer.items ?? [], layer.key)
             .join(layer.element ?? (enter => enter.append(item => document.createElementNS('http://www.w3.org/2000/svg', item[elementOf]))));
     elements.order().each(drawItem);
-    if (layer.fit)
+    if (layer.fit) {
         elements.filter(function() { return this.hasAttribute('max-width') })
             .each(function(item) { fitText(this, item.text === null || item.text === undefined ? '' : String(item.text)) });
+        // the texts in the elements, e.g. the labels in the ticks of an axis
+        elements.selectAll('text[max-width]').each(function() { fitText(this) });
+    }
     return elements;
 };
 

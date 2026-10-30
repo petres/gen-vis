@@ -13,6 +13,8 @@ export default {
     axis: { h: 'angular', v: 'radial' },
     // a stacked angle is the one of the values, e.g. of a pie, see axisNames of layout.js
     flip: 'stacked',
+    // the plots are a circle in the center of the facet, its title is centered above it
+    centered: true,
     positions: ['angular', 'radial'],
     dims: (width, height) => ({ width, height, radius: Math.min(width, height)/2 }),
     origin: (width, height) => [width/2, height/2],

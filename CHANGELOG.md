@@ -94,6 +94,17 @@ New:
   of the facets of polar plots, e.g. of the hole of a donut
 - the types of TypeScript of the definitions, `Definition` and its parts,
   generated of the schema (`npm run types`)
+- axes: the `props` of the `labels` (`axis.labels`) also of the axes of
+  polar plots, `angular` and `radial`, e.g. the values of a radial axis in
+  the background, a `stroke` and a `stroke-width` replace the halo of the
+  labels of radial axes, a `font-size` the one of the styles (also of
+  cartesian axes, it had no effect); the props of the line of an axis
+  (`axis.domain.props`), e.g. its stroke-opacity
+- facets: the title of a facet spans its plot area (the margins of the
+  facet are the css variables `--gen-vis-margin-left` and
+  `--gen-vis-margin-right` of its style, it had an inline `margin-left`), a
+  centered title is above the center of the plot area; the titles of polar
+  plots are centered (`vis-facet-title-center`), above the circles
 - `validateDef` warns of unknown keys of form elements and of their
   entries, e.g. a `mapping` of an entry which is not part of its `patch`
 

@@ -6,7 +6,7 @@ import * as d3 from "@/utils/d3";
 import { arc as arcShape, lineRadial, pointRadial } from 'd3-shape';
 import plotTypes from "@/plots/polar";
 import { bandCenter } from "@/utils/scales";
-import { tickValues, tickFormat, tickCount } from "@/coords/ticks";
+import { tickValues, tickFormat, tickCount, labelProps, domainProps } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
 import { childrenOf, directOf, elementOf } from "@/utils/draw";
 
@@ -60,8 +60,10 @@ const anchor = a => Math.sin(a) > 0.01 ? "start" : (Math.sin(a) < -0.01 ? "end" 
 const baseline = a => Math.cos(a) > 0.5 ? "auto" : (Math.cos(a) < -0.5 ? "hanging" : "middle");
 
 // the categories or ticks around the circle, spokes as grid lines, the
-// parts of the axes (see `axes` of coords/index.js), drawn anew
-const angularAxis = (ctx, n, s, values, format, axis) => {
+// parts of the axes (see `axes` of coords/index.js), drawn anew, `label(v)`
+// is the text and the props of the label of a tick, `domain` the props of
+// the circle
+const angularAxis = (ctx, n, s, values, label, domain, axis) => {
     const [r0, r1] = radiusRange(ctx);
     const angles = angleTicks(s, values);
     const parts = [];
@@ -81,9 +83,10 @@ const angularAxis = (ctx, n, s, values, format, axis) => {
             },
         });
 
-    const domain = { [elementOf]: "circle", [directOf]: { class: "domain", r: r1, fill: "none", stroke: "currentColor" } };
+    const circle = { [elementOf]: "circle", [directOf]: { class: "domain", r: r1, fill: "none", stroke: "currentColor" }, ...domain };
     const ticks = angles.map(v => {
         const a = angleOf(s, v);
+        const { text, props } = label(v);
         const [x1, y1] = pointRadial(a, r1);
         const [x2, y2] = pointRadial(a, r1 + 6);
         const [x, y] = pointRadial(a, r1 + 6 + axis.padding);
@@ -92,17 +95,18 @@ const angularAxis = (ctx, n, s, values, format, axis) => {
             [directOf]: { class: "tick" },
             [childrenOf]: [
                 { [elementOf]: "line", [directOf]: { stroke: "currentColor", x1, y1, x2, y2 } },
-                { [elementOf]: "text", [directOf]: { fill: "currentColor", x, y, "text-anchor": anchor(a), "dominant-baseline": baseline(a) }, text: format(v) },
+                { [elementOf]: "text", [directOf]: { fill: "currentColor", x, y, "text-anchor": anchor(a), "dominant-baseline": baseline(a) }, ...props, text },
             ],
         };
     });
-    return [parts, [domain, ...ticks]];
+    return [parts, [circle, ...ticks]];
 };
 
 // the values along a line from the center, circles (or polygons through the
 // ticks of the angle) as grid lines, `angle` of the axis in degrees, the
-// parts of the axes, drawn anew
-const radialAxis = (ctx, n, s, values, format, axis) => {
+// parts of the axes, drawn anew, `label(v)` is the text and the props of the
+// label of a tick, `domain` the props of the line
+const radialAxis = (ctx, n, s, values, label, domain, axis) => {
     const a = (axis.angle ?? 0)/180*Math.PI;
     const [r0, r1] = d3.extent(s.range());
     const parts = [];
@@ -126,12 +130,13 @@ const radialAxis = (ctx, n, s, values, format, axis) => {
 
     const [x0, y0] = pointRadial(a, r0);
     const [x1, y1] = pointRadial(a, r1);
-    const domain = { [elementOf]: "line", [directOf]: { class: "domain", stroke: "currentColor", x1: x0, y1: y0, x2: x1, y2: y1 } };
+    const line = { [elementOf]: "line", [directOf]: { class: "domain", stroke: "currentColor", x1: x0, y1: y0, x2: x1, y2: y1 }, ...domain };
 
     // the labels on the left of the line, below it if it is horizontal
     const horizontal = Math.abs(Math.cos(a)) <= 0.5;
     const ticks = values.map(v => {
         const [x, y] = pointRadial(a, s(v));
+        const { text, props } = label(v);
         return {
             [elementOf]: "g",
             [directOf]: { class: "tick" },
@@ -144,7 +149,8 @@ const radialAxis = (ctx, n, s, values, format, axis) => {
                     x: x - (horizontal ? 0 : axis.padding),
                     y: y + (horizontal ? axis.padding : 0),
                 },
-                text: format(v),
+                ...props,
+                text,
             }],
         };
     });
@@ -160,7 +166,7 @@ const radialAxis = (ctx, n, s, values, format, axis) => {
             text: ctx.store.text(axis.title.name),
         });
     }
-    return [parts, [domain, ...ticks], after];
+    return [parts, [line, ...ticks], after];
 };
 
 // the parts of the axes: the grid lines, the axis, its domain and ticks, and
@@ -175,8 +181,17 @@ const axes = ctx => {
         const span = Math.abs(s.range()[1] - s.range()[0]);
         const ticks = tickCount(i, ctx.scope, i.position == 'angular' ? span*radiusRange(ctx)[1] : span);
         const format = tickFormat(store, n, s, ticks) ?? (v => v);
+        // the props of the labels, also their texts, as the ones of cartesian
+        // axes, see labelProps
+        const labelsOf = labelProps(ctx, n, i.labels);
+        const label = v => {
+            if (!labelsOf)
+                return { text: format(v), props: {} };
+            const { text, ...props } = labelsOf(v);
+            return { text: !('text' in i.labels.props) ? format(v) : (text === null || text === undefined ? '' : String(text)), props };
+        };
         const draw = { angular: angularAxis, radial: radialAxis }[i.position];
-        const [before, items, after = []] = draw(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope), format, i);
+        const [before, items, after = []] = draw(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope), label, domainProps(ctx, i) ?? {}, i);
         return [
             ...before,
             {
@@ -184,7 +199,8 @@ const axes = ctx => {
                 fresh: true,
                 element: "g",
                 attrs: { class: `vis-axis vis-axis-${i.position}`, "data-mapping": n, "font-size": 10, "font-family": "sans-serif" },
-                layer: { items },
+                // the labels with a max-width are cut or wrapped
+                layer: { items, fit: true },
             },
             ...after,
         ];
