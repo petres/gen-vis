@@ -418,7 +418,9 @@ const validateDef = def => {
     // and the ones of the texts, e.g. "Durchschnitt {base} = 100" of the subtitle
     const checkText = (text, path) => templateRefs(text).filter(r => !globals.has(r)).forEach(r =>
         warn(path, `unknown global '${r}' in the text`));
-    ['title', 'subtitle', 'footer'].forEach(o => checkText(def.options?.[o], `options.${o}`));
+    ['title', 'subtitle', 'footer', 'empty', 'class'].forEach(o => checkText(def.options?.[o], `options.${o}`));
+    checkProp(def.options?.message, 'options.message', warn, names.global);
+    checkText(typeof def.options?.message == 'string' ? def.options.message : undefined, 'options.message');
     // the templates of the hover, the names of the title and of a row, e.g. {land.unit}
     const hover = def.options?.hover ?? {};
     const checkHover = (template, path, known) => templateNames(template).filter(r => !known(r)).forEach(r =>

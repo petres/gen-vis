@@ -1,5 +1,5 @@
 <template>
-    <div class="vis" ref="vis" :style="{'--gen-vis-font-family': options.fontFamily}">
+    <div class="vis" ref="vis" :class="rootClass" v-bind="globalAttrs" :style="{'--gen-vis-font-family': options.fontFamily}">
         <div class="vis-header">
             <slot-content v-if="slots.header" :fn="slots.header" :props="header"/>
             <template v-else>
@@ -10,6 +10,9 @@
         <div ref="form" class="vis-form-elements">
             <form-element v-for="element in formElements" :key="element.id" :element="element" :globals="globals" @changeSelected="formChanged"/>
         </div>
+        <!-- a text instead of the plots and the legends, e.g. of a narrow screen -->
+        <div v-if="message" class="vis-message">{{ message }}</div>
+        <template v-else>
         <div class="vis-legends">
             <legends :names="legendsAt.top" :view="view" @changeSelected="changeSelected" @highlight="highlight"/>
         </div>
@@ -31,6 +34,7 @@
         <div v-if="legendsAt.bottom.length" class="vis-legends vis-legends-bottom">
             <legends :names="legendsAt.bottom" :view="view" @changeSelected="changeSelected" @highlight="highlight"/>
         </div>
+        </template>
         <div class="vis-footer">
             <div class="vis-footer-content">
                 <slot-content v-if="slots.footer" :fn="slots.footer" :props="{ footer: store.html(options.footer) }"/>
@@ -66,6 +70,7 @@
 import { markRaw } from 'vue';
 
 import { layout } from "@/layout";
+import { evaluate } from "@/utils/props";
 import { canCopy } from "@/utils/clipboard.js";
 
 import Facets from '@/comp/Facets.vue';
@@ -135,6 +140,25 @@ export default {
             const at = { top: [], bottom: [], left: [], right: [] };
             this.store.mappingNamesWithKey('legend').forEach(n => at[this.store.mapping(n).legend.position ?? 'top']?.push(n));
             return at;
+        },
+        // the text instead of the plots: `options.message`, a prop of the
+        // globals and the width, e.g. steps of `totalWidth` or a patch of a
+        // form element, or `options.empty` without rows
+        message() {
+            const scope = { ...this.store.scope, totalWidth: this.width };
+            const message = this.store.text(evaluate(this.options.message ?? null, scope));
+            if (message !== null && message !== undefined && message !== '')
+                return String(message);
+            return this.view && this.view.rows.length == 0 && this.options.empty ? this.store.text(this.options.empty) : null;
+        },
+        // the class of the definition, a template of the globals, e.g. for the styles of a page
+        rootClass() { return this.options.class ? this.store.text(this.options.class) : null },
+        // the globals as data-global- attributes, e.g. for the styles of a
+        // page of a form element, only the ones of names and values of text
+        globalAttrs() {
+            return Object.fromEntries(Object.entries(this.store.def.globals)
+                .filter(([k, v]) => /^[A-Za-z][\w-]*$/.test(k) && ['string', 'number', 'boolean'].includes(typeof v))
+                .map(([k, v]) => [`data-global-${k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)}`, String(v)]));
         },
         // legends beside the plots
         sides() { return this.legendsAt.left.length > 0 || this.legendsAt.right.length > 0 },
@@ -308,6 +332,12 @@ export default {
         }
     }
 
+    // the text instead of the plots
+    .vis-message {
+        font-size: 14px;
+        padding: 40px 10px;
+        text-align: center;
+    }
     // the legends beside the plots, the plots have the rest of the width
     .vis-body-sides {
         display: flex;

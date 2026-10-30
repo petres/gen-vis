@@ -294,7 +294,7 @@ d3, `tick` and `domain`:
 
 | Part | Classes |
 |------|---------|
-| the visualisation | `vis-mounted` (an element mounted by `mountGenVisByClass` or `mountGenVisElement`), `vis-outer` (the root, `vis-loading` while it is loaded), `vis`, `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
+| the visualisation | `vis-mounted` (an element mounted by `mountGenVisByClass` or `mountGenVisElement`), `vis-outer` (the root, `vis-loading` while it is loaded), `vis` (with `options.class` and the globals as `data-global-` attributes), `vis-message` (the text instead of the plots), `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
 | form elements | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`), the `id` of a form element and of its entries as `data-id`, e.g. `.vis-form-element[data-id="scale"]` |
 | legends | `vis-legends` (above the plots, `vis-legends-bottom`, `vis-legends-left` and `vis-legends-right`, the plots beside them are in `vis-plots`), `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, the mapping as `data-dim`, an entry with `data-key` and `data-visible`), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
 | facets | `vis-facet` (a facet), `vis-facet-title`, `vis-svg` |
@@ -502,6 +502,22 @@ margin of the labels on a phone.
 global, e.g. `"Durchschnitt {base} = 100"` of a form element of the base year,
 also in the image and the name of its file, see
 [templates](#formelements-and-globals).
+
+`message` is a text instead of the plots and the legends, a prop of the
+globals and `totalWidth` (a template), e.g. of a narrow screen:
+
+```json
+"message": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": "The display is too narrow, please rotate your device." }, { "cut": 600, "value": null }] }
+```
+
+or of an entry of a form element (`"patch": { "options": { "message":
+"..." } }`), e.g. of a comparison which the chart can not show, `empty` the
+text if there are no rows, e.g. of a filter (`vis-message`). `class` is a
+class of the element `.vis` (a template of the globals), e.g. for the styles
+of a page of several charts, `.vis` also has the globals of text and
+numbers as `data-global-` attributes (the names in lower case with
+hyphens, e.g. `data-global-share-scale` of `shareScale`), e.g. a style of
+an entry of a form element: `.vis[data-global-group="eu"] .vis-title`.
 
 `locale` sets the number and date formats of the axes and the hover, also of
 axes without `format`: `de` (the default) or `en`, a language of the browser
@@ -1051,7 +1067,7 @@ parts add names:
 | Part | Names |
 |------|-------|
 | everywhere | the `globals` and `totalWidth`, the width of the visualisation |
-| `options.height`, `options.margins`, `facets.cols`, `facets.scales`, `filter` | only these |
+| `options.height`, `options.margins`, `options.message`, `facets.cols`, `facets.scales`, `filter` | only these |
 | the `props` of `legend` (also of the `symbol`) and `hover` of a mapping | the props of its categories, e.g. `@color` and `@name` |
 | `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight`, the sizes of the band and point scales, e.g. `y:bandwidth` and `y:step` |
 | `scale.range` | the sizes of the coordinate system, e.g. `@radius` of polar plots, `width` and `height` are the ones of the inner area |

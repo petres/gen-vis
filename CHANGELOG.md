@@ -55,6 +55,9 @@ New:
 - transforms: `calc` (columns added, subtracted, multiplied or divided),
   `rank` (in groups) and `lookup` (a value of a file of rows by a key, e.g.
   names in a language)
+- `options.message` (a text instead of the plots, a prop, e.g. of a narrow
+  screen or of an entry), `options.empty` (the text without rows),
+  `options.class` and the globals as `data-global-` attributes of `.vis`
 
 ## 2.1.0
 

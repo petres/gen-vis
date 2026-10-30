@@ -477,3 +477,40 @@ describe('transforms', () => {
         }
     });
 });
+
+describe('messages and the classes of the root', () => {
+    test('a message of a narrow screen and of an entry, the text without rows, the class and the globals of the root', async () => {
+        const def = lineDef({
+            message: { prop: 'steps', ref: 'totalWidth', steps: [{ cut: 0, value: 'Zu schmal' }, { cut: 400, value: null }] },
+            empty: 'Keine Daten für {group:name}',
+            class: 'chart-{group}',
+        });
+        def.globals = { group: 'all', shareScale: 'x' };
+        def.formElements = [{ id: 'group', name: 'Gruppe', ref: 'group', type: 'radio', values: [
+            { id: 'all', name: 'Alle', value: 'all' },
+            { id: 'none', name: 'Keine', value: 'none', patch: { filter: { c: [] } } },
+            { id: 'top3', name: 'Top 3', value: 'top3', patch: { options: { message: 'Die Top 3 sind je Indikator andere Länder.' } } },
+        ] }];
+        const el = await mount(GenVis, { def, data: lineData });
+        const vis = el.querySelector('.vis');
+        expect(vis.className).toBe('vis chart-all');
+        expect([vis.dataset.globalGroup, vis.dataset.globalShareScale]).toEqual(['all', 'x']);
+        expect(el.querySelector('.vis-message')).toBeNull();
+
+        await select(el, 'none');
+        expect(el.querySelector('.vis-message').textContent).toBe('Keine Daten für Keine');
+        expect(el.querySelector('.vis-body, .vis-legends')).toBeNull();
+        expect(vis.className).toBe('vis chart-none');
+
+        await select(el, 'top3');
+        expect(el.querySelector('.vis-message').textContent).toBe('Die Top 3 sind je Indikator andere Länder.');
+        await select(el, 'all');
+        expect(el.querySelectorAll('g.vis-plot circle')).toHaveLength(7);
+
+        // a narrow visualisation
+        const narrow = lineDef({ width: 300, message: def.options.message });
+        const small = await mount(GenVis, { def: narrow, data: lineData });
+        expect(small.querySelector('.vis-message').textContent).toBe('Zu schmal');
+        expect(errors).toEqual([]);
+    });
+});

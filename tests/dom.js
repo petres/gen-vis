@@ -50,7 +50,7 @@ export const useDom = () => {
 };
 
 export const rendered = el => vi.waitFor(() => {
-    if (!el.querySelector('svg.vis-svg, .vis-error'))
+    if (!el.querySelector('svg.vis-svg, .vis-error, .vis-message'))
         throw new Error('not rendered');
 }, { timeout: 20000, interval: 10 });
 

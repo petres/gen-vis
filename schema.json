@@ -262,6 +262,12 @@
                 "title": { "type": "string" },
                 "subtitle": { "type": "string" },
                 "footer": { "type": "string", "description": "HTML, e.g. a link of the source, a template of the globals, their values are text." },
+                "message": {
+                    "description": "A text instead of the plots and the legends, a template and a prop of the globals and totalWidth, e.g. steps of a narrow screen, null or an empty text for the plots.",
+                    "anyOf": [{ "type": "string" }, { "type": "null" }, { "$ref": "#/definitions/prop" }]
+                },
+                "empty": { "type": "string", "description": "A text instead of the plots if there are no rows, e.g. of a filter, a template of the globals." },
+                "class": { "type": "string", "description": "The class of the element of the visualisation (vis), a template of the globals, e.g. for the styles of a page." },
                 "transition": { "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "boolean" }], "description": "The elements move to their new values in this many milliseconds (true for 300) after a change of a legend, a form element or the state." },
                 "highlight": {
                     "type": "object",
