@@ -1,10 +1,9 @@
 # Changelog
 
 The changes of the versions, the newest first, the ones on npm without
-0.7.0 and 2.0.0-alpha.1. The details are in the commits, the upgrades from
-2.x and 1.x in the [README](README.md#upgrading-from-2x).
+0.7.0 and 2.0.0-alpha.1. The details are in the commits.
 
-## 3.0.0 (unreleased)
+## 3.0.0
 
 Definitions are more flexible: the entries of form elements patch all parts
 of a definition, the page sets globals, plots and the hover have filters,
@@ -89,6 +88,13 @@ New:
 - linked charts: the prop `highlight` (`data-highlight`) and the method
   `setHighlight`, the rows of values of mappings highlighted by the page,
   e.g. of the hover of another chart
+- `validateDef` warns of unknown keys of form elements and of their
+  entries, e.g. a `mapping` of an entry which is not part of its `patch`
+
+Faster and smaller:
+
+- the module of the standalone script is minified, 86 kB (gzipped) at first
+  instead of 95 kB
 
 ## 2.1.0
 
@@ -102,8 +108,7 @@ New:
 The changes since 1.2.0, the ones of the pre-releases below in one, and the
 ones since 2.0.0-alpha.2 at the end.
 
-Changes which need changes of definitions, styles or pages, see the
-[README](README.md#upgrading-from-1x):
+Changes which need changes of definitions, styles or pages:
 
 - definitions: `facets.dim` is the name of a mapping, not a list; the names
   of 0.9 are removed (svg:path, base:area, bar, stackedBar, "@y:st:e"); the
@@ -206,8 +211,7 @@ Since 2.0.0-alpha.2:
 
 ## 2.0.0-alpha.2
 
-Changes which need changes of definitions, styles or pages, see the
-[README](README.md#upgrading-from-1x):
+Changes which need changes of definitions, styles or pages:
 
 - the categories of props are `categories` (they were `manual`), radio
   buttons are `"type": "radio"` (they were `"switch"`, the class `vis-radio`
@@ -277,8 +281,7 @@ Faster and smaller:
 
 ## 2.0.0-alpha.0
 
-Changes which need changes of definitions, styles or extensions, see the
-[README](README.md#upgrading-from-1x):
+Changes which need changes of definitions, styles or extensions:
 
 - `facets.dim` is the name of a mapping, not a list
 - the names of 0.9 are removed (svg:path, base:area, bar, stackedBar, "@y:st:e")

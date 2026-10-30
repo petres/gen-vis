@@ -86,7 +86,7 @@ createApp(App).use(GenVis).mount('#app');
                 </div>
                 <p>
                     As a classic script with globals, all parts in one file (148 kB gzipped):
-                    <code>&lt;script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@2/dist-lib/gen-vis.js"&gt;&lt;/script&gt;</code>
+                    <code>&lt;script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/gen-vis.js"&gt;&lt;/script&gt;</code>
                     and <code>mountGenVisByClass('chart')</code>.
                 </p>
             </section>
@@ -133,7 +133,7 @@ import vueSource from './components/VueDemo.vue?raw';
 import examples from './examples/index.js';
 
 const repo = 'https://github.com/petres/gen-vis';
-const cdn = 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@2/dist-lib/esm/gen-vis.js';
+const cdn = 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/esm/gen-vis.js';
 
 export default {
     components: { Example, Comparison, VueDemo },

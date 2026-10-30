@@ -19,24 +19,24 @@ npm install @preschen/gen-vis vue
 
 The standalone script includes Vue, d3 and the styles, for pages without a
 bundler, e.g. of a CDN. As a module of the page (`dist-lib/esm/gen-vis.js`)
-it loads 95 kB (gzipped) at first and the parts which not every chart needs
+it loads 86 kB (gzipped) at first and the parts which not every chart needs
 when a chart needs them, e.g. the ones of maps, from the files next to it:
 
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
 
 <script type="module">
-import { mountGenVisByClass } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@2/dist-lib/esm/gen-vis.js';
+import { mountGenVisByClass } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/esm/gen-vis.js';
 mountGenVisByClass('genVis');
 </script>
 ```
 
-As a single file (`dist-lib/gen-vis.js`, 437 kB, 148 kB gzipped) it has all
+As a single file (`dist-lib/gen-vis.js`, 443 kB, 151 kB gzipped) it has all
 parts in itself and provides the functions as globals, e.g. of a page which
 loads its scripts without modules:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@2/dist-lib/gen-vis.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/gen-vis.js"></script>
 <script>mountGenVisByClass('genVis')</script>
 ```
 
@@ -77,7 +77,7 @@ TypeScript, e.g. of the props, the events and the methods.
 
 Parts which not every chart needs are loaded when a chart needs them, so a
 bundler of the application puts them into chunks of their own, the rest is
-~70 kB gzipped (without Vue). The sizes are gzipped: the check of the
+~62 kB gzipped (without Vue). The sizes are gzipped: the check of the
 definitions (~5 kB) with the first one, the colors of d3
 (`d3-scale-chromatic`, ~8 kB) for definitions which name a scheme or an
 interpolator, the parts of maps (`d3-geo`, `topojson-client`, ~13 kB) with
@@ -351,7 +351,7 @@ without a color of their `props`.
 
 ```json
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@2/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@3/schema.json",
     "parent": "../shared/def.json",
     "data": "data.csv",
     "dataFormat": "csv",
@@ -412,7 +412,7 @@ The package contains a JSON Schema of the definitions, `schema.json`. With
 
 ```json
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@2/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@3/schema.json",
     ...
 }
 ```
@@ -1296,102 +1296,6 @@ coordinate system loads its parts with its first chart, e.g. the ones of maps
 `registerCoord` as well, the standalone script has them as
 `GenVis.registerPlotType`, `GenVis.registerCoord`, `GenVis.pointwise` and
 `GenVis.groupwise`. The schema only knows the built-in ones.
-
-## Upgrading from 2.x
-
-Definitions:
-
-- The patches of the entries of form elements are `patch`, which can also
-  patch the other parts of the definition: `"patch": { "mapping": { "y": {
-  "column": "share" } } }` instead of `"mapping": { "y": { "column": "share"
-  } }`.
-- `null` of a condition of `filter` is the rows without a value, it was no
-  row.
-- A position of the hover without rows has no hover, e.g. a region of a map
-  without a value, `"empty": true` of `options.hover` shows it as before.
-- The `ratio` of a `relative` prop is 1 by default.
-
-Styles: `.vis` has the globals as `data-global-` attributes and the class of
-`options.class`, the title of the facets is a style of the component of the
-facets (`vis-facet-title`), the scale of a legend of colors has its `x` and
-`y`.
-
-## Upgrading from 1.x
-
-Definitions:
-
-- `facets.dim` is the name of a mapping, not a list: `"dim": "facet"`
-  instead of `"dim": ["facet"]`.
-- The names of 0.9 are removed: `svg:path`, `base:area`, `bar` and
-  `stackedBar` are `cartesian:line`, `cartesian:area` and `cartesian:bar`,
-  `@y:st:s`, `@y:st:e` and `@y:st:h:scaled` are `@y:start`, `@y:end` and
-  `@y:height:scaled`, see the readme of 1.x.
-- Values of globals are the same as strings, e.g. `2024` and `"2024"`, but
-  `0` and `""` are different, they were the same.
-- All texts are templates of the globals, so `{word}` in a footer or a name
-  is replaced if there is a global `word`, its value is text, also in the
-  footer.
-- A single value of an annotation which is `null` is no value, e.g. a text
-  at the start of the axis.
-- The categories of the props of a mapping are `categories`, they were
-  `manual`, radio buttons are `"type": "radio"`, they were `"switch"`.
-- The hover without format has the decimal mark of the locale, e.g. `1234,5`
-  in German, and of several vertical mappings the one with a `hover` has the
-  values of the hover, it was the last one. Every hover prop of a category
-  is a column of the hover.
-- Only the footer and the templates of the hover are HTML, the names of the
-  legends and the hover are text, an entity is the character itself, e.g.
-  `"Ø\u00a01991\u00a0-\u00a02020"` instead of `"Ø&nbsp;1991&nbsp;-&nbsp;2020"`.
-- A date without a time, e.g. `2024-06-01`, is the midnight of the time zone
-  of the scale, local of a `time` scale, it was midnight UTC, so the day
-  before west of UTC, also the values of the events `hover` and `select`
-  differ, a `utc` scale has the one of UTC. Dates and times without a time
-  zone, e.g. `2024-06-01 13:00`, are UTC of a `utc` scale, they were local,
-  dates of parquet and its timestamps without a time zone are strings.
-- The extension of a domain taken from the data (`domainRel`, 2% by
-  default) is relative to the positions of `log`, `sqrt` and `symlog`
-  scales, e.g. of the radius of a rose chart, it was relative to the values,
-  except of `log` scales.
-
-Pages:
-
-- The standalone script reads the data attributes as their props:
-  `data-download="false"` and `data-copy="false"` are off (they were on, a
-  download of a file named "false"), `data-state` is JSON.
-  `mountGenVisElement` mounts an element which is mounted already again.
-- The charts fill the width of `.vis` inside its padding and border, a page
-  which made `.vis` wider for its padding does not need to.
-- The package depends on the modules of d3 which it uses, not on `d3`, an
-  application which imports `d3` needs its own dependency.
-
-Styles: all classes start with `vis-`, see [styles](#styles):
-
-| 1.x | 2.0 |
-|-----|-----|
-| `.vis-header .title`, `.subtitle`, `.selection` | `vis-title`, `vis-subtitle`, `vis-selection` |
-| `formElement` (`.title`, `.entries`, `.slider`, `.value`) | `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`) |
-| `legend`, `color-legend` (`.title`, `.entries`, `.scale`, `.missing`, `.swatch`) | `vis-legend`, `vis-color-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, `vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
-| `facet-title`, `vis-inner`, `svg.facet` | `vis-facet-title`, `vis-facet`, `svg.vis-svg` |
-| `plotGroup`, `paths`, `group`, `highlight`, `features` | `vis-plot` (`data-plot`), `vis-plot`, `vis-group`, `vis-highlight`, `vis-features` |
-| `axis-name-x axis-position-left`, `axis-title`, `grid` | `vis-axis vis-axis-left` (`data-mapping="x"`), `vis-axis-title`, `vis-grid` |
-| `annotations below`, `annotation band`, `annotation-label`, `annotation-labels` | `vis-plot vis-annotations vis-below`, `vis-annotation vis-band`, `vis-annotation-label`, `vis-annotation-labels` |
-| `hover` (`.title`, `.entries`, `tr.entry`, `.nearest`, `td.y`, `.value`), `hoverMarker`, `events` | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-nearest`, `td[data-mapping="y"]`, `vis-value`), `vis-hover-marker`, `vis-events` |
-| `#container-<id>` of form elements and their entries | `[data-id="<id>"]` |
-| `gen-vis-attached` (mountGenVisByClass) | `vis-mounted` |
-
-The default colors of annotations are styles, not attributes, they can be
-changed with the [css variables](#styles). A facet with a hover is an
-application of screen readers (`role="application"`), not an image.
-
-Extensions: a plot type gets plain values instead of the objects of the
-internal format, the groups have `rows`, `at(row)`, `prop(name)`, `attrs` and
-`complete(row)` instead of `values` and `props`, `ctx` has `rows`, `scales`
-(the d3 scales by the names of the mappings), `axis`, `stackOf` and `scope`
-instead of `data`, `info` and `relativeBases`, the nearest value of a scale
-is `scale.nearest(position)`, see [extensions](#extensions). `groupwise` sets
-the path of its third argument, `d(group)`, a type with `update: true` draws
-into its elements of the draw before, the elements of other types are
-removed before they are drawn again.
 
 ## Development
 

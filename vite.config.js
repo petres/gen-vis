@@ -88,6 +88,9 @@ export default defineConfig(({ mode }) => ({
         },
         rolldownOptions: {
             output: {
+                // vite keeps the whitespace of es modules of libraries (for the
+                // bundlers of applications), these are loaded by the browser
+                minify: true,
                 chunkFileNames: 'chunks/[name]-[hash].js',
                 codeSplitting: { groups: [{ name: atOnce(fileURLToPath(new URL('./src/lib.js', import.meta.url))) }] },
             },

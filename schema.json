@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://unpkg.com/@preschen/gen-vis@2/schema.json",
+    "$id": "https://unpkg.com/@preschen/gen-vis@3/schema.json",
     "title": "gen-vis definition",
-    "description": "A chart of gen-vis 2, see https://github.com/petres/gen-vis. A definition can be a part which is merged into its parent, so no entry is required.",
+    "description": "A chart of gen-vis 3, see https://github.com/petres/gen-vis. A definition can be a part which is merged into its parent, so no entry is required.",
     "type": "object",
     "additionalProperties": false,
     "properties": {

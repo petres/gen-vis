@@ -16,6 +16,9 @@ const curveNames = Object.keys(curves);
 
 const mappingTypes = ['numeric', 'date', 'categorical'];
 const formElementTypes = ['radio', 'select', 'slider', 'hidden'];
+// the keys of a form element and of its entries, e.g. a mapping of an entry is part of its patch
+const formElementKeys = ['id', 'name', 'ref', 'type', 'inImage', 'values'];
+const entryKeys = ['id', 'name', 'value', 'globals', 'patch'];
 const propKinds = ['fixed', 'ref', 'relative', 'steps', 'format', 'match'];
 
 const list = a => a.map(e => `'${e}'`).join(', ');
@@ -391,6 +394,8 @@ const validateDef = def => {
     });
 
     formElements.forEach(([i, e]) => {
+        Object.keys(e).filter(k => !formElementKeys.includes(k)).forEach(k =>
+            warn(`formElements[${i}].${k}`, `unknown key, expected one of ${list(formElementKeys)}`));
         if (!formElementTypes.includes(e.type))
             warn(`formElements[${i}].type`, `unknown type '${e.type}', expected one of ${list(formElementTypes)}`);
         // parts of entries are patches of a parent, the merged ones are complete
@@ -404,6 +409,10 @@ const validateDef = def => {
                 warn(`formElements[${i}].values[${j}]`, `expected an entry, e.g. { "id": "a", "name": "A", "value": "a" }`);
             else if (!('value' in v))
                 warn(`formElements[${i}].values`, `no value of '${v.id}'`);
+            Object.keys(isObject(v) ? v : {}).filter(k => !entryKeys.includes(k)).forEach(k =>
+                warn(`formElements[${i}].values[${j}].${k}`, patchable.includes(k)
+                    ? `unknown key, a part of the definition is part of the patch, e.g. { "patch": { "${k}": ... } }`
+                    : `unknown key, expected one of ${list(entryKeys)}`));
             if (isObject(v) && v.patch !== undefined && !isObject(v.patch))
                 warn(`formElements[${i}].values[${j}].patch`, `expected the parts of the definition, e.g. { "mapping": { "y": { "column": "share" } } }`);
             Object.keys(isObject(v?.patch) ? v.patch : {}).filter(k => !patchable.includes(k)).forEach(k =>

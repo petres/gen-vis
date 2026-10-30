@@ -216,6 +216,19 @@ describe('validateDef', () => {
         ]);
     });
 
+    test('unknown keys of form elements and of their entries', () => {
+        const def = base();
+        def.formElements = [{ id: 'g', name: 'G', ref: 'g', type: 'radio', default: 'a', values: [
+            { id: 'a', name: 'A', value: 'a', mapping: { y: { column: 'share' } } },
+            { id: 'b', name: 'B', value: 'b', label: 'B' },
+        ] }];
+        expect(validateDef(def)).toEqual([
+            "formElements[0].default: unknown key, expected one of 'id', 'name', 'ref', 'type', 'inImage', 'values'",
+            `formElements[0].values[0].mapping: unknown key, a part of the definition is part of the patch, e.g. { "patch": { "mapping": ... } }`,
+            "formElements[0].values[1].label: unknown key, expected one of 'id', 'name', 'value', 'globals', 'patch'",
+        ]);
+    });
+
     test('definitions which can not be drawn', () => {
         const def = base();
         def.mapping.d = { column: 'date', type: 'date', scale: { type: 'linear', orientation: 'horizontal' } };

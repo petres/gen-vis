@@ -55,11 +55,11 @@ const rows = [
     },
     {
         label: 'Transforms of the data',
-        cells: ['index, share, rolling, cumulative, year, align', 'calculate, aggregate, window, fold, …', 'filter, sort (dataset)', '— (removed in v3)', '—', '—', 'bin, group, stack, window, …'],
+        cells: ['index, share, rolling, cumulative, calc, rank, lookup, year, align', 'calculate, aggregate, window, fold, …', 'filter, sort (dataset)', '— (removed in v3)', '—', '—', 'bin, group, stack, window, …'],
     },
     {
         label: 'Controls in the definition',
-        cells: ['radio, select, slider, they change columns, filters, scales', 'inputs bound to parameters', 'legend, data zoom, timeline', 'buttons, dropdowns, sliders', 'legend, range selector (Stock)', 'legend', '—'],
+        cells: ['radio, select, slider, hidden, they patch any part of the definition', 'inputs bound to parameters', 'legend, data zoom, timeline', 'buttons, dropdowns, sliders', 'legend, range selector (Stock)', 'legend', '—'],
     },
     {
         label: 'Kinds of charts',
@@ -87,7 +87,7 @@ const rows = [
     },
     {
         label: 'Size (gzipped)',
-        cells: ['148 kB with Vue, as a module 95 kB at first', '280 kB (Vega, Vega-Lite, vega-embed)', '367 kB', '1 475 kB', '102 kB, more with modules', '70 kB', '68 kB, with d3 160 kB'],
+        cells: ['151 kB with Vue, as a module 86 kB at first', '280 kB (Vega, Vega-Lite, vega-embed)', '367 kB', '1 475 kB', '102 kB, more with modules', '70 kB', '68 kB, with d3 160 kB'],
     },
     {
         label: 'License',
