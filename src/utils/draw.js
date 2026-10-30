@@ -1,4 +1,4 @@
-export { curves, setProps, setAttrs, groupAttrs, groupKey, highlighter, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, reducedMotion, fitText };
+export { curves, setProps, setAttrs, groupAttrs, groupKey, highlighter, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, reducedMotion, dataAttribute, fitText };
 
 import * as d3 from "@/utils/d3";
 
@@ -67,6 +67,12 @@ const motion = { duration: 0 };
 // the user prefers no motion, a setting of the system, the elements are at
 // their values at once
 const reducedMotion = () => Boolean(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+
+// the data attribute of a name of the definition, e.g. `data-global-land-name`
+// of the global `landName` with the prefix `global-`, null for names which
+// are no names of attributes, e.g. with a space
+const dataAttribute = (name, prefix = '') => /^[A-Za-z][\w-]*$/.test(name)
+    ? `data-${prefix}${name.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)}` : null;
 const withMotion = (duration, draw) => {
     motion.duration = duration;
     try {

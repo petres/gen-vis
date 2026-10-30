@@ -24,7 +24,7 @@
 import { toRaw } from 'vue';
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/props";
-import { drawLayer, highlighter, reducedMotion, withMotion } from "@/utils/draw";
+import { dataAttribute, drawLayer, highlighter, reducedMotion, withMotion } from "@/utils/draw";
 import { drawAxis } from "@/utils/axis";
 import { plotTypes } from "@/plots";
 import { plotGroups, plotRows } from "@/layout";
@@ -301,6 +301,10 @@ export default {
             const others = store.mappingNamesWithKey('hover')
                 .filter(n => n != names.h && n != v && !store.mapping(n).props && ['numeric', 'date'].includes(store.mapping(n).type));
             const formats = Object.fromEntries(others.map(n => [n, store.valueFormat(n, ctx.scales[n])]));
+            // the mappings whose categories style the rows (`hover.row.props`),
+            // and the ones of categories as attributes of the rows, e.g. data-type="load"
+            const styled = categories.filter(n => store.mapping(n).hover.row?.props);
+            const keyed = Object.keys(store.def.mapping).filter(n => store.mapping(n).props && dataAttribute(n));
 
             const marker = d3.select(this.$refs.hoverMarker).select("line");
             const scope = store.scope;
@@ -390,7 +394,15 @@ export default {
                     entries[n] = { value: row[n], name: row[n] === null ? '' : formats[n](row[n]) };
                     cells.push({ mapping: n, value: true, text: entries[n].name });
                 });
-                return { entries, cells, data: row, nearest: row === nearest, order: orderOf(row, rows) };
+                // the styles of the row, of the props of its categories, the
+                // later mappings override the ones before, see Hover.vue
+                const style = {};
+                styled.forEach(n => Object.entries(evaluate(store.mapping(n).hover.row.props, { ...scope, ...store.prop(n, row[n]) }))
+                    .filter(([, s]) => s !== null && s !== undefined && s !== '')
+                    .forEach(([k, s]) => style[k] = String(s)));
+                const attrs = Object.fromEntries(keyed.filter(n => row[n] !== null && row[n] !== undefined)
+                    .map(n => [dataAttribute(n), String(row[n])]));
+                return { entries, cells, data: row, nearest: row === nearest, order: orderOf(row, rows), style, attrs };
             });
 
             // the rows of the events and the slot, copies of the values of the mappings

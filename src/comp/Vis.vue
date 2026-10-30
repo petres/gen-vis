@@ -71,7 +71,7 @@ import { markRaw } from 'vue';
 
 import { layout } from "@/layout";
 import { evaluate } from "@/utils/props";
-import { reducedMotion } from "@/utils/draw";
+import { dataAttribute, reducedMotion } from "@/utils/draw";
 import { canCopy } from "@/utils/clipboard.js";
 
 import Facets from '@/comp/Facets.vue';
@@ -167,8 +167,8 @@ export default {
         // page of a form element, only the ones of names and values of text
         globalAttrs() {
             return Object.fromEntries(Object.entries(this.store.def.globals)
-                .filter(([k, v]) => /^[A-Za-z][\w-]*$/.test(k) && ['string', 'number', 'boolean'].includes(typeof v))
-                .map(([k, v]) => [`data-global-${k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)}`, String(v)]));
+                .filter(([k, v]) => dataAttribute(k, 'global-') && ['string', 'number', 'boolean'].includes(typeof v))
+                .map(([k, v]) => [dataAttribute(k, 'global-'), String(v)]));
         },
         // legends beside the plots
         sides() { return this.legendsAt.left.length > 0 || this.legendsAt.right.length > 0 },

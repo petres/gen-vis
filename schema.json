@@ -489,6 +489,18 @@
                             "type": "object",
                             "description": "The columns of the entries of a categorical mapping, name by default.",
                             "additionalProperties": { "$ref": "#/definitions/value" }
+                        },
+                        "row": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "description": "The rows of the hover of the categories of a categorical mapping.",
+                            "properties": {
+                                "props": {
+                                    "type": "object",
+                                    "description": "CSS properties of the row of a category, props of the props of the categories, e.g. { \"font-style\": \"@hoverStyle\" }, the nearest row stays bold.",
+                                    "additionalProperties": { "$ref": "#/definitions/value" }
+                                }
+                            }
                         }
                     }
                 }] },

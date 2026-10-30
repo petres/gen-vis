@@ -5,7 +5,7 @@
         <!-- the templates of the definition, options.hover, html -->
         <template v-else-if="template.row">
             <div class="vis-hover-title" v-html="filledTitle"/>
-            <div v-for="(row, i) in rows" :key="i" class="vis-hover-row" :class="{ 'vis-nearest': row.nearest }" v-html="row.html"/>
+            <div v-for="(row, i) in rows" :key="i" class="vis-hover-row" :class="{ 'vis-nearest': row.nearest }" :style="row.style" v-bind="row.attrs" v-html="row.html"/>
         </template>
         <template v-else>
             <div v-if="template.title" class="vis-hover-title" v-html="filledTitle"/>
@@ -24,7 +24,10 @@ export default {
     // beside the marker, on the `side` with more space, `payload` are the rows
     // of the slot and the events, see Facet.vue, the `cells` of a row are the
     // hover props of its categories (`data-mapping`, other props than the
-    // name as `data-prop`) and the value (`vis-value`)
+    // name as `data-prop`) and the value (`vis-value`), the `style` of a row
+    // are the styles of the props of its categories (`hover.row.props`), the
+    // nearest one stays bold, its `attrs` the keys of its categories, e.g.
+    // data-type="load"
     props: ["title", "side", "data", "payload"],
     inject: ['slots', 'store'],
     components: { SlotContent },
@@ -56,7 +59,7 @@ export default {
         // hover prop, {y} the formatted value and {y.value} the value, and the globals
         rows() {
             return [...(this.data ?? [])].sort((a, b) => b.order - a.order)
-                .map(d => ({ nearest: d.nearest, html: fillHtml(this.template.row, this.namesOf(d)) }));
+                .map(d => ({ nearest: d.nearest, style: this.styleOf(d), attrs: d.attrs, html: fillHtml(this.template.row, this.namesOf(d)) }));
         },
         // the rows and their formatted values, as the ones of the default table
         slotProps() {
@@ -85,15 +88,29 @@ export default {
             });
             return names;
         },
+        // the styles of a row, the nearest one is bold, see vis-nearest
+        styleOf(row) {
+            const { 'font-weight': weight, ...style } = row.style ?? {};
+            return row.nearest || weight === undefined ? style : { ...style, 'font-weight': weight };
+        },
         render() {
             if (!this.$refs.entries || !this.data)
                 return;
             const data = [...this.data].sort((a, b) => b.order - a.order)
+            const styleOf = row => this.styleOf(row);
             let entries = d3.select(this.$refs.entries).selectAll('tr.vis-hover-entry')
                 .data(data)
                 .join('tr')
                 .attr('class', "vis-hover-entry")
                 .classed('vis-nearest', d => d.nearest)
+                // the styles and the keys of the categories of the row, the
+                // ones of the row before are removed
+                .each(function(d) {
+                    this.removeAttribute('style');
+                    [...this.attributes].filter(a => a.name.startsWith('data-')).forEach(a => this.removeAttribute(a.name));
+                    Object.entries(styleOf(d)).forEach(([k, v]) => this.style.setProperty(k, v));
+                    Object.entries(d.attrs ?? {}).forEach(([k, v]) => this.setAttribute(k, v));
+                })
 
             entries.selectAll("td").remove();
             entries.selectAll("td")

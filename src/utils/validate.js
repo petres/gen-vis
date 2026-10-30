@@ -305,12 +305,15 @@ const validateDef = def => {
         checkProp(m.legend?.orientation, `${path}.legend.orientation`, warn, names.global);
         Object.entries(legendChoices).filter(([k]) => typeof m.legend?.[k] == 'string' && !legendChoices[k].includes(m.legend[k])).forEach(([k, values]) =>
             warn(`${path}.legend.${k}`, `unknown ${k} '${m.legend[k]}', expected one of ${list(values)}`));
+        if (isObject(m.hover?.row) && !m.props)
+            warn(`${path}.hover.row`, `the styles of the rows of the hover are props of the categories, the mapping needs 'props'`);
         if (m.legend && !m.props && m.scale?.orientation !== undefined)
             warn(`${path}.legend`, `a legend needs the props of the categories or a scale of colors, without an orientation`);
         // the props of the legend and the hover of the categories
         if (m.props) {
             checkProp(m.legend?.props, `${path}.legend.props`, warn, names.category(n));
             checkProp(m.hover?.props, `${path}.hover.props`, warn, names.category(n));
+            checkProp(m.hover?.row?.props, `${path}.hover.row.props`, warn, names.category(n));
             [].concat(m.legend?.symbol?.elements ?? []).forEach((e, j) =>
                 checkProp(e?.props, `${path}.legend.symbol.elements[${j}].props`, warn, names.category(n)));
             const symbol = m.legend?.symbol;

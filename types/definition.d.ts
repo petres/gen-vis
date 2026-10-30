@@ -579,6 +579,17 @@ export interface MappingEntry {
               props?: {
                   [k: string]: Value;
               };
+              /**
+               * The rows of the hover of the categories of a categorical mapping.
+               */
+              row?: {
+                  /**
+                   * CSS properties of the row of a category, props of the props of the categories, e.g. { "font-style": "@hoverStyle" }, the nearest row stays bold.
+                   */
+                  props?: {
+                      [k: string]: Value;
+                  };
+              };
           };
     legend?:
         | None

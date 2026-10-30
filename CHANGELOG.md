@@ -99,7 +99,10 @@ New:
 - the hover (`options.hover`): `box` and `marker` (`false` leaves them out,
   the highlight and the events stay), `position` (`pointer`), `side`,
   `offset`, `area` (`facet`, also the margins, e.g. the labels of rows),
-  `empty`
+  `empty`; the styles of the rows of the categories (`hover.row.props` of
+  a categorical mapping, e.g. the lines which are not stacked in italics,
+  the nearest row stays bold) and the keys of the categories as attributes
+  of the rows, e.g. `data-type="load"`, for the styles of a page
 - the highlight: `others-` props of the elements which are not highlighted
   while an element is, `options.highlight.transition` (the elements end at
   their values also after quick changes of the highlight)

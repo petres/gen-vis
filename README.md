@@ -308,6 +308,8 @@ the styles, e.g.:
 ```css
 .vis-form-element { display: block; margin: 6px 4px; }
 .vis-subtitle { font-size: 15px; }
+/* the row of the category `load` of the mapping `type` in the hover */
+.vis-hover-entry[data-type="load"] { font-style: italic; }
 ```
 
 The charts fill the width of `.vis` inside its padding and border, so the
@@ -331,7 +333,7 @@ and the lines of the axes, `tick` and `domain`, as the ones of d3:
 | plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base), `vis-mesh` (geo:mesh), the keys of the features of maps as `data-geo-key` |
 | axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`), `vis-axis-title`, `vis-grid` |
 | annotations | `vis-annotations` (the plot), `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or `vis-circle`, `vis-annotation-label`, `vis-annotation-labels` |
-| hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-hover-row` of a template, `vis-nearest`, the cells of the values `vis-value`, the mapping of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`), `vis-hover-marker`, `vis-events` |
+| hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-hover-row` of a template, `vis-nearest`, the key of the category of every categorical mapping of a row as `data-` attribute, e.g. `data-type="load"` of the mapping `type` (`data-land-name` of `landName`), the cells of the values `vis-value`, the mapping of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`), `vis-hover-marker`, `vis-events` |
 | footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-copy`, `vis-csv` and `vis-download`) |
 
 Styles of the page which are in a cascade layer themselves only override the
@@ -759,6 +761,15 @@ parent or of a patch, e.g. `"hover": null`.
   For categorical mappings `props` are the columns of the entries, the
   `name` of the category first, e.g. `{"unit": "@unit"}` adds a column of
   the prop `unit` of the categories, `"name": null` leaves out the name.
+  `props` of `row` are CSS properties of the row of a category (of the
+  table or of the template `row` of the options), props of the props of the
+  categories, e.g. the sources which are not stacked in italics:
+  `"hover": {"row": {"props": {"font-style": "@hoverStyle"}}}` with
+  `"common": {"hoverStyle": "normal"}` and `"hoverStyle": "italic"` of the
+  categories `total` and `load`. The nearest row stays bold, its
+  `font-weight` is the one of `vis-nearest`, of several mappings with a
+  `row` the later ones override the ones before. The rows also have the
+  keys of their categories as attributes, see [styles](#styles).
 - `props`: the categories and their props, e.g. colors. `common` props are
   used for all `categories`, `name` and `visible` are set by default. Only
   visible categories are shown. The order of the `categories` is the order

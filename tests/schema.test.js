@@ -56,6 +56,11 @@ describe('the schema', () => {
         expect(errors({ options: { locale: { texts: { downlaod: 'x' } } } })).not.toEqual([]);
     });
 
+    test('the styles of the rows of the hover', () => {
+        expect(errors({ mapping: { c: { hover: { row: { props: { 'font-style': '@hoverStyle', opacity: 0.6 } } } } } })).toEqual([]);
+        expect(errors({ mapping: { c: { hover: { row: { style: {} } } } } })).not.toEqual([]);
+    });
+
     test('parts of a definition are valid, e.g. patches of the parent', () => {
         expect(errors({ parent: '../shared.json', options: { title: 'A' } })).toEqual([]);
         expect(errors({ plot: { props: { 'stroke-dasharray': '2 2' } } })).toEqual([]);

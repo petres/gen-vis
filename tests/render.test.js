@@ -568,6 +568,43 @@ describe('events and slots', () => {
         expect([...other.querySelectorAll('.vis-hover tr.vis-hover-entry')].map(tr => tr.textContent)).toEqual(['Tsd.2,0', 'Mio.1,0']);
     });
 
+    // the styles of the rows of the props of their categories, e.g. the lines
+    // which are not stacked in italics, the nearest row stays bold, the keys
+    // of the categories are attributes of the rows
+    test('the styles of the rows of the hover of the props of the categories', async () => {
+        const def = lineDef();
+        def.mapping.c.props.common = { hoverStyle: 'normal' };
+        def.mapping.c.props.categories.Wien.hoverStyle = 'italic';
+        def.mapping.c.hover = { row: { props: { 'font-style': '@hoverStyle', 'font-weight': 300, color: '@color', opacity: null } } };
+        const el = await mount(GenVis, { def, data: lineData });
+        const events = el.querySelector('rect.vis-events');
+        const rows = () => [...el.querySelectorAll('.vis-hover tr.vis-hover-entry')].map(tr => [
+            tr.dataset.c, tr.classList.contains('vis-nearest'), tr.style.fontStyle, tr.style.fontWeight, tr.style.color, tr.style.opacity,
+        ]);
+        events.dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+        await nextTick();
+        // the nearest row is bold, the other one has the weight of the props
+        expect(rows()).toEqual([['Tirol', true, 'normal', '', 'blue', ''], ['Wien', false, 'italic', '300', 'red', '']]);
+        // another position, the rows of the one before are drawn anew
+        events.dispatchEvent(pointer('pointermove', { clientX: 400, clientY: 20 }));
+        await nextTick();
+        expect(rows()).toEqual([['Wien', true, 'italic', '', 'red', ''], ['Tirol', false, 'normal', '300', 'blue', '']]);
+
+        // the rows of a template of the definition
+        const template = await mount(GenVis, { def: { ...def, options: { ...def.options, hover: { row: '{c}: {y}' } } }, data: lineData });
+        template.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+        await nextTick();
+        expect([...template.querySelectorAll('.vis-hover-row')].map(r => [r.dataset.c, r.style.fontStyle, r.style.fontWeight]))
+            .toEqual([['Tirol', 'normal', ''], ['Wien', 'italic', '300']]);
+        expect(errors).toEqual([]);
+
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef({ ...def, mapping: { ...def.mapping, c: { ...def.mapping.c, hover: { row: { props: { color: '@colour' } } } } } }))
+            .toEqual([expect.stringMatching(/^mapping\.c\.hover\.row\.props\.color: unknown reference 'colour'/)]);
+        expect(validateDef({ ...def, mapping: { ...def.mapping, y: { ...def.mapping.y, hover: { row: { props: { color: 'red' } } } } } }))
+            .toEqual([`mapping.y.hover.row: the styles of the rows of the hover are props of the categories, the mapping needs 'props'`]);
+    });
+
     test('hover and select with the rows of the mappings', async () => {
         const hovers = [], selects = [];
         const el = await mount({ render: () => h(GenVis, { def: lineDef(), data: lineData,
