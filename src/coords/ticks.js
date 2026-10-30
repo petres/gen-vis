@@ -18,7 +18,8 @@ const inRange = (scale, v) => {
 // the number of the ticks of an axis, its `ticks` or one per `tickSpacing`
 // pixels of its `length`, e.g. of the width of the plot area, at least 2
 const tickCount = (axis, scope, length) => {
-    const ticks = evaluate(axis.ticks, scope);
+    // null is no number, e.g. of a parent, so the one of tickSpacing
+    const ticks = evaluate(axis.ticks, scope) ?? undefined;
     if (ticks !== undefined || !axis.tickSpacing)
         return ticks;
     return Math.max(2, Math.round(length / evaluate(axis.tickSpacing, scope)));

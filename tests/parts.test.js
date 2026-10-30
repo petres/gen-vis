@@ -666,3 +666,14 @@ describe('fixed ticks of dates', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('ticks of null', () => {
+    test('are the ones of tickSpacing, e.g. a parent with ticks', async () => {
+        const def = lineDef();
+        def.mapping.x.axis = { position: 'bottom', ticks: null, tickSpacing: 250 };
+        const el = await mount(GenVis, { def, data: lineData });
+        // 550 pixels, about 2 ticks
+        expect(el.querySelectorAll('.vis-axis-bottom .tick').length).toBeLessThanOrEqual(3);
+        expect(errors).toEqual([]);
+    });
+});

@@ -408,7 +408,7 @@
                     "enum": ["circle", "polygon"],
                     "description": "The grid lines of a radial axis, circles or polygons through the ticks of the angle, e.g. of radar charts."
                 },
-                "ticks": { "$ref": "#/definitions/number" },
+                "ticks": { "anyOf": [{ "$ref": "#/definitions/number" }, { "$ref": "#/definitions/none" }], "description": "The number of the ticks, null for the ones of tickSpacing, e.g. of a parent." },
                 "tickSpacing": { "$ref": "#/definitions/number", "description": "Without ticks, a tick per this many pixels of the length of the axis, e.g. 80." },
                 "values": { "type": "array", "description": "Fixed ticks." },
                 "format": { "type": "string", "description": "A d3 number or time format." },

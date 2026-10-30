@@ -13,7 +13,8 @@ highlight have more options, legends their place, texts a width, three new
 transforms, messages instead of the plots and linked charts. See the
 `data/fti/` charts of the FTI Monitor, they need no workarounds anymore.
 
-Fixed: the fixed ticks of an axis of dates (`axis.values`, e.g.
+Fixed: `"ticks": null` of an axis is the number of `tickSpacing`, e.g. a
+patch of the ticks of a parent, it was no number. The fixed ticks of an axis of dates (`axis.values`, e.g.
 `"2020-04-01"`) are converted as the dates of the data, they had no
 position.
 
