@@ -8,6 +8,7 @@ import schema from '../schema.json';
 import { GenVis } from '@/index.js';
 import { validateDef } from '@/utils/validate';
 import { errors, useDom, mount, root } from './dom.js';
+import steps from '../site/guide/steps.js';
 
 useDom();
 
@@ -44,6 +45,26 @@ describe('the examples of the page', () => {
         const el = await mount(GenVis, file.startsWith('charts/') ? { def, data: chartData } : { def });
         expect(el.querySelector('.vis-error')).toBeNull();
         expect(el.querySelectorAll('svg.vis-svg g.vis-plot').length).toBeGreaterThan(0);
+        expect(errors).toEqual([]);
+    });
+});
+
+// the steps of the page "How it works" (site/guide.html)
+describe('the steps of the page how it works', () => {
+    test.each(steps.map(s => [s.id, s.def]))('%s is valid and drawn', async (id, def) => {
+        expect(validate(def) ? [] : validate.errors).toEqual([]);
+        expect(validateDef(def)).toEqual([]);
+        const el = await mount(GenVis, { def });
+        expect(el.querySelector('.vis-error')).toBeNull();
+        expect(el.querySelectorAll('svg.vis-svg g.vis-plot').length).toBeGreaterThan(0);
+        expect(errors).toEqual([]);
+    });
+
+    test('the last one switches to the index, without the line at 2 euros', async () => {
+        const el = await mount(GenVis, { def: steps.at(-1).def, state: { globals: { unit: 'index' } } });
+        expect(el.querySelector('.vis-error')).toBeNull();
+        expect(el.querySelector('.vis-annotation.vis-band')).not.toBeNull();
+        expect(el.querySelector('.vis-annotation.vis-line')).toBeNull();
         expect(errors).toEqual([]);
     });
 });

@@ -5,6 +5,7 @@
                 <span class="wordmark">gen-vis</span>
                 <span class="version">{{ version }}</span>
                 <nav class="links">
+                    <a href="guide.html">How it works</a>
                     <a :href="readme">Readme</a>
                     <a :href="`${repo}/blob/${branch}/CHANGELOG.md`">Changelog</a>
                     <a href="https://www.npmjs.com/package/@preschen/gen-vis">npm</a>
@@ -13,9 +14,10 @@
             </div>
             <h1>Charts from JSON definitions</h1>
             <p class="lead">
-                A declarative d3 visualisation library for Vue: a chart is a JSON definition and a
-                data file. Lines, bars, areas, polar plots and maps, with legends, hover, facets
-                and form elements.
+                A small d3 library for Vue which I write for the charts of my own pages: a chart is a
+                JSON definition and a data file. Lines, bars, areas, polar plots and maps, with legends,
+                hover, facets and form elements. It does what these charts need, use it if it fits
+                yours, fork it if it nearly does, see <a href="guide.html">how it works</a>.
             </p>
             <pre class="install"><code>npm install @preschen/gen-vis</code></pre>
             <ul class="points">
@@ -39,6 +41,7 @@
                 <a href="#vue">Vue</a>
                 <a href="#standalone">Without a bundler</a>
                 <a href="#comparison">Comparison</a>
+                <a href="guide.html">How it works</a>
             </nav>
         </header>
 
@@ -76,7 +79,7 @@ createApp(App).use(GenVis).mount('#app');
                 <h2>Without a bundler</h2>
                 <p>
                     The standalone script includes Vue and d3. As a module of the page it loads
-                    95 kB (gzipped) at first and the parts which not every chart needs, e.g. the ones of
+                    87 kB (gzipped) at first and the parts which not every chart needs, e.g. the ones of
                     maps, when a chart needs them. The page below is this file, it loads the script of
                     this build instead of the CDN.
                 </p>
@@ -85,7 +88,7 @@ createApp(App).use(GenVis).mount('#app');
 <pre class="demo-code"><code>{{ standaloneSource }}</code></pre>
                 </div>
                 <p>
-                    As a classic script with globals, all parts in one file (148 kB gzipped):
+                    As a classic script with globals, all parts in one file (152 kB gzipped):
                     <code>&lt;script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/gen-vis.js"&gt;&lt;/script&gt;</code>
                     and <code>mountGenVisByClass('chart')</code>.
                 </p>
@@ -106,7 +109,9 @@ createApp(App).use(GenVis).mount('#app');
             <section class="usage">
                 <h2>More</h2>
                 <p>
-                    Everything a definition can do is in the <a :href="readme">readme</a>. The styles of
+                    How a definition becomes a chart, its parts and a chart built step by step are on the page
+                    <a href="guide.html">how it works</a>, everything a definition can do is in the
+                    <a :href="readme">readme</a>. The styles of
                     the package are in the cascade layer <code>gen-vis</code>, so any CSS of the page
                     overrides them, and all its classes start with <code>vis-</code>. Editors like VS Code
                     complete and check definitions with the JSON Schema of the package, as the editor

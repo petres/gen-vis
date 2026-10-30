@@ -52,5 +52,12 @@ export default defineConfig({
         emptyOutDir: true,
         // the editor (codemirror) and the check of the schema (ajv) are part of the page
         chunkSizeWarningLimit: 1200,
+        // the page of the examples and the one of how it works
+        rollupOptions: {
+            input: {
+                index: fileURLToPath(new URL('index.html', import.meta.url)),
+                guide: fileURLToPath(new URL('guide.html', import.meta.url)),
+            },
+        },
     },
 });
