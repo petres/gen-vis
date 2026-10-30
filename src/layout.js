@@ -1,9 +1,10 @@
 export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor };
 
-import { categoryOrder, compareCategories, continuous, convert, filter, groupBy, rowFilter, stack } from "@/utils/data";
+import { categoryOrder, continuous, convert, filter, groupBy, rowFilter, stack } from "@/utils/data";
 import * as d3 from "@/utils/d3";
 import { bind, constant, evaluate, formatter, refNames } from "@/utils/props";
 import { bandCenter, makeScale } from "@/utils/scales";
+import { compareCategories } from "@/utils/values";
 
 /**
  * The view of a visualisation, computed from its store without Vue: the rows

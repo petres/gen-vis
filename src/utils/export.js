@@ -3,7 +3,7 @@ export { selection, renderImage, saveFile, csvOf, defaultWidth };
 
 import { render } from "vue";
 import * as d3 from "@/utils/d3";
-import { sameValue } from "@/utils/def";
+import { selectedEntry } from "@/utils/def";
 import { columnValues } from "@/utils/data";
 import { lazy } from "@/utils/lazy";
 
@@ -20,7 +20,7 @@ const timeout = 20000;
 // "Einheit: Anteil · Jahr: 2024", the image has no form elements, the ones
 // with `"inImage": false` only change the presentation, e.g. shared scales
 const selection = def => (def.formElements ?? []).filter(e => e.inImage !== false && e.type != 'hidden').map(e => {
-    const entry = e.values.find(v => sameValue(v.value, def.globals?.[e.ref]));
+    const entry = selectedEntry(def, e);
     return entry ? `${e.name}: ${entry.name}` : null;
 }).filter(Boolean).join(' · ');
 

@@ -2,7 +2,7 @@ export { barScale, barWidth };
 
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, propScale } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, points, propScale } from "@/plots/elements";
 
 // the scale of a prop of a bar, e.g. of "@x:scaled"
 const barScale = (plot, ctx, prop, type) => {
@@ -17,12 +17,6 @@ const barWidth = (scale, type) => {
     if (!scale.step)
         throw new Error(`${type}: a 'width' is needed for a continuous scale`);
     return scale.bandwidth() || scale.step()*(1 - scale.padding());
-};
-
-// the points of the path of a group, the values of `d` of its rows
-const points = g => {
-    const d = g.prop('d');
-    return g.rows.map(row => d(row) ?? {});
 };
 
 // the plot types of the cartesian coordinate system, missing values are gaps

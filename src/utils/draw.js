@@ -1,4 +1,4 @@
-export { curves, setProps, setAttrs, groupAttrs, groupKey, highlighter, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, fitText };
+export { curves, setProps, setAttrs, groupAttrs, groupKey, highlighter, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, reducedMotion, fitText };
 
 import * as d3 from "@/utils/d3";
 
@@ -63,6 +63,10 @@ const finish = node => {
 // the transition of the elements of a draw in milliseconds, 0 without, see
 // options.transition and Facet.vue
 const motion = { duration: 0 };
+
+// the user prefers no motion, a setting of the system, the elements are at
+// their values at once
+const reducedMotion = () => Boolean(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
 const withMotion = (duration, draw) => {
     motion.duration = duration;
     try {

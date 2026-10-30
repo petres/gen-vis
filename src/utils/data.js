@@ -1,10 +1,11 @@
-export { groupBy, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, compareCategories, filter, stack, categoryOrder, toDate, addDataValues, distinctValues, usedColumns, columnValues };
+export { groupBy, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, addDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
-import { sameValue, templateRefs } from "@/utils/def";
+import { sameValue, templateRefs, variants } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
 import { evaluate } from "@/utils/props";
+import { comparison, compareCategories } from "@/utils/values";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
@@ -115,11 +116,6 @@ const continuous = mapping => mapping?.type == 'numeric' || mapping?.type == 'da
 // parquet are the same ones, e.g. the year 2004 is "2004" of every format, a
 // missing one is null, also an empty cell of csv, as the null of JSON
 const toCategory = v => missing(v) ? null : String(v);
-
-// categories compared as numbers if both are numbers, e.g. "9" before "10",
-// otherwise as texts
-const numericText = v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v));
-const compareCategories = (a, b) => numericText(a) && numericText(b) ? a - b : String(a).localeCompare(String(b));
 
 // the definition of the scale of a mapping, of a mapping with the scale of
 // another one (`"scale": { "of": "y" }`) the one of the other one, of the
@@ -341,8 +337,7 @@ const usedColumns = def => {
         return columns;
     };
     const columns = [
-        ...Object.values(def.mapping ?? {}).map(m => m?.column),
-        ...elements.flatMap(e => Array.isArray(e.values) ? e.values.flatMap(v => Object.values(v?.patch?.mapping ?? {}).map(m => m?.column)) : []),
+        ...variants(def).flatMap(d => Object.values(d.mapping ?? {}).map(m => m?.column)),
         ...transformColumns(def.transform),
     ].map(expand);
     if (columns.includes(null))
@@ -353,10 +348,9 @@ const usedColumns = def => {
 // the distinct values of a column of the rows (or of a transform, see
 // columnValues), without missing ones, ascending, numbers by their value
 const distinctValues = (rows, columns, column) => {
-    const numeric = v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v));
     const value = columnValues(rows, columns, column);
     const values = [...new Set(rows.map((r, i) => value(i)))].filter(v => v !== null && v !== undefined && v !== '');
-    return values.sort(values.every(numeric) ? (a, b) => a - b : (a, b) => String(a).localeCompare(String(b)));
+    return values.sort(comparison(values));
 };
 
 // the entries of form elements with the values of a column of the rows, e.g.

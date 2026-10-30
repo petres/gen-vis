@@ -1,7 +1,8 @@
-export { mergeAll, sameValue, prepareDef, applyPatches, patchable, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts };
+export { mergeAll, sameValue, prepareDef, applyPatches, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts };
 
 import merge from 'deepmerge';
 import { schemeColors } from '@/utils/d3';
+import { comparison, isObject } from '@/utils/values';
 
 // arrays whose entries all have an `id`, e.g. the form elements and their
 // values, are merged by it, entries with a new id are appended, all other
@@ -32,9 +33,8 @@ const sameValue = (a, b) => {
 };
 
 // keys of categories ascending or descending, numbers by their value
-const numeric = v => v.trim() !== '' && !isNaN(+v);
 const sortKeys = (keys, descending) => {
-    const compare = keys.every(numeric) ? (a, b) => a - b : (a, b) => a.localeCompare(b);
+    const compare = comparison(keys);
     return [...keys].sort(descending ? (a, b) => compare(b, a) : compare);
 };
 
@@ -72,8 +72,6 @@ const symbolOf = (symbol, names) => {
     };
     return { size, elements: [{ type, props: { ...shapes[type], ...props } }] };
 };
-
-const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
 
 // the colors of the categories without colors, of d3's scheme Observable10,
 // distinct colors which are also distinct for most color vision deficiencies
@@ -220,10 +218,18 @@ const prepareDef = (def, options = {}) => {
 // the parts of a definition which the entries of form elements can patch
 const patchable = ['options', 'mapping', 'plot', 'annotations', 'filter', 'facets', 'geo', 'transform'];
 
+// the definition and the patches of the entries of its form elements, e.g.
+// to load the parts any of them needs, see requirements of store.js
+const variants = def => [def, ...(def.formElements ?? [])
+    .flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.patch) : [])
+    .filter(isObject)];
+
+// the entry of a form element of the value of its global, undefined if
+// there is none
+const selectedEntry = (def, e) => e.values.find(v => sameValue(v.value, def.globals?.[e.ref]));
+
 // the entries of the form elements of the values of their globals
-const selectedEntries = def => (def.formElements ?? [])
-    .map(e => e.values.find(v => sameValue(v.value, def.globals?.[e.ref])))
-    .filter(Boolean);
+const selectedEntries = def => (def.formElements ?? []).map(e => selectedEntry(def, e)).filter(Boolean);
 
 // the sources of the prepared parts of a definition, a part whose source is
 // the same is kept, e.g. a mapping with its categories of the data
@@ -342,8 +348,7 @@ const fillTemplate = (column, names = {}) =>
 const templateNames = def => {
     const names = { ...def.globals };
     (def.formElements ?? []).forEach(e => {
-        const entry = e.values.find(v => sameValue(v.value, def.globals?.[e.ref]));
-        Object.entries(entry ?? {}).filter(([, v]) => v === null || typeof v != 'object')
+        Object.entries(selectedEntry(def, e) ?? {}).filter(([, v]) => v === null || typeof v != 'object')
             .forEach(([k, v]) => names[`${e.ref}:${k}`] ??= v);
     });
     return names;

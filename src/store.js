@@ -4,7 +4,7 @@ import { reactive, markRaw, toRaw } from 'vue';
 
 import { addDataValues, dataFormat, distinctValues, parseData, prepareData, scaleDef, updateData, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
-import { applyPatches, fillHtml, fillText, formatOf, mergeAll, prepareDef, templateNames } from "@/utils/def";
+import { applyPatches, fillHtml, fillText, formatOf, mergeAll, prepareDef, templateNames, variants } from "@/utils/def";
 import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale, loadLocale } from "@/utils/locale";
 import { formatter } from "@/utils/props";
@@ -178,11 +178,11 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
         defOrg.options?.transition || defOrg.options?.highlight?.transition ? loadTransition() : null,
         defOrg.transform ? loadTransforms() : null,
         // the legend of a scale of colors, a mapping with a legend without props, also of a patch
-        [defOrg.mapping, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.patch?.mapping) : [])]
+        variants(defOrg).map(d => d.mapping)
             .some(ms => Object.values(ms ?? {}).some(m => m?.legend && !m.props)) ? lazy.colorLegend() : null,
         // the locale of the definition and of the patches of form elements
-        ...[defOrg, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.patch) : [])]
-            .filter((d, i) => i == 0 || d?.options?.locale !== undefined)
+        ...variants(defOrg)
+            .filter((d, i) => i == 0 || d.options?.locale !== undefined)
             .map(d => loadLocale(d?.options?.locale ?? undefined)),
     ]);
     parts.catch(() => {});
@@ -206,7 +206,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     // transforms, also of the patches of form elements, the url relative to
     // the def, the rows are not evaluated as the ones of the definition, see
     // layout.js
-    const sources = [defOrg, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.patch) : [])];
+    const sources = variants(defOrg);
     const withFiles = [
         ...sources.flatMap(d => [d?.plot ?? []].flat()).filter(p => typeof p?.data == 'string'),
         ...sources.flatMap(d => [d?.transform ?? []].flat()).filter(t => t?.type == 'lookup' && typeof t.data == 'string'),

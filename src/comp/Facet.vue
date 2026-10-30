@@ -24,7 +24,7 @@
 import { toRaw } from 'vue';
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/props";
-import { drawLayer, highlighter, withMotion } from "@/utils/draw";
+import { drawLayer, highlighter, reducedMotion, withMotion } from "@/utils/draw";
 import { drawAxis } from "@/utils/axis";
 import { plotTypes } from "@/plots";
 import { plotGroups, plotRows } from "@/layout";
@@ -190,8 +190,7 @@ export default {
             });
             // the highlight moves in the milliseconds of `options.highlight.transition`,
             // not if the user prefers less motion
-            const still = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-            const duration = still ? 0 : Number(this.store.def.options.highlight?.transition) || 0;
+            const duration = reducedMotion() ? 0 : Number(this.store.def.options.highlight?.transition) || 0;
             // the plots without the proxies of vue, the highlighter reads their props per element
             this.highlighter = highlighter(toRaw(this.store.def.plot), plot => this.kept.get(this.plotKey(plot)), duration);
             this.hoverInit();

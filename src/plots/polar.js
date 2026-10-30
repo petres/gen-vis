@@ -1,7 +1,7 @@
 // the plot types of polar plots, loaded with the first one, see coords/polar.js
 import { arc, areaRadial, lineRadial, pointRadial } from 'd3-shape';
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, propScale } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, points, propScale } from "@/plots/elements";
 import { barScale, barWidth } from "@/plots/cartesian";
 import { radiusRange } from "@/coords/polar-plot";
 
@@ -9,12 +9,6 @@ import { radiusRange } from "@/coords/polar-plot";
 const angleOffset = (plot, ctx, path) => {
     const scale = propScale(plot, ctx, path);
     return scale ? bandCenter(scale) : 0;
-};
-
-// the points of the path of a group, the values of `d` of its rows
-const points = g => {
-    const d = g.prop('d');
-    return g.rows.map(row => d(row) ?? {});
 };
 
 // an element of `type` per row at the `angle` and `radius` of the props, as `x` and `y`

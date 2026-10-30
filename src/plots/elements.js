@@ -1,4 +1,4 @@
-export { perRow, perGroup, finite, curve, propScale, dodge };
+export { perRow, perGroup, finite, curve, points, propScale, dodge };
 
 import * as d3 from "@/utils/d3";
 import { refOf } from "@/utils/props";
@@ -7,6 +7,12 @@ import { curves, groupAttrs, groupKey, keyOf, rowOf } from "@/utils/draw";
 const finite = (...values) => values.every(v => Number.isFinite(v));
 
 const curve = plot => curves[plot.curve ?? 'linear'] ?? d3.curveLinear;
+
+// the points of the path of a group, the values of `d` of its rows
+const points = g => {
+    const d = g.prop('d');
+    return g.rows.map(row => d(row) ?? {});
+};
 
 // the scale of the mapping a prop of a plot refers to, e.g. the one of `x`
 // of "@x:scaled" or of `d.angle`, undefined if it is no reference

@@ -3,6 +3,7 @@ export { makeScale, bandCenter };
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/props";
 import { convert } from "@/utils/data";
+import { comparison } from "@/utils/values";
 
 // the offset of the center of a band, the position of band scales is its start
 const bandCenter = s => s.bandwidth ? s.bandwidth()/2 : 0;
@@ -108,10 +109,8 @@ const grouped = (s, rows, name, { by, padding: gap = 1 }) => {
 const sortCategories = (values, rows, name, order) => {
     if (order === undefined)
         return values;
-    const numeric = vs => vs.every(v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v)));
-    const compare = vs => numeric(vs) ? (a, b) => a - b : (a, b) => String(a).localeCompare(String(b));
     if (order == 'ascending' || order == 'descending') {
-        const c = compare(values);
+        const c = comparison(values);
         return [...values].sort(order == 'descending' ? (a, b) => c(b, a) : c);
     }
     const by = order?.by;
@@ -123,7 +122,7 @@ const sortCategories = (values, rows, name, order) => {
             first.set(r[name], r[by]);
     });
     const keyed = values.filter(v => first.has(v));
-    const c = compare(keyed.map(v => first.get(v)));
+    const c = comparison(keyed.map(v => first.get(v)));
     keyed.sort((a, b) => order.descending ? c(first.get(b), first.get(a)) : c(first.get(a), first.get(b)));
     return [...keyed, ...values.filter(v => !first.has(v))];
 };

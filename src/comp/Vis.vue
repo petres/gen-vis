@@ -71,6 +71,7 @@ import { markRaw } from 'vue';
 
 import { layout } from "@/layout";
 import { evaluate } from "@/utils/props";
+import { reducedMotion } from "@/utils/draw";
 import { canCopy } from "@/utils/clipboard.js";
 
 import Facets from '@/comp/Facets.vue';
@@ -239,8 +240,7 @@ export default {
             const view = layout(this.store, this.width);
             const transition = this.store.def.options.transition;
             // no motion if the user prefers it, a setting of the system
-            const still = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-            const duration = animated && !still ? (transition === true ? 300 : (Number(transition) || 0)) : 0;
+            const duration = animated && !reducedMotion() ? (transition === true ? 300 : (Number(transition) || 0)) : 0;
             view.facets.forEach(f => f.transition = duration);
             this.view = markRaw(view);
         },

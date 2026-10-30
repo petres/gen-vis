@@ -10,6 +10,7 @@ import { coords } from "@/coords";
 import { annotationKeys } from "@/coords/annotations.js";
 import { projectionNames } from "@/coords/geo.js";
 import { transformNames } from "@/utils/transform";
+import { isObject } from "@/utils/values";
 
 // the interpolations of the plot types with a curve, e.g. cartesian:line
 const curveNames = Object.keys(curves);
@@ -24,8 +25,6 @@ const entryKeys = ['id', 'name', 'value', 'globals', 'patch'];
 const propKinds = ['fixed', 'ref', 'relative', 'steps', 'format', 'match'];
 
 const list = a => a.map(e => `'${e}'`).join(', ');
-
-const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
 
 // the parts of a mapping which are objects, see prepareMapping of utils/def.js
 const mappingParts = ['scale', 'axis', 'legend', 'hover', 'props'];

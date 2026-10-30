@@ -1,6 +1,6 @@
 import { loadColors } from '@/utils/d3';
 import { describe, test, expect, beforeAll } from 'vitest';
-import { sameValue, applyPatches, fillTemplate, formatOf, mergeAll, prepareDef, templateNames, templateRefs } from '@/utils/def';
+import { sameValue, applyPatches, fillTemplate, formatOf, mergeAll, prepareDef, selectedEntry, templateNames, templateRefs, variants } from '@/utils/def';
 
 // the colors of d3 are loaded by the store, see loadColors
 beforeAll(loadColors);
@@ -227,6 +227,29 @@ describe('column templates', () => {
         expect(names).not.toHaveProperty('group:patch');
         expect(fillTemplate('relative to {group:name} ({group})', names)).toBe('relative to EU-27 (eu)');
         expect(templateRefs('{group:name}')).toEqual(['group']);
+    });
+});
+
+describe('variants and selectedEntry', () => {
+    const def = {
+        mapping: { y: { column: 'value' } },
+        globals: { unit: 2024 },
+        formElements: [
+            { ref: 'unit', values: [{ value: '2023' }, { value: '2024', patch: { mapping: { y: { column: 'share' } } } }, { value: '2025', patch: null }] },
+            // the values of a column, not loaded yet
+            { ref: 'year', values: { column: 'year' } },
+            {},
+        ],
+    };
+
+    test('the definition and the patches of the entries of its form elements', () => {
+        expect(variants(def)).toEqual([def, { mapping: { y: { column: 'share' } } }]);
+        expect(variants({ mapping: {} })).toEqual([{ mapping: {} }]);
+    });
+
+    test('the entry of the value of the global, compared as strings', () => {
+        expect(selectedEntry(def, def.formElements[0])).toBe(def.formElements[0].values[1]);
+        expect(selectedEntry({ ...def, globals: {} }, def.formElements[0])).toBe(undefined);
     });
 });
 

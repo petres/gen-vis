@@ -904,7 +904,8 @@ describe('the categories of every format of the data', () => {
     });
 
     test('ranges and the most of categories by their numbers, the values of form elements as strings', async () => {
-        const { filter, rowFilter, compareCategories } = await import('@/utils/data');
+        const { filter, rowFilter } = await import('@/utils/data');
+        const { compareCategories } = await import('@/utils/values');
         const mapping = { m: { column: 'month', type: 'categorical' } };
         const months = ['8', '9', '10', '11'].map(m => ({ m }));
         expect(filter(months, rowFilter({ m: { range: [9, 10] } }, mapping)).map(r => r.m)).toEqual(['9', '10']);
