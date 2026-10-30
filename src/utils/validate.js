@@ -472,7 +472,8 @@ const validateDef = def => {
         warn(path, `unknown name '${r}' in the template`));
     // a global or a field of its entry, e.g. `group:name`
     const isGlobal = r => globals.has(r) || (r.includes(':') && globals.has(r.split(':')[0]));
-    checkHover(hover.title, 'options.hover.title', r => r == 'title' || isGlobal(r));
+    // the title has the names of the nearest row as well, e.g. {definition}
+    checkHover(hover.title, 'options.hover.title', r => r == 'title' || isGlobal(r) || Object.hasOwn(mapping, r.split('.')[0]));
     const highlightOptions = def.options?.highlight;
     if (highlightOptions !== undefined && !(isObject(highlightOptions) && (highlightOptions.transition === undefined
         || (typeof highlightOptions.transition == 'number' && highlightOptions.transition >= 0))))

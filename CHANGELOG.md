@@ -22,6 +22,10 @@ category of a band or a point scale are left out (they were at 0); the
 categories which are numbers are compared by their value in `range` of a
 filter and `select` of a plot, e.g. `"9"` before `"10"`.
 
+Fixed: the categories of a `point` scale of angles (polar plots) have the
+same distance, also the last and the first one, as the ones of `band`
+scales (it was 0.8 of a step, e.g. the radar of `data/bev/def-radar.json`).
+
 Fixed: `"ticks": null` of an axis is the number of `tickSpacing`, e.g. a
 patch of the ticks of a parent, it was no number. The fixed ticks of an axis of dates (`axis.values`, e.g.
 `"2020-04-01"`) are converted as the dates of the data, they had no
@@ -107,6 +111,13 @@ New:
 - examples (`data/ecad/`): the charts of ecad.abteil.org, the days of a
   year in a circle with the band above or below the mean of the day, the
   years and the means of two periods
+- examples (`data/wifo-radar/`): the radar of competitiveness of WIFO, the
+  percentile ranks of countries or of years of a country
+- the title of the hover (`options.hover.title`) has the names of the
+  nearest row, e.g. `{definition}` of the category of the position; the
+  `padding` of a `point` scale of angles is the place of its first category,
+  `0` at the top, e.g. of a radar chart; the entries of categories of a
+  legend beside the plots are one below the other
 - `options.message` (a text instead of the plots, a prop, e.g. of a narrow
   screen or of an entry), `options.empty` (the text without rows),
   `options.class` and the globals as `data-global-` attributes of `.vis`

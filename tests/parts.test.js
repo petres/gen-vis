@@ -1080,3 +1080,26 @@ describe('css variables in props', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('radar charts', () => {
+    test('the first category of a point scale of angles at the top, the hover title of the names of the nearest row', async () => {
+        const def = lineDef({ coord: 'polar', width: 400, height: 400, margins: { top: 50, right: 50, bottom: 50, left: 50 },
+            hover: { title: '<b>{title}</b> <i>{info}</i>', row: '{c}: {y}' } });
+        def.mapping.x = { column: 'year', type: 'categorical', scale: { type: 'point', orientation: 'angular', padding: 0 }, axis: { position: 'angular' } };
+        def.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radial', domain: [0, 4] }, hover: {} };
+        def.mapping.info = { column: 'other', type: 'categorical', props: { fromData: true }, hover: {} };
+        def.plot = { type: 'polar:line', categories: ['c'], curve: 'linearClosed', props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef(def)).toEqual([]);
+        const el = await mount(GenVis, { def, data: lineData });
+        // four years, 2020 at the top, 2021 at the right (a quarter of the circle)
+        const angles = [...el.querySelectorAll('.vis-axis-angular .tick text')].map(t => Math.atan2(+t.getAttribute('x'), -t.getAttribute('y')));
+        expect(angles[0]).toBeCloseTo(0);
+        expect(angles[1]).toBeCloseTo(Math.PI/2);
+        // the hover of the right, of 2021, the title has the category of info of the nearest row
+        el.querySelector('rect.vis-events').dispatchEvent(new PointerEvent('pointermove', { pointerType: 'mouse', bubbles: true, clientX: 100, clientY: -2 }));
+        await nextTick();
+        expect(el.querySelector('.vis-hover-title').innerHTML).toBe('<b>2021</b> <i>20</i>');
+        expect(errors).toEqual([]);
+    });
+});

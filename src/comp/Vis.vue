@@ -359,6 +359,11 @@ export default {
         }
         .vis-legends-left, .vis-legends-right {
             flex: none;
+            // the entries of the categories one below the other
+            :deep(.vis-legend-entries > .vis-legend-entry) {
+                display: block;
+                margin: 2px 5px;
+            }
         }
     }
 </style>

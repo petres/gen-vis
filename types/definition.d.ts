@@ -737,7 +737,7 @@ export interface Scale {
      */
     range?: (number | string | Prop)[];
     /**
-     * For categorical scales.
+     * For categorical scales, of a point scale of angles the place of the first category in steps, half a step after the top by default, 0 at the top, e.g. of a radar chart.
      */
     padding?: number;
     /**

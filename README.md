@@ -159,7 +159,10 @@ Without the slot, e.g. with the standalone script, `hover` of the
 `row`, a line per row instead of the table, with `{land}` (the name of the
 category of the mapping `land`), `{land.unit}` (another hover prop), `{y}`
 (the formatted value) and `{y.value}` (the value). Both have the globals,
-the values are text, e.g. `<` of the data is shown as it is:
+the title also the names of the nearest row (or the first one), e.g. the
+definition of a category of the position, `{definition}` of a mapping
+`definition` with a hover and props, the values are text, e.g. `<` of the
+data is shown as it is:
 
 ```json
 "options": { "hover": { "title": "<b>{title}</b>", "row": "{land}: {y} <small>{land.unit}</small>" } }
@@ -808,9 +811,9 @@ parent or of a patch, e.g. `"hover": null`.
   `position` places the legend above the plots (`top`, the default), below
   them (`bottom`) or beside them (`left`, `right`, the plots have the rest
   of the width, the class of the legends is `vis-legends-left` or
-  `vis-legends-right`), a prop of `totalWidth` (the width of the
-  visualisation), e.g. below the plots of a phone, e.g. a vertical scale of
-  colors left of a map:
+  `vis-legends-right`, the entries of categories are one below the other),
+  a prop of `totalWidth` (the width of the visualisation), e.g. below the
+  plots of a phone, e.g. a vertical scale of colors left of a map:
 
   ```json
   "legend": { "position": "left", "orientation": "vertical", "size": 160, "labels": "before" }
@@ -973,7 +976,9 @@ The years of daily data, the dates aligned to 2020, a line per year.
 - The angle is a cycle, the end of its domain is at the angle of its start,
   e.g. a year from `2020-01-01` to `2021-01-01`, a domain taken from the data
   is not extended. The categories of `point` and `band` scales have the same
-  distance, also the last and the first one.
+  distance, also the last and the first one, the `padding` of a `point`
+  scale is the place of the first category in steps, half a step after the
+  top by default, `0` at the top, e.g. the first axis of a radar chart.
 - The range of the radius is `[0, "@radius"]` by default, the half of the
   smaller side of the facet, e.g. `[20, "@radius"]` leaves a hole in the
   center.

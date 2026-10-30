@@ -1,0 +1,26 @@
+id,group,order,name,definition,source
+H1,H,1,Wirtschaftsleistung,"BIP pro Kopf, real in € zu Preisen von 2015","WIFO-Daten-System, Macrobond"
+H2,H,2,Arbeitsproduktivität,"BIP je Arbeitsstunde, nominell, EU 27 = 100",Eurostat 
+H3,H,3,Multifaktorproduktivität,"Wachstumsbeitag in Prozentpunkten, Zweijahresdurchschnitt","TED-Total Economy Database, Conference Board"
+H4,H,4,Energieintensität,Anteil Endenergieeinsatz (PJ) am BIP (zu Preisen von 2015) in %,"IEA World Energy Balances; WIFO-Daten-System, Macrobond"
+H5,H,5,CO2-Intensität ,Anteil CO2-Emissionen (kt) am BIP (zu Preisen von 2015) in %,"UNFCCC GHG Data Interface; WDS - WIFO-Daten-System, Macrobond"
+H6,H,6,Anteil erneuerbarer Energieträger,Anteil erneuerbarer Energieträger am energetischen Endverbrauch in %,Eurostat
+H7,H,7,Armutsgefährdung,"Anteil von Personen mit höchstens 60% des medianen Äquivalenzeinkommens in %, nach Sozialleistungen",Eurostat
+H8,H,8,Arbeitslosenquote,"Anteil der Arbeitslosen an den 15- bis 64-
+Jährigen Erwerbspersonen in %",Eurostat
+H9,H,9,Beschäftigungsquote,Anteil der Beschäftigten an allen 15- bis 64-Jährigen in %,Eurostat
+H10,H,10,Einkommensverteilung,Verhältnis der Bevölkerung mit den höchsten 20% der verfügbaren Einkommen zu der mit den niedrigsten 20%,Eurostat
+H11,H,11,Regionale Kohäsion,"Variationskoeffizient: Bruttoregionalprodukt pro Kopf zu KKP, NUTS-3-Regionen",ARDECO (Annual Regional Database of the European Commission)
+H12,H,12,Leistungsbilanzsaldo,Leistungsbilanzsaldo in % des BIP,Eurostat
+E1,E,1,Pro-Kopf-Einkommen (kaufkraftbereinigt),BIP pro Kopf zu KKP von 2021,"Conference Board, TED – Total Economy Database"
+E2,E,2,BIP pro Kopf Metropolregionen,"Bruttoregionalprodukt pro Kopf zu KKP, EU-Metrolpolregionen",ARDECO (Annual Regional Database of the European Commission)
+E3,E,3,BIP pro Kopf Nicht-Metropolregionen,"Bruttoregionalprodukt pro Kopf zu KKP, Nicht-Metropolregionen der EU",ARDECO (Annual Regional Database of the European Commission)
+E4,E,4,Beschäftigungsquote in Vollzeitäquivalenten,Anteil der Beschäftigten in Vollzeitäquivalenten an allen 15- bis 64-Jährigen in %,"Eurostat, Labour Force Survey, Sonderauswertung"
+E5,E,5,Gender-Gap Beschäftigung,"Differenz der Beschäftigungsquote von Männern und Frauen (25- bis 44-Jährige, Vollzeitäquivalente) in Prozentpunkten","Eurostat, Labour Force Survey, Sonderauswertung"
+E6,E,6,NEET-Quote,"Anteil der Nicht-Erwerbstätigen, die keine Bildung oder Weiterbildung besuchen, an allen 18- bis 24-Jährigen in %",Eurostat
+E7,E,7,Weiterbildung,"Anteil der Personen, die an Bildung oder Weiterbildung teilnehmen, an allen 25- bis 64-Jährigen in %",Eurostat
+E8,E,8,Energieabhängigkeit,Anteil der Nettoenergieimporte am Bruttoinlandsverbrauch von Energie in %,Eurostat; IEA
+E9,E,9,Modal Split Gütertransport,Verhältnis des Gütertransports mit der Bahn zu dem auf der Straße in t-km,Eurostat
+E10,E,10,Umweltpatente,Anteil umwelt- und klimarelevanter Patentanträge bei der EPO (Durchschnitt der letzten 3 Jahre) in %,"Patstat, OECD-Definition"
+E11,E,11,Marktanteil Warenexport ,Anteil am weltweiten Warenexport in %,"WIFO-Daten-System, Macrobond"
+E12,E,12,Marktanteil Tourismusexport,Anteil am weltweiten Export von Reiseverkehrsdienstleistungen (ohne Personentransporte) in %,"Macrobond, WIFO-Berechnungen"

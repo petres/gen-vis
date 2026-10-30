@@ -44,22 +44,19 @@ export default {
         },
         // the templates of the title and of a row, see README "hover"
         template() { return this.store.def.options.hover ?? {} },
+        // the title has the names of the nearest row (or of the first one),
+        // e.g. {definition} of a category of the position
         filledTitle() {
             const template = this.template.title ?? '{title}';
-            return fillHtml(template, { ...this.store.names, title: this.title });
+            const row = (this.data ?? []).find(d => d.nearest) ?? this.data?.[0];
+            return fillHtml(template, { ...this.namesOf(row), title: this.title });
         },
         // the rows of the template, its names are the ones of the entries of
         // the slot: {land} is the name of the category, {land.unit} another
         // hover prop, {y} the formatted value and {y.value} the value, and the globals
         rows() {
-            return [...(this.data ?? [])].sort((a, b) => b.order - a.order).map(d => {
-                const names = { ...this.store.names };
-                Object.entries(d.entries).forEach(([n, e]) => {
-                    names[n] = e.name;
-                    Object.entries(e).forEach(([k, v]) => names[`${n}.${k}`] = v);
-                });
-                return { nearest: d.nearest, html: fillHtml(this.template.row, names) };
-            });
+            return [...(this.data ?? [])].sort((a, b) => b.order - a.order)
+                .map(d => ({ nearest: d.nearest, html: fillHtml(this.template.row, this.namesOf(d)) }));
         },
         // the rows and their formatted values, as the ones of the default table
         slotProps() {
@@ -77,6 +74,17 @@ export default {
         data: 'render',
     },
     methods: {
+        // the names of the templates of a row: the globals, the names of the
+        // categories of its entries and their hover props, e.g. {land} and
+        // {land.unit}, the formatted values and the values, e.g. {y} and {y.value}
+        namesOf(row) {
+            const names = { ...this.store.names };
+            Object.entries(row?.entries ?? {}).forEach(([n, e]) => {
+                names[n] = e.name;
+                Object.entries(e).forEach(([k, v]) => names[`${n}.${k}`] = v);
+            });
+            return names;
+        },
         render() {
             if (!this.$refs.entries || !this.data)
                 return;

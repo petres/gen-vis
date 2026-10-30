@@ -265,10 +265,21 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
             : sortCategories(values, rows, name, scaleDef.order);
         // the positions of the categories, e.g. of a band scale, not the
         // colors of an ordinal scale
-        if (s.step) {
+        // a point scale has no inner padding (its bandwidth is 0)
+        if (s.step && cyclic && !s.paddingInner) {
+            // the points of a cyclic range have the same distance, also the last
+            // and the first one, the `padding` is the place of the first one in
+            // steps, e.g. 0 at the start of the range (the top of a circle),
+            // half a step by default
+            s.padding(0.5);
+            const offset = (Number(scaleDef.padding ?? 0.5) - 0.5)*(s.range()[1] - s.range()[0])/Math.max(1, domain.length);
+            if (offset)
+                s.range([s.range()[0] + offset, s.range()[1] + offset]);
+            s.nearest = p => d3.least(s.domain(), d => Math.abs(s(d) - p));
+        } else if (s.step) {
             // the categories of a cyclic range have the same distance, also the
             // last and the first one
-            const padding = scaleDef.padding ?? (cyclic && !s.bandwidth ? 0.5 : 0.4);
+            const padding = scaleDef.padding ?? 0.4;
             s.padding(padding);
             if (cyclic && s.paddingOuter)
                 s.paddingOuter(padding/2);
