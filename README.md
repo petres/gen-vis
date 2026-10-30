@@ -463,8 +463,9 @@ which they change. The CSV of the data has the computed values. See
 
 `title`, `subtitle`, `footer` (HTML), `width` (the width of the container if
 not given), `height` (of a facet, 400 by default) and `margins` (`{"top",
-"right", "bottom", "left"}` in pixels). `height` can be a prop based on
-`totalWidth`, see [props](#props-of-the-definition).
+"right", "bottom", "left"}` in pixels). `height` and the margins can be props
+based on `totalWidth`, see [props](#props-of-the-definition), e.g. a smaller
+margin of the labels on a phone.
 `{name}` in `title`, `subtitle` and `footer` is replaced by the value of the
 global, e.g. `"Durchschnitt {base} = 100"` of a form element of the base year,
 also in the image and the name of its file, see
@@ -945,13 +946,22 @@ Most values of a definition can be props:
 - references `"@name"`, see below, also as `{"prop": "ref", "ref": "name"}`
 - `{"prop": "fixed", "value": ...}`: a value which is not a prop, e.g. an
   object or a text starting with `@`
-- `{"prop": "relative", "ref": "innerWidth", "ratio": 0.01}`: a ratio of a
-  reference
+- `{"prop": "relative", "ref": "innerWidth", "ratio": 0.01, "offset": 0}`: a
+  ratio of a reference (1 by default) plus an offset (0 by default), e.g.
+  `{"prop": "relative", "ref": "x:scaled", "offset": -14}`, a position moved
+  by 14 pixels
 - `{"prop": "steps", "ref": "totalWidth", "steps": [{"cut": 0, "value": 220}, {"cut": 550, "value": 250}]}`:
   the value of the last step with a cut below the reference
 - `{"prop": "format", "ref": "y", "format": ",.1f"}`: the reference as a text
   of a d3 format in the locale, of a date mapping a time format, e.g.
   `"%b %Y"`, e.g. a label of a value
+- `{"prop": "match", "ref": "level", "cases": {"header": 4.5, "item": "@r"},
+  "default": 0}`: the prop of the case of the value of the reference (as a
+  text), `default` (null by default) of other values, e.g. a size by a
+  category
+- the props `relative`, `steps`, `format` and `match` can have a prop `of`
+  instead of a reference, e.g. `{"prop": "relative", "of": {"prop":
+  "steps", ...}, "ratio": 0.5}`
 
 Objects without `prop` are nested props, e.g. `d` of a path.
 
@@ -961,7 +971,7 @@ parts add names:
 | Part | Names |
 |------|-------|
 | everywhere | the `globals` and `totalWidth`, the width of the visualisation |
-| `options.height`, `facets.cols`, `facets.scales`, `filter` | only these |
+| `options.height`, `options.margins`, `facets.cols`, `facets.scales`, `filter` | only these |
 | the `props` of `legend` (also of the `symbol`) and `hover` of a mapping | the props of its categories, e.g. `@color` and `@name` |
 | `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight` |
 | `scale.range` | the sizes of the coordinate system, e.g. `@radius` of polar plots, `width` and `height` are the ones of the inner area |

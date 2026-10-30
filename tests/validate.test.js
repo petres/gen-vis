@@ -147,8 +147,22 @@ describe('validateDef', () => {
         def.plot.props.fill = { prop: 'color' };
         expect(validateDef(def)).toEqual([
             "mapping.x.axis.ticks: has 'ratio', 'mode' but no 'prop', so it is not evaluated",
-            "plot[0].props.r: a 'relative' prop needs a 'ref'",
-            "plot[0].props.fill: unknown prop 'color', expected one of 'fixed', 'ref', 'relative', 'steps', 'format'",
+            "plot[0].props.r: a 'relative' prop needs a 'ref' or a prop 'of'",
+            "plot[0].props.fill: unknown prop 'color', expected one of 'fixed', 'ref', 'relative', 'steps', 'format', 'match'",
+        ]);
+    });
+
+    test('match props and props of props', () => {
+        const def = base();
+        def.plot.props.r = { prop: 'match', ref: 'c', cases: { Wien: '@nope' }, default: '@x:scaled' };
+        def.plot.props.cx = { prop: 'relative', of: '@unknown', offset: 2 };
+        def.plot.props.cy = { prop: 'match', ref: 'c' };
+        def.options = { margins: { left: { prop: 'steps', ref: 'innerWidth', steps: [] } } };
+        expect(validateDef(def)).toEqual([
+            "plot[0].props.r.cases.Wien: unknown reference 'nope'",
+            "plot[0].props.cx.of: unknown reference 'unknown'",
+            "plot[0].props.cy: a 'match' prop needs the props of the values, its 'cases', e.g. { \"header\": 4 }",
+            "options.margins.left: unknown reference 'innerWidth', expected one of 'totalWidth'",
         ]);
     });
 

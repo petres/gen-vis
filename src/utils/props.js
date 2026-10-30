@@ -4,11 +4,17 @@ export { compile, evaluate, bind, constant, refNames, refOf, formatter };
  * The props of a definition, the values of most of its parts:
  * - a value, e.g. 3 or "none"
  * - a reference "@name" to a name of the place of the prop, e.g. a global
- * - { "prop": "relative", "ref": "innerWidth", "ratio": 0.5 }, a ratio of a reference
+ * - { "prop": "relative", "ref": "innerWidth", "ratio": 0.5, "offset": 0 }, a
+ *   ratio of a reference plus an offset, e.g. a position moved by pixels
  * - { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 1 }] },
  *   the value of the last step with a cut below the reference
  * - { "prop": "format", "ref": "y", "format": ",.1f" }, the reference as a text
  *   of a d3 format in the locale, e.g. a label of a value
+ * - { "prop": "match", "ref": "level", "cases": { "header": 4 }, "default": 0 },
+ *   the prop of the case of the value of the reference (as a text), e.g.
+ *   of a category, the default for other values
+ * - the derived props have the value of a prop `of` instead of a reference,
+ *   e.g. { "prop": "relative", "of": { "prop": "steps", ... }, "ratio": 2 }
  * - objects without `prop` (nested props, e.g. `d` of a line) and lists
  *   (lists of props, e.g. a range)
  *
@@ -33,8 +39,18 @@ const node = raw => {
         return { kind: 'fixed', value: raw };
     if (!('prop' in raw))
         return { kind: 'object', entries: Object.entries(raw).map(([k, v]) => [k, compile(v)]) };
-    if (raw.prop == 'ref' || raw.prop == 'relative' || raw.prop == 'steps' || raw.prop == 'format')
-        return { kind: raw.prop, name: raw.ref, ratio: raw.ratio, steps: raw.steps ?? [], format: raw.format };
+    if (raw.prop == 'ref' || raw.prop == 'relative' || raw.prop == 'steps' || raw.prop == 'format' || raw.prop == 'match')
+        return {
+            kind: raw.prop,
+            name: raw.ref,
+            of: 'of' in raw ? compile(raw.of) : undefined,
+            ratio: raw.ratio ?? 1,
+            offset: raw.offset ?? 0,
+            steps: raw.steps ?? [],
+            format: raw.format,
+            cases: raw.prop == 'match' ? new Map(Object.entries(raw.cases ?? {}).map(([k, v]) => [k, compile(v)])) : undefined,
+            fallback: raw.prop == 'match' ? compile(raw.default ?? null) : undefined,
+        };
     return { kind: 'fixed', value: raw.value };
 };
 
@@ -55,7 +71,7 @@ const derive = (n, v, format) => {
     if (v === undefined)
         return undefined;
     if (n.kind == 'relative')
-        return n.ratio*v;
+        return n.ratio*v + n.offset;
     if (n.kind == 'steps') {
         let value;
         for (const s of n.steps)
@@ -66,13 +82,19 @@ const derive = (n, v, format) => {
     return v;
 };
 
+// the case of a match prop of a value, the default for others
+const caseOf = (n, v) => n.cases.get(String(v)) ?? n.fallback;
+
 const valueOf = (n, get) => {
     switch (n.kind) {
         case 'fixed': return n.value;
         case 'list': return n.items.map(i => valueOf(i, get));
         case 'object': return Object.fromEntries(n.entries.map(([k, e]) => [k, valueOf(e, get)]));
-        default: return derive(n, get(n.name), get(formatter));
     }
+    const v = n.of ? valueOf(n.of, get) : get(n.name);
+    if (n.kind == 'match')
+        return valueOf(caseOf(n, v), get);
+    return derive(n, v, get(formatter));
 };
 
 // the value of a prop with the values of the names of the scope, e.g. the
@@ -97,9 +119,17 @@ const bindNode = (n, resolve) => {
         f.entries = new Map(entries);
         return f;
     }
-    const value = resolve(n.name) ?? constant(undefined);
+    const value = n.of ? bindNode(n.of, resolve) : (resolve(n.name) ?? constant(undefined));
     if (n.kind == 'ref')
         return value;
+    if (n.kind == 'match') {
+        const cases = new Map([...n.cases].map(([k, c]) => [k, bindNode(c, resolve)]));
+        const fallback = bindNode(n.fallback, resolve);
+        const pick = v => cases.get(String(v)) ?? fallback;
+        if (value.constant)
+            return pick(value());
+        return row => pick(value(row))(row);
+    }
     const format = n.kind == 'format' ? resolve(formatter)?.() : undefined;
     return value.constant ? constant(derive(n, value(), format)) : row => derive(n, value(row), format);
 };
@@ -118,7 +148,8 @@ const bind = (raw, resolve) => bindNode(compile(raw), resolve);
 const refNames = raw => {
     const names = n => n.kind == 'list' ? n.items.flatMap(names)
         : n.kind == 'object' ? n.entries.flatMap(([, e]) => names(e))
-        : n.kind == 'fixed' ? [] : [n.name];
+        : n.kind == 'fixed' ? []
+        : [...(n.of ? names(n.of) : [n.name]), ...(n.cases ? [...n.cases.values(), n.fallback].flatMap(names) : [])];
     return names(compile(raw));
 };
 

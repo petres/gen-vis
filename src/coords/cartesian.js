@@ -72,7 +72,7 @@ const axes = ctx => {
         if (i.title) {
             // the distance of the title from the axis, by default near the
             // edge of the margin, e.g. outside of the labels of the ticks
-            const offset = i.title.offset ?? Math.max(0, store.def.options.margins[i.position] - 8);
+            const offset = i.title.offset ?? Math.max(0, ctx.margins[i.position] - 8);
             const at = ctx.keep(`axis title ${n}`, () => inner.append("text"))
                 .attr('class', 'vis-axis-title')
                 .attr('y', 0)

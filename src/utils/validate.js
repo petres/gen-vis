@@ -16,7 +16,7 @@ const curveNames = Object.keys(curves);
 
 const mappingTypes = ['numeric', 'date', 'categorical'];
 const formElementTypes = ['radio', 'select', 'slider', 'hidden'];
-const propKinds = ['fixed', 'ref', 'relative', 'steps', 'format'];
+const propKinds = ['fixed', 'ref', 'relative', 'steps', 'format', 'match'];
 
 const list = a => a.map(e => `'${e}'`).join(', ');
 
@@ -47,15 +47,27 @@ const checkProp = (value, path, warn, names = null) => {
     if ('prop' in value) {
         if (!propKinds.includes(value.prop))
             warn(path, `unknown prop '${value.prop}', expected one of ${list(propKinds)}`);
-        else if (value.prop != 'fixed' && typeof value.ref != 'string')
-            warn(path, `a '${value.prop}' prop needs a 'ref'`);
+        else if (value.prop == 'ref' && typeof value.ref != 'string')
+            warn(path, `a 'ref' prop needs a 'ref'`);
+        else if (value.prop != 'fixed' && typeof value.ref != 'string' && !('of' in value))
+            warn(path, `a '${value.prop}' prop needs a 'ref' or a prop 'of'`);
         else if (value.prop == 'format' && typeof value.format != 'string')
             warn(path, `a 'format' prop needs a 'format', e.g. ",.1f"`);
-        else if (value.prop != 'fixed')
-            checkRef(value.ref, path, warn, names);
+        else if (value.prop == 'match' && !isObject(value.cases))
+            warn(path, `a 'match' prop needs the props of the values, its 'cases', e.g. { "header": 4 }`);
+        else if (value.prop != 'fixed') {
+            if ('of' in value)
+                checkProp(value.of, `${path}.of`, warn, names);
+            else
+                checkRef(value.ref, path, warn, names);
+            if (value.prop == 'match') {
+                Object.entries(value.cases).forEach(([k, c]) => checkProp(c, `${path}.cases.${k}`, warn, names));
+                checkProp(value.default, `${path}.default`, warn, names);
+            }
+        }
         return;
     }
-    const keys = ['ratio', 'steps', 'ref', 'mode', 'format'].filter(k => k in value);
+    const keys = ['ratio', 'steps', 'ref', 'mode', 'format', 'cases'].filter(k => k in value);
     if (keys.length > 0)
         return warn(path, `has ${list(keys)} but no 'prop', so it is not evaluated`);
     Object.entries(value).forEach(([k, v]) => checkProp(v, `${path}.${k}`, warn, names));
@@ -434,6 +446,7 @@ const validateDef = def => {
         warn('dataFormat', `unknown format '${def.dataFormat}', expected one of ${list(dataFormats)}`);
 
     checkProp(def.options?.height, 'options.height', warn, names.global);
+    Object.entries(isObject(def.options?.margins) ? def.options.margins : {}).forEach(([k, v]) => checkProp(v, `options.margins.${k}`, warn, names.global));
     checkProp(def.facets?.cols, 'facets.cols', warn, names.global);
     checkProp(def.facets?.scales, 'facets.scales', warn, names.global);
 

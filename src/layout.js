@@ -88,7 +88,8 @@ const layout = (store, width) => {
     const faceted = entries.length > 0;
 
     // the sizes of a facet
-    const margins = def.options.margins;
+    // the margins can be props, e.g. steps of the width of the visualisation
+    const margins = Object.fromEntries(Object.entries(def.options.margins).map(([k, v]) => [k, Number(evaluate(v, scope)) || 0]));
     const cols = faceted ? evaluate(def.facets.cols, scope) : 1;
     const size = { width: width/cols, height: evaluate(def.options.height, scope) };
     size.innerWidth = size.width - (margins.left + margins.right);

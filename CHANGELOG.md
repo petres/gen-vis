@@ -26,6 +26,9 @@ New:
 - filters: the conditions of `filter` are also `null` (no value), `{"not":
   ...}` and `{"range": [from, to]}`, a plot (`filter` of the plot) and the
   hover (`options.hover.filter`) have their own
+- props: `offset` of `relative` props (the `ratio` is 1 by default), the
+  prop `match` (the prop of the case of a value), a prop `of` instead of a
+  reference, the margins are props, e.g. steps of `totalWidth`
 
 ## 2.1.0
 

@@ -179,3 +179,19 @@ describe('filters of rows', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('props', () => {
+    test('margins of the width of the visualisation, offsets and matches of plots', async () => {
+        const def = lineDef();
+        def.options.margins.left = { prop: 'steps', ref: 'totalWidth', steps: [{ cut: 0, value: 20 }, { cut: 500, value: 100 }] };
+        def.mapping.x.scale.domainRel = [0, 0];
+        def.plot[1].props.cx = { prop: 'relative', ref: 'x:scaled', offset: -5 };
+        def.plot[1].props.r = { prop: 'match', ref: 'c', cases: { Wien: 6 }, default: 2 };
+        const el = await mount(GenVis, { def, data: lineData });
+        expect(el.querySelector('svg.vis-svg > g').getAttribute('transform')).toBe('translate(100 10)');
+        const wien = el.querySelector('g.vis-group[data-group-c="Wien"] circle');
+        const tirol = el.querySelector('g.vis-group[data-group-c="Tirol"] circle');
+        expect([wien.getAttribute('cx'), wien.getAttribute('r'), tirol.getAttribute('r')]).toEqual(['-5', '6', '2']);
+        expect(errors).toEqual([]);
+    });
+});

@@ -128,17 +128,19 @@
             "anyOf": [{ "type": "number" }, { "type": "string" }, { "type": "null" }, { "$ref": "#/definitions/prop" }]
         },
         "prop": {
-            "description": "A computed value: a reference, a ratio of a reference, steps based on a reference or a reference as a text of a format. The prop is required unless the object is merged into a prop of the parent definition.",
+            "description": "A computed value: a reference, a ratio of a reference plus an offset, steps based on a reference, a reference as a text of a format or the prop of the case of the value of a reference. Instead of a reference the derived props can have a prop (of). The prop is required unless the object is merged into a prop of the parent definition.",
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "prop": { "enum": ["fixed", "ref", "relative", "steps", "format"] },
+                "prop": { "enum": ["fixed", "ref", "relative", "steps", "format", "match"] },
                 "format": { "type": "string", "description": "The d3 format of a format prop, e.g. \",.1f\" or \"%Y\" of dates, in the locale." },
                 "ref": {
                     "type": "string",
                     "description": "e.g. totalWidth or a global, in a facet also innerWidth or innerHeight"
                 },
-                "ratio": { "type": "number" },
+                "of": { "description": "A prop whose value is used instead of the one of a reference, e.g. a steps prop of a relative one." },
+                "ratio": { "type": "number", "description": "The factor of a relative prop, 1 by default." },
+                "offset": { "type": "number", "description": "Added to a relative prop, e.g. pixels of a position, 0 by default." },
                 "steps": {
                     "type": "array",
                     "description": "The value of the last step with a cut below the reference.",
@@ -152,13 +154,16 @@
                         }
                     }
                 },
+                "cases": { "type": "object", "description": "The props of a match prop by the value of the reference (as a text), e.g. of the categories." },
+                "default": { "description": "The prop of a match prop of other values, null by default." },
                 "value": { "description": "The value of a fixed prop, e.g. an object which is not a nested prop." }
             },
             "allOf": [
                 { "if": { "required": ["prop"], "properties": { "prop": { "const": "ref" } } }, "then": { "required": ["ref"], "properties": { "ref": true } } },
-                { "if": { "required": ["prop"], "properties": { "prop": { "const": "relative" } } }, "then": { "required": ["ref", "ratio"], "properties": { "ref": true, "ratio": true } } },
-                { "if": { "required": ["prop"], "properties": { "prop": { "const": "steps" } } }, "then": { "required": ["ref", "steps"], "properties": { "ref": true, "steps": true } } },
-                { "if": { "required": ["prop"], "properties": { "prop": { "const": "format" } } }, "then": { "required": ["ref", "format"], "properties": { "ref": true, "format": true } } }
+                { "if": { "required": ["prop"], "properties": { "prop": { "enum": ["relative", "steps", "format", "match"] } } }, "then": { "anyOf": [{ "required": ["ref"], "properties": { "ref": true } }, { "required": ["of"], "properties": { "of": true } }] } },
+                { "if": { "required": ["prop"], "properties": { "prop": { "const": "steps" } } }, "then": { "required": ["steps"], "properties": { "steps": true } } },
+                { "if": { "required": ["prop"], "properties": { "prop": { "const": "format" } } }, "then": { "required": ["format"], "properties": { "format": true } } },
+                { "if": { "required": ["prop"], "properties": { "prop": { "const": "match" } } }, "then": { "required": ["cases"], "properties": { "cases": true } } }
             ]
         },
         "value": {
@@ -276,10 +281,10 @@
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "top": { "type": "number" },
-                        "right": { "type": "number" },
-                        "bottom": { "type": "number" },
-                        "left": { "type": "number" }
+                        "top": { "$ref": "#/definitions/number" },
+                        "right": { "$ref": "#/definitions/number" },
+                        "bottom": { "$ref": "#/definitions/number" },
+                        "left": { "$ref": "#/definitions/number" }
                     }
                 },
                 "locale": { "$ref": "#/definitions/locale" },

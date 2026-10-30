@@ -35,7 +35,7 @@
             </div>
             <!-- the buttons of the page (the slot buttons), copy, check, file-text
                  and download of the feather icons, at the right end of the plots -->
-            <div v-if="slots.buttons || (copy && clipboard) || csv || download" class="vis-buttons" :style="{ marginRight: `${options.margins?.right ?? 0}px` }">
+            <div v-if="slots.buttons || (copy && clipboard) || csv || download" class="vis-buttons" :style="{ marginRight: `${view?.facets[0]?.margins.right ?? 0}px` }">
                 <slot-content v-if="slots.buttons" :fn="slots.buttons" :props="{ save: files.save, copy: files.copy, csv: files.csv, canCopy: clipboard }"/>
                 <button v-if="copy && clipboard" class="vis-copy" :title="copied ? texts.copied : texts.copy" :aria-label="texts.copy" @click="copyPng">
                     <svg viewBox="0 0 24 24" width="14" height="14">

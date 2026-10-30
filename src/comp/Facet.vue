@@ -139,7 +139,7 @@ export default {
             // the context of the plot types and the coordinate system, see
             // plots/index.js, the scales are not reactive, they are only replaced
             // with the facet
-            const { key, rows, scales, axis, stackOf, scope, dims, innerWidth, innerHeight } = this.facet;
+            const { key, rows, scales, axis, stackOf, scope, dims, innerWidth, innerHeight, margins } = this.facet;
             this.ctx = {
                 store: this.store,
                 inner: d3.select(inner),
@@ -152,6 +152,7 @@ export default {
                 dims,
                 innerWidth,
                 innerHeight,
+                margins,
                 keep: (key, create) => this.keep(key, create),
             };
 
