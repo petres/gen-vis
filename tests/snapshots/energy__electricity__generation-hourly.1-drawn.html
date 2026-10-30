@@ -11,57 +11,50 @@
 </div>
 <div class="vis-legend-entries" role="group">
 <div class="vis-legend-entry" data-visible="true" data-key="Hydro" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<rect x="0" y="0" width="16" height="15" fill="#5BC5F2" rx="2">
+<svg width="14" height="14">
+<rect x="0" y="0" width="14" height="13" rx="2" fill="#5BC5F2">
 </rect>
 </svg>
 <span>Hydro</span>
 </div>
 <div class="vis-legend-entry" data-visible="true" data-key="Wind" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<rect x="0" y="0" width="16" height="15" fill="#BBD7EE" rx="2">
+<svg width="14" height="14">
+<rect x="0" y="0" width="14" height="13" rx="2" fill="#BBD7EE">
 </rect>
 </svg>
 <span>Wind</span>
 </div>
 <div class="vis-legend-entry" data-visible="true" data-key="Solar" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<rect x="0" y="0" width="16" height="15" fill="#F3D039" rx="2">
+<svg width="14" height="14">
+<rect x="0" y="0" width="14" height="13" rx="2" fill="#F3D039">
 </rect>
 </svg>
 <span>Solar</span>
 </div>
 <div class="vis-legend-entry" data-visible="true" data-key="Gas" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<rect x="0" y="0" width="16" height="15" fill="#C3423F" rx="2">
+<svg width="14" height="14">
+<rect x="0" y="0" width="14" height="13" rx="2" fill="#C3423F">
 </rect>
 </svg>
 <span>Erdgas</span>
 </div>
 <div class="vis-legend-entry" data-visible="true" data-key="Coal" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<rect x="0" y="0" width="16" height="15" fill="#8B4513" rx="2">
+<svg width="14" height="14">
+<rect x="0" y="0" width="14" height="13" rx="2" fill="#8B4513">
 </rect>
 </svg>
 <span>Kohle</span>
 </div>
-<div class="vis-legend-entry" data-visible="true" data-key="Waste" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<rect x="0" y="0" width="16" height="15" fill="#ABD6A9" rx="2">
-</rect>
-</svg>
-<span>Müll</span>
-</div>
 <div class="vis-legend-entry" data-visible="true" data-key="Oil" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<rect x="0" y="0" width="16" height="15" fill="#000" rx="2">
+<svg width="14" height="14">
+<rect x="0" y="0" width="14" height="13" rx="2" fill="#000">
 </rect>
 </svg>
 <span>Erdöl</span>
 </div>
 <div class="vis-legend-entry" data-visible="true" data-key="others" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<rect x="0" y="0" width="16" height="15" fill="#CCC" rx="2">
+<svg width="14" height="14">
+<rect x="0" y="0" width="14" height="13" rx="2" fill="#CCC">
 </rect>
 </svg>
 <span>Andere</span>
@@ -71,524 +64,140 @@
 </div>
 <div class="vis-body">
 <div style="width: 800px;" class="vis-facet">
-<svg width="800" height="350" class="vis-svg" role="application" aria-label="Stromproduktion im Tagesverlauf" aria-roledescription="Diagramm" aria-describedby="gen-vis-facet-N-keys" tabindex="0">
-<g transform="translate(50 5)">
+<svg width="800" height="360" class="vis-svg" role="application" aria-label="Stromproduktion im Tagesverlauf" aria-roledescription="Diagramm" aria-describedby="gen-vis-facet-N-keys" tabindex="0">
+<g transform="translate(50 18)">
 <g visibility="hidden" class="vis-hover-marker">
 <line>
 </line>
 </g>
-<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 310)">
-<path class="domain" stroke="currentColor" d="M0.5,0.5H720.5">
+<g class="vis-plot areas vis-below" data-plot="areas">
+<path fill="#5BC5F2" fill-opacity="0.9" stroke="#FFFFFF" stroke-width="0.8" highlight-fill-opacity="1" others-fill-opacity="0.35" data-group-type="Hydro" d="M0,190.456C10.58,191.118,21.159,191.78,31.739,191.824C42.319,191.869,52.899,191.891,63.478,191.891C74.058,191.891,84.638,191.049,95.217,189.365C105.797,187.681,116.377,181.157,126.957,174.603C137.536,168.048,148.116,157.171,158.696,150.036C169.275,142.901,179.855,131.871,190.435,131.794C201.014,131.717,211.594,131.679,222.174,131.679C232.754,131.679,243.333,139.468,253.913,142.594C264.493,145.721,275.072,148.196,285.652,150.44C296.232,152.684,306.812,153.857,317.391,156.058C327.971,158.259,338.551,161.555,349.13,163.646C359.71,165.737,370.29,168.041,380.87,168.603C391.449,169.166,402.029,169.447,412.609,169.447C423.188,169.447,433.768,168.344,444.348,166.138C454.928,163.933,465.507,159.206,476.087,153.196C486.667,147.186,497.246,136.585,507.826,130.078C518.406,123.571,528.986,114.153,539.565,114.153C550.145,114.153,560.725,116.356,571.304,120.764C581.884,125.172,592.464,135.729,603.043,142.553C613.623,149.377,624.203,156.258,634.783,161.709C645.362,167.16,655.942,171.575,666.522,175.258C677.101,178.941,687.681,181.757,698.261,183.808C708.841,185.858,719.42,186.71,730,187.562L730,307C719.42,307,708.841,307,698.261,307C687.681,307,677.101,307,666.522,307C655.942,307,645.362,307,634.783,307C624.203,307,613.623,307,603.043,307C592.464,307,581.884,307,571.304,307C560.725,307,550.145,307,539.565,307C528.986,307,518.406,307,507.826,307C497.246,307,486.667,307,476.087,307C465.507,307,454.928,307,444.348,307C433.768,307,423.188,307,412.609,307C402.029,307,391.449,307,380.87,307C370.29,307,359.71,307,349.13,307C338.551,307,327.971,307,317.391,307C306.812,307,296.232,307,285.652,307C275.072,307,264.493,307,253.913,307C243.333,307,232.754,307,222.174,307C211.594,307,201.014,307,190.435,307C179.855,307,169.275,307,158.696,307C148.116,307,137.536,307,126.957,307C116.377,307,105.797,307,95.217,307C84.638,307,74.058,307,63.478,307C52.899,307,42.319,307,31.739,307C21.159,307,10.58,307,0,307Z">
 </path>
-<g class="tick" opacity="1" transform="translate(14.346,0)">
-<line stroke="currentColor" y2="9">
-</line>
-<text fill="currentColor" y="12" dy="0.71em">0</text>
+<path fill="#C3423F" fill-opacity="0.9" stroke="#FFFFFF" stroke-width="0.8" highlight-fill-opacity="1" others-fill-opacity="0.35" data-group-type="Gas" d="M0,133.384C10.58,134.412,21.159,135.441,31.739,135.441C42.319,135.441,52.899,135.288,63.478,134.982C74.058,134.677,84.638,133.514,95.217,130.577C105.797,127.64,116.377,119.89,126.957,112.352C137.536,104.815,148.116,93.271,158.696,85.351C169.275,77.43,179.855,67.098,190.435,64.83C201.014,62.563,211.594,61.429,222.174,61.429C232.754,61.429,243.333,66.706,253.913,68.643C264.493,70.58,275.072,71.773,285.652,73.053C296.232,74.333,306.812,74.592,317.391,76.322C327.971,78.053,338.551,81.323,349.13,83.438C359.71,85.554,370.29,87.625,380.87,89.014C391.449,90.403,402.029,91.77,412.609,91.77C423.188,91.77,433.768,91.559,444.348,91.137C454.928,90.716,465.507,85.875,476.087,80.588C486.667,75.301,497.246,65.447,507.826,59.415C518.406,53.383,528.986,44.398,539.565,44.398C550.145,44.398,560.725,46.618,571.304,51.057C581.884,55.496,592.464,65.811,603.043,72.905C613.623,79.999,624.203,87.469,634.783,93.623C645.362,99.778,655.942,105.105,666.522,109.831C677.101,114.558,687.681,118.836,698.261,121.984C708.841,125.132,719.42,126.926,730,128.72L730,158.494C719.42,157.474,708.841,156.454,698.261,154.247C687.681,152.04,677.101,149.041,666.522,145.254C655.942,141.467,645.362,136.956,634.783,131.525C624.203,126.093,613.623,119.306,603.043,112.666C592.464,106.027,581.884,95.834,571.304,91.686C560.725,87.537,550.145,85.463,539.565,85.463C528.986,85.463,518.406,94.553,507.826,100.594C497.246,106.635,486.667,116.453,476.087,121.708C465.507,126.964,454.928,131.481,444.348,132.126C433.768,132.771,423.188,133.094,412.609,133.094C402.029,133.094,391.449,132.024,380.87,130.84C370.29,129.657,359.71,127.941,349.13,125.992C338.551,124.043,327.971,120.882,317.391,119.146C306.812,117.41,296.232,117.046,285.652,115.576C275.072,114.106,264.493,112.604,253.913,110.326C243.333,108.047,232.754,101.904,222.174,101.904C211.594,101.904,201.014,102.525,190.435,103.767C179.855,105.009,169.275,115.155,158.696,122.193C148.116,129.232,137.536,139.559,126.957,145.997C116.377,152.435,105.797,159.065,95.217,160.822C84.638,162.579,74.058,163.428,63.478,163.458C52.899,163.487,42.319,163.502,31.739,163.502C21.159,163.502,10.58,162.741,0,161.979Z">
+</path>
+<path fill="#BBD7EE" fill-opacity="0.9" stroke="#FFFFFF" stroke-width="0.8" highlight-fill-opacity="1" others-fill-opacity="0.35" data-group-type="Wind" d="M0,161.979C10.58,162.741,21.159,163.502,31.739,163.502C42.319,163.502,52.899,163.487,63.478,163.458C74.058,163.428,84.638,162.613,95.217,160.925C105.797,159.236,116.377,152.647,126.957,146.385C137.536,140.124,148.116,129.992,158.696,123.354C169.275,116.716,179.855,106.556,190.435,106.556C201.014,106.556,211.594,106.7,222.174,106.987C232.754,107.275,243.333,114.819,253.913,117.82C264.493,120.82,275.072,122.994,285.652,124.99C296.232,126.987,306.812,127.801,317.391,129.799C327.971,131.798,338.551,135.089,349.13,136.982C359.71,138.874,370.29,140.697,380.87,141.155C391.449,141.614,402.029,141.843,412.609,141.843C423.188,141.843,433.768,140.79,444.348,138.684C454.928,136.579,465.507,131.812,476.087,125.79C486.667,119.769,497.246,109.159,507.826,102.555C518.406,95.95,528.986,86.163,539.565,86.163C550.145,86.163,560.725,88.058,571.304,91.85C581.884,95.641,592.464,106.056,603.043,112.668C613.623,119.28,624.203,126.094,634.783,131.525C645.362,136.956,655.942,141.467,666.522,145.254C677.101,149.041,687.681,152.04,698.261,154.247C708.841,156.454,719.42,157.474,730,158.494L730,187.562C719.42,186.71,708.841,185.858,698.261,183.808C687.681,181.757,677.101,178.941,666.522,175.258C655.942,171.575,645.362,167.16,634.783,161.709C624.203,156.258,613.623,149.377,603.043,142.553C592.464,135.729,581.884,125.172,571.304,120.764C560.725,116.356,550.145,114.153,539.565,114.153C528.986,114.153,518.406,123.571,507.826,130.078C497.246,136.585,486.667,147.186,476.087,153.196C465.507,159.206,454.928,163.933,444.348,166.138C433.768,168.344,423.188,169.447,412.609,169.447C402.029,169.447,391.449,169.166,380.87,168.603C370.29,168.041,359.71,165.737,349.13,163.646C338.551,161.555,327.971,158.259,317.391,156.058C306.812,153.857,296.232,152.684,285.652,150.44C275.072,148.196,264.493,145.721,253.913,142.594C243.333,139.468,232.754,131.679,222.174,131.679C211.594,131.679,201.014,131.717,190.435,131.794C179.855,131.871,169.275,142.901,158.696,150.036C148.116,157.171,137.536,168.048,126.957,174.603C116.377,181.157,105.797,187.681,95.217,189.365C84.638,191.049,74.058,191.891,63.478,191.891C52.899,191.891,42.319,191.869,31.739,191.824C21.159,191.78,10.58,191.118,0,190.456Z">
+</path>
+<path fill="#F3D039" fill-opacity="0.9" stroke="#FFFFFF" stroke-width="0.8" highlight-fill-opacity="1" others-fill-opacity="0.35" data-group-type="Solar" d="M0,161.979C10.58,162.741,21.159,163.502,31.739,163.502C42.319,163.502,52.899,163.487,63.478,163.458C74.058,163.428,84.638,162.579,95.217,160.822C105.797,159.065,116.377,152.435,126.957,145.997C137.536,139.559,148.116,129.232,158.696,122.193C169.275,115.155,179.855,105.009,190.435,103.767C201.014,102.525,211.594,101.904,222.174,101.904C232.754,101.904,243.333,108.047,253.913,110.326C264.493,112.604,275.072,114.106,285.652,115.576C296.232,117.046,306.812,117.41,317.391,119.146C327.971,120.882,338.551,124.043,349.13,125.992C359.71,127.941,370.29,129.657,380.87,130.84C391.449,132.024,402.029,133.094,412.609,133.094C423.188,133.094,433.768,132.771,444.348,132.126C454.928,131.481,465.507,126.964,476.087,121.708C486.667,116.453,497.246,106.635,507.826,100.594C518.406,94.553,528.986,85.463,539.565,85.463C550.145,85.463,560.725,87.537,571.304,91.686C581.884,95.834,592.464,106.027,603.043,112.666C613.623,119.306,624.203,126.093,634.783,131.525C645.362,136.956,655.942,141.467,666.522,145.254C677.101,149.041,687.681,152.04,698.261,154.247C708.841,156.454,719.42,157.474,730,158.494L730,158.494C719.42,157.474,708.841,156.454,698.261,154.247C687.681,152.04,677.101,149.041,666.522,145.254C655.942,141.467,645.362,136.956,634.783,131.525C624.203,126.094,613.623,119.28,603.043,112.668C592.464,106.056,581.884,95.641,571.304,91.85C560.725,88.058,550.145,86.163,539.565,86.163C528.986,86.163,518.406,95.95,507.826,102.555C497.246,109.159,486.667,119.769,476.087,125.79C465.507,131.812,454.928,136.579,444.348,138.684C433.768,140.79,423.188,141.843,412.609,141.843C402.029,141.843,391.449,141.614,380.87,141.155C370.29,140.697,359.71,138.874,349.13,136.982C338.551,135.089,327.971,131.798,317.391,129.799C306.812,127.801,296.232,126.987,285.652,124.99C275.072,122.994,264.493,120.82,253.913,117.82C243.333,114.819,232.754,107.275,222.174,106.987C211.594,106.7,201.014,106.556,190.435,106.556C179.855,106.556,169.275,116.716,158.696,123.354C148.116,129.992,137.536,140.124,126.957,146.385C116.377,152.647,105.797,159.236,95.217,160.925C84.638,162.613,74.058,163.428,63.478,163.458C52.899,163.487,42.319,163.502,31.739,163.502C21.159,163.502,10.58,162.741,0,161.979Z">
+</path>
+<path fill="#8B4513" fill-opacity="0.9" stroke="#FFFFFF" stroke-width="0.8" highlight-fill-opacity="1" others-fill-opacity="0.35" data-group-type="Coal" d="M0,133.384C10.58,134.412,21.159,135.441,31.739,135.441C42.319,135.441,52.899,135.288,63.478,134.982C74.058,134.677,84.638,133.514,95.217,130.577C105.797,127.64,116.377,119.89,126.957,112.352C137.536,104.815,148.116,93.271,158.696,85.351C169.275,77.43,179.855,67.098,190.435,64.83C201.014,62.563,211.594,61.429,222.174,61.429C232.754,61.429,243.333,66.706,253.913,68.643C264.493,70.58,275.072,71.773,285.652,73.053C296.232,74.333,306.812,74.592,317.391,76.322C327.971,78.053,338.551,81.323,349.13,83.438C359.71,85.554,370.29,87.625,380.87,89.014C391.449,90.403,402.029,91.77,412.609,91.77C423.188,91.77,433.768,91.559,444.348,91.137C454.928,90.716,465.507,85.875,476.087,80.588C486.667,75.301,497.246,65.447,507.826,59.415C518.406,53.383,528.986,44.398,539.565,44.398C550.145,44.398,560.725,46.618,571.304,51.057C581.884,55.496,592.464,65.811,603.043,72.905C613.623,79.999,624.203,87.469,634.783,93.623C645.362,99.778,655.942,105.105,666.522,109.831C677.101,114.558,687.681,118.836,698.261,121.984C708.841,125.132,719.42,126.926,730,128.72L730,128.72C719.42,126.926,708.841,125.132,698.261,121.984C687.681,118.836,677.101,114.558,666.522,109.831C655.942,105.105,645.362,99.778,634.783,93.623C624.203,87.469,613.623,79.999,603.043,72.905C592.464,65.811,581.884,55.496,571.304,51.057C560.725,46.618,550.145,44.398,539.565,44.398C528.986,44.398,518.406,53.383,507.826,59.415C497.246,65.447,486.667,75.301,476.087,80.588C465.507,85.875,454.928,90.716,444.348,91.137C433.768,91.559,423.188,91.77,412.609,91.77C402.029,91.77,391.449,90.403,380.87,89.014C370.29,87.625,359.71,85.554,349.13,83.438C338.551,81.323,327.971,78.053,317.391,76.322C306.812,74.592,296.232,74.333,285.652,73.053C275.072,71.773,264.493,70.58,253.913,68.643C243.333,66.706,232.754,61.429,222.174,61.429C211.594,61.429,201.014,62.563,190.435,64.83C179.855,67.098,169.275,77.43,158.696,85.351C148.116,93.271,137.536,104.815,126.957,112.352C116.377,119.89,105.797,127.64,95.217,130.577C84.638,133.514,74.058,134.677,63.478,134.982C52.899,135.288,42.319,135.441,31.739,135.441C21.159,135.441,10.58,134.412,0,133.384Z">
+</path>
+<path fill="#000" fill-opacity="0.9" stroke="#FFFFFF" stroke-width="0.8" highlight-fill-opacity="1" others-fill-opacity="0.35" data-group-type="Oil" d="M0,133.384C10.58,134.412,21.159,135.441,31.739,135.441C42.319,135.441,52.899,135.288,63.478,134.982C74.058,134.677,84.638,133.514,95.217,130.577C105.797,127.64,116.377,119.89,126.957,112.352C137.536,104.815,148.116,93.271,158.696,85.351C169.275,77.43,179.855,67.098,190.435,64.83C201.014,62.563,211.594,61.429,222.174,61.429C232.754,61.429,243.333,66.706,253.913,68.643C264.493,70.58,275.072,71.773,285.652,73.053C296.232,74.333,306.812,74.592,317.391,76.322C327.971,78.053,338.551,81.323,349.13,83.438C359.71,85.554,370.29,87.625,380.87,89.014C391.449,90.403,402.029,91.77,412.609,91.77C423.188,91.77,433.768,91.559,444.348,91.137C454.928,90.716,465.507,85.875,476.087,80.588C486.667,75.301,497.246,65.447,507.826,59.415C518.406,53.383,528.986,44.398,539.565,44.398C550.145,44.398,560.725,46.618,571.304,51.057C581.884,55.496,592.464,65.811,603.043,72.905C613.623,79.999,624.203,87.469,634.783,93.623C645.362,99.778,655.942,105.105,666.522,109.831C677.101,114.558,687.681,118.836,698.261,121.984C708.841,125.132,719.42,126.926,730,128.72L730,128.72C719.42,126.926,708.841,125.132,698.261,121.984C687.681,118.836,677.101,114.558,666.522,109.831C655.942,105.105,645.362,99.778,634.783,93.623C624.203,87.469,613.623,79.999,603.043,72.905C592.464,65.811,581.884,55.496,571.304,51.057C560.725,46.618,550.145,44.398,539.565,44.398C528.986,44.398,518.406,53.383,507.826,59.415C497.246,65.447,486.667,75.301,476.087,80.588C465.507,85.875,454.928,90.716,444.348,91.137C433.768,91.559,423.188,91.77,412.609,91.77C402.029,91.77,391.449,90.403,380.87,89.014C370.29,87.625,359.71,85.554,349.13,83.438C338.551,81.323,327.971,78.053,317.391,76.322C306.812,74.592,296.232,74.333,285.652,73.053C275.072,71.773,264.493,70.58,253.913,68.643C243.333,66.706,232.754,61.429,222.174,61.429C211.594,61.429,201.014,62.563,190.435,64.83C179.855,67.098,169.275,77.43,158.696,85.351C148.116,93.271,137.536,104.815,126.957,112.352C116.377,119.89,105.797,127.64,95.217,130.577C84.638,133.514,74.058,134.677,63.478,134.982C52.899,135.288,42.319,135.441,31.739,135.441C21.159,135.441,10.58,134.412,0,133.384Z">
+</path>
+<path fill="#CCC" fill-opacity="0.9" stroke="#FFFFFF" stroke-width="0.8" highlight-fill-opacity="1" others-fill-opacity="0.35" data-group-type="others" d="M0,123.4C10.58,124.429,21.159,125.459,31.739,125.459C42.319,125.459,52.899,125.305,63.478,124.996C74.058,124.687,84.638,123.524,95.217,120.58C105.797,117.636,116.377,109.888,126.957,102.347C137.536,94.807,148.116,83.261,158.696,75.339C169.275,67.417,179.855,57.083,190.435,54.817C201.014,52.552,211.594,51.419,222.174,51.419C232.754,51.419,243.333,56.702,253.913,58.642C264.493,60.582,275.072,61.778,285.652,63.06C296.232,64.342,306.812,64.602,317.391,66.334C327.971,68.067,338.551,71.338,349.13,73.454C359.71,75.571,370.29,77.644,380.87,79.034C391.449,80.424,402.029,81.794,412.609,81.794C423.188,81.794,433.768,81.581,444.348,81.157C454.928,80.732,465.507,75.89,476.087,70.601C486.667,65.312,497.246,55.457,507.826,49.423C518.406,43.39,528.986,34.398,539.565,34.398C550.145,34.398,560.725,36.616,571.304,41.05C581.884,45.484,592.464,55.799,603.043,62.893C613.623,69.987,624.203,77.465,634.783,83.613C645.362,89.76,655.942,95.048,666.522,99.776C677.101,104.505,687.681,108.829,698.261,111.985C708.841,115.141,719.42,116.927,730,118.713L730,128.72C719.42,126.926,708.841,125.132,698.261,121.984C687.681,118.836,677.101,114.558,666.522,109.831C655.942,105.105,645.362,99.778,634.783,93.623C624.203,87.469,613.623,79.999,603.043,72.905C592.464,65.811,581.884,55.496,571.304,51.057C560.725,46.618,550.145,44.398,539.565,44.398C528.986,44.398,518.406,53.383,507.826,59.415C497.246,65.447,486.667,75.301,476.087,80.588C465.507,85.875,454.928,90.716,444.348,91.137C433.768,91.559,423.188,91.77,412.609,91.77C402.029,91.77,391.449,90.403,380.87,89.014C370.29,87.625,359.71,85.554,349.13,83.438C338.551,81.323,327.971,78.053,317.391,76.322C306.812,74.592,296.232,74.333,285.652,73.053C275.072,71.773,264.493,70.58,253.913,68.643C243.333,66.706,232.754,61.429,222.174,61.429C211.594,61.429,201.014,62.563,190.435,64.83C179.855,67.098,169.275,77.43,158.696,85.351C148.116,93.271,137.536,104.815,126.957,112.352C116.377,119.89,105.797,127.64,95.217,130.577C84.638,133.514,74.058,134.677,63.478,134.982C52.899,135.288,42.319,135.441,31.739,135.441C21.159,135.441,10.58,134.412,0,133.384Z">
+</path>
 </g>
-<g class="tick" opacity="1" transform="translate(74.547,0)">
+<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle" transform="translate(0, 307)">
+<path class="domain" stroke="currentColor" d="M0.5,0.5H730.5">
+</path>
+<g class="tick" opacity="1" transform="translate(0.5,0)">
 <line stroke="currentColor" y2="9">
 </line>
-<text fill="currentColor" y="12" dy="0.71em">2</text>
+<text fill="currentColor" y="12" dy="0.71em">0 Uhr</text>
 </g>
-<g class="tick" opacity="1" transform="translate(134.747,0)">
+<g class="tick" opacity="1" transform="translate(95.717,0)">
 <line stroke="currentColor" y2="9">
 </line>
-<text fill="currentColor" y="12" dy="0.71em">4</text>
+<text fill="currentColor" y="12" dy="0.71em">3 Uhr</text>
 </g>
-<g class="tick" opacity="1" transform="translate(194.948,0)">
+<g class="tick" opacity="1" transform="translate(190.935,0)">
 <line stroke="currentColor" y2="9">
 </line>
-<text fill="currentColor" y="12" dy="0.71em">6</text>
+<text fill="currentColor" y="12" dy="0.71em">6 Uhr</text>
 </g>
-<g class="tick" opacity="1" transform="translate(255.149,0)">
+<g class="tick" opacity="1" transform="translate(286.152,0)">
 <line stroke="currentColor" y2="9">
 </line>
-<text fill="currentColor" y="12" dy="0.71em">8</text>
+<text fill="currentColor" y="12" dy="0.71em">9 Uhr</text>
 </g>
-<g class="tick" opacity="1" transform="translate(315.349,0)">
+<g class="tick" opacity="1" transform="translate(381.37,0)">
 <line stroke="currentColor" y2="9">
 </line>
-<text fill="currentColor" y="12" dy="0.71em">10</text>
+<text fill="currentColor" y="12" dy="0.71em">12 Uhr</text>
 </g>
-<g class="tick" opacity="1" transform="translate(375.55,0)">
+<g class="tick" opacity="1" transform="translate(476.587,0)">
 <line stroke="currentColor" y2="9">
 </line>
-<text fill="currentColor" y="12" dy="0.71em">12</text>
+<text fill="currentColor" y="12" dy="0.71em">15 Uhr</text>
 </g>
-<g class="tick" opacity="1" transform="translate(435.751,0)">
+<g class="tick" opacity="1" transform="translate(571.804,0)">
 <line stroke="currentColor" y2="9">
 </line>
-<text fill="currentColor" y="12" dy="0.71em">14</text>
+<text fill="currentColor" y="12" dy="0.71em">18 Uhr</text>
 </g>
-<g class="tick" opacity="1" transform="translate(495.952,0)">
+<g class="tick" opacity="1" transform="translate(667.022,0)">
 <line stroke="currentColor" y2="9">
 </line>
-<text fill="currentColor" y="12" dy="0.71em">16</text>
-</g>
-<g class="tick" opacity="1" transform="translate(556.152,0)">
-<line stroke="currentColor" y2="9">
-</line>
-<text fill="currentColor" y="12" dy="0.71em">18</text>
-</g>
-<g class="tick" opacity="1" transform="translate(616.353,0)">
-<line stroke="currentColor" y2="9">
-</line>
-<text fill="currentColor" y="12" dy="0.71em">20</text>
-</g>
-<g class="tick" opacity="1" transform="translate(676.554,0)">
-<line stroke="currentColor" y2="9">
-</line>
-<text fill="currentColor" y="12" dy="0.71em">22</text>
+<text fill="currentColor" y="12" dy="0.71em">21 Uhr</text>
 </g>
 </g>
 <g class="vis-grid">
-<line x1="0" x2="720" y1="310" y2="310">
+<line x1="0" x2="730" y1="307" y2="307">
 </line>
-<line x1="0" x2="720" y1="281.913" y2="281.913">
+<line x1="0" x2="730" y1="237.227" y2="237.227">
 </line>
-<line x1="0" x2="720" y1="253.827" y2="253.827">
+<line x1="0" x2="730" y1="167.455" y2="167.455">
 </line>
-<line x1="0" x2="720" y1="225.74" y2="225.74">
+<line x1="0" x2="730" y1="97.682" y2="97.682">
 </line>
-<line x1="0" x2="720" y1="197.653" y2="197.653">
-</line>
-<line x1="0" x2="720" y1="169.567" y2="169.567">
-</line>
-<line x1="0" x2="720" y1="141.48" y2="141.48">
-</line>
-<line x1="0" x2="720" y1="113.393" y2="113.393">
-</line>
-<line x1="0" x2="720" y1="85.306" y2="85.306">
-</line>
-<line x1="0" x2="720" y1="57.22" y2="57.22">
-</line>
-<line x1="0" x2="720" y1="29.133" y2="29.133">
-</line>
-<line x1="0" x2="720" y1="1.046" y2="1.046">
+<line x1="0" x2="730" y1="27.909" y2="27.909">
 </line>
 </g>
 <g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
-<path class="domain" stroke="currentColor" d="M0.5,310.5V0.5">
+<path class="domain" stroke="currentColor" d="M0.5,307.5V0.5">
 </path>
-<g class="tick" opacity="1" transform="translate(0,310.5)">
+<g class="tick" opacity="1" transform="translate(0,307.5)">
 <line stroke="currentColor" x2="-9">
 </line>
-<text fill="currentColor" x="-12" dy="0.32em">0,00</text>
+<text fill="currentColor" x="-12" dy="0.32em">0,0</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,282.413)">
+<g class="tick" opacity="1" transform="translate(0,237.727)">
 <line stroke="currentColor" x2="-9">
 </line>
-<text fill="currentColor" x="-12" dy="0.32em">0,20</text>
+<text fill="currentColor" x="-12" dy="0.32em">0,5</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,254.327)">
+<g class="tick" opacity="1" transform="translate(0,167.955)">
 <line stroke="currentColor" x2="-9">
 </line>
-<text fill="currentColor" x="-12" dy="0.32em">0,40</text>
+<text fill="currentColor" x="-12" dy="0.32em">1,0</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,226.24)">
+<g class="tick" opacity="1" transform="translate(0,98.182)">
 <line stroke="currentColor" x2="-9">
 </line>
-<text fill="currentColor" x="-12" dy="0.32em">0,60</text>
+<text fill="currentColor" x="-12" dy="0.32em">1,5</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,198.153)">
+<g class="tick" opacity="1" transform="translate(0,28.409)">
 <line stroke="currentColor" x2="-9">
 </line>
-<text fill="currentColor" x="-12" dy="0.32em">0,80</text>
-</g>
-<g class="tick" opacity="1" transform="translate(0,170.067)">
-<line stroke="currentColor" x2="-9">
-</line>
-<text fill="currentColor" x="-12" dy="0.32em">1,00</text>
-</g>
-<g class="tick" opacity="1" transform="translate(0,141.98)">
-<line stroke="currentColor" x2="-9">
-</line>
-<text fill="currentColor" x="-12" dy="0.32em">1,20</text>
-</g>
-<g class="tick" opacity="1" transform="translate(0,113.893)">
-<line stroke="currentColor" x2="-9">
-</line>
-<text fill="currentColor" x="-12" dy="0.32em">1,40</text>
-</g>
-<g class="tick" opacity="1" transform="translate(0,85.806)">
-<line stroke="currentColor" x2="-9">
-</line>
-<text fill="currentColor" x="-12" dy="0.32em">1,60</text>
-</g>
-<g class="tick" opacity="1" transform="translate(0,57.72)">
-<line stroke="currentColor" x2="-9">
-</line>
-<text fill="currentColor" x="-12" dy="0.32em">1,80</text>
-</g>
-<g class="tick" opacity="1" transform="translate(0,29.633)">
-<line stroke="currentColor" x2="-9">
-</line>
-<text fill="currentColor" x="-12" dy="0.32em">2,00</text>
-</g>
-<g class="tick" opacity="1" transform="translate(0,1.546)">
-<line stroke="currentColor" x2="-9">
-</line>
-<text fill="currentColor" x="-12" dy="0.32em">2,20</text>
+<text fill="currentColor" x="-12" dy="0.32em">2,0</text>
 </g>
 </g>
-<g class="vis-plot plot-0" data-plot="plot-0">
+<g class="vis-plot names vis-above" data-plot="names">
 <g class="vis-group" data-group-type="Hydro">
-<rect fill="#5BC5F2" opacity="0.9" x="4.846" width="18" y="192.714" height="117.286">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="34.946" width="18" y="194.092" height="115.908">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="65.047" width="18" y="194.159" height="115.841">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="95.147" width="18" y="191.617" height="118.383">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="125.247" width="18" y="176.76" height="133.24">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="155.348" width="18" y="152.037" height="157.963">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="185.448" width="18" y="133.679" height="176.321">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="215.548" width="18" y="133.563" height="176.437">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="245.649" width="18" y="144.548" height="165.452">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="275.749" width="18" y="152.444" height="157.556">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="305.849" width="18" y="158.097" height="151.903">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="335.95" width="18" y="165.734" height="144.266">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="366.05" width="18" y="170.723" height="139.277">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="396.151" width="18" y="171.571" height="138.429">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="426.251" width="18" y="168.242" height="141.758">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="456.351" width="18" y="155.217" height="154.783">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="486.452" width="18" y="131.952" height="178.048">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="516.552" width="18" y="115.925" height="194.075">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="546.652" width="18" y="122.579" height="187.421">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="576.753" width="18" y="144.507" height="165.493">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="606.853" width="18" y="163.784" height="146.216">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="636.953" width="18" y="177.42" height="132.58">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="667.054" width="18" y="186.024" height="123.976">
-</rect>
-<rect fill="#5BC5F2" opacity="0.9" x="697.154" width="18" y="189.802" height="120.198">
-</rect>
+<text x="539.565" y="210.576" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="bold" fill="#0B5E80" pointer-events="none" highlight-opacity="1" others-opacity="0.3">Hydro</text>
 </g>
 <g class="vis-group" data-group-type="Gas">
-<rect fill="#C3423F" opacity="0.9" x="4.846" width="18" y="135.28" height="28.776">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="34.946" width="18" y="137.349" height="28.24">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="65.047" width="18" y="136.888" height="28.657">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="95.147" width="18" y="132.454" height="30.438">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="125.247" width="18" y="114.114" height="33.859">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="155.348" width="18" y="86.94" height="37.077">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="185.448" width="18" y="66.289" height="39.185">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="215.548" width="18" y="62.866" height="40.733">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="245.649" width="18" y="70.126" height="41.948">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="275.749" width="18" y="74.565" height="42.793">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="305.849" width="18" y="77.854" height="43.097">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="335.95" width="18" y="85.016" height="42.825">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="366.05" width="18" y="90.627" height="42.092">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="396.151" width="18" y="93.401" height="41.587">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="426.251" width="18" y="92.764" height="41.25">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="456.351" width="18" y="82.148" height="41.382">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="486.452" width="18" y="60.839" height="41.441">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="516.552" width="18" y="45.727" height="41.326">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="546.652" width="18" y="52.428" height="40.887">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="576.753" width="18" y="74.415" height="40.014">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="606.853" width="18" y="95.265" height="38.143">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="636.953" width="18" y="111.577" height="35.648">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="667.054" width="18" y="123.807" height="32.468">
-</rect>
-<rect fill="#C3423F" opacity="0.9" x="697.154" width="18" y="130.586" height="29.963">
-</rect>
+<text x="317.391" y="97.734" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="bold" fill="#FFFFFF" pointer-events="none" highlight-opacity="1" others-opacity="0.3">Erdgas</text>
 </g>
 <g class="vis-group" data-group-type="Wind">
-<rect fill="#BBD7EE" opacity="0.9" x="4.846" width="18" y="164.056" height="28.658">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="34.946" width="18" y="165.589" height="28.502">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="65.047" width="18" y="165.544" height="28.615">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="95.147" width="18" y="162.995" height="28.621">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="125.247" width="18" y="148.363" height="28.397">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="155.348" width="18" y="125.186" height="26.852">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="185.448" width="18" y="108.281" height="25.398">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="215.548" width="18" y="108.715" height="24.848">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="245.649" width="18" y="119.616" height="24.933">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="275.749" width="18" y="126.832" height="25.612">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="305.849" width="18" y="131.672" height="26.425">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="335.95" width="18" y="138.9" height="26.834">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="366.05" width="18" y="143.1" height="27.623">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="396.151" width="18" y="143.792" height="27.779">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="426.251" width="18" y="140.613" height="27.629">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="456.351" width="18" y="127.637" height="27.58">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="486.452" width="18" y="104.254" height="27.698">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="516.552" width="18" y="87.757" height="28.168">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="546.652" width="18" y="93.481" height="29.098">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="576.753" width="18" y="114.431" height="30.075">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="606.853" width="18" y="133.408" height="30.376">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="636.953" width="18" y="147.224" height="30.196">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="667.054" width="18" y="156.275" height="29.749">
-</rect>
-<rect fill="#BBD7EE" opacity="0.9" x="697.154" width="18" y="160.549" height="29.253">
-</rect>
+<text x="634.783" y="146.617" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="bold" fill="#2F5F8A" pointer-events="none" highlight-opacity="1" others-opacity="0.3">Wind</text>
 </g>
 <g class="vis-group" data-group-type="Solar">
-<rect fill="#F3D039" opacity="0.9" x="4.846" width="18" y="164.056" height="0">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="34.946" width="18" y="165.589" height="0">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="65.047" width="18" y="165.544" height="0">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="95.147" width="18" y="162.892" height="0.103">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="125.247" width="18" y="147.972" height="0.391">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="155.348" width="18" y="124.017" height="1.168">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="185.448" width="18" y="105.474" height="2.807">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="215.548" width="18" y="103.599" height="5.115">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="245.649" width="18" y="112.074" height="7.542">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="275.749" width="18" y="117.358" height="9.474">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="305.849" width="18" y="120.951" height="10.721">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="335.95" width="18" y="127.84" height="11.059">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="366.05" width="18" y="132.719" height="10.381">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="396.151" width="18" y="134.987" height="8.805">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="426.251" width="18" y="134.014" height="6.6">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="456.351" width="18" y="123.529" height="4.108">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="486.452" width="18" y="102.281" height="1.973">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="516.552" width="18" y="87.053" height="0.705">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="546.652" width="18" y="93.316" height="0.165">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="576.753" width="18" y="114.43" height="0.002">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="606.853" width="18" y="133.408" height="0">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="636.953" width="18" y="147.224" height="0">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="667.054" width="18" y="156.275" height="0">
-</rect>
-<rect fill="#F3D039" opacity="0.9" x="697.154" width="18" y="160.549" height="0">
-</rect>
-</g>
-<g class="vis-group" data-group-type="Coal">
-<rect fill="#8B4513" opacity="0.9" x="4.846" width="18" y="135.28" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="34.946" width="18" y="137.349" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="65.047" width="18" y="136.888" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="95.147" width="18" y="132.454" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="125.247" width="18" y="114.114" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="155.348" width="18" y="86.94" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="185.448" width="18" y="66.289" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="215.548" width="18" y="62.866" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="245.649" width="18" y="70.126" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="275.749" width="18" y="74.565" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="305.849" width="18" y="77.854" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="335.95" width="18" y="85.016" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="366.05" width="18" y="90.627" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="396.151" width="18" y="93.401" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="426.251" width="18" y="92.764" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="456.351" width="18" y="82.148" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="486.452" width="18" y="60.839" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="516.552" width="18" y="45.727" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="546.652" width="18" y="52.428" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="576.753" width="18" y="74.415" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="606.853" width="18" y="95.265" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="636.953" width="18" y="111.577" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="667.054" width="18" y="123.807" height="0">
-</rect>
-<rect fill="#8B4513" opacity="0.9" x="697.154" width="18" y="130.586" height="0">
-</rect>
-</g>
-<g class="vis-group" data-group-type="Oil">
-<rect fill="#000" opacity="0.9" x="4.846" width="18" y="135.28" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="34.946" width="18" y="137.349" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="65.047" width="18" y="136.888" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="95.147" width="18" y="132.454" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="125.247" width="18" y="114.114" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="155.348" width="18" y="86.94" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="185.448" width="18" y="66.289" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="215.548" width="18" y="62.866" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="245.649" width="18" y="70.126" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="275.749" width="18" y="74.565" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="305.849" width="18" y="77.854" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="335.95" width="18" y="85.016" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="366.05" width="18" y="90.627" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="396.151" width="18" y="93.401" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="426.251" width="18" y="92.764" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="456.351" width="18" y="82.148" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="486.452" width="18" y="60.839" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="516.552" width="18" y="45.727" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="546.652" width="18" y="52.428" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="576.753" width="18" y="74.415" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="606.853" width="18" y="95.265" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="636.953" width="18" y="111.577" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="667.054" width="18" y="123.807" height="0">
-</rect>
-<rect fill="#000" opacity="0.9" x="697.154" width="18" y="130.586" height="0">
-</rect>
-</g>
-<g class="vis-group" data-group-type="others">
-<rect fill="#CCC" opacity="0.9" x="4.846" width="18" y="125.231" height="10.048">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="34.946" width="18" y="127.304" height="10.045">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="65.047" width="18" y="126.838" height="10.05">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="95.147" width="18" y="122.394" height="10.06">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="125.247" width="18" y="104.045" height="10.069">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="155.348" width="18" y="76.865" height="10.075">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="185.448" width="18" y="56.213" height="10.077">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="215.548" width="18" y="52.793" height="10.073">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="245.649" width="18" y="60.062" height="10.065">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="275.749" width="18" y="64.508" height="10.057">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="305.849" width="18" y="67.803" height="10.052">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="335.95" width="18" y="74.968" height="10.048">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="366.05" width="18" y="80.583" height="10.044">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="396.151" width="18" y="83.361" height="10.04">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="426.251" width="18" y="82.72" height="10.044">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="456.351" width="18" y="72.096" height="10.051">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="486.452" width="18" y="50.784" height="10.055">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="516.552" width="18" y="35.664" height="10.063">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="546.652" width="18" y="42.358" height="10.071">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="576.753" width="18" y="64.339" height="10.076">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="606.853" width="18" y="85.191" height="10.074">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="636.953" width="18" y="101.458" height="10.119">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="667.054" width="18" y="113.744" height="10.063">
-</rect>
-<rect fill="#CCC" opacity="0.9" x="697.154" width="18" y="120.514" height="10.071">
-</rect>
+<text x="349.13" y="131.487" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="bold" fill="#6B5500" pointer-events="none" highlight-opacity="1" others-opacity="0.3">Solar</text>
 </g>
 </g>
-<rect width="720" height="310" class="vis-events" opacity="0" style="touch-action: pan-y;">
+<g class="vis-plot annotation-0 vis-above vis-annotations" data-plot="annotation-0">
+<line class="vis-annotation vis-line" x1="380.87" x2="380.87" y1="0" y2="307" stroke="#333" stroke-dasharray="3 3">
+</line>
+</g>
+<g class="vis-annotation-labels">
+<text class="vis-annotation-label" x="384.87" y="4" text-anchor="start" dominant-baseline="hanging">Mittag</text>
+</g>
+<rect width="730" height="307" class="vis-events" opacity="0" style="touch-action: pan-y;">
 </rect>
 </g>
 </svg>
 <span id="gen-vis-facet-N-keys" hidden="">Die Pfeiltasten zeigen die Werte der Positionen und Zeilen, die Eingabetaste wählt sie aus, Escape schließt sie.</span>
-<div aria-live="polite" style="transform: translate(50px, 5px); position: absolute; top: 0px; left: 0px;">
+<div aria-live="polite" style="transform: translate(50px, 18px); position: absolute; top: 0px; left: 0px;">
 </div>
 </div>
 </div>

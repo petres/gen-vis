@@ -8,7 +8,10 @@ their data (October 2026), the ones of special plot types or uses:
 - `weather/hdd.json`: daily and cumulated values in two facets
 - `fossil/supply.json`, `fossil/supply-stacked.json`: the unit and the share
   switched by column templates of globals, stacked bars
-- `electricity/generation-hourly.json`: hourly stacked bars
+- `electricity/generation-hourly.json`: the hours of a day as stacked areas
+  (stacked bars in the dashboard), the names in the areas at their thickest
+  hour (`select` of the max, `@y:mid:scaled`), a line at noon, fewer hours of
+  the axis on a phone (`axis.values` of `totalWidth`)
 - `mobility/registrations.json`: six mixins, e.g. a toggle of the facets
 - `mobility/traffic.json`: a timeline, the data only of the total
 - `oil/fuel-prices-map.json`, `electricity/generation-map.json`: maps of
