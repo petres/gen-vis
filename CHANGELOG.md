@@ -62,7 +62,8 @@ New:
   position and the orientation are props of the width, e.g. below the plots
   of a phone
 - texts: `max-width` of `svg:text` and of the labels of axes cuts them with
-  an ellipsis or wraps them (`"text-overflow": "wrap"`); the props of the
+  an ellipsis (the full text is the tooltip, also below the area of the
+  hover) or wraps them (`"text-overflow": "wrap"`); the props of the
   labels of cartesian axes (`axis.labels`), e.g. bold ones of headers or
   other texts of another mapping
 - transforms: `calc` (columns added, subtracted, multiplied or divided),

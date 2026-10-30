@@ -610,3 +610,27 @@ describe('the order of the categories of a scale', () => {
         expect(domain({ by: 'x', descending: true }, { by: 'g' })).toEqual(['a', 'd', 'b', 'c']);
     });
 });
+
+describe('the full text of a cut text', () => {
+    test('is the title of the area of the hover above it', async () => {
+        const def = lineDef();
+        def.mapping.x = { column: 'value', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, null] } };
+        def.mapping.y = { column: 'name', type: 'categorical', scale: { type: 'band', orientation: 'vertical' },
+            axis: { position: 'left', labels: { props: { 'max-width': 30 } } } };
+        delete def.mapping.c;
+        def.plot = { type: 'cartesian:bar', props: { x1: '@x:scaled', y: '@y:scaled' } };
+        def.options.hover = { area: 'facet' };
+        const el = await mount(GenVis, { def, data: 'name,value\nA long name,1\nB,2' });
+        const label = el.querySelector('.vis-axis-left .tick text');
+        const area = el.querySelector('rect.vis-events');
+        const { pointer } = await import('./dom.js');
+        // jsdom has no layout, the element under the pointer is the label or the area
+        document.elementsFromPoint = x => x < 40 ? [area, label] : [area];
+        area.dispatchEvent(pointer('pointermove', { clientX: 10, clientY: 50 }));
+        expect(area.querySelector('title').textContent).toBe('A long name');
+        area.dispatchEvent(pointer('pointermove', { clientX: 200, clientY: 50 }));
+        expect(area.querySelector('title').textContent).toBe('');
+        delete document.elementsFromPoint;
+        expect(errors).toEqual([]);
+    });
+});

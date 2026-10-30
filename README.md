@@ -822,7 +822,8 @@ A plot or a list of plots, drawn in order:
 
 The texts of `svg:text` and of the labels of axes with a `max-width` prop
 (pixels) are cut with an ellipsis, the full text is their title (the
-tooltip of the browser), or wrapped into lines with `"text-overflow":
+tooltip of the browser, also below the area of the hover, e.g. of labels
+with `"area": "facet"`), or wrapped into lines with `"text-overflow":
 "wrap"`, of the `line-height` in em (1.2 by default), around the text of a
 `middle` or `central` baseline, e.g. long names of rows.
 - `layer`: `below` draws the plot below the axes and grid lines, e.g. a

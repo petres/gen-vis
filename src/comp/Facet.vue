@@ -493,11 +493,27 @@ export default {
             if (hoverOptions.area == 'facet' && area.node().tagName == 'rect')
                 area.attr("x", -(this.facet.margins.left + this.origin[0])).attr("y", -(this.facet.margins.top + this.origin[1]))
                     .attr("width", this.facet.width).attr("height", this.facet.height);
+            // the full text of a cut text under the pointer (see fitText of
+            // utils/draw.js) is the title of the area, it is above the texts,
+            // so the browser shows it as their tooltip
+            let tooltip = null;
+            const cutText = e => {
+                const text = e.pointerType == 'mouse' && this.$refs.inner.querySelector('text > title')
+                    ? document.elementsFromPoint?.(e.clientX, e.clientY)
+                        .find(el => el.tagName == 'text' && this.$refs.inner.contains(el) && el.querySelector(':scope > title'))
+                    : null;
+                const full = text ? text.querySelector(':scope > title').textContent : '';
+                if (full || tooltip)
+                    tooltip ??= area.append("title");
+                if (tooltip && tooltip.text() !== full)
+                    tooltip.text(full);
+            };
             area
                 .attr("class", "vis-events")
                 .attr("opacity", 0)
                 .style("touch-action", "pan-y")
                 .on("pointerdown pointermove", move)
+                .on("pointermove.title", cutText)
                 // a click or a tap, e.g. on a region of a map
                 .on("click", e => {
                     const found = at(e);
