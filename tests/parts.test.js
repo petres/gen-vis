@@ -231,3 +231,54 @@ describe('scales', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('groups of band scales', () => {
+    const rows = [
+        { y: 'a', g: 'one' }, { y: 'b', g: 'two' }, { y: 'c', g: 'one' }, { y: 'd', g: 'two' }, { y: 'e', g: 'three' },
+    ];
+
+    test('the categories of a group are next to each other, with a space between the groups', async () => {
+        const { makeScale } = await import('@/utils/scales');
+        const scale = (type, groups, range = [0, 100]) => makeScale('y', { type: 'categorical', scale: { type, domain: [null, null], padding: 0, range, groups } }, rows);
+        const s = scale('band', { by: 'g', padding: 1 });
+        // 5 categories and 2 gaps of a step each
+        expect(s.domain()).toEqual(['a', 'c', 'b', 'd', 'e']);
+        expect(s.step()).toBeCloseTo(100/7);
+        expect(s.bandwidth()).toBeCloseTo(100/7);
+        expect(['a', 'c', 'b', 'd', 'e'].map(d => Math.round(s(d)))).toEqual([0, 14, 43, 57, 86]);
+        expect(s.groupExtent('c').map(Math.round)).toEqual([0, 29]);
+        expect(s.nearest(50)).toBe('b');
+        // reversed, e.g. a vertical range from the bottom
+        const r = scale('band', { by: 'g', padding: 1 }, [100, 0]);
+        expect(Math.round(r('a'))).toBe(86);
+        expect(r('e')).toBeCloseTo(0);
+        // a point scale, without the space of a band
+        const p = scale('point', { by: 'g', padding: 0.5 });
+        expect(p.bandwidth()).toBe(0);
+        expect(['a', 'c', 'b'].map(d => Math.round(p(d)))).toEqual([0, 20, 50]);
+    });
+
+    test('axes, bars and lines of the groups', async () => {
+        const def = {
+            options: { width: 400, height: 260, margins: { top: 0, right: 0, bottom: 0, left: 60 } },
+            mapping: {
+                x: { column: 'v', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, 10], domainRel: [0, 0] } },
+                y: { column: 'y', type: 'categorical', scale: { type: 'band', orientation: 'vertical', range: [0, '@height'], padding: 0, groups: { by: 'g' } }, axis: { position: 'left' } },
+                g: { column: 'g', type: 'categorical' },
+            },
+            plot: [
+                { id: 'bars', type: 'cartesian:bar', props: { x1: '@x:scaled', y: '@y:scaled' } },
+                { id: 'zero', type: 'svg:line', props: { x1: 0, x2: 0, y1: '@y:group:start', y2: '@y:group:end', stroke: 'black' } },
+            ],
+        };
+        const data = 'y,g,v\na,one,1\nb,one,2\nc,two,3';
+        const el = await mount(GenVis, { def, data });
+        // 3 categories and a gap, 65 pixels each
+        expect([...el.querySelectorAll('g.vis-plot[data-plot="bars"] rect')].map(r => [r.getAttribute('y'), r.getAttribute('height')]))
+            .toEqual([['0', '65'], ['65', '65'], ['195', '65']]);
+        expect([...el.querySelectorAll('g.vis-axis-left .tick')].map(t => t.getAttribute('transform'))).toEqual(['translate(0,32.5)', 'translate(0,97.5)', 'translate(0,227.5)']);
+        expect([...el.querySelectorAll('g.vis-plot[data-plot="zero"] line')].map(l => [l.getAttribute('y1'), l.getAttribute('y2')]))
+            .toEqual([['0', '130'], ['0', '130'], ['195', '260']]);
+        expect(errors).toEqual([]);
+    });
+});

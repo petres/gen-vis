@@ -79,6 +79,7 @@ const rowNames = (n, m) => [
     n,
     `${n}:formatted`,
     ...(m.scale ? [`${n}:scaled`, `${n}:scaled:center`, `${n}:scaled:min`, `${n}:scaled:max`, `${n}:bandwidth`, `${n}:step`] : []),
+    ...(['band', 'point'].includes(m.scale?.type) ? [`${n}:group:start`, `${n}:group:end`] : []),
     ...(m.stacked ? [`${n}:start`, `${n}:end`] : []),
     ...(m.stacked && m.scale ? [`${n}:start:scaled`, `${n}:end:scaled`, `${n}:height:scaled`] : []),
 ];
@@ -234,6 +235,10 @@ const validateDef = def => {
             checkProp(m.scale.center, `${path}.scale.center`, warn, names.facet);
             if ((m.scale.include !== undefined || m.scale.center !== undefined) && !['numeric', 'date'].includes(m.type))
                 warn(`${path}.scale`, `'include' and 'center' are values of numeric or date mappings`);
+            if (m.scale.groups !== undefined && (!['band', 'point'].includes(type) || !isObject(m.scale.groups)))
+                warn(`${path}.scale.groups`, `the groups of the categories of a band or a point scale, e.g. { "by": "group", "padding": 1 }`);
+            else if (m.scale.groups !== undefined && !Object.hasOwn(def.mapping ?? {}, m.scale.groups.by))
+                warn(`${path}.scale.groups.by`, `unknown mapping '${m.scale.groups.by}'`);
             if (m.scale.closed !== undefined && (type != 'threshold' || !['left', 'right'].includes(m.scale.closed)))
                 warn(`${path}.scale.closed`, `the side of the classes of a threshold scale, 'left' (default) or 'right'`);
             if (m.scale.orientation !== undefined && !orientations.includes(m.scale.orientation))

@@ -51,6 +51,54 @@ const rightClosed = s => {
     return f;
 };
 
+/**
+ * A band or point scale `s` whose categories are in groups of the values of
+ * the mapping `by` of their rows, in the order of their first category, with
+ * a space of `padding` steps between the groups (1 by default), the
+ * categories of a group are next to each other. `groupExtent(category)` is
+ * the start of the first band and the end of the last band of its group.
+ */
+const grouped = (s, rows, name, { by, padding: gap = 1 }) => {
+    const groupOf = new Map();
+    rows.forEach(r => {
+        const key = String(r[name]);
+        if (!groupOf.has(key))
+            groupOf.set(key, String(r[by] ?? ''));
+    });
+    const groups = [...new Set(s.domain().map(d => groupOf.get(String(d)) ?? ''))];
+    const domain = groups.flatMap(g => s.domain().filter(d => (groupOf.get(String(d)) ?? '') === g));
+    const [r0, r1] = s.range();
+    const [lo, hi] = [Math.min(r0, r1), Math.max(r0, r1)];
+    // the padding of a point scale is the outer one, its bands have no width
+    const inner = s.paddingInner ? s.paddingInner() : 1;
+    const outer = s.paddingOuter ? s.paddingOuter() : s.padding();
+    const step = (hi - lo) / Math.max(1, domain.length - inner + 2*outer + (groups.length - 1)*gap);
+    const bandwidth = s.bandwidth ? step*(1 - inner) : 0;
+    const starts = new Map(domain.map((d, i) => {
+        const g = groups.indexOf(groupOf.get(String(d)) ?? '');
+        const start = lo + step*(outer + i + g*gap);
+        return [String(d), r1 < r0 ? lo + hi - start - bandwidth : start];
+    }));
+    const extents = new Map(groups.map(g => {
+        const ends = domain.filter(d => (groupOf.get(String(d)) ?? '') === g).flatMap(d => [starts.get(String(d)), starts.get(String(d)) + bandwidth]);
+        return [g, d3.extent(ends)];
+    }));
+    const f = d => starts.get(String(d));
+    Object.assign(f, {
+        domain: () => [...domain],
+        range: () => [r0, r1],
+        bandwidth: () => bandwidth,
+        step: () => step,
+        round: () => false,
+        paddingInner: () => inner,
+        paddingOuter: () => outer,
+        copy: () => f,
+        groupExtent: d => extents.get(groupOf.get(String(d)) ?? '') ?? [f(d), f(d) + bandwidth],
+        nearest: p => d3.least(domain, d => Math.abs(f(d) + bandwidth/2 - p)),
+    });
+    return f;
+};
+
 // the values of a mapping in the rows, continuous ones sorted for the lookup
 // of the nearest value, and their extent, of stacked values (`stackOf`, see
 // layout.js) the one of the stacks, e.g. from 0
@@ -198,5 +246,11 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     }
 
     s.domain(domain);
-    return scaleDef.type == 'threshold' && scaleDef.closed == 'right' ? rightClosed(s) : s;
+    if (scaleDef.type == 'threshold' && scaleDef.closed == 'right')
+        return rightClosed(s);
+    // the categories in groups with a space between them, e.g. the rows of
+    // horizontal bars of groups of indicators, not of a cyclic range
+    if (scaleDef.groups?.by && s.step && !cyclic)
+        return grouped(s, rows, name, scaleDef.groups);
+    return s;
 };

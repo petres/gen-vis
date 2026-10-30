@@ -348,6 +348,16 @@
                     "description": "By default the width or height of the plot, e.g. colors, references to the sizes of the coordinate system, e.g. \"@radius\"."
                 },
                 "padding": { "type": "number", "description": "For categorical scales." },
+                "groups": {
+                    "type": "object",
+                    "description": "The categories of a band or point scale in groups of the values of a mapping of their rows, with a space between the groups.",
+                    "required": ["by"],
+                    "additionalProperties": false,
+                    "properties": {
+                        "by": { "type": "string", "description": "The mapping of the groups, e.g. a column of the group of a row." },
+                        "padding": { "type": "number", "description": "The space between the groups in steps of the categories, 1 by default." }
+                    }
+                },
                 "inset": {
                     "description": "The space at the start and the end of the range in pixels (of positions), a number for both or [start, end], e.g. so the first and the last point are not at the edges of the plot area.",
                     "anyOf": [{ "$ref": "#/definitions/number" }, { "type": "array", "items": { "$ref": "#/definitions/number" }, "minItems": 2, "maxItems": 2 }]

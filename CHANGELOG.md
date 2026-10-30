@@ -34,6 +34,9 @@ New:
   `center` (a symmetric domain), `"closed": "right"` of threshold scales
   (`value > limit`); the references `@y:bandwidth`, `@y:step` (also of
   annotations) and the position of any value, e.g. `@x:scaled:100`
+- groups of the categories of band and point scales (`scale.groups`), with
+  a space between them, `@y:group:start` and `@y:group:end` of the group of
+  a row
 
 ## 2.1.0
 

@@ -211,6 +211,11 @@ const rowValue = (ctx, name, rows) => {
         'scaled:max': () => s && constant(s(s.domain().at(-1))),
         // the size of a band and the distance of the categories, e.g. of a band scale
         'bandwidth': () => s && constant(s.bandwidth?.() ?? 0),
+        // the start of the first band and the end of the last band of the
+        // group of the category, see `groups` of scales, of other scales the
+        // band of the category
+        'group:start': () => s?.step && (row => s.groupExtent ? s.groupExtent(row[m])[0] : s(row[m])),
+        'group:end': () => s?.step && (row => s.groupExtent ? s.groupExtent(row[m])[1] : s(row[m]) + (s.bandwidth?.() ?? 0)),
         'step': () => s && constant(s.step?.() ?? 0),
         'start': () => stackOf && start,
         'end': () => stackOf && end,
