@@ -184,6 +184,27 @@ describe('Store.init', () => {
         expect(store.data).toEqual([{ x: 1, y: 2 }]);
     });
 
+    // the legend of a scale of colors, of the definition or of a patch of a form element
+    test('loads the legend of a scale of colors', async () => {
+        const color = { column: 'value', type: 'numeric', scale: { type: 'sequential', interpolator: 'Blues' } };
+        const withLegend = createStore();
+        await withLegend.init({ def: { ...def, data: undefined, mapping: { ...def.mapping, color: { ...color, legend: {} } } }, data: csv });
+        expect(withLegend.colorLegend).not.toBe(null);
+
+        const patched = createStore();
+        await patched.init({ def: { ...def, data: undefined, mapping: { ...def.mapping, color },
+            globals: { legend: 'no' },
+            formElements: [{ id: 'legend', ref: 'legend', type: 'radio', values: [
+                { id: 'no', value: 'no' },
+                { id: 'yes', value: 'yes', patch: { mapping: { color: { legend: {} } } } },
+            ] }] }, data: csv });
+        expect(patched.colorLegend).not.toBe(null);
+
+        const without = createStore();
+        await without.init({ def: { ...def, data: undefined, mapping: { ...def.mapping, color } }, data: csv });
+        expect(without.colorLegend).toBe(null);
+    });
+
     test('warnings for the definition', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const store = createStore();

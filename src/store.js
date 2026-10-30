@@ -178,7 +178,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
         defOrg.options?.transition || defOrg.options?.highlight?.transition ? loadTransition() : null,
         defOrg.transform ? loadTransforms() : null,
         // the legend of a scale of colors, a mapping with a legend without props, also of a patch
-        [defOrg.mapping, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.mapping) : [])]
+        [defOrg.mapping, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.patch?.mapping) : [])]
             .some(ms => Object.values(ms ?? {}).some(m => m?.legend && !m.props)) ? lazy.colorLegend() : null,
         // the locale of the definition and of the patches of form elements
         ...[defOrg, ...(defOrg.formElements ?? []).flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.patch) : [])]
