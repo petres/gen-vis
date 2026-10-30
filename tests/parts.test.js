@@ -398,3 +398,44 @@ describe('legends', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('texts', () => {
+    const bars = () => {
+        const def = lineDef();
+        def.mapping.x = { column: 'value', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, null] }, axis: { position: 'bottom' } };
+        def.mapping.y = { column: 'name', type: 'categorical', scale: { type: 'band', orientation: 'vertical' }, axis: { position: 'left',
+            labels: { categories: ['level'], props: { 'font-weight': '@weight', text: '@short', 'max-width': 30 } } } };
+        def.mapping.level = { column: 'level', type: 'categorical', props: { categories: { header: { weight: 'bold' }, item: { weight: 'normal' } } } };
+        def.mapping.short = { column: 'short', type: 'categorical' };
+        def.plot = { type: 'cartesian:bar', props: { x1: '@x:scaled', y: '@y:scaled' } };
+        delete def.mapping.c;
+        return def;
+    };
+    const data = 'name,short,level,value\nA long name,A long,header,1\nB,B,item,2';
+
+    test('the props of the labels of an axis by the categories of their rows, cut in a width', async () => {
+        const el = await mount(GenVis, { def: bars(), data });
+        const labels = [...el.querySelectorAll('.vis-axis-left .tick text')];
+        expect(labels.map(t => t.getAttribute('font-weight'))).toEqual(['bold', 'normal']);
+        // 30 pixels of 12 pixels per character are 4 characters, estimated without layout
+        expect(labels.map(t => t.childNodes[0].textContent)).toEqual(['A l…', 'B']);
+        expect(labels[0].querySelector('title').textContent).toBe('A long');
+        expect(errors).toEqual([]);
+    });
+
+    test('texts of svg:text cut or wrapped in a width', async () => {
+        const def = lineDef();
+        def.plot = [
+            { id: 'cut', type: 'svg:text', select: 'first', categories: ['c'], props: { x: 0, y: 0, text: 'a long label of a line', 'max-width': 40 } },
+            { id: 'wrap', type: 'svg:text', select: 'first', categories: ['c'], props: { x: 5, y: 0, text: 'a long label of a line', 'max-width': 40, 'text-overflow': 'wrap', 'dominant-baseline': 'middle' } },
+        ];
+        const el = await mount(GenVis, { def, data: lineData });
+        const cut = el.querySelector('g.vis-plot[data-plot="cut"] text');
+        expect(cut.childNodes[0].textContent).toBe('a lon…');
+        const lines = [...el.querySelectorAll('g.vis-plot[data-plot="wrap"] text')[0].querySelectorAll('tspan')];
+        expect(lines.map(t => t.textContent)).toEqual(['a long', 'label', 'of a', 'line']);
+        expect(lines.map(t => t.getAttribute('dy'))).toEqual(['-1.8em', '1.2em', '1.2em', '1.2em']);
+        expect(lines.every(t => t.getAttribute('x') == '5')).toBe(true);
+        expect(errors).toEqual([]);
+    });
+});

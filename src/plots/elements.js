@@ -2,7 +2,7 @@ export { groupwise, pointwise, finite, curve, propScale, dodge };
 
 import * as d3 from "@/utils/d3";
 import { refOf } from "@/utils/props";
-import { curves, groupAttrs, rowOf, setGroupData, setProps } from "@/utils/draw";
+import { curves, fitText, groupAttrs, rowOf, setGroupData, setProps } from "@/utils/draw";
 
 const finite = (...values) => values.every(v => Number.isFinite(v));
 
@@ -93,16 +93,19 @@ export default {
     'svg:rect': element("rect"),
     // `dodge` of the plot moves the texts apart vertically, to at least this
     // distance, e.g. labels at the ends of lines
+    // `max-width` of the props cuts or wraps the texts, see fitText
     'svg:text': {
         update: true,
         render(groups, parent, plot) {
+            const fit = texts => texts.filter(function() { return this.hasAttribute('max-width') })
+                .each(function(v) { fitText(this, v.text === null || v.text === undefined ? '' : String(v.text)) });
             if (!plot.dodge)
-                return pointwise(groups, parent, "text");
+                return fit(pointwise(groups, parent, "text"));
             // the positions of the texts of all groups, moved apart
             const rows = groups.flatMap(g => g.rows.filter(g.complete).map(row => [row, parseFloat(g.at(row).y)]));
             const moved = dodge(rows.map(([, y]) => y), plot.dodge);
             const ys = new Map(rows.map(([row], i) => [row, moved[i]]));
-            return pointwise(groups, parent, "text", (v, row) => ({ ...v, y: ys.get(row) }));
+            return fit(pointwise(groups, parent, "text", (v, row) => ({ ...v, y: ys.get(row) })));
         },
     },
 };

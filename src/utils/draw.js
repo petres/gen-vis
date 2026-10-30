@@ -1,4 +1,4 @@
-export { curves, setProps, setGroupData, groupAttrs, highlighter, rowOf, motion, withMotion };
+export { curves, setProps, setGroupData, groupAttrs, highlighter, rowOf, motion, withMotion, fitText };
 
 import * as d3 from "@/utils/d3";
 
@@ -218,4 +218,63 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
         otherIndex.forEach(({ plot, nodes }) => nodes.filter(node => !highlighted.has(node))
             .forEach(node => replace(node, plot.othersProps, 'others')));
     };
+};
+
+// the width of a text in pixels, of the browser or, without layout (e.g.
+// jsdom), estimated of its size
+const textWidth = node => typeof node.getComputedTextLength == 'function'
+    ? node.getComputedTextLength()
+    : node.textContent.length*0.55*(parseFloat(node.getAttribute('font-size')) || 12);
+
+/**
+ * A text of an svg element in the width of its attribute `max-width`, cut
+ * with an ellipsis (`text-overflow`, by default) or wrapped into lines of
+ * tspans (`"text-overflow": "wrap"`) of the height `line-height` (in em,
+ * 1.2 by default), the lines of a text with a middle or central baseline are
+ * around it. A cut text has its full text as title, e.g. the tooltip of the
+ * browser. The text is the one of `text`, e.g. of the props.
+ */
+const fitText = (node, text = node.textContent) => {
+    const max = parseFloat(node.getAttribute('max-width'));
+    if (!(max > 0))
+        return;
+    node.textContent = text;
+    if (textWidth(node) <= max)
+        return;
+    if (node.getAttribute('text-overflow') == 'wrap') {
+        const words = text.split(/\s+/).filter(Boolean);
+        const lines = [];
+        let line = [];
+        for (const word of words) {
+            node.textContent = [...line, word].join(' ');
+            if (line.length > 0 && textWidth(node) > max) {
+                lines.push(line.join(' '));
+                line = [word];
+            } else
+                line.push(word);
+        }
+        lines.push(line.join(' '));
+        node.textContent = '';
+        const height = parseFloat(node.getAttribute('line-height')) || 1.2;
+        const centered = ['middle', 'central'].includes(node.getAttribute('dominant-baseline'));
+        lines.forEach((l, i) => {
+            const tspan = node.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'tspan'));
+            tspan.setAttribute('x', node.getAttribute('x') ?? 0);
+            tspan.setAttribute('dy', `${+(i == 0 ? (centered ? -(lines.length - 1)*height/2 : 0) : height).toFixed(3)}em`);
+            tspan.textContent = l;
+        });
+        return;
+    }
+    // the longest start with an ellipsis which fits
+    let [lo, hi] = [0, text.length];
+    while (lo < hi) {
+        const mid = Math.ceil((lo + hi)/2);
+        node.textContent = `${text.slice(0, mid).trimEnd()}…`;
+        if (textWidth(node) <= max)
+            lo = mid;
+        else
+            hi = mid - 1;
+    }
+    node.textContent = `${text.slice(0, lo).trimEnd()}…`;
+    node.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'title')).textContent = text;
 };

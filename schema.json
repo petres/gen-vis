@@ -399,6 +399,15 @@
                 "tickSpacing": { "$ref": "#/definitions/number", "description": "Without ticks, a tick per this many pixels of the length of the axis, e.g. 80." },
                 "values": { "type": "array", "description": "Fixed ticks." },
                 "format": { "type": "string", "description": "A d3 number or time format." },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "description": "The props of the labels of the ticks (svg attributes and text), of the props of the categories of the tick and of the mappings of the categories of its row, its values and the names of the facet, e.g. { \"categories\": [\"level\"], \"props\": { \"font-weight\": \"@weight\", \"text\": \"@short\", \"max-width\": 300 } } (cartesian).",
+                    "properties": {
+                        "categories": { "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] },
+                        "props": { "$ref": "#/definitions/props" }
+                    }
+                },
                 "rotate": {
                     "type": "number",
                     "description": "The angle of the labels in degrees, positive counterclockwise, negative clockwise."

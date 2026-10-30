@@ -1,6 +1,7 @@
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { motion, setProps } from "@/utils/draw";
+import { fitText, motion, setProps } from "@/utils/draw";
+import { evaluate } from "@/utils/props";
 import { tickValues, tickFormat, tickCount } from "@/coords/ticks";
 import { constraints, span, position, drawLabel, setAnnotationProps } from "@/coords/annotations";
 
@@ -22,6 +23,33 @@ const grid = (ctx, n, s, values, vertical) => {
         });
 };
 
+/**
+ * The props of the labels of the ticks of the axis of the mapping `n` as a
+ * function of the tick, `axis.labels.props`, e.g. { "font-weight": "@weight",
+ * "text": "@short", "max-width": 300 }, of the names of the facet, the values
+ * of the first row of the tick (e.g. `@short`), the props of the categories
+ * of the tick and of the mappings `axis.labels.categories` of its row (e.g.
+ * `@weight` of a category of a level), null without props.
+ */
+const labelProps = (ctx, n, labels) => {
+    if (!labels?.props)
+        return null;
+    const store = ctx.store;
+    const categories = [labels.categories ?? []].flat().filter(c => store.mapping(c)?.props);
+    const rows = new Map();
+    ctx.rows.forEach(r => {
+        const k = String(r[n]);
+        if (!rows.has(k))
+            rows.set(k, r);
+    });
+    return d => {
+        const row = rows.get(String(d)) ?? {};
+        const props = Object.assign({}, store.mapping(n).props ? store.prop(n, String(d)) : undefined,
+            ...categories.map(c => store.prop(c, String(row[c]))));
+        return evaluate(labels.props, { ...ctx.scope, ...row, [n]: d, ...props });
+    };
+};
+
 const axes = ctx => {
     const { store, inner, innerWidth, innerHeight } = ctx;
     store.mappingNamesWithKey('axis').forEach(n => {
@@ -39,6 +67,13 @@ const axes = ctx => {
         const format = tickFormat(store, n, s, ticks);
         if (format)
             a.tickFormat(format);
+        // the props of the labels, e.g. their texts, see labelProps
+        const labelsOf = labelProps(ctx, n, i.labels);
+        if (labelsOf && 'text' in i.labels.props)
+            a.tickFormat(d => {
+                const text = labelsOf(d).text;
+                return text === null || text === undefined ? '' : String(text);
+            });
 
         if (i.values) {
             a.tickValues(tickValues(i, s, ticks))
@@ -55,7 +90,22 @@ const axes = ctx => {
         // the transitions are loaded for definitions with a transition, see loadTransition
         if (d3.hasTransitions(ga))
             ga.interrupt('vis').selectAll('*').interrupt('vis');
-        (motion.duration > 0 && ga.node().hasChildNodes() && d3.hasTransitions(ga) ? ga.transition('vis').duration(motion.duration) : ga).call(a);
+        const moving = motion.duration > 0 && ga.node().hasChildNodes() && d3.hasTransitions(ga);
+        const drawn = moving ? ga.transition('vis').duration(motion.duration) : ga;
+        drawn.call(a);
+        if (labelsOf) {
+            const texts = ga.selectAll('.tick text');
+            texts.each(function(d) {
+                const { text, ...attrs } = labelsOf(d);
+                setProps.call(this, attrs);
+            });
+            // texts in a width, at once or at the end of the transition of their texts
+            const fit = () => texts.filter(function() { return this.hasAttribute('max-width') }).each(function() { fitText(this) });
+            if (moving)
+                drawn.on('end.labels', fit);
+            else
+                fit();
+        }
 
         if (i.position == 'bottom')
             ga.attr('transform', `translate(0, ${innerHeight})`)

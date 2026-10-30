@@ -610,7 +610,13 @@ parent or of a patch, e.g. `"hover": null`.
   instead of a `relative` prop of `ticks`), `values` (fixed ticks, the ones
   outside of the domain are left out), `format` (d3 number or time format),
   `rotate` (the angle of the labels in degrees, positive counterclockwise,
-  negative clockwise), `grid` (lines at the ticks), `title` (`{"name",
+  negative clockwise), `labels` (of cartesian axes: the `props` of the
+  labels, svg attributes and `text`, e.g. `{"font-weight": "@weight",
+  "text": "@short", "max-width": 300}`, their names are the ones of the
+  facet, the values of the first row of the tick, e.g. `@short` of another
+  mapping, the props of the categories of the tick and of the mappings
+  `categories` of its row, e.g. `"categories": ["level"]` for `@weight` of
+  the categories of a level), `grid` (lines at the ticks), `title` (`{"name",
   "offset"}`, the distance from the axis, by default 8 pixels inside the
   edge of the margin, of a radial axis 16 pixels outside of the circle) and
   `padding`.
@@ -757,6 +763,12 @@ A plot or a list of plots, drawn in order:
   `{ "max": "x" }`, e.g. labels at the ends of lines.
 - `dodge` (`svg:text`): the texts are moved apart vertically to at least
   this distance in pixels, e.g. labels at the ends of lines.
+
+The texts of `svg:text` and of the labels of axes with a `max-width` prop
+(pixels) are cut with an ellipsis, the full text is their title (the
+tooltip of the browser), or wrapped into lines with `"text-overflow":
+"wrap"`, of the `line-height` in em (1.2 by default), around the text of a
+`middle` or `central` baseline, e.g. long names of rows.
 - `layer`: `below` draws the plot below the axes and grid lines, e.g. a
   background, `above` above the other plots, e.g. labels, by default the
   plots are drawn between them in their order.

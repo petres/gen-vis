@@ -252,6 +252,15 @@ const validateDef = def => {
             if (!coord.positions.includes(m.axis.position))
                 warn(`${path}.axis.position`, `unknown position '${m.axis.position}', expected one of ${list(coord.positions)}`);
             checkProp(m.axis.ticks, `${path}.axis.ticks`, warn, names.facet);
+            const labels = m.axis.labels;
+            if (labels !== undefined && !isObject(labels))
+                warn(`${path}.axis.labels`, `expected the props of the labels, e.g. { "props": { "font-weight": "bold" } }`);
+            else if (labels) {
+                const categories = [labels.categories ?? []].flat();
+                categories.filter(c => !Object.hasOwn(mapping, c)).forEach(c => warn(`${path}.axis.labels.categories`, `unknown mapping '${c}'`));
+                checkProp(labels.props, `${path}.axis.labels.props`, warn, new Set([...facetNames, ...Object.keys(mapping),
+                    ...categoryNames(m), ...categories.flatMap(c => categoryNames(mapping[c]))]));
+            }
             checkProp(m.axis.tickSpacing, `${path}.axis.tickSpacing`, warn, names.facet);
         }
         const legendChoices = { position: ['top', 'bottom', 'left', 'right'], orientation: ['horizontal', 'vertical'], labels: ['before', 'after'] };

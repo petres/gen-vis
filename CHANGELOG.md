@@ -48,6 +48,10 @@ New:
 - legends: `"legend": false` of a category (no entry), `position` (`top`,
   `bottom`, `left`, `right`), of the scales of colors `orientation`
   (`vertical`), `size`, `values` (ticks) and `labels` (`before`)
+- texts: `max-width` of `svg:text` and of the labels of axes cuts them with
+  an ellipsis or wraps them (`"text-overflow": "wrap"`); the props of the
+  labels of cartesian axes (`axis.labels`), e.g. bold ones of headers or
+  other texts of another mapping
 
 ## 2.1.0
 
