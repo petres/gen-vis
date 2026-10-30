@@ -10,6 +10,8 @@ Changes which need changes of definitions:
 
 - `filter`: `null` is the rows without a value (it was no row)
 - `"ratio"` of `relative` props is 1 by default (it was required)
+- the hover: a position without rows has no hover, e.g. a region of a map
+  without a value (`"empty": true` shows its name as before)
 - form elements: the patches of an entry are `patch`, e.g.
   `"patch": { "mapping": { "y": { "column": "share" } } }` instead of
   `"mapping": { "y": { "column": "share" } }`
@@ -37,6 +39,10 @@ New:
 - groups of the categories of band and point scales (`scale.groups`), with
   a space between them, `@y:group:start` and `@y:group:end` of the group of
   a row
+- the hover (`options.hover`): `box` and `marker` (`false` leaves them out,
+  the highlight and the events stay), `position` (`pointer`), `side`,
+  `offset`, `area` (`facet`, also the margins, e.g. the labels of rows),
+  `empty`
 
 ## 2.1.0
 

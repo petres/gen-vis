@@ -282,3 +282,52 @@ describe('groups of band scales', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the hover', () => {
+    const move = async (el, x, y) => {
+        const { pointer } = await import('./dom.js');
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: x, clientY: y }));
+        await nextTick();
+    };
+
+    test('without the box and the marker, the highlight and the events stay', async () => {
+        const def = lineDef();
+        def.options.hover = { box: false, marker: false };
+        def.plot[1].props['highlight-r'] = 6;
+        const hovers = [];
+        const el = await mount(GenVis, { def, data: lineData, onHover: e => hovers.push(e) });
+        await move(el, 100, 100);
+        expect(el.querySelector('.vis-hover')).toBeNull();
+        expect(el.querySelector('.vis-hover-marker').getAttribute('visibility')).toBe('hidden');
+        expect(el.querySelectorAll('circle.vis-highlight').length).toBeGreaterThan(0);
+        expect(hovers.at(-1).key).toBe(2021);
+        expect(errors).toEqual([]);
+    });
+
+    test('at the pointer, on a side, moved by an offset', async () => {
+        const def = lineDef();
+        def.options.hover = { position: 'pointer', side: 'above', offset: [0, -10] };
+        const el = await mount(GenVis, { def, data: lineData });
+        await move(el, 100, 100);
+        // the pointer in the plot area (in jsdom the one of the facet), with
+        // its margins of 40 and 10 and the offset
+        const holder = el.querySelector('.vis-hover').parentElement;
+        expect(holder.style.transform).toBe('translate(140px, 100px)');
+        expect(el.querySelector('.vis-hover').style.transform).toBe('translate(-50%, calc(-100% - 20px))');
+        // it moves with the pointer within a position
+        await move(el, 105, 120);
+        expect(holder.style.transform).toBe('translate(145px, 120px)');
+    });
+
+    test('the area of the facet, e.g. the labels of the rows of horizontal bars', async () => {
+        const def = lineDef();
+        def.mapping.x = { column: 'value', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, null] }, axis: { position: 'bottom' } };
+        def.mapping.y = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'vertical' }, axis: { position: 'left' } };
+        def.plot = { type: 'cartesian:bar', categories: ['c'], props: { x1: '@x:scaled', y: '@y:scaled', fill: '@color' } };
+        def.options.hover = { area: 'facet' };
+        const el = await mount(GenVis, { def, data: lineData });
+        const area = el.querySelector('rect.vis-events');
+        expect(['x', 'y', 'width', 'height'].map(a => area.getAttribute(a))).toEqual(['-40', '-10', '600', '300']);
+        expect(errors).toEqual([]);
+    });
+});

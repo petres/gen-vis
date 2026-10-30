@@ -271,6 +271,13 @@
                         "mode": { "enum": ["position", "point"], "description": "The rows of the nearest position of the axis (position, by default) or the row of the nearest point, e.g. of a scatter plot." },
                         "radius": { "type": "number", "description": "The distance of the nearest point in pixels, 30 by default." },
                         "filter": { "$ref": "#/definitions/filter", "description": "The rows with a hover, e.g. not the ones of headers." },
+                        "box": { "type": "boolean", "default": true, "description": "false: no box of the hover, its highlight and the events stay, e.g. a hover of the highlight only." },
+                        "marker": { "type": "boolean", "default": true, "description": "false: no line of the position of the hover." },
+                        "empty": { "type": "boolean", "default": false, "description": "true: a hover also without rows, e.g. the name of a region without a value." },
+                        "position": { "enum": ["marker", "pointer"], "default": "marker", "description": "The hover is beside the marker of the position (or the center of a region) or at the pointer." },
+                        "side": { "enum": ["left", "right", "above", "below"], "description": "The side of the hover, by default the one with more space." },
+                        "offset": { "$ref": "#/definitions/pair", "description": "Moves the hover by [x, y] pixels." },
+                        "area": { "enum": ["plot", "facet"], "default": "plot", "description": "The area of the hover, the plot area or the facet with its margins, e.g. the labels of the rows of horizontal bars." },
                         "title": { "type": "string", "description": "The title, {title} is the default one, e.g. the date, and the globals." },
                         "row": { "type": "string", "description": "A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, and the globals." }
                     }

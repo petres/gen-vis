@@ -6,7 +6,7 @@
             :aria-roledescription="keyboard ? store.locale.texts.chart : undefined" :aria-describedby="keyboard ? `${uid}-keys` : undefined"
             :tabindex="keyboard ? 0 : undefined" @keydown="key" @blur="hide?.()">
             <g ref="inner" :transform="innerTransform">
-                <g :visibility="hover.visible ? 'visible' : 'hidden'" class="vis-hover-marker" ref="hoverMarker">
+                <g :visibility="hover.visible && hoverOptions.marker !== false ? 'visible' : 'hidden'" class="vis-hover-marker" ref="hoverMarker">
                     <line/>
                 </g>
             </g>
@@ -14,7 +14,7 @@
         <span v-if="keyboard" :id="`${uid}-keys`" hidden>{{ store.locale.texts.keys }}</span>
         <!-- the hover is read by screen readers when it changes, e.g. by the keyboard -->
         <div aria-live="polite" :style="`transform: translate(${facet.margins.left + origin[0] + hover.x}px, ${facet.margins.top + origin[1] + hover.y}px); position: absolute; top: 0; left: 0;`">
-            <hover v-if="hover.visible" :title="hover.title" :data="hover.data" :side="hover.side" :payload="hover.payload"/>
+            <hover v-if="hover.visible && hoverOptions.box !== false" :title="hover.title" :data="hover.data" :side="hover.side" :payload="hover.payload"/>
         </div>
     </div>
 </template>
@@ -53,6 +53,8 @@ export default {
         label() {
             return [this.store.def.options.title, this.facet.name].filter(Boolean).map(t => this.store.text(t)).join(': ') || undefined;
         },
+        // the options of the hover, see README "Events and slots"
+        hoverOptions() { return this.store.def.options.hover ?? {} },
         // the origin of the plots and axes in the inner area, e.g. its center
         origin() { return this.store.coord.origin?.(this.facet.innerWidth, this.facet.innerHeight) ?? [0, 0] },
         innerTransform() { return `translate(${this.facet.margins.left + this.origin[0]} ${this.facet.margins.top + this.origin[1]})` },
@@ -360,16 +362,36 @@ export default {
             });
 
             // the hover of the rows of a position and the nearest one
+            // the position of the hover: beside the marker of the coordinate
+            // system or at the pointer (`"position": "pointer"`), e.g. above
+            // the region of a map, on the side with more space or the `side`
+            // of the options, moved by the `offset` of the options
+            const placed = (found, position) => {
+                if (hoverOptions.position == 'pointer' && this.pointerAt)
+                    position = { ...position, x: this.pointerAt[0], y: this.pointerAt[1] };
+                const [dx = 0, dy = 0] = hoverOptions.offset ?? [];
+                return { ...position, x: position.x + dx, y: position.y + dy, side: hoverOptions.side ?? position.side };
+            };
+
             const show = found => {
+                const { key, value, rows, nearest } = found;
+                // no hover without rows, e.g. of a region without a value,
+                // unless `"empty": true`, e.g. the name of every region
+                if (rows.length == 0 && !hoverOptions.empty) {
+                    hide();
+                    return;
+                }
                 this.hover.visible = true;
                 current = found;
-                const { key, value, rows, nearest } = found;
 
                 // the same key and row as before, e.g. a move within a step
-                // of the axis, nothing is formatted or drawn
-                if (last && last.key === key && last.nearest === nearest)
+                // of the axis, nothing is formatted or drawn, a hover at the
+                // pointer moves with it
+                if (last && last.key === key && last.nearest === nearest) {
+                    if (hoverOptions.position == 'pointer' && this.pointerAt)
+                        Object.assign(this.hover, placed(found, last.position));
                     return;
-                last = { key, nearest };
+                }
 
                 // there is no entry e.g. if all categories are hidden, without
                 // a value the elements of the key are highlighted, e.g. a region
@@ -381,7 +403,8 @@ export default {
                     ? (marker.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null),
                         { x: found.point[0], y: found.point[1], side: found.point[0] > ctx.innerWidth/2 ? "left" : "right" })
                     : coord.hover.marker(ctx, key, names, marker);
-                Object.assign(this.hover, position, {
+                last = { key, nearest, position };
+                Object.assign(this.hover, placed(found, position), {
                     data: entriesOf(rows, nearest),
                     title: p.title,
                     payload: p,
@@ -400,6 +423,7 @@ export default {
                 }
                 this.lastEvent = e;
                 this.lastKey = null;
+                this.pointerAt = d3.pointer(e, ctx.inner.node());
                 show(found);
             };
 
@@ -435,6 +459,7 @@ export default {
                 const { key, rows, point } = positions[i];
                 const r = Math.max(0, Math.min(rows.length - 1, row));
                 this.lastEvent = null;
+                this.pointerAt = null;
                 this.lastKey = { index: i, row: r, key };
                 show({ key, rows, nearest: rows[r], point });
             };
@@ -452,7 +477,13 @@ export default {
             };
 
             // mouse, touch and pen, vertical swipes still scroll the page
-            coord.hover.area(ctx, ctx.inner)
+            // the area of the events, the plot area or with `"area": "facet"` also
+            // the margins, e.g. the labels of the rows of horizontal bars
+            const area = coord.hover.area(ctx, ctx.inner);
+            if (hoverOptions.area == 'facet' && area.node().tagName == 'rect')
+                area.attr("x", -(this.facet.margins.left + this.origin[0])).attr("y", -(this.facet.margins.top + this.origin[1]))
+                    .attr("width", this.facet.width).attr("height", this.facet.height);
+            area
                 .attr("class", "vis-events")
                 .attr("opacity", 0)
                 .style("touch-action", "pan-y")

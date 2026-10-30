@@ -157,7 +157,23 @@ the values are text, e.g. `<` of the data is shown as it is:
 
 `filter` of the `hover` of the options are the rows with a hover, the
 conditions of mappings as the ones of [filter](#formelements-and-globals),
-e.g. `{"level": "item"}`.
+e.g. `{"level": "item"}`. A position without rows has no hover, e.g. a
+region of a map without a value, `"empty": true` shows it, e.g. the name
+of every region. The other options of the hover:
+
+- `box`: `false` leaves out the box of the hover, the highlight of its
+  elements (see `highlight-` props of the [plot](#plot)) and the events stay,
+  e.g. a larger circle with its value as the hover of a row of bars.
+- `marker`: `false` leaves out the line of the position.
+- `position`: the hover is beside the marker of the position, of a map the
+  center of the region (`marker`, the default), or at the pointer
+  (`pointer`, it moves with it, by the keyboard it is at the marker).
+- `side`: `left`, `right`, `above` or `below` of the position, by default
+  the side with more space, and `offset`, `[x, y]` in pixels, e.g. `"side":
+  "above", "offset": [0, -10]` of a text above a region of a map.
+- `area`: the hover of the plot area (`plot`, the default) or of the facet
+  with its margins (`facet`), e.g. the labels of the rows of horizontal bars
+  are part of the row, a click on them is a `select` of the row.
 
 `"mode": "point"` of the `hover` of the options shows the row of the point
 nearest to the mouse (within `radius` pixels, 30 by default) instead of the

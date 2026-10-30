@@ -990,9 +990,16 @@ describe('maps', () => {
         expect([...el.querySelectorAll('.vis-hover td')].map(t => t.textContent)).toEqual(['3.0'.replace('.', ',')]);
         // the region is highlighted
         expect(el.querySelector('g.vis-plot.plot-1 path.vis-highlight').getAttribute('stroke')).toBe('black');
-        // a region without rows has its name
-        expect(await at(250)).toBe('Region C');
-        expect(el.querySelectorAll('.vis-hover tr.vis-hover-entry')).toHaveLength(0);
+        // a region without rows has no hover, with `empty` its name
+        expect(await at(250)).toBeUndefined();
+        expect(el.querySelector('g.vis-plot.plot-1 path.vis-highlight')).toBeNull();
+        const def = mapDef();
+        def.options.hover = { empty: true };
+        const all = await mount(GenVis, { def, data: mapData });
+        all.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 250, clientY: 50 }));
+        await nextTick();
+        expect(all.querySelector('.vis-hover .vis-hover-title').textContent).toBe('Region C');
+        expect(all.querySelectorAll('.vis-hover tr.vis-hover-entry')).toHaveLength(0);
         expect(errors).toEqual([]);
     });
 
