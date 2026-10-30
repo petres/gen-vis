@@ -19,7 +19,7 @@
         "y": {
             "column": "price",
             "type": "numeric",
-            "scale": { "type": "linear", "orientation": "vertical", "domain": [0.8, 2.2] },
+            "scale": { "type": "linear", "orientation": "vertical", "include": 2, "nice": true },
             "axis": { "position": "left", "ticks": 7, "grid": true, "format": "$.2f" },
             "hover": { "format": "$.3f" }
         },
@@ -56,14 +56,15 @@
                 "stroke": "@color",
                 "stroke-width": 2.5,
                 "fill": "none",
-                "highlight-stroke-width": 3.5
+                "highlight-stroke-width": 3.5,
+                "others-stroke-opacity": 0.25
             }
         },
         {
             "type": "svg:circle",
             "categories": ["fuel"],
             "select": "last",
-            "props": { "cx": "@x:scaled", "cy": "@y:scaled", "r": 4, "fill": "@color", "stroke": "white", "stroke-width": 2 }
+            "props": { "cx": "@x:scaled", "cy": "@y:scaled", "r": 4, "fill": "@color", "stroke": "white", "stroke-width": 2, "highlight-r": 5, "others-opacity": 0.25 }
         },
         {
             "type": "svg:text",
@@ -73,7 +74,8 @@
             "layer": "above",
             "props": {
                 "x": "@x:scaled", "y": "@y:scaled", "dx": 9, "dominant-baseline": "middle",
-                "text": "@name", "fill": "@color", "font-size": 13, "font-weight": "bold"
+                "text": "@name", "fill": "@color", "font-size": 13, "font-weight": "bold",
+                "highlight-font-size": 14, "others-opacity": 0.25
             }
         }
     ]

@@ -1,7 +1,8 @@
 <template>
     <div class="vis-legend vis-color-legend" :data-dim="legend">
         <div class="vis-legend-title">{{ store.text(store.mapping(legend).name) }}</div>
-        <div class="vis-color-scale">
+        <!-- the entry of the missing values below a vertical scale -->
+        <div class="vis-color-scale" :style="vertical ? { flexDirection: 'column' } : null">
             <svg ref="svg" :width="vertical ? 64 : size + 2*padding" :height="vertical ? size + 2*padding : 34"/>
             <!-- the regions without a value, e.g. the color of geo:base -->
             <div v-if="missing" class="vis-legend-missing">
@@ -15,6 +16,7 @@
 <script>
 import * as d3 from "@/utils/d3";
 import { formatOf } from "@/utils/def";
+import { evaluate } from "@/utils/props";
 
 // the gradients of the legends of a page have their own ids
 let count = 0;
@@ -65,7 +67,8 @@ export default {
         // the length of the scale, 240 pixels by default
         size() { return Number(this.options.size) || 240 },
         // a vertical scale has the high values at the top
-        vertical() { return this.options.orientation == 'vertical' },
+        // a prop of the width of the visualisation, e.g. horizontal on a phone
+        vertical() { return evaluate(this.options.orientation, { ...this.store.scope, totalWidth: this.store.visWidth }) == 'vertical' },
     },
     created() {
         this.uid = `gen-vis-gradient-${count++}`;
@@ -75,6 +78,7 @@ export default {
     },
     watch: {
         scale: 'render',
+        vertical() { this.$nextTick(() => this.render()) },
     },
     methods: {
         render() {

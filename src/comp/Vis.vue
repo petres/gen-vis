@@ -115,8 +115,9 @@ export default {
         copied: false,
         clipboard: canCopy(),
 
-        // the width of the visualisation, see measure
+        // the width of the plots and of the visualisation, see measure
         width: null,
+        fullWidth: null,
         globals: {},
 
         formElements: [],
@@ -125,6 +126,11 @@ export default {
         Facets, Legends, FormElement, SlotContent,
     },
     watch: {
+        // legends beside the plots or not anymore, e.g. of a new width, the
+        // plots have another width
+        sides() {
+            this.$nextTick(() => this.resized());
+        },
         // the state was set from outside
         'store.stateSets'() {
             this.update(true);
@@ -138,7 +144,10 @@ export default {
         // form element can patch them
         legendsAt() {
             const at = { top: [], bottom: [], left: [], right: [] };
-            this.store.mappingNamesWithKey('legend').forEach(n => at[this.store.mapping(n).legend.position ?? 'top']?.push(n));
+            // a prop of the width of the visualisation, e.g. below the plots of a phone
+            const scope = { ...this.store.scope, totalWidth: this.fullWidth };
+            // the legends of the width of the visualisation, see ColorLegend.vue
+            this.store.mappingNamesWithKey('legend').forEach(n => at[evaluate(this.store.mapping(n).legend.position, scope) ?? 'top']?.push(n));
             return at;
         },
         // the text instead of the plots: `options.message`, a prop of the
@@ -204,6 +213,7 @@ export default {
         // beside legends the rest of it
         plotsWidth() {
             const total = this.store.def.options.width || innerWidth(this.$refs.vis);
+            this.fullWidth = this.store.visWidth = total;
             if (!this.sides)
                 return total;
             const legends = [...this.$refs.vis.querySelectorAll(':scope > .vis-body-sides > .vis-legends')]

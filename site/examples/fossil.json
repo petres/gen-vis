@@ -2,20 +2,20 @@
     "data": "data/fossil.csv",
     "options": {
         "title": "Fossil fuel sales in Austria",
-        "subtitle": "Monthly, by energy content or by the CO₂ emitted when burned",
+        "subtitle": "Monthly, the {what} in {unit:name}",
         "footer": "Source: Eurostat, calculations of the WIFO energy dashboard",
         "locale": "en",
         "height": 300,
         "margins": { "top": 10, "right": 6, "bottom": 28, "left": 44 },
         "transition": 400
     },
-    "globals": { "unit": "twh", "share": "" },
+    "globals": { "unit": "twh", "share": "", "what": "energy content" },
     "formElements": [
         {
             "id": "unit", "name": "Unit", "ref": "unit", "type": "radio",
             "values": [
-                { "id": "twh", "name": "TWh", "value": "twh" },
-                { "id": "co2", "name": "Mt CO₂", "value": "mt.co2" }
+                { "id": "twh", "name": "TWh", "value": "twh", "globals": { "what": "energy content" } },
+                { "id": "co2", "name": "Mt CO₂", "value": "mt.co2", "globals": { "what": "CO₂ emitted when burned" } }
             ]
         },
         {
@@ -24,7 +24,10 @@
                 { "id": "absolute", "name": "Absolute", "value": "" },
                 {
                     "id": "share", "name": "Share", "value": ".share",
-                    "patch": { "mapping": { "y": { "scale": { "domain": [0, 1] }, "axis": { "format": ".0%" }, "hover": { "format": ".1%" } } } }
+                    "patch": {
+                        "options": { "subtitle": "Monthly, the shares of the products in the {what}" },
+                        "mapping": { "y": { "scale": { "domain": [0, 1] }, "axis": { "format": ".0%" }, "hover": { "format": ".1%" } } }
+                    }
                 }
             ]
         }
@@ -79,7 +82,8 @@
             "opacity": 0.9,
             "highlight-opacity": 1,
             "highlight-stroke": "#E2E8F0",
-            "highlight-stroke-width": 1
+            "highlight-stroke-width": 1,
+            "others-opacity": 0.5
         }
     }
 }

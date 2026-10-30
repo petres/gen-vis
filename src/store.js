@@ -291,8 +291,10 @@ class Store {
     files = null;
     data = null;
     defaults = null;
-    // the width of the visualisation, set by its measure
+    // the width of the plots and of the visualisation, set by its measure,
+    // they differ with legends beside the plots
     totalWidth = null;
+    visWidth = null;
     runs = 0;
     // the number of the definitions loaded, a new one is drawn anew, while it
     // is loaded the one before is shown, see App.vue

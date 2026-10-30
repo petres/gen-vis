@@ -269,7 +269,9 @@ const validateDef = def => {
             checkProp(m.axis.tickSpacing, `${path}.axis.tickSpacing`, warn, names.facet);
         }
         const legendChoices = { position: ['top', 'bottom', 'left', 'right'], orientation: ['horizontal', 'vertical'], labels: ['before', 'after'] };
-        Object.entries(legendChoices).filter(([k]) => m.legend?.[k] !== undefined && !legendChoices[k].includes(m.legend[k])).forEach(([k, values]) =>
+        checkProp(m.legend?.position, `${path}.legend.position`, warn, names.global);
+        checkProp(m.legend?.orientation, `${path}.legend.orientation`, warn, names.global);
+        Object.entries(legendChoices).filter(([k]) => typeof m.legend?.[k] == 'string' && !legendChoices[k].includes(m.legend[k])).forEach(([k, values]) =>
             warn(`${path}.legend.${k}`, `unknown ${k} '${m.legend[k]}', expected one of ${list(values)}`));
         if (m.legend && !m.props && m.scale?.orientation !== undefined)
             warn(`${path}.legend`, `a legend needs the props of the categories or a scale of colors, without an orientation`);

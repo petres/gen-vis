@@ -735,14 +735,17 @@ parent or of a patch, e.g. `"hover": null`.
   an entry beside them, e.g. of the regions of a map without a value
   (`{"name": "keine Daten", "color": "#DADADA"}`, the color of `geo:base`).
   The scale of the colors is horizontal or vertical (`orientation`, the high
-  values at the top), `size` pixels long (240 by default), its labels are
+  values at the top, also a prop of `totalWidth`, the width of the
+  visualisation), `size` pixels long (240 by default), its labels are
   after it (`labels`, below or right of it) or `before` it, `values` are the
   ticks of a gradient, e.g. `[0, 50, 100]`. A category with `"legend":
   false` in its props has no entry, it stays visible, e.g. headers.
   `position` places the legend above the plots (`top`, the default), below
   them (`bottom`) or beside them (`left`, `right`, the plots have the rest
   of the width, the class of the legends is `vis-legends-left` or
-  `vis-legends-right`), e.g. a vertical scale of colors left of a map:
+  `vis-legends-right`), a prop of `totalWidth` (the width of the
+  visualisation), e.g. below the plots of a phone, e.g. a vertical scale of
+  colors left of a map:
 
   ```json
   "legend": { "position": "left", "orientation": "vertical", "size": 160, "labels": "before" }

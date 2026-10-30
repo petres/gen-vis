@@ -1,0 +1,32 @@
+/* An annual report: light paper, a navy headline with a teal rule, quiet axes */
+.theme-report {
+    background: #FAFAF7;
+    padding: 24px 26px 14px;
+    border-left: 6px solid #0F766E;
+}
+
+.theme-report .vis {
+    --gen-vis-font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --gen-vis-grid-color: #E4E7E2;
+    --gen-vis-button-color: #9AA5A0;
+    --gen-vis-button-hover-color: #0F766E;
+    --gen-vis-focus-color: #0F766E;
+    color: #1D3557;
+}
+
+.theme-report .vis-title { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
+.theme-report .vis-subtitle { font-size: 13px; color: #52606D; margin-top: 4px; }
+
+.theme-report .vis-form-element-title { font-weight: 600; }
+.theme-report .vis-slider input { accent-color: #0F766E; width: 160px; }
+.theme-report .vis-slider-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* the axes without lines, the names of the countries of the axis */
+.theme-report .vis-axis path.domain, .theme-report .vis-axis .tick line { display: none; }
+.theme-report .vis-axis text { fill: #52606D; font-size: 11px; }
+.theme-report .vis-axis-left text { fill: #1D3557; font-size: 12px; }
+
+/* the names of the regions above their groups */
+.theme-report [data-plot="regions"] text { text-transform: uppercase; }
+
+.theme-report .vis-footer span { font-size: 11px; color: #7B8794; }

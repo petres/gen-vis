@@ -8,7 +8,8 @@
         "locale": "en",
         "height": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 380 }, { "cut": 560, "value": 500 }] },
         "margins": { "top": 0, "right": 0, "bottom": 0, "left": 0 },
-        "transition": 400
+        "transition": 400,
+        "hover": { "position": "pointer", "side": "above", "offset": [0, -4] }
     },
     "geo": {
         "data": "data/europe.json",
@@ -41,11 +42,13 @@
         "source": { "column": "source", "type": "categorical" },
         "year": { "column": "year", "type": "categorical" },
         "share": {
-            "name": "Share of the electricity generated",
+            "name": "Share of {source:name}",
             "column": "share",
             "type": "numeric",
             "scale": { "type": "threshold", "domain": [0.2, 0.4, 0.6, 0.8], "range": ["#D5EBC6", "#9ED08F", "#5FAF6E", "#2A7D55", "#11573C"] },
-            "legend": { "format": ".0%", "missing": { "name": "No data", "color": "#E9E4DA" } },
+            "legend": {
+                "format": ".0%", "orientation": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": "horizontal" }, { "cut": 560, "value": "vertical" }] },
+                "position": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": "top" }, { "cut": 560, "value": "right" }] }, "size": 180, "missing": { "name": "No data", "color": "#E9E4DA" } },
             "hover": { "format": ".1%" }
         }
     },

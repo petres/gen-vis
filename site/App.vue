@@ -25,7 +25,8 @@
                 <li><strong>The data stays data.</strong> CSV, TSV, JSON or parquet (only the columns
                     used), transforms compute e.g. an index of a base year or rolling means.</li>
                 <li><strong>Controls without code.</strong> Radio buttons, selects and sliders of the
-                    definition switch columns, filters and scales, the state is a <code>v-model</code>.</li>
+                    definition patch any part of it, e.g. columns, filters, scales, texts or the language,
+                    the state is a <code>v-model</code>, the page can set globals and link charts.</li>
                 <li><strong>For Vue and for any page.</strong> A component of Vue 3, or a standalone script,
                     which loads the parts a chart needs when it needs them.</li>
                 <li><strong>Built in:</strong> the hover by the keyboard and screen readers, PNG and CSV

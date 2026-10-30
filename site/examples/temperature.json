@@ -9,6 +9,28 @@
         "height": 470,
         "margins": { "top": 34, "right": 34, "bottom": 34, "left": 34 }
     },
+    "globals": { "lang": "de", "summer": "Sommer" },
+    "formElements": [{
+        "id": "lang", "name": "Sprache · Language", "ref": "lang", "type": "radio", "inImage": false,
+        "values": [
+            { "id": "de", "name": "Deutsch", "value": "de", "globals": { "summer": "Sommer" } },
+            {
+                "id": "en", "name": "English", "value": "en", "globals": { "summer": "Summer" },
+                "patch": {
+                    "options": {
+                        "title": "A year in a circle",
+                        "subtitle": "Temperature in Austria, weighted by population, rolling 4-week mean, in °C",
+                        "footer": "Source: ERA5, Copernicus Climate Change Service",
+                        "locale": "en"
+                    },
+                    "mapping": {
+                        "x": { "hover": { "format": "%B %-d" } },
+                        "year": { "name": "Year", "props": { "categories": { "1991–2020": { "name": "Mean 1991–2020" } } } }
+                    }
+                }
+            }
+        ]
+    }],
     "mapping": {
         "x": {
             "column": "day",
@@ -58,7 +80,7 @@
         }
     },
     "annotations": [
-        { "type": "band", "x": ["2020-06-01", "2020-09-01"], "label": "Sommer", "props": { "fill": "#FFE36E", "opacity": 0.45 } },
+        { "type": "band", "x": ["2020-06-01", "2020-09-01"], "label": "{summer}", "props": { "fill": "#FFE36E", "opacity": 0.45 } },
         { "type": "line", "y": 0, "label": "0 °C", "props": { "stroke": "#0078BF", "stroke-dasharray": "1 3" } }
     ],
     "plot": {
@@ -73,7 +95,8 @@
             "fill": "none",
             "stroke-linecap": "round",
             "highlight-opacity": 1,
-            "highlight-stroke-width": 3.5
+            "highlight-stroke-width": 3.5,
+            "others-opacity": 0.1
         }
     }
 }
