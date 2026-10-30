@@ -4,7 +4,7 @@ The changes of the versions, the newest first, the ones on npm without
 0.7.0 and 2.0.0-alpha.1. The details are in the commits, the upgrade from 1.x
 in the [README](README.md#upgrading-from-1x).
 
-## Unreleased
+## 2.1.0
 
 - maps: the plot type `geo:mesh`, the borders of an object of TopoJSON as one
   path, every border once, `object` (the one of the features by default) and
