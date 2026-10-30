@@ -1,162 +1,45 @@
-<div class="vis">
+<div class="vis" data-global-quali="A" data-global-werr="1918 und davor" data-global-wrecht="gbv">
 <div class="vis-header">
 <div class="vis-title">Mietpreis</div>
 <div class="vis-subtitle">Preis in €/m²</div>
 </div>
 <div class="vis-form-elements">
+<div class="vis-form-element" data-id="quali">
+<label class="vis-form-element-title" for="gen-vis-form-N-quali">Ausstattung:</label>
+<select id="gen-vis-form-N-quali">
+<option selected="" value="A">A</option>
+<option value="B">B</option>
+<option value="C">C</option>
+<option value="D">D</option>
+<option value="NA">NA</option>
+</select>
+</div>
+<div class="vis-form-element" data-id="werr">
+<label class="vis-form-element-title" for="gen-vis-form-N-werr">Errichtung:</label>
+<select id="gen-vis-form-N-werr">
+<option selected="" value="1918 und davor">1918 und davor</option>
+<option value="1919 - 1944">1919 - 1944</option>
+<option value="1945 - 1960">1945 - 1960</option>
+<option value="1961 - 1970">1961 - 1970</option>
+<option value="1971 - 1980">1971 - 1980</option>
+<option value="1981 - 1990">1981 - 1990</option>
+<option value="1991 - 2000">1991 - 2000</option>
+<option value="2001 - 2010">2001 - 2010</option>
+<option value="2011 - 2020">2011 - 2020</option>
+<option value="NA">NA</option>
+</select>
+</div>
+<div class="vis-form-element" data-id="wrecht">
+<label class="vis-form-element-title" for="gen-vis-form-N-wrecht">Rechtsform:</label>
+<select id="gen-vis-form-N-wrecht">
+<option selected="" value="gbv">GBV</option>
+<option value="pub">öffentlich</option>
+<option value="priv">privat</option>
+<option value="NA">NA</option>
+</select>
+</div>
 </div>
 <div class="vis-legends">
-<div class="vis-legend" data-dim="quali">
-<div class="vis-legend-title">
-</div>
-<div class="vis-legend-entries" role="group">
-<div class="vis-legend-entry" data-visible="true" data-key="A" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>A</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="B" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>B</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="C" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>C</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="D" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>D</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="NA" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>NA</span>
-</div>
-</div>
-</div>
-<div class="vis-legend" data-dim="werr">
-<div class="vis-legend-title">
-</div>
-<div class="vis-legend-entries" role="group">
-<div class="vis-legend-entry" data-visible="true" data-key="1918 und davor" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1918 und davor</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="1919 - 1944" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1919 - 1944</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="1945 - 1960" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1945 - 1960</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="1961 - 1970" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1961 - 1970</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="1971 - 1980" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1971 - 1980</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="1981 - 1990" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1981 - 1990</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="1991 - 2000" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1991 - 2000</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="2001 - 2010" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>2001 - 2010</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="2011 - 2020" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>2011 - 2020</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="NA" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>NA</span>
-</div>
-</div>
-</div>
-<div class="vis-legend" data-dim="wrecht">
-<div class="vis-legend-title">
-</div>
-<div class="vis-legend-entries" role="group">
-<div class="vis-legend-entry" data-visible="true" data-key="gbv" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>GBV</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="pub" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2" stroke-dasharray="2">
-</line>
-</svg>
-<span>öffentlich</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="priv" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2" stroke-dasharray="4">
-</line>
-</svg>
-<span>privat</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="NA" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2" stroke-dasharray="2 4">
-</line>
-</svg>
-<span>NA</span>
-</div>
-</div>
-</div>
 <div class="vis-legend" data-dim="bundesland">
 <div class="vis-legend-title">
 </div>
@@ -435,9 +318,6 @@
 <div class="vis-hover-title">1994</div>
 <table class="vis-hover-entries">
 <tr class="vis-hover-entry vis-nearest">
-<td data-mapping="quali">A</td>
-<td data-mapping="werr">1918 und davor</td>
-<td data-mapping="wrecht">GBV</td>
 <td data-mapping="bundesland">Wien</td>
 <td data-mapping="y" class="vis-value">2,93</td>
 </tr>

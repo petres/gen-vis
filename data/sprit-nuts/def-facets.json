@@ -1,116 +1,58 @@
 {
     "data": "data.csv",
     "options": {
-        "height": 400,
-        "margins": {"top": 10, "right": 20, "bottom": 50, "left": 80},
+        "height": 150,
+        "margins": {"top": 6, "right": 18, "bottom": 22, "left": 34},
         "title": "Spritpreis",
-        "subtitle": "nach Typ und Bundesland",
-        "footer": "<strong>Quelle:</strong> Tankstellenpreise <a target='_blank' href='https://spritpreisrechner.at'>spritpreisrechner.at</a>"
+        "subtitle": "Diesel und Benzin, Durchschnitt der Tankstellen je Bundesland, in €/l",
+        "footer": "<strong>Quelle:</strong> Tankstellenpreise <a target='_blank' href='https://spritpreisrechner.at'>spritpreisrechner.at</a>",
+        "locale": { "base": "de", "number": { "currency": ["", " €"] } }
+    },
+    "facets": {
+        "dim": "nuts",
+        "cols": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 2 }, { "cut": 700, "value": 3 }] },
+        "scales": ["x", "y"]
     },
     "mapping": {
         "x": {
             "column": "date",
             "type": "date",
-            "scale": {
-                "type": "time",
-                "orientation": "horizontal"
-            },
-            "axis": {
-                "ticks": 6,
-                "position": "bottom",
-                "rotate": 40,
-                "format": "%b %y"
-            },
-            "hover": {
-                "format": "%e. %b %Y"
-            }
+            "scale": { "type": "time", "orientation": "horizontal" },
+            "axis": { "position": "bottom", "values": ["2021-01-01", "2021-07-01", "2022-01-01"], "format": "%b %y" },
+            "hover": { "format": "%e. %b %Y" }
         },
         "y": {
             "column": "priceMean",
             "type": "numeric",
-            "scale": {
-                "type": "linear",
-                "domain": [0, null],
-                "orientation": "vertical"
-            },
-            "axis": {
-                "ticks": 8,
-                "position": "left",
-                "grid": true,
-                "title": {
-                    "name": "Preis in €/l",
-                    "offset": 50
-                },
-                "format": ".1f"
-            },
-            "hover": {
-                "format": ".2f"
-            }
+            "scale": { "type": "linear", "orientation": "vertical", "domain": [0.9, null], "nice": true },
+            "axis": { "position": "left", "ticks": 3, "grid": true, "format": ".1f" },
+            "hover": { "format": "$.3f" }
         },
         "type": {
             "column": "fuelType",
-            "props": {
-                "common": {
-                    "visible": true
-                },
-                "categories": {
-                    "DIE": { "name": "Diesel"},
-                    "SUP": { "name": "Benzin"}
-                }
-            }
+            "type": "categorical",
+            "legend": { "symbol": "line" },
+            "props": { "categories": { "DIE": { "name": "Diesel", "color": "#B5432B" }, "SUP": { "name": "Benzin", "color": "#2B6CB5" } } },
+            "hover": {}
         },
         "nuts": {
             "column": "nuts2",
-            "legend": {
-                "symbol": {
-                    "size": 16,
-                    "elements": [{
-                        "type": "line",
-                        "props": {
-                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                            "stroke": "@color", "stroke-width": "@stroke-width"
-                        }
-                    }]
-                }
-            },
-            "props": {
-                "common": {
-                    "stroke-width": 1.5,
-                    "visible": false
-                },
-                "categories": {
-                    "W":  { "color": "#1E4F77", "name": "Wien" },
-                    "N":  { "color": "#BBD7EE", "name": "Niederösterreich" },
-                    "B":  { "color": "#5BC5F2", "name": "Burgenland", "visible": true },
-                    "O":  { "color": "#559BD5", "name": "Oberösterreich" },
-                    "Sa": { "color": "#C7DF71", "name": "Salzburg" },
-                    "St": { "color": "#4B9847", "name": "Steiermark" },
-                    "K":  { "color": "#9CE1F8", "name": "Kärnten" },
-                    "T":  { "color": "#72BB6F", "name": "Tirol" },
-                    "V":  { "color": "#3F766B", "name": "Vorarlberg" },
-                    "NA": { "color": "#ABD6A9", "name": "Österreich", "stroke-width": 2.5, "visible": true }
-                }
-            },
-            "hover": {
-            }
+            "type": "categorical",
+            "props": { "categories": {
+                "NA": { "name": "Österreich" }, "W": { "name": "Wien" }, "N": { "name": "Niederösterreich" }, "B": { "name": "Burgenland" },
+                "O": { "name": "Oberösterreich" }, "Sa": { "name": "Salzburg" }, "St": { "name": "Steiermark" },
+                "K": { "name": "Kärnten" }, "T": { "name": "Tirol" }, "V": { "name": "Vorarlberg" }
+            } }
         }
-    },
-    "facets": {
-        "dim": "type",
-        "cols": 2
     },
     "plot": [
         {
+            "id": "lines",
             "type": "cartesian:line",
-            "categories": ["nuts"],
+            "categories": ["type"],
             "props": {
-                "stroke-width": "@stroke-width",
-                "fill": "none",
-                "stroke": "@color",
-                "d": {
-                    "x": "@x:scaled",
-                    "y": "@y:scaled"
-                }
+                "d": { "x": "@x:scaled", "y": "@y:scaled" }, "stroke": "@color", "stroke-width": 1.6, "fill": "none",
+                "highlight-stroke-width": 2.5, "others-stroke-opacity": 0.3
             }
         }
     ]

@@ -72,20 +72,21 @@
                 }
             },
             "props": {
+                "scheme": "Tableau10",
                 "common": {
                     "stroke-width": 2.5
                 },
                 "categories": {
                     "ÖSTERREICH":       { "color": "#1E4F77", "stroke-width": 4, "name": "Gesamt", "visible": false, "class": "bold" },
-                    "Wien":             { "color": "#BBD7EE" },
-                    "Niederösterreich": { "color": "#5BC5F2" },
-                    "Burgenland":       { "color": "#559BD5" },
-                    "Oberösterreich":   { "color": "#C7DF71" },
-                    "Salzburg":         { "color": "#4B9847" },
-                    "Steiermark":       { "color": "#9CE1F8" },
-                    "Kärnten":          { "color": "#72BB6F" },
-                    "Tirol":            { "color": "#3F766B" },
-                    "Vorarlberg":       { "color": "#ABD6A9" }
+                    "Wien":             {},
+                    "Niederösterreich": {},
+                    "Burgenland":       {},
+                    "Oberösterreich":   {},
+                    "Salzburg":         {},
+                    "Steiermark":       {},
+                    "Kärnten":          {},
+                    "Tirol":            {},
+                    "Vorarlberg":       {}
                 }
             },
             "hover": {

@@ -1,222 +1,62 @@
-<div class="vis">
+<div class="vis" data-global-quali="Alle" data-global-werr="Alle" data-global-wfrist="Alle" data-global-wrecht="Alle">
 <div class="vis-header">
 <div class="vis-title">Mietpreis</div>
 <div class="vis-subtitle">Preis in €/m²</div>
 </div>
 <div class="vis-form-elements">
+<div class="vis-form-element" data-id="quali">
+<label class="vis-form-element-title" for="gen-vis-form-N-quali">Ausstattung:</label>
+<select id="gen-vis-form-N-quali">
+<option value="A">A</option>
+<option value="B">B</option>
+<option value="C">C</option>
+<option value="D">D</option>
+<option value="NA">NA</option>
+<option selected="" value="Alle">Alle</option>
+</select>
+</div>
+<div class="vis-form-element" data-id="werr">
+<label class="vis-form-element-title" for="gen-vis-form-N-werr">Errichtung:</label>
+<select id="gen-vis-form-N-werr">
+<option value="1918 und davor">1918 und davor</option>
+<option value="1919 - 1944">1919 - 1944</option>
+<option value="1945 - 1960">1945 - 1960</option>
+<option value="1961 - 1970">1961 - 1970</option>
+<option value="1971 - 1980">1971 - 1980</option>
+<option value="1981 - 1990">1981 - 1990</option>
+<option value="1991 - 2000">1991 - 2000</option>
+<option value="2001 - 2010">2001 - 2010</option>
+<option value="2011 - 2020">2011 - 2020</option>
+<option value="NA">NA</option>
+<option selected="" value="Alle">Alle</option>
+</select>
+</div>
+<div class="vis-form-element" data-id="wfrist">
+<label class="vis-form-element-title" for="gen-vis-form-N-wfrist">Befristung:</label>
+<select id="gen-vis-form-N-wfrist">
+<option value="unbefristet">unbefristet</option>
+<option value="befristet">befristet</option>
+<option value="NA">NA</option>
+<option selected="" value="Alle">Alle</option>
+</select>
+</div>
+<div class="vis-form-element" data-id="wrecht">
+<label class="vis-form-element-title" for="gen-vis-form-N-wrecht">Rechtsform:</label>
+<select id="gen-vis-form-N-wrecht">
+<option value="gbv">GBV</option>
+<option value="pub">öffentlich</option>
+<option value="priv">privat</option>
+<option value="NA">NA</option>
+<option selected="" value="Alle">Alle</option>
+</select>
+</div>
 </div>
 <div class="vis-legends">
-<div class="vis-legend" data-dim="quali">
-<div class="vis-legend-title">
-</div>
-<div class="vis-legend-entries" role="group">
-<div class="vis-legend-entry" data-visible="true" data-key="A" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>A</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="B" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>B</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="C" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>C</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="D" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>D</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="NA" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>NA</span>
-</div>
-<div class="vis-legend-entry bold" data-visible="true" data-key="Alle" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>Alle</span>
-</div>
-</div>
-</div>
-<div class="vis-legend" data-dim="werr">
-<div class="vis-legend-title">
-</div>
-<div class="vis-legend-entries" role="group">
-<div class="vis-legend-entry" data-visible="false" data-key="1918 und davor" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1918 und davor</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="1919 - 1944" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1919 - 1944</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="1945 - 1960" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1945 - 1960</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="1961 - 1970" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1961 - 1970</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="1971 - 1980" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1971 - 1980</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="1981 - 1990" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1981 - 1990</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="1991 - 2000" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>1991 - 2000</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="2001 - 2010" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>2001 - 2010</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="2011 - 2020" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>2011 - 2020</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="NA" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>NA</span>
-</div>
-<div class="vis-legend-entry" data-visible="true" data-key="Alle" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>Alle</span>
-</div>
-</div>
-</div>
-<div class="vis-legend" data-dim="wfrist">
-<div class="vis-legend-title">
-</div>
-<div class="vis-legend-entries" role="group">
-<div class="vis-legend-entry" data-visible="false" data-key="unbefristet" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>unbefristet</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="befristet" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>befristet</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="NA" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>NA</span>
-</div>
-<div class="vis-legend-entry" data-visible="true" data-key="Alle" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>Alle</span>
-</div>
-</div>
-</div>
-<div class="vis-legend" data-dim="wrecht">
-<div class="vis-legend-title">
-</div>
-<div class="vis-legend-entries" role="group">
-<div class="vis-legend-entry" data-visible="false" data-key="gbv" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>GBV</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="pub" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2" stroke-dasharray="2">
-</line>
-</svg>
-<span>öffentlich</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="priv" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2" stroke-dasharray="4">
-</line>
-</svg>
-<span>privat</span>
-</div>
-<div class="vis-legend-entry" data-visible="false" data-key="NA" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2" stroke-dasharray="2 4">
-</line>
-</svg>
-<span>NA</span>
-</div>
-<div class="vis-legend-entry" data-visible="true" data-key="Alle" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="16" height="16">
-<line x1="0" x2="16" y1="8" y2="8" stroke="#888" stroke-width="2">
-</line>
-</svg>
-<span>Alle</span>
-</div>
-</div>
-</div>
 <div class="vis-legend" data-dim="bundesland">
 <div class="vis-legend-title">
 </div>
 <div class="vis-legend-entries" role="group">
-<div class="vis-legend-entry" data-visible="false" data-key="Wien" role="checkbox" tabindex="0" aria-checked="false">
+<div class="vis-legend-entry" data-visible="true" data-key="Wien" role="checkbox" tabindex="0" aria-checked="true">
 <svg width="16" height="16">
 <line x1="0" x2="16" y1="8" y2="8" stroke="#1E4F77" stroke-width="1.5">
 </line>
@@ -391,106 +231,106 @@
 </g>
 </g>
 <g class="vis-plot plot-0" data-plot="plot-0">
-<path stroke-width="2" fill="none" stroke="#000" data-group-quali="A" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Alle" data-group-wfrist="Alle" d="M6.154,314.144L12.843,313.241L19.532,311.75L26.221,309.729L32.91,309.895L39.599,307.59L46.288,308.492L52.977,287.053L59.666,238.945L66.355,237.15L73.043,219.4L79.732,215.2L86.421,209.912L93.11,204.75L99.799,211.079L106.488,207.282L113.177,202.651L119.866,199.069L126.555,196.921L133.244,196.057L139.933,139.746L146.622,134.379L153.311,138.657L160,121.957L166.689,111.478L173.378,113.499L180.067,111.311L186.756,102.628L193.445,98.546L200.134,126.716L206.823,135.351L213.512,115.344L220.201,109.722L226.89,105.463L233.579,105.709L240.268,104.247L246.957,96.387L253.645,89.117L260.334,84.564L267.023,78.274L273.712,78.706L280.401,80.188L287.09,70.621L293.779,58.415L300.468,60.23L307.157,57.807L313.846,50.683">
+<path stroke-width="2" fill="none" stroke="#1E4F77" data-group-quali="Alle" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Wien" data-group-wfrist="Alle" d="M6.154,248.885L12.843,247.109L19.532,247.903L26.221,249.257L32.91,248.276L39.599,250.474L46.288,250.916L52.977,251.671L59.666,251.141L66.355,251.377L73.043,232.018L79.732,234.432L86.421,232.489L93.11,230.379L99.799,238.042L106.488,236.757L113.177,235.334L119.866,235.305L126.555,236.551L133.244,237.405L139.933,238.111L146.622,238.464L153.311,238.455L160,233.823L166.689,229.889L173.378,233.666L180.067,234.333L186.756,231.655L193.445,231.321L200.134,263.426L206.823,265.114L213.512,253.349L220.201,243.812L226.89,246.039L233.579,253.948L240.268,251.966L246.957,250.582L253.645,249.591L260.334,246.961L267.023,249.218L273.712,250.827L280.401,247.462L287.09,247.531L293.779,245.176L300.468,247.913L307.157,246.687L313.846,246.726">
 </path>
 <path stroke-width="2" fill="none" stroke="#000" data-group-quali="Alle" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Alle" data-group-wfrist="Alle" d="M6.154,6.471L12.843,13.447L19.532,13.162L26.221,21.552L32.91,21.032L39.599,26.183L46.288,37.153L52.977,44.698L59.666,45.787L66.355,49.859L73.043,29.264L79.732,40.577L86.421,36.289L93.11,36.063L99.799,60.858L106.488,64.175L113.177,67.982L119.866,68.737L126.555,76.567L133.244,85.977L139.933,44.933L146.622,46.356L153.311,61.457L160,47.622L166.689,40.498L173.378,47.71L180.067,52.106L186.756,46.66L193.445,47.043L200.134,83.053L206.823,103.275L213.512,79.903L220.201,76.204L226.89,74.134L233.579,74.87L240.268,73.594L246.957,68.07L253.645,61.054L260.334,57.453L267.023,55.383L273.712,54.451L280.401,57.689L287.09,47.043L293.779,35.298L300.468,40.626L307.157,39.488L313.846,33.346">
 </path>
 </g>
 <g class="vis-plot plot-1" data-plot="plot-1">
-<g class="vis-group" data-group-quali="A" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Alle" data-group-wfrist="Alle">
-<circle fill="#000" r="3" cx="6.154" cy="314.144">
+<g class="vis-group" data-group-quali="Alle" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Wien" data-group-wfrist="Alle">
+<circle fill="#1E4F77" r="3" cx="6.154" cy="248.885">
 </circle>
-<circle fill="#000" r="3" cx="12.843" cy="313.241">
+<circle fill="#1E4F77" r="3" cx="12.843" cy="247.109">
 </circle>
-<circle fill="#000" r="3" cx="19.532" cy="311.75">
+<circle fill="#1E4F77" r="3" cx="19.532" cy="247.903">
 </circle>
-<circle fill="#000" r="3" cx="26.221" cy="309.729">
+<circle fill="#1E4F77" r="3" cx="26.221" cy="249.257">
 </circle>
-<circle fill="#000" r="3" cx="32.91" cy="309.895">
+<circle fill="#1E4F77" r="3" cx="32.91" cy="248.276">
 </circle>
-<circle fill="#000" r="3" cx="39.599" cy="307.59">
+<circle fill="#1E4F77" r="3" cx="39.599" cy="250.474">
 </circle>
-<circle fill="#000" r="3" cx="46.288" cy="308.492">
+<circle fill="#1E4F77" r="3" cx="46.288" cy="250.916">
 </circle>
-<circle fill="#000" r="3" cx="52.977" cy="287.053">
+<circle fill="#1E4F77" r="3" cx="52.977" cy="251.671">
 </circle>
-<circle fill="#000" r="3" cx="59.666" cy="238.945">
+<circle fill="#1E4F77" r="3" cx="59.666" cy="251.141">
 </circle>
-<circle fill="#000" r="3" cx="66.355" cy="237.15">
+<circle fill="#1E4F77" r="3" cx="66.355" cy="251.377">
 </circle>
-<circle fill="#000" r="3" cx="73.043" cy="219.4">
+<circle fill="#1E4F77" r="3" cx="73.043" cy="232.018">
 </circle>
-<circle fill="#000" r="3" cx="79.732" cy="215.2">
+<circle fill="#1E4F77" r="3" cx="79.732" cy="234.432">
 </circle>
-<circle fill="#000" r="3" cx="86.421" cy="209.912">
+<circle fill="#1E4F77" r="3" cx="86.421" cy="232.489">
 </circle>
-<circle fill="#000" r="3" cx="93.11" cy="204.75">
+<circle fill="#1E4F77" r="3" cx="93.11" cy="230.379">
 </circle>
-<circle fill="#000" r="3" cx="99.799" cy="211.079">
+<circle fill="#1E4F77" r="3" cx="99.799" cy="238.042">
 </circle>
-<circle fill="#000" r="3" cx="106.488" cy="207.282">
+<circle fill="#1E4F77" r="3" cx="106.488" cy="236.757">
 </circle>
-<circle fill="#000" r="3" cx="113.177" cy="202.651">
+<circle fill="#1E4F77" r="3" cx="113.177" cy="235.334">
 </circle>
-<circle fill="#000" r="3" cx="119.866" cy="199.069">
+<circle fill="#1E4F77" r="3" cx="119.866" cy="235.305">
 </circle>
-<circle fill="#000" r="3" cx="126.555" cy="196.921">
+<circle fill="#1E4F77" r="3" cx="126.555" cy="236.551">
 </circle>
-<circle fill="#000" r="3" cx="133.244" cy="196.057">
+<circle fill="#1E4F77" r="3" cx="133.244" cy="237.405">
 </circle>
-<circle fill="#000" r="3" cx="139.933" cy="139.746">
+<circle fill="#1E4F77" r="3" cx="139.933" cy="238.111">
 </circle>
-<circle fill="#000" r="3" cx="146.622" cy="134.379">
+<circle fill="#1E4F77" r="3" cx="146.622" cy="238.464">
 </circle>
-<circle fill="#000" r="3" cx="153.311" cy="138.657">
+<circle fill="#1E4F77" r="3" cx="153.311" cy="238.455">
 </circle>
-<circle fill="#000" r="3" cx="160" cy="121.957">
+<circle fill="#1E4F77" r="3" cx="160" cy="233.823">
 </circle>
-<circle fill="#000" r="3" cx="166.689" cy="111.478">
+<circle fill="#1E4F77" r="3" cx="166.689" cy="229.889">
 </circle>
-<circle fill="#000" r="3" cx="173.378" cy="113.499">
+<circle fill="#1E4F77" r="3" cx="173.378" cy="233.666">
 </circle>
-<circle fill="#000" r="3" cx="180.067" cy="111.311">
+<circle fill="#1E4F77" r="3" cx="180.067" cy="234.333">
 </circle>
-<circle fill="#000" r="3" cx="186.756" cy="102.628">
+<circle fill="#1E4F77" r="3" cx="186.756" cy="231.655">
 </circle>
-<circle fill="#000" r="3" cx="193.445" cy="98.546">
+<circle fill="#1E4F77" r="3" cx="193.445" cy="231.321">
 </circle>
-<circle fill="#000" r="3" cx="200.134" cy="126.716">
+<circle fill="#1E4F77" r="3" cx="200.134" cy="263.426">
 </circle>
-<circle fill="#000" r="3" cx="206.823" cy="135.351">
+<circle fill="#1E4F77" r="3" cx="206.823" cy="265.114">
 </circle>
-<circle fill="#000" r="3" cx="213.512" cy="115.344">
+<circle fill="#1E4F77" r="3" cx="213.512" cy="253.349">
 </circle>
-<circle fill="#000" r="3" cx="220.201" cy="109.722">
+<circle fill="#1E4F77" r="3" cx="220.201" cy="243.812">
 </circle>
-<circle fill="#000" r="3" cx="226.89" cy="105.463">
+<circle fill="#1E4F77" r="3" cx="226.89" cy="246.039">
 </circle>
-<circle fill="#000" r="3" cx="233.579" cy="105.709">
+<circle fill="#1E4F77" r="3" cx="233.579" cy="253.948">
 </circle>
-<circle fill="#000" r="3" cx="240.268" cy="104.247">
+<circle fill="#1E4F77" r="3" cx="240.268" cy="251.966">
 </circle>
-<circle fill="#000" r="3" cx="246.957" cy="96.387">
+<circle fill="#1E4F77" r="3" cx="246.957" cy="250.582">
 </circle>
-<circle fill="#000" r="3" cx="253.645" cy="89.117">
+<circle fill="#1E4F77" r="3" cx="253.645" cy="249.591">
 </circle>
-<circle fill="#000" r="3" cx="260.334" cy="84.564">
+<circle fill="#1E4F77" r="3" cx="260.334" cy="246.961">
 </circle>
-<circle fill="#000" r="3" cx="267.023" cy="78.274">
+<circle fill="#1E4F77" r="3" cx="267.023" cy="249.218">
 </circle>
-<circle fill="#000" r="3" cx="273.712" cy="78.706">
+<circle fill="#1E4F77" r="3" cx="273.712" cy="250.827">
 </circle>
-<circle fill="#000" r="3" cx="280.401" cy="80.188">
+<circle fill="#1E4F77" r="3" cx="280.401" cy="247.462">
 </circle>
-<circle fill="#000" r="3" cx="287.09" cy="70.621">
+<circle fill="#1E4F77" r="3" cx="287.09" cy="247.531">
 </circle>
-<circle fill="#000" r="3" cx="293.779" cy="58.415">
+<circle fill="#1E4F77" r="3" cx="293.779" cy="245.176">
 </circle>
-<circle fill="#000" r="3" cx="300.468" cy="60.23">
+<circle fill="#1E4F77" r="3" cx="300.468" cy="247.913">
 </circle>
-<circle fill="#000" r="3" cx="307.157" cy="57.807">
+<circle fill="#1E4F77" r="3" cx="307.157" cy="246.687">
 </circle>
-<circle fill="#000" r="3" cx="313.846" cy="50.683">
+<circle fill="#1E4F77" r="3" cx="313.846" cy="246.726">
 </circle>
 </g>
 <g class="vis-group" data-group-quali="Alle" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Alle" data-group-wfrist="Alle">
@@ -640,23 +480,23 @@
 <g class="vis-grid">
 <line x1="0" x2="320" y1="330" y2="330">
 </line>
-<line x1="0" x2="320" y1="293.484" y2="293.484">
+<line x1="0" x2="320" y1="293.525" y2="293.525">
 </line>
-<line x1="0" x2="320" y1="256.969" y2="256.969">
+<line x1="0" x2="320" y1="257.051" y2="257.051">
 </line>
-<line x1="0" x2="320" y1="220.453" y2="220.453">
+<line x1="0" x2="320" y1="220.576" y2="220.576">
 </line>
-<line x1="0" x2="320" y1="183.937" y2="183.937">
+<line x1="0" x2="320" y1="184.102" y2="184.102">
 </line>
-<line x1="0" x2="320" y1="147.421" y2="147.421">
+<line x1="0" x2="320" y1="147.627" y2="147.627">
 </line>
-<line x1="0" x2="320" y1="110.906" y2="110.906">
+<line x1="0" x2="320" y1="111.153" y2="111.153">
 </line>
-<line x1="0" x2="320" y1="74.39" y2="74.39">
+<line x1="0" x2="320" y1="74.678" y2="74.678">
 </line>
-<line x1="0" x2="320" y1="37.874" y2="37.874">
+<line x1="0" x2="320" y1="38.203" y2="38.203">
 </line>
-<line x1="0" x2="320" y1="1.358" y2="1.358">
+<line x1="0" x2="320" y1="1.729" y2="1.729">
 </line>
 </g>
 <g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
@@ -667,249 +507,249 @@
 </line>
 <text fill="currentColor" x="-12" dy="0.32em">0,0</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,293.984)">
+<g class="tick" opacity="1" transform="translate(0,294.025)">
 <line stroke="currentColor" x2="-9">
 </line>
 <text fill="currentColor" x="-12" dy="0.32em">1,0</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,257.469)">
+<g class="tick" opacity="1" transform="translate(0,257.551)">
 <line stroke="currentColor" x2="-9">
 </line>
 <text fill="currentColor" x="-12" dy="0.32em">2,0</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,220.953)">
+<g class="tick" opacity="1" transform="translate(0,221.076)">
 <line stroke="currentColor" x2="-9">
 </line>
 <text fill="currentColor" x="-12" dy="0.32em">3,0</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,184.437)">
+<g class="tick" opacity="1" transform="translate(0,184.602)">
 <line stroke="currentColor" x2="-9">
 </line>
 <text fill="currentColor" x="-12" dy="0.32em">4,0</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,147.921)">
+<g class="tick" opacity="1" transform="translate(0,148.127)">
 <line stroke="currentColor" x2="-9">
 </line>
 <text fill="currentColor" x="-12" dy="0.32em">5,0</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,111.406)">
+<g class="tick" opacity="1" transform="translate(0,111.653)">
 <line stroke="currentColor" x2="-9">
 </line>
 <text fill="currentColor" x="-12" dy="0.32em">6,0</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,74.89)">
+<g class="tick" opacity="1" transform="translate(0,75.178)">
 <line stroke="currentColor" x2="-9">
 </line>
 <text fill="currentColor" x="-12" dy="0.32em">7,0</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,38.374)">
+<g class="tick" opacity="1" transform="translate(0,38.703)">
 <line stroke="currentColor" x2="-9">
 </line>
 <text fill="currentColor" x="-12" dy="0.32em">8,0</text>
 </g>
-<g class="tick" opacity="1" transform="translate(0,1.858)">
+<g class="tick" opacity="1" transform="translate(0,2.229)">
 <line stroke="currentColor" x2="-9">
 </line>
 <text fill="currentColor" x="-12" dy="0.32em">9,0</text>
 </g>
 </g>
 <g class="vis-plot plot-0" data-plot="plot-0">
-<path stroke-width="2" fill="none" stroke="#000" data-group-quali="A" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Alle" data-group-wfrist="Alle" d="M6.154,286.911L12.843,283.26L19.532,278.513L26.221,274.496L32.91,270.114L39.599,266.463L46.288,264.272L52.977,254.047L59.666,240.536L66.355,235.789L73.043,224.835L79.732,224.104L86.421,221.913L93.11,218.262L99.799,216.436L106.488,214.245L113.177,210.959L119.866,204.021L126.555,195.622L133.244,188.319L139.933,179.555L146.622,170.426L153.311,163.123L160,159.106L166.689,155.455L173.378,150.708L180.067,148.517L186.756,144.5L193.445,140.118L200.134,138.658L206.823,117.478L213.512,118.574L220.201,114.557L226.89,110.906L233.579,103.968L240.268,95.569L246.957,90.822L253.645,83.154L260.334,74.39L267.023,67.087L273.712,55.037L280.401,47.368L287.09,38.97L293.779,29.476L300.468,21.442L307.157,15.234L313.846,6.471">
+<path stroke-width="2" fill="none" stroke="#1E4F77" data-group-quali="Alle" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Wien" data-group-wfrist="Alle" d="M6.154,306.036L12.843,304.395L19.532,300.93L26.221,297.428L32.91,294.547L39.599,290.243L46.288,287.69L52.977,282.948L59.666,268.723L66.355,264.346L73.043,258.51L79.732,254.862L86.421,251.944L93.11,249.756L99.799,247.567L106.488,242.461L113.177,237.355L119.866,231.883L126.555,223.859L133.244,215.835L139.933,201.61L146.622,189.208L153.311,181.549L160,177.172L166.689,170.606L173.378,164.405L180.067,160.758L186.756,156.746L193.445,152.369L200.134,150.91L206.823,126.107L213.512,129.755L220.201,126.472L226.89,120.271L233.579,114.071L240.268,104.222L246.957,96.928L253.645,87.079L260.334,79.784L267.023,72.125L273.712,59.723L280.401,49.511L287.09,42.216L293.779,30.909L300.468,20.331L307.157,15.224L313.846,6.471">
 </path>
-<path stroke-width="2" fill="none" stroke="#000" data-group-quali="Alle" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Alle" data-group-wfrist="Alle" d="M6.154,302.869L12.843,300.459L19.532,296.552L26.221,292.754L32.91,289.102L39.599,286.181L46.288,282.53L52.977,277.782L59.666,265.367L66.355,259.525L73.043,252.221L79.732,248.935L86.421,244.553L93.11,241.267L99.799,238.711L106.488,234.329L113.177,229.582L119.866,223.009L126.555,214.975L133.244,206.212L139.933,193.066L146.622,183.572L153.311,175.538L160,171.157L166.689,166.775L173.378,161.662L180.067,158.376L186.756,153.994L193.445,149.247L200.134,146.326L206.823,123.321L213.512,125.512L220.201,121.86L226.89,117.113L233.579,110.906L240.268,102.507L246.957,97.03L253.645,89.726L260.334,80.598L267.023,72.199L273.712,60.879L280.401,53.211L287.09,44.812L293.779,35.318L300.468,26.919L307.157,20.712L313.846,11.218">
+<path stroke-width="2" fill="none" stroke="#000" data-group-quali="Alle" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Alle" data-group-wfrist="Alle" d="M6.154,302.899L12.843,300.492L19.532,296.589L26.221,292.796L32.91,289.148L39.599,286.231L46.288,282.583L52.977,277.841L59.666,265.44L66.355,259.604L73.043,252.309L79.732,249.026L86.421,244.65L93.11,241.367L99.799,238.814L106.488,234.437L113.177,229.695L119.866,223.13L126.555,215.105L133.244,206.351L139.933,193.22L146.622,183.737L153.311,175.713L160,171.336L166.689,166.959L173.378,161.852L180.067,158.57L186.756,154.193L193.445,149.451L200.134,146.533L206.823,123.554L213.512,125.742L220.201,122.095L226.89,117.353L233.579,111.153L240.268,102.763L246.957,97.292L253.645,89.997L260.334,80.879L267.023,72.49L273.712,61.182L280.401,53.523L287.09,45.134L293.779,35.65L300.468,27.261L307.157,21.06L313.846,11.577">
 </path>
 </g>
 <g class="vis-plot plot-1" data-plot="plot-1">
-<g class="vis-group" data-group-quali="A" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Alle" data-group-wfrist="Alle">
-<circle fill="#000" r="3" cx="6.154" cy="286.911">
+<g class="vis-group" data-group-quali="Alle" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Wien" data-group-wfrist="Alle">
+<circle fill="#1E4F77" r="3" cx="6.154" cy="306.036">
 </circle>
-<circle fill="#000" r="3" cx="12.843" cy="283.26">
+<circle fill="#1E4F77" r="3" cx="12.843" cy="304.395">
 </circle>
-<circle fill="#000" r="3" cx="19.532" cy="278.513">
+<circle fill="#1E4F77" r="3" cx="19.532" cy="300.93">
 </circle>
-<circle fill="#000" r="3" cx="26.221" cy="274.496">
+<circle fill="#1E4F77" r="3" cx="26.221" cy="297.428">
 </circle>
-<circle fill="#000" r="3" cx="32.91" cy="270.114">
+<circle fill="#1E4F77" r="3" cx="32.91" cy="294.547">
 </circle>
-<circle fill="#000" r="3" cx="39.599" cy="266.463">
+<circle fill="#1E4F77" r="3" cx="39.599" cy="290.243">
 </circle>
-<circle fill="#000" r="3" cx="46.288" cy="264.272">
+<circle fill="#1E4F77" r="3" cx="46.288" cy="287.69">
 </circle>
-<circle fill="#000" r="3" cx="52.977" cy="254.047">
+<circle fill="#1E4F77" r="3" cx="52.977" cy="282.948">
 </circle>
-<circle fill="#000" r="3" cx="59.666" cy="240.536">
+<circle fill="#1E4F77" r="3" cx="59.666" cy="268.723">
 </circle>
-<circle fill="#000" r="3" cx="66.355" cy="235.789">
+<circle fill="#1E4F77" r="3" cx="66.355" cy="264.346">
 </circle>
-<circle fill="#000" r="3" cx="73.043" cy="224.835">
+<circle fill="#1E4F77" r="3" cx="73.043" cy="258.51">
 </circle>
-<circle fill="#000" r="3" cx="79.732" cy="224.104">
+<circle fill="#1E4F77" r="3" cx="79.732" cy="254.862">
 </circle>
-<circle fill="#000" r="3" cx="86.421" cy="221.913">
+<circle fill="#1E4F77" r="3" cx="86.421" cy="251.944">
 </circle>
-<circle fill="#000" r="3" cx="93.11" cy="218.262">
+<circle fill="#1E4F77" r="3" cx="93.11" cy="249.756">
 </circle>
-<circle fill="#000" r="3" cx="99.799" cy="216.436">
+<circle fill="#1E4F77" r="3" cx="99.799" cy="247.567">
 </circle>
-<circle fill="#000" r="3" cx="106.488" cy="214.245">
+<circle fill="#1E4F77" r="3" cx="106.488" cy="242.461">
 </circle>
-<circle fill="#000" r="3" cx="113.177" cy="210.959">
+<circle fill="#1E4F77" r="3" cx="113.177" cy="237.355">
 </circle>
-<circle fill="#000" r="3" cx="119.866" cy="204.021">
+<circle fill="#1E4F77" r="3" cx="119.866" cy="231.883">
 </circle>
-<circle fill="#000" r="3" cx="126.555" cy="195.622">
+<circle fill="#1E4F77" r="3" cx="126.555" cy="223.859">
 </circle>
-<circle fill="#000" r="3" cx="133.244" cy="188.319">
+<circle fill="#1E4F77" r="3" cx="133.244" cy="215.835">
 </circle>
-<circle fill="#000" r="3" cx="139.933" cy="179.555">
+<circle fill="#1E4F77" r="3" cx="139.933" cy="201.61">
 </circle>
-<circle fill="#000" r="3" cx="146.622" cy="170.426">
+<circle fill="#1E4F77" r="3" cx="146.622" cy="189.208">
 </circle>
-<circle fill="#000" r="3" cx="153.311" cy="163.123">
+<circle fill="#1E4F77" r="3" cx="153.311" cy="181.549">
 </circle>
-<circle fill="#000" r="3" cx="160" cy="159.106">
+<circle fill="#1E4F77" r="3" cx="160" cy="177.172">
 </circle>
-<circle fill="#000" r="3" cx="166.689" cy="155.455">
+<circle fill="#1E4F77" r="3" cx="166.689" cy="170.606">
 </circle>
-<circle fill="#000" r="3" cx="173.378" cy="150.708">
+<circle fill="#1E4F77" r="3" cx="173.378" cy="164.405">
 </circle>
-<circle fill="#000" r="3" cx="180.067" cy="148.517">
+<circle fill="#1E4F77" r="3" cx="180.067" cy="160.758">
 </circle>
-<circle fill="#000" r="3" cx="186.756" cy="144.5">
+<circle fill="#1E4F77" r="3" cx="186.756" cy="156.746">
 </circle>
-<circle fill="#000" r="3" cx="193.445" cy="140.118">
+<circle fill="#1E4F77" r="3" cx="193.445" cy="152.369">
 </circle>
-<circle fill="#000" r="3" cx="200.134" cy="138.658">
+<circle fill="#1E4F77" r="3" cx="200.134" cy="150.91">
 </circle>
-<circle fill="#000" r="3" cx="206.823" cy="117.478">
+<circle fill="#1E4F77" r="3" cx="206.823" cy="126.107">
 </circle>
-<circle fill="#000" r="3" cx="213.512" cy="118.574">
+<circle fill="#1E4F77" r="3" cx="213.512" cy="129.755">
 </circle>
-<circle fill="#000" r="3" cx="220.201" cy="114.557">
+<circle fill="#1E4F77" r="3" cx="220.201" cy="126.472">
 </circle>
-<circle fill="#000" r="3" cx="226.89" cy="110.906">
+<circle fill="#1E4F77" r="3" cx="226.89" cy="120.271">
 </circle>
-<circle fill="#000" r="3" cx="233.579" cy="103.968">
+<circle fill="#1E4F77" r="3" cx="233.579" cy="114.071">
 </circle>
-<circle fill="#000" r="3" cx="240.268" cy="95.569">
+<circle fill="#1E4F77" r="3" cx="240.268" cy="104.222">
 </circle>
-<circle fill="#000" r="3" cx="246.957" cy="90.822">
+<circle fill="#1E4F77" r="3" cx="246.957" cy="96.928">
 </circle>
-<circle fill="#000" r="3" cx="253.645" cy="83.154">
+<circle fill="#1E4F77" r="3" cx="253.645" cy="87.079">
 </circle>
-<circle fill="#000" r="3" cx="260.334" cy="74.39">
+<circle fill="#1E4F77" r="3" cx="260.334" cy="79.784">
 </circle>
-<circle fill="#000" r="3" cx="267.023" cy="67.087">
+<circle fill="#1E4F77" r="3" cx="267.023" cy="72.125">
 </circle>
-<circle fill="#000" r="3" cx="273.712" cy="55.037">
+<circle fill="#1E4F77" r="3" cx="273.712" cy="59.723">
 </circle>
-<circle fill="#000" r="3" cx="280.401" cy="47.368">
+<circle fill="#1E4F77" r="3" cx="280.401" cy="49.511">
 </circle>
-<circle fill="#000" r="3" cx="287.09" cy="38.97">
+<circle fill="#1E4F77" r="3" cx="287.09" cy="42.216">
 </circle>
-<circle fill="#000" r="3" cx="293.779" cy="29.476">
+<circle fill="#1E4F77" r="3" cx="293.779" cy="30.909">
 </circle>
-<circle fill="#000" r="3" cx="300.468" cy="21.442">
+<circle fill="#1E4F77" r="3" cx="300.468" cy="20.331">
 </circle>
-<circle fill="#000" r="3" cx="307.157" cy="15.234">
+<circle fill="#1E4F77" r="3" cx="307.157" cy="15.224">
 </circle>
-<circle fill="#000" r="3" cx="313.846" cy="6.471">
+<circle fill="#1E4F77" r="3" cx="313.846" cy="6.471">
 </circle>
 </g>
 <g class="vis-group" data-group-quali="Alle" data-group-werr="Alle" data-group-wrecht="Alle" data-group-bundesland="Alle" data-group-wfrist="Alle">
-<circle fill="#000" r="3" cx="6.154" cy="302.869">
+<circle fill="#000" r="3" cx="6.154" cy="302.899">
 </circle>
-<circle fill="#000" r="3" cx="12.843" cy="300.459">
+<circle fill="#000" r="3" cx="12.843" cy="300.492">
 </circle>
-<circle fill="#000" r="3" cx="19.532" cy="296.552">
+<circle fill="#000" r="3" cx="19.532" cy="296.589">
 </circle>
-<circle fill="#000" r="3" cx="26.221" cy="292.754">
+<circle fill="#000" r="3" cx="26.221" cy="292.796">
 </circle>
-<circle fill="#000" r="3" cx="32.91" cy="289.102">
+<circle fill="#000" r="3" cx="32.91" cy="289.148">
 </circle>
-<circle fill="#000" r="3" cx="39.599" cy="286.181">
+<circle fill="#000" r="3" cx="39.599" cy="286.231">
 </circle>
-<circle fill="#000" r="3" cx="46.288" cy="282.53">
+<circle fill="#000" r="3" cx="46.288" cy="282.583">
 </circle>
-<circle fill="#000" r="3" cx="52.977" cy="277.782">
+<circle fill="#000" r="3" cx="52.977" cy="277.841">
 </circle>
-<circle fill="#000" r="3" cx="59.666" cy="265.367">
+<circle fill="#000" r="3" cx="59.666" cy="265.44">
 </circle>
-<circle fill="#000" r="3" cx="66.355" cy="259.525">
+<circle fill="#000" r="3" cx="66.355" cy="259.604">
 </circle>
-<circle fill="#000" r="3" cx="73.043" cy="252.221">
+<circle fill="#000" r="3" cx="73.043" cy="252.309">
 </circle>
-<circle fill="#000" r="3" cx="79.732" cy="248.935">
+<circle fill="#000" r="3" cx="79.732" cy="249.026">
 </circle>
-<circle fill="#000" r="3" cx="86.421" cy="244.553">
+<circle fill="#000" r="3" cx="86.421" cy="244.65">
 </circle>
-<circle fill="#000" r="3" cx="93.11" cy="241.267">
+<circle fill="#000" r="3" cx="93.11" cy="241.367">
 </circle>
-<circle fill="#000" r="3" cx="99.799" cy="238.711">
+<circle fill="#000" r="3" cx="99.799" cy="238.814">
 </circle>
-<circle fill="#000" r="3" cx="106.488" cy="234.329">
+<circle fill="#000" r="3" cx="106.488" cy="234.437">
 </circle>
-<circle fill="#000" r="3" cx="113.177" cy="229.582">
+<circle fill="#000" r="3" cx="113.177" cy="229.695">
 </circle>
-<circle fill="#000" r="3" cx="119.866" cy="223.009">
+<circle fill="#000" r="3" cx="119.866" cy="223.13">
 </circle>
-<circle fill="#000" r="3" cx="126.555" cy="214.975">
+<circle fill="#000" r="3" cx="126.555" cy="215.105">
 </circle>
-<circle fill="#000" r="3" cx="133.244" cy="206.212">
+<circle fill="#000" r="3" cx="133.244" cy="206.351">
 </circle>
-<circle fill="#000" r="3" cx="139.933" cy="193.066">
+<circle fill="#000" r="3" cx="139.933" cy="193.22">
 </circle>
-<circle fill="#000" r="3" cx="146.622" cy="183.572">
+<circle fill="#000" r="3" cx="146.622" cy="183.737">
 </circle>
-<circle fill="#000" r="3" cx="153.311" cy="175.538">
+<circle fill="#000" r="3" cx="153.311" cy="175.713">
 </circle>
-<circle fill="#000" r="3" cx="160" cy="171.157">
+<circle fill="#000" r="3" cx="160" cy="171.336">
 </circle>
-<circle fill="#000" r="3" cx="166.689" cy="166.775">
+<circle fill="#000" r="3" cx="166.689" cy="166.959">
 </circle>
-<circle fill="#000" r="3" cx="173.378" cy="161.662">
+<circle fill="#000" r="3" cx="173.378" cy="161.852">
 </circle>
-<circle fill="#000" r="3" cx="180.067" cy="158.376">
+<circle fill="#000" r="3" cx="180.067" cy="158.57">
 </circle>
-<circle fill="#000" r="3" cx="186.756" cy="153.994">
+<circle fill="#000" r="3" cx="186.756" cy="154.193">
 </circle>
-<circle fill="#000" r="3" cx="193.445" cy="149.247">
+<circle fill="#000" r="3" cx="193.445" cy="149.451">
 </circle>
-<circle fill="#000" r="3" cx="200.134" cy="146.326">
+<circle fill="#000" r="3" cx="200.134" cy="146.533">
 </circle>
-<circle fill="#000" r="3" cx="206.823" cy="123.321">
+<circle fill="#000" r="3" cx="206.823" cy="123.554">
 </circle>
-<circle fill="#000" r="3" cx="213.512" cy="125.512">
+<circle fill="#000" r="3" cx="213.512" cy="125.742">
 </circle>
-<circle fill="#000" r="3" cx="220.201" cy="121.86">
+<circle fill="#000" r="3" cx="220.201" cy="122.095">
 </circle>
-<circle fill="#000" r="3" cx="226.89" cy="117.113">
+<circle fill="#000" r="3" cx="226.89" cy="117.353">
 </circle>
-<circle fill="#000" r="3" cx="233.579" cy="110.906">
+<circle fill="#000" r="3" cx="233.579" cy="111.153">
 </circle>
-<circle fill="#000" r="3" cx="240.268" cy="102.507">
+<circle fill="#000" r="3" cx="240.268" cy="102.763">
 </circle>
-<circle fill="#000" r="3" cx="246.957" cy="97.03">
+<circle fill="#000" r="3" cx="246.957" cy="97.292">
 </circle>
-<circle fill="#000" r="3" cx="253.645" cy="89.726">
+<circle fill="#000" r="3" cx="253.645" cy="89.997">
 </circle>
-<circle fill="#000" r="3" cx="260.334" cy="80.598">
+<circle fill="#000" r="3" cx="260.334" cy="80.879">
 </circle>
-<circle fill="#000" r="3" cx="267.023" cy="72.199">
+<circle fill="#000" r="3" cx="267.023" cy="72.49">
 </circle>
-<circle fill="#000" r="3" cx="273.712" cy="60.879">
+<circle fill="#000" r="3" cx="273.712" cy="61.182">
 </circle>
-<circle fill="#000" r="3" cx="280.401" cy="53.211">
+<circle fill="#000" r="3" cx="280.401" cy="53.523">
 </circle>
-<circle fill="#000" r="3" cx="287.09" cy="44.812">
+<circle fill="#000" r="3" cx="287.09" cy="45.134">
 </circle>
-<circle fill="#000" r="3" cx="293.779" cy="35.318">
+<circle fill="#000" r="3" cx="293.779" cy="35.65">
 </circle>
-<circle fill="#000" r="3" cx="300.468" cy="26.919">
+<circle fill="#000" r="3" cx="300.468" cy="27.261">
 </circle>
-<circle fill="#000" r="3" cx="307.157" cy="20.712">
+<circle fill="#000" r="3" cx="307.157" cy="21.06">
 </circle>
-<circle fill="#000" r="3" cx="313.846" cy="11.218">
+<circle fill="#000" r="3" cx="313.846" cy="11.577">
 </circle>
 </g>
 </g>

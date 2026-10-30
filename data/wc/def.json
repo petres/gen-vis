@@ -1,129 +1,73 @@
 {
     "data": "data.csv",
     "options": {
-        "height": 400,
-        "margins": {"top": 20, "right": 20, "bottom": 50, "left": 50},
+        "height": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 300 }, { "cut": 700, "value": 380 }] },
+        "margins": {"top": 34, "right": 118, "bottom": 28, "left": 44},
         "title": "Ausstattungsqualität",
-        "subtitle": "Anteil der Wohnungen / Häuser mit WC im Wohnungsverband. Veränderung zwischen 1971 und 2001",
+        "subtitle": "Anteil der Wohnungen und Häuser mit WC im Wohnungsverband, 1971 bis 2001",
         "footer": "<strong>Q:</strong> Statistik Austria (2021c)"
     },
     "mapping": {
         "x": {
             "column": "Jahr",
             "type": "numeric",
-            "scale": {
-                "type": "linear",
-                "orientation": "horizontal",
-                "domainAbs": [-1, 0.5]
-            },
-            "axis": {
-                "ticks": 6,
-                "format": "",
-                "position": "bottom",
-                "rotate": 0,
-                "format": "c"
-            },
-            "hover": {
-                "format": "c"
-            }
+            "scale": { "type": "linear", "orientation": "horizontal", "domainRel": [0, 0], "inset": [6, 6] },
+            "axis": { "position": "bottom", "values": [1971, 1981, 1991, 2001], "format": "d" },
+            "hover": { "format": "d" }
         },
         "y": {
             "column": "Anteil",
             "type": "numeric",
-            "scale": {
-                "type": "linear",
-                "domain": [null, null],
-                "domainRel": [-0.02, 0],
-                "orientation": "vertical"
-            },
-            "axis": {
-                "ticks": 5,
-                "position": "left",
-                "grid": true,
-                "format": ".0%"
-            },
-            "hover": {
-                "format": ".1%"
-            }
+            "scale": { "type": "linear", "orientation": "vertical", "domain": [0.4, 1], "domainRel": [0, 0] },
+            "axis": { "position": "left", "ticks": 4, "grid": true, "format": ".0%" },
+            "hover": { "format": ".1%" }
         },
         "type": {
             "column": "Wohnungssegment",
-            "legend": {
-                "symbol": {
-                    "size": 16,
-                    "elements": [{
-                        "type": "line",
-                        "props": {
-                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
-                            "stroke": "@color", "stroke-width": "@stroke-width"
-                        }
-                    }, {
-                        "type": "circle",
-                        "props": {
-                            "cx": 8, "cy": 8, "r": "@r",
-                            "fill": "@color"
-                        }
-                    }]
-                }
-            },
+            "type": "categorical",
             "props": {
-                "common": {
-                    "visible": true,
-                    "stroke-width": 3,
-                    "r": 4
-                },
+                "scheme": "Tableau10",
+                "common": { "width": 2 },
                 "categories": {
-                    "Hauseigentum":     { "color": "#BBD7EE", "name": "Hauseigentum"},
-                    "Wohnungseigentum": { "color": "#5BC5F2", "name": "Wohnungseigentum"},
-                    "GBV Miete":        { "color": "#559BD5", "name": "GBV Miete"},
-                    "Kommunale Miete":  { "color": "#C7DF71", "name": "Kommunale Miete"},
-                    "Private Miete":    { "color": "#4B9847", "name": "Private Miete"},
-                    "Sonstiges":        { "color": "#9CE1F8", "name": "Sonstiges"},
-                    "Alle Haushalte":   { "color": "#72BB6F", "name": "Alle Haushalte", "stroke-width": 4}
+                    "Hauseigentum": {}, "Wohnungseigentum": {}, "GBV Miete": {}, "Kommunale Miete": {},
+                    "Private Miete": {}, "Sonstiges": {},
+                    "Alle Haushalte": { "color": "#111", "width": 3.5 }
                 }
             },
-            "hover": {
-
-            }
+            "hover": {}
         },
         "einheit": {
             "column": "Einheit",
-            "props": {
-                "common": {},
-                "categories": {
-                    "Österreich": { "name": "Österreich"},
-                    "Wien": { "name": "Wien"}
-                }
-            }
+            "type": "categorical",
+            "props": { "categories": { "Österreich": {}, "Wien": {} } }
         }
     },
-    "facets": {
-        "dim": "einheit",
-        "scales": ["y"],
-        "cols": 2
-    },
+    "facets": { "dim": "einheit", "scales": ["y"], "cols": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 1 }, { "cut": 700, "value": 2 }] } },
     "plot": [
         {
+            "id": "lines",
             "type": "cartesian:line",
             "categories": ["type"],
             "props": {
-                "stroke-width": "@stroke-width",
-                "fill": "none",
-                "stroke": "@color",
-                "d": {
-                    "x": "@x:scaled",
-                    "y": "@y:scaled"
-                }
+                "d": { "x": "@x:scaled", "y": "@y:scaled" }, "stroke": "@color", "stroke-width": "@width", "fill": "none",
+                "highlight-stroke-width": 4, "others-stroke-opacity": 0.25
             }
-        }, {
+        },
+        {
+            "id": "points",
             "type": "svg:circle",
             "categories": ["type"],
+            "props": { "cx": "@x:scaled", "cy": "@y:scaled", "r": 3, "fill": "@color", "highlight-r": 4.5, "others-opacity": 0.25 }
+        },
+        {
+            "id": "labels",
+            "type": "svg:text",
+            "categories": ["type"],
+            "select": "last",
+            "dodge": 12,
             "props": {
-                "fill": "@color",
-                "opacity": 0.6,
-                "cx": "@x:scaled",
-                "cy": "@y:scaled",
-                "r": "@r"
+                "x": "@x:scaled", "dx": 8, "y": "@y:scaled", "dominant-baseline": "central", "font-size": 11,
+                "fill": "@color", "text": "@name", "highlight-font-weight": "bold", "others-opacity": 0.3
             }
         }
     ]
