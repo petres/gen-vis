@@ -19,7 +19,7 @@ npm install @preschen/gen-vis vue
 
 The standalone script includes Vue, d3 and the styles, for pages without a
 bundler, e.g. of a CDN. As a module of the page (`dist-lib/esm/gen-vis.js`)
-it loads 90 kB (gzipped) at first and the parts which not every chart needs
+it loads 95 kB (gzipped) at first and the parts which not every chart needs
 when a chart needs them, e.g. the ones of maps, from the files next to it:
 
 ```html
@@ -31,7 +31,7 @@ mountGenVisByClass('genVis');
 </script>
 ```
 
-As a single file (`dist-lib/gen-vis.js`, 415 kB, 141 kB gzipped) it has all
+As a single file (`dist-lib/gen-vis.js`, 437 kB, 148 kB gzipped) it has all
 parts in itself and provides the functions as globals, e.g. of a page which
 loads its scripts without modules:
 
@@ -77,7 +77,7 @@ TypeScript, e.g. of the props, the events and the methods.
 
 Parts which not every chart needs are loaded when a chart needs them, so a
 bundler of the application puts them into chunks of their own, the rest is
-~65 kB gzipped (without Vue). The sizes are gzipped: the check of the
+~70 kB gzipped (without Vue). The sizes are gzipped: the check of the
 definitions (~5 kB) with the first one, the colors of d3
 (`d3-scale-chromatic`, ~8 kB) for definitions which name a scheme or an
 interpolator, the parts of maps (`d3-geo`, `topojson-client`, ~13 kB) with
@@ -1275,6 +1275,25 @@ coordinate system loads its parts with its first chart, e.g. the ones of maps
 `registerCoord` as well, the standalone script has them as
 `GenVis.registerPlotType`, `GenVis.registerCoord`, `GenVis.pointwise` and
 `GenVis.groupwise`. The schema only knows the built-in ones.
+
+## Upgrading from 2.x
+
+Definitions:
+
+- The patches of the entries of form elements are `patch`, which can also
+  patch the other parts of the definition: `"patch": { "mapping": { "y": {
+  "column": "share" } } }` instead of `"mapping": { "y": { "column": "share"
+  } }`.
+- `null` of a condition of `filter` is the rows without a value, it was no
+  row.
+- A position of the hover without rows has no hover, e.g. a region of a map
+  without a value, `"empty": true` of `options.hover` shows it as before.
+- The `ratio` of a `relative` prop is 1 by default.
+
+Styles: `.vis` has the globals as `data-global-` attributes and the class of
+`options.class`, the title of the facets is a style of the component of the
+facets (`vis-facet-title`), the scale of a legend of colors has its `x` and
+`y`.
 
 ## Upgrading from 1.x
 

@@ -554,3 +554,21 @@ describe('linked charts', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('patches of the plots', () => {
+    test('a plot of another type of a patch is drawn anew', async () => {
+        const def = lineDef();
+        def.globals = { kind: 'dots' };
+        def.formElements = [{ id: 'kind', name: 'Art', ref: 'kind', type: 'radio', values: [
+            { id: 'dots', name: 'Punkte', value: 'dots' },
+            { id: 'bars', name: 'Balken', value: 'bars', patch: { plot: [{ id: 'dots', type: 'svg:rect', props: { x: '@x:scaled', y: '@y:scaled', width: 4, height: 4 } }] } },
+        ] }];
+        const el = await mount(GenVis, { def, data: lineData });
+        await select(el, 'bars');
+        expect(el.querySelectorAll('g.vis-plot[data-plot="dots"] circle')).toHaveLength(0);
+        expect(el.querySelectorAll('g.vis-plot[data-plot="dots"] rect')).toHaveLength(7);
+        await select(el, 'dots');
+        expect(el.querySelectorAll('g.vis-plot[data-plot="dots"] circle')).toHaveLength(7);
+        expect(errors).toEqual([]);
+    });
+});

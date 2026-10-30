@@ -197,10 +197,11 @@ export default {
                 this.highlight(null);
         },
 
-        // the key of the group of a plot, its place in the definition, the ids
-        // of two plots can be the same, e.g. of a parent
+        // the key of the group of a plot, its place in the definition (the ids
+        // of two plots can be the same, e.g. of a parent), its id and type,
+        // e.g. a plot of a patch is not drawn into the elements of another one
         plotKey(plot) {
-            return `plot ${this.store.def.plot.indexOf(plot)}`;
+            return `plot ${this.store.def.plot.indexOf(plot)} ${plot.id} ${plot.type}`;
         },
 
         // a group per plot, kept from one draw to the next, the plot types

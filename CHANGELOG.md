@@ -1,10 +1,17 @@
 # Changelog
 
 The changes of the versions, the newest first, the ones on npm without
-0.7.0 and 2.0.0-alpha.1. The details are in the commits, the upgrade from 1.x
-in the [README](README.md#upgrading-from-1x).
+0.7.0 and 2.0.0-alpha.1. The details are in the commits, the upgrades from
+2.x and 1.x in the [README](README.md#upgrading-from-2x).
 
 ## 3.0.0 (unreleased)
+
+Definitions are more flexible: the entries of form elements patch all parts
+of a definition, the page sets globals, plots and the hover have filters,
+props are combined, scales have groups and include values, the hover and the
+highlight have more options, legends their place, texts a width, three new
+transforms, messages instead of the plots and linked charts. See the
+`data/fti/` charts of the FTI Monitor, they need no workarounds anymore.
 
 Changes which need changes of definitions:
 
