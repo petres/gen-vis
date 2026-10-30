@@ -13,6 +13,11 @@ Eurostat, © EuroGeographics for the administrative boundaries, see the
 - `europe.json`: the countries (2020, 1:20 million), clipped to Europe
   (25° W to 75° E, 30° N to 75° N, e.g. without overseas departments), object
   `countries`, the ids are ISO codes, but `UK`, the property `name`.
+- `austria-districts.json`: the political districts of Austria of Statistik
+  Austria ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), 1
+  January 2026), objects `districts` (ids of the districts, property `NAME`)
+  and `states`, simplified along their shared arcs, the one of the energy
+  dashboard of WIFO.
 - `world.json`: the countries (1:110 million), object `countries`, the ids
   are ISO codes of two letters (Kosovo, Northern Cyprus and Somaliland
   without one), French Guiana (`GF`) and Svalbard (`SJ`) are features of
