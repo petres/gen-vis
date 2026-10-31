@@ -185,8 +185,9 @@ of every region. The other options of the hover:
   center of the region (`marker`, the default), or at the pointer
   (`pointer`, it moves with it, by the keyboard it is at the marker).
 - `side`: `left`, `right`, `above` or `below` of the position, by default
-  the side with more space, and `offset`, `[x, y]` in pixels, e.g. `"side":
-  "above", "offset": [0, -10]` of a text above a region of a map.
+  the side with more space, or on it (`center`), e.g. in the center of a
+  polar plot, and `offset`, `[x, y]` in pixels, e.g. `"side": "above",
+  "offset": [0, -10]` of a text above a region of a map.
 - `area`: the hover of the plot area (`plot`, the default) or of the facet
   with its margins (`facet`), e.g. the labels of the rows of horizontal bars
   are part of the row, a click on them is a `select` of the row.

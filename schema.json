@@ -289,7 +289,7 @@
                         "marker": { "type": "boolean", "default": true, "description": "false: no line of the position of the hover." },
                         "empty": { "type": "boolean", "default": false, "description": "true: a hover also without rows, e.g. the name of a region without a value." },
                         "position": { "enum": ["marker", "pointer"], "default": "marker", "description": "The hover is beside the marker of the position (or the center of a region) or at the pointer." },
-                        "side": { "enum": ["left", "right", "above", "below"], "description": "The side of the hover, by default the one with more space." },
+                        "side": { "enum": ["left", "right", "above", "below", "center"], "description": "The side of the hover, by default the one with more space, center on the position, e.g. in the center of a polar plot." },
                         "offset": { "$ref": "#/definitions/pair", "description": "Moves the hover by [x, y] pixels." },
                         "area": { "enum": ["plot", "facet"], "default": "plot", "description": "The area of the hover, the plot area or the facet with its margins, e.g. the labels of the rows of horizontal bars." },
                         "title": { "type": "string", "description": "The title, {title} is the default one, e.g. the date, and the globals." },

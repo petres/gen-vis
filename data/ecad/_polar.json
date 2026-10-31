@@ -7,8 +7,9 @@
         "footer": "Source: <a href=\"https://www.ecad.eu/\">ECA&amp;D</a>, the original charts on <a href=\"https://ecad.abteil.org/\">ecad.abteil.org</a>",
         "hover": {
             "filter": { "year": "@year" },
-            "title": "<b>{title}</b>",
-            "row": "{date}<br><b>{t}</b>, avg. {mean}, diff. <b>{diff}</b>"
+            "side": "center",
+            "title": "<span style=\"font-weight: normal\">{date},</span><br>{title}",
+            "row": "<div style=\"display: grid; grid-template-columns: auto auto; column-gap: 14px; text-align: center; margin-top: 3px\"><span style=\"font-weight: normal; font-size: 11px\">{year}</span><span style=\"font-weight: normal; font-size: 11px\">avg.</span><span>{t}</span><span style=\"font-weight: normal\">{mean}</span></div><div style=\"text-align: center; margin-top: 4px\"><span style=\"font-weight: normal; font-size: 11px\">diff.</span><br>{diff}</div>"
         }
     },
     "globals": { "year": "2023", "smooth": "avg15", "type": "rel", "r": "diff", "c": "zero", "hi": "hiRel", "lo": "loRel" },
@@ -61,7 +62,7 @@
         "mean": { "column": "clim", "type": "numeric", "hover": { "format": "$.1f" } },
         "diff": { "column": "diff", "type": "numeric", "hover": { "format": "+$.1f" } },
         "year": { "column": "year", "type": "categorical", "props": { "fromData": true } },
-        "date": { "column": "date", "type": "date", "hover": { "format": "%A, %e %B %Y" } }
+        "date": { "column": "date", "type": "date", "hover": { "format": "%A" } }
     },
     "plot": [
         {

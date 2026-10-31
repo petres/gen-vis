@@ -1897,6 +1897,23 @@ describe('polar', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the hover beside the center or on it, side center', async () => {
+        const def = polarDef();
+        const shown = async def => {
+            const el = await mount(GenVis, { def, data: polarData });
+            el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+            await nextTick();
+            return el.querySelector('.vis-hover');
+        };
+        // 3 on the right, the hover left of the center
+        expect((await shown(def)).style.transform).toBe('translate(-100%, -50%)');
+        def.options.hover = { side: 'center' };
+        const hover = await shown(def);
+        expect([hover.style.left, hover.style.transform]).toEqual(['0px', 'translate(-50%, -50%)']);
+        expect(hover.parentElement.style.transform).toBe('translate(200px, 200px)');
+        expect(errors).toEqual([]);
+    });
+
     test('stacked arcs of a band scale', async () => {
         const def = polarDef();
         def.mapping.x = { column: 'month', type: 'categorical', scale: { type: 'band', orientation: 'angular' }, axis: { position: 'angular' } };

@@ -494,9 +494,9 @@ export interface Options {
          */
         position?: 'marker' | 'pointer';
         /**
-         * The side of the hover, by default the one with more space.
+         * The side of the hover, by default the one with more space, center on the position, e.g. in the center of a polar plot.
          */
-        side?: 'left' | 'right' | 'above' | 'below';
+        side?: 'left' | 'right' | 'above' | 'below' | 'center';
         offset?: Pair;
         /**
          * The area of the hover, the plot area or the facet with its margins, e.g. the labels of the rows of horizontal bars.

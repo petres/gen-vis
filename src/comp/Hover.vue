@@ -36,13 +36,15 @@ export default {
     }),
     computed: {
         left() { return { left: `${-this.space}px`, right: `${this.space}px` }[this.side] ?? '0px' },
-        // beside the marker or above or below it, e.g. of horizontal bars
+        // beside the marker, above or below it, e.g. of horizontal bars, or on it
         transform() {
             return {
                 left: 'translate(-100%, -50%)',
                 right: 'translate(0, -50%)',
                 above: `translate(-50%, calc(-100% - ${this.space}px))`,
                 below: `translate(-50%, ${this.space}px)`,
+                // on the position, e.g. in the center of a polar plot
+                center: 'translate(-50%, -50%)',
             }[this.side];
         },
         // the templates of the title and of a row, see README "hover"

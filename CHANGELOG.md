@@ -23,6 +23,11 @@ stroke props.
 `dodge` of `polar:text` moves the texts of the same angle apart along the
 radius (it was ignored), `validateDef` warns of `dodge` of the other types.
 
+`"side": "center"` of the hover of the options places it on its position,
+e.g. in the center of a polar plot, see `data/ecad/polar-rr.json` (the
+day, the year and the mean beside each other, the difference below them,
+as on ecad.abteil.org).
+
 Fixed: the values of DECIMAL columns of parquet (INT32, INT64 or
 FIXED_LEN_BYTE_ARRAY with a scale, e.g. doubles written as decimals, less
 than half the size) are the doubles of their decimals, the same as the ones

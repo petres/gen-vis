@@ -494,7 +494,7 @@ const validateDef = def => {
         warn('options.transition', `expected the milliseconds of the transition, e.g. 300, or true`);
     if (hover.mode !== undefined && !['position', 'point'].includes(hover.mode))
         warn('options.hover.mode', `unknown mode '${hover.mode}', expected one of 'position', 'point'`);
-    const choices = { position: ['marker', 'pointer'], side: ['left', 'right', 'above', 'below'], area: ['plot', 'facet'] };
+    const choices = { position: ['marker', 'pointer'], side: ['left', 'right', 'above', 'below', 'center'], area: ['plot', 'facet'] };
     Object.entries(choices).filter(([k]) => hover[k] !== undefined && !choices[k].includes(hover[k])).forEach(([k, values]) =>
         warn(`options.hover.${k}`, `unknown ${k} '${hover[k]}', expected one of ${list(values)}`));
     ['box', 'marker', 'empty'].filter(k => hover[k] !== undefined && typeof hover[k] != 'boolean').forEach(k =>
