@@ -321,6 +321,18 @@ describe('validateDef', () => {
         expect(validateDef(def).filter(w => w.includes('innerRadius'))).toEqual([]);
     });
 
+    test('curved labels of an angular axis', () => {
+        const def = base();
+        def.options = { coord: 'polar' };
+        def.mapping.x = { column: 'year', type: 'numeric', scale: { orientation: 'angular' }, axis: { position: 'angular', labels: { curved: 'between' } } };
+        def.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radial' }, axis: { position: 'radial', labels: { curved: true } } };
+        def.plot = { type: 'polar:line', categories: ['c'], props: { d: { angle: '@x:scaled', radius: '@y:scaled' } } };
+        expect(validateDef(def)).toEqual(["mapping.y.axis.labels.curved: the labels along the circle of an angular axis, true or 'between'"]);
+        def.mapping.y.axis.labels.curved = false;
+        def.mapping.x.axis.labels.curved = 'around';
+        expect(validateDef(def)).toEqual(["mapping.x.axis.labels.curved: the labels along the circle of an angular axis, true or 'between'"]);
+    });
+
     test('the data, the selection and the layer of a plot', () => {
         const def = base();
         def.globals = { target: 3 };

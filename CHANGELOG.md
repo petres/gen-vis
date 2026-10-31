@@ -28,6 +28,11 @@ e.g. in the center of a polar plot, see `data/ecad/polar-rr.json` (the
 day, the year and the mean beside each other, the difference below them,
 as on ecad.abteil.org).
 
+`"curved": true` of the `labels` of an angular axis writes them along the
+circle, `"between"` between the tick and the next one, e.g. the names of
+the months of `data/ecad/polar-rr.json`, the ones of the lower half are
+not upside down.
+
 Fixed: the values of DECIMAL columns of parquet (INT32, INT64 or
 FIXED_LEN_BYTE_ARRAY with a scale, e.g. doubles written as decimals, less
 than half the size) are the doubles of their decimals, the same as the ones

@@ -59,11 +59,39 @@ const angleTicks = (scale, values) => values.filter((v, i) =>
 const anchor = a => Math.sin(a) > 0.01 ? "start" : (Math.sin(a) < -0.01 ? "end" : "middle");
 const baseline = a => Math.cos(a) > 0.5 ? "auto" : (Math.cos(a) < -0.5 ? "hanging" : "middle");
 
+// a path around the circle of the radius `r` through the angle `a`, which
+// is in its middle, clockwise or counterclockwise, e.g. of a curved label
+const circlePath = (a, r, clockwise) => {
+    const half = (clockwise ? 1 : -1)*0.99*Math.PI;
+    const [p0, p1, p2] = [a - half, a, a + half].map(t => pointRadial(t, r));
+    const arc = `A${r},${r} 0 0,${clockwise ? 1 : 0}`;
+    return `M${p0}${arc} ${p1}${arc} ${p2}`;
+};
+
+// the label of a tick along the circle (`"curved": true` of the labels of
+// the axis) centered at the angle `a`, on a path of its own (`id`), outside
+// of the radius `r`, the ones of the lower half counterclockwise, so they
+// are not upside down
+const curvedLabel = (id, a, r, text, props) => {
+    const lower = Math.cos(a) < -1e-9;
+    return [
+        { [elementOf]: "path", [directOf]: { id, d: circlePath(a, r, !lower), fill: "none" } },
+        {
+            [elementOf]: "text",
+            [directOf]: { fill: "currentColor", "text-anchor": "middle", "dominant-baseline": lower ? "hanging" : "auto" },
+            ...props,
+            [childrenOf]: [{ [elementOf]: "textPath", [directOf]: { href: `#${id}`, startOffset: "50%" }, text }],
+        },
+    ];
+};
+
 // the categories or ticks around the circle, spokes as grid lines, the
 // parts of the axes (see `axes` of coords/index.js), drawn anew, `label(v)`
 // is the text and the props of the label of a tick, `domain` the props of
 // the circle, the tick marks (`axis.tickMarks`, see tickMarks) are 6 pixels
-// outside of the circle by default, the labels after them
+// outside of the circle by default, the labels after them, along the circle
+// with `labels.curved`, at the tick (true) or between it and the next one
+// (`between`), e.g. the names of the months
 const angularAxis = (ctx, n, s, values, label, domain, axis) => {
     const marks = tickMarks(ctx, axis);
     const size = marks?.size ?? 6;
@@ -87,18 +115,23 @@ const angularAxis = (ctx, n, s, values, label, domain, axis) => {
         });
 
     const circle = { [elementOf]: "circle", [directOf]: { class: "domain", r: r1, fill: "none", stroke: "currentColor" }, ...domain };
-    const ticks = angles.map(v => {
+    const curved = axis.labels?.curved;
+    const ticks = angles.map((v, i) => {
         const a = angleOf(s, v);
         const { text, props } = label(v);
         const [x1, y1] = pointRadial(a, r1);
         const [x2, y2] = pointRadial(a, r1 + size);
         const [x, y] = pointRadial(a, r1 + size + axis.padding);
+        // the middle of the angle to the next tick, after the last one the first one
+        const step = ((angleOf(s, angles[(i + 1)%angles.length]) - a)%(2*Math.PI) + 2*Math.PI)%(2*Math.PI) || 2*Math.PI;
         return {
             [elementOf]: "g",
             [directOf]: { class: "tick" },
             [childrenOf]: [
                 ...(marks === false ? [] : [{ [elementOf]: "line", [directOf]: { stroke: "currentColor", x1, y1, x2, y2 }, ...marks.props }]),
-                { [elementOf]: "text", [directOf]: { fill: "currentColor", x, y, "text-anchor": anchor(a), "dominant-baseline": baseline(a) }, ...props, text },
+                ...(curved
+                    ? curvedLabel(`${ctx.uid}-${n}-${i}`, curved == 'between' ? a + step/2 : a, r1 + size + axis.padding, text, props)
+                    : [{ [elementOf]: "text", [directOf]: { fill: "currentColor", x, y, "text-anchor": anchor(a), "dominant-baseline": baseline(a) }, ...props, text }]),
             ],
         };
     });

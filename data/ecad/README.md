@@ -27,6 +27,6 @@ the columns of the api: `date`, `value`, `avg7`, `avg15`, `avg31`,
 
 Other than on the page the year is chosen by a form element (on the page by
 the yearly chart, a page links the charts by the events `select` and `hover`
-and the props `globals` and `highlight`), the names of the months are not
-written along the circle and the values of the radius are only on the
-upper half.
+and the props `globals` and `highlight`), the names of the months of the
+lower half are not upside down and the values of the radius are only on
+the upper half.

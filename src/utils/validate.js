@@ -278,6 +278,8 @@ const validateDef = def => {
             if (labels !== undefined && !isObject(labels))
                 warn(`${path}.axis.labels`, `expected the props of the labels, e.g. { "props": { "font-weight": "bold" } }`);
             else if (labels) {
+                if (labels.curved !== undefined && (![true, false, 'between'].includes(labels.curved) || (labels.curved && m.axis.position != 'angular')))
+                    warn(`${path}.axis.labels.curved`, `the labels along the circle of an angular axis, true or 'between'`);
                 const categories = [labels.categories ?? []].flat();
                 categories.filter(c => !Object.hasOwn(mapping, c)).forEach(c => warn(`${path}.axis.labels.categories`, `unknown mapping '${c}'`));
                 checkProp(labels.props, `${path}.axis.labels.props`, warn, new Set([...facetNames, ...Object.keys(mapping),

@@ -824,6 +824,10 @@ export interface Axis {
     labels?: {
         categories?: string | string[];
         props?: Props;
+        /**
+         * Angular axes: the labels along the circle, centered at the tick (true) or between it and the next one (between), e.g. the names of the months, the ones of the lower half are not upside down.
+         */
+        curved?: boolean | 'between';
     };
     /**
      * The tick marks: false leaves them out (the labels stay at their places), their length (size, 9 pixels across the line of cartesian axes, 6 outside of the circle of angular ones by default, the labels move with it) and their props (svg attributes of the names of the facet), e.g. { "props": { "stroke": "var(--gen-vis-grid-color)" } }, radial axes have none.

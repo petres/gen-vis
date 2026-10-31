@@ -1075,6 +1075,11 @@ The years of daily data, the dates aligned to 2020, a line per year.
       "domain": { "props": { "stroke-opacity": 0.4 } }
   } }
   ```
+- `"curved": true` of the `labels` of an angular axis writes them along
+  the circle, centered at the tick, `"between"` between the tick and the
+  next one, e.g. the names of the months, the ones of the lower half are
+  not upside down: `"labels": { "curved": "between" }`, see
+  `data/ecad/polar-rr.json`.
 - The titles of the facets are centered above the circles.
 - The plot types: `polar:line` (a line per group, `d` with `angle` and
   `radius`), `polar:area` (an area per group, `d` with `angle`,

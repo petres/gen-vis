@@ -46,7 +46,7 @@
             "column": "day", "type": "date",
             "scale": { "type": "utc", "orientation": "angular", "domain": ["2020-01-01", "2021-01-01"] },
             "axis": { "position": "angular", "ticks": 12, "format": "%B", "grid": true, "padding": 6,
-                "labels": { "props": { "font-weight": "bold", "font-size": 12 } } },
+                "labels": { "curved": "between", "props": { "font-weight": "bold", "font-size": 12 } } },
             "hover": { "format": "%e %B" }
         },
         "y": {

@@ -1867,6 +1867,39 @@ describe('polar', () => {
         expect(el.querySelector('svg.vis-svg > g').lastElementChild.previousElementSibling.getAttribute('class')).toMatch(/vis-axis-radial/);
     });
 
+    test('labels along the circle, at the ticks or between them, the lower ones not upside down', async () => {
+        const def = polarDef();
+        def.mapping.x.axis.labels = { curved: true, props: { 'font-weight': 'bold' } };
+        let el = await mount(GenVis, { def, data: polarData });
+        const ticks = () => [...el.querySelectorAll('g.vis-axis-angular g.tick')];
+        // 0 at the top, 3 on the right, 6 at the bottom, 9 on the left
+        expect(ticks().map(t => t.querySelector('textPath').textContent)).toEqual(['0', '3', '6', '9']);
+        const paths = ticks().map(t => t.querySelector('path'));
+        const ids = paths.map(p => p.id);
+        expect(new Set(ids).size).toBe(4);
+        expect(ids[0]).toMatch(/^gen-vis-facet-\d+-x-0$/);
+        ticks().forEach((t, i) => expect(t.querySelector('textPath').getAttribute('href')).toBe(`#${ids[i]}`));
+        expect(ticks()[0].querySelector('text').getAttribute('font-weight')).toBe('bold');
+        // the path through the tick, outside of the circle (150 + 6 + the padding)
+        const middle = d => d.match(/A[^A]* (-?[\d.e-]+),(-?[\d.e-]+)A/).slice(1).map(Number);
+        expect(middle(paths[0].getAttribute('d'))[0]).toBeCloseTo(0);
+        expect(middle(paths[0].getAttribute('d'))[1]).toBeLessThan(-150);
+        expect(middle(paths[1].getAttribute('d'))[0]).toBeGreaterThan(150);
+        // clockwise at the top, counterclockwise at the bottom, the text below the path
+        expect(paths[0].getAttribute('d')).toMatch(/0 0,1 /);
+        expect(paths[2].getAttribute('d')).toMatch(/0 0,0 /);
+        expect(ticks().map(t => t.querySelector('text').getAttribute('dominant-baseline'))).toEqual(['auto', 'auto', 'hanging', 'auto']);
+
+        // between the tick and the next one: 0 at 1.5 of 12 (upper right), 9 at 10.5 (upper left)
+        def.mapping.x.axis.labels = { curved: 'between' };
+        el = await mount(GenVis, { def, data: polarData });
+        const [x0, y0] = middle(ticks()[0].querySelector('path').getAttribute('d'));
+        const [x9, y9] = middle(ticks()[3].querySelector('path').getAttribute('d'));
+        expect(Math.atan2(x0, -y0)).toBeCloseTo(Math.PI/4);
+        expect(Math.atan2(x9, -y9)).toBeCloseTo(-Math.PI/4);
+        expect(errors).toEqual([]);
+    });
+
     test('polygons as grid lines', async () => {
         const def = polarDef();
         def.mapping.y.axis.gridShape = 'polygon';

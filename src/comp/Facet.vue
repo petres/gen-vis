@@ -146,6 +146,8 @@ export default {
             const { key, rows, scales, axis, stackOf, isStacked, stackOrder, scope, dims, innerWidth, innerHeight, margins } = this.facet;
             this.ctx = {
                 store: this.store,
+                // the id of the facet on the page, e.g. of the ids of elements
+                uid: this.uid,
                 inner: d3.select(inner),
                 key,
                 rows,
