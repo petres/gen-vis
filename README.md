@@ -348,6 +348,7 @@ page (the default in brackets):
     --gen-vis-grid-color: #444;                /* #CCC, the grid lines */
     --gen-vis-hover-background: #222D;         /* #FFFFFFCC */
     --gen-vis-halo-color: #111;                /* white, behind labels on the plots */
+    --gen-vis-text-color: #EEE;                /* black, the texts of plots without a fill */
     --gen-vis-background: #111;                /* #FFF, of the PNG */
     color: #EEE;                               /* the texts, axes and ticks */
 }
@@ -923,6 +924,12 @@ A plot or a list of plots, drawn in order:
   after `"9"`), e.g. labels at the ends of lines.
 - `dodge` (`svg:text`): the texts are moved apart vertically to at least
   this distance in pixels, e.g. labels at the ends of lines.
+- `halo` (`svg:text`, `polar:text`): a halo behind the texts in the color
+  of `--gen-vis-halo-color`, `true` (3 pixels) or its width in pixels, e.g.
+  labels on areas, the props of the plot replace its `stroke`,
+  `stroke-width`, `paint-order` and `stroke-linejoin`. Texts without a
+  `fill` are in the color of `--gen-vis-text-color` (black by default), see
+  [styles](#styles).
 
 The texts of `svg:text` and of the labels of axes with a `max-width` prop
 (pixels) are cut with an ellipsis, the full text is their title (the
@@ -1049,7 +1056,7 @@ The years of daily data, the dates aligned to 2020, a line per year.
   `startAngle` to `endAngle` instead of `angle` and `width`, e.g. the slices
   of a pie), and
   `polar:circle` and `polar:text` (an element per row at `angle` and
-  `radius`). The angles of a band scale are in the center of the band. The
+  `radius`, texts with a `halo`, see [plot](#plot)). The angles of a band scale are in the center of the band. The
   `svg:` types draw with the center as origin, the `cartesian:` types are
   cartesian only.
 - Stacked values (`stacked` of the radius) are stacked from the center, e.g.

@@ -675,6 +675,7 @@
                 "object": { "type": "string", "description": "geo:mesh: the object of the TopoJSON of the borders, the one of the geometry by default, e.g. the states above the districts." },
                 "borders": { "enum": ["all", "inner", "outer"], "default": "all", "description": "geo:mesh: all borders, the ones between two features (inner) or the outline (outer)." },
                 "dodge": { "type": "number", "description": "svg:text: the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines." },
+                "halo": { "anyOf": [{ "type": "boolean" }, { "type": "number" }], "description": "svg:text, polar:text: a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the props of the plot replace its stroke props." },
                 "layer": { "enum": ["below", "above"], "description": "below: below the axes and grid lines, above: above the other plots, between them by default." },
                 "facet": { "description": "The facets of the plot, a key or a list of them, all by default." },
                 "highlight": {

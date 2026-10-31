@@ -845,6 +845,23 @@ describe('the selection of the rows of a plot', () => {
         expect(Math.abs(ys[0] - ys[1])).toBeCloseTo(20);
     });
 
+    test('a halo behind the texts, the props of the plot replace its props', async () => {
+        const def = labelDef('last');
+        def.plot[1].halo = true;
+        let text = (await mount(GenVis, { def, data: lineData })).querySelector('g.vis-plot.plot-1 text');
+        expect(text.style.getPropertyValue('stroke')).toBe('var(--gen-vis-halo-color, white)');
+        expect([text.getAttribute('stroke-width'), text.getAttribute('paint-order'), text.getAttribute('stroke-linejoin')]).toEqual(['3', 'stroke', 'round']);
+        def.plot[1].halo = 2;
+        def.plot[1].props.stroke = '#EEE';
+        text = (await mount(GenVis, { def, data: lineData })).querySelector('g.vis-plot.plot-1 text');
+        expect([text.getAttribute('stroke'), text.getAttribute('stroke-width')]).toEqual(['#EEE', '2']);
+        expect(text.style.getPropertyValue('stroke')).toBe('');
+        // without one none
+        delete def.plot[1].halo;
+        text = (await mount(GenVis, { def, data: lineData })).querySelector('g.vis-plot.plot-1 text');
+        expect(text.hasAttribute('stroke-width')).toBe(false);
+    });
+
     test('the row with the most or the least value, of the rows with values', async () => {
         expect(await labels({ max: 'y' })).toEqual([['Wien', 2023], ['Tirol', 2020]]);
         expect(await labels({ min: 'y' })).toEqual([['Wien', 2020], ['Tirol', 2020]]);
@@ -1805,6 +1822,16 @@ describe('polar', () => {
         expect(circles).toHaveLength(12);
         expect(num(circles[3], 'cx')).toBeCloseTo(25);
         expect(num(circles[3], 'cy')).toBeCloseTo(0);
+        expect(errors).toEqual([]);
+    });
+
+    test('texts at the angle and the radius, with a halo', async () => {
+        const def = polarDef();
+        def.plot[1] = { type: 'polar:text', categories: ['c'], halo: true, filter: { x: 3 }, props: { text: '@name', angle: '@x:scaled', radius: '@y:scaled' } };
+        const el = await mount(GenVis, { def, data: polarData });
+        const texts = [...el.querySelectorAll('g.vis-plot.plot-1 text')];
+        expect(texts.map(t => [t.textContent, Math.round(num(t, 'x')), Math.round(num(t, 'y'))])).toEqual([['Wien', 50], ['Tirol', 25]].map(([n, x]) => [n, x, 0]));
+        expect(texts[0].getAttribute('stroke-width')).toBe('3');
         expect(errors).toEqual([]);
     });
 

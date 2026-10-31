@@ -944,6 +944,10 @@ export interface Plot {
      */
     dodge?: number;
     /**
+     * svg:text, polar:text: a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the props of the plot replace its stroke props.
+     */
+    halo?: boolean | number;
+    /**
      * below: below the axes and grid lines, above: above the other plots, between them by default.
      */
     layer?: 'below' | 'above';

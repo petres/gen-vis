@@ -610,6 +610,8 @@ export default {
                 stroke: var(--gen-vis-grid-color, #CCC);
                 stroke-width: 0.75px;
             }
+            // the texts of the plots without a fill of their props, black by default as in svg
+            .vis-plot:not(.vis-annotations) text:not([fill]) { fill: var(--gen-vis-text-color, black); }
             // the colors of the annotations without the ones of their props
             .vis-annotation.vis-band:not([fill]) { fill: var(--gen-vis-band-color, #EEE); }
             .vis-annotation.vis-line:not([stroke]) { stroke: var(--gen-vis-line-color, #999); }

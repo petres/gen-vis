@@ -9,6 +9,12 @@ Legends of categories with `"onlyData": true` only have the categories of
 the rows after the `filter`, e.g. not the sources of a parent which a year
 has no rows of, the entries follow the form elements.
 
+Texts of plots without a `fill` are in the color of the css variable
+`--gen-vis-text-color` (black by default, as before), e.g. of a dark page.
+`halo` of `svg:text` and `polar:text` draws a halo behind the texts in the
+color of `--gen-vis-halo-color`, `true` or its width, instead of the four
+stroke props.
+
 ## 3.0.0
 
 Definitions are more flexible: the entries of form elements patch all parts

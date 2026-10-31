@@ -1,4 +1,4 @@
-export { perRow, perGroup, finite, curve, points, propScale, dodge };
+export { perRow, perGroup, finite, curve, points, propScale, dodge, halo };
 
 import * as d3 from "@/utils/d3";
 import { refOf } from "@/utils/props";
@@ -72,6 +72,16 @@ const dodge = (ys, gap) => {
     return moved;
 };
 
+// the props of the halo of texts (`halo` of the plot, true or its width in
+// pixels), in the color of `--gen-vis-halo-color`, the props of the plot
+// replace them, e.g. a `stroke`
+const halo = plot => !plot.halo ? {} : {
+    "paint-order": "stroke",
+    stroke: "var(--gen-vis-halo-color, white)",
+    "stroke-width": plot.halo === true ? 3 : plot.halo,
+    "stroke-linejoin": "round",
+};
+
 const element = type => ({ update: true, marks: groups => perRow(groups, type) });
 
 // the svg elements, an element per row in any coordinate system, the props are
@@ -81,18 +91,19 @@ export default {
     'svg:line': element("line"),
     'svg:rect': element("rect"),
     // `dodge` of the plot moves the texts apart vertically, to at least this
-    // distance, e.g. labels at the ends of lines
+    // distance, e.g. labels at the ends of lines, `halo` draws a halo
     // `max-width` of the props cuts or wraps the texts, see fitText
     'svg:text': {
         update: true,
         marks(groups, plot) {
+            const props = halo(plot);
             if (!plot.dodge)
-                return { ...perRow(groups, "text"), fit: true };
+                return { ...perRow(groups, "text", v => ({ ...props, ...v })), fit: true };
             // the positions of the texts of all groups, moved apart
             const rows = groups.flatMap(g => g.rows.filter(g.complete).map(row => [row, parseFloat(g.at(row).y)]));
             const moved = dodge(rows.map(([, y]) => y), plot.dodge);
             const ys = new Map(rows.map(([row], i) => [row, moved[i]]));
-            return { ...perRow(groups, "text", (v, row) => ({ ...v, y: ys.get(row) })), fit: true };
+            return { ...perRow(groups, "text", (v, row) => ({ ...props, ...v, y: ys.get(row) })), fit: true };
         },
     },
 };

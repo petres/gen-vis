@@ -1,7 +1,7 @@
 // the plot types of polar plots, loaded with the first one, see coords/polar.js
 import { arc, areaRadial, lineRadial, pointRadial } from 'd3-shape';
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, points, propScale } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, points, propScale, halo } from "@/plots/elements";
 import { barScale, barWidth } from "@/plots/cartesian";
 import { radiusRange } from "@/coords/polar-plot";
 
@@ -11,17 +11,22 @@ const angleOffset = (plot, ctx, path) => {
     return scale ? bandCenter(scale) : 0;
 };
 
-// an element of `type` per row at the `angle` and `radius` of the props, as `x` and `y`
-const positioned = (name, type, x, y) => ({
+// an element of `type` per row at the `angle` and `radius` of the props, as
+// `x` and `y`, with the props `defaults(plot)` below them, e.g. a halo
+const positioned = (name, type, x, y, defaults = () => ({})) => ({
     coords: ['polar'],
     update: true,
-    marks: (groups, plot, ctx) => perRow(groups, type, v => {
-        if (!('angle' in v && 'radius' in v))
-            throw new Error(`${name}: the props 'angle' and 'radius' are needed`);
-        const [px, py] = pointRadial(v.angle + angleOffset(plot, ctx, 'angle'), v.radius);
-        const { angle, radius, ...props } = v;
-        return { ...props, [x]: px, [y]: py };
-    }),
+    marks(groups, plot, ctx) {
+        const offset = angleOffset(plot, ctx, 'angle');
+        const below = defaults(plot);
+        return perRow(groups, type, v => {
+            if (!('angle' in v && 'radius' in v))
+                throw new Error(`${name}: the props 'angle' and 'radius' are needed`);
+            const [px, py] = pointRadial(v.angle + offset, v.radius);
+            const { angle, radius, ...props } = v;
+            return { ...below, ...props, [x]: px, [y]: py };
+        });
+    },
 });
 
 const arcProps = ['angle', 'width', 'startAngle', 'endAngle', 'innerRadius', 'outerRadius', 'padAngle', 'cornerRadius'];
@@ -97,5 +102,6 @@ export default {
     },
 
     'polar:circle': positioned('polar:circle', 'circle', 'cx', 'cy'),
-    'polar:text': positioned('polar:text', 'text', 'x', 'y'),
+    // `halo` of the plot draws a halo behind the texts
+    'polar:text': positioned('polar:text', 'text', 'x', 'y', halo),
 };
