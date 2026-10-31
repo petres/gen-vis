@@ -18,6 +18,14 @@ stroke props.
 `dodge` of `polar:text` moves the texts of the same angle apart along the
 radius (it was ignored), `validateDef` warns of `dodge` of the other types.
 
+Fixed: the values of DECIMAL columns of parquet (INT32, INT64 or
+FIXED_LEN_BYTE_ARRAY with a scale, e.g. doubles written as decimals, less
+than half the size) are the doubles of their decimals, the same as the ones
+of a csv, e.g. `22.1637`, they were the products of the reader, e.g.
+`22.163700000000002` in the csv of the button and the hover without a
+format; the ones of only the logical type DECIMAL are scaled (they were the
+integers).
+
 ## 3.0.0
 
 Definitions are more flexible: the entries of form elements patch all parts

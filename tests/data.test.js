@@ -80,6 +80,37 @@ describe('parseData', () => {
         expect(await parseData(buffer)).toEqual([{ ts: '2024-06-01T13:00:00.000' }, { ts: null }]);
     });
 
+    test('parquet, decimals are the doubles of their text, as the ones of csv, also of 64 bits and of bytes', async () => {
+        const decimal = (name, type, precision, scale, more = {}) => ({ name, type, converted_type: 'DECIMAL', precision, scale,
+            logical_type: { type: 'DECIMAL', precision, scale }, repetition_type: 'OPTIONAL', ...more });
+        // the writer scales the values itself
+        const buffer = parquetWriteBuffer({
+            columnData: [
+                { name: 'a', data: [164.732, 22.164, null, -0.003] },
+                { name: 'b', data: [22.1637, 123456789.1234, null, -1.0001] },
+                { name: 'c', data: [22.1637, 0.3, null, 1] },
+                // only the logical type, the reader does not scale it
+                { name: 'd', data: [221637, 3, null, -1] },
+            ],
+            schema: [
+                { name: 'root', num_children: 4 },
+                decimal('a', 'INT32', 9, 3),
+                decimal('b', 'INT64', 18, 4),
+                decimal('c', 'FIXED_LEN_BYTE_ARRAY', 18, 4, { type_length: 8 }),
+                { name: 'd', type: 'INT32', logical_type: { type: 'DECIMAL', precision: 9, scale: 4 }, repetition_type: 'OPTIONAL' },
+            ],
+        });
+        const rows = await parseData(buffer);
+        const expected = [
+            { a: 164.732, b: 22.1637, c: 22.1637, d: 22.1637 },
+            { a: 22.164, b: 123456789.1234, c: 0.3, d: 0.0003 },
+            { a: null, b: null, c: null, d: null },
+            { a: -0.003, b: -1.0001, c: 1, d: -0.0001 },
+        ];
+        // the same numbers as the ones of the texts, not only close ones
+        rows.forEach((row, i) => Object.keys(expected[i]).forEach(k => expect(Object.is(row[k], expected[i][k])).toBe(true)));
+    });
+
     test('parquet with other compressions than snappy, e.g. zstd of polars', async () => {
         // the writer only has snappy
         const compressors = {

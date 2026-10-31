@@ -469,7 +469,9 @@ large for them, e.g. ids, then they are strings, timestamps are the ones of
 the other formats, dates (without a time) and timestamps without a time zone
 (e.g. of pandas, polars and duckdb) are strings as the ones of csv, e.g.
 `2024-06-01` and `2024-06-01T13:00:00.000`, see `type` of
-[mapping](#mapping). Snappy, the default of arrow (R, Python), pandas and
+[mapping](#mapping), decimals (`DECIMAL`, e.g. doubles written as integers
+with a scale, less than half the size) are the numbers of their text, the
+same as the ones of csv, e.g. `22.1637`. Snappy, the default of arrow (R, Python), pandas and
 duckdb, is read directly, other compressions, e.g. zstd of polars, load the
 decompressors of `hyparquet-compressors` (~75 kB gzipped), the standalone
 script reads only snappy and uncompressed parquet.

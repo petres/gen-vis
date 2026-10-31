@@ -22,7 +22,9 @@ const loadCompressors = async codecs => {
 // time) and timestamps without a time zone are strings as the ones of csv,
 // e.g. "2024-06-01" or "2024-06-01T13:00:00.000", so they are the same day
 // and time in every time zone, see toDate of utils/data.js
-const normalize = (v, kind) => {
+const normalize = (v, kind, decimal) => {
+    if (decimal && v !== null && v !== undefined)
+        return exact(v, decimal);
     if (typeof v == 'bigint')
         return Number.isSafeInteger(Number(v)) ? Number(v) : String(v);
     if (v instanceof Date)
@@ -34,6 +36,25 @@ const normalize = (v, kind) => {
 // (e.g. of pandas, polars and duckdb), the reader reads them as UTC
 const kindOf = e => e.converted_type == 'DATE' || e.logical_type?.type == 'DATE' ? 'date'
     : (e.logical_type?.type == 'TIMESTAMP' && e.logical_type.isAdjustedToUTC === false ? 'local' : null);
+
+// the columns of decimals (INT32, INT64 or FIXED_LEN_BYTE_ARRAY with a scale,
+// e.g. doubles written as DECIMAL(9, 4), less than half the size), their
+// scale and whether the reader scaled them: it reads the ones of the
+// converted type DECIMAL as Number(unscaled) * 10 ** -scale, e.g.
+// 22.163700000000002, the ones of only the logical type not at all
+const decimalOf = e => e.converted_type == 'DECIMAL' ? { scale: e.scale || 0, scaled: true }
+    : (e.logical_type?.type == 'DECIMAL' ? { scale: e.logical_type.scale || 0, scaled: false } : null);
+
+// the double nearest to a decimal, the one of the same text in a csv, e.g.
+// 22.1637: the unscaled integer divided by an exact power of ten, a scaled
+// value stays if its unscaled one is no safe integer, e.g. of DECIMAL(18, x)
+const exact = (v, { scale, scaled }) => {
+    const f = 10 ** scale;
+    if (!scaled)
+        return typeof v == 'number' || typeof v == 'bigint' ? Number(v)/f : v;
+    const unscaled = typeof v == 'number' ? Math.round(v*f) : NaN;
+    return Number.isSafeInteger(unscaled) ? unscaled/f : v;
+};
 
 // the rows of a parquet file, an ArrayBuffer or a view of one, only the
 // `columns` of the file which are given, e.g. the ones a definition uses, all
@@ -50,6 +71,7 @@ const parseParquet = async (data, columns = null) => {
         .map(c => c.meta_data?.codec)))];
     const rows = await parquetReadObjects({ file, metadata, columns: [...used], compressors: await loadCompressors(codecs) });
     const kinds = new Map(metadata.schema.map(e => [e.name, kindOf(e)]));
-    rows.forEach(row => Object.keys(row).forEach(k => row[k] = normalize(row[k], kinds.get(k))));
+    const decimals = new Map(metadata.schema.map(e => [e.name, decimalOf(e)]));
+    rows.forEach(row => Object.keys(row).forEach(k => row[k] = normalize(row[k], kinds.get(k), decimals.get(k))));
     return rows;
 };
