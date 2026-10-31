@@ -922,8 +922,10 @@ A plot or a list of plots, drawn in order:
   the least or the most value of a mapping, `{ "min": "y" }` or
   `{ "max": "x" }` (categories which are numbers by their value, e.g. `"10"`
   after `"9"`), e.g. labels at the ends of lines.
-- `dodge` (`svg:text`): the texts are moved apart vertically to at least
-  this distance in pixels, e.g. labels at the ends of lines.
+- `dodge` (`svg:text`, `polar:text`): the texts are moved apart vertically
+  to at least this distance in pixels, e.g. labels at the ends of lines, the
+  ones of `polar:text` of the same angle along the radius, e.g. labels of
+  the same hour, labels of other angles are not moved.
 - `halo` (`svg:text`, `polar:text`): a halo behind the texts in the color
   of `--gen-vis-halo-color`, `true` (3 pixels) or its width in pixels, e.g.
   labels on areas, the props of the plot replace its `stroke`,
@@ -1056,7 +1058,7 @@ The years of daily data, the dates aligned to 2020, a line per year.
   `startAngle` to `endAngle` instead of `angle` and `width`, e.g. the slices
   of a pie), and
   `polar:circle` and `polar:text` (an element per row at `angle` and
-  `radius`, texts with a `halo`, see [plot](#plot)). The angles of a band scale are in the center of the band. The
+  `radius`, texts with a `halo` and `dodge`, see [plot](#plot)). The angles of a band scale are in the center of the band. The
   `svg:` types draw with the center as origin, the `cartesian:` types are
   cartesian only.
 - Stacked values (`stacked` of the radius) are stacked from the center, e.g.

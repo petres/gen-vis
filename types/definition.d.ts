@@ -940,7 +940,7 @@ export interface Plot {
      */
     borders?: 'all' | 'inner' | 'outer';
     /**
-     * svg:text: the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines.
+     * svg:text: the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines; polar:text: the texts of the same angle along the radius.
      */
     dodge?: number;
     /**

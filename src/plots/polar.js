@@ -1,7 +1,8 @@
 // the plot types of polar plots, loaded with the first one, see coords/polar.js
 import { arc, areaRadial, lineRadial, pointRadial } from 'd3-shape';
+import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, points, propScale, halo } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, points, propScale, dodge, halo } from "@/plots/elements";
 import { barScale, barWidth } from "@/plots/cartesian";
 import { radiusRange } from "@/coords/polar-plot";
 
@@ -11,18 +12,33 @@ const angleOffset = (plot, ctx, path) => {
     return scale ? bandCenter(scale) : 0;
 };
 
+// the radii of the rows of the groups, the ones of the same angle moved apart
+// to at least the distance `gap`, see dodge
+const dodgedRadii = (groups, gap) => {
+    const rows = groups.flatMap(g => g.rows.filter(g.complete).map(row => [row, g.at(row)]));
+    const radii = new Map();
+    d3.group(rows, ([, v]) => v.angle).forEach(same => {
+        const moved = dodge(same.map(([, v]) => parseFloat(v.radius)), gap);
+        same.forEach(([row], i) => radii.set(row, moved[i]));
+    });
+    return radii;
+};
+
 // an element of `type` per row at the `angle` and `radius` of the props, as
-// `x` and `y`, with the props `defaults(plot)` below them, e.g. a halo
-const positioned = (name, type, x, y, defaults = () => ({})) => ({
+// `x` and `y`, texts with a `halo` and the ones of the same angle moved apart
+// along the radius (`dodge`)
+const positioned = (name, type, x, y) => ({
     coords: ['polar'],
     update: true,
     marks(groups, plot, ctx) {
         const offset = angleOffset(plot, ctx, 'angle');
-        const below = defaults(plot);
-        return perRow(groups, type, v => {
+        const text = type == 'text';
+        const below = text ? halo(plot) : {};
+        const radii = text && plot.dodge ? dodgedRadii(groups, plot.dodge) : null;
+        return perRow(groups, type, (v, row) => {
             if (!('angle' in v && 'radius' in v))
                 throw new Error(`${name}: the props 'angle' and 'radius' are needed`);
-            const [px, py] = pointRadial(v.angle + offset, v.radius);
+            const [px, py] = pointRadial(v.angle + offset, radii ? radii.get(row) : v.radius);
             const { angle, radius, ...props } = v;
             return { ...below, ...props, [x]: px, [y]: py };
         });
@@ -102,6 +118,7 @@ export default {
     },
 
     'polar:circle': positioned('polar:circle', 'circle', 'cx', 'cy'),
-    // `halo` of the plot draws a halo behind the texts
-    'polar:text': positioned('polar:text', 'text', 'x', 'y', halo),
+    // `halo` of the plot draws a halo behind the texts, `dodge` moves the
+    // texts of the same angle apart along the radius, to at least this distance
+    'polar:text': positioned('polar:text', 'text', 'x', 'y'),
 };

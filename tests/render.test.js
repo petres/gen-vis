@@ -1835,6 +1835,21 @@ describe('polar', () => {
         expect(errors).toEqual([]);
     });
 
+    test('texts of the same angle moved apart along the radius', async () => {
+        const def = polarDef();
+        def.plot[1] = { type: 'polar:text', categories: ['c'], dodge: 20, filter: { x: [2, 3] }, props: { text: '@name', angle: '@x:scaled', radius: '@y:scaled' } };
+        // month 2: Wien 3, Tirol 2 (radii 37.5 and 25), month 3: Wien 4 (50), Tirol 2 (25)
+        const el = await mount(GenVis, { def, data: polarData });
+        const at = month => [...el.querySelectorAll('g.vis-plot.plot-1 text')].filter(t => t.__data__[Object.getOwnPropertySymbols(t.__data__)[0]].x == month)
+            .map(t => Math.hypot(num(t, 'x'), num(t, 'y')));
+        expect(at(2).map(Math.round)).toEqual([41, 21]);
+        expect(at(3).map(Math.round)).toEqual([50, 25]);
+        // on the right, month 3 at its angle
+        const right = [...el.querySelectorAll('g.vis-plot.plot-1 text')].filter(t => Math.abs(num(t, 'y')) < 1e-6);
+        expect(right).toHaveLength(2);
+        expect(errors).toEqual([]);
+    });
+
     test('the axes, the end of the cycle is not a tick of its own', async () => {
         const el = await mount(GenVis, { def: polarDef(), data: polarData });
         const angular = [...el.querySelectorAll('g.vis-axis-angular g.tick text')];

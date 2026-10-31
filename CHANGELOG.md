@@ -15,6 +15,9 @@ Texts of plots without a `fill` are in the color of the css variable
 color of `--gen-vis-halo-color`, `true` or its width, instead of the four
 stroke props.
 
+`dodge` of `polar:text` moves the texts of the same angle apart along the
+radius (it was ignored), `validateDef` warns of `dodge` of the other types.
+
 ## 3.0.0
 
 Definitions are more flexible: the entries of form elements patch all parts
