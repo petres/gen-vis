@@ -603,6 +603,10 @@ export interface MappingEntry {
                */
               orientation?: ('horizontal' | 'vertical') | Prop;
               /**
+               * Only the entries of the categories of the rows after the filter, e.g. of the selected year, also the hidden ones.
+               */
+              onlyData?: boolean;
+              /**
                * The length of the scale of the colors in pixels.
                */
               size?: number;

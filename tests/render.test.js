@@ -2222,6 +2222,37 @@ describe('fixed bugs', () => {
         expect(errors).toEqual([]);
     });
 
+    test('a legend with onlyData has the categories of the filtered rows, also of a form element', async () => {
+        const def = lineDef();
+        def.globals = { from: 2020 };
+        def.filter = { x: { range: ['@from', null] } };
+        def.mapping.c.legend = { onlyData: true };
+        def.mapping.c.props.categories.Salzburg = { color: 'green' };
+        def.formElements = [{ id: 'from', name: 'Ab', ref: 'from', type: 'radio', values: [
+            { id: 'a', name: '2020', value: 2020 }, { id: 'b', name: '2023', value: 2023 },
+        ] }];
+        const data = lineData + '\n2021,5,50,Salzburg';
+        const el = await mount(GenVis, { def, data });
+        const keys = () => [...el.querySelectorAll('.vis-legend-entry')].map(e => e.dataset.key);
+        expect(keys()).toEqual(['Wien', 'Tirol', 'Salzburg']);
+        // a hidden category stays, it has rows
+        el.querySelector('.vis-legend-entry[data-key="Tirol"]').click();
+        await nextTick();
+        expect(keys()).toEqual(['Wien', 'Tirol', 'Salzburg']);
+        el.querySelector('.vis-form-element input[value="b"]').click();
+        await nextTick();
+        expect(keys()).toEqual(['Wien', 'Tirol']);
+        el.querySelector('.vis-form-element input[value="a"]').click();
+        await nextTick();
+        expect(keys()).toEqual(['Wien', 'Tirol', 'Salzburg']);
+
+        // without it all categories of the props
+        delete def.mapping.c.legend.onlyData;
+        const all = await mount(GenVis, { def, data: lineData });
+        expect([...all.querySelectorAll('.vis-legend-entry')].map(e => e.dataset.key)).toEqual(['Wien', 'Tirol', 'Salzburg']);
+        expect(errors).toEqual([]);
+    });
+
     test('null removes a part of a mapping, also by a patch of a form element', async () => {
         const def = lineDef();
         def.mapping.c.hover = null;

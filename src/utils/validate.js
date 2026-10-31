@@ -307,6 +307,8 @@ const validateDef = def => {
             warn(`${path}.legend.${k}`, `unknown ${k} '${m.legend[k]}', expected one of ${list(values)}`));
         if (isObject(m.hover?.row) && !m.props)
             warn(`${path}.hover.row`, `the styles of the rows of the hover are props of the categories, the mapping needs 'props'`);
+        if (m.legend?.onlyData !== undefined && (typeof m.legend.onlyData != 'boolean' || !m.props))
+            warn(`${path}.legend.onlyData`, `only the entries of the categories of the rows, true or false, of a legend of props`);
         if (m.legend && !m.props && m.scale?.orientation !== undefined)
             warn(`${path}.legend`, `a legend needs the props of the categories or a scale of colors, without an orientation`);
         // the props of the legend and the hover of the categories

@@ -3,6 +3,12 @@
 The changes of the versions, the newest first, the ones on npm without
 0.7.0 and 2.0.0-alpha.1. The details are in the commits.
 
+## 3.1.0 (unreleased)
+
+Legends of categories with `"onlyData": true` only have the categories of
+the rows after the `filter`, e.g. not the sources of a parent which a year
+has no rows of, the entries follow the form elements.
+
 ## 3.0.0
 
 Definitions are more flexible: the entries of form elements patch all parts

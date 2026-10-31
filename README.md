@@ -825,7 +825,10 @@ parent or of a patch, e.g. `"hover": null`.
   visualisation), `size` pixels long (240 by default), its labels are
   after it (`labels`, below or right of it) or `before` it, `values` are the
   ticks of a gradient, e.g. `[0, 50, 100]`. A category with `"legend":
-  false` in its props has no entry, it stays visible, e.g. headers.
+  false` in its props has no entry, it stays visible, e.g. headers. With
+  `"onlyData": true` the legend only has the categories of the rows after
+  the `filter`, also the hidden ones, e.g. the sources of the selected
+  year, the entries follow the form elements.
   `position` places the legend above the plots (`top`, the default), below
   them (`bottom`) or beside them (`left`, `right`, the plots have the rest
   of the width, the class of the legends is `vis-legends-left` or

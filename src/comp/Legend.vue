@@ -25,7 +25,8 @@ import { withColor } from "@/layout";
 import LegendSymbol from '@/comp/LegendSymbol.vue';
 
 export default {
-    props: ["legend"],
+    // `inData`: the categories of the filtered rows of a legend with `onlyData`
+    props: ["legend", "inData"],
     inject: ['store'],
     components: {
         LegendSymbol
@@ -33,8 +34,12 @@ export default {
     computed: {
         // the mapping, a form element can replace it, e.g. by another column
         info() { return this.store.mapping(this.legend) },
-        // without the categories with `"legend": false`, e.g. headers, they stay visible
-        entries() { return this.info.keys.filter(key => this.info.props[key].legend !== false).map(key => ({ key, props: this.info.props[key] })) },
+        // without the categories with `"legend": false`, e.g. headers, they stay
+        // visible, and with `onlyData` without the ones which are not in the rows
+        entries() {
+            return this.info.keys.filter(key => this.info.props[key].legend !== false && (!this.inData || this.inData.has(key)))
+                .map(key => ({ key, props: this.info.props[key] }));
+        },
         // the props of the entries with their default colors, see withColor of layout.js
         colored() { return Object.fromEntries(this.entries.map(e => [e.key, withColor([e.props])])) },
         // the legend props of the entries, also with the globals of the store

@@ -108,10 +108,11 @@ const layout = (store, width) => {
     const axis = axisNames(store);
     const scope = { ...def.globals, totalWidth: width, [formatter]: store.scope[formatter] };
 
-    // the rows of the visible categories and of the conditions of `filter`,
-    // e.g. of a global of a form element, see rowFilter
+    // the rows of the conditions of `filter`, e.g. of a global of a form
+    // element, see rowFilter, and of them the ones of the visible categories
     const visible = visibleKeys(def);
-    const rows = filter(store.data, [...visible, ...rowFilter(def.filter, def.mapping, scope)]);
+    const filtered = filter(store.data, rowFilter(def.filter, def.mapping, scope));
+    const rows = filter(filtered, visible);
 
     // the start and the end of the stacked values of the rows, stacked in the
     // order of the categories, not of the rows, the rows of the conditions of
@@ -188,6 +189,10 @@ const layout = (store, width) => {
         faceted,
         facets,
         colors: Object.fromEntries(colors.map(n => [n, common[n]])),
+        // the categories of the filtered rows of the legends with `onlyData`,
+        // also the hidden ones, e.g. the sources of the selected year
+        inData: Object.fromEntries(Object.keys(def.mapping).filter(n => def.mapping[n].legend?.onlyData)
+            .map(n => [n, new Set(filtered.map(r => String(r[n])))])),
         height: size.height,
     };
 };
