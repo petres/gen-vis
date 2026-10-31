@@ -13,9 +13,10 @@ export default {
     },
 };
 
-// the props of the buttons and the debug output, "false" is false, a
-// string other than "true" and "" is the name of the file, e.g. of download
-const flags = ['debug', 'check', 'copy', 'download', 'csv'];
+// the props of the buttons, the debug output and lazy, "false" is false, a
+// string other than "true" and "" is the name of the file, e.g. of
+// download, or the margin of lazy, e.g. "800px"
+const flags = ['debug', 'check', 'copy', 'download', 'csv', 'lazy'];
 
 // the value of a data attribute as the one of its prop, e.g. "false" of
 // data-copy, the state, the globals and the highlight are JSON

@@ -27,6 +27,8 @@ export interface GenVisProps {
     data?: Row[] | string | ArrayBuffer | Uint8Array | null;
     /** Shows the prepared definition. */
     debug?: boolean;
+    /** Logs the warnings of the check of the definition in the console. */
+    check?: boolean;
     /** The changes of the user, with v-model:state. */
     state?: State | null;
     /** The globals of the page, e.g. the language, also of hidden form elements. */
@@ -41,6 +43,8 @@ export interface GenVisProps {
     csv?: boolean | string;
     /** The width of the PNG in pixels, `screen` for the one on the screen. */
     imageWidth?: number | 'screen' | null;
+    /** Loads the definition and the data when it is near the viewport, `true` within 400px, a string is the `rootMargin`, e.g. `'800px 0px'`. */
+    lazy?: boolean | string;
 }
 
 /** The rows of the hover and of a click or a tap (`select`), the values of the mappings. */

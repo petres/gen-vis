@@ -2718,6 +2718,129 @@ describe('layout shifts', () => {
     });
 });
 
+describe('lazy', () => {
+    // the observers of the visualisations, `show()` brings their elements near the viewport
+    let observers;
+    const show = (o = observers.at(-1)) => o.callback([{ isIntersecting: true, target: o.targets[0] }]);
+    let fetched;
+    beforeEach(() => {
+        observers = [];
+        vi.stubGlobal('IntersectionObserver', class {
+            constructor(callback, options) {
+                Object.assign(this, { callback, options, targets: [], disconnected: false });
+                observers.push(this);
+            }
+            observe(el) { this.targets.push(el) }
+            disconnect() { this.disconnected = true }
+        });
+        fetched = [];
+        const serve = fetch;
+        vi.stubGlobal('fetch', url => {
+            fetched.push(new URL(url).pathname);
+            return serve(url);
+        });
+    });
+    const wait = async () => {
+        await new Promise(resolve => setTimeout(resolve, 30));
+        await nextTick();
+    };
+
+    test('nothing is loaded before it is near the viewport, then it is loaded once and stays', async () => {
+        const el = document.body.appendChild(document.createElement('div'));
+        createApp(GenVis, { defFile: '/data/bev/def.json', lazy: true, download: true, csv: true }).mount(el);
+        await wait();
+        expect(fetched).toEqual([]);
+        expect(observers).toHaveLength(1);
+        expect(observers[0].options.rootMargin).toBe('400px');
+        expect(observers[0].targets[0]).toBe(el.querySelector('.vis-outer'));
+        // the space while it waits, no buttons
+        expect(el.querySelector('.vis-outer').classList.contains('vis-loading')).toBe(true);
+        expect(el.querySelector('.vis-buttons')).toBeNull();
+
+        // not near the viewport
+        observers[0].callback([{ isIntersecting: false }]);
+        await wait();
+        expect(fetched).toEqual([]);
+
+        show();
+        await rendered(el);
+        expect(observers[0].disconnected).toBe(true);
+        expect(fetched).toEqual(['/data/bev/def.json', '/data/bev/data.csv']);
+        expect(el.querySelectorAll('.vis-buttons button')).toHaveLength(2);
+        show();
+        await wait();
+        expect(fetched).toHaveLength(2);
+        expect(errors).toEqual([]);
+    });
+
+    test('changes of the props before are used when it is near the viewport', async () => {
+        const defFile = ref('/data/bev/def.json');
+        const state = ref(null);
+        const el = document.body.appendChild(document.createElement('div'));
+        createApp({ render: () => h(GenVis, { defFile: defFile.value, state: state.value, lazy: '800px 0px' }) }).mount(el);
+        await wait();
+        defFile.value = '/data/bev/def-bar.json';
+        state.value = { globals: {} };
+        await wait();
+        expect(fetched).toEqual([]);
+        expect(observers).toHaveLength(1);
+        expect(observers[0].options.rootMargin).toBe('800px 0px');
+        show();
+        await vi.waitFor(() => expect(el.querySelector('g.vis-plot rect')).not.toBeNull());
+        expect(fetched[0]).toBe('/data/bev/def-bar.json');
+        expect(fetched).not.toContain('/data/bev/def.json');
+        // after it is loaded a change loads it again, as without lazy
+        defFile.value = '/data/bev/def.json';
+        await vi.waitFor(() => expect(el.querySelector('.vis-title').textContent).toBe('Bevölkerung'));
+        expect(errors).toEqual([]);
+    });
+
+    test('without an IntersectionObserver or with lazy false it is loaded at once', async () => {
+        await mount(GenVis, { def: lineDef(), data: lineData, lazy: false });
+        expect(observers).toHaveLength(0);
+        vi.stubGlobal('IntersectionObserver', undefined);
+        const el = await mount(GenVis, { defFile: '/data/bev/def.json', lazy: true });
+        expect(el.querySelector('svg.vis-svg')).not.toBeNull();
+
+        // lazy turned off while it waits
+        vi.stubGlobal('IntersectionObserver', class { observe() {} disconnect() { this.done = true } });
+        const lazy = ref(true);
+        const other = document.body.appendChild(document.createElement('div'));
+        createApp({ render: () => h(GenVis, { def: lineDef(), data: lineData, lazy: lazy.value }) }).mount(other);
+        await wait();
+        expect(other.querySelector('svg.vis-svg')).toBeNull();
+        lazy.value = false;
+        await rendered(other);
+    });
+
+    test('the observer is disconnected on unmount, the methods of the files need it loaded', async () => {
+        const app = createApp(GenVis, { def: lineDef(), data: lineData, lazy: true });
+        const vm = app.mount(document.body.appendChild(document.createElement('div')));
+        await expect(vm.image()).rejects.toThrow('not loaded yet');
+        await expect(vm.exportCsv()).rejects.toThrow('not loaded yet');
+        app.unmount();
+        expect(observers[0].disconnected).toBe(true);
+        expect(errors).toEqual([]);
+    });
+
+    test('the attribute data-lazy, a margin or true', async () => {
+        const el = document.body.appendChild(document.createElement('div'));
+        el.dataset.defFile = '/data/bev/def.json';
+        el.dataset.lazy = '';
+        mountGenVisElement(el);
+        const margin = document.body.appendChild(document.createElement('div'));
+        margin.dataset.defFile = '/data/bev/def.json';
+        margin.dataset.lazy = '1000px';
+        mountGenVisElement(margin);
+        await wait();
+        expect(observers.map(o => o.options.rootMargin)).toEqual(['400px', '1000px']);
+        expect(fetched).toEqual([]);
+        show(observers[1]);
+        await rendered(margin);
+        expect(el.querySelector('svg.vis-svg')).toBeNull();
+    });
+});
+
 describe('images', () => {
     const def = () => ({
         ...lineDef({ title: 'Titel', subtitle: 'Untertitel', footer: 'Quelle' }),

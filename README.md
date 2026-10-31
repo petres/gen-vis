@@ -111,10 +111,12 @@ parquet data and the PNG and the CSV (~11 kB) with the first one.
 | `copy`     | `data-copy`     | a button at the right of the footer to copy the PNG to the clipboard (only on https or localhost) |
 | `csv`      | `data-csv`      | a button at the right of the footer to save the data shown as CSV, a string is the name of the file (default the title) |
 | `imageWidth` | `data-image-width` | the width of the PNG in pixels, the one of the definition otherwise or 1200, `screen` for the one on the screen (as it is seen, e.g. on a phone) |
+| `lazy`     | `data-lazy`     | loads the definition and the data only when the visualisation is near the viewport, `true` within 400 pixels, a string is the `rootMargin` of the `IntersectionObserver`, e.g. `"800px 0px"`, see [lazy loading](#lazy-loading) |
 
 The attributes are strings: `data-download`, `data-csv`, `data-copy`,
-`data-check` and `data-debug` without a value or `"true"` are on, `"false"` is off, another
-value of `data-download` or `data-csv` is the name of the file.
+`data-check`, `data-debug` and `data-lazy` without a value or `"true"` are
+on, `"false"` is off, another value of `data-download` or `data-csv` is the
+name of the file, of `data-lazy` the margin.
 
 Every visualisation has its own state, several of them can be used on a page.
 If `def`, `defFile` or `data` change, the visualisation is loaded again, a new
@@ -257,6 +259,27 @@ visualisations, so the space of the empty elements is set by the page:
 
 ```html
 <div class="genVis" data-def-file="/data/map.json" style="--gen-vis-loading-height: 720px"></div>
+```
+
+### Lazy loading
+
+With `lazy` a visualisation loads its definition, its parents and its data
+only when it comes near the viewport (400 pixels by default), e.g. of a page
+of ten charts of which a phone shows two, so the requests of the charts at
+the top do not wait for the ones below. Until then it has the space of a
+visualisation which is loaded (see [layout shifts](#layout-shifts)), so
+`--gen-vis-loading-height` keeps the charts below out of view; without it
+the empty charts have no height and the ones close below are loaded at once.
+Once it is loaded it stays loaded, new props before are the ones it is
+loaded with. Without an `IntersectionObserver`, e.g. of old browsers, it is
+loaded at once. The buttons and the methods of the files (`exportPng`,
+`image`, ...) need it loaded. Visualisations which are not loaded yet are
+empty when the page is printed, the browser prints at once, so a page which
+is printed leaves out `lazy`.
+
+```html
+<GenVis def-file="/data/bev/def.json" lazy/>
+<div class="genVis" data-def-file="/data/map.json" data-lazy="800px"></div>
 ```
 
 ### Accessibility and the data

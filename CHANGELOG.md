@@ -5,6 +5,11 @@ The changes of the versions, the newest first, the ones on npm without
 
 ## 3.1.0 (unreleased)
 
+The prop `lazy` (attribute `data-lazy`) loads a visualisation only when it
+comes near the viewport, `true` within 400 pixels or a `rootMargin`, e.g.
+of pages with many charts, it keeps the space of the loading state until
+then.
+
 Legends of categories with `"onlyData": true` only have the categories of
 the rows after the `filter`, e.g. not the sources of a parent which a year
 has no rows of, the entries follow the form elements.

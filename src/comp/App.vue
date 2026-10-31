@@ -96,6 +96,13 @@ export default {
            type: [Number, String],
            default: null
         },
+        // loads the definition and the data when the visualisation is near
+        // the viewport, true within 400px, a string is the rootMargin of the
+        // IntersectionObserver, e.g. "800px 0px", see observe
+        lazy: {
+           type: [Boolean, String],
+           default: false
+        },
     },
     // update:state of the changes of the user, hover and select of the rows
     // of the hover and of a click, see Facet.vue, rendered once it is drawn,
@@ -142,12 +149,21 @@ export default {
             handler(entry) { this.setHighlight(entry) },
             deep: true,
         },
+        // a waiting visualisation which is not lazy anymore is loaded
+        lazy(value) {
+            if (value === false && this.observer) {
+                this.stopObserving();
+                this.init();
+            }
+        },
     },
     mounted() {
         this.reserved = heights.get(this.sourceKey()) ?? null;
-        this.init();
+        if (!this.observe())
+            this.init();
     },
     beforeUnmount() {
+        this.stopObserving();
         this.remember();
         this.removed = true;
     },
@@ -157,7 +173,31 @@ export default {
         return false;
     },
     methods: {
+        // a lazy visualisation waits until it is near the viewport, then it
+        // is loaded with the props it has then, also the ones changed while
+        // it waited, and stays loaded, false if it does not wait, e.g.
+        // without an IntersectionObserver (old browsers, jsdom)
+        observe() {
+            if (this.lazy === false || typeof IntersectionObserver != 'function')
+                return false;
+            const rootMargin = typeof this.lazy == 'string' && this.lazy ? this.lazy : '400px';
+            this.observer = new IntersectionObserver(entries => {
+                if (entries.some(e => e.isIntersecting)) {
+                    this.stopObserving();
+                    this.init();
+                }
+            }, { rootMargin });
+            this.observer.observe(this.$el);
+            return true;
+        },
+        stopObserving() {
+            this.observer?.disconnect();
+            this.observer = null;
+        },
         async init() {
+            // the props are used when it is near the viewport
+            if (this.observer)
+                return;
             this.heightKey = this.sourceKey();
             if (this.def === null && this.defFile === null)
                 return this.showError(new Error('No definition given.'));
@@ -218,6 +258,8 @@ export default {
         // the visualisation as a PNG (a Blob) without the form elements, of a
         // copy of the width of the images, see utils/export.js
         async image() {
+            if (!this.store.loaded)
+                throw new Error('The visualisation is not loaded yet, e.g. a lazy one out of view.');
             const { renderImage, selection, defaultWidth } = await lazy.exporting();
             const options = this.store.def.options;
             const width = this.imageWidth == 'screen'
@@ -251,6 +293,8 @@ export default {
         },
         // the rows shown in the columns of their mappings, see utils/export.js
         async exportCsv(name) {
+            if (!this.store.loaded)
+                throw new Error('The visualisation is not loaded yet, e.g. a lazy one out of view.');
             const { saveFile, csvOf } = await lazy.exporting();
             const rows = layout(this.store, this.store.totalWidth).rows;
             saveFile(new Blob([csvOf(this.store, rows)], { type: 'text/csv' }), `${name ?? this.fileName(this.csv)}.csv`);
