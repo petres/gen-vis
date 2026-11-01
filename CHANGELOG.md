@@ -41,6 +41,67 @@ of a csv, e.g. `22.1637`, they were the products of the reader, e.g.
 format; the ones of only the logical type DECIMAL are scaled (they were the
 integers).
 
+A patch of a form element can change the coordinate system
+(`options.coord`) and the map (`geo.data`), all of them are loaded with the
+definition (they were the ones of the definition). The `globals` of an entry
+select the entry of another form element at once (it needed a second
+change). The parts of a definition, its data, files and maps are loaded at
+the same time.
+
+`validateDef` (with `check`) reports unknown keys of the schema, with the
+name it probably is, checks the definition with the patch of every entry of
+the form elements and the rows of the data (`validateDef(def, rows)`), e.g.
+years as numbers of a `date` mapping, and warns of names which are not in
+lower case, e.g. `Linear`, and of `nice` of other than numeric mappings. The
+schema allows other fields of the entries of form elements (for
+`{ref:field}`), `false` as `null` of the parts of a mapping, `null` of
+`options` and `mapping` of a patch and of `geo` and `filter` of a child, and
+registered plot types and coordinate systems. The events and the slots of
+the component have types.
+
+Accessibility: a chart without a title is named by its subtitle or `chart`
+of the locale, the subtitle describes a chart with a title, the hover is read
+when the keys move it, not the mouse, the legend of a scale of colors is a
+named image.
+
+Fixed:
+
+- A definition removed (`null`) while one is loaded stays removed, globals
+  changed while it is loaded are applied, a visualisation removed while it
+  is loaded reports nothing.
+- The buttons of the footer do not submit a form of the page, the label of
+  the copy button says it was copied.
+- `mountGenVisByClass` mounts elements by its own record, not the class
+  `vis-mounted`, e.g. of a copy of a mounted element.
+- The PNG and the CSV are an error while a new definition or new data is
+  loaded (they could mix the new definition with the old data).
+- Legends of `fromData` of a column of the globals, e.g. of a lookup of
+  `{lang}`, have the categories of the values (they kept the old ones, all
+  rows were hidden).
+- Curved labels with a `max-width` stay on the circle (they were in the
+  center), `"between"` of angles counterclockwise and of a single tick,
+  values below the domain of the radius are at the inner radius (they were
+  on the other side of the center), `dodge` of `polar:text` treats 0 and 360°
+  as the same angle and stays outside the inner radius.
+- A container smaller than its margins has no negative sizes.
+- The hover is at the nearest position with rows (positions without values
+  or of `options.hover.filter` hid it), the order of rows outside of stacks
+  is stable, a double click of a legend with `onlyData` also hides the
+  categories which are not shown, transitions stop with the visualisation.
+- Parquet: decimals of bytes and of only the logical type, dates of only the
+  logical type (they were of 1970), floats of 32 bits as their text (e.g.
+  `22.1637`), integers of 64 bits in lists and structs are numbers.
+- Numbers are numbers of the data or texts of decimal numbers (`0x10`,
+  `true` and `[1]` were numbers), a `log` scale has the positive values only
+  (0 gave an infinite domain), a domain without values is `[0, 1]` (it was
+  NaN), filters and the ticks of a `date` mapping with the scale of another
+  one in UTC match, `rolling` gives no mean to rows without a value.
+- Maps: rows without a feature are not drawn, keys of integers match without
+  leading zeros, a join without any match is a warning, unknown parameters
+  of projections, TopoJSON without objects and empty maps are clear errors,
+  annotations which a map has not are a warning.
+- The radial labels of `data/bev/def-radar.json` are beside the spokes.
+
 ## 3.0.0
 
 Definitions are more flexible: the entries of form elements patch all parts

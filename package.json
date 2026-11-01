@@ -19,6 +19,7 @@
     },
     "./schema.json": "./schema.json",
     "./standalone": "./dist-lib/gen-vis.js",
+    "./esm": "./dist-lib/esm/gen-vis.js",
     "./package.json": "./package.json"
   },
   "files": [
