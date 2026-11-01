@@ -298,3 +298,54 @@ describe('sameValue', () => {
         expect(sameValue(['y'], 'y')).toBe(false);
     });
 });
+
+describe('applyPatches of globals and of the categories of the data', () => {
+    test('the globals of an entry select the entry of a later form element at once', () => {
+        const org = {
+            globals: { a: '2', b: 'x' },
+            formElements: [
+                { ref: 'a', values: [{ value: '1', globals: { b: 'y' } }, { value: '2' }] },
+                { ref: 'b', values: [{ value: 'x', patch: { mapping: { y: { column: 'cx' } } } }, { value: 'y', patch: { mapping: { y: { column: 'cy' } } } }] },
+            ],
+            mapping: { y: { column: 'c0', type: 'numeric' } },
+        };
+        const def = prepareDef(JSON.parse(JSON.stringify(org)));
+        expect(def.mapping.y.column).toBe('cx');
+        def.globals.a = '1';
+        expect(applyPatches(def, org)).toEqual(['y']);
+        expect(def.globals.b).toBe('y');
+        expect(def.mapping.y.column).toBe('cy');
+        // a second one changes nothing
+        expect(applyPatches(def, org)).toEqual([]);
+        expect(def.mapping.y.column).toBe('cy');
+    });
+
+    test('entries which set each other\'s globals end', () => {
+        const org = {
+            globals: { a: '1', b: '1' },
+            formElements: [
+                { ref: 'a', values: [{ value: '1', globals: { b: '2' } }, { value: '2', globals: { b: '1' } }] },
+                { ref: 'b', values: [{ value: '1', globals: { a: '1' } }, { value: '2', globals: { a: '2' } }] },
+            ],
+        };
+        expect(() => prepareDef(JSON.parse(JSON.stringify(org)))).not.toThrow();
+    });
+
+    test('a mapping of the categories of the data is prepared again with other values of its column', () => {
+        const org = { globals: { lang: 'de' }, formElements: [{ ref: 'lang', values: [{ value: 'de' }, { value: 'en' }] }],
+            mapping: { c: { column: 'name', props: { fromData: true }, legend: {} } } };
+        let keys = ['Österreich', 'Deutschland'];
+        const def = prepareDef(JSON.parse(JSON.stringify(org)), { dataKeys: () => keys });
+        expect(def.mapping.c.keys).toEqual(['Österreich', 'Deutschland']);
+        def.globals.lang = 'en';
+        keys = ['Austria', 'Germany'];
+        applyPatches(def, org, { dataKeys: () => keys });
+        expect(def.mapping.c.keys).toEqual(['Austria', 'Germany']);
+        expect(Object.keys(def.mapping.c.props)).toEqual(['Austria', 'Germany']);
+        // the same values keep the mapping, e.g. its entries hidden
+        def.mapping.c.props.Austria.visible = false;
+        const mapping = def.mapping.c;
+        applyPatches(def, org, { dataKeys: () => [...keys] });
+        expect(def.mapping.c).toBe(mapping);
+    });
+});

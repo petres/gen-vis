@@ -252,8 +252,18 @@ const sources = Symbol('sources');
  * column or type.
  */
 const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null } = {}) => {
-    const selected = selectedEntries(def);
-    selected.filter(v => isObject(v.globals)).forEach(v => Object.assign(def.globals, v.globals));
+    // the globals of an entry can select the entry of a later form element,
+    // e.g. a language selects its names, they are applied until no entry
+    // changes them anymore, at most once per form element, e.g. of entries
+    // which set each other's globals
+    let selected;
+    for (let i = 0; i <= (def.formElements ?? []).length; i++) {
+        selected = selectedEntries(def);
+        const globals = JSON.stringify(def.globals);
+        selected.filter(v => isObject(v.globals)).forEach(v => Object.assign(def.globals, v.globals));
+        if (JSON.stringify(def.globals) == globals)
+            break;
+    }
     const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));
     const patched = mergeAll([pick(defOrg), ...selected.filter(v => isObject(v.patch)).map(v => pick(v.patch))]);
     const before = def[sources] ?? {};
@@ -294,7 +304,10 @@ const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, tr
         const merged = JSON.parse(JSON.stringify(raw));
         if (typeof merged.column == 'string')
             merged.column = fillTemplate(merged.column, names);
-        const source = JSON.stringify(merged);
+        // the categories of the data are part of the source, e.g. of a column
+        // of a transform of the globals, such as the names of a language
+        const keys = merged.props?.fromData && typeof merged.column == 'string' ? dataKeys(merged.column) : null;
+        const source = JSON.stringify([merged, keys]);
         after.mapping[n] = source;
         const old = def.mapping?.[n];
         // without `keepVisible` the entries of the legend are the ones of the definition

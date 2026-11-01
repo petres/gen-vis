@@ -1,319 +1,15 @@
 export { createStore, resolveUrl, resolveParents, clearCache, requirements };
 
-import { reactive, markRaw, toRaw } from 'vue';
+import { reactive, markRaw } from 'vue';
 
-import { addDataValues, dataFormat, distinctValues, parseData, prepareData, scaleDef, updateData, usedColumns } from "@/utils/data";
-import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
-import { applyPatches, fillHtml, fillText, formatOf, mergeAll, prepareDef, templateNames, variants } from "@/utils/def";
+import { distinctValues, scaleDef, updateData } from "@/utils/data";
+import { applyTransforms, utcColumns } from "@/utils/transform";
+import { applyPatches, fillHtml, fillText, formatOf, templateNames } from "@/utils/def";
 import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
-import { getLocale, loadLocale } from "@/utils/locale";
+import { getLocale } from "@/utils/locale";
 import { formatter } from "@/utils/props";
-import { loadCoord } from "@/coords";
 import { axisNames } from "@/layout";
-import { loadColors, loadTransition } from "@/utils/d3";
-import { lazy } from "@/utils/lazy";
-import { isObject } from "@/utils/values";
-
-// relative urls are resolved against `base`, e.g. the url of the def referencing them
-const resolveUrl = (url, base = document.baseURI) => new URL(url, base).href;
-
-// requests of the last minutes are shared, e.g. the parents of the charts of a
-// page or a csv of two charts, later ones load again, e.g. for updated data,
-// the content is not kept longer, e.g. after the charts of a page are removed
-const cacheTime = 5 * 60 * 1000;
-const cache = new Map();
-const clearCache = () => {
-    cache.forEach(c => clearTimeout(c.timer));
-    cache.clear();
-};
-
-// the content of a url, `type` is text or arrayBuffer, e.g. of parquet data
-const request = async (url, type) => {
-    const response = await fetch(url);
-    if (!response.ok)
-        throw new Error(`${response.status} ${response.statusText}`);
-    return response[type]();
-};
-
-const fetchCached = (url, type = 'text') => {
-    const key = `${type} ${url}`;
-    if (!cache.has(key)) {
-        const forget = entry => {
-            if (cache.get(key) === entry) {
-                clearTimeout(entry.timer);
-                cache.delete(key);
-            }
-        };
-        const entry = {};
-        entry.content = request(url, type).catch(error => {
-            // failed requests are not kept
-            forget(entry);
-            throw new Error(`Could not load '${url}': ${error.message}`);
-        });
-        entry.timer = setTimeout(() => forget(entry), cacheTime);
-        // the timer does not keep a script of node running, e.g. a check
-        entry.timer.unref?.();
-        cache.set(key, entry);
-    }
-    return cache.get(key).content;
-};
-
-const fetchText = url => fetchCached(url);
-
-// parquet is binary, the other formats are text
-const fetchData = (url, format) => fetchCached(url, format == 'parquet' ? 'arrayBuffer' : 'text');
-
-const parseDef = (text, source, what = 'definition') => {
-    try {
-        return JSON.parse(text);
-    } catch (error) {
-        throw new Error(`Invalid JSON in ${what} ${source}: ${error.message}`);
-    }
-};
-
-// merges def with its parents, a parent url is relative to the def referencing
-// it. A list of parents (mixins) is merged in its order, later ones override
-// earlier ones. A parent shared by several mixins is merged once, before the
-// first one using it, so it does not override the mixins in between. The
-// parents of a def are requested at once, but merged in their order.
-const resolveParents = async (def, url, load = fetchText) => {
-    const parts = [];
-    const included = new Set();
-    const add = async (def, url, ancestors) => {
-        const parents = [def.parent ?? []].flat().map(p => resolveUrl(p, url));
-        const texts = new Map(parents.filter(u => !included.has(u)).map(u => [u, Promise.resolve().then(() => load(u))]));
-        // errors are thrown in the order of the parents, not as unhandled ones
-        texts.forEach(t => t.catch(() => {}));
-        for (const parentUrl of parents) {
-            if (ancestors.includes(parentUrl))
-                throw new Error(`Cyclic parent definition '${parentUrl}'`);
-            if (included.has(parentUrl))
-                continue;
-            included.add(parentUrl);
-            await add(parseDef(await texts.get(parentUrl), `'${parentUrl}'`), parentUrl, [...ancestors, parentUrl]);
-        }
-        parts.push(def);
-    };
-    await add(def, url, []);
-    return mergeAll(parts);
-};
-
-// the rows of data, errors name its url (`source`)
-const readData = async (data, format, source, columns = null) => {
-    try {
-        return await parseData(data, format, columns);
-    } catch (error) {
-        throw new Error(`Could not read the data ${source}: ${error.message}`);
-    }
-};
-
-// the rows are not made reactive, they can be large and are only replaced as a whole
-const raw = rows => markRaw(Array.from(toRaw(rows)));
-
-// the check of the definitions (`check` of Store.init, e.g. while a
-// definition is written), loaded with the first one, together with its
-// parents, a definition is drawn without it if it could not be loaded
-let validator = null;
-const loadValidator = () => validator ??= lazy.validate().catch(() => {
-    validator = null;
-    return null;
-});
-
-// the features of a map of the geometry `json` and the part `geo` of a
-// prepared definition: only the ones of `include`, without the ones of
-// `exclude`, they are not drawn at all, the borders of the objects of
-// TopoJSON (`mesh`) and the projections of the facets, see coords/geo.js,
-// `source` are the parts it depends on, a patch of them makes a new one
-const geoParts = g => JSON.stringify([g?.key ?? 'id', g?.object ?? null, g?.include ?? null, g?.exclude ?? null]);
-const geoOf = (module, json, def = {}) => {
-    const { geoFeatures, geoKey, geoMesh } = module;
-    const key = geoKey(def.key ?? 'id');
-    const include = def.include && new Set(def.include.map(String));
-    const exclude = new Set((def.exclude ?? []).map(String));
-    const keep = f => (!include || include.has(key(f))) && !exclude.has(key(f));
-    const features = geoFeatures(json, def.object).filter(keep);
-    // the borders of an object of TopoJSON by the plots of geo:mesh, of the
-    // object of the features also without the ones left out
-    const objectName = object => object ?? def.object ?? Object.keys(json.objects ?? {})[0];
-    const meshes = new Map();
-    const mesh = (object, borders = 'all') => {
-        const id = JSON.stringify([objectName(object), borders]);
-        if (!meshes.has(id))
-            meshes.set(id, geoMesh(json, objectName(object), borders,
-                objectName(object) == objectName(undefined) ? keep : undefined));
-        return meshes.get(id);
-    };
-    return markRaw({ json, module, source: geoParts(def), features, key, byKey: new Map(features.map(f => [key(f), f])), mesh, projections: new Map() });
-};
-
-/**
- * The parts of the package a definition needs, loaded with its data, also
- * the ones of the patches of the entries of its form elements (see
- * variants): the colors of d3 (`colors`, of schemes and interpolators), the
- * coordinate system (`coord`), the parts of maps (`geo`), the transitions,
- * the transforms, the legend of a scale of colors (`colorLegend`, a mapping
- * with a legend without props) and the locales (`locales`, the one of the
- * definition first).
- */
-const requirements = defOrg => {
-    const all = variants(defOrg);
-    const mappings = all.flatMap(d => Object.values(d.mapping ?? {})).filter(isObject);
-    return {
-        colors: mappings.some(m => Boolean(m.scale?.scheme || m.scale?.interpolator || m.props?.scheme)),
-        coord: defOrg.options?.coord,
-        geo: Boolean(defOrg.geo?.data),
-        transition: all.some(d => Boolean(d.options?.transition || d.options?.highlight?.transition)),
-        transforms: all.some(d => Boolean(d.transform)),
-        colorLegend: mappings.some(m => m.legend && !m.props),
-        locales: all.filter((d, i) => i == 0 || d.options?.locale !== undefined).map(d => d.options?.locale ?? undefined),
-    };
-};
-
-// the parts of the requirements, loaded at once, the coordinate system, the
-// module of maps and the legend of colors are the result
-const loadParts = need => {
-    const parts = Promise.all([
-        need.colors ? loadColors() : null,
-        loadCoord(need.coord),
-        need.geo ? lazy.geo() : null,
-        need.transition ? loadTransition() : null,
-        need.transforms ? loadTransforms() : null,
-        need.colorLegend ? lazy.colorLegend() : null,
-        ...need.locales.map(locale => loadLocale(locale)),
-    ]).then(([, coord, geo, , , colorLegend]) => ({ coord, geo, colorLegend }));
-    // the errors are the ones of the load, not unhandled ones
-    parts.catch(() => {});
-    return parts;
-};
-
-// the definition of the attribute or of its url, with its parents, the
-// warnings of its check (`check`), the data and the geometry are requested together
-// with the parents, if the def names them, the data if its format is known,
-// it can be the one of a parent, `url` is undefined for inline definitions
-const resolveDef = async ({ def, defUrl, data, check }) => {
-    const checks = check ? loadValidator() : null;
-    let url;
-    if (def === null) {
-        url = resolveUrl(defUrl);
-        def = parseDef(await fetchText(url), `'${url}'`);
-    } else if (typeof def == 'string') {
-        def = parseDef(def, 'attribute');
-    }
-
-    if (data === null && typeof def.data == 'string' && !def.data.includes('{')) {
-        const dataUrl = resolveUrl(def.data, url);
-        const format = dataFormat(dataUrl, def.dataFormat);
-        if (format !== undefined || def.parent === undefined)
-            fetchData(dataUrl, format).catch(() => {});
-    }
-    if (typeof def.geo?.data == 'string')
-        fetchText(resolveUrl(def.geo.data, url)).catch(() => {});
-
-    const defOrg = await resolveParents(JSON.parse(JSON.stringify(def)), url);
-    (await checks)?.validateDef(defOrg).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
-    return { url, defOrg };
-};
-
-// the rows of the data of the attribute or of the url of the definition,
-// the format by default the one of the extension of its url, parquet is
-// read in the columns which are used
-const loadRows = async (defOrg, url, data) => {
-    let format = defOrg.dataFormat;
-    let source = 'of the attribute';
-    if (data === null) {
-        if (!defOrg.data)
-            throw new Error('No data given, neither in the definition nor as attribute.');
-        const dataUrl = resolveUrl(defOrg.data, url);
-        format = dataFormat(dataUrl, format);
-        data = await fetchData(dataUrl, format);
-        source = `'${dataUrl}'`;
-    }
-    return raw(await readData(data, format, source, usedColumns(defOrg)));
-};
-
-// the data of plots of their own, e.g. events, and of the lookups of
-// transforms, also of the patches of form elements, by their url relative
-// to the def, the rows are not evaluated as the ones of the definition, see
-// layout.js
-const loadFiles = async (defOrg, url) => {
-    const all = variants(defOrg);
-    const withFiles = [
-        ...all.flatMap(d => [d.plot ?? []].flat()).filter(p => typeof p?.data == 'string'),
-        ...all.flatMap(d => [d.transform ?? []].flat()).filter(t => t?.type == 'lookup' && typeof t.data == 'string'),
-    ];
-    return new Map(await Promise.all([...new Set(withFiles.map(p => p.data))].map(async data => {
-        const dataUrl = resolveUrl(data, url);
-        const format = dataFormat(dataUrl, withFiles.find(p => p.data == data).dataFormat);
-        return [data, raw(await readData(await fetchData(dataUrl, format), format, `'${dataUrl}'`))];
-    })));
-};
-
-/**
- * The prepared definition of the rows with the state and the globals of the
- * page, its defaults (the state of the definition, see utils/state.js) and
- * the columns of the transforms. The form elements can have the values of
- * the data, the state needs them. The transforms of the globals of the
- * state are computed before the mappings, their categories can be the ones
- * of a transform, and again after them, e.g. of a patch of a scale of dates
- * to utc, the entries of the legends are the ones of the state, e.g. of the
- * categories of another column.
- */
-const prepare = (defOrg, rows, files, state, globals) => {
-    let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files);
-    addDataValues(defOrg, rows, columns);
-    const keysOf = column => distinctValues(rows, columns, column).map(String);
-    const transform = () => {
-        columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns, files);
-    };
-    const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), { dataKeys: keysOf, files });
-    const defaults = snapshot(prepared);
-    applyState(prepared, state);
-    applyGlobals(prepared, globals);
-    applyPatches(prepared, defOrg, { dataKeys: keysOf, files, transform });
-    applyState(prepared, { visible: state?.visible });
-    transform();
-    return { prepared, defaults, columns };
-};
-
-// the geometry of a map, see coords/geo.js, of the url of GeoJSON or
-// TopoJSON or itself, its features are the ones of the prepared definition
-const loadGeo = async (defOrg, url, module, prepared) => {
-    if (!defOrg.geo?.data)
-        return null;
-    let json = defOrg.geo.data;
-    if (typeof json == 'string') {
-        const geoUrl = resolveUrl(json, url);
-        json = parseDef(await fetchText(geoUrl), `'${geoUrl}'`, 'geometry');
-    }
-    return geoOf(module, markRaw(json), prepared.geo);
-};
-
-// see Store.init, urls of inline defs are relative to the page: the
-// definition, the parts it needs together with its data, the files of its
-// plots and transforms, the prepared definition and the geometry of a map
-const load = async ({ def = null, defUrl = null, data = null, state = null, globals = null, check = false }) => {
-    const { url, defOrg } = await resolveDef({ def, defUrl, data, check });
-    const parts = loadParts(requirements(defOrg));
-    const rows = await loadRows(defOrg, url, data);
-    const { coord, geo: geoModule, colorLegend } = await parts;
-    const files = await loadFiles(defOrg, url);
-    const { prepared, defaults, columns } = prepare(defOrg, rows, files, state, globals);
-    const geo = await loadGeo(defOrg, url, geoModule, prepared);
-
-    return {
-        defUrl: url ?? null,
-        defOrg,
-        colorLegend: colorLegend ? markRaw(colorLegend.default) : null,
-        coord: markRaw(coord),
-        geo,
-        files: markRaw(files),
-        rows,
-        columns: markRaw(columns),
-        def: prepared,
-        defaults,
-        data: raw(prepareData(rows, prepared, columns)),
-    };
-};
+import { clearCache, geoParts, load, loadGeo, raw, requirements, resolveParents, resolveUrl } from "@/utils/load";
 
 // the formatters of the locales by their definition, the last ones are kept
 const locales = new Map();
@@ -330,8 +26,15 @@ const localeOf = locale => {
 class Store {
     defUrl = null;
     defOrg = null;
+    // the coordinate system of the definition, of a patch its one, of the
+    // ones loaded by their name (`coords`), see applyFormElements
     coord = null;
+    coords = null;
+    // the map of the definition, see geoOf, of the module of maps and of the
+    // geometries of all patches by their key, see loadGeometries
     geo = null;
+    geoModule = null;
+    geometries = null;
     def = null;
     rows = null;
     // the columns of the transforms, see utils/transform.js
@@ -446,6 +149,13 @@ class Store {
         }
     }
 
+    // a running init is not applied anymore, e.g. the definition was
+    // removed or the visualisation unmounted while it was loaded
+    cancel() {
+        this.runs++;
+        this.loading = false;
+    }
+
     // the parts of the definition patched by the entries of the form
     // elements, see applyPatches, the columns of patched mappings might have
     // changed, and the ones of transforms of the globals, e.g. an index of a
@@ -469,9 +179,14 @@ class Store {
             .forEach(n => changed.push(n));
         if (changed.length > 0)
             this.data = raw(updateData(this.rows, this.data, this.def, changed, this.columns));
-        // the features of another part of a map, e.g. of other countries
-        if (this.geo && this.geo.source != geoParts(this.def.geo))
-            this.geo = geoOf(this.geo.module, this.geo.json, this.def.geo);
+        // the coordinate system of a patch, e.g. polar instead of cartesian
+        const coord = this.coords?.get(this.def.options.coord ?? 'cartesian');
+        if (coord && coord !== this.coord)
+            this.coord = coord;
+        // another geometry or the features of another part of a map, e.g. of
+        // other countries
+        if ((this.geo?.source ?? null) !== (this.def.geo?.data ? geoParts(this.def.geo) : null))
+            this.geo = this.geometries && loadGeo(this.geometries, this.geoModule, this.def);
     }
 
     // the categories of the data of a column, e.g. of a column of a form

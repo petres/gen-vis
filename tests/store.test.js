@@ -229,6 +229,19 @@ describe('Store.init', () => {
         expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition: plot\[0\]\.type: unknown type 'path'/));
     });
 
+    // the check has the rows, e.g. of years as numbers of a date mapping,
+    // and warns also if the data could not be loaded
+    test('warnings of the rows and of a failed load', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const dated = { mapping: { x: { column: 'year', type: 'date' }, y: { column: 'value' } }, plot: { type: 'cartesian:line' } };
+        await createStore().init({ def: dated, data: [{ year: 2020, value: 1 }], check: true });
+        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/mapping\.x\.type: the values of 'year' are numbers, e\.g\. 2020/));
+        warn.mockClear();
+        const wrong = { ...def, data: 'http://h/missing.csv', plot: { ...def.plot, type: 'path' } };
+        await expect(createStore().init({ def: wrong, check: true })).rejects.toThrow(/Could not load/);
+        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/plot\[0\]\.type: unknown type 'path'/));
+    });
+
     test('errors name the url', async () => {
         serve({ 'http://h/data/def.json': JSON.stringify(def) });
         const store = createStore();
@@ -274,7 +287,7 @@ describe('requirements', () => {
 
     test('nothing of a plain definition but the coordinate system and the locale', () => {
         expect(requirements(def)).toEqual({
-            colors: false, coord: undefined, geo: false, transition: false, transforms: false, colorLegend: false, locales: [undefined],
+            colors: false, coords: [undefined], geo: false, transition: false, transforms: false, colorLegend: false, locales: [undefined],
         });
     });
 
@@ -288,7 +301,7 @@ describe('requirements', () => {
                 k: { column: 'k', props: { scheme: 'Tableau10', fromData: true }, legend: {} },
             },
         });
-        expect(need).toEqual({ colors: true, coord: 'polar', geo: true, transition: true, transforms: true, colorLegend: true, locales: ['de'] });
+        expect(need).toEqual({ colors: true, coords: ['polar'], geo: true, transition: true, transforms: true, colorLegend: true, locales: ['de'] });
         expect(requirements({ mapping: { c: { scale: { scheme: 'Blues' } } } }).colors).toBe(true);
         expect(requirements({ mapping: { k: { props: { scheme: 'Tableau10' } } } }).colors).toBe(true);
         // a legend of categories is no legend of colors
@@ -303,7 +316,7 @@ describe('requirements', () => {
             null,
             { mapping: { y: null } },
         ]) });
-        expect(need).toEqual({ colors: true, coord: undefined, geo: false, transition: true, transforms: true, colorLegend: true, locales: [undefined, 'en'] });
+        expect(need).toEqual({ colors: true, coords: [undefined], geo: false, transition: true, transforms: true, colorLegend: true, locales: [undefined, 'en'] });
     });
 
     test('a name of a color which is no part of a scale or of props needs no colors', () => {
@@ -316,5 +329,122 @@ describe('the entry for scripts', () => {
         const check = await import('@/check');
         const merged = await check.resolveParents({ parent: 'base.json' }, 'http://h/def.json', () => JSON.stringify(def));
         expect(check.validateDef(merged)).toEqual([]);
+    });
+});
+
+describe('form elements of globals, coordinate systems and maps', () => {
+    const lookupDef = {
+        globals: { lang: 'de' },
+        formElements: [{ ref: 'lang', type: 'select', values: [{ value: 'de' }, { value: 'en' }] }],
+        transform: [{ type: 'lookup', column: 'land', data: 'names.csv', key: 'code', value: '{lang}', as: 'label' }],
+        mapping: { c: { column: 'label', props: { fromData: true }, legend: {} }, x: { column: 'year', type: 'numeric' } },
+        plot: [],
+    };
+    const lookupRows = [{ land: 'W', year: 1 }, { land: 'T', year: 1 }];
+    const names = { 'http://localhost:3000/names.csv': 'code,de,en\nW,Wien,Vienna\nT,Tirol,Tyrol\n' };
+
+    test('the categories of the data of a column of the globals', async () => {
+        serve(names);
+        const store = createStore();
+        await store.init({ def: lookupDef, data: lookupRows });
+        expect(store.def.mapping.c.keys).toEqual(['Tirol', 'Wien']);
+        store.setGlobals({ lang: 'en' });
+        expect(store.def.mapping.c.keys).toEqual(['Tyrol', 'Vienna']);
+        expect(store.data.map(r => r.c)).toEqual(['Vienna', 'Tyrol']);
+        expect(store.prop('c', 'Vienna')).toMatchObject({ name: 'Vienna', visible: true });
+    });
+
+    test('the categories of the data of the globals of the page at the load', async () => {
+        serve(names);
+        const store = createStore();
+        await store.init({ def: lookupDef, data: lookupRows, globals: { lang: 'en' } });
+        expect(store.def.mapping.c.keys).toEqual(['Tyrol', 'Vienna']);
+    });
+
+    test('the globals of an entry select the entry of a later form element', async () => {
+        const store = createStore();
+        await store.init({ def: {
+            globals: { a: '2', b: 'x' },
+            formElements: [
+                { ref: 'a', type: 'select', values: [{ value: '1', globals: { b: 'y' } }, { value: '2' }] },
+                { ref: 'b', type: 'select', values: [{ value: 'x', patch: { mapping: { y: { column: 'cx' } } } }, { value: 'y', patch: { mapping: { y: { column: 'cy' } } } }] },
+            ],
+            mapping: { y: { column: 'c0', type: 'numeric' } }, plot: [],
+        }, data: [{ cx: 1, cy: 2, c0: 0 }] });
+        store.def.globals.a = '1';
+        store.applyFormElements();
+        expect(store.def.mapping.y.column).toBe('cy');
+        expect(store.data[0].y).toBe(2);
+    });
+
+    test('a radio of the coordinate system', async () => {
+        const store = createStore();
+        await store.init({ def: {
+            ...def,
+            globals: { coord: 'cartesian' },
+            formElements: [{ ref: 'coord', type: 'radio', values: [
+                { value: 'cartesian' },
+                { value: 'polar', patch: { options: { coord: 'polar' }, mapping: {
+                    x: { scale: { orientation: 'angular' } }, y: { scale: { orientation: 'radial' } } } } },
+            ] }],
+        }, data: csv });
+        expect(store.coord).toBe(coords.cartesian);
+        store.def.globals.coord = 'polar';
+        store.applyFormElements();
+        expect(store.def.options.coord).toBe('polar');
+        expect(store.coord).toBe(coords.polar);
+        store.def.globals.coord = 'cartesian';
+        store.applyFormElements();
+        expect(store.coord).toBe(coords.cartesian);
+
+        // the one of a patch selected at the load
+        const polar = createStore();
+        await polar.init({ def: { ...def, globals: { coord: 'polar' }, formElements: [{ ref: 'coord', type: 'radio', values: [
+            { value: 'cartesian' }, { value: 'polar', patch: { options: { coord: 'polar' } } },
+        ] }] }, data: csv });
+        expect(polar.coord).toBe(coords.polar);
+    });
+
+    test('a radio of the geometry of a map', async () => {
+        const topo = (object, ids) => JSON.stringify({ type: 'Topology', objects: { [object]: { type: 'GeometryCollection',
+            geometries: ids.map(id => ({ type: 'Polygon', id, arcs: [[0]] })) } }, arcs: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]] });
+        const requested = [];
+        const files = { 'http://localhost:3000/states.json': topo('states', ['W', 'T']), 'http://localhost:3000/districts.json': topo('districts', ['901', '701', '702']) };
+        vi.stubGlobal('fetch', async url => {
+            requested.push(url);
+            return new Response(files[url]);
+        });
+        const store = createStore();
+        await store.init({ def: {
+            options: { coord: 'geo' },
+            globals: { level: 'states' },
+            geo: { data: 'states.json', join: 'region' },
+            formElements: [{ ref: 'level', type: 'radio', values: [
+                { value: 'states' },
+                { value: 'districts', patch: { geo: { data: 'districts.json' } } },
+            ] }],
+            mapping: { region: { column: 'region' } },
+            plot: [{ type: 'geo:base' }],
+        }, data: [{ region: 'W' }] });
+        expect(requested.sort()).toEqual(['http://localhost:3000/districts.json', 'http://localhost:3000/states.json']);
+        expect(store.geo.features.map(store.geo.key)).toEqual(['W', 'T']);
+        store.def.globals.level = 'districts';
+        store.applyFormElements();
+        expect(store.geo.features.map(store.geo.key)).toEqual(['901', '701', '702']);
+        store.def.globals.level = 'states';
+        store.applyFormElements();
+        expect(store.geo.features.map(store.geo.key)).toEqual(['W', 'T']);
+        expect(requested).toHaveLength(2);
+    });
+
+    test('an error of the data and of the parts is the one of the load, not an unhandled one', async () => {
+        const unhandled = [];
+        const listener = e => unhandled.push(e);
+        process.on('unhandledRejection', listener);
+        onTestFinished(() => process.off('unhandledRejection', listener));
+        const failing = { ...def, data: undefined, formElements: [{ ref: 'c', values: [{ value: 'x', patch: { options: { coord: 'unknown' } } }] }] };
+        await expect(createStore().init({ def: failing })).rejects.toThrow();
+        await new Promise(r => setTimeout(r, 10));
+        expect(unhandled).toEqual([]);
     });
 });
