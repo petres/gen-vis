@@ -66,7 +66,9 @@ const unmountGenVisElement = element => {
     return true;
 }
 
-// the elements of the class which are not mounted yet, returns their components
+// the elements of the class which are not mounted yet, returns their
+// components, not by the class vis-mounted, e.g. a copy of a mounted element
+// (cloneNode) has it but no visualisation
 const mountGenVisByClass = cl => [...document.getElementsByClassName(cl)]
-    .filter(e => !e.classList.contains('vis-mounted'))
+    .filter(e => !apps.has(e))
     .map(e => mountGenVisElement(e));

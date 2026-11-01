@@ -166,6 +166,8 @@ export default {
         this.stopObserving();
         this.remember();
         this.removed = true;
+        // a definition still loaded is not shown, nor its error
+        this.store.cancel();
     },
     // errors while rendering
     errorCaptured(error) {
@@ -199,8 +201,11 @@ export default {
             if (this.observer)
                 return;
             this.heightKey = this.sourceKey();
-            if (this.def === null && this.defFile === null)
+            // the definition loaded before is not shown when it is ready
+            if (this.def === null && this.defFile === null) {
+                this.store.cancel();
                 return this.showError(new Error('No definition given.'));
+            }
             try {
                 // a definition loaded after a newer one was given is not shown
                 if (!await this.store.init({ def: this.def, defUrl: this.defFile, data: this.data, state: this.state, globals: this.globals, check: this.check || this.debug }))
@@ -209,8 +214,10 @@ export default {
                 // the error is kept while the new definition is loaded, a
                 // definition which could not be drawn is not drawn again meanwhile
                 this.error = null;
-                // the state might have changed while loading
+                // the state and the globals might have changed while loading,
+                // the store has the ones given when it started
                 this.syncState();
+                this.syncGlobals();
             } catch (error) {
                 this.showError(error);
             }
@@ -255,29 +262,39 @@ export default {
             if (this.store.loaded && !sameValue(this.globals ?? {}, this.store.globals ?? {}))
                 this.store.setGlobals(this.globals ? JSON.parse(JSON.stringify(this.globals)) : null);
         },
+        // the exports need the visualisation loaded, also while a new definition
+        // or new data is loaded they are refused, the image would be drawn
+        // with the props of the new one and the rows of the one before
+        assertLoaded() {
+            if (!this.store.loaded)
+                throw new Error('The visualisation is not loaded yet, e.g. a lazy one out of view.');
+            if (this.store.loading)
+                throw new Error('The visualisation is not loaded yet, a new definition or new data is loaded.');
+        },
         // the visualisation as a PNG (a Blob) without the form elements, of a
         // copy of the width of the images, see utils/export.js
         async image() {
-            if (!this.store.loaded)
-                throw new Error('The visualisation is not loaded yet, e.g. a lazy one out of view.');
-            const { renderImage, selection, defaultWidth } = await lazy.exporting();
-            const options = this.store.def.options;
-            const width = this.imageWidth == 'screen'
-                ? this.$el.querySelector('.vis').getBoundingClientRect().width
-                : Number(this.imageWidth || options.width || defaultWidth);
-            // the rows already loaded, the data is not loaded and parsed again
+            this.assertLoaded();
+            // the rows already loaded, the data is not loaded and parsed again,
+            // taken before the export is loaded, a new definition given
+            // meanwhile is not drawn with the rows of this one
+            const def = this.store.def;
             const props = {
                 def: this.def, defFile: this.defFile, data: this.store.rows,
                 state: JSON.parse(JSON.stringify(this.store.state)),
                 globals: this.globals,
                 class: this.$attrs.class,
             };
+            const { renderImage, selection, defaultWidth } = await lazy.exporting();
+            const width = this.imageWidth == 'screen'
+                ? this.$el.querySelector('.vis').getBoundingClientRect().width
+                : Number(this.imageWidth || def.options.width || defaultWidth);
             return await renderImage(this.$el, done => {
                 const vnode = h(this.$.type, { ...props, onRendered: done.resolve, onError: done.reject }, this.$slots);
                 // the components and plugins of the page, e.g. of the slots
                 vnode.appContext = this.$.appContext;
                 return vnode;
-            }, { width, text: selection(this.store.def), facets: this.store.def.facets?.dim });
+            }, { width, text: selection(def), facets: def.facets?.dim });
         },
         // the name of a file, the one of the prop, e.g. `download`, or the
         // title (with the values of the globals)
@@ -293,8 +310,7 @@ export default {
         },
         // the rows shown in the columns of their mappings, see utils/export.js
         async exportCsv(name) {
-            if (!this.store.loaded)
-                throw new Error('The visualisation is not loaded yet, e.g. a lazy one out of view.');
+            this.assertLoaded();
             const { saveFile, csvOf } = await lazy.exporting();
             const rows = layout(this.store, this.store.totalWidth).rows;
             saveFile(new Blob([csvOf(this.store, rows)], { type: 'text/csv' }), `${name ?? this.fileName(this.csv)}.csv`);
@@ -302,7 +318,10 @@ export default {
         copyPng() {
             return copyImage(this.image());
         },
+        // not after it was unmounted, e.g. a load failing later
         showError(error) {
+            if (this.removed)
+                return;
             console.error(error);
             this.error = error.message;
             this.$emit('error', error.message);

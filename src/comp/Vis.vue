@@ -42,21 +42,22 @@
                 <span v-else v-html="store.html(options.footer)"/>
             </div>
             <!-- the buttons of the page (the slot buttons), copy, check, file-text
-                 and download of the feather icons, at the right end of the plots -->
+                 and download of the feather icons, at the right end of the plots,
+                 type="button" does not submit a form around the visualisation -->
             <div v-if="slots.buttons || (copy && clipboard) || csv || download" class="vis-buttons" :style="{ marginRight: `${view?.facets[0]?.margins.right ?? 0}px` }">
                 <slot-content v-if="slots.buttons" :fn="slots.buttons" :props="{ save: files.save, copy: files.copy, csv: files.csv, canCopy: clipboard }"/>
-                <button v-if="copy && clipboard" class="vis-copy" :title="copied ? texts.copied : texts.copy" :aria-label="texts.copy" @click="copyPng">
+                <button v-if="copy && clipboard" type="button" class="vis-copy" :title="copied ? texts.copied : texts.copy" :aria-label="copied ? texts.copied : texts.copy" @click="copyPng">
                     <svg viewBox="0 0 24 24" width="14" height="14">
                         <path v-if="copied" d="M20 6L9 17l-5-5"/>
                         <path v-else d="M11 9h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                     </svg>
                 </button>
-                <button v-if="csv" class="vis-csv" :title="texts.csv" :aria-label="texts.csv" @click="files.csv()">
+                <button v-if="csv" type="button" class="vis-csv" :title="texts.csv" :aria-label="texts.csv" @click="files.csv()">
                     <svg viewBox="0 0 24 24" width="14" height="14">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>
                     </svg>
                 </button>
-                <button v-if="download" class="vis-download" :title="texts.download" :aria-label="texts.download" @click="savePng">
+                <button v-if="download" type="button" class="vis-download" :title="texts.download" :aria-label="texts.download" @click="savePng">
                     <svg viewBox="0 0 24 24" width="14" height="14">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                     </svg>
