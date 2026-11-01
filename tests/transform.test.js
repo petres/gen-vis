@@ -74,7 +74,7 @@ describe('transforms', () => {
     test('a rolling mean of large and small values, infinite values are missing', () => {
         const values = v => v.map(value => ({ value: String(value) }));
         expect(applyTransforms(values([1e17, 1, 1, 1]), { type: 'rolling', column: 'value', size: 2 }).get('value').slice(2)).toEqual([1, 1]);
-        expect(applyTransforms(values([1, 'Infinity', 3, 4, 5]), { type: 'rolling', column: 'value', size: 2 }).get('value')).toEqual([null, 1, 3, 3.5, 4.5]);
+        expect(applyTransforms(values([1, 'Infinity', 3, 4, 5]), { type: 'rolling', column: 'value', size: 2 }).get('value')).toEqual([null, null, 3, 3.5, 4.5]);
         const [zero, mean] = applyTransforms(values([0.1, 0.2, -0.3, 0]), { type: 'rolling', column: 'value', size: 3 }).get('value').slice(2);
         expect(zero).toBeCloseTo(0, 15);
         expect(mean).toBeCloseTo(-1/30, 15);
@@ -85,8 +85,9 @@ describe('transforms', () => {
         const start = performance.now();
         const means = applyTransforms(many, { type: 'rolling', column: 'v', size: 365 }).get('v');
         expect(performance.now() - start).toBeLessThan(1000);
-        const window = many.slice(0, 365).map(r => r.v).filter(v => v !== '').map(Number);
-        expect(means[364]).toBeCloseTo(window.reduce((a, b) => a + b, 0)/window.length, 9);
+        // the row 365 has a value, 364 not (a multiple of 7)
+        const window = many.slice(1, 366).map(r => r.v).filter(v => v !== '').map(Number);
+        expect(means[365]).toBeCloseTo(window.reduce((a, b) => a + b, 0)/window.length, 9);
         expect(means[363]).toBeNull();
     });
 
@@ -96,7 +97,7 @@ describe('transforms', () => {
     });
 
     test('a rolling mean and a cumulative sum in the order of a column', () => {
-        expect(column({ type: 'rolling', column: 'value', as: 'mean', by: 'type', order: 'date', size: 2 }, 'mean')).toEqual([null, 20, 35, null, 15, 10]);
+        expect(column({ type: 'rolling', column: 'value', as: 'mean', by: 'type', order: 'date', size: 2 }, 'mean')).toEqual([null, 20, 35, null, null, 10]);
         expect(column({ type: 'rolling', column: 'value', as: 'mean', by: 'type', order: 'date', size: 3, align: 'center' }, 'mean')).toEqual([null, 80/3, null, null, null, 10]);
         expect(column({ type: 'cumulative', column: 'value', as: 'sum', by: 'type', order: 'date' }, 'sum')).toEqual([10, 40, 80, 5, null, 20]);
     });
@@ -178,5 +179,19 @@ describe('transforms', () => {
         ]);
         expect(schema.definitions.transform.properties.type.enum).toEqual(Object.keys(transformTypes));
         expect(transformNames).toEqual(Object.keys(transformTypes));
+    });
+});
+
+describe('rolling, rows without a value', () => {
+    test('have no mean, as no cumulative sum', () => {
+        const values = [{ v: '' }, { v: '15' }, { v: 'NA' }, { v: '20' }];
+        expect(applyTransforms(values, { type: 'rolling', column: 'v', size: 2 }).get('v')).toEqual([null, 15, null, 20]);
+        expect(applyTransforms(values, { type: 'rolling', column: 'v', size: 3, align: 'center' }).get('v')).toEqual([null, 15, null, null]);
+        expect(applyTransforms(values, { type: 'cumulative', column: 'v' }).get('v')).toEqual([null, 15, null, 35]);
+    });
+
+    test('texts which are no decimal numbers are missing, e.g. hexadecimal ones', () => {
+        const values = [{ v: '0x10' }, { v: ' 2 ' }, { v: '1e1' }];
+        expect(applyTransforms(values, { type: 'cumulative', column: 'v' }).get('v')).toEqual([null, 2, 12]);
     });
 });

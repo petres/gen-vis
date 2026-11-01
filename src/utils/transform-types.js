@@ -2,7 +2,7 @@
 // utils/transform.js
 export { applyTransforms, transformTypes };
 
-import { toDate } from "@/utils/data";
+import { toDate, toNumber } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
 
 /**
@@ -19,12 +19,6 @@ import { fillTemplate } from "@/utils/def";
  */
 
 const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
-
-// missing, invalid and infinite values are null
-const toNumber = v => {
-    const n = missing(v) ? NaN : Number(v);
-    return Number.isFinite(n) ? n : null;
-};
 
 // the comparable values of a column: numbers if all are numbers, otherwise
 // timestamps of dates if all are dates, otherwise strings
@@ -142,9 +136,10 @@ const transformTypes = {
 
     // the mean of the values of `size` rows of the group in their order, the
     // ones before (`"align": "end"`, by default) or around the row
-    // (`"center"`), missing values are left out, only of whole windows. The
-    // window moves along the rows, its sum is compensated (Neumaier), so small
-    // values beside large ones are kept, e.g. 1 beside 1e17.
+    // (`"center"`), missing values are left out, only of whole windows, a row
+    // without a value has none, as of cumulative. The window moves along the
+    // rows, its sum is compensated (Neumaier), so small values beside large
+    // ones are kept, e.g. 1 beside 1e17.
     rolling: (t, { n, numbers, groups }) => {
         const result = new Array(n).fill(null);
         const size = Math.max(1, Math.round(t.size ?? 1));
@@ -170,7 +165,7 @@ const transformTypes = {
                     count--;
                 }
                 // the window of the row `start + before`
-                if (start >= 0)
+                if (start >= 0 && values[start + before] !== null)
                     result[g[start + before]] = count ? (sum + compensation)/count : null;
             }
         });

@@ -2,6 +2,7 @@ import { loadColors } from '@/utils/d3';
 import { describe, test, expect, beforeAll } from 'vitest';
 import { makeScale, bandCenter } from '@/utils/scales';
 import coord from '@/coords/cartesian';
+import { tickValues } from '@/coords/ticks';
 
 // the colors of d3 are loaded by the store, see loadColors
 beforeAll(loadColors);
@@ -113,5 +114,57 @@ describe('the domains of scales', () => {
             [{ v: 1 }, { v: 2 }, { v: 10 }], options);
         expect(quantile.domain()).toEqual([1, 2, 10]);
         expect(quantile(2)).toBe(quantile.interpolator()(0.5));
+    });
+});
+
+describe('makeScale, log scales and rows without values', () => {
+    const log = { type: 'numeric', scale: { type: 'log', orientation: 'vertical', domain: [null, null], domainRel: [0, 0] } };
+
+    test('values of a log scale without a position are left out of the domain, e.g. 0', () => {
+        const s = makeScale('y', log, [{ y: 0 }, { y: 10 }, { y: 100 }], options);
+        expect(s.domain()).toEqual([10, 100]);
+        expect(s(10)).toBe(50);
+        expect(s(0)).toBeNaN();
+        // mixed signs, the positive ones, all negative ones stay
+        expect(makeScale('y', log, [{ y: -5 }, { y: 10 }, { y: 1000 }], options).domain()).toEqual([10, 1000]);
+        expect(makeScale('y', log, [{ y: -5 }, { y: -500 }, { y: 0 }], options).domain()).toEqual([-500, -5]);
+        // without them 1 to 10, also of an include of 0
+        expect(makeScale('y', log, [{ y: 0 }, { y: null }], options).domain()).toEqual([1, 10]);
+        const included = { ...log, scale: { ...log.scale, include: [0, 1] } };
+        expect(makeScale('y', included, [{ y: 10 }, { y: 100 }], options).domain()).toEqual([1, 100]);
+        // the stacks from 0, e.g. of bars
+        const stacked = { ...log, stacked: true };
+        expect(makeScale('y', stacked, [{ y: 10 }, { y: 100 }], { ...options, stackOf: r => [0, r.y] }).domain()).toEqual([10, 100]);
+    });
+
+    test('without rows the domain is 0 to 1 or the one of the values of include or center', () => {
+        const linear = { type: 'numeric', scale: { type: 'linear', orientation: 'vertical', domain: [null, null], domainRel: [0, 0], nice: true } };
+        expect(makeScale('y', linear, [], options).domain()).toEqual([0, 1]);
+        expect(makeScale('y', linear, [{ y: null }], options).domain()).toEqual([0, 1]);
+        expect(makeScale('y', { ...linear, scale: { ...linear.scale, include: [0, 50] } }, [], options).domain()).toEqual([0, 50]);
+        expect(makeScale('y', { ...linear, scale: { ...linear.scale, include: 50 } }, [], options).domain()).toEqual([0, 50]);
+        expect(makeScale('y', { ...linear, scale: { ...linear.scale, center: 0 } }, [], options).domain()).toEqual([-1, 1]);
+        expect(makeScale('y', log, [], options).domain()).toEqual([1, 10]);
+        const fixed = { ...linear, scale: { ...linear.scale, domain: [0, 100] } };
+        expect(makeScale('y', fixed, [], options).domain()).toEqual([0, 100]);
+        // dates and colors
+        const time = { type: 'date', scale: { type: 'time', orientation: 'horizontal', domain: [null, null] } };
+        expect(makeScale('x', time, [], options).domain().map(Number).every(Number.isFinite)).toBe(true);
+        const color = { type: 'numeric', scale: { type: 'sequential', interpolator: 'Blues', domain: [null, null] } };
+        expect(makeScale('c', color, [], options).domain()).toEqual([0, 1]);
+    });
+});
+
+describe('values of the definition of a mapping with the scale of another one', () => {
+    test('dates of fixed ticks of a utc scale of another mapping', () => {
+        const mappings = {
+            x: { type: 'date', scale: { type: 'utc', orientation: 'horizontal' } },
+            x2: { type: 'date', scale: { of: 'x' } },
+        };
+        const s = makeScale('x', mappings.x, [{ x: Date.UTC(2020, 0, 1) }, { x: Date.UTC(2021, 0, 1) }], options);
+        expect(tickValues({ values: ['2020-07-01'] }, s, 5, mappings.x2, {}, mappings)).toEqual([Date.UTC(2020, 6, 1)]);
+        const include = { ...mappings.x, scale: { ...mappings.x.scale, include: '2019-01-01', domain: [null, null], domainRel: [0, 0] } };
+        expect(makeScale('x', include, [{ x: Date.UTC(2020, 0, 1) }], { ...options, mappings }).domain().map(Number))
+            .toEqual([Date.UTC(2019, 0, 1), Date.UTC(2020, 0, 1)]);
     });
 });

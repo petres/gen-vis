@@ -1,4 +1,4 @@
-export { groupBy, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, addDataValues, distinctValues, usedColumns, columnValues };
+export { groupBy, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { sameValue, templateRefs, variants } from "@/utils/def";
@@ -47,10 +47,16 @@ const parseData = async (data, format, columns = null) => {
 
 const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
 
-// missing, invalid and infinite values are null, integers of 64 bits are
-// numbers, e.g. of parquet
+// a decimal number, also with an exponent and spaces around it, e.g. " 12 ",
+// "-.5" or "1e3", not the other texts of Number, e.g. "0x10" or "Infinity"
+const decimalNumber = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
+
+// missing, invalid and infinite values are null, only numbers and texts of
+// decimal numbers are numbers, not e.g. true or [1], which Number reads as
+// 1, integers of 64 bits are numbers
 const toNumber = v => {
-    const n = missing(v) ? NaN : Number(v);
+    const n = typeof v == 'number' || typeof v == 'bigint' ? Number(v)
+        : (typeof v == 'string' && decimalNumber.test(v) ? Number(v) : NaN);
     return Number.isFinite(n) ? n : null;
 };
 
@@ -135,8 +141,10 @@ const converter = (mapping, mappings) => {
     return toCategory;
 };
 
-// a value as the ones of the rows of a mapping, e.g. "2022-06-01" of a date
-const convert = (mapping, v) => converter(mapping)(v);
+// a value as the ones of the rows of a mapping, e.g. "2022-06-01" of a date,
+// of the time zone of its scale, also the one of another mapping (`"scale":
+// { "of": "x" }`) of the `mappings` of the definition
+const convert = (mapping, v, mappings) => converter(mapping, mappings)(v);
 
 // the values of a column of the data by the index of a row, of a transform
 // (`columns`, see utils/transform.js) or of the rows
@@ -271,29 +279,30 @@ const filter = (data, conditions) => {
 // a condition of the values of a mapping `m` of a filter: a value or a list
 // of values, compared as the ones of the rows, e.g. dates, `null` the rows
 // without a value, `{ "not": condition }` and `{ "range": [from, to] }`
-// (`null` is open), the values are evaluated already, e.g. of globals
+// (`null` is open), the values are evaluated already, e.g. of globals, the
+// `mappings` of the definition are the ones of a scale of another mapping
 const missingValue = v => v === null || v === undefined;
-const condition = (m, c, path) => {
+const condition = (m, c, path, mappings) => {
     if (missingValue(c))
         return missingValue;
     if (Array.isArray(c)) {
-        const keys = new Set(c.map(k => String(convert(m, k))));
+        const keys = new Set(c.map(k => String(convert(m, k, mappings))));
         return v => !missingValue(v) && keys.has(String(v));
     }
     if (typeof c == 'object') {
         if ('not' in c) {
-            const test = condition(m, c.not, path);
+            const test = condition(m, c.not, path, mappings);
             return v => !test(v);
         }
         if (Array.isArray(c.range)) {
             // categories as numbers if they are numbers, e.g. "9" is below "10"
-            const [from, to] = c.range.map(e => missingValue(e) ? null : convert(m, e));
+            const [from, to] = c.range.map(e => missingValue(e) ? null : convert(m, e, mappings));
             const compare = continuous(m) ? (a, b) => a - b : compareCategories;
             return v => !missingValue(v) && (from === null || compare(v, from) >= 0) && (to === null || compare(v, to) <= 0);
         }
         throw new Error(`${path}: expected a value, a list of values, null, { "not": ... } or { "range": [from, to] }`);
     }
-    const key = String(convert(m, c));
+    const key = String(convert(m, c, mappings));
     return v => !missingValue(v) && String(v) === key;
 };
 
@@ -305,7 +314,7 @@ const condition = (m, c, path) => {
  */
 const rowFilter = (conditions, mapping, scope = {}, path = 'filter') => Object.entries(conditions ?? {}).map(([dim, c]) => ({
     dim,
-    key: condition(Object.hasOwn(mapping, dim) ? mapping[dim] : undefined, evaluate(c, scope), `${path}.${dim}`),
+    key: condition(Object.hasOwn(mapping, dim) ? mapping[dim] : undefined, evaluate(c, scope), `${path}.${dim}`, mapping),
 }));
 
 /**

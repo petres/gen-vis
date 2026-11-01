@@ -2,7 +2,7 @@ export { makeScale, bandCenter };
 
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/props";
-import { convert } from "@/utils/data";
+import { continuous, convert } from "@/utils/data";
 import { comparison } from "@/utils/values";
 
 // the offset of the center of a band, the position of band scales is its start
@@ -36,7 +36,7 @@ const transformOf = (type, sign) => {
 
 // rounded ends of a domain, of log scales powers of 10, e.g. 1 and 1000 of
 // 1.3 and 870, `count` is the number of steps of the others
-const niceEnds = (type, lo, hi, count) => type.toLowerCase().endsWith('log') && !type.toLowerCase().endsWith('symlog')
+const niceEnds = (type, lo, hi, count) => isLog(type)
     ? d3.scales.log().domain([lo, hi]).nice().domain()
     : d3.nice(lo, hi, count);
 
@@ -127,19 +127,35 @@ const sortCategories = (values, rows, name, order) => {
     return [...keyed, ...values.filter(v => !first.has(v))];
 };
 
+// a log scale, not a symlog one, its values are all positive or all negative
+const isLog = type => type.toLowerCase().endsWith('log') && !type.toLowerCase().endsWith('symlog');
+
+// the values of a log scale: the positive ones, without them the negative
+// ones, 0 and the others have no position, e.g. 0 of 0, 10 and 100
+const logValues = values => {
+    const positive = values.filter(v => v > 0);
+    return positive.length ? positive : values.filter(v => v < 0);
+};
+
 // the values of a mapping in the rows, continuous ones sorted for the lookup
 // of the nearest value, and their extent, of stacked values (`stackOf`, see
 // layout.js) the one of the stacks, e.g. from 0, the extent and the
 // categories include the values of the mappings with this scale (`also`,
-// `"scale": { "of": ... }`), e.g. of a band between two columns
-const valuesOf = (name, mapping, rows, stackOf, also = []) => {
+// `"scale": { "of": ... }`), e.g. of a band between two columns, of a log
+// scale (`log`) only the ones with a position, see logValues, the extent
+// is null without values
+const valuesOf = (name, mapping, rows, stackOf, also = [], log = false) => {
     const values = [...new Set(rows.map(d => d[name]))];
     const others = also.flatMap(n => rows.map(d => d[n])).filter(v => v !== null && v !== undefined);
     if (mapping.type != 'numeric' && mapping.type != 'date')
         return { values: others.length ? [...new Set([...values, ...others])] : values };
-    const sorted = values.filter(v => v !== null).sort((a, b) => a - b);
-    const extent = mapping.stacked && stackOf ? d3.extent(rows.flatMap(stackOf)) : d3.extent(sorted);
-    return { values: sorted, extent: others.length ? d3.extent([...extent, ...others]) : extent };
+    let sorted = values.filter(v => v !== null && v !== undefined).sort((a, b) => a - b);
+    let all = [...(mapping.stacked && stackOf ? rows.flatMap(stackOf) : sorted), ...others].filter(v => v !== null && v !== undefined);
+    if (log) {
+        all = logValues(all);
+        sorted = sorted.filter(v => Math.sign(v) == Math.sign(all[0]));
+    }
+    return { values: sorted, extent: all.length ? d3.extent(all) : null };
 };
 
 /**
@@ -147,23 +163,33 @@ const valuesOf = (name, mapping, rows, stackOf, also = []) => {
  * is the value with data nearest to a position, e.g. of the hover. The range
  * is the one of the definition or of the orientation of the coordinate
  * system (`coord`), the references of the range are the names of `scope`
- * and the sizes `dims` of the coordinate system, e.g. its `radius`.
+ * and the sizes `dims` of the coordinate system, e.g. its `radius`, values
+ * of the definition are converted as the ones of the rows, also of the
+ * `mappings` of the definition, e.g. dates of a scale of another mapping.
  */
-const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, stackOf, also = [] } = {}) => {
+const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, stackOf, also = [], mappings } = {}) => {
     const scaleDef = mapping.scale;
     const ranges = coord.ranges ?? {};
     // the end of a cyclic range is its start, e.g. of the angles of a circle
     const cyclic = (coord.cyclic ?? []).includes(scaleDef.orientation);
-    let { values, extent } = valuesOf(name, mapping, rows, stackOf, also);
+    const log = isLog(scaleDef.type);
+    let { values, extent } = valuesOf(name, mapping, rows, stackOf, also, log);
     // the extent of the data includes the values of `include`, e.g. 0 or
     // 100, around `center` it is symmetric, e.g. of 0 of changes
     // a value of the definition as the ones of the data, e.g. a date or a category as a string
-    const valueOf = v => v === null || v === undefined ? null : convert(mapping, v);
-    if (extent && scaleDef.include !== undefined) {
-        const included = [evaluate(scaleDef.include, scope)].flat().map(valueOf).filter(v => v !== null);
-        extent = d3.extent([...extent, ...included].filter(v => v !== undefined && v !== null));
+    const valueOf = v => v === null || v === undefined ? null : convert(mapping, v, mappings);
+    if (continuous(mapping)) {
+        let included = scaleDef.include === undefined ? []
+            : [evaluate(scaleDef.include, scope)].flat().map(valueOf).filter(v => v !== null && v !== undefined);
+        if (log)
+            included = included.filter(v => extent ? Math.sign(v) == Math.sign(extent[0]) : v > 0);
+        // without values, e.g. of empty rows, the extent of the included
+        // values or 0 to 1 (1 to 10 of a log scale), not NaN to NaN
+        if (!extent && new Set(included).size < 2)
+            included.push(...(log ? [1, 10] : [0, 1]));
+        extent = d3.extent([...(extent ?? []), ...included]);
     }
-    if (extent && scaleDef.center !== undefined && extent[0] !== undefined) {
+    if (continuous(mapping) && scaleDef.center !== undefined) {
         const c = valueOf(evaluate(scaleDef.center, scope));
         if (c !== null) {
             const d = Math.max(Math.abs(extent[0] - c), Math.abs(extent[1] - c));

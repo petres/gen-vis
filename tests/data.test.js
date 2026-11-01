@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, parseData, prepareData, stack, updateData, usedColumns } from '@/utils/data';
+import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, parseData, prepareData, rowFilter, stack, updateData, usedColumns } from '@/utils/data';
 import { prepareDef } from '@/utils/def';
 
 const def = {
@@ -346,5 +346,112 @@ describe('groupBy', () => {
     test('the groups are in the order of the data, also for numeric keys', () => {
         const data = [{ a: '2021' }, { a: '2020' }, { a: 'x' }];
         expect(groupBy(data, ['a']).map(g => g.group.a)).toEqual(['2021', '2020', 'x']);
+    });
+});
+
+describe('parquet, values as the ones of csv', () => {
+    const optional = (name, type, more = {}) => ({ name, type, repetition_type: 'OPTIONAL', ...more });
+
+    test('decimals of only the logical type of bytes, also negative and large ones', async () => {
+        // the unscaled integers big-endian, two's complement
+        const bytes = (n, length) => {
+            const b = new Uint8Array(length);
+            let v = BigInt.asUintN(8*length, BigInt(n));
+            for (let i = length - 1; i >= 0; i--, v >>= 8n)
+                b[i] = Number(v & 255n);
+            return b;
+        };
+        const logical = { type: 'DECIMAL', precision: 30, scale: 4 };
+        const unscaled = [221637n, -1n, -221637n, 10n**25n + 1n, null];
+        const buffer = parquetWriteBuffer({
+            columnData: [
+                { name: 'f', data: unscaled.map(n => n === null ? null : bytes(n, 16)) },
+                { name: 'b', data: unscaled.map(n => n === null ? null : bytes(n, n < 0 ? 3 : 11)) },
+            ],
+            schema: [
+                { name: 'root', num_children: 2 },
+                optional('f', 'FIXED_LEN_BYTE_ARRAY', { type_length: 16, logical_type: logical }),
+                optional('b', 'BYTE_ARRAY', { logical_type: logical }),
+            ],
+        });
+        const rows = await parseData(buffer);
+        const expected = [22.1637, -0.0001, -22.1637, Number('1000000000000000000000.0001'), null];
+        rows.forEach((row, i) => ['f', 'b'].forEach(k => expect(Object.is(row[k], expected[i])).toBe(true)));
+    });
+
+    test('dates of only the logical type are the days of csv, not timestamps of 1970', async () => {
+        const buffer = parquetWriteBuffer({
+            columnData: [{ name: 'day', data: [19875, -3593, null] }],
+            schema: [{ name: 'root', num_children: 1 }, optional('day', 'INT32', { logical_type: { type: 'DATE' } })],
+        });
+        const rows = await parseData(buffer);
+        expect(rows).toEqual([{ day: '2024-06-01' }, { day: '1960-03-01' }, { day: null }]);
+        const csv = await parseData('day\n2024-06-01\n1960-03-01\n');
+        const d = prepareDef({ mapping: { t: { column: 'day', type: 'date' } } });
+        expect(prepareData(rows, d).slice(0, 2)).toEqual(prepareData(csv, d));
+    });
+
+    test('floats of 32 bits are the numbers of their shortest text', async () => {
+        const values = [22.1637, 0.1, -3.4e38, 1e-7, 16777216, 0, null];
+        const buffer = parquetWriteBuffer({ columnData: [{ name: 'f', data: values, type: 'FLOAT' }] });
+        expect((await parseData(buffer)).map(r => r.f)).toEqual(values);
+    });
+
+    test('integers of 64 bits in lists and structs are no BigInt, bytes without a type are text', async () => {
+        const buffer = parquetWriteBuffer({
+            columnData: [
+                { name: 'l', data: [[1n, 2n**60n, null], null, []] },
+                { name: 's', data: [{ a: 1n, b: new TextEncoder().encode('ä') }, null, { a: 2n**60n, b: null }] },
+                { name: 't', data: [new TextEncoder().encode('Wien'), null, new TextEncoder().encode('')] },
+            ],
+            schema: [
+                { name: 'root', num_children: 3 },
+                optional('l', undefined, { converted_type: 'LIST', num_children: 1 }),
+                { name: 'list', repetition_type: 'REPEATED', num_children: 1 },
+                optional('element', 'INT64'),
+                optional('s', undefined, { num_children: 2 }),
+                optional('a', 'INT64'),
+                optional('b', 'BYTE_ARRAY'),
+                optional('t', 'BYTE_ARRAY'),
+            ],
+        });
+        const rows = await parseData(buffer);
+        const bigints = v => typeof v == 'bigint' || (v && typeof v == 'object' && Object.values(v).some(bigints));
+        expect(rows.some(bigints)).toBe(false);
+        expect(rows[0]).toEqual({ l: [1, String(2n**60n), null], s: { a: 1, b: 'ä' }, t: 'Wien' });
+        expect(rows[2]).toEqual({ l: [], s: { a: String(2n**60n), b: null }, t: '' });
+        const d = prepareDef({ mapping: { v: { column: 'l', type: 'numeric' } } });
+        expect(prepareData(rows, d)[0].v).toBeNull();
+    });
+});
+
+describe('numbers, only finite numbers and texts of decimal numbers', () => {
+    const d = prepareDef({ mapping: { v: { column: 'v', type: 'numeric' } } });
+    const values = rows => prepareData(rows, d).map(r => r.v);
+
+    test('of csv, with spaces, signs and exponents', async () => {
+        expect(values(await parseData('v\n 12 \n-.5\n+1e3\n2.5E-1\n007\n\nNA\n-\n0x10\n0b1\n"1,234"\nInfinity\n1e999'))).toEqual(
+            [12, -0.5, 1000, 0.25, 7, null, null, null, null, null, null, null, null]);
+    });
+
+    test('of json, no booleans, lists or objects', async () => {
+        expect(values(await parseData('[{"v": 1.5}, {"v": true}, {"v": false}, {"v": [1]}, {"v": {}}, {"v": "0x10"}, {"v": null}, {"v": " 3 "}]')))
+            .toEqual([1.5, null, null, null, null, null, null, 3]);
+        expect(values([{ v: 2n**60n }, { v: 3n }])).toEqual([2**60, 3]);
+    });
+});
+
+describe('filters of a mapping with the scale of another one', () => {
+    test('dates of a utc scale of another mapping', () => {
+        const d = prepareDef({ mapping: {
+            x: { column: 'd', type: 'date', scale: { type: 'utc' } },
+            x2: { column: 'e', type: 'date', scale: { of: 'x' } },
+        } });
+        const data = prepareData([{ d: '2020-01-01', e: '2020-01-01' }, { d: '2020-01-02', e: '2020-01-03' }], d);
+        expect(data[0].x2).toBe(Date.UTC(2020, 0, 1));
+        expect(filter(data, rowFilter({ x2: '2020-01-01' }, d.mapping))).toEqual([data[0]]);
+        expect(filter(data, rowFilter({ x2: ['2020-01-03'] }, d.mapping))).toEqual([data[1]]);
+        expect(filter(data, rowFilter({ x2: { range: ['2020-01-02', null] } }, d.mapping))).toEqual([data[1]]);
+        expect(filter(data, rowFilter({ x2: { not: '2020-01-01' } }, d.mapping))).toEqual([data[1]]);
     });
 });

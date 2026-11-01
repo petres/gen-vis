@@ -28,12 +28,14 @@ const tickCount = (axis, scope, length) => {
 // the values of the ticks of an axis, also of the grid lines, fixed ones are
 // converted as the values of the data of the `mapping`, e.g. dates of
 // "2020-04-01" or the categories as strings, e.g. "2004" of 2004, they can be
-// a prop of the names of the facet (`scope`)
-const tickValues = (axis, scale, ticks, mapping, scope = {}) => {
+// a prop of the names of the facet (`scope`), dates in the time zone of the
+// scale, also of the one of another mapping (`"scale": { "of": "x" }`) of
+// the `mappings` of the definition
+const tickValues = (axis, scale, ticks, mapping, scope = {}, mappings) => {
     // a list or a prop, e.g. steps of the width
     const values = axis.values === undefined ? undefined : evaluate(axis.values, scope);
     return Array.isArray(values)
-        ? values.map(v => mapping ? convert(mapping, v) : v).filter(v => v !== null && inRange(scale, v))
+        ? values.map(v => mapping ? convert(mapping, v, mappings) : v).filter(v => v !== null && inRange(scale, v))
         : (scale.ticks ? scale.ticks(ticks) : scale.domain());
 };
 
