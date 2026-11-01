@@ -43,10 +43,10 @@ test('the symbols of legends, the order and the ranks of categories', () => {
         "mapping.c.props.order: expected 'ascending', 'descending' or a list of keys",
         "mapping.c.props.ranks: expected a list of props, of the first category, the second one, ...",
         "mapping.c.legend.onlyData: only the entries of the categories of the rows, true or false, of a legend of props",
-        "mapping.c.legend.symbol: unknown symbol 'star', expected one of 'line', 'rect', 'circle' or the svg 'elements'",
         expect.stringMatching(/^mapping.c.legend.symbol.props.fill: unknown reference 'nope'/),
         // the ranks are no list, so their props are unknown
         expect.stringMatching(/^plot\[0\].props.stroke: unknown reference 'dash'/),
+        "mapping.c.legend.symbol.type: unknown type 'star', expected one of 'line', 'rect', 'circle'",
     ]);
 });
 
@@ -147,9 +147,12 @@ describe('validateDef', () => {
         def.plot.props.r = { prop: 'relative', ratio: 0.01 };
         def.plot.props.fill = { prop: 'color' };
         expect(validateDef(def)).toEqual([
-            "mapping.x.axis.ticks: has 'ratio', 'mode' but no 'prop', so it is not evaluated",
+            "mapping.x.axis.ticks: has 'ratio' but no 'prop', so it is not evaluated",
             "plot[0].props.r: a 'relative' prop needs a 'ref' or a prop 'of'",
-            "plot[0].props.fill: unknown prop 'color', expected one of 'fixed', 'ref', 'relative', 'steps', 'format', 'match'",
+            // the keys of a prop and its kinds are the ones of the schema
+            "mapping.x.axis.ticks.mode: unknown key, expected one of 'prop', 'format', 'ref', 'of', 'ratio', 'offset', 'steps', 'cases', 'default', 'value'",
+            "mapping.x.axis.ticks.base: unknown key, expected one of 'prop', 'format', 'ref', 'of', 'ratio', 'offset', 'steps', 'cases', 'default', 'value'",
+            "plot[0].props.fill.prop: unknown prop 'color', expected one of 'fixed', 'ref', 'relative', 'steps', 'format', 'match'",
         ]);
     });
 
@@ -187,10 +190,11 @@ describe('validateDef', () => {
         def.mapping.c.props = { Wien: {} };
         expect(validateDef(def)).toEqual([
             "mapping.x: no 'column'",
-            "mapping.x.type: unknown type 'number', expected one of 'numeric', 'date', 'categorical'",
             "mapping.x.scale.type: a linear scale does not fit the type 'number'",
             "mapping.y.axis.position: unknown position 'middle', expected one of 'top', 'bottom', 'left', 'right'",
             "mapping.c.props: expected 'categories' or the ones of the data ('fromData'), and optional 'common' props",
+            // the warnings of the schema are the last ones
+            "mapping.x.type: unknown type 'number', expected one of 'numeric', 'date', 'categorical'",
         ]);
     });
 
@@ -209,26 +213,25 @@ describe('validateDef', () => {
             `mapping.n: expected a mapping, e.g. { "column": "value", "type": "numeric" }`,
             'mapping.y.hover: expected an object, e.g. {}',
             'formElements[0]: expected a form element',
-            "mapping.x.scale.type: unknown scale 'implicit', e.g. 'linear', 'time' or 'band'",
             `plot[0]: expected a plot, e.g. { "type": "svg:circle", "props": {} }`,
-            'plot[2].categories: expected a mapping or a list of mappings, e.g. ["land"]',
             `annotations[0]: expected an annotation, e.g. { "type": "line", "y": 0 }`,
+            "mapping.x.scale.type: unknown scale 'implicit', e.g. 'linear', 'time' or 'band'",
+            'plot[2].categories: expected a mapping or a list of mappings, e.g. ["land"]',
             `formElements[1].values[0]: expected an entry, e.g. { "id": "a", "name": "A", "value": "a" }`,
             `formElements[2].values: expected a list of entries or the column of the values, e.g. { "column": "year" }`,
             "options.locale: expected 'de', 'en', a language of Intl, e.g. 'fr', or an object with a 'base' locale",
         ]);
     });
 
-    test('unknown keys of form elements and of their entries', () => {
+    test('unknown keys of form elements and of their entries, other fields of entries are names of templates', () => {
         const def = base();
         def.formElements = [{ id: 'g', name: 'G', ref: 'g', type: 'radio', default: 'a', values: [
             { id: 'a', name: 'A', value: 'a', mapping: { y: { column: 'share' } } },
             { id: 'b', name: 'B', value: 'b', label: 'B' },
         ] }];
         expect(validateDef(def)).toEqual([
-            "formElements[0].default: unknown key, expected one of 'id', 'name', 'ref', 'type', 'inImage', 'values'",
             `formElements[0].values[0].mapping: unknown key, a part of the definition is part of the patch, e.g. { "patch": { "mapping": ... } }`,
-            "formElements[0].values[1].label: unknown key, expected one of 'id', 'name', 'value', 'globals', 'patch'",
+            "formElements[0].default: unknown key, expected one of 'id', 'name', 'ref', 'type', 'inImage', 'values'",
         ]);
     });
 
@@ -274,10 +277,10 @@ describe('validateDef', () => {
             expect.stringMatching(/^geo.projection.type: unknown projection 'flat', expected one of 'albers', .*'mercator'/),
             "filter.year: unknown mapping 'year'",
             "filter.year: unknown reference 'year', expected one of 'g', 'totalWidth'",
-            "formElements[0].type: unknown type 'checkbox', expected one of 'radio', 'select', 'slider', 'hidden'",
             "formElements[0].ref: no global",
             "formElements[0].values: no value of 'a'",
             "formElements[1].values: expected a list of entries or the column of the values, e.g. { \"column\": \"year\" }",
+            "formElements[0].type: unknown type 'checkbox', expected one of 'radio', 'select', 'slider', 'hidden'",
         ]);
     });
 
@@ -303,7 +306,7 @@ describe('validateDef', () => {
         expect(validateDef(def)).toEqual([
             "mapping.x.scale.range[1]: unknown reference 'radius', expected one of 'g', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight'",
             "mapping.c.legend.props.title: unknown reference 'innerWidth', expected one of 'g', 'totalWidth', 'name', 'visible', 'color'",
-            "plot[0].props.fill: unknown reference 'colour'",
+            "plot[0].props.fill: unknown reference 'colour', did you mean 'color'?",
             "plot[0].props.y0: unknown reference 'y:start:scaled'",
             "filter.c: unknown reference 'h', expected one of 'g', 'totalWidth'",
             "annotations[0].props.stroke: unknown reference 'color', expected one of 'g', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'y'",
@@ -349,8 +352,8 @@ describe('validateDef', () => {
             "plot[0].halo: a halo behind the texts of a plot of 'svg:text' or 'polar:text', true or its width",
             "plot[1].data[0].y: unknown reference 'unknown', expected one of 'target', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight'",
             `plot[1].select: expected 'first', 'last' or the min or max of a mapping, e.g. { "max": "x" }`,
-            "plot[1].layer: unknown layer 'front', expected one of 'below', 'above'",
             "plot[1].props.text: unknown reference 'label'",
+            "plot[1].layer: unknown layer 'front', expected one of 'below', 'above'",
         ]);
         delete def.plot[0].halo;
         delete def.plot[0].dodge;
@@ -379,10 +382,10 @@ describe('validateDef', () => {
         def.plot.highlight = 'element';
         def.annotations = [{ type: 'band', x: [0, 1], z: 2 }, { type: 'arrow' }, { type: 'text', c: 'Wien' }];
         expect(validateDef(def)).toEqual([
-            "plot[0].highlight: unknown highlight 'element', expected one of 'group', 'row'",
             "annotations[0].z: unknown mapping 'z'",
             "annotations[1].type: unknown type 'arrow', expected one of 'band', 'line', 'text', 'circle'",
             "annotations[2].c: the mapping has no scale",
+            "plot[0].highlight: unknown highlight 'element', expected one of 'group', 'row'",
         ]);
         def.plot.highlight = 'row';
         def.options = { coord: 'geo' };
@@ -393,7 +396,7 @@ describe('validateDef', () => {
         delete def.mapping.y.scale.orientation;
         def.annotations = [{ type: 'band' }, { type: 'text', lon: 16.4, lat: 48.2 }];
         expect(validateDef(def).sort()).toEqual([
-            "annotations[0].type: unknown type 'band', expected one of 'text', 'circle'",
+            "annotations[0].type: a band is not available in the coordinate system 'geo', expected one of 'text', 'circle'",
             "annotations[0]: an annotation of a map needs 'lon' and 'lat'",
             "mapping.x.scale.orientation: the coordinate system 'geo' has no orientations, e.g. a scale of colors has none",
         ].sort());
@@ -406,9 +409,9 @@ describe('validateDef', () => {
         ];
         expect(validateDef(def).filter(w => w.startsWith('plot'))).toEqual([
             "plot[1].object: the object of the TopoJSON of a plot of 'geo:mesh', a string",
-            "plot[1].borders: the borders of a plot of 'geo:mesh', one of 'all', 'inner', 'outer'",
             "plot[2].object: the object of the TopoJSON of a plot of 'geo:mesh', a string",
             "plot[2].borders: the borders of a plot of 'geo:mesh', one of 'all', 'inner', 'outer'",
+            "plot[1].borders: unknown borders 'between', expected one of 'all', 'inner', 'outer'",
         ]);
     });
 
@@ -421,7 +424,7 @@ describe('validateDef', () => {
         ] }];
         expect(validateDef(def)).toEqual([
             "mapping.y.column: unknown global 'share' in the column template",
-            "formElements[0].values[0].patch.mapping.y.column: unknown global 'unit' in the column template",
+            "formElements[0].values[0] > mapping.y.column: unknown global 'unit' in the column template",
         ]);
     });
 
@@ -449,6 +452,168 @@ describe('validateDef', () => {
         def.options = { title: 'Index {base}', subtitle: '{base} = 100, {unit}' };
         expect(validateDef(def)).toEqual([
             "options.subtitle: unknown global 'unit' in the text",
+        ]);
+    });
+});
+
+describe('validateDef and the schema', () => {
+    test('unknown keys everywhere the schema has none, typos with the key they probably are', () => {
+        const def = base();
+        def.mapping.x.axis.positon = 'bottom';
+        def.mapping.y.scale.domian = [0, null];
+        def.options = { hover: { sid: 'left' }, titel: 'A' };
+        def.plot.curv = 'linear';
+        def.colour = 'red';
+        // in the order of the keys of the definition
+        expect(validateDef(def)).toEqual([
+            "mapping.x.axis.positon: unknown key, did you mean 'position'?",
+            "mapping.y.scale.domian: unknown key, did you mean 'domain'?",
+            "plot[0].curv: unknown key, did you mean 'curve'?",
+            "options.hover.sid: unknown key, did you mean 'side'?",
+            "options.titel: unknown key, did you mean 'title'?",
+            "colour: unknown key, expected one of '$schema', 'parent', 'data', 'dataFormat', 'geo', 'annotations', 'transform', 'filter', 'options', 'globals', 'mapping', 'plot', 'facets', 'formElements'",
+        ]);
+    });
+
+    test('values of the enums of the schema, typos with the value they probably are', () => {
+        const def = base();
+        def.plot.curve = 'monotonX';
+        def.options = { hover: { side: 'top', box: 'no', offset: [0] }, transition: -1 };
+        def.transform = { type: 'calc', columns: ['a', 'b'], op: 'plus', as: 'c' };
+        expect(validateDef(def)).toEqual([
+            "plot[0].curve: unknown curve 'monotonX', did you mean 'monotoneX'?",
+            "options.hover.side: unknown side 'top', expected one of 'left', 'right', 'above', 'below', 'center'",
+            "options.hover.box: expected true or false",
+            "options.hover.offset: expected 2 values",
+            "options.transition: expected at least 0",
+            "transform[0].op: unknown op 'plus', expected one of 'add', 'subtract', 'multiply', 'divide', 'min', 'max'",
+        ]);
+    });
+
+    test('the offset of the hover can leave out a direction (null)', () => {
+        expect(validateDef({ ...base(), options: { hover: { offset: [null, -10] } } })).toEqual([]);
+    });
+
+    test('false or null removes a part of a mapping, null the geometry, the filter or the options of a patch', () => {
+        const def = base();
+        def.mapping.c.hover = false;
+        def.mapping.c.legend = null;
+        def.filter = null;
+        def.geo = null;
+        def.globals = { g: 'a' };
+        def.formElements = [{ id: 'g', ref: 'g', type: 'radio', values: [
+            { id: 'a', value: 'a', patch: { options: null, filter: null } },
+            { id: 'b', value: 'b', patch: { mapping: { c: { props: false } }, geo: null } },
+        ] }];
+        expect(validateDef(def)).toEqual([]);
+    });
+
+    test('other scalar fields of entries are names of templates, e.g. {g:short}', () => {
+        const def = base();
+        def.globals = { g: 'a' };
+        def.options = { subtitle: 'Values of {g:short}' };
+        def.formElements = [{ id: 'g', ref: 'g', type: 'radio', values: [
+            { id: 'a', value: 'a', short: 'A', rank: 1, main: true, none: null },
+            { id: 'b', value: 'b', short: { de: 'B' } },
+        ] }];
+        expect(validateDef(def)).toEqual([
+            "formElements[0].values[1].short: expected a string or a number or true or false or null",
+        ]);
+    });
+
+    test('the definitions of the patches of the entries, the warnings of their own after the entry', () => {
+        const def = base();
+        def.globals = { g: 'a' };
+        def.mapping.y.scale.type = 'Linear';
+        def.formElements = [{ id: 'g', ref: 'g', type: 'radio', values: [
+            { id: 'a', value: 'a', patch: { mapping: { y: { type: 'date' } } } },
+            { id: 'b', value: 'b', patch: { options: { coord: 'geo' }, plot: { type: 'geo:region', props: {} } } },
+            { id: 'c', value: 'c', patch: { plot: { type: 'cartesian:bar', categories: ['z'] } } },
+        ] }];
+        expect(validateDef(def)).toEqual([
+            "mapping.y.scale.type: use 'linear'",
+            "formElements[0].values[0] > mapping.y.scale.type: the positions of dates need a 'time' or a 'utc' scale",
+            "formElements[0].values[1] > mapping.x.scale.orientation: the coordinate system 'geo' has no orientations, e.g. a scale of colors has none",
+            "formElements[0].values[1] > mapping.x.axis: the coordinate system 'geo' has no axes",
+            "formElements[0].values[1] > mapping.y.scale.orientation: the coordinate system 'geo' has no orientations, e.g. a scale of colors has none",
+            "formElements[0].values[1] > mapping.y.axis: the coordinate system 'geo' has no axes",
+            "formElements[0].values[1] > geo.data: a map needs its geometry, GeoJSON or TopoJSON or their url",
+            "formElements[0].values[2] > plot[0].categories: unknown mapping 'z'",
+        ]);
+        // a patch is checked by the schema as a part of the definition
+        def.formElements[0].values[0].patch.mapping.y.scael = {};
+        expect(validateDef(def)).toContain("formElements[0].values[0].patch.mapping.y.scael: unknown key, did you mean 'scale'?");
+    });
+
+    test('registered plot types and coordinate systems are valid in the schema, unknown ones are warnings', () => {
+        const def = base();
+        def.plot.type = 'my:plot';
+        def.options = { coord: 'mine' };
+        expect(validateDef(def)).toEqual([
+            "options.coord: unknown coordinate system 'mine', expected one of 'cartesian', 'polar', 'geo'",
+            expect.stringMatching(/^plot\[0\]\.type: unknown type 'my:plot', expected one of 'svg:circle', /),
+        ]);
+        def.plot.type = 'cartesian:lin';
+        def.options.coord = 'polr';
+        expect(validateDef(def)).toEqual([
+            "options.coord: unknown coordinate system 'polr', did you mean 'polar'?",
+            "plot[0].type: unknown type 'cartesian:lin', did you mean 'cartesian:line'?",
+        ]);
+    });
+
+    test('the names of d3 in the case of the schema', () => {
+        const def = base();
+        def.mapping.x.scale.type = 'Linear';
+        def.options = { coord: 'geo' };
+        def.geo = { data: 'map.json', projection: { type: 'Mercator' } };
+        def.plot = { type: 'geo:region', props: {} };
+        def.mapping.x = { column: 'year', type: 'numeric', scale: { type: 'Linear', interpolator: 'Blues' } };
+        delete def.mapping.y.scale.orientation;
+        delete def.mapping.y.axis;
+        expect(validateDef(def)).toEqual([
+            "mapping.x.scale.type: use 'linear'",
+            "mapping.x.scale.interpolator: a linear scale has no interpolator, e.g. a sequential one has",
+            "geo.projection.type: use 'mercator'",
+        ]);
+    });
+
+    test('nice rounds the domains of numeric mappings, the messages of mappings without a type', () => {
+        const def = base();
+        def.mapping.d = { column: 'date', type: 'date', scale: { type: 'time', nice: true } };
+        def.mapping.c.scale = { type: 'linear', nice: 5 };
+        expect(validateDef(def)).toEqual([
+            "mapping.c.scale.type: a linear scale does not fit the type 'categorical'",
+            "mapping.c.scale.nice: only the domains of numeric mappings are rounded, not the ones of the type 'categorical'",
+            "mapping.d.scale.nice: only the domains of numeric mappings are rounded, not the ones of the type 'date'",
+        ]);
+        delete def.mapping.d;
+        delete def.mapping.c.type;
+        expect(validateDef(def)).toEqual([
+            "mapping.c.scale.type: a linear scale does not fit a mapping without a type (categorical)",
+            "mapping.c.scale.nice: only the domains of numeric mappings are rounded, not the ones of a mapping without a type (categorical)",
+        ]);
+    });
+
+    test('years of a date mapping are milliseconds, if the rows are given', () => {
+        const def = base();
+        def.mapping.x = { column: 'year', type: 'date', scale: { type: 'time', orientation: 'horizontal' }, axis: { position: 'bottom' } };
+        expect(validateDef(def)).toEqual([]);
+        expect(validateDef(def, [{ year: '2020' }, { year: Date.UTC(2021, 0, 1) }])).toEqual([]);
+        expect(validateDef(def, [{ year: 2020 }])).toEqual([
+            `mapping.x.type: the values of 'year' are numbers, e.g. 2020, which are milliseconds since 1970 as dates, years are numeric or strings, e.g. "2020"`,
+        ]);
+    });
+
+    test('a map has no axes', () => {
+        const def = base();
+        def.options = { coord: 'geo' };
+        def.geo = { data: 'map.json' };
+        def.plot = { type: 'geo:region', props: {} };
+        delete def.mapping.x.scale.orientation;
+        delete def.mapping.y.scale.orientation;
+        expect(validateDef(def)).toEqual([
+            "mapping.x.axis: the coordinate system 'geo' has no axes",
+            "mapping.y.axis: the coordinate system 'geo' has no axes",
         ]);
     });
 });

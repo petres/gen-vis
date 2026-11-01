@@ -30,13 +30,13 @@ describe('the schema', () => {
     });
 
     test('knows the plot types, coordinate systems and locales', () => {
-        expect(schema.definitions.plot.properties.type.enum).toEqual(Object.keys(plotTypes));
-        expect(schema.definitions.options.properties.coord.enum).toEqual(Object.keys(coords));
+        expect(schema.definitions.plot.properties.type.anyOf[0].enum).toEqual(Object.keys(plotTypes));
+        expect(schema.definitions.options.properties.coord.anyOf[0].enum).toEqual(Object.keys(coords));
         expect(schema.definitions.plot.properties.curve.enum).toEqual(curveNames);
         expect(schema.definitions.locale.anyOf[0].enum).toEqual(localeNames);
         expect(schema.properties.dataFormat.enum).toEqual(dataFormats);
         expect(schema.definitions.scale.properties.type.enum).toEqual(Object.keys(scales).sort());
-        expect(schema.properties.geo.properties.projection.properties.type.enum).toEqual(projectionNames);
+        expect(schema.definitions.geo.properties.projection.properties.type.enum).toEqual(projectionNames);
     });
 
     test('references and computed props of numbers, domains and ranges', () => {
@@ -87,5 +87,49 @@ describe('the schema', () => {
             d: { x: '@x:scaled', y: '@y:scaled' },
             'stroke-width': { prop: 'relative', ref: 'innerWidth', ratio: 0.01 },
         } } })).toEqual([]);
+    });
+});
+
+describe('the schema of the parts the code accepts', () => {
+    test('other scalar fields of entries, names of templates, e.g. {group:short}', () => {
+        expect(errors({ formElements: [{ id: 'g', values: [{ id: 'a', value: 'a', short: 'A', rank: 1, main: true, none: null }] }] })).toEqual([]);
+        expect(errors({ formElements: [{ id: 'g', values: [{ id: 'a', short: { de: 'A' } }] }] })).not.toEqual([]);
+        expect(errors({ formElements: [{ id: 'g', default: 'a' }] })).not.toEqual([]);
+    });
+
+    test('false or null removes a part of a mapping', () => {
+        for (const part of ['scale', 'axis', 'hover', 'legend', 'props']) {
+            expect(errors({ mapping: { c: { [part]: false } } })).toEqual([]);
+            expect(errors({ mapping: { c: { [part]: null } } })).toEqual([]);
+            expect(errors({ mapping: { c: { [part]: true } } })).not.toEqual([]);
+        }
+    });
+
+    test('null removes the geometry and the filter of a parent and the options and the mappings of a patch', () => {
+        expect(errors({ parent: 'map.json', geo: null, filter: null })).toEqual([]);
+        expect(errors({ formElements: [{ id: 'g', values: [{ id: 'a', patch: { options: null, mapping: null, geo: null, filter: null } }] }] })).toEqual([]);
+        // the coordinate system and the geometry of a patch, e.g. a map instead of bars
+        expect(errors({ formElements: [{ id: 'g', values: [{ id: 'a', patch: { options: { coord: 'geo' }, geo: { data: 'map.json' } } }] }] })).toEqual([]);
+    });
+
+    test('a direction of the offset of the hover can be left out (null)', () => {
+        expect(errors({ options: { hover: { offset: [null, -10] } } })).toEqual([]);
+        expect(errors({ options: { hover: { offset: [0] } } })).not.toEqual([]);
+    });
+
+    test('registered plot types and coordinate systems beside the built-in ones', () => {
+        expect(errors({ plot: { type: 'my-coord:dots' }, options: { coord: 'my-coord' } })).toEqual([]);
+        expect(errors({ options: { coord: 'test:coord' } })).toEqual([]);
+        expect(errors({ plot: { type: 'dots' } })).not.toEqual([]);
+        expect(errors({ options: { coord: 'My coord' } })).not.toEqual([]);
+        // the names of d3 are the ones of the schema, validateDef warns of others
+        expect(errors({ mapping: { x: { scale: { type: 'Linear' } } } })).not.toEqual([]);
+    });
+
+    test('the types of TypeScript keep the built-in plot types and coordinate systems of registered ones', async () => {
+        const { readFileSync } = await import('node:fs');
+        const types = readFileSync(new URL('../types/definition.d.ts', import.meta.url), 'utf8');
+        expect(types).toContain(`coord?: ('cartesian' | 'polar' | 'geo') | (string & {});`);
+        expect(types).toMatch(/'annotation:circle'\n\s+\)\n\s+\| \(string & \{\}\);/);
     });
 });

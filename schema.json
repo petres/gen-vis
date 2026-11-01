@@ -23,6 +23,52 @@
             "description": "The format of the data, by default the one of the extension of its url, without one CSV or JSON by the content."
         },
         "geo": {
+            "description": "The geometry of a map (coord geo), the rows are joined to its features, null removes the one of a parent.",
+            "anyOf": [{ "$ref": "#/definitions/geo" }, { "$ref": "#/definitions/none" }]
+        },
+        "annotations": {
+            "description": "An annotation or a list of them, bands, lines, texts and circles at values of the mappings, e.g. { \"type\": \"band\", \"x\": [\"2025-07-01\", null], \"label\": \"Schätzung\" }.",
+            "anyOf": [
+                { "$ref": "#/definitions/annotation" },
+                { "type": "array", "items": { "$ref": "#/definitions/annotation" } }
+            ]
+        },
+        "transform": {
+            "description": "Columns computed of the data, e.g. an index of a base year, in their order, see the readme.",
+            "anyOf": [
+                { "$ref": "#/definitions/transform" },
+                { "type": "array", "items": { "$ref": "#/definitions/transform" } }
+            ]
+        },
+        "filter": {
+            "description": "The rows of the conditions of mappings, null removes the ones of a parent.",
+            "anyOf": [{ "$ref": "#/definitions/filter" }, { "$ref": "#/definitions/none" }]
+        },
+        "options": { "$ref": "#/definitions/options" },
+        "globals": {
+            "type": "object",
+            "description": "Values changed by the form elements, e.g. the shared scales of the facets."
+        },
+        "mapping": {
+            "type": "object",
+            "description": "Maps columns of the data to named dimensions, the plots and all other parts of the definition refer to these names, null removes a mapping, e.g. of a parent.",
+            "additionalProperties": { "anyOf": [{ "$ref": "#/definitions/mapping" }, { "$ref": "#/definitions/none" }] }
+        },
+        "plot": {
+            "description": "A plot or a list of plots, drawn in order.",
+            "oneOf": [
+                { "$ref": "#/definitions/plot" },
+                { "type": "array", "items": { "$ref": "#/definitions/plot" } }
+            ]
+        },
+        "facets": { "$ref": "#/definitions/facets" },
+        "formElements": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/formElement" }
+        }
+    },
+    "definitions": {
+        "geo": {
             "type": "object",
             "additionalProperties": false,
             "description": "The geometry of a map (coord geo), the rows are joined to its features.",
@@ -50,45 +96,6 @@
                 }
             }
         },
-        "annotations": {
-            "description": "An annotation or a list of them, bands, lines, texts and circles at values of the mappings, e.g. { \"type\": \"band\", \"x\": [\"2025-07-01\", null], \"label\": \"Schätzung\" }.",
-            "anyOf": [
-                { "$ref": "#/definitions/annotation" },
-                { "type": "array", "items": { "$ref": "#/definitions/annotation" } }
-            ]
-        },
-        "transform": {
-            "description": "Columns computed of the data, e.g. an index of a base year, in their order, see the readme.",
-            "anyOf": [
-                { "$ref": "#/definitions/transform" },
-                { "type": "array", "items": { "$ref": "#/definitions/transform" } }
-            ]
-        },
-        "filter": { "$ref": "#/definitions/filter" },
-        "options": { "$ref": "#/definitions/options" },
-        "globals": {
-            "type": "object",
-            "description": "Values changed by the form elements, e.g. the shared scales of the facets."
-        },
-        "mapping": {
-            "type": "object",
-            "description": "Maps columns of the data to named dimensions, the plots and all other parts of the definition refer to these names, null removes a mapping, e.g. of a parent.",
-            "additionalProperties": { "anyOf": [{ "$ref": "#/definitions/mapping" }, { "$ref": "#/definitions/none" }] }
-        },
-        "plot": {
-            "description": "A plot or a list of plots, drawn in order.",
-            "oneOf": [
-                { "$ref": "#/definitions/plot" },
-                { "type": "array", "items": { "$ref": "#/definitions/plot" } }
-            ]
-        },
-        "facets": { "$ref": "#/definitions/facets" },
-        "formElements": {
-            "type": "array",
-            "items": { "$ref": "#/definitions/formElement" }
-        }
-    },
-    "definitions": {
         "filter": {
             "type": "object",
             "description": "The rows of the conditions of mappings: a value or a list of values, e.g. a global of a form element { \"year\": \"@year\" }, null (no value), { \"not\": ... } or { \"range\": [from, to] } (null is open).",
@@ -97,6 +104,10 @@
         "none": {
             "type": "null",
             "description": "Removes the part of a parent."
+        },
+        "removed": {
+            "enum": [null, false],
+            "description": "null or false removes the part, e.g. the one of a parent."
         },
         "key": {
             "description": "A key of a feature of a map or of a category, compared as a string.",
@@ -310,7 +321,10 @@
                 },
                 "locale": { "$ref": "#/definitions/locale" },
                 "coord": {
-                    "enum": ["cartesian", "polar", "geo"],
+                    "anyOf": [
+                        { "enum": ["cartesian", "polar", "geo"] },
+                        { "type": "string", "pattern": "^[a-z][\\w-]*(:[\\w-]+)?$", "description": "A registered coordinate system, see registerCoord." }
+                    ],
                     "description": "The coordinate system of the plots, cartesian (a horizontal and a vertical axis) by default, polar (an angle and a radius) or geo (a map)."
                 },
                 "fontFamily": {
@@ -362,14 +376,14 @@
                 },
                 "nice": {
                     "anyOf": [{ "type": "boolean" }, { "type": "number" }],
-                    "description": "Rounds the ends of the domain taken from the data, e.g. 0.951 to 1, true for steps of about a tenth of the domain or the number of steps."
+                    "description": "Numeric mappings only: rounds the ends of the domain taken from the data, e.g. 0.951 to 1, true for steps of about a tenth of the domain or the number of steps."
                 },
                 "range": {
                     "type": "array",
                     "items": { "anyOf": [{ "type": "number" }, { "type": "string" }, { "$ref": "#/definitions/prop" }] },
                     "description": "By default the width or height of the plot, e.g. colors, references to the sizes of the coordinate system, e.g. \"@radius\"."
                 },
-                "padding": { "type": "number", "description": "For categorical scales, of a point scale of angles the place of the first category in steps, half a step after the top by default, 0 at the top, e.g. of a radar chart." },
+                "padding": { "type": "number", "description": "Band and point scales: the space between the categories and at the ends in steps, 0.4 by default; of a point scale of angles the place of the first category in steps, half a step after the top (0.5) by default, 0 at the top, e.g. of a radar chart." },
                 "step": { "$ref": "#/definitions/number", "description": "The pixels of a category of a vertical band or point scale, the height of the plot is the one of its categories (instead of options.height), e.g. the rows of horizontal bars keep their size if some are hidden." },
                 "order": {
                     "description": "The order of the categories of the data of a band, point or ordinal scale: of the rows (default), ascending, descending or by the value of a mapping of their first row, e.g. bars by their length.",
@@ -456,10 +470,10 @@
                     "additionalProperties": false,
                     "properties": {
                         "name": { "type": "string" },
-                        "offset": { "type": "number", "description": "The distance from the axis in pixels, by default near the edge of the margin." }
+                        "offset": { "type": "number", "description": "The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of polar axes 16 pixels outside of the circle." }
                     }
                 },
-                "padding": { "type": "number" }
+                "padding": { "type": "number", "default": 3, "description": "The gap between the tick marks and the labels in pixels, also of polar axes." }
             }
         },
         "mapping": {
@@ -479,9 +493,9 @@
                     "anyOf": [{ "type": "boolean" }, { "$ref": "#/definitions/filter" }],
                     "description": "Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars), a radial or an angular one (of pies, polar:arc from @<name>:start:scaled to @<name>:end:scaled), true all rows or the conditions of mappings of the rows which are stacked, as the ones of filter, e.g. { \"type\": { \"not\": \"load\" } }, the others have their own value as start and end, e.g. a line of a total on stacked areas."
                 },
-                "scale": { "anyOf": [{ "$ref": "#/definitions/scale" }, { "$ref": "#/definitions/none" }] },
-                "axis": { "anyOf": [{ "$ref": "#/definitions/axis" }, { "$ref": "#/definitions/none" }] },
-                "hover": { "anyOf": [{ "$ref": "#/definitions/none" }, {
+                "scale": { "anyOf": [{ "$ref": "#/definitions/scale" }, { "$ref": "#/definitions/removed" }] },
+                "axis": { "anyOf": [{ "$ref": "#/definitions/axis" }, { "$ref": "#/definitions/removed" }] },
+                "hover": { "anyOf": [{ "$ref": "#/definitions/removed" }, {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
@@ -505,7 +519,7 @@
                         }
                     }
                 }] },
-                "legend": { "anyOf": [{ "$ref": "#/definitions/none" }, {
+                "legend": { "anyOf": [{ "$ref": "#/definitions/removed" }, {
                     "type": "object",
                     "additionalProperties": false,
                     "description": "Toggles of the categories of the props, without props the colors of the scale.",
@@ -544,7 +558,8 @@
                                     "properties": {
                                         "type": { "enum": ["line", "rect", "circle"] },
                                         "size": { "type": "number", "default": 16 },
-                                        "props": { "$ref": "#/definitions/props" }
+                                        "props": { "$ref": "#/definitions/props" },
+                                        "elements": { "$ref": "#/definitions/symbolElements/properties/elements", "description": "Left out, the type replaces them, e.g. the ones of a parent." }
                                     }
                                 },
                                 { "$ref": "#/definitions/symbolElements" }
@@ -557,7 +572,7 @@
                     }
                 }] },
 
-                "props": { "anyOf": [{ "$ref": "#/definitions/none" }, {
+                "props": { "anyOf": [{ "$ref": "#/definitions/removed" }, {
                     "type": "object",
                     "description": "The categories and their props, e.g. colors. Only visible categories are shown, null removes the ones of a parent.",
                     "additionalProperties": false,
@@ -653,7 +668,10 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "enum": ["svg:circle", "svg:line", "svg:rect", "svg:text", "cartesian:line", "cartesian:area", "cartesian:bar", "polar:line", "polar:area", "polar:arc", "polar:circle", "polar:text", "geo:base", "geo:region", "geo:circle", "geo:text", "geo:mesh", "annotation:band", "annotation:line", "annotation:text", "annotation:circle"],
+                    "anyOf": [
+                        { "enum": ["svg:circle", "svg:line", "svg:rect", "svg:text", "cartesian:line", "cartesian:area", "cartesian:bar", "polar:line", "polar:area", "polar:arc", "polar:circle", "polar:text", "geo:base", "geo:region", "geo:circle", "geo:text", "geo:mesh", "annotation:band", "annotation:line", "annotation:text", "annotation:circle"] },
+                        { "type": "string", "pattern": "^[a-z][\\w-]*:[\\w-]+$", "description": "A registered plot type, see registerPlotType." }
+                    ],
                     "description": "The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations."
                 },
                 "id": { "type": "string", "description": "The class and the data-plot of the group of the plot, plot-<index> by default, the plots of a parent are merged by their ids." },
@@ -744,7 +762,8 @@
             "items": {
                 "type": "object",
                 "required": ["id"],
-                "additionalProperties": false,
+                "description": "An entry, other fields of scalars are names of the templates while it is selected, e.g. {group:short} of a field short of the entry of the global group.",
+                "additionalProperties": { "anyOf": [{ "type": "string" }, { "type": "number" }, { "type": "boolean" }, { "type": "null" }] },
                 "properties": {
                     "id": { "type": "string" },
                     "name": { "type": "string" },
@@ -758,13 +777,13 @@
                         "description": "Patches the definition while the entry is selected, merged in the order of the form elements, null removes a part.",
                         "additionalProperties": false,
                         "properties": {
-                            "options": { "$ref": "#/properties/options" },
-                            "mapping": { "$ref": "#/properties/mapping" },
+                            "options": { "anyOf": [{ "$ref": "#/properties/options" }, { "type": "null" }] },
+                            "mapping": { "anyOf": [{ "$ref": "#/properties/mapping" }, { "type": "null" }] },
                             "plot": { "anyOf": [{ "$ref": "#/properties/plot" }, { "type": "null" }] },
                             "annotations": { "anyOf": [{ "$ref": "#/properties/annotations" }, { "type": "null" }] },
-                            "filter": { "anyOf": [{ "$ref": "#/properties/filter" }, { "type": "null" }] },
+                            "filter": { "$ref": "#/properties/filter" },
                             "facets": { "anyOf": [{ "$ref": "#/properties/facets" }, { "type": "null" }] },
-                            "geo": { "anyOf": [{ "$ref": "#/properties/geo" }, { "type": "null" }] },
+                            "geo": { "$ref": "#/properties/geo" },
                             "transform": { "anyOf": [{ "$ref": "#/properties/transform" }, { "type": "null" }] }
                         }
                     }

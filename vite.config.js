@@ -1,7 +1,30 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 import pkg from './package.json' with { type: 'json' };
+
+// the schema of the check of the definitions (`schema.json?check`, see
+// src/utils/validate.js) without its texts, the check only needs the rules,
+// the descriptions are most of its size, the editor of the site and the
+// file of the package keep them; the names of `properties` are kept, e.g. a
+// property `default`
+const checkSchema = () => ({
+    name: 'check-schema',
+    enforce: 'pre',
+    load(id) {
+        const [file, query] = id.split('?');
+        if (query != 'check' || !file.endsWith('schema.json'))
+            return null;
+        const texts = new Set(['description', 'title', 'default', 'examples', '$comment']);
+        const strip = (v, names = false) => Array.isArray(v) ? v.map(e => strip(e))
+            : v && typeof v == 'object' ? Object.fromEntries(Object.entries(v)
+                .filter(([k]) => names || !texts.has(k))
+                .map(([k, e]) => [k, strip(e, !names && (k == 'properties' || k == 'definitions' || k == '$defs' || k == 'patternProperties'))]))
+            : v;
+        return `export default JSON.parse(${JSON.stringify(JSON.stringify(strip(JSON.parse(readFileSync(file, 'utf8')))))});`;
+    },
+});
 
 // the styles are injected by the script, so a single file is enough to use
 // the library (as it was with the style-loader of webpack), they are in the
@@ -57,7 +80,7 @@ const unversioned = () => ({
 });
 
 export default defineConfig(({ mode }) => ({
-    plugins: [vue(), injectCss(), ...(mode == 'lib' ? [unversioned()] : [])],
+    plugins: [vue(), checkSchema(), injectCss(), ...(mode == 'lib' ? [unversioned()] : [])],
     resolve: {
         alias: [
             // the standalone script is one file, the parts which are loaded

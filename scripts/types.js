@@ -17,6 +17,11 @@ const titles = { mapping: 'MappingEntry' };
 export const definitionTypes = async () => {
     const schema = JSON.parse(readFileSync(new URL('schema.json', root), 'utf8'));
     Object.entries(titles).forEach(([key, title]) => schema.definitions[key].title = title);
+    // the names of registered plot types and coordinate systems beside the
+    // built-in ones, `string & {}` keeps the built-in ones for the completion
+    // of editors, `string` would replace them
+    [schema.definitions.plot.properties.type, schema.definitions.options.properties.coord]
+        .forEach(t => t.anyOf.filter(b => b.pattern).forEach(b => b.tsType = 'string & {}'));
     const types = await compile(schema, 'Definition', {
         bannerComment: '// the types of the definitions, generated of schema.json by `npm run types`, see scripts/types.js',
         customName: (part, key) => names[key],

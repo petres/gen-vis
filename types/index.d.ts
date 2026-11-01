@@ -1,6 +1,6 @@
 // the types of @preschen/gen-vis, a definition is the JSON of schema.json,
 // see the readme
-import type { ComponentPublicInstance, DefineComponent, Plugin } from 'vue';
+import type { ComponentOptionsMixin, ComponentPublicInstance, DefineComponent, EmitsToProps, Plugin, PublicProps, SlotsType, VNodeChild } from 'vue';
 import type { GenVisDefinition } from './definition';
 
 // the types of the parts of a definition, e.g. MappingEntry or Plot
@@ -65,10 +65,43 @@ export interface GenVisMethods {
     setHighlight(entry: Record<string, unknown> | null): void;
 }
 
+/** The events of the component, e.g. `@hover="e => …"`, a type, not an interface, so Vue reads its listeners, e.g. `onHover`. */
+export type GenVisEmits = {
+    /** The changes of the user, the globals of the form elements and the legends, see v-model:state. */
+    'update:state': (state: State) => void;
+    /** The rows of the position of the pointer, null if the hover ends. */
+    hover: (event: HoverEvent | null) => void;
+    /** The rows of the position of a click or a tap, or of Enter of the keyboard. */
+    select: (event: HoverEvent) => void;
+    /** The visualisation is drawn, after every change. */
+    rendered: () => void;
+    /** The message of an error of the definition or the data, the visualisation shows it. */
+    error: (message: string) => void;
+};
+
+/** The props of the hover slot, the ones of the event and the entries of the rows. */
+export interface HoverSlotProps extends HoverEvent {
+    /** The rows of the hover, their values and the props of their categories by the names of the mappings, e.g. `entries[0].land.name`. */
+    entries: (Record<string, Record<string, unknown>> & { nearest: boolean })[];
+}
+
+/** The slots of the component, they replace the parts of the definition. */
+export interface GenVisSlots {
+    /** The title and the subtitle, with the values of the globals. */
+    header?(props: { title?: string; subtitle?: string }): VNodeChild;
+    /** The footer, HTML of options.footer with the values of the globals. */
+    footer?(props: { footer?: string }): VNodeChild;
+    /** The content of the hover instead of the table or the templates of options.hover. */
+    hover?(props: HoverSlotProps): VNodeChild;
+    /** Buttons of the PNG and the CSV, `canCopy` if the clipboard takes images. */
+    buttons?(props: { save: () => void; copy: () => void; csv: () => void; canCopy: boolean }): VNodeChild;
+}
+
 export type GenVisInstance = ComponentPublicInstance<GenVisProps> & GenVisMethods;
 
 /** The component, see the readme. */
-export declare const GenVis: DefineComponent<GenVisProps>;
+export declare const GenVis: DefineComponent<GenVisProps, {}, {}, {}, {}, ComponentOptionsMixin, ComponentOptionsMixin,
+    GenVisEmits, string, PublicProps, Readonly<GenVisProps> & EmitsToProps<GenVisEmits>, {}, SlotsType<GenVisSlots>>;
 
 /** A group of the rows of a plot, see the readme "Extensions". */
 export interface PlotGroup {

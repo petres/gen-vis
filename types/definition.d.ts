@@ -4,6 +4,10 @@
  * A key of a feature of a map or of a category, compared as a string.
  */
 export type Key = string | number;
+/**
+ * Removes the part of a parent.
+ */
+export type None = null;
 export type PropEntry =
     | Value
     | {
@@ -162,9 +166,22 @@ export type Pair1 = [number | null, number | null];
  */
 export type Pair2 = [number | null, number | null];
 /**
- * Removes the part of a parent.
+ * null or false removes the part, e.g. the one of a parent.
  */
-export type None = null;
+export type Removed = null | false;
+/**
+ * Left out, the type replaces them, e.g. the ones of a parent.
+ */
+export type Elements = {
+    /**
+     * An svg element, e.g. line or circle.
+     */
+    type: string;
+    props?: Props;
+}[];
+/**
+ * Items: An entry, other fields of scalars are names of the templates while it is selected, e.g. {group:short} of a field short of the entry of the global group.
+ */
 export type FormElementValues = {
     id: string;
     name?: string;
@@ -179,15 +196,22 @@ export type FormElementValues = {
      * Patches the definition while the entry is selected, merged in the order of the form elements, null removes a part.
      */
     patch?: {
-        options?: Options;
-        mapping?: Mapping;
+        options?: Options | null;
+        mapping?: Mapping | null;
         plot?: (Plot | Plot[]) | null;
         annotations?: (Annotation | Annotation[]) | null;
-        filter?: Filter | null;
+        /**
+         * The rows of the conditions of mappings, null removes the ones of a parent.
+         */
+        filter?: Filter | None;
         facets?: Facets | null;
-        geo?: Geo | null;
+        /**
+         * The geometry of a map (coord geo), the rows are joined to its features, null removes the one of a parent.
+         */
+        geo?: Geo | None;
         transform?: (Transform | Transform[]) | null;
     };
+    [k: string]: unknown;
 }[];
 
 /**
@@ -207,7 +231,10 @@ export interface GenVisDefinition {
      * The format of the data, by default the one of the extension of its url, without one CSV or JSON by the content.
      */
     dataFormat?: 'csv' | 'tsv' | 'json' | 'parquet';
-    geo?: Geo;
+    /**
+     * The geometry of a map (coord geo), the rows are joined to its features, null removes the one of a parent.
+     */
+    geo?: Geo | None;
     /**
      * An annotation or a list of them, bands, lines, texts and circles at values of the mappings, e.g. { "type": "band", "x": ["2025-07-01", null], "label": "Schätzung" }.
      */
@@ -216,7 +243,10 @@ export interface GenVisDefinition {
      * Columns computed of the data, e.g. an index of a base year, in their order, see the readme.
      */
     transform?: Transform | Transform[];
-    filter?: Filter;
+    /**
+     * The rows of the conditions of mappings, null removes the ones of a parent.
+     */
+    filter?: Filter | None;
     options?: Options;
     /**
      * Values changed by the form elements, e.g. the shared scales of the facets.
@@ -529,7 +559,7 @@ export interface Options {
     /**
      * The coordinate system of the plots, cartesian (a horizontal and a vertical axis) by default, polar (an angle and a radius) or geo (a map).
      */
-    coord?: 'cartesian' | 'polar' | 'geo';
+    coord?: ('cartesian' | 'polar' | 'geo') | (string & {});
     /**
      * Css font-family, by default the css variable --gen-vis-font-family or Century Gothic.
      */
@@ -564,10 +594,10 @@ export interface MappingEntry {
      * Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars), a radial or an angular one (of pies, polar:arc from @<name>:start:scaled to @<name>:end:scaled), true all rows or the conditions of mappings of the rows which are stacked, as the ones of filter, e.g. { "type": { "not": "load" } }, the others have their own value as start and end, e.g. a line of a total on stacked areas.
      */
     stacked?: boolean | Filter;
-    scale?: Scale | None;
-    axis?: Axis | None;
+    scale?: Scale | Removed;
+    axis?: Axis | Removed;
     hover?:
-        | None
+        | Removed
         | {
               /**
                * By default the format of the axis.
@@ -592,7 +622,7 @@ export interface MappingEntry {
               };
           };
     legend?:
-        | None
+        | Removed
         | {
               /**
                * The place of the legend, above or below the plots or beside them, the plots have the rest of the width, a prop of totalWidth (the width of the visualisation), e.g. below the plots of a phone.
@@ -641,6 +671,7 @@ export interface MappingEntry {
                         type: 'line' | 'rect' | 'circle';
                         size?: number;
                         props?: Props;
+                        elements?: Elements;
                     }
                   | SymbolElements;
               props?: {
@@ -648,7 +679,7 @@ export interface MappingEntry {
               };
           };
     props?:
-        | None
+        | Removed
         | {
               common?: CategoryProps;
               /**
@@ -735,7 +766,7 @@ export interface Scale {
     domainRel?: Pair1;
     domainAbs?: Pair2;
     /**
-     * Rounds the ends of the domain taken from the data, e.g. 0.951 to 1, true for steps of about a tenth of the domain or the number of steps.
+     * Numeric mappings only: rounds the ends of the domain taken from the data, e.g. 0.951 to 1, true for steps of about a tenth of the domain or the number of steps.
      */
     nice?: boolean | number;
     /**
@@ -743,7 +774,7 @@ export interface Scale {
      */
     range?: (number | string | Prop)[];
     /**
-     * For categorical scales, of a point scale of angles the place of the first category in steps, half a step after the top by default, 0 at the top, e.g. of a radar chart.
+     * Band and point scales: the space between the categories and at the ends in steps, 0.4 by default; of a point scale of angles the place of the first category in steps, half a step after the top (0.5) by default, 0 at the top, e.g. of a radar chart.
      */
     padding?: number;
     /**
@@ -855,10 +886,13 @@ export interface Axis {
     title?: {
         name?: string;
         /**
-         * The distance from the axis in pixels, by default near the edge of the margin.
+         * The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of polar axes 16 pixels outside of the circle.
          */
         offset?: number;
     };
+    /**
+     * The gap between the tick marks and the labels in pixels, also of polar axes.
+     */
     padding?: number;
 }
 export interface SymbolElements {
@@ -888,27 +922,30 @@ export interface Plot {
      * The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations.
      */
     type?:
-        | 'svg:circle'
-        | 'svg:line'
-        | 'svg:rect'
-        | 'svg:text'
-        | 'cartesian:line'
-        | 'cartesian:area'
-        | 'cartesian:bar'
-        | 'polar:line'
-        | 'polar:area'
-        | 'polar:arc'
-        | 'polar:circle'
-        | 'polar:text'
-        | 'geo:base'
-        | 'geo:region'
-        | 'geo:circle'
-        | 'geo:text'
-        | 'geo:mesh'
-        | 'annotation:band'
-        | 'annotation:line'
-        | 'annotation:text'
-        | 'annotation:circle';
+        | (
+              | 'svg:circle'
+              | 'svg:line'
+              | 'svg:rect'
+              | 'svg:text'
+              | 'cartesian:line'
+              | 'cartesian:area'
+              | 'cartesian:bar'
+              | 'polar:line'
+              | 'polar:area'
+              | 'polar:arc'
+              | 'polar:circle'
+              | 'polar:text'
+              | 'geo:base'
+              | 'geo:region'
+              | 'geo:circle'
+              | 'geo:text'
+              | 'geo:mesh'
+              | 'annotation:band'
+              | 'annotation:line'
+              | 'annotation:text'
+              | 'annotation:circle'
+          )
+        | (string & {});
     /**
      * The class and the data-plot of the group of the plot, plot-<index> by default, the plots of a parent are merged by their ids.
      */
