@@ -139,9 +139,13 @@ const layout = (store, width) => {
     // of horizontal bars, the height of the definition otherwise
     const stepped = stepHeight(store, faceted ? entries.map(f => f.rows) : [rows], scope);
     const size = { width: width/cols, height: stepped === undefined ? evaluate(def.options.height, scope) : stepped + margins.top + margins.bottom };
-    size.innerWidth = size.width - (margins.left + margins.right);
-    size.innerHeight = size.height - (margins.top + margins.bottom);
+    // a container smaller than its margins has no room, not a negative one,
+    // which would flip the ranges of the scales, e.g. a negative radius
+    size.innerWidth = Math.max(0, size.width - (margins.left + margins.right));
+    size.innerHeight = Math.max(0, size.height - (margins.top + margins.bottom));
     const dims = store.coord.dims(size.innerWidth, size.innerHeight);
+    if (dims.radius !== undefined)
+        dims.radius = Math.max(0, dims.radius);
     // the radius of polar plots is a size of the facet, e.g. of the hole of a donut
     const facetScope = { ...scope, ...size, ...(dims.radius === undefined ? {} : { radius: dims.radius }) };
 
@@ -152,7 +156,7 @@ const layout = (store, width) => {
 
     // the scale of a mapping for the rows, in the sizes of a facet
     const scaleOf = (name, rows) => makeScale(name, store.mapping(name), rows,
-        { dims, coord: store.coord, scope: facetScope, stackOf: name == axis.v ? stackOf : null, also: also(name) });
+        { dims, coord: store.coord, scope: facetScope, mappings: def.mapping, stackOf: name == axis.v ? stackOf : null, also: also(name) });
 
     // the scales of all facets: the shared ones and the ones without
     // orientation, e.g. of colors

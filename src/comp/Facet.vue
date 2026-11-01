@@ -3,7 +3,7 @@
         <!-- with a hover the facet is in the order of the tab key, the arrow keys move the
              hover, it is an application of screen readers, so they pass the keys to it -->
         <svg ref="svg" :width="facet.width" :height="facet.height" class="vis-svg" :role="keyboard ? 'application' : 'img'" :aria-label="label"
-            :aria-roledescription="keyboard ? store.locale.texts.chart : undefined" :aria-describedby="keyboard ? `${uid}-keys` : undefined"
+            :aria-roledescription="keyboard ? store.locale.texts.chart : undefined" :aria-describedby="describedBy"
             :tabindex="keyboard ? 0 : undefined" @keydown="key" @blur="hide?.()">
             <g ref="inner" :transform="innerTransform">
                 <g :visibility="hover.visible && hoverOptions.marker !== false ? 'visible' : 'hidden'" class="vis-hover-marker" ref="hoverMarker">
@@ -11,9 +11,10 @@
                 </g>
             </g>
         </svg>
+        <span v-if="description" :id="`${uid}-subtitle`" hidden>{{ description }}</span>
         <span v-if="keyboard" :id="`${uid}-keys`" hidden>{{ store.locale.texts.keys }}</span>
-        <!-- the hover is read by screen readers when it changes, e.g. by the keyboard -->
-        <div aria-live="polite" :style="`transform: translate(${facet.margins.left + origin[0] + hover.x}px, ${facet.margins.top + origin[1] + hover.y}px); position: absolute; top: 0; left: 0;`">
+        <!-- the hover is read by screen readers when the keyboard moves it, not on every move of the mouse -->
+        <div :aria-live="announced ? 'polite' : 'off'" :style="`transform: translate(${facet.margins.left + origin[0] + hover.x}px, ${facet.margins.top + origin[1] + hover.y}px); position: absolute; top: 0; left: 0;`">
             <hover v-if="hover.visible && hoverOptions.box !== false" :title="hover.title" :data="hover.data" :side="hover.side" :payload="hover.payload"/>
         </div>
     </div>
@@ -29,6 +30,7 @@ import { drawAxis } from "@/utils/axis";
 import { plotTypes } from "@/plots";
 import { plotGroups, plotRows } from "@/layout";
 import { filter, rowFilter } from "@/utils/data";
+import { orderOf, sortedByOrder, nearestWithRows, nearestRow, pointFinder, pointPosition, placed, positionsInOrder, clamp } from "@/utils/hover";
 
 import Hover from '@/comp/Hover.vue';
 
@@ -49,11 +51,24 @@ export default {
         },
         // the facet has a hover, it can be moved by the keyboard
         keyboard: false,
+        // the hover was moved by the keyboard, so screen readers read it
+        announced: false,
     }),
     computed: {
-        // the name of the chart for screen readers, the title and the facet
+        // the name of the chart for screen readers, the title and the facet,
+        // without a title the subtitle or the localized name of a chart
         label() {
-            return [this.store.def.options.title, this.facet.name].filter(Boolean).map(t => this.store.text(t)).join(': ') || undefined;
+            const { title, subtitle } = this.store.def.options;
+            const name = [title || subtitle, this.facet.name].filter(Boolean).map(t => this.store.text(t)).join(': ');
+            return name || this.store.locale.texts.chart;
+        },
+        // the subtitle of a chart with a title describes it
+        description() {
+            const { title, subtitle } = this.store.def.options;
+            return title && subtitle ? this.store.text(subtitle) : undefined;
+        },
+        describedBy() {
+            return [this.description && `${this.uid}-subtitle`, this.keyboard && `${this.uid}-keys`].filter(Boolean).join(' ') || undefined;
         },
         // the options of the hover, see README "Events and slots"
         hoverOptions() { return this.store.def.options.hover ?? {} },
@@ -83,6 +98,14 @@ export default {
         };
         document.addEventListener("pointerdown", this.hideOnPointerOutside);
         this.draw();
+    },
+    // the transitions of the elements end with the facet, so their timers do
+    // not set the attributes of removed elements, d3-transition is loaded
+    // only for definitions with a transition (see loadTransition)
+    beforeUnmount() {
+        const inner = d3.select(this.$refs.inner);
+        if (d3.hasTransitions(inner))
+            inner.selectAll("*").interrupt("vis").interrupt("highlight");
     },
     unmounted() {
         document.removeEventListener("pointerdown", this.hideOnPointerOutside);
@@ -283,19 +306,8 @@ export default {
             const v = names.v;
             // the start and the end of a stacked value
             const stackOf = ctx.stackOf;
-            // the place of a row in the hover, from the top, of the rows of its
-            // position: of a stacked value the middle of its stack, a row which
-            // is not stacked, e.g. a total, is above the stacked ones of the
-            // categories before it, below the ones of the categories after it
-            const orderOf = (row, rows) => {
-                if (!stackOf)
-                    return row[v];
-                if (ctx.isStacked(row))
-                    return d3.mean(stackOf(row));
-                const stacked = rows.filter(ctx.isStacked);
-                const before = stacked.filter(s => ctx.stackOrder(s, row) < 0).length;
-                return stacked.length == 0 || (before > 0 && before < stacked.length) ? row[v] : (before > 0 ? Infinity : -Infinity);
-            };
+            // the place of a row in the hover, see utils/hover.js
+            const stacks = { v, stackOf, isStacked: ctx.isStacked, stackOrder: ctx.stackOrder };
 
             // categorical mappings, and other values with a hover, e.g. of a second vertical axis
             const categories = store.mappingNamesWithKey('hover')
@@ -316,6 +328,11 @@ export default {
             const hoverOptions = store.def.options.hover ?? {};
             const hoverRows = filter(ctx.rows.filter(e => e[v] !== null), rowFilter(hoverOptions.filter, store.def.mapping, ctx.scope, 'options.hover.filter'));
             const rowsByKey = d3.group(hoverRows, e => String(e[names.h]));
+            // the nearest key is one with rows, e.g. not one of null values, of
+            // the coordinate systems with the `nearest` of the context, unless
+            // the hover of keys without rows is shown (`"empty": true`)
+            const located = hoverOptions.empty ? ctx
+                : { ...ctx, nearest: nearestWithRows(ctx.scales[names.h], [...rowsByKey.values()].map(rows => rows[0][names.h])) };
             let last = null;
             // the rows of the hover shown, e.g. for a select by the keyboard
             let current = null;
@@ -333,47 +350,33 @@ export default {
                 this.highlight(null);
             };
 
+            // the hover of the nearest point, e.g. of a scatter plot, within
+            // `radius` pixels, of the coordinate systems with points of rows,
+            // the points of the rows are placed at the first use
+            const pointMode = hoverOptions.mode == 'point' && coord.hover.point;
+            let points = null;
+            let nearestPoint = null;
+            const preparePoints = () => {
+                points ??= hoverRows.filter(row => row[names.h] !== null)
+                    .map(row => [...coord.hover.point(ctx, row, names), row]);
+                nearestPoint ??= pointFinder(points, hoverOptions.radius ?? 30);
+            };
+
             // the rows at the pointer and the nearest one, stacked: the segment
             // under the pointer, outside of the stack the closest one, null
             // without a key, the rows are not formatted yet
-            // the hover of the nearest point, e.g. of a scatter plot, within
-            // `radius` pixels, of the coordinate systems with points of rows
-            const pointMode = hoverOptions.mode == 'point' && coord.hover.point;
-            // the points are in cells of the size of the radius, so only the
-            // ones of the nine cells around the pointer are compared
-            const radius = hoverOptions.radius ?? 30;
-            const size = Math.max(radius, 1);
-            let points = null;
-            let cells = null;
-            const cellOf = (x, y) => `${Math.floor(x/size)} ${Math.floor(y/size)}`;
-            const nearestPoint = ([px, py]) => {
-                if (!points) {
-                    points = hoverRows.filter(row => row[names.h] !== null)
-                        .map(row => [...coord.hover.point(ctx, row, names), row]);
-                    cells = d3.group(points.filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y)), ([x, y]) => cellOf(x, y));
-                }
-                const [cx, cy] = [Math.floor(px/size), Math.floor(py/size)];
-                const near = [-1, 0, 1].flatMap(dx => [-1, 0, 1].flatMap(dy => cells.get(`${cx + dx} ${cy + dy}`) ?? []));
-                const best = d3.least(near, ([x, y]) => (x - px)**2 + (y - py)**2);
-                return best && (best[0] - px)**2 + (best[1] - py)**2 <= radius**2 ? best : null;
-            };
-
             const at = e => {
                 if (pointMode) {
+                    preparePoints();
                     const point = nearestPoint(d3.pointer(e, ctx.inner.node()));
                     return point && { key: point[2][names.h], rows: [point[2]], nearest: point[2], point };
                 }
-                const position = coord.hover.locate(ctx, d3.pointer(e, ctx.inner.node()), names, e);
+                const position = coord.hover.locate(located, d3.pointer(e, ctx.inner.node()), names, e);
                 if (!position)
                     return null;
                 const { key, value } = position;
                 const rows = rowsByKey.get(String(key)) ?? [];
-                const distance = stackOf ? row => {
-                    const [lo, hi] = d3.extent(stackOf(row));
-                    return value < lo ? lo - value : (value > hi ? value - hi : 0);
-                } : row => Math.abs(row[v] - value);
-                const nearest = value === undefined ? undefined : d3.least(rows, distance);
-                return { key, value, rows, nearest };
+                return { key, value, rows, nearest: nearestRow(rows, value, v, stackOf) };
             };
 
             const titleOf = key => coord.hover.title ? coord.hover.title(ctx, key, names) : format.h(key);
@@ -404,7 +407,7 @@ export default {
                     .forEach(([k, s]) => style[k] = String(s)));
                 const attrs = Object.fromEntries(keyed.filter(n => row[n] !== null && row[n] !== undefined)
                     .map(n => [dataAttribute(n), String(row[n])]));
-                return { entries, cells, data: row, nearest: row === nearest, order: orderOf(row, rows), style, attrs };
+                return { entries, cells, data: row, nearest: row === nearest, order: orderOf(row, rows, stacks), style, attrs };
             });
 
             // the rows of the events and the slot, copies of the values of the mappings
@@ -417,17 +420,6 @@ export default {
             });
 
             // the hover of the rows of a position and the nearest one
-            // the position of the hover: beside the marker of the coordinate
-            // system or at the pointer (`"position": "pointer"`), e.g. above
-            // the region of a map, on the side with more space or the `side`
-            // of the options, moved by the `offset` of the options
-            const placed = (found, position) => {
-                if (hoverOptions.position == 'pointer' && this.pointerAt)
-                    position = { ...position, x: this.pointerAt[0], y: this.pointerAt[1] };
-                const [dx = 0, dy = 0] = hoverOptions.offset ?? [];
-                return { ...position, x: position.x + dx, y: position.y + dy, side: hoverOptions.side ?? position.side };
-            };
-
             const show = found => {
                 const { key, value, rows, nearest } = found;
                 // no hover without rows, e.g. of a region without a value,
@@ -444,7 +436,7 @@ export default {
                 // pointer moves with it
                 if (last && last.key === key && last.nearest === nearest) {
                     if (hoverOptions.position == 'pointer' && this.pointerAt)
-                        Object.assign(this.hover, placed(found, last.position));
+                        Object.assign(this.hover, placed(last.position, hoverOptions, this.pointerAt));
                     return;
                 }
 
@@ -455,11 +447,10 @@ export default {
                 const p = payload(found);
                 // a point has no line, the hover is beside it
                 const position = found.point
-                    ? (marker.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null),
-                        { x: found.point[0], y: found.point[1], side: found.point[0] > ctx.innerWidth/2 ? "left" : "right" })
+                    ? (marker.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null), pointPosition(found.point, ctx.innerWidth))
                     : coord.hover.marker(ctx, key, names, marker, nearest);
                 last = { key, nearest, position };
-                Object.assign(this.hover, placed(found, position), {
+                Object.assign(this.hover, placed(position, hoverOptions, this.pointerAt), {
                     data: entriesOf(rows, nearest),
                     title: p.title,
                     payload: p,
@@ -478,6 +469,8 @@ export default {
                 }
                 this.lastEvent = e;
                 this.lastKey = null;
+                // the hover of the pointer is not read by screen readers
+                this.announced = false;
                 this.pointerAt = d3.pointer(e, ctx.inner.node());
                 show(found);
             };
@@ -488,17 +481,12 @@ export default {
             let positions = null;
             const positionsOf = () => {
                 if (pointMode) {
-                    nearestPoint([0, 0]);
+                    preparePoints();
                     return [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1])
                         .map(point => ({ key: point[2][names.h], rows: [point[2]], point }));
                 }
-                const s = ctx.scales[names.h];
-                const all = [...rowsByKey.values()].map(rows => ({
-                    key: rows[0][names.h],
-                    rows: [...rows].sort((a, b) => orderOf(b, rows) - orderOf(a, rows)),
-                }));
-                return s ? all.sort((a, b) => s(a.key) - s(b.key))
-                    : all.sort((a, b) => String(titleOf(a.key)).localeCompare(String(titleOf(b.key))));
+                const all = [...rowsByKey.values()].map(rows => ({ key: rows[0][names.h], rows: sortedByOrder(rows, row => orderOf(row, rows, stacks)) }));
+                return positionsInOrder(all, ctx.scales[names.h], titleOf);
             };
             // the position of an index, of a key before, e.g. of the draw before
             // with other positions, at its index if it has none anymore
@@ -509,11 +497,13 @@ export default {
                     return;
                 }
                 const same = before === undefined ? -1 : positions.findIndex(p => String(p.key) === String(before));
-                const i = same >= 0 ? same : Math.max(0, Math.min(positions.length - 1, index));
+                const i = same >= 0 ? same : clamp(index, positions.length);
                 const { key, rows, point } = positions[i];
-                const r = Math.max(0, Math.min(rows.length - 1, row));
+                const r = clamp(row, rows.length);
                 this.lastEvent = null;
                 this.pointerAt = null;
+                // the hover of the keyboard is read by screen readers
+                this.announced = true;
                 this.lastKey = { index: i, row: r, key };
                 show({ key, rows, nearest: rows[r], point });
             };

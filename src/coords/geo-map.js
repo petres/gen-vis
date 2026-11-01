@@ -6,6 +6,7 @@ import {
 } from 'd3-geo';
 import { named } from "@/utils/registry";
 import { annotationItem } from "@/coords/annotations";
+import { featureByKey } from "@/plots/geo";
 
 // the projections of maps (`geo.projection.type`), e.g. mercator
 export const projections = {
@@ -23,8 +24,10 @@ export const projections = {
 const fitKeys = ctx => {
     const def = ctx.store.def.geo ?? {};
     const join = ctx.store.def.geo?.join;
-    if (def.fit == 'data' && join)
-        return [...new Set(ctx.rows.map(e => String(e[join])))].sort();
+    if (def.fit == 'data' && join) {
+        const { key } = ctx.store.geo;
+        return [...new Set(ctx.rows.map(e => featureByKey(ctx.store.geo, e[join])).filter(f => f).map(key))].sort();
+    }
     if (Array.isArray(def.fit))
         return [...new Set(def.fit.map(String))].sort();
     return null;
@@ -38,12 +41,31 @@ const projection = (ctx, keys) => {
     if (!make)
         throw new Error(`Unknown projection '${type}', e.g. 'mercator' or 'conicConformal'`);
     const p = make();
-    Object.entries(params).forEach(([k, v]) => p[k](v));
+    Object.entries(params).forEach(([k, v]) => {
+        if (typeof p[k] != 'function')
+            throw new Error(`The projection '${type}' has no parameter '${k}' (geo.projection.${k})`);
+        p[k](v);
+    });
 
-    const { features, key } = ctx.store.geo;
+    // features without a geometry have no bounds, a fit to them is NaN
+    const { features: all, key } = ctx.store.geo;
+    const features = all.filter(f => f.geometry);
     const set = keys && new Set(keys);
     const fitted = set ? features.filter(f => set.has(key(f))) : features;
+    if (!features.length)
+        return p;
     return p.fitSize([ctx.innerWidth, ctx.innerHeight], { type: 'FeatureCollection', features: fitted.length ? fitted : features });
+};
+
+// the features of a map are needed, an empty geometry or an `include` of no
+// key of them draws nothing
+const checkFeatures = store => {
+    if (store.geo.features.some(f => f.geometry))
+        return;
+    const { include, exclude, key = 'id' } = store.def.geo;
+    if (include || exclude)
+        throw new Error(`The map has no features: none of the geometry is left by geo.include or geo.exclude, matched to their key '${key}' (geo.key)`);
+    throw new Error('The map has no features: the geometry is empty');
 };
 
 // the paths and their centers of the features of a projection, computed once
@@ -98,6 +120,7 @@ export default {
     prepare(ctx) {
         if (!ctx.store.geo)
             throw new Error(`A map needs a geometry, e.g. "geo": { "data": "regions.json" }`);
+        checkFeatures(ctx.store);
         const { projection, path } = projected(ctx);
         ctx.projection = projection;
         ctx.path = path;
@@ -127,7 +150,7 @@ export default {
         // no line, the hover is beside the center of the region
         marker(ctx, key, names, line) {
             line.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null);
-            const f = ctx.store.geo.byKey.get(String(key));
+            const f = featureByKey(ctx.store.geo, key);
             const [x, y] = f ? ctx.path.centroid(f) : [ctx.innerWidth/2, ctx.innerHeight/2];
             return { x, y, side: x > ctx.innerWidth/2 ? "left" : "right" };
         },
@@ -135,7 +158,7 @@ export default {
         // the name of the props of the region, of the feature (`name` of the
         // geometry, the property "name" by default) or its key
         title(ctx, key, names) {
-            const f = ctx.store.geo.byKey.get(String(key));
+            const f = featureByKey(ctx.store.geo, key);
             const property = (ctx.store.def.geo.name ?? 'name').replace(/^properties\./, '');
             const props = ctx.store.mapping(names.h).props;
             return ctx.store.text(props && Object.hasOwn(props, key) ? props[key].name : undefined) ?? f?.properties?.[property] ?? key;

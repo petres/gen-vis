@@ -54,7 +54,7 @@ const axes = ctx => {
         const parts = [];
         // the grid lines are at the ticks of the axis
         if (i.grid)
-            parts.push(grid(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope), ['left', 'right'].includes(i.position)));
+            parts.push(grid(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.mapping), ['left', 'right'].includes(i.position)));
 
         // the axis of the draw before, its ticks are moved with a transition
         parts.push({
@@ -63,7 +63,7 @@ const axes = ctx => {
                 name: n,
                 position: i.position,
                 scale: s,
-                values: i.values ? tickValues(i, s, ticks, m, ctx.scope) : (s.ticks ? s.ticks(ticks) : s.domain()),
+                values: i.values ? tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.mapping) : (s.ticks ? s.ticks(ticks) : s.domain()),
                 format,
                 labels: labelsOf && (d => {
                     const { text, ...attrs } = labelsOf(d);
@@ -154,11 +154,12 @@ export default {
             .attr("width", ctx.innerWidth)
             .attr("height", ctx.innerHeight),
 
-        // the nearest position with data, e.g. horizontal, and the value at
-        // the pointer, e.g. vertical
+        // the nearest position with data, e.g. horizontal, of the hover the
+        // one with rows (`ctx.nearest`, see Facet.vue), and the value at the
+        // pointer, e.g. vertical
         locate(ctx, [px, py], names) {
             const vertical = isVertical(ctx, names);
-            const key = ctx.scales[names.h].nearest(vertical ? py : px);
+            const key = (ctx.nearest ?? ctx.scales[names.h].nearest)(vertical ? py : px);
             if (key === undefined)
                 return null;
             return { key, value: ctx.scales[names.v].invert?.(vertical ? px : py) };

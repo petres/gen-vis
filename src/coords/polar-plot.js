@@ -55,6 +55,18 @@ const sliceOf = (ctx, row, names) => {
 const angleTicks = (scale, values) => values.filter((v, i) =>
     !values.slice(0, i).some(w => angleDistance(angleOf(scale, v), angleOf(scale, w)) < 1e-6));
 
+// the angle from `a` to `b` in the `direction` of the ticks, negative
+// counterclockwise, e.g. of a decreasing range, not the shortest one, which
+// is the wrong side of a gap of more than half the circle
+const stepTo = (a, b, direction) => {
+    const d = ((b - a)%tau + tau)%tau;
+    return direction < 0 ? d - tau : d;
+};
+
+// a part of an id of the name of a mapping, which can have a space, the
+// other characters as their codes, so the ids of two names differ
+const idOf = name => name.replace(/[^A-Za-z0-9-]/g, c => `_${c.codePointAt(0).toString(16)}_`);
+
 // the anchor of a label outside of the circle at an angle
 const anchor = a => Math.sin(a) > 0.01 ? "start" : (Math.sin(a) < -0.01 ? "end" : "middle");
 const baseline = a => Math.cos(a) > 0.5 ? "auto" : (Math.cos(a) < -0.5 ? "hanging" : "middle");
@@ -97,6 +109,9 @@ const angularAxis = (ctx, n, s, values, label, domain, axis) => {
     const size = marks?.size ?? 6;
     const [r0, r1] = radiusRange(ctx);
     const angles = angleTicks(s, values);
+    // the direction of the ticks, counterclockwise of a decreasing range or
+    // of a reversed domain
+    const direction = angles.length > 1 ? Math.sign(angleOf(s, angles[1]) - angleOf(s, angles[0])) : 1;
     const parts = [];
 
     if (axis.grid)
@@ -123,14 +138,14 @@ const angularAxis = (ctx, n, s, values, label, domain, axis) => {
         const [x2, y2] = pointRadial(a, r1 + size);
         const [x, y] = pointRadial(a, r1 + size + axis.padding);
         // the middle of the angle to the next tick, after the last one the first one
-        const step = ((angleOf(s, angles[(i + 1)%angles.length]) - a)%(2*Math.PI) + 2*Math.PI)%(2*Math.PI) || 2*Math.PI;
+        const step = angles.length > 1 ? stepTo(a, angleOf(s, angles[(i + 1)%angles.length]), direction) : 0;
         return {
             [elementOf]: "g",
             [directOf]: { class: "tick" },
             [childrenOf]: [
                 ...(marks === false ? [] : [{ [elementOf]: "line", [directOf]: { stroke: "currentColor", x1, y1, x2, y2 }, ...marks.props }]),
                 ...(curved
-                    ? curvedLabel(`${ctx.uid}-${n}-${i}`, curved == 'between' ? a + step/2 : a, r1 + size + axis.padding, text, props)
+                    ? curvedLabel(`${ctx.uid}-${idOf(n)}-${i}`, curved == 'between' ? a + step/2 : a, r1 + size + axis.padding, text, props)
                     : [{ [elementOf]: "text", [directOf]: { fill: "currentColor", x, y, "text-anchor": anchor(a), "dominant-baseline": baseline(a) }, ...props, text }]),
             ],
         };
@@ -154,7 +169,7 @@ const radialAxis = (ctx, n, s, values, label, domain, axis) => {
         if (axis.gridShape == "polygon" && angle) {
             const hAxis = ctx.store.mapping(h).axis;
             const arc = Math.abs(angle.range()[1] - angle.range()[0])*radiusRange(ctx)[1];
-            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, tickCount(hAxis, ctx.scope, arc), ctx.store.mapping(h), ctx.scope) : angle.domain());
+            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, tickCount(hAxis, ctx.scope, arc), ctx.store.mapping(h), ctx.scope, ctx.store.def.mapping) : angle.domain());
             items = values.map(v => ({ [elementOf]: "path", [directOf]: { d: lineRadial().curve(d3.curveLinearClosed)
                 .angle(w => angleOf(angle, w))
                 .radius(() => s(v))(angles) } }));
@@ -227,7 +242,7 @@ const axes = ctx => {
             return { text: !('text' in i.labels.props) ? format(v) : (text === null || text === undefined ? '' : String(text)), props };
         };
         const draw = { angular: angularAxis, radial: radialAxis }[i.position];
-        const [before, items, after = []] = draw(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope), label, domainProps(ctx, i) ?? {}, i);
+        const [before, items, after = []] = draw(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.mapping), label, domainProps(ctx, i) ?? {}, i);
         return [
             ...before,
             {
@@ -298,7 +313,8 @@ export default {
         // the values of stacked angles without the radius, e.g. of a pie
         values: true,
 
-        // the nearest angle with data, also across the top, and the radius,
+        // the nearest angle with data (of the hover with rows, `ctx.nearest`),
+        // also across the top, and the radius,
         // of stacked angles the ring of the radius and the angle, e.g. the
         // slice of a pie under the pointer, not outside of the circle
         locate(ctx, [px, py], names) {
@@ -307,13 +323,13 @@ export default {
                 const r = Math.hypot(px, py);
                 if (!names.h && r > radiusRange(ctx)[1])
                     return null;
-                const key = names.h ? ctx.scales[names.h].nearest?.(r) : undefined;
+                const key = names.h ? (ctx.nearest ?? ctx.scales[names.h].nearest)?.(r) : undefined;
                 if (names.h && key === undefined)
                     return null;
                 return { key, value: ctx.scales[names.v].invert?.(a) };
             }
             const s = ctx.scales[names.h];
-            const keys = [a - tau, a, a + tau].map(v => s.nearest(v)).filter(k => k !== undefined);
+            const keys = [a - tau, a, a + tau].map(v => (ctx.nearest ?? s.nearest)(v)).filter(k => k !== undefined);
             if (keys.length == 0)
                 return null;
             const key = d3.least(keys, k => angleDistance(angleOf(s, k), a));
@@ -327,7 +343,9 @@ export default {
                 return pointRadial((a0 + a1)/2, (inner + outer)/2);
             }
             const value = ctx.stackOf ? d3.mean(ctx.stackOf(row)) : row[names.v];
-            return pointRadial(angleOf(ctx.scales[names.h], row[names.h]), ctx.scales[names.v](value));
+            // not through the center, as the plots, see plots/polar.js
+            const s = ctx.scales[names.v];
+            return pointRadial(angleOf(ctx.scales[names.h], row[names.h]), Math.max(d3.min(s.range()), s(value)));
         },
 
         // a line from the center, the hover is in the center, on the other

@@ -29,7 +29,7 @@
 <div class="vis-legend vis-color-legend" data-dim="value">
 <div class="vis-legend-title">Abweichung in °C</div>
 <div class="vis-color-scale">
-<svg width="272" height="34">
+<svg role="img" aria-label="Abweichung in °C" width="272" height="34">
 <g transform="translate(16, 2)">
 <rect x="0" y="0" width="240" height="10" fill="url(#gen-vis-gradient-N)">
 </rect>
@@ -80,7 +80,7 @@
 </div>
 <div class="vis-body">
 <div style="width: 800px;" class="vis-facet">
-<svg width="800" height="380" class="vis-svg" role="application" aria-label="Temperatur" aria-roledescription="Diagramm" aria-describedby="gen-vis-facet-N-keys" tabindex="0">
+<svg width="800" height="380" class="vis-svg" role="application" aria-label="Temperatur" aria-describedby="gen-vis-facet-N-subtitle gen-vis-facet-N-keys" aria-roledescription="Diagramm" tabindex="0">
 <g transform="translate(10 10)">
 <g visibility="hidden" class="vis-hover-marker">
 <line>
@@ -662,8 +662,9 @@
 </rect>
 </g>
 </svg>
+<span id="gen-vis-facet-N-subtitle" hidden="">Jahresmittel bzw. Abweichung vom Mittel 1961 - 1990, in °C</span>
 <span id="gen-vis-facet-N-keys" hidden="">Die Pfeiltasten zeigen die Werte der Positionen und Zeilen, die Eingabetaste wählt sie aus, Escape schließt sie.</span>
-<div aria-live="polite" style="transform: translate(10px, 10px); position: absolute; top: 0px; left: 0px;">
+<div aria-live="off" style="transform: translate(10px, 10px); position: absolute; top: 0px; left: 0px;">
 </div>
 </div>
 </div>

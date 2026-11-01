@@ -20,6 +20,8 @@ const rewind = f => {
 
 // an object of TopoJSON, by default its first one
 const topoObject = (json, object) => {
+    if (!json.objects || typeof json.objects != 'object' || !Object.keys(json.objects).length)
+        throw new Error('The TopoJSON has no objects, its features are the geometries of an object of "objects"');
     const names = Object.keys(json.objects);
     const name = object ?? names[0];
     if (!json.objects[name])

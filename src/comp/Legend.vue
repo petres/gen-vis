@@ -37,9 +37,11 @@ export default {
         // without the categories with `"legend": false`, e.g. headers, they stay
         // visible, and with `onlyData` without the ones which are not in the rows
         entries() {
-            return this.info.keys.filter(key => this.info.props[key].legend !== false && (!this.inData || this.inData.has(key)))
+            return this.categories.filter(key => !this.inData || this.inData.has(key))
                 .map(key => ({ key, props: this.info.props[key] }));
         },
+        // the categories of the entries, also the ones which are not in the rows
+        categories() { return this.info.keys.filter(key => this.info.props[key].legend !== false) },
         // the props of the entries with their default colors, see withColor of layout.js
         colored() { return Object.fromEntries(this.entries.map(e => [e.key, withColor([e.props])])) },
         // the legend props of the entries, also with the globals of the store
@@ -55,18 +57,21 @@ export default {
         clicked(entry, event) {
             if (event.detail > 1)
                 return;
-            this.before = { entry, visible: this.entries.map(e => e.props.visible) };
+            this.before = { key: entry.key, visible: this.categories.map(key => this.info.props[key].visible) };
             this.switched(entry);
         },
         switched(entry) {
             entry.props.visible = !entry.props.visible;
             this.changed();
         },
-        // only the entry, if it is the only one already all entries
+        // only the entry, if it is the only one already all entries, also
+        // the categories which are not in the rows of a legend with `onlyData`,
+        // so they stay hidden when they are in the rows again, e.g. of a filter
         only(entry) {
-            const visible = this.before?.entry === entry ? this.before.visible : this.entries.map(e => e.props.visible);
-            const alone = this.entries.every((e, i) => visible[i] == (e === entry));
-            this.entries.forEach(e => e.props.visible = alone || e === entry);
+            const all = this.categories;
+            const visible = this.before?.key === entry.key ? this.before.visible : all.map(key => this.info.props[key].visible);
+            const alone = all.every((key, i) => visible[i] == (key === entry.key));
+            all.forEach(key => this.info.props[key].visible = alone || key === entry.key);
             this.changed();
         },
         changed() {

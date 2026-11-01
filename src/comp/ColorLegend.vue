@@ -3,7 +3,8 @@
         <div class="vis-legend-title">{{ store.text(store.mapping(legend).name) }}</div>
         <!-- the entry of the missing values below a vertical scale -->
         <div class="vis-color-scale" :style="vertical ? { flexDirection: 'column' } : null">
-            <svg ref="svg" :width="vertical ? 64 : size + 2*padding" :height="vertical ? size + 2*padding : 34"/>
+            <!-- an image of the colors, named by the legend for screen readers -->
+            <svg ref="svg" role="img" :aria-label="store.text(store.mapping(legend).name) || undefined" :width="vertical ? 64 : size + 2*padding" :height="vertical ? size + 2*padding : 34"/>
             <!-- the regions without a value, e.g. the color of geo:base -->
             <div v-if="missing" class="vis-legend-missing">
                 <span class="vis-swatch" :style="{ background: missing.color ?? 'var(--gen-vis-missing-color, #EEE)' }"/>

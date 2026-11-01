@@ -435,16 +435,26 @@ const textWidth = node => typeof node.getComputedTextLength == 'function'
  * tspans (`"text-overflow": "wrap"`) of the height `line-height` (in em,
  * 1.2 by default), the lines of a text with a middle or central baseline are
  * around it. A cut text has its full text as title, e.g. the tooltip of the
- * browser. The text is the one of `text`, e.g. of the props.
+ * browser. The text is the one of `text`, e.g. of the props. The text of a
+ * text along a path is the one of its textPath, which is kept, e.g. of a
+ * curved label of a polar axis, it is cut, also with `wrap`, as lines of
+ * tspans would leave the path.
  */
-const fitText = (node, text = node.textContent) => {
+const fitText = (node, text) => {
     const max = parseFloat(node.getAttribute('max-width'));
     if (!(max > 0))
         return;
-    node.textContent = text;
+    const path = node.querySelector(':scope > textPath');
+    // the element of the text, setting the text of the text element itself
+    // would remove the textPath
+    const inner = path ?? node;
+    text ??= inner.textContent;
+    if (path)
+        node.querySelectorAll(':scope > title').forEach(t => t.remove());
+    inner.textContent = text;
     if (textWidth(node) <= max)
         return;
-    if (node.getAttribute('text-overflow') == 'wrap') {
+    if (!path && node.getAttribute('text-overflow') == 'wrap') {
         const words = text.split(/\s+/).filter(Boolean);
         const lines = [];
         let line = [];
@@ -472,12 +482,12 @@ const fitText = (node, text = node.textContent) => {
     let [lo, hi] = [0, text.length];
     while (lo < hi) {
         const mid = Math.ceil((lo + hi)/2);
-        node.textContent = `${text.slice(0, mid).trimEnd()}…`;
+        inner.textContent = `${text.slice(0, mid).trimEnd()}…`;
         if (textWidth(node) <= max)
             lo = mid;
         else
             hi = mid - 1;
     }
-    node.textContent = `${text.slice(0, lo).trimEnd()}…`;
+    inner.textContent = `${text.slice(0, lo).trimEnd()}…`;
     node.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'title')).textContent = text;
 };

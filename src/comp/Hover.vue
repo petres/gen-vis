@@ -18,6 +18,7 @@
 <script>
 import * as d3 from "@/utils/d3";
 import { fillHtml } from "@/utils/def";
+import { byOrder } from "@/utils/hover";
 import SlotContent from '@/comp/SlotContent.vue';
 
 export default {
@@ -49,6 +50,8 @@ export default {
         },
         // the templates of the title and of a row, see README "hover"
         template() { return this.store.def.options.hover ?? {} },
+        // the rows from the top to the bottom, see orderOf of utils/hover.js
+        sorted() { return [...(this.data ?? [])].sort((a, b) => byOrder(a.order, b.order)) },
         // the title has the names of the nearest row (or of the first one),
         // e.g. {definition} of a category of the position
         filledTitle() {
@@ -60,14 +63,13 @@ export default {
         // the slot: {land} is the name of the category, {land.unit} another
         // hover prop, {y} the formatted value and {y.value} the value, and the globals
         rows() {
-            return [...(this.data ?? [])].sort((a, b) => b.order - a.order)
-                .map(d => ({ nearest: d.nearest, style: this.styleOf(d), attrs: d.attrs, html: fillHtml(this.template.row, this.namesOf(d)) }));
+            return this.sorted.map(d => ({ nearest: d.nearest, style: this.styleOf(d), attrs: d.attrs, html: fillHtml(this.template.row, this.namesOf(d)) }));
         },
         // the rows and their formatted values, as the ones of the default table
         slotProps() {
             return {
                 ...this.payload,
-                entries: [...(this.data ?? [])].sort((a, b) => b.order - a.order).map(d => ({ ...d.entries, nearest: d.nearest })),
+                entries: this.sorted.map(d => ({ ...d.entries, nearest: d.nearest })),
             };
         },
     },
@@ -98,7 +100,7 @@ export default {
         render() {
             if (!this.$refs.entries || !this.data)
                 return;
-            const data = [...this.data].sort((a, b) => b.order - a.order)
+            const data = this.sorted;
             const styleOf = row => this.styleOf(row);
             let entries = d3.select(this.$refs.entries).selectAll('tr.vis-hover-entry')
                 .data(data)

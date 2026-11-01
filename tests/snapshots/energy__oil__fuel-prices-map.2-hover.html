@@ -26,7 +26,7 @@
 <div class="vis-legend vis-color-legend" data-dim="price">
 <div class="vis-legend-title">€/Liter</div>
 <div class="vis-color-scale">
-<svg width="272" height="34">
+<svg role="img" aria-label="€/Liter" width="272" height="34">
 <g transform="translate(16, 2)">
 <rect x="0" y="0" width="240" height="10" fill="url(#gen-vis-gradient-N)">
 </rect>
@@ -72,7 +72,7 @@
 </div>
 <div class="vis-body">
 <div style="width: 800px;" class="vis-facet">
-<svg width="800" height="480" class="vis-svg" role="application" aria-label="Spritpreise in Europa" aria-roledescription="Diagramm" aria-describedby="gen-vis-facet-N-keys" tabindex="0">
+<svg width="800" height="480" class="vis-svg" role="application" aria-label="Spritpreise in Europa" aria-describedby="gen-vis-facet-N-subtitle gen-vis-facet-N-keys" aria-roledescription="Diagramm" tabindex="0">
 <g transform="translate(10 10)">
 <g visibility="hidden" class="vis-hover-marker">
 <line>
@@ -212,8 +212,6 @@
 </path>
 </g>
 <g class="vis-group" data-group-country="MT">
-<path fill="rgb(255, 255, 204)" stroke="white" stroke-width="0.5" highlight-stroke="#333" highlight-stroke-width="1.5" data-geo-key="MT">
-</path>
 </g>
 <g class="vis-group" data-group-country="NL">
 <path fill="rgb(193, 7, 35)" stroke="white" stroke-width="0.5" highlight-stroke="#333" highlight-stroke-width="1.5" d="M417.501,232.908L415.558,240.864L412.981,242.78L415.818,246.156L413.31,250.106L406.423,252.269L408.246,255.415L407.85,259.842L405.258,261.724L406.258,265.479L403.425,265.276L404.639,259.964L400.127,258.356L398.683,255.533L392.014,256.265L386.636,254.157L389.066,253.215L395.688,242.39L397.643,234.297L401.063,235.261L406.605,230.725L413.997,229.878ZM391.908,256.61L389.648,258.07L384.761,255.712Z" data-geo-key="NL">
@@ -248,8 +246,9 @@
 </rect>
 </g>
 </svg>
+<span id="gen-vis-facet-N-subtitle" hidden="">Länder der EU, inkl. Steuern, in €/Liter, Stand 28.9.203</span>
 <span id="gen-vis-facet-N-keys" hidden="">Die Pfeiltasten zeigen die Werte der Positionen und Zeilen, die Eingabetaste wählt sie aus, Escape schließt sie.</span>
-<div aria-live="polite" style="transform: translate(10px, 10px); position: absolute; top: 0px; left: 0px;">
+<div aria-live="off" style="transform: translate(10px, 10px); position: absolute; top: 0px; left: 0px;">
 </div>
 </div>
 </div>

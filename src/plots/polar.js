@@ -12,14 +12,29 @@ const angleOffset = (plot, ctx, path) => {
     return scale ? bandCenter(scale) : 0;
 };
 
+const tau = 2*Math.PI;
+
+// a radius not inside of the inner radius `r0`, a value below the domain of
+// the radius is not on the other side of the center
+const clampRadius = (r, r0) => Number.isFinite(r) ? Math.max(r0, r) : r;
+
+// the same angle, also 0 and 2π, rounded, as an angle of a scale can differ
+// in its last digits
+const angleKey = a => {
+    const k = Math.round(((a%tau + tau)%tau)*1e6);
+    return k == Math.round(tau*1e6) ? 0 : k;
+};
+
 // the radii of the rows of the groups, the ones of the same angle moved apart
-// to at least the distance `gap`, see dodge
-const dodgedRadii = (groups, gap) => {
+// to at least the distance `gap`, see dodge, around their mean, a group
+// moved outward if one of them would be inside of the inner radius `r0`
+const dodgedRadii = (groups, gap, r0) => {
     const rows = groups.flatMap(g => g.rows.filter(g.complete).map(row => [row, g.at(row)]));
     const radii = new Map();
-    d3.group(rows, ([, v]) => v.angle).forEach(same => {
-        const moved = dodge(same.map(([, v]) => parseFloat(v.radius)), gap);
-        same.forEach(([row], i) => radii.set(row, moved[i]));
+    d3.group(rows, ([, v]) => angleKey(v.angle)).forEach(same => {
+        const moved = dodge(same.map(([, v]) => clampRadius(parseFloat(v.radius), r0)), gap);
+        const shift = Math.max(0, r0 - (d3.min(moved) ?? r0));
+        same.forEach(([row], i) => radii.set(row, moved[i] + shift));
     });
     return radii;
 };
@@ -34,11 +49,12 @@ const positioned = (name, type, x, y) => ({
         const offset = angleOffset(plot, ctx, 'angle');
         const text = type == 'text';
         const below = text ? halo(plot) : {};
-        const radii = text && plot.dodge ? dodgedRadii(groups, plot.dodge) : null;
+        const [r0] = radiusRange(ctx);
+        const radii = text && plot.dodge ? dodgedRadii(groups, plot.dodge, r0) : null;
         return perRow(groups, type, (v, row) => {
             if (!('angle' in v && 'radius' in v))
                 throw new Error(`${name}: the props 'angle' and 'radius' are needed`);
-            const [px, py] = pointRadial(v.angle + offset, radii ? radii.get(row) : v.radius);
+            const [px, py] = pointRadial(v.angle + offset, radii ? radii.get(row) : clampRadius(v.radius, r0));
             const { angle, radius, ...props } = v;
             return { ...below, ...props, [x]: px, [y]: py };
         });
@@ -57,11 +73,12 @@ export default {
         update: true,
         marks(groups, plot, ctx) {
             const offset = angleOffset(plot, ctx, 'd.angle');
+            const [r0] = radiusRange(ctx);
             return perGroup(groups, g => lineRadial()
                 .curve(curve(plot))
                 .defined(e => finite(e.angle, e.radius))
                 .angle(e => e.angle + offset)
-                .radius(e => e.radius)
+                .radius(e => clampRadius(e.radius, r0))
                 (points(g))
             );
         },
@@ -74,12 +91,13 @@ export default {
         update: true,
         marks(groups, plot, ctx) {
             const offset = angleOffset(plot, ctx, 'd.angle');
+            const [r0] = radiusRange(ctx);
             return perGroup(groups, g => areaRadial()
                 .curve(curve(plot))
                 .defined(e => finite(e.angle, e.innerRadius, e.outerRadius))
                 .angle(e => e.angle + offset)
-                .innerRadius(e => e.innerRadius)
-                .outerRadius(e => e.outerRadius)
+                .innerRadius(e => clampRadius(e.innerRadius, r0))
+                .outerRadius(e => clampRadius(e.outerRadius, r0))
                 (points(g))
             );
         },
@@ -109,8 +127,8 @@ export default {
                 .cornerRadius(v.cornerRadius ?? 0)({
                     startAngle: start,
                     endAngle: end,
-                    innerRadius: v.innerRadius ?? inner,
-                    outerRadius: v.outerRadius ?? outer,
+                    innerRadius: clampRadius(v.innerRadius ?? inner, inner),
+                    outerRadius: clampRadius(v.outerRadius ?? outer, inner),
                 });
             const props = Object.fromEntries(Object.entries(v).filter(([k]) => !arcProps.includes(k)));
             return { ...props, d };

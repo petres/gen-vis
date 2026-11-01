@@ -48,6 +48,7 @@
             "axis": {
                 "ticks": 4,
                 "position": "radial",
+                "angle": 40,
                 "grid": true,
                 "gridShape": "polygon",
                 "format": ".2s"

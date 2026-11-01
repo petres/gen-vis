@@ -1219,8 +1219,8 @@ describe('maps', () => {
         const def = mapDef();
         def.geo = { data: topo, join: 'region' };
         let el = await mount(GenVis, { def, data: mapData });
-        // B has no feature, its path is empty
-        expect([...el.querySelectorAll('g.vis-plot.plot-1 path')].map(p => p.hasAttribute('d'))).toEqual([true, false]);
+        // B has no feature, it is not drawn
+        expect([...el.querySelectorAll('g.vis-plot.plot-1 path')].map(p => p.getAttribute('data-geo-key'))).toEqual(['A']);
 
         def.geo.object = 'circles';
         el = await mount(GenVis, { def, data: mapData });
@@ -1234,8 +1234,8 @@ describe('maps', () => {
         def.annotations = [{ type: 'text', lon: 0.5, lat: 0.5, text: 'A' }, { type: 'circle', lon: 0.5, lat: 0.5, above: true }];
         const el = await mount(GenVis, { def, data: mapData });
         expect([...el.querySelectorAll('g.vis-plot.plot-0 path')].map(p => p.getAttribute('data-geo-key'))).toEqual(['A']);
-        // A fills the facet, B has no feature
-        expect([...el.querySelectorAll('g.vis-plot.plot-1 path')].map(p => p.hasAttribute('d'))).toEqual([true, false]);
+        // A fills the facet, B has no feature, it is not drawn
+        expect([...el.querySelectorAll('g.vis-plot.plot-1 path')].map(p => p.getAttribute('data-geo-key'))).toEqual(['A']);
         const text = el.querySelector('g.vis-annotations text.vis-text');
         expect([num(text, 'x'), num(text, 'y')].map(Math.round)).toEqual([150, 50]);
         expect(el.querySelector('g.vis-annotations.vis-above circle')).not.toBeNull();
