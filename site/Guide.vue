@@ -120,7 +120,7 @@
                         <tbody>
                             <tr><th><code>3</code>, <code>"none"</code></th><td>a value</td></tr>
                             <tr><th><code>"@y:scaled"</code></th><td>a reference to a name of the place of the prop</td></tr>
-                            <tr><th><code>{ "prop": "relative", "ref": "innerWidth", "ratio": 0.5 }</code></th><td>a computed value: <code>relative</code>, <code>steps</code> (e.g. of the width of the chart), <code>format</code> (a text of a number or a date) and <code>match</code> (the value of a case)</td></tr>
+                            <tr><th><code>{ "prop": "relative", "ref": "innerWidth", "ratio": 0.5 }</code></th><td>a computed value: <code>ref</code> (the value of the reference), <code>fixed</code> (its <code>value</code> as it is, e.g. an object which is no nested prop), <code>relative</code>, <code>steps</code> (e.g. of the width of the chart), <code>format</code> (a text of a number or a date) and <code>match</code> (the value of a case)</td></tr>
                             <tr><th><code>{ "x": "@x:scaled", "y": "@y:scaled" }</code></th><td>objects and lists of props, e.g. the points of a line</td></tr>
                         </tbody>
                     </table>
@@ -161,23 +161,12 @@
             <section id="steps" class="usage">
                 <h2>Step by step</h2>
                 <p>
-                    A line chart of the weekly fuel prices in Austria. Every step adds to the definition of the
-                    one before, the addition is shown beside the chart, the whole definition below it.
+                    A dumbbell chart of the share of renewables in the electricity of European countries, 2019
+                    against 2025: two circles per country and the line between them. Every step adds to the
+                    definition of the one before. Its definition is beside the chart, edit it and the chart
+                    follows, with the warnings of the check; <em>Added in this step</em> shows what is new.
                 </p>
-                <div v-for="(step, i) in steps" :id="step.id" :key="step.id" class="step">
-                    <h3><span>{{ String(i + 1).padStart(2, '0') }}</span> {{ step.title }}</h3>
-                    <p v-html="step.text"/>
-                    <div class="demo">
-                        <div class="demo-live"><GenVis :def="step.def"/></div>
-                        <div>
-                            <pre class="demo-code"><code>{{ json(step.add) }}</code></pre>
-                            <details>
-                                <summary>The whole definition</summary>
-                                <pre class="demo-code"><code>{{ json(step.def) }}</code></pre>
-                            </details>
-                        </div>
-                    </div>
-                </div>
+                <Step v-for="(step, i) in steps" :key="step.id" :step="step" :index="i"/>
             </section>
 
             <section id="changing" class="usage">
@@ -193,33 +182,19 @@
         </main>
 
         <footer class="footer">
-            <p>gen-vis {{ version }} · MIT licence · Data: spritpreisrechner.at</p>
+            <p>gen-vis {{ version }} · MIT licence · Data: ENTSO-E Transparency Platform</p>
         </footer>
     </div>
 </template>
 
 <script>
-import { GenVis } from '@preschen/gen-vis';
+import Step from './components/Step.vue';
 import steps from './guide/steps.js';
 
 const repo = 'https://github.com/petres/gen-vis';
 
-// JSON with the short objects and lists in one line, e.g. the props of a plot
-const width = 84;
-// in the width, `prefix` is the length of the key before it
-const json = (value, indent = '', prefix = 0) => {
-    const line = JSON.stringify(value, null, 1).replace(/\n\s*/g, ' ');
-    if (value === null || typeof value != 'object' || indent.length + prefix + line.length <= width)
-        return line;
-    const inner = `${indent}    `;
-    const entries = Array.isArray(value)
-        ? value.map(v => `${inner}${json(v, inner)}`)
-        : Object.entries(value).map(([k, v]) => `${inner}${JSON.stringify(k)}: ${json(v, inner, JSON.stringify(k).length + 2)}`);
-    return Array.isArray(value) ? `[\n${entries.join(',\n')}\n${indent}]` : `{\n${entries.join(',\n')}\n${indent}}`;
-};
-
 export default {
-    components: { GenVis },
+    components: { Step },
     data: () => ({
         steps,
         repo,
@@ -227,6 +202,5 @@ export default {
         branch: __BRANCH__,
         readme: `${repo}/blob/${__BRANCH__}/README.md`,
     }),
-    methods: { json },
 };
 </script>

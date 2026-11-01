@@ -287,6 +287,13 @@ table.names th { font-weight: 600; width: 34%; }
 .step { padding-top: 26px; }
 .step + .step { margin-top: 14px; border-top: 1px dashed var(--line); }
 .step h3 span { color: var(--faint); font-variant-numeric: tabular-nums; margin-right: 6px; }
-.step details { margin-top: 10px; font-size: 13px; color: var(--muted); }
-.step details summary { cursor: pointer; }
-.step details pre { margin-top: 8px; }
+.step-body { margin-top: 18px; }
+.step-panel { min-height: 480px; }
+.step-added { overflow: auto; }
+.step-added pre {
+    margin: 0;
+    padding: 10px 14px;
+    font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

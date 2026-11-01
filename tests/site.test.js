@@ -60,11 +60,15 @@ describe('the steps of the page how it works', () => {
         expect(errors).toEqual([]);
     });
 
-    test('the last one switches to the index, without the line at 2 euros', async () => {
-        const el = await mount(GenVis, { def: steps.at(-1).def, state: { globals: { unit: 'index' } } });
-        expect(el.querySelector('.vis-error')).toBeNull();
-        expect(el.querySelector('.vis-annotation.vis-band')).not.toBeNull();
-        expect(el.querySelector('.vis-annotation.vis-line')).toBeNull();
+    test('the last one switches to nuclear power, without the line at half, and to another first year', async () => {
+        const def = steps.at(-1).def;
+        const el = await mount(GenVis, { def });
+        expect(el.querySelector('.vis-annotation.vis-line')).not.toBeNull();
+        const nuclear = await mount(GenVis, { def, state: { globals: { source: 'nuclear', from: '2021' } } });
+        expect(nuclear.querySelector('.vis-error')).toBeNull();
+        expect(nuclear.querySelector('.vis-annotation.vis-line')).toBeNull();
+        expect(nuclear.querySelector('.vis-subtitle').textContent).toBe('Share of the generation of nuclear power, 2021 and 2025');
+        expect([...nuclear.querySelectorAll('.vis-legend-entry')].map(e => e.textContent.trim())).toEqual(['2021', '2025']);
         expect(errors).toEqual([]);
     });
 });

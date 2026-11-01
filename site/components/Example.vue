@@ -52,32 +52,25 @@
 
 <script>
 import { GenVis } from '@preschen/gen-vis';
-import { validateDef } from '@preschen/gen-vis/check';
 import CodeEditor from './CodeEditor.vue';
 import DataPreview from './DataPreview.vue';
-import { schemaErrors } from '../editor/validate.js';
-
-// the time after the last key stroke the chart is drawn again
-const delay = 300;
+import { liveDefinition } from '../editor/live.js';
 
 export default {
     components: { GenVis, CodeEditor, DataPreview },
+    mixins: [liveDefinition],
     props: { example: Object, index: Number },
     data() {
         return {
             tab: 'def',
             tabs: [{ id: 'def', name: 'Definition' }, { id: 'css', name: 'CSS' }, { id: 'data', name: 'Data' }],
-            defText: this.example.def,
             cssText: this.example.css,
-            def: JSON.parse(this.example.def),
-            parseError: null,
-            warnings: [],
             copied: false,
         };
     },
     computed: {
         number() { return String(this.index + 1).padStart(2, '0') },
-        changed() { return this.defText != this.example.def || this.cssText != this.example.css },
+        changed() { return this.defChanged || this.cssText != this.example.css },
         dataUrl() { return typeof this.def.data == 'string' ? new URL(this.def.data, document.baseURI).href : null },
         status() {
             if (this.parseError)
@@ -88,10 +81,6 @@ export default {
         },
     },
     watch: {
-        defText(text) {
-            clearTimeout(this.timer);
-            this.timer = setTimeout(() => this.apply(text), delay);
-        },
         cssText(text) {
             this.style.textContent = text;
         },
@@ -102,39 +91,13 @@ export default {
         this.style.dataset.example = this.example.id;
         this.style.textContent = this.cssText;
         document.head.appendChild(this.style);
-        this.check(this.def);
     },
     beforeUnmount() {
-        clearTimeout(this.timer);
         this.style.remove();
     },
     methods: {
-        apply(text) {
-            let def;
-            try {
-                def = JSON.parse(text);
-            } catch (error) {
-                this.parseError = `Invalid JSON: ${error.message}`;
-                return;
-            }
-            if (def === null || typeof def != 'object' || Array.isArray(def)) {
-                this.parseError = 'The definition is an object.';
-                return;
-            }
-            this.parseError = null;
-            this.check(def);
-            this.def = def;
-        },
-        // the warnings of the package and the errors of the schema
-        check(def) {
-            let warnings;
-            try {
-                warnings = validateDef(def);
-            } catch (error) {
-                warnings = [error.message];
-            }
-            this.warnings = [...new Set([...warnings, ...schemaErrors(def, warnings)])];
-        },
+        // the text of the definition it starts with, see editor/live.js
+        originalDef() { return this.example.def },
         reset() {
             this.defText = this.example.def;
             this.cssText = this.example.css;
