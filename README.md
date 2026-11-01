@@ -18,9 +18,10 @@ npm install @preschen/gen-vis vue
 ### Standalone script
 
 The standalone script includes Vue, d3 and the styles, for pages without a
-bundler, e.g. of a CDN. As a module of the page (`dist-lib/esm/gen-vis.js`)
-it loads 90 kB (gzipped) at first and the parts which not every chart needs
-when a chart needs them, e.g. the ones of maps, from the files next to it:
+bundler, e.g. of a CDN. The module of the page (`dist-lib/esm/gen-vis.js`) is
+the one to use: it loads 90 kB (gzipped) at first and the parts which not
+every chart needs when a chart needs them, e.g. the ones of maps, from the
+files next to it:
 
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
@@ -31,22 +32,52 @@ mountGenVisByClass('genVis');
 </script>
 ```
 
-As a single file (`dist-lib/gen-vis.js`, 476 kB, 161 kB gzipped) it has all
-parts in itself and provides the functions as globals, e.g. of a page which
-loads its scripts without modules:
+A page which loads its scripts without modules loads the same module with
+`dist-lib/gen-vis.core.js` (less than 1 kB), from the files next to it. Its
+functions are globals at once, they return promises (of the components), so
+they can be called before the module is loaded; `GenVis.ready` is the module,
+e.g. for `registerPlotType`:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/gen-vis.core.js"></script>
+<script>mountGenVisByClass('genVis').then(charts => ...)</script>
+```
+
+The single file (`dist-lib/gen-vis.js`, 435 kB, 149 kB gzipped, 129 kB with
+brotli) has all parts in itself, without the check of the definitions
+(`check` and `debug` warn that it is missing), e.g. of a page which has to
+work with one file, its globals return the components at once:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/gen-vis.js"></script>
 <script>mountGenVisByClass('genVis')</script>
 ```
 
-Both have a Vue of their own, a page with its own Vue loads it twice, an
-application of Vue uses the [Vue component](#vue-component). Of a bundler the
-module is `@preschen/gen-vis/esm` and the single file
+These have a Vue of their own, a page with its own Vue loads it twice, an
+application of Vue uses the [Vue component](#vue-component). A page with Vue
+3 as a script uses `dist-lib/gen-vis.novue.js` (126 kB gzipped), with the
+global `Vue` (`vue.global.prod.js`), or with Vue in the import map of the
+page the module `dist-lib/esm-novue/gen-vis.js` (66 kB at first):
+
+```html
+<script type="importmap">{ "imports": { "vue": "https://cdn.jsdelivr.net/npm/vue@3/dist/vue.esm-browser.prod.js" } }</script>
+<script type="module">
+import { mountGenVisByClass } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/esm-novue/gen-vis.js';
+mountGenVisByClass('genVis');
+</script>
+```
+
+Of a bundler the modules are `@preschen/gen-vis/esm` and
+`@preschen/gen-vis/esm-novue`, the single file is
 `@preschen/gen-vis/standalone`, which only sets the globals.
 
-`npm run lib` builds both in `dist-lib/`, the single file also as
-`gen-vis-<version>.js`, e.g. for an upload to a server of its own.
+`npm run lib` builds them in `dist-lib/`, the single files also as
+`gen-vis-<version>.js` and `gen-vis-<version>.novue.js`, e.g. for an upload
+to a server of its own, the ones of a page which keeps its version (the
+module and the core load the files of `esm/` of the upload). `npm run upload`
+also writes the files compressed next to them (`.br`, `.gz`), for a server
+which sends them as they are, e.g. nginx with `brotli_static` and
+`gzip_static`, a CDN compresses them itself.
 
 `mountGenVisByClass(className)` mounts all elements with the class which are
 not mounted yet and returns their components, `mountGenVisElement(element,
@@ -109,7 +140,7 @@ parquet data and the PNG and the CSV (~11 kB) with the first one.
 | `def`      | `data-def`      | the definition, an object or a JSON string |
 | `data`     | `data-data`     | the data as rows, a CSV/JSON string or parquet (an `ArrayBuffer` or `Uint8Array`), if not given it is loaded from the `data` url of the definition |
 | `debug`    | `data-debug`    | shows the prepared definition, with the warnings of `check` |
-| `check`    | `data-check`    | logs the warnings of the check of the definition in the console, e.g. unknown plot types, while it is written, the check is only loaded then |
+| `check`    | `data-check`    | logs the warnings of the check of the definition in the console, e.g. unknown plot types, while it is written, the check is only loaded then (not part of the single file of the standalone script) |
 | `state`    | `data-state`    | the changes of the user, see [state](#state), the attribute is JSON |
 | `highlight` | `data-highlight` | the rows highlighted by the page, values of mappings, e.g. `{"country": "AT"}` of the hover of another chart, see [linked charts](#linked-charts), the attribute is JSON |
 | `globals`  | `data-globals`  | the globals of the page, e.g. the language or the year of a menu of the page, also of hidden form elements, see [globals](#formelements-and-globals), the attribute is JSON |
@@ -519,7 +550,8 @@ type) and floats of 32 bits are the numbers of their text, the
 same as the ones of csv, e.g. `22.1637`. Snappy, the default of arrow (R, Python), pandas and
 duckdb, is read directly, other compressions, e.g. zstd of polars, load the
 decompressors of `hyparquet-compressors` (~75 kB gzipped), the standalone
-script reads only snappy and uncompressed parquet.
+script (its single files) reads only snappy and uncompressed parquet, its
+module loads the decompressors as well.
 
 The values of a `categorical` mapping (and of a mapping without a `type`)
 are strings, as the ones of CSV, whatever the format of the data, e.g. the

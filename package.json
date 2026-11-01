@@ -1,6 +1,6 @@
 {
   "name": "@preschen/gen-vis",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "A declarative d3 visualisation library",
   "type": "module",
   "main": "dist/gen-vis.js",
@@ -20,12 +20,16 @@
     "./schema.json": "./schema.json",
     "./standalone": "./dist-lib/gen-vis.js",
     "./esm": "./dist-lib/esm/gen-vis.js",
+    "./esm-novue": "./dist-lib/esm-novue/gen-vis.js",
     "./package.json": "./package.json"
   },
   "files": [
     "dist",
     "dist-lib/gen-vis.js",
+    "dist-lib/gen-vis.novue.js",
+    "dist-lib/gen-vis.core.js",
     "dist-lib/esm",
+    "dist-lib/esm-novue",
     "types",
     "schema.json",
     "CHANGELOG.md"
@@ -34,12 +38,12 @@
     "dev": "vite",
     "build": "vite build",
     "watch": "vite build --watch",
-    "lib": "vite build --mode lib && vite build --mode module",
+    "lib": "vite build --mode lib && vite build --mode lib-novue && vite build --mode module && vite build --mode module-novue && vite build --mode core",
     "site": "npm run build && npm run lib && vite --config site/vite.config.js",
     "site:build": "npm run build && npm run lib && vite build --config site/vite.config.js",
     "test": "vitest run",
     "types": "node scripts/types.js",
-    "upload": "[ -f .env ] && . ./.env; rsync -arv dist-lib/ \"${GEN_VIS_UPLOAD:?set GEN_VIS_UPLOAD=user@host:/path in .env}\"",
+    "upload": "[ -f .env ] && . ./.env; node scripts/compress.js && rsync -arv dist-lib/ \"${GEN_VIS_UPLOAD:?set GEN_VIS_UPLOAD=user@host:/path in .env}\"",
     "deploy": "npm run lib && npm run upload",
     "prepublishOnly": "npm test && npm run build && npm run lib"
   },

@@ -114,9 +114,11 @@ const raw = rows => markRaw(Array.from(toRaw(rows)));
 
 // the check of the definitions (`check` of Store.init, e.g. while a
 // definition is written), loaded with the first one, together with its
-// parents, a definition is drawn without it if it could not be loaded
+// parents, a definition is drawn without it if it could not be loaded, e.g.
+// of the single file of the standalone script, which has none
 let validator = null;
-const loadValidator = () => validator ??= lazy.validate().catch(() => {
+const loadValidator = () => validator ??= lazy.validate().catch(error => {
+    console.warn(`gen-vis: the definition is not checked, ${error.message}`);
     validator = null;
     return null;
 });

@@ -1,7 +1,8 @@
-// the parts of lazy.js in the standalone script, it is one file, so they are
-// part of it anyway, imported directly they are smaller than as chunks
-// inlined into it, see vite.config.js
-import * as validate from '@/utils/validate.js';
+// the parts of lazy.js in the single file of the standalone script, it is one
+// file, so they are part of it anyway, imported directly they are smaller
+// than as chunks inlined into it, see vite.config.js. The check of the
+// definitions is not part of it (~12 kB gzipped), a page in use does not
+// need it, the module of the standalone script and the package have it.
 import * as transform from '@/utils/transform-types.js';
 import * as intl from '@/utils/locale-intl.js';
 import ColorLegend from '@/comp/ColorLegend.vue';
@@ -15,7 +16,9 @@ import * as screenshot from 'modern-screenshot';
 import 'd3-transition';
 
 export const lazy = {
-    validate: async () => validate,
+    validate: async () => {
+        throw new Error('the single file of the standalone script has no check of the definitions, the module (esm/gen-vis.js, gen-vis.core.js) and the package have it');
+    },
     transform: async () => transform,
     intl: async () => intl,
     colorLegend: async () => ({ default: ColorLegend }),

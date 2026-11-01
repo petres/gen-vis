@@ -3,7 +3,16 @@
 The changes of the versions, the newest first, the ones on npm without
 0.7.0 and 2.0.0-alpha.1. The details are in the commits.
 
-## 3.1.0 (unreleased)
+## 3.1.0
+
+The standalone script in more sizes: `dist-lib/gen-vis.core.js` (less than
+1 kB) loads the module of `esm/` (90 kB gzipped at first, the other parts
+when a chart needs them) for pages without modules, its globals return
+promises; `gen-vis.novue.js` and `esm-novue/` use the Vue of the page (the
+global `Vue` or the one of the import map, 126 kB and 66 kB gzipped). The
+single file has no check of the definitions anymore (149 kB gzipped, it was
+161 kB), `check` warns that it is missing. `npm run upload` writes the files
+compressed next to them (brotli and gzip). The readme starts with the module.
 
 The prop `lazy` (attribute `data-lazy`) loads a visualisation only when it
 comes near the viewport, `true` within 400 pixels or a `rootMargin`, e.g.
