@@ -1,4 +1,4 @@
-export { mergeAll, sameValue, prepareDef, applyPatches, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts };
+export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts };
 
 import merge from 'deepmerge';
 import { schemeColors } from '@/utils/d3';
@@ -236,6 +236,28 @@ const selectedEntries = def => (def.formElements ?? []).map(e => selectedEntry(d
 const sources = Symbol('sources');
 
 /**
+ * The patchable parts of the original definition `defOrg` with the patches
+ * of the entries of the form elements selected by the globals of `def`, in
+ * the order of the form elements, see spec/merge.md. The globals of an entry
+ * can select the entry of a later form element, e.g. a language selects its
+ * names, they are set in `def.globals` until no entry changes them anymore,
+ * at most once per form element, e.g. of entries which set each other's
+ * globals.
+ */
+const patchedParts = (def, defOrg) => {
+    let selected;
+    for (let i = 0; i <= (def.formElements ?? []).length; i++) {
+        selected = selectedEntries(def);
+        const globals = JSON.stringify(def.globals);
+        selected.filter(v => isObject(v.globals)).forEach(v => Object.assign(def.globals, v.globals));
+        if (JSON.stringify(def.globals) == globals)
+            break;
+    }
+    const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));
+    return mergeAll([pick(defOrg), ...selected.filter(v => isObject(v.patch)).map(v => pick(v.patch))]);
+};
+
+/**
  * The parts of a definition with the patches of the selected entries of the
  * form elements (`patch`, e.g. { "mapping": { "y": { "column": "share" } } }
  * or { "geo": { "fit": "data" } }), merged into the original definition
@@ -252,20 +274,7 @@ const sources = Symbol('sources');
  * column or type.
  */
 const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null } = {}) => {
-    // the globals of an entry can select the entry of a later form element,
-    // e.g. a language selects its names, they are applied until no entry
-    // changes them anymore, at most once per form element, e.g. of entries
-    // which set each other's globals
-    let selected;
-    for (let i = 0; i <= (def.formElements ?? []).length; i++) {
-        selected = selectedEntries(def);
-        const globals = JSON.stringify(def.globals);
-        selected.filter(v => isObject(v.globals)).forEach(v => Object.assign(def.globals, v.globals));
-        if (JSON.stringify(def.globals) == globals)
-            break;
-    }
-    const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));
-    const patched = mergeAll([pick(defOrg), ...selected.filter(v => isObject(v.patch)).map(v => pick(v.patch))]);
+    const patched = patchedParts(def, defOrg);
     const before = def[sources] ?? {};
     const after = { mapping: {} };
     // a part prepared again if its source differs from the one before

@@ -1,0 +1,156 @@
+[
+  {
+    "name": "the year of dates of several forms",
+    "rows": [
+      {
+        "d": "2024-06-01"
+      },
+      {
+        "d": "2024-06"
+      },
+      {
+        "d": "2024"
+      },
+      {
+        "d": "01.06.2023"
+      },
+      {
+        "d": "2022-12-31 23:00"
+      }
+    ],
+    "transform": {
+      "type": "year",
+      "column": "d",
+      "as": "year"
+    },
+    "columns": {
+      "year": [
+        2024,
+        2024,
+        2024,
+        2023,
+        2022
+      ]
+    }
+  },
+  {
+    "name": "missing and invalid dates have no year",
+    "rows": [
+      {
+        "d": ""
+      },
+      {
+        "d": null
+      },
+      {},
+      {
+        "d": "no date"
+      },
+      {
+        "d": "2022-02-30"
+      }
+    ],
+    "transform": {
+      "type": "year",
+      "column": "d",
+      "as": "year"
+    },
+    "columns": {
+      "year": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "without as the column is replaced",
+    "rows": [
+      {
+        "d": "2019-03-01"
+      }
+    ],
+    "transform": {
+      "type": "year",
+      "column": "d"
+    },
+    "columns": {
+      "d": [
+        2019
+      ]
+    }
+  },
+  {
+    "name": "times with a time zone are the local year",
+    "timezone": "Europe/Vienna",
+    "rows": [
+      {
+        "d": "2023-12-31T23:30:00Z"
+      },
+      {
+        "d": "2024-06-01T12:00:00Z"
+      }
+    ],
+    "transform": {
+      "type": "year",
+      "column": "d",
+      "as": "year"
+    },
+    "columns": {
+      "year": [
+        2024,
+        2024
+      ]
+    }
+  },
+  {
+    "name": "the year in UTC of a column of a utc scale",
+    "timezone": "Europe/Vienna",
+    "utc": [
+      "d"
+    ],
+    "rows": [
+      {
+        "d": "2023-12-31T23:30:00Z"
+      },
+      {
+        "d": "2024-01-01"
+      }
+    ],
+    "transform": {
+      "type": "year",
+      "column": "d",
+      "as": "year"
+    },
+    "columns": {
+      "year": [
+        2023,
+        2024
+      ]
+    }
+  },
+  {
+    "name": "the year in UTC of the column as of a utc scale",
+    "timezone": "Europe/Vienna",
+    "utc": [
+      "year"
+    ],
+    "rows": [
+      {
+        "d": "2023-12-31T23:30:00Z"
+      }
+    ],
+    "transform": {
+      "type": "year",
+      "column": "d",
+      "as": "year"
+    },
+    "columns": {
+      "year": [
+        2023
+      ]
+    }
+  }
+]

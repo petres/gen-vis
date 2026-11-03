@@ -1,0 +1,125 @@
+[
+  {
+    "name": "the dates in 2020 by default",
+    "rows": [
+      {
+        "d": "2019-01-01"
+      },
+      {
+        "d": "2021-07-15"
+      },
+      {
+        "d": ""
+      }
+    ],
+    "transform": {
+      "type": "align",
+      "column": "d",
+      "as": "day"
+    },
+    "columns": {
+      "day": [
+        "2020-01-01",
+        "2020-07-15",
+        null
+      ]
+    }
+  },
+  {
+    "name": "a date with a time keeps the time",
+    "rows": [
+      {
+        "d": "2023-02-28T13:05:00"
+      },
+      {
+        "d": "2023-02-28 13:05"
+      },
+      {
+        "d": "2024-02-29"
+      }
+    ],
+    "transform": {
+      "type": "align",
+      "column": "d",
+      "year": 2024
+    },
+    "columns": {
+      "d": [
+        "2024-02-28T13:05:00",
+        "2024-02-28T13:05:00",
+        "2024-02-29"
+      ]
+    }
+  },
+  {
+    "name": "the 29th of February of a leap year is kept in 2020",
+    "rows": [
+      {
+        "d": "2024-02-29"
+      },
+      {
+        "d": "2023-03-01"
+      }
+    ],
+    "transform": {
+      "type": "align",
+      "column": "d",
+      "as": "day"
+    },
+    "columns": {
+      "day": [
+        "2020-02-29",
+        "2020-03-01"
+      ]
+    }
+  },
+  {
+    "name": "the day and time in UTC of a utc scale",
+    "timezone": "Europe/Vienna",
+    "utc": [
+      "d"
+    ],
+    "rows": [
+      {
+        "d": "2023-12-31T23:30:00Z"
+      },
+      {
+        "d": "2024-03-30T23:30:00Z"
+      },
+      {
+        "d": "2024-06-01 13:00"
+      }
+    ],
+    "transform": {
+      "type": "align",
+      "column": "d",
+      "as": "day"
+    },
+    "columns": {
+      "day": [
+        "2020-12-31T23:30:00",
+        "2020-03-30T23:30:00",
+        "2020-06-01T13:00:00"
+      ]
+    }
+  },
+  {
+    "name": "the local day and time of times with a time zone",
+    "timezone": "Europe/Vienna",
+    "rows": [
+      {
+        "d": "2023-12-31T23:30:00Z"
+      }
+    ],
+    "transform": {
+      "type": "align",
+      "column": "d",
+      "as": "day"
+    },
+    "columns": {
+      "day": [
+        "2020-01-01T00:30:00"
+      ]
+    }
+  }
+]

@@ -1,0 +1,332 @@
+[
+  {
+    "name": "the patch of the selected entry is merged into the patchable parts",
+    "def": {
+      "globals": {
+        "column": "share"
+      },
+      "formElements": [
+        {
+          "id": "column",
+          "ref": "column",
+          "values": [
+            {
+              "id": "value",
+              "value": "value"
+            },
+            {
+              "id": "share",
+              "value": "share",
+              "patch": {
+                "mapping": {
+                  "y": {
+                    "column": "share",
+                    "axis": {
+                      "format": ".0%"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "mapping": {
+        "y": {
+          "column": "value",
+          "type": "numeric",
+          "axis": {
+            "format": ",.0f",
+            "ticks": 5
+          }
+        }
+      },
+      "plot": {
+        "type": "cartesian:line"
+      },
+      "data": "not patchable.csv"
+    },
+    "result": {
+      "globals": {
+        "column": "share"
+      },
+      "parts": {
+        "mapping": {
+          "y": {
+            "column": "share",
+            "type": "numeric",
+            "axis": {
+              "format": ".0%",
+              "ticks": 5
+            }
+          }
+        },
+        "plot": {
+          "type": "cartesian:line"
+        }
+      }
+    }
+  },
+  {
+    "name": "the patches of several form elements in their order, null removes a part",
+    "def": {
+      "globals": {
+        "a": "1",
+        "b": "x"
+      },
+      "formElements": [
+        {
+          "ref": "a",
+          "values": [
+            {
+              "value": "1",
+              "patch": {
+                "options": {
+                  "height": 300
+                },
+                "filter": {
+                  "year": "2024"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ref": "b",
+          "values": [
+            {
+              "value": "x",
+              "patch": {
+                "options": {
+                  "height": 400
+                },
+                "filter": null
+              }
+            }
+          ]
+        }
+      ],
+      "options": {
+        "title": "T"
+      },
+      "filter": {
+        "year": "@year"
+      }
+    },
+    "result": {
+      "globals": {
+        "a": "1",
+        "b": "x"
+      },
+      "parts": {
+        "options": {
+          "title": "T",
+          "height": 400
+        },
+        "filter": null
+      }
+    }
+  },
+  {
+    "name": "values are compared as text, the year 2024 of the data and \"2024\"",
+    "def": {
+      "globals": {
+        "year": 2024
+      },
+      "formElements": [
+        {
+          "ref": "year",
+          "values": [
+            {
+              "value": "2024",
+              "patch": {
+                "options": {
+                  "title": "selected"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "options": {
+        "title": "none"
+      }
+    },
+    "result": {
+      "globals": {
+        "year": 2024
+      },
+      "parts": {
+        "options": {
+          "title": "selected"
+        }
+      }
+    }
+  },
+  {
+    "name": "without a selected entry the parts are the ones of the definition",
+    "def": {
+      "globals": {
+        "year": "2030"
+      },
+      "formElements": [
+        {
+          "ref": "year",
+          "values": [
+            {
+              "value": "2024",
+              "patch": {
+                "options": {
+                  "title": "selected"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "options": {
+        "title": "none"
+      }
+    },
+    "result": {
+      "globals": {
+        "year": "2030"
+      },
+      "parts": {
+        "options": {
+          "title": "none"
+        }
+      }
+    }
+  },
+  {
+    "name": "the globals of an entry select the entry of a later form element",
+    "def": {
+      "globals": {
+        "a": "1",
+        "b": "x"
+      },
+      "formElements": [
+        {
+          "ref": "a",
+          "values": [
+            {
+              "value": "1",
+              "globals": {
+                "b": "y"
+              }
+            },
+            {
+              "value": "2"
+            }
+          ]
+        },
+        {
+          "ref": "b",
+          "values": [
+            {
+              "value": "x",
+              "patch": {
+                "options": {
+                  "title": "x"
+                }
+              }
+            },
+            {
+              "value": "y",
+              "patch": {
+                "options": {
+                  "title": "y"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "result": {
+      "globals": {
+        "a": "1",
+        "b": "y"
+      },
+      "parts": {
+        "options": {
+          "title": "y"
+        }
+      }
+    }
+  },
+  {
+    "name": "plots of the patch are merged by their ids",
+    "def": {
+      "globals": {
+        "v": "b"
+      },
+      "formElements": [
+        {
+          "ref": "v",
+          "values": [
+            {
+              "value": "b",
+              "patch": {
+                "plot": [
+                  {
+                    "id": "bars",
+                    "type": "cartesian:bar"
+                  },
+                  {
+                    "id": "labels",
+                    "props": {
+                      "dy": -4
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "plot": [
+        {
+          "id": "bars",
+          "type": "cartesian:line",
+          "props": {
+            "fill": "@color"
+          }
+        },
+        {
+          "id": "labels",
+          "type": "svg:text",
+          "props": {
+            "dy": 4,
+            "text": "@name"
+          }
+        }
+      ]
+    },
+    "result": {
+      "globals": {
+        "v": "b"
+      },
+      "parts": {
+        "plot": [
+          {
+            "id": "bars",
+            "type": "cartesian:bar",
+            "props": {
+              "fill": "@color"
+            }
+          },
+          {
+            "id": "labels",
+            "type": "svg:text",
+            "props": {
+              "dy": -4,
+              "text": "@name"
+            }
+          }
+        ]
+      }
+    }
+  }
+]

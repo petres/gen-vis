@@ -1,0 +1,110 @@
+[
+  {
+    "name": "the value of the row of a file of the key, a template of a global",
+    "globals": {
+      "lang": "en"
+    },
+    "files": {
+      "countries.json": [
+        {
+          "code": "AT",
+          "name_de": "Österreich",
+          "name_en": "Austria"
+        },
+        {
+          "code": "SE",
+          "name_de": "Schweden",
+          "name_en": "Sweden"
+        }
+      ]
+    },
+    "rows": [
+      {
+        "c": "SE"
+      },
+      {
+        "c": "AT"
+      },
+      {
+        "c": "XX"
+      },
+      {
+        "c": ""
+      }
+    ],
+    "transform": {
+      "type": "lookup",
+      "column": "c",
+      "data": "countries.json",
+      "key": "code",
+      "value": "name_{lang}",
+      "as": "name"
+    },
+    "columns": {
+      "name": [
+        "Sweden",
+        "Austria",
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "keys are compared as text, the first row of a key",
+    "files": {
+      "k.json": [
+        {
+          "k": "1",
+          "v": "one"
+        },
+        {
+          "k": 2,
+          "v": "two"
+        },
+        {
+          "k": 2,
+          "v": "second two"
+        }
+      ]
+    },
+    "rows": [
+      {
+        "c": 1
+      },
+      {
+        "c": "2"
+      }
+    ],
+    "transform": {
+      "type": "lookup",
+      "column": "c",
+      "data": "k.json",
+      "key": "k",
+      "value": "v",
+      "as": "name"
+    },
+    "columns": {
+      "name": [
+        "one",
+        "two"
+      ]
+    }
+  },
+  {
+    "name": "a file which is not loaded is an error",
+    "rows": [
+      {
+        "c": "SE"
+      }
+    ],
+    "transform": {
+      "type": "lookup",
+      "column": "c",
+      "data": "missing.json",
+      "key": "code",
+      "value": "name",
+      "as": "name"
+    },
+    "error": "lookup: the rows of 'missing.json' are not loaded"
+  }
+]

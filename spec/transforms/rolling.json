@@ -1,0 +1,331 @@
+[
+  {
+    "name": "the mean of the window before the row, in the order of a column",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "rolling",
+      "column": "value",
+      "as": "mean",
+      "by": "type",
+      "order": "date",
+      "size": 2
+    },
+    "columns": {
+      "mean": [
+        null,
+        20,
+        35,
+        null,
+        null,
+        10
+      ]
+    }
+  },
+  {
+    "name": "a centered window",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "rolling",
+      "column": "value",
+      "as": "mean",
+      "by": "type",
+      "order": "date",
+      "size": 3,
+      "align": "center"
+    },
+    "columns": {
+      "mean": [
+        null,
+        26.666666666666668,
+        null,
+        null,
+        null,
+        10
+      ]
+    }
+  },
+  {
+    "name": "small values beside large ones are kept (a compensated sum)",
+    "rows": [
+      {
+        "v": "1e17"
+      },
+      {
+        "v": "1"
+      },
+      {
+        "v": "1"
+      },
+      {
+        "v": "1"
+      }
+    ],
+    "transform": {
+      "type": "rolling",
+      "column": "v",
+      "size": 2
+    },
+    "columns": {
+      "v": [
+        null,
+        50000000000000000,
+        1,
+        1
+      ]
+    }
+  },
+  {
+    "name": "infinite values and texts which are no decimal numbers are missing",
+    "rows": [
+      {
+        "v": "1"
+      },
+      {
+        "v": "Infinity"
+      },
+      {
+        "v": "3"
+      },
+      {
+        "v": "4"
+      },
+      {
+        "v": "0x10"
+      },
+      {
+        "v": "5"
+      }
+    ],
+    "transform": {
+      "type": "rolling",
+      "column": "v",
+      "size": 2
+    },
+    "columns": {
+      "v": [
+        null,
+        null,
+        3,
+        3.5,
+        null,
+        5
+      ]
+    }
+  },
+  {
+    "name": "rows without a value have no mean, a window with values has one",
+    "rows": [
+      {
+        "v": ""
+      },
+      {
+        "v": "15"
+      },
+      {
+        "v": "NA"
+      },
+      {
+        "v": "20"
+      }
+    ],
+    "transform": {
+      "type": "rolling",
+      "column": "v",
+      "size": 2
+    },
+    "columns": {
+      "v": [
+        null,
+        15,
+        null,
+        20
+      ]
+    }
+  },
+  {
+    "name": "a centered window of rows without values",
+    "rows": [
+      {
+        "v": ""
+      },
+      {
+        "v": "15"
+      },
+      {
+        "v": "NA"
+      },
+      {
+        "v": "20"
+      }
+    ],
+    "transform": {
+      "type": "rolling",
+      "column": "v",
+      "size": 3,
+      "align": "center"
+    },
+    "columns": {
+      "v": [
+        null,
+        15,
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "rows without a value of the order are at the end",
+    "rows": [
+      {
+        "o": "3",
+        "v": "3"
+      },
+      {
+        "o": "",
+        "v": "100"
+      },
+      {
+        "o": "1",
+        "v": "1"
+      },
+      {
+        "o": "2",
+        "v": "2"
+      }
+    ],
+    "transform": {
+      "type": "rolling",
+      "column": "v",
+      "as": "m",
+      "order": "o",
+      "size": 2
+    },
+    "columns": {
+      "m": [
+        2.5,
+        51.5,
+        null,
+        1.5
+      ]
+    }
+  },
+  {
+    "name": "an order of numbers by their value, not as text",
+    "rows": [
+      {
+        "o": "10",
+        "v": "10"
+      },
+      {
+        "o": "9",
+        "v": "9"
+      },
+      {
+        "o": "8",
+        "v": "8"
+      }
+    ],
+    "transform": {
+      "type": "rolling",
+      "column": "v",
+      "as": "m",
+      "order": "o",
+      "size": 2
+    },
+    "columns": {
+      "m": [
+        9.5,
+        8.5,
+        null
+      ]
+    }
+  },
+  {
+    "name": "a size of 1 by default",
+    "rows": [
+      {
+        "v": "1"
+      },
+      {
+        "v": ""
+      },
+      {
+        "v": "3"
+      }
+    ],
+    "transform": {
+      "type": "rolling",
+      "column": "v",
+      "as": "m"
+    },
+    "columns": {
+      "m": [
+        1,
+        null,
+        3
+      ]
+    }
+  }
+]
