@@ -31,6 +31,16 @@ describe('the filter transform', () => {
         expect(errors).toEqual([]);
     });
 
+    test('a definition of the shorthand of 4.0: the types of the values, the scales and axes of x and y, a line of its defaults', async () => {
+        const el = await mount(GenVis, { def: { options: { width: 400, height: 200 }, mapping: { x: 'year', y: 'value' }, plot: { type: 'line' } }, data });
+        expect(el.querySelectorAll('.vis-axis')).toHaveLength(2);
+        const path = el.querySelector('g.vis-plot path');
+        expect(path.getAttribute('d')).toMatch(/^M[\d.]+,[\d.]+L/);
+        expect(path.getAttribute('fill')).toBe('none');
+        expect(path.getAttribute('stroke')).toBe('currentColor');
+        expect(errors).toEqual([]);
+    });
+
     test('without rows nothing is drawn', async () => {
         const el = await mount(GenVis, { def: def([{ type: 'filter', expr: false }]), data });
         expect(el.querySelectorAll('g.vis-plot circle')).toHaveLength(0);
