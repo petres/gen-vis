@@ -3,7 +3,7 @@
 The changes of the versions, the newest first, the ones on npm without
 0.7.0 and 2.0.0-alpha.1. The details are in the commits.
 
-## 4.0.0 (unreleased)
+## 4.0.0-beta.0
 
 A shorter definition language, a core without a framework (Vue is an
 optional adapter) and a renderer without d3-selection and d3-transition.
