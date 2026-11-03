@@ -18,6 +18,11 @@ The parts are merged in their order, a later part overrides an earlier one
   the entries of the earlier array in their order, each merged with the entry
   of the later array of the same id (ids are compared as strings, `1` and
   `"1"` are the same), then the entries of the later one with new ids.
+- A mapping of a text (the column, e.g. `"facet": "group"`) and an object of
+  the same mapping (of `mapping`, also of a patch) are merged as the object
+  `{"column": "group"}` and the other one, in both orders: a child adds the
+  categories of the column of its parent, or a text changes only the column
+  of an object. Two texts replace each other.
 - All other values replace the earlier one, also arrays (of numbers, strings
   or of entries of which one has no id), `null` (it stays in the merged
   definition) and an object of an array or of a value and the other way round.

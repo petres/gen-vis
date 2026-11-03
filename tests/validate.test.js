@@ -668,6 +668,17 @@ describe('validateDef and the schema', () => {
 });
 
 describe('validateDef of the types of the rows', () => {
+    test('a mapping of a sequential scale without a type is numeric, also of the regions of a map by another mapping', () => {
+        const def = {
+            options: { coord: 'geo' },
+            geo: { data: 'regions.json' },
+            mapping: { country: { column: 'country', categories: { AT: {} } }, value: { column: 'share', domain: [0, 1], scale: { type: 'sequential', interpolator: 'Reds' } } },
+            plot: { type: 'region', by: 'country', props: { fill: '@value:scaled' } },
+        };
+        expect(validateDef(def, [{ country: 'AT', share: 0.5 }])).toEqual([]);
+        expect(normalize(def, { plotTypes }).mapping.value.type).toBe('numeric');
+    });
+
     test('the scale of a mapping of the type of its values', () => {
         const def = { mapping: { n: { column: 'land', nice: 5 } }, plot: { type: 'cartesian:line', props: {} } };
         expect(validateDef(def, [{ land: 'Wien' }]).filter(w => w.startsWith('mapping.n'))).toEqual([

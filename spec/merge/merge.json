@@ -504,5 +504,54 @@
         "d": 2
       }
     }
+  },
+  {
+    "name": "a text of a mapping is the mapping of its column, merged with an object of the same mapping",
+    "parts": [
+      {
+        "mapping": {
+          "facet": "group",
+          "x": {
+            "column": "year",
+            "axis": {
+              "ticks": 5
+            }
+          },
+          "y": "value"
+        }
+      },
+      {
+        "mapping": {
+          "facet": {
+            "categories": {
+              "a": {
+                "name": "A"
+              }
+            }
+          },
+          "x": "date",
+          "y": "share"
+        }
+      }
+    ],
+    "result": {
+      "mapping": {
+        "facet": {
+          "column": "group",
+          "categories": {
+            "a": {
+              "name": "A"
+            }
+          }
+        },
+        "x": {
+          "column": "date",
+          "axis": {
+            "ticks": 5
+          }
+        },
+        "y": "share"
+      }
+    }
   }
 ]

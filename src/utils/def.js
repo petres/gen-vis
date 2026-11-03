@@ -19,7 +19,23 @@ const arrayMerge = (target, source, options) => {
     return [...merged, ...source.filter(s => !target.some(t => t.id == s.id))];
 };
 
-const mergeAll = parts => merge.all(parts, { arrayMerge });
+// the mappings of two parts, a text of one which the other one writes as
+// an object is the mapping of its column, e.g. "facet": "group" of a parent
+// and "facet": { "categories": {} } of its child is the column with the
+// categories
+const columnOf = (m, other) => typeof m == 'string' && isObject(other) ? { column: m } : m;
+const mergeMappings = (target, source, options) => {
+    const t = { ...target };
+    const s = { ...source };
+    Object.keys(s).filter(k => Object.hasOwn(t, k)).forEach(k => {
+        t[k] = columnOf(t[k], s[k]);
+        s[k] = columnOf(s[k], t[k]);
+    });
+    return merge(t, s, options);
+};
+const customMerge = key => key == 'mapping' ? mergeMappings : undefined;
+
+const mergeAll = parts => merge.all(parts, { arrayMerge, customMerge });
 
 // keys of categories ascending or descending, numbers by their value
 const sortKeys = (keys, descending) => {
