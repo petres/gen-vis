@@ -124,7 +124,7 @@ describe('spec/migrate', () => {
     const files = import.meta.glob('../spec/migrate/*.json', { eager: true, import: 'default' });
     describe.each(fixtures(files))('%s', (file, cases) => {
         test.each(cases.map(c => [c.name, c]))('%s', (name, c) => {
-            expect(migrate(clone(c.def))).toEqual(c.result);
+            expect(migrate(clone(c.def), c.options)).toEqual(c.result);
             // migrate is idempotent
             expect(migrate(clone(c.result))).toEqual(c.result);
         });

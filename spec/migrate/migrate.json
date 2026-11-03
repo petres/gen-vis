@@ -235,21 +235,19 @@
     },
     "result": {
       "mapping": {
-        "g": {
-          "column": "g"
-        }
+        "g": "g"
       },
       "plot": {
         "type": "svg:circle",
+        "by": "g",
         "props": {
           "r": 2
-        },
-        "by": "g"
+        }
       }
     }
   },
   {
-    "name": "a scale without a type of 3.x is linear, x and y without a scale or an axis have none, without orientation none",
+    "name": "a scale without a type of 3.x is linear, x and y without a scale or an axis have none, the inferred orientations and positions of axes are left out",
     "def": {
       "mapping": {
         "x": {
@@ -281,26 +279,22 @@
         }
       }
     },
+    "options": {
+      "legacy": true
+    },
     "result": {
       "mapping": {
         "x": {
           "column": "d",
           "type": "date",
           "scale": {
-            "type": "linear",
-            "orientation": "horizontal"
+            "type": "linear"
           },
           "axis": false
         },
         "y": {
           "column": "v",
-          "type": "numeric",
-          "scale": {
-            "orientation": "vertical"
-          },
-          "axis": {
-            "position": "left"
-          }
+          "type": "numeric"
         },
         "r": {
           "column": "r",
@@ -339,6 +333,9 @@
         }
       }
     },
+    "options": {
+      "legacy": true
+    },
     "result": {
       "options": {
         "coord": "polar"
@@ -346,14 +343,7 @@
       "mapping": {
         "x": {
           "column": "m",
-          "type": "categorical",
-          "scale": {
-            "type": "point",
-            "orientation": "angular"
-          },
-          "axis": {
-            "position": "angular"
-          }
+          "type": "categorical"
         },
         "y": {
           "column": "v",
@@ -383,15 +373,15 @@
     "result": {
       "plot": {
         "type": "cartesian:bar",
-        "highlight": {
-          "mode": "row",
-          "fill": "#333"
-        },
+        "by": "land",
         "props": {
           "fill": "@color",
           "x": "@x:scaled"
         },
-        "by": "land",
+        "highlight": {
+          "mode": "row",
+          "fill": "#333"
+        },
         "others": {
           "opacity": 0.3
         }
@@ -399,7 +389,7 @@
     }
   },
   {
-    "name": "props of the highlight between others keep their prefix (the order of the attributes)",
+    "name": "the props of the highlight are an object, also between other props (the order of the attributes is no change)",
     "def": {
       "plot": {
         "type": "svg:circle",
@@ -413,14 +403,16 @@
       "plot": {
         "type": "svg:circle",
         "props": {
-          "highlight-r": 5,
           "r": 3
+        },
+        "highlight": {
+          "r": 5
         }
       }
     }
   },
   {
-    "name": "a type of the coordinate system without prefix if the props are its defaults and the ones which differ, in their order",
+    "name": "a type without the prefix of the coordinate system if the props contain its defaults, of the props which differ",
     "def": {
       "mapping": {},
       "plot": [
@@ -497,20 +489,15 @@
       "plot": [
         {
           "type": "line",
+          "by": "land",
           "props": {
             "stroke": "red"
-          },
-          "by": "land"
+          }
         },
         {
-          "type": "cartesian:line",
+          "type": "line",
           "props": {
-            "fill": "none",
-            "stroke": "red",
-            "d": {
-              "x": "@x:scaled",
-              "y": "@y:scaled"
-            }
+            "stroke": "red"
           }
         },
         {
@@ -532,9 +519,9 @@
         {
           "type": "bar",
           "props": {
-            "height": 8,
             "x1": "@x:scaled",
-            "y": "@y:scaled"
+            "y": "@y:scaled",
+            "height": 8
           }
         }
       ]
@@ -672,14 +659,7 @@
       "mapping": {
         "y": {
           "column": "v",
-          "type": "numeric",
-          "scale": {
-            "type": "linear",
-            "orientation": "vertical"
-          },
-          "axis": {
-            "position": "left"
-          }
+          "type": "numeric"
         }
       },
       "formElements": [

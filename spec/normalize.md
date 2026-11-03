@@ -4,7 +4,8 @@ A definition of 4.0 is written shorter than the form the renderer reads, the
 one of 3.x (the internal form). `normalize` writes a definition of 4.0
 (merged with its parents, see `merge.md`) in the internal form, it is JSON
 to JSON. `migrate` writes a definition of 3.x as one of 4.0, so
-`normalize(migrate(d))` is the internal form of `d`.
+`normalize(migrate(d))` is the internal form of `d`, the order of the props
+of the plots (attributes) aside, see below.
 
 The order of the load: the parents are merged, a definition with constructs
 of 3.x is migrated, normalized, then the types of the mappings without one
@@ -88,7 +89,10 @@ The default props (`src/plots/defaults.js`), `color` is
 
 ## migrate
 
-The fixtures are `migrate/*.json`.
+The fixtures are `migrate/*.json`. A definition of 3.x is one with
+constructs of 3.x (the ones the load migrates: props of `prop`, `op` of
+calc, `categories` of plots, `props` of mappings) or one given as such
+(`"legacy": true`); its constructs of 3.x are migrated:
 
 - The props of 3.x are expressions, see `expressions.md`.
 - `calc` of `op` and `columns` (and `scale`) is one of `expr`, e.g.
@@ -105,13 +109,30 @@ The fixtures are `migrate/*.json`.
   without an orientation `"orientation": null`, without an axis `"axis":
   false`.
 - `categories` of a plot are `by` (a text of one).
-- The props `highlight-` and `others-` are the objects `highlight` and
-  `others` if they are after the other props (highlight before others),
-  `"highlight": "row"` is `mode` then.
-- A type `<coord>:<name>` (or `svg:<name>` of a cartesian plot) is `<name>`
-  (`svg:circle` is `point`) if the props have all of its defaults and
-  merged into them they are the same props in the same order, then the
-  props are the ones which differ from the defaults.
 - A mapping of the parts of 4.0 (`categories`, ..., `domain`, `nice`,
-  `format`) is not migrated, the other constructs of 4.0 stay as they are,
-  so migrate is idempotent.
+  `format`) is not migrated.
+
+Then the definition, also one of 4.0, is written in its shorter forms, each
+one taken if the definition draws the same: normalize gives the same
+internal form, in which the order of the props of a plot (the attributes of
+its elements) and of the parts of mappings and plots is no difference and
+the formats of a mapping are the ones of its axis, hover and legend (see
+`formatOf`, of a patch merged into the mapping of the definition):
+
+- A mapping without the type of its scale (inferred of its type), without
+  its type (inferred of its scale, its categories or as a mapping of the
+  categories of a plot), without the orientation of a position and the
+  position of its axis, an empty scale and axis of a position left out,
+  `domain` and `nice` at the mapping, the format at the mapping if the ones
+  of the axis, the hover and the legend are the same, a text of the column.
+- The props `highlight-` and `others-` are the objects `highlight` and
+  `others`, `"highlight": "row"` (also the one of the merged plot of a part)
+  is `mode` then.
+- A type `<coord>:<name>` or `svg:<name>` is `<name>` (`circle` is `point`)
+  if `<name>` is the type in the coordinate system and the props have all of
+  its defaults, the props are the ones which differ from the defaults then.
+
+A definition of 4.0 has no constructs of 3.x and its shorter forms are
+the shortest ones, so migrate is idempotent. `migrateParts` writes the
+parts of a merge (a definition and its parents) shorter the same way, a
+shorter form of a part is taken if the merge draws the same.

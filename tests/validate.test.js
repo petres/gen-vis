@@ -107,10 +107,11 @@ describe('validateDef', () => {
             ...warnings,
         ]);
         expect(validateDef(migrate(legacy))).toEqual(warnings);
-        // the migrated definition of 4.0
+        // the migrated definition of 4.0, in its shorter form: the orientations
+        // and the positions of the axes are the inferred ones, the type of `c`
+        // the one of its categories
         const def = base();
-        def.mapping.x = legacy.mapping.x;
-        def.mapping.y = legacy.mapping.y;
+        delete def.mapping.c.type;
         def.mapping.c.order = 'down';
         def.plot.by = 'c';
         def.plot.props['stroke-width'] = { '*': ['@innerWidth', 0.01] };
