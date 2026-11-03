@@ -94,7 +94,7 @@ dependency). All three take the same props, events and methods (see
   ```
 
 - **Standalone script** for a page without a bundler, e.g. from a CDN: the
-  module `dist-lib/esm/gen-vis.js` (above; 69 kB gzipped at first, optional
+  module `dist-lib/esm/gen-vis.js` (above; 70 kB gzipped at first, optional
   parts load when a chart needs them), the core loader
   `dist-lib/gen-vis.core.js` (less than 1 kB) for pages without modules, or
   the single file `dist-lib/gen-vis.js` with everything in it.

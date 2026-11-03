@@ -1,5 +1,5 @@
 // A classic script for pages without modules. It is small and loads the
-// module esm/gen-vis.js next to it (68 kB gzipped at first), see
+// module esm/gen-vis.js next to it (70 kB gzipped at first), see
 // docs/usage.md. Its functions exist at once, return promises and wait for
 // the module. Functions which must return at once (perRow, perGroup,
 // createVueComponent, vuePlugin) are on the module: `(await GenVis.ready)`.

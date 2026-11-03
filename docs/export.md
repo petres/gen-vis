@@ -128,8 +128,7 @@ The result (sizes in CSS pixels):
 `await window.genVisExport.resolve(options)` (since 4.0.0, of protocol
 version 1) is the definition of `def` or `defUrl` with its parents and
 mixins, merged as the load of the chart merges them (`parent`, relative to
-`baseUrl` or to `defUrl`, the files of the chart), not in the internal form
-of the renderer; it takes the options of `genVisExport` (unknown ones are an
+`baseUrl` or to `defUrl`, the files of the chart), not yet normalized; it takes the options of `genVisExport` (unknown ones are an
 error, the others than `def`, `defUrl` and `baseUrl` are not used), leaves
 the chart before as it is and rejects as `genVisExport` does, e.g. with
 `Could not load '…/base.json': 404 Not Found`. A wrapper chooses its

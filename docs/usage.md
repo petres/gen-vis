@@ -18,7 +18,7 @@ component](#vue-component)), `vue` is an optional peer dependency.
 
 The standalone script includes d3 and the styles, for pages without a
 bundler, e.g. from a CDN. Use the module (`dist-lib/esm/gen-vis.js`): it
-loads 69 kB (gzipped) at first and fetches optional parts, e.g. for maps,
+loads 70 kB (gzipped) at first and fetches optional parts, e.g. for maps,
 from the files next to it when a chart needs them:
 
 ```html

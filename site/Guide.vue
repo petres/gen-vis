@@ -56,8 +56,8 @@
                 <ol class="pipeline">
                     <li>
                         <strong>Load</strong> <code>src/utils/load.js</code>: the definition is merged with its
-                        parents and written in its internal form (<code>src/utils/normalize.js</code>: the defaults of
-                        the mappings and of the plot types), the parts of the package it
+                        parents and normalized (<code>src/utils/normalize.js</code>: shorthands written out, defaults
+                        of the mappings and plot types filled in), the parts of the package it
                         needs are loaded with the data (e.g. the ones of maps only for a map), the data is read, CSV,
                         TSV, JSON or the columns used of parquet.
                     </li>
@@ -81,7 +81,7 @@
                         plot into a layer, plain objects of SVG elements with their attributes, it draws nothing.
                     </li>
                     <li>
-                        <strong>Draw</strong> <code>src/utils/draw.js</code>, <code>src/comp/facet.js</code>: the
+                        <strong>Draw</strong> <code>src/utils/draw.js</code>, <code>src/comp/facet.js</code>, <code>src/comp/facet-hover.js</code>: the
                         layers are joined to the elements of the draw before by their keys, only attributes which
                         changed are set, with a transition if the definition has one. The hover and the highlight
                         work on the drawn elements, the other parts of <code>src/comp/</code> are the frame: titles,

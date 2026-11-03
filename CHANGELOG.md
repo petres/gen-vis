@@ -143,11 +143,13 @@ Definitions:
   (`data-defaults`), `registerDefaults(defaults)`, the export option
   `defaults` and the CLI's `--defaults`. The definition wins, then the prop,
   then the page.
-- Smaller files: the single file `dist-lib/gen-vis.js` is 130 kB gzipped
-  (3.1: 149 kB), the module `dist-lib/esm/gen-vis.js` loads 69 kB at first
-  (3.1: 90 kB). `@preschen/gen-vis/vue` imports only `h` and `render`, so a
-  Vue app's bundle no longer includes all of Vue (~23 kB gzipped less at
-  first). The core loader also forwards `createGenVis`. `dist/` keeps
+- Sizes: the single file `dist-lib/gen-vis.js` is 130 kB gzipped and the
+  module `dist-lib/esm/gen-vis.js` loads 70 kB at first (3.1 with Vue: 149
+  and 90 kB, 3.1 without Vue: 126 and 66 kB; 4.0 adds the SVG export). A
+  Vue app built with the npm package ships about as much as with 3.1 (98
+  kB gzipped at first), a page without Vue 74 kB instead of 98 kB.
+  `@preschen/gen-vis/vue` imports only `h` and `render`, so a Vue app's
+  bundle no longer includes all of Vue. The core loader also forwards `createGenVis`. `dist/` keeps
   dependency subpaths (e.g. `hyparquet-compressors/src/gzip.js`) external.
 - Parquet decompressors load one by one, only the ones a file uses, e.g.
   zstd for polars files (3 kB instead of 75 kB for all of
@@ -184,7 +186,9 @@ Definitions:
   numbers ≥ 0; schemes of one `genVisExport` call are restored at the next.
 - Schema: no `"linear"` default for the scale type, `orientation` may be
   `null`.
-- Faster `wallTime` and type inference.
+- Faster `wallTime` and type inference; a resize reuses the filtered rows
+  and scale values (resize ~11% faster), the highlight only touches
+  elements whose state changes (40% fewer DOM mutations per hover move).
 - Removed: `utils/props.js`, the 3.x calc `columns`, the sass dev
   dependency.
 - `normalize` returns 4.0 key names instead of the 3.x internal form.

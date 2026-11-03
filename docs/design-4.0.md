@@ -2,9 +2,9 @@
 
 Goals: shorter and more intuitive definitions, one portable expression language
 instead of several mini-languages, transforms and merging specified in a way
-other languages can implement (Python, R), and the internals kept as they are:
-a 4.0 definition is *normalized* into the internal form the renderer already
-uses, so the renderer, the tests and the snapshots stay valid.
+other languages can implement (Python, R). A 4.0 definition is *normalized*:
+shorthands are written out and defaults filled in, with the same key names,
+and the renderer reads that normalized definition.
 
 This document is the design as implemented in 4.0;
 "Deviations" at the end lists where it differs from the first draft and why.
@@ -18,7 +18,7 @@ definition 4.0 (JSON, schema.json)
    │ resolveParents   (merge, spec/merge)                  portable
    │ normalize        (src/utils/normalize.js)             portable, pure JSON → JSON
    ▼
-internal definition (the form of 3.x, not documented for users)
+normalized definition (4.0 key names, every shorthand written out)
    │ inferTypes (types of the values of the rows), prepare / transforms (spec/transforms)
    ▼
 renderer (JS only)
@@ -26,10 +26,9 @@ renderer (JS only)
 
 - The load (`src/utils/load.js`) merges the parents, then normalizes the
   definition with the registered plot types. 4.0 has no compatibility code
-  for 3.x: no migration, no detection of 3.x constructs; the parts of the
-  internal form (`props` of a mapping, `categories` of a plot, a text of
-  `highlight`, props of the prefixes `highlight-`/`others-`) are not read
-  from a definition, the schema and validateDef name them as unknown. The types of mappings
+  for 3.x: no migration, no detection of 3.x constructs. 3.x keys (`props`
+  of a mapping, `categories` of a plot, a text `highlight`, props with the
+  prefixes `highlight-`/`others-`) are unknown to the schema and validateDef. The types of mappings
   without one are inferred from the rows in `prepare` (`inferTypes` of
   `src/utils/data.js`), after the first computation of the transforms, so
   columns of transforms are known; the scale type follows in `prepareMapping`
@@ -77,12 +76,12 @@ renderer (JS only)
   (`false` removes either, `orientation: null` is none); an axis without a
   position is at the one of the orientation of its scale (also for other
   mappings, e.g. a second axis `"axis": {}`).
-- `format` stays at the mapping (internal form too): `formatOf` uses it as the
-  default of the axis and the hover format.
+- `format` stays at the mapping: `formatOf` uses it as the default for the
+  axis and hover format.
 - `domain` and `nice` at the mapping are moved into `scale`; `categories`,
-  `scheme`, `common`, `fromData`, `ranks`, `order` into `props`.
-- Mappings of patches are parts: only the shorthand is written in internal
-  form, no defaults (they would override the base when merged). A patch of
+  `scheme`, `common`, `fromData`, `ranks` and `order` stay on the mapping.
+- Mappings of patches are parts: only the shorthand is written out, no
+  defaults (they would override the base when merged). A patch of
   another coordinate system gets the orientations/positions of the base
   mappings whose orientation was inferred.
 
@@ -146,7 +145,8 @@ merge of the selected patches, exported for the fixtures.
 
 ## 7. Not in this step
 
-- The renderer keeps its internal form; dropping it is a later cleanup.
+- The renderer reads the normalized 4.0 definition; the 3.x internal form
+  it read at first was dropped before the release.
 - Facets, form elements and globals keep their 3.x syntax (with the
   expression language inside).
 
@@ -171,7 +171,7 @@ merge of the selected patches, exported for the fixtures.
   (categorical in 3.x) needs `"type": "categorical"` unless the structure
   implies it, a scale without type (linear in 3.x) needs `"type": "linear"`
   unless inference gives linear.
-- **Format** stays on the mapping in the internal form (formatOf falls back
+- **Format** stays on the mapping (formatOf falls back
   to it) instead of being copied into axis/hover, so it also works for
   `@x:formatted` without a hover and inside patches.
 - **Filter conditions** (`filter`, `stacked`, plot filters) keep `not` and
