@@ -4,17 +4,35 @@ export { parseParquet };
 
 import { parquetMetadata, parquetReadObjects, parquetSchema } from 'hyparquet';
 
-// snappy, the default of arrow, pandas and duckdb, is part of hyparquet, other
-// compressions, e.g. zstd of polars, need hyparquet-compressors, it is only
-// loaded for them, the standalone script does not have it
+// snappy, the default of arrow, pandas and duckdb, is part of hyparquet, the
+// decompressors of the other compressions are loaded one by one, only the
+// ones of the file, e.g. zstd of polars (3 kB), not all of
+// hyparquet-compressors (75 kB, most of it brotli), the standalone script
+// does not have them
 const builtIn = ['UNCOMPRESSED', 'SNAPPY'];
+const decompressors = {
+    GZIP: async () => {
+        const { gunzip } = await import('hyparquet-compressors/src/gzip.js');
+        return (input, length) => gunzip(input, new Uint8Array(length));
+    },
+    ZSTD: async () => {
+        const { decompress } = await import('fzstd');
+        return input => decompress(input);
+    },
+    BROTLI: async () => (await import('hyparquet-compressors/src/brotli.js')).decompressBrotli,
+    LZ4: async () => (await import('hyparquet-compressors/src/lz4.js')).decompressLz4,
+    LZ4_RAW: async () => (await import('hyparquet-compressors/src/lz4.js')).decompressLz4Raw,
+};
 const loadCompressors = async codecs => {
-    const others = codecs.filter(c => !builtIn.includes(c));
+    const others = [...new Set(codecs.filter(c => !builtIn.includes(c)))];
     if (others.length == 0)
         return undefined;
     if (__GEN_VIS_STANDALONE__)
         throw new Error(`The standalone script reads parquet with snappy or without compression, not ${others.join(', ')}.`);
-    return (await import('hyparquet-compressors')).compressors;
+    const unknown = others.filter(c => !Object.hasOwn(decompressors, c));
+    if (unknown.length)
+        throw new Error(`Unknown compression of parquet: ${unknown.join(', ')}`);
+    return Object.fromEntries(await Promise.all(others.map(async c => [c, await decompressors[c]()])));
 };
 
 const decoder = new TextDecoder();
