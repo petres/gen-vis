@@ -11,7 +11,7 @@ import { projectionNames } from "@/coords/geo.js";
 import { transformNames } from "@/utils/transform";
 import { isObject } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
-import { isLegacy, normalize } from "@/utils/normalize";
+import { isLegacy, normalize, scaleTypeOf } from "@/utils/normalize";
 import { migrate } from "@/utils/migrate";
 import { inferType } from "@/utils/data";
 // without its descriptions, see checkSchema of vite.config.js
@@ -78,7 +78,7 @@ const checkProp = (value, path, warn, names = null) => {
         return checkRef(value.substring(1), path, warn, names);
     if (!isObject(value))
         return;
-    if (typeof value.prop == 'string' && legacyKinds.includes(value.prop))
+    if (typeof value.prop == 'string' && (legacyKinds.includes(value.prop) || Object.keys(value).every(k => ['prop', 'ref', 'of', 'ratio', 'offset', 'steps', 'format', 'cases', 'default', 'value'].includes(k))))
         return warn(path, `a prop of gen-vis 3.x, see migrate of @preschen/gen-vis/check, e.g. { "*": ["@innerWidth", 0.5] } of a relative one`);
     if (!isOperator(value)) {
         const keys = Object.keys(value);
@@ -268,7 +268,7 @@ const checkMappings = ctx => {
         if (typeof m.column != 'string')
             warn(path, `no 'column'`);
         if (m.props && !m.props.categories && !m.props.fromData)
-            warn(`${path}.props`, `expected 'categories' or the ones of the data ('fromData'), and optional 'common' props`);
+            warn(path, `the categories need 'categories' or the ones of the data ('fromData'), 'common' are the props of all of them`);
         const order = m.props?.order;
         if (order !== undefined && order != 'ascending' && order != 'descending' && !Array.isArray(order))
             warn(`${path}.props.order`, `expected 'ascending', 'descending' or a list of keys`);
@@ -319,9 +319,9 @@ const checkMappings = ctx => {
         checkProp(m.legend?.position, `${path}.legend.position`, warn, names.global);
         checkProp(m.legend?.orientation, `${path}.legend.orientation`, warn, names.global);
         if (isObject(m.hover?.row) && !m.props)
-            warn(`${path}.hover.row`, `the styles of the rows of the hover are props of the categories, the mapping needs 'props'`);
+            warn(`${path}.hover.row`, `the styles of the rows of the hover are props of the categories, the mapping needs 'categories' or 'fromData'`);
         if (m.legend?.onlyData !== undefined && (typeof m.legend.onlyData != 'boolean' || !m.props))
-            warn(`${path}.legend.onlyData`, `only the entries of the categories of the rows, true or false, of a legend of props`);
+            warn(`${path}.legend.onlyData`, `only the entries of the categories of the rows, true or false, of a legend of categories`);
         if (m.legend && !m.props && m.scale?.orientation !== undefined)
             warn(`${path}.legend`, `a legend needs the props of the categories or a scale of colors, without an orientation`);
         // the props of the legend and the hover of the categories
@@ -610,7 +610,7 @@ const checkFacets = ({ def, mapping, names, warn }) => {
     else if (!Object.hasOwn(mapping, def.facets.dim))
         warn('facets.dim', `unknown mapping '${def.facets.dim}'`);
     else if (!mapping[def.facets.dim].props)
-        warn('facets.dim', `the mapping '${def.facets.dim}' needs the props of its categories, e.g. { "fromData": true }`);
+        warn('facets.dim', `the mapping '${def.facets.dim}' needs categories, e.g. "fromData": true`);
     checkProp(def.facets.cols, 'facets.cols', warn, names.global);
     checkProp(def.facets.scales, 'facets.scales', warn, names.global);
 };
@@ -787,7 +787,12 @@ const withTypes = (def, rows) => {
         return def;
     const columns = new Set(Object.keys(rows[0] ?? {}));
     Object.values(def.mapping ?? {}).filter(m => isObject(m) && m.type === undefined && columns.has(m.column))
-        .forEach(m => m.type = inferType(rows.map(r => r?.[m.column])));
+        .forEach(m => {
+            m.type = inferType(rows.map(r => r?.[m.column]));
+            // the type of the scale of the type, see prepareMapping
+            if (isObject(m.scale) && m.scale.of === undefined && m.scale.type === undefined)
+                m.scale.type = scaleTypeOf(m, Object.keys(def.mapping).find(n => def.mapping[n] === m), def.plot);
+        });
     return def;
 };
 

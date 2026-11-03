@@ -602,7 +602,7 @@ describe('events and slots', () => {
         expect(validateDef({ ...def, mapping: { ...def.mapping, c: { ...def.mapping.c, hover: { row: { props: { color: '@colour' } } } } } }))
             .toEqual([expect.stringMatching(/^mapping\.c\.hover\.row\.props\.color: unknown reference 'colour'/)]);
         expect(validateDef({ ...def, mapping: { ...def.mapping, y: { ...def.mapping.y, hover: { row: { props: { color: 'red' } } } } } }))
-            .toEqual([`mapping.y.hover.row: the styles of the rows of the hover are props of the categories, the mapping needs 'props'`]);
+            .toEqual([`mapping.y.hover.row: the styles of the rows of the hover are props of the categories, the mapping needs 'categories' or 'fromData'`]);
     });
 
     test('hover and select with the rows of the mappings', async () => {

@@ -54,6 +54,9 @@ const migrateExpr = raw => {
         return raw;
     if (!('prop' in raw) || typeof raw.prop != 'string')
         return Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, migrateExpr(v)]));
+    // a prop without its reference stays as it is, validateDef names it
+    if (raw.prop != 'fixed' && typeof raw.ref != 'string' && !('of' in raw))
+        return raw;
     switch (raw.prop) {
         case 'ref':
             return source(raw);
