@@ -412,7 +412,7 @@
     }
   },
   {
-    "name": "mappings of the categories of plots and of the facets are categorical",
+    "name": "mappings of the facets are categorical, the ones of the categories of plots (by) keep the type of their values",
     "def": {
       "mapping": {
         "g": {
@@ -435,8 +435,7 @@
     "result": {
       "mapping": {
         "g": {
-          "column": "g",
-          "type": "categorical"
+          "column": "g"
         },
         "f": {
           "column": "f",

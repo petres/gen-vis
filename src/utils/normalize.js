@@ -227,10 +227,10 @@ const normalizeMappings = (mapping, coord, own, plots = [], used = new Set()) =>
     }));
 };
 
-// the names of the mappings of the categories of plots, of the facets and of
-// the groups of scales, they are categorical
-const categoryNames = (def, plots) => new Set([
-    ...[plots ?? []].flat().filter(isObject).flatMap(p => [p.categories ?? []].flat()),
+// the names of the mappings of the facets and of the groups of scales, they
+// are categorical, the categories of a plot (`by`) are not, they group the
+// rows of any type, e.g. of a year
+const categoryNames = def => new Set([
     ...(isObject(def.facets) && typeof def.facets.dim == 'string' ? [def.facets.dim] : []),
     ...Object.values(isObject(def.mapping) ? def.mapping : {}).filter(m => isObject(m) && isObject(m.scale)).map(m => m.scale.groups?.by),
 ].filter(n => typeof n == 'string'));
@@ -248,8 +248,7 @@ const normalize = (raw, { plotTypes = {} } = {}) => {
         def.plot = normalizePlots(def.plot, coord, plotTypes);
     const ownNames = new Set(Object.keys(isObject(def.mapping) ? def.mapping : {}));
     const patches = (Array.isArray(def.formElements) ? def.formElements : []).flatMap(e => Array.isArray(e?.values) ? e.values : []).filter(v => isObject(v?.patch));
-    // the plots of the patches are categories as well, e.g. of another plot
-    const used = categoryNames(def, [def.plot, ...patches.map(v => normalizePlots(v.patch.plot, coord, plotTypes))]);
+    const used = categoryNames(def);
     if (def.mapping !== undefined)
         def.mapping = normalizeMappings(def.mapping, coord, true, def.plot, used);
     patches.forEach(v => {

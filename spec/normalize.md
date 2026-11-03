@@ -39,8 +39,9 @@ The fixtures are `normalize/*.json`.
 - The type of a mapping without one follows from its parts: categorical with
   categories (`props`) or a `band`, `point` or `ordinal` scale, date with a
   `time` or `utc` scale, numeric with another scale, categorical if it is a
-  mapping of the categories of a plot (`by`), of the facets (`facets.dim`)
-  or of the groups of a scale (`scale.groups.by`). Otherwise it is the type
+  mapping of the facets (`facets.dim`) or of the groups of a scale
+  (`scale.groups.by`), not of the categories of a plot (`by`), they group the
+  rows of any type. Otherwise it is the type
   of the values of the column (when the rows are known): numeric if all
   values which are not missing are numbers, date if all of them are dates,
   otherwise categorical (see `README.md` of the values).

@@ -866,8 +866,8 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
 - `type`: `numeric`, `date` or `categorical`. Without a type it follows from
   the parts of the mapping: `categories` (or a `band`, `point` or `ordinal`
   scale) are categorical, a `time` or `utc` scale is a date, other scales
-  are numeric, a mapping of the categories of a plot (`by`) or of the
-  facets is categorical, otherwise it is the one of the values of the
+  are numeric, a mapping of the facets is categorical (one of the
+  categories of a plot, `by`, is not, it groups rows of any type), otherwise it is the one of the values of the
   column: numbers are numeric, dates (as below) a date, others categorical,
   e.g. years of a column are numeric, so a mapping of the categories of
   years is categorical by its `categories` or with `"type": "categorical"`.
