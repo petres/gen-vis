@@ -30,7 +30,7 @@
 </template>
 
 <script>
-import GenVis from '@/comp/App.vue';
+import { GenVis } from '@/vue.js';
 import LazyVis from '@/dev/LazyVis.vue';
 import { definitions } from '@/dev/definitions.js';
 

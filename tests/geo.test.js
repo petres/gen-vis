@@ -2,7 +2,6 @@
 // the problems of the definitions of maps: joins without a feature, errors of
 // the geometry and the projection, annotations a map has not
 import { describe, test, expect } from 'vitest';
-import { GenVis } from '@/index.js';
 import { errors, useDom, mount } from './dom.js';
 
 useDom();
@@ -31,7 +30,7 @@ const warnings = () => errors.filter(e => e.startsWith('gen-vis'));
 
 describe('the join of rows to the features', () => {
     test('keys with leading zeros match integers, e.g. 1 of a CSV the id "01"', async () => {
-        const el = await mount(GenVis, { def: mapDef(), data: 'region,value\n1,1\n2,2\n3,3' });
+        const el = await mount({ def: mapDef(), data: 'region,value\n1,1\n2,2\n3,3' });
         expect(regionsDrawn(el)).toEqual([['1', true], ['2', true], ['3', true]]);
         expect(el.querySelectorAll('g.vis-plot.plot-2 circle')).toHaveLength(3);
         expect(errors).toEqual([]);
@@ -40,13 +39,13 @@ describe('the join of rows to the features', () => {
     test('ambiguous integer keys are not matched', async () => {
         const def = mapDef();
         def.geo.data = { type: 'FeatureCollection', features: [square('01', 0), square('001', 1)] };
-        const el = await mount(GenVis, { def, data: 'region,value\n1,1\n01,2' });
+        const el = await mount({ def, data: 'region,value\n1,1\n01,2' });
         expect(regionsDrawn(el)).toEqual([['01', true]]);
         expect(warnings()).toEqual([]);
     });
 
     test('rows without a feature are not drawn', async () => {
-        const el = await mount(GenVis, { def: mapDef(), data: 'region,value\n01,1\nX,2' });
+        const el = await mount({ def: mapDef(), data: 'region,value\n01,1\nX,2' });
         expect(regionsDrawn(el)).toEqual([['01', true]]);
         expect(el.querySelectorAll('g.vis-plot.plot-2 circle')).toHaveLength(1);
         // a region the geometry has not, the join works
@@ -54,7 +53,7 @@ describe('the join of rows to the features', () => {
     });
 
     test('a join of no row warns once, with the first keys and the key of the features', async () => {
-        const el = await mount(GenVis, { def: mapDef({ key: 'properties.name' }), data: 'region,value\nX,1\nY,2\nZ,3\nW,4' });
+        const el = await mount({ def: mapDef({ key: 'properties.name' }), data: 'region,value\nX,1\nY,2\nZ,3\nW,4' });
         expect(regionsDrawn(el)).toEqual([]);
         expect(el.querySelectorAll('g.vis-plot.plot-2 circle')).toHaveLength(0);
         // one warning of both plots
@@ -64,7 +63,7 @@ describe('the join of rows to the features', () => {
     test('features without ids match no row', async () => {
         const def = mapDef();
         def.geo.data = { type: 'FeatureCollection', features: [square(undefined, 0), square(undefined, 1)] };
-        const el = await mount(GenVis, { def, data: 'region,value\n01,1' });
+        const el = await mount({ def, data: 'region,value\n01,1' });
         expect(el.querySelectorAll('g.vis-plot.plot-0 path')).toHaveLength(2);
         expect(regionsDrawn(el)).toEqual([]);
         expect(warnings()[0]).toMatch(/key 'id'.*geo\.key/);
@@ -73,29 +72,29 @@ describe('the join of rows to the features', () => {
 
 describe('the errors of the geometry and the projection', () => {
     test('a parameter the projection has not', async () => {
-        const el = await mount(GenVis, { def: mapDef({ projection: { type: 'albersUsa', rotate: [10, 0] } }), data: 'region,value\n01,1' });
+        const el = await mount({ def: mapDef({ projection: { type: 'albersUsa', rotate: [10, 0] } }), data: 'region,value\n01,1' });
         expect(errorOf(el)).toMatch(/projection 'albersUsa' has no parameter 'rotate'/);
     });
 
     test('TopoJSON without objects or with an unknown object', async () => {
-        const el = await mount(GenVis, { def: mapDef({ data: { type: 'Topology', arcs: [] } }), data: 'region,value\n01,1' });
+        const el = await mount({ def: mapDef({ data: { type: 'Topology', arcs: [] } }), data: 'region,value\n01,1' });
         expect(errorOf(el)).toMatch(/TopoJSON has no objects/);
         const topo = { type: 'Topology', objects: { a: { type: 'GeometryCollection', geometries: [] } }, arcs: [] };
-        const el2 = await mount(GenVis, { def: mapDef({ data: topo, object: 'b' }), data: 'region,value\n01,1' });
+        const el2 = await mount({ def: mapDef({ data: topo, object: 'b' }), data: 'region,value\n01,1' });
         expect(errorOf(el2)).toMatch(/Unknown object 'b' of the TopoJSON, expected one of 'a'/);
     });
 
     test('an empty geometry or an include of no feature', async () => {
-        const el = await mount(GenVis, { def: mapDef({ data: { type: 'FeatureCollection', features: [] } }), data: 'region,value\n01,1' });
+        const el = await mount({ def: mapDef({ data: { type: 'FeatureCollection', features: [] } }), data: 'region,value\n01,1' });
         expect(errorOf(el)).toMatch(/no features: the geometry is empty/);
-        const el2 = await mount(GenVis, { def: mapDef({ include: ['nope'] }), data: 'region,value\n01,1' });
+        const el2 = await mount({ def: mapDef({ include: ['nope'] }), data: 'region,value\n01,1' });
         expect(errorOf(el2)).toMatch(/no features.*geo\.include.*key 'id'/);
     });
 
     test('a fit to the data without rows keeps the annotations finite', async () => {
         const def = mapDef({ fit: 'data' });
         def.annotations = [{ type: 'circle', lon: 0.5, lat: 0.5 }];
-        const el = await mount(GenVis, { def, data: 'region,value' });
+        const el = await mount({ def, data: 'region,value' });
         const c = el.querySelector('.vis-annotation.vis-circle');
         expect(Number.isFinite(parseFloat(c.getAttribute('cx')))).toBe(true);
         expect(Number.isFinite(parseFloat(c.getAttribute('cy')))).toBe(true);
@@ -105,7 +104,7 @@ describe('the errors of the geometry and the projection', () => {
 test('an annotation a map has not warns once', async () => {
     const def = mapDef();
     def.annotations = [{ type: 'band', x: [0, 1] }, { type: 'band', x: [1, 2] }, { type: 'circle', lon: 0.5, lat: 0.5 }];
-    const el = await mount(GenVis, { def, data: 'region,value\n01,1' });
+    const el = await mount({ def, data: 'region,value\n01,1' });
     expect(el.querySelectorAll('.vis-annotation.vis-circle')).toHaveLength(1);
     const w = warnings().filter(e => e.includes("'band'"));
     expect(w).toHaveLength(1);

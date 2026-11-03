@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import { GenVis } from '@preschen/gen-vis';
+import { GenVis } from '@preschen/gen-vis/vue';
 import CodeEditor from './CodeEditor.vue';
 import { liveDefinition, json } from '../editor/live.js';
 

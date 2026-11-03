@@ -26,7 +26,7 @@ import { defaults } from "@/plots/defaults";
  *   `projection` and `path`
  * - `update`: the layer is drawn into the elements of the draw before, the
  *   elements of the others are removed before they are drawn again, see
- *   Facet.vue
+ *   comp/facet.js
  * - `curve`: the type uses the `curve` of the plot
  * - `coords`: the coordinate systems of the type, all if it is not given
  * - `defaults`: the default props of a plot whose type is written without

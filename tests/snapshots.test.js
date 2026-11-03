@@ -4,18 +4,14 @@
 // the charts are seen in the diff of tests/snapshots/, `vitest -u` takes
 // intended changes
 import { describe, test, expect } from 'vitest';
-import { nextTick } from 'vue';
-import { GenVis } from '@/index.js';
-import { examples, errors, useDom, mount, pointer } from './dom.js';
+import { examples, errors, useDom, mount, pointer, nextTick } from './dom.js';
 
 useDom();
 
-// without comments, the scoped ids of vue and the counters of the ids of a page,
-// numbers are rounded, e.g. the positions, so a different order of the
-// computation is no change, three decimals are kept, e.g. 1.234 in german
+// without the counters of the ids of a page, numbers are rounded, e.g. the
+// positions, so a different order of the computation is no change, three
+// decimals are kept, e.g. 1.234 in german
 const normalize = html => html
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/ data-v-[0-9a-f]+=""/g, '')
     .replace(/gen-vis-(gradient|form|facet)-\d+/g, 'gen-vis-$1-N')
     .replace(/-?\d+\.\d{4,}(e-?\d+)?/g, n => String(+Number(n).toFixed(3)))
     .replace(/></g, '>\n<');
@@ -26,7 +22,7 @@ const file = (def, step) => `./snapshots/${def.replace(/^\/data\//, '').replace(
 
 describe('the charts of the examples', () => {
     test.each(examples)('%s', async def => {
-        const el = await mount(GenVis, { defFile: def });
+        const el = await mount({ defFile: def });
         await expect(snapshot(el)).toMatchFileSnapshot(file(def, '1-drawn'));
 
         // the hover in the middle of the first facet

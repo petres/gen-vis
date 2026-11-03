@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi, afterEach, onTestFinished } from 'vitest';
-import { isReactive } from 'vue';
 import { createStore, resolveUrl, resolveParents, clearCache, requirements } from '@/store';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import { coords, loadCoord, registerCoord } from '@/coords';
@@ -171,10 +170,8 @@ describe('Store.init', () => {
         expect(store.defUrl).toBe('http://h/data/def.json');
         expect(store.axis).toEqual({ h: 'x', v: 'y' });
         expect(store.data).toEqual([{ x: 2020, y: 1 }, { x: 2021, y: null }, { x: 2022, y: 3 }]);
-        // the rows are not reactive
-        expect(isReactive(store.data)).toBe(false);
-        expect(isReactive(store.data[0])).toBe(false);
-        expect(isReactive(store.def)).toBe(true);
+        // the rows are plain objects
+        expect(Object.getPrototypeOf(store.data[0])).toBe(Object.prototype);
     });
 
     test('inline def and data', async () => {

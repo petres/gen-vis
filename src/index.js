@@ -1,17 +1,9 @@
-export { GenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, registerCoord, perRow, perGroup };
+export { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, registerCoord, perRow, perGroup };
 
-import { createApp } from 'vue'
-import GenVis from '@/comp/App.vue'
+import { createGenVis } from '@/comp/app'
 import { registerPlotType } from '@/plots'
 import { perRow, perGroup } from '@/plots/elements'
 import { registerCoord } from '@/coords'
-
-// vue plugin, registers the <GenVis> component
-export default {
-    install(app) {
-        app.component('GenVis', GenVis);
-    },
-};
 
 // the props of the buttons, the debug output and lazy, "false" is false, a
 // string other than "true" and "" is the name of the file, e.g. of
@@ -37,38 +29,42 @@ const attributeValue = (name, value) => {
     return value;
 };
 
-// the apps of the mounted elements, see unmountGenVisElement
-const apps = new WeakMap();
+// the name of a prop of a data attribute, e.g. defFile of def-file
+const propName = name => name.replace(/-([a-z])/g, (m, c) => c.toUpperCase());
+
+// the visualisations of the mounted elements, see unmountGenVisElement
+const mounted = new WeakMap();
 
 // the props are taken from the data attributes, e.g. data-def-file="def.json",
 // and `props`, e.g. { onSelect: e => ... } of the events, returns the
-// component, e.g. for its methods, an element mounted before is mounted anew
+// visualisation, e.g. for its methods, an element mounted before is mounted anew
 const mountGenVisElement = (element, props = {}) => {
     unmountGenVisElement(element);
     const attributes = Object.fromEntries(element.getAttributeNames()
         .filter(name => name.startsWith('data-'))
-        .map(name => [name.substring(5), attributeValue(name.substring(5), element.getAttribute(name))]));
-    const app = createApp(GenVis, { ...attributes, ...props });
-    apps.set(element, app);
+        .map(name => [propName(name.substring(5)), attributeValue(name.substring(5), element.getAttribute(name))]));
+    element.replaceChildren();
+    const vis = createGenVis(element, { ...attributes, ...props });
+    mounted.set(element, vis);
     element.classList.add('vis-mounted');
-    return app.mount(element);
-}
+    return vis;
+};
 
 // removes the visualisation of a mounted element, e.g. before a page removes
 // the element, false if it is not mounted
 const unmountGenVisElement = element => {
-    const app = apps.get(element);
-    if (!app)
+    const vis = mounted.get(element);
+    if (!vis)
         return false;
-    app.unmount();
-    apps.delete(element);
+    vis.destroy();
+    mounted.delete(element);
     element.classList.remove('vis-mounted');
     return true;
-}
+};
 
 // the elements of the class which are not mounted yet, returns their
-// components, not by the class vis-mounted, e.g. a copy of a mounted element
-// (cloneNode) has it but no visualisation
+// visualisations, not by the class vis-mounted, e.g. a copy of a mounted
+// element (cloneNode) has it but no visualisation
 const mountGenVisByClass = cl => [...document.getElementsByClassName(cl)]
-    .filter(e => !apps.has(e))
+    .filter(e => !mounted.has(e))
     .map(e => mountGenVisElement(e));

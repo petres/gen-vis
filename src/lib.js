@@ -1,6 +1,8 @@
 // the standalone script for embedding, see the readme, the exports are the
-// global GenVis, e.g. GenVis.registerPlotType
-export { mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, registerCoord, perRow, perGroup } from '@/index.js';
+// global GenVis, e.g. GenVis.registerPlotType, the component of the Vue of
+// the page is GenVis.vuePlugin(Vue) or GenVis.createVueComponent(Vue)
+export { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, registerCoord, perRow, perGroup } from '@/index.js';
+export { createVueComponent, vuePlugin } from '@/vue-adapter.js';
 import { mountGenVisElement, mountGenVisByClass, unmountGenVisElement } from '@/index.js';
 
 Object.assign(window, { mountGenVisElement, mountGenVisByClass, unmountGenVisElement });

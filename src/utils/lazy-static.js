@@ -6,7 +6,7 @@
 import * as transform from '@/utils/transform-types.js';
 import * as migrate from '@/utils/migrate.js';
 import * as intl from '@/utils/locale-intl.js';
-import ColorLegend from '@/comp/ColorLegend.vue';
+import createColorLegend from '@/comp/color-legend.js';
 import * as colors from '@/utils/colors.js';
 import * as geoMap from '@/coords/geo-map.js';
 import * as polar from '@/coords/polar-plot.js';
@@ -22,7 +22,7 @@ export const lazy = {
     migrate: async () => migrate,
     transform: async () => transform,
     intl: async () => intl,
-    colorLegend: async () => ({ default: ColorLegend }),
+    colorLegend: async () => ({ default: createColorLegend }),
     colors: async () => colors,
     geoMap: async () => geoMap,
     polar: async () => polar,

@@ -33,7 +33,7 @@ import geo from "@/coords/geo";
  *   drawAxis of utils/axis.js) or an element (`element`, `g` by default)
  *   with the attributes `attrs`, the `text` and the elements of a `layer`
  *   (see drawLayer of utils/draw.js), `fresh` ones are drawn anew, see
- *   drawParts of Facet.vue, `raise(ctx)` is called after the plots, e.g. to
+ *   drawParts of comp/facet.js, `raise(ctx)` is called after the plots, e.g. to
  *   move axes in the plot area (elements of `ctx.inner`) above them
  * - `hover.area(ctx, parent)`: appends the element of the pointer events to
  *   the element `parent` (`ctx.inner`) and returns it, e.g. a rect,

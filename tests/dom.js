@@ -5,7 +5,7 @@ import { vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { createApp, nextTick } from 'vue';
+import { createGenVis } from '@/index.js';
 import { definitions } from '@/dev/definitions.js';
 import { clearCache } from '@/store';
 
@@ -16,11 +16,31 @@ export const examples = definitions(import.meta.glob('../data/**/*.json', { eage
 
 export let errors = [];
 
+// the observers of the sizes of the visualisations, see resize
+const resizeObservers = new Set();
+
+// a new size of the visualisations, their ResizeObservers are called
+export const resize = () => resizeObservers.forEach(o => o.callback([]));
+
+// an html element of the content of a slot, its attributes, its listeners
+// (`onClick`) and its text
+export const html = (tag, attrs = {}, text) => {
+    const node = document.createElement(tag);
+    Object.entries(attrs).forEach(([k, v]) => k.startsWith('on') ? node.addEventListener(k.slice(2).toLowerCase(), v) : node.setAttribute(k, v));
+    if (text !== undefined)
+        node.textContent = text;
+    return node;
+};
+
 export const useDom = () => {
     beforeAll(() => {
         // jsdom has no layout
         Element.prototype.getBoundingClientRect = () => ({ x: 0, y: 0, left: 0, top: 0, width: 800, height: 400, right: 800, bottom: 400 });
-        globalThis.ResizeObserver = class { observe() {} disconnect() {} };
+        globalThis.ResizeObserver = class {
+            constructor(callback) { this.callback = callback; }
+            observe() { resizeObservers.add(this); }
+            disconnect() { resizeObservers.delete(this); }
+        };
     });
 
     beforeEach(() => {
@@ -54,13 +74,25 @@ export const rendered = el => vi.waitFor(() => {
         throw new Error('not rendered');
 }, { timeout: 20000, interval: 10 });
 
-export const mount = async (component, props) => {
+// the changes drawn, the visualisation draws them in microtasks, e.g. the
+// ones of an event, also the ones which follow, e.g. a new width
+export const nextTick = async () => {
+    for (let i = 0; i < 4; i++)
+        await Promise.resolve();
+};
+
+// a visualisation of `props` in a new element of the page, drawn (or its
+// error), returns the element and the visualisation, see createGenVis
+export const mountVis = async props => {
     const el = document.body.appendChild(document.createElement('div'));
-    createApp(component, props).mount(el);
+    const vis = createGenVis(el, props);
     await rendered(el);
     await nextTick();
-    return el;
+    return { el, vis };
 };
+
+// the element of a visualisation of `props` drawn, see mountVis
+export const mount = async props => (await mountVis(props)).el;
 
 export const pointer = (type, init = {}) => new PointerEvent(type, { pointerType: 'mouse', bubbles: true, ...init });
 

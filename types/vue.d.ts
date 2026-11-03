@@ -1,0 +1,39 @@
+// the types of the Vue adapter, @preschen/gen-vis/vue: the component GenVis
+// of the Vue of the application, the plugin which registers it and the
+// factories of the Vue of a page, see the readme "Vue component"
+import type { ComponentOptionsMixin, ComponentPublicInstance, DefineComponent, EmitsToProps, Plugin, PublicProps, SlotsType, VNodeChild } from 'vue';
+import type { GenVisEmits, GenVisMethods, GenVisProps, HoverSlotProps } from './index.js';
+
+export type * from './index.js';
+
+/** The slots of the component, they replace the parts of the definition. */
+export interface GenVisSlots {
+    /** The title and the subtitle, with the values of the globals. */
+    header?(props: { title?: string; subtitle?: string }): VNodeChild;
+    /** The footer, HTML of options.footer with the values of the globals. */
+    footer?(props: { footer?: string }): VNodeChild;
+    /** The content of the hover instead of the table or the templates of options.hover. */
+    hover?(props: HoverSlotProps): VNodeChild;
+    /** Buttons of the PNG and the CSV, `canCopy` if the clipboard takes images. */
+    buttons?(props: { save: () => Promise<void>; copy: () => Promise<void>; csv: () => Promise<void>; canCopy: boolean }): VNodeChild;
+}
+
+/** The component of a ref, its props and the methods of the visualisation. */
+export type GenVisComponentInstance = ComponentPublicInstance<GenVisProps> & GenVisMethods;
+
+/** The type of the component, its props, events, slots and methods. */
+export type GenVisComponent = DefineComponent<GenVisProps, {}, {}, {}, { [K in keyof GenVisMethods]: GenVisMethods[K] }, ComponentOptionsMixin, ComponentOptionsMixin,
+    GenVisEmits, string, PublicProps, Readonly<GenVisProps> & EmitsToProps<GenVisEmits>, {}, SlotsType<GenVisSlots>>;
+
+/** The component of the Vue of the application, see the readme. */
+export declare const GenVis: GenVisComponent;
+
+/** The component of another Vue, e.g. the global `Vue` of a page with the standalone script, `import * as Vue from 'vue'`. */
+export declare function createVueComponent(vue: object): GenVisComponent;
+
+/** The plugin of another Vue, it registers <GenVis>, `component` is the component. */
+export declare function vuePlugin(vue: object): Plugin & { component: GenVisComponent };
+
+/** The plugin of Vue, registers the component <GenVis>. */
+declare const plugin: Plugin;
+export default plugin;

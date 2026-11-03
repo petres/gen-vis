@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import { GenVis } from '@preschen/gen-vis';
+import { GenVis } from '@preschen/gen-vis/vue';
 
 export default {
     components: { GenVis },

@@ -1,10 +1,8 @@
 // @vitest-environment jsdom
 import { describe, test, expect, onTestFinished } from 'vitest';
-import { createApp, nextTick } from 'vue';
 import { scaleBand, scaleLinear } from 'd3-scale';
-import { GenVis } from '@/index.js';
 import { orderOf, byOrder, sortedByOrder, nearestWithRows, nearestRow, pointFinder, pointPosition, placed, positionsInOrder, clamp } from '@/utils/hover';
-import { errors, useDom, mount, rendered, pointer } from './dom.js';
+import { errors, useDom, mount, mountVis, rendered, pointer, nextTick } from './dom.js';
 import { targetOf } from '@/utils/dom';
 
 useDom();
@@ -28,7 +26,7 @@ const title = el => el.querySelector('.vis-hover-title')?.textContent;
 describe('the nearest position of the hover', () => {
     // 2020 at 0, 2021 at 275, 2022 at 550 of the inner width
     test('a position without a value is skipped', async () => {
-        const el = await mount(GenVis, { def: lineDef(), data: 'year,value,land\n2020,1,Wien\n2021,,Wien\n2022,3,Wien' });
+        const el = await mount({ def: lineDef(), data: 'year,value,land\n2020,1,Wien\n2021,,Wien\n2022,3,Wien' });
         await move(el, 260);
         expect(title(el)).toBe('2020');
         await move(el, 290);
@@ -38,7 +36,7 @@ describe('the nearest position of the hover', () => {
 
     test('a position whose rows the filter of the hover removes is skipped', async () => {
         const def = lineDef({ hover: { filter: { c: 'Wien' } } });
-        const el = await mount(GenVis, { def, data: 'year,value,land\n2020,1,Wien\n2021,2,Tirol\n2022,3,Wien' });
+        const el = await mount({ def, data: 'year,value,land\n2020,1,Wien\n2021,2,Tirol\n2022,3,Wien' });
         await move(el, 260);
         expect(title(el)).toBe('2020');
         expect(errors).toEqual([]);
@@ -56,7 +54,7 @@ describe('the legend', () => {
             { id: 'a', name: '2020', value: 2020 }, { id: 'b', name: '2022', value: 2022 },
         ] }];
         const data = 'year,value,land\n2020,1,Wien\n2022,2,Wien\n2022,3,Tirol\n2021,5,Salzburg';
-        const el = await mount(GenVis, { def, data });
+        const el = await mount({ def, data });
         const entries = () => [...el.querySelectorAll('.vis-legend-entry')].map(e => [e.dataset.key, e.dataset.visible]);
         el.querySelector('.vis-form-element input[value="b"]').click();
         await nextTick();
@@ -142,21 +140,21 @@ describe('accessibility', () => {
     const described = el => svg(el).getAttribute('aria-describedby').split(' ').map(id => el.querySelector(`[id="${id}"]`).textContent);
 
     test('the name of the chart without a title: the subtitle or the localized name of a chart', async () => {
-        const named = await mount(GenVis, { def: lineDef({ title: 'Titel', subtitle: 'Untertitel' }), data });
+        const named = await mount({ def: lineDef({ title: 'Titel', subtitle: 'Untertitel' }), data });
         expect(svg(named).getAttribute('aria-label')).toBe('Titel');
         expect(described(named)).toEqual(['Untertitel', expect.stringMatching(/Pfeiltasten/)]);
 
-        const subtitle = await mount(GenVis, { def: lineDef({ subtitle: 'Untertitel' }), data });
+        const subtitle = await mount({ def: lineDef({ subtitle: 'Untertitel' }), data });
         expect(svg(subtitle).getAttribute('aria-label')).toBe('Untertitel');
         expect(described(subtitle)).toEqual([expect.stringMatching(/Pfeiltasten/)]);
 
-        const none = await mount(GenVis, { def: lineDef({ locale: 'en' }), data });
+        const none = await mount({ def: lineDef({ locale: 'en' }), data });
         expect(svg(none).getAttribute('aria-label')).toBe('chart');
         expect(errors).toEqual([]);
     });
 
     test('the hover is announced when the keyboard moves it, not the mouse', async () => {
-        const el = await mount(GenVis, { def: lineDef(), data });
+        const el = await mount({ def: lineDef(), data });
         const live = () => el.querySelector('.vis-hover').parentElement.getAttribute('aria-live');
         await move(el, 10);
         expect(live()).toBe('off');
@@ -171,7 +169,7 @@ describe('accessibility', () => {
         const def = lineDef();
         def.mapping.v = { name: 'Wert', column: 'value', type: 'numeric', scale: { type: 'sequential', interpolator: 'Blues' }, legend: {} };
         def.plot[0].props.fill = '@v:scaled';
-        const el = await mount(GenVis, { def, data });
+        const el = await mount({ def, data });
         const scale = el.querySelector('.vis-color-legend svg');
         expect([scale.getAttribute('role'), scale.getAttribute('aria-label')]).toEqual(['img', 'Wert']);
     });
@@ -185,16 +183,12 @@ describe('the end of a facet', () => {
             return { baseVal: { consolidate: () => ({ matrix: { a: 1, b: 0, c: 0, d: 1, e: x, f: y } }) } };
         } });
         onTestFinished(() => delete SVGElement.prototype.transform);
-        const el = document.body.appendChild(document.createElement('div'));
-        const app = createApp(GenVis, { def: lineDef({ transition: 5000 }), data: 'year,value,land\n2020,1,Wien\n2021,2,Wien\n2020,2,Tirol\n2021,3,Tirol' });
-        app.mount(el);
-        await rendered(el);
-        await nextTick();
+        const { el, vis } = await mountVis({ def: lineDef({ transition: 5000 }), data: 'year,value,land\n2020,1,Wien\n2021,2,Wien\n2020,2,Tirol\n2021,3,Tirol' });
         el.querySelector('.vis-legend-entry[data-key="Wien"]').click();
         await nextTick();
         const nodes = [...el.querySelectorAll('svg.vis-svg *')];
         expect(nodes.some(n => targetOf(n))).toBe(true);
-        app.unmount();
+        vis.destroy();
         expect(nodes.filter(n => targetOf(n))).toEqual([]);
     });
 });

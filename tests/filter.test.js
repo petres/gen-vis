@@ -2,7 +2,6 @@
 // the filter transform: the plots, the scales and the later transforms have
 // only its rows
 import { describe, test, expect } from 'vitest';
-import { GenVis } from '@/index.js';
 import { useDom, mount, errors } from './dom.js';
 
 useDom();
@@ -22,7 +21,7 @@ const data = 'year,value\n2020,1\n2021,-2\n2022,3\n2023,5\n';
 
 describe('the filter transform', () => {
     test('the rows whose expression is true are drawn, later transforms have only them', async () => {
-        const el = await mount(GenVis, { def: def([
+        const el = await mount({ def: def([
             { type: 'filter', expr: { '>': ['@value', '@min'] } },
             { type: 'share', column: 'value', as: 'share' },
         ]), data });
@@ -32,7 +31,7 @@ describe('the filter transform', () => {
     });
 
     test('a definition of the shorthand of 4.0: the types of the values, the scales and axes of x and y, a line of its defaults', async () => {
-        const el = await mount(GenVis, { def: { options: { width: 400, height: 200 }, mapping: { x: 'year', y: 'value' }, plot: { type: 'line' } }, data });
+        const el = await mount({ def: { options: { width: 400, height: 200 }, mapping: { x: 'year', y: 'value' }, plot: { type: 'line' } }, data });
         expect(el.querySelectorAll('.vis-axis')).toHaveLength(2);
         const path = el.querySelector('g.vis-plot path');
         expect(path.getAttribute('d')).toMatch(/^M[\d.]+,[\d.]+L/);
@@ -42,7 +41,7 @@ describe('the filter transform', () => {
     });
 
     test('without rows nothing is drawn', async () => {
-        const el = await mount(GenVis, { def: def([{ type: 'filter', expr: false }]), data });
+        const el = await mount({ def: def([{ type: 'filter', expr: false }]), data });
         expect(el.querySelectorAll('g.vis-plot circle')).toHaveLength(0);
     });
 });

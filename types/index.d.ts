@@ -1,6 +1,6 @@
-// the types of @preschen/gen-vis, a definition is the JSON of schema.json,
-// see the readme
-import type { ComponentOptionsMixin, ComponentPublicInstance, DefineComponent, EmitsToProps, Plugin, PublicProps, SlotsType, VNodeChild } from 'vue';
+// the types of @preschen/gen-vis, the core without Vue, a definition is the
+// JSON of schema.json, see the readme; the ones of the Vue adapter
+// (@preschen/gen-vis/vue) are in vue.d.ts
 import type { GenVisDefinition } from './definition';
 
 // the types of the parts of a definition, e.g. MappingEntry or Plot
@@ -55,7 +55,7 @@ export interface HoverEvent {
     nearest: Row | null;
 }
 
-/** The methods of the component, e.g. of a ref or of mountGenVisElement. */
+/** The methods of the visualisation, of createGenVis, mountGenVisElement and of a ref of the Vue component. */
 export interface GenVisMethods {
     exportPng(name?: string): Promise<void>;
     copyPng(): Promise<void>;
@@ -65,7 +65,7 @@ export interface GenVisMethods {
     setHighlight(entry: Record<string, unknown> | null): void;
 }
 
-/** The events of the component, e.g. `@hover="e => …"`, a type, not an interface, so Vue reads its listeners, e.g. `onHover`. */
+/** The events of the visualisation, e.g. `on('hover', e => …)`, the props `on…` (e.g. `onHover`) and the events of the Vue component. */
 export type GenVisEmits = {
     /** The changes of the user, the globals of the form elements and the legends, see v-model:state. */
     'update:state': (state: State) => void;
@@ -73,11 +73,14 @@ export type GenVisEmits = {
     hover: (event: HoverEvent | null) => void;
     /** The rows of the position of a click or a tap, or of Enter of the keyboard. */
     select: (event: HoverEvent) => void;
-    /** The visualisation is drawn, after every change. */
+    /** The visualisation is drawn, once a definition is drawn the first time. */
     rendered: () => void;
     /** The message of an error of the definition or the data, the visualisation shows it. */
     error: (message: string) => void;
 };
+
+/** The names of the events. */
+export type GenVisEvent = keyof GenVisEmits;
 
 /** The props of the hover slot, the ones of the event and the entries of the rows. */
 export interface HoverSlotProps extends HoverEvent {
@@ -85,23 +88,53 @@ export interface HoverSlotProps extends HoverEvent {
     entries: (Record<string, Record<string, unknown>> & { nearest: boolean })[];
 }
 
-/** The slots of the component, they replace the parts of the definition. */
-export interface GenVisSlots {
+/** The content of a slot of the core: a node (e.g. an element or a fragment), a text, a list of them or nothing. */
+export type SlotContent = Node | string | null | undefined | false | SlotContent[];
+
+/** The slots of the core (the prop `slots`), functions of their props, they replace the parts of the definition. */
+export interface GenVisSlotFunctions {
     /** The title and the subtitle, with the values of the globals. */
-    header?(props: { title?: string; subtitle?: string }): VNodeChild;
+    header?(props: { title?: string; subtitle?: string }): SlotContent;
     /** The footer, HTML of options.footer with the values of the globals. */
-    footer?(props: { footer?: string }): VNodeChild;
+    footer?(props: { footer?: string }): SlotContent;
     /** The content of the hover instead of the table or the templates of options.hover. */
-    hover?(props: HoverSlotProps): VNodeChild;
+    hover?(props: HoverSlotProps): SlotContent;
     /** Buttons of the PNG and the CSV, `canCopy` if the clipboard takes images. */
-    buttons?(props: { save: () => void; copy: () => void; csv: () => void; canCopy: boolean }): VNodeChild;
+    buttons?(props: { save: () => Promise<void>; copy: () => Promise<void>; csv: () => Promise<void>; canCopy: boolean }): SlotContent;
 }
 
-export type GenVisInstance = ComponentPublicInstance<GenVisProps> & GenVisMethods;
+/** The listeners of the events as props, e.g. `{ onSelect: e => … }` of mountGenVisElement. */
+export interface GenVisListeners {
+    onRendered?: GenVisEmits['rendered'];
+    onError?: GenVisEmits['error'];
+    onHover?: GenVisEmits['hover'];
+    onSelect?: GenVisEmits['select'];
+    'onUpdate:state'?: GenVisEmits['update:state'];
+}
 
-/** The component, see the readme. */
-export declare const GenVis: DefineComponent<GenVisProps, {}, {}, {}, {}, ComponentOptionsMixin, ComponentOptionsMixin,
-    GenVisEmits, string, PublicProps, Readonly<GenVisProps> & EmitsToProps<GenVisEmits>, {}, SlotsType<GenVisSlots>>;
+/** The props of createGenVis, the ones of the component, the slots and the listeners. */
+export interface GenVisOptions extends GenVisProps, GenVisListeners {
+    slots?: GenVisSlotFunctions | null;
+}
+
+/** A visualisation of createGenVis and mountGenVisElement, see the readme "Usage". */
+export interface GenVisInstance extends GenVisMethods {
+    /** The element of the visualisation, `.vis-outer`. */
+    readonly el: HTMLElement;
+    /** The changes of the user, see the readme "State", null while it is loaded. */
+    readonly state: State | null;
+    /** The props it has now. */
+    readonly props: Readonly<GenVisOptions>;
+    /** New props, applied together in a microtask: a new definition or new data is loaded again, a new state, new globals and a highlight are applied. */
+    update(props: Partial<GenVisOptions>): GenVisInstance;
+    on<E extends GenVisEvent>(event: E, listener: GenVisEmits[E]): GenVisInstance;
+    off<E extends GenVisEvent>(event: E, listener?: GenVisEmits[E]): GenVisInstance;
+    /** Removes the visualisation, its listeners and its observers. */
+    destroy(): void;
+}
+
+/** A visualisation at the end of `element` (in a new element `.vis-outer`), `root` makes `element` the one of the visualisation. */
+export declare function createGenVis(element: Element, props?: GenVisOptions, options?: { root?: boolean }): GenVisInstance;
 
 /** A group of the rows of a plot, see the readme "Extensions". */
 export interface PlotGroup {
@@ -144,9 +177,9 @@ export interface PlotType {
     defaults?: Record<string, unknown> | ((props: Record<string, unknown>) => Record<string, unknown>);
 }
 
-/** Mounts an element, the props of its data- attributes and `props`, e.g. the events, returns the component. */
-export declare function mountGenVisElement(element: Element, props?: Record<string, unknown>): GenVisInstance;
-/** Mounts the elements of the class which are not mounted yet, returns their components. */
+/** Mounts an element, the props of its data- attributes and `props`, e.g. the events, returns the visualisation. */
+export declare function mountGenVisElement(element: Element, props?: GenVisOptions): GenVisInstance;
+/** Mounts the elements of the class which are not mounted yet, returns their visualisations. */
 export declare function mountGenVisByClass(className: string): GenVisInstance[];
 /** Removes the visualisation of a mounted element, false if it is not mounted. */
 export declare function unmountGenVisElement(element: Element): boolean;
@@ -158,7 +191,3 @@ export declare function perRow(groups: PlotGroup[], element: string,
     key?: (item: LayerItem) => unknown): Layer;
 /** The marks of a path per group with the `attrs` of the group and the path `d(group)`. */
 export declare function perGroup(groups: PlotGroup[], d?: (group: PlotGroup) => string | null): Layer;
-
-/** The plugin of Vue, registers the component <GenVis>. */
-declare const plugin: Plugin;
-export default plugin;

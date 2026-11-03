@@ -12,14 +12,19 @@ charts) and maps with legends, hover, facets and form elements are supported.
 ## Usage
 
 ```sh
-npm install @preschen/gen-vis vue
+npm install @preschen/gen-vis
 ```
+
+The package is a core without a framework (`createGenVis`, see
+[JavaScript](#javascript)), with the standalone script for pages without a
+bundler and an adapter of Vue 3 (`@preschen/gen-vis/vue`, see [Vue
+component](#vue-component)), `vue` is an optional peer dependency.
 
 ### Standalone script
 
-The standalone script includes Vue, d3 and the styles, for pages without a
+The standalone script includes d3 and the styles, for pages without a
 bundler, e.g. of a CDN. The module of the page (`dist-lib/esm/gen-vis.js`) is
-the one to use: it loads 90 kB (gzipped) at first and the parts which not
+the one to use: it loads 64 kB (gzipped) at first and the parts which not
 every chart needs when a chart needs them, e.g. the ones of maps, from the
 files next to it:
 
@@ -34,55 +39,57 @@ mountGenVisByClass('genVis');
 
 A page which loads its scripts without modules loads the same module with
 `dist-lib/gen-vis.core.js` (less than 1 kB), from the files next to it. Its
-functions are globals at once, they return promises (of the components), so
-they can be called before the module is loaded; `GenVis.ready` is the module,
-e.g. for `registerPlotType`:
+functions are globals at once, they return promises (of the
+visualisations), so they can be called before the module is loaded;
+`GenVis.ready` is the module, e.g. for `registerPlotType`:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.core.js"></script>
 <script>mountGenVisByClass('genVis').then(charts => ...)</script>
 ```
 
-The single file (`dist-lib/gen-vis.js`, 435 kB, 149 kB gzipped, 129 kB with
+The single file (`dist-lib/gen-vis.js`, 345 kB, 120 kB gzipped, 103 kB with
 brotli) has all parts in itself, without the check of the definitions
 (`check` and `debug` warn that it is missing), e.g. of a page which has to
-work with one file, its globals return the components at once:
+work with one file, its globals return the visualisations at once:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.js"></script>
 <script>mountGenVisByClass('genVis')</script>
 ```
 
-These have a Vue of their own, a page with its own Vue loads it twice, an
-application of Vue uses the [Vue component](#vue-component). A page with Vue
-3 as a script uses `dist-lib/gen-vis.novue.js` (126 kB gzipped), with the
-global `Vue` (`vue.global.prod.js`), or with Vue in the import map of the
-page the module `dist-lib/esm-novue/gen-vis.js` (66 kB at first):
+None of them has Vue. A page with Vue 3 as a script (the global `Vue` of
+`vue.global.prod.js`, or `vue` of its import map) has the component of its
+Vue of the same files: `GenVis.vuePlugin(Vue)` is the plugin which registers
+`<GenVis>` (its `component` is the component), `GenVis.createVueComponent(Vue)`
+the component, the same as the one of the [Vue component](#vue-component):
 
 ```html
-<script type="importmap">{ "imports": { "vue": "https://cdn.jsdelivr.net/npm/vue@3/dist/vue.esm-browser.prod.js" } }</script>
-<script type="module">
-import { mountGenVisByClass } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/esm-novue/gen-vis.js';
-mountGenVisByClass('genVis');
-</script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.js"></script>
+<script>Vue.createApp({ ... }).use(GenVis.vuePlugin(Vue)).mount('#app')</script>
 ```
 
-Of a bundler the modules are `@preschen/gen-vis/esm` and
-`@preschen/gen-vis/esm-novue`, the single file is
+```js
+import * as Vue from 'vue';
+import { vuePlugin } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/esm/gen-vis.js';
+Vue.createApp(App).use(vuePlugin(Vue)).mount('#app');
+```
+
+Of a bundler the module is `@preschen/gen-vis/esm`, the single file is
 `@preschen/gen-vis/standalone`, which only sets the globals.
 
-`npm run lib` builds them in `dist-lib/`, the single files also as
-`gen-vis-<version>.js` and `gen-vis-<version>.novue.js`, e.g. for an upload
-to a server of its own, the ones of a page which keeps its version (the
-module and the core load the files of `esm/` of the upload). `npm run upload`
-also writes the files compressed next to them (`.br`, `.gz`), for a server
-which sends them as they are, e.g. nginx with `brotli_static` and
-`gzip_static`, a CDN compresses them itself.
+`npm run lib` builds them in `dist-lib/`, the single file also as
+`gen-vis-<version>.js`, e.g. for an upload to a server of its own, the one
+of a page which keeps its version (the module and the core load the files
+of `esm/` of the upload). `npm run upload` also writes the files compressed
+next to them (`.br`, `.gz`), for a server which sends them as they are, e.g.
+nginx with `brotli_static` and `gzip_static`, a CDN compresses them itself.
 
 `mountGenVisByClass(className)` mounts all elements with the class which are
-not mounted yet and returns their components, `mountGenVisElement(element,
+not mounted yet and returns their visualisations, `mountGenVisElement(element,
 props)` mounts a single element (again, if it is mounted) and returns its
-component, e.g. for its [methods](#png), both set the class `vis-mounted` of
+visualisation, e.g. for its [methods](#png), both set the class `vis-mounted` of
 the element (the class is not what makes it mounted, e.g. a copy of a mounted
 element with the class is mounted too). `unmountGenVisElement(element)` removes the visualisation, e.g.
 before a page of a single page application removes the element.
@@ -93,26 +100,45 @@ e.g. the events:
 GenVis.mountGenVisElement(element, { onSelect: e => location.href = `/region/${e.key}` });
 ```
 
-### Vue component
+### JavaScript
+
+`createGenVis(element, props)` draws a visualisation at the end of an element
+(in a new element `.vis-outer`) and returns it, `props` are the
+[props](#props), the listeners of the [events](#events-and-slots) (`onHover`,
+`onSelect`, `onRendered`, `onError`, `'onUpdate:state'`) and the functions of
+the slots (`slots`). Of the visualisation `update(props)` changes props, the
+ones given together are applied together (in a microtask): a new `def`,
+`defFile` or `data` is loaded again, a new `state`, new `globals` and a new
+`highlight` are applied without it, the buttons follow theirs, a prop which
+is not given keeps its value, `undefined` is its default. `on(event, fn)` and
+`off(event, fn)` are the listeners of the events, `state` the changes of the
+user (see [state](#state)), `props` the props it has, `el` its element,
+`destroy()` removes it (its observers and the listeners of the document),
+the [methods](#png) of the files are its methods, too:
 
 ```js
-import GenVis from '@preschen/gen-vis';
+import { createGenVis } from '@preschen/gen-vis';
 
-app.use(GenVis);
+const chart = createGenVis(document.getElementById('chart'), {
+    defFile: '/data/bev/def.json',
+    download: true,
+    'onUpdate:state': state => localStorage.chart = JSON.stringify(state),
+});
+chart.on('select', e => console.log(e.key));
+chart.update({ globals: { lang: 'en' } });
 ```
 
-```html
-<GenVis def-file="/data/bev/def.json"/>
-<GenVis :def="def" :data="rows"/>
-```
+A change only draws what it needs: a new state, new globals and a toggle of
+a legend draw a new view of the rows already loaded (without loading or
+transforming them again), a new width (it fills its element unless the
+definition has a `width`) draws the plots again, the hover draws only
+itself. A state or globals object which the page changes in place is a new
+one only with `update`.
 
-`import { GenVis } from '@preschen/gen-vis'` registers the component
-locally instead. `vue` is a peer dependency, the package uses the Vue of the
-application. `mountGenVisElement`, `mountGenVisByClass` and
-`unmountGenVisElement` are exported as well. The package has the types of
-TypeScript, e.g. of the props, the events and the methods, and of the
-definitions (`Definition` and its parts, e.g. `MappingEntry` and `Plot`), of
-the [schema](#definition), so an editor checks a definition of the code:
+The package has the types of TypeScript, e.g. of the props, the events, the
+visualisation and the methods, and of the definitions (`Definition` and its
+parts, e.g. `MappingEntry` and `Plot`), of the [schema](#definition), so an
+editor checks a definition of the code:
 
 ```ts
 import type { Definition } from '@preschen/gen-vis';
@@ -122,7 +148,7 @@ const def: Definition = { data: 'data.csv', mapping: { ... }, plot: { ... } };
 
 Parts which not every chart needs are loaded when a chart needs them, so a
 bundler of the application puts them into chunks of their own, the rest is
-~66 kB gzipped (without Vue). The sizes are gzipped: the check of the
+~62 kB gzipped. The sizes are gzipped: the check of the
 definitions (~11 kB) with the first one, the colors of d3
 (`d3-scale-chromatic`, ~8 kB) for definitions which name a scheme or an
 interpolator, the parts of maps (`d3-geo`, `topojson-client`, ~13 kB) with
@@ -130,6 +156,29 @@ the first map, the parts of polar plots (~5 kB) with the first one, the
 transforms (~2 kB), the legend of scales of colors (~2 kB), the languages of
 `Intl` (~1 kB) other than `de` and `en`, the parquet reader (~18 kB) for
 parquet data and the PNG and the CSV (~11 kB) with the first one.
+
+### Vue component
+
+```js
+import GenVis from '@preschen/gen-vis/vue';
+
+app.use(GenVis);
+```
+
+```html
+<GenVis def-file="/data/bev/def.json"/>
+<GenVis :def="def" :data="rows"/>
+```
+
+`import { GenVis } from '@preschen/gen-vis/vue'` registers the component
+locally instead. The adapter uses the Vue of the application (`vue`, a peer
+dependency), the component draws the visualisation of `createGenVis` in its
+element, with the same props, `v-model:state`, the events, the slots (Vue
+draws them, with the components and plugins of the application, they follow
+the data of the page they use) and the [methods](#png) of a ref. Its props
+are watched (`state`, `globals` and `highlight` deeply). `createVueComponent(Vue)`
+and `vuePlugin(Vue)` of `@preschen/gen-vis/vue` are the component and the
+plugin of another Vue, the types are the ones of `@preschen/gen-vis/vue`.
 
 ### Props
 
@@ -155,16 +204,20 @@ on, `"false"` is off, another value of `data-download` or `data-csv` is the
 name of the file, of `data-lazy` the margin.
 
 Every visualisation has its own state, several of them can be used on a page.
-If `def`, `defFile` or `data` change, the visualisation is loaded again, a new
+If `def`, `defFile` or `data` change (`update` of [createGenVis](#javascript),
+a new prop of the component), the visualisation is loaded again, a new
 `state` or new `globals` are applied without loading it again. Errors are shown in place of
 the visualisation, e.g. of a definition which can not be drawn.
 
 ### Events and slots
 
-Besides `update:state` (see [state](#state)) the component emits `rendered`
+Besides `update:state` (see [state](#state)) the visualisation emits `rendered`
 once it is drawn the first time, `error` with the message of an error and
 `hover` and `select` (a click, a tap or enter and space of the hover by the
-keyboard) with the rows under the mouse, `hover` with `null` at its end:
+keyboard) with the rows under the mouse, `hover` with `null` at its end, the
+events of the component, the listeners of `on(event, fn)` of
+[createGenVis](#javascript) and of its props `onHover`, `onSelect`,
+`onRendered`, `onError` and `'onUpdate:state'` (also of `mountGenVisElement`):
 
 The events and the slots have types, e.g. of `@hover` and of the props of
 the slot `hover`.
@@ -193,6 +246,19 @@ the [PNG](#png) and `csv()` of the [data](#accessibility-and-the-data):
     <template #footer="{ footer }"><small v-html="footer"/></template>
     <template #buttons="{ save }"><button @click="save">PNG</button></template>
 </GenVis>
+```
+
+Without Vue the slots are functions of their props (the prop `slots` of
+[createGenVis](#javascript)) which return a node (e.g. an element or a
+fragment), a text, a list of them or null. A slot is called again when its
+props change, e.g. the header of new globals and the hover of another
+position, its nodes are the ones from its first to its last:
+
+```js
+createGenVis(element, { defFile: '/data/bev/def.json', slots: {
+    hover: ({ title, nearest }) => `${title}: ${nearest?.y}`,
+    buttons: ({ save }) => Object.assign(document.createElement('button'), { textContent: 'PNG', onclick: save }),
+} });
 ```
 
 Without the slot, e.g. with the standalone script, `hover` of the
@@ -253,6 +319,11 @@ globals of the page:
 <GenVis def-file="/data/ranking.json" :highlight="country" @hover="e => country = e?.nearest && { country: e.nearest.country }"/>
 ```
 
+```js
+const ranking = createGenVis(list, { defFile: '/data/ranking.json' });
+createGenVis(map, { defFile: '/data/map.json', onHover: e => ranking.setHighlight(e && { country: e.key }) });
+```
+
 ### PNG
 
 The image is a copy of the visualisation with the same state, drawn outside
@@ -266,8 +337,9 @@ the legend of the facets is left out, their titles name them.
 The titles of the buttons are in the language of `options.locale`, see
 [options](#options).
 
-Besides the buttons of `download` and `copy`, the methods of the component
-are `exportPng(name)` (saves the file), `copyPng()` (copies it, in the click
+Besides the buttons of `download` and `copy`, the methods of the
+visualisation (of `createGenVis`, `mountGenVisElement` and a ref of the
+component) are `exportPng(name)` (saves the file), `copyPng()` (copies it, in the click
 of the user) and `image()` (the PNG as a `Blob`), e.g. for a button of the
 page. They and `exportCsv` are an error while the visualisation is loaded,
 also while a new definition or new data is loaded, e.g. after `rendered`
@@ -356,8 +428,10 @@ globals of the form elements and the entries of the legends shown or hidden.
 { "globals": { "column": "share" }, "visible": { "year": { "2019": true, "2022": false } } }
 ```
 
-The component emits `update:state` on every change of the user, so with
-`v-model:state` the page can keep it, e.g. in the local storage. A given state
+The visualisation emits `update:state` on every change of the user, so with
+`v-model:state` (or `'onUpdate:state'` and `update({ state })`) the page can
+keep it, e.g. in the local storage, `state` of the visualisation is the one
+it has. A given state
 is applied when the visualisation is loaded, a new one (`null` for the
 definition) is applied without loading it again. Globals, values and entries
 the definition does not have (anymore) are ignored, new entries of the
@@ -369,7 +443,8 @@ definition keep their defaults.
 
 ### Styles
 
-The styles of the package are in the cascade layer `gen-vis`, so every style
+The styles of the package are injected once by its script (a `<style>` in
+the head of the page, also of the standalone script), in the cascade layer `gen-vis`, so every style
 of the page overrides them, regardless of its specificity and of the order of
 the styles, e.g.:
 
@@ -381,7 +456,8 @@ the styles, e.g.:
 ```
 
 The charts fill the width of `.vis` inside its padding and border, so the
-page can style it as a card (`vis-outer` is the root of the component):
+page can style it as a card (`vis-outer` is the root of the visualisation,
+the element of the component):
 
 ```css
 .vis { padding: 20px; border-radius: 12px; background: white; }
@@ -1692,7 +1768,7 @@ npm install
 npm run dev     # dev server with all definitions in data/, ?def=bev/def.json shows one with the prepared definition
 npm test        # unit tests, rendering and schema check of all definitions in data/
 npm run types   # the types of the definitions (types/definition.d.ts) of schema.json, a test checks them
-npm run build   # es module for bundlers in dist/
+npm run build   # es modules for bundlers in dist/: gen-vis.js (the core), vue.js (the Vue adapter), check.js
 npm run watch   # rebuilds dist/ on changes, e.g. for `npm link`
 npm run lib     # standalone script in dist-lib/, gen-vis.js (of the package) and gen-vis-<version>.js
 npm run deploy  # builds and uploads the standalone script to GEN_VIS_UPLOAD (user@host:/path) of .env
@@ -1737,9 +1813,9 @@ hovered and checked by the tests, so they have to stay valid. `data/energy/`
 is a selection of the energy dashboard, see its `README.md`.
 
 To try changes in an application, `npm install --no-save ../gen-vis` links the
-directory (with `npm run watch`). The `vue` of the linked package would be the
-one of its own `node_modules`, a second Vue, so the bundler of the application
-has to resolve `vue` to its own, e.g. `resolve.alias: { vue:
+directory (with `npm run watch`). The `vue` of the Vue adapter of the linked
+package would be the one of its own `node_modules`, a second Vue, so the
+bundler of the application has to resolve `vue` to its own, e.g. `resolve.alias: { vue:
 path.resolve('node_modules/vue') }` of webpack or `resolve.dedupe: ['vue']` of
 vite. The changes of the versions are in `CHANGELOG.md`. `npm publish` runs
 the tests and builds `dist/` and the standalone script of the package.

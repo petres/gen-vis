@@ -13,6 +13,10 @@
       "types": "./types/index.d.ts",
       "default": "./dist/gen-vis.js"
     },
+    "./vue": {
+      "types": "./types/vue.d.ts",
+      "default": "./dist/vue.js"
+    },
     "./check": {
       "types": "./types/check.d.ts",
       "default": "./dist/check.js"
@@ -20,16 +24,13 @@
     "./schema.json": "./schema.json",
     "./standalone": "./dist-lib/gen-vis.js",
     "./esm": "./dist-lib/esm/gen-vis.js",
-    "./esm-novue": "./dist-lib/esm-novue/gen-vis.js",
     "./package.json": "./package.json"
   },
   "files": [
     "dist",
     "dist-lib/gen-vis.js",
-    "dist-lib/gen-vis.novue.js",
     "dist-lib/gen-vis.core.js",
     "dist-lib/esm",
-    "dist-lib/esm-novue",
     "types",
     "schema.json",
     "CHANGELOG.md"
@@ -38,7 +39,7 @@
     "dev": "vite",
     "build": "vite build",
     "watch": "vite build --watch",
-    "lib": "vite build --mode lib && vite build --mode lib-novue && vite build --mode module && vite build --mode module-novue && vite build --mode core",
+    "lib": "vite build --mode lib && vite build --mode module && vite build --mode core",
     "site": "npm run build && npm run lib && vite --config site/vite.config.js",
     "site:build": "npm run build && npm run lib && vite build --config site/vite.config.js",
     "test": "vitest run",
@@ -80,6 +81,11 @@
   },
   "peerDependencies": {
     "vue": "^3"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    }
   },
   "dependencies": {
     "d3-array": "^3",

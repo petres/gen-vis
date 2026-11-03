@@ -1,0 +1,465 @@
+export { createVis };
+
+import { layout } from "@/layout";
+import { evaluate } from "@/utils/props";
+import { dataAttribute, reducedMotion } from "@/utils/draw";
+import { canCopy } from "@/utils/clipboard.js";
+import { create } from "@/utils/dom";
+import { el, patch, place, setHtml, setText, slotNodes, takeRange } from "@/comp/html";
+import { createFacets } from "@/comp/facets";
+import { createLegends } from "@/comp/legends";
+import { createFormElement } from "@/comp/form-element";
+
+// the width of the visualisation inside its padding and border, e.g. of a card
+// styled by the page, the svg fills only this part
+const innerWidth = el => {
+    const style = getComputedStyle(el);
+    const sides = ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth']
+        .reduce((sum, p) => sum + (parseFloat(style[p]) || 0), 0);
+    return el.getBoundingClientRect().width - sides;
+};
+
+// the icons of the buttons, copy, check, file-text and download of the
+// feather icons
+const icons = {
+    copy: 'M11 9h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1',
+    copied: 'M20 6L9 17l-5-5',
+    csv: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8',
+    download: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3',
+};
+
+// a button of the footer with its icon, type="button" does not submit a
+// form around the visualisation
+const button = (cls, onClick) => {
+    const b = el('button', { type: 'button', class: cls });
+    const svg = b.appendChild(create('svg'));
+    patch(svg, { viewBox: '0 0 24 24', width: '14', height: '14' });
+    svg.appendChild(create('path'));
+    b.addEventListener('click', onClick);
+    return b;
+};
+
+// the same props of a slot, its content is drawn again otherwise
+const sameProps = (a, b) => a && b && Object.keys(a).length == Object.keys(b).length
+    && Object.keys(a).every(k => a[k] === b[k]);
+
+// the content of a slot in `parent` before `before`, drawn again if the
+// slot or its props change, see README "Events and slots". Its nodes are
+// the ones from its first to its last, also the ones which the slot adds
+// between them later, e.g. Vue (see vue-adapter.js), they are removed
+// together, see takeRange
+const slotPart = () => {
+    let first = null, last = null, fn = null, props = null;
+    const remove = () => {
+        if (first)
+            takeRange(first, last);
+        first = last = null;
+    };
+    return {
+        draw(parent, slot, next, before = null) {
+            if (slot === fn && sameProps(props, next)) {
+                if (first && (first.parentNode !== parent || last.nextSibling !== before))
+                    parent.insertBefore(takeRange(first, last), before);
+                return;
+            }
+            remove();
+            fn = slot;
+            props = next;
+            const nodes = slotNodes(slot(next));
+            nodes.forEach(n => parent.insertBefore(n, before));
+            first = nodes[0] ?? null;
+            last = nodes.at(-1) ?? null;
+        },
+        clear() {
+            remove();
+            fn = props = null;
+        },
+    };
+};
+
+/**
+ * The visualisation of a loaded definition (the element `.vis`): the
+ * header, the form elements, the legends, the facets and the footer. `app`
+ * has the store, the slots (`slots()`), the props of the buttons
+ * (`props()`), the files (save, copy, csv), `emit` of the events of the
+ * hover, `stateChanged()` of a change of the user, `rendered()` once it is
+ * drawn, `drawn()` after every draw and `showError(error)`, see app.js.
+ * Changes are drawn together in a microtask (see invalidate), a new view
+ * (see update) only after a change of the state or of the width.
+ */
+const createVis = app => {
+    const { store, files } = app;
+    const slots = () => app.slots() ?? {};
+    const texts = () => store.locale.texts;
+    const options = () => store.def.options;
+
+    // the rows, facets and scales, see layout.js, the width of the plots and
+    // of the visualisation, see measure
+    let view = null;
+    let width = null;
+    let fullWidth = null;
+    let globals = {};
+    let formElements = [];
+    // the check instead of the icon of the copy for a while
+    let copied = false;
+    const clipboard = canCopy();
+    let removed = false;
+    let resizeObserver = null, resizeTimeout = null, copiedTimeout = null;
+    // a draw is due (see invalidate), a new view of a state set from outside
+    let queued = false;
+    let stateSet = false;
+
+    // the errors of the listeners and the draws are shown instead of the visualisation
+    const guard = fn => {
+        try {
+            return fn();
+        } catch (error) {
+            app.showError(error);
+        }
+    };
+
+    // the mappings of the legends by their position, `top` by default, a
+    // form element can patch them
+    const legendsAt = () => {
+        const at = { top: [], bottom: [], left: [], right: [] };
+        // a prop of the width of the visualisation, e.g. below the plots of a phone
+        const scope = { ...store.scope, totalWidth: fullWidth };
+        // the legends of the width of the visualisation, see color-legend.js
+        store.mappingNamesWithKey('legend').forEach(n => at[evaluate(store.mapping(n).legend.position, scope) ?? 'top']?.push(n));
+        return at;
+    };
+    // the text instead of the plots: `options.message`, a prop of the
+    // globals and the width, e.g. steps of `totalWidth` or a patch of a
+    // form element, or `options.empty` without rows
+    const messageOf = () => {
+        const scope = { ...store.scope, totalWidth: width };
+        const message = store.text(evaluate(options().message ?? null, scope));
+        if (message !== null && message !== undefined && message !== '')
+            return String(message);
+        return view && view.rows.length == 0 && options().empty ? store.text(options().empty) : null;
+    };
+    // legends beside the plots
+    const sidesOf = at => at.left.length > 0 || at.right.length > 0;
+
+    // the elements, see render
+    const root = el('div');
+    const header = root.appendChild(el('div', { class: 'vis-header' }));
+    const form = root.appendChild(el('div', { class: 'vis-form-elements' }));
+    const footer = el('div', { class: 'vis-footer' });
+    const footerContent = footer.appendChild(el('div', { class: 'vis-footer-content' }));
+    let headerTitle = null, headerSubtitle = null, footerSpan = null;
+    let message = null;
+    // the parts of the plots: the containers of the legends and their
+    // legends (see legends.js), the body and the facets in it (see facets.js)
+    const parts = { top: null, left: null, right: null, bottom: null };
+    const legends = {};
+    let body = null, bodyKind = null, plots = null, sides = null, facets = null, facetsIn = null, drawnView = null;
+    let buttons = null, copyButton = null, csvButton = null, downloadButton = null;
+    const headerSlot = slotPart(), footerSlot = slotPart(), buttonsSlot = slotPart();
+    root.appendChild(footer);
+
+    const highlight = info => facets?.highlight(info.dim === undefined ? null : {[info.dim]: info.key});
+
+    const vis = { store, slots, emit: app.emit, guard, highlight, changeSelected: () => changeSelected() };
+
+    // the rows, facets and scales of the store, `animated` of a change of
+    // the user or the state, the elements move with the transition of
+    // the definition, not the ones of a new width
+    const update = (animated = false) => {
+        const next = layout(store, width);
+        const transition = options().transition;
+        // no motion if the user prefers it, a setting of the system
+        const duration = animated && !reducedMotion() ? (transition === true ? 300 : (Number(transition) || 0)) : 0;
+        next.facets.forEach(f => f.transition = duration);
+        view = next;
+        invalidate();
+    };
+
+    const changeSelected = () => {
+        update(true);
+        app.stateChanged();
+    };
+    const formChanged = () => {
+        store.applyFormElements();
+        changeSelected();
+    };
+
+    // the width of the plots, of the visualisation or of the definition,
+    // beside legends the rest of it
+    const plotsWidth = () => {
+        const total = options().width || innerWidth(root);
+        fullWidth = store.visWidth = total;
+        if (!sidesOf(legendsAt()))
+            return total;
+        const besides = [...root.querySelectorAll(':scope > .vis-body-sides > .vis-legends')]
+            .reduce((sum, e) => sum + e.getBoundingClientRect().width + 10, 0);
+        return options().width || !plots ? Math.max(0, total - besides) : innerWidth(plots);
+    };
+    const measure = () => {
+        width = plotsWidth();
+        store.totalWidth = width;
+    };
+    const resized = () => {
+        if (removed)
+            return;
+        const w = plotsWidth();
+        if (!w || w == width)
+            return;
+        measure();
+        update();
+    };
+
+    const savePng = async () => {
+        try {
+            await files.save();
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    const copyPng = async () => {
+        try {
+            await files.copy();
+            copied = true;
+            invalidate();
+            clearTimeout(copiedTimeout);
+            copiedTimeout = setTimeout(() => {
+                copied = false;
+                invalidate();
+            }, 1500);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    // the legends of a position in their container, a new container has new legends
+    const drawLegends = (key, container, names) => {
+        if (legends[key]?.container !== container)
+            legends[key] = { container, legends: createLegends(vis, container) };
+        legends[key].legends.update(names, view);
+    };
+
+    // an element which is `wanted`, the one before or a new one, removed otherwise
+    const keepIf = (node, wanted, make) => {
+        if (wanted)
+            return node ?? make();
+        node?.remove();
+        return null;
+    };
+
+    // the facets in their container, new ones in a new one
+    const drawFacets = container => {
+        if (facetsIn !== container) {
+            facets?.destroy();
+            facets = container && view ? createFacets(vis, container) : null;
+            facetsIn = facets ? container : null;
+            drawnView = null;
+        }
+        if (facets && drawnView !== view) {
+            drawnView = view;
+            facets.update(view);
+        }
+    };
+
+    const render = () => {
+        const opts = options();
+        // the class of the definition, a template of the globals, e.g. for
+        // the styles of a page, the globals as data-global- attributes,
+        // e.g. for the styles of a page of a form element, only the ones of
+        // names and values of text
+        const rootClass = opts.class ? store.text(opts.class) : null;
+        const globalAttrs = Object.fromEntries(Object.entries(store.def.globals)
+            .filter(([k, v]) => dataAttribute(k, 'global-') && ['string', 'number', 'boolean'].includes(typeof v))
+            .map(([k, v]) => [dataAttribute(k, 'global-'), String(v)]));
+        patch(root, { class: rootClass ? `vis ${rootClass}` : 'vis', ...globalAttrs, style: { '--gen-vis-font-family': opts.fontFamily } });
+
+        // the title and the subtitle with the values of the globals, e.g.
+        // "Durchschnitt {base} = 100" of a form element
+        const own = slots();
+        const head = { title: store.text(opts.title), subtitle: store.text(opts.subtitle) };
+        if (own.header) {
+            headerTitle?.remove();
+            headerSubtitle?.remove();
+            headerTitle = headerSubtitle = null;
+            headerSlot.draw(header, own.header, head);
+        } else {
+            headerSlot.clear();
+            headerTitle ??= header.appendChild(el('div', { class: 'vis-title' }));
+            headerSubtitle ??= header.appendChild(el('div', { class: 'vis-subtitle' }));
+            setText(headerTitle, head.title);
+            setText(headerSubtitle, head.subtitle);
+        }
+
+        formElements.forEach(f => f.update());
+
+        // a text instead of the plots and the legends, e.g. of a narrow screen
+        const text = messageOf();
+        const at = legendsAt();
+        sides = sidesOf(at);
+        const shown = text === null;
+        // the legends beside the plots, the plots have the width of the rest
+        const bodySides = shown && sides;
+        const wantBody = shown && (sides || Boolean(view));
+        if (body && (!wantBody || bodyKind !== bodySides)) {
+            body.remove();
+            body = plots = parts.left = parts.right = null;
+        }
+        if (wantBody && !body) {
+            bodyKind = bodySides;
+            body = el('div', { class: bodySides ? 'vis-body vis-body-sides' : 'vis-body' });
+            if (bodySides)
+                plots = body.appendChild(el('div', { class: 'vis-plots' }));
+        }
+        message = keepIf(message, !shown, () => el('div', { class: 'vis-message' }));
+        if (message)
+            setText(message, text);
+        parts.top = keepIf(parts.top, shown, () => el('div', { class: 'vis-legends' }));
+        parts.bottom = keepIf(parts.bottom, shown && at.bottom.length > 0, () => el('div', { class: 'vis-legends vis-legends-bottom' }));
+        [message, parts.top, body, parts.bottom].filter(Boolean).reduceRight((after, n) => place(root, n, after), footer);
+        if (parts.top)
+            drawLegends('top', parts.top, at.top);
+        if (bodySides) {
+            parts.left = keepIf(parts.left, at.left.length > 0, () => el('div', { class: 'vis-legends vis-legends-left' }));
+            parts.right = keepIf(parts.right, at.right.length > 0, () => el('div', { class: 'vis-legends vis-legends-right' }));
+            if (parts.left)
+                drawLegends('left', place(body, parts.left, plots), at.left);
+            if (parts.right)
+                drawLegends('right', place(body, parts.right, null), at.right);
+        }
+        if (parts.bottom)
+            drawLegends('bottom', parts.bottom, at.bottom);
+        drawFacets(bodySides ? plots : body);
+
+        // the footer, html of the definition, e.g. a link of the source,
+        // the values of the globals are text
+        const footerHtml = store.html(opts.footer);
+        if (own.footer) {
+            footerSpan?.remove();
+            footerSpan = null;
+            footerSlot.draw(footerContent, own.footer, { footer: footerHtml });
+        } else {
+            footerSlot.clear();
+            footerSpan ??= footerContent.appendChild(el('span'));
+            setHtml(footerSpan, footerHtml);
+        }
+        drawButtons(own);
+        app.drawn();
+    };
+
+    // the buttons of the page (the slot buttons), copy, csv and download,
+    // at the right end of the plots
+    const drawButtons = own => {
+        const { copy, csv, download } = app.props();
+        if (!(own.buttons || (copy && clipboard) || csv || download)) {
+            buttons?.remove();
+            buttonsSlot.clear();
+            buttons = copyButton = csvButton = downloadButton = null;
+            return;
+        }
+        buttons ??= footer.appendChild(el('div', { class: 'vis-buttons' }));
+        patch(buttons, { class: 'vis-buttons', style: { marginRight: `${view?.facets[0]?.margins.right ?? 0}px` } });
+        const t = texts();
+        copyButton = keepIf(copyButton, copy && clipboard, () => button('vis-copy', () => copyPng()));
+        csvButton = keepIf(csvButton, csv, () => button('vis-csv', () => files.csv().catch(app.showError)));
+        downloadButton = keepIf(downloadButton, download, () => button('vis-download', () => savePng()));
+        if (copyButton) {
+            patch(copyButton, { type: 'button', class: 'vis-copy', title: copied ? t.copied : t.copy, 'aria-label': copied ? t.copied : t.copy });
+            patch(copyButton.querySelector('path'), { d: icons[copied ? 'copied' : 'copy'] });
+        }
+        if (csvButton) {
+            patch(csvButton, { type: 'button', class: 'vis-csv', title: t.csv, 'aria-label': t.csv });
+            patch(csvButton.querySelector('path'), { d: icons.csv });
+        }
+        if (downloadButton) {
+            patch(downloadButton, { type: 'button', class: 'vis-download', title: t.download, 'aria-label': t.download });
+            patch(downloadButton.querySelector('path'), { d: icons.download });
+        }
+        const order = [copyButton, csvButton, downloadButton].filter(Boolean);
+        order.reduceRight((after, b) => place(buttons, b, after), null);
+        if (own.buttons)
+            buttonsSlot.draw(buttons, own.buttons, { save: files.save, copy: files.copy, csv: files.csv, canCopy: clipboard }, order[0] ?? null);
+        else
+            buttonsSlot.clear();
+    };
+
+    // the changes are drawn together, once, in a microtask, e.g. of
+    // several changes of the state of one event
+    const invalidate = () => {
+        if (queued || removed)
+            return;
+        queued = true;
+        queueMicrotask(flush);
+    };
+    const flush = () => {
+        if (!queued || removed)
+            return;
+        queued = false;
+        guard(() => {
+            if (stateSet) {
+                stateSet = false;
+                update(true);
+                queued = false;
+            }
+            const before = sides;
+            render();
+            // legends beside the plots or not anymore, e.g. of a new width,
+            // the plots have another width
+            if (before !== null && before !== sides)
+                queueMicrotask(() => guard(resized));
+        });
+    };
+
+    // the state was set from outside, see setState of store.js
+    const stateListener = () => {
+        stateSet = true;
+        invalidate();
+    };
+
+    // the elements before the first measure, as the ones of Vue: without
+    // the view, the form elements and the width
+    render();
+
+    return {
+        el: root,
+        // once it is in the page: the form elements, the width, the view
+        mounted() {
+            // hidden form elements have no element, their globals are set by the page
+            globals = store.def.globals;
+            formElements = store.def.formElements.filter(e => e.type != 'hidden')
+                .map(e => createFormElement(vis, e, globals, formChanged));
+            form.append(...formElements.map(f => f.el));
+            measure();
+            update();
+            store.listeners.add(stateListener);
+            // without a fixed width the visualisation fills its container
+            if (!options().width && typeof ResizeObserver == 'function') {
+                resizeObserver = new ResizeObserver(() => {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(() => guard(resized), 100);
+                });
+                resizeObserver.observe(root);
+            }
+            const before = sides;
+            queued = false;
+            render();
+            // the plots beside legends have the width of the rest, e.g. after the
+            // first draw of a legend of colors
+            if (sides || (before !== null && before !== sides))
+                queueMicrotask(() => guard(resized));
+        },
+        // the props of the buttons or the slots changed
+        invalidate,
+        highlight,
+        destroy() {
+            removed = true;
+            store.listeners.delete(stateListener);
+            resizeObserver?.disconnect();
+            clearTimeout(resizeTimeout);
+            clearTimeout(copiedTimeout);
+            facets?.destroy();
+            formElements.forEach(f => f.destroy());
+            headerSlot.clear();
+            footerSlot.clear();
+            buttonsSlot.clear();
+        },
+    };
+};
