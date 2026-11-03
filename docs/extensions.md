@@ -114,6 +114,16 @@ registerScheme('wifo', ['#005CA9', '#E6A000', '#7AB51D', '#A6A6A6']);
 registerScheme('observable10', ['#005CA9', '#E6A000', '#7AB51D', '#A6A6A6']);
 ```
 
+`registerScheme` returns a function that restores what was registered
+under that name before (or removes the name again), e.g. for a scheme that
+applies to one chart only:
+
+```js
+const restore = registerScheme('wifo', ['#005CA9', '#E6A000']);
+// … draw or export …
+restore();
+```
+
 ## Defaults of the page
 
 `registerDefaults(defaults)` replaces built-in defaults of the parts of all

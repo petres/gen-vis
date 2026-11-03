@@ -153,14 +153,11 @@ options and new keys of the result are added without a new version.
 
 ## CLI
 
-`gen-vis export` (the `bin` of the package, node 22 or newer, no
-dependencies) draws definition files with the export page in a Chromium,
-Chrome or Edge of the system (`--browser`, the environment variables
-`GEN_VIS_BROWSER` or `CHROME_PATH`, otherwise `chromium`,
-`chromium-browser`, `google-chrome`, `chrome`, `msedge` on the PATH and the
-usual places of Chrome and Edge on macOS and Windows) and writes SVG, PNG
-and PDF files, by their extensions. Every definition is followed by its
-outputs, one browser draws them all:
+`gen-vis export` is the package's `bin` (node 22 or newer, no
+dependencies). It draws definition files on the export page in a Chromium,
+Chrome or Edge of the system and writes SVG, PNG and PDF files, chosen by
+their extensions. Each definition is followed by its outputs, and one
+browser draws them all:
 
 ```sh
 npx gen-vis export data/bev/def.json bev.svg bev.png bev.pdf --width 16cm --font-size 8pt --dpi 300
@@ -169,20 +166,36 @@ npx gen-vis export a.json a.svg b.json b.svg b.png --parts legend,plot --css wif
     --defaults '{"axis": {"padding": 2, "tickMarks": {"size": 4, "inset": 0}}}'
 ```
 
-The options are the ones of the export page: `--width`, `--parts` (a list
-with commas), `--css` (a file or CSS, repeatable), `--class` (repeatable),
-`--font-size`, `--globals` and `--state` (JSON), `--defaults` (JSON or a
-file of it, e.g. `--defaults wifo-defaults.json`), `--data` (a file),
-`--background` (`none` for none), `--scheme name=color,color,...`
-(repeatable), `--unit`, `--padding` and `--timeout`; the PNG has `--scale`
-pixels per CSS pixel (default 2) or `--dpi`, its width a whole number of
-pixels (e.g. 1890 of 16cm at 300 dpi). The files reach the page without a
-server, the program answers its requests (`Fetch` of CDP), so the
-definitions load their data and parents relative to their own files. The
-browser runs with its sandbox, without it as root, with `--no-sandbox` or
-`GEN_VIS_NO_SANDBOX=1`, and if it can not start one (e.g. in a container,
-it says so). A chart which fails is reported with the message of gen-vis,
-the others are drawn, the exit code is 1 then. A signal (SIGINT, SIGTERM,
-SIGHUP) ends the browser and removes its profile, the exit code is the one
-of the shells (130, 143, 129). The PDF is the print of the
-SVG, PDF and SVG are the same drawing.
+`npx gen-vis export --help` lists all options. They match the export page's
+options above:
+
+- `--width` (default 800), `--unit`, `--padding` (pixels, 0 or more,
+  default 15), `--parts` (a comma-separated list), `--background` (`none`
+  for a transparent one).
+- `--css` (a file or CSS text) and `--class`, both repeatable;
+  `--font-size`.
+- `--globals` and `--state` (JSON), `--defaults` (JSON or a JSON file, e.g.
+  `--defaults wifo-defaults.json`), `--data` (a CSV, JSON or parquet file
+  instead of the definition's data), `--scheme name=color,color,...`
+  (repeatable).
+- PNG resolution: `--scale` (pixels per CSS pixel, default 2) or `--dpi`.
+  The width is rounded to whole pixels, e.g. 1890 for 16cm at 300 dpi.
+- `--timeout` (ms per chart, default 30000).
+- `--browser <path>`; otherwise `GEN_VIS_BROWSER` or `CHROME_PATH`, then
+  `chromium`, `chromium-browser`, `google-chrome`, `chrome` or `msedge` on
+  the PATH and the usual Chrome and Edge locations on macOS and Windows.
+- `--no-sandbox` (or `GEN_VIS_NO_SANDBOX=1`). The browser runs without its
+  sandbox anyway as root, or when it cannot start one (e.g. in a
+  container); it says so.
+
+How it works and what to expect:
+
+- No server is needed: the program answers the page's requests itself
+  (CDP `Fetch`), so a definition loads its data and parents relative to its
+  own file. Site-absolute paths such as `"/geo/europe.json"` have no file to
+  map to and fail with a 404; use relative paths for charts you export.
+- A chart that fails is reported with gen-vis's message, the others are
+  still drawn, and the exit code is 1.
+- SIGINT, SIGTERM and SIGHUP close the browser and remove its profile; the
+  exit code is the shell's (130, 143, 129).
+- The PDF is a print of the SVG, so PDF and SVG are the same drawing.

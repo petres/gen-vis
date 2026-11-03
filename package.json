@@ -83,7 +83,7 @@
   },
   "homepage": "https://petres.github.io/gen-vis/",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "peerDependencies": {
     "vue": "^3"
