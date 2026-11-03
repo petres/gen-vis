@@ -23,26 +23,37 @@ around them. Its keys:
 }
 ```
 
-A definition of 4.0 is short: a mapping can be the name of its column, `x`
-and `y` have a scale and an axis by default, the type of a mapping follows
-from its parts or its values, a plot type of the coordinate system, e.g.
-`line`, has the props it needs by default:
+A 4.0 definition is short: a mapping can be just its column name, `x` and
+`y` have a scale and an axis by default, a mapping's type follows from its
+parts or its values, and a plot type such as `line` has the props it needs
+by default. The README example, drawn from
+[`data/bev/data.csv`](../data/bev/data.csv):
 
 ```json
 {
     "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
     "data": "data.csv",
-    "mapping": {
-        "x": "Jahr",
-        "y": { "column": "Einwohner", "format": ",.0f", "domain": [0, null], "axis": { "grid": true } },
-        "land": { "column": "Bundesland", "fromData": true, "scheme": "Tableau10", "legend": {} }
+    "transform": [{ "type": "filter", "expr": { "!=": ["@Bundesland", "ÖSTERREICH"] } }],
+    "options": {
+        "title": "Bevölkerung nach Bundesland",
+        "height": 300,
+        "margins": { "top": 10, "right": 10, "bottom": 30, "left": 80 }
     },
-    "plot": { "type": "line", "by": "land", "highlight": { "stroke-width": 3 } }
+    "mapping": {
+        "x": { "column": "Jahr", "format": "c" },
+        "y": { "column": "Einwohner", "format": ",.0f", "domain": [0, null], "axis": { "grid": true } },
+        "land": { "column": "Bundesland", "fromData": true, "scheme": "Tableau10", "legend": { "symbol": "line", "onlyData": true } }
+    },
+    "plot": { "type": "line", "by": "land", "props": { "stroke-width": 2 }, "highlight": { "stroke-width": 4 } }
 }
 ```
 
-The changes of the definitions of 3.x are listed in the
-[changelog](../CHANGELOG.md).
+Margins are 0 by default, so a chart with axes needs some. `Jahr` holds
+numbers, so its type is numeric and `"format": "c"` writes the years
+without a thousands separator.
+
+Upgrading 3.x definitions: see the [changelog](../CHANGELOG.md), "Upgrading
+from 3.x".
 
 See [data](#data) (also `dataFormat`), [`transform`](#transform),
 [`options`](#options), [`mapping`](#mapping), [`plot`](#plot),
@@ -176,12 +187,13 @@ a scale, `range` of a filter, `select` of a plot).
 
 ## `transform`
 
-Transforms compute columns of the data in the browser, e.g. an index of a
-base year which a slider changes, instead of columns of every base year in the
-file. A transform (or a list of them, in their order) computes the column
-`as` (by default its `column`, which it replaces) of the values of `column`,
-in groups of the rows of the same values of the columns `by` (a column or a
-list), the mappings and the later transforms can use the new column:
+Transforms compute data columns in the browser, e.g. an index to a base
+year that a slider changes, instead of one column per base year in the
+file. A transform (or a list of them, applied in order) computes the column
+`as` (by default its `column`, which it replaces) from the values of
+`column`, grouped by the columns `by` (a column or a list; rows with the
+same values form a group). Mappings and later transforms can use the new
+column:
 
 ```json
 "globals": { "base": "2019" },
@@ -210,8 +222,8 @@ list), the mappings and the later transforms can use the new column:
   "day"`, the day of `align`) or the one of a period, `{"type": "mean",
   "column": "value", "base": {"year": [1961, 1990]}, "min": 22, "as":
   "p1"}`.
-- `share`: the share of the value of the sum of the values of the group, e.g.
-  `"by": "date"` for the shares of the categories of a date.
+- `share`: the value's share of its group's sum, e.g. `"by": "date"` for
+  each category's share per date.
 - `rolling`: the mean of the values of `size` rows of the group, the ones
   before the row (`"align": "end"`, the default) or around it (`"center"`),
   only of whole windows, missing values are left out (a row without a value
@@ -238,9 +250,8 @@ list), the mappings and the later transforms can use the new column:
   rank, e.g. the place of a country in a year with `"by": "year"`.
 - `lookup`: the value of the column `value` of the row of a file of rows
   (`data`, its url relative to the definition, the format of its extension
-  or `dataFormat`) whose column `key` is the value of `column`, e.g. the
-  names of the countries of the codes of the data in the language of the
-  page: `{"type": "lookup", "column": "country", "data": "countries.csv",
+  or `dataFormat`) whose column `key` is the value of `column`, e.g. country
+  names for the country codes of the data, in the page language: `{"type": "lookup", "column": "country", "data": "countries.csv",
   "key": "code", "value": "name_{lang}", "as": "countryName"}`. The file is
   loaded with the data, its url is no template.
 
@@ -424,8 +435,8 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   categories, of the values of a mapping (`by`) of their rows, with a space
   of `padding` steps between them (1 by default), e.g. the rows of horizontal
   bars of the groups of indicators, `@y:group:start` and `@y:group:end` are
-  the start of the first band and the end of the last band of the group of
-  the row, e.g. a line along a group:
+  where the row's group starts (its first band) and ends (its last band),
+  e.g. a line along a group:
 
   ```json
   "y": { "column": "label", "type": "categorical", "scale": { "groups": { "by": "group", "padding": 0.8 } } }
@@ -635,12 +646,12 @@ definition: the prop `defaults` of a chart (also `data-defaults`, the Vue
 component, `defaults` of the [export page](export.md#export-page) and `--defaults`
 of the [CLI](export.md#cli)) and `registerDefaults(defaults)` of all charts of the
 page (`GenVis.registerDefaults` of the standalone script, called before the
-charts are drawn, `null` removes them). A value of the definition takes
-precedence, then the prop, then the page, then the built-in one; in each
-the one of the kind of the axis before the one of `axis`, so `axis` of the
-prop is before `angularAxis` of the page. E.g. the spacing of ggplot2 (tick
-marks of 3pt outside of the plot area, the labels close to them) of every
-axis of every definition:
+charts are drawn, `null` removes them). Precedence: the definition, then
+the prop, then the page, then the built-in defaults. Within one level an
+axis-specific entry (e.g. `angularAxis`) beats `axis`, but a higher level
+always wins, so the prop's `axis` beats the page's `angularAxis`. E.g.
+ggplot2 spacing (3pt tick marks outside the plot area, labels close to
+them) for every axis of every definition:
 
 ```js
 import { registerDefaults } from '@preschen/gen-vis';
