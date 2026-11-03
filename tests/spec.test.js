@@ -4,6 +4,8 @@ import { describe, test, expect, beforeAll } from 'vitest';
 import { applyTransforms, loadTransforms } from '@/utils/transform';
 import { mergeAll, patchedParts } from '@/utils/def';
 import { resolveParents } from '@/utils/load';
+import { evaluate, bind, formatter } from '@/utils/expr';
+import { format } from 'd3-format';
 
 // the fixtures of a directory of spec/ by the name of their file, e.g. "rolling"
 const fixtures = files => Object.entries(files).map(([file, cases]) => [file.split('/').pop().replace(/\.json$/, ''), cases]);
@@ -76,5 +78,25 @@ describe('spec/merge', () => {
         def.globals ??= {};
         const parts = patchedParts(def, c.def);
         expect({ globals: def.globals, parts }).toEqual(c.result);
+    });
+});
+
+// no value is null in JSON, undefined in JS
+const plain = v => v === undefined ? null : Array.isArray(v) ? v.map(plain)
+    : v !== null && typeof v == 'object' ? Object.fromEntries(Object.entries(v).map(([k, e]) => [k, plain(e)])) : v;
+
+describe('spec/expressions', () => {
+    // the formats of d3 of its default locale (en-US)
+    const format3 = (spec) => format(spec);
+    const files = import.meta.glob('../spec/expressions/*.json', { eager: true, import: 'default' });
+    describe.each(fixtures(files))('%s', (file, cases) => {
+        test.each(cases.map(c => [c.name, c]))('%s', (name, c) => {
+            const scope = { ...c.scope, [formatter]: format3 };
+            expect(plain(evaluate(c.expr, scope))).toEqual(c.result);
+            // bound to rows, the names are values of the row, not constants
+            const resolve = n => typeof n == 'symbol' ? Object.assign(() => format3, { constant: true })
+                : (Object.hasOwn(c.scope, n) ? row => row[n] : undefined);
+            expect(plain(bind(c.expr, resolve)(c.scope))).toEqual(c.result);
+        });
     });
 });

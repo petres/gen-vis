@@ -5,7 +5,7 @@ import { sameValue, templateRefs, variants } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
 import { evaluate } from "@/utils/props";
-import { comparison, compareCategories } from "@/utils/values";
+import { comparison, compareCategories, isObject, toNumber } from "@/utils/values";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
@@ -46,19 +46,6 @@ const parseData = async (data, format, columns = null) => {
 };
 
 const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
-
-// a decimal number, also with an exponent and spaces around it, e.g. " 12 ",
-// "-.5" or "1e3", not the other texts of Number, e.g. "0x10" or "Infinity"
-const decimalNumber = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
-
-// missing, invalid and infinite values are null, only numbers and texts of
-// decimal numbers are numbers, not e.g. true or [1], which Number reads as
-// 1, integers of 64 bits are numbers
-const toNumber = v => {
-    const n = typeof v == 'number' || typeof v == 'bigint' ? Number(v)
-        : (typeof v == 'string' && decimalNumber.test(v) ? Number(v) : NaN);
-    return Number.isFinite(n) ? n : null;
-};
 
 // a date without a time zone: of ISO, e.g. "2022-06-01", "2022-06", "2022"
 // or "2022-06-01 13:00:00" (also with a T and the fraction of a second), and
@@ -314,8 +301,18 @@ const condition = (m, c, path, mappings) => {
  */
 const rowFilter = (conditions, mapping, scope = {}, path = 'filter') => Object.entries(conditions ?? {}).map(([dim, c]) => ({
     dim,
-    key: condition(Object.hasOwn(mapping, dim) ? mapping[dim] : undefined, evaluate(c, scope), `${path}.${dim}`, mapping),
+    key: condition(Object.hasOwn(mapping, dim) ? mapping[dim] : undefined, conditionValues(c, scope), `${path}.${dim}`, mapping),
 }));
+
+// the values of a condition evaluated, `not` and `range` are parts of the
+// condition, not operators of expressions, e.g. { "not": "@type" }
+const conditionValues = (c, scope) => {
+    if (isObject(c) && Object.keys(c).length == 1 && 'not' in c)
+        return { not: conditionValues(c.not, scope) };
+    if (isObject(c) && Array.isArray(c.range))
+        return { ...c, range: evaluate(c.range, scope) };
+    return evaluate(c, scope);
+};
 
 /**
  * The columns of the data a definition can use, null if they are not known:

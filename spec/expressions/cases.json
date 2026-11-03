@@ -1,0 +1,15 @@
+[
+  { "name": "steps, the value of the last step whose cut is below the value", "scope": { "totalWidth": 600 }, "expr": { "steps": ["@totalWidth", { "0": 220, "550": 250 }] }, "result": 250 },
+  { "name": "steps, a cut is not below itself", "scope": { "totalWidth": 550 }, "expr": { "steps": ["@totalWidth", { "0": 220, "550": 250 }] }, "result": 220 },
+  { "name": "steps without a cut below the value have no value", "scope": { "totalWidth": 0 }, "expr": { "steps": ["@totalWidth", { "0": 220, "550": 250 }] }, "result": null },
+  { "name": "steps of a missing value have no value", "scope": {}, "expr": { "steps": ["@totalWidth", { "0": 220 }] }, "result": null },
+  { "name": "the cuts of steps are ordered by their value, also negative and decimal ones", "scope": { "v": 0.7 }, "expr": { "steps": ["@v", { "0.5": "b", "-1": "a", "10": "c" }] }, "result": "b" },
+  { "name": "the values of steps are expressions", "scope": { "totalWidth": 800, "r": 4 }, "expr": { "steps": ["@totalWidth", { "0": 2, "600": { "*": ["@r", 2] } }] }, "result": 8 },
+  { "name": "steps of an expression, e.g. of a ratio", "scope": { "totalWidth": 600 }, "expr": { "*": [{ "steps": ["@totalWidth", { "0": 100, "500": 200 }] }, 0.5] }, "result": 100 },
+  { "name": "match, the value of the case of the value", "scope": { "level": "header" }, "expr": { "match": ["@level", { "header": 4.5, "item": "@r" }, 0] }, "result": 4.5 },
+  { "name": "match, the cases are expressions", "scope": { "level": "item", "r": 2 }, "expr": { "match": ["@level", { "header": 4.5, "item": "@r" }, 0] }, "result": 2 },
+  { "name": "match, the default of other values", "scope": { "level": "other" }, "expr": { "match": ["@level", { "header": 4.5, "item": "@r" }, 0] }, "result": 0 },
+  { "name": "match without a default has no value", "scope": { "year": 2023 }, "expr": { "match": ["@year", { "2024": "red" }] }, "result": null },
+  { "name": "match of a number by its text", "scope": { "year": 2024 }, "expr": { "match": ["@year", { "2024": "red" }] }, "result": "red" },
+  { "name": "match of an expression", "scope": { "a": 1 }, "expr": { "match": [{ "+": ["@a", 1] }, { "2": "two" }] }, "result": "two" }
+]

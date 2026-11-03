@@ -4,6 +4,7 @@
 // definitions is not part of it (~12 kB gzipped), a page in use does not
 // need it, the module of the standalone script and the package have it.
 import * as transform from '@/utils/transform-types.js';
+import * as migrate from '@/utils/migrate.js';
 import * as intl from '@/utils/locale-intl.js';
 import ColorLegend from '@/comp/ColorLegend.vue';
 import * as colors from '@/utils/colors.js';
@@ -19,6 +20,7 @@ export const lazy = {
     validate: async () => {
         throw new Error('the single file of the standalone script has no check of the definitions, the module (esm/gen-vis.js, gen-vis.core.js) and the package have it');
     },
+    migrate: async () => migrate,
     transform: async () => transform,
     intl: async () => intl,
     colorLegend: async () => ({ default: ColorLegend }),

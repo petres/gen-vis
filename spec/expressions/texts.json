@@ -1,0 +1,8 @@
+[
+  { "name": "cat of texts and numbers", "scope": { "name": "Wien", "v": 3 }, "expr": { "cat": ["@name", ": ", "@v"] }, "result": "Wien: 3" },
+  { "name": "cat of missing values, they are empty", "scope": {}, "expr": { "cat": ["a", "@b", null, "c"] }, "result": "ac" },
+  { "name": "format of a d3 format", "scope": { "y": 1234.567 }, "expr": { "format": ["@y", ",.1f"] }, "result": "1,234.6" },
+  { "name": "format of a percentage", "scope": { "share": 0.256 }, "expr": { "format": ["@share", ".0%"] }, "result": "26%" },
+  { "name": "format of a missing value is the empty text", "scope": {}, "expr": { "format": ["@y", ",.1f"] }, "result": "" },
+  { "name": "format of an expression", "scope": { "y": 2 }, "expr": { "format": [{ "*": ["@y", 1.5] }, ".2f"] }, "result": "3.00" }
+]

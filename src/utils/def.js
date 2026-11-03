@@ -2,7 +2,7 @@ export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable,
 
 import merge from 'deepmerge';
 import { schemeColors } from '@/utils/d3';
-import { comparison, isObject } from '@/utils/values';
+import { comparison, isObject, sameValue } from '@/utils/values';
 
 // arrays whose entries all have an `id`, e.g. the form elements and their
 // values, are merged by it, entries with a new id are appended, all other
@@ -19,18 +19,6 @@ const arrayMerge = (target, source, options) => {
 };
 
 const mergeAll = parts => merge.all(parts, { arrayMerge });
-
-// values of globals and entries are the same as strings, e.g. the year 2024
-// of the data and "2024" of a definition, but not 0 and "", missing ones are
-// null, lists and objects are compared by their content
-const scalar = v => v === null || v === undefined || typeof v != 'object';
-const sameValue = (a, b) => {
-    if (!scalar(a) || !scalar(b))
-        return JSON.stringify(a) == JSON.stringify(b);
-    if (a === null || a === undefined || b === null || b === undefined)
-        return (a ?? null) === (b ?? null);
-    return String(a) === String(b);
-};
 
 // keys of categories ascending or descending, numbers by their value
 const sortKeys = (keys, descending) => {

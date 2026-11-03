@@ -39,7 +39,7 @@ describe('makeScale', () => {
     });
 
     test('the references of a range', () => {
-        const mapping = { type: 'numeric', scale: { type: 'sqrt', range: [0, { prop: 'relative', ref: 'width', ratio: 0.1 }], domain: [0, null] } };
+        const mapping = { type: 'numeric', scale: { type: 'sqrt', range: [0, { '*': ['@width', 0.1] }], domain: [0, null] } };
         expect(makeScale('r', mapping, [{ r: 4 }], options).range()).toEqual([0, 10]);
     });
 
@@ -47,7 +47,7 @@ describe('makeScale', () => {
         const scale = (orientation, inset) => makeScale('y', { type: 'numeric', scale: { type: 'linear', orientation, domain: [0, 10], inset } }, [], options);
         expect(scale('horizontal', 10).range()).toEqual([10, 90]);
         expect(scale('vertical', [5, 10]).range()).toEqual([45, 10]);
-        expect(scale('horizontal', { prop: 'relative', ref: 'width', ratio: 0.1 }).range()).toEqual([10, 90]);
+        expect(scale('horizontal', { '*': ['@width', 0.1] }).range()).toEqual([10, 90]);
         // the dates of a time scale, the categories of a band scale
         const time = makeScale('x', { type: 'date', scale: { type: 'time', orientation: 'horizontal', domain: [null, null], domainRel: [0, 0], inset: 20 } },
             [{ x: Date.UTC(2020, 0, 1) }, { x: Date.UTC(2021, 0, 1) }], options);
