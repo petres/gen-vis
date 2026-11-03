@@ -4,6 +4,7 @@ import { validateDef, curveNames } from '@/utils/validate';
 import { prepareDef } from '@/utils/def';
 import { normalize } from '@/utils/normalize';
 import { rowFilter } from '@/utils/data';
+import { loadTransforms } from '@/utils/transform';
 import { plotTypes, registerPlotType } from '@/plots';
 import { coords, registerCoord } from '@/coords';
 import { resolveParents } from '@/utils/load';
@@ -720,6 +721,20 @@ describe('validateDef of the types of the rows', () => {
     test('the scale of a mapping of the type of its values', () => {
         const def = { mapping: { n: { column: 'land', nice: 5 } }, plot: { type: 'cartesian:line', props: {} } };
         expect(validateDef(def, [{ land: 'Wien' }]).filter(w => w.startsWith('mapping.n'))).toEqual([
+            "mapping.n.nice: only the domains of numeric mappings are rounded, not the ones of the type 'categorical'",
+        ]);
+    });
+
+    test('the types of the columns of transforms and of column templates, as the ones of the load', async () => {
+        await loadTransforms();
+        const def = {
+            globals: { col: 'land' },
+            transform: { type: 'align', column: 'date', as: 'day' },
+            mapping: { t: { column: 'day', nice: 5 }, n: { column: '{col}', nice: 5 }, u: { column: 'unknown', nice: 5 } },
+            plot: { type: 'cartesian:line', props: {} },
+        };
+        expect(validateDef(def, [{ date: '2024-06-01', land: 'Wien' }]).filter(w => w.startsWith('mapping.'))).toEqual([
+            "mapping.t.nice: only the domains of numeric mappings are rounded, not the ones of the type 'date'",
             "mapping.n.nice: only the domains of numeric mappings are rounded, not the ones of the type 'categorical'",
         ]);
     });

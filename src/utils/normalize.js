@@ -1,4 +1,4 @@
-export { normalize, scaleTypeOf };
+export { normalize, scaleTypeOf, defaultScaleType };
 
 import { isObject } from '@/utils/values';
 import { isOperator, refNames } from '@/utils/expr';
@@ -117,6 +117,10 @@ const scaleTypeOf = (m, name, plots = []) => {
     return bars.some(p => refNames(p.props ?? {}).some(r => r == `${name}:scaled` || r.startsWith(`${name}:scaled:`) || r.startsWith(`${name}:start:scaled`) || r.startsWith(`${name}:end:scaled`)))
         ? 'band' : 'point';
 };
+
+// the type of the scale of its own of a mapping, see scaleTypeOf, linear of a
+// mapping without a type, e.g. of no column
+const defaultScaleType = (m, name, plots = []) => scaleTypeOf(m, name, plots) ?? 'linear';
 
 // the type of a mapping of its parts, see normalize, undefined if they do not tell
 const typeOf = (m, name, used) => {

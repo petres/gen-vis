@@ -8,11 +8,11 @@ import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
 import { annotationKeys } from "@/coords/annotations.js";
 import { projectionNames } from "@/coords/geo.js";
-import { transformNames } from "@/utils/transform";
+import { applyTransforms, transformNames, utcColumns } from "@/utils/transform";
 import { isObject } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
-import { normalize, scaleTypeOf } from "@/utils/normalize";
-import { inferType } from "@/utils/data";
+import { defaultScaleType, normalize, scaleTypeOf } from "@/utils/normalize";
+import { inferTypes } from "@/utils/data";
 import { versionError } from "@/utils/version";
 // without its descriptions, see checkSchema of vite.config.js
 import schema from "../../schema.json?check";
@@ -356,9 +356,8 @@ const checkScale = (ctx, n, m, path) => {
     }
     // the name of the schema, e.g. "linear" of "Linear"
     const lower = otherCase(m.scale.type, Object.keys(d3.scales));
-    const type = lower ?? m.scale.type ?? 'linear';
+    const type = lower ?? m.scale.type ?? defaultScaleType(m, n, def.plot);
     const scale = d3.named(d3.scales, type);
-    // a mapping without a type is a categorical one
     const typeName = `the type '${m.type}'`;
     // the type of a mapping without one follows from the rows, see inferTypes
     const typed = m.type !== undefined;
@@ -781,19 +780,25 @@ const writtenPath = (path, def) => {
     return path;
 };
 
-// the types of the mappings without one of the columns of the rows, the
-// other ones are known after the transforms, see inferTypes of utils/data.js
+// the types of the mappings without one of the values of their columns, as
+// the ones of the load (inferTypes of utils/data.js), of the columns of the
+// rows and of the transforms, the transforms are computed if they are
+// loaded (e.g. by the store), the types of other columns are not known
 const withTypes = (def, rows) => {
     if (!Array.isArray(rows) || rows.length == 0)
         return def;
-    const columns = new Set(Object.keys(rows[0] ?? {}));
-    Object.values(def.mapping ?? {}).filter(m => isObject(m) && m.type === undefined && columns.has(m.column))
-        .forEach(m => {
-            m.type = inferType(rows.map(r => r?.[m.column]));
-            // the type of the scale of the type, see prepareMapping
-            if (isObject(m.scale) && m.scale.of === undefined && m.scale.type === undefined)
-                m.scale.type = scaleTypeOf(m, Object.keys(def.mapping).find(n => def.mapping[n] === m), def.plot);
-        });
+    let columns = null;
+    try {
+        columns = applyTransforms(rows, def.transform, def.globals ?? {}, utcColumns(def));
+    } catch {
+        // not loaded or a transform of a file, e.g. a lookup
+    }
+    const present = new Set(Object.keys(rows[0] ?? {}));
+    inferTypes(def, rows, columns, column => present.has(column) || columns?.has(column));
+    // the type of the scale of the type, see prepareMapping
+    Object.entries(isObject(def.mapping) ? def.mapping : {}).filter(([, m]) => isObject(m) && m.type !== undefined
+        && isObject(m.scale) && m.scale.of === undefined && m.scale.type === undefined)
+        .forEach(([n, m]) => m.scale.type = scaleTypeOf(m, n, def.plot));
     return def;
 };
 

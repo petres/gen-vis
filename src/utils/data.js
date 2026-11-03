@@ -453,13 +453,17 @@ const formatType = m => [m.format, m.axis?.format, m.hover?.format, m.legend?.fo
  * (see inferType, of a column without values see formatType), of the rows
  * and the columns of the transforms, a column template of the globals, also
  * the ones of the mappings of patches which are not mappings of the
- * definition, the definition is changed.
+ * definition, the definition is changed. Only the columns which are `known`
+ * (all by default), e.g. of the check of the definition.
  */
-const inferTypes = (def, rows, columns = null) => {
+const inferTypes = (def, rows, columns = null, known = () => true) => {
     const infer = m => {
         if (!isObject(m) || m.type !== undefined || typeof m.column != 'string')
             return;
-        const value = columnValues(rows, columns, fillTemplate(m.column, def.globals ?? {}));
+        const column = fillTemplate(m.column, def.globals ?? {});
+        if (!known(column))
+            return;
+        const value = columnValues(rows, columns, column);
         m.type = inferType(value, rows.length) ?? formatType(m);
     };
     Object.values(def.mapping ?? {}).forEach(infer);

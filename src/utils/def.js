@@ -3,7 +3,7 @@ export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable,
 import merge from 'deepmerge';
 import { ownColors, schemeColors } from '@/utils/d3';
 import { comparison, isObject, sameValue } from '@/utils/values';
-import { scaleTypeOf } from '@/utils/normalize';
+import { defaultScaleType } from '@/utils/normalize';
 
 // arrays whose entries all have an `id`, e.g. the form elements and their
 // values, are merged by it, entries with a new id are appended, all other
@@ -136,9 +136,9 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = []) 
     }
 
     // the scale of another mapping (`of`) has no parts of its own, the type
-    // of the scale follows from the one of the mapping, see scaleTypeOf
+    // of the scale follows from the one of the mapping, see defaultScaleType
     if (m.scale && m.scale.of === undefined) {
-        m.scale.type ??= scaleTypeOf(m, name, plots) ?? 'linear';
+        m.scale.type ??= defaultScaleType(m, name, plots);
         m.scale.domain ??= [null, null];
     }
 
