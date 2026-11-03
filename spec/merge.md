@@ -54,6 +54,18 @@ definition `def` of the url `url`, `files` are the definitions of the urls,
 - The `parent` of the result is the one of the definition (it has no
   meaning anymore).
 - A parent which is its own ancestor is an error (`Cyclic parent definition '<url>'`).
+- The version of the definition language is the `$schema` of a part: every
+  part with one is a definition of gen-vis 4, the merged definition of a url
+  (a file) has one (of itself or of a parent), a definition without a url
+  (inline) may have none. Otherwise it is an error (`'<url>' is no definition
+  of gen-vis 4: its $schema is missing`, `... is the one of gen-vis 3`, `...
+  names no major version of gen-vis`, `... is none of gen-vis`; `the inline
+  definition` instead of the url). A `$schema` of gen-vis 4 is a url or a
+  path ending in `@preschen/gen-vis@<version>/schema.json` of the major
+  version 4 (`@4`, `@4.1`, `@4.0.2`, `@4.0.0-beta.1`), e.g.
+  `https://unpkg.com/@preschen/gen-vis@4/schema.json` (the `$id` of
+  `schema.json`) or the one of jsdelivr, or the schema of the installed
+  package, a path ending in `node_modules/@preschen/gen-vis/schema.json`.
 
 ## Patches
 

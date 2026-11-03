@@ -501,6 +501,7 @@ describe('transforms', () => {
         mkdirSync(`${root}/tests/tmp-lookup`, { recursive: true });
         writeFileSync(`${root}/tests/tmp-lookup/names.csv`, 'code,de,en\nWien,Wien,Vienna\nTirol,Tirol,Tyrol\n');
         writeFileSync(`${root}/tests/tmp-lookup/def.json`, JSON.stringify({
+            $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json',
             ...lineDef(),
             globals: { lang: 'de' },
             formElements: [{ id: 'lang', ref: 'lang', type: 'hidden', values: [{ id: 'de', value: 'de' }, { id: 'en', value: 'en' }] }],

@@ -13,6 +13,7 @@ import { isObject } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
 import { normalize, scaleTypeOf } from "@/utils/normalize";
 import { inferType } from "@/utils/data";
+import { versionError } from "@/utils/version";
 // without its descriptions, see checkSchema of vite.config.js
 import schema from "../../schema.json?check";
 
@@ -845,7 +846,9 @@ const prefixedProps = def => [].concat(def?.plot ?? []).flatMap((p, i) => Object
     .map(([k, part, name]) => `plot[${i}].props.${k}: unknown prop, a prop of the ${part == 'highlight' ? 'highlight' : 'other elements'} is one of '${part}', e.g. { "${part}": { "${name}": … } }`));
 
 /**
- * Returns warnings for common mistakes in a (merged) definition, e.g. unknown
+ * Returns warnings for common mistakes in a (merged) definition, e.g. a
+ * `$schema` of another version than gen-vis 4 (the load of a file needs one,
+ * see resolveParents of utils/load.js, an object may have none), unknown
  * plot types, keys which are not in the schema or props which are not
  * evaluated. The parts are checked in the internal form of
  * the definition (see utils/normalize.js), the paths are the ones of the
@@ -859,7 +862,13 @@ const prefixedProps = def => [].concat(def?.plot ?? []).flatMap((p, i) => Object
  */
 const validateDef = (def, rows = null) => {
     const internal = withTypes(normalize(def, { plotTypes: withoutDefaults() }), rows);
-    const warnings = [...checkDef(def, internal, rows, true, defaultProps(def, internal)), ...prefixedProps(def)];
+    // a $schema of another version, a definition object may have none, see utils/version.js
+    const version = versionError(def?.$schema);
+    const warnings = [
+        ...(version ? [`$schema: no definition of gen-vis 4, ${version}`] : []),
+        ...checkDef(def, internal, rows, true, defaultProps(def, internal)),
+        ...prefixedProps(def),
+    ];
     const known = new Set(warnings);
     // the patches are checked by the schema as parts of the definition
     const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));

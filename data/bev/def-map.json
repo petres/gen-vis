@@ -1,4 +1,5 @@
 {
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
     "data": "data.csv",
     "options": {
         "coord": "geo",

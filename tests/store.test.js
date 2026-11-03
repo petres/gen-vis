@@ -18,7 +18,11 @@ afterEach(() => {
     vi.restoreAllMocks();
 });
 
+// the version of the definition language, see utils/version.js
+const schema = 'https://unpkg.com/@preschen/gen-vis@4/schema.json';
+
 const def = {
+    $schema: schema,
     data: 'data.csv',
     options: { width: 500, height: 300 },
     mapping: {
@@ -50,7 +54,7 @@ describe('resolveParents', () => {
         };
         const loaded = [];
         const merged = await resolveParents(
-            { parent: '../shared/base.json', options: { width: 3 }, plot: [{ type: 'b' }] },
+            { $schema: schema, parent: '../shared/base.json', options: { width: 3 }, plot: [{ type: 'b' }] },
             'http://h/data/bev/def.json',
             url => { loaded.push(url); return files[url]; },
         );
@@ -68,7 +72,7 @@ describe('resolveParents', () => {
         };
         const loaded = [];
         const merged = await resolveParents(
-            { parent: ['../lines.json', '../facets.json'], options: { title: 'def' } },
+            { $schema: schema, parent: ['../lines.json', '../facets.json'], options: { title: 'def' } },
             'http://h/data/bev/def.json',
             url => { loaded.push(url); return files[url]; },
         );
@@ -86,6 +90,34 @@ describe('resolveParents', () => {
         const files = { 'http://h/b.json': '{"parent": ["c.json"]}', 'http://h/c.json': '{"parent": "b.json"}' };
         await expect(resolveParents({ parent: ['x.json', 'b.json'] }, 'http://h/a.json', url => files[url] ?? '{}'))
             .rejects.toThrow("Cyclic parent definition 'http://h/b.json'");
+    });
+
+    test('a file of a definition declares gen-vis 4 by its $schema, in itself or in a parent, an inline one may omit it', async () => {
+        const load = files => url => files[url];
+        const of = s => JSON.stringify({ $schema: s, options: {} });
+        // the major version of unpkg or jsdelivr, a full one or the schema of the installed package
+        for (const s of [schema, 'https://unpkg.com/@preschen/gen-vis@4.1.0/schema.json', 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4.0.0-beta.1/schema.json',
+            '../../node_modules/@preschen/gen-vis/schema.json'])
+            expect((await resolveParents({ $schema: s }, 'http://h/a.json')).$schema).toBe(s);
+        // in a parent
+        expect((await resolveParents({ parent: 'p.json' }, 'http://h/a.json', load({ 'http://h/p.json': of(schema) }))).$schema).toBe(schema);
+        // an inline definition without one, its parents need none
+        expect(await resolveParents({ parent: 'p.json', options: { title: 'a' } }, undefined, () => '{}')).toEqual({ parent: 'p.json', options: { title: 'a' } });
+        const error = what => `'http://h/a.json' is no definition of gen-vis 4: ${what}, e.g. "$schema": "${schema}", see the changelog of gen-vis 4.0.0 of the changes of the definitions`;
+        await expect(resolveParents({ options: {} }, 'http://h/a.json')).rejects.toThrow(error('its $schema is missing'));
+        await expect(resolveParents({ $schema: 'https://unpkg.com/@preschen/gen-vis@3/schema.json' }, 'http://h/a.json')).rejects.toThrow(error('its $schema is the one of gen-vis 3'));
+        await expect(resolveParents({ $schema: 'https://unpkg.com/@preschen/gen-vis/schema.json' }, 'http://h/a.json'))
+            .rejects.toThrow(error('its $schema "https://unpkg.com/@preschen/gen-vis/schema.json" names no major version of gen-vis'));
+        await expect(resolveParents({ $schema: 'https://vega.github.io/schema/vega-lite/v5.json' }, 'http://h/a.json'))
+            .rejects.toThrow(error('its $schema "https://vega.github.io/schema/vega-lite/v5.json" is none of gen-vis'));
+        // every part with one, also a parent of a file with the one of 4 and of an inline definition
+        await expect(resolveParents({ $schema: schema, parent: 'p.json' }, 'http://h/a.json', load({ 'http://h/p.json': of('https://unpkg.com/@preschen/gen-vis@3/schema.json') })))
+            .rejects.toThrow("'http://h/p.json' is no definition of gen-vis 4: its $schema is the one of gen-vis 3");
+        await expect(resolveParents({ $schema: 'https://unpkg.com/@preschen/gen-vis@3.1.0/schema.json' }, undefined))
+            .rejects.toThrow('the inline definition is no definition of gen-vis 4: its $schema is the one of gen-vis 3');
+        // the load of a file
+        serve({ 'http://h/data/def.json': JSON.stringify({ ...def, $schema: undefined }), 'http://h/data/data.csv': csv });
+        await expect(createStore().init({ defUrl: 'http://h/data/def.json' })).rejects.toThrow("'http://h/data/def.json' is no definition of gen-vis 4: its $schema is missing");
     });
 
     test('invalid JSON', async () => {

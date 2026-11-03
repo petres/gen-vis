@@ -11,6 +11,7 @@ import { loadColors } from "@/utils/d3";
 import { lazy } from "@/utils/lazy";
 import { isObject } from "@/utils/values";
 import { normalize } from "@/utils/normalize";
+import { versionError } from "@/utils/version";
 import { plotTypes } from "@/plots";
 
 // the load of a visualisation: its definition with its parents, the parts
@@ -74,15 +75,26 @@ const parseDef = (text, source, what = 'definition') => {
     }
 };
 
+// a definition of another version than gen-vis 4 (see utils/version.js),
+// `source` is its url or the inline definition
+const checkVersion = (def, source, required = false) => {
+    const error = versionError(def?.$schema, required);
+    if (error)
+        throw new Error(`${source} is no definition of gen-vis 4: ${error}`);
+};
+
 // merges def with its parents, a parent url is relative to the def referencing
 // it. A list of parents (mixins) is merged in its order, later ones override
 // earlier ones. A parent shared by several mixins is merged once, before the
 // first one using it, so it does not override the mixins in between. The
-// parents of a def are requested at once, but merged in their order.
+// parents of a def are requested at once, but merged in their order. Every
+// part with a `$schema` is one of gen-vis 4, a definition of a file (of its
+// `url`, undefined of an inline one) has one, in itself or in a parent.
 const resolveParents = async (def, url, load = fetchText) => {
     const parts = [];
     const included = new Set();
     const add = async (def, url, ancestors) => {
+        checkVersion(def, url === undefined ? 'the inline definition' : `'${url}'`);
         const parents = [def.parent ?? []].flat().map(p => resolveUrl(p, url));
         const texts = new Map(parents.filter(u => !included.has(u)).map(u => [u, Promise.resolve().then(() => load(u))]));
         // errors are thrown in the order of the parents, not as unhandled ones
@@ -98,7 +110,10 @@ const resolveParents = async (def, url, load = fetchText) => {
         parts.push(def);
     };
     await add(def, url, []);
-    return mergeAll(parts);
+    const merged = mergeAll(parts);
+    if (url !== undefined)
+        checkVersion(merged, `'${url}'`, true);
+    return merged;
 };
 
 // the rows of data, errors name its url (`source`)

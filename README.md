@@ -545,6 +545,7 @@ from its parts or its values, a plot type of the coordinate system, e.g.
 
 ```json
 {
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
     "data": "data.csv",
     "mapping": {
         "x": "Jahr",
@@ -604,8 +605,10 @@ used by all of them or a csv of two charts is loaded once, later ones load
 again, e.g. for updated data. The parents of a definition and its data are
 requested at once.
 
-The package contains a JSON Schema of the definitions, `schema.json`. With
-`"$schema"` in a definition, editors like VS Code complete and check it:
+The package contains a JSON Schema of the definitions, `schema.json`. Its
+`$id` as the `"$schema"` of a definition declares the version of the
+definition language, gen-vis 4, and editors like VS Code complete and check
+the definition with it:
 
 ```json
 {
@@ -614,8 +617,27 @@ The package contains a JSON Schema of the definitions, `schema.json`. With
 }
 ```
 
-or with a local path, e.g. `"./node_modules/@preschen/gen-vis/schema.json"`.
-The schema also allows parts of definitions, e.g. definitions with a `parent`.
+- A definition file (`defFile`, also `resolveParents` of a url) needs a
+  `$schema` of gen-vis 4, in itself or in one of its parents, otherwise the
+  load fails, e.g. "'…/def.json' is no definition of gen-vis 4: its $schema
+  is missing" (or "is the one of gen-vis 3"); every part with a `$schema`
+  (a parent too) needs the one of gen-vis 4.
+- A definition object or text (`def`) may have none, but one it has is the
+  one of gen-vis 4; `validateDef` warns of another one.
+- A `$schema` of gen-vis 4 is a url or a path which ends in
+  `@preschen/gen-vis@<version>/schema.json` of the major version 4: `@4`,
+  `@4.1`, `@4.0.2`, `@4.0.0-beta.1`, of unpkg or jsdelivr
+  (`https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/schema.json`), or the
+  schema of the installed package, a path which ends in
+  `node_modules/@preschen/gen-vis/schema.json`, e.g.
+  `"./node_modules/@preschen/gen-vis/schema.json"`. A schema of gen-vis
+  without a version (the newest one of unpkg) is none of 4, the one of
+  another major version neither, nor any other schema.
+
+The schema also allows parts of definitions, e.g. definitions with a
+`parent`. The definitions of `data/` and of the page have the `$schema` in
+every file, also in the parents and mixins, so the editors check each of
+them (a definition file needs it only in itself or in a parent).
 
 ### Data
 

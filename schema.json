@@ -6,7 +6,7 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
-        "$schema": { "type": "string" },
+        "$schema": { "type": "string", "description": "The version of the definition language, the schema of gen-vis 4 (https://unpkg.com/@preschen/gen-vis@4/schema.json, also of jsdelivr, a full version, e.g. @4.1.0, or node_modules/@preschen/gen-vis/schema.json of the installed package), a definition file needs it, in itself or in a parent." },
         "parent": {
             "oneOf": [
                 { "type": "string" },

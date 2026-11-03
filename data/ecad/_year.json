@@ -1,4 +1,5 @@
 {
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
     "options": {
         "height": 150,
         "margins": { "top": 26, "right": 36, "bottom": 24, "left": 62 },

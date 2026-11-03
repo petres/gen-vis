@@ -86,6 +86,16 @@ describe('validateDef', () => {
         expect(validateDef(base())).toEqual([]);
     });
 
+    test('a $schema of gen-vis 4, an object may have none', () => {
+        expect(validateDef({ ...base(), $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json' })).toEqual([]);
+        expect(validateDef({ ...base(), $schema: 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4.2.1/schema.json' })).toEqual([]);
+        const hint = 'e.g. "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json", see the changelog of gen-vis 4.0.0 of the changes of the definitions';
+        expect(validateDef({ ...base(), $schema: 'https://unpkg.com/@preschen/gen-vis@3/schema.json' }))
+            .toEqual([`$schema: no definition of gen-vis 4, its $schema is the one of gen-vis 3, ${hint}`]);
+        expect(validateDef({ ...base(), $schema: 'http://json-schema.org/draft-07/schema#' }))
+            .toEqual([`$schema: no definition of gen-vis 4, its $schema "http://json-schema.org/draft-07/schema#" is none of gen-vis, ${hint}`]);
+    });
+
     test('the parts of the internal form are unknown: categories of a plot, props of a mapping, a text of the highlight and props of its prefixes', () => {
         const def = base();
         def.mapping.c = { column: 'land', props: { categories: { Wien: {} } } };

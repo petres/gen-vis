@@ -165,6 +165,9 @@ export type FormElementValues = {
  * A chart of gen-vis 4, see https://github.com/petres/gen-vis. A definition can be a part which is merged into its parent, so no entry is required.
  */
 export interface GenVisDefinition {
+    /**
+     * The version of the definition language, the schema of gen-vis 4 (https://unpkg.com/@preschen/gen-vis@4/schema.json, also of jsdelivr, a full version, e.g. @4.1.0, or node_modules/@preschen/gen-vis/schema.json of the installed package), a definition file needs it, in itself or in a parent.
+     */
     $schema?: string;
     /**
      * Url of the definition this one is deep merged into, relative to this definition, or a list of them (mixins) merged in their order, later ones override earlier ones. Arrays are replaced, not merged.

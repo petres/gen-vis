@@ -39,6 +39,18 @@ renderer (JS only)
   3.x; they compare the elements with their attributes sorted by name, the
   order of attributes does not change a drawing.
 
+- The version of a definition is its `$schema`, the `$id` of schema.json
+  (`https://unpkg.com/@preschen/gen-vis@4/schema.json`; `src/utils/version.js`,
+  rule and fixtures in `spec/merge.md`): `resolveParents` of a url (a file)
+  requires one of gen-vis 4 in the merge, every part with one has the one of
+  gen-vis 4, an inline definition may have none; validateDef warns of
+  another one. Accepted: a url or path ending in
+  `@preschen/gen-vis@4[.x.y…]/schema.json` (unpkg, jsdelivr, a full or a
+  prerelease version) or in `node_modules/@preschen/gen-vis/schema.json` (the
+  installed package); an unversioned url of unpkg is not (its major version
+  changes). All definition files of `data/` and `site/` have it, also the
+  parents, so editors validate every file.
+
 ## 2. Mappings: shorthand and inference
 
 ```json

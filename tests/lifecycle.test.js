@@ -13,6 +13,7 @@ vi.mock('modern-screenshot', () => ({
 useDom();
 
 const defOf = (title, extra = {}) => ({
+    $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json',
     data: 'd.csv',
     options: { width: 600, height: 300, title },
     mapping: {

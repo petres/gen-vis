@@ -39,7 +39,11 @@ definition of 3.x):
     `cartesian:line` a stroke, `svg:text` the fill of `@color`: the props
     which are the defaults are left out (best with the short name), a
     default the plot must not have is `null`, e.g. `"fill": null`;
-  - `validateDef` names the parts of 3.x which are left as unknown ones.
+  - `validateDef` names the parts of 3.x which are left as unknown ones;
+  - a definition file declares gen-vis 4: `"$schema":
+    "https://unpkg.com/@preschen/gen-vis@4/schema.json"` (in itself or in a
+    parent), the load of a file without it or with the one of gen-vis 3
+    fails, an inline definition may have none, see the readme (Definition).
 - Vue: the component `GenVis` and the plugin are the ones of
   `@preschen/gen-vis/vue` (`vue` is an optional peer dependency), `import
   GenVis from '@preschen/gen-vis/vue'` or `import { GenVis } from
@@ -94,7 +98,9 @@ The definition language, the breaking changes:
   `"d": {"x": "@x:scaled", "y": "@y:scaled"}` in the color of its category,
   a definition writes only the props which differ, `null` removes one; the
   full names (`cartesian:line`) are the same types with the same defaults.
-- The schema is the one of 4.0 (`@preschen/gen-vis@4/schema.json`).
+- The schema is the one of 4.0 (`@preschen/gen-vis@4/schema.json`), the
+  `$schema` of a definition is its version: a definition file needs the one
+  of gen-vis 4, a part with another one is an error.
 
 The definitions of `data/` and of the page are written in the shorter
 forms of 4.0: the short types without the props of their defaults,

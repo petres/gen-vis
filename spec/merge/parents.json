@@ -23,6 +23,7 @@
       }
     },
     "def": {
+      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
       "parent": "../shared/base.json",
       "options": {
         "width": 3
@@ -34,6 +35,7 @@
       ]
     },
     "result": {
+      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
       "options": {
         "width": 3,
         "title": "root",
@@ -82,6 +84,7 @@
       }
     },
     "def": {
+      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
       "parent": [
         "../lines.json",
         "../facets.json"
@@ -91,6 +94,7 @@
       }
     },
     "result": {
+      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
       "options": {
         "title": "def",
         "height": 2,
@@ -143,6 +147,7 @@
       }
     },
     "def": {
+      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
       "parent": [
         "a.json",
         "b.json"
@@ -157,6 +162,7 @@
       ]
     },
     "result": {
+      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
       "plot": [
         {
           "id": "l",
@@ -194,5 +200,73 @@
       "parent": "b.json"
     },
     "error": "Cyclic parent definition 'http://h/b.json'"
+  },
+  {
+    "name": "a definition of a url declares gen-vis 4 by its $schema, it may be the one of a parent",
+    "url": "http://h/def.json",
+    "files": {
+      "http://h/base.json": {
+        "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+        "options": {
+          "width": 1
+        }
+      }
+    },
+    "def": {
+      "parent": "base.json",
+      "options": {
+        "height": 2
+      }
+    },
+    "result": {
+      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+      "options": {
+        "width": 1,
+        "height": 2
+      },
+      "parent": "base.json"
+    }
+  },
+  {
+    "name": "a definition without a url (inline) may have no $schema",
+    "files": {},
+    "def": {
+      "options": {
+        "height": 2
+      }
+    },
+    "result": {
+      "options": {
+        "height": 2
+      }
+    }
+  },
+  {
+    "name": "a definition of a url without a $schema is an error",
+    "url": "http://h/def.json",
+    "files": {},
+    "def": {
+      "options": {
+        "height": 2
+      }
+    },
+    "error": "'http://h/def.json' is no definition of gen-vis 4: its $schema is missing"
+  },
+  {
+    "name": "a part with the $schema of another version of gen-vis is an error, also a parent",
+    "url": "http://h/def.json",
+    "files": {
+      "http://h/base.json": {
+        "$schema": "https://unpkg.com/@preschen/gen-vis@3/schema.json",
+        "options": {
+          "width": 1
+        }
+      }
+    },
+    "def": {
+      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+      "parent": "base.json"
+    },
+    "error": "'http://h/base.json' is no definition of gen-vis 4: its $schema is the one of gen-vis 3"
   }
 ]

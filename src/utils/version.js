@@ -1,0 +1,43 @@
+export { schemaUrl, schemaMajor, versionError };
+
+// the version of the definition language of a definition is its `$schema`,
+// the url of the schema of gen-vis which editors validate it with, the
+// `$id` of schema.json
+const schemaUrl = 'https://unpkg.com/@preschen/gen-vis@4/schema.json';
+
+/**
+ * The major version of gen-vis of a `$schema`: a url or a path which ends in
+ * `@preschen/gen-vis@<version>/schema.json`, e.g. of unpkg or jsdelivr, the
+ * version a major one or a full one (`@4`, `@4.1`, `@4.0.2`,
+ * `@4.0.0-beta.1`), or the schema.json of the installed package
+ * (`node_modules/@preschen/gen-vis/schema.json`, also a relative path), the
+ * one of this version. Undefined of a schema of gen-vis without a version
+ * (the newest one, e.g. https://unpkg.com/@preschen/gen-vis/schema.json),
+ * null of any other value, e.g. the schema of another library.
+ */
+const schemaMajor = schema => {
+    const m = typeof schema == 'string' ? /@preschen\/gen-vis(?:@(\d+)(?:[.-][\w.+-]*)?)?\/schema\.json$/.exec(schema) : null;
+    if (!m)
+        return null;
+    if (m[1] !== undefined)
+        return Number(m[1]);
+    return /(^|\/)node_modules\/@preschen\/gen-vis\/schema\.json$/.test(schema) ? 4 : undefined;
+};
+
+/**
+ * Why a definition of its `$schema` is none of gen-vis 4, e.g. "its $schema
+ * is the one of gen-vis 3", null if it is one. A definition file needs one
+ * (`required`), an inline definition may have none.
+ */
+const versionError = (schema, required = false) => {
+    if (schema === undefined && !required)
+        return null;
+    const major = schemaMajor(schema);
+    if (major === 4)
+        return null;
+    const reason = schema === undefined ? 'its $schema is missing'
+        : major === undefined ? `its $schema ${JSON.stringify(schema)} names no major version of gen-vis`
+            : major === null ? `its $schema ${JSON.stringify(schema)} is none of gen-vis`
+                : `its $schema is the one of gen-vis ${major}`;
+    return `${reason}, e.g. "$schema": "${schemaUrl}", see the changelog of gen-vis 4.0.0 of the changes of the definitions`;
+};
