@@ -20,6 +20,7 @@ it.
 
 Package and API:
 
+- Node 22 or newer (`engines`), as the CLI uses node's built-in WebSocket.
 - Vue is optional (`vue` is an optional peer dependency). The component and
   the plugin moved to `@preschen/gen-vis/vue`: `import GenVis from
   '@preschen/gen-vis/vue'` is the plugin, `import { GenVis } from
