@@ -3,6 +3,16 @@
 The changes of the versions, the newest first, the ones on npm without
 0.7.0 and 2.0.0-alpha.1. The details are in the commits.
 
+## 4.0.0 (unreleased)
+
+Breaking: the coordinate systems of `registerCoord` get DOM elements
+instead of d3 selections, the `parent` of `hover.area` (it returns the
+element it appends), the `line` of `hover.marker` and `ctx.inner`, and
+the plot types of `registerPlotType` get `ctx.inner` as an element (the
+`g` of the plots and axes), e.g. `ctx.inner.getAttribute('transform')`
+instead of `ctx.inner.node().getAttribute('transform')`. The package
+draws without d3-selection and d3-transition (`src/utils/dom.js`).
+
 ## 3.1.0
 
 The standalone script in more sizes: `dist-lib/gen-vis.core.js` (less than

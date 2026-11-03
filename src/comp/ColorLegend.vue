@@ -18,9 +18,21 @@
 import * as d3 from "@/utils/d3";
 import { formatOf } from "@/utils/def";
 import { evaluate } from "@/utils/props";
+import { create, setAttr } from "@/utils/dom";
 
 // the gradients of the legends of a page have their own ids
 let count = 0;
+
+// a new svg element `tag` at the end of `parent`, with the attributes `attrs`
+// and the text `text`
+const append = (parent, tag, attrs = {}, text) => {
+    const node = parent.appendChild(create(tag));
+    for (const k in attrs)
+        setAttr(node, k, attrs[k]);
+    if (text !== undefined)
+        node.textContent = text ?? '';
+    return node;
+};
 
 // a scale of colors whose positions are linear in the values, e.g. not a sqrt,
 // log or a diverging one with a middle which is not in the center
@@ -85,38 +97,37 @@ export default {
         render() {
             const m = this.store.mapping(this.legend);
             const s = this.scale;
-            const svg = d3.select(this.$refs.svg);
-            svg.selectAll("*").remove();
+            const svg = this.$refs.svg;
+            svg.replaceChildren();
             const width = this.size;
             const { vertical } = this;
             // the labels after the scale (below it, right of a vertical one) or before it
             const before = this.options.labels == 'before';
             const along = vertical ? (vertical && before ? 48 : 2) : this.padding;
-            const g = svg.append("g").attr("transform", vertical ? `translate(${along}, ${this.padding})` : `translate(${this.padding}, ${before ? 20 : 2})`);
+            const g = append(svg, "g", { transform: vertical ? `translate(${along}, ${this.padding})` : `translate(${this.padding}, ${before ? 20 : 2})` });
             // a position along the scale, of a vertical one from the bottom
             const at = x => vertical ? width - x : x;
             // a box from `x` of the length `w` in the color `fill`
-            const box = (x, w, fill) => g.append("rect")
-                .attr(vertical ? "y" : "x", vertical ? at(x + w) : x).attr(vertical ? "x" : "y", 0)
-                .attr(vertical ? "height" : "width", w).attr(vertical ? "width" : "height", 10).attr("fill", fill);
+            const box = (x, w, fill) => append(g, "rect", {
+                [vertical ? "y" : "x"]: vertical ? at(x + w) : x, [vertical ? "x" : "y"]: 0,
+                [vertical ? "height" : "width"]: w, [vertical ? "width" : "height"]: 10, fill,
+            });
             const label = (x, v, format) => {
                 const p = at(x);
                 const [t0, t1] = before ? [-4, 0] : [10, 14];
                 if (vertical) {
-                    g.append("line").attr("y1", p).attr("y2", p).attr("x1", t0).attr("x2", t1).attr("stroke", "currentColor");
-                    g.append("text").attr("y", p).attr("x", before ? -6 : 16).attr("text-anchor", before ? "end" : "start")
-                        .attr("dominant-baseline", "middle").attr("fill", "currentColor").text(format(v));
+                    append(g, "line", { y1: p, y2: p, x1: t0, x2: t1, stroke: "currentColor" });
+                    append(g, "text", { y: p, x: before ? -6 : 16, "text-anchor": before ? "end" : "start",
+                        "dominant-baseline": "middle", fill: "currentColor" }, format(v));
                 } else {
-                    g.append("line").attr("x1", p).attr("x2", p).attr("y1", t0).attr("y2", t1).attr("stroke", "currentColor");
-                    g.append("text").attr("x", p).attr("y", before ? -8 : 26).attr("text-anchor", "middle").attr("fill", "currentColor").text(format(v));
+                    append(g, "line", { x1: p, x2: p, y1: t0, y2: t1, stroke: "currentColor" });
+                    append(g, "text", { x: p, y: before ? -8 : 26, "text-anchor": "middle", fill: "currentColor" }, format(v));
                 }
             };
             // a gradient of `color(t)` of t from 0 to 1 along the scale
             const gradient = color => {
-                const defs = svg.append("defs").append("linearGradient").attr("id", this.uid);
-                if (vertical)
-                    defs.attr("x1", 0).attr("x2", 0).attr("y1", 1).attr("y2", 0);
-                d3.range(11).forEach(i => defs.append("stop").attr("offset", `${i*10}%`).attr("stop-color", color(i/10)));
+                const defs = append(append(svg, "defs"), "linearGradient", { id: this.uid, ...(vertical ? { x1: 0, x2: 0, y1: 1, y2: 0 } : {}) });
+                d3.range(11).forEach(i => append(defs, "stop", { offset: `${i*10}%`, "stop-color": color(i/10) }));
                 box(0, width, `url(#${this.uid})`);
             };
             // the format of the legend or the hover, by default the one of the ticks of an axis
@@ -132,7 +143,7 @@ export default {
                 const w = width/Math.max(categories.length, 1);
                 categories.forEach((c, i) => box(i*w, w, s(c)));
                 categories.forEach((c, i) => label((i + 0.5)*w, c, String));
-                g.selectAll("line").remove();
+                g.querySelectorAll("line").forEach(line => line.remove());
             } else if (s.invertExtent) {
                 // a box per class, the limits between them
                 const colors = s.range();

@@ -8,6 +8,7 @@ import plotTypes from "@/plots/polar";
 import { bandCenter } from "@/utils/scales";
 import { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
+import { rect, placeLine } from "@/coords/hover";
 import { childrenOf, directOf, elementOf } from "@/utils/draw";
 
 const tau = 2*Math.PI;
@@ -301,14 +302,13 @@ export default {
     axes,
     annotate,
     // the labels of the radial axes are in the plot area, they are above the plots
-    raise: ctx => ctx.inner.selectAll(".vis-axis-radial").raise(),
+    raise: ctx => ctx.inner.querySelectorAll(".vis-axis-radial").forEach(node => {
+        if (node.nextSibling)
+            node.parentNode.appendChild(node);
+    }),
     hover: {
         // the whole facet, the angle is also taken outside of the circle
-        area: (ctx, parent) => parent.append("rect")
-            .attr("x", -ctx.innerWidth/2)
-            .attr("y", -ctx.innerHeight/2)
-            .attr("width", ctx.innerWidth)
-            .attr("height", ctx.innerHeight),
+        area: (ctx, parent) => parent.appendChild(rect(ctx.innerWidth, ctx.innerHeight, -ctx.innerWidth/2, -ctx.innerHeight/2)),
 
         // the values of stacked angles without the radius, e.g. of a pie
         values: true,
@@ -353,7 +353,7 @@ export default {
         // towards the center, e.g. over the hole of a donut
         marker(ctx, key, names, line, nearest) {
             if (flipped(ctx, names)) {
-                line.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null);
+                placeLine(line, null);
                 if (!nearest)
                     return { x: 0, y: 0, side: "right" };
                 const { a0, a1, inner, outer } = sliceOf(ctx, nearest, names);
@@ -364,7 +364,10 @@ export default {
             const [r0, r1] = radiusRange(ctx);
             const [x1, y1] = pointRadial(a, r0);
             const [x2, y2] = pointRadial(a, r1);
-            line.attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2);
+            line.setAttribute("x1", x1);
+            line.setAttribute("y1", y1);
+            line.setAttribute("x2", x2);
+            line.setAttribute("y2", y2);
             return { x: 0, y: 0, side: Math.sin(a) >= 0 ? "left" : "right" };
         },
     },

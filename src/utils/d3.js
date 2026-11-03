@@ -12,7 +12,6 @@ export { bisectCenter, bisectLeft, extent, greatest, group, least, max, mean, mi
 export { csvFormat, csvParse, tsvParse } from 'd3-dsv';
 export { formatLocale, precisionFixed } from 'd3-format';
 export { scaleLinear } from 'd3-scale';
-export { pointer, select } from 'd3-selection';
 export {
     area, line,
     curveBasis, curveBasisClosed, curveCatmullRom, curveCatmullRomClosed, curveLinear, curveLinearClosed,
