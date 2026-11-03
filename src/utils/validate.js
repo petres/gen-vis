@@ -429,16 +429,16 @@ const checkDates = ({ rows, warn }, n, m, path) => {
 };
 
 // the conditions of the rows of mappings, see rowFilter of utils/data.js:
-// values, lists, null, { "not": ... } and { "range": [from, to] }, props
-// of the names `known`
+// values, lists, null, { "not": ... }, { "range": [from, to] } and
+// expressions of the names `known`, e.g. { "var": "lo" }, other objects are
+// none, e.g. { "prop": ... } of 3.x
 const checkCondition = (ctx, c, path, known) => {
-    if (isObject(c) && !('prop' in c)) {
-        if ('not' in c)
-            return checkCondition(ctx, c.not, `${path}.not`, known);
-        if (Array.isArray(c.range) && c.range.length == 2)
-            return c.range.forEach((v, j) => checkProp(v, `${path}.range[${j}]`, ctx.warn, known));
-        return ctx.warn(path, `expected a value, a list of values, null, { "not": ... } or { "range": [from, to] }`);
-    }
+    if (isObject(c) && Object.keys(c).length == 1 && 'not' in c)
+        return checkCondition(ctx, c.not, `${path}.not`, known);
+    if (isObject(c) && Array.isArray(c.range) && c.range.length == 2)
+        return c.range.forEach((v, j) => checkProp(v, `${path}.range[${j}]`, ctx.warn, known));
+    if (isObject(c) && !isOperator(c))
+        return ctx.warn(path, `expected a value, a list of values, null, { "not": ... }, { "range": [from, to] } or an expression`);
     checkProp(c, path, ctx.warn, known);
 };
 // null removes the conditions, e.g. of a parent

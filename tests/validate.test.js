@@ -3,6 +3,7 @@ import { loadColors, registerScheme } from '@/utils/d3';
 import { validateDef, curveNames } from '@/utils/validate';
 import { prepareDef } from '@/utils/def';
 import { normalize } from '@/utils/normalize';
+import { rowFilter } from '@/utils/data';
 import { plotTypes, registerPlotType } from '@/plots';
 import { coords, registerCoord } from '@/coords';
 import { resolveParents } from '@/utils/load';
@@ -30,6 +31,21 @@ test('the facets need a known mapping', () => {
     expect(validateDef({ ...base(), facets: { dim: 'c' } })).toEqual([]);
     expect(validateDef({ ...base(), facets: { dim: 'z' } })).toEqual([`facets.dim: unknown mapping 'z'`]);
     expect(validateDef({ ...base(), facets: { dim: ['c'] } })).toEqual([`facets.dim: expected the name of a mapping`]);
+});
+
+test('the conditions of a filter: values, not, range and expressions, not other objects', () => {
+    const def = { ...base(), globals: { lo: 2020 } };
+    def.filter = { x: { var: 'lo' }, y: { max: ['@lo', 1] }, c: { not: { range: ['@lo', null] } } };
+    expect(validateDef(def)).toEqual([]);
+    // the renderer reads them, see rowFilter
+    const tests = rowFilter(def.filter, normalize(def).mapping, def.globals);
+    expect(tests.map(t => t.key(2020))).toEqual([true, true, false]);
+    def.filter = { x: { prop: 'lo' }, y: { var: 'hi' }, c: { a: 1, b: 2 } };
+    expect(validateDef(def)).toEqual([
+        `filter.x: expected a value, a list of values, null, { "not": ... }, { "range": [from, to] } or an expression`,
+        "filter.y.var: unknown reference 'hi', expected one of 'lo', 'totalWidth'",
+        `filter.c: expected a value, a list of values, null, { "not": ... }, { "range": [from, to] } or an expression`,
+    ]);
 });
 
 test('the symbols of legends, the order and the ranks of categories', () => {
