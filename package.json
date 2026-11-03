@@ -24,13 +24,19 @@
     "./schema.json": "./schema.json",
     "./standalone": "./dist-lib/gen-vis.js",
     "./esm": "./dist-lib/esm/gen-vis.js",
+    "./export.html": "./dist-lib/export.html",
     "./package.json": "./package.json"
   },
+  "bin": {
+    "gen-vis": "bin/gen-vis.js"
+  },
   "files": [
+    "bin",
     "dist",
     "dist-lib/gen-vis.js",
     "dist-lib/gen-vis.core.js",
     "dist-lib/esm",
+    "dist-lib/export.html",
     "types",
     "schema.json",
     "CHANGELOG.md"
