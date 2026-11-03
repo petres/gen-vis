@@ -851,6 +851,9 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   column: numbers are numeric, dates (as below) a date, others categorical,
   e.g. years of a column are numeric, so a mapping of the categories of
   years is categorical by its `categories` or with `"type": "categorical"`.
+  The type of the values reads the values of the column (once per value,
+  until one is neither a number nor a date), a few milliseconds of data of
+  hundred thousands of rows, a mapping with a `type` does not read them.
   Numeric and date values which
   are missing, invalid or infinite are `null`: they are gaps in lines and
   areas, points and bars are not drawn, and they are not shown in the hover. Dates are

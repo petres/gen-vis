@@ -379,16 +379,37 @@ const addDataValues = (def, rows, columns = null) => {
 };
 
 // the type of the values of a column: numeric if all of them are numbers,
-// date if all of them are dates, otherwise (also without values) categorical
-const inferType = values => {
-    const present = values.filter(v => !missing(v));
-    if (present.length == 0)
-        return 'categorical';
-    if (present.every(v => toNumber(v) !== null))
-        return 'numeric';
-    if (present.every(v => toDate(v) !== null))
-        return 'date';
-    return 'categorical';
+// date if all of them are dates, otherwise (also without values) categorical.
+// One pass which ends at the first value which is neither, a value is read
+// once (e.g. the years of many rows), the values before the first one which
+// is no number are read as dates then, `value(i)` is the one of the row i of
+// `n` rows (or `values` an array)
+const inferType = (values, n = values.length) => {
+    const at = typeof values == 'function' ? values : i => values[i];
+    const seen = new Set();
+    let present = false;
+    let numeric = true;
+    for (let i = 0; i < n; i++) {
+        const v = at(i);
+        if (seen.has(v))
+            continue;
+        seen.add(v);
+        if (missing(v))
+            continue;
+        present = true;
+        if (numeric && toNumber(v) !== null)
+            continue;
+        if (numeric) {
+            numeric = false;
+            // the values before were numbers, they are dates as well if all of them are ones
+            for (const w of seen)
+                if (w !== v && !missing(w) && toDate(w) === null)
+                    return 'categorical';
+        }
+        if (toDate(v) === null)
+            return 'categorical';
+    }
+    return !present ? 'categorical' : (numeric ? 'numeric' : 'date');
 };
 
 /**
@@ -402,7 +423,7 @@ const inferTypes = (def, rows, columns = null) => {
         if (!isObject(m) || m.type !== undefined || typeof m.column != 'string')
             return;
         const value = columnValues(rows, columns, fillTemplate(m.column, def.globals ?? {}));
-        m.type = inferType(rows.map((r, i) => value(i)));
+        m.type = inferType(value, rows.length);
     };
     Object.values(def.mapping ?? {}).forEach(infer);
     variants(def).slice(1).forEach(patch => Object.entries(isObject(patch.mapping) ? patch.mapping : {})
