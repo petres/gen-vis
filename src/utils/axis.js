@@ -162,8 +162,6 @@ const ticks = (ga, moving, orient, scale, { values, format, tickSizeInner, tickS
  * `height`).
  */
 const drawAxis = (ga, { name, position, scale, values, format, labels, padding, rotate, domain, marks, width, height }) => {
-    if (typeof ga.node == 'function')
-        ga = ga.node();
     setAttr(ga, "class", `vis-axis vis-axis-${position}`);
     setAttr(ga, "data-mapping", name);
     // the animations of the draw before stop where they are, the ticks
