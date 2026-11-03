@@ -1,0 +1,22 @@
+<!doctype html>
+<!-- the export page of gen-vis, see README "Static export": window.genVisExport(options) -->
+<html>
+<head>
+<meta charset="utf-8">
+<title>gen-vis export</title>
+<style>
+/* the styles of gen-vis are in the layer gen-vis, these defaults come after
+   it, the stylesheets of the options (not in a layer) override both */
+@layer gen-vis, gen-vis-export;
+@layer gen-vis-export {
+    html, body { margin: 0; padding: 0; background: transparent; }
+    /* Century Gothic is the font of gen-vis, URW Gothic a free one of the
+       same design, e.g. of Linux (Debian: fonts-urw-base35) */
+    .vis { --gen-vis-font-family: "Century Gothic", "URW Gothic", sans-serif; }
+}
+@page { margin: 0; }
+</style>
+<script type="module" src="esm/export.js"></script>
+</head>
+<body></body>
+</html>

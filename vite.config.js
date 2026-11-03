@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { fileURLToPath } from 'node:url';
-import { readFileSync } from 'node:fs';
+import { readFileSync, copyFileSync } from 'node:fs';
 import pkg from './package.json' with { type: 'json' };
 
 // the schema of the check of the definitions (`schema.json?check`, see
@@ -83,6 +83,16 @@ const unversioned = () => ({
     },
 });
 
+// the export page next to the module of the standalone script
+// (dist-lib/export.html, it loads esm/export.js), see README "Static export"
+const exportPage = () => ({
+    name: 'export-page',
+    apply: 'build',
+    writeBundle(options) {
+        copyFileSync(fileURLToPath(new URL('./src/export.html', import.meta.url)), `${options.dir}/../export.html`);
+    },
+});
+
 // the builds of the standalone script (`npm run lib`), see the readme: the
 // single file (lib), the module with its parts next to it (module) and the
 // classic script which loads the module (core), none of them has Vue, the
@@ -92,7 +102,7 @@ export default defineConfig(({ mode }) => {
     const single = mode == 'lib';
     const module = mode == 'module';
     return {
-        plugins: [vue(), checkSchema(), injectCss(), ...(single ? [unversioned()] : [])],
+        plugins: [vue(), checkSchema(), injectCss(), ...(single ? [unversioned()] : []), ...(module ? [exportPage()] : [])],
         resolve: {
             alias: [
                 // the single file has the parts which are loaded when a chart needs
@@ -114,10 +124,11 @@ export default defineConfig(({ mode }) => {
         build: module ? {
             // the standalone script as a module of a page, with d3, the parts
             // which are loaded when a chart needs them are files of their own
-            // next to it, e.g. the ones of maps, see the readme
+            // next to it, e.g. the ones of maps, see the readme, and the
+            // module of the export page (src/export.js)
             outDir: 'dist-lib/esm',
             lib: {
-                entry: { 'gen-vis': 'src/lib.js' },
+                entry: { 'gen-vis': 'src/lib.js', export: 'src/export.js' },
                 formats: ['es'],
                 fileName: (format, name) => `${name}.js`,
             },
