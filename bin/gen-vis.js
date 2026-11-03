@@ -5,6 +5,7 @@ import { parseArgs } from 'node:util';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { createExporter, formats } from './export.js';
+import { stopBrowsers } from './cdp.js';
 
 const usage = `Usage: gen-vis export <def.json> <out.svg|out.png|out.pdf>... [<def.json> <out>...]... [options]
 
@@ -87,12 +88,13 @@ const chartsOf = positionals => {
     return charts;
 };
 
-const number = (value, name) => {
+// a positive number of an option, 0 too if `zero`
+const number = (value, name, zero = false) => {
     if (value === undefined)
         return undefined;
-    const n = Number(value);
-    if (!(n > 0))
-        fail(`--${name} is a positive number, not ${value}`);
+    const n = value.trim() ? Number(value) : NaN;
+    if (!(zero ? n >= 0 : n > 0) || n == Infinity)
+        fail(`--${name} is a ${zero ? 'number of 0 or more' : 'positive number'}, not ${value}`);
     return n;
 };
 
@@ -127,11 +129,19 @@ const exportCommand = async args => {
         fontSize: o['font-size'], dpi: number(o.dpi, 'dpi'), scale: number(o.scale, 'scale'),
         globals: json(o.globals, 'globals'), state: json(o.state, 'state'), defaults: defaultsOf(o.defaults), data: o.data,
         background: o.background === undefined ? undefined : o.background == 'none' ? null : o.background,
-        schemes: schemesOf(o.scheme ?? []), unit: o.unit, padding: o.padding === undefined ? undefined : Number(o.padding),
+        schemes: schemesOf(o.scheme ?? []), unit: o.unit, padding: number(o.padding, 'padding', true),
         timeout: number(o.timeout, 'timeout'),
     }).filter(([, v]) => v !== undefined));
 
-    const note = text => process.stderr.write(`gen-vis: ${text}\n`);
+    // a signal ends the browser and removes its profile, the exit code is
+    // the one of the shells, 128 and the number of the signal
+    let stopping = false;
+    Object.entries({ SIGHUP: 129, SIGINT: 130, SIGTERM: 143 }).forEach(([signal, code]) => process.once(signal, async () => {
+        stopping = true;
+        await stopBrowsers();
+        process.exit(code);
+    }));
+    const note = text => stopping || process.stderr.write(`gen-vis: ${text}\n`);
     const sandbox = !(o['no-sandbox'] || ['1', 'true'].includes(process.env.GEN_VIS_NO_SANDBOX ?? ''));
     let exporter;
     try {

@@ -63,6 +63,7 @@ const colorList = (c, n = c?.length) => Array.isArray(c) && c.length > 0 && c.le
  * the list of n colors, the others empty (null), e.g. [null, null, null,
  * ["#a", "#b", "#c"], ["#a", "#b", "#c", "#d"]], see sizedColors. The
  * scheme `observable10` is also the one of the categories without colors.
+ * Returns the function which restores the scheme of the name before.
  */
 export const registerScheme = (name, colors) => {
     if (typeof name != 'string' || !name)
@@ -71,8 +72,15 @@ export const registerScheme = (name, colors) => {
     if (!colorList(colors) && !sized)
         throw new Error(`registerScheme: the colors of the scheme '${name}' are an array of CSS colors, e.g. ["#1F77B4", "#FF7F0E"], or of several sizes, an array whose entry n is the array of n colors (or null)`);
     const key = name.charAt(0).toLowerCase() + name.slice(1);
+    const [had, before, known] = [Object.hasOwn(ownSchemes, key), ownSchemes[key], Object.hasOwn(schemeNames, key)];
     ownSchemes[key] = Array.from(colors, c => Array.isArray(c) ? [...c] : c ?? undefined);
     schemeNames[key] = true;
+    // the function which restores the scheme before, e.g. of the export page
+    return () => {
+        had ? ownSchemes[key] = before : delete ownSchemes[key];
+        if (!known)
+            delete schemeNames[key];
+    };
 };
 
 // a scheme registered by the page, e.g. a definition of one needs no colors of d3

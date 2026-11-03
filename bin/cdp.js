@@ -48,13 +48,60 @@ export const findBrowser = given => {
     return found;
 };
 
+// the browsers of POSIX in process groups of their own, so their
+// processes (renderers, GPU, zygote) end with them, see stop
+const grouped = process.platform != 'win32';
+
+// a browser and all its processes killed, at once
+const kill = child => {
+    if (child.pid === undefined)
+        return;
+    try {
+        grouped ? process.kill(-child.pid, 'SIGKILL') : child.kill('SIGKILL');
+    } catch { /* ended already */ }
+};
+
+// the end of a process, at most `ms` later
+const ended = (child, ms) => child.exitCode !== null || child.signalCode !== null || child.pid === undefined ? Promise.resolve()
+    : Promise.race([new Promise(r => child.once('exit', r)), new Promise(r => setTimeout(r, ms).unref())]);
+
+// the browsers which run and their profiles, ended by stopBrowsers and at
+// the exit of the process
+const running = new Set();
+
+// a browser killed and its profile removed
+const stop = async b => {
+    running.delete(b);
+    if (b.child) {
+        kill(b.child);
+        await ended(b.child, 3000);
+    }
+    rmSync(b.profile, { recursive: true, force: true, maxRetries: 3 });
+};
+
+/**
+ * Kills the browsers of launch which still run and removes their
+ * profiles, e.g. of a signal (see bin/gen-vis.js).
+ */
+export const stopBrowsers = () => Promise.all([...running].map(stop));
+
+process.on('exit', () => running.forEach(b => {
+    if (b.child)
+        kill(b.child);
+    try {
+        rmSync(b.profile, { recursive: true, force: true });
+    } catch { /* a process of the browser writes it */ }
+}));
+
 // the browser started with its DevTools on a port of its own, resolves
-// with the url of its WebSocket, rejects with its output if it ends first
-const start = (executable, args, wait) => new Promise((resolve, reject) => {
-    const child = spawn(executable, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+// with the url of its WebSocket, rejects with its output if it ends first;
+// `started(child)` gets it at once, its temporary files are in the profile
+const start = (executable, args, profile, wait, started) => new Promise((resolve, reject) => {
+    const child = spawn(executable, args, { stdio: ['ignore', 'ignore', 'pipe'], detached: grouped, env: { ...process.env, TMPDIR: profile } });
+    started(child);
     let output = '';
     const timer = setTimeout(() => {
-        child.kill();
+        kill(child);
         reject(new Error(`the browser did not start within ${wait / 1000} s`));
     }, wait);
     child.stderr.setEncoding('utf8');
@@ -88,7 +135,20 @@ const start = (executable, args, wait) => new Promise((resolve, reject) => {
 export const launch = async (executable, { sandbox = true, wait = 30000, note = () => {} } = {}) => {
     if (typeof WebSocket != 'function')
         throw new Error(`the export needs node 22 or newer (its WebSocket), this is ${process.version}`);
-    const profile = mkdtempSync(path.join(tmpdir(), 'gen-vis-'));
+    const b = { child: null, profile: mkdtempSync(path.join(tmpdir(), 'gen-vis-')) };
+    running.add(b);
+    try {
+        return await connect(executable, b, sandbox, wait, note);
+    } catch (error) {
+        await stop(b);
+        throw error;
+    }
+};
+
+// the browser of `b` started (`b.child`) of its profile and connected
+const connect = async (executable, b, sandbox, wait, note) => {
+    const { profile } = b;
+    const started = child => b.child = child;
     const args = ['--headless', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run',
         '--no-default-browser-check', '--disable-gpu', '--hide-scrollbars', '--mute-audio', '--font-render-hinting=none',
         '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows',
@@ -96,12 +156,12 @@ export const launch = async (executable, { sandbox = true, wait = 30000, note = 
     const root = process.getuid?.() === 0;
     let browser;
     try {
-        browser = await start(executable, sandbox && !root ? args : ['--no-sandbox', ...args], wait);
+        browser = await start(executable, sandbox && !root ? args : ['--no-sandbox', ...args], profile, wait, started);
     } catch (error) {
         if (!sandbox || root || !/sandbox/i.test(error.output ?? ''))
             throw error;
         note('the browser has no sandbox here (e.g. in a container), it runs without one');
-        browser = await start(executable, ['--no-sandbox', ...args], wait);
+        browser = await start(executable, ['--no-sandbox', ...args], profile, wait, started);
     }
     const { child, url } = browser;
 
@@ -157,10 +217,8 @@ export const launch = async (executable, { sandbox = true, wait = 30000, note = 
             await Promise.race([send('Browser.close'), new Promise(r => setTimeout(r, 2000))]);
         } catch { /* closed already */ }
         ws.close();
-        if (child.exitCode === null)
-            await Promise.race([new Promise(r => child.once('exit', r)), new Promise(r => setTimeout(r, 3000))]);
-        child.kill();
-        rmSync(profile, { recursive: true, force: true, maxRetries: 3 });
+        await ended(child, 3000);
+        await stop(b);
     };
     return { send, on, once, close, executable };
 };

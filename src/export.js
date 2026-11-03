@@ -128,12 +128,17 @@ const dataOf = async ({ data, dataUrl }) => {
     return String.fromCharCode(...bytes.subarray(0, 4)) == 'PAR1' ? bytes : new TextDecoder().decode(bytes);
 };
 
-// the copy of the chart before, removed by the next one
+// the copy of the chart before, removed by the next one, and the restores
+// of the schemes of its options (registerScheme), so they are the ones of
+// that call only
 let removeBefore = null;
+let restoreSchemes = [];
 
 const clear = () => {
     removeBefore?.();
     removeBefore = null;
+    restoreSchemes.reverse().forEach(restore => restore());
+    restoreSchemes = [];
     document.querySelectorAll('.gen-vis-export').forEach(e => e.remove());
 };
 
@@ -157,6 +162,8 @@ const genVisExport = async (options = {}) => {
     checkOptions(options);
     const width = lengthOf(options.width ?? defaultWidth, 'width');
     const space = options.padding ?? padding;
+    if (typeof space != 'number' || !(space >= 0) || space == Infinity)
+        throw new Error(`genVisExport: padding is a number of pixels, 0 or more, not ${JSON.stringify(space) ?? String(space)}.`);
     const unit = options.unit ?? (width.unit == 'pt' ? 'px' : width.unit);
     if (!Object.hasOwn(units, unit))
         throw new Error(`genVisExport: unknown unit ${unit}, expected one of ${Object.keys(units).join(', ')}.`);
@@ -167,7 +174,7 @@ const genVisExport = async (options = {}) => {
     // schemes and defaults of functions of the merged definition, it is
     // resolved only for them, its files are loaded once (the cache of the load)
     const merged = [options.schemes, options.defaults].some(o => typeof o == 'function') ? await mergedOf(options) : null;
-    Object.entries(await ofMerged(options.schemes, 'schemes', merged) ?? {}).forEach(([name, colors]) => registerScheme(name, colors));
+    Object.entries(await ofMerged(options.schemes, 'schemes', merged) ?? {}).forEach(([name, colors]) => restoreSchemes.push(registerScheme(name, colors)));
     const defaults = await ofMerged(options.defaults, 'defaults', merged);
     await addStyles(options.css, options.fontSize);
     const data = await dataOf(options);
