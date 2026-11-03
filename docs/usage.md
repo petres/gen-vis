@@ -1,8 +1,8 @@
 # Usage
 
-The ways a page draws the charts of its definitions: the standalone script,
-the JavaScript API of the core and the Vue component, their props, events
-and slots, the images and the styles. The definitions themselves are in
+How a page draws charts from definitions: the standalone script, the
+core's JavaScript API and the Vue component, their props, events and slots,
+images and styles. The definitions themselves are in
 [definition](definition.md), the static export in [static export](export.md).
 
 ```sh
@@ -17,10 +17,9 @@ component](#vue-component)), `vue` is an optional peer dependency.
 ## Standalone script
 
 The standalone script includes d3 and the styles, for pages without a
-bundler, e.g. of a CDN. The module of the page (`dist-lib/esm/gen-vis.js`) is
-the one to use: it loads 68 kB (gzipped) at first and the parts which not
-every chart needs when a chart needs them, e.g. the ones of maps, from the
-files next to it:
+bundler, e.g. from a CDN. Use the module (`dist-lib/esm/gen-vis.js`): it
+loads 69 kB (gzipped) at first and fetches optional parts, e.g. for maps,
+from the files next to it when a chart needs them:
 
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
@@ -31,18 +30,18 @@ mountGenVisByClass('genVis');
 </script>
 ```
 
-A page which loads its scripts without modules loads the same module with
+A page without modules loads the same module through
 `dist-lib/gen-vis.core.js` (less than 1 kB), from the files next to it. Its
-functions are globals at once, they return promises (of the
-visualisations), so they can be called before the module is loaded;
-`GenVis.ready` is the module, e.g. for `registerPlotType`:
+globals exist at once and return promises (e.g. of the visualisations), so
+a page can call them before the module has loaded. `GenVis.ready` resolves
+to the module, e.g. for `perRow` in a `registerPlotType`:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.core.js"></script>
 <script>mountGenVisByClass('genVis').then(charts => ...)</script>
 ```
 
-The single file (`dist-lib/gen-vis.js`, 372 kB, 128 kB gzipped, 111 kB with
+The single file (`dist-lib/gen-vis.js`, 376 kB, 130 kB gzipped, 112 kB with
 brotli) has all parts in itself, without the check of the definitions
 (`check` and `debug` warn that it is missing), e.g. of a page which has to
 work with one file, its globals return the visualisations at once:
@@ -52,11 +51,18 @@ work with one file, its globals return the visualisations at once:
 <script>mountGenVisByClass('genVis')</script>
 ```
 
-None of them has Vue. A page with Vue 3 as a script (the global `Vue` of
-`vue.global.prod.js`, or `vue` of its import map) has the component of its
-Vue of the same files: `GenVis.vuePlugin(Vue)` is the plugin which registers
-`<GenVis>` (its `component` is the component), `GenVis.createVueComponent(Vue)`
-the component, the same as the one of the [Vue component](#vue-component):
+None of them contains Vue. A page that loads Vue 3 as a script (the global
+`Vue` from `vue.global.prod.js`, or `vue` in its import map) gets a
+component for its own Vue from the same files: `vuePlugin(Vue)` is the
+plugin which registers `<GenVis>` (its `component` is the component),
+`createVueComponent(Vue)` the component itself, the same as the [Vue
+component](#vue-component). The single file has them as `GenVis.vuePlugin`
+and `GenVis.createVueComponent`, the module as named exports. The core
+loader only forwards the functions that may return a promise
+(`createGenVis`, the mount functions and the `register…` functions); use
+`vuePlugin`, `createVueComponent`, `perRow` and `perGroup` from the loaded
+module, e.g. `(await GenVis.ready).vuePlugin(Vue)`. The single file and the
+module:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
@@ -70,15 +76,20 @@ import { vuePlugin } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist
 Vue.createApp(App).use(vuePlugin(Vue)).mount('#app');
 ```
 
-Of a bundler the module is `@preschen/gen-vis/esm`, the single file is
-`@preschen/gen-vis/standalone`, which only sets the globals.
+With a bundler the module is `@preschen/gen-vis/esm` and the single file
+`@preschen/gen-vis/standalone`, which only sets the globals. Neither has a
+`types` entry in `package.json`; the types are the ones of the main entry
+(`import type { GenVisInstance } from '@preschen/gen-vis'`).
 
 `npm run lib` builds them in `dist-lib/`, the single file also as
-`gen-vis-<version>.js`, e.g. for an upload to a server of its own, the one
-of a page which keeps its version (the module and the core load the files
-of `esm/` of the upload). `npm run upload` also writes the files compressed
-next to them (`.br`, `.gz`), for a server which sends them as they are, e.g.
-nginx with `brotli_static` and `gzip_static`, a CDN compresses them itself.
+`gen-vis-<version>.js`. `npm run upload` copies all of `dist-lib/` to your
+own server (`GEN_VIS_UPLOAD` in `.env`), so a page can pin the single file
+to a version by loading `gen-vis-<version>.js`. Only the single file has a
+versioned copy: the module and the core loader load the unversioned
+`esm/` files of the latest upload. The upload also writes compressed copies
+next to the files (`.br`, `.gz`) for servers which send them as they are,
+e.g. nginx with `brotli_static` and `gzip_static`; a CDN compresses them
+itself.
 
 `mountGenVisByClass(className)` mounts all elements with the class which are
 not mounted yet and returns their visualisations, `mountGenVisElement(element,
@@ -140,9 +151,8 @@ import type { Definition } from '@preschen/gen-vis';
 const def: Definition = { data: 'data.csv', mapping: { ... }, plot: { ... } };
 ```
 
-Parts which not every chart needs are loaded when a chart needs them, so a
-bundler of the application puts them into chunks of their own, the rest is
-~62 kB gzipped. The sizes are gzipped: the check of the
+Optional parts load on demand, so your bundler splits them into separate
+chunks; the rest is ~62 kB gzipped. The sizes are gzipped: the check of the
 definitions (~12 kB) with the first one, the colors of d3
 (`d3-scale-chromatic`, ~8 kB) for definitions which name a scheme or an
 interpolator, the parts of maps (`d3-geo`, `topojson-client`, ~13 kB) with
@@ -170,7 +180,7 @@ dependency), the component draws the visualisation of `createGenVis` in its
 element, with the same props, `v-model:state`, the events, the slots (Vue
 draws them, with the components and plugins of the application, they follow
 the data of the page they use) and the [methods](#png) of a ref. Its props
-are watched (`state`, `globals` and `highlight` deeply). `createVueComponent(Vue)`
+are watched (`state`, `globals`, `highlight` and `defaults` deeply). `createVueComponent(Vue)`
 and `vuePlugin(Vue)` of `@preschen/gen-vis/vue` are the component and the
 plugin of another Vue, the types are the ones of `@preschen/gen-vis/vue`.
 
@@ -476,7 +486,7 @@ and the lines of the axes, `tick` and `domain`, as the ones of d3:
 | axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`), `vis-axis-title`, `vis-grid` |
 | annotations | `vis-annotations` (the plot), `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or `vis-circle`, `vis-annotation-label`, `vis-annotation-labels` |
 | hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-hover-row` of a template, `vis-nearest`, the key of the category of every categorical mapping of a row as `data-` attribute, e.g. `data-type="load"` of the mapping `type` (`data-land-name` of `landName`), the cells of the values `vis-value`, the mapping of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`), `vis-hover-marker`, `vis-events` |
-| footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-copy`, `vis-csv` and `vis-download`) |
+| footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-copy`, `vis-csv`, `vis-download-svg` and `vis-download`) |
 
 Styles of the page which are in a cascade layer themselves only override the
 package if their layer is declared after it, e.g. `@layer gen-vis, page;`.

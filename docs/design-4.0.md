@@ -6,7 +6,7 @@ other languages can implement (Python, R), and the internals kept as they are:
 a 4.0 definition is *normalized* into the internal form the renderer already
 uses, so the renderer, the tests and the snapshots stay valid.
 
-This document is the design as it was implemented on the branch `def-4`;
+This document is the design as implemented in 4.0;
 "Deviations" at the end lists where it differs from the first draft and why.
 The rules themselves are in `spec/` (`README.md`, `expressions.md`,
 `merge.md`, `normalize.md`), with fixtures that `tests/spec.test.js` runs.
@@ -64,8 +64,9 @@ renderer (JS only)
 - A string is the column.
 - `type` is inferred when missing: first structurally (normalize: categories,
   a band/point/ordinal scale → categorical, time/utc → date, other scale
-  types → numeric, a mapping of `by` of a plot, of `facets.dim` or of
-  `scale.groups.by` → categorical), then from the values of the column when
+  types → numeric, a mapping of `facets.dim` or of `scale.groups.by` →
+  categorical; a plot's `by` does not make a mapping categorical, it groups
+  rows of any type), then from the values of the column when
   the rows are known (numbers → numeric, dates → date, else categorical;
   without values a time `format` → date, else categorical).
 - `scale.type` is inferred from the type: numeric → linear, date → time,

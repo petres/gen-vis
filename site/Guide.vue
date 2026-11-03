@@ -39,13 +39,13 @@
                 <p>
                     That has its price. A definition is longer than the one of a library which decides more for
                     you, there are a few kinds of plots which are combined rather than many chart types, it is
-                    SVG only, and a new major version changes definitions when a better way turns up (2.0 and 3.0
-                    did). There is one author, no company and no promise of support.
+                    SVG only, and a new major version changes definitions when a better way turns up (2.0, 3.0
+                    and 4.0 did). There is one author, no company and no promise of support.
                 </p>
                 <p>
                     If it fits your charts, use it. If it nearly fits, fork it: the code is about 8 000 lines of
                     JavaScript without a framework, the parts and their files are below. The
-                    <a href="./#comparison">comparison</a> on the page of the examples names the libraries which
+                    <a href="./#comparison">comparison</a> on the examples page names the libraries which
                     are the better choice for most other cases.
                 </p>
             </section>
@@ -85,7 +85,7 @@
                         layers are joined to the elements of the draw before by their keys, only attributes which
                         changed are set, with a transition if the definition has one. The hover and the highlight
                         work on the drawn elements, the other parts of <code>src/comp/</code> are the frame: titles,
-                        form elements, legends and facets, the Vue component (<code>src/vue.js</code>) is a thin
+                        form elements, legends and facets, the Vue component (<code>src/vue-adapter.js</code>) is a thin
                         adapter of them.
                     </li>
                 </ol>

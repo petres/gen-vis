@@ -1,9 +1,9 @@
 # Extensions
 
-Plot types, coordinate systems, schemes of colors and the defaults of the
-parts can be registered, before the visualisations are loaded. The checks of
-the definitions also run outside the browser, the schema and the types
-describe the definitions for editors.
+A page can register plot types, coordinate systems, color schemes and
+defaults before its visualisations load. The definition checks also run
+outside the browser, and the schema and types describe definitions for
+editors.
 
 ## Plot types
 
@@ -33,13 +33,14 @@ registerPlotType('my:tick', {
 });
 ```
 
-`defaults` are the default props of the plots of the type, of its full name
-(`"type": "my:tick"`) and of its name without the prefix (`"type": "tick"`,
-the only registered type of the name of the coordinate system, or one of the
-prefix of the coordinate system, e.g. `cartesian:tick`) alike, an object or a
-function of the props of the plot, the props of the plot are merged into
-them (nested ones deeply, `null` removes one), see `src/plots/defaults.js`
-of the built-in ones.
+`defaults` are the type's default props, an object or a function of the
+plot's props. They apply under the full name (`"type": "my:tick"`) and the
+short name (`"type": "tick"`) alike. A short name resolves to the type
+with the coordinate system's prefix (e.g. `cartesian:tick`), then to
+`svg:tick`, otherwise to the only registered type of that name (here
+`my:tick`). A plot's props are merged
+into the defaults (nested ones deeply, `null` removes one); the built-in
+defaults are in `src/plots/defaults.js`.
 
 The marks are a layer, `{ element, groups: [{ categories, items }] }` (an
 element per item in a `g.vis-group` per group) or `{ element, items }` (the
@@ -120,11 +121,15 @@ charts of the page, see [defaults](definition.md#defaults).
 
 ## The check and the standalone script
 
-All three are known to `validateDef`, `@preschen/gen-vis/check` exports
-`registerPlotType`, `registerCoord` and `registerScheme` as well, the
-standalone script has them as `GenVis.registerPlotType`,
-`GenVis.registerCoord`, `GenVis.registerScheme`, `GenVis.perRow` and
-`GenVis.perGroup`. The schema only knows the built-in ones.
+`validateDef` knows registered plot types, coordinate systems and
+schemes; `@preschen/gen-vis/check` exports `registerPlotType`,
+`registerCoord` and `registerScheme` too. The single file has them as
+`GenVis.registerPlotType`, `GenVis.registerCoord`, `GenVis.registerScheme`,
+`GenVis.registerDefaults`, `GenVis.perRow` and `GenVis.perGroup`. The core
+loader (`gen-vis.core.js`) forwards the `register…` functions (they return
+promises), but `perRow` and `perGroup` are only on the loaded module:
+`const { perRow } = await GenVis.ready`. The schema only knows the built-in
+ones.
 
 ## Schema and types
 
@@ -144,20 +149,20 @@ import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { resolveParents, validateDef } from '@preschen/gen-vis/check';
 
-const url = pathToFileURL('data/gas/price.json').href;
+const url = pathToFileURL('data/ecad/polar-tg.json').href;
 const def = await resolveParents(JSON.parse(readFileSync(new URL(url), 'utf8')), url,
     u => readFileSync(new URL(u), 'utf8'));
 console.log(validateDef(def));  // the warnings, e.g. unknown plot types
 ```
 
-`validateDef(def, rows)` also checks the rows of the data, e.g. years as
-numbers of a `date` mapping, the types of the mappings without one are the
-ones of the values.
+`validateDef(def, rows)` also checks the data rows, e.g. years as numbers
+in a `date` mapping. Mappings without a type get the type the load infers
+from the values (also for transform columns).
 
-`normalize(def)` is the internal form of a definition of 4.0, the one the
-renderer reads, see `spec/normalize.md`.
+`normalize(def)` writes out the defaults a definition leaves implicit, see
+`spec/normalize.md`.
 
-The parts which are not bound to the browser, the expressions, the
-transforms, merging and normalize, are specified by the fixtures of
-`spec/` (`spec/README.md`), so they can be implemented in other languages,
-e.g. Python or R, the tests of the package run them.
+The parts not bound to the browser (expressions, transforms, merging and
+normalize) are specified by the fixtures in `spec/` (`spec/README.md`), so
+other languages, e.g. Python or R, can implement them; the package tests
+run them.

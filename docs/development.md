@@ -1,7 +1,6 @@
 # Development
 
-The scripts of the repository, the tests, the builds and the page of the
-examples.
+Repository scripts, tests, builds, publishing and the examples site.
 
 ```sh
 npm install
@@ -10,15 +9,16 @@ npm test        # unit tests, rendering and schema check of all definitions in d
 npm run types   # the types of the definitions (types/definition.d.ts) of schema.json, a test checks them
 npm run build   # es modules for bundlers in dist/: gen-vis.js (the core), vue.js (the Vue adapter), check.js
 npm run watch   # rebuilds dist/ on changes, e.g. for `npm link`
-npm run lib     # standalone script in dist-lib/, gen-vis.js (of the package) and gen-vis-<version>.js, the export page
+npm run lib     # standalone script in dist-lib/: gen-vis.js (in the package), gen-vis-<version>.js (for the upload), esm/, the core loader, the export page
 node bin/gen-vis.js export data/bev/def.json bev.svg   # the CLI of the static export, of dist-lib/
-npm run deploy  # builds and uploads the standalone script to GEN_VIS_UPLOAD (user@host:/path) of .env
-npm run site    # dev server of the page of the examples (site/), with the package built in dist/ and dist-lib/
-npm run site:build  # the page of the examples in dist-site/
+npm run upload  # compresses dist-lib/ and copies all of it to GEN_VIS_UPLOAD (user@host:/path) in .env
+npm run deploy  # npm run lib, then npm run upload
+npm run site    # dev server of the examples site (site/), with the package built in dist/ and dist-lib/
+npm run site:build  # the examples site in dist-site/
 ```
 
-The page of the examples (`site/`) is the one of GitHub Pages, built and
-deployed by `.github/workflows/pages.yml` on every push to `main`. It
+The examples site (`site/`) is the GitHub Pages site, built and deployed
+by `.github/workflows/pages.yml` on every push to `main`. It
 uses the package as it is published, the es module of `dist/`, so its styles
 are in the cascade layer as in the applications. Every example is a
 definition and the CSS of its look in `site/examples/` (listed in
@@ -63,5 +63,23 @@ directory (with `npm run watch`). The `vue` of the Vue adapter of the linked
 package would be the one of its own `node_modules`, a second Vue, so the
 bundler of the application has to resolve `vue` to its own, e.g. `resolve.alias: { vue:
 path.resolve('node_modules/vue') }` of webpack or `resolve.dedupe: ['vue']` of
-vite. The changes of the versions are in `CHANGELOG.md`. `npm publish` runs
-the tests and builds `dist/` and the standalone script of the package.
+vite.
+
+## Publishing
+
+Changes by version are in `CHANGELOG.md`. `npm publish` runs the tests and
+builds `dist/` and the standalone script (`prepublishOnly`).
+
+A prerelease (e.g. `4.0.0-beta.0`) must be published with a tag, `npm
+publish --tag beta`; without one it becomes `latest`, the version that
+`npm install @preschen/gen-vis` installs. The `@4` URLs in the docs and in
+every `$schema` (unpkg and jsDelivr, e.g.
+`https://unpkg.com/@preschen/gen-vis@4/schema.json`) resolve only to
+non-prerelease versions, so they work once a 4.x release, e.g. 4.0.0, is on
+npm. Until then editors can not load the schema from that URL, but gen-vis
+itself accepts it: it only checks the URL, it does not fetch it.
+
+`npm run upload` is separate from npm: it copies `dist-lib/` to your own
+server. The versioned single file `gen-vis-<version>.js` lets a page pin a
+version there; the module (`esm/`) and the core loader are unversioned and
+always the latest upload, see [usage](usage.md#standalone-script).
