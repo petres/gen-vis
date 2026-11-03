@@ -6,13 +6,13 @@
 <div class="vis-form-elements">
 <div class="vis-form-element" data-id="set">
 <div class="vis-form-element-title" id="gen-vis-form-N-set-title">Indikatoren:</div>
-<div class="vis-radio" role="radiogroup" aria-labelledby="gen-vis-form-N-set-title">
+<div aria-labelledby="gen-vis-form-N-set-title" class="vis-radio" role="radiogroup">
 <div data-id="H">
-<input type="radio" id="gen-vis-form-N-set-H" name="gen-vis-form-N-set" checked="" value="H">
+<input checked="" id="gen-vis-form-N-set-H" name="gen-vis-form-N-set" type="radio" value="H">
 <label for="gen-vis-form-N-set-H">Hauptindikatoren</label>
 </div>
 <div data-id="E">
-<input type="radio" id="gen-vis-form-N-set-E" name="gen-vis-form-N-set" value="E">
+<input id="gen-vis-form-N-set-E" name="gen-vis-form-N-set" type="radio" value="E">
 <label for="gen-vis-form-N-set-E">Ergänzende Indikatoren</label>
 </div>
 </div>
@@ -20,7 +20,7 @@
 <div class="vis-form-element" data-id="year">
 <label class="vis-form-element-title" for="gen-vis-form-N-year">Jahr:</label>
 <div class="vis-slider">
-<input type="range" id="gen-vis-form-N-year" min="0" max="29" step="1" aria-valuetext="2019" value="24">
+<input aria-valuetext="2019" id="gen-vis-form-N-year" max="29" min="0" step="1" type="range" value="24">
 <span class="vis-slider-value">2019</span>
 </div>
 </div>
@@ -29,87 +29,87 @@
 </div>
 <div class="vis-body vis-body-sides">
 <div class="vis-plots">
-<div style="width: 800px;" class="vis-facet">
-<svg width="800" height="600" class="vis-svg" role="application" aria-label="Radar der Wettbewerbsfähigkeit: Ländervergleich" aria-describedby="gen-vis-facet-N-subtitle gen-vis-facet-N-keys" aria-roledescription="Diagramm" tabindex="0">
+<div class="vis-facet" style="width: 800px;">
+<svg aria-describedby="gen-vis-facet-N-subtitle gen-vis-facet-N-keys" aria-label="Radar der Wettbewerbsfähigkeit: Ländervergleich" aria-roledescription="Diagramm" class="vis-svg" height="600" role="application" tabindex="0" width="800">
 <g transform="translate(400 300)">
-<g visibility="visible" class="vis-hover-marker">
-<line x1="0" y1="0" x2="216.506" y2="125">
+<g class="vis-hover-marker" visibility="visible">
+<line x1="0" x2="216.506" y1="0" y2="125">
 </line>
 </g>
 <g class="vis-grid">
-<line x1="0" y1="0" x2="0" y2="-250">
+<line x1="0" x2="0" y1="0" y2="-250">
 </line>
-<line x1="0" y1="0" x2="125" y2="-216.506">
+<line x1="0" x2="125" y1="0" y2="-216.506">
 </line>
-<line x1="0" y1="0" x2="216.506" y2="-125">
+<line x1="0" x2="216.506" y1="0" y2="-125">
 </line>
-<line x1="0" y1="0" x2="250" y2="0">
+<line x1="0" x2="250" y1="0" y2="0">
 </line>
-<line x1="0" y1="0" x2="216.506" y2="125">
+<line x1="0" x2="216.506" y1="0" y2="125">
 </line>
-<line x1="0" y1="0" x2="125" y2="216.506">
+<line x1="0" x2="125" y1="0" y2="216.506">
 </line>
-<line x1="0" y1="0" x2="0" y2="250">
+<line x1="0" x2="0" y1="0" y2="250">
 </line>
-<line x1="0" y1="0" x2="-125" y2="216.506">
+<line x1="0" x2="-125" y1="0" y2="216.506">
 </line>
-<line x1="0" y1="0" x2="-216.506" y2="125">
+<line x1="0" x2="-216.506" y1="0" y2="125">
 </line>
-<line x1="0" y1="0" x2="-250" y2="0">
+<line x1="0" x2="-250" y1="0" y2="0">
 </line>
-<line x1="0" y1="0" x2="-216.506" y2="-125">
+<line x1="0" x2="-216.506" y1="0" y2="-125">
 </line>
-<line x1="0" y1="0" x2="-125" y2="-216.506">
+<line x1="0" x2="-125" y1="0" y2="-216.506">
 </line>
 </g>
-<g class="vis-axis vis-axis-angular" data-mapping="x" font-size="10" font-family="sans-serif">
-<circle class="domain" r="250" fill="none" style="stroke: var(--gen-vis-grid-color, #CCC);">
+<g class="vis-axis vis-axis-angular" data-mapping="x" font-family="sans-serif" font-size="10">
+<circle class="domain" fill="none" r="250" style="stroke: var(--gen-vis-grid-color, #CCC);">
 </circle>
 <g class="tick">
-<text fill="currentColor" x="0" y="-264" text-anchor="middle" dominant-baseline="auto" font-weight="bold" font-size="12" max-width="130" text-overflow="wrap">Wirtschaftsleistung</text>
+<text dominant-baseline="auto" fill="currentColor" font-size="12" font-weight="bold" max-width="130" text-anchor="middle" text-overflow="wrap" x="0" y="-264">Wirtschaftsleistung</text>
 </g>
 <g class="tick">
-<text fill="currentColor" x="132" y="-228.631" text-anchor="start" dominant-baseline="auto" font-weight="bold" font-size="12" max-width="130" text-overflow="wrap">
-<tspan x="132" dy="0em">Arbeitsproduktivität</tspan>
+<text dominant-baseline="auto" fill="currentColor" font-size="12" font-weight="bold" max-width="130" text-anchor="start" text-overflow="wrap" x="132" y="-228.631">
+<tspan dy="0em" x="132">Arbeitsproduktivität</tspan>
 </text>
 </g>
 <g class="tick">
-<text fill="currentColor" x="228.631" y="-132" text-anchor="start" dominant-baseline="middle" font-weight="bold" font-size="12" max-width="130" text-overflow="wrap">
-<tspan x="228.631" dy="0em">Multifaktorproduktivität</tspan>
+<text dominant-baseline="middle" fill="currentColor" font-size="12" font-weight="bold" max-width="130" text-anchor="start" text-overflow="wrap" x="228.631" y="-132">
+<tspan dy="0em" x="228.631">Multifaktorproduktivität</tspan>
 </text>
 </g>
 <g class="tick">
-<text fill="currentColor" x="264" y="0" text-anchor="start" dominant-baseline="middle" font-weight="bold" font-size="12" max-width="130" text-overflow="wrap">Energieintensität</text>
+<text dominant-baseline="middle" fill="currentColor" font-size="12" font-weight="bold" max-width="130" text-anchor="start" text-overflow="wrap" x="264" y="0">Energieintensität</text>
 </g>
 <g class="tick">
-<text fill="currentColor" x="228.631" y="132" text-anchor="start" dominant-baseline="middle" font-weight="bold" font-size="12" max-width="130" text-overflow="wrap">CO2-Intensität </text>
+<text dominant-baseline="middle" fill="currentColor" font-size="12" font-weight="bold" max-width="130" text-anchor="start" text-overflow="wrap" x="228.631" y="132">CO2-Intensität </text>
 </g>
 <g class="tick">
-<text fill="currentColor" x="132" y="228.631" text-anchor="start" dominant-baseline="hanging" font-weight="bold" font-size="12" max-width="130" text-overflow="wrap">
-<tspan x="132" dy="0em">Anteil erneuerbarer</tspan>
-<tspan x="132" dy="1.2em">Energieträger</tspan>
+<text dominant-baseline="hanging" fill="currentColor" font-size="12" font-weight="bold" max-width="130" text-anchor="start" text-overflow="wrap" x="132" y="228.631">
+<tspan dy="0em" x="132">Anteil erneuerbarer</tspan>
+<tspan dy="1.2em" x="132">Energieträger</tspan>
 </text>
 </g>
 <g class="tick">
-<text fill="currentColor" x="0" y="264" text-anchor="middle" dominant-baseline="hanging" font-weight="bold" font-size="12" max-width="130" text-overflow="wrap">Armutsgefährdung</text>
+<text dominant-baseline="hanging" fill="currentColor" font-size="12" font-weight="bold" max-width="130" text-anchor="middle" text-overflow="wrap" x="0" y="264">Armutsgefährdung</text>
 </g>
 <g class="tick">
-<text fill="currentColor" x="-132" y="228.631" text-anchor="end" dominant-baseline="hanging" font-weight="bold" font-size="12" max-width="130" text-overflow="wrap">Arbeitslosenquote</text>
+<text dominant-baseline="hanging" fill="currentColor" font-size="12" font-weight="bold" max-width="130" text-anchor="end" text-overflow="wrap" x="-132" y="228.631">Arbeitslosenquote</text>
 </g>
 <g class="tick">
-<text fill="currentColor" x="-228.631" y="132" text-anchor="end" dominant-baseline="hanging" font-weight="bold" font-size="12" max-width="130" text-overflow="wrap">Beschäftigungsquote</text>
+<text dominant-baseline="hanging" fill="currentColor" font-size="12" font-weight="bold" max-width="130" text-anchor="end" text-overflow="wrap" x="-228.631" y="132">Beschäftigungsquote</text>
 </g>
 <g class="tick">
-<text fill="currentColor" x="-264" y="0" text-anchor="end" dominant-baseline="middle" font-weight="bold" font-size="12" max-width="130" text-overflow="wrap">
-<tspan x="-264" dy="0em">Einkommensverteilung</tspan>
+<text dominant-baseline="middle" fill="currentColor" font-size="12" font-weight="bold" max-width="130" text-anchor="end" text-overflow="wrap" x="-264" y="0">
+<tspan dy="0em" x="-264">Einkommensverteilung</tspan>
 </text>
 </g>
 <g class="tick">
-<text fill="currentColor" x="-228.631" y="-132" text-anchor="end" dominant-baseline="middle" font-weight="bold" font-size="12" max-width="130" text-overflow="wrap">Regionale Kohäsion</text>
+<text dominant-baseline="middle" fill="currentColor" font-size="12" font-weight="bold" max-width="130" text-anchor="end" text-overflow="wrap" x="-228.631" y="-132">Regionale Kohäsion</text>
 </g>
 <g class="tick">
-<text fill="currentColor" x="-132" y="-228.631" text-anchor="end" dominant-baseline="auto" font-weight="bold" font-size="12" max-width="130" text-overflow="wrap">
-<tspan x="-132" dy="0em">Leistungsbilanzsaldo</tspan>
+<text dominant-baseline="auto" fill="currentColor" font-size="12" font-weight="bold" max-width="130" text-anchor="end" text-overflow="wrap" x="-132" y="-228.631">
+<tspan dy="0em" x="-132">Leistungsbilanzsaldo</tspan>
 </text>
 </g>
 </g>
@@ -126,96 +126,96 @@
 </circle>
 </g>
 <g class="vis-plot areas" data-plot="areas">
-<path fill="#559BD5" fill-opacity="0.08" highlight-fill-opacity="0.2" data-group-country="Deutschland" d="M0,-161.3L101.85,-176.409L76.816,-44.35L177.425,0L111.739,64.512L51.725,89.59L0,146.55L-120.837,209.297L-187.646,108.338L-94.825,0L-40.097,-23.15L-116.663,-202.065ZM0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0Z">
+<path d="M0,-161.3L101.85,-176.409L76.816,-44.35L177.425,0L111.739,64.512L51.725,89.59L0,146.55L-120.837,209.297L-187.646,108.338L-94.825,0L-40.097,-23.15L-116.663,-202.065ZM0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0Z" data-group-country="Deutschland" fill="#559BD5" fill-opacity="0.08" highlight-fill-opacity="0.2">
 </path>
-<path fill="#C3423F" fill-opacity="0.2" highlight-fill-opacity="0.2" data-group-country="Österreich" d="M0,-177.425L92.587,-160.366L41.894,-24.187L137.1,0L153.655,88.712L99.138,171.711L0,181.025L-75,129.904L-151.554,87.5L-172.425,0L-184.442,-106.487L-75,-129.904ZM0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0Z" class="vis-highlight" default-fill-opacity="0.08">
+<path class="vis-highlight" d="M0,-177.425L92.587,-160.366L41.894,-24.187L137.1,0L153.655,88.712L99.138,171.711L0,181.025L-75,129.904L-151.554,87.5L-172.425,0L-184.442,-106.487L-75,-129.904ZM0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0Z" data-group-country="Österreich" default-fill-opacity="0.08" fill="#C3423F" fill-opacity="0.2" highlight-fill-opacity="0.2">
 </path>
 </g>
 <g class="vis-plot lines" data-plot="lines">
-<path fill="none" stroke="#559BD5" stroke-width="2.5" highlight-stroke-width="4" data-group-country="Deutschland" d="M0,-161.3L101.85,-176.409L76.816,-44.35L177.425,0L111.739,64.512L51.725,89.59L0,146.55L-120.837,209.297L-187.646,108.338L-94.825,0L-40.097,-23.15L-116.663,-202.065Z">
+<path d="M0,-161.3L101.85,-176.409L76.816,-44.35L177.425,0L111.739,64.512L51.725,89.59L0,146.55L-120.837,209.297L-187.646,108.338L-94.825,0L-40.097,-23.15L-116.663,-202.065Z" data-group-country="Deutschland" fill="none" highlight-stroke-width="4" stroke="#559BD5" stroke-width="2.5">
 </path>
-<path fill="none" stroke="#C3423F" stroke-width="4" highlight-stroke-width="4" data-group-country="Österreich" d="M0,-177.425L92.587,-160.366L41.894,-24.187L137.1,0L153.655,88.712L99.138,171.711L0,181.025L-75,129.904L-151.554,87.5L-172.425,0L-184.442,-106.487L-75,-129.904Z" class="vis-highlight" default-stroke-width="2.5">
+<path class="vis-highlight" d="M0,-177.425L92.587,-160.366L41.894,-24.187L137.1,0L153.655,88.712L99.138,171.711L0,181.025L-75,129.904L-151.554,87.5L-172.425,0L-184.442,-106.487L-75,-129.904Z" data-group-country="Österreich" default-stroke-width="2.5" fill="none" highlight-stroke-width="4" stroke="#C3423F" stroke-width="4">
 </path>
 </g>
 <g class="vis-plot points" data-plot="points">
 <g class="vis-group" data-group-country="Deutschland">
-<circle fill="#559BD5" r="5" highlight-r="6" cx="0" cy="-161.3">
+<circle cx="0" cy="-161.3" fill="#559BD5" highlight-r="6" r="5">
 </circle>
-<circle fill="#559BD5" r="5" highlight-r="6" cx="101.85" cy="-176.409">
+<circle cx="101.85" cy="-176.409" fill="#559BD5" highlight-r="6" r="5">
 </circle>
-<circle fill="#559BD5" r="5" highlight-r="6" cx="76.816" cy="-44.35">
+<circle cx="76.816" cy="-44.35" fill="#559BD5" highlight-r="6" r="5">
 </circle>
-<circle fill="#559BD5" r="5" highlight-r="6" cx="177.425" cy="0">
+<circle cx="177.425" cy="0" fill="#559BD5" highlight-r="6" r="5">
 </circle>
-<circle fill="#559BD5" r="5" highlight-r="6" cx="111.739" cy="64.512">
+<circle cx="111.739" cy="64.512" fill="#559BD5" highlight-r="6" r="5">
 </circle>
-<circle fill="#559BD5" r="5" highlight-r="6" cx="51.725" cy="89.59">
+<circle cx="51.725" cy="89.59" fill="#559BD5" highlight-r="6" r="5">
 </circle>
-<circle fill="#559BD5" r="5" highlight-r="6" cx="0" cy="146.55">
+<circle cx="0" cy="146.55" fill="#559BD5" highlight-r="6" r="5">
 </circle>
-<circle fill="#559BD5" r="5" highlight-r="6" cx="-120.837" cy="209.297">
+<circle cx="-120.837" cy="209.297" fill="#559BD5" highlight-r="6" r="5">
 </circle>
-<circle fill="#559BD5" r="5" highlight-r="6" cx="-187.646" cy="108.338">
+<circle cx="-187.646" cy="108.338" fill="#559BD5" highlight-r="6" r="5">
 </circle>
-<circle fill="#559BD5" r="5" highlight-r="6" cx="-94.825" cy="0">
+<circle cx="-94.825" cy="0" fill="#559BD5" highlight-r="6" r="5">
 </circle>
-<circle fill="#559BD5" r="5" highlight-r="6" cx="-40.097" cy="-23.15">
+<circle cx="-40.097" cy="-23.15" fill="#559BD5" highlight-r="6" r="5">
 </circle>
-<circle fill="#559BD5" r="5" highlight-r="6" cx="-116.663" cy="-202.065">
+<circle cx="-116.663" cy="-202.065" fill="#559BD5" highlight-r="6" r="5">
 </circle>
 </g>
 <g class="vis-group vis-highlight" data-group-country="Österreich">
-<circle fill="#C3423F" r="6" highlight-r="6" cx="0" cy="-177.425" class="vis-highlight" default-r="5">
+<circle class="vis-highlight" cx="0" cy="-177.425" default-r="5" fill="#C3423F" highlight-r="6" r="6">
 </circle>
-<circle fill="#C3423F" r="6" highlight-r="6" cx="92.588" cy="-160.366" class="vis-highlight" default-r="5">
+<circle class="vis-highlight" cx="92.588" cy="-160.366" default-r="5" fill="#C3423F" highlight-r="6" r="6">
 </circle>
-<circle fill="#C3423F" r="6" highlight-r="6" cx="41.894" cy="-24.187" class="vis-highlight" default-r="5">
+<circle class="vis-highlight" cx="41.894" cy="-24.187" default-r="5" fill="#C3423F" highlight-r="6" r="6">
 </circle>
-<circle fill="#C3423F" r="6" highlight-r="6" cx="137.1" cy="0" class="vis-highlight" default-r="5">
+<circle class="vis-highlight" cx="137.1" cy="0" default-r="5" fill="#C3423F" highlight-r="6" r="6">
 </circle>
-<circle fill="#C3423F" r="6" highlight-r="6" cx="153.655" cy="88.712" class="vis-highlight" default-r="5">
+<circle class="vis-highlight" cx="153.655" cy="88.712" default-r="5" fill="#C3423F" highlight-r="6" r="6">
 </circle>
-<circle fill="#C3423F" r="6" highlight-r="6" cx="99.138" cy="171.711" class="vis-highlight" default-r="5">
+<circle class="vis-highlight" cx="99.138" cy="171.711" default-r="5" fill="#C3423F" highlight-r="6" r="6">
 </circle>
-<circle fill="#C3423F" r="6" highlight-r="6" cx="0" cy="181.025" class="vis-highlight" default-r="5">
+<circle class="vis-highlight" cx="0" cy="181.025" default-r="5" fill="#C3423F" highlight-r="6" r="6">
 </circle>
-<circle fill="#C3423F" r="6" highlight-r="6" cx="-75" cy="129.904" class="vis-highlight" default-r="5">
+<circle class="vis-highlight" cx="-75" cy="129.904" default-r="5" fill="#C3423F" highlight-r="6" r="6">
 </circle>
-<circle fill="#C3423F" r="6" highlight-r="6" cx="-151.554" cy="87.5" class="vis-highlight" default-r="5">
+<circle class="vis-highlight" cx="-151.554" cy="87.5" default-r="5" fill="#C3423F" highlight-r="6" r="6">
 </circle>
-<circle fill="#C3423F" r="6" highlight-r="6" cx="-172.425" cy="0" class="vis-highlight" default-r="5">
+<circle class="vis-highlight" cx="-172.425" cy="0" default-r="5" fill="#C3423F" highlight-r="6" r="6">
 </circle>
-<circle fill="#C3423F" r="6" highlight-r="6" cx="-184.442" cy="-106.487" class="vis-highlight" default-r="5">
+<circle class="vis-highlight" cx="-184.442" cy="-106.487" default-r="5" fill="#C3423F" highlight-r="6" r="6">
 </circle>
-<circle fill="#C3423F" r="6" highlight-r="6" cx="-75" cy="-129.904" class="vis-highlight" default-r="5">
+<circle class="vis-highlight" cx="-75" cy="-129.904" default-r="5" fill="#C3423F" highlight-r="6" r="6">
 </circle>
 </g>
 </g>
-<g class="vis-axis vis-axis-radial" data-mapping="y" font-size="10" font-family="sans-serif">
-<line class="domain" stroke="currentColor" x1="0" y1="0" x2="64.705" y2="-241.481" stroke-opacity="0">
+<g class="vis-axis vis-axis-radial" data-mapping="y" font-family="sans-serif" font-size="10">
+<line class="domain" stroke="currentColor" stroke-opacity="0" x1="0" x2="64.705" y1="0" y2="-241.481">
 </line>
 <g class="tick">
-<text fill="#777" text-anchor="end" dominant-baseline="middle" x="9.941" y="-48.296" font-size="10">20</text>
+<text dominant-baseline="middle" fill="#777" font-size="10" text-anchor="end" x="9.941" y="-48.296">20</text>
 </g>
 <g class="tick">
-<text fill="#777" text-anchor="end" dominant-baseline="middle" x="22.882" y="-96.593" font-size="10">40</text>
+<text dominant-baseline="middle" fill="#777" font-size="10" text-anchor="end" x="22.882" y="-96.593">40</text>
 </g>
 <g class="tick">
-<text fill="#777" text-anchor="end" dominant-baseline="middle" x="35.823" y="-144.889" font-size="10">60</text>
+<text dominant-baseline="middle" fill="#777" font-size="10" text-anchor="end" x="35.823" y="-144.889">60</text>
 </g>
 <g class="tick">
-<text fill="#777" text-anchor="end" dominant-baseline="middle" x="48.764" y="-193.185" font-size="10">80</text>
+<text dominant-baseline="middle" fill="#777" font-size="10" text-anchor="end" x="48.764" y="-193.185">80</text>
 </g>
 <g class="tick">
-<text fill="#777" text-anchor="end" dominant-baseline="middle" x="61.705" y="-241.481" font-size="10">100</text>
+<text dominant-baseline="middle" fill="#777" font-size="10" text-anchor="end" x="61.705" y="-241.481">100</text>
 </g>
 </g>
-<rect x="-295" y="-250" width="590" height="500" class="vis-events" opacity="0" style="touch-action: pan-y;">
+<rect class="vis-events" height="500" opacity="0" style="touch-action: pan-y;" width="590" x="-295" y="-250">
 </rect>
 </g>
 </svg>
-<span id="gen-vis-facet-N-subtitle" hidden="">Die Prozentränge der Länder in der EU, Norwegen, Island, der Schweiz und dem Vereinigten Königreich 2019</span>
-<span id="gen-vis-facet-N-keys" hidden="">Die Pfeiltasten zeigen die Werte der Positionen und Zeilen, die Eingabetaste wählt sie aus, Escape schließt sie.</span>
+<span hidden="" id="gen-vis-facet-N-subtitle">Die Prozentränge der Länder in der EU, Norwegen, Island, der Schweiz und dem Vereinigten Königreich 2019</span>
+<span hidden="" id="gen-vis-facet-N-keys">Die Pfeiltasten zeigen die Werte der Positionen und Zeilen, die Eingabetaste wählt sie aus, Escape schließt sie.</span>
 <div aria-live="off" style="transform: translate(700px, 450px); position: absolute; top: 0px; left: 0px;">
 <div class="vis-hover" style="left: -20px; transform: translate(-100%, -50%);">
 <div class="vis-hover-title">
@@ -223,9 +223,9 @@
 <br>
 <small>Anteil CO2-Emissionen (kt) am BIP (zu Preisen von 2015) in %<br>Q: UNFCCC GHG Data Interface; WDS - WIFO-Daten-System, Macrobond</small>
 </div>
-<div class="vis-hover-row vis-nearest" data-definition="Anteil CO2-Emissionen (kt) am BIP (zu Preisen von 2015) in %" data-source="UNFCCC GHG Data Interface; WDS - WIFO-Daten-System, Macrobond" data-country="Österreich">Österreich: <b>71</b>
+<div class="vis-hover-row vis-nearest" data-country="Österreich" data-definition="Anteil CO2-Emissionen (kt) am BIP (zu Preisen von 2015) in %" data-source="UNFCCC GHG Data Interface; WDS - WIFO-Daten-System, Macrobond">Österreich: <b>71</b>
 </div>
-<div class="vis-hover-row" data-definition="Anteil CO2-Emissionen (kt) am BIP (zu Preisen von 2015) in %" data-source="UNFCCC GHG Data Interface; WDS - WIFO-Daten-System, Macrobond" data-country="Deutschland">Deutschland: <b>52</b>
+<div class="vis-hover-row" data-country="Deutschland" data-definition="Anteil CO2-Emissionen (kt) am BIP (zu Preisen von 2015) in %" data-source="UNFCCC GHG Data Interface; WDS - WIFO-Daten-System, Macrobond">Deutschland: <b>52</b>
 </div>
 </div>
 </div>
@@ -236,219 +236,219 @@
 <div class="vis-legend-title">
 </div>
 <div class="vis-legend-entries" role="group">
-<div class="vis-legend-entry" data-visible="true" data-key="Österreich" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#C3423F">
+<div aria-checked="true" class="vis-legend-entry" data-key="Österreich" data-visible="true" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#C3423F" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Österreich</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Belgien" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#72BB6F">
+<div aria-checked="false" class="vis-legend-entry" data-key="Belgien" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#72BB6F" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Belgien</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Bulgarien" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#F3D039">
+<div aria-checked="false" class="vis-legend-entry" data-key="Bulgarien" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#F3D039" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Bulgarien</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Dänemark" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#559E8F">
+<div aria-checked="false" class="vis-legend-entry" data-key="Dänemark" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#559E8F" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Dänemark</span>
 </div>
-<div class="vis-legend-entry" data-visible="true" data-key="Deutschland" role="checkbox" tabindex="0" aria-checked="true">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#559BD5">
+<div aria-checked="true" class="vis-legend-entry" data-key="Deutschland" data-visible="true" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#559BD5" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Deutschland</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Estland" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#12A7E7">
+<div aria-checked="false" class="vis-legend-entry" data-key="Estland" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#12A7E7" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Estland</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Finnland" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#96B428">
+<div aria-checked="false" class="vis-legend-entry" data-key="Finnland" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#96B428" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Finnland</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Frankreich" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#E7B3B1">
+<div aria-checked="false" class="vis-legend-entry" data-key="Frankreich" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#E7B3B1" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Frankreich</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Griechenland" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#BBD7EE">
+<div aria-checked="false" class="vis-legend-entry" data-key="Griechenland" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#BBD7EE" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Griechenland</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Irland" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#C7E3C6">
+<div aria-checked="false" class="vis-legend-entry" data-key="Irland" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#C7E3C6" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Irland</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Island" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#FAEBAF">
+<div aria-checked="false" class="vis-legend-entry" data-key="Island" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#FAEBAF" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Island</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Italien" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#B9D9D2">
+<div aria-checked="false" class="vis-legend-entry" data-key="Italien" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#B9D9D2" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Italien</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Kroatien" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#9CDCF8">
+<div aria-checked="false" class="vis-legend-entry" data-key="Kroatien" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#9CDCF8" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Kroatien</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Lettland" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#D9EA9F">
+<div aria-checked="false" class="vis-legend-entry" data-key="Lettland" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#D9EA9F" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Lettland</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Litauen" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#62201E">
+<div aria-checked="false" class="vis-legend-entry" data-key="Litauen" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#62201E" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Litauen</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Luxemburg" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#1E4F77">
+<div aria-checked="false" class="vis-legend-entry" data-key="Luxemburg" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#1E4F77" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Luxemburg</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Malta" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#336530">
+<div aria-checked="false" class="vis-legend-entry" data-key="Malta" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#336530" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Malta</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Niederlande" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#8C7209">
+<div aria-checked="false" class="vis-legend-entry" data-key="Niederlande" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#8C7209" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Niederlande</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Norwegen" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#2B4F47">
+<div aria-checked="false" class="vis-legend-entry" data-key="Norwegen" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#2B4F47" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Norwegen</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Polen" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#095373">
+<div aria-checked="false" class="vis-legend-entry" data-key="Polen" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#095373" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Polen</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Portugal" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#4A5A14">
+<div aria-checked="false" class="vis-legend-entry" data-key="Portugal" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#4A5A14" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Portugal</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Rumänien" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#C3423F">
+<div aria-checked="false" class="vis-legend-entry" data-key="Rumänien" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#C3423F" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Rumänien</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Schweden" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#559BD5">
+<div aria-checked="false" class="vis-legend-entry" data-key="Schweden" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#559BD5" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Schweden</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Schweiz" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#72BB6F">
+<div aria-checked="false" class="vis-legend-entry" data-key="Schweiz" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#72BB6F" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Schweiz</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Slowakei" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#F3D039">
+<div aria-checked="false" class="vis-legend-entry" data-key="Slowakei" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#F3D039" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Slowakei</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Slowenien" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#559E8F">
+<div aria-checked="false" class="vis-legend-entry" data-key="Slowenien" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#559E8F" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Slowenien</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Spanien" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#12A7E7">
+<div aria-checked="false" class="vis-legend-entry" data-key="Spanien" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#12A7E7" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Spanien</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Tschechien" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#96B428">
+<div aria-checked="false" class="vis-legend-entry" data-key="Tschechien" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#96B428" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Tschechien</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Ungarn" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#E7B3B1">
+<div aria-checked="false" class="vis-legend-entry" data-key="Ungarn" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#E7B3B1" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Ungarn</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Vereinigtes Königreich" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#BBD7EE">
+<div aria-checked="false" class="vis-legend-entry" data-key="Vereinigtes Königreich" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#BBD7EE" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Vereinigtes Königreich</span>
 </div>
-<div class="vis-legend-entry" data-visible="false" data-key="Zypern" role="checkbox" tabindex="0" aria-checked="false">
-<svg width="14" height="14">
-<rect x="1" y="1" width="12" height="12" fill="#C7E3C6">
+<div aria-checked="false" class="vis-legend-entry" data-key="Zypern" data-visible="false" role="checkbox" tabindex="0">
+<svg height="14" width="14">
+<rect fill="#C7E3C6" height="12" width="12" x="1" y="1">
 </rect>
 </svg>
 <span>Zypern</span>
