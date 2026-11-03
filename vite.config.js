@@ -170,6 +170,8 @@ export default defineConfig(({ mode }) => {
             // the snapshots of the time scales are the ones of Vienna, the positions of
             // the days differ by the changes of the daylight saving time of a zone
             env: { TZ: 'Europe/Vienna' },
+            // the worktrees of agents, e.g. of Claude Code, have tests of their own
+            exclude: ['**/node_modules/**', '.claude/**'],
         },
     };
 });

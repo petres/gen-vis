@@ -4,3 +4,4 @@ dist-lib
 *.tgz
 .env
 dist-site
+.claude
