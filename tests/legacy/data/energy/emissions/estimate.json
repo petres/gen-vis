@@ -1,0 +1,93 @@
+{
+    "parent": ["../_timeline.json", "../_facets.json", "../_facet-toggle.json", "../_scale-switch.json"],
+    "data": "estimate.csv",
+    "options": {
+        "height": 220,
+        "margins": {"top": 5, "right": 30, "bottom": 30, "left": 50},
+        "title": "CO₂-Emissionen fossiler Brennstoffe: Inventur und Schätzung",
+        "subtitle": "in Mt CO₂, Schätzung als Summe der letzten 12 Monate, Inventur jährlich (beim Dezember), Kohle laut Referenzansatz inkl. gespeichertem Kohlenstoff, ohne internationalen Flugverkehr, AT",
+        "footer": "Quelle: Umweltbundesamt - Treibhausgasinventur, eurostat, eigene Berechnungen"
+    },
+    "mapping": {
+        "x": {
+            "axis": {
+                "ticks": null,
+                "tickSpacing": 60,
+                "rotate": 0,
+                "format": "%Y"
+            }
+        },
+        "y": {
+            "hover": {
+                "format": ",.2f"
+            }
+        },
+        "type": {
+            "column": "type",
+            "legend": {
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "@stroke", "stroke-width": 2
+                        }
+                    }, {
+                        "type": "circle",
+                        "props": {
+                            "cx": 8, "cy": 8, "r": "@r", "fill": "@color"
+                        }
+                    }]
+                }
+            },
+            "props": {
+                "categories": {
+                    "estimate":  { "color": "#C3423F", "name": "Schätzung", "stroke": "#C3423F", "r": 0 },
+                    "inventory": { "color": "#444444", "name": "Inventur", "stroke": "none", "r": 3 }
+                }
+            },
+            "hover": {}
+        },
+        "facet": {
+            "column": "facet",
+            "props": {
+                "categories": {
+                    "total": { "name": "Gesamt" },
+                    "oil":   { "name": "Mineralöl" },
+                    "gas":   { "name": "Erdgas" },
+                    "coal":  { "name": "Kohle" }
+                }
+            }
+        }
+    },
+    "facets": {
+        "scales": ["x"],
+        "cols": {
+            "steps": [
+                {"cut":   0, "value": 1},
+                {"cut": 550, "value": 2}
+            ]
+        }
+    },
+    "plot": [{
+        "type": "cartesian:line",
+        "categories": ["type", "facet"],
+        "props": {
+            "stroke": "@stroke",
+            "stroke-width": 2,
+            "highlight-stroke-width": 3,
+            "fill": "none",
+            "d": { "x": "@x:scaled", "y": "@y:scaled" }
+        }
+    }, {
+        "type": "svg:circle",
+        "categories": ["type", "facet"],
+        "props": {
+            "cx": "@x:scaled",
+            "cy": "@y:scaled",
+            "r": "@r",
+            "fill": "@color"
+        }
+    }]
+}

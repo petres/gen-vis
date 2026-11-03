@@ -1,0 +1,182 @@
+[
+  {
+    "name": "the sum of the group up to the row, in the order of a column",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "cumulative",
+      "column": "value",
+      "as": "sum",
+      "by": "type",
+      "order": "date"
+    },
+    "columns": {
+      "sum": [
+        10,
+        40,
+        80,
+        5,
+        null,
+        20
+      ]
+    }
+  },
+  {
+    "name": "rows without a value have none",
+    "rows": [
+      {
+        "v": ""
+      },
+      {
+        "v": "15"
+      },
+      {
+        "v": "NA"
+      },
+      {
+        "v": "20"
+      }
+    ],
+    "transform": {
+      "type": "cumulative",
+      "column": "v"
+    },
+    "columns": {
+      "v": [
+        null,
+        15,
+        null,
+        35
+      ]
+    }
+  },
+  {
+    "name": "decimal numbers with spaces and exponents, not hexadecimal ones",
+    "rows": [
+      {
+        "v": "0x10"
+      },
+      {
+        "v": " 2 "
+      },
+      {
+        "v": "1e1"
+      },
+      {
+        "v": 3
+      }
+    ],
+    "transform": {
+      "type": "cumulative",
+      "column": "v"
+    },
+    "columns": {
+      "v": [
+        null,
+        2,
+        12,
+        15
+      ]
+    }
+  },
+  {
+    "name": "of a column of a transform before, the year of the dates",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": [
+      {
+        "type": "year",
+        "column": "date",
+        "as": "year"
+      },
+      {
+        "type": "cumulative",
+        "column": "value",
+        "by": [
+          "type",
+          "year"
+        ],
+        "order": "date",
+        "as": "sum"
+      }
+    ],
+    "columns": {
+      "year": [
+        2019,
+        2019,
+        2020,
+        2019,
+        2020,
+        2019
+      ],
+      "sum": [
+        10,
+        40,
+        40,
+        5,
+        null,
+        20
+      ]
+    }
+  }
+]

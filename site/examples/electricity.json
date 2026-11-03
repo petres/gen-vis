@@ -6,7 +6,7 @@
         "subtitle": "Share of a source in the electricity generated in each country, by year (2026: year to date)",
         "footer": "Source: ENTSO-E Transparency Platform · Boundaries © EuroGeographics",
         "locale": "en",
-        "height": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 380 }, { "cut": 560, "value": 500 }] },
+        "height": { "steps": ["@totalWidth", { "0": 380, "560": 500 }] },
         "margins": { "top": 0, "right": 0, "bottom": 0, "left": 0 },
         "transition": 400,
         "hover": { "position": "pointer", "side": "above", "offset": [0, -4] }
@@ -47,8 +47,12 @@
             "type": "numeric",
             "scale": { "type": "threshold", "domain": [0.2, 0.4, 0.6, 0.8], "range": ["#D5EBC6", "#9ED08F", "#5FAF6E", "#2A7D55", "#11573C"] },
             "legend": {
-                "format": ".0%", "orientation": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": "horizontal" }, { "cut": 560, "value": "vertical" }] },
-                "position": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": "top" }, { "cut": 560, "value": "right" }] }, "size": 180, "missing": { "name": "No data", "color": "#E9E4DA" } },
+                "format": ".0%",
+                "orientation": { "steps": ["@totalWidth", { "0": "horizontal", "560": "vertical" }] },
+                "position": { "steps": ["@totalWidth", { "0": "top", "560": "right" }] },
+                "size": 180,
+                "missing": { "name": "No data", "color": "#E9E4DA" }
+            },
             "hover": { "format": ".1%" }
         }
     },
@@ -56,14 +60,13 @@
         { "type": "geo:base", "props": { "fill": "#E9E4DA", "stroke": "#FFFFFF", "stroke-width": 0.6 } },
         {
             "type": "geo:region",
-            "categories": ["country"],
+            "by": "country",
             "props": {
                 "fill": "@share:scaled",
                 "stroke": "#FFFFFF",
-                "stroke-width": 0.6,
-                "highlight-stroke": "#0B2B26",
-                "highlight-stroke-width": 1.6
-            }
+                "stroke-width": 0.6
+            },
+            "highlight": { "stroke": "#0B2B26", "stroke-width": 1.6 }
         }
     ]
 }

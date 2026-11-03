@@ -14,66 +14,13 @@ export type PropEntry =
           [k: string]: PropEntry;
       };
 /**
- * A fixed value, a reference "@name" or a computed prop.
+ * A value, a reference "@name" or an expression of an operator.
  */
-export type Value = string | number | boolean | null | Prop;
-/**
- * A computed value: a reference, a ratio of a reference plus an offset, steps based on a reference, a reference as a text of a format or the prop of the case of the value of a reference. Instead of a reference the derived props can have a prop (of). The prop is required unless the object is merged into a prop of the parent definition.
- */
-export type Prop = {
-    prop?: 'fixed' | 'ref' | 'relative' | 'steps' | 'format' | 'match';
-    /**
-     * The d3 format of a format prop, e.g. ",.1f" or "%Y" of dates, in the locale.
-     */
-    format?: string;
-    /**
-     * e.g. totalWidth or a global, in a facet also innerWidth or innerHeight
-     */
-    ref?: string;
-    /**
-     * A prop whose value is used instead of the one of a reference, e.g. a steps prop of a relative one.
-     */
-    of?: {
-        [k: string]: unknown;
-    };
-    /**
-     * The factor of a relative prop, 1 by default.
-     */
-    ratio?: number;
-    /**
-     * Added to a relative prop, e.g. pixels of a position, 0 by default.
-     */
-    offset?: number;
-    /**
-     * The value of the last step with a cut below the reference.
-     */
-    steps?: {
-        cut: number;
-        value: unknown;
-    }[];
-    /**
-     * The props of a match prop by the value of the reference (as a text), e.g. of the categories.
-     */
-    cases?: {
-        [k: string]: unknown;
-    };
-    /**
-     * The prop of a match prop of other values, null by default.
-     */
-    default?: {
-        [k: string]: unknown;
-    };
-    /**
-     * The value of a fixed prop, e.g. an object which is not a nested prop.
-     */
-    value?: {
-        [k: string]: unknown;
-    };
-};
+export type Value = string | number | boolean | null | Expression;
 /**
  * A value of a mapping, e.g. a date of a string, a reference "@name", e.g. to a global, or a computed prop, null is taken from the data.
  */
-export type DomainValue = number | string | null | Prop;
+export type DomainValue = number | string | null | Expression;
 /**
  * Moves the hover by [x, y] pixels.
  *
@@ -82,9 +29,9 @@ export type DomainValue = number | string | null | Prop;
  */
 export type Pair = [number | null, number | null];
 /**
- * A number, a reference "@name", e.g. to a global, or a computed prop, e.g. based on totalWidth.
+ * A number, a reference "@name", e.g. to a global, or an expression, e.g. of totalWidth.
  */
-export type NumberValue = number | string | Prop;
+export type NumberValue = number | string | Expression;
 /**
  * Number and date formats, the name of a built-in locale, a language of Intl (e.g. fr or de-CH) or a d3 locale definition merged into one.
  */
@@ -215,7 +162,7 @@ export type FormElementValues = {
 }[];
 
 /**
- * A chart of gen-vis 3, see https://github.com/petres/gen-vis. A definition can be a part which is merged into its parent, so no entry is required.
+ * A chart of gen-vis 4, see https://github.com/petres/gen-vis. A definition can be a part which is merged into its parent, so no entry is required.
  */
 export interface GenVisDefinition {
     $schema?: string;
@@ -375,28 +322,134 @@ export interface Annotation {
         | undefined;
 }
 /**
- * Svg attributes (and text), values are fixed, references "@name", computed props or nested props, e.g. d of a path.
+ * Svg attributes (and text), values, references "@name", expressions of operators or nested props, e.g. d of a path.
  */
 export interface Props {
     [k: string]: PropEntry;
 }
+/**
+ * An operator, an object of one key, the operator, and its arguments, e.g. { "*": ["@innerWidth", 0.5] } or { "steps": ["@totalWidth", { "0": 220, "550": 250 }] }, see spec/expressions.md of the package.
+ */
+export interface Expression {
+    /**
+     * The sum of the values.
+     */
+    '+'?: PropEntry[] | PropEntry;
+    /**
+     * The first value minus the others, of one value its negation.
+     */
+    '-'?: PropEntry[] | PropEntry;
+    /**
+     * The product of the values.
+     */
+    '*'?: PropEntry[] | PropEntry;
+    /**
+     * The first value divided by the others, no value of a division by 0.
+     */
+    '/'?: PropEntry[] | PropEntry;
+    /**
+     * The least value.
+     */
+    min?: PropEntry[] | PropEntry;
+    /**
+     * The largest value.
+     */
+    max?: PropEntry[] | PropEntry;
+    /**
+     * [value, digits]: the value rounded to digits (0 by default), halves up.
+     */
+    round?: PropEntry[] | PropEntry;
+    /**
+     * The same values, as texts, e.g. 2024 and "2024".
+     */
+    '=='?: PropEntry[] | PropEntry;
+    /**
+     * Not the same values.
+     */
+    '!='?: PropEntry[] | PropEntry;
+    /**
+     * Numbers by their value, otherwise texts, false of a missing value, more values are a chain, e.g. [0, "@x", 10].
+     */
+    '<'?: PropEntry[] | PropEntry;
+    /**
+     * See <.
+     */
+    '<='?: PropEntry[] | PropEntry;
+    /**
+     * See <.
+     */
+    '>'?: PropEntry[] | PropEntry;
+    /**
+     * See <.
+     */
+    '>='?: PropEntry[] | PropEntry;
+    /**
+     * True of a false value (false, 0, "", null, an empty list).
+     */
+    not?: PropEntry[] | PropEntry;
+    /**
+     * The values as texts, joined.
+     */
+    cat?: PropEntry[] | PropEntry;
+    /**
+     * [condition, value, condition, value, ..., otherwise]: the value of the first true condition.
+     */
+    if?: PropEntry[] | PropEntry;
+    /**
+     * The first false value, otherwise the last one.
+     */
+    and?: PropEntry[] | PropEntry;
+    /**
+     * The first true value, otherwise the last one, e.g. a default ["@color", "black"].
+     */
+    or?: PropEntry[] | PropEntry;
+    /**
+     * [value, { "cut": value, ... }]: the value of the largest cut below the value, e.g. ["@totalWidth", { "0": 220, "550": 250 }].
+     */
+    steps?: PropEntry[] | PropEntry;
+    /**
+     * [value, { "case": value, ... }, default]: the value of the case of the value (as a text), otherwise the default.
+     */
+    match?: PropEntry[] | PropEntry;
+    /**
+     * [value, format]: the value as a text of a d3 format in the locale, e.g. ["@y", ",.1f"] or of dates ["@x", "%b %Y"].
+     */
+    format?: PropEntry[] | PropEntry;
+    /**
+     * A value which is not evaluated, e.g. a text starting with @.
+     */
+    literal?: {
+        [k: string]: unknown;
+    };
+    /**
+     * A reference, a name or [name, default], the default of an unknown name.
+     */
+    var?: string | [unknown] | [unknown, unknown];
+}
 export interface Transform {
     /**
-     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the values of `columns` combined by `op`, rank: the rank in the group, lookup: the `value` of the row of a file of `data` of the `key`.
+     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, lookup: the `value` of the row of a file of `data` of the `key`.
      */
-    type: 'year' | 'align' | 'index' | 'mean' | 'share' | 'rolling' | 'cumulative' | 'calc' | 'rank' | 'lookup';
+    type:
+        | 'year'
+        | 'align'
+        | 'index'
+        | 'mean'
+        | 'share'
+        | 'rolling'
+        | 'cumulative'
+        | 'calc'
+        | 'filter'
+        | 'rank'
+        | 'lookup';
     /**
      * The column of the values, a template of the globals, of a lookup the one of the keys.
      */
     column?: string;
     /**
-     * calc: the columns of the values, combined from the first one.
+     * calc: the expression of the value of the row, filter: the expression of the rows which are kept, its names are the columns of the row and the globals, e.g. { "*": [{ "/": ["@value", "@inno"] }, 100] } or { ">": ["@value", 0] }.
      */
-    columns?: string[];
-    /**
-     * calc: the operation of the values of the columns, min and max the least and the largest one.
-     */
-    op?: 'add' | 'subtract' | 'multiply' | 'divide' | 'min' | 'max';
+    expr?: string | number | boolean | null | Expression;
     /**
      * mean: the least number of values, without as many values the mean is missing, 1 by default.
      */
@@ -440,7 +493,7 @@ export interface Transform {
         [k: string]: unknown;
     };
     /**
-     * The value of the base of an index (100 by default), the factor of calc (1 by default).
+     * The value of the base of an index (100 by default).
      */
     scale?: number;
     /**
@@ -472,7 +525,7 @@ export interface Options {
     /**
      * A text instead of the plots and the legends, a template and a prop of the globals and totalWidth, e.g. steps of a narrow screen, null or an empty text for the plots.
      */
-    message?: string | null | Prop;
+    message?: string | null | Expression;
     /**
      * A text instead of the plots if there are no rows, e.g. of a filter, a template of the globals.
      */
@@ -548,7 +601,7 @@ export interface Options {
     /**
      * The height of a facet in pixels, 400 by default.
      */
-    height?: number | string | Prop;
+    height?: number | string | Expression;
     margins?: {
         top?: NumberValue;
         right?: NumberValue;
@@ -572,11 +625,14 @@ export interface Filter1 {
     [k: string]: unknown;
 }
 /**
- * Maps columns of the data to named dimensions, the plots and all other parts of the definition refer to these names, null removes a mapping, e.g. of a parent.
+ * Maps columns of the data to named dimensions, the plots and all other parts of the definition refer to these names, a text is the column, null removes a mapping, e.g. of a parent.
  */
 export interface Mapping {
-    [k: string]: MappingEntry | None;
+    [k: string]: MappingEntry | string | None;
 }
+/**
+ * A mapping of a column, x and y (polar also angle and radius) have a scale of their orientation and an axis, false removes them.
+ */
 export interface MappingEntry {
     /**
      * The column of the data, can be a template of globals, e.g. "{values}{share}", see formElements.
@@ -587,9 +643,13 @@ export interface MappingEntry {
      */
     name?: string;
     /**
-     * Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values (also of a mapping without a type) are strings of every format of the data, e.g. "2004" of the number 2004 of JSON or parquet.
+     * Without a type it follows from the other parts (categories or a band, point or ordinal scale are categorical, a time or utc scale date, other scales numeric, the mappings of the categories of plots and facets categorical) or from the values of the column: numbers numeric, dates date, otherwise categorical. Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values are strings of every format of the data, e.g. "2004" of the number 2004 of JSON or parquet.
      */
     type?: 'numeric' | 'date' | 'categorical';
+    /**
+     * The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. ",.0f".
+     */
+    format?: string;
     /**
      * Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars), a radial or an angular one (of pies, polar:arc from @<name>:start:scaled to @<name>:end:scaled), true all rows or the conditions of mappings of the rows which are stacked, as the ones of filter, e.g. { "type": { "not": "load" } }, the others have their own value as start and end, e.g. a line of a total on stacked areas.
      */
@@ -627,11 +687,11 @@ export interface MappingEntry {
               /**
                * The place of the legend, above or below the plots or beside them, the plots have the rest of the width, a prop of totalWidth (the width of the visualisation), e.g. below the plots of a phone.
                */
-              position?: ('top' | 'bottom' | 'left' | 'right') | Prop;
+              position?: ('top' | 'bottom' | 'left' | 'right') | Expression;
               /**
                * The direction of the scale of the colors, a vertical one has the high values at the top, a prop of totalWidth (the width of the visualisation).
                */
-              orientation?: ('horizontal' | 'vertical') | Prop;
+              orientation?: ('horizontal' | 'vertical') | Expression;
               /**
                * Only the entries of the categories of the rows after the filter, e.g. of the selected year, also the hidden ones.
                */
@@ -678,33 +738,39 @@ export interface MappingEntry {
                   [k: string]: Value;
               };
           };
-    props?:
-        | Removed
-        | {
-              common?: CategoryProps;
-              /**
-               * The categories by their key (the value of the column) and their props, in the order of the legend, the facets and the stacks.
-               */
-              categories?: {
-                  [k: string]: CategoryProps;
-              };
-              /**
-               * The values of the column which are not in categories are categories as well, after them, in ascending order.
-               */
-              fromData?: boolean;
-              /**
-               * The order of the categories: the one of categories (keys which are integers ascending first), ascending, descending (numbers by their value) or a list of keys which are first.
-               */
-              order?: ('ascending' | 'descending') | Key[];
-              /**
-               * The props of the categories by their rank in the order: of the first one, the second one, ..., the last entry is the one of all others, e.g. the newest year red.
-               */
-              ranks?: CategoryProps[];
-              /**
-               * The colors of the categories in their order as the prop color, a d3 scheme, e.g. Tableau10.
-               */
-              scheme?: string;
-          };
+    /**
+     * The domain of the scale, see scale.domain, e.g. [0, null].
+     *
+     * @minItems 1
+     */
+    domain?: [DomainValue, ...DomainValue[]];
+    /**
+     * Rounds the ends of the domain of the scale, see scale.nice.
+     */
+    nice?: boolean | number;
+    /**
+     * The categories by their key (the value of the column) and their props, e.g. colors, in the order of the legend, the facets and the stacks, only visible ones are shown.
+     */
+    categories?: {
+        [k: string]: CategoryProps;
+    };
+    /**
+     * The colors of the categories in their order as the prop color, a d3 scheme, e.g. Tableau10.
+     */
+    scheme?: string;
+    common?: CategoryProps1;
+    /**
+     * The values of the column which are not in categories are categories as well, after them, in ascending order.
+     */
+    fromData?: boolean;
+    /**
+     * The order of the categories: the one of categories (keys which are integers ascending first), ascending, descending (numbers by their value) or a list of keys which are first.
+     */
+    order?: ('ascending' | 'descending') | Key[];
+    /**
+     * The props of the categories by their rank in the order: of the first one, the second one, ..., the last entry is the one of all others, e.g. the newest year red.
+     */
+    ranks?: CategoryProps[];
 }
 export interface Scale {
     /**
@@ -758,7 +824,7 @@ export interface Scale {
     /**
      * A value of a mapping, e.g. a date of a string, a reference "@name", e.g. to a global, or a computed prop, null is taken from the data.
      */
-    center?: number | string | null | Prop;
+    center?: number | string | null | Expression;
     /**
      * The end of the classes of a threshold scale they include, the lower one (left, value >= limit) or the upper one (right, value > limit).
      */
@@ -772,15 +838,15 @@ export interface Scale {
     /**
      * By default the width or height of the plot, e.g. colors, references to the sizes of the coordinate system, e.g. "@radius".
      */
-    range?: (number | string | Prop)[];
+    range?: (number | string | Expression)[];
     /**
      * Band and point scales: the space between the categories and at the ends in steps, 0.4 by default; of a point scale of angles the place of the first category in steps, half a step after the top (0.5) by default, 0 at the top, e.g. of a radar chart.
      */
     padding?: number;
     /**
-     * A number, a reference "@name", e.g. to a global, or a computed prop, e.g. based on totalWidth.
+     * A number, a reference "@name", e.g. to a global, or an expression, e.g. of totalWidth.
      */
-    step?: number | string | Prop;
+    step?: number | string | Expression;
     /**
      * The order of the categories of the data of a band, point or ordinal scale: of the rows (default), ascending, descending or by the value of a mapping of their first row, e.g. bars by their length.
      */
@@ -838,13 +904,13 @@ export interface Axis {
      */
     ticks?: NumberValue | None;
     /**
-     * A number, a reference "@name", e.g. to a global, or a computed prop, e.g. based on totalWidth.
+     * A number, a reference "@name", e.g. to a global, or an expression, e.g. of totalWidth.
      */
-    tickSpacing?: number | string | Prop;
+    tickSpacing?: number | string | Expression;
     /**
      * Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or ["2004", "2008"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also a prop, e.g. steps of totalWidth.
      */
-    values?: unknown[] | Prop;
+    values?: unknown[] | Expression;
     /**
      * A d3 number or time format.
      */
@@ -917,9 +983,24 @@ export interface CategoryProps {
     legend?: boolean;
     [k: string]: unknown;
 }
+/**
+ * The props of all categories.
+ */
+export interface CategoryProps1 {
+    /**
+     * The key by default.
+     */
+    name?: string;
+    visible?: boolean;
+    /**
+     * false: the category has no entry in the legend, it stays visible, e.g. headers.
+     */
+    legend?: boolean;
+    [k: string]: unknown;
+}
 export interface Plot {
     /**
-     * The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations.
+     * The full name of a type has no default props. The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations.
      */
     type?:
         | (
@@ -945,11 +1026,16 @@ export interface Plot {
               | 'annotation:text'
               | 'annotation:circle'
           )
+        | ('arc' | 'area' | 'bar' | 'base' | 'circle' | 'line' | 'mesh' | 'point' | 'rect' | 'region' | 'text')
         | (string & {});
     /**
      * The class and the data-plot of the group of the plot, plot-<index> by default, the plots of a parent are merged by their ids.
      */
     id?: string;
+    /**
+     * The rows are grouped by this mapping or these mappings, e.g. a line per category, the props of their categories are available in the props.
+     */
+    by?: string | string[];
     /**
      * Rows of the plot instead of the ones of the data, e.g. events, with the names of the mappings and others, e.g. a label, or the url of a file of them. The values of rows of the definition are props, e.g. references to globals.
      */
@@ -999,9 +1085,14 @@ export interface Plot {
         [k: string]: unknown;
     };
     /**
-     * The elements with the highlight- props, the ones of the category of the hover (group, default) or only the one of its row (row), e.g. a segment of a stacked bar.
+     * The props of the elements of the category of the hover or of the entry of the legend, e.g. { "stroke-width": 3 }, mode: the elements of the category (group, default) or only the one of its row (row), e.g. a segment of a stacked bar, also as a text, e.g. "row".
      */
-    highlight?: 'group' | 'row';
+    highlight?:
+        | ('group' | 'row')
+        | {
+              mode?: 'group' | 'row';
+              [k: string]: PropEntry | 'group' | 'row' | undefined;
+          };
     /**
      * The interpolation of the paths and areas between their points, monotoneX is smooth without overshooting the values, the closed ones connect the last point with the first one, e.g. of radar charts.
      */
@@ -1017,11 +1108,13 @@ export interface Plot {
         | 'linearClosed'
         | 'catmullRomClosed'
         | 'basisClosed';
-    /**
-     * The rows are grouped by this mapping or these mappings, the props of their categories are available in the props.
-     */
-    categories?: string | string[];
     props?: Props;
+    /**
+     * The props of the other elements of the plot while an element is highlighted, e.g. { "opacity": 0.3 }.
+     */
+    others?: {
+        [k: string]: PropEntry;
+    };
 }
 /**
  * The rows of the conditions of mappings: a value or a list of values, e.g. a global of a form element { "year": "@year" }, null (no value), { "not": ... } or { "range": [from, to] } (null is open).
@@ -1035,13 +1128,13 @@ export interface Facets {
      */
     dim?: string;
     /**
-     * A number, a reference "@name", e.g. to a global, or a computed prop, e.g. based on totalWidth.
+     * A number, a reference "@name", e.g. to a global, or an expression, e.g. of totalWidth.
      */
-    cols?: number | string | Prop;
+    cols?: number | string | Expression;
     /**
      * The mappings which share their scale across all facets, or a reference to a global.
      */
-    scales?: string[] | string | Prop;
+    scales?: string[] | string | Expression;
 }
 /**
  * Entries of a parent are patched by their id, so only the id is required.

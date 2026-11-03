@@ -2,13 +2,7 @@
     "parent": "_timeline.json",
     "options": {
         "height": {
-            "prop": "steps",
-            "ref": "totalWidth",
-            "steps": [
-                {"cut":   0, "value": 220},
-                {"cut": 550, "value": 260},
-                {"cut": 600, "value": 300}
-            ]
+            "steps": ["@totalWidth", { "0": 220, "550": 260, "600": 300 }]
         },
         "margins": {"top": 15, "right": 30, "bottom": 45, "left": 50}
     },
@@ -36,18 +30,14 @@
     "plot": [
         {
             "type": "cartesian:bar",
-            "categories": ["type"],
+            "by": "type",
             "props": {
                 "fill": "@color",
                 "opacity": 0.9,
                 "x": "@x:scaled",
                 "y0": "@y:start:scaled",
                 "y1": "@y:end:scaled",
-                "width": {
-                    "prop": "relative",
-                    "ref": "innerWidth",
-                    "ratio": 0.008
-                }
+                "width": { "*": ["@innerWidth", 0.008] }
             }
         }
     ]

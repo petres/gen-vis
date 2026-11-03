@@ -56,33 +56,29 @@
                     }]
                 }
             },
-            "props": {
-                "common": {
-                    "visible": true,
-                    "stroke-width": 3,
-                    "r": 4,
-                    "width": 10,
-                    "transform": "translate(-20 0)"
-                },
-                "categories": {
-                    "Hauseigentum":     { "color": "#BBD7EE", "transform": "translate(-25 0)"},
-                    "Wohnungseigentum": { "color": "#5BC5F2", "transform": "translate(-15 0)"},
-                    "GBV Miete":        { "color": "#559BD5", "transform": "translate( -5 0)"},
-                    "Gemeinde Miete":   { "color": "#C7DF71", "transform": "translate(  5 0)"},
-                    "Private Miete":    { "color": "#4B9847", "transform": "translate( 15 0)"},
-                    "Sonstige":         { "color": "#9CE1F8", "transform": "translate( 25 0)"}
-                }
+            "common": {
+                "visible": true,
+                "stroke-width": 3,
+                "r": 4,
+                "width": 10,
+                "transform": "translate(-20 0)"
+            },
+            "categories": {
+                "Hauseigentum":     { "color": "#BBD7EE", "transform": "translate(-25 0)"},
+                "Wohnungseigentum": { "color": "#5BC5F2", "transform": "translate(-15 0)"},
+                "GBV Miete":        { "color": "#559BD5", "transform": "translate( -5 0)"},
+                "Gemeinde Miete":   { "color": "#C7DF71", "transform": "translate(  5 0)"},
+                "Private Miete":    { "color": "#4B9847", "transform": "translate( 15 0)"},
+                "Sonstige":         { "color": "#9CE1F8", "transform": "translate( 25 0)"}
             },
             "hover": {}
         },
         "geo": {
             "column": "Geo",
             "type": "categorical",
-            "props": {
-                "categories": {
-                    "Österreich": { "name": "Österreich"},
-                    "Wien": { "name": "Wien"}
-                }
+            "categories": {
+                "Österreich": { "name": "Österreich"},
+                "Wien": { "name": "Wien"}
             }
         }
     },
@@ -94,7 +90,7 @@
     "plot": [
         {
             "type": "cartesian:bar",
-            "categories": ["type"],
+            "by": "type",
             "props": {
                 "fill": "@color",
                 "opacity": 1,

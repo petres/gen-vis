@@ -1,0 +1,198 @@
+[
+  {
+    "name": "the parent of a parent, urls relative to the definition referencing them",
+    "url": "http://h/data/bev/def.json",
+    "files": {
+      "http://h/data/shared/base.json": {
+        "parent": "root.json",
+        "options": {
+          "width": 1,
+          "height": 2
+        },
+        "plot": [
+          {
+            "type": "a"
+          }
+        ]
+      },
+      "http://h/data/shared/root.json": {
+        "options": {
+          "width": 0,
+          "title": "root"
+        }
+      }
+    },
+    "def": {
+      "parent": "../shared/base.json",
+      "options": {
+        "width": 3
+      },
+      "plot": [
+        {
+          "type": "b"
+        }
+      ]
+    },
+    "result": {
+      "options": {
+        "width": 3,
+        "title": "root",
+        "height": 2
+      },
+      "parent": "../shared/base.json",
+      "plot": [
+        {
+          "type": "b"
+        }
+      ]
+    }
+  },
+  {
+    "name": "mixins in their order, a shared parent once before the first one using it",
+    "url": "http://h/data/bev/def.json",
+    "files": {
+      "http://h/data/root.json": {
+        "options": {
+          "title": "root",
+          "height": 1,
+          "width": 1
+        }
+      },
+      "http://h/data/lines.json": {
+        "parent": "root.json",
+        "options": {
+          "height": 2
+        },
+        "plot": [
+          {
+            "type": "a"
+          }
+        ]
+      },
+      "http://h/data/facets.json": {
+        "parent": "root.json",
+        "options": {
+          "width": 3
+        },
+        "facets": {
+          "dim": [
+            "type"
+          ]
+        }
+      }
+    },
+    "def": {
+      "parent": [
+        "../lines.json",
+        "../facets.json"
+      ],
+      "options": {
+        "title": "def"
+      }
+    },
+    "result": {
+      "options": {
+        "title": "def",
+        "height": 2,
+        "width": 3
+      },
+      "parent": [
+        "../lines.json",
+        "../facets.json"
+      ],
+      "plot": [
+        {
+          "type": "a"
+        }
+      ],
+      "facets": {
+        "dim": [
+          "type"
+        ]
+      }
+    }
+  },
+  {
+    "name": "a later mixin overrides an earlier one, plots of ids are merged across mixins",
+    "url": "http://h/def.json",
+    "files": {
+      "http://h/a.json": {
+        "plot": [
+          {
+            "id": "l",
+            "type": "cartesian:line",
+            "props": {
+              "stroke": "red"
+            }
+          }
+        ]
+      },
+      "http://h/b.json": {
+        "plot": [
+          {
+            "id": "l",
+            "props": {
+              "stroke": "blue"
+            }
+          },
+          {
+            "id": "p",
+            "type": "svg:circle"
+          }
+        ]
+      }
+    },
+    "def": {
+      "parent": [
+        "a.json",
+        "b.json"
+      ],
+      "plot": [
+        {
+          "id": "p",
+          "props": {
+            "r": 2
+          }
+        }
+      ]
+    },
+    "result": {
+      "plot": [
+        {
+          "id": "l",
+          "type": "cartesian:line",
+          "props": {
+            "stroke": "blue"
+          }
+        },
+        {
+          "id": "p",
+          "type": "svg:circle",
+          "props": {
+            "r": 2
+          }
+        }
+      ],
+      "parent": [
+        "a.json",
+        "b.json"
+      ]
+    }
+  },
+  {
+    "name": "a cyclic parent is an error",
+    "url": "http://h/a.json",
+    "files": {
+      "http://h/b.json": {
+        "parent": "a.json"
+      },
+      "http://h/a.json": {
+        "parent": "b.json"
+      }
+    },
+    "def": {
+      "parent": "b.json"
+    },
+    "error": "Cyclic parent definition 'http://h/b.json'"
+  }
+]

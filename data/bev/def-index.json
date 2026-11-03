@@ -20,41 +20,27 @@
         { "type": "line", "y": 100, "props": { "stroke-dasharray": "3 3" } }
     ],
     "mapping": {
-        "x": {
-            "column": "Jahr",
-            "type": "numeric",
-            "scale": { "orientation": "horizontal", "domainRel": [0, 0], "inset": 6 },
-            "axis": { "position": "bottom", "format": "c", "tickSpacing": 80 },
-            "hover": { "format": "c" }
-        },
-        "y": {
-            "column": "index",
-            "type": "numeric",
-            "scale": { "orientation": "vertical", "nice": true },
-            "axis": { "position": "left", "grid": true, "ticks": 5, "format": ",.0f" },
-            "hover": { "format": ",.1f" }
-        },
+        "x": { "column": "Jahr", "type": "numeric", "format": "c", "scale": { "domainRel": [0, 0], "inset": 6 }, "axis": { "tickSpacing": 80 }, "hover": {} },
+        "y": { "column": "index", "type": "numeric", "nice": true, "axis": { "grid": true, "ticks": 5, "format": ",.0f" }, "hover": { "format": ",.1f" } },
         "land": {
             "column": "Bundesland",
+            "fromData": true,
+            "scheme": "Tableau10",
+            "common": { "stroke-width": 1.5 },
+            "categories": { "ÖSTERREICH": { "name": "Gesamt", "color": "#000", "stroke-width": 3 } },
             "legend": { "symbol": "line" },
-            "hover": {},
-            "props": {
-                "fromData": true,
-                "scheme": "Tableau10",
-                "common": { "stroke-width": 1.5 },
-                "categories": { "ÖSTERREICH": { "name": "Gesamt", "color": "#000", "stroke-width": 3 } }
-            }
+            "hover": {}
         }
     },
     "plot": {
         "type": "cartesian:line",
-        "categories": ["land"],
+        "by": "land",
         "props": {
             "stroke": "@color",
             "stroke-width": "@stroke-width",
             "fill": "none",
-            "d": { "x": "@x:scaled", "y": "@y:scaled" },
-            "highlight-stroke-width": 4
-        }
+            "d": { "x": "@x:scaled", "y": "@y:scaled" }
+        },
+        "highlight": { "stroke-width": 4 }
     }
 }

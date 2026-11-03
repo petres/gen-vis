@@ -8,8 +8,10 @@
         "locale": "en",
         "height": 640,
         "margins": {
-            "top": 26, "right": 46, "bottom": 4,
-            "left": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 104 }, { "cut": 560, "value": 150 }] }
+            "top": 26,
+            "right": 46,
+            "bottom": 4,
+            "left": { "steps": ["@totalWidth", { "0": 104, "560": 150 }] }
         },
         "transition": 400,
         "hover": { "box": false, "marker": false, "area": "facet" },
@@ -41,11 +43,14 @@
                 "groups": { "by": "region", "padding": 1.6 }
             },
             "axis": {
-                "position": "left", "padding": 6,
-                "labels": { "props": {
-                    "text": "@name",
-                    "max-width": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 84 }, { "cut": 560, "value": 138 }] }
-                } }
+                "position": "left",
+                "padding": 6,
+                "labels": {
+                    "props": {
+                        "text": "@name",
+                        "max-width": { "steps": ["@totalWidth", { "0": 84, "560": 138 }] }
+                    }
+                }
             }
         },
         "name": { "column": "name", "type": "categorical" },
@@ -60,26 +65,37 @@
         {
             "id": "bars",
             "type": "cartesian:bar",
-            "categories": ["y"],
+            "by": "y",
             "props": {
-                "x1": "@x:scaled", "y": "@y:scaled", "fill": "#9CC9B9", "rx": 2,
-                "highlight-fill": "#0F766E", "others-opacity": 0.45
-            }
+                "x1": "@x:scaled",
+                "y": "@y:scaled",
+                "fill": "#9CC9B9",
+                "rx": 2
+            },
+            "highlight": { "fill": "#0F766E" },
+            "others": { "opacity": 0.45 }
         },
         {
             "id": "values",
             "type": "svg:text",
-            "categories": ["y"],
+            "by": "y",
             "props": {
-                "x": "@x:scaled", "dx": 5, "y": "@y:scaled:center", "dominant-baseline": "central",
-                "font-size": 11, "font-weight": "bold", "fill": "#0F766E", "text": "@x:formatted",
-                "visibility": "hidden", "highlight-visibility": "visible"
-            }
+                "x": "@x:scaled",
+                "dx": 5,
+                "y": "@y:scaled:center",
+                "dominant-baseline": "central",
+                "font-size": 11,
+                "font-weight": "bold",
+                "fill": "#0F766E",
+                "text": "@x:formatted",
+                "visibility": "hidden"
+            },
+            "highlight": { "visibility": "visible" }
         },
         {
             "id": "regions",
             "type": "svg:text",
-            "categories": ["region"],
+            "by": "region",
             "select": "first",
             "props": {
                 "x": "@x:scaled:0", "y": "@y:group:start", "dy": -5,

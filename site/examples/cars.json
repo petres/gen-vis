@@ -36,32 +36,30 @@
                     "elements": [{ "type": "circle", "props": { "cx": 7, "cy": 7, "r": 5, "fill": "@color" } }]
                 }
             },
-            "props": {
-                "categories": {
-                    "bev":    { "name": "Battery electric", "color": "#0E9F8E" },
-                    "phev":   { "name": "Plug-in hybrid",   "color": "#4C8FE0" },
-                    "hybrid": { "name": "Hybrid",           "color": "#D4A017" },
-                    "petrol": { "name": "Petrol",           "color": "#9B7BE0" },
-                    "diesel": { "name": "Diesel",           "color": "#E0607E" },
-                    "other":  { "name": "Other",            "color": "#B8BEC8" }
-                }
+            "categories": {
+                "bev":    { "name": "Battery electric", "color": "#0E9F8E" },
+                "phev":   { "name": "Plug-in hybrid",   "color": "#4C8FE0" },
+                "hybrid": { "name": "Hybrid",           "color": "#D4A017" },
+                "petrol": { "name": "Petrol",           "color": "#9B7BE0" },
+                "diesel": { "name": "Diesel",           "color": "#E0607E" },
+                "other":  { "name": "Other",            "color": "#B8BEC8" }
             },
             "hover": {}
         }
     },
     "plot": {
-        "type": "cartesian:area",
-        "categories": ["powertrain"],
+        "type": "area",
+        "by": "powertrain",
         "curve": "monotoneX",
         "layer": "below",
         "props": {
-            "d": { "x": "@x:scaled", "y0": "@y:start:scaled", "y1": "@y:end:scaled" },
             "fill": "@color",
+            "d": { "y0": "@y:start:scaled", "y1": "@y:end:scaled" },
             "fill-opacity": 0.85,
             "stroke": "#FFFFFF",
-            "stroke-width": 1.5,
-            "highlight-fill-opacity": 1,
-            "others-fill-opacity": 0.3
-        }
+            "stroke-width": 1.5
+        },
+        "highlight": { "fill-opacity": 1 },
+        "others": { "fill-opacity": 0.3 }
     }
 }

@@ -53,9 +53,11 @@
                 <p>A chart is drawn in steps, each one has its module, only the last one knows the DOM:</p>
                 <ol class="pipeline">
                     <li>
-                        <strong>Load</strong> <code>src/store.js</code>: the definition is merged with its parents,
-                        the parts of the package it needs are loaded with the data (e.g. the ones of maps only for a
-                        map), the data is read, CSV, TSV, JSON or the columns used of parquet.
+                        <strong>Load</strong> <code>src/utils/load.js</code>: the definition is merged with its
+                        parents and written in its internal form (<code>src/utils/normalize.js</code>: the defaults of
+                        the mappings and of the plot types, one of 3.x is migrated first), the parts of the package it
+                        needs are loaded with the data (e.g. the ones of maps only for a map), the data is read, CSV,
+                        TSV, JSON or the columns used of parquet.
                     </li>
                     <li>
                         <strong>Prepare</strong> <code>src/utils/def.js</code>: the selected entries of the form
@@ -92,35 +94,41 @@
                 <h3>Mappings</h3>
                 <p>
                     A mapping gives a column of the data a name and a type (<code>numeric</code>,
-                    <code>date</code> or categories), and everything which belongs to it: its
-                    <code>scale</code>, whose <code>orientation</code> is its place in the coordinate system
-                    (horizontal or vertical, angular or radial), its <code>axis</code>, <code>legend</code> and
-                    <code>hover</code>, and the <code>props</code> of its categories: a name, a color and any
-                    other value a plot can use. A mapping without a scale is fine, e.g. one which only groups rows
-                    or carries props of its categories.
+                    <code>date</code> or categorical, by default the one of its parts or of the values), and
+                    everything which belongs to it: its <code>scale</code>, whose <code>orientation</code> is its
+                    place in the coordinate system (horizontal or vertical, angular or radial), its
+                    <code>axis</code>, <code>legend</code> and <code>hover</code>, and its
+                    <code>categories</code> with their props: a name, a color and any other value a plot can use.
+                    <code>x</code> and <code>y</code> are the places of the coordinate system, they have a scale
+                    and an axis of their own, <code>"x": "year"</code> is a mapping of the column. A mapping
+                    without a scale is fine, e.g. one which only groups rows or carries props of its categories.
                 </p>
 
                 <h3>Plots</h3>
                 <p>
-                    A plot is a layer of SVG elements. <code>svg:circle</code>, <code>svg:rect</code>,
-                    <code>svg:line</code> and <code>svg:text</code> draw an element per row in any coordinate
-                    system, the others draw what their coordinate system needs, e.g. <code>cartesian:line</code>
-                    a path per group, <code>polar:arc</code> slices or <code>geo:region</code> the region of a row.
-                    <code>categories</code> groups the rows, <code>select</code> picks one row per group,
-                    <code>filter</code> leaves rows out and <code>data</code> gives a plot rows of its own, e.g.
-                    events. The props of a plot are the attributes of its elements.
+                    A plot is a layer of SVG elements. A type is the one of the coordinate system, e.g.
+                    <code>line</code> a path per group, <code>bar</code>, <code>point</code>, of polar plots
+                    <code>arc</code> slices, of maps <code>region</code> the region of a row, with the props it
+                    needs by default, e.g. the points of a line at <code>@x:scaled</code> and
+                    <code>@y:scaled</code>. The full names, e.g. <code>cartesian:line</code> and
+                    <code>svg:circle</code>, draw only the props of the definition, the <code>svg:</code> types an
+                    element per row in any coordinate system. <code>by</code> groups the rows, <code>select</code>
+                    picks one row per group, <code>filter</code> leaves rows out and <code>data</code> gives a plot
+                    rows of its own, e.g. events. The props of a plot are the attributes of its elements,
+                    <code>highlight</code> the ones of the elements under the pointer.
                 </p>
 
                 <h3>Props</h3>
                 <p>
-                    Most values of a definition are props, a small language of their own, the same everywhere:
+                    Most values of a definition are props, expressions close to JSON Logic, the same everywhere
+                    (and in the transforms <code>calc</code> and <code>filter</code>):
                 </p>
                 <div class="table-scroll">
                     <table class="names">
                         <tbody>
                             <tr><th><code>3</code>, <code>"none"</code></th><td>a value</td></tr>
                             <tr><th><code>"@y:scaled"</code></th><td>a reference to a name of the place of the prop</td></tr>
-                            <tr><th><code>{ "prop": "relative", "ref": "innerWidth", "ratio": 0.5 }</code></th><td>a computed value: <code>ref</code> (the value of the reference), <code>fixed</code> (its <code>value</code> as it is, e.g. an object which is no nested prop), <code>relative</code>, <code>steps</code> (e.g. of the width of the chart), <code>format</code> (a text of a number or a date) and <code>match</code> (the value of a case)</td></tr>
+                            <tr><th><code>{ "*": ["@innerWidth", 0.5] }</code></th><td>an operator, an object of one key and its arguments: <code>+ - * / min max round</code>, comparisons, <code>if</code>, <code>and</code>, <code>or</code>, <code>not</code>, <code>cat</code> (texts), <code>format</code> (a text of a number or a date), <code>steps</code> (e.g. of the width of the chart, <code>["@totalWidth", { "0": 3, "560": 5 }]</code>), <code>match</code> (the value of a case) and <code>literal</code> (a value as it is)</td></tr>
                             <tr><th><code>{ "x": "@x:scaled", "y": "@y:scaled" }</code></th><td>objects and lists of props, e.g. the points of a line</td></tr>
                         </tbody>
                     </table>

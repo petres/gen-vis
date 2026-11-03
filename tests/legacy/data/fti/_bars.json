@@ -1,0 +1,122 @@
+{
+    "parent": "_group.json",
+    "options": {
+        "class": "fti fti-bars",
+        "locale": { "base": "en", "number": { "currency": ["", "%"] } },
+        "margins": {
+            "top": 34, "right": 50, "bottom": 6,
+            "left": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 200 }, { "cut": 760, "value": 320 }] }
+        },
+        "message": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": "The display is too narrow, please rotate your device." }, { "cut": 480, "value": null }] },
+        "subtitle": "Sub-indicators, Austria relative to the comparison group (= 100)",
+        "hover": { "box": false, "marker": false, "area": "facet" }
+    },
+    "mapping": {
+        "x": {
+            "column": "{group}",
+            "type": "numeric",
+            "scale": { "type": "linear", "orientation": "horizontal", "domain": [0, null] },
+            "axis": {
+                "position": "top", "values": [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200], "format": "d",
+                "labels": { "props": { "font-size": 13, "font-weight": "bold" } }
+            },
+            "hover": { "format": ".1f" }
+        },
+        "y": {
+            "column": "label",
+            "type": "categorical",
+            "scale": { "type": "band", "orientation": "vertical", "padding": 0.45, "step": 23, "range": [0, "@height"], "groups": { "by": "group", "padding": 1 } },
+            "axis": {
+                "position": "left", "padding": 19,
+                "labels": { "categories": ["level"], "props": {
+                    "font-size": 13, "font-weight": "@weight", "fill": "#222",
+                    "max-width": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 170 }, { "cut": 760, "value": 290 }] }
+                } }
+            }
+        },
+        "group": { "column": "group", "type": "categorical" },
+        "color": {
+            "column": "{group}",
+            "type": "numeric",
+            "scale": {
+                "type": "threshold",
+                "domain": [74.5, 89.5, 99.5, 109.5],
+                "closed": "right",
+                "range": ["#EA4B55", "#F59036", "#F9EB00", "#AFD24B", "#3CAF55"]
+            }
+        },
+        "level": {
+            "column": "level",
+            "type": "categorical",
+            "props": { "categories": {
+                "header": { "bar": "#C2C2C2", "barHover": "#9A9A9A", "weight": "bold" },
+                "item": { "bar": "#DCDCDC", "barHover": "#A6A6A6", "weight": "normal" }
+            } }
+        },
+        "io": {
+            "column": "io",
+            "type": "categorical",
+            "props": { "categories": {
+                "input": { "name": "Input", "fill": "white" },
+                "output": { "name": "Output", "fill": "black" },
+                "none": { "legend": false }
+            } },
+            "legend": { "position": "bottom", "symbol": { "type": "circle", "size": 14, "props": { "fill": "@fill", "stroke": "black", "stroke-width": 1.5 } } }
+        }
+    },
+    "plot": [
+        {
+            "id": "bars",
+            "type": "cartesian:bar",
+            "categories": ["level"],
+            "highlight": "row",
+            "props": { "x1": "@x:scaled", "y": "@y:scaled", "fill": "@bar", "highlight-fill": "@barHover" }
+        },
+        {
+            "id": "axis",
+            "type": "svg:line",
+            "categories": ["group"],
+            "select": "first",
+            "props": { "x1": "@x:scaled:0", "x2": "@x:scaled:0", "y1": "@y:group:start", "y2": "@y:group:end", "stroke": "black", "stroke-width": 1.5 }
+        },
+        {
+            "id": "dots",
+            "type": "svg:circle",
+            "categories": ["level"],
+            "highlight": "row",
+            "props": { "cx": "@x:scaled", "cy": "@y:scaled:center", "r": 7.5, "fill": "@color:scaled", "highlight-r": 11 }
+        },
+        {
+            "id": "holes",
+            "type": "svg:circle",
+            "categories": ["level"],
+            "highlight": "row",
+            "filter": { "level": "header" },
+            "props": { "cx": "@x:scaled", "cy": "@y:scaled:center", "r": 4.5, "fill": "white", "highlight-r": 0 }
+        },
+        {
+            "id": "io",
+            "type": "svg:circle",
+            "categories": ["io"],
+            "filter": { "io": { "not": "none" } },
+            "props": {
+                "cx": { "prop": "relative", "ref": "x:scaled:0", "offset": -14 }, "cy": "@y:scaled:center", "r": 5,
+                "fill": "@fill", "stroke": "black", "stroke-width": 1.5
+            }
+        },
+        {
+            "id": "value",
+            "type": "svg:text",
+            "categories": ["level"],
+            "highlight": "row",
+            "props": {
+                "x": "@x:scaled", "dx": 15, "y": "@y:scaled:center", "dominant-baseline": "central",
+                "font-size": 13, "font-weight": "bold", "text": { "prop": "format", "ref": "x", "format": "$.0f" },
+                "visibility": "hidden", "highlight-visibility": "visible"
+            }
+        }
+    ],
+    "annotations": [
+        { "type": "line", "x": 100, "props": { "stroke": "#BBB", "stroke-width": 1.5 } }
+    ]
+}

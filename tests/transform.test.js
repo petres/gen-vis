@@ -3,6 +3,7 @@ import { applyTransforms, loadTransforms, transformColumns, transformGlobals, tr
 import { transformTypes } from '@/utils/transform-types';
 import { usedColumns } from '@/utils/data';
 import { validateDef } from '@/utils/validate';
+import { migrate } from '@/utils/migrate';
 import schema from '../schema.json';
 
 const rows = [
@@ -117,15 +118,17 @@ describe('transforms', () => {
         expect(usedColumns({ mapping: { y: { column: 'index' } }, transform: transforms })).toEqual(['index', 'date', 'value', 'type']);
     });
 
-    test('calc, the values of columns combined', () => {
+    test('calc of 3.x, the values of columns combined, migrated to an expression', () => {
         const wide = [{ v: '50', base: '200' }, { v: '3', base: '0' }, { v: '', base: '1' }];
-        expect(applyTransforms(wide, { type: 'calc', op: 'divide', columns: ['v', 'base'], scale: 100, as: 'rel' }).get('rel')).toEqual([25, null, null]);
-        expect(applyTransforms(wide, { type: 'calc', op: 'subtract', columns: ['base', 'v'], as: 'd' }).get('d')).toEqual([150, -3, null]);
-        expect(applyTransforms(wide, { type: 'calc', op: 'add', columns: ['v', 'base', 'v'], as: 's' }).get('s')).toEqual([300, 6, null]);
-        expect(() => applyTransforms(wide, { type: 'calc', op: 'power', columns: ['v'], as: 'p' })).toThrow("calc: unknown op 'power'");
+        const calc = t => applyTransforms(wide, migrate({ transform: t }).transform).get(t.as);
+        expect(calc({ type: 'calc', op: 'divide', columns: ['v', 'base'], scale: 100, as: 'rel' })).toEqual([25, null, null]);
+        expect(calc({ type: 'calc', op: 'subtract', columns: ['base', 'v'], as: 'd' })).toEqual([150, -3, null]);
+        expect(calc({ type: 'calc', op: 'add', columns: ['v', 'base', 'v'], as: 's' })).toEqual([300, 6, null]);
         // the least and the largest value, e.g. the ends of a band above or below a mean
-        expect(applyTransforms(wide, { type: 'calc', op: 'min', columns: ['v', 'base'], as: 'lo' }).get('lo')).toEqual([50, 0, null]);
-        expect(applyTransforms(wide, { type: 'calc', op: 'max', columns: ['v', 'base'], as: 'hi' }).get('hi')).toEqual([200, 3, null]);
+        expect(calc({ type: 'calc', op: 'min', columns: ['v', 'base'], as: 'lo' })).toEqual([50, 0, null]);
+        expect(calc({ type: 'calc', op: 'max', columns: ['v', 'base'], as: 'hi' })).toEqual([200, 3, null]);
+        expect(migrate({ transform: { type: 'calc', op: 'divide', columns: ['v', 'base'], scale: 100, as: 'rel' } }).transform)
+            .toEqual({ type: 'calc', as: 'rel', expr: { '*': [{ '/': ['@v', '@base'] }, 100] } });
     });
 
     test('mean, of the group, of the base and of at least `min` values', () => {
@@ -174,7 +177,7 @@ describe('transforms', () => {
             "transform[0]: unknown global 'base' in the template",
             "transform[1].size: the number of the rows of the window is needed, e.g. 7",
             "transform[1].align: expected 'end' or 'center'",
-            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'rank', 'lookup'",
+            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'lookup'",
             "transform[2].column: the column of the values is needed",
         ]);
         expect(schema.definitions.transform.properties.type.enum).toEqual(Object.keys(transformTypes));

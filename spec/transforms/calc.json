@@ -1,0 +1,196 @@
+[
+  {
+    "name": "an expression of columns of the row",
+    "rows": [
+      {
+        "v": "50",
+        "inno": "200"
+      },
+      {
+        "v": "3",
+        "inno": "0"
+      },
+      {
+        "v": "",
+        "inno": "1"
+      }
+    ],
+    "transform": {
+      "type": "calc",
+      "expr": {
+        "*": [
+          {
+            "/": [
+              "@v",
+              "@inno"
+            ]
+          },
+          100
+        ]
+      },
+      "as": "rel"
+    },
+    "columns": {
+      "rel": [
+        25,
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "an expression of a global, a column of the row is not a global",
+    "globals": {
+      "factor": 2,
+      "v": 100
+    },
+    "rows": [
+      {
+        "v": "3"
+      },
+      {
+        "v": "x"
+      }
+    ],
+    "transform": {
+      "type": "calc",
+      "expr": {
+        "*": [
+          "@v",
+          "@factor"
+        ]
+      },
+      "as": "d"
+    },
+    "columns": {
+      "d": [
+        6,
+        null
+      ]
+    }
+  },
+  {
+    "name": "an expression of texts and conditions",
+    "rows": [
+      {
+        "name": "Wien",
+        "v": "3"
+      },
+      {
+        "name": "Graz",
+        "v": "-1"
+      }
+    ],
+    "transform": {
+      "type": "calc",
+      "expr": {
+        "cat": [
+          "@name",
+          {
+            "if": [
+              {
+                ">": [
+                  "@v",
+                  0
+                ]
+              },
+              " +",
+              " -"
+            ]
+          }
+        ]
+      },
+      "as": "label"
+    },
+    "columns": {
+      "label": [
+        "Wien +",
+        "Graz -"
+      ]
+    }
+  },
+  {
+    "name": "an expression of a column of a transform before",
+    "rows": [
+      {
+        "d": "2019-03-01",
+        "v": "2"
+      }
+    ],
+    "transform": [
+      {
+        "type": "year",
+        "column": "d",
+        "as": "year"
+      },
+      {
+        "type": "calc",
+        "expr": {
+          "-": [
+            "@year",
+            "@v"
+          ]
+        },
+        "as": "x"
+      }
+    ],
+    "columns": {
+      "year": [
+        2019
+      ],
+      "x": [
+        2017
+      ]
+    }
+  },
+  {
+    "name": "an unknown name has no value",
+    "rows": [
+      {
+        "v": "1"
+      }
+    ],
+    "transform": {
+      "type": "calc",
+      "expr": {
+        "+": [
+          "@v",
+          "@nope"
+        ]
+      },
+      "as": "x"
+    },
+    "columns": {
+      "x": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "a template of the globals in an expression",
+    "globals": {
+      "col": "b"
+    },
+    "rows": [
+      {
+        "a": "1",
+        "b": "2"
+      }
+    ],
+    "transform": {
+      "type": "calc",
+      "expr": {
+        "*": [
+          "@{col}",
+          10
+        ]
+      },
+      "as": "x"
+    },
+    "columns": {
+      "x": [
+        20
+      ]
+    }
+  }
+]

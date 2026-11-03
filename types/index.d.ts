@@ -140,6 +140,8 @@ export interface PlotType {
     update?: boolean;
     curve?: boolean;
     coords?: string[];
+    /** The default props of a plot of the type written without its prefix, e.g. "tick" of "my:tick", or a function of the props of the plot. */
+    defaults?: Record<string, unknown> | ((props: Record<string, unknown>) => Record<string, unknown>);
 }
 
 /** Mounts an element, the props of its data- attributes and `props`, e.g. the events, returns the component. */

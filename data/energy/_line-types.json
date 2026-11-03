@@ -19,7 +19,7 @@
         }
     },
     "plot": {
-        "categories": ["year", "type"],
+        "by": ["year", "type"],
         "props": {
             "stroke-dasharray": "@stroke-dasharray"
         }

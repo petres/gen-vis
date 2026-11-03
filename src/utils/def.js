@@ -1,8 +1,9 @@
-export { mergeAll, sameValue, prepareDef, applyPatches, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts };
+export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts };
 
 import merge from 'deepmerge';
 import { schemeColors } from '@/utils/d3';
-import { comparison, isObject } from '@/utils/values';
+import { comparison, isObject, sameValue } from '@/utils/values';
+import { scaleTypeOf } from '@/utils/normalize';
 
 // arrays whose entries all have an `id`, e.g. the form elements and their
 // values, are merged by it, entries with a new id are appended, all other
@@ -19,18 +20,6 @@ const arrayMerge = (target, source, options) => {
 };
 
 const mergeAll = parts => merge.all(parts, { arrayMerge });
-
-// values of globals and entries are the same as strings, e.g. the year 2024
-// of the data and "2024" of a definition, but not 0 and "", missing ones are
-// null, lists and objects are compared by their content
-const scalar = v => v === null || v === undefined || typeof v != 'object';
-const sameValue = (a, b) => {
-    if (!scalar(a) || !scalar(b))
-        return JSON.stringify(a) == JSON.stringify(b);
-    if (a === null || a === undefined || b === null || b === undefined)
-        return (a ?? null) === (b ?? null);
-    return String(a) === String(b);
-};
 
 // keys of categories ascending or descending, numbers by their value
 const sortKeys = (keys, descending) => {
@@ -87,7 +76,7 @@ const object = (v, path, expected) => {
 
 // `dataKeys(column)` are the distinct values of a column of the data as
 // strings, see distinctValues of utils/data.js, the categories of `fromData`
-const prepareMapping = (m, name, dataKeys = () => [], globals = {}) => {
+const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = []) => {
     object(m, `mapping.${name}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`);
     // null or false removes a part, e.g. the hover of a parent
     ['scale', 'axis', 'legend', 'hover', 'props'].forEach(k => {
@@ -127,9 +116,10 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}) => {
         }))
     }
 
-    // the scale of another mapping (`of`) has no parts of its own
+    // the scale of another mapping (`of`) has no parts of its own, the type
+    // of the scale follows from the one of the mapping, see scaleTypeOf
     if (m.scale && m.scale.of === undefined) {
-        m.scale.type ??= "linear";
+        m.scale.type ??= scaleTypeOf(m, name, plots) ?? 'linear';
         m.scale.domain ??= [null, null];
     }
 
@@ -236,6 +226,28 @@ const selectedEntries = def => (def.formElements ?? []).map(e => selectedEntry(d
 const sources = Symbol('sources');
 
 /**
+ * The patchable parts of the original definition `defOrg` with the patches
+ * of the entries of the form elements selected by the globals of `def`, in
+ * the order of the form elements, see spec/merge.md. The globals of an entry
+ * can select the entry of a later form element, e.g. a language selects its
+ * names, they are set in `def.globals` until no entry changes them anymore,
+ * at most once per form element, e.g. of entries which set each other's
+ * globals.
+ */
+const patchedParts = (def, defOrg) => {
+    let selected;
+    for (let i = 0; i <= (def.formElements ?? []).length; i++) {
+        selected = selectedEntries(def);
+        const globals = JSON.stringify(def.globals);
+        selected.filter(v => isObject(v.globals)).forEach(v => Object.assign(def.globals, v.globals));
+        if (JSON.stringify(def.globals) == globals)
+            break;
+    }
+    const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));
+    return mergeAll([pick(defOrg), ...selected.filter(v => isObject(v.patch)).map(v => pick(v.patch))]);
+};
+
+/**
  * The parts of a definition with the patches of the selected entries of the
  * form elements (`patch`, e.g. { "mapping": { "y": { "column": "share" } } }
  * or { "geo": { "fit": "data" } }), merged into the original definition
@@ -252,20 +264,7 @@ const sources = Symbol('sources');
  * column or type.
  */
 const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null } = {}) => {
-    // the globals of an entry can select the entry of a later form element,
-    // e.g. a language selects its names, they are applied until no entry
-    // changes them anymore, at most once per form element, e.g. of entries
-    // which set each other's globals
-    let selected;
-    for (let i = 0; i <= (def.formElements ?? []).length; i++) {
-        selected = selectedEntries(def);
-        const globals = JSON.stringify(def.globals);
-        selected.filter(v => isObject(v.globals)).forEach(v => Object.assign(def.globals, v.globals));
-        if (JSON.stringify(def.globals) == globals)
-            break;
-    }
-    const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));
-    const patched = mergeAll([pick(defOrg), ...selected.filter(v => isObject(v.patch)).map(v => pick(v.patch))]);
+    const patched = patchedParts(def, defOrg);
     const before = def[sources] ?? {};
     const after = { mapping: {} };
     // a part prepared again if its source differs from the one before
@@ -315,7 +314,7 @@ const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, tr
             mapping[n] = old;
             return;
         }
-        const m = prepareMapping(merged, n, dataKeys);
+        const m = prepareMapping(merged, n, dataKeys, {}, def.plot);
         if (keepVisible && old?.props && m.props)
             m.keys.filter(k => Object.hasOwn(old.props, k)).forEach(k => m.props[k].visible = old.props[k].visible);
         if (old?.column !== m.column || old?.type !== m.type)
@@ -327,13 +326,14 @@ const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, tr
 };
 
 // the d3 format of the values of a mapping in a part of the visualisation:
-// of the axis its own, of the hover its own or the one of the axis, of the
+// of the axis its own or the one of the mapping (`format`), of the hover its
+// own, the one of the mapping or the one of the axis, of the
 // legend of colors its own or the one of the hover, undefined for the
 // default of the part, see coords/ticks.js, ColorLegend.vue and
 // valueFormat of utils/locale.js
 const formatOf = (m, part) => {
-    const axis = m.axis?.format;
-    const hover = m.hover?.format ?? axis;
+    const axis = m.axis?.format ?? m.format;
+    const hover = m.hover?.format ?? m.format ?? axis;
     if (part == 'axis')
         return axis;
     if (part == 'legend')

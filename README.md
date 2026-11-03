@@ -27,7 +27,7 @@ files next to it:
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
 
 <script type="module">
-import { mountGenVisByClass } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/esm/gen-vis.js';
+import { mountGenVisByClass } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/esm/gen-vis.js';
 mountGenVisByClass('genVis');
 </script>
 ```
@@ -39,7 +39,7 @@ they can be called before the module is loaded; `GenVis.ready` is the module,
 e.g. for `registerPlotType`:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/gen-vis.core.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.core.js"></script>
 <script>mountGenVisByClass('genVis').then(charts => ...)</script>
 ```
 
@@ -49,7 +49,7 @@ brotli) has all parts in itself, without the check of the definitions
 work with one file, its globals return the components at once:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/gen-vis.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.js"></script>
 <script>mountGenVisByClass('genVis')</script>
 ```
 
@@ -62,7 +62,7 @@ page the module `dist-lib/esm-novue/gen-vis.js` (66 kB at first):
 ```html
 <script type="importmap">{ "imports": { "vue": "https://cdn.jsdelivr.net/npm/vue@3/dist/vue.esm-browser.prod.js" } }</script>
 <script type="module">
-import { mountGenVisByClass } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/esm-novue/gen-vis.js';
+import { mountGenVisByClass } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/esm-novue/gen-vis.js';
 mountGenVisByClass('genVis');
 </script>
 ```
@@ -218,7 +218,7 @@ rows, `"empty": true` shows it, e.g. the name
 of every region. The other options of the hover:
 
 - `box`: `false` leaves out the box of the hover, the highlight of its
-  elements (see `highlight-` props of the [plot](#plot)) and the events stay,
+  elements (see `highlight` of the [plot](#plot)) and the events stay,
   e.g. a larger circle with its value as the hover of a row of bars.
 - `marker`: `false` leaves out the line of the position.
 - `position`: the hover is beside the marker of the position, of a map the
@@ -242,7 +242,7 @@ cartesian and polar plots.
 The charts of a page can be linked by their events and props, e.g. a map
 and a list of the countries beside it: the hover of one chart highlights the
 row of the other one (the prop `highlight`, values of mappings, as an entry
-of a legend highlights its category, see the `highlight-` and `others-`
+of a legend highlights its category, see `highlight` and `others`
 props of the [plots](#plot)), a hover of the chart itself replaces it while
 it is shown, the method `setHighlight(entry)` does the same. With
 `v-model:state` and `globals` they share their form elements and the
@@ -439,13 +439,13 @@ attribute, it is set at once, also with a transition, and it works for the
 props which are css properties of svg, e.g. colors, widths, opacities and
 fonts, not for positions, e.g. `x`. Of all props: of plots, annotations,
 axes (`labels`, `domain`, `tickMarks`), legends and the highlight
-(`highlight-` and `others-` props).
+(`highlight` and `others` of plots).
 
 ## Definition
 
 ```json
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@3/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
     "parent": "../shared/def.json",
     "data": "data.csv",
     "dataFormat": "csv",
@@ -461,6 +461,27 @@ axes (`labels`, `domain`, `tickMarks`), legends and the highlight
     "geo": { ... }
 }
 ```
+
+A definition of 4.0 is short: a mapping can be the name of its column, `x`
+and `y` have a scale and an axis by default, the type of a mapping follows
+from its parts or its values, a plot type of the coordinate system, e.g.
+`line`, has the props it needs by default:
+
+```json
+{
+    "data": "data.csv",
+    "mapping": {
+        "x": "Jahr",
+        "y": { "column": "Einwohner", "format": ",.0f", "domain": [0, null], "axis": { "grid": true } },
+        "land": { "column": "Bundesland", "fromData": true, "scheme": "Tableau10", "legend": {} }
+    },
+    "plot": { "type": "line", "by": "land", "highlight": { "stroke-width": 3 } }
+}
+```
+
+A definition of 3.x is migrated while it is loaded (with `check` the
+console says so), see [migrate](#checks-outside-the-browser) and the
+changes in `CHANGELOG.md`.
 
 See [data](#data) (also `dataFormat`), [`transform`](#transform),
 [`options`](#options), [`mapping`](#mapping), [`plot`](#plot),
@@ -514,7 +535,7 @@ The package contains a JSON Schema of the definitions, `schema.json`. With
 
 ```json
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@3/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
     ...
 }
 ```
@@ -611,13 +632,19 @@ list), the mappings and the later transforms can use the new column:
   "by": "country", "order": "date", "size": 28}`.
 - `cumulative`: the sum of the values of the group up to the row, in the order
   of `order`, e.g. the sum of a year so far with `"by": "year"`.
-- `calc`: the values of the columns `columns` combined by `op` (`add`,
-  `subtract`, `multiply`, `divide`, `min` or `max`, from the first one)
-  times `scale` (1 by default) in the column `as`, without a value if one is
-  missing or of a division by 0, e.g. a value relative to the one of a group
-  in another column (or the larger one of two columns with `max`, e.g. the
-  end of a band above a mean): `{"type": "calc", "op": "divide", "columns": ["value", "inno"],
-  "scale": 100, "as": "rel"}`.
+- `calc`: the value of the [expression](#props-of-the-definition) `expr`
+  of the row in the column `as`, its names are the columns of the row (also
+  the ones of the transforms before) and the globals, without a value if a
+  number is missing or of a division by 0, e.g. a value relative to the one
+  of a group in another column, `{"type": "calc", "expr": {"*": [{"/":
+  ["@value", "@inno"]}, 100]}, "as": "rel"}`, or the larger one of two
+  columns, e.g. the end of a band above a mean, `{"max": ["@value", "@mean"]}`.
+- `filter`: only the rows whose expression `expr` is true (the names are
+  the ones of `calc`), the later transforms, the plots and the scales have
+  only them, e.g. `{"type": "filter", "expr": {">": ["@value", 0]}}`, a
+  `share` after it is the one of these rows. The values of form elements of
+  a column are the ones of all rows. The `filter` of the definition is one of
+  the values of mappings, see [formElements](#formelements-and-globals).
 - `rank`: the rank of the value in its group, 1 of the least one or of the
   largest one with `"descending": true`, the same values have the same
   rank, e.g. the place of a country in a year with `"by": "year"`.
@@ -650,7 +677,7 @@ also in the image and the name of its file, see
 globals and `totalWidth` (a template), e.g. of a narrow screen:
 
 ```json
-"message": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": "The display is too narrow, please rotate your device." }, { "cut": 600, "value": null }] }
+"message": { "steps": ["@totalWidth", { "0": "The display is too narrow, please rotate your device.", "600": null }] }
 ```
 
 or of an entry of a form element (`"patch": { "options": { "message":
@@ -707,20 +734,45 @@ a page can be set with css (see [styles](#styles) for the colors):
 
 Maps columns of the data to named dimensions, the plots and all other parts of
 the definition refer to these names. `null` (or `false`) removes a part of a
-mapping of a parent or of a patch, e.g. `"hover": null`.
+mapping of a parent or of a patch, e.g. `"hover": null`. A text is the
+column, `"x": "Jahr"` is `"x": {"column": "Jahr"}`.
 
 ```json
 "y": {
     "column": "value",
     "type": "numeric",
-    "stacked": false,
-    "scale": { "type": "linear", "orientation": "vertical", "domain": [0, null] },
-    "axis": { "position": "left", "ticks": 8, "format": ".1f", "grid": true, "title": { "name": "€/l", "offset": 50 } },
+    "format": ".1f",
+    "domain": [0, null],
+    "scale": { "type": "linear", "orientation": "vertical" },
+    "axis": { "position": "left", "ticks": 8, "grid": true, "title": { "name": "€/l", "offset": 50 } },
     "hover": { "format": ".2f" }
 }
 ```
 
-- `type`: `numeric`, `date` or `categorical`. Numeric and date values which
+The mappings of the positions of the coordinate system have a scale of the
+orientation of their name and an axis: of cartesian plots `x` (horizontal,
+an axis at the bottom) and `y` (vertical, at the left), of polar plots `x`
+and `angle` (angular) and `y` and `radius` (radial), so `"x": "Jahr"` is
+enough. `"axis": false` leaves out the axis, `"scale": false` the scale,
+`"orientation": null` of the scale is none (e.g. a mapping `y` of the sizes
+of points). An axis without a `position` is at the one of the orientation of
+its scale (`bottom`, `left`, `angular`, `radial`), e.g. of a second vertical
+axis `"axis": {}` or `"axis": {"position": "right"}`.
+
+- `format`: the d3 format of the values, the one of the axis and of the
+  hover (and of `@y:formatted`) which have none of their own.
+- `domain` and `nice` are the ones of the scale (see below), e.g.
+  `"domain": [0, null]`.
+
+- `type`: `numeric`, `date` or `categorical`. Without a type it follows from
+  the parts of the mapping: `categories` (or a `band`, `point` or `ordinal`
+  scale) are categorical, a `time` or `utc` scale is a date, other scales
+  are numeric, a mapping of the categories of a plot (`by`) or of the
+  facets is categorical, otherwise it is the one of the values of the
+  column: numbers are numeric, dates (as below) a date, others categorical,
+  e.g. years of a column are numeric, so a mapping of the categories of
+  years is categorical by its `categories` or with `"type": "categorical"`.
+  Numeric and date values which
   are missing, invalid or infinite are `null`: they are gaps in lines and
   areas, points and bars are not drawn, and they are not shown in the hover. Dates are
   timestamps or strings. A date without a time zone, e.g. `2024-06-01`,
@@ -735,7 +787,10 @@ mapping of a parent or of a patch, e.g. `"hover": null`.
 - `scale`: `type` is a d3 scale (`linear`, `time`, `log`, `point`, `band`,
   ...), continuous scales need a `numeric` or `date` type (positions of dates
   a `time` or `utc` one), `point` and `band` a `categorical` one, `ordinal`
-  scales are of any values, e.g. the colors of categories (`range`).
+  scales are of any values, e.g. the colors of categories (`range`). Without
+  a type it is the one of the type of the mapping: `linear` of numeric ones,
+  `time` of dates, of categorical ones `band` of the positions of bars
+  (`bar`, `arc`), `point` of other positions and `ordinal` otherwise.
   `"scale": {"of": "y"}` is the scale of another mapping, the values of this
   one are positions on it too and they are in its domain, e.g. the other end
   of a band between two columns, `"y0": "@low:scaled", "y1": "@high:scaled"`,
@@ -860,14 +915,15 @@ mapping of a parent or of a patch, e.g. `"hover": null`.
   `font-weight` is the one of `vis-nearest`, of several mappings with a
   `row` the later ones override the ones before. The rows also have the
   keys of their categories as attributes, see [styles](#styles).
-- `props`: the categories and their props, e.g. colors. `common` props are
+- `categories`: the categories and their props, e.g. colors, by their key
+  (the value of the column). `common` props are
   used for all `categories`, `name` and `visible` are set by default. Only
   visible categories are shown. The order of the `categories` is the order
   of the legend, the facets and the stacks, not the order of the rows. Keys
   which are integers, e.g. years, are ordered ascending by JavaScript, first.
   `order` sets the order: `"ascending"`, `"descending"` (numbers by their
   value, e.g. the newest year first) or a list of keys, which are first, the
-  others after them. A patch of the props by a form element, e.g. other
+  others after them. A patch of the categories by a form element, e.g. other
   colors, replaces them, the entries of the legend keep their state.
   `ranks` are the props of the categories by their place
   in the order, of the first one, the second one, ..., the last entry of all
@@ -875,8 +931,8 @@ mapping of a parent or of a patch, e.g. `"hover": null`.
   category override them, they override `common`:
 
   ```json
-  "year": { "column": "year", "props": { "fromData": true, "order": "descending", "common": { "stroke-width": 2 },
-      "ranks": [{ "color": "#C3423F", "opacity": 1 }, { "color": "#CF8E02", "opacity": 0.7 }, { "color": "#BBB", "opacity": 0.3 }] } }
+  "year": { "column": "year", "fromData": true, "order": "descending", "common": { "stroke-width": 2 },
+      "ranks": [{ "color": "#C3423F", "opacity": 1 }, { "color": "#CF8E02", "opacity": 0.7 }, { "color": "#BBB", "opacity": 0.3 }] }
   ```
 
   Categories without a `color` (none of the mapping has one, no `scheme`)
@@ -892,7 +948,7 @@ mapping of a parent or of a patch, e.g. `"hover": null`.
   (of the number of categories), a `color` of the props is kept:
 
   ```json
-  "land": { "column": "Bundesland", "props": { "fromData": true, "scheme": "Tableau10", "categories": { "ÖSTERREICH": { "name": "Gesamt", "color": "#000" } } } }
+  "land": { "column": "Bundesland", "fromData": true, "scheme": "Tableau10", "categories": { "ÖSTERREICH": { "name": "Gesamt", "color": "#000" } } }
   ```
 - `legend`: a toggle for every category, `symbol` draws svg `elements` (with
   props) of the given `size` before the name, or is a shortcut in the color
@@ -934,7 +990,7 @@ mapping of a parent or of a patch, e.g. `"hover": null`.
   horizontal (of horizontal bars), a radial or an angular one (of pies, see
   [polar plots](#polar-plots)), the first category is at the bottom. `@y:start` and `@y:end` are the start and the end
   of the stacked value, `@y:start:scaled` and `@y:end:scaled` their positions,
-  e.g. `y0` and `y1` of `cartesian:bar`, `@y:height:scaled` the difference,
+  e.g. `y0` and `y1` of `bar`, `@y:height:scaled` the difference,
   e.g. the height of an `svg:rect`, `@y:mid` and `@y:mid:scaled` the middle,
   e.g. of a label in its stack. `true` stacks all rows, conditions of
   mappings, as the ones of [`filter`](#formelements-and-globals), only the
@@ -946,8 +1002,8 @@ mapping of a parent or of a patch, e.g. `"hover": null`.
   ```json
   "y": { "column": "value", "type": "numeric", "stacked": { "type": { "not": "load" } }, ... },
   "plot": [
-      { "type": "cartesian:area", "categories": ["type"], "filter": { "type": { "not": "load" } }, "props": { "d": { "x": "@x:scaled", "y0": "@y:start:scaled", "y1": "@y:end:scaled" } } },
-      { "type": "cartesian:line", "filter": { "type": "load" }, "props": { "d": { "x": "@x:scaled", "y": "@y:scaled" } } }
+      { "type": "area", "by": "type", "filter": { "type": { "not": "load" } }, "props": { "d": { "y0": "@y:start:scaled", "y1": "@y:end:scaled" } } },
+      { "type": "line", "filter": { "type": "load" } }
   ]
   ```
 
@@ -957,18 +1013,31 @@ A plot or a list of plots, drawn in order:
 
 ```json
 {
-    "type": "cartesian:line",
-    "categories": ["nuts"],
-    "props": {
-        "stroke": "@color",
-        "fill": "none",
-        "d": { "x": "@x:scaled", "y": "@y:scaled" },
-        "highlight-stroke-width": 3
-    }
+    "type": "line",
+    "by": "nuts",
+    "props": { "stroke-width": 1.5 },
+    "highlight": { "stroke-width": 3 }
 }
 ```
 
-- `type`: the types are named by their coordinate system:
+- `type`: a type of the coordinate system of the definition, `line`,
+  `area`, `bar`, `point` (or `circle`) and `text` of cartesian plots, of
+  polar plots `line`, `area`, `arc`, `point` and `text`, of maps `base`,
+  `region`, `circle`, `text` and `mesh`, has default props, the ones it
+  needs, a plot writes only the ones which differ, `null` removes one, nested
+  props (e.g. `d`) are merged into the defaults:
+
+  | Type | Default props |
+  |------|---------------|
+  | `line` | `"stroke": {"or": ["@color", "currentColor"]}, "fill": "none", "d": {"x": "@x:scaled", "y": "@y:scaled"}` (polar `"angle"` and `"radius"`) |
+  | `area` | `"fill"` as the stroke of a line, `"d": {"x": "@x:scaled", "y0": "@y:scaled:0", "y1": "@y:scaled"}` (polar `angle`, `innerRadius`, `outerRadius`) |
+  | `bar` | `"fill"`, `"x": "@x:scaled", "y1": "@y:scaled"`, of a horizontal one (`x1`) `"x1": "@x:scaled", "y": "@y:scaled"` |
+  | `point` | `"cx": "@x:scaled", "cy": "@y:scaled", "r": 3, "fill"` (polar `angle` and `radius`) |
+  | `text` | `"x": "@x:scaled", "y": "@y:scaled", "fill": "@color"` (polar `angle` and `radius`) |
+  | `arc` | `"fill"` |
+
+  The full names of the types, the name of the coordinate system and the
+  type, have no defaults, their props are the ones of the plot:
   - `svg:circle`, `svg:rect`, `svg:line`, `svg:text`: an svg element per row
     in any coordinate system, the props are its attributes, e.g.
     `"cx": "@x:scaled"`
@@ -982,23 +1051,25 @@ A plot or a list of plots, drawn in order:
     the bars are horizontal, from `x0` (by default 0) to `x1` at `y`, `height`
     is their thickness, e.g. of the countries of a band scale of `y`.
   - `polar:*` of [polar plots](#polar-plots) and `geo:*` of [maps](#maps)
-- `categories`: the rows are grouped by this mapping or these mappings, the
+- `by`: the rows are grouped by this mapping or these mappings, the
   props of their categories are available in the plot props. Mappings
-  without `props` only group the rows, e.g. a line per id.
+  without `categories` only group the rows, e.g. a line per id.
 - `id`: the class and the `data-plot` of the group of the plot, `plot-<index>`
   by default, the plots of a parent are merged by their ids (if all of them
   have one).
-- `props`: svg attributes (and `text`). Props starting with `highlight-` are
-  used for the elements of the category under the mouse or the legend entry,
-  props starting with `others-` for the other elements of the plot while an
-  element is highlighted, also of plots without categories, e.g.
-  `"others-opacity": 0.3` fades the others, `"others-visibility": "hidden"`
-  hides the label of the last value while the one of another value is
-  shown. `options.highlight.transition` moves the attributes to the ones of
+- `props`: svg attributes (and `text`), [props](#props-of-the-definition).
+- `highlight`: the props of the elements of the category under the mouse or
+  of the legend entry, e.g. `{"stroke-width": 3}`, `others` the props of
+  the other elements of the plot while an element is highlighted, also of
+  plots without categories, e.g. `"others": {"opacity": 0.3}` fades the
+  others, `{"visibility": "hidden"}` hides the label of the last value while
+  the one of another value is shown (the props `highlight-<name>` and
+  `others-<name>` are the same). `mode` of `highlight`: `group` (default)
+  highlights the elements of the category under the mouse, `row` only the
+  element of its row, e.g. the segment of a stacked bar, an entry of the
+  legend highlights all of its category, `"highlight": "row"` is the mode
+  alone. `options.highlight.transition` moves the attributes to the ones of
   the highlight in this many milliseconds, e.g. `{"transition": 50}`.
-- `highlight`: `group` (default) highlights the elements of the category under
-  the mouse, `row` only the element of its row, e.g. the segment of a stacked
-  bar, an entry of the legend highlights all of its category.
 - `curve`: the interpolation of the paths and areas between their points,
   `linear` (default), `monotoneX`, `natural`, `catmullRom`, `basis`, `step`,
   `stepBefore` or `stepAfter`. `monotoneX` is smooth without overshooting the
@@ -1012,19 +1083,19 @@ A plot or a list of plots, drawn in order:
   the least or the most value of a mapping, `{ "min": "y" }` or
   `{ "max": "x" }` (categories which are numbers by their value, e.g. `"10"`
   after `"9"`), e.g. labels at the ends of lines.
-- `dodge` (`svg:text`, `polar:text`): the texts are moved apart vertically
+- `dodge` (`text`): the texts are moved apart vertically
   to at least this distance in pixels, e.g. labels at the ends of lines, the
   ones of `polar:text` of the same angle along the radius (outwards from
   the inner radius, 0 and 360° are the same angle), e.g. labels of
   the same hour, labels of other angles are not moved.
-- `halo` (`svg:text`, `polar:text`): a halo behind the texts in the color
+- `halo` (`text`): a halo behind the texts in the color
   of `--gen-vis-halo-color`, `true` (3 pixels) or its width in pixels, e.g.
   labels on areas, the props of the plot replace its `stroke`,
   `stroke-width`, `paint-order` and `stroke-linejoin`. Texts without a
   `fill` are in the color of `--gen-vis-text-color` (black by default), see
   [styles](#styles).
 
-The texts of `svg:text` and of the labels of axes with a `max-width` prop
+The texts of `text` and of the labels of axes with a `max-width` prop
 (pixels) are cut with an ellipsis, the full text is their title (the
 tooltip of the browser, also below the area of the hover, e.g. of labels
 with `"area": "facet"`), or wrapped into lines with `"text-overflow":
@@ -1045,8 +1116,8 @@ format of the hover of the mapping (`@x:formatted`), see
 
 ```json
 {
-    "type": "svg:text",
-    "props": { "x": "@x:scaled", "dx": 4, "y": "@y:scaled:center", "dominant-baseline": "middle", "text": "@x:formatted" }
+    "type": "text",
+    "props": { "dx": 4, "y": "@y:scaled:center", "dominant-baseline": "middle", "text": "@x:formatted" }
 }
 ```
 
@@ -1054,11 +1125,11 @@ Labels at the ends of lines, in the color of the line:
 
 ```json
 {
-    "type": "svg:text",
-    "categories": ["nuts"],
+    "type": "text",
+    "by": "nuts",
     "select": { "max": "x" },
     "dodge": 12,
-    "props": { "x": "@x:scaled", "y": "@y:scaled", "dx": 4, "text": "@name", "fill": "@color" }
+    "props": { "dx": 4, "text": "@name" }
 }
 ```
 
@@ -1073,36 +1144,28 @@ of the horizontal one:
 
 ```json
 {
-    "type": "svg:text",
+    "type": "text",
     "data": [{ "y": "@target", "label": "Ziel" }],
-    "props": { "x": "@x:scaled:max", "y": "@y:scaled", "dy": -4, "text-anchor": "end", "text": "@label" }
+    "props": { "x": "@x:scaled:max", "dy": -4, "text-anchor": "end", "text": "@label" }
 }
 ```
 
 ### Polar plots
 
 With `"coord": "polar"` the plots are in a circle in the center of the facet,
-the mapping with the `angular` orientation goes around it, clockwise from the
-top, the one with the `radial` orientation from the center outwards, the
-margins are the space of the labels:
+the mapping with the `angular` orientation (by default `x` or `angle`) goes
+around it, clockwise from the top, the one with the `radial` orientation (`y`
+or `radius`) from the center outwards, the margins are the space of the labels:
 
 ```json
 "options": { "coord": "polar", "height": 400, "margins": {"top": 30, "right": 60, "bottom": 30, "left": 60} },
 "transform": [{ "type": "year", "column": "date", "as": "year" }, { "type": "align", "column": "date" }],
 "mapping": {
-    "x": {
-        "column": "date", "type": "date",
-        "scale": { "type": "utc", "orientation": "angular", "domain": ["2020-01-01", "2021-01-01"] },
-        "axis": { "position": "angular", "ticks": 12, "format": "%b", "grid": true }
-    },
-    "y": {
-        "column": "value", "type": "numeric",
-        "scale": { "orientation": "radial", "domain": [0, null] },
-        "axis": { "position": "radial", "ticks": 4, "grid": true }
-    },
-    "year": { "column": "year", "type": "categorical", "legend": {}, "props": { "fromData": true, "scheme": "Tableau10" } }
+    "x": { "column": "date", "type": "date", "format": "%b", "scale": { "type": "utc", "domain": ["2020-01-01", "2021-01-01"] }, "axis": { "ticks": 12, "grid": true } },
+    "y": { "column": "value", "type": "numeric", "domain": [0, null], "axis": { "ticks": 4, "grid": true } },
+    "year": { "column": "year", "type": "categorical", "fromData": true, "scheme": "Tableau10", "legend": {} }
 },
-"plot": { "type": "polar:line", "categories": ["year"], "props": { "stroke": "@color", "fill": "none", "d": { "angle": "@x:scaled", "radius": "@y:scaled" } } }
+"plot": { "type": "line", "by": "year" }
 ```
 
 The years of daily data, the dates aligned to 2020, a line per year.
@@ -1150,7 +1213,7 @@ The years of daily data, the dates aligned to 2020, a line per year.
 - Values below the domain of the radius are drawn at the inner radius, not
   on the other side of the center.
 - The titles of the facets are centered above the circles.
-- The plot types: `polar:line` (a line per group, `d` with `angle` and
+- The plot types (`line` is `polar:line` of polar plots): `polar:line` (a line per group, `d` with `angle` and
   `radius`), `polar:area` (an area per group, `d` with `angle`,
   `innerRadius` and `outerRadius`), `polar:arc` (a segment of a ring per row,
   props `angle`, `innerRadius` and `outerRadius`, optional `width` in radians,
@@ -1175,9 +1238,9 @@ its values are the ones of the hover, the slices are `polar:arc` from
 "options": { "coord": "polar", "height": 360 },
 "mapping": {
     "value": { "column": "value", "type": "numeric", "stacked": true, "scale": { "orientation": "angular" }, "hover": {} },
-    "type": { "column": "type", "type": "categorical", "legend": {}, "hover": {}, "props": { "fromData": true, "scheme": "Tableau10" } }
+    "type": { "column": "type", "fromData": true, "scheme": "Tableau10", "legend": {}, "hover": {} }
 },
-"plot": { "type": "polar:arc", "categories": ["type"], "props": { "fill": "@color", "stroke": "white", "startAngle": "@value:start:scaled", "endAngle": "@value:end:scaled", "innerRadius": 60, "highlight-opacity": 0.8 } }
+"plot": { "type": "arc", "by": "type", "props": { "stroke": "white", "startAngle": "@value:start:scaled", "endAngle": "@value:end:scaled", "innerRadius": 60 }, "highlight": { "opacity": 0.8 } }
 ```
 
 The circle is the sum of the values. The hover shows the slice under the
@@ -1207,7 +1270,7 @@ mapping (`join`) whose values are the keys of the features:
 "globals": { "type": "euroSuper95" },
 "filter": { "type": "@type" },
 "mapping": {
-    "country": { "column": "country", "type": "categorical" },
+    "country": "country",
     "type": { "column": "variable", "type": "categorical" },
     "price": {
         "name": "€/Liter", "column": "value", "type": "numeric",
@@ -1216,8 +1279,8 @@ mapping (`join`) whose values are the keys of the features:
     }
 },
 "plot": [
-    { "type": "geo:base", "props": { "fill": "#EEE", "stroke": "white" } },
-    { "type": "geo:region", "categories": ["country"], "props": { "fill": "@price:scaled", "highlight-stroke": "#333" } }
+    { "type": "base", "props": { "fill": "#EEE", "stroke": "white" } },
+    { "type": "region", "by": "country", "props": { "fill": "@price:scaled" }, "highlight": { "stroke": "#333" } }
 ]
 ```
 
@@ -1242,7 +1305,7 @@ mapping (`join`) whose values are the keys of the features:
   common projection of Europe (EPSG:3035), `parallels` are the ones of a
   conic projection, e.g. `"parallels": [46, 49]` of `conicConformal` for
   Austria, `rotate` of `mercator` its central meridian.
-- The plot types: `geo:base` (all features, e.g. as background, the props
+- The plot types (`region` is `geo:region` of maps, they have no default props): `geo:base` (all features, e.g. as background, the props
   are fixed), `geo:region` (the feature of every row), `geo:circle` and
   `geo:text` (an element per row at the center of its feature or at the `lon`
   and `lat` of its props, e.g. proportional circles with a `sqrt` scale of
@@ -1255,8 +1318,8 @@ mapping (`join`) whose values are the keys of the features:
   objects share the arcs of the topology, so the borders are the same lines:
 
   ```json
-  { "type": "geo:region", "categories": ["district"], "props": { "fill": "@value:scaled", "stroke": "white", "stroke-width": 0.5 } },
-  { "type": "geo:mesh", "object": "states", "borders": "inner", "props": { "stroke": "white", "stroke-width": 1.5 } }
+  { "type": "region", "by": "district", "props": { "fill": "@value:scaled", "stroke": "white", "stroke-width": 0.5 } },
+  { "type": "mesh", "object": "states", "borders": "inner", "props": { "stroke": "white", "stroke-width": 1.5 } }
   ```
 - The hover shows the region under the mouse: its name (the `name` of the
   props of the `join` mapping, of the feature or the key) and the rows of it
@@ -1323,30 +1386,38 @@ See `data/sprit-nuts/def.json`, `data/rechtsform/def-stacked-p.json` and
 
 ### Props of the definition
 
-Most values of a definition can be props:
+Most values of a definition are props, expressions close to
+[JSON Logic](https://jsonlogic.com/), also the `expr` of the transforms
+`calc` and `filter`, see `spec/expressions.md` (the rules for other
+languages):
 
-- fixed values, e.g. `3` or `"none"`
-- references `"@name"`, see below, also as `{"prop": "ref", "ref": "name"}`
-- `{"prop": "fixed", "value": ...}`: a value which is not a prop, e.g. an
-  object or a text starting with `@`
-- `{"prop": "relative", "ref": "innerWidth", "ratio": 0.01, "offset": 0}`: a
-  ratio of a reference (1 by default) plus an offset (0 by default), e.g.
-  `{"prop": "relative", "ref": "x:scaled", "offset": -14}`, a position moved
-  by 14 pixels
-- `{"prop": "steps", "ref": "totalWidth", "steps": [{"cut": 0, "value": 220}, {"cut": 550, "value": 250}]}`:
-  the value of the last step with a cut below the reference
-- `{"prop": "format", "ref": "y", "format": ",.1f"}`: the reference as a text
-  of a d3 format in the locale, of a date mapping a time format, e.g.
-  `"%b %Y"`, e.g. a label of a value
-- `{"prop": "match", "ref": "level", "cases": {"header": 4.5, "item": "@r"},
-  "default": 0}`: the prop of the case of the value of the reference (as a
-  text), `default` (null by default) of other values, e.g. a size by a
-  category
-- the props `relative`, `steps`, `format` and `match` can have a prop `of`
-  instead of a reference, e.g. `{"prop": "relative", "of": {"prop":
-  "steps", ...}, "ratio": 0.5}`
+- values, e.g. `3`, `"none"` or `null`, and lists of props
+- references `"@name"`, see below, also `{"var": "name"}`, `{"var": ["name",
+  0]}` is `0` if the name is unknown
+- an operator, an object of exactly one key, the operator, and its
+  arguments (a list, or one of them):
+  - `+`, `-`, `*`, `/`, `min`, `max`, `round` (`[x, digits]`), e.g.
+    `{"*": ["@innerWidth", 0.013]}` or `{"+": ["@x:scaled", -14]}`, a
+    position moved by 14 pixels; no value if a value is no number (also a
+    text of the data which is no decimal number) or of a division by 0
+  - `==`, `!=` (the same as texts, e.g. `2024` and `"2024"`), `<`, `<=`, `>`,
+    `>=` (numbers by their value, otherwise texts, false of a missing value,
+    `{"<": [0, "@x", 10]}` is a value between), `and`, `or` (the first true
+    value, e.g. a default `{"or": ["@color", "black"]}`), `not`, `if`
+    (`[condition, value, ..., otherwise]`)
+  - `cat`: the values as a text, e.g. `{"cat": ["@name", ": ", "@y"]}`
+  - `format`: a value as a text of a d3 format in the locale, of a date
+    mapping a time format, e.g. `{"format": ["@y", ",.1f"]}` or `["@x", "%b %Y"]`
+  - `steps`: the value of the largest cut below the value, e.g. `{"steps":
+    ["@totalWidth", {"0": 220, "550": 250}]}`
+  - `match`: the value of the case of a value (as a text), otherwise the
+    default (null without one), e.g. `{"match": ["@level", {"header": 4.5,
+    "item": "@r"}, 0]}`
+  - `literal`: a value which is not evaluated, e.g. an object or a text
+    starting with `@`
 
-Objects without `prop` are nested props, e.g. `d` of a path.
+Other objects are nested props, e.g. `d` of a path. The props of 3.x
+(`{"prop": "relative", ...}`) are migrated, see `spec/expressions.md`.
 
 The names of the references depend on the part of the definition, the inner
 parts add names:
@@ -1366,7 +1437,7 @@ is undefined, `validateDef` warns of it.
 
 ### `facets`
 
-A plot for every category of `dim` (the name of a mapping with `props`), in
+A plot for every category of `dim` (the name of a mapping with `categories`, also `fromData`), in
 `cols` columns (1 by default). The mappings listed in `scales` share their
 scale across all facets. `cols` can be a prop based on `totalWidth`,
 `scales` a reference to `globals`. The title of a facet (`vis-facet-title`)
@@ -1429,7 +1500,9 @@ the column of an axis. A patch has the parts `options`, `mapping`, `plot`,
 `annotations`, `filter`, `facets`, `geo` and `transform`, it is merged into
 the definition as a parent is (plots and other lists of entries with an `id`
 by their ids), the patches of several form elements in their order, `null`
-removes a part, e.g. a mapping. Only the parts which change are prepared
+removes a part, e.g. a mapping. The mappings of a patch are parts of the ones of the
+definition, they have no default scale or axis of their own, a plot of a type
+without prefix has the default props of its type. Only the parts which change are prepared
 again, the entries of the legends of the same categories keep their state:
 
 ```json
@@ -1503,7 +1576,31 @@ console.log(validateDef(def));  // the warnings, e.g. unknown plot types
 ```
 
 `validateDef(def, rows)` also checks the rows of the data, e.g. years as
-numbers of a `date` mapping.
+numbers of a `date` mapping, the types of the mappings without one are the
+ones of the values. A definition of 3.x gets the warning first, its other
+warnings are the ones of the migrated definition.
+
+`migrate(def)` is the definition of 4.0 of a merged definition of 3.x (a
+definition of 4.0 stays as it is, except mappings without a type, which are
+categorical in 3.x), `migrateParts(parts)` the ones of a definition and its
+parents, in the order of their merge (the parents first), so the files of
+definitions with parents are migrated each, e.g. a page of charts of shared
+parents: the parts the merged mappings need, e.g. `"type": "categorical"`,
+are in their first part. `normalize(def)` is the internal form of a
+definition of 4.0, the one the renderer reads (the form of 3.x), see
+`spec/normalize.md`:
+
+```js
+import { migrateParts } from '@preschen/gen-vis/check';
+
+// the parts of a definition, e.g. [parent, def], migrated, written back
+const [parent4, def4] = migrateParts([parent, def]);
+```
+
+The parts which are not bound to the browser, the expressions, the
+transforms, merging, normalize and migrate, are specified by the fixtures of
+`spec/` (`spec/README.md`), so they can be implemented in other languages,
+e.g. Python or R, the tests of the package run them.
 
 ### Extensions
 
@@ -1527,11 +1624,19 @@ import { registerPlotType, perRow } from '@preschen/gen-vis';
 
 registerPlotType('my:tick', {
     update: true,
+    defaults: { cx: '@x:scaled', fill: { or: ['@color', 'currentColor'] } },
     marks: (groups, plot, ctx) => perRow(groups, 'rect', v => ({
         ...v, x: v.cx - 1, width: 2, height: ctx.innerHeight,
     })),
 });
 ```
+
+`defaults` are the default props of a plot of the type written without its
+prefix (`"type": "tick"`, the only registered type of the name of the
+coordinate system, or one of the prefix of the coordinate system, e.g.
+`cartesian:tick`), an object or a function of the props of the plot, the
+props of the plot are merged into them, see `src/plots/defaults.js` of the
+built-in ones.
 
 The marks are a layer, `{ element, groups: [{ categories, items }] }` (an
 element per item in a `g.vis-group` per group) or `{ element, items }` (the
@@ -1608,6 +1713,11 @@ the use are `site/components/VueDemo.vue` and `site/public/standalone.html`
 `lib/esm/` of the page) of the chart `site/public/charts/seasons.json`, the
 comparison with other libraries is `site/components/Comparison.vue`. The
 tests check and draw the examples, as the ones of `data/`.
+
+`spec/` has the fixtures of the parts of the definitions which other
+languages can implement (`spec/README.md`), `tests/spec.test.js` runs them,
+`tests/legacy/` the definitions of `data/` of 3.1, migrate of them is checked
+against the ones of 4.0 (`tests/migrate.test.js`).
 
 `tests/snapshots/` has the html of every definition in `data/`, drawn,
 hovered and with the first entry of the legend toggled, so changes of the

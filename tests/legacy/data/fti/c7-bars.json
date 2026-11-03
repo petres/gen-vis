@@ -1,0 +1,8 @@
+{
+    "parent": "_bars.json",
+    "data": "c7-bars.csv",
+    "options": {
+        "title": "Artificial Intelligence",
+        "footer": "Source: <a href=\"https://fti-monitor.forwit.at/en/B/C.7\">FTI Monitor C.7</a>, FORWIT"
+    }
+}

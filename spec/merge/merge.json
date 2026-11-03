@@ -1,0 +1,508 @@
+[
+  {
+    "name": "objects are merged deeply, later parts override earlier ones",
+    "parts": [
+      {
+        "options": {
+          "width": 1,
+          "height": 2,
+          "margins": {
+            "top": 1,
+            "left": 2
+          }
+        }
+      },
+      {
+        "options": {
+          "width": 3,
+          "margins": {
+            "left": 5
+          }
+        }
+      }
+    ],
+    "result": {
+      "options": {
+        "width": 3,
+        "height": 2,
+        "margins": {
+          "top": 1,
+          "left": 5
+        }
+      }
+    }
+  },
+  {
+    "name": "arrays are replaced",
+    "parts": [
+      {
+        "plot": [
+          {
+            "type": "a"
+          },
+          {
+            "type": "b"
+          }
+        ]
+      },
+      {
+        "plot": [
+          {
+            "type": "c"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "plot": [
+        {
+          "type": "c"
+        }
+      ]
+    }
+  },
+  {
+    "name": "arrays of numbers and strings are replaced, also by an empty one",
+    "parts": [
+      {
+        "mapping": {
+          "y": {
+            "scale": {
+              "domain": [
+                0,
+                100
+              ]
+            }
+          }
+        }
+      },
+      {
+        "mapping": {
+          "y": {
+            "scale": {
+              "domain": [
+                null
+              ]
+            }
+          }
+        }
+      },
+      {
+        "options": {
+          "a": [
+            "x"
+          ]
+        }
+      },
+      {
+        "options": {
+          "a": []
+        }
+      }
+    ],
+    "result": {
+      "mapping": {
+        "y": {
+          "scale": {
+            "domain": [
+              null
+            ]
+          }
+        }
+      },
+      "options": {
+        "a": []
+      }
+    }
+  },
+  {
+    "name": "arrays whose entries all have an id are merged by it, new ids are appended",
+    "parts": [
+      {
+        "plot": [
+          {
+            "id": "line",
+            "type": "cartesian:line",
+            "props": {
+              "stroke": "red",
+              "fill": "none"
+            }
+          },
+          {
+            "id": "dots",
+            "type": "svg:circle"
+          }
+        ]
+      },
+      {
+        "plot": [
+          {
+            "id": "label",
+            "type": "svg:text"
+          },
+          {
+            "id": "line",
+            "props": {
+              "stroke": "blue"
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "plot": [
+        {
+          "id": "line",
+          "type": "cartesian:line",
+          "props": {
+            "stroke": "blue",
+            "fill": "none"
+          }
+        },
+        {
+          "id": "dots",
+          "type": "svg:circle"
+        },
+        {
+          "id": "label",
+          "type": "svg:text"
+        }
+      ]
+    }
+  },
+  {
+    "name": "arrays of entries with ids are replaced if one entry of either has no id",
+    "parts": [
+      {
+        "plot": [
+          {
+            "id": "line",
+            "type": "a"
+          },
+          {
+            "type": "b"
+          }
+        ]
+      },
+      {
+        "plot": [
+          {
+            "id": "line",
+            "props": {
+              "r": 1
+            }
+          }
+        ]
+      },
+      {
+        "formElements": [
+          {
+            "id": "a",
+            "name": "A"
+          }
+        ]
+      },
+      {
+        "formElements": [
+          {
+            "id": "a",
+            "name": "B"
+          },
+          {
+            "name": "C"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "plot": [
+        {
+          "id": "line",
+          "props": {
+            "r": 1
+          }
+        }
+      ],
+      "formElements": [
+        {
+          "id": "a",
+          "name": "B"
+        },
+        {
+          "name": "C"
+        }
+      ]
+    }
+  },
+  {
+    "name": "the entries of entries with ids are merged by their ids as well, e.g. the values of form elements",
+    "parts": [
+      {
+        "formElements": [
+          {
+            "id": "unit",
+            "ref": "unit",
+            "values": [
+              {
+                "id": "twh",
+                "name": "TWh"
+              },
+              {
+                "id": "pj",
+                "name": "PJ"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "formElements": [
+          {
+            "id": "unit",
+            "values": [
+              {
+                "id": "pj",
+                "patch": {
+                  "mapping": {
+                    "y": {
+                      "column": "pj"
+                    }
+                  }
+                }
+              },
+              {
+                "id": "mtoe",
+                "name": "Mtoe"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "result": {
+      "formElements": [
+        {
+          "id": "unit",
+          "ref": "unit",
+          "values": [
+            {
+              "id": "twh",
+              "name": "TWh"
+            },
+            {
+              "id": "pj",
+              "name": "PJ",
+              "patch": {
+                "mapping": {
+                  "y": {
+                    "column": "pj"
+                  }
+                }
+              }
+            },
+            {
+              "id": "mtoe",
+              "name": "Mtoe"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "ids are compared as text",
+    "parts": [
+      {
+        "plot": [
+          {
+            "id": 1,
+            "props": {
+              "a": 1
+            }
+          }
+        ]
+      },
+      {
+        "plot": [
+          {
+            "id": "1",
+            "props": {
+              "b": 2
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "plot": [
+        {
+          "id": "1",
+          "props": {
+            "a": 1,
+            "b": 2
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "null replaces a value, it is kept in the merged definition",
+    "parts": [
+      {
+        "geo": {
+          "data": "map.json"
+        },
+        "mapping": {
+          "y": {
+            "hover": {
+              "format": ".1f"
+            }
+          }
+        }
+      },
+      {
+        "geo": null,
+        "mapping": {
+          "y": {
+            "hover": null
+          }
+        }
+      }
+    ],
+    "result": {
+      "geo": null,
+      "mapping": {
+        "y": {
+          "hover": null
+        }
+      }
+    }
+  },
+  {
+    "name": "a value replaces an object and an object replaces a value",
+    "parts": [
+      {
+        "options": {
+          "message": {
+            "a": 1
+          },
+          "height": 300
+        }
+      },
+      {
+        "options": {
+          "message": "text",
+          "height": {
+            "*": [
+              "@totalWidth",
+              0.5
+            ]
+          }
+        }
+      }
+    ],
+    "result": {
+      "options": {
+        "message": "text",
+        "height": {
+          "*": [
+            "@totalWidth",
+            0.5
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "an object replaces an array and an array an object",
+    "parts": [
+      {
+        "plot": [
+          {
+            "type": "a"
+          }
+        ],
+        "transform": {
+          "type": "year",
+          "column": "d"
+        }
+      },
+      {
+        "plot": {
+          "type": "b"
+        },
+        "transform": [
+          {
+            "type": "year",
+            "column": "e"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "plot": {
+        "type": "b"
+      },
+      "transform": [
+        {
+          "type": "year",
+          "column": "e"
+        }
+      ]
+    }
+  },
+  {
+    "name": "a single plot object is merged with a single plot object",
+    "parts": [
+      {
+        "plot": {
+          "type": "cartesian:line",
+          "props": {
+            "stroke": "red"
+          }
+        }
+      },
+      {
+        "plot": {
+          "props": {
+            "stroke-width": 2
+          }
+        }
+      }
+    ],
+    "result": {
+      "plot": {
+        "type": "cartesian:line",
+        "props": {
+          "stroke": "red",
+          "stroke-width": 2
+        }
+      }
+    }
+  },
+  {
+    "name": "the parts after the first one are not changed by a merge, three parts",
+    "parts": [
+      {
+        "a": 1
+      },
+      {
+        "b": {
+          "c": 1
+        }
+      },
+      {
+        "b": {
+          "d": 2
+        }
+      }
+    ],
+    "result": {
+      "a": 1,
+      "b": {
+        "c": 1,
+        "d": 2
+      }
+    }
+  }
+]

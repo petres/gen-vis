@@ -1,0 +1,269 @@
+[
+  {
+    "name": "relative to the base year in the groups",
+    "globals": {
+      "base": "2019"
+    },
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": [
+      {
+        "type": "year",
+        "column": "date",
+        "as": "year"
+      },
+      {
+        "type": "index",
+        "column": "value",
+        "as": "index",
+        "by": "type",
+        "base": {
+          "year": "{base}"
+        }
+      }
+    ],
+    "columns": {
+      "year": [
+        2019,
+        2019,
+        2020,
+        2019,
+        2020,
+        2019
+      ],
+      "index": [
+        50,
+        150,
+        200,
+        50,
+        null,
+        150
+      ]
+    }
+  },
+  {
+    "name": "groups without values of the base have none",
+    "globals": {
+      "base": 2020
+    },
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": [
+      {
+        "type": "year",
+        "column": "date",
+        "as": "year"
+      },
+      {
+        "type": "index",
+        "column": "value",
+        "as": "index",
+        "by": "type",
+        "base": {
+          "year": "{base}"
+        }
+      }
+    ],
+    "columns": {
+      "year": [
+        2019,
+        2019,
+        2020,
+        2019,
+        2020,
+        2019
+      ],
+      "index": [
+        25,
+        75,
+        100,
+        null,
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "a range of dates as the base, open at the end, a scale",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "index",
+      "column": "value",
+      "by": [
+        "type"
+      ],
+      "base": {
+        "date": [
+          "2019-06-01",
+          null
+        ]
+      },
+      "scale": 1
+    },
+    "columns": {
+      "value": [
+        0.2857142857142857,
+        0.8571428571428571,
+        1.1428571428571428,
+        0.3333333333333333,
+        null,
+        1
+      ]
+    }
+  },
+  {
+    "name": "the rows of a base of a value, a base of mean 0 has none",
+    "rows": [
+      {
+        "g": "a",
+        "v": "0"
+      },
+      {
+        "g": "a",
+        "v": "0"
+      },
+      {
+        "g": "b",
+        "v": "5"
+      },
+      {
+        "g": "b",
+        "v": "2"
+      }
+    ],
+    "transform": {
+      "type": "index",
+      "column": "v",
+      "as": "i",
+      "base": {
+        "g": "a"
+      }
+    },
+    "columns": {
+      "i": [
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "a base of numbers is compared as text",
+    "rows": [
+      {
+        "y": 2019,
+        "v": "2"
+      },
+      {
+        "y": "2020",
+        "v": "4"
+      }
+    ],
+    "transform": {
+      "type": "index",
+      "column": "v",
+      "as": "i",
+      "base": {
+        "y": 2020
+      }
+    },
+    "columns": {
+      "i": [
+        50,
+        100
+      ]
+    }
+  }
+]

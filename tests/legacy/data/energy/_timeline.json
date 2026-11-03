@@ -1,0 +1,45 @@
+{
+    "mapping": {
+        "x": {
+            "column": "date",
+            "type": "date",
+            "scale": {
+                "type": "time",
+                "orientation": "horizontal",
+                "domainAbs": [-2000000000, 2000000000]
+            },
+            "axis": {
+                "ticks": {
+                    "prop": "relative",
+                    "ref": "innerWidth",
+                    "ratio": 0.017
+                },
+                "position": "bottom",
+                "rotate": 35,
+                "format": "%b %y"
+            },
+            "hover": {
+                "format": "%b %y"
+            }
+        },
+        "y": {
+            "column": "value",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "orientation": "vertical",
+                "domain": [0, null],
+                "domainRel": [0, 0.1]
+            },
+            "axis": {
+                "ticks": 6,
+                "position": "left",
+                "grid": true,
+                "format": ",.0f"
+            },
+            "hover": {
+                "format": ",.1f"
+            }
+        }
+    }
+}

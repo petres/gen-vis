@@ -1,0 +1,242 @@
+[
+  {
+    "name": "the mean of the group, missing values are left out",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "mean",
+      "column": "value",
+      "by": "type",
+      "as": "m"
+    },
+    "columns": {
+      "m": [
+        26.666666666666668,
+        26.666666666666668,
+        26.666666666666668,
+        10,
+        10,
+        10
+      ]
+    }
+  },
+  {
+    "name": "of the days of all years, by the day of align",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": [
+      {
+        "type": "align",
+        "column": "date",
+        "as": "day"
+      },
+      {
+        "type": "mean",
+        "column": "value",
+        "by": "day",
+        "as": "m"
+      }
+    ],
+    "columns": {
+      "day": [
+        "2020-01-01",
+        "2020-07-01",
+        "2020-01-01",
+        "2020-01-01",
+        "2020-01-01",
+        "2020-07-01"
+      ],
+      "m": [
+        18.333333333333332,
+        22.5,
+        18.333333333333332,
+        18.333333333333332,
+        18.333333333333332,
+        22.5
+      ]
+    }
+  },
+  {
+    "name": "of a period of years, all rows",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": [
+      {
+        "type": "year",
+        "column": "date",
+        "as": "year"
+      },
+      {
+        "type": "mean",
+        "column": "value",
+        "base": {
+          "year": [
+            2019,
+            2019
+          ]
+        },
+        "as": "m"
+      }
+    ],
+    "columns": {
+      "year": [
+        2019,
+        2019,
+        2020,
+        2019,
+        2020,
+        2019
+      ],
+      "m": [
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
+      ]
+    }
+  },
+  {
+    "name": "without the least number of values none",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "mean",
+      "column": "value",
+      "by": "type",
+      "min": 3,
+      "as": "m"
+    },
+    "columns": {
+      "m": [
+        26.666666666666668,
+        26.666666666666668,
+        26.666666666666668,
+        null,
+        null,
+        null
+      ]
+    }
+  }
+]

@@ -16,7 +16,8 @@
             "column": "year",
             "type": "numeric",
             "scale": { "type": "linear", "orientation": "horizontal", "domainRel": [0, 0], "inset": [10, 30] },
-            "hover": { "format": "d" }
+            "hover": { "format": "d" },
+            "axis": false
         },
         "y": {
             "column": "{group}",
@@ -38,11 +39,11 @@
         "type": {
             "column": "type",
             "type": "categorical",
-            "props": { "categories": {
+            "categories": {
                 "total": { "name": "Total", "dash": "none", "fill": "white", "r": 5 },
                 "input": { "name": "Input", "dash": "2 2", "fill": "#F5F6FA", "r": 4 },
                 "output": { "name": "Output", "dash": "6 3", "fill": "#888", "r": 4 }
-            } },
+            },
             "legend": { "position": "bottom", "symbol": { "size": 24, "elements": [
                 { "type": "line", "props": { "x1": 0, "x2": 24, "y1": 12, "y2": 12, "stroke": "#888", "stroke-dasharray": "@dash" } },
                 { "type": "circle", "props": { "cx": 12, "cy": 12, "r": "@r", "fill": "@fill", "stroke": "#888", "stroke-width": 1.5 } }
@@ -51,96 +52,116 @@
         }
     },
     "plot": [
-        {
-            "id": "lines",
-            "type": "cartesian:line",
-            "categories": ["type"],
-            "props": { "stroke": "#888", "fill": "none", "stroke-dasharray": "@dash", "d": { "x": "@x:scaled", "y": "@y:scaled" } }
-        },
-        {
-            "id": "points",
-            "type": "svg:circle",
-            "categories": ["type"],
-            "filter": { "type": { "not": "total" } },
-            "props": { "cx": "@x:scaled", "cy": "@y:scaled", "r": "@r", "fill": "@fill", "stroke": "#888" }
-        },
+        { "id": "lines", "type": "line", "by": "type", "props": { "stroke": "#888", "stroke-dasharray": "@dash" } },
+        { "id": "points", "type": "point", "by": "type", "filter": { "type": { "not": "total" } }, "props": { "r": "@r", "fill": "@fill", "stroke": "#888" } },
         {
             "id": "total",
-            "type": "svg:circle",
-            "categories": ["type"],
+            "type": "point",
+            "by": "type",
             "filter": { "type": "total" },
-            "props": { "cx": "@x:scaled", "cy": "@y:scaled", "r": "@r", "fill": "white", "stroke": "@color:scaled", "stroke-width": 3 }
+            "props": { "r": "@r", "fill": "white", "stroke": "@color:scaled", "stroke-width": 3 }
         },
         {
             "id": "last",
-            "type": "svg:circle",
-            "categories": ["type"],
+            "type": "point",
+            "by": "type",
             "select": "last",
             "filter": { "type": "total" },
             "layer": "above",
             "props": {
-                "cx": "@x:scaled", "cy": "@y:scaled", "r": 17, "fill": "white",
-                "stroke": "@color:scaled", "stroke-width": 5, "others-visibility": "hidden"
-            }
+                "r": 17,
+                "fill": "white",
+                "stroke": "@color:scaled",
+                "stroke-width": 5
+            },
+            "others": { "visibility": "hidden" }
         },
         {
             "id": "last-value",
             "type": "svg:text",
-            "categories": ["type"],
+            "by": "type",
             "select": "last",
             "filter": { "type": "total" },
             "layer": "above",
             "props": {
-                "x": "@x:scaled", "y": "@y:scaled", "text-anchor": "middle", "dominant-baseline": "central",
-                "font-size": 11, "font-weight": "bold", "text": "@y:formatted", "others-visibility": "hidden"
-            }
+                "x": "@x:scaled",
+                "y": "@y:scaled",
+                "text-anchor": "middle",
+                "dominant-baseline": "central",
+                "font-size": 11,
+                "font-weight": "bold",
+                "text": "@y:formatted"
+            },
+            "others": { "visibility": "hidden" }
         },
         {
             "id": "last-year",
             "type": "svg:text",
-            "categories": ["type"],
+            "by": "type",
             "select": "last",
             "filter": { "type": "total" },
             "layer": "above",
             "props": {
-                "x": "@x:scaled", "y": "@y:scaled", "dy": 30, "text-anchor": "middle", "dominant-baseline": "central",
-                "font-size": 11, "text": "@x:formatted", "others-visibility": "hidden"
-            }
+                "x": "@x:scaled",
+                "y": "@y:scaled",
+                "dy": 30,
+                "text-anchor": "middle",
+                "dominant-baseline": "central",
+                "font-size": 11,
+                "text": "@x:formatted"
+            },
+            "others": { "visibility": "hidden" }
         },
         {
             "id": "ring",
-            "type": "svg:circle",
-            "categories": ["x"],
+            "type": "point",
+            "by": "x",
             "filter": { "type": "total" },
             "layer": "above",
             "props": {
-                "cx": "@x:scaled", "cy": "@y:scaled", "r": 17, "fill": "white", "stroke": "@color:scaled", "stroke-width": 5,
-                "visibility": "hidden", "highlight-visibility": "visible"
-            }
+                "r": 17,
+                "fill": "white",
+                "stroke": "@color:scaled",
+                "stroke-width": 5,
+                "visibility": "hidden"
+            },
+            "highlight": { "visibility": "visible" }
         },
         {
             "id": "ring-value",
             "type": "svg:text",
-            "categories": ["x"],
+            "by": "x",
             "filter": { "type": "total" },
             "layer": "above",
             "props": {
-                "x": "@x:scaled", "y": "@y:scaled", "text-anchor": "middle", "dominant-baseline": "central",
-                "font-size": 11, "font-weight": "bold", "text": "@y:formatted",
-                "visibility": "hidden", "highlight-visibility": "visible"
-            }
+                "x": "@x:scaled",
+                "y": "@y:scaled",
+                "text-anchor": "middle",
+                "dominant-baseline": "central",
+                "font-size": 11,
+                "font-weight": "bold",
+                "text": "@y:formatted",
+                "visibility": "hidden"
+            },
+            "highlight": { "visibility": "visible" }
         },
         {
             "id": "ring-year",
             "type": "svg:text",
-            "categories": ["x"],
+            "by": "x",
             "filter": { "type": "total" },
             "layer": "above",
             "props": {
-                "x": "@x:scaled", "y": "@y:scaled", "dy": 30, "text-anchor": "middle", "dominant-baseline": "central",
-                "font-size": 11, "text": "@x:formatted",
-                "visibility": "hidden", "highlight-visibility": "visible"
-            }
+                "x": "@x:scaled",
+                "y": "@y:scaled",
+                "dy": 30,
+                "text-anchor": "middle",
+                "dominant-baseline": "central",
+                "font-size": 11,
+                "text": "@x:formatted",
+                "visibility": "hidden"
+            },
+            "highlight": { "visibility": "visible" }
         }
     ],
     "annotations": [

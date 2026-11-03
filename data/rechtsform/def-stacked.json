@@ -69,20 +69,18 @@
                     }]
                 }
             },
-            "props": {
-                "common": {
-                    "visible": true,
-                    "stroke-width": 3,
-                    "r": 4
-                },
-                "categories": {
-                    "Hauseigentum":     { "color": "#BBD7EE"},
-                    "Wohnungseigentum": { "color": "#5BC5F2"},
-                    "GBV Miete":        { "color": "#559BD5"},
-                    "Gemeinde Miete":   { "color": "#C7DF71"},
-                    "Private Miete":    { "color": "#4B9847"},
-                    "Sonstige":         { "color": "#9CE1F8"}
-                }
+            "common": {
+                "visible": true,
+                "stroke-width": 3,
+                "r": 4
+            },
+            "categories": {
+                "Hauseigentum":     { "color": "#BBD7EE"},
+                "Wohnungseigentum": { "color": "#5BC5F2"},
+                "GBV Miete":        { "color": "#559BD5"},
+                "Gemeinde Miete":   { "color": "#C7DF71"},
+                "Private Miete":    { "color": "#4B9847"},
+                "Sonstige":         { "color": "#9CE1F8"}
             },
             "hover": {
 
@@ -92,11 +90,9 @@
             "column": "Geo",
             "type": "categorical",
             "legend": {},
-            "props": {
-                "categories": {
-                    "Österreich": { "name": "Österreich"},
-                    "Wien": { "name": "Wien"}
-                }
+            "categories": {
+                "Österreich": { "name": "Österreich"},
+                "Wien": { "name": "Wien"}
             }
         }
     },
@@ -108,7 +104,7 @@
     "plot": [
         {
             "type": "cartesian:bar",
-            "categories": ["type"],
+            "by": "type",
             "highlight": "row",
             "props": {
                 "fill": "@color",
@@ -119,11 +115,7 @@
                 "x": "@xx:scaled",
                 "y0": "@yy:start:scaled",
                 "y1": "@yy:end:scaled",
-                "width": {
-                    "prop": "relative",
-                    "ref": "innerWidth",
-                    "ratio": 0.1
-                }
+                "width": { "*": ["@innerWidth", 0.1] }
             }
         }
     ]

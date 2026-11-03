@@ -24,8 +24,10 @@
             "type": "numeric",
             "scale": { "orientation": "horizontal", "include": [100, 110], "domainRel": [-0.03, 0.03] },
             "axis": {
-                "position": "top", "grid": true, "tickSpacing": 90,
-                "labels": { "props": { "text": { "prop": "format", "of": { "prop": "relative", "ref": "x", "offset": -100 }, "format": "+$.0f" } } }
+                "position": "top",
+                "grid": true,
+                "tickSpacing": 90,
+                "labels": { "props": { "text": { "format": [{ "+": ["@x", -100] }, "+$.0f"] } } }
             }
         },
         "y": {
@@ -33,11 +35,9 @@
             "type": "categorical",
             "scale": { "type": "band", "orientation": "vertical", "range": [0, "@height"], "padding": 0.3, "order": { "by": "x", "descending": true } },
             "axis": { "position": "left", "labels": { "props": { "font-weight": "@weight", "text": "@name" } } },
-            "props": {
-                "fromData": true,
-                "common": { "fill": "#4C9F70", "weight": "normal" },
-                "categories": { "ÖSTERREICH": { "name": "Österreich", "fill": "#1F3A33", "weight": "bold" } }
-            }
+            "fromData": true,
+            "common": { "fill": "#4C9F70", "weight": "normal" },
+            "categories": { "ÖSTERREICH": { "name": "Österreich", "fill": "#1F3A33", "weight": "bold" } }
         }
     },
     "annotations": [
@@ -47,17 +47,26 @@
         {
             "id": "bars",
             "type": "cartesian:bar",
-            "categories": ["y"],
-            "props": { "x0": "@x:scaled:100", "x1": "@x:scaled", "y": "@y:scaled", "fill": "@fill", "highlight-opacity": 1, "others-opacity": 0.5 }
+            "by": "y",
+            "props": { "x0": "@x:scaled:100", "x1": "@x:scaled", "y": "@y:scaled", "fill": "@fill" },
+            "highlight": { "opacity": 1 },
+            "others": { "opacity": 0.5 }
         },
         {
             "id": "values",
             "type": "svg:text",
-            "categories": ["y"],
+            "by": "y",
             "props": {
-                "x": "@x:scaled", "dx": 5, "y": "@y:scaled:center", "dominant-baseline": "central", "font-size": 11,
-                "font-weight": "@weight", "fill": "#333", "highlight-opacity": 1, "others-opacity": 0.5,
-                "text": { "prop": "format", "of": { "prop": "relative", "ref": "x", "offset": -100 }, "format": "+$.1f" }
+                "x": "@x:scaled",
+                "dx": 5,
+                "y": "@y:scaled:center",
+                "dominant-baseline": "central",
+                "font-size": 11,
+                "font-weight": "@weight",
+                "fill": "#333",
+                "highlight-opacity": 1,
+                "others-opacity": 0.5,
+                "text": { "format": [{ "+": ["@x", -100] }, "+$.1f"] }
             }
         }
     ]

@@ -8,16 +8,19 @@
     "plot": [
         {
             "type": "cartesian:line",
-            "categories": ["land"],
+            "by": "land",
             "props": {
-                "stroke-width": "@stroke-width", "fill": "none", "opacity": 0.7, "stroke": "@color",
-                "d": { "x": "@x:scaled", "y": "@y:scaled" },
-                "highlight-opacity": 1, "highlight-stroke-width": 3
-            }
+                "stroke-width": "@stroke-width",
+                "fill": "none",
+                "opacity": 0.7,
+                "stroke": "@color",
+                "d": { "x": "@x:scaled", "y": "@y:scaled" }
+            },
+            "highlight": { "opacity": 1, "stroke-width": 3 }
         },
         {
             "type": "svg:text",
-            "categories": ["land"],
+            "by": "land",
             "select": { "max": "x" },
             "dodge": 12,
             "layer": "above",

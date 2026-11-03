@@ -1,0 +1,165 @@
+[
+  {
+    "name": "the share of the sum of the group",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "share",
+      "column": "value",
+      "as": "share",
+      "by": "date"
+    },
+    "columns": {
+      "share": [
+        0.6666666666666666,
+        0.6666666666666666,
+        1,
+        0.3333333333333333,
+        null,
+        0.3333333333333333
+      ]
+    }
+  },
+  {
+    "name": "of all rows without groups",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "share",
+      "column": "value",
+      "as": "share"
+    },
+    "columns": {
+      "share": [
+        0.1,
+        0.3,
+        0.4,
+        0.05,
+        null,
+        0.15
+      ]
+    }
+  },
+  {
+    "name": "a sum of 0 has no shares",
+    "rows": [
+      {
+        "v": "0"
+      },
+      {
+        "v": "0"
+      },
+      {
+        "v": ""
+      }
+    ],
+    "transform": {
+      "type": "share",
+      "column": "v",
+      "as": "s"
+    },
+    "columns": {
+      "s": [
+        null,
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "groups of several columns",
+    "rows": [
+      {
+        "a": "x",
+        "b": "1",
+        "v": "1"
+      },
+      {
+        "a": "x",
+        "b": "2",
+        "v": "3"
+      },
+      {
+        "a": "x",
+        "b": "1",
+        "v": "3"
+      }
+    ],
+    "transform": {
+      "type": "share",
+      "column": "v",
+      "by": [
+        "a",
+        "b"
+      ],
+      "as": "s"
+    },
+    "columns": {
+      "s": [
+        0.25,
+        1,
+        0.75
+      ]
+    }
+  }
+]

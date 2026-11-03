@@ -21,19 +21,17 @@
                 "grid": true,
                 "padding": 4
             },
-            "props": {
-                "categories": {
-                    "ÖSTERREICH":       { "visible": false },
-                    "Wien":             {},
-                    "Niederösterreich": {},
-                    "Burgenland":       {},
-                    "Steiermark":       {},
-                    "Kärnten":          {},
-                    "Tirol":            {},
-                    "Vorarlberg":       {},
-                    "Salzburg":         {},
-                    "Oberösterreich":   {}
-                }
+            "categories": {
+                "ÖSTERREICH":       { "visible": false },
+                "Wien":             {},
+                "Niederösterreich": {},
+                "Burgenland":       {},
+                "Steiermark":       {},
+                "Kärnten":          {},
+                "Tirol":            {},
+                "Vorarlberg":       {},
+                "Salzburg":         {},
+                "Oberösterreich":   {}
             }
         },
         "y": {
@@ -69,12 +67,10 @@
                     }]
                 }
             },
-            "props": {
-                "categories": {
-                    "2002": { "color": "#BBD7EE" },
-                    "2012": { "color": "#559BD5" },
-                    "2022": { "color": "#1E4F77" }
-                }
+            "categories": {
+                "2002": { "color": "#BBD7EE" },
+                "2012": { "color": "#559BD5" },
+                "2022": { "color": "#1E4F77" }
             },
             "hover": {}
         }
@@ -82,25 +78,26 @@
     "plot": [
         {
             "type": "polar:line",
-            "categories": ["year"],
+            "by": "year",
             "curve": "linearClosed",
             "props": {
                 "stroke": "@color",
                 "stroke-width": 2.5,
                 "fill": "none",
-                "d": { "angle": "@land:scaled", "radius": "@y:scaled" },
-                "highlight-stroke-width": 4
-            }
-        }, {
+                "d": { "angle": "@land:scaled", "radius": "@y:scaled" }
+            },
+            "highlight": { "stroke-width": 4 }
+        },
+        {
             "type": "polar:circle",
-            "categories": ["year"],
+            "by": "year",
             "props": {
                 "fill": "@color",
                 "r": 3.5,
                 "angle": "@land:scaled",
-                "radius": "@y:scaled",
-                "highlight-r": 5
-            }
+                "radius": "@y:scaled"
+            },
+            "highlight": { "r": 5 }
         }
     ]
 }

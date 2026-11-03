@@ -5,6 +5,7 @@ import { bandCenter } from "@/utils/scales";
 import { perGroup, perRow, finite, curve, points, propScale, dodge, halo } from "@/plots/elements";
 import { barScale, barWidth } from "@/plots/cartesian";
 import { radiusRange } from "@/coords/polar-plot";
+import { defaults } from "@/plots/defaults";
 
 // the angles of a band scale are in the center of the band, as the ones of the axis
 const angleOffset = (plot, ctx, path) => {
@@ -65,7 +66,7 @@ const arcProps = ['angle', 'width', 'startAngle', 'endAngle', 'innerRadius', 'ou
 
 // the plot types of the polar coordinate system, the angles are in radians,
 // clockwise from the top, missing values are gaps in paths and areas
-export default {
+const types = {
     // a line per group, `d` with `angle` and `radius`
     'polar:line': {
         curve: true,
@@ -140,3 +141,6 @@ export default {
     // texts of the same angle apart along the radius, to at least this distance
     'polar:text': positioned('polar:text', 'text', 'x', 'y'),
 };
+
+// with their default props, see plots/defaults.js
+export default Object.fromEntries(Object.entries(types).map(([name, t]) => [name, { ...t, defaults: defaults[name] }]));

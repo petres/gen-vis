@@ -37,12 +37,10 @@
         },
         "type": {
             "column": "product",
-            "props": {
-                "categories": {
-                    "oil":  { "color": "#6F625A", "name": "Mineralöl" },
-                    "coal": { "color": "#8B4513", "name": "Kohle" },
-                    "gas":  { "color": "#C3423F", "name": "Erdgas" }
-                }
+            "categories": {
+                "oil":  { "color": "#6F625A", "name": "Mineralöl" },
+                "coal": { "color": "#8B4513", "name": "Kohle" },
+                "gas":  { "color": "#C3423F", "name": "Erdgas" }
             }
         }
     }

@@ -49,71 +49,63 @@
         },
         "quali": {
             "column": "quali",
-            "props": {
-                "categories": {
-                    "A": {},
-                    "B": {},
-                    "C": {},
-                    "D": {},
-                    "NA": {},
-                    "Alle": {}
-                }
+            "categories": {
+                "A": {},
+                "B": {},
+                "C": {},
+                "D": {},
+                "NA": {},
+                "Alle": {}
             }
         },
         "werr": {
             "column": "werr.label",
-            "props": {
-                "categories": {
-                    "1918 und davor": {},
-                    "1919 - 1944": {},
-                    "1945 - 1960": {},
-                    "1961 - 1970": {},
-                    "1971 - 1980": {},
-                    "1981 - 1990": {},
-                    "1991 - 2000": {},
-                    "2001 - 2010": {},
-                    "2011 - 2020": {},
-                    "NA": {},
-                    "Alle": {}
-                }
+            "categories": {
+                "1918 und davor": {},
+                "1919 - 1944": {},
+                "1945 - 1960": {},
+                "1961 - 1970": {},
+                "1971 - 1980": {},
+                "1981 - 1990": {},
+                "1991 - 2000": {},
+                "2001 - 2010": {},
+                "2011 - 2020": {},
+                "NA": {},
+                "Alle": {}
             }
         },
         "wfrist": {
             "column": "wfrist.label",
-            "props": {
-                "categories": {
-                    "unbefristet": {},
-                    "befristet": {},
-                    "NA": {},
-                    "Alle": {}
-                }
+            "categories": {
+                "unbefristet": {},
+                "befristet": {},
+                "NA": {},
+                "Alle": {}
             }
         },
         "wrecht": {
             "column": "wrecht.miete",
-            "props": {
-                "common": {
-                    "visible": true
+            "common": {
+                "visible": true
+            },
+            "categories": {
+                "gbv": {
+                    "name": "GBV",
+                    "stroke-dasharray": null
                 },
-                "categories": {
-                    "gbv": {
-                        "name": "GBV",
-                        "stroke-dasharray": null
-                    },
-                    "pub": {
-                        "name": "öffentlich",
-                        "stroke-dasharray": 2
-                    },
-                    "priv": {
-                        "name": "privat",
-                        "stroke-dasharray": 4
-                    },
-                    "NA": {
-                        "stroke-dasharray": "2 4"
-                    },
-                    "Alle": {
-                        "visible": true
-                    }
+                "pub": {
+                    "name": "öffentlich",
+                    "stroke-dasharray": 2
+                },
+                "priv": {
+                    "name": "privat",
+                    "stroke-dasharray": 4
+                },
+                "NA": {
+                    "stroke-dasharray": "2 4"
+                },
+                "Alle": {
+                    "visible": true
                 }
             },
             "hover": {}
@@ -138,56 +130,54 @@
                     ]
                 }
             },
-            "props": {
-                "common": {
-                    "stroke-width": 1.5,
-                    "visible": false
+            "common": {
+                "stroke-width": 1.5,
+                "visible": false
+            },
+            "categories": {
+                "Wien": {
+                    "color": "#1E4F77",
+                    "name": "Wien"
                 },
-                "categories": {
-                    "Wien": {
-                        "color": "#1E4F77",
-                        "name": "Wien"
-                    },
-                    "Niederösterreich": {
-                        "color": "#BBD7EE",
-                        "name": "Niederösterreich"
-                    },
-                    "Burgenland": {
-                        "color": "#5BC5F2",
-                        "name": "Burgenland"
-                    },
-                    "Oberösterreich": {
-                        "color": "#559BD5",
-                        "name": "Oberösterreich"
-                    },
-                    "Salzburg": {
-                        "color": "#C7DF71",
-                        "name": "Salzburg"
-                    },
-                    "Steiermark": {
-                        "color": "#4B9847",
-                        "name": "Steiermark"
-                    },
-                    "Kärnten": {
-                        "color": "#9CE1F8",
-                        "name": "Kärnten"
-                    },
-                    "Tirol": {
-                        "color": "#72BB6F",
-                        "name": "Tirol"
-                    },
-                    "Vorarlberg": {
-                        "color": "#3F766B",
-                        "name": "Vorarlberg"
-                    },
-                    "NA": {
-                        "color": "#ABD6A9",
-                        "name": "NA"
-                    },
-                    "Alle": {
-                        "color": "#000",
-                        "visible": true
-                    }
+                "Niederösterreich": {
+                    "color": "#BBD7EE",
+                    "name": "Niederösterreich"
+                },
+                "Burgenland": {
+                    "color": "#5BC5F2",
+                    "name": "Burgenland"
+                },
+                "Oberösterreich": {
+                    "color": "#559BD5",
+                    "name": "Oberösterreich"
+                },
+                "Salzburg": {
+                    "color": "#C7DF71",
+                    "name": "Salzburg"
+                },
+                "Steiermark": {
+                    "color": "#4B9847",
+                    "name": "Steiermark"
+                },
+                "Kärnten": {
+                    "color": "#9CE1F8",
+                    "name": "Kärnten"
+                },
+                "Tirol": {
+                    "color": "#72BB6F",
+                    "name": "Tirol"
+                },
+                "Vorarlberg": {
+                    "color": "#3F766B",
+                    "name": "Vorarlberg"
+                },
+                "NA": {
+                    "color": "#ABD6A9",
+                    "name": "NA"
+                },
+                "Alle": {
+                    "color": "#000",
+                    "visible": true
                 }
             },
             "hover": {}
@@ -204,7 +194,7 @@
     "plot": [
         {
             "type": "cartesian:line",
-            "categories": [
+            "by": [
                 "quali",
                 "werr",
                 "bundesland",
@@ -222,7 +212,7 @@
         },
         {
             "type": "svg:circle",
-            "categories": [
+            "by": [
                 "quali",
                 "werr",
                 "bundesland",

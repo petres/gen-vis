@@ -2,7 +2,7 @@ export { resolveUrl, clearCache, resolveParents, requirements, raw, geoParts, lo
 
 import { markRaw, toRaw } from 'vue';
 
-import { addDataValues, dataFormat, distinctValues, parseData, prepareData, usedColumns } from "@/utils/data";
+import { addDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
 import { applyPatches, mergeAll, prepareDef, variants } from "@/utils/def";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
@@ -11,6 +11,8 @@ import { loadCoord } from "@/coords";
 import { loadColors } from "@/utils/d3";
 import { lazy } from "@/utils/lazy";
 import { isObject } from "@/utils/values";
+import { isLegacy, normalize } from "@/utils/normalize";
+import { plotTypes } from "@/plots";
 
 // the load of a visualisation: its definition with its parents, the parts
 // of the package it needs, its data and the files and geometries of it and
@@ -191,6 +193,18 @@ const loadParts = need => {
     return parts;
 };
 
+// the internal form of a merged definition (see utils/normalize.js), one
+// with constructs of 3.x is migrated first, the migration is loaded then,
+// `check` warns of it
+const toInternal = async (def, url, check) => {
+    if (isLegacy(def)) {
+        if (check)
+            console.warn(`gen-vis ${url ?? 'inline definition'}: a definition of gen-vis 3.x, it is migrated while it is loaded, see migrate of @preschen/gen-vis/check`);
+        def = (await lazy.migrate()).migrate(def);
+    }
+    return normalize(def, { plotTypes });
+};
+
 // the definition of the attribute or of its url, with its parents, the
 // warnings of its check (`check`), the data and the geometry are requested together
 // with the parents, if the def names them, the data if its format is known,
@@ -214,7 +228,7 @@ const resolveDef = async ({ def, defUrl, data, check }) => {
     if (typeof def.geo?.data == 'string')
         fetchText(resolveUrl(def.geo.data, url)).catch(() => {});
 
-    const defOrg = await resolveParents(JSON.parse(JSON.stringify(def)), url);
+    const defOrg = await toInternal(await resolveParents(JSON.parse(JSON.stringify(def)), url), url, check);
     // the check with the rows, e.g. of years as dates, see load, it is
     // loaded meanwhile
     const validate = async rows => (await checks)?.validateDef(defOrg, rows)
@@ -258,7 +272,8 @@ const loadFiles = async (defOrg, url) => {
 
 /**
  * The prepared definition of the rows with the state and the globals of the
- * page, its defaults (the state of the definition, see utils/state.js) and
+ * page (the types of the mappings without one are the ones of their values,
+ * see inferTypes), its defaults (the state of the definition, see utils/state.js) and
  * the columns of the transforms. The form elements can have the values of
  * the data, the state needs them. The transforms of the globals of the
  * state are computed before the mappings, their categories can be the ones
@@ -269,6 +284,7 @@ const loadFiles = async (defOrg, url) => {
 const prepare = (defOrg, rows, files, state, globals) => {
     let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files);
     addDataValues(defOrg, rows, columns);
+    inferTypes(defOrg, rows, columns);
     const keysOf = column => distinctValues(rows, columns, column).map(String);
     const transform = () => {
         columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns, files);

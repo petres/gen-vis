@@ -27,18 +27,15 @@
             "type": "categorical",
             "scale": { "type": "band", "orientation": "vertical", "range": [0, "@height"], "padding": 0.25, "order": { "by": "x", "descending": true } },
             "axis": { "position": "left" },
-            "props": { "fromData": true, "categories": { "ÖSTERREICH": { "visible": false } } }
+            "fromData": true,
+            "categories": { "ÖSTERREICH": { "visible": false } }
         }
     },
     "plot": [
-        {
-            "type": "cartesian:bar",
-            "categories": ["y"],
-            "props": { "x1": "@x:scaled", "y": "@y:scaled", "fill": "#1E4F77", "highlight-fill": "#5BC5F2" }
-        },
+        { "type": "cartesian:bar", "by": "y", "props": { "x1": "@x:scaled", "y": "@y:scaled", "fill": "#1E4F77" }, "highlight": { "fill": "#5BC5F2" } },
         {
             "type": "svg:text",
-            "categories": ["y"],
+            "by": "y",
             "props": {
                 "x": "@x:scaled", "dx": 4, "y": "@y:scaled:center", "dominant-baseline": "middle",
                 "font-size": 11, "text": "@x:formatted"

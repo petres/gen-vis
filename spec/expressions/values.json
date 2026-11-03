@@ -1,0 +1,20 @@
+[
+  { "name": "a number", "scope": {}, "expr": 3, "result": 3 },
+  { "name": "a text", "scope": {}, "expr": "none", "result": "none" },
+  { "name": "null", "scope": {}, "expr": null, "result": null },
+  { "name": "a boolean", "scope": {}, "expr": true, "result": true },
+  { "name": "a reference", "scope": { "a": "x" }, "expr": "@a", "result": "x" },
+  { "name": "a reference of a name with modifiers", "scope": { "x:scaled": 120 }, "expr": "@x:scaled", "result": 120 },
+  { "name": "an unknown name has no value", "scope": { "a": "x" }, "expr": "@b", "result": null },
+  { "name": "names of the prototype of objects are unknown", "scope": {}, "expr": "@constructor", "result": null },
+  { "name": "var is a reference", "scope": { "a": "x" }, "expr": { "var": "a" }, "result": "x" },
+  { "name": "var with a default of an unknown name", "scope": {}, "expr": { "var": ["a", 0] }, "result": 0 },
+  { "name": "the default of var is not used for a known name of null", "scope": { "a": null }, "expr": { "var": ["a", 0] }, "result": null },
+  { "name": "literal is not evaluated, e.g. a text starting with @", "scope": { "a": "x" }, "expr": { "literal": "@a" }, "result": "@a" },
+  { "name": "literal of an object of an operator", "scope": {}, "expr": { "literal": { "*": [1, 2] } }, "result": { "*": [1, 2] } },
+  { "name": "a list of expressions", "scope": { "height": 300 }, "expr": [0, "@height"], "result": [0, 300] },
+  { "name": "nested props, objects which are no operator", "scope": { "a": 1 }, "expr": { "d": { "x": "@a", "y": 2 }, "fill": "red" }, "result": { "d": { "x": 1, "y": 2 }, "fill": "red" } },
+  { "name": "an object of one key which is no operator is a nested prop", "scope": { "a": 1 }, "expr": { "x": "@a" }, "result": { "x": 1 } },
+  { "name": "an object of an operator and another key is a nested prop", "scope": { "a": 1 }, "expr": { "max": "@a", "min": 0 }, "result": { "max": 1, "min": 0 } },
+  { "name": "operators in nested props and lists", "scope": { "w": 100 }, "expr": { "d": [{ "*": ["@w", 0.5] }] }, "result": { "d": [50] } }
+]

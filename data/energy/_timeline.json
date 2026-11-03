@@ -9,11 +9,7 @@
                 "domainAbs": [-2000000000, 2000000000]
             },
             "axis": {
-                "ticks": {
-                    "prop": "relative",
-                    "ref": "innerWidth",
-                    "ratio": 0.017
-                },
+                "ticks": { "*": ["@innerWidth", 0.017] },
                 "position": "bottom",
                 "rotate": 35,
                 "format": "%b %y"

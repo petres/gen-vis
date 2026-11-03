@@ -1,11 +1,11 @@
-export { groupBy, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, distinctValues, usedColumns, columnValues };
+export { groupBy, inferTypes, inferType, keptRows, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
-import { sameValue, templateRefs, variants } from "@/utils/def";
+import { fillTemplate, sameValue, templateRefs, variants } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
 import { evaluate } from "@/utils/props";
-import { comparison, compareCategories } from "@/utils/values";
+import { comparison, compareCategories, isObject, toNumber } from "@/utils/values";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
@@ -46,19 +46,6 @@ const parseData = async (data, format, columns = null) => {
 };
 
 const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
-
-// a decimal number, also with an exponent and spaces around it, e.g. " 12 ",
-// "-.5" or "1e3", not the other texts of Number, e.g. "0x10" or "Infinity"
-const decimalNumber = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
-
-// missing, invalid and infinite values are null, only numbers and texts of
-// decimal numbers are numbers, not e.g. true or [1], which Number reads as
-// 1, integers of 64 bits are numbers
-const toNumber = v => {
-    const n = typeof v == 'number' || typeof v == 'bigint' ? Number(v)
-        : (typeof v == 'string' && decimalNumber.test(v) ? Number(v) : NaN);
-    return Number.isFinite(n) ? n : null;
-};
 
 // a date without a time zone: of ISO, e.g. "2022-06-01", "2022-06", "2022"
 // or "2022-06-01 13:00:00" (also with a T and the fraction of a second), and
@@ -145,6 +132,10 @@ const converter = (mapping, mappings) => {
 // of the time zone of its scale, also the one of another mapping (`"scale":
 // { "of": "x" }`) of the `mappings` of the definition
 const convert = (mapping, v, mappings) => converter(mapping, mappings)(v);
+
+// the prepared rows of the filters of the transforms (`columns.kept`, see
+// utils/transform-types.js), all without one
+const keptRows = (data, columns) => columns?.kept ? columns.kept.map(i => data[i]) : data;
 
 // the values of a column of the data by the index of a row, of a transform
 // (`columns`, see utils/transform.js) or of the rows
@@ -314,8 +305,18 @@ const condition = (m, c, path, mappings) => {
  */
 const rowFilter = (conditions, mapping, scope = {}, path = 'filter') => Object.entries(conditions ?? {}).map(([dim, c]) => ({
     dim,
-    key: condition(Object.hasOwn(mapping, dim) ? mapping[dim] : undefined, evaluate(c, scope), `${path}.${dim}`, mapping),
+    key: condition(Object.hasOwn(mapping, dim) ? mapping[dim] : undefined, conditionValues(c, scope), `${path}.${dim}`, mapping),
 }));
+
+// the values of a condition evaluated, `not` and `range` are parts of the
+// condition, not operators of expressions, e.g. { "not": "@type" }
+const conditionValues = (c, scope) => {
+    if (isObject(c) && Object.keys(c).length == 1 && 'not' in c)
+        return { not: conditionValues(c.not, scope) };
+    if (isObject(c) && Array.isArray(c.range))
+        return { ...c, range: evaluate(c.range, scope) };
+    return evaluate(c, scope);
+};
 
 /**
  * The columns of the data a definition can use, null if they are not known:
@@ -376,3 +377,35 @@ const addDataValues = (def, rows, columns = null) => {
             def.globals[e.ref] = values.at(-1);
     });
 };
+
+// the type of the values of a column: numeric if all of them are numbers,
+// date if all of them are dates, otherwise (also without values) categorical
+const inferType = values => {
+    const present = values.filter(v => !missing(v));
+    if (present.length == 0)
+        return 'categorical';
+    if (present.every(v => toNumber(v) !== null))
+        return 'numeric';
+    if (present.every(v => toDate(v) !== null))
+        return 'date';
+    return 'categorical';
+};
+
+/**
+ * The types of the mappings without a type of the values of their columns
+ * (see inferType), of the rows and the columns of the transforms, a column
+ * template of the globals, also the ones of the mappings of patches which are
+ * not mappings of the definition, the definition is changed.
+ */
+const inferTypes = (def, rows, columns = null) => {
+    const infer = m => {
+        if (!isObject(m) || m.type !== undefined || typeof m.column != 'string')
+            return;
+        const value = columnValues(rows, columns, fillTemplate(m.column, def.globals ?? {}));
+        m.type = inferType(rows.map((r, i) => value(i)));
+    };
+    Object.values(def.mapping ?? {}).forEach(infer);
+    variants(def).slice(1).forEach(patch => Object.entries(isObject(patch.mapping) ? patch.mapping : {})
+        .filter(([n]) => !Object.hasOwn(def.mapping ?? {}, n)).forEach(([, m]) => infer(m)));
+};
+

@@ -48,8 +48,11 @@ describe('the schema', () => {
     });
 
     test('an annotation or a list, a mapping or a list of categories, keys of numbers', () => {
-        expect(errors({ annotations: { type: 'line', y: { prop: 'ref', ref: 'target' } } })).toEqual([]);
-        expect(errors({ plot: { type: 'svg:circle', categories: 'c' } })).toEqual([]);
+        expect(errors({ annotations: { type: 'line', y: { '*': ['@target', 1.1] } } })).toEqual([]);
+        expect(errors({ plot: { type: 'svg:circle', by: 'c' } })).toEqual([]);
+        expect(errors({ plot: { type: 'svg:circle', by: ['c', 'd'] } })).toEqual([]);
+        // the categories of a plot of 3.x are by
+        expect(errors({ plot: { type: 'svg:circle', categories: 'c' } })).not.toEqual([]);
         expect(errors({ geo: { include: ['AT', 40], fit: [40], projection: { type: 'conicConformal', parallels: [46, 49] } } })).toEqual([]);
         expect(errors({ geo: { projection: { type: 'round' } } })).not.toEqual([]);
         expect(errors({ options: { locale: { base: 'de', texts: { csv: 'CSV', keys: 'Tasten' } } } })).toEqual([]);
@@ -64,20 +67,31 @@ describe('the schema', () => {
     test('parts of a definition are valid, e.g. patches of the parent', () => {
         expect(errors({ parent: '../shared.json', options: { title: 'A' } })).toEqual([]);
         expect(errors({ plot: { props: { 'stroke-dasharray': '2 2' } } })).toEqual([]);
-        expect(errors({ facets: { cols: { steps: [{ cut: 0, value: 1 }] } } })).toEqual([]);
+        expect(errors({ facets: { cols: { steps: ['@totalWidth', { 0: 1, 550: 2 }] } } })).toEqual([]);
         expect(errors({ formElements: [{ id: 'scale', inImage: false }] })).toEqual([]);
         expect(errors({ mapping: { c: { legend: { symbol: 'line' } } } })).toEqual([]);
         expect(errors({ mapping: { c: { legend: { symbol: { type: 'rect', size: 12, props: { rx: 0 } } } } } })).toEqual([]);
         expect(errors({ mapping: { c: { legend: { symbol: 'star' } } } })).not.toEqual([]);
-        expect(errors({ mapping: { c: { props: { order: 'descending', ranks: [{ color: 'red' }] } } } })).toEqual([]);
+        expect(errors({ mapping: { c: { column: 'land', order: 'descending', ranks: [{ color: 'red' }] } } })).toEqual([]);
+        expect(errors({ mapping: { c: { categories: { Wien: { color: 'red' } }, scheme: 'Tableau10', common: { width: 1 }, fromData: true } } })).toEqual([]);
+        // a mapping of a text is the one of the column, the domain, nice and the format are the ones of the mapping
+        expect(errors({ mapping: { c: 'land', y: { column: 'value', domain: [0, '@max'], nice: true, format: ',.1f' } } })).toEqual([]);
+        // the props of the categories of 3.x are parts of the mapping
+        expect(errors({ mapping: { c: { props: { order: 'descending' } } } })).not.toEqual([]);
     });
 
     test('rejects typos and wrong values', () => {
         expect(errors({ option: {} })).not.toEqual([]);
         expect(errors({ mapping: { x: { axis: { positon: 'left' } } } })).not.toEqual([]);
         expect(errors({ mapping: { x: { type: 'number' } } })).not.toEqual([]);
-        expect(errors({ plot: [{ type: 'line' }] })).not.toEqual([]);
+        // a type without the prefix of the coordinate system, not of another case
+        expect(errors({ plot: [{ type: 'line' }] })).toEqual([]);
+        expect(errors({ plot: [{ type: 'Line' }] })).not.toEqual([]);
+        // a prop of 3.x, an object which is no operator, an operator and another key
         expect(errors({ options: { height: { prop: 'relative', ratio: 0.5 } } })).not.toEqual([]);
+        expect(errors({ options: { height: { relative: ['@totalWidth', 0.5] } } })).not.toEqual([]);
+        expect(errors({ options: { height: { '*': ['@totalWidth', 0.5], '+': [1] } } })).not.toEqual([]);
+        expect(errors({ plot: { type: 'line', highlight: { mode: 'segment' } } })).not.toEqual([]);
         expect(errors({ options: { locale: 'fr' } })).toEqual([]);
         expect(errors({ options: { locale: 'not a locale' } })).not.toEqual([]);
     });
@@ -85,8 +99,15 @@ describe('the schema', () => {
     test('nested props and computed props', () => {
         expect(errors({ plot: { type: 'cartesian:line', props: {
             d: { x: '@x:scaled', y: '@y:scaled' },
-            'stroke-width': { prop: 'relative', ref: 'innerWidth', ratio: 0.01 },
-        } } })).toEqual([]);
+            'stroke-width': { '+': [{ '*': ['@innerWidth', 0.01] }, 1] },
+            'stroke-opacity': { steps: ['@totalWidth', { 0: 0.5, 550: 1 }] },
+            'data-label': { format: ['@y', ',.1f'] },
+            'stroke-dasharray': { match: ['@level', { header: '2 2' }, null] },
+            'data-at': { literal: '@a' },
+            'data-if': { if: [{ '>': ['@y', 0] }, 'up', 'down'] },
+        }, highlight: { 'stroke-width': 3 }, others: { opacity: 0.3 } } })).toEqual([]);
+        expect(errors({ plot: { type: 'line', highlight: { mode: 'row', opacity: 1 } } })).toEqual([]);
+        expect(errors({ plot: { type: 'line', highlight: 'row' } })).toEqual([]);
     });
 });
 
@@ -98,7 +119,7 @@ describe('the schema of the parts the code accepts', () => {
     });
 
     test('false or null removes a part of a mapping', () => {
-        for (const part of ['scale', 'axis', 'hover', 'legend', 'props']) {
+        for (const part of ['scale', 'axis', 'hover', 'legend']) {
             expect(errors({ mapping: { c: { [part]: false } } })).toEqual([]);
             expect(errors({ mapping: { c: { [part]: null } } })).toEqual([]);
             expect(errors({ mapping: { c: { [part]: true } } })).not.toEqual([]);
@@ -120,7 +141,10 @@ describe('the schema of the parts the code accepts', () => {
     test('registered plot types and coordinate systems beside the built-in ones', () => {
         expect(errors({ plot: { type: 'my-coord:dots' }, options: { coord: 'my-coord' } })).toEqual([]);
         expect(errors({ options: { coord: 'test:coord' } })).toEqual([]);
-        expect(errors({ plot: { type: 'dots' } })).not.toEqual([]);
+        // a registered type without the prefix of its coordinate system
+        expect(errors({ plot: { type: 'dots' } })).toEqual([]);
+        expect(errors({ plot: { type: 'Dots' } })).not.toEqual([]);
+        expect(errors({ plot: { type: 'my coord:dots' } })).not.toEqual([]);
         expect(errors({ options: { coord: 'My coord' } })).not.toEqual([]);
         // the names of d3 are the ones of the schema, validateDef warns of others
         expect(errors({ mapping: { x: { scale: { type: 'Linear' } } } })).not.toEqual([]);
@@ -130,6 +154,7 @@ describe('the schema of the parts the code accepts', () => {
         const { readFileSync } = await import('node:fs');
         const types = readFileSync(new URL('../types/definition.d.ts', import.meta.url), 'utf8');
         expect(types).toContain(`coord?: ('cartesian' | 'polar' | 'geo') | (string & {});`);
-        expect(types).toMatch(/'annotation:circle'\n\s+\)\n\s+\| \(string & \{\}\);/);
+        // the full names, the names without the prefix of the coordinate system, registered ones
+        expect(types).toMatch(/'annotation:circle'\n\s+\)\n\s+\| \('arc' \| 'area' \| [^)]*'line' \| [^)]*'point' \| [^)]*'text'\)\n\s+\| \(string & \{\}\);/);
     });
 });

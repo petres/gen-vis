@@ -4,6 +4,7 @@ export { applyTransforms, transformTypes };
 
 import { toDate, toNumber } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
+import { bind, constant } from "@/utils/expr";
 
 /**
  * The transforms of a definition compute columns of the data in the browser,
@@ -17,6 +18,9 @@ import { fillTemplate } from "@/utils/def";
  * "{base}", it is computed again if the globals change. Dates are the ones
  * of the time zone of the scale of `column` or `as`, local or UTC (`utc`).
  */
+
+// the truth of a value of an expression, as the one of `if` of utils/expr.js
+const truthy = v => Array.isArray(v) ? v.length > 0 : Boolean(v);
 
 const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
 
@@ -187,24 +191,21 @@ const transformTypes = {
         return result;
     },
 
-    // the values of the columns `columns` combined by `op` (add, subtract,
-    // multiply, divide, min or max, from the first one), times `scale` (1 by
-    // default), e.g. a value relative to the one of a group or the larger one
-    // of two columns, without a value if one is missing or of a division by 0
-    calc: (t, { n, get }) => {
-        const ops = { add: (a, b) => a + b, subtract: (a, b) => a - b, multiply: (a, b) => a*b, divide: (a, b) => b === 0 ? null : a/b,
-            min: (a, b) => Math.min(a, b), max: (a, b) => Math.max(a, b) };
-        const op = ops[t.op];
-        if (!op)
-            throw new Error(`calc: unknown op '${t.op}', expected one of ${Object.keys(ops).map(o => `'${o}'`).join(', ')}`);
-        const columns = [t.columns ?? []].flat();
-        return Array.from({ length: n }, (_, i) => {
-            const values = columns.map(c => toNumber(get(i, c)));
-            if (values.length == 0 || values.includes(null))
-                return null;
-            const v = values.slice(1).reduce((a, b) => a === null ? null : op(a, b), values[0]);
-            return v === null || !Number.isFinite(v) ? null : v*(t.scale ?? 1);
-        });
+    // the value of the expression `expr` of the row (see utils/expr.js), its
+    // names are the columns of the row and the globals, e.g. { "*": [{ "/":
+    // ["@value", "@inno"] }, 100] }, no value is null (the `op` and `columns`
+    // of 3.x are migrated, see utils/migrate.js)
+    calc: (t, { n, expr }) => {
+        const f = expr(t.expr ?? null);
+        return Array.from({ length: n }, (_, i) => f(i) ?? null);
+    },
+
+    // the rows whose expression `expr` is true (see utils/expr.js, the names
+    // are the ones of calc), the later transforms and the plots have only
+    // them, e.g. { ">": ["@value", 0] }, see applyTransforms
+    filter: (t, { n, expr }) => {
+        const f = expr(t.expr ?? true);
+        return Array.from({ length: n }, (_, i) => truthy(f(i)));
     },
 
     // the rank of the value in its group, 1 of the least one or of the
@@ -271,21 +272,28 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
     if (before && first == list.length && steps.length == list.length)
         return before;
 
-    // the columns of the transforms which are kept, in their order
+    // the columns of the transforms which are kept, in their order, and the
+    // rows of the filters (`kept`, the indexes of the rows, null without a
+    // filter), the later transforms compute the values of these rows, the
+    // others have none
     const columns = new Map();
     const kept = steps.slice(0, first);
-    kept.forEach(s => columns.set(s.name, s.values));
+    kept.forEach(s => s.name !== null && columns.set(s.name, s.values));
     columns.steps = [...kept];
+    columns.kept = kept.at(-1)?.kept ?? null;
     // also the columns which are not computed anymore, e.g. of another `as`
-    columns.changed = new Set(steps.slice(first).map(s => s.name));
-    const get = (i, c) => columns.has(c) ? columns.get(c)[i] : rows[i][c];
+    columns.changed = new Set(steps.slice(first).map(s => s.name).filter(n => n !== null));
+    const read = (i, c) => columns.has(c) ? columns.get(c)[i] : rows[i][c];
     for (const [k, { t, inUtc }] of list.entries()) {
         if (k < first)
             continue;
         const compute = Object.hasOwn(transformTypes, t.type) ? transformTypes[t.type] : undefined;
         if (!compute)
             throw new Error(`Unknown transform '${t.type}', expected one of ${Object.keys(transformTypes).map(n => `'${n}'`).join(', ')}`);
-        const n = rows.length;
+        // the rows of the filters before, by their index among them
+        const index = columns.kept;
+        const n = index ? index.length : rows.length;
+        const get = index ? (i, c) => read(index[i], c) : read;
         const values = i => get(i, t.column);
         const by = [t.by ?? []].flat();
         // the rows of the base of an index, e.g. { "year": "2019" } or a range
@@ -300,21 +308,35 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
                 return x !== null && (from === null || x >= from) && (to === null || x <= to);
             };
         });
-        const name = t.as ?? t.column ?? [t.columns ?? []].flat()[0];
+        // an expression of the row, its names are the columns of the row and the globals
+        const present = new Set(rows.length ? Object.keys(rows[0]) : []);
+        const expr = raw => bind(raw, name => typeof name == 'symbol' ? undefined
+            : (!columns.has(name) && !present.has(name) && Object.hasOwn(globals, name) ? constant(globals[name]) : i => get(i, name)));
         let groups = null;
         const result = compute(t, {
             n,
             get,
             files,
             values,
+            expr,
             numbers: i => toNumber(values(i)),
             // only of the types which need them, e.g. not of the year
             get groups() { return groups ??= groupsOf(n, get, by, t.order, inUtc); },
             matches: i => conditions.every(c => c(i)),
             utc: inUtc,
         });
-        columns.set(name, result);
-        columns.steps.push({ key: keys[k], name, values: result });
+        if (t.type == 'filter') {
+            columns.kept = (index ?? Array.from({ length: n }, (_, i) => i)).filter((r, i) => result[i]);
+            columns.steps.push({ key: keys[k], name: null, kept: columns.kept });
+            continue;
+        }
+        const name = t.as ?? t.column ?? [t.columns ?? []].flat()[0];
+        // the values of all rows, none of the ones of the filters before
+        const all = index ? new Array(rows.length).fill(null) : result;
+        if (index)
+            index.forEach((r, i) => all[r] = result[i]);
+        columns.set(name, all);
+        columns.steps.push({ key: keys[k], name, values: all, kept: index });
         columns.changed.add(name);
     }
     return columns;

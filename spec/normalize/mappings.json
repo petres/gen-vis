@@ -1,0 +1,635 @@
+[
+  {
+    "name": "a text is the column, x and y have a scale and an axis of their orientation",
+    "def": {
+      "mapping": {
+        "x": "year",
+        "y": "value"
+      }
+    },
+    "result": {
+      "mapping": {
+        "x": {
+          "column": "year",
+          "scale": {
+            "orientation": "horizontal"
+          },
+          "axis": {
+            "position": "bottom"
+          }
+        },
+        "y": {
+          "column": "value",
+          "scale": {
+            "orientation": "vertical"
+          },
+          "axis": {
+            "position": "left"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "the parts of the categories at the mapping are its props",
+    "def": {
+      "mapping": {
+        "land": {
+          "column": "Bundesland",
+          "scheme": "Tableau10",
+          "fromData": true,
+          "common": {
+            "stroke-width": 2
+          },
+          "categories": {
+            "ÖSTERREICH": {
+              "color": "#000"
+            }
+          },
+          "order": "descending",
+          "ranks": [
+            {
+              "opacity": 1
+            }
+          ]
+        }
+      }
+    },
+    "result": {
+      "mapping": {
+        "land": {
+          "column": "Bundesland",
+          "props": {
+            "categories": {
+              "ÖSTERREICH": {
+                "color": "#000"
+              }
+            },
+            "scheme": "Tableau10",
+            "common": {
+              "stroke-width": 2
+            },
+            "fromData": true,
+            "ranks": [
+              {
+                "opacity": 1
+              }
+            ],
+            "order": "descending"
+          },
+          "type": "categorical"
+        }
+      }
+    }
+  },
+  {
+    "name": "domain and nice at the mapping are the ones of the scale",
+    "def": {
+      "mapping": {
+        "y": {
+          "column": "v",
+          "type": "numeric",
+          "domain": [
+            0,
+            null
+          ],
+          "nice": true,
+          "scale": {
+            "inset": 4
+          }
+        }
+      }
+    },
+    "result": {
+      "mapping": {
+        "y": {
+          "column": "v",
+          "type": "numeric",
+          "scale": {
+            "orientation": "vertical",
+            "inset": 4,
+            "domain": [
+              0,
+              null
+            ],
+            "nice": true,
+            "type": "linear"
+          },
+          "axis": {
+            "position": "left"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "the format of the mapping stays, it is the default of the axis and the hover",
+    "def": {
+      "mapping": {
+        "y": {
+          "column": "v",
+          "type": "numeric",
+          "format": ",.0f",
+          "hover": {}
+        }
+      }
+    },
+    "result": {
+      "mapping": {
+        "y": {
+          "column": "v",
+          "type": "numeric",
+          "format": ",.0f",
+          "hover": {},
+          "scale": {
+            "orientation": "vertical",
+            "type": "linear"
+          },
+          "axis": {
+            "position": "left"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "an explicit orientation and position stay, an axis without a position is the one of the orientation",
+    "def": {
+      "mapping": {
+        "x": {
+          "column": "n",
+          "type": "numeric",
+          "scale": {
+            "orientation": "vertical"
+          }
+        },
+        "y": {
+          "column": "c",
+          "type": "categorical",
+          "axis": {
+            "position": "right"
+          }
+        }
+      }
+    },
+    "result": {
+      "mapping": {
+        "x": {
+          "column": "n",
+          "type": "numeric",
+          "scale": {
+            "orientation": "vertical",
+            "type": "linear"
+          },
+          "axis": {
+            "position": "left"
+          }
+        },
+        "y": {
+          "column": "c",
+          "type": "categorical",
+          "axis": {
+            "position": "right"
+          },
+          "scale": {
+            "orientation": "vertical",
+            "type": "point"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "false is no scale or axis, an orientation null is none",
+    "def": {
+      "mapping": {
+        "x": {
+          "column": "a",
+          "type": "numeric",
+          "axis": false
+        },
+        "y": {
+          "column": "b",
+          "type": "numeric",
+          "scale": {
+            "orientation": null,
+            "range": [
+              2,
+              10
+            ]
+          }
+        },
+        "z": {
+          "column": "c",
+          "scale": false
+        }
+      }
+    },
+    "result": {
+      "mapping": {
+        "x": {
+          "column": "a",
+          "type": "numeric",
+          "axis": false,
+          "scale": {
+            "orientation": "horizontal",
+            "type": "linear"
+          }
+        },
+        "y": {
+          "column": "b",
+          "type": "numeric",
+          "scale": {
+            "range": [
+              2,
+              10
+            ],
+            "type": "linear"
+          }
+        },
+        "z": {
+          "column": "c",
+          "scale": false
+        }
+      }
+    }
+  },
+  {
+    "name": "other mappings have no scale by default, an axis is at the position of the orientation of its scale",
+    "def": {
+      "mapping": {
+        "c": {
+          "column": "c",
+          "type": "categorical"
+        },
+        "y2": {
+          "column": "w",
+          "type": "numeric",
+          "scale": {
+            "orientation": "vertical"
+          },
+          "axis": {}
+        }
+      }
+    },
+    "result": {
+      "mapping": {
+        "c": {
+          "column": "c",
+          "type": "categorical"
+        },
+        "y2": {
+          "column": "w",
+          "type": "numeric",
+          "scale": {
+            "orientation": "vertical",
+            "type": "linear"
+          },
+          "axis": {
+            "position": "left"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "a mapping of the scale of another one has no parts of its own",
+    "def": {
+      "mapping": {
+        "y": {
+          "column": "v",
+          "type": "numeric"
+        },
+        "y0": {
+          "column": "low",
+          "type": "numeric",
+          "scale": {
+            "of": "y"
+          }
+        }
+      }
+    },
+    "result": {
+      "mapping": {
+        "y": {
+          "column": "v",
+          "type": "numeric",
+          "scale": {
+            "orientation": "vertical",
+            "type": "linear"
+          },
+          "axis": {
+            "position": "left"
+          }
+        },
+        "y0": {
+          "column": "low",
+          "type": "numeric",
+          "scale": {
+            "of": "y"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "the type of the parts: categories, scales of categories, of dates and others",
+    "def": {
+      "mapping": {
+        "c": {
+          "column": "c",
+          "categories": {
+            "a": {}
+          }
+        },
+        "b": {
+          "column": "b",
+          "scale": {
+            "type": "band"
+          }
+        },
+        "d": {
+          "column": "d",
+          "scale": {
+            "type": "utc"
+          }
+        },
+        "n": {
+          "column": "n",
+          "scale": {
+            "type": "sqrt",
+            "range": [
+              0,
+              10
+            ]
+          }
+        },
+        "u": {
+          "column": "u"
+        }
+      }
+    },
+    "result": {
+      "mapping": {
+        "c": {
+          "column": "c",
+          "props": {
+            "categories": {
+              "a": {}
+            }
+          },
+          "type": "categorical"
+        },
+        "b": {
+          "column": "b",
+          "scale": {
+            "type": "band"
+          },
+          "type": "categorical"
+        },
+        "d": {
+          "column": "d",
+          "scale": {
+            "type": "utc"
+          },
+          "type": "date"
+        },
+        "n": {
+          "column": "n",
+          "scale": {
+            "type": "sqrt",
+            "range": [
+              0,
+              10
+            ]
+          },
+          "type": "numeric"
+        },
+        "u": {
+          "column": "u"
+        }
+      }
+    }
+  },
+  {
+    "name": "mappings of the categories of plots and of the facets are categorical",
+    "def": {
+      "mapping": {
+        "g": {
+          "column": "g"
+        },
+        "f": {
+          "column": "f"
+        }
+      },
+      "facets": {
+        "dim": "f"
+      },
+      "plot": {
+        "type": "cartesian:line",
+        "categories": [
+          "g"
+        ]
+      }
+    },
+    "result": {
+      "mapping": {
+        "g": {
+          "column": "g",
+          "type": "categorical"
+        },
+        "f": {
+          "column": "f",
+          "type": "categorical"
+        }
+      },
+      "facets": {
+        "dim": "f"
+      },
+      "plot": {
+        "type": "cartesian:line",
+        "categories": [
+          "g"
+        ]
+      }
+    }
+  },
+  {
+    "name": "the scale of the type: linear, time, band of the positions of bars, point of other positions, ordinal otherwise",
+    "def": {
+      "mapping": {
+        "x": {
+          "column": "c",
+          "type": "categorical"
+        },
+        "y": {
+          "column": "v",
+          "type": "numeric"
+        },
+        "t": {
+          "column": "t",
+          "type": "date",
+          "scale": {
+            "orientation": "horizontal"
+          }
+        },
+        "p": {
+          "column": "p",
+          "type": "categorical",
+          "scale": {
+            "orientation": "vertical"
+          }
+        },
+        "k": {
+          "column": "k",
+          "type": "categorical",
+          "scale": {
+            "range": [
+              "red",
+              "blue"
+            ]
+          }
+        }
+      },
+      "plot": {
+        "type": "cartesian:bar",
+        "props": {
+          "x": "@x:scaled",
+          "y1": "@y:scaled"
+        }
+      }
+    },
+    "result": {
+      "mapping": {
+        "x": {
+          "column": "c",
+          "type": "categorical",
+          "scale": {
+            "orientation": "horizontal",
+            "type": "band"
+          },
+          "axis": {
+            "position": "bottom"
+          }
+        },
+        "y": {
+          "column": "v",
+          "type": "numeric",
+          "scale": {
+            "orientation": "vertical",
+            "type": "linear"
+          },
+          "axis": {
+            "position": "left"
+          }
+        },
+        "t": {
+          "column": "t",
+          "type": "date",
+          "scale": {
+            "orientation": "horizontal",
+            "type": "time"
+          }
+        },
+        "p": {
+          "column": "p",
+          "type": "categorical",
+          "scale": {
+            "orientation": "vertical",
+            "type": "point"
+          }
+        },
+        "k": {
+          "column": "k",
+          "type": "categorical",
+          "scale": {
+            "range": [
+              "red",
+              "blue"
+            ],
+            "type": "ordinal"
+          }
+        }
+      },
+      "plot": {
+        "type": "cartesian:bar",
+        "props": {
+          "x": "@x:scaled",
+          "y1": "@y:scaled"
+        }
+      }
+    }
+  },
+  {
+    "name": "polar plots: x and angle are angular, y and radius radial",
+    "def": {
+      "options": {
+        "coord": "polar"
+      },
+      "mapping": {
+        "x": {
+          "column": "m",
+          "type": "categorical"
+        },
+        "radius": {
+          "column": "v",
+          "type": "numeric"
+        }
+      }
+    },
+    "result": {
+      "options": {
+        "coord": "polar"
+      },
+      "mapping": {
+        "x": {
+          "column": "m",
+          "type": "categorical",
+          "scale": {
+            "orientation": "angular",
+            "type": "point"
+          },
+          "axis": {
+            "position": "angular"
+          }
+        },
+        "radius": {
+          "column": "v",
+          "type": "numeric",
+          "scale": {
+            "orientation": "radial",
+            "type": "linear"
+          },
+          "axis": {
+            "position": "radial"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "maps have no positions",
+    "def": {
+      "options": {
+        "coord": "geo"
+      },
+      "mapping": {
+        "x": {
+          "column": "a",
+          "type": "numeric"
+        }
+      }
+    },
+    "result": {
+      "options": {
+        "coord": "geo"
+      },
+      "mapping": {
+        "x": {
+          "column": "a",
+          "type": "numeric"
+        }
+      }
+    }
+  }
+]

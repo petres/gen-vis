@@ -10,20 +10,23 @@
     "mapping": {
         "x": { "scale": { "domainRel": [0, 0] } },
         "y": { "stacked": true, "scale": { "domainRel": [0, 0.05] } },
-        "land": {
-            "legend": { "symbol": { "type": "rect", "size": 14 } },
-            "props": { "categories": { "ÖSTERREICH": { "legend": false } } }
-        }
+        "land": { "legend": { "symbol": { "type": "rect", "size": 14 } }, "categories": { "ÖSTERREICH": { "legend": false } } }
     },
-    "plot": [{
-        "type": "cartesian:area",
-        "categories": ["land"],
-        "curve": "monotoneX",
-        "layer": "below",
-        "props": {
-            "d": { "x": "@x:scaled", "y0": "@y:start:scaled", "y1": "@y:end:scaled" },
-            "fill": "@color", "fill-opacity": 0.85, "stroke": "white", "stroke-width": 0.8,
-            "highlight-fill-opacity": 1, "others-fill-opacity": 0.35
+    "plot": [
+        {
+            "type": "area",
+            "by": "land",
+            "curve": "monotoneX",
+            "layer": "below",
+            "props": {
+                "fill": "@color",
+                "d": { "y0": "@y:start:scaled", "y1": "@y:end:scaled" },
+                "fill-opacity": 0.85,
+                "stroke": "white",
+                "stroke-width": 0.8
+            },
+            "highlight": { "fill-opacity": 1 },
+            "others": { "fill-opacity": 0.35 }
         }
-    }]
+    ]
 }

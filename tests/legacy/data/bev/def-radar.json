@@ -1,0 +1,106 @@
+{
+    "data": "data.csv",
+    "options": {
+        "coord": "polar",
+        "height": 420,
+        "margins": {"top": 30, "right": 90, "bottom": 30, "left": 90},
+        "title": "Bevölkerung",
+        "subtitle": "nach Bundesland",
+        "footer": "Q: Statistik Austria"
+    },
+    "mapping": {
+        "land": {
+            "column": "Bundesland",
+            "type": "categorical",
+            "scale": {
+                "type": "point",
+                "orientation": "angular"
+            },
+            "axis": {
+                "position": "angular",
+                "grid": true,
+                "padding": 4
+            },
+            "props": {
+                "categories": {
+                    "ÖSTERREICH":       { "visible": false },
+                    "Wien":             {},
+                    "Niederösterreich": {},
+                    "Burgenland":       {},
+                    "Steiermark":       {},
+                    "Kärnten":          {},
+                    "Tirol":            {},
+                    "Vorarlberg":       {},
+                    "Salzburg":         {},
+                    "Oberösterreich":   {}
+                }
+            }
+        },
+        "y": {
+            "column": "Einwohner",
+            "type": "numeric",
+            "scale": {
+                "type": "linear",
+                "domain": [0, null],
+                "domainRel": [0, 0.05],
+                "orientation": "radial"
+            },
+            "axis": {
+                "ticks": 4,
+                "position": "radial",
+                "angle": 40,
+                "grid": true,
+                "gridShape": "polygon",
+                "format": ".2s"
+            },
+            "hover": {
+                "format": ",.0f"
+            }
+        },
+        "year": {
+            "column": "Jahr",
+            "type": "categorical",
+            "legend": {
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": { "x1": 0, "x2": 16, "y1": 8, "y2": 8, "stroke": "@color", "stroke-width": 2.5 }
+                    }]
+                }
+            },
+            "props": {
+                "categories": {
+                    "2002": { "color": "#BBD7EE" },
+                    "2012": { "color": "#559BD5" },
+                    "2022": { "color": "#1E4F77" }
+                }
+            },
+            "hover": {}
+        }
+    },
+    "plot": [
+        {
+            "type": "polar:line",
+            "categories": ["year"],
+            "curve": "linearClosed",
+            "props": {
+                "stroke": "@color",
+                "stroke-width": 2.5,
+                "fill": "none",
+                "d": { "angle": "@land:scaled", "radius": "@y:scaled" },
+                "highlight-stroke-width": 4
+            }
+        }, {
+            "type": "polar:circle",
+            "categories": ["year"],
+            "props": {
+                "fill": "@color",
+                "r": 3.5,
+                "angle": "@land:scaled",
+                "radius": "@y:scaled",
+                "highlight-r": 5
+            }
+        }
+    ]
+}
