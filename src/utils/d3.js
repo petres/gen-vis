@@ -55,7 +55,8 @@ const ownSchemes = {};
 /**
  * A scheme of its own (`name`, e.g. "wifo") of `colors` (CSS colors), for
  * `scheme` of the categories and of the scales as the ones of d3, known to
- * validateDef, registered before the visualisations are loaded.
+ * validateDef, registered before the visualisations are loaded. The scheme
+ * `observable10` is also the one of the categories without colors.
  */
 export const registerScheme = (name, colors) => {
     if (typeof name != 'string' || !name)

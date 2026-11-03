@@ -1,7 +1,7 @@
 export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts };
 
 import merge from 'deepmerge';
-import { schemeColors } from '@/utils/d3';
+import { ownScheme, schemeColors } from '@/utils/d3';
 import { comparison, isObject, sameValue } from '@/utils/values';
 import { scaleTypeOf } from '@/utils/normalize';
 
@@ -78,8 +78,10 @@ const symbolOf = (symbol, names) => {
     return { size, elements: [{ type, props: { ...shapes[type], ...props } }] };
 };
 
-// the colors of the categories without colors, of d3's scheme Observable10,
-// distinct colors which are also distinct for most color vision deficiencies
+// the colors of the categories without colors, the scheme observable10
+// registered by the page (registerScheme, e.g. the colors of a house style)
+// or d3's scheme Observable10, distinct colors which are also distinct for
+// most color vision deficiencies
 const defaultColors = ['#4269D0', '#EFB118', '#FF725C', '#6CC5B0', '#3CA951', '#FF8AB7', '#A463F2', '#97BBF5', '#9C6B4E', '#9498A0'];
 
 // an entry of a definition which is an object, e.g. a mapping or a plot, an
@@ -120,14 +122,15 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = []) 
         if (props.scheme && !colors)
             throw new Error(`Unknown scheme '${props.scheme}', e.g. 'Tableau10' or 'Blues'`);
         const ranks = props.ranks ?? [];
+        const palette = colors || given ? null : ownScheme('observable10') ?? defaultColors;
         m.keys = keys;
         m.props = Object.fromEntries(keys.map((k, i) => {
             const rank = ranks.length > 0 ? ranks[Math.min(i, ranks.length - 1)] : {};
             const t = Object.assign({}, colors ? { color: colors[i % colors.length] } : {}, props.common, rank, categories[k]);
             t.name ??= k;
             t.visible ??= true;
-            if (!colors && !given)
-                t.defaultColor = defaultColors[i % defaultColors.length];
+            if (palette)
+                t.defaultColor = palette[i % palette.length];
             return [k, t];
         }))
     }

@@ -164,7 +164,8 @@ the PDF the print of the SVG, one browser for all of them. The PNG of
 `registerScheme(name, colors)`: a scheme of colors of its own for `scheme`
 of the categories and the scales, e.g. `"scheme": "wifo"` of the colors of a
 house style, known to `validateDef` (also of `@preschen/gen-vis/check`),
-without the colors of d3.
+without the colors of d3. A registered `observable10` is also the palette of
+the categories without colors (the default colors).
 
 Defaults of the parts (README "Defaults"): the built-in values of the axes
 are collected in `builtInDefaults` (`src/utils/defaults.js`): the `padding`

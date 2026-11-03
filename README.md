@@ -1978,13 +1978,17 @@ ones of d3, e.g. the colors of a house style, which a stylesheet can not
 give a definition; the categories take its colors in their order (again
 from the first one if there are more), a scale of `classes` its first ones
 (all of them if it has fewer), it needs no colors of d3 and takes precedence
-over a scheme of d3 of the same name:
+over a scheme of d3 of the same name. A registered `observable10` is also
+the palette of the categories without colors and without a scheme (the
+default colors, d3's Observable10 otherwise), e.g. the colors of a house
+style for every definition:
 
 ```js
 import { registerScheme } from '@preschen/gen-vis';
 
 registerScheme('wifo', ['#005CA9', '#E6A000', '#7AB51D', '#A6A6A6']);
 // "land": { "column": "Bundesland", "fromData": true, "scheme": "wifo", "legend": {} }
+registerScheme('observable10', ['#005CA9', '#E6A000', '#7AB51D', '#A6A6A6']);
 ```
 
 All three are known to `validateDef`, `@preschen/gen-vis/check` exports

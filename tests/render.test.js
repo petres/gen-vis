@@ -302,6 +302,21 @@ describe('rendering', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the default colors of categories without colors, of a registered scheme observable10', async () => {
+        const def = lineDef();
+        def.mapping.c = { column: 'land', type: 'categorical', legend: {}, categories: { Wien: {}, Tirol: {} } };
+        const strokes = el => [...el.querySelectorAll('g.vis-plot.plot-0 path')].map(p => p.getAttribute('stroke'));
+        expect(strokes(await mount({ def, data: lineData }))).toEqual(['#4269D0', '#EFB118']);
+        // the observable10 of the page, e.g. of a house style, with the original colors afterwards
+        onTestFinished(() => registerScheme('observable10', ['#4269D0', '#EFB118', '#FF725C', '#6CC5B0', '#3CA951', '#FF8AB7', '#A463F2', '#97BBF5', '#9C6B4E', '#9498A0']));
+        registerScheme('Observable10', ['#010101', '#020202', '#030303']);
+        expect(strokes(await mount({ def, data: lineData }))).toEqual(['#010101', '#020202']);
+        // with colors of the categories none
+        def.mapping.c.categories.Wien.color = 'red';
+        expect(strokes(await mount({ def, data: lineData }))).toEqual(['red', null]);
+        expect(errors).toEqual([]);
+    });
+
     test('a given state is applied', async () => {
         const state = { globals: { column: 'other' }, visible: { c: { Tirol: false } } };
         const el = await mount({ def: stateDef(), data: lineData, state });
