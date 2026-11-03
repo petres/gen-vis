@@ -5,7 +5,6 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import Ajv from 'ajv';
 import schema from '../schema.json';
-import { GenVis } from '@/index.js';
 import { validateDef } from '@/utils/validate';
 import { errors, useDom, mount, root } from './dom.js';
 import steps from '../site/guide/steps.js';
@@ -42,7 +41,7 @@ describe('the examples of the page', () => {
     test.each(examples)('%s is valid and drawn', async (file, def) => {
         expect(validate(def) ? [] : validate.errors).toEqual([]);
         expect(validateDef(def)).toEqual([]);
-        const el = await mount(GenVis, file.startsWith('charts/') ? { def, data: chartData } : { def });
+        const el = await mount(file.startsWith('charts/') ? { def, data: chartData } : { def });
         expect(el.querySelector('.vis-error')).toBeNull();
         expect(el.querySelectorAll('svg.vis-svg g.vis-plot').length).toBeGreaterThan(0);
         expect(errors).toEqual([]);
@@ -54,7 +53,7 @@ describe('the steps of the page how it works', () => {
     test.each(steps.map(s => [s.id, s.def]))('%s is valid and drawn', async (id, def) => {
         expect(validate(def) ? [] : validate.errors).toEqual([]);
         expect(validateDef(def)).toEqual([]);
-        const el = await mount(GenVis, { def });
+        const el = await mount({ def });
         expect(el.querySelector('.vis-error')).toBeNull();
         expect(el.querySelectorAll('svg.vis-svg g.vis-plot').length).toBeGreaterThan(0);
         expect(errors).toEqual([]);
@@ -62,9 +61,9 @@ describe('the steps of the page how it works', () => {
 
     test('the last one switches to nuclear power, without the line at half, and to another first year', async () => {
         const def = steps.at(-1).def;
-        const el = await mount(GenVis, { def });
+        const el = await mount({ def });
         expect(el.querySelector('.vis-annotation.vis-line')).not.toBeNull();
-        const nuclear = await mount(GenVis, { def, state: { globals: { source: 'nuclear', from: '2021' } } });
+        const nuclear = await mount({ def, state: { globals: { source: 'nuclear', from: '2021' } } });
         expect(nuclear.querySelector('.vis-error')).toBeNull();
         expect(nuclear.querySelector('.vis-annotation.vis-line')).toBeNull();
         expect(nuclear.querySelector('.vis-subtitle').textContent).toBe('Share of the generation of nuclear power, 2021 and 2025');

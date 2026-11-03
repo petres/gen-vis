@@ -1,7 +1,6 @@
-// the image and the CSV of a visualisation, loaded with the first one, see App.vue
+// the image and the CSV of a visualisation, loaded with the first one, see comp/app.js
 export { selection, renderImage, saveFile, csvOf, defaultWidth };
 
-import { render } from "vue";
 import * as d3 from "@/utils/d3";
 import { selectedEntry } from "@/utils/def";
 import { columnValues } from "@/utils/data";
@@ -26,7 +25,7 @@ const selection = def => (def.formElements ?? []).filter(e => e.inImage !== fals
 
 // a copy of the visualisation without the form elements, the buttons and the
 // legend of the facets (their titles name them), the selection is a line
-// below the subtitle (of the class `vis-selection`, with the scoped styles of
+// below the subtitle (of the class `vis-selection`, with the attributes of
 // the subtitle) and the legends only have the entries shown
 const prepare = (vis, { text, facets }) => {
     const copy = vis.cloneNode(true);
@@ -53,13 +52,14 @@ const scaleOf = width => Math.max(2, Math.ceil(defaultWidth / width));
 
 /**
  * The PNG (a Blob, see scaleOf) of a visualisation of the given `width`,
- * independent of the size of the screen. `vnode(done)` is a GenVis of the
- * same definition, data and state, which calls `done.resolve` once it is
- * drawn and `done.reject` on errors. It is rendered next to `outer` (outside
- * of the screen), so the styles of the page apply. `text` is the selection,
- * `facets` the mapping of the facets.
+ * independent of the size of the screen. `mount(holder, done)` draws a
+ * visualisation of the same definition, data and state in `holder`, which
+ * calls `done.resolve` once it is drawn and `done.reject` on errors, and
+ * returns the function which removes it. It is drawn next to `outer`
+ * (outside of the screen), so the styles of the page apply. `text` is the
+ * selection, `facets` the mapping of the facets.
  */
-const renderImage = async (outer, vnode, { width, ...parts }) => {
+const renderImage = async (outer, mount, { width, ...parts }) => {
     const { domToBlob } = await lazy.screenshot();
 
     const wrapper = document.createElement('div');
@@ -68,16 +68,17 @@ const renderImage = async (outer, vnode, { width, ...parts }) => {
     holder.style.width = `${width}px`;
     outer.after(wrapper);
 
+    let remove = null;
     try {
         await new Promise((resolve, reject) => {
             const timer = setTimeout(() => reject(new Error('The image was not rendered in time.')), timeout);
-            render(vnode({
+            remove = mount(holder, {
                 resolve: () => { clearTimeout(timer); resolve(); },
                 reject: message => { clearTimeout(timer); reject(new Error(message)); },
-            }), holder);
+            });
         });
 
-        // the copy is in an element as the one of the component, e.g. of its classes
+        // the copy is in an element as the one of the visualisation, e.g. of its classes
         const root = holder.firstElementChild;
         const shot = wrapper.appendChild(root.cloneNode(false));
         shot.style.cssText = `margin: 0; width: ${width + 2*padding}px;`;
@@ -87,7 +88,7 @@ const renderImage = async (outer, vnode, { width, ...parts }) => {
         const background = getComputedStyle(copy).getPropertyValue('--gen-vis-background').trim() || '#FFF';
         return await domToBlob(copy, { scale: scaleOf(width), backgroundColor: background, type: 'image/png' });
     } finally {
-        render(null, holder);
+        remove?.();
         wrapper.remove();
     }
 };

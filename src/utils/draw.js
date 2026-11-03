@@ -52,7 +52,7 @@ const writeValue = (node, k, v) => {
 const finish = node => finishAnimation(node, 'vis');
 
 // the transition of the elements of a draw in milliseconds, 0 without, see
-// options.transition and Facet.vue
+// options.transition and comp/facet.js
 const motion = { duration: 0 };
 
 // the user prefers no motion, a setting of the system, the elements are at

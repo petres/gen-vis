@@ -3,10 +3,8 @@
 // of a definition, globals of the page, filters, props, scales, the hover,
 // the highlight, legends, texts, transforms and messages
 import { describe, test, expect, vi, onTestFinished } from 'vitest';
-import { nextTick } from 'vue';
-import { GenVis } from '@/index.js';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { errors, useDom, mount } from './dom.js';
+import { errors, useDom, mount, mountVis, nextTick } from './dom.js';
 
 useDom();
 
@@ -53,7 +51,7 @@ describe('patches of the entries of form elements', () => {
     });
 
     test('the options, the filter and the plots, the names of the entries in the texts', async () => {
-        const el = await mount(GenVis, { def: patchedDef(), data: lineData });
+        const el = await mount({ def: patchedDef(), data: lineData });
         expect(el.querySelector('.vis-title').textContent).toBe('Werte von Alle');
         expect(el.querySelectorAll('g.vis-plot circle')).toHaveLength(7);
         expect(el.querySelector('svg.vis-svg').getAttribute('height')).toBe('300');
@@ -88,7 +86,7 @@ describe('patches of the entries of form elements', () => {
             mapping: { region: { column: 'region', type: 'categorical' }, value: { column: 'value', type: 'numeric', scale: { type: 'sequential', interpolator: 'Blues' } } },
             plot: [{ type: 'geo:base', props: { fill: '#EEE' } }],
         };
-        const el = await mount(GenVis, { def, data: 'region,value\nA,1\nB,2' });
+        const el = await mount({ def, data: 'region,value\nA,1\nB,2' });
         expect(el.querySelectorAll('.vis-features path')).toHaveLength(3);
         await select(el, 'ab');
         expect(el.querySelectorAll('.vis-features path')).toHaveLength(2);
@@ -107,25 +105,18 @@ describe('globals of the page', () => {
     });
 
     test('a hidden form element is set by the page, not by the user', async () => {
-        const { createApp, h, ref } = await import('vue');
-        const globals = ref({ lang: 'en' });
         const states = [];
-        const el = document.body.appendChild(document.createElement('div'));
-        createApp({ render: () => h(GenVis, { def: def(), data: lineData, globals: globals.value, 'onUpdate:state': s => states.push(s) }) }).mount(el);
-        await (await import('./dom.js')).rendered(el);
-        await nextTick();
+        const { el, vis } = await mountVis({ def: def(), data: lineData, globals: { lang: 'en' }, 'onUpdate:state': s => states.push(s) });
         expect(el.querySelector('.vis-form-element')).toBeNull();
         expect(el.querySelector('.vis-title').textContent).toBe('Values');
         expect(el.querySelector('.vis-legend-entry[data-key="Wien"]').textContent).toBe('Vienna');
 
-        globals.value = { lang: 'de' };
-        await nextTick();
+        vis.update({ globals: { lang: 'de' } });
         await nextTick();
         expect(el.querySelector('.vis-title').textContent).toBe('Werte');
         expect(el.querySelector('.vis-legend-entry[data-key="Wien"]').textContent).toBe('Wien');
         // an unknown value of a form element is ignored, other globals are set
-        globals.value = { lang: 'fr', suffix: '!' };
-        await nextTick();
+        vis.update({ globals: { lang: 'fr', suffix: '!' } });
         await nextTick();
         expect(el.querySelector('.vis-title').textContent).toBe('Werte!');
         // not a change of the user
@@ -171,7 +162,7 @@ describe('filters of rows', () => {
         const def = lineDef();
         def.plot[1].filter = { c: 'Wien', y: { not: null } };
         def.options.hover = { filter: { c: 'Tirol' } };
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         expect(el.querySelectorAll('g.vis-plot[data-plot="dots"] circle')).toHaveLength(3);
         const { pointer } = await import('./dom.js');
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
@@ -188,7 +179,7 @@ describe('props', () => {
         def.mapping.x.scale.domainRel = [0, 0];
         def.plot[1].props.cx = { prop: 'relative', ref: 'x:scaled', offset: -5 };
         def.plot[1].props.r = { prop: 'match', ref: 'c', cases: { Wien: 6 }, default: 2 };
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         expect(el.querySelector('svg.vis-svg > g').getAttribute('transform')).toBe('translate(100 10)');
         const wien = el.querySelector('g.vis-group[data-group-c="Wien"] circle');
         const tirol = el.querySelector('g.vis-group[data-group-c="Tirol"] circle');
@@ -224,7 +215,7 @@ describe('scales', () => {
         def.mapping.x.scale.domainRel = [0, 0];
         def.plot = [{ id: 'zero', type: 'svg:rect', props: { x: '@x:scaled:2021', y: '@y:scaled', height: '@y:bandwidth', width: '@y:step' } }];
         def.annotations = [{ type: 'text', x: 2020, y: 'Wien', text: 'a', props: { dy: '@y:bandwidth' } }];
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         // 250 pixels, two bands
         const rect = el.querySelector('g.vis-plot[data-plot="zero"] rect');
         expect(['x', 'height', 'width'].map(a => Math.round(rect.getAttribute(a)))).toEqual([183, 125, 125]);
@@ -273,7 +264,7 @@ describe('groups of band scales', () => {
             ],
         };
         const data = 'y,g,v\na,one,1\nb,one,2\nc,two,3';
-        const el = await mount(GenVis, { def, data });
+        const el = await mount({ def, data });
         // 3 categories and a gap, 65 pixels each
         expect([...el.querySelectorAll('g.vis-plot[data-plot="bars"] rect')].map(r => [r.getAttribute('y'), r.getAttribute('height')]))
             .toEqual([['0', '65'], ['65', '65'], ['195', '65']]);
@@ -296,7 +287,7 @@ describe('the hover', () => {
         def.options.hover = { box: false, marker: false };
         def.plot[1].props['highlight-r'] = 6;
         const hovers = [];
-        const el = await mount(GenVis, { def, data: lineData, onHover: e => hovers.push(e) });
+        const el = await mount({ def, data: lineData, onHover: e => hovers.push(e) });
         await move(el, 100, 100);
         expect(el.querySelector('.vis-hover')).toBeNull();
         expect(el.querySelector('.vis-hover-marker').getAttribute('visibility')).toBe('hidden');
@@ -308,7 +299,7 @@ describe('the hover', () => {
     test('at the pointer, on a side, moved by an offset', async () => {
         const def = lineDef();
         def.options.hover = { position: 'pointer', side: 'above', offset: [0, -10] };
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         await move(el, 100, 100);
         // the pointer in the plot area (in jsdom the one of the facet), with
         // its margins of 40 and 10 and the offset
@@ -326,7 +317,7 @@ describe('the hover', () => {
         def.mapping.y = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'vertical' }, axis: { position: 'left' } };
         def.plot = { type: 'cartesian:bar', categories: ['c'], props: { x1: '@x:scaled', y: '@y:scaled', fill: '@color' } };
         def.options.hover = { area: 'facet' };
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         const area = el.querySelector('rect.vis-events');
         expect(['x', 'y', 'width', 'height'].map(a => area.getAttribute(a))).toEqual(['-40', '-10', '600', '300']);
         expect(errors).toEqual([]);
@@ -338,7 +329,7 @@ describe('the highlight', () => {
         const def = lineDef();
         def.plot[1] = { ...def.plot[1], highlight: 'row', props: { ...def.plot[1].props, 'highlight-r': 6, 'others-opacity': 0.3 } };
         def.plot.push({ id: 'last', type: 'svg:text', select: 'last', props: { x: '@x:scaled', y: '@y:scaled', text: 'last', 'others-visibility': 'hidden' } });
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         const { pointer } = await import('./dom.js');
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
         await nextTick();
@@ -363,7 +354,7 @@ describe('the highlight', () => {
     test('a highlight of the same elements changes nothing, others- props also without highlight- props', async () => {
         const def = lineDef();
         def.plot[1] = { ...def.plot[1], props: { ...def.plot[1].props, 'highlight-r': 6 } };
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         const { pointer } = await import('./dom.js');
         const events = el.querySelector('rect.vis-events');
         // the position of a circle of a group, Wien has no value of 2021
@@ -395,7 +386,7 @@ describe('the highlight', () => {
         // the others- props of a highlight without elements of highlight- props
         const others = lineDef();
         others.plot[1] = { ...others.plot[1], props: { ...others.plot[1].props, 'others-opacity': 0.3 } };
-        const el2 = await mount(GenVis, { def: others, data: lineData });
+        const el2 = await mount({ def: others, data: lineData });
         el2.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
         await nextTick();
         expect(el2.querySelectorAll('g.vis-plot[data-plot="dots"] circle[opacity="0.3"]')).toHaveLength(7);
@@ -407,7 +398,7 @@ describe('the highlight', () => {
         def.options.highlight = { transition: 40 };
         def.plot[1] = { ...def.plot[1], highlight: 'row', props: { ...def.plot[1].props, fill: 'red', 'highlight-fill': 'black', 'others-opacity': 0.3 } };
         delete def.mapping.c.props.categories.Wien.color;
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         const { pointer } = await import('./dom.js');
         const events = el.querySelector('rect.vis-events');
         // other rows, back to the first one and away, while the transitions run
@@ -426,7 +417,7 @@ describe('the highlight', () => {
         const def = lineDef();
         def.options.highlight = { transition: 50 };
         def.plot[1].props['highlight-r'] = 6;
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         const { pointer } = await import('./dom.js');
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
         await nextTick();
@@ -443,7 +434,7 @@ describe('legends', () => {
         def.mapping.c.legend = { position: 'bottom' };
         def.mapping.v = { column: 'value', type: 'numeric', name: 'Wert', scale: { type: 'sequential', interpolator: 'Blues' }, legend: { position: 'left', orientation: 'vertical', size: 120, values: [1, 2, 3], labels: 'before' } };
         delete def.options.width;
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         expect([...el.querySelectorAll('.vis-legends-bottom .vis-legend-entry')].map(e => e.dataset.key)).toEqual(['Wien']);
         // Tirol stays visible
         expect(el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle')).toHaveLength(4);
@@ -477,7 +468,7 @@ describe('texts', () => {
     const data = 'name,short,level,value\nA long name,A long,header,1\nB,B,item,2';
 
     test('the props of the labels of an axis by the categories of their rows, cut in a width', async () => {
-        const el = await mount(GenVis, { def: bars(), data });
+        const el = await mount({ def: bars(), data });
         const labels = [...el.querySelectorAll('.vis-axis-left .tick text')];
         expect(labels.map(t => t.getAttribute('font-weight'))).toEqual(['bold', 'normal']);
         // 30 pixels of 12 pixels per character are 4 characters, estimated without layout
@@ -492,7 +483,7 @@ describe('texts', () => {
             { id: 'cut', type: 'svg:text', select: 'first', categories: ['c'], props: { x: 0, y: 0, text: 'a long label of a line', 'max-width': 40 } },
             { id: 'wrap', type: 'svg:text', select: 'first', categories: ['c'], props: { x: 5, y: 0, text: 'a long label of a line', 'max-width': 40, 'text-overflow': 'wrap', 'dominant-baseline': 'middle' } },
         ];
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         const cut = el.querySelector('g.vis-plot[data-plot="cut"] text');
         expect(cut.childNodes[0].textContent).toBe('a lon…');
         const lines = [...el.querySelectorAll('g.vis-plot[data-plot="wrap"] text')[0].querySelectorAll('tspan')];
@@ -521,17 +512,11 @@ describe('transforms', () => {
             plot: [{ id: 'labels', type: 'svg:text', select: 'last', categories: ['c'], props: { x: 0, y: 0, text: '@label', 'data-rank': '@rank' } }],
         }));
         try {
-            const { createApp, h, ref } = await import('vue');
-            const globals = ref({ lang: 'en' });
-            const el = document.body.appendChild(document.createElement('div'));
-            createApp({ render: () => h(GenVis, { defFile: '/tests/tmp-lookup/def.json', data: lineData, globals: globals.value }) }).mount(el);
-            await (await import('./dom.js')).rendered(el);
-            await nextTick();
+            const { el, vis } = await mountVis({ defFile: '/tests/tmp-lookup/def.json', data: lineData, globals: { lang: 'en' } });
             const texts = () => [...el.querySelectorAll('g.vis-plot[data-plot="labels"] text')].map(t => [t.textContent, t.getAttribute('data-rank')]);
             // 2023: Wien 4, Tirol 2
             expect(texts()).toEqual([['Vienna', '1'], ['Tyrol', '2']]);
-            globals.value = { lang: 'de' };
-            await nextTick();
+            vis.update({ globals: { lang: 'de' } });
             await nextTick();
             expect(texts()).toEqual([['Wien', '1'], ['Tirol', '2']]);
             expect(errors).toEqual([]);
@@ -554,7 +539,7 @@ describe('messages and the classes of the root', () => {
             { id: 'none', name: 'Keine', value: 'none', patch: { filter: { c: [] } } },
             { id: 'top3', name: 'Top 3', value: 'top3', patch: { options: { message: 'Die Top 3 sind je Indikator andere Länder.' } } },
         ] }];
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         const vis = el.querySelector('.vis');
         expect(vis.className).toBe('vis chart-all');
         expect([vis.dataset.globalGroup, vis.dataset.globalShareScale]).toEqual(['all', 'x']);
@@ -572,7 +557,7 @@ describe('messages and the classes of the root', () => {
 
         // a narrow visualisation
         const narrow = lineDef({ width: 300, message: def.options.message });
-        const small = await mount(GenVis, { def: narrow, data: lineData });
+        const small = await mount({ def: narrow, data: lineData });
         expect(small.querySelector('.vis-message').textContent).toBe('Zu schmal');
         expect(errors).toEqual([]);
     });
@@ -580,19 +565,16 @@ describe('messages and the classes of the root', () => {
 
 describe('linked charts', () => {
     test('the highlight of the page, e.g. the row under the mouse of another chart', async () => {
-        const { createApp, h, ref } = await import('vue');
-        const { pointer, rendered } = await import('./dom.js');
+        const { pointer } = await import('./dom.js');
         const def = lineDef();
         def.plot[1].props['highlight-r'] = 6;
-        const row = ref(null);
+        const row = { value: null };
         const el = document.body.appendChild(document.createElement('div'));
-        createApp({ render: () => h('div', [
-            h(GenVis, { class: 'a', def, data: lineData, onHover: e => row.value = e?.nearest ? { c: e.nearest.c } : null }),
-            h(GenVis, { class: 'b', def, data: lineData, highlight: row.value }),
-        ]) }).mount(el);
-        await rendered(el.querySelector('.a'));
-        await rendered(el.querySelector('.b'));
-        await nextTick();
+        const b = await mountVis({ def, data: lineData, highlight: null });
+        const a = await mountVis({ def, data: lineData, onHover: e => b.vis.update({ highlight: row.value = e?.nearest ? { c: e.nearest.c } : null }) });
+        a.el.classList.add('a');
+        b.el.classList.add('b');
+        el.append(a.el, b.el);
         const highlighted = () => [...el.querySelectorAll('.b circle.vis-highlight')].map(c => c.parentNode.dataset.groupC);
         expect(highlighted()).toEqual([]);
 
@@ -626,7 +608,7 @@ describe('patches of the plots', () => {
             { id: 'dots', name: 'Punkte', value: 'dots' },
             { id: 'bars', name: 'Balken', value: 'bars', patch: { plot: [{ id: 'dots', type: 'svg:rect', props: { x: '@x:scaled', y: '@y:scaled', width: 4, height: 4 } }] } },
         ] }];
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         await select(el, 'bars');
         expect(el.querySelectorAll('g.vis-plot[data-plot="dots"] circle')).toHaveLength(0);
         expect(el.querySelectorAll('g.vis-plot[data-plot="dots"] rect')).toHaveLength(7);
@@ -645,7 +627,7 @@ describe('the locale of a patch', () => {
             { id: 'de', name: 'Deutsch', value: 'de' },
             { id: 'en', name: 'English', value: 'en', patch: { options: { locale: 'en' } } },
         ] }];
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         const { pointer } = await import('./dom.js');
         const value = async () => {
             el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
@@ -683,7 +665,7 @@ describe('the full text of a cut text', () => {
         delete def.mapping.c;
         def.plot = { type: 'cartesian:bar', props: { x1: '@x:scaled', y: '@y:scaled' } };
         def.options.hover = { area: 'facet' };
-        const el = await mount(GenVis, { def, data: 'name,value\nA long name,1\nB,2' });
+        const el = await mount({ def, data: 'name,value\nA long name,1\nB,2' });
         const label = el.querySelector('.vis-axis-left .tick text');
         const area = el.querySelector('rect.vis-events');
         const { pointer } = await import('./dom.js');
@@ -703,7 +685,7 @@ describe('fixed ticks of dates', () => {
         const def = lineDef();
         def.mapping.x = { column: 'day', type: 'date', scale: { type: 'utc', orientation: 'horizontal' },
             axis: { position: 'bottom', values: ['2020-02-01', '2020-03-01', '2030-01-01'], format: '%b', grid: true } };
-        const el = await mount(GenVis, { def, data: 'day,value,land\n2020-01-01,1,Wien\n2020-04-01,2,Wien' });
+        const el = await mount({ def, data: 'day,value,land\n2020-01-01,1,Wien\n2020-04-01,2,Wien' });
         expect([...el.querySelectorAll('.vis-axis-bottom .tick text')].map(t => t.textContent)).toEqual(['Feb', 'Mrz']);
         expect(el.querySelectorAll('.vis-grid line')).toHaveLength(2);
         expect(errors).toEqual([]);
@@ -714,7 +696,7 @@ describe('ticks of null', () => {
     test('are the ones of tickSpacing, e.g. a parent with ticks', async () => {
         const def = lineDef();
         def.mapping.x.axis = { position: 'bottom', ticks: null, tickSpacing: 250 };
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         // 550 pixels, about 2 ticks
         expect(el.querySelectorAll('.vis-axis-bottom .tick').length).toBeLessThanOrEqual(3);
         expect(errors).toEqual([]);
@@ -725,7 +707,7 @@ describe('fixed ticks as a prop', () => {
     test('e.g. fewer of a narrow visualisation', async () => {
         const def = lineDef({ width: 400 });
         def.mapping.x.axis = { position: 'bottom', format: 'd', values: { prop: 'steps', ref: 'totalWidth', steps: [{ cut: 0, value: [2020, 2023] }, { cut: 500, value: [2020, 2021, 2022, 2023] }] } };
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         expect([...el.querySelectorAll('.vis-axis-bottom .tick text')].map(t => t.textContent)).toEqual(['2020', '2023']);
         expect(errors).toEqual([]);
     });
@@ -738,7 +720,7 @@ describe('default colors', () => {
         delete def.mapping.c.props.categories.Tirol.color;
         def.mapping.g = { column: 'land', type: 'categorical', props: { categories: { Wien: { color: 'black' }, Tirol: {} } } };
         def.plot[1].categories = ['c', 'g'];
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         // the lines of the default colors, a color of a category of the plot before them
         expect([...el.querySelectorAll('g.vis-plot[data-plot="lines"] path')].map(p => p.getAttribute('stroke'))).toEqual(['#4269D0', '#EFB118']);
         expect([...el.querySelectorAll('g.vis-plot[data-plot="dots"] g.vis-group')].map(g => g.querySelector('circle').getAttribute('fill'))).toEqual(['black', '#EFB118']);
@@ -754,12 +736,12 @@ describe('the step of a band scale', () => {
         def.mapping.x = { column: 'value', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, null] } };
         def.mapping.y = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'vertical', padding: 0, step: 20 } };
         def.plot = { type: 'cartesian:bar', categories: ['c'], props: { x1: '@x:scaled', y: '@y:scaled' } };
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         // 4 years of 20 pixels, the margins
         const svg = el.querySelector('svg.vis-svg');
         expect(svg.getAttribute('height')).toBe('110');
         const data = lineData.split('\n').filter(l => !l.startsWith('2023')).join('\n');
-        const less = await mount(GenVis, { def, data });
+        const less = await mount({ def, data });
         expect(less.querySelector('svg.vis-svg').getAttribute('height')).toBe('90');
         expect(less.querySelector('g.vis-plot rect').getAttribute('height')).toBe('20');
         expect(errors).toEqual([]);
@@ -784,7 +766,7 @@ describe('the props of the labels and of the line of an axis, the titles of face
         const { validateDef } = await import('@/utils/validate');
         const def = polarDef();
         expect(validateDef(def)).toEqual([]);
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         // the texts of the props, 10 pixels high and cut at 15 pixels, estimated without layout
         const angular = [...el.querySelectorAll('.vis-axis-angular .tick text')];
         expect(angular.map(t => t.childNodes[0].textContent)).toEqual(['2…', '2…', '2…', '2…']);
@@ -803,7 +785,7 @@ describe('the props of the labels and of the line of an axis, the titles of face
     test('the line of a cartesian axis and the size of its labels', async () => {
         const def = lineDef();
         def.mapping.y.axis = { ...def.mapping.y.axis, labels: { props: { 'font-size': 9 } }, domain: { props: { 'stroke-opacity': 0.4 } } };
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         expect(el.querySelector('.vis-axis-left path.domain').getAttribute('stroke-opacity')).toBe('0.4');
         expect([...el.querySelectorAll('.vis-axis-left .tick text')].every(t => t.getAttribute('font-size') == '9')).toBe(true);
 
@@ -820,7 +802,7 @@ describe('the props of the labels and of the line of an axis, the titles of face
     test('the titles of the facets span their plot areas, the ones of polar plots are centered', async () => {
         const def = lineDef();
         def.facets = { dim: 'c', cols: 2 };
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         const titles = [...el.querySelectorAll('.vis-facet-title')];
         expect(titles.map(t => [t.style.getPropertyValue('--gen-vis-margin-left'), t.style.getPropertyValue('--gen-vis-margin-right')]))
             .toEqual([['40px', '10px'], ['40px', '10px']]);
@@ -829,7 +811,7 @@ describe('the props of the labels and of the line of an axis, the titles of face
 
         const polar = polarDef();
         polar.facets = { dim: 'c', cols: 2 };
-        const circles = await mount(GenVis, { def: polar, data: lineData });
+        const circles = await mount({ def: polar, data: lineData });
         expect([...circles.querySelectorAll('.vis-facet-title')].map(t => t.classList.contains('vis-facet-title-center'))).toEqual([true, true]);
         expect(errors).toEqual([]);
     });
@@ -884,7 +866,7 @@ describe('the categories of every format of the data', () => {
         const hovers = {};
         for (const [format, data] of Object.entries(formats))
             for (const [kind, fixed] of Object.entries({ strings: v => v.map(String), numbers: v => v })) {
-                const el = await mount(GenVis, { def: barsDef(fixed), data: data(), onHover: e => hovers[format] = e });
+                const el = await mount({ def: barsDef(fixed), data: data(), onHover: e => hovers[format] = e });
                 results[`${format} ${kind}`] = drawn(el);
                 const { pointer } = await import('./dom.js');
                 el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 500, clientY: 100 }));
@@ -915,7 +897,7 @@ describe('the categories of every format of the data', () => {
         const def = lineDef();
         def.mapping.x = { column: 'year', type: 'categorical', scale: { type: 'point', orientation: 'horizontal' } };
         def.plot = { id: 'last', type: 'svg:text', categories: ['c'], select: { max: 'x' }, props: { x: '@x:scaled', y: 0, text: '@x' } };
-        const el = await mount(GenVis, { def, data: 'year,value,land\n9,1,Wien\n10,2,Wien' });
+        const el = await mount({ def, data: 'year,value,land\n9,1,Wien\n10,2,Wien' });
         expect(el.querySelector('g.vis-plot.last text').textContent).toBe('10');
 
         // a slider of the years of parquet data, its values are the strings of csv
@@ -927,7 +909,7 @@ describe('the categories of every format of the data', () => {
             { name: 'value', data: [1, 2], type: 'DOUBLE' },
             { name: 'land', data: ['Wien', 'Wien'], type: 'STRING' },
         ]);
-        const chart = await mount(GenVis, { def: years, data: parquet, 'onUpdate:state': s => state = s });
+        const chart = await mount({ def: years, data: parquet, 'onUpdate:state': s => state = s });
         expect([...chart.querySelectorAll('.vis-form-element option')].map(o => o.value)).toEqual(['2020', '2021']);
         const select = chart.querySelector('.vis-form-element select');
         select.value = '2020';
@@ -953,7 +935,7 @@ describe('the labels of an axis with a transition', () => {
         delete def.mapping.c;
         def.formElements = [{ id: 'col', name: 'Spalte', ref: 'col', type: 'radio', values: [{ id: 'a', name: 'A', value: 'a' }, { id: 'b', name: 'B', value: 'b' }] }];
         def.plot = { type: 'cartesian:bar', props: { x: '@x:scaled', y1: '@y:scaled' } };
-        const el = await mount(GenVis, { def, data: 'a,b,value\nA,C,1\nB,D,2' });
+        const el = await mount({ def, data: 'a,b,value\nA,C,1\nB,D,2' });
         const labels = () => [...el.querySelectorAll('.vis-axis-bottom .tick text')].map(t => [t.textContent, t.getAttribute('font-weight')]);
         expect(labels()).toEqual([['A', 'bold'], ['B', 'bold']]);
         await select(el, 'b');
@@ -973,7 +955,7 @@ describe('the scale of another mapping', () => {
         delete def.mapping.c;
         def.plot = { type: 'cartesian:area', props: { fill: 'gray', d: { x: '@x:scaled', y0: '@lo:scaled', y1: '@hi:scaled' } } };
         const data = 'year,value,other,top\n2020,1,0.5,2\n2021,2,1,10\n2022,3,2,4';
-        const el = await mount(GenVis, { def, data });
+        const el = await mount({ def, data });
         // the axis of y reaches the largest value of hi
         const ticks = [...el.querySelectorAll('.vis-axis-left .tick text')].map(t => t.textContent);
         expect(ticks.at(-1)).toBe('10');
@@ -990,7 +972,7 @@ describe('the scale of another mapping', () => {
         dates.mapping.x = { column: 'start', type: 'date', scale: { type: 'utc', orientation: 'horizontal' } };
         dates.mapping.end = { column: 'end', type: 'date', scale: { of: 'x' } };
         dates.plot = { type: 'svg:line', props: { x1: '@x:scaled', x2: '@end:scaled', y1: 0, y2: 0 } };
-        const lines = await mount(GenVis, { def: dates, data: 'start,end,value,land\n2020-01-01,2020-01-01,1,Wien\n2020-06-01,2020-12-31,2,Wien' });
+        const lines = await mount({ def: dates, data: 'start,end,value,land\n2020-01-01,2020-01-01,1,Wien\n2020-06-01,2020-12-31,2,Wien' });
         const first = lines.querySelector('g.vis-plot line');
         expect(first.getAttribute('x2')).toBe(first.getAttribute('x1'));
 
@@ -1010,7 +992,7 @@ describe('the tick marks of axes', () => {
         const def = lineDef();
         def.mapping.x.axis = { ...def.mapping.x.axis, tickMarks: { size: 4, props: { 'stroke-opacity': 0.4 } } };
         def.mapping.y.axis = { ...def.mapping.y.axis, tickMarks: false };
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         const bottom = [...el.querySelectorAll('.vis-axis-bottom .tick line')];
         expect(bottom.length).toBeGreaterThan(0);
         expect(bottom.every(l => l.getAttribute('y2') == '4' && l.getAttribute('stroke-opacity') == '0.4')).toBe(true);
@@ -1026,12 +1008,12 @@ describe('the tick marks of axes', () => {
             values: [2020, 2022], tickMarks: { size: 10, props: { stroke: 'var(--gen-vis-grid-color)', 'stroke-width': 0.75 } } } };
         polar.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radial', domain: [0, 4] } };
         polar.plot = { type: 'polar:line', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
-        const circle = await mount(GenVis, { def: polar, data: lineData });
+        const circle = await mount({ def: polar, data: lineData });
         const marks = [...circle.querySelectorAll('.vis-axis-angular .tick line')];
         expect(marks.map(l => [+l.getAttribute('y1'), +l.getAttribute('y2')])).toEqual([[-150, -160], [150, 160]].map(([a, b], i) => i == 0 ? [a, b] : [expect.closeTo(a, 6), expect.closeTo(b, 6)]));
         expect(marks.every(l => !l.hasAttribute('stroke') && l.style.getPropertyValue('stroke') == 'var(--gen-vis-grid-color)' && l.getAttribute('stroke-width') == '0.75')).toBe(true);
         polar.mapping.x.axis.tickMarks = false;
-        const without = await mount(GenVis, { def: polar, data: lineData });
+        const without = await mount({ def: polar, data: lineData });
         expect(without.querySelectorAll('.vis-axis-angular .tick line')).toHaveLength(0);
         expect(without.querySelectorAll('.vis-axis-angular .tick text')).toHaveLength(2);
 
@@ -1056,7 +1038,7 @@ describe('css variables in props', () => {
         def.mapping.c.legend = { symbol: { size: 16, elements: [{ type: 'rect', props: { width: 12, height: 12, fill: '@color' } }] } };
         def.mapping.y.axis = { ...def.mapping.y.axis, domain: { props: { stroke: 'var(--gen-vis-grid-color)' } } };
         def.annotations = [{ type: 'band', x: [2021, 2022], props: { fill: 'var(--band-color)' } }];
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         const style = (e, k) => e.style.getPropertyValue(k);
         const circle = el.querySelector('g.vis-group[data-group-c="Wien"] circle');
         // the props of a category, of a global and of the highlight, which are attributes of data
@@ -1092,7 +1074,7 @@ describe('radar charts', () => {
         def.plot = { type: 'polar:line', categories: ['c'], curve: 'linearClosed', props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef(def)).toEqual([]);
-        const el = await mount(GenVis, { def, data: lineData });
+        const el = await mount({ def, data: lineData });
         // four years, 2020 at the top, 2021 at the right (a quarter of the circle)
         const angles = [...el.querySelectorAll('.vis-axis-angular .tick text')].map(t => Math.atan2(+t.getAttribute('x'), -t.getAttribute('y')));
         expect(angles[0]).toBeCloseTo(0);
@@ -1142,7 +1124,7 @@ describe('rows which are not stacked', () => {
     test('a line of the consumption on the stacked generation, its domain, its own values and its place in the hover', async () => {
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef(loadDef())).toEqual([]);
-        const el = await mount(GenVis, { def: loadDef(), data });
+        const el = await mount({ def: loadDef(), data });
         // the domain reaches 8 of the consumption (the stacks reach 5), 0 at 250, 8 at 0 pixels
         const line = points(el.querySelector('g.vis-plot.load path').getAttribute('d'));
         expect(line.map(([, y]) => y)).toEqual([125, 0]);
@@ -1167,7 +1149,7 @@ describe('rows which are not stacked', () => {
         expect(points(el.querySelector('g.vis-plot.load path').getAttribute('d')).map(([, y]) => y)).toEqual([250 - 250/1.6, 0]);
 
         // the consumption before the sources is below them in the hover
-        const below = await mount(GenVis, { def: loadDef(['load', 'hydro', 'wind']), data });
+        const below = await mount({ def: loadDef(['load', 'hydro', 'wind']), data });
         below.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 10, clientY: 100 }));
         await nextTick();
         expect([...below.querySelectorAll('.vis-hover tr')].map(tr => tr.textContent)).toEqual(['Wind3,0', 'Wasser1,0', 'Verbrauch4,0']);

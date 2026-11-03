@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import GenVis from '@/comp/App.vue';
+import { GenVis } from '@/vue.js';
 
 // the visualisation is loaded when it is near the visible part of the page,
 // with the space of a typical one until then

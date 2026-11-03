@@ -1,8 +1,6 @@
 // @vitest-environment jsdom
 import { describe, test, expect } from 'vitest';
-import { nextTick } from 'vue';
-import { GenVis } from '@/index.js';
-import { useDom, mount, errors } from './dom.js';
+import { useDom, mount, errors, nextTick } from './dom.js';
 
 useDom();
 
@@ -33,7 +31,7 @@ describe('curved labels of polar axes', () => {
         const def = polarDef();
         def.mapping.x.scale.range = [0, -2*Math.PI];
         def.mapping.x.axis.labels = { curved: 'between' };
-        const el = await mount(GenVis, { def, data: polarData });
+        const el = await mount({ def, data: polarData });
         expect(labels(el)).toEqual([['0', 315], ['3', 225], ['6', 135], ['9', 45]]);
     });
 
@@ -41,7 +39,7 @@ describe('curved labels of polar axes', () => {
         const def = polarDef();
         def.mapping.x.scale.domain = [12, 0];
         def.mapping.x.axis.labels = { curved: 'between' };
-        const el = await mount(GenVis, { def, data: polarData });
+        const el = await mount({ def, data: polarData });
         // 0 and 12 are both at the top, the labels go counterclockwise
         expect(labels(el).map(([, a]) => a)).toEqual([315, 225, 135, 45]);
     });
@@ -50,7 +48,7 @@ describe('curved labels of polar axes', () => {
         const def = polarDef();
         def.mapping.x.axis.values = [0, 3];
         def.mapping.x.axis.labels = { curved: 'between' };
-        const el = await mount(GenVis, { def, data: polarData });
+        const el = await mount({ def, data: polarData });
         expect(labels(el)).toEqual([['0', 45], ['3', 225]]);
     });
 
@@ -58,14 +56,14 @@ describe('curved labels of polar axes', () => {
         const def = polarDef();
         def.mapping.x.axis.values = [3];
         def.mapping.x.axis.labels = { curved: 'between' };
-        const el = await mount(GenVis, { def, data: polarData });
+        const el = await mount({ def, data: polarData });
         expect(labels(el)).toEqual([['3', 90]]);
     });
 
     test('keep their textPath with a max-width, also after a redraw', async () => {
         const def = polarDef();
         def.mapping.x.axis.labels = { curved: true, props: { 'max-width': 500 } };
-        const el = await mount(GenVis, { def, data: polarData });
+        const el = await mount({ def, data: polarData });
         expect(labels(el).map(([t]) => t)).toEqual(['0', '3', '6', '9']);
         // a toggle of the legend draws the axes anew
         el.querySelector('.vis-legend-entry').click();
@@ -78,7 +76,7 @@ describe('curved labels of polar axes', () => {
         for (const overflow of [undefined, 'wrap']) {
             const def = polarDef();
             def.mapping.x.axis.labels = { curved: true, props: { 'max-width': 30, 'text-overflow': overflow, text: 'ein sehr langer Monat' } };
-            const el = await mount(GenVis, { def, data: polarData });
+            const el = await mount({ def, data: polarData });
             const text = ticks(el)[0].querySelector('text');
             expect(text.querySelector('textPath').textContent).toMatch(/^ein.*…$/);
             expect(text.querySelector('tspan')).toBeNull();
@@ -93,7 +91,7 @@ describe('curved labels of polar axes', () => {
         delete def.mapping.x;
         def.plot[0].props.angle = '@the x:scaled';
         def.mapping['the x'].axis.labels = { curved: true };
-        const el = await mount(GenVis, { def, data: polarData });
+        const el = await mount({ def, data: polarData });
         const tick = ticks(el)[0];
         const id = tick.querySelector('path').id;
         expect(id).toMatch(/^[\w-]+$/);
@@ -107,7 +105,7 @@ describe('polar plots', () => {
         const def = polarDef();
         def.mapping.y.scale.range = [40, '@radius'];
         def.plot.push({ type: 'polar:line', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } });
-        const el = await mount(GenVis, { def, data: 'month,value,land\n3,-3,Wien\n6,-3,Wien\n3,3,Tirol' });
+        const el = await mount({ def, data: 'month,value,land\n3,-3,Wien\n6,-3,Wien\n3,3,Tirol' });
         const [wien] = [...el.querySelectorAll('g.vis-plot circle')].map(point);
         // month 3 is on the right
         expect(wien[0]).toBeCloseTo(40);
@@ -119,7 +117,7 @@ describe('polar plots', () => {
     test('dodged texts of the same angle, also 0 and 2π, are not inside the circle', async () => {
         const def = polarDef();
         def.plot = [{ type: 'polar:text', dodge: 20, props: { text: '@c', angle: '@x:scaled', radius: '@y:scaled' } }];
-        const el = await mount(GenVis, { def, data: 'month,value,land\n3,0,Wien\n3,0,Tirol\n0,6,Wien\n12,6,Tirol' });
+        const el = await mount({ def, data: 'month,value,land\n3,0,Wien\n3,0,Tirol\n0,6,Wien\n12,6,Tirol' });
         const texts = [...el.querySelectorAll('g.vis-plot text')].map(t => [+t.getAttribute('x'), +t.getAttribute('y')]);
         // month 3 on the right, from the center outward
         const right = texts.slice(0, 2).map(([x, y]) => (expect(y).toBeCloseTo(0), x)).sort((a, b) => a - b);
@@ -134,7 +132,7 @@ describe('polar plots', () => {
         const def = polarDef();
         def.options.width = 80;
         def.options.height = 80;
-        const el = await mount(GenVis, { def, data: polarData });
+        const el = await mount({ def, data: polarData });
         expect(el.querySelector('.vis-error')).toBeNull();
         expect(+el.querySelector('g.vis-axis-angular circle.domain').getAttribute('r')).toBe(0);
         const cartesian = {
@@ -145,7 +143,7 @@ describe('polar plots', () => {
             },
             plot: [{ type: 'svg:circle', props: { r: 3, cx: '@x:scaled', cy: '@y:scaled' } }],
         };
-        const el2 = await mount(GenVis, { def: cartesian, data: polarData });
+        const el2 = await mount({ def: cartesian, data: polarData });
         const circles = [...el2.querySelectorAll('g.vis-plot circle')].map(point);
         expect(circles.length).toBeGreaterThan(0);
         expect(circles.every(([x, y]) => x == 0 && y == 0)).toBe(true);

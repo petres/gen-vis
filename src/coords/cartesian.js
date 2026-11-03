@@ -154,7 +154,7 @@ export default {
         area: (ctx, parent) => parent.appendChild(rect(ctx.innerWidth, ctx.innerHeight)),
 
         // the nearest position with data, e.g. horizontal, of the hover the
-        // one with rows (`ctx.nearest`, see Facet.vue), and the value at the
+        // one with rows (`ctx.nearest`, see comp/facet.js), and the value at the
         // pointer, e.g. vertical
         locate(ctx, [px, py], names) {
             const vertical = isVertical(ctx, names);

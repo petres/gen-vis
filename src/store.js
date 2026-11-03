@@ -1,7 +1,5 @@
 export { createStore, resolveUrl, resolveParents, clearCache, requirements };
 
-import { reactive, markRaw } from 'vue';
-
 import { distinctValues, scaleDef, updateData } from "@/utils/data";
 import { applyTransforms, utcColumns } from "@/utils/transform";
 import { applyPatches, fillHtml, fillText, formatOf, templateNames } from "@/utils/def";
@@ -18,7 +16,7 @@ const localeOf = locale => {
     if (!locales.has(key)) {
         if (locales.size >= 20)
             locales.delete(locales.keys().next().value);
-        locales.set(key, markRaw(getLocale(locale ?? undefined)));
+        locales.set(key, getLocale(locale ?? undefined));
     }
     return locales.get(key);
 };
@@ -49,18 +47,20 @@ class Store {
     visWidth = null;
     runs = 0;
     // the number of the definitions loaded, a new one is drawn anew, while it
-    // is loaded the one before is shown, see App.vue
+    // is loaded the one before is shown, see comp/app.js
     loads = 0;
     loading = false;
-    // incremented if the state or the globals are set from outside, the components update
+    // incremented if the state or the globals are set from outside, the
+    // listeners are called then, e.g. the visualisation draws a new view
     stateSets = 0;
+    listeners = new Set();
     // the globals of the page, see setGlobals
     globals = null;
-    // the rows highlighted by the page, values of mappings, see App.vue
+    // the rows highlighted by the page, values of mappings, see comp/app.js
     highlighted = null;
     // the categories of the data of the last column, see dataKeys
     keyCache = null;
-    // the component of the legends of scales of colors, loaded for definitions with one
+    // the legends of scales of colors (see comp/color-legend.js), loaded for definitions with one
     colorLegend = null;
 
     get loaded() { return this.def !== null && this.data !== null }
@@ -169,7 +169,7 @@ class Store {
         const transform = () => {
             const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns, this.files);
             if (columns !== this.columns) {
-                this.columns = markRaw(columns);
+                this.columns = columns;
                 columns.changed.forEach(c => changedColumns.add(c));
             }
         };
@@ -190,11 +190,11 @@ class Store {
     }
 
     // the categories of the data of a column, e.g. of a column of a form
-    // element, the last ones are kept, the rows are not reactive
+    // element, the last ones are kept
     dataKeys(column) {
         const source = this.columns?.get(column) ?? this.rows;
         if (this.keyCache?.column !== column || this.keyCache.source !== source)
-            this.keyCache = markRaw({ column, source, keys: distinctValues(this.rows, this.columns, column).map(String) });
+            this.keyCache = { column, source, keys: distinctValues(this.rows, this.columns, column).map(String) };
         return this.keyCache.keys;
     }
 
@@ -208,7 +208,7 @@ class Store {
         // ones of the definition and of the state, not the ones before
         this.applyFormElements(false);
         applyState(this.def, { visible: state?.visible });
-        this.stateSets++;
+        this.changed();
     }
 
     // the globals of the page, e.g. the language, see applyGlobals, they
@@ -217,9 +217,15 @@ class Store {
         this.globals = globals;
         applyGlobals(this.def, globals);
         this.applyFormElements();
+        this.changed();
+    }
+
+    // the state or the globals were set from outside
+    changed() {
         this.stateSets++;
+        this.listeners.forEach(fn => fn());
     }
 }
 
-// every visualisation has its own store, it is provided to all its components
-const createStore = () => reactive(new Store());
+// every visualisation has its own store, it is given to all its parts
+const createStore = () => new Store();

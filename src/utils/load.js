@@ -1,6 +1,5 @@
 export { resolveUrl, clearCache, resolveParents, requirements, raw, geoParts, loadGeo, load };
 
-import { markRaw, toRaw } from 'vue';
 
 import { addDataValues, dataFormat, distinctValues, parseData, prepareData, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
@@ -109,8 +108,8 @@ const readData = async (data, format, source, columns = null) => {
     }
 };
 
-// the rows are not made reactive, they can be large and are only replaced as a whole
-const raw = rows => markRaw(Array.from(toRaw(rows)));
+// the rows as an array of their own, they can be large and are only replaced as a whole
+const raw = rows => Array.from(rows);
 
 // the check of the definitions (`check` of Store.init, e.g. while a
 // definition is written), loaded with the first one, together with its
@@ -149,7 +148,7 @@ const geoOf = (module, json, def = {}) => {
                 objectName(object) == objectName(undefined) ? keep : undefined));
         return meshes.get(id);
     };
-    return markRaw({ json, module, source: geoParts(def), features, key, byKey: new Map(features.map(f => [key(f), f])), mesh, projections: new Map() });
+    return { json, module, source: geoParts(def), features, key, byKey: new Map(features.map(f => [key(f), f])), mesh, projections: new Map() };
 };
 
 /**
@@ -185,7 +184,7 @@ const loadParts = need => {
         Promise.all(need.coords.map(name => loadCoord(name))),
         ...need.locales.map(locale => loadLocale(locale)),
     ]).then(([, geo, , colorLegend, coords]) =>
-        ({ coords: new Map(need.coords.map((name, i) => [name ?? 'cartesian', markRaw(coords[i])])), geo, colorLegend }));
+        ({ coords: new Map(need.coords.map((name, i) => [name ?? 'cartesian', coords[i]])), geo, colorLegend }));
     // the errors are the ones of the load, not unhandled ones
     parts.catch(() => {});
     return parts;
@@ -293,7 +292,7 @@ const loadGeometries = async (defOrg, url) => {
             const geoUrl = resolveUrl(json, url);
             json = parseDef(await fetchText(geoUrl), `'${geoUrl}'`, 'geometry');
         }
-        return [key, markRaw(json)];
+        return [key, json];
     })));
 };
 
@@ -333,15 +332,15 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     return {
         defUrl: url ?? null,
         defOrg,
-        colorLegend: colorLegend ? markRaw(colorLegend.default) : null,
-        coords: markRaw(coords),
+        colorLegend: colorLegend ? colorLegend.default : null,
+        coords,
         coord: coords.get(prepared.options.coord ?? 'cartesian'),
-        geoModule: geoModule ? markRaw(geoModule) : null,
-        geometries: markRaw(geometries),
+        geoModule: geoModule ?? null,
+        geometries,
         geo: loadGeo(geometries, geoModule, prepared),
-        files: markRaw(files),
+        files,
         rows,
-        columns: markRaw(columns),
+        columns,
         def: prepared,
         defaults,
         data: raw(prepareData(rows, prepared, columns)),

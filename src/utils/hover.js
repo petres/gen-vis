@@ -1,7 +1,7 @@
 export { orderOf, byOrder, sortedByOrder, nearestWithRows, nearestRow, pointFinder, pointPosition, placed, positionsInOrder, clamp };
 
 // the parts of the hover of a facet without its elements and events, see
-// hoverInit of Facet.vue
+// hoverInit of comp/facet.js
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
 

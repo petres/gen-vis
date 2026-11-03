@@ -4,9 +4,7 @@
 // the charts are seen in the diff of tests/snapshots/, `vitest -u` takes
 // intended changes
 import { describe, test, expect } from 'vitest';
-import { nextTick } from 'vue';
-import { GenVis } from '@/index.js';
-import { examples, errors, useDom, mount, pointer } from './dom.js';
+import { examples, errors, useDom, mount, pointer, nextTick } from './dom.js';
 
 useDom();
 
@@ -26,7 +24,7 @@ const file = (def, step) => `./snapshots/${def.replace(/^\/data\//, '').replace(
 
 describe('the charts of the examples', () => {
     test.each(examples)('%s', async def => {
-        const el = await mount(GenVis, { defFile: def });
+        const el = await mount({ defFile: def });
         await expect(snapshot(el)).toMatchFileSnapshot(file(def, '1-drawn'));
 
         // the hover in the middle of the first facet

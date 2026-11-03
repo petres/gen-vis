@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
-// the lifecycle of the component: definitions and globals changed while it is
+// the lifecycle of a visualisation: definitions and globals changed while it is
 // loaded, unmounted while it is loaded, exports while it is loaded, mounting
 // by class and the buttons of the footer
 import { test, expect, vi, beforeEach } from 'vitest';
-import { createApp, h, nextTick, ref } from 'vue';
-import { GenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement } from '@/index.js';
-import { errors, useDom, rendered, mount } from './dom.js';
+import { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement } from '@/index.js';
+import { errors, useDom, rendered, mount, nextTick } from './dom.js';
 
 vi.mock('modern-screenshot', () => ({
     domToBlob: async () => new Blob(['png'], { type: 'image/png' }),
@@ -51,18 +50,16 @@ beforeEach(() => {
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const title = el => el.querySelector('.vis-title')?.textContent;
 const checked = el => [...el.querySelectorAll('input[type=radio]')].map(i => i.checked);
-const mountReactive = props => {
+const create = props => {
     const el = document.body.appendChild(document.createElement('div'));
-    createApp({ render: () => h(GenVis, props()) }).mount(el);
-    return el;
+    return { el, vis: createGenVis(el, props) };
 };
 
 test('a definition removed while one is loaded keeps the error', async () => {
     delays['defA.json'] = 100;
-    const file = ref('defA.json');
-    const el = mountReactive(() => ({ defFile: file.value }));
+    const { el, vis } = create({ defFile: 'defA.json' });
     await wait(10);
-    file.value = null;
+    vis.update({ defFile: null });
     await wait(200);
     await nextTick();
     expect(el.querySelector('.vis-error')?.textContent).toBe('No definition given.');
@@ -71,10 +68,9 @@ test('a definition removed while one is loaded keeps the error', async () => {
 
 test('the globals changed while the first definition is loaded are applied', async () => {
     delays['g1.json'] = 100;
-    const globals = ref({ col: 'value' });
-    const el = mountReactive(() => ({ defFile: 'g1.json', globals: globals.value }));
+    const { el, vis } = create({ defFile: 'g1.json', globals: { col: 'value' } });
     await wait(10);
-    globals.value = { col: 'other' };
+    vis.update({ globals: { col: 'other' } });
     await rendered(el);
     await wait(50);
     await nextTick();
@@ -83,13 +79,11 @@ test('the globals changed while the first definition is loaded are applied', asy
 
 test('the globals changed while a new definition is loaded are applied', async () => {
     delays['g2.json'] = 100;
-    const file = ref('g1.json');
-    const globals = ref({ col: 'value' });
-    const el = mountReactive(() => ({ defFile: file.value, globals: globals.value }));
+    const { el, vis } = create({ defFile: 'g1.json', globals: { col: 'value' } });
     await rendered(el);
-    file.value = 'g2.json';
+    vis.update({ defFile: 'g2.json' });
     await wait(10);
-    globals.value = { col: 'other' };
+    vis.update({ globals: { col: 'other' } });
     await vi.waitFor(() => expect(title(el)).toBe('g2.json'));
     await nextTick();
     expect(checked(el)).toEqual([false, true]);
@@ -98,10 +92,9 @@ test('the globals changed while a new definition is loaded are applied', async (
 test('a load failing after the unmount is not reported', async () => {
     delays['missing.json'] = 50;
     const emitted = [];
-    const app = createApp(GenVis, { defFile: 'missing.json', onError: e => emitted.push(e), onRendered: () => emitted.push('rendered') });
-    app.mount(document.body.appendChild(document.createElement('div')));
+    const { vis } = create({ defFile: 'missing.json', onError: e => emitted.push(e), onRendered: () => emitted.push('rendered') });
     await wait(10);
-    app.unmount();
+    vis.destroy();
     await wait(100);
     expect(emitted).toEqual([]);
     expect(errors).toEqual([]);
@@ -110,10 +103,9 @@ test('a load failing after the unmount is not reported', async () => {
 test('a definition loaded after the unmount is not drawn', async () => {
     delays['defA.json'] = 50;
     const emitted = [];
-    const app = createApp(GenVis, { defFile: 'defA.json', onRendered: () => emitted.push('rendered') });
-    app.mount(document.body.appendChild(document.createElement('div')));
+    const { vis } = create({ defFile: 'defA.json', onRendered: () => emitted.push('rendered') });
     await wait(10);
-    app.unmount();
+    vis.destroy();
     await wait(100);
     expect(emitted).toEqual([]);
     expect(errors).toEqual([]);
@@ -138,17 +130,15 @@ test('a copy of a mounted element (with the class vis-mounted) is mounted by cla
 
 test('the exports are refused while a new definition is loaded', async () => {
     delays['defB.json'] = 100;
-    const file = ref('defA.json');
-    const vm = ref();
-    const el = mountReactive(() => ({ defFile: file.value, ref: vm }));
+    const { el, vis } = create({ defFile: 'defA.json' });
     await rendered(el);
-    await expect(vm.value.image()).resolves.toBeInstanceOf(Blob);
-    file.value = 'defB.json';
+    await expect(vis.image()).resolves.toBeInstanceOf(Blob);
+    vis.update({ defFile: 'defB.json' });
     await nextTick();
-    await expect(vm.value.image()).rejects.toThrow('not loaded yet');
-    await expect(vm.value.exportCsv()).rejects.toThrow('not loaded yet');
+    await expect(vis.image()).rejects.toThrow('not loaded yet');
+    await expect(vis.exportCsv()).rejects.toThrow('not loaded yet');
     await vi.waitFor(() => expect(title(el)).toBe('defB.json'));
-    await expect(vm.value.image()).resolves.toBeInstanceOf(Blob);
+    await expect(vis.image()).resolves.toBeInstanceOf(Blob);
 });
 
 test('the buttons of the footer do not submit a form, the label of the copy shows it is copied', async () => {
@@ -158,7 +148,7 @@ test('the buttons of the footer do not submit a form, the label of the copy show
     const submitted = vi.fn(e => e.preventDefault());
     form.addEventListener('submit', submitted);
     const el = form.appendChild(document.createElement('div'));
-    createApp(GenVis, { def: defOf('a'), data: csv, copy: true, csv: true, download: true }).mount(el);
+    createGenVis(el, { def: defOf('a'), data: csv, copy: true, csv: true, download: true });
     await rendered(el);
     const buttons = [...el.querySelectorAll('.vis-buttons button')];
     expect(buttons.map(b => b.type)).toEqual(['button', 'button', 'button']);

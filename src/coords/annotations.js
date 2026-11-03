@@ -50,7 +50,7 @@ const span = (c, sorted = true) => {
 const position = c => Array.isArray(c.value) ? d3.mean(span(c)) : center(c.scale, c.value);
 
 // the label of an annotation, e.g. the name of a band, its colors are the
-// ones of the styles, see Facet.vue, the items of a layer (see drawLayer of
+// ones of the styles, see comp/facet.js, the items of a layer (see drawLayer of
 // utils/draw.js), none without a label
 const labelItems = (a, x, y, anchor = "start", baseline = "hanging") => a.label === undefined ? [] : [{
     [elementOf]: "text",
@@ -62,7 +62,7 @@ const labelItems = (a, x, y, anchor = "start", baseline = "hanging") => a.label 
 // `element`, its attributes `direct`, e.g. the class and the position, and
 // the props of the annotation, svg attributes, also props of the size of the
 // facet, of an annotation of a row (`scope`) of the names of the row, the
-// colors without props are the ones of the styles, see Facet.vue, of a text
+// colors without props are the ones of the styles, see comp/facet.js, of a text
 // its text
 const annotationItem = (element, direct, a, ctx, defaults = {}) => ({
     [elementOf]: element,
