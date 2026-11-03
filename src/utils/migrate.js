@@ -277,8 +277,9 @@ const mappingParts = ['scale', 'axis', 'legend', 'hover', 'props', 'stacked'];
 // categories), without the orientation of a position and the position of the
 // axis, the domain and `nice` at the mapping, without an empty axis and
 // scale (of a position), the format at the mapping instead of the ones of the
-// axis, the hover and the legend, a text of the column
-const mappingSteps = m => {
+// axis, the hover and the legend (of a mapping of the definition, `own`, a
+// patch keeps the format of the part it changes), a text of the column
+const mappingSteps = (m, own = true) => {
     if (!isObject(m))
         return [];
     const steps = [['scale', 'type'], ['type'], ['scale', 'orientation'], ['axis', 'position']].map(path => without(m, path));
@@ -287,7 +288,7 @@ const mappingSteps = m => {
     ['axis', 'scale'].filter(k => isObject(m[k]) && Object.keys(m[k]).length == 0).forEach(k => steps.push(without(m, [k])));
     const parts = ['axis', 'hover', 'legend'].filter(k => isObject(m[k]) && m[k].format !== undefined);
     const format = m.format ?? m.axis?.format ?? m.hover?.format;
-    if (format !== undefined && parts.length > 0 && parts.every(k => m[k].format === format)) {
+    if (own && format !== undefined && parts.length > 0 && parts.every(k => m[k].format === format)) {
         // the format at the mapping, the parts without the same format
         const moved = parts.reduce((r, k) => without(r, [k, 'format']), m);
         steps.push(m.format === undefined ? inserted(moved, 'format', format, mappingParts) : moved);
@@ -360,7 +361,7 @@ const placesOf = (part, merged, plotTypes) => {
     [part, ...patchesOf(part)].forEach(d => {
         const own = d.options?.coord ?? coord;
         if (isObject(d.mapping))
-            Object.keys(d.mapping).forEach(n => places.push([d.mapping, n, mappingSteps]));
+            Object.keys(d.mapping).forEach(n => places.push([d.mapping, n, m => mappingSteps(m, d === part)]));
         const plotOf = (p, i) => d !== part ? undefined
             : (isObject(p) && p.id !== undefined ? mergedPlots.find(m => isObject(m) && String(m.id) == String(p.id)) : mergedPlots[i]);
         if (Array.isArray(d.plot))
