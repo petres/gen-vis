@@ -5,7 +5,7 @@ import type { Definition, PlotType } from './index.js';
 export declare function resolveParents(def: Definition, url: string, load?: (url: string) => string | Promise<string>): Promise<Definition>;
 /** The warnings of common mistakes of a merged definition, also of the definitions of the patches of its entries, and of its `rows` if given, e.g. years of a date mapping. */
 export declare function validateDef(def: Definition, rows?: Record<string, unknown>[] | null): string[];
-/** The internal form of a (merged) definition of 4.0, the one the renderer reads. */
+/** A (merged) definition of 4.0 with the parts it may leave out written out (e.g. the scales of the positions, the default props of the plot types), keys of 4.0, the form the renderer reads. */
 export declare function normalize(def: Definition, options?: { plotTypes?: Record<string, PlotType> }): Record<string, unknown>;
 export declare function registerPlotType(name: string, type: PlotType): void;
 export declare function registerCoord(name: string, coord: Record<string, unknown>): void;

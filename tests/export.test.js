@@ -226,7 +226,7 @@ describe('the merged definition of the export page (genVisExport.resolve, scheme
         expect(merged.options).toEqual({ ...parent().options, title: 'Kind' });
         expect(merged.plot).toEqual(parent().plot);
         expect(merged.mapping.c).toEqual({ column: 'land', fromData: true, legend: {}, scheme: 'house' });
-        // the y of the definition, not the internal form of normalize
+        // the y of the definition, not the normalized one
         expect(merged.mapping.y).toBe('value');
         // the base of the page is removed again, the definition object is as it was
         expect(document.querySelector('base')).toBeNull();

@@ -259,8 +259,8 @@ describe('Store.init', () => {
         expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition: plot\[0\]\.type: unknown type 'path'/));
     });
 
-    // the check reads the definition, not its internal form, e.g. of the
-    // categories at a mapping, `by`, `highlight` and the default props
+    // the check reads the definition, not the normalized one, e.g. of the
+    // default props
     test('no warnings of a definition of the parts of 4.0', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const short = { mapping: { x: 'year', y: 'value', k: { column: 'k', categories: { a: { color: 'red' } } } },
