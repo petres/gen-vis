@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import * as d3 from "@/utils/d3";
+import { create } from "@/utils/dom";
 import { evaluate } from "@/utils/props";
 import { setProps } from "@/utils/draw";
 
@@ -22,11 +22,11 @@ export default {
     },
     methods: {
         draw() {
-            const svg = d3.select(this.$refs.legendSymbol);
-            svg.selectAll("*").remove();
+            const svg = this.$refs.legendSymbol;
+            svg.replaceChildren();
             this.info.elements.forEach(e => {
-                const el = svg.append(e.type);
-                setProps.call(el.node(), evaluate(e.props, this.scope))
+                const el = svg.appendChild(create(e.type));
+                setProps.call(el, evaluate(e.props, this.scope));
             });
         },
     }

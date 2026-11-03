@@ -175,8 +175,7 @@ function drawItem(item) {
 
 /**
  * Draws a layer of a plot (see `marks` of the plot types, plots/index.js)
- * into the group of the plot `parent`, an element (or still a d3 selection
- * of one), into the elements of the draw before (see join of utils/dom.js),
+ * into the group of the plot `parent`, an element, into the elements of the draw before (see join of utils/dom.js),
  * returns the elements of the items, an array:
  * - `groups`: an element `g.vis-group` per group (its `categories` are its
  *   data-group- attributes), in it an element `element` per item of its
@@ -199,9 +198,6 @@ function drawItem(item) {
 const drawLayer = (parent, layer) => {
     if (!layer)
         return null;
-    // a d3 selection of the callers which are not ported yet
-    if (typeof parent.node == 'function')
-        parent = parent.node();
     if (layer.class)
         parent.classList.add(...layer.class.trim().split(/\s+/));
     // the elements of the layer, the ones of `element`, all without one

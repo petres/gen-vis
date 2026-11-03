@@ -89,7 +89,6 @@
     "d3-interpolate": "^3",
     "d3-scale": "^4",
     "d3-scale-chromatic": "^3",
-    "d3-selection": "^3",
     "d3-shape": "^3",
     "d3-time": "^3",
     "d3-time-format": "^4",

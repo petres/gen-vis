@@ -3,6 +3,7 @@ import { bandCenter } from "@/utils/scales";
 import { keyOf } from "@/utils/draw";
 import { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
+import { rect, placeLine } from "@/coords/hover";
 
 // the positions of the hover are vertical, e.g. of horizontal bars
 const isVertical = (ctx, names) => ctx.store.mapping(names.h).scale?.orientation == 'vertical';
@@ -150,9 +151,7 @@ export default {
     // the positions can be the vertical ones, e.g. of horizontal bars, see axisNames of layout.js
     flip: true,
     hover: {
-        area: (ctx, parent) => parent.append("rect")
-            .attr("width", ctx.innerWidth)
-            .attr("height", ctx.innerHeight),
+        area: (ctx, parent) => parent.appendChild(rect(ctx.innerWidth, ctx.innerHeight)),
 
         // the nearest position with data, e.g. horizontal, of the hover the
         // one with rows (`ctx.nearest`, see Facet.vue), and the value at the
@@ -181,13 +180,10 @@ export default {
             const s = ctx.scales[names.h];
             const p = s(key) + bandCenter(s);
             if (isVertical(ctx, names)) {
-                line.attr("x1", 0).attr("x2", ctx.innerWidth).attr("y1", p).attr("y2", p);
+                placeLine(line, 0, p, ctx.innerWidth, p);
                 return { x: ctx.innerWidth/2, y: p, side: p > ctx.innerHeight/2 ? "above" : "below" };
             }
-            line.attr("x1", p)
-                .attr("x2", p)
-                .attr("y1", 0)
-                .attr("y2", ctx.innerHeight);
+            placeLine(line, p, 0, p, ctx.innerHeight);
             return { x: p, y: ctx.innerHeight/2, side: p > ctx.innerWidth/2 ? "left" : "right" };
         },
     },

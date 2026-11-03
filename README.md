@@ -1541,7 +1541,9 @@ element, by default its row or its index, `class` is a class of the group of
 the plot and `fit` cuts or wraps the texts with a `max-width`, null draws
 nothing, see `drawLayer` of `src/utils/draw.js`.
 
-`ctx` is the facet: the `store`, the `key` of the facet, its `rows`, the
+`ctx` is the facet: the `store`, `inner` (the svg element `g` of its plots
+and axes, a DOM element, its origin is the one of the coordinate system),
+the `key` of the facet, its `rows`, the
 `scales` by the names of the mappings, `axis` (the names of the mappings of
 the positions and of the values), `stackOf(row)` (the start and the end of a
 stacked value), `scope` (the names of the references of the facet, see
@@ -1565,7 +1567,12 @@ A coordinate system (`registerCoord(name, coord)`) has the default ranges of
 the orientations of its scales, the parts of its axes (the ticks, labels and
 lines as layers or an axis of a side, also marks, drawn by the package), the
 items of its annotations and the geometry of the hover, see
-`src/coords/index.js` and e.g. `src/coords/polar.js`, `load()` of a
+`src/coords/index.js` and e.g. `src/coords/polar.js`. Its functions get DOM
+elements, no d3 selections: `hover.area(ctx, parent)` appends the element of
+the pointer events to the element `parent` and returns it,
+`hover.marker(ctx, key, names, line, nearest)` places the svg element
+`line` by its attributes (`x1`, `y1`, `x2`, `y2`, removed without a line),
+`raise(ctx)` moves elements of `ctx.inner`. `load()` of a
 coordinate system loads its parts with its first chart, e.g. the ones of maps
 (`src/coords/geo.js`), again with the next one if it failed. Both are known to
 `validateDef`, `@preschen/gen-vis/check` exports `registerPlotType` and

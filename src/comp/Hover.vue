@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import * as d3 from "@/utils/d3";
+import { join, setAttr } from "@/utils/dom";
 import { fillHtml } from "@/utils/def";
 import { byOrder } from "@/utils/hover";
 import SlotContent from '@/comp/SlotContent.vue';
@@ -101,29 +101,28 @@ export default {
             if (!this.$refs.entries || !this.data)
                 return;
             const data = this.sorted;
-            const styleOf = row => this.styleOf(row);
-            let entries = d3.select(this.$refs.entries).selectAll('tr.vis-hover-entry')
-                .data(data)
-                .join('tr')
-                .attr('class', "vis-hover-entry")
-                .classed('vis-nearest', d => d.nearest)
+            const table = this.$refs.entries;
+            const rows = join(table, data, { select: 'tr.vis-hover-entry', create: () => document.createElement('tr') });
+            rows.forEach((tr, i) => {
+                const d = data[i];
+                tr.setAttribute('class', d.nearest ? "vis-hover-entry vis-nearest" : "vis-hover-entry");
                 // the styles and the keys of the categories of the row, the
                 // ones of the row before are removed
-                .each(function(d) {
-                    this.removeAttribute('style');
-                    [...this.attributes].filter(a => a.name.startsWith('data-')).forEach(a => this.removeAttribute(a.name));
-                    Object.entries(styleOf(d)).forEach(([k, v]) => this.style.setProperty(k, v));
-                    Object.entries(d.attrs ?? {}).forEach(([k, v]) => this.setAttribute(k, v));
-                })
-
-            entries.selectAll("td").remove();
-            entries.selectAll("td")
-                .data(d => d.cells)
-                .join("td")
-                .attr('data-mapping', c => c.mapping)
-                .attr('data-prop', c => c.prop)
-                .attr('class', c => c.value ? 'vis-value' : null)
-                .text(c => c.text)
+                tr.removeAttribute('style');
+                [...tr.attributes].filter(a => a.name.startsWith('data-')).forEach(a => tr.removeAttribute(a.name));
+                Object.entries(this.styleOf(d)).forEach(([k, v]) => tr.style.setProperty(k, v));
+                Object.entries(d.attrs ?? {}).forEach(([k, v]) => tr.setAttribute(k, v));
+                // the cells are new ones
+                tr.replaceChildren(...d.cells.map(c => {
+                    const td = document.createElement('td');
+                    setAttr(td, 'data-mapping', c.mapping);
+                    setAttr(td, 'data-prop', c.prop);
+                    if (c.value)
+                        td.setAttribute('class', 'vis-value');
+                    td.textContent = c.text ?? '';
+                    return td;
+                }));
+            });
         }
     }
 }

@@ -6,6 +6,7 @@ import {
 } from 'd3-geo';
 import { named } from "@/utils/registry";
 import { annotationItem } from "@/coords/annotations";
+import { rect, placeLine } from "@/coords/hover";
 import { featureByKey } from "@/plots/geo";
 
 // the projections of maps (`geo.projection.type`), e.g. mercator
@@ -107,7 +108,7 @@ const projected = ctx => {
 // layout (e.g. jsdom) the feature containing the point is taken
 const featureAt = (ctx, pointer, event) => {
     const element = event && document.elementsFromPoint?.(event.clientX, event.clientY)
-        .find(e => ctx.inner.node().contains(e) && e.hasAttribute('data-geo-key'));
+        .find(e => ctx.inner.contains(e) && e.hasAttribute('data-geo-key'));
     if (element)
         return element.getAttribute('data-geo-key');
     const position = ctx.projection.invert(pointer);
@@ -137,9 +138,7 @@ export default {
         return [];
     },
     hover: {
-        area: (ctx, parent) => parent.append("rect")
-            .attr("width", ctx.innerWidth)
-            .attr("height", ctx.innerHeight),
+        area: (ctx, parent) => parent.appendChild(rect(ctx.innerWidth, ctx.innerHeight)),
 
         // the region under the pointer, the values are not compared
         locate(ctx, pointer, names, event) {
@@ -149,7 +148,7 @@ export default {
 
         // no line, the hover is beside the center of the region
         marker(ctx, key, names, line) {
-            line.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null);
+            placeLine(line, null);
             const f = featureByKey(ctx.store.geo, key);
             const [x, y] = f ? ctx.path.centroid(f) : [ctx.innerWidth/2, ctx.innerHeight/2];
             return { x, y, side: x > ctx.innerWidth/2 ? "left" : "right" };

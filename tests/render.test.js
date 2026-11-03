@@ -1701,7 +1701,7 @@ describe('the update of the facets', () => {
 
     test('a new width moves the plots before they are drawn, e.g. the center of a polar plot', async () => {
         const seen = [];
-        registerPlotType('test:origin', { marks: (groups, plot, ctx) => { seen.push(ctx.inner.node().getAttribute('transform')); return null; } });
+        registerPlotType('test:origin', { marks: (groups, plot, ctx) => { seen.push(ctx.inner.getAttribute('transform')); return null; } });
         onTestFinished(() => delete plotTypes['test:origin']);
         const def = lineDef({ coord: 'polar', width: undefined, margins: { top: 0, right: 0, bottom: 0, left: 0 } });
         def.mapping.x.scale.orientation = 'angular';

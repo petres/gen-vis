@@ -249,8 +249,19 @@ const animate = (node, attrs, { channel = 'vis', duration = 250, ease = cubicInO
             continue;
         }
         target[name] = value;
-        if (before !== String(value))
-            tweens.push([name, (name == 'transform' ? interpolateTransformSvg : interpolate)(before, value)]);
+        if (before === String(value))
+            continue;
+        // a transform which the environment can not read, e.g. of jsdom
+        // without the transforms of svg, is set at once
+        let tween;
+        try {
+            tween = (name == 'transform' ? interpolateTransformSvg : interpolate)(before, value);
+        } catch {
+            setAttr(node, name, value);
+            delete target[name];
+            continue;
+        }
+        tweens.push([name, tween]);
     }
     if (!(duration > 0)) {
         if (remove)

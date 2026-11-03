@@ -19,7 +19,9 @@ import geo from "@/coords/geo";
  * - `names(store)`: the mappings of the hover and the stacks instead of the
  *   ones of `axis`, e.g. of a map, `flip` swaps them, see axisNames of
  *   layout.js
- * The `ctx` is the facet, as the one of the plot types, see plots/index.js.
+ * The `ctx` is the facet, as the one of the plot types, see plots/index.js,
+ * `ctx.inner` is the element of the plots and axes. The elements of the
+ * functions are DOM elements, no d3 selections.
  * - `prepare(ctx)`: adds to the context before the axes and plots are drawn,
  *   e.g. the projection of a map
  * - `annotations`: the types of the annotations, `annotate(ctx, a)` returns
@@ -32,13 +34,16 @@ import geo from "@/coords/geo";
  *   with the attributes `attrs`, the `text` and the elements of a `layer`
  *   (see drawLayer of utils/draw.js), `fresh` ones are drawn anew, see
  *   drawParts of Facet.vue, `raise(ctx)` is called after the plots, e.g. to
- *   raise axes in the plot area above them
- * - `hover.area(ctx, parent)`: appends the element of the pointer events,
+ *   move axes in the plot area (elements of `ctx.inner`) above them
+ * - `hover.area(ctx, parent)`: appends the element of the pointer events to
+ *   the element `parent` (`ctx.inner`) and returns it, e.g. a rect,
  *   `hover.locate(ctx, pointer, names, event)` returns the `key` (a value of
  *   the position mapping) and the `value` at the pointer, null if there is no
  *   key, without a value the elements of the key are highlighted,
  *   `hover.marker(ctx, key, names, line, nearest)` places the marker line of
- *   the key (and of the nearest row) and returns the position of the hover,
+ *   the key (and of the nearest row), the svg element `line`, by its
+ *   attributes `x1`, `y1`, `x2` and `y2` (removed without a line, see
+ *   placeLine of coords/hover.js), and returns the position of the hover,
  *   `{x, y, side}`, `hover.values`: the hover of the values without a mapping
  *   of the positions, e.g. of a pie, the key is undefined, `hover.title(ctx, key,
  *   names)` the title of the hover, the formatted key by default,

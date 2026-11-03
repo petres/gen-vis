@@ -27,13 +27,16 @@ import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/props";
 import { dataAttribute, drawLayer, highlighter, reducedMotion, withMotion } from "@/utils/draw";
 import { drawAxis } from "@/utils/axis";
-import { interruptAll } from "@/utils/dom";
+import { create, interruptAll, pointer, setAttr } from "@/utils/dom";
 import { plotTypes } from "@/plots";
 import { plotGroups, plotRows } from "@/layout";
 import { filter, rowFilter } from "@/utils/data";
 import { orderOf, sortedByOrder, nearestWithRows, nearestRow, pointFinder, pointPosition, placed, positionsInOrder, clamp } from "@/utils/hover";
 
 import Hover from '@/comp/Hover.vue';
+
+// the elements in an element are removed
+const removeElements = node => [...node.children].forEach(c => c.remove());
 
 // the descriptions of the keys of the facets of a page have their own ids
 let count = 0;
@@ -111,19 +114,19 @@ export default {
     },
     methods: {
         // the element of `key` of the draw before or a new one, `create()`
-        // appends it to the plot area, it is placed after the element drawn
+        // returns a new one, it is placed after the element drawn
         // before (the cursor), so the elements are in the order of the draw,
         // an element in its place is not moved, as a move costs the browser
         // the style of all its elements, e.g. of the circles of a plot
         keep(key, create) {
             let node = this.kept.get(key);
             if (!node)
-                this.kept.set(key, node = create().node());
+                this.kept.set(key, node = create());
             if (this.cursor.nextSibling !== node)
                 this.$refs.inner.insertBefore(node, this.cursor.nextSibling);
             this.cursor = node;
             this.used.add(key);
-            return d3.select(node);
+            return node;
         },
 
         // the parts of the axes of the coordinate system (see `axes` of
@@ -133,15 +136,16 @@ export default {
         // elements of a `layer` (see drawLayer), of a `fresh` part drawn anew
         drawParts(parts) {
             (parts ?? []).forEach(part => {
-                const node = this.keep(part.key, () => this.ctx.inner.append(part.element ?? "g"));
+                const node = this.keep(part.key, () => create(part.element ?? "g"));
                 if (part.axis)
                     return drawAxis(node, part.axis);
-                Object.entries(part.attrs ?? {}).forEach(([k, v]) => node.attr(k, v));
+                Object.entries(part.attrs ?? {}).forEach(([k, v]) => setAttr(node, k, v));
                 if (part.text !== undefined)
-                    node.text(part.text);
+                    node.textContent = part.text ?? '';
                 if (part.layer) {
+                    // the elements of the draw before, not the text
                     if (part.fresh)
-                        node.selectAll("*").remove();
+                        removeElements(node);
                     drawLayer(node, part.layer);
                 }
             });
@@ -170,7 +174,8 @@ export default {
                 store: this.store,
                 // the id of the facet on the page, e.g. of the ids of elements
                 uid: this.uid,
-                inner: d3.select(inner),
+                // the element of the plots and axes, the origin is the one of the coordinate system
+                inner,
                 key,
                 rows,
                 scales,
@@ -198,10 +203,11 @@ export default {
                 this.plot(plots.filter(p => p.layer == 'above'));
             });
             // the labels of the annotations are above the plots, also the ones below them
-            const labels = this.ctx.inner.selectAll(".vis-annotation-label");
-            if (!labels.empty()) {
-                const g = this.ctx.inner.append("g").attr("class", "vis-annotation-labels");
-                labels.each(function() { g.node().appendChild(this) });
+            const labels = inner.querySelectorAll(".vis-annotation-label");
+            if (labels.length > 0) {
+                const g = inner.appendChild(create("g"));
+                g.setAttribute("class", "vis-annotation-labels");
+                g.append(...labels);
             }
             this.store.coord.raise?.(this.ctx);
 
@@ -244,16 +250,16 @@ export default {
                 if (type.coords && !type.coords.includes(coord))
                     throw new Error(`The plot type '${plot.type}' is not available in the coordinate system '${coord}'`);
                 const parent = this.keep(this.plotKey(plot), () => {
-                    const g = this.ctx.inner.append("g")
-                        .classed("vis-plot", true)
-                        .classed(plot.id, true)
-                        .attr("data-plot", plot.id);
+                    const g = create("g");
+                    // an id with spaces is several classes, e.g. "1st line"
+                    g.classList.add("vis-plot", ...String(plot.id).trim().split(/^|\s+/));
+                    g.setAttribute("data-plot", plot.id);
                     if (plot.layer)
-                        g.classed(`vis-${plot.layer}`, true);
+                        g.classList.add(`vis-${plot.layer}`);
                     return g;
                 });
                 if (!type.update)
-                    parent.selectAll("*").remove();
+                    removeElements(parent);
                 const rows = plotRows(this.store, plot, this.facet);
                 drawLayer(parent, type.marks(plotGroups(plot, rows, this.ctx), plot, this.ctx));
             });
@@ -319,7 +325,14 @@ export default {
             const styled = categories.filter(n => store.mapping(n).hover.row?.props);
             const keyed = Object.keys(store.def.mapping).filter(n => store.mapping(n).props && dataAttribute(n));
 
-            const marker = d3.select(this.$refs.hoverMarker).select("line");
+            const marker = this.$refs.hoverMarker.querySelector("line");
+            // the marker without a line, e.g. of a hidden hover or of a point
+            const noLine = () => {
+                marker.removeAttribute("x1");
+                marker.removeAttribute("x2");
+                marker.removeAttribute("y1");
+                marker.removeAttribute("y2");
+            };
             const scope = store.scope;
 
             // the rows of the hover, with a value and of its `filter`, by their
@@ -345,7 +358,7 @@ export default {
                 this.lastEvent = null;
                 this.lastKey = null;
                 Object.assign(this.hover, { visible: false, x: 0, y: 0 });
-                marker.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null);
+                noLine();
                 this.highlight(null);
             };
 
@@ -367,10 +380,10 @@ export default {
             const at = e => {
                 if (pointMode) {
                     preparePoints();
-                    const point = nearestPoint(d3.pointer(e, ctx.inner.node()));
+                    const point = nearestPoint(pointer(e, ctx.inner));
                     return point && { key: point[2][names.h], rows: [point[2]], nearest: point[2], point };
                 }
-                const position = coord.hover.locate(located, d3.pointer(e, ctx.inner.node()), names, e);
+                const position = coord.hover.locate(located, pointer(e, ctx.inner), names, e);
                 if (!position)
                     return null;
                 const { key, value } = position;
@@ -446,7 +459,7 @@ export default {
                 const p = payload(found);
                 // a point has no line, the hover is beside it
                 const position = found.point
-                    ? (marker.attr("x1", null).attr("x2", null).attr("y1", null).attr("y2", null), pointPosition(found.point, ctx.innerWidth))
+                    ? (noLine(), pointPosition(found.point, ctx.innerWidth))
                     : coord.hover.marker(ctx, key, names, marker, nearest);
                 last = { key, nearest, position };
                 Object.assign(this.hover, placed(position, hoverOptions, this.pointerAt), {
@@ -470,7 +483,7 @@ export default {
                 this.lastKey = null;
                 // the hover of the pointer is not read by screen readers
                 this.announced = false;
-                this.pointerAt = d3.pointer(e, ctx.inner.node());
+                this.pointerAt = pointer(e, ctx.inner);
                 show(found);
             };
 
@@ -523,9 +536,12 @@ export default {
             // the area of the events, the plot area or with `"area": "facet"` also
             // the margins, e.g. the labels of the rows of horizontal bars
             const area = coord.hover.area(ctx, ctx.inner);
-            if (hoverOptions.area == 'facet' && area.node().tagName == 'rect')
-                area.attr("x", -(this.facet.margins.left + this.origin[0])).attr("y", -(this.facet.margins.top + this.origin[1]))
-                    .attr("width", this.facet.width).attr("height", this.facet.height);
+            if (hoverOptions.area == 'facet' && area.tagName == 'rect') {
+                area.setAttribute("x", -(this.facet.margins.left + this.origin[0]));
+                area.setAttribute("y", -(this.facet.margins.top + this.origin[1]));
+                area.setAttribute("width", this.facet.width);
+                area.setAttribute("height", this.facet.height);
+            }
             // the full text of a cut text under the pointer (see fitText of
             // utils/draw.js) is the title of the area, it is above the texts,
             // so the browser shows it as their tooltip
@@ -539,28 +555,28 @@ export default {
                     : null;
                 const full = text ? text.querySelector(':scope > title').textContent : '';
                 if (full || tooltip)
-                    tooltip ??= area.append("title");
-                if (tooltip && tooltip.text() !== full)
-                    tooltip.text(full);
+                    tooltip ??= area.appendChild(create("title"));
+                if (tooltip && tooltip.textContent !== full)
+                    tooltip.textContent = full;
             };
-            area
-                .attr("class", "vis-events")
-                .attr("opacity", 0)
-                .style("touch-action", "pan-y")
-                .on("pointerdown pointermove", move)
-                .on("pointermove.title", cutText)
-                // a click or a tap, e.g. on a region of a map
-                .on("click", e => {
-                    const found = at(e);
-                    if (found)
-                        this.emit('select', payload(found));
-                })
-                .on("pointerleave", e => {
-                    if (e.pointerType != "touch")
-                        hide();
-                })
-                // the browser scrolls the page instead
-                .on("pointercancel", hide);
+            area.setAttribute("class", "vis-events");
+            area.setAttribute("opacity", 0);
+            area.style.setProperty("touch-action", "pan-y");
+            area.addEventListener("pointerdown", move);
+            area.addEventListener("pointermove", move);
+            area.addEventListener("pointermove", cutText);
+            // a click or a tap, e.g. on a region of a map
+            area.addEventListener("click", e => {
+                const found = at(e);
+                if (found)
+                    this.emit('select', payload(found));
+            });
+            area.addEventListener("pointerleave", e => {
+                if (e.pointerType != "touch")
+                    hide();
+            });
+            // the browser scrolls the page instead
+            area.addEventListener("pointercancel", hide);
 
             // the hover of the draw before with the rows of this one
             if (this.hover.visible && this.lastEvent)
