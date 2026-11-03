@@ -129,7 +129,7 @@ export interface GenVisExportOptions {
     parts?: ImagePart[] | null;
     fontSize?: number | string;
     background?: string | null;
-    schemes?: Record<string, string[]>;
+    schemes?: Record<string, string[] | (string[] | null)[]>;
     timeout?: number;
 }
 
@@ -262,8 +262,8 @@ export declare function mountGenVisByClass(className: string): GenVisInstance[];
 export declare function unmountGenVisElement(element: Element): boolean;
 export declare function registerPlotType(name: string, type: PlotType): void;
 export declare function registerCoord(name: string, coord: Record<string, unknown>): void;
-/** A scheme of its own, e.g. the colors of a house style, for `scheme` of the categories and the scales as the ones of d3, `colors` are CSS colors. */
-export declare function registerScheme(name: string, colors: string[]): void;
+/** A scheme of its own, e.g. the colors of a house style, for `scheme` of the categories and the scales as the ones of d3, `colors` are CSS colors, of a scheme of several sizes entry n the n colors (others null), `observable10` also the default colors. */
+export declare function registerScheme(name: string, colors: string[] | (string[] | null | undefined)[]): void;
 /** The defaults of the parts of all charts of the page instead of the built-in ones, the prop `defaults` of a chart takes precedence, null removes them. */
 export declare function registerDefaults(defaults: GenVisDefaults | null): void;
 /** The marks of an element of `element` per row, the elements of the draw before are updated. */

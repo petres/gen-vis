@@ -52,24 +52,49 @@ export const schemeNames = registry([
 // ones of d3, they need no colors of d3 and take precedence over them
 const ownSchemes = {};
 
+// a list of CSS colors, of `n` of them if n is given
+const colorList = (c, n = c?.length) => Array.isArray(c) && c.length > 0 && c.length == n && c.every(e => typeof e == 'string' && e);
+
 /**
  * A scheme of its own (`name`, e.g. "wifo") of `colors` (CSS colors), for
  * `scheme` of the categories and of the scales as the ones of d3, known to
- * validateDef, registered before the visualisations are loaded. The scheme
- * `observable10` is also the one of the categories without colors.
+ * validateDef, registered before the visualisations are loaded. A scheme of
+ * several sizes as the ones of d3, e.g. "Blues", is a list whose entry n is
+ * the list of n colors, the others empty (null), e.g. [null, null, null,
+ * ["#a", "#b", "#c"], ["#a", "#b", "#c", "#d"]], see sizedColors. The
+ * scheme `observable10` is also the one of the categories without colors.
  */
 export const registerScheme = (name, colors) => {
     if (typeof name != 'string' || !name)
         throw new Error('registerScheme: the name of a scheme is a string, e.g. "wifo"');
-    if (!Array.isArray(colors) || !colors.length || !colors.every(c => typeof c == 'string' && c))
-        throw new Error(`registerScheme: the colors of the scheme '${name}' are an array of CSS colors, e.g. ["#1F77B4", "#FF7F0E"]`);
+    const sized = Array.isArray(colors) && !colorList(colors) && Array.from(colors).every((c, n) => c == null || colorList(c, n)) && colors.some(c => c != null);
+    if (!colorList(colors) && !sized)
+        throw new Error(`registerScheme: the colors of the scheme '${name}' are an array of CSS colors, e.g. ["#1F77B4", "#FF7F0E"], or of several sizes, an array whose entry n is the array of n colors (or null)`);
     const key = name.charAt(0).toLowerCase() + name.slice(1);
-    ownSchemes[key] = [...colors];
+    ownSchemes[key] = Array.from(colors, c => Array.isArray(c) ? [...c] : c ?? undefined);
     schemeNames[key] = true;
 };
 
 // a scheme registered by the page, e.g. a definition of one needs no colors of d3
 export const ownScheme = name => named(ownSchemes, name);
+
+// the colors of a scheme for `n` categories or classes: all of a scheme of
+// one size, of a scheme of several sizes (entry n the n colors, e.g. the ones
+// of d3 from 3 colors) the first n of the smallest size of at least n
+// colors, the largest one if it has fewer
+const sizedColors = (scheme, n) => {
+    if (typeof scheme.at(-1) == 'string')
+        return scheme;
+    const sizes = scheme.flatMap((c, i) => Array.isArray(c) ? [i] : []);
+    return scheme[sizes.find(i => i >= n) ?? sizes.at(-1)].slice(0, n);
+};
+
+// the colors of a scheme registered by the page for `n` categories,
+// undefined if there is none of the name
+export const ownColors = (name, n) => {
+    const own = ownScheme(name);
+    return own && sizedColors(own, n);
+};
 
 // the colors of d3-scale-chromatic, loaded once by loadColors
 let colors = null;
@@ -85,15 +110,9 @@ const loaded = () => {
 export const interpolator = name => named(loaded().interpolators, name);
 
 // the colors of a scheme, e.g. "Tableau10" or one registered, of a scheme of
-// several sizes, e.g. "Blues", `n` colors (3 to the most of the scheme), undefined if it is unknown
+// several sizes, e.g. "Blues", `n` colors (see sizedColors), undefined if it
+// is unknown
 export const schemeColors = (name, n) => {
-    const own = ownScheme(name);
-    if (own)
-        return own;
-    const scheme = named(loaded().schemes, name);
-    if (!scheme)
-        return undefined;
-    if (typeof scheme.at(-1) == 'string')
-        return scheme;
-    return scheme[Math.min(Math.max(n, 3), scheme.length - 1)].slice(0, n);
+    const scheme = ownScheme(name) ?? named(loaded().schemes, name);
+    return scheme && sizedColors(scheme, n);
 };

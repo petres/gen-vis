@@ -1,7 +1,7 @@
 export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts };
 
 import merge from 'deepmerge';
-import { ownScheme, schemeColors } from '@/utils/d3';
+import { ownColors, schemeColors } from '@/utils/d3';
 import { comparison, isObject, sameValue } from '@/utils/values';
 import { scaleTypeOf } from '@/utils/normalize';
 
@@ -122,7 +122,7 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = []) 
         if (props.scheme && !colors)
             throw new Error(`Unknown scheme '${props.scheme}', e.g. 'Tableau10' or 'Blues'`);
         const ranks = props.ranks ?? [];
-        const palette = colors || given ? null : ownScheme('observable10') ?? defaultColors;
+        const palette = colors || given ? null : ownColors('observable10', keys.length) ?? defaultColors;
         m.keys = keys;
         m.props = Object.fromEntries(keys.map((k, i) => {
             const rank = ranks.length > 0 ? ranks[Math.min(i, ranks.length - 1)] : {};

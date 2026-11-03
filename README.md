@@ -458,7 +458,7 @@ unknown ones are an error):
 | `parts` | the parts of the image, see above, default all |
 | `fontSize` | the size of the texts of gen-vis, e.g. `"8pt"`: 13px of most texts become it, the title (22px), the message (14px) and the small texts (11px) in proportion; sizes of the definition (props) stay as they are |
 | `background` | a CSS color, `null` none (a transparent PNG), default the one of gen-vis (`--gen-vis-background` or white) |
-| `schemes` | schemes of colors registered before the chart is drawn, e.g. `{ "wifo": ["#005CA9", "#E6A000"] }`, see `registerScheme` in [extensions](#extensions) |
+| `schemes` | schemes of colors registered before the chart is drawn, e.g. `{ "wifo": ["#005CA9", "#E6A000"] }`, also of several sizes (`[null, null, ["#9EC5E8", "#005CA9"], ...]`), see `registerScheme` in [extensions](#extensions) |
 | `timeout` | the time to wait for the chart in milliseconds, default 30000 |
 
 The result (sizes in CSS pixels):
@@ -1978,7 +1978,13 @@ ones of d3, e.g. the colors of a house style, which a stylesheet can not
 give a definition; the categories take its colors in their order (again
 from the first one if there are more), a scale of `classes` its first ones
 (all of them if it has fewer), it needs no colors of d3 and takes precedence
-over a scheme of d3 of the same name. A registered `observable10` is also
+over a scheme of d3 of the same name. A scheme of several sizes, as the
+ones of d3, e.g. `Blues`, is an array whose entry n is the array of n
+colors, entries without a size are `null` (holes): n categories (or
+classes) take the first n colors of the smallest size of at least n
+colors, more than the largest size its colors again from the first one,
+e.g. `registerScheme('wifoBlues', [null, null, ['#9EC5E8', '#005CA9'],
+['#C6DBEF', '#6BAED6', '#005CA9']])`. A registered `observable10` is also
 the palette of the categories without colors and without a scheme (the
 default colors, d3's Observable10 otherwise), e.g. the colors of a house
 style for every definition:

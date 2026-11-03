@@ -311,9 +311,39 @@ describe('rendering', () => {
         onTestFinished(() => registerScheme('observable10', ['#4269D0', '#EFB118', '#FF725C', '#6CC5B0', '#3CA951', '#FF8AB7', '#A463F2', '#97BBF5', '#9C6B4E', '#9498A0']));
         registerScheme('Observable10', ['#010101', '#020202', '#030303']);
         expect(strokes(await mount({ def, data: lineData }))).toEqual(['#010101', '#020202']);
+        // of several sizes the one of the number of categories
+        registerScheme('observable10', [null, ['#111111'], ['#121212', '#222222'], ['#131313', '#232323', '#333333']]);
+        expect(strokes(await mount({ def, data: lineData }))).toEqual(['#121212', '#222222']);
         // with colors of the categories none
         def.mapping.c.categories.Wien.color = 'red';
         expect(strokes(await mount({ def, data: lineData }))).toEqual(['red', null]);
+        expect(errors).toEqual([]);
+    });
+
+    test('registered schemes of several sizes, entry n the n colors, holes allowed', async () => {
+        registerScheme('test-sizes', [null, null, ['#000002', '#000003'], undefined, ['#000004', '#000005', '#000006', '#000007']]);
+        const def = lineDef();
+        def.mapping.c = { ...def.mapping.c, fromData: true, scheme: 'test-sizes', categories: {} };
+        // the colors of the entries of the legend, in the order of the categories
+        const colors = async data => Object.values((await mountVis({ def, data })).vis.store.def.mapping.c.props).map(p => p.color);
+        // 2 categories of the entry of 2 colors
+        expect(await colors(lineData)).toEqual(['#000002', '#000003']);
+        // 3 categories of the next larger one, the first 3 colors
+        const three = lineData + '\n2020,3,30,Salzburg\n2021,3,30,Salzburg';
+        expect(await colors(three)).toEqual(['#000004', '#000005', '#000006']);
+        // more categories than the largest size: its colors again from the first one
+        const six = three + ['Burgenland', 'Kärnten', 'Steiermark'].map(l => `\n2020,1,1,${l}`).join('');
+        expect(await colors(six)).toEqual(['#000004', '#000005', '#000006', '#000007', '#000004', '#000005']);
+
+        // the classes of a scale of colors, e.g. 2 of a threshold scale of one limit
+        const { makeScale } = await import('@/utils/scales');
+        expect(makeScale('v', { column: 'v', type: 'numeric', scale: { type: 'threshold', domain: [2], scheme: 'test-sizes' } }, [{ v: 1 }]).range()).toEqual(['#000002', '#000003']);
+
+        // entry n has n colors, at least one entry
+        expect(() => registerScheme('test-wrong', [null, ['#000'], ['#000']])).toThrow('or of several sizes, an array whose entry n is the array of n colors');
+        expect(() => registerScheme('test-none', [null, null])).toThrow('an array of CSS colors');
+        expect(() => registerScheme('test-mixed', ['#000', ['#000']])).toThrow('an array of CSS colors');
+        expect(() => registerScheme('test-zero', [[]])).toThrow('an array of CSS colors');
         expect(errors).toEqual([]);
     });
 
