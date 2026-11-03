@@ -231,10 +231,11 @@ const resolveDef = async ({ def, defUrl, data, check }) => {
         fetchText(resolveUrl(def.geo.data, url)).catch(() => {});
 
     // the internal form of the merged definition, see utils/normalize.js
-    const defOrg = normalize(await resolveParents(JSON.parse(JSON.stringify(def)), url), { plotTypes });
-    // the check with the rows, e.g. of years as dates, see load, it is
-    // loaded meanwhile
-    const validate = async rows => (await checks)?.validateDef(defOrg, rows)
+    const merged = await resolveParents(JSON.parse(JSON.stringify(def)), url);
+    const defOrg = normalize(merged, { plotTypes });
+    // the check of the merged definition (not of its internal form) with
+    // the rows, e.g. of years as dates, see load, it is loaded meanwhile
+    const validate = async rows => (await checks)?.validateDef(merged, rows)
         .forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
     return { url, defOrg, validate };
 };

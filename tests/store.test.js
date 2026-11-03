@@ -258,6 +258,16 @@ describe('Store.init', () => {
         expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition: plot\[0\]\.type: unknown type 'path'/));
     });
 
+    // the check reads the definition, not its internal form, e.g. of the
+    // categories at a mapping, `by`, `highlight` and the default props
+    test('no warnings of a definition of the parts of 4.0', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const short = { mapping: { x: 'year', y: 'value', k: { column: 'k', categories: { a: { color: 'red' } } } },
+            plot: { type: 'line', by: 'k', highlight: { 'stroke-width': 3 } } };
+        await createStore().init({ def: short, data: 'year,value,k\n2020,1,a\n2021,2,a', check: true });
+        expect(warn).not.toHaveBeenCalled();
+    });
+
     // the check has the rows, e.g. of years as numbers of a date mapping,
     // and warns also if the data could not be loaded
     test('warnings of the rows and of a failed load', async () => {
