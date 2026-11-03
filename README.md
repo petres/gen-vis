@@ -82,7 +82,7 @@ methods (see [docs/usage.md](docs/usage.md)):
   ```
 
 - **Standalone script** of a page without a bundler, e.g. of a CDN: the
-  module `dist-lib/esm/gen-vis.js` (above, 64 kB gzipped at first, the parts
+  module `dist-lib/esm/gen-vis.js` (above, 68 kB gzipped at first, the parts
   which not every chart needs when a chart needs them), the core loader
   `dist-lib/gen-vis.core.js` (less than 1 kB) of pages which load their
   scripts without modules, or the single file `dist-lib/gen-vis.js` with all

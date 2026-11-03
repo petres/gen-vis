@@ -83,7 +83,7 @@ createApp(App).use(GenVis).mount('#app');
                 <h2>Without a bundler</h2>
                 <p>
                     The standalone script includes d3 and no framework. As a module of the page it loads
-                    64 kB (gzipped) at first and the parts which not every chart needs, e.g. the ones of
+                    68 kB (gzipped) at first and the parts which not every chart needs, e.g. the ones of
                     maps, when a chart needs them. The page below is this file, it loads the script of
                     this build instead of the CDN.
                 </p>
@@ -96,7 +96,7 @@ createApp(App).use(GenVis).mount('#app');
                     script of less than 1 kB, its globals return promises:
                     <code>&lt;script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.core.js"&gt;&lt;/script&gt;</code>
                     and <code>mountGenVisByClass('chart')</code>. All parts in one file are
-                    <code>dist-lib/gen-vis.js</code> (120 kB gzipped), pages with Vue as a script have
+                    <code>dist-lib/gen-vis.js</code> (128 kB gzipped), pages with Vue as a script have
                     the component of their Vue, <code>GenVis.vuePlugin(Vue)</code>, see the
                     <a :href="`${docs}/usage.md#standalone-script`">usage</a>.
                 </p>

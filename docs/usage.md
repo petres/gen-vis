@@ -18,7 +18,7 @@ component](#vue-component)), `vue` is an optional peer dependency.
 
 The standalone script includes d3 and the styles, for pages without a
 bundler, e.g. of a CDN. The module of the page (`dist-lib/esm/gen-vis.js`) is
-the one to use: it loads 64 kB (gzipped) at first and the parts which not
+the one to use: it loads 68 kB (gzipped) at first and the parts which not
 every chart needs when a chart needs them, e.g. the ones of maps, from the
 files next to it:
 
@@ -42,7 +42,7 @@ visualisations), so they can be called before the module is loaded;
 <script>mountGenVisByClass('genVis').then(charts => ...)</script>
 ```
 
-The single file (`dist-lib/gen-vis.js`, 345 kB, 120 kB gzipped, 103 kB with
+The single file (`dist-lib/gen-vis.js`, 372 kB, 128 kB gzipped, 111 kB with
 brotli) has all parts in itself, without the check of the definitions
 (`check` and `debug` warn that it is missing), e.g. of a page which has to
 work with one file, its globals return the visualisations at once:
@@ -143,7 +143,7 @@ const def: Definition = { data: 'data.csv', mapping: { ... }, plot: { ... } };
 Parts which not every chart needs are loaded when a chart needs them, so a
 bundler of the application puts them into chunks of their own, the rest is
 ~62 kB gzipped. The sizes are gzipped: the check of the
-definitions (~11 kB) with the first one, the colors of d3
+definitions (~12 kB) with the first one, the colors of d3
 (`d3-scale-chromatic`, ~8 kB) for definitions which name a scheme or an
 interpolator, the parts of maps (`d3-geo`, `topojson-client`, ~13 kB) with
 the first map, the parts of polar plots (~5 kB) with the first one, the

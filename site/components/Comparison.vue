@@ -87,7 +87,7 @@ const rows = [
     },
     {
         label: 'Size (gzipped)',
-        cells: ['as a module 90 kB at first with Vue, 66 kB without', '280 kB (Vega, Vega-Lite, vega-embed)', '367 kB', '1 475 kB', '102 kB, more with modules', '70 kB', '68 kB, with d3 160 kB'],
+        cells: ['as a module 68 kB at first, the single file 128 kB', '280 kB (Vega, Vega-Lite, vega-embed)', '367 kB', '1 475 kB', '102 kB, more with modules', '70 kB', '68 kB, with d3 160 kB'],
     },
     {
         label: 'License',
