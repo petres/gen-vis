@@ -454,11 +454,11 @@ unknown ones are an error):
 | `classes` | a class or a list of classes of the element of the chart (`.vis-outer`), e.g. of a theme of `css` |
 | `globals` | the globals, see [globals](#formelements-and-globals) |
 | `state` | the state, see [state](#state) |
-| `defaults` | the defaults of the parts instead of the built-in ones, e.g. `{ "axis": { "padding": 2, "tickMarks": { "size": 4, "inset": 0 } } }`, see [defaults](#defaults) |
+| `defaults` | the defaults of the parts instead of the built-in ones, e.g. `{ "axis": { "padding": 2, "tickMarks": { "size": 4, "inset": 0 } } }`, see [defaults](#defaults); also a function of the merged definition (see `resolve` below) which returns them (or a promise of them, `null` none), since 4.0.0 |
 | `parts` | the parts of the image, see above, default all |
 | `fontSize` | the size of the texts of gen-vis, e.g. `"8pt"`: 13px of most texts become it, the title (22px), the message (14px) and the small texts (11px) in proportion; sizes of the definition (props) stay as they are |
 | `background` | a CSS color, `null` none (a transparent PNG), default the one of gen-vis (`--gen-vis-background` or white) |
-| `schemes` | schemes of colors registered before the chart is drawn, e.g. `{ "wifo": ["#005CA9", "#E6A000"] }`, also of several sizes (`[null, null, ["#9EC5E8", "#005CA9"], ...]`), see `registerScheme` in [extensions](#extensions) |
+| `schemes` | schemes of colors registered before the chart is drawn, e.g. `{ "wifo": ["#005CA9", "#E6A000"] }`, also of several sizes (`[null, null, ["#9EC5E8", "#005CA9"], ...]`), see `registerScheme` in [extensions](#extensions); also a function of the merged definition (see `resolve` below) which returns such an object (or a promise of it), called before the chart is drawn, e.g. of colors by the plot types, since 4.0.0 |
 | `timeout` | the time to wait for the chart in milliseconds, default 30000 |
 
 The result (sizes in CSS pixels):
@@ -469,6 +469,26 @@ The result (sizes in CSS pixels):
 | `svg` | the SVG, see `exportSvg` above |
 | `width`, `height` | the size of the image (of `parts`), `width` is the one asked for (to a fraction of a pixel) |
 | `box` | `{ x, y, width, height }`, the rectangle of the image in the page (document coordinates), the `clip` of a screenshot |
+
+`await window.genVisExport.resolve(options)` (since 4.0.0, of protocol
+version 1) is the definition of `def` or `defUrl` with its parents and
+mixins, merged as the load of the chart merges them (`parent`, relative to
+`baseUrl` or to `defUrl`, the files of the chart), not in the internal form
+of the renderer; it takes the options of `genVisExport` (unknown ones are an
+error, the others than `def`, `defUrl` and `baseUrl` are not used), leaves
+the chart before as it is and rejects as `genVisExport` does, e.g. with
+`Could not load '…/base.json': 404 Not Found`. A wrapper chooses its
+colors by it, e.g. by the plot types of `merged.plot`, or gives a function
+of it as `schemes` (or `defaults`), the page calls it with the merged
+definition (its files are loaded once):
+
+```js
+await genVisExport({ defUrl, schemes: merged =>
+    ({ wifo: [merged.plot].flat().some(p => p.type == 'bar') ? barColors : lineColors }) });
+```
+
+The CLI has no functions of options (they do not come from the command
+line); a program of its own evaluates them in the page.
 
 The page has the fonts of the computer: the font of gen-vis is Century
 Gothic, the page falls back to URW Gothic (the same design, e.g. of Linux,

@@ -4,9 +4,12 @@
 // its SVG and the rectangle of its image in the page, so a program which
 // drives the browser (the CLI bin/gen-vis.js, wrappers of Python or R)
 // takes a screenshot of it (PNG) or prints the SVG (PDF). The protocol is
-// the one of README "Static export", of `genVisExport.version`.
+// the one of README "Static export", of `genVisExport.version`;
+// `genVisExport.resolve(options)` returns the merged definition, e.g. of
+// the plot types a wrapper chooses its colors by.
 import { createGenVis } from '@/index.js';
 import { registerScheme } from '@/utils/d3';
+import { readDef, resolveParents } from '@/utils/load';
 import { staticCopy, selectParts, partsBox, backgroundOf, padding } from '@/utils/export.js';
 import { composeSvg, units } from '@/utils/export-svg.js';
 
@@ -44,6 +47,46 @@ const fontCss = px => {
         [11, ['.vis-facet svg .vis-annotation-label', '.vis-color-legend svg', '.vis-color-legend .vis-legend-missing']],
     ];
     return groups.map(([size, selectors]) => `${selectors.join(', ')} { font-size: ${(size * f).toFixed(3)}px !important; }`).join('\n');
+};
+
+// the options of genVisExport and of resolve: unknown ones are an error,
+// one of def and defUrl is needed
+const checkOptions = options => {
+    const unknown = Object.keys(options).filter(k => !known.includes(k));
+    if (unknown.length)
+        throw new Error(`genVisExport: unknown options ${unknown.join(', ')}, expected some of ${known.join(', ')}.`);
+    if ((options.def == null) == (options.defUrl == null))
+        throw new Error('genVisExport: either def (a definition) or defUrl (the url of one) is needed.');
+};
+
+// the <base> of the url of the relative urls of a definition object, the
+// first one of the page, before the one of a chart before
+const addBase = baseUrl => {
+    if (baseUrl == null)
+        return null;
+    const base = document.head.insertBefore(document.createElement('base'), document.head.firstChild);
+    base.className = 'gen-vis-export';
+    base.href = baseUrl;
+    return base;
+};
+
+// the definition of the options with its parents and mixins (resolveParents
+// of the load of a chart, not normalized), a definition object relative to
+// the <base> of baseUrl, if there is one
+const mergedOf = async options => {
+    const { def, url } = await readDef(options.def ?? null, options.defUrl ?? null);
+    return resolveParents(JSON.parse(JSON.stringify(def)), url);
+};
+
+// the value of an option which may be a function of the merged definition,
+// its result (also of a promise) an object or null, other values as they are
+const ofMerged = async (value, name, merged) => {
+    if (typeof value != 'function')
+        return value ?? null;
+    const result = await value(merged);
+    if (result != null && (typeof result != 'object' || Array.isArray(result)))
+        throw new Error(`genVisExport: the function of ${name} returns an object, not ${JSON.stringify(result) ?? String(result)}.`);
+    return result ?? null;
 };
 
 // a list of a single value, none of null
@@ -111,11 +154,7 @@ const frame = () => new Promise(resolve => {
  */
 const genVisExport = async (options = {}) => {
     clear();
-    const unknown = Object.keys(options).filter(k => !known.includes(k));
-    if (unknown.length)
-        throw new Error(`genVisExport: unknown options ${unknown.join(', ')}, expected some of ${known.join(', ')}.`);
-    if ((options.def == null) == (options.defUrl == null))
-        throw new Error('genVisExport: either def (a definition) or defUrl (the url of one) is needed.');
+    checkOptions(options);
     const width = lengthOf(options.width ?? 800, 'width');
     const space = options.padding ?? padding;
     const unit = options.unit ?? (width.unit == 'pt' ? 'px' : width.unit);
@@ -123,13 +162,13 @@ const genVisExport = async (options = {}) => {
         throw new Error(`genVisExport: unknown unit ${unit}, expected one of ${Object.keys(units).join(', ')}.`);
     if (width.px - 2 * space <= 0)
         throw new Error(`genVisExport: the width ${options.width} has no space for the chart beside the padding.`);
-    Object.entries(options.schemes ?? {}).forEach(([name, colors]) => registerScheme(name, colors));
     // the urls of a definition object are relative to the base url
-    if (options.baseUrl != null) {
-        const base = document.head.appendChild(document.createElement('base'));
-        base.className = 'gen-vis-export';
-        base.href = options.baseUrl;
-    }
+    addBase(options.baseUrl);
+    // schemes and defaults of functions of the merged definition, it is
+    // resolved only for them, its files are loaded once (the cache of the load)
+    const merged = [options.schemes, options.defaults].some(o => typeof o == 'function') ? await mergedOf(options) : null;
+    Object.entries(await ofMerged(options.schemes, 'schemes', merged) ?? {}).forEach(([name, colors]) => registerScheme(name, colors));
+    const defaults = await ofMerged(options.defaults, 'defaults', merged);
     await addStyles(options.css, options.fontSize);
     const data = await dataOf(options);
     const classes = listOf(options.classes).flatMap(c => String(c).split(/\s+/)).filter(Boolean);
@@ -137,7 +176,7 @@ const genVisExport = async (options = {}) => {
     const mount = (holder, done) => {
         const shown = createGenVis(holder, {
             def: options.def ?? null, defFile: options.defUrl ?? null, data,
-            globals: options.globals ?? null, state: options.state ?? null, defaults: options.defaults ?? null,
+            globals: options.globals ?? null, state: options.state ?? null, defaults,
             onRendered: done.resolve, onError: done.reject,
         });
         shown.el.classList.add(...classes);
@@ -157,5 +196,23 @@ const genVisExport = async (options = {}) => {
     return { version, svg, width: b.width, height: b.height, box: { x: b.left + scrollX, y: b.top + scrollY, width: b.width, height: b.height } };
 };
 genVisExport.version = version;
+
+/**
+ * The definition of the options (`def` or `defUrl`, relative to `baseUrl`)
+ * with its parents and mixins, merged as the load of a chart does, not
+ * normalized, see README "Static export"; it takes the options of
+ * genVisExport (the others are not used) and leaves the chart before as it
+ * is. Errors (e.g. of a missing parent) reject it with the message of
+ * gen-vis.
+ */
+genVisExport.resolve = async (options = {}) => {
+    checkOptions(options);
+    const base = addBase(options.baseUrl);
+    try {
+        return await mergedOf(options);
+    } finally {
+        base?.remove();
+    }
+};
 
 window.genVisExport = genVisExport;

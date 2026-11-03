@@ -1,4 +1,4 @@
-export { resolveUrl, clearCache, resolveParents, requirements, raw, geoParts, loadGeo, load };
+export { resolveUrl, clearCache, resolveParents, readDef, requirements, raw, geoParts, loadGeo, load };
 
 
 import { addDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, usedColumns } from "@/utils/data";
@@ -208,19 +208,23 @@ const loadParts = need => {
     return parts;
 };
 
+// the definition of the attribute (an object or a JSON text) or, of null,
+// the one of its url, and its url, undefined of the attribute
+const readDef = async (def, defUrl) => {
+    if (def === null) {
+        const url = resolveUrl(defUrl);
+        return { def: parseDef(await fetchText(url), `'${url}'`), url };
+    }
+    return { def: typeof def == 'string' ? parseDef(def, 'attribute') : def, url: undefined };
+};
+
 // the definition of the attribute or of its url, with its parents, the
 // warnings of its check (`check`), the data and the geometry are requested together
 // with the parents, if the def names them, the data if its format is known,
 // it can be the one of a parent, `url` is undefined for inline definitions
-const resolveDef = async ({ def, defUrl, data, check }) => {
+const resolveDef = async ({ def: given, defUrl, data, check }) => {
     const checks = check ? loadValidator() : null;
-    let url;
-    if (def === null) {
-        url = resolveUrl(defUrl);
-        def = parseDef(await fetchText(url), `'${url}'`);
-    } else if (typeof def == 'string') {
-        def = parseDef(def, 'attribute');
-    }
+    const { def, url } = await readDef(given, defUrl);
 
     if (data === null && typeof def.data == 'string' && !def.data.includes('{')) {
         const dataUrl = resolveUrl(def.data, url);

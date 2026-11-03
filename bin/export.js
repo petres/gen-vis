@@ -55,7 +55,8 @@ const answer = url => {
 /**
  * The exporter of one browser for several charts: `exportChart(def,
  * outputs, options)` draws the definition file `def` and writes the
- * outputs (paths of .svg, .png and .pdf), `close()` ends the browser.
+ * outputs (paths of .svg, .png and .pdf), `evaluate(expression)` is the
+ * value of an expression of the export page, `close()` ends the browser.
  * `browser` is its path (see findBrowser), `sandbox: false` runs it
  * without its sandbox, `note(text)` gets the notes, e.g. the warnings of
  * the page.
@@ -173,7 +174,12 @@ export const createExporter = async ({ browser, sandbox = true, note = () => {} 
             return { ...rest, messages: [...messages] };
         };
 
-        return { exportChart, close: () => cdp.close() };
+        // the value of an expression of the export page (awaited), e.g. of
+        // genVisExport.resolve or of options with functions, which the
+        // command line has not
+        const evaluatePage = expression => evaluate(exporter, expression);
+
+        return { exportChart, evaluate: evaluatePage, close: () => cdp.close() };
     } catch (error) {
         await cdp.close();
         throw error;

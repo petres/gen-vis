@@ -175,3 +175,106 @@ describe('the defaults of the parts in the export', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the merged definition of the export page (genVisExport.resolve, schemes and defaults of functions)', () => {
+    // a definition file of a chart and one of its own with it as parent,
+    // which colors the categories with the scheme house
+    const parent = () => {
+        const d = def();
+        d.$schema = 'https://unpkg.com/@preschen/gen-vis@4/schema.json';
+        d.mapping.c = { column: 'land', fromData: true, legend: {} };
+        return d;
+    };
+    const child = { parent: 'parent.json', options: { title: 'Kind' }, mapping: { c: { scheme: 'house' } } };
+    const files = { 'http://h/defs/parent.json': JSON.stringify(parent()), 'http://h/defs/child.json': JSON.stringify(child) };
+    let fetched;
+    const serve = () => {
+        fetched = [];
+        vi.stubGlobal('fetch', async url => {
+            fetched.push(url);
+            return url in files ? new Response(files[url]) : new Response('', { status: 404, statusText: 'Not Found' });
+        });
+    };
+    // the colors of the lines of the chart in the page, jsdom computes no
+    // styles of svg elements, the SVG has none of them
+    const strokes = () => [...document.querySelectorAll('g.vis-plot.plot-0 path')].map(p => [p.getAttribute('data-group-c'), p.getAttribute('stroke')]);
+    // the ends of the tick marks
+    const marks = svg => [...parse(svg).querySelectorAll('line')].map(l => l.getAttribute('y2')).filter(Boolean);
+
+    beforeAll(() => import('@/export.js'));
+
+    test('resolve: the definition with its parents, merged and not normalized, of def and baseUrl or of defUrl', async () => {
+        serve();
+        const merged = await window.genVisExport.resolve({ def: child, baseUrl: 'http://h/defs/' });
+        expect(merged.options).toEqual({ ...parent().options, title: 'Kind' });
+        expect(merged.plot).toEqual(parent().plot);
+        expect(merged.mapping.c).toEqual({ column: 'land', fromData: true, legend: {}, scheme: 'house' });
+        // the y of the definition, not the internal form of normalize
+        expect(merged.mapping.y).toBe('value');
+        // the base of the page is removed again, the definition object is as it was
+        expect(document.querySelector('base')).toBeNull();
+        expect(child.options).toEqual({ title: 'Kind' });
+        expect(await window.genVisExport.resolve({ defUrl: 'http://h/defs/child.json', width: '16cm' })).toEqual(merged);
+        expect(await window.genVisExport.resolve({ def: JSON.stringify(child), baseUrl: 'http://h/defs/' })).toEqual(merged);
+        // a chart drawn before stays
+        await window.genVisExport({ def: def(), data });
+        await window.genVisExport.resolve({ defUrl: 'http://h/defs/child.json' });
+        expect(document.querySelectorAll('.vis')).toHaveLength(1);
+        expect(errors).toEqual([]);
+    });
+
+    test('schemes of a function of the merged definition, its colors drawn, also of a promise; defaults of one', async () => {
+        serve();
+        const seen = [];
+        const schemes = merged => {
+            seen.push(merged.plot.map(p => p.type));
+            return { house: merged.plot.some(p => p.type == 'line') ? ['#112233', '#445566'] : ['#FFFFFF'] };
+        };
+        await window.genVisExport({ defUrl: 'http://h/defs/child.json', data, schemes });
+        expect(seen).toEqual([['line', 'text']]);
+        // the categories in ascending order (fromData), Tirol first
+        expect(strokes()).toEqual([['Wien', '#445566'], ['Tirol', '#112233']]);
+        // the files of the definition are loaded once
+        expect(fetched.filter(u => u.endsWith('.json'))).toEqual(['http://h/defs/child.json', 'http://h/defs/parent.json']);
+
+        const later = async merged => {
+            await new Promise(r => setTimeout(r, 10));
+            return { house: [merged.options.title == 'Kind' ? '#AA0000' : '#FFFFFF'] };
+        };
+        const defaults = async merged => ({ axis: { tickMarks: { size: merged.plot.length + 2 } } });
+        const promised = await window.genVisExport({ def: child, baseUrl: 'http://h/defs/', data, schemes: later, defaults });
+        expect(strokes()).toEqual([['Wien', '#AA0000'], ['Tirol', '#AA0000']]);
+        expect(marks(promised.svg)).toEqual(Array(11).fill('4'));
+        // the object form as before
+        await window.genVisExport({ def: child, baseUrl: 'http://h/defs/', data, schemes: { house: ['#00AA00'] } });
+        expect(strokes()).toEqual([['Wien', '#00AA00'], ['Tirol', '#00AA00']]);
+        expect(errors).toEqual([]);
+    });
+
+    test('errors: of the definition, of the options and of the functions', async () => {
+        serve();
+        const { genVisExport } = window;
+        // the <base> of the chart before (its baseUrl) stays, the one of resolve is removed
+        const bases = [...document.querySelectorAll('base')];
+        await expect(genVisExport.resolve({ def: { ...child, parent: 'missing.json' }, baseUrl: 'http://h/defs/' }))
+            .rejects.toThrow("Could not load 'http://h/defs/missing.json': 404 Not Found");
+        await expect(genVisExport.resolve({ defUrl: 'http://h/defs/nope.json' })).rejects.toThrow("Could not load 'http://h/defs/nope.json'");
+        await expect(genVisExport.resolve({ def: '{"plot": ' })).rejects.toThrow('Invalid JSON in definition attribute');
+        await expect(genVisExport.resolve({})).rejects.toThrow('either def (a definition) or defUrl');
+        await expect(genVisExport.resolve({ def: child, sheme: {} })).rejects.toThrow('unknown options sheme');
+        expect([...document.querySelectorAll('base')]).toEqual(bases);
+
+        const options = { defUrl: 'http://h/defs/child.json', data };
+        await expect(genVisExport({ ...options, schemes: () => [['#000000']] }))
+            .rejects.toThrow('the function of schemes returns an object, not [["#000000"]]');
+        await expect(genVisExport({ ...options, defaults: async () => 4 })).rejects.toThrow('the function of defaults returns an object, not 4');
+        await expect(genVisExport({ ...options, schemes: async () => { throw new Error('no colors'); } })).rejects.toThrow('no colors');
+        await expect(genVisExport({ ...options, schemes: () => ({ house: [] }) })).rejects.toThrow("the colors of the scheme 'house'");
+        await expect(genVisExport({ defUrl: 'http://h/defs/missing.json', data, schemes: () => ({}) }))
+            .rejects.toThrow("Could not load 'http://h/defs/missing.json': 404 Not Found");
+        // null of a function: no defaults, the built-in ones
+        const none = await genVisExport({ ...options, schemes: () => ({ house: ['#123456'] }), defaults: () => null });
+        expect(marks(none.svg)).toEqual(Array(11).fill('9'));
+        expect(errors).toEqual([]);
+    });
+});

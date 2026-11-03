@@ -9,6 +9,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { root } from './dom.js';
 import { findBrowser } from '../bin/cdp.js';
+import { createExporter, fileUrl } from '../bin/export.js';
 
 const browser = (() => {
     try {
@@ -122,6 +123,26 @@ describe.skipIf(!browser)('gen-vis export', () => {
         expect(missing.code).toBe(2);
         expect(missing.stderr).toMatch(/--defaults is a JSON object or a file of one, .*missing\.json does not exist/);
         expect((await run(['export', 'data/bev/def.json', path.join(dir, 'x.svg'), '--defaults', '{"axis": '])).stderr).toMatch(/--defaults is not JSON/);
+    }, 60000);
+
+    test('the merged definition of the page (genVisExport.resolve) and schemes of a function of it', async () => {
+        // a definition of the one of house.json (the test before) as parent
+        writeFileSync(path.join(dir, 'kind.json'), JSON.stringify({ parent: 'house.json', options: { title: 'Kind' } }));
+        const exporter = await createExporter({ browser });
+        try {
+            const url = JSON.stringify(fileUrl(path.join(dir, 'kind.json')));
+            const merged = await exporter.evaluate(`genVisExport.resolve({ defUrl: ${url} })`);
+            expect(merged.options.title).toBe('Kind');
+            expect(merged.plot).toEqual(JSON.parse(readFileSync(path.join(dir, 'house.json'), 'utf8')).plot);
+            const r = await exporter.evaluate(`genVisExport({ defUrl: ${url}, schemes: async merged => ({
+                house: [merged.plot.length ? '#ABCDEF' : '#000000', '#FEDCBA'] }) }).then(r => r.svg)`);
+            expect(r).toMatch(/stroke="#ABCDEF"/);
+            expect(r).toMatch(/stroke="#FEDCBA"/);
+            await expect(exporter.evaluate(`genVisExport.resolve({ def: { parent: 'missing.json' }, baseUrl: ${url} })`))
+                .rejects.toThrow(/Could not load '.*missing\.json': 404/);
+        } finally {
+            await exporter.close();
+        }
     }, 60000);
 
     test('the message of an error of gen-vis', async () => {

@@ -159,7 +159,12 @@ Chromium, Chrome or Edge of the system (DevTools protocol over the
 WebSocket of node 22, no dependencies), the PNG of `--dpi` or `--scale`,
 the PDF the print of the SVG, one browser for all of them. The PNG of
 `image()` and the SVG share the static copy of the chart (`staticCopy` of
-`src/utils/export.js`).
+`src/utils/export.js`). `genVisExport.resolve(options)` is the merged definition of
+the options (the parents and mixins resolved as the load does, not
+normalized), the options `schemes` and `defaults` may also be functions of
+it (also of promises), called before the chart is drawn, e.g. of the
+colors of a wrapper of Python or R by the plot types; additions to the
+protocol version 1.
 
 `registerScheme(name, colors)`: a scheme of colors of its own for `scheme`
 of the categories and the scales, e.g. `"scheme": "wifo"` of the colors of a

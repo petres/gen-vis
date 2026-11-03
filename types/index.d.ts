@@ -125,12 +125,24 @@ export interface GenVisExportOptions {
     classes?: string | string[];
     globals?: Record<string, unknown>;
     state?: State;
-    defaults?: GenVisDefaults;
+    /** Also a function of the merged definition (see `genVisExport.resolve`), its result also of a promise. */
+    defaults?: GenVisDefaults | ((merged: Definition) => GenVisDefaults | null | Promise<GenVisDefaults | null>);
     parts?: ImagePart[] | null;
     fontSize?: number | string;
     background?: string | null;
-    schemes?: Record<string, string[] | (string[] | null)[]>;
+    /** Also a function of the merged definition (see `genVisExport.resolve`), its result also of a promise. */
+    schemes?: GenVisSchemes | ((merged: Definition) => GenVisSchemes | null | Promise<GenVisSchemes | null>);
     timeout?: number;
+}
+
+/** The schemes of colors of `genVisExport`, of one size or of several, see `registerScheme`. */
+export type GenVisSchemes = Record<string, string[] | (string[] | null)[]>;
+
+/** `window.genVisExport` of the export page: draws a chart, `resolve` is the merged definition of the options (parents and mixins resolved, not normalized). */
+export interface GenVisExport {
+    (options: GenVisExportOptions): Promise<GenVisExportResult>;
+    version: 1;
+    resolve(options: GenVisExportOptions): Promise<Definition>;
 }
 
 /** The result of `window.genVisExport`, the sizes in CSS pixels, `box` the rectangle of the image in the page. */
