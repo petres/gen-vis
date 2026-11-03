@@ -27,6 +27,7 @@ import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/props";
 import { dataAttribute, drawLayer, highlighter, reducedMotion, withMotion } from "@/utils/draw";
 import { drawAxis } from "@/utils/axis";
+import { interruptAll } from "@/utils/dom";
 import { plotTypes } from "@/plots";
 import { plotGroups, plotRows } from "@/layout";
 import { filter, rowFilter } from "@/utils/data";
@@ -100,12 +101,14 @@ export default {
         this.draw();
     },
     // the transitions of the elements end with the facet, so their timers do
-    // not set the attributes of removed elements, d3-transition is loaded
-    // only for definitions with a transition (see loadTransition)
+    // not set the attributes of removed elements: the animations of the
+    // plots (see utils/dom.js) and the ones of the axes, d3-transition is
+    // loaded only for definitions with a transition (see loadTransition)
     beforeUnmount() {
+        interruptAll(this.$refs.inner);
         const inner = d3.select(this.$refs.inner);
         if (d3.hasTransitions(inner))
-            inner.selectAll("*").interrupt("vis").interrupt("highlight");
+            inner.selectAll("*").interrupt("vis");
     },
     unmounted() {
         document.removeEventListener("pointerdown", this.hideOnPointerOutside);

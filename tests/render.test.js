@@ -8,6 +8,8 @@ import * as d3 from 'd3-scale-chromatic';
 import { prepareDef } from '@/utils/def';
 import { clearCache, createStore } from '@/store';
 import { selection } from '@/utils/export';
+import { itemOf } from '@/utils/dom';
+import { rowOf } from '@/utils/draw';
 import { examples, errors, useDom, rendered, mount, pointer, hover } from './dom.js';
 
 // the image of the copy of the visualisation, the copy and the width of its
@@ -830,7 +832,7 @@ describe('the selection of the rows of a plot', () => {
         return def;
     };
     const labels = async select => [...(await mount(GenVis, { def: labelDef(select), data: lineData })).querySelectorAll('g.vis-plot.plot-1 text')]
-        .map(t => [t.textContent, t.__data__[Object.getOwnPropertySymbols(t.__data__)[0]].x]);
+        .map(t => [t.textContent, t[itemOf][rowOf].x]);
 
     test('the last or the first row of every group, e.g. labels at the end of lines', async () => {
         expect(await labels('last')).toEqual([['Wien', 2023], ['Tirol', 2023]]);
@@ -1498,7 +1500,7 @@ describe('horizontal bars and several value axes', () => {
     test('stacked horizontal bars, the hover of a row of bars', async () => {
         const el = await mount(GenVis, { def: barDef(), data: lineData });
         // 2023: Wien 4, Tirol 2, stacked from 0 to 6 of the width 550
-        const bars = [...el.querySelectorAll('g.vis-plot rect')].filter(r => r.getAttribute('fill') && r.__data__);
+        const bars = [...el.querySelectorAll('g.vis-plot rect')].filter(r => r.getAttribute('fill') && r[itemOf]);
         const wien = el.querySelectorAll('g.vis-group[data-group-c="Wien"] rect');
         expect(wien).toHaveLength(3);
         const last = [...wien].at(-1);
@@ -1840,7 +1842,7 @@ describe('polar', () => {
         def.plot[1] = { type: 'polar:text', categories: ['c'], dodge: 20, filter: { x: [2, 3] }, props: { text: '@name', angle: '@x:scaled', radius: '@y:scaled' } };
         // month 2: Wien 3, Tirol 2 (radii 37.5 and 25), month 3: Wien 4 (50), Tirol 2 (25)
         const el = await mount(GenVis, { def, data: polarData });
-        const at = month => [...el.querySelectorAll('g.vis-plot.plot-1 text')].filter(t => t.__data__[Object.getOwnPropertySymbols(t.__data__)[0]].x == month)
+        const at = month => [...el.querySelectorAll('g.vis-plot.plot-1 text')].filter(t => t[itemOf][rowOf].x == month)
             .map(t => Math.hypot(num(t, 'x'), num(t, 'y')));
         expect(at(2).map(Math.round)).toEqual([41, 21]);
         expect(at(3).map(Math.round)).toEqual([50, 25]);

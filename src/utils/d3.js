@@ -53,8 +53,10 @@ export const schemeNames = registry([
 let colors = null;
 export const loadColors = async () => colors ??= await lazy.colors();
 
-// the transitions of selections, e.g. of options.transition, d3-transition
-// adds them to the selections of d3, e.g. `transition()` and `interrupt()`
+// the transitions of selections, of the axes (see utils/axis.js) with
+// options.transition, d3-transition adds them to the selections of d3, e.g.
+// `transition()` and `interrupt()`, the plots and the highlight move with
+// the animations of utils/dom.js, which are always there
 let transitions = null;
 export const loadTransition = () => transitions ??= lazy.transition().catch(error => {
     transitions = null;

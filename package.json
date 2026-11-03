@@ -86,6 +86,7 @@
     "d3-dsv": "^3",
     "d3-format": "^3",
     "d3-geo": "^3",
+    "d3-interpolate": "^3",
     "d3-scale": "^4",
     "d3-scale-chromatic": "^3",
     "d3-selection": "^3",

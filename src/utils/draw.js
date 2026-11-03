@@ -1,6 +1,7 @@
 export { curves, setProps, setAttrs, groupAttrs, groupKey, highlighter, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, reducedMotion, dataAttribute, fitText };
 
 import * as d3 from "@/utils/d3";
+import { animate, create, finish as finishAnimation, interrupt, itemOf, join, onEnd, setAttr, targetOf } from "@/utils/dom";
 
 // the interpolations of the paths and areas between their points, `monotoneX`
 // is smooth without overshooting the values, e.g. for monthly data
@@ -18,9 +19,6 @@ const curves = {
     catmullRomClosed: d3.curveCatmullRomClosed,
     basisClosed: d3.curveBasisClosed,
 };
-
-// the values of the attributes an element moves to with a transition, see setProps
-const targets = Symbol('targets');
 
 // the props whose values are styles of an element, not attributes, values
 // with css variables, e.g. "var(--gen-vis-grid-color)", svg attributes do not
@@ -51,14 +49,7 @@ const writeValue = (node, k, v) => {
 
 // an element moving with a transition is at its end at once, e.g. before
 // the values of its highlight replace its values, so it keeps the new ones
-const finish = node => {
-    if (!node[targets])
-        return;
-    if (node.__transition)
-        d3.select(node).interrupt('vis');
-    Object.entries(node[targets]).forEach(([k, v]) => writeValue(node, k, v));
-    node[targets] = null;
-};
+const finish = node => finishAnimation(node, 'vis');
 
 // the transition of the elements of a draw in milliseconds, 0 without, see
 // options.transition and Facet.vue
@@ -88,13 +79,12 @@ const withMotion = (duration, draw) => {
 // before, as setting one costs the browser its style. With a transition the
 // attributes an element has move to their values, e.g. of the draw before,
 // new ones are set at once, a transition of the draw before stops where it
-// is. The values of a transition are kept, see finish. Values with css
-// variables are styles, set at once, see writeValue.
+// is. The end values of a transition are the ones of its animation (see
+// targetOf of utils/dom.js), see finish. Values with css variables are
+// styles, set at once, see writeValue.
 const setProps = function(values) {
-    if (this.__transition)
-        d3.select(this).interrupt('vis');
-    this[targets] = null;
-    let transition = null;
+    interrupt(this, 'vis');
+    let moving = null;
     for (const k in values) {
         const v = values[k];
         if (v !== null && (typeof v == 'object' || typeof v == 'function'))
@@ -105,7 +95,7 @@ const setProps = function(values) {
                 this.textContent = text;
         } else if (k.includes(':')) {
             // a namespace, e.g. xlink:href
-            d3.select(this).attr(k, v);
+            setAttr(this, k, v);
         } else if (v === null || v === undefined) {
             writeValue(this, k, null);
         } else {
@@ -113,14 +103,14 @@ const setProps = function(values) {
             const before = readValue(this, k);
             if (before === value)
                 continue;
-            if (motion.duration > 0 && before !== null && !isStyle(k, value) && !this[styles]?.has(k) && d3.hasTransitions(d3.select(this))) {
-                (transition ??= d3.select(this).transition('vis').duration(motion.duration)).attr(k, value);
-                (this[targets] ??= {})[k] = value;
-            } else {
+            if (motion.duration > 0 && before !== null && !isStyle(k, value) && !this[styles]?.has(k))
+                (moving ??= {})[k] = value;
+            else
                 writeValue(this, k, value);
-            }
         }
     }
+    if (moving)
+        animate(this, moving, { channel: 'vis', duration: motion.duration });
 };
 
 // the attributes of the keys of the categories of a group, e.g. for the highlight
@@ -128,8 +118,7 @@ const groupAttrs = g => Object.fromEntries(Object.entries(g.categories).map(([di
 
 // the keys of the categories of the group of an element, e.g. for the highlight
 const setGroupData = function(g) {
-    const element = d3.select(this);
-    Object.entries(g.categories).forEach(([dim, key]) => element.attr(`data-group-${dim}`, key));
+    Object.entries(g.categories).forEach(([dim, key]) => setAttr(this, `data-group-${dim}`, key));
 };
 
 // the row of an element per row, a symbol, so it is not an attribute
@@ -181,13 +170,14 @@ function drawItem(item) {
     setProps.call(this, item);
     const children = item[childrenOf];
     if (children && !this.hasChildNodes())
-        children.forEach(child => drawItem.call(this.appendChild(document.createElementNS('http://www.w3.org/2000/svg', child[elementOf])), child));
+        children.forEach(child => drawItem.call(this.appendChild(create(child[elementOf])), child));
 }
 
 /**
  * Draws a layer of a plot (see `marks` of the plot types, plots/index.js)
- * into the group of the plot `parent`, a d3 selection, into the elements of
- * the draw before, returns the elements of the items:
+ * into the group of the plot `parent`, an element (or still a d3 selection
+ * of one), into the elements of the draw before (see join of utils/dom.js),
+ * returns the elements of the items, an array:
  * - `groups`: an element `g.vis-group` per group (its `categories` are its
  *   data-group- attributes), in it an element `element` per item of its
  *   `items`, e.g. a circle per row, the ones of the same group and of the
@@ -203,31 +193,38 @@ function drawItem(item) {
  * its row (`rowOf`, e.g. of the highlight of a row), the attributes which
  * are set at once (`directOf`) and the items of the elements in its element
  * (`childrenOf`, only of a new element, e.g. of the layers which are drawn
- * anew). Null draws nothing.
+ * anew), an element has its item as `node[itemOf]` (see utils/dom.js), a
+ * group its group. Null draws nothing.
  */
 const drawLayer = (parent, layer) => {
     if (!layer)
         return null;
+    // a d3 selection of the callers which are not ported yet
+    if (typeof parent.node == 'function')
+        parent = parent.node();
     if (layer.class)
-        parent.classed(layer.class, true);
+        parent.classList.add(...layer.class.trim().split(/\s+/));
+    // the elements of the layer, the ones of `element`, all without one
+    const select = layer.element ?? undefined;
     const elements = layer.groups
-        ? parent.selectChildren("g.vis-group")
-            .data(layer.groups, groupKey)
-            .join(enter => enter.append("g").attr("class", "vis-group"))
-            .order()
-            .each(setGroupData)
-            .selectChildren(layer.element)
-            .data(g => g.items, layer.key ?? rowKey)
-            .join(layer.element)
-        : parent.selectChildren(layer.element)
-            .data(layer.items ?? [], layer.key)
-            .join(layer.element ?? (enter => enter.append(item => document.createElementNS('http://www.w3.org/2000/svg', item[elementOf]))));
-    elements.order().each(drawItem);
+        ? join(parent, layer.groups, { select: 'g.vis-group', key: groupKey, create: () => {
+            const g = create('g');
+            g.setAttribute('class', 'vis-group');
+            return g;
+        } }).flatMap(group => {
+            setGroupData.call(group, group[itemOf]);
+            return join(group, group[itemOf].items, { select, key: layer.key ?? rowKey, create: layer.element });
+        })
+        : join(parent, layer.items ?? [], { select, key: layer.key, create: layer.element ?? (item => create(item[elementOf])) });
+    elements.forEach(node => drawItem.call(node, node[itemOf]));
     if (layer.fit) {
-        elements.filter(function() { return this.hasAttribute('max-width') })
-            .each(function(item) { fitText(this, item.text === null || item.text === undefined ? '' : String(item.text)) });
+        elements.filter(node => node.hasAttribute('max-width'))
+            .forEach(node => {
+                const text = node[itemOf].text;
+                fitText(node, text === null || text === undefined ? '' : String(text));
+            });
         // the texts in the elements, e.g. the labels in the ticks of an axis
-        elements.selectAll('text[max-width]').each(function() { fitText(this) });
+        elements.forEach(node => node.querySelectorAll('text[max-width]').forEach(t => fitText(t)));
     }
     return elements;
 };
@@ -244,13 +241,12 @@ const drawLayer = (parent, layer) => {
  * their elements with highlight- and others- props are found once, at the
  * first highlight, so a highlight does not search the elements of the facet.
  * `nodeOf(plot)` is the element of a plot, the attributes move in `duration`
- * milliseconds to their values, if the transitions are loaded.
+ * milliseconds to their values, in the animations of the channel
+ * `highlight` (see animate of utils/dom.js).
  */
 // the values of the definition of the attributes of an element which the
 // highlight changed, see highlighter
 const originals = Symbol('originals');
-// the values of the attributes of the transition of the highlight of an element
-const pending = Symbol('pending');
 
 const highlighter = (plotDefs, nodeOf, duration = 0) => {
     const plots = plotDefs.filter(p => p.highlightProps.length > 0 && p.categories.length > 0);
@@ -285,7 +281,7 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
             .filter(node => plot.highlightProps.some(n => node.hasAttribute(`highlight-${n}`)));
         if (plot.highlight != 'row')
             return group.targets;
-        const rows = group.targets.filter(node => node.__data__?.[rowOf] === dataEntry);
+        const rows = group.targets.filter(node => node[itemOf]?.[rowOf] === dataEntry);
         return rows.length > 0 ? rows : group.targets;
     };
 
@@ -300,30 +296,27 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
     // or in one transition per element (one of an element would interrupt
     // the one before), of the attributes with a value before and after
     const apply = (targets, now) => targets.forEach((changes, node) => {
-        const moving = !now && duration > 0 && d3.hasTransitions(d3.select(node));
+        const moving = !now && duration > 0;
         // the attributes of a transition of the element which is interrupted
         // move on to their values, e.g. its color back to its own while its
         // opacity is the one of the others
-        const values = { ...node[pending], ...changes };
-        if (node[pending]) {
-            d3.select(node).interrupt('highlight');
-            node[pending] = null;
-        }
+        const values = { ...targetOf(node, 'highlight'), ...changes };
+        interrupt(node, 'highlight');
         let transition = null;
         Object.entries(values).forEach(([n, value]) => {
             // values with css variables at once, see writeValue
-            if (moving && value !== null && !isStyle(n, value) && !node[styles]?.has(n) && node.getAttribute(n) !== null) {
-                (transition ??= d3.select(node).transition('highlight').duration(duration)).attr(n, value);
-                (node[pending] ??= {})[n] = value;
-            } else
+            if (moving && value !== null && !isStyle(n, value) && !node[styles]?.has(n) && node.getAttribute(n) !== null)
+                (transition ??= {})[n] = value;
+            else
                 writeValue(node, n, value);
         });
-        transition?.on('end.pending', () => node[pending] = null);
+        if (transition)
+            animate(node, transition, { channel: 'highlight', duration });
         // the values of the definition are kept until they are back, e.g. if
         // the element is highlighted again while it moves back
         if (!changed.has(node)) {
             if (transition)
-                transition.on('end.originals', () => {
+                onEnd(node, 'highlight', () => {
                     if (!changed.has(node))
                         node[originals] = null;
                 });
