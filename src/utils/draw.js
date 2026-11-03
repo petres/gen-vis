@@ -249,9 +249,10 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
     const others = plotDefs.filter(p => p.othersProps?.length > 0);
     let index = null;
     let otherIndex = null;
-    // the highlighted groups and the changed elements
+    // the highlighted groups, the changed elements with the props and the
+    // prefixes of their values (see stateOf) and whether they have the class
     let groups = [];
-    let elements = [];
+    let elements = new Map();
 
     const build = () => plots.map(plot => {
         const node = nodeOf(plot);
@@ -339,7 +340,53 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
         });
         targets.set(node, values);
         changed.add(node);
-        elements.push({ node, props });
+    };
+
+    // the values of the definition of an element changed before
+    const restore = (targets, node, { parts }) => {
+        const values = targets.get(node) ?? {};
+        parts.forEach(([props]) => props.forEach(n => {
+            values[n] = node[originals]?.[n] ?? null;
+            node.removeAttribute(`default-${n}`);
+        }));
+        targets.set(node, values);
+    };
+
+    // the state of the elements of a highlight: per element whether it has
+    // the class (`marked`) and the props of the plots with their prefix
+    // (`parts`), e.g. the highlight- props of the targets and the others-
+    // props of the other elements
+    const stateOf = (next, dataEntry) => {
+        const state = new Map();
+        const add = (node, marked, props, prefix) => {
+            const s = state.get(node) ?? { marked: false, parts: [] };
+            s.marked ||= marked;
+            s.parts.push([props, prefix]);
+            state.set(node, s);
+        };
+        if (!dataEntry)
+            return state;
+        next.targets.forEach(([plot, nodes]) => nodes.forEach(node => add(node, true, plot.highlightProps, 'highlight')));
+        // the other elements, e.g. a label of the last value which is hidden
+        // while the one of another value is highlighted
+        otherIndex ??= buildOthers();
+        otherIndex.forEach(({ plot, nodes }) => nodes.filter(node => !state.get(node)?.marked)
+            .forEach(node => add(node, false, plot.othersProps, 'others')));
+        return state;
+    };
+    const sameState = (a, b) => a.marked == b.marked && a.parts.length == b.parts.length
+        && a.parts.every(([props, prefix], i) => props === b.parts[i][0] && prefix === b.parts[i][1]);
+
+    // the groups of a highlight after the other ones of their parent, in
+    // their order, unless they are there already, e.g. of the highlight
+    // before, so a move of the pointer does not move the elements
+    const raise = list => {
+        const byParent = new Map();
+        list.forEach(node => byParent.set(node.parentNode, [...(byParent.get(node.parentNode) ?? []), node]));
+        byParent.forEach((nodes, parent) => {
+            if (!nodes.every((node, i) => node.nextSibling === (nodes[i + 1] ?? null)))
+                nodes.forEach(node => parent.appendChild(node));
+        });
     };
 
     // the groups and the elements of the plots of a highlight, see targetsOf
@@ -368,46 +415,49 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
         && next.targets.length == shown.targets.length
         && next.targets.every(([plot, nodes], i) => plot === shown.targets[i][0] && same(nodes, shown.targets[i][1]));
 
-    // `now` ends the highlight without a transition, e.g. before a draw
+    // `now` ends the highlight without a transition, e.g. before a draw,
+    // and sets all attributes again, a highlight only changes the elements
+    // whose state changes, e.g. not the other elements of a line while the
+    // highlight moves along another one
     return (dataEntry, now = false) => {
         const next = selection(dataEntry);
         if (!now && unchanged(next))
             return;
         shown = next;
+        const state = stateOf(next, dataEntry);
+        const before = elements;
+        const same = node => !now && before.has(node) && state.has(node) && sameState(before.get(node), state.get(node));
+        // the elements with the class, the groups and the targets
+        const marked = list => [...list].filter(([, s]) => s.marked).map(([node]) => node);
+        const classed = new Set([...next.groups, ...marked(state)]);
+        const unmarked = [...groups, ...marked(before)];
+
         // the values of the definition of the elements changed before
         const targets = new Map();
-        groups.forEach(unclass);
-        elements.forEach(({ node, props }) => {
-            unclass(node);
-            const values = targets.get(node) ?? {};
-            props.forEach(n => {
-                values[n] = node[originals]?.[n] ?? null;
-                node.removeAttribute(`default-${n}`);
-            });
-            targets.set(node, values);
+        before.forEach((s, node) => {
+            if (!same(node))
+                restore(targets, node, s);
         });
-        groups = [];
-        elements = [];
-        changed = new Set();
+        [...unmarked, ...targets.keys()].forEach(node => {
+            if (now || !classed.has(node))
+                unclass(node);
+        });
+        groups = [...next.groups];
+        elements = state;
+        changed = new Set(state.keys());
 
-        if (dataEntry) {
-            const highlighted = new Set();
-            next.groups.forEach(node => {
+        classed.forEach(node => {
+            if (now || !node.classList.contains('vis-highlight'))
                 node.classList.add('vis-highlight');
-                node.parentNode.appendChild(node);
-                groups.push(node);
-            });
-            next.targets.forEach(([plot, nodes]) => nodes.forEach(node => {
-                node.classList.add('vis-highlight');
-                highlighted.add(node);
-                replace(targets, node, plot.highlightProps, 'highlight');
-            }));
-            // the other elements, e.g. a label of the last value which is hidden
-            // while the one of another value is highlighted
-            otherIndex ??= buildOthers();
-            otherIndex.forEach(({ plot, nodes }) => nodes.filter(node => !highlighted.has(node))
-                .forEach(node => replace(targets, node, plot.othersProps, 'others')));
-        }
+        });
+        if (now)
+            groups.forEach(node => node.parentNode.appendChild(node));
+        else
+            raise(groups);
+        state.forEach((s, node) => {
+            if (!same(node))
+                s.parts.forEach(([props, prefix]) => replace(targets, node, props, prefix));
+        });
         apply(targets, now);
     };
 };
