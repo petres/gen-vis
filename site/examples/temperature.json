@@ -43,21 +43,20 @@
     "mapping": {
         "x": {
             "column": "day",
-            "type": "date",
-            "scale": { "type": "utc", "orientation": "angular", "domain": ["2020-01-01", "2021-01-01"] },
-            "axis": { "position": "angular", "ticks": 12, "format": "%b", "grid": true },
+            "domain": ["2020-01-01", "2021-01-01"],
+            "scale": { "type": "utc" },
+            "axis": { "ticks": 12, "format": "%b", "grid": true },
             "hover": { "format": "%-d. %B" }
         },
         "y": {
             "column": "temperature",
-            "type": "numeric",
-            "scale": { "type": "linear", "orientation": "radial", "domain": [-5, 25], "range": [28, "@radius"] },
-            "axis": { "position": "radial", "angle": 20, "values": [10, 20], "grid": true, "format": "d" },
+            "domain": [-5, 25],
+            "scale": { "range": [28, "@radius"] },
+            "axis": { "angle": 20, "values": [10, 20], "grid": true, "format": "d" },
             "hover": { "format": ",.1f" }
         },
         "year": {
             "column": "year",
-            "type": "categorical",
             "name": "Jahr",
             "legend": {
                 "symbol": {
@@ -91,15 +90,13 @@
         { "type": "line", "y": 0, "label": "0 °C", "props": { "stroke": "#0078BF", "stroke-dasharray": "1 3" } }
     ],
     "plot": {
-        "type": "polar:line",
+        "type": "line",
         "by": "year",
         "props": {
-            "d": { "angle": "@x:scaled", "radius": "@y:scaled" },
             "stroke": "@color",
             "stroke-width": "@width",
             "stroke-dasharray": "@dash",
             "opacity": "@opacity",
-            "fill": "none",
             "stroke-linecap": "round"
         },
         "highlight": { "opacity": 1, "stroke-width": 3.5 },

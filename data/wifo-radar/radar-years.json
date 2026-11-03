@@ -25,13 +25,9 @@
         }
     ],
     "mapping": {
-        "countryName": {
-            "column": "countryName",
-            "type": "categorical"
-        },
+        "countryName": "countryName",
         "year": {
             "column": "year",
-            "type": "categorical",
             "hover": {},
             "legend": {
                 "position": "bottom",
@@ -86,30 +82,17 @@
         },
         {
             "id": "lines",
-            "type": "polar:line",
+            "type": "line",
             "by": "year",
             "curve": "linearClosed",
-            "props": {
-                "fill": "none",
-                "stroke": "@color",
-                "stroke-width": 2.5,
-                "d": {
-                    "angle": "@x:scaled",
-                    "radius": "@y:scaled"
-                }
-            },
+            "props": { "stroke": "@color", "stroke-width": 2.5 },
             "highlight": { "stroke-width": 4 }
         },
         {
             "id": "points",
-            "type": "polar:circle",
+            "type": "point",
             "by": "year",
-            "props": {
-                "fill": "@color",
-                "r": 5,
-                "angle": "@x:scaled",
-                "radius": "@y:scaled"
-            },
+            "props": { "fill": "@color", "r": 5 },
             "highlight": { "r": 6 }
         }
     ]

@@ -14,25 +14,23 @@
         "values": { "column": "Jahr" }
     }],
     "mapping": {
-        "year": { "column": "Jahr", "type": "numeric" },
+        "year": "Jahr",
         "x": {
             "column": "Einwohner",
-            "type": "numeric",
-            "scale": { "orientation": "horizontal", "domain": [0, null] },
-            "axis": { "position": "bottom", "grid": true, "format": ",.0f", "tickSpacing": 110 },
-            "hover": { "format": ",.0f" }
+            "domain": [0, null],
+            "format": ",.0f",
+            "axis": { "grid": true, "tickSpacing": 110 },
+            "hover": {}
         },
         "y": {
             "column": "Bundesland",
-            "type": "categorical",
-            "scale": { "type": "band", "orientation": "vertical", "range": [0, "@height"], "padding": 0.25, "order": { "by": "x", "descending": true } },
-            "axis": { "position": "left" },
+            "scale": { "range": [0, "@height"], "padding": 0.25, "order": { "by": "x", "descending": true } },
             "fromData": true,
             "categories": { "ÖSTERREICH": { "visible": false } }
         }
     },
     "plot": [
-        { "type": "cartesian:bar", "by": "y", "props": { "x1": "@x:scaled", "y": "@y:scaled", "fill": "#1E4F77" }, "highlight": { "fill": "#5BC5F2" } },
+        { "type": "bar", "by": "y", "props": { "x1": "@x:scaled", "y": "@y:scaled", "fill": "#1E4F77" }, "highlight": { "fill": "#5BC5F2" } },
         {
             "type": "svg:text",
             "by": "y",

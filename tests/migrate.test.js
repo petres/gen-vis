@@ -2,7 +2,7 @@
 // definition of data/ migrated and normalized is the one of 3.x, see
 // utils/migrate.js and utils/normalize.js
 import { describe, test, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { definitions } from '@/dev/definitions.js';
 import { resolveParents } from '@/utils/load';
@@ -70,6 +70,20 @@ const canonical = def => {
     return d;
 };
 
+// the internal form of a definition of 4.0 with the types of the mappings
+// without one (and the ones of their scales, which follow) of the internal
+// form `internal`, normalize has no rows to infer them of
+const withInferred = (def, internal) => {
+    const d = JSON.parse(JSON.stringify(def));
+    Object.entries(isObject(d.mapping) ? d.mapping : {}).filter(([n, m]) => isObject(m) && m.type === undefined && isObject(internal.mapping?.[n])).forEach(([n, m]) => {
+        const given = internal.mapping[n];
+        m.type = given.type;
+        if (isObject(m.scale) && m.scale.of === undefined && m.scale.type === undefined && isObject(given.scale))
+            m.scale.type = given.scale.type;
+    });
+    return d;
+};
+
 // the order of the keys of an object of a path is no difference where it is
 // none of the drawing: the props of a plot (attributes, normalize merges them
 // into the defaults of its type and appends the ones of the highlight and the
@@ -98,11 +112,26 @@ describe('migrate', () => {
         expect(migrate(migrated)).toEqual(migrated);
         const internal = normalize(migrated, { plotTypes });
         expect(differences(canonical(internal), canonical(def))).toEqual([]);
-        // the definition of 4.0 in data/, migrated by its parts (migrateParts)
-        // and written shorter, has the same internal form
+        // the definition of 4.0 in data/, migrated by its parts (shorten) and
+        // written shorter, has the same internal form, the types of its
+        // mappings without one are the ones of their values (see inferTypes),
+        // the snapshots draw them
         const own = await load(path);
         expect(isLegacy(own)).toBe(false);
-        expect(differences(canonical(normalize(own, { plotTypes })), canonical(internal))).toEqual([]);
+        expect(differences(canonical(withInferred(normalize(own, { plotTypes }), internal)), canonical(internal))).toEqual([]);
+    });
+
+    // the examples of the page, without parents
+    const site = ['examples', 'public/charts'].flatMap(dir => readdirSync(`${root}/site/${dir}`).filter(f => f.endsWith('.json')).map(f => `${dir}/${f}`));
+    test.each(site)('site/%s: normalize of the migrated definition is the one of 3.x and the one of 4.0', path => {
+        const def = JSON.parse(readFileSync(`${root}/tests/legacy/site/${path}`, 'utf8'));
+        const migrated = migrate(def);
+        expect(migrate(migrated)).toEqual(migrated);
+        const internal = normalize(migrated, { plotTypes });
+        expect(differences(canonical(internal), canonical(def))).toEqual([]);
+        const own = JSON.parse(readFileSync(`${root}/site/${path}`, 'utf8'));
+        expect(isLegacy(own)).toBe(false);
+        expect(differences(canonical(withInferred(normalize(own, { plotTypes }), internal)), canonical(internal))).toEqual([]);
     });
 
     test.each(examples.map(e => e.path).filter(p => partsOf(p, 'tests/legacy/data').length > 1))('%s: the merge of the parts migrated by migrateParts is the one of 3.x', path => {

@@ -21,10 +21,7 @@
         "include": ["AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK"],
         "projection": {
             "type": "azimuthalEqualArea",
-            "rotate": [
-                -10,
-                -52
-            ]
+            "rotate": [-10, -52]
         }
     },
     "globals": {
@@ -59,18 +56,11 @@
         }
     ],
     "mapping": {
-        "country": {
-            "column": "country",
-            "type": "categorical"
-        },
-        "type": {
-            "column": "variable",
-            "type": "categorical"
-        },
+        "country": "country",
+        "type": "variable",
         "price": {
             "name": "€/Liter",
             "column": "value",
-            "type": "numeric",
             "scale": {
                 "type": "sequential",
                 "interpolator": "YlOrRd"

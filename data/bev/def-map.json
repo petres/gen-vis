@@ -66,7 +66,6 @@
         },
         "land": {
             "column": "Bundesland",
-            "type": "categorical",
             "categories": {
                 "ÖSTERREICH": {
                     "visible": false
@@ -84,18 +83,8 @@
         },
         "pop": {
             "column": "Einwohner",
-            "type": "numeric",
-            "scale": {
-                "type": "sqrt",
-                "domain": [
-                    0,
-                    2000000
-                ],
-                "range": [
-                    0,
-                    34
-                ]
-            },
+            "domain": [0, 2000000],
+            "scale": { "type": "sqrt", "range": [0, 34] },
             "hover": {
                 "format": ",.0f"
             }

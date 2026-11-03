@@ -21,7 +21,8 @@
                     "patch": { "mapping": {
                         "value": {
                             "name": "Jahresmittel in °C",
-                            "scale": { "interpolator": "YlOrRd", "domain": [0, 14] },
+                            "domain": [0, 14],
+                            "scale": { "interpolator": "YlOrRd" },
                             "legend": { "format": ".0f" },
                             "hover": { "format": ".1f" }
                         }
@@ -34,7 +35,8 @@
     "mapping": {
         "value": {
             "name": "Abweichung in °C",
-            "scale": { "type": "sequential", "interpolator": "RdBu", "domain": [3, -3] },
+            "domain": [3, -3],
+            "scale": { "type": "sequential", "interpolator": "RdBu" },
             "legend": { "format": "+.1f" },
             "hover": { "format": "+.1f" }
         }

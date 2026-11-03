@@ -14,22 +14,19 @@
     "mapping": {
         "x": {
             "column": "month",
-            "type": "date",
-            "scale": { "type": "utc", "orientation": "horizontal", "domainRel": [0, 0] },
-            "axis": { "position": "bottom", "ticks": 8, "format": "%Y" },
+            "scale": { "type": "utc", "domainRel": [0, 0] },
+            "axis": { "ticks": 8, "format": "%Y" },
             "hover": { "format": "%B %Y" }
         },
         "y": {
             "column": "share",
-            "type": "numeric",
+            "domain": [0, 1],
             "stacked": true,
-            "scale": { "type": "linear", "orientation": "vertical", "domain": [0, 1] },
             "axis": { "position": "right", "ticks": 4, "grid": true, "format": ".0%" },
             "hover": { "format": ".1%" }
         },
         "powertrain": {
             "column": "powertrain",
-            "type": "categorical",
             "legend": {
                 "symbol": {
                     "size": 14,

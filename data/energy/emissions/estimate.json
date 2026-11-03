@@ -65,15 +65,10 @@
     },
     "plot": [
         {
-            "type": "cartesian:line",
+            "type": "line",
             "by": ["type", "facet"],
-            "props": {
-                "stroke": "@stroke",
-                "stroke-width": 2,
-                "highlight-stroke-width": 3,
-                "fill": "none",
-                "d": { "x": "@x:scaled", "y": "@y:scaled" }
-            }
+            "props": { "stroke": "@stroke", "stroke-width": 2 },
+            "highlight": { "stroke-width": 3 }
         },
         {
             "type": "point",

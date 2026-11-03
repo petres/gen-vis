@@ -10,40 +10,24 @@
     "mapping": {
         "x": {
             "column": "Jahr",
-            "type": "numeric",
-            "scale": {
-                "orientation": "horizontal",
-                "domainAbs": [-4, 4]
-            },
+            "format": "c",
+            "scale": { "domainAbs": [-4, 4] },
             "axis": {
                 "ticks": 6,
-                "position": "bottom",
                 "rotate": 0,
-                "format": "c",
                 "values": [1971, 1981, 1991, 2001, 2011, 2020]
             },
-            "hover": {
-                "format": "c"
-            }
+            "hover": {}
         },
         "y": {
             "column": "Anzahl",
-            "type": "numeric",
-            "scale": {
-                "domain": [0, null],
-                "orientation": "vertical"
-            },
-            "axis": {
-                "ticks": 8,
-                "position": "left",
-                "grid": true,
-                "format": ",.0f"
-            },
+            "domain": [0, null],
+            "format": ",.0f",
+            "axis": { "ticks": 8, "grid": true },
             "hover": {}
         },
         "type": {
             "column": "Type",
-            "type": "categorical",
             "legend": {
                 "symbol": {
                     "size": 16,
@@ -75,7 +59,6 @@
         },
         "geo": {
             "column": "Geo",
-            "type": "categorical",
             "categories": {
                 "Österreich": { "name": "Österreich"},
                 "Wien": { "name": "Wien"}
@@ -89,14 +72,12 @@
     },
     "plot": [
         {
-            "type": "cartesian:bar",
+            "type": "bar",
             "by": "type",
             "props": {
                 "fill": "@color",
                 "opacity": 1,
-                "x": "@x:scaled",
                 "width": "@width",
-                "y1": "@y:scaled",
                 "transform": "@transform"
             }
         }

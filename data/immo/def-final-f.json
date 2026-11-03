@@ -13,36 +13,11 @@
         "footer": "Q: Mikrozensus."
     },
     "mapping": {
-        "x": {
-            "column": "year",
-            "type": "numeric",
-            "scale": {
-                "type": "linear",
-                "orientation": "horizontal"
-            },
-            "axis": {
-                "ticks": 6,
-                "format": "c",
-                "position": "bottom"
-            }
-        },
+        "x": { "column": "year", "format": "c", "axis": { "ticks": 6 } },
         "y": {
             "column": "price.m2.v",
-            "type": "numeric",
-            "scale": {
-                "type": "linear",
-                "domain": [
-                    0,
-                    null
-                ],
-                "orientation": "vertical"
-            },
-            "axis": {
-                "ticks": 8,
-                "position": "left",
-                "grid": true,
-                "format": ".1f"
-            },
+            "domain": [0, null],
+            "axis": { "ticks": 8, "grid": true, "format": ".1f" },
             "hover": {
                 "format": ".2f"
             }
@@ -186,44 +161,18 @@
     "facets": {
         "dim": "wrecht",
         "cols": 3,
-        "scales": [
-            "x",
-            "y"
-        ]
+        "scales": ["x", "y"]
     },
     "plot": [
         {
-            "type": "cartesian:line",
-            "by": [
-                "quali",
-                "werr",
-                "bundesland",
-                "wfrist"
-            ],
-            "props": {
-                "stroke-width": "2",
-                "fill": "none",
-                "stroke": "@color",
-                "d": {
-                    "x": "@x:scaled",
-                    "y": "@y:scaled"
-                }
-            }
+            "type": "line",
+            "by": ["quali", "werr", "bundesland", "wfrist"],
+            "props": { "stroke-width": "2", "stroke": "@color" }
         },
         {
-            "type": "svg:circle",
-            "by": [
-                "quali",
-                "werr",
-                "bundesland",
-                "wfrist"
-            ],
-            "props": {
-                "fill": "@color",
-                "r": "3",
-                "cx": "@x:scaled",
-                "cy": "@y:scaled"
-            }
+            "type": "point",
+            "by": ["quali", "werr", "bundesland", "wfrist"],
+            "props": { "fill": "@color", "r": "3" }
         }
     ],
     "globals": {

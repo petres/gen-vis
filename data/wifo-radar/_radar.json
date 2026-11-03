@@ -96,17 +96,8 @@
     "mapping": {
         "x": {
             "column": "name",
-            "type": "categorical",
-            "scale": {
-                "type": "point",
-                "orientation": "angular",
-                "padding": 0,
-                "order": {
-                    "by": "order"
-                }
-            },
+            "scale": { "padding": 0, "order": { "by": "order" } },
             "axis": {
-                "position": "angular",
                 "grid": true,
                 "padding": 8,
                 "tickMarks": false,
@@ -127,27 +118,10 @@
         },
         "y": {
             "column": "value",
-            "type": "numeric",
-            "scale": {
-                "orientation": "radial",
-                "domain": [
-                    0,
-                    100
-                ],
-                "domainRel": [
-                    0,
-                    0
-                ]
-            },
+            "domain": [0, 100],
+            "scale": { "domainRel": [0, 0] },
             "axis": {
-                "position": "radial",
-                "values": [
-                    20,
-                    40,
-                    60,
-                    80,
-                    100
-                ],
+                "values": [20, 40, 60, 80, 100],
                 "grid": true,
                 "format": "d",
                 "angle": 15,
@@ -167,15 +141,9 @@
                 "format": ".0f"
             }
         },
-        "order": {
-            "column": "order",
-            "type": "numeric"
-        },
-        "group": {
-            "column": "group",
-            "type": "categorical"
-        },
-        "definition": { "column": "definition", "type": "categorical", "fromData": true, "hover": {} },
-        "source": { "column": "source", "type": "categorical", "fromData": true, "hover": {} }
+        "order": "order",
+        "group": "group",
+        "definition": { "column": "definition", "fromData": true, "hover": {} },
+        "source": { "column": "source", "fromData": true, "hover": {} }
     }
 }

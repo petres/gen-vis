@@ -14,31 +14,28 @@
     "mapping": {
         "x": {
             "column": "year",
-            "type": "numeric",
-            "scale": { "type": "linear", "orientation": "horizontal", "domainRel": [0, 0], "inset": [10, 30] },
+            "scale": { "domainRel": [0, 0], "inset": [10, 30] },
             "hover": { "format": "d" },
             "axis": false
         },
         "y": {
             "column": "{group}",
-            "type": "numeric",
-            "scale": { "type": "linear", "orientation": "vertical", "include": 100 },
-            "axis": { "position": "left", "ticks": 3, "format": "$.0f", "grid": true },
-            "hover": { "format": "$.0f" }
+            "format": "$.0f",
+            "scale": { "include": 100 },
+            "axis": { "ticks": 3, "grid": true },
+            "hover": {}
         },
         "color": {
             "column": "{group}",
-            "type": "numeric",
+            "domain": [74.5, 89.5, 99.5, 109.5],
             "scale": {
                 "type": "threshold",
-                "domain": [74.5, 89.5, 99.5, 109.5],
                 "closed": "right",
                 "range": ["#EA4B55", "#F59036", "#F9EB00", "#AFD24B", "#3CAF55"]
             }
         },
         "type": {
             "column": "type",
-            "type": "categorical",
             "categories": {
                 "total": { "name": "Total", "dash": "none", "fill": "white", "r": 5 },
                 "input": { "name": "Input", "dash": "2 2", "fill": "#F5F6FA", "r": 4 },

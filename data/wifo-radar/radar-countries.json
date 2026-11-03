@@ -27,7 +27,6 @@
     "mapping": {
         "country": {
             "column": "countryName",
-            "type": "categorical",
             "hover": {},
             "legend": {
                 "position": {
@@ -173,30 +172,17 @@
         },
         {
             "id": "lines",
-            "type": "polar:line",
+            "type": "line",
             "by": "country",
             "curve": "linearClosed",
-            "props": {
-                "fill": "none",
-                "stroke": "@color",
-                "stroke-width": 2.5,
-                "d": {
-                    "angle": "@x:scaled",
-                    "radius": "@y:scaled"
-                }
-            },
+            "props": { "stroke": "@color", "stroke-width": 2.5 },
             "highlight": { "stroke-width": 4 }
         },
         {
             "id": "points",
-            "type": "polar:circle",
+            "type": "point",
             "by": "country",
-            "props": {
-                "fill": "@color",
-                "r": 5,
-                "angle": "@x:scaled",
-                "radius": "@y:scaled"
-            },
+            "props": { "fill": "@color", "r": 5 },
             "highlight": { "r": 6 }
         }
     ]

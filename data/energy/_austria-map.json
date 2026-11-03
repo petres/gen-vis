@@ -35,11 +35,10 @@
             "column": "district",
             "type": "categorical"
         },
-        "indicator": { "column": "indicator", "type": "categorical" },
+        "indicator": "indicator",
         "year": { "column": "year", "type": "categorical" },
         "value": {
             "column": "value",
-            "type": "numeric",
             "legend": { "missing": { "name": "keine Daten", "color": "#DADADA" } }
         }
     },

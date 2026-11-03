@@ -13,43 +13,15 @@
     },
     "mapping": {
         "x": {
-            "scale": {
-                "type": "utc",
-                "orientation": "angular",
-                "domain": [
-                    "2020-01-01",
-                    "2021-01-01"
-                ]
-            },
-            "axis": {
-                "position": "angular",
-                "ticks": 12,
-                "grid": true
-            }
+            "domain": ["2020-01-01", "2021-01-01"],
+            "scale": { "type": "utc" },
+            "axis": { "ticks": 12, "grid": true }
         },
-        "y": {
-            "scale": {
-                "orientation": "radial"
-            },
-            "axis": {
-                "position": "radial",
-                "angle": 15,
-                "grid": true,
-                "ticks": 5
-            }
-        }
+        "y": { "axis": { "angle": 15, "grid": true, "ticks": 5 } }
     },
     "annotations": [
         { "type": "band", "x": ["2020-06-01", "2020-09-01"], "label": "Sommer", "props": { "fill": "#FFF3D6" } },
         { "type": "line", "y": 0, "label": "0 °C", "props": { "stroke": "#4A96D4", "stroke-dasharray": "3 3" } }
     ],
-    "plot": {
-        "type": "polar:line",
-        "props": {
-            "d": {
-                "angle": "@x:scaled",
-                "radius": "@y:scaled"
-            }
-        }
-    }
+    "plot": { "type": "line" }
 }

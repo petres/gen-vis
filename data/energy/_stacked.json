@@ -23,18 +23,16 @@
                     }]
                 }
             },
-            "hover": {
-            }
+            "hover": {}
         }
     },
     "plot": [
         {
-            "type": "cartesian:bar",
+            "type": "bar",
             "by": "type",
             "props": {
                 "fill": "@color",
                 "opacity": 0.9,
-                "x": "@x:scaled",
                 "y0": "@y:start:scaled",
                 "y1": "@y:end:scaled",
                 "width": { "*": ["@innerWidth", 0.008] }

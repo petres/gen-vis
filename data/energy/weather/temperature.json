@@ -9,10 +9,8 @@
     "mapping": {
         "y": {
             "column": "value",
-            "scale": {
-                "domain": [null, null],
-                "domainRel": [-0.1, 0.1]
-            }
+            "domain": [null, null],
+            "scale": { "domainRel": [-0.1, 0.1] }
         },
         "year": {
             "legend": {

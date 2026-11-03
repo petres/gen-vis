@@ -33,15 +33,14 @@
         ]
     }],
     "mapping": {
-        "country": { "column": "country", "type": "categorical" },
-        "europe": { "column": "europe", "type": "categorical" },
+        "country": "country",
+        "europe": "europe",
         "value": {
             "name": "Relative to the comparison group",
             "column": "{group}",
-            "type": "numeric",
+            "domain": [74.5, 89.5, 99.5, 109.5],
             "scale": {
                 "type": "threshold",
-                "domain": [74.5, 89.5, 99.5, 109.5],
                 "closed": "right",
                 "range": ["#EA4B55", "#F59036", "#F9EB00", "#AFD24B", "#3CAF55"]
             },

@@ -18,7 +18,6 @@
     "mapping": {
         "country": {
             "column": "country",
-            "type": "categorical",
             "categories": {
                 "AL": { "name": "Albanien" },
                 "AD": { "name": "Andorra" },

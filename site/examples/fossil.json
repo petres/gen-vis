@@ -26,7 +26,7 @@
                     "id": "share", "name": "Share", "value": ".share",
                     "patch": {
                         "options": { "subtitle": "Monthly, the shares of the products in the {what}" },
-                        "mapping": { "y": { "scale": { "domain": [0, 1] }, "axis": { "format": ".0%" }, "hover": { "format": ".1%" } } }
+                        "mapping": { "y": { "domain": [0, 1], "axis": { "format": ".0%" }, "hover": { "format": ".1%" } } }
                     }
                 }
             ]
@@ -35,22 +35,21 @@
     "mapping": {
         "x": {
             "column": "date",
-            "type": "date",
-            "scale": { "type": "utc", "orientation": "horizontal" },
-            "axis": { "position": "bottom", "ticks": 8, "format": "%Y" },
+            "scale": { "type": "utc" },
+            "axis": { "ticks": 8, "format": "%Y" },
             "hover": { "format": "%B %Y" }
         },
         "y": {
             "column": "{unit}{share}",
             "type": "numeric",
+            "domain": [0, null],
+            "nice": true,
             "stacked": true,
-            "scale": { "type": "linear", "orientation": "vertical", "domain": [0, null], "nice": true },
-            "axis": { "position": "left", "ticks": 5, "grid": true, "format": ",.0f" },
+            "axis": { "ticks": 5, "grid": true, "format": ",.0f" },
             "hover": { "format": ",.2f" }
         },
         "product": {
             "column": "product",
-            "type": "categorical",
             "legend": {
                 "symbol": {
                     "size": 12,
@@ -66,10 +65,9 @@
         }
     },
     "plot": {
-        "type": "cartesian:bar",
+        "type": "bar",
         "by": "product",
         "props": {
-            "x": "@x:scaled",
             "y0": "@y:start:scaled",
             "y1": "@y:end:scaled",
             "width": { "*": ["@innerWidth", 0.0075] },

@@ -3,6 +3,7 @@ import { loadColors } from '@/utils/d3';
 import { validateDef, curveNames } from '@/utils/validate';
 import { migrate } from '@/utils/migrate';
 import { prepareDef } from '@/utils/def';
+import { normalize } from '@/utils/normalize';
 import { plotTypes, registerPlotType } from '@/plots';
 import { coords, registerCoord } from '@/coords';
 import { resolveParents } from '@/store';
@@ -71,12 +72,13 @@ describe('the example definitions', () => {
         expect(Object.keys(examples).length).toBeGreaterThan(10);
     });
 
-    // merged with their parents, as by a check before a deploy
+    // merged with their parents, as by a check before a deploy, prepared in
+    // their internal form, as by the load
     test.each(Object.entries(examples))('%s is valid', async (file, org) => {
         const url = new URL(file, import.meta.url).href;
         const def = await resolveParents(JSON.parse(JSON.stringify(org)), url, u => readFileSync(new URL(u), 'utf8'));
         expect(validateDef(def)).toEqual([]);
-        expect(() => prepareDef(JSON.parse(JSON.stringify(def)))).not.toThrow();
+        expect(() => prepareDef(normalize(def, { plotTypes }))).not.toThrow();
     });
 });
 

@@ -10,21 +10,20 @@
     "mapping": {
         "x": {
             "column": "Jahr",
-            "type": "numeric",
-            "scale": { "type": "linear", "orientation": "horizontal", "domainRel": [0, 0], "inset": [6, 6] },
-            "axis": { "position": "bottom", "values": [1971, 1981, 1991, 2001], "format": "d" },
-            "hover": { "format": "d" }
+            "format": "d",
+            "scale": { "domainRel": [0, 0], "inset": [6, 6] },
+            "axis": { "values": [1971, 1981, 1991, 2001] },
+            "hover": {}
         },
         "y": {
             "column": "Anteil",
-            "type": "numeric",
-            "scale": { "type": "linear", "orientation": "vertical", "domain": [0.4, 1], "domainRel": [0, 0] },
-            "axis": { "position": "left", "ticks": 4, "grid": true, "format": ".0%" },
+            "domain": [0.4, 1],
+            "scale": { "domainRel": [0, 0] },
+            "axis": { "ticks": 4, "grid": true, "format": ".0%" },
             "hover": { "format": ".1%" }
         },
         "type": {
             "column": "Wohnungssegment",
-            "type": "categorical",
             "scheme": "Tableau10",
             "common": { "width": 2 },
             "categories": {
@@ -34,37 +33,29 @@
             },
             "hover": {}
         },
-        "einheit": { "column": "Einheit", "type": "categorical", "categories": { "Österreich": {}, "Wien": {} } }
+        "einheit": { "column": "Einheit", "categories": { "Österreich": {}, "Wien": {} } }
     },
     "facets": { "dim": "einheit", "scales": ["y"], "cols": { "steps": ["@totalWidth", { "0": 1, "700": 2 }] } },
     "plot": [
         {
             "id": "lines",
-            "type": "cartesian:line",
+            "type": "line",
             "by": "type",
-            "props": {
-                "d": { "x": "@x:scaled", "y": "@y:scaled" },
-                "stroke": "@color",
-                "stroke-width": "@width",
-                "fill": "none"
-            },
+            "props": { "stroke": "@color", "stroke-width": "@width" },
             "highlight": { "stroke-width": 4 },
             "others": { "stroke-opacity": 0.25 }
         },
         { "id": "points", "type": "point", "by": "type", "props": { "fill": "@color" }, "highlight": { "r": 4.5 }, "others": { "opacity": 0.25 } },
         {
             "id": "labels",
-            "type": "svg:text",
+            "type": "text",
             "by": "type",
             "select": "last",
             "dodge": 12,
             "props": {
-                "x": "@x:scaled",
                 "dx": 8,
-                "y": "@y:scaled",
                 "dominant-baseline": "central",
                 "font-size": 11,
-                "fill": "@color",
                 "text": "@name"
             },
             "highlight": { "font-weight": "bold" },

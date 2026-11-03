@@ -15,27 +15,27 @@
     ],
     "mapping": {
         "x": {
-            "column": "date", "type": "numeric",
-            "scale": { "orientation": "horizontal", "domainRel": [0, 0] },
-            "axis": { "position": "top", "ticks": 5, "format": "d", "grid": true },
-            "hover": { "format": "d" }
+            "column": "date", "format": "d",
+            "scale": { "domainRel": [0, 0] },
+            "axis": { "position": "top", "ticks": 5, "grid": true },
+            "hover": {}
         },
         "y": {
-            "column": "v", "type": "numeric",
-            "scale": { "orientation": "vertical", "domainRel": [0, 0] },
-            "axis": { "position": "left", "ticks": 3, "format": "$.1f", "grid": true },
-            "hover": { "format": "$.1f" }
+            "column": "v", "format": "$.1f",
+            "scale": { "domainRel": [0, 0] },
+            "axis": { "ticks": 3, "grid": true },
+            "hover": {}
         },
-        "avg": { "column": "avg", "type": "numeric", "scale": { "of": "y" }, "hover": { "format": "$.1f" } }
+        "avg": { "column": "avg", "scale": { "of": "y" }, "hover": { "format": "$.1f" } }
     },
     "plot": [
         {
-            "id": "line", "type": "cartesian:line",
-            "props": { "fill": "none", "stroke": "#444", "stroke-width": 1.5, "d": { "x": "@x:scaled", "y": "@y:scaled" } }
+            "id": "line", "type": "line",
+            "props": { "stroke": "#444", "stroke-width": 1.5 }
         },
         {
-            "id": "avg", "type": "cartesian:line",
-            "props": { "fill": "none", "stroke": "#9cb806", "stroke-width": 1.5, "stroke-opacity": 0.5, "d": { "x": "@x:scaled", "y": "@avg:scaled" } }
+            "id": "avg", "type": "line",
+            "props": { "stroke": "#9cb806", "stroke-width": 1.5, "stroke-opacity": 0.5, "d": { "y": "@avg:scaled" } }
         }
     ],
     "annotations": [

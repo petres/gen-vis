@@ -16,8 +16,7 @@
     "mapping": {
         "x": {
             "column": "{group}",
-            "type": "numeric",
-            "scale": { "type": "linear", "orientation": "horizontal", "domain": [0, null] },
+            "domain": [0, null],
             "axis": {
                 "position": "top", "values": [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200], "format": "d",
                 "labels": { "props": { "font-size": 13, "font-weight": "bold" } }
@@ -27,9 +26,8 @@
         "y": {
             "column": "label",
             "type": "categorical",
-            "scale": { "type": "band", "orientation": "vertical", "padding": 0.45, "step": 23, "range": [0, "@height"], "groups": { "by": "group", "padding": 1 } },
+            "scale": { "padding": 0.45, "step": 23, "range": [0, "@height"], "groups": { "by": "group", "padding": 1 } },
             "axis": {
-                "position": "left",
                 "padding": 19,
                 "labels": {
                     "categories": ["level"],
@@ -42,20 +40,18 @@
                 }
             }
         },
-        "group": { "column": "group", "type": "categorical" },
+        "group": "group",
         "color": {
             "column": "{group}",
-            "type": "numeric",
+            "domain": [74.5, 89.5, 99.5, 109.5],
             "scale": {
                 "type": "threshold",
-                "domain": [74.5, 89.5, 99.5, 109.5],
                 "closed": "right",
                 "range": ["#EA4B55", "#F59036", "#F9EB00", "#AFD24B", "#3CAF55"]
             }
         },
         "level": {
             "column": "level",
-            "type": "categorical",
             "categories": {
                 "header": { "bar": "#C2C2C2", "barHover": "#9A9A9A", "weight": "bold" },
                 "item": { "bar": "#DCDCDC", "barHover": "#A6A6A6", "weight": "normal" }
@@ -63,7 +59,6 @@
         },
         "io": {
             "column": "io",
-            "type": "categorical",
             "categories": {
                 "input": { "name": "Input", "fill": "white" },
                 "output": { "name": "Output", "fill": "black" },
@@ -75,7 +70,7 @@
     "plot": [
         {
             "id": "bars",
-            "type": "cartesian:bar",
+            "type": "bar",
             "by": "level",
             "props": { "x1": "@x:scaled", "y": "@y:scaled", "fill": "@bar" },
             "highlight": { "mode": "row", "fill": "@barHover" }

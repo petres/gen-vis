@@ -45,18 +45,10 @@
         }
     },
     "plot": {
-        "type": "cartesian:line",
+        "type": "line",
         "curve": "monotoneX",
         "by": ["road", "vehicle"],
-        "props": {
-            "stroke-width": "@stroke-width",
-            "fill": "none",
-            "stroke": "@color",
-            "d": {
-                "x": "@x:scaled",
-                "y": "@y:scaled"
-            }
-        },
+        "props": { "stroke-width": "@stroke-width", "stroke": "@color" },
         "highlight": { "stroke-width": "@highlight-stroke-width" }
     }
 }

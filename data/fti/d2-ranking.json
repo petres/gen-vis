@@ -20,23 +20,22 @@
         ]
     }],
     "mapping": {
-        "country": { "column": "country", "type": "categorical" },
-        "name": { "column": "name", "type": "categorical" },
+        "country": "country",
+        "name": "name",
         "rank": {
-            "column": "rank", "type": "categorical",
-            "scale": { "type": "point", "orientation": "vertical", "domain": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "padding": 0.5, "range": [0, "@height"] }
+            "column": "rank", "type": "categorical", "domain": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            "scale": { "orientation": "vertical", "padding": 0.5, "range": [0, "@height"] }
         },
         "value": {
-            "column": "{group}", "type": "numeric",
-            "scale": { "orientation": "horizontal", "domain": [0, 1] },
+            "column": "{group}", "domain": [0, 1],
+            "scale": { "orientation": "horizontal" },
             "hover": { "format": ".0f" }
         },
         "color": {
             "column": "{group}",
-            "type": "numeric",
+            "domain": [74.5, 89.5, 99.5, 109.5],
             "scale": {
                 "type": "threshold",
-                "domain": [74.5, 89.5, 99.5, 109.5],
                 "closed": "right",
                 "range": ["#EA4B55", "#F59036", "#F9EB00", "#AFD24B", "#3CAF55"]
             }
