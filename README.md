@@ -678,7 +678,7 @@ list), the mappings and the later transforms can use the new column:
     { "type": "index", "column": "value", "as": "index", "by": "type", "base": { "year": "{base}" } }
 ],
 "formElements": [{ "id": "base", "name": "Basisjahr", "ref": "base", "type": "slider", "values": { "column": "year" } }],
-"mapping": { "y": { "column": "index", "type": "numeric", ... } }
+"mapping": { "y": { "column": "index", ... } }
 ```
 
 - `year`: the year of a date, e.g. `2024` of `2024-06-01`.
@@ -816,14 +816,17 @@ column, `"x": "Jahr"` is `"x": {"column": "Jahr"}`.
 ```json
 "y": {
     "column": "value",
-    "type": "numeric",
     "format": ".1f",
     "domain": [0, null],
-    "scale": { "type": "linear", "orientation": "vertical" },
-    "axis": { "position": "left", "ticks": 8, "grid": true, "title": { "name": "€/l", "offset": 50 } },
+    "axis": { "ticks": 8, "grid": true, "title": { "name": "€/l", "offset": 50 } },
     "hover": { "format": ".2f" }
 }
 ```
+
+is the mapping `y` of the numbers of the column `value` with all its parts
+which follow from the rest: `"type": "numeric"` (of the values),
+`"scale": {"type": "linear", "orientation": "vertical", "domain": [0, null]}`
+and `"axis": {"position": "left", "format": ".1f", ...}`.
 
 The mappings of the positions of the coordinate system have a scale of the
 orientation of their name and an axis: of cartesian plots `x` (horizontal,
@@ -905,7 +908,7 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   the row, e.g. a line along a group:
 
   ```json
-  "y": { "column": "label", "type": "categorical", "scale": { "type": "band", "orientation": "vertical", "groups": { "by": "group", "padding": 0.8 } } }
+  "y": { "column": "label", "type": "categorical", "scale": { "groups": { "by": "group", "padding": 0.8 } } }
   ```
 
   `nice` rounds the ends taken from the data of a numeric mapping, e.g. 0.951
@@ -1076,7 +1079,7 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   consumption, their values are in the domain and in the hover:
 
   ```json
-  "y": { "column": "value", "type": "numeric", "stacked": { "type": { "not": "load" } }, ... },
+  "y": { "column": "value", "stacked": { "type": { "not": "load" } }, ... },
   "plot": [
       { "type": "area", "by": "type", "filter": { "type": { "not": "load" } }, "props": { "d": { "y0": "@y:start:scaled", "y1": "@y:end:scaled" } } },
       { "type": "line", "filter": { "type": "load" } }
@@ -1237,9 +1240,9 @@ or `radius`) from the center outwards, the margins are the space of the labels:
 "options": { "coord": "polar", "height": 400, "margins": {"top": 30, "right": 60, "bottom": 30, "left": 60} },
 "transform": [{ "type": "year", "column": "date", "as": "year" }, { "type": "align", "column": "date" }],
 "mapping": {
-    "x": { "column": "date", "type": "date", "format": "%b", "scale": { "type": "utc", "domain": ["2020-01-01", "2021-01-01"] }, "axis": { "ticks": 12, "grid": true } },
-    "y": { "column": "value", "type": "numeric", "domain": [0, null], "axis": { "ticks": 4, "grid": true } },
-    "year": { "column": "year", "type": "categorical", "fromData": true, "scheme": "Tableau10", "legend": {} }
+    "x": { "column": "date", "format": "%b", "domain": ["2020-01-01", "2021-01-01"], "scale": { "type": "utc" }, "axis": { "ticks": 12, "grid": true } },
+    "y": { "column": "value", "domain": [0, null], "axis": { "ticks": 4, "grid": true } },
+    "year": { "column": "year", "fromData": true, "scheme": "Tableau10", "legend": {} }
 },
 "plot": { "type": "line", "by": "year" }
 ```
@@ -1313,7 +1316,7 @@ its values are the ones of the hover, the slices are `polar:arc` from
 ```json
 "options": { "coord": "polar", "height": 360 },
 "mapping": {
-    "value": { "column": "value", "type": "numeric", "stacked": true, "scale": { "orientation": "angular" }, "hover": {} },
+    "value": { "column": "value", "stacked": true, "scale": { "orientation": "angular" }, "hover": {} },
     "type": { "column": "type", "fromData": true, "scheme": "Tableau10", "legend": {}, "hover": {} }
 },
 "plot": { "type": "arc", "by": "type", "props": { "stroke": "white", "startAngle": "@value:start:scaled", "endAngle": "@value:end:scaled", "innerRadius": 60 }, "highlight": { "opacity": 0.8 } }
@@ -1347,9 +1350,9 @@ mapping (`join`) whose values are the keys of the features:
 "filter": { "type": "@type" },
 "mapping": {
     "country": "country",
-    "type": { "column": "variable", "type": "categorical" },
+    "type": "variable",
     "price": {
-        "name": "€/Liter", "column": "value", "type": "numeric",
+        "name": "€/Liter", "column": "value",
         "scale": { "type": "sequential", "interpolator": "YlOrRd" },
         "legend": { "format": ",.1f" }, "hover": { "format": "$,.3f" }
     }
@@ -1656,15 +1659,24 @@ numbers of a `date` mapping, the types of the mappings without one are the
 ones of the values. A definition of 3.x gets the warning first, its other
 warnings are the ones of the migrated definition.
 
-`migrate(def)` is the definition of 4.0 of a merged definition of 3.x (a
-definition of 4.0 stays as it is, except mappings without a type, which are
-categorical in 3.x), `migrateParts(parts)` the ones of a definition and its
-parents, in the order of their merge (the parents first), so the files of
-definitions with parents are migrated each, e.g. a page of charts of shared
-parents: the parts the merged mappings need, e.g. `"type": "categorical"`,
-are in their first part. `normalize(def)` is the internal form of a
-definition of 4.0, the one the renderer reads (the form of 3.x), see
-`spec/normalize.md`:
+`migrate(def)` is the definition of 4.0 of a merged definition of 3.x in
+its shorter forms: plot types without the prefix of the coordinate system
+and only the props which differ from their defaults, `by`, `highlight` and
+`others`, mappings of a column as a text, without the types, scales,
+orientations and positions of axes which follow from the rest, `domain` and
+`format` at the mapping; each one is taken if the definition draws the same
+(its internal form is the same, the order of the attributes aside). A
+definition of 3.x is one with constructs of 3.x, as the load reads it
+(`{ "legacy": true }` migrates one without them), a definition of 4.0 is
+only written shorter. `migrateParts(parts)` writes the parts of a
+definition and its parents the same way, in the order of their merge (the
+parents first), so the files of definitions with parents are migrated each,
+e.g. a page of charts of shared parents: the parts the merged mappings need,
+e.g. `"type": "categorical"`, are in their first part, a shorter form of a
+part is taken if the merge draws the same. Types which the values infer,
+e.g. `"type": "numeric"` of a column of numbers, stay, migrate does not see
+the data. `normalize(def)` is the internal form of a definition of 4.0, the
+one the renderer reads (the form of 3.x), see `spec/normalize.md`:
 
 ```js
 import { migrateParts } from '@preschen/gen-vis/check';

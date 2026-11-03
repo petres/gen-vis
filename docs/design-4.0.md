@@ -36,9 +36,12 @@ renderer (JS only)
   (`scaleTypeOf`).
 - `migrate(def3)`, `migrateParts(parts)` and `normalize(def)` are exported
   from `@preschen/gen-vis/check`. `normalize(migrate(d))` equals the internal
-  form of `d` for all definitions of `data/` (tests/migrate.test.js, against
-  the 3.1 definitions kept in `tests/legacy/`), and the snapshots, rendered from
-  the 4.0 definitions in `data/`, are unchanged.
+  form of `d` for all definitions of `data/` and `site/`, the order of the
+  props of plots and of the parts of mappings and plots aside
+  (tests/migrate.test.js, against the 3.1 definitions kept in
+  `tests/legacy/`), and the snapshots, rendered from the 4.0 definitions in
+  `data/`, are unchanged; they compare the elements with their attributes
+  sorted by name, the order of attributes does not change a drawing.
 
 ## 2. Mappings: shorthand and inference
 
@@ -142,12 +145,31 @@ merge of the selected patches, exported for the fixtures.
 - **Defaults only for short type names.** `cartesian:line` keeps meaning
   "only the props written". Otherwise every 3.x definition (and every inline
   test definition) would get extra attributes or need `null`s to cancel them.
-  Migrate converts a prefixed type to the short one only when the props
-  contain all defaults and the merged props come out identical *and in the
-  same order* (attribute order shows up in the snapshots).
+  Migrate converts a prefixed type to the short one when the props contain
+  all defaults, the props are the ones which differ then; the merged props
+  are the same, their order (the one of the attributes) may differ.
 - **`highlight-`/`others-` prefixes stay valid** (not a 3.x marker). Migrate
-  only turns them into objects when they come last in the props, because
-  normalize appends them and the attribute order would change otherwise.
+  turns them into objects, normalize appends them to the props.
+- **Migrate writes the shortest forms it can check** (`shorten`), not only
+  the 4.0 constructs: short types, `highlight`/`others` objects, a mapping
+  without the type of its scale, the type, the orientation and the position
+  of the axis which normalize infers, `domain`, `nice` and `format` at the
+  mapping (formats of the axis, hover and legend which are the same), a
+  text of a column. Each form is taken if normalize of the merged definition
+  is the same (props and the parts of mappings and plots in any order, the
+  formats as `formatOf` reads them), for `migrateParts` and the examples
+  checked against every merge the part is one of. Types the values infer
+  stay, migrate has no rows; the examples of `data/` and `site/` were
+  written without them where the load infers the same type and every chart
+  of the file draws the same, also with every entry of its form elements
+  (the migrate test takes the types of mappings without one of the 3.x
+  form, the snapshots draw them).
+- **A definition of 3.x is one with constructs of 3.x** (`isLegacy`, as the
+  load reads it) or one given as such (`legacy: true`), only its mappings
+  are read as the ones of 3.x (a position without a scale has none, a
+  mapping without a type is categorical); a definition of 4.0 is only
+  written shorter, so migrate is idempotent although a shortened mapping has
+  no part of 4.0, e.g. `{"column": "Jahr", "type": "numeric"}`.
 - **`mode` inside `highlight`**: the 3.x `highlight: "row"` and highlight
   props needed one place; a string still means the mode.
 - **Type inference is two-staged** (structural in normalize, data in
@@ -164,7 +186,8 @@ merge of the selected patches, exported for the fixtures.
   one by one (a mixin's mapping has no type, a child's partial `steps` object
   overrides a parent's prop), so the parts are migrated in the context of
   their merge and the parts the merged mappings need go into the first part
-  that defines them. `data/` and `site/` were migrated this way.
+  that defines them. `data/` and `site/` were migrated this way, then
+  written shorter (see above).
 - **Format** stays on the mapping in the internal form (formatOf falls back
   to it) instead of being copied into axis/hover, so it also works for
   `@x:formatted` without a hover and inside patches.
