@@ -7,7 +7,7 @@ import { applyPatches, mergeAll, prepareDef, variants } from "@/utils/def";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
 import { loadLocale } from "@/utils/locale";
 import { loadCoord } from "@/coords";
-import { loadColors } from "@/utils/d3";
+import { loadColors, ownScheme } from "@/utils/d3";
 import { lazy } from "@/utils/lazy";
 import { isObject } from "@/utils/values";
 import { normalize } from "@/utils/normalize";
@@ -171,7 +171,8 @@ const geoOf = (module, json, def = {}) => {
 /**
  * The parts of the package a definition needs, loaded with its data, also
  * the ones of the patches of the entries of its form elements (see
- * variants): the colors of d3 (`colors`, of schemes and interpolators), the
+ * variants): the colors of d3 (`colors`, of schemes and interpolators, not
+ * of the schemes registered by the page), the
  * coordinate systems (`coords`, the one of the definition first, undefined
  * for the default), the parts of maps (`geo`), the transforms, the legend
  * of a scale of colors (`colorLegend`, a mapping with a legend without
@@ -181,7 +182,7 @@ const requirements = defOrg => {
     const all = variants(defOrg);
     const mappings = all.flatMap(d => Object.values(d.mapping ?? {})).filter(isObject);
     return {
-        colors: mappings.some(m => Boolean(m.scale?.scheme || m.scale?.interpolator || m.props?.scheme)),
+        colors: mappings.some(m => Boolean(m.scale?.interpolator || [m.scale?.scheme, m.props?.scheme].some(s => s && !ownScheme(s)))),
         coords: [...new Set(all.filter((d, i) => i == 0 || d.options?.coord !== undefined).map(d => d.options?.coord ?? undefined))],
         geo: all.some(d => Boolean(d.geo?.data)),
         transforms: all.some(d => Boolean(d.transform)),

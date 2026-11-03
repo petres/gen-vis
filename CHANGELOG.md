@@ -140,6 +140,11 @@ The decompressors of parquet are loaded one by one, only the ones of the
 file, e.g. zstd of polars (3 kB instead of 75 kB of all of
 hyparquet-compressors).
 
+`registerScheme(name, colors)`: a scheme of colors of its own for `scheme`
+of the categories and the scales, e.g. `"scheme": "wifo"` of the colors of a
+house style, known to `validateDef` (also of `@preschen/gen-vis/check`),
+without the colors of d3.
+
 ## 3.1.0
 
 The standalone script in more sizes: `dist-lib/gen-vis.core.js` (less than

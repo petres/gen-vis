@@ -1,9 +1,10 @@
-export { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, registerCoord, perRow, perGroup };
+export { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, registerCoord, registerScheme, perRow, perGroup };
 
 import { createGenVis } from '@/comp/app'
 import { registerPlotType } from '@/plots'
 import { perRow, perGroup } from '@/plots/elements'
 import { registerCoord } from '@/coords'
+import { registerScheme } from '@/utils/d3'
 
 // the props of the buttons, the debug output and lazy, "false" is false, a
 // string other than "true" and "" is the name of the file, e.g. of

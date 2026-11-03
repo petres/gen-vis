@@ -4,7 +4,7 @@
 // the readme. Its functions are the globals at once, they return promises,
 // e.g. of the components, and wait for the module; `GenVis.ready` is the
 // module itself, e.g. for registerPlotType with perRow.
-const names = ['mountGenVisElement', 'mountGenVisByClass', 'unmountGenVisElement', 'registerPlotType', 'registerCoord'];
+const names = ['mountGenVisElement', 'mountGenVisByClass', 'unmountGenVisElement', 'registerPlotType', 'registerCoord', 'registerScheme'];
 
 // the url of this script, of the page if it is not known, e.g. of a script
 // added by another one after the page was loaded

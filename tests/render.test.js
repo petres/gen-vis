@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi, beforeEach, onTestFinished } from 'vitest';
-import { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, perRow } from '@/index.js';
+import { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, registerScheme, perRow } from '@/index.js';
 import { plotTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import * as d3 from 'd3-scale-chromatic';
@@ -286,6 +286,19 @@ describe('rendering', () => {
         expect([...el.querySelectorAll('.vis-legend .vis-legend-entries > div')].map(e => e.getAttribute('data-key'))).toEqual(['Tirol', 'Salzburg', 'Wien']);
         expect([...el.querySelectorAll('g.vis-plot.plot-0 path')].map(p => [p.getAttribute('data-group-c'), p.getAttribute('stroke')]))
             .toEqual([['Wien', '#e15759'], ['Tirol', '#4e79a7'], ['Salzburg', '#f28e2c']]);
+        expect(errors).toEqual([]);
+    });
+
+    test('categories colored by a registered scheme, without the colors of d3', async () => {
+        registerScheme('test-house', ['#111111', '#222222']);
+        const def = lineDef();
+        def.mapping.c = { ...def.mapping.c, fromData: true, scheme: 'test-house', categories: { Tirol: {} } };
+        const data = lineData + '\n2020,3,30,Salzburg\n2021,3,30,Salzburg';
+        const el = await mount({ def, data });
+        // the colors in the order of the categories, again from the first one
+        expect([...el.querySelectorAll('g.vis-plot.plot-0 path')].map(p => [p.getAttribute('data-group-c'), p.getAttribute('stroke')]))
+            .toEqual([['Wien', '#111111'], ['Tirol', '#111111'], ['Salzburg', '#222222']]);
+        expect(() => registerScheme('test-empty', [])).toThrow('an array of CSS colors');
         expect(errors).toEqual([]);
     });
 

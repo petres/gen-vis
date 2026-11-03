@@ -1767,10 +1767,27 @@ the pointer events to the element `parent` and returns it,
 `line` by its attributes (`x1`, `y1`, `x2`, `y2`, removed without a line),
 `raise(ctx)` moves elements of `ctx.inner`. `load()` of a
 coordinate system loads its parts with its first chart, e.g. the ones of maps
-(`src/coords/geo.js`), again with the next one if it failed. Both are known to
-`validateDef`, `@preschen/gen-vis/check` exports `registerPlotType` and
-`registerCoord` as well, the standalone script has them as
-`GenVis.registerPlotType`, `GenVis.registerCoord`, `GenVis.perRow` and
+(`src/coords/geo.js`), again with the next one if it failed.
+
+A scheme of colors (`registerScheme(name, colors)`, `colors` an array of
+CSS colors) is one of `scheme` of the categories and of the scales as the
+ones of d3, e.g. the colors of a house style, which a stylesheet can not
+give a definition; the categories take its colors in their order (again
+from the first one if there are more), a scale of `classes` its first ones
+(all of them if it has fewer), it needs no colors of d3 and takes precedence
+over a scheme of d3 of the same name:
+
+```js
+import { registerScheme } from '@preschen/gen-vis';
+
+registerScheme('wifo', ['#005CA9', '#E6A000', '#7AB51D', '#A6A6A6']);
+// "land": { "column": "Bundesland", "fromData": true, "scheme": "wifo", "legend": {} }
+```
+
+All three are known to `validateDef`, `@preschen/gen-vis/check` exports
+`registerPlotType`, `registerCoord` and `registerScheme` as well, the
+standalone script has them as `GenVis.registerPlotType`,
+`GenVis.registerCoord`, `GenVis.registerScheme`, `GenVis.perRow` and
 `GenVis.perGroup`. The schema only knows the built-in ones.
 
 ## Development

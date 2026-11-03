@@ -9,3 +9,5 @@ export declare function validateDef(def: Definition, rows?: Record<string, unkno
 export declare function normalize(def: Definition, options?: { plotTypes?: Record<string, PlotType> }): Record<string, unknown>;
 export declare function registerPlotType(name: string, type: PlotType): void;
 export declare function registerCoord(name: string, coord: Record<string, unknown>): void;
+/** A scheme of its own, e.g. the colors of a house style, for `scheme` of the categories and the scales as the ones of d3, `colors` are CSS colors. */
+export declare function registerScheme(name: string, colors: string[]): void;

@@ -185,6 +185,8 @@ export declare function mountGenVisByClass(className: string): GenVisInstance[];
 export declare function unmountGenVisElement(element: Element): boolean;
 export declare function registerPlotType(name: string, type: PlotType): void;
 export declare function registerCoord(name: string, coord: Record<string, unknown>): void;
+/** A scheme of its own, e.g. the colors of a house style, for `scheme` of the categories and the scales as the ones of d3, `colors` are CSS colors. */
+export declare function registerScheme(name: string, colors: string[]): void;
 /** The marks of an element of `element` per row, the elements of the draw before are updated. */
 export declare function perRow(groups: PlotGroup[], element: string,
     translate?: (values: Record<string, unknown>, row: Row, group: PlotGroup) => Record<string, unknown>,

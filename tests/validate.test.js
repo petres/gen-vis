@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from 'vitest';
-import { loadColors } from '@/utils/d3';
+import { loadColors, registerScheme } from '@/utils/d3';
 import { validateDef, curveNames } from '@/utils/validate';
 import { prepareDef } from '@/utils/def';
 import { normalize } from '@/utils/normalize';
@@ -147,6 +147,18 @@ describe('validateDef', () => {
         def.plot = { type: 'cartesian:bar', props: {} };
         expect(validateDef(def)).toEqual([`plot[0].type: not available in the coordinate system 'test:coord'`]);
         delete coords['test:coord'];
+    });
+
+    test('registered schemes', () => {
+        const def = base();
+        def.mapping.c.scheme = 'testHouse';
+        def.mapping.y.scale = { type: 'quantize', scheme: 'TestHouse' };
+        expect(validateDef(def)).toEqual([
+            "mapping.y.scale.scheme: unknown scheme 'TestHouse', e.g. 'Blues'",
+            "mapping.c.scheme: unknown scheme 'testHouse', e.g. 'Tableau10'",
+        ]);
+        registerScheme('testHouse', ['#000', '#FFF']);
+        expect(validateDef(def)).toEqual([]);
     });
 
     test('registered plot types', () => {
