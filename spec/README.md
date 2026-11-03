@@ -39,8 +39,10 @@ the rules of the values:
   the end of the day) or the day first (`01.06.2024`, also with a time),
   these are the wall time of the time zone of the scale of the column, local
   or UTC (`utc`), so the same day everywhere; dates which do not exist are
-  missing, e.g. `2022-02-30`. Other strings are read as JavaScript's
-  `Date.parse` does, e.g. `2024-06-01T13:00:00Z`.
+  missing, e.g. `2022-02-30`. A date and a time with a time zone, `Z` or
+  an offset (`+02:00`, `+0200` or `+02`), e.g. `2024-06-01T13:00:00Z` or
+  `2024-06-01 13:00+02:00`, is the same time of every scale. Other strings
+  are no dates, e.g. `Phase 1` or `June 1, 2024`.
 - Values are **the same** if their strings are the same (`2024` and
   `"2024"`), not `0` and `""`, missing ones are `null`.
 - Values are **compared** as numbers if all of them (the ones which are not

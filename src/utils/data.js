@@ -52,6 +52,9 @@ const missing = v => v === null || v === undefined || (typeof v == 'string' && v
 // the day first of German and other languages, e.g. "01.06.2022 13:00"
 const isoDate = /^(\d{4})(?:-(\d{2})(?:-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:[.,](\d+))?)?)?)?)?$/;
 const dayFirst = /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2})(?:[.,](\d+))?)?)?$/;
+// a date and a time with a time zone of ISO, Z or an offset, e.g.
+// "2024-06-01T13:00:00Z" or "2024-06-01 13:00+02:00", of every scale the same time
+const isoZoned = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:[.,](\d+))?)?\s?(?:([Zz])|([+-])(\d{2})(?::?(\d{2}))?)$/;
 
 // the time of a date and a time of the time zone of a scale, local or UTC,
 // NaN if it does not exist, e.g. "2022-02-30", which Date.parse reads as the
@@ -78,11 +81,22 @@ const wallTime = (utc, y, m = 1, d = 1, h = 0, mi = 0, s = 0, fraction = '') => 
     return valid ? date.getTime() : NaN;
 };
 
+// the time of a date with a time zone, see isoZoned, NaN if it does not exist
+const zonedTime = ([, y, m, d, h, mi, s, fraction, z, sign, oh, om = '00']) => {
+    if (z)
+        return wallTime(true, y, m, d, h, mi, s, fraction);
+    if (+oh > 23 || +om > 59)
+        return NaN;
+    return wallTime(true, y, m, d, h, mi, s, fraction) - (sign == '-' ? -1 : 1)*(oh*60 + +om)*60000;
+};
+
 // dates are strings, timestamps or Date objects. A date without a time zone,
 // e.g. "2024-06-01" or "2024-06-01 13:00", is the one of the time zone of the
 // scale, local or UTC (`utc`), so it is the same day everywhere (Date.parse
 // reads a date without a time as midnight UTC, the day before west of UTC
-// in local time). Others are read by Date.parse, e.g. with a time zone.
+// in local time). A date with a time zone is the one of ISO, e.g.
+// "2024-06-01T13:00:00Z", other strings are no dates, e.g. "Phase 1", which
+// Date.parse of some browsers reads as one.
 const toDate = (v, utc = false) => {
     if (missing(v))
         return null;
@@ -95,8 +109,10 @@ const toDate = (v, utc = false) => {
         const text = String(v).trim();
         const iso = isoDate.exec(text);
         const day = !iso && dayFirst.exec(text);
+        const zoned = !iso && !day && isoZoned.exec(text);
         t = iso ? wallTime(utc, ...iso.slice(1).map(p => p ?? undefined))
-            : (day ? wallTime(utc, day[3], day[2], day[1], ...day.slice(4).map(p => p ?? undefined)) : Date.parse(text));
+            : (day ? wallTime(utc, day[3], day[2], day[1], ...day.slice(4).map(p => p ?? undefined))
+                : (zoned ? zonedTime(zoned.map(p => p ?? undefined)) : NaN));
     }
     return isNaN(t) ? null : t;
 };

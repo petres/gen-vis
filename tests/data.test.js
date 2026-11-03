@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, parseData, prepareData, rowFilter, stack, updateData, usedColumns } from '@/utils/data';
+import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, inferType, parseData, prepareData, rowFilter, stack, toDate, updateData, usedColumns } from '@/utils/data';
 import { prepareDef } from '@/utils/def';
 
 const def = {
@@ -230,6 +230,21 @@ describe('prepareData', () => {
         const mapping = { mapping: { t: { column: 'date', type: 'date', scale: { type: 'utc' } } } };
         expect(prepareData(['01.06.2024', '1.6.2024 13:05', '31.02.2024'].map(date => ({ date })), mapping).map(r => r.t))
             .toEqual([Date.UTC(2024, 5, 1), Date.UTC(2024, 5, 1, 13, 5), null]);
+    });
+
+    test('a date with a time zone is one of ISO, Z or an offset, other texts are no dates', () => {
+        expect(['2024-06-01T13:00:00Z', '2024-06-01 13:00z', '2024-06-01T13:00:00.25+02:00', '2024-06-01T13:00-0130', '2024-06-01T13:00:00 +02', '2024-06-01T24:00Z']
+            .map(v => toDate(v))).toEqual([
+            Date.UTC(2024, 5, 1, 13), Date.UTC(2024, 5, 1, 13), Date.UTC(2024, 5, 1, 11, 0, 0, 250), Date.UTC(2024, 5, 1, 14, 30), Date.UTC(2024, 5, 1, 11), Date.UTC(2024, 5, 2),
+        ]);
+        // of every scale the same time
+        expect(toDate('2024-06-01T13:00:00+02:00', true)).toBe(toDate('2024-06-01T13:00:00+02:00', false));
+        // which do not exist, and texts which Date.parse of V8 reads as dates
+        expect(['2024-02-30T13:00Z', '2024-06-01T13:00+24:00', '2024-06-01T13:00:00+02:60', 'Phase 1', 'AT-1', 'Wien 2', 'Top 10', 'Product 5', 'June 1, 2024', 'Sat, 01 Jun 2024 13:00:00 GMT']
+            .map(v => toDate(v))).toEqual(Array(10).fill(null));
+        expect(inferType(['Phase 1', 'Phase 2', 'Phase 3'])).toBe('categorical');
+        expect(inferType(['AT-1', 'AT-2'])).toBe('categorical');
+        expect(inferType(['2024-06-01T13:00:00Z', '2024-06-01T14:00:00+01:00'])).toBe('date');
     });
 
     test('missing and invalid values are null, not 0, missing categories too, e.g. an empty cell of csv as null of JSON', () => {

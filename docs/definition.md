@@ -376,8 +376,11 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   scale, local of a `time` scale (and the other ones) and UTC of a `utc`
   scale, so it is the same day and time in every time zone (`Date.parse`
   reads a date without a time as midnight UTC, the day before west of UTC in
-  local time, and `01.06.2024` as the 6th of January), the others are read
-  by `Date.parse`, e.g. `2024-06-01T13:00:00Z`.
+  local time, and `01.06.2024` as the 6th of January). A date and a time
+  with a time zone, `Z` or an offset, e.g. `2024-06-01T13:00:00Z` or
+  `2024-06-01 13:00+02:00`, is the same time of every scale, other strings
+  are no dates, e.g. `Phase 1` (which `Date.parse` of some browsers reads as
+  one).
 - `scale`: `type` is a d3 scale (`linear`, `time`, `log`, `point`, `band`,
   ...), continuous scales need a `numeric` or `date` type (positions of dates
   a `time` or `utc` one), `point` and `band` a `categorical` one, `ordinal`

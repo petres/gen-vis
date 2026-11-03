@@ -152,5 +152,47 @@
         2023
       ]
     }
+  },
+  {
+    "name": "an offset of a time zone, texts with numbers are no dates",
+    "timezone": "Europe/Vienna",
+    "utc": [
+      "d"
+    ],
+    "rows": [
+      {
+        "d": "2024-01-01T00:30:00+01:00"
+      },
+      {
+        "d": "2023-12-31 23:30-01:00"
+      },
+      {
+        "d": "Phase 1"
+      },
+      {
+        "d": "AT-1"
+      },
+      {
+        "d": "Top 10"
+      },
+      {
+        "d": "June 1, 2024"
+      }
+    ],
+    "transform": {
+      "type": "year",
+      "column": "d",
+      "as": "year"
+    },
+    "columns": {
+      "year": [
+        2023,
+        2024,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
   }
 ]
