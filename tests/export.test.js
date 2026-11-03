@@ -95,6 +95,23 @@ describe('exportSvg', () => {
         expect(out.querySelector('text').hasAttribute('fill-opacity')).toBe(false);
     });
 
+    test('the opacity of an svg once, lengths of texts in pixels, href also as xlink:href', () => {
+        const root = document.body.appendChild(document.createElement('div'));
+        root.innerHTML = '<svg style="opacity: 0.5"><path id="p" d="M0,0L100,0"/>'
+            + '<text style="font-size: 10px" x="1.5em" dy="0.71em">A</text><text style="font-size: 10px"><textPath href="#p">B</textPath></text></svg>';
+        const out = parse(composeSvg(root));
+        const g = out.querySelector('g');
+        expect(g.getAttribute('opacity')).toBe('0.5');
+        expect(out.querySelectorAll('[opacity]')).toHaveLength(1);
+        const [a] = out.querySelectorAll('text');
+        expect([a.getAttribute('x'), a.getAttribute('dy')]).toEqual(['15', '7.1']);
+        const path = out.querySelector('textPath');
+        expect(path.getAttribute('href')).toBe('#p');
+        expect(path.getAttributeNS('http://www.w3.org/1999/xlink', 'href')).toBe('#p');
+        expect(out.getAttribute('xmlns:xlink')).toBe('http://www.w3.org/1999/xlink');
+        root.remove();
+    });
+
     test('the parts, cropped to them', async () => {
         const vis = await chart();
         const plot = parse(await vis.exportSvg({ parts: ['plot'] }));

@@ -11,10 +11,12 @@
 // are hex colors with opacities of their own (no rgba), lengths have no
 // units, the baselines of the texts (dominant-baseline) are offsets, the
 // halos of labels (paint-order) are two texts, nested svg elements are
-// groups (with a clip only where their content overflows them).
+// groups (with a clip only where their content overflows them), lengths of
+// texts in em are pixels, an href is also an xlink:href (SVG 1.1).
 export { composeSvg, units };
 
 const ns = 'http://www.w3.org/2000/svg';
+const xlink = 'http://www.w3.org/1999/xlink';
 
 // the CSS pixels of the units of the size of an SVG, a CSS pixel is 1/96 in
 const units = { px: 1, in: 96, cm: 96 / 2.54, mm: 96 / 25.4 };
@@ -22,12 +24,34 @@ const units = { px: 1, in: 96, cm: 96 / 2.54, mm: 96 / 25.4 };
 const r2 = v => Math.round(v * 100) / 100;
 const r3 = v => Math.round(v * 1000) / 1000;
 
+// a color of CSS which is not rgb (e.g. oklch() or color()) as rgba() of
+// a pixel drawn of it, of sRGB, null without a canvas (e.g. jsdom)
+const rgbOf = new Map();
+let pixel = null;
+const toRgb = c => {
+    if (!rgbOf.has(c)) {
+        pixel ??= document.createElement('canvas').getContext?.('2d', { willReadFrequently: true }) ?? false;
+        let rgb = null;
+        if (pixel && globalThis.CSS?.supports?.('color', c)) {
+            pixel.clearRect(0, 0, 1, 1);
+            pixel.fillStyle = c;
+            pixel.fillRect(0, 0, 1, 1);
+            const [r, g, b, a] = pixel.getImageData(0, 0, 1, 1).data;
+            rgb = `rgba(${r}, ${g}, ${b}, ${r3(a / 255)})`;
+        }
+        rgbOf.set(c, rgb);
+    }
+    return rgbOf.get(c);
+};
+
 // a color of a computed style as a hex color and its alpha, null of none,
-// a color which is not rgb (e.g. a system color) as it is
+// a color which is not rgb as the rgb of a pixel of it, one the browser can
+// not draw as it is
 const parseColor = c => {
     if (!c || c == 'none' || c == 'transparent')
         return null;
-    const m = c.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/);
+    const rgba = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/;
+    const m = c.match(rgba) ?? toRgb(c)?.match(rgba);
     if (!m)
         return { value: c, alpha: 1 };
     const hex = [m[1], m[2], m[3]].map(v => Math.round(+v).toString(16).padStart(2, '0')).join('');
@@ -49,6 +73,10 @@ const paint = v => {
 
 // a length or a list of them without px, e.g. "4 3" of "4px, 3px"
 const unitless = v => v.replace(/(-?[\d.]+)px/g, '$1').replace(/,\s*/g, ' ');
+
+// lengths in em and rem (e.g. "0.71em", "0 1em") as pixels of a font size
+const emToPx = (v, size) => v.replace(/(-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?)(r?em)\b/g,
+    (_, n, u) => String(r2(n * (u == 'rem' ? parseFloat(getComputedStyle(document.documentElement).fontSize) : size))));
 
 // the opacity of an attribute, none of 1
 const opacityOf = a => a < 1 ? r2(a) : null;
@@ -160,6 +188,19 @@ const inlineSvg = (orig, copy, parent, shifts, halos) => {
         if (cs.paintOrder?.startsWith('stroke') && props.stroke && props.stroke != 'none')
             halos.push(copy);
     }
+    // lengths of texts in em (e.g. the dy of the ticks of d3) in pixels of
+    // their font size, LibreOffice and Word place them otherwise
+    const fontSize = parseFloat(cs.fontSize);
+    if ((tag == 'text' || tag == 'tspan') && fontSize > 0)
+        ['x', 'y', 'dx', 'dy'].forEach(a => {
+            const v = copy.getAttribute(a);
+            if (v?.includes('em'))
+                copy.setAttribute(a, emToPx(v, fontSize));
+        });
+    // the href of SVG 2 also as the xlink:href of SVG 1.1, e.g. of a
+    // textPath, rsvg-convert and others know only that one
+    if (copy.hasAttribute('href'))
+        copy.setAttributeNS(xlink, 'xlink:href', copy.getAttribute('href'));
     dropped.forEach(a => copy.removeAttribute(a));
     [...copy.attributes].filter(a => a.name.startsWith('data-') || a.name.startsWith('aria-')).forEach(a => copy.removeAttribute(a.name));
     if (cs.textTransform && cs.textTransform != 'none' && (tag == 'text' || tag == 'tspan'))
@@ -408,9 +449,10 @@ const compose = (root, B, unit, asked) => {
         inlineSvg(s, copy, {}, baselineShifts(s), halos);
         splitHalos(halos);
         const g = svgEl('g');
-        [...copy.attributes].filter(a => a.name in inherited || a.name in own).forEach(a => g.setAttribute(a.name, a.value));
+        // the opacity of the svg element itself is in the one of the walk
+        [...copy.attributes].filter(a => a.name != 'opacity' && (a.name in inherited || a.name in own)).forEach(a => g.setAttribute(a.name, a.value));
         if (opacity < 1)
-            g.setAttribute('opacity', r2(opacity * parseFloat(g.getAttribute('opacity') ?? 1)));
+            g.setAttribute('opacity', r2(opacity));
         const vb = s.viewBox?.baseVal;
         const scaled = vb && vb.width && vb.height;
         g.setAttribute('transform', `translate(${X(b.left)} ${Y(b.top)})`
@@ -465,6 +507,9 @@ const compose = (root, B, unit, asked) => {
     };
 
     walk(out, root, 1, true);
+    // the prefix of xlink:href (see inlineSvg) declared once, at the root
+    if (out.querySelector('[href]'))
+        out.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:xlink', xlink);
     // the serializer declares the namespace of the root (xmlns)
     if (defs.childNodes.length)
         out.prepend(defs);
