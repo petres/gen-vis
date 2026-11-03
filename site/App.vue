@@ -31,8 +31,11 @@
                     the state is a <code>v-model</code>, the page can set globals and link charts.</li>
                 <li><strong>For any page and for Vue.</strong> A core without a framework, a standalone
                     script which loads the parts a chart needs when it needs them, and a component of Vue 3.</li>
-                <li><strong>Built in:</strong> the hover by the keyboard and screen readers, PNG and CSV
-                    of the data shown.</li>
+                <li><strong>Images for documents.</strong> <code>exportSvg</code> is an SVG for Word and
+                    editors whose texts stay texts, <code>gen-vis export</code> writes SVG, PNG and PDF files
+                    of a definition at a physical size, e.g. 16 cm wide with texts of 8 pt.</li>
+                <li><strong>Built in:</strong> the hover by the keyboard and screen readers, PNG, SVG and
+                    CSV of the data shown.</li>
             </ul>
             <nav class="toc" aria-label="Contents">
                 <a v-for="(e, i) in examples" :key="e.id" :href="`#${e.id}`">
@@ -40,6 +43,7 @@
                 </a>
                 <a href="#vue">Vue</a>
                 <a href="#standalone">Without a bundler</a>
+                <a href="#export">Static export</a>
                 <a href="#comparison">Comparison</a>
                 <a href="guide.html">How it works</a>
             </nav>
@@ -94,7 +98,25 @@ createApp(App).use(GenVis).mount('#app');
                     and <code>mountGenVisByClass('chart')</code>. All parts in one file are
                     <code>dist-lib/gen-vis.js</code> (120 kB gzipped), pages with Vue as a script have
                     the component of their Vue, <code>GenVis.vuePlugin(Vue)</code>, see the
-                    <a :href="readme">readme</a>.
+                    <a :href="`${docs}/usage.md#standalone-script`">usage</a>.
+                </p>
+            </section>
+
+            <section id="export" class="usage">
+                <h2>Images for documents</h2>
+                <p>
+                    The button SVG of the examples (the prop <code>svg</code>) saves the chart as one SVG
+                    without HTML and CSS: the texts are texts in the fonts of the computer, so Word, LaTeX
+                    (through a PDF) and editors draw it and its texts stay editable.
+                    <code>exportSvg(options)</code> is the same of the page, e.g. only the legend and the
+                    plot, in cm. Outside the browser the CLI draws definition files with a Chromium, Chrome or
+                    Edge of the system, laid out at exactly the width asked for, so 8 pt in the chart are
+                    8 pt in the document:
+                </p>
+<pre class="demo-code"><code>npx gen-vis export def.json chart.svg chart.png chart.pdf --width 16cm --font-size 8pt --dpi 300</code></pre>
+                <p>
+                    The export page of the CLI is a page of its own, so wrappers in other languages, e.g.
+                    Python or R, drive the same, see the <a :href="`${docs}/export.md`">static export</a>.
                 </p>
             </section>
 
@@ -115,9 +137,11 @@ createApp(App).use(GenVis).mount('#app');
                 <p>
                     How a definition becomes a chart, its parts and a chart built step by step are on the page
                     <a href="guide.html">how it works</a>, everything a definition can do is in the
-                    <a :href="readme">readme</a>. The styles of
+                    <a :href="`${docs}/definition.md`">definition language</a>. The styles of
                     the package are in the cascade layer <code>gen-vis</code>, so any CSS of the page
-                    overrides them, and all its classes start with <code>vis-</code>. Editors like VS Code
+                    overrides them, and all its classes start with <code>vis-</code>; the colors of a house
+                    style are a scheme of the page (<code>registerScheme</code>), the sizes of its axes its
+                    defaults (<code>registerDefaults</code>). Editors like VS Code
                     complete and check definitions with the JSON Schema of the package, as the editor
                     here does (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).
                 </p>
@@ -152,6 +176,7 @@ export default {
         version: __VERSION__,
         branch: __BRANCH__,
         readme: `${repo}/blob/${__BRANCH__}/README.md`,
+        docs: `${repo}/blob/${__BRANCH__}/docs`,
         vueSource: vueSource.trim(),
         standaloneSource: '',
     }),

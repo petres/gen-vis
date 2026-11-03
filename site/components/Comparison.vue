@@ -47,7 +47,7 @@ const rows = [
     },
     {
         label: 'Shared parts of definitions',
-        cells: ['parents and mixins, any part', 'config of defaults', 'themes', 'templates of the layout', 'global options, themes', 'global defaults', '—'],
+        cells: ['parents and mixins, any part; schemes and defaults of the page', 'config of defaults', 'themes', 'templates of the layout', 'global options, themes', 'global defaults', '—'],
     },
     {
         label: 'Loads its data',
@@ -79,7 +79,7 @@ const rows = [
     },
     {
         label: 'Export',
-        cells: ['PNG, CSV, clipboard', 'PNG, SVG (vega-embed)', 'PNG, SVG, data view', 'PNG, SVG', 'PNG, JPEG, PDF, SVG, CSV, XLS (modules)', 'image by its API', '—'],
+        cells: ['PNG, SVG, CSV, clipboard, a CLI of SVG, PNG and PDF', 'PNG, SVG (vega-embed)', 'PNG, SVG, data view', 'PNG, SVG', 'PNG, JPEG, PDF, SVG, CSV, XLS (modules)', 'image by its API', '—'],
     },
     {
         label: 'Vue',

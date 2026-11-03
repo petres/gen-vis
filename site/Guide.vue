@@ -14,7 +14,9 @@
             <h1>How it works</h1>
             <p class="lead">
                 The ideas behind a definition, the way from it to the SVG, and a chart built step by step.
-                Every option is in the <a :href="readme">readme</a>.
+                Every option is in the documentation: the <a :href="`${docs}/definition.md`">definition
+                language</a>, the <a :href="`${docs}/usage.md`">usage</a> and the
+                <a :href="`${docs}/export.md`">static export</a>.
             </p>
             <nav class="toc" aria-label="Contents">
                 <a href="#perspective">What it is</a>
@@ -87,6 +89,14 @@
                         adapter of them.
                     </li>
                 </ol>
+                <p>
+                    The images are copies of the chart drawn outside of the screen in their own width
+                    (<code>src/utils/export.js</code>): the PNG is a picture of the copy, the SVG
+                    (<code>src/utils/export-svg.js</code>) writes its HTML texts as SVG texts and its styles as
+                    attributes. The export page (<code>src/export.js</code>) draws a chart at a width of cm or
+                    in for programs outside the browser, the CLI (<code>bin/</code>) opens it in a Chromium of
+                    the system and saves its SVG, a screenshot as PNG or a print as PDF.
+                </p>
             </section>
 
             <section id="parts" class="usage">
@@ -182,8 +192,9 @@
                 <h2>Changing it</h2>
                 <p>
                     A new plot type is a function from the groups of rows to a layer, registered by its name, see
-                    <a :href="`${readme}#extensions`">extensions</a>; a coordinate system is registered the same
-                    way. Anything else is a change of the code: the steps above are the places to start, the tests
+                    <a :href="`${docs}/extensions.md`">extensions</a>; a coordinate system is registered the same
+                    way, a scheme of colors of a house style (<code>registerScheme</code>) and the defaults of
+                    the axes (<code>registerDefaults</code>) for all charts of a page as well. Anything else is a change of the code: the steps above are the places to start, the tests
                     (<code>npm test</code>) draw every example of <code>data/</code> and of this site, and
                     <code>npm run dev</code> shows them in a gallery.
                 </p>
@@ -210,6 +221,7 @@ export default {
         version: __VERSION__,
         branch: __BRANCH__,
         readme: `${repo}/blob/${__BRANCH__}/README.md`,
+        docs: `${repo}/blob/${__BRANCH__}/docs`,
     }),
 };
 </script>
