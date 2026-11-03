@@ -9,7 +9,7 @@
 // the plot types a wrapper chooses its colors by.
 import { createGenVis } from '@/index.js';
 import { registerScheme } from '@/utils/d3';
-import { readDef, resolveParents } from '@/utils/load';
+import { fetchData, readDef, resolveParents, resolveUrl } from '@/utils/load';
 import { staticCopy, selectParts, partsBox, backgroundOf, defaultWidth, padding } from '@/utils/export.js';
 import { composeSvg, units } from '@/utils/export-svg.js';
 
@@ -114,18 +114,18 @@ const addStyles = (css, fontSize) => Promise.all([...listOf(css), ...(fontSize =
 }));
 
 // the data of the options: the one given (rows, a CSV/JSON text, bytes as
-// { base64 }) or the one of an url (parquet as bytes), none otherwise
+// { base64 }) or the bytes of an url, as the data of a definition of an url
+// without an extension (parquet of its content, see parseData), none otherwise
 const dataOf = async ({ data, dataUrl }) => {
     if (data?.base64 !== undefined)
         return Uint8Array.from(atob(data.base64), c => c.charCodeAt(0));
     if (data != null || dataUrl == null)
         return data ?? null;
-    const response = await fetch(dataUrl);
-    if (!response.ok)
-        throw new Error(`genVisExport: the data ${dataUrl} could not be loaded (${response.status} ${response.statusText}).`);
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    // parquet files begin with PAR1
-    return String.fromCharCode(...bytes.subarray(0, 4)) == 'PAR1' ? bytes : new TextDecoder().decode(bytes);
+    try {
+        return await fetchData(resolveUrl(dataUrl), undefined);
+    } catch (error) {
+        throw new Error(`genVisExport: ${error.message}`);
+    }
 };
 
 // the copy of the chart before, removed by the next one, and the restores

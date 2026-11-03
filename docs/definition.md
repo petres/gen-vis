@@ -135,7 +135,7 @@ them (a definition file needs it only in itself or in a parent).
 
 `data` is CSV, TSV, JSON (a list of rows) or [parquet](https://parquet.apache.org/),
 by the extension of the url (`.csv`, `.tsv`, `.json`, `.parquet`), without one
-CSV or JSON by the content. `dataFormat` sets it, e.g. for an url of an api,
+by the content: parquet (which begins with `PAR1`), JSON or CSV. `dataFormat` sets it, e.g. for an url of an api,
 also the one of a parent, data which can not be read is an error of its url:
 
 ```json

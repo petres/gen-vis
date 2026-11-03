@@ -182,7 +182,7 @@ export interface GenVisDefinition {
      */
     data?: string;
     /**
-     * The format of the data, by default the one of the extension of its url, without one CSV or JSON by the content.
+     * The format of the data, by default the one of the extension of its url, without one parquet, CSV or JSON by the content.
      */
     dataFormat?: 'csv' | 'tsv' | 'json' | 'parquet';
     /**

@@ -1378,6 +1378,37 @@ describe('data formats', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the data of an url without an extension by its content, parquet or text, also of the export page', async () => {
+        const parquet = parquetWriteBuffer({ columnData: [
+            { name: 'year', data: [2020, 2021, 2022], type: 'INT32' },
+            { name: 'value', data: [1, 2, 3], type: 'DOUBLE' },
+            { name: 'land', data: [1, 1, 1], type: 'INT32' },
+        ] });
+        // the lands of the parquet are numbers, as categories "1" and "2"
+        const def = () => {
+            const d = lineDef();
+            d.mapping.c.categories = { 1: { color: 'red' }, 2: { color: 'blue' }, Wien: { color: 'red' }, Tirol: { color: 'blue' } };
+            return d;
+        };
+        const files = { 'http://h/api/parquet': parquet, 'http://h/api/csv': new TextEncoder().encode(lineData) };
+        vi.stubGlobal('fetch', async url => url in files ? new Response(files[url]) : new Response('', { status: 404, statusText: 'Not Found' }));
+        const circles = el => el.querySelectorAll('g.vis-plot.plot-1 circle').length;
+        expect(circles(await mount({ def: { ...def(), data: 'http://h/api/parquet' } }))).toBe(3);
+        expect(circles(await mount({ def: { ...def(), data: 'http://h/api/csv' } }))).toBe(7);
+        document.body.innerHTML = '';
+        // jsdom has no layout of texts, see export.test.js
+        Range.prototype.getClientRects = () => [{ left: 0, top: 0, right: 10, bottom: 10, width: 10, height: 10 }];
+        onTestFinished(() => delete Range.prototype.getClientRects);
+        await import('@/export.js');
+        for (const [url, n] of [['http://h/api/parquet', 3], ['http://h/api/csv', 7]]) {
+            await window.genVisExport({ def: def(), dataUrl: url });
+            expect(circles(document)).toBe(n);
+        }
+        await expect(window.genVisExport({ def: def(), dataUrl: 'http://h/api/none' }))
+            .rejects.toThrow("genVisExport: Could not load 'http://h/api/none': 404 Not Found");
+        expect(errors).toEqual([]);
+    });
+
     test('tsv by the format of the definition', async () => {
         const def = { ...lineDef(), dataFormat: 'tsv' };
         const el = await mount({ def, data: lineData.replaceAll(',', '\t') });

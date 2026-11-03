@@ -1,4 +1,4 @@
-export { resolveUrl, clearCache, resolveParents, readDef, requirements, raw, geoParts, loadGeo, load };
+export { resolveUrl, clearCache, resolveParents, readDef, requirements, raw, geoParts, loadGeo, load, fetchData };
 
 
 import { addDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, usedColumns } from "@/utils/data";
@@ -64,8 +64,10 @@ const fetchCached = (url, type = 'text') => {
 
 const fetchText = url => fetchCached(url);
 
-// parquet is binary, the other formats are text
-const fetchData = (url, format) => fetchCached(url, format == 'parquet' ? 'arrayBuffer' : 'text');
+// parquet is binary, the other formats are text, data of an unknown format
+// (e.g. of an url without an extension) is binary, parseData reads parquet
+// of its content and the others of its text
+const fetchData = (url, format) => fetchCached(url, format == 'parquet' || format === undefined ? 'arrayBuffer' : 'text');
 
 const parseDef = (text, source, what = 'definition') => {
     try {

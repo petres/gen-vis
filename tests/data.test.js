@@ -39,6 +39,20 @@ describe('parseData', () => {
         await expect(parseData('a,b', 'parquet')).rejects.toThrow('Parquet data needs to be binary');
     });
 
+    test('bytes are parquet by their content (PAR1) or of the format, otherwise text', async () => {
+        const bytes = text => new TextEncoder().encode(text);
+        expect([...await parseData(bytes('a,b\n1,2'))]).toEqual([{ a: '1', b: '2' }]);
+        expect(await parseData(bytes('\uFEFF[{"a": 1}]').buffer)).toEqual([{ a: 1 }]);
+        expect([...await parseData(bytes('a\tb\n1\t2'), 'tsv')]).toEqual([{ a: '1', b: '2' }]);
+        const parquet = parquetWriteBuffer({ columnData: [{ name: 'a', data: [1], type: 'INT32' }] });
+        expect(await parseData(parquet)).toEqual([{ a: 1 }]);
+        // a view of a part of a buffer
+        const padded = new Uint8Array(parquet.byteLength + 2);
+        padded.set(new Uint8Array(parquet), 2);
+        expect(await parseData(padded.subarray(2))).toEqual([{ a: 1 }]);
+        await expect(parseData(bytes('a,b'), 'parquet')).rejects.toThrow();
+    });
+
     test('the format of a url by its extension', () => {
         expect(dataFormat('https://a.at/data.parquet?v=2')).toBe('parquet');
         expect(dataFormat('/data/bev/data.TSV')).toBe('tsv');

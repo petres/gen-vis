@@ -20,7 +20,7 @@
         },
         "dataFormat": {
             "enum": ["csv", "tsv", "json", "parquet"],
-            "description": "The format of the data, by default the one of the extension of its url, without one CSV or JSON by the content."
+            "description": "The format of the data, by default the one of the extension of its url, without one parquet, CSV or JSON by the content."
         },
         "geo": {
             "description": "The geometry of a map (coord geo), the rows are joined to its features, null removes the one of a parent.",

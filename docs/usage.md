@@ -180,7 +180,7 @@ plugin of another Vue, the types are the ones of `@preschen/gen-vis/vue`.
 |------------|-----------------|-------------|
 | `defFile`  | `data-def-file` | url of the definition |
 | `def`      | `data-def`      | the definition, an object or a JSON string |
-| `data`     | `data-data`     | the data as rows, a CSV/JSON string or parquet (an `ArrayBuffer` or `Uint8Array`), if not given it is loaded from the `data` url of the definition |
+| `data`     | `data-data`     | the data as rows, a CSV/JSON string or bytes (an `ArrayBuffer` or `Uint8Array`, parquet or the text of CSV/JSON), if not given it is loaded from the `data` url of the definition |
 | `debug`    | `data-debug`    | shows the prepared definition, with the warnings of `check` |
 | `check`    | `data-check`    | logs the warnings of the check of the definition in the console, e.g. unknown plot types, while it is written, the check is only loaded then (not part of the single file of the standalone script) |
 | `state`    | `data-state`    | the changes of the user, see [state](#state), the attribute is JSON |

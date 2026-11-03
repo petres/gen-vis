@@ -10,22 +10,35 @@ import { comparison, compareCategories, isObject, missing, toNumber } from "@/ut
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
 // the format of the data of a url, the given one or the one of its extension,
-// undefined if it is neither, see parseData
+// undefined if it is neither, then its content tells, see parseData
 const dataFormat = (url, format) => format ??
     dataFormats.find(f => new URL(url, 'file:///').pathname.toLowerCase().endsWith(`.${f}`));
 
 const isBinary = data => data instanceof ArrayBuffer || ArrayBuffer.isView(data);
 
+const bytesOf = data => data instanceof ArrayBuffer ? new Uint8Array(data) : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+
+// parquet files begin with PAR1
+const isParquet = data => {
+    const b = bytesOf(data);
+    return b.length >= 4 && b[0] == 0x50 && b[1] == 0x41 && b[2] == 0x52 && b[3] == 0x31;
+};
+
 /**
- * The rows of the data: binary data is parquet, strings are parsed in their
- * `format`, without one as JSON (a list of rows) or CSV by their content,
- * already parsed rows are passed through. The parquet reader is only loaded
- * for parquet data, it reads only the `columns` given, all without them.
+ * The rows of the data: binary data is parquet if it begins with PAR1 (or
+ * of the `format` parquet), otherwise the text of its bytes (UTF-8), strings
+ * are parsed in their `format`, without one as JSON (a list of rows) or CSV
+ * by their content, already parsed rows are passed through. The parquet
+ * reader is only loaded for parquet data, it reads only the `columns`
+ * given, all without them.
  */
 const parseData = async (data, format, columns = null) => {
     if (isBinary(data)) {
-        const { parseParquet } = await lazy.parquet();
-        return parseParquet(data, columns);
+        if (format == 'parquet' || isParquet(data)) {
+            const { parseParquet } = await lazy.parquet();
+            return parseParquet(data, columns);
+        }
+        data = new TextDecoder().decode(bytesOf(data));
     }
     if (Array.isArray(data))
         return data;
