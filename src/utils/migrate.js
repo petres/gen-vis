@@ -1,20 +1,20 @@
-export { migrate, migrateExpr, migrateParts };
+export { migrate, migrateExpr, migrateParts, shorten };
 
 import { isObject } from '@/utils/values';
 import { isOperator } from '@/utils/expr';
-import { mergeAll } from '@/utils/def';
+import { formatOf, mergeAll } from '@/utils/def';
 import { plotTypes as registered } from '@/plots';
-import { categoryKeys, positions, resolveType, scaleTypeOf, withDefaults } from '@/utils/normalize';
+import { categoryKeys, isLegacy, normalize, positions, resolveType, scaleTypeOf, withDefaults } from '@/utils/normalize';
 
 /**
  * The migration of a definition of 3.x to 4.0, see docs/design-4.0.md and
  * spec/migrate, normalize (utils/normalize.js) of the migrated definition is
- * the definition of 3.x. A definition of 4.0 stays as it is (migrate is
- * idempotent), except mappings without a type, which are categorical in
- * 3.x, so a definition of both, e.g. of a parent of 3.x, is migrated as
- * well. It is loaded with the check (`@preschen/gen-vis/check`) and by the
- * load of a definition with constructs of 3.x, see isLegacy of
- * utils/normalize.js.
+ * the definition of 3.x, the order of the props of the plots aside (the one
+ * of the attributes of their elements). The migrated definition is written in
+ * the shorter forms of 4.0 (see shorten), a definition of 4.0 is only written
+ * shorter, so migrate is idempotent. It is loaded with the check
+ * (`@preschen/gen-vis/check`) and by the load of a definition with
+ * constructs of 3.x, see isLegacy of utils/normalize.js.
  */
 
 const clone = v => JSON.parse(JSON.stringify(v));
@@ -95,95 +95,42 @@ const migrateTransform = t => {
     return { ...rest, ...(rest.as === undefined && rest.column === undefined && refs.length ? { as: [columns].flat()[0] } : {}), expr };
 };
 
-// the props which differ from the defaults, of nested props the ones which
-// differ, undefined if a default is not one of the props (the type keeps its
-// prefix then, a null would remove it)
+// nested props, objects which are no operators, e.g. `d` of a line
+const nested = v => isObject(v) && !isOperator(v);
+
+// the props which differ from the defaults, in their order, of nested props
+// the ones which differ, undefined if a default is not one of the props (the
+// type keeps its prefix then, a null would remove it)
 const ownProps = (defaults, props) => {
+    if (Object.keys(defaults).some(k => !Object.hasOwn(props, k)))
+        return undefined;
     const own = {};
-    for (const [k, d] of Object.entries(defaults)) {
-        if (!Object.hasOwn(props, k))
-            return undefined;
-        if (isObject(d) && !isOperator(d) && isObject(props[k]) && !isOperator(props[k]) && !same(d, props[k])) {
-            const inner = ownProps(d, props[k]);
+    for (const [k, v] of Object.entries(props)) {
+        const d = defaults[k];
+        if (!Object.hasOwn(defaults, k))
+            own[k] = v;
+        else if (nested(d) && nested(v) && !same(d, v)) {
+            const inner = ownProps(d, v);
             if (inner === undefined)
                 return undefined;
             if (Object.keys(inner).length > 0)
                 own[k] = inner;
-        } else if (!same(d, props[k]))
-            own[k] = props[k];
+        } else if (!same(d, v))
+            own[k] = v;
     }
-    Object.entries(props).filter(([k]) => !Object.hasOwn(defaults, k)).forEach(([k, v]) => own[k] = v);
     return own;
 };
 
-// the plot of 4.0 of one of 3.x in the coordinate system `coord`: `by`
-// instead of `categories`, the props of the highlight and of the others as
-// objects, the type without its prefix if its props are the defaults of the
-// type and the ones which differ, in the same order (the one of the
-// attributes of the elements), see withDefaults of utils/normalize.js
-const migratePlot = (raw, coord, plotTypes, merged = raw) => {
-    if (!isObject(raw))
+// the plot of 4.0 of one of 3.x: `by` instead of `categories`, the shorter
+// forms follow, see shorten
+const migratePlot = raw => {
+    if (!isObject(raw) || raw.categories === undefined)
         return raw;
-    let p = { ...raw };
-    if (p.categories !== undefined) {
-        const by = [p.categories].flat();
-        p = replaced(p, 'categories', p.by === undefined ? [['by', by.length == 1 ? by[0] : by]] : []);
-    }
-    if (isObject(p.props)) {
-        // the props of the highlight and of the others after the other ones,
-        // in this order (the one of the attributes), the mode of the
-        // highlight is part of the object of its props, otherwise the props
-        // keep their prefixes
-        const part = k => ['highlight', 'others'].find(h => k.startsWith(`${h}-`));
-        const keys = Object.keys(p.props);
-        // of the merged plot, e.g. of a part of the props of the plot of a parent
-        const all = Object.keys(isObject(merged?.props) ? merged.props : p.props);
-        const sorted = [...all.filter(k => !part(k)), ...all.filter(k => part(k) == 'highlight'), ...all.filter(k => part(k) == 'others')];
-        if (keys.some(part) && sorted.join() == all.join() && !isObject(p.highlight) && !isObject(p.others)) {
-            const parts = { highlight: typeof p.highlight == 'string' && keys.some(k => part(k) == 'highlight') ? { mode: p.highlight } : undefined };
-            const props = {};
-            Object.entries(p.props).forEach(([k, v]) => {
-                const h = part(k);
-                if (h)
-                    (parts[h] ??= {})[k.substring(h.length + 1)] = v;
-                else
-                    props[k] = v;
-            });
-            // after the props
-            p = replaced(p, 'props', [['props', props], ...['highlight', 'others'].filter(h => parts[h]).map(h => [h, parts[h]])]);
-        }
-    }
-    const [prefix, name] = typeof p.type == 'string' ? p.type.split(':') : [];
-    if (name !== undefined && (prefix == coord || prefix == 'svg') && Object.hasOwn(plotTypes, p.type)) {
-        const short = prefix == 'svg' && name == 'circle' && coord == 'cartesian' ? 'point' : name;
-        const defaults = plotTypes[p.type].defaults;
-        const own = typeof defaults == 'function' ? defaults(p.props ?? {}) : defaults;
-        const full = p.props ?? {};
-        let props = isObject(own) && resolveType(short, coord, plotTypes) == p.type ? ownProps(own, full) : undefined;
-        // the defaults of the props without the ones of the defaults, e.g. of
-        // a horizontal bar without its `x1`, which keeps them then
-        const of = props => typeof defaults == 'function' ? defaults(props) : defaults;
-        if (props !== undefined && !same(withDefaults(of(props), props), full))
-            props = { ...props, ...Object.fromEntries(Object.keys(own).filter(k => !Object.hasOwn(of(props), k)).map(k => [k, full[k]])) };
-        // the attributes of the elements are in the order of the props, also
-        // the ones of the defaults, nested props are no attributes, e.g. `d`
-        const order = props => Object.keys(props).filter(k => !isObject(props[k]) || isOperator(props[k])).join();
-        if (props !== undefined && same(withDefaults(of(props), props), full) && order(withDefaults(of(props), props)) == order(full)) {
-            p.type = short;
-            p.props = props;
-        }
-    }
-    if (isObject(p.props) && Object.keys(p.props).length == 0)
-        delete p.props;
-    return p;
+    const by = [raw.categories].flat();
+    return replaced(raw, 'categories', raw.by === undefined ? [['by', by.length == 1 ? by[0] : by]] : []);
 };
 
-// `merged` are the plots of the merged definition of a part, see migrateParts
-const migratePlots = (plot, coord, plotTypes, merged = null) => {
-    const list = merged === null ? null : [merged ?? []].flat();
-    const of = (p, i) => list === null ? p : (isObject(p) && p.id !== undefined ? list.find(m => isObject(m) && String(m.id) == String(p.id)) : list[i]);
-    return Array.isArray(plot) ? plot.map((p, i) => migratePlot(p, coord, plotTypes, of(p, i))) : migratePlot(plot, coord, plotTypes, of(plot, 0));
-};
+const migratePlots = plot => Array.isArray(plot) ? plot.map(migratePlot) : migratePlot(plot);
 
 // a mapping of 4.0 of one of 3.x of the coordinate system `coord`: the
 // parts of its categories at the mapping, of the mappings of the definition
@@ -191,7 +138,8 @@ const migratePlots = (plot, coord, plotTypes, merged = null) => {
 // of the scale linear if it has none, unless normalize finds them, the
 // mappings of the names of positions without a scale or an axis with false
 // and without an orientation with null, a mapping of the parts of 4.0 (e.g.
-// `categories` or `format`) stays as it is
+// `categories` or `format`) stays as it is; the shorter forms follow, see
+// shorten
 const migrateMapping = (raw, name, coord, own, used, plots) => {
     // a mapping of 4.0, e.g. of a definition of a parent of 3.x
     if (!isObject(raw) || [...categoryKeys, 'domain', 'nice', 'format'].some(k => k in raw))
@@ -242,21 +190,14 @@ const usedNames = (def, patches) => new Set([
     ...Object.values(isObject(def.mapping) ? def.mapping : {}).map(m => m?.scale?.groups?.by),
 ].filter(n => typeof n == 'string'));
 
-/**
- * The definition of 4.0 of a (merged) definition of 3.x, the definition is
- * not changed, `plotTypes` are the plot types by name, by default the
- * registered ones. A `part` of a definition, e.g. a parent, is migrated
- * without the parts its mappings need as a whole (type, scale and axis, see
- * migrateParts), `coord` is the coordinate system of the definition of the
- * part, by default its own, `merged` the merged definition, of the order of
- * the props of its plots.
- */
-const migrate = (raw, { plotTypes = registered, part = false, coord = raw?.options?.coord ?? 'cartesian', merged = null } = {}) => {
-    if (!isObject(raw))
-        return raw;
+// the patches of the entries of the form elements of a definition
+const patchesOf = def => (Array.isArray(def?.formElements) ? def.formElements : []).flatMap(e => Array.isArray(e?.values) ? e.values : [])
+    .filter(v => isObject(v?.patch)).map(v => v.patch);
+
+// the constructs of 3.x of a definition in the ones of 4.0, see migrate
+const migrateLegacy = (raw, { part, coord }) => {
     const def = migrateExpr(clone(raw));
-    const patches = (Array.isArray(def.formElements) ? def.formElements : []).flatMap(e => Array.isArray(e?.values) ? e.values : [])
-        .filter(v => isObject(v?.patch)).map(v => v.patch);
+    const patches = patchesOf(def);
     const used = usedNames(def, patches);
     // the plots of the internal form, e.g. of the bars of a band scale
     const plots = [def.plot ?? []].flat();
@@ -267,10 +208,226 @@ const migrate = (raw, { plotTypes = registered, part = false, coord = raw?.optio
         if (d.transform !== undefined)
             d.transform = Array.isArray(d.transform) ? d.transform.map(migrateTransform) : migrateTransform(d.transform);
         if (d.plot !== undefined)
-            d.plot = migratePlots(d.plot, own, plotTypes, d === def && merged ? merged.plot : null);
+            d.plot = migratePlots(d.plot);
         if (d !== def && d.mapping !== undefined)
             d.mapping = migrateMappings(d.mapping, own, false);
     });
+    return def;
+};
+
+// the shorter forms of 4.0 of the parts of definitions, see shorten
+
+// the formats of the axis, the hover and the legend of a mapping of the
+// internal form, see formatOf
+const formatsOf = m => ['axis', 'hover', 'legend'].map(part => formatOf(m, part));
+
+// a mapping of the internal form with the formats of its parts instead of
+// the ones written
+const withFormats = (m, formats) => {
+    const r = { ...m, formats };
+    delete r.format;
+    ['axis', 'hover', 'legend'].filter(k => isObject(r[k])).forEach(k => {
+        r[k] = { ...r[k] };
+        delete r[k].format;
+    });
+    return r;
+};
+
+// the internal form of a merged definition (normalize) as it is drawn: the
+// formats of the mappings are the ones of their parts, also the ones of the
+// mappings of a patch, which are merged into the ones of the definition
+const drawn = (def, plotTypes) => {
+    const d = normalize(def, { plotTypes });
+    if (!isObject(d))
+        return d;
+    const base = isObject(d.mapping) ? d.mapping : {};
+    patchesOf(d).filter(p => isObject(p.mapping)).forEach(p => {
+        p.mapping = Object.fromEntries(Object.entries(p.mapping).map(([n, m]) =>
+            [n, isObject(m) ? withFormats(m, formatsOf(isObject(base[n]) ? mergeAll([base[n], m]) : m)) : m]));
+    });
+    if (isObject(d.mapping))
+        d.mapping = Object.fromEntries(Object.entries(base).map(([n, m]) => [n, isObject(m) ? withFormats(m, formatsOf(m)) : m]));
+    return d;
+};
+
+// a copy of an object with a value at the place of the key `at` or before
+// the first of the keys `before`, otherwise at the end
+const inserted = (o, key, value, before) => {
+    const keys = Object.keys(o).filter(k => k != key);
+    const at = keys.findIndex(k => before.includes(k));
+    const entries = keys.map(k => [k, o[k]]);
+    entries.splice(at < 0 ? entries.length : at, 0, [key, value]);
+    return Object.fromEntries(entries);
+};
+
+// a copy of a mapping without the part of the path, undefined if it has none
+const without = (m, [key, inner]) => {
+    if (inner === undefined)
+        return key in m ? Object.fromEntries(Object.entries(m).filter(([k]) => k != key)) : undefined;
+    if (!isObject(m[key]) || !(inner in m[key]))
+        return undefined;
+    return { ...m, [key]: Object.fromEntries(Object.entries(m[key]).filter(([k]) => k != inner)) };
+};
+
+// the parts of a mapping at the mapping, before its parts
+const mappingParts = ['scale', 'axis', 'legend', 'hover', 'props', 'stacked'];
+
+// the shorter forms of a mapping, one step each: without the type of the
+// scale (inferred of the type), without the type (of the scale or the
+// categories), without the orientation of a position and the position of the
+// axis, the domain and `nice` at the mapping, without an empty axis and
+// scale (of a position), the format at the mapping instead of the ones of the
+// axis, the hover and the legend (of a mapping of the definition, `own`, a
+// patch keeps the format of the part it changes), a text of the column
+const mappingSteps = (m, own = true) => {
+    if (!isObject(m))
+        return [];
+    const steps = [['scale', 'type'], ['type'], ['scale', 'orientation'], ['axis', 'position']].map(path => without(m, path));
+    if (isObject(m.scale) && m.scale.of === undefined)
+        ['domain', 'nice'].filter(k => k in m.scale && !(k in m)).forEach(k => steps.push(inserted(without(m, ['scale', k]), k, m.scale[k], mappingParts)));
+    ['axis', 'scale'].filter(k => isObject(m[k]) && Object.keys(m[k]).length == 0).forEach(k => steps.push(without(m, [k])));
+    const parts = ['axis', 'hover', 'legend'].filter(k => isObject(m[k]) && m[k].format !== undefined);
+    const format = m.format ?? m.axis?.format ?? m.hover?.format;
+    if (own && format !== undefined && parts.length > 0 && parts.every(k => m[k].format === format)) {
+        // the format at the mapping, the parts without the same format
+        const moved = parts.reduce((r, k) => without(r, [k, 'format']), m);
+        steps.push(m.format === undefined ? inserted(moved, 'format', format, mappingParts) : moved);
+    }
+    if (Object.keys(m).length == 1 && typeof m.column == 'string')
+        steps.push(m.column);
+    return steps.filter(s => s !== undefined && !same(s, m));
+};
+
+// the props of the highlight and of the others as objects of a plot, after
+// its props, the mode of the highlight in the object of its props, also the
+// one of the merged plot (`merged`), e.g. of a parent
+const highlightObjects = (p, merged) => {
+    const part = k => ['highlight', 'others'].find(h => k.startsWith(`${h}-`));
+    if (!isObject(p.props) || !Object.keys(p.props).some(part) || isObject(p.highlight) || isObject(p.others))
+        return undefined;
+    const props = {};
+    const mode = p.highlight ?? merged?.highlight;
+    const parts = {};
+    Object.entries(p.props).forEach(([k, v]) => {
+        const h = part(k);
+        if (h)
+            (parts[h] ??= h == 'highlight' && typeof mode == 'string' ? { mode } : {})[k.substring(h.length + 1)] = v;
+        else
+            props[k] = v;
+    });
+    const r = replaced(p, 'props', [...(Object.keys(props).length ? [['props', props]] : []),
+        ...['highlight', 'others'].filter(h => parts[h]).map(h => [h, parts[h]])]);
+    return r;
+};
+
+// the plot of the type without the prefix of the coordinate system `coord`
+// (`point` of a circle) and of the props which differ from its defaults
+const shortType = (p, coord, plotTypes) => {
+    const [prefix, name] = typeof p.type == 'string' ? p.type.split(':') : [];
+    if (name === undefined || !Object.hasOwn(plotTypes, p.type) || !prefix)
+        return undefined;
+    const short = name == 'circle' ? 'point' : name;
+    const defaults = plotTypes[p.type].defaults;
+    if (resolveType(short, coord, plotTypes) != p.type || defaults === undefined)
+        return undefined;
+    const full = isObject(p.props) ? p.props : {};
+    const of = props => typeof defaults == 'function' ? defaults(props) : defaults;
+    let props = isObject(of(full)) ? ownProps(of(full), full) : undefined;
+    if (props === undefined)
+        return undefined;
+    // the defaults of the props without the ones of the defaults, e.g. of a
+    // horizontal bar without its `x1`, which keeps them then
+    if (!same(withDefaults(of(props), props), full))
+        props = Object.fromEntries(Object.entries(full).filter(([k]) => Object.hasOwn(props, k) || !Object.hasOwn(of(props), k)));
+    const r = { ...p, type: short, props };
+    if (Object.keys(props).length == 0)
+        delete r.props;
+    return r;
+};
+
+// the shorter forms of a plot, one step each: the props of the highlight and
+// of the others as objects, the type without its prefix
+const plotSteps = (p, coord, plotTypes, merged) => isObject(p)
+    ? [highlightObjects(p, merged), shortType(p, coord, plotTypes)].filter(s => s !== undefined)
+    : [];
+
+// the places of the mappings and the plots of a part of a definition, also
+// the ones of its patches: [object, key, steps of the value]; `merged` is the
+// merged definition of the part, e.g. of the plots of the parents
+const placesOf = (part, merged, plotTypes) => {
+    const coord = merged.options?.coord ?? 'cartesian';
+    const mergedPlots = [merged.plot ?? []].flat();
+    const places = [];
+    [part, ...patchesOf(part)].forEach(d => {
+        const own = d.options?.coord ?? coord;
+        if (isObject(d.mapping))
+            Object.keys(d.mapping).forEach(n => places.push([d.mapping, n, m => mappingSteps(m, d === part)]));
+        const plotOf = (p, i) => d !== part ? undefined
+            : (isObject(p) && p.id !== undefined ? mergedPlots.find(m => isObject(m) && String(m.id) == String(p.id)) : mergedPlots[i]);
+        if (Array.isArray(d.plot))
+            d.plot.forEach((p, i) => places.push([d.plot, i, v => plotSteps(v, own, plotTypes, plotOf(p, i))]));
+        else if (isObject(d.plot))
+            places.push([d, 'plot', v => plotSteps(v, own, plotTypes, plotOf(d.plot, 0))]);
+    });
+    return places;
+};
+
+/**
+ * The parts of definitions in their shorter forms of 4.0, changed in place:
+ * `chains` are lists of parts in the order of their merge (the parents
+ * first), a part may be one of several chains, e.g. a parent of two
+ * definitions. A shorter form of a mapping or of a plot (see mappingSteps
+ * and plotSteps) is taken when every merged chain of the part draws the
+ * same: its internal form (normalize) is the same, the props of the plots and
+ * the parts of the mappings in any order (the order of attributes is no
+ * change of the drawing), the formats as the ones of the axes, hovers and
+ * legends.
+ */
+const shorten = (chains, plotTypes = registered) => {
+    const before = new Map(chains.map(c => [c, drawn(mergeAll(c), plotTypes)]));
+    const keeps = part => chains.filter(c => c.includes(part)).every(c => same(drawn(mergeAll(c), plotTypes), before.get(c)));
+    let changed = true;
+    while (changed) {
+        changed = false;
+        for (const part of new Set(chains.flat())) {
+            const merged = mergeAll(chains.find(c => c.includes(part)));
+            for (const [o, key, steps] of placesOf(part, merged, plotTypes)) {
+                let step;
+                do {
+                    const value = o[key];
+                    step = steps(value).find(s => {
+                        o[key] = s;
+                        if (keeps(part))
+                            return true;
+                        o[key] = value;
+                        return false;
+                    });
+                    changed ||= step !== undefined;
+                } while (step !== undefined);
+            }
+        }
+    }
+    return chains;
+};
+
+/**
+ * The definition of 4.0 of a (merged) definition of 3.x in its shorter forms,
+ * the definition is not changed: the constructs of 3.x are migrated if it is
+ * one of 3.x (`legacy`, by default if it has constructs of 3.x, see isLegacy
+ * of utils/normalize.js, as the load reads it), a definition of 4.0 is only
+ * written shorter (see shorten), so migrate is idempotent. `plotTypes` are
+ * the plot types by name, by default the registered ones. A `part` of a
+ * definition, e.g. a parent, is migrated without the parts its mappings
+ * need as a whole (type, scale and axis, see migrateParts) and not shorter,
+ * `coord` is the coordinate system of the definition of the part, by
+ * default its own.
+ */
+const migrate = (raw, { plotTypes = registered, part = false, coord = raw?.options?.coord ?? 'cartesian', legacy = isLegacy(raw) } = {}) => {
+    if (!isObject(raw))
+        return raw;
+    const def = legacy ? migrateLegacy(raw, { part, coord }) : clone(raw);
+    if (!part)
+        shorten([[def]], plotTypes);
     return def;
 };
 
@@ -293,15 +450,18 @@ const whole = (part, merged) => {
 /**
  * The parts of a definition of 3.x, e.g. a definition and its parents in the
  * order of their merge (the parents first, see resolveParents), migrated to
- * 4.0, so their merge is the migrated merge of the parts. The parts of
- * mappings which their merge needs, e.g. "type": "categorical" of a mapping
- * without a type, are in the first part of the mapping (of its scale).
+ * 4.0 in their shorter forms, so their merge is the migrated merge of the
+ * parts, `legacy` as the one of migrate of their merge. The parts of mappings which their merge needs, e.g. "type":
+ * "categorical" of a mapping without a type, are in the first part of the
+ * mapping (of its scale).
  */
-const migrateParts = (parts, { plotTypes = registered } = {}) => {
+const migrateParts = (parts, { plotTypes = registered, legacy = isLegacy(mergeAll(parts)) } = {}) => {
     const merged = mergeAll(parts);
+    if (!legacy)
+        return shorten([parts.map(clone)], plotTypes)[0];
     const coord = merged.options?.coord ?? 'cartesian';
-    const target = migrate(merged, { plotTypes });
-    const migrated = parts.map(p => migrate(whole(p, merged), { plotTypes, part: true, coord, merged }));
+    const target = migrateLegacy(merged, { part: false, coord });
+    const migrated = parts.map(p => migrateLegacy(whole(p, merged), { part: true, coord }));
     const result = mergeAll(migrated);
     Object.entries(isObject(target.mapping) ? target.mapping : {}).filter(([, m]) => isObject(m)).forEach(([n, m]) => {
         const at = (mapping, path) => path.reduce((v, k) => isObject(v) ? v[k] : undefined, mapping);
@@ -314,5 +474,5 @@ const migrateParts = (parts, { plotTypes = registered } = {}) => {
                 at(part.mapping[n], path.slice(0, -1))[path.at(-1)] = value;
         });
     });
-    return migrated;
+    return shorten([migrated], plotTypes)[0];
 };

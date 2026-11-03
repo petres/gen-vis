@@ -116,6 +116,7 @@ See `merge.md`.
 3.x which the renderer reads, see `normalize.md`. The plot types are the
 built-in ones, their default props are the ones of `src/plots/defaults.js`.
 
-`migrate/*.json` are `{ "name", "def", "result" }`: the 3.x definition `def`
-(merged with its parents) and the 4.0 one, migrating the result again does
-not change it, see `normalize.md`.
+`migrate/*.json` are `{ "name", "def", "options", "result" }`: the 3.x
+definition `def` (merged with its parents), the options of migrate if any
+(`"legacy": true` of a definition of 3.x without constructs of 3.x) and the
+4.0 one, migrating the result again does not change it, see `normalize.md`.

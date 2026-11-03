@@ -10,39 +10,18 @@
     "mapping": {
         "x": {
             "column": "Jahr",
-            "type": "numeric",
-            "scale": {
-                "type": "linear",
-                "domainAbs": [-0.5, 0.5],
-                "orientation": "horizontal"
-            },
-            "axis": {
-                "ticks": { "*": ["@innerWidth", 0.013] },
-                "position": "bottom",
-                "format": "c"
-            },
-            "hover": {
-                "format": "c"
-            }
+            "format": "c",
+            "scale": { "domainAbs": [-0.5, 0.5] },
+            "axis": { "ticks": { "*": ["@innerWidth", 0.013] } },
+            "hover": {}
         },
         "y": {
             "column": "Einwohner",
-            "type": "numeric",
-            "scale": {
-                "type": "linear",
-                "domain": [0, null],
-                "domainRel": [0, 0.2],
-                "orientation": "vertical"
-            },
-            "axis": {
-                "ticks": 5,
-                "position": "left",
-                "grid": true,
-                "format": ",.0f"
-            },
-            "hover": {
-                "format": ",.0f"
-            }
+            "domain": [0, null],
+            "format": ",.0f",
+            "scale": { "domainRel": [0, 0.2] },
+            "axis": { "ticks": 5, "grid": true },
+            "hover": {}
         },
         "land": {
             "column": "Bundesland",
@@ -83,36 +62,24 @@
                 "Tirol":            {},
                 "Vorarlberg":       {}
             },
-            "hover": {
-            }
+            "hover": {}
         }
     },
     "plot": [
         {
-            "type": "cartesian:line",
+            "type": "line",
             "by": "land",
             "props": {
                 "stroke-width": "@stroke-width",
-                "fill": "none",
                 "opacity": 0.7,
-                "stroke": "@color",
-                "d": {
-                    "x": "@x:scaled",
-                    "y": "@y:scaled"
-                }
+                "stroke": "@color"
             },
             "highlight": { "opacity": 1, "stroke-width": 3 }
         },
         {
-            "type": "svg:circle",
+            "type": "point",
             "by": "land",
-            "props": {
-                "fill": "@color",
-                "opacity": 0.7,
-                "cx": "@x:scaled",
-                "cy": "@y:scaled",
-                "r": 4
-            },
+            "props": { "fill": "@color", "opacity": 0.7, "r": 4 },
             "highlight": { "r": 5, "opacity": 1 }
         }
     ]

@@ -14,9 +14,7 @@
             {
                 "id": "valuesShare",
                 "patch": { "mapping": {
-                    "y": {
-                        "scale": { "domain": [0, null], "domainRel": [0, 0.1] }
-                    }
+                    "y": { "domain": [0, null], "scale": { "domainRel": [0, 0.1] } }
                 } }
             }
         ]

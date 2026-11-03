@@ -70,13 +70,9 @@
         }
     ],
     "mapping": {
-        "date": {
-            "column": "date",
-            "type": "date"
-        },
+        "date": "date",
         "type": {
             "column": "fuelType",
-            "type": "categorical",
             "categories": {
                 "DIE": {
                     "name": "Diesel"
@@ -86,13 +82,9 @@
                 }
             }
         },
-        "nuts": {
-            "column": "nuts2",
-            "type": "categorical"
-        },
+        "nuts": "nuts2",
         "price": {
             "column": "priceMean",
-            "type": "numeric",
             "scale": {
                 "type": "sequential",
                 "interpolator": "YlOrRd"

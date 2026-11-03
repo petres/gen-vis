@@ -13,21 +13,18 @@
     "mapping": {
         "x": {
             "column": "Jahr",
-            "type": "categorical",
-            "scale": { "type": "band", "orientation": "horizontal", "padding": 0.18 },
-            "axis": { "position": "bottom" }
+            "scale": { "type": "band", "padding": 0.18 }
         },
         "y": {
             "column": "share",
-            "type": "numeric",
+            "domain": [0, 1],
             "stacked": true,
-            "scale": { "type": "linear", "orientation": "vertical", "domain": [0, 1], "domainRel": [0, 0] },
-            "axis": { "position": "left", "values": [0, 0.25, 0.5, 0.75, 1], "grid": true, "format": ".0%" },
+            "scale": { "domainRel": [0, 0] },
+            "axis": { "values": [0, 0.25, 0.5, 0.75, 1], "grid": true, "format": ".0%" },
             "hover": { "format": ".1%" }
         },
         "type": {
             "column": "Type",
-            "type": "categorical",
             "legend": { "symbol": { "type": "rect", "size": 14 } },
             "categories": {
                 "Hauseigentum":     { "color": "#264653", "text": "#FFFFFF" },
@@ -39,7 +36,7 @@
             },
             "hover": {}
         },
-        "geo": { "column": "Geo", "type": "categorical", "categories": { "Österreich": {}, "Wien": {} } }
+        "geo": { "column": "Geo", "categories": { "Österreich": {}, "Wien": {} } }
     },
     "facets": { "dim": "geo", "cols": { "steps": ["@totalWidth", { "0": 1, "600": 2 }] } },
     "annotations": [
@@ -64,7 +61,7 @@
         },
         {
             "id": "shares",
-            "type": "svg:text",
+            "type": "text",
             "by": "type",
             "filter": { "y": { "range": [0.07, null] } },
             "props": {

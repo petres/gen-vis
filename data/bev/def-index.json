@@ -20,8 +20,8 @@
         { "type": "line", "y": 100, "props": { "stroke-dasharray": "3 3" } }
     ],
     "mapping": {
-        "x": { "column": "Jahr", "type": "numeric", "format": "c", "scale": { "domainRel": [0, 0], "inset": 6 }, "axis": { "tickSpacing": 80 }, "hover": {} },
-        "y": { "column": "index", "type": "numeric", "nice": true, "axis": { "grid": true, "ticks": 5, "format": ",.0f" }, "hover": { "format": ",.1f" } },
+        "x": { "column": "Jahr", "format": "c", "scale": { "domainRel": [0, 0], "inset": 6 }, "axis": { "tickSpacing": 80 }, "hover": {} },
+        "y": { "column": "index", "nice": true, "axis": { "grid": true, "ticks": 5, "format": ",.0f" }, "hover": { "format": ",.1f" } },
         "land": {
             "column": "Bundesland",
             "fromData": true,
@@ -33,14 +33,9 @@
         }
     },
     "plot": {
-        "type": "cartesian:line",
+        "type": "line",
         "by": "land",
-        "props": {
-            "stroke": "@color",
-            "stroke-width": "@stroke-width",
-            "fill": "none",
-            "d": { "x": "@x:scaled", "y": "@y:scaled" }
-        },
+        "props": { "stroke": "@color", "stroke-width": "@stroke-width" },
         "highlight": { "stroke-width": 4 }
     }
 }

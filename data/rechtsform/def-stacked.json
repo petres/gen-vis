@@ -10,47 +10,26 @@
     "mapping": {
         "xx": {
             "column": "Jahr",
-            "type": "numeric",
-            "scale": {
-                "type": "linear",
-                "orientation": "horizontal",
-                "domainAbs": [-6, 6]
-            },
+            "format": "c",
+            "scale": { "orientation": "horizontal", "domainAbs": [-6, 6] },
             "axis": {
                 "ticks": 6,
-                "format": "",
-                "position": "bottom",
                 "rotate": 0,
-                "format": "c",
                 "values": [1971, 1981, 1991, 2001, 2011, 2020]
             },
-            "hover": {
-                "format": "c"
-            }
+            "hover": {}
         },
         "yy": {
             "column": "Anzahl",
-            "type": "numeric",
+            "domain": [0, null],
+            "format": ",.0f",
             "stacked": true,
-            "scale": {
-                "type": "linear",
-                "domain": [0, null],
-                "domainRel": [0, 0.02],
-                "orientation": "vertical"
-            },
-            "axis": {
-                "ticks": 8,
-                "position": "left",
-                "grid": true,
-                "format": ",.0f"
-            },
-            "hover": {
-                "format": ",.0f"
-            }
+            "scale": { "domainRel": [0, 0.02], "orientation": "vertical" },
+            "axis": { "ticks": 8, "grid": true },
+            "hover": {}
         },
         "type": {
             "column": "Type",
-            "type": "categorical",
             "legend": {
                 "symbol": {
                     "size": 16,
@@ -82,13 +61,10 @@
                 "Private Miete":    { "color": "#4B9847"},
                 "Sonstige":         { "color": "#9CE1F8"}
             },
-            "hover": {
-
-            }
+            "hover": {}
         },
         "geo": {
             "column": "Geo",
-            "type": "categorical",
             "legend": {},
             "categories": {
                 "Österreich": { "name": "Österreich"},
@@ -103,20 +79,17 @@
     },
     "plot": [
         {
-            "type": "cartesian:bar",
+            "type": "bar",
             "by": "type",
-            "highlight": "row",
             "props": {
                 "fill": "@color",
                 "opacity": 0.7,
-                "highlight-opacity": 1,
-                "highlight-stroke": "#333",
-                "highlight-stroke-width": 1.5,
                 "x": "@xx:scaled",
                 "y0": "@yy:start:scaled",
                 "y1": "@yy:end:scaled",
                 "width": { "*": ["@innerWidth", 0.1] }
-            }
+            },
+            "highlight": { "mode": "row", "opacity": 1, "stroke": "#333", "stroke-width": 1.5 }
         }
     ]
 }

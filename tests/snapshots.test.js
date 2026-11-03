@@ -8,12 +8,24 @@ import { examples, errors, useDom, mount, pointer, nextTick } from './dom.js';
 
 useDom();
 
+// the attributes of the start tags of serialized html sorted by their names,
+// their order does not change the drawing, e.g. the one of the props of a
+// plot and of its defaults; the values of the serialization are quoted with
+// `"`, which is escaped in them, a `<` of a text is escaped as well
+const sortAttributes = html => html.replace(/<([a-zA-Z][^\s/>]*)((?:\s+[^\s"'>\/=]+(?:="[^"]*")?)*)(\s*\/?)>/g, (tag, name, attrs, end) => {
+    const sorted = (attrs.match(/[^\s"'>\/=]+(?:="[^"]*")?/g) ?? []).sort((a, b) => {
+        const [x, y] = [a, b].map(v => v.split('=')[0]);
+        return x < y ? -1 : (x > y ? 1 : 0);
+    });
+    return `<${name}${sorted.map(a => ` ${a}`).join('')}${end}>`;
+});
+
 // without the counters of the ids of a page, numbers are rounded, e.g. the
 // positions, so a different order of the computation is no change, three
-// decimals are kept, e.g. 1.234 in german
-const normalize = html => html
+// decimals are kept, e.g. 1.234 in german, the attributes sorted
+const normalize = html => sortAttributes(html
     .replace(/gen-vis-(gradient|form|facet)-\d+/g, 'gen-vis-$1-N')
-    .replace(/-?\d+\.\d{4,}(e-?\d+)?/g, n => String(+Number(n).toFixed(3)))
+    .replace(/-?\d+\.\d{4,}(e-?\d+)?/g, n => String(+Number(n).toFixed(3))))
     .replace(/></g, '>\n<');
 
 const snapshot = el => normalize(el.querySelector('.vis')?.outerHTML ?? el.innerHTML);

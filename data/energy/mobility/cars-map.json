@@ -49,14 +49,15 @@
         }
     ],
     "mapping": {
-        "series": { "column": "series", "type": "categorical" },
-        "type": { "column": "type", "type": "categorical" },
+        "series": "series",
+        "type": "type",
         "year": { "column": "year", "type": "categorical" },
         "value": {
             "name": "Anteil",
             "column": "share",
-            "type": "numeric",
-            "scale": { "type": "sequentialSqrt", "interpolator": "Reds", "domain": [0, null], "nice": true },
+            "domain": [0, null],
+            "nice": true,
+            "scale": { "type": "sequentialSqrt", "interpolator": "Reds" },
             "legend": { "format": ".1~%" },
             "hover": { "format": ".1%" }
         }

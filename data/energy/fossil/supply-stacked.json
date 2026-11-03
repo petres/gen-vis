@@ -20,7 +20,8 @@
                 "id": "valuesShare", "value": ".share", "name": "Anteil",
                 "patch": { "mapping": {
                     "y": {
-                        "scale": { "domain": [0, 1], "domainRel": [0, 0] },
+                        "domain": [0, 1],
+                        "scale": { "domainRel": [0, 0] },
                         "axis": { "format": ".0%" },
                         "hover": { "format": ".1%" }
                     }

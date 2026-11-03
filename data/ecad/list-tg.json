@@ -17,20 +17,20 @@
     "filter": { "x": { "range": [1959, null] } },
     "mapping": {
         "x": {
-            "column": "date", "type": "numeric",
-            "scale": { "orientation": "horizontal", "domain": [1959, null], "domainRel": [0, 0] },
-            "axis": { "position": "top", "ticks": 7, "format": "d", "grid": true, "padding": 5 },
-            "hover": { "format": "d" }
+            "column": "date", "domain": [1959, null], "format": "d",
+            "scale": { "domainRel": [0, 0] },
+            "axis": { "position": "top", "ticks": 7, "grid": true, "padding": 5 },
+            "hover": {}
         },
         "y": {
-            "column": "v", "type": "numeric",
-            "scale": { "orientation": "vertical", "domainRel": [0, 0] },
-            "axis": { "position": "left", "ticks": 2, "format": "$.1f", "grid": true },
-            "hover": { "format": "$.1f" }
+            "column": "v", "format": "$.1f",
+            "scale": { "domainRel": [0, 0] },
+            "axis": { "ticks": 2, "grid": true },
+            "hover": {}
         },
-        "avg": { "column": "avg", "type": "numeric", "scale": { "of": "y" } },
-        "p1": { "column": "p1", "type": "numeric", "scale": { "of": "y" }, "hover": { "format": "$.1f" } },
-        "p2": { "column": "p2", "type": "numeric", "scale": { "of": "y" }, "hover": { "format": "$.1f" } }
+        "avg": { "column": "avg", "scale": { "of": "y" } },
+        "p1": { "column": "p1", "scale": { "of": "y" }, "hover": { "format": "$.1f" } },
+        "p2": { "column": "p2", "scale": { "of": "y" }, "hover": { "format": "$.1f" } }
     },
     "annotations": [
         { "type": "band", "x": [1961, 1990], "props": { "fill": "#35d3da", "fill-opacity": 0.1 } },
@@ -38,20 +38,20 @@
     ],
     "plot": [
         {
-            "id": "avg", "type": "cartesian:line",
-            "props": { "fill": "none", "stroke": "#9cb806", "stroke-width": 1.5, "stroke-opacity": 0.5, "d": { "x": "@x:scaled", "y": "@avg:scaled" } }
+            "id": "avg", "type": "line",
+            "props": { "stroke": "#9cb806", "stroke-width": 1.5, "stroke-opacity": 0.5, "d": { "y": "@avg:scaled" } }
         },
         {
-            "id": "p1", "type": "cartesian:line", "filter": { "x": { "range": [1961, 1990] } },
-            "props": { "fill": "none", "stroke": "#35d3da", "stroke-width": 1.5, "stroke-opacity": 0.7, "d": { "x": "@x:scaled", "y": "@p1:scaled" } }
+            "id": "p1", "type": "line", "filter": { "x": { "range": [1961, 1990] } },
+            "props": { "stroke": "#35d3da", "stroke-width": 1.5, "stroke-opacity": 0.7, "d": { "y": "@p1:scaled" } }
         },
         {
-            "id": "p2", "type": "cartesian:line", "filter": { "x": { "range": [1991, 2020] } },
-            "props": { "fill": "none", "stroke": "#f23c06", "stroke-width": 1.5, "stroke-opacity": 0.7, "d": { "x": "@x:scaled", "y": "@p2:scaled" } }
+            "id": "p2", "type": "line", "filter": { "x": { "range": [1991, 2020] } },
+            "props": { "stroke": "#f23c06", "stroke-width": 1.5, "stroke-opacity": 0.7, "d": { "y": "@p2:scaled" } }
         },
         {
-            "id": "line", "type": "cartesian:line",
-            "props": { "fill": "none", "stroke": "#444", "stroke-width": 1.5, "d": { "x": "@x:scaled", "y": "@y:scaled" } }
+            "id": "line", "type": "line",
+            "props": { "stroke": "#444", "stroke-width": 1.5 }
         },
         {
             "id": "points",
@@ -59,13 +59,13 @@
             "props": { "r": 1.5, "fill": "#333", "fill-opacity": 0.8 }
         },
         {
-            "id": "p1-label", "type": "svg:text", "filter": { "x": { "range": [1961, 1990] } }, "select": "last", "layer": "above",
-            "props": { "x": "@x:scaled", "dx": 6, "y": "@p1:scaled", "text": "@p1:formatted", "font-size": 12, "dominant-baseline": "middle",
+            "id": "p1-label", "type": "text", "filter": { "x": { "range": [1961, 1990] } }, "select": "last", "layer": "above",
+            "props": { "dx": 6, "y": "@p1:scaled", "text": "@p1:formatted", "font-size": 12, "dominant-baseline": "middle",
                 "fill": "#126064", "stroke": "white", "stroke-width": 4, "stroke-opacity": 0.8, "paint-order": "stroke" }
         },
         {
-            "id": "p2-label", "type": "svg:text", "filter": { "x": { "range": [1991, 2020] } }, "select": "first", "layer": "above",
-            "props": { "x": "@x:scaled", "dx": -6, "y": "@p2:scaled", "text": "@p2:formatted", "font-size": 12, "dominant-baseline": "middle", "text-anchor": "end",
+            "id": "p2-label", "type": "text", "filter": { "x": { "range": [1991, 2020] } }, "select": "first", "layer": "above",
+            "props": { "dx": -6, "y": "@p2:scaled", "text": "@p2:formatted", "font-size": 12, "dominant-baseline": "middle", "text-anchor": "end",
                 "fill": "#5d1702", "stroke": "white", "stroke-width": 4, "stroke-opacity": 0.8, "paint-order": "stroke" }
         }
     ]

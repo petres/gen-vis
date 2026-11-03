@@ -43,34 +43,34 @@
     ],
     "mapping": {
         "x": {
-            "column": "day", "type": "date",
-            "scale": { "type": "utc", "orientation": "angular", "domain": ["2020-01-01", "2021-01-01"] },
-            "axis": { "position": "angular", "ticks": 12, "format": "%B", "grid": true, "padding": 6,
+            "column": "day", "domain": ["2020-01-01", "2021-01-01"],
+            "scale": { "type": "utc" },
+            "axis": { "ticks": 12, "format": "%B", "grid": true, "padding": 6,
                 "labels": { "curved": "between", "props": { "font-weight": "bold", "font-size": 12 } } },
             "hover": { "format": "%e %B" }
         },
         "y": {
             "column": "{r}",
             "type": "numeric",
-            "scale": { "orientation": "radial", "range": [{ "*": ["@radius", 0.22] }, "@radius"] },
-            "axis": { "position": "radial", "ticks": 6, "grid": true, "format": "+$.0f",
+            "scale": { "range": [{ "*": ["@radius", 0.22] }, "@radius"] },
+            "axis": { "ticks": 6, "grid": true, "format": "+$.0f",
                 "labels": { "props": { "font-size": 10, "fill": "#555", "stroke-width": 4, "stroke-opacity": 0.6 } } }
         },
-        "clim": { "column": "{c}", "type": "numeric", "scale": { "of": "y" } },
-        "hi": { "column": "{hi}", "type": "numeric", "scale": { "of": "y" } },
-        "lo": { "column": "{lo}", "type": "numeric", "scale": { "of": "y" } },
-        "t": { "column": "t", "type": "numeric", "hover": { "format": "$.1f" } },
-        "mean": { "column": "clim", "type": "numeric", "hover": { "format": "$.1f" } },
-        "diff": { "column": "diff", "type": "numeric", "hover": { "format": "+$.1f" } },
-        "year": { "column": "year", "type": "categorical", "fromData": true },
-        "date": { "column": "date", "type": "date", "hover": { "format": "%A" } }
+        "clim": { "column": "{c}", "scale": { "of": "y" } },
+        "hi": { "column": "{hi}", "scale": { "of": "y" } },
+        "lo": { "column": "{lo}", "scale": { "of": "y" } },
+        "t": { "column": "t", "hover": { "format": "$.1f" } },
+        "mean": { "column": "clim", "hover": { "format": "$.1f" } },
+        "diff": { "column": "diff", "hover": { "format": "+$.1f" } },
+        "year": { "column": "year", "fromData": true },
+        "date": { "column": "date", "hover": { "format": "%A" } }
     },
     "plot": [
         {
             "id": "years",
-            "type": "polar:line",
+            "type": "line",
             "by": "year",
-            "props": { "fill": "none", "stroke": "#999", "stroke-opacity": 0.12, "d": { "angle": "@x:scaled", "radius": "@y:scaled" } }
+            "props": { "stroke": "#999", "stroke-opacity": 0.12 }
         },
         {
             "id": "above",
@@ -85,12 +85,12 @@
             "props": { "fill": "#35d3da", "d": { "innerRadius": "@lo:scaled", "outerRadius": "@clim:scaled" }, "fill-opacity": 0.25 }
         },
         {
-            "id": "mean", "type": "polar:line", "filter": { "year": "@year" },
-            "props": { "fill": "none", "stroke": "#9cb806", "stroke-width": 2, "stroke-opacity": 0.8, "d": { "angle": "@x:scaled", "radius": "@clim:scaled" } }
+            "id": "mean", "type": "line", "filter": { "year": "@year" },
+            "props": { "stroke": "#9cb806", "stroke-width": 2, "stroke-opacity": 0.8, "d": { "radius": "@clim:scaled" } }
         },
         {
-            "id": "selected", "type": "polar:line", "filter": { "year": "@year" },
-            "props": { "fill": "none", "stroke": "#444", "stroke-width": 1.5, "d": { "angle": "@x:scaled", "radius": "@y:scaled" } }
+            "id": "selected", "type": "line", "filter": { "year": "@year" },
+            "props": { "stroke": "#444", "stroke-width": 1.5 }
         },
         {
             "id": "mean-points",

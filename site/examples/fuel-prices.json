@@ -11,21 +11,19 @@
     "mapping": {
         "x": {
             "column": "week",
-            "type": "date",
-            "scale": { "type": "utc", "orientation": "horizontal" },
-            "axis": { "position": "bottom", "ticks": { "*": ["@innerWidth", 0.009] }, "format": "%b %Y" },
+            "scale": { "type": "utc" },
+            "axis": { "ticks": { "*": ["@innerWidth", 0.009] }, "format": "%b %Y" },
             "hover": { "format": "%b %-d, %Y" }
         },
         "y": {
             "column": "price",
-            "type": "numeric",
-            "scale": { "type": "linear", "orientation": "vertical", "include": 2, "nice": true },
-            "axis": { "position": "left", "ticks": 7, "grid": true, "format": "$.2f" },
+            "nice": true,
+            "scale": { "include": 2 },
+            "axis": { "ticks": 7, "grid": true, "format": "$.2f" },
             "hover": { "format": "$.3f" }
         },
         "fuel": {
             "column": "fuel",
-            "type": "categorical",
             "legend": {
                 "symbol": {
                     "size": 18,
@@ -46,15 +44,10 @@
     ],
     "plot": [
         {
-            "type": "cartesian:line",
+            "type": "line",
             "by": "fuel",
             "curve": "monotoneX",
-            "props": {
-                "d": { "x": "@x:scaled", "y": "@y:scaled" },
-                "stroke": "@color",
-                "stroke-width": 2.5,
-                "fill": "none"
-            },
+            "props": { "stroke": "@color", "stroke-width": 2.5 },
             "highlight": { "stroke-width": 3.5 },
             "others": { "stroke-opacity": 0.25 }
         },
@@ -67,18 +60,15 @@
             "others": { "opacity": 0.25 }
         },
         {
-            "type": "svg:text",
+            "type": "text",
             "by": "fuel",
             "select": "last",
             "dodge": 16,
             "layer": "above",
             "props": {
-                "x": "@x:scaled",
-                "y": "@y:scaled",
                 "dx": 9,
                 "dominant-baseline": "middle",
                 "text": "@name",
-                "fill": "@color",
                 "font-size": 13,
                 "font-weight": "bold"
             },

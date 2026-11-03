@@ -37,21 +37,20 @@
     },
     "mapping": {
         "x": {
-            "column": "month", "type": "date",
-            "scale": { "type": "utc", "orientation": "horizontal", "domain": ["2020-01-01", "2020-12-01"], "inset": 4 },
-            "axis": { "position": "bottom", "values": ["2020-01-01", "2020-04-01", "2020-07-01", "2020-10-01"], "format": "%b" },
+            "column": "month", "domain": ["2020-01-01", "2020-12-01"],
+            "scale": { "type": "utc", "inset": 4 },
+            "axis": { "values": ["2020-01-01", "2020-04-01", "2020-07-01", "2020-10-01"], "format": "%b" },
             "hover": { "format": "%B" }
         },
         "y": {
-            "column": "{unit}", "type": "numeric",
-            "scale": { "type": "linear", "orientation": "vertical", "include": 0, "nice": true },
-            "axis": { "position": "left", "ticks": 4, "grid": true, "format": ",.0f" },
+            "column": "{unit}", "nice": true,
+            "scale": { "include": 0 },
+            "axis": { "ticks": 4, "grid": true, "format": ",.0f" },
             "hover": { "format": ",.2f" }
         },
-        "product": { "column": "product", "type": "categorical", "categories": { "oil": { "name": "Oil" }, "gas": { "name": "Gas" }, "coal": { "name": "Coal" } } },
+        "product": { "column": "product", "categories": { "oil": { "name": "Oil" }, "gas": { "name": "Gas" }, "coal": { "name": "Coal" } } },
         "year": {
             "column": "year",
-            "type": "categorical",
             "name": "Year",
             "legend": { "symbol": "line" },
             "hover": {},
@@ -67,26 +66,21 @@
     "plot": [
         {
             "id": "lines",
-            "type": "cartesian:line",
+            "type": "line",
             "by": "year",
             "curve": "monotoneX",
-            "props": {
-                "d": { "x": "@x:scaled", "y": "@y:scaled" },
-                "stroke": "@color",
-                "stroke-width": "@width",
-                "fill": "none"
-            },
+            "props": { "stroke": "@color", "stroke-width": "@width" },
             "highlight": { "stroke-width": 3.5 },
             "others": { "stroke-opacity": 0.25 }
         },
         {
             "id": "labels",
-            "type": "svg:text",
+            "type": "text",
             "by": "year",
             "select": "last",
             "props": {
-                "x": "@x:scaled", "y": "@y:scaled", "dy": -8, "text-anchor": "end", "font-size": 11, "font-weight": "bold",
-                "fill": "@color", "text": "@year", "visibility": "@label"
+                "dy": -8, "text-anchor": "end", "font-size": 11, "font-weight": "bold",
+                "text": "@year", "visibility": "@label"
             }
         }
     ]

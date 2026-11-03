@@ -11,16 +11,8 @@
     "mapping": {
         "land": {
             "column": "Bundesland",
-            "type": "categorical",
-            "scale": {
-                "type": "point",
-                "orientation": "angular"
-            },
-            "axis": {
-                "position": "angular",
-                "grid": true,
-                "padding": 4
-            },
+            "scale": { "orientation": "angular" },
+            "axis": { "grid": true, "padding": 4 },
             "categories": {
                 "ÖSTERREICH":       { "visible": false },
                 "Wien":             {},
@@ -36,16 +28,10 @@
         },
         "y": {
             "column": "Einwohner",
-            "type": "numeric",
-            "scale": {
-                "type": "linear",
-                "domain": [0, null],
-                "domainRel": [0, 0.05],
-                "orientation": "radial"
-            },
+            "domain": [0, null],
+            "scale": { "domainRel": [0, 0.05] },
             "axis": {
                 "ticks": 4,
-                "position": "radial",
                 "angle": 40,
                 "grid": true,
                 "gridShape": "polygon",
@@ -57,7 +43,6 @@
         },
         "year": {
             "column": "Jahr",
-            "type": "categorical",
             "legend": {
                 "symbol": {
                     "size": 16,
@@ -77,26 +62,20 @@
     },
     "plot": [
         {
-            "type": "polar:line",
+            "type": "line",
             "by": "year",
             "curve": "linearClosed",
             "props": {
                 "stroke": "@color",
                 "stroke-width": 2.5,
-                "fill": "none",
-                "d": { "angle": "@land:scaled", "radius": "@y:scaled" }
+                "d": { "angle": "@land:scaled" }
             },
             "highlight": { "stroke-width": 4 }
         },
         {
-            "type": "polar:circle",
+            "type": "point",
             "by": "year",
-            "props": {
-                "fill": "@color",
-                "r": 3.5,
-                "angle": "@land:scaled",
-                "radius": "@y:scaled"
-            },
+            "props": { "fill": "@color", "r": 3.5, "angle": "@land:scaled" },
             "highlight": { "r": 5 }
         }
     ]

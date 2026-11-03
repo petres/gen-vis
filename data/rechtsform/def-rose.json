@@ -12,41 +12,28 @@
         "year": {
             "column": "Jahr",
             "type": "categorical",
-            "scale": {
-                "type": "band",
-                "orientation": "angular",
-                "padding": 0.1
-            },
-            "axis": {
-                "position": "angular"
-            },
+            "scale": { "orientation": "angular", "padding": 0.1 },
+            "axis": {},
             "hover": {
                 "format": "c"
             }
         },
         "count": {
             "column": "Anzahl",
-            "type": "numeric",
+            "domain": [0, null],
             "stacked": true,
             "scale": {
                 "type": "sqrt",
-                "domain": [0, null],
                 "range": [20, "@radius"],
                 "orientation": "radial"
             },
-            "axis": {
-                "ticks": 4,
-                "position": "radial",
-                "grid": true,
-                "format": ".2s"
-            },
+            "axis": { "ticks": 4, "grid": true, "format": ".2s" },
             "hover": {
                 "format": ",.0f"
             }
         },
         "type": {
             "column": "Type",
-            "type": "categorical",
             "legend": {
                 "symbol": {
                     "size": 16,
@@ -68,7 +55,6 @@
         },
         "geo": {
             "column": "Geo",
-            "type": "categorical",
             "categories": {
                 "Österreich": {},
                 "Wien": {}

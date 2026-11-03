@@ -10,29 +10,14 @@
     "mapping": {
         "x": {
             "column": "date",
-            "type": "date",
-            "scale": {
-                "type": "time",
-                "orientation": "horizontal"
-            },
-            "axis": {
-                "ticks": 6,
-                "format": "",
-                "position": "bottom",
-                "rotate": 40
-            }
+            "format": "",
+            "axis": { "ticks": 6, "rotate": 40 }
         },
         "y": {
             "column": "priceMean",
-            "type": "numeric",
-            "scale": {
-                "type": "linear",
-                "domain": [0, null],
-                "orientation": "vertical"
-            },
+            "domain": [0, null],
             "axis": {
                 "ticks": 8,
-                "position": "left",
                 "grid": true,
                 "title": {
                     "name": "Preis in €/l",
@@ -100,17 +85,12 @@
     ],
     "plot": [
         {
-            "type": "cartesian:line",
+            "type": "line",
             "by": ["type", "nuts"],
             "props": {
                 "stroke-width": "@stroke-width",
                 "stroke-dasharray": "@stroke-dasharray",
-                "fill": "none",
-                "stroke": "@color",
-                "d": {
-                    "x": "@x:scaled",
-                    "y": "@y:scaled"
-                }
+                "stroke": "@color"
             }
         }
     ]

@@ -2,37 +2,17 @@
     "mapping": {
         "x": {
             "column": "date",
-            "type": "date",
-            "scale": {
-                "type": "time",
-                "orientation": "horizontal",
-                "domainAbs": [-2000000000, 2000000000]
-            },
-            "axis": {
-                "ticks": { "*": ["@innerWidth", 0.017] },
-                "position": "bottom",
-                "rotate": 35,
-                "format": "%b %y"
-            },
-            "hover": {
-                "format": "%b %y"
-            }
+            "format": "%b %y",
+            "scale": { "domainAbs": [-2000000000, 2000000000] },
+            "axis": { "ticks": { "*": ["@innerWidth", 0.017] }, "rotate": 35 },
+            "hover": {}
         },
         "y": {
             "column": "value",
             "type": "numeric",
-            "scale": {
-                "type": "linear",
-                "orientation": "vertical",
-                "domain": [0, null],
-                "domainRel": [0, 0.1]
-            },
-            "axis": {
-                "ticks": 6,
-                "position": "left",
-                "grid": true,
-                "format": ",.0f"
-            },
+            "domain": [0, null],
+            "scale": { "domainRel": [0, 0.1] },
+            "axis": { "ticks": 6, "grid": true, "format": ",.0f" },
             "hover": {
                 "format": ",.1f"
             }

@@ -17,14 +17,12 @@
         "year": { "column": "Jahr", "type": "categorical" },
         "count": {
             "column": "Anzahl",
-            "type": "numeric",
             "stacked": true,
             "scale": { "orientation": "angular" },
             "hover": { "format": ",.0f" }
         },
         "type": {
             "column": "Type",
-            "type": "categorical",
             "legend": {
                 "symbol": {
                     "size": 16,
@@ -41,7 +39,7 @@
             },
             "hover": {}
         },
-        "geo": { "column": "Geo", "type": "categorical", "categories": { "Österreich": {}, "Wien": {} } }
+        "geo": { "column": "Geo", "categories": { "Österreich": {}, "Wien": {} } }
     },
     "facets": {
         "dim": "geo",

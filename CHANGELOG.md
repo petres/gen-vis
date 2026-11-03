@@ -5,12 +5,41 @@ The changes of the versions, the newest first, the ones on npm without
 
 ## 4.0.0 (unreleased)
 
-A shorter definition language, a definition of 3.x is migrated while it is
-loaded (the console says so with `check`), `migrate(def)` and
-`migrateParts(parts)` of `@preschen/gen-vis/check` write it in 4.0, see the
-readme (Checks outside the browser). The renderer is the one of 3.x, a
-definition of 4.0 is written in its form (`normalize`), so the charts are
-the same. The breaking changes:
+A shorter definition language, a core without a framework (Vue is an
+optional adapter) and a renderer without d3-selection and d3-transition.
+The charts are the ones of 3.x: a definition of 4.0 is written in the form
+the renderer of 3.x reads (`normalize`), the elements are the ones of 3.x
+without the scoped ids of Vue (`data-v-…`) and its comments, the attributes
+of the default props of a short plot type are before the ones of the
+definition.
+
+Migration from 3.x:
+
+- Definitions: a definition of 3.x is migrated while it is loaded (the
+  console says so with `check`). `migrate(def)` and `migrateParts(parts)` of
+  `@preschen/gen-vis/check` write it in 4.0, in its shorter forms, the parts
+  of a definition and its parents each, see the readme (Checks outside the
+  browser); `validateDef` checks a definition of 4.0, one of 3.x gets the
+  hint to migrate it first.
+- Vue: the component `GenVis` and the plugin are the ones of
+  `@preschen/gen-vis/vue` (`vue` is an optional peer dependency), `import
+  GenVis from '@preschen/gen-vis/vue'` or `import { GenVis } from
+  '@preschen/gen-vis/vue'` instead of `'@preschen/gen-vis'`, with the same
+  props, `v-model:state`, events, slots and methods.
+- The standalone script and the module of `dist-lib/` have no Vue,
+  `gen-vis.novue.js`, `esm-novue/` and the export
+  `@preschen/gen-vis/esm-novue` are gone; a page with Vue uses
+  `GenVis.vuePlugin(Vue)` or `GenVis.createVueComponent(Vue)`.
+- `registerCoord` and `registerPlotType`: the coordinate systems and plot
+  types get DOM elements instead of d3 selections (`ctx.inner`, the `parent`
+  of `hover.area`, the `line` of `hover.marker`), e.g.
+  `ctx.inner.getAttribute('transform')` instead of
+  `ctx.inner.node().getAttribute('transform')`.
+- `createGenVis`, `mountGenVisElement` and `mountGenVisByClass` return the
+  visualisation instead of a Vue component: its element is `.el` (not
+  `$el`), its props `.props` (not `$props`).
+
+The definition language, the breaking changes:
 
 - The props are expressions, close to JSON Logic: an operator is an object of
   one key, e.g. `{"*": ["@innerWidth", 0.013]}`, `{"+": ["@x:scaled", -14]}`,
@@ -23,10 +52,11 @@ the same. The breaking changes:
 - `calc` is an expression of the row (`expr`), not `op`, `columns` and
   `scale`; the new transform `filter` keeps the rows of an expression, the
   later transforms, the plots and the scales have only them.
-- The parts of the categories of a mapping (`categories`, `scheme`,
-  `common`, `fromData`, `order`, `ranks`) are parts of the mapping, not of
-  `props`; `domain` and `nice` of a mapping are the ones of its scale,
-  `format` the one of its axis and hover; a text is the mapping of a column.
+- A text is the mapping of a column, e.g. `"x": "Jahr"`. The parts of the
+  categories of a mapping (`categories`, `scheme`, `common`, `fromData`,
+  `order`, `ranks`) are parts of the mapping, not of `props`; `domain` and
+  `nice` of a mapping are the ones of its scale, `format` is the one of its
+  axis and hover which have none of their own.
 - `x` and `y` (of polar plots also `angle` and `radius`) have a scale of the
   orientation of their name and an axis by default, `"axis": false`,
   `"scale": false` and `"orientation": null` leave them out; an axis is at the
@@ -44,54 +74,47 @@ the same. The breaking changes:
   `defaults` of the types, also of registered ones): a line draws
   `"d": {"x": "@x:scaled", "y": "@y:scaled"}` in the color of its category,
   a definition writes only the props which differ; the full names have none.
-- The schema is the one of 4.0 (`@preschen/gen-vis@4/schema.json`),
-  `validateDef` checks a definition of 4.0, one of 3.x gets the hint to
-  migrate it first.
+- The schema is the one of 4.0 (`@preschen/gen-vis@4/schema.json`).
 
-The parts which are not bound to the browser, the expressions, the
-transforms, merging, normalize and migrate, are specified by the fixtures
-of `spec/`, e.g. for implementations in Python or R, the tests run them. The
-definitions of `data/` and of the page are the ones of 4.0, the ones of 3.1
-are in `tests/legacy/`.
+`migrate` writes the shorter forms of 4.0, each one if the definition draws
+the same: the short types without the props of their defaults, `highlight`
+and `others`, mappings without the types, scales, orientations and positions
+of axes which follow from the rest, `domain` and `format` at the mapping and
+texts of columns; a definition of 4.0 is only written shorter. The
+definitions of `data/` and of the page are written so (also without the
+types their values infer), the ones of 3.1 are in `tests/legacy/`. The parts
+which are not bound to the browser, the expressions, the transforms,
+merging, normalize and migrate, are specified by the fixtures of `spec/`,
+e.g. for implementations in Python or R, the tests run them.
 
-Breaking: the coordinate systems of `registerCoord` get DOM elements
-instead of d3 selections, the `parent` of `hover.area` (it returns the
-element it appends), the `line` of `hover.marker` and `ctx.inner`, and
-the plot types of `registerPlotType` get `ctx.inner` as an element (the
-`g` of the plots and axes), e.g. `ctx.inner.getAttribute('transform')`
-instead of `ctx.inner.node().getAttribute('transform')`. The package
-draws without d3-selection and d3-transition (`src/utils/dom.js`).
+The package is a core without a framework. `@preschen/gen-vis` exports
+`createGenVis(element, props)` (a visualisation with `update(props)`,
+`on`/`off` of the events, `destroy()`, `state`, `el` and the methods
+`exportPng`, `copyPng`, `image`, `exportCsv` and `setHighlight`),
+`mountGenVisElement`, `mountGenVisByClass`, `unmountGenVisElement`,
+`registerPlotType`, `registerCoord`, `perRow` and `perGroup`. Without Vue
+the slots are functions of their props (the prop `slots`, they return a
+node or a text) and the events are listeners (`on`, or the props `onHover`,
+`onSelect`, `onRendered`, `onError` and `'onUpdate:state'`). Changes are
+drawn together in a microtask, a new view only of a new state, new globals,
+a toggle or a new width, the hover only draws itself. The styles are one
+stylesheet (`src/styles.css`), still in the cascade layer `gen-vis`, with
+the same classes and css variables.
 
-Breaking: the package is a core without a framework, Vue is an optional
-adapter. `@preschen/gen-vis` exports `createGenVis(element, props)` (a
-visualisation with `update(props)`, `on`/`off` of the events, `destroy()`,
-`state`, `el` and the methods `exportPng`, `copyPng`, `image`, `exportCsv`
-and `setHighlight`), `mountGenVisElement`, `mountGenVisByClass`,
-`unmountGenVisElement`, `registerPlotType`, `registerCoord`, `perRow` and
-`perGroup`; these return the visualisation instead of a Vue component (its
-element is `el`, not `$el`, its props `props`, not `$props`). The component
-`GenVis` and the plugin are the ones of `@preschen/gen-vis/vue` (`vue` is an
-optional peer dependency): `import GenVis from '@preschen/gen-vis/vue'` and
-`import { GenVis } from '@preschen/gen-vis/vue'` instead of
-`'@preschen/gen-vis'`, with the same props, `v-model:state`, events, slots
-and methods. Without Vue the slots are functions of their props (the prop
-`slots`, they return a node or a text) and the events are listeners (`on`,
-or the props `onHover`, `onSelect`, `onRendered`, `onError` and
-`'onUpdate:state'`). Changes are drawn together in a microtask, a new view
-only of a new state, new globals, a toggle or a new width, the hover only
-draws itself.
+The standalone script without Vue is smaller: the single file 120 kB gzipped
+instead of 143 kB, the module 64 kB at first instead of 87 kB. A page with
+Vue as a script or in its import map has the component of its Vue of the
+same files: `GenVis.vuePlugin(Vue)` (the plugin, its `component`) and
+`GenVis.createVueComponent(Vue)`.
 
-Breaking: the standalone script and the module of `dist-lib/` have no Vue
-(the single file 120 kB gzipped instead of 143 kB, the module 64 kB at first
-instead of 87 kB), `gen-vis.novue.js`, `esm-novue/` and the export
-`@preschen/gen-vis/esm-novue` are gone. A page with Vue as a script or in
-its import map has the component of its Vue of the same files:
-`GenVis.vuePlugin(Vue)` (the plugin, its `component`) and
-`GenVis.createVueComponent(Vue)`. The elements and their attributes are the
-ones of 3.x without the scoped ids of Vue (`data-v-…`) and its comments;
-the styles are one stylesheet (`src/styles.css`), still in the cascade layer
-`gen-vis`, with the same classes and css variables. The charts are drawn
+The package draws without d3-selection and d3-transition
+(`src/utils/dom.js`): the elements of the plots, the axes, the facets, the
+legends and the hover, their transitions included. The charts are drawn
 faster, the ones of `data/` together in ~14% less time.
+
+The decompressors of parquet are loaded one by one, only the ones of the
+file, e.g. zstd of polars (3 kB instead of 75 kB of all of
+hyparquet-compressors).
 
 ## 3.1.0
 
