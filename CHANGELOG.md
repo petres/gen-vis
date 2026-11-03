@@ -140,6 +140,27 @@ The decompressors of parquet are loaded one by one, only the ones of the
 file, e.g. zstd of polars (3 kB instead of 75 kB of all of
 hyparquet-compressors).
 
+The static export (README "Static export"): `exportSvg(options)` of the
+visualisation (and of a ref of the component) is the SVG of the image, made
+for Word and editors (the texts of the HTML as `<text>`, the styles as
+attributes, no foreignObject, no classes, no styles, no css variables), of
+the chosen `parts` (`title`, `subtitle`, `selection`, `legend`, `plot`,
+`footer`), its size in `px`, `cm`, `mm` or `in`, loaded with the first SVG
+(~4.5 kB gzipped); the prop `svg` is a button which saves it. The export
+page `dist-lib/export.html` (`@preschen/gen-vis/export.html`, protocol
+version 1) is the one entry of programs outside the browser:
+`window.genVisExport(options)` draws a chart at exactly the width asked
+for (e.g. `16cm`, a CSS pixel is 1/96 in), with stylesheets, classes,
+globals, a state, schemes and a size of the texts (`fontSize`, e.g.
+`8pt`), and returns its SVG and the rectangle of its image in the page,
+e.g. of a screenshot or of the print of a PDF. The CLI `gen-vis export
+<def.json> <out.svg|out.png|out.pdf>...` draws definition files in a
+Chromium, Chrome or Edge of the system (DevTools protocol over the
+WebSocket of node 22, no dependencies), the PNG of `--dpi` or `--scale`,
+the PDF the print of the SVG, one browser for all of them. The PNG of
+`image()` and the SVG share the static copy of the chart (`staticCopy` of
+`src/utils/export.js`).
+
 `registerScheme(name, colors)`: a scheme of colors of its own for `scheme`
 of the categories and the scales, e.g. `"scheme": "wifo"` of the colors of a
 house style, known to `validateDef` (also of `@preschen/gen-vis/check`),

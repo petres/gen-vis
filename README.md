@@ -195,13 +195,14 @@ plugin of another Vue, the types are the ones of `@preschen/gen-vis/vue`.
 | `download` | `data-download` | a button at the right of the footer to save it as a PNG, a string is the name of the file (default the title) |
 | `copy`     | `data-copy`     | a button at the right of the footer to copy the PNG to the clipboard (only on https or localhost) |
 | `csv`      | `data-csv`      | a button at the right of the footer to save the data shown as CSV, a string is the name of the file (default the title) |
+| `svg`      | `data-svg`      | a button at the right of the footer to save it as an SVG, see [static export](#static-export), a string is the name of the file (default the title) |
 | `imageWidth` | `data-image-width` | the width of the PNG in pixels, the one of the definition otherwise or 1200, `screen` for the one on the screen (as it is seen, e.g. on a phone) |
 | `lazy`     | `data-lazy`     | loads the definition and the data only when the visualisation is near the viewport, `true` within 400 pixels, a string is the `rootMargin` of the `IntersectionObserver`, e.g. `"800px 0px"`, see [lazy loading](#lazy-loading) |
 
-The attributes are strings: `data-download`, `data-csv`, `data-copy`,
-`data-check`, `data-debug` and `data-lazy` without a value or `"true"` are
-on, `"false"` is off, another value of `data-download` or `data-csv` is the
-name of the file, of `data-lazy` the margin.
+The attributes are strings: `data-download`, `data-csv`, `data-svg`,
+`data-copy`, `data-check`, `data-debug` and `data-lazy` without a value or
+`"true"` are on, `"false"` is off, another value of `data-download`,
+`data-csv` or `data-svg` is the name of the file, of `data-lazy` the margin.
 
 Every visualisation has its own state, several of them can be used on a page.
 If `def`, `defFile` or `data` change (`update` of [createGenVis](#javascript),
@@ -235,8 +236,9 @@ The slots replace parts of the visualisation, `hover` the content of the
 hover (it also has `entries`, the formatted values of the default table),
 `header` the title and the subtitle and `footer` the footer. `buttons` adds
 buttons of the page at the right of the footer, before the ones of `copy`,
-`csv` and `download`, e.g. own icons, with `save()`, `copy()` and `canCopy` of
-the [PNG](#png) and `csv()` of the [data](#accessibility-and-the-data):
+`csv`, `svg` and `download`, e.g. own icons, with `save()`, `copy()` and
+`canCopy` of the [PNG](#png), `svg()` of the [SVG](#static-export) and
+`csv()` of the [data](#accessibility-and-the-data):
 
 ```html
 <GenVis def-file="/data/bev/def.json" @select="open">
@@ -341,14 +343,168 @@ Besides the buttons of `download` and `copy`, the methods of the
 visualisation (of `createGenVis`, `mountGenVisElement` and a ref of the
 component) are `exportPng(name)` (saves the file), `copyPng()` (copies it, in the click
 of the user) and `image()` (the PNG as a `Blob`), e.g. for a button of the
-page. They and `exportCsv` are an error while the visualisation is loaded,
-also while a new definition or new data is loaded, e.g. after `rendered`
-again:
+page, `exportSvg(options)` is the SVG, see [static export](#static-export).
+They and `exportCsv` are an error while the visualisation is loaded, also
+while a new definition or new data is loaded, e.g. after `rendered` again:
 
 ```html
 <GenVis ref="chart" def-file="/data/bev/def.json"/>
 <button @click="$refs.chart.exportPng('bev')">PNG</button>
 ```
+
+### Static export
+
+`exportSvg(options)` (a method of the visualisation as `exportPng`, also of
+a ref of the component) returns the SVG of the image (a string): the copy
+of the [PNG](#png) (the width of `imageWidth`, the selection below the
+subtitle, without the form elements and the buttons) as one SVG of its own,
+made for Word, LaTeX (through a PDF) and editors, which draw SVG but no
+HTML and no CSS:
+
+- the texts of the HTML (the title, the subtitle, the legends, the footer)
+  are `<text>` elements at the positions the browser drew them, one per
+  line, the texts stay texts (editable, in the fonts of the computer which
+  opens it, e.g. Century Gothic), backgrounds and borders are `<rect>` and
+  `<line>` elements;
+- the svg elements of the plots are copied with their styles as
+  presentation attributes: no `foreignObject`, no `<style>`, no `class`
+  and `style` attributes, no css variables (`var()`), no images, no fonts
+  of its own;
+- colors are hex colors with opacities of their own (`fill-opacity`, no
+  `rgba()`), lengths have no units, the baselines of CSS
+  (`dominant-baseline`) are offsets of the texts, halos of labels
+  (`paint-order`) two texts, nested svg elements groups (with a clip only
+  where their content overflows them, e.g. a map).
+
+The options:
+
+| Option | Description |
+|--------|-------------|
+| `parts` | the parts of the image, some of `title`, `subtitle`, `selection` (the line of the form elements), `legend`, `plot` and `footer`, by default all; the image is cropped to them: the full width, the height from the first to the last part with the space of the image (15 pixels) above and below, e.g. `["legend", "plot"]` of a document which has the title in its text |
+| `unit` | the unit of the attributes `width` and `height`: `px` (default), `cm`, `mm` or `in` (a CSS pixel is 1/96 in), the `viewBox` is in CSS pixels |
+| `background` | a CSS color of the background, `null` none, by default the one of the PNG (`--gen-vis-background` or white) |
+
+```js
+const svg = await vis.exportSvg({ parts: ['legend', 'plot'], unit: 'cm' });
+```
+
+The prop `svg` adds a button which saves it (`exportSvg()` with the
+defaults, the name of the file is the one of `svg` or the title). The
+composer of the SVG is a part of its own, loaded with the first SVG (~4.5
+kB gzipped), not with the chart.
+
+Not drawn: shadows, gradients of CSS (their first color), images, rotated
+HTML texts. Word imports the SVG as a picture (with a PNG of it for old
+versions), "Convert to shape" of Word 365 makes its parts editable.
+
+#### Export page
+
+For programs outside the browser (the CLI below, wrappers of Python or R),
+`dist-lib/export.html` (built by `npm run lib`, in the package
+`@preschen/gen-vis/export.html`, it loads `esm/export.js` next to it) is a
+page which draws a chart at exactly the size asked for and returns its SVG
+and the rectangle of its image in the page, so the program takes a
+screenshot of it (PNG) or prints the SVG (PDF). A wrapper drives a headless
+Chromium (Chrome, Edge) through the DevTools protocol (CDP), e.g. with
+Playwright, `chromote` of R or a client of its own:
+
+1. Open `export.html` from a server or from an origin whose requests the
+   program answers (`Fetch.enable` of CDP, a route of Playwright), not as
+   `file://` (modules need http). After the `load` event
+   `window.genVisExport` is a function and `window.genVisExport.version`
+   the version of the protocol (`1`).
+2. Call `await window.genVisExport(options)` (CDP: `Runtime.evaluate` with
+   `awaitPromise: true` and `returnByValue: true`), one chart at a time,
+   each call removes the chart before. It resolves with the result below or
+   rejects with an `Error` whose `message` is the message of gen-vis, e.g.
+   `Unknown plot type 'nope'`; of CDP, evaluate
+   `genVisExport(o).then(r => ({ result: r }), e => ({ error: e.message }))`.
+   A page in the background draws no frames: the page is the one in front
+   (`Page.bringToFront`) while it runs.
+3. PNG: `Page.captureScreenshot` with `clip` = `box` and its `scale` (pixels
+   per CSS pixel, e.g. 300 dpi = 300/96 = 3.125) and
+   `captureBeyondViewport: true`, of a page with a transparent default
+   background (`Emulation.setDefaultBackgroundColorOverride` of a color of
+   alpha 0), the image has its own (`background`).
+4. PDF: print the SVG in a page with only it (`@page { margin: 0 }`,
+   `html, body { margin: 0 }`, `svg { display: block }`) with
+   `Page.printToPDF`, margins 0, `printBackground: true`, `paperWidth` and
+   `paperHeight` the size of the image in inches (CSS pixels / 96), so the
+   PDF is the drawing of the SVG and its texts stay texts. The browser
+   rounds the size of the page (e.g. 16.02cm of 16cm).
+5. SVG: `svg` of the result as it is (a file of it begins with
+   `<?xml version="1.0" encoding="UTF-8"?>`).
+
+The options (one of `def` and `defUrl` is needed, the others are optional,
+unknown ones are an error):
+
+| Option | Description |
+|--------|-------------|
+| `def` | the definition, an object or a JSON string, its urls are relative to `baseUrl` (otherwise to the page) |
+| `defUrl` | the url of the definition, it loads its data and parents relative to it |
+| `data` | the data instead of the one of the definition: rows, a CSV or JSON text, or bytes (e.g. parquet) as `{ "base64": "..." }` |
+| `dataUrl` | the url of the data instead of the one of the definition (parquet by its content) |
+| `baseUrl` | the url of the relative urls of `def` (a `<base>` of the page) |
+| `width` | the width of the whole image (with its padding): a number of CSS pixels (`800`, the default), `"800px"`, `"16cm"`, `"160mm"`, `"6in"` or `"480pt"`; the chart is laid out at exactly that width, nothing is scaled afterwards, so 8pt in it is 8pt in a document |
+| `padding` | the space around the chart in CSS pixels, default 15 (the one of the PNG) |
+| `unit` | the unit of the size of the SVG (`px`, `cm`, `mm`, `in`), default the one of `width` (`px` of `pt`); a width of `"16cm"` is the attribute `width="16cm"` |
+| `css` | a stylesheet or a list of them: a text with a `{` is CSS, others are urls (loaded before the chart is drawn) |
+| `classes` | a class or a list of classes of the element of the chart (`.vis-outer`), e.g. of a theme of `css` |
+| `globals` | the globals, see [globals](#formelements-and-globals) |
+| `state` | the state, see [state](#state) |
+| `parts` | the parts of the image, see above, default all |
+| `fontSize` | the size of the texts of gen-vis, e.g. `"8pt"`: 13px of most texts become it, the title (22px), the message (14px) and the small texts (11px) in proportion; sizes of the definition (props) stay as they are |
+| `background` | a CSS color, `null` none (a transparent PNG), default the one of gen-vis (`--gen-vis-background` or white) |
+| `schemes` | schemes of colors registered before the chart is drawn, e.g. `{ "wifo": ["#005CA9", "#E6A000"] }`, see `registerScheme` in [extensions](#extensions) |
+| `timeout` | the time to wait for the chart in milliseconds, default 30000 |
+
+The result (sizes in CSS pixels):
+
+| Key | Description |
+|-----|-------------|
+| `version` | `1` |
+| `svg` | the SVG, see `exportSvg` above |
+| `width`, `height` | the size of the image (of `parts`), `width` is the one asked for (to a fraction of a pixel) |
+| `box` | `{ x, y, width, height }`, the rectangle of the image in the page (document coordinates), the `clip` of a screenshot |
+
+The page has the fonts of the computer: the font of gen-vis is Century
+Gothic, the page falls back to URW Gothic (the same design, e.g. of Linux,
+Debian: `fonts-urw-base35`), then to sans-serif; a stylesheet of the
+options sets others (`--gen-vis-font-family`). The version changes only
+with changes which are not compatible, e.g. a new meaning of an option, new
+options and new keys of the result are added without a new version.
+
+#### CLI
+
+`gen-vis export` (the `bin` of the package, node 22 or newer, no
+dependencies) draws definition files with the export page in a Chromium,
+Chrome or Edge of the system (`--browser`, the environment variables
+`GEN_VIS_BROWSER` or `CHROME_PATH`, otherwise `chromium`,
+`chromium-browser`, `google-chrome`, `chrome`, `msedge` on the PATH and the
+usual places of Chrome and Edge on macOS and Windows) and writes SVG, PNG
+and PDF files, by their extensions. Every definition is followed by its
+outputs, one browser draws them all:
+
+```sh
+npx gen-vis export data/bev/def.json bev.svg bev.png bev.pdf --width 16cm --font-size 8pt --dpi 300
+npx gen-vis export a.json a.svg b.json b.svg b.png --parts legend,plot --css wifo.css --class wifo \
+    --scheme wifo=#005CA9,#E6A000,#7AB51D --globals '{"lang": "en"}'
+```
+
+The options are the ones of the export page: `--width`, `--parts` (a list
+with commas), `--css` (a file or CSS, repeatable), `--class` (repeatable),
+`--font-size`, `--globals` and `--state` (JSON), `--data` (a file),
+`--background` (`none` for none), `--scheme name=color,color,...`
+(repeatable), `--unit`, `--padding` and `--timeout`; the PNG has `--scale`
+pixels per CSS pixel (default 2) or `--dpi`, its width a whole number of
+pixels (e.g. 1890 of 16cm at 300 dpi). The files reach the page without a
+server, the program answers its requests (`Fetch` of CDP), so the
+definitions load their data and parents relative to their own files. The
+browser runs with its sandbox, without it as root, with `--no-sandbox` or
+`GEN_VIS_NO_SANDBOX=1`, and if it can not start one (e.g. in a container,
+it says so). A chart which fails is reported with the message of gen-vis,
+the others are drawn, the exit code is 1 then. The PDF is the print of the
+SVG, PDF and SVG are the same drawing.
 
 ### Layout shifts
 
@@ -1799,7 +1955,8 @@ npm test        # unit tests, rendering and schema check of all definitions in d
 npm run types   # the types of the definitions (types/definition.d.ts) of schema.json, a test checks them
 npm run build   # es modules for bundlers in dist/: gen-vis.js (the core), vue.js (the Vue adapter), check.js
 npm run watch   # rebuilds dist/ on changes, e.g. for `npm link`
-npm run lib     # standalone script in dist-lib/, gen-vis.js (of the package) and gen-vis-<version>.js
+npm run lib     # standalone script in dist-lib/, gen-vis.js (of the package) and gen-vis-<version>.js, the export page
+node bin/gen-vis.js export data/bev/def.json bev.svg   # the CLI of the static export, of dist-lib/
 npm run deploy  # builds and uploads the standalone script to GEN_VIS_UPLOAD (user@host:/path) of .env
 npm run site    # dev server of the page of the examples (site/), with the package built in dist/ and dist-lib/
 npm run site:build  # the page of the examples in dist-site/
@@ -1818,6 +1975,10 @@ the use are `site/components/VueDemo.vue` and `site/public/standalone.html`
 `lib/esm/` of the page) of the chart `site/public/charts/seasons.json`, the
 comparison with other libraries is `site/components/Comparison.vue`. The
 tests check and draw the examples, as the ones of `data/`.
+
+`tests/cli.test.js` draws a chart with the CLI of the static export in a
+Chromium, Chrome or Edge of the system (it builds the export page if it is
+older than `src/`), it is skipped without one.
 
 `spec/` has the fixtures of the parts of the definitions which other
 languages can implement (`spec/README.md`), `tests/spec.test.js` runs them.
