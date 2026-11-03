@@ -1,4 +1,4 @@
-export { el, patch, setStyle, setText, setHtml, display, slotNodes, place, emitter };
+export { el, patch, setStyle, setText, setHtml, display, slotNodes, takeRange, place, emitter };
 
 // the html elements of the visualisation without a framework: an element
 // with its attributes (el), the attributes of an element patched (patch),
@@ -130,6 +130,20 @@ const el = (tag, attrs = null, ...children) => {
 const slotNodes = result => [result].flat(Infinity)
     .filter(r => r !== null && r !== undefined && r !== false)
     .flatMap(r => r instanceof DocumentFragment ? [...r.childNodes] : [r instanceof Node ? r : document.createTextNode(String(r))]);
+
+// the nodes from `first` to `last` (its next siblings) in a fragment of
+// their own, e.g. the ones of a slot removed from the page, they stay
+// together, so Vue can remove the ones it drew, see vue-adapter.js
+const takeRange = (first, last) => {
+    const fragment = document.createDocumentFragment();
+    let node = first;
+    while (node) {
+        const next = node === last ? null : node.nextSibling;
+        fragment.appendChild(node);
+        node = next;
+    }
+    return fragment;
+};
 
 // `node` in `parent` before `before` (at the end without one), only moved
 // if it is not there yet

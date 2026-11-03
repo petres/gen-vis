@@ -5,7 +5,7 @@ import { evaluate } from "@/utils/props";
 import { dataAttribute, reducedMotion } from "@/utils/draw";
 import { canCopy } from "@/utils/clipboard.js";
 import { create } from "@/utils/dom";
-import { el, patch, place, setHtml, setText, slotNodes } from "@/comp/html";
+import { el, patch, place, setHtml, setText, slotNodes, takeRange } from "@/comp/html";
 import { createFacets } from "@/comp/facets";
 import { createLegends } from "@/comp/legends";
 import { createFormElement } from "@/comp/form-element";
@@ -44,24 +44,34 @@ const sameProps = (a, b) => a && b && Object.keys(a).length == Object.keys(b).le
     && Object.keys(a).every(k => a[k] === b[k]);
 
 // the content of a slot in `parent` before `before`, drawn again if the
-// slot or its props change, see README "Events and slots"
+// slot or its props change, see README "Events and slots". Its nodes are
+// the ones from its first to its last, also the ones which the slot adds
+// between them later, e.g. Vue (see vue-adapter.js), they are removed
+// together, see takeRange
 const slotPart = () => {
-    let nodes = [], fn = null, props = null;
+    let first = null, last = null, fn = null, props = null;
+    const remove = () => {
+        if (first)
+            takeRange(first, last);
+        first = last = null;
+    };
     return {
         draw(parent, slot, next, before = null) {
             if (slot === fn && sameProps(props, next)) {
-                nodes.forEach(n => place(parent, n, before));
+                if (first && (first.parentNode !== parent || last.nextSibling !== before))
+                    parent.insertBefore(takeRange(first, last), before);
                 return;
             }
-            nodes.forEach(n => n.remove());
+            remove();
             fn = slot;
             props = next;
-            nodes = slotNodes(slot(next));
+            const nodes = slotNodes(slot(next));
             nodes.forEach(n => parent.insertBefore(n, before));
+            first = nodes[0] ?? null;
+            last = nodes.at(-1) ?? null;
         },
         clear() {
-            nodes.forEach(n => n.remove());
-            nodes = [];
+            remove();
             fn = props = null;
         },
     };

@@ -3,7 +3,7 @@ export { createHover };
 import { join, setAttr } from "@/utils/dom";
 import { fillHtml } from "@/utils/def";
 import { byOrder } from "@/utils/hover";
-import { el, patch, setHtml, setText, slotNodes } from "@/comp/html";
+import { el, patch, setHtml, setText, slotNodes, takeRange } from "@/comp/html";
 
 // the space between the marker and the hover
 const space = 20;
@@ -98,7 +98,8 @@ const createHover = (store, slots) => {
         const own = slots();
         const kind = own?.hover ? 'slot' : t.row ? 'row' : t.title ? 'title' : 'table';
         if (kind != mode) {
-            root.replaceChildren();
+            if (root.firstChild)
+                takeRange(root.firstChild, root.lastChild);
             title = table = null;
             mode = kind;
             drawn = null;
@@ -111,7 +112,10 @@ const createHover = (store, slots) => {
         if (kind == 'slot') {
             // the rows and their formatted values, as the ones of the default table
             const props = { ...hover.payload, entries: sorted.map(d => ({ ...d.entries, nearest: d.nearest })) };
-            root.replaceChildren(...slotNodes(own.hover(props)));
+            // the nodes before stay together, see takeRange
+            if (root.firstChild)
+                takeRange(root.firstChild, root.lastChild);
+            root.append(...slotNodes(own.hover(props)));
         } else if (kind == 'row') {
             // the rows of the template, its names are the ones of the entries of
             // the slot: {land} is the name of the category, {land.unit} another
