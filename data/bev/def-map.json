@@ -92,7 +92,7 @@
     },
     "plot": [
         {
-            "type": "geo:base",
+            "type": "base",
             "props": {
                 "fill": "#E6EEF4",
                 "stroke": "white",
@@ -100,7 +100,7 @@
             }
         },
         {
-            "type": "geo:circle",
+            "type": "circle",
             "by": "land",
             "props": {
                 "r": "@pop:scaled",
@@ -112,7 +112,7 @@
             "highlight": { "fill-opacity": 0.9 }
         },
         {
-            "type": "geo:text",
+            "type": "text",
             "by": "land",
             "props": {
                 "text": "@name",

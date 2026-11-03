@@ -10,7 +10,7 @@ optional adapter) and a renderer without d3-selection and d3-transition.
 The charts are the ones of 3.x: a definition of 4.0 is written in the form
 the renderer of 3.x reads (`normalize`), the elements are the ones of 3.x
 without the scoped ids of Vue (`data-v-…`) and its comments, the attributes
-of the default props of a short plot type are before the ones of the
+of the default props of a plot type are before the ones of the
 definition.
 
 Changes from 3.x, made by hand (4.0 has no migration and reads no
@@ -35,6 +35,10 @@ definition of 3.x):
     linear: `"type": "linear"` where the type of the mapping gives another
     one; a position without a scale or an axis: `"scale": false`, `"axis":
     false` (`"orientation": null` of a scale without an orientation);
+  - a plot type of its full name has the default props of the type, e.g.
+    `cartesian:line` a stroke, `svg:text` the fill of `@color`: the props
+    which are the defaults are left out (best with the short name), a
+    default the plot must not have is `null`, e.g. `"fill": null`;
   - `validateDef` names the parts of 3.x which are left as unknown ones.
 - Vue: the component `GenVis` and the plugin are the ones of
   `@preschen/gen-vis/vue` (`vue` is an optional peer dependency), `import
@@ -88,7 +92,8 @@ The definition language, the breaking changes:
   `area`, `bar`, `point`, `text`, `arc`, `region`, have default props (the
   `defaults` of the types, also of registered ones): a line draws
   `"d": {"x": "@x:scaled", "y": "@y:scaled"}` in the color of its category,
-  a definition writes only the props which differ; the full names have none.
+  a definition writes only the props which differ, `null` removes one; the
+  full names (`cartesian:line`) are the same types with the same defaults.
 - The schema is the one of 4.0 (`@preschen/gen-vis@4/schema.json`).
 
 The definitions of `data/` and of the page are written in the shorter

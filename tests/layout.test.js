@@ -78,7 +78,7 @@ describe('plotGroups', () => {
 
     test('the props of one group do not leak into others', async () => {
         const def = { mapping: { ...mapping(), c: { column: 'land', categories: { Wien: { color: 'red', bold: 'bold' }, Tirol: { color: 'blue' } } } } };
-        const { groups: [a, b] } = await groups({ type: 'svg:circle', by: ['c'], props: { fill: '@color', 'font-weight': '@bold' } }, def);
+        const { groups: [a, b] } = await groups({ type: 'svg:rect', by: ['c'], props: { fill: '@color', 'font-weight': '@bold' } }, def);
         expect(a.attrs).toEqual({ fill: 'red', 'font-weight': 'bold' });
         expect(b.attrs).toEqual({ fill: 'blue', 'font-weight': undefined });
     });
@@ -98,7 +98,7 @@ describe('plotGroups', () => {
 
     test('the props of the categories, then the rows, then the globals and the facet', async () => {
         const def = { globals: { y: 'global', g: 'global' }, mapping: { ...mapping(), c: { column: 'land', categories: { Wien: { x: 'category' }, Tirol: {} } } } };
-        const { groups: [wien, tirol] } = await groups({ type: 'svg:circle', by: ['c'], props: { a: '@x', b: '@y', c: '@g', d: '@innerWidth' } }, def);
+        const { groups: [wien, tirol] } = await groups({ type: 'svg:rect', by: ['c'], props: { a: '@x', b: '@y', c: '@g', d: '@innerWidth' } }, def);
         expect(wien.at(wien.rows[0])).toEqual({ a: 'category', b: 1, c: 'global', d: 400 });
         expect(tirol.at(tirol.rows[0])).toEqual({ a: 2020, b: 10, c: 'global', d: 400 });
     });

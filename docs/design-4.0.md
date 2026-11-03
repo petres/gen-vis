@@ -89,7 +89,8 @@ renderer (JS only)
   is the mode of the highlight.
 - Default props (`defaults` of the plot types, `src/plots/defaults.js`,
   an object or a function of the props, documented for `registerPlotType`)
-  apply to short type names only; nested props are merged deeply, `null`
+  apply to the plots of the type, of its short and its full name alike
+  (`line` is `cartesian:line`); nested props are merged deeply, `null`
   removes a default. The color default is `{"or": ["@color", "currentColor"]}`
   so a plot without categories is visible.
 
@@ -137,12 +138,12 @@ merge of the selected patches, exported for the fixtures.
 
 ## Deviations from the first draft, and why
 
-- **Defaults only for short type names.** `cartesian:line` keeps meaning
-  "only the props written". Otherwise every 3.x definition (and every inline
-  test definition) would get extra attributes or need `null`s to cancel them.
-  Migrate converts a prefixed type to the short one when the props contain
-  all defaults, the props are the ones which differ then; the merged props
-  are the same, their order (the one of the attributes) may differ.
+- **Defaults of every name of a type.** The first version applied the
+  defaults only to short type names, so a 3.x definition kept meaning "only
+  the props written"; without the compatibility of 3.x, `line` and
+  `cartesian:line` are the same type with the same defaults. A plot which
+  must not have a default sets it to `null`, e.g. `"fill": null` of a text in
+  the color of the page instead of the one of its category.
 - **`mode` inside `highlight`**: the 3.x `highlight: "row"` and highlight
   props needed one place.
 - **No compatibility with 3.x** (decided after the first version, which

@@ -64,17 +64,12 @@
         }
     },
     "plot": {
-        "type": "cartesian:line",
+        "type": "line",
         "by": "year",
         "props": {
             "stroke-width": "@stroke-width",
-            "fill": "none",
             "opacity": "@opacity",
-            "stroke": "@color",
-            "d": {
-                "x": "@x:scaled",
-                "y": "@y:scaled"
-            }
+            "stroke": "@color"
         },
         "highlight": { "opacity": "@highlight-opacity", "stroke-width": "@highlight-stroke-width" }
     }

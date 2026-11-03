@@ -57,9 +57,9 @@
         }
     },
     "plot": [
-        { "type": "geo:base", "props": { "fill": "#E9E4DA", "stroke": "#FFFFFF", "stroke-width": 0.6 } },
+        { "type": "base", "props": { "fill": "#E9E4DA", "stroke": "#FFFFFF", "stroke-width": 0.6 } },
         {
-            "type": "geo:region",
+            "type": "region",
             "by": "country",
             "props": {
                 "fill": "@share:scaled",

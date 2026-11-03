@@ -45,7 +45,7 @@
     "plot": [
         {
             "id": "bars",
-            "type": "svg:rect",
+            "type": "rect",
             "by": "type",
             "props": {
                 "x": "@x:scaled",

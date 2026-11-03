@@ -1,7 +1,7 @@
 // the default props of the built-in plot types, the `defaults` of the types
-// (see plots/index.js), of a plot whose type has no prefix of a coordinate
-// system, e.g. "line", see utils/normalize.js, a definition writes only the
-// props which differ, null removes one. A position is the one of the
+// (see plots/index.js), of the plots of the type, "line" and
+// "cartesian:line" alike, see utils/normalize.js, a definition writes only
+// the props which differ, null removes one. A position is the one of the
 // mappings x and y, the color of a plot without categories the one of the text.
 const color = { or: ['@color', 'currentColor'] };
 

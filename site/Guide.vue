@@ -111,9 +111,9 @@
                     <code>line</code> a path per group, <code>bar</code>, <code>point</code>, of polar plots
                     <code>arc</code> slices, of maps <code>region</code> the region of a row, with the props it
                     needs by default, e.g. the points of a line at <code>@x:scaled</code> and
-                    <code>@y:scaled</code>. The full names, e.g. <code>cartesian:line</code> and
-                    <code>svg:circle</code>, draw only the props of the definition, the <code>svg:</code> types an
-                    element per row in any coordinate system. <code>by</code> groups the rows, <code>select</code>
+                    <code>@y:scaled</code>, also of the full names, e.g. <code>cartesian:line</code>; a prop
+                    <code>null</code> removes a default. The <code>svg:</code> types draw an element per row in any
+                    coordinate system. <code>by</code> groups the rows, <code>select</code>
                     picks one row per group, <code>filter</code> leaves rows out and <code>data</code> gives a plot
                     rows of its own, e.g. events. The props of a plot are the attributes of its elements,
                     <code>highlight</code> the ones of the elements under the pointer.

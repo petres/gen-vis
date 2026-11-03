@@ -113,16 +113,16 @@
         },
         {
             "id": "value",
-            "type": "svg:text",
+            "type": "text",
             "by": "level",
             "props": {
-                "x": "@x:scaled",
                 "dx": 15,
                 "y": "@y:scaled:center",
                 "dominant-baseline": "central",
                 "font-size": 13,
                 "font-weight": "bold",
                 "text": { "format": ["@x", "$.0f"] },
+                "fill": null,
                 "visibility": "hidden"
             },
             "highlight": { "mode": "row", "visibility": "visible" }

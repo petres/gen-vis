@@ -816,16 +816,16 @@ const checkDef = (def, internal, rows, schemaChecked = true, plots = {}) => {
 // the plot types without their default props, the props a definition writes
 const withoutDefaults = () => Object.fromEntries(Object.entries(plotTypes).map(([n, t]) => [n, { ...t, defaults: undefined }]));
 
-// the plots of a type without the prefix of the coordinate system: their
-// default props (`defaults`) and the type as it is written (`written`), by
-// the index of the plot
-const shortPlots = (def, internal) => {
+// the plots of a registered type: their default props which the plot does
+// not write (`defaults`) and the type as it is written (`written`), by the
+// index of the plot
+const defaultProps = (def, internal) => {
     const written = new Map();
     const defaults = new Map();
     const raw = [].concat(def.plot ?? []);
     [].concat(internal.plot ?? []).forEach((p, i) => {
         const type = raw[i]?.type;
-        if (typeof type != 'string' || type.includes(':') || !isObject(p) || !Object.hasOwn(plotTypes, p.type))
+        if (typeof type != 'string' || !isObject(p) || !Object.hasOwn(plotTypes, p.type))
             return;
         written.set(i, type);
         const d = plotTypes[p.type].defaults;
@@ -859,7 +859,7 @@ const prefixedProps = def => [].concat(def?.plot ?? []).flatMap((p, i) => Object
  */
 const validateDef = (def, rows = null) => {
     const internal = withTypes(normalize(def, { plotTypes: withoutDefaults() }), rows);
-    const warnings = [...checkDef(def, internal, rows, true, shortPlots(def, internal)), ...prefixedProps(def)];
+    const warnings = [...checkDef(def, internal, rows, true, defaultProps(def, internal)), ...prefixedProps(def)];
     const known = new Set(warnings);
     // the patches are checked by the schema as parts of the definition
     const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));

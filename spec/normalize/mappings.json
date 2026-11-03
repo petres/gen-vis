@@ -450,7 +450,20 @@
         "type": "cartesian:line",
         "categories": [
           "g"
-        ]
+        ],
+        "props": {
+          "stroke": {
+            "or": [
+              "@color",
+              "currentColor"
+            ]
+          },
+          "fill": "none",
+          "d": {
+            "x": "@x:scaled",
+            "y": "@y:scaled"
+          }
+        }
       }
     }
   },
@@ -554,6 +567,12 @@
       "plot": {
         "type": "cartesian:bar",
         "props": {
+          "fill": {
+            "or": [
+              "@color",
+              "currentColor"
+            ]
+          },
           "x": "@x:scaled",
           "y1": "@y:scaled"
         }

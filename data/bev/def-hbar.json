@@ -32,11 +32,11 @@
     "plot": [
         { "type": "bar", "by": "y", "props": { "x1": "@x:scaled", "y": "@y:scaled", "fill": "#1E4F77" }, "highlight": { "fill": "#5BC5F2" } },
         {
-            "type": "svg:text",
+            "type": "text",
             "by": "y",
             "props": {
-                "x": "@x:scaled", "dx": 4, "y": "@y:scaled:center", "dominant-baseline": "middle",
-                "font-size": 11, "text": "@x:formatted"
+                "dx": 4, "y": "@y:scaled:center", "dominant-baseline": "middle",
+                "font-size": 11, "text": "@x:formatted", "fill": null
             }
         }
     ]

@@ -73,11 +73,11 @@
     },
     "plot": [
         {
-            "type": "geo:base",
+            "type": "base",
             "props": { "fill": "#DADADA", "stroke": "white", "stroke-width": 1 }
         },
         {
-            "type": "geo:region",
+            "type": "region",
             "by": "country",
             "props": {
                 "fill": "@value:scaled",

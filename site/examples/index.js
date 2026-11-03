@@ -60,7 +60,7 @@ export default [
         look: 'Atlas',
         theme: 'theme-atlas',
         description: 'TopoJSON of Europe, classes of a threshold scale, a slider over the years of the data and radio buttons of the source which also changes the colors and names the legend, a vertical scale beside the map. The countries fade into their new colors, the hover follows the pointer.',
-        features: ['coord: geo', 'geo:region', 'formElements: slider', 'filter', 'legend: right, vertical', 'transition'],
+        features: ['coord: geo', 'region', 'formElements: slider', 'filter', 'legend: right, vertical', 'transition'],
         def: electricityDef,
         css: electricityCss,
     },

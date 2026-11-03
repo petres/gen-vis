@@ -108,6 +108,8 @@
         "type": "cartesian:bar",
         "props": {
           "fill": "@color",
+          "x": "@x:scaled",
+          "y1": "@y:scaled",
           "highlight-fill": "#333",
           "others-opacity": 0.3
         },
@@ -116,7 +118,7 @@
     }
   },
   {
-    "name": "a type of a full name has no defaults",
+    "name": "a type of a full name has the defaults of its type, the same as the short name",
     "def": {
       "mapping": {},
       "plot": {
@@ -134,6 +136,13 @@
       "plot": {
         "type": "cartesian:line",
         "props": {
+          "stroke": {
+            "or": [
+              "@color",
+              "currentColor"
+            ]
+          },
+          "fill": "none",
           "d": {
             "x": "@x:scaled",
             "y": "@y:scaled"
@@ -382,7 +391,9 @@
       "plot": {
         "type": "cartesian:bar",
         "props": {
-          "fill": "@color"
+          "fill": "@color",
+          "x": "@x:scaled",
+          "y1": "@y:scaled"
         }
       }
     }

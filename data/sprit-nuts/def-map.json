@@ -106,14 +106,14 @@
     },
     "plot": [
         {
-            "type": "geo:base",
+            "type": "base",
             "props": {
                 "fill": "#EEE",
                 "stroke": "white"
             }
         },
         {
-            "type": "geo:region",
+            "type": "region",
             "by": "nuts",
             "props": {
                 "fill": "@price:scaled",

@@ -29,8 +29,10 @@ import { isOperator, refNames } from '@/utils/expr';
  * - the type of a plot without the prefix of the coordinate system is the one
  *   of the coordinate system (`line` is `cartesian:line` or `polar:line`), of
  *   svg elements (`circle` is `svg:circle` of cartesian plots) or the only
- *   registered one of the name, `point` is `circle`, its props are merged
- *   into the `defaults` of the type, null removes a default
+ *   registered one of the name, `point` is `circle`
+ * - the props of a plot are merged into the `defaults` of its type, of a
+ *   short name and of a full one alike (`line` is `cartesian:line`), null
+ *   removes a default
  *
  * The parts of the internal form are not the ones of a definition, they are
  * not read: `props` of a mapping, `categories` of a plot, a text of its
@@ -181,9 +183,9 @@ const normalizePlot = (raw, coord, plotTypes) => {
         p.categories = p.by;
         delete p.by;
     }
-    if (typeof p.type == 'string' && !p.type.includes(':')) {
-        const type = resolveType(p.type, coord, plotTypes);
-        if (type !== undefined) {
+    if (typeof p.type == 'string') {
+        const type = p.type.includes(':') ? p.type : resolveType(p.type, coord, plotTypes);
+        if (type !== undefined && Object.hasOwn(plotTypes, type)) {
             p.type = type;
             const defaults = plotTypes[type].defaults;
             const own = typeof defaults == 'function' ? defaults(isObject(p.props) ? p.props : {}) : defaults;

@@ -29,10 +29,10 @@ import { defaults } from "@/plots/defaults";
  *   comp/facet.js
  * - `curve`: the type uses the `curve` of the plot
  * - `coords`: the coordinate systems of the type, all if it is not given
- * - `defaults`: the default props of a plot whose type is written without
- *   the prefix of the coordinate system, e.g. "line" of "cartesian:line",
- *   an object or a function of the props of the plot, see plots/defaults.js
- *   and utils/normalize.js
+ * - `defaults`: the default props of the plots of the type, written with or
+ *   without the prefix of the coordinate system ("line" is
+ *   "cartesian:line"), an object or a function of the props of the plot,
+ *   see plots/defaults.js and utils/normalize.js
  */
 // the plot types of polar plots are loaded with the first one, until then
 // they are known by their names, e.g. to validateDef, see coords/polar.js

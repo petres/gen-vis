@@ -44,11 +44,11 @@
     },
     "plot": [
         {
-            "type": "geo:base",
+            "type": "base",
             "props": { "fill": "#DADADA", "stroke": "white", "stroke-width": 0.5 }
         },
         {
-            "type": "geo:region",
+            "type": "region",
             "by": "district",
             "props": {
                 "fill": "@value:scaled",
@@ -58,7 +58,7 @@
             "highlight": { "fill-opacity": 0.75 }
         },
         {
-            "type": "geo:mesh",
+            "type": "mesh",
             "object": "states",
             "borders": "inner",
             "props": { "stroke": "white", "stroke-width": 1.4 }

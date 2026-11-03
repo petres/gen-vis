@@ -1000,7 +1000,7 @@ export interface CategoryProps1 {
 }
 export interface Plot {
     /**
-     * The full name of a type has no default props. The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations.
+     * The full name of a type has the default props of the type, as its name without the prefix. The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations.
      */
     type?:
         | (

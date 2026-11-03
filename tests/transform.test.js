@@ -167,7 +167,7 @@ describe('transforms', () => {
     test('the checks of validateDef and the schema', () => {
         const def = {
             mapping: { y: { column: 'index', type: 'numeric' } },
-            plot: { type: 'svg:circle', props: { cy: '@y' } },
+            plot: { type: 'svg:rect', props: { y: '@y' } },
             transform: [{ type: 'index', column: 'value', base: { year: '{base}' } }, { type: 'rolling', column: 'value', align: 'left' }, { type: 'sum' }],
         };
         expect(validateDef(def)).toEqual([

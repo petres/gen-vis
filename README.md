@@ -1117,7 +1117,9 @@ A plot or a list of plots, drawn in order:
   | `arc` | `"fill"` |
 
   The full names of the types, the name of the coordinate system and the
-  type, have no defaults, their props are the ones of the plot:
+  type, are the same types with the same defaults (`line` is
+  `cartesian:line`), `null` removes a default a plot must not have, e.g.
+  `"fill": null` of a text in black:
   - `svg:circle`, `svg:rect`, `svg:line`, `svg:text`: an svg element per row
     in any coordinate system, the props are its attributes, e.g.
     `"cx": "@x:scaled"`
@@ -1694,12 +1696,13 @@ registerPlotType('my:tick', {
 });
 ```
 
-`defaults` are the default props of a plot of the type written without its
-prefix (`"type": "tick"`, the only registered type of the name of the
-coordinate system, or one of the prefix of the coordinate system, e.g.
-`cartesian:tick`), an object or a function of the props of the plot, the
-props of the plot are merged into them, see `src/plots/defaults.js` of the
-built-in ones.
+`defaults` are the default props of the plots of the type, of its full name
+(`"type": "my:tick"`) and of its name without the prefix (`"type": "tick"`,
+the only registered type of the name of the coordinate system, or one of the
+prefix of the coordinate system, e.g. `cartesian:tick`) alike, an object or a
+function of the props of the plot, the props of the plot are merged into
+them (nested ones deeply, `null` removes one), see `src/plots/defaults.js`
+of the built-in ones.
 
 The marks are a layer, `{ element, groups: [{ categories, items }] }` (an
 element per item in a `g.vis-group` per group) or `{ element, items }` (the

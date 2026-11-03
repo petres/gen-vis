@@ -75,37 +75,35 @@
         },
         {
             "id": "last-value",
-            "type": "svg:text",
+            "type": "text",
             "by": "type",
             "select": "last",
             "filter": { "type": "total" },
             "layer": "above",
             "props": {
-                "x": "@x:scaled",
-                "y": "@y:scaled",
                 "text-anchor": "middle",
                 "dominant-baseline": "central",
                 "font-size": 11,
                 "font-weight": "bold",
-                "text": "@y:formatted"
+                "text": "@y:formatted",
+                "fill": null
             },
             "others": { "visibility": "hidden" }
         },
         {
             "id": "last-year",
-            "type": "svg:text",
+            "type": "text",
             "by": "type",
             "select": "last",
             "filter": { "type": "total" },
             "layer": "above",
             "props": {
-                "x": "@x:scaled",
-                "y": "@y:scaled",
                 "dy": 30,
                 "text-anchor": "middle",
                 "dominant-baseline": "central",
                 "font-size": 11,
-                "text": "@x:formatted"
+                "text": "@x:formatted",
+                "fill": null
             },
             "others": { "visibility": "hidden" }
         },
@@ -126,36 +124,34 @@
         },
         {
             "id": "ring-value",
-            "type": "svg:text",
+            "type": "text",
             "by": "x",
             "filter": { "type": "total" },
             "layer": "above",
             "props": {
-                "x": "@x:scaled",
-                "y": "@y:scaled",
                 "text-anchor": "middle",
                 "dominant-baseline": "central",
                 "font-size": 11,
                 "font-weight": "bold",
                 "text": "@y:formatted",
+                "fill": null,
                 "visibility": "hidden"
             },
             "highlight": { "visibility": "visible" }
         },
         {
             "id": "ring-year",
-            "type": "svg:text",
+            "type": "text",
             "by": "x",
             "filter": { "type": "total" },
             "layer": "above",
             "props": {
-                "x": "@x:scaled",
-                "y": "@y:scaled",
                 "dy": 30,
                 "text-anchor": "middle",
                 "dominant-baseline": "central",
                 "font-size": 11,
                 "text": "@x:formatted",
+                "fill": null,
                 "visibility": "hidden"
             },
             "highlight": { "visibility": "visible" }

@@ -62,11 +62,12 @@ The fixtures are `normalize/*.json`.
   the coordinate system of the definition (`options.coord`, `cartesian` by
   default), `<coord>:<name>`, otherwise `svg:<name>`, otherwise the only
   registered type `<prefix>:<name>` of the coordinate system; `point` is
-  `circle`. Its props are merged into the default props of the type: nested
-  props (objects which are no operators, e.g. `d`) deeply, `null` removes a
-  default. The order of the props is the one of the defaults, then the other
+  `circle`.
+- The props of a plot of a registered type, of its short or its full name
+  (`line` and `cartesian:line` alike), are merged into the default props of
+  the type: nested props (objects which are no operators, e.g. `d`) deeply,
+  `null` removes a default. The order of the props is the one of the defaults, then the other
   ones (the order of the attributes of the elements).
-- A type of its full name (`cartesian:line`) has no defaults.
 - The plots of a patch are normalized in the coordinate system of the patch
   (its `options.coord`, otherwise the one of the definition). A patch of
   another coordinate system has the orientations and the axis positions of

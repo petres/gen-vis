@@ -44,7 +44,7 @@
     "plot": [
         {
             "id": "rank",
-            "type": "svg:text",
+            "type": "text",
             "by": "country",
             "props": {
                 "x": 22,
@@ -52,21 +52,23 @@
                 "text-anchor": "end",
                 "dominant-baseline": "central",
                 "font-size": 14,
-                "text": { "format": ["@rank", "d"] }
+                "text": { "format": ["@rank", "d"] },
+                "fill": null
             },
             "highlight": { "mode": "row", "font-weight": "bold" }
         },
         { "id": "dot", "type": "point", "by": "country", "props": { "cx": 34, "cy": "@rank:scaled", "r": 5, "fill": "@color:scaled" } },
         {
             "id": "name",
-            "type": "svg:text",
+            "type": "text",
             "by": "country",
             "props": {
                 "x": 46,
                 "y": "@rank:scaled",
                 "dominant-baseline": "central",
                 "font-size": 14,
-                "text": "@name"
+                "text": "@name",
+                "fill": null
             },
             "highlight": { "mode": "row", "font-weight": "bold" },
             "others": { "opacity": 0.5 }
