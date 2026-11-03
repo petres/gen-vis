@@ -91,12 +91,13 @@ describe('a new width keeps the rows', () => {
 
     test('not of a filter of the width', async () => {
         const def = lineDef();
-        def.filter = { x: { range: [{ if: { '>': ['@totalWidth', 700] }, then: 2020, else: 2022 }, null] } };
+        def.filter = { x: { range: [{ steps: ['@totalWidth', { 0: 2022, 700: 2020 }] }, null] } };
         const s = await store(def);
         const before = layout(s, 800);
         expect(before.rows).toHaveLength(8);
         const next = layout(s, 600, before);
         expect(next.rows).not.toBe(before.rows);
+        expect(next.rows).toHaveLength(4);
         expect(next.rows.map(r => r.x)).toEqual(layout(s, 600).rows.map(r => r.x));
     });
 });
@@ -163,6 +164,37 @@ describe('a resize after a change draws the new rows', () => {
         await resizedAfter({ def: def(), data: lineData },
             (el, vis) => vis.update({ globals: { year: 2022 } }),
             { def: def(), data: lineData, globals: { year: 2022 } });
+    });
+});
+
+describe('the rows of the filter of a plot', () => {
+    const def = () => {
+        const d = { ...lineDef(), globals: { land: 'Wien' } };
+        d.plot[1] = { ...d.plot[1], filter: { c: '@land' } };
+        return d;
+    };
+
+    test('are the ones of the globals after a resize', async () => {
+        const { el, vis } = await mountVis({ def: def(), data: lineData });
+        expect(cys(el)).toHaveLength(4);
+        await resizeTo(600);
+        vis.update({ globals: { land: 'Tirol' } });
+        await nextTick();
+        await resizeTo(500);
+        const fresh = await mount({ def: def(), data: lineData, globals: { land: 'Tirol' } });
+        expect(cys(el)).toHaveLength(4);
+        expect(drawing(el)).toBe(drawing(fresh));
+    });
+
+    test('of the width are new ones of a new width', async () => {
+        const d = lineDef();
+        d.plot[1] = { ...d.plot[1], filter: { x: { range: [{ steps: ['@totalWidth', { 0: 2022, 700: 2020 }] }, null] } } };
+        const el = await mount({ def: d, data: lineData });
+        expect(cys(el)).toHaveLength(8);
+        await resizeTo(600);
+        expect(cys(el)).toHaveLength(4);
+        await resizeTo(800);
+        expect(cys(el)).toHaveLength(8);
     });
 });
 

@@ -242,6 +242,29 @@ const convertValue = (mapping, v) => Array.isArray(v)
     ? v.map(e => e === null ? null : convert(mapping, e))
     : (v === null ? null : convert(mapping, v));
 
+// the rows of the `filter` of a plot of the rows of a facet, kept for the
+// same rows if the filter has only references to globals, e.g. of the
+// facet of a new width, see layout
+const plotRowsKept = new WeakMap();
+const keptPlotRows = (store, plot, facet) => {
+    const globals = store.def.globals ?? {};
+    const names = refNames(plot.filter);
+    const own = names.every(n => Object.hasOwn(globals, n) && facet.scope[n] === globals[n]);
+    const key = own ? JSON.stringify(names.map(n => globals[n])) : null;
+    let kept = plotRowsKept.get(facet.rows);
+    const hit = kept?.get(plot);
+    if (key !== null && hit?.key === key)
+        return hit.rows;
+    const conditions = rowFilter(plot.filter, store.def.mapping, facet.scope, `plot ${plot.id}: filter`);
+    const rows = conditions.length > 0 ? filter(facet.rows, conditions) : facet.rows;
+    if (key !== null) {
+        if (!kept)
+            plotRowsKept.set(facet.rows, kept = new Map());
+        kept.set(plot, { key, rows });
+    }
+    return rows;
+};
+
 /**
  * The rows of a plot in a facet: the rows of the facet or the ones of the
  * `data` of the plot, e.g. events. These have the names of the mappings and
@@ -252,6 +275,8 @@ const convertValue = (mapping, v) => Array.isArray(v)
  * out rows, see rowFilter.
  */
 const plotRows = (store, plot, facet) => {
+    if (!plot.data && plot.filter)
+        return keptPlotRows(store, plot, facet);
     const conditions = rowFilter(plot.filter, store.def.mapping, facet.scope, `plot ${plot.id}: filter`);
     if (!plot.data)
         return conditions.length > 0 ? filter(facet.rows, conditions) : facet.rows;
