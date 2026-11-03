@@ -1,6 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
+import { toNumber } from '@/utils/values';
 import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, inferType, inferTypes, parseData, prepareData, rowFilter, stack, toDate, updateData, usedColumns } from '@/utils/data';
 import { prepareDef } from '@/utils/def';
 
@@ -495,5 +496,109 @@ describe('filters of a mapping with the scale of another one', () => {
         expect(filter(data, rowFilter({ x2: ['2020-01-03'] }, d.mapping))).toEqual([data[1]]);
         expect(filter(data, rowFilter({ x2: { range: ['2020-01-02', null] } }, d.mapping))).toEqual([data[1]]);
         expect(filter(data, rowFilter({ x2: { not: '2020-01-01' } }, d.mapping))).toEqual([data[1]]);
+    });
+});
+
+// the implementations before the faster ones, the same results of random
+// values, of the time zone of the tests (Europe/Vienna, see vite.config.js)
+describe('the faster dates and types are the ones of before', () => {
+    // a seeded random number generator (mulberry32), the same values every run
+    const random = (seed => () => {
+        seed = (seed + 0x6D2B79F5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    })(42);
+    const int = (a, b) => a + Math.floor(random() * (b - a + 1));
+    const pad = (v, n = 2) => String(v).padStart(n, '0');
+
+    const wallTimeBefore = (utc, y, m = 1, d = 1, h = 0, mi = 0, s = 0, fraction = '') => {
+        const date = new Date(0);
+        const ms = +`${fraction ?? ''}000`.slice(0, 3);
+        const end = +h == 24 && +mi == 0 && +s == 0 && ms == 0;
+        if (utc) {
+            date.setUTCFullYear(+y, m - 1, +d);
+            date.setUTCHours(end ? 0 : +h, +mi, +s, ms);
+        } else {
+            date.setFullYear(+y, m - 1, +d);
+            date.setHours(end ? 0 : +h, +mi, +s, ms);
+        }
+        const [year, month, day] = utc
+            ? [date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()]
+            : [date.getFullYear(), date.getMonth(), date.getDate()];
+        const valid = year == +y && month == m - 1 && day == +d && (end || +h < 24) && +mi < 60 && +s < 60;
+        if (valid && end)
+            utc ? date.setUTCDate(date.getUTCDate() + 1) : date.setDate(date.getDate() + 1);
+        return valid ? date.getTime() : null;
+    };
+
+    const inferTypeBefore = values => {
+        const seen = new Set();
+        let present = false;
+        let numeric = true;
+        for (const v of values) {
+            if (seen.has(v))
+                continue;
+            seen.add(v);
+            if (v === null || v === undefined || (typeof v == 'string' && v.trim() === ''))
+                continue;
+            present = true;
+            if (numeric && toNumber(v) !== null)
+                continue;
+            if (numeric) {
+                numeric = false;
+                for (const w of seen)
+                    if (w !== v && !(w === null || w === undefined || (typeof w == 'string' && w.trim() === '')) && toDate(w) === null)
+                        return 'categorical';
+            }
+            if (toDate(v) === null)
+                return 'categorical';
+        }
+        return !present ? undefined : (numeric ? 'numeric' : 'date');
+    };
+
+    test('random dates and times, also ones which do not exist, in UTC and local time', () => {
+        const differences = [];
+        for (let k = 0; k < 50000; k++) {
+            const parts = [pad(int(0, 2100), 4), pad(int(0, 13)), pad(int(0, 32)), pad(int(0, 25)), pad(int(0, 60)), pad(int(0, 60)), random() < 0.3 ? String(int(0, 99999)) : undefined];
+            const n = int(1, 7);
+            const text = parts[0] + (n > 1 ? `-${parts[1]}` : '') + (n > 2 ? `-${parts[2]}` : '') + (n > 4 ? `T${parts[3]}:${parts[4]}` : '')
+                + (n > 5 ? `:${parts[5]}` : '') + (n > 6 && parts[6] ? `.${parts[6]}` : '');
+            const used = n > 4 ? parts.slice(0, n) : parts.slice(0, Math.min(n, 3));
+            for (const utc of [false, true])
+                if (toDate(text, utc) !== wallTimeBefore(utc, ...used))
+                    differences.push([text, utc]);
+        }
+        // leap years, early years and the end of a day
+        for (const text of ['2000-02-29', '1900-02-29', '2024-02-29', '2023-02-29', '0000-02-29', '0004-02-29', '0100-02-29', '0099-12-31T24:00', '0050-06-01T13:00:00.5'])
+            for (const utc of [false, true]) {
+                const [, y, m, d, h, mi, s, fraction] = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?)?$/.exec(text);
+                if (toDate(text, utc) !== wallTimeBefore(utc, y, m, d, h, mi, s, fraction))
+                    differences.push([text, utc]);
+            }
+        expect(differences).toEqual([]);
+    });
+
+    test('every minute of the days of the changes of the summer time of Vienna', () => {
+        const differences = [];
+        for (const day of ['2024-03-31', '2024-10-27', '2023-03-26', '2023-10-29'])
+            for (let h = 0; h <= 24; h++)
+                for (let mi = 0; mi < 60; mi++) {
+                    const text = `${day} ${pad(h)}:${pad(mi)}`;
+                    if (toDate(text) !== wallTimeBefore(false, ...day.split('-'), pad(h), pad(mi)))
+                        differences.push(text);
+                }
+        expect(differences).toEqual([]);
+    });
+
+    test('random columns of numbers, dates, categories and missing values', () => {
+        const pool = [1, 2.5, NaN, Infinity, '3', ' 4 ', '1e3', '2024-06-01', '2024-06', '01.06.2024', '2024-06-01T13:00Z', 'Wien', 'Phase 1', '', ' ', null, undefined, 0, Date.UTC(2024, 0, 1)];
+        const differences = [];
+        for (let k = 0; k < 20000; k++) {
+            const values = Array.from({ length: int(0, 8) }, () => pool[int(0, pool.length - 1)]);
+            if (inferType(values) !== inferTypeBefore(values))
+                differences.push(values);
+        }
+        expect(differences).toEqual([]);
     });
 });

@@ -67,29 +67,27 @@ const dayFirst = /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[T ](\d{1,2}):(\d{2})(?::(\d{
 // "2024-06-01T13:00:00Z" or "2024-06-01 13:00+02:00", of every scale the same time
 const isoZoned = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:[.,](\d+))?)?\s?(?:([Zz])|([+-])(\d{2})(?::?(\d{2}))?)$/;
 
+// the days of the months of a year which is no leap year
+const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+// the milliseconds of 400 years, the leap years repeat after them
+const cycle = 146097*86400000;
+
 // the time of a date and a time of the time zone of a scale, local or UTC,
 // NaN if it does not exist, e.g. "2022-02-30", which Date.parse reads as the
 // 2nd of March, 24:00 is the midnight at the end of the day, a fraction of a
 // second is cut to milliseconds, e.g. of pandas
 const wallTime = (utc, y, m = 1, d = 1, h = 0, mi = 0, s = 0, fraction = '') => {
-    // years before 100 are not the ones of 1900, as of new Date(y, m, d)
-    const date = new Date(0);
-    const ms = +`${fraction ?? ''}000`.slice(0, 3);
-    const end = +h == 24 && +mi == 0 && +s == 0 && ms == 0;
-    if (utc) {
-        date.setUTCFullYear(+y, m - 1, +d);
-        date.setUTCHours(end ? 0 : +h, +mi, +s, ms);
-    } else {
-        date.setFullYear(+y, m - 1, +d);
-        date.setHours(end ? 0 : +h, +mi, +s, ms);
-    }
-    const [year, month, day] = utc
-        ? [date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()]
-        : [date.getFullYear(), date.getMonth(), date.getDate()];
-    const valid = year == +y && month == m - 1 && day == +d && (end || +h < 24) && +mi < 60 && +s < 60;
-    if (valid && end)
-        utc ? date.setUTCDate(date.getUTCDate() + 1) : date.setDate(date.getDate() + 1);
-    return valid ? date.getTime() : NaN;
+    y = +y; m = +m; d = +d; h = +h; mi = +mi; s = +s;
+    const ms = fraction ? +`${fraction}00`.slice(0, 3) : 0;
+    const end = h == 24 && mi == 0 && s == 0 && ms == 0;
+    const days = m == 2 && ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0) ? 29 : monthDays[m - 1];
+    if (!(d >= 1 && d <= days && (end || h < 24) && mi < 60 && s < 60))
+        return NaN;
+    // years before 100 are not the ones of 1900, as of new Date(y, m, d), but
+    // the ones of 400 years later, before them
+    const early = y < 100;
+    const args = [early ? y + 400 : y, m - 1, d + (end ? 1 : 0), end ? 0 : h, mi, s, ms];
+    return (utc ? Date.UTC(...args) : new Date(...args).getTime()) - (early ? cycle : 0);
 };
 
 // the time of a date with a time zone, see isoZoned, NaN if it does not exist
@@ -407,37 +405,43 @@ const addDataValues = (def, rows, columns = null) => {
 
 // the type of the values of a column: numeric if all of them are numbers,
 // date if all of them are dates, otherwise categorical, undefined without
-// values (e.g. of empty data).
-// One pass which ends at the first value which is neither, a value is read
-// once (e.g. the years of many rows), the values before the first one which
-// is no number are read as dates then, `value(i)` is the one of the row i of
-// `n` rows (or `values` an array)
+// values (e.g. of empty data). A pass of numbers which ends at the first
+// value which is none (a value which is the one before is skipped, e.g. the
+// years of many rows), then a pass of dates of the distinct values, which
+// ends at the first value which is no date, `value(i)` is the one of the
+// row i of `n` rows (or `values` an array)
 const inferType = (values, n = values.length) => {
     const at = typeof values == 'function' ? values : i => values[i];
-    const seen = new Set();
     let present = false;
-    let numeric = true;
-    for (let i = 0; i < n; i++) {
+    let before;
+    let i = 0;
+    for (; i < n; i++) {
         const v = at(i);
+        if (v === before)
+            continue;
+        before = v;
+        if (typeof v == 'number' && Number.isFinite(v)) {
+            present = true;
+            continue;
+        }
+        if (missing(v))
+            continue;
+        if (toNumber(v) === null)
+            break;
+        present = true;
+    }
+    if (i == n)
+        return present ? 'numeric' : undefined;
+    const seen = new Set();
+    for (let j = 0; j < n; j++) {
+        const v = at(j);
         if (seen.has(v))
             continue;
         seen.add(v);
-        if (missing(v))
-            continue;
-        present = true;
-        if (numeric && toNumber(v) !== null)
-            continue;
-        if (numeric) {
-            numeric = false;
-            // the values before were numbers, they are dates as well if all of them are ones
-            for (const w of seen)
-                if (w !== v && !missing(w) && toDate(w) === null)
-                    return 'categorical';
-        }
-        if (toDate(v) === null)
+        if (!missing(v) && toDate(v) === null)
             return 'categorical';
     }
-    return !present ? undefined : (numeric ? 'numeric' : 'date');
+    return 'date';
 };
 
 // a d3 time format, e.g. "%b %Y", not a number format, e.g. ".0%"
