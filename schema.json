@@ -607,12 +607,11 @@
             "required": ["type"],
             "properties": {
                 "type": {
-                    "enum": ["year", "align", "index", "mean", "share", "rolling", "cumulative", "calc", "rank", "lookup"],
-                    "description": "year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the values of `columns` combined by `op`, rank: the rank in the group, lookup: the `value` of the row of a file of `data` of the `key`."
+                    "enum": ["year", "align", "index", "mean", "share", "rolling", "cumulative", "calc", "filter", "rank", "lookup"],
+                    "description": "year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, lookup: the `value` of the row of a file of `data` of the `key`."
                 },
                 "column": { "type": "string", "description": "The column of the values, a template of the globals, of a lookup the one of the keys." },
-                "columns": { "type": "array", "items": { "type": "string" }, "description": "calc: the columns of the values, combined from the first one." },
-                "op": { "enum": ["add", "subtract", "multiply", "divide", "min", "max"], "description": "calc: the operation of the values of the columns, min and max the least and the largest one." },
+                "expr": { "$ref": "#/definitions/value", "description": "calc: the expression of the value of the row, filter: the expression of the rows which are kept, its names are the columns of the row and the globals, e.g. { \"*\": [{ \"/\": [\"@value\", \"@inno\"] }, 100] } or { \">\": [\"@value\", 0] }." },
                 "min": { "type": "integer", "minimum": 1, "description": "mean: the least number of values, without as many values the mean is missing, 1 by default." },
                 "descending": { "type": "boolean", "default": false, "description": "rank: the largest value is the first one." },
                 "data": { "type": "string", "description": "lookup: the url of a file of rows, relative to the definition, not a template." },
@@ -630,7 +629,7 @@
                     "description": "The rows of the base of an index or of a mean: a column and its value, e.g. { \"year\": \"{base}\" }, or a range [from, to], e.g. of dates or years, { \"year\": [1961, 1990] }.",
                     "additionalProperties": true
                 },
-                "scale": { "type": "number", "description": "The value of the base of an index (100 by default), the factor of calc (1 by default)." },
+                "scale": { "type": "number", "description": "The value of the base of an index (100 by default)." },
                 "size": { "type": "integer", "minimum": 1, "description": "The number of the rows of the window of rolling." },
                 "align": { "enum": ["end", "center"], "description": "The window of rolling: the rows before the row (end, by default) or around it." },
                 "year": { "type": "integer", "description": "The year of align, 2020 by default." }

@@ -1,0 +1,244 @@
+[
+  {
+    "name": "the rows whose expression is true",
+    "rows": [
+      {
+        "v": "1"
+      },
+      {
+        "v": "-2"
+      },
+      {
+        "v": ""
+      },
+      {
+        "v": "4"
+      }
+    ],
+    "transform": {
+      "type": "filter",
+      "expr": {
+        ">": [
+          "@v",
+          0
+        ]
+      }
+    },
+    "columns": {},
+    "kept": [
+      0,
+      3
+    ]
+  },
+  {
+    "name": "the later transforms have only the rows of the filter, the others have no value",
+    "rows": [
+      {
+        "g": "a",
+        "v": "1"
+      },
+      {
+        "g": "a",
+        "v": "-2"
+      },
+      {
+        "g": "a",
+        "v": "3"
+      },
+      {
+        "g": "b",
+        "v": "5"
+      }
+    ],
+    "transform": [
+      {
+        "type": "filter",
+        "expr": {
+          ">": [
+            "@v",
+            0
+          ]
+        }
+      },
+      {
+        "type": "share",
+        "column": "v",
+        "by": "g",
+        "as": "s"
+      },
+      {
+        "type": "cumulative",
+        "column": "v",
+        "as": "sum"
+      }
+    ],
+    "columns": {
+      "s": [
+        0.25,
+        null,
+        0.75,
+        1
+      ],
+      "sum": [
+        1,
+        null,
+        4,
+        9
+      ]
+    },
+    "kept": [
+      0,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "a column of a transform before the filter has the values of all rows",
+    "rows": [
+      {
+        "v": "1"
+      },
+      {
+        "v": "-2"
+      }
+    ],
+    "transform": [
+      {
+        "type": "cumulative",
+        "column": "v",
+        "as": "sum"
+      },
+      {
+        "type": "filter",
+        "expr": {
+          ">": [
+            "@v",
+            0
+          ]
+        }
+      }
+    ],
+    "columns": {
+      "sum": [
+        1,
+        -1
+      ]
+    },
+    "kept": [
+      0
+    ]
+  },
+  {
+    "name": "two filters, the rows of both",
+    "rows": [
+      {
+        "v": "1",
+        "t": "a"
+      },
+      {
+        "v": "2",
+        "t": "b"
+      },
+      {
+        "v": "3",
+        "t": "a"
+      }
+    ],
+    "transform": [
+      {
+        "type": "filter",
+        "expr": {
+          "==": [
+            "@t",
+            "a"
+          ]
+        }
+      },
+      {
+        "type": "filter",
+        "expr": {
+          ">": [
+            "@v",
+            1
+          ]
+        }
+      }
+    ],
+    "columns": {},
+    "kept": [
+      2
+    ]
+  },
+  {
+    "name": "a filter of a global",
+    "globals": {
+      "year": "2024"
+    },
+    "rows": [
+      {
+        "year": 2023
+      },
+      {
+        "year": 2024
+      }
+    ],
+    "transform": {
+      "type": "filter",
+      "expr": {
+        "==": [
+          "@year",
+          "{year}"
+        ]
+      }
+    },
+    "columns": {},
+    "kept": [
+      1
+    ]
+  },
+  {
+    "name": "a filter of a global as a reference, a name which is no column",
+    "globals": {
+      "min": 2
+    },
+    "rows": [
+      {
+        "v": "1"
+      },
+      {
+        "v": "2"
+      },
+      {
+        "v": "3"
+      }
+    ],
+    "transform": {
+      "type": "filter",
+      "expr": {
+        ">=": [
+          "@v",
+          "@min"
+        ]
+      }
+    },
+    "columns": {},
+    "kept": [
+      1,
+      2
+    ]
+  },
+  {
+    "name": "a filter without rows",
+    "rows": [
+      {
+        "v": "1"
+      }
+    ],
+    "transform": {
+      "type": "filter",
+      "expr": false
+    },
+    "columns": {},
+    "kept": []
+  }
+]

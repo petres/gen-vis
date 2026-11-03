@@ -1,4 +1,4 @@
-export { groupBy, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, distinctValues, usedColumns, columnValues };
+export { groupBy, keptRows, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { sameValue, templateRefs, variants } from "@/utils/def";
@@ -132,6 +132,10 @@ const converter = (mapping, mappings) => {
 // of the time zone of its scale, also the one of another mapping (`"scale":
 // { "of": "x" }`) of the `mappings` of the definition
 const convert = (mapping, v, mappings) => converter(mapping, mappings)(v);
+
+// the prepared rows of the filters of the transforms (`columns.kept`, see
+// utils/transform-types.js), all without one
+const keptRows = (data, columns) => columns?.kept ? columns.kept.map(i => data[i]) : data;
 
 // the values of a column of the data by the index of a row, of a transform
 // (`columns`, see utils/transform.js) or of the rows

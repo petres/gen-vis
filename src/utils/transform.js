@@ -3,6 +3,7 @@ export { applyTransforms, loadTransforms, transformNames, transformColumns, tran
 import { fillTemplate, templateRefs } from "@/utils/def";
 import { scaleDef } from "@/utils/data";
 import { lazy } from "@/utils/lazy";
+import { refNames } from "@/utils/expr";
 
 /**
  * The transforms of a definition compute columns of the data in the browser,
@@ -11,7 +12,7 @@ import { lazy } from "@/utils/lazy";
  */
 
 // the types of the transforms, e.g. for validateDef
-const transformNames = ['year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'rank', 'lookup'];
+const transformNames = ['year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'lookup'];
 
 const list = transforms => [transforms ?? []].flat();
 
@@ -24,7 +25,7 @@ const loadTransforms = async () => types ??= await lazy.transform();
  */
 const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null) => {
     if (list(transforms).length == 0)
-        return Object.assign(new Map(), { steps: [], changed: new Set() });
+        return Object.assign(new Map(), { steps: [], changed: new Set(), kept: null });
     if (!types)
         throw new Error('The transforms are not loaded, see loadTransforms');
     return types.applyTransforms(rows, transforms, globals, utc, before, files);
@@ -45,9 +46,10 @@ const transformColumns = transforms => {
     const own = new Set();
     const used = new Set();
     list(transforms).forEach(t => {
-        [t.column, ...[t.columns ?? []].flat(), ...[t.by ?? []].flat(), t.order, ...Object.keys(t.base ?? {})]
+        [t.column, ...[t.columns ?? []].flat(), ...[t.by ?? []].flat(), t.order, ...Object.keys(t.base ?? {}), ...(t.expr === undefined ? [] : refNames(t.expr))]
             .filter(c => typeof c == 'string' && !own.has(c)).forEach(c => used.add(c));
-        own.add(t.as ?? t.column);
+        if (t.type != 'filter')
+            own.add(t.as ?? t.column ?? [t.columns ?? []].flat()[0]);
     });
     return [...used];
 };

@@ -10,6 +10,7 @@ import { annotationKeys } from "@/coords/annotations.js";
 import { projectionNames } from "@/coords/geo.js";
 import { transformNames } from "@/utils/transform";
 import { isObject } from "@/utils/values";
+import { isOperator, operators } from "@/utils/expr";
 // without its descriptions, see checkSchema of vite.config.js
 import schema from "../../schema.json?check";
 
@@ -65,42 +66,57 @@ const checkRef = (ref, path, warn, names) => {
     warn(path, `unknown reference '${ref}'${known}`);
 };
 
-// objects are nested props unless they have a `prop` key, `names` are the
-// names of the references known at the place of the props, an unknown kind
-// of a prop is one of the schema, see schemaWarnings
-const propKinds = schema.definitions.prop.properties.prop.enum;
+// the expressions of props (see utils/expr.js): references, operators and
+// nested props, `names` are the names of the references known at the place of
+// the props, a prop of 3.x is one to migrate
+const legacyKinds = ['fixed', 'ref', 'relative', 'steps', 'format', 'match'];
 const checkProp = (value, path, warn, names = null) => {
     if (typeof value == 'string' && value.charAt() == '@')
         return checkRef(value.substring(1), path, warn, names);
-    if (value === null || typeof value != 'object' || Array.isArray(value))
+    if (!isObject(value))
         return;
-    if ('prop' in value) {
-        if (!propKinds.includes(value.prop))
-            return;
-        if (value.prop == 'ref' && typeof value.ref != 'string')
-            warn(path, `a 'ref' prop needs a 'ref'`);
-        else if (value.prop != 'fixed' && typeof value.ref != 'string' && !('of' in value))
-            warn(path, `a '${value.prop}' prop needs a 'ref' or a prop 'of'`);
-        else if (value.prop == 'format' && typeof value.format != 'string')
-            warn(path, `a 'format' prop needs a 'format', e.g. ",.1f"`);
-        else if (value.prop == 'match' && !isObject(value.cases))
-            warn(path, `a 'match' prop needs the props of the values, its 'cases', e.g. { "header": 4 }`);
-        else if (value.prop != 'fixed') {
-            if ('of' in value)
-                checkProp(value.of, `${path}.of`, warn, names);
-            else
-                checkRef(value.ref, path, warn, names);
-            if (value.prop == 'match') {
-                Object.entries(value.cases).forEach(([k, c]) => checkProp(c, `${path}.cases.${k}`, warn, names));
-                checkProp(value.default, `${path}.default`, warn, names);
-            }
-        }
-        return;
+    if (typeof value.prop == 'string' && legacyKinds.includes(value.prop))
+        return warn(path, `a prop of gen-vis 3.x, see migrate of @preschen/gen-vis/check, e.g. { "*": ["@innerWidth", 0.5] } of a relative one`);
+    if (!isOperator(value)) {
+        const keys = Object.keys(value);
+        const close = keys.length == 1 ? similar(keys[0], operators.filter(o => /^[a-z]/.test(o))) : undefined;
+        if (close !== undefined)
+            warn(`${path}.${keys[0]}`, `a nested prop, not an operator, did you mean '${close}'?`);
+        return Object.entries(value).forEach(([k, v]) => checkProp(v, `${path}.${k}`, warn, names));
     }
-    const keys = ['ratio', 'steps', 'ref', 'format', 'cases'].filter(k => k in value);
-    if (keys.length > 0)
-        return warn(path, `has ${list(keys)} but no 'prop', so it is not evaluated`);
-    Object.entries(value).forEach(([k, v]) => checkProp(v, `${path}.${k}`, warn, names));
+    const op = Object.keys(value)[0];
+    const args = Array.isArray(value[op]) ? value[op] : [value[op]];
+    const at = `${path}.${op}`;
+    const each = list => list.forEach((v, i) => checkProp(v, `${at}[${i}]`, warn, names));
+    switch (op) {
+        case 'literal':
+            return;
+        case 'var':
+            if (typeof args[0] != 'string')
+                return warn(at, `expected a name or a name and its default, e.g. ["year", 2024]`);
+            checkRef(args[0], at, warn, names);
+            return checkProp(args[1], `${at}[1]`, warn, names);
+        case 'steps':
+        case 'match':
+            checkProp(args[0], `${at}[0]`, warn, names);
+            if (!isObject(args[1]))
+                return warn(at, op == 'steps' ? `expected a value and its steps, e.g. ["@totalWidth", { "0": 220, "550": 250 }]`
+                    : `expected a value, its cases and a default, e.g. ["@level", { "header": 4.5 }, 0]`);
+            if (op == 'steps')
+                Object.keys(args[1]).filter(k => !Number.isFinite(Number(k)) || k.trim() === '').forEach(k => warn(`${at}[1].${k}`, `the cut of a step is a number`));
+            Object.entries(args[1]).forEach(([k, v]) => checkProp(v, `${at}[1].${k}`, warn, names));
+            return checkProp(args[2], `${at}[2]`, warn, names);
+        case 'format':
+            checkProp(args[0], `${at}[0]`, warn, names);
+            if (typeof args[1] != 'string')
+                warn(at, `expected a value and a d3 format, e.g. ["@y", ",.1f"]`);
+            return;
+        case 'if':
+            if (args.length < 2)
+                warn(at, `expected a condition, its value and the value otherwise, e.g. [{ ">": ["@y", 0] }, "green", "red"]`);
+            return each(args);
+    }
+    return each(args);
 };
 
 // the values of the rows of a mapping, e.g. `x:scaled`, see rowValue of
@@ -178,7 +194,7 @@ const describe = node => {
     if (branches)
         return [...new Set(branches.map(describe))].join(' or ');
     if (node === schema.definitions.prop)
-        return 'a computed prop';
+        return 'an expression';
     if (node.enum)
         return node.enum.length == 1 ? show(node.enum[0]) : `one of ${list(node.enum)}`;
     if ('const' in node)
@@ -634,7 +650,6 @@ const checkOptions = ({ def, names, warn }) => {
 };
 
 // the transforms, a column of the values, the globals of their templates
-const calcOps = schema.definitions.transform.properties.op.enum;
 const checkTransforms = ({ def, globals, warn }) => {
     [def.transform ?? []].flat().forEach((t, i) => {
         const path = `transform[${i}]`;
@@ -643,12 +658,12 @@ const checkTransforms = ({ def, globals, warn }) => {
         // the registered transforms, see utils/transform.js
         if (!transformNames.includes(t.type))
             warn(`${path}.type`, `unknown transform '${t.type}'${choices(t.type, transformNames)}`);
-        if (t.type == 'calc') {
-            if (!Array.isArray(t.columns) || t.columns.length == 0 || !t.columns.every(c => typeof c == 'string'))
-                warn(`${path}.columns`, `the columns of the values are needed, e.g. ["value", "base"]`);
-            if (t.op === undefined)
-                warn(`${path}.op`, `expected one of ${list(calcOps)}`);
-            if (typeof t.as != 'string')
+        if (t.type == 'calc' || t.type == 'filter') {
+            if (t.expr === undefined)
+                warn(`${path}.expr`, t.type == 'calc' ? `the expression of the value of the row is needed, e.g. { "*": [{ "/": ["@value", "@base"] }, 100] }`
+                    : `the expression of the rows which are kept is needed, e.g. { ">": ["@value", 0] }`);
+            checkProp(t.expr, `${path}.expr`, warn, null);
+            if (t.type == 'calc' && typeof t.as != 'string')
                 warn(`${path}.as`, `the name of the new column is needed`);
         } else if (typeof t.column != 'string')
             warn(`${path}.column`, `the column of the values is needed`);

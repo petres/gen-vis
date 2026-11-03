@@ -1,6 +1,6 @@
 export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor };
 
-import { categoryOrder, continuous, convert, filter, groupBy, rowFilter, stack } from "@/utils/data";
+import { categoryOrder, continuous, convert, filter, groupBy, keptRows, rowFilter, stack } from "@/utils/data";
 import * as d3 from "@/utils/d3";
 import { bind, constant, evaluate, formatter, refNames } from "@/utils/props";
 import { bandCenter, makeScale } from "@/utils/scales";
@@ -111,7 +111,7 @@ const layout = (store, width) => {
     // the rows of the conditions of `filter`, e.g. of a global of a form
     // element, see rowFilter, and of them the ones of the visible categories
     const visible = visibleKeys(def);
-    const filtered = filter(store.data, rowFilter(def.filter, def.mapping, scope));
+    const filtered = filter(keptRows(store.data, store.columns), rowFilter(def.filter, def.mapping, scope));
     const rows = filter(filtered, visible);
 
     // the start and the end of the stacked values of the rows, stacked in the

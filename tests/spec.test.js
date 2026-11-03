@@ -50,8 +50,12 @@ describe('spec/transforms', () => {
             inZone(c.timezone, () => {
                 if (c.error !== undefined)
                     expect(run).toThrow(c.error);
-                else
-                    expectClose(Object.fromEntries(run()), c.columns);
+                else {
+                    const columns = run();
+                    expectClose(Object.fromEntries(columns), c.columns);
+                    // the rows of filters, null without one
+                    expect(columns.kept ?? null).toEqual(c.kept ?? null);
+                }
             });
         });
     });
