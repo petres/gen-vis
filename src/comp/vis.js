@@ -161,7 +161,17 @@ const createVis = app => {
 
     const highlight = info => facets?.highlight(info.dim === undefined ? null : {[info.dim]: info.key});
 
-    const vis = { store, slots, emit: app.emit, guard, highlight, changeSelected: () => changeSelected() };
+    // the entries of the legends of the categories of a highlighted row,
+    // e.g. of the line under the pointer, of an entry of a legend or of the
+    // page, the class `vis-legend-highlight` (bold), null ends it
+    const markLegends = row => root.querySelectorAll('.vis-legend[data-dim]').forEach(legend => {
+        const value = row?.[legend.dataset.dim];
+        const key = value === null || value === undefined ? null : String(value);
+        legend.querySelectorAll(':scope > .vis-legend-entries > .vis-legend-entry')
+            .forEach(entry => entry.classList.toggle('vis-legend-highlight', entry.dataset.key === key));
+    });
+
+    const vis = { store, slots, emit: app.emit, guard, highlight, markLegends, changeSelected: () => changeSelected() };
 
     // the rows, facets and scales of the store, `animated` of a change of
     // the user or the state, the elements move with the transition of

@@ -171,7 +171,9 @@ const createFacet = (vis, initial) => {
     // an entry of a legend, null ends it, see utils/draw.js, without one
     // the one of the page, see the prop highlight of app.js
     const highlightEntry = dataEntry => {
-        highlight?.(dataEntry ?? store.highlighted ?? null);
+        const entry = dataEntry ?? store.highlighted ?? null;
+        highlight?.(entry);
+        vis.markLegends?.(entry);
     };
 
     const draw = () => {

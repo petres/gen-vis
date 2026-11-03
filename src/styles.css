@@ -236,6 +236,11 @@
 .vis-legend .vis-legend-entries > div.bold {
     font-weight: bold;
 }
+/* the entry of the category of the highlighted row, e.g. of the line
+   under the pointer, a bold look of the same width, so no entry moves */
+.vis-legend .vis-legend-entries > div.vis-legend-highlight span {
+    text-shadow: 0.4px 0 0 currentColor, -0.4px 0 0 currentColor;
+}
 /* the symbol of an entry */
 .vis-legend-entry > svg {
     display: inline-block;
