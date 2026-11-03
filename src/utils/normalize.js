@@ -1,11 +1,11 @@
-export { normalize, isLegacy, resolveType, withDefaults, scaleTypeOf, positions, categoryKeys };
+export { normalize, resolveType, withDefaults, scaleTypeOf, positions, categoryKeys };
 
 import { isObject } from '@/utils/values';
 import { isOperator, refNames } from '@/utils/expr';
 
 /**
  * The normalization of a definition of 4.0 (merged with its parents) into the
- * internal form of the renderer, the one of 3.x, see docs/design-4.0.md and
+ * internal form of the renderer, see docs/design-4.0.md and
  * spec/normalize. It is pure, JSON to JSON, the parts which need the rows,
  * the types of mappings without a type, follow when the rows are loaded, see
  * inferTypes of utils/data.js and prepareMapping of utils/def.js.
@@ -25,12 +25,16 @@ import { isOperator, refNames } from '@/utils/expr';
  *   see scaleTypeOf
  * - `by` of a plot are its `categories`, `highlight` and `others` objects of
  *   props are the props `highlight-` and `others-`, `mode` of the highlight
- *   is the one of 3.x (`group` or `row`)
+ *   is the highlight of the internal form (`group` or `row`)
  * - the type of a plot without the prefix of the coordinate system is the one
  *   of the coordinate system (`line` is `cartesian:line` or `polar:line`), of
  *   svg elements (`circle` is `svg:circle` of cartesian plots) or the only
  *   registered one of the name, `point` is `circle`, its props are merged
  *   into the `defaults` of the type, null removes a default
+ *
+ * The parts of the internal form are not the ones of a definition, they are
+ * not read: `props` of a mapping, `categories` of a plot, a text of its
+ * `highlight` and its props of the prefixes `highlight-` and `others-`.
  *
  * The patches of the entries of form elements are parts, they are only
  * written in the internal form, without the defaults, except the plots of a
@@ -60,26 +64,6 @@ const dateScales = ['time', 'utc'];
 const barTypes = ['cartesian:bar', 'polar:arc'];
 
 const clone = v => v === undefined ? undefined : JSON.parse(JSON.stringify(v));
-
-// the kinds of the props of 3.x, e.g. { "prop": "relative", ... }
-const legacyProps = new Set(['fixed', 'ref', 'relative', 'steps', 'format', 'match']);
-
-/**
- * A definition with constructs of 3.x, which the load migrates (see
- * utils/migrate.js): props of `prop` (e.g. { "prop": "relative" }), the
- * `op` of calc, the `categories` of a plot and the `props` of a mapping.
- */
-const isLegacy = def => {
-    const visit = v => Array.isArray(v) ? v.some(visit)
-        : isObject(v) && ((typeof v.prop == 'string' && legacyProps.has(v.prop)) || Object.values(v).some(visit));
-    const parts = [def, ...(Array.isArray(def?.formElements) ? def.formElements : [])
-        .flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.patch) : []).filter(isObject)];
-    const plots = parts.flatMap(d => [d.plot ?? []].flat()).filter(isObject);
-    return visit(def)
-        || parts.some(d => [d.transform ?? []].flat().some(t => t?.type == 'calc' && t.op !== undefined))
-        || parts.some(d => Object.values(isObject(d.mapping) ? d.mapping : {}).some(m => isObject(m) && 'props' in m))
-        || plots.some(p => p.categories !== undefined);
-};
 
 /**
  * The plot type of a name without the prefix of a coordinate system, e.g.
@@ -152,9 +136,10 @@ const normalizeMapping = (raw, orientation, own) => {
     if (!isObject(raw) && typeof raw != 'string')
         return raw;
     const m = typeof raw == 'string' ? { column: raw } : { ...raw };
+    delete m.props;
     const categories = categoryKeys.filter(k => k in m);
     if (categories.length > 0) {
-        m.props = { ...(isObject(m.props) ? m.props : {}), ...Object.fromEntries(categories.map(k => [k, m[k]])) };
+        m.props = Object.fromEntries(categories.map(k => [k, m[k]]));
         categories.forEach(k => delete m[k]);
     }
     const scaled = scaleKeys.filter(k => k in m);
@@ -187,8 +172,13 @@ const normalizePlot = (raw, coord, plotTypes) => {
     if (!isObject(raw))
         return raw;
     const p = { ...raw };
+    delete p.categories;
+    if (typeof p.highlight == 'string')
+        delete p.highlight;
+    if (isObject(p.props))
+        p.props = Object.fromEntries(Object.entries(p.props).filter(([k]) => !/^(highlight|others)-/.test(k)));
     if ('by' in p) {
-        p.categories ??= p.by;
+        p.categories = p.by;
         delete p.by;
     }
     if (typeof p.type == 'string' && !p.type.includes(':')) {

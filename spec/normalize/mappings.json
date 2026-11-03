@@ -427,7 +427,7 @@
       },
       "plot": {
         "type": "cartesian:line",
-        "categories": [
+        "by": [
           "g"
         ]
       }
@@ -628,6 +628,26 @@
         "x": {
           "column": "a",
           "type": "numeric"
+        }
+      }
+    }
+  },
+  {
+    "name": "props of a mapping, the categories of the internal form, are not read",
+    "def": {
+      "mapping": {
+        "c": {
+          "column": "c",
+          "props": {
+            "fromData": true
+          }
+        }
+      }
+    },
+    "result": {
+      "mapping": {
+        "c": {
+          "column": "c"
         }
       }
     }

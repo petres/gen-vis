@@ -11,8 +11,7 @@ import { projectionNames } from "@/coords/geo.js";
 import { transformNames } from "@/utils/transform";
 import { isObject } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
-import { isLegacy, normalize, scaleTypeOf } from "@/utils/normalize";
-import { migrate } from "@/utils/migrate";
+import { normalize, scaleTypeOf } from "@/utils/normalize";
 import { inferType } from "@/utils/data";
 // without its descriptions, see checkSchema of vite.config.js
 import schema from "../../schema.json?check";
@@ -71,15 +70,12 @@ const checkRef = (ref, path, warn, names) => {
 
 // the expressions of props (see utils/expr.js): references, operators and
 // nested props, `names` are the names of the references known at the place of
-// the props, a prop of 3.x is one to migrate
-const legacyKinds = ['fixed', 'ref', 'relative', 'steps', 'format', 'match'];
+// the props
 const checkProp = (value, path, warn, names = null) => {
     if (typeof value == 'string' && value.charAt() == '@')
         return checkRef(value.substring(1), path, warn, names);
     if (!isObject(value))
         return;
-    if (typeof value.prop == 'string' && (legacyKinds.includes(value.prop) || Object.keys(value).every(k => ['prop', 'ref', 'of', 'ratio', 'offset', 'steps', 'format', 'cases', 'default', 'value'].includes(k))))
-        return warn(path, `a prop of gen-vis 3.x, see migrate of @preschen/gen-vis/check, e.g. { "*": ["@innerWidth", 0.5] } of a relative one`);
     if (!isOperator(value)) {
         const keys = Object.keys(value);
         const close = keys.length == 1 ? similar(keys[0], operators.filter(o => /^[a-z]/.test(o))) : undefined;
@@ -763,20 +759,22 @@ const context = (def, warn, rows) => {
 // the path of a warning of the internal form (see utils/normalize.js) in the
 // definition of 4.0 `def`: the parts of the categories of a mapping and its
 // domain at the mapping, `by` of the categories of a plot, `highlight` and
-// `others` objects of the props of their prefixes
+// `others` objects of the props of their prefixes, `mode` of the highlight
 const writtenPath = (path, def) => {
     let m = /^mapping\.([^.[]+)\.props\.(categories|scheme|common|fromData|ranks|order)\b(.*)$/.exec(path);
-    if (m && !isObject(def.mapping?.[m[1]]?.props))
+    if (m)
         return `mapping.${m[1]}.${m[2]}${m[3]}`;
     m = /^mapping\.([^.[]+)\.scale\.(domain|nice)\b(.*)$/.exec(path);
     if (m && isObject(def.mapping?.[m[1]]) && m[2] in def.mapping[m[1]])
         return `mapping.${m[1]}.${m[2]}${m[3]}`;
     m = /^plot\[(\d+)\]\.(categories|props\.(highlight|others)-([^.[]+))(.*)$/.exec(path);
-    const plot = m && [].concat(def.plot ?? [])[m[1]];
-    if (m && m[2] == 'categories' && plot?.by !== undefined)
+    if (m && m[2] == 'categories')
         return `plot[${m[1]}].by${m[5]}`;
-    if (m && m[3] && isObject(plot?.[m[3]]))
+    if (m)
         return `plot[${m[1]}].${m[3]}.${m[4]}${m[5]}`;
+    m = /^plot\[(\d+)\]\.highlight$/.exec(path);
+    if (m)
+        return `plot[${m[1]}].highlight.mode`;
     return path;
 };
 
@@ -839,11 +837,17 @@ const shortPlots = (def, internal) => {
     return { written, defaults };
 };
 
+// the props of a plot of the names of the internal form of its highlight
+// and its others, e.g. "highlight-stroke", they are the ones of the objects
+// `highlight` and `others`, see utils/normalize.js
+const prefixedProps = def => [].concat(def?.plot ?? []).flatMap((p, i) => Object.keys(isObject(p?.props) ? p.props : {})
+    .map(k => /^(highlight|others)-(.+)$/.exec(k)).filter(Boolean)
+    .map(([k, part, name]) => `plot[${i}].props.${k}: unknown prop, a prop of the ${part == 'highlight' ? 'highlight' : 'other elements'} is one of '${part}', e.g. { "${part}": { "${name}": … } }`));
+
 /**
  * Returns warnings for common mistakes in a (merged) definition, e.g. unknown
  * plot types, keys which are not in the schema or props which are not
- * evaluated. A definition of 3.x is migrated first (see utils/migrate.js),
- * the first warning names it. The parts are checked in the internal form of
+ * evaluated. The parts are checked in the internal form of
  * the definition (see utils/normalize.js), the paths are the ones of the
  * definition. The definitions of the entries of the form elements, the one
  * with the patch of an entry merged as the runtime merges it (see
@@ -853,14 +857,9 @@ const shortPlots = (def, internal) => {
  * if given, are checked as well, e.g. years of a date mapping, the types of
  * the mappings without one are the ones of their values.
  */
-const validateDef = (raw, rows = null) => {
-    const legacy = isLegacy(raw);
-    const def = legacy ? migrate(raw) : raw;
+const validateDef = (def, rows = null) => {
     const internal = withTypes(normalize(def, { plotTypes: withoutDefaults() }), rows);
-    const warnings = [
-        ...(legacy ? ['definition: a definition of gen-vis 3.x, see migrate of @preschen/gen-vis/check, it is migrated while it is loaded, the paths are the ones of the migrated definition'] : []),
-        ...checkDef(def, internal, rows, true, shortPlots(def, internal)),
-    ];
+    const warnings = [...checkDef(def, internal, rows, true, shortPlots(def, internal)), ...prefixedProps(def)];
     const known = new Set(warnings);
     // the patches are checked by the schema as parts of the definition
     const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));

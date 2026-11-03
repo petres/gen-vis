@@ -16,32 +16,28 @@ The rules themselves are in `spec/` (`README.md`, `expressions.md`,
 ```
 definition 4.0 (JSON, schema.json)
    │ resolveParents   (merge, spec/merge)                  portable
-   │ migrate          (only if isLegacy: constructs of 3.x) portable, check chunk
    │ normalize        (src/utils/normalize.js)             portable, pure JSON → JSON
    ▼
-internal definition (the form of 3.x, not documented for users anymore)
+internal definition (the form of 3.x, not documented for users)
    │ inferTypes (types of the values of the rows), prepare / transforms (spec/transforms)
    ▼
 renderer (JS only)
 ```
 
-- The load (`src/utils/load.js`, `toInternal`) merges the parents, migrates a
-  definition with constructs of 3.x (`isLegacy`: props of `prop`, `op` of
-  calc, `categories` of plots, `props` of mappings; the migration is loaded
-  as a chunk of its own then, `lazy.migrate`, with `check` the console warns),
-  then normalizes it with the registered plot types. The types of mappings
+- The load (`src/utils/load.js`) merges the parents, then normalizes the
+  definition with the registered plot types. 4.0 has no compatibility code
+  for 3.x: no migration, no detection of 3.x constructs; the parts of the
+  internal form (`props` of a mapping, `categories` of a plot, a text of
+  `highlight`, props of the prefixes `highlight-`/`others-`) are not read
+  from a definition, the schema and validateDef name them as unknown. The types of mappings
   without one are inferred from the rows in `prepare` (`inferTypes` of
   `src/utils/data.js`), after the first computation of the transforms, so
   columns of transforms are known; the scale type follows in `prepareMapping`
   (`scaleTypeOf`).
-- `migrate(def3)`, `migrateParts(parts)` and `normalize(def)` are exported
-  from `@preschen/gen-vis/check`. `normalize(migrate(d))` equals the internal
-  form of `d` for all definitions of `data/` and `site/`, the order of the
-  props of plots and of the parts of mappings and plots aside
-  (tests/migrate.test.js, against the 3.1 definitions kept in
-  `tests/legacy/`), and the snapshots, rendered from the 4.0 definitions in
-  `data/`, are unchanged; they compare the elements with their attributes
-  sorted by name, the order of attributes does not change a drawing.
+- `normalize(def)` is exported from `@preschen/gen-vis/check`. The
+  snapshots, rendered from the 4.0 definitions in `data/`, are the ones of
+  3.x; they compare the elements with their attributes sorted by name, the
+  order of attributes does not change a drawing.
 
 ## 2. Mappings: shorthand and inference
 
@@ -90,7 +86,7 @@ renderer (JS only)
   registered type `*:<name>` of the coordinate system; `point` is `circle`.
 - `by` instead of `categories`.
 - `highlight` / `others` objects of props; `highlight: {"mode": "row", ...}`
-  carries the 3.x mode, the string `"highlight": "row"` stays valid.
+  is the mode of the highlight.
 - Default props (`defaults` of the plot types, `src/plots/defaults.js`,
   an object or a function of the props, documented for `registerPlotType`)
   apply to short type names only; nested props are merged deeply, `null`
@@ -110,14 +106,13 @@ Semantics (numbers as in the data, comparisons, truthiness of JSON Logic,
 halves rounded up) are in `spec/expressions.md`, fixtures
 `spec/expressions/*.json` run through both `evaluate` and `bind`.
 
-The 3.x forms are not understood by the renderer anymore; migrate rewrites
-them (`migrateExpr`).
+The 3.x forms (`{"prop": ...}`) are not understood anymore, they are nested
+props.
 
 ## 5. Transforms (portable)
 
 - `calc` takes an expression of the row (`expr`), its names are the columns
-  of the row and the globals (a column wins). `op`/`columns`/`scale` are
-  migrated, the implementation has only `expr`.
+  of the row and the globals (a column wins).
 - `filter` (`{"type": "filter", "expr": ...}`) is a transform inside
   `applyTransforms`: the later transforms compute only the kept rows (their
   values of the other rows are null), the kept row indexes are
@@ -148,46 +143,19 @@ merge of the selected patches, exported for the fixtures.
   Migrate converts a prefixed type to the short one when the props contain
   all defaults, the props are the ones which differ then; the merged props
   are the same, their order (the one of the attributes) may differ.
-- **`highlight-`/`others-` prefixes stay valid** (not a 3.x marker). Migrate
-  turns them into objects, normalize appends them to the props.
-- **Migrate writes the shortest forms it can check** (`shorten`), not only
-  the 4.0 constructs: short types, `highlight`/`others` objects, a mapping
-  without the type of its scale, the type, the orientation and the position
-  of the axis which normalize infers, `domain`, `nice` and `format` at the
-  mapping (formats of the axis, hover and legend which are the same), a
-  text of a column. Each form is taken if normalize of the merged definition
-  is the same (props and the parts of mappings and plots in any order, the
-  formats as `formatOf` reads them), for `migrateParts` and the examples
-  checked against every merge the part is one of. Types the values infer
-  stay, migrate has no rows; the examples of `data/` and `site/` were
-  written without them where the load infers the same type and every chart
-  of the file draws the same, also with every entry of its form elements
-  (the migrate test takes the types of mappings without one of the 3.x
-  form, the snapshots draw them).
-- **A definition of 3.x is one with constructs of 3.x** (`isLegacy`, as the
-  load reads it) or one given as such (`legacy: true`), only its mappings
-  are read as the ones of 3.x (a position without a scale has none, a
-  mapping without a type is categorical); a definition of 4.0 is only
-  written shorter, so migrate is idempotent although a shortened mapping has
-  no part of 4.0, e.g. `{"column": "Jahr", "type": "numeric"}`.
 - **`mode` inside `highlight`**: the 3.x `highlight: "row"` and highlight
-  props needed one place; a string still means the mode.
+  props needed one place.
+- **No compatibility with 3.x** (decided after the first version, which
+  migrated 3.x definitions while loading them and kept `highlight-`/`others-`
+  props and a text of `highlight`): only the maintainer uses the library, so
+  4.0 reads only 4.0 definitions; the changes are listed in `CHANGELOG.md`
+  to be done by hand.
 - **Type inference is two-staged** (structural in normalize, data in
   prepare), not only from data: years with categories must stay categorical.
-  Consequence for migration: a 3.x mapping without type (categorical) gets an
-  explicit `"type": "categorical"` unless the structure implies it, a 3.x
-  scale without type gets `"type": "linear"` unless inference gives linear.
-- **Mixed definitions** (a 4.0 child of a 3.x parent) are migrated as a whole;
-  a 4.0 mapping is recognized by its 4.0 parts (`categories`, `domain`,
-  `format`, ...) and left alone, but a 4.0 mapping without type and without
-  such parts would become categorical. Migrate the parents with
-  `migrateParts` instead.
-- **`migrateParts`** (not in the draft): files with parents can't be migrated
-  one by one (a mixin's mapping has no type, a child's partial `steps` object
-  overrides a parent's prop), so the parts are migrated in the context of
-  their merge and the parts the merged mappings need go into the first part
-  that defines them. `data/` and `site/` were migrated this way, then
-  written shorter (see above).
+  Consequence for a definition rewritten from 3.x: a mapping without type
+  (categorical in 3.x) needs `"type": "categorical"` unless the structure
+  implies it, a scale without type (linear in 3.x) needs `"type": "linear"`
+  unless inference gives linear.
 - **Format** stays on the mapping in the internal form (formatOf falls back
   to it) instead of being copied into axis/hover, so it also works for
   `@x:formatted` without a hover and inside patches.

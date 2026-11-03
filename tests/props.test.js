@@ -1,6 +1,5 @@
 import { describe, test, expect } from 'vitest';
 import { evaluate, bind, constant, refNames, refOf, formatter } from '@/utils/props';
-import { migrateExpr } from '@/utils/migrate';
 
 describe('evaluate', () => {
     test('fixed values and references', () => {
@@ -116,25 +115,5 @@ describe('references', () => {
         expect(refOf({ var: 'x:scaled' })).toBe('x:scaled');
         expect(refOf('red')).toBeUndefined();
         expect(refOf(undefined)).toBeUndefined();
-    });
-});
-
-describe('the props of 3.x', () => {
-    test('are migrated to expressions of the same values', () => {
-        const scope = { innerWidth: 100, x: 3, level: 'item', r: 2, totalWidth: 600 };
-        const props = [
-            { prop: 'ref', ref: 'x' },
-            { prop: 'fixed', value: '@a' },
-            { prop: 'relative', ref: 'innerWidth', ratio: 0.5 },
-            { prop: 'relative', ref: 'x', ratio: 2, offset: 1 },
-            { prop: 'relative', ref: 'nope', offset: 1 },
-            { prop: 'match', ref: 'level', cases: { header: 4.5, item: '@r' }, default: 0 },
-            { prop: 'match', ref: 'level', cases: { header: 4.5 } },
-            { prop: 'relative', of: { prop: 'steps', ref: 'totalWidth', steps: [{ cut: 0, value: 100 }, { cut: 500, value: 200 }] }, ratio: 0.5 },
-            { prop: 'steps', ref: 'totalWidth', steps: [{ cut: 0, value: '@x' }, { cut: 700, value: 2 }] },
-        ];
-        expect(props.map(p => evaluate(migrateExpr(p), scope))).toEqual([3, '@a', 50, 7, undefined, 2, null, 100, '@x']);
-        expect(migrateExpr({ prop: 'relative', ref: 'x', ratio: 2, offset: 1 })).toEqual({ '+': [{ '*': ['@x', 2] }, 1] });
-        expect(migrateExpr({ d: { x: { prop: 'relative', ref: 'x:scaled', offset: -5 } } })).toEqual({ d: { x: { '+': ['@x:scaled', -5] } } });
     });
 });

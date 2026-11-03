@@ -359,5 +359,32 @@
         "type": "dots"
       }
     }
+  },
+  {
+    "name": "the parts of the internal form are not read: categories of a plot, a text of its highlight and its props of the prefixes highlight- and others-",
+    "def": {
+      "mapping": {},
+      "plot": {
+        "type": "cartesian:bar",
+        "categories": [
+          "land"
+        ],
+        "highlight": "row",
+        "props": {
+          "fill": "@color",
+          "highlight-fill": "#333",
+          "others-opacity": 0.3
+        }
+      }
+    },
+    "result": {
+      "mapping": {},
+      "plot": {
+        "type": "cartesian:bar",
+        "props": {
+          "fill": "@color"
+        }
+      }
+    }
   }
 ]

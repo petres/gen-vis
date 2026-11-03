@@ -56,17 +56,3 @@ other values are true (also `"0"`).
 
 Of `format` the fixtures use the d3 locale en-US (`.` and `,`), the format
 of a reference to a mapping of dates is a time format.
-
-## 3.x
-
-The props of 3.x are expressions of 4.0 (see `migrate`):
-
-| 3.x | 4.0 |
-|-----|-----|
-| `{"prop": "ref", "ref": "a"}` | `"@a"` |
-| `{"prop": "fixed", "value": v}` | `v`, `{"literal": v}` of texts starting with `@`, objects and lists |
-| `{"prop": "relative", "ref": "a", "ratio": r, "offset": o}` | `{"+": [{"*": ["@a", r]}, o]}` |
-| `{"prop": "steps", "ref": "a", "steps": [{"cut": c, "value": v}]}` | `{"steps": ["@a", {"c": v}]}` |
-| `{"prop": "format", "ref": "a", "format": f}` | `{"format": ["@a", f]}` |
-| `{"prop": "match", "ref": "a", "cases": {...}, "default": d}` | `{"match": ["@a", {...}, d]}` |
-| `"of": expression` instead of `ref` | the expression instead of `"@a"` |

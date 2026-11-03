@@ -333,7 +333,7 @@ describe('form elements of globals, coordinate systems and maps', () => {
         globals: { lang: 'de' },
         formElements: [{ ref: 'lang', type: 'select', values: [{ value: 'de' }, { value: 'en' }] }],
         transform: [{ type: 'lookup', column: 'land', data: 'names.csv', key: 'code', value: '{lang}', as: 'label' }],
-        mapping: { c: { column: 'label', props: { fromData: true }, legend: {} }, x: { column: 'year', type: 'numeric' } },
+        mapping: { c: { column: 'label', fromData: true, legend: {} }, x: { column: 'year', type: 'numeric' } },
         plot: [],
     };
     const lookupRows = [{ land: 'W', year: 1 }, { land: 'T', year: 1 }];

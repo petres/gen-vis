@@ -7,7 +7,6 @@ import { resolveParents } from '@/utils/load';
 import { evaluate, bind, formatter } from '@/utils/expr';
 import { format } from 'd3-format';
 import { normalize } from '@/utils/normalize';
-import { migrate } from '@/utils/migrate';
 import { plotTypes } from '@/plots';
 
 // the fixtures of a directory of spec/ by the name of their file, e.g. "rolling"
@@ -116,17 +115,6 @@ describe('spec/normalize', () => {
             expect(normalize(def, { plotTypes })).toEqual(c.result);
             // the definition is not changed
             expect(def).toEqual(c.def);
-        });
-    });
-});
-
-describe('spec/migrate', () => {
-    const files = import.meta.glob('../spec/migrate/*.json', { eager: true, import: 'default' });
-    describe.each(fixtures(files))('%s', (file, cases) => {
-        test.each(cases.map(c => [c.name, c]))('%s', (name, c) => {
-            expect(migrate(clone(c.def), c.options)).toEqual(c.result);
-            // migrate is idempotent
-            expect(migrate(clone(c.result))).toEqual(c.result);
         });
     });
 });

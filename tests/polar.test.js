@@ -11,9 +11,9 @@ const polarDef = () => ({
     mapping: {
         x: { column: 'month', type: 'numeric', scale: { orientation: 'angular', domain: [0, 12] }, axis: { position: 'angular', values: [0, 3, 6, 9, 12], grid: true } },
         y: { column: 'value', type: 'numeric', scale: { orientation: 'radial', domain: [0, 12] }, axis: { position: 'radial', ticks: 3, grid: true }, hover: {} },
-        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, props: { categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } } },
+        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } },
     },
-    plot: [{ type: 'polar:circle', categories: ['c'], props: { fill: '@color', r: 3, angle: '@x:scaled', radius: '@y:scaled' } }],
+    plot: [{ type: 'polar:circle', by: ['c'], props: { fill: '@color', r: 3, angle: '@x:scaled', radius: '@y:scaled' } }],
 });
 
 const ticks = el => [...el.querySelectorAll('g.vis-axis-angular g.tick')];
@@ -104,7 +104,7 @@ describe('polar plots', () => {
     test('values below the domain of the radius are at the inner radius, not mirrored', async () => {
         const def = polarDef();
         def.mapping.y.scale.range = [40, '@radius'];
-        def.plot.push({ type: 'polar:line', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } });
+        def.plot.push({ type: 'polar:line', by: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } });
         const el = await mount({ def, data: 'month,value,land\n3,-3,Wien\n6,-3,Wien\n3,3,Tirol' });
         const [wien] = [...el.querySelectorAll('g.vis-plot circle')].map(point);
         // month 3 is on the right

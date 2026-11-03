@@ -3,7 +3,6 @@ import { applyTransforms, loadTransforms, transformColumns, transformGlobals, tr
 import { transformTypes } from '@/utils/transform-types';
 import { usedColumns } from '@/utils/data';
 import { validateDef } from '@/utils/validate';
-import { migrate } from '@/utils/migrate';
 import schema from '../schema.json';
 
 const rows = [
@@ -118,17 +117,15 @@ describe('transforms', () => {
         expect(usedColumns({ mapping: { y: { column: 'index' } }, transform: transforms })).toEqual(['index', 'date', 'value', 'type']);
     });
 
-    test('calc of 3.x, the values of columns combined, migrated to an expression', () => {
+    test('calc of the values of columns combined', () => {
         const wide = [{ v: '50', base: '200' }, { v: '3', base: '0' }, { v: '', base: '1' }];
-        const calc = t => applyTransforms(wide, migrate({ transform: t }).transform).get(t.as);
-        expect(calc({ type: 'calc', op: 'divide', columns: ['v', 'base'], scale: 100, as: 'rel' })).toEqual([25, null, null]);
-        expect(calc({ type: 'calc', op: 'subtract', columns: ['base', 'v'], as: 'd' })).toEqual([150, -3, null]);
-        expect(calc({ type: 'calc', op: 'add', columns: ['v', 'base', 'v'], as: 's' })).toEqual([300, 6, null]);
+        const calc = expr => applyTransforms(wide, { type: 'calc', expr, as: 'c' }).get('c');
+        expect(calc({ '*': [{ '/': ['@v', '@base'] }, 100] })).toEqual([25, null, null]);
+        expect(calc({ '-': ['@base', '@v'] })).toEqual([150, -3, null]);
+        expect(calc({ '+': ['@v', '@base', '@v'] })).toEqual([300, 6, null]);
         // the least and the largest value, e.g. the ends of a band above or below a mean
-        expect(calc({ type: 'calc', op: 'min', columns: ['v', 'base'], as: 'lo' })).toEqual([50, 0, null]);
-        expect(calc({ type: 'calc', op: 'max', columns: ['v', 'base'], as: 'hi' })).toEqual([200, 3, null]);
-        expect(migrate({ transform: { type: 'calc', op: 'divide', columns: ['v', 'base'], scale: 100, as: 'rel' } }).transform)
-            .toEqual({ type: 'calc', as: 'rel', expr: { '*': [{ '/': ['@v', '@base'] }, 100] } });
+        expect(calc({ min: ['@v', '@base'] })).toEqual([50, 0, null]);
+        expect(calc({ max: ['@v', '@base'] })).toEqual([200, 3, null]);
     });
 
     test('mean, of the group, of the base and of at least `min` values', () => {

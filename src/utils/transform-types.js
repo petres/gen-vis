@@ -193,8 +193,7 @@ const transformTypes = {
 
     // the value of the expression `expr` of the row (see utils/expr.js), its
     // names are the columns of the row and the globals, e.g. { "*": [{ "/":
-    // ["@value", "@inno"] }, 100] }, no value is null (the `op` and `columns`
-    // of 3.x are migrated, see utils/migrate.js)
+    // ["@value", "@inno"] }, 100] }, no value is null
     calc: (t, { n, expr }) => {
         const f = expr(t.expr ?? null);
         return Array.from({ length: n }, (_, i) => f(i) ?? null);

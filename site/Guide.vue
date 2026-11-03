@@ -55,7 +55,7 @@
                     <li>
                         <strong>Load</strong> <code>src/utils/load.js</code>: the definition is merged with its
                         parents and written in its internal form (<code>src/utils/normalize.js</code>: the defaults of
-                        the mappings and of the plot types, one of 3.x is migrated first), the parts of the package it
+                        the mappings and of the plot types), the parts of the package it
                         needs are loaded with the data (e.g. the ones of maps only for a map), the data is read, CSV,
                         TSV, JSON or the columns used of parquet.
                     </li>

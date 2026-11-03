@@ -4,7 +4,7 @@
 // the highlight, legends, texts, transforms and messages
 import { describe, test, expect, vi, onTestFinished } from 'vitest';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { errors, useDom, mount, mountVis, nextTick, checkMigrated } from './dom.js';
+import { errors, useDom, mount, mountVis, nextTick } from './dom.js';
 
 useDom();
 
@@ -13,11 +13,11 @@ const lineDef = (options = {}) => ({
     mapping: {
         x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' }, axis: { position: 'bottom', ticks: 5 } },
         y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' }, axis: { position: 'left', ticks: 5 }, hover: { format: ',.1f' } },
-        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, props: { categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } } },
+        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } },
     },
     plot: [
-        { id: 'lines', type: 'cartesian:line', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { x: '@x:scaled', y: '@y:scaled' } } },
-        { id: 'dots', type: 'svg:circle', categories: ['c'], props: { fill: '@color', r: 3, cx: '@x:scaled', cy: '@y:scaled' } },
+        { id: 'lines', type: 'cartesian:line', by: ['c'], props: { stroke: '@color', fill: 'none', d: { x: '@x:scaled', y: '@y:scaled' } } },
+        { id: 'dots', type: 'svg:circle', by: ['c'], props: { fill: '@color', r: 3, cx: '@x:scaled', cy: '@y:scaled' } },
     ],
 });
 
@@ -100,7 +100,7 @@ describe('globals of the page', () => {
         globals: { lang: 'de', titleText: 'Werte', suffix: '' },
         formElements: [{ id: 'lang', ref: 'lang', type: 'hidden', values: [
             { id: 'de', value: 'de', globals: { titleText: 'Werte' } },
-            { id: 'en', value: 'en', globals: { titleText: 'Values' }, patch: { mapping: { c: { props: { categories: { Wien: { name: 'Vienna' } } } } } } },
+            { id: 'en', value: 'en', globals: { titleText: 'Values' }, patch: { mapping: { c: { categories: { Wien: { name: 'Vienna' } } } } } },
         ] }],
     });
 
@@ -175,10 +175,10 @@ describe('filters of rows', () => {
 describe('props', () => {
     test('margins of the width of the visualisation, offsets and matches of plots', async () => {
         const def = lineDef();
-        def.options.margins.left = { prop: 'steps', ref: 'totalWidth', steps: [{ cut: 0, value: 20 }, { cut: 500, value: 100 }] };
+        def.options.margins.left = { steps: ['@totalWidth', { 0: 20, 500: 100 }] };
         def.mapping.x.scale.domainRel = [0, 0];
-        def.plot[1].props.cx = { prop: 'relative', ref: 'x:scaled', offset: -5 };
-        def.plot[1].props.r = { prop: 'match', ref: 'c', cases: { Wien: 6 }, default: 2 };
+        def.plot[1].props.cx = { '+': ['@x:scaled', -5] };
+        def.plot[1].props.r = { match: ['@c', { Wien: 6 }, 2] };
         const el = await mount({ def, data: lineData });
         expect(el.querySelector('svg.vis-svg > g').getAttribute('transform')).toBe('translate(100 10)');
         const wien = el.querySelector('g.vis-group[data-group-c="Wien"] circle');
@@ -285,7 +285,7 @@ describe('the hover', () => {
     test('without the box and the marker, the highlight and the events stay', async () => {
         const def = lineDef();
         def.options.hover = { box: false, marker: false };
-        def.plot[1].props['highlight-r'] = 6;
+        def.plot[1].highlight = { ...def.plot[1].highlight, r: 6 };
         const hovers = [];
         const el = await mount({ def, data: lineData, onHover: e => hovers.push(e) });
         await move(el, 100, 100);
@@ -315,7 +315,7 @@ describe('the hover', () => {
         const def = lineDef();
         def.mapping.x = { column: 'value', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, null] }, axis: { position: 'bottom' } };
         def.mapping.y = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'vertical' }, axis: { position: 'left' } };
-        def.plot = { type: 'cartesian:bar', categories: ['c'], props: { x1: '@x:scaled', y: '@y:scaled', fill: '@color' } };
+        def.plot = { type: 'cartesian:bar', by: ['c'], props: { x1: '@x:scaled', y: '@y:scaled', fill: '@color' } };
         def.options.hover = { area: 'facet' };
         const el = await mount({ def, data: lineData });
         const area = el.querySelector('rect.vis-events');
@@ -325,10 +325,10 @@ describe('the hover', () => {
 });
 
 describe('the highlight', () => {
-    test('others- props of the elements which are not highlighted, also of plots without categories', async () => {
+    test('the props of the others, the elements which are not highlighted, also of plots without categories', async () => {
         const def = lineDef();
-        def.plot[1] = { ...def.plot[1], highlight: 'row', props: { ...def.plot[1].props, 'highlight-r': 6, 'others-opacity': 0.3 } };
-        def.plot.push({ id: 'last', type: 'svg:text', select: 'last', props: { x: '@x:scaled', y: '@y:scaled', text: 'last', 'others-visibility': 'hidden' } });
+        def.plot[1] = { ...def.plot[1], highlight: { mode: 'row', r: 6 }, others: { opacity: 0.3 } };
+        def.plot.push({ id: 'last', type: 'svg:text', select: 'last', props: { x: '@x:scaled', y: '@y:scaled', text: 'last' }, others: { visibility: 'hidden' } });
         const el = await mount({ def, data: lineData });
         const { pointer } = await import('./dom.js');
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
@@ -353,7 +353,7 @@ describe('the highlight', () => {
 
     test('a highlight of the same elements changes nothing, others- props also without highlight- props', async () => {
         const def = lineDef();
-        def.plot[1] = { ...def.plot[1], props: { ...def.plot[1].props, 'highlight-r': 6 } };
+        def.plot[1] = { ...def.plot[1], highlight: { r: 6 } };
         const el = await mount({ def, data: lineData });
         const { pointer } = await import('./dom.js');
         const events = el.querySelector('rect.vis-events');
@@ -385,7 +385,7 @@ describe('the highlight', () => {
 
         // the others- props of a highlight without elements of highlight- props
         const others = lineDef();
-        others.plot[1] = { ...others.plot[1], props: { ...others.plot[1].props, 'others-opacity': 0.3 } };
+        others.plot[1] = { ...others.plot[1], others: { opacity: 0.3 } };
         const el2 = await mount({ def: others, data: lineData });
         el2.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
         await nextTick();
@@ -396,8 +396,8 @@ describe('the highlight', () => {
     test('the transitions of quick changes of the highlight end at the values of the definition', async () => {
         const def = lineDef();
         def.options.highlight = { transition: 40 };
-        def.plot[1] = { ...def.plot[1], highlight: 'row', props: { ...def.plot[1].props, fill: 'red', 'highlight-fill': 'black', 'others-opacity': 0.3 } };
-        delete def.mapping.c.props.categories.Wien.color;
+        def.plot[1] = { ...def.plot[1], highlight: { mode: 'row', fill: 'black' }, others: { opacity: 0.3 }, props: { ...def.plot[1].props, fill: 'red' } };
+        delete def.mapping.c.categories.Wien.color;
         const el = await mount({ def, data: lineData });
         const { pointer } = await import('./dom.js');
         const events = el.querySelector('rect.vis-events');
@@ -416,7 +416,7 @@ describe('the highlight', () => {
     test('a transition of the highlight', async () => {
         const def = lineDef();
         def.options.highlight = { transition: 50 };
-        def.plot[1].props['highlight-r'] = 6;
+        def.plot[1].highlight = { ...def.plot[1].highlight, r: 6 };
         const el = await mount({ def, data: lineData });
         const { pointer } = await import('./dom.js');
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
@@ -430,7 +430,7 @@ describe('the highlight', () => {
 describe('legends', () => {
     test('categories without an entry, legends below and beside the plots', async () => {
         const def = lineDef();
-        def.mapping.c.props.categories.Tirol.legend = false;
+        def.mapping.c.categories.Tirol.legend = false;
         def.mapping.c.legend = { position: 'bottom' };
         def.mapping.v = { column: 'value', type: 'numeric', name: 'Wert', scale: { type: 'sequential', interpolator: 'Blues' }, legend: { position: 'left', orientation: 'vertical', size: 120, values: [1, 2, 3], labels: 'before' } };
         delete def.options.width;
@@ -459,7 +459,7 @@ describe('texts', () => {
         def.mapping.x = { column: 'value', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, null] }, axis: { position: 'bottom' } };
         def.mapping.y = { column: 'name', type: 'categorical', scale: { type: 'band', orientation: 'vertical' }, axis: { position: 'left',
             labels: { categories: ['level'], props: { 'font-weight': '@weight', text: '@short', 'max-width': 30 } } } };
-        def.mapping.level = { column: 'level', type: 'categorical', props: { categories: { header: { weight: 'bold' }, item: { weight: 'normal' } } } };
+        def.mapping.level = { column: 'level', type: 'categorical', categories: { header: { weight: 'bold' }, item: { weight: 'normal' } } };
         def.mapping.short = { column: 'short', type: 'categorical' };
         def.plot = { type: 'cartesian:bar', props: { x1: '@x:scaled', y: '@y:scaled' } };
         delete def.mapping.c;
@@ -480,8 +480,8 @@ describe('texts', () => {
     test('texts of svg:text cut or wrapped in a width', async () => {
         const def = lineDef();
         def.plot = [
-            { id: 'cut', type: 'svg:text', select: 'first', categories: ['c'], props: { x: 0, y: 0, text: 'a long label of a line', 'max-width': 40 } },
-            { id: 'wrap', type: 'svg:text', select: 'first', categories: ['c'], props: { x: 5, y: 0, text: 'a long label of a line', 'max-width': 40, 'text-overflow': 'wrap', 'dominant-baseline': 'middle' } },
+            { id: 'cut', type: 'svg:text', select: 'first', by: ['c'], props: { x: 0, y: 0, text: 'a long label of a line', 'max-width': 40 } },
+            { id: 'wrap', type: 'svg:text', select: 'first', by: ['c'], props: { x: 5, y: 0, text: 'a long label of a line', 'max-width': 40, 'text-overflow': 'wrap', 'dominant-baseline': 'middle' } },
         ];
         const el = await mount({ def, data: lineData });
         const cut = el.querySelector('g.vis-plot[data-plot="cut"] text');
@@ -509,7 +509,7 @@ describe('transforms', () => {
                 { type: 'rank', column: 'value', by: 'year', descending: true, as: 'rank' },
             ],
             mapping: { ...lineDef().mapping, label: { column: 'label', type: 'categorical' }, rank: { column: 'rank', type: 'numeric' } },
-            plot: [{ id: 'labels', type: 'svg:text', select: 'last', categories: ['c'], props: { x: 0, y: 0, text: '@label', 'data-rank': '@rank' } }],
+            plot: [{ id: 'labels', type: 'svg:text', select: 'last', by: ['c'], props: { x: 0, y: 0, text: '@label', 'data-rank': '@rank' } }],
         }));
         try {
             const { el, vis } = await mountVis({ defFile: '/tests/tmp-lookup/def.json', data: lineData, globals: { lang: 'en' } });
@@ -529,7 +529,7 @@ describe('transforms', () => {
 describe('messages and the classes of the root', () => {
     test('a message of a narrow screen and of an entry, the text without rows, the class and the globals of the root', async () => {
         const def = lineDef({
-            message: { prop: 'steps', ref: 'totalWidth', steps: [{ cut: 0, value: 'Zu schmal' }, { cut: 400, value: null }] },
+            message: { steps: ['@totalWidth', { 0: 'Zu schmal', 400: null }] },
             empty: 'Keine Daten für {group:name}',
             class: 'chart-{group}',
         });
@@ -567,7 +567,7 @@ describe('linked charts', () => {
     test('the highlight of the page, e.g. the row under the mouse of another chart', async () => {
         const { pointer } = await import('./dom.js');
         const def = lineDef();
-        def.plot[1].props['highlight-r'] = 6;
+        def.plot[1].highlight = { ...def.plot[1].highlight, r: 6 };
         const row = { value: null };
         const el = document.body.appendChild(document.createElement('div'));
         const b = await mountVis({ def, data: lineData, highlight: null });
@@ -706,7 +706,7 @@ describe('ticks of null', () => {
 describe('fixed ticks as a prop', () => {
     test('e.g. fewer of a narrow visualisation', async () => {
         const def = lineDef({ width: 400 });
-        def.mapping.x.axis = { position: 'bottom', format: 'd', values: { prop: 'steps', ref: 'totalWidth', steps: [{ cut: 0, value: [2020, 2023] }, { cut: 500, value: [2020, 2021, 2022, 2023] }] } };
+        def.mapping.x.axis = { position: 'bottom', format: 'd', values: { steps: ['@totalWidth', { 0: { literal: [2020, 2023] }, 500: { literal: [2020, 2021, 2022, 2023] } }] } };
         const el = await mount({ def, data: lineData });
         expect([...el.querySelectorAll('.vis-axis-bottom .tick text')].map(t => t.textContent)).toEqual(['2020', '2023']);
         expect(errors).toEqual([]);
@@ -716,10 +716,10 @@ describe('fixed ticks as a prop', () => {
 describe('default colors', () => {
     test('of categories without colors, the colors of the categories of a plot first', async () => {
         const def = lineDef();
-        delete def.mapping.c.props.categories.Wien.color;
-        delete def.mapping.c.props.categories.Tirol.color;
-        def.mapping.g = { column: 'land', type: 'categorical', props: { categories: { Wien: { color: 'black' }, Tirol: {} } } };
-        def.plot[1].categories = ['c', 'g'];
+        delete def.mapping.c.categories.Wien.color;
+        delete def.mapping.c.categories.Tirol.color;
+        def.mapping.g = { column: 'land', type: 'categorical', categories: { Wien: { color: 'black' }, Tirol: {} } };
+        def.plot[1].by = ['c', 'g'];
         const el = await mount({ def, data: lineData });
         // the lines of the default colors, a color of a category of the plot before them
         expect([...el.querySelectorAll('g.vis-plot[data-plot="lines"] path')].map(p => p.getAttribute('stroke'))).toEqual(['#4269D0', '#EFB118']);
@@ -735,7 +735,7 @@ describe('the step of a band scale', () => {
         def.options.margins = { top: 10, right: 10, bottom: 20, left: 40 };
         def.mapping.x = { column: 'value', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, null] } };
         def.mapping.y = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'vertical', padding: 0, step: 20 } };
-        def.plot = { type: 'cartesian:bar', categories: ['c'], props: { x1: '@x:scaled', y: '@y:scaled' } };
+        def.plot = { type: 'cartesian:bar', by: ['c'], props: { x1: '@x:scaled', y: '@y:scaled' } };
         const el = await mount({ def, data: lineData });
         // 4 years of 20 pixels, the margins
         const svg = el.querySelector('svg.vis-svg');
@@ -758,12 +758,12 @@ describe('the props of the labels and of the line of an axis, the titles of face
         def.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radial', domain: [0, 4] }, axis: { position: 'radial', angle: 90,
             ticks: 2, labels: { props: { fill: '#777', 'stroke-width': 2, 'stroke-opacity': 0.5 } }, domain: { props: { 'stroke-opacity': '@opacity' } } }, hover: {} };
         def.globals = { opacity: 0.4 };
-        def.plot = { type: 'polar:line', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
+        def.plot = { type: 'polar:line', by: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
         return def;
     };
 
     test('the labels and the lines of the axes of polar plots', async () => {
-        const validateDef = await checkMigrated();
+        const { validateDef } = await import('@/utils/validate');
         const def = polarDef();
         expect(validateDef(def)).toEqual([]);
         const el = await mount({ def, data: lineData });
@@ -789,7 +789,7 @@ describe('the props of the labels and of the line of an axis, the titles of face
         expect(el.querySelector('.vis-axis-left path.domain').getAttribute('stroke-opacity')).toBe('0.4');
         expect([...el.querySelectorAll('.vis-axis-left .tick text')].every(t => t.getAttribute('font-size') == '9')).toBe(true);
 
-        const validateDef = await checkMigrated();
+        const { validateDef } = await import('@/utils/validate');
         def.mapping.y.axis.domain = { props: { stroke: '@colour' } };
         def.mapping.x.axis.domain = 'none';
         expect(validateDef(def)).toEqual([
@@ -896,7 +896,7 @@ describe('the categories of every format of the data', () => {
         // labels at the last month, "10" after "9"
         const def = lineDef();
         def.mapping.x = { column: 'year', type: 'categorical', scale: { type: 'point', orientation: 'horizontal' } };
-        def.plot = { id: 'last', type: 'svg:text', categories: ['c'], select: { max: 'x' }, props: { x: '@x:scaled', y: 0, text: '@x' } };
+        def.plot = { id: 'last', type: 'svg:text', by: ['c'], select: { max: 'x' }, props: { x: '@x:scaled', y: 0, text: '@x' } };
         const el = await mount({ def, data: 'year,value,land\n9,1,Wien\n10,2,Wien' });
         expect(el.querySelector('g.vis-plot.last text').textContent).toBe('10');
 
@@ -964,7 +964,7 @@ describe('the scale of another mapping', () => {
         const at = +tick.match(/,([\d.]+)\)/)[1] - 0.5;
         const second = el.querySelector('g.vis-plot path').getAttribute('d').split('L')[1].split(',').map(Number);
         expect(second[1]).toBeCloseTo(at, 2);
-        const validateDef = await checkMigrated();
+        const { validateDef } = await import('@/utils/validate');
         expect(validateDef(def)).toEqual([]);
 
         // a second date of a utc scale is a date of UTC as well, e.g. the end of a range
@@ -1007,7 +1007,7 @@ describe('the tick marks of axes', () => {
         polar.mapping.x = { column: 'year', type: 'numeric', scale: { orientation: 'angular', domain: [2020, 2024] }, axis: { position: 'angular',
             values: [2020, 2022], tickMarks: { size: 10, props: { stroke: 'var(--gen-vis-grid-color)', 'stroke-width': 0.75 } } } };
         polar.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radial', domain: [0, 4] } };
-        polar.plot = { type: 'polar:line', categories: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
+        polar.plot = { type: 'polar:line', by: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
         const circle = await mount({ def: polar, data: lineData });
         const marks = [...circle.querySelectorAll('.vis-axis-angular .tick line')];
         expect(marks.map(l => [+l.getAttribute('y1'), +l.getAttribute('y2')])).toEqual([[-150, -160], [150, 160]].map(([a, b], i) => i == 0 ? [a, b] : [expect.closeTo(a, 6), expect.closeTo(b, 6)]));
@@ -1017,7 +1017,7 @@ describe('the tick marks of axes', () => {
         expect(without.querySelectorAll('.vis-axis-angular .tick line')).toHaveLength(0);
         expect(without.querySelectorAll('.vis-axis-angular .tick text')).toHaveLength(2);
 
-        const validateDef = await checkMigrated();
+        const { validateDef } = await import('@/utils/validate');
         polar.mapping.x.axis.tickMarks = { size: -1, props: { stroke: '@colour' } };
         polar.mapping.y.axis = { position: 'radial', tickMarks: { size: 4 } };
         expect(validateDef(polar)).toEqual([
@@ -1033,8 +1033,8 @@ describe('css variables in props', () => {
     test('a value with a css variable is a style, also of the highlight, annotations, lines of axes and legends', async () => {
         const def = lineDef();
         def.globals = { lineColor: 'var(--line-color)' };
-        def.plot[1] = { ...def.plot[1], props: { ...def.plot[1].props, fill: '@color', stroke: '@lineColor', 'highlight-stroke': 'black', 'highlight-fill': 'var(--highlight-color)' } };
-        def.mapping.c.props.categories.Wien.color = 'var(--wien-color)';
+        def.plot[1] = { ...def.plot[1], highlight: { stroke: 'black', fill: 'var(--highlight-color)' }, props: { ...def.plot[1].props, fill: '@color', stroke: '@lineColor' } };
+        def.mapping.c.categories.Wien.color = 'var(--wien-color)';
         def.mapping.c.legend = { symbol: { size: 16, elements: [{ type: 'rect', props: { width: 12, height: 12, fill: '@color' } }] } };
         def.mapping.y.axis = { ...def.mapping.y.axis, domain: { props: { stroke: 'var(--gen-vis-grid-color)' } } };
         def.annotations = [{ type: 'band', x: [2021, 2022], props: { fill: 'var(--band-color)' } }];
@@ -1070,9 +1070,9 @@ describe('radar charts', () => {
             hover: { title: '<b>{title}</b> <i>{info}</i>', row: '{c}: {y}' } });
         def.mapping.x = { column: 'year', type: 'categorical', scale: { type: 'point', orientation: 'angular', padding: 0 }, axis: { position: 'angular' } };
         def.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radial', domain: [0, 4] }, hover: {} };
-        def.mapping.info = { column: 'other', type: 'categorical', props: { fromData: true }, hover: {} };
-        def.plot = { type: 'polar:line', categories: ['c'], curve: 'linearClosed', props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
-        const validateDef = await checkMigrated();
+        def.mapping.info = { column: 'other', type: 'categorical', fromData: true, hover: {} };
+        def.plot = { type: 'polar:line', by: ['c'], curve: 'linearClosed', props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
+        const { validateDef } = await import('@/utils/validate');
         expect(validateDef(def)).toEqual([]);
         const el = await mount({ def, data: lineData });
         // four years, 2020 at the top, 2021 at the right (a quarter of the circle)
@@ -1108,12 +1108,12 @@ describe('rows which are not stacked', () => {
             y: { column: '{values}', type: 'numeric', stacked: { type: { not: 'load' } }, scale: { orientation: 'vertical', domain: [0, null], domainRel: [0, 0] },
                 axis: { position: 'left', ticks: 4 }, hover: { format: '.1f' } },
             type: { column: 'type', type: 'categorical', legend: {}, hover: {},
-                props: { categories: Object.fromEntries(order.map(k => [k, { name: { hydro: 'Wasser', wind: 'Wind', load: 'Verbrauch' }[k] }])) } },
+                categories: Object.fromEntries(order.map(k => [k, { name: { hydro: 'Wasser', wind: 'Wind', load: 'Verbrauch' }[k] }])) },
         },
         plot: [
-            { id: 'areas', type: 'cartesian:area', categories: ['type'], filter: { type: { not: 'load' } },
+            { id: 'areas', type: 'cartesian:area', by: ['type'], filter: { type: { not: 'load' } },
                 props: { fill: 'gray', d: { x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' } } },
-            { id: 'load', type: 'cartesian:line', categories: ['type'], filter: { type: 'load' },
+            { id: 'load', type: 'cartesian:line', by: ['type'], filter: { type: 'load' },
                 props: { fill: 'none', stroke: 'black', d: { x: '@x:scaled', y: '@y:scaled' } } },
             { id: 'labels', type: 'svg:text', filter: { type: 'load' },
                 props: { x: '@x:scaled', y: '@y:end:scaled', 'data-start': '@y:start', 'data-mid': '@y:mid:scaled', text: '@y' } },
@@ -1122,7 +1122,7 @@ describe('rows which are not stacked', () => {
     const points = path => path.slice(1).split('L').map(p => p.split(',').map(Number));
 
     test('a line of the consumption on the stacked generation, its domain, its own values and its place in the hover', async () => {
-        const validateDef = await checkMigrated();
+        const { validateDef } = await import('@/utils/validate');
         expect(validateDef(loadDef())).toEqual([]);
         const el = await mount({ def: loadDef(), data });
         // the domain reaches 8 of the consumption (the stacks reach 5), 0 at 250, 8 at 0 pixels

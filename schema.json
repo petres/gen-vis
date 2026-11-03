@@ -244,7 +244,7 @@
                 "highlight": {
                     "type": "object",
                     "additionalProperties": false,
-                    "description": "The highlight of the elements, see the highlight- and others- props of the plots.",
+                    "description": "The highlight of the elements, see highlight and others of the plots.",
                     "properties": {
                         "transition": { "type": "number", "minimum": 0, "description": "The attributes move to the ones of the highlight in this many milliseconds, e.g. 50." }
                     }
@@ -705,15 +705,10 @@
                 "layer": { "enum": ["below", "above"], "description": "below: below the axes and grid lines, above: above the other plots, between them by default." },
                 "facet": { "description": "The facets of the plot, a key or a list of them, all by default." },
                 "highlight": {
-                    "description": "The props of the elements of the category of the hover or of the entry of the legend, e.g. { \"stroke-width\": 3 }, mode: the elements of the category (group, default) or only the one of its row (row), e.g. a segment of a stacked bar, also as a text, e.g. \"row\".",
-                    "anyOf": [
-                        { "enum": ["group", "row"] },
-                        {
-                            "type": "object",
-                            "properties": { "mode": { "enum": ["group", "row"] } },
-                            "additionalProperties": { "$ref": "#/definitions/propEntry" }
-                        }
-                    ]
+                    "type": "object",
+                    "description": "The props of the elements of the category of the hover or of the entry of the legend, e.g. { \"stroke-width\": 3 }, mode: the elements of the category (group, default) or only the one of its row (row), e.g. a segment of a stacked bar.",
+                    "properties": { "mode": { "enum": ["group", "row"] } },
+                    "additionalProperties": { "$ref": "#/definitions/propEntry" }
                 },
                 "curve": {
                     "enum": ["linear", "monotoneX", "natural", "catmullRom", "basis", "step", "stepBefore", "stepAfter", "linearClosed", "catmullRomClosed", "basisClosed"],
@@ -914,5 +909,5 @@
             ]
         }
     },
-    "$comment": "gen-vis 4.0, see docs/design-4.0.md, definitions of 3.x are migrated, see migrate of @preschen/gen-vis/check"
+    "$comment": "gen-vis 4.0, see docs/design-4.0.md"
 }

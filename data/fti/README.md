@@ -14,7 +14,7 @@ with gen-vis, the data of its files (`/data/hierarchy.json`, `labels.json`,
   pixels high (`step` of the scale), a toggle of the legend makes the chart
   less high, the bars keep their size
 - `d2-series.json`: the aggregated indicator over time, the circle of the
-  last year, hidden while another year is highlighted (`others-visibility`),
+  last year, hidden while another year is highlighted (`others` of `visibility`),
   the domain includes 100 (`include`)
 - `d2-map.json`: the international comparison, the view of Europe is a patch
   of the filter (`europe`), the Top 3 is a message (there are other Top 3
@@ -28,7 +28,7 @@ entry, `{group:name}`), the colors are the classes of the monitor (`value >
 74.5`, `"closed": "right"`). The mixins are `_group.json` (the comparison
 group) and `_bars.json`.
 
-The hover is the one of the monitor, by `highlight-` props of the elements
+The hover is the one of the monitor, by the `highlight` props of the elements
 of the row of the hover: of the bars the darker bar, a larger circle and the
 value (also over the labels, `"area": "facet"`), of the lines the ring of
 the year, of the map the faded country with the text above it (`side`,

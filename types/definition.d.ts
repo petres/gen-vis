@@ -539,7 +539,7 @@ export interface Options {
      */
     transition?: number | boolean;
     /**
-     * The highlight of the elements, see the highlight- and others- props of the plots.
+     * The highlight of the elements, see highlight and others of the plots.
      */
     highlight?: {
         /**
@@ -1085,14 +1085,12 @@ export interface Plot {
         [k: string]: unknown;
     };
     /**
-     * The props of the elements of the category of the hover or of the entry of the legend, e.g. { "stroke-width": 3 }, mode: the elements of the category (group, default) or only the one of its row (row), e.g. a segment of a stacked bar, also as a text, e.g. "row".
+     * The props of the elements of the category of the hover or of the entry of the legend, e.g. { "stroke-width": 3 }, mode: the elements of the category (group, default) or only the one of its row (row), e.g. a segment of a stacked bar.
      */
-    highlight?:
-        | ('group' | 'row')
-        | {
-              mode?: 'group' | 'row';
-              [k: string]: PropEntry | 'group' | 'row' | undefined;
-          };
+    highlight?: {
+        mode?: 'group' | 'row';
+        [k: string]: PropEntry | 'group' | 'row' | undefined;
+    };
     /**
      * The interpolation of the paths and areas between their points, monotoneX is smooth without overshooting the values, the closed ones connect the last point with the first one, e.g. of radar charts.
      */

@@ -13,14 +13,29 @@ without the scoped ids of Vue (`data-v-…`) and its comments, the attributes
 of the default props of a short plot type are before the ones of the
 definition.
 
-Migration from 3.x:
+Changes from 3.x, made by hand (4.0 has no migration and reads no
+definition of 3.x):
 
-- Definitions: a definition of 3.x is migrated while it is loaded (the
-  console says so with `check`). `migrate(def)` and `migrateParts(parts)` of
-  `@preschen/gen-vis/check` write it in 4.0, in its shorter forms, the parts
-  of a definition and its parents each, see the readme (Checks outside the
-  browser); `validateDef` checks a definition of 4.0, one of 3.x gets the
-  hint to migrate it first.
+- Definitions, see the definition language below:
+  - props of `prop`: `{"prop": "ref", "ref": "a"}` is `"@a"`, `"fixed"` the
+    value (`{"literal": v}` of texts of `@`, objects and lists),
+    `"relative"` `{"+": [{"*": ["@a", ratio]}, offset]}`, `"steps"`
+    `{"steps": ["@a", {"<cut>": value}]}`, `"format"` `{"format": ["@a",
+    f]}`, `"match"` `{"match": ["@a", {cases}, default]}`, `of` the
+    expression instead of `"@a"`;
+  - `calc` of `op` and `columns`: `expr`, e.g. `{"*": [{"/": ["@v",
+    "@base"]}, 100]}` of `divide` with `scale` 100;
+  - `props` of a mapping: its entries (`categories`, `scheme`, `common`,
+    `fromData`, `order`, `ranks`) at the mapping;
+  - `categories` of a plot: `by`; the props `highlight-<name>` and
+    `others-<name>`: `"highlight": {"<name>": …}` and `"others": {…}`; a
+    text of `highlight`: `"highlight": {"mode": "row"}`;
+  - a mapping without a type was categorical: `"type": "categorical"`
+    unless its parts or its values give the type, a scale without a type was
+    linear: `"type": "linear"` where the type of the mapping gives another
+    one; a position without a scale or an axis: `"scale": false`, `"axis":
+    false` (`"orientation": null` of a scale without an orientation);
+  - `validateDef` names the parts of 3.x which are left as unknown ones.
 - Vue: the component `GenVis` and the plugin are the ones of
   `@preschen/gen-vis/vue` (`vue` is an optional peer dependency), `import
   GenVis from '@preschen/gen-vis/vue'` or `import { GenVis } from
@@ -67,8 +82,8 @@ The definition language, the breaking changes:
   scale without a type is the one of the type of the mapping (`linear`,
   `time`, `band` of bars, `point`, `ordinal`), not `linear`.
 - `by` of a plot instead of `categories`, `highlight` and `others` objects
-  of props instead of the props `highlight-` and `others-` (they still work),
-  `"highlight": {"mode": "row", ...}`.
+  of props instead of the props `highlight-` and `others-`,
+  `"highlight": {"mode": "row", ...}` instead of `"highlight": "row"`.
 - Plot types without the prefix of the coordinate system, e.g. `line`,
   `area`, `bar`, `point`, `text`, `arc`, `region`, have default props (the
   `defaults` of the types, also of registered ones): a line draws
@@ -76,15 +91,13 @@ The definition language, the breaking changes:
   a definition writes only the props which differ; the full names have none.
 - The schema is the one of 4.0 (`@preschen/gen-vis@4/schema.json`).
 
-`migrate` writes the shorter forms of 4.0, each one if the definition draws
-the same: the short types without the props of their defaults, `highlight`
-and `others`, mappings without the types, scales, orientations and positions
-of axes which follow from the rest, `domain` and `format` at the mapping and
-texts of columns; a definition of 4.0 is only written shorter. The
-definitions of `data/` and of the page are written so (also without the
-types their values infer), the ones of 3.1 are in `tests/legacy/`. The parts
-which are not bound to the browser, the expressions, the transforms,
-merging, normalize and migrate, are specified by the fixtures of `spec/`,
+The definitions of `data/` and of the page are written in the shorter
+forms of 4.0: the short types without the props of their defaults,
+`highlight` and `others`, mappings without the types, scales, orientations
+and positions of axes which follow from the rest (also without the types
+their values infer), `domain` and `format` at the mapping and texts of
+columns. The parts which are not bound to the browser, the expressions, the
+transforms, merging and normalize, are specified by the fixtures of `spec/`,
 e.g. for implementations in Python or R, the tests run them.
 
 The package is a core without a framework. `@preschen/gen-vis` exports

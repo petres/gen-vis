@@ -19,8 +19,8 @@ const mapDef = (geo = {}) => ({
     },
     plot: [
         { type: 'geo:base', props: { fill: '#EEE' } },
-        { type: 'geo:region', categories: ['region'], props: { fill: 'red' } },
-        { type: 'geo:circle', categories: ['region'], props: { r: 3 } },
+        { type: 'geo:region', by: ['region'], props: { fill: 'red' } },
+        { type: 'geo:circle', by: ['region'], props: { r: 3 } },
     ],
 });
 const regionsDrawn = el => [...el.querySelectorAll('g.vis-plot.plot-1 path')]

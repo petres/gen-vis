@@ -14,7 +14,6 @@ files.
 | `merge/*.json`, `merge.md` | parents, mixins and the patches of form elements | `src/utils/def.js` (`mergeAll`, `patchedParts`), `src/utils/load.js` (`resolveParents`) |
 | `expressions/*.json` | the expressions of props | `src/utils/expr.js` |
 | `normalize/*.json` | a 4.0 definition as the internal form | `src/utils/normalize.js` |
-| `migrate/*.json` | a 3.x definition as a 4.0 one | `src/utils/migrate.js` |
 
 Every file is a list of cases, every case has a `name` (what it shows, the
 name of the test) and the fields of its part, see below. A case with an
@@ -109,14 +108,9 @@ See `merge.md`.
 - `expr`: the expression, see `expressions.md`.
 - `result`: its value.
 
-## Normalize and migrate
+## Normalize
 
 `normalize/*.json` are `{ "name", "def", "result" }`: the 4.0 definition
-`def` (merged with its parents) and its internal form `result`, the form of
-3.x which the renderer reads, see `normalize.md`. The plot types are the
+`def` (merged with its parents) and its internal form `result`, the form
+which the renderer reads, see `normalize.md`. The plot types are the
 built-in ones, their default props are the ones of `src/plots/defaults.js`.
-
-`migrate/*.json` are `{ "name", "def", "options", "result" }`: the 3.x
-definition `def` (merged with its parents), the options of migrate if any
-(`"legacy": true` of a definition of 3.x without constructs of 3.x) and the
-4.0 one, migrating the result again does not change it, see `normalize.md`.

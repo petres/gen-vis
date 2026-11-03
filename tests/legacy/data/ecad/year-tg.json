@@ -1,8 +1,0 @@
-{
-    "parent": "_year.json",
-    "data": "16-tg-y.csv",
-    "options": {
-        "title": "Wien Hohe Warte: the mean temperature of the years",
-        "subtitle": "Years with less than 95% of the days without a value, the mean of all years in green"
-    }
-}

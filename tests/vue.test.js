@@ -25,9 +25,9 @@ const lineDef = (options = {}) => ({
     mapping: {
         x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' }, axis: { position: 'bottom' } },
         y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' }, axis: { position: 'left' }, hover: { format: ',.1f' } },
-        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, props: { categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } } },
+        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } },
     },
-    plot: [{ type: 'svg:circle', categories: ['c'], props: { fill: '@color', r: 3, cx: '@x:scaled', cy: '@y:scaled' } }],
+    plot: [{ type: 'svg:circle', by: ['c'], props: { fill: '@color', r: 3, cx: '@x:scaled', cy: '@y:scaled' } }],
 });
 
 const lineData = `year,value,other,land

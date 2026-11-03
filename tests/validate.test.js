@@ -1,7 +1,6 @@
 import { describe, test, expect, beforeAll } from 'vitest';
 import { loadColors } from '@/utils/d3';
 import { validateDef, curveNames } from '@/utils/validate';
-import { migrate } from '@/utils/migrate';
 import { prepareDef } from '@/utils/def';
 import { normalize } from '@/utils/normalize';
 import { plotTypes, registerPlotType } from '@/plots';
@@ -87,39 +86,17 @@ describe('validateDef', () => {
         expect(validateDef(base())).toEqual([]);
     });
 
-    test('a definition of 3.x is migrated, the first warning names it, the others are the ones of the migrated definition', () => {
-        const legacy = {
-            mapping: {
-                x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' }, axis: { position: 'bottom' } },
-                y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' }, axis: { position: 'left' } },
-                c: { column: 'land', type: 'categorical', props: { categories: { Wien: {} }, order: 'down' } },
-            },
-            plot: { type: 'cartesian:line', categories: ['c'], props: {
-                d: { x: '@x:scaled', y: '@y:scaled' },
-                'stroke-width': { prop: 'relative', ref: 'innerWidth', ratio: 0.01 },
-                'data-a': { prop: 'steps', ref: 'nope', steps: [{ cut: 0, value: 1 }] },
-            } },
-        };
-        const warnings = [
-            "mapping.c.order: expected 'ascending', 'descending' or a list of keys",
-            "plot[0].props.data-a.steps[0]: unknown reference 'nope'",
-        ];
-        expect(validateDef(legacy)).toEqual([
-            'definition: a definition of gen-vis 3.x, see migrate of @preschen/gen-vis/check, it is migrated while it is loaded, the paths are the ones of the migrated definition',
-            ...warnings,
-        ]);
-        expect(validateDef(migrate(legacy))).toEqual(warnings);
-        // the migrated definition of 4.0, in its shorter form: the orientations
-        // and the positions of the axes are the inferred ones, the type of `c`
-        // the one of its categories
+    test('the parts of the internal form are unknown: categories of a plot, props of a mapping, a text of the highlight and props of its prefixes', () => {
         const def = base();
-        delete def.mapping.c.type;
-        def.mapping.c.order = 'down';
-        def.plot.by = 'c';
-        def.plot.props['stroke-width'] = { '*': ['@innerWidth', 0.01] };
-        def.plot.props['data-a'] = { steps: ['@nope', { 0: 1 }] };
-        expect(migrate(legacy)).toEqual(def);
-        expect(validateDef(def)).toEqual(warnings);
+        def.mapping.c = { column: 'land', props: { categories: { Wien: {} } } };
+        def.plot = { type: 'cartesian:line', categories: ['c'], highlight: 'row', props: { ...def.plot.props, 'highlight-stroke-width': 3, 'others-opacity': 0.3 } };
+        expect(validateDef(def)).toEqual([
+            "mapping.c.props: unknown key, expected one of 'column', 'name', 'type', 'format', 'stacked', 'scale', 'axis', 'hover', 'legend', 'domain', 'nice', 'categories', 'scheme', 'common', 'fromData', 'order', 'ranks'",
+            "plot[0].categories: unknown key, expected one of 'type', 'id', 'by', 'data', 'dataFormat', 'filter', 'select', 'object', 'borders', 'dodge', 'halo', 'layer', 'facet', 'highlight', 'curve', 'props', 'others'",
+            'plot[0].highlight: expected an object',
+            'plot[0].props.highlight-stroke-width: unknown prop, a prop of the highlight is one of \'highlight\', e.g. { "highlight": { "stroke-width": … } }',
+            'plot[0].props.others-opacity: unknown prop, a prop of the other elements is one of \'others\', e.g. { "others": { "opacity": … } }',
+        ]);
     });
 
     test('curves of paths and areas', () => {
@@ -432,15 +409,15 @@ describe('validateDef', () => {
 
     test('annotations and the highlight of a plot', () => {
         const def = base();
-        def.plot.highlight = 'element';
+        def.plot.highlight = { mode: 'element' };
         def.annotations = [{ type: 'band', x: [0, 1], z: 2 }, { type: 'arrow' }, { type: 'text', c: 'Wien' }];
         expect(validateDef(def)).toEqual([
             "annotations[0].z: unknown mapping 'z'",
             "annotations[1].type: unknown type 'arrow', expected one of 'band', 'line', 'text', 'circle'",
             "annotations[2].c: the mapping has no scale",
-            "plot[0].highlight: unknown highlight 'element', expected one of 'group', 'row'",
+            "plot[0].highlight.mode: unknown mode 'element', expected one of 'group', 'row'",
         ]);
-        def.plot.highlight = 'row';
+        def.plot.highlight = { mode: 'row' };
         def.options = { coord: 'geo' };
         def.geo = { data: 'regions.json' };
         def.plot = { type: 'geo:region', props: {} };
@@ -690,18 +667,11 @@ describe('validateDef and the schema', () => {
     });
 });
 
-describe('validateDef of the types of the rows and of props of 3.x', () => {
+describe('validateDef of the types of the rows', () => {
     test('the scale of a mapping of the type of its values', () => {
         const def = { mapping: { n: { column: 'land', nice: 5 } }, plot: { type: 'cartesian:line', props: {} } };
         expect(validateDef(def, [{ land: 'Wien' }]).filter(w => w.startsWith('mapping.n'))).toEqual([
             "mapping.n.nice: only the domains of numeric mappings are rounded, not the ones of the type 'categorical'",
-        ]);
-    });
-
-    test('an object of a prop of 3.x is named', () => {
-        const def = { mapping: {}, plot: { type: 'cartesian:line', props: { fill: { prop: 'color' } } } };
-        expect(validateDef(def).filter(w => w.startsWith('plot'))).toEqual([
-            'plot[0].props.fill: a prop of gen-vis 3.x, see migrate of @preschen/gen-vis/check, e.g. { "*": ["@innerWidth", 0.5] } of a relative one',
         ]);
     });
 });

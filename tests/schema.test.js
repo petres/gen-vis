@@ -51,7 +51,7 @@ describe('the schema', () => {
         expect(errors({ annotations: { type: 'line', y: { '*': ['@target', 1.1] } } })).toEqual([]);
         expect(errors({ plot: { type: 'svg:circle', by: 'c' } })).toEqual([]);
         expect(errors({ plot: { type: 'svg:circle', by: ['c', 'd'] } })).toEqual([]);
-        // the categories of a plot of 3.x are by
+        // the categories of a plot are by
         expect(errors({ plot: { type: 'svg:circle', categories: 'c' } })).not.toEqual([]);
         expect(errors({ geo: { include: ['AT', 40], fit: [40], projection: { type: 'conicConformal', parallels: [46, 49] } } })).toEqual([]);
         expect(errors({ geo: { projection: { type: 'round' } } })).not.toEqual([]);
@@ -76,7 +76,7 @@ describe('the schema', () => {
         expect(errors({ mapping: { c: { categories: { Wien: { color: 'red' } }, scheme: 'Tableau10', common: { width: 1 }, fromData: true } } })).toEqual([]);
         // a mapping of a text is the one of the column, the domain, nice and the format are the ones of the mapping
         expect(errors({ mapping: { c: 'land', y: { column: 'value', domain: [0, '@max'], nice: true, format: ',.1f' } } })).toEqual([]);
-        // the props of the categories of 3.x are parts of the mapping
+        // the props of the categories are parts of the mapping, not of props
         expect(errors({ mapping: { c: { props: { order: 'descending' } } } })).not.toEqual([]);
     });
 
@@ -87,7 +87,7 @@ describe('the schema', () => {
         // a type without the prefix of the coordinate system, not of another case
         expect(errors({ plot: [{ type: 'line' }] })).toEqual([]);
         expect(errors({ plot: [{ type: 'Line' }] })).not.toEqual([]);
-        // a prop of 3.x, an object which is no operator, an operator and another key
+        // objects which are no operators, an operator and another key
         expect(errors({ options: { height: { prop: 'relative', ratio: 0.5 } } })).not.toEqual([]);
         expect(errors({ options: { height: { relative: ['@totalWidth', 0.5] } } })).not.toEqual([]);
         expect(errors({ options: { height: { '*': ['@totalWidth', 0.5], '+': [1] } } })).not.toEqual([]);
@@ -107,7 +107,7 @@ describe('the schema', () => {
             'data-if': { if: [{ '>': ['@y', 0] }, 'up', 'down'] },
         }, highlight: { 'stroke-width': 3 }, others: { opacity: 0.3 } } })).toEqual([]);
         expect(errors({ plot: { type: 'line', highlight: { mode: 'row', opacity: 1 } } })).toEqual([]);
-        expect(errors({ plot: { type: 'line', highlight: 'row' } })).toEqual([]);
+        expect(errors({ plot: { type: 'line', highlight: { mode: 'row' } } })).toEqual([]);
     });
 });
 

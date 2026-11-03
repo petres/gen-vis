@@ -555,9 +555,7 @@ from its parts or its values, a plot type of the coordinate system, e.g.
 }
 ```
 
-A definition of 3.x is migrated while it is loaded (with `check` the
-console says so), see [migrate](#checks-outside-the-browser) and the
-changes in `CHANGELOG.md`.
+The changes of the definitions of 3.x are listed in `CHANGELOG.md`.
 
 See [data](#data) (also `dataFormat`), [`transform`](#transform),
 [`options`](#options), [`mapping`](#mapping), [`plot`](#plot),
@@ -1145,12 +1143,10 @@ A plot or a list of plots, drawn in order:
   the other elements of the plot while an element is highlighted, also of
   plots without categories, e.g. `"others": {"opacity": 0.3}` fades the
   others, `{"visibility": "hidden"}` hides the label of the last value while
-  the one of another value is shown (the props `highlight-<name>` and
-  `others-<name>` are the same). `mode` of `highlight`: `group` (default)
-  highlights the elements of the category under the mouse, `row` only the
-  element of its row, e.g. the segment of a stacked bar, an entry of the
-  legend highlights all of its category, `"highlight": "row"` is the mode
-  alone. `options.highlight.transition` moves the attributes to the ones of
+  the one of another value is shown. `mode` of `highlight`: `group`
+  (default) highlights the elements of the category under the mouse, `row`
+  only the element of its row, e.g. the segment of a stacked bar, an entry
+  of the legend highlights all of its category. `options.highlight.transition` moves the attributes to the ones of
   the highlight in this many milliseconds, e.g. `{"transition": 50}`.
 - `curve`: the interpolation of the paths and areas between their points,
   `linear` (default), `monotoneX`, `natural`, `catmullRom`, `basis`, `step`,
@@ -1498,8 +1494,8 @@ languages):
   - `literal`: a value which is not evaluated, e.g. an object or a text
     starting with `@`
 
-Other objects are nested props, e.g. `d` of a path. The props of 3.x
-(`{"prop": "relative", ...}`) are migrated, see `spec/expressions.md`.
+Other objects are nested props, e.g. `d` of a path, see
+`spec/expressions.md`.
 
 The names of the references depend on the part of the definition, the inner
 parts add names:
@@ -1659,37 +1655,13 @@ console.log(validateDef(def));  // the warnings, e.g. unknown plot types
 
 `validateDef(def, rows)` also checks the rows of the data, e.g. years as
 numbers of a `date` mapping, the types of the mappings without one are the
-ones of the values. A definition of 3.x gets the warning first, its other
-warnings are the ones of the migrated definition.
+ones of the values.
 
-`migrate(def)` is the definition of 4.0 of a merged definition of 3.x in
-its shorter forms: plot types without the prefix of the coordinate system
-and only the props which differ from their defaults, `by`, `highlight` and
-`others`, mappings of a column as a text, without the types, scales,
-orientations and positions of axes which follow from the rest, `domain` and
-`format` at the mapping; each one is taken if the definition draws the same
-(its internal form is the same, the order of the attributes aside). A
-definition of 3.x is one with constructs of 3.x, as the load reads it
-(`{ "legacy": true }` migrates one without them), a definition of 4.0 is
-only written shorter. `migrateParts(parts)` writes the parts of a
-definition and its parents the same way, in the order of their merge (the
-parents first), so the files of definitions with parents are migrated each,
-e.g. a page of charts of shared parents: the parts the merged mappings need,
-e.g. `"type": "categorical"`, are in their first part, a shorter form of a
-part is taken if the merge draws the same. Types which the values infer,
-e.g. `"type": "numeric"` of a column of numbers, stay, migrate does not see
-the data. `normalize(def)` is the internal form of a definition of 4.0, the
-one the renderer reads (the form of 3.x), see `spec/normalize.md`:
-
-```js
-import { migrateParts } from '@preschen/gen-vis/check';
-
-// the parts of a definition, e.g. [parent, def], migrated, written back
-const [parent4, def4] = migrateParts([parent, def]);
-```
+`normalize(def)` is the internal form of a definition of 4.0, the one the
+renderer reads, see `spec/normalize.md`.
 
 The parts which are not bound to the browser, the expressions, the
-transforms, merging, normalize and migrate, are specified by the fixtures of
+transforms, merging and normalize, are specified by the fixtures of
 `spec/` (`spec/README.md`), so they can be implemented in other languages,
 e.g. Python or R, the tests of the package run them.
 
@@ -1806,9 +1778,7 @@ comparison with other libraries is `site/components/Comparison.vue`. The
 tests check and draw the examples, as the ones of `data/`.
 
 `spec/` has the fixtures of the parts of the definitions which other
-languages can implement (`spec/README.md`), `tests/spec.test.js` runs them,
-`tests/legacy/` the definitions of `data/` of 3.1, migrate of them is checked
-against the ones of 4.0 (`tests/migrate.test.js`).
+languages can implement (`spec/README.md`), `tests/spec.test.js` runs them.
 
 `tests/snapshots/` has the html of every definition in `data/`, drawn,
 hovered and with the first entry of the legend toggled, so changes of the

@@ -124,10 +124,3 @@ export const hover = async el => {
     }
     return rows;
 };
-
-// validateDef of a definition of 3.x migrated to 4.0, without the warning of
-// the migration, e.g. of the definitions of the tests written in 3.x
-export const checkMigrated = async () => {
-    const [{ validateDef }, { migrate }] = await Promise.all([import('@/utils/validate'), import('@/utils/migrate')]);
-    return def => validateDef(migrate(def));
-};

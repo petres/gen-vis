@@ -12,9 +12,9 @@ const lineDef = (options = {}) => ({
     mapping: {
         x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' }, axis: { position: 'bottom' } },
         y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' }, axis: { position: 'left' }, hover: { format: ',.1f' } },
-        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, props: { categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } } },
+        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } },
     },
-    plot: [{ type: 'svg:circle', categories: ['c'], props: { fill: '@color', r: 3, cx: '@x:scaled', cy: '@y:scaled' } }],
+    plot: [{ type: 'svg:circle', by: ['c'], props: { fill: '@color', r: 3, cx: '@x:scaled', cy: '@y:scaled' } }],
 });
 
 const move = async (el, x, y = 100) => {
@@ -49,7 +49,7 @@ describe('the legend', () => {
         def.globals = { from: 2020 };
         def.filter = { x: { range: ['@from', null] } };
         def.mapping.c.legend = { onlyData: true };
-        def.mapping.c.props.categories.Salzburg = { color: 'green' };
+        def.mapping.c.categories.Salzburg = { color: 'green' };
         def.formElements = [{ id: 'from', name: 'Ab', ref: 'from', type: 'radio', values: [
             { id: 'a', name: '2020', value: 2020 }, { id: 'b', name: '2022', value: 2022 },
         ] }];
