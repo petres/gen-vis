@@ -1,9 +1,12 @@
-export { createHover };
+export { createHover, byOrder };
 
 import { join, setAttr } from "@/utils/dom";
 import { fillHtml } from "@/utils/def";
-import { byOrder } from "@/utils/hover";
 import { el, patch, setHtml, setText, slotNodes, takeRange } from "@/comp/html";
+
+// the higher order first, a total order, also of two rows above or below
+// all stacks (Infinity - Infinity is NaN), the same orders keep their order
+const byOrder = (a, b) => (b > a) - (b < a);
 
 // the space between the marker and the hover
 const space = 20;
@@ -39,7 +42,7 @@ const styleOf = row => {
 /**
  * The box of the hover of a facet, beside the marker, on the `side` with
  * more space. `show(hover)` draws the `title`, the `data` and the `payload`
- * of the rows of the slot and the events (see hoverInit of facet.js): the
+ * of the rows of the slot and the events (see init of comp/facet-hover.js): the
  * `cells` of a row are the hover props of its categories (`data-mapping`,
  * other props than the name as `data-prop`) and the value (`vis-value`),
  * the `style` of a row are the styles of the props of its categories
@@ -57,7 +60,7 @@ const createHover = (store, slots) => {
     let table = null;
 
     const template = () => store.def.options.hover ?? {};
-    // the rows from the top to the bottom, see orderOf of utils/hover.js
+    // the rows from the top to the bottom, see orderOf of comp/facet-hover.js
     const sortedOf = data => [...(data ?? [])].sort((a, b) => byOrder(a.order, b.order));
 
     // the title has the names of the nearest row (or of the first one),

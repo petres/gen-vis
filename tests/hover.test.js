@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { describe, test, expect, onTestFinished } from 'vitest';
 import { scaleBand, scaleLinear } from 'd3-scale';
-import { orderOf, byOrder, sortedByOrder, nearestWithRows, nearestRow, pointFinder, pointPosition, placed, positionsInOrder, clamp } from '@/utils/hover';
+import { orderOf, sortedByOrder, nearestWithRows, nearestRow, pointFinder, pointPosition, placed, positionsInOrder, clamp } from '@/comp/facet-hover';
+import { byOrder } from '@/comp/hover';
 import { errors, useDom, mount, mountVis, rendered, pointer, nextTick } from './dom.js';
 import { targetOf } from '@/utils/dom';
 

@@ -1,16 +1,12 @@
 export { createFacet };
 
-import * as d3 from "@/utils/d3";
-import { evaluate } from "@/utils/expr";
-import { dataAttribute, drawLayer, highlighter, reducedMotion, withMotion } from "@/utils/draw";
+import { drawLayer, highlighter, reducedMotion, withMotion } from "@/utils/draw";
 import { drawAxis } from "@/utils/axis";
-import { create, interruptAll, pointer, setAttr } from "@/utils/dom";
+import { create, interruptAll, setAttr } from "@/utils/dom";
 import { plotTypes } from "@/plots";
 import { plotGroups, plotRows } from "@/layout";
-import { filter, rowFilter } from "@/utils/data";
-import { orderOf, sortedByOrder, nearestWithRows, nearestRow, pointFinder, pointPosition, placed, positionsInOrder, clamp } from "@/utils/hover";
 import { el, patch, place, setText } from "@/comp/html";
-import { createHover } from "@/comp/hover";
+import { createFacetHover } from "@/comp/facet-hover";
 
 // the elements in an element are removed
 const removeElements = node => [...node.children].forEach(c => c.remove());
@@ -38,19 +34,6 @@ const createFacet = (vis, initial) => {
     let cursor = null;
     let ctx = null;
     let highlight = null;
-    // the hover shown and its position, see hoverInit
-    const hover = { visible: false, x: 0, y: 0 };
-    // the facet has a hover, it can be moved by the keyboard
-    let keyboard = false;
-    // the hover was moved by the keyboard, so screen readers read it
-    let announced = false;
-    // the functions of the hover of the draw, see hoverInit
-    let hide = null, step = null, selectShown = null;
-    let lastEvent = null, lastKey = null, pointerAt = null;
-    let box = null;
-
-    // the options of the hover, see docs/usage.md "Events and slots"
-    const hoverOptions = () => store.def.options.hover ?? {};
     // the origin of the plots and axes in the inner area, e.g. its center
     const origin = () => store.coord.origin?.(facet.innerWidth, facet.innerHeight) ?? [0, 0];
     const innerTransform = () => { const o = origin(); return `translate(${facet.margins.left + o[0]} ${facet.margins.top + o[1]})` };
@@ -67,23 +50,6 @@ const createFacet = (vis, initial) => {
         return title && subtitle ? store.text(subtitle) : undefined;
     };
 
-    // the keys of the hover: the arrows to the left and the right move it
-    // to the position before and after, the ones up and down to the row
-    // above and below, home and end to the first and the last position,
-    // enter and space select it, as a click, escape hides it
-    const key = e => {
-        const s = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 'down', ArrowUp: 'up', Home: 'first', End: 'last' }[e.key];
-        if (e.key == 'Escape') {
-            hide?.();
-        } else if ((e.key == 'Enter' || e.key == ' ') && selectShown) {
-            e.preventDefault();
-            selectShown();
-        } else if (s !== undefined && step) {
-            e.preventDefault();
-            step(s);
-        }
-    };
-
     // with a hover the facet is in the order of the tab key, the arrow keys move the
     // hover, it is an application of screen readers, so they pass the keys to it
     const root = el('div', { style: `width: ${facet.width}px;`, class: 'vis-facet' });
@@ -94,12 +60,15 @@ const createFacet = (vis, initial) => {
     // the hover is read by screen readers when the keyboard moves it, not on every move of the mouse
     const live = root.appendChild(el('div'));
     let subtitleSpan = null, keysSpan = null;
-    svg.addEventListener('keydown', e => vis.guard(() => key(e)));
-    svg.addEventListener('blur', () => vis.guard(() => hide?.()));
+    // the hover of the pointer and of the keyboard, see comp/facet-hover.js
+    const hover = createFacetHover({ store, slots, emit, marker, live, highlight: entry => highlightEntry(entry), origin, facetOf: () => facet });
+    svg.addEventListener('keydown', e => vis.guard(() => hover.key(e)));
+    svg.addEventListener('blur', () => vis.guard(() => hover.hide()));
 
     // the attributes of the elements of the facet, of its sizes, the hover and the keyboard
     const render = () => {
         const o = origin();
+        const keyboard = hover.keyboard;
         const text = description();
         patch(root, { style: `width: ${facet.width}px;`, class: 'vis-facet' });
         patch(svg, {
@@ -123,28 +92,7 @@ const createFacet = (vis, initial) => {
             keysSpan?.remove();
             keysSpan = null;
         }
-        renderHover(o);
-    };
-
-    // the marker of the position and the box of the hover beside it, also
-    // of the hover slot
-    const renderHover = (o = origin()) => {
-        patch(marker, { visibility: hover.visible && hoverOptions().marker !== false ? 'visible' : 'hidden', class: 'vis-hover-marker' });
-        patch(live, {
-            'aria-live': announced ? 'polite' : 'off',
-            style: `transform: translate(${facet.margins.left + o[0] + hover.x}px, ${facet.margins.top + o[1] + hover.y}px); position: absolute; top: 0; left: 0;`,
-        });
-        if (hover.visible && hoverOptions().box !== false) {
-            if (!box) {
-                box = createHover(store, slots);
-                box.show(hover);
-                live.appendChild(box.el);
-            } else
-                box.show(hover);
-        } else if (box) {
-            box.el.remove();
-            box = null;
-        }
+        hover.render(o);
     };
 
     // the element of `key` of the draw before or a new one, `make()`
@@ -295,316 +243,16 @@ const createFacet = (vis, initial) => {
         // not if the user prefers less motion
         const duration = reducedMotion() ? 0 : Number(store.def.options.highlight?.transition) || 0;
         highlight = highlighter(store.def.plot, plot => kept.get(plotKey(plot)), duration);
-        hoverInit();
+        hover.init(ctx);
         // the highlight of the page
         if (store.highlighted)
             highlightEntry(null);
     };
 
-    const hoverInit = () => {
-        const coord = store.coord;
-        hide = null;
-        step = null;
-        selectShown = null;
-
-        // the hover needs the mappings of the positions and of the values,
-        // of a coordinate system with `values` of the hover only the ones
-        // of the values, e.g. of a pie without rings, all rows are one position
-        const names = ctx.axis;
-        keyboard = Boolean(names.v && (names.h || coord.hover.values));
-        if (!keyboard) {
-            hover.visible = false;
-            return;
-        }
-
-        const format = { h: names.h ? store.valueFormat(names.h, ctx.scales[names.h]) : () => '', v: store.valueFormat(names.v, ctx.scales[names.v]) };
-        const v = names.v;
-        // the start and the end of a stacked value
-        const stackOf = ctx.stackOf;
-        // the place of a row in the hover, see utils/hover.js
-        const stacks = { v, stackOf, isStacked: ctx.isStacked, stackOrder: ctx.stackOrder };
-
-        // categorical mappings, and other values with a hover, e.g. of a second vertical axis
-        const categories = store.mappingNamesWithKey('hover')
-            .filter(n => n != names.h && n != v && store.mapping(n).categoryProps);
-        const others = store.mappingNamesWithKey('hover')
-            .filter(n => n != names.h && n != v && !store.mapping(n).categoryProps && ['numeric', 'date'].includes(store.mapping(n).type));
-        const formats = Object.fromEntries(others.map(n => [n, store.valueFormat(n, ctx.scales[n])]));
-        // the mappings whose categories style the rows (`hover.row.props`),
-        // and the ones of categories as attributes of the rows, e.g. data-type="load"
-        const styled = categories.filter(n => store.mapping(n).hover.row?.props);
-        const keyed = Object.keys(store.def.mapping).filter(n => store.mapping(n).categoryProps && dataAttribute(n));
-
-        const line = marker.querySelector("line");
-        // the marker without a line, e.g. of a hidden hover or of a point
-        const noLine = () => {
-            line.removeAttribute("x1");
-            line.removeAttribute("x2");
-            line.removeAttribute("y1");
-            line.removeAttribute("y2");
-        };
-        const scope = store.scope;
-
-        // the rows of the hover, with a value and of its `filter`, by their
-        // key, e.g. of the horizontal axis, compared as strings
-        const options = hoverOptions();
-        const hoverRows = filter(ctx.rows.filter(e => e[v] !== null), rowFilter(options.filter, store.def.mapping, ctx.scope, 'options.hover.filter'));
-        const rowsByKey = d3.group(hoverRows, e => String(e[names.h]));
-        // the nearest key is one with rows, e.g. not one of null values, of
-        // the coordinate systems with the `nearest` of the context, unless
-        // the hover of keys without rows is shown (`"empty": true`)
-        const located = options.empty ? ctx
-            : { ...ctx, nearest: nearestWithRows(ctx.scales[names.h], [...rowsByKey.values()].map(rows => rows[0][names.h])) };
-        let last = null;
-        // the rows of the hover shown, e.g. for a select by the keyboard
-        let current = null;
-
-        // a hidden hover has no position, as the one of a new facet
-        hide = () => {
-            if (hover.visible)
-                emit('hover', null);
-            last = null;
-            current = null;
-            lastEvent = null;
-            lastKey = null;
-            Object.assign(hover, { visible: false, x: 0, y: 0 });
-            noLine();
-            highlightEntry(null);
-            renderHover();
-        };
-
-        // the hover of the nearest point, e.g. of a scatter plot, within
-        // `radius` pixels, of the coordinate systems with points of rows,
-        // the points of the rows are placed at the first use
-        const pointMode = options.mode == 'point' && coord.hover.point;
-        let points = null;
-        let nearestPoint = null;
-        const preparePoints = () => {
-            points ??= hoverRows.filter(row => row[names.h] !== null)
-                .map(row => [...coord.hover.point(ctx, row, names), row]);
-            nearestPoint ??= pointFinder(points, options.radius ?? 30);
-        };
-
-        // the rows at the pointer and the nearest one, stacked: the segment
-        // under the pointer, outside of the stack the closest one, null
-        // without a key, the rows are not formatted yet
-        const at = e => {
-            if (pointMode) {
-                preparePoints();
-                const point = nearestPoint(pointer(e, ctx.inner));
-                return point && { key: point[2][names.h], rows: [point[2]], nearest: point[2], point };
-            }
-            const position = coord.hover.locate(located, pointer(e, ctx.inner), names, e);
-            if (!position)
-                return null;
-            const { key, value } = position;
-            const rows = rowsByKey.get(String(key)) ?? [];
-            return { key, value, rows, nearest: nearestRow(rows, value, v, stackOf) };
-        };
-
-        const titleOf = key => coord.hover.title ? coord.hover.title(ctx, key, names) : format.h(key);
-
-        // the rows of the table from the top to the bottom, stacks as they
-        // are drawn, the cells are a cell per hover prop of the categories,
-        // e.g. their name, and the value
-        const entriesOf = (rows, nearest) => rows.map(row => {
-            const cells = [];
-            const entries = Object.fromEntries(categories.map(n => {
-                const values = evaluate(store.mapping(n).hover.props, { ...scope, ...store.prop(n, row[n]) });
-                const texts = Object.fromEntries(Object.entries(values).map(([k, t]) => [k, store.text(t)]));
-                Object.entries(texts).filter(([, t]) => t !== null && t !== undefined)
-                    .forEach(([k, t]) => cells.push({ mapping: n, prop: k == 'name' ? null : k, text: t }));
-                return [n, texts];
-            }));
-            entries[v] = { value: row[v], name: format.v(row[v]) };
-            cells.push({ mapping: v, value: true, text: entries[v].name });
-            others.forEach(n => {
-                entries[n] = { value: row[n], name: row[n] === null ? '' : formats[n](row[n]) };
-                cells.push({ mapping: n, value: true, text: entries[n].name });
-            });
-            // the styles of the row, of the props of its categories, the
-            // later mappings override the ones before, see hover.js
-            const style = {};
-            styled.forEach(n => Object.entries(evaluate(store.mapping(n).hover.row.props, { ...scope, ...store.prop(n, row[n]) }))
-                .filter(([, s]) => s !== null && s !== undefined && s !== '')
-                .forEach(([k, s]) => style[k] = String(s)));
-            const attrs = Object.fromEntries(keyed.filter(n => row[n] !== null && row[n] !== undefined)
-                .map(n => [dataAttribute(n), String(row[n])]));
-            return { entries, cells, data: row, nearest: row === nearest, order: orderOf(row, rows, stacks), style, attrs };
-        });
-
-        // the rows of the events and the slot, copies of the values of the mappings
-        const plain = row => ({ ...row });
-        const payload = ({ key, rows, nearest }) => ({
-            key,
-            title: titleOf(key),
-            rows: rows.map(plain),
-            nearest: nearest ? plain(nearest) : null,
-        });
-
-        // the hover of the rows of a position and the nearest one
-        const show = found => {
-            const { key, value, rows, nearest } = found;
-            // no hover without rows, e.g. of a region without a value,
-            // unless `"empty": true`, e.g. the name of every region
-            if (rows.length == 0 && !options.empty) {
-                hide();
-                return;
-            }
-            hover.visible = true;
-            current = found;
-
-            // the same key and row as before, e.g. a move within a step
-            // of the axis, nothing is formatted or drawn, a hover at the
-            // pointer moves with it
-            if (last && last.key === key && last.nearest === nearest) {
-                if (options.position == 'pointer' && pointerAt)
-                    Object.assign(hover, placed(last.position, options, pointerAt));
-                renderHover();
-                return;
-            }
-
-            // there is no entry e.g. if all categories are hidden, without
-            // a value the elements of the key are highlighted, e.g. a region
-            highlightEntry(nearest ?? (value === undefined ? {[names.h]: key} : null));
-
-            const p = payload(found);
-            // a point has no line, the hover is beside it
-            const position = found.point
-                ? (noLine(), pointPosition(found.point, ctx.innerWidth))
-                : coord.hover.marker(ctx, key, names, line, nearest);
-            last = { key, nearest, position };
-            Object.assign(hover, placed(position, options, pointerAt), {
-                data: entriesOf(rows, nearest),
-                title: p.title,
-                payload: p,
-            });
-            emit('hover', p);
-            renderHover();
-        };
-
-        // the hover of the pointer, also the one of the draw before at its
-        // position, e.g. after a toggle by the keyboard
-        const move = e => {
-            // nothing under the pointer, e.g. the sea of a map, no empty or old hover
-            const found = at(e);
-            if (!found) {
-                hide();
-                return;
-            }
-            lastEvent = e;
-            lastKey = null;
-            // the hover of the pointer is not read by screen readers
-            announced = false;
-            pointerAt = pointer(e, ctx.inner);
-            show(found);
-        };
-
-        // the positions with rows in their order, e.g. from the left to
-        // the right, the ones of a map by their titles, and of the points
-        // their order from the left, the rows of a position as in the table
-        let positions = null;
-        const positionsOf = () => {
-            if (pointMode) {
-                preparePoints();
-                return [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1])
-                    .map(point => ({ key: point[2][names.h], rows: [point[2]], point }));
-            }
-            const all = [...rowsByKey.values()].map(rows => ({ key: rows[0][names.h], rows: sortedByOrder(rows, row => orderOf(row, rows, stacks)) }));
-            return positionsInOrder(all, ctx.scales[names.h], titleOf);
-        };
-        // the position of an index, of a key before, e.g. of the draw before
-        // with other positions, at its index if it has none anymore
-        const showKey = (index, row, before) => {
-            positions ??= positionsOf();
-            if (positions.length == 0) {
-                hide();
-                return;
-            }
-            const same = before === undefined ? -1 : positions.findIndex(p => String(p.key) === String(before));
-            const i = same >= 0 ? same : clamp(index, positions.length);
-            const { key, rows, point } = positions[i];
-            const r = clamp(row, rows.length);
-            lastEvent = null;
-            pointerAt = null;
-            // the hover of the keyboard is read by screen readers
-            announced = true;
-            lastKey = { index: i, row: r, key };
-            show({ key, rows, nearest: rows[r], point });
-        };
-        selectShown = () => {
-            if (current)
-                emit('select', payload(current));
-        };
-        step = s => {
-            const current = lastKey;
-            if (s == 'first' || s == 'last')
-                return showKey(s == 'first' ? 0 : Infinity, 0);
-            if (s == 'up' || s == 'down')
-                return current ? showKey(current.index, current.row + (s == 'down' ? 1 : -1)) : showKey(0, 0);
-            showKey(current ? current.index + s : (s > 0 ? 0 : Infinity), 0);
-        };
-
-        // mouse, touch and pen, vertical swipes still scroll the page
-        // the area of the events, the plot area or with `"area": "facet"` also
-        // the margins, e.g. the labels of the rows of horizontal bars
-        const area = coord.hover.area(ctx, ctx.inner);
-        if (options.area == 'facet' && area.tagName == 'rect') {
-            const o = origin();
-            area.setAttribute("x", -(facet.margins.left + o[0]));
-            area.setAttribute("y", -(facet.margins.top + o[1]));
-            area.setAttribute("width", facet.width);
-            area.setAttribute("height", facet.height);
-        }
-        // the full text of a cut text under the pointer (see fitText of
-        // utils/draw.js) is the title of the area, it is above the texts,
-        // so the browser shows it as their tooltip
-        let tooltip = null;
-        // the texts are cut in the draw, before the hover, so they are searched once
-        const anyCut = Boolean(inner.querySelector('text > title'));
-        const cutText = e => {
-            const text = e.pointerType == 'mouse' && anyCut
-                ? document.elementsFromPoint?.(e.clientX, e.clientY)
-                    .find(el => el.tagName == 'text' && inner.contains(el) && el.querySelector(':scope > title'))
-                : null;
-            const full = text ? text.querySelector(':scope > title').textContent : '';
-            if (full || tooltip)
-                tooltip ??= area.appendChild(create("title"));
-            if (tooltip && tooltip.textContent !== full)
-                tooltip.textContent = full;
-        };
-        area.setAttribute("class", "vis-events");
-        area.setAttribute("opacity", 0);
-        area.style.setProperty("touch-action", "pan-y");
-        area.addEventListener("pointerdown", move);
-        area.addEventListener("pointermove", move);
-        area.addEventListener("pointermove", cutText);
-        // a click or a tap, e.g. on a region of a map
-        area.addEventListener("click", e => {
-            const found = at(e);
-            if (found)
-                emit('select', payload(found));
-        });
-        area.addEventListener("pointerleave", e => {
-            if (e.pointerType != "touch")
-                hide();
-        });
-        // the browser scrolls the page instead
-        area.addEventListener("pointercancel", hide);
-
-        // the hover of the draw before with the rows of this one
-        if (hover.visible && lastEvent)
-            move(lastEvent);
-        else if (hover.visible && lastKey)
-            showKey(lastKey.index, lastKey.row, lastKey.key);
-        else
-            hover.visible = false;
-    };
-
     // a touch keeps the hover until the next touch outside of the facet
     const hideOnPointerOutside = e => {
         if (hover.visible && !svg.contains(e.target))
-            hide?.();
+            hover.hide();
     };
 
     // the elements before the first draw, the ones of a facet without a
