@@ -13,6 +13,37 @@ the plot types of `registerPlotType` get `ctx.inner` as an element (the
 instead of `ctx.inner.node().getAttribute('transform')`. The package
 draws without d3-selection and d3-transition (`src/utils/dom.js`).
 
+Breaking: the package is a core without a framework, Vue is an optional
+adapter. `@preschen/gen-vis` exports `createGenVis(element, props)` (a
+visualisation with `update(props)`, `on`/`off` of the events, `destroy()`,
+`state`, `el` and the methods `exportPng`, `copyPng`, `image`, `exportCsv`
+and `setHighlight`), `mountGenVisElement`, `mountGenVisByClass`,
+`unmountGenVisElement`, `registerPlotType`, `registerCoord`, `perRow` and
+`perGroup`; these return the visualisation instead of a Vue component (its
+element is `el`, not `$el`, its props `props`, not `$props`). The component
+`GenVis` and the plugin are the ones of `@preschen/gen-vis/vue` (`vue` is an
+optional peer dependency): `import GenVis from '@preschen/gen-vis/vue'` and
+`import { GenVis } from '@preschen/gen-vis/vue'` instead of
+`'@preschen/gen-vis'`, with the same props, `v-model:state`, events, slots
+and methods. Without Vue the slots are functions of their props (the prop
+`slots`, they return a node or a text) and the events are listeners (`on`,
+or the props `onHover`, `onSelect`, `onRendered`, `onError` and
+`'onUpdate:state'`). Changes are drawn together in a microtask, a new view
+only of a new state, new globals, a toggle or a new width, the hover only
+draws itself.
+
+Breaking: the standalone script and the module of `dist-lib/` have no Vue
+(the single file 120 kB gzipped instead of 143 kB, the module 64 kB at first
+instead of 87 kB), `gen-vis.novue.js`, `esm-novue/` and the export
+`@preschen/gen-vis/esm-novue` are gone. A page with Vue as a script or in
+its import map has the component of its Vue of the same files:
+`GenVis.vuePlugin(Vue)` (the plugin, its `component`) and
+`GenVis.createVueComponent(Vue)`. The elements and their attributes are the
+ones of 3.x without the scoped ids of Vue (`data-v-…`) and its comments;
+the styles are one stylesheet (`src/styles.css`), still in the cascade layer
+`gen-vis`, with the same classes and css variables. A visualisation drawn
+faster, ~15% of the 49 charts of `data/`.
+
 ## 3.1.0
 
 The standalone script in more sizes: `dist-lib/gen-vis.core.js` (less than

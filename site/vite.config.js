@@ -39,6 +39,7 @@ export default defineConfig({
         alias: {
             '@preschen/gen-vis/schema.json': fileURLToPath(new URL('../schema.json', import.meta.url)),
             '@preschen/gen-vis/check': fileURLToPath(new URL('../dist/check.js', import.meta.url)),
+            '@preschen/gen-vis/vue': fileURLToPath(new URL('../dist/vue.js', import.meta.url)),
             '@preschen/gen-vis': fileURLToPath(new URL('../dist/gen-vis.js', import.meta.url)),
         },
     },

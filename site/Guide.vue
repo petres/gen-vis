@@ -42,7 +42,7 @@
                 </p>
                 <p>
                     If it fits your charts, use it. If it nearly fits, fork it: the code is about 8 000 lines of
-                    JavaScript and Vue, the parts and their files are below. The
+                    JavaScript without a framework, the parts and their files are below. The
                     <a href="./#comparison">comparison</a> on the page of the examples names the libraries which
                     are the better choice for most other cases.
                 </p>
@@ -70,18 +70,19 @@
                     <li>
                         <strong>Layout</strong> <code>src/layout.js</code>: the rows shown (filters, hidden
                         categories), the stacks, the facets with their sizes and a d3 scale per mapping, without
-                        Vue and without the DOM.
+                        the DOM.
                     </li>
                     <li>
                         <strong>Marks</strong> <code>src/plots/</code>: a plot type turns the groups of the rows of a
                         plot into a layer, plain objects of SVG elements with their attributes, it draws nothing.
                     </li>
                     <li>
-                        <strong>Draw</strong> <code>src/utils/draw.js</code>, <code>src/comp/Facet.vue</code>: the
+                        <strong>Draw</strong> <code>src/utils/draw.js</code>, <code>src/comp/facet.js</code>: the
                         layers are joined to the elements of the draw before by their keys, only attributes which
                         changed are set, with a transition if the definition has one. The hover and the highlight
-                        work on the drawn elements, the Vue components are the frame: titles, form elements,
-                        legends and facets.
+                        work on the drawn elements, the other parts of <code>src/comp/</code> are the frame: titles,
+                        form elements, legends and facets, the Vue component (<code>src/vue.js</code>) is a thin
+                        adapter of them.
                     </li>
                 </ol>
             </section>

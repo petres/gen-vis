@@ -51,7 +51,7 @@
 </template>
 
 <script>
-import { GenVis } from '@preschen/gen-vis';
+import { GenVis } from '@preschen/gen-vis/vue';
 import CodeEditor from './CodeEditor.vue';
 import DataPreview from './DataPreview.vue';
 import { liveDefinition } from '../editor/live.js';

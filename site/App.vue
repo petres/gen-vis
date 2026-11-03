@@ -14,7 +14,7 @@
             </div>
             <h1>Charts from JSON definitions</h1>
             <p class="lead">
-                A small d3 library for Vue which I write for the charts of my own pages: a chart is a
+                A small d3 library for any page and for Vue which I write for the charts of my own pages: a chart is a
                 JSON definition and a data file. Lines, bars, areas, polar plots and maps, with legends,
                 hover, facets and form elements. It does what these charts need, use it if it fits
                 yours, fork it if it nearly does, see <a href="guide.html">how it works</a>.
@@ -29,8 +29,8 @@
                 <li><strong>Controls without code.</strong> Radio buttons, selects and sliders of the
                     definition patch any part of it, e.g. columns, filters, scales, texts or the language,
                     the state is a <code>v-model</code>, the page can set globals and link charts.</li>
-                <li><strong>For Vue and for any page.</strong> A component of Vue 3, or a standalone script,
-                    which loads the parts a chart needs when it needs them.</li>
+                <li><strong>For any page and for Vue.</strong> A core without a framework, a standalone
+                    script which loads the parts a chart needs when it needs them, and a component of Vue 3.</li>
                 <li><strong>Built in:</strong> the hover by the keyboard and screen readers, PNG and CSV
                     of the data shown.</li>
             </ul>
@@ -65,7 +65,7 @@
                     <div class="demo-live"><VueDemo/></div>
 <pre class="demo-code"><code>// main.js
 import { createApp } from 'vue';
-import GenVis from '@preschen/gen-vis';
+import GenVis from '@preschen/gen-vis/vue';
 import App from './App.vue';
 
 createApp(App).use(GenVis).mount('#app');
@@ -78,8 +78,8 @@ createApp(App).use(GenVis).mount('#app');
             <section id="standalone" class="usage">
                 <h2>Without a bundler</h2>
                 <p>
-                    The standalone script includes Vue and d3. As a module of the page it loads
-                    90 kB (gzipped) at first and the parts which not every chart needs, e.g. the ones of
+                    The standalone script includes d3 and no framework. As a module of the page it loads
+                    64 kB (gzipped) at first and the parts which not every chart needs, e.g. the ones of
                     maps, when a chart needs them. The page below is this file, it loads the script of
                     this build instead of the CDN.
                 </p>
@@ -90,11 +90,11 @@ createApp(App).use(GenVis).mount('#app');
                 <p>
                     A page which loads its scripts without modules loads the same module with a classic
                     script of less than 1 kB, its globals return promises:
-                    <code>&lt;script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/gen-vis.core.js"&gt;&lt;/script&gt;</code>
+                    <code>&lt;script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.core.js"&gt;&lt;/script&gt;</code>
                     and <code>mountGenVisByClass('chart')</code>. All parts in one file are
-                    <code>dist-lib/gen-vis.js</code> (149 kB gzipped), pages with Vue of their own use
-                    <code>gen-vis.novue.js</code> or the module <code>esm-novue/gen-vis.js</code> (66 kB at
-                    first), see the <a :href="readme">readme</a>.
+                    <code>dist-lib/gen-vis.js</code> (120 kB gzipped), pages with Vue as a script have
+                    the component of their Vue, <code>GenVis.vuePlugin(Vue)</code>, see the
+                    <a :href="readme">readme</a>.
                 </p>
             </section>
 
@@ -142,7 +142,7 @@ import vueSource from './components/VueDemo.vue?raw';
 import examples from './examples/index.js';
 
 const repo = 'https://github.com/petres/gen-vis';
-const cdn = 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@3/dist-lib/esm/gen-vis.js';
+const cdn = 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/esm/gen-vis.js';
 
 export default {
     components: { Example, Comparison, VueDemo },
