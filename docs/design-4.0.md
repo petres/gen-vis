@@ -6,24 +6,39 @@ other languages can implement (Python, R), and the internals kept as they are:
 a 4.0 definition is *normalized* into the internal form the renderer already
 uses, so the renderer, the tests and the snapshots stay valid.
 
+This document is the design as it was implemented on the branch `def-4`;
+"Deviations" at the end lists where it differs from the first draft and why.
+The rules themselves are in `spec/` (`README.md`, `expressions.md`,
+`merge.md`, `normalize.md`), with fixtures that `tests/spec.test.js` runs.
+
 ## 1. Layers
 
 ```
 definition 4.0 (JSON, schema.json)
-   │ resolveParents   (merge, spec/merge)          portable
-   │ normalize        (src/utils/normalize.js)      portable, pure JSON → JSON
+   │ resolveParents   (merge, spec/merge)                  portable
+   │ migrate          (only if isLegacy: constructs of 3.x) portable, check chunk
+   │ normalize        (src/utils/normalize.js)             portable, pure JSON → JSON
    ▼
 internal definition (the form of 3.x, not documented for users anymore)
-   │ prepare / transforms (spec/transforms)         transforms portable
+   │ inferTypes (types of the values of the rows), prepare / transforms (spec/transforms)
    ▼
 renderer (JS only)
 ```
 
-`migrate(def3)` (in `@preschen/gen-vis/check`) rewrites a 3.x definition as a
-4.0 one, the loader migrates 3.x definitions automatically with a warning of
-`check`, so existing definitions (e.g. energy-monitor) keep working.
-`normalize(migrate(d))` equals the internal form of `d`, a test checks it for
-all definitions of `data/`.
+- The load (`src/utils/load.js`, `toInternal`) merges the parents, migrates a
+  definition with constructs of 3.x (`isLegacy`: props of `prop`, `op` of
+  calc, `categories` of plots, `props` of mappings; the migration is loaded
+  as a chunk of its own then, `lazy.migrate`, with `check` the console warns),
+  then normalizes it with the registered plot types. The types of mappings
+  without one are inferred from the rows in `prepare` (`inferTypes` of
+  `src/utils/data.js`), after the first computation of the transforms, so
+  columns of transforms are known; the scale type follows in `prepareMapping`
+  (`scaleTypeOf`).
+- `migrate(def3)`, `migrateParts(parts)` and `normalize(def)` are exported
+  from `@preschen/gen-vis/check`. `normalize(migrate(d))` equals the internal
+  form of `d` for all definitions of `data/` (tests/migrate.test.js, against
+  the 3.1 definitions kept in `tests/legacy/`), and the snapshots, rendered from
+  the 4.0 definitions in `data/`, are unchanged.
 
 ## 2. Mappings: shorthand and inference
 
@@ -36,18 +51,27 @@ all definitions of `data/`.
 ```
 
 - A string is the column.
-- `type` is inferred from the data when missing (numbers → numeric, dates as
-  in 3.x → date, else categorical); an explicit type stays possible.
-- `scale.type` is inferred: numeric → linear, date → time, categorical
-  positions → band for bars, point otherwise, other categorical → ordinal.
-- `scale.orientation` and `axis.position` follow from the channel name and the
-  coordinate system: `x` horizontal/bottom, `y` vertical/left, polar `angle`
-  and `radius`.
-- `format` of the mapping is the default of `axis.format` and `hover.format`.
-- Scale fields used often may stand at the mapping (`domain`, `nice`) and
-  are moved into `scale` by normalize.
-- `props.categories`, `props.scheme`, `props.common` → `categories`,
-  `scheme`, `common` at the mapping (no extra `props` level).
+- `type` is inferred when missing: first structurally (normalize: categories,
+  a band/point/ordinal scale → categorical, time/utc → date, other scale
+  types → numeric, a mapping of `by` of a plot, of `facets.dim` or of
+  `scale.groups.by` → categorical), then from the values of the column when
+  the rows are known (numbers → numeric, dates → date, else categorical).
+- `scale.type` is inferred from the type: numeric → linear, date → time,
+  categorical positions → band for bars (`cartesian:bar`, `polar:arc` using
+  `@n:scaled`), point otherwise, other categorical → ordinal.
+- Positions: `x` horizontal, `y` vertical (cartesian), `x`/`angle` angular,
+  `y`/`radius` radial (polar) get a scale with that orientation and an axis
+  (`false` removes either, `orientation: null` is none); an axis without a
+  position is at the one of the orientation of its scale (also for other
+  mappings, e.g. a second axis `"axis": {}`).
+- `format` stays at the mapping (internal form too): `formatOf` uses it as the
+  default of the axis and the hover format.
+- `domain` and `nice` at the mapping are moved into `scale`; `categories`,
+  `scheme`, `common`, `fromData`, `ranks`, `order` into `props`.
+- Mappings of patches are parts: only the shorthand is written in internal
+  form, no defaults (they would override the base when merged). A patch of
+  another coordinate system gets the orientations/positions of the base
+  mappings whose orientation was inferred.
 
 ## 3. Plots
 
@@ -59,57 +83,95 @@ all definitions of `data/`.
 ]
 ```
 
-- `type` without a coordinate prefix: the coordinate system of
-  `options.coord` decides (`line` → `cartesian:line` or `polar:line`),
-  `svg:*` stay as they are for raw elements.
-- `by` instead of `categories` (the same word as in transforms).
-- `highlight` and `others` are objects of props instead of the prefixes
-  `highlight-` and `others-`.
-- Every plot type has default props (`defaults` of the type, also for
-  registered ones): a line draws `d: {x: "@x:scaled", y: "@y:scaled"}`, the
-  stroke `@color`, no fill; a definition only writes what differs.
+- `type` without a prefix: `<coord>:<name>`, else `svg:<name>`, else the only
+  registered type `*:<name>` of the coordinate system; `point` is `circle`.
+- `by` instead of `categories`.
+- `highlight` / `others` objects of props; `highlight: {"mode": "row", ...}`
+  carries the 3.x mode, the string `"highlight": "row"` stays valid.
+- Default props (`defaults` of the plot types, `src/plots/defaults.js`,
+  an object or a function of the props, documented for `registerPlotType`)
+  apply to short type names only; nested props are merged deeply, `null`
+  removes a default. The color default is `{"or": ["@color", "currentColor"]}`
+  so a plot without categories is visible.
 
 ## 4. Expressions (portable)
 
-One expression language for all props, close to JSON Logic so other languages
-have a known model:
+`src/utils/expr.js` (pure; props.js re-exports it): literals, references
+`"@name"` and `{"var": name | [name, default]}`, operator objects of exactly
+one key: `+ - * / min max round == != < <= > >= and or not if cat format
+steps match literal var`. Other objects are nested props. Expressions are
+compiled once (WeakMap by object identity) and bound to closures per plot
+(`bind`), constant parts are folded, the argument buffer of an operator is
+reused per row; `evaluate` interprets the compiled tree without closures.
+Semantics (numbers as in the data, comparisons, truthiness of JSON Logic,
+halves rounded up) are in `spec/expressions.md`, fixtures
+`spec/expressions/*.json` run through both `evaluate` and `bind`.
 
-- literals: numbers, strings, booleans, null, arrays
-- references: `"@name"` and `"@name:modifier"` (as 3.x), also `{"var": "name"}`
-- an operator object has exactly one key, the operator:
-  `{"*": ["@innerWidth", 0.013]}`, `{"+": ["@x:scaled", -14]}`, `-`, `/`,
-  `min`, `max`, `round`, `if` (`[cond, then, else]`), `==`, `!=`, `<`, `<=`,
-  `>`, `>=`, `and`, `or`, `not`, `cat` (texts), `format` (`["@y", ",.1f"]`),
-  `steps` (`["@totalWidth", {"0": 220, "550": 250}]`), `match`
-  (`["@level", {"header": 4.5, "item": "@r"}, 0]`), `literal` (a value which
-  is not evaluated, the 3.x `fixed`)
-- other objects are nested props (e.g. `d`)
-- 3.x forms (`{"prop": "relative", ...}`) are migrated.
-
-`spec/expressions/*.json` are fixtures: `{ "scope", "expr", "result" }`.
+The 3.x forms are not understood by the renderer anymore; migrate rewrites
+them (`migrateExpr`).
 
 ## 5. Transforms (portable)
 
-The column-wise model of 3.x stays (`column`, `as`, `by`, `order`, `base`):
-
-- `calc` takes an expression of the row: `{"type": "calc", "as": "rel",
-  "expr": {"*": [{"/": ["@value", "@inno"]}, 100]}}` (the 3.x `op`/`columns`
-  form is migrated).
-- new `filter` (`{"type": "filter", "expr": {">": ["@value", 0]}}`) — the
-  rows of the data afterwards.
-- every transform has a fixture file in `spec/transforms/<type>.json`:
-  `[{ "name", "rows", "globals", "transform", "columns" }]`, the JS test runs
-  them, an implementation in another language runs the same files.
+- `calc` takes an expression of the row (`expr`), its names are the columns
+  of the row and the globals (a column wins). `op`/`columns`/`scale` are
+  migrated, the implementation has only `expr`.
+- `filter` (`{"type": "filter", "expr": ...}`) is a transform inside
+  `applyTransforms`: the later transforms compute only the kept rows (their
+  values of the other rows are null), the kept row indexes are
+  `columns.kept`; `layout.js` takes only these rows (`keptRows`). Form element
+  values and `fromData` categories still see all rows (a filter of a global,
+  e.g. of the year of a slider, would otherwise remove the slider's values).
+- Every transform has `spec/transforms/<type>.json` (`kept` of filters).
 
 ## 6. Merging (portable)
 
-`parent`, mixins and the patches of form elements follow one rule set,
-written down in `spec/merge.md` with fixtures `spec/merge/*.json`: objects are
-merged deeply, arrays replaced, lists of entries with `id` (plots,
-annotations, form elements) merged by `id`, `null` removes.
+As implemented (verified in code, `spec/merge.md`): objects merged deeply,
+arrays replaced, arrays whose entries *all* have an `id` merged by id (as
+strings), `null` replaces and stays in the merged definition — the parts that
+treat it as "removed" are listed in merge.md; `patchedParts` (def.js) is the
+merge of the selected patches, exported for the fixtures.
 
 ## 7. Not in this step
 
 - The renderer keeps its internal form; dropping it is a later cleanup.
 - Facets, form elements and globals keep their 3.x syntax (with the
   expression language inside).
+
+## Deviations from the first draft, and why
+
+- **Defaults only for short type names.** `cartesian:line` keeps meaning
+  "only the props written". Otherwise every 3.x definition (and every inline
+  test definition) would get extra attributes or need `null`s to cancel them.
+  Migrate converts a prefixed type to the short one only when the props
+  contain all defaults and the merged props come out identical *and in the
+  same order* (attribute order shows up in the snapshots).
+- **`highlight-`/`others-` prefixes stay valid** (not a 3.x marker). Migrate
+  only turns them into objects when they come last in the props, because
+  normalize appends them and the attribute order would change otherwise.
+- **`mode` inside `highlight`**: the 3.x `highlight: "row"` and highlight
+  props needed one place; a string still means the mode.
+- **Type inference is two-staged** (structural in normalize, data in
+  prepare), not only from data: years with categories must stay categorical.
+  Consequence for migration: a 3.x mapping without type (categorical) gets an
+  explicit `"type": "categorical"` unless the structure implies it, a 3.x
+  scale without type gets `"type": "linear"` unless inference gives linear.
+- **Mixed definitions** (a 4.0 child of a 3.x parent) are migrated as a whole;
+  a 4.0 mapping is recognized by its 4.0 parts (`categories`, `domain`,
+  `format`, ...) and left alone, but a 4.0 mapping without type and without
+  such parts would become categorical. Migrate the parents with
+  `migrateParts` instead.
+- **`migrateParts`** (not in the draft): files with parents can't be migrated
+  one by one (a mixin's mapping has no type, a child's partial `steps` object
+  overrides a parent's prop), so the parts are migrated in the context of
+  their merge and the parts the merged mappings need go into the first part
+  that defines them. `data/` and `site/` were migrated this way.
+- **Format** stays on the mapping in the internal form (formatOf falls back
+  to it) instead of being copied into axis/hover, so it also works for
+  `@x:formatted` without a hover and inside patches.
+- **Filter conditions** (`filter`, `stacked`, plot filters) keep `not` and
+  `range` as condition keys, they are evaluated structurally
+  (`conditionValues`), since `not` is an operator now.
+- **Mapping-level `order`** is the order of the categories (`props.order`),
+  the order of a band scale stays `scale.order`.
+- **Positions of registered coordinate systems** are not inferred (no
+  orientation names known), their mappings are written as in 3.x.
