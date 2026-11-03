@@ -727,7 +727,7 @@ const context = (def, warn, rows) => {
         warn('options.coord', `unknown coordinate system '${coordName}'${choices(coordName, Object.keys(coords))}`);
     const coord = coords[coordName] ?? coords.cartesian;
 
-    // the names of the references, see README "Props": everywhere the globals
+    // the names of the references, see docs/definition.md "Props of the definition": everywhere the globals
     // (also the ones of form elements) and the width of the visualisation, in
     // a facet its sizes, in a plot the props of its categories and the rows,
     // in a range the sizes of the coordinate system, e.g. `radius`

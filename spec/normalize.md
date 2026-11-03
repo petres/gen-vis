@@ -44,7 +44,7 @@ The fixtures are `normalize/*.json`.
   rows of any type. Otherwise it is the type
   of the values of the column (when the rows are known): numeric if all
   values which are not missing are numbers, date if all of them are dates,
-  otherwise categorical (see `README.md` of the values).
+  otherwise categorical (see `docs/definition.md` of the values).
 - The type of a scale without one follows from the type of the mapping:
   numeric `linear`, date `time`, categorical `band` of a position of the
   bars of a plot (`cartesian:bar`, `polar:arc`, a prop of `@name:scaled`),

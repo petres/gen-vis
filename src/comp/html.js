@@ -2,7 +2,7 @@ export { el, patch, setStyle, setText, setHtml, display, slotNodes, takeRange, p
 
 // the html elements of the visualisation without a framework: an element
 // with its attributes (el), the attributes of an element patched (patch),
-// the texts and the content of the slots, see README "Events and slots"
+// the texts and the content of the slots, see docs/usage.md "Events and slots"
 
 // the attributes set by patch, so the ones which are not given anymore are removed
 const patched = Symbol('patched');
@@ -126,7 +126,7 @@ const el = (tag, attrs = null, ...children) => {
 };
 
 // the nodes of the result of a slot, a node (e.g. a fragment), a text or
-// a list of them, see README "Events and slots"
+// a list of them, see docs/usage.md "Events and slots"
 const slotNodes = result => [result].flat(Infinity)
     .filter(r => r !== null && r !== undefined && r !== false)
     .flatMap(r => r instanceof DocumentFragment ? [...r.childNodes] : [r instanceof Node ? r : document.createTextNode(String(r))]);

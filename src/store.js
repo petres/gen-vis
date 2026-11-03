@@ -91,7 +91,7 @@ class Store {
 
     // the names of the references in all parts of the definition, the globals
     // and the width of the visualisation, a facet adds its sizes, a plot the
-    // props of the categories and the row, see README "Props"
+    // props of the categories and the row, see docs/definition.md "Props of the definition"
     get scope() { return { ...this.names, totalWidth: this.totalWidth, [formatter]: (format, name) => this.format(format, name) } }
 
     // a d3 format in the locale of the values of a mapping, of times if it is

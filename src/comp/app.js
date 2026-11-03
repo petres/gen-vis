@@ -15,8 +15,8 @@ import '@/styles.css';
 const heights = new Map();
 const keptHeights = 500;
 
-// the props and their defaults, see README "Props", `slots` are the
-// functions of the slots (see README "Events and slots"), props `on…` of a
+// the props and their defaults, see docs/usage.md "Props", `slots` are the
+// functions of the slots (see docs/usage.md "Events and slots"), props `on…` of a
 // function are listeners of the events, e.g. `onSelect`
 const defaults = {
     // shows the prepared definition, its warnings are logged, see check
@@ -63,7 +63,7 @@ const defaults = {
 };
 const propNames = Object.keys(defaults);
 
-// the events, see README "Events and slots"
+// the events, see docs/usage.md "Events and slots"
 const events = { onRendered: 'rendered', onError: 'error', onHover: 'hover', onSelect: 'select', 'onUpdate:state': 'update:state' };
 
 // a copy of JSON, e.g. of the globals given by the page, the store changes its own
@@ -72,7 +72,7 @@ const copyOf = v => v ? JSON.parse(JSON.stringify(v)) : null;
 /**
  * A visualisation in `element` (in a new element `.vis-outer` at its end,
  * with `{ root: true }` the element is the one of the visualisation), see
- * README "Usage". `props` are the props of README "Props", `slots` and the
+ * docs/usage.md. `props` are the props of docs/usage.md "Props", `slots` and the
  * listeners of the events (e.g. `onSelect`). Returns the visualisation:
  * `update(props)` changes props (together in a microtask, a new
  * definition or new data is loaded again, a new state, globals and
@@ -375,7 +375,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
     };
 
     // the visualisation as an SVG (a string) of the copy of the images, of
-    // the `parts` chosen, see README "Static export" and utils/export-svg.js
+    // the `parts` chosen, see docs/export.md and utils/export-svg.js
     const exportSvg = async (options = {}) => {
         const { exporting, mount, width } = await imageSource();
         return await exporting.renderSvg(outer, mount, { ...options, width });
@@ -446,7 +446,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
     const instance = {
         el: outer,
         store,
-        // the changes of the user, see README "State", and the props
+        // the changes of the user, see docs/usage.md "State", and the props
         get state() { return store.state },
         get props() { return { ...props } },
         update(next = {}) {

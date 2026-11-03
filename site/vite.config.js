@@ -27,7 +27,7 @@ const standalone = () => ({
     },
 });
 
-// the page of the examples (GitHub Pages), see the readme (Development), it uses the
+// the page of the examples (GitHub Pages), see docs/development.md, it uses the
 // package as it is published, the es module of dist/ (`npm run build` first),
 // so its styles are in the cascade layer `gen-vis` as in the applications
 export default defineConfig({
@@ -45,7 +45,7 @@ export default defineConfig({
     },
     define: {
         __VERSION__: JSON.stringify(pkg.version),
-        // the links to the readme are the ones of the branch built
+        // the links to the readme and docs/ are the ones of the branch built
         __BRANCH__: JSON.stringify(process.env.GITHUB_REF_NAME || 'main'),
     },
     build: {

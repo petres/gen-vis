@@ -1,7 +1,7 @@
 // the standalone script as a classic script, e.g. of a page which loads its
 // scripts without modules, small, it loads the module of esm/ next to it
 // (~90 kB gzipped at first, the parts a chart needs when it needs them), see
-// the readme. Its functions are the globals at once, they return promises,
+// docs/usage.md. Its functions are the globals at once, they return promises,
 // e.g. of the components, and wait for the module; `GenVis.ready` is the
 // module itself, e.g. for registerPlotType with perRow.
 const names = ['mountGenVisElement', 'mountGenVisByClass', 'unmountGenVisElement', 'registerPlotType', 'registerCoord', 'registerScheme', 'registerDefaults'];

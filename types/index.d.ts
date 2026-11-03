@@ -1,12 +1,12 @@
 // the types of @preschen/gen-vis, the core without Vue, a definition is the
-// JSON of schema.json, see the readme; the ones of the Vue adapter
+// JSON of schema.json, see docs/definition.md; the ones of the Vue adapter
 // (@preschen/gen-vis/vue) are in vue.d.ts
 import type { GenVisDefinition } from './definition';
 
 // the types of the parts of a definition, e.g. MappingEntry or Plot
 export type * from './definition';
 
-/** A definition of a visualisation, see schema.json and the readme. */
+/** A definition of a visualisation, see schema.json and docs/definition.md. */
 export type Definition = GenVisDefinition;
 
 /** A row of the data, the values of its columns. */
@@ -18,7 +18,7 @@ export interface State {
     visible?: Record<string, Record<string, boolean>>;
 }
 
-/** The defaults of an axis, the values used where the definition has none, see the readme "Defaults". */
+/** The defaults of an axis, the values used where the definition has none, see docs/definition.md "Defaults". */
 export interface AxisDefaults {
     /** The space between the tick marks and the labels in pixels. */
     padding?: number;
@@ -34,7 +34,7 @@ export interface AxisDefaults {
     };
 }
 
-/** The defaults of the parts of a chart instead of the built-in ones (`builtInDefaults`, see the readme "Defaults"): of all axes, the ones of the axes of a position before them, e.g. `angularAxis`. */
+/** The defaults of the parts of a chart instead of the built-in ones (`builtInDefaults`, see docs/definition.md "Defaults"): of all axes, the ones of the axes of a position before them, e.g. `angularAxis`. */
 export interface GenVisDefaults {
     axis?: AxisDefaults;
     angularAxis?: AxisDefaults;
@@ -91,14 +91,14 @@ export interface GenVisMethods {
     exportPng(name?: string): Promise<void>;
     copyPng(): Promise<void>;
     image(): Promise<Blob>;
-    /** The SVG of the image (a string), made for Word and editors, see the readme "Static export". */
+    /** The SVG of the image (a string), made for Word and editors, see docs/export.md. */
     exportSvg(options?: ExportSvgOptions): Promise<string>;
     exportCsv(name?: string): Promise<void>;
     /** Highlights the rows of the values of mappings, e.g. `{ country: 'AT' }`, null ends it. */
     setHighlight(entry: Record<string, unknown> | null): void;
 }
 
-/** The parts of the images, see the readme "Static export". */
+/** The parts of the images, see docs/export.md. */
 export type ImagePart = 'title' | 'subtitle' | 'selection' | 'legend' | 'plot' | 'footer';
 
 /** The options of exportSvg. */
@@ -111,7 +111,7 @@ export interface ExportSvgOptions {
     background?: string | null;
 }
 
-/** The options of `window.genVisExport` of the export page (dist-lib/export.html), version 1, see the readme "Static export". */
+/** The options of `window.genVisExport` of the export page (dist-lib/export.html), version 1, see docs/export.md. */
 export interface GenVisExportOptions {
     def?: Definition | string;
     defUrl?: string;
@@ -206,11 +206,11 @@ export interface GenVisOptions extends GenVisProps, GenVisListeners {
     slots?: GenVisSlotFunctions | null;
 }
 
-/** A visualisation of createGenVis and mountGenVisElement, see the readme "Usage". */
+/** A visualisation of createGenVis and mountGenVisElement, see docs/usage.md. */
 export interface GenVisInstance extends GenVisMethods {
     /** The element of the visualisation, `.vis-outer`. */
     readonly el: HTMLElement;
-    /** The changes of the user, see the readme "State", null while it is loaded. */
+    /** The changes of the user, see docs/usage.md "State", null while it is loaded. */
     readonly state: State | null;
     /** The props it has now. */
     readonly props: Readonly<GenVisOptions>;
@@ -225,7 +225,7 @@ export interface GenVisInstance extends GenVisMethods {
 /** A visualisation at the end of `element` (in a new element `.vis-outer`), `root` makes `element` the one of the visualisation. */
 export declare function createGenVis(element: Element, props?: GenVisOptions, options?: { root?: boolean }): GenVisInstance;
 
-/** A group of the rows of a plot, see the readme "Extensions". */
+/** A group of the rows of a plot, see docs/extensions.md. */
 export interface PlotGroup {
     categories: Record<string, unknown>;
     props: Record<string, unknown>;
@@ -239,7 +239,7 @@ export interface PlotGroup {
 /** An element of a layer, the values of its attributes (`text` is its text). */
 export type LayerItem = Record<string, unknown>;
 
-/** The marks of a plot, drawn by the package, see the readme "Extensions" and drawLayer of src/utils/draw.js. */
+/** The marks of a plot, drawn by the package, see docs/extensions.md and drawLayer of src/utils/draw.js. */
 export interface Layer {
     /** The svg element of the items, e.g. "rect". */
     element?: string;
@@ -255,7 +255,7 @@ export interface Layer {
     fit?: boolean;
 }
 
-/** A plot type, see the readme "Extensions" and src/plots/index.js. */
+/** A plot type, see docs/extensions.md and src/plots/index.js. */
 export interface PlotType {
     /** The marks of the groups of rows of a plot, null draws nothing. */
     marks(groups: PlotGroup[], plot: Record<string, any>, ctx: Record<string, any>): Layer | null;

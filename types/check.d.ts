@@ -1,4 +1,4 @@
-// the rules of the definitions for scripts outside the browser, see the readme
+// the rules of the definitions for scripts outside the browser, see docs/extensions.md
 import type { Definition, PlotType } from './index.js';
 
 /** The definition merged with its parents, `load(url)` reads a file, by default with fetch. */

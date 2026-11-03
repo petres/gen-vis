@@ -11,7 +11,7 @@ elements of a plot, the height, the margins, the ticks of an axis) and the
 - A number, a text, a boolean or `null` is itself.
 - A text starting with `@` is a reference to a name of the scope, e.g.
   `"@innerWidth"`, `"@x:scaled"` (the names of a place of a definition are
-  in the README of the package, `:` is part of the name). An unknown name has
+  in `docs/definition.md` of the package, `:` is part of the name). An unknown name has
   no value. `{"var": "name"}` is the same, `{"var": ["name", default]}` is
   `default` if the name is unknown (not if it is `null`).
 - A list is a list of expressions.
@@ -25,7 +25,7 @@ No value is `null` in JSON (`undefined` in JavaScript).
 
 ## Operators
 
-Numbers are the ones of the values of the data (see `README.md`): numbers
+Numbers are the ones of the values of the data (see `docs/definition.md`): numbers
 and texts of decimal numbers, others are no number.
 
 | Operator | Value |

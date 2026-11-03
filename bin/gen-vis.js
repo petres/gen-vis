@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// the command line of gen-vis, see README "Static export":
+// the command line of gen-vis, see docs/export.md:
 //   gen-vis export <def.json> <out.svg|out.png|out.pdf>... [<def.json> <out>...]... [options]
 import { parseArgs } from 'node:util';
 import { existsSync, readFileSync } from 'node:fs';

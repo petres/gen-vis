@@ -71,7 +71,7 @@ const atOnce = entry => {
 };
 
 // the standalone script also as gen-vis.js, the one of the package, e.g. of a
-// CDN, beside the one of the version for the upload, see the readme
+// CDN, beside the one of the version for the upload, see docs/usage.md
 const unversioned = () => ({
     name: 'unversioned',
     apply: 'build',
@@ -84,7 +84,7 @@ const unversioned = () => ({
 });
 
 // the export page next to the module of the standalone script
-// (dist-lib/export.html, it loads esm/export.js), see README "Static export"
+// (dist-lib/export.html, it loads esm/export.js), see docs/export.md
 const exportPage = () => ({
     name: 'export-page',
     apply: 'build',
@@ -93,7 +93,7 @@ const exportPage = () => ({
     },
 });
 
-// the builds of the standalone script (`npm run lib`), see the readme: the
+// the builds of the standalone script (`npm run lib`), see docs/usage.md: the
 // single file (lib), the module with its parts next to it (module) and the
 // classic script which loads the module (core), none of them has Vue, the
 // component of the Vue of a page is a function of it (see src/vue-adapter.js);
@@ -124,7 +124,7 @@ export default defineConfig(({ mode }) => {
         build: module ? {
             // the standalone script as a module of a page, with d3, the parts
             // which are loaded when a chart needs them are files of their own
-            // next to it, e.g. the ones of maps, see the readme, and the
+            // next to it, e.g. the ones of maps, see docs/usage.md, and the
             // module of the export page (src/export.js)
             outDir: 'dist-lib/esm',
             lib: {
@@ -142,7 +142,7 @@ export default defineConfig(({ mode }) => {
                 },
             },
         } : single ? {
-            // standalone script for embedding, see the readme, the first build
+            // standalone script for embedding, see docs/usage.md, the first build
             // (lib) empties dist-lib, the others are added to it
             outDir: 'dist-lib',
             emptyOutDir: true,

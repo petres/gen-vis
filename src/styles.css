@@ -1,6 +1,6 @@
 /* the styles of the package, injected by the builds in the cascade layer
    `gen-vis` (see vite.config.js), so every style of the page overrides
-   them, see README "Styles", the classes start with `vis-` */
+   them, see docs/usage.md "Styles", the classes start with `vis-` */
 
 /* the space while the visualisation is loaded, e.g. 450px, set by the page */
 .vis-outer.vis-loading {

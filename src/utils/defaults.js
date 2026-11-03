@@ -5,7 +5,7 @@ import { isObject } from '@/utils/values';
 
 /**
  * The built-in defaults of the parts of a chart, the values used where a
- * definition has none, see README "Defaults": of all axes (`axis`), the
+ * definition has none, see docs/definition.md "Defaults": of all axes (`axis`), the
  * ones of the axes of a position before them, e.g. of the angular and the
  * radial axes of polar plots (`angularAxis`, `radialAxis`). `padding` is the space between the tick
  * marks and the labels, `tickMarks.size` the length of the tick marks,

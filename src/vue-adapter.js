@@ -5,7 +5,7 @@ import { createGenVis } from '@/index.js';
 import { propNames } from '@/comp/app';
 
 // the props of the component, the ones of createGenVis without the slots,
-// see README "Props"
+// see docs/usage.md "Props"
 const props = {
     debug: { type: Boolean, default: false },
     check: { type: Boolean, default: false },
@@ -24,17 +24,17 @@ const props = {
     lazy: { type: [Boolean, String], default: false },
 };
 
-// the events of the visualisation, see README "Events and slots"
+// the events of the visualisation, see docs/usage.md "Events and slots"
 const events = ['update:state', 'hover', 'select', 'rendered', 'error'];
 
-// the slots of the component, see README "Events and slots"
+// the slots of the component, see docs/usage.md "Events and slots"
 const slotNames = ['header', 'footer', 'buttons', 'hover'];
 
 /**
  * The component GenVis of the Vue of the page (the module `vue`, e.g.
  * `import * as Vue from 'vue'`, or the global `Vue` of
  * vue.global.prod.js): the props, `v-model:state`, the events, the slots and
- * the methods of the visualisation of createGenVis, see README "Vue
+ * the methods of the visualisation of createGenVis, see docs/usage.md "Vue
  * component". The slots are drawn by Vue into the elements of the
  * visualisation, with the components and plugins of the application.
  */
@@ -97,7 +97,7 @@ const createVueComponent = Vue => {
             presentSlots() {
                 return slotNames.filter(n => this.$slots[n]);
             },
-            // the slots as functions of the visualisation, see README "Events
+            // the slots as functions of the visualisation, see docs/usage.md "Events
             // and slots": a slot is drawn by Vue into an element of its own,
             // its nodes are the ones of the visualisation, the ones which are
             // not shown anymore are removed by Vue, see sweep
@@ -128,7 +128,7 @@ const createVueComponent = Vue => {
                     }
                 });
             },
-            // the methods of the visualisation, see README "PNG"
+            // the methods of the visualisation, see docs/usage.md "PNG"
             image() { return this.vis.image() },
             exportSvg(options) { return this.vis.exportSvg(options) },
             exportPng(name) { return this.vis.exportPng(name) },

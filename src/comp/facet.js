@@ -49,7 +49,7 @@ const createFacet = (vis, initial) => {
     let lastEvent = null, lastKey = null, pointerAt = null;
     let box = null;
 
-    // the options of the hover, see README "Events and slots"
+    // the options of the hover, see docs/usage.md "Events and slots"
     const hoverOptions = () => store.def.options.hover ?? {};
     // the origin of the plots and axes in the inner area, e.g. its center
     const origin = () => store.coord.origin?.(facet.innerWidth, facet.innerHeight) ?? [0, 0];

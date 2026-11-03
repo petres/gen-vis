@@ -4,7 +4,7 @@
 // its SVG and the rectangle of its image in the page, so a program which
 // drives the browser (the CLI bin/gen-vis.js, wrappers of Python or R)
 // takes a screenshot of it (PNG) or prints the SVG (PDF). The protocol is
-// the one of README "Static export", of `genVisExport.version`;
+// the one of docs/export.md, of `genVisExport.version`;
 // `genVisExport.resolve(options)` returns the merged definition, e.g. of
 // the plot types a wrapper chooses its colors by.
 import { createGenVis } from '@/index.js';
@@ -17,7 +17,7 @@ import { composeSvg, units } from '@/utils/export-svg.js';
 // compatible with the one before, e.g. a new meaning of an option
 const version = 1;
 
-// the options of genVisExport, see README "Static export"
+// the options of genVisExport, see docs/export.md
 const known = ['def', 'defUrl', 'data', 'dataUrl', 'baseUrl', 'width', 'padding', 'unit', 'css', 'classes', 'globals',
     'state', 'defaults', 'parts', 'fontSize', 'background', 'schemes', 'timeout'];
 
@@ -146,7 +146,7 @@ const frame = () => new Promise(resolve => {
 
 /**
  * Draws a chart and returns `{ version, svg, width, height, box }`, see
- * README "Static export": the SVG (a string), the size of the image in CSS
+ * docs/export.md: the SVG (a string), the size of the image in CSS
  * pixels and its rectangle in the page (`x`, `y`, `width`, `height`, CSS
  * pixels of the page, e.g. the clip of a screenshot), it stays in the page
  * until the next call. Errors (e.g. of the definition) reject it with the
@@ -200,7 +200,7 @@ genVisExport.version = version;
 /**
  * The definition of the options (`def` or `defUrl`, relative to `baseUrl`)
  * with its parents and mixins, merged as the load of a chart does, not
- * normalized, see README "Static export"; it takes the options of
+ * normalized, see docs/export.md; it takes the options of
  * genVisExport (the others are not used) and leaves the chart before as it
  * is. Errors (e.g. of a missing parent) reject it with the message of
  * gen-vis.

@@ -43,7 +43,7 @@ definition of 3.x):
   - a definition file declares gen-vis 4: `"$schema":
     "https://unpkg.com/@preschen/gen-vis@4/schema.json"` (in itself or in a
     parent), the load of a file without it or with the one of gen-vis 3
-    fails, an inline definition may have none, see the readme (Definition).
+    fails, an inline definition may have none, see docs/definition.md.
 - Vue: the component `GenVis` and the plugin are the ones of
   `@preschen/gen-vis/vue` (`vue` is an optional peer dependency), `import
   GenVis from '@preschen/gen-vis/vue'` or `import { GenVis } from
@@ -140,7 +140,7 @@ The decompressors of parquet are loaded one by one, only the ones of the
 file, e.g. zstd of polars (3 kB instead of 75 kB of all of
 hyparquet-compressors).
 
-The static export (README "Static export"): `exportSvg(options)` of the
+The static export (docs/export.md): `exportSvg(options)` of the
 visualisation (and of a ref of the component) is the SVG of the image, made
 for Word and editors (the texts of the HTML as `<text>`, the styles as
 attributes, no foreignObject, no classes, no styles, no css variables), of
@@ -174,7 +174,7 @@ the n colors, holes of null), n categories or classes take the colors of
 their size. A registered `observable10` is also the palette of the
 categories without colors (the default colors).
 
-Defaults of the parts (README "Defaults"): the built-in values of the axes
+Defaults of the parts (docs/definition.md "Defaults"): the built-in values of the axes
 are collected in `builtInDefaults` (`src/utils/defaults.js`): the `padding`
 of the labels (3), the length of the tick marks (`tickMarks.size`, 9 of
 cartesian, 6 of angular axes), the part of them inside the plot area (the
@@ -187,6 +187,12 @@ replace them for all axes of any definition, e.g. `{"axis": {"padding": 2,
 "tickMarks": {"size": 4, "inset": 0}}}` of the spacing of ggplot2; the
 values of a definition take precedence, the prop over the page. The
 prepared definition has no `axis.padding` of 3 anymore.
+
+The readme is an overview, the details are in `docs/`: the definition
+language (`docs/definition.md`), the usage and the JavaScript API
+(`docs/usage.md`), the static export (`docs/export.md`), the extensions and
+the checks (`docs/extensions.md`) and the development
+(`docs/development.md`).
 
 ## 3.1.0
 

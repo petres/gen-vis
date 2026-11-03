@@ -1,6 +1,6 @@
 // the types of the Vue adapter, @preschen/gen-vis/vue: the component GenVis
 // of the Vue of the application, the plugin which registers it and the
-// factories of the Vue of a page, see the readme "Vue component"
+// factories of the Vue of a page, see docs/usage.md "Vue component"
 import type { ComponentOptionsMixin, ComponentPublicInstance, DefineComponent, EmitsToProps, Plugin, PublicProps, SlotsType, VNodeChild } from 'vue';
 import type { GenVisEmits, GenVisMethods, GenVisProps, HoverSlotProps } from './index.js';
 
@@ -25,7 +25,7 @@ export type GenVisComponentInstance = ComponentPublicInstance<GenVisProps> & Gen
 export type GenVisComponent = DefineComponent<GenVisProps, {}, {}, {}, { [K in keyof GenVisMethods]: GenVisMethods[K] }, ComponentOptionsMixin, ComponentOptionsMixin,
     GenVisEmits, string, PublicProps, Readonly<GenVisProps> & EmitsToProps<GenVisEmits>, {}, SlotsType<GenVisSlots>>;
 
-/** The component of the Vue of the application, see the readme. */
+/** The component of the Vue of the application, see docs/usage.md "Vue component". */
 export declare const GenVis: GenVisComponent;
 
 /** The component of another Vue, e.g. the global `Vue` of a page with the standalone script, `import * as Vue from 'vue'`. */

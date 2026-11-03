@@ -96,10 +96,10 @@ const staticCopy = async (place, mount, { width, space = padding, visible = fals
     }
 };
 
-// the parts of the images, see README "Static export"
+// the parts of the images, see docs/export.md
 const parts = ['title', 'subtitle', 'selection', 'legend', 'plot', 'footer'];
 
-// the elements of a part of a copy (`.vis`), see README "Styles"
+// the elements of a part of a copy (`.vis`), see docs/usage.md "Styles"
 const partSelectors = {
     title: '.vis-header .vis-title',
     subtitle: '.vis-header .vis-subtitle',
@@ -165,7 +165,7 @@ const renderImage = async (outer, mount, { width }) => {
  * The SVG (a string) of the static copy of a visualisation of the given
  * `width` next to `outer` (see staticCopy), of the `parts` chosen (default
  * all), its size in `unit`, on its `background` (by default the one of the
- * PNG, null none), see README "Static export" and utils/export-svg.js.
+ * PNG, null none), see docs/export.md and utils/export-svg.js.
  */
 const renderSvg = async (outer, mount, { width, parts = null, unit = 'px', background }) => {
     const { composeSvg } = await lazy.svg();

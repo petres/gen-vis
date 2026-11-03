@@ -249,7 +249,7 @@ const selected = (rows, select, mapping) => {
 };
 
 // a name of the rows of a facet as a function of the row, e.g. "x" or
-// "x:scaled", undefined for other names, see README "Props"
+// "x:scaled", undefined for other names, see docs/definition.md "Props of the definition"
 const rowValue = (ctx, name, rows) => {
     const [m, ...parts] = name.split(':');
     // the other names of the rows of the data of a plot, e.g. a label

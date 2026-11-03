@@ -1,5 +1,5 @@
 // the static export of the CLI (gen-vis export, see bin/gen-vis.js and
-// README "Static export"): a headless browser (bin/cdp.js) loads the export
+// docs/export.md): a headless browser (bin/cdp.js) loads the export
 // page of dist-lib (export.html) and calls its genVisExport, the PNG is a
 // screenshot of the box of the image, the PDF the print of the SVG, so PDF
 // and SVG are the same drawing. The files reach the page without a server:
@@ -128,7 +128,7 @@ export const createExporter = async ({ browser, sandbox = true, note = () => {} 
 
         /**
          * Draws the definition file `def` and writes the `outputs`, the
-         * options are the ones of genVisExport (README "Static export")
+         * options are the ones of genVisExport (docs/export.md)
          * with files instead of urls (`data`, `css` files or texts) and
          * `scale` (pixels of the PNG per CSS pixel, default 2) or `dpi`.
          * Returns the result of genVisExport without the SVG and the notes

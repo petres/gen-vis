@@ -194,7 +194,7 @@ export interface GenVisDefinition {
      */
     annotations?: Annotation | Annotation[];
     /**
-     * Columns computed of the data, e.g. an index of a base year, in their order, see the readme.
+     * Columns computed of the data, e.g. an index of a base year, in their order, see https://github.com/petres/gen-vis/blob/main/docs/definition.md#transform.
      */
     transform?: Transform | Transform[];
     /**

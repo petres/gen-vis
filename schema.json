@@ -34,7 +34,7 @@
             ]
         },
         "transform": {
-            "description": "Columns computed of the data, e.g. an index of a base year, in their order, see the readme.",
+            "description": "Columns computed of the data, e.g. an index of a base year, in their order, see https://github.com/petres/gen-vis/blob/main/docs/definition.md#transform.",
             "anyOf": [
                 { "$ref": "#/definitions/transform" },
                 { "type": "array", "items": { "$ref": "#/definitions/transform" } }

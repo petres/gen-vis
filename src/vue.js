@@ -1,7 +1,7 @@
 // the Vue adapter of the package (`@preschen/gen-vis/vue`): the component
 // GenVis of the Vue of the application (a peer dependency), the plugin which
 // registers it (`app.use(GenVis)`) and the factories of another Vue, see
-// README "Vue component"
+// docs/usage.md "Vue component"
 export { GenVis, createVueComponent, vuePlugin };
 
 import * as Vue from 'vue';

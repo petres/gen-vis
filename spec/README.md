@@ -80,7 +80,7 @@ the rules of the values:
   `column`), a value per row, in the order of the rows, `null` is no value.
   Numbers are the same up to a relative difference of 1e-12.
 
-The rules of all transforms (see the README of the package, `transform`):
+The rules of all transforms (see `docs/definition.md` of the package, `transform`):
 
 - The groups are the rows of the same values of the columns `by` (a column or
   a list, as strings, `null` and values which are not there as `""`), in the order of the column

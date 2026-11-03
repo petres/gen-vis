@@ -45,7 +45,7 @@ const sameProps = (a, b) => a && b && Object.keys(a).length == Object.keys(b).le
     && Object.keys(a).every(k => a[k] === b[k]);
 
 // the content of a slot in `parent` before `before`, drawn again if the
-// slot or its props change, see README "Events and slots". Its nodes are
+// slot or its props change, see docs/usage.md "Events and slots". Its nodes are
 // the ones from its first to its last, also the ones which the slot adds
 // between them later, e.g. Vue (see vue-adapter.js), they are removed
 // together, see takeRange
