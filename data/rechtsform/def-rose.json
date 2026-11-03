@@ -56,48 +56,42 @@
                     }]
                 }
             },
-            "props": {
-                "categories": {
-                    "Hauseigentum":     { "color": "#BBD7EE" },
-                    "Wohnungseigentum": { "color": "#5BC5F2" },
-                    "GBV Miete":        { "color": "#559BD5" },
-                    "Gemeinde Miete":   { "color": "#C7DF71" },
-                    "Private Miete":    { "color": "#4B9847" },
-                    "Sonstige":         { "color": "#9CE1F8" }
-                }
+            "categories": {
+                "Hauseigentum":     { "color": "#BBD7EE" },
+                "Wohnungseigentum": { "color": "#5BC5F2" },
+                "GBV Miete":        { "color": "#559BD5" },
+                "Gemeinde Miete":   { "color": "#C7DF71" },
+                "Private Miete":    { "color": "#4B9847" },
+                "Sonstige":         { "color": "#9CE1F8" }
             },
             "hover": {}
         },
         "geo": {
             "column": "Geo",
             "type": "categorical",
-            "props": {
-                "categories": {
-                    "Österreich": {},
-                    "Wien": {}
-                }
+            "categories": {
+                "Österreich": {},
+                "Wien": {}
             }
         }
     },
     "facets": {
         "dim": "geo",
         "cols": {
-            "prop": "steps",
-            "ref": "totalWidth",
-            "steps": [{"cut": 0, "value": 1}, {"cut": 700, "value": 2}]
+            "steps": ["@totalWidth", { "0": 1, "700": 2 }]
         }
     },
     "plot": {
-        "type": "polar:arc",
-        "categories": ["type"],
+        "type": "arc",
+        "by": "type",
         "props": {
             "fill": "@color",
             "stroke": "white",
             "stroke-width": 0.5,
             "angle": "@year:scaled",
             "innerRadius": "@count:start:scaled",
-            "outerRadius": "@count:end:scaled",
-            "highlight-opacity": 0.8
-        }
+            "outerRadius": "@count:end:scaled"
+        },
+        "highlight": { "opacity": 0.8 }
     }
 }

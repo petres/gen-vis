@@ -1,0 +1,74 @@
+{
+    "options": {
+        "coord": "geo",
+        "height": {
+            "prop": "steps",
+            "ref": "totalWidth",
+            "steps": [
+                {"cut":   0, "value": 260},
+                {"cut": 450, "value": 320},
+                {"cut": 550, "value": 380}
+            ]
+        },
+        "margins": {"top": 10, "right": 10, "bottom": 10, "left": 10}
+    },
+    "geo": {
+        "data": "../../geo/austria-districts.json",
+        "object": "districts",
+        "key": "id",
+        "join": "district",
+        "name": "NAME",
+        "projection": { "type": "conicEquidistant", "rotate": [-13.3, 0], "parallels": [46, 49] }
+    },
+    "globals": {
+        "year": "2025"
+    },
+    "filter": {
+        "indicator": "@indicator",
+        "year": "@year"
+    },
+    "formElements": [
+        {
+            "id": "year",
+            "name": "Jahr",
+            "ref": "year",
+            "type": "slider",
+            "values": { "column": "year" }
+        }
+    ],
+    "mapping": {
+        "district": {
+            "column": "district",
+            "type": "categorical"
+        },
+        "indicator": { "column": "indicator", "type": "categorical" },
+        "year": { "column": "year", "type": "categorical" },
+        "value": {
+            "column": "value",
+            "type": "numeric",
+            "legend": { "missing": { "name": "keine Daten", "color": "#DADADA" } }
+        }
+    },
+    "plot": [
+        {
+            "type": "geo:base",
+            "props": { "fill": "#DADADA", "stroke": "white", "stroke-width": 0.5 }
+        },
+        {
+            "type": "geo:region",
+            "categories": ["district"],
+            "props": {
+                "fill": "@value:scaled",
+                "stroke": "white",
+                "stroke-width": 0.5,
+                "highlight-fill-opacity": 0.75
+            }
+        },
+        {
+            "type": "geo:mesh",
+            "object": "states",
+            "borders": "inner",
+            "props": { "stroke": "white", "stroke-width": 1.4 }
+        }
+    ]
+}

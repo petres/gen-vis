@@ -1,0 +1,13 @@
+{
+    "parent": "_polar.json",
+    "data": "16-rr-d.parquet",
+    "options": {
+        "title": "Wien Hohe Warte: a year of precipitation in a circle",
+        "subtitle": "The daily precipitation of {year} and the mean of the day of 1951–2024, the years since 1951 in gray",
+        "locale": { "number": { "currency": ["", " mm"] } }
+    },
+    "globals": { "smooth": "avg31" },
+    "mapping": {
+        "y": { "scale": { "include": 0, "domainRel": [0, 0.02] } }
+    }
+}

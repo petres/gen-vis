@@ -10,27 +10,36 @@
         "margins": { "top": 34, "right": 34, "bottom": 34, "left": 34 }
     },
     "globals": { "lang": "de", "summer": "Sommer" },
-    "formElements": [{
-        "id": "lang", "name": "Sprache · Language", "ref": "lang", "type": "radio", "inImage": false,
-        "values": [
-            { "id": "de", "name": "Deutsch", "value": "de", "globals": { "summer": "Sommer" } },
-            {
-                "id": "en", "name": "English", "value": "en", "globals": { "summer": "Summer" },
-                "patch": {
-                    "options": {
-                        "title": "A year in a circle",
-                        "subtitle": "Temperature in Austria, weighted by population, rolling 4-week mean, in °C",
-                        "footer": "Source: ERA5, Copernicus Climate Change Service",
-                        "locale": "en"
-                    },
-                    "mapping": {
-                        "x": { "hover": { "format": "%B %-d" } },
-                        "year": { "name": "Year", "props": { "categories": { "1991–2020": { "name": "Mean 1991–2020" } } } }
+    "formElements": [
+        {
+            "id": "lang",
+            "name": "Sprache · Language",
+            "ref": "lang",
+            "type": "radio",
+            "inImage": false,
+            "values": [
+                { "id": "de", "name": "Deutsch", "value": "de", "globals": { "summer": "Sommer" } },
+                {
+                    "id": "en",
+                    "name": "English",
+                    "value": "en",
+                    "globals": { "summer": "Summer" },
+                    "patch": {
+                        "options": {
+                            "title": "A year in a circle",
+                            "subtitle": "Temperature in Austria, weighted by population, rolling 4-week mean, in °C",
+                            "footer": "Source: ERA5, Copernicus Climate Change Service",
+                            "locale": "en"
+                        },
+                        "mapping": {
+                            "x": { "hover": { "format": "%B %-d" } },
+                            "year": { "name": "Year", "categories": { "1991–2020": { "name": "Mean 1991–2020" } } }
+                        }
                     }
                 }
-            }
-        ]
-    }],
+            ]
+        }
+    ],
     "mapping": {
         "x": {
             "column": "day",
@@ -62,19 +71,17 @@
                     }]
                 }
             },
-            "props": {
-                "common": { "color": "#0078BF", "width": 1.5 },
-                "categories": {
-                    "1991–2020": { "name": "Ø 1991–2020", "color": "#1B1B1B", "dash": "4 3", "opacity": 1, "width": 2 },
-                    "2019": { "opacity": 0.25 },
-                    "2020": { "opacity": 0.3 },
-                    "2021": { "opacity": 0.35 },
-                    "2022": { "opacity": 0.45 },
-                    "2023": { "opacity": 0.55 },
-                    "2024": { "opacity": 0.65 },
-                    "2025": { "opacity": 0.75 },
-                    "2026": { "color": "#E4572E", "opacity": 1, "width": 3.5 }
-                }
+            "common": { "color": "#0078BF", "width": 1.5 },
+            "categories": {
+                "2019": { "opacity": 0.25 },
+                "2020": { "opacity": 0.3 },
+                "2021": { "opacity": 0.35 },
+                "2022": { "opacity": 0.45 },
+                "2023": { "opacity": 0.55 },
+                "2024": { "opacity": 0.65 },
+                "2025": { "opacity": 0.75 },
+                "2026": { "color": "#E4572E", "opacity": 1, "width": 3.5 },
+                "1991–2020": { "name": "Ø 1991–2020", "color": "#1B1B1B", "dash": "4 3", "opacity": 1, "width": 2 }
             },
             "hover": {}
         }
@@ -85,7 +92,7 @@
     ],
     "plot": {
         "type": "polar:line",
-        "categories": ["year"],
+        "by": "year",
         "props": {
             "d": { "angle": "@x:scaled", "radius": "@y:scaled" },
             "stroke": "@color",
@@ -93,10 +100,9 @@
             "stroke-dasharray": "@dash",
             "opacity": "@opacity",
             "fill": "none",
-            "stroke-linecap": "round",
-            "highlight-opacity": 1,
-            "highlight-stroke-width": 3.5,
-            "others-opacity": 0.1
-        }
+            "stroke-linecap": "round"
+        },
+        "highlight": { "opacity": 1, "stroke-width": 3.5 },
+        "others": { "opacity": 0.1 }
     }
 }

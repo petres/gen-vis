@@ -29,16 +29,14 @@
         },
         "facet": {
             "column": "type",
-            "props": {
-                "categories": {
-                    "bev":    { "name": "Elektro", "visible": true },
-                    "phev":   { "name": "Plug-in-Hybrid", "visible": true },
-                    "hybrid": { "name": "Hybrid (ohne Plug-in)", "visible": true },
-                    "petrol": { "name": "Benzin", "visible": true },
-                    "diesel": { "name": "Diesel", "visible": true },
-                    "other":  { "name": "Sonstige", "visible": false },
-                    "total":  { "name": "Gesamt", "visible": false }
-                }
+            "categories": {
+                "bev":    { "name": "Elektro", "visible": true },
+                "phev":   { "name": "Plug-in-Hybrid", "visible": true },
+                "hybrid": { "name": "Hybrid (ohne Plug-in)", "visible": true },
+                "petrol": { "name": "Benzin", "visible": true },
+                "diesel": { "name": "Diesel", "visible": true },
+                "other":  { "name": "Sonstige", "visible": false },
+                "total":  { "name": "Gesamt", "visible": false }
             }
         }
     }

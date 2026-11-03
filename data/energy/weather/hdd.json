@@ -16,16 +16,14 @@
             }
         },
         "facet": {
-            "props": {
-                "categories": {
-                    "rm": {
-                        "name": "Durchschnitt der letzten 28-Tage",
-                        "highlight-stroke-width": 3
-                    },
-                    "cum": {
-                        "name": "Summe seit Jahresbeginn",
-                        "highlight-stroke-width": 4
-                    }
+            "categories": {
+                "rm": {
+                    "name": "Durchschnitt der letzten 28-Tage",
+                    "highlight-stroke-width": 3
+                },
+                "cum": {
+                    "name": "Summe seit Jahresbeginn",
+                    "highlight-stroke-width": 4
                 }
             }
         }

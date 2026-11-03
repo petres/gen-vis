@@ -77,14 +77,12 @@
         "type": {
             "column": "fuelType",
             "type": "categorical",
-            "props": {
-                "categories": {
-                    "DIE": {
-                        "name": "Diesel"
-                    },
-                    "SUP": {
-                        "name": "Benzin"
-                    }
+            "categories": {
+                "DIE": {
+                    "name": "Diesel"
+                },
+                "SUP": {
+                    "name": "Benzin"
                 }
             }
         },
@@ -111,18 +109,7 @@
     "facets": {
         "dim": "type",
         "cols": {
-            "prop": "steps",
-            "ref": "totalWidth",
-            "steps": [
-                {
-                    "cut": 0,
-                    "value": 1
-                },
-                {
-                    "cut": 700,
-                    "value": 2
-                }
-            ]
+            "steps": ["@totalWidth", { "0": 1, "700": 2 }]
         }
     },
     "plot": [
@@ -135,16 +122,13 @@
         },
         {
             "type": "geo:region",
-            "categories": [
-                "nuts"
-            ],
+            "by": "nuts",
             "props": {
                 "fill": "@price:scaled",
                 "stroke": "white",
-                "stroke-width": 1,
-                "highlight-stroke": "#333",
-                "highlight-stroke-width": 2
-            }
+                "stroke-width": 1
+            },
+            "highlight": { "stroke": "#333", "stroke-width": 2 }
         }
     ]
 }

@@ -94,16 +94,13 @@
         },
         {
             "type": "geo:region",
-            "categories": [
-                "country"
-            ],
+            "by": "country",
             "props": {
                 "fill": "@price:scaled",
                 "stroke": "white",
-                "stroke-width": 0.5,
-                "highlight-stroke": "#333",
-                "highlight-stroke-width": 1.5
-            }
+                "stroke-width": 0.5
+            },
+            "highlight": { "stroke": "#333", "stroke-width": 1.5 }
         }
     ]
 }

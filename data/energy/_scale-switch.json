@@ -14,9 +14,6 @@
         ]
     }],
     "facets": {
-        "scales": {
-            "prop": "ref",
-            "ref": "shareScale"
-        }
+        "scales": "@shareScale"
     }
 }

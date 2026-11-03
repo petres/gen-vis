@@ -1,7 +1,7 @@
 {
     "data": "data.csv",
     "options": {
-        "height": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 300 }, { "cut": 700, "value": 380 }] },
+        "height": { "steps": ["@totalWidth", { "0": 300, "700": 380 }] },
         "margins": {"top": 34, "right": 118, "bottom": 28, "left": 44},
         "title": "Ausstattungsqualität",
         "subtitle": "Anteil der Wohnungen und Häuser mit WC im Wohnungsverband, 1971 bis 2001",
@@ -25,50 +25,50 @@
         "type": {
             "column": "Wohnungssegment",
             "type": "categorical",
-            "props": {
-                "scheme": "Tableau10",
-                "common": { "width": 2 },
-                "categories": {
-                    "Hauseigentum": {}, "Wohnungseigentum": {}, "GBV Miete": {}, "Kommunale Miete": {},
-                    "Private Miete": {}, "Sonstiges": {},
-                    "Alle Haushalte": { "color": "#111", "width": 3.5 }
-                }
+            "scheme": "Tableau10",
+            "common": { "width": 2 },
+            "categories": {
+                "Hauseigentum": {}, "Wohnungseigentum": {}, "GBV Miete": {}, "Kommunale Miete": {},
+                "Private Miete": {}, "Sonstiges": {},
+                "Alle Haushalte": { "color": "#111", "width": 3.5 }
             },
             "hover": {}
         },
-        "einheit": {
-            "column": "Einheit",
-            "type": "categorical",
-            "props": { "categories": { "Österreich": {}, "Wien": {} } }
-        }
+        "einheit": { "column": "Einheit", "type": "categorical", "categories": { "Österreich": {}, "Wien": {} } }
     },
-    "facets": { "dim": "einheit", "scales": ["y"], "cols": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 1 }, { "cut": 700, "value": 2 }] } },
+    "facets": { "dim": "einheit", "scales": ["y"], "cols": { "steps": ["@totalWidth", { "0": 1, "700": 2 }] } },
     "plot": [
         {
             "id": "lines",
             "type": "cartesian:line",
-            "categories": ["type"],
+            "by": "type",
             "props": {
-                "d": { "x": "@x:scaled", "y": "@y:scaled" }, "stroke": "@color", "stroke-width": "@width", "fill": "none",
-                "highlight-stroke-width": 4, "others-stroke-opacity": 0.25
-            }
+                "d": { "x": "@x:scaled", "y": "@y:scaled" },
+                "stroke": "@color",
+                "stroke-width": "@width",
+                "fill": "none"
+            },
+            "highlight": { "stroke-width": 4 },
+            "others": { "stroke-opacity": 0.25 }
         },
-        {
-            "id": "points",
-            "type": "svg:circle",
-            "categories": ["type"],
-            "props": { "cx": "@x:scaled", "cy": "@y:scaled", "r": 3, "fill": "@color", "highlight-r": 4.5, "others-opacity": 0.25 }
-        },
+        { "id": "points", "type": "point", "by": "type", "props": { "fill": "@color" }, "highlight": { "r": 4.5 }, "others": { "opacity": 0.25 } },
         {
             "id": "labels",
             "type": "svg:text",
-            "categories": ["type"],
+            "by": "type",
             "select": "last",
             "dodge": 12,
             "props": {
-                "x": "@x:scaled", "dx": 8, "y": "@y:scaled", "dominant-baseline": "central", "font-size": 11,
-                "fill": "@color", "text": "@name", "highlight-font-weight": "bold", "others-opacity": 0.3
-            }
+                "x": "@x:scaled",
+                "dx": 8,
+                "y": "@y:scaled",
+                "dominant-baseline": "central",
+                "font-size": 11,
+                "fill": "@color",
+                "text": "@name"
+            },
+            "highlight": { "font-weight": "bold" },
+            "others": { "opacity": 0.3 }
         }
     ]
 }

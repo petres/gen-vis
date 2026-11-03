@@ -31,18 +31,7 @@
             "hover": {},
             "legend": {
                 "position": {
-                    "prop": "steps",
-                    "ref": "totalWidth",
-                    "steps": [
-                        {
-                            "cut": 0,
-                            "value": "bottom"
-                        },
-                        {
-                            "cut": 760,
-                            "value": "right"
-                        }
-                    ]
+                    "steps": ["@totalWidth", { "0": "bottom", "760": "right" }]
                 },
                 "orientation": "vertical",
                 "symbol": {
@@ -61,106 +50,104 @@
                     ]
                 }
             },
-            "props": {
-                "common": {
-                    "visible": false
+            "common": {
+                "visible": false
+            },
+            "categories": {
+                "Österreich": {
+                    "color": "#C3423F",
+                    "visible": true
                 },
-                "categories": {
-                    "Österreich": {
-                        "color": "#C3423F",
-                        "visible": true
-                    },
-                    "Belgien": {
-                        "color": "#72BB6F"
-                    },
-                    "Bulgarien": {
-                        "color": "#F3D039"
-                    },
-                    "Dänemark": {
-                        "color": "#559E8F"
-                    },
-                    "Deutschland": {
-                        "color": "#559BD5",
-                        "visible": true
-                    },
-                    "Estland": {
-                        "color": "#12A7E7"
-                    },
-                    "Finnland": {
-                        "color": "#96B428"
-                    },
-                    "Frankreich": {
-                        "color": "#E7B3B1"
-                    },
-                    "Griechenland": {
-                        "color": "#BBD7EE"
-                    },
-                    "Irland": {
-                        "color": "#C7E3C6"
-                    },
-                    "Island": {
-                        "color": "#FAEBAF"
-                    },
-                    "Italien": {
-                        "color": "#B9D9D2"
-                    },
-                    "Kroatien": {
-                        "color": "#9CDCF8"
-                    },
-                    "Lettland": {
-                        "color": "#D9EA9F"
-                    },
-                    "Litauen": {
-                        "color": "#62201E"
-                    },
-                    "Luxemburg": {
-                        "color": "#1E4F77"
-                    },
-                    "Malta": {
-                        "color": "#336530"
-                    },
-                    "Niederlande": {
-                        "color": "#8C7209"
-                    },
-                    "Norwegen": {
-                        "color": "#2B4F47"
-                    },
-                    "Polen": {
-                        "color": "#095373"
-                    },
-                    "Portugal": {
-                        "color": "#4A5A14"
-                    },
-                    "Rumänien": {
-                        "color": "#C3423F"
-                    },
-                    "Schweden": {
-                        "color": "#559BD5"
-                    },
-                    "Schweiz": {
-                        "color": "#72BB6F"
-                    },
-                    "Slowakei": {
-                        "color": "#F3D039"
-                    },
-                    "Slowenien": {
-                        "color": "#559E8F"
-                    },
-                    "Spanien": {
-                        "color": "#12A7E7"
-                    },
-                    "Tschechien": {
-                        "color": "#96B428"
-                    },
-                    "Ungarn": {
-                        "color": "#E7B3B1"
-                    },
-                    "Vereinigtes Königreich": {
-                        "color": "#BBD7EE"
-                    },
-                    "Zypern": {
-                        "color": "#C7E3C6"
-                    }
+                "Belgien": {
+                    "color": "#72BB6F"
+                },
+                "Bulgarien": {
+                    "color": "#F3D039"
+                },
+                "Dänemark": {
+                    "color": "#559E8F"
+                },
+                "Deutschland": {
+                    "color": "#559BD5",
+                    "visible": true
+                },
+                "Estland": {
+                    "color": "#12A7E7"
+                },
+                "Finnland": {
+                    "color": "#96B428"
+                },
+                "Frankreich": {
+                    "color": "#E7B3B1"
+                },
+                "Griechenland": {
+                    "color": "#BBD7EE"
+                },
+                "Irland": {
+                    "color": "#C7E3C6"
+                },
+                "Island": {
+                    "color": "#FAEBAF"
+                },
+                "Italien": {
+                    "color": "#B9D9D2"
+                },
+                "Kroatien": {
+                    "color": "#9CDCF8"
+                },
+                "Lettland": {
+                    "color": "#D9EA9F"
+                },
+                "Litauen": {
+                    "color": "#62201E"
+                },
+                "Luxemburg": {
+                    "color": "#1E4F77"
+                },
+                "Malta": {
+                    "color": "#336530"
+                },
+                "Niederlande": {
+                    "color": "#8C7209"
+                },
+                "Norwegen": {
+                    "color": "#2B4F47"
+                },
+                "Polen": {
+                    "color": "#095373"
+                },
+                "Portugal": {
+                    "color": "#4A5A14"
+                },
+                "Rumänien": {
+                    "color": "#C3423F"
+                },
+                "Schweden": {
+                    "color": "#559BD5"
+                },
+                "Schweiz": {
+                    "color": "#72BB6F"
+                },
+                "Slowakei": {
+                    "color": "#F3D039"
+                },
+                "Slowenien": {
+                    "color": "#559E8F"
+                },
+                "Spanien": {
+                    "color": "#12A7E7"
+                },
+                "Tschechien": {
+                    "color": "#96B428"
+                },
+                "Ungarn": {
+                    "color": "#E7B3B1"
+                },
+                "Vereinigtes Königreich": {
+                    "color": "#BBD7EE"
+                },
+                "Zypern": {
+                    "color": "#C7E3C6"
                 }
             }
         },
@@ -172,28 +159,22 @@
     "plot": [
         {
             "id": "areas",
-            "type": "polar:area",
-            "categories": [
-                "country"
-            ],
+            "type": "area",
+            "by": "country",
             "curve": "linearClosed",
             "props": {
                 "fill": "@color",
-                "fill-opacity": 0.08,
                 "d": {
-                    "angle": "@x:scaled",
-                    "innerRadius": 0,
-                    "outerRadius": "@y:scaled"
+                    "innerRadius": 0
                 },
-                "highlight-fill-opacity": 0.2
-            }
+                "fill-opacity": 0.08
+            },
+            "highlight": { "fill-opacity": 0.2 }
         },
         {
             "id": "lines",
             "type": "polar:line",
-            "categories": [
-                "country"
-            ],
+            "by": "country",
             "curve": "linearClosed",
             "props": {
                 "fill": "none",
@@ -202,23 +183,21 @@
                 "d": {
                     "angle": "@x:scaled",
                     "radius": "@y:scaled"
-                },
-                "highlight-stroke-width": 4
-            }
+                }
+            },
+            "highlight": { "stroke-width": 4 }
         },
         {
             "id": "points",
             "type": "polar:circle",
-            "categories": [
-                "country"
-            ],
+            "by": "country",
             "props": {
                 "fill": "@color",
                 "r": 5,
                 "angle": "@x:scaled",
-                "radius": "@y:scaled",
-                "highlight-r": 6
-            }
+                "radius": "@y:scaled"
+            },
+            "highlight": { "r": 6 }
         }
     ]
 }

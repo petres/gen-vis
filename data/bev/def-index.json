@@ -38,23 +38,21 @@
             "column": "Bundesland",
             "legend": { "symbol": "line" },
             "hover": {},
-            "props": {
-                "fromData": true,
-                "scheme": "Tableau10",
-                "common": { "stroke-width": 1.5 },
-                "categories": { "ÖSTERREICH": { "name": "Gesamt", "color": "#000", "stroke-width": 3 } }
-            }
+            "fromData": true,
+            "scheme": "Tableau10",
+            "common": { "stroke-width": 1.5 },
+            "categories": { "ÖSTERREICH": { "name": "Gesamt", "color": "#000", "stroke-width": 3 } }
         }
     },
     "plot": {
         "type": "cartesian:line",
-        "categories": ["land"],
+        "by": "land",
         "props": {
             "stroke": "@color",
             "stroke-width": "@stroke-width",
             "fill": "none",
-            "d": { "x": "@x:scaled", "y": "@y:scaled" },
-            "highlight-stroke-width": 4
-        }
+            "d": { "x": "@x:scaled", "y": "@y:scaled" }
+        },
+        "highlight": { "stroke-width": 4 }
     }
 }

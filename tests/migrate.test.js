@@ -12,13 +12,13 @@ import { plotTypes } from '@/plots';
 import { isObject } from '@/utils/values';
 import { root } from './dom.js';
 
-// the definitions of 3.x of data/, the ones of git (HEAD of the branch of
-// 4.0 has the migrated ones), resolved with their parents
+// the definitions of data/ of 4.0 and the ones of 3.x (tests/legacy/data/,
+// the ones of 3.1), resolved with their parents
 const files = import.meta.glob('../data/**/*.json', { eager: true, import: 'default' });
 const examples = definitions(files);
 
-const load = async path => {
-    const url = pathToFileURL(`${root}/data/${path}`).href;
+const load = async (path, dir = 'data') => {
+    const url = pathToFileURL(`${root}/${dir}/${path}`).href;
     return resolveParents(JSON.parse(readFileSync(new URL(url), 'utf8')), url, u => readFileSync(new URL(u), 'utf8'));
 };
 
@@ -54,12 +54,18 @@ const differences = (a, b, path = '') => {
 };
 
 describe('migrate', () => {
-    test.each(examples.map(e => e.path))('%s: normalize of the migrated definition is the one of 3.x', async path => {
-        const def = await load(path);
+    test.each(examples.map(e => e.path))('%s: normalize of the migrated definition is the one of 3.x and the one of 4.0', async path => {
+        const def = await load(path, 'tests/legacy/data');
         const migrated = migrate(def);
         expect(isLegacy(migrated)).toBe(false);
         // migrate is idempotent
         expect(migrate(migrated)).toEqual(migrated);
-        expect(differences(canonical(normalize(migrated, { plotTypes })), canonical(def))).toEqual([]);
+        const internal = normalize(migrated, { plotTypes });
+        expect(differences(canonical(internal), canonical(def))).toEqual([]);
+        // the definition of 4.0 in data/, migrated by its parts (migrateParts)
+        // and written shorter, has the same internal form
+        const own = await load(path);
+        expect(isLegacy(own)).toBe(false);
+        expect(differences(canonical(normalize(own, { plotTypes })), canonical(internal))).toEqual([]);
     });
 });

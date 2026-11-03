@@ -57,33 +57,28 @@
                     "elements": [{ "type": "rect", "props": { "x": 0, "y": 1, "width": 10, "height": 10, "rx": 2, "fill": "@color" } }]
                 }
             },
-            "props": {
-                "categories": {
-                    "oil":  { "name": "Oil",  "color": "#D97706" },
-                    "gas":  { "name": "Gas",  "color": "#0EA5A4" },
-                    "coal": { "name": "Coal", "color": "#8B5CF6" }
-                }
+            "categories": {
+                "oil":  { "name": "Oil",  "color": "#D97706" },
+                "gas":  { "name": "Gas",  "color": "#0EA5A4" },
+                "coal": { "name": "Coal", "color": "#8B5CF6" }
             },
             "hover": {}
         }
     },
     "plot": {
         "type": "cartesian:bar",
-        "categories": ["product"],
-        "highlight": "row",
+        "by": "product",
         "props": {
             "x": "@x:scaled",
             "y0": "@y:start:scaled",
             "y1": "@y:end:scaled",
-            "width": { "prop": "relative", "ref": "innerWidth", "ratio": 0.0075 },
+            "width": { "*": ["@innerWidth", 0.0075] },
             "fill": "@color",
             "stroke": "#0F172A",
             "stroke-width": 1,
-            "opacity": 0.9,
-            "highlight-opacity": 1,
-            "highlight-stroke": "#E2E8F0",
-            "highlight-stroke-width": 1,
-            "others-opacity": 0.5
-        }
+            "opacity": 0.9
+        },
+        "highlight": { "mode": "row", "opacity": 1, "stroke": "#E2E8F0", "stroke-width": 1 },
+        "others": { "opacity": 0.5 }
     }
 }

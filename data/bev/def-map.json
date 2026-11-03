@@ -67,21 +67,19 @@
         "land": {
             "column": "Bundesland",
             "type": "categorical",
-            "props": {
-                "categories": {
-                    "ÖSTERREICH": {
-                        "visible": false
-                    },
-                    "Wien": {},
-                    "Niederösterreich": {},
-                    "Burgenland": {},
-                    "Oberösterreich": {},
-                    "Salzburg": {},
-                    "Steiermark": {},
-                    "Kärnten": {},
-                    "Tirol": {},
-                    "Vorarlberg": {}
-                }
+            "categories": {
+                "ÖSTERREICH": {
+                    "visible": false
+                },
+                "Wien": {},
+                "Niederösterreich": {},
+                "Burgenland": {},
+                "Oberösterreich": {},
+                "Salzburg": {},
+                "Steiermark": {},
+                "Kärnten": {},
+                "Tirol": {},
+                "Vorarlberg": {}
             }
         },
         "pop": {
@@ -114,23 +112,19 @@
         },
         {
             "type": "geo:circle",
-            "categories": [
-                "land"
-            ],
+            "by": "land",
             "props": {
                 "r": "@pop:scaled",
                 "fill": "#1E4F77",
                 "fill-opacity": 0.65,
                 "stroke": "white",
-                "stroke-width": 1,
-                "highlight-fill-opacity": 0.9
-            }
+                "stroke-width": 1
+            },
+            "highlight": { "fill-opacity": 0.9 }
         },
         {
             "type": "geo:text",
-            "categories": [
-                "land"
-            ],
+            "by": "land",
             "props": {
                 "text": "@name",
                 "font-size": 11,

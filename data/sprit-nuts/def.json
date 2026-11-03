@@ -55,14 +55,12 @@
                     }]
                 }
             },
-            "props": {
-                "common": {
-                    "visible": true
-                },
-                "categories": {
-                    "DIE": { "name": "Diesel", "stroke-dasharray": null },
-                    "SUP": { "name": "Benzin", "stroke-dasharray": 2 }
-                }
+            "common": {
+                "visible": true
+            },
+            "categories": {
+                "DIE": { "name": "Diesel", "stroke-dasharray": null },
+                "SUP": { "name": "Benzin", "stroke-dasharray": 2 }
             }
         },
         "nuts": {
@@ -79,23 +77,21 @@
                     }]
                 }
             },
-            "props": {
-                "common": {
-                    "stroke-width": 1.5,
-                    "visible": false
-                },
-                "categories": {
-                    "W":  { "color": "#1E4F77", "name": "Wien" },
-                    "N":  { "color": "#BBD7EE", "name": "Niederösterreich" },
-                    "B":  { "color": "#5BC5F2", "name": "Burgenland", "visible": true },
-                    "O":  { "color": "#559BD5", "name": "Oberösterreich" },
-                    "Sa": { "color": "#C7DF71", "name": "Salzburg" },
-                    "St": { "color": "#4B9847", "name": "Steiermark" },
-                    "K":  { "color": "#9CE1F8", "name": "Kärnten" },
-                    "T":  { "color": "#72BB6F", "name": "Tirol" },
-                    "V":  { "color": "#3F766B", "name": "Vorarlberg" },
-                    "NA": { "color": "#ABD6A9", "name": "Österreich", "stroke-width": 2.5, "visible": true }
-                }
+            "common": {
+                "stroke-width": 1.5,
+                "visible": false
+            },
+            "categories": {
+                "W":  { "color": "#1E4F77", "name": "Wien" },
+                "N":  { "color": "#BBD7EE", "name": "Niederösterreich" },
+                "B":  { "color": "#5BC5F2", "name": "Burgenland", "visible": true },
+                "O":  { "color": "#559BD5", "name": "Oberösterreich" },
+                "Sa": { "color": "#C7DF71", "name": "Salzburg" },
+                "St": { "color": "#4B9847", "name": "Steiermark" },
+                "K":  { "color": "#9CE1F8", "name": "Kärnten" },
+                "T":  { "color": "#72BB6F", "name": "Tirol" },
+                "V":  { "color": "#3F766B", "name": "Vorarlberg" },
+                "NA": { "color": "#ABD6A9", "name": "Österreich", "stroke-width": 2.5, "visible": true }
             }
         }
     },
@@ -105,7 +101,7 @@
     "plot": [
         {
             "type": "cartesian:line",
-            "categories": ["type", "nuts"],
+            "by": ["type", "nuts"],
             "props": {
                 "stroke-width": "@stroke-width",
                 "stroke-dasharray": "@stroke-dasharray",

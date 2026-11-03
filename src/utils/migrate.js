@@ -1,7 +1,8 @@
-export { migrate, migrateExpr };
+export { migrate, migrateExpr, migrateParts };
 
 import { isObject } from '@/utils/values';
 import { isOperator } from '@/utils/expr';
+import { mergeAll } from '@/utils/def';
 import { plotTypes as registered } from '@/plots';
 import { categoryKeys, positions, resolveType, scaleTypeOf, withDefaults } from '@/utils/normalize';
 
@@ -24,6 +25,13 @@ const same = (a, b) => {
     if (Array.isArray(a) && Array.isArray(b))
         return a.length == b.length && a.every((e, i) => same(e, b[i]));
     return a === b;
+};
+
+// an object with the entries instead of the key at its place, e.g. `by`
+// instead of `categories`, the other entries of these names are left out
+const replaced = (o, key, entries) => {
+    const names = new Set(entries.map(([k]) => k));
+    return Object.fromEntries(Object.entries(o).flatMap(([k, v]) => k == key ? entries : (names.has(k) ? [] : [[k, v]])));
 };
 
 // a value which is not evaluated: texts of references, objects and lists as
@@ -110,15 +118,13 @@ const ownProps = (defaults, props) => {
 // objects, the type without its prefix if its props are the defaults of the
 // type and the ones which differ, in the same order (the one of the
 // attributes of the elements), see withDefaults of utils/normalize.js
-const migratePlot = (raw, coord, plotTypes) => {
+const migratePlot = (raw, coord, plotTypes, merged = raw) => {
     if (!isObject(raw))
         return raw;
-    const p = { ...raw };
+    let p = { ...raw };
     if (p.categories !== undefined) {
         const by = [p.categories].flat();
-        if (p.by === undefined)
-            p.by = by.length == 1 ? by[0] : by;
-        delete p.categories;
+        p = replaced(p, 'categories', p.by === undefined ? [['by', by.length == 1 ? by[0] : by]] : []);
     }
     if (isObject(p.props)) {
         // the props of the highlight and of the others after the other ones,
@@ -127,19 +133,21 @@ const migratePlot = (raw, coord, plotTypes) => {
         // keep their prefixes
         const part = k => ['highlight', 'others'].find(h => k.startsWith(`${h}-`));
         const keys = Object.keys(p.props);
-        const sorted = [...keys.filter(k => !part(k)), ...keys.filter(k => part(k) == 'highlight'), ...keys.filter(k => part(k) == 'others')];
-        if (keys.some(part) && sorted.join() == keys.join() && !isObject(p.highlight) && !isObject(p.others)) {
-            if (typeof p.highlight == 'string' && keys.some(k => part(k) == 'highlight'))
-                p.highlight = { mode: p.highlight };
+        // of the merged plot, e.g. of a part of the props of the plot of a parent
+        const all = Object.keys(isObject(merged?.props) ? merged.props : p.props);
+        const sorted = [...all.filter(k => !part(k)), ...all.filter(k => part(k) == 'highlight'), ...all.filter(k => part(k) == 'others')];
+        if (keys.some(part) && sorted.join() == all.join() && !isObject(p.highlight) && !isObject(p.others)) {
+            const parts = { highlight: typeof p.highlight == 'string' && keys.some(k => part(k) == 'highlight') ? { mode: p.highlight } : undefined };
             const props = {};
             Object.entries(p.props).forEach(([k, v]) => {
                 const h = part(k);
                 if (h)
-                    (p[h] ??= {})[k.substring(h.length + 1)] = v;
+                    (parts[h] ??= {})[k.substring(h.length + 1)] = v;
                 else
                     props[k] = v;
             });
-            p.props = props;
+            // after the props
+            p = replaced(p, 'props', [['props', props], ...['highlight', 'others'].filter(h => parts[h]).map(h => [h, parts[h]])]);
         }
     }
     const [prefix, name] = typeof p.type == 'string' ? p.type.split(':') : [];
@@ -167,8 +175,12 @@ const migratePlot = (raw, coord, plotTypes) => {
     return p;
 };
 
-const migratePlots = (plot, coord, plotTypes) => Array.isArray(plot) ? plot.map(p => migratePlot(p, coord, plotTypes))
-    : migratePlot(plot, coord, plotTypes);
+// `merged` are the plots of the merged definition of a part, see migrateParts
+const migratePlots = (plot, coord, plotTypes, merged = null) => {
+    const list = merged === null ? null : [merged ?? []].flat();
+    const of = (p, i) => list === null ? p : (isObject(p) && p.id !== undefined ? list.find(m => isObject(m) && String(m.id) == String(p.id)) : list[i]);
+    return Array.isArray(plot) ? plot.map((p, i) => migratePlot(p, coord, plotTypes, of(p, i))) : migratePlot(plot, coord, plotTypes, of(plot, 0));
+};
 
 // a mapping of 4.0 of one of 3.x of the coordinate system `coord`: the
 // parts of its categories at the mapping, of the mappings of the definition
@@ -181,16 +193,12 @@ const migrateMapping = (raw, name, coord, own, used, plots) => {
     // a mapping of 4.0, e.g. of a definition of a parent of 3.x
     if (!isObject(raw) || [...categoryKeys, 'domain', 'nice', 'format'].some(k => k in raw))
         return raw;
-    const m = { ...raw };
+    let m = { ...raw };
     if (isObject(m.props)) {
+        // at the place of the props, in their order
         const { props } = m;
-        delete m.props;
-        Object.entries(props).forEach(([k, v]) => {
-            if (categoryKeys.includes(k) && m[k] === undefined)
-                m[k] = v;
-            else
-                (m.props ??= {})[k] = v;
-        });
+        const rest = Object.fromEntries(Object.entries(props).filter(([k]) => !categoryKeys.includes(k)));
+        m = replaced(m, 'props', [...Object.entries(props).filter(([k]) => categoryKeys.includes(k)), ...(Object.keys(rest).length ? [['props', rest]] : [])]);
     }
     if (!own)
         return m;
@@ -234,28 +242,74 @@ const usedNames = (def, patches) => new Set([
 /**
  * The definition of 4.0 of a (merged) definition of 3.x, the definition is
  * not changed, `plotTypes` are the plot types by name, by default the
- * registered ones.
+ * registered ones. A `part` of a definition, e.g. a parent, is migrated
+ * without the parts its mappings need as a whole (type, scale and axis, see
+ * migrateParts), `coord` is the coordinate system of the definition of the
+ * part, by default its own, `merged` the merged definition, of the order of
+ * the props of its plots.
  */
-const migrate = (raw, { plotTypes = registered } = {}) => {
+const migrate = (raw, { plotTypes = registered, part = false, coord = raw?.options?.coord ?? 'cartesian', merged = null } = {}) => {
     if (!isObject(raw))
         return raw;
     const def = migrateExpr(clone(raw));
-    const coord = def.options?.coord ?? 'cartesian';
     const patches = (Array.isArray(def.formElements) ? def.formElements : []).flatMap(e => Array.isArray(e?.values) ? e.values : [])
         .filter(v => isObject(v?.patch)).map(v => v.patch);
     const used = usedNames(def, patches);
     // the plots of the internal form, e.g. of the bars of a band scale
     const plots = [def.plot ?? []].flat();
     if (def.mapping !== undefined)
-        def.mapping = migrateMappings(def.mapping, coord, true, used, plots);
+        def.mapping = migrateMappings(def.mapping, coord, !part, used, plots);
     [def, ...patches].forEach(d => {
         const own = d.options?.coord ?? coord;
         if (d.transform !== undefined)
             d.transform = Array.isArray(d.transform) ? d.transform.map(migrateTransform) : migrateTransform(d.transform);
         if (d.plot !== undefined)
-            d.plot = migratePlots(d.plot, own, plotTypes);
+            d.plot = migratePlots(d.plot, own, plotTypes, d === def && merged ? merged.plot : null);
         if (d !== def && d.mapping !== undefined)
             d.mapping = migrateMappings(d.mapping, own, false);
     });
     return def;
+};
+
+// the parts of the mappings of the merged definition which migrate adds, see migrateMapping
+const wholeParts = [['type'], ['scale'], ['axis'], ['scale', 'type'], ['scale', 'orientation']];
+
+// a part with the whole props of 3.x of the merged definition where it
+// changes a part of one, e.g. the `steps` of a steps prop of its parent, also
+// in the entries of lists of ids, e.g. the plots
+const whole = (part, merged) => {
+    if (Array.isArray(part) && Array.isArray(merged) && part.every(e => isObject(e) && 'id' in e))
+        return part.map(e => whole(e, merged.find(m => isObject(m) && String(m.id) == String(e.id))));
+    if (!isObject(part) || !isObject(merged))
+        return part;
+    if (typeof merged.prop == 'string' && typeof part.prop != 'string')
+        return merged;
+    return Object.fromEntries(Object.entries(part).map(([k, v]) => [k, whole(v, merged[k])]));
+};
+
+/**
+ * The parts of a definition of 3.x, e.g. a definition and its parents in the
+ * order of their merge (the parents first, see resolveParents), migrated to
+ * 4.0, so their merge is the migrated merge of the parts. The parts of
+ * mappings which their merge needs, e.g. "type": "categorical" of a mapping
+ * without a type, are in the first part of the mapping (of its scale).
+ */
+const migrateParts = (parts, { plotTypes = registered } = {}) => {
+    const merged = mergeAll(parts);
+    const coord = merged.options?.coord ?? 'cartesian';
+    const target = migrate(merged, { plotTypes });
+    const migrated = parts.map(p => migrate(whole(p, merged), { plotTypes, part: true, coord, merged }));
+    const result = mergeAll(migrated);
+    Object.entries(isObject(target.mapping) ? target.mapping : {}).filter(([, m]) => isObject(m)).forEach(([n, m]) => {
+        const at = (mapping, path) => path.reduce((v, k) => isObject(v) ? v[k] : undefined, mapping);
+        wholeParts.forEach(path => {
+            const value = at(m, path);
+            if (value === undefined || at(result.mapping?.[n], path) !== undefined)
+                return;
+            const part = migrated.find(p => isObject(at(p.mapping?.[n], path.slice(0, -1))) && (path.length == 1 || isObject(p.mapping[n])));
+            if (part)
+                at(part.mapping[n], path.slice(0, -1))[path.at(-1)] = value;
+        });
+    });
+    return migrated;
 };

@@ -31,43 +31,35 @@
                     "elements": [{ "type": "rect", "props": { "x": 2, "y": 2, "width": 12, "height": 12, "fill": "@color" } }]
                 }
             },
-            "props": {
-                "categories": {
-                    "Hauseigentum":     { "color": "#BBD7EE" },
-                    "Wohnungseigentum": { "color": "#5BC5F2" },
-                    "GBV Miete":        { "color": "#559BD5" },
-                    "Gemeinde Miete":   { "color": "#C7DF71" },
-                    "Private Miete":    { "color": "#4B9847" },
-                    "Sonstige":         { "color": "#9CE1F8" }
-                }
+            "categories": {
+                "Hauseigentum":     { "color": "#BBD7EE" },
+                "Wohnungseigentum": { "color": "#5BC5F2" },
+                "GBV Miete":        { "color": "#559BD5" },
+                "Gemeinde Miete":   { "color": "#C7DF71" },
+                "Private Miete":    { "color": "#4B9847" },
+                "Sonstige":         { "color": "#9CE1F8" }
             },
             "hover": {}
         },
-        "geo": {
-            "column": "Geo",
-            "type": "categorical",
-            "props": { "categories": { "Österreich": {}, "Wien": {} } }
-        }
+        "geo": { "column": "Geo", "type": "categorical", "categories": { "Österreich": {}, "Wien": {} } }
     },
     "facets": {
         "dim": "geo",
         "cols": {
-            "prop": "steps",
-            "ref": "totalWidth",
-            "steps": [{"cut": 0, "value": 1}, {"cut": 600, "value": 2}]
+            "steps": ["@totalWidth", { "0": 1, "600": 2 }]
         }
     },
     "plot": {
-        "type": "polar:arc",
-        "categories": ["type"],
+        "type": "arc",
+        "by": "type",
         "props": {
             "fill": "@color",
             "stroke": "white",
             "stroke-width": 1,
             "startAngle": "@count:start:scaled",
             "endAngle": "@count:end:scaled",
-            "innerRadius": { "prop": "relative", "ref": "radius", "ratio": 0.55 },
-            "highlight-opacity": 0.8
-        }
+            "innerRadius": { "*": ["@radius", 0.55] }
+        },
+        "highlight": { "opacity": 0.8 }
     }
 }

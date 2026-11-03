@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://unpkg.com/@preschen/gen-vis@3/schema.json",
+    "$id": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
     "title": "gen-vis definition",
-    "description": "A chart of gen-vis 3, see https://github.com/petres/gen-vis. A definition can be a part which is merged into its parent, so no entry is required.",
+    "description": "A chart of gen-vis 4, see https://github.com/petres/gen-vis. A definition can be a part which is merged into its parent, so no entry is required.",
     "type": "object",
     "additionalProperties": false,
     "properties": {
@@ -51,8 +51,8 @@
         },
         "mapping": {
             "type": "object",
-            "description": "Maps columns of the data to named dimensions, the plots and all other parts of the definition refer to these names, null removes a mapping, e.g. of a parent.",
-            "additionalProperties": { "anyOf": [{ "$ref": "#/definitions/mapping" }, { "$ref": "#/definitions/none" }] }
+            "description": "Maps columns of the data to named dimensions, the plots and all other parts of the definition refer to these names, a text is the column, null removes a mapping, e.g. of a parent.",
+            "additionalProperties": { "anyOf": [{ "$ref": "#/definitions/mapping" }, { "type": "string", "description": "The column, e.g. \"year\"." }, { "$ref": "#/definitions/none" }] }
         },
         "plot": {
             "description": "A plot or a list of plots, drawn in order.",
@@ -136,68 +136,29 @@
         },
         "domainValue": {
             "description": "A value of a mapping, e.g. a date of a string, a reference \"@name\", e.g. to a global, or a computed prop, null is taken from the data.",
-            "anyOf": [{ "type": "number" }, { "type": "string" }, { "type": "null" }, { "$ref": "#/definitions/prop" }]
-        },
-        "prop": {
-            "description": "A computed value: a reference, a ratio of a reference plus an offset, steps based on a reference, a reference as a text of a format or the prop of the case of the value of a reference. Instead of a reference the derived props can have a prop (of). The prop is required unless the object is merged into a prop of the parent definition.",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "prop": { "enum": ["fixed", "ref", "relative", "steps", "format", "match"] },
-                "format": { "type": "string", "description": "The d3 format of a format prop, e.g. \",.1f\" or \"%Y\" of dates, in the locale." },
-                "ref": {
-                    "type": "string",
-                    "description": "e.g. totalWidth or a global, in a facet also innerWidth or innerHeight"
-                },
-                "of": { "description": "A prop whose value is used instead of the one of a reference, e.g. a steps prop of a relative one." },
-                "ratio": { "type": "number", "description": "The factor of a relative prop, 1 by default." },
-                "offset": { "type": "number", "description": "Added to a relative prop, e.g. pixels of a position, 0 by default." },
-                "steps": {
-                    "type": "array",
-                    "description": "The value of the last step with a cut below the reference.",
-                    "items": {
-                        "type": "object",
-                        "required": ["cut", "value"],
-                        "additionalProperties": false,
-                        "properties": {
-                            "cut": { "type": "number" },
-                            "value": {}
-                        }
-                    }
-                },
-                "cases": { "type": "object", "description": "The props of a match prop by the value of the reference (as a text), e.g. of the categories." },
-                "default": { "description": "The prop of a match prop of other values, null by default." },
-                "value": { "description": "The value of a fixed prop, e.g. an object which is not a nested prop." }
-            },
-            "allOf": [
-                { "if": { "required": ["prop"], "properties": { "prop": { "const": "ref" } } }, "then": { "required": ["ref"], "properties": { "ref": true } } },
-                { "if": { "required": ["prop"], "properties": { "prop": { "enum": ["relative", "steps", "format", "match"] } } }, "then": { "anyOf": [{ "required": ["ref"], "properties": { "ref": true } }, { "required": ["of"], "properties": { "of": true } }] } },
-                { "if": { "required": ["prop"], "properties": { "prop": { "const": "steps" } } }, "then": { "required": ["steps"], "properties": { "steps": true } } },
-                { "if": { "required": ["prop"], "properties": { "prop": { "const": "format" } } }, "then": { "required": ["format"], "properties": { "format": true } } },
-                { "if": { "required": ["prop"], "properties": { "prop": { "const": "match" } } }, "then": { "required": ["cases"], "properties": { "cases": true } } }
-            ]
+            "anyOf": [{ "type": "number" }, { "type": "string" }, { "type": "null" }, { "$ref": "#/definitions/expression" }]
         },
         "value": {
-            "description": "A fixed value, a reference \"@name\" or a computed prop.",
+            "description": "A value, a reference \"@name\" or an expression of an operator.",
             "anyOf": [
                 { "type": "string" },
                 { "type": "number" },
                 { "type": "boolean" },
                 { "type": "null" },
-                { "$ref": "#/definitions/prop" }
+                { "$ref": "#/definitions/expression" }
             ]
         },
         "number": {
-            "description": "A number, a reference \"@name\", e.g. to a global, or a computed prop, e.g. based on totalWidth.",
+            "description": "A number, a reference \"@name\", e.g. to a global, or an expression, e.g. of totalWidth.",
             "anyOf": [
                 { "type": "number" },
                 { "type": "string", "pattern": "^@" },
-                { "$ref": "#/definitions/prop" }
+                { "$ref": "#/definitions/expression" }
             ]
         },
         "props": {
             "type": "object",
-            "description": "Svg attributes (and text), values are fixed, references \"@name\", computed props or nested props, e.g. d of a path.",
+            "description": "Svg attributes (and text), values, references \"@name\", expressions of operators or nested props, e.g. d of a path.",
             "additionalProperties": { "$ref": "#/definitions/propEntry" }
         },
         "propEntry": {
@@ -205,8 +166,8 @@
                 { "$ref": "#/definitions/value" },
                 {
                     "type": "object",
-                    "not": { "required": ["prop"], "properties": { "prop": true } },
-                    "additionalProperties": { "$ref": "#/definitions/propEntry" }
+                    "additionalProperties": { "$ref": "#/definitions/propEntry" },
+                    "description": "Nested props, e.g. d of a path, an object which is no operator."
                 }
             ]
         },
@@ -275,7 +236,7 @@
                 "footer": { "type": "string", "description": "HTML, e.g. a link of the source, a template of the globals, their values are text." },
                 "message": {
                     "description": "A text instead of the plots and the legends, a template and a prop of the globals and totalWidth, e.g. steps of a narrow screen, null or an empty text for the plots.",
-                    "anyOf": [{ "type": "string" }, { "type": "null" }, { "$ref": "#/definitions/prop" }]
+                    "anyOf": [{ "type": "string" }, { "type": "null" }, { "$ref": "#/definitions/expression" }]
                 },
                 "empty": { "type": "string", "description": "A text instead of the plots if there are no rows, e.g. of a filter, a template of the globals." },
                 "class": { "type": "string", "description": "The class of the element of the visualisation (vis), a template of the globals, e.g. for the styles of a page." },
@@ -380,7 +341,7 @@
                 },
                 "range": {
                     "type": "array",
-                    "items": { "anyOf": [{ "type": "number" }, { "type": "string" }, { "$ref": "#/definitions/prop" }] },
+                    "items": { "anyOf": [{ "type": "number" }, { "type": "string" }, { "$ref": "#/definitions/expression" }] },
                     "description": "By default the width or height of the plot, e.g. colors, references to the sizes of the coordinate system, e.g. \"@radius\"."
                 },
                 "padding": { "type": "number", "description": "Band and point scales: the space between the categories and at the ends in steps, 0.4 by default; of a point scale of angles the place of the first category in steps, half a step after the top (0.5) by default, 0 at the top, e.g. of a radar chart." },
@@ -426,7 +387,10 @@
                 },
                 "ticks": { "anyOf": [{ "$ref": "#/definitions/number" }, { "$ref": "#/definitions/none" }], "description": "The number of the ticks, null for the ones of tickSpacing, e.g. of a parent." },
                 "tickSpacing": { "$ref": "#/definitions/number", "description": "Without ticks, a tick per this many pixels of the length of the axis, e.g. 80." },
-                "values": { "anyOf": [{ "type": "array" }, { "$ref": "#/definitions/prop" }], "description": "Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or [\"2004\", \"2008\"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also a prop, e.g. steps of totalWidth." },
+                "values": {
+                    "anyOf": [{ "type": "array" }, { "$ref": "#/definitions/expression" }],
+                    "description": "Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or [\"2004\", \"2008\"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also a prop, e.g. steps of totalWidth."
+                },
                 "format": { "type": "string", "description": "A d3 number or time format." },
                 "labels": {
                     "type": "object",
@@ -487,7 +451,11 @@
                 "name": { "type": "string", "description": "The title of the legend." },
                 "type": {
                     "enum": ["numeric", "date", "categorical"],
-                    "description": "Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values (also of a mapping without a type) are strings of every format of the data, e.g. \"2004\" of the number 2004 of JSON or parquet."
+                    "description": "Without a type it follows from the other parts (categories or a band, point or ordinal scale are categorical, a time or utc scale date, other scales numeric, the mappings of the categories of plots and facets categorical) or from the values of the column: numbers numeric, dates date, otherwise categorical. Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values are strings of every format of the data, e.g. \"2004\" of the number 2004 of JSON or parquet."
+                },
+                "format": {
+                    "type": "string",
+                    "description": "The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. \",.0f\"."
                 },
                 "stacked": {
                     "anyOf": [{ "type": "boolean" }, { "$ref": "#/definitions/filter" }],
@@ -519,87 +487,107 @@
                         }
                     }
                 }] },
-                "legend": { "anyOf": [{ "$ref": "#/definitions/removed" }, {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "description": "Toggles of the categories of the props, without props the colors of the scale.",
-                    "properties": {
-                        "position": {
-                                "description": "The place of the legend, above or below the plots or beside them, the plots have the rest of the width, a prop of totalWidth (the width of the visualisation), e.g. below the plots of a phone.",
-                                "anyOf": [{ "enum": ["top", "bottom", "left", "right"] }, { "$ref": "#/definitions/prop" }]
-                            },
-                        "orientation": {
-                                "description": "The direction of the scale of the colors, a vertical one has the high values at the top, a prop of totalWidth (the width of the visualisation).",
-                                "anyOf": [{ "enum": ["horizontal", "vertical"] }, { "$ref": "#/definitions/prop" }]
-                            },
-                        "onlyData": { "type": "boolean", "default": false, "description": "Only the entries of the categories of the rows after the filter, e.g. of the selected year, also the hidden ones." },
-                        "size": { "type": "number", "default": 240, "description": "The length of the scale of the colors in pixels." },
-                        "values": { "type": "array", "items": { "type": "number" }, "description": "The ticks of a gradient of colors, e.g. [0, 50, 100]." },
-                        "labels": { "enum": ["before", "after"], "default": "after", "description": "The labels of the scale of colors after it (below, right of a vertical one) or before it." },
-                        "format": { "type": "string", "description": "The format of the values of the colors of a scale, by default the one of the hover." },
-                        "missing": {
+                "legend": {
+                    "anyOf": [
+                        { "$ref": "#/definitions/removed" },
+                        {
                             "type": "object",
                             "additionalProperties": false,
-                            "description": "An entry of the regions without a value beside the colors of a scale, e.g. { \"name\": \"no data\", \"color\": \"#EEE\" }.",
+                            "description": "Toggles of the categories of the props, without props the colors of the scale.",
                             "properties": {
-                                "name": { "type": "string" },
-                                "color": { "type": "string", "description": "By default #EEE." }
-                            },
-                            "required": ["name"]
-                        },
-                        "symbol": {
-                            "description": "The symbol before the name of a category: line, rect or circle in its color, or the svg elements.",
-                            "anyOf": [
-                                { "enum": ["line", "rect", "circle"] },
-                                {
+                                "position": {
+                                    "description": "The place of the legend, above or below the plots or beside them, the plots have the rest of the width, a prop of totalWidth (the width of the visualisation), e.g. below the plots of a phone.",
+                                    "anyOf": [{ "enum": ["top", "bottom", "left", "right"] }, { "$ref": "#/definitions/expression" }]
+                                },
+                                "orientation": {
+                                    "description": "The direction of the scale of the colors, a vertical one has the high values at the top, a prop of totalWidth (the width of the visualisation).",
+                                    "anyOf": [{ "enum": ["horizontal", "vertical"] }, { "$ref": "#/definitions/expression" }]
+                                },
+                                "onlyData": { "type": "boolean", "default": false, "description": "Only the entries of the categories of the rows after the filter, e.g. of the selected year, also the hidden ones." },
+                                "size": { "type": "number", "default": 240, "description": "The length of the scale of the colors in pixels." },
+                                "values": { "type": "array", "items": { "type": "number" }, "description": "The ticks of a gradient of colors, e.g. [0, 50, 100]." },
+                                "labels": { "enum": ["before", "after"], "default": "after", "description": "The labels of the scale of colors after it (below, right of a vertical one) or before it." },
+                                "format": { "type": "string", "description": "The format of the values of the colors of a scale, by default the one of the hover." },
+                                "missing": {
                                     "type": "object",
                                     "additionalProperties": false,
-                                    "required": ["type"],
+                                    "description": "An entry of the regions without a value beside the colors of a scale, e.g. { \"name\": \"no data\", \"color\": \"#EEE\" }.",
                                     "properties": {
-                                        "type": { "enum": ["line", "rect", "circle"] },
-                                        "size": { "type": "number", "default": 16 },
-                                        "props": { "$ref": "#/definitions/props" },
-                                        "elements": { "$ref": "#/definitions/symbolElements/properties/elements", "description": "Left out, the type replaces them, e.g. the ones of a parent." }
-                                    }
+                                        "name": { "type": "string" },
+                                        "color": { "type": "string", "description": "By default #EEE." }
+                                    },
+                                    "required": ["name"]
                                 },
-                                { "$ref": "#/definitions/symbolElements" }
-                            ]
-                        },
-                        "props": {
-                            "type": "object",
-                            "additionalProperties": { "$ref": "#/definitions/value" }
+                                "symbol": {
+                                    "description": "The symbol before the name of a category: line, rect or circle in its color, or the svg elements.",
+                                    "anyOf": [
+                                        { "enum": ["line", "rect", "circle"] },
+                                        {
+                                            "type": "object",
+                                            "additionalProperties": false,
+                                            "required": ["type"],
+                                            "properties": {
+                                                "type": { "enum": ["line", "rect", "circle"] },
+                                                "size": { "type": "number", "default": 16 },
+                                                "props": { "$ref": "#/definitions/props" },
+                                                "elements": { "$ref": "#/definitions/symbolElements/properties/elements", "description": "Left out, the type replaces them, e.g. the ones of a parent." }
+                                            }
+                                        },
+                                        { "$ref": "#/definitions/symbolElements" }
+                                    ]
+                                },
+                                "props": {
+                                    "type": "object",
+                                    "additionalProperties": { "$ref": "#/definitions/value" }
+                                }
+                            }
                         }
-                    }
-                }] },
-
-                "props": { "anyOf": [{ "$ref": "#/definitions/removed" }, {
+                    ]
+                },
+                "domain": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "$ref": "#/definitions/domainValue" },
+                    "description": "The domain of the scale, see scale.domain, e.g. [0, null]."
+                },
+                "nice": {
+                    "anyOf": [
+                        { "type": "boolean" },
+                        { "type": "number" }
+                    ],
+                    "description": "Rounds the ends of the domain of the scale, see scale.nice."
+                },
+                "categories": {
                     "type": "object",
-                    "description": "The categories and their props, e.g. colors. Only visible categories are shown, null removes the ones of a parent.",
-                    "additionalProperties": false,
-                    "properties": {
-                        "common": { "$ref": "#/definitions/categoryProps" },
-                        "categories": {
-                            "type": "object",
-                            "description": "The categories by their key (the value of the column) and their props, in the order of the legend, the facets and the stacks.",
-                            "additionalProperties": { "$ref": "#/definitions/categoryProps" }
-                        },
-                        "fromData": { "type": "boolean", "description": "The values of the column which are not in categories are categories as well, after them, in ascending order." },
-                        "order": {
-                            "description": "The order of the categories: the one of categories (keys which are integers ascending first), ascending, descending (numbers by their value) or a list of keys which are first.",
-                            "anyOf": [
-                                { "enum": ["ascending", "descending"] },
-                                { "type": "array", "items": { "$ref": "#/definitions/key" } }
-                            ]
-                        },
-                        "ranks": {
-                            "type": "array",
-                            "description": "The props of the categories by their rank in the order: of the first one, the second one, ..., the last entry is the one of all others, e.g. the newest year red.",
-                            "items": { "$ref": "#/definitions/categoryProps" }
-                        },
-                        "scheme": { "type": "string", "description": "The colors of the categories in their order as the prop color, a d3 scheme, e.g. Tableau10." }
-                    }
-                }] }
-            }
+                    "description": "The categories by their key (the value of the column) and their props, e.g. colors, in the order of the legend, the facets and the stacks, only visible ones are shown.",
+                    "additionalProperties": { "$ref": "#/definitions/categoryProps" }
+                },
+                "scheme": {
+                    "type": "string",
+                    "description": "The colors of the categories in their order as the prop color, a d3 scheme, e.g. Tableau10."
+                },
+                "common": {
+                    "$ref": "#/definitions/categoryProps",
+                    "description": "The props of all categories."
+                },
+                "fromData": {
+                    "type": "boolean",
+                    "description": "The values of the column which are not in categories are categories as well, after them, in ascending order."
+                },
+                "order": {
+                    "description": "The order of the categories: the one of categories (keys which are integers ascending first), ascending, descending (numbers by their value) or a list of keys which are first.",
+                    "anyOf": [
+                        { "enum": ["ascending", "descending"] },
+                        { "type": "array", "items": { "$ref": "#/definitions/key" } }
+                    ]
+                },
+                "ranks": {
+                    "type": "array",
+                    "description": "The props of the categories by their rank in the order: of the first one, the second one, ..., the last entry is the one of all others, e.g. the newest year red.",
+                    "items": { "$ref": "#/definitions/categoryProps" }
+                }
+            },
+            "description": "A mapping of a column, x and y (polar also angle and radius) have a scale of their orientation and an axis, false removes them."
         },
         "transform": {
             "type": "object",
@@ -669,11 +657,31 @@
                 "type": {
                     "anyOf": [
                         { "enum": ["svg:circle", "svg:line", "svg:rect", "svg:text", "cartesian:line", "cartesian:area", "cartesian:bar", "polar:line", "polar:area", "polar:arc", "polar:circle", "polar:text", "geo:base", "geo:region", "geo:circle", "geo:text", "geo:mesh", "annotation:band", "annotation:line", "annotation:text", "annotation:circle"] },
-                        { "type": "string", "pattern": "^[a-z][\\w-]*:[\\w-]+$", "description": "A registered plot type, see registerPlotType." }
+                        {
+                            "enum": ["arc", "area", "bar", "base", "circle", "line", "mesh", "point", "rect", "region", "text"],
+                            "description": "A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian plots, point is circle) with the default props of the type, a definition writes only the props which differ."
+                        },
+                        {
+                            "type": "string",
+                            "pattern": "^[a-z][\\w-]*:[\\w-]+$",
+                            "description": "A registered plot type, see registerPlotType."
+                        },
+                        {
+                            "type": "string",
+                            "pattern": "^[a-z][\\w-]*$",
+                            "description": "A registered plot type of the coordinate system without its prefix, see registerPlotType."
+                        }
                     ],
-                    "description": "The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations."
+                    "description": "The full name of a type has no default props. The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations."
                 },
                 "id": { "type": "string", "description": "The class and the data-plot of the group of the plot, plot-<index> by default, the plots of a parent are merged by their ids." },
+                "by": {
+                    "anyOf": [
+                        { "type": "string" },
+                        { "type": "array", "items": { "type": "string" } }
+                    ],
+                    "description": "The rows are grouped by this mapping or these mappings, e.g. a line per category, the props of their categories are available in the props."
+                },
                 "data": {
                     "description": "Rows of the plot instead of the ones of the data, e.g. events, with the names of the mappings and others, e.g. a label, or the url of a file of them. The values of rows of the definition are props, e.g. references to globals.",
                     "anyOf": [
@@ -697,19 +705,27 @@
                 "layer": { "enum": ["below", "above"], "description": "below: below the axes and grid lines, above: above the other plots, between them by default." },
                 "facet": { "description": "The facets of the plot, a key or a list of them, all by default." },
                 "highlight": {
-                    "enum": ["group", "row"],
-                    "description": "The elements with the highlight- props, the ones of the category of the hover (group, default) or only the one of its row (row), e.g. a segment of a stacked bar."
+                    "description": "The props of the elements of the category of the hover or of the entry of the legend, e.g. { \"stroke-width\": 3 }, mode: the elements of the category (group, default) or only the one of its row (row), e.g. a segment of a stacked bar, also as a text, e.g. \"row\".",
+                    "anyOf": [
+                        { "enum": ["group", "row"] },
+                        {
+                            "type": "object",
+                            "properties": { "mode": { "enum": ["group", "row"] } },
+                            "additionalProperties": { "$ref": "#/definitions/propEntry" }
+                        }
+                    ]
                 },
                 "curve": {
                     "enum": ["linear", "monotoneX", "natural", "catmullRom", "basis", "step", "stepBefore", "stepAfter", "linearClosed", "catmullRomClosed", "basisClosed"],
                     "default": "linear",
                     "description": "The interpolation of the paths and areas between their points, monotoneX is smooth without overshooting the values, the closed ones connect the last point with the first one, e.g. of radar charts."
                 },
-                "categories": {
-                    "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }],
-                    "description": "The rows are grouped by this mapping or these mappings, the props of their categories are available in the props."
-                },
-                "props": { "$ref": "#/definitions/props" }
+                "props": { "$ref": "#/definitions/props" },
+                "others": {
+                    "type": "object",
+                    "description": "The props of the other elements of the plot while an element is highlighted, e.g. { \"opacity\": 0.3 }.",
+                    "additionalProperties": { "$ref": "#/definitions/propEntry" }
+                }
             }
         },
         "facets": {
@@ -726,7 +742,7 @@
                     "anyOf": [
                         { "type": "array", "items": { "type": "string" } },
                         { "type": "string", "pattern": "^@" },
-                        { "$ref": "#/definitions/prop" }
+                        { "$ref": "#/definitions/expression" }
                     ]
                 }
             }
@@ -788,6 +804,115 @@
                     }
                 }
             }
+        },
+        "expression": {
+            "description": "An operator, an object of one key, the operator, and its arguments, e.g. { \"*\": [\"@innerWidth\", 0.5] } or { \"steps\": [\"@totalWidth\", { \"0\": 220, \"550\": 250 }] }, see spec/expressions.md of the package.",
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "additionalProperties": false,
+            "properties": {
+                "+": {
+                    "$ref": "#/definitions/args",
+                    "description": "The sum of the values."
+                },
+                "-": {
+                    "$ref": "#/definitions/args",
+                    "description": "The first value minus the others, of one value its negation."
+                },
+                "*": {
+                    "$ref": "#/definitions/args",
+                    "description": "The product of the values."
+                },
+                "/": {
+                    "$ref": "#/definitions/args",
+                    "description": "The first value divided by the others, no value of a division by 0."
+                },
+                "min": {
+                    "$ref": "#/definitions/args",
+                    "description": "The least value."
+                },
+                "max": {
+                    "$ref": "#/definitions/args",
+                    "description": "The largest value."
+                },
+                "round": {
+                    "$ref": "#/definitions/args",
+                    "description": "[value, digits]: the value rounded to digits (0 by default), halves up."
+                },
+                "==": {
+                    "$ref": "#/definitions/args",
+                    "description": "The same values, as texts, e.g. 2024 and \"2024\"."
+                },
+                "!=": {
+                    "$ref": "#/definitions/args",
+                    "description": "Not the same values."
+                },
+                "<": {
+                    "$ref": "#/definitions/args",
+                    "description": "Numbers by their value, otherwise texts, false of a missing value, more values are a chain, e.g. [0, \"@x\", 10]."
+                },
+                "<=": {
+                    "$ref": "#/definitions/args",
+                    "description": "See <."
+                },
+                ">": {
+                    "$ref": "#/definitions/args",
+                    "description": "See <."
+                },
+                ">=": {
+                    "$ref": "#/definitions/args",
+                    "description": "See <."
+                },
+                "not": {
+                    "$ref": "#/definitions/args",
+                    "description": "True of a false value (false, 0, \"\", null, an empty list)."
+                },
+                "cat": {
+                    "$ref": "#/definitions/args",
+                    "description": "The values as texts, joined."
+                },
+                "if": {
+                    "$ref": "#/definitions/args",
+                    "description": "[condition, value, condition, value, ..., otherwise]: the value of the first true condition."
+                },
+                "and": {
+                    "$ref": "#/definitions/args",
+                    "description": "The first false value, otherwise the last one."
+                },
+                "or": {
+                    "$ref": "#/definitions/args",
+                    "description": "The first true value, otherwise the last one, e.g. a default [\"@color\", \"black\"]."
+                },
+                "steps": {
+                    "$ref": "#/definitions/args",
+                    "description": "[value, { \"cut\": value, ... }]: the value of the largest cut below the value, e.g. [\"@totalWidth\", { \"0\": 220, \"550\": 250 }]."
+                },
+                "match": {
+                    "$ref": "#/definitions/args",
+                    "description": "[value, { \"case\": value, ... }, default]: the value of the case of the value (as a text), otherwise the default."
+                },
+                "format": {
+                    "$ref": "#/definitions/args",
+                    "description": "[value, format]: the value as a text of a d3 format in the locale, e.g. [\"@y\", \",.1f\"] or of dates [\"@x\", \"%b %Y\"]."
+                },
+                "literal": { "description": "A value which is not evaluated, e.g. a text starting with @." },
+                "var": {
+                    "anyOf": [
+                        { "type": "string" },
+                        { "type": "array", "minItems": 1, "maxItems": 2, "items": true }
+                    ],
+                    "description": "A reference, a name or [name, default], the default of an unknown name."
+                }
+            }
+        },
+        "args": {
+            "description": "The arguments of an operator, a list of expressions or a single one.",
+            "anyOf": [
+                { "type": "array", "items": { "$ref": "#/definitions/propEntry" } },
+                { "$ref": "#/definitions/propEntry" }
+            ]
         }
-    }
+    },
+    "$comment": "gen-vis 4.0, see docs/design-4.0.md, definitions of 3.x are migrated, see migrate of @preschen/gen-vis/check"
 }

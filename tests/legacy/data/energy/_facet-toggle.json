@@ -1,0 +1,13 @@
+{
+    "mapping": {
+        "facet": {
+            "legend": {
+                "symbol": {
+                    "size": 0,
+                    "elements": []
+                }
+            },
+            "hover": {}
+        }
+    }
+}

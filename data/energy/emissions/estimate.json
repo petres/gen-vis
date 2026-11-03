@@ -41,53 +41,47 @@
                     }]
                 }
             },
-            "props": {
-                "categories": {
-                    "estimate":  { "color": "#C3423F", "name": "Schätzung", "stroke": "#C3423F", "r": 0 },
-                    "inventory": { "color": "#444444", "name": "Inventur", "stroke": "none", "r": 3 }
-                }
+            "categories": {
+                "estimate":  { "color": "#C3423F", "name": "Schätzung", "stroke": "#C3423F", "r": 0 },
+                "inventory": { "color": "#444444", "name": "Inventur", "stroke": "none", "r": 3 }
             },
             "hover": {}
         },
         "facet": {
             "column": "facet",
-            "props": {
-                "categories": {
-                    "total": { "name": "Gesamt" },
-                    "oil":   { "name": "Mineralöl" },
-                    "gas":   { "name": "Erdgas" },
-                    "coal":  { "name": "Kohle" }
-                }
+            "categories": {
+                "total": { "name": "Gesamt" },
+                "oil":   { "name": "Mineralöl" },
+                "gas":   { "name": "Erdgas" },
+                "coal":  { "name": "Kohle" }
             }
         }
     },
     "facets": {
         "scales": ["x"],
         "cols": {
-            "steps": [
-                {"cut":   0, "value": 1},
-                {"cut": 550, "value": 2}
-            ]
+            "steps": ["@totalWidth", { "0": 1, "550": 2 }]
         }
     },
-    "plot": [{
-        "type": "cartesian:line",
-        "categories": ["type", "facet"],
-        "props": {
-            "stroke": "@stroke",
-            "stroke-width": 2,
-            "highlight-stroke-width": 3,
-            "fill": "none",
-            "d": { "x": "@x:scaled", "y": "@y:scaled" }
+    "plot": [
+        {
+            "type": "cartesian:line",
+            "by": ["type", "facet"],
+            "props": {
+                "stroke": "@stroke",
+                "stroke-width": 2,
+                "highlight-stroke-width": 3,
+                "fill": "none",
+                "d": { "x": "@x:scaled", "y": "@y:scaled" }
+            }
+        },
+        {
+            "type": "point",
+            "by": ["type", "facet"],
+            "props": {
+                "r": "@r",
+                "fill": "@color"
+            }
         }
-    }, {
-        "type": "svg:circle",
-        "categories": ["type", "facet"],
-        "props": {
-            "cx": "@x:scaled",
-            "cy": "@y:scaled",
-            "r": "@r",
-            "fill": "@color"
-        }
-    }]
+    ]
 }

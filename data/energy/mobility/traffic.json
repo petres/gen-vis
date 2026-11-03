@@ -3,13 +3,7 @@
     "data": "traffic.csv",
     "options": {
         "height": {
-            "prop": "steps",
-            "ref": "totalWidth",
-            "steps": [
-                {"cut":   0, "value": 220},
-                {"cut": 550, "value": 250},
-                {"cut": 600, "value": 280}
-            ]
+            "steps": ["@totalWidth", { "0": 220, "550": 250, "600": 280 }]
         },
         "margins": {"top": 5, "right": 30, "bottom": 45, "left": 50},
         "title": "Verkehrsaufkommen",
@@ -19,10 +13,8 @@
     "mapping": {
         "road": {
             "column": "road",
-            "props": {
-                "categories": {
-                    "total": { "name": "Österreich" }
-                }
+            "categories": {
+                "total": { "name": "Österreich" }
             }
         },
         "vehicle": {
@@ -40,16 +32,14 @@
                     }]
                 }
             },
-            "props": {
-                "common": {
-                    "stroke-width": 2,
-                    "highlight-stroke-width": 3
-                },
-                "categories": {
-                    "all":   { "color": "#444444", "name": "Gesamt" },
-                    "light": { "color": "#4A96D4", "name": "Leicht (bis 3,5 t)" },
-                    "heavy": { "color": "#C3423F", "name": "Schwer (über 3,5 t)" }
-                }
+            "common": {
+                "stroke-width": 2,
+                "highlight-stroke-width": 3
+            },
+            "categories": {
+                "all":   { "color": "#444444", "name": "Gesamt" },
+                "light": { "color": "#4A96D4", "name": "Leicht (bis 3,5 t)" },
+                "heavy": { "color": "#C3423F", "name": "Schwer (über 3,5 t)" }
             },
             "hover": {}
         }
@@ -57,7 +47,7 @@
     "plot": {
         "type": "cartesian:line",
         "curve": "monotoneX",
-        "categories": ["road", "vehicle"],
+        "by": ["road", "vehicle"],
         "props": {
             "stroke-width": "@stroke-width",
             "fill": "none",
@@ -65,8 +55,8 @@
             "d": {
                 "x": "@x:scaled",
                 "y": "@y:scaled"
-            },
-            "highlight-stroke-width": "@highlight-stroke-width"
-        }
+            }
+        },
+        "highlight": { "stroke-width": "@highlight-stroke-width" }
     }
 }

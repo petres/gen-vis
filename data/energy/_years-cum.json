@@ -11,24 +11,19 @@
         },
         "facet": {
             "column": "variable",
-            "props": {
-                "categories": {
-                    "rm7": {
-                        "name": "täglich (rollierender 7-Tages Durchschnitt)"
-                    },
-                    "cum": {
-                        "name": "kumuliert"
-                    }
+            "categories": {
+                "rm7": {
+                    "name": "täglich (rollierender 7-Tages Durchschnitt)"
+                },
+                "cum": {
+                    "name": "kumuliert"
                 }
             }
         }
     },
     "facets": {
         "cols": {
-            "steps": [
-                {"cut":   0, "value": 1},
-                {"cut": 850, "value": 2}
-            ]
+            "steps": ["@totalWidth", { "0": 1, "850": 2 }]
         }
     }
 }

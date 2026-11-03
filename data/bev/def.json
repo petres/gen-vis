@@ -17,11 +17,7 @@
                 "orientation": "horizontal"
             },
             "axis": {
-                "ticks": {
-                    "prop": "relative",
-                    "ref": "innerWidth",
-                    "ratio": 0.013
-                },
+                "ticks": { "*": ["@innerWidth", 0.013] },
                 "position": "bottom",
                 "format": "c"
             },
@@ -71,23 +67,21 @@
                     }]
                 }
             },
-            "props": {
-                "scheme": "Tableau10",
-                "common": {
-                    "stroke-width": 2.5
-                },
-                "categories": {
-                    "ÖSTERREICH":       { "color": "#1E4F77", "stroke-width": 4, "name": "Gesamt", "visible": false, "class": "bold" },
-                    "Wien":             {},
-                    "Niederösterreich": {},
-                    "Burgenland":       {},
-                    "Oberösterreich":   {},
-                    "Salzburg":         {},
-                    "Steiermark":       {},
-                    "Kärnten":          {},
-                    "Tirol":            {},
-                    "Vorarlberg":       {}
-                }
+            "scheme": "Tableau10",
+            "common": {
+                "stroke-width": 2.5
+            },
+            "categories": {
+                "ÖSTERREICH":       { "color": "#1E4F77", "stroke-width": 4, "name": "Gesamt", "visible": false, "class": "bold" },
+                "Wien":             {},
+                "Niederösterreich": {},
+                "Burgenland":       {},
+                "Oberösterreich":   {},
+                "Salzburg":         {},
+                "Steiermark":       {},
+                "Kärnten":          {},
+                "Tirol":            {},
+                "Vorarlberg":       {}
             },
             "hover": {
             }
@@ -96,7 +90,7 @@
     "plot": [
         {
             "type": "cartesian:line",
-            "categories": ["land"],
+            "by": "land",
             "props": {
                 "stroke-width": "@stroke-width",
                 "fill": "none",
@@ -105,22 +99,21 @@
                 "d": {
                     "x": "@x:scaled",
                     "y": "@y:scaled"
-                },
-                "highlight-opacity": 1,
-                "highlight-stroke-width": 3
-            }
-        }, {
+                }
+            },
+            "highlight": { "opacity": 1, "stroke-width": 3 }
+        },
+        {
             "type": "svg:circle",
-            "categories": ["land"],
+            "by": "land",
             "props": {
                 "fill": "@color",
                 "opacity": 0.7,
                 "cx": "@x:scaled",
                 "cy": "@y:scaled",
-                "r": 4,
-                "highlight-r": 5,
-                "highlight-opacity": 1
-            }
+                "r": 4
+            },
+            "highlight": { "r": 5, "opacity": 1 }
         }
     ]
 }

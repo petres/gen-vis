@@ -29,25 +29,19 @@
             "column": "Type",
             "type": "categorical",
             "legend": { "symbol": { "type": "rect", "size": 14 } },
-            "props": {
-                "categories": {
-                    "Hauseigentum":     { "color": "#264653", "text": "#FFFFFF" },
-                    "Wohnungseigentum": { "color": "#2A9D8F", "text": "#FFFFFF" },
-                    "GBV Miete":        { "color": "#8AB17D", "text": "#1B2B22" },
-                    "Gemeinde Miete":   { "color": "#E9C46A", "text": "#3D2E00" },
-                    "Private Miete":    { "color": "#F4A261", "text": "#3D2200" },
-                    "Sonstige":         { "color": "#E76F51", "text": "#FFFFFF" }
-                }
+            "categories": {
+                "Hauseigentum":     { "color": "#264653", "text": "#FFFFFF" },
+                "Wohnungseigentum": { "color": "#2A9D8F", "text": "#FFFFFF" },
+                "GBV Miete":        { "color": "#8AB17D", "text": "#1B2B22" },
+                "Gemeinde Miete":   { "color": "#E9C46A", "text": "#3D2E00" },
+                "Private Miete":    { "color": "#F4A261", "text": "#3D2200" },
+                "Sonstige":         { "color": "#E76F51", "text": "#FFFFFF" }
             },
             "hover": {}
         },
-        "geo": {
-            "column": "Geo",
-            "type": "categorical",
-            "props": { "categories": { "Österreich": {}, "Wien": {} } }
-        }
+        "geo": { "column": "Geo", "type": "categorical", "categories": { "Österreich": {}, "Wien": {} } }
     },
-    "facets": { "dim": "geo", "cols": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 1 }, { "cut": 600, "value": 2 }] } },
+    "facets": { "dim": "geo", "cols": { "steps": ["@totalWidth", { "0": 1, "600": 2 }] } },
     "annotations": [
         { "type": "text", "x": "2020", "y": 1, "text": "Mikrozensus", "props": { "dy": -7, "text-anchor": "middle", "font-size": 10 } }
     ],
@@ -55,23 +49,33 @@
         {
             "id": "bars",
             "type": "svg:rect",
-            "categories": ["type"],
-            "highlight": "row",
+            "by": "type",
             "props": {
-                "x": "@x:scaled", "width": "@x:bandwidth",
-                "y": "@y:end:scaled", "height": "@y:height:scaled",
-                "fill": "@color", "stroke": "white", "stroke-width": 0.8,
-                "highlight-opacity": 1, "others-opacity": 0.55
-            }
+                "x": "@x:scaled",
+                "width": "@x:bandwidth",
+                "y": "@y:end:scaled",
+                "height": "@y:height:scaled",
+                "fill": "@color",
+                "stroke": "white",
+                "stroke-width": 0.8
+            },
+            "highlight": { "mode": "row", "opacity": 1 },
+            "others": { "opacity": 0.55 }
         },
         {
             "id": "shares",
             "type": "svg:text",
-            "categories": ["type"],
+            "by": "type",
             "filter": { "y": { "range": [0.07, null] } },
             "props": {
-                "x": "@x:scaled:center", "y": "@y:mid:scaled", "text-anchor": "middle", "dominant-baseline": "central",
-                "font-size": 10, "fill": "@text", "pointer-events": "none", "text": { "prop": "format", "ref": "y", "format": ".0%" }
+                "x": "@x:scaled:center",
+                "y": "@y:mid:scaled",
+                "text-anchor": "middle",
+                "dominant-baseline": "central",
+                "font-size": 10,
+                "fill": "@text",
+                "pointer-events": "none",
+                "text": { "format": ["@y", ".0%"] }
             }
         }
     ]

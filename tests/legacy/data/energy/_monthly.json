@@ -1,0 +1,12 @@
+{
+    "mapping": {
+        "x": {
+            "hover": {
+                "format": "%b"
+            }
+        }
+    },
+    "plot": {
+        "curve": "monotoneX"
+    }
+}

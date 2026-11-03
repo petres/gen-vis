@@ -5,7 +5,7 @@
         "subtitle": "Monthly sales in Austria in {unit:name}, a line per year",
         "footer": "Source: Eurostat, calculations of the WIFO energy dashboard",
         "locale": "en",
-        "height": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 170 }, { "cut": 500, "value": 230 }] },
+        "height": { "steps": ["@totalWidth", { "0": 170, "500": 230 }] },
         "margins": { "top": 8, "right": 12, "bottom": 26, "left": 36 },
         "transition": 300
     },
@@ -32,7 +32,7 @@
     ],
     "facets": {
         "dim": "product",
-        "cols": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 1 }, { "cut": 500, "value": 3 }] },
+        "cols": { "steps": ["@totalWidth", { "0": 1, "500": 3 }] },
         "scales": "@scales"
     },
     "mapping": {
@@ -48,39 +48,41 @@
             "axis": { "position": "left", "ticks": 4, "grid": true, "format": ",.0f" },
             "hover": { "format": ",.2f" }
         },
-        "product": {
-            "column": "product", "type": "categorical",
-            "props": { "categories": { "oil": { "name": "Oil" }, "gas": { "name": "Gas" }, "coal": { "name": "Coal" } } }
-        },
+        "product": { "column": "product", "type": "categorical", "categories": { "oil": { "name": "Oil" }, "gas": { "name": "Gas" }, "coal": { "name": "Coal" } } },
         "year": {
-            "column": "year", "type": "categorical", "name": "Year",
+            "column": "year",
+            "type": "categorical",
+            "name": "Year",
             "legend": { "symbol": "line" },
             "hover": {},
-            "props": {
-                "fromData": true, "order": "descending",
-                "ranks": [
-                    { "color": "#C2410C", "width": 3, "label": "visible" },
-                    { "color": "#0F766E", "width": 2, "label": "hidden" },
-                    { "color": "#94A3B8", "width": 1.2, "label": "hidden" }
-                ]
-            }
+            "fromData": true,
+            "order": "descending",
+            "ranks": [
+                { "color": "#C2410C", "width": 3, "label": "visible" },
+                { "color": "#0F766E", "width": 2, "label": "hidden" },
+                { "color": "#94A3B8", "width": 1.2, "label": "hidden" }
+            ]
         }
     },
     "plot": [
         {
             "id": "lines",
             "type": "cartesian:line",
-            "categories": ["year"],
+            "by": "year",
             "curve": "monotoneX",
             "props": {
-                "d": { "x": "@x:scaled", "y": "@y:scaled" }, "stroke": "@color", "stroke-width": "@width", "fill": "none",
-                "highlight-stroke-width": 3.5, "others-stroke-opacity": 0.25
-            }
+                "d": { "x": "@x:scaled", "y": "@y:scaled" },
+                "stroke": "@color",
+                "stroke-width": "@width",
+                "fill": "none"
+            },
+            "highlight": { "stroke-width": 3.5 },
+            "others": { "stroke-opacity": 0.25 }
         },
         {
             "id": "labels",
             "type": "svg:text",
-            "categories": ["year"],
+            "by": "year",
             "select": "last",
             "props": {
                 "x": "@x:scaled", "y": "@y:scaled", "dy": -8, "text-anchor": "end", "font-size": 11, "font-weight": "bold",

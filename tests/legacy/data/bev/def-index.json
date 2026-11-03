@@ -1,0 +1,60 @@
+{
+    "data": "data.csv",
+    "options": {
+        "height": 300,
+        "margins": {"top": 10, "right": 20, "bottom": 30, "left": 50},
+        "title": "Bevölkerung",
+        "subtitle": "Index, {base} = 100, nach Bundesland",
+        "footer": "Q: Statistik Austria"
+    },
+    "globals": { "base": "2002" },
+    "transform": {
+        "type": "index", "column": "Einwohner", "as": "index", "by": "Bundesland",
+        "base": { "Jahr": "{base}" }
+    },
+    "formElements": [{
+        "id": "base", "name": "Basisjahr", "ref": "base", "type": "slider", "inImage": false,
+        "values": { "column": "Jahr" }
+    }],
+    "annotations": [
+        { "type": "line", "y": 100, "props": { "stroke-dasharray": "3 3" } }
+    ],
+    "mapping": {
+        "x": {
+            "column": "Jahr",
+            "type": "numeric",
+            "scale": { "orientation": "horizontal", "domainRel": [0, 0], "inset": 6 },
+            "axis": { "position": "bottom", "format": "c", "tickSpacing": 80 },
+            "hover": { "format": "c" }
+        },
+        "y": {
+            "column": "index",
+            "type": "numeric",
+            "scale": { "orientation": "vertical", "nice": true },
+            "axis": { "position": "left", "grid": true, "ticks": 5, "format": ",.0f" },
+            "hover": { "format": ",.1f" }
+        },
+        "land": {
+            "column": "Bundesland",
+            "legend": { "symbol": "line" },
+            "hover": {},
+            "props": {
+                "fromData": true,
+                "scheme": "Tableau10",
+                "common": { "stroke-width": 1.5 },
+                "categories": { "ÖSTERREICH": { "name": "Gesamt", "color": "#000", "stroke-width": 3 } }
+            }
+        }
+    },
+    "plot": {
+        "type": "cartesian:line",
+        "categories": ["land"],
+        "props": {
+            "stroke": "@color",
+            "stroke-width": "@stroke-width",
+            "fill": "none",
+            "d": { "x": "@x:scaled", "y": "@y:scaled" },
+            "highlight-stroke-width": 4
+        }
+    }
+}

@@ -3,18 +3,7 @@
     "options": {
         "coord": "polar",
         "height": {
-            "prop": "steps",
-            "ref": "totalWidth",
-            "steps": [
-                {
-                    "cut": 0,
-                    "value": 460
-                },
-                {
-                    "cut": 760,
-                    "value": 600
-                }
-            ]
+            "steps": ["@totalWidth", { "0": 460, "760": 600 }]
         },
         "margins": {
             "top": 50,
@@ -186,21 +175,7 @@
             "column": "group",
             "type": "categorical"
         },
-        "definition": {
-            "column": "definition",
-            "type": "categorical",
-            "props": {
-                "fromData": true
-            },
-            "hover": {}
-        },
-        "source": {
-            "column": "source",
-            "type": "categorical",
-            "props": {
-                "fromData": true
-            },
-            "hover": {}
-        }
+        "definition": { "column": "definition", "type": "categorical", "fromData": true, "hover": {} },
+        "source": { "column": "source", "type": "categorical", "fromData": true, "hover": {} }
     }
 }

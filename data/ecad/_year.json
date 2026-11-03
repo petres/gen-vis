@@ -7,7 +7,7 @@
     },
     "globals": { "year": "2023" },
     "transform": [
-        { "type": "calc", "op": "multiply", "columns": ["value"], "scale": 0.1, "as": "v" },
+        { "type": "calc", "as": "v", "expr": { "*": [{ "+": ["@value"] }, 0.1] } },
         { "type": "mean", "column": "v", "as": "avg" }
     ],
     "formElements": [

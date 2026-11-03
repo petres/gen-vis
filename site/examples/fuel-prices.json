@@ -13,7 +13,7 @@
             "column": "week",
             "type": "date",
             "scale": { "type": "utc", "orientation": "horizontal" },
-            "axis": { "position": "bottom", "ticks": { "prop": "relative", "ref": "innerWidth", "ratio": 0.009 }, "format": "%b %Y" },
+            "axis": { "position": "bottom", "ticks": { "*": ["@innerWidth", 0.009] }, "format": "%b %Y" },
             "hover": { "format": "%b %-d, %Y" }
         },
         "y": {
@@ -32,11 +32,9 @@
                     "elements": [{ "type": "line", "props": { "x1": 0, "x2": 18, "y1": 9, "y2": 9, "stroke": "@color", "stroke-width": 3 } }]
                 }
             },
-            "props": {
-                "categories": {
-                    "diesel": { "name": "Diesel", "color": "#C0392B" },
-                    "petrol": { "name": "Petrol", "color": "#2563A8" }
-                }
+            "categories": {
+                "diesel": { "name": "Diesel", "color": "#C0392B" },
+                "petrol": { "name": "Petrol", "color": "#2563A8" }
             },
             "hover": {}
         }
@@ -49,34 +47,43 @@
     "plot": [
         {
             "type": "cartesian:line",
-            "categories": ["fuel"],
+            "by": "fuel",
             "curve": "monotoneX",
             "props": {
                 "d": { "x": "@x:scaled", "y": "@y:scaled" },
                 "stroke": "@color",
                 "stroke-width": 2.5,
-                "fill": "none",
-                "highlight-stroke-width": 3.5,
-                "others-stroke-opacity": 0.25
-            }
+                "fill": "none"
+            },
+            "highlight": { "stroke-width": 3.5 },
+            "others": { "stroke-opacity": 0.25 }
         },
         {
-            "type": "svg:circle",
-            "categories": ["fuel"],
+            "type": "point",
+            "by": "fuel",
             "select": "last",
-            "props": { "cx": "@x:scaled", "cy": "@y:scaled", "r": 4, "fill": "@color", "stroke": "white", "stroke-width": 2, "highlight-r": 5, "others-opacity": 0.25 }
+            "props": { "r": 4, "fill": "@color", "stroke": "white", "stroke-width": 2 },
+            "highlight": { "r": 5 },
+            "others": { "opacity": 0.25 }
         },
         {
             "type": "svg:text",
-            "categories": ["fuel"],
+            "by": "fuel",
             "select": "last",
             "dodge": 16,
             "layer": "above",
             "props": {
-                "x": "@x:scaled", "y": "@y:scaled", "dx": 9, "dominant-baseline": "middle",
-                "text": "@name", "fill": "@color", "font-size": 13, "font-weight": "bold",
-                "highlight-font-size": 14, "others-opacity": 0.25
-            }
+                "x": "@x:scaled",
+                "y": "@y:scaled",
+                "dx": 9,
+                "dominant-baseline": "middle",
+                "text": "@name",
+                "fill": "@color",
+                "font-size": 13,
+                "font-weight": "bold"
+            },
+            "highlight": { "font-size": 14 },
+            "others": { "opacity": 0.25 }
         }
     ]
 }

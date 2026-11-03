@@ -1,0 +1,78 @@
+{
+    "data": "data.csv",
+    "options": {
+        "height": 380,
+        "margins": {"top": 22, "right": 10, "bottom": 28, "left": 44},
+        "title": "Wohnungsbestände nach Rechtsform",
+        "subtitle": "Anteile an allen Wohnungen, in %",
+        "footer": "<strong>Q:</strong> GWZ/HWZ 1971-2001, RZ 2011, MZ 2020",
+        "locale": { "base": "de", "number": { "percent": " %" } },
+        "transition": 400
+    },
+    "transform": { "type": "share", "column": "Anzahl", "as": "share", "by": ["Geo", "Jahr"] },
+    "mapping": {
+        "x": {
+            "column": "Jahr",
+            "type": "categorical",
+            "scale": { "type": "band", "orientation": "horizontal", "padding": 0.18 },
+            "axis": { "position": "bottom" }
+        },
+        "y": {
+            "column": "share",
+            "type": "numeric",
+            "stacked": true,
+            "scale": { "type": "linear", "orientation": "vertical", "domain": [0, 1], "domainRel": [0, 0] },
+            "axis": { "position": "left", "values": [0, 0.25, 0.5, 0.75, 1], "grid": true, "format": ".0%" },
+            "hover": { "format": ".1%" }
+        },
+        "type": {
+            "column": "Type",
+            "type": "categorical",
+            "legend": { "symbol": { "type": "rect", "size": 14 } },
+            "props": {
+                "categories": {
+                    "Hauseigentum":     { "color": "#264653", "text": "#FFFFFF" },
+                    "Wohnungseigentum": { "color": "#2A9D8F", "text": "#FFFFFF" },
+                    "GBV Miete":        { "color": "#8AB17D", "text": "#1B2B22" },
+                    "Gemeinde Miete":   { "color": "#E9C46A", "text": "#3D2E00" },
+                    "Private Miete":    { "color": "#F4A261", "text": "#3D2200" },
+                    "Sonstige":         { "color": "#E76F51", "text": "#FFFFFF" }
+                }
+            },
+            "hover": {}
+        },
+        "geo": {
+            "column": "Geo",
+            "type": "categorical",
+            "props": { "categories": { "Österreich": {}, "Wien": {} } }
+        }
+    },
+    "facets": { "dim": "geo", "cols": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": 1 }, { "cut": 600, "value": 2 }] } },
+    "annotations": [
+        { "type": "text", "x": "2020", "y": 1, "text": "Mikrozensus", "props": { "dy": -7, "text-anchor": "middle", "font-size": 10 } }
+    ],
+    "plot": [
+        {
+            "id": "bars",
+            "type": "svg:rect",
+            "categories": ["type"],
+            "highlight": "row",
+            "props": {
+                "x": "@x:scaled", "width": "@x:bandwidth",
+                "y": "@y:end:scaled", "height": "@y:height:scaled",
+                "fill": "@color", "stroke": "white", "stroke-width": 0.8,
+                "highlight-opacity": 1, "others-opacity": 0.55
+            }
+        },
+        {
+            "id": "shares",
+            "type": "svg:text",
+            "categories": ["type"],
+            "filter": { "y": { "range": [0.07, null] } },
+            "props": {
+                "x": "@x:scaled:center", "y": "@y:mid:scaled", "text-anchor": "middle", "dominant-baseline": "central",
+                "font-size": 10, "fill": "@text", "pointer-events": "none", "text": { "prop": "format", "ref": "y", "format": ".0%" }
+            }
+        }
+    ]
+}

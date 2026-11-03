@@ -26,31 +26,25 @@
         },
         "facet": {
             "column": "country",
-            "props": {
-                "categories": {
-                    "BE": { "name": "Belgien", "visible": false },
-                    "DE": { "name": "Deutschland", "visible": true },
-                    "FR": { "name": "Frankreich", "visible": true },
-                    "IT": { "name": "Italien", "visible": true },
-                    "NL": { "name": "Niederlande", "visible": false },
-                    "NO": { "name": "Norwegen", "visible": false },
-                    "PL": { "name": "Polen", "visible": false },
-                    "SE": { "name": "Schweden", "visible": false },
-                    "CH": { "name": "Schweiz", "visible": true },
-                    "SK": { "name": "Slowakei", "visible": false },
-                    "SI": { "name": "Slowenien", "visible": false },
-                    "ES": { "name": "Spanien", "visible": false },
-                    "CZ": { "name": "Tschechische Republik", "visible": false },
-                    "HU": { "name": "Ungarn", "visible": true },
-                    "AT": { "name": "Österreich", "visible": true }
-                }
+            "categories": {
+                "BE": { "name": "Belgien", "visible": false },
+                "DE": { "name": "Deutschland", "visible": true },
+                "FR": { "name": "Frankreich", "visible": true },
+                "IT": { "name": "Italien", "visible": true },
+                "NL": { "name": "Niederlande", "visible": false },
+                "NO": { "name": "Norwegen", "visible": false },
+                "PL": { "name": "Polen", "visible": false },
+                "SE": { "name": "Schweden", "visible": false },
+                "CH": { "name": "Schweiz", "visible": true },
+                "SK": { "name": "Slowakei", "visible": false },
+                "SI": { "name": "Slowenien", "visible": false },
+                "ES": { "name": "Spanien", "visible": false },
+                "CZ": { "name": "Tschechische Republik", "visible": false },
+                "HU": { "name": "Ungarn", "visible": true },
+                "AT": { "name": "Österreich", "visible": true }
             },
             "legend": {}
         }
     },
-    "plot": {
-        "props": {
-            "highlight-stroke-width": 2.5
-        }
-    }
+    "plot": { "highlight": { "stroke-width": 2.5 } }
 }

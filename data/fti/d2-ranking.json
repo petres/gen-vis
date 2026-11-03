@@ -46,28 +46,31 @@
         {
             "id": "rank",
             "type": "svg:text",
-            "categories": ["country"],
-            "highlight": "row",
+            "by": "country",
             "props": {
-                "x": 22, "y": "@rank:scaled", "text-anchor": "end", "dominant-baseline": "central", "font-size": 14,
-                "text": { "prop": "format", "ref": "rank", "format": "d" }, "highlight-font-weight": "bold"
-            }
+                "x": 22,
+                "y": "@rank:scaled",
+                "text-anchor": "end",
+                "dominant-baseline": "central",
+                "font-size": 14,
+                "text": { "format": ["@rank", "d"] }
+            },
+            "highlight": { "mode": "row", "font-weight": "bold" }
         },
-        {
-            "id": "dot",
-            "type": "svg:circle",
-            "categories": ["country"],
-            "props": { "cx": 34, "cy": "@rank:scaled", "r": 5, "fill": "@color:scaled" }
-        },
+        { "id": "dot", "type": "point", "by": "country", "props": { "cx": 34, "cy": "@rank:scaled", "r": 5, "fill": "@color:scaled" } },
         {
             "id": "name",
             "type": "svg:text",
-            "categories": ["country"],
-            "highlight": "row",
+            "by": "country",
             "props": {
-                "x": 46, "y": "@rank:scaled", "dominant-baseline": "central", "font-size": 14, "text": "@name",
-                "highlight-font-weight": "bold", "others-opacity": 0.5
-            }
+                "x": 46,
+                "y": "@rank:scaled",
+                "dominant-baseline": "central",
+                "font-size": 14,
+                "text": "@name"
+            },
+            "highlight": { "mode": "row", "font-weight": "bold" },
+            "others": { "opacity": 0.5 }
         }
     ]
 }

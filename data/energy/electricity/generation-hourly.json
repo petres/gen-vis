@@ -16,8 +16,9 @@
             "type": "numeric",
             "scale": { "type": "linear", "orientation": "horizontal", "domain": [0, 23], "domainRel": [0, 0] },
             "axis": {
-                "position": "bottom", "format": "$d",
-                "values": { "prop": "steps", "ref": "totalWidth", "steps": [{ "cut": 0, "value": [0, 6, 12, 18] }, { "cut": 600, "value": [0, 3, 6, 9, 12, 15, 18, 21] }] }
+                "position": "bottom",
+                "format": "$d",
+                "values": { "steps": ["@totalWidth", { "0": { "literal": [0, 6, 12, 18] }, "600": { "literal": [0, 3, 6, 9, 12, 15, 18, 21] } }] }
             },
             "hover": { "format": "$d" }
         },
@@ -33,16 +34,14 @@
             "legend": {
                 "symbol": { "type": "rect", "size": 14 }
             },
-            "props": {
-                "categories": {
-                    "Hydro":  { "text": "#0B5E80" },
-                    "Wind":   { "text": "#2F5F8A" },
-                    "Solar":  { "text": "#6B5500" },
-                    "Gas":    { "text": "#FFFFFF" },
-                    "Coal":   { "text": "#FFFFFF" },
-                    "Oil":    { "color": "#000", "name": "Erdöl", "text": "#FFFFFF" },
-                    "others": { "color": "#CCC", "name": "Andere", "text": "#444444" }
-                }
+            "categories": {
+                "Hydro":  { "text": "#0B5E80" },
+                "Wind":   { "text": "#2F5F8A" },
+                "Solar":  { "text": "#6B5500" },
+                "Gas":    { "text": "#FFFFFF" },
+                "Coal":   { "text": "#FFFFFF" },
+                "Oil":    { "color": "#000", "name": "Erdöl", "text": "#FFFFFF" },
+                "others": { "color": "#CCC", "name": "Andere", "text": "#444444" }
             },
             "hover": {}
         }
@@ -53,32 +52,40 @@
     "plot": [
         {
             "id": "areas",
-            "type": "cartesian:area",
-            "categories": ["type"],
+            "type": "area",
+            "by": "type",
             "curve": "monotoneX",
             "layer": "below",
             "props": {
-                "d": { "x": "@x:scaled", "y0": "@y:start:scaled", "y1": "@y:end:scaled" },
                 "fill": "@color",
+                "d": { "y0": "@y:start:scaled", "y1": "@y:end:scaled" },
                 "fill-opacity": 0.9,
                 "stroke": "#FFFFFF",
-                "stroke-width": 0.8,
-                "highlight-fill-opacity": 1,
-                "others-fill-opacity": 0.35
-            }
+                "stroke-width": 0.8
+            },
+            "highlight": { "fill-opacity": 1 },
+            "others": { "fill-opacity": 0.35 }
         },
         {
             "id": "names",
             "type": "svg:text",
-            "categories": ["type"],
+            "by": "type",
             "select": { "max": "y" },
             "filter": { "y": { "range": [0.075, null] } },
             "layer": "above",
             "props": {
-                "x": "@x:scaled", "y": "@y:mid:scaled", "text-anchor": "middle", "dominant-baseline": "central",
-                "font-size": 11, "font-weight": "bold", "fill": "@text", "text": "@name",
-                "pointer-events": "none", "highlight-opacity": 1, "others-opacity": 0.3
-            }
+                "x": "@x:scaled",
+                "y": "@y:mid:scaled",
+                "text-anchor": "middle",
+                "dominant-baseline": "central",
+                "font-size": 11,
+                "font-weight": "bold",
+                "fill": "@text",
+                "text": "@name",
+                "pointer-events": "none"
+            },
+            "highlight": { "opacity": 1 },
+            "others": { "opacity": 0.3 }
         }
     ]
 }
