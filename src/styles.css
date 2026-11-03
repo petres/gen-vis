@@ -52,13 +52,13 @@
     gap: 8px;
 }
 
-.vis-copy, .vis-csv, .vis-download {
+.vis-copy, .vis-csv, .vis-download-svg, .vis-download {
     padding: 0;
     border: 0;
     background: none;
     cursor: pointer;
 }
-.vis-copy svg, .vis-csv svg, .vis-download svg {
+.vis-copy svg, .vis-csv svg, .vis-download-svg svg, .vis-download svg {
     display: block;
     fill: none;
     stroke: var(--gen-vis-button-color, #BBB);
@@ -66,7 +66,7 @@
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-.vis-copy:hover svg, .vis-csv:hover svg, .vis-download:hover svg {
+.vis-copy:hover svg, .vis-csv:hover svg, .vis-download-svg:hover svg, .vis-download:hover svg {
     stroke: var(--gen-vis-button-hover-color, #777);
 }
 

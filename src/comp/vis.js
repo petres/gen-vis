@@ -19,13 +19,14 @@ const innerWidth = el => {
     return el.getBoundingClientRect().width - sides;
 };
 
-// the icons of the buttons, copy, check, file-text and download of the
-// feather icons
+// the icons of the buttons, copy, check, file-text, image and download of
+// the feather icons
 const icons = {
     copy: 'M11 9h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1',
     copied: 'M20 6L9 17l-5-5',
     csv: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8',
     download: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3',
+    svg: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM21 15l-5-5L5 21',
 };
 
 // a button of the footer with its icon, type="button" does not submit a
@@ -154,7 +155,7 @@ const createVis = app => {
     const parts = { top: null, left: null, right: null, bottom: null };
     const legends = {};
     let body = null, bodyKind = null, plots = null, sides = null, facets = null, facetsIn = null, drawnView = null;
-    let buttons = null, copyButton = null, csvButton = null, downloadButton = null;
+    let buttons = null, copyButton = null, csvButton = null, svgButton = null, downloadButton = null;
     const headerSlot = slotPart(), footerSlot = slotPart(), buttonsSlot = slotPart();
     root.appendChild(footer);
 
@@ -345,14 +346,14 @@ const createVis = app => {
         app.drawn();
     };
 
-    // the buttons of the page (the slot buttons), copy, csv and download,
+    // the buttons of the page (the slot buttons), copy, csv, svg and download,
     // at the right end of the plots
     const drawButtons = own => {
-        const { copy, csv, download } = app.props();
-        if (!(own.buttons || (copy && clipboard) || csv || download)) {
+        const { copy, csv, svg, download } = app.props();
+        if (!(own.buttons || (copy && clipboard) || csv || svg || download)) {
             buttons?.remove();
             buttonsSlot.clear();
-            buttons = copyButton = csvButton = downloadButton = null;
+            buttons = copyButton = csvButton = svgButton = downloadButton = null;
             return;
         }
         buttons ??= footer.appendChild(el('div', { class: 'vis-buttons' }));
@@ -360,6 +361,7 @@ const createVis = app => {
         const t = texts();
         copyButton = keepIf(copyButton, copy && clipboard, () => button('vis-copy', () => copyPng()));
         csvButton = keepIf(csvButton, csv, () => button('vis-csv', () => files.csv().catch(app.showError)));
+        svgButton = keepIf(svgButton, svg, () => button('vis-download-svg', () => files.svg().catch(console.error)));
         downloadButton = keepIf(downloadButton, download, () => button('vis-download', () => savePng()));
         if (copyButton) {
             patch(copyButton, { type: 'button', class: 'vis-copy', title: copied ? t.copied : t.copy, 'aria-label': copied ? t.copied : t.copy });
@@ -369,14 +371,18 @@ const createVis = app => {
             patch(csvButton, { type: 'button', class: 'vis-csv', title: t.csv, 'aria-label': t.csv });
             patch(csvButton.querySelector('path'), { d: icons.csv });
         }
+        if (svgButton) {
+            patch(svgButton, { type: 'button', class: 'vis-download-svg', title: t.svg, 'aria-label': t.svg });
+            patch(svgButton.querySelector('path'), { d: icons.svg });
+        }
         if (downloadButton) {
             patch(downloadButton, { type: 'button', class: 'vis-download', title: t.download, 'aria-label': t.download });
             patch(downloadButton.querySelector('path'), { d: icons.download });
         }
-        const order = [copyButton, csvButton, downloadButton].filter(Boolean);
+        const order = [copyButton, csvButton, svgButton, downloadButton].filter(Boolean);
         order.reduceRight((after, b) => place(buttons, b, after), null);
         if (own.buttons)
-            buttonsSlot.draw(buttons, own.buttons, { save: files.save, copy: files.copy, csv: files.csv, canCopy: clipboard }, order[0] ?? null);
+            buttonsSlot.draw(buttons, own.buttons, { save: files.save, copy: files.copy, csv: files.csv, svg: files.svg, canCopy: clipboard }, order[0] ?? null);
         else
             buttonsSlot.clear();
     };

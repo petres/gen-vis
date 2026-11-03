@@ -41,6 +41,8 @@ export interface GenVisProps {
     copy?: boolean;
     /** A button to save the data shown as CSV, a string is the name of the file. */
     csv?: boolean | string;
+    /** A button to save the SVG, a string is the name of the file. */
+    svg?: boolean | string;
     /** The width of the PNG in pixels, `screen` for the one on the screen. */
     imageWidth?: number | 'screen' | null;
     /** Loads the definition and the data when it is near the viewport, `true` within 400px, a string is the `rootMargin`, e.g. `'800px 0px'`. */
@@ -60,9 +62,54 @@ export interface GenVisMethods {
     exportPng(name?: string): Promise<void>;
     copyPng(): Promise<void>;
     image(): Promise<Blob>;
+    /** The SVG of the image (a string), made for Word and editors, see the readme "Static export". */
+    exportSvg(options?: ExportSvgOptions): Promise<string>;
     exportCsv(name?: string): Promise<void>;
     /** Highlights the rows of the values of mappings, e.g. `{ country: 'AT' }`, null ends it. */
     setHighlight(entry: Record<string, unknown> | null): void;
+}
+
+/** The parts of the images, see the readme "Static export". */
+export type ImagePart = 'title' | 'subtitle' | 'selection' | 'legend' | 'plot' | 'footer';
+
+/** The options of exportSvg. */
+export interface ExportSvgOptions {
+    /** The parts of the image, cropped to them, by default all. */
+    parts?: ImagePart[] | null;
+    /** The unit of the width and the height, the viewBox is in CSS pixels. */
+    unit?: 'px' | 'cm' | 'mm' | 'in';
+    /** The background, a CSS color, null none, by default the one of the PNG. */
+    background?: string | null;
+}
+
+/** The options of `window.genVisExport` of the export page (dist-lib/export.html), version 1, see the readme "Static export". */
+export interface GenVisExportOptions {
+    def?: Definition | string;
+    defUrl?: string;
+    data?: Row[] | string | { base64: string };
+    dataUrl?: string;
+    baseUrl?: string;
+    width?: number | string;
+    padding?: number;
+    unit?: 'px' | 'cm' | 'mm' | 'in';
+    css?: string | string[];
+    classes?: string | string[];
+    globals?: Record<string, unknown>;
+    state?: State;
+    parts?: ImagePart[] | null;
+    fontSize?: number | string;
+    background?: string | null;
+    schemes?: Record<string, string[]>;
+    timeout?: number;
+}
+
+/** The result of `window.genVisExport`, the sizes in CSS pixels, `box` the rectangle of the image in the page. */
+export interface GenVisExportResult {
+    version: 1;
+    svg: string;
+    width: number;
+    height: number;
+    box: { x: number; y: number; width: number; height: number };
 }
 
 /** The events of the visualisation, e.g. `on('hover', e => …)`, the props `on…` (e.g. `onHover`) and the events of the Vue component. */
@@ -99,8 +146,8 @@ export interface GenVisSlotFunctions {
     footer?(props: { footer?: string }): SlotContent;
     /** The content of the hover instead of the table or the templates of options.hover. */
     hover?(props: HoverSlotProps): SlotContent;
-    /** Buttons of the PNG and the CSV, `canCopy` if the clipboard takes images. */
-    buttons?(props: { save: () => Promise<void>; copy: () => Promise<void>; csv: () => Promise<void>; canCopy: boolean }): SlotContent;
+    /** Buttons of the PNG, the CSV and the SVG, `canCopy` if the clipboard takes images. */
+    buttons?(props: { save: () => Promise<void>; copy: () => Promise<void>; csv: () => Promise<void>; svg: () => Promise<void>; canCopy: boolean }): SlotContent;
 }
 
 /** The listeners of the events as props, e.g. `{ onSelect: e => … }` of mountGenVisElement. */

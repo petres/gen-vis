@@ -64,6 +64,10 @@ export type Locale =
                */
               csv?: string;
               /**
+               * The button of the SVG.
+               */
+              svg?: string;
+              /**
                * The kind of a facet with a hover, e.g. chart.
                */
               chart?: string;

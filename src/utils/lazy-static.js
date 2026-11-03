@@ -12,6 +12,7 @@ import * as polar from '@/coords/polar-plot.js';
 import * as geo from '@/utils/geo.js';
 import * as parquet from '@/utils/parquet.js';
 import * as exporting from '@/utils/export.js';
+import * as svg from '@/utils/export-svg.js';
 import * as screenshot from 'modern-screenshot';
 
 export const lazy = {
@@ -27,5 +28,6 @@ export const lazy = {
     geo: async () => geo,
     parquet: async () => parquet,
     exporting: async () => exporting,
+    svg: async () => svg,
     screenshot: async () => screenshot,
 };

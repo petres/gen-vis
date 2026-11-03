@@ -196,6 +196,7 @@
                                 "copy": { "type": "string", "description": "The button of the copy of the PNG." },
                                 "copied": { "type": "string", "description": "The title of the copy after a copy." },
                                 "csv": { "type": "string", "description": "The button of the CSV." },
+                                "svg": { "type": "string", "description": "The button of the SVG." },
                                 "chart": { "type": "string", "description": "The kind of a facet with a hover, e.g. chart." },
                                 "keys": { "type": "string", "description": "The description of the keys of the hover." }
                             }

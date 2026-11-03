@@ -44,6 +44,8 @@ const defaults = {
     copy: false,
     // a button in the footer to save the data shown as CSV, a string is the name of the file
     csv: false,
+    // a button in the footer to save it as an SVG, a string is the name of the file
+    svg: false,
     // the width of the images, independent of the screen, the one of the
     // definition otherwise or 1200, `screen` is the one on the screen
     imageWidth: null,
@@ -72,7 +74,7 @@ const copyOf = v => v ? JSON.parse(JSON.stringify(v)) : null;
  * definition or new data is loaded again, a new state, globals and
  * highlight are applied), `on(event, fn)` and `off(event, fn)` of the
  * events, `destroy()` removes it, the methods of the files (`exportPng`,
- * `copyPng`, `image`, `exportCsv`), `setHighlight(entry)`, `state` (the
+ * `copyPng`, `image`, `exportSvg`, `exportCsv`), `setHighlight(entry)`, `state` (the
  * changes of the user) and `el`, its element.
  */
 const createGenVis = (element, given = {}, { root = false } = {}) => {
@@ -207,7 +209,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         props: () => props,
         slots: () => props.slots,
         emit,
-        files: { save: () => exportPng(), copy: () => copyPng(), csv: () => exportCsv() },
+        files: { save: () => exportPng(), copy: () => copyPng(), csv: () => exportCsv(), svg: () => saveSvg() },
         stateChanged: () => emit('update:state', store.state),
         drawn: () => drawDebug(),
         showError: e => showError(e),
@@ -332,9 +334,9 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             throw new Error('The visualisation is not loaded yet, a new definition or new data is loaded.');
     };
 
-    // the visualisation as a PNG (a Blob) without the form elements, of a
-    // copy of the width of the images, see utils/export.js
-    const image = async () => {
+    // a copy of the visualisation for the images (see staticCopy of
+    // utils/export.js), the width of the images and the module of the export
+    const imageSource = async () => {
         assertLoaded();
         // the rows already loaded, the data is not loaded and parsed again,
         // taken before the export is loaded, a new definition given
@@ -348,15 +350,30 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         };
         // the classes of the page, e.g. of the styles of a card
         const classes = [...outer.classList].filter(c => c != 'vis-loading' && c != 'vis-outer');
-        const { renderImage, selection, defaultWidth } = await lazy.exporting();
+        const exporting = await lazy.exporting();
         const width = props.imageWidth == 'screen'
             ? outer.querySelector('.vis').getBoundingClientRect().width
-            : Number(props.imageWidth || def.options.width || defaultWidth);
-        return await renderImage(outer, (holder, done) => {
+            : Number(props.imageWidth || def.options.width || exporting.defaultWidth);
+        const mount = (holder, done) => {
             const shown = createGenVis(holder, { ...copy, onRendered: done.resolve, onError: done.reject });
             shown.el.classList.add(...classes);
-            return () => shown.destroy();
-        }, { width, text: selection(def), facets: def.facets?.dim });
+            return shown;
+        };
+        return { exporting, mount, width };
+    };
+
+    // the visualisation as a PNG (a Blob) without the form elements, of a
+    // copy of the width of the images, see utils/export.js
+    const image = async () => {
+        const { exporting, mount, width } = await imageSource();
+        return await exporting.renderImage(outer, mount, { width });
+    };
+
+    // the visualisation as an SVG (a string) of the copy of the images, of
+    // the `parts` chosen, see README "Static export" and utils/export-svg.js
+    const exportSvg = async (options = {}) => {
+        const { exporting, mount, width } = await imageSource();
+        return await exporting.renderSvg(outer, mount, { ...options, width });
     };
 
     // the name of a file, the one of the prop, e.g. `download`, or the
@@ -380,6 +397,11 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         saveFile(new Blob([csvOf(store, rows)], { type: 'text/csv' }), `${name ?? fileName(props.csv)}.csv`);
     };
     const copyPng = () => copyImage(image());
+    const saveSvg = async name => {
+        const svg = await exportSvg();
+        const { saveFile } = await lazy.exporting();
+        saveFile(new Blob([svg], { type: 'image/svg+xml' }), `${name ?? fileName(props.svg)}.svg`);
+    };
 
     // the props given since the last update, applied together: a new
     // definition or new data is loaded again, the others are applied
@@ -409,7 +431,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         }
         if ('highlight' in next)
             setHighlight(props.highlight);
-        if (['download', 'copy', 'csv', 'slots'].some(changed))
+        if (['download', 'copy', 'csv', 'svg', 'slots'].some(changed))
             vis?.invalidate();
         if (changed('debug'))
             render();
@@ -435,6 +457,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             return instance;
         },
         image,
+        exportSvg,
         exportPng,
         exportCsv,
         copyPng,

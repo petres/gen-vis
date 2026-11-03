@@ -18,6 +18,7 @@ const props = {
     download: { type: [Boolean, String], default: false },
     copy: { type: Boolean, default: false },
     csv: { type: [Boolean, String], default: false },
+    svg: { type: [Boolean, String], default: false },
     imageWidth: { type: [Number, String], default: null },
     lazy: { type: [Boolean, String], default: false },
 };
@@ -128,6 +129,7 @@ const createVueComponent = Vue => {
             },
             // the methods of the visualisation, see README "PNG"
             image() { return this.vis.image() },
+            exportSvg(options) { return this.vis.exportSvg(options) },
             exportPng(name) { return this.vis.exportPng(name) },
             exportCsv(name) { return this.vis.exportCsv(name) },
             copyPng() { return this.vis.copyPng() },
