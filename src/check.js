@@ -4,7 +4,12 @@
 // registered plot types and coordinate systems are known to validateDef
 export { resolveParents } from '@/store';
 export { validateDef } from '@/utils/validate';
-export { migrate } from '@/utils/migrate';
-export { normalize } from '@/utils/normalize';
+export { migrate, migrateParts } from '@/utils/migrate';
 export { registerPlotType } from '@/plots';
 export { registerCoord } from '@/coords';
+
+import { normalize as normalizeDef } from '@/utils/normalize';
+import { plotTypes } from '@/plots';
+
+// the internal form of a definition of 4.0, of the registered plot types
+export const normalize = (def, options = {}) => normalizeDef(def, { plotTypes, ...options });

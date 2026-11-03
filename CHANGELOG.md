@@ -3,6 +3,57 @@
 The changes of the versions, the newest first, the ones on npm without
 0.7.0 and 2.0.0-alpha.1. The details are in the commits.
 
+## 4.0.0 (unreleased)
+
+A shorter definition language, a definition of 3.x is migrated while it is
+loaded (the console says so with `check`), `migrate(def)` and
+`migrateParts(parts)` of `@preschen/gen-vis/check` write it in 4.0, see the
+readme (Checks outside the browser). The renderer is the one of 3.x, a
+definition of 4.0 is written in its form (`normalize`), so the charts are
+the same. The breaking changes:
+
+- The props are expressions, close to JSON Logic: an operator is an object of
+  one key, e.g. `{"*": ["@innerWidth", 0.013]}`, `{"+": ["@x:scaled", -14]}`,
+  `{"steps": ["@totalWidth", {"0": 220, "550": 250}]}`, `{"format": ["@y",
+  ",.1f"]}`, `{"match": ["@level", {"header": 4.5}, 0]}`, `{"literal": v}`,
+  also comparisons, `if`, `and`, `or`, `not`, `cat`, `min`, `max`, `round`
+  and `var`. The props of `prop` of 3.x (`relative`, `steps`, `format`,
+  `match`, `ref`, `fixed`) are no props anymore, an object of one key which is
+  an operator is no nested prop anymore.
+- `calc` is an expression of the row (`expr`), not `op`, `columns` and
+  `scale`; the new transform `filter` keeps the rows of an expression, the
+  later transforms, the plots and the scales have only them.
+- The parts of the categories of a mapping (`categories`, `scheme`,
+  `common`, `fromData`, `order`, `ranks`) are parts of the mapping, not of
+  `props`; `domain` and `nice` of a mapping are the ones of its scale,
+  `format` the one of its axis and hover; a text is the mapping of a column.
+- `x` and `y` (of polar plots also `angle` and `radius`) have a scale of the
+  orientation of their name and an axis by default, `"axis": false`,
+  `"scale": false` and `"orientation": null` leave them out; an axis is at the
+  position of the orientation of its scale.
+- A mapping without a type is not categorical anymore: its type follows from
+  its parts (categories, the type of its scale, the categories of plots and
+  facets) or from the values of the column (numbers numeric, dates date); a
+  scale without a type is the one of the type of the mapping (`linear`,
+  `time`, `band` of bars, `point`, `ordinal`), not `linear`.
+- `by` of a plot instead of `categories`, `highlight` and `others` objects
+  of props instead of the props `highlight-` and `others-` (they still work),
+  `"highlight": {"mode": "row", ...}`.
+- Plot types without the prefix of the coordinate system, e.g. `line`,
+  `area`, `bar`, `point`, `text`, `arc`, `region`, have default props (the
+  `defaults` of the types, also of registered ones): a line draws
+  `"d": {"x": "@x:scaled", "y": "@y:scaled"}` in the color of its category,
+  a definition writes only the props which differ; the full names have none.
+- The schema is the one of 4.0 (`@preschen/gen-vis@4/schema.json`),
+  `validateDef` checks a definition of 4.0, one of 3.x gets the hint to
+  migrate it first.
+
+The parts which are not bound to the browser, the expressions, the
+transforms, merging, normalize and migrate, are specified by the fixtures
+of `spec/`, e.g. for implementations in Python or R, the tests run them. The
+definitions of `data/` and of the page are the ones of 4.0, the ones of 3.1
+are in `tests/legacy/`.
+
 ## 3.1.0
 
 The standalone script in more sizes: `dist-lib/gen-vis.core.js` (less than
