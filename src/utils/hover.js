@@ -58,14 +58,18 @@ const nearestWithRows = (scale, keys) => {
 };
 
 // the row of `rows` nearest to `value`, of stacked values the segment of the
-// value, outside of the stacks the closest one, undefined without a value
+// value, outside of the stacks the closest one, undefined without a value,
+// rows without a value are not the nearest one (a stack of them has no
+// extent, null is no 0)
 const nearestRow = (rows, value, v, stackOf) => {
     if (value === undefined)
         return undefined;
     const distance = stackOf ? row => {
         const [lo, hi] = d3.extent(stackOf(row));
+        if (lo === undefined)
+            return Infinity;
         return value < lo ? lo - value : (value > hi ? value - hi : 0);
-    } : row => Math.abs(row[v] - value);
+    } : row => row[v] === null || row[v] === undefined ? Infinity : Math.abs(row[v] - value);
     return d3.least(rows, distance);
 };
 

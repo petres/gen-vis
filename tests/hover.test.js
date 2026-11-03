@@ -113,6 +113,12 @@ describe('the parts of the hover', () => {
         expect(nearestRow(rows, 9, 'y', stackOf)).toBe(rows[1]);
     });
 
+    test('a row without a value is not the nearest one, also not in a stack', () => {
+        const rows = [{ y: null }, { y: 10 }];
+        expect(nearestRow(rows, 1, 'y')).toBe(rows[1]);
+        expect(nearestRow(rows, 50, 'y', row => [row.y, row.y])).toBe(rows[1]);
+    });
+
     test('the nearest point within the radius', () => {
         const points = [[10, 10, 'a'], [100, 100, 'b'], [NaN, 5, 'c']];
         const find = pointFinder(points, 30);
