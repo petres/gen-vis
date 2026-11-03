@@ -4,7 +4,7 @@ export { applyTransforms, transformTypes };
 
 import { toDate, toNumber } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
-import { bind, constant } from "@/utils/expr";
+import { bind, constant, refNames } from "@/utils/expr";
 
 /**
  * The transforms of a definition compute columns of the data in the browser,
@@ -259,11 +259,21 @@ const filled = (t, globals) => {
  * the files of lookups by their url, see the store.
  */
 const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null) => {
+    const present = new Set(rows.length ? Object.keys(rows[0]) : []);
+    // the columns of the transforms before, the names of an expression which
+    // are none of them or of the rows are globals
+    const own = new Set();
     const list = [transforms].flat().map(raw => {
         const t = filled(raw, globals);
-        return { t, inUtc: utc.has(t.column) || utc.has(t.as ?? t.column) };
+        // the values of the globals of an expression are part of the key, so
+        // e.g. a calc of "@factor" is computed again if the global changes
+        const refs = t.expr === undefined ? [] : [...new Set(refNames(t.expr))]
+            .filter(n => typeof n == 'string' && !own.has(n) && !present.has(n) && Object.hasOwn(globals, n));
+        if (t.type != 'filter')
+            own.add(t.as ?? t.column);
+        return { t, inUtc: utc.has(t.column) || utc.has(t.as ?? t.column), refs: refs.map(n => [n, globals[n] ?? null]) };
     });
-    const keys = list.map(({ t, inUtc }) => JSON.stringify([t, inUtc]));
+    const keys = list.map(({ t, inUtc, refs }) => JSON.stringify([t, inUtc, refs]));
     const steps = before?.steps ?? [];
     let first = 0;
     while (first < list.length && first < steps.length && steps[first].key === keys[first])
@@ -308,7 +318,6 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
             };
         });
         // an expression of the row, its names are the columns of the row and the globals
-        const present = new Set(rows.length ? Object.keys(rows[0]) : []);
         const expr = raw => bind(raw, name => typeof name == 'symbol' ? undefined
             : (!columns.has(name) && !present.has(name) && Object.hasOwn(globals, name) ? constant(globals[name]) : i => get(i, name)));
         let groups = null;

@@ -71,6 +71,25 @@ describe('transforms', () => {
         expect(after.get('sum')).toEqual(applyTransforms(rows, transforms, { base: 2020 }).get('sum'));
     });
 
+    test('a calc and a filter are computed again if a global of their expression changes, not of a column', () => {
+        const transforms = [
+            { type: 'year', column: 'date', as: 'year' },
+            { type: 'calc', as: 'w', expr: { '*': ['@value', '@f'] } },
+            { type: 'filter', expr: { '>': ['@value', '@min'] } },
+            { type: 'calc', as: 'y', expr: { '+': ['@year', 0] } },
+        ];
+        const before = applyTransforms(rows, transforms, { f: 1, min: 0, year: 1 });
+        expect(before.get('w')).toEqual([10, 30, 40, 5, null, 15]);
+        // `year` is a column of a transform before, not the global
+        expect(applyTransforms(rows, transforms, { f: 1, min: 0, year: 2 }, new Set(), before)).toBe(before);
+        const after = applyTransforms(rows, transforms, { f: 10, min: 0, year: 1 }, new Set(), before);
+        expect(after.get('year')).toBe(before.get('year'));
+        expect(after.get('w')).toEqual([100, 300, 400, 50, null, 150]);
+        const filtered = applyTransforms(rows, transforms, { f: 10, min: 20, year: 1 }, new Set(), after);
+        expect(filtered.get('w')).toBe(after.get('w'));
+        expect(filtered.kept).toEqual([1, 2]);
+    });
+
     test('a rolling mean of large and small values, infinite values are missing', () => {
         const values = v => v.map(value => ({ value: String(value) }));
         expect(applyTransforms(values([1e17, 1, 1, 1]), { type: 'rolling', column: 'value', size: 2 }).get('value').slice(2)).toEqual([1, 1]);

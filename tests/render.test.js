@@ -1624,6 +1624,33 @@ describe('transforms', () => {
         saved.mockRestore();
         expect(errors).toEqual([]);
     });
+
+    test('a calc and a filter of globals are computed again if a global changes', async () => {
+        const values = (id, list) => ({ id, name: id, ref: id, type: 'radio', values: list.map(v => ({ id: v, name: v, value: v })) });
+        const def = {
+            options: { width: 600, height: 300 },
+            globals: { min: '0', f: '1' },
+            transform: [{ type: 'calc', as: 'w', expr: { '*': ['@v', '@f'] } }, { type: 'filter', expr: { '>': ['@v', '@min'] } }],
+            formElements: [values('min', ['0', '2']), values('f', ['1', '100'])],
+            mapping: { x: 'x', y: 'w' },
+            plot: { type: 'point', props: { 'data-w': '@y' } },
+        };
+        const data = [{ x: '1', v: '1' }, { x: '2', v: '2' }, { x: '3', v: '3' }];
+        const { el, vis } = await mountVis({ def, data });
+        const shown = () => [...el.querySelectorAll('.vis-plot circle')].map(c => c.getAttribute('data-w'));
+        expect(shown()).toEqual(['1', '2', '3']);
+        const radios = el.querySelectorAll('input[type=radio]');
+        radios[1].click();
+        await nextTick();
+        expect(shown()).toEqual(['3']);
+        radios[3].click();
+        await nextTick();
+        expect(shown()).toEqual(['300']);
+        vis.update({ globals: { min: '0', f: '1' } });
+        await nextTick();
+        expect(shown()).toEqual(['1', '2', '3']);
+        expect(errors).toEqual([]);
+    });
 });
 
 describe('the order and the ranks of categories', () => {
