@@ -420,13 +420,14 @@ const shorten = (chains, plotTypes = registered) => {
  * definition, e.g. a parent, is migrated without the parts its mappings
  * need as a whole (type, scale and axis, see migrateParts) and not shorter,
  * `coord` is the coordinate system of the definition of the part, by
- * default its own.
+ * default its own. Without `short` the definition is not written shorter,
+ * e.g. of the load, which only needs its meaning, not its shorter forms.
  */
-const migrate = (raw, { plotTypes = registered, part = false, coord = raw?.options?.coord ?? 'cartesian', legacy = isLegacy(raw) } = {}) => {
+const migrate = (raw, { plotTypes = registered, part = false, coord = raw?.options?.coord ?? 'cartesian', legacy = isLegacy(raw), short = true } = {}) => {
     if (!isObject(raw))
         return raw;
     const def = legacy ? migrateLegacy(raw, { part, coord }) : clone(raw);
-    if (!part)
+    if (!part && short)
         shorten([[def]], plotTypes);
     return def;
 };

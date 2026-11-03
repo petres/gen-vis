@@ -199,7 +199,7 @@ const toInternal = async (def, url, check) => {
     if (isLegacy(def)) {
         if (check)
             console.warn(`gen-vis ${url ?? 'inline definition'}: a definition of gen-vis 3.x, it is migrated while it is loaded, see migrate of @preschen/gen-vis/check`);
-        def = (await lazy.migrate()).migrate(def);
+        def = (await lazy.migrate()).migrate(def, { short: false });
     }
     return normalize(def, { plotTypes });
 };

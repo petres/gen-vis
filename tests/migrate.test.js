@@ -112,6 +112,8 @@ describe('migrate', () => {
         expect(migrate(migrated)).toEqual(migrated);
         const internal = normalize(migrated, { plotTypes });
         expect(differences(canonical(internal), canonical(def))).toEqual([]);
+        // the migration of the load, not written shorter, has the same internal form
+        expect(differences(canonical(normalize(migrate(def, { short: false }), { plotTypes })), canonical(def))).toEqual([]);
         // the definition of 4.0 in data/, migrated by its parts (shorten) and
         // written shorter, has the same internal form, the types of its
         // mappings without one are the ones of their values (see inferTypes),
