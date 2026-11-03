@@ -8,7 +8,7 @@ import { applyPatches, mergeAll, prepareDef, variants } from "@/utils/def";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
 import { loadLocale } from "@/utils/locale";
 import { loadCoord } from "@/coords";
-import { loadColors, loadTransition } from "@/utils/d3";
+import { loadColors } from "@/utils/d3";
 import { lazy } from "@/utils/lazy";
 import { isObject } from "@/utils/values";
 
@@ -157,10 +157,9 @@ const geoOf = (module, json, def = {}) => {
  * the ones of the patches of the entries of its form elements (see
  * variants): the colors of d3 (`colors`, of schemes and interpolators), the
  * coordinate systems (`coords`, the one of the definition first, undefined
- * for the default), the parts of maps (`geo`), the transitions,
- * the transforms, the legend of a scale of colors (`colorLegend`, a mapping
- * with a legend without props) and the locales (`locales`, the one of the
- * definition first).
+ * for the default), the parts of maps (`geo`), the transforms, the legend
+ * of a scale of colors (`colorLegend`, a mapping with a legend without
+ * props) and the locales (`locales`, the one of the definition first).
  */
 const requirements = defOrg => {
     const all = variants(defOrg);
@@ -169,7 +168,6 @@ const requirements = defOrg => {
         colors: mappings.some(m => Boolean(m.scale?.scheme || m.scale?.interpolator || m.props?.scheme)),
         coords: [...new Set(all.filter((d, i) => i == 0 || d.options?.coord !== undefined).map(d => d.options?.coord ?? undefined))],
         geo: all.some(d => Boolean(d.geo?.data)),
-        transition: all.some(d => Boolean(d.options?.transition || d.options?.highlight?.transition)),
         transforms: all.some(d => Boolean(d.transform)),
         colorLegend: mappings.some(m => m.legend && !m.props),
         locales: all.filter((d, i) => i == 0 || d.options?.locale !== undefined).map(d => d.options?.locale ?? undefined),
@@ -182,12 +180,11 @@ const loadParts = need => {
     const parts = Promise.all([
         need.colors ? loadColors() : null,
         need.geo ? lazy.geo() : null,
-        need.transition ? loadTransition() : null,
         need.transforms ? loadTransforms() : null,
         need.colorLegend ? lazy.colorLegend() : null,
         Promise.all(need.coords.map(name => loadCoord(name))),
         ...need.locales.map(locale => loadLocale(locale)),
-    ]).then(([, geo, , , colorLegend, coords]) =>
+    ]).then(([, geo, , colorLegend, coords]) =>
         ({ coords: new Map(need.coords.map((name, i) => [name ?? 'cartesian', markRaw(coords[i])])), geo, colorLegend }));
     // the errors are the ones of the load, not unhandled ones
     parts.catch(() => {});

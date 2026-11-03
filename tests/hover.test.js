@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, onTestFinished } from 'vitest';
 import { createApp, nextTick } from 'vue';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { GenVis } from '@/index.js';
 import { orderOf, byOrder, sortedByOrder, nearestWithRows, nearestRow, pointFinder, pointPosition, placed, positionsInOrder, clamp } from '@/utils/hover';
 import { errors, useDom, mount, rendered, pointer } from './dom.js';
+import { targetOf } from '@/utils/dom';
 
 useDom();
 
@@ -178,6 +179,12 @@ describe('accessibility', () => {
 
 describe('the end of a facet', () => {
     test('its transitions are interrupted', async () => {
+        // jsdom has no transforms of svg, the translations of the ticks of axes are interpolated by them
+        Object.defineProperty(SVGElement.prototype, 'transform', { configurable: true, get() {
+            const [x = 0, y = 0] = (this.getAttribute('transform')?.match(/-?\d*\.?\d+(?:e-?\d+)?/g) ?? []).map(Number);
+            return { baseVal: { consolidate: () => ({ matrix: { a: 1, b: 0, c: 0, d: 1, e: x, f: y } }) } };
+        } });
+        onTestFinished(() => delete SVGElement.prototype.transform);
         const el = document.body.appendChild(document.createElement('div'));
         const app = createApp(GenVis, { def: lineDef({ transition: 5000 }), data: 'year,value,land\n2020,1,Wien\n2021,2,Wien\n2020,2,Tirol\n2021,3,Tirol' });
         app.mount(el);
@@ -186,8 +193,8 @@ describe('the end of a facet', () => {
         el.querySelector('.vis-legend-entry[data-key="Wien"]').click();
         await nextTick();
         const nodes = [...el.querySelectorAll('svg.vis-svg *')];
-        expect(nodes.some(n => n.__transition)).toBe(true);
+        expect(nodes.some(n => targetOf(n))).toBe(true);
         app.unmount();
-        expect(nodes.filter(n => n.__transition)).toEqual([]);
+        expect(nodes.filter(n => targetOf(n))).toEqual([]);
     });
 });

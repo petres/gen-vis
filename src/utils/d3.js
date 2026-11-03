@@ -2,8 +2,7 @@
 // d3, e.g. without forces and zoom. The names of the definitions, e.g. of
 // scales and interpolators, are looked up in the registries below. The
 // colors of d3-scale-chromatic are only loaded for definitions which name
-// one (see loadColors), the transitions for the ones with a transition (see
-// loadTransition), the projections of maps with the first map (see
+// one (see loadColors), the projections of maps with the first map (see
 // coords/geo.js).
 import * as d3Scale from 'd3-scale';
 import { byPrefix, named } from '@/utils/registry';
@@ -53,16 +52,6 @@ export const schemeNames = registry([
 let colors = null;
 export const loadColors = async () => colors ??= await lazy.colors();
 
-// the transitions of selections, of the axes (see utils/axis.js) with
-// options.transition, d3-transition adds them to the selections of d3, e.g.
-// `transition()` and `interrupt()`, the plots and the highlight move with
-// the animations of utils/dom.js, which are always there
-let transitions = null;
-export const loadTransition = () => transitions ??= lazy.transition().catch(error => {
-    transitions = null;
-    throw error;
-});
-export const hasTransitions = selection => typeof selection.interrupt == 'function';
 const loaded = () => {
     if (!colors)
         throw new Error('The colors of d3 are not loaded, see loadColors');

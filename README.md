@@ -127,7 +127,6 @@ definitions (~11 kB) with the first one, the colors of d3
 (`d3-scale-chromatic`, ~8 kB) for definitions which name a scheme or an
 interpolator, the parts of maps (`d3-geo`, `topojson-client`, ~13 kB) with
 the first map, the parts of polar plots (~5 kB) with the first one, the
-transitions (`d3-transition`, ~5 kB) for definitions with a `transition`, the
 transforms (~2 kB), the legend of scales of colors (~2 kB), the languages of
 `Intl` (~1 kB) other than `de` and `en`, the parquet reader (~18 kB) for
 parquet data and the PNG and the CSV (~11 kB) with the first one.

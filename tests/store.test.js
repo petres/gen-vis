@@ -287,7 +287,7 @@ describe('requirements', () => {
 
     test('nothing of a plain definition but the coordinate system and the locale', () => {
         expect(requirements(def)).toEqual({
-            colors: false, coords: [undefined], geo: false, transition: false, transforms: false, colorLegend: false, locales: [undefined],
+            colors: false, coords: [undefined], geo: false, transforms: false, colorLegend: false, locales: [undefined],
         });
     });
 
@@ -301,12 +301,11 @@ describe('requirements', () => {
                 k: { column: 'k', props: { scheme: 'Tableau10', fromData: true }, legend: {} },
             },
         });
-        expect(need).toEqual({ colors: true, coords: ['polar'], geo: true, transition: true, transforms: true, colorLegend: true, locales: ['de'] });
+        expect(need).toEqual({ colors: true, coords: ['polar'], geo: true, transforms: true, colorLegend: true, locales: ['de'] });
         expect(requirements({ mapping: { c: { scale: { scheme: 'Blues' } } } }).colors).toBe(true);
         expect(requirements({ mapping: { k: { props: { scheme: 'Tableau10' } } } }).colors).toBe(true);
         // a legend of categories is no legend of colors
         expect(requirements({ mapping: { k: { props: {}, legend: {} } } }).colorLegend).toBe(false);
-        expect(requirements({ options: { highlight: { transition: 200 } } }).transition).toBe(true);
     });
 
     test('the parts of the patches of form elements', () => {
@@ -316,7 +315,7 @@ describe('requirements', () => {
             null,
             { mapping: { y: null } },
         ]) });
-        expect(need).toEqual({ colors: true, coords: [undefined], geo: false, transition: true, transforms: true, colorLegend: true, locales: [undefined, 'en'] });
+        expect(need).toEqual({ colors: true, coords: [undefined], geo: false, transforms: true, colorLegend: true, locales: [undefined, 'en'] });
     });
 
     test('a name of a color which is no part of a scale or of props needs no colors', () => {

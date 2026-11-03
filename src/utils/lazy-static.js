@@ -13,7 +13,6 @@ import * as geo from '@/utils/geo.js';
 import * as parquet from '@/utils/parquet.js';
 import * as exporting from '@/utils/export.js';
 import * as screenshot from 'modern-screenshot';
-import 'd3-transition';
 
 export const lazy = {
     validate: async () => {
@@ -29,5 +28,4 @@ export const lazy = {
     parquet: async () => parquet,
     exporting: async () => exporting,
     screenshot: async () => screenshot,
-    transition: async () => ({}),
 };

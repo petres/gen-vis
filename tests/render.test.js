@@ -1676,9 +1676,8 @@ describe('the update of the facets', () => {
         await vi.waitFor(() => expect(circle.getAttribute('cy')).not.toBe(cy), { timeout: 2000, interval: 5 });
         await new Promise(resolve => setTimeout(resolve, 250));
         const fresh = await mount(GenVis, { def: lineDef(), data: lineData, state: { visible: { c: { Wien: false } } } });
-        // the transition of a transform ends with "translate(x, y)", the axis writes "translate(x,y)"
-        const html = el => svgHtml(el).replace(/translate\(([^,)]+), /g, 'translate($1,');
-        expect(html(el)).toBe(html(fresh));
+        // the end values of the animations are the ones of a draw without one
+        expect(svgHtml(el)).toBe(svgHtml(fresh));
         expect(errors).toEqual([]);
     });
 

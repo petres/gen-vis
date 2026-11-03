@@ -100,15 +100,11 @@ export default {
         document.addEventListener("pointerdown", this.hideOnPointerOutside);
         this.draw();
     },
-    // the transitions of the elements end with the facet, so their timers do
-    // not set the attributes of removed elements: the animations of the
-    // plots (see utils/dom.js) and the ones of the axes, d3-transition is
-    // loaded only for definitions with a transition (see loadTransition)
+    // the animations of the elements end with the facet, so their frames do
+    // not set the attributes of removed elements: the ones of the plots and
+    // of the axes (see utils/dom.js)
     beforeUnmount() {
         interruptAll(this.$refs.inner);
-        const inner = d3.select(this.$refs.inner);
-        if (d3.hasTransitions(inner))
-            inner.selectAll("*").interrupt("vis");
     },
     unmounted() {
         document.removeEventListener("pointerdown", this.hideOnPointerOutside);
