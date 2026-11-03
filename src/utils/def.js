@@ -3,6 +3,7 @@ export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable,
 import merge from 'deepmerge';
 import { schemeColors } from '@/utils/d3';
 import { comparison, isObject, sameValue } from '@/utils/values';
+import { scaleTypeOf } from '@/utils/normalize';
 
 // arrays whose entries all have an `id`, e.g. the form elements and their
 // values, are merged by it, entries with a new id are appended, all other
@@ -75,7 +76,7 @@ const object = (v, path, expected) => {
 
 // `dataKeys(column)` are the distinct values of a column of the data as
 // strings, see distinctValues of utils/data.js, the categories of `fromData`
-const prepareMapping = (m, name, dataKeys = () => [], globals = {}) => {
+const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = []) => {
     object(m, `mapping.${name}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`);
     // null or false removes a part, e.g. the hover of a parent
     ['scale', 'axis', 'legend', 'hover', 'props'].forEach(k => {
@@ -115,9 +116,10 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}) => {
         }))
     }
 
-    // the scale of another mapping (`of`) has no parts of its own
+    // the scale of another mapping (`of`) has no parts of its own, the type
+    // of the scale follows from the one of the mapping, see scaleTypeOf
     if (m.scale && m.scale.of === undefined) {
-        m.scale.type ??= "linear";
+        m.scale.type ??= scaleTypeOf(m, name, plots) ?? 'linear';
         m.scale.domain ??= [null, null];
     }
 
@@ -312,7 +314,7 @@ const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, tr
             mapping[n] = old;
             return;
         }
-        const m = prepareMapping(merged, n, dataKeys);
+        const m = prepareMapping(merged, n, dataKeys, {}, def.plot);
         if (keepVisible && old?.props && m.props)
             m.keys.filter(k => Object.hasOwn(old.props, k)).forEach(k => m.props[k].visible = old.props[k].visible);
         if (old?.column !== m.column || old?.type !== m.type)
@@ -324,13 +326,14 @@ const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, tr
 };
 
 // the d3 format of the values of a mapping in a part of the visualisation:
-// of the axis its own, of the hover its own or the one of the axis, of the
+// of the axis its own or the one of the mapping (`format`), of the hover its
+// own, the one of the mapping or the one of the axis, of the
 // legend of colors its own or the one of the hover, undefined for the
 // default of the part, see coords/ticks.js, ColorLegend.vue and
 // valueFormat of utils/locale.js
 const formatOf = (m, part) => {
-    const axis = m.axis?.format;
-    const hover = m.hover?.format ?? axis;
+    const axis = m.axis?.format ?? m.format;
+    const hover = m.hover?.format ?? m.format ?? axis;
     if (part == 'axis')
         return axis;
     if (part == 'legend')

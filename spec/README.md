@@ -111,8 +111,11 @@ See `merge.md`.
 
 ## Normalize and migrate
 
-`normalize/*.json` are `{ "name", "def", "result" }` (and `"coord"` of the
-plot types of a coordinate system), the 4.0 definition `def` and its
-internal form, the one of 3.x, see `src/utils/normalize.js`.
-`migrate/*.json` are `{ "name", "def", "result" }`, the 3.x definition and
-the 4.0 one, migrating the result again does not change it.
+`normalize/*.json` are `{ "name", "def", "result" }`: the 4.0 definition
+`def` (merged with its parents) and its internal form `result`, the form of
+3.x which the renderer reads, see `normalize.md`. The plot types are the
+built-in ones, their default props are the ones of `src/plots/defaults.js`.
+
+`migrate/*.json` are `{ "name", "def", "result" }`: the 3.x definition `def`
+(merged with its parents) and the 4.0 one, migrating the result again does
+not change it, see `normalize.md`.

@@ -1,0 +1,221 @@
+[
+  {
+    "name": "the parts of patches in the internal form, without defaults of mappings",
+    "def": {
+      "mapping": {
+        "y": {
+          "column": "v",
+          "type": "numeric"
+        }
+      },
+      "formElements": [
+        {
+          "id": "v",
+          "ref": "v",
+          "values": [
+            {
+              "id": "a",
+              "value": "a",
+              "patch": {
+                "mapping": {
+                  "y": {
+                    "column": "share",
+                    "format": ".0%",
+                    "domain": [
+                      0,
+                      1
+                    ]
+                  }
+                },
+                "plot": [
+                  {
+                    "id": "p",
+                    "type": "line",
+                    "by": "c"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "result": {
+      "mapping": {
+        "y": {
+          "column": "v",
+          "type": "numeric",
+          "scale": {
+            "orientation": "vertical",
+            "type": "linear"
+          },
+          "axis": {
+            "position": "left"
+          }
+        }
+      },
+      "formElements": [
+        {
+          "id": "v",
+          "ref": "v",
+          "values": [
+            {
+              "id": "a",
+              "value": "a",
+              "patch": {
+                "mapping": {
+                  "y": {
+                    "column": "share",
+                    "format": ".0%",
+                    "scale": {
+                      "domain": [
+                        0,
+                        1
+                      ]
+                    }
+                  }
+                },
+                "plot": [
+                  {
+                    "id": "p",
+                    "type": "cartesian:line",
+                    "categories": "c",
+                    "props": {
+                      "stroke": {
+                        "or": [
+                          "@color",
+                          "currentColor"
+                        ]
+                      },
+                      "fill": "none",
+                      "d": {
+                        "x": "@x:scaled",
+                        "y": "@y:scaled"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a patch of another coordinate system has the positions of its mappings",
+    "def": {
+      "mapping": {
+        "x": {
+          "column": "m",
+          "type": "categorical"
+        },
+        "y": {
+          "column": "v",
+          "type": "numeric",
+          "axis": {
+            "ticks": 4
+          }
+        }
+      },
+      "formElements": [
+        {
+          "id": "c",
+          "ref": "c",
+          "values": [
+            {
+              "id": "polar",
+              "value": "polar",
+              "patch": {
+                "options": {
+                  "coord": "polar"
+                },
+                "plot": {
+                  "type": "line"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "result": {
+      "mapping": {
+        "x": {
+          "column": "m",
+          "type": "categorical",
+          "scale": {
+            "orientation": "horizontal",
+            "type": "point"
+          },
+          "axis": {
+            "position": "bottom"
+          }
+        },
+        "y": {
+          "column": "v",
+          "type": "numeric",
+          "axis": {
+            "ticks": 4,
+            "position": "left"
+          },
+          "scale": {
+            "orientation": "vertical",
+            "type": "linear"
+          }
+        }
+      },
+      "formElements": [
+        {
+          "id": "c",
+          "ref": "c",
+          "values": [
+            {
+              "id": "polar",
+              "value": "polar",
+              "patch": {
+                "options": {
+                  "coord": "polar"
+                },
+                "plot": {
+                  "type": "polar:line",
+                  "props": {
+                    "stroke": {
+                      "or": [
+                        "@color",
+                        "currentColor"
+                      ]
+                    },
+                    "fill": "none",
+                    "d": {
+                      "angle": "@x:scaled",
+                      "radius": "@y:scaled"
+                    }
+                  }
+                },
+                "mapping": {
+                  "x": {
+                    "scale": {
+                      "orientation": "angular"
+                    },
+                    "axis": {
+                      "position": "angular"
+                    }
+                  },
+                  "y": {
+                    "scale": {
+                      "orientation": "radial"
+                    },
+                    "axis": {
+                      "position": "radial"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

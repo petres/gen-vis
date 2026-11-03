@@ -1,7 +1,7 @@
-export { groupBy, keptRows, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, distinctValues, usedColumns, columnValues };
+export { groupBy, inferTypes, inferType, keptRows, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
-import { sameValue, templateRefs, variants } from "@/utils/def";
+import { fillTemplate, sameValue, templateRefs, variants } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
 import { evaluate } from "@/utils/props";
@@ -377,3 +377,35 @@ const addDataValues = (def, rows, columns = null) => {
             def.globals[e.ref] = values.at(-1);
     });
 };
+
+// the type of the values of a column: numeric if all of them are numbers,
+// date if all of them are dates, otherwise (also without values) categorical
+const inferType = values => {
+    const present = values.filter(v => !missing(v));
+    if (present.length == 0)
+        return 'categorical';
+    if (present.every(v => toNumber(v) !== null))
+        return 'numeric';
+    if (present.every(v => toDate(v) !== null))
+        return 'date';
+    return 'categorical';
+};
+
+/**
+ * The types of the mappings without a type of the values of their columns
+ * (see inferType), of the rows and the columns of the transforms, a column
+ * template of the globals, also the ones of the mappings of patches which are
+ * not mappings of the definition, the definition is changed.
+ */
+const inferTypes = (def, rows, columns = null) => {
+    const infer = m => {
+        if (!isObject(m) || m.type !== undefined || typeof m.column != 'string')
+            return;
+        const value = columnValues(rows, columns, fillTemplate(m.column, def.globals ?? {}));
+        m.type = inferType(rows.map((r, i) => value(i)));
+    };
+    Object.values(def.mapping ?? {}).forEach(infer);
+    variants(def).slice(1).forEach(patch => Object.entries(isObject(patch.mapping) ? patch.mapping : {})
+        .filter(([n]) => !Object.hasOwn(def.mapping ?? {}, n)).forEach(([, m]) => infer(m)));
+};
+

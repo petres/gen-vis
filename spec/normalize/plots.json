@@ -1,0 +1,363 @@
+[
+  {
+    "name": "a type without prefix of the coordinate system with its default props, by are the categories",
+    "def": {
+      "mapping": {},
+      "plot": {
+        "type": "line",
+        "by": "land",
+        "props": {
+          "stroke-width": 2
+        }
+      }
+    },
+    "result": {
+      "mapping": {},
+      "plot": {
+        "type": "cartesian:line",
+        "props": {
+          "stroke": {
+            "or": [
+              "@color",
+              "currentColor"
+            ]
+          },
+          "fill": "none",
+          "d": {
+            "x": "@x:scaled",
+            "y": "@y:scaled"
+          },
+          "stroke-width": 2
+        },
+        "categories": "land"
+      }
+    }
+  },
+  {
+    "name": "the props are merged into the defaults, nested props deeply, null removes one",
+    "def": {
+      "mapping": {},
+      "plot": {
+        "type": "line",
+        "props": {
+          "fill": null,
+          "d": {
+            "x": "@date:scaled"
+          },
+          "stroke": {
+            "if": [
+              {
+                ">": [
+                  "@y",
+                  0
+                ]
+              },
+              "green",
+              "red"
+            ]
+          }
+        }
+      }
+    },
+    "result": {
+      "mapping": {},
+      "plot": {
+        "type": "cartesian:line",
+        "props": {
+          "stroke": {
+            "if": [
+              {
+                ">": [
+                  "@y",
+                  0
+                ]
+              },
+              "green",
+              "red"
+            ]
+          },
+          "d": {
+            "x": "@date:scaled",
+            "y": "@y:scaled"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "highlight and others are objects of props, mode the one of the highlight",
+    "def": {
+      "mapping": {},
+      "plot": {
+        "type": "cartesian:bar",
+        "highlight": {
+          "mode": "row",
+          "fill": "#333"
+        },
+        "others": {
+          "opacity": 0.3
+        },
+        "props": {
+          "fill": "@color"
+        }
+      }
+    },
+    "result": {
+      "mapping": {},
+      "plot": {
+        "type": "cartesian:bar",
+        "props": {
+          "fill": "@color",
+          "highlight-fill": "#333",
+          "others-opacity": 0.3
+        },
+        "highlight": "row"
+      }
+    }
+  },
+  {
+    "name": "a type of a full name has no defaults",
+    "def": {
+      "mapping": {},
+      "plot": {
+        "type": "cartesian:line",
+        "props": {
+          "d": {
+            "x": "@x:scaled",
+            "y": "@y:scaled"
+          }
+        }
+      }
+    },
+    "result": {
+      "mapping": {},
+      "plot": {
+        "type": "cartesian:line",
+        "props": {
+          "d": {
+            "x": "@x:scaled",
+            "y": "@y:scaled"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "point and circle of cartesian plots are svg:circle, text svg:text",
+    "def": {
+      "mapping": {},
+      "plot": [
+        {
+          "type": "point"
+        },
+        {
+          "type": "text",
+          "props": {
+            "text": "@name"
+          }
+        }
+      ]
+    },
+    "result": {
+      "mapping": {},
+      "plot": [
+        {
+          "type": "svg:circle",
+          "props": {
+            "cx": "@x:scaled",
+            "cy": "@y:scaled",
+            "r": 3,
+            "fill": {
+              "or": [
+                "@color",
+                "currentColor"
+              ]
+            }
+          }
+        },
+        {
+          "type": "svg:text",
+          "props": {
+            "x": "@x:scaled",
+            "y": "@y:scaled",
+            "fill": "@color",
+            "text": "@name"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "a horizontal bar of x1, a vertical one otherwise",
+    "def": {
+      "mapping": {},
+      "plot": [
+        {
+          "type": "bar",
+          "props": {
+            "x1": "@v:scaled"
+          }
+        },
+        {
+          "type": "bar"
+        }
+      ]
+    },
+    "result": {
+      "mapping": {},
+      "plot": [
+        {
+          "type": "cartesian:bar",
+          "props": {
+            "fill": {
+              "or": [
+                "@color",
+                "currentColor"
+              ]
+            },
+            "x1": "@v:scaled",
+            "y": "@y:scaled"
+          }
+        },
+        {
+          "type": "cartesian:bar",
+          "props": {
+            "fill": {
+              "or": [
+                "@color",
+                "currentColor"
+              ]
+            },
+            "x": "@x:scaled",
+            "y1": "@y:scaled"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "the types of polar plots",
+    "def": {
+      "options": {
+        "coord": "polar"
+      },
+      "mapping": {},
+      "plot": [
+        {
+          "type": "line"
+        },
+        {
+          "type": "point"
+        },
+        {
+          "type": "arc",
+          "props": {
+            "startAngle": "@v:start:scaled"
+          }
+        }
+      ]
+    },
+    "result": {
+      "options": {
+        "coord": "polar"
+      },
+      "mapping": {},
+      "plot": [
+        {
+          "type": "polar:line",
+          "props": {
+            "stroke": {
+              "or": [
+                "@color",
+                "currentColor"
+              ]
+            },
+            "fill": "none",
+            "d": {
+              "angle": "@x:scaled",
+              "radius": "@y:scaled"
+            }
+          }
+        },
+        {
+          "type": "polar:circle",
+          "props": {
+            "angle": "@x:scaled",
+            "radius": "@y:scaled",
+            "r": 3,
+            "fill": {
+              "or": [
+                "@color",
+                "currentColor"
+              ]
+            }
+          }
+        },
+        {
+          "type": "polar:arc",
+          "props": {
+            "fill": {
+              "or": [
+                "@color",
+                "currentColor"
+              ]
+            },
+            "startAngle": "@v:start:scaled"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "the types of maps without defaults",
+    "def": {
+      "options": {
+        "coord": "geo"
+      },
+      "mapping": {},
+      "plot": [
+        {
+          "type": "region",
+          "props": {
+            "fill": "@value:scaled"
+          }
+        },
+        {
+          "type": "mesh"
+        }
+      ]
+    },
+    "result": {
+      "options": {
+        "coord": "geo"
+      },
+      "mapping": {},
+      "plot": [
+        {
+          "type": "geo:region",
+          "props": {
+            "fill": "@value:scaled"
+          }
+        },
+        {
+          "type": "geo:mesh"
+        }
+      ]
+    }
+  },
+  {
+    "name": "an unknown type stays as it is",
+    "def": {
+      "mapping": {},
+      "plot": {
+        "type": "dots"
+      }
+    },
+    "result": {
+      "mapping": {},
+      "plot": {
+        "type": "dots"
+      }
+    }
+  }
+]

@@ -6,6 +6,9 @@ import { mergeAll, patchedParts } from '@/utils/def';
 import { resolveParents } from '@/utils/load';
 import { evaluate, bind, formatter } from '@/utils/expr';
 import { format } from 'd3-format';
+import { normalize } from '@/utils/normalize';
+import { migrate } from '@/utils/migrate';
+import { plotTypes } from '@/plots';
 
 // the fixtures of a directory of spec/ by the name of their file, e.g. "rolling"
 const fixtures = files => Object.entries(files).map(([file, cases]) => [file.split('/').pop().replace(/\.json$/, ''), cases]);
@@ -101,6 +104,29 @@ describe('spec/expressions', () => {
             const resolve = n => typeof n == 'symbol' ? Object.assign(() => format3, { constant: true })
                 : (Object.hasOwn(c.scope, n) ? row => row[n] : undefined);
             expect(plain(bind(c.expr, resolve)(c.scope))).toEqual(c.result);
+        });
+    });
+});
+
+describe('spec/normalize', () => {
+    const files = import.meta.glob('../spec/normalize/*.json', { eager: true, import: 'default' });
+    describe.each(fixtures(files))('%s', (file, cases) => {
+        test.each(cases.map(c => [c.name, c]))('%s', (name, c) => {
+            const def = clone(c.def);
+            expect(normalize(def, { plotTypes })).toEqual(c.result);
+            // the definition is not changed
+            expect(def).toEqual(c.def);
+        });
+    });
+});
+
+describe('spec/migrate', () => {
+    const files = import.meta.glob('../spec/migrate/*.json', { eager: true, import: 'default' });
+    describe.each(fixtures(files))('%s', (file, cases) => {
+        test.each(cases.map(c => [c.name, c]))('%s', (name, c) => {
+            expect(migrate(clone(c.def))).toEqual(c.result);
+            // migrate is idempotent
+            expect(migrate(clone(c.result))).toEqual(c.result);
         });
     });
 });

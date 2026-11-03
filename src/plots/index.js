@@ -4,6 +4,7 @@ import elements from "@/plots/elements";
 import cartesian from "@/plots/cartesian";
 import geo from "@/plots/geo";
 import annotations from "@/plots/annotations";
+import { defaults } from "@/plots/defaults";
 
 /**
  * The plot types by name, the `type` of a plot:
@@ -27,6 +28,10 @@ import annotations from "@/plots/annotations";
  *   Facet.vue
  * - `curve`: the type uses the `curve` of the plot
  * - `coords`: the coordinate systems of the type, all if it is not given
+ * - `defaults`: the default props of a plot whose type is written without
+ *   the prefix of the coordinate system, e.g. "line" of "cartesian:line",
+ *   an object or a function of the props of the plot, see plots/defaults.js
+ *   and utils/normalize.js
  */
 // the plot types of polar plots are loaded with the first one, until then
 // they are known by their names, e.g. to validateDef, see coords/polar.js
@@ -45,6 +50,7 @@ const polar = {
 };
 
 const plotTypes = { ...elements, ...cartesian, ...polar, ...geo, ...annotations };
+Object.entries(defaults).forEach(([name, d]) => plotTypes[name].defaults = d);
 
 const registerPlotType = (name, type) => {
     plotTypes[name] = type;

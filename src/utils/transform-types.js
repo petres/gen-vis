@@ -193,28 +193,11 @@ const transformTypes = {
 
     // the value of the expression `expr` of the row (see utils/expr.js), its
     // names are the columns of the row and the globals, e.g. { "*": [{ "/":
-    // ["@value", "@inno"] }, 100] }, no value is null. Of 3.x: the values of
-    // the columns `columns` combined by `op` (add, subtract, multiply, divide,
-    // min or max, from the first one), times `scale` (1 by default), without
-    // a value if one is missing or of a division by 0
-    calc: (t, { n, get, expr }) => {
-        if (t.expr !== undefined) {
-            const f = expr(t.expr);
-            return Array.from({ length: n }, (_, i) => f(i) ?? null);
-        }
-        const ops = { add: (a, b) => a + b, subtract: (a, b) => a - b, multiply: (a, b) => a*b, divide: (a, b) => b === 0 ? null : a/b,
-            min: (a, b) => Math.min(a, b), max: (a, b) => Math.max(a, b) };
-        const op = ops[t.op];
-        if (!op)
-            throw new Error(`calc: unknown op '${t.op}', expected one of ${Object.keys(ops).map(o => `'${o}'`).join(', ')}`);
-        const columns = [t.columns ?? []].flat();
-        return Array.from({ length: n }, (_, i) => {
-            const values = columns.map(c => toNumber(get(i, c)));
-            if (values.length == 0 || values.includes(null))
-                return null;
-            const v = values.slice(1).reduce((a, b) => a === null ? null : op(a, b), values[0]);
-            return v === null || !Number.isFinite(v) ? null : v*(t.scale ?? 1);
-        });
+    // ["@value", "@inno"] }, 100] }, no value is null (the `op` and `columns`
+    // of 3.x are migrated, see utils/migrate.js)
+    calc: (t, { n, expr }) => {
+        const f = expr(t.expr ?? null);
+        return Array.from({ length: n }, (_, i) => f(i) ?? null);
     },
 
     // the rows whose expression `expr` is true (see utils/expr.js, the names
