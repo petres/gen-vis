@@ -165,9 +165,10 @@ const createVis = app => {
 
     // the rows, facets and scales of the store, `animated` of a change of
     // the user or the state, the elements move with the transition of
-    // the definition, not the ones of a new width
-    const update = (animated = false) => {
-        const next = layout(store, width);
+    // the definition, not the ones of a new width, a new width (`resize`)
+    // keeps the rows of the view, see layout
+    const update = (animated = false, resize = false) => {
+        const next = layout(store, width, resize ? view : null);
         const transition = options().transition;
         // no motion if the user prefers it, a setting of the system
         const duration = animated && !reducedMotion() ? (transition === true ? 300 : (Number(transition) || 0)) : 0;
@@ -207,7 +208,7 @@ const createVis = app => {
         if (!w || w == width)
             return;
         measure();
-        update();
+        update(false, true);
     };
 
     const savePng = async () => {

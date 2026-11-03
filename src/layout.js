@@ -99,15 +99,8 @@ const stepHeight = (store, rowsOf, scope) => {
     return Math.round(steps*step);
 };
 
-/**
- * The view of the store in the `width` of the visualisation, the globals
- * and the width are the references of the definition, e.g. of the height.
- */
-const layout = (store, width) => {
-    const def = store.def;
-    const axis = axisNames(store);
-    const scope = { ...def.globals, totalWidth: width, [formatter]: store.scope[formatter] };
-
+// the rows of a view, see layout
+const rowsOf = (store, def, axis, scope, stacked) => {
     // the rows of the conditions of `filter`, e.g. of a global of a form
     // element, see rowFilter, and of them the ones of the visible categories
     const visible = visibleKeys(def);
@@ -119,7 +112,6 @@ const layout = (store, width) => {
     // `stacked` (all of `true`), e.g. { "type": { "not": "load" } }, the
     // others have their own value as start and end, e.g. a line of a total
     // on stacked areas
-    const stacked = axis.v ? store.mapping(axis.v).stacked : undefined;
     const stackOrder = categoryOrder(visible.map(f => ({ dim: f.dim, keys: f.key })));
     const stackedRows = stacked && stacked !== true
         ? filter(rows, rowFilter(stacked, def.mapping, scope, `mapping.${axis.v}.stacked`)) : rows;
@@ -129,6 +121,51 @@ const layout = (store, width) => {
 
     // without facets, or if no facet has rows, one of all rows
     const entries = def.facets ? facetEntries(store, rows) : [];
+    return {
+        rows, stackOrder, stackOf, isStacked, entries,
+        // the categories of the filtered rows of the legends with `onlyData`,
+        // also the hidden ones, e.g. the sources of the selected year
+        inData: Object.fromEntries(Object.keys(def.mapping).filter(n => def.mapping[n].legend?.onlyData)
+            .map(n => [n, new Set(filtered.map(r => String(r[n])))])),
+        // the rows are kept for another width if their conditions do not
+        // depend on it, see layout
+        keep: !ofWidth(def.filter) && !(stacked && stacked !== true && ofWidth(stacked)),
+    };
+};
+
+// the parts of a view which do not depend on the width, see layout
+const rowsKept = Symbol('rowsKept');
+
+// the names of the scope which change with the width, of the conditions of
+// the rows (`filter`, `stacked`), see layout
+const widthNames = ['totalWidth'];
+const ofWidth = raw => raw !== undefined && raw !== null && typeof raw != 'boolean'
+    && refNames(raw).some(n => widthNames.includes(n));
+
+/**
+ * The view of the store in the `width` of the visualisation, the globals
+ * and the width are the references of the definition, e.g. of the height.
+ * The rows of the view `before` of the same store are kept, e.g. of a new
+ * width (only of a resize, not of a change of the store, e.g. of the state,
+ * the data or the definition, as these change parts of it in place), the
+ * scales of the same rows keep their values, see valuesOf of utils/scales.js.
+ */
+const layout = (store, width, before = null) => {
+    const def = store.def;
+    const axis = axisNames(store);
+    const scope = { ...def.globals, totalWidth: width, [formatter]: store.scope[formatter] };
+    const stacked = axis.v ? store.mapping(axis.v).stacked : undefined;
+    const kept = before?.[rowsKept];
+    const reuse = kept?.keep && kept.store === store && kept.def === def && kept.data === store.data && kept.columns === store.columns
+        && kept.coord === store.coord && kept.stateSets === store.stateSets && kept.loads === store.loads
+        && kept.axisV === axis.v && kept.axisH === axis.h && kept.stacked === stacked;
+    const parts = reuse ? kept : {
+        ...rowsOf(store, def, axis, scope, stacked),
+        store, def, data: store.data, columns: store.columns, coord: store.coord, stateSets: store.stateSets,
+        loads: store.loads, axisV: axis.v, axisH: axis.h, stacked,
+    };
+    const { rows, stackOrder, stackOf, isStacked, entries } = parts;
+
     const faceted = entries.length > 0;
 
     // the sizes of a facet
@@ -193,11 +230,9 @@ const layout = (store, width) => {
         faceted,
         facets,
         colors: Object.fromEntries(colors.map(n => [n, common[n]])),
-        // the categories of the filtered rows of the legends with `onlyData`,
-        // also the hidden ones, e.g. the sources of the selected year
-        inData: Object.fromEntries(Object.keys(def.mapping).filter(n => def.mapping[n].legend?.onlyData)
-            .map(n => [n, new Set(filtered.map(r => String(r[n])))])),
+        inData: parts.inData,
         height: size.height,
+        [rowsKept]: parts,
     };
 };
 
