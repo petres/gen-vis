@@ -5,7 +5,7 @@ import { sameValue } from "@/utils/def";
 import { copyImage } from '@/utils/clipboard.js';
 import { lazy } from '@/utils/lazy';
 import { layout } from '@/layout';
-import { el, emitter, patch, setText } from '@/comp/html';
+import { el, emitter, setText } from '@/comp/html';
 import { createVis } from '@/comp/vis';
 import '@/styles.css';
 
@@ -176,9 +176,10 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             return;
         dropVis();
         visLoads = store.loads;
-        vis = createVis(visApp);
-        outer.insertBefore(vis.el, debugEl && debugEl.parentNode === outer ? debugEl : null);
+        // errors of the draw are shown instead of it
         try {
+            vis = createVis(visApp);
+            outer.insertBefore(vis.el, debugEl && debugEl.parentNode === outer ? debugEl : null);
             vis.mounted();
         } catch (e) {
             showError(e);

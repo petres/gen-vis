@@ -41,8 +41,8 @@ its import map has the component of its Vue of the same files:
 `GenVis.createVueComponent(Vue)`. The elements and their attributes are the
 ones of 3.x without the scoped ids of Vue (`data-v-…`) and its comments;
 the styles are one stylesheet (`src/styles.css`), still in the cascade layer
-`gen-vis`, with the same classes and css variables. A visualisation drawn
-faster, ~15% of the 49 charts of `data/`.
+`gen-vis`, with the same classes and css variables. The charts are drawn
+faster, the ones of `data/` together in ~14% less time.
 
 ## 3.1.0
 
