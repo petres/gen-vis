@@ -10,7 +10,7 @@ import { loadCoord } from "@/coords";
 import { loadColors, ownScheme } from "@/utils/d3";
 import { lazy } from "@/utils/lazy";
 import { isObject } from "@/utils/values";
-import { normalize } from "@/utils/normalize";
+import { hasCategories, normalize } from "@/utils/normalize";
 import { versionError } from "@/utils/version";
 import { plotTypes } from "@/plots";
 
@@ -178,17 +178,17 @@ const geoOf = (module, json, def = {}) => {
  * coordinate systems (`coords`, the one of the definition first, undefined
  * for the default), the parts of maps (`geo`), the transforms, the legend
  * of a scale of colors (`colorLegend`, a mapping with a legend without
- * props) and the locales (`locales`, the one of the definition first).
+ * categories) and the locales (`locales`, the one of the definition first).
  */
 const requirements = defOrg => {
     const all = variants(defOrg);
     const mappings = all.flatMap(d => Object.values(d.mapping ?? {})).filter(isObject);
     return {
-        colors: mappings.some(m => Boolean(m.scale?.interpolator || [m.scale?.scheme, m.props?.scheme].some(s => s && !ownScheme(s)))),
+        colors: mappings.some(m => Boolean(m.scale?.interpolator || [m.scale?.scheme, m.scheme].some(s => s && !ownScheme(s)))),
         coords: [...new Set(all.filter((d, i) => i == 0 || d.options?.coord !== undefined).map(d => d.options?.coord ?? undefined))],
         geo: all.some(d => Boolean(d.geo?.data)),
         transforms: all.some(d => Boolean(d.transform)),
-        colorLegend: mappings.some(m => m.legend && !m.props),
+        colorLegend: mappings.some(m => m.legend && !hasCategories(m)),
         locales: all.filter((d, i) => i == 0 || d.options?.locale !== undefined).map(d => d.options?.locale ?? undefined),
     };
 };
@@ -237,10 +237,10 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
     if (typeof def.geo?.data == 'string')
         fetchText(resolveUrl(def.geo.data, url)).catch(() => {});
 
-    // the internal form of the merged definition, see utils/normalize.js
+    // the normalized merged definition, see utils/normalize.js
     const merged = await resolveParents(JSON.parse(JSON.stringify(def)), url);
     const defOrg = normalize(merged, { plotTypes });
-    // the check of the merged definition (not of its internal form) with
+    // the check of the merged definition (not the normalized one) with
     // the rows, e.g. of years as dates, see load, it is loaded meanwhile
     const validate = async rows => (await checks)?.validateDef(merged, rows)
         .forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));

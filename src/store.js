@@ -124,7 +124,7 @@ class Store {
     // as text, they can be values of the data, e.g. of a form element
     html(t) { return typeof t == 'string' ? fillHtml(t, this.names) : t }
     // the props of a category, e.g. of a value of the data, undefined for other values
-    prop(n, k) { const props = this.def.mapping[n].props; return Object.hasOwn(props, k) ? props[k] : undefined }
+    prop(n, k) { const props = this.def.mapping[n].categoryProps; return Object.hasOwn(props, k) ? props[k] : undefined }
     mappingNamesWithKey(k) { return Object.keys(this.def.mapping).filter(n => Boolean(this.def.mapping[n][k])) }
 
     /**

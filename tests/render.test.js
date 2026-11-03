@@ -334,7 +334,7 @@ describe('rendering', () => {
         const def = lineDef();
         def.mapping.c = { ...def.mapping.c, fromData: true, scheme: 'test-sizes', categories: {} };
         // the colors of the entries of the legend, in the order of the categories
-        const colors = async data => Object.values((await mountVis({ def, data })).vis.store.def.mapping.c.props).map(p => p.color);
+        const colors = async data => Object.values((await mountVis({ def, data })).vis.store.def.mapping.c.categoryProps).map(p => p.color);
         // 2 categories of the entry of 2 colors
         expect(await colors(lineData)).toEqual(['#000002', '#000003']);
         // 3 categories of the next larger one, the first 3 colors
@@ -2371,7 +2371,7 @@ describe('fixed bugs', () => {
         const def = lineDef();
         def.mapping.y.hover = true;
         expect(await message(def)).toBe('mapping.y.hover: expected an object, e.g. {}');
-        expect(await message({ ...lineDef(), facets: { dim: 'x' } })).toMatch(/^facets.dim: the facets are the categories of a mapping with props/);
+        expect(await message({ ...lineDef(), facets: { dim: 'x' } })).toMatch(/^facets.dim: the facets are the categories of a mapping, e.g./);
         expect(await message({ ...lineDef(), plot: [null] })).toMatch(/^plot\[0\]: expected a plot/);
     });
 

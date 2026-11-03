@@ -226,13 +226,14 @@ const drawLayer = (parent, layer) => {
 };
 
 /**
- * The highlight of the elements of a facet: the highlight- props of the
- * plots replace the props of the elements of the categories of a row, e.g.
- * of the hover or of an entry of a legend, the others- props the ones of
- * the other elements of their plots while a highlight is shown, e.g. a
- * label which is hidden, their values are kept in default- attributes. With
- * `"highlight": "row"` only the element of the row is highlighted, e.g. the
- * segment of a stacked bar, if it has one. The groups of the plots (the
+ * The highlight of the elements of a facet: the props of the `highlight` of
+ * the plots (the highlight- attributes of their elements, see preparePlots
+ * of utils/def.js) replace the props of the elements of the categories of a
+ * row, e.g. of the hover or of an entry of a legend, the props of `others`
+ * (others- attributes) the ones of the other elements of their plots while a
+ * highlight is shown, e.g. a label which is hidden, their values are kept in
+ * default- attributes. With the `mode` "row" only the element of the row is
+ * highlighted, e.g. the segment of a stacked bar, if it has one. The groups of the plots (the
  * elements with the keys of their categories as data-group- attributes) and
  * their elements with highlight- and others- props are found once, at the
  * first highlight, so a highlight does not search the elements of the facet.
@@ -245,7 +246,7 @@ const drawLayer = (parent, layer) => {
 const originals = Symbol('originals');
 
 const highlighter = (plotDefs, nodeOf, duration = 0) => {
-    const plots = plotDefs.filter(p => p.highlightProps.length > 0 && p.categories.length > 0);
+    const plots = plotDefs.filter(p => p.highlightProps.length > 0 && p.by.length > 0);
     const others = plotDefs.filter(p => p.othersProps?.length > 0);
     let index = null;
     let otherIndex = null;
@@ -256,12 +257,12 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
 
     const build = () => plots.map(plot => {
         const node = nodeOf(plot);
-        const attrs = plot.categories.map(c => `data-group-${c}`);
+        const attrs = plot.by.map(c => `data-group-${c}`);
         return {
             plot,
             groups: node ? [...node.querySelectorAll('*')].filter(g => attrs.some(a => g.hasAttribute(a))).map(node => ({
                 node,
-                keys: Object.fromEntries(plot.categories.map((c, i) => [c, node.getAttribute(attrs[i])])),
+                keys: Object.fromEntries(plot.by.map((c, i) => [c, node.getAttribute(attrs[i])])),
                 targets: null,
             })) : [],
         };
@@ -276,7 +277,7 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
     const targetsOf = (plot, group, dataEntry) => {
         group.targets ??= [group.node, ...group.node.querySelectorAll('*')]
             .filter(node => plot.highlightProps.some(n => node.hasAttribute(`highlight-${n}`)));
-        if (plot.highlight != 'row')
+        if (plot.highlight?.mode != 'row')
             return group.targets;
         const rows = group.targets.filter(node => node[itemOf]?.[rowOf] === dataEntry);
         return rows.length > 0 ? rows : group.targets;
@@ -397,7 +398,7 @@ const highlighter = (plotDefs, nodeOf, duration = 0) => {
         index ??= build();
         index.forEach(({ plot, groups: all }) => {
             // the values are compared as strings, as the ones of the attributes
-            const conditions = plot.categories.filter(c => c in dataEntry).map(c => [c, String(dataEntry[c])]);
+            const conditions = plot.by.filter(c => c in dataEntry).map(c => [c, String(dataEntry[c])]);
             if (conditions.length == 0)
                 return;
             all.filter(g => conditions.every(([c, v]) => g.keys[c] === v)).forEach(g => {

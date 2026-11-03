@@ -1,18 +1,13 @@
 # Normalize
 
-A definition of 4.0 is written shorter than the form the renderer reads (the
-internal form). `normalize` writes a definition of 4.0 (merged with its
-parents, see `merge.md`) in the internal form, it is JSON to JSON.
+A definition of 4.0 may leave out parts which the renderer reads, e.g. the
+scale of `x`. `normalize` writes them out in a definition of 4.0 (merged
+with its parents, see `merge.md`), it keeps the names of 4.0 and is JSON to
+JSON.
 
 The order of the load: the parents are merged, the definition is
 normalized, then the types of the mappings without one follow from their
 values (the rows are loaded then), see below.
-
-The parts of the internal form are not the ones of a definition, normalize
-does not read them: `props` of a mapping (its categories are parts of the
-mapping), `categories` of a plot (`by`), a text of `highlight` (`mode`) and
-the props of the prefixes `highlight-` and `others-` (the objects
-`highlight` and `others`).
 
 ## normalize
 
@@ -21,8 +16,8 @@ The fixtures are `normalize/*.json`.
 ### Mappings
 
 - A text is the column: `"x": "year"` is `"x": {"column": "year"}`.
-- `categories`, `scheme`, `common`, `fromData`, `ranks` and `order` of a
-  mapping are the ones of its categories, `props` of the internal form.
+- `categories`, `scheme`, `common`, `fromData`, `ranks` and `order` stay at
+  the mapping, they are the parts of its categories.
 - `domain` and `nice` of a mapping are the ones of its scale.
 - `format` stays at the mapping, it is the format of the axis and of the
   hover which have none of their own (the hover: its own, the one of the
@@ -37,7 +32,7 @@ The fixtures are `normalize/*.json`.
   scale: horizontal `bottom`, vertical `left`, angular `angular`, radial
   `radial`.
 - The type of a mapping without one follows from its parts: categorical with
-  categories (`props`) or a `band`, `point` or `ordinal` scale, date with a
+  categories (any of their parts) or a `band`, `point` or `ordinal` scale, date with a
   `time` or `utc` scale, numeric with another scale, categorical if it is a
   mapping of the facets (`facets.dim`) or of the groups of a scale
   (`scale.groups.by`), not of the categories of a plot (`by`), they group the
@@ -49,16 +44,13 @@ The fixtures are `normalize/*.json`.
   numeric `linear`, date `time`, categorical `band` of a position of the
   bars of a plot (`cartesian:bar`, `polar:arc`, a prop of `@name:scaled`),
   `point` of other positions, `ordinal` without an orientation.
-- The mappings of patches are parts: they are only written in the internal
-  form (text, categories, domain), they have no default parts, their types
+- The mappings of patches are parts: they are only normalized (text,
+  domain), they have no default parts, their types
   are the ones of the merged mapping.
 
 ### Plots
 
-- `by` are the `categories` of a plot.
-- `highlight` and `others` objects are the props `highlight-<name>` and
-  `others-<name>` of the internal form, `mode` of `highlight` is its
-  `highlight` (`group` or `row`).
+- `by`, `highlight` and `others` stay as they are.
 - A type without the prefix of a coordinate system (`line`) is the one of
   the coordinate system of the definition (`options.coord`, `cartesian` by
   default), `<coord>:<name>`, otherwise `svg:<name>`, otherwise the only

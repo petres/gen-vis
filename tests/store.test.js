@@ -338,14 +338,14 @@ describe('requirements', () => {
             transform: { type: 'share', column: 'value', as: 'share' },
             mapping: {
                 c: { column: 'c', scale: { type: 'sequential', interpolator: 'Blues' }, legend: {} },
-                k: { column: 'k', props: { scheme: 'Tableau10', fromData: true }, legend: {} },
+                k: { column: 'k', scheme: 'Tableau10', fromData: true, legend: {} },
             },
         });
         expect(need).toEqual({ colors: true, coords: ['polar'], geo: true, transforms: true, colorLegend: true, locales: ['de'] });
         expect(requirements({ mapping: { c: { scale: { scheme: 'Blues' } } } }).colors).toBe(true);
-        expect(requirements({ mapping: { k: { props: { scheme: 'Tableau10' } } } }).colors).toBe(true);
+        expect(requirements({ mapping: { k: { scheme: 'Tableau10' } } }).colors).toBe(true);
         // a legend of categories is no legend of colors
-        expect(requirements({ mapping: { k: { props: {}, legend: {} } } }).colorLegend).toBe(false);
+        expect(requirements({ mapping: { k: { fromData: true, legend: {} } } }).colorLegend).toBe(false);
     });
 
     test('the parts of the patches of form elements', () => {

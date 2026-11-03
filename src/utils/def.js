@@ -3,7 +3,7 @@ export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable,
 import merge from 'deepmerge';
 import { ownColors, schemeColors } from '@/utils/d3';
 import { comparison, isObject, sameValue } from '@/utils/values';
-import { defaultScaleType } from '@/utils/normalize';
+import { defaultScaleType, hasCategories } from '@/utils/normalize';
 
 // arrays whose entries all have an `id`, e.g. the form elements and their
 // values, are merged by it, entries with a new id are appended, all other
@@ -97,36 +97,36 @@ const object = (v, path, expected) => {
 const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = []) => {
     object(m, `mapping.${name}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`);
     // null or false removes a part, e.g. the hover of a parent
-    ['scale', 'axis', 'legend', 'hover', 'props'].forEach(k => {
+    ['scale', 'axis', 'legend', 'hover'].forEach(k => {
         if (m[k] === null || m[k] === false)
             delete m[k];
         else if (m[k] !== undefined)
             object(m[k], `mapping.${name}.${k}`, 'an object, e.g. {}');
     });
-    if (m.props) {
-        // the props of a category: the color of a scheme in the order of the
-        // categories, e.g. Tableau10, the common ones, the ones of its rank,
-        // e.g. the newest year, and its own ones, `keys` is the order of the
-        // categories, the one of the legend, the facets and the stacks. The
-        // categories of the data which are not listed are after the listed ones.
-        const props = m.props;
-        const categories = { ...props.categories };
-        if (props.fromData && typeof m.column == 'string')
+    if (hasCategories(m)) {
+        // the props of a category (`categoryProps`, by its key): the color of
+        // a scheme in the order of the categories, e.g. Tableau10, the common
+        // ones, the ones of its rank, e.g. the newest year, and its own ones,
+        // `keys` is the order of the categories, the one of the legend, the
+        // facets and the stacks. The categories of the data which are not
+        // listed are after the listed ones.
+        const categories = { ...m.categories };
+        if (m.fromData && typeof m.column == 'string')
             dataKeys(fillTemplate(m.column, globals)).filter(k => !Object.hasOwn(categories, k)).forEach(k => categories[k] = {});
-        const keys = orderKeys(Object.keys(categories), props.order);
+        const keys = orderKeys(Object.keys(categories), m.order);
         // the colors of a scheme, without one and without colors of the
         // categories the default colors, `defaultColor`, the color of a plot
         // or a legend if no category of it has a color, see plotGroups
-        const given = [props.common, ...[props.ranks ?? []].flat(), ...Object.values(categories)].some(c => c?.color !== undefined);
-        const colors = props.scheme ? schemeColors(props.scheme, keys.length) : undefined;
-        if (props.scheme && !colors)
-            throw new Error(`Unknown scheme '${props.scheme}', e.g. 'Tableau10' or 'Blues'`);
-        const ranks = props.ranks ?? [];
+        const given = [m.common, ...[m.ranks ?? []].flat(), ...Object.values(categories)].some(c => c?.color !== undefined);
+        const colors = m.scheme ? schemeColors(m.scheme, keys.length) : undefined;
+        if (m.scheme && !colors)
+            throw new Error(`Unknown scheme '${m.scheme}', e.g. 'Tableau10' or 'Blues'`);
+        const ranks = m.ranks ?? [];
         const palette = colors || given ? null : ownColors('observable10', keys.length) ?? defaultColors;
         m.keys = keys;
-        m.props = Object.fromEntries(keys.map((k, i) => {
+        m.categoryProps = Object.fromEntries(keys.map((k, i) => {
             const rank = ranks.length > 0 ? ranks[Math.min(i, ranks.length - 1)] : {};
-            const t = Object.assign({}, colors ? { color: colors[i % colors.length] } : {}, props.common, rank, categories[k]);
+            const t = Object.assign({}, colors ? { color: colors[i % colors.length] } : {}, m.common, rank, categories[k]);
             t.name ??= k;
             t.visible ??= true;
             if (palette)
@@ -148,7 +148,7 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = []) 
 
         const symbol = m.legend.symbol;
         if (typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type))
-            m.legend.symbol = symbolOf(symbol, new Set(Object.values(m.props ?? {}).flatMap(p => Object.keys(p))));
+            m.legend.symbol = symbolOf(symbol, new Set(Object.values(m.categoryProps ?? {}).flatMap(p => Object.keys(p))));
 
         if (!('name' in m.legend.props)) {
              m.legend.props.name = "@name"
@@ -180,18 +180,31 @@ const annotationPlots = (annotations = []) => [annotations].flat().map((a, i) =>
 // its plots, e.g. of the axes
 const prepareOptions = options => ({ height: 400, ...options, margins: { top: 0, right: 0, bottom: 0, left: 0, ...options?.margins } });
 
+// the props of a highlight or of the others of a plot, without the mode of
+// the highlight, e.g. "highlight": { "mode": "row", "r": 5 }
+const partProps = part => isObject(part) ? Object.keys(part).filter(n => n != 'mode') : [];
+
 // the plots and the annotations, which are plots of their own, the rows of
-// files of plots are the ones loaded, see `files` of applyPatches
+// files of plots are the ones loaded, see `files` of applyPatches. The props
+// of the highlight and of the others are props of the elements with the
+// prefixes `highlight-` and `others-`, attributes which the highlight reads,
+// see highlighter of utils/draw.js.
 const preparePlots = (plot, annotations, files) => {
     const plots = [...[plot ?? []].flat(), ...annotationPlots(annotations ?? [])];
     return plots.map((raw, i) => {
         const p = { ...object(raw, `plot[${i}]`, 'a plot, e.g. { "type": "svg:circle", "props": {} }') };
         p.props ??= {};
         // a mapping or a list of them
-        p.categories = [p.categories ?? []].flat();
+        p.by = [p.by ?? []].flat();
         p.id ??= `plot-${i}`;
-        p.highlightProps = Object.keys(p.props).filter(n => n.startsWith('highlight-')).map(n => n.substring(10));
-        p.othersProps = Object.keys(p.props).filter(n => n.startsWith('others-')).map(n => n.substring(7));
+        p.highlightProps = partProps(p.highlight);
+        p.othersProps = partProps(p.others);
+        if (p.highlightProps.length > 0 || p.othersProps.length > 0)
+            p.props = {
+                ...p.props,
+                ...Object.fromEntries(p.highlightProps.map(n => [`highlight-${n}`, p.highlight[n]])),
+                ...Object.fromEntries(p.othersProps.map(n => [`others-${n}`, p.others[n]])),
+            };
         if (typeof p.data == 'string' && files?.has(p.data)) {
             p.data = files.get(p.data);
             p.loaded = true;
@@ -320,7 +333,7 @@ const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, tr
             merged.column = fillTemplate(merged.column, names);
         // the categories of the data are part of the source, e.g. of a column
         // of a transform of the globals, such as the names of a language
-        const keys = merged.props?.fromData && typeof merged.column == 'string' ? dataKeys(merged.column) : null;
+        const keys = merged.fromData && typeof merged.column == 'string' ? dataKeys(merged.column) : null;
         const source = JSON.stringify([merged, keys]);
         after.mapping[n] = source;
         const old = def.mapping?.[n];
@@ -330,8 +343,8 @@ const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, tr
             return;
         }
         const m = prepareMapping(merged, n, dataKeys, {}, def.plot);
-        if (keepVisible && old?.props && m.props)
-            m.keys.filter(k => Object.hasOwn(old.props, k)).forEach(k => m.props[k].visible = old.props[k].visible);
+        if (keepVisible && old?.categoryProps && m.categoryProps)
+            m.keys.filter(k => Object.hasOwn(old.categoryProps, k)).forEach(k => m.categoryProps[k].visible = old.categoryProps[k].visible);
         if (old?.column !== m.column || old?.type !== m.type)
             changed.push(n);
         mapping[n] = m;

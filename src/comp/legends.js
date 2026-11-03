@@ -17,7 +17,7 @@ const createLegends = (vis, parent) => {
     const update = (names, view) => {
         const next = new Map();
         names.forEach(name => {
-            const kind = store.mapping(name).props ? 'entries'
+            const kind = store.mapping(name).categoryProps ? 'entries'
                 : store.colorLegend && view?.colors[name] ? 'colors' : null;
             if (!kind)
                 return;

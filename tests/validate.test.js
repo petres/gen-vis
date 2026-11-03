@@ -88,8 +88,8 @@ describe('the example definitions', () => {
         expect(Object.keys(examples).length).toBeGreaterThan(10);
     });
 
-    // merged with their parents, as by a check before a deploy, prepared in
-    // their internal form, as by the load
+    // merged with their parents, as by a check before a deploy, normalized
+    // and prepared, as by the load
     test.each(Object.entries(examples))('%s is valid', async (file, org) => {
         const url = new URL(file, import.meta.url).href;
         const def = await resolveParents(JSON.parse(JSON.stringify(org)), url, u => readFileSync(new URL(u), 'utf8'));
@@ -113,16 +113,23 @@ describe('validateDef', () => {
             .toEqual([`$schema: no definition of gen-vis 4, its $schema "http://json-schema.org/draft-07/schema#" is none of gen-vis, ${hint}`]);
     });
 
-    test('the parts of the internal form are unknown: categories of a plot, props of a mapping, a text of the highlight and props of its prefixes', () => {
+    test('the keys of 3.x are unknown: categories of a plot, props of a mapping, a text of the highlight', () => {
         const def = base();
         def.mapping.c = { column: 'land', props: { categories: { Wien: {} } } };
-        def.plot = { type: 'cartesian:line', categories: ['c'], highlight: 'row', props: { ...def.plot.props, 'highlight-stroke-width': 3, 'others-opacity': 0.3 } };
+        def.plot = { type: 'cartesian:line', categories: ['c'], highlight: 'row', props: { ...def.plot.props } };
         expect(validateDef(def)).toEqual([
             "mapping.c.props: unknown key, expected one of 'column', 'name', 'type', 'format', 'stacked', 'scale', 'axis', 'hover', 'legend', 'domain', 'nice', 'categories', 'scheme', 'common', 'fromData', 'order', 'ranks'",
             "plot[0].categories: unknown key, expected one of 'type', 'id', 'by', 'data', 'dataFormat', 'filter', 'select', 'object', 'borders', 'dodge', 'halo', 'layer', 'facet', 'highlight', 'curve', 'props', 'others'",
             'plot[0].highlight: expected an object',
-            'plot[0].props.highlight-stroke-width: unknown prop, a prop of the highlight is one of \'highlight\', e.g. { "highlight": { "stroke-width": … } }',
-            'plot[0].props.others-opacity: unknown prop, a prop of the other elements is one of \'others\', e.g. { "others": { "opacity": … } }',
+        ]);
+    });
+
+    test('the props of the highlight and of the others are checked at their paths', () => {
+        const def = base();
+        def.plot = { ...def.plot, by: 'c', highlight: { mode: 'row', 'stroke-width': '@nope' }, others: { opacity: '@colour' } };
+        expect(validateDef(def)).toEqual([
+            expect.stringMatching(/^plot\[0\]\.highlight\.stroke-width: unknown reference 'nope'/),
+            expect.stringMatching(/^plot\[0\]\.others\.opacity: unknown reference 'colour'/),
         ]);
     });
 

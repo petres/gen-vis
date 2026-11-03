@@ -31,7 +31,7 @@
     }
   },
   {
-    "name": "the parts of the categories at the mapping are its props",
+    "name": "the parts of the categories stay at the mapping, it is categorical",
     "def": {
       "mapping": {
         "land": {
@@ -59,24 +59,22 @@
       "mapping": {
         "land": {
           "column": "Bundesland",
-          "props": {
-            "categories": {
-              "ÖSTERREICH": {
-                "color": "#000"
-              }
-            },
-            "scheme": "Tableau10",
-            "common": {
-              "stroke-width": 2
-            },
-            "fromData": true,
-            "ranks": [
-              {
-                "opacity": 1
-              }
-            ],
-            "order": "descending"
+          "categories": {
+            "ÖSTERREICH": {
+              "color": "#000"
+            }
           },
+          "scheme": "Tableau10",
+          "common": {
+            "stroke-width": 2
+          },
+          "fromData": true,
+          "ranks": [
+            {
+              "opacity": 1
+            }
+          ],
+          "order": "descending",
           "type": "categorical"
         }
       }
@@ -373,10 +371,8 @@
       "mapping": {
         "c": {
           "column": "c",
-          "props": {
-            "categories": {
-              "a": {}
-            }
+          "categories": {
+            "a": {}
           },
           "type": "categorical"
         },
@@ -447,7 +443,7 @@
       },
       "plot": {
         "type": "cartesian:line",
-        "categories": [
+        "by": [
           "g"
         ],
         "props": {
@@ -646,26 +642,6 @@
         "x": {
           "column": "a",
           "type": "numeric"
-        }
-      }
-    }
-  },
-  {
-    "name": "props of a mapping, the categories of the internal form, are not read",
-    "def": {
-      "mapping": {
-        "c": {
-          "column": "c",
-          "props": {
-            "fromData": true
-          }
-        }
-      }
-    },
-    "result": {
-      "mapping": {
-        "c": {
-          "column": "c"
         }
       }
     }

@@ -11,7 +11,7 @@ import { projectionNames } from "@/coords/geo.js";
 import { applyTransforms, transformNames, utcColumns } from "@/utils/transform";
 import { isObject } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
-import { defaultScaleType, normalize, scaleTypeOf } from "@/utils/normalize";
+import { defaultScaleType, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
 import { inferTypes } from "@/utils/data";
 import { versionError } from "@/utils/version";
 // without its descriptions, see checkSchema of vite.config.js
@@ -54,7 +54,7 @@ const choices = (name, names) => {
 };
 
 // the parts of a mapping which are objects, see prepareMapping of utils/def.js
-const mappingParts = ['scale', 'axis', 'legend', 'hover', 'props'];
+const mappingParts = ['scale', 'axis', 'legend', 'hover'];
 
 // the names of a template of html, e.g. "land.unit" of "{land.unit}"
 const templateNames = text => typeof text == 'string' ? [...text.matchAll(/\{([\p{L}\p{N}_.:-]+)\}/gu)].map(m => m[1]) : [];
@@ -132,10 +132,10 @@ const rowNames = (n, m) => [
 
 // the props of the categories of a mapping, `name` and `visible` are set by
 // default, `color` by a scheme or the default colors
-const categoryNames = m => m?.props ? ['name', 'visible', 'color',
-    ...Object.keys(m.props.common ?? {}),
-    ...[m.props.ranks ?? []].flat().flatMap(e => Object.keys(e ?? {})),
-    ...Object.values(m.props.categories ?? {}).flatMap(e => Object.keys(e ?? {}))] : [];
+const categoryNames = m => hasCategories(m) ? ['name', 'visible', 'color',
+    ...Object.keys(m.common ?? {}),
+    ...[m.ranks ?? []].flat().flatMap(e => Object.keys(e ?? {})),
+    ...Object.values(m.categories ?? {}).flatMap(e => Object.keys(e ?? {}))] : [];
 
 // the names of a plot, also the positions of values of the scaled mappings,
 // e.g. `x:scaled:0` or `y:scaled:100`
@@ -264,15 +264,15 @@ const checkMappings = ctx => {
         const path = `mapping.${n}`;
         if (typeof m.column != 'string')
             warn(path, `no 'column'`);
-        if (m.props && !m.props.categories && !m.props.fromData)
+        const categorical = hasCategories(m);
+        if (categorical && !m.categories && !m.fromData)
             warn(path, `the categories need 'categories' or the ones of the data ('fromData'), 'common' are the props of all of them`);
-        const order = m.props?.order;
-        if (order !== undefined && order != 'ascending' && order != 'descending' && !Array.isArray(order))
-            warn(`${path}.props.order`, `expected 'ascending', 'descending' or a list of keys`);
-        if (m.props?.ranks !== undefined && !(Array.isArray(m.props.ranks) && m.props.ranks.every(isObject)))
-            warn(`${path}.props.ranks`, `expected a list of props, of the first category, the second one, ...`);
-        if (m.props?.scheme !== undefined && !d3.named(d3.schemeNames, m.props.scheme))
-            warn(`${path}.props.scheme`, `unknown scheme '${m.props.scheme}', e.g. 'Tableau10'`);
+        if (m.order !== undefined && m.order != 'ascending' && m.order != 'descending' && !Array.isArray(m.order))
+            warn(`${path}.order`, `expected 'ascending', 'descending' or a list of keys`);
+        if (m.ranks !== undefined && !(Array.isArray(m.ranks) && m.ranks.every(isObject)))
+            warn(`${path}.ranks`, `expected a list of props, of the first category, the second one, ...`);
+        if (m.scheme !== undefined && !d3.named(d3.schemeNames, m.scheme))
+            warn(`${path}.scheme`, `unknown scheme '${m.scheme}', e.g. 'Tableau10'`);
         if (m.scale)
             checkScale(ctx, n, m, path);
         if (m.axis) {
@@ -317,14 +317,14 @@ const checkMappings = ctx => {
         }
         checkProp(m.legend?.position, `${path}.legend.position`, warn, names.global);
         checkProp(m.legend?.orientation, `${path}.legend.orientation`, warn, names.global);
-        if (isObject(m.hover?.row) && !m.props)
+        if (isObject(m.hover?.row) && !categorical)
             warn(`${path}.hover.row`, `the styles of the rows of the hover are props of the categories, the mapping needs 'categories' or 'fromData'`);
-        if (m.legend?.onlyData !== undefined && (typeof m.legend.onlyData != 'boolean' || !m.props))
+        if (m.legend?.onlyData !== undefined && (typeof m.legend.onlyData != 'boolean' || !categorical))
             warn(`${path}.legend.onlyData`, `only the entries of the categories of the rows, true or false, of a legend of categories`);
-        if (m.legend && !m.props && m.scale?.orientation !== undefined)
+        if (m.legend && !categorical && m.scale?.orientation !== undefined)
             warn(`${path}.legend`, `a legend needs the props of the categories or a scale of colors, without an orientation`);
         // the props of the legend and the hover of the categories
-        if (m.props) {
+        if (categorical) {
             const known = names.category(n);
             checkProp(m.legend?.props, `${path}.legend.props`, warn, known);
             checkProp(m.hover?.props, `${path}.hover.props`, warn, known);
@@ -346,12 +346,15 @@ const checkMappings = ctx => {
 // the scale of a mapping, of its own or the one of another mapping (`of`)
 const checkScale = (ctx, n, m, path) => {
     const { def, names, warn, coordName, orientations } = ctx;
+    // `domain` and `nice` may be written at the mapping, see utils/normalize.js
+    const raw = ctx.raw?.mapping?.[n];
+    const at = k => isObject(raw) && ['domain', 'nice'].includes(k) && k in raw ? `${path}.${k}` : `${path}.scale.${k}`;
     if (m.scale.of !== undefined) {
         const other = Object.hasOwn(def.mapping ?? {}, m.scale.of) ? def.mapping[m.scale.of] : undefined;
         if (!other?.scale || other.scale.of !== undefined)
             warn(`${path}.scale.of`, `expected a mapping with a scale of its own, e.g. "y"`);
         Object.keys(m.scale).filter(k => k != 'of').forEach(k =>
-            warn(`${path}.scale.${k}`, `not used, the scale is the one of '${m.scale.of}'`));
+            warn(at(k), `not used, the scale is the one of '${m.scale.of}'`));
         return;
     }
     // the name of the schema, e.g. "linear" of "Linear"
@@ -380,19 +383,19 @@ const checkScale = (ctx, n, m, path) => {
     if (m.scale.scheme !== undefined && !d3.named(d3.schemeNames, m.scale.scheme))
         warn(`${path}.scale.scheme`, `unknown scheme '${m.scale.scheme}', e.g. 'Blues'`);
     if (type == 'threshold' && !(Array.isArray(m.scale.domain) && m.scale.domain.every(v => v !== null)))
-        warn(`${path}.scale.domain`, `a threshold scale needs the values between its classes`);
+        warn(at('domain'), `a threshold scale needs the values between its classes`);
     if (m.type == 'date' && m.scale.orientation !== undefined && !['time', 'utc'].includes(type))
         warn(`${path}.scale.type`, `the positions of dates need a 'time' or a 'utc' scale`);
     // the ends of the domain of dates and categories are not rounded, see utils/scales.js
     if (typed && m.scale.nice !== undefined && m.scale.nice !== false && m.type != 'numeric')
-        warn(`${path}.scale.nice`, `only the domains of numeric mappings are rounded, not the ones of ${typeName}`);
+        warn(at('nice'), `only the domains of numeric mappings are rounded, not the ones of ${typeName}`);
     const domain = Array.isArray(m.scale.domain) ? m.scale.domain : [];
     if (scale && typeof scale().step == 'function' && domain.some(v => v === null) && domain.some(v => v !== null))
-        warn(`${path}.scale.domain`, `the categories of a ${type} scale are all the ones of the data (null) or a list of them`);
+        warn(at('domain'), `the categories of a ${type} scale are all the ones of the data (null) or a list of them`);
     if (Array.isArray(m.scale.range))
         m.scale.range.forEach((v, j) => checkProp(v, `${path}.scale.range[${j}]`, warn, names.range));
     [m.scale.inset].flat().forEach(v => checkProp(v, `${path}.scale.inset`, warn, names.range));
-    domain.forEach((v, j) => checkProp(v, `${path}.scale.domain[${j}]`, warn, names.facet));
+    domain.forEach((v, j) => checkProp(v, `${at('domain')}[${j}]`, warn, names.facet));
     [m.scale.include ?? []].flat().forEach(v => checkProp(v, `${path}.scale.include`, warn, names.facet));
     checkProp(m.scale.center, `${path}.scale.center`, warn, names.facet);
     if (typed && (m.scale.include !== undefined || m.scale.center !== undefined) && !['numeric', 'date'].includes(m.type))
@@ -478,11 +481,11 @@ const checkPlots = ctx => {
             warn(`${path}.type`, `unknown type '${p.type}'${choices(p.type, types)}`);
         else if (plotTypes[p.type].coords && coordName in coords && !plotTypes[p.type].coords.includes(coordName))
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
-        if (![p.categories ?? []].flat().every(c => typeof c == 'string'))
-            warn(`${path}.categories`, `expected a mapping or a list of mappings, e.g. ["land"]`);
-        const categories = [p.categories ?? []].flat().filter(c => typeof c == 'string');
+        if (![p.by ?? []].flat().every(c => typeof c == 'string'))
+            warn(`${path}.by`, `expected a mapping or a list of mappings, e.g. ["land"]`);
+        const categories = [p.by ?? []].flat().filter(c => typeof c == 'string');
         categories.filter(c => !Object.hasOwn(mapping, c)).forEach(c =>
-            warn(`${path}.categories`, `unknown mapping '${c}'`));
+            warn(`${path}.by`, `unknown mapping '${c}'`));
         if (p.curve !== undefined && curveNames.includes(p.curve) && types.includes(p.type) && !curvePlots.includes(p.type))
             warn(`${path}.curve`, `only used by ${list(curvePlots)}`);
         // the data of the plot: rows of the definition, their names are known
@@ -514,6 +517,9 @@ const checkPlots = ctx => {
         const plotNames = typeof p.data == 'string' ? null
             : new PlotNames([...names.plot(categories.filter(c => Object.hasOwn(mapping, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
         checkProp(p.props, `${path}.props`, warn, plotNames);
+        // the props of the highlight and of the other elements, see preparePlots of utils/def.js
+        ['highlight', 'others'].filter(k => isObject(p[k])).forEach(k => Object.entries(p[k])
+            .filter(([n]) => k != 'highlight' || n != 'mode').forEach(([n, v]) => checkProp(v, `${path}.${k}.${n}`, warn, plotNames)));
         // the references of the default props of the type, e.g. "@x:scaled" of a line
         const defaults = ctx.defaults?.get(i);
         if (defaults && plotNames)
@@ -607,7 +613,7 @@ const checkFacets = ({ def, mapping, names, warn }) => {
         warn('facets.dim', `expected the name of a mapping`);
     else if (!Object.hasOwn(mapping, def.facets.dim))
         warn('facets.dim', `unknown mapping '${def.facets.dim}'`);
-    else if (!mapping[def.facets.dim].props)
+    else if (!hasCategories(mapping[def.facets.dim]))
         warn('facets.dim', `the mapping '${def.facets.dim}' needs categories, e.g. "fromData": true`);
     checkProp(def.facets.cols, 'facets.cols', warn, names.global);
     checkProp(def.facets.scales, 'facets.scales', warn, names.global);
@@ -637,8 +643,8 @@ const checkTexts = ({ def, mapping, globals, warn, annotations }) => {
         checkText(m.name, `mapping.${n}.name`);
         checkText(m.axis?.title?.name, `mapping.${n}.axis.title.name`);
         checkText(m.legend?.missing?.name, `mapping.${n}.legend.missing.name`);
-        checkText(m.props?.common?.name, `mapping.${n}.props.common.name`);
-        Object.entries(m.props?.categories ?? {}).forEach(([k, e]) => checkText(e?.name, `mapping.${n}.props.categories.${k}.name`));
+        checkText(m.common?.name, `mapping.${n}.common.name`);
+        Object.entries(m.categories ?? {}).forEach(([k, e]) => checkText(e?.name, `mapping.${n}.categories.${k}.name`));
     });
     annotations.forEach(([i, a]) => ['label', 'text'].forEach(k => checkText(a[k], `annotations[${i}].${k}`)));
 };
@@ -758,28 +764,6 @@ const context = (def, warn, rows) => {
     };
 };
 
-// the path of a warning of the internal form (see utils/normalize.js) in the
-// definition of 4.0 `def`: the parts of the categories of a mapping and its
-// domain at the mapping, `by` of the categories of a plot, `highlight` and
-// `others` objects of the props of their prefixes, `mode` of the highlight
-const writtenPath = (path, def) => {
-    let m = /^mapping\.([^.[]+)\.props\.(categories|scheme|common|fromData|ranks|order)\b(.*)$/.exec(path);
-    if (m)
-        return `mapping.${m[1]}.${m[2]}${m[3]}`;
-    m = /^mapping\.([^.[]+)\.scale\.(domain|nice)\b(.*)$/.exec(path);
-    if (m && isObject(def.mapping?.[m[1]]) && m[2] in def.mapping[m[1]])
-        return `mapping.${m[1]}.${m[2]}${m[3]}`;
-    m = /^plot\[(\d+)\]\.(categories|props\.(highlight|others)-([^.[]+))(.*)$/.exec(path);
-    if (m && m[2] == 'categories')
-        return `plot[${m[1]}].by${m[5]}`;
-    if (m)
-        return `plot[${m[1]}].${m[3]}.${m[4]}${m[5]}`;
-    m = /^plot\[(\d+)\]\.highlight$/.exec(path);
-    if (m)
-        return `plot[${m[1]}].highlight.mode`;
-    return path;
-};
-
 // the types of the mappings without one of the values of their columns, as
 // the ones of the load (inferTypes of utils/data.js), of the columns of the
 // rows and of the transforms, the transforms are computed if they are
@@ -802,14 +786,15 @@ const withTypes = (def, rows) => {
     return def;
 };
 
-// the warnings of the checks of the parts of the internal form (`internal`)
-// and of the schema of the definition of 4.0 (`def`, if `schemaChecked`), a
-// warning of the schema is left out if a check warns of the same path, or of
-// a value of a path above it, e.g. "expected a list" of the parts of a list
-const checkDef = (def, internal, rows, schemaChecked = true, plots = {}) => {
+// the warnings of the checks of the parts of the normalized definition
+// (`normalized`) and of the schema of the definition of 4.0 (`def`, if
+// `schemaChecked`), a warning of the schema is left out if a check warns of
+// the same path, or of a value of a path above it, e.g. "expected a list" of
+// the parts of a list
+const checkDef = (def, normalized, rows, schemaChecked = true, plots = {}) => {
     const warnings = [];
-    const warn = (path, message) => warnings.push([writtenPath(path, def), message]);
-    const ctx = { ...context(internal, warn, rows), ...plots };
+    const warn = (path, message) => warnings.push([path, message]);
+    const ctx = { ...context(normalized, warn, rows), raw: def, ...plots };
     [checkMappings, checkPlots, checkGeo, checkFilters, checkAnnotations, checkFormElements, checkFacets, checkTexts, checkOptions, checkTransforms]
         .forEach(check => check(ctx));
     const paths = new Set(warnings.map(([p]) => p));
@@ -827,11 +812,11 @@ const withoutDefaults = () => Object.fromEntries(Object.entries(plotTypes).map((
 // the plots of a registered type: their default props which the plot does
 // not write (`defaults`) and the type as it is written (`written`), by the
 // index of the plot
-const defaultProps = (def, internal) => {
+const defaultProps = (def, normalized) => {
     const written = new Map();
     const defaults = new Map();
     const raw = [].concat(def.plot ?? []);
-    [].concat(internal.plot ?? []).forEach((p, i) => {
+    [].concat(normalized.plot ?? []).forEach((p, i) => {
         const type = raw[i]?.type;
         if (typeof type != 'string' || !isObject(p) || !Object.hasOwn(plotTypes, p.type))
             return;
@@ -845,21 +830,13 @@ const defaultProps = (def, internal) => {
     return { written, defaults };
 };
 
-// the props of a plot of the names of the internal form of its highlight
-// and its others, e.g. "highlight-stroke", they are the ones of the objects
-// `highlight` and `others`, see utils/normalize.js
-const prefixedProps = def => [].concat(def?.plot ?? []).flatMap((p, i) => Object.keys(isObject(p?.props) ? p.props : {})
-    .map(k => /^(highlight|others)-(.+)$/.exec(k)).filter(Boolean)
-    .map(([k, part, name]) => `plot[${i}].props.${k}: unknown prop, a prop of the ${part == 'highlight' ? 'highlight' : 'other elements'} is one of '${part}', e.g. { "${part}": { "${name}": … } }`));
-
 /**
  * Returns warnings for common mistakes in a (merged) definition, e.g. a
  * `$schema` of another version than gen-vis 4 (the load of a file needs one,
  * see resolveParents of utils/load.js, an object may have none), unknown
  * plot types, keys which are not in the schema or props which are not
- * evaluated. The parts are checked in the internal form of
- * the definition (see utils/normalize.js), the paths are the ones of the
- * definition. The definitions of the entries of the form elements, the one
+ * evaluated. The parts are checked in the normalized definition (see
+ * utils/normalize.js), the paths are the ones of the definition. The definitions of the entries of the form elements, the one
  * with the patch of an entry merged as the runtime merges it (see
  * applyPatches of utils/def.js), are checked as well, their warnings which
  * are not the ones of the definition have the entry before the path, e.g.
@@ -868,21 +845,20 @@ const prefixedProps = def => [].concat(def?.plot ?? []).flatMap((p, i) => Object
  * the mappings without one are the ones of their values.
  */
 const validateDef = (def, rows = null) => {
-    const internal = withTypes(normalize(def, { plotTypes: withoutDefaults() }), rows);
+    const normalized = withTypes(normalize(def, { plotTypes: withoutDefaults() }), rows);
     // a $schema of another version, a definition object may have none, see utils/version.js
     const version = versionError(def?.$schema);
     const warnings = [
         ...(version ? [`$schema: no definition of gen-vis 4, ${version}`] : []),
-        ...checkDef(def, internal, rows, true, defaultProps(def, internal)),
-        ...prefixedProps(def),
+        ...checkDef(def, normalized, rows, true, defaultProps(def, normalized)),
     ];
     const known = new Set(warnings);
     // the patches are checked by the schema as parts of the definition
     const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));
-    (Array.isArray(internal.formElements) ? internal.formElements : []).forEach((e, i) => (Array.isArray(e?.values) ? e.values : []).forEach((v, j) => {
+    (Array.isArray(normalized.formElements) ? normalized.formElements : []).forEach((e, i) => (Array.isArray(e?.values) ? e.values : []).forEach((v, j) => {
         if (!isObject(v?.patch))
             return;
-        const variant = { ...internal, ...mergeAll([pick(internal), pick(v.patch)]), globals: { ...internal.globals, ...(isObject(v.globals) ? v.globals : {}) } };
+        const variant = { ...normalized, ...mergeAll([pick(normalized), pick(v.patch)]), globals: { ...normalized.globals, ...(isObject(v.globals) ? v.globals : {}) } };
         checkDef(def, variant, rows, false).filter(w => !known.has(w)).forEach(w => {
             known.add(w);
             warnings.push(`formElements[${i}].values[${j}] > ${w}`);

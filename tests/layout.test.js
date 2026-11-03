@@ -59,7 +59,7 @@ describe('layout', () => {
     test('without rows of a facet one of all rows', async () => {
         const store = createStore();
         await store.init({ def: { options: { height: 200 }, mapping: mapping(), plot, facets: { dim: 'c', cols: 2 } }, data });
-        Object.values(store.def.mapping.c.props).forEach(p => p.visible = false);
+        Object.values(store.def.mapping.c.categoryProps).forEach(p => p.visible = false);
         const v = layout(store, 400);
         expect(v.faceted).toBe(false);
         expect(v.facets).toHaveLength(1);

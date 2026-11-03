@@ -1,6 +1,6 @@
 [
   {
-    "name": "the parts of patches in the internal form, without defaults of mappings",
+    "name": "the parts of patches are normalized, without defaults of mappings",
     "def": {
       "mapping": {
         "y": {
@@ -79,7 +79,7 @@
                   {
                     "id": "p",
                     "type": "cartesian:line",
-                    "categories": "c",
+                    "by": "c",
                     "props": {
                       "stroke": {
                         "or": [

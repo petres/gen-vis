@@ -64,7 +64,7 @@ const labelProps = (ctx, n, labels) => {
     if (!labels?.props)
         return null;
     const store = ctx.store;
-    const categories = [labels.categories ?? []].flat().filter(c => store.mapping(c)?.props);
+    const categories = [labels.categories ?? []].flat().filter(c => store.mapping(c)?.categoryProps);
     const rows = new Map();
     ctx.rows.forEach(r => {
         const k = String(r[n]);
@@ -73,7 +73,7 @@ const labelProps = (ctx, n, labels) => {
     });
     return d => {
         const row = rows.get(String(d)) ?? {};
-        const props = Object.assign({}, store.mapping(n).props ? store.prop(n, String(d)) : undefined,
+        const props = Object.assign({}, store.mapping(n).categoryProps ? store.prop(n, String(d)) : undefined,
             ...categories.map(c => store.prop(c, String(row[c]))));
         return evaluate(labels.props, { ...ctx.scope, ...row, [n]: d, ...props });
     };

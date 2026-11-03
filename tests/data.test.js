@@ -312,7 +312,7 @@ describe('the categories of the data', () => {
     test('after the listed ones, in ascending order', () => {
         const rows = [{ a: 'y', b: 'q' }, { a: 'x', b: 'p' }, { a: 'x', b: '' }, { a: 'x', b: 'z' }];
         const keysOf = column => distinctValues(rows, null, column).map(String);
-        const def = prepareDef({ globals: { col: 'b' }, mapping: { c: { column: '{col}', props: { fromData: true, categories: { z: {} } } }, d: { column: 'a', props: { categories: { x: {} } } } } }, { dataKeys: keysOf });
+        const def = prepareDef({ globals: { col: 'b' }, mapping: { c: { column: '{col}', fromData: true, categories: { z: {} } }, d: { column: 'a', categories: { x: {} } } } }, { dataKeys: keysOf });
         expect(def.mapping.c.keys).toEqual(['z', 'p', 'q']);
         // only with fromData
         expect(def.mapping.d.keys).toEqual(['x']);

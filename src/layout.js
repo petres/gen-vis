@@ -43,11 +43,11 @@ const axisNames = store => {
     return { ...(h === undefined ? {} : { h }), ...(v === undefined ? {} : { v }) };
 };
 
-// the visible categories of the mappings with props, e.g. of the legends,
+// the visible categories of the mappings with categories, e.g. of the legends,
 // in the order of the categories
 const visibleKeys = def => Object.entries(def.mapping)
-    .filter(([, m]) => m.props)
-    .map(([dim, m]) => ({ dim, key: m.keys.filter(k => m.props[k].visible) }));
+    .filter(([, m]) => m.categoryProps)
+    .map(([dim, m]) => ({ dim, key: m.keys.filter(k => m.categoryProps[k].visible) }));
 
 // the props of a category of a mapping, e.g. of a value of the data,
 // undefined for other values
@@ -58,9 +58,9 @@ const ownProp = (props, key) => props && Object.hasOwn(props, key) ? props[key] 
 const facetEntries = (store, rows) => {
     const d = store.def.facets.dim;
     const m = Object.hasOwn(store.def.mapping, d) ? store.mapping(d) : null;
-    if (!m?.props)
-        throw new Error(`facets.dim: the facets are the categories of a mapping with props, e.g. { "fromData": true }, not '${d}'`);
-    const { props, keys } = m;
+    if (!m?.categoryProps)
+        throw new Error(`facets.dim: the facets are the categories of a mapping, e.g. { "fromData": true }, not '${d}'`);
+    const { categoryProps: props, keys } = m;
     return groupBy(rows, [d])
         .filter(g => keys.includes(String(g.group[d])))
         .sort((a, b) => keys.indexOf(String(a.group[d])) - keys.indexOf(String(b.group[d])))
@@ -384,8 +384,8 @@ const plotGroups = (plot, rows, ctx) => {
     const mapping = ctx.store.def.mapping;
     const needed = [...new Set(refNames(plot.props).map(n => n.split(':')[0]))].filter(m => Object.hasOwn(mapping, m));
     const complete = row => needed.every(m => row[m] !== null);
-    return groupBy(rows, plot.categories).map(g => {
-        const props = withColor(plot.categories.map(c => ownProp(mapping[c].props, g.group[c])));
+    return groupBy(rows, plot.by).map(g => {
+        const props = withColor(plot.by.map(c => ownProp(mapping[c].categoryProps, g.group[c])));
         const scoped = name => Object.hasOwn(ctx.scope, name) ? constant(ctx.scope[name]) : undefined;
         const resolve = name => typeof name == 'symbol' ? scoped(name) : (Object.hasOwn(props, name) ? constant(props[name])
             : rowValue(ctx, name, rows) ?? scoped(name));

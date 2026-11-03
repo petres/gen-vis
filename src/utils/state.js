@@ -16,8 +16,8 @@ const userElements = def => (def.formElements ?? []).filter(e => e.type != 'hidd
 const snapshot = def => ({
     globals: Object.fromEntries(userElements(def).map(e => [e.ref, def.globals?.[e.ref]])),
     visible: Object.fromEntries(Object.entries(def.mapping)
-        .filter(([n, m]) => m.legend && m.props)
-        .map(([n, m]) => [n, Object.fromEntries(Object.entries(m.props).map(([k, p]) => [k, p.visible]))])),
+        .filter(([n, m]) => m.legend && m.categoryProps)
+        .map(([n, m]) => [n, Object.fromEntries(Object.entries(m.categoryProps).map(([k, p]) => [k, p.visible]))])),
 });
 
 // the entries of the state which differ from the defaults, empty parts are omitted
@@ -49,11 +49,11 @@ const applyState = (def, state) => {
 
     Object.entries(state?.visible ?? {}).forEach(([n, keys]) => {
         const m = Object.hasOwn(def.mapping, n) ? def.mapping[n] : null;
-        if (!m?.legend || !m.props)
+        if (!m?.legend || !m.categoryProps)
             return;
         Object.entries(keys ?? {}).forEach(([k, v]) => {
-            if (Object.hasOwn(m.props, k))
-                m.props[k].visible = Boolean(v);
+            if (Object.hasOwn(m.categoryProps, k))
+                m.categoryProps[k].visible = Boolean(v);
         });
     });
 };

@@ -326,14 +326,14 @@ const createFacet = (vis, initial) => {
 
         // categorical mappings, and other values with a hover, e.g. of a second vertical axis
         const categories = store.mappingNamesWithKey('hover')
-            .filter(n => n != names.h && n != v && store.mapping(n).props);
+            .filter(n => n != names.h && n != v && store.mapping(n).categoryProps);
         const others = store.mappingNamesWithKey('hover')
-            .filter(n => n != names.h && n != v && !store.mapping(n).props && ['numeric', 'date'].includes(store.mapping(n).type));
+            .filter(n => n != names.h && n != v && !store.mapping(n).categoryProps && ['numeric', 'date'].includes(store.mapping(n).type));
         const formats = Object.fromEntries(others.map(n => [n, store.valueFormat(n, ctx.scales[n])]));
         // the mappings whose categories style the rows (`hover.row.props`),
         // and the ones of categories as attributes of the rows, e.g. data-type="load"
         const styled = categories.filter(n => store.mapping(n).hover.row?.props);
-        const keyed = Object.keys(store.def.mapping).filter(n => store.mapping(n).props && dataAttribute(n));
+        const keyed = Object.keys(store.def.mapping).filter(n => store.mapping(n).categoryProps && dataAttribute(n));
 
         const line = marker.querySelector("line");
         // the marker without a line, e.g. of a hidden hover or of a point

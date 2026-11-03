@@ -64,7 +64,7 @@ const createLegend = (vis, legend) => {
     const info = () => store.mapping(legend);
     // the categories of the entries, without the ones with `"legend": false`,
     // e.g. headers, they stay visible, also the ones which are not in the rows
-    const categories = () => { const m = info(); return m.keys.filter(key => m.props[key].legend !== false) };
+    const categories = () => { const m = info(); return m.keys.filter(key => m.categoryProps[key].legend !== false) };
 
     const changed = () => vis.changeSelected({ dim: legend });
     const switched = entry => {
@@ -76,7 +76,7 @@ const createLegend = (vis, legend) => {
     const clicked = (entry, event) => {
         if (event.detail > 1)
             return;
-        before = { key: entry.key, visible: categories().map(key => info().props[key].visible) };
+        before = { key: entry.key, visible: categories().map(key => info().categoryProps[key].visible) };
         switched(entry);
     };
     // only the entry, if it is the only one already all entries, also
@@ -85,9 +85,9 @@ const createLegend = (vis, legend) => {
     const only = entry => {
         const all = categories();
         const m = info();
-        const visible = before?.key === entry.key ? before.visible : all.map(key => m.props[key].visible);
+        const visible = before?.key === entry.key ? before.visible : all.map(key => m.categoryProps[key].visible);
         const alone = all.every((key, i) => visible[i] == (key === entry.key));
-        all.forEach(key => m.props[key].visible = alone || key === entry.key);
+        all.forEach(key => m.categoryProps[key].visible = alone || key === entry.key);
         changed();
     };
     const highlight = entry => vis.highlight(entry ? { dim: legend, key: entry.key } : {});
@@ -123,7 +123,7 @@ const createLegend = (vis, legend) => {
         setText(title, name);
         patch(list, { class: 'vis-legend-entries', role: 'group', 'aria-label': name });
         // with `onlyData` without the ones which are not in the rows
-        const entries = categories().filter(key => !inData || inData.has(key)).map(key => ({ key, props: m.props[key] }));
+        const entries = categories().filter(key => !inData || inData.has(key)).map(key => ({ key, props: m.categoryProps[key] }));
         const scope = store.scope;
         const symbol = m.legend.symbol;
         join(list, entries, { key: e => e.key, create: createEntry }).forEach((div, i) => {

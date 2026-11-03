@@ -1,31 +1,27 @@
-export { normalize, scaleTypeOf, defaultScaleType };
+export { normalize, scaleTypeOf, defaultScaleType, categoryKeys, hasCategories };
 
 import { isObject } from '@/utils/values';
 import { isOperator, refNames } from '@/utils/expr';
 
 /**
  * The normalization of a definition of 4.0 (merged with its parents) into the
- * internal form of the renderer, see docs/design-4.0.md and
- * spec/normalize. It is pure, JSON to JSON, the parts which need the rows,
- * the types of mappings without a type, follow when the rows are loaded, see
- * inferTypes of utils/data.js and prepareMapping of utils/def.js.
+ * form the renderer reads, see docs/design-4.0.md and spec/normalize. It
+ * keeps the names of 4.0 and writes out what a definition may leave out. It
+ * is pure, JSON to JSON, the parts which need the rows, the types of mappings
+ * without a type, follow when the rows are loaded, see inferTypes of
+ * utils/data.js and prepareMapping of utils/def.js.
  *
  * - a mapping of a text is the one of the column, e.g. "x": "year"
- * - `categories`, `scheme`, `common`, `fromData`, `ranks` and `order` of a
- *   mapping are the ones of its categories (`props`), `domain` and `nice`
- *   the ones of its scale
+ * - `domain` and `nice` of a mapping are the ones of its scale
  * - the mappings of the positions of the coordinate system (`x` and `y`,
  *   polar also `angle` and `radius`) have a scale of the orientation of the
  *   name and an axis, unless they are false (an orientation null is none), an axis is at the position of
  *   the orientation of its scale
- * - the type of a mapping follows from its parts: categories or a band,
- *   point or ordinal scale are categorical, a time or utc scale a date, other
- *   scales numeric, a mapping of the categories of a plot or of the facets
- *   is categorical, the type of a scale follows from the type of the mapping,
- *   see scaleTypeOf
- * - `by` of a plot are its `categories`, `highlight` and `others` objects of
- *   props are the props `highlight-` and `others-`, `mode` of the highlight
- *   is the highlight of the internal form (`group` or `row`)
+ * - the type of a mapping follows from its parts: categories (see
+ *   hasCategories) or a band, point or ordinal scale are categorical, a time
+ *   or utc scale a date, other scales numeric, a mapping of the facets or of
+ *   the groups of a scale is categorical, the type of a scale follows from
+ *   the type of the mapping, see scaleTypeOf
  * - the type of a plot without the prefix of the coordinate system is the one
  *   of the coordinate system (`line` is `cartesian:line` or `polar:line`), of
  *   svg elements (`circle` is `svg:circle` of cartesian plots) or the only
@@ -34,19 +30,17 @@ import { isOperator, refNames } from '@/utils/expr';
  *   short name and of a full one alike (`line` is `cartesian:line`), null
  *   removes a default
  *
- * The parts of the internal form are not the ones of a definition, they are
- * not read: `props` of a mapping, `categories` of a plot, a text of its
- * `highlight` and its props of the prefixes `highlight-` and `others-`.
- *
  * The patches of the entries of form elements are parts, they are only
- * written in the internal form, without the defaults, except the plots of a
- * type, of the coordinate system of the patch, and the positions of the
- * mappings of the definition in another coordinate system of a patch.
- * `plotTypes` are the plot types by name, see plots/index.js.
+ * normalized, without the defaults, except the plots of a type, of the
+ * coordinate system of the patch, and the positions of the mappings of the
+ * definition in another coordinate system of a patch. `plotTypes` are the
+ * plot types by name, see plots/index.js.
  */
 
-// the parts of the categories of a mapping, `props` of the internal form
+// the parts of the categories of a mapping, a mapping with any of them has
+// categories, see prepareMapping of utils/def.js
 const categoryKeys = ['categories', 'scheme', 'common', 'fromData', 'ranks', 'order'];
+const hasCategories = m => isObject(m) && categoryKeys.some(k => m[k] !== undefined);
 // the parts of the scale which may stand at the mapping
 const scaleKeys = ['domain', 'nice'];
 
@@ -101,8 +95,8 @@ const withDefaults = (defaults, props) => {
  * The type of the scale of a mapping of a type: `linear` of numeric ones,
  * `time` of dates, of categorical ones `band` of the positions of bars,
  * `point` of other positions and `ordinal` otherwise, e.g. colors, undefined
- * without a type. `plots` are the plots of the definition (of the internal
- * form), `name` the one of the mapping.
+ * without a type. `plots` are the plots of the normalized definition,
+ * `name` the one of the mapping.
  */
 const scaleTypeOf = (m, name, plots = []) => {
     if (m.type == 'numeric')
@@ -124,7 +118,7 @@ const defaultScaleType = (m, name, plots = []) => scaleTypeOf(m, name, plots) ??
 
 // the type of a mapping of its parts, see normalize, undefined if they do not tell
 const typeOf = (m, name, used) => {
-    if (isObject(m.props))
+    if (hasCategories(m))
         return 'categorical';
     const type = isObject(m.scale) ? m.scale.type : undefined;
     if (categoricalScales.includes(type))
@@ -136,18 +130,12 @@ const typeOf = (m, name, used) => {
     return used.has(name) ? 'categorical' : undefined;
 };
 
-// the mapping in the internal form, `own` if it is one of the definition, not
+// the normalized mapping, `own` if it is one of the definition, not
 // of a patch, `orientation` the one of its name in the coordinate system
 const normalizeMapping = (raw, orientation, own) => {
     if (!isObject(raw) && typeof raw != 'string')
         return raw;
     const m = typeof raw == 'string' ? { column: raw } : { ...raw };
-    delete m.props;
-    const categories = categoryKeys.filter(k => k in m);
-    if (categories.length > 0) {
-        m.props = Object.fromEntries(categories.map(k => [k, m[k]]));
-        categories.forEach(k => delete m[k]);
-    }
     const scaled = scaleKeys.filter(k => k in m);
     if (scaled.length > 0) {
         if (m.scale !== null && m.scale !== false)
@@ -173,20 +161,11 @@ const normalizeMapping = (raw, orientation, own) => {
     return m;
 };
 
-// the plot in the internal form, its type of the coordinate system `coord`
+// the normalized plot, its type of the coordinate system `coord`
 const normalizePlot = (raw, coord, plotTypes) => {
     if (!isObject(raw))
         return raw;
     const p = { ...raw };
-    delete p.categories;
-    if (typeof p.highlight == 'string')
-        delete p.highlight;
-    if (isObject(p.props))
-        p.props = Object.fromEntries(Object.entries(p.props).filter(([k]) => !/^(highlight|others)-/.test(k)));
-    if ('by' in p) {
-        p.categories = p.by;
-        delete p.by;
-    }
     if (typeof p.type == 'string') {
         const type = p.type.includes(':') ? p.type : resolveType(p.type, coord, plotTypes);
         if (type !== undefined && Object.hasOwn(plotTypes, type)) {
@@ -197,22 +176,13 @@ const normalizePlot = (raw, coord, plotTypes) => {
                 p.props = withDefaults(clone(own), isObject(p.props) ? p.props : {});
         }
     }
-    // the props of the highlight and of the others, e.g. "highlight": { "stroke-width": 3 }
-    // and `mode` of the highlight, the elements of the group or of the row
-    ['highlight', 'others'].filter(k => isObject(p[k])).forEach(k => {
-        const { mode, ...props } = p[k];
-        p.props = { ...(isObject(p.props) ? p.props : {}), ...Object.fromEntries(Object.entries(k == 'highlight' ? props : p[k]).map(([n, v]) => [`${k}-${n}`, v])) };
-        delete p[k];
-        if (k == 'highlight' && mode !== undefined)
-            p.highlight = mode;
-    });
     return p;
 };
 
 const normalizePlots = (plot, coord, plotTypes) => Array.isArray(plot) ? plot.map(p => normalizePlot(p, coord, plotTypes))
     : normalizePlot(plot, coord, plotTypes);
 
-// the mappings in the internal form, `own` of the definition, `coord` its
+// the normalized mappings, `own` of the definition, `coord` its
 // coordinate system, `used` the names of the mappings of categories
 const normalizeMappings = (mapping, coord, own, plots = [], used = new Set()) => {
     if (!isObject(mapping))
@@ -240,8 +210,8 @@ const categoryNames = def => new Set([
 ].filter(n => typeof n == 'string'));
 
 /**
- * The internal form of a definition of 4.0 (merged with its parents), see
- * above, the definition is not changed.
+ * The normalized definition of 4.0 (merged with its parents), see above,
+ * the definition is not changed.
  */
 const normalize = (raw, { plotTypes = {} } = {}) => {
     const def = clone(raw);
