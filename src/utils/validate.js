@@ -291,8 +291,8 @@ const checkMappings = ctx => {
             else if (labels) {
                 if (labels.curved !== undefined && (![true, false, 'between'].includes(labels.curved) || (labels.curved && m.axis.position != 'angular')))
                     warn(`${path}.axis.labels.curved`, `the labels along the circle of an angular axis, true or 'between'`);
-                const categories = [labels.categories ?? []].flat();
-                categories.filter(c => !Object.hasOwn(mapping, c)).forEach(c => warn(`${path}.axis.labels.categories`, `unknown mapping '${c}'`));
+                const categories = [labels.by ?? []].flat();
+                categories.filter(c => !Object.hasOwn(mapping, c)).forEach(c => warn(`${path}.axis.labels.by`, `unknown mapping '${c}'`));
                 checkProp(labels.props, `${path}.axis.labels.props`, warn, new Set([...names.facet, ...Object.keys(mapping),
                     ...categoryNames(m), ...categories.flatMap(c => categoryNames(mapping[c]))]));
             }

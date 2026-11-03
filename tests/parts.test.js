@@ -458,7 +458,7 @@ describe('texts', () => {
         const def = lineDef();
         def.mapping.x = { column: 'value', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, null] }, axis: { position: 'bottom' } };
         def.mapping.y = { column: 'name', type: 'categorical', scale: { type: 'band', orientation: 'vertical' }, axis: { position: 'left',
-            labels: { categories: ['level'], props: { 'font-weight': '@weight', text: '@short', 'max-width': 30 } } } };
+            labels: { by: ['level'], props: { 'font-weight': '@weight', text: '@short', 'max-width': 30 } } } };
         def.mapping.level = { column: 'level', type: 'categorical', categories: { header: { weight: 'bold' }, item: { weight: 'normal' } } };
         def.mapping.short = { column: 'short', type: 'categorical' };
         def.plot = { type: 'cartesian:bar', props: { x1: '@x:scaled', y: '@y:scaled' } };

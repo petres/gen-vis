@@ -412,6 +412,17 @@ describe('validateDef', () => {
         expect(validateDef(def)).toEqual(["mapping.x.axis.labels.curved: the labels along the circle of an angular axis, true or 'between'"]);
     });
 
+    test('the props of the labels of an axis by the categories of the mappings of their rows', () => {
+        const def = base();
+        def.mapping.y.axis = { labels: { by: ['c'], props: { 'font-weight': '@weight' } } };
+        def.mapping.c.common = { weight: 'bold' };
+        expect(validateDef(def)).toEqual([]);
+        def.mapping.y.axis.labels.by = 'nope';
+        expect(validateDef(def)).toEqual(["mapping.y.axis.labels.by: unknown mapping 'nope'", "mapping.y.axis.labels.props.font-weight: unknown reference 'weight', did you mean 'height'?"]);
+        def.mapping.y.axis.labels = { categories: ['c'] };
+        expect(validateDef(def)).toEqual([expect.stringMatching(/^mapping\.y\.axis\.labels\.categories: unknown key/)]);
+    });
+
     test('the data, the selection and the layer of a plot', () => {
         const def = base();
         def.globals = { target: 3 };

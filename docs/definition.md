@@ -482,7 +482,7 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   "@weight", "text": "@short", "max-width": 300}`, their names are the ones
   of the facet, the values of the first row of the tick, e.g. `@short` of
   another mapping, the props of the categories of the tick and of the
-  mappings `categories` of its row, e.g. `"categories": ["level"]` for
+  categories of its row of the mappings `by`, e.g. `"by": ["level"]` for
   `@weight` of the categories of a level, a `font-size` replaces the one of
   the styles), `domain` (the `props` of the line of the axis, svg
   attributes of the names of the facet, e.g. `{"props": {"stroke-opacity":

@@ -923,10 +923,13 @@ export interface Axis {
      */
     format?: string;
     /**
-     * The props of the labels of the ticks (svg attributes and text), of the props of the categories of the tick and of the mappings of the categories of its row, its values and the names of the facet, e.g. { "categories": ["level"], "props": { "font-weight": "@weight", "text": "@short", "max-width": 300 } }, of all axes, e.g. { "props": { "fill": "#777", "font-size": 10, "stroke-width": 2 } } of the values of a radial axis in the background, the stroke and its width replace the halo of the labels of radial axes.
+     * The props of the labels of the ticks (svg attributes and text), of the props of the categories of the tick and of the categories of its row of the mappings `by`, its values and the names of the facet, e.g. { "by": ["level"], "props": { "font-weight": "@weight", "text": "@short", "max-width": 300 } }, of all axes, e.g. { "props": { "fill": "#777", "font-size": 10, "stroke-width": 2 } } of the values of a radial axis in the background, the stroke and its width replace the halo of the labels of radial axes.
      */
     labels?: {
-        categories?: string | string[];
+        /**
+         * The mappings of categories whose props the labels have, of the categories of the row of the tick, a mapping or a list of them, as `by` of a plot.
+         */
+        by?: string | string[];
         props?: Props;
         /**
          * Angular axes: the labels along the circle, centered at the tick (true) or between it and the next one (between), e.g. the names of the months, the ones of the lower half are not upside down.

@@ -56,7 +56,7 @@ const tickFormat = (store, name, scale, ticks) => {
  * function of the tick, `axis.labels.props`, e.g. { "font-weight": "@weight",
  * "text": "@short", "max-width": 300 }, of the names of the facet, the values
  * of the first row of the tick (e.g. `@short`), the props of the categories
- * of the tick and of the mappings `axis.labels.categories` of its row (e.g.
+ * of the tick and of the mappings `axis.labels.by` of its row (e.g.
  * `@weight` of a category of a level), null without props, of the axes of
  * all coordinate systems.
  */
@@ -64,7 +64,7 @@ const labelProps = (ctx, n, labels) => {
     if (!labels?.props)
         return null;
     const store = ctx.store;
-    const categories = [labels.categories ?? []].flat().filter(c => store.mapping(c)?.categoryProps);
+    const categories = [labels.by ?? []].flat().filter(c => store.mapping(c)?.categoryProps);
     const rows = new Map();
     ctx.rows.forEach(r => {
         const k = String(r[n]);
