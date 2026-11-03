@@ -10,6 +10,7 @@
   { "name": "match, the cases are expressions", "scope": { "level": "item", "r": 2 }, "expr": { "match": ["@level", { "header": 4.5, "item": "@r" }, 0] }, "result": 2 },
   { "name": "match, the default of other values", "scope": { "level": "other" }, "expr": { "match": ["@level", { "header": 4.5, "item": "@r" }, 0] }, "result": 0 },
   { "name": "match without a default has no value", "scope": { "year": 2023 }, "expr": { "match": ["@year", { "2024": "red" }] }, "result": null },
+  { "name": "match of a missing value is the default, not a case \"null\" or \"\"", "scope": { "n": null, "e": "" }, "expr": [{ "match": ["@n", { "null": "a", "undefined": "b" }, "c"] }, { "match": ["@a", { "undefined": "b" }, "c"] }, { "match": ["@e", { "": "d" }, "c"] }], "result": ["c", "c", "c"] },
   { "name": "match of a number by its text", "scope": { "year": 2024 }, "expr": { "match": ["@year", { "2024": "red" }] }, "result": "red" },
   { "name": "match of an expression", "scope": { "a": 1 }, "expr": { "match": [{ "+": ["@a", 1] }, { "2": "two" }] }, "result": "two" }
 ]

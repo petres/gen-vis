@@ -44,7 +44,8 @@ the rules of the values:
   `2024-06-01 13:00+02:00`, is the same time of every scale. Other strings
   are no dates, e.g. `Phase 1` or `June 1, 2024`.
 - Values are **the same** if their strings are the same (`2024` and
-  `"2024"`), not `0` and `""`, missing ones are `null`.
+  `"2024"`), not `0` and `""`, missing ones are the same, e.g. `null` and
+  `""`.
 - Values are **compared** as numbers if all of them (the ones which are not
   missing) are numbers, otherwise as dates if all of them are dates,
   otherwise as strings (by their UTF-16 code units, as JavaScript compares

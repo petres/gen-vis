@@ -5,7 +5,7 @@ import { fillTemplate, sameValue, templateRefs, variants } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
 import { evaluate } from "@/utils/expr";
-import { comparison, compareCategories, isObject, toNumber } from "@/utils/values";
+import { comparison, compareCategories, isObject, missing, toNumber } from "@/utils/values";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
@@ -44,8 +44,6 @@ const parseData = async (data, format, columns = null) => {
     }
     return d3.csvParse(data);
 };
-
-const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
 
 // a date without a time zone: of ISO, e.g. "2022-06-01", "2022-06", "2022"
 // or "2022-06-01 13:00:00" (also with a T and the fraction of a second), and

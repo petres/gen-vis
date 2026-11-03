@@ -1,9 +1,13 @@
 // the comparisons of the values of definitions and of the data, e.g. of
 // categories, used by the other parts, so they import no part of their own
-export { isObject, numericText, compareCategories, comparison, toNumber, sameValue };
+export { isObject, missing, numericText, compareCategories, comparison, toNumber, sameValue };
 
 // an object of a definition, e.g. a mapping, not a list and not null
 const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
+
+// a missing value: null, undefined or a text of only whitespace, e.g. an
+// empty cell of csv
+const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
 
 // a number or the text of one, e.g. the category "2004", not an empty text
 const numericText = v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v));
@@ -31,12 +35,12 @@ const toNumber = v => {
 
 // values of globals and entries are the same as strings, e.g. the year 2024
 // of the data and "2024" of a definition, but not 0 and "", missing ones are
-// null, lists and objects are compared by their content
+// the same, e.g. null and "", lists and objects are compared by their content
 const scalar = v => v === null || v === undefined || typeof v != 'object';
 const sameValue = (a, b) => {
     if (!scalar(a) || !scalar(b))
         return JSON.stringify(a) == JSON.stringify(b);
-    if (a === null || a === undefined || b === null || b === undefined)
-        return (a ?? null) === (b ?? null);
+    if (missing(a) || missing(b))
+        return missing(a) && missing(b);
     return String(a) === String(b);
 };

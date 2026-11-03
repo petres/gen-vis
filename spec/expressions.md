@@ -35,8 +35,8 @@ and texts of decimal numbers, others are no number.
 | `/` | the first argument divided by the others |
 | `min`, `max` | the least, the largest argument |
 | `round` | `[x]` or `[x, digits]`: x rounded to `digits` decimals (0 by default, negative ones are tens, hundreds, ...), halves up (towards +∞): `Math.round(x·10^digits)/10^digits` |
-| `==`, `!=` | the same values or not: as texts, `0` and `""` are different, a missing value is `null`, lists and objects by their JSON |
-| `<`, `<=`, `>`, `>=` | of numbers if both are numbers, otherwise of texts (by code units), false if one is missing; more than two arguments are a chain, e.g. `{"<": [0, "@x", 10]}` |
+| `==`, `!=` | the same values or not: as texts, `0` and `""` are different, missing values (`null`, no value, `""` and whitespace) are the same, lists and objects by their JSON |
+| `<`, `<=`, `>`, `>=` | of numbers if both are numbers, otherwise of texts (by code units), false if one is missing (also `""`); more than two arguments are a chain, e.g. `{"<": [0, "@x", 10]}` |
 | `and` | the first argument which is false, otherwise the last one |
 | `or` | the first argument which is true, otherwise the last one, e.g. a default `{"or": ["@color", "black"]}` |
 | `not` | true if its argument is false |
@@ -44,7 +44,7 @@ and texts of decimal numbers, others are no number.
 | `cat` | the arguments as texts, joined, missing ones are empty |
 | `format` | `[value, format]`: the value as a text of a d3 format (numbers, e.g. `",.1f"`, or a time format of a mapping of dates, e.g. `"%b %Y"`) in the locale of the definition, a missing value is the empty text |
 | `steps` | `[value, {"cut": expression, ...}]`: the expression of the largest cut below the value (`value > cut`, the cuts as numbers), no value if there is none, e.g. `{"steps": ["@totalWidth", {"0": 220, "550": 250}]}` |
-| `match` | `[value, {"case": expression, ...}, default]`: the expression of the case of the value (as a text), otherwise `default` (no value without one) |
+| `match` | `[value, {"case": expression, ...}, default]`: the expression of the case of the value (as a text), otherwise `default` (no value without one), a missing value has no case, e.g. not `"null"` |
 | `literal` | its argument, not evaluated, e.g. `{"literal": "@a"}` |
 
 The arithmetic operators (`+`, `-`, `*`, `/`, `min`, `max`, `round`) have no

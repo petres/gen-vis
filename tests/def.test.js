@@ -284,11 +284,13 @@ describe('sameValue', () => {
         expect(sameValue(1, 2)).toBe(false);
     });
 
-    test('0, the empty string and missing values are different', () => {
+    test('0 and missing values are different, missing ones are the same, also empty texts', () => {
         expect(sameValue(0, '')).toBe(false);
         expect(sameValue(0, null)).toBe(false);
-        expect(sameValue('', undefined)).toBe(false);
+        expect(sameValue('', undefined)).toBe(true);
+        expect(sameValue(' ', null)).toBe(true);
         expect(sameValue(null, undefined)).toBe(true);
+        expect(sameValue('a', '')).toBe(false);
     });
 
     test('lists and objects by their content', () => {

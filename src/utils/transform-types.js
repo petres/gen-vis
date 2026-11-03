@@ -5,6 +5,7 @@ export { applyTransforms, transformTypes };
 import { toDate, toNumber } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
 import { bind, constant, refNames } from "@/utils/expr";
+import { missing } from "@/utils/values";
 
 /**
  * The transforms of a definition compute columns of the data in the browser,
@@ -21,8 +22,6 @@ import { bind, constant, refNames } from "@/utils/expr";
 
 // the truth of a value of an expression, as the one of `if` of utils/expr.js
 const truthy = v => Array.isArray(v) ? v.length > 0 : Boolean(v);
-
-const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
 
 // the comparable values of a column: numbers if all are numbers, otherwise
 // timestamps of dates if all are dates, otherwise strings

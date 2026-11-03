@@ -1041,8 +1041,9 @@ languages):
     `{"*": ["@innerWidth", 0.013]}` or `{"+": ["@x:scaled", -14]}`, a
     position moved by 14 pixels; no value if a value is no number (also a
     text of the data which is no decimal number) or of a division by 0
-  - `==`, `!=` (the same as texts, e.g. `2024` and `"2024"`), `<`, `<=`, `>`,
-    `>=` (numbers by their value, otherwise texts, false of a missing value,
+  - `==`, `!=` (the same as texts, e.g. `2024` and `"2024"`, missing values
+    are the same, e.g. `null` and `""`), `<`, `<=`, `>`, `>=` (numbers by
+    their value, otherwise texts, false of a missing value, also of `""`,
     `{"<": [0, "@x", 10]}` is a value between), `and`, `or` (the first true
     value, e.g. a default `{"or": ["@color", "black"]}`), `not`, `if`
     (`[condition, value, ..., otherwise]`)
@@ -1051,8 +1052,8 @@ languages):
     mapping a time format, e.g. `{"format": ["@y", ",.1f"]}` or `["@x", "%b %Y"]`
   - `steps`: the value of the largest cut below the value, e.g. `{"steps":
     ["@totalWidth", {"0": 220, "550": 250}]}`
-  - `match`: the value of the case of a value (as a text), otherwise the
-    default (null without one), e.g. `{"match": ["@level", {"header": 4.5,
+  - `match`: the value of the case of a value (as a text), otherwise (also
+    of a missing value) the default (null without one), e.g. `{"match": ["@level", {"header": 4.5,
     "item": "@r"}, 0]}`
   - `literal`: a value which is not evaluated, e.g. an object or a text
     starting with `@`

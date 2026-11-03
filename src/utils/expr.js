@@ -1,6 +1,6 @@
 export { compile, evaluate, bind, constant, refNames, refOf, formatter, operators, isOperator };
 
-import { isObject, sameValue, toNumber } from '@/utils/values';
+import { isObject, missing, sameValue, toNumber } from '@/utils/values';
 
 /**
  * The expressions of a definition, the values of its props, close to JSON
@@ -42,9 +42,9 @@ const numbers = (values, f) => {
 const truthy = v => Array.isArray(v) ? v.length > 0 : Boolean(v);
 
 // the order of two values: numbers by their value, others as texts, no
-// order of a missing value (NaN)
+// order of a missing value (NaN), e.g. of ""
 const order = (a, b) => {
-    if (a === null || a === undefined || b === null || b === undefined)
+    if (missing(a) || missing(b))
         return NaN;
     const [x, y] = [toNumber(a), toNumber(b)];
     if (x !== null && y !== null)
@@ -52,6 +52,10 @@ const order = (a, b) => {
     const [s, t] = [String(a), String(b)];
     return s < t ? -1 : (s > t ? 1 : 0);
 };
+// the case of a value of match, by its text, none of a missing value, e.g.
+// not a case "null"
+const caseOf = (cases, v) => missing(v) ? undefined : cases.get(String(v));
+
 // a chain of comparisons, e.g. { "<": [0, "@x", 10] } of a value between two
 const ordered = test => values => {
     for (let i = 1; i < values.length; i++)
@@ -211,7 +215,7 @@ const valueOf = (n, get) => {
             const i = stepOf(n.cuts, toNumber(valueOf(n.of, get)));
             return i < 0 ? undefined : valueOf(n.items[i], get);
         }
-        case 'match': return valueOf(n.cases.get(String(valueOf(n.of, get))) ?? n.fallback, get);
+        case 'match': return valueOf(caseOf(n.cases, valueOf(n.of, get)) ?? n.fallback, get);
         case 'format': return formatted(valueOf(n.of, get), valueOf(n.spec, get), get(formatter), n.name);
     }
 };
@@ -310,7 +314,7 @@ const bindNode = (n, resolve) => {
             const value = bindNode(n.of, resolve);
             const cases = new Map([...n.cases].map(([k, c]) => [k, bindNode(c, resolve)]));
             const fallback = bindNode(n.fallback, resolve);
-            const at = v => cases.get(String(v)) ?? fallback;
+            const at = v => caseOf(cases, v) ?? fallback;
             return value.constant ? at(value()) : row => at(value(row))(row);
         }
         case 'format': {
