@@ -66,7 +66,8 @@ renderer (JS only)
   a band/point/ordinal scale → categorical, time/utc → date, other scale
   types → numeric, a mapping of `by` of a plot, of `facets.dim` or of
   `scale.groups.by` → categorical), then from the values of the column when
-  the rows are known (numbers → numeric, dates → date, else categorical).
+  the rows are known (numbers → numeric, dates → date, else categorical;
+  without values a time `format` → date, else categorical).
 - `scale.type` is inferred from the type: numeric → linear, date → time,
   categorical positions → band for bars (`cartesian:bar`, `polar:arc` using
   `@n:scaled`), point otherwise, other categorical → ordinal.

@@ -360,7 +360,9 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   scale) are categorical, a `time` or `utc` scale is a date, other scales
   are numeric, a mapping of the facets is categorical (one of the
   categories of a plot, `by`, is not, it groups rows of any type), otherwise it is the one of the values of the
-  column: numbers are numeric, dates (as below) a date, others categorical,
+  column: numbers are numeric, dates (as below) a date, others categorical
+  (a column without values, e.g. of empty data, is a date with a time
+  `format` of the mapping, its axis or its hover, otherwise categorical),
   e.g. years of a column are numeric, so a mapping of the categories of
   years is categorical by its `categories` or with `"type": "categorical"`.
   The type of the values reads the values of the column (once per value,

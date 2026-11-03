@@ -395,7 +395,8 @@ const addDataValues = (def, rows, columns = null) => {
 };
 
 // the type of the values of a column: numeric if all of them are numbers,
-// date if all of them are dates, otherwise (also without values) categorical.
+// date if all of them are dates, otherwise categorical, undefined without
+// values (e.g. of empty data).
 // One pass which ends at the first value which is neither, a value is read
 // once (e.g. the years of many rows), the values before the first one which
 // is no number are read as dates then, `value(i)` is the one of the row i of
@@ -425,21 +426,30 @@ const inferType = (values, n = values.length) => {
         if (toDate(v) === null)
             return 'categorical';
     }
-    return !present ? 'categorical' : (numeric ? 'numeric' : 'date');
+    return !present ? undefined : (numeric ? 'numeric' : 'date');
 };
+
+// a d3 time format, e.g. "%b %Y", not a number format, e.g. ".0%"
+const timeFormat = /%[-_0]?[a-zA-Z]/;
+
+// the type of a mapping without values, e.g. of empty data: date of a time
+// format of the mapping, otherwise categorical (e.g. a band scale of bars)
+const formatType = m => [m.format, m.axis?.format, m.hover?.format, m.legend?.format]
+    .some(f => typeof f == 'string' && timeFormat.test(f)) ? 'date' : 'categorical';
 
 /**
  * The types of the mappings without a type of the values of their columns
- * (see inferType), of the rows and the columns of the transforms, a column
- * template of the globals, also the ones of the mappings of patches which are
- * not mappings of the definition, the definition is changed.
+ * (see inferType, of a column without values see formatType), of the rows
+ * and the columns of the transforms, a column template of the globals, also
+ * the ones of the mappings of patches which are not mappings of the
+ * definition, the definition is changed.
  */
 const inferTypes = (def, rows, columns = null) => {
     const infer = m => {
         if (!isObject(m) || m.type !== undefined || typeof m.column != 'string')
             return;
         const value = columnValues(rows, columns, fillTemplate(m.column, def.globals ?? {}));
-        m.type = inferType(value, rows.length);
+        m.type = inferType(value, rows.length) ?? formatType(m);
     };
     Object.values(def.mapping ?? {}).forEach(infer);
     variants(def).slice(1).forEach(patch => Object.entries(isObject(patch.mapping) ? patch.mapping : {})

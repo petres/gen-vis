@@ -70,6 +70,14 @@ describe('the example definitions', () => {
 
         expect(errors).toEqual([]);
     }, 60000);
+
+    // a column without values is of no type, e.g. a time format of its axis
+    test.each(examples)('%s renders without data', async file => {
+        const el = await mount({ defFile: file, data: [] });
+        expect(el.querySelector('.vis-error')?.textContent ?? null).toBeNull();
+        await hover(el);
+        expect(errors).toEqual([]);
+    }, 60000);
 });
 
 describe('rendering', () => {

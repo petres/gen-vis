@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, inferType, parseData, prepareData, rowFilter, stack, toDate, updateData, usedColumns } from '@/utils/data';
+import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, inferType, inferTypes, parseData, prepareData, rowFilter, stack, toDate, updateData, usedColumns } from '@/utils/data';
 import { prepareDef } from '@/utils/def';
 
 const def = {
@@ -245,6 +245,19 @@ describe('prepareData', () => {
         expect(inferType(['Phase 1', 'Phase 2', 'Phase 3'])).toBe('categorical');
         expect(inferType(['AT-1', 'AT-2'])).toBe('categorical');
         expect(inferType(['2024-06-01T13:00:00Z', '2024-06-01T14:00:00+01:00'])).toBe('date');
+    });
+
+    test('a column without values is a date of a time format, otherwise categorical', () => {
+        expect(inferType([])).toBeUndefined();
+        expect(inferType(['', null, ' '])).toBeUndefined();
+        const def = { mapping: {
+            t: { column: 't', axis: { format: '%Y' } },
+            h: { column: 'h', hover: { format: '%b %y' } },
+            p: { column: 'p', format: '.0%' },
+            c: { column: 'c' },
+        } };
+        inferTypes(def, []);
+        expect(Object.values(def.mapping).map(m => m.type)).toEqual(['date', 'date', 'categorical', 'categorical']);
     });
 
     test('missing and invalid values are null, not 0, missing categories too, e.g. an empty cell of csv as null of JSON', () => {
