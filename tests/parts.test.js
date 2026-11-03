@@ -6,7 +6,7 @@ import { describe, test, expect, vi, onTestFinished } from 'vitest';
 import { nextTick } from 'vue';
 import { GenVis } from '@/index.js';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { errors, useDom, mount } from './dom.js';
+import { errors, useDom, mount, checkMigrated } from './dom.js';
 
 useDom();
 
@@ -781,7 +781,7 @@ describe('the props of the labels and of the line of an axis, the titles of face
     };
 
     test('the labels and the lines of the axes of polar plots', async () => {
-        const { validateDef } = await import('@/utils/validate');
+        const validateDef = await checkMigrated();
         const def = polarDef();
         expect(validateDef(def)).toEqual([]);
         const el = await mount(GenVis, { def, data: lineData });
@@ -807,7 +807,7 @@ describe('the props of the labels and of the line of an axis, the titles of face
         expect(el.querySelector('.vis-axis-left path.domain').getAttribute('stroke-opacity')).toBe('0.4');
         expect([...el.querySelectorAll('.vis-axis-left .tick text')].every(t => t.getAttribute('font-size') == '9')).toBe(true);
 
-        const { validateDef } = await import('@/utils/validate');
+        const validateDef = await checkMigrated();
         def.mapping.y.axis.domain = { props: { stroke: '@colour' } };
         def.mapping.x.axis.domain = 'none';
         expect(validateDef(def)).toEqual([
@@ -982,7 +982,7 @@ describe('the scale of another mapping', () => {
         const at = +tick.match(/,([\d.]+)\)/)[1] - 0.5;
         const second = el.querySelector('g.vis-plot path').getAttribute('d').split('L')[1].split(',').map(Number);
         expect(second[1]).toBeCloseTo(at, 2);
-        const { validateDef } = await import('@/utils/validate');
+        const validateDef = await checkMigrated();
         expect(validateDef(def)).toEqual([]);
 
         // a second date of a utc scale is a date of UTC as well, e.g. the end of a range
@@ -1035,7 +1035,7 @@ describe('the tick marks of axes', () => {
         expect(without.querySelectorAll('.vis-axis-angular .tick line')).toHaveLength(0);
         expect(without.querySelectorAll('.vis-axis-angular .tick text')).toHaveLength(2);
 
-        const { validateDef } = await import('@/utils/validate');
+        const validateDef = await checkMigrated();
         polar.mapping.x.axis.tickMarks = { size: -1, props: { stroke: '@colour' } };
         polar.mapping.y.axis = { position: 'radial', tickMarks: { size: 4 } };
         expect(validateDef(polar)).toEqual([
@@ -1090,7 +1090,7 @@ describe('radar charts', () => {
         def.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radial', domain: [0, 4] }, hover: {} };
         def.mapping.info = { column: 'other', type: 'categorical', props: { fromData: true }, hover: {} };
         def.plot = { type: 'polar:line', categories: ['c'], curve: 'linearClosed', props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
-        const { validateDef } = await import('@/utils/validate');
+        const validateDef = await checkMigrated();
         expect(validateDef(def)).toEqual([]);
         const el = await mount(GenVis, { def, data: lineData });
         // four years, 2020 at the top, 2021 at the right (a quarter of the circle)
@@ -1140,7 +1140,7 @@ describe('rows which are not stacked', () => {
     const points = path => path.slice(1).split('L').map(p => p.split(',').map(Number));
 
     test('a line of the consumption on the stacked generation, its domain, its own values and its place in the hover', async () => {
-        const { validateDef } = await import('@/utils/validate');
+        const validateDef = await checkMigrated();
         expect(validateDef(loadDef())).toEqual([]);
         const el = await mount(GenVis, { def: loadDef(), data });
         // the domain reaches 8 of the consumption (the stacks reach 5), 0 at 250, 8 at 0 pixels

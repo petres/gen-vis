@@ -8,7 +8,7 @@ import * as d3 from 'd3-scale-chromatic';
 import { prepareDef } from '@/utils/def';
 import { clearCache, createStore } from '@/store';
 import { selection } from '@/utils/export';
-import { examples, errors, useDom, rendered, mount, pointer, hover } from './dom.js';
+import { examples, errors, useDom, rendered, mount, pointer, hover, checkMigrated } from './dom.js';
 
 // the image of the copy of the visualisation, the copy and the width of its
 // container are kept for the tests
@@ -529,7 +529,7 @@ describe('events and slots', () => {
         expect(rows.map(r => r.innerHTML)).toEqual(['Tirol: <i>2,0</i> Mio. (2)', 'Wien: <i>1,0</i> &lt;u&gt; (1)']);
         expect(rows.map(r => r.classList.contains('vis-nearest'))).toEqual([true, false]);
 
-        const { validateDef } = await import('@/utils/validate');
+        const validateDef = await checkMigrated();
         expect(validateDef({ ...def, options: { hover: { title: '{titel}', row: '{c.unit} {z}' } } })).toEqual([
             "options.hover.title: unknown name 'titel' in the template",
             "options.hover.row: unknown name 'z' in the template",
@@ -598,7 +598,7 @@ describe('events and slots', () => {
             .toEqual([['Tirol', 'normal', ''], ['Wien', 'italic', '300']]);
         expect(errors).toEqual([]);
 
-        const { validateDef } = await import('@/utils/validate');
+        const validateDef = await checkMigrated();
         expect(validateDef({ ...def, mapping: { ...def.mapping, c: { ...def.mapping.c, hover: { row: { props: { color: '@colour' } } } } } }))
             .toEqual([expect.stringMatching(/^mapping\.c\.hover\.row\.props\.color: unknown reference 'colour'/)]);
         expect(validateDef({ ...def, mapping: { ...def.mapping, y: { ...def.mapping.y, hover: { row: { props: { color: 'red' } } } } } }))

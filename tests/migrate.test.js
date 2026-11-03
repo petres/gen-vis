@@ -10,6 +10,7 @@ import { migrate, migrateExpr } from '@/utils/migrate';
 import { isLegacy, normalize } from '@/utils/normalize';
 import { plotTypes } from '@/plots';
 import { isObject } from '@/utils/values';
+import { formatOf } from '@/utils/def';
 import { root } from './dom.js';
 
 // the definitions of data/ of 4.0 and the ones of 3.x (tests/legacy/data/,
@@ -35,6 +36,12 @@ const canonical = def => {
         // a scale without a type is linear, see prepareMapping
         if (i == 0 && isObject(m.scale) && m.scale.of === undefined)
             m.scale.type ??= 'linear';
+        // the formats of the parts, also the one of the mapping, see formatOf
+        if (i == 0) {
+            m.formats = ['axis', 'hover', 'legend'].map(part => formatOf(m, part));
+            delete m.format;
+            ['axis', 'hover', 'legend'].filter(k => isObject(m[k])).forEach(k => delete m[k].format);
+        }
     }));
     // the categories of a plot are a list, also of one
     [d, ...(d.formElements ?? []).flatMap(e => Array.isArray(e.values) ? e.values : []).map(v => v?.patch).filter(isObject)]
