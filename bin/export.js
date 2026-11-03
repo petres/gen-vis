@@ -30,8 +30,10 @@ export const fileUrl = file => `${origin}/fs${pathToFileURL(path.resolve(file)).
 // the page of the print of an SVG
 const printPage = '<!doctype html><html><head><meta charset="utf-8"><style>@page { margin: 0; } html, body { margin: 0; } svg { display: block; }</style></head><body></body></html>';
 
-// the file of an url of the page, null if it is not one
-const fileOf = url => {
+// the file of an url of the page, null if it is not one; a site-absolute
+// path, e.g. "/geo/europe.json", is a file in `root` (if given)
+const within = (dir, file) => file == dir || file.startsWith(dir.endsWith(path.sep) ? dir : dir + path.sep);
+const fileOf = (url, root) => {
     const { pathname } = new URL(url);
     if (pathname.startsWith('/__gen-vis/')) {
         const file = path.resolve(lib, decodeURIComponent(pathname.slice('/__gen-vis/'.length)));
@@ -39,16 +41,20 @@ const fileOf = url => {
     }
     if (pathname.startsWith('/fs/'))
         return fileURLToPath(`file://${pathname.slice('/fs'.length)}`);
+    if (root) {
+        const file = path.resolve(root, `.${decodeURIComponent(pathname)}`);
+        return within(root, file) ? file : null;
+    }
     return null;
 };
 
 // the answer of a request of the page
-const answer = url => {
+const answer = (url, root) => {
     if (new URL(url).pathname == '/__print.html')
         return { responseCode: 200, type: 'text/html', body: Buffer.from(printPage) };
-    const file = fileOf(url);
+    const file = fileOf(url, root);
     if (!file || !existsSync(file) || !statSync(file).isFile())
-        return { responseCode: 404, type: 'text/plain', body: Buffer.from(`not found: ${file ?? url}`) };
+        return { responseCode: 404, type: 'text/plain', body: Buffer.from(`not found: ${file ?? `${url}${root ? '' : ' (a site-absolute path needs --root)'}`}`) };
     return { responseCode: 200, type: types[path.extname(file).toLowerCase()] ?? 'application/octet-stream', body: readFileSync(file) };
 };
 
@@ -58,10 +64,14 @@ const answer = url => {
  * outputs (paths of .svg, .png and .pdf), `evaluate(expression)` is the
  * value of an expression of the export page, `close()` ends the browser.
  * `browser` is its path (see findBrowser), `sandbox: false` runs it
- * without its sandbox, `note(text)` gets the notes, e.g. the warnings of
+ * without its sandbox, `root` is the directory of site-absolute paths
+ * (e.g. "/geo/europe.json"), `note(text)` gets the notes, e.g. the warnings of
  * the page.
  */
-export const createExporter = async ({ browser, sandbox = true, note = () => {} } = {}) => {
+export const createExporter = async ({ browser, sandbox = true, root, note = () => {} } = {}) => {
+    root = root == null ? null : path.resolve(root);
+    if (root && !(existsSync(root) && statSync(root).isDirectory()))
+        throw new Error(`the root ${root} is no directory`);
     if (!existsSync(path.join(lib, 'export.html')))
         throw new Error(`the export page ${path.join(lib, 'export.html')} is missing, it is built by npm run lib`);
     const cdp = await launch(findBrowser(browser), { sandbox, note });
@@ -69,7 +79,7 @@ export const createExporter = async ({ browser, sandbox = true, note = () => {} 
     let messages = [];
     try {
         cdp.on('Fetch.requestPaused', ({ requestId, request }, sessionId) => {
-            const { responseCode, type, body } = answer(request.url);
+            const { responseCode, type, body } = answer(request.url, root);
             cdp.send('Fetch.fulfillRequest', {
                 requestId, responseCode, body: body.toString('base64'),
                 responseHeaders: [{ name: 'Content-Type', value: type }, { name: 'Cache-Control', value: 'no-store' }],

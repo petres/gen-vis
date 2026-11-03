@@ -260,4 +260,31 @@ describe.skipIf(!browser)('gen-vis export', () => {
         expect(r.stderr).toContain('has no output');
         expect((await run(['--help'])).stdout).toContain('Usage: gen-vis export');
     });
+    test('site-absolute paths are files of --root', async () => {
+        // a site: the data at /bev/data.csv, the definition elsewhere
+        const site = mkdtempSync(path.join(dir, 'site-'));
+        const bev = path.join(site, 'bev');
+        spawnSync('mkdir', ['-p', bev]);
+        writeFileSync(path.join(bev, 'data.csv'), readFileSync(path.join(root, 'data/bev/data.csv')));
+        const def = JSON.parse(readFileSync(path.join(root, 'data/bev/def.json'), 'utf8'));
+        const file = path.join(dir, 'absolute.json');
+        writeFileSync(file, JSON.stringify({ ...def, data: '/bev/data.csv' }));
+        const out = path.join(dir, 'absolute.svg');
+        const without = await run(['export', file, out]);
+        expect(without.code).toBe(1);
+        expect(without.stderr).toContain('/bev/data.csv');
+        expect(without.stderr).toContain('set --root');
+        const r = await run(['export', file, out, '--root', site]);
+        expect(r.stderr).not.toContain('Could not load');
+        expect(r.code).toBe(0);
+        expect(readFileSync(out, 'utf8')).toContain('<svg');
+        // no path out of the root, and the root must exist
+        const outside = path.join(dir, 'outside.json');
+        writeFileSync(path.join(dir, 'secret.csv'), readFileSync(path.join(root, 'data/bev/data.csv')));
+        writeFileSync(outside, JSON.stringify({ ...def, data: '/..%2Fsecret.csv' }));
+        expect((await run(['export', outside, path.join(dir, 'outside.svg'), '--root', site])).code).toBe(1);
+        const missing = await run(['export', file, out, '--root', path.join(dir, 'nothing')]);
+        expect(missing.code).toBe(1);
+        expect(missing.stderr).toContain('is no directory');
+    }, 120000);
 });

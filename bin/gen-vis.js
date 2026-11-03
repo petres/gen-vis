@@ -30,6 +30,7 @@ Options:
   --unit <px|cm|mm|in>    the unit of the size of the SVG (default the one of the width)
   --padding <px>          the space around the chart (default 15)
   --timeout <ms>          the time to wait for a chart (default 30000)
+  --root <dir>            the directory of site-absolute paths, e.g. /geo/europe.json (a site's root)
   --browser <path>        the browser (default GEN_VIS_BROWSER, CHROME_PATH or one found)
   --no-sandbox            runs the browser without its sandbox (also GEN_VIS_NO_SANDBOX=1)
   -h, --help              this text
@@ -109,7 +110,7 @@ const exportCommand = async args => {
                 scale: { type: 'string' }, globals: { type: 'string' }, state: { type: 'string' }, defaults: { type: 'string' }, data: { type: 'string' },
                 background: { type: 'string' }, scheme: { type: 'string', multiple: true }, unit: { type: 'string' },
                 padding: { type: 'string' }, timeout: { type: 'string' }, browser: { type: 'string' },
-                'no-sandbox': { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
+                root: { type: 'string' }, 'no-sandbox': { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
             },
         });
     } catch (error) {
@@ -145,7 +146,7 @@ const exportCommand = async args => {
     const sandbox = !(o['no-sandbox'] || ['1', 'true'].includes(process.env.GEN_VIS_NO_SANDBOX ?? ''));
     let exporter;
     try {
-        exporter = await createExporter({ browser: o.browser, sandbox, note });
+        exporter = await createExporter({ browser: o.browser, sandbox, root: o.root, note });
     } catch (error) {
         fail(error.message, 1);
     }
@@ -160,7 +161,9 @@ const exportCommand = async args => {
             } catch (error) {
                 failed++;
                 (error.messages ?? []).forEach(m => note(`${def}: ${m}`));
-                note(`${def}: ${error.message}`);
+                // a site-absolute path, e.g. "/geo/europe.json", is a file of --root
+                const absolute = !o.root && /gen-vis\.local\/(?!fs\/|__gen-vis\/)\S*': 404/.test(error.message);
+                note(`${def}: ${error.message}${absolute ? ' (a site-absolute path: set --root to the site\'s directory)' : ''}`);
             }
         }
     } finally {

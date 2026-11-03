@@ -164,6 +164,8 @@ Definitions:
 
 ### Fixes and other changes
 
+- Export CLI: `--root <dir>` serves site-absolute paths of definitions
+  (e.g. `"/geo/europe.json"`) from a directory.
 - Transforms (`calc`, `filter`) recompute when a global used in their
   expression changes.
 - Dates: besides the ISO and day-first formats only ISO dates with a time

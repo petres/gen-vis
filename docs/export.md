@@ -181,6 +181,7 @@ options above:
 - PNG resolution: `--scale` (pixels per CSS pixel, default 2) or `--dpi`.
   The width is rounded to whole pixels, e.g. 1890 for 16cm at 300 dpi.
 - `--timeout` (ms per chart, default 30000).
+- `--root <dir>`: the directory of site-absolute paths (see below).
 - `--browser <path>`; otherwise `GEN_VIS_BROWSER` or `CHROME_PATH`, then
   `chromium`, `chromium-browser`, `google-chrome`, `chrome` or `msedge` on
   the PATH and the usual Chrome and Edge locations on macOS and Windows.
@@ -192,8 +193,9 @@ How it works and what to expect:
 
 - No server is needed: the program answers the page's requests itself
   (CDP `Fetch`), so a definition loads its data and parents relative to its
-  own file. Site-absolute paths such as `"/geo/europe.json"` have no file to
-  map to and fail with a 404; use relative paths for charts you export.
+  own file. Site-absolute paths such as `"/geo/europe.json"` are files in
+  `--root <dir>`, the directory the site serves (without it they fail with a
+  404 and a hint), e.g. `--root web/dist` or a directory with `geo/` in it.
 - A chart that fails is reported with gen-vis's message, the others are
   still drawn, and the exit code is 1.
 - SIGINT, SIGTERM and SIGHUP close the browser and remove its profile; the
