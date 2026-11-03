@@ -217,5 +217,90 @@
         }
       ]
     }
+  },
+  {
+    "name": "false of a patch of another coordinate system stays, no scale or no axis, without a scale no axis",
+    "def": {
+      "mapping": {
+        "x": "m",
+        "y": "v"
+      },
+      "formElements": [
+        {
+          "id": "c",
+          "ref": "c",
+          "values": [
+            {
+              "id": "polar",
+              "value": "polar",
+              "patch": {
+                "options": {
+                  "coord": "polar"
+                },
+                "mapping": {
+                  "x": {
+                    "axis": false
+                  },
+                  "y": {
+                    "scale": false
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "result": {
+      "mapping": {
+        "x": {
+          "column": "m",
+          "scale": {
+            "orientation": "horizontal"
+          },
+          "axis": {
+            "position": "bottom"
+          }
+        },
+        "y": {
+          "column": "v",
+          "scale": {
+            "orientation": "vertical"
+          },
+          "axis": {
+            "position": "left"
+          }
+        }
+      },
+      "formElements": [
+        {
+          "id": "c",
+          "ref": "c",
+          "values": [
+            {
+              "id": "polar",
+              "value": "polar",
+              "patch": {
+                "options": {
+                  "coord": "polar"
+                },
+                "mapping": {
+                  "x": {
+                    "axis": false,
+                    "scale": {
+                      "orientation": "angular"
+                    }
+                  },
+                  "y": {
+                    "scale": false,
+                    "axis": false
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
   }
 ]

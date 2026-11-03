@@ -267,8 +267,13 @@ const normalize = (raw, { plotTypes = {} } = {}) => {
                 if (m === null)
                     return;
                 patch.mapping ??= {};
-                const scale = { orientation: names[n], ...(isObject(m?.scale) ? m.scale : {}) };
-                patch.mapping[n] = { ...(isObject(m) ? m : {}), scale, ...(isObject(def.mapping[n].axis) ? { axis: { position: axisPositions[scale.orientation], ...m?.axis } } : {}) };
+                // false and null of the patch stay, no scale or no axis, a
+                // mapping without a scale has no axis of the definition
+                const removed = v => v === false || v === null;
+                const scale = removed(m?.scale) ? m.scale : { orientation: names[n], ...(isObject(m?.scale) ? m.scale : {}) };
+                const axis = removed(m?.axis) ? { axis: m.axis }
+                    : (isObject(def.mapping[n].axis) ? { axis: isObject(scale) ? { position: axisPositions[scale.orientation], ...m?.axis } : false } : {});
+                patch.mapping[n] = { ...(isObject(m) ? m : {}), scale, ...axis };
             });
         }
     });
