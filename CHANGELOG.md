@@ -1,198 +1,193 @@
 # Changelog
 
-The changes of the versions, the newest first, the ones on npm without
-0.7.0 and 2.0.0-alpha.1. The details are in the commits.
+Changes by version, newest first. Every version is on npm except 0.7.0 and
+2.0.0-alpha.1. The details are in the commits.
 
 ## 4.0.0-beta.0
 
 A shorter definition language, a core without a framework (Vue is an
 optional adapter) and a renderer without d3-selection and d3-transition.
-The charts are the ones of 3.x: a definition of 4.0 is written in the form
-the renderer of 3.x reads (`normalize`), the elements are the ones of 3.x
-without the scoped ids of Vue (`data-v-…`) and its comments, the attributes
-of the default props of a plot type are before the ones of the
-definition.
+The charts look as in 3.x: the elements are the same, without Vue's scoped
+ids (`data-v-…`) and comments, and a plot type's default props come before
+the definition's attributes.
 
-Changes from 3.x, made by hand (4.0 has no migration and reads no
-definition of 3.x):
+### Upgrading from 3.x
 
-- Definitions, see the definition language below:
-  - props of `prop`: `{"prop": "ref", "ref": "a"}` is `"@a"`, `"fixed"` the
-    value (`{"literal": v}` of texts of `@`, objects and lists),
-    `"relative"` `{"+": [{"*": ["@a", ratio]}, offset]}`, `"steps"`
-    `{"steps": ["@a", {"<cut>": value}]}`, `"format"` `{"format": ["@a",
-    f]}`, `"match"` `{"match": ["@a", {cases}, default]}`, `of` the
-    expression instead of `"@a"`;
-  - `calc` of `op` and `columns`: `expr`, e.g. `{"*": [{"/": ["@v",
-    "@base"]}, 100]}` of `divide` with `scale` 100;
-  - `props` of a mapping: its entries (`categories`, `scheme`, `common`,
-    `fromData`, `order`, `ranks`) at the mapping;
-  - `categories` of a plot: `by`; the props `highlight-<name>` and
-    `others-<name>`: `"highlight": {"<name>": …}` and `"others": {…}`; a
-    text of `highlight`: `"highlight": {"mode": "row"}`;
-  - a mapping without a type was categorical: `"type": "categorical"`
-    unless its parts or its values give the type, a scale without a type was
-    linear: `"type": "linear"` where the type of the mapping gives another
-    one; a position without a scale or an axis: `"scale": false`, `"axis":
-    false` (`"orientation": null` of a scale without an orientation);
-  - a plot type of its full name has the default props of the type, e.g.
-    `cartesian:line` a stroke, `svg:text` the fill of `@color`: the props
-    which are the defaults are left out (best with the short name), a
-    default the plot must not have is `null`, e.g. `"fill": null`;
-  - `validateDef` names the parts of 3.x which are left as unknown ones;
-  - a definition file declares gen-vis 4: `"$schema":
-    "https://unpkg.com/@preschen/gen-vis@4/schema.json"` (in itself or in a
-    parent), the load of a file without it or with the one of gen-vis 3
-    fails, an inline definition may have none, see docs/definition.md.
-- Vue: the component `GenVis` and the plugin are the ones of
-  `@preschen/gen-vis/vue` (`vue` is an optional peer dependency), `import
-  GenVis from '@preschen/gen-vis/vue'` or `import { GenVis } from
-  '@preschen/gen-vis/vue'` instead of `'@preschen/gen-vis'`, with the same
-  props, `v-model:state`, events, slots and methods.
-- The standalone script and the module of `dist-lib/` have no Vue,
-  `gen-vis.novue.js`, `esm-novue/` and the export
-  `@preschen/gen-vis/esm-novue` are gone; a page with Vue uses
-  `GenVis.vuePlugin(Vue)` or `GenVis.createVueComponent(Vue)`.
-- `registerCoord` and `registerPlotType`: the coordinate systems and plot
-  types get DOM elements instead of d3 selections (`ctx.inner`, the `parent`
-  of `hover.area`, the `line` of `hover.marker`), e.g.
-  `ctx.inner.getAttribute('transform')` instead of
+4.0 reads no 3.x definitions and has no migration. The migration code that
+was dropped before the release is still in git
+(`git show b1ab6bf^:src/utils/migrate.js`); energy-monitor was ported with
+it.
+
+Package and API:
+
+- Vue is optional (`vue` is an optional peer dependency). The component and
+  the plugin moved to `@preschen/gen-vis/vue`: `import GenVis from
+  '@preschen/gen-vis/vue'` is the plugin, `import { GenVis } from
+  '@preschen/gen-vis/vue'` the component, with the same props,
+  `v-model:state`, events, slots and methods. The root
+  `@preschen/gen-vis` has no default export and no `GenVis` export.
+- Root exports: `createGenVis` (new), `mountGenVisElement`,
+  `mountGenVisByClass`, `unmountGenVisElement`, `registerPlotType`,
+  `registerCoord`, `registerScheme` (new), `registerDefaults` (new),
+  `perRow`, `perGroup`.
+- `mountGenVisElement` and `mountGenVisByClass` return the visualisation,
+  not a Vue component: its element is `.el` (was `$el`), its props `.props`
+  (was `$props`). Its methods are `exportPng`, `copyPng`, `image`,
+  `exportSvg` (new), `exportCsv` and `setHighlight`, plus `update`,
+  `on`/`off`, `destroy` and `state`.
+- Types: `GenVis`, `GenVisSlots` and the plugin type are in
+  `@preschen/gen-vis/vue`. `GenVisInstance` is now the core visualisation;
+  a component ref is `GenVisComponentInstance`. The types import
+  `./definition.js`, so they work with `node16`/`nodenext` resolution.
+- The standalone files contain no Vue. `gen-vis.novue.js`, `esm-novue/` and
+  the `@preschen/gen-vis/esm-novue` export are gone. A page with its own Vue
+  uses `GenVis.vuePlugin(Vue)` (single file), `vuePlugin(Vue)` (module) or
+  `(await GenVis.ready).vuePlugin(Vue)` (core loader); `createVueComponent`
+  likewise.
+- d3-selection and d3-transition are no longer dependencies.
+  `registerCoord` and `registerPlotType` get DOM elements instead of d3
+  selections (`ctx.inner`, the `parent` of `hover.area`, the `line` of
+  `hover.marker`), e.g. `ctx.inner.getAttribute('transform')` instead of
   `ctx.inner.node().getAttribute('transform')`.
-- `createGenVis`, `mountGenVisElement` and `mountGenVisByClass` return the
-  visualisation instead of a Vue component: its element is `.el` (not
-  `$el`), its props `.props` (not `$props`).
+- Page images (PNG and SVG) are 800 px wide by default, as in the export
+  (was 1200). Set `imageWidth` to keep 1200.
 
-The definition language, the breaking changes:
+Definitions:
 
-- The props are expressions, close to JSON Logic: an operator is an object of
-  one key, e.g. `{"*": ["@innerWidth", 0.013]}`, `{"+": ["@x:scaled", -14]}`,
-  `{"steps": ["@totalWidth", {"0": 220, "550": 250}]}`, `{"format": ["@y",
-  ",.1f"]}`, `{"match": ["@level", {"header": 4.5}, 0]}`, `{"literal": v}`,
-  also comparisons, `if`, `and`, `or`, `not`, `cat`, `min`, `max`, `round`
-  and `var`. The props of `prop` of 3.x (`relative`, `steps`, `format`,
-  `match`, `ref`, `fixed`) are no props anymore, an object of one key which is
-  an operator is no nested prop anymore.
-- `calc` is an expression of the row (`expr`), not `op`, `columns` and
-  `scale`; the new transform `filter` keeps the rows of an expression, the
-  later transforms, the plots and the scales have only them.
-- A text is the mapping of a column, e.g. `"x": "Jahr"`. The parts of the
-  categories of a mapping (`categories`, `scheme`, `common`, `fromData`,
-  `order`, `ranks`) are parts of the mapping, not of `props`; `domain` and
-  `nice` of a mapping are the ones of its scale, `format` is the one of its
-  axis and hover which have none of their own.
-- `x` and `y` (of polar plots also `angle` and `radius`) have a scale of the
-  orientation of their name and an axis by default, `"axis": false`,
-  `"scale": false` and `"orientation": null` leave them out; an axis is at the
-  position of the orientation of its scale.
-- A mapping without a type is not categorical anymore: its type follows from
-  its parts (categories, the type of its scale, the categories of plots and
-  facets) or from the values of the column (numbers numeric, dates date); a
-  scale without a type is the one of the type of the mapping (`linear`,
-  `time`, `band` of bars, `point`, `ordinal`), not `linear`.
-- `by` of a plot instead of `categories`, `highlight` and `others` objects
-  of props instead of the props `highlight-` and `others-`,
-  `"highlight": {"mode": "row", ...}` instead of `"highlight": "row"`.
-- Plot types without the prefix of the coordinate system, e.g. `line`,
-  `area`, `bar`, `point`, `text`, `arc`, `region`, have default props (the
-  `defaults` of the types, also of registered ones): a line draws
-  `"d": {"x": "@x:scaled", "y": "@y:scaled"}` in the color of its category,
-  a definition writes only the props which differ, `null` removes one; the
-  full names (`cartesian:line`) are the same types with the same defaults.
-- The schema is the one of 4.0 (`@preschen/gen-vis@4/schema.json`), the
-  `$schema` of a definition is its version: a definition file needs the one
-  of gen-vis 4, a part with another one is an error.
+- `$schema` is required in a definition file (in the file or a parent):
+  `"$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json"`. A file
+  without one or with the gen-vis 3 schema fails to load;
+  `./node_modules/@preschen/gen-vis/schema.json` counts as 4. An inline
+  definition may have none.
+- Props are expressions, close to JSON Logic. The 3.x `{"prop": …}` objects
+  become: `ref` → `"@a"`; `fixed` → the value itself (`{"literal": v}` for
+  texts starting with `@`, objects and lists); `relative` → `{"+": [{"*":
+  ["@a", ratio]}, offset]}`; `steps` → `{"steps": ["@a", {"<cut>":
+  value}]}`; `format` → `{"format": ["@a", f]}`; `match` → `{"match": ["@a",
+  {cases}, default]}`; `of` → the expression instead of `"@a"`. An object
+  with a single key that is an operator is now that operator, not a nested
+  prop. `validateDef` does not flag leftover `{"prop": …}` objects (they
+  read as nested props), so search for them.
+- `calc`: `op`, `columns` and `scale` → `expr`, e.g. `divide` with `scale`
+  100 → `{"*": [{"/": ["@v", "@base"]}, 100]}`.
+- Mappings: the entries of `props` (`categories`, `scheme`, `common`,
+  `fromData`, `order`, `ranks`) move directly onto the mapping.
+- Plots: `categories` → `by`; `highlight-<name>` and `others-<name>` →
+  `"highlight": {"<name>": …}` and `"others": {…}`; `"highlight": "row"` →
+  `"highlight": {"mode": "row"}`. `validateDef` reports the old keys as
+  unknown.
+- Axes: `labels.categories` → `labels.by`.
+- Types are inferred. A mapping without a type is no longer categorical: it
+  is categorical by its categories, a band, point or ordinal scale, or as
+  `facets.dim` or `scale.groups.by`, otherwise its type follows from the
+  values (numbers numeric, dates date). A plot's `by` does not make a
+  mapping categorical, so a 3.x mapping of years used only by `by` needs
+  `"type": "categorical"`. A scale without a type follows the mapping
+  (`linear`, `time`, `band` for bars, `point`, `ordinal`), not `linear`.
+- `x` and `y` (polar: also `angle` and `radius`) get a scale with the
+  matching orientation and an axis by default. Opt out with `"scale":
+  false`, `"axis": false` or `"orientation": null`.
+- Plot types have default props, also under their full names
+  (`cartesian:line` draws a stroke in `@color`, `svg:text` fills with
+  `@color`). Props equal to the defaults can go; drop an unwanted default
+  with `null`, e.g. `"fill": null`.
 
-The definitions of `data/` and of the page are written in the shorter
-forms of 4.0: the short types without the props of their defaults,
-`highlight` and `others`, mappings without the types, scales, orientations
-and positions of axes which follow from the rest (also without the types
-their values infer), `domain` and `format` at the mapping and texts of
-columns. The parts which are not bound to the browser, the expressions, the
-transforms, merging and normalize, are specified by the fixtures of `spec/`,
-e.g. for implementations in Python or R, the tests run them.
+### New
 
-The package is a core without a framework. `@preschen/gen-vis` exports
-`createGenVis(element, props)` (a visualisation with `update(props)`,
-`on`/`off` of the events, `destroy()`, `state`, `el` and the methods
-`exportPng`, `copyPng`, `image`, `exportCsv` and `setHighlight`),
-`mountGenVisElement`, `mountGenVisByClass`, `unmountGenVisElement`,
-`registerPlotType`, `registerCoord`, `perRow` and `perGroup`. Without Vue
-the slots are functions of their props (the prop `slots`, they return a
-node or a text) and the events are listeners (`on`, or the props `onHover`,
-`onSelect`, `onRendered`, `onError` and `'onUpdate:state'`). Changes are
-drawn together in a microtask, a new view only of a new state, new globals,
-a toggle or a new width, the hover only draws itself. The styles are one
-stylesheet (`src/styles.css`), still in the cascade layer `gen-vis`, with
-the same classes and css variables.
+- `createGenVis(element, props)` draws a visualisation without a framework
+  and returns it: `update(props)`, `on`/`off`, `destroy()`, `state`, `el`,
+  `props` and the image methods. Slots are functions (the prop `slots`,
+  returning a node or a text), events are listeners (`on`, or the props
+  `onHover`, `onSelect`, `onRendered`, `onError`, `'onUpdate:state'`).
+  Changes are drawn together in a microtask; a new state, new globals, a
+  legend toggle or a new width draw a new view without loading again, the
+  hover draws only itself. The styles are one stylesheet
+  (`src/styles.css`), still in the cascade layer `gen-vis`, with the same
+  classes and CSS variables.
+- Shorter definitions: a text is a mapping's column (`"x": "Jahr"`),
+  `domain` and `nice` at a mapping are its scale's, `format` the default of
+  its axis and hover, short plot types (`line`, `area`, `bar`, `point`,
+  `text`, `arc`, `region`) with default props, `highlight` and `others`
+  objects. The definitions in `data/` and `site/` use these forms.
+- Expressions: operators `+ - * /`, comparisons, `if`, `and`, `or`, `not`,
+  `cat`, `min`, `max`, `round`, `var`, `format`, `steps`, `match`,
+  `literal`. The new transform `filter` keeps the rows of an expression; the
+  later transforms, plots and scales only see them.
+- `spec/` has fixtures for the browser-independent parts (expressions,
+  transforms, merging, normalize) for implementations in Python or R;
+  `tests/spec.test.js` runs them. `normalize` is exported from
+  `@preschen/gen-vis/check`.
+- Static export (docs/export.md): `exportSvg(options)` writes an SVG for
+  Word and editors (HTML texts as `<text>`, styles as attributes, no
+  foreignObject, classes or CSS variables) of the chosen `parts`, sized in
+  `px`, `cm`, `mm` or `in`, loaded with the first SVG (~4.5 kB gzipped); the
+  prop `svg` adds a button. The export page `dist-lib/export.html`
+  (`@preschen/gen-vis/export.html`, protocol version 1) is the entry for
+  programs outside the browser: `window.genVisExport(options)` draws a chart
+  at an exact width (e.g. `16cm`) with stylesheets, globals, a state,
+  schemes, defaults and a font size, and returns the SVG and the image
+  rectangle; `genVisExport.resolve(options)` returns the merged definition.
+  The CLI `gen-vis export <def.json> <out.svg|out.png|out.pdf>...` uses the
+  system's Chromium, Chrome or Edge (DevTools protocol over node 22's
+  WebSocket, no dependencies): PNG by `--dpi` or `--scale`, PDF as a print
+  of the SVG.
+- `registerScheme(name, colors)` adds a color scheme for `scheme`, e.g. a
+  house style, also in several sizes like the d3 ones; `validateDef` and
+  `@preschen/gen-vis/check` know it. A registered `observable10` replaces
+  the default category colors. It returns a function that restores the
+  scheme before.
+- Defaults (docs/definition.md "Defaults"): the built-in axis values
+  (`builtInDefaults` in `src/utils/defaults.js`: label `padding` 3,
+  `tickMarks.size` 9 cartesian / 6 angular, the new `tickMarks.inset`,
+  `title.offset`) can be replaced for all charts by the prop `defaults`
+  (`data-defaults`), `registerDefaults(defaults)`, the export option
+  `defaults` and the CLI's `--defaults`. The definition wins, then the prop,
+  then the page.
+- Smaller files: the single file `dist-lib/gen-vis.js` is 130 kB gzipped
+  (3.1: 149 kB), the module `dist-lib/esm/gen-vis.js` loads 69 kB at first
+  (3.1: 90 kB). `@preschen/gen-vis/vue` imports only `h` and `render`, so a
+  Vue app's bundle no longer includes all of Vue (~23 kB gzipped less at
+  first). The core loader also forwards `createGenVis`. `dist/` keeps
+  dependency subpaths (e.g. `hyparquet-compressors/src/gzip.js`) external.
+- Parquet decompressors load one by one, only the ones a file uses, e.g.
+  zstd for polars files (3 kB instead of 75 kB for all of
+  hyparquet-compressors).
+- The renderer draws without d3-selection and d3-transition
+  (`src/utils/dom.js`), the charts of `data/` in ~14% less time. A resize
+  reuses the rows and scale values, and the highlight only touches the
+  elements whose state changes.
+- The README is an overview; the details are in `docs/` (definition, usage,
+  export, extensions, development).
 
-The standalone script without Vue is smaller: the single file 120 kB gzipped
-instead of 143 kB, the module 64 kB at first instead of 87 kB. A page with
-Vue as a script or in its import map has the component of its Vue of the
-same files: `GenVis.vuePlugin(Vue)` (the plugin, its `component`) and
-`GenVis.createVueComponent(Vue)`.
+### Fixes and other changes
 
-The package draws without d3-selection and d3-transition
-(`src/utils/dom.js`): the elements of the plots, the axes, the facets, the
-legends and the hover, their transitions included. The charts are drawn
-faster, the ones of `data/` together in ~14% less time.
-
-The decompressors of parquet are loaded one by one, only the ones of the
-file, e.g. zstd of polars (3 kB instead of 75 kB of all of
-hyparquet-compressors).
-
-The static export (docs/export.md): `exportSvg(options)` of the
-visualisation (and of a ref of the component) is the SVG of the image, made
-for Word and editors (the texts of the HTML as `<text>`, the styles as
-attributes, no foreignObject, no classes, no styles, no css variables), of
-the chosen `parts` (`title`, `subtitle`, `selection`, `legend`, `plot`,
-`footer`), its size in `px`, `cm`, `mm` or `in`, loaded with the first SVG
-(~4.5 kB gzipped); the prop `svg` is a button which saves it. The export
-page `dist-lib/export.html` (`@preschen/gen-vis/export.html`, protocol
-version 1) is the one entry of programs outside the browser:
-`window.genVisExport(options)` draws a chart at exactly the width asked
-for (e.g. `16cm`, a CSS pixel is 1/96 in), with stylesheets, classes,
-globals, a state, schemes and a size of the texts (`fontSize`, e.g.
-`8pt`), and returns its SVG and the rectangle of its image in the page,
-e.g. of a screenshot or of the print of a PDF. The CLI `gen-vis export
-<def.json> <out.svg|out.png|out.pdf>...` draws definition files in a
-Chromium, Chrome or Edge of the system (DevTools protocol over the
-WebSocket of node 22, no dependencies), the PNG of `--dpi` or `--scale`,
-the PDF the print of the SVG, one browser for all of them. The PNG of
-`image()` and the SVG share the static copy of the chart (`staticCopy` of
-`src/utils/export.js`). `genVisExport.resolve(options)` is the merged definition of
-the options (the parents and mixins resolved as the load does, not
-normalized), the options `schemes` and `defaults` may also be functions of
-it (also of promises), called before the chart is drawn, e.g. of the
-colors of a wrapper of Python or R by the plot types; additions to the
-protocol version 1.
-
-`registerScheme(name, colors)`: a scheme of colors of its own for `scheme`
-of the categories and the scales, e.g. `"scheme": "wifo"` of the colors of a
-house style, known to `validateDef` (also of `@preschen/gen-vis/check`),
-without the colors of d3, also of several sizes as the ones of d3 (entry n
-the n colors, holes of null), n categories or classes take the colors of
-their size. A registered `observable10` is also the palette of the
-categories without colors (the default colors).
-
-Defaults of the parts (docs/definition.md "Defaults"): the built-in values of the axes
-are collected in `builtInDefaults` (`src/utils/defaults.js`): the `padding`
-of the labels (3), the length of the tick marks (`tickMarks.size`, 9 of
-cartesian, 6 of angular axes), the part of them inside the plot area (the
-new `tickMarks.inset`, of cartesian axes the one of the styles, 0 of
-angular ones) and the `title.offset` (16 of radial axes). The prop
-`defaults` (`data-defaults` of JSON, also of the Vue component),
-`registerDefaults(defaults)` of the page, the option `defaults` of
-`genVisExport` (protocol version 1) and `--defaults <json|file>` of the CLI
-replace them for all axes of any definition, e.g. `{"axis": {"padding": 2,
-"tickMarks": {"size": 4, "inset": 0}}}` of the spacing of ggplot2; the
-values of a definition take precedence, the prop over the page. The
-prepared definition has no `axis.padding` of 3 anymore.
-
-The readme is an overview, the details are in `docs/`: the definition
-language (`docs/definition.md`), the usage and the JavaScript API
-(`docs/usage.md`), the static export (`docs/export.md`), the extensions and
-the checks (`docs/extensions.md`) and the development
-(`docs/development.md`).
+- Transforms (`calc`, `filter`) recompute when a global used in their
+  expression changes.
+- Dates: besides the ISO and day-first formats only ISO dates with a time
+  zone (`Z` or an offset) are read; there is no `Date.parse` fallback, so
+  texts like `Phase 1` or `AT-1` are no longer dates.
+- Empty data renders without an error (a column without values is a date if
+  its mapping has a time format).
+- `""` and whitespace are missing in comparisons, `match` and equality
+  (`==` and `!=` treat them as `null`, `<`, `>`, `<=` and `>=` are false).
+- `validateDef` checks filter conditions that are operators as expressions
+  and infers types with the load's `inferTypes` (also for transform
+  columns).
+- A patch with another coordinate system keeps `false` scales and axes.
+- Parquet is detected by its content (`PAR1`) wherever data is loaded, also
+  for URLs without an extension and the export page's `dataUrl`.
+- SVG export: opacity is applied once (0.5 was 0.25), `em` lengths are
+  written as px (labels in Word and LibreOffice were ~9 px off), `href` also
+  as `xlink:href`, all colors (e.g. `oklch()`) as hex.
+- Export CLI and page: SIGINT, SIGTERM and SIGHUP and failed starts close
+  the browser and remove its profile; `--padding` and `padding` must be
+  numbers ≥ 0; schemes of one `genVisExport` call are restored at the next.
+- Schema: no `"linear"` default for the scale type, `orientation` may be
+  `null`.
+- Faster `wallTime` and type inference.
+- Removed: `utils/props.js`, the 3.x calc `columns`, the sass dev
+  dependency.
+- `normalize` returns 4.0 key names instead of the 3.x internal form.
 
 ## 3.1.0
 
