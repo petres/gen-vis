@@ -152,3 +152,26 @@ describe('exportSvg', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the defaults of the parts in the export', () => {
+    // the ends of the lines of an SVG, of the tick marks of the horizontal axis the lengths
+    const marks = svg => [...parse(svg).querySelectorAll('line')].map(l => l.getAttribute('y2'));
+
+    test('the SVG of a chart with defaults has them, also the one of the export page (genVisExport)', async () => {
+        const vis = await chart({ defaults: { axis: { tickMarks: { size: 4 } } } });
+        const svg = await vis.exportSvg();
+        expect(marks(svg).filter(Boolean)).toEqual(Array(11).fill('4'));
+        vis.el.remove();
+
+        // the export page, of the protocol version 1
+        await import('@/export.js');
+        expect(window.genVisExport.version).toBe(1);
+        const page = await window.genVisExport({ def: def(), data, defaults: { axis: { tickMarks: { size: 3 } } } });
+        expect(page.version).toBe(1);
+        expect(marks(page.svg).filter(Boolean)).toEqual(Array(11).fill('3'));
+        // without defaults the built-in ones
+        expect(new Set(marks((await window.genVisExport({ def: def(), data })).svg).filter(Boolean))).toEqual(new Set(['9']));
+        await expect(window.genVisExport({ def: def(), data, defaultz: {} })).rejects.toThrow(/unknown options defaultz, expected some of .*defaults/);
+        expect(errors).toEqual([]);
+    });
+});

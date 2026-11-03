@@ -119,10 +119,11 @@
     outline: 2px solid var(--gen-vis-focus-color, #1E4F77);
     outline-offset: 1px;
 }
-.vis-facet svg g.vis-axis-bottom g.tick line { transform: translate(0px, -4px); }
-.vis-facet svg g.vis-axis-top g.tick line { transform: translate(0px, 5px); }
-.vis-facet svg g.vis-axis-right g.tick line { transform: translate(-4px, 0px); }
-.vis-facet svg g.vis-axis-left g.tick line { transform: translate(5px, 0px); }
+/* the part of the tick marks inside the plot area, `tickMarks.inset` */
+.vis-facet svg g.vis-axis-bottom g.tick line { transform: translate(0px, calc(-1 * var(--gen-vis-tick-inset, 4px))); }
+.vis-facet svg g.vis-axis-top g.tick line { transform: translate(0px, var(--gen-vis-tick-inset, 5px)); }
+.vis-facet svg g.vis-axis-right g.tick line { transform: translate(calc(-1 * var(--gen-vis-tick-inset, 4px)), 0px); }
+.vis-facet svg g.vis-axis-left g.tick line { transform: translate(var(--gen-vis-tick-inset, 5px), 0px); }
 /* the size of the labels of the ticks without one of their props, see `axis.labels` */
 .vis-facet svg g.tick text:not([font-size]) {
     font-size: 13px;

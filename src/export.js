@@ -16,7 +16,7 @@ const version = 1;
 
 // the options of genVisExport, see README "Static export"
 const known = ['def', 'defUrl', 'data', 'dataUrl', 'baseUrl', 'width', 'padding', 'unit', 'css', 'classes', 'globals',
-    'state', 'parts', 'fontSize', 'background', 'schemes', 'timeout'];
+    'state', 'defaults', 'parts', 'fontSize', 'background', 'schemes', 'timeout'];
 
 // the CSS pixels of a length, e.g. 800, "800px", "16cm", "160mm", "6in" or
 // "8pt", and its unit
@@ -137,7 +137,7 @@ const genVisExport = async (options = {}) => {
     const mount = (holder, done) => {
         const shown = createGenVis(holder, {
             def: options.def ?? null, defFile: options.defUrl ?? null, data,
-            globals: options.globals ?? null, state: options.state ?? null,
+            globals: options.globals ?? null, state: options.state ?? null, defaults: options.defaults ?? null,
             onRendered: done.resolve, onError: done.reject,
         });
         shown.el.classList.add(...classes);

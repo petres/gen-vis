@@ -18,6 +18,33 @@ export interface State {
     visible?: Record<string, Record<string, boolean>>;
 }
 
+/** The defaults of an axis, the values used where the definition has none, see the readme "Defaults". */
+export interface AxisDefaults {
+    /** The space between the tick marks and the labels in pixels. */
+    padding?: number;
+    tickMarks?: {
+        /** The length of the tick marks in pixels, also the space of the labels without them. */
+        size?: number;
+        /** The part of the length inside the plot area in pixels, null of the one of the styles (4 pixels of bottom and right axes, 5 of top and left ones). */
+        inset?: number | null;
+    };
+    title?: {
+        /** The distance of the title from the axis in pixels, null of cartesian axes 8 pixels inside the edge of the margin. */
+        offset?: number | null;
+    };
+}
+
+/** The defaults of the parts of a chart instead of the built-in ones (`builtInDefaults`, see the readme "Defaults"): of all axes, the ones of the axes of a position before them, e.g. `angularAxis`. */
+export interface GenVisDefaults {
+    axis?: AxisDefaults;
+    angularAxis?: AxisDefaults;
+    radialAxis?: AxisDefaults;
+    topAxis?: AxisDefaults;
+    rightAxis?: AxisDefaults;
+    bottomAxis?: AxisDefaults;
+    leftAxis?: AxisDefaults;
+}
+
 export interface GenVisProps {
     /** The url of the definition. */
     defFile?: string | null;
@@ -35,6 +62,8 @@ export interface GenVisProps {
     globals?: Record<string, unknown> | null;
     /** The rows highlighted by the page, values of mappings, e.g. `{ country: 'AT' }` of another chart. */
     highlight?: Record<string, unknown> | null;
+    /** The defaults of the parts instead of the built-in ones, e.g. `{ axis: { padding: 2, tickMarks: { size: 4, inset: 0 } } }`, values of the definition take precedence. */
+    defaults?: GenVisDefaults | null;
     /** A button to save the PNG, a string is the name of the file. */
     download?: boolean | string;
     /** A button to copy the PNG to the clipboard. */
@@ -96,6 +125,7 @@ export interface GenVisExportOptions {
     classes?: string | string[];
     globals?: Record<string, unknown>;
     state?: State;
+    defaults?: GenVisDefaults;
     parts?: ImagePart[] | null;
     fontSize?: number | string;
     background?: string | null;
@@ -234,6 +264,8 @@ export declare function registerPlotType(name: string, type: PlotType): void;
 export declare function registerCoord(name: string, coord: Record<string, unknown>): void;
 /** A scheme of its own, e.g. the colors of a house style, for `scheme` of the categories and the scales as the ones of d3, `colors` are CSS colors. */
 export declare function registerScheme(name: string, colors: string[]): void;
+/** The defaults of the parts of all charts of the page instead of the built-in ones, the prop `defaults` of a chart takes precedence, null removes them. */
+export declare function registerDefaults(defaults: GenVisDefaults | null): void;
 /** The marks of an element of `element` per row, the elements of the draw before are updated. */
 export declare function perRow(groups: PlotGroup[], element: string,
     translate?: (values: Record<string, unknown>, row: Row, group: PlotGroup) => Record<string, unknown>,

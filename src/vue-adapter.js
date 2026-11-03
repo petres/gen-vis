@@ -15,6 +15,7 @@ const props = {
     state: { type: Object, default: null },
     globals: { type: Object, default: null },
     highlight: { type: Object, default: null },
+    defaults: { type: Object, default: null },
     download: { type: [Boolean, String], default: false },
     copy: { type: Boolean, default: false },
     csv: { type: [Boolean, String], default: false },
@@ -66,7 +67,7 @@ const createVueComponent = Vue => {
             this.vis = createGenVis(this.$el, { ...this.ownProps(), slots: this.slotsOf(), ...this.listeners() }, { root: true });
             // the props are applied together, see update of createGenVis
             propNames.filter(k => k in props).forEach(k => this.$watch(k, value => this.vis.update({ [k]: value }),
-                { deep: ['state', 'globals', 'highlight'].includes(k) }));
+                { deep: ['state', 'globals', 'highlight', 'defaults'].includes(k) }));
         },
         updated() {
             // the classes and styles of the page, e.g. of a class of a parent

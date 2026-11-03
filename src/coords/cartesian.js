@@ -52,6 +52,8 @@ const axes = ctx => {
                 return text === null || text === undefined ? '' : String(text);
             };
 
+        // the values without ones of the axis, see utils/defaults.js
+        const d = store.axisDefaults(i.position);
         const parts = [];
         // the grid lines are at the ticks of the axis
         if (i.grid)
@@ -70,10 +72,11 @@ const axes = ctx => {
                     const { text, ...attrs } = labelsOf(d);
                     return attrs;
                 }),
-                padding: i.padding,
+                padding: i.padding ?? d.padding,
                 rotate: i.rotate,
                 domain: domainProps(ctx, i),
-                marks: tickMarks(ctx, i),
+                marks: tickMarks(ctx, i, d.tickMarks),
+                markSize: d.tickMarks?.size,
                 width: innerWidth,
                 height: innerHeight,
             },
@@ -82,7 +85,7 @@ const axes = ctx => {
         if (i.title) {
             // the distance of the title from the axis, by default near the
             // edge of the margin, e.g. outside of the labels of the ticks
-            const offset = i.title.offset ?? Math.max(0, ctx.margins[i.position] - 8);
+            const offset = i.title.offset ?? d.title?.offset ?? Math.max(0, ctx.margins[i.position] - 8);
             const transform = {
                 left: `rotate(-90) translate(-${innerHeight/2} -${offset})`,
                 right: `rotate(90) translate(${innerHeight/2} -${innerWidth + offset})`,

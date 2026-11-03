@@ -404,7 +404,7 @@
                     }
                 },
                 "tickMarks": {
-                    "description": "The tick marks: false leaves them out (the labels stay at their places), their length (size, 9 pixels across the line of cartesian axes, 6 outside of the circle of angular ones by default, the labels move with it) and their props (svg attributes of the names of the facet), e.g. { \"props\": { \"stroke\": \"var(--gen-vis-grid-color)\" } }, radial axes have none.",
+                    "description": "The tick marks: false leaves them out (the labels stay at their places), their length (size, 9 pixels across the line of cartesian axes, 6 outside of the circle of angular ones by default, the labels move with it), the part of it inside the plot area (inset, by default 4 pixels of bottom and right axes, 5 of top and left ones, 0 of angular ones, e.g. 0 for marks outside only) and their props (svg attributes of the names of the facet), e.g. { \"props\": { \"stroke\": \"var(--gen-vis-grid-color)\" } }, radial axes have none.",
                     "anyOf": [
                         { "const": false },
                         {
@@ -412,6 +412,7 @@
                             "additionalProperties": false,
                             "properties": {
                                 "size": { "type": "number", "minimum": 0 },
+                                "inset": { "type": "number" },
                                 "props": { "$ref": "#/definitions/props" }
                             }
                         }
@@ -435,10 +436,10 @@
                     "additionalProperties": false,
                     "properties": {
                         "name": { "type": "string" },
-                        "offset": { "type": "number", "description": "The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of polar axes 16 pixels outside of the circle." }
+                        "offset": { "type": "number", "description": "The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults)." }
                     }
                 },
-                "padding": { "type": "number", "default": 3, "description": "The gap between the tick marks and the labels in pixels, also of polar axes." }
+                "padding": { "type": "number", "default": 3, "description": "The gap between the tick marks and the labels in pixels, also of polar axes, 3 by default (see the prop defaults)." }
             }
         },
         "mapping": {

@@ -166,6 +166,20 @@ of the categories and the scales, e.g. `"scheme": "wifo"` of the colors of a
 house style, known to `validateDef` (also of `@preschen/gen-vis/check`),
 without the colors of d3.
 
+Defaults of the parts (README "Defaults"): the built-in values of the axes
+are collected in `builtInDefaults` (`src/utils/defaults.js`): the `padding`
+of the labels (3), the length of the tick marks (`tickMarks.size`, 9 of
+cartesian, 6 of angular axes), the part of them inside the plot area (the
+new `tickMarks.inset`, of cartesian axes the one of the styles, 0 of
+angular ones) and the `title.offset` (16 of radial axes). The prop
+`defaults` (`data-defaults` of JSON, also of the Vue component),
+`registerDefaults(defaults)` of the page, the option `defaults` of
+`genVisExport` (protocol version 1) and `--defaults <json|file>` of the CLI
+replace them for all axes of any definition, e.g. `{"axis": {"padding": 2,
+"tickMarks": {"size": 4, "inset": 0}}}` of the spacing of ggplot2; the
+values of a definition take precedence, the prop over the page. The
+prepared definition has no `axis.padding` of 3 anymore.
+
 ## 3.1.0
 
 The standalone script in more sizes: `dist-lib/gen-vis.core.js` (less than

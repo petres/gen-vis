@@ -101,13 +101,18 @@ const curvedLabel = (id, a, r, text, props) => {
 // the categories or ticks around the circle, spokes as grid lines, the
 // parts of the axes (see `axes` of coords/index.js), drawn anew, `label(v)`
 // is the text and the props of the label of a tick, `domain` the props of
-// the circle, the tick marks (`axis.tickMarks`, see tickMarks) are 6 pixels
-// outside of the circle by default, the labels after them, along the circle
+// the circle, the tick marks (`axis.tickMarks`, see tickMarks) outside of
+// the circle, 6 pixels by default (see utils/defaults.js), the part of them
+// inside it their `inset`, the labels after them, also without tick marks at
+// their places, along the circle
 // with `labels.curved`, at the tick (true) or between it and the next one
 // (`between`), e.g. the names of the months
 const angularAxis = (ctx, n, s, values, label, domain, axis) => {
-    const marks = tickMarks(ctx, axis);
-    const size = marks?.size ?? 6;
+    const d = ctx.store.axisDefaults('angular');
+    const marks = tickMarks(ctx, axis, d.tickMarks);
+    const size = marks ? marks.size : d.tickMarks?.size;
+    const inset = marks ? marks.inset ?? 0 : 0;
+    const at = size + (axis.padding ?? d.padding);
     const [r0, r1] = radiusRange(ctx);
     const angles = angleTicks(s, values);
     // the direction of the ticks, counterclockwise of a decreasing range or
@@ -135,9 +140,9 @@ const angularAxis = (ctx, n, s, values, label, domain, axis) => {
     const ticks = angles.map((v, i) => {
         const a = angleOf(s, v);
         const { text, props } = label(v);
-        const [x1, y1] = pointRadial(a, r1);
-        const [x2, y2] = pointRadial(a, r1 + size);
-        const [x, y] = pointRadial(a, r1 + size + axis.padding);
+        const [x1, y1] = pointRadial(a, r1 - inset);
+        const [x2, y2] = pointRadial(a, r1 - inset + size);
+        const [x, y] = pointRadial(a, r1 + at);
         // the middle of the angle to the next tick, after the last one the first one
         const step = angles.length > 1 ? stepTo(a, angleOf(s, angles[(i + 1)%angles.length]), direction) : 0;
         return {
@@ -146,7 +151,7 @@ const angularAxis = (ctx, n, s, values, label, domain, axis) => {
             [childrenOf]: [
                 ...(marks === false ? [] : [{ [elementOf]: "line", [directOf]: { stroke: "currentColor", x1, y1, x2, y2 }, ...marks.props }]),
                 ...(curved
-                    ? curvedLabel(`${ctx.uid}-${idOf(n)}-${i}`, curved == 'between' ? a + step/2 : a, r1 + size + axis.padding, text, props)
+                    ? curvedLabel(`${ctx.uid}-${idOf(n)}-${i}`, curved == 'between' ? a + step/2 : a, r1 + at, text, props)
                     : [{ [elementOf]: "text", [directOf]: { fill: "currentColor", x, y, "text-anchor": anchor(a), "dominant-baseline": baseline(a) }, ...props, text }]),
             ],
         };
@@ -161,6 +166,8 @@ const angularAxis = (ctx, n, s, values, label, domain, axis) => {
 const radialAxis = (ctx, n, s, values, label, domain, axis) => {
     const a = (axis.angle ?? 0)/180*Math.PI;
     const [r0, r1] = d3.extent(s.range());
+    const d = ctx.store.axisDefaults('radial');
+    const padding = axis.padding ?? d.padding;
     const parts = [];
 
     if (axis.grid) {
@@ -198,8 +205,8 @@ const radialAxis = (ctx, n, s, values, label, domain, axis) => {
                     fill: "currentColor",
                     "text-anchor": horizontal ? "middle" : "end",
                     "dominant-baseline": horizontal ? "hanging" : "middle",
-                    x: x - (horizontal ? 0 : axis.padding),
-                    y: y + (horizontal ? axis.padding : 0),
+                    x: x - (horizontal ? 0 : padding),
+                    y: y + (horizontal ? padding : 0),
                 },
                 ...props,
                 text,
@@ -209,7 +216,7 @@ const radialAxis = (ctx, n, s, values, label, domain, axis) => {
 
     const after = [];
     if (axis.title) {
-        const [x, y] = pointRadial(a, r1 + (axis.title.offset ?? 16));
+        const [x, y] = pointRadial(a, r1 + (axis.title.offset ?? d.title?.offset ?? 16));
         after.push({
             key: `axis title ${n}`,
             fresh: true,

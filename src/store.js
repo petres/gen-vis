@@ -7,6 +7,7 @@ import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { formatter } from "@/utils/props";
 import { axisNames } from "@/layout";
+import { axisDefaults } from "@/utils/defaults";
 import { clearCache, geoParts, load, loadGeo, raw, requirements, resolveParents, resolveUrl } from "@/utils/load";
 
 // the formatters of the locales by their definition, the last ones are kept
@@ -41,6 +42,9 @@ class Store {
     files = null;
     data = null;
     defaults = null;
+    // the defaults of the parts of the chart of its prop `defaults`, before
+    // the ones of the page and the built-in ones, see utils/defaults.js
+    chartDefaults = null;
     // the width of the plots and of the visualisation, set by its measure,
     // they differ with legends beside the plots
     totalWidth = null;
@@ -106,6 +110,10 @@ class Store {
 
     mapping(n) { return this.def.mapping[n] }
 
+    // the defaults of the axes of a position, e.g. "left", see
+    // axisDefaults of utils/defaults.js
+    axisDefaults(position) { return axisDefaults(this.chartDefaults, position) }
+
     // the names of the templates, the globals and the fields of the selected
     // entries of the form elements, e.g. `group:name`, see templateNames
     get names() { return templateNames(this.def) }
@@ -135,7 +143,7 @@ class Store {
             const state = await load(sources);
             if (run != this.runs)
                 return false;
-            Object.assign(this, state, { globals: sources.globals ?? null });
+            Object.assign(this, state, { globals: sources.globals ?? null, chartDefaults: sources.defaults });
             this.loads++;
             return true;
         } catch (error) {

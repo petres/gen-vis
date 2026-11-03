@@ -38,6 +38,10 @@ const defaults = {
     // the rows highlighted by the page, values of mappings, e.g. the
     // country under the mouse of another chart, { "country": "AT" }
     highlight: null,
+    // the defaults of the parts of the chart instead of the built-in ones,
+    // e.g. { "axis": { "padding": 2, "tickMarks": { "size": 4 } } }, values
+    // of the definition take precedence, see utils/defaults.js
+    defaults: null,
     // a button in the footer to save it as a PNG, a string is the name of the file
     download: false,
     // a button in the footer to copy the PNG to the clipboard
@@ -255,7 +259,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         }
         try {
             // a definition loaded after a newer one was given is not shown
-            if (!await store.init({ def: props.def, defUrl: props.defFile, data: props.data, state: props.state, globals: props.globals, check: props.check || props.debug }))
+            if (!await store.init({ def: props.def, defUrl: props.defFile, data: props.data, state: props.state, globals: props.globals, defaults: props.defaults, check: props.check || props.debug }))
                 return;
             store.highlighted = copyOf(props.highlight);
             // the error is kept while the new definition is loaded, a
@@ -346,6 +350,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             def: props.def, defFile: props.defFile, data: store.rows,
             state: JSON.parse(JSON.stringify(store.state)),
             globals: props.globals,
+            defaults: props.defaults,
             slots: props.slots,
         };
         // the classes of the page, e.g. of the styles of a card
@@ -415,7 +420,8 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         const before = { ...props };
         assign(next);
         const changed = k => k in next && next[k] !== before[k];
-        const reload = changed('def') || changed('defFile') || changed('data');
+        // other defaults are drawn anew, the same ones of a new object not
+        const reload = changed('def') || changed('defFile') || changed('data') || (changed('defaults') && !sameValue(next.defaults ?? null, before.defaults ?? null));
         if (reload)
             init();
         // a waiting visualisation which is not lazy anymore is loaded

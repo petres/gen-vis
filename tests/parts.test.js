@@ -4,7 +4,7 @@
 // the highlight, legends, texts, transforms and messages
 import { describe, test, expect, vi, onTestFinished } from 'vitest';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { errors, useDom, mount, mountVis, nextTick } from './dom.js';
+import { errors, useDom, mount, mountVis, nextTick, rendered } from './dom.js';
 
 useDom();
 
@@ -1019,13 +1019,123 @@ describe('the tick marks of axes', () => {
         expect(without.querySelectorAll('.vis-axis-angular .tick text')).toHaveLength(2);
 
         const { validateDef } = await import('@/utils/validate');
-        polar.mapping.x.axis.tickMarks = { size: -1, props: { stroke: '@colour' } };
+        polar.mapping.x.axis.tickMarks = { size: -1, inset: 'x', props: { stroke: '@colour' } };
         polar.mapping.y.axis = { position: 'radial', tickMarks: { size: 4 } };
         expect(validateDef(polar)).toEqual([
             'mapping.x.axis.tickMarks.size: expected the length of the tick marks in pixels, e.g. 4',
+            'mapping.x.axis.tickMarks.inset: expected the part of the tick marks inside the plot area in pixels, e.g. 0',
             "mapping.x.axis.tickMarks.props.stroke: unknown reference 'colour', expected one of 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'radius'",
             'mapping.y.axis.tickMarks: a radial axis has no tick marks, the circles of the grid mark its values',
         ]);
+        expect(errors).toEqual([]);
+    });
+});
+
+describe('the defaults of the parts', () => {
+    // the tick marks and the positions of the labels of an axis
+    const marks = (el, position, x) => [...el.querySelectorAll(`.vis-axis-${position} .tick line`)].map(l => l.getAttribute(`${x}2`));
+    const label = (el, position, x) => el.querySelector(`.vis-axis-${position} .tick text`).getAttribute(x);
+    const polarDef = () => {
+        const def = lineDef({ coord: 'polar', width: 400, height: 400, margins: { top: 50, right: 50, bottom: 50, left: 50 } });
+        def.mapping.x = { column: 'year', type: 'numeric', scale: { orientation: 'angular', domain: [2020, 2024] }, axis: { position: 'angular', values: [2020, 2022] } };
+        def.mapping.y = { column: 'value', type: 'numeric', scale: { orientation: 'radial', domain: [0, 4] }, axis: { position: 'radial', angle: 0, values: [2], title: { name: 'Wert' } } };
+        def.plot = { type: 'polar:line', by: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } };
+        return def;
+    };
+    // the first mark and label of the angular axis (at the top), the label
+    // of the radial one and its title
+    const polarAxes = el => {
+        const line = el.querySelector('.vis-axis-angular .tick line');
+        return {
+            mark: [+line.getAttribute('y1'), +line.getAttribute('y2')],
+            label: +el.querySelector('.vis-axis-angular .tick text').getAttribute('y'),
+            radial: Math.round(el.querySelector('.vis-axis-radial .tick text').getAttribute('x') * 1000) / 1000,
+            title: +el.querySelector('.vis-axis-title').getAttribute('y'),
+        };
+    };
+
+    test('the built-in ones without defaults', async () => {
+        const { builtInDefaults } = await import('@/utils/defaults');
+        expect(builtInDefaults).toEqual({
+            axis: { padding: 3, tickMarks: { size: 9, inset: null }, title: { offset: null } },
+            angularAxis: { tickMarks: { size: 6, inset: 0 } },
+            radialAxis: { title: { offset: 16 } },
+        });
+        const el = await mount({ def: lineDef(), data: lineData });
+        expect(new Set(marks(el, 'bottom', 'y'))).toEqual(new Set(['9']));
+        // the part inside the plot area of the styles
+        expect(el.querySelector('.vis-axis-bottom').hasAttribute('style')).toBe(false);
+        expect(label(el, 'bottom', 'y')).toBe('12');
+        expect(label(el, 'left', 'x')).toBe('-12');
+        expect(polarAxes(await mount({ def: polarDef(), data: lineData }))).toEqual({ mark: [-150, -156], label: -159, radial: -3, title: -166 });
+    });
+
+    test('of all axes, cartesian and polar, the values of the definition win', async () => {
+        const defaults = { axis: { padding: 1, tickMarks: { size: 4 }, title: { offset: 20 } } };
+        const def = lineDef();
+        def.mapping.y.axis = { ...def.mapping.y.axis, padding: 6, title: { name: 'Wert' } };
+        const el = await mount({ def, data: lineData, defaults });
+        expect(new Set(marks(el, 'bottom', 'y'))).toEqual(new Set(['4']));
+        expect(label(el, 'bottom', 'y')).toBe('5');
+        expect(new Set(marks(el, 'left', 'x'))).toEqual(new Set(['-4']));
+        // the padding of the definition
+        expect(label(el, 'left', 'x')).toBe('-10');
+        expect(el.querySelector('.vis-axis-title').getAttribute('transform')).toMatch(/translate\(-\d+(\.\d+)? -20\)/);
+        // the tick marks outside of the plot area, e.g. of ggplot2
+        const outside = await mount({ def, data: lineData, defaults: { axis: { ...defaults.axis, tickMarks: { size: 4, inset: 0 } } } });
+        expect(outside.querySelector('.vis-axis-bottom').style.getPropertyValue('--gen-vis-tick-inset')).toBe('0px');
+        expect(outside.querySelector('.vis-axis-bottom .tick line').getAttribute('y2')).toBe('4');
+        def.mapping.x.axis.tickMarks = { inset: 2 };
+        const inset = await mount({ def, data: lineData, defaults: { axis: { ...defaults.axis, tickMarks: { size: 4, inset: 0 } } } });
+        expect(inset.querySelector('.vis-axis-bottom').style.getPropertyValue('--gen-vis-tick-inset')).toBe('2px');
+        expect(inset.querySelector('.vis-axis-left').style.getPropertyValue('--gen-vis-tick-inset')).toBe('0px');
+        // the size of the definition, the labels without marks at their places of the default
+        def.mapping.x.axis.tickMarks = { size: 2 };
+        def.mapping.y.axis.tickMarks = false;
+        const own = await mount({ def, data: lineData, defaults });
+        expect(new Set(marks(own, 'bottom', 'y'))).toEqual(new Set(['2']));
+        expect(label(own, 'bottom', 'y')).toBe('3');
+        expect(label(own, 'left', 'x')).toBe('-10');
+
+        // the angular axis and the radial one, the title of the radial one at its offset
+        expect(polarAxes(await mount({ def: polarDef(), data: lineData, defaults }))).toEqual({ mark: [-150, -154], label: -155, radial: -1, title: -170 });
+        // the defaults of polar axes before the ones of all axes, the part inside the circle
+        const polar = await mount({ def: polarDef(), data: lineData, defaults: { ...defaults, angularAxis: { tickMarks: { size: 8, inset: 2 } }, radialAxis: { padding: 5 } } });
+        expect(polarAxes(polar)).toEqual({ mark: [-148, -156], label: -159, radial: -5, title: -170 });
+        // of a position of cartesian axes
+        const left = await mount({ def: lineDef(), data: lineData, defaults: { ...defaults, leftAxis: { padding: 7 } } });
+        expect([label(left, 'bottom', 'y'), label(left, 'left', 'x')]).toEqual(['5', '-11']);
+        const ownPolar = polarDef();
+        ownPolar.mapping.x.axis = { ...ownPolar.mapping.x.axis, padding: 0, tickMarks: { size: 10 } };
+        ownPolar.mapping.y.axis = { ...ownPolar.mapping.y.axis, padding: 2, title: { name: 'Wert', offset: 30 } };
+        expect(polarAxes(await mount({ def: ownPolar, data: lineData, defaults }))).toEqual({ mark: [-150, -160], label: -160, radial: -2, title: -180 });
+        expect(errors).toEqual([]);
+    });
+
+    test('of the page (registerDefaults), the prop takes precedence, of a data attribute and of an update', async () => {
+        const { registerDefaults, mountGenVisElement } = await import('@/index.js');
+        onTestFinished(() => registerDefaults(null));
+        registerDefaults({ axis: { padding: 0, tickMarks: { size: 5 } } });
+        const page = await mount({ def: lineDef(), data: lineData });
+        expect(new Set(marks(page, 'bottom', 'y'))).toEqual(new Set(['5']));
+        expect(label(page, 'bottom', 'y')).toBe('5');
+        const prop = await mount({ def: lineDef(), data: lineData, defaults: { axis: { tickMarks: { size: 2 } } } });
+        expect(label(prop, 'bottom', 'y')).toBe('2');
+        registerDefaults(null);
+
+        const el = document.body.appendChild(document.createElement('div'));
+        el.dataset.def = JSON.stringify(lineDef());
+        el.dataset.data = lineData;
+        el.dataset.defaults = '{"axis": {"padding": 1, "tickMarks": {"size": 4}}}';
+        const vis = mountGenVisElement(el);
+        await rendered(vis.el);
+        await nextTick();
+        expect(label(el, 'bottom', 'y')).toBe('5');
+
+        // other defaults draw the chart anew
+        vis.update({ defaults: { axis: { tickMarks: { size: 6 } } } });
+        await vi.waitFor(() => expect(label(el, 'bottom', 'y')).toBe('9'));
+        expect(new Set(marks(el, 'bottom', 'y'))).toEqual(new Set(['6']));
         expect(errors).toEqual([]);
     });
 });

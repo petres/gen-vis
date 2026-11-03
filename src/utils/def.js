@@ -139,10 +139,6 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = []) 
         m.scale.domain ??= [null, null];
     }
 
-    if (m.axis) {
-        m.axis.padding ??= 3;
-    }
-
     if (m.legend) {
         if (m.legend.props === undefined)
             m.legend.props = {};

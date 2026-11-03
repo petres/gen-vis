@@ -2,6 +2,7 @@
 // the command line of gen-vis, see README "Static export":
 //   gen-vis export <def.json> <out.svg|out.png|out.pdf>... [<def.json> <out>...]... [options]
 import { parseArgs } from 'node:util';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { createExporter, formats } from './export.js';
 
@@ -20,6 +21,8 @@ Options:
   --dpi <n> | --scale <n> the pixels of the PNG: dots per inch, or pixels per CSS pixel (default 2)
   --globals <json>        the globals, e.g. '{"lang": "en"}'
   --state <json>          the state, e.g. '{"visible": {"land": {"Wien": false}}}'
+  --defaults <json|file>  the defaults of the parts instead of the built-in ones, a JSON text or
+                          file, e.g. '{"axis": {"padding": 2, "tickMarks": {"size": 4}}}'
   --data <file>           the data instead of the one of the definition (CSV, JSON or parquet)
   --background <color>    the background, none for none (default the one of gen-vis, white)
   --scheme <name=colors>  a scheme of colors, e.g. wifo=#005CA9,#E6A000, repeatable
@@ -44,6 +47,18 @@ const json = (value, name) => {
     } catch (error) {
         fail(`--${name} is not JSON: ${error.message}`);
     }
+};
+
+// the defaults of --defaults, a JSON text (it begins with a {) or a file of one
+const defaultsOf = value => {
+    if (value === undefined)
+        return undefined;
+    if (!value.trim().startsWith('{') && !existsSync(value))
+        fail(`--defaults is a JSON object or a file of one, ${value} does not exist`);
+    const defaults = json(value.trim().startsWith('{') ? value : readFileSync(value, 'utf8'), 'defaults');
+    if (defaults === null || typeof defaults != 'object' || Array.isArray(defaults))
+        fail(`--defaults is a JSON object, e.g. '{"axis": {"padding": 2}}', not ${JSON.stringify(defaults)}`);
+    return defaults;
 };
 
 // the schemes of --scheme name=#hex,#hex
@@ -89,7 +104,7 @@ const exportCommand = async args => {
             options: {
                 width: { type: 'string' }, parts: { type: 'string' }, css: { type: 'string', multiple: true },
                 class: { type: 'string', multiple: true }, 'font-size': { type: 'string' }, dpi: { type: 'string' },
-                scale: { type: 'string' }, globals: { type: 'string' }, state: { type: 'string' }, data: { type: 'string' },
+                scale: { type: 'string' }, globals: { type: 'string' }, state: { type: 'string' }, defaults: { type: 'string' }, data: { type: 'string' },
                 background: { type: 'string' }, scheme: { type: 'string', multiple: true }, unit: { type: 'string' },
                 padding: { type: 'string' }, timeout: { type: 'string' }, browser: { type: 'string' },
                 'no-sandbox': { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
@@ -110,7 +125,7 @@ const exportCommand = async args => {
     const options = Object.fromEntries(Object.entries({
         width, parts: o.parts?.split(',').map(p => p.trim()).filter(Boolean), css: o.css ?? [], classes: o.class,
         fontSize: o['font-size'], dpi: number(o.dpi, 'dpi'), scale: number(o.scale, 'scale'),
-        globals: json(o.globals, 'globals'), state: json(o.state, 'state'), data: o.data,
+        globals: json(o.globals, 'globals'), state: json(o.state, 'state'), defaults: defaultsOf(o.defaults), data: o.data,
         background: o.background === undefined ? undefined : o.background == 'none' ? null : o.background,
         schemes: schemesOf(o.scheme ?? []), unit: o.unit, padding: o.padding === undefined ? undefined : Number(o.padding),
         timeout: number(o.timeout, 'timeout'),

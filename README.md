@@ -192,6 +192,7 @@ plugin of another Vue, the types are the ones of `@preschen/gen-vis/vue`.
 | `state`    | `data-state`    | the changes of the user, see [state](#state), the attribute is JSON |
 | `highlight` | `data-highlight` | the rows highlighted by the page, values of mappings, e.g. `{"country": "AT"}` of the hover of another chart, see [linked charts](#linked-charts), the attribute is JSON |
 | `globals`  | `data-globals`  | the globals of the page, e.g. the language or the year of a menu of the page, also of hidden form elements, see [globals](#formelements-and-globals), the attribute is JSON |
+| `defaults` | `data-defaults` | the defaults of the parts instead of the built-in ones, e.g. `{"axis": {"padding": 2, "tickMarks": {"size": 4, "inset": 0}}}` for all axes, the values of the definition take precedence, see [defaults](#defaults), the attribute is JSON |
 | `download` | `data-download` | a button at the right of the footer to save it as a PNG, a string is the name of the file (default the title) |
 | `copy`     | `data-copy`     | a button at the right of the footer to copy the PNG to the clipboard (only on https or localhost) |
 | `csv`      | `data-csv`      | a button at the right of the footer to save the data shown as CSV, a string is the name of the file (default the title) |
@@ -206,8 +207,9 @@ The attributes are strings: `data-download`, `data-csv`, `data-svg`,
 
 Every visualisation has its own state, several of them can be used on a page.
 If `def`, `defFile` or `data` change (`update` of [createGenVis](#javascript),
-a new prop of the component), the visualisation is loaded again, a new
-`state` or new `globals` are applied without loading it again. Errors are shown in place of
+a new prop of the component), the visualisation is loaded again, also of
+other `defaults`, a new `state` or new `globals` are applied without
+loading it again. Errors are shown in place of
 the visualisation, e.g. of a definition which can not be drawn.
 
 ### Events and slots
@@ -452,6 +454,7 @@ unknown ones are an error):
 | `classes` | a class or a list of classes of the element of the chart (`.vis-outer`), e.g. of a theme of `css` |
 | `globals` | the globals, see [globals](#formelements-and-globals) |
 | `state` | the state, see [state](#state) |
+| `defaults` | the defaults of the parts instead of the built-in ones, e.g. `{ "axis": { "padding": 2, "tickMarks": { "size": 4, "inset": 0 } } }`, see [defaults](#defaults) |
 | `parts` | the parts of the image, see above, default all |
 | `fontSize` | the size of the texts of gen-vis, e.g. `"8pt"`: 13px of most texts become it, the title (22px), the message (14px) and the small texts (11px) in proportion; sizes of the definition (props) stay as they are |
 | `background` | a CSS color, `null` none (a transparent PNG), default the one of gen-vis (`--gen-vis-background` or white) |
@@ -488,12 +491,14 @@ outputs, one browser draws them all:
 ```sh
 npx gen-vis export data/bev/def.json bev.svg bev.png bev.pdf --width 16cm --font-size 8pt --dpi 300
 npx gen-vis export a.json a.svg b.json b.svg b.png --parts legend,plot --css wifo.css --class wifo \
-    --scheme wifo=#005CA9,#E6A000,#7AB51D --globals '{"lang": "en"}'
+    --scheme wifo=#005CA9,#E6A000,#7AB51D --globals '{"lang": "en"}' \
+    --defaults '{"axis": {"padding": 2, "tickMarks": {"size": 4, "inset": 0}}}'
 ```
 
 The options are the ones of the export page: `--width`, `--parts` (a list
 with commas), `--css` (a file or CSS, repeatable), `--class` (repeatable),
-`--font-size`, `--globals` and `--state` (JSON), `--data` (a file),
+`--font-size`, `--globals` and `--state` (JSON), `--defaults` (JSON or a
+file of it, e.g. `--defaults wifo-defaults.json`), `--data` (a file),
 `--background` (`none` for none), `--scheme name=color,color,...`
 (repeatable), `--unit`, `--padding` and `--timeout`; the PNG has `--scale`
 pixels per CSS pixel (default 2) or `--dpi`, its width a whole number of
@@ -1137,13 +1142,17 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   0.4}}`, of an angular axis the circle), `tickMarks` (the short lines of
   the ticks: `false` leaves them out, the labels stay at their places, their
   length `size`, 9 pixels across the line of a cartesian axis, 6 outside of
-  the circle of an angular axis by default, the labels move with it, and
-  their `props`, as the ones of `domain`, radial axes have none), `grid`
-  (lines at the ticks),
+  the circle of an angular axis by default, the labels move with it, the
+  part of it inside the plot area `inset`, by default 4 pixels of bottom
+  and right axes, 5 of top and left ones (the styles), 0 of angular axes,
+  e.g. `0` for marks only outside, and their `props`, as the ones of
+  `domain`, radial axes have none), `grid` (lines at the ticks),
   `title` (`{"name", "offset"}`, the distance from the axis, by default 8
   pixels inside the edge of the margin, of a radial axis 16 pixels outside
   of the circle) and `padding` (the space between the tick marks and the
-  labels, 3 pixels by default, also of polar axes).
+  labels, 3 pixels by default, also of polar axes). The defaults are the
+  ones of [defaults](#defaults), a page or an export replaces them for all
+  axes.
 - `hover`: the hover shows the values of the vertical axis at the position of
   the mouse, of horizontal bars (a horizontal mapping is stacked, or the
   vertical one is categorical and the horizontal one is not) the values of
@@ -1264,6 +1273,44 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
       { "type": "line", "filter": { "type": "load" } }
   ]
   ```
+
+#### Defaults
+
+The built-in defaults of the parts are the values a definition does not
+have to give, `builtInDefaults` of `src/utils/defaults.js`, so far the ones
+of the axes:
+
+```json
+{
+    "axis": { "padding": 3, "tickMarks": { "size": 9, "inset": null }, "title": { "offset": null } },
+    "angularAxis": { "tickMarks": { "size": 6, "inset": 0 } },
+    "radialAxis": { "title": { "offset": 16 } }
+}
+```
+
+`axis` are the ones of all axes, `<position>Axis` the ones of the axes of a
+position before them, e.g. `angularAxis` and `radialAxis` of polar plots or
+`leftAxis`; an `inset` of `null` is the one of the styles (the css variable
+`--gen-vis-tick-inset`, 4 pixels of bottom and right axes, 5 of top and
+left ones), a
+`title.offset` of `null` of cartesian axes 8 pixels inside the edge of the
+margin. Defaults of the same shape replace them without changing a
+definition: the prop `defaults` of a chart (also `data-defaults`, the Vue
+component, `defaults` of the [export page](#export-page) and `--defaults`
+of the [CLI](#cli)) and `registerDefaults(defaults)` of all charts of the
+page (`GenVis.registerDefaults` of the standalone script, called before the
+charts are drawn, `null` removes them). A value of the definition takes
+precedence, then the prop, then the page, then the built-in one; in each
+the one of the kind of the axis before the one of `axis`, so `axis` of the
+prop is before `angularAxis` of the page. E.g. the spacing of ggplot2 (tick
+marks of 3pt outside of the plot area, the labels close to them) of every
+axis of every definition:
+
+```js
+import { registerDefaults } from '@preschen/gen-vis';
+
+registerDefaults({ axis: { padding: 2, tickMarks: { size: 4, inset: 0 } } });
+```
 
 ### `plot`
 
@@ -1945,6 +1992,8 @@ All three are known to `validateDef`, `@preschen/gen-vis/check` exports
 standalone script has them as `GenVis.registerPlotType`,
 `GenVis.registerCoord`, `GenVis.registerScheme`, `GenVis.perRow` and
 `GenVis.perGroup`. The schema only knows the built-in ones.
+`registerDefaults(defaults)` replaces built-in defaults of the parts of all
+charts of the page, see [defaults](#defaults).
 
 ## Development
 

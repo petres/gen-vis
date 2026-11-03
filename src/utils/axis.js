@@ -2,6 +2,7 @@ export { drawAxis };
 
 import { animate, create, interrupt, itemOf, join, onEnd, setAttr } from "@/utils/dom";
 import { fitText, motion, setAttrs } from "@/utils/draw";
+import { builtInDefaults } from "@/utils/defaults";
 
 /**
  * The ticks of an axis of the positions top, right, bottom or left, as the
@@ -157,11 +158,15 @@ const ticks = (ga, moving, orient, scale, { values, format, tickSizeInner, tickS
  * of the labels, their angle (`rotate`, degrees, positive ones
  * counterclockwise), the props of the line of the axis (`domain`, e.g. its
  * stroke-opacity), the tick marks (`marks`, false without them, their
- * `size`, 9 pixels across the line of the axis by default, the labels are
- * moved by it, and their `props`) and the size of the plot area (`width`,
+ * `size` across the line of the axis, the labels are moved by it, the part
+ * of it inside the plot area, `inset`, the css variable
+ * --gen-vis-tick-inset, null of the one of the styles, 4 pixels of bottom
+ * and right axes, 5 of top and left ones, and their `props`), the length of the tick marks without a `size` of their own, also
+ * the space of the labels without tick marks (`markSize`, the built-in
+ * default of axes without one) and the size of the plot area (`width`,
  * `height`).
  */
-const drawAxis = (ga, { name, position, scale, values, format, labels, padding, rotate, domain, marks, width, height }) => {
+const drawAxis = (ga, { name, position, scale, values, format, labels, padding, rotate, domain, marks, markSize, width, height }) => {
     setAttr(ga, "class", `vis-axis vis-axis-${position}`);
     setAttr(ga, "data-mapping", name);
     // the animations of the draw before stop where they are, the ticks
@@ -170,7 +175,7 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
     ga.querySelectorAll('*').forEach(node => interrupt(node, 'vis'));
     // the ticks of the draw before move with an animation
     const moving = motion.duration > 0 && ga.hasChildNodes();
-    ticks(ga, moving, position, scale, { values, format, tickSizeInner: marks?.size ?? 9, tickSizeOuter: 0, tickPadding: +padding });
+    ticks(ga, moving, position, scale, { values, format, tickSizeInner: marks?.size ?? markSize ?? builtInDefaults.axis.tickMarks.size, tickSizeOuter: 0, tickPadding: +(padding ?? builtInDefaults.axis.padding) });
     // the props of the line and of the labels at once, the animations of
     // the path and of the texts (their positions) go on
     if (domain)
@@ -180,6 +185,12 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
         ga.querySelectorAll('.tick line').forEach(node => node.remove());
     else if (marks?.props)
         ga.querySelectorAll('.tick line').forEach(node => setAttrs(node, marks.props));
+    // the part of the tick marks inside the plot area, the css variable of
+    // the styles, without one the one of the styles
+    if (Number.isFinite(marks?.inset))
+        ga.style.setProperty("--gen-vis-tick-inset", `${marks.inset}px`);
+    else if (ga.style.length)
+        ga.style.removeProperty("--gen-vis-tick-inset");
     if (labels) {
         const texts = [...ga.querySelectorAll('.tick text')];
         texts.forEach(node => setAttrs(node, labels(node.parentNode[itemOf])));

@@ -934,12 +934,13 @@ export interface Axis {
         curved?: boolean | 'between';
     };
     /**
-     * The tick marks: false leaves them out (the labels stay at their places), their length (size, 9 pixels across the line of cartesian axes, 6 outside of the circle of angular ones by default, the labels move with it) and their props (svg attributes of the names of the facet), e.g. { "props": { "stroke": "var(--gen-vis-grid-color)" } }, radial axes have none.
+     * The tick marks: false leaves them out (the labels stay at their places), their length (size, 9 pixels across the line of cartesian axes, 6 outside of the circle of angular ones by default, the labels move with it), the part of it inside the plot area (inset, by default 4 pixels of bottom and right axes, 5 of top and left ones, 0 of angular ones, e.g. 0 for marks outside only) and their props (svg attributes of the names of the facet), e.g. { "props": { "stroke": "var(--gen-vis-grid-color)" } }, radial axes have none.
      */
     tickMarks?:
         | false
         | {
               size?: number;
+              inset?: number;
               props?: Props;
           };
     /**
@@ -959,12 +960,12 @@ export interface Axis {
     title?: {
         name?: string;
         /**
-         * The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of polar axes 16 pixels outside of the circle.
+         * The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults).
          */
         offset?: number;
     };
     /**
-     * The gap between the tick marks and the labels in pixels, also of polar axes.
+     * The gap between the tick marks and the labels in pixels, also of polar axes, 3 by default (see the prop defaults).
      */
     padding?: number;
 }

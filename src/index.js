@@ -1,10 +1,11 @@
-export { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, registerCoord, registerScheme, perRow, perGroup };
+export { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, registerCoord, registerScheme, registerDefaults, perRow, perGroup };
 
 import { createGenVis } from '@/comp/app'
 import { registerPlotType } from '@/plots'
 import { perRow, perGroup } from '@/plots/elements'
 import { registerCoord } from '@/coords'
 import { registerScheme } from '@/utils/d3'
+import { registerDefaults } from '@/utils/defaults'
 
 // the props of the buttons, the debug output and lazy, "false" is false, a
 // string other than "true" and "" is the name of the file, e.g. of
@@ -12,14 +13,14 @@ import { registerScheme } from '@/utils/d3'
 const flags = ['debug', 'check', 'copy', 'download', 'csv', 'svg', 'lazy'];
 
 // the value of a data attribute as the one of its prop, e.g. "false" of
-// data-copy, the state, the globals and the highlight are JSON
+// data-copy, the state, the globals, the highlight and the defaults are JSON
 const attributeValue = (name, value) => {
     if (flags.includes(name)) {
         if (value === 'false')
             return false;
         return value === '' || value === 'true' || ['debug', 'check', 'copy'].includes(name) ? true : value;
     }
-    if (name == 'state' || name == 'globals' || name == 'highlight') {
+    if (['state', 'globals', 'highlight', 'defaults'].includes(name)) {
         try {
             return JSON.parse(value);
         } catch (error) {

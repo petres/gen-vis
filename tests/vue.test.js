@@ -80,6 +80,18 @@ describe('the component', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the defaults of the parts, e.g. of the tick marks, also changed ones', async () => {
+        const defaults = ref({ axis: { padding: 1, tickMarks: { size: 4 } } });
+        const { el } = await mountApp(() => h(GenVis, { def: lineDef(), data: lineData, defaults: defaults.value }));
+        const label = () => el.querySelector('.vis-axis-bottom .tick text').getAttribute('y');
+        expect(el.querySelector('.vis-axis-bottom .tick line').getAttribute('y2')).toBe('4');
+        expect(label()).toBe('5');
+        defaults.value = { axis: { tickMarks: { size: 2 } } };
+        await vi.waitFor(() => expect(label()).toBe('5'));
+        await vi.waitFor(() => expect(el.querySelector('.vis-axis-bottom .tick line').getAttribute('y2')).toBe('2'));
+        expect(errors).toEqual([]);
+    });
+
     test('v-model:state reports the changes of the user and takes the ones of the page', async () => {
         const state = ref(null);
         const updates = [];

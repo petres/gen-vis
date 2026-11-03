@@ -101,6 +101,29 @@ describe.skipIf(!browser)('gen-vis export', () => {
         expect(parts).not.toMatch(/^<\?xml[^>]*>\n<svg[^>]*><rect x="0" y="0"/);
     }, 60000);
 
+    test('the defaults of the parts, of JSON and of a file', async () => {
+        // the lengths and the shifts of the tick marks of the horizontal axis, lines without x1
+        const marks = file => new Set([...readFileSync(file, 'utf8').matchAll(/<line stroke="[^"]*" y2="([\d.]+)" transform="matrix\(1 0 0 1 0 (-?[\d.]+)\)"/g)].map(m => `${m[1]} ${m[2]}`));
+        writeFileSync(path.join(dir, 'defaults.json'), JSON.stringify({ axis: { padding: 1, tickMarks: { size: 3 } } }));
+        const r = await run(['export',
+            'data/bev/def.json', path.join(dir, 'json.svg'),
+            '--defaults', '{"axis": {"tickMarks": {"size": 4, "inset": 0}}}']);
+        expect(r.code).toBe(0);
+        const f = await run(['export', 'data/bev/def.json', path.join(dir, 'file.svg'), '--defaults', path.join(dir, 'defaults.json')]);
+        expect(f.code).toBe(0);
+        const b = await run(['export', 'data/bev/def.json', path.join(dir, 'none.svg')]);
+        expect(b.code).toBe(0);
+        // outside of the plot area, of the styles 4 pixels inside
+        expect(marks(path.join(dir, 'json.svg'))).toEqual(new Set(['4 0']));
+        expect(marks(path.join(dir, 'file.svg'))).toEqual(new Set(['3 -4']));
+        expect(marks(path.join(dir, 'none.svg'))).toEqual(new Set(['9 -4']));
+
+        const missing = await run(['export', 'data/bev/def.json', path.join(dir, 'x.svg'), '--defaults', path.join(dir, 'missing.json')]);
+        expect(missing.code).toBe(2);
+        expect(missing.stderr).toMatch(/--defaults is a JSON object or a file of one, .*missing\.json does not exist/);
+        expect((await run(['export', 'data/bev/def.json', path.join(dir, 'x.svg'), '--defaults', '{"axis": '])).stderr).toMatch(/--defaults is not JSON/);
+    }, 60000);
+
     test('the message of an error of gen-vis', async () => {
         writeFileSync(path.join(dir, 'broken.json'), JSON.stringify({ $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json',
             data: path.relative(dir, path.join(root, 'data/bev/data.csv')).replaceAll(path.sep, '/'), mapping: { x: 'Jahr' }, plot: { type: 'nope' } }));

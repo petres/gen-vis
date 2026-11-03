@@ -303,6 +303,8 @@ const checkMappings = ctx => {
             else if (isObject(marks)) {
                 if (marks.size !== undefined && !(typeof marks.size == 'number' && marks.size >= 0))
                     warn(`${path}.axis.tickMarks.size`, `expected the length of the tick marks in pixels, e.g. 4`);
+                if (marks.inset !== undefined && typeof marks.inset != 'number')
+                    warn(`${path}.axis.tickMarks.inset`, `expected the part of the tick marks inside the plot area in pixels, e.g. 0`);
                 checkProp(marks.props, `${path}.axis.tickMarks.props`, warn, names.facet);
             }
             if (marks !== undefined && m.axis.position == 'radial')
