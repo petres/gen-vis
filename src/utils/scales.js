@@ -138,24 +138,54 @@ const logValues = values => {
 };
 
 // the values of a mapping in the rows, continuous ones sorted for the lookup
-// of the nearest value, and their extent, of stacked values (`stackOf`, see
-// layout.js) the one of the stacks, e.g. from 0, the extent and the
-// categories include the values of the mappings with this scale (`also`,
-// `"scale": { "of": ... }`), e.g. of a band between two columns, of a log
-// scale (`log`) only the ones with a position, see logValues, the extent
-// is null without values
-const valuesOf = (name, mapping, rows, stackOf, also = [], log = false) => {
+// of the nearest value (sorted when they are read, e.g. not for a scale
+// which only needs the extent), and their extent, of stacked values
+// (`stackOf`, see layout.js) the one of the stacks, e.g. from 0, the extent
+// and the categories include the values of the mappings with this scale
+// (`also`, `"scale": { "of": ... }`), e.g. of a band between two columns, of
+// a log scale (`log`) only the ones with a position, see logValues, the
+// extent is null without values. The values are read only, they are kept
+// for the same rows, e.g. of the scales of a new width, see valuesOf
+const computeValues = (name, numeric, rows, stackOf, also, log) => {
     const values = [...new Set(rows.map(d => d[name]))];
     const others = also.flatMap(n => rows.map(d => d[n])).filter(v => v !== null && v !== undefined);
-    if (mapping.type != 'numeric' && mapping.type != 'date')
+    if (!numeric)
         return { values: others.length ? [...new Set([...values, ...others])] : values };
-    let sorted = values.filter(v => v !== null && v !== undefined).sort((a, b) => a - b);
-    let all = [...(mapping.stacked && stackOf ? rows.flatMap(stackOf) : sorted), ...others].filter(v => v !== null && v !== undefined);
-    if (log) {
+    const present = values.filter(v => v !== null && v !== undefined);
+    let all = [...(stackOf ? rows.flatMap(stackOf) : present), ...others].filter(v => v !== null && v !== undefined);
+    if (log)
         all = logValues(all);
-        sorted = sorted.filter(v => Math.sign(v) == Math.sign(all[0]));
-    }
-    return { values: sorted, extent: all.length ? d3.extent(all) : null };
+    const extent = all.length ? d3.extent(all) : null;
+    let sorted = null;
+    return {
+        get values() {
+            if (sorted === null) {
+                sorted = present.sort((a, b) => a - b);
+                if (log)
+                    sorted = sorted.filter(v => Math.sign(v) == Math.sign(all[0]));
+            }
+            return sorted;
+        },
+        extent,
+    };
+};
+
+// the values of computeValues of the rows, kept per rows: the rows of a
+// view are new ones after a change of the data or the state, see layout.js
+const valueCache = new WeakMap();
+const valuesOf = (name, mapping, rows, stackOf, also = [], log = false) => {
+    const numeric = mapping.type == 'numeric' || mapping.type == 'date';
+    const stacks = numeric && mapping.stacked && stackOf ? stackOf : null;
+    const key = JSON.stringify([name, also, numeric, log]);
+    let cached = valueCache.get(rows);
+    if (!cached)
+        valueCache.set(rows, cached = new Map());
+    const hit = cached.get(key);
+    if (hit?.stacks === stacks)
+        return hit.result;
+    const result = computeValues(name, numeric, rows, stacks, also, log);
+    cached.set(key, { stacks, result });
+    return result;
 };
 
 /**
@@ -173,7 +203,8 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     // the end of a cyclic range is its start, e.g. of the angles of a circle
     const cyclic = (coord.cyclic ?? []).includes(scaleDef.orientation);
     const log = isLog(scaleDef.type);
-    let { values, extent } = valuesOf(name, mapping, rows, stackOf, also, log);
+    const found = valuesOf(name, mapping, rows, stackOf, also, log);
+    let extent = found.extent;
     // the extent of the data includes the values of `include`, e.g. 0 or
     // 100, around `center` it is symmetric, e.g. of 0 of changes
     // a value of the definition as the ones of the data, e.g. a date or a category as a string
@@ -237,7 +268,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         domain = fixed();
     } else if (scaleDef.type == 'quantile' || scaleDef.type == 'sequentialQuantile') {
         // classes of the same number of values
-        domain = values;
+        domain = found.values;
     } else if (extent && scaleDef.type != 'ordinal') {
         domain = fixed();
         // the first and the last entry, a diverging domain has a middle one
@@ -279,11 +310,15 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
 
         // the nearest value with data
         if (s.invert)
-            s.nearest = p => values[d3.bisectCenter(values, s.invert(p))];
+            s.nearest = p => {
+                const values = found.values;
+                return values[d3.bisectCenter(values, s.invert(p))];
+            };
     } else {
         // the categories of the data or a fixed list of them, in its order,
         // as the values of the rows, e.g. the numbers of a JSON column
         const given = fixed();
+        const values = found.values;
         const byText = new Map(values.map(v => [String(v), v]));
         domain = given.length > 0 && given.every(v => v !== null)
             ? [...new Set(given.map(v => byText.get(String(v)) ?? v))]
