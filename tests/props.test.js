@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { evaluate, bind, constant, refNames, refOf, formatter } from '@/utils/props';
+import { evaluate, bind, constant, refNames, refOf, formatter } from '@/utils/expr';
 
 describe('evaluate', () => {
     test('fixed values and references', () => {

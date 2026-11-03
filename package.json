@@ -122,7 +122,6 @@
     "hyparquet-writer": "^0.16.10",
     "jsdom": "^30.1.1",
     "json-schema-to-typescript": "^16.0.0",
-    "sass": "^1.105.0",
     "vite": "^8.3.1",
     "vitest": "^5.0.2",
     "vue": "^3.5.43"

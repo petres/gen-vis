@@ -785,7 +785,7 @@ export interface Scale {
      */
     of?: string;
     /**
-     * A d3 scale, continuous scales and the ones of classes (quantize, quantile, threshold) need a numeric or date mapping, point and band a categorical one, ordinal ones are of any values, e.g. colors of categories, positions of dates need a time or utc scale.
+     * By default linear for a numeric mapping, time for a date one, band (bars) or point for a categorical position and ordinal for other categorical ones. A d3 scale, continuous scales and the ones of classes (quantize, quantile, threshold) need a numeric or date mapping, point and band a categorical one, ordinal ones are of any values, e.g. colors of categories, positions of dates need a time or utc scale.
      */
     type?:
         | 'band'
@@ -815,9 +815,9 @@ export interface Scale {
         | 'time'
         | 'utc';
     /**
-     * Places the scale on the plot, horizontal and vertical in the cartesian coordinate system, angular and radial in the polar one.
+     * null: no position, e.g. a y mapping of the sizes of points. Places the scale on the plot, horizontal and vertical in the cartesian coordinate system, angular and radial in the polar one.
      */
-    orientation?: 'horizontal' | 'vertical' | 'angular' | 'radial';
+    orientation?: 'horizontal' | 'vertical' | 'angular' | 'radial' | null;
     /**
      * Fixes the domain, a null first or last entry is taken from the data, the values are converted as the ones of the data, e.g. dates, and can be references, e.g. to a global. A diverging scale has a middle entry, a threshold scale the values between its classes, a point or band scale its categories in their order.
      *

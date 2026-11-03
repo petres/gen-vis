@@ -1,10 +1,9 @@
-// the standalone script as a classic script, e.g. of a page which loads its
-// scripts without modules, small, it loads the module of esm/ next to it
-// (~90 kB gzipped at first, the parts a chart needs when it needs them), see
-// docs/usage.md. Its functions are the globals at once, they return promises,
-// e.g. of the components, and wait for the module; `GenVis.ready` is the
-// module itself, e.g. for registerPlotType with perRow.
-const names = ['mountGenVisElement', 'mountGenVisByClass', 'unmountGenVisElement', 'registerPlotType', 'registerCoord', 'registerScheme', 'registerDefaults'];
+// A classic script for pages without modules. It is small and loads the
+// module esm/gen-vis.js next to it (68 kB gzipped at first), see
+// docs/usage.md. Its functions exist at once, return promises and wait for
+// the module. Functions which must return at once (perRow, perGroup,
+// createVueComponent, vuePlugin) are on the module: `(await GenVis.ready)`.
+const names = ['createGenVis', 'mountGenVisElement', 'mountGenVisByClass', 'unmountGenVisElement', 'registerPlotType', 'registerCoord', 'registerScheme', 'registerDefaults'];
 
 // the url of this script, of the page if it is not known, e.g. of a script
 // added by another one after the page was loaded

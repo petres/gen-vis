@@ -2,7 +2,7 @@ export { annotationKeys, constraints, span, position, annotationItem, labelItems
 
 import * as d3 from "@/utils/d3";
 import { convert } from "@/utils/data";
-import { evaluate } from "@/utils/props";
+import { evaluate } from "@/utils/expr";
 import { bandCenter } from "@/utils/scales";
 import { directOf, elementOf } from "@/utils/draw";
 

@@ -1,7 +1,7 @@
 export { makeScale, bandCenter };
 
 import * as d3 from "@/utils/d3";
-import { evaluate } from "@/utils/props";
+import { evaluate } from "@/utils/expr";
 import { continuous, convert } from "@/utils/data";
 import { comparison } from "@/utils/values";
 

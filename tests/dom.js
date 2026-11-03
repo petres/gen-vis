@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { createGenVis } from '@/index.js';
 import { definitions } from '@/dev/definitions.js';
-import { clearCache } from '@/store';
+import { clearCache } from '@/utils/load';
 
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 

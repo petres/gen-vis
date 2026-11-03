@@ -1,4 +1,4 @@
-export { normalize, resolveType, withDefaults, scaleTypeOf, positions, categoryKeys };
+export { normalize, scaleTypeOf };
 
 import { isObject } from '@/utils/values';
 import { isOperator, refNames } from '@/utils/expr';

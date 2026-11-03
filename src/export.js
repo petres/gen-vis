@@ -10,7 +10,7 @@
 import { createGenVis } from '@/index.js';
 import { registerScheme } from '@/utils/d3';
 import { readDef, resolveParents } from '@/utils/load';
-import { staticCopy, selectParts, partsBox, backgroundOf, padding } from '@/utils/export.js';
+import { staticCopy, selectParts, partsBox, backgroundOf, defaultWidth, padding } from '@/utils/export.js';
 import { composeSvg, units } from '@/utils/export-svg.js';
 
 // the version of the protocol, a new one only of changes which are not
@@ -155,7 +155,7 @@ const frame = () => new Promise(resolve => {
 const genVisExport = async (options = {}) => {
     clear();
     checkOptions(options);
-    const width = lengthOf(options.width ?? 800, 'width');
+    const width = lengthOf(options.width ?? defaultWidth, 'width');
     const space = options.padding ?? padding;
     const unit = options.unit ?? (width.unit == 'pt' ? 'px' : width.unit);
     if (!Object.hasOwn(units, unit))

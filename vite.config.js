@@ -174,7 +174,8 @@ export default defineConfig(({ mode }) => {
                 fileName: (format, name) => `${name}.js`,
             },
             rolldownOptions: {
-                external: [...Object.keys(pkg.peerDependencies), ...Object.keys(pkg.dependencies)],
+                // the packages and their files, e.g. hyparquet-compressors/src/gzip.js
+                external: id => [...Object.keys(pkg.peerDependencies), ...Object.keys(pkg.dependencies)].some(d => id == d || id.startsWith(`${d}/`)),
             },
         },
         test: {

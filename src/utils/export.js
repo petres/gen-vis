@@ -10,8 +10,9 @@ import { lazy } from "@/utils/lazy";
 // the space around the visualisation in the images
 const padding = 15;
 
-// the width of the images, if neither the page nor the definition sets one
-const defaultWidth = 1200;
+// the width of the images (PNG, SVG and the export page), if neither the page
+// nor the definition sets one
+const defaultWidth = 800;
 
 // the time to wait for the copy of the visualisation
 const timeout = 20000;

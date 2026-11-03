@@ -2,7 +2,7 @@ export default createColorLegend;
 
 import * as d3 from "@/utils/d3";
 import { formatOf } from "@/utils/def";
-import { evaluate } from "@/utils/props";
+import { evaluate } from "@/utils/expr";
 import { create, setAttr } from "@/utils/dom";
 import { el, patch, setText } from "@/comp/html";
 

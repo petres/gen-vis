@@ -5,7 +5,7 @@ import { prepareDef } from '@/utils/def';
 import { normalize } from '@/utils/normalize';
 import { plotTypes, registerPlotType } from '@/plots';
 import { coords, registerCoord } from '@/coords';
-import { resolveParents } from '@/store';
+import { resolveParents } from '@/utils/load';
 import { definitions } from '@/dev/definitions.js';
 import { readFileSync } from 'node:fs';
 

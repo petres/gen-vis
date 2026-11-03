@@ -1,7 +1,7 @@
 export { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks };
 
 import { formatOf } from "@/utils/def";
-import { evaluate } from "@/utils/props";
+import { evaluate } from "@/utils/expr";
 import { convert } from "@/utils/data";
 
 // fixed values outside of the range of the scale are not drawn, e.g. 10 of a

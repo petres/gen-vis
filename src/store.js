@@ -1,14 +1,14 @@
-export { createStore, resolveUrl, resolveParents, clearCache, requirements };
+export { createStore };
 
 import { distinctValues, scaleDef, updateData } from "@/utils/data";
 import { applyTransforms, utcColumns } from "@/utils/transform";
 import { applyPatches, fillHtml, fillText, formatOf, templateNames } from "@/utils/def";
 import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
-import { formatter } from "@/utils/props";
+import { formatter } from "@/utils/expr";
 import { axisNames } from "@/layout";
 import { axisDefaults } from "@/utils/defaults";
-import { clearCache, geoParts, load, loadGeo, raw, requirements, resolveParents, resolveUrl } from "@/utils/load";
+import { geoParts, load, loadGeo, raw } from "@/utils/load";
 
 // the formatters of the locales by their definition, the last ones are kept
 const locales = new Map();
@@ -97,7 +97,7 @@ class Store {
     // a d3 format in the locale of the values of a mapping, of times if it is
     // a mapping of dates or of a time scale, e.g. "%Y", local or UTC of a
     // `utc` scale, of numbers otherwise, see also the prop format of
-    // utils/props.js
+    // utils/expr.js
     format(format, name) {
         const m = Object.hasOwn(this.def.mapping, name) ? this.def.mapping[name] : undefined;
         const type = scaleDef(this.def.mapping, m)?.type;

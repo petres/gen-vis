@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi, afterEach, onTestFinished } from 'vitest';
-import { createStore, resolveUrl, resolveParents, clearCache, requirements } from '@/store';
+import { createStore } from '@/store';
+import { resolveUrl, resolveParents, clearCache, requirements } from '@/utils/load';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import { coords, loadCoord, registerCoord } from '@/coords';
 

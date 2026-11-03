@@ -1,7 +1,7 @@
 export { createVis };
 
 import { layout } from "@/layout";
-import { evaluate } from "@/utils/props";
+import { evaluate } from "@/utils/expr";
 import { dataAttribute, reducedMotion } from "@/utils/draw";
 import { canCopy } from "@/utils/clipboard.js";
 import { create } from "@/utils/dom";

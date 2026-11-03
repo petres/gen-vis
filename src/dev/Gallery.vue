@@ -74,8 +74,8 @@ export default {
 };
 </script>
 
-<style lang="scss">
-    // the visualisations are not wider on the pages using them
+<style>
+    /* the visualisations are not wider on the pages using them */
     body {
         margin: 0;
         font-family: Century Gothic, sans-serif;
@@ -112,8 +112,8 @@ export default {
                 color: #666;
                 margin-left: 12px;
             }
-            // the links wrap as items, the template has no space between
-            // them where a line could break
+            /* the links wrap as items, the template has no space between */
+            /* them where a line could break */
             nav {
                 display: flex;
                 flex-wrap: wrap;
@@ -127,7 +127,7 @@ export default {
             }
         }
 
-        // below the header, e.g. after a link of the navigation
+        /* below the header, e.g. after a link of the navigation */
         section {
             scroll-margin-top: 110px;
         }

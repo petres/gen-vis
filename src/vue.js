@@ -4,10 +4,10 @@
 // docs/usage.md "Vue component"
 export { GenVis, createVueComponent, vuePlugin };
 
-import * as Vue from 'vue';
+import { h, render } from 'vue';
 import { createVueComponent, vuePlugin } from '@/vue-adapter';
 
-const GenVis = createVueComponent(Vue);
+const GenVis = createVueComponent({ h, render });
 
 // the plugin of Vue, registers the <GenVis> component
 export default {

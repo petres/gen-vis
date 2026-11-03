@@ -1,7 +1,7 @@
 export { perRow, perGroup, finite, curve, points, propScale, dodge, halo };
 
 import * as d3 from "@/utils/d3";
-import { refOf } from "@/utils/props";
+import { refOf } from "@/utils/expr";
 import { curves, groupAttrs, groupKey, keyOf, rowOf } from "@/utils/draw";
 
 const finite = (...values) => values.every(v => Number.isFinite(v));

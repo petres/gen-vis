@@ -1,7 +1,7 @@
 export { createFacet };
 
 import * as d3 from "@/utils/d3";
-import { evaluate } from "@/utils/props";
+import { evaluate } from "@/utils/expr";
 import { dataAttribute, drawLayer, highlighter, reducedMotion, withMotion } from "@/utils/draw";
 import { drawAxis } from "@/utils/axis";
 import { create, interruptAll, pointer, setAttr } from "@/utils/dom";

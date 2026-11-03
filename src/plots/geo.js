@@ -1,4 +1,4 @@
-import { evaluate } from "@/utils/props";
+import { evaluate } from "@/utils/expr";
 import { directOf } from "@/utils/draw";
 import { perRow, finite } from "@/plots/elements";
 import { warnOnce } from "@/utils/warn";

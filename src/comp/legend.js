@@ -1,7 +1,7 @@
 export { createLegend };
 
 import { create, itemOf, join } from "@/utils/dom";
-import { evaluate } from "@/utils/props";
+import { evaluate } from "@/utils/expr";
 import { setProps } from "@/utils/draw";
 import { withColor } from "@/layout";
 import { el, patch, setText } from "@/comp/html";

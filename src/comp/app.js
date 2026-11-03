@@ -51,7 +51,7 @@ const defaults = {
     // a button in the footer to save it as an SVG, a string is the name of the file
     svg: false,
     // the width of the images, independent of the screen, the one of the
-    // definition otherwise or 1200, `screen` is the one on the screen
+    // definition otherwise or 800, `screen` is the one on the screen
     imageWidth: null,
     // loads the definition and the data when the visualisation is near
     // the viewport, true within 400px, a string is the rootMargin of the

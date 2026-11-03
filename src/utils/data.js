@@ -4,7 +4,7 @@ import * as d3 from "@/utils/d3";
 import { fillTemplate, sameValue, templateRefs, variants } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
-import { evaluate } from "@/utils/props";
+import { evaluate } from "@/utils/expr";
 import { comparison, compareCategories, isObject, toNumber } from "@/utils/values";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];

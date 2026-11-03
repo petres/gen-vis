@@ -1,10 +1,10 @@
 // the types of @preschen/gen-vis, the core without Vue, a definition is the
 // JSON of schema.json, see docs/definition.md; the ones of the Vue adapter
 // (@preschen/gen-vis/vue) are in vue.d.ts
-import type { GenVisDefinition } from './definition';
+import type { GenVisDefinition } from './definition.js';
 
 // the types of the parts of a definition, e.g. MappingEntry or Plot
-export type * from './definition';
+export type * from './definition.js';
 
 /** A definition of a visualisation, see schema.json and docs/definition.md. */
 export type Definition = GenVisDefinition;

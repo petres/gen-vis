@@ -191,7 +191,7 @@ plugin of another Vue, the types are the ones of `@preschen/gen-vis/vue`.
 | `copy`     | `data-copy`     | a button at the right of the footer to copy the PNG to the clipboard (only on https or localhost) |
 | `csv`      | `data-csv`      | a button at the right of the footer to save the data shown as CSV, a string is the name of the file (default the title) |
 | `svg`      | `data-svg`      | a button at the right of the footer to save it as an SVG, see [static export](export.md#static-export), a string is the name of the file (default the title) |
-| `imageWidth` | `data-image-width` | the width of the PNG in pixels, the one of the definition otherwise or 1200, `screen` for the one on the screen (as it is seen, e.g. on a phone) |
+| `imageWidth` | `data-image-width` | the width of the PNG in pixels, the one of the definition otherwise or 800, `screen` for the one on the screen (as it is seen, e.g. on a phone) |
 | `lazy`     | `data-lazy`     | loads the definition and the data only when the visualisation is near the viewport, `true` within 400 pixels, a string is the `rootMargin` of the `IntersectionObserver`, e.g. `"800px 0px"`, see [lazy loading](#lazy-loading) |
 
 The attributes are strings: `data-download`, `data-csv`, `data-svg`,
@@ -328,7 +328,7 @@ The image is a copy of the visualisation with the same state, drawn outside
 of the screen in the width of `imageWidth`, so it is the same on every
 screen, e.g. the facets have the columns of this width, or with `screen` in
 the width it has on the screen, e.g. the layout of a phone. It is twice the
-size, narrow ones more (at least 1200 pixels wide, e.g. four times of 360),
+size, narrow ones more (at least 800 pixels wide, e.g. three times of 360),
 has no form elements, their selection is a line below the subtitle, e.g.
 `Einheit: Anteil · Jahr: 2024`, the legends only have the entries shown and
 the legend of the facets is left out, their titles name them.

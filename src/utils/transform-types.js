@@ -329,7 +329,7 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
             columns.steps.push({ key: keys[k], name: null, kept: columns.kept });
             continue;
         }
-        const name = t.as ?? t.column ?? [t.columns ?? []].flat()[0];
+        const name = t.as ?? t.column;
         // the values of all rows, none of the ones of the filters before
         const all = index ? new Array(rows.length).fill(null) : result;
         if (index)

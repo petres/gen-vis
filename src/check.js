@@ -2,7 +2,7 @@
 // of all definitions before a deploy, and their internal form (normalize),
 // `load` reads the files of the urls, registered plot types, coordinate
 // systems and schemes are known to validateDef
-export { resolveParents } from '@/store';
+export { resolveParents } from '@/utils/load';
 export { validateDef } from '@/utils/validate';
 export { registerPlotType } from '@/plots';
 export { registerCoord } from '@/coords';

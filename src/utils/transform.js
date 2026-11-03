@@ -46,10 +46,10 @@ const transformColumns = transforms => {
     const own = new Set();
     const used = new Set();
     list(transforms).forEach(t => {
-        [t.column, ...[t.columns ?? []].flat(), ...[t.by ?? []].flat(), t.order, ...Object.keys(t.base ?? {}), ...(t.expr === undefined ? [] : refNames(t.expr))]
+        [t.column, ...[t.by ?? []].flat(), t.order, ...Object.keys(t.base ?? {}), ...(t.expr === undefined ? [] : refNames(t.expr))]
             .filter(c => typeof c == 'string' && !own.has(c)).forEach(c => used.add(c));
         if (t.type != 'filter')
-            own.add(t.as ?? t.column ?? [t.columns ?? []].flat()[0]);
+            own.add(t.as ?? t.column);
     });
     return [...used];
 };

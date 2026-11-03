@@ -5,7 +5,8 @@ import { plotTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import * as d3 from 'd3-scale-chromatic';
 import { prepareDef } from '@/utils/def';
-import { clearCache, createStore } from '@/store';
+import { createStore } from '@/store';
+import { clearCache } from '@/utils/load';
 import { selection } from '@/utils/export';
 import { itemOf } from '@/utils/dom';
 import { rowOf } from '@/utils/draw';
@@ -3047,7 +3048,7 @@ describe('images', () => {
             images.push([screenshot.width, screenshot.scale]);
             vm.destroy();
         }
-        expect(images).toEqual([['630px', 2], ['1230px', 2], ['1630px', 2], ['830px', 2], ['390px', 4]]);
+        expect(images).toEqual([['630px', 2], ['830px', 2], ['1630px', 2], ['830px', 2], ['390px', 3]]);
         expect(errors).toEqual([]);
     });
 

@@ -2,7 +2,7 @@ export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor };
 
 import { categoryOrder, continuous, convert, filter, groupBy, keptRows, rowFilter, stack } from "@/utils/data";
 import * as d3 from "@/utils/d3";
-import { bind, constant, evaluate, formatter, refNames } from "@/utils/props";
+import { bind, constant, evaluate, formatter, refNames } from "@/utils/expr";
 import { bandCenter, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
 
