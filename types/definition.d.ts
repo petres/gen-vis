@@ -121,6 +121,26 @@ export type Pair2 = [number | null, number | null];
  */
 export type Removed = null | false;
 /**
+ * The symbol before the name of a category: line, rect or circle in its color, or the svg elements, drawn in a box of width x height pixels (size both, 16 by default) from 0, 0, the name is centered vertically on the box.
+ */
+export type LegendSymbol =
+    | ('line' | 'rect' | 'circle')
+    | {
+          type: 'line' | 'rect' | 'circle';
+          size?: number;
+          /**
+           * The width of the box, size by default, e.g. a longer line of a dash.
+           */
+          width?: number;
+          /**
+           * The height of the box, size by default.
+           */
+          height?: number;
+          props?: Props;
+          elements?: Elements;
+      }
+    | SymbolElements;
+/**
  * Left out, the type replaces them, e.g. the ones of a parent.
  */
 export type Elements = {
@@ -729,18 +749,7 @@ export interface MappingEntry {
                    */
                   color?: string;
               };
-              /**
-               * The symbol before the name of a category: line, rect or circle in its color, or the svg elements.
-               */
-              symbol?:
-                  | ('line' | 'rect' | 'circle')
-                  | {
-                        type: 'line' | 'rect' | 'circle';
-                        size?: number;
-                        props?: Props;
-                        elements?: Elements;
-                    }
-                  | SymbolElements;
+              symbol?: LegendSymbol;
               props?: {
                   [k: string]: Value;
               };
@@ -978,6 +987,8 @@ export interface Axis {
 }
 export interface SymbolElements {
     size?: number;
+    width?: number;
+    height?: number;
     elements?: {
         /**
          * An svg element, e.g. line or circle.
@@ -996,6 +1007,26 @@ export interface CategoryProps {
      * false: the category has no entry in the legend, it stays visible, e.g. headers.
      */
     legend?: boolean;
+    /**
+     * The symbol before the name of a category: line, rect or circle in its color, or the svg elements, drawn in a box of width x height pixels (size both, 16 by default) from 0, 0, the name is centered vertically on the box.
+     */
+    symbol?:
+        | ('line' | 'rect' | 'circle')
+        | {
+              type: 'line' | 'rect' | 'circle';
+              size?: number;
+              /**
+               * The width of the box, size by default, e.g. a longer line of a dash.
+               */
+              width?: number;
+              /**
+               * The height of the box, size by default.
+               */
+              height?: number;
+              props?: Props;
+              elements?: Elements;
+          }
+        | SymbolElements;
     [k: string]: unknown;
 }
 /**
@@ -1011,6 +1042,26 @@ export interface CategoryProps1 {
      * false: the category has no entry in the legend, it stays visible, e.g. headers.
      */
     legend?: boolean;
+    /**
+     * The symbol before the name of a category: line, rect or circle in its color, or the svg elements, drawn in a box of width x height pixels (size both, 16 by default) from 0, 0, the name is centered vertically on the box.
+     */
+    symbol?:
+        | ('line' | 'rect' | 'circle')
+        | {
+              type: 'line' | 'rect' | 'circle';
+              size?: number;
+              /**
+               * The width of the box, size by default, e.g. a longer line of a dash.
+               */
+              width?: number;
+              /**
+               * The height of the box, size by default.
+               */
+              height?: number;
+              props?: Props;
+              elements?: Elements;
+          }
+        | SymbolElements;
     [k: string]: unknown;
 }
 export interface Plot {

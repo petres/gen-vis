@@ -589,7 +589,14 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   `stroke-dasharray` and `opacity` of the categories if they have them, a
   width of 2 otherwise), `"rect"` or `"circle"` (with their `opacity`), the
   object `{"type": "line", "size": 20, "props": {"stroke-width": 3}}` sets
-  the size (16 by default) and props of the element. A click shows or hides the
+  the size (16 by default) and props of the element. The elements are drawn
+  in a box of `width` × `height` pixels from (0, 0) (both `size` by default,
+  e.g. `{"type": "line", "width": 24, "height": 16}` of a longer line of a
+  dash), the name is centered vertically on the box, so an element at half
+  the height is at the middle of the text, e.g. the line of the shortcut. A
+  category can have a `symbol` of its own (in the same forms), e.g.
+  `"categories": {"Direktvergabe": {"symbol": "rect"}}` of an area in a
+  legend of lines. A click shows or hides the
   category, a double click shows only it, the next double click all of them.
   The entries are checkboxes of the keyboard (tab, enter or space), the mouse
   and the focus highlight their category. A mapping with a scale but

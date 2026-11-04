@@ -40,15 +40,25 @@ describe('the props of categories', () => {
 
     test('the shortcuts of the symbols of legends, with the props the categories have', () => {
         const symbol = (symbol, props = {}) => prepareDef({ mapping: { c: { column: 'c', legend: { symbol }, categories: { a: props } } }, plot: [] }).mapping.c.legend.symbol;
-        expect(symbol('line')).toEqual({ size: 16, elements: [{ type: 'line', props: { x1: 0, x2: 16, y1: 8, y2: 8, stroke: '@color', 'stroke-width': 2 } }] });
+        expect(symbol('line')).toEqual({ width: 16, height: 16, elements: [{ type: 'line', props: { x1: 0, x2: 16, y1: 8, y2: 8, stroke: '@color', 'stroke-width': 2 } }] });
         expect(symbol('line', { 'stroke-width': 3, 'stroke-dasharray': '2 2', opacity: 0.5 }).elements[0].props).toEqual({
             x1: 0, x2: 16, y1: 8, y2: 8, stroke: '@color', 'stroke-width': '@stroke-width', 'stroke-dasharray': '@stroke-dasharray', opacity: '@opacity',
         });
-        expect(symbol('rect')).toEqual({ size: 16, elements: [{ type: 'rect', props: { x: 0, y: 0, width: 16, height: 15, rx: 2, fill: '@color' } }] });
-        expect(symbol({ type: 'circle', size: 12, props: { stroke: 'white' } })).toEqual({ size: 12, elements: [{ type: 'circle', props: { cx: 6, cy: 6, r: 4, fill: '@color', stroke: 'white' } }] });
+        expect(symbol('rect')).toEqual({ width: 16, height: 16, elements: [{ type: 'rect', props: { x: 0, y: 0, width: 16, height: 15, rx: 2, fill: '@color' } }] });
+        expect(symbol({ type: 'circle', size: 12, props: { stroke: 'white' } })).toEqual({ width: 12, height: 12, elements: [{ type: 'circle', props: { cx: 6, cy: 6, r: 4, fill: '@color', stroke: 'white' } }] });
+        // a box of its own width and height, e.g. a longer line of a dash
+        expect(symbol({ type: 'line', width: 24, height: 10 }).elements[0].props).toMatchObject({ x1: 0, x2: 24, y1: 5, y2: 5 });
+        expect(symbol({ type: 'circle', width: 24, height: 10 })).toMatchObject({ width: 24, height: 10, elements: [{ props: { cx: 12, cy: 5, r: 3 } }] });
         // the svg elements are kept
         const elements = { size: 10, elements: [{ type: 'rect', props: { width: 10 } }] };
         expect(symbol(elements)).toEqual(elements);
+    });
+
+    test('a symbol of a category instead of the one of the legend', () => {
+        const c = prepareDef({ mapping: { c: { column: 'c', legend: { symbol: 'line' }, categories: { a: { symbol: 'rect' }, b: {} } } }, plot: [] }).mapping.c;
+        expect(c.categoryProps.a.symbol.elements[0].type).toBe('rect');
+        expect(c.categoryProps.b.symbol).toBeUndefined();
+        expect(c.legend.symbol.elements[0].type).toBe('line');
     });
 
     test('the props of the ranks of the categories, the last one of all others', () => {

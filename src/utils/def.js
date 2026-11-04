@@ -64,18 +64,20 @@ const orderKeys = (keys, order) => {
  * `"rect"` or `"circle"` in the color of the categories (`@color`), with
  * their `stroke-width`, `stroke-dasharray` and `opacity` if the categories
  * have them, `names` are the props of the categories. The object form has
- * the `size` (16 by default) and `props` of the element, e.g. a width.
+ * the `size` (16 by default), or `width` and `height`, of the box of the
+ * symbol and the `props` of the element, e.g. a dash, the line is in the
+ * middle of the box, the circle in its center.
  */
 const symbolShortcuts = ['line', 'rect', 'circle'];
 const symbolOf = (symbol, names) => {
-    const { type, size = 16, props = {} } = typeof symbol == 'string' ? { type: symbol } : symbol;
+    const { type, size = 16, width = size, height = size, props = {} } = typeof symbol == 'string' ? { type: symbol } : symbol;
     const own = keys => Object.fromEntries(keys.filter(k => names.has(k)).map(k => [k, `@${k}`]));
     const shapes = {
-        line: { x1: 0, x2: size, y1: size/2, y2: size/2, stroke: '@color', 'stroke-width': 2, ...own(['stroke-width', 'stroke-dasharray', 'opacity']) },
-        rect: { x: 0, y: 0, width: size, height: size - 1, rx: 2, fill: '@color', ...own(['opacity']) },
-        circle: { cx: size/2, cy: size/2, r: size/2 - 2, fill: '@color', ...own(['opacity']) },
+        line: { x1: 0, x2: width, y1: height/2, y2: height/2, stroke: '@color', 'stroke-width': 2, ...own(['stroke-width', 'stroke-dasharray', 'opacity']) },
+        rect: { x: 0, y: 0, width, height: height - 1, rx: 2, fill: '@color', ...own(['opacity']) },
+        circle: { cx: width/2, cy: height/2, r: Math.min(width, height)/2 - 2, fill: '@color', ...own(['opacity']) },
     };
-    return { size, elements: [{ type, props: { ...shapes[type], ...props } }] };
+    return { width, height, elements: [{ type, props: { ...shapes[type], ...props } }] };
 };
 
 // the colors of the categories without colors, the scheme observable10
@@ -146,9 +148,12 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = []) 
         if (m.legend.props === undefined)
             m.legend.props = {};
 
-        const symbol = m.legend.symbol;
-        if (typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type))
-            m.legend.symbol = symbolOf(symbol, new Set(Object.values(m.categoryProps ?? {}).flatMap(p => Object.keys(p))));
+        // the symbols of the legend and of its categories, e.g. a rect of
+        // one category and lines of the others
+        const names = new Set(Object.values(m.categoryProps ?? {}).flatMap(p => Object.keys(p)));
+        const prepared = symbol => typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type) ? symbolOf(symbol, names) : symbol;
+        m.legend.symbol = prepared(m.legend.symbol);
+        Object.values(m.categoryProps ?? {}).filter(p => p.symbol !== undefined).forEach(p => p.symbol = prepared(p.symbol));
 
         if (!('name' in m.legend.props)) {
              m.legend.props.name = "@name"

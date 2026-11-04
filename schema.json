@@ -523,24 +523,7 @@
                                     },
                                     "required": ["name"]
                                 },
-                                "symbol": {
-                                    "description": "The symbol before the name of a category: line, rect or circle in its color, or the svg elements.",
-                                    "anyOf": [
-                                        { "enum": ["line", "rect", "circle"] },
-                                        {
-                                            "type": "object",
-                                            "additionalProperties": false,
-                                            "required": ["type"],
-                                            "properties": {
-                                                "type": { "enum": ["line", "rect", "circle"] },
-                                                "size": { "type": "number", "default": 16 },
-                                                "props": { "$ref": "#/definitions/props" },
-                                                "elements": { "$ref": "#/definitions/symbolElements/properties/elements", "description": "Left out, the type replaces them, e.g. the ones of a parent." }
-                                            }
-                                        },
-                                        { "$ref": "#/definitions/symbolElements" }
-                                    ]
-                                },
+                                "symbol": { "$ref": "#/definitions/legendSymbol" },
                                 "props": {
                                     "type": "object",
                                     "additionalProperties": { "$ref": "#/definitions/value" }
@@ -628,11 +611,33 @@
                 "year": { "type": "integer", "description": "The year of align, 2020 by default." }
             }
         },
+        "legendSymbol": {
+            "description": "The symbol before the name of a category: line, rect or circle in its color, or the svg elements, drawn in a box of width x height pixels (size both, 16 by default) from 0, 0, the name is centered vertically on the box.",
+            "anyOf": [
+                { "enum": ["line", "rect", "circle"] },
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["type"],
+                    "properties": {
+                        "type": { "enum": ["line", "rect", "circle"] },
+                        "size": { "type": "number", "default": 16 },
+                        "width": { "type": "number", "description": "The width of the box, size by default, e.g. a longer line of a dash." },
+                        "height": { "type": "number", "description": "The height of the box, size by default." },
+                        "props": { "$ref": "#/definitions/props" },
+                        "elements": { "$ref": "#/definitions/symbolElements/properties/elements", "description": "Left out, the type replaces them, e.g. the ones of a parent." }
+                    }
+                },
+                { "$ref": "#/definitions/symbolElements" }
+            ]
+        },
         "symbolElements": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "size": { "type": "number" },
+                "width": { "type": "number" },
+                "height": { "type": "number" },
                 "elements": {
                     "type": "array",
                     "items": {
@@ -652,7 +657,8 @@
             "properties": {
                 "name": { "type": "string", "description": "The key by default." },
                 "visible": { "type": "boolean", "default": true },
-                "legend": { "type": "boolean", "default": true, "description": "false: the category has no entry in the legend, it stays visible, e.g. headers." }
+                "legend": { "type": "boolean", "default": true, "description": "false: the category has no entry in the legend, it stays visible, e.g. headers." },
+                "symbol": { "$ref": "#/definitions/legendSymbol", "description": "The symbol of the entry of the category in the legend instead of the one of the legend, e.g. a rect of an area beside lines." }
             }
         },
         "plot": {

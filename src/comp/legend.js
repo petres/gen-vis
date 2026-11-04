@@ -125,7 +125,6 @@ const createLegend = (vis, legend) => {
         // with `onlyData` without the ones which are not in the rows
         const entries = categories().filter(key => !inData || inData.has(key)).map(key => ({ key, props: m.categoryProps[key] }));
         const scope = store.scope;
-        const symbol = m.legend.symbol;
         join(list, entries, { key: e => e.key, create: createEntry }).forEach((div, i) => {
             const entry = entries[i];
             // the props of the entry with its default colors, see withColor of
@@ -135,6 +134,8 @@ const createLegend = (vis, legend) => {
             patch(div, entryAttrs({ class: 'vis-legend-entry', 'data-visible': entry.props.visible, 'data-key': entry.key },
                 { ...filled, name: null },
                 { role: 'checkbox', tabindex: '0', 'aria-checked': String(entry.props.visible) }));
+            // the symbol of the category or the one of the legend
+            const symbol = entry.props.symbol ?? m.legend.symbol;
             let svg = div.firstElementChild?.tagName == 'svg' ? div.firstElementChild : null;
             let span = div.lastElementChild?.tagName == 'SPAN' ? div.lastElementChild : null;
             if (symbol && !svg)
@@ -144,7 +145,8 @@ const createLegend = (vis, legend) => {
                 svg = null;
             }
             if (svg) {
-                patch(svg, { width: symbol.size, height: symbol.size });
+                // the box of the symbol, the label is centered on it, see styles.css
+                patch(svg, { width: symbol.width ?? symbol.size ?? 16, height: symbol.height ?? symbol.size ?? 16 });
                 drawSymbol(svg, symbol, { ...scope, ...colored });
             }
             span ??= div.appendChild(el('span'));

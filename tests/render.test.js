@@ -1713,6 +1713,16 @@ describe('the order and the ranks of categories', () => {
         expect(el.querySelector('.vis-legend-entry svg').getAttribute('width')).toBe('16');
     });
 
+    test('a symbol of a category, the box of a width and a height', async () => {
+        const def = lineDef();
+        def.mapping.c.legend = { symbol: { type: 'line', width: 24, height: 12 } };
+        def.mapping.c.categories.Tirol.symbol = 'rect';
+        const el = await mount({ def, data: lineData });
+        const svgs = [...el.querySelectorAll('.vis-legend-entry svg')];
+        expect(svgs.map(e => [e.getAttribute('width'), e.getAttribute('height'), e.firstElementChild.tagName])).toEqual([['24', '12', 'line'], ['16', '16', 'rect']]);
+        expect(svgs[1].firstElementChild.getAttribute('fill')).toBe('blue');
+    });
+
 
     test('the newest year first and red, in the legend, the stacks and the facets', async () => {
         const def = lineDef();
