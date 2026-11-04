@@ -295,3 +295,66 @@ describe('the merged definition of the export page (genVisExport.resolve, scheme
         expect(errors).toEqual([]);
     });
 });
+
+describe('each call of the export page loads its files anew', () => {
+    // a definition file with its data file, of the responses of `files`,
+    // a response of `slow` is answered once `release` is called
+    const file = { ...def(), $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', data: 'data.csv' };
+    const files = {};
+    const slow = new Set();
+    let fetched;
+    let release;
+    beforeAll(() => import('@/export.js'));
+    const serve = () => {
+        fetched = [];
+        slow.clear();
+        Object.assign(files, { 'http://h/defs/def.json': JSON.stringify(file), 'http://h/defs/data.csv': data });
+        vi.stubGlobal('fetch', async url => {
+            fetched.push(url);
+            const body = files[url];
+            if (slow.has(url))
+                await new Promise(resolve => release = resolve);
+            return new Response(body);
+        });
+    };
+    const tens = 'year,value,land\n2020,10,Wien\n2021,20,Wien\n2020,20,Tirol\n2021,30,Tirol';
+    const options = { defUrl: 'http://h/defs/def.json' };
+    // the ticks of the y axis
+    const ticks = svg => texts(parse(svg)).filter(t => /^\d+([.,]\d+)?$/.test(t) && !t.startsWith('20'));
+
+    test('a changed data file of the same definition is the one drawn', async () => {
+        serve();
+        const before = await window.genVisExport(options);
+        files['http://h/defs/data.csv'] = tens;
+        const after = await window.genVisExport(options);
+        expect(after.svg).not.toBe(before.svg);
+        expect(ticks(before.svg)).toContain('3,0');
+        expect(ticks(before.svg)).not.toContain('30');
+        expect(ticks(after.svg)).toContain('30');
+        // the definition and its data are loaded again, once by each call
+        expect(fetched.filter(u => u.endsWith('def.json'))).toHaveLength(2);
+        expect(fetched.filter(u => u.endsWith('data.csv'))).toHaveLength(2);
+        // also by resolve
+        files['http://h/defs/def.json'] = JSON.stringify({ ...file, options: { ...file.options, title: 'Neu' } });
+        expect((await window.genVisExport.resolve(options)).options.title).toBe('Neu');
+        expect(errors).toEqual([]);
+    });
+
+    test('a request of a call that timed out is not the one of the next call', async () => {
+        serve();
+        slow.add('http://h/defs/data.csv');
+        await expect(window.genVisExport({ ...options, timeout: 50 })).rejects.toThrow('not rendered in time');
+        slow.clear();
+        files['http://h/defs/data.csv'] = tens;
+        const next = window.genVisExport(options);
+        // the request before ends with the old data while the next call runs
+        await new Promise(resolve => setTimeout(resolve, 0));
+        release();
+        const { svg } = await next;
+        expect(ticks(svg)).toContain('30');
+        expect(fetched.filter(u => u.endsWith('data.csv'))).toHaveLength(2);
+        // the old data is not kept either
+        files['http://h/defs/data.csv'] = data;
+        expect(ticks((await window.genVisExport(options)).svg)).not.toContain('30');
+    });
+});

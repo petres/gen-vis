@@ -104,7 +104,8 @@ using it, so it does not override the mixins in between.
 The charts of a page share their requests of the last 5 minutes, e.g. a parent
 used by all of them or a csv of two charts is loaded once, later ones load
 again, e.g. for updated data. The parents of a definition and its data are
-requested at once.
+requested at once. The export page loads the files of each chart fresh, see
+[export](export.md#export-page).
 
 ## `$schema`
 

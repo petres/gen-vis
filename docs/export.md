@@ -78,6 +78,12 @@ Playwright, `chromote` of R or a client of its own:
    `genVisExport(o).then(r => ({ result: r }), e => ({ error: e.message }))`.
    A page in the background draws no frames: the page is the one in front
    (`Page.bringToFront`) while it runs.
+   Each call loads its files fresh (the definition, its parents, data,
+   geometries; `resolve` too), so a page can stay open for many charts and
+   callers: a file changed since the call before is drawn as it is now.
+   Within one call each file is loaded once. Only the browser's own HTTP
+   cache can still return an old file: a server whose files change answers
+   with `Cache-Control: no-store` (the CLI does).
 3. PNG: `Page.captureScreenshot` with `clip` = `box` and its `scale` (pixels
    per CSS pixel, e.g. 300 dpi = 300/96 = 3.125) and
    `captureBeyondViewport: true`, of a page with a transparent default

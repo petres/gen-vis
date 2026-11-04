@@ -3,6 +3,23 @@
 Changes by version, newest first. Every version is on npm except 0.7.0 and
 2.0.0-alpha.1. The details are in the commits.
 
+## Unreleased
+
+### Fixes
+
+- Export page: each `genVisExport(options)` call (and
+  `genVisExport.resolve`) loads its files fresh. Before, the page's
+  5-minute cache of requests outlived a call, so a definition whose data
+  file or parent had changed was drawn with the old content when the same
+  page exported it again within 5 minutes (e.g. one `Renderer` of
+  `wifo_genvis`), and a server rendering for several clients on one page
+  could draw one client's file for another when their urls were equal.
+  Within a call the files are still loaded once (e.g. the merged
+  definition of function-valued `schemes`/`defaults` and the chart). Normal
+  pages keep the shared cache. The CLI loads a parent shared by several
+  definitions once per definition now (the files come from disk, so this
+  costs little).
+
 ## 4.0.0
 
 A shorter definition language, a core without a framework (Vue is an

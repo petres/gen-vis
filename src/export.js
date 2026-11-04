@@ -9,7 +9,7 @@
 // the plot types a wrapper chooses its colors by.
 import { createGenVis } from '@/index.js';
 import { registerScheme } from '@/utils/d3';
-import { fetchData, readDef, resolveParents, resolveUrl } from '@/utils/load';
+import { clearCache, fetchData, readDef, resolveParents, resolveUrl } from '@/utils/load';
 import { staticCopy, selectParts, partsBox, backgroundOf, defaultWidth, padding } from '@/utils/export.js';
 import { composeSvg, units } from '@/utils/export-svg.js';
 
@@ -134,7 +134,16 @@ const dataOf = async ({ data, dataUrl }) => {
 let removeBefore = null;
 let restoreSchemes = [];
 
+// each call loads its files again (the cache of utils/load.js is the one
+// of a call, e.g. of the merged definition and the chart, see mergedOf), a
+// file changed since the call before or one of another caller of the same
+// url is not the one of the call before. A request still running of a
+// call before (e.g. one that timed out) is not kept: the cache keeps an
+// entry from the start of its request, and the cleared ones are gone; a
+// load of that call which requests a file later requests it anew, after
+// this call began.
 const clear = () => {
+    clearCache();
     removeBefore?.();
     removeBefore = null;
     restoreSchemes.reverse().forEach(restore => restore());
@@ -214,6 +223,8 @@ genVisExport.version = version;
  */
 genVisExport.resolve = async (options = {}) => {
     checkOptions(options);
+    // its files are loaded anew, as the ones of genVisExport
+    clearCache();
     const base = addBase(options.baseUrl);
     try {
         return await mergedOf(options);
