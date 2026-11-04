@@ -5,6 +5,7 @@ import * as d3 from "@/utils/d3";
 import { bind, constant, evaluate, formatter, refNames } from "@/utils/expr";
 import { bandCenter, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
+import { warnOnce } from "@/utils/warn";
 
 /**
  * The view of a visualisation, computed from its store without Vue: the rows
@@ -48,6 +49,14 @@ const axisNames = store => {
 const visibleKeys = def => Object.entries(def.mapping)
     .filter(([, m]) => m.categoryProps)
     .map(([dim, m]) => ({ dim, key: m.keys.filter(k => m.categoryProps[k].visible) }));
+
+// the conditions of the visible categories (see visibleKeys): the rows of a
+// hidden category are left out, the ones without a value are in no category
+// and stay, e.g. rows of other plots which do not use the mapping
+const visibleRows = visible => visible.map(({ dim, key }) => {
+    const keys = new Set(key.map(String));
+    return { dim, key: v => v === null || v === undefined || keys.has(String(v)) };
+});
 
 // the props of a category of a mapping, e.g. of a value of the data,
 // undefined for other values
@@ -105,7 +114,8 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     // element, see rowFilter, and of them the ones of the visible categories
     const visible = visibleKeys(def);
     const filtered = filter(keptRows(store.data, store.columns), rowFilter(def.filter, def.mapping, scope));
-    const rows = filter(filtered, visible);
+    const shown = visibleRows(visible);
+    const rows = shown.length > 0 ? filter(filtered, shown) : filtered;
 
     // the start and the end of the stacked values of the rows, stacked in the
     // order of the categories, not of the rows, the rows of the conditions of
@@ -123,7 +133,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     const entries = def.facets ? facetEntries(store, rows) : [];
     return {
         rows, stackOrder, stackOf, isStacked, entries,
-        domains: domainRows(store, def, axis, scope, stacked, visible, stackOrder),
+        domains: domainRows(store, def, axis, scope, stacked, shown, stackOrder),
         // the categories of the filtered rows of the legends with `onlyData`,
         // also the hidden ones, e.g. the sources of the selected year
         inData: Object.fromEntries(Object.keys(def.mapping).filter(n => def.mapping[n].legend?.onlyData)
@@ -141,7 +151,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
  * (`facets`, by the key of the facet), the stacks of them (`stackOf`) are
  * also the ones of the values of the ignored conditions, e.g. per month.
  */
-const domainRows = (store, def, axis, scope, stacked, visible, stackOrder) => {
+const domainRows = (store, def, axis, scope, stacked, shown, stackOrder) => {
     const conditions = Object.keys(def.filter ?? {});
     const kept = new Map();
     const domains = {};
@@ -153,7 +163,7 @@ const domainRows = (store, def, axis, scope, stacked, visible, stackOrder) => {
         const key = names.join('\0');
         if (!kept.has(key)) {
             const others = Object.fromEntries(Object.entries(def.filter).filter(([c]) => !names.includes(c)));
-            kept.set(key, filter(keptRows(store.data, store.columns), [...rowFilter(others, def.mapping, scope), ...visible]));
+            kept.set(key, filter(keptRows(store.data, store.columns), [...rowFilter(others, def.mapping, scope), ...shown]));
         }
         const rows = kept.get(key);
         const dims = def.facets ? [def.facets.dim] : [];
@@ -417,6 +427,10 @@ const withColor = parts => {
     return props;
 };
 
+// the names of the rows which are not values of the row, e.g. "@y:scaled:max"
+// of the end of the scale, a row needs no value of their mapping, see rowValue
+const ofScale = /^(scaled:(min|max|-?\d+(\.\d+)?)|bandwidth|step)$/;
+
 /**
  * The groups of the rows of a plot by its categories, see plots/index.js:
  * the props of their categories (`props`), their `rows`, the values of the
@@ -429,9 +443,18 @@ const withColor = parts => {
  */
 const plotGroups = (plot, rows, ctx) => {
     const mapping = ctx.store.def.mapping;
-    const needed = [...new Set(refNames(plot.props).map(n => n.split(':')[0]))].filter(m => Object.hasOwn(mapping, m));
+    const needed = [...new Set(refNames(plot.props).filter(n => !ofScale.test(n.split(':').slice(1).join(':')))
+        .map(n => n.split(':')[0]))].filter(m => Object.hasOwn(mapping, m));
     const complete = row => needed.every(m => row[m] !== null);
-    return groupBy(rows, plot.by).map(g => {
+    if (needed.length > 0 && rows.length > 0 && !rows.some(complete))
+        warnOnce(ctx.store, `plot:${plot.id}:missing`, `plot '${plot.id}': none of its ${rows.length} rows is drawn, `
+            + needed.map(m => [m, rows.filter(r => r[m] === null).length]).filter(([, n]) => n > 0)
+                .map(([m, n]) => `${n} without a value of mapping '${m}'`).join(', '));
+    // the rows without a value of a mapping of categories of `by` are in
+    // no category, e.g. rows of other plots
+    const categorized = plot.by.filter(c => mapping[c].categoryProps);
+    const groups = groupBy(rows, plot.by);
+    return (categorized.length ? groups.filter(g => categorized.every(c => g.group[c] !== null && g.group[c] !== undefined)) : groups).map(g => {
         const props = withColor(plot.by.map(c => ownProp(mapping[c].categoryProps, g.group[c])));
         const scoped = name => Object.hasOwn(ctx.scope, name) ? constant(ctx.scope[name]) : undefined;
         const resolve = name => typeof name == 'symbol' ? scoped(name) : (Object.hasOwn(props, name) ? constant(props[name])

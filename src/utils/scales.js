@@ -149,8 +149,9 @@ const logValues = values => {
 const computeValues = (name, numeric, rows, stackOf, also, log) => {
     const values = [...new Set(rows.map(d => d[name]))];
     const others = also.flatMap(n => rows.map(d => d[n])).filter(v => v !== null && v !== undefined);
+    // a row without a value is in no category, e.g. one of another plot
     if (!numeric)
-        return { values: others.length ? [...new Set([...values, ...others])] : values };
+        return { values: [...new Set([...values, ...others])].filter(v => v !== null && v !== undefined) };
     const present = values.filter(v => v !== null && v !== undefined);
     let all = [...(stackOf ? rows.flatMap(stackOf) : present), ...others].filter(v => v !== null && v !== undefined);
     if (log)

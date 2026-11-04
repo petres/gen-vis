@@ -1,5 +1,5 @@
 import { loadColors } from '@/utils/d3';
-import { describe, test, expect, beforeAll } from 'vitest';
+import { describe, test, expect, beforeAll, vi } from 'vitest';
 import { createStore } from '@/store';
 import { layout, plotGroups } from '@/layout';
 
@@ -182,5 +182,61 @@ describe('plotGroups', () => {
         const { groups: [wien, tirol] } = await groups({ type: 'svg:rect', by: ['c'], props: { a: '@x', b: '@y', c: '@g', d: '@innerWidth' } }, def);
         expect(wien.at(wien.rows[0])).toEqual({ a: 'category', b: 1, c: 'global', d: 400 });
         expect(tirol.at(tirol.rows[0])).toEqual({ a: 2020, b: 10, c: 'global', d: 400 });
+    });
+});
+
+describe('rows without a value', () => {
+    // three kinds of rows, each without some values: lines, caps and labels
+    const data = 'x,y,kind,label\n1,2,step,\n2,3,step,\n1,,cap,\n2,,cap,\n,,n,n=5';
+    const mapping = {
+        x: { column: 'x', type: 'numeric', scale: { orientation: 'horizontal' } },
+        y: { column: 'y', type: 'numeric', scale: { orientation: 'vertical' } },
+        kind: { column: 'kind', type: 'categorical', fromData: true },
+        label: { column: 'label', type: 'categorical', fromData: true },
+    };
+    const plots = [
+        { id: 'steps', type: 'cartesian:line', filter: { kind: 'step' }, props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
+        { id: 'caps', type: 'svg:line', filter: { kind: 'cap' }, props: { x1: '@x:scaled', x2: '@x:scaled', y1: '@y:scaled:min', y2: '@y:scaled:max' } },
+        { id: 'labels', type: 'svg:text', by: ['label'], filter: { kind: 'n' }, props: { x: '@x:scaled:0', y: '@y:scaled:max', text: '@label' } },
+    ];
+    const setup = async (plot = plots) => {
+        const store = createStore();
+        await store.init({ def: { options: { height: 200 }, mapping, plot }, data });
+        const v = layout(store, 400);
+        const f = v.facets[0];
+        const groups = id => {
+            const p = store.def.plot.find(e => e.id == id);
+            return plotGroups(p, f.rows.filter(r => r.kind == p.filter.kind), { store, ...f });
+        };
+        return { store, v, groups };
+    };
+
+    test('are kept, a mapping of categories without a value leaves them in no category', async () => {
+        const { v, store, groups } = await setup();
+        expect(v.rows.map(r => r.kind)).toEqual(['step', 'step', 'cap', 'cap', 'n']);
+        expect(groups('steps').flatMap(g => g.rows).length).toBe(2);
+        // the label of the n row is its category
+        expect(groups('labels').map(g => g.categories.label)).toEqual(['n=5']);
+        // a plot by the categories of all rows has none of the rows without one
+        const all = plotGroups(store.def.plot[2], v.rows, { store, ...v.facets[0] });
+        expect(all.map(g => [g.categories.label, g.rows.length])).toEqual([['n=5', 1]]);
+    });
+
+    test('the ends of a scale need no value of the row, a hidden category leaves its rows out', async () => {
+        const { v, store, groups } = await setup();
+        const caps = groups('caps');
+        expect(caps.flatMap(g => g.rows.filter(g.complete)).length).toBe(2);
+        // no category of rows without a value on the scales of categories
+        store.def.mapping.label.categoryProps['n=5'].visible = false;
+        expect(layout(store, 400).rows.map(r => r.kind)).toEqual(['step', 'step', 'cap', 'cap']);
+        expect(v.rows.length).toBe(5);
+    });
+
+    test('a plot whose rows all lack a value is named in a warning', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const { groups } = await setup([{ ...plots[1], id: 'caps', props: { x1: '@x:scaled', y1: '@y:scaled' } }]);
+        groups('caps');
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining(`plot 'caps': none of its 2 rows is drawn, 2 without a value of mapping 'y'`));
+        warn.mockRestore();
     });
 });

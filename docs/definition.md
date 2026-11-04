@@ -176,7 +176,10 @@ module loads the decompressors as well.
 The values of a `categorical` mapping (and of a mapping without a `type`)
 are strings, as the ones of CSV, whatever the format of the data, e.g. the
 year 2004 of a parquet or JSON column is `"2004"`, so a definition is the same
-for every format. A missing category is `null`, also an empty cell of CSV. Numbers are numbers
+for every format. A missing category is `null`, also an empty cell of CSV: the row is in no
+category of the mapping, it stays in the chart, e.g. a row of another plot
+which does not use the mapping, a plot `by` the mapping and its scale (e.g.
+the bands of an axis) leave it out, `filter` selects it with `null`. Numbers are numbers
 of the data or texts of decimal numbers, e.g. `-1.5e3`, not `0x10`, `1,234`
 or `true`, other values are missing values. The values of the definition are converted the same way,
 the keys of `props`, the fixed `values` of an axis, the `domain` of a scale,
@@ -382,7 +385,12 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   hundred thousands of rows, a mapping with a `type` does not read them.
   Numeric and date values which
   are missing, invalid or infinite are `null`: they are gaps in lines and
-  areas, points and bars are not drawn, and they are not shown in the hover. Dates are
+  areas, points and bars are not drawn, and they are not shown in the hover,
+  only of the plots whose props use the value of the row (not e.g.
+  `@y:scaled:max`, the end of the scale). A plot none of whose rows has the
+  values it uses is named in a warning of the console (also of the CLI),
+  e.g. `plot 'caps': none of its 312 rows is drawn, 312 without a value of
+  mapping 'y'`. Dates are
   timestamps or strings. A date without a time zone, e.g. `2024-06-01`,
   `2024-06`, `2024`, `2024-06-01 13:00` (also with a `T`, seconds and their
   fraction, `24:00` is the end of the day) or `01.06.2024` (the day first,

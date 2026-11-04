@@ -208,7 +208,7 @@ describe('the values of the scales', () => {
         expect(makeScale('v', { type: 'numeric', scale: { type: 'linear', domain: [null, null], orientation: 'horizontal' } }, rows,
             { coord: { ranges: { horizontal: [0, 100] } } }).nearest(40)).toBe(2);
         expect(scale('ordinal').domain()).toEqual([1, 2, 3]);
-        expect(makeScale('v', { type: 'categorical', scale: { type: 'band' } }, rows).domain()).toEqual([3, 1, null, 2]);
+        expect(makeScale('v', { type: 'categorical', scale: { type: 'band' } }, rows).domain()).toEqual([3, 1, 2]);
     });
 
     test('of new rows are new', () => {
