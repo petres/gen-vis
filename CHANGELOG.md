@@ -35,6 +35,13 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   the row's index or of a `key` column), e.g. the jitter of a strip plot.
   Both are in `spec/` with the rules of their numbers, for other
   implementations.
+- Axes at a value of the other axis: `"axis": {"at": 0}` puts the line
+  and the tick marks of a cartesian axis at y = 0 (or a vertical one at a
+  value of x, e.g. a date), at the half pixel of the tick of the value and
+  above the plots; outside of the other domain it stays at its edge. The
+  labels stay at the edge (`"labels": {"at": "edge"}`, the default) or move
+  with the line (`"axis"`, without the label at the crossing). Example
+  `data/axis/balance.json`.
 - Histograms: `bar` with `x0`, `x1` and `y1` is a bar from start to end on a
   continuous scale (crisp edges, so neighbours meet without a seam), a
   `line` with `x0` and `x1` in `d` draws stairs down to the base at both
