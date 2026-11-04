@@ -5,6 +5,15 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
 
 ## Unreleased
 
+### Features
+
+- `scale.domainIgnores`: the conditions of `filter` (their mappings, `true`
+  all) the domain of a scale taken from the data ignores, e.g.
+  `"domainIgnores": ["month"]` of a slider over months: the scale (also of
+  colors and their legend) is the one of all months, the plots draw the
+  rows of the month. Fixed `domain` entries still win, stacked values are
+  stacked per month, facets with own scales get the rows of their facet.
+
 ### Fixes
 
 - Export page: each `genVisExport(options)` call (and

@@ -757,3 +757,15 @@ describe('validateDef of the types of the rows', () => {
         ]);
     });
 });
+
+test('domainIgnores: the mappings of conditions of the filter or true', () => {
+    const def = (ignores) => {
+        const d = base();
+        d.mapping.y.scale = { domainIgnores: ignores };
+        return { ...d, globals: { year: 2020 }, filter: { x: '@year' } };
+    };
+    expect(validateDef(def(['x']))).toEqual([]);
+    expect(validateDef(def(true))).toEqual([]);
+    expect(validateDef(def(['z']))).toEqual([`mapping.y.scale.domainIgnores: unknown mapping 'z'`]);
+    expect(validateDef(def('x')).some(w => w.startsWith('mapping.y.scale.domainIgnores'))).toBe(true);
+});

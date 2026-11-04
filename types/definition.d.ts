@@ -839,6 +839,10 @@ export interface Scale {
     domainRel?: Pair1;
     domainAbs?: Pair2;
     /**
+     * The conditions of the filter of the definition (their mappings, true all) the domain taken from the data ignores, e.g. ["month"] of a slider over months: the scale is the same for all months, the plots draw the rows of the month.
+     */
+    domainIgnores?: boolean | string[];
+    /**
      * Numeric mappings only: rounds the ends of the domain taken from the data, e.g. 0.951 to 1, true for steps of about a tenth of the domain or the number of steps.
      */
     nice?: boolean | number;

@@ -412,6 +412,11 @@ const checkScale = (ctx, n, m, path) => {
         warn(`${path}.scale.groups`, `the groups of the categories of a band or a point scale, e.g. { "by": "group", "padding": 1 }`);
     else if (m.scale.groups !== undefined && !Object.hasOwn(def.mapping ?? {}, m.scale.groups.by))
         warn(`${path}.scale.groups.by`, `unknown mapping '${m.scale.groups.by}'`);
+    const ignores = m.scale.domainIgnores;
+    if (ignores !== undefined && typeof ignores != 'boolean' && !(Array.isArray(ignores) && ignores.every(c => typeof c == 'string')))
+        warn(`${path}.scale.domainIgnores`, `expected the mappings of conditions of 'filter', e.g. ["month"], or true (all)`);
+    else if (Array.isArray(ignores))
+        ignores.filter(c => !Object.hasOwn(def.mapping ?? {}, c)).forEach(c => warn(`${path}.scale.domainIgnores`, `unknown mapping '${c}'`));
     if (m.scale.closed !== undefined && type != 'threshold')
         warn(`${path}.scale.closed`, `the side of the classes of a threshold scale, 'left' (default) or 'right'`);
     if (m.scale.orientation !== undefined && !orientations.includes(m.scale.orientation))

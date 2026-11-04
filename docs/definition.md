@@ -423,6 +423,16 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   `[0, 100]`, around `center` it is symmetric, e.g. `0` of changes, e.g.
   `"include": 0, "domainRel": [-0.4, 0.4]` is the domain of the values and 0
   extended by 40% of its size on both sides.
+  `domainIgnores` are the conditions of the [`filter`](#formelements-and-globals)
+  of the definition (their mappings, `true` all of them) the domain taken from
+  the data ignores, e.g. `["month"]` of a slider over months: the domain is
+  the one of the rows of the other conditions and the visible categories,
+  e.g. of all months of the selected fuel, the plots draw the rows of the
+  month. So the scale and its legend stay the same while the slider moves.
+  Fixed entries of `domain` still win, `include`, `center`, `domainRel`,
+  `domainAbs` and `nice` apply to the wider domain, of a `band` or `point`
+  scale it has the categories of all months, of stacked values the stacks
+  of each month, of facets with their own scales the rows of the facet.
   `step` of a vertical `band` or `point` scale are the pixels of a
   category (also a prop of the globals and `totalWidth`), the height of the
   plot is the one of its categories (and the space of their `groups`), not
@@ -1126,7 +1136,9 @@ as the ones of the rows, e.g. dates, categories as strings and the ones which
 are numbers by their value, and can be references, e.g. `"@year"`
 or `{"range": [null, "@max"]}`. The same conditions are the `filter` of a
 plot (its rows) and of the hover (`options.hover.filter`, the rows with a
-hover):
+hover). The scales are the ones of the filtered rows, `domainIgnores` of a
+[`scale`](#mapping) keeps one of all values of a condition, e.g.
+`"scale": {"domainIgnores": ["year"]}` of the same y-axis for all years:
 
 ```json
 "globals": { "year": "2025" },

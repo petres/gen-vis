@@ -196,14 +196,20 @@ const valuesOf = (name, mapping, rows, stackOf, also = [], log = false) => {
  * and the sizes `dims` of the coordinate system, e.g. its `radius`, values
  * of the definition are converted as the ones of the rows, also of the
  * `mappings` of the definition, e.g. dates of a scale of another mapping.
+ * The values of the domain are the ones of `domainRows` if given, e.g. the
+ * rows of `domainIgnores` (see layout.js), with their stacks `domainStackOf`.
  */
-const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, stackOf, also = [], mappings } = {}) => {
+const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, stackOf, also = [], mappings, domainRows, domainStackOf } = {}) => {
     const scaleDef = mapping.scale;
     const ranges = coord.ranges ?? {};
     // the end of a cyclic range is its start, e.g. of the angles of a circle
     const cyclic = (coord.cyclic ?? []).includes(scaleDef.orientation);
     const log = isLog(scaleDef.type);
-    const found = valuesOf(name, mapping, rows, stackOf, also, log);
+    // the domain is the one of `domainRows` (and their stacks), e.g. of all
+    // months of `domainIgnores`, the nearest value with data is one of `rows`
+    const all = domainRows ?? rows;
+    const found = valuesOf(name, mapping, all, domainRows ? domainStackOf : stackOf, also, log);
+    const near = () => (domainRows ? valuesOf(name, mapping, rows, stackOf, also, log) : found).values;
     let extent = found.extent;
     // the extent of the data includes the values of `include`, e.g. 0 or
     // 100, around `center` it is symmetric, e.g. of 0 of changes
@@ -311,7 +317,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         // the nearest value with data
         if (s.invert)
             s.nearest = p => {
-                const values = found.values;
+                const values = near();
                 return values[d3.bisectCenter(values, s.invert(p))];
             };
     } else {
@@ -322,7 +328,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         const byText = new Map(values.map(v => [String(v), v]));
         domain = given.length > 0 && given.every(v => v !== null)
             ? [...new Set(given.map(v => byText.get(String(v)) ?? v))]
-            : sortCategories(values, rows, name, scaleDef.order);
+            : sortCategories(values, all, name, scaleDef.order);
         // the positions of the categories, e.g. of a band scale, not the
         // colors of an ordinal scale
         // a point scale has no inner padding (its bandwidth is 0)
@@ -354,6 +360,6 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     // the categories in groups with a space between them, e.g. the rows of
     // horizontal bars of groups of indicators, not of a cyclic range
     if (scaleDef.groups?.by && s.step && !cyclic)
-        return grouped(s, rows, name, scaleDef.groups);
+        return grouped(s, all, name, scaleDef.groups);
     return s;
 };

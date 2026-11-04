@@ -56,6 +56,87 @@ describe('layout', () => {
         expect(v.facets.every(f => f.scales.color === v.colors.color)).toBe(true);
     });
 
+    describe('domainIgnores: the domain of the rows of the other conditions of the filter', () => {
+        const months = 'month,zone,price,fuel\n7,AT,100,gas\n7,DE,160,gas\n10,AT,240,gas\n10,DE,120,gas\n7,AT,30,coal\n10,DE,50,coal';
+        const def = (scale, extra = {}) => ({
+            globals: { month: '7', fuel: 'gas' },
+            filter: { month: '@month', fuel: '@fuel' },
+            mapping: {
+                month: { column: 'month', type: 'categorical' },
+                fuel: { column: 'fuel', type: 'categorical', fromData: true },
+                x: { column: 'zone', type: 'categorical', scale: { orientation: 'horizontal' } },
+                y: { column: 'price', type: 'numeric', scale: { orientation: 'vertical', domain: [0, null], domainRel: [0, 0], ...scale } },
+                color: { column: 'price', type: 'numeric', scale: { type: 'sequential', interpolator: 'Reds', ...scale } },
+            },
+            plot: { type: 'cartesian:bar', props: { x: '@x:scaled', y: '@y:scaled' } },
+            ...extra,
+        });
+        const views = async (scale, extra) => {
+            const store = createStore();
+            await store.init({ def: { options: { height: 200 }, ...def(scale, extra) }, data: months });
+            return ['7', '10'].map(month => {
+                store.def.globals.month = month;
+                return layout(store, 400);
+            });
+        };
+
+        test('the same domain of all months, the rows of the month', async () => {
+            const [july, october] = await views({ domainIgnores: ['month'] });
+            expect(july.rows.map(r => r.y)).toEqual([100, 160]);
+            expect(october.rows.map(r => r.y)).toEqual([240, 120]);
+            [july, october].forEach(v => {
+                expect(v.facets[0].scales.y.domain()).toEqual([0, 240]);
+                // the scale of the legend
+                expect(v.colors.color.domain()).toEqual([100, 240]);
+            });
+            // the nearest value with data is one of the month: at the top
+            // (240 of October) the highest one of July
+            expect(july.facets[0].scales.y.nearest(0)).toBe(160);
+        });
+
+        test('without domainIgnores the domain of the month, ignored conditions keep the others', async () => {
+            const [july, october] = await views({});
+            expect([july, october].map(v => v.facets[0].scales.y.domain())).toEqual([[0, 160], [0, 240]]);
+            // the domain of gas only, also with the coal of the other months
+            const [all] = await views({ domainIgnores: true });
+            expect(all.facets[0].scales.y.domain()).toEqual([0, 240]);
+            expect(all.colors.color.domain()).toEqual([30, 240]);
+        });
+
+        test('fixed entries of the domain and nice, categories of all months', async () => {
+            const [july] = await views({ domainIgnores: ['month'], domain: [null, 300] });
+            expect(july.facets[0].scales.y.domain()).toEqual([100, 300]);
+            const store = createStore();
+            const d = def({});
+            d.mapping.x.scale.domainIgnores = ['month'];
+            d.globals.fuel = 'coal';
+            await store.init({ def: { options: { height: 200 }, ...d }, data: months });
+            expect(layout(store, 400).facets[0].scales.x.domain()).toEqual(['AT', 'DE']);
+        });
+
+        test('the stacks of all months, per month', async () => {
+            // gas and coal stacked by zone: 130 and 160 in July, 240 and 170
+            // in October, not 370 of AT of all months together
+            const stacked = async scale => {
+                const store = createStore();
+                const d = def(scale, { filter: { month: '@month' } });
+                d.mapping.y.stacked = true;
+                await store.init({ def: { options: { height: 200 }, ...d }, data: months });
+                return ['7', '10'].map(month => {
+                    store.def.globals.month = month;
+                    return layout(store, 400).facets[0].scales.y.domain();
+                });
+            };
+            expect(await stacked({})).toEqual([[0, 160], [0, 240]]);
+            expect(await stacked({ domainIgnores: ['month'] })).toEqual([[0, 240], [0, 240]]);
+        });
+
+        test('facets with own scales: the rows of the facet of all months', async () => {
+            const [july] = await views({ domainIgnores: ['month'] }, { filter: { month: '@month' }, facets: { dim: 'fuel', cols: 2 } });
+            expect(july.facets.map(f => [f.key, f.scales.y.domain()])).toEqual([['coal', [0, 50]], ['gas', [0, 240]]]);
+        });
+    });
+
     test('without rows of a facet one of all rows', async () => {
         const store = createStore();
         await store.init({ def: { options: { height: 200 }, mapping: mapping(), plot, facets: { dim: 'c', cols: 2 } }, data });

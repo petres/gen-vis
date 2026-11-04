@@ -79,7 +79,7 @@ const scaleSizes = scales => Object.fromEntries(Object.entries(scales).filter(([
  * high, of the most categories of the rows of the facets (`rowsOf`), also
  * with the space of the groups of the scale, undefined without one.
  */
-const stepHeight = (store, rowsOf, scope) => {
+const stepHeight = (store, rowsOf, scope, domainOf) => {
     const mapping = store.def.mapping;
     const name = Object.keys(mapping).find(n => mapping[n].scale?.step !== undefined && mapping[n].scale.orientation == 'vertical'
         && ['band', 'point'].includes(mapping[n].scale.type));
@@ -92,8 +92,8 @@ const stepHeight = (store, rowsOf, scope) => {
     // the steps of the categories of a range of the length 1, e.g. the
     // categories, their padding and the space between groups
     const unit = { ...m, scale: { ...m.scale, range: [0, 1], inset: undefined } };
-    const steps = Math.max(0, ...rowsOf.map(rows => {
-        const s = makeScale(name, unit, rows, { scope });
+    const steps = Math.max(0, ...rowsOf.map(([rows, key]) => {
+        const s = makeScale(name, unit, rows, { scope, domainRows: domainOf(name, key)?.rows });
         return s.domain().length > 0 ? 1/s.step() : 0;
     }));
     return Math.round(steps*step);
@@ -123,6 +123,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     const entries = def.facets ? facetEntries(store, rows) : [];
     return {
         rows, stackOrder, stackOf, isStacked, entries,
+        domains: domainRows(store, def, axis, scope, stacked, visible, stackOrder),
         // the categories of the filtered rows of the legends with `onlyData`,
         // also the hidden ones, e.g. the sources of the selected year
         inData: Object.fromEntries(Object.keys(def.mapping).filter(n => def.mapping[n].legend?.onlyData)
@@ -131,6 +132,41 @@ const rowsOf = (store, def, axis, scope, stacked) => {
         // depend on it, see layout
         keep: !ofWidth(def.filter) && !(stacked && stacked !== true && ofWidth(stacked)),
     };
+};
+
+/**
+ * The rows of the domains of the scales with `domainIgnores` by their
+ * mapping: the rows of the other conditions of `filter`, e.g. of all months
+ * of a slider, of the visible categories, as the ones of a facet
+ * (`facets`, by the key of the facet), the stacks of them (`stackOf`) are
+ * also the ones of the values of the ignored conditions, e.g. per month.
+ */
+const domainRows = (store, def, axis, scope, stacked, visible, stackOrder) => {
+    const conditions = Object.keys(def.filter ?? {});
+    const kept = new Map();
+    const domains = {};
+    Object.entries(def.mapping).forEach(([n, m]) => {
+        const ignores = m.scale?.of === undefined ? m.scale?.domainIgnores : undefined;
+        const names = ignores ? conditions.filter(c => ignores === true || ignores.includes(c)) : [];
+        if (names.length == 0)
+            return;
+        const key = names.join('\0');
+        if (!kept.has(key)) {
+            const others = Object.fromEntries(Object.entries(def.filter).filter(([c]) => !names.includes(c)));
+            kept.set(key, filter(keptRows(store.data, store.columns), [...rowFilter(others, def.mapping, scope), ...visible]));
+        }
+        const rows = kept.get(key);
+        const dims = def.facets ? [def.facets.dim] : [];
+        let stackOf = null;
+        if (n == axis.v && stacked) {
+            const stackedRows = stacked !== true ? filter(rows, rowFilter(stacked, def.mapping, scope, `mapping.${n}.stacked`)) : rows;
+            const stacks = stack(stackedRows, axis, [...dims, ...names], stackOrder);
+            stackOf = row => stacks.get(row) ?? [row[n], row[n]];
+        }
+        const facets = def.facets ? new Map(groupBy(rows, dims).map(g => [String(g.group[dims[0]]), g.entries])) : null;
+        domains[n] = { rows, stackOf, facets };
+    });
+    return domains;
 };
 
 // the parts of a view which do not depend on the width, see layout
@@ -164,7 +200,14 @@ const layout = (store, width, before = null) => {
         store, def, data: store.data, columns: store.columns, coord: store.coord, stateSets: store.stateSets,
         loads: store.loads, axisV: axis.v, axisH: axis.h, stacked,
     };
-    const { rows, stackOrder, stackOf, isStacked, entries } = parts;
+    const { rows, stackOrder, stackOf, isStacked, entries, domains } = parts;
+
+    // the rows of the domain of a scale with `domainIgnores`, of the rows of
+    // a facet (`key`) or of all rows (undefined), null of other scales
+    const domainOf = (name, key) => {
+        const d = Object.hasOwn(domains, name) ? domains[name] : null;
+        return d && (key === undefined || !d.facets ? d : { rows: d.facets.get(String(key)) ?? [], stackOf: d.stackOf });
+    };
 
     const faceted = entries.length > 0;
 
@@ -174,7 +217,7 @@ const layout = (store, width, before = null) => {
     const cols = faceted ? evaluate(def.facets.cols, scope) : 1;
     // the height of the categories of a scale with a `step`, e.g. of the rows
     // of horizontal bars, the height of the definition otherwise
-    const stepped = stepHeight(store, faceted ? entries.map(f => f.rows) : [rows], scope);
+    const stepped = stepHeight(store, faceted ? entries.map(f => [f.rows, f.key]) : [[rows]], scope, domainOf);
     const size = { width: width/cols, height: stepped === undefined ? evaluate(def.options.height, scope) : stepped + margins.top + margins.bottom };
     // a container smaller than its margins has no room, not a negative one,
     // which would flip the ranges of the scales, e.g. a negative radius
@@ -191,9 +234,13 @@ const layout = (store, width, before = null) => {
     const borrowed = Object.keys(def.mapping).filter(n => def.mapping[n].scale?.of !== undefined);
     const also = name => borrowed.filter(n => def.mapping[n].scale.of === name);
 
-    // the scale of a mapping for the rows, in the sizes of a facet
-    const scaleOf = (name, rows) => makeScale(name, store.mapping(name), rows,
-        { dims, coord: store.coord, scope: facetScope, mappings: def.mapping, stackOf: name == axis.v ? stackOf : null, also: also(name) });
+    // the scale of a mapping for the rows, in the sizes of a facet, of the
+    // facet `key` (undefined of all rows)
+    const scaleOf = (name, rows, key) => {
+        const domain = domainOf(name, key);
+        return makeScale(name, store.mapping(name), rows, { dims, coord: store.coord, scope: facetScope, mappings: def.mapping,
+            stackOf: name == axis.v ? stackOf : null, also: also(name), domainRows: domain?.rows, domainStackOf: domain?.stackOf });
+    };
 
     // the scales of all facets: the shared ones and the ones without
     // orientation, e.g. of colors
@@ -205,7 +252,7 @@ const layout = (store, width, before = null) => {
     const facets = (faceted ? entries : [{ key: undefined, name: undefined, rows }]).map(f => {
         const scales = {
             ...common,
-            ...Object.fromEntries(scaled.filter(n => !Object.hasOwn(common, n)).map(n => [n, scaleOf(n, f.rows)])),
+            ...Object.fromEntries(scaled.filter(n => !Object.hasOwn(common, n)).map(n => [n, scaleOf(n, f.rows, f.key)])),
         };
         borrowed.filter(n => Object.hasOwn(scales, def.mapping[n].scale.of)).forEach(n => scales[n] = scales[def.mapping[n].scale.of]);
         return {
