@@ -1,0 +1,19 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "data": "balance.csv",
+    "options": {
+        "height": 300,
+        "margins": {"top": 10, "right": 10, "bottom": 30, "left": 40},
+        "title": "Erträge nach Teilen",
+        "subtitle": "in Mio. €, die Achse der Jahre bei 0, ihre Beschriftung am Rand",
+        "footer": "Erfundene Daten, Beispiel von axis.at",
+        "locale": { "base": "de" }
+    },
+    "mapping": {
+        "x": { "column": "year", "type": "categorical", "axis": { "position": "bottom", "at": 0, "values": [2010, 2015, 2020, 2025] } },
+        "y": { "column": "value", "type": "numeric", "stacked": true, "domain": [null, null], "nice": true,
+               "axis": { "position": "left", "grid": true, "ticks": 6 } },
+        "part": { "column": "part", "categories": { "Markt": { "color": "#4C78A8" }, "Förderung": { "color": "#F58518" } }, "legend": { "symbol": "rect" }, "hover": {} }
+    },
+    "plot": { "type": "bar", "by": "part", "props": { "y0": "@y:start:scaled", "y1": "@y:end:scaled" } }
+}

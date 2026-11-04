@@ -5,6 +5,40 @@ import { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks }
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
 import { rect, placeLine } from "@/coords/hover";
 import { pixelOffset, tickPosition } from "@/utils/axis";
+import { convert } from "@/utils/data";
+import { evaluate } from "@/utils/expr";
+
+// the mapping of the other orientation, e.g. y of an axis of x, the one of
+// the positions or the values of the facet first
+const otherMapping = (ctx, n) => {
+    const other = ctx.store.mapping(n).scale?.orientation == 'horizontal' ? 'vertical' : 'horizontal';
+    const of = k => k !== undefined && ctx.scales[k] && ctx.store.mapping(k).scale?.orientation == other;
+    return [ctx.axis?.h, ctx.axis?.v].find(of) ?? Object.keys(ctx.scales).find(of);
+};
+
+// the value of `at` of an axis as a value of the other mapping, e.g. a date,
+// undefined without one
+const atValue = (ctx, n, at) => {
+    const o = otherMapping(ctx, n);
+    const v = at === undefined || o === undefined ? null : evaluate(at, ctx.scope);
+    return v === null || v === undefined ? undefined : { name: o, value: convert(ctx.store.mapping(o), v, ctx.store.def.mapping) };
+};
+
+// the position of the line of an axis at a value of the other axis
+// (`at`), e.g. 0 of y of an axis of x: the one of the tick of the value
+// without the half pixel of the line (see tickPosition), null at its edge,
+// also of a value outside of the domain or without a position, e.g. 0 of
+// a log scale
+const crossing = (ctx, n, at) => {
+    const a = atValue(ctx, n, at);
+    if (!a)
+        return null;
+    const s = ctx.scales[a.name];
+    const inside = s.step ? s.domain().some(d => String(d) == String(a.value))
+        : (([lo, hi]) => +a.value >= +lo && +a.value <= +hi)(d3.extent(s.domain(), d => +d));
+    const p = inside ? tickPosition(s)(a.value) - pixelOffset() : NaN;
+    return Number.isFinite(p) ? p : null;
+};
 
 // the positions of the hover are vertical, e.g. of horizontal bars
 const isVertical = (ctx, names) => ctx.store.mapping(names.h).scale?.orientation == 'vertical';
@@ -53,6 +87,20 @@ const axes = ctx => {
                 return text === null || text === undefined ? '' : String(text);
             };
 
+        // the line at a value of the other axis (`at`), the labels at the
+        // edge (by default) or with it (`"labels": { "at": "axis" }`), then
+        // without the label where the line of the other axis crosses it
+        const cross = crossing(ctx, n, i.at);
+        const edge = { bottom: innerHeight, right: innerWidth }[i.position] ?? 0;
+        const withLine = i.labels?.at == 'axis';
+        const other = otherMapping(ctx, n);
+        const crossed = withLine && other !== undefined && store.mapping(other).axis && crossing(ctx, other, store.mapping(other).axis.at) !== null
+            ? atValue(ctx, other, store.mapping(other).axis.at) : undefined;
+        if (crossed?.name == n) {
+            const shown = format;
+            format = d => String(+d === +d ? +d : d) == String(+crossed.value === +crossed.value ? +crossed.value : crossed.value) ? '' : shown(d);
+        }
+
         // the values without ones of the axis, see utils/defaults.js
         const d = store.axisDefaults(i.position);
         const parts = [];
@@ -80,6 +128,8 @@ const axes = ctx => {
                 markSize: d.tickMarks?.size,
                 width: innerWidth,
                 height: innerHeight,
+                at: cross,
+                labelShift: cross === null || withLine ? 0 : edge - cross,
             },
         });
 
@@ -156,6 +206,12 @@ export default {
     axes,
     annotations: ['band', 'line', 'text', 'circle'],
     annotate,
+    // an axis at a value of the other axis (`at`) crosses the plots, it is
+    // above them, e.g. the line at 0 of bars of negative values
+    raise: ctx => ctx.inner.querySelectorAll(".vis-axis-at").forEach(node => {
+        if (node.nextSibling)
+            node.parentNode.appendChild(node);
+    }),
     // the positions can be the vertical ones, e.g. of horizontal bars, see axisNames of layout.js
     flip: true,
     hover: {

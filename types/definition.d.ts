@@ -957,6 +957,10 @@ export interface Axis {
      */
     position?: 'top' | 'bottom' | 'left' | 'right' | 'angular' | 'radial';
     /**
+     * A value of a mapping, e.g. a date of a string, a reference "@name", e.g. to a global, or a computed prop, null is taken from the data.
+     */
+    at?: number | string | null | Expression;
+    /**
      * The angle of a radial axis in degrees, clockwise from the top, 0 by default.
      */
     angle?: number;
@@ -989,6 +993,10 @@ export interface Axis {
          */
         by?: string | string[];
         props?: Props;
+        /**
+         * Of an axis at a value (`at`): the labels at the edge of the plot area (edge, by default), only the line and the tick marks at the value, or with them (axis), without the label where the other axis crosses.
+         */
+        at?: 'edge' | 'axis';
         /**
          * Angular axes: the labels along the circle, centered at the tick (true) or between it and the next one (between), e.g. the names of the months, the ones of the lower half are not upside down.
          */

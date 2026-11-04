@@ -3244,3 +3244,71 @@ describe('histograms: the classes of a bin', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('axes at a value of the other axis (`at`)', () => {
+    // inner size 550 x 250, x from 2020 to 2023, y from -2 to 4
+    const def = (x = {}, y = {}) => {
+        const d = lineDef();
+        d.mapping.x.scale.domain = [2020, 2023];
+        d.mapping.x.scale.domainRel = [0, 0];
+        d.mapping.y.scale.domain = [-2, 4];
+        d.mapping.y.scale.domainRel = [0, 0];
+        Object.assign(d.mapping.x.axis, x);
+        Object.assign(d.mapping.y.axis, y);
+        return d;
+    };
+    const axis = (el, position) => el.querySelector(`.vis-axis-${position}`);
+    const tickOf = (el, position, label) => [...axis(el, position).querySelectorAll('.tick')]
+        .find(t => parseFloat(t.textContent.replace(',', '.').replace('−', '-')) == label);
+
+    test('the line on the tick of the value, the labels at the edge', async () => {
+        const el = await mount({ def: def({ at: 0 }), data: lineData });
+        const x = axis(el, 'bottom');
+        // y = 0 is a third from the bottom: 250 - 250/3
+        expect(x.getAttribute('transform')).toBe(`translate(0, ${250 - 250/3})`);
+        // the line is at the half pixel of the tick of 0 of y
+        expect(tickOf(el, 'left', 0).getAttribute('transform')).toBe(`translate(0,${250 - 250/3 + 0.5})`);
+        expect(x.querySelector('.domain').getAttribute('d')).toBe('M0.5,0.5H550.5');
+        // the labels are moved back to the edge, the tick marks stay at the line
+        expect(+x.querySelector('.tick text').getAttribute('transform').match(/translate\(0 ([\d.]+)\)/)[1]).toBeCloseTo(250/3, 9);
+        expect(x.querySelector('.tick line').getAttribute('transform')).toBeNull();
+        // above the plots, as it crosses them
+        expect(x.classList.contains('vis-axis-at')).toBe(true);
+        const plots = [...x.parentNode.querySelectorAll(':scope > .vis-plot')];
+        expect(plots.length).toBeGreaterThan(0);
+        expect(plots.every(p => p.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+        expect(errors).toEqual([]);
+    });
+
+    test('outside of the domain at the edge, labels with the line', async () => {
+        const outside = await mount({ def: def({ at: 10 }), data: lineData });
+        expect(axis(outside, 'bottom').getAttribute('transform')).toBe('translate(0, 250)');
+        expect(axis(outside, 'bottom').querySelector('.tick text').hasAttribute('transform')).toBe(false);
+
+        const el = await mount({ def: def({ at: 0, labels: { at: 'axis' } }), data: lineData });
+        expect(axis(el, 'bottom').querySelector('.tick text').hasAttribute('transform')).toBe(false);
+        expect(errors).toEqual([]);
+    });
+
+    test('a vertical axis at a value of x, the label at the crossing left out', async () => {
+        const el = await mount({ def: def({ at: 0, labels: { at: 'axis' } }, { at: 2021.5, labels: { at: 'axis' } }), data: lineData });
+        expect(axis(el, 'left').getAttribute('transform')).toBe(`translate(${550/2}, 0)`);
+        // the label of 0 of y where the axis of x crosses it
+        expect(tickOf(el, 'left', 2)?.querySelector('text').textContent).toBe('2');
+        expect([...axis(el, 'left').querySelectorAll('.tick text')].map(t => t.textContent)).not.toContain('0');
+        expect(errors).toEqual([]);
+    });
+
+    test('at a date and a reference, validateDef of polar axes', async () => {
+        const d = def({}, { at: '@start' });
+        d.globals = { start: '2022-01-01' };
+        d.mapping.x = { column: 'date', type: 'date', scale: { orientation: 'horizontal', domain: ['2020-01-01', '2024-01-01'], domainRel: [0, 0] }, axis: { position: 'bottom' } };
+        const data = 'date,value,land\n2020-01-01,1,Wien\n2024-01-01,2,Wien';
+        const el = await mount({ def: d, data });
+        const p = +axis(el, 'left').getAttribute('transform').match(/translate\(([\d.]+)/)[1];
+        expect(p).toBeCloseTo(550*(Date.UTC(2022, 0, 1) - Date.UTC(2020, 0, 1))/(Date.UTC(2024, 0, 1) - Date.UTC(2020, 0, 1)), 0);
+        const { validateDef } = await import('@/utils/validate');
+        const polar = { options: { coord: 'polar' }, mapping: { x: { column: 'a', type: 'categorical', axis: { at: 0 } }, y: { column: 'v', type: 'numeric' } }, plot: { type: 'polar:arc' } };
+        expect(validateDef(polar).filter(w => w.includes('.at'))).toEqual([`mapping.x.axis.at: only cartesian axes are at a value of the other axis`]);
+    });
+});

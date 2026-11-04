@@ -384,6 +384,10 @@
                     "enum": ["top", "bottom", "left", "right", "angular", "radial"],
                     "description": "top, bottom, left or right of the cartesian coordinate system, angular (around the circle) or radial (from the center) of the polar one."
                 },
+                "at": {
+                    "$ref": "#/definitions/domainValue",
+                    "description": "Cartesian axes: the line of the axis at this value of the mapping of the other axis, e.g. 0 of an axis of x at y = 0 or a date of an axis of y, converted as the values of the data, also a reference \"@zero\"; a value outside of the domain of the other scale leaves it at its edge (`position`, also the side of its labels and tick marks)."
+                },
                 "angle": { "type": "number", "description": "The angle of a radial axis in degrees, clockwise from the top, 0 by default." },
                 "gridShape": {
                     "enum": ["circle", "polygon"],
@@ -403,6 +407,7 @@
                     "properties": {
                         "by": { "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }], "description": "The mappings of categories whose props the labels have, of the categories of the row of the tick, a mapping or a list of them, as `by` of a plot." },
                         "props": { "$ref": "#/definitions/props" },
+                        "at": { "enum": ["edge", "axis"], "default": "edge", "description": "Of an axis at a value (`at`): the labels at the edge of the plot area (edge, by default), only the line and the tick marks at the value, or with them (axis), without the label where the other axis crosses." },
                         "curved": { "anyOf": [{ "type": "boolean" }, { "const": "between" }], "description": "Angular axes: the labels along the circle, centered at the tick (true) or between it and the next one (between), e.g. the names of the months, the ones of the lower half are not upside down." }
                     }
                 },

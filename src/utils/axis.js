@@ -176,8 +176,9 @@ const ticks = (ga, moving, orient, scale, { values, format, tickSizeInner, tickS
  * default of axes without one) and the size of the plot area (`width`,
  * `height`).
  */
-const drawAxis = (ga, { name, position, scale, values, format, labels, padding, rotate, domain, marks, markSize, width, height }) => {
-    setAttr(ga, "class", `vis-axis vis-axis-${position}`);
+const drawAxis = (ga, { name, position, scale, values, format, labels, padding, rotate, domain, marks, markSize, width, height, at = null, labelShift = 0 }) => {
+    // an axis at a value of the other axis is in the plot area (vis-axis-at)
+    setAttr(ga, "class", `vis-axis vis-axis-${position}${at === null ? '' : ' vis-axis-at'}`);
     setAttr(ga, "data-mapping", name);
     // the animations of the draw before stop where they are, the ticks
     // which disappear are removed
@@ -215,16 +216,29 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
             fit();
     }
 
-    if (position == 'bottom')
-        setAttr(ga, 'transform', `translate(0, ${height})`);
-    if (position == 'right')
-        setAttr(ga, 'transform', `translate(${width}, 0)`);
+    // at its edge or at a value of the other axis (`at`, the position of
+    // the line without its half pixel), moved with the animation of the draw
+    const vertical = position == 'left' || position == 'right';
+    const place = at ?? { bottom: height, right: width }[position] ?? 0;
+    const transform = vertical ? `translate(${place}, 0)` : `translate(0, ${place})`;
+    if (moving && ga.hasAttribute('transform'))
+        animate(ga, { transform }, { channel: 'vis', duration: motion.duration });
+    else if (place)
+        setAttr(ga, 'transform', transform);
+    else
+        ga.removeAttribute('transform');
 
-    // positive angles rotate counterclockwise, negative ones
+    // the labels at the edge of an axis at a value (`labelShift` from the
+    // line), positive angles rotate counterclockwise, negative ones
     // clockwise, the labels start at their tick in both cases
-    if (rotate)
-        ga.querySelectorAll("text").forEach(node => {
+    const shift = labelShift ? (vertical ? `translate(${labelShift} 0)` : `translate(0 ${labelShift})`) : '';
+    ga.querySelectorAll(".tick text").forEach(node => {
+        if (rotate)
             setAttr(node, "text-anchor", rotate > 0 ? "end" : "start");
-            setAttr(node, "transform", `rotate(${-rotate})`);
-        });
+        const t = [shift, rotate ? `rotate(${-rotate})` : ''].filter(Boolean).join(' ');
+        if (t)
+            setAttr(node, "transform", t);
+        else
+            node.removeAttribute("transform");
+    });
 };

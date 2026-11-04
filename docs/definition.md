@@ -532,7 +532,20 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   all facets.
 - `name`: the title of the legend.
 - `axis`: `position` (`top`, `bottom`, `left`, `right`, in polar plots
-  `angular` and `radial`), `ticks`, `tickSpacing` (without `ticks` a tick per
+  `angular` and `radial`), `at` (cartesian axes: the line of the axis at
+  this value of the mapping of the other axis instead of at the edge, e.g.
+  `"x": {"axis": {"at": 0}}` at y = 0 of bars of negative values, or
+  `"y": {"axis": {"at": "2020-01-01"}}` at a date of x, converted as the
+  values of the data, also a reference, e.g. `"@zero"`; the line is at the
+  half pixel of the tick of the value, on the tick and the grid line of
+  it, above the plots (class `vis-axis-at`), a value outside of the domain of
+  the other scale or without a position, e.g. 0 of a log scale, leaves the
+  axis at its edge. `position` is the side of its tick marks and labels.
+  The labels stay at the edge of the plot area (`"labels": {"at": "edge"}`,
+  the default), only the line and the tick marks are at the value, so they
+  cover no bars, or are with the line, `"labels": {"at": "axis"}`, then
+  without the label where the line of the other axis crosses it; the title
+  stays at the edge, the margins are the ones of the definition), `ticks`, `tickSpacing` (without `ticks` a tick per
   this many pixels of the axis, e.g. `80`, so a narrow chart has fewer ticks,
   instead of a `relative` prop of `ticks`), `values` (fixed ticks, converted
   as the values of the data, e.g. dates of strings or categories as strings,

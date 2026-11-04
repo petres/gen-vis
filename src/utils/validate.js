@@ -283,6 +283,16 @@ const checkMappings = ctx => {
             else if (!coord.positions.includes(m.axis.position))
                 warn(`${path}.axis.position`, `unknown position '${m.axis.position}'${choices(m.axis.position, coord.positions)}`);
             checkProp(m.axis.ticks, `${path}.axis.ticks`, warn, names.facet);
+            if (m.axis.at !== undefined) {
+                const other = m.scale?.orientation == 'horizontal' ? 'vertical' : 'horizontal';
+                if (!['top', 'bottom', 'left', 'right'].includes(m.axis.position))
+                    warn(`${path}.axis.at`, `only cartesian axes are at a value of the other axis`);
+                else if (!Object.values(mapping).some(o => o?.scale?.orientation == other || (o?.scale?.of !== undefined && mapping[o.scale.of]?.scale?.orientation == other)))
+                    warn(`${path}.axis.at`, `a value of the mapping of the other axis, there is no mapping with a ${other} scale`);
+                checkProp(m.axis.at, `${path}.axis.at`, warn, names.facet);
+            }
+            if (isObject(m.axis.labels) && m.axis.labels.at !== undefined && !['edge', 'axis'].includes(m.axis.labels.at))
+                warn(`${path}.axis.labels.at`, `expected 'edge' (the labels at the edge of the plot area) or 'axis' (with the line at its value)`);
             if (m.axis.values !== undefined && !Array.isArray(m.axis.values))
                 checkProp(m.axis.values, `${path}.axis.values`, warn, names.facet);
             const labels = m.axis.labels;
