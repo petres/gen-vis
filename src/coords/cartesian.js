@@ -4,6 +4,7 @@ import { keyOf } from "@/utils/draw";
 import { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
 import { rect, placeLine } from "@/coords/hover";
+import { pixelOffset, tickPosition } from "@/utils/axis";
 
 // the positions of the hover are vertical, e.g. of horizontal bars
 const isVertical = (ctx, names) => ctx.store.mapping(names.h).scale?.orientation == 'vertical';
@@ -119,18 +120,22 @@ const annotate = (ctx, a) => {
             ...labelItems(a, x0 + 4, y0 + 4),
         ];
     if (a.type == 'line') {
-        // a value of the horizontal axis is a vertical line, of the vertical one a horizontal line
+        // a value of the horizontal axis is a vertical line, of the vertical
+        // one a horizontal line, at the position of the tick of the value
+        // (a half pixel, see utils/axis.js), so it is sharp and on the tick,
+        // the label at the position of the value, of a range at its center
+        const at = c => Array.isArray(c.value) ? position(c) + pixelOffset() : tickPosition(c.scale)(c.value);
         if (h) {
-            const x = position(h);
+            const x = at(h);
             return [
                 annotationItem("line", { class: "vis-annotation vis-line", x1: x, x2: x, y1: y0, y2: y1 }, a, ctx),
-                ...labelItems(a, x + 4, y0 + 4),
+                ...labelItems(a, position(h) + 4, y0 + 4),
             ];
         }
-        const y = v ? position(v) : 0;
+        const y = v ? at(v) : pixelOffset();
         return [
             annotationItem("line", { class: "vis-annotation vis-line", x1: x0, x2: x1, y1: y, y2: y }, a, ctx),
-            ...labelItems(a, x1 - 4, y - 4, "end", "auto"),
+            ...labelItems(a, x1 - 4, (v ? position(v) : 0) - 4, "end", "auto"),
         ];
     }
     const x = h ? position(h) : 0;

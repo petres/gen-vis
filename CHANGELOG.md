@@ -16,6 +16,13 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
 
 ### Fixes
 
+- Horizontal and vertical annotation lines (cartesian plots) are at the
+  position of the tick of their value, with the half pixel of the axes
+  (`pixelOffset` of utils/axis.js, 0.5 on screens of one pixel per CSS
+  pixel): before, they were between two pixel rows (blurry, twice as wide
+  as the axis) and a pixel away from the tick of the same value. Labels
+  and bands keep their positions.
+
 - Export page: each `genVisExport(options)` call (and
   `genVisExport.resolve`) loads its files fresh. Before, the page's
   5-minute cache of requests outlived a call, so a definition whose data

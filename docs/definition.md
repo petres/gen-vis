@@ -1019,7 +1019,10 @@ globals, e.g. `"@target"`:
   in a range is the edge of the domain, a category of a `band` or `point`
   scale is its band, `label` is its name.
 - `line`: a value of the horizontal axis is a vertical line, of the vertical
-  one a horizontal line, with a `label` at its end.
+  one a horizontal line, with a `label` at its end. The line is at the
+  position of the tick of its value, like the axes at the half pixel on
+  screens of one pixel per CSS pixel, so it is as sharp as them and on the
+  tick, e.g. a zero line, without `"shape-rendering": "crispEdges"`.
 - `text` (`text`) and `circle` at the values, without one (or with `null`)
   of an axis at the start of the other one.
 - `label` and `text` are templates of the globals, e.g. `"Ziel {target}"`.

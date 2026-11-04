@@ -728,9 +728,9 @@ describe('annotations', () => {
         // the labels are above the plots
         expect(el.querySelector('g.vis-annotation-labels .vis-annotation-label').textContent).toBe('Schätzung');
         const [horizontal, vertical] = el.querySelectorAll('g.vis-annotations line');
-        expect(['x1', 'x2', 'y1', 'y2'].map(a => num(horizontal, a))).toEqual([0, 550, 125, 125]);
+        expect(['x1', 'x2', 'y1', 'y2'].map(a => num(horizontal, a))).toEqual([0, 550, 125.5, 125.5]);
         expect(horizontal.getAttribute('stroke')).toBe('red');
-        expect(num(vertical, 'x1')).toBeCloseTo(550/3);
+        expect(num(vertical, 'x1')).toBeCloseTo(550/3 + 0.5);
         expect(el.querySelector('g.vis-annotations text.vis-text').textContent).toBe('Hinweis');
         expect(num(el.querySelector('g.vis-annotations.vis-above circle'), 'cx')).toBeCloseTo(1100/3);
         // below the grid lines and the plots, the circle above them
@@ -776,9 +776,19 @@ describe('annotations', () => {
         expect([num(text, 'x'), num(text, 'y')]).toEqual([0, 125]);
         expect(text.textContent).toBe('Ziel 2');
         const line = el.querySelector('line.vis-line');
-        expect(['x1', 'x2', 'y1', 'y2'].map(a => num(line, a))).toEqual([0, 550, 125, 125]);
+        expect(['x1', 'x2', 'y1', 'y2'].map(a => num(line, a))).toEqual([0, 550, 125.5, 125.5]);
         expect(el.querySelector('.vis-annotation-label').textContent).toBe('Ziel 2');
         expect(errors).toEqual([]);
+    });
+
+    test('lines on the ticks of their values, at the half pixel of the axes', async () => {
+        const el = await mount({ def: annotated([{ type: 'line', y: 2 }, { type: 'line', x: 2022 }]), data: lineData });
+        const tickAt = (axis, value) => [...el.querySelectorAll(`.vis-axis-${axis} .tick`)]
+            .find(t => parseFloat(t.textContent.replace(/\./g, '').replace(',', '.')) == value).getAttribute('transform');
+        const [horizontal, vertical] = el.querySelectorAll('g.vis-annotations line');
+        expect(tickAt('left', 2)).toBe(`translate(0,${horizontal.getAttribute('y1')})`);
+        expect(tickAt('bottom', 2022)).toBe(`translate(${vertical.getAttribute('x1')},0)`);
+        expect(horizontal.getAttribute('y1')).toBe('125.5');
     });
 
     test('annotations of the rows of a plot, e.g. events, with props of the rows', async () => {
@@ -790,7 +800,7 @@ describe('annotations', () => {
         }];
         const el = await mount({ def, data: lineData });
         const lines = [...el.querySelectorAll('g.vis-plot.plot-1 line.vis-line')];
-        expect(lines.map(l => [Math.round(num(l, 'x1')), l.getAttribute('stroke')])).toEqual([[183, 'red'], [367, 'blue']]);
+        expect(lines.map(l => [Math.round(num(l, 'x1')), l.getAttribute('stroke')])).toEqual([[184, 'red'], [367, 'blue']]);
         expect([...el.querySelectorAll('.vis-annotation-label')].map(l => l.textContent)).toEqual(['A', 'B']);
     });
 

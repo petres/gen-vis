@@ -1,4 +1,4 @@
-export { drawAxis };
+export { drawAxis, pixelOffset, tickPosition };
 
 import { animate, create, interrupt, itemOf, join, onEnd, setAttr } from "@/utils/dom";
 import { fitText, motion, setAttrs } from "@/utils/draw";
@@ -40,6 +40,17 @@ const center = (scale, offset) => {
     return d => +scale(d) + offset;
 };
 
+// the lines at half pixels of screens of a pixel per CSS pixel, so they
+// are sharp, as the ones of d3-axis
+const pixelOffset = () => typeof window !== "undefined" && window.devicePixelRatio > 1 ? 0 : 0.5;
+
+// the position of the tick of a value of a scale, e.g. of an annotation
+// line on it: at the half pixel (`offset`), of a band its center
+const tickPosition = (scale, offset = pixelOffset()) => {
+    const p = (scale.bandwidth ? center : number)(scale, offset);
+    return d => p(d) + offset;
+};
+
 // the positions of the ticks of the draw before of the element of an axis
 // (a function of a value), new ticks come from them, d3-axis has them as
 // `__axis`; an element without one is a new axis
@@ -58,8 +69,7 @@ const change = (node, attrs, moving) => {
 // draw, the sizes of the ticks are the ones of `tickSizeInner`,
 // `tickSizeOuter` and `tickPadding`
 const ticks = (ga, moving, orient, scale, { values, format, tickSizeInner, tickSizeOuter, tickPadding }) => {
-    // the lines at half pixels of screens of a pixel per pixel, sharp
-    const offset = typeof window !== "undefined" && window.devicePixelRatio > 1 ? 0 : 0.5;
+    const offset = pixelOffset();
     const k = orient == "top" || orient == "left" ? -1 : 1;
     const x = orient == "left" || orient == "right" ? "x" : "y";
     const transform = orient == "top" || orient == "bottom" ? translateX : translateY;
