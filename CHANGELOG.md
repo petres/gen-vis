@@ -3,7 +3,7 @@
 Changes by version, newest first. Every version is on npm except 0.7.0 and
 2.0.0-alpha.1. The details are in the commits.
 
-## Unreleased
+## 4.1.0
 
 ### Features
 
@@ -13,9 +13,49 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   colors and their legend) is the one of all months, the plots draw the
   rows of the month. Fixed `domain` entries still win, stacked values are
   stacked per month, facets with own scales get the rows of their facet.
+- The legend entries of the categories of the hovered row are highlighted
+  in every legend (class `vis-legend-highlight`, bold of the same width,
+  so no entry moves), of the hover of the plot, of a legend entry and of
+  the highlight of the page.
+- Legend symbols: a box of a `width` and a `height` (both `size` by
+  default), e.g. a longer line of a dash without a higher box, and a
+  `symbol` per category (`"categories": {"A": {"symbol": "rect"}}`), e.g.
+  an area in a legend of lines.
+- Statistics in the transforms: `bin` adds a row per class and group of
+  the values of a column (`edges` of numbers and `{from, to, step}` ranges,
+  unequal classes, or a `step`; `by`, `weight`, the columns `start`, `end`
+  and `as`), empty classes with 0, values outside the edges left out with
+  a warning. The rows stay, so a histogram and a strip plot of the same
+  values are one chart, the plots draw the rows with the values they use;
+  `"replace": true` keeps only the classes. The later transforms (`share`,
+  `calc`) compute values of the classes, e.g. a density or counts per
+  month. Transforms can change the rows now (the store prepares them again
+  when they change, e.g. other edges of a global). `random`: a random
+  number per row in a `range`, the same on every draw (`seed`, a hash of
+  the row's index or of a `key` column), e.g. the jitter of a strip plot.
+  Both are in `spec/` with the rules of their numbers, for other
+  implementations.
+- Histograms: `bar` with `x0`, `x1` and `y1` is a bar from start to end on a
+  continuous scale (crisp edges, so neighbours meet without a seam), a
+  `line` with `x0` and `x1` in `d` draws stairs down to the base at both
+  ends, e.g. the outline of a density per category. Examples
+  `data/stats/histogram.json` and `data/stats/density.json`.
+- A plot none of whose rows has the values it uses is named in a warning
+  (console, CLI, `messages` of the export page), e.g. `plot 'caps': none
+  of its 312 rows is drawn, 312 without a value of mapping 'y'`.
 
 ### Fixes
 
+- Rows without a value of a mapping of categories (e.g. an empty cell of
+  a column with `fromData`) stay in the chart: they are in no category, so
+  plots `by` the mapping and its scale leave them out, but other plots
+  draw them. Before, they were left out of the whole chart without a
+  message, e.g. all rows of other plots in one CSV. A plot only needs the
+  values of the row its props use, not e.g. `@y:scaled:max` (the end of
+  the scale). The categories of a scale no longer include `null`.
+- The name of a legend entry is centered vertically on the box of its
+  symbol at any size (a flex box); before, it was 4 pixels above the
+  bottom of the box, centered only at the default size of 16.
 - Horizontal and vertical annotation lines (cartesian plots) are at the
   position of the tick of their value, with the half pixel of the axes
   (`pixelOffset` of utils/axis.js, 0.5 on screens of one pixel per CSS
