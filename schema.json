@@ -583,8 +583,8 @@
             "required": ["type"],
             "properties": {
                 "type": {
-                    "enum": ["year", "align", "index", "mean", "share", "rolling", "cumulative", "calc", "filter", "rank", "lookup"],
-                    "description": "year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, lookup: the `value` of the row of a file of `data` of the `key`."
+                    "enum": ["year", "align", "index", "mean", "share", "rolling", "cumulative", "calc", "filter", "rank", "random", "lookup", "bin"],
+                    "description": "year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`)."
                 },
                 "column": { "type": "string", "description": "The column of the values, a template of the globals, of a lookup the one of the keys." },
                 "expr": { "$ref": "#/definitions/value", "description": "calc: the expression of the value of the row, filter: the expression of the rows which are kept, its names are the columns of the row and the globals, e.g. { \"*\": [{ \"/\": [\"@value\", \"@inno\"] }, 100] } or { \">\": [\"@value\", 0] }." },
@@ -592,9 +592,35 @@
                 "descending": { "type": "boolean", "default": false, "description": "rank: the largest value is the first one." },
                 "data": { "type": "string", "description": "lookup: the url of a file of rows, relative to the definition, not a template." },
                 "dataFormat": { "enum": ["csv", "tsv", "json", "parquet"], "description": "lookup: the format of the file, by default the one of the extension of its url." },
-                "key": { "type": "string", "description": "lookup: the column of the keys of the rows of the file." },
+                "key": { "type": "string", "description": "lookup: the column of the keys of the rows of the file; random: the column of the keys of the rows, e.g. an id, a row keeps its number also if the rows of the file are in another order (by default its index in the data)." },
                 "value": { "type": "string", "description": "lookup: the column of the values of the rows of the file, a template of the globals, e.g. \"name_{lang}\"." },
-                "as": { "type": "string", "description": "The name of the new column, by default the one of `column`, which it replaces." },
+                "as": { "type": "string", "description": "The name of the new column, by default the one of `column`, which it replaces; bin: the column of the number of the values of the class, count by default." },
+                "edges": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            { "type": "number" },
+                            { "type": "string" },
+                            {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": ["from", "to", "step"],
+                                "properties": { "from": { "type": "number" }, "to": { "type": "number" }, "step": { "type": "number", "exclusiveMinimum": 0 } }
+                            }
+                        ]
+                    },
+                    "description": "bin: the edges of the classes, numbers and ranges { \"from\": 50, \"to\": 250, \"step\": 5 }, sorted together, e.g. [{ \"from\": 50, \"to\": 250, \"step\": 5 }, 143]. A class includes its start, the last one also its end, values outside the edges are left out."
+                },
+                "step": { "anyOf": [{ "type": "number", "exclusiveMinimum": 0 }, { "type": "string" }], "description": "bin: the width of the classes without edges, also a template of the globals, e.g. \"{step}\", from the multiple of it below the least value to the one above the largest one." },
+                "weight": { "type": "string", "description": "bin: the column of the weights of the rows, the value of a class is the sum of the weights of its values, e.g. of a reporting lag." },
+                "start": { "type": "string", "description": "bin: the column of the start of the class, start by default." },
+                "end": { "type": "string", "description": "bin: the column of the end of the class, end by default." },
+                "replace": { "type": "boolean", "default": false, "description": "bin: the rows of the classes replace the rows; by default they come after them, e.g. a histogram and a strip plot of the same values, the plots draw the rows with the values they use." },
+                "range": {
+                    "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2,
+                    "description": "random: the least and the largest number, [0, 1] by default."
+                },
+                "seed": { "anyOf": [{ "type": "number" }, { "type": "string" }], "description": "random: another seed gives other numbers, 0 by default." },
                 "by": {
                     "description": "The groups of the rows of the same values of these columns, e.g. a line per category.",
                     "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]

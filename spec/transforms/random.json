@@ -1,0 +1,142 @@
+[
+  {
+    "name": "a number of every row in the range, of the seed and the index of the row",
+    "rows": [
+      {
+        "v": "a"
+      },
+      {
+        "v": "b"
+      },
+      {
+        "v": "c"
+      },
+      {
+        "v": "d"
+      }
+    ],
+    "transform": {
+      "type": "random",
+      "as": "jitter",
+      "range": [
+        0.06,
+        0.94
+      ],
+      "seed": 1
+    },
+    "columns": {
+      "jitter": [
+        0.37593293901532887,
+        0.8124289434961975,
+        0.9351237853430212,
+        0.6736854409612716
+      ]
+    }
+  },
+  {
+    "name": "a row keeps its number if a filter before leaves out others",
+    "rows": [
+      {
+        "v": "a"
+      },
+      {
+        "v": "b"
+      },
+      {
+        "v": "c"
+      },
+      {
+        "v": "d"
+      }
+    ],
+    "transform": [
+      {
+        "type": "filter",
+        "expr": {
+          "!=": [
+            "@v",
+            "b"
+          ]
+        }
+      },
+      {
+        "type": "random",
+        "as": "jitter",
+        "range": [
+          0.06,
+          0.94
+        ],
+        "seed": 1
+      }
+    ],
+    "columns": {
+      "jitter": [
+        0.37593293901532887,
+        null,
+        0.9351237853430212,
+        0.6736854409612716
+      ]
+    },
+    "kept": [
+      0,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "another seed, numbers of [0, 1) by default",
+    "rows": [
+      {
+        "v": "a"
+      },
+      {
+        "v": "b"
+      },
+      {
+        "v": "c"
+      },
+      {
+        "v": "d"
+      }
+    ],
+    "transform": {
+      "type": "random",
+      "as": "r",
+      "seed": 2
+    },
+    "columns": {
+      "r": [
+        0.2716840491630137,
+        0.4681830669287592,
+        0.16949510131962597,
+        0.739657680504024
+      ]
+    }
+  },
+  {
+    "name": "the numbers of the values of a key column, the same in any order of the rows",
+    "rows": [
+      {
+        "id": "c"
+      },
+      {
+        "id": "a"
+      },
+      {
+        "id": "b"
+      }
+    ],
+    "transform": {
+      "type": "random",
+      "as": "r",
+      "key": "id"
+    },
+    "columns": {
+      "r": [
+        0.15447981539182365,
+        0.8496012145187706,
+        0.46416792972013354
+      ]
+    }
+  }
+]

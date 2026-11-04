@@ -57,6 +57,10 @@ describe('spec/transforms', () => {
                     expectClose(Object.fromEntries(columns), c.columns);
                     // the rows of filters, null without one
                     expect(columns.kept ?? null).toEqual(c.kept ?? null);
+                    // the rows of a transform of rows, e.g. a bin, and its warnings
+                    if (c.result !== undefined)
+                        expectClose(columns.rows, c.result);
+                    expect(columns.notes ?? []).toEqual(c.notes ?? []);
                 }
             });
         });

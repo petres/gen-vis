@@ -1,6 +1,6 @@
 // the computation of the transforms, loaded for definitions with transforms, see
 // utils/transform.js
-export { applyTransforms, transformTypes };
+export { applyTransforms, transformTypes, randomOf };
 
 import { toDate, toNumber } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
@@ -220,6 +220,20 @@ const transformTypes = {
         return result;
     },
 
+    // a random number of the row in `range` ([0, 1] by default), the same of
+    // every draw: a hash of the `seed` (0 by default) and of the row, its
+    // index in the data or its value of the column `key`, so a row keeps it
+    // if others are left out, e.g. the vertical place of a point of a strip
+    // plot in its band, see randomOf
+    random: (t, { n, get, index }) => {
+        const [lo, hi] = Array.isArray(t.range) ? t.range.map(Number) : [0, 1];
+        const seed = String(t.seed ?? 0);
+        return Array.from({ length: n }, (_, i) => {
+            const key = t.key === undefined ? index(i) : get(i, t.key);
+            return lo + (hi - lo)*randomOf(`${seed}:${missing(key) ? '' : key}`);
+        });
+    },
+
     // the value of the column `value` of the row of a file of rows (`data`)
     // whose column `key` is the value of the column, e.g. the name of a
     // country in a language, "value": "name_{lang}", missing ones have none
@@ -240,6 +254,103 @@ const transformTypes = {
     },
 };
 
+// a number in [0, 1) of a text, the same of every run and implementation:
+// the 32 bits of FNV-1a of its UTF-16 code units, mixed by the finalizer of
+// MurmurHash3, divided by 2^32
+const randomOf = text => {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < text.length; i++)
+        h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
+    h ^= h >>> 16;
+    h = Math.imul(h, 0x85ebca6b);
+    h ^= h >>> 13;
+    h = Math.imul(h, 0xc2b2ae35);
+    h ^= h >>> 16;
+    return (h >>> 0)/4294967296;
+};
+
+// the edges of the classes of a bin: numbers and ranges { "from", "to",
+// "step" } (from and to included if they are steps), sorted, or of `step`
+// alone the multiples of it around the values, null without two of them
+const binEdges = (t, values) => {
+    const range = ({ from, to, step }) => {
+        const [a, b, d] = [from, to, step].map(Number);
+        if (![a, b, d].every(Number.isFinite) || !(d > 0) || b < a)
+            throw new Error(`bin: a range of edges is { "from": 50, "to": 250, "step": 5 }`);
+        // as integers of steps, so e.g. 0.1 steps have no rounding errors
+        const count = Math.floor((b - a)/d + 1e-9);
+        return Array.from({ length: count + 1 }, (_, k) => +(a + k*d).toPrecision(12));
+    };
+    let edges;
+    if (t.edges !== undefined)
+        edges = [t.edges].flat().flatMap(e => e !== null && typeof e == 'object' ? range(e) : [toNumber(e)]);
+    else if (t.step !== undefined) {
+        const step = Number(t.step);
+        const present = values.filter(v => v !== null);
+        if (!(step > 0))
+            throw new Error(`bin: 'step' is the width of the classes, e.g. 5`);
+        if (present.length == 0)
+            return null;
+        const lo = Math.min(...present);
+        const hi = Math.max(...present);
+        edges = range({ from: Math.floor(lo/step)*step, to: Math.max(Math.ceil(hi/step), Math.floor(lo/step) + 1)*step, step });
+    } else
+        throw new Error(`bin: the 'edges' of the classes are needed, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143], or a 'step'`);
+    edges = [...new Set(edges.filter(e => e !== null && Number.isFinite(e)))].sort((a, b) => a - b);
+    return edges.length < 2 ? null : edges;
+};
+
+/**
+ * The rows of a bin: a row per class of `edges` and group of `by` (of the
+ * rows with values, also of empty classes, 0), with the values of the columns `by`, the start (`start`,
+ * "start" by default) and the end (`end`, "end") of the class and the number
+ * of the values of `column` in it (`as`, "count"), or the sum of their
+ * `weight`. The classes include their start, the last one also its end,
+ * values outside the edges are left out (`outside`, their number).
+ */
+const binRows = (t, { n, get, numbers, groups }) => {
+    const values = Array.from({ length: n }, (_, i) => numbers(i));
+    const edges = binEdges(t, values);
+    const by = [t.by ?? []].flat();
+    const names = { start: t.start ?? 'start', end: t.end ?? 'end', value: t.as ?? 'count' };
+    const last = edges ? edges.length - 2 : -1;
+    let outside = 0;
+    // one group of all rows without `by`, also without rows, otherwise the
+    // groups of rows with values, e.g. not the ones of the rows of another bin
+    const all = by.length == 0 ? [Array.from({ length: n }, (_, i) => i)] : groups.filter(g => g.some(i => values[i] !== null));
+    const rows = edges === null ? [] : all.flatMap(g => {
+        const sums = new Array(last + 1).fill(0);
+        for (const i of g) {
+            const v = values[i];
+            if (v === null)
+                continue;
+            if (v < edges[0] || v > edges[last + 1]) {
+                outside++;
+                continue;
+            }
+            // the class of the value: the last edge not after it, the end of the last class is in it
+            let lo = 0;
+            let hi = last + 1;
+            while (hi - lo > 1) {
+                const mid = (lo + hi) >> 1;
+                if (edges[mid] <= v)
+                    lo = mid;
+                else
+                    hi = mid;
+            }
+            const w = t.weight === undefined ? 1 : toNumber(get(i, t.weight));
+            sums[lo] += w ?? 0;
+        }
+        const keys = Object.fromEntries(by.map(c => [c, g.length ? get(g[0], c) ?? null : null]));
+        return sums.map((sum, k) => ({ ...keys, [names.start]: edges[k], [names.end]: edges[k + 1], [names.value]: sum }));
+    });
+    return { rows, outside, edges };
+};
+
+// the transforms which change the rows, see applyTransforms
+transformTypes.bin = binRows;
+const rowTransforms = new Set(['bin']);
+
 // the strings of a transform with the values of the globals
 const filled = (t, globals) => {
     const fill = v => typeof v == 'string' ? fillTemplate(v, globals) : (Array.isArray(v) ? v.map(fill)
@@ -255,7 +366,10 @@ const filled = (t, globals) => {
  * computed from the first one which changes, e.g. by the global, the ones
  * before it are kept, `changed` are the names of the columns computed again,
  * without changes the columns are the ones before. `files` are the rows of
- * the files of lookups by their url, see the store.
+ * the files of lookups by their url, see the store. A transform of rows
+ * (`bin`) adds its rows after the rows or replaces them (`replace`): then `rows`
+ * are the rows of the columns, the ones of the data otherwise (null).
+ * `notes` are the warnings of the transforms, e.g. values outside the edges.
  */
 const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null) => {
     const present = new Set(rows.length ? Object.keys(rows[0]) : []);
@@ -268,7 +382,9 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
         // e.g. a calc of "@factor" is computed again if the global changes
         const refs = t.expr === undefined ? [] : [...new Set(refNames(t.expr))]
             .filter(n => typeof n == 'string' && !own.has(n) && !present.has(n) && Object.hasOwn(globals, n));
-        if (t.type != 'filter')
+        if (rowTransforms.has(t.type))
+            [t.start ?? 'start', t.end ?? 'end', t.as ?? 'count', ...[t.by ?? []].flat()].forEach(c => own.add(c));
+        else if (t.type != 'filter')
             own.add(t.as ?? t.column);
         return { t, inUtc: utc.has(t.column) || utc.has(t.as ?? t.column), refs: refs.map(n => [n, globals[n] ?? null]) };
     });
@@ -280,18 +396,22 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
     if (before && first == list.length && steps.length == list.length)
         return before;
 
-    // the columns of the transforms which are kept, in their order, and the
-    // rows of the filters (`kept`, the indexes of the rows, null without a
-    // filter), the later transforms compute the values of these rows, the
-    // others have none
-    const columns = new Map();
-    const kept = steps.slice(0, first);
-    kept.forEach(s => s.name !== null && columns.set(s.name, s.values));
-    columns.steps = [...kept];
-    columns.kept = kept.at(-1)?.kept ?? null;
+    // the state after the transforms which are kept: the rows (the ones of
+    // the data or of a transform of rows), the columns of the transforms in
+    // their order and the rows of the filters (`kept`, the indexes of the
+    // rows, null without a filter), the later transforms compute the values
+    // of these rows, the others have none
+    const state = steps[first - 1]?.state ?? { rows, columns: [], kept: null, notes: [] };
+    let base = state.rows;
+    const columns = new Map(state.columns);
+    columns.steps = steps.slice(0, first);
+    columns.kept = state.kept;
+    const notes = [...state.notes];
     // also the columns which are not computed anymore, e.g. of another `as`
     columns.changed = new Set(steps.slice(first).map(s => s.name).filter(n => n !== null));
-    const read = (i, c) => columns.has(c) ? columns.get(c)[i] : rows[i][c];
+    const read = (i, c) => columns.has(c) ? columns.get(c)[i] ?? null : base[i][c];
+    const save = (key, name) => columns.steps.push({ key, name,
+        state: { rows: base, columns: [...columns], kept: columns.kept, notes: [...notes] } });
     for (const [k, { t, inUtc }] of list.entries()) {
         if (k < first)
             continue;
@@ -300,7 +420,7 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
             throw new Error(`Unknown transform '${t.type}', expected one of ${Object.keys(transformTypes).map(n => `'${n}'`).join(', ')}`);
         // the rows of the filters before, by their index among them
         const index = columns.kept;
-        const n = index ? index.length : rows.length;
+        const n = index ? index.length : base.length;
         const get = index ? (i, c) => read(index[i], c) : read;
         const values = i => get(i, t.column);
         const by = [t.by ?? []].flat();
@@ -327,24 +447,48 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
             values,
             expr,
             numbers: i => toNumber(values(i)),
+            // the index of the row in the rows, e.g. of the data
+            index: index ? i => index[i] : i => i,
             // only of the types which need them, e.g. not of the year
             get groups() { return groups ??= groupsOf(n, get, by, t.order, inUtc); },
             matches: i => conditions.every(c => c(i)),
             utc: inUtc,
         });
+        if (rowTransforms.has(t.type)) {
+            // the rows of the classes after the rows (the columns before have
+            // no values of them, the filters before keep them), or instead of
+            // them (`replace`, all columns are new)
+            if (result.outside > 0)
+                notes.push(`transform[${k}] (${t.type}): ${result.outside} values of '${t.column}' outside the edges ${result.edges[0]} to ${result.edges.at(-1)} are left out`);
+            if (!t.replace) {
+                const added = result.rows.map((_, j) => base.length + j);
+                [...columns].forEach(([c, v]) => columns.set(c, [...v, ...result.rows.map(() => null)]));
+                columns.kept = index ? [...index, ...added] : null;
+                base = [...base, ...result.rows];
+            } else {
+                columns.clear();
+                columns.kept = null;
+                base = result.rows;
+            }
+            result.rows.forEach(r => Object.keys(r).forEach(c => present.add(c)));
+            save(keys[k], null);
+            continue;
+        }
         if (t.type == 'filter') {
             columns.kept = (index ?? Array.from({ length: n }, (_, i) => i)).filter((r, i) => result[i]);
-            columns.steps.push({ key: keys[k], name: null, kept: columns.kept });
+            save(keys[k], null);
             continue;
         }
         const name = t.as ?? t.column;
         // the values of all rows, none of the ones of the filters before
-        const all = index ? new Array(rows.length).fill(null) : result;
+        const all = index ? new Array(base.length).fill(null) : result;
         if (index)
             index.forEach((r, i) => all[r] = result[i]);
         columns.set(name, all);
-        columns.steps.push({ key: keys[k], name, values: all, kept: index });
+        save(keys[k], name);
         columns.changed.add(name);
     }
+    columns.rows = base === rows ? null : base;
+    columns.notes = notes;
     return columns;
 };

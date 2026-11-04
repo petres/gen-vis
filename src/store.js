@@ -1,6 +1,7 @@
 export { createStore };
 
-import { distinctValues, scaleDef, updateData } from "@/utils/data";
+import { distinctValues, prepareData, scaleDef, sourceRows, updateData } from "@/utils/data";
+import { warnOnce } from "@/utils/warn";
 import { applyTransforms, utcColumns } from "@/utils/transform";
 import { applyPatches, fillHtml, fillText, formatOf, templateNames } from "@/utils/def";
 import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
@@ -144,6 +145,7 @@ class Store {
             if (run != this.runs)
                 return false;
             Object.assign(this, state, { globals: sources.globals ?? null, chartDefaults: sources.defaults });
+            this.warnNotes();
             this.loads++;
             return true;
         } catch (error) {
@@ -181,11 +183,17 @@ class Store {
                 columns.changed.forEach(c => changedColumns.add(c));
             }
         };
+        const source = sourceRows(this.rows, this.columns);
         const changed = applyPatches(this.def, this.defOrg, { dataKeys: column => this.dataKeys(column), keepVisible, transform, files: this.files });
         transform();
+        this.warnNotes();
         Object.keys(this.def.mapping).filter(n => changedColumns.has(this.def.mapping[n].column) && !changed.includes(n))
             .forEach(n => changed.push(n));
-        if (changed.length > 0)
+        // other rows of a transform of rows, e.g. the classes of other edges
+        // of a bin, are prepared again, the same ones are updated in place
+        if (sourceRows(this.rows, this.columns) !== source)
+            this.data = raw(prepareData(this.rows, this.def, this.columns));
+        else if (changed.length > 0)
             this.data = raw(updateData(this.rows, this.data, this.def, changed, this.columns));
         // the coordinate system of a patch, e.g. polar instead of cartesian
         const coord = this.coords?.get(this.def.options.coord ?? 'cartesian');
@@ -197,10 +205,15 @@ class Store {
             this.geo = this.geometries && loadGeo(this.geometries, this.geoModule, this.def);
     }
 
+    // the warnings of the transforms, e.g. of values outside the edges of a bin
+    warnNotes() {
+        (this.columns?.notes ?? []).forEach(note => warnOnce(this, note, note));
+    }
+
     // the categories of the data of a column, e.g. of a column of a form
     // element, the last ones are kept
     dataKeys(column) {
-        const source = this.columns?.get(column) ?? this.rows;
+        const source = this.columns?.get(column) ?? sourceRows(this.rows, this.columns);
         if (this.keyCache?.column !== column || this.keyCache.source !== source)
             this.keyCache = { column, source, keys: distinctValues(this.rows, this.columns, column).map(String) };
         return this.keyCache.keys;

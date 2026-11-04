@@ -82,6 +82,12 @@ the rules of the values:
 - `columns`: the computed columns, by their name (`as`, by default
   `column`), a value per row, in the order of the rows, `null` is no value.
   Numbers are the same up to a relative difference of 1e-12.
+- `kept` (optional): the indexes of the rows of the filters, without one
+  all rows.
+- `result` (optional): the rows after a transform of rows (`bin`), the
+  columns of the later transforms are the ones of these rows.
+- `notes` (optional): the warnings of the transforms, e.g. of values outside
+  the edges of a bin, none by default.
 
 The rules of all transforms (see `docs/definition.md` of the package, `transform`):
 
@@ -94,6 +100,32 @@ The rules of all transforms (see `docs/definition.md` of the package, `transform
   `[from, to]` (included, `null` is open), compared as the values of the
   column and the ends together.
 - The values of `column` are numbers (above), the others are missing.
+
+`random`: the number of a row is `lo + (hi - lo)*u` of the `range` `[lo, hi]`
+(`[0, 1]` by default) and `u` of the text `"<seed>:<key>"`, the `seed` (0 by
+default) as a text and the key the index of the row in the rows (from 0, also
+of the rows left out by a filter before) or its value of the column `key`
+(`""` if missing). `u` is the 32 bits of FNV-1a of the UTF-16 code units of the
+text (offset 0x811c9dc5, prime 0x01000193), mixed by the finalizer of
+MurmurHash3 (`h ^= h >>> 16; h *= 0x85ebca6b; h ^= h >>> 13; h *= 0xc2b2ae35;
+h ^= h >>> 16`, 32-bit unsigned products), divided by 2^32.
+
+`bin` adds a row per class and group after the rows (`by`, the groups of
+the rows with a number of `column`, in the order of their first row; without
+`by` one group, also without rows) with the values
+of the columns `by` of the first row of the group, `start`, `end` and the
+count (`as`) or the sum of the numbers of `weight` (missing ones are 0). The
+`edges` are numbers (also strings of numbers) and ranges `{ "from", "to",
+"step" }` (from `from` in steps up to `to`, both included if they are steps,
+each edge rounded to 12 significant digits), sorted and without duplicates;
+of a `step` alone the edges are from the multiple of the step below the least
+value up to the one above the largest one. A class includes its start, the
+last one also its end; missing values are left out, values outside the edges
+too, with the note `transform[<i>] (bin): <n> values of '<column>' outside
+the edges <first> to <last> are left out`. The columns of the transforms
+before have no values of the added rows, the rows of the filters before
+include them. With `replace` the rows of the classes replace the rows, the
+columns of the transforms before are left out.
 
 ## Merging
 

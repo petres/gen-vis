@@ -1,4 +1,4 @@
-export { groupBy, inferTypes, inferType, keptRows, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, distinctValues, usedColumns, columnValues };
+export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { fillTemplate, sameValue, templateRefs, variants } from "@/utils/def";
@@ -162,11 +162,17 @@ const convert = (mapping, v, mappings) => converter(mapping, mappings)(v);
 // utils/transform-types.js), all without one
 const keptRows = (data, columns) => columns?.kept ? columns.kept.map(i => data[i]) : data;
 
+// the rows of the data, or the ones of a transform of rows (`columns.rows`,
+// e.g. the classes of a bin, see utils/transform-types.js), the columns of
+// the transforms are the ones of these rows
+const sourceRows = (rows, columns) => columns?.rows ?? rows;
+
 // the values of a column of the data by the index of a row, of a transform
 // (`columns`, see utils/transform.js) or of the rows
-const columnValues = (rows, columns, column) => columns?.has(column)
-    ? (values => i => values[i])(columns.get(column))
-    : i => rows[i]?.[column];
+const columnValues = (rows, columns, column) => {
+    const source = sourceRows(rows, columns);
+    return columns?.has(column) ? (values => i => values[i])(columns.get(column)) : i => source[i]?.[column];
+};
 
 // the values of mappings of the parsed rows in the prepared ones, e.g. of
 // another column of a form element, the rows are the same objects
@@ -176,7 +182,7 @@ const updateData = (rows, data, def, names, columns = null) => {
         value: columnValues(rows, columns, def.mapping[n].column),
         convert: converter(def.mapping[n], def.mapping),
     }));
-    rows.forEach((r, i) => {
+    sourceRows(rows, columns).forEach((r, i) => {
         const e = data[i];
         for (const c of mapping)
             e[c.name] = c.convert(c.value(i));
@@ -193,7 +199,7 @@ const prepareData = (data, def, columns = null) => {
         convert: converter(def.mapping[n], def.mapping),
     }));
 
-    return data.map((d, i) => {
+    return sourceRows(data, columns).map((d, i) => {
         const e = {};
         mapping.forEach(c => {
             e[c.name] = c.convert(c.value(i));
@@ -384,7 +390,7 @@ const usedColumns = def => {
 // columnValues), without missing ones, ascending, numbers by their value
 const distinctValues = (rows, columns, column) => {
     const value = columnValues(rows, columns, column);
-    const values = [...new Set(rows.map((r, i) => value(i)))].filter(v => v !== null && v !== undefined && v !== '');
+    const values = [...new Set(sourceRows(rows, columns).map((r, i) => value(i)))].filter(v => v !== null && v !== undefined && v !== '');
     return values.sort(comparison(values));
 };
 
@@ -468,7 +474,7 @@ const inferTypes = (def, rows, columns = null, known = () => true) => {
         if (!known(column))
             return;
         const value = columnValues(rows, columns, column);
-        m.type = inferType(value, rows.length) ?? formatType(m);
+        m.type = inferType(value, sourceRows(rows, columns).length) ?? formatType(m);
     };
     Object.values(def.mapping ?? {}).forEach(infer);
     variants(def).slice(1).forEach(patch => Object.entries(isObject(patch.mapping) ? patch.mapping : {})

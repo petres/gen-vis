@@ -3209,3 +3209,38 @@ describe('images', () => {
         expect(onRendered).toHaveBeenCalledTimes(1);
     });
 });
+
+describe('histograms: the classes of a bin', () => {
+    // inner size 750 x 250, x from 0 to 10, y from 0 to 4
+    const def = plot => ({
+        options: { height: 300, margins: { top: 25, right: 25, bottom: 25, left: 25 } },
+        transform: { type: 'bin', column: 'v', edges: [0, 2, 4, 10], by: 'g', start: 'lo', end: 'hi' },
+        mapping: {
+            x: { column: 'v', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, 10], domainRel: [0, 0] } },
+            lo: { column: 'lo', type: 'numeric', scale: { of: 'x' } },
+            hi: { column: 'hi', type: 'numeric', scale: { of: 'x' } },
+            y: { column: 'count', type: 'numeric', scale: { orientation: 'vertical', domain: [0, 4], domainRel: [0, 0] } },
+            g: { column: 'g', type: 'categorical', fromData: true },
+        },
+        plot,
+    });
+    const data = 'v,g\n1,a\n1.5,a\n3,a\n9,a\n1,b';
+
+    test('bars from the start to the end of a class, with crisp edges, empty ones of no height', async () => {
+        const el = await mount({ def: def({ type: 'bar', by: 'g', props: { x0: '@lo:scaled', x1: '@hi:scaled', y1: '@y:scaled' } }), data });
+        const rects = [...el.querySelectorAll('g.vis-plot rect')].map(r => ['x', 'width', 'y', 'height'].map(a => +r.getAttribute(a)));
+        // a: 2 in 0-2, 1 in 2-4, 1 in 4-10; b: 1 in 0-2, none in the others
+        expect(rects.slice(0, 3)).toEqual([[0, 150, 125, 125], [150, 150, 187.5, 62.5], [300, 450, 187.5, 62.5]]);
+        expect(rects[4]).toEqual([150, 150, 250, 0]);
+        expect(el.querySelector('g.vis-plot rect').getAttribute('shape-rendering')).toBe('crispEdges');
+        expect(errors).toEqual([]);
+    });
+
+    test('stairs of a line of x0 and x1: down to the base at both ends', async () => {
+        const el = await mount({ def: def({ type: 'line', by: 'g', props: { d: { x0: '@lo:scaled', x1: '@hi:scaled' } } }), data });
+        const [a, b] = [...el.querySelectorAll('g.vis-plot path')].map(p => p.getAttribute('d'));
+        expect(a).toBe('M0,250V125H150V187.5H300V187.5H750V250');
+        expect(b).toBe('M0,250V187.5H150V250H300V250H750V250');
+        expect(errors).toEqual([]);
+    });
+});

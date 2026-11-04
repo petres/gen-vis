@@ -446,7 +446,8 @@ const plotGroups = (plot, rows, ctx) => {
     const needed = [...new Set(refNames(plot.props).filter(n => !ofScale.test(n.split(':').slice(1).join(':')))
         .map(n => n.split(':')[0]))].filter(m => Object.hasOwn(mapping, m));
     const complete = row => needed.every(m => row[m] !== null);
-    if (needed.length > 0 && rows.length > 0 && !rows.some(complete))
+    // not without data, e.g. the empty classes of a bin of no rows
+    if (needed.length > 0 && rows.length > 0 && ctx.store.rows?.length > 0 && !rows.some(complete))
         warnOnce(ctx.store, `plot:${plot.id}:missing`, `plot '${plot.id}': none of its ${rows.length} rows is drawn, `
             + needed.map(m => [m, rows.filter(r => r[m] === null).length]).filter(([, n]) => n > 0)
                 .map(([m, n]) => `${n} without a value of mapping '${m}'`).join(', '));

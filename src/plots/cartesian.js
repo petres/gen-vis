@@ -19,6 +19,35 @@ const barWidth = (scale, type) => {
     return scale.bandwidth() || scale.step()*(1 - scale.padding());
 };
 
+// the position of the base of the values of a scale: of 0, or of the end of
+// the range nearest to it if 0 is outside the domain
+const baseOf = scale => {
+    const [lo, hi] = d3.extent(scale.range());
+    return Math.max(lo, Math.min(hi, scale(0)));
+};
+
+/**
+ * The path of stairs of the points of a group: a horizontal line from `x0`
+ * to `x1` at `y` of every point (e.g. a class of a bin), in the order of
+ * `x0`, vertical lines between neighbours and down to the base (`y0`, by
+ * default the position of 0) at the ends and at gaps between them, e.g. the
+ * outline of a histogram. Points without a position are gaps.
+ */
+const stairs = (points, base) => {
+    const steps = points.filter(p => finite(p.x0, p.x1, p.y)).sort((a, b) => a.x0 - b.x0);
+    let path = '';
+    let end = null;
+    steps.forEach(p => {
+        const y0 = finite(p.y0) ? p.y0 : base;
+        // a neighbour (less than half a pixel apart) or a new part from the base
+        if (end === null || Math.abs(p.x0 - end.x) >= 0.5)
+            path += `${end === null ? '' : `V${end.y0}`}M${p.x0},${y0}`;
+        path += `V${p.y}H${p.x1}`;
+        end = { x: p.x1, y0 };
+    });
+    return end === null ? null : `${path}V${end.y0}`;
+};
+
 // the plot types of the cartesian coordinate system, missing values are gaps
 // in lines and areas
 export default {
@@ -27,13 +56,21 @@ export default {
         curve: true,
         coords: ['cartesian'],
         update: true,
-        marks: (groups, plot) => perGroup(groups, g => d3.line()
-            .curve(curve(plot))
-            .defined(e => finite(e.x, e.y))
-            .x(e => e.x)
-            .y(e => e.y)
-            (points(g))
-        ),
+        marks(groups, plot, ctx) {
+            // stairs of `x0` and `x1`, e.g. the outline of a histogram
+            if (plot.props.d && ('x0' in plot.props.d || 'x1' in plot.props.d)) {
+                const scale = propScale(plot, ctx, 'd.y');
+                const base = scale ? baseOf(scale) : ctx.innerHeight;
+                return perGroup(groups, g => stairs(points(g), base));
+            }
+            return perGroup(groups, g => d3.line()
+                .curve(curve(plot))
+                .defined(e => finite(e.x, e.y))
+                .x(e => e.x)
+                .y(e => e.y)
+                (points(g))
+            );
+        },
     },
 
     // an area per group, `d` with `x`, `y0` and `y1`
@@ -68,6 +105,17 @@ export default {
                 let value;
                 return () => value ??= f();
             };
+            // a vertical bar from `x0` to `x1`, e.g. a class of a bin, from `y0`
+            // (by default the position of 0) to `y1`
+            if ('x1' in plot.props && 'y1' in plot.props) {
+                const base = once(() => baseOf(barScale(plot, ctx, 'y1', type)));
+                return perRow(groups, "rect", v => {
+                    const { x0, x1 } = v;
+                    const y0 = 'y0' in v ? v.y0 : base();
+                    const { x0: _, x1: __, y0: ___, y1: ____, ...props } = v;
+                    return { ...props, x: Math.min(x0, x1), width: Math.abs(x1 - x0), y: Math.min(y0, v.y1), height: Math.abs(v.y1 - y0) };
+                });
+            }
             if ('x1' in plot.props) {
                 const yScale = once(() => barScale(plot, ctx, 'y', type));
                 const thickness = once(() => barWidth(yScale(), type));

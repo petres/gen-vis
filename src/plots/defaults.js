@@ -6,12 +6,17 @@
 const color = { or: ['@color', 'currentColor'] };
 
 export const defaults = {
-    'cartesian:line': { stroke: color, fill: 'none', d: { x: '@x:scaled', y: '@y:scaled' } },
+    // stairs with `x0` and `x1` of `d`, e.g. the classes of a bin, without an `x`
+    'cartesian:line': props => props?.d && typeof props.d == 'object' && ('x0' in props.d || 'x1' in props.d)
+        ? { stroke: color, fill: 'none', d: { y: '@y:scaled' } }
+        : { stroke: color, fill: 'none', d: { x: '@x:scaled', y: '@y:scaled' } },
     'cartesian:area': { fill: color, d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } },
-    // a horizontal bar with `x1`, otherwise a vertical one
-    'cartesian:bar': props => props && 'x1' in props
-        ? { fill: color, x1: '@x:scaled', y: '@y:scaled' }
-        : { fill: color, x: '@x:scaled', y1: '@y:scaled' },
+    // a horizontal bar with `x1`, a vertical one from `x0` to `x1` with `x1`
+    // and `y1` (e.g. the classes of a bin, with crisp edges, so neighbours
+    // meet without a seam also in a scaled image), otherwise a vertical one
+    'cartesian:bar': props => props && 'x1' in props && 'y1' in props ? { fill: color, 'shape-rendering': 'crispEdges' }
+        : (props && 'x1' in props ? { fill: color, x1: '@x:scaled', y: '@y:scaled' }
+            : { fill: color, x: '@x:scaled', y1: '@y:scaled' }),
     'svg:circle': { cx: '@x:scaled', cy: '@y:scaled', r: 3, fill: color },
     'svg:text': { x: '@x:scaled', y: '@y:scaled', fill: '@color' },
     'polar:line': { stroke: color, fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } },

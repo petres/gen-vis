@@ -12,7 +12,7 @@ import { refNames } from "@/utils/expr";
  */
 
 // the types of the transforms, e.g. for validateDef
-const transformNames = ['year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'lookup'];
+const transformNames = ['year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin'];
 
 const list = transforms => [transforms ?? []].flat();
 
@@ -25,7 +25,7 @@ const loadTransforms = async () => types ??= await lazy.transform();
  */
 const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null) => {
     if (list(transforms).length == 0)
-        return Object.assign(new Map(), { steps: [], changed: new Set(), kept: null });
+        return Object.assign(new Map(), { steps: [], changed: new Set(), kept: null, rows: null, notes: [] });
     if (!types)
         throw new Error('The transforms are not loaded, see loadTransforms');
     return types.applyTransforms(rows, transforms, globals, utc, before, files);
@@ -46,9 +46,13 @@ const transformColumns = transforms => {
     const own = new Set();
     const used = new Set();
     list(transforms).forEach(t => {
-        [t.column, ...[t.by ?? []].flat(), t.order, ...Object.keys(t.base ?? {}), ...(t.expr === undefined ? [] : refNames(t.expr))]
+        [t.column, ...[t.by ?? []].flat(), t.order, t.weight, t.type == 'random' ? t.key : undefined,
+            ...Object.keys(t.base ?? {}), ...(t.expr === undefined ? [] : refNames(t.expr))]
             .filter(c => typeof c == 'string' && !own.has(c)).forEach(c => used.add(c));
-        if (t.type != 'filter')
+        // the columns of the rows of a bin are its own
+        if (t.type == 'bin')
+            [t.start ?? 'start', t.end ?? 'end', t.as ?? 'count'].forEach(c => own.add(c));
+        else if (t.type != 'filter')
             own.add(t.as ?? t.column);
     });
     return [...used];

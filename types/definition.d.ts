@@ -455,7 +455,7 @@ export interface Expression {
 }
 export interface Transform {
     /**
-     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, lookup: the `value` of the row of a file of `data` of the `key`.
+     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`).
      */
     type:
         | 'year'
@@ -468,7 +468,9 @@ export interface Transform {
         | 'calc'
         | 'filter'
         | 'rank'
-        | 'lookup';
+        | 'random'
+        | 'lookup'
+        | 'bin';
     /**
      * The column of the values, a template of the globals, of a lookup the one of the keys.
      */
@@ -494,7 +496,7 @@ export interface Transform {
      */
     dataFormat?: 'csv' | 'tsv' | 'json' | 'parquet';
     /**
-     * lookup: the column of the keys of the rows of the file.
+     * lookup: the column of the keys of the rows of the file; random: the column of the keys of the rows, e.g. an id, a row keeps its number also if the rows of the file are in another order (by default its index in the data).
      */
     key?: string;
     /**
@@ -502,9 +504,52 @@ export interface Transform {
      */
     value?: string;
     /**
-     * The name of the new column, by default the one of `column`, which it replaces.
+     * The name of the new column, by default the one of `column`, which it replaces; bin: the column of the number of the values of the class, count by default.
      */
     as?: string;
+    /**
+     * bin: the edges of the classes, numbers and ranges { "from": 50, "to": 250, "step": 5 }, sorted together, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143]. A class includes its start, the last one also its end, values outside the edges are left out.
+     */
+    edges?: (
+        | number
+        | string
+        | {
+              from: number;
+              to: number;
+              step: number;
+          }
+    )[];
+    /**
+     * bin: the width of the classes without edges, also a template of the globals, e.g. "{step}", from the multiple of it below the least value to the one above the largest one.
+     */
+    step?: number | string;
+    /**
+     * bin: the column of the weights of the rows, the value of a class is the sum of the weights of its values, e.g. of a reporting lag.
+     */
+    weight?: string;
+    /**
+     * bin: the column of the start of the class, start by default.
+     */
+    start?: string;
+    /**
+     * bin: the column of the end of the class, end by default.
+     */
+    end?: string;
+    /**
+     * bin: the rows of the classes replace the rows; by default they come after them, e.g. a histogram and a strip plot of the same values, the plots draw the rows with the values they use.
+     */
+    replace?: boolean;
+    /**
+     * random: the least and the largest number, [0, 1] by default.
+     *
+     * @minItems 2
+     * @maxItems 2
+     */
+    range?: [number, number];
+    /**
+     * random: another seed gives other numbers, 0 by default.
+     */
+    seed?: number | string;
     /**
      * The groups of the rows of the same values of these columns, e.g. a line per category.
      */

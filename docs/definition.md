@@ -258,6 +258,52 @@ column:
   names for the country codes of the data, in the page language: `{"type": "lookup", "column": "country", "data": "countries.csv",
   "key": "code", "value": "name_{lang}", "as": "countryName"}`. The file is
   loaded with the data, its url is no template.
+- `random`: a random number of the row in `range` (`[0, 1]` by default) in
+  the column `as`, the same on every draw: a hash of the `seed` (0 by
+  default, another seed gives other numbers) and of the row, its index in
+  the data or its value of the column `key` (e.g. an id, so the numbers stay
+  if the rows of the file come in another order). A row keeps its number if
+  others are left out (by a `filter`, the `filter` of the definition or a
+  hidden category), e.g. the jitter of the points of a strip plot within the
+  band of their category:
+  ```json
+  "transform": { "type": "random", "as": "jitter", "range": [0.06, 0.94], "seed": 1 },
+  "plot": { "type": "point", "by": "group",
+            "props": { "cx": "@x:scaled", "cy": { "+": ["@group:scaled", { "*": ["@jitter", "@group:bandwidth"]}]}, "r": 1 } }
+  ```
+- `bin`: the classes of the values of `column`, e.g. a histogram. It adds a
+  row per class and group (`by`, the groups of the rows with values) after
+  the rows, with the columns `by`, the start of the class (`start`, by
+  default `"start"`), its end (`end`, `"end"`) and the number of its values
+  (`as`, `"count"`) or the sum of their `weight` (a column, e.g. a weight of
+  a reporting lag), also of empty classes (0), so an outline goes down to 0.
+  `edges` are numbers and ranges `{"from", "to", "step"}`, e.g. classes of 5
+  from 50 to 250 and an edge at 143, so no class crosses a threshold: `[{"from":
+  50, "to": 250, "step": 5}, 143]`; without them `step` gives classes of the
+  multiples of it around the values. A class includes its start, the last
+  one also its end, the values outside the edges are left out (a warning
+  says how many). The rows stay, so the plots draw both: a plot draws the
+  rows with the values it uses, e.g. the bars the rows of the classes and
+  the points of a strip plot the rows of the data, see
+  `data/stats/histogram.json`. With `"replace": true` the rows of the
+  classes replace the rows, they only have their own columns. The transforms
+  after it compute values of the rows of the classes too, e.g. the
+  awards per month and class of 5 (`months` a global):
+  ```json
+  "transform": [
+      { "type": "bin", "column": "value", "edges": [{ "from": 50, "to": 250, "step": 5 }, 143], "start": "lo", "end": "hi" },
+      { "type": "calc", "as": "perMonth", "expr": { "/": [{ "/": ["@count", "@months"] }, { "/": [{ "-": ["@hi", "@lo"] }, 5] }] } }
+  ]
+  ```
+  or a density per category, its share of the group, divided by the width:
+  `{"type": "share", "column": "count", "as": "share", "by": "regime"}`,
+  `{"type": "calc", "as": "density", "expr": {"/": ["@share", {"-":
+  ["@hi", "@lo"]}]}}`. The rows of the data have no count, so they are no
+  part of these values. The transforms are computed before the `filter`
+  of the definition: the classes of the values of a selected month need the
+  month in `by`, e.g. `"by": ["month"]` and `"filter": {"month": "@month"}`.
+  The bars of the classes are `bar` with `x0`, `x1` and `y1`, an outline is
+  a `line` with `x0` and `x1`, see [plot](#plot).
 
 The strings of a transform are templates of the globals, e.g. `{base}`, the
 transforms are computed again when the globals change, from the first one
@@ -721,7 +767,12 @@ A plot or a list of plots, drawn in order:
   - `svg:circle`, `svg:rect`, `svg:line`, `svg:text`: an svg element per row
     in any coordinate system, the props are its attributes, e.g.
     `"cx": "@x:scaled"`
-  - `cartesian:line`: a line per group, `d` with `x` and `y`
+  - `cartesian:line`: a line per group, `d` with `x` and `y`. With `x0`
+    and `x1` instead of `x` stairs: a horizontal line from `x0` to `x1` at
+    `y` of every row (e.g. a class of a [bin](#transform)), vertical lines
+    between neighbours, and down to the base (`y0`, by default the position
+    of 0) at the ends and at gaps, e.g. the outline of a histogram per
+    category, `"d": {"x0": "@lo:scaled", "x1": "@hi:scaled", "y": "@density:scaled"}`
   - `cartesian:area`: an area per group, `d` with `x`, `y0` and `y1`
   - `cartesian:bar`: a bar per row from `y0` to `y1`, by default from the
     position of 0, e.g. `"y1": "@y:scaled"`, or a stacked value with
@@ -729,7 +780,12 @@ A plot or a list of plots, drawn in order:
     `x`, in the middle of a band, `width` defaults to the width of a band or
     the step of a point scale, a continuous scale needs a `width`. With `x1`
     the bars are horizontal, from `x0` (by default 0) to `x1` at `y`, `height`
-    is their thickness, e.g. of the countries of a band scale of `y`.
+    is their thickness, e.g. of the countries of a band scale of `y`. With
+    `x1` and `y1` a bar from `x0` to `x1` and from `y0` (by default 0) to
+    `y1`, e.g. a class of a [bin](#transform) on a continuous scale,
+    `"x0": "@lo:scaled", "x1": "@hi:scaled", "y1": "@count:scaled"`, with
+    crisp edges (`"shape-rendering": "crispEdges"`, `null` removes it), so
+    neighbours meet without a seam, also in a scaled image.
   - `polar:*` of [polar plots](#polar-plots) and `geo:*` of [maps](#maps)
 - `by`: the rows are grouped by this mapping or these mappings, the
   props of their categories are available in the plot props. Mappings

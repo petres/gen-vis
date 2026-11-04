@@ -193,7 +193,7 @@ describe('transforms', () => {
             "transform[0]: unknown global 'base' in the template",
             "transform[1].size: the number of the rows of the window is needed, e.g. 7",
             "transform[1].align: expected 'end' or 'center'",
-            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'lookup'",
+            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin'",
             "transform[2].column: the column of the values is needed",
         ]);
         expect(schema.definitions.transform.properties.type.enum).toEqual(Object.keys(transformTypes));
@@ -212,5 +212,61 @@ describe('rolling, rows without a value', () => {
     test('texts which are no decimal numbers are missing, e.g. hexadecimal ones', () => {
         const values = [{ v: '0x10' }, { v: ' 2 ' }, { v: '1e1' }];
         expect(applyTransforms(values, { type: 'cumulative', column: 'v' }).get('v')).toEqual([null, 2, 12]);
+    });
+});
+
+describe('bin and random in a chart', () => {
+    const data = 'v,g\n1,a\n3,a\n7,b\n9,b';
+    const def = () => ({
+        globals: { step: '5' },
+        transform: [
+            { type: 'random', as: 'jitter', seed: 1 },
+            { type: 'bin', column: 'v', step: '{step}', start: 'lo', end: 'hi' },
+        ],
+        mapping: {
+            x: { column: 'v', type: 'numeric', scale: { orientation: 'horizontal' } },
+            lo: { column: 'lo', type: 'numeric', scale: { of: 'x' } },
+            hi: { column: 'hi', type: 'numeric', scale: { of: 'x' } },
+            y: { column: 'count', type: 'numeric', scale: { orientation: 'vertical', domain: [0, null] } },
+            g: { column: 'g', type: 'categorical', fromData: true, legend: {} },
+            jitter: { column: 'jitter', type: 'numeric' },
+        },
+        plot: [
+            { type: 'bar', props: { x0: '@lo:scaled', x1: '@hi:scaled', y1: '@y:scaled' } },
+            { type: 'point', by: 'g', props: { cy: '@jitter' } },
+        ],
+    });
+
+    test('the rows of the classes after the rows, again of another global, the numbers of the rows stay', async () => {
+        const { createStore } = await import('@/store');
+        const store = createStore();
+        await store.init({ def: def(), data });
+        const classes = () => store.data.filter(r => r.y !== null).map(r => [r.lo, r.hi, r.y]);
+        const jitter = () => store.data.filter(r => r.jitter !== null).map(r => r.jitter);
+        expect(store.data).toHaveLength(6);
+        expect(classes()).toEqual([[0, 5, 2], [5, 10, 2]]);
+        const before = jitter();
+        // other edges: other rows of the classes, the chart's rows are new
+        store.setGlobals({ step: '2' });
+        expect(classes()).toEqual([[0, 2, 1], [2, 4, 1], [4, 6, 0], [6, 8, 1], [8, 10, 1]]);
+        expect(store.data).toHaveLength(9);
+        expect(jitter()).toEqual(before);
+        // a hidden category does not change the numbers
+        store.def.mapping.g.categoryProps.a.visible = false;
+        expect(jitter()).toEqual(before);
+    });
+
+    test('validateDef: the edges of a bin, the name of a random number', () => {
+        const checks = transform => validateDef({ ...def(), transform }).filter(w => w.startsWith('transform'));
+        expect(checks([{ type: 'bin', column: 'v' }])).toEqual([`transform[0].edges: the edges of the classes are needed, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143], or a 'step'`]);
+        expect(checks([{ type: 'random' }])).toEqual([`transform[0].as: the name of the new column is needed, e.g. "jitter"`]);
+        expect(checks([{ type: 'calc', as: 'c', expr: 1, replace: true }])).toEqual([`transform[0].replace: only of a bin: its rows replace the rows`]);
+        expect(checks(def().transform)).toEqual([]);
+    });
+
+    test('the columns of the data the transforms use, not their own ones', () => {
+        expect(transformColumns([{ type: 'bin', column: 'v', by: 'g', weight: 'w' }, { type: 'calc', as: 'd', expr: { '/': ['@count', '@end'] } }]))
+            .toEqual(['v', 'g', 'w']);
+        expect(transformColumns([{ type: 'random', as: 'r', key: 'id' }])).toEqual(['id']);
     });
 });

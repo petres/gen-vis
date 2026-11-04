@@ -689,8 +689,15 @@ const checkTransforms = ({ def, globals, warn }) => {
             checkProp(t.expr, `${path}.expr`, warn, null);
             if (t.type == 'calc' && typeof t.as != 'string')
                 warn(`${path}.as`, `the name of the new column is needed`);
+        } else if (t.type == 'random') {
+            if (typeof t.as != 'string')
+                warn(`${path}.as`, `the name of the new column is needed, e.g. "jitter"`);
         } else if (typeof t.column != 'string')
             warn(`${path}.column`, `the column of the values is needed`);
+        if (t.type == 'bin' && t.edges === undefined && t.step === undefined)
+            warn(`${path}.edges`, `the edges of the classes are needed, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143], or a 'step'`);
+        if (t.replace !== undefined && t.type != 'bin')
+            warn(`${path}.replace`, `only of a bin: its rows replace the rows`);
         if (t.type == 'lookup') {
             if (typeof t.data != 'string' || t.data.includes('{'))
                 warn(`${path}.data`, `the url of the rows is needed, not a template`);
