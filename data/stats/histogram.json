@@ -14,6 +14,9 @@
         "footer": "Erfundene Daten, Beispiel des Transforms bin und random",
         "locale": {
             "base": "de"
+        },
+        "hover": {
+            "title": "{title}–{hi} Tsd. €"
         }
     },
     "globals": {
@@ -99,21 +102,25 @@
                     }
                 }
             },
-            "hover": {
-                "format": ",.2f"
-            },
             "name": "Auftragswert (1.000 €)"
         },
         "lo": {
             "column": "lo",
             "scale": {
                 "of": "x"
+            },
+            "hover": {
+                "format": ",.0f"
             }
         },
         "hi": {
             "column": "hi",
             "scale": {
                 "of": "x"
+            },
+            "hover": {
+                "format": ",.0f",
+                "cell": false
             }
         },
         "y": {
@@ -138,6 +145,11 @@
             "axis": {
                 "ticks": 5,
                 "grid": true
+            },
+            "stacked": true,
+            "stackBy": "lo",
+            "hover": {
+                "format": ",.2f"
             }
         },
         "group": {
@@ -166,8 +178,7 @@
             },
             "axis": {
                 "position": "left"
-            },
-            "hover": {}
+            }
         },
         "jitter": {
             "column": "jitter",
