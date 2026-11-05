@@ -717,7 +717,10 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   references to the props of the categories, e.g. `@color`, `"fill-opacity":
   0.08`, `"stroke-dasharray": "@dash"`), in the box of the line of the
   defaults, without a line of the box or the dot; the `props` of the symbol
-  apply to all its parts; without a plot `by` the mapping it is a rect. A
+  apply to all its parts; without a plot `by` the mapping it is a rect. Plots
+  with a `filter` of the mapping (e.g. `{"land": "Wien"}`, a list or `not`,
+  not a global) give each category the symbol of the plots which draw it,
+  e.g. a line of one category and boxes of the bars of the others. A
   category can have a `symbol` of its own (in the same forms), e.g.
   `"categories": {"Direktvergabe": {"symbol": "rect"}}` of an area in a
   legend of lines. A click shows or hides the

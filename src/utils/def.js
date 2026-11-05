@@ -113,12 +113,13 @@ const symbolKinds = [
  * shortcut of the line (or of the box or the dot) of the `defaults`, a
  * rect without plots of the categories.
  */
-const autoSymbol = (symbol, name, plots, names, defaults) => {
+const autoSymbol = (symbol, name, plots, names, defaults, key) => {
     const given = typeof symbol == 'string' ? {} : symbol;
     const own = v => !refNames(v).some(n => typeof n != 'string' || (n != 'color' && !names.has(n)));
     const parts = symbolKinds.flatMap(([kind, types, keys]) => {
-        // the first plot of the first type of the kind, e.g. a line before a rule
-        const of = [plots ?? []].flat().filter(p => [p?.by ?? []].flat().includes(name));
+        // the first plot of the first type of the kind, e.g. a line before a
+        // rule, of the ones which draw the category `key` (all without one)
+        const of = [plots ?? []].flat().filter(p => [p?.by ?? []].flat().includes(name) && (key === undefined || draws(p.filter, name, key)));
         const plot = types.map(t => of.find(p => p?.type == t)).find(Boolean);
         if (!plot)
             return [];
@@ -131,6 +132,19 @@ const autoSymbol = (symbol, name, plots, names, defaults) => {
     const base = symbolOf({ ...given, type: parts.find(p => p.kind == 'line')?.kind ?? parts[0].kind, props: {} }, names, defaults);
     const { width, height } = base;
     return { width, height, elements: parts.map(p => ({ type: p.kind, props: { ...symbolShape(p.kind, width, height), ...p.props, ...given.props } })) };
+};
+
+// whether a plot draws a category of a mapping by its `filter` on the
+// mapping, e.g. { "land": "Wien" } or { "land": { "not": ["Wien"] } }; the
+// conditions of globals and ranges are of all categories (undecided here)
+const draws = (filter, name, key) => {
+    if (!isObject(filter) || !Object.hasOwn(filter, name))
+        return true;
+    const ref = v => typeof v == 'string' && v.startsWith('@');
+    const test = c => Array.isArray(c) ? (c.some(ref) ? undefined : c.map(String).includes(key))
+        : isObject(c) ? ('not' in c ? (r => r === undefined ? undefined : !r)(test(c.not)) : undefined)
+        : ref(c) ? undefined : c !== null && String(c) === key;
+    return test(filter[name]) ?? true;
 };
 
 // the colors of the categories without colors, the scheme observable10
@@ -206,8 +220,15 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = [], 
         const names = new Set(Object.values(m.categoryProps ?? {}).flatMap(p => Object.keys(p)));
         const prepared = symbol => symbol === 'auto' || symbol?.type == 'auto' ? autoSymbol(symbol, name, plots, names, symbols)
             : (typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type) ? symbolOf(symbol, names, symbols) : symbol);
+        const auto = m.legend.symbol === 'auto' || m.legend.symbol?.type == 'auto' ? m.legend.symbol : null;
         m.legend.symbol = prepared(m.legend.symbol);
         Object.values(m.categoryProps ?? {}).filter(p => p.symbol !== undefined).forEach(p => p.symbol = prepared(p.symbol));
+        // "auto" of plots of some categories (a filter of the mapping): the
+        // symbol of each category of the plots which draw it, e.g. a line of
+        // one and bars of the others
+        if (auto && [plots ?? []].flat().some(p => [p?.by ?? []].flat().includes(name) && isObject(p.filter) && Object.hasOwn(p.filter, name)))
+            Object.entries(m.categoryProps ?? {}).filter(([, p]) => p.symbol === undefined)
+                .forEach(([k, p]) => p.symbol = autoSymbol(auto, name, plots, names, symbols, k));
 
         if (!('name' in m.legend.props)) {
              m.legend.props.name = "@name"

@@ -159,7 +159,8 @@ Legends:
 - `"symbol": "auto"`: the symbol of a legend of the plots of its
   categories, a box of their bars or areas, a line of their lines and a
   dot of their points together, with their style, e.g. a light area under
-  a line; also of the plots of a patch of a form element.
+  a line; also of the plots of a patch of a form element, per category of
+  plots with a `filter` of the mapping (a line of one, bars of the others).
 - Annotations in the legend: `"legend": "name"` of an annotation is an
   entry of the legend with a symbol of it (a vertical line of a line at a
   value of x, a horizontal one of y, a box of a band), after the legends

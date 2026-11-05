@@ -70,6 +70,19 @@ describe('the props of categories', () => {
         expect(none.mapping.c.legend.symbol.elements[0].type).toBe('rect');
     });
 
+    test('"auto" of plots of some categories: the symbol of each category of the plots which draw it', () => {
+        const def = prepareDef({ globals: { year: '2024' }, mapping: { c: { column: 'c', legend: { symbol: 'auto' }, categories: { a: {}, b: {}, c: { symbol: 'circle' }, d: {} } } }, plot: [
+            { type: 'cartesian:line', by: 'c', filter: { c: 'a' }, props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
+            { type: 'cartesian:bar', by: 'c', filter: { c: { not: ['a', 'd'] } }, props: { x: '@x:scaled', y1: '@y:scaled' } },
+            // a condition of a global is of all categories
+            { type: 'svg:circle', by: 'c', filter: { c: '@year' }, props: {} },
+        ] });
+        const kinds = k => def.mapping.c.categoryProps[k].symbol.elements.map(e => e.type);
+        expect([kinds('a'), kinds('b'), kinds('c'), kinds('d')]).toEqual([['line', 'circle'], ['rect', 'circle'], ['circle'], ['circle']]);
+        // the one of the legend of all plots
+        expect(def.mapping.c.legend.symbol.elements.map(e => e.type)).toEqual(['rect', 'line', 'circle']);
+    });
+
     test('a symbol of a category instead of the one of the legend', () => {
         const c = prepareDef({ mapping: { c: { column: 'c', legend: { symbol: 'line' }, categories: { a: { symbol: 'rect' }, b: {} } } }, plot: [] }).mapping.c;
         expect(c.categoryProps.a.symbol.elements[0].type).toBe('rect');
