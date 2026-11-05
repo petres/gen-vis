@@ -10,7 +10,11 @@
     --gen-vis-font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
     --gen-vis-grid-color: #1E293B;
     --gen-vis-marker-color: #64748B;
-    --gen-vis-hover-background: #020617E6;
+    --gen-vis-axis-color: #334155;
+    --gen-vis-axis-label-color: #64748B;
+    --gen-vis-muted-color: #64748B;
+    --gen-vis-hover-background: #020617;
+    --gen-vis-hover-border-color: #334155;
     --gen-vis-halo-color: #0F172A;
     --gen-vis-background: #0F172A;
     --gen-vis-button-color: #475569;
@@ -26,11 +30,9 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
-.theme-dashboard .vis-subtitle { font-size: 12px; color: #64748B; }
+.theme-dashboard .vis-subtitle { font-size: 12px; }
 
-.theme-dashboard .vis-axis path.domain { stroke: #334155; }
-.theme-dashboard .vis-axis .tick line { stroke: #334155; }
-.theme-dashboard .vis-axis text { fill: #64748B; font-size: 11px; }
+.theme-dashboard .vis-axis text { font-size: 11px; }
 
 /* the radio buttons as a segmented control */
 .theme-dashboard .vis-form-elements { margin: 4px 0 8px; }
@@ -69,14 +71,12 @@
 .theme-dashboard .vis-radio input:focus-visible + label { outline: 2px solid #38BDF8; }
 
 .theme-dashboard .vis-legend-title { display: none; }
-.theme-dashboard .vis-legend-entry span { font-size: 12px; color: #CBD5E1; top: -1px; }
+.theme-dashboard .vis-legend-entry { font-size: 12px; color: #CBD5E1; }
 
 .theme-dashboard .vis-hover {
     color: #E2E8F0;
-    border: 1px solid #334155;
     border-radius: 8px;
     padding: 4px 2px;
 }
-.theme-dashboard .vis-hover-title { border-bottom: 1px solid #334155; font-weight: 600; }
 
 .theme-dashboard .vis-footer span { font-size: 11px; color: #475569; }

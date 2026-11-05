@@ -10,7 +10,11 @@
     --gen-vis-font-family: "Avenir Next", "Avenir", "Futura", "Trebuchet MS", sans-serif;
     --gen-vis-grid-color: #1B1B1B26;
     --gen-vis-marker-color: #E4572E;
-    --gen-vis-hover-background: #F4EEE1F2;
+    --gen-vis-axis-color: #1B1B1B66;
+    --gen-vis-axis-label-color: #1B1B1B;
+    --gen-vis-muted-color: #1B1B1B;
+    --gen-vis-hover-background: #F4EEE1;
+    --gen-vis-hover-border-color: #1B1B1B;
     --gen-vis-halo-color: #F4EEE1;
     --gen-vis-background: #F4EEE1;
     --gen-vis-annotation-color: #1B1B1B;
@@ -36,7 +40,7 @@
 
 .theme-poster .vis-legends { margin-top: 6px; }
 .theme-poster .vis-legend-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }
-.theme-poster .vis-legend-entry span { font-size: 12px; }
+.theme-poster .vis-legend-entry { font-size: 12px; }
 
 .theme-poster .vis-annotation-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
 

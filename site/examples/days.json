@@ -28,7 +28,7 @@
     "mapping": {
         "x": {
             "column": "temperature", "type": "numeric", "domain": [-6, 26], "format": ",.1f",
-            "scale": { "domainRel": [0, 0] },
+            "scale": { "pad": 0 },
             "axis": { "values": [-5, 0, 5, 10, 15, 20, 25], "format": "d", "title": { "name": "°C", "offset": 30 } }
         },
         "lo": { "column": "lo", "type": "numeric", "format": "d", "scale": { "of": "x" }, "hover": {} },

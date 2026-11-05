@@ -9,7 +9,9 @@
     --gen-vis-font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, sans-serif;
     --gen-vis-grid-color: #FFFFFFB3;
     --gen-vis-marker-color: #1E1B4B;
-    --gen-vis-hover-background: #FFFFFF;
+    --gen-vis-axis-label-color: #9CA3AF;
+    --gen-vis-muted-color: #6B7280;
+    --gen-vis-hover-border-color: #EDE9FE;
     --gen-vis-button-color: #A5B4FC;
     --gen-vis-button-hover-color: #4338CA;
     --gen-vis-focus-color: #6366F1;
@@ -22,11 +24,9 @@
 }
 
 .theme-soft .vis-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #1E1B4B; }
-.theme-soft .vis-subtitle { font-size: 13px; color: #6B7280; }
 
 /* the axes without lines, the grid is white above the areas (layer below) */
 .theme-soft .vis-axis path.domain, .theme-soft .vis-axis .tick line { display: none; }
-.theme-soft .vis-axis text { fill: #9CA3AF; font-size: 12px; }
 
 /* the legend as chips */
 .theme-soft .vis-legends { margin: 4px 0 12px; }
@@ -35,9 +35,10 @@
     background: #F5F3FF;
     border-radius: 999px;
     padding: 3px 10px 3px 6px;
-    margin: 3px 2px !important;
+    margin: 3px 4px 3px 0;
+    font-size: 12px;
+    color: #3730A3;
 }
-.theme-soft .vis-legend-entry span { font-size: 12px; top: -2px; color: #3730A3; }
 .theme-soft .vis-legend-entry[data-visible="false"] { opacity: 0.45; }
 
 .theme-soft .vis-hover {

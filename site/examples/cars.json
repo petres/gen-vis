@@ -15,7 +15,7 @@
     "mapping": {
         "x": {
             "column": "month",
-            "scale": { "type": "utc", "domainRel": [0, 0] },
+            "scale": { "type": "utc", "pad": 0 },
             "axis": { "ticks": 8, "format": "%Y" },
             "hover": { "format": "%B %Y" }
         },

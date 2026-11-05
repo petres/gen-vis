@@ -16,7 +16,7 @@
     "mapping": {
         "x": {
             "column": "year", "type": "numeric", "format": "d",
-            "scale": { "domainRel": [0, 0] },
+            "scale": { "pad": 0 },
             "axis": { "values": [2019, 2022, 2025], "tickMarks": false }
         },
         "y": {
