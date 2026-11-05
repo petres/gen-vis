@@ -122,7 +122,8 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   a `share` and a `calc` after it.
 - `stackBy` of a stacked mapping: the mapping of the positions of the
   stacks, e.g. the start of the classes of a bin (`lo`) of a stacked
-  histogram whose `x` are the values of the rows (example
+  histogram whose `x` are the values of the rows, also the positions of the
+  hover (example
   `data/stats/jitter.json`, with a strip plot of the values below it).
 - The title of a vertical axis at the top: `"title": {"name": "in €",
   "position": "top"}` draws it horizontal above the range of the scale, e.g.

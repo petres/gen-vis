@@ -773,7 +773,8 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   vertical bars), `stackBy` names another one, e.g. the start of the class
   of a [bin](#transform) (`"stackBy": "lo"`) of a stacked histogram above a
   strip plot whose `x` are the values; rows without a value of it are not
-  stacked.
+  stacked. The hover is at the positions of the stacks then, e.g. a row per
+  category of the class under the pointer (example `data/stats/jitter.json`).
 
 ### Defaults
 

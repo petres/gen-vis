@@ -47,6 +47,11 @@ const axisNames = store => {
     if (flip && h !== undefined && (v === undefined ? mapping[h].stacked
         : (mapping[h].stacked && !mapping[v].stacked) || (flip !== 'stacked' && categorical(v) && !categorical(h))))
         [h, v] = [v, h];
+    // the positions of the stacks of `stackBy` are the ones of the hover,
+    // e.g. the start of the class of a bin, not the values of the rows
+    const by = v === undefined ? undefined : mapping[v].stacked && mapping[v].stackBy;
+    if (by && Object.hasOwn(mapping, by))
+        h = by;
     return { ...(h === undefined ? {} : { h }), ...(v === undefined ? {} : { v }) };
 };
 

@@ -295,6 +295,8 @@ describe('stacks at the positions of another mapping (stackBy)', () => {
         const classes = v.rows.filter(r => r.lo !== null);
         expect(classes.map(r => [r.g, r.lo, ...v.stackOf(r)])).toEqual([['a', 0, 0, 1], ['a', 5, 0, 1], ['b', 0, 1, 3], ['b', 5, 1, 1]]);
         expect(v.facets[0].scales.y.domain()).toEqual([0, 3]);
+        // the hover of the stacks: its positions are the starts of the classes
+        expect(v.axis).toEqual({ h: 'lo', v: 'y' });
     });
 });
 
