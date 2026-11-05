@@ -5,6 +5,7 @@ import { applyTransforms, loadTransforms } from '@/utils/transform';
 import { mergeAll, patchedParts } from '@/utils/def';
 import { resolveParents } from '@/utils/load';
 import { evaluate, bind, formatter } from '@/utils/expr';
+import { parseExpression } from '@/utils/expr-parse';
 import { format } from 'd3-format';
 import { normalize } from '@/utils/normalize';
 import { plotTypes } from '@/plots';
@@ -95,10 +96,12 @@ describe('spec/merge', () => {
 const plain = v => v === undefined ? null : Array.isArray(v) ? v.map(plain)
     : v !== null && typeof v == 'object' ? Object.fromEntries(Object.entries(v).map(([k, e]) => [k, plain(e)])) : v;
 
+// the formats of d3 of its default locale (en-US)
+const format3 = (spec) => format(spec);
+
 describe('spec/expressions', () => {
-    // the formats of d3 of its default locale (en-US)
-    const format3 = (spec) => format(spec);
-    const files = import.meta.glob('../spec/expressions/*.json', { eager: true, import: 'default' });
+    // the ASTs, the texts of the syntax are below
+    const files = import.meta.glob(['../spec/expressions/*.json', '!../spec/expressions/syntax.json'], { eager: true, import: 'default' });
     describe.each(fixtures(files))('%s', (file, cases) => {
         test.each(cases.map(c => [c.name, c]))('%s', (name, c) => {
             const scope = { ...c.scope, [formatter]: format3 };
@@ -108,6 +111,20 @@ describe('spec/expressions', () => {
                 : (Object.hasOwn(c.scope, n) ? row => row[n] : undefined);
             expect(plain(bind(c.expr, resolve)(c.scope))).toEqual(c.result);
         });
+    });
+});
+
+// the string syntax of expressions, see expressions.md (String syntax): the
+// AST of a text, and its value of the cases with a result
+describe('spec/expressions/syntax', () => {
+    test.each(import.meta.glob('../spec/expressions/syntax.json', { eager: true, import: 'default' })['../spec/expressions/syntax.json'].map(c => [c.name, c]))('%s', (name, c) => {
+        if (c.error !== undefined)
+            expect(() => parseExpression(c.text)).toThrow(c.error);
+        else {
+            expect(parseExpression(c.text)).toEqual(c.expr);
+            if (c.result !== undefined)
+                expect(plain(evaluate(c.expr, { ...c.scope, [formatter]: format3 }))).toEqual(c.result);
+        }
     });
 });
 
