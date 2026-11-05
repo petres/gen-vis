@@ -100,16 +100,18 @@ function createColorLegend(vis, legend) {
             [vertical ? "y" : "x"]: vertical ? at(x + w) : x, [vertical ? "x" : "y"]: 0,
             [vertical ? "height" : "width"]: w, [vertical ? "width" : "height"]: 10, fill,
         });
-        const label = (x, v, format) => {
+        const label = (x, v, format, tick = true) => {
             const p = at(x);
             const [t0, t1] = before ? [-4, 0] : [10, 14];
             if (vertical) {
-                append(g, "line", { y1: p, y2: p, x1: t0, x2: t1, stroke: "currentColor" });
+                if (tick)
+                    append(g, "line", { y1: p, y2: p, x1: t0, x2: t1, stroke: "currentColor" });
                 append(g, "text", { y: p, x: before ? -6 : 16, "text-anchor": before ? "end" : "start",
                     "dominant-baseline": "middle", fill: "currentColor" }, format(v));
             } else {
-                append(g, "line", { x1: p, x2: p, y1: t0, y2: t1, stroke: "currentColor" });
-                append(g, "text", { x: p, y: before ? -8 : 26, "text-anchor": "middle", fill: "currentColor" }, format(v));
+                if (tick)
+                    append(g, "line", { x1: p, x2: p, y1: t0, y2: t1, stroke: "currentColor" });
+                append(g, "text", { x: p, y: before ? -8 : (tick ? 26 : 22), "text-anchor": "middle", fill: "currentColor" }, format(v));
             }
         };
         // a gradient of `color(t)` of t from 0 to 1 along the scale
@@ -139,7 +141,16 @@ function createColorLegend(vis, legend) {
             colors.forEach((c, i) => box(i*w, w, c));
             const limits = colors.slice(1).map(c => s.invertExtent(c)[0]);
             const format = formatter(limits);
-            limits.forEach((v, i) => label((i + 1)*w, v, format));
+            // a label per class in its middle (`classes`), the open ends
+            // with < and ≥ (≤ and > of classes closed at the right)
+            if (opts.classes) {
+                const right = m.scale?.closed == 'right';
+                const text = i => i == 0 ? `${right ? '≤' : '<'} ${format(limits[0])}`
+                    : i == colors.length - 1 ? `${right ? '>' : '≥'} ${format(limits.at(-1))}`
+                    : `${format(limits[i - 1])}–${format(limits[i])}`;
+                colors.forEach((c, i) => label(i*w + w/2, i, text, false));
+            } else
+                limits.forEach((v, i) => label((i + 1)*w, v, format));
         } else if (s.interpolator) {
             // sequential and diverging scales: the gradient and the ticks at
             // the positions of the colors, e.g. of a sqrt or a log scale, the

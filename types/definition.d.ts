@@ -803,6 +803,10 @@ export interface MappingEntry {
                */
               orientation?: ('horizontal' | 'vertical') | Expression;
               /**
+               * Of a legend of the colors of a threshold, quantize or quantile scale: a label per class in its middle, e.g. < 50, 50–100, ≥ 300, instead of ticks at the limits.
+               */
+              classes?: boolean;
+              /**
                * Only the entries of the categories of the rows after the filter, e.g. of the selected year, also the hidden ones.
                */
               onlyData?: boolean;

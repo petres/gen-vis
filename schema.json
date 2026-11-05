@@ -526,6 +526,7 @@
                                     "description": "The direction of the scale of the colors, a vertical one has the high values at the top, a prop of totalWidth (the width of the visualisation).",
                                     "anyOf": [{ "enum": ["horizontal", "vertical"] }, { "$ref": "#/definitions/expression" }]
                                 },
+                                "classes": { "type": "boolean", "description": "Of a legend of the colors of a threshold, quantize or quantile scale: a label per class in its middle, e.g. < 50, 50–100, ≥ 300, instead of ticks at the limits." },
                                 "onlyData": { "type": "boolean", "default": false, "description": "Only the entries of the categories of the rows after the filter, e.g. of the selected year, also the hidden ones." },
                                 "size": { "type": "number", "default": 240, "description": "The length of the scale of the colors in pixels." },
                                 "values": { "type": "array", "items": { "type": "number" }, "description": "The ticks of a gradient of colors, e.g. [0, 50, 100]." },

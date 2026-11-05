@@ -1283,6 +1283,19 @@ describe('maps', () => {
         expect([...el.querySelectorAll('.vis-color-legend text')].map(t => t.textContent)).toEqual(['2,0', '3,5']);
     });
 
+    test('a label per class of a threshold scale, open ends', async () => {
+        const def = mapDef();
+        def.mapping.value.scale = { type: 'threshold', domain: [2, 3.5], scheme: 'Greens' };
+        def.mapping.value.legend = { ...def.mapping.value.legend, classes: true };
+        const el = await mount({ def, data: mapData });
+        expect([...el.querySelectorAll('.vis-color-legend text')].map(t => t.textContent)).toEqual(['< 2,0', '2,0–3,5', '≥ 3,5']);
+        expect(el.querySelectorAll('.vis-color-legend line')).toHaveLength(0);
+        def.mapping.value.scale.closed = 'right';
+        const right = await mount({ def, data: mapData });
+        expect([...right.querySelectorAll('.vis-color-legend text')].map(t => t.textContent)).toEqual(['≤ 2,0', '2,0–3,5', '> 3,5']);
+        expect(errors).toEqual([]);
+    });
+
     test('topojson and its objects', async () => {
         const topo = { type: 'Topology', objects: { squares: { type: 'GeometryCollection', geometries: [
             { type: 'Polygon', id: 'A', properties: { name: 'A' }, arcs: [[0]] },
