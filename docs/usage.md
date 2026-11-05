@@ -269,6 +269,21 @@ createGenVis(element, { defFile: '/data/bev/def.json', slots: {
 } });
 ```
 
+A button of the page with the class `vis-button` looks like the ones of
+the package: an `svg` of strokes (e.g. a `viewBox` of 24×24, the icons of
+the package are 16 pixels wide) in `--gen-vis-button-color`, darker under
+the pointer (`--gen-vis-button-hover-color`), lighter if it is `disabled`
+(`--gen-vis-button-disabled-color`, `#E3E5E8`), in the color of the text
+with `aria-pressed="true"`, e.g. a toggle:
+
+```html
+<template #buttons>
+    <button class="vis-button" title="Reset" @click="reset">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+    </button>
+</template>
+```
+
 Without the slot, e.g. with the standalone script, `hover` of the
 [options](definition.md#options) are templates of HTML of the hover: `title`, with
 `{title}`, the default one, e.g. the date, above the table or the rows, and
@@ -486,7 +501,7 @@ and the lines of the axes, `tick` and `domain`, as the ones of d3:
 | axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`), `vis-axis-title`, `vis-grid` |
 | annotations | `vis-annotations` (the plot), `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or `vis-circle`, `vis-annotation-label`, `vis-annotation-labels` |
 | hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-hover-row` of a template, `vis-nearest`, the key of the category of every categorical mapping of a row as `data-` attribute, e.g. `data-type="load"` of the mapping `type` (`data-land-name` of `landName`), the cells of the values `vis-value`, the mapping of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`), `vis-hover-marker`, `vis-events` |
-| footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-copy`, `vis-csv`, `vis-download-svg` and `vis-download`) |
+| footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-button` and `vis-copy`, `vis-csv`, `vis-download-svg` or `vis-download`) |
 
 Styles of the page which are in a cascade layer themselves only override the
 package if their layer is declared after it, e.g. `@layer gen-vis, page;`.
@@ -515,7 +530,8 @@ The others are `--gen-vis-marker-color` (`#9AA0A8`, the line of the hover),
 `--gen-vis-annotation-color` (`#444` of texts, `#5F6670` of labels, `#666`
 of circles), `--gen-vis-missing-color` (`#EEE`, the missing values of a
 legend), `--gen-vis-button-color` (`#B8BDC4`), `--gen-vis-button-hover-color`
-(`#5F6670`), `--gen-vis-focus-color` (`#4269D0`, the first color of
+(`#5F6670`), `--gen-vis-button-disabled-color` (`#E3E5E8`, of the buttons
+of the page with the class `vis-button`), `--gen-vis-focus-color` (`#4269D0`, the first color of
 observable10, the entries of legends and the facets) and
 `--gen-vis-error-color` (`#B42318`). The default look: Inter, which the
 package brings (see [the font](#the-font)), figures of the same width

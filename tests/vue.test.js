@@ -186,19 +186,19 @@ describe('the component', () => {
         const def = lineDef();
         const { el } = await mountApp(() => h(GenVis, { def, data: lineData, download: 'name', copy: true, imageWidth: 'screen' },
             settings.value ? { buttons: () => [h('button', { class: 'reset' }), movable.value ? h('button', { class: 'move' }) : null] } : {}));
-        expect([...el.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['vis-download']);
+        expect([...el.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['vis-button vis-download']);
         settings.value = true;
         await vueTick();
         await nextTick();
-        expect([...el.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['reset', 'vis-download']);
+        expect([...el.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['reset', 'vis-button vis-download']);
         // the content of the slot changes, Vue draws it between the nodes of the slot
         movable.value = true;
         await vueTick();
-        expect([...el.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['reset', 'move', 'vis-download']);
+        expect([...el.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['reset', 'move', 'vis-button vis-download']);
         settings.value = false;
         await vueTick();
         await nextTick();
-        expect([...el.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['vis-download']);
+        expect([...el.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['vis-button vis-download']);
         expect(errors).toEqual([]);
     });
 

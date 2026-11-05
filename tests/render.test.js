@@ -3119,8 +3119,18 @@ describe('images', () => {
         clipboard();
         expect((await mount({ def: def(), data: lineData })).querySelector('.vis-buttons')).toBeNull();
         const el = await mount({ def: def(), data: lineData, download: true, copy: true });
-        expect([...el.querySelectorAll('.vis-footer .vis-buttons button')].map(b => b.className)).toEqual(['vis-copy', 'vis-download']);
+        expect([...el.querySelectorAll('.vis-footer .vis-buttons button')].map(b => b.className)).toEqual(['vis-button vis-copy', 'vis-button vis-download']);
         expect(el.querySelector('.vis-download').title).toBe('Als PNG speichern');
+        // a button of the page in the slot with the class vis-button has the styles of them
+        const slotted = await mount({ def: def(), data: lineData, download: true, slots: {
+            buttons: () => Object.assign(document.createElement('button'), { className: 'vis-button own', disabled: true }),
+        } });
+        expect([...slotted.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['vis-button own', 'vis-button vis-download']);
+        const { readFileSync } = await import('node:fs');
+        const { root } = await import('./dom.js');
+        const css = readFileSync(`${root}/src/styles.css`, 'utf8');
+        expect(css).toMatch(/\.vis-button svg \{[^}]*stroke: var\(--gen-vis-button-color/);
+        expect(css).toMatch(/\.vis-button:disabled svg \{[^}]*--gen-vis-button-disabled-color/);
     });
 
     test('no copy button without the clipboard', async () => {
@@ -3237,7 +3247,7 @@ describe('images', () => {
         const el = await mount({ def: def(), data: lineData, download: true, slots: {
             buttons: ({ save, canCopy }) => html('button', { class: 'own', 'data-copy': String(canCopy), onClick: save }),
         } });
-        expect([...el.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['own', 'vis-download']);
+        expect([...el.querySelectorAll('.vis-buttons button')].map(b => b.className)).toEqual(['own', 'vis-button vis-download']);
         expect(el.querySelector('.own').dataset.copy).toBe('false');
 
         // the own button saves the image too, without the buttons

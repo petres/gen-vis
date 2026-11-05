@@ -239,6 +239,14 @@ Maps and form elements:
   `"%b %Y"` of `2026-10`) or a column of `names`, instead of the raw
   values.
 
+Page integration:
+
+- `vis-button`: the class of the buttons of the footer, also of buttons of
+  the page in the slot `buttons`, which then look like the ones of the
+  package (an svg of strokes in `--gen-vis-button-color`, darker under the
+  pointer, `--gen-vis-button-disabled-color` of a disabled one, the color
+  of the text with `aria-pressed="true"`), without copies of their styles.
+
 Warnings (console, CLI, `messages` of the export page):
 
 - A plot none of whose rows has the values it uses, e.g. `plot 'caps': none

@@ -163,7 +163,7 @@ describe('exportSvg', () => {
         vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () { saved.push(this.download); });
         const vis = await chart({ svg: true, download: true });
         expect([...vis.el.querySelectorAll('.vis-buttons button')].map(b => [b.className, b.title]))
-            .toEqual([['vis-download-svg', 'Als SVG speichern'], ['vis-download', 'Als PNG speichern']]);
+            .toEqual([['vis-button vis-download-svg', 'Als SVG speichern'], ['vis-button vis-download', 'Als PNG speichern']]);
         vis.el.querySelector('.vis-download-svg').click();
         await vi.waitFor(() => expect(saved).toEqual(['Titel.svg']));
         expect(errors).toEqual([]);

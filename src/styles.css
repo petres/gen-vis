@@ -56,13 +56,17 @@
     gap: 8px;
 }
 
-.vis-copy, .vis-csv, .vis-download-svg, .vis-download {
+/* the buttons of the footer (vis-button), also the ones of the page in the
+   slot `buttons`: an icon of an svg of strokes (24x24 of their viewBox) in
+   the colors of the buttons, darker under the pointer, lighter of a
+   disabled one, the one of the text of a pressed one (aria-pressed) */
+.vis-button {
     padding: 0;
     border: 0;
     background: none;
     cursor: pointer;
 }
-.vis-copy svg, .vis-csv svg, .vis-download-svg svg, .vis-download svg {
+.vis-button svg {
     display: block;
     fill: none;
     stroke: var(--gen-vis-button-color, #B8BDC4);
@@ -70,8 +74,17 @@
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-.vis-copy:hover svg, .vis-csv:hover svg, .vis-download-svg:hover svg, .vis-download:hover svg {
+.vis-button:hover svg {
     stroke: var(--gen-vis-button-hover-color, #5F6670);
+}
+.vis-button:disabled {
+    cursor: default;
+}
+.vis-button:disabled svg {
+    stroke: var(--gen-vis-button-disabled-color, #E3E5E8);
+}
+.vis-button[aria-pressed="true"] svg {
+    stroke: currentColor;
 }
 
 /* the text instead of the plots */

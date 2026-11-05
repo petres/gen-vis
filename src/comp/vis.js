@@ -421,19 +421,19 @@ const createVis = app => {
         svgButton = keepIf(svgButton, svg, () => button('vis-download-svg', () => files.svg().catch(console.error)));
         downloadButton = keepIf(downloadButton, download, () => button('vis-download', () => savePng()));
         if (copyButton) {
-            patch(copyButton, { type: 'button', class: 'vis-copy', title: copied ? t.copied : t.copy, 'aria-label': copied ? t.copied : t.copy });
+            patch(copyButton, { type: 'button', class: 'vis-button vis-copy', title: copied ? t.copied : t.copy, 'aria-label': copied ? t.copied : t.copy });
             patch(copyButton.querySelector('path'), { d: icons[copied ? 'copied' : 'copy'] });
         }
         if (csvButton) {
-            patch(csvButton, { type: 'button', class: 'vis-csv', title: t.csv, 'aria-label': t.csv });
+            patch(csvButton, { type: 'button', class: 'vis-button vis-csv', title: t.csv, 'aria-label': t.csv });
             patch(csvButton.querySelector('path'), { d: icons.csv });
         }
         if (svgButton) {
-            patch(svgButton, { type: 'button', class: 'vis-download-svg', title: t.svg, 'aria-label': t.svg });
+            patch(svgButton, { type: 'button', class: 'vis-button vis-download-svg', title: t.svg, 'aria-label': t.svg });
             patch(svgButton.querySelector('path'), { d: icons.svg });
         }
         if (downloadButton) {
-            patch(downloadButton, { type: 'button', class: 'vis-download', title: t.download, 'aria-label': t.download });
+            patch(downloadButton, { type: 'button', class: 'vis-button vis-download', title: t.download, 'aria-label': t.download });
             patch(downloadButton.querySelector('path'), { d: icons.download });
         }
         const order = [copyButton, csvButton, svgButton, downloadButton].filter(Boolean);
