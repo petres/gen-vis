@@ -55,6 +55,12 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
 
 ### Fixes
 
+- The categories of a band, point or ordinal scale are in the order of the
+  `categories` of the mapping (as the legend, the stacks and the facets),
+  the ones not listed after them in the order of the rows; before, in the
+  order of the rows, so the order of `categories` did not decide the bands.
+  Charts with categories listed in another order than the rows change,
+  e.g. the angles of `data/bev/def-radar.json`.
 - Legend symbols are centered on the middle of the capitals of the name
   (`--gen-vis-legend-symbol-middle`, 0.36em above its baseline), at any
   font size; before, on its line box, about 1.5 pixels above the middle at

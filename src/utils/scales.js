@@ -127,6 +127,17 @@ const sortCategories = (values, rows, name, order) => {
     return [...keyed, ...values.filter(v => !first.has(v))];
 };
 
+// the categories in the order of the categories of the mapping (`keys`,
+// e.g. of `categories`), the others after them in their order, e.g. of the
+// rows, as the legend, the stacks and the facets
+const byKeys = (values, keys) => {
+    if (!keys?.length)
+        return values;
+    const rank = new Map(keys.map((k, i) => [String(k), i]));
+    const known = values.filter(v => rank.has(String(v))).sort((a, b) => rank.get(String(a)) - rank.get(String(b)));
+    return known.length ? [...known, ...values.filter(v => !rank.has(String(v)))] : values;
+};
+
 // a log scale, not a symlog one, its values are all positive or all negative
 const isLog = type => type.toLowerCase().endsWith('log') && !type.toLowerCase().endsWith('symlog');
 
@@ -329,7 +340,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         const byText = new Map(values.map(v => [String(v), v]));
         domain = given.length > 0 && given.every(v => v !== null)
             ? [...new Set(given.map(v => byText.get(String(v)) ?? v))]
-            : sortCategories(values, all, name, scaleDef.order);
+            : sortCategories(scaleDef.order === undefined ? byKeys(values, mapping.keys) : values, all, name, scaleDef.order);
         // the positions of the categories, e.g. of a band scale, not the
         // colors of an ordinal scale
         // a point scale has no inner padding (its bandwidth is 0)

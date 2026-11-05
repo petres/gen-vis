@@ -497,8 +497,16 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   plot is the one of its categories (and the space of their `groups`), not
   `options.height`, e.g. the rows of horizontal bars keep their size if
   some of them are hidden, the plot is less high.
+  The categories of a `band`, `point` or `ordinal` scale are in the order
+  of the `categories` of the mapping (the one of the legend, the stacks and
+  the facets), the ones which are not listed after them in the order of the
+  rows. The first category is at the start of the range: left of a
+  horizontal scale, at the bottom of a vertical one (its range is
+  `["@height", 0]`), so horizontal bars from the top down need `"range":
+  [0, "@height"]`.
   `order` of a `band`, `point` or `ordinal` scale is the order of
-  its categories taken from the data: the one of the rows (by default),
+  its categories taken from the data: the one of the rows (by default, after
+  the listed `categories`),
   `ascending`, `descending` or by the value of a mapping of their first row,
   e.g. bars by their length, `{"by": "x", "descending": true}`.
   `groups` of a `band` or `point` scale are the groups of its
