@@ -1,9 +1,27 @@
-export { makeScale, bandCenter };
+export { makeScale, bandCenter, intervalOf };
 
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/expr";
 import { continuous, convert } from "@/utils/data";
 import { comparison } from "@/utils/values";
+
+// the periods of the dates of a mapping (`interval`): day, week, month,
+// quarter, half (a year), year or a number of them, e.g. "6 months", of the
+// time zone of the scale, null without one or of another value
+const units = { day: 'Day', week: 'Week', month: 'Month', quarter: ['Month', 3], half: ['Month', 6], year: 'Year' };
+const intervalOf = (spec, utc = false) => {
+    if (typeof spec != 'string')
+        return null;
+    const m = /^\s*(\d+)?\s*([a-z]+?)s?\s*$/.exec(spec.toLowerCase());
+    const unit = m && Object.hasOwn(units, m[2]) ? units[m[2]] : null;
+    if (!unit)
+        return null;
+    const [name, size] = Array.isArray(unit) ? unit : [unit, 1];
+    const count = size*(m[1] ? Number(m[1]) : 1);
+    const base = d3[`${utc ? 'utc' : 'time'}${name}`];
+    const interval = count == 1 ? base : base.every(count);
+    return interval && { offset: d => interval.offset(d instanceof Date ? d : new Date(d), 1) };
+};
 
 // the offset of the center of a band, the position of band scales is its start
 const bandCenter = s => s.bandwidth ? s.bandwidth()/2 : 0;
@@ -223,6 +241,11 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     const found = valuesOf(name, mapping, all, domainRows ? domainStackOf : stackOf, also, log);
     const near = () => (domainRows ? valuesOf(name, mapping, rows, stackOf, also, log) : found).values;
     let extent = found.extent;
+    // the periods of the dates (`interval`): the domain of the data reaches
+    // the end of the last one
+    const period = mapping.type == 'date' ? intervalOf(mapping.interval, scaleDef.type == 'utc') : null;
+    if (period && extent)
+        extent = [extent[0], +period.offset(extent[1])];
     // the extent of the data includes the values of `include`, e.g. 0 or
     // 100, around `center` it is symmetric, e.g. of 0 of changes
     // a value of the definition as the ones of the data, e.g. a date or a category as a string
@@ -294,7 +317,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
 
         // without fixed values the domain of a position is extended a bit, not
         // if it is cyclic, e.g. not the domain of colors
-        const domainRel = scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic || !scaleDef.orientation ? [0, 0] :
+        const domainRel = scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic || period || !scaleDef.orientation ? [0, 0] :
             [domain[0] === null ? -0.02 : 0, domain[last] === null ? 0.02 : 0]);
         const domainAbs = scaleDef.domainAbs ?? [0, 0];
 
@@ -367,6 +390,9 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     }
 
     s.domain(domain);
+    // the periods of the dates, e.g. of bars in their period, see rowValue of layout.js
+    if (period)
+        s.period = period;
     if (scaleDef.type == 'threshold' && scaleDef.closed == 'right')
         return rightClosed(s);
     // the categories in groups with a space between them, e.g. the rows of

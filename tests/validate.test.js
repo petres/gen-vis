@@ -78,7 +78,7 @@ test('the names of 1.x are unknown', () => {
     def.formElements = [{ id: 'g', name: 'G', ref: 'g', type: 'switch', values: [{ id: 'a', name: 'A', value: 'a' }] }];
     expect(validateDef(def)).toEqual([
         // the warnings of the schema are in the order of the keys of the definition
-        "mapping.c.manual: unknown key, expected one of 'column', 'name', 'type', 'format', 'stacked', 'stackBy', 'scale', 'axis', 'hover', 'legend', 'domain', 'nice', 'categories', 'scheme', 'common', 'fromData', 'order', 'ranks'",
+        "mapping.c.manual: unknown key, expected one of 'column', 'name', 'type', 'format', 'stacked', 'interval', 'stackBy', 'scale', 'axis', 'hover', 'legend', 'domain', 'nice', 'categories', 'scheme', 'common', 'fromData', 'order', 'ranks'",
         "formElements[0].type: unknown type 'switch', expected one of 'radio', 'select', 'slider', 'hidden'",
     ]);
 });
@@ -118,7 +118,7 @@ describe('validateDef', () => {
         def.mapping.c = { column: 'land', props: { categories: { Wien: {} } } };
         def.plot = { type: 'cartesian:line', categories: ['c'], highlight: 'row', props: { ...def.plot.props } };
         expect(validateDef(def)).toEqual([
-            "mapping.c.props: unknown key, expected one of 'column', 'name', 'type', 'format', 'stacked', 'stackBy', 'scale', 'axis', 'hover', 'legend', 'domain', 'nice', 'categories', 'scheme', 'common', 'fromData', 'order', 'ranks'",
+            "mapping.c.props: unknown key, expected one of 'column', 'name', 'type', 'format', 'stacked', 'interval', 'stackBy', 'scale', 'axis', 'hover', 'legend', 'domain', 'nice', 'categories', 'scheme', 'common', 'fromData', 'order', 'ranks'",
             "plot[0].categories: unknown key, expected one of 'type', 'id', 'by', 'data', 'dataFormat', 'filter', 'once', 'select', 'object', 'borders', 'dodge', 'halo', 'layer', 'facet', 'highlight', 'curve', 'props', 'others'",
             'plot[0].highlight: expected an object',
         ]);

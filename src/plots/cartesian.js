@@ -4,6 +4,7 @@ import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
 import { perGroup, perRow, finite, curve, points, propScale } from "@/plots/elements";
 import { pixelOffset } from "@/utils/axis";
+import { refOf } from "@/utils/expr";
 
 // the scale of a prop of a bar, e.g. of "@x:scaled"
 const barScale = (plot, ctx, prop, type) => {
@@ -185,15 +186,24 @@ export default {
                 });
             }
             const xScale = once(() => barScale(plot, ctx, 'x', type));
+            // of the periods of dates (`interval` of the mapping of x): a bar
+            // in the middle of its period, 80% of its length by default
+            const periodOf = once(() => {
+                const s = xScale();
+                const name = refOf(plot.props.x)?.split(':');
+                return s.period && name?.length == 2 && name[1] == 'scaled'
+                    ? row => (s(s.period.offset(row[name[0]])) - s(row[name[0]])) : null;
+            });
             const thickness = once(() => barWidth(xScale(), type));
             const base = once(() => barScale(plot, ctx, 'y1', type)(0));
-            return perRow(groups, "rect", v => {
-                const width = v.width ?? thickness();
+            return perRow(groups, "rect", (v, row) => {
+                const period = periodOf()?.(row);
+                const width = v.width ?? (period === undefined ? thickness() : 0.8*period);
                 const y0 = 'y0' in v ? v.y0 : base();
                 const { y0: _, y1: __, ...props } = v;
                 return {
                     ...props,
-                    x: v.x + bandCenter(xScale()) - width/2,
+                    x: v.x + (period === undefined ? bandCenter(xScale()) : period/2) - width/2,
                     width,
                     y: Math.min(y0, v.y1),
                     height: Math.abs(v.y1 - y0),

@@ -140,11 +140,31 @@ const localeOf = tag => {
  * loadLocale) or an object with the `base` locale (`de` by default) and
  * `number`, `time`, `timeTicks` and `texts` parts which are merged into it.
  */
+// the half of the year of a date in time formats, `%K` (1 or 2, d3 has
+// `%q` of the quarter), local or in UTC
+const withHalves = time => {
+    const half = (make, utc) => spec => {
+        if (typeof spec != 'string' || !spec.includes('%K'))
+            return make(spec);
+        const f = make(spec.replaceAll('%K', '\u0000'));
+        return d => {
+            const date = d instanceof Date ? d : new Date(d);
+            return f(date).replaceAll('\u0000', String((utc ? date.getUTCMonth() : date.getMonth()) < 6 ? 1 : 2));
+        };
+    };
+    return { ...time, format: half(time.format, false), utcFormat: half(time.utcFormat, true) };
+};
+
+// the formats of the values of dates of periods (`interval` of a mapping),
+// e.g. of the hover of half years, and the name of the period of an interval
+const periodFormats = { month: '%b %Y', quarter: 'Q%q %Y', half: 'H%K %Y', year: '%Y' };
+const periodName = interval => typeof interval == 'string' ? /^\s*(?:1\s*)?([a-z]+?)s?\s*$/.exec(interval.toLowerCase())?.[1] : undefined;
+
 const getLocale = (locale = 'de') => {
     const custom = typeof locale == 'string' ? { base: locale } : (locale ?? {});
     const base = localeOf(baseOf(locale));
     const number = d3.formatLocale({ ...base.number, ...custom.number });
-    const time = d3.timeFormatLocale({ ...base.time, ...custom.time });
+    const time = withHalves(d3.timeFormatLocale({ ...base.time, ...custom.time }));
     const timeTicks = { ...base.timeTicks, ...custom.timeTicks };
     return {
         number,
@@ -171,7 +191,7 @@ const getLocale = (locale = 'de') => {
         // values as they are
         valueFormat(mapping, scale) {
             if (mapping.type == 'date')
-                return (mapping.scale?.type == 'utc' ? time.utcFormat : time.format)('%x');
+                return (mapping.scale?.type == 'utc' ? time.utcFormat : time.format)(periodFormats[periodName(mapping.interval)] ?? '%x');
             if (mapping.type != 'numeric')
                 return v => v;
             const plain = number.format('.6~f');

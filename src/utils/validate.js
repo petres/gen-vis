@@ -1,5 +1,6 @@
 export { validateDef, curveNames };
 
+import { intervalOf } from "@/utils/scales";
 import * as d3 from "@/utils/d3";
 import { checkLocale } from "@/utils/locale";
 import { mergeAll, patchable, templateRefs } from "@/utils/def";
@@ -126,6 +127,7 @@ const rowNames = (n, m) => [
     `${n}:formatted`,
     ...(m.scale ? [`${n}:scaled`, `${n}:scaled:center`, `${n}:scaled:min`, `${n}:scaled:max`, `${n}:bandwidth`, `${n}:step`] : []),
     ...(['band', 'point'].includes(m.scale?.type) ? [`${n}:group:start`, `${n}:group:end`] : []),
+    ...(m.interval !== undefined && m.scale ? [`${n}:scaled:end`] : []),
     ...(m.stacked ? [`${n}:start`, `${n}:end`, `${n}:mid`] : []),
     ...(m.stacked && m.scale ? [`${n}:start:scaled`, `${n}:end:scaled`, `${n}:height:scaled`, `${n}:mid:scaled`] : []),
 ];
@@ -352,6 +354,12 @@ const checkMappings = ctx => {
     Object.entries(mapping).filter(([, m]) => m.stacked !== undefined && typeof m.stacked != 'boolean').forEach(([n, m]) => isObject(m.stacked)
         ? checkFilter(ctx, m.stacked, `mapping.${n}.stacked`, names.global)
         : warn(`mapping.${n}.stacked`, `expected true or the conditions of the rows which are stacked, e.g. { "type": { "not": "load" } }`));
+    Object.entries(mapping).filter(([, m]) => m.interval !== undefined).forEach(([n, m]) => {
+        if (m.type !== undefined && m.type != 'date')
+            warn(`mapping.${n}.interval`, `the periods of the values of a date mapping, not of a ${m.type} one`);
+        else if (!intervalOf(m.interval))
+            warn(`mapping.${n}.interval`, `expected day, week, month, quarter, half, year or a number of them, e.g. "6 months"`);
+    });
     Object.entries(mapping).filter(([, m]) => m.stackBy !== undefined).forEach(([n, m]) => {
         if (!m.stacked)
             warn(`mapping.${n}.stackBy`, `the positions of the stacks of a stacked mapping, without 'stacked' none`);

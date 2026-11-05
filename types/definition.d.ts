@@ -753,6 +753,10 @@ export interface MappingEntry {
      */
     stacked?: boolean | Filter;
     /**
+     * Of a date mapping: a value is the period starting at it, day, week, month, quarter, half (a year), year or a number of them, e.g. "6 months": the domain of the data reaches the end of the last period, bars are in the middle of their period (80% of its length by default), @x:scaled:center and @x:scaled:end are its middle and its end, @x:step its length, the hover shows the period, e.g. H2 2023 (%K is the half of the year in formats).
+     */
+    interval?: string;
+    /**
      * Of a stacked mapping: the mapping of the positions of the stacks, by default the one of the positions of the coordinate system (x of vertical bars), e.g. the start of the class of a bin (lo) of a histogram whose x are the values of the rows; rows without a value of it are not stacked.
      */
     stackBy?: string;

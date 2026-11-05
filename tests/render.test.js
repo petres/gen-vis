@@ -3549,3 +3549,40 @@ describe('the total of the stacked values in the hover', () => {
         expect(nearestRow(rows, 6, 'y', stackOf).t).toBe('sum');
     });
 });
+
+describe('periods of dates (interval)', () => {
+    const def = () => ({
+        options: { width: 600, height: 300, margins: { top: 10, right: 10, bottom: 40, left: 40 }, locale: 'de' },
+        mapping: {
+            x: { column: 'date', type: 'date', interval: 'half', scale: { orientation: 'horizontal' }, axis: { position: 'bottom' }, hover: {} },
+            y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical', domain: [0, null] }, axis: { position: 'left' } },
+        },
+        plot: [{ type: 'bar', id: 'bars', props: { fill: 'red' } },
+            { type: 'svg:circle', id: 'mid', props: { cx: '@x:scaled:center', cy: 0, r: { '/': ['@x:step', 10] } } }],
+    });
+    const data = 'date,value\n2023-01-01,1\n2023-07-01,2\n2024-01-01,3';
+
+    test('the domain to the end of the last period, bars in the middle of theirs, the step of a period, the hover of the period', async () => {
+        const el = await mount({ def: def(), data });
+        // three halves of a year in 550 pixels, without the extension of 2%
+        const rects = [...el.querySelectorAll('[data-plot="bars"] rect')].map(r => [+r.getAttribute('x'), +r.getAttribute('width')]);
+        const half = 550*181/(365 + 182);
+        expect(rects[0][1]).toBeCloseTo(0.8*half, 0);
+        expect(rects[0][0]).toBeCloseTo(0.1*half, 0);
+        const circles = [...el.querySelectorAll('[data-plot="mid"] circle')];
+        expect(+circles[0].getAttribute('cx')).toBeCloseTo(half/2, 0);
+        expect(+circles[0].getAttribute('r')).toBeCloseTo(half/10, 0);
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 60, clientY: 100 }));
+        await nextTick();
+        expect(el.querySelector('.vis-hover-title').textContent).toBe('H1 2023');
+        expect(errors).toEqual([]);
+    });
+
+    test('the half of a year in formats, validateDef of intervals', async () => {
+        const { getLocale } = await import('@/utils/locale');
+        expect(getLocale('de').time.format('%K. Halbjahr %Y')(new Date(2023, 8, 1))).toBe('2. Halbjahr 2023');
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef({ ...def(), mapping: { ...def().mapping, x: { ...def().mapping.x, interval: 'fortnight' } } }).filter(w => w.includes('interval')))
+            .toEqual([`mapping.x.interval: expected day, week, month, quarter, half, year or a number of them, e.g. "6 months"`]);
+    });
+});
