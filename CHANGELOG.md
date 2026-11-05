@@ -62,6 +62,9 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- `rule`: a line per row across the plot area at a value of x (or y), in
+  the color of its category, optionally from `y1` to `y2`, e.g. the caps of
+  regimes, instead of an `svg:line` with four props.
 - `normalize` of a bin: `"share"` of the group or `"density"` (the area is
   1), and `per` (e.g. 5 of the count per 5k of unequal classes), instead of
   a `share` and a `calc` after it.

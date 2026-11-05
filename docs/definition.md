@@ -827,6 +827,13 @@ A plot or a list of plots, drawn in order:
     `y0` (by default the position of 0) to `y1` of every row, e.g. the
     classes of a [bin](#transform), closed along the base,
     `"d": {"x0": "@lo:scaled", "x1": "@hi:scaled"}`
+  - `cartesian:rule`: a line per row across the plot area at `x` (by
+    default `@x:scaled`), vertical, or at `y` without an `x`, horizontal,
+    from `y1` to `y2` (or `x1` to `x2`, by default the edges of the plot
+    area), at the half pixel of the ticks, in the color of its category,
+    e.g. the cap of each regime at its value, `{"type": "rule", "by":
+    "regime", "props": {"stroke-dasharray": "1.5 2"}}`; in a legend
+    `"symbol": "auto"` of it is a line
   - `cartesian:bar`: a bar per row from `y0` to `y1`, by default from the
     position of 0, e.g. `"y1": "@y:scaled"`, or a stacked value with
     `"y0": "@y:start:scaled", "y1": "@y:end:scaled"`. The bars are centered at

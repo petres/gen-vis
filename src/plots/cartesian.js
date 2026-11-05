@@ -3,6 +3,7 @@ export { barScale, barWidth };
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
 import { perGroup, perRow, finite, curve, points, propScale } from "@/plots/elements";
+import { pixelOffset } from "@/utils/axis";
 
 // the scale of a prop of a bar, e.g. of "@x:scaled"
 const barScale = (plot, ctx, prop, type) => {
@@ -116,6 +117,25 @@ export default {
                 .y0(e => e.y0)
                 (points(g))
             );
+        },
+    },
+
+    // a line per row across the plot area at `x`, vertical, or at `y`,
+    // horizontal (without an `x`), from `y1` to `y2` (or `x1` to `x2`, by
+    // default the edges of the plot area), at the half pixel of the ticks,
+    // e.g. the caps of categories at their values
+    'cartesian:rule': {
+        coords: ['cartesian'],
+        update: true,
+        marks(groups, plot, ctx) {
+            const o = pixelOffset();
+            const vertical = 'x' in plot.props;
+            return perRow(groups, "line", v => {
+                const { x, y, x1, x2, y1, y2, ...props } = v;
+                return vertical
+                    ? { ...props, x1: x + o, x2: x + o, y1: y1 ?? 0, y2: y2 ?? ctx.innerHeight }
+                    : { ...props, x1: x1 ?? 0, x2: x2 ?? ctx.innerWidth, y1: y + o, y2: y + o };
+            });
         },
     },
 

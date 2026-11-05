@@ -1163,6 +1163,7 @@ export interface Plot {
               | 'svg:text'
               | 'cartesian:line'
               | 'cartesian:area'
+              | 'cartesian:rule'
               | 'cartesian:bar'
               | 'polar:line'
               | 'polar:area'
@@ -1179,7 +1180,7 @@ export interface Plot {
               | 'annotation:text'
               | 'annotation:circle'
           )
-        | ('arc' | 'area' | 'bar' | 'base' | 'circle' | 'line' | 'mesh' | 'point' | 'rect' | 'region' | 'text')
+        | ('arc' | 'area' | 'bar' | 'base' | 'circle' | 'line' | 'mesh' | 'point' | 'rect' | 'region' | 'rule' | 'text')
         | (string & {});
     /**
      * The class and the data-plot of the group of the plot, plot-<index> by default, the plots of a parent are merged by their ids.

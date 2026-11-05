@@ -706,9 +706,9 @@
             "properties": {
                 "type": {
                     "anyOf": [
-                        { "enum": ["svg:circle", "svg:line", "svg:rect", "svg:text", "cartesian:line", "cartesian:area", "cartesian:bar", "polar:line", "polar:area", "polar:arc", "polar:circle", "polar:text", "geo:base", "geo:region", "geo:circle", "geo:text", "geo:mesh", "annotation:band", "annotation:line", "annotation:text", "annotation:circle"] },
+                        { "enum": ["svg:circle", "svg:line", "svg:rect", "svg:text", "cartesian:line", "cartesian:area", "cartesian:rule", "cartesian:bar", "polar:line", "polar:area", "polar:arc", "polar:circle", "polar:text", "geo:base", "geo:region", "geo:circle", "geo:text", "geo:mesh", "annotation:band", "annotation:line", "annotation:text", "annotation:circle"] },
                         {
-                            "enum": ["arc", "area", "bar", "base", "circle", "line", "mesh", "point", "rect", "region", "text"],
+                            "enum": ["arc", "area", "bar", "base", "circle", "line", "mesh", "point", "rect", "region", "rule", "text"],
                             "description": "A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian plots, point is circle) with the default props of the type, a definition writes only the props which differ."
                         },
                         {

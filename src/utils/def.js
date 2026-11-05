@@ -92,7 +92,7 @@ const symbolOf = (symbol, names, defaults = {}) => {
 // the plot types drawn as a filled box, a line or a dot in a symbol of "auto"
 const symbolKinds = [
     ['rect', ['cartesian:area', 'cartesian:bar', 'polar:area', 'polar:arc', 'svg:rect', 'geo:region'], ['fill', 'fill-opacity', 'opacity']],
-    ['line', ['cartesian:line', 'polar:line', 'svg:line'], ['stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity', 'opacity']],
+    ['line', ['cartesian:line', 'cartesian:rule', 'polar:line', 'svg:line'], ['stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity', 'opacity']],
     ['circle', ['svg:circle', 'polar:circle', 'geo:circle'], ['fill', 'fill-opacity', 'stroke', 'opacity']],
 ];
 

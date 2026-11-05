@@ -20,6 +20,8 @@ export const defaults = {
     'cartesian:bar': props => props && 'x1' in props && 'y1' in props ? { fill: color, 'shape-rendering': 'crispEdges' }
         : (props && 'x1' in props ? { fill: color, x1: '@x:scaled', y: '@y:scaled' }
             : { fill: color, x: '@x:scaled', y1: '@y:scaled' }),
+    // vertical at `x`, horizontal at `y` without an `x`
+    'cartesian:rule': props => props && 'y' in props && !('x' in props) ? { stroke: color, y: '@y:scaled' } : { stroke: color, x: '@x:scaled' },
     'svg:circle': { cx: '@x:scaled', cy: '@y:scaled', r: 3, fill: color },
     'svg:text': { x: '@x:scaled', y: '@y:scaled', fill: '@color' },
     'polar:line': { stroke: color, fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } },

@@ -3397,3 +3397,21 @@ describe('plots once per facet', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('rules', () => {
+    test('a line per row across the plot area at x, in the color of its category, limited by y1 and y2; at y horizontal', async () => {
+        const def = lineDef();
+        def.mapping.x.scale.domain = [2020, 2023];
+        def.mapping.x.scale.domainRel = [0, 0];
+        def.plot = [{ type: 'rule', by: 'c', filter: { x: 2021 }, props: { 'stroke-dasharray': '2 2' } },
+            { type: 'rule', id: 'h', filter: { x: 2020, c: 'Wien' }, props: { y: '@y:scaled', x2: 100 } }];
+        const el = await mount({ def, data: lineData });
+        const lines = [...el.querySelectorAll('[data-plot="plot-0"] line')];
+        expect(lines.map(l => ['y1', 'y2', 'stroke'].map(a => l.getAttribute(a)))).toEqual([['0', '250', 'red'], ['0', '250', 'blue']]);
+        lines.forEach(l => ['x1', 'x2'].forEach(a => expect(+l.getAttribute(a)).toBeCloseTo(550/3 + 0.5, 9)));
+        const h = el.querySelector('[data-plot="h"] line');
+        expect(['x1', 'x2'].map(a => h.getAttribute(a))).toEqual(['0', '100']);
+        expect(h.getAttribute('y1')).toBe(h.getAttribute('y2'));
+        expect(errors).toEqual([]);
+    });
+});
