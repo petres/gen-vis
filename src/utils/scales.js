@@ -24,8 +24,9 @@ const intervalOf = (spec, utc = false) => {
     const [local, inUtc, size = 1] = unit;
     const count = size*(m[1] ? Number(m[1]) : 1);
     const base = utc ? inUtc : local;
-    const interval = count == 1 ? base : base.every(count);
-    return interval && { offset: d => interval.offset(d instanceof Date ? d : new Date(d), 1) };
+    // the period starts at the date, e.g. a half year in April, so it is
+    // `count` units long, not up to the next multiple of them (d3's `every`)
+    return count > 0 ? { offset: d => base.offset(d instanceof Date ? d : new Date(d), count) } : null;
 };
 
 // the offset of the center of a band, the position of band scales is its start

@@ -3680,6 +3680,25 @@ describe('periods of dates (interval)', () => {
         expect(el.querySelector('.vis-hover-title').textContent).toBe('H1 2023');
         expect(errors).toEqual([]);
     });
+    test('a period starts at its date, also of several units which do not start at a multiple of them', async () => {
+        const { intervalOf } = await import('@/utils/scales');
+        const days = (spec, date) => (+intervalOf(spec, true).offset(new Date(date)) - Date.parse(date))/864e5;
+        // a half year of a fiscal year from April, a quarter from February, 3 days from the 31st
+        expect(days('half', '2023-04-01T00:00Z')).toBe(183);
+        expect(days('quarter', '2023-02-01T00:00Z')).toBe(89);
+        expect(days('3 days', '2023-01-31T00:00Z')).toBe(3);
+        expect(days('2 weeks', '2023-01-02T00:00Z')).toBe(14);
+        expect(days('2 years', '2023-01-01T00:00Z')).toBe(731);
+        expect(days('month', '2023-02-01T00:00Z')).toBe(28);
+        expect(intervalOf('0 months')).toBe(null);
+        // bars of half years from April and October, of the same width
+        const d = def();
+        d.mapping.x.scale.type = 'utc';
+        const el = await mount({ def: d, data: 'date,value\n2023-04-01,1\n2023-10-01,2' });
+        const widths = [...el.querySelectorAll('[data-plot="bars"] rect')].map(r => Math.round(+r.getAttribute('width')));
+        expect(widths[0]).toBe(widths[1]);
+        expect(errors).toEqual([]);
+    });
 });
 
 describe('the categories of band and point scales in the order of the categories', () => {
