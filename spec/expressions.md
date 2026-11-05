@@ -4,7 +4,9 @@ The props of a definition (most of its values, e.g. the attributes of the
 elements of a plot, the height, the margins, the ticks of an axis) and the
 `expr` of the transforms `calc` and `filter` are expressions, close to
 [JSON Logic](https://jsonlogic.com/). The fixtures are
-`expressions/*.json`, `{ "name", "scope", "expr", "result" }`.
+`expressions/*.json`, `{ "name", "scope", "expr", "result" }`, and the
+texts of the string syntax (below) `expressions/syntax.json`, `{ "name",
+"text", "expr" }`.
 
 ## Forms
 
@@ -56,3 +58,75 @@ other values are true (also `"0"`).
 
 Of `format` the fixtures use the d3 locale en-US (`.` and `,`), the format
 of a reference to a mapping of dates is a time format.
+
+## String syntax
+
+An expression is also written as a text, e.g. `"@innerWidth * 0.5"` of
+`{"*": ["@innerWidth", 0.5]}` (`src/utils/expr-parse.js`,
+`parseExpression`). A text of a definition which starts with `=` or `@` is
+an expression (`isExpressionText`), other texts are texts; a leading `=` is
+left out, so `"=@a + 1"` and `"@a + 1"` are the same expression and `"=3"`
+is the number 3. A text which is a reference is itself, e.g. `"@a"`. The
+text of an expression (`formatExpression`) uses the operators between their
+operands, `?:` and calls of the others, with as few parentheses as needed;
+the expression of it is the expression again, with the arguments of an
+operator as a list (`{"not": ["@a"]}` of `{"not": "@a"}`).
+
+The grammar, from the loosest to the tightest level; the operators of a
+level nest from the left:
+
+| Level | Syntax | Expression |
+|-------|--------|------------|
+| ternary | `c ? a : b` | `{"if": [c, a, b]}`, the else may be another one: `c ? a : d ? b : e` |
+| or | `a or b` | `{"or": [a, b]}` |
+| and | `a and b` | `{"and": [a, b]}` |
+| not | `not a` | `{"not": [a]}` |
+| comparison | `a == b`, `a != b`, `a < b`, `a <= b`, `a > b`, `a >= b` | `{"==": [a, b]}`, ... |
+| additive | `a + b`, `a - b` | `{"+": [a, b]}`, `{"-": [a, b]}` |
+| multiplicative | `a * b`, `a / b` | `{"*": [a, b]}`, `{"/": [a, b]}` |
+| unary | `-a` | `{"-": [a]}`; of a number a negative number, e.g. `-14` |
+| value | see below | |
+
+A run of the same operator is one operator of all of its operands: `1 + 2 +
+3` is `{"+": [1, 2, 3]}`, `10 - 4 - 1` is `{"-": [10, 4, 1]}`, `0 < @x <
+10` is `{"<": [0, "@x", 10]}` (a value between two) and `@a or @b or
+'black'` is `{"or": ["@a", "@b", "black"]}`. Mixed operators of a level
+nest from the left: `10 - 4 + 1` is `{"+": [{"-": [10, 4]}, 1]}`, and `0 <
+@x <= 10` is `{"<=": [{"<": [0, "@x"]}, 10]}`, no chain. Parentheses keep
+their nesting: `(1 + 2) + 3` is `{"+": [{"+": [1, 2]}, 3]}`.
+
+The values:
+
+- Numbers as in JSON, e.g. `3`, `0.5`, `1e3`; `true`, `false` and `null`.
+- Texts in single or double quotes, with the escapes of JSON (`\n`, `\t`,
+  `\\`, `\"`, `\uXXXX`, ...) and `\'`. A quoted text starting with `@` is
+  `{"literal": "@..."}`, so it is no reference.
+- References `@name`. The name is letters (of any script), digits, `_`,
+  `:` and `.`, and a `-` if a letter follows it: `@x:scaled` and
+  `@stroke-width` are one name, `@a-1` is `@a` minus 1, `@a-@b` and `@a -
+  @b` are `@a` minus `@b`. A name of other characters is `var('name')`.
+- `(a)`, lists `[a, b]` and objects `{key: a, ...}`; the keys are words,
+  numbers (as their text, e.g. `{0: 220, 550: 250}` of steps, `-1` and
+  `0.5` too) or quoted texts. An object is an object of the expression,
+  e.g. the table of `steps` or `match` or a nested prop, so an object of one
+  key which is an operator is that operator, as in JSON.
+- Calls `name(a, b, ...)` of the operators which are words: `min`, `max`,
+  `round`, `cat`, `format`, `if`, `steps`, `match`, `var`, `literal`,
+  `and`, `or` and `not`, e.g. `max(@a, 0)`, `if(@v > 10, 'a', @v > 4, 'b',
+  'c')` (an `if` of other than three arguments), `steps(@totalWidth, {0:
+  220, 550: 250})`, `match(@lang, {de: 'Quelle', en: 'Source'})`,
+  `var('a', 0)`; `+`, `-`, `*`, `/` and the comparisons are no calls.
+  `not(a)` without a space before the parenthesis is the call, `not (a)` is
+  `not` of `(a)`. The argument of `literal` is data: in it quoted texts are
+  texts, also starting with `@`, e.g. `literal(['@a', 'b'])` is `{"literal":
+  ["@a", "b"]}`; the first argument of `var` is the name, e.g. `var('@a')`
+  is `{"var": ["@a"]}`.
+
+Whitespace between the tokens does not matter, also newlines. An error
+names the text and the position (from 0) of the problem, e.g. `expression
+"@a +": unexpected end at 4`.
+
+The fixtures `expressions/syntax.json` are `{ "name", "text", "expr" }`:
+the text and its expression, the ones with a `scope` and a `result` also
+the value of the expression, and `{ "name", "text", "error" }` of a text
+which is no expression, `error` the start of the message.
