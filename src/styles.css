@@ -256,7 +256,11 @@
        --gen-vis-legend-symbol-middle */
     font-size: 13px;
     /* the symbol at the middle of the capitals of the name, of any size,
-       by the vertical-align of the svg, see comp/legend.js */
+       by the vertical-align of the svg, see comp/legend.js; the rows of
+       20px of 13px (as in 4.0), the entries at their top, not on the
+       baseline of the font of the legend */
+    line-height: 1.5385;
+    vertical-align: top;
     display: inline-block;
     margin: 0px 5px;
     /* no selection of the text of a double click */

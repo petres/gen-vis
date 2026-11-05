@@ -73,8 +73,12 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   font size; before, on its line box, about 1.5 pixels above the middle at
   8pt. The font size of the names is the one of the entry
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
-  A rect symbol is at the middle of its box. Every legend moves by up to
-  2 pixels.
+  A rect symbol is at the middle of its box. The rows of the entries stay
+  20 pixels high (a line height of 20/13 em, the entries at the top of the
+  row), the symbol and its name are in the middle of the row: names move
+  about 3 pixels down, symbols about 2 pixels, the legends and the plots
+  stay where they were. The `fontSize` of the export (CLI `--font-size`)
+  sizes the entries, so their symbols are centered at that size too.
 - `"classes": true` of the legend of a threshold scale: a label per class
   (`< 50`, `50–100`, …, `≥ 300`) instead of ticks at the limits.
 - The names of the values of a form element of a column: `format` (e.g.

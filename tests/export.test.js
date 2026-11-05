@@ -322,6 +322,14 @@ describe('each call of the export page loads its files anew', () => {
     // the ticks of the y axis
     const ticks = svg => texts(parse(svg)).filter(t => /^\d+([.,]\d+)?$/.test(t) && !t.startsWith('20'));
 
+    test('fontSize sizes the legend entries, whose font size the symbols are centered by', async () => {
+        serve();
+        await window.genVisExport({ ...options, fontSize: '8pt' });
+        const css = [...document.head.querySelectorAll('style.gen-vis-export')].map(s => s.textContent).join('\n');
+        expect(css).toMatch(/\.vis-legend \.vis-legend-entries > div[,{ ][^}]*font-size: 10\.667px/);
+        expect(css).not.toContain('.vis-legend-entries > div span');
+    });
+
     test('a changed data file of the same definition is the one drawn', async () => {
         serve();
         const before = await window.genVisExport(options);
