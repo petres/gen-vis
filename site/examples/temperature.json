@@ -3,14 +3,17 @@
     "data": "data/temperature.csv",
     "options": {
         "coord": "polar",
-        "title": "Ein Jahr im Kreis",
-        "subtitle": "Temperatur in Österreich, gewichtet nach Bevölkerung, gleitender 4-Wochen-Durchschnitt, in °C",
-        "footer": "Quelle: ERA5, Copernicus Climate Change Service",
-        "locale": "de",
+        "language": "@lang",
+        "title": { "de": "Ein Jahr im Kreis", "en": "A year in a circle" },
+        "subtitle": {
+            "de": "Temperatur in Österreich, gewichtet nach Bevölkerung, gleitender 4-Wochen-Durchschnitt, in °C",
+            "en": "Temperature in Austria, weighted by population, rolling 4-week mean, in °C"
+        },
+        "footer": { "de": "Quelle: ERA5, Copernicus Climate Change Service", "en": "Source: ERA5, Copernicus Climate Change Service" },
         "height": 470,
         "margins": { "top": 34, "right": 34, "bottom": 34, "left": 34 }
     },
-    "globals": { "lang": "de", "summer": "Sommer" },
+    "globals": { "lang": "de" },
     "formElements": [
         {
             "id": "lang",
@@ -19,25 +22,8 @@
             "type": "radio",
             "inImage": false,
             "values": [
-                { "id": "de", "name": "Deutsch", "value": "de", "globals": { "summer": "Sommer" } },
-                {
-                    "id": "en",
-                    "name": "English",
-                    "value": "en",
-                    "globals": { "summer": "Summer" },
-                    "patch": {
-                        "options": {
-                            "title": "A year in a circle",
-                            "subtitle": "Temperature in Austria, weighted by population, rolling 4-week mean, in °C",
-                            "footer": "Source: ERA5, Copernicus Climate Change Service",
-                            "locale": "en"
-                        },
-                        "mapping": {
-                            "x": { "hover": { "format": "%B %-d" } },
-                            "year": { "name": "Year", "categories": { "1991–2020": { "name": "Mean 1991–2020" } } }
-                        }
-                    }
-                }
+                { "id": "de", "name": "Deutsch", "value": "de" },
+                { "id": "en", "name": "English", "value": "en" }
             ]
         }
     ],
@@ -47,7 +33,7 @@
             "domain": ["2020-01-01", "2021-01-01"],
             "scale": { "type": "utc" },
             "axis": { "ticks": 12, "format": "%b", "grid": true },
-            "hover": { "format": "%-d. %B" }
+            "hover": { "format": { "de": "%-d. %B", "en": "%B %-d" } }
         },
         "y": {
             "column": "temperature",
@@ -58,7 +44,7 @@
         },
         "year": {
             "column": "year",
-            "name": "Jahr",
+            "name": { "de": "Jahr", "en": "Year" },
             "legend": {
                 "symbol": {
                     "size": 18,
@@ -81,13 +67,13 @@
                 "2024": { "opacity": 0.65 },
                 "2025": { "opacity": 0.75 },
                 "2026": { "color": "#E4572E", "opacity": 1, "width": 3.5 },
-                "1991–2020": { "name": "Ø 1991–2020", "color": "#1B1B1B", "dash": "4 3", "opacity": 1, "width": 2 }
+                "1991–2020": { "name": { "de": "Ø 1991–2020", "en": "Mean 1991–2020" }, "color": "#1B1B1B", "dash": "4 3", "opacity": 1, "width": 2 }
             },
             "hover": {}
         }
     },
     "annotations": [
-        { "type": "band", "x": ["2020-06-01", "2020-09-01"], "label": "{summer}", "props": { "fill": "#FFE36E", "opacity": 0.45 } },
+        { "type": "band", "x": ["2020-06-01", "2020-09-01"], "label": { "de": "Sommer", "en": "Summer" }, "props": { "fill": "#FFE36E", "opacity": 0.45 } },
         { "type": "line", "y": 0, "label": "0 °C", "props": { "stroke": "#0078BF", "stroke-dasharray": "1 3" } }
     ],
     "plot": {

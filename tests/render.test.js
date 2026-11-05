@@ -3894,3 +3894,59 @@ describe('the hover of the stacks of stackBy', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('texts in several languages', () => {
+    const def = () => ({
+        options: { width: 600, height: 300, margins: { top: 10, right: 10, bottom: 40, left: 50 }, language: '@lang',
+            title: { de: 'Bevölkerung', en: 'Population' }, subtitle: { de: 'nach Bundesland', en: 'by state' }, footer: 'Statistik Austria' },
+        globals: { lang: 'de' },
+        formElements: [{ id: 'lang', name: { de: 'Sprache', en: 'Language' }, ref: 'lang', type: 'radio', values: [
+            { id: 'de', name: 'Deutsch', value: 'de' }, { id: 'en', name: { de: 'Englisch', en: 'English' }, value: 'en' }] }],
+        mapping: {
+            x: { column: 'year', type: 'numeric', format: 'd', axis: { position: 'bottom', title: { name: { de: 'Jahr', en: 'Year' } } } },
+            y: { column: 'value', type: 'numeric', format: ',.1f', axis: { position: 'left' }, hover: {} },
+            c: { column: 'land', name: { de: 'Land', en: 'State' }, legend: {}, hover: {},
+                categories: { Wien: { name: { de: 'Wien', en: 'Vienna' } }, Tirol: { name: 'Tirol' } } },
+        },
+        plot: { type: 'line', by: 'c' },
+        annotations: [{ type: 'line', y: 2500, label: { de: 'Ziel', en: 'Target' } }],
+    });
+    const data = 'year,value,land\n2020,1000,Wien\n2021,2000,Wien\n2020,3000,Tirol\n2021,3500,Tirol';
+    const texts = el => ({
+        title: el.querySelector('.vis-title').textContent,
+        subtitle: el.querySelector('.vis-subtitle').textContent,
+        form: [el.querySelector('.vis-form-element-title').textContent, ...[...el.querySelectorAll('.vis-radio label')].map(l => l.textContent)],
+        legend: [el.querySelector('.vis-legend-title').textContent, ...[...el.querySelectorAll('.vis-legend-entry span')].map(s => s.textContent)],
+        axis: el.querySelector('.vis-axis-title').textContent,
+        // the numbers of the locale: 1.000,0 (de) or 1,000.0 (en)
+        tick: [...el.querySelectorAll('.vis-axis-left .tick text')].map(t => t.textContent).some(t => /^\d\.\d{3},\d$/.test(t)) ? 'de' : 'en',
+        label: el.querySelector('.vis-annotation-label')?.textContent,
+    });
+
+    test('the texts of the language of a global, the locale of the numbers with it, a switch of the language', async () => {
+        const el = await mount({ def: def(), data });
+        expect(texts(el)).toEqual({ title: 'Bevölkerung', subtitle: 'nach Bundesland', form: ['Sprache:', 'Deutsch', 'Englisch'],
+            legend: ['Land', 'Wien', 'Tirol'], axis: 'Jahr', tick: 'de', label: 'Ziel' });
+        // a hidden entry stays hidden in the other language
+        el.querySelector('.vis-legend-entry[data-key="Tirol"]').click();
+        el.querySelectorAll('.vis-radio input')[1].click();
+        await nextTick();
+        expect(texts(el)).toEqual({ title: 'Population', subtitle: 'by state', form: ['Language:', 'Deutsch', 'English'],
+            legend: ['State', 'Vienna', 'Tirol'], axis: 'Year', tick: 'en', label: 'Target' });
+        expect(el.querySelector('.vis-legend-entry[data-key="Tirol"]').dataset.visible).toBe('false');
+        expect(errors).toEqual([]);
+    });
+
+    test('the language of the locale, of its region, the first text of another one; a locale of its own', async () => {
+        const of = async options => texts(await mount({ def: { ...def(), options: { ...def().options, ...options } }, data }));
+        expect((await of({ language: undefined, locale: 'en' })).title).toBe('Population');
+        expect((await of({ language: 'en-GB' })).title).toBe('Population');
+        expect((await of({ language: 'fr' })).title).toBe('Bevölkerung');
+        // the numbers of the locale, the texts of the language
+        const own = await of({ language: 'en', locale: 'de' });
+        expect([own.title, own.tick]).toEqual(['Population', 'de']);
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef(def())).toEqual([]);
+        expect(errors).toEqual([]);
+    });
+});

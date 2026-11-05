@@ -1,4 +1,4 @@
-export { getLocale, loadLocale, checkLocale, localeNames };
+export { getLocale, loadLocale, checkLocale, localeNames, hasLocale };
 
 import * as d3 from "@/utils/d3";
 import { lazy } from "@/utils/lazy";
@@ -112,6 +112,10 @@ const checkLocale = tag => {
     if (supported.length == 0)
         throw new Error(`Unknown locale '${tag}', expected one of ${localeNames.map(n => `'${n}'`).join(', ')} or a language of Intl, e.g. 'fr'`);
 };
+
+// a locale which can be used: a built-in one or a loaded one of Intl, e.g.
+// a language of the texts as the locale, see applyPatches of utils/def.js
+const hasLocale = tag => typeof tag == 'string' && (Object.hasOwn(locales, tag) || intlLocales.has(tag));
 
 // the tag of the base of a locale, see getLocale
 const baseOf = locale => (typeof locale == 'string' ? locale : locale?.base) ?? 'de';

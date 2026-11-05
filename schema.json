@@ -68,6 +68,13 @@
         }
     },
     "definitions": {
+        "inLanguages": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" },
+            "additionalProperties": { "type": "string" },
+            "description": "The text in several languages by their tags, e.g. { \"de\": \"Bevölkerung\", \"en\": \"Population\" }: the one of options.language, else the one of its language without the region (de of de-AT), else the first one."
+        },
         "geo": {
             "type": "object",
             "additionalProperties": false,
@@ -119,8 +126,8 @@
             "properties": {
                 "type": { "enum": ["band", "line", "text", "circle"] },
                 "props": { "$ref": "#/definitions/props" },
-                "label": { "type": "string", "description": "A label of a band or a line, a template of the globals." },
-                "text": { "type": "string", "description": "The text of a text, a template of the globals." },
+                "label": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }], "description": "A label of a band or a line, a template of the globals." },
+                "text": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }], "description": "The text of a text, a template of the globals." },
                 "above": { "type": "boolean", "description": "Above the plots, below them by default, as layer above." },
                 "layer": { "enum": ["below", "above"], "description": "Below the plots and the axes (default) or above all plots." },
                 "legend": { "type": "string", "description": "The name of the annotation in the legend (a template of the globals), with a symbol of it: a vertical line of a line at a value of x, a horizontal one of y, a box of a band, a dot of a circle; one entry per name, after the legends of the mappings." },
@@ -236,14 +243,14 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "title": { "type": "string" },
-                "subtitle": { "type": "string" },
-                "footer": { "type": "string", "description": "HTML, e.g. a link of the source, a template of the globals, their values are text." },
+                "title": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }] },
+                "subtitle": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }] },
+                "footer": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }], "description": "HTML, e.g. a link of the source, a template of the globals, their values are text." },
                 "message": {
                     "description": "A text instead of the plots and the legends, a template and a prop of the globals and totalWidth, e.g. steps of a narrow screen, null or an empty text for the plots.",
                     "anyOf": [{ "type": "string" }, { "type": "null" }, { "$ref": "#/definitions/expression" }]
                 },
-                "empty": { "type": "string", "description": "A text instead of the plots if there are no rows, e.g. of a filter, a template of the globals." },
+                "empty": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }], "description": "A text instead of the plots if there are no rows, e.g. of a filter, a template of the globals." },
                 "class": { "type": "string", "description": "The class of the element of the visualisation (vis), a template of the globals, e.g. for the styles of a page." },
                 "transition": { "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "boolean" }], "description": "The elements move to their new values in this many milliseconds (true for 300) after a change of a legend, a form element or the state." },
                 "highlight": {
@@ -270,8 +277,8 @@
                         "side": { "enum": ["left", "right", "above", "below", "center"], "description": "The side of the hover, by default the one with more space, center on the position, e.g. in the center of a polar plot." },
                         "offset": { "$ref": "#/definitions/pair", "description": "Moves the hover by [x, y] pixels." },
                         "area": { "enum": ["plot", "facet"], "default": "plot", "description": "The area of the hover, the plot area or the facet with its margins, e.g. the labels of the rows of horizontal bars." },
-                        "title": { "type": "string", "description": "The title, {title} is the default one, e.g. the date, and the globals." },
-                        "row": { "type": "string", "description": "A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, and the globals." }
+                        "title": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }], "description": "The title, {title} is the default one, e.g. the date, and the globals." },
+                        "row": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }], "description": "A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, and the globals." }
                     }
                 },
                 "width": { "type": "number", "description": "The width of the container if not given." },
@@ -287,6 +294,7 @@
                     }
                 },
                 "locale": { "$ref": "#/definitions/locale" },
+                "language": { "type": "string", "description": "The language of the texts in several languages (e.g. { \"de\": \"Bevölkerung\", \"en\": \"Population\" }), a tag, e.g. en, or a global, e.g. @lang of a form element or of the page; the locale of the numbers and dates without options.locale; by default the language of options.locale." },
                 "coord": {
                     "anyOf": [
                         { "enum": ["cartesian", "polar", "geo"] },
@@ -408,7 +416,7 @@
                     "anyOf": [{ "type": "array" }, { "$ref": "#/definitions/expression" }],
                     "description": "Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or [\"2004\", \"2008\"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also a prop, e.g. steps of totalWidth."
                 },
-                "format": { "type": "string", "description": "A d3 number or time format." },
+                "format": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }], "description": "A d3 number or time format." },
                 "labels": {
                     "type": "object",
                     "additionalProperties": false,
@@ -452,7 +460,7 @@
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "name": { "type": "string" },
+                        "name": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }] },
                         "offset": { "type": "number", "description": "The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults)." },
                         "position": { "enum": ["side", "top"], "default": "side", "description": "Of a vertical axis: beside it, rotated, in the middle of the range of its scale (side), or horizontal above its range (top), e.g. the unit at the top left, starting at the distance offset from the axis." },
                         "gap": { "type": "number", "description": "Of a title at the top: its distance above the range of the scale, 8 pixels by default." }
@@ -469,13 +477,13 @@
                     "type": "string",
                     "description": "The column of the data, can be a template of globals, e.g. \"{values}{share}\", see formElements."
                 },
-                "name": { "type": "string", "description": "The title of the legend." },
+                "name": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }], "description": "The title of the legend." },
                 "type": {
                     "enum": ["numeric", "date", "categorical"],
                     "description": "Without a type it follows from the other parts (categories or a band, point or ordinal scale are categorical, a time or utc scale date, other scales numeric, a mapping of the facets or of the groups of a scale categorical, not one only used as `by` of a plot) or from the values of the column: numbers numeric, dates date, otherwise categorical (a column without values, e.g. of empty data, date of a time format of the mapping, its axis or its hover, otherwise categorical). Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values are strings of every format of the data, e.g. \"2004\" of the number 2004 of JSON or parquet."
                 },
                 "format": {
-                    "type": "string",
+                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
                     "description": "The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. \",.0f\"."
                 },
                 "stacked": {
@@ -491,7 +499,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "cell": { "type": "boolean", "default": true, "description": "false: the value is a name of the templates of the hover (e.g. {half} of the title), without a cell of the table." },
-                        "format": { "type": "string", "description": "By default the format of the axis." },
+                        "format": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }], "description": "By default the format of the axis." },
                         "props": {
                             "type": "object",
                             "description": "The columns of the entries of a categorical mapping, name by default.",
@@ -532,13 +540,13 @@
                                 "size": { "type": "number", "default": 240, "description": "The length of the scale of the colors in pixels." },
                                 "values": { "type": "array", "items": { "type": "number" }, "description": "The ticks of a gradient of colors, e.g. [0, 50, 100]." },
                                 "labels": { "enum": ["before", "after"], "default": "after", "description": "The labels of the scale of colors after it (below, right of a vertical one) or before it." },
-                                "format": { "type": "string", "description": "The format of the values of the colors of a scale, by default the one of the hover." },
+                                "format": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }], "description": "The format of the values of the colors of a scale, by default the one of the hover." },
                                 "missing": {
                                     "type": "object",
                                     "additionalProperties": false,
                                     "description": "An entry of the regions without a value beside the colors of a scale, e.g. { \"name\": \"no data\", \"color\": \"#EEE\" }.",
                                     "properties": {
-                                        "name": { "type": "string" },
+                                        "name": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }] },
                                         "color": { "type": "string", "description": "By default #EEE." }
                                     },
                                     "required": ["name"]
@@ -704,7 +712,7 @@
         "categoryProps": {
             "type": "object",
             "properties": {
-                "name": { "type": "string", "description": "The key by default." },
+                "name": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }], "description": "The key by default." },
                 "visible": { "type": "boolean", "default": true },
                 "legend": { "type": "boolean", "default": true, "description": "false: the category has no entry in the legend, it stays visible, e.g. headers." },
                 "symbol": { "$ref": "#/definitions/legendSymbol", "description": "The symbol of the entry of the category in the legend instead of the one of the legend, e.g. a rect of an area beside lines." }
@@ -842,7 +850,7 @@
             "additionalProperties": false,
             "properties": {
                 "id": { "type": "string" },
-                "name": { "type": "string" },
+                "name": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }] },
                 "ref": { "type": "string", "description": "The global which is changed." },
                 "type": { "enum": ["radio", "select", "slider", "hidden"], "description": "Radio buttons, a drop down list, a slider over the entries or hidden, the global is set by the page (the prop globals)." },
                 "inImage": { "type": "boolean", "default": true, "description": "The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales." },
@@ -873,7 +881,7 @@
                 "additionalProperties": { "anyOf": [{ "type": "string" }, { "type": "number" }, { "type": "boolean" }, { "type": "null" }] },
                 "properties": {
                     "id": { "type": "string" },
-                    "name": { "type": "string" },
+                    "name": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }] },
                     "value": {},
                     "globals": {
                         "type": "object",

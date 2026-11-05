@@ -84,3 +84,25 @@ the entries selected by the globals.
 - `parts` = `merge([parts of def, patchable parts of the patch of every
   selected entry in the order of the form elements])`, the other parts of a
   patch are left out.
+
+## Texts in several languages
+
+After the patches are merged, the texts in several languages of the parts
+are the ones of the language: a text in several languages is an object of
+at least one key, all keys language tags (`^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`,
+not the name of an operator of the expressions, e.g. `or`, `var`) and all
+values strings. The language is `options.language` of the merged parts, a
+tag, or of a text starting with `@` the global of its name (as a string,
+none if the global is missing); without one the tag of `options.locale` (a
+string or its `base`); none otherwise. The text is the one of the language,
+else the one of its language without the region (the part before the first
+`-`), else the first one (in the order of the keys). Only these places are
+texts in several languages, objects elsewhere stay as they are (e.g. `{"of":
+"x"}` of a scale): `options.title`, `subtitle`, `footer`, `empty`,
+`options.hover.title`, `row`, `total`; of every mapping `name`, `format`,
+`axis.format`, `axis.title` (a text) and `axis.title.name`, `hover.format`,
+`legend.format`, `legend.missing.name`, `common.name`, the `name` of every
+category and of every entry of `ranks`; of every annotation `label` and
+`text`; the `name` of every form element and of every entry of its
+`values`. Without `options.locale` the language is also the locale, if it is
+one (see `locale` of `docs/definition.md`).

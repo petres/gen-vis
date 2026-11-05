@@ -1,10 +1,11 @@
-export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts, symbolOf, symbolShape };
+export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts, symbolOf, symbolShape, isInLanguages, inLanguage, languageOf, textsIn };
 
 import merge from 'deepmerge';
 import { ownColors, schemeColors } from '@/utils/d3';
 import { comparison, isObject, sameValue } from '@/utils/values';
 import { defaultScaleType, hasCategories } from '@/utils/normalize';
-import { refNames } from '@/utils/expr';
+import { operators, refNames } from '@/utils/expr';
+import { hasLocale } from '@/utils/locale';
 
 // arrays whose entries all have an `id`, e.g. the form elements and their
 // values, are merged by it, entries with a new id are appended, all other
@@ -330,6 +331,73 @@ const prepareDef = (def, options = {}) => {
     return def;
 };
 
+// the language tags of texts in several languages, e.g. de or de-AT, not
+// the names of operators, e.g. { "or": "x" } or { "var": "x" }
+const languageTag = /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/;
+const operatorNames = new Set(operators);
+
+/**
+ * A text in several languages: an object of language tags and texts, e.g.
+ * { "de": "Bevölkerung", "en": "Population" }, see inLanguage.
+ */
+const isInLanguages = v => isObject(v) && Object.keys(v).length > 0
+    && Object.entries(v).every(([k, t]) => languageTag.test(k) && !operatorNames.has(k) && typeof t == 'string');
+
+/**
+ * The text of a text in several languages in the language `language`, of
+ * its language without the region (de of de-AT) or the first one; other
+ * values as they are.
+ */
+const inLanguage = (v, language) => {
+    if (!isInLanguages(v))
+        return v;
+    const base = language?.split('-')[0];
+    return (language !== undefined && Object.hasOwn(v, language) ? v[language] : undefined)
+        ?? (base !== undefined && Object.hasOwn(v, base) ? v[base] : undefined) ?? Object.values(v)[0];
+};
+
+/**
+ * The language of the texts (`options.language`): a tag or a global
+ * ("@lang"), by default the one of `options.locale`, undefined without both.
+ */
+const languageOf = (options, globals = {}) => {
+    const given = options?.language;
+    if (typeof given == 'string')
+        return given.startsWith('@') ? (globals?.[given.slice(1)] ?? undefined) && String(globals[given.slice(1)]) : given;
+    const locale = options?.locale;
+    return typeof locale == 'string' ? locale : (isObject(locale) && typeof locale.base == 'string' ? locale.base : undefined);
+};
+
+// the places of texts which can be in several languages, by part, a path
+// of keys ('*' every entry of an object or a list), only these, other
+// objects of short keys are not texts, e.g. { "of": "x" } of a scale
+const textPaths = {
+    options: [['title'], ['subtitle'], ['footer'], ['empty'], ['hover', 'title'], ['hover', 'row'], ['hover', 'total']],
+    mapping: [['*', 'name'], ['*', 'format'], ['*', 'axis', 'format'], ['*', 'axis', 'title'], ['*', 'axis', 'title', 'name'], ['*', 'hover', 'format'],
+        ['*', 'legend', 'format'], ['*', 'legend', 'missing', 'name'], ['*', 'common', 'name'], ['*', 'categories', '*', 'name'], ['*', 'ranks', '*', 'name']],
+    annotations: [['*', 'label'], ['*', 'text']],
+};
+
+/**
+ * A part of a definition (`options`, `mapping` or `annotations`) with its
+ * texts in several languages in the one of `language` (see inLanguage), at
+ * their places (textPaths), a copy of the objects on the way to them.
+ */
+const textsIn = (name, part, language) => {
+    const resolve = (v, path) => {
+        if (path.length == 0)
+            return inLanguage(v, language);
+        const [k, ...rest] = path;
+        if (Array.isArray(v) && k == '*')
+            return v.map(e => resolve(e, rest));
+        if (!isObject(v))
+            return v;
+        const keys = k == '*' ? Object.keys(v) : (Object.hasOwn(v, k) ? [k] : []);
+        return keys.length ? { ...v, ...Object.fromEntries(keys.map(key => [key, resolve(v[key], rest)])) } : v;
+    };
+    return (textPaths[name] ?? []).reduce((v, path) => resolve(v, path), part);
+};
+
 // the parts of a definition which the entries of form elements can patch
 const patchable = ['options', 'mapping', 'plot', 'annotations', 'filter', 'facets', 'geo', 'transform'];
 
@@ -390,7 +458,28 @@ const patchedParts = (def, defOrg) => {
  * column or type.
  */
 const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {} } = {}) => {
-    const patched = patchedParts(def, defOrg);
+    const merged = patchedParts(def, defOrg);
+    // the texts in the language of the definition, e.g. of a global of a
+    // form element; the locale of the numbers and dates is the language
+    // without one of its own
+    const language = languageOf(merged.options, def.globals);
+    const patched = { ...merged };
+    ['options', 'mapping', 'annotations'].filter(k => merged[k] !== undefined).forEach(k => patched[k] = textsIn(k, merged[k], language));
+    if (hasLocale(language) && patched.options?.locale === undefined)
+        patched.options = { ...patched.options, locale: language };
+    // the names of the form elements and of their entries
+    (def.formElements ?? []).forEach((e, i) => {
+        const org = defOrg.formElements?.[i];
+        if (!isObject(org) || !isObject(e))
+            return;
+        if (org.name !== undefined)
+            e.name = inLanguage(org.name, language);
+        if (Array.isArray(org.values) && Array.isArray(e.values))
+            e.values.forEach((v, j) => {
+                if (isObject(v) && isObject(org.values[j]) && org.values[j].name !== undefined)
+                    v.name = inLanguage(org.values[j].name, language);
+            });
+    });
     const before = def[sources] ?? {};
     const after = { mapping: {} };
     // a part prepared again if its source differs from the one before

@@ -160,7 +160,7 @@ export type Elements = {
  */
 export type FormElementValues = {
     id: string;
-    name?: string;
+    name?: string | InLanguages;
     value?: unknown;
     /**
      * Globals which are set when the entry is selected, e.g. a name used by the texts.
@@ -311,11 +311,11 @@ export interface Annotation {
     /**
      * A label of a band or a line, a template of the globals.
      */
-    label?: string;
+    label?: string | InLanguages;
     /**
      * The text of a text, a template of the globals.
      */
-    text?: string;
+    text?: string | InLanguages;
     /**
      * Above the plots, below them by default, as layer above.
      */
@@ -358,6 +358,7 @@ export interface Annotation {
         | 'circle'
         | Props
         | string
+        | InLanguages
         | boolean
         | 'below'
         | 'above'
@@ -471,6 +472,12 @@ export interface Expression {
      * A reference, a name or [name, default], the default of an unknown name.
      */
     var?: string | [unknown] | [unknown, unknown];
+}
+/**
+ * The text in several languages by their tags, e.g. { "de": "Bevölkerung", "en": "Population" }: the one of options.language, else the one of its language without the region (de of de-AT), else the first one.
+ */
+export interface InLanguages {
+    [k: string]: string;
 }
 export interface Transform {
     /**
@@ -615,12 +622,12 @@ export interface Filter {
     [k: string]: unknown;
 }
 export interface Options {
-    title?: string;
-    subtitle?: string;
+    title?: string | InLanguages;
+    subtitle?: string | InLanguages;
     /**
      * HTML, e.g. a link of the source, a template of the globals, their values are text.
      */
-    footer?: string;
+    footer?: string | InLanguages;
     /**
      * A text instead of the plots and the legends, a template and a prop of the globals and totalWidth, e.g. steps of a narrow screen, null or an empty text for the plots.
      */
@@ -628,7 +635,7 @@ export interface Options {
     /**
      * A text instead of the plots if there are no rows, e.g. of a filter, a template of the globals.
      */
-    empty?: string;
+    empty?: string | InLanguages;
     /**
      * The class of the element of the visualisation (vis), a template of the globals, e.g. for the styles of a page.
      */
@@ -691,11 +698,11 @@ export interface Options {
         /**
          * The title, {title} is the default one, e.g. the date, and the globals.
          */
-        title?: string;
+        title?: string | InLanguages;
         /**
          * A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, and the globals.
          */
-        row?: string;
+        row?: string | InLanguages;
     };
     /**
      * The width of the container if not given.
@@ -712,6 +719,10 @@ export interface Options {
         left?: NumberValue;
     };
     locale?: Locale;
+    /**
+     * The language of the texts in several languages (e.g. { "de": "Bevölkerung", "en": "Population" }), a tag, e.g. en, or a global, e.g. @lang of a form element or of the page; the locale of the numbers and dates without options.locale; by default the language of options.locale.
+     */
+    language?: string;
     /**
      * The coordinate system of the plots, cartesian (a horizontal and a vertical axis) by default, polar (an angle and a radius) or geo (a map).
      */
@@ -744,7 +755,7 @@ export interface MappingEntry {
     /**
      * The title of the legend.
      */
-    name?: string;
+    name?: string | InLanguages;
     /**
      * Without a type it follows from the other parts (categories or a band, point or ordinal scale are categorical, a time or utc scale date, other scales numeric, a mapping of the facets or of the groups of a scale categorical, not one only used as `by` of a plot) or from the values of the column: numbers numeric, dates date, otherwise categorical (a column without values, e.g. of empty data, date of a time format of the mapping, its axis or its hover, otherwise categorical). Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values are strings of every format of the data, e.g. "2004" of the number 2004 of JSON or parquet.
      */
@@ -752,7 +763,7 @@ export interface MappingEntry {
     /**
      * The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. ",.0f".
      */
-    format?: string;
+    format?: string | InLanguages;
     /**
      * Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars), a radial or an angular one (of pies, polar:arc from @<name>:start:scaled to @<name>:end:scaled), true all rows or the conditions of mappings of the rows which are stacked, as the ones of filter, e.g. { "type": { "not": "load" } }, the others have their own value as start and end, e.g. a line of a total on stacked areas.
      */
@@ -777,7 +788,7 @@ export interface MappingEntry {
               /**
                * By default the format of the axis.
                */
-              format?: string;
+              format?: string | InLanguages;
               /**
                * The columns of the entries of a categorical mapping, name by default.
                */
@@ -830,12 +841,12 @@ export interface MappingEntry {
               /**
                * The format of the values of the colors of a scale, by default the one of the hover.
                */
-              format?: string;
+              format?: string | InLanguages;
               /**
                * An entry of the regions without a value beside the colors of a scale, e.g. { "name": "no data", "color": "#EEE" }.
                */
               missing?: {
-                  name: string;
+                  name: string | InLanguages;
                   /**
                    * By default #EEE.
                    */
@@ -1034,7 +1045,7 @@ export interface Axis {
     /**
      * A d3 number or time format.
      */
-    format?: string;
+    format?: string | InLanguages;
     /**
      * The props of the labels of the ticks (svg attributes and text), of the props of the categories of the tick and of the categories of its row of the mappings `by`, its values and the names of the facet, e.g. { "by": ["level"], "props": { "font-weight": "@weight", "text": "@short", "max-width": 300 } }, of all axes, e.g. { "props": { "fill": "#777", "font-size": 10, "stroke-width": 2 } } of the values of a radial axis in the background, the stroke and its width replace the halo of the labels of radial axes.
      */
@@ -1078,7 +1089,7 @@ export interface Axis {
      */
     grid?: boolean;
     title?: {
-        name?: string;
+        name?: string | InLanguages;
         /**
          * The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults).
          */
@@ -1113,7 +1124,7 @@ export interface CategoryProps {
     /**
      * The key by default.
      */
-    name?: string;
+    name?: string | InLanguages;
     visible?: boolean;
     /**
      * false: the category has no entry in the legend, it stays visible, e.g. headers.
@@ -1149,7 +1160,7 @@ export interface CategoryProps1 {
     /**
      * The key by default.
      */
-    name?: string;
+    name?: string | InLanguages;
     visible?: boolean;
     /**
      * false: the category has no entry in the legend, it stays visible, e.g. headers.
@@ -1381,7 +1392,7 @@ export interface Props1 {
  */
 export interface FormElement {
     id: string;
-    name?: string;
+    name?: string | InLanguages;
     /**
      * The global which is changed.
      */

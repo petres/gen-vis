@@ -5,7 +5,7 @@ import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
 import { applyPatches, mergeAll, prepareDef, variants } from "@/utils/def";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
-import { getLocale, loadLocale } from "@/utils/locale";
+import { checkLocale, getLocale, loadLocale } from "@/utils/locale";
 import { loadCoord } from "@/coords";
 import { loadColors, ownScheme } from "@/utils/d3";
 import { lazy } from "@/utils/lazy";
@@ -190,8 +190,26 @@ const requirements = defOrg => {
         geo: all.some(d => Boolean(d.geo?.data)),
         transforms: all.some(d => Boolean(d.transform)),
         colorLegend: mappings.some(m => m.legend && !hasCategories(m)),
-        locales: all.filter((d, i) => i == 0 || d.options?.locale !== undefined).map(d => d.options?.locale ?? undefined),
+        locales: [...all.filter((d, i) => i == 0 || d.options?.locale !== undefined).map(d => d.options?.locale ?? undefined), ...languagesOf(defOrg)],
     };
+};
+
+// the languages of the texts a definition can have (`options.language`, a
+// tag or a global: the values of its form elements and of the definition),
+// the locales of the numbers and dates of the ones which are locales
+const languagesOf = def => {
+    const given = variants(def).map(d => d.options?.language).filter(l => typeof l == 'string');
+    const globals = given.filter(l => l.startsWith('@')).map(l => l.slice(1));
+    const values = [...given.filter(l => !l.startsWith('@')), ...globals.map(g => def.globals?.[g]),
+        ...(def.formElements ?? []).filter(e => globals.includes(e?.ref) && Array.isArray(e.values)).flatMap(e => e.values.map(v => v?.value))];
+    return [...new Set(values.filter(v => typeof v == 'string'))].filter(tag => {
+        try {
+            checkLocale(tag);
+            return true;
+        } catch {
+            return false;
+        }
+    });
 };
 
 // the parts of the requirements, loaded at once, the coordinate systems by

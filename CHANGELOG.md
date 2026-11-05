@@ -239,6 +239,19 @@ Maps and form elements:
   `"%b %Y"` of `2026-10`) or a column of `names`, instead of the raw
   values.
 
+Languages:
+
+- Texts in several languages: `{"de": "Bevölkerung", "en": "Population"}`
+  where a text of the definition is, e.g. the title, the names of mappings,
+  categories, axes and form elements, the labels of annotations, the
+  templates of the hover and formats (`{"de": "%-d. %B", "en": "%B %-d"}`),
+  in the language of `options.language`, a tag or a global (`"@lang"` of a
+  form element or of the page), by default the one of `options.locale`,
+  else the one without the region (`de` of `de-AT`) or the first one.
+  Without a `locale` of its own the language is the locale of the numbers
+  and dates. A language switch is a form element of the global, without a
+  patch of every text (example: the polar lines of the site).
+
 Page integration:
 
 - `vis-button`: the class of the buttons of the footer, also of buttons of

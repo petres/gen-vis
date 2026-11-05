@@ -366,6 +366,37 @@ titles of the buttons (`download`, `copy`, `copied` and `csv`) and the texts
 of screen readers (`chart`, the kind of a facet with a hover, and `keys`,
 the description of its keys).
 
+`language` is the language of the texts of the definition which are written
+in several languages, an object of language tags and texts:
+
+```json
+"options": { "language": "@lang", "title": { "de": "Bevölkerung", "en": "Population" } },
+"globals": { "lang": "de" },
+"formElements": [{ "id": "lang", "ref": "lang", "type": "radio", "values": [
+    { "id": "de", "name": "Deutsch", "value": "de" }, { "id": "en", "name": "English", "value": "en" }] }]
+```
+
+A text is the one of the language (`en`), of its language without the
+region (`de` of `de-AT`) or the first one. `language` is a tag or a global
+(`"@lang"`, e.g. of a form element as above or of the page, see
+[globals](#formelements-and-globals)), by default the language of `locale`;
+without a `locale` of its own the language is also the locale of the numbers
+and dates, e.g. the names of the months (a language of `Intl` is loaded with
+the definition if it is a value of the global of a form element or the
+global). The texts which can be in several languages are the title, the
+subtitle, the footer and `empty` of the options, `title`, `row` and `total`
+of `options.hover`, of the mappings their `name`, `format` (e.g. `{"de":
+"%-d. %B", "en": "%B %-d"}` of the order of the day and the month), the
+`format` and the `title` (or its `name`) of the axis, the `format` of the
+hover and of the legend, the `name` of `legend.missing`, of `common`, of the
+categories and of the ranks, the `label` and the `text` of annotations and
+the names of the form elements and of their entries. Props are expressions,
+a text of a prop in several languages is a `match` of the global, e.g.
+`{"match": ["@lang", {"de": "Quelle", "en": "Source"}]}`, the names of the
+data are the ones of a column of the language, e.g. `"column": "name_{lang}"`
+or a `lookup` of `"value": "name_{lang}"`. Instead of patches of every text
+of an entry of a language, the texts are written where they are.
+
 `coord` is the coordinate system of the plots, `cartesian` (the default, a
 horizontal and a vertical axis), `polar` (an angle and a radius, see
 [polar plots](#polar-plots)), `geo` (a map, see [maps](#maps)) or a
