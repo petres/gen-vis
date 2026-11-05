@@ -59,7 +59,8 @@ describe('the props of categories', () => {
             { type: 'cartesian:bar', by: 'c', props: { x: '@x:scaled', y1: '@y:scaled', fill: '@color', 'fill-opacity': 0.08, opacity: '@y' } },
             { type: 'cartesian:line', by: 'c', props: { 'stroke-width': 1.4, 'stroke-dasharray': '@dash', d: { x: '@x:scaled', y: '@y:scaled' } } },
             { type: 'cartesian:line', props: { stroke: 'black' } },
-        ] }, { symbols: { line: { width: 18, height: 9 } } });
+            // a rule of the categories before the line, the symbol is the one of the line
+        ].toSpliced(0, 0, { type: 'cartesian:rule', by: 'c', props: { 'stroke-dasharray': '1 1' } }) }, { symbols: { line: { width: 18, height: 9 } } });
         expect(def.mapping.c.legend.symbol).toEqual({ width: 18, height: 9, elements: [
             { type: 'rect', props: { x: 0, y: 0.5, width: 18, height: 8, fill: '@color', 'fill-opacity': 0.08 } },
             { type: 'line', props: { x1: 0, x2: 18, y1: 4.5, y2: 4.5, stroke: '@color', 'stroke-width': 1.4, 'stroke-dasharray': '@dash' } },

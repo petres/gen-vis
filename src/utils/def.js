@@ -110,7 +110,9 @@ const autoSymbol = (symbol, name, plots, names, defaults) => {
     const given = typeof symbol == 'string' ? {} : symbol;
     const own = v => !refNames(v).some(n => typeof n != 'string' || (n != 'color' && !names.has(n)));
     const parts = symbolKinds.flatMap(([kind, types, keys]) => {
-        const plot = [plots ?? []].flat().find(p => types.includes(p?.type) && [p.by ?? []].flat().includes(name));
+        // the first plot of the first type of the kind, e.g. a line before a rule
+        const of = [plots ?? []].flat().filter(p => [p?.by ?? []].flat().includes(name));
+        const plot = types.map(t => of.find(p => p?.type == t)).find(Boolean);
         if (!plot)
             return [];
         const props = Object.fromEntries(keys.filter(k => plot.props?.[k] !== undefined && own(plot.props[k])).map(k => [k, plot.props[k]]));
