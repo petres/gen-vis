@@ -1715,6 +1715,28 @@ describe('transforms', () => {
     });
 });
 
+describe('legend symbols at the middle of the capitals of the name', () => {
+    // measured in Chromium (13, 20 and 8 pixels of names, boxes of 6 to 30
+    // pixels): the middle of each box within 0.4 pixels of the middle of the
+    // capitals, in the DOM and in the SVG export (the same positions)
+    test('the box of each size moved by half its height below the middle, of a category and of "auto" of plots of rows', async () => {
+        const def = lineDef();
+        def.mapping.c.legend = { symbol: { type: 'line', width: 24, height: 8 } };
+        def.mapping.c.categories.Tirol.symbol = { type: 'rect', size: 30 };
+        let el = await mount({ def, data: lineData });
+        const aligns = () => [...el.querySelectorAll('.vis-legend-entry > svg')].map(s => [s.getAttribute('width'), s.getAttribute('height'), s.style.verticalAlign]);
+        expect(aligns()).toEqual([['24', '8', 'calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 4px)'], ['30', '30', 'calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 15px)']]);
+        // "auto" of plots without the categories in `by`, e.g. of the values of the rows: a box
+        def.mapping.c.legend = { symbol: 'auto' };
+        delete def.mapping.c.categories.Tirol.symbol;
+        def.plot = [{ type: 'svg:circle', props: { r: 2, cx: '@x:scaled', cy: '@y:scaled', fill: { match: ['@c', { Wien: 'red' }, 'blue'] } } }];
+        el = await mount({ def, data: lineData });
+        expect([...el.querySelectorAll('.vis-legend-entry > svg > *')].map(s => s.tagName)).toEqual(['rect', 'rect']);
+        expect(aligns()[0][2]).toBe('calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 8px)');
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('the order and the ranks of categories', () => {
     test('a symbol of a legend by its shortcut', async () => {
         const def = lineDef();
@@ -3350,6 +3372,34 @@ describe('axes at a value of the other axis (`at`)', () => {
         const { validateDef } = await import('@/utils/validate');
         const polar = { options: { coord: 'polar' }, mapping: { x: { column: 'a', type: 'categorical', axis: { at: 0 } }, y: { column: 'v', type: 'numeric' } }, plot: { type: 'polar:arc' } };
         expect(validateDef(polar).filter(w => w.includes('.at'))).toEqual([`mapping.x.axis.at: only cartesian axes are at a value of the other axis`]);
+    });
+
+    test('of a log scale at 0 or null at the edge, at a value of a band scale its center, per facet of own scales', async () => {
+        const log = d => { d.mapping.y.scale = { orientation: 'vertical', type: 'log' }; return d; };
+        for (const at of [0, -1, null]) {
+            const el = await mount({ def: log(def({ at })), data: lineData.replace(',,20,Wien', ',5,20,Wien') });
+            expect([at, axis(el, 'bottom').getAttribute('transform'), axis(el, 'bottom').classList.contains('vis-axis-at')]).toEqual([at, 'translate(0, 250)', false]);
+        }
+        // y of the lands: Wien and Tirol, the line of x at the center of Tirol
+        const band = def({ at: 'Tirol', labels: { at: 'axis' } }, { at: 2021, labels: { at: 'axis' } });
+        band.mapping.y = { column: 'land', type: 'categorical', scale: { orientation: 'vertical', type: 'band', padding: 0 }, axis: { position: 'left', at: 2021, labels: { at: 'axis' } } };
+        const el = await mount({ def: band, data: lineData });
+        // at the tick of Tirol, without its half pixel
+        const tirol = [...axis(el, 'left').querySelectorAll('.tick')].map(t => t.getAttribute('transform'))[1];
+        expect(tirol).toMatch(/^translate\(0,[\d.]+\)$/);
+        expect(axis(el, 'bottom').getAttribute('transform')).toBe(`translate(0, ${+tirol.match(/,([\d.]+)/)[1] - 0.5})`);
+        expect(+axis(el, 'left').getAttribute('transform').match(/translate\(([\d.]+)/)[1]).toBeCloseTo(550/3, 9);
+        // the labels without the ones at the crossing: Tirol of y and 2021 of x
+        expect([...axis(el, 'left').querySelectorAll('.tick text')].map(t => t.textContent)).toEqual(['Wien', '']);
+        expect([...axis(el, 'bottom').querySelectorAll('.tick text')].map(t => t.textContent).filter(Boolean)).not.toContain('2.021');
+        // facets of own scales of y: the line at 3 inside the domain of Wien (1 to 4), at the edge of Tirol (2)
+        const faceted = def({ at: 3 });
+        delete faceted.mapping.y.scale.domain;
+        faceted.mapping.f = { column: 'land', categories: { Wien: {}, Tirol: {} } };
+        faceted.facets = { dim: 'f', cols: 2 };
+        const f = await mount({ def: faceted, data: lineData });
+        expect([...f.querySelectorAll('.vis-axis-bottom')].map(a => a.classList.contains('vis-axis-at'))).toEqual([true, false]);
+        expect(errors).toEqual([]);
     });
 });
 
