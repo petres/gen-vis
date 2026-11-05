@@ -10,6 +10,7 @@ import { el, patch, place, setHtml, setText, slotNodes, takeRange } from "@/comp
 import { createFacets } from "@/comp/facets";
 import { createLegends, annotationsLegend } from "@/comp/legends";
 import { createFormElement } from "@/comp/form-element";
+import { highlightStyle } from "@/utils/highlight";
 
 // the width of the visualisation inside its padding and border, e.g. of a card
 // styled by the page, the svg fills only this part
@@ -40,6 +41,9 @@ const button = (cls, onClick) => {
     b.addEventListener('click', onClick);
     return b;
 };
+
+// the charts of a page have ids of their own, the scope of their stylesheets
+let count = 0;
 
 // the same props of a slot, its content is drawn again otherwise
 const sameProps = (a, b) => a && b && Object.keys(a).length == Object.keys(b).length
@@ -148,7 +152,10 @@ const createVis = app => {
     const sidesOf = at => at.left.length > 0 || at.right.length > 0;
 
     // the elements, see render
-    const root = el('div');
+    const uid = count++;
+    const root = el('div', { 'data-vis': uid });
+    // the stylesheet of the highlights of the plots, see utils/highlight.js
+    const style = root.appendChild(el('style'));
     const header = root.appendChild(el('div', { class: 'vis-header' }));
     const form = root.appendChild(el('div', { class: 'vis-form-elements' }));
     const footer = el('div', { class: 'vis-footer' });
@@ -336,7 +343,10 @@ const createVis = app => {
         const globalAttrs = Object.fromEntries(Object.entries(store.def.globals)
             .filter(([k, v]) => dataAttribute(k, 'global-') && ['string', 'number', 'boolean'].includes(typeof v))
             .map(([k, v]) => [dataAttribute(k, 'global-'), String(v)]));
-        patch(root, { class: rootClass ? `vis ${rootClass}` : 'vis', ...globalAttrs, style: { '--gen-vis-font-family': opts.fontFamily } });
+        patch(root, { class: rootClass ? `vis ${rootClass}` : 'vis', 'data-vis': uid, ...globalAttrs, style: { '--gen-vis-font-family': opts.fontFamily } });
+        const css = highlightStyle(store.def.plot, { scope: `.vis[data-vis="${uid}"]`, transition: Number(opts.highlight?.transition) || 0 });
+        if (style.textContent !== css)
+            style.textContent = css;
 
         // the title and the subtitle with the values of the globals, e.g.
         // "Durchschnitt {base} = 100" of a form element

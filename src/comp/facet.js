@@ -1,6 +1,7 @@
 export { createFacet };
 
-import { drawLayer, highlighter, reducedMotion, withMotion } from "@/utils/draw";
+import { drawLayer, withMotion } from "@/utils/draw";
+import { highlighter } from "@/utils/highlight";
 import { drawAxis } from "@/utils/axis";
 import { create, interruptAll, setAttr } from "@/utils/dom";
 import { plotTypes } from "@/plots";
@@ -255,10 +256,9 @@ const createFacet = (vis, initial) => {
                 kept.delete(k);
             }
         });
-        // the highlight moves in the milliseconds of `options.highlight.transition`,
-        // not if the user prefers less motion
-        const duration = reducedMotion() ? 0 : Number(store.def.options.highlight?.transition) || 0;
-        highlight = highlighter(store.def.plot, plot => kept.get(plotKey(plot)), duration);
+        // the classes of the highlight, its styles are the ones of the chart,
+        // see highlightStyle of utils/highlight.js and comp/vis.js
+        highlight = highlighter(store.def.plot, plot => kept.get(plotKey(plot)), inner);
         hover.init(ctx);
         // the highlight of the page
         if (store.highlighted)

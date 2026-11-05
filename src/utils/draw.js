@@ -1,4 +1,4 @@
-export { curves, setProps, setAttrs, groupAttrs, groupKey, highlighter, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, reducedMotion, dataAttribute, fitText };
+export { curves, setProps, setAttrs, groupAttrs, groupKey, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, reducedMotion, dataAttribute, fitText };
 
 import * as d3 from "@/utils/d3";
 import { animate, create, finish as finishAnimation, interrupt, itemOf, join, onEnd, setAttr, targetOf } from "@/utils/dom";
@@ -22,9 +22,9 @@ const curves = {
 
 // the props whose values are styles of an element, not attributes, values
 // with css variables, e.g. "var(--gen-vis-grid-color)", svg attributes do not
-// know them, the names of the highlight and of data are attributes
+// know them, the names of data are attributes
 const styles = Symbol('styles');
-const isStyle = (k, v) => typeof v == 'string' && v.includes('var(') && !/^(highlight|others|default|data)-/.test(k);
+const isStyle = (k, v) => typeof v == 'string' && v.includes('var(') && !/^data-/.test(k);
 
 // the value of a prop of an element, a style or an attribute, null without one
 const readValue = (node, k) => node[styles]?.has(k) ? node.style.getPropertyValue(k) : node.getAttribute(k);
@@ -116,9 +116,18 @@ const setProps = function(values) {
 // the attributes of the keys of the categories of a group, e.g. for the highlight
 const groupAttrs = g => Object.fromEntries(Object.entries(g.categories).map(([dim, key]) => [`data-group-${dim}`, key]));
 
-// the keys of the categories of the group of an element, e.g. for the highlight
+// the keys of the categories of the group of an element, e.g. for the
+// highlight, and the custom properties of its highlight (`vars`, see
+// highlightVars of utils/highlight.js)
 const setGroupData = function(g) {
     Object.entries(g.categories).forEach(([dim, key]) => setAttr(this, `data-group-${dim}`, key));
+    if (g.vars)
+        Object.entries(g.vars).forEach(([k, v]) => {
+            if (v === null)
+                this.style.removeProperty(k);
+            else if (this.style.getPropertyValue(k) !== v)
+                this.style.setProperty(k, v);
+        });
 };
 
 // the row of an element per row, a symbol, so it is not an attribute
@@ -223,244 +232,6 @@ const drawLayer = (parent, layer) => {
         elements.forEach(node => node.querySelectorAll('text[max-width]').forEach(t => fitText(t)));
     }
     return elements;
-};
-
-/**
- * The highlight of the elements of a facet: the props of the `highlight` of
- * the plots (the highlight- attributes of their elements, see preparePlots
- * of utils/def.js) replace the props of the elements of the categories of a
- * row, e.g. of the hover or of an entry of a legend, the props of `others`
- * (others- attributes) the ones of the other elements of their plots while a
- * highlight is shown, e.g. a label which is hidden, their values are kept in
- * default- attributes. With the `mode` "row" only the element of the row is
- * highlighted, e.g. the segment of a stacked bar, if it has one. The groups of the plots (the
- * elements with the keys of their categories as data-group- attributes) and
- * their elements with highlight- and others- props are found once, at the
- * first highlight, so a highlight does not search the elements of the facet.
- * `nodeOf(plot)` is the element of a plot, the attributes move in `duration`
- * milliseconds to their values, in the animations of the channel
- * `highlight` (see animate of utils/dom.js).
- */
-// the values of the definition of the attributes of an element which the
-// highlight changed, see highlighter
-const originals = Symbol('originals');
-
-const highlighter = (plotDefs, nodeOf, duration = 0) => {
-    const plots = plotDefs.filter(p => p.highlightProps.length > 0 && p.by.length > 0);
-    const others = plotDefs.filter(p => p.othersProps?.length > 0);
-    let index = null;
-    let otherIndex = null;
-    // the highlighted groups, the changed elements with the props and the
-    // prefixes of their values (see stateOf) and whether they have the class
-    let groups = [];
-    let elements = new Map();
-
-    const build = () => plots.map(plot => {
-        const node = nodeOf(plot);
-        const attrs = plot.by.map(c => `data-group-${c}`);
-        return {
-            plot,
-            groups: node ? [...node.querySelectorAll('*')].filter(g => attrs.some(a => g.hasAttribute(a))).map(node => ({
-                node,
-                keys: Object.fromEntries(plot.by.map((c, i) => [c, node.getAttribute(attrs[i])])),
-                targets: null,
-            })) : [],
-        };
-    });
-    // the elements of the plots with others- props
-    const buildOthers = () => others.map(plot => {
-        const node = nodeOf(plot);
-        return { plot, nodes: node ? [node, ...node.querySelectorAll('*')].filter(e => plot.othersProps.some(n => e.hasAttribute(`others-${n}`))) : [] };
-    });
-
-    // the path of a group or its elements per row with highlight- props, e.g. circles
-    const targetsOf = (plot, group, dataEntry) => {
-        group.targets ??= [group.node, ...group.node.querySelectorAll('*')]
-            .filter(node => plot.highlightProps.some(n => node.hasAttribute(`highlight-${n}`)));
-        if (plot.highlight?.mode != 'row')
-            return group.targets;
-        const rows = group.targets.filter(node => node[itemOf]?.[rowOf] === dataEntry);
-        return rows.length > 0 ? rows : group.targets;
-    };
-
-    // without an empty class, so an element is the same as a new one
-    const unclass = node => {
-        node.classList.remove('vis-highlight');
-        if (node.classList.length == 0)
-            node.removeAttribute('class');
-    };
-
-    // the attributes of the elements of an update of the highlight, at once
-    // or in one transition per element (one of an element would interrupt
-    // the one before), of the attributes with a value before and after
-    const apply = (targets, now) => targets.forEach((changes, node) => {
-        const moving = !now && duration > 0;
-        // the attributes of a transition of the element which is interrupted
-        // move on to their values, e.g. its color back to its own while its
-        // opacity is the one of the others
-        const values = { ...targetOf(node, 'highlight'), ...changes };
-        interrupt(node, 'highlight');
-        let transition = null;
-        Object.entries(values).forEach(([n, value]) => {
-            // values with css variables at once, see writeValue
-            if (moving && value !== null && !isStyle(n, value) && !node[styles]?.has(n) && node.getAttribute(n) !== null)
-                (transition ??= {})[n] = value;
-            else
-                writeValue(node, n, value);
-        });
-        if (transition)
-            animate(node, transition, { channel: 'highlight', duration });
-        // the values of the definition are kept until they are back, e.g. if
-        // the element is highlighted again while it moves back
-        if (!changed.has(node)) {
-            if (transition)
-                onEnd(node, 'highlight', () => {
-                    if (!changed.has(node))
-                        node[originals] = null;
-                });
-            else
-                node[originals] = null;
-        }
-    });
-
-    // the elements whose attributes are the ones of the highlight
-    let changed = new Set();
-
-    // the values of the props of `prefix` of an element, the ones of the
-    // definition are kept, also as default- attributes
-    const replace = (targets, node, props, prefix) => {
-        finish(node);
-        node[originals] ??= {};
-        const values = targets.get(node) ?? {};
-        props.forEach(n => {
-            if (!Object.hasOwn(node[originals], n))
-                node[originals][n] = readValue(node, n);
-            if (node[originals][n] !== null)
-                node.setAttribute(`default-${n}`, node[originals][n]);
-            values[n] = node.getAttribute(`${prefix}-${n}`);
-        });
-        targets.set(node, values);
-        changed.add(node);
-    };
-
-    // the values of the definition of an element changed before
-    const restore = (targets, node, { parts }) => {
-        const values = targets.get(node) ?? {};
-        parts.forEach(([props]) => props.forEach(n => {
-            values[n] = node[originals]?.[n] ?? null;
-            node.removeAttribute(`default-${n}`);
-        }));
-        targets.set(node, values);
-    };
-
-    // the state of the elements of a highlight: per element whether it has
-    // the class (`marked`) and the props of the plots with their prefix
-    // (`parts`), e.g. the highlight- props of the targets and the others-
-    // props of the other elements
-    const stateOf = (next, dataEntry) => {
-        const state = new Map();
-        const add = (node, marked, props, prefix) => {
-            const s = state.get(node) ?? { marked: false, parts: [] };
-            s.marked ||= marked;
-            s.parts.push([props, prefix]);
-            state.set(node, s);
-        };
-        if (!dataEntry)
-            return state;
-        next.targets.forEach(([plot, nodes]) => nodes.forEach(node => add(node, true, plot.highlightProps, 'highlight')));
-        // the other elements, e.g. a label of the last value which is hidden
-        // while the one of another value is highlighted
-        otherIndex ??= buildOthers();
-        otherIndex.forEach(({ plot, nodes }) => nodes.filter(node => !state.get(node)?.marked)
-            .forEach(node => add(node, false, plot.othersProps, 'others')));
-        return state;
-    };
-    const sameState = (a, b) => a.marked == b.marked && a.parts.length == b.parts.length
-        && a.parts.every(([props, prefix], i) => props === b.parts[i][0] && prefix === b.parts[i][1]);
-
-    // the groups of a highlight after the other ones of their parent, in
-    // their order, unless they are there already, e.g. of the highlight
-    // before, so a move of the pointer does not move the elements
-    const raise = list => {
-        const byParent = new Map();
-        list.forEach(node => byParent.set(node.parentNode, [...(byParent.get(node.parentNode) ?? []), node]));
-        byParent.forEach((nodes, parent) => {
-            if (!nodes.every((node, i) => node.nextSibling === (nodes[i + 1] ?? null)))
-                nodes.forEach(node => parent.appendChild(node));
-        });
-    };
-
-    // the groups and the elements of the plots of a highlight, see targetsOf
-    const selection = dataEntry => {
-        const found = { active: Boolean(dataEntry), groups: [], targets: [] };
-        if (!dataEntry)
-            return found;
-        index ??= build();
-        index.forEach(({ plot, groups: all }) => {
-            // the values are compared as strings, as the ones of the attributes
-            const conditions = plot.by.filter(c => c in dataEntry).map(c => [c, String(dataEntry[c])]);
-            if (conditions.length == 0)
-                return;
-            all.filter(g => conditions.every(([c, v]) => g.keys[c] === v)).forEach(g => {
-                found.groups.push(g.node);
-                found.targets.push([plot, targetsOf(plot, g, dataEntry)]);
-            });
-        });
-        return found;
-    };
-    const same = (a, b) => a === b || (a.length == b.length && a.every((e, i) => e === b[i]));
-    // the selection shown, a highlight of the same elements changes nothing,
-    // e.g. of another row of the group of a line or of the points of a group
-    let shown = { active: false, groups: [], targets: [] };
-    const unchanged = next => next.active == shown.active && same(next.groups, shown.groups)
-        && next.targets.length == shown.targets.length
-        && next.targets.every(([plot, nodes], i) => plot === shown.targets[i][0] && same(nodes, shown.targets[i][1]));
-
-    // `now` ends the highlight without a transition, e.g. before a draw,
-    // and sets all attributes again, a highlight only changes the elements
-    // whose state changes, e.g. not the other elements of a line while the
-    // highlight moves along another one
-    return (dataEntry, now = false) => {
-        const next = selection(dataEntry);
-        if (!now && unchanged(next))
-            return;
-        shown = next;
-        const state = stateOf(next, dataEntry);
-        const before = elements;
-        const same = node => !now && before.has(node) && state.has(node) && sameState(before.get(node), state.get(node));
-        // the elements with the class, the groups and the targets
-        const marked = list => [...list].filter(([, s]) => s.marked).map(([node]) => node);
-        const classed = new Set([...next.groups, ...marked(state)]);
-        const unmarked = [...groups, ...marked(before)];
-
-        // the values of the definition of the elements changed before
-        const targets = new Map();
-        before.forEach((s, node) => {
-            if (!same(node))
-                restore(targets, node, s);
-        });
-        [...unmarked, ...targets.keys()].forEach(node => {
-            if (now || !classed.has(node))
-                unclass(node);
-        });
-        groups = [...next.groups];
-        elements = state;
-        changed = new Set(state.keys());
-
-        classed.forEach(node => {
-            if (now || !node.classList.contains('vis-highlight'))
-                node.classList.add('vis-highlight');
-        });
-        if (now)
-            groups.forEach(node => node.parentNode.appendChild(node));
-        else
-            raise(groups);
-        state.forEach((s, node) => {
-            if (!same(node))
-                s.parts.forEach(([props, prefix]) => replace(targets, node, props, prefix));
-        });
-        apply(targets, now);
-    };
 };
 
 // the width of a text in pixels, of the browser or, without layout (e.g.

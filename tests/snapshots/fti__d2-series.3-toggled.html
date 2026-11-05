@@ -1,4 +1,10 @@
-<div class="vis fti fti-series" data-global-group="inno">
+<div class="vis fti fti-series" data-global-group="inno" data-vis="N">
+<style>.vis[data-vis="N"] .vis-highlighting [data-plot="last"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { visibility: hidden; }
+.vis[data-vis="N"] .vis-highlighting [data-plot="last-value"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { visibility: hidden; }
+.vis[data-vis="N"] .vis-highlighting [data-plot="last-year"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { visibility: hidden; }
+.vis[data-vis="N"] [data-plot="ring"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="ring"] .vis-highlight *:not(g) { visibility: visible; }
+.vis[data-vis="N"] [data-plot="ring-value"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="ring-value"] .vis-highlight *:not(g) { visibility: visible; }
+.vis[data-vis="N"] [data-plot="ring-year"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="ring-year"] .vis-highlight *:not(g) { visibility: visible; }</style>
 <div class="vis-header">
 <div class="vis-title">Efficiency</div>
 <div class="vis-subtitle">Aggregated indicator over time, Austria relative to the comparison group</div>

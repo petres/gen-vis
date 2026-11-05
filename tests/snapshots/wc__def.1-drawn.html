@@ -1,4 +1,10 @@
-<div class="vis">
+<div class="vis" data-vis="N">
+<style>.vis[data-vis="N"] [data-plot="lines"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="lines"] .vis-highlight *:not(g) { stroke-width: 4; }
+.vis[data-vis="N"] .vis-highlighting [data-plot="lines"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { stroke-opacity: 0.25; }
+.vis[data-vis="N"] [data-plot="points"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="points"] .vis-highlight *:not(g) { r: 4.5; }
+.vis[data-vis="N"] .vis-highlighting [data-plot="points"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { opacity: 0.25; }
+.vis[data-vis="N"] [data-plot="labels"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="labels"] .vis-highlight *:not(g) { font-weight: bold; }
+.vis[data-vis="N"] .vis-highlighting [data-plot="labels"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { opacity: 0.3; }</style>
 <div class="vis-header">
 <div class="vis-title">Ausstattungsqualität</div>
 <div class="vis-subtitle">Anteil der Wohnungen und Häuser mit WC im Wohnungsverband, 1971 bis 2001</div>
@@ -76,114 +82,114 @@
 </g>
 </g>
 <g class="vis-plot lines" data-plot="lines">
-<path d="M6,132.5L81.333,47.7L156.667,21.2L232,5.3" data-group-type="Hauseigentum" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#4e79a7" stroke-width="2">
+<path d="M6,132.5L81.333,47.7L156.667,21.2L232,5.3" data-group-type="Hauseigentum" fill="none" stroke="#4e79a7" stroke-width="2">
 </path>
-<path d="M6,0L81.333,5.3L156.667,10.6L232,0" data-group-type="Wohnungseigentum" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#f28e2c" stroke-width="2">
+<path d="M6,0L81.333,5.3L156.667,10.6L232,0" data-group-type="Wohnungseigentum" fill="none" stroke="#f28e2c" stroke-width="2">
 </path>
-<path d="M6,15.9L81.333,15.9L156.667,15.9L232,0" data-group-type="GBV Miete" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#e15759" stroke-width="2">
+<path d="M6,15.9L81.333,15.9L156.667,15.9L232,0" data-group-type="GBV Miete" fill="none" stroke="#e15759" stroke-width="2">
 </path>
-<path d="M6,63.6L81.333,42.4L156.667,26.5L232,5.3" data-group-type="Kommunale Miete" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#76b7b2" stroke-width="2">
+<path d="M6,63.6L81.333,42.4L156.667,26.5L232,5.3" data-group-type="Kommunale Miete" fill="none" stroke="#76b7b2" stroke-width="2">
 </path>
-<path d="M6,270.3L81.333,169.6L156.667,90.1L232,15.9" data-group-type="Private Miete" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#59a14f" stroke-width="2">
+<path d="M6,270.3L81.333,169.6L156.667,90.1L232,15.9" data-group-type="Private Miete" fill="none" stroke="#59a14f" stroke-width="2">
 </path>
-<path d="M6,233.2L81.333,116.6L156.667,68.9L232,15.9" data-group-type="Sonstiges" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#edc949" stroke-width="2">
+<path d="M6,233.2L81.333,116.6L156.667,68.9L232,15.9" data-group-type="Sonstiges" fill="none" stroke="#edc949" stroke-width="2">
 </path>
-<path d="M6,159L81.333,74.2L156.667,37.1L232,5.3" data-group-type="Alle Haushalte" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#111" stroke-width="3.5">
+<path d="M6,159L81.333,74.2L156.667,37.1L232,5.3" data-group-type="Alle Haushalte" fill="none" stroke="#111" stroke-width="3.5">
 </path>
 </g>
 <g class="vis-plot points" data-plot="points">
 <g class="vis-group" data-group-type="Hauseigentum">
-<circle cx="6" cy="132.5" fill="#4e79a7" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="132.5" fill="#4e79a7" r="3">
 </circle>
-<circle cx="81.333" cy="47.7" fill="#4e79a7" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="47.7" fill="#4e79a7" r="3">
 </circle>
-<circle cx="156.667" cy="21.2" fill="#4e79a7" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="21.2" fill="#4e79a7" r="3">
 </circle>
-<circle cx="232" cy="5.3" fill="#4e79a7" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="5.3" fill="#4e79a7" r="3">
 </circle>
 </g>
 <g class="vis-group" data-group-type="Wohnungseigentum">
-<circle cx="6" cy="0" fill="#f28e2c" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="0" fill="#f28e2c" r="3">
 </circle>
-<circle cx="81.333" cy="5.3" fill="#f28e2c" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="5.3" fill="#f28e2c" r="3">
 </circle>
-<circle cx="156.667" cy="10.6" fill="#f28e2c" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="10.6" fill="#f28e2c" r="3">
 </circle>
-<circle cx="232" cy="0" fill="#f28e2c" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="0" fill="#f28e2c" r="3">
 </circle>
 </g>
 <g class="vis-group" data-group-type="GBV Miete">
-<circle cx="6" cy="15.9" fill="#e15759" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="15.9" fill="#e15759" r="3">
 </circle>
-<circle cx="81.333" cy="15.9" fill="#e15759" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="15.9" fill="#e15759" r="3">
 </circle>
-<circle cx="156.667" cy="15.9" fill="#e15759" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="15.9" fill="#e15759" r="3">
 </circle>
-<circle cx="232" cy="0" fill="#e15759" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="0" fill="#e15759" r="3">
 </circle>
 </g>
 <g class="vis-group" data-group-type="Kommunale Miete">
-<circle cx="6" cy="63.6" fill="#76b7b2" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="63.6" fill="#76b7b2" r="3">
 </circle>
-<circle cx="81.333" cy="42.4" fill="#76b7b2" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="42.4" fill="#76b7b2" r="3">
 </circle>
-<circle cx="156.667" cy="26.5" fill="#76b7b2" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="26.5" fill="#76b7b2" r="3">
 </circle>
-<circle cx="232" cy="5.3" fill="#76b7b2" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="5.3" fill="#76b7b2" r="3">
 </circle>
 </g>
 <g class="vis-group" data-group-type="Private Miete">
-<circle cx="6" cy="270.3" fill="#59a14f" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="270.3" fill="#59a14f" r="3">
 </circle>
-<circle cx="81.333" cy="169.6" fill="#59a14f" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="169.6" fill="#59a14f" r="3">
 </circle>
-<circle cx="156.667" cy="90.1" fill="#59a14f" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="90.1" fill="#59a14f" r="3">
 </circle>
-<circle cx="232" cy="15.9" fill="#59a14f" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="15.9" fill="#59a14f" r="3">
 </circle>
 </g>
 <g class="vis-group" data-group-type="Sonstiges">
-<circle cx="6" cy="233.2" fill="#edc949" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="233.2" fill="#edc949" r="3">
 </circle>
-<circle cx="81.333" cy="116.6" fill="#edc949" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="116.6" fill="#edc949" r="3">
 </circle>
-<circle cx="156.667" cy="68.9" fill="#edc949" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="68.9" fill="#edc949" r="3">
 </circle>
-<circle cx="232" cy="15.9" fill="#edc949" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="15.9" fill="#edc949" r="3">
 </circle>
 </g>
 <g class="vis-group" data-group-type="Alle Haushalte">
-<circle cx="6" cy="159" fill="#111" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="159" fill="#111" r="3">
 </circle>
-<circle cx="81.333" cy="74.2" fill="#111" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="74.2" fill="#111" r="3">
 </circle>
-<circle cx="156.667" cy="37.1" fill="#111" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="37.1" fill="#111" r="3">
 </circle>
-<circle cx="232" cy="5.3" fill="#111" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="5.3" fill="#111" r="3">
 </circle>
 </g>
 </g>
 <g class="vis-plot labels" data-plot="labels">
 <g class="vis-group" data-group-type="Hauseigentum">
-<text dominant-baseline="central" dx="8" fill="#4e79a7" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="-5.186">Hauseigentum</text>
+<text dominant-baseline="central" dx="8" fill="#4e79a7" font-size="11" x="232" y="-5.186">Hauseigentum</text>
 </g>
 <g class="vis-group" data-group-type="Wohnungseigentum">
-<text dominant-baseline="central" dx="8" fill="#f28e2c" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="-29.186">Wohnungseigentum</text>
+<text dominant-baseline="central" dx="8" fill="#f28e2c" font-size="11" x="232" y="-29.186">Wohnungseigentum</text>
 </g>
 <g class="vis-group" data-group-type="GBV Miete">
-<text dominant-baseline="central" dx="8" fill="#e15759" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="-17.186">GBV Miete</text>
+<text dominant-baseline="central" dx="8" fill="#e15759" font-size="11" x="232" y="-17.186">GBV Miete</text>
 </g>
 <g class="vis-group" data-group-type="Kommunale Miete">
-<text dominant-baseline="central" dx="8" fill="#76b7b2" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="6.814">Kommunale Miete</text>
+<text dominant-baseline="central" dx="8" fill="#76b7b2" font-size="11" x="232" y="6.814">Kommunale Miete</text>
 </g>
 <g class="vis-group" data-group-type="Private Miete">
-<text dominant-baseline="central" dx="8" fill="#59a14f" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="30.814">Private Miete</text>
+<text dominant-baseline="central" dx="8" fill="#59a14f" font-size="11" x="232" y="30.814">Private Miete</text>
 </g>
 <g class="vis-group" data-group-type="Sonstiges">
-<text dominant-baseline="central" dx="8" fill="#edc949" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="42.814">Sonstiges</text>
+<text dominant-baseline="central" dx="8" fill="#edc949" font-size="11" x="232" y="42.814">Sonstiges</text>
 </g>
 <g class="vis-group" data-group-type="Alle Haushalte">
-<text dominant-baseline="central" dx="8" fill="#111" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="18.814">Alle Haushalte</text>
+<text dominant-baseline="central" dx="8" fill="#111" font-size="11" x="232" y="18.814">Alle Haushalte</text>
 </g>
 </g>
 <rect class="vis-events" height="318" opacity="0" style="touch-action: pan-y;" width="238">
@@ -264,114 +270,114 @@
 </g>
 </g>
 <g class="vis-plot lines" data-plot="lines">
-<path d="M6,84.8L81.333,37.1L156.667,21.2L232,5.3" data-group-type="Hauseigentum" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#4e79a7" stroke-width="2">
+<path d="M6,84.8L81.333,37.1L156.667,21.2L232,5.3" data-group-type="Hauseigentum" fill="none" stroke="#4e79a7" stroke-width="2">
 </path>
-<path d="M6,0L81.333,5.3L156.667,10.6L232,0" data-group-type="Wohnungseigentum" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#f28e2c" stroke-width="2">
+<path d="M6,0L81.333,5.3L156.667,10.6L232,0" data-group-type="Wohnungseigentum" fill="none" stroke="#f28e2c" stroke-width="2">
 </path>
-<path d="M6,10.6L81.333,5.3L156.667,10.6L232,0" data-group-type="GBV Miete" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#e15759" stroke-width="2">
+<path d="M6,10.6L81.333,5.3L156.667,10.6L232,0" data-group-type="GBV Miete" fill="none" stroke="#e15759" stroke-width="2">
 </path>
-<path d="M6,21.2L81.333,10.6L156.667,10.6L232,0" data-group-type="Kommunale Miete" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#76b7b2" stroke-width="2">
+<path d="M6,21.2L81.333,10.6L156.667,10.6L232,0" data-group-type="Kommunale Miete" fill="none" stroke="#76b7b2" stroke-width="2">
 </path>
-<path d="M6,286.2L81.333,196.1L156.667,116.6L232,26.5" data-group-type="Private Miete" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#59a14f" stroke-width="2">
+<path d="M6,286.2L81.333,196.1L156.667,116.6L232,26.5" data-group-type="Private Miete" fill="none" stroke="#59a14f" stroke-width="2">
 </path>
-<path d="M6,291.5L81.333,159L156.667,100.7L232,21.2" data-group-type="Sonstiges" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#edc949" stroke-width="2">
+<path d="M6,291.5L81.333,159L156.667,100.7L232,21.2" data-group-type="Sonstiges" fill="none" stroke="#edc949" stroke-width="2">
 </path>
-<path d="M6,174.9L81.333,100.7L156.667,53L232,10.6" data-group-type="Alle Haushalte" fill="none" highlight-stroke-width="4" others-stroke-opacity="0.25" stroke="#111" stroke-width="3.5">
+<path d="M6,174.9L81.333,100.7L156.667,53L232,10.6" data-group-type="Alle Haushalte" fill="none" stroke="#111" stroke-width="3.5">
 </path>
 </g>
 <g class="vis-plot points" data-plot="points">
 <g class="vis-group" data-group-type="Hauseigentum">
-<circle cx="6" cy="84.8" fill="#4e79a7" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="84.8" fill="#4e79a7" r="3">
 </circle>
-<circle cx="81.333" cy="37.1" fill="#4e79a7" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="37.1" fill="#4e79a7" r="3">
 </circle>
-<circle cx="156.667" cy="21.2" fill="#4e79a7" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="21.2" fill="#4e79a7" r="3">
 </circle>
-<circle cx="232" cy="5.3" fill="#4e79a7" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="5.3" fill="#4e79a7" r="3">
 </circle>
 </g>
 <g class="vis-group" data-group-type="Wohnungseigentum">
-<circle cx="6" cy="0" fill="#f28e2c" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="0" fill="#f28e2c" r="3">
 </circle>
-<circle cx="81.333" cy="5.3" fill="#f28e2c" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="5.3" fill="#f28e2c" r="3">
 </circle>
-<circle cx="156.667" cy="10.6" fill="#f28e2c" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="10.6" fill="#f28e2c" r="3">
 </circle>
-<circle cx="232" cy="0" fill="#f28e2c" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="0" fill="#f28e2c" r="3">
 </circle>
 </g>
 <g class="vis-group" data-group-type="GBV Miete">
-<circle cx="6" cy="10.6" fill="#e15759" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="10.6" fill="#e15759" r="3">
 </circle>
-<circle cx="81.333" cy="5.3" fill="#e15759" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="5.3" fill="#e15759" r="3">
 </circle>
-<circle cx="156.667" cy="10.6" fill="#e15759" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="10.6" fill="#e15759" r="3">
 </circle>
-<circle cx="232" cy="0" fill="#e15759" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="0" fill="#e15759" r="3">
 </circle>
 </g>
 <g class="vis-group" data-group-type="Kommunale Miete">
-<circle cx="6" cy="21.2" fill="#76b7b2" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="21.2" fill="#76b7b2" r="3">
 </circle>
-<circle cx="81.333" cy="10.6" fill="#76b7b2" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="10.6" fill="#76b7b2" r="3">
 </circle>
-<circle cx="156.667" cy="10.6" fill="#76b7b2" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="10.6" fill="#76b7b2" r="3">
 </circle>
-<circle cx="232" cy="0" fill="#76b7b2" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="0" fill="#76b7b2" r="3">
 </circle>
 </g>
 <g class="vis-group" data-group-type="Private Miete">
-<circle cx="6" cy="286.2" fill="#59a14f" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="286.2" fill="#59a14f" r="3">
 </circle>
-<circle cx="81.333" cy="196.1" fill="#59a14f" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="196.1" fill="#59a14f" r="3">
 </circle>
-<circle cx="156.667" cy="116.6" fill="#59a14f" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="116.6" fill="#59a14f" r="3">
 </circle>
-<circle cx="232" cy="26.5" fill="#59a14f" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="26.5" fill="#59a14f" r="3">
 </circle>
 </g>
 <g class="vis-group" data-group-type="Sonstiges">
-<circle cx="6" cy="291.5" fill="#edc949" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="291.5" fill="#edc949" r="3">
 </circle>
-<circle cx="81.333" cy="159" fill="#edc949" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="159" fill="#edc949" r="3">
 </circle>
-<circle cx="156.667" cy="100.7" fill="#edc949" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="100.7" fill="#edc949" r="3">
 </circle>
-<circle cx="232" cy="21.2" fill="#edc949" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="21.2" fill="#edc949" r="3">
 </circle>
 </g>
 <g class="vis-group" data-group-type="Alle Haushalte">
-<circle cx="6" cy="174.9" fill="#111" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="6" cy="174.9" fill="#111" r="3">
 </circle>
-<circle cx="81.333" cy="100.7" fill="#111" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="81.333" cy="100.7" fill="#111" r="3">
 </circle>
-<circle cx="156.667" cy="53" fill="#111" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="156.667" cy="53" fill="#111" r="3">
 </circle>
-<circle cx="232" cy="10.6" fill="#111" highlight-r="4.5" others-opacity="0.25" r="3">
+<circle cx="232" cy="10.6" fill="#111" r="3">
 </circle>
 </g>
 </g>
 <g class="vis-plot labels" data-plot="labels">
 <g class="vis-group" data-group-type="Hauseigentum">
-<text dominant-baseline="central" dx="8" fill="#4e79a7" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="9.086">Hauseigentum</text>
+<text dominant-baseline="central" dx="8" fill="#4e79a7" font-size="11" x="232" y="9.086">Hauseigentum</text>
 </g>
 <g class="vis-group" data-group-type="Wohnungseigentum">
-<text dominant-baseline="central" dx="8" fill="#f28e2c" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="-26.914">Wohnungseigentum</text>
+<text dominant-baseline="central" dx="8" fill="#f28e2c" font-size="11" x="232" y="-26.914">Wohnungseigentum</text>
 </g>
 <g class="vis-group" data-group-type="GBV Miete">
-<text dominant-baseline="central" dx="8" fill="#e15759" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="-14.914">GBV Miete</text>
+<text dominant-baseline="central" dx="8" fill="#e15759" font-size="11" x="232" y="-14.914">GBV Miete</text>
 </g>
 <g class="vis-group" data-group-type="Kommunale Miete">
-<text dominant-baseline="central" dx="8" fill="#76b7b2" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="-2.914">Kommunale Miete</text>
+<text dominant-baseline="central" dx="8" fill="#76b7b2" font-size="11" x="232" y="-2.914">Kommunale Miete</text>
 </g>
 <g class="vis-group" data-group-type="Private Miete">
-<text dominant-baseline="central" dx="8" fill="#59a14f" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="45.086">Private Miete</text>
+<text dominant-baseline="central" dx="8" fill="#59a14f" font-size="11" x="232" y="45.086">Private Miete</text>
 </g>
 <g class="vis-group" data-group-type="Sonstiges">
-<text dominant-baseline="central" dx="8" fill="#edc949" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="33.086">Sonstiges</text>
+<text dominant-baseline="central" dx="8" fill="#edc949" font-size="11" x="232" y="33.086">Sonstiges</text>
 </g>
 <g class="vis-group" data-group-type="Alle Haushalte">
-<text dominant-baseline="central" dx="8" fill="#111" font-size="11" highlight-font-weight="bold" others-opacity="0.3" x="232" y="21.086">Alle Haushalte</text>
+<text dominant-baseline="central" dx="8" fill="#111" font-size="11" x="232" y="21.086">Alle Haushalte</text>
 </g>
 </g>
 <rect class="vis-events" height="318" opacity="0" style="touch-action: pan-y;" width="238">

@@ -101,6 +101,14 @@ export const mountVis = async props => {
 // the element of a visualisation of `props` drawn, see mountVis
 export const mount = async props => (await mountVis(props)).el;
 
+// the elements of `selector` in `el` which are highlighted: with the class
+// vis-highlight or in an element with it, the stylesheet of the chart
+// (see highlightCss) styles them, see utils/highlight.js
+export const highlighted = (el, selector) => [...el.querySelectorAll(selector)].filter(e => e.closest('.vis-highlight'));
+
+// the stylesheet of the highlights of a chart
+export const highlightCss = el => el.querySelector('.vis > style').textContent;
+
 export const pointer = (type, init = {}) => new PointerEvent(type, { pointerType: 'mouse', bubbles: true, ...init });
 
 // the rows of the hover shown, of a hover without a box (`"box": false`) 1

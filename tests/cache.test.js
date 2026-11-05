@@ -37,6 +37,7 @@ const lineData = `year,value,other,land
 // attributes sorted, see snapshots.test.js
 const drawing = el => (el.querySelector('.vis')?.outerHTML ?? '')
     .replace(/gen-vis-(gradient|form|facet)-\d+/g, 'gen-vis-$1-N')
+    .replace(/data-vis="\d+"/g, 'data-vis="N"')
     .replace(/<([a-zA-Z][^\s/>]*)((?:\s+[^\s"'>/=]+(?:="[^"]*")?)*)(\s*\/?)>/g, (tag, name, attrs, end) =>
         `<${name}${(attrs.match(/[^\s"'>/=]+(?:="[^"]*")?/g) ?? []).sort((a, b) => a.split('=')[0] < b.split('=')[0] ? -1 : 1).map(a => ` ${a}`).join('')}${end}>`);
 

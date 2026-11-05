@@ -7,6 +7,7 @@ import { bandCenter, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
 import { facetMappings } from "@/utils/normalize";
 import { warnOnce } from "@/utils/warn";
+import { highlightVars } from "@/utils/highlight";
 
 // the warning of a condition of a filter of no mapping, e.g. of a column
 // instead of the mapping of it, which no row has, see rowFilter
@@ -664,6 +665,8 @@ const plotGroups = (plot, rows, ctx) => {
             at,
             prop: name => at.entries.get(name) ?? constant(undefined),
             attrs: Object.fromEntries([...at.entries].filter(([, f]) => f.constant).map(([k, f]) => [k, f()])),
+            // the custom properties of the highlight of the group, of its first row
+            vars: highlightVars(plot, value => bind(value, resolve), g.entries[0]),
             complete,
         };
     });

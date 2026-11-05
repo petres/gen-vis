@@ -54,7 +54,8 @@ describe('the component', () => {
         const core = await mount({ def: lineDef(), data: lineData, csv: true });
         const outer = el.firstElementChild;
         expect(outer.className).toBe('vis-outer card');
-        expect(html(outer).replace(/gen-vis-\w+-\d+/g, 'ID')).toBe(html(core.firstElementChild).replace(/gen-vis-\w+-\d+/g, 'ID'));
+        const same = h => h.replace(/gen-vis-\w+-\d+/g, 'ID').replace(/data-vis="\d+"/g, 'data-vis="N"');
+        expect(same(html(outer))).toBe(same(html(core.firstElementChild)));
         expect(errors).toEqual([]);
     });
 

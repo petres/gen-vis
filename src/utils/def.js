@@ -283,10 +283,10 @@ const prepareOptions = options => ({ height: 400, ...options, margins: { top: 0,
 const partProps = part => isObject(part) ? Object.keys(part).filter(n => n != 'mode') : [];
 
 // the plots and the annotations, which are plots of their own, the rows of
-// files of plots are the ones loaded, see `files` of applyPatches. The props
-// of the highlight and of the others are props of the elements with the
-// prefixes `highlight-` and `others-`, attributes which the highlight reads,
-// see highlighter of utils/draw.js.
+// files of plots are the ones loaded, see `files` of applyPatches. The names
+// of the props of the highlight and of the others (`highlightProps`,
+// `othersProps`) are the ones of the stylesheet of the highlight, see
+// utils/highlight.js.
 const preparePlots = (plot, annotations, files) => {
     const plots = placed([...[plot ?? []].flat(), ...annotationPlots(annotations ?? [])]);
     return plots.map((raw, i) => {
@@ -297,12 +297,6 @@ const preparePlots = (plot, annotations, files) => {
         p.id ??= `plot-${i}`;
         p.highlightProps = partProps(p.highlight);
         p.othersProps = partProps(p.others);
-        if (p.highlightProps.length > 0 || p.othersProps.length > 0)
-            p.props = {
-                ...p.props,
-                ...Object.fromEntries(p.highlightProps.map(n => [`highlight-${n}`, p.highlight[n]])),
-                ...Object.fromEntries(p.othersProps.map(n => [`others-${n}`, p.others[n]])),
-            };
         if (typeof p.data == 'string' && files?.has(p.data)) {
             p.data = files.get(p.data);
             p.loaded = true;

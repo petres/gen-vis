@@ -18,9 +18,9 @@ describe('prepareDef', () => {
         // without colors of the categories the default colors, see withColor of layout.js
         expect(def.mapping.c.categoryProps).toEqual({ a: { r: 3, name: 'a', visible: true, defaultColor: '#4269D0' }, b: { r: 3, name: 'B', visible: false, defaultColor: '#EFB118' } });
         expect(def.plot).toHaveLength(1);
-        // the props of the highlight and of the others are attributes of the elements, see highlighter of utils/draw.js
-        expect(def.plot[0]).toMatchObject({ id: 'plot-0', by: [], highlightProps: ['r'], othersProps: ['opacity'],
-            props: { r: '@r', 'highlight-r': 5, 'others-opacity': 0.3 } });
+        // the names of the props of the highlight and of the others, of the stylesheet of the highlight, see utils/highlight.js
+        expect(def.plot[0]).toMatchObject({ id: 'plot-0', by: [], highlightProps: ['r'], othersProps: ['opacity'], props: { r: '@r' } });
+        expect(def.plot[0].props).not.toHaveProperty('highlight-r');
         expect(def.options.margins).toEqual({ top: 0, right: 0, bottom: 0, left: 0 });
     });
 });

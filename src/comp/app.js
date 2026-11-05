@@ -9,9 +9,9 @@ import { el, emitter, setText } from '@/comp/html';
 import { createVis } from '@/comp/vis';
 import '@/styles.css';
 
-// the heights of the visualisations drawn on the page by their definition and
-// width, one drawn again, e.g. after a navigation of the page, has the space
-// of the one before while it is loaded, the last ones are kept
+// the heights of the visualisations drawn on the page by their definition,
+// one drawn again, e.g. after a navigation of the page, has the space of
+// the one before while it is loaded, the last ones are kept
 const heights = new Map();
 const keptHeights = 500;
 
@@ -280,11 +280,11 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         return p && ['def', 'defUrl', 'data', 'defaults', 'check'].every(k => p.given[k] === given[k]) ? p.done : null;
     };
 
-    // the definition and the width of the visualisation, the key of its height
-    const sourceKey = () => {
-        const source = props.defFile ?? (typeof props.def == 'string' ? props.def : JSON.stringify(props.def));
-        return `${Math.round(outer.getBoundingClientRect().width)} ${source}`;
-    };
+    // the definition of the visualisation, the key of its height; not with
+    // its width, which would force a layout of the page at the mount of
+    // every chart, the height of the same definition at another width is
+    // only a guess of the space, the real one follows with the draw
+    const sourceKey = () => props.defFile ?? (typeof props.def == 'string' ? props.def : JSON.stringify(props.def));
 
     const init = async () => {
         // the props are used when it is near the viewport

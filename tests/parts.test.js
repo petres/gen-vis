@@ -4,7 +4,7 @@
 // the highlight, legends, texts, transforms and messages
 import { describe, test, expect, vi, onTestFinished } from 'vitest';
 import { parquetWriteBuffer } from 'hyparquet-writer';
-import { errors, useDom, mount, mountVis, nextTick, rendered } from './dom.js';
+import { errors, useDom, mount, mountVis, nextTick, rendered, highlighted, highlightCss } from './dom.js';
 
 useDom();
 
@@ -291,7 +291,7 @@ describe('the hover', () => {
         await move(el, 100, 100);
         expect(el.querySelector('.vis-hover')).toBeNull();
         expect(el.querySelector('.vis-hover-marker').getAttribute('visibility')).toBe('hidden');
-        expect(el.querySelectorAll('circle.vis-highlight').length).toBeGreaterThan(0);
+        expect(highlighted(el, 'circle').length).toBeGreaterThan(0);
         expect(hovers.at(-1).key).toBe(2021);
         expect(errors).toEqual([]);
     });
@@ -333,21 +333,29 @@ describe('the highlight', () => {
         const { pointer } = await import('./dom.js');
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
         await nextTick();
+        // the element of the row has the class, the others are styled by the
+        // stylesheet while the plots are highlighting, see utils/highlight.js
         const circles = [...el.querySelectorAll('g.vis-plot[data-plot="dots"] circle')];
-        expect(circles.filter(c => c.getAttribute('r') == '6')).toHaveLength(1);
-        expect(circles.filter(c => c.getAttribute('opacity') == '0.3')).toHaveLength(circles.length - 1);
-        expect(el.querySelector('g.vis-plot[data-plot="last"] text').getAttribute('visibility')).toBe('hidden');
+        expect(highlighted(el, 'g.vis-plot[data-plot="dots"] circle')).toHaveLength(1);
+        expect(circles.every(c => c.getAttribute('r') == '3' && c.getAttribute('opacity') === null)).toBe(true);
+        expect(el.querySelector('g.vis-highlighting g.vis-plot[data-plot="dots"]')).not.toBeNull();
+        const css = highlightCss(el);
+        expect(css).toContain('[data-plot="dots"] .vis-highlight:not(g), .vis[data-vis="');
+        expect(css).toContain('.vis-highlight *:not(g) { r: 6; }');
+        expect(css).toContain('.vis-highlighting [data-plot="dots"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { opacity: 0.3; }');
+        expect(css).toContain('.vis-highlighting [data-plot="last"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { visibility: hidden; }');
 
-        // the end of the highlight restores the values
+        // the end of the highlight removes the classes
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointerleave'));
         await nextTick();
-        expect(circles.every(c => c.getAttribute('opacity') === null && c.getAttribute('r') == '3')).toBe(true);
-        expect(el.querySelector('g.vis-plot[data-plot="last"] text').getAttribute('visibility')).toBeNull();
+        expect(el.querySelectorAll('.vis-highlight, .vis-highlighting, .vis-highlight-group')).toHaveLength(0);
 
         // an entry of the legend highlights its category
         el.querySelector('.vis-legend-entry[data-key="Wien"]').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
         await nextTick();
-        expect(el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle[opacity="0.3"]')).toHaveLength(4);
+        expect(highlighted(el, 'g.vis-group[data-group-c="Wien"] circle')).toHaveLength(3);
+        expect(highlighted(el, 'g.vis-group[data-group-c="Tirol"] circle')).toHaveLength(0);
+        expect(el.querySelector('g.vis-highlighting g.vis-plot[data-plot="dots"]')).not.toBeNull();
         expect(errors).toEqual([]);
     });
 
@@ -364,7 +372,7 @@ describe('the highlight', () => {
         };
         events.dispatchEvent(pointer('pointermove', at('Wien', 0)));
         await nextTick();
-        expect(el.querySelectorAll('g.vis-group[data-group-c="Wien"] circle[r="6"]')).toHaveLength(3);
+        expect(highlighted(el, 'g.vis-group[data-group-c="Wien"] circle')).toHaveLength(3);
         // another row of the same group
         const plots = el.querySelector('g.vis-plot[data-plot="dots"]');
         const changes = [];
@@ -374,13 +382,13 @@ describe('the highlight', () => {
         await nextTick();
         changes.push(...observer.takeRecords());
         expect(el.querySelector('.vis-hover-title').textContent).toBe('2023');
-        expect(changes).toEqual([]);
+        expect(changes.map(c => [c.type, c.attributeName, c.target.tagName, c.target.getAttribute(c.attributeName), c.oldValue])).toEqual([]);
         // another group
         events.dispatchEvent(pointer('pointermove', at('Tirol', 3)));
         await nextTick();
         changes.push(...observer.takeRecords());
         expect(changes.length).toBeGreaterThan(0);
-        expect(el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle[r="6"]')).toHaveLength(4);
+        expect(highlighted(el, 'g.vis-group[data-group-c="Tirol"] circle')).toHaveLength(4);
         observer.disconnect();
 
         // the others- props of a highlight without elements of highlight- props
@@ -389,7 +397,8 @@ describe('the highlight', () => {
         const el2 = await mount({ def: others, data: lineData });
         el2.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
         await nextTick();
-        expect(el2.querySelectorAll('g.vis-plot[data-plot="dots"] circle[opacity="0.3"]')).toHaveLength(7);
+        expect(el2.querySelector('g.vis-highlighting g.vis-plot[data-plot="dots"]')).not.toBeNull();
+        expect(highlightCss(el2)).toContain('[data-plot="dots"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { opacity: 0.3; }');
         expect(errors).toEqual([]);
     });
 
@@ -421,8 +430,9 @@ describe('the highlight', () => {
         const { pointer } = await import('./dom.js');
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
         await nextTick();
-        const circle = el.querySelector('circle.vis-highlight');
-        await vi.waitFor(() => expect(circle.getAttribute('r')).toBe('6'));
+        expect(highlighted(el, 'circle').length).toBeGreaterThan(0);
+        // the transition is the one of the stylesheet
+        expect(highlightCss(el)).toContain('[data-plot] *:not(g) { transition-property: r; transition-duration: 50ms; }');
         expect(errors).toEqual([]);
     });
 });
@@ -576,27 +586,27 @@ describe('linked charts', () => {
         a.el.classList.add('a');
         b.el.classList.add('b');
         el.append(a.el, b.el);
-        const highlighted = () => [...el.querySelectorAll('.b circle.vis-highlight')].map(c => c.parentNode.dataset.groupC);
-        expect(highlighted()).toEqual([]);
+        const marked = () => highlighted(el, '.b circle').map(c => c.parentNode.dataset.groupC);
+        expect(marked()).toEqual([]);
 
         // the hover of the first chart highlights the category in the second one
         el.querySelector('.a rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
         await nextTick();
         await nextTick();
         const key = row.value.c;
-        expect(new Set(highlighted())).toEqual(new Set([key]));
+        expect(new Set(marked())).toEqual(new Set([key]));
 
         // its own hover replaces it while it is shown
         el.querySelector('.b rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
         await nextTick();
         el.querySelector('.b rect.vis-events').dispatchEvent(pointer('pointerleave'));
         await nextTick();
-        expect(new Set(highlighted())).toEqual(new Set([key]));
+        expect(new Set(marked())).toEqual(new Set([key]));
 
         el.querySelector('.a rect.vis-events').dispatchEvent(pointer('pointerleave'));
         await nextTick();
         await nextTick();
-        expect(highlighted()).toEqual([]);
+        expect(marked()).toEqual([]);
         expect(errors).toEqual([]);
     });
 });
@@ -1179,21 +1189,23 @@ describe('css variables in props', () => {
         // the props of a category, of a global and of the highlight, which are attributes of data
         expect([style(circle, 'fill'), circle.hasAttribute('fill'), circle.getAttribute('stroke'), style(circle, 'stroke')])
             .toEqual(['var(--wien-color)', false, null, 'var(--line-color)']);
-        expect(circle.getAttribute('highlight-fill')).toBe('var(--highlight-color)');
+        // the props of the highlight are the stylesheet of the chart
+        expect(highlightCss(el)).toContain('[data-plot="dots"] .vis-highlight *:not(g) { stroke: black; fill: var(--highlight-color); }');
         expect(style(el.querySelector('g.vis-group[data-group-c="Tirol"] circle'), 'fill')).toBe('');
         expect(el.querySelector('g.vis-group[data-group-c="Tirol"] circle').getAttribute('fill')).toBe('blue');
         expect(style(el.querySelector('.vis-axis-left path.domain'), 'stroke')).toBe('var(--gen-vis-grid-color)');
         expect(style(el.querySelector('.vis-annotation.vis-band'), 'fill')).toBe('var(--band-color)');
         expect(style(el.querySelector('.vis-legend-entry[data-key="Wien"] rect'), 'fill')).toBe('var(--wien-color)');
 
-        // the highlight replaces the styles, its end restores them
+        // the highlight is a class, the styles of the elements stay as they are
         const entry = el.querySelector('.vis-legend-entry[data-key="Wien"]');
         entry.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
         await nextTick();
-        expect([circle.getAttribute('stroke'), style(circle, 'stroke'), style(circle, 'fill'), circle.hasAttribute('fill')])
-            .toEqual(['black', '', 'var(--highlight-color)', false]);
+        expect(highlighted(el, 'circle')).toHaveLength(3);
+        expect([circle.getAttribute('stroke'), style(circle, 'stroke'), style(circle, 'fill')]).toEqual([null, 'var(--line-color)', 'var(--wien-color)']);
         entry.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
         await nextTick();
+        expect(highlighted(el, 'circle')).toHaveLength(0);
         expect([circle.getAttribute('stroke'), style(circle, 'stroke'), style(circle, 'fill')]).toEqual([null, 'var(--line-color)', 'var(--wien-color)']);
         expect(errors).toEqual([]);
     });

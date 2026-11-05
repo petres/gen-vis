@@ -10,7 +10,7 @@ import { clearCache } from '@/utils/load';
 import { selection } from '@/utils/export';
 import { itemOf } from '@/utils/dom';
 import { rowOf } from '@/utils/draw';
-import { examples, errors, useDom, rendered, mount, mountVis, pointer, hover, nextTick, html, resize } from './dom.js';
+import { examples, errors, useDom, rendered, mount, mountVis, pointer, hover, nextTick, html, resize, highlighted, highlightCss } from './dom.js';
 
 // the image of the copy of the visualisation, the copy and the width of its
 // container are kept for the tests
@@ -843,16 +843,17 @@ describe('the highlight of a row', () => {
             props: { x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled', width: 10, stroke: 'none' } };
         const data = 'year,value,land,type\n2020,1,Wien,a\n2020,2,Wien,b\n2023,3,Wien,a\n2023,1,Wien,b';
         const el = await mount({ def, data });
-        const highlighted = () => [...el.querySelectorAll('g.vis-plot rect')].filter(r => r.getAttribute('stroke') == 'black');
+        const marked = () => highlighted(el, 'g.vis-plot rect');
+        expect(highlightCss(el)).toContain('.vis-highlight *:not(g) { stroke: black; }');
 
         // the bottom segment of 2020, a of the value 1
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 0, clientY: 240 }));
         await nextTick();
-        expect(highlighted()).toHaveLength(1);
-        expect(highlighted()[0].parentNode.getAttribute('data-group-type')).toBe('a');
+        expect(marked()).toHaveLength(1);
+        expect(marked()[0].parentNode.getAttribute('data-group-type')).toBe('a');
 
         el.querySelector('.vis-legend[data-dim="type"] .vis-legend-entries > div').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
-        expect(highlighted()).toHaveLength(2);
+        expect(marked()).toHaveLength(2);
         expect(errors).toEqual([]);
     });
 });
@@ -1116,10 +1117,11 @@ describe('maps', () => {
         expect(await at(150)).toBe('Region B');
         expect([...el.querySelectorAll('.vis-hover td')].map(t => t.textContent)).toEqual(['3.0'.replace('.', ',')]);
         // the region is highlighted
-        expect(el.querySelector('g.vis-plot.plot-1 path.vis-highlight').getAttribute('stroke')).toBe('black');
+        expect(highlighted(el, 'g.vis-plot.plot-1 path')).toHaveLength(1);
+        expect(highlightCss(el)).toContain('[data-plot="plot-1"] .vis-highlight:not(g)');
         // a region without rows has no hover, with `empty` its name
         expect(await at(250)).toBeUndefined();
-        expect(el.querySelector('g.vis-plot.plot-1 path.vis-highlight')).toBeNull();
+        expect(highlighted(el, 'g.vis-plot.plot-1 path')).toHaveLength(0);
         const def = mapDef();
         def.options.hover = { empty: true };
         const all = await mount({ def, data: mapData });
@@ -1356,10 +1358,11 @@ describe('highlight', () => {
         def.plot[1].highlight = { ...def.plot[1].highlight, r: 6 };
         const el = await mount({ def, data: lineData });
         el.querySelector('.vis-legend .vis-legend-entries > div').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
-        const circles = [...el.querySelectorAll('g.vis-plot.plot-1 g.vis-group[data-group-c="Wien"] circle')];
-        expect(circles.map(c => c.getAttribute('r'))).toEqual(['6', '6', '6']);
+        const circles = 'g.vis-plot.plot-1 g.vis-group[data-group-c="Wien"] circle';
+        expect(highlighted(el, circles)).toHaveLength(3);
+        expect(highlightCss(el)).toContain('[data-plot="plot-1"] .vis-highlight *:not(g) { r: 6; }');
         el.querySelector('.vis-legend .vis-legend-entries > div').dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
-        expect(circles.map(c => c.getAttribute('r'))).toEqual(['3', '3', '3']);
+        expect(highlighted(el, circles)).toHaveLength(0);
     });
 
     test('the attributes are restored as they were, a missing one is removed', async () => {
@@ -1371,10 +1374,11 @@ describe('highlight', () => {
         const html = el.querySelector('svg.vis-svg').outerHTML.replace(/ class=""/g, '');
         const entry = el.querySelector('.vis-legend-entry[data-key="Tirol"]');
         entry.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
-        expect([...el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle')].map(c => c.getAttribute('stroke'))).toEqual(['black', 'black', 'black', 'black']);
-        expect(el.querySelector('path[data-group-c="Tirol"]').getAttribute('stroke-width')).toBe('3');
+        expect(highlighted(el, 'g.vis-group[data-group-c="Tirol"] circle')).toHaveLength(4);
+        expect(el.querySelector('path[data-group-c="Tirol"]').classList.contains('vis-highlight')).toBe(true);
+        expect(highlightCss(el)).toContain('[data-plot="plot-0"] .vis-highlight *:not(g) { stroke-width: 3; }');
         entry.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
-        expect(el.querySelectorAll('[default-r], [stroke="black"], .vis-highlight')).toHaveLength(0);
+        expect(el.querySelectorAll('[stroke="black"], .vis-highlight, .vis-highlighting')).toHaveLength(0);
         // the groups are in their order again after the next draw, see the update of the facets
         expect(el.querySelector('svg.vis-svg').outerHTML.replace(/ class=""/g, '').length).toBe(html.length);
     });
@@ -1389,9 +1393,9 @@ describe('highlight', () => {
         el.querySelector('.vis-legend[data-dim="c"] .vis-legend-entry[data-key="Wien"]').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
         const facets = [...el.querySelectorAll('svg.vis-svg')];
         expect(facets).toHaveLength(2);
-        expect(facets.map(f => f.querySelectorAll('circle[r="6"]').length)).toEqual([3, 0]);
+        expect(facets.map(f => highlighted(f, 'circle').length)).toEqual([3, 0]);
         el.querySelector('.vis-legend[data-dim="c"] .vis-legend-entry[data-key="Tirol"]').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
-        expect(facets.map(f => f.querySelectorAll('circle[r="6"]').length)).toEqual([0, 4]);
+        expect(facets.map(f => highlighted(f, 'circle').length)).toEqual([0, 4]);
     });
 });
 
@@ -1643,7 +1647,7 @@ describe('horizontal bars and several value axes', () => {
         expect([...el.querySelectorAll('.vis-hover tr')].map(tr => tr.textContent)).toEqual(['Tirol2,0', 'Wien4,0']);
         // the segment under the pointer, Tirol from 4 to 6
         expect(el.querySelector('.vis-hover tr.vis-nearest').textContent).toBe('Tirol2,0');
-        expect(el.querySelectorAll('rect[stroke="black"]')).toHaveLength(1);
+        expect(highlighted(el, 'rect')).toHaveLength(1);
         const line = el.querySelector('.vis-hover-marker line');
         expect(line.getAttribute('y1')).toBe(line.getAttribute('y2'));
         expect(el.querySelector('.vis-hover').style.transform).toContain('-50%');
@@ -1874,8 +1878,8 @@ describe('the update of the facets', () => {
         const tirol = el.querySelector('.vis-legend-entry[data-key="Tirol"]');
         tirol.dispatchEvent(pointer('pointerenter'));
         await new Promise(resolve => setTimeout(resolve, 250));
-        // the highlight, not the end of the transition
-        expect(el.querySelector('g.vis-group[data-group-c="Tirol"] circle').getAttribute('cy')).toBe('5');
+        // the highlight is a class, the transition of the attribute goes on
+        expect(highlighted(el, 'g.vis-group[data-group-c="Tirol"] circle').length).toBeGreaterThan(0);
         tirol.dispatchEvent(pointer('pointerleave'));
         const fresh = await mount({ def: lineDef(), data: lineData, state: { visible: { c: { Wien: false } } } });
         const cys = el => [...el.querySelectorAll('g.vis-group[data-group-c="Tirol"] circle')].map(c => c.getAttribute('cy'));
@@ -2179,7 +2183,8 @@ describe('polar', () => {
         };
         expect(await at(-100, 10)).toBe('B2');
         expect(el.querySelectorAll('.vis-hover tr.vis-hover-entry')).toHaveLength(3);
-        expect(el.querySelector('path.vis-highlight').getAttribute('fill')).toBe('blue');
+        expect(highlighted(el, 'path').map(p => p.getAttribute('fill'))).toEqual(['blue']);
+        expect(highlightCss(el)).toContain('.vis-highlight *:not(g) { stroke: black; }');
         expect(await at(-30, -100)).toBe('C1');
         // outside of the circle
         expect(await at(160, 0)).toBeNull();
@@ -2720,7 +2725,8 @@ describe('fixed bugs', () => {
         const el = await mount({ def, data: lineData });
         expect(await hover(el)).toBe(2);
         el.querySelector('.vis-legend .vis-legend-entries > div').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
-        expect(el.querySelector('path.vis-highlight').getAttribute('stroke-width')).toBe('3');
+        expect(el.querySelector('path.vis-highlight')).not.toBeNull();
+        expect(highlightCss(el)).toContain('[data-plot="1st line"] .vis-highlight *:not(g) { stroke-width: 3; }');
         expect(errors).toEqual([]);
     });
 
@@ -2748,10 +2754,10 @@ describe('fixed bugs', () => {
 
         const [first, second] = el.querySelectorAll('.vis-legend .vis-legend-entries > div');
         second.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
-        const highlighted = el.querySelectorAll('g.vis-plot.plot-0 path.vis-highlight');
-        expect(highlighted).toHaveLength(1);
-        expect(highlighted[0].getAttribute('data-group-c')).toBe('Say "hi"');
-        expect(highlighted[0].getAttribute('stroke-width')).toBe('3');
+        const marked = el.querySelectorAll('g.vis-plot.plot-0 path.vis-highlight');
+        expect(marked).toHaveLength(1);
+        expect(marked[0].getAttribute('data-group-c')).toBe('Say "hi"');
+        expect(highlightCss(el)).toContain('.vis-highlight *:not(g) { stroke-width: 3; }');
 
         second.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
         first.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));

@@ -1,4 +1,10 @@
-<div class="vis fti fti-series" data-global-group="inno">
+<div class="vis fti fti-series" data-global-group="inno" data-vis="N">
+<style>.vis[data-vis="N"] .vis-highlighting [data-plot="last"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { visibility: hidden; }
+.vis[data-vis="N"] .vis-highlighting [data-plot="last-value"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { visibility: hidden; }
+.vis[data-vis="N"] .vis-highlighting [data-plot="last-year"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { visibility: hidden; }
+.vis[data-vis="N"] [data-plot="ring"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="ring"] .vis-highlight *:not(g) { visibility: visible; }
+.vis[data-vis="N"] [data-plot="ring-value"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="ring-value"] .vis-highlight *:not(g) { visibility: visible; }
+.vis[data-vis="N"] [data-plot="ring-year"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="ring-year"] .vis-highlight *:not(g) { visibility: visible; }</style>
 <div class="vis-header">
 <div class="vis-title">Efficiency</div>
 <div class="vis-subtitle">Aggregated indicator over time, Austria relative to the comparison group</div>
@@ -27,7 +33,7 @@
 <div class="vis-body">
 <div class="vis-facet" style="width: 800px;">
 <svg aria-describedby="gen-vis-facet-N-subtitle gen-vis-facet-N-keys" aria-label="Efficiency" aria-roledescription="chart" class="vis-svg" height="220" role="application" tabindex="0" width="800">
-<g transform="translate(50 24)">
+<g class="vis-highlighting" transform="translate(50 24)">
 <g class="vis-hover-marker" visibility="hidden">
 <line x1="323.636" x2="323.636" y1="0" y2="156">
 </line>
@@ -155,144 +161,144 @@
 </g>
 <g class="vis-plot last vis-above" data-plot="last">
 <g class="vis-group" data-group-type="total">
-<circle cx="700" cy="113.54" fill="white" others-visibility="hidden" r="17" stroke="#F59036" stroke-width="5" visibility="hidden">
+<circle cx="700" cy="113.54" fill="white" r="17" stroke="#F59036" stroke-width="5">
 </circle>
 </g>
 </g>
 <g class="vis-plot last-value vis-above" data-plot="last-value">
 <g class="vis-group" data-group-type="total">
-<text dominant-baseline="central" font-size="11" font-weight="bold" others-visibility="hidden" text-anchor="middle" visibility="hidden" x="700" y="113.54">84%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" x="700" y="113.54">84%</text>
 </g>
 </g>
 <g class="vis-plot last-year vis-above" data-plot="last-year">
 <g class="vis-group" data-group-type="total">
-<text dominant-baseline="central" dy="30" font-size="11" others-visibility="hidden" text-anchor="middle" visibility="hidden" x="700" y="113.54">2026</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" x="700" y="113.54">2026</text>
 </g>
 </g>
 <g class="vis-plot ring vis-above" data-plot="ring">
 <g class="vis-group" data-group-x="2015">
-<circle cx="10" cy="75.957" fill="white" highlight-visibility="visible" r="17" stroke="#F59036" stroke-width="5" visibility="hidden">
+<circle cx="10" cy="75.957" fill="white" r="17" stroke="#F59036" stroke-width="5" visibility="hidden">
 </circle>
 </g>
 <g class="vis-group" data-group-x="2016">
-<circle cx="72.727" cy="75.823" fill="white" highlight-visibility="visible" r="17" stroke="#F59036" stroke-width="5" visibility="hidden">
+<circle cx="72.727" cy="75.823" fill="white" r="17" stroke="#F59036" stroke-width="5" visibility="hidden">
 </circle>
 </g>
 <g class="vis-group" data-group-x="2017">
-<circle cx="135.455" cy="67.582" fill="white" highlight-visibility="visible" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
+<circle cx="135.455" cy="67.582" fill="white" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
 </circle>
 </g>
 <g class="vis-group" data-group-x="2018">
-<circle cx="198.182" cy="70.53" fill="white" highlight-visibility="visible" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
+<circle cx="198.182" cy="70.53" fill="white" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
 </circle>
 </g>
 <g class="vis-group" data-group-x="2019">
-<circle cx="260.909" cy="71.2" fill="white" highlight-visibility="visible" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
+<circle cx="260.909" cy="71.2" fill="white" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
 </circle>
 </g>
 <g class="vis-group" data-group-x="2021">
-<circle cx="386.364" cy="50.834" fill="white" highlight-visibility="visible" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
+<circle cx="386.364" cy="50.834" fill="white" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
 </circle>
 </g>
 <g class="vis-group" data-group-x="2022">
-<circle cx="449.091" cy="64.434" fill="white" highlight-visibility="visible" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
+<circle cx="449.091" cy="64.434" fill="white" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
 </circle>
 </g>
 <g class="vis-group" data-group-x="2023">
-<circle cx="511.818" cy="72.607" fill="white" highlight-visibility="visible" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
+<circle cx="511.818" cy="72.607" fill="white" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
 </circle>
 </g>
 <g class="vis-group" data-group-x="2024">
-<circle cx="574.545" cy="65.104" fill="white" highlight-visibility="visible" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
+<circle cx="574.545" cy="65.104" fill="white" r="17" stroke="#F9EB00" stroke-width="5" visibility="hidden">
 </circle>
 </g>
 <g class="vis-group" data-group-x="2025">
-<circle cx="637.273" cy="90.695" fill="white" highlight-visibility="visible" r="17" stroke="#F59036" stroke-width="5" visibility="hidden">
+<circle cx="637.273" cy="90.695" fill="white" r="17" stroke="#F59036" stroke-width="5" visibility="hidden">
 </circle>
 </g>
 <g class="vis-group" data-group-x="2026">
-<circle cx="700" cy="113.54" fill="white" highlight-visibility="visible" r="17" stroke="#F59036" stroke-width="5" visibility="hidden">
+<circle cx="700" cy="113.54" fill="white" r="17" stroke="#F59036" stroke-width="5" visibility="hidden">
 </circle>
 </g>
 <g class="vis-group vis-highlight" data-group-x="2020">
-<circle class="vis-highlight" cx="323.636" cy="76.091" default-visibility="hidden" fill="white" highlight-visibility="visible" r="17" stroke="#F59036" stroke-width="5" visibility="visible">
+<circle cx="323.636" cy="76.091" fill="white" r="17" stroke="#F59036" stroke-width="5" visibility="hidden">
 </circle>
 </g>
 </g>
 <g class="vis-plot ring-value vis-above" data-plot="ring-value">
 <g class="vis-group" data-group-x="2015">
-<text dominant-baseline="central" font-size="11" font-weight="bold" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="10" y="75.957">89%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" visibility="hidden" x="10" y="75.957">89%</text>
 </g>
 <g class="vis-group" data-group-x="2016">
-<text dominant-baseline="central" font-size="11" font-weight="bold" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="72.727" y="75.823">89%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" visibility="hidden" x="72.727" y="75.823">89%</text>
 </g>
 <g class="vis-group" data-group-x="2017">
-<text dominant-baseline="central" font-size="11" font-weight="bold" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="135.455" y="67.582">90%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" visibility="hidden" x="135.455" y="67.582">90%</text>
 </g>
 <g class="vis-group" data-group-x="2018">
-<text dominant-baseline="central" font-size="11" font-weight="bold" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="198.182" y="70.53">90%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" visibility="hidden" x="198.182" y="70.53">90%</text>
 </g>
 <g class="vis-group" data-group-x="2019">
-<text dominant-baseline="central" font-size="11" font-weight="bold" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="260.909" y="71.2">90%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" visibility="hidden" x="260.909" y="71.2">90%</text>
 </g>
 <g class="vis-group" data-group-x="2021">
-<text dominant-baseline="central" font-size="11" font-weight="bold" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="386.364" y="50.834">93%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" visibility="hidden" x="386.364" y="50.834">93%</text>
 </g>
 <g class="vis-group" data-group-x="2022">
-<text dominant-baseline="central" font-size="11" font-weight="bold" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="449.091" y="64.434">91%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" visibility="hidden" x="449.091" y="64.434">91%</text>
 </g>
 <g class="vis-group" data-group-x="2023">
-<text dominant-baseline="central" font-size="11" font-weight="bold" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="511.818" y="72.607">90%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" visibility="hidden" x="511.818" y="72.607">90%</text>
 </g>
 <g class="vis-group" data-group-x="2024">
-<text dominant-baseline="central" font-size="11" font-weight="bold" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="574.545" y="65.104">91%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" visibility="hidden" x="574.545" y="65.104">91%</text>
 </g>
 <g class="vis-group" data-group-x="2025">
-<text dominant-baseline="central" font-size="11" font-weight="bold" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="637.273" y="90.695">87%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" visibility="hidden" x="637.273" y="90.695">87%</text>
 </g>
 <g class="vis-group" data-group-x="2026">
-<text dominant-baseline="central" font-size="11" font-weight="bold" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="700" y="113.54">84%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" visibility="hidden" x="700" y="113.54">84%</text>
 </g>
 <g class="vis-group vis-highlight" data-group-x="2020">
-<text class="vis-highlight" default-visibility="hidden" dominant-baseline="central" font-size="11" font-weight="bold" highlight-visibility="visible" text-anchor="middle" visibility="visible" x="323.636" y="76.091">89%</text>
+<text dominant-baseline="central" font-size="11" font-weight="bold" text-anchor="middle" visibility="hidden" x="323.636" y="76.091">89%</text>
 </g>
 </g>
 <g class="vis-plot ring-year vis-above" data-plot="ring-year">
 <g class="vis-group" data-group-x="2015">
-<text dominant-baseline="central" dy="30" font-size="11" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="10" y="75.957">2015</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" visibility="hidden" x="10" y="75.957">2015</text>
 </g>
 <g class="vis-group" data-group-x="2016">
-<text dominant-baseline="central" dy="30" font-size="11" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="72.727" y="75.823">2016</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" visibility="hidden" x="72.727" y="75.823">2016</text>
 </g>
 <g class="vis-group" data-group-x="2017">
-<text dominant-baseline="central" dy="30" font-size="11" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="135.455" y="67.582">2017</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" visibility="hidden" x="135.455" y="67.582">2017</text>
 </g>
 <g class="vis-group" data-group-x="2018">
-<text dominant-baseline="central" dy="30" font-size="11" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="198.182" y="70.53">2018</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" visibility="hidden" x="198.182" y="70.53">2018</text>
 </g>
 <g class="vis-group" data-group-x="2019">
-<text dominant-baseline="central" dy="30" font-size="11" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="260.909" y="71.2">2019</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" visibility="hidden" x="260.909" y="71.2">2019</text>
 </g>
 <g class="vis-group" data-group-x="2021">
-<text dominant-baseline="central" dy="30" font-size="11" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="386.364" y="50.834">2021</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" visibility="hidden" x="386.364" y="50.834">2021</text>
 </g>
 <g class="vis-group" data-group-x="2022">
-<text dominant-baseline="central" dy="30" font-size="11" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="449.091" y="64.434">2022</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" visibility="hidden" x="449.091" y="64.434">2022</text>
 </g>
 <g class="vis-group" data-group-x="2023">
-<text dominant-baseline="central" dy="30" font-size="11" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="511.818" y="72.607">2023</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" visibility="hidden" x="511.818" y="72.607">2023</text>
 </g>
 <g class="vis-group" data-group-x="2024">
-<text dominant-baseline="central" dy="30" font-size="11" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="574.545" y="65.104">2024</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" visibility="hidden" x="574.545" y="65.104">2024</text>
 </g>
 <g class="vis-group" data-group-x="2025">
-<text dominant-baseline="central" dy="30" font-size="11" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="637.273" y="90.695">2025</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" visibility="hidden" x="637.273" y="90.695">2025</text>
 </g>
 <g class="vis-group" data-group-x="2026">
-<text dominant-baseline="central" dy="30" font-size="11" highlight-visibility="visible" text-anchor="middle" visibility="hidden" x="700" y="113.54">2026</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" visibility="hidden" x="700" y="113.54">2026</text>
 </g>
 <g class="vis-group vis-highlight" data-group-x="2020">
-<text class="vis-highlight" default-visibility="hidden" dominant-baseline="central" dy="30" font-size="11" highlight-visibility="visible" text-anchor="middle" visibility="visible" x="323.636" y="76.091">2020</text>
+<text dominant-baseline="central" dy="30" font-size="11" text-anchor="middle" visibility="hidden" x="323.636" y="76.091">2020</text>
 </g>
 </g>
 <rect class="vis-events" height="156" opacity="0" style="touch-action: pan-y;" width="730">
