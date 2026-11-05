@@ -729,7 +729,8 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   ticks of a gradient, e.g. `[0, 50, 100]`. `"classes": true` labels the
   classes of a threshold, quantize or quantile scale in their middle instead
   of their limits, the open ends with `<` and `≥` (`≤` and `>` of `"closed":
-  "right"`), e.g. `< 50`, `50–100`, …, `≥ 300`. A category with `"legend":
+  "right"`), e.g. `< 50`, `50–100`, …, `≥ 300`; without a `size` of the
+  legend its classes are as wide as their labels. A category with `"legend":
   false` in its props has no entry, it stays visible, e.g. headers. With
   `"onlyData": true` the legend only has the categories of the rows after
   the `filter`, also the hidden ones, e.g. the sources of the selected

@@ -83,12 +83,14 @@ function createColorLegend(vis, legend) {
     // of the visualisation, e.g. horizontal on a phone
     const isVertical = () => evaluate(options().orientation, { ...store.scope, totalWidth: store.visWidth }) == 'vertical';
 
+    // the length of the scale drawn, e.g. wider of the labels of classes
+    let drawnSize = null;
     const draw = vertical => {
         const m = store.mapping(legend);
         const s = scale;
         const opts = options();
         svg.replaceChildren();
-        const width = size();
+        let width = size();
         // the labels after the scale (below it, right of a vertical one) or before it
         const before = opts.labels == 'before';
         const along = vertical ? (vertical && before ? 48 : 2) : padding;
@@ -137,17 +139,21 @@ function createColorLegend(vis, legend) {
         } else if (s.invertExtent) {
             // a box per class, the limits between them
             const colors = s.range();
-            const w = width/colors.length;
-            colors.forEach((c, i) => box(i*w, w, c));
             const limits = colors.slice(1).map(c => s.invertExtent(c)[0]);
             const format = formatter(limits);
+            const right = m.scale?.closed == 'right';
+            const text = i => i == 0 ? `${right ? '≤' : '<'} ${format(limits[0])}`
+                : i == colors.length - 1 ? `${right ? '>' : '≥'} ${format(limits.at(-1))}`
+                : `${format(limits[i - 1])}–${format(limits[i])}`;
+            // the classes as wide as their labels (estimated, 10px texts)
+            // without a `size` of the legend
+            if (opts.classes && !opts.size && !vertical)
+                width = Math.max(width, colors.length*Math.max(...colors.map((c, i) => text(i).length*6 + 8)));
+            const w = width/colors.length;
+            colors.forEach((c, i) => box(i*w, w, c));
             // a label per class in its middle (`classes`), the open ends
             // with < and ≥ (≤ and > of classes closed at the right)
             if (opts.classes) {
-                const right = m.scale?.closed == 'right';
-                const text = i => i == 0 ? `${right ? '≤' : '<'} ${format(limits[0])}`
-                    : i == colors.length - 1 ? `${right ? '>' : '≥'} ${format(limits.at(-1))}`
-                    : `${format(limits[i - 1])}–${format(limits[i])}`;
                 colors.forEach((c, i) => label(i*w + w/2, i, text, false));
             } else
                 limits.forEach((v, i) => label((i + 1)*w, v, format));
@@ -170,6 +176,7 @@ function createColorLegend(vis, legend) {
             const format = formatter(ticks);
             ticks.forEach(v => label(x(v), v, format));
         }
+        drawnSize = width;
     };
 
     // the parts of the legend, the title, the image and the missing values
@@ -179,7 +186,8 @@ function createColorLegend(vis, legend) {
         patch(root, { class: 'vis-legend vis-color-legend', 'data-dim': legend });
         setText(title, name);
         patch(scaleBox, { class: 'vis-color-scale', style: vertical ? { flexDirection: 'column' } : null });
-        patch(svg, { role: 'img', 'aria-label': name || undefined, width: vertical ? 64 : size() + 2*padding, height: vertical ? size() + 2*padding : 34 });
+        const length = drawnSize ?? size();
+        patch(svg, { role: 'img', 'aria-label': name || undefined, width: vertical ? 64 : length + 2*padding, height: vertical ? length + 2*padding : 34 });
         // the regions without a value, e.g. the color of geo:base
         const missing = options().missing;
         if (missing) {
