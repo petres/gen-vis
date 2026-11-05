@@ -13,11 +13,9 @@
 }
 
 /* the font can be set with options.fontFamily or the css variable: Inter
-   where it is installed, the font of the system otherwise; numbers with
-   figures of the same width, so values in columns and ticks align */
+   where it is installed, the font of the system otherwise */
 .vis text, .vis span, .vis div {
     font-family: var(--gen-vis-font-family, Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
-    font-variant-numeric: tabular-nums;
 }
 
 .vis-header {
@@ -243,6 +241,8 @@
     font-weight: 600;
 }
 .vis-hover table {
+    /* figures of the same width, so the values of a column align */
+    font-variant-numeric: tabular-nums;
     border-collapse: collapse;
     margin-left: auto;
     margin-right: auto;

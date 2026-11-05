@@ -519,7 +519,7 @@ legend), `--gen-vis-button-color` (`#B8BDC4`), `--gen-vis-button-hover-color`
 observable10, the entries of legends and the facets) and
 `--gen-vis-error-color` (`#B42318`). The default look: Inter where it is
 installed (the font of the system otherwise), figures of the same width
-(`tabular-nums`), grey axes, light grid lines, a hover card; the colors of
+in the hover (`tabular-nums`), grey axes, light grid lines, a hover card; the colors of
 categories without colors are d3's `observable10`. The colors of annotations are only the ones
 without a color of their `props`.
 

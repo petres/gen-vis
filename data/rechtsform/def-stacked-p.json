@@ -3,7 +3,7 @@
     "data": "data.csv",
     "options": {
         "height": 380,
-        "margins": {"top": 22, "right": 10, "bottom": 28, "left": 44},
+        "margins": {"top": 22, "right": 10, "bottom": 28, "left": 50},
         "title": "Wohnungsbestände nach Rechtsform",
         "subtitle": "Anteile an allen Wohnungen, in %",
         "footer": "<strong>Q:</strong> GWZ/HWZ 1971-2001, RZ 2011, MZ 2020",

@@ -18,8 +18,10 @@ What existing definitions draw differently:
 - A new default look of its own, not the one of a house style: the font
   is Inter where it is installed, otherwise the one of the system
   (`system-ui`, …, before Century Gothic, also of the export page, which
-  had URW Gothic), numbers with figures of the same width
-  (`tabular-nums`); the title 20px semibold, the subtitle and the footer
+  had URW Gothic), the numbers of the hover with figures of the same width
+  (`tabular-nums`); its digits are wider than the ones of Century Gothic,
+  so fixed margins sized for long tick labels may need a few pixels more
+  (three examples of `data/` got 6 more); the title 20px semibold, the subtitle and the footer
   grey (`--gen-vis-muted-color`), the lines and marks of the axes grey
   (`--gen-vis-axis-color`) and their labels and titles 12px a darker grey
   (`--gen-vis-axis-label-color`), the grid lines lighter and 1px, the

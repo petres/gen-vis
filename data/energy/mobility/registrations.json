@@ -4,6 +4,7 @@
     "data": "registrations.csv",
     "options": {
         "height": 220,
+        "margins": {"left": 56},
         "title": "Pkw-Neuzulassungen",
         "subtitle": "nach Kraftstoffart bzw. Energiequelle, monatlich",
         "footer": "Source: Statistik Austria - Kfz-Neuzulassungen"
