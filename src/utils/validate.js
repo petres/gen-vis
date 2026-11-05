@@ -689,8 +689,10 @@ const checkFacets = ({ def, mapping, names, warn }) => {
     });
     if (def.facets.rows !== undefined && typeof def.facets.rows != 'string')
         warn('facets.rows', `expected the mapping of the rows of a grid`);
-    if (def.facets.rowHeaders !== undefined && !['left', 'right'].includes(def.facets.rowHeaders))
-        warn('facets.rowHeaders', `expected 'left' (horizontal) or 'right' (rotated, the default)`);
+    const headers = def.facets.rowHeaders;
+    if (headers !== undefined && !['left', 'right'].includes(headers) && !(isObject(headers)
+        && (headers.side === undefined || ['left', 'right'].includes(headers.side)) && (headers.vertical === undefined || typeof headers.vertical == 'boolean')))
+        warn('facets.rowHeaders', `expected 'left' (horizontal), 'right' (vertical, the default) or { "side": "left", "vertical": true }`);
     const scales = def.facets.scales;
     if (isObject(scales))
         Object.entries(scales).forEach(([n, v]) => {

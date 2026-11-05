@@ -1,4 +1,4 @@
-export { normalize, scaleTypeOf, defaultScaleType, categoryKeys, hasCategories, facetMappings };
+export { normalize, scaleTypeOf, defaultScaleType, categoryKeys, hasCategories, facetMappings, rowHeadersOf };
 
 import { isObject } from '@/utils/values';
 import { isOperator, refNames } from '@/utils/expr';
@@ -215,6 +215,19 @@ const facetMappings = facets => {
     const cols = mapping(facets?.cols);
     return rows || cols ? { grid: true, rows, cols, all: [rows, cols].filter(Boolean) }
         : { grid: false, rows: null, cols: null, all: typeof facets?.dim == 'string' ? [facets.dim] : [] };
+};
+
+/**
+ * The side and the direction of the headers of the rows of a grid of
+ * facets (`facets.rowHeaders`): "right" (vertical, the default), "left"
+ * (horizontal) or { "side", "vertical" } (by default vertical at the right,
+ * horizontal at the left), e.g. vertical at the left as a title of an axis.
+ */
+const rowHeadersOf = facets => {
+    const given = facets?.rowHeaders;
+    const side = (isObject(given) ? given.side : given) == 'left' ? 'left' : 'right';
+    const vertical = isObject(given) && typeof given.vertical == 'boolean' ? given.vertical : side == 'right';
+    return { side, vertical };
 };
 
 const categoryNames = def => new Set([

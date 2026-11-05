@@ -1,6 +1,7 @@
 export { createVis };
 
 import { gridOf, layout } from "@/layout";
+import { rowHeadersOf } from "@/utils/normalize";
 import { evaluate } from "@/utils/expr";
 import { dataAttribute, reducedMotion } from "@/utils/draw";
 import { canCopy } from "@/utils/clipboard.js";
@@ -229,11 +230,11 @@ const createVis = app => {
         const m = grid?.rows ? store.def.mapping[grid.rows] : null;
         if (!m?.categoryProps)
             return 0;
-        const left = (store.def.facets.rowHeaders ?? 'right') == 'left';
-        const probe = root.appendChild(el('div', { class: `vis-facet-row-title ${left ? 'vis-facet-row-title-left' : ''}`,
+        const { side, vertical } = rowHeadersOf(store.def.facets);
+        const probe = root.appendChild(el('div', { class: `vis-facet-row-title vis-facet-row-title-${side} vis-facet-row-title-${vertical ? 'vertical' : 'horizontal'}`,
             style: 'position: absolute; visibility: hidden; height: auto; padding-top: 0; padding-bottom: 0; white-space: nowrap;' }));
         const names = m.keys.map(k => store.text(m.categoryProps[k].name));
-        const size = left
+        const size = !vertical
             ? Math.max(0, ...names.map(n => { setText(probe, n); return probe.getBoundingClientRect().width; }))
             : (setText(probe, names[0] ?? ''), probe.getBoundingClientRect().height + 4);
         probe.remove();

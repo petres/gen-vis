@@ -1332,9 +1332,20 @@ export interface Facets {
      */
     rows?: string;
     /**
-     * The headers of the rows of a grid: right of them rotated (default) or left of them horizontal, in a column of the width of the longest one.
+     * The headers of the rows of a grid: right of them vertical (default), left of them horizontal, in a column of the width of the longest one, or { "side": "left", "vertical": true }, e.g. as a title of an axis.
      */
-    rowHeaders?: 'left' | 'right';
+    rowHeaders?:
+        | ('left' | 'right')
+        | {
+              /**
+               * Left or right of the rows.
+               */
+              side?: 'left' | 'right';
+              /**
+               * Vertical text (upwards at the left, downwards at the right), by default at the right; horizontal text is in a column of the width of the longest header.
+               */
+              vertical?: boolean;
+          };
     /**
      * The titles of the axes in every facet (all) or only at the outer ones (outer): of the bottom axis in the bottom row, of the left one in the first column, of the right one in the last column, of the top one in the first row.
      */

@@ -194,7 +194,8 @@ Facets:
 - Grids of facets: `"facets": {"cols": "group", "rows": "band"}`, a facet
   per category of the two mappings, the names of the columns above the
   first row and the ones of the rows beside them (`"rowHeaders": "right"`,
-  rotated, or `"left"`, wrapped if longer than 40% of the width), empty
+  vertical, `"left"`, horizontal, wrapped if longer than 40% of the width,
+  or `{"side": "left", "vertical": true}`), empty
   boxes of combinations without rows, scales of all facets, per row or per
   column (`"scales": {"y": "row"}`, the labels only at the outer facets,
   also beside empty cells), `facet` of plots and annotations of a row, a

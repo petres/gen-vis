@@ -800,7 +800,20 @@
                     "description": "The number of the columns of the facets of dim, 1 by default; or the mapping of the columns of a grid, its categories are the columns (their names the headers above them)."
                 },
                 "rows": { "type": "string", "description": "The mapping of the rows of a grid of facets, its categories are the rows (their names the headers beside them), with cols a mapping or alone (one column)." },
-                "rowHeaders": { "enum": ["left", "right"], "default": "right", "description": "The headers of the rows of a grid: right of them rotated (default) or left of them horizontal, in a column of the width of the longest one." },
+                "rowHeaders": {
+                    "anyOf": [
+                        { "enum": ["left", "right"] },
+                        {
+                            "type": "object", "additionalProperties": false,
+                            "properties": {
+                                "side": { "enum": ["left", "right"], "default": "right", "description": "Left or right of the rows." },
+                                "vertical": { "type": "boolean", "description": "Vertical text (upwards at the left, downwards at the right), by default at the right; horizontal text is in a column of the width of the longest header." }
+                            }
+                        }
+                    ],
+                    "default": "right",
+                    "description": "The headers of the rows of a grid: right of them vertical (default), left of them horizontal, in a column of the width of the longest one, or { \"side\": \"left\", \"vertical\": true }, e.g. as a title of an axis."
+                },
                 "axisTitles": { "enum": ["all", "outer"], "default": "all", "description": "The titles of the axes in every facet (all) or only at the outer ones (outer): of the bottom axis in the bottom row, of the left one in the first column, of the right one in the last column, of the top one in the first row." },
                 "title": {
                     "type": "object",

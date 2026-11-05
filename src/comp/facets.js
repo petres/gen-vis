@@ -5,6 +5,7 @@ import { createFacet } from "@/comp/facet";
 import { evaluate } from "@/utils/expr";
 import { create } from "@/utils/dom";
 import { gridOf } from "@/layout";
+import { rowHeadersOf } from "@/utils/normalize";
 
 /**
  * The facets of the view (see layout.js), the children of `parent`, a
@@ -26,25 +27,27 @@ const createFacets = (vis, parent) => {
     };
 
     // the header of a row of a grid (`.vis-facet-row-title`), beside the plot
-    // area of its facets: left of them horizontal text (html), right of them
-    // rotated text (svg, the export keeps it as a text), of the width of the
-    // headers, see the measure of vis.js
-    const rowHeader = (node, f, side) => {
+    // area of its facets, left or right of them (`-left`, `-right`):
+    // horizontal text (html, `-horizontal`) or vertical (svg, `-vertical`,
+    // the export keeps it as a text, upwards at the left, downwards at the
+    // right), of the width of the headers, see the measure of vis.js
+    const rowHeader = (node, f, { side, vertical }) => {
         const { cell, margins } = f;
         const width = store.rowHeaderWidth ?? 0;
         const props = titleProps(f, gridOf(store.def).rows, cell.row);
-        if (side == 'left') {
-            patch(node, { class: 'vis-facet-row-title vis-facet-row-title-left',
+        const classes = `vis-facet-row-title vis-facet-row-title-${side} vis-facet-row-title-${vertical ? 'vertical' : 'horizontal'}`;
+        if (!vertical) {
+            patch(node, { class: classes,
                 style: { ...props, width: `${width}px`, height: `${f.height}px`, 'padding-top': `${margins.top}px`, 'padding-bottom': `${margins.bottom}px` } });
             setText(node, store.text(cell.rowName));
             return;
         }
-        patch(node, { class: 'vis-facet-row-title vis-facet-row-title-right', width, height: f.height });
+        patch(node, { class: classes, width, height: f.height });
         let text = node.firstElementChild;
         if (!text)
             text = node.appendChild(create('text'));
         const [x, y] = [width/2, margins.top + f.innerHeight/2];
-        Object.entries({ x, y, transform: `rotate(90 ${x} ${y})`, 'text-anchor': 'middle', 'dominant-baseline': 'middle' })
+        Object.entries({ x, y, transform: `rotate(${side == 'left' ? -90 : 90} ${x} ${y})`, 'text-anchor': 'middle', 'dominant-baseline': 'middle' })
             .forEach(([k, v]) => text.setAttribute(k, v));
         Object.entries(props).forEach(([k, v]) => v === null ? text.style.removeProperty(k) : text.style.setProperty(k, v));
         text.textContent = store.text(cell.rowName);
@@ -77,7 +80,9 @@ const createFacets = (vis, parent) => {
         const mounted = [];
         const facets = view.faceted ? view.facets : [view.facets[0]];
         const grid = view.faceted ? gridOf(store.def) : null;
-        const side = store.def.facets?.rowHeaders ?? 'right';
+        const headers = rowHeadersOf(store.def.facets);
+        // the element of a header, of its direction
+        const header = cell => extra(`row ${headers.vertical ? 'v' : 'h'} ${cell.row}`, () => headers.vertical ? create('svg') : el('div'));
         // the elements of a grid besides the facets, e.g. the headers of its rows
         const extra = (key, make) => {
             let entry = shown.get(key);
@@ -91,8 +96,8 @@ const createFacets = (vis, parent) => {
             const key = view.faceted ? String(f.key) : '';
             const cell = grid ? f.cell : null;
             // the header of the row of a grid, left of its first facet
-            if (cell?.row !== undefined && side == 'left' && cell.colIndex == 0)
-                rowHeader(extra(`row ${cell.row}`, () => el('div')), f, side);
+            if (cell?.row !== undefined && headers.side == 'left' && cell.colIndex == 0)
+                rowHeader(header(cell), f, headers);
             // an empty cell of a grid, a box of the size of a facet
             let entry = shown.get(key);
             if (entry && Boolean(entry.facet) == Boolean(f.empty)) {
@@ -130,8 +135,8 @@ const createFacets = (vis, parent) => {
             shown.delete(key);
             // the header of the row right of its last facet, the end of the row
             if (cell && cell.colIndex == cell.cols - 1) {
-                if (cell.row !== undefined && side != 'left')
-                    rowHeader(extra(`row ${cell.row}`, () => create('svg')), f, side);
+                if (cell.row !== undefined && headers.side != 'left')
+                    rowHeader(header(cell), f, headers);
                 extra(`end ${cell.rowIndex}`, () => el('div', { class: 'vis-facet-row-end' }));
             }
         });

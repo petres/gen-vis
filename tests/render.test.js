@@ -3577,6 +3577,28 @@ describe('grids of facets', () => {
         expect(errors).toEqual([]);
     });
 
+    test('headers of the rows of a side and a direction: vertical at the left (upwards), horizontal at the right', async () => {
+        const def = lineDef();
+        def.mapping.half = { column: 'year', type: 'categorical', categories: { 2020: {}, 2021: {} } };
+        def.plot = [{ type: 'svg:circle', props: { r: 2 } }];
+        def.facets = { rows: 'c', cols: 'half', rowHeaders: { side: 'left', vertical: true } };
+        const data = lineData.replace('2021,,20,Wien', '2021,2,20,Wien');
+        const left = await mount({ def, data });
+        const headers = [...left.querySelectorAll('svg.vis-facet-row-title-left.vis-facet-row-title-vertical text')];
+        expect(headers.map(t => t.textContent)).toEqual(['Wien', 'Tirol']);
+        expect(headers[0].getAttribute('transform')).toMatch(/^rotate\(-90 /);
+        // before the first facet of its row
+        expect(headers[0].closest('svg').nextElementSibling.querySelector('.vis-facet')).not.toBeNull();
+        def.facets.rowHeaders = { side: 'right', vertical: false };
+        const right = await mount({ def, data });
+        expect([...right.querySelectorAll('div.vis-facet-row-title-right.vis-facet-row-title-horizontal')].map(t => t.textContent)).toEqual(['Wien', 'Tirol']);
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef(def)).toEqual([]);
+        expect(validateDef({ ...def, facets: { ...def.facets, rowHeaders: { side: 'top' } } })).toEqual(
+            [`facets.rowHeaders: expected 'left' (horizontal), 'right' (vertical, the default) or { "side": "left", "vertical": true }`]);
+        expect(errors).toEqual([]);
+    });
+
     test('headers of the rows left of them, horizontal; plots of a column (facet of the mapping of the columns), empty cells', async () => {
         const def = lineDef();
         def.mapping.half = { column: 'year', type: 'categorical', categories: { 2020: {}, 2021: {} } };
@@ -3584,7 +3606,7 @@ describe('grids of facets', () => {
         def.plot = [{ type: 'svg:circle', id: 'all', props: { r: 2 } }, { type: 'svg:circle', id: 'first', facet: { half: '2020' }, props: { r: 2 } }];
         // Wien has no value in 2021
         const el = await mount({ def, data: lineData.replace('2021,,20,Wien\n', '') });
-        expect([...el.querySelectorAll('div.vis-facet-row-title-left')].map(t => t.textContent)).toEqual(['Wien', 'Tirol']);
+        expect([...el.querySelectorAll('div.vis-facet-row-title-horizontal')].map(t => t.textContent)).toEqual(['Wien', 'Tirol']);
         expect(el.querySelectorAll('.vis-facet-empty')).toHaveLength(1);
         expect([...el.querySelectorAll('svg.vis-svg')].map(s => s.querySelectorAll('[data-plot="first"] circle').length)).toEqual([1, 1, 0]);
         const { validateDef } = await import('@/utils/validate');
@@ -3638,10 +3660,10 @@ describe('grids of facets: edge cases', () => {
         const { root } = await import('./dom.js');
         // jsdom has no layout: every element is 800 pixels wide, so the names are measured wider than 40%
         const el = await mount({ def: gridDef({ rows: 'c', cols: 'half', rowHeaders: 'left' }), data });
-        const header = el.querySelector('div.vis-facet-row-title-left');
+        const header = el.querySelector('div.vis-facet-row-title-horizontal');
         expect(header.style.width).toBe('240px');
         // the headers wrap (measured in one line, see rowHeaderWidth of comp/vis.js), checked in Chromium
-        const rule = /\.vis-facet-row-title-left \{([^}]*)\}/.exec(readFileSync(`${root}/src/styles.css`, 'utf8'))[1];
+        const rule = /\.vis-facet-row-title-horizontal \{([^}]*)\}/.exec(readFileSync(`${root}/src/styles.css`, 'utf8'))[1];
         expect(rule).not.toMatch(/nowrap/);
         expect(readFileSync(`${root}/src/comp/vis.js`, 'utf8')).toMatch(/visibility: hidden;[^']*white-space: nowrap;/);
         expect(errors).toEqual([]);

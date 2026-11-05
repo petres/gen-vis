@@ -39,7 +39,7 @@
         }
     },
     "facets": {
-        "rows": "region", "cols": "source", "rowHeaders": "left", "axisTitles": "outer",
+        "rows": "region", "cols": "source", "rowHeaders": { "side": "left", "vertical": true }, "axisTitles": "outer",
         "scales": { "x": "all", "y": "all" },
         "title": { "props": { "color": "@color" } }
     },

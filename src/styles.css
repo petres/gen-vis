@@ -114,29 +114,35 @@
     text-align: center;
 }
 /* the headers of the rows of a grid of facets, beside the plot area of the
-   row: horizontal left of it, rotated right of it (an svg); the headers of
-   the columns are the titles of the first row (.vis-facet-col-title) */
+   row, left or right of it (-left, -right): horizontal (html, -horizontal)
+   or vertical (an svg, -vertical); the headers of the columns are the
+   titles of the first row (.vis-facet-col-title) */
 .vis-facet-row-title {
     font-size: 13px;
     font-weight: 600;
     vertical-align: bottom;
     box-sizing: border-box;
 }
-.vis-facet-row-title-left {
+.vis-facet-row-title-horizontal {
     display: inline-flex;
     align-items: center;
-    padding-right: 8px;
     /* a header wider than its column (at most 40% of the width, see
        rowHeaderWidth of comp/vis.js, which measures it in one line) wraps,
        it does not cover the axis of the first facet */
     overflow-wrap: break-word;
 }
-.vis-facet-row-title-right {
+.vis-facet-row-title-horizontal.vis-facet-row-title-left {
+    padding-right: 8px;
+}
+.vis-facet-row-title-horizontal.vis-facet-row-title-right {
+    padding-left: 8px;
+}
+.vis-facet-row-title-vertical {
     display: inline-block;
     /* a header longer than the plot area is not cut */
     overflow: visible;
 }
-.vis-facet-row-title-right text {
+.vis-facet-row-title-vertical text {
     fill: currentColor;
 }
 /* the end of a row of a grid */

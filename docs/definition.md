@@ -1367,10 +1367,13 @@ rows is an empty box of the size of a facet (`.vis-facet-empty`, without
 axes). The names of the columns are the titles above the first row
 (`.vis-facet-title .vis-facet-col-title`), the names of the rows are the
 headers beside them (`.vis-facet-row-title`): `"rowHeaders": "right"` (the
-default) rotated right of the last column (an svg, also in the export),
-`"left"` horizontal left of the first column, in a column of the width of
-the longest one (at most 40% of the width, the facets have the rest). Both
-have the `title.props` of the facets, of the props of the category of the
+default) vertical right of the last column (an svg, also in the export,
+downwards), `"left"` horizontal left of the first column, in a column of
+the width of the longest one (at most 40% of the width, the facets have
+the rest), or the side and the direction, `{"side": "left", "vertical":
+true}` (upwards, as a title of an axis) or `{"side": "right", "vertical":
+false}`; the classes `vis-facet-row-title-left` or `-right` and
+`-vertical` or `-horizontal`. All have the `title.props` of the facets, of the props of the category of the
 column or the row. `scales` is a list of the mappings of the scale of all
 facets, as before, or an object of the mappings and `"all"`, `"row"` (a
 scale per row, e.g. of `y`) or `"col"` (per column, e.g. of `x`); the

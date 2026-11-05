@@ -95,7 +95,7 @@ export default [
         name: 'Grid of facets',
         look: 'Swiss',
         theme: 'theme-swiss',
-        description: 'A small chart per region and source of electricity, the regions of the countries are looked up in a second file. The rows have their headers at the left, the columns their names above them, the axes have labels only at the outer facets. Hover a line and the country is highlighted in every facet.',
+        description: 'A small chart per region and source of electricity, the regions of the countries are looked up in a second file. The rows have their headers at the left, vertical as titles of axes, the columns their names above them, the axes have labels only at the outer facets. Hover a line and the country is highlighted in every facet.',
         features: ['facets: rows, cols', 'rowHeaders', 'axisTitles: outer', 'facets.title.props', 'transform: lookup', 'highlight, others'],
         def: mixDef,
         css: mixCss,
