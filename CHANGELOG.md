@@ -88,7 +88,8 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   keeps it), so labels of long or bent countries are inside them; the labels
   of maps move. `"fit": true` and `"overlap": false` show only labels which
   fit into their area and do not overlap, without a list of them.
-- `pad` of a scale: extends the domain at both ends, positive values extend
+- `pad` of a scale: extends the ends of the domain taken from the data (as
+  the 2% it replaces, a fixed end such as 0 stays), positive values extend
   (a number or `[start, end]`), instead of `domainRel`, whose values are
   added; `validateDef` warns of a positive start of `domainRel` or
   `domainAbs`, which shrinks the domain and cuts off data.

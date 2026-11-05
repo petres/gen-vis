@@ -341,7 +341,7 @@
                 },
                 "pad": {
                     "anyOf": [{ "type": "number" }, { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }],
-                    "description": "Extends the domain relative to its size at both ends (a number) or at the start and the end ([start, end]), positive values extend, e.g. 0.1 of 10% below and above; instead of domainRel, whose values are added (a positive start shrinks)."
+                    "description": "Extends the ends of the domain taken from the data (not fixed ones, e.g. 0 of bars) relative to its size, both (a number) or at the start and the end ([start, end]), positive values extend, e.g. 0.1 of 10% below and above; instead of domainRel, whose values are added (a positive start shrinks)."
                 },
                 "domainIgnores": {
                     "anyOf": [{ "type": "boolean" }, { "type": "array", "items": { "type": "string" } }],

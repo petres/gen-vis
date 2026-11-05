@@ -935,7 +935,7 @@ export interface Scale {
     domainRel?: Pair1;
     domainAbs?: Pair2;
     /**
-     * Extends the domain relative to its size at both ends (a number) or at the start and the end ([start, end]), positive values extend, e.g. 0.1 of 10% below and above; instead of domainRel, whose values are added (a positive start shrinks).
+     * Extends the ends of the domain taken from the data (not fixed ones, e.g. 0 of bars) relative to its size, both (a number) or at the start and the end ([start, end]), positive values extend, e.g. 0.1 of 10% below and above; instead of domainRel, whose values are added (a positive start shrinks).
      */
     pad?: number | [number, number];
     /**

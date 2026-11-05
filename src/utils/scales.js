@@ -329,10 +329,12 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
 
         // without fixed values the domain of a position is extended a bit, not
         // if it is cyclic, e.g. not the domain of colors
-        // `pad` extends both ends relative to the size (a number or
-        // [start, end], positive values extend), `domainRel` adds to them
+        // `pad` extends both ends taken from the data relative to the size
+        // (a number or [start, end], positive values extend), as the 2% it
+        // replaces, a fixed end stays, e.g. 0 of bars; `domainRel` adds to
+        // all ends
         const pad = scaleDef.pad === undefined ? null : [scaleDef.pad].flat().map(Number);
-        const domainRel = pad ? [-pad[0], pad[1] ?? pad[0]] : scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic || period || !scaleDef.orientation ? [0, 0] :
+        const domainRel = pad ? [domain[0] === null ? -pad[0] : 0, domain[last] === null ? pad[1] ?? pad[0] : 0] : scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic || period || !scaleDef.orientation ? [0, 0] :
             [domain[0] === null ? -0.02 : 0, domain[last] === null ? 0.02 : 0]);
         const domainAbs = scaleDef.domainAbs ?? [0, 0];
 

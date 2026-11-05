@@ -490,8 +490,9 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   the data, e.g. dates or numbers of strings, categories as strings, e.g.
   `[2004, 2008]` of the years of any data, entries can be references,
   e.g. `[0, "@max"]` of a global, the domain of a `point` or `band` scale
-  are its categories in their order. `pad` extends it relative to its size
-  at both ends, positive values extend: a number, e.g. `0.1` of 10% below
+  are its categories in their order. `pad` extends the ends taken from the
+  data relative to the size of the domain (a fixed end stays, e.g. `0` of
+  bars), positive values extend: a number, e.g. `0.1` of 10% below
   and above, or `[start, end]`, e.g. `[0, 0.1]` of room above bars.
   `domainRel` (relative to the positions, e.g. of a `log` or a `sqrt` scale)
   and `domainAbs` (absolute) add their values to the ends, so they extend

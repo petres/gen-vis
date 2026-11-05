@@ -194,6 +194,9 @@ describe('pad', () => {
         expect(scale({ pad: 0.1 }).domain()).toEqual([-1, 11]);
         expect(scale({ pad: [0, 0.2] }).domain()).toEqual([0, 12]);
         expect(scale({ domainRel: [0.1, 0.1] }).domain()).toEqual([1, 11]);
+        // only the ends taken from the data, as the 2% it replaces, e.g. not 0 of bars
+        expect(scale({ pad: 0.1, domain: [0, null] }).domain()).toEqual([0, 11]);
+        expect(scale({ pad: 0.1, domain: [-5, 20] }).domain()).toEqual([-5, 20]);
     });
 
     test('validateDef warns of a positive start of domainRel', async () => {
