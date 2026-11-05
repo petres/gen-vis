@@ -44,7 +44,7 @@ export type Locale =
            */
           base?: string;
           /**
-           * The titles of the buttons and the texts of screen readers.
+           * The titles of the buttons, the texts of screen readers and the name of the total of the hover.
            */
           texts?: {
               /**
@@ -75,6 +75,10 @@ export type Locale =
                * The description of the keys of the hover.
                */
               keys?: string;
+              /**
+               * The name of the row of the sum of the stacked values of the hover (options.hover.total true), Gesamt of de.
+               */
+              total?: string;
           };
           /**
            * See d3.formatLocale, e.g. decimal, thousands, grouping and currency ([prefix, suffix]).

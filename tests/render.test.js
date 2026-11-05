@@ -3691,6 +3691,12 @@ describe('the total of the stacked values in the hover', () => {
         expect(el.querySelectorAll('.vis-hover td[data-mapping="half"]')).toHaveLength(0);
         // the rows of the table are the rows before the total
         expect(total.previousElementSibling.classList.contains('vis-hover-entry')).toBe(true);
+        // true: the name of the locale
+        def.options.hover.total = true;
+        const named = await mount({ def, data });
+        named.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
+        await nextTick();
+        expect(named.querySelector('.vis-hover tr.vis-hover-total td').textContent).toBe('Gesamt');
     });
 
     test('a row which is not stacked is not the nearest one in a segment of a stack', async () => {

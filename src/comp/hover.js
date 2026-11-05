@@ -87,7 +87,7 @@ const createHover = (store, slots) => {
         tr.replaceChildren(...Array.from({ length: width }, (_, i) => {
             const td = document.createElement('td');
             if (i == 0)
-                td.textContent = store.text(t === true ? 'Total' : String(t));
+                td.textContent = store.text(t === true ? store.locale.texts.total : String(t));
             if (i == at) {
                 td.setAttribute('class', 'vis-value');
                 td.textContent = hover.total.name;

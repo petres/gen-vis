@@ -652,8 +652,9 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   `"cell": false` keeps a value out of the table, it is a name of the
   templates of `options.hover`, e.g. `{half}` of the title. In a segment of
   a stack the nearest row is the stacked one, not a row which is not
-  stacked, e.g. a line of the total. `"total": true` of `options.hover` (or
-  the name of the row, e.g. `"Gesamt"`) adds a row of the sum of the stacked
+  stacked, e.g. a line of the total. `"total": true` of `options.hover`
+  (the name of the locale, `Gesamt` of `de`, `Total` of `en`, `texts.total`
+  of a locale of the definition, or a name, e.g. `"Summe"`) adds a row of the sum of the stacked
   values of the position below the rows (`vis-hover-total`, with a line
   above it), in the format of the values, also `{total}` of the `title`.
 - `categories`: the categories and their props, e.g. colors, by their key

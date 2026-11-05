@@ -193,7 +193,7 @@
                         "texts": {
                             "type": "object",
                             "additionalProperties": false,
-                            "description": "The titles of the buttons and the texts of screen readers.",
+                            "description": "The titles of the buttons, the texts of screen readers and the name of the total of the hover.",
                             "properties": {
                                 "download": { "type": "string", "description": "The button of the PNG." },
                                 "copy": { "type": "string", "description": "The button of the copy of the PNG." },
@@ -201,7 +201,8 @@
                                 "csv": { "type": "string", "description": "The button of the CSV." },
                                 "svg": { "type": "string", "description": "The button of the SVG." },
                                 "chart": { "type": "string", "description": "The kind of a facet with a hover, e.g. chart." },
-                                "keys": { "type": "string", "description": "The description of the keys of the hover." }
+                                "keys": { "type": "string", "description": "The description of the keys of the hover." },
+                                "total": { "type": "string", "description": "The name of the row of the sum of the stacked values of the hover (options.hover.total true), Gesamt of de." }
                             }
                         },
                         "number": {
