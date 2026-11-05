@@ -1,4 +1,4 @@
-export { builtInDefaults, registerDefaults, axisDefaults };
+export { builtInDefaults, registerDefaults, axisDefaults, symbolDefaults };
 
 import merge from 'deepmerge';
 import { isObject } from '@/utils/values';
@@ -16,6 +16,9 @@ import { isObject } from '@/utils/values';
  */
 const builtInDefaults = {
     axis: { padding: 3, tickMarks: { size: 9, inset: null }, title: { offset: null } },
+    // the box of the symbols of the legends, all and per shortcut, e.g.
+    // { "line": { "width": 18, "height": 9, "props": { "stroke-width": 1.6 } } }
+    legend: { symbol: { size: 16 } },
     angularAxis: { tickMarks: { size: 6, inset: 0 } },
     radialAxis: { title: { offset: 16 } },
 };
@@ -41,5 +44,14 @@ const registerDefaults = defaults => {
  * order, in each the ones of all axes (`axis`) before the ones of the axes
  * of the position (`<position>Axis`, e.g. `angularAxis` or `leftAxis`).
  */
+/**
+ * The defaults of the symbols of the legends (`legend.symbol` of the
+ * defaults): the `size` (or `width` and `height`) of their box and per
+ * shortcut (`line`, `rect`, `circle`) its own box and `props`, of the
+ * built-in ones, the ones of the page and of the chart (`own`), see
+ * symbolOf of utils/def.js.
+ */
+const symbolDefaults = own => merge.all([builtInDefaults, registered, own].map(d => d?.legend?.symbol).filter(isObject));
+
 const axisDefaults = (own, position) => merge.all([builtInDefaults, registered, own]
     .flatMap(d => [d?.axis, d?.[`${position}Axis`]]).filter(isObject));

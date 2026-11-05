@@ -651,8 +651,13 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   the size (16 by default) and props of the element. The elements are drawn
   in a box of `width` × `height` pixels from (0, 0) (both `size` by default,
   e.g. `{"type": "line", "width": 24, "height": 16}` of a longer line of a
-  dash), the name is centered vertically on the box, so an element at half
-  the height is at the middle of the text, e.g. the line of the shortcut. A
+  dash), the middle of the box is at the middle of the capitals of the name
+  (`--gen-vis-legend-symbol-middle` above its baseline, 0.36em of the font
+  size of the entry, `.vis-legend-entry`, 13 pixels by default; a style
+  sets the size of the names there, not on their `span`), so an element at
+  half the height is at the middle of the text, e.g. the line of the
+  shortcut. Without a size the ones of the [defaults](#defaults) (per
+  shortcut, e.g. smaller symbols of a house style), 16 pixels. A
   category can have a `symbol` of its own (in the same forms), e.g.
   `"categories": {"Direktvergabe": {"symbol": "rect"}}` of an area in a
   legend of lines. A click shows or hides the
@@ -709,16 +714,24 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
 ### Defaults
 
 The built-in defaults of the parts are the values a definition does not
-have to give, `builtInDefaults` of `src/utils/defaults.js`, so far the ones
-of the axes:
+have to give, `builtInDefaults` of `src/utils/defaults.js`, the ones of
+the axes and of the symbols of the legends:
 
 ```json
 {
     "axis": { "padding": 3, "tickMarks": { "size": 9, "inset": null }, "title": { "offset": null } },
     "angularAxis": { "tickMarks": { "size": 6, "inset": 0 } },
-    "radialAxis": { "title": { "offset": 16 } }
+    "radialAxis": { "title": { "offset": 16 } },
+    "legend": { "symbol": { "size": 16 } }
 }
 ```
+
+`legend.symbol` is the box of the symbols of the shortcuts (`size`, or
+`width` and `height`), for all and per shortcut, with props of their own,
+e.g. smaller symbols of a house style, `{"legend": {"symbol": {"rect":
+{"width": 9, "height": 9}, "line": {"width": 18, "height": 9, "props":
+{"stroke-width": 1.6}}}}}`; the box and the props of a symbol of the
+definition win.
 
 `axis` are the ones of all axes, `<position>Axis` the ones of the axes of a
 position before them, e.g. `angularAxis` and `radialAxis` of polar plots or

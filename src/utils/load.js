@@ -13,6 +13,7 @@ import { isObject } from "@/utils/values";
 import { hasCategories, normalize } from "@/utils/normalize";
 import { versionError } from "@/utils/version";
 import { plotTypes } from "@/plots";
+import { symbolDefaults } from "@/utils/defaults";
 
 // the load of a visualisation: its definition with its parents, the parts
 // of the package it needs, its data and the files and geometries of it and
@@ -292,7 +293,7 @@ const loadFiles = async (defOrg, url) => {
  * to utc, the entries of the legends are the ones of the state, e.g. of the
  * categories of another column.
  */
-const prepare = (defOrg, rows, files, state, globals) => {
+const prepare = (defOrg, rows, files, state, globals, symbols = {}) => {
     let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files);
     addDataValues(defOrg, rows, columns);
     inferTypes(defOrg, rows, columns);
@@ -300,11 +301,11 @@ const prepare = (defOrg, rows, files, state, globals) => {
     const transform = () => {
         columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns, files);
     };
-    const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), { dataKeys: keysOf, files });
+    const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), { dataKeys: keysOf, files, symbols });
     const defaults = snapshot(prepared);
     applyState(prepared, state);
     applyGlobals(prepared, globals);
-    applyPatches(prepared, defOrg, { dataKeys: keysOf, files, transform });
+    applyPatches(prepared, defOrg, { dataKeys: keysOf, files, transform, symbols });
     applyState(prepared, { visible: state?.visible });
     transform();
     return { prepared, defaults, columns };
@@ -337,7 +338,7 @@ const loadGeo = (geometries, module, prepared) => {
 // one of the load, the others are handled by Promise.all), the prepared
 // definition and the geometry of its map. The coordinate systems and the
 // geometries of all patches are kept, a form element can switch them.
-const load = async ({ def = null, defUrl = null, data = null, state = null, globals = null, check = false }) => {
+const load = async ({ def = null, defUrl = null, data = null, state = null, globals = null, check = false, defaults: chartDefaults = null }) => {
     const { url, defOrg, validate } = await resolveDef({ def, defUrl, data, check });
     let loaded;
     try {
@@ -355,7 +356,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     }
     const [{ coords, geo: geoModule, colorLegend }, rows, files, geometries] = loaded;
     await validate(rows);
-    const { prepared, defaults, columns } = prepare(defOrg, rows, files, state, globals);
+    const { prepared, defaults, columns } = prepare(defOrg, rows, files, state, globals, symbolDefaults(chartDefaults));
 
     return {
         defUrl: url ?? null,

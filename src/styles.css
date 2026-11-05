@@ -93,7 +93,7 @@
 /* the entries of the categories one below the other */
 .vis-body-sides .vis-legends-left .vis-legend-entries > .vis-legend-entry,
 .vis-body-sides .vis-legends-right .vis-legend-entries > .vis-legend-entry {
-    display: flex;
+    display: block;
     margin: 2px 5px;
 }
 
@@ -214,10 +214,12 @@
 }
 .vis-legend .vis-legend-entries > div {
     cursor: pointer;
-    /* the name in the middle of the box of the symbol, of any size */
-    display: inline-flex;
-    align-items: center;
-    vertical-align: top;
+    /* the size of the name and of the em of the place of the symbol, see
+       --gen-vis-legend-symbol-middle */
+    font-size: 13px;
+    /* the symbol at the middle of the capitals of the name, of any size,
+       by the vertical-align of the svg, see comp/legend.js */
+    display: inline-block;
     margin: 0px 5px;
     /* no selection of the text of a double click */
     user-select: none;
@@ -231,7 +233,7 @@
     opacity: 0.3;
 }
 .vis-legend .vis-legend-entries > div span {
-    font-size: 13px;
+    font-size: inherit;
 }
 .vis-legend .vis-legend-entries > div.bold {
     font-weight: bold;
@@ -243,8 +245,7 @@
 }
 /* the symbol of an entry */
 .vis-legend-entry > svg {
-    display: block;
-    flex: none;
+    display: inline-block;
     margin-right: 5px;
 }
 

@@ -1060,6 +1060,7 @@ describe('the defaults of the parts', () => {
             axis: { padding: 3, tickMarks: { size: 9, inset: null }, title: { offset: null } },
             angularAxis: { tickMarks: { size: 6, inset: 0 } },
             radialAxis: { title: { offset: 16 } },
+            legend: { symbol: { size: 16 } },
         });
         const el = await mount({ def: lineDef(), data: lineData });
         expect(new Set(marks(el, 'bottom', 'y'))).toEqual(new Set(['9']));

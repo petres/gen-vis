@@ -44,7 +44,7 @@ describe('the props of categories', () => {
         expect(symbol('line', { 'stroke-width': 3, 'stroke-dasharray': '2 2', opacity: 0.5 }).elements[0].props).toEqual({
             x1: 0, x2: 16, y1: 8, y2: 8, stroke: '@color', 'stroke-width': '@stroke-width', 'stroke-dasharray': '@stroke-dasharray', opacity: '@opacity',
         });
-        expect(symbol('rect')).toEqual({ width: 16, height: 16, elements: [{ type: 'rect', props: { x: 0, y: 0, width: 16, height: 15, rx: 2, fill: '@color' } }] });
+        expect(symbol('rect')).toEqual({ width: 16, height: 16, elements: [{ type: 'rect', props: { x: 0, y: 0.5, width: 16, height: 15, rx: 2, fill: '@color' } }] });
         expect(symbol({ type: 'circle', size: 12, props: { stroke: 'white' } })).toEqual({ width: 12, height: 12, elements: [{ type: 'circle', props: { cx: 6, cy: 6, r: 4, fill: '@color', stroke: 'white' } }] });
         // a box of its own width and height, e.g. a longer line of a dash
         expect(symbol({ type: 'line', width: 24, height: 10 }).elements[0].props).toMatchObject({ x1: 0, x2: 24, y1: 5, y2: 5 });

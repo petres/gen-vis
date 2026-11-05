@@ -145,8 +145,13 @@ const createLegend = (vis, legend) => {
                 svg = null;
             }
             if (svg) {
-                // the box of the symbol, the label is centered on it, see styles.css
-                patch(svg, { width: symbol.width ?? symbol.size ?? 16, height: symbol.height ?? symbol.size ?? 16 });
+                // the box of the symbol, its middle at the middle of the
+                // capitals of the name (--gen-vis-legend-symbol-middle above
+                // the baseline), the bottom of an inline svg is on the
+                // baseline, see styles.css
+                const height = symbol.height ?? symbol.size ?? 16;
+                patch(svg, { width: symbol.width ?? symbol.size ?? 16, height,
+                    style: `vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - ${height/2}px)` });
                 drawSymbol(svg, symbol, { ...scope, ...colored });
             }
             span ??= div.appendChild(el('span'));

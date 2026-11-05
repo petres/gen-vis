@@ -8,7 +8,7 @@ import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { formatter } from "@/utils/expr";
 import { axisNames } from "@/layout";
-import { axisDefaults } from "@/utils/defaults";
+import { axisDefaults, symbolDefaults } from "@/utils/defaults";
 import { geoParts, load, loadGeo, raw } from "@/utils/load";
 
 // the formatters of the locales by their definition, the last ones are kept
@@ -184,7 +184,8 @@ class Store {
             }
         };
         const source = sourceRows(this.rows, this.columns);
-        const changed = applyPatches(this.def, this.defOrg, { dataKeys: column => this.dataKeys(column), keepVisible, transform, files: this.files });
+        const changed = applyPatches(this.def, this.defOrg, { dataKeys: column => this.dataKeys(column), keepVisible, transform, files: this.files,
+            symbols: symbolDefaults(this.chartDefaults) });
         transform();
         this.warnNotes();
         Object.keys(this.def.mapping).filter(n => changedColumns.has(this.def.mapping[n].column) && !changed.includes(n))

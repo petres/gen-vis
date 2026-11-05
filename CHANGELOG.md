@@ -53,6 +53,16 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
 
 ### Fixes
 
+- Legend symbols are centered on the middle of the capitals of the name
+  (`--gen-vis-legend-symbol-middle`, 0.36em above its baseline), at any
+  font size; before, on its line box, about 1.5 pixels above the middle at
+  8pt. The font size of the names is the one of the entry
+  (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
+  A rect symbol is at the middle of its box. Every legend moves by up to
+  2 pixels.
+- The size of the symbols of the legends is a default of the chart
+  (`legend.symbol` of the defaults: `size`, `width`, `height`, per shortcut
+  also `props`), e.g. 9px rects and 18×9 lines of a house style.
 - `@plot:top`, `@plot:bottom`, `@plot:left`, `@plot:right`, `@plot:width`
   and `@plot:height`: the edges and the size of the plot area in the
   coordinates of the plots, also of polar plots (around their center).

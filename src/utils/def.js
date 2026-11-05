@@ -64,17 +64,25 @@ const orderKeys = (keys, order) => {
  * `"rect"` or `"circle"` in the color of the categories (`@color`), with
  * their `stroke-width`, `stroke-dasharray` and `opacity` if the categories
  * have them, `names` are the props of the categories. The object form has
- * the `size` (16 by default), or `width` and `height`, of the box of the
- * symbol and the `props` of the element, e.g. a dash, the line is in the
- * middle of the box, the circle in its center.
+ * the `size`, or `width` and `height`, of the box of the symbol and the
+ * `props` of the element, e.g. a dash, the line is in the middle of the
+ * box, the circle in its center. Without them the ones of the `defaults`
+ * (see symbolDefaults of utils/defaults.js): of the shortcut, then of all
+ * symbols, 16 pixels; the props of the defaults of the shortcut come before
+ * the ones of the symbol.
  */
 const symbolShortcuts = ['line', 'rect', 'circle'];
-const symbolOf = (symbol, names) => {
-    const { type, size = 16, width = size, height = size, props = {} } = typeof symbol == 'string' ? { type: symbol } : symbol;
+const symbolOf = (symbol, names, defaults = {}) => {
+    const { type, ...given } = typeof symbol == 'string' ? { type: symbol } : symbol;
+    const shortcut = defaults?.[type] ?? {};
+    const size = given.size ?? shortcut.size ?? defaults?.size ?? 16;
+    const width = given.width ?? (given.size === undefined ? shortcut.width ?? defaults?.width : undefined) ?? size;
+    const height = given.height ?? (given.size === undefined ? shortcut.height ?? defaults?.height : undefined) ?? size;
+    const props = { ...shortcut.props, ...given.props };
     const own = keys => Object.fromEntries(keys.filter(k => names.has(k)).map(k => [k, `@${k}`]));
     const shapes = {
         line: { x1: 0, x2: width, y1: height/2, y2: height/2, stroke: '@color', 'stroke-width': 2, ...own(['stroke-width', 'stroke-dasharray', 'opacity']) },
-        rect: { x: 0, y: 0, width, height: height - 1, rx: 2, fill: '@color', ...own(['opacity']) },
+        rect: { x: 0, y: 0.5, width, height: height - 1, rx: 2, fill: '@color', ...own(['opacity']) },
         circle: { cx: width/2, cy: height/2, r: Math.min(width, height)/2 - 2, fill: '@color', ...own(['opacity']) },
     };
     return { width, height, elements: [{ type, props: { ...shapes[type], ...props } }] };
@@ -96,7 +104,7 @@ const object = (v, path, expected) => {
 
 // `dataKeys(column)` are the distinct values of a column of the data as
 // strings, see distinctValues of utils/data.js, the categories of `fromData`
-const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = []) => {
+const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = [], symbols = {}) => {
     object(m, `mapping.${name}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`);
     // null or false removes a part, e.g. the hover of a parent
     ['scale', 'axis', 'legend', 'hover'].forEach(k => {
@@ -151,7 +159,7 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = []) 
         // the symbols of the legend and of its categories, e.g. a rect of
         // one category and lines of the others
         const names = new Set(Object.values(m.categoryProps ?? {}).flatMap(p => Object.keys(p)));
-        const prepared = symbol => typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type) ? symbolOf(symbol, names) : symbol;
+        const prepared = symbol => typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type) ? symbolOf(symbol, names, symbols) : symbol;
         m.legend.symbol = prepared(m.legend.symbol);
         Object.values(m.categoryProps ?? {}).filter(p => p.symbol !== undefined).forEach(p => p.symbol = prepared(p.symbol));
 
@@ -292,11 +300,12 @@ const patchedParts = (def, defOrg) => {
  * entries of the legends of the same categories keep their state shown or
  * hidden (`keepVisible`). `transform()` is called once the transforms are
  * the new ones, before the mappings, their categories can be the ones of a
- * transform, `files` are the rows of the files of plots, by their url.
+ * transform, `files` are the rows of the files of plots, by their url,
+ * `symbols` the defaults of the symbols of legends, see symbolDefaults.
  * Returns the names of the mappings whose values change, the ones of another
  * column or type.
  */
-const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null } = {}) => {
+const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {} } = {}) => {
     const patched = patchedParts(def, defOrg);
     const before = def[sources] ?? {};
     const after = { mapping: {} };
@@ -347,7 +356,7 @@ const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, tr
             mapping[n] = old;
             return;
         }
-        const m = prepareMapping(merged, n, dataKeys, {}, def.plot);
+        const m = prepareMapping(merged, n, dataKeys, {}, def.plot, symbols);
         if (keepVisible && old?.categoryProps && m.categoryProps)
             m.keys.filter(k => Object.hasOwn(old.categoryProps, k)).forEach(k => m.categoryProps[k].visible = old.categoryProps[k].visible);
         if (old?.column !== m.column || old?.type !== m.type)
