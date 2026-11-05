@@ -931,6 +931,10 @@ export interface Scale {
     domainRel?: Pair1;
     domainAbs?: Pair2;
     /**
+     * Extends the domain relative to its size at both ends (a number) or at the start and the end ([start, end]), positive values extend, e.g. 0.1 of 10% below and above; instead of domainRel, whose values are added (a positive start shrinks).
+     */
+    pad?: number | [number, number];
+    /**
      * The conditions of the filter of the definition (their mappings, true all) the domain taken from the data ignores, e.g. ["month"] of a slider over months: the scale is the same for all months, the plots draw the rows of the month.
      */
     domainIgnores?: boolean | string[];

@@ -484,9 +484,15 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   the data, e.g. dates or numbers of strings, categories as strings, e.g.
   `[2004, 2008]` of the years of any data, entries can be references,
   e.g. `[0, "@max"]` of a global, the domain of a `point` or `band` scale
-  are its categories in their order. `domainRel` (relative to the positions,
-  e.g. of a `log` or a `sqrt` scale) and `domainAbs` (absolute) extend it, by
-  default a domain of a position taken from the data is extended by 2%.
+  are its categories in their order. `pad` extends it relative to its size
+  at both ends, positive values extend: a number, e.g. `0.1` of 10% below
+  and above, or `[start, end]`, e.g. `[0, 0.1]` of room above bars.
+  `domainRel` (relative to the positions, e.g. of a `log` or a `sqrt` scale)
+  and `domainAbs` (absolute) add their values to the ends, so they extend
+  with a negative start and a positive end, e.g. `[-0.1, 0.1]` (a positive
+  start shrinks the domain and cuts off data, `validateDef` warns of it),
+  `pad` replaces `domainRel`; by default a domain of a position taken from
+  the data is extended by 2%.
   A `log` scale has the positive values only (the negative ones if there are
   none), a value of 0 is not drawn, a domain without values is `[0, 1]`
   (`[1, 10]` of a `log` scale) or the one of `include`.

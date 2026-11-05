@@ -68,6 +68,10 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- `pad` of a scale: extends the domain at both ends, positive values extend
+  (a number or `[start, end]`), instead of `domainRel`, whose values are
+  added; `validateDef` warns of a positive start of `domainRel` or
+  `domainAbs`, which shrinks the domain and cuts off data.
 - Periods of dates: `"interval": "half"` (also day, week, month, quarter,
   year, "6 months") of a date mapping: the domain reaches the end of the
   last period, bars are in the middle of their period, `@x:scaled:center`,

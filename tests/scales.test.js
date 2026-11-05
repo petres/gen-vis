@@ -168,3 +168,20 @@ describe('values of the definition of a mapping with the scale of another one', 
             .toEqual([Date.UTC(2019, 0, 1), Date.UTC(2020, 0, 1)]);
     });
 });
+
+describe('pad', () => {
+    test('extends both ends, positive values, instead of domainRel', async () => {
+        const { makeScale } = await import('@/utils/scales');
+        const rows = [{ v: 0 }, { v: 10 }];
+        const scale = s => makeScale('v', { type: 'numeric', scale: { type: 'linear', orientation: 'vertical', domain: [null, null], ...s } }, rows, { coord: { ranges: { vertical: [100, 0] } } });
+        expect(scale({ pad: 0.1 }).domain()).toEqual([-1, 11]);
+        expect(scale({ pad: [0, 0.2] }).domain()).toEqual([0, 12]);
+        expect(scale({ domainRel: [0.1, 0.1] }).domain()).toEqual([1, 11]);
+    });
+
+    test('validateDef warns of a positive start of domainRel', async () => {
+        const { validateDef } = await import('@/utils/validate');
+        const def = { mapping: { x: { column: 'x', type: 'numeric' }, y: { column: 'y', type: 'numeric', scale: { domainRel: [0.1, 0.1] } } }, plot: { type: 'line' } };
+        expect(validateDef(def)).toEqual([`mapping.y.scale.domainRel: a positive start shrinks the domain at its start and cuts off data (the value is added), it extends with a negative one, e.g. [-0.1, 0.1]; "pad": 0.1 extends both ends`]);
+    });
+});

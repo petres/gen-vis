@@ -444,6 +444,12 @@ const checkScale = (ctx, n, m, path) => {
         warn(`${path}.scale.domainIgnores`, `expected the mappings of conditions of 'filter', e.g. ["month"], or true (all)`);
     else if (Array.isArray(ignores))
         ignores.filter(c => !Object.hasOwn(def.mapping ?? {}, c)).forEach(c => warn(`${path}.scale.domainIgnores`, `unknown mapping '${c}'`));
+    // a positive start of domainRel or domainAbs moves the start up, the
+    // domain shrinks and cuts off data, e.g. of bars below the plot area
+    ['domainRel', 'domainAbs'].filter(k => Array.isArray(m.scale[k]) && m.scale[k][0] > 0).forEach(k =>
+        warn(`${path}.scale.${k}`, `a positive start shrinks the domain at its start and cuts off data (the value is added), it extends with a negative one, e.g. [-0.1, 0.1]; "pad": 0.1 extends both ends`));
+    if (m.scale.pad !== undefined && m.scale.domainRel !== undefined)
+        warn(`${path}.scale.pad`, `pad replaces domainRel, one of them`);
     if (m.scale.closed !== undefined && type != 'threshold')
         warn(`${path}.scale.closed`, `the side of the classes of a threshold scale, 'left' (default) or 'right'`);
     if (m.scale.orientation !== undefined && !orientations.includes(m.scale.orientation))

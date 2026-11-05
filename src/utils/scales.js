@@ -317,7 +317,10 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
 
         // without fixed values the domain of a position is extended a bit, not
         // if it is cyclic, e.g. not the domain of colors
-        const domainRel = scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic || period || !scaleDef.orientation ? [0, 0] :
+        // `pad` extends both ends relative to the size (a number or
+        // [start, end], positive values extend), `domainRel` adds to them
+        const pad = scaleDef.pad === undefined ? null : [scaleDef.pad].flat().map(Number);
+        const domainRel = pad ? [-pad[0], pad[1] ?? pad[0]] : scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic || period || !scaleDef.orientation ? [0, 0] :
             [domain[0] === null ? -0.02 : 0, domain[last] === null ? 0.02 : 0]);
         const domainAbs = scaleDef.domainAbs ?? [0, 0];
 
