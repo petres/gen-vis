@@ -1240,6 +1240,10 @@ export interface Plot {
      */
     overlap?: boolean;
     /**
+     * Of the stairs of a line of x0 and x1 in d: down to the base at both ends (base) or from the first step to the last one (open), e.g. of shares.
+     */
+    ends?: 'base' | 'open';
+    /**
      * One element per facet, of no row: its props are the names of the facet, e.g. a header or a unit label at the edge of the plot area, "y": "@plot:top", "text": "@facet:name".
      */
     once?: boolean;

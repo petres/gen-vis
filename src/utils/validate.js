@@ -541,6 +541,8 @@ const checkPlots = ctx => {
             else if (!Object.hasOwn(mapping, name))
                 warn(`${path}.select.${which}`, `unknown mapping '${name}'`);
         }
+        if (p.ends !== undefined && (!['base', 'open'].includes(p.ends) || !['line', 'cartesian:line'].includes(p.type)))
+            warn(`${path}.ends`, `the ends of the stairs of a line of x0 and x1, 'base' (down to the base, the default) or 'open'`);
         if (p.once !== undefined && typeof p.once != 'boolean')
             warn(`${path}.once`, `true: an element per facet, of no row, e.g. a header`);
         else if (p.once && (p.data !== undefined || [p.by ?? []].flat().length > 0 || p.filter !== undefined))

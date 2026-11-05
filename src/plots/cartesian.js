@@ -35,9 +35,10 @@ const baseOf = scale => {
  * pixel apart) and down to the base (`y0` of the first point of a run, by
  * default the position of 0, `base`) at the ends and at gaps between them,
  * e.g. the outline of a histogram; an area (`fill`) closes every run along
- * the base. Points without a position are gaps.
+ * the base, a line with `open` ends starts and ends at the step of its
+ * first and last point, e.g. a share. Points without a position are gaps.
  */
-const stairs = (points, base, fill = false) => {
+const stairs = (points, base, fill = false, open = false) => {
     const y = fill ? 'y1' : 'y';
     const steps = points.filter(p => finite(p.x0, p.x1, p[y])).sort((a, b) => a.x0 - b.x0);
     const close = fill ? 'Z' : '';
@@ -45,15 +46,15 @@ const stairs = (points, base, fill = false) => {
     let end = null;
     steps.forEach(p => {
         if (end === null || Math.abs(p.x0 - end.x) >= 0.5) {
-            if (end !== null)
+            if (end !== null && !open)
                 path += `V${end.y0}${close}`;
             end = { y0: finite(p.y0) ? p.y0 : base };
-            path += `M${p.x0},${end.y0}`;
-        }
-        path += `V${p[y]}H${p.x1}`;
+            path += open ? `M${p.x0},${p[y]}H${p.x1}` : `M${p.x0},${end.y0}V${p[y]}H${p.x1}`;
+        } else
+            path += `V${p[y]}H${p.x1}`;
         end.x = p.x1;
     });
-    return end === null ? null : `${path}V${end.y0}${close}`;
+    return end === null ? null : open ? path : `${path}V${end.y0}${close}`;
 };
 
 // the plot types of the cartesian coordinate system, missing values are gaps
@@ -69,7 +70,7 @@ export default {
             if (plot.props.d && ('x0' in plot.props.d || 'x1' in plot.props.d)) {
                 const scale = propScale(plot, ctx, 'd.y');
                 const base = scale ? baseOf(scale) : ctx.innerHeight;
-                return perGroup(groups, g => stairs(points(g), base));
+                return perGroup(groups, g => stairs(points(g), base, false, plot.ends == 'open'));
             }
             return perGroup(groups, g => d3.line()
                 .curve(curve(plot))

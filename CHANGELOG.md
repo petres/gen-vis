@@ -104,7 +104,7 @@ Plots:
 - Histograms: `bar` with `x0`, `x1` and `y1` is a bar from start to end on
   a continuous scale (crisp edges, so neighbours meet without a seam), a
   `line` with `x0` and `x1` in `d` draws stairs down to the base at both
-  ends, e.g. the outline of a density per category, an `area` with them
+  ends (`"ends": "open"` without the drops, e.g. of shares), e.g. the outline of a density per category, an `area` with them
   fills the stairs. Examples `data/stats/histogram.json`,
   `data/stats/density.json` and `data/stats/jitter.json`.
 - `stackBy` of a stacked mapping: the mapping of the positions of the

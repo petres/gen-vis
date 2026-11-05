@@ -873,7 +873,9 @@ A plot or a list of plots, drawn in order:
     `y` of every row (e.g. a class of a [bin](#transform)), vertical lines
     between neighbours, and down to the base (`y0`, by default the position
     of 0) at the ends and at gaps, e.g. the outline of a histogram per
-    category, `"d": {"x0": "@lo:scaled", "x1": "@hi:scaled", "y": "@density:scaled"}`
+    category, `"d": {"x0": "@lo:scaled", "x1": "@hi:scaled", "y": "@density:scaled"}`;
+    `"ends": "open"` of the plot starts and ends the line at its first and
+    last step, without the drops to the base, e.g. of shares
   - `cartesian:area`: an area per group, `d` with `x`, `y0` and `y1`. With
     `x0` and `x1` instead of `x` filled stairs from `x0` to `x1` and from
     `y0` (by default the position of 0) to `y1` of every row, e.g. the

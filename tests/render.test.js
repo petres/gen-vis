@@ -3298,6 +3298,12 @@ describe('histograms: the classes of a bin', () => {
         const [a, b] = [...el.querySelectorAll('g.vis-plot path')].map(p => p.getAttribute('d'));
         expect(a).toBe('M0,250V125H150V187.5H300V187.5H750V250');
         expect(b).toBe('M0,250V187.5H150V250H300V250H750V250');
+        // open ends: from the first step to the last one, e.g. of shares
+        const open = await mount({ def: def({ type: 'line', by: 'g', ends: 'open', props: { d: { x0: '@lo:scaled', x1: '@hi:scaled' } } }), data });
+        expect(open.querySelector('g.vis-plot path').getAttribute('d')).toBe('M0,125H150V187.5H300V187.5H750');
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef(def({ type: 'bar', ends: 'open', props: {} })).filter(w => w.includes('ends')))
+            .toEqual([`plot[0].ends: the ends of the stairs of a line of x0 and x1, 'base' (down to the base, the default) or 'open'`]);
         expect(errors).toEqual([]);
     });
 });
