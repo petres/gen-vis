@@ -1,26 +1,13 @@
 // the CLI of the static export (bin/gen-vis.js) in a browser of the system,
-// only if there is one (Chromium, Chrome or Edge, see bin/cdp.js), skipped
-// otherwise; the export page is built (vite build --mode module) if it is
-// missing or older than the sources
+// only if there is one (see browser.js), skipped otherwise; the export page
+// is built if it is missing or older than the sources
 import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { root } from './dom.js';
-import { findBrowser } from '../bin/cdp.js';
+import { root, browser, buildExportPage } from './browser.js';
 import { createExporter, fileUrl } from '../bin/export.js';
-
-const browser = (() => {
-    try {
-        return findBrowser();
-    } catch {
-        return null;
-    }
-})();
-
-// the newest change of the files of a directory
-const newest = dir => Math.max(...readdirSync(dir, { recursive: true }).map(f => statSync(path.join(dir, f)).mtimeMs));
 
 // the CLI of `args`, `env` added to the environment, `started(child)` gets
 // its process at once, e.g. of a signal
@@ -49,9 +36,7 @@ const pdfSize = file => readFileSync(file, 'latin1').match(/\/MediaBox\s*\[\s*0 
 describe.skipIf(!browser)('gen-vis export', () => {
     let dir;
     beforeAll(() => {
-        const page = path.join(root, 'dist-lib/esm/export.js');
-        if (!existsSync(path.join(root, 'dist-lib/export.html')) || !existsSync(page) || statSync(page).mtimeMs < newest(path.join(root, 'src')))
-            expect(spawnSync(process.execPath, [path.join(root, 'node_modules/vite/bin/vite.js'), 'build', '--mode', 'module'], { cwd: root }).status).toBe(0);
+        buildExportPage();
         dir = mkdtempSync(path.join(tmpdir(), 'gen-vis-cli-'));
     }, 120000);
     afterAll(() => rmSync(dir, { recursive: true, force: true }));

@@ -6,6 +6,7 @@ Repository scripts, tests, builds, publishing and the examples site.
 npm install
 npm run dev     # dev server with all definitions in data/, ?def=bev/def.json shows one with the prepared definition
 npm test        # unit tests, rendering and schema check of all definitions in data/
+npm run test:png  # the images of all definitions compared with tests/png/ (part of npm test)
 npm run types   # the types of the definitions (types/definition.d.ts) of schema.json, a test checks them
 npm run build   # es modules for bundlers in dist/: gen-vis.js (the core), vue.js (the Vue adapter), check.js
 npm run watch   # rebuilds dist/ on changes, e.g. for `npm link`
@@ -33,7 +34,15 @@ tests check and draw the examples, as the ones of `data/`.
 
 `tests/cli.test.js` draws a chart with the CLI of the static export in a
 Chromium, Chrome or Edge of the system (it builds the export page if it is
-older than `src/`), it is skipped without one.
+older than `src/`), it is skipped without one. `tests/png.test.js` draws
+every definition of `data/` and of the site with it, in one browser, 720 px
+wide, and compares the images pixel by pixel with the ones of `tests/png/`
+(pixelmatch): a test fails when the size differs or more than 0.2% of the
+pixels, the diff is written to `tests/png-diff/` then. Intended changes of
+the images are taken by `UPDATE_PNG=1 npx vitest run tests/png.test.js`
+(a missing baseline is written in any run), commit them with the change.
+The images are the ones of the Chromium of the box, the text of another
+browser or version may be a few pixels off, which stays below the limit.
 
 `spec/` has the fixtures of the parts of the definitions which other
 languages can implement ([spec/README.md](../spec/README.md)),
