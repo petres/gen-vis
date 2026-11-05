@@ -180,9 +180,12 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
     // of the hover slot
     const render = (o = origin()) => {
         patch(marker, { visibility: hover.visible && hoverOptions().marker !== false ? 'visible' : 'hidden', class: 'vis-hover-marker' });
+        // above the other facets (positioned after this one, e.g. the next
+        // row of a grid): the transform makes the element a layer of its own,
+        // so its z-index decides, not the one of the box in it
         patch(live, {
             'aria-live': announced ? 'polite' : 'off',
-            style: `transform: translate(${facetOf().margins.left + o[0] + hover.x}px, ${facetOf().margins.top + o[1] + hover.y}px); position: absolute; top: 0; left: 0;`,
+            style: `transform: translate(${facetOf().margins.left + o[0] + hover.x}px, ${facetOf().margins.top + o[1] + hover.y}px); position: absolute; top: 0; left: 0; z-index: 1;`,
         });
         if (hover.visible && hoverOptions().box !== false) {
             if (!box) {

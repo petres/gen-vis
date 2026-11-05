@@ -3577,6 +3577,20 @@ describe('grids of facets', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the hover of a facet is above the facets after it, e.g. of the next row', async () => {
+        const def = lineDef();
+        def.mapping.half = { column: 'year', type: 'categorical', categories: { 2020: {}, 2021: {} } };
+        def.facets = { rows: 'c', cols: 'half' };
+        const el = await mount({ def, data: lineData.replace('2021,,20,Wien', '2021,2,20,Wien') });
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
+        await nextTick();
+        // the element which places the box is a layer of its own (a transform), its z-index decides
+        const place = el.querySelector('.vis-hover').parentElement;
+        expect(place.style.transform).toMatch(/^translate/);
+        expect(place.style.zIndex).toBe('1');
+        expect(errors).toEqual([]);
+    });
+
     test('headers of the rows of a side and a direction: vertical at the left (upwards), horizontal at the right', async () => {
         const def = lineDef();
         def.mapping.half = { column: 'year', type: 'categorical', categories: { 2020: {}, 2021: {} } };

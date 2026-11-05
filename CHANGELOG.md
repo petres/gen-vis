@@ -238,6 +238,9 @@ Warnings (console, CLI, `messages` of the export page):
 
 ### Fixes
 
+- The hover of a facet is above the facets after it: the box of a facet in
+  the upper row of facets (of `dim` or a grid) was below the next row,
+  whose labels and lines crossed it.
 - The values of a form element of a column of a transform (`"values":
   {"column": …}`) follow the globals: of the page and the state when the
   chart is loaded and of a change of a global, e.g. the classes of a bin of
