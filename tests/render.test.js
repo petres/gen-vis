@@ -3252,6 +3252,26 @@ describe('histograms: the classes of a bin', () => {
     });
 });
 
+describe('axis titles', () => {
+    test('at the top of a vertical axis, horizontal, above the range of its scale; beside it in the middle of the range', async () => {
+        const def = lineDef();
+        // the scale of y in the upper 60% of the plot area of 250 pixels
+        def.mapping.y.scale.range = [{ '*': ['@height', 0.6] }, 0];
+        def.mapping.y.axis.title = { name: 'in €', position: 'top', offset: 30 };
+        def.mapping.x.axis.title = { name: 'Jahr', offset: 30 };
+        const el = await mount({ def, data: lineData });
+        const [y, x] = ['y', 'x'].map(n => [...el.querySelectorAll('.vis-axis-title')].find(t => t.textContent == (n == 'y' ? 'in €' : 'Jahr')));
+        expect(y.getAttribute('transform')).toBe('translate(-30 -8)');
+        expect([y.getAttribute('text-anchor'), y.classList.contains('vis-axis-title-top')]).toEqual(['start', true]);
+        expect(x.getAttribute('transform')).toBe('translate(275 280)');
+
+        def.mapping.y.axis.title = { name: 'in €', offset: 30 };
+        const side = await mount({ def, data: lineData });
+        expect([...side.querySelectorAll('.vis-axis-title')].find(t => t.textContent == 'in €').getAttribute('transform')).toBe('rotate(-90) translate(-75 -30)');
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('axes at a value of the other axis (`at`)', () => {
     // inner size 550 x 250, x from 2020 to 2023, y from -2 to 4
     const def = (x = {}, y = {}) => {

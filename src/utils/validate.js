@@ -291,6 +291,9 @@ const checkMappings = ctx => {
                     warn(`${path}.axis.at`, `a value of the mapping of the other axis, there is no mapping with a ${other} scale`);
                 checkProp(m.axis.at, `${path}.axis.at`, warn, names.facet);
             }
+            if (isObject(m.axis.title) && m.axis.title.position !== undefined && (!['side', 'top'].includes(m.axis.title.position)
+                || (m.axis.title.position == 'top' && !['left', 'right'].includes(m.axis.position))))
+                warn(`${path}.axis.title.position`, `'top' of the title of a left or right axis, above it, or 'side' (beside it, the default)`);
             if (isObject(m.axis.labels) && m.axis.labels.at !== undefined && !['edge', 'axis'].includes(m.axis.labels.at))
                 warn(`${path}.axis.labels.at`, `expected 'edge' (the labels at the edge of the plot area) or 'axis' (with the line at its value)`);
             if (m.axis.values !== undefined && !Array.isArray(m.axis.values))

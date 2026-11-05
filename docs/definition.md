@@ -574,7 +574,11 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   `domain`, radial axes have none), `grid` (lines at the ticks),
   `title` (`{"name", "offset"}`, the distance from the axis, by default 8
   pixels inside the edge of the margin, of a radial axis 16 pixels outside
-  of the circle) and `padding` (the space between the tick marks and the
+  of the circle; in the middle of the range of the scale, e.g. of a scale of
+  the upper part of the plot area; of a left or right axis `"position":
+  "top"` puts it horizontal above the range of the scale, `gap` pixels (8)
+  above it, starting at `offset` from the axis, e.g. the unit at the top
+  left, class `vis-axis-title-top`) and `padding` (the space between the tick marks and the
   labels, 3 pixels by default, also of polar axes). The defaults are the
   ones of [defaults](#defaults), a page or an export replaces them for all
   axes.

@@ -62,6 +62,10 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- The title of a vertical axis at the top: `"title": {"name": "in €",
+  "position": "top"}` draws it horizontal above the range of the scale, e.g.
+  the unit at the top left. A rotated title is in the middle of the range of
+  its scale, not of the plot area (the same without a `range`).
 - `"once": true`: a plot drawn once per facet, of no row, e.g. a header or a
   unit label at the edge of the plot area (`@plot:top`); `@facet` and
   `@facet:name` are the key and the name of the facet.

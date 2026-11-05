@@ -137,16 +137,26 @@ const axes = ctx => {
             // the distance of the title from the axis, by default near the
             // edge of the margin, e.g. outside of the labels of the ticks
             const offset = i.title.offset ?? d.title?.offset ?? Math.max(0, ctx.margins[i.position] - 8);
-            const transform = {
-                left: `rotate(-90) translate(-${innerHeight/2} -${offset})`,
-                right: `rotate(90) translate(${innerHeight/2} -${innerWidth + offset})`,
-                top: `translate(${innerWidth/2} -${offset})`,
-                bottom: `translate(${innerWidth/2} ${innerHeight + offset})`,
+            // the middle of the range of the scale, e.g. of a scale of the
+            // upper part of the plot area
+            const [lo, hi] = d3.extent(s.range());
+            const middle = (lo + hi)/2;
+            const vertical = ['left', 'right'].includes(i.position);
+            // a title of a vertical axis at the top: horizontal, above the
+            // range of the scale, starting at the distance of the title from
+            // the axis, e.g. the unit at the top left
+            const top = vertical && i.title.position == 'top';
+            const transform = top ? `translate(${i.position == 'left' ? -offset : innerWidth + offset} ${lo - (i.title.gap ?? 8)})` : {
+                left: `rotate(-90) translate(-${middle} -${offset})`,
+                right: `rotate(90) translate(${middle} -${innerWidth + offset})`,
+                top: `translate(${middle} -${offset})`,
+                bottom: `translate(${middle} ${innerHeight + offset})`,
             }[i.position];
             parts.push({
                 key: `axis title ${n}`,
                 element: "text",
-                attrs: { class: "vis-axis-title", y: 0, x: 0, "text-anchor": "middle", "dominant-baseline": "middle", ...(transform ? { transform } : {}) },
+                attrs: { class: `vis-axis-title${top ? ' vis-axis-title-top' : ''}`, y: 0, x: 0,
+                    "text-anchor": top ? (i.position == 'left' ? 'start' : 'end') : "middle", "dominant-baseline": top ? "auto" : "middle", ...(transform ? { transform } : {}) },
                 text: ctx.store.text(i.title.name),
             });
         }

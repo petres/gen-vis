@@ -1046,6 +1046,14 @@ export interface Axis {
          * The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults).
          */
         offset?: number;
+        /**
+         * Of a vertical axis: beside it, rotated, in the middle of the range of its scale (side), or horizontal above its range (top), e.g. the unit at the top left, starting at the distance offset from the axis.
+         */
+        position?: 'side' | 'top';
+        /**
+         * Of a title at the top: its distance above the range of the scale, 8 pixels by default.
+         */
+        gap?: number;
     };
     /**
      * The gap between the tick marks and the labels in pixels, also of polar axes, 3 by default (see the prop defaults).

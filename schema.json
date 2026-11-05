@@ -447,7 +447,9 @@
                     "additionalProperties": false,
                     "properties": {
                         "name": { "type": "string" },
-                        "offset": { "type": "number", "description": "The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults)." }
+                        "offset": { "type": "number", "description": "The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults)." },
+                        "position": { "enum": ["side", "top"], "default": "side", "description": "Of a vertical axis: beside it, rotated, in the middle of the range of its scale (side), or horizontal above its range (top), e.g. the unit at the top left, starting at the distance offset from the axis." },
+                        "gap": { "type": "number", "description": "Of a title at the top: its distance above the range of the scale, 8 pixels by default." }
                     }
                 },
                 "padding": { "type": "number", "default": 3, "description": "The gap between the tick marks and the labels in pixels, also of polar axes, 3 by default (see the prop defaults)." }
