@@ -62,6 +62,9 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- `stackBy` of a stacked mapping: the mapping of the positions of the
+  stacks, e.g. the start of the classes of a bin (`lo`) of a stacked
+  histogram whose `x` are the values of the rows.
 - The title of a vertical axis at the top: `"title": {"name": "in €",
   "position": "top"}` draws it horizontal above the range of the scale, e.g.
   the unit at the top left. A rotated title is in the middle of the range of

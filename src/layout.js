@@ -124,6 +124,15 @@ const stepHeight = (store, rowsOf, scope, domainOf) => {
     return Math.round(steps*step);
 };
 
+// the rows and the positions of the stacks of the stacked mapping: the ones
+// of the positions (`axis.h`) or of `stackBy` of the mapping, e.g. the
+// start of the class of a bin (`lo`) of a histogram whose x are the values
+// of the rows, the rows without one are not stacked
+const stackSource = (def, axis, rows) => {
+    const by = def.mapping[axis.v]?.stackBy;
+    return by === undefined ? [rows, axis] : [rows.filter(r => r[by] !== null && r[by] !== undefined), { ...axis, h: by }];
+};
+
 // the rows of a view, see layout
 const rowsOf = (store, def, axis, scope, stacked) => {
     // the rows of the conditions of `filter`, e.g. of a global of a form
@@ -141,7 +150,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     const stackOrder = categoryOrder(visible.map(f => ({ dim: f.dim, keys: f.key })));
     const stackedRows = stacked && stacked !== true
         ? filter(rows, rowFilter(stacked, def.mapping, scope, `mapping.${axis.v}.stacked`)) : rows;
-    const stacks = stacked ? stack(stackedRows, axis, def.facets ? [def.facets.dim] : [], stackOrder) : null;
+    const stacks = stacked ? stack(...stackSource(def, axis, stackedRows), def.facets ? [def.facets.dim] : [], stackOrder) : null;
     const stackOf = stacks ? row => stacks.get(row) ?? [row[axis.v], row[axis.v]] : null;
     const isStacked = stacks ? row => stacks.has(row) : null;
 
@@ -186,7 +195,7 @@ const domainRows = (store, def, axis, scope, stacked, shown, stackOrder) => {
         let stackOf = null;
         if (n == axis.v && stacked) {
             const stackedRows = stacked !== true ? filter(rows, rowFilter(stacked, def.mapping, scope, `mapping.${n}.stacked`)) : rows;
-            const stacks = stack(stackedRows, axis, [...dims, ...names], stackOrder);
+            const stacks = stack(...stackSource(def, axis, stackedRows), [...dims, ...names], stackOrder);
             stackOf = row => stacks.get(row) ?? [row[n], row[n]];
         }
         const facets = def.facets ? new Map(groupBy(rows, dims).map(g => [String(g.group[dims[0]]), g.entries])) : null;

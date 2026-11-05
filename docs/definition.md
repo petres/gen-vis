@@ -723,6 +723,12 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   ]
   ```
 
+  The stacks are at the positions of the mapping of the other axis (`x` of
+  vertical bars), `stackBy` names another one, e.g. the start of the class
+  of a [bin](#transform) (`"stackBy": "lo"`) of a stacked histogram above a
+  strip plot whose `x` are the values; rows without a value of it are not
+  stacked.
+
 ### Defaults
 
 The built-in defaults of the parts are the values a definition does not

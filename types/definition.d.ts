@@ -740,6 +740,10 @@ export interface MappingEntry {
      * Stacks the values of the axis of the values, a vertical, a horizontal (of horizontal bars), a radial or an angular one (of pies, polar:arc from @<name>:start:scaled to @<name>:end:scaled), true all rows or the conditions of mappings of the rows which are stacked, as the ones of filter, e.g. { "type": { "not": "load" } }, the others have their own value as start and end, e.g. a line of a total on stacked areas.
      */
     stacked?: boolean | Filter;
+    /**
+     * Of a stacked mapping: the mapping of the positions of the stacks, by default the one of the positions of the coordinate system (x of vertical bars), e.g. the start of the class of a bin (lo) of a histogram whose x are the values of the rows; rows without a value of it are not stacked.
+     */
+    stackBy?: string;
     scale?: Scale | Removed;
     axis?: Axis | Removed;
     hover?:

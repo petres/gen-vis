@@ -352,6 +352,12 @@ const checkMappings = ctx => {
     Object.entries(mapping).filter(([, m]) => m.stacked !== undefined && typeof m.stacked != 'boolean').forEach(([n, m]) => isObject(m.stacked)
         ? checkFilter(ctx, m.stacked, `mapping.${n}.stacked`, names.global)
         : warn(`mapping.${n}.stacked`, `expected true or the conditions of the rows which are stacked, e.g. { "type": { "not": "load" } }`));
+    Object.entries(mapping).filter(([, m]) => m.stackBy !== undefined).forEach(([n, m]) => {
+        if (!m.stacked)
+            warn(`mapping.${n}.stackBy`, `the positions of the stacks of a stacked mapping, without 'stacked' none`);
+        else if (!Object.hasOwn(mapping, m.stackBy))
+            warn(`mapping.${n}.stackBy`, `unknown mapping '${m.stackBy}'`);
+    });
     if (!def.mapping)
         warn('mapping', 'missing');
 };

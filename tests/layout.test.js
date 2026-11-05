@@ -269,3 +269,24 @@ describe('the plot area', () => {
         expect(layout(store, 300).facets[0].scope).toMatchObject({ 'plot:left': -150, 'plot:top': -100, 'plot:right': 150, 'plot:bottom': 100 });
     });
 });
+
+describe('stacks at the positions of another mapping (stackBy)', () => {
+    test('the classes of a bin stacked at their start, the rows of the values not', async () => {
+        const store = createStore();
+        await store.init({ def: {
+            options: { height: 200 },
+            transform: { type: 'bin', column: 'v', edges: [0, 5, 10], by: 'g', start: 'lo', end: 'hi' },
+            mapping: {
+                x: { column: 'v', type: 'numeric', scale: { orientation: 'horizontal' } },
+                lo: { column: 'lo', type: 'numeric', scale: { of: 'x' } },
+                y: { column: 'count', type: 'numeric', stacked: true, stackBy: 'lo', scale: { orientation: 'vertical', domain: [0, null], domainRel: [0, 0] } },
+                g: { column: 'g', type: 'categorical', categories: { a: {}, b: {} } },
+            },
+            plot: { type: 'bar', by: 'g', props: { x0: '@lo:scaled', x1: '@lo:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' } },
+        }, data: 'v,g\n1,a\n2,b\n3,b\n7,a' });
+        const v = layout(store, 400);
+        const classes = v.rows.filter(r => r.lo !== null);
+        expect(classes.map(r => [r.g, r.lo, ...v.stackOf(r)])).toEqual([['a', 0, 0, 1], ['a', 5, 0, 1], ['b', 0, 1, 3], ['b', 5, 1, 1]]);
+        expect(v.facets[0].scales.y.domain()).toEqual([0, 3]);
+    });
+});
