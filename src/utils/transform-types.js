@@ -474,6 +474,9 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
             // the rows of the classes after the rows (the columns before have
             // no values of them, the filters before keep them), or instead of
             // them (`replace`, all columns are new)
+            // edges of no class, e.g. a single one, not the ones of a step without values
+            if (result.edges === null && t.edges !== undefined)
+                notes.push(`transform[${k}] (${t.type}): the edges ${JSON.stringify(t.edges)} are no classes, at least two different ones are needed`);
             if (result.outside > 0)
                 notes.push(`transform[${k}] (${t.type}): ${result.outside} values of '${t.column}' outside the edges ${result.edges[0]} to ${result.edges.at(-1)} are left out`);
             if (!t.replace) {

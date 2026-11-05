@@ -256,6 +256,35 @@ describe('bin and random in a chart', () => {
         expect(jitter()).toEqual(before);
     });
 
+    test('the rows of a bin: replaced, with later calc and share, after a filter, without values', () => {
+        const source = [{ v: '1', g: 'a', y: '2020' }, { v: '3', g: 'a', y: '2021' }, { v: '7', g: 'b', y: '2020' }, { v: '', g: 'b', y: '2021' }, { v: '12', g: 'b', y: '2020' }];
+        // the rows after the transforms with the columns of the transforms, of the filters
+        const rowsOf = transforms => {
+            const c = applyTransforms(source, transforms);
+            const base = c.rows ?? source;
+            const all = base.map((r, i) => ({ ...r, ...Object.fromEntries([...c].map(([k, v]) => [k, v[i]])) }));
+            return { rows: c.kept ? c.kept.map(i => all[i]) : all, notes: c.notes };
+        };
+        const replaced = rowsOf([{ type: 'bin', column: 'v', edges: [0, 5, 10], by: 'g', replace: true },
+            { type: 'calc', as: 'd', expr: { '*': ['@count', 2] } }, { type: 'share', column: 'count', by: 'g', as: 's' }]);
+        expect(replaced.rows).toEqual([
+            { g: 'a', start: 0, end: 5, count: 2, d: 4, s: 1 }, { g: 'a', start: 5, end: 10, count: 0, d: 0, s: 0 },
+            { g: 'b', start: 0, end: 5, count: 0, d: 0, s: 0 }, { g: 'b', start: 5, end: 10, count: 1, d: 2, s: 1 }]);
+        expect(replaced.notes).toEqual([`transform[0] (bin): 1 values of 'v' outside the edges 0 to 10 are left out`]);
+        // the rows of a filter before are kept, the classes after them, of their values
+        const filtered = rowsOf([{ type: 'filter', expr: { '==': ['@y', '2020'] } }, { type: 'bin', column: 'v', edges: [0, 5, 15] },
+            { type: 'calc', as: 'd', expr: { '*': ['@count', 2] } }]);
+        expect(filtered.rows.map(r => r.v ?? [r.start, r.end, r.count, r.d])).toEqual(['1', '7', '12', [0, 5, 1, 2], [5, 15, 2, 4]]);
+        // no values: empty classes of all rows, none of groups
+        expect(rowsOf([{ type: 'bin', column: 'none', edges: [0, 5], replace: true }]).rows).toEqual([{ start: 0, end: 5, count: 0 }]);
+        expect(rowsOf([{ type: 'bin', column: 'none', edges: [0, 5], by: 'g', replace: true }]).rows).toEqual([]);
+        expect(rowsOf([{ type: 'bin', column: 'none', step: 5, replace: true }]).rows).toEqual([]);
+        // fewer than two edges are no classes, named in a note
+        const one = rowsOf([{ type: 'bin', column: 'v', edges: [5, '5'], replace: true }]);
+        expect(one.rows).toEqual([]);
+        expect(one.notes).toEqual([`transform[0] (bin): the edges [5,"5"] are no classes, at least two different ones are needed`]);
+    });
+
     test('validateDef: the edges of a bin, the name of a random number', () => {
         const checks = transform => validateDef({ ...def(), transform }).filter(w => w.startsWith('transform'));
         expect(checks([{ type: 'bin', column: 'v' }])).toEqual([`transform[0].edges: the edges of the classes are needed, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143], or a 'step'`]);
