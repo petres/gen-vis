@@ -202,7 +202,7 @@ plugin of another Vue, the types are the ones of `@preschen/gen-vis/vue`.
 | `csv`      | `data-csv`      | a button at the right of the footer to save the data shown as CSV, a string is the name of the file (default the title) |
 | `svg`      | `data-svg`      | a button at the right of the footer to save it as an SVG, see [static export](export.md#static-export), a string is the name of the file (default the title) |
 | `imageWidth` | `data-image-width` | the width of the PNG in pixels, the one of the definition otherwise or 800, `screen` for the one on the screen (as it is seen, e.g. on a phone) |
-| `lazy`     | `data-lazy`     | loads the definition and the data only when the visualisation is near the viewport, `true` within 400 pixels, a string is the `rootMargin` of the `IntersectionObserver`, e.g. `"800px 0px"`, see [lazy loading](#lazy-loading) |
+| `lazy`     | `data-lazy`     | draws the visualisation only when it is near the viewport, `true` within one height of the viewport, a string is the `rootMargin` of the `IntersectionObserver`, e.g. `"800px 0px"`; its files are loaded ahead (three heights) when the browser is idle, see [lazy loading](#lazy-loading) |
 
 The attributes are strings: `data-download`, `data-csv`, `data-svg`,
 `data-copy`, `data-check`, `data-debug` and `data-lazy` without a value or
@@ -401,10 +401,14 @@ visualisations, so the space of the empty elements is set by the page:
 
 ## Lazy loading
 
-With `lazy` a visualisation loads its definition, its parents and its data
-only when it comes near the viewport (400 pixels by default), e.g. of a page
-of ten charts of which a phone shows two, so the requests of the charts at
-the top do not wait for the ones below. Until then it has the space of a
+With `lazy` a visualisation is drawn only when it comes near the viewport
+(within one height of the viewport above or below it by default, or the
+margin of `lazy`), e.g. of a page of ten charts of which a phone shows two,
+so the requests of the charts at the top do not wait for the ones below.
+Its definition, its parents and its data are loaded and prepared before,
+when it is within three heights of the viewport and the browser is idle
+(`requestIdleCallback`), so it is drawn at once when it comes near; the
+charts further down are loaded only when the page is scrolled towards them. Until then it has the space of a
 visualisation which is loaded (see [layout shifts](#layout-shifts)), so
 `--gen-vis-loading-height` keeps the charts below out of view; without it
 the empty charts have no height and the ones close below are loaded at once.

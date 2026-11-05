@@ -2954,8 +2954,11 @@ describe('layout shifts', () => {
 
 describe('lazy', () => {
     // the observers of the visualisations, `show()` brings their elements near the viewport
+    // (the observer of drawing), `come()` within the margin of the load ahead
     let observers;
-    const show = (o = observers.at(-1)) => o.callback([{ isIntersecting: true, target: o.targets[0] }]);
+    const near = () => observers.filter(o => o.options.rootMargin != '300% 0px');
+    const show = (o = near().at(-1)) => o.callback([{ isIntersecting: true, target: o.targets[0] }]);
+    const come = (o = observers.filter(o => o.options.rootMargin == '300% 0px').at(-1)) => o.callback([{ isIntersecting: true, target: o.targets[0] }]);
     let fetched;
     beforeEach(() => {
         observers = [];
@@ -2984,8 +2987,8 @@ describe('lazy', () => {
         createGenVis(el, { defFile: '/data/bev/def.json', lazy: true, download: true, csv: true });
         await wait();
         expect(fetched).toEqual([]);
-        expect(observers).toHaveLength(1);
-        expect(observers[0].options.rootMargin).toBe('400px');
+        // near: one height of the viewport, ahead: three
+        expect(observers.map(o => o.options.rootMargin)).toEqual(['100% 0px', '300% 0px']);
         expect(observers[0].targets[0]).toBe(el.querySelector('.vis-outer'));
         // the space while it waits, no buttons
         expect(el.querySelector('.vis-outer').classList.contains('vis-loading')).toBe(true);
@@ -3014,8 +3017,7 @@ describe('lazy', () => {
         vis.update({ defFile: '/data/bev/def-bar.json', state: { globals: {} } });
         await wait();
         expect(fetched).toEqual([]);
-        expect(observers).toHaveLength(1);
-        expect(observers[0].options.rootMargin).toBe('800px 0px');
+        expect(observers.map(o => o.options.rootMargin)).toEqual(['800px 0px', '300% 0px']);
         show();
         await vi.waitFor(() => expect(el.querySelector('g.vis-plot rect')).not.toBeNull());
         expect(fetched[0]).toBe('/data/bev/def-bar.json');
@@ -3023,6 +3025,33 @@ describe('lazy', () => {
         // after it is loaded a change loads it again, as without lazy
         vis.update({ defFile: '/data/bev/def.json' });
         await vi.waitFor(() => expect(el.querySelector('.vis-title').textContent).toBe('Bevölkerung'));
+        expect(errors).toEqual([]);
+    });
+
+    test('ahead of the viewport its files are loaded when the browser is idle, it is drawn near it without loading them again', async () => {
+        const el = document.body.appendChild(document.createElement('div'));
+        const vis = createGenVis(el, { defFile: '/data/bev/def.json', lazy: true });
+        await wait();
+        come();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        expect(fetched).toEqual(['/data/bev/def.json', '/data/bev/data.csv']);
+        // loaded, not drawn
+        expect(el.querySelector('svg.vis-svg')).toBeNull();
+        show();
+        await rendered(el);
+        expect(fetched).toHaveLength(2);
+        expect(observers.every(o => o.disconnected)).toBe(true);
+
+        // a definition given after the load ahead is the one drawn
+        const other = document.body.appendChild(document.createElement('div'));
+        const changed = createGenVis(other, { defFile: '/data/bev/def.json', lazy: true });
+        await wait();
+        come();
+        await new Promise(resolve => setTimeout(resolve, 200));
+        changed.update({ defFile: '/data/bev/def-bar.json' });
+        show();
+        await vi.waitFor(() => expect(other.querySelector('g.vis-plot rect')).not.toBeNull());
+        vis.destroy?.();
         expect(errors).toEqual([]);
     });
 
@@ -3062,9 +3091,9 @@ describe('lazy', () => {
         margin.dataset.lazy = '1000px';
         mountGenVisElement(margin);
         await wait();
-        expect(observers.map(o => o.options.rootMargin)).toEqual(['400px', '1000px']);
+        expect(observers.map(o => o.options.rootMargin)).toEqual(['100% 0px', '300% 0px', '1000px', '300% 0px']);
         expect(fetched).toEqual([]);
-        show(observers[1]);
+        show(observers[2]);
         await rendered(margin);
         expect(el.querySelector('svg.vis-svg')).toBeNull();
     });

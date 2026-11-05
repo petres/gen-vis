@@ -274,6 +274,11 @@ Warnings (console, CLI, `messages` of the export page):
 
 ### Fixes
 
+- `lazy` loads ahead: the files and the data of a lazy chart are loaded and
+  prepared when it is within three heights of the viewport and the browser
+  is idle, it is drawn within one height (before: everything when it came
+  within 400 pixels, so a chart scrolled to was often still empty). A
+  string of `lazy` is still the margin of the drawing.
 - A legend entry without a symbol (`{"size": 0, "elements": []}`, an
   object without elements) has no empty svg before its name, so no space
   of 5 pixels before the name and between the entries. `"symbol": null`

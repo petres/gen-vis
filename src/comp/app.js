@@ -92,6 +92,9 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
     let vis = null;
     let visLoads = null;
     let observer = null;
+    // the observer of the load ahead and the load, see observe
+    let ahead = null;
+    let prefetched = null;
     let removed = false;
     let heightKey = null;
     // the height of the visualisation of the same definition and width
@@ -219,14 +222,17 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         showError: e => showError(e),
     };
 
-    // a lazy visualisation waits until it is near the viewport, then it
-    // is loaded with the props it has then, also the ones changed while
-    // it waited, and stays loaded, false if it does not wait, e.g.
-    // without an IntersectionObserver (old browsers, jsdom)
+    // a lazy visualisation waits until it is near the viewport (one height
+    // of the viewport above or below it, or the margin of `lazy`), then it
+    // is drawn with the props it has then, also the ones changed while it
+    // waited, and stays drawn, false if it does not wait, e.g. without an
+    // IntersectionObserver (old browsers, jsdom). Ahead of it (three heights
+    // of the viewport) its files and data are loaded and prepared when the
+    // browser is idle, so it is drawn at once when it comes near.
     const observe = () => {
         if (props.lazy === false || typeof IntersectionObserver != 'function')
             return false;
-        const rootMargin = typeof props.lazy == 'string' && props.lazy ? props.lazy : '400px';
+        const rootMargin = typeof props.lazy == 'string' && props.lazy ? props.lazy : '100% 0px';
         observer = new IntersectionObserver(entries => {
             if (entries.some(e => e.isIntersecting)) {
                 stopObserving();
@@ -234,11 +240,44 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             }
         }, { rootMargin });
         observer.observe(outer);
+        ahead = new IntersectionObserver(entries => {
+            if (entries.some(e => e.isIntersecting)) {
+                stopAhead();
+                whenIdle(prefetch);
+            }
+        }, { rootMargin: '300% 0px' });
+        ahead.observe(outer);
         return true;
     };
     const stopObserving = () => {
         observer?.disconnect();
         observer = null;
+        stopAhead();
+    };
+    const stopAhead = () => {
+        ahead?.disconnect();
+        ahead = null;
+    };
+    const whenIdle = fn => typeof requestIdleCallback == 'function' ? requestIdleCallback(fn, { timeout: 2000 }) : setTimeout(fn, 100);
+
+    // the sources of the load of the store, the ones of the props
+    const sources = () => ({ def: props.def, defUrl: props.defFile, data: props.data, state: props.state, globals: props.globals,
+        defaults: props.defaults, check: props.check || props.debug });
+    // the load of a visualisation still waiting (see observe) with its
+    // sources, null if the props changed since, the draw loads it anew
+    const prefetch = () => {
+        if (removed || !observer || prefetched || (props.def === null && props.defFile === null))
+            return;
+        const given = sources();
+        const done = store.init(given);
+        // its errors are the ones of the draw, not unhandled ones before it
+        done.catch(() => {});
+        prefetched = { given, done };
+    };
+    const prefetchedFor = given => {
+        const p = prefetched;
+        prefetched = null;
+        return p && ['def', 'defUrl', 'data', 'defaults', 'check'].every(k => p.given[k] === given[k]) ? p.done : null;
     };
 
     // the definition and the width of the visualisation, the key of its height
@@ -258,8 +297,11 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             return showError(new Error('No definition given.'));
         }
         try {
-            // a definition loaded after a newer one was given is not shown
-            if (!await store.init({ def: props.def, defUrl: props.defFile, data: props.data, state: props.state, globals: props.globals, defaults: props.defaults, check: props.check || props.debug }))
+            // a definition loaded after a newer one was given is not shown,
+            // the one loaded ahead of the same sources is (see prefetch), its
+            // state and globals are the ones of the props below
+            const given = sources();
+            if (!await (prefetchedFor(given) ?? store.init(given)))
                 return;
             store.highlighted = copyOf(props.highlight);
             // the error is kept while the new definition is loaded, a
