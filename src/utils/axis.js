@@ -40,6 +40,9 @@ const center = (scale, offset) => {
     return d => +scale(d) + offset;
 };
 
+// an axis whose labels were rotated or shifted in its last draw
+const labelsMoved = Symbol('labelsMoved');
+
 // the lines at half pixels of screens of a pixel per CSS pixel, so they
 // are sharp, as the ones of d3-axis
 const pixelOffset = () => typeof window !== "undefined" && window.devicePixelRatio > 1 ? 0 : 0.5;
@@ -231,7 +234,13 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
     // the labels at the edge of an axis at a value (`labelShift` from the
     // line), positive angles rotate counterclockwise, negative ones
     // clockwise, the labels start at their tick in both cases
+    // (only of an axis with them now or in its draw before, the labels of
+    // other axes have no transform, e.g. not on every draw of a hover)
     const shift = labelShift ? (vertical ? `translate(${labelShift} 0)` : `translate(0 ${labelShift})`) : '';
+    const moved = Boolean(rotate || labelShift);
+    if (!moved && !ga[labelsMoved])
+        return;
+    ga[labelsMoved] = moved;
     ga.querySelectorAll(".tick text").forEach(node => {
         if (rotate)
             setAttr(node, "text-anchor", rotate > 0 ? "end" : "start");

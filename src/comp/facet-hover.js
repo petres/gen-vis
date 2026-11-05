@@ -73,12 +73,20 @@ const nearestRow = (rows, value, v, stackOf, isStacked = null) => {
     } : row => row[v] === null || row[v] === undefined ? Infinity : Math.abs(row[v] - value);
     // a row which is not stacked (e.g. a line of the total) is not the
     // nearest one in a segment of a stack nor of the same distance as one
-    const rank = isStacked ? row => [distance(row), isStacked(row) ? 0 : 1] : row => [distance(row), 0];
-    return d3.least(rows, (a, b) => {
-        const [da, sa] = rank(a);
-        const [db, sb] = rank(b);
-        return da - db || sa - sb;
-    });
+    if (!isStacked)
+        return d3.least(rows, distance);
+    // (a key of the row, not a comparison, so the distance is computed once
+    // per row: the ones not stacked after the stacked ones of the same distance)
+    let best;
+    let bestDistance = Infinity;
+    let bestStacked = false;
+    for (const row of rows) {
+        const d = distance(row);
+        const stacked = isStacked(row);
+        if (best === undefined || d < bestDistance || (d == bestDistance && stacked && !bestStacked))
+            [best, bestDistance, bestStacked] = [row, d, stacked];
+    }
+    return best;
 };
 
 /**

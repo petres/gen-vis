@@ -51,6 +51,9 @@ const styleOf = row => {
  * hover slot, of the templates of the definition (options.hover) or the
  * table of the rows. `slots()` are the slots of the page.
  */
+// the row of the total of a table of the hover, see totalRow
+const totalOf = Symbol('total');
+
 const createHover = (store, slots) => {
     const root = el('div', { class: 'vis-hover' });
     // the data drawn and the kind of the content, see show
@@ -74,12 +77,14 @@ const createHover = (store, slots) => {
     // or its name), its value in the cell of the values, see vis-hover-total
     const totalRow = hover => {
         const t = template().total;
-        let tr = table.querySelector('tr.vis-hover-total');
+        // the row of the total, without a total none, kept, not looked up
+        let tr = table[totalOf] ?? null;
         if (!t || !hover.total) {
             tr?.remove();
+            table[totalOf] = null;
             return;
         }
-        tr ??= table.appendChild(document.createElement('tr'));
+        tr ??= table[totalOf] = table.appendChild(document.createElement('tr'));
         tr.setAttribute('class', 'vis-hover-total');
         const width = Math.max(...(hover.data ?? []).map(d => d.cells.length), 2);
         const value = (hover.data?.[0]?.cells ?? []).findIndex(c => c.value);

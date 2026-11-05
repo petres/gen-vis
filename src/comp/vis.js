@@ -168,12 +168,22 @@ const createVis = app => {
     // the entries of the legends of the categories of a highlighted row,
     // e.g. of the line under the pointer, of an entry of a legend or of the
     // page, the class `vis-legend-highlight` (bold), null ends it
-    const markLegends = row => root.querySelectorAll('.vis-legend[data-dim]').forEach(legend => {
-        const value = row?.[legend.dataset.dim];
-        const key = value === null || value === undefined ? null : String(value);
-        legend.querySelectorAll(':scope > .vis-legend-entries > .vis-legend-entry')
-            .forEach(entry => entry.classList.toggle('vis-legend-highlight', entry.dataset.key === key));
-    });
+    // The legends and the key marked in each are kept until the legends are
+    // drawn again (drawLegends), so a move of the hover within the same
+    // category does not search and toggle all entries of the chart.
+    let marked = null;
+    const markLegends = row => {
+        marked ??= [...root.querySelectorAll('.vis-legend[data-dim]')].map(legend => ({ legend, key: undefined }));
+        marked.forEach(m => {
+            const value = row?.[m.legend.dataset.dim];
+            const key = value === null || value === undefined ? null : String(value);
+            if (key === m.key)
+                return;
+            m.key = key;
+            m.legend.querySelectorAll(':scope > .vis-legend-entries > .vis-legend-entry')
+                .forEach(entry => entry.classList.toggle('vis-legend-highlight', entry.dataset.key === key));
+        });
+    };
 
     const vis = { store, slots, emit: app.emit, guard, highlight, markLegends, changeSelected: () => changeSelected() };
 
@@ -269,6 +279,8 @@ const createVis = app => {
 
     // the legends of a position in their container, a new container has new legends
     const drawLegends = (key, container, names) => {
+        // the entries may be new ones, see markLegends
+        marked = null;
         if (legends[key]?.container !== container)
             legends[key] = { container, legends: createLegends(vis, container) };
         legends[key].legends.update(names, view);
