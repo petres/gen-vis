@@ -590,10 +590,23 @@ const checkGeo = ({ def, mapping, warn, coordName }) => {
 
 // the conditions of the rows of the definition, of the plots and of the hover
 const checkFilters = ctx => {
-    const { def, names } = ctx;
+    const { def, names, warn } = ctx;
     checkFilter(ctx, def.filter, 'filter', names.global);
     ctx.plots.forEach(([i, p]) => checkFilter(ctx, p.filter, `plot[${i}].filter`, names.facet));
     checkFilter(ctx, def.options?.hover?.filter, 'options.hover.filter', names.facet);
+    if (def.options?.hover?.total && !Object.values(ctx.mapping).some(m => m.stacked))
+        warn('options.hover.total', `the sum of the stacked values, there is no stacked mapping`);
+    // the facets of plots and annotations: keys of facets or, of a grid, an
+    // object of the values of the mappings of its rows and columns
+    const facets = facetMappings(def.facets);
+    [...ctx.plots.map(([i, p]) => [`plot[${i}]`, p]), ...ctx.annotations.map(([i, a]) => [`annotations[${i}]`, a])]
+        .filter(([, p]) => isObject(p.facet)).forEach(([path, p]) => {
+            if (!facets.grid)
+                warn(`${path}.facet`, `an object of the rows and columns of a grid of facets ("rows", "cols"), of other facets their keys, e.g. "Wien"`);
+            else
+                Object.keys(p.facet).filter(k => !facets.all.includes(k)).forEach(k =>
+                    warn(`${path}.facet.${k}`, `expected the mapping of the rows or the columns of the grid, ${list(facets.all)}`));
+        });
 };
 
 // the values of an annotation are of mappings with a scale, of maps `lon` and `lat`
@@ -688,9 +701,11 @@ const checkFacets = ({ def, mapping, names, warn }) => {
         checkProp(def.facets.cols, 'facets.cols', warn, names.global);
     if (def.facets.axisTitles !== undefined && !['all', 'outer'].includes(def.facets.axisTitles))
         warn('facets.axisTitles', `expected 'all' (in every facet, the default) or 'outer' (only at the outer facets)`);
-    const dim = typeof def.facets.dim == 'string' && Object.hasOwn(mapping, def.facets.dim) ? mapping[def.facets.dim] : null;
+    // the props of the titles: of the category of the facet, of a grid the
+    // one of the column or of the row
+    const own = facetMappings(def.facets).all.filter(d => Object.hasOwn(mapping, d)).flatMap(d => categoryNames(mapping[d]));
     if (isObject(def.facets.title))
-        checkProp(def.facets.title.props, 'facets.title.props', warn, new Set([...names.global, 'facet', 'facet:name', ...(dim ? categoryNames(dim) : [])]));
+        checkProp(def.facets.title.props, 'facets.title.props', warn, new Set([...names.global, 'facet', 'facet:name', ...own]));
     if (!isObject(scales))
         checkProp(def.facets.scales, 'facets.scales', warn, names.global);
 };
@@ -713,7 +728,7 @@ const checkTexts = ({ def, mapping, globals, warn, annotations }) => {
     // a global or a field of its entry, e.g. `group:name`
     const isGlobal = r => globals.has(r) || (r.includes(':') && globals.has(r.split(':')[0]));
     // the title has the names of the nearest row as well, e.g. {definition}
-    checkHover(hover.title, 'options.hover.title', r => r == 'title' || isGlobal(r) || Object.hasOwn(mapping, r.split('.')[0]));
+    checkHover(hover.title, 'options.hover.title', r => r == 'title' || r == 'total' || isGlobal(r) || Object.hasOwn(mapping, r.split('.')[0]));
     checkHover(hover.row, 'options.hover.row', r => isGlobal(r) || Object.hasOwn(mapping, r.split('.')[0]));
     Object.entries(mapping).forEach(([n, m]) => {
         checkText(m.name, `mapping.${n}.name`);
@@ -769,6 +784,20 @@ const checkTransforms = ({ def, globals, warn }) => {
             warn(`${path}.edges`, `the edges of the classes are needed, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143], or a 'step'`);
         if (t.replace !== undefined && t.type != 'bin')
             warn(`${path}.replace`, `only of a bin: its rows replace the rows`);
+        // the keys of a bin or of random numbers on other transforms
+        const own = { bin: ['edges', 'step', 'weight', 'normalize', 'per', 'start', 'end'], random: ['range', 'seed'] };
+        Object.entries(own).filter(([type]) => t.type != type).forEach(([type, keys]) => keys.filter(k => t[k] !== undefined)
+            .forEach(k => warn(`${path}.${k}`, `only of a transform of the type '${type}'`)));
+        if (t.type == 'bin') {
+            [t.edges ?? []].flat().filter(e => isObject(e) && !(Number(e.step) > 0 && Number.isFinite(Number(e.from)) && Number.isFinite(Number(e.to))))
+                .forEach(() => warn(`${path}.edges`, `a range of edges is { "from": 50, "to": 250, "step": 5 }, a positive step`));
+            if (t.edges === undefined && t.step !== undefined && !(Number(t.step) > 0) && !String(t.step).includes('{'))
+                warn(`${path}.step`, `the width of the classes, a positive number, e.g. 5`);
+            if (t.per !== undefined && !(Number(t.per) > 0))
+                warn(`${path}.per`, `a positive number of units, e.g. 5`);
+            else if (t.per !== undefined && t.normalize == 'share')
+                warn(`${path}.per`, `a share is one of the group, without a unit, 'per' is of counts and densities`);
+        }
         if (t.type == 'lookup') {
             if (typeof t.data != 'string' || t.data.includes('{'))
                 warn(`${path}.data`, `the url of the rows is needed, not a template`);
@@ -828,7 +857,8 @@ const context = (def, warn, rows) => {
     const bandNames = Object.entries(def.mapping ?? {}).filter(([, m]) => m?.scale?.orientation !== undefined && ['band', 'point'].includes(m.scale.type))
         .flatMap(([n]) => [`${n}:bandwidth`, `${n}:step`]);
     const facetNames = [...globalNames, 'width', 'innerWidth', 'height', 'innerHeight', ...(coordName == 'polar' ? ['radius'] : []), ...bandNames,
-        'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height', ...(def.facets ? ['facet', 'facet:name'] : [])];
+        'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height', ...(def.facets ? ['facet', 'facet:name'] : []),
+        ...(facetMappings(def.facets).grid ? ['facet:row', 'facet:col', 'facet:row:name', 'facet:col:name'] : [])];
     const names = {
         global: new Set(globalNames),
         facet: new Set(facetNames),

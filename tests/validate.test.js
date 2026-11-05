@@ -769,3 +769,48 @@ test('domainIgnores: the mappings of conditions of the filter or true', () => {
     expect(validateDef(def(['z']))).toEqual([`mapping.y.scale.domainIgnores: unknown mapping 'z'`]);
     expect(validateDef(def('x')).some(w => w.startsWith('mapping.y.scale.domainIgnores'))).toBe(true);
 });
+
+describe('the names and the keys of 4.1', () => {
+    const grid = () => {
+        const d = base();
+        d.mapping.g = { column: 'group', categories: { Bau: { color: 'red' } } };
+        return { ...d, facets: { rows: 'c', cols: 'g', title: { props: { color: '@color' } } } };
+    };
+
+    test('the names of the facets of a grid, the props of the category of a column or a row of its titles', () => {
+        const d = grid();
+        d.plot = [d.plot, { type: 'svg:text', once: true, props: { text: { cat: ['@facet:row:name', '@facet:col:name', '@facet:row', '@facet:col'] }, x: 0, y: '@plot:top' } }];
+        expect(validateDef(d)).toEqual([]);
+        // not of other facets
+        expect(validateDef({ ...d, facets: { dim: 'c' } }).filter(w => w.includes('facet:row')).length).toBeGreaterThan(0);
+    });
+
+    test('the total of the hover: {total} of its title, a stacked mapping', () => {
+        const d = base();
+        d.options = { hover: { total: true, title: '{title}: {total}' } };
+        expect(validateDef(d)).toEqual([`options.hover.total: the sum of the stacked values, there is no stacked mapping`]);
+        d.mapping.y.stacked = true;
+        expect(validateDef(d)).toEqual([]);
+    });
+
+    test('the facet of a plot or an annotation of a grid: its rows and columns', () => {
+        const d = grid();
+        d.plot = { ...d.plot, facet: { g: 'Bau' } };
+        d.annotations = [{ type: 'line', y: 0, facet: { land: 'Wien' } }];
+        expect(validateDef(d)).toEqual([`annotations[0].facet.land: expected the mapping of the rows or the columns of the grid, 'c', 'g'`]);
+        expect(validateDef({ ...d, annotations: [], facets: { dim: 'c' } })).toEqual(
+            [`plot[0].facet: an object of the rows and columns of a grid of facets ("rows", "cols"), of other facets their keys, e.g. "Wien"`]);
+    });
+
+    test('the keys of a bin: ranges of edges, positive steps, per, not on other transforms', () => {
+        const checks = t => validateDef({ ...base(), transform: [t] }).filter(w => w.startsWith('transform'));
+        expect(checks({ type: 'bin', column: 'value', edges: [{ from: 0, to: 10 }] })).toEqual([`transform[0].edges: a range of edges is { "from": 50, "to": 250, "step": 5 }, a positive step`]);
+        expect(checks({ type: 'bin', column: 'value', step: -1 })).toEqual([`transform[0].step: the width of the classes, a positive number, e.g. 5`]);
+        expect(checks({ type: 'bin', column: 'value', step: '{step}' })).toEqual([`transform[0]: unknown global 'step' in the template`]);
+        expect(checks({ type: 'bin', column: 'value', step: 1, per: 0 })).toEqual([`transform[0].per: a positive number of units, e.g. 5`]);
+        expect(checks({ type: 'bin', column: 'value', step: 1, per: 5, normalize: 'share' })).toEqual(
+            [`transform[0].per: a share is one of the group, without a unit, 'per' is of counts and densities`]);
+        expect(checks({ type: 'share', column: 'value', step: 5, seed: 1 })).toEqual(
+            [`transform[0].step: only of a transform of the type 'bin'`, `transform[0].seed: only of a transform of the type 'random'`]);
+    });
+});

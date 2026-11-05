@@ -3584,6 +3584,7 @@ describe('grids of facets', () => {
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef(def)).toEqual([]);
         expect(validateDef({ ...def, facets: { rows: 'c', cols: 'nope', scales: { y: 'rows' } } })).toEqual([
+            `plot[1].facet.half: expected the mapping of the rows or the columns of the grid, 'c', 'nope'`,
             `facets.cols: unknown mapping 'nope'`, `facets.scales.y: expected 'all', 'row' or 'col'`]);
         expect(errors).toEqual([]);
     });
