@@ -31,6 +31,23 @@ describe('makeScale', () => {
         expect(makeScale('y', mapping, rows, { ...options, stackOf: r => stacks.get(r) }).domain()).toEqual([0, 5]);
     });
 
+    test('the nearest value is one of the rows, not of the rows of the domain (domainIgnores), also of periods', () => {
+        const rows = [{ x: 2 }, { x: 3 }];
+        const domainRows = [{ x: 0 }, { x: 2 }, { x: 3 }, { x: 10 }];
+        const mapping = { type: 'numeric', scale: { type: 'linear', orientation: 'horizontal', domain: [null, null], domainRel: [0, 0] } };
+        const s = makeScale('x', mapping, rows, { ...options, domainRows });
+        expect(s.domain()).toEqual([0, 10]);
+        expect([s.nearest(0), s.nearest(100)]).toEqual([2, 3]);
+        const months = [0, 1, 2, 3].map(m => ({ d: +new Date(2024, m, 1) }));
+        const dated = { type: 'date', interval: 'month', scale: { type: 'time', orientation: 'horizontal', domain: [null, null] } };
+        const p = makeScale('d', dated, months.slice(1, 3), { ...options, domainRows: months });
+        expect(p.domain().map(d => d.getMonth())).toEqual([0, 4]);
+        // the period under the position, of the rows
+        expect(p.nearest(p(new Date(2024, 1, 20)))).toBe(months[1].d);
+        expect(p.nearest(p(new Date(2024, 0, 10)))).toBe(months[1].d);
+        expect(p.nearest(p(new Date(2024, 3, 10)))).toBe(months[2].d);
+    });
+
     test('categories keep their order, the nearest is the band under a position', () => {
         const mapping = { type: 'categorical', scale: { type: 'band', orientation: 'horizontal', domain: [null, null] } };
         const s = makeScale('c', mapping, [{ c: 'b' }, { c: 'a' }, { c: 'b' }], options);

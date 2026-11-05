@@ -243,7 +243,9 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     // months of `domainIgnores`, the nearest value with data is one of `rows`
     const all = domainRows ?? rows;
     const found = valuesOf(name, mapping, all, domainRows ? domainStackOf : stackOf, also, log);
-    const near = () => (domainRows ? valuesOf(name, mapping, rows, stackOf, also, log) : found).values;
+    // computed once, at the first hover
+    let nearValues = null;
+    const near = () => nearValues ??= (domainRows ? valuesOf(name, mapping, rows, stackOf, also, log) : found).values;
     let extent = found.extent;
     // the periods of the dates (`interval`): the domain of the data reaches
     // the end of the last one
@@ -401,9 +403,11 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     // layout.js, the nearest value of a position is the one of its period
     if (period) {
         s.period = period;
+        let starts = null;
         s.nearest = p => {
-            const values = found.values;
-            const i = d3.bisectLeft(values.map(Number), +s.invert(p) + 1) - 1;
+            const values = near();
+            starts ??= values.map(Number);
+            const i = d3.bisectLeft(starts, +s.invert(p) + 1) - 1;
             return values[Math.max(0, Math.min(values.length - 1, i))];
         };
     }
