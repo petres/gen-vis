@@ -160,6 +160,13 @@ export default defineConfig(({ mode }) => {
         server: {
             open: '/',
         },
+        // the dependencies of the pages of the dev server (index.html, src/dev/),
+        // not the ones of every html file of the checkout: the export page
+        // (src/export.html) imports the module of the lib build, the site
+        // (site/, its own config) the package itself (dist/)
+        optimizeDeps: {
+            entries: ['index.html'],
+        },
         define: {
             // the standalone script reads parquet without the decompressors of
             // other compressions than snappy, see src/utils/parquet.js
