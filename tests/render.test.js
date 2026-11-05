@@ -3524,6 +3524,44 @@ describe('grids of facets', () => {
     });
 });
 
+describe('grids of facets: edge cases', () => {
+    // the labels of the ticks of a facet at a side, '' of an empty cell
+    const labels = (el, side) => [...el.querySelectorAll('.vis-facet')].map(f => f.classList.contains('vis-facet-empty') ? ''
+        : [...f.querySelectorAll(`.vis-axis-${side} .tick text`)].map(t => t.textContent).filter(Boolean).join('|'));
+    const gridDef = facets => {
+        const def = lineDef();
+        def.mapping.half = { column: 'half', type: 'categorical', categories: { a: {}, b: {} } };
+        def.mapping.x.axis.ticks = 1;
+        def.mapping.x.axis.title = { name: 'Jahr' };
+        def.mapping.y.axis.ticks = 2;
+        def.plot = [{ type: 'svg:circle', props: { r: 2, cx: '@x:scaled', cy: '@y:scaled' } }];
+        def.facets = facets;
+        return def;
+    };
+    const data = 'year,value,land,half\n2020,10,Wien,a\n2021,20,Wien,b\n2020,1,Tirol,a\n2021,3,Tirol,b';
+
+    test('one row or one column: the labels of a shared scale at the outer facets only', async () => {
+        const row = await mount({ def: gridDef({ cols: 'half', scales: { y: 'row' } }), data });
+        expect(labels(row, 'left').map(Boolean)).toEqual([true, false]);
+        expect(row.querySelectorAll('.vis-facet-row-title')).toHaveLength(0);
+        const col = await mount({ def: gridDef({ rows: 'half', scales: { x: 'col' } }), data });
+        expect(labels(col, 'bottom').map(Boolean)).toEqual([false, true]);
+        expect(col.querySelectorAll('.vis-facet-row-title')).toHaveLength(2);
+        expect(errors).toEqual([]);
+    });
+
+    test('an empty cell at the edge: the facet beyond it has the labels and the title', async () => {
+        // Tirol has no row in a: the bottom left cell is empty
+        const def = gridDef({ rows: 'c', cols: 'half', scales: { x: 'all', y: 'all' }, axisTitles: 'outer' });
+        const el = await mount({ def, data: data.replace('2020,1,Tirol,a\n', '') });
+        expect(labels(el, 'bottom').map(Boolean)).toEqual([true, false, false, true]);
+        // the row of Tirol has its labels of y in its first facet, the second column
+        expect(labels(el, 'left').map(Boolean)).toEqual([true, false, false, true]);
+        expect([...el.querySelectorAll('.vis-facet')].map(f => f.querySelectorAll('.vis-axis-title').length)).toEqual([1, 0, 0, 1]);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('the total of the stacked values in the hover', () => {
     const stackDef = () => {
         const def = lineDef();

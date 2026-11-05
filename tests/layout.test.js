@@ -324,9 +324,10 @@ describe('grids of facets', () => {
         const v = await view({ rows: 'band', cols: 'group' });
         expect(v.facets.map(f => [f.cell.row, f.cell.col, f.rows.length, Boolean(f.empty), f.width])).toEqual([
             ['low', 'Bau', 2, false, 180], ['low', 'DL', 2, false, 180], ['high', 'Bau', 2, false, 180], ['high', 'DL', 0, true, 180]]);
+        // the cell beside and the one above the empty cell are at the edges
         expect(v.facets.map(f => f.outer)).toEqual([
-            { top: true, bottom: false, left: true, right: false }, { top: true, bottom: false, left: false, right: true },
-            { top: false, bottom: true, left: true, right: false }, { top: false, bottom: true, left: false, right: true }]);
+            { top: true, bottom: false, left: true, right: false }, { top: true, bottom: true, left: false, right: true },
+            { top: false, bottom: true, left: true, right: true }, { top: false, bottom: true, left: false, right: true }]);
         expect(v.facets[0].scope).toMatchObject({ 'facet:row': 'low', 'facet:col': 'Bau', 'facet:row:name': '50–100k', 'facet:col:name': 'Bauaufträge' });
     });
 

@@ -374,11 +374,15 @@ const layout = (store, width, before = null) => {
     };
 
     // the edges of the grid of facets a facet is at, e.g. the bottom row
-    // without a facet below it, see `facets.axisTitles`
+    // without a facet below it, see `facets.axisTitles`, of a grid without a
+    // facet (not an empty cell) beyond it, e.g. the facet above an empty
+    // cell of the bottom row has the labels and the title of x
     const count = faceted ? entries.length : 1;
+    const beyond = (cell, same, index, side) => entries.some(e => !e.empty && e.cell[same] == cell[same] && Math.sign(e.cell[index] - cell[index]) == side);
     const outerOf = (i, cell) => cell
-        ? { top: cell.rowIndex == 0, bottom: cell.rowIndex == cell.rows - 1, left: cell.colIndex == 0, right: cell.colIndex == cell.cols - 1 }
-        : { top: i < cols, bottom: i + cols >= count, left: i % cols == 0, right: i % cols == cols - 1 || i == count - 1 };
+        ? { top: !beyond(cell, 'colIndex', 'rowIndex', -1), bottom: !beyond(cell, 'colIndex', 'rowIndex', 1),
+            left: !beyond(cell, 'rowIndex', 'colIndex', -1), right: !beyond(cell, 'rowIndex', 'colIndex', 1) }
+        :{ top: i < cols, bottom: i + cols >= count, left: i % cols == 0, right: i % cols == cols - 1 || i == count - 1 };
     const facets = (faceted ? entries : [{ key: undefined, name: undefined, rows }]).map((f, i) => {
         const scales = {
             ...common,
