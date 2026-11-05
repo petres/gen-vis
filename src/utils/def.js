@@ -411,7 +411,11 @@ const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, tr
         // the categories of the data are part of the source, e.g. of a column
         // of a transform of the globals, such as the names of a language
         const keys = merged.fromData && typeof merged.column == 'string' ? dataKeys(merged.column) : null;
-        const source = JSON.stringify([merged, keys]);
+        // a symbol "auto" of the legend or of a category is the one of the
+        // plots, e.g. bars of a patch instead of lines
+        const auto = [merged.legend?.symbol, ...Object.values(isObject(merged.categories) ? merged.categories : {}).map(c => c?.symbol)]
+            .some(s => s === 'auto' || s?.type == 'auto');
+        const source = JSON.stringify([merged, keys, auto ? after.plot : null]);
         after.mapping[n] = source;
         const old = def.mapping?.[n];
         // without `keepVisible` the entries of the legend are the ones of the definition

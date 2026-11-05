@@ -617,6 +617,25 @@ describe('patches of the plots', () => {
         expect(el.querySelectorAll('g.vis-plot[data-plot="dots"] circle')).toHaveLength(7);
         expect(errors).toEqual([]);
     });
+
+    test('the legend symbol "auto" is the one of the plots of the patch', async () => {
+        const def = lineDef();
+        def.mapping.c.legend = { symbol: 'auto' };
+        def.globals = { kind: 'lines' };
+        def.plot = [{ id: 'p', type: 'cartesian:line', by: ['c'], props: { stroke: '@color', fill: 'none', d: { x: '@x:scaled', y: '@y:scaled' } } }];
+        def.formElements = [{ id: 'kind', name: 'Art', ref: 'kind', type: 'radio', values: [
+            { id: 'lines', name: 'Linien', value: 'lines' },
+            { id: 'bars', name: 'Balken', value: 'bars', patch: { plot: [{ id: 'p', type: 'cartesian:bar', by: ['c'], props: { width: 4, fill: '@color' } }] } },
+        ] }];
+        const el = await mount({ def, data: lineData });
+        const symbols = () => [...el.querySelectorAll('.vis-legend-entry svg')].map(s => [...s.children].map(c => c.tagName).join());
+        expect(symbols()).toEqual(['line', 'line']);
+        await select(el, 'bars');
+        expect(symbols()).toEqual(['rect', 'rect']);
+        await select(el, 'lines');
+        expect(symbols()).toEqual(['line', 'line']);
+        expect(errors).toEqual([]);
+    });
 });
 
 describe('the locale of a patch', () => {
