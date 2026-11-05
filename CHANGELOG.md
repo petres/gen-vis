@@ -5,53 +5,214 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
 
 ## 4.1.0
 
+Statistics (bins and random numbers in the transforms, histograms, densities
+and strip plots), grids of facets, axes at a value, periods of dates, legend
+symbols of the plots and of annotations, totals in the hover and labels of
+maps which fit. Every 4.0 definition stays valid; some draw a little
+differently, listed first.
+
+### Changed rendering
+
+What existing definitions draw differently:
+
+- The categories of a band, point or ordinal scale are in the order of the
+  `categories` of the mapping (as the legend, the stacks and the facets),
+  the ones not listed after them in the order of the rows; before, in the
+  order of the rows. Lines and areas on a band or point scale connect their
+  points in the order of its categories, not of the rows (also of a fixed
+  `domain`, which 4.0 drew in the order of the rows, e.g. a radar as a
+  star). Charts with categories listed in another order than the rows
+  change, e.g. the angles of `data/bev/def-radar.json`.
+- Legend symbols are centered on the middle of the capitals of the name
+  (`--gen-vis-legend-symbol-middle`, 0.36em above its baseline) at any font
+  size and symbol size; before, the name was 4 pixels above the bottom of
+  the box of the symbol, about 1.5 pixels above its middle at 13px and more
+  at 8pt. The font size of the names is the one of the entry
+  (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`. A
+  rect symbol is at the middle of its box. The rows of the entries stay 20
+  pixels high (a line height of 20/13 em, the entries at the top of the
+  row), the symbol and its name are in the middle of the row: names move
+  about 3 pixels down, symbols about 2 pixels, the legends and the plots
+  stay where they were. The `fontSize` of the export (CLI `--font-size`)
+  sizes the entries, so their symbols are centered at that size too.
+- Horizontal and vertical annotation lines (cartesian plots) are at the
+  position of the tick of their value, with the half pixel of the axes
+  (`pixelOffset` of utils/axis.js, 0.5 on screens of one pixel per CSS
+  pixel): before, they were between two pixel rows (blurry, twice as wide
+  as the axis) and a pixel away from the tick of the same value. Labels
+  and bands keep their positions.
+- The labels of maps (`geo:text`) are at the pole of inaccessibility of the
+  largest polygon of a feature, not at its centroid, so labels of long or
+  bent countries are inside them; `"place": "centroid"` keeps the centroid,
+  e.g. of labels on bubbles (`data/bev/def-map.json`).
+- Rows without a value of a mapping of categories (e.g. an empty cell of a
+  column with `fromData`) stay in the chart: they are in no category, so
+  plots `by` the mapping and its scale leave them out, but other plots draw
+  them. Before, they were left out of the whole chart without a message,
+  e.g. all rows of other plots in one CSV. A plot only needs the values of
+  the row its props use, not e.g. `@y:scaled:max` (the end of the scale).
+  The categories of a scale no longer include `null`.
+- A rotated axis title is in the middle of the range of its scale, not of
+  the plot area (the same without a `range`).
+
 ### Features
+
+Scales:
 
 - `scale.domainIgnores`: the conditions of `filter` (their mappings, `true`
   all) the domain of a scale taken from the data ignores, e.g.
   `"domainIgnores": ["month"]` of a slider over months: the scale (also of
   colors and their legend) is the one of all months, the plots draw the
   rows of the month. Fixed `domain` entries still win, stacked values are
-  stacked per month, facets with own scales get the rows of their facet.
-- The legend entries of the categories of the hovered row are highlighted
-  in every legend (class `vis-legend-highlight`, bold of the same width,
-  so no entry moves), of the hover of the plot, of a legend entry and of
-  the highlight of the page.
+  stacked per month, facets and rows or columns of grids with own scales
+  get the rows of their part.
+- `pad` of a scale: extends the ends of the domain taken from the data (as
+  the 2% it replaces, a fixed end such as 0 stays), positive values extend
+  (a number or `[start, end]`), instead of `domainRel`, whose values are
+  added; `validateDef` warns of a positive start of `domainRel` or
+  `domainAbs`, which shrinks the domain and cuts off data.
+- Periods of dates: `"interval": "half"` (also day, week, month, quarter,
+  year, "6 months") of a date mapping of a time or utc scale: a value is
+  the period starting at it (also of fiscal years, e.g. halves from
+  April), the domain reaches the end of the last period, a value is at the
+  middle of its period (`@x:scaled`, also of points, lines and the hover),
+  `@x:scaled:start`, `@x:scaled:end` and `@x:step` are its start, end and
+  length, the hover shows the period; `%K` is the half of the year in time
+  formats. Bars on time scales need no `domainAbs` and widths of the plot
+  width.
+
+Transforms:
+
+- Statistics: `bin` adds a row per class and group of the values of a
+  column (`edges` of numbers and `{from, to, step}` ranges, unequal
+  classes, or a `step`; `by`, `weight`, the columns `start`, `end` and
+  `as`), empty classes with 0, values outside the edges left out with a
+  warning; `normalize`: `"share"` of the group or `"density"` (the area is
+  1), and `per` (e.g. 5 of the count per 5k of unequal classes). The rows
+  stay, so a histogram and a strip plot of the same values are one chart,
+  the plots draw the rows with the values they use; `"replace": true` keeps
+  only the classes. The later transforms (`share`, `calc`) compute values
+  of the classes. `random`: a random number per row in a `range`, the same
+  on every draw (`seed`, a hash of the row's index or of a `key` column),
+  e.g. the jitter of a strip plot. Both are in `spec/` with the rules of
+  their numbers, for other implementations.
+- Transforms can change the rows: the store prepares them again when they
+  change, e.g. other edges of a global.
+
+Plots:
+
+- Histograms: `bar` with `x0`, `x1` and `y1` is a bar from start to end on
+  a continuous scale (crisp edges, so neighbours meet without a seam), a
+  `line` with `x0` and `x1` in `d` draws stairs down to the base at both
+  ends, e.g. the outline of a density per category, an `area` with them
+  fills the stairs. Examples `data/stats/histogram.json`,
+  `data/stats/density.json` and `data/stats/jitter.json`.
+- `stackBy` of a stacked mapping: the mapping of the positions of the
+  stacks, e.g. the start of the classes of a bin (`lo`) of a stacked
+  histogram whose `x` are the values of the rows, also the positions of the
+  hover (example `data/stats/jitter.json`, with a strip plot of the values
+  below it).
+- `rule`: a line per row across the plot area at a value of x (or y), in
+  the color of its category, optionally from `y1` to `y2`, e.g. the caps of
+  regimes, instead of an `svg:line` with four props.
+- `"once": true`: a plot drawn once per facet, of no row, e.g. a header or
+  a unit label at the edge of the plot area (`@plot:top`).
+- Names of the props: `@plot:top`, `@plot:bottom`, `@plot:left`,
+  `@plot:right`, `@plot:width` and `@plot:height`, the edges and the size
+  of the plot area in the coordinates of the plots, also of polar plots
+  (around their center); `@facet` and `@facet:name`, the key and the name
+  of the facet (of grids also `@facet:row`, `@facet:col` and their
+  `:name`); `@row:index`, the place of the row among the rows of the plot
+  in the facet, e.g. the lines of a small table per facet. `@height` of a
+  prop is the one of the facet with its margins, of a `scale.range` the one
+  of the plot area, so `"y2": "@height"` ends below the plot area; the docs
+  say it now.
+- The layer of annotations: `"layer": "below"` (default) or `"above"`, and
+  `"before": "<plot id>"` right before a plot, e.g. lines above the bars
+  but below labels whose halo cuts them.
+
+Axes:
+
+- Axes at a value of the other axis: `"axis": {"at": 0}` puts the line and
+  the tick marks of a cartesian axis at y = 0 (or a vertical one at a value
+  of x, e.g. a date), at the half pixel of the tick of the value and above
+  the plots; outside of the other domain (or 0 of a log scale) it stays at
+  its edge. The labels stay at the edge (`"labels": {"at": "edge"}`, the
+  default) or move with the line (`"axis"`, without the label at the
+  crossing). Example `data/axis/balance.json`.
+- The title of a vertical axis at the top: `"title": {"name": "in €",
+  "position": "top"}` draws it horizontal above the range of the scale,
+  e.g. the unit at the top left.
+
+Legends:
+
+- The entries of the categories of the hovered row are highlighted in every
+  legend (class `vis-legend-highlight`, bold of the same width, so no entry
+  moves), of the hover of the plot, of a legend entry and of the highlight
+  of the page.
 - Legend symbols: a box of a `width` and a `height` (both `size` by
   default), e.g. a longer line of a dash without a higher box, and a
   `symbol` per category (`"categories": {"A": {"symbol": "rect"}}`), e.g.
-  an area in a legend of lines.
-- Statistics in the transforms: `bin` adds a row per class and group of
-  the values of a column (`edges` of numbers and `{from, to, step}` ranges,
-  unequal classes, or a `step`; `by`, `weight`, the columns `start`, `end`
-  and `as`), empty classes with 0, values outside the edges left out with
-  a warning. The rows stay, so a histogram and a strip plot of the same
-  values are one chart, the plots draw the rows with the values they use;
-  `"replace": true` keeps only the classes. The later transforms (`share`,
-  `calc`) compute values of the classes, e.g. a density or counts per
-  month. Transforms can change the rows now (the store prepares them again
-  when they change, e.g. other edges of a global). `random`: a random
-  number per row in a `range`, the same on every draw (`seed`, a hash of
-  the row's index or of a `key` column), e.g. the jitter of a strip plot.
-  Both are in `spec/` with the rules of their numbers, for other
-  implementations.
-- Axes at a value of the other axis: `"axis": {"at": 0}` puts the line
-  and the tick marks of a cartesian axis at y = 0 (or a vertical one at a
-  value of x, e.g. a date), at the half pixel of the tick of the value and
-  above the plots; outside of the other domain it stays at its edge. The
-  labels stay at the edge (`"labels": {"at": "edge"}`, the default) or move
-  with the line (`"axis"`, without the label at the crossing). Example
-  `data/axis/balance.json`.
-- Histograms: `bar` with `x0`, `x1` and `y1` is a bar from start to end on a
-  continuous scale (crisp edges, so neighbours meet without a seam), a
-  `line` with `x0` and `x1` in `d` draws stairs down to the base at both
-  ends, e.g. the outline of a density per category. Examples
-  `data/stats/histogram.json` and `data/stats/density.json`. An `area` with
-  `x0` and `x1` in `d` fills the stairs, e.g. a light area under the outline
-  of a density.
-- A plot none of whose rows has the values it uses is named in a warning
-  (console, CLI, `messages` of the export page), e.g. `plot 'caps': none
+  an area in a legend of lines. The size of the symbols is a default of the
+  chart (`legend.symbol` of the defaults: `size`, `width`, `height`, per
+  shortcut also `props`), e.g. 9px rects and 18×9 lines of a house style.
+- `"symbol": "auto"`: the symbol of a legend of the plots of its
+  categories, a box of their bars or areas, a line of their lines and a
+  dot of their points together, with their style, e.g. a light area under
+  a line; also of the plots of a patch of a form element.
+- Annotations in the legend: `"legend": "name"` of an annotation is an
+  entry of the legend with a symbol of it (a vertical line of a line at a
+  value of x, a horizontal one of y, a box of a band), after the legends
+  of the mappings.
+- `"classes": true` of the legend of a threshold scale: a label per class
+  (`< 50`, `50–100`, …, `≥ 300`) instead of ticks at the limits, the legend
+  as wide as the labels.
+
+Facets:
+
+- Grids of facets: `"facets": {"cols": "group", "rows": "band"}`, a facet
+  per category of the two mappings, the names of the columns above the
+  first row and the ones of the rows beside them (`"rowHeaders": "right"`,
+  rotated, or `"left"`, wrapped if longer than 40% of the width), empty
+  boxes of combinations without rows, scales of all facets, per row or per
+  column (`"scales": {"y": "row"}`, the labels only at the outer facets,
+  also beside empty cells), `facet` of plots and annotations of a row, a
+  column or a cell (`{"group": "Bau"}`). The facets of `dim` and a number
+  of `cols` (also `"@cols"` of a global) are the ones before.
+- `"facets": {"axisTitles": "outer"}`: the titles of the axes only at the
+  outer facets, e.g. of x in the bottom row and of y in the first column.
+- `facets.title.props`: CSS properties of the titles of the facets in the
+  definition, also of the props of the category of a facet, e.g. its
+  color.
+
+Hover:
+
+- `"total": true` (the name of the locale, e.g. `Gesamt`) or a name of
+  `options.hover` is a row of the sum of the stacked values of the
+  position, also `{total}` of the title; `"cell": false` of the `hover` of
+  a mapping keeps its value for the templates without a column; a row
+  which is not stacked is not the nearest one in a segment of a stack.
+
+Maps and form elements:
+
+- `"fit": true` of `geo:text` shows only the labels which fit into their
+  area, `"overlap": false` only the ones which do not overlap the label of
+  a larger area, without a list of them.
+- The names of the values of a form element of a column: `format` (e.g.
+  `"%b %Y"` of `2026-10`) or a column of `names`, instead of the raw
+  values.
+
+Warnings (console, CLI, `messages` of the export page):
+
+- A plot none of whose rows has the values it uses, e.g. `plot 'caps': none
   of its 312 rows is drawn, 312 without a value of mapping 'y'`.
+- A key of a `filter` (of the definition, a plot or the hover) which is no
+  mapping, e.g. a column instead of its mapping, when the chart is drawn;
+  before, only `validateDef` named it and the plot stayed empty.
+- Values outside the edges of a bin and edges of no class.
+- `validateDef` checks the new keys, e.g. a `facet` object of a plot
+  without a grid, a `total` without a stacked mapping, keys of a bin on
+  another transform.
 
 ### Fixes
 
@@ -59,125 +220,6 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   point) per value, in ascending order; before, its domain was the two ends
   of the values (extended by 2%), so the bars were drawn at wrong places,
   and the hover failed (`nearest is not a function`).
-- The categories of a band, point or ordinal scale are in the order of the
-  `categories` of the mapping (as the legend, the stacks and the facets),
-  the ones not listed after them in the order of the rows; before, in the
-  order of the rows, so the order of `categories` did not decide the bands.
-  Lines and areas on a band or point scale connect their points in the
-  order of its categories, not of the rows (also of a fixed `domain`, which
-  4.0 drew in the order of the rows, e.g. a radar as a star). Charts with
-  categories listed in another order than the rows change, e.g. the angles
-  of `data/bev/def-radar.json`.
-- Legend symbols are centered on the middle of the capitals of the name
-  (`--gen-vis-legend-symbol-middle`, 0.36em above its baseline), at any
-  font size; before, on its line box, about 1.5 pixels above the middle at
-  8pt. The font size of the names is the one of the entry
-  (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
-  A rect symbol is at the middle of its box. The rows of the entries stay
-  20 pixels high (a line height of 20/13 em, the entries at the top of the
-  row), the symbol and its name are in the middle of the row: names move
-  about 3 pixels down, symbols about 2 pixels, the legends and the plots
-  stay where they were. The `fontSize` of the export (CLI `--font-size`)
-  sizes the entries, so their symbols are centered at that size too.
-- `"classes": true` of the legend of a threshold scale: a label per class
-  (`< 50`, `50–100`, …, `≥ 300`) instead of ticks at the limits.
-- The names of the values of a form element of a column: `format` (e.g.
-  `"%b %Y"` of `2026-10`) or a column of `names`, instead of the raw values.
-- The labels of maps: `geo:text` at the pole of inaccessibility of the
-  largest polygon of a feature, not its centroid (`"place": "centroid"`
-  keeps it), so labels of long or bent countries are inside them; the labels
-  of maps move. `"fit": true` and `"overlap": false` show only labels which
-  fit into their area and do not overlap, without a list of them.
-- `pad` of a scale: extends the ends of the domain taken from the data (as
-  the 2% it replaces, a fixed end such as 0 stays), positive values extend
-  (a number or `[start, end]`), instead of `domainRel`, whose values are
-  added; `validateDef` warns of a positive start of `domainRel` or
-  `domainAbs`, which shrinks the domain and cuts off data.
-- Periods of dates: `"interval": "half"` (also day, week, month, quarter,
-  year, "6 months") of a date mapping: the domain reaches the end of the
-  last period, a value is at the middle of its period (`@x:scaled`, also
-  of points, lines and the hover), `@x:scaled:start`, `@x:scaled:end` and
-  `@x:step` are its start, end and length, the hover shows the period; `%K` is the half of the year in time formats. Bars on
-  time scales need no `domainAbs` and widths of the plot width.
-- The hover: `"total": true` (or a name) of `options.hover` is a row of the
-  sum of the stacked values of the position, also `{total}` of the title;
-  `"cell": false` of the `hover` of a mapping keeps its value for the
-  templates without a column; a row which is not stacked is not the
-  nearest one in a segment of a stack.
-- Grids of facets: `"facets": {"cols": "group", "rows": "band"}`, a facet
-  per category of the two mappings, the names of the columns above the
-  first row and the ones of the rows beside them (`"rowHeaders": "right"`,
-  rotated, or `"left"`), empty boxes of combinations without rows, scales of
-  all facets, per row or per column (`"scales": {"y": "row"}`, the labels
-  only at the outer facets), `facet` of plots and annotations of a row, a
-  column or a cell (`{"group": "Bau"}`). The facets of `dim` and a number of
-  `cols` are the ones before.
-- `@row:index` of the props of a plot: the place of the row among the rows
-  of the plot in the facet, e.g. the lines of a small table per facet (with
-  a header `once` and `@plot:top`), without a column of positions.
-- `"facets": {"axisTitles": "outer"}`: the titles of the axes only at the
-  outer facets, e.g. of x in the bottom row and of y in the first column.
-- `facets.title.props`: CSS properties of the titles of the facets in the
-  definition, also of the props of the category of a facet, e.g. its color.
-- `rule`: a line per row across the plot area at a value of x (or y), in
-  the color of its category, optionally from `y1` to `y2`, e.g. the caps of
-  regimes, instead of an `svg:line` with four props.
-- `normalize` of a bin: `"share"` of the group or `"density"` (the area is
-  1), and `per` (e.g. 5 of the count per 5k of unequal classes), instead of
-  a `share` and a `calc` after it.
-- `stackBy` of a stacked mapping: the mapping of the positions of the
-  stacks, e.g. the start of the classes of a bin (`lo`) of a stacked
-  histogram whose `x` are the values of the rows, also the positions of the
-  hover (example
-  `data/stats/jitter.json`, with a strip plot of the values below it).
-- The title of a vertical axis at the top: `"title": {"name": "in €",
-  "position": "top"}` draws it horizontal above the range of the scale, e.g.
-  the unit at the top left. A rotated title is in the middle of the range of
-  its scale, not of the plot area (the same without a `range`).
-- `"once": true`: a plot drawn once per facet, of no row, e.g. a header or a
-  unit label at the edge of the plot area (`@plot:top`); `@facet` and
-  `@facet:name` are the key and the name of the facet.
-- Annotations in the legend: `"legend": "name"` of an annotation is an
-  entry of the legend with a symbol of it (a vertical line of a line at a
-  value of x, a horizontal one of y, a box of a band), after the legends of
-  the mappings.
-- The layer of annotations: `"layer": "below"` (default) or `"above"`,
-  and `"before": "<plot id>"` right before a plot, e.g. lines above the
-  bars but below labels whose halo cuts them.
-- `"symbol": "auto"`: the symbol of a legend of the plots of its
-  categories, a box of their bars or areas, a line of their lines and a dot
-  of their points together, with their style, e.g. a light area under a
-  line.
-- The size of the symbols of the legends is a default of the chart
-  (`legend.symbol` of the defaults: `size`, `width`, `height`, per shortcut
-  also `props`), e.g. 9px rects and 18×9 lines of a house style.
-- `@plot:top`, `@plot:bottom`, `@plot:left`, `@plot:right`, `@plot:width`
-  and `@plot:height`: the edges and the size of the plot area in the
-  coordinates of the plots, also of polar plots (around their center).
-  `@height` of a prop is the one of the facet with its margins, of a
-  `scale.range` the one of the plot area, so `"y2": "@height"` ended below
-  the plot area; the docs say it now.
-- A key of a `filter` (of the definition, a plot or the hover) which is no
-  mapping, e.g. a column instead of its mapping, is named in a warning when
-  the chart is drawn (the console, the CLI, the messages of the export
-  page); before, only `validateDef` named it and the plot stayed empty.
-- Rows without a value of a mapping of categories (e.g. an empty cell of
-  a column with `fromData`) stay in the chart: they are in no category, so
-  plots `by` the mapping and its scale leave them out, but other plots
-  draw them. Before, they were left out of the whole chart without a
-  message, e.g. all rows of other plots in one CSV. A plot only needs the
-  values of the row its props use, not e.g. `@y:scaled:max` (the end of
-  the scale). The categories of a scale no longer include `null`.
-- The name of a legend entry is centered vertically on the box of its
-  symbol at any size (a flex box); before, it was 4 pixels above the
-  bottom of the box, centered only at the default size of 16.
-- Horizontal and vertical annotation lines (cartesian plots) are at the
-  position of the tick of their value, with the half pixel of the axes
-  (`pixelOffset` of utils/axis.js, 0.5 on screens of one pixel per CSS
-  pixel): before, they were between two pixel rows (blurry, twice as wide
-  as the axis) and a pixel away from the tick of the same value. Labels
-  and bands keep their positions.
-
 - Export page: each `genVisExport(options)` call (and
   `genVisExport.resolve`) loads its files fresh. Before, the page's
   5-minute cache of requests outlived a call, so a definition whose data
