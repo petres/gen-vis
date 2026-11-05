@@ -8,10 +8,22 @@ const finite = (...values) => values.every(v => Number.isFinite(v));
 
 const curve = plot => curves[plot.curve ?? 'linear'] ?? d3.curveLinear;
 
-// the points of the path of a group, the values of `d` of its rows
-const points = g => {
+// the points of the path of a group, the values of `d` of its rows, of a
+// position of a band or a point scale (`path` of the prop, e.g. `d.x`) in
+// the order of its categories, not of the rows, e.g. a line or the polygon
+// of a radar through the categories in the order of `categories`
+const points = (g, plot, ctx, path) => {
     const d = g.prop('d');
-    return g.rows.map(row => d(row) ?? {});
+    const ref = plot && refOf(path.split('.').reduce((p, k) => p?.[k], plot.props));
+    const name = ref?.split(':')[0];
+    const s = name === undefined ? undefined : ctx.scales[name];
+    let rows = g.rows;
+    if (s?.step) {
+        const at = new Map(s.domain().map((k, i) => [String(k), i]));
+        const index = row => at.get(String(row[name])) ?? at.size;
+        rows = [...rows].sort((a, b) => index(a) - index(b));
+    }
+    return rows.map(row => d(row) ?? {});
 };
 
 // the scale of the mapping a prop of a plot refers to, e.g. the one of `x`

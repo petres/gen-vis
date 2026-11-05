@@ -80,7 +80,7 @@ const types = {
                 .defined(e => finite(e.angle, e.radius))
                 .angle(e => e.angle + offset)
                 .radius(e => clampRadius(e.radius, r0))
-                (points(g))
+                (points(g, plot, ctx, 'd.angle'))
             );
         },
     },
@@ -99,7 +99,7 @@ const types = {
                 .angle(e => e.angle + offset)
                 .innerRadius(e => clampRadius(e.innerRadius, r0))
                 .outerRadius(e => clampRadius(e.outerRadius, r0))
-                (points(g))
+                (points(g, plot, ctx, 'd.angle'))
             );
         },
     },

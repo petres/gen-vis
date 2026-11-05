@@ -93,7 +93,7 @@ export default {
                 .defined(e => finite(e.x, e.y))
                 .x(e => e.x)
                 .y(e => e.y)
-                (points(g))
+                (points(g, plot, ctx, 'd.x'))
             );
         },
     },
@@ -116,7 +116,7 @@ export default {
                 .x(e => e.x)
                 .y1(e => e.y1)
                 .y0(e => e.y0)
-                (points(g))
+                (points(g, plot, ctx, 'd.x'))
             );
         },
     },

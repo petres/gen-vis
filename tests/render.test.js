@@ -3619,3 +3619,30 @@ describe('periods of dates (interval)', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the categories of band and point scales in the order of the categories', () => {
+    const def = () => ({
+        options: { width: 400, height: 200, margins: { top: 10, right: 10, bottom: 30, left: 30 } },
+        mapping: {
+            x: { column: 'land', categories: { Wien: {}, Tirol: {}, Burgenland: {} }, scale: { type: 'point', orientation: 'horizontal' } },
+            y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' } },
+        },
+        plot: [{ type: 'line', id: 'line' }, { type: 'area', id: 'area' }, { type: 'point', id: 'dots', props: { r: 2 } }],
+    });
+    // the rows in another order than the categories
+    const data = 'land,value\nBurgenland,1\nTirol,2\nWien,3';
+
+    test('the points of the scale and the lines and areas through them in this order, not the one of the rows', async () => {
+        const el = await mount({ def: def(), data });
+        const cx = [...el.querySelectorAll('[data-plot="dots"] circle')].map(c => +c.getAttribute('cx'));
+        // Burgenland, Tirol, Wien in the rows, the last one at the right
+        expect(cx[0]).toBeGreaterThan(cx[1]);
+        expect(cx[1]).toBeGreaterThan(cx[2]);
+        for (const plot of ['line', 'area']) {
+            const d = el.querySelector(`[data-plot="${plot}"] path`).getAttribute('d');
+            const xs = [...d.matchAll(/[ML]([\d.]+),/g)].map(m => +m[1]).slice(0, 3);
+            expect(xs.map(Math.round)).toEqual([...cx].sort((a, b) => a - b).map(Math.round));
+        }
+        expect(errors).toEqual([]);
+    });
+});
