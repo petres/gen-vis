@@ -481,7 +481,7 @@ export interface InLanguages {
 }
 export interface Transform {
     /**
-     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`).
+     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max) of a window of `size` rows.
      */
     type:
         | 'year'
@@ -496,7 +496,10 @@ export interface Transform {
         | 'rank'
         | 'random'
         | 'lookup'
-        | 'bin';
+        | 'bin'
+        | 'fold'
+        | 'aggregate'
+        | 'window';
     /**
      * The column of the values, a template of the globals, of a lookup the one of the keys.
      */
@@ -522,15 +525,15 @@ export interface Transform {
      */
     dataFormat?: 'csv' | 'tsv' | 'json' | 'parquet';
     /**
-     * lookup: the column of the keys of the rows of the file; random: the column of the keys of the rows, e.g. an id, a row keeps its number also if the rows of the file are in another order (by default its index in the data).
+     * fold: the column of the names of the folded columns, key by default; lookup: the column of the keys of the rows of the file; random: the column of the keys of the rows, e.g. an id, a row keeps its number also if the rows of the file are in another order (by default its index in the data).
      */
     key?: string;
     /**
-     * lookup: the column of the values of the rows of the file, a template of the globals, e.g. "name_{lang}".
+     * fold: the column of the values of the folded columns, value by default; lookup: the column of the values of the rows of the file, a template of the globals, e.g. "name_{lang}".
      */
     value?: string;
     /**
-     * The name of the new column, by default the one of `column`, which it replaces; bin: the column of the number of the values of the class, count by default.
+     * The name of the new column, by default the one of `column`, which it replaces; bin: the column of the number of the values of the class, count by default; aggregate with `rows`: the column of the aggregate of the group.
      */
     as?: string;
     /**
@@ -570,7 +573,7 @@ export interface Transform {
      */
     end?: string;
     /**
-     * bin: the rows of the classes replace the rows; by default they come after them, e.g. a histogram and a strip plot of the same values, the plots draw the rows with the values they use.
+     * bin, fold: the rows of the transform replace the rows (by default of a fold); without it they come after them (by default of a bin), e.g. a histogram and a strip plot of the same values, the plots draw the rows with the values they use.
      */
     replace?: boolean;
     /**
@@ -589,7 +592,7 @@ export interface Transform {
      */
     by?: string | string[];
     /**
-     * The column of the order of the rows of rolling and cumulative, e.g. the date, the order of the rows by default.
+     * The column of the order of the rows of rolling, cumulative, window and of the first and last values of aggregate, e.g. the date, the order of the rows by default.
      */
     order?: string;
     /**
@@ -603,13 +606,29 @@ export interface Transform {
      */
     scale?: number;
     /**
-     * The number of the rows of the window of rolling.
+     * The number of the rows of the window of rolling and of the sums, means, least and largest values of window.
      */
     size?: number;
     /**
-     * The window of rolling: the rows before the row (end, by default) or around it.
+     * The window of rolling and window: the rows before the row (end, by default) or around it.
      */
     align?: 'end' | 'center';
+    /**
+     * fold: the columns to fold, a list of names or a pattern with a single `*`, e.g. "20*", the columns which match, in their order, templates of the globals.
+     */
+    columns?: string | string[];
+    /**
+     * aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows.
+     */
+    op?: 'sum' | 'mean' | 'min' | 'max' | 'count' | 'median' | 'first' | 'last' | 'lag' | 'lead' | 'diff' | 'pct';
+    /**
+     * aggregate: a row per group instead of a column, with the columns `by` and `as`, the rows replace the rows.
+     */
+    rows?: boolean;
+    /**
+     * window: the number of rows before (lag, diff, pct) or after (lead) the row, 1 by default.
+     */
+    offset?: number;
     /**
      * The year of align, 2020 by default.
      */

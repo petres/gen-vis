@@ -12,7 +12,7 @@ import { refNames } from "@/utils/expr";
  */
 
 // the types of the transforms, e.g. for validateDef
-const transformNames = ['year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin'];
+const transformNames = ['year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window'];
 
 const list = transforms => [transforms ?? []].flat();
 
@@ -41,19 +41,26 @@ const utcColumns = def => new Set(Object.values(def.mapping ?? {})
     .map(m => fillTemplate(m.column, def.globals ?? {})));
 
 // the columns of the data the transforms use, e.g. for parquet, the ones of
-// the transforms themselves are no columns of the data
+// the transforms themselves are no columns of the data, null if they are
+// not known, e.g. of a pattern of a fold ("20*")
 const transformColumns = transforms => {
     const own = new Set();
     const used = new Set();
+    let unknown = false;
     list(transforms).forEach(t => {
+        const folded = t.type == 'fold' ? [t.columns ?? []].flat() : [];
+        if (folded.some(c => typeof c == 'string' && c.includes('*')))
+            unknown = true;
         [t.column, ...[t.by ?? []].flat(), t.order, t.weight, t.type == 'random' ? t.key : undefined,
-            ...Object.keys(t.base ?? {}), ...(t.expr === undefined ? [] : refNames(t.expr))]
+            ...Object.keys(t.base ?? {}), ...(t.expr === undefined ? [] : refNames(t.expr)), ...folded]
             .filter(c => typeof c == 'string' && !own.has(c)).forEach(c => used.add(c));
-        // the columns of the rows of a bin are its own
+        // the columns of the rows of a bin or a fold are its own
         if (t.type == 'bin')
             [t.start ?? 'start', t.end ?? 'end', t.as ?? 'count'].forEach(c => own.add(c));
+        else if (t.type == 'fold')
+            [t.key ?? 'key', t.value ?? 'value'].forEach(c => own.add(c));
         else if (t.type != 'filter')
             own.add(t.as ?? t.column);
     });
-    return [...used];
+    return unknown ? null : [...used];
 };

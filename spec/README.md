@@ -84,8 +84,9 @@ the rules of the values:
   Numbers are the same up to a relative difference of 1e-12.
 - `kept` (optional): the indexes of the rows of the filters, without one
   all rows.
-- `result` (optional): the rows after a transform of rows (`bin`), the
-  columns of the later transforms are the ones of these rows.
+- `result` (optional): the rows after a transform of rows (`bin`, `fold`,
+  `aggregate` with `rows`), the columns of the later transforms are the ones
+  of these rows.
 - `notes` (optional): the warnings of the transforms, e.g. of values outside
   the edges of a bin, none by default.
 
@@ -143,10 +144,50 @@ two different ones are needed`. A class includes its start, the last one
 also its end; missing values are left out, values outside the edges too,
 with one note of the bin (of all groups) `transform[<i>] (bin): <n> values
 of '<column>' outside the edges <first> to <last> are left out`. The columns
-of the transforms before have no values of the added rows, the rows of the
-filters before include them. With `replace` the rows of the classes (of the
+of the transforms before have no values of the added rows (except the ones
+the rows have, e.g. a `by` of a transform before), the rows of the filters
+before include them. With `replace` the rows of the classes (of the
 rows of the filters before) replace the rows, the columns of the transforms
 before and the filters are left out (all rows are kept).
+
+`fold` (wide to long) replaces the rows (`replace`, true by default; without
+it the rows follow the rows as the ones of a `bin`) by a row per row and
+column of `columns` in their order: a list of names or a pattern with a
+single `*` (`"20*"`, `"*_eu"`, `"*"`), the columns of the rows which match
+(the ones of the data in the order of the first row, then the ones of the
+transforms before), a string without a `*` is one column. A folded row has
+the other columns of the row (the ones of the data and of the transforms
+before, the folded ones left out), the name of the column in `key` (`"key"`
+by default) and its value in `value` (`"value"`), as it is, not converted,
+`null` if the row has no such column. Without `columns` or with more than
+one `*` the fold is an error. Rows which follow the rows (also of a `bin`)
+have the values of the columns of the transforms before which they have,
+e.g. the `d` of a `calc` before a fold or a `by` of a bin, no value
+otherwise.
+
+`aggregate` computes an aggregate of the numbers of `column` of the group
+(`op`: `sum`, `mean`, `min`, `max`, `count`, `median`, `first`, `last`),
+missing values are left out, `count` is the number of the numbers (0 of
+none), `median` the middle number or the mean of the two middle ones,
+`first` and `last` the first or the last number in the order of `order` or
+of the rows; a group without numbers has no value (except `count`). By
+default a column, the value of every row of the group. With `rows` a row
+per group replaces the rows (of the rows of the filters before, as a `bin`
+with `replace`), in the order of the first rows of the groups, with the
+values of the columns `by` of the first row of the group (as they are) and
+the aggregate in `as` (by default `column`); without `by` one row of all
+rows, also without rows. An unknown `op` is an error.
+
+`window` computes of every row of the group in the order of `order`
+(`op`): `lag` or `lead` the number `offset` rows (1 by default) before or
+after the row in the group (`null` beyond the ends or if that row has no
+number), `diff` the number minus the one `offset` rows before, `pct` the
+change in percent, `(value/before - 1)*100` (`null` of a missing one or of
+a `before` of 0); `sum`, `mean`, `min` and `max` the ones of the window of
+`size` rows as the mean of `rolling` (the rows before the row or around it
+with `"align": "center"`, only whole windows, missing values left out, a
+row without a number has no value, the sums compensated as the ones of
+`rolling`). An unknown `op` is an error.
 
 ## Merging
 

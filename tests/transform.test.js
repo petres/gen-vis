@@ -193,7 +193,7 @@ describe('transforms', () => {
             "transform[0]: unknown global 'base' in the template",
             "transform[1].size: the number of the rows of the window is needed, e.g. 7",
             "transform[1].align: expected 'end' or 'center'",
-            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin'",
+            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window'",
             "transform[2].column: the column of the values is needed",
         ]);
         expect(schema.definitions.transform.properties.type.enum).toEqual(Object.keys(transformTypes));
@@ -321,7 +321,7 @@ describe('bin and random in a chart', () => {
         const checks = transform => validateDef({ ...def(), transform }).filter(w => w.startsWith('transform'));
         expect(checks([{ type: 'bin', column: 'v' }])).toEqual([`transform[0].edges: the edges of the classes are needed, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143], or a 'step'`]);
         expect(checks([{ type: 'random' }])).toEqual([`transform[0].as: the name of the new column is needed, e.g. "jitter"`]);
-        expect(checks([{ type: 'calc', as: 'c', expr: 1, replace: true }])).toEqual([`transform[0].replace: only of a bin: its rows replace the rows`]);
+        expect(checks([{ type: 'calc', as: 'c', expr: 1, replace: true }])).toEqual([`transform[0].replace: only of a bin or a fold: its rows replace the rows`]);
         expect(checks(def().transform)).toEqual([]);
     });
 
@@ -335,5 +335,76 @@ describe('bin and random in a chart', () => {
         expect(transformColumns([{ type: 'bin', column: 'v', by: 'g', weight: 'w' }, { type: 'calc', as: 'd', expr: { '/': ['@count', '@end'] } }]))
             .toEqual(['v', 'g', 'w']);
         expect(transformColumns([{ type: 'random', as: 'r', key: 'id' }])).toEqual(['id']);
+    });
+});
+
+describe('fold, aggregate and window', () => {
+    // the rows after the transforms with the columns of the transforms, of the filters
+    const rowsOf = (source, transforms, globals) => {
+        const c = applyTransforms(source, transforms, globals);
+        const base = c.rows ?? source;
+        const all = base.map((r, i) => ({ ...r, ...Object.fromEntries([...c].map(([k, v]) => [k, v[i]])) }));
+        return c.kept ? c.kept.map(i => all[i]) : all;
+    };
+
+    test('fold: a row per row and column, the key and the value, a pattern of the globals, the rows replaced or appended', () => {
+        const wide = [{ id: 'a', v_2019: '1', v_2020: '2' }, { id: 'b', v_2019: '', v_2020: '4' }];
+        expect(rowsOf(wide, { type: 'fold', columns: ['v_2019', 'v_2020'], key: 'year' })).toEqual([
+            { id: 'a', year: 'v_2019', value: '1' }, { id: 'a', year: 'v_2020', value: '2' }, { id: 'b', year: 'v_2019', value: '' }, { id: 'b', year: 'v_2020', value: '4' }]);
+        expect(rowsOf(wide, { type: 'fold', columns: '{prefix}*' }, { prefix: 'v_' }).map(r => [r.key, r.value]))
+            .toEqual([['v_2019', '1'], ['v_2020', '2'], ['v_2019', ''], ['v_2020', '4']]);
+        // appended: the indexes of the rows of a random number after them
+        const appended = applyTransforms(wide, [{ type: 'fold', columns: 'v_*', replace: false }, { type: 'random', as: 'r' }]);
+        expect(appended.rows).toHaveLength(6);
+        expect(appended.get('r')).toEqual(applyTransforms(wide, [{ type: 'random', as: 'r' }]).get('r').concat(appended.get('r').slice(2)));
+        expect(() => applyTransforms(wide, { type: 'fold' })).toThrow("fold: the 'columns' to fold are needed");
+    });
+
+    test('aggregate: a column of the group or a row per group', () => {
+        expect(column({ type: 'aggregate', column: 'value', by: 'type', op: 'sum', as: 'total' }, 'total')).toEqual([80, 80, 80, 20, 20, 20]);
+        expect(column({ type: 'aggregate', column: 'value', by: 'type', op: 'last', order: 'date', as: 'last' }, 'last')).toEqual([40, 40, 40, 15, 15, 15]);
+        expect(column({ type: 'aggregate', column: 'value', op: 'median', as: 'm' }, 'm')).toEqual([15, 15, 15, 15, 15, 15]);
+        expect(rowsOf(rows, { type: 'aggregate', column: 'value', by: 'type', op: 'count', as: 'n', rows: true })).toEqual([{ type: 'gas', n: 3 }, { type: 'oil', n: 2 }]);
+        expect(rowsOf(rows, [{ type: 'filter', expr: { '==': ['@type', 'oil'] } }, { type: 'aggregate', column: 'value', op: 'mean', rows: true }]))
+            .toEqual([{ value: 10 }]);
+        expect(() => applyTransforms(rows, { type: 'aggregate', column: 'value', op: 'total' })).toThrow('aggregate: the op is one of');
+    });
+
+    test('window: lag, lead, diff and pct in the order of a column, sums and extremes of a window as rolling', () => {
+        expect(column({ type: 'window', column: 'value', by: 'type', order: 'date', op: 'lag', as: 'prev' }, 'prev')).toEqual([null, 10, 30, null, 15, 5]);
+        expect(column({ type: 'window', column: 'value', by: 'type', order: 'date', op: 'lead', as: 'next' }, 'next')).toEqual([30, 40, null, 15, null, null]);
+        expect(column({ type: 'window', column: 'value', by: 'type', order: 'date', op: 'diff', as: 'd' }, 'd')).toEqual([null, 20, 10, null, null, 10]);
+        expect(column({ type: 'window', column: 'value', by: 'type', order: 'date', op: 'pct', as: 'p' }, 'p')).toEqual([null, 200, (40/30 - 1)*100, null, null, 200]);
+        expect(column({ type: 'window', column: 'value', by: 'type', order: 'date', op: 'sum', size: 2, as: 's' }, 's')).toEqual([null, 40, 70, null, null, 20]);
+        expect(column({ type: 'window', column: 'value', by: 'type', order: 'date', op: 'mean', size: 2, as: 'm' }, 'm'))
+            .toEqual(column({ type: 'rolling', column: 'value', by: 'type', order: 'date', size: 2, as: 'm' }, 'm'));
+        expect(column({ type: 'window', column: 'value', by: 'type', order: 'date', op: 'max', size: 3, align: 'center', as: 'x' }, 'x')).toEqual([null, 40, null, null, null, 15]);
+        expect(() => applyTransforms(rows, { type: 'window', column: 'value', op: 'cumsum' })).toThrow('window: the op is one of');
+    });
+
+    test('validateDef: the columns of a fold, the op of an aggregate and a window, the size and the offset, the keys of other types', () => {
+        const checks = transform => validateDef({ mapping: { y: { column: 'value', type: 'numeric' } }, plot: { type: 'svg:rect', props: {} }, transform }).filter(w => w.startsWith('transform'));
+        expect(checks([{ type: 'fold' }])).toEqual([`transform[0].columns: the columns to fold are needed, a list or a pattern with a '*', e.g. ["2019", "2020"] or "20*"`]);
+        expect(checks([{ type: 'fold', columns: '*_*' }])).toEqual([`transform[0].columns: a pattern of columns has a single '*', e.g. "20*"`]);
+        expect(checks([{ type: 'fold', columns: '20*', key: 'year', value: 'v', replace: false }])).toEqual([]);
+        expect(checks([{ type: 'aggregate', column: 'value' }])).toEqual([`transform[0].op: the operation is needed, one of 'sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last'`]);
+        expect(checks([{ type: 'aggregate', column: 'value', op: 'lag', rows: true }])).toEqual([`transform[0].op: unknown op 'lag', expected one of 'sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last'`]);
+        expect(checks([{ type: 'aggregate', column: 'value', op: '{op}' }])).toEqual([`transform[0]: unknown global 'op' in the template`]);
+        expect(checks([{ type: 'window', column: 'value', op: 'sum' }])).toEqual([`transform[0].size: the number of the rows of the window is needed, e.g. 7`]);
+        expect(checks([{ type: 'window', column: 'value', op: 'lag', offset: 0 }])).toEqual([`transform[0].offset: the number of the rows before or after the row, a positive integer, e.g. 1`]);
+        expect(checks([{ type: 'window', column: 'value', op: 'lag', offset: 2 }])).toEqual([]);
+        expect(checks([{ type: 'share', column: 'value', op: 'sum', rows: true, offset: 1, columns: ['a'] }])).toEqual([
+            `transform[0].columns: only of a transform of the type 'fold'`,
+            `transform[0].op: only of a transform of the type 'aggregate' or 'window'`,
+            `transform[0].rows: only of a transform of the type 'aggregate'`,
+            `transform[0].offset: only of a transform of the type 'window'`,
+        ]);
+    });
+
+    test('the columns of the data: the folded ones, unknown of a pattern', () => {
+        expect(transformColumns([{ type: 'fold', columns: ['a', 'b'], key: 'k', value: 'v' }, { type: 'calc', as: 'c', expr: { '+': ['@value', '@k', '@v'] } }])).toEqual(['a', 'b', 'value']);
+        expect(transformColumns([{ type: 'fold', columns: 'v_*' }])).toBeNull();
+        expect(usedColumns({ mapping: { y: { column: 'value' } }, transform: { type: 'fold', columns: 'v_*' } })).toBeNull();
+        expect(transformColumns([{ type: 'aggregate', column: 'v', by: 'g', order: 'd', op: 'sum', rows: true }, { type: 'window', column: 'v', op: 'lag', order: 'd' }])).toEqual(['v', 'g', 'd']);
     });
 });

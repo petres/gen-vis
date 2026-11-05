@@ -55,7 +55,7 @@ const rows = [
     },
     {
         label: 'Transforms of the data',
-        cells: ['index, share, rolling, cumulative, calc, rank, lookup, year, align, bin, random', 'calculate, aggregate, window, fold, …', 'filter, sort (dataset)', '— (removed in v3)', '—', '—', 'bin, group, stack, window, …'],
+        cells: ['index, share, rolling, cumulative, calc, rank, lookup, year, align, bin, random, fold, aggregate, window', 'calculate, aggregate, window, fold, …', 'filter, sort (dataset)', '— (removed in v3)', '—', '—', 'bin, group, stack, window, …'],
     },
     {
         label: 'Controls in the definition',

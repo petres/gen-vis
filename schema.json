@@ -611,8 +611,8 @@
             "required": ["type"],
             "properties": {
                 "type": {
-                    "enum": ["year", "align", "index", "mean", "share", "rolling", "cumulative", "calc", "filter", "rank", "random", "lookup", "bin"],
-                    "description": "year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`)."
+                    "enum": ["year", "align", "index", "mean", "share", "rolling", "cumulative", "calc", "filter", "rank", "random", "lookup", "bin", "fold", "aggregate", "window"],
+                    "description": "year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max) of a window of `size` rows."
                 },
                 "column": { "type": "string", "description": "The column of the values, a template of the globals, of a lookup the one of the keys." },
                 "expr": { "$ref": "#/definitions/value", "description": "calc: the expression of the value of the row, filter: the expression of the rows which are kept, its names are the columns of the row and the globals, e.g. { \"*\": [{ \"/\": [\"@value\", \"@inno\"] }, 100] } or { \">\": [\"@value\", 0] }." },
@@ -620,9 +620,9 @@
                 "descending": { "type": "boolean", "default": false, "description": "rank: the largest value is the first one." },
                 "data": { "type": "string", "description": "lookup: the url of a file of rows, relative to the definition, not a template." },
                 "dataFormat": { "enum": ["csv", "tsv", "json", "parquet"], "description": "lookup: the format of the file, by default the one of the extension of its url." },
-                "key": { "type": "string", "description": "lookup: the column of the keys of the rows of the file; random: the column of the keys of the rows, e.g. an id, a row keeps its number also if the rows of the file are in another order (by default its index in the data)." },
-                "value": { "type": "string", "description": "lookup: the column of the values of the rows of the file, a template of the globals, e.g. \"name_{lang}\"." },
-                "as": { "type": "string", "description": "The name of the new column, by default the one of `column`, which it replaces; bin: the column of the number of the values of the class, count by default." },
+                "key": { "type": "string", "description": "fold: the column of the names of the folded columns, key by default; lookup: the column of the keys of the rows of the file; random: the column of the keys of the rows, e.g. an id, a row keeps its number also if the rows of the file are in another order (by default its index in the data)." },
+                "value": { "type": "string", "description": "fold: the column of the values of the folded columns, value by default; lookup: the column of the values of the rows of the file, a template of the globals, e.g. \"name_{lang}\"." },
+                "as": { "type": "string", "description": "The name of the new column, by default the one of `column`, which it replaces; bin: the column of the number of the values of the class, count by default; aggregate with `rows`: the column of the aggregate of the group." },
                 "edges": {
                     "type": "array",
                     "items": {
@@ -645,7 +645,7 @@
                 "per": { "type": "number", "exclusiveMinimum": 0, "description": "bin: the value per this many units of the width of a class, e.g. 5 of the count per 5k of classes of unequal widths, of a density the share per 5 units." },
                 "start": { "type": "string", "description": "bin: the column of the start of the class, start by default." },
                 "end": { "type": "string", "description": "bin: the column of the end of the class, end by default." },
-                "replace": { "type": "boolean", "default": false, "description": "bin: the rows of the classes replace the rows; by default they come after them, e.g. a histogram and a strip plot of the same values, the plots draw the rows with the values they use." },
+                "replace": { "type": "boolean", "description": "bin, fold: the rows of the transform replace the rows (by default of a fold); without it they come after them (by default of a bin), e.g. a histogram and a strip plot of the same values, the plots draw the rows with the values they use." },
                 "range": {
                     "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2,
                     "description": "random: the least and the largest number, [0, 1] by default."
@@ -655,15 +655,28 @@
                     "description": "The groups of the rows of the same values of these columns, e.g. a line per category.",
                     "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
                 },
-                "order": { "type": "string", "description": "The column of the order of the rows of rolling and cumulative, e.g. the date, the order of the rows by default." },
+                "order": { "type": "string", "description": "The column of the order of the rows of rolling, cumulative, window and of the first and last values of aggregate, e.g. the date, the order of the rows by default." },
                 "base": {
                     "type": "object",
                     "description": "The rows of the base of an index or of a mean: a column and its value, e.g. { \"year\": \"{base}\" }, or a range [from, to], e.g. of dates or years, { \"year\": [1961, 1990] }.",
                     "additionalProperties": true
                 },
                 "scale": { "type": "number", "description": "The value of the base of an index (100 by default)." },
-                "size": { "type": "integer", "minimum": 1, "description": "The number of the rows of the window of rolling." },
-                "align": { "enum": ["end", "center"], "description": "The window of rolling: the rows before the row (end, by default) or around it." },
+                "size": { "type": "integer", "minimum": 1, "description": "The number of the rows of the window of rolling and of the sums, means, least and largest values of window." },
+                "align": { "enum": ["end", "center"], "description": "The window of rolling and window: the rows before the row (end, by default) or around it." },
+                "columns": {
+                    "anyOf": [
+                        { "type": "string" },
+                        { "type": "array", "items": { "type": "string" } }
+                    ],
+                    "description": "fold: the columns to fold, a list of names or a pattern with a single `*`, e.g. \"20*\", the columns which match, in their order, templates of the globals."
+                },
+                "op": {
+                    "enum": ["sum", "mean", "min", "max", "count", "median", "first", "last", "lag", "lead", "diff", "pct"],
+                    "description": "aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows."
+                },
+                "rows": { "type": "boolean", "default": false, "description": "aggregate: a row per group instead of a column, with the columns `by` and `as`, the rows replace the rows." },
+                "offset": { "type": "integer", "minimum": 1, "description": "window: the number of rows before (lag, diff, pct) or after (lead) the row, 1 by default." },
                 "year": { "type": "integer", "description": "The year of align, 2020 by default." }
             }
         },
