@@ -5,6 +5,7 @@ import { evaluate } from "@/utils/expr";
 import { dataAttribute } from "@/utils/draw";
 import { create, pointer } from "@/utils/dom";
 import { filter, rowFilter } from "@/utils/data";
+import { unknownOf } from "@/layout";
 import { bandCenter } from "@/utils/scales";
 import { patch } from "@/comp/html";
 import { createHover, byOrder } from "@/comp/hover";
@@ -228,7 +229,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // the rows of the hover, with a value and of its `filter`, by their
         // key, e.g. of the horizontal axis, compared as strings
         const options = hoverOptions();
-        const hoverRows = filter(ctx.rows.filter(e => e[v] !== null), rowFilter(options.filter, store.def.mapping, ctx.scope, 'options.hover.filter'));
+        const hoverRows = filter(ctx.rows.filter(e => e[v] !== null), rowFilter(options.filter, store.def.mapping, ctx.scope, 'options.hover.filter', unknownOf(store)));
         const rowsByKey = d3.group(hoverRows, e => String(e[names.h]));
         // the nearest key is one with rows, e.g. not one of null values, of
         // the coordinate systems with the `nearest` of the context, unless

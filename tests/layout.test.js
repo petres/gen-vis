@@ -240,3 +240,16 @@ describe('rows without a value', () => {
         warn.mockRestore();
     });
 });
+
+describe('filters of no mapping', () => {
+    test('are named in a warning, e.g. a column instead of its mapping', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const store = createStore();
+        await store.init({ def: { options: { height: 200 }, mapping: mapping(), plot: { ...plot, filter: { year: 2020 } } }, data });
+        const v = layout(store, 400);
+        const p = store.def.plot[0];
+        expect(plotGroups(p, (await import('@/layout')).plotRows(store, p, v.facets[0]), { store, ...v.facets[0] })).toEqual([]);
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining(`plot plot-0: filter.year: unknown mapping 'year', the keys of a filter are the names of mappings, not columns`));
+        warn.mockRestore();
+    });
+});

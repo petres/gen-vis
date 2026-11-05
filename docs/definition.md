@@ -1214,7 +1214,10 @@ The selected entries are named below the subtitle of the [PNG](usage.md#png),
 `"inImage": false` leaves out a form element which only changes the
 presentation, which the image shows anyway, e.g. shared or separate scales of
 the facets.
-`filter` shows only the rows of the conditions of mappings: a value or a
+`filter` shows only the rows of the conditions of mappings (the keys are
+names of mappings, not columns, e.g. `"x": 50` of a mapping `x` of the
+column `lo`; a key of no mapping matches no row and is named in a warning of
+the console): a value or a
 list of them, e.g. of a global, `null` (the rows without a value),
 `{"not": ...}` (the rows which do not fulfil the condition, so a patch
 removes a condition only with the whole `filter`, `"filter": null`) or `{"range":

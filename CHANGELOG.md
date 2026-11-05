@@ -53,6 +53,10 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
 
 ### Fixes
 
+- A key of a `filter` (of the definition, a plot or the hover) which is no
+  mapping, e.g. a column instead of its mapping, is named in a warning when
+  the chart is drawn (the console, the CLI, the messages of the export
+  page); before, only `validateDef` named it and the plot stayed empty.
 - Rows without a value of a mapping of categories (e.g. an empty cell of
   a column with `fromData`) stay in the chart: they are in no category, so
   plots `by` the mapping and its scale leave them out, but other plots

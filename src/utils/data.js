@@ -334,10 +334,13 @@ const condition = (m, c, path, mappings) => {
  * props of the `scope`, e.g. the globals, `mapping` are the mappings of the
  * definition, `path` names it in errors, a list of { dim, key } of `filter`.
  */
-const rowFilter = (conditions, mapping, scope = {}, path = 'filter') => Object.entries(conditions ?? {}).map(([dim, c]) => ({
-    dim,
-    key: condition(Object.hasOwn(mapping, dim) ? mapping[dim] : undefined, conditionValues(c, scope), `${path}.${dim}`, mapping),
-}));
+const rowFilter = (conditions, mapping, scope = {}, path = 'filter', unknown = null) => Object.entries(conditions ?? {}).map(([dim, c]) => {
+    // a condition of no mapping is one of no value of the rows, e.g. of a
+    // column instead of its mapping, `unknown(path)` reports it
+    if (unknown && !Object.hasOwn(mapping, dim))
+        unknown(`${path}.${dim}`, dim);
+    return { dim, key: condition(Object.hasOwn(mapping, dim) ? mapping[dim] : undefined, conditionValues(c, scope), `${path}.${dim}`, mapping) };
+});
 
 // the values of a condition evaluated, `not` and `range` are parts of the
 // condition, not operators of expressions, e.g. { "not": "@type" }

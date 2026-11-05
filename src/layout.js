@@ -1,4 +1,4 @@
-export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor };
+export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor, unknownOf };
 
 import { categoryOrder, continuous, convert, filter, groupBy, keptRows, rowFilter, stack } from "@/utils/data";
 import * as d3 from "@/utils/d3";
@@ -6,6 +6,11 @@ import { bind, constant, evaluate, formatter, refNames } from "@/utils/expr";
 import { bandCenter, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
 import { warnOnce } from "@/utils/warn";
+
+// the warning of a condition of a filter of no mapping, e.g. of a column
+// instead of the mapping of it, which no row has, see rowFilter
+const unknownOf = store => (path, dim) => warnOnce(store, `unknown ${path}`,
+    `${path}: unknown mapping '${dim}', the keys of a filter are the names of mappings, not columns, no row is drawn`);
 
 /**
  * The view of a visualisation, computed from its store without Vue: the rows
@@ -113,7 +118,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     // the rows of the conditions of `filter`, e.g. of a global of a form
     // element, see rowFilter, and of them the ones of the visible categories
     const visible = visibleKeys(def);
-    const filtered = filter(keptRows(store.data, store.columns), rowFilter(def.filter, def.mapping, scope));
+    const filtered = filter(keptRows(store.data, store.columns), rowFilter(def.filter, def.mapping, scope, 'filter', unknownOf(store)));
     const shown = visibleRows(visible);
     const rows = shown.length > 0 ? filter(filtered, shown) : filtered;
 
@@ -312,7 +317,7 @@ const keptPlotRows = (store, plot, facet) => {
     const hit = kept?.get(plot);
     if (key !== null && hit?.key === key)
         return hit.rows;
-    const conditions = rowFilter(plot.filter, store.def.mapping, facet.scope, `plot ${plot.id}: filter`);
+    const conditions = rowFilter(plot.filter, store.def.mapping, facet.scope, `plot ${plot.id}: filter`, unknownOf(store));
     const rows = conditions.length > 0 ? filter(facet.rows, conditions) : facet.rows;
     if (key !== null) {
         if (!kept)
@@ -334,7 +339,7 @@ const keptPlotRows = (store, plot, facet) => {
 const plotRows = (store, plot, facet) => {
     if (!plot.data && plot.filter)
         return keptPlotRows(store, plot, facet);
-    const conditions = rowFilter(plot.filter, store.def.mapping, facet.scope, `plot ${plot.id}: filter`);
+    const conditions = rowFilter(plot.filter, store.def.mapping, facet.scope, `plot ${plot.id}: filter`, unknownOf(store));
     if (!plot.data)
         return conditions.length > 0 ? filter(facet.rows, conditions) : facet.rows;
     const mapping = store.def.mapping;
