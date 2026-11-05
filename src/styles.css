@@ -222,7 +222,7 @@
 .vis-hover {
     position: absolute;
     font-size: 12px;
-    background-color: var(--gen-vis-hover-background, #FFFFFFF2);
+    background-color: var(--gen-vis-hover-background, #FFFFFF);
     border: 1px solid var(--gen-vis-hover-border-color, #E3E5E8);
     border-radius: 4px;
     box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);

@@ -501,7 +501,7 @@ page (the default in brackets):
     --gen-vis-axis-color: #777;                /* #9AA0A8, the lines and marks of the axes */
     --gen-vis-axis-label-color: #BBB;          /* #5F6670, their labels and titles */
     --gen-vis-muted-color: #AAA;               /* #5F6670, the subtitle and the footer */
-    --gen-vis-hover-background: #222D;         /* #FFFFFFF2 */
+    --gen-vis-hover-background: #222D;         /* #FFFFFF */
     --gen-vis-hover-border-color: #444;        /* #E3E5E8, the border and lines of the hover */
     --gen-vis-halo-color: #111;                /* white, behind labels on the plots */
     --gen-vis-text-color: #EEE;                /* #1F2328, the texts of plots without a fill */

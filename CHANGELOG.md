@@ -28,8 +28,8 @@ What existing definitions draw differently:
   grey (`--gen-vis-muted-color`), the lines and marks of the axes grey
   (`--gen-vis-axis-color`) and their labels and titles 12px a darker grey
   (`--gen-vis-axis-label-color`), the grid lines lighter and 1px, the
-  hover a card with a border (`--gen-vis-hover-border-color`) and a
-  shadow whose title is one line, the focus in the first color of
+  hover an opaque card (before 80% white) with a border
+  (`--gen-vis-hover-border-color`) and a shadow whose title is one line, the focus in the first color of
   `observable10` (the colors of categories without colors, as before),
   bold texts semibold. All are css variables (see the styles of
   `docs/usage.md`); a house style sets its font and colors there, e.g.
