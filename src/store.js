@@ -1,6 +1,6 @@
 export { createStore };
 
-import { distinctValues, prepareData, scaleDef, sourceRows, updateData } from "@/utils/data";
+import { distinctValues, prepareData, scaleDef, sourceRows, updateData, updateDataValues } from "@/utils/data";
 import { warnOnce } from "@/utils/warn";
 import { applyTransforms, utcColumns } from "@/utils/transform";
 import { applyPatches, fillHtml, fillText, formatOf, templateNames } from "@/utils/def";
@@ -9,7 +9,7 @@ import { getLocale } from "@/utils/locale";
 import { formatter } from "@/utils/expr";
 import { axisNames } from "@/layout";
 import { axisDefaults, symbolDefaults } from "@/utils/defaults";
-import { geoParts, load, loadGeo, raw } from "@/utils/load";
+import { geoParts, load, loadGeo, raw, valueFormat } from "@/utils/load";
 
 // the formatters of the locales by their definition, the last ones are kept
 const locales = new Map();
@@ -190,9 +190,15 @@ class Store {
         this.warnNotes();
         Object.keys(this.def.mapping).filter(n => changedColumns.has(this.def.mapping[n].column) && !changed.includes(n))
             .forEach(n => changed.push(n));
+        // the values of form elements of columns of transforms computed
+        // again, e.g. the classes of other edges of a bin
+        const rowsChanged = sourceRows(this.rows, this.columns) !== source;
+        if (rowsChanged || changedColumns.size > 0)
+            updateDataValues(this.defOrg ?? {}, this.def, this.rows, this.columns, valueFormat(this.def.options?.locale),
+                spec => rowsChanged || changedColumns.has(spec.column) || changedColumns.has(spec.names));
         // other rows of a transform of rows, e.g. the classes of other edges
         // of a bin, are prepared again, the same ones are updated in place
-        if (sourceRows(this.rows, this.columns) !== source)
+        if (rowsChanged)
             this.data = raw(prepareData(this.rows, this.def, this.columns));
         else if (changed.length > 0)
             this.data = raw(updateData(this.rows, this.data, this.def, changed, this.columns));

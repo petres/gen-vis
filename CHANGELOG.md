@@ -216,6 +216,11 @@ Warnings (console, CLI, `messages` of the export page):
 
 ### Fixes
 
+- The values of a form element of a column of a transform (`"values":
+  {"column": …}`) follow the globals: of the page and the state when the
+  chart is loaded and of a change of a global, e.g. the classes of a bin of
+  another step or a `calc` of a global. Before, they were the ones of the
+  globals of the definition and stayed.
 - A band or point scale of a numeric or date mapping has a band (or a
   point) per value, in ascending order; before, its domain was the two ends
   of the values (extended by 2%), so the bars were drawn at wrong places,

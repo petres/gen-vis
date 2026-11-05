@@ -1,4 +1,4 @@
-export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, distinctValues, usedColumns, columnValues };
+export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { fillTemplate, sameValue, templateRefs, variants } from "@/utils/def";
@@ -397,36 +397,61 @@ const distinctValues = (rows, columns, column) => {
     return values.sort(comparison(values));
 };
 
+// the spec of the values of a form element of a column (`values` of the
+// definition, e.g. { "column": "year" }), kept on the element of the
+// original definition, see updateDataValues
+const valuesSource = Symbol('valuesSource');
+
+// the entries of the values of a column of the rows (`spec`), distinct and
+// ascending, numbers by their value, the values are strings, as the ones of
+// csv, of every format; the names of a column of the first row of the value
+// (`names`), formatted (`format`, of dates a time format, e.g. "%b %Y", a
+// number format otherwise, see `formatOf`), the values otherwise
+const dataValues = (spec, rows, columns, formatOf) => {
+    const values = distinctValues(rows, columns, spec.column).map(String);
+    const { names, format } = spec;
+    let nameOf = v => v;
+    if (typeof names == 'string') {
+        const source = sourceRows(rows, columns);
+        const value = columnValues(rows, columns, spec.column);
+        const name = columnValues(rows, columns, names);
+        const byValue = new Map();
+        source.forEach((r, i) => {
+            const k = String(value(i));
+            if (!byValue.has(k) && !missing(name(i)))
+                byValue.set(k, String(name(i)));
+        });
+        nameOf = v => byValue.get(v) ?? v;
+    } else if (typeof format == 'string' && formatOf)
+        nameOf = formatOf(format);
+    return values.map(v => ({ id: v, name: nameOf(v), value: v }));
+};
+
 // the entries of form elements with the values of a column of the rows, e.g.
-// "values": { "column": "year" }, distinct and ascending, numbers by their
-// value, the values are strings, as the ones of csv, of every format, a
-// global which is none of them (or missing) is the last value, e.g. the
-// latest year
+// "values": { "column": "year" }, see dataValues, a global which is none of
+// them (or missing) is the last value, e.g. the latest year
 const addDataValues = (def, rows, columns = null, formatOf = null) => {
     (def.formElements ?? []).filter(e => e?.values && !Array.isArray(e.values)).forEach(e => {
-        const values = distinctValues(rows, columns, e.values.column).map(String);
-        // the names of the entries: of a column of the first row of the value
-        // (`names`), formatted (`format`, of dates a time format, e.g. "%b
-        // %Y", a number format otherwise, see formatOf), the values otherwise
-        const { names, format } = e.values;
-        let nameOf = v => v;
-        if (typeof names == 'string') {
-            const source = sourceRows(rows, columns);
-            const value = columnValues(rows, columns, e.values.column);
-            const name = columnValues(rows, columns, names);
-            const byValue = new Map();
-            source.forEach((r, i) => {
-                const k = String(value(i));
-                if (!byValue.has(k) && !missing(name(i)))
-                    byValue.set(k, String(name(i)));
-            });
-            nameOf = v => byValue.get(v) ?? v;
-        } else if (typeof format == 'string' && formatOf)
-            nameOf = formatOf(format);
-        e.values = values.map(v => ({ id: v, name: nameOf(v), value: v }));
+        e[valuesSource] = e.values;
+        e.values = dataValues(e.values, rows, columns, formatOf);
         def.globals ??= {};
-        if (values.length > 0 && !values.some(v => sameValue(v, def.globals[e.ref])))
-            def.globals[e.ref] = values.at(-1);
+        if (e.values.length > 0 && !e.values.some(v => sameValue(v.value, def.globals[e.ref])))
+            def.globals[e.ref] = e.values.at(-1).value;
+    });
+};
+
+/**
+ * The values of the form elements of columns of the prepared definition
+ * `def` again, of the specs kept on the ones of the original one (`defOrg`,
+ * see addDataValues), e.g. of the column of a transform of a global, the
+ * classes of other edges of a bin; only the ones of `changed(spec)`.
+ */
+const updateDataValues = (defOrg, def, rows, columns, formatOf = null, changed = () => true) => {
+    (defOrg.formElements ?? []).forEach((e, i) => {
+        const spec = e?.[valuesSource];
+        const target = (def.formElements ?? []).find(f => f?.id !== undefined && f.id === e.id) ?? def.formElements?.[i];
+        if (spec && target && changed(spec))
+            target.values = dataValues(spec, rows, columns, formatOf);
     });
 };
 

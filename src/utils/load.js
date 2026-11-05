@@ -1,7 +1,7 @@
-export { resolveUrl, clearCache, resolveParents, readDef, requirements, raw, geoParts, loadGeo, load, fetchData };
+export { valueFormat, resolveUrl, clearCache, resolveParents, readDef, requirements, raw, geoParts, loadGeo, load, fetchData };
 
 
-import { addDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, toDate, usedColumns } from "@/utils/data";
+import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, toDate, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
 import { applyPatches, mergeAll, prepareDef, variants } from "@/utils/def";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
@@ -321,6 +321,10 @@ const prepare = (defOrg, rows, files, state, globals, symbols = {}) => {
     applyPatches(prepared, defOrg, { dataKeys: keysOf, files, transform, symbols });
     applyState(prepared, { visible: state?.visible });
     transform();
+    // the values of the columns of the transforms of the globals of the
+    // state and the page, not of the definition, e.g. the classes of a bin
+    if (columns.steps.length > 0)
+        updateDataValues(defOrg, prepared, rows, columns, valueFormat(prepared.options?.locale));
     return { prepared, defaults, columns };
 };
 

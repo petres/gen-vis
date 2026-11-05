@@ -275,13 +275,17 @@ describe('bin and random in a chart', () => {
     });
 
     // the values of a form element are the ones of the transforms of the globals of the definition
-    test.fails('the values of a form element of a column of a bin follow other edges (known: they stay)', async () => {
+    test('the values of a form element of a column of a bin follow other edges', async () => {
         const { createStore } = await import('@/store');
         const store = createStore();
         await store.init({ def: { ...def(), formElements: [{ id: 'lo', ref: 'lo', type: 'select', values: { column: 'lo' } }] }, data });
         expect(store.def.formElements[0].values.map(v => v.value)).toEqual(['0', '5']);
         store.setGlobals({ step: '2' });
         expect(store.def.formElements[0].values.map(v => v.value)).toEqual(['0', '2', '4', '6', '8']);
+        // also of a global of the page when the chart is loaded
+        const page = createStore();
+        await page.init({ def: { ...def(), formElements: [{ id: 'lo', ref: 'lo', type: 'select', values: { column: 'lo' } }] }, data, globals: { step: '2' } });
+        expect(page.def.formElements[0].values.map(v => v.value)).toEqual(['0', '2', '4', '6', '8']);
     });
 
     test('the rows of a bin: replaced, with later calc and share, after a filter, without values', () => {
