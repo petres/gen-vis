@@ -66,7 +66,7 @@ test('the symbols of legends, the order and the ranks of categories', () => {
         expect.stringMatching(/^mapping.c.legend.symbol.props.fill: unknown reference 'nope'/),
         // the ranks are no list, so their props are unknown
         expect.stringMatching(/^plot\[0\].props.stroke: unknown reference 'dash'/),
-        "mapping.c.legend.symbol.type: unknown type 'star', expected one of 'line', 'rect', 'circle'",
+        "mapping.c.legend.symbol.type: unknown type 'star', expected one of 'line', 'rect', 'circle', 'auto'",
     ]);
 });
 

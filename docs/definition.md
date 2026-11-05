@@ -657,7 +657,15 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   sets the size of the names there, not on their `span`), so an element at
   half the height is at the middle of the text, e.g. the line of the
   shortcut. Without a size the ones of the [defaults](#defaults) (per
-  shortcut, e.g. smaller symbols of a house style), 16 pixels. A
+  shortcut, e.g. smaller symbols of a house style), 16 pixels.
+  `"symbol": "auto"` (also `{"type": "auto", "width": 18}`) is the symbol of
+  the plots of the categories (with the mapping in `by`): a box of the ones
+  which fill (bars, areas, rects), a line of the lines and a dot of the
+  points, in this order, e.g. a light area under a line, with the props of
+  their style which are the same for all rows of a category (values and
+  references to the props of the categories, e.g. `@color`, `"fill-opacity":
+  0.08`, `"stroke-dasharray": "@dash"`), in the box of the line (or of the
+  box) of the defaults. A
   category can have a `symbol` of its own (in the same forms), e.g.
   `"categories": {"Direktvergabe": {"symbol": "rect"}}` of an area in a
   legend of lines. A click shows or hides the

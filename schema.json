@@ -643,16 +643,16 @@
             }
         },
         "legendSymbol": {
-            "description": "The symbol before the name of a category: line, rect or circle in its color, or the svg elements, drawn in a box of width x height pixels (size both, 16 by default) from 0, 0, the name is centered vertically on the box.",
+            "description": "The symbol before the name of a category: line, rect or circle in its color, auto of the plots of the categories (a box of their bars or areas, a line of their lines, a dot of their points), or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name.",
             "anyOf": [
-                { "enum": ["line", "rect", "circle"] },
+                { "enum": ["line", "rect", "circle", "auto"] },
                 {
                     "type": "object",
                     "additionalProperties": false,
                     "required": ["type"],
                     "properties": {
-                        "type": { "enum": ["line", "rect", "circle"] },
-                        "size": { "type": "number", "default": 16 },
+                        "type": { "enum": ["line", "rect", "circle", "auto"] },
+                        "size": { "type": "number" },
                         "width": { "type": "number", "description": "The width of the box, size by default, e.g. a longer line of a dash." },
                         "height": { "type": "number", "description": "The height of the box, size by default." },
                         "props": { "$ref": "#/definitions/props" },

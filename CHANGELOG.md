@@ -60,6 +60,10 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- `"symbol": "auto"`: the symbol of a legend of the plots of its
+  categories, a box of their bars or areas, a line of their lines and a dot
+  of their points together, with their style, e.g. a light area under a
+  line.
 - The size of the symbols of the legends is a default of the chart
   (`legend.symbol` of the defaults: `size`, `width`, `height`, per shortcut
   also `props`), e.g. 9px rects and 18×9 lines of a house style.

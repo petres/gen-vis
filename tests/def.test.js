@@ -54,6 +54,21 @@ describe('the props of categories', () => {
         expect(symbol(elements)).toEqual(elements);
     });
 
+    test('a symbol of the plots of the categories: a light area under a line, the style which is the same for a category', () => {
+        const def = prepareDef({ mapping: { c: { column: 'c', legend: { symbol: 'auto' }, categories: { a: { dash: '4 2' } } } }, plot: [
+            { type: 'cartesian:bar', by: 'c', props: { x: '@x:scaled', y1: '@y:scaled', fill: '@color', 'fill-opacity': 0.08, opacity: '@y' } },
+            { type: 'cartesian:line', by: 'c', props: { 'stroke-width': 1.4, 'stroke-dasharray': '@dash', d: { x: '@x:scaled', y: '@y:scaled' } } },
+            { type: 'cartesian:line', props: { stroke: 'black' } },
+        ] }, { symbols: { line: { width: 18, height: 9 } } });
+        expect(def.mapping.c.legend.symbol).toEqual({ width: 18, height: 9, elements: [
+            { type: 'rect', props: { x: 0, y: 0.5, width: 18, height: 8, fill: '@color', 'fill-opacity': 0.08 } },
+            { type: 'line', props: { x1: 0, x2: 18, y1: 4.5, y2: 4.5, stroke: '@color', 'stroke-width': 1.4, 'stroke-dasharray': '@dash' } },
+        ] });
+        // without plots of the categories a box
+        const none = prepareDef({ mapping: { c: { column: 'c', legend: { symbol: 'auto' }, categories: { a: {} } } }, plot: [] });
+        expect(none.mapping.c.legend.symbol.elements[0].type).toBe('rect');
+    });
+
     test('a symbol of a category instead of the one of the legend', () => {
         const c = prepareDef({ mapping: { c: { column: 'c', legend: { symbol: 'line' }, categories: { a: { symbol: 'rect' }, b: {} } } }, plot: [] }).mapping.c;
         expect(c.categoryProps.a.symbol.elements[0].type).toBe('rect');

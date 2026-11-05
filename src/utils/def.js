@@ -4,6 +4,7 @@ import merge from 'deepmerge';
 import { ownColors, schemeColors } from '@/utils/d3';
 import { comparison, isObject, sameValue } from '@/utils/values';
 import { defaultScaleType, hasCategories } from '@/utils/normalize';
+import { refNames } from '@/utils/expr';
 
 // arrays whose entries all have an `id`, e.g. the form elements and their
 // values, are merged by it, entries with a new id are appended, all other
@@ -88,6 +89,46 @@ const symbolOf = (symbol, names, defaults = {}) => {
     return { width, height, elements: [{ type, props: { ...shapes[type], ...props } }] };
 };
 
+// the plot types drawn as a filled box, a line or a dot in a symbol of "auto"
+const symbolKinds = [
+    ['rect', ['cartesian:area', 'cartesian:bar', 'polar:area', 'polar:arc', 'svg:rect', 'geo:region'], ['fill', 'fill-opacity', 'opacity']],
+    ['line', ['cartesian:line', 'polar:line', 'svg:line'], ['stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity', 'opacity']],
+    ['circle', ['svg:circle', 'polar:circle', 'geo:circle'], ['fill', 'fill-opacity', 'stroke', 'opacity']],
+];
+
+/**
+ * The symbol of a legend of the plots of its categories (`"symbol": "auto"`):
+ * a box of the ones which fill an area (e.g. bars, areas), a line of the
+ * lines and a circle of the dots, in this order, e.g. a light area under a
+ * line, with the props of their style which are the same for all rows of a
+ * category: values or references to the props of the categories, e.g.
+ * `@color` or `@dash`, not to values of the rows. The box is the one of the
+ * shortcut of the line (or of the box or the dot) of the `defaults`, a
+ * rect without plots of the categories.
+ */
+const autoSymbol = (symbol, name, plots, names, defaults) => {
+    const given = typeof symbol == 'string' ? {} : symbol;
+    const own = v => !refNames(v).some(n => typeof n != 'string' || (n != 'color' && !names.has(n)));
+    const parts = symbolKinds.flatMap(([kind, types, keys]) => {
+        const plot = [plots ?? []].flat().find(p => types.includes(p?.type) && [p.by ?? []].flat().includes(name));
+        if (!plot)
+            return [];
+        const props = Object.fromEntries(keys.filter(k => plot.props?.[k] !== undefined && own(plot.props[k])).map(k => [k, plot.props[k]]));
+        return [{ kind, props }];
+    });
+    if (parts.length == 0)
+        return symbolOf({ ...given, type: 'rect' }, names, defaults);
+    // the box of the line, of the area or of the dot
+    const base = symbolOf({ ...given, type: parts.find(p => p.kind == 'line')?.kind ?? parts[0].kind, props: {} }, names, defaults);
+    const { width, height } = base;
+    const shapes = {
+        rect: { x: 0, y: 0.5, width, height: height - 1, fill: '@color' },
+        line: { x1: 0, x2: width, y1: height/2, y2: height/2, stroke: '@color', 'stroke-width': 2 },
+        circle: { cx: width/2, cy: height/2, r: Math.min(width, height)/2 - 2, fill: '@color' },
+    };
+    return { width, height, elements: parts.map(p => ({ type: p.kind, props: { ...shapes[p.kind], ...p.props, ...given.props } })) };
+};
+
 // the colors of the categories without colors, the scheme observable10
 // registered by the page (registerScheme, e.g. the colors of a house style)
 // or d3's scheme Observable10, distinct colors which are also distinct for
@@ -159,7 +200,8 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = [], 
         // the symbols of the legend and of its categories, e.g. a rect of
         // one category and lines of the others
         const names = new Set(Object.values(m.categoryProps ?? {}).flatMap(p => Object.keys(p)));
-        const prepared = symbol => typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type) ? symbolOf(symbol, names, symbols) : symbol;
+        const prepared = symbol => symbol === 'auto' || symbol?.type == 'auto' ? autoSymbol(symbol, name, plots, names, symbols)
+            : (typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type) ? symbolOf(symbol, names, symbols) : symbol);
         m.legend.symbol = prepared(m.legend.symbol);
         Object.values(m.categoryProps ?? {}).filter(p => p.symbol !== undefined).forEach(p => p.symbol = prepared(p.symbol));
 
