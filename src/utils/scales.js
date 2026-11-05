@@ -247,9 +247,9 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     let nearValues = null;
     const near = () => nearValues ??= (domainRows ? valuesOf(name, mapping, rows, stackOf, also, log) : found).values;
     let extent = found.extent;
-    // the periods of the dates (`interval`): the domain of the data reaches
-    // the end of the last one
-    const period = mapping.type == 'date' ? intervalOf(mapping.interval, scaleDef.type == 'utc') : null;
+    // the periods of the dates (`interval`) of a time scale: the domain of
+    // the data reaches the end of the last one
+    const period = mapping.type == 'date' && ['time', 'utc'].includes(scaleDef.type) ? intervalOf(mapping.interval, scaleDef.type == 'utc') : null;
     if (period && extent)
         extent = [extent[0], +period.offset(extent[1])];
     // the extent of the data includes the values of `include`, e.g. 0 or
@@ -316,7 +316,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     } else if (scaleDef.type == 'quantile' || scaleDef.type == 'sequentialQuantile') {
         // classes of the same number of values
         domain = found.values;
-    } else if (extent && scaleDef.type != 'ordinal') {
+    } else if (extent && !['ordinal', 'band', 'point'].includes(scaleDef.type)) {
         domain = fixed();
         // the first and the last entry, a diverging domain has a middle one
         const last = domain.length - 1;
@@ -366,7 +366,8 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
             };
     } else {
         // the categories of the data or a fixed list of them, in its order,
-        // as the values of the rows, e.g. the numbers of a JSON column
+        // as the values of the rows, e.g. the numbers of a JSON column, of
+        // numbers and dates ascending, e.g. a band per date
         const given = fixed();
         const values = found.values;
         const byText = new Map(values.map(v => [String(v), v]));

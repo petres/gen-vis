@@ -454,9 +454,11 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   `2024-06-01 13:00+02:00`, is the same time of every scale, other strings
   are no dates, e.g. `Phase 1` (which `Date.parse` of some browsers reads as
   one).
-  `interval` makes the dates periods which start at them, e.g. half years of
+  `interval` makes the dates of a time (or utc) scale periods which start
+  at them, e.g. half years of
   `2023-01-01` and `2023-07-01`: `day`, `week`, `month`, `quarter`, `half`,
-  `year` or a number of them, e.g. `"6 months"`. The domain of the data
+  `year` or a number of them, e.g. `"6 months"` (a band scale of dates has a
+  band per date instead, in their order). The domain of the data
   reaches the end of the last period (without the 2% of other positions),
   so bars at the ends fit; `@x:scaled` (also `@x:scaled:center`) is the
   middle of the period of a row, so bars, points and lines are in the

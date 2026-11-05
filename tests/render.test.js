@@ -3602,4 +3602,20 @@ describe('periods of dates (interval)', () => {
         expect(validateDef({ ...def(), mapping: { ...def().mapping, x: { ...def().mapping.x, interval: 'fortnight' } } }).filter(w => w.includes('interval')))
             .toEqual([`mapping.x.interval: expected day, week, month, quarter, half, year or a number of them, e.g. "6 months"`]);
     });
+
+    test('of a time scale only: a band scale of dates is a band per date, its hover works', async () => {
+        const banded = def();
+        banded.mapping.x = { ...banded.mapping.x, type: 'categorical', scale: { type: 'band', orientation: 'horizontal' } };
+        const { validateDef } = await import('@/utils/validate');
+        const dated = { ...banded, mapping: { ...banded.mapping, x: { ...banded.mapping.x, type: 'date' } } };
+        expect(validateDef(dated).filter(w => w.includes('interval'))).toEqual([`mapping.x.interval: the periods of a time or utc scale, not of a band one`]);
+        const el = await mount({ def: dated, data });
+        const rects = [...el.querySelectorAll('[data-plot="bars"] rect')];
+        expect(rects).toHaveLength(3);
+        expect(new Set(rects.map(r => r.getAttribute('width'))).size).toBe(1);
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 60, clientY: 100 }));
+        await nextTick();
+        expect(el.querySelector('.vis-hover-title').textContent).toBe('H1 2023');
+        expect(errors).toEqual([]);
+    });
 });

@@ -55,6 +55,10 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
 
 ### Fixes
 
+- A band or point scale of a numeric or date mapping has a band (or a
+  point) per value, in ascending order; before, its domain was the two ends
+  of the values (extended by 2%), so the bars were drawn at wrong places,
+  and the hover failed (`nearest is not a function`).
 - The categories of a band, point or ordinal scale are in the order of the
   `categories` of the mapping (as the legend, the stacks and the facets),
   the ones not listed after them in the order of the rows; before, in the
