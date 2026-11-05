@@ -29,48 +29,31 @@ const baseOf = scale => {
 };
 
 /**
- * The path of filled stairs of the points of a group, `x0` and `x1` of
- * every point (e.g. a class of a bin) from `y0` to `y1`: an area per run of
- * neighbours (less than half a pixel apart), closed along the base (`y0`
- * of its first point, by default the position of 0, `base`).
+ * The path of stairs of the points of a group: a horizontal line from `x0`
+ * to `x1` at `y` (of an area `y1`) of every point (e.g. a class of a bin),
+ * in the order of `x0`, vertical lines between neighbours (less than half a
+ * pixel apart) and down to the base (`y0` of the first point of a run, by
+ * default the position of 0, `base`) at the ends and at gaps between them,
+ * e.g. the outline of a histogram; an area (`fill`) closes every run along
+ * the base. Points without a position are gaps.
  */
-const stairsArea = (points, base) => {
-    const steps = points.filter(p => finite(p.x0, p.x1, p.y1)).sort((a, b) => a.x0 - b.x0);
+const stairs = (points, base, fill = false) => {
+    const y = fill ? 'y1' : 'y';
+    const steps = points.filter(p => finite(p.x0, p.x1, p[y])).sort((a, b) => a.x0 - b.x0);
+    const close = fill ? 'Z' : '';
     let path = '';
     let end = null;
     steps.forEach(p => {
         if (end === null || Math.abs(p.x0 - end.x) >= 0.5) {
             if (end !== null)
-                path += `V${end.y0}Z`;
+                path += `V${end.y0}${close}`;
             end = { y0: finite(p.y0) ? p.y0 : base };
             path += `M${p.x0},${end.y0}`;
         }
-        path += `V${p.y1}H${p.x1}`;
+        path += `V${p[y]}H${p.x1}`;
         end.x = p.x1;
     });
-    return end === null ? null : `${path}V${end.y0}Z`;
-};
-
-/**
- * The path of stairs of the points of a group: a horizontal line from `x0`
- * to `x1` at `y` of every point (e.g. a class of a bin), in the order of
- * `x0`, vertical lines between neighbours and down to the base (`y0`, by
- * default the position of 0) at the ends and at gaps between them, e.g. the
- * outline of a histogram. Points without a position are gaps.
- */
-const stairs = (points, base) => {
-    const steps = points.filter(p => finite(p.x0, p.x1, p.y)).sort((a, b) => a.x0 - b.x0);
-    let path = '';
-    let end = null;
-    steps.forEach(p => {
-        const y0 = finite(p.y0) ? p.y0 : base;
-        // a neighbour (less than half a pixel apart) or a new part from the base
-        if (end === null || Math.abs(p.x0 - end.x) >= 0.5)
-            path += `${end === null ? '' : `V${end.y0}`}M${p.x0},${y0}`;
-        path += `V${p.y}H${p.x1}`;
-        end = { x: p.x1, y0 };
-    });
-    return end === null ? null : `${path}V${end.y0}`;
+    return end === null ? null : `${path}V${end.y0}${close}`;
 };
 
 // the plot types of the cartesian coordinate system, missing values are gaps
@@ -108,7 +91,7 @@ export default {
             if (plot.props.d && ('x0' in plot.props.d || 'x1' in plot.props.d)) {
                 const scale = propScale(plot, ctx, 'd.y1');
                 const base = scale ? baseOf(scale) : ctx.innerHeight;
-                return perGroup(groups, g => stairsArea(points(g), base));
+                return perGroup(groups, g => stairs(points(g), base, true));
             }
             return perGroup(groups, g => d3.area()
                 .curve(curve(plot))
