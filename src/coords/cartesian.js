@@ -260,7 +260,8 @@ export default {
         // below it
         marker(ctx, key, names, line) {
             const s = ctx.scales[names.h];
-            const p = centerOf(s, key);
+            // e.g. the middle of a class of stackBy, see facet-hover.js
+            const p = ctx.markerAt?.(key) ?? centerOf(s, key);
             if (isVertical(ctx, names)) {
                 placeLine(line, 0, p, ctx.innerWidth, p);
                 return { x: ctx.innerWidth/2, y: p, side: p > ctx.innerHeight/2 ? "above" : "below" };

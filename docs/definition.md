@@ -784,7 +784,9 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   of a [bin](#transform) (`"stackBy": "lo"`) of a stacked histogram above a
   strip plot whose `x` are the values; rows without a value of it are not
   stacked. The hover is at the positions of the stacks then, e.g. a row per
-  category of the class under the pointer (example `data/stats/jitter.json`).
+  category of the class under the pointer (the last start not after it,
+  the marker in the middle of the class up to the next start; example
+  `data/stats/jitter.json`).
 
 ### Defaults
 

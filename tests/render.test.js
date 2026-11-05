@@ -3819,3 +3819,32 @@ describe('the categories of band and point scales in the order of the categories
         expect(errors).toEqual([]);
     });
 });
+
+describe('the hover of the stacks of stackBy', () => {
+    test('the class under the pointer, its marker in the middle of the class', async () => {
+        const def = {
+            options: { width: 440, height: 240, margins: { top: 10, right: 20, bottom: 30, left: 20 } },
+            transform: { type: 'bin', column: 'v', edges: [0, 5, 10], by: 'g', start: 'lo', end: 'hi' },
+            mapping: {
+                x: { column: 'v', type: 'numeric', domain: [0, 10], scale: { orientation: 'horizontal', domainRel: [0, 0] }, axis: { position: 'bottom' } },
+                lo: { column: 'lo', type: 'numeric', scale: { of: 'x' }, hover: {} },
+                y: { column: 'count', type: 'numeric', stacked: true, stackBy: 'lo', hover: {}, scale: { orientation: 'vertical', domain: [0, null] } },
+                g: { column: 'g', type: 'categorical', categories: { a: {}, b: {} }, hover: {} },
+            },
+            plot: { type: 'bar', by: 'g', props: { x0: '@lo:scaled', x1: '@hi:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' } },
+        };
+        const el = await mount({ def, data: 'v,g\n1,a\n2,b\n3,b\n7,a' });
+        const at = async x => {
+            el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: x, clientY: 100 }));
+            await nextTick();
+            return [el.querySelector('.vis-hover-title').textContent, Math.floor(+el.querySelector('g.vis-hover-marker line').getAttribute('x1'))];
+        };
+        // 400 pixels of 0 to 10 (the pointer in the coordinates of the plot
+        // area here): the right half of the first class is the first one
+        expect(await at(180)).toEqual(['0', 100]);
+        expect(await at(220)).toEqual(['5', 300]);
+        expect(await at(390)).toEqual(['5', 300]);
+        expect(await at(5)).toEqual(['0', 100]);
+        expect(errors).toEqual([]);
+    });
+});

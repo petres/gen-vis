@@ -110,8 +110,8 @@ Plots:
 - `stackBy` of a stacked mapping: the mapping of the positions of the
   stacks, e.g. the start of the classes of a bin (`lo`) of a stacked
   histogram whose `x` are the values of the rows, also the positions of the
-  hover (example `data/stats/jitter.json`, with a strip plot of the values
-  below it).
+  hover: the class under the pointer, the marker in its middle (example
+  `data/stats/jitter.json`, with a strip plot of the values below it).
 - `rule`: a line per row across the plot area at a value of x (or y), in
   the color of its category, optionally from `y1` to `y2`, e.g. the caps of
   regimes, instead of an `svg:line` with four props.

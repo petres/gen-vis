@@ -249,8 +249,22 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // the nearest key is one with rows, e.g. not one of null values, of
         // the coordinate systems with the `nearest` of the context, unless
         // the hover of keys without rows is shown (`"empty": true`)
+        // the classes of `stackBy` (the positions of the stacks are their
+        // starts, e.g. of the classes of a bin): the class under the pointer,
+        // the last start not after it, its marker in its middle, up to the
+        // next start (the last class as wide as the one before)
+        const hs = ctx.scales[names.h];
+        const classes = names.v && store.mapping(names.v).stackBy === names.h && hs?.invert ? (() => {
+            const starts = [...rowsByKey.values()].map(rows => rows[0][names.h]).sort((a, b) => a - b);
+            const index = k => d3.bisectLeft(starts, +k);
+            const end = i => i + 1 < starts.length ? starts[i + 1] : 2*starts[i] - (starts[i - 1] ?? starts[i]);
+            return {
+                nearest: p => starts.length ? starts[Math.max(0, d3.bisectRight(starts, +hs.invert(p)) - 1)] : undefined,
+                middle: k => (hs(k) + hs(end(index(k))))/2,
+            };
+        })() : null;
         const located = options.empty ? ctx
-            : { ...ctx, nearest: nearestWithRows(ctx.scales[names.h], [...rowsByKey.values()].map(rows => rows[0][names.h])) };
+            : { ...ctx, nearest: classes?.nearest ?? nearestWithRows(ctx.scales[names.h], [...rowsByKey.values()].map(rows => rows[0][names.h])) };
         let last = null;
         // the rows of the hover shown, e.g. for a select by the keyboard
         let current = null;
@@ -372,7 +386,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
             // a point has no line, the hover is beside it
             const position = found.point
                 ? (noLine(), pointPosition(found.point, ctx.innerWidth))
-                : coord.hover.marker(ctx, key, names, line, nearest);
+                : coord.hover.marker(classes ? { ...ctx, markerAt: classes.middle } : ctx, key, names, line, nearest);
             last = { key, nearest, position };
             // the sum of the stacked values of the position (`total`), of the
             // format of the values
