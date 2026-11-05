@@ -327,7 +327,7 @@ describe('requirements', () => {
 
     test('nothing of a plain definition but the coordinate system and the locale', () => {
         expect(requirements(def)).toEqual({
-            colors: false, coords: [undefined], geo: false, transforms: false, colorLegend: false, locales: [undefined],
+            colors: false, coords: [undefined], geo: false, transforms: false, colorLegend: false, inside: false, locales: [undefined],
         });
     });
 
@@ -341,7 +341,7 @@ describe('requirements', () => {
                 k: { column: 'k', scheme: 'Tableau10', fromData: true, legend: {} },
             },
         });
-        expect(need).toEqual({ colors: true, coords: ['polar'], geo: true, transforms: true, colorLegend: true, locales: ['de'] });
+        expect(need).toEqual({ colors: true, coords: ['polar'], geo: true, transforms: true, colorLegend: true, inside: false, locales: ['de'] });
         expect(requirements({ mapping: { c: { scale: { scheme: 'Blues' } } } }).colors).toBe(true);
         expect(requirements({ mapping: { k: { scheme: 'Tableau10' } } }).colors).toBe(true);
         // a legend of categories is no legend of colors
@@ -355,7 +355,9 @@ describe('requirements', () => {
             null,
             { mapping: { y: null } },
         ]) });
-        expect(need).toEqual({ colors: true, coords: [undefined], geo: false, transforms: true, colorLegend: true, locales: [undefined, 'en'] });
+        expect(need).toEqual({ colors: true, coords: [undefined], geo: false, transforms: true, colorLegend: true, inside: false, locales: [undefined, 'en'] });
+        // the placement of labels inside the bands of an area, also of a patch
+        expect(requirements({ plot: [{ id: 'a', type: 'area' }], formElements: [{ values: [{ patch: { plot: [{ id: 't', type: 'text', place: { in: 'a' } }] } }] }] }).inside).toBe(true);
     });
 
     test('a name of a color which is no part of a scale or of props needs no colors', () => {

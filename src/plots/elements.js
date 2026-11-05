@@ -1,4 +1,4 @@
-export { perRow, perGroup, finite, curve, points, propScale, dodge, halo };
+export { perRow, perGroup, finite, curve, points, propScale, dodge, halo, inside, centered };
 
 import * as d3 from "@/utils/d3";
 import { refOf } from "@/utils/expr";
@@ -96,6 +96,11 @@ const halo = plot => !plot.halo ? {} : {
 
 const element = type => ({ update: true, marks: groups => perRow(groups, type) });
 
+// the labels placed inside of bands (see placeInside of plots/inside.js):
+// a group of the row of each label and the spots by the rows, centered
+const centered = { 'text-anchor': 'middle', 'dominant-baseline': 'central' };
+const inside = placed => ({ groups: placed.map(([g, row]) => ({ ...g, rows: [row] })), spots: new Map(placed.map(([, row, s]) => [row, s])) });
+
 // the svg elements, an element per row in any coordinate system, the props are
 // its attributes, e.g. "@x:scaled" of cx
 export default {
@@ -107,8 +112,13 @@ export default {
     // `max-width` of the props cuts or wraps the texts, see fitText
     'svg:text': {
         update: true,
-        marks(groups, plot) {
+        marks(groups, plot, ctx) {
             const props = halo(plot);
+            // inside the bands of an area plot (`place`), see plots/inside.js
+            if (plot.place?.in !== undefined) {
+                const { groups: placed, spots } = inside(ctx.store.inside.placeInside(groups, plot, ctx, false));
+                return { ...perRow(placed, "text", (v, row) => ({ ...props, ...v, ...centered, x: spots.get(row).x, y: spots.get(row).y })), fit: true };
+            }
             if (!plot.dodge)
                 return { ...perRow(groups, "text", v => ({ ...props, ...v })), fit: true };
             // the positions of the texts of all groups, moved apart

@@ -162,8 +162,8 @@ const createFacet = (vis, initial) => {
             });
             if (!type.update)
                 removeElements(parent);
-            const rows = plotRows(store, plot, facet);
-            drawLayer(parent, type.marks(plotGroups(plot, rows, ctx), plot, ctx));
+            const groups = ctx.groupsOf(plot.id);
+            drawLayer(parent, type.marks(groups, plot, ctx));
         });
     };
 
@@ -216,7 +216,17 @@ const createFacet = (vis, initial) => {
             outer,
             cell,
             sharing,
+            // the groups of a plot of the facet by its id, of this draw, e.g.
+            // the bands of an area of labels inside them (plots/inside.js)
+            groupsOf: id => {
+                if (!drawnGroups.has(id)) {
+                    const p = store.def.plot.find(q => q.id === id);
+                    drawnGroups.set(id, p ? plotGroups(p, plotRows(store, p, facet), ctx) : []);
+                }
+                return drawnGroups.get(id);
+            },
         };
+        const drawnGroups = new Map();
 
         store.coord.prepare?.(ctx);
         // the plots below the axes and grid lines, e.g. the bands of annotations,

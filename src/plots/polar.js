@@ -2,7 +2,7 @@
 import { arc, areaRadial, lineRadial, pointRadial } from 'd3-shape';
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, points, propScale, dodge, halo } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, points, propScale, dodge, halo, inside, centered } from "@/plots/elements";
 import { barScale, barWidth } from "@/plots/cartesian";
 import { radiusRange } from "@/coords/polar-plot";
 import { defaults } from "@/plots/defaults";
@@ -51,6 +51,14 @@ const positioned = (name, type, x, y) => ({
         const text = type == 'text';
         const below = text ? halo(plot) : {};
         const [r0] = radiusRange(ctx);
+        // inside the bands of an area plot (`place`), see plots/inside.js
+        if (text && plot.place?.in !== undefined) {
+            const { groups: placed, spots } = inside(ctx.store.inside.placeInside(groups, plot, ctx, true));
+            return perRow(placed, type, (v, row) => {
+                const { angle, radius, ...props } = v;
+                return { ...below, ...props, ...centered, [x]: spots.get(row).x, [y]: spots.get(row).y };
+            });
+        }
         const radii = text && plot.dodge ? dodgedRadii(groups, plot.dodge, r0) : null;
         return perRow(groups, type, (v, row) => {
             if (!('angle' in v && 'radius' in v))

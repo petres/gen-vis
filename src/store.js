@@ -34,6 +34,8 @@ class Store {
     // geometries of all patches by their key, see loadGeometries
     geo = null;
     geoModule = null;
+    // the placement of labels inside of bands, loaded for them, see plots/inside.js
+    inside = null;
     geometries = null;
     def = null;
     rows = null;

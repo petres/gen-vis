@@ -190,6 +190,8 @@ const requirements = defOrg => {
         geo: all.some(d => Boolean(d.geo?.data)),
         transforms: all.some(d => Boolean(d.transform)),
         colorLegend: mappings.some(m => m.legend && !hasCategories(m)),
+        // labels inside the bands of an area, see plots/inside.js
+        inside: all.some(d => [d.plot ?? []].flat().some(p => isObject(p) && isObject(p.place) && p.place.in !== undefined)),
         locales: [...all.filter((d, i) => i == 0 || d.options?.locale !== undefined).map(d => d.options?.locale ?? undefined), ...languagesOf(defOrg)],
     };
 };
@@ -220,10 +222,11 @@ const loadParts = need => {
         need.geo ? lazy.geo() : null,
         need.transforms ? loadTransforms() : null,
         need.colorLegend ? lazy.colorLegend() : null,
+        need.inside ? lazy.inside() : null,
         Promise.all(need.coords.map(name => loadCoord(name))),
         ...need.locales.map(locale => loadLocale(locale)),
-    ]).then(([, geo, , colorLegend, coords]) =>
-        ({ coords: new Map(need.coords.map((name, i) => [name ?? 'cartesian', coords[i]])), geo, colorLegend }));
+    ]).then(([, geo, , colorLegend, inside, coords]) =>
+        ({ coords: new Map(need.coords.map((name, i) => [name ?? 'cartesian', coords[i]])), geo, colorLegend, inside }));
     // the errors are the ones of the load, not unhandled ones
     parts.catch(() => {});
     return parts;
@@ -389,7 +392,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
         await validate();
         throw error;
     }
-    const [{ coords, geo: geoModule, colorLegend }, rows, files, geometries] = loaded;
+    const [{ coords, geo: geoModule, colorLegend, inside }, rows, files, geometries] = loaded;
     await validate(rows);
     const { prepared, defaults, columns } = prepare(defOrg, rows, files, state, globals, symbolDefaults(chartDefaults));
 
@@ -400,6 +403,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
         coords,
         coord: coords.get(prepared.options.coord ?? 'cartesian'),
         geoModule: geoModule ?? null,
+        inside: inside ?? null,
         geometries,
         geo: loadGeo(geometries, geoModule, prepared),
         files,

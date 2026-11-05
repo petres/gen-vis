@@ -3979,3 +3979,56 @@ describe('texts in several languages', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('labels inside the bands of an area plot (place)', () => {
+    // two thick bands and a thin one, stacked, a label per category inside its band
+    const def = (coord = 'cartesian') => ({
+        options: { coord, width: 600, height: 300, margins: { top: 10, right: 10, bottom: 30, left: 40 } },
+        mapping: {
+            x: { column: 'hour', type: 'numeric', domain: [0, 23], scale: { domainRel: [0, 0] } },
+            y: { column: 'value', type: 'numeric', domain: [0, null], stacked: true, scale: { domainRel: [0, 0] } },
+            c: { column: 'c', legend: {}, categories: { a: { name: 'Erster' }, b: { name: 'Zweiter' }, thin: { name: 'Dünn' } } },
+        },
+        plot: [
+            coord == 'polar' ? { id: 'areas', type: 'polar:area', by: 'c', curve: 'catmullRomClosed', props: { d: { innerRadius: '@y:start:scaled', outerRadius: '@y:end:scaled' } } }
+                : { id: 'areas', type: 'area', by: 'c', curve: 'monotoneX', props: { d: { y0: '@y:start:scaled', y1: '@y:end:scaled' } } },
+            { id: 'names', type: coord == 'polar' ? 'polar:text' : 'svg:text', by: 'c', place: { in: 'areas' }, halo: true,
+                props: { text: '@name', 'font-size': 11, fill: 'black' } },
+        ],
+    });
+    const data = 'hour,c,value\n' + Array.from({ length: 24 }, (_, h) => [`${h},a,${10 + Math.sin(h/4)*3}`, `${h},b,${8}`, `${h},thin,0.2`]).flat().join('\n');
+    const labels = el => [...el.querySelectorAll('[data-plot="names"] text')];
+
+    test('a label per band where it fits, centered, inside the band, none of a thin band; again of a hidden category', async () => {
+        const el = await mount({ def: def(), data });
+        expect(labels(el).map(t => t.textContent).sort()).toEqual(['Erster', 'Zweiter']);
+        expect(labels(el).every(t => t.getAttribute('text-anchor') == 'middle' && t.getAttribute('dominant-baseline') == 'central')).toBe(true);
+        // the scale of y of 0 to about 21.3 in 260 pixels: a (0 to 10 ± 3) is below b
+        const y = t => +t.getAttribute('y');
+        const [first, second] = ['Erster', 'Zweiter'].map(n => labels(el).find(t => t.textContent == n));
+        expect(y(first)).toBeGreaterThan(y(second));
+        // b without a: the whole plot area of 260 pixels, the label in its middle
+        el.querySelector('.vis-legend-entry[data-key="a"]').click();
+        await nextTick();
+        expect(labels(el).map(t => t.textContent)).toEqual(['Zweiter']);
+        expect(Math.abs(y(labels(el)[0]) - 130)).toBeLessThan(10);
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef(def())).toEqual([]);
+        const bad = def();
+        bad.plot[1] = { ...bad.plot[1], place: { in: 'names' }, select: { max: 'y' } };
+        expect(validateDef(bad).filter(w => w.includes('place') || w.includes('select'))).toEqual([
+            `plot[1].place.in: expected an area plot, not one of 'svg:text'`,
+            `plot[1].select: the labels inside of bands are placed at the positions of all their rows, without a select`]);
+        expect(errors).toEqual([]);
+    });
+
+    test('in polar plots inside of their rings, in the SVG of the export', async () => {
+        const el = await mount({ def: def('polar'), data });
+        expect(labels(el).map(t => t.textContent).sort()).toEqual(['Erster', 'Zweiter']);
+        const vis = createGenVis(document.body.appendChild(document.createElement('div')), { def: def(), data });
+        await rendered(vis.el);
+        const svg = await vis.exportSvg({ parts: ['plot'] });
+        expect(svg).toContain('>Erster</text>');
+        expect(errors).toEqual([]);
+    });
+});

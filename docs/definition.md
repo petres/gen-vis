@@ -982,6 +982,8 @@ A plot or a list of plots, drawn in order:
   the least or the most value of a mapping, `{ "min": "y" }` or
   `{ "max": "x" }` (categories which are numbers by their value, e.g. `"10"`
   after `"9"`), e.g. labels at the ends of lines.
+- `place` (`text`, `polar:text`): `{"in": "<id of an area plot>"}`, the
+  labels inside its bands, see the labels below
 - `dodge` (`text`): the texts are moved apart vertically
   to at least this distance in pixels, e.g. labels at the ends of lines, the
   ones of `polar:text` of the same angle along the radius (outwards from
@@ -1031,6 +1033,35 @@ Labels at the ends of lines, in the color of the line:
     "props": { "dx": 4, "text": "@name" }
 }
 ```
+
+Labels inside the bands of an area plot, e.g. the names of the sources of
+stacked areas: `"place": {"in": "areas"}` (the `id` of a `cartesian:area` or
+`polar:area` plot) of an `svg:text` (or `polar:text`) puts a label per
+group of the plot (its text and font are the props of its first row) inside
+the band of the area of the same categories, at the place with the most
+room: its whole box (the width and the height of the text at its font size,
+the halo and `padding`, 2 pixels by default) is between the edges of the
+band over its width, on the curve of the area (e.g. `monotoneX`), as far as
+possible from them; of the same room the one nearest to `near` (a value of
+x, by default the middle of the positions of its rows). The positions are
+the ones of the rows of the label (each the space to its neighbours), e.g. a
+`filter` of x keeps the labels off the edges of the plot. The labels of the
+least room are placed first, the others at their best places which do not
+overlap them (`"overlap": true` lets them overlap). A label without room is
+left out (`"fit": false` puts it at its best place nevertheless). The labels
+follow the hidden categories, the form elements and the width, the texts are
+centered at their place (`text-anchor` and `dominant-baseline`), the plot
+has no `select`. Of polar plots the box is checked at the angles of its
+points against the rings of the areas.
+
+```json
+{ "id": "areas", "type": "area", "by": "type", "curve": "monotoneX", "props": { "d": { "y0": "@y:start:scaled", "y1": "@y:end:scaled" } } },
+{ "id": "names", "type": "text", "by": "type", "place": { "in": "areas" }, "halo": true,
+  "filter": { "x": { "range": [1, 22] } }, "props": { "text": "@name", "font-size": 11, "font-weight": "bold" } }
+```
+
+Examples `data/energy/electricity/generation-hourly-inside.json`,
+`-radial.json` (polar) and `-overlap.json` (areas which are not stacked).
 
 The rows of `data` have the names of the mappings and others, e.g. a
 `label`, all of them are names of the props. The values of the mappings are

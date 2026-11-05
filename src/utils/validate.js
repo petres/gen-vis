@@ -563,6 +563,18 @@ const checkPlots = ctx => {
         const plotNames = typeof p.data == 'string' ? null
             : new PlotNames([...names.plot(categories.filter(c => Object.hasOwn(mapping, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
         checkProp(p.props, `${path}.props`, warn, plotNames);
+        // labels inside the bands of an area plot, see plots/inside.js
+        if (isObject(p.place)) {
+            const area = plotList.find(q => q?.id === p.place.in);
+            if (!['svg:text', 'polar:text', 'text'].includes(p.type))
+                warn(`${path}.place`, `the labels inside the bands of an area plot are of svg:text or polar:text`);
+            else if (!area)
+                warn(`${path}.place.in`, `unknown plot '${p.place.in}', expected the id of an area plot`);
+            else if (!['area', 'cartesian:area', 'polar:area'].includes(area.type))
+                warn(`${path}.place.in`, `expected an area plot, not one of '${area.type}'`);
+            if (p.select !== undefined)
+                warn(`${path}.select`, `the labels inside of bands are placed at the positions of all their rows, without a select`);
+        }
         // the props of the highlight and of the other elements, see preparePlots of utils/def.js
         ['highlight', 'others'].filter(k => isObject(p[k])).forEach(k => Object.entries(p[k])
             .filter(([n]) => k != 'highlight' || n != 'mode').forEach(([n, v]) => checkProp(v, `${path}.${k}.${n}`, warn, plotNames)));

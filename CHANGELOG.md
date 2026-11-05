@@ -166,6 +166,16 @@ Plots:
   `"before": "<plot id>"` right before a plot, e.g. lines above the bars
   but below labels whose halo cuts them.
 
+- Labels inside the bands of an area plot: `"place": {"in": "areas"}` of an
+  `svg:text` or `polar:text` puts a label per category inside the band of
+  the area of the same category (stacked or not, of the curve of the
+  area) where its whole text box has the most room, the narrowest bands
+  first, without overlaps (`"overlap": true`); a label without room is left
+  out (`"fit": false` places it nevertheless); `near` and `padding`. Instead
+  of `select` and `dodge`, which put labels of peaks on the edges of the
+  bands. Examples `data/energy/electricity/generation-hourly-inside.json`,
+  `-radial.json` and `-overlap.json`.
+
 Axes:
 
 - Axes at a value of the other axis: `"axis": {"at": 0}` puts the line and

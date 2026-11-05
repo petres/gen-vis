@@ -6,6 +6,7 @@
 export const lazy = {
     validate: () => import('@/utils/validate.js'),
     transform: () => import('@/utils/transform-types.js'),
+    inside: () => import('@/plots/inside.js'),
     intl: () => import('@/utils/locale-intl.js'),
     colorLegend: () => import('@/comp/color-legend.js'),
     colors: () => import('@/utils/colors.js'),

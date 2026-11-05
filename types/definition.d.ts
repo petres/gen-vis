@@ -1241,16 +1241,30 @@ export interface Plot {
      */
     dataFormat?: 'csv' | 'tsv' | 'json' | 'parquet';
     filter?: Filter2;
+    place?:
+        | ('pole' | 'centroid')
+        | {
+              /**
+               * The id of the area plot (cartesian or polar), its bands are the ones of the same categories.
+               */
+              in: string;
+              /**
+               * A value of x (of the angle of polar plots) the labels are near of the places of the same room, by default the middle of the positions of their rows.
+               */
+              near?: {
+                  [k: string]: unknown;
+              };
+              /**
+               * The pixels around a text inside its band, besides the halo.
+               */
+              padding?: number;
+          };
     /**
-     * geo:text: a label at the pole of inaccessibility of the largest polygon of its feature, the point farthest from its edges (default), or at its centroid.
-     */
-    place?: 'pole' | 'centroid';
-    /**
-     * geo:text: only the labels which fit into the area around their place (estimated of their characters and font size).
+     * geo:text: only the labels which fit into the area around their place (estimated of their characters and font size); text plots of place in: true (default) leaves out a label without room in its band, false places it where it violates the least.
      */
     fit?: boolean;
     /**
-     * geo:text: false leaves out the labels which overlap the one of a larger area, so a map needs no list of the labels shown.
+     * geo:text: false leaves out the labels which overlap the one of a larger area, so a map needs no list of the labels shown; text plots of place in: false (default) places the labels apart, true lets them overlap.
      */
     overlap?: boolean;
     /**

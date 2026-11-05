@@ -4,6 +4,7 @@
 // definitions is not part of it (~12 kB gzipped), a page in use does not
 // need it, the module of the standalone script and the package have it.
 import * as transform from '@/utils/transform-types.js';
+import * as inside from '@/plots/inside.js';
 import * as intl from '@/utils/locale-intl.js';
 import createColorLegend from '@/comp/color-legend.js';
 import * as colors from '@/utils/colors.js';
@@ -20,6 +21,7 @@ export const lazy = {
         throw new Error('the single file of the standalone script has no check of the definitions, the module (esm/gen-vis.js, gen-vis.core.js) and the package have it');
     },
     transform: async () => transform,
+    inside: async () => inside,
     intl: async () => intl,
     colorLegend: async () => ({ default: createColorLegend }),
     colors: async () => colors,
