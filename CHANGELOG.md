@@ -46,7 +46,9 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   continuous scale (crisp edges, so neighbours meet without a seam), a
   `line` with `x0` and `x1` in `d` draws stairs down to the base at both
   ends, e.g. the outline of a density per category. Examples
-  `data/stats/histogram.json` and `data/stats/density.json`.
+  `data/stats/histogram.json` and `data/stats/density.json`. An `area` with
+  `x0` and `x1` in `d` fills the stairs, e.g. a light area under the outline
+  of a density.
 - A plot none of whose rows has the values it uses is named in a warning
   (console, CLI, `messages` of the export page), e.g. `plot 'caps': none
   of its 312 rows is drawn, 312 without a value of mapping 'y'`.

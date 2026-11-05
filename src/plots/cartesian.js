@@ -27,6 +27,29 @@ const baseOf = scale => {
 };
 
 /**
+ * The path of filled stairs of the points of a group, `x0` and `x1` of
+ * every point (e.g. a class of a bin) from `y0` to `y1`: an area per run of
+ * neighbours (less than half a pixel apart), closed along the base (`y0`
+ * of its first point, by default the position of 0, `base`).
+ */
+const stairsArea = (points, base) => {
+    const steps = points.filter(p => finite(p.x0, p.x1, p.y1)).sort((a, b) => a.x0 - b.x0);
+    let path = '';
+    let end = null;
+    steps.forEach(p => {
+        if (end === null || Math.abs(p.x0 - end.x) >= 0.5) {
+            if (end !== null)
+                path += `V${end.y0}Z`;
+            end = { y0: finite(p.y0) ? p.y0 : base };
+            path += `M${p.x0},${end.y0}`;
+        }
+        path += `V${p.y1}H${p.x1}`;
+        end.x = p.x1;
+    });
+    return end === null ? null : `${path}V${end.y0}Z`;
+};
+
+/**
  * The path of stairs of the points of a group: a horizontal line from `x0`
  * to `x1` at `y` of every point (e.g. a class of a bin), in the order of
  * `x0`, vertical lines between neighbours and down to the base (`y0`, by
@@ -78,14 +101,22 @@ export default {
         curve: true,
         coords: ['cartesian'],
         update: true,
-        marks: (groups, plot) => perGroup(groups, g => d3.area()
-            .curve(curve(plot))
-            .defined(e => finite(e.x, e.y0, e.y1))
-            .x(e => e.x)
-            .y1(e => e.y1)
-            .y0(e => e.y0)
-            (points(g))
-        ),
+        marks(groups, plot, ctx) {
+            // filled stairs of `x0` and `x1`, e.g. of the classes of a bin
+            if (plot.props.d && ('x0' in plot.props.d || 'x1' in plot.props.d)) {
+                const scale = propScale(plot, ctx, 'd.y1');
+                const base = scale ? baseOf(scale) : ctx.innerHeight;
+                return perGroup(groups, g => stairsArea(points(g), base));
+            }
+            return perGroup(groups, g => d3.area()
+                .curve(curve(plot))
+                .defined(e => finite(e.x, e.y0, e.y1))
+                .x(e => e.x)
+                .y1(e => e.y1)
+                .y0(e => e.y0)
+                (points(g))
+            );
+        },
     },
 
     // a bar per row from `y0` (by default the position of 0 of the scale of `y1`)

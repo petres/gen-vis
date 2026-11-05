@@ -3236,6 +3236,13 @@ describe('histograms: the classes of a bin', () => {
         expect(errors).toEqual([]);
     });
 
+    test('filled stairs of an area of x0 and x1, closed along the base', async () => {
+        const el = await mount({ def: def({ type: 'area', by: 'g', props: { d: { x0: '@lo:scaled', x1: '@hi:scaled' } } }), data });
+        const [a] = [...el.querySelectorAll('g.vis-plot path')].map(p => p.getAttribute('d'));
+        expect(a).toBe('M0,250V125H150V187.5H300V187.5H750V250Z');
+        expect(errors).toEqual([]);
+    });
+
     test('stairs of a line of x0 and x1: down to the base at both ends', async () => {
         const el = await mount({ def: def({ type: 'line', by: 'g', props: { d: { x0: '@lo:scaled', x1: '@hi:scaled' } } }), data });
         const [a, b] = [...el.querySelectorAll('g.vis-plot path')].map(p => p.getAttribute('d'));

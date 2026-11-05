@@ -807,7 +807,11 @@ A plot or a list of plots, drawn in order:
     between neighbours, and down to the base (`y0`, by default the position
     of 0) at the ends and at gaps, e.g. the outline of a histogram per
     category, `"d": {"x0": "@lo:scaled", "x1": "@hi:scaled", "y": "@density:scaled"}`
-  - `cartesian:area`: an area per group, `d` with `x`, `y0` and `y1`
+  - `cartesian:area`: an area per group, `d` with `x`, `y0` and `y1`. With
+    `x0` and `x1` instead of `x` filled stairs from `x0` to `x1` and from
+    `y0` (by default the position of 0) to `y1` of every row, e.g. the
+    classes of a [bin](#transform), closed along the base,
+    `"d": {"x0": "@lo:scaled", "x1": "@hi:scaled"}`
   - `cartesian:bar`: a bar per row from `y0` to `y1`, by default from the
     position of 0, e.g. `"y1": "@y:scaled"`, or a stacked value with
     `"y0": "@y:start:scaled", "y1": "@y:end:scaled"`. The bars are centered at
