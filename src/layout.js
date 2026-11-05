@@ -173,10 +173,11 @@ const scaleSizes = scales => Object.fromEntries(Object.entries(scales).filter(([
  * The inner height of the facets of a vertical band or point scale with a
  * `step`, the pixels of a category, e.g. of a row of horizontal bars, so
  * the bars keep their size if categories are hidden and the plot is less
- * high, of the most categories of the rows of the facets (`rowsOf`), also
+ * high, of the most categories of the scales of the facets (`rowsOf(name)`,
+ * the rows of each and the ones of its domain, see domainOf of layout), also
  * with the space of the groups of the scale, undefined without one.
  */
-const stepHeight = (store, rowsOf, scope, domainOf) => {
+const stepHeight = (store, rowsOf, scope) => {
     const mapping = store.def.mapping;
     const name = Object.keys(mapping).find(n => mapping[n].scale?.step !== undefined && mapping[n].scale.orientation == 'vertical'
         && ['band', 'point'].includes(mapping[n].scale.type));
@@ -189,8 +190,8 @@ const stepHeight = (store, rowsOf, scope, domainOf) => {
     // the steps of the categories of a range of the length 1, e.g. the
     // categories, their padding and the space between groups
     const unit = { ...m, scale: { ...m.scale, range: [0, 1], inset: undefined } };
-    const steps = Math.max(0, ...rowsOf.map(([rows, key]) => {
-        const s = makeScale(name, unit, rows, { scope, domainRows: domainOf(name, key)?.rows });
+    const steps = Math.max(0, ...rowsOf(name).map(([rows, domainRows]) => {
+        const s = makeScale(name, unit, rows, { scope, domainRows });
         return s.domain().length > 0 ? 1/s.step() : 0;
     }));
     return Math.round(steps*step);
@@ -326,9 +327,28 @@ const layout = (store, width, before = null) => {
     // the width of the facets of a grid without the one of the headers of
     // its rows, see facets.js
     const usable = grid ? Math.max(0, width - (store.rowHeaderWidth ?? 0)) : width;
+    // the scales of all facets (a list of mappings) or of each row or column
+    // of a grid (`{ "y": "row", "x": "all" }`)
+    const raw = faceted && def.facets.scales ? evaluate(def.facets.scales, scope) : [];
+    const sharing = Array.isArray(raw) ? Object.fromEntries(raw.map(n => [n, 'all'])) : (raw && typeof raw == 'object' ? raw : {});
+    // the facets of the scale of a mapping of a facet of a grid shared by its
+    // row or its column, the facet alone otherwise
+    const partOf = (n, f) => {
+        if (!f.cell || !['row', 'col'].includes(sharing[n]))
+            return [f];
+        const index = e => sharing[n] == 'row' ? e.cell.rowIndex : e.cell.colIndex;
+        return entries.filter(e => index(e) === index(f));
+    };
+    // the rows of the domain of the scale of the facets, e.g. of a row
+    const domainOfAll = (n, part) => {
+        const of = part.map(e => domainOf(n, e.key));
+        return of[0] ? { rows: of.flatMap(d => d.rows), stackOf: of[0].stackOf } : null;
+    };
     // the height of the categories of a scale with a `step`, e.g. of the rows
-    // of horizontal bars, the height of the definition otherwise
-    const stepped = stepHeight(store, faceted ? entries.map(f => [f.rows, f.key]) : [[rows]], scope, domainOf);
+    // of horizontal bars, the height of the definition otherwise, of the rows
+    // of the scale of each facet, e.g. the ones of its row of a grid
+    const stepped = stepHeight(store, n => !faceted || sharing[n] == 'all' ? [[rows, domainOf(n)?.rows]]
+        : entries.map(f => partOf(n, f)).map(part => [part.flatMap(e => e.rows), domainOfAll(n, part)?.rows]), scope);
     const size = { width: usable/cols, height: stepped === undefined ? evaluate(def.options.height, scope) : stepped + margins.top + margins.bottom };
     // a container smaller than its margins has no room, not a negative one,
     // which would flip the ranges of the scales, e.g. a negative radius
@@ -346,9 +366,8 @@ const layout = (store, width, before = null) => {
     const also = name => borrowed.filter(n => def.mapping[n].scale.of === name);
 
     // the scale of a mapping for the rows, in the sizes of a facet, of the
-    // facet `key` (undefined of all rows)
-    const scaleOf = (name, rows, key) => {
-        const domain = domainOf(name, key);
+    // facet `key` (undefined of all rows), of the rows of `domain` if given
+    const scaleOf = (name, rows, key, domain = domainOf(name, key)) => {
         return makeScale(name, store.mapping(name), rows, { dims, coord: store.coord, scope: facetScope, mappings: def.mapping,
             stackOf: name == axis.v ? stackOf : null, also: also(name), domainRows: domain?.rows, domainStackOf: domain?.stackOf });
     };
@@ -357,19 +376,17 @@ const layout = (store, width, before = null) => {
     // orientation, e.g. of colors
     const scaled = Object.keys(def.mapping).filter(n => def.mapping[n].scale && !borrowed.includes(n));
     const colors = scaled.filter(n => !def.mapping[n].scale.orientation);
-    // the scales of all facets (a list of mappings) or of each row or column
-    // of a grid (`{ "y": "row", "x": "all" }`)
-    const raw = faceted && def.facets.scales ? evaluate(def.facets.scales, scope) : [];
-    const sharing = Array.isArray(raw) ? Object.fromEntries(raw.map(n => [n, 'all'])) : (raw && typeof raw == 'object' ? raw : {});
     const shared = Object.keys(sharing).filter(n => sharing[n] == 'all');
     const common = Object.fromEntries([...new Set([...shared, ...colors])].map(n => [n, scaleOf(n, rows)]));
     // the scales of a row or a column of a grid, of the rows of its facets
     const partScales = new Map();
+    // of the rows of the domains of its facets, e.g. of `domainIgnores`
     const partScale = (n, f) => {
-        const part = sharing[n] == 'row' ? f.cell.rowIndex : f.cell.colIndex;
-        const id = `${n} ${sharing[n]} ${part}`;
-        if (!partScales.has(id))
-            partScales.set(id, scaleOf(n, entries.filter(e => (sharing[n] == 'row' ? e.cell.rowIndex : e.cell.colIndex) === part).flatMap(e => e.rows)));
+        const id = `${n} ${sharing[n]} ${sharing[n] == 'row' ? f.cell.rowIndex : f.cell.colIndex}`;
+        if (!partScales.has(id)) {
+            const part = partOf(n, f);
+            partScales.set(id, scaleOf(n, part.flatMap(e => e.rows), undefined, domainOfAll(n, part)));
+        }
         return partScales.get(id);
     };
 

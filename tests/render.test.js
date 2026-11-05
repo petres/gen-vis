@@ -3560,6 +3560,30 @@ describe('grids of facets: edge cases', () => {
         expect([...el.querySelectorAll('.vis-facet')].map(f => f.querySelectorAll('.vis-axis-title').length)).toEqual([1, 0, 0, 1]);
         expect(errors).toEqual([]);
     });
+
+    test('domainIgnores of a scale per row: the domain of the rows of the row, of all values of the condition', async () => {
+        const def = gridDef({ rows: 'c', cols: 'half', scales: { y: 'row' } });
+        def.mapping.y.scale.domainIgnores = true;
+        def.mapping.y.scale.domainRel = [0, 0];
+        def.mapping.y.axis.values = [1, 3, 10, 20];
+        def.filter = { x: 2020 };
+        // Wien from 10 to 20, Tirol from 1 to 3 of both years, the rows of 2020 drawn
+        const el = await mount({ def, data: data.replace(/,b$/gm, ',a') });
+        expect(labels(el, 'left')).toEqual(['10|20', '1|3']);
+        expect(errors).toEqual([]);
+    });
+
+    test('a step of a band scale per row: the height of the categories of the row', async () => {
+        const def = gridDef({ rows: 'g', cols: 'half', scales: { y: 'row' } });
+        def.mapping.g = { column: 'group', type: 'categorical', fromData: true };
+        delete def.mapping.c;
+        def.mapping.y = { column: 'land', type: 'categorical', scale: { orientation: 'vertical', type: 'band', step: 20, padding: 0 }, axis: { position: 'left' } };
+        // two categories in each facet, four in the row
+        const el = await mount({ def, data: 'year,land,half,group\n2020,A,a,g\n2020,B,b,g\n2020,C,a,g\n2020,D,b,g' });
+        expect(labels(el, 'left')).toEqual(['A|C|B|D', '']);
+        expect([...el.querySelectorAll('svg.vis-svg')].map(s => +s.getAttribute('height'))).toEqual([130, 130]);
+        expect(errors).toEqual([]);
+    });
 });
 
 describe('the total of the stacked values in the hover', () => {
