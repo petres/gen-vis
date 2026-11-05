@@ -8,7 +8,12 @@ import { comparison } from "@/utils/values";
 // the periods of the dates of a mapping (`interval`): day, week, month,
 // quarter, half (a year), year or a number of them, e.g. "6 months", of the
 // time zone of the scale, null without one or of another value
-const units = { day: 'Day', week: 'Week', month: 'Month', quarter: ['Month', 3], half: ['Month', 6], year: 'Year' };
+// (the intervals of d3 by name, not d3[name], which would keep all of d3's
+// parts of the bundle)
+const units = {
+    day: [d3.timeDay, d3.utcDay], week: [d3.timeWeek, d3.utcWeek], month: [d3.timeMonth, d3.utcMonth],
+    quarter: [d3.timeMonth, d3.utcMonth, 3], half: [d3.timeMonth, d3.utcMonth, 6], year: [d3.timeYear, d3.utcYear],
+};
 const intervalOf = (spec, utc = false) => {
     if (typeof spec != 'string')
         return null;
@@ -16,9 +21,9 @@ const intervalOf = (spec, utc = false) => {
     const unit = m && Object.hasOwn(units, m[2]) ? units[m[2]] : null;
     if (!unit)
         return null;
-    const [name, size] = Array.isArray(unit) ? unit : [unit, 1];
+    const [local, inUtc, size = 1] = unit;
     const count = size*(m[1] ? Number(m[1]) : 1);
-    const base = d3[`${utc ? 'utc' : 'time'}${name}`];
+    const base = utc ? inUtc : local;
     const interval = count == 1 ? base : base.every(count);
     return interval && { offset: d => interval.offset(d instanceof Date ? d : new Date(d), 1) };
 };
