@@ -468,6 +468,161 @@
     "columns": {}
   },
   {
+    "name": "normalized: the share of the group, the density per unit or per `per` units, the count per `per` units of the width",
+    "rows": [
+      {
+        "g": "a",
+        "v": "1"
+      },
+      {
+        "g": "a",
+        "v": "3"
+      },
+      {
+        "g": "a",
+        "v": "5"
+      },
+      {
+        "g": "b",
+        "v": "1"
+      }
+    ],
+    "transform": [
+      {
+        "type": "bin",
+        "column": "v",
+        "edges": [
+          0,
+          2,
+          6
+        ],
+        "by": "g",
+        "normalize": "share",
+        "as": "share"
+      },
+      {
+        "type": "bin",
+        "column": "v",
+        "edges": [
+          0,
+          2,
+          6
+        ],
+        "by": "g",
+        "normalize": "density",
+        "per": 2,
+        "as": "density",
+        "start": "s2",
+        "end": "e2"
+      },
+      {
+        "type": "bin",
+        "column": "v",
+        "edges": [
+          0,
+          2,
+          6
+        ],
+        "by": "g",
+        "per": 2,
+        "as": "perTwo",
+        "start": "s3",
+        "end": "e3"
+      }
+    ],
+    "result": [
+      {
+        "g": "a",
+        "v": "1"
+      },
+      {
+        "g": "a",
+        "v": "3"
+      },
+      {
+        "g": "a",
+        "v": "5"
+      },
+      {
+        "g": "b",
+        "v": "1"
+      },
+      {
+        "g": "a",
+        "start": 0,
+        "end": 2,
+        "share": 0.3333333333333333
+      },
+      {
+        "g": "a",
+        "start": 2,
+        "end": 6,
+        "share": 0.6666666666666666
+      },
+      {
+        "g": "b",
+        "start": 0,
+        "end": 2,
+        "share": 1
+      },
+      {
+        "g": "b",
+        "start": 2,
+        "end": 6,
+        "share": 0
+      },
+      {
+        "g": "a",
+        "s2": 0,
+        "e2": 2,
+        "density": 0.3333333333333333
+      },
+      {
+        "g": "a",
+        "s2": 2,
+        "e2": 6,
+        "density": 0.3333333333333333
+      },
+      {
+        "g": "b",
+        "s2": 0,
+        "e2": 2,
+        "density": 1
+      },
+      {
+        "g": "b",
+        "s2": 2,
+        "e2": 6,
+        "density": 0
+      },
+      {
+        "g": "a",
+        "s3": 0,
+        "e3": 2,
+        "perTwo": 1
+      },
+      {
+        "g": "a",
+        "s3": 2,
+        "e3": 6,
+        "perTwo": 1
+      },
+      {
+        "g": "b",
+        "s3": 0,
+        "e3": 2,
+        "perTwo": 1
+      },
+      {
+        "g": "b",
+        "s3": 2,
+        "e3": 6,
+        "perTwo": 0
+      }
+    ],
+    "columns": {}
+  },
+  {
     "name": "edges are needed",
     "rows": [
       {

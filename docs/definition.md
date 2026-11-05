@@ -298,7 +298,12 @@ column:
   or a density per category, its share of the group, divided by the width:
   `{"type": "share", "column": "count", "as": "share", "by": "regime"}`,
   `{"type": "calc", "as": "density", "expr": {"/": ["@share", {"-":
-  ["@hi", "@lo"]}]}}`. The rows of the data have no count, so they are no
+  ["@hi", "@lo"]}]}}`. `normalize` does these in the bin: `"share"` (of
+  the sum of the group), `"density"` (the share per unit of `column`, so
+  the area of the classes is 1) or `"count"` (the default); `per` divides
+  by the width of the class in units of it, e.g. `"per": 5` of the count per
+  5k, of a density the share per 5k, so the example above is a `bin` with
+  `"per": 5` and a `calc` of `@months`. The rows of the data have no count, so they are no
   part of these values. The transforms are computed before the `filter`
   of the definition: the classes of the values of a selected month need the
   month in `by`, e.g. `"by": ["month"]` and `"filter": {"month": "@month"}`.

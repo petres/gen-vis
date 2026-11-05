@@ -41,30 +41,17 @@
                 143
             ],
             "start": "lo",
-            "end": "hi"
+            "end": "hi",
+            "per": 5,
+            "as": "perFive"
         },
         {
             "type": "calc",
             "as": "perMonth",
             "expr": {
                 "/": [
-                    {
-                        "/": [
-                            "@count",
-                            "@months"
-                        ]
-                    },
-                    {
-                        "/": [
-                            {
-                                "-": [
-                                    "@hi",
-                                    "@lo"
-                                ]
-                            },
-                            5
-                        ]
-                    }
+                    "@perFive",
+                    "@months"
                 ]
             }
         },

@@ -33,36 +33,9 @@
                 "period"
             ],
             "start": "lo",
-            "end": "hi"
-        },
-        {
-            "type": "share",
-            "column": "count",
-            "as": "share",
-            "by": [
-                "group",
-                "period"
-            ]
-        },
-        {
-            "type": "calc",
-            "as": "density",
-            "expr": {
-                "*": [
-                    {
-                        "/": [
-                            "@share",
-                            {
-                                "-": [
-                                    "@hi",
-                                    "@lo"
-                                ]
-                            }
-                        ]
-                    },
-                    1000
-                ]
-            }
+            "end": "hi",
+            "normalize": "density",
+            "as": "density"
         }
     ],
     "mapping": {

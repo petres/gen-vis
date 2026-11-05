@@ -114,7 +114,11 @@ h ^= h >>> 16`, 32-bit unsigned products), divided by 2^32.
 the rows with a number of `column`, in the order of their first row; without
 `by` one group, also without rows) with the values
 of the columns `by` of the first row of the group, `start`, `end` and the
-count (`as`) or the sum of the numbers of `weight` (missing ones are 0). The
+count (`as`) or the sum of the numbers of `weight` (missing ones are 0),
+`normalize`d: `share` divides it by the sum of the group (0 of a sum of 0),
+`density` also by the width of the class in units of `per` (1 by default),
+without `normalize` (or `count`) a `per` divides the count by the width in
+units of it. The
 `edges` are numbers (also strings of numbers) and ranges `{ "from", "to",
 "step" }` (from `from` in steps up to `to`, both included if they are steps,
 each edge rounded to 12 significant digits), sorted and without duplicates;

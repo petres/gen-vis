@@ -305,7 +305,9 @@ const binEdges = (t, values) => {
  * rows with values, also of empty classes, 0), with the values of the columns `by`, the start (`start`,
  * "start" by default) and the end (`end`, "end") of the class and the number
  * of the values of `column` in it (`as`, "count"), or the sum of their
- * `weight`. The classes include their start, the last one also its end,
+ * `weight`, or of them `normalize`d: the `share` of the group or the
+ * `density` (the share per unit of `column`, per `per` units), the count
+ * per `per` units of the width of the class otherwise. The classes include their start, the last one also its end,
  * values outside the edges are left out (`outside`, their number).
  */
 const binRows = (t, { n, get, numbers, groups }) => {
@@ -342,7 +344,15 @@ const binRows = (t, { n, get, numbers, groups }) => {
             sums[lo] += w ?? 0;
         }
         const keys = Object.fromEntries(by.map(c => [c, g.length ? get(g[0], c) ?? null : null]));
-        return sums.map((sum, k) => ({ ...keys, [names.start]: edges[k], [names.end]: edges[k + 1], [names.value]: sum }));
+        // the share of the sum of the group, a density per unit of `column`
+        // (the area of the classes is 1) or per `per` units, the count (or
+        // sum) per `per` units of the width of the class
+        const total = sums.reduce((a, b) => a + b, 0);
+        const width = k => (edges[k + 1] - edges[k])/(t.per ?? 1);
+        const value = (sum, k) => t.normalize == 'share' ? (total ? sum/total : 0)
+            : t.normalize == 'density' ? (total ? sum/total/width(k) : 0)
+            : (t.per === undefined ? sum : sum/width(k));
+        return sums.map((sum, k) => ({ ...keys, [names.start]: edges[k], [names.end]: edges[k + 1], [names.value]: value(sum, k) }));
     });
     return { rows, outside, edges };
 };

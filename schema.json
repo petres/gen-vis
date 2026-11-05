@@ -624,6 +624,8 @@
                 },
                 "step": { "anyOf": [{ "type": "number", "exclusiveMinimum": 0 }, { "type": "string" }], "description": "bin: the width of the classes without edges, also a template of the globals, e.g. \"{step}\", from the multiple of it below the least value to the one above the largest one." },
                 "weight": { "type": "string", "description": "bin: the column of the weights of the rows, the value of a class is the sum of the weights of its values, e.g. of a reporting lag." },
+                "normalize": { "enum": ["count", "share", "density"], "default": "count", "description": "bin: the value of a class, the count (or the sum of the weights), the share of the sum of the group or the density (the share per unit of column, per `per` units), e.g. densities of categories of different sizes." },
+                "per": { "type": "number", "exclusiveMinimum": 0, "description": "bin: the value per this many units of the width of a class, e.g. 5 of the count per 5k of classes of unequal widths, of a density the share per 5 units." },
                 "start": { "type": "string", "description": "bin: the column of the start of the class, start by default." },
                 "end": { "type": "string", "description": "bin: the column of the end of the class, end by default." },
                 "replace": { "type": "boolean", "default": false, "description": "bin: the rows of the classes replace the rows; by default they come after them, e.g. a histogram and a strip plot of the same values, the plots draw the rows with the values they use." },

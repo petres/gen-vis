@@ -542,6 +542,14 @@ export interface Transform {
      */
     weight?: string;
     /**
+     * bin: the value of a class, the count (or the sum of the weights), the share of the sum of the group or the density (the share per unit of column, per `per` units), e.g. densities of categories of different sizes.
+     */
+    normalize?: 'count' | 'share' | 'density';
+    /**
+     * bin: the value per this many units of the width of a class, e.g. 5 of the count per 5k of classes of unequal widths, of a density the share per 5 units.
+     */
+    per?: number;
+    /**
      * bin: the column of the start of the class, start by default.
      */
     start?: string;
