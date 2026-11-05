@@ -3510,3 +3510,42 @@ describe('grids of facets', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the total of the stacked values in the hover', () => {
+    const stackDef = () => {
+        const def = lineDef();
+        def.mapping.y.stacked = true;
+        def.mapping.type = { column: 'type', type: 'categorical', categories: { a: {}, b: {} } };
+        def.plot = { type: 'cartesian:bar', by: ['type'], props: { x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled', width: 10, fill: 'red' } };
+        return def;
+    };
+    test('a row of the sum below the rows, {total} of the title, values for templates without a cell', async () => {
+        const def = stackDef();
+        def.mapping.type.hover = {};
+        def.mapping.type.categories = { a: {}, b: {}, n: {}, sum: {} };
+        def.mapping.y.stacked = { type: { not: 'sum' } };
+        def.mapping.half = { column: 'half', type: 'categorical', fromData: true, hover: { cell: false } };
+        def.options.hover = { total: 'Gesamt', title: '{half}: {total}' };
+        const data = 'year,value,land,type,half\n2020,5,Wien,a,H1\n2020,2,Wien,b,H1\n2020,-1,Wien,n,H1\n2020,6,Wien,sum,H1';
+        const el = await mount({ def, data });
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
+        await nextTick();
+        const total = el.querySelector('.vis-hover tr.vis-hover-total');
+        expect([...total.querySelectorAll('td')].map(t => t.textContent).filter(Boolean)).toEqual(['Gesamt', '6,0']);
+        expect(el.querySelector('.vis-hover-title').textContent).toBe('H1: 6,0');
+        expect(el.querySelectorAll('.vis-hover td[data-mapping="half"]')).toHaveLength(0);
+        // the rows of the table are the rows before the total
+        expect(total.previousElementSibling.classList.contains('vis-hover-entry')).toBe(true);
+    });
+
+    test('a row which is not stacked is not the nearest one in a segment of a stack', async () => {
+        const { nearestRow } = await import('@/comp/facet-hover');
+        const rows = [{ y: 6, t: 'sum' }, { y: 5, t: 'a' }, { y: 2, t: 'b' }];
+        const stacks = new Map([[rows[1], [0, 5]], [rows[2], [5, 7]]]);
+        const stackOf = r => stacks.get(r) ?? [r.y, r.y];
+        const isStacked = r => stacks.has(r);
+        expect(nearestRow(rows, 6, 'y', stackOf, isStacked).t).toBe('b');
+        expect(nearestRow(rows, 8, 'y', stackOf, isStacked).t).toBe('b');
+        expect(nearestRow(rows, 6, 'y', stackOf).t).toBe('sum');
+    });
+});

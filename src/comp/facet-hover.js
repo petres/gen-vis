@@ -62,7 +62,7 @@ const nearestWithRows = (scale, keys) => {
 // value, outside of the stacks the closest one, undefined without a value,
 // rows without a value are not the nearest one (a stack of them has no
 // extent, null is no 0)
-const nearestRow = (rows, value, v, stackOf) => {
+const nearestRow = (rows, value, v, stackOf, isStacked = null) => {
     if (value === undefined)
         return undefined;
     const distance = stackOf ? row => {
@@ -71,7 +71,14 @@ const nearestRow = (rows, value, v, stackOf) => {
             return Infinity;
         return value < lo ? lo - value : (value > hi ? value - hi : 0);
     } : row => row[v] === null || row[v] === undefined ? Infinity : Math.abs(row[v] - value);
-    return d3.least(rows, distance);
+    // a row which is not stacked (e.g. a line of the total) is not the
+    // nearest one in a segment of a stack nor of the same distance as one
+    const rank = isStacked ? row => [distance(row), isStacked(row) ? 0 : 1] : row => [distance(row), 0];
+    return d3.least(rows, (a, b) => {
+        const [da, sa] = rank(a);
+        const [db, sb] = rank(b);
+        return da - db || sa - sb;
+    });
 };
 
 /**
@@ -280,7 +287,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
                 return null;
             const { key, value } = position;
             const rows = rowsByKey.get(String(key)) ?? [];
-            return { key, value, rows, nearest: nearestRow(rows, value, v, stackOf) };
+            return { key, value, rows, nearest: nearestRow(rows, value, v, stackOf, ctx.isStacked) };
         };
 
         const titleOf = key => coord.hover.title ? coord.hover.title(ctx, key, names) : format.h(key);
@@ -290,10 +297,13 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // e.g. their name, and the value
         const entriesOf = (rows, nearest) => rows.map(row => {
             const cells = [];
+            // the values of the mappings with `"cell": false` are names of
+            // the templates, without a cell of the table
+            const celled = n => store.mapping(n).hover.cell !== false;
             const entries = Object.fromEntries(categories.map(n => {
                 const values = evaluate(store.mapping(n).hover.props, { ...scope, ...store.prop(n, row[n]) });
                 const texts = Object.fromEntries(Object.entries(values).map(([k, t]) => [k, store.text(t)]));
-                Object.entries(texts).filter(([, t]) => t !== null && t !== undefined)
+                Object.entries(texts).filter(([, t]) => t !== null && t !== undefined && celled(n))
                     .forEach(([k, t]) => cells.push({ mapping: n, prop: k == 'name' ? null : k, text: t }));
                 return [n, texts];
             }));
@@ -301,7 +311,8 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
             cells.push({ mapping: v, value: true, text: entries[v].name });
             others.forEach(n => {
                 entries[n] = { value: row[n], name: row[n] === null ? '' : formats[n](row[n]) };
-                cells.push({ mapping: n, value: true, text: entries[n].name });
+                if (celled(n))
+                    cells.push({ mapping: n, value: true, text: entries[n].name });
             });
             // the styles of the row, of the props of its categories, the
             // later mappings override the ones before, see hover.js
@@ -355,10 +366,15 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
                 ? (noLine(), pointPosition(found.point, ctx.innerWidth))
                 : coord.hover.marker(ctx, key, names, line, nearest);
             last = { key, nearest, position };
+            // the sum of the stacked values of the position (`total`), of the
+            // format of the values
+            const total = options.total && stackOf && ctx.isStacked
+                ? rows.filter(ctx.isStacked).reduce((sum, r) => sum + (Number.isFinite(r[v]) ? r[v] : 0), 0) : null;
             Object.assign(hover, placed(position, options, pointerAt), {
                 data: entriesOf(rows, nearest),
                 title: p.title,
                 payload: p,
+                total: total === null ? null : { value: total, name: format.v(total) },
             });
             emit('hover', p);
             render();

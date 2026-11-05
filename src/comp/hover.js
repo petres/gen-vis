@@ -67,7 +67,34 @@ const createHover = (store, slots) => {
     // e.g. {definition} of a category of the position
     const filledTitle = hover => {
         const row = (hover.data ?? []).find(d => d.nearest) ?? hover.data?.[0];
-        return fillHtml(template().title ?? '{title}', { ...namesOf(store, row), title: hover.title });
+        return fillHtml(template().title ?? '{title}', { ...namesOf(store, row), title: hover.title, total: hover.total?.name ?? '' });
+    };
+
+    // the row of the sum of the stacked values below the rows (`total`, true
+    // or its name), its value in the cell of the values, see vis-hover-total
+    const totalRow = hover => {
+        const t = template().total;
+        let tr = table.querySelector('tr.vis-hover-total');
+        if (!t || !hover.total) {
+            tr?.remove();
+            return;
+        }
+        tr ??= table.appendChild(document.createElement('tr'));
+        tr.setAttribute('class', 'vis-hover-total');
+        const width = Math.max(...(hover.data ?? []).map(d => d.cells.length), 2);
+        const value = (hover.data?.[0]?.cells ?? []).findIndex(c => c.value);
+        const at = value < 0 ? width - 1 : value;
+        tr.replaceChildren(...Array.from({ length: width }, (_, i) => {
+            const td = document.createElement('td');
+            if (i == 0)
+                td.textContent = store.text(t === true ? 'Total' : String(t));
+            if (i == at) {
+                td.setAttribute('class', 'vis-value');
+                td.textContent = hover.total.name;
+            }
+            return td;
+        }));
+        table.appendChild(tr);
     };
 
     // the rows of the table of the default content
@@ -141,8 +168,10 @@ const createHover = (store, slots) => {
             else
                 setText(title, hover.title);
             // the rows are also drawn when the hover is shown, e.g. by a touch
-            if (hover.data || first)
+            if (hover.data || first) {
                 hover.data && rows(sorted);
+                totalRow(hover);
+            }
         }
     };
 

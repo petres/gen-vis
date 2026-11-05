@@ -68,6 +68,11 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- The hover: `"total": true` (or a name) of `options.hover` is a row of the
+  sum of the stacked values of the position, also `{total}` of the title;
+  `"cell": false` of the `hover` of a mapping keeps its value for the
+  templates without a column; a row which is not stacked is not the
+  nearest one in a segment of a stack.
 - Grids of facets: `"facets": {"cols": "group", "rows": "band"}`, a facet
   per category of the two mappings, the names of the columns above the
   first row and the ones of the rows beside them (`"rowHeaders": "right"`,

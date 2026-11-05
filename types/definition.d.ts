@@ -646,6 +646,10 @@ export interface Options {
      */
     hover?: {
         /**
+         * A row of the sum of the stacked values of the position below the rows (true, or its name, e.g. Gesamt), in the format of the values; also {total} of the title.
+         */
+        total?: boolean | string;
+        /**
          * The rows of the nearest position of the axis (position, by default) or the row of the nearest point, e.g. of a scatter plot.
          */
         mode?: 'position' | 'point';
@@ -757,6 +761,10 @@ export interface MappingEntry {
     hover?:
         | Removed
         | {
+              /**
+               * false: the value is a name of the templates of the hover (e.g. {half} of the title), without a cell of the table.
+               */
+              cell?: boolean;
               /**
                * By default the format of the axis.
                */
