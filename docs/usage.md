@@ -496,23 +496,31 @@ page (the default in brackets):
 
 ```css
 .vis {
-    --gen-vis-font-family: Arial, sans-serif;  /* Century Gothic */
-    --gen-vis-grid-color: #444;                /* #CCC, the grid lines */
-    --gen-vis-hover-background: #222D;         /* #FFFFFFCC */
+    --gen-vis-font-family: Arial, sans-serif;  /* Inter, system-ui, …, sans-serif */
+    --gen-vis-grid-color: #444;                /* #E3E5E8, the grid lines */
+    --gen-vis-axis-color: #777;                /* #9AA0A8, the lines and marks of the axes */
+    --gen-vis-axis-label-color: #BBB;          /* #5F6670, their labels and titles */
+    --gen-vis-muted-color: #AAA;               /* #5F6670, the subtitle and the footer */
+    --gen-vis-hover-background: #222D;         /* #FFFFFFF2 */
+    --gen-vis-hover-border-color: #444;        /* #E3E5E8, the border and lines of the hover */
     --gen-vis-halo-color: #111;                /* white, behind labels on the plots */
-    --gen-vis-text-color: #EEE;                /* black, the texts of plots without a fill */
+    --gen-vis-text-color: #EEE;                /* #1F2328, the texts of plots without a fill */
     --gen-vis-background: #111;                /* #FFF, of the PNG */
-    color: #EEE;                               /* the texts, axes and ticks */
+    color: #EEE;                               /* the titles, legends and the hover */
 }
 ```
 
-The others are `--gen-vis-marker-color` (`#AAA`, the line of the hover),
-`--gen-vis-band-color` (`#EEE`), `--gen-vis-line-color` (`#999`),
-`--gen-vis-annotation-color` (`#444` of texts, `#555` of labels, `#666` of
-circles), `--gen-vis-missing-color` (`#EEE`, the missing values of a legend),
-`--gen-vis-button-color` (`#BBB`), `--gen-vis-button-hover-color` (`#777`),
-`--gen-vis-focus-color` (`#1E4F77`, the entries of legends and the facets) and
-`--gen-vis-error-color` (`#B00`). The colors of annotations are only the ones
+The others are `--gen-vis-marker-color` (`#9AA0A8`, the line of the hover),
+`--gen-vis-band-color` (`#F1F2F4`), `--gen-vis-line-color` (`#9AA0A8`),
+`--gen-vis-annotation-color` (`#444` of texts, `#5F6670` of labels, `#666`
+of circles), `--gen-vis-missing-color` (`#EEE`, the missing values of a
+legend), `--gen-vis-button-color` (`#B8BDC4`), `--gen-vis-button-hover-color`
+(`#5F6670`), `--gen-vis-focus-color` (`#4269D0`, the first color of
+observable10, the entries of legends and the facets) and
+`--gen-vis-error-color` (`#B42318`). The default look: Inter where it is
+installed (the font of the system otherwise), figures of the same width
+(`tabular-nums`), grey axes, light grid lines, a hover card; the colors of
+categories without colors are d3's `observable10`. The colors of annotations are only the ones
 without a color of their `props`.
 
 The props of a definition can be css variables, e.g. the ones of the page or

@@ -56,7 +56,7 @@ const ownSchemes = {};
 const colorList = (c, n = c?.length) => Array.isArray(c) && c.length > 0 && c.length == n && c.every(e => typeof e == 'string' && e);
 
 /**
- * A scheme of its own (`name`, e.g. "wifo") of `colors` (CSS colors), for
+ * A scheme of its own (`name`, e.g. "house") of `colors` (CSS colors), for
  * `scheme` of the categories and of the scales as the ones of d3, known to
  * validateDef, registered before the visualisations are loaded. A scheme of
  * several sizes as the ones of d3, e.g. "Blues", is a list whose entry n is
@@ -67,7 +67,7 @@ const colorList = (c, n = c?.length) => Array.isArray(c) && c.length > 0 && c.le
  */
 export const registerScheme = (name, colors) => {
     if (typeof name != 'string' || !name)
-        throw new Error('registerScheme: the name of a scheme is a string, e.g. "wifo"');
+        throw new Error('registerScheme: the name of a scheme is a string, e.g. "house"');
     const sized = Array.isArray(colors) && !colorList(colors) && Array.from(colors).every((c, n) => c == null || colorList(c, n)) && colors.some(c => c != null);
     if (!colorList(colors) && !sized)
         throw new Error(`registerScheme: the colors of the scheme '${name}' are an array of CSS colors, e.g. ["#1F77B4", "#FF7F0E"], or of several sizes, an array whose entry n is the array of n colors (or null)`);

@@ -18,7 +18,7 @@ HTML and no CSS:
 - the texts of the HTML (the title, the subtitle, the legends, the footer)
   are `<text>` elements at the positions the browser drew them, one per
   line, the texts stay texts (editable, in the fonts of the computer which
-  opens it, e.g. Century Gothic), backgrounds and borders are `<rect>` and
+  opens it, e.g. Inter), backgrounds and borders are `<rect>` and
   `<line>` elements;
 - the svg elements of the plots are copied with their styles as
   presentation attributes: no `foreignObject`, no `<style>`, no `class`
@@ -119,7 +119,7 @@ unknown ones are an error):
 | `parts` | the parts of the image, see above, default all |
 | `fontSize` | the size of the texts of gen-vis, e.g. `"8pt"`: 13px of most texts become it, the title (22px), the message (14px) and the small texts (11px) in proportion; sizes of the definition (props) stay as they are |
 | `background` | a CSS color, `null` none (a transparent PNG), default the one of gen-vis (`--gen-vis-background` or white) |
-| `schemes` | schemes of colors registered before the chart is drawn, for this call only (the next one has the schemes of the page before), e.g. `{ "wifo": ["#005CA9", "#E6A000"] }`, also of several sizes (`[null, null, ["#9EC5E8", "#005CA9"], ...]`), see `registerScheme` in [extensions](extensions.md#extensions); also a function of the merged definition (see `resolve` below) which returns such an object (or a promise of it), called before the chart is drawn, e.g. of colors by the plot types, since 4.0.0 |
+| `schemes` | schemes of colors registered before the chart is drawn, for this call only (the next one has the schemes of the page before), e.g. `{ "house": ["#005CA9", "#E6A000"] }`, also of several sizes (`[null, null, ["#9EC5E8", "#005CA9"], ...]`), see `registerScheme` in [extensions](extensions.md#extensions); also a function of the merged definition (see `resolve` below) which returns such an object (or a promise of it), called before the chart is drawn, e.g. of colors by the plot types, since 4.0.0 |
 | `timeout` | the time to wait for the chart in milliseconds, default 30000 |
 
 The result (sizes in CSS pixels):
@@ -144,16 +144,16 @@ definition (its files are loaded once):
 
 ```js
 await genVisExport({ defUrl, schemes: merged =>
-    ({ wifo: [merged.plot].flat().some(p => p.type == 'bar') ? barColors : lineColors }) });
+    ({ house: [merged.plot].flat().some(p => p.type == 'bar') ? barColors : lineColors }) });
 ```
 
 The CLI has no functions of options (they do not come from the command
 line); a program of its own evaluates them in the page.
 
-The page has the fonts of the computer: the font of gen-vis is Century
-Gothic, the page falls back to URW Gothic (the same design, e.g. of Linux,
-Debian: `fonts-urw-base35`), then to sans-serif; a stylesheet of the
-options sets others (`--gen-vis-font-family`). The version changes only
+The page has the fonts of the computer: the font of gen-vis is Inter
+(Debian: `fonts-inter`), then the font of the system (`system-ui`, e.g.
+DejaVu Sans of Linux) and sans-serif; a stylesheet of the options sets
+others (`--gen-vis-font-family`), e.g. the one of a house style. The version changes only
 with changes which are not compatible, e.g. a new meaning of an option, new
 options and new keys of the result are added without a new version.
 
@@ -167,8 +167,8 @@ browser draws them all:
 
 ```sh
 npx gen-vis export data/bev/def.json bev.svg bev.png bev.pdf --width 16cm --font-size 8pt --dpi 300
-npx gen-vis export a.json a.svg b.json b.svg b.png --parts legend,plot --css wifo.css --class wifo \
-    --scheme wifo=#005CA9,#E6A000,#7AB51D --globals '{"lang": "en"}' \
+npx gen-vis export a.json a.svg b.json b.svg b.png --parts legend,plot --css house.css --class house \
+    --scheme house=#005CA9,#E6A000,#7AB51D --globals '{"lang": "en"}' \
     --defaults '{"axis": {"padding": 2, "tickMarks": {"size": 4, "inset": 0}}}'
 ```
 
@@ -181,7 +181,7 @@ options above:
 - `--css` (a file or CSS text) and `--class`, both repeatable;
   `--font-size`.
 - `--globals` and `--state` (JSON), `--defaults` (JSON or a JSON file, e.g.
-  `--defaults wifo-defaults.json`), `--data` (a CSV, JSON or parquet file
+  `--defaults house-defaults.json`), `--data` (a CSV, JSON or parquet file
   instead of the definition's data), `--scheme name=color,color,...`
   (repeatable).
 - PNG resolution: `--scale` (pixels per CSS pixel, default 2) or `--dpi`.

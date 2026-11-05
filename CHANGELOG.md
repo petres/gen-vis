@@ -15,6 +15,21 @@ differently, listed first.
 
 What existing definitions draw differently:
 
+- A new default look of its own, not the one of a house style: the font
+  is Inter where it is installed, otherwise the one of the system
+  (`system-ui`, …, before Century Gothic, also of the export page, which
+  had URW Gothic), numbers with figures of the same width
+  (`tabular-nums`); the title 20px semibold, the subtitle and the footer
+  grey (`--gen-vis-muted-color`), the lines and marks of the axes grey
+  (`--gen-vis-axis-color`) and their labels and titles 12px a darker grey
+  (`--gen-vis-axis-label-color`), the grid lines lighter and 1px, the
+  hover a card with a border (`--gen-vis-hover-border-color`) and a
+  shadow whose title is one line, the focus in the first color of
+  `observable10` (the colors of categories without colors, as before),
+  bold texts semibold. All are css variables (see the styles of
+  `docs/usage.md`); a house style sets its font and colors there, e.g.
+  `--gen-vis-font-family: "Century Gothic"`. The export's `fontSize`
+  scales the new sizes.
 - The categories of a band, point or ordinal scale are in the order of the
   `categories` of the mapping (as the legend, the stacks and the facets),
   the ones not listed after them in the order of the rows; before, in the

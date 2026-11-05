@@ -39,11 +39,12 @@ const lengthOf = (value, name) => {
 const fontCss = px => {
     const f = px / 13;
     const groups = [
-        [22, ['.vis-header .vis-title']],
+        [20, ['.vis-header .vis-title']],
         [14, ['.vis-message']],
-        [13, ['.vis-header .vis-subtitle', '.vis-header .vis-selection', '.vis-footer-content > span',
-            '.vis-facet-title', '.vis-facet svg g.tick text:not([font-size])', '.vis-facet svg .vis-axis-title',
+        [13, ['.vis-header .vis-subtitle', '.vis-header .vis-selection',
+            '.vis-facet-title', '.vis-facet-row-title',
             '.vis-legend .vis-legend-title', '.vis-legend .vis-legend-entries > div', '.vis-color-legend .vis-legend-title']],
+        [12, ['.vis-footer-content > span', '.vis-facet svg g.tick text:not([font-size])', '.vis-facet svg .vis-axis-title']],
         [11, ['.vis-facet svg .vis-annotation-label', '.vis-color-legend svg', '.vis-color-legend .vis-legend-missing']],
     ];
     return groups.map(([size, selectors]) => `${selectors.join(', ')} { font-size: ${(size * f).toFixed(3)}px !important; }`).join('\n');

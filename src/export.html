@@ -9,10 +9,9 @@
    it, the stylesheets of the options (not in a layer) override both */
 @layer gen-vis, gen-vis-export;
 @layer gen-vis-export {
+    /* the font is the one of gen-vis (Inter where it is installed, the
+       one of the system otherwise), the css of the options sets another */
     html, body { margin: 0; padding: 0; background: transparent; }
-    /* Century Gothic is the font of gen-vis, URW Gothic a free one of the
-       same design, e.g. of Linux (Debian: fonts-urw-base35) */
-    .vis { --gen-vis-font-family: "Century Gothic", "URW Gothic", sans-serif; }
 }
 @page { margin: 0; }
 </style>

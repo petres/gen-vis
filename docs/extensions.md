@@ -100,7 +100,7 @@ ones of d3, e.g. `Blues`, is an array whose entry n is the array of n
 colors, entries without a size are `null` (holes): n categories (or
 classes) take the first n colors of the smallest size of at least n
 colors, more than the largest size its colors again from the first one,
-e.g. `registerScheme('wifoBlues', [null, null, ['#9EC5E8', '#005CA9'],
+e.g. `registerScheme('houseBlues', [null, null, ['#9EC5E8', '#005CA9'],
 ['#C6DBEF', '#6BAED6', '#005CA9']])`. A registered `observable10` is also
 the palette of the categories without colors and without a scheme (the
 default colors, d3's Observable10 otherwise), e.g. the colors of a house
@@ -109,8 +109,8 @@ style for every definition:
 ```js
 import { registerScheme } from '@preschen/gen-vis';
 
-registerScheme('wifo', ['#005CA9', '#E6A000', '#7AB51D', '#A6A6A6']);
-// "land": { "column": "Bundesland", "fromData": true, "scheme": "wifo", "legend": {} }
+registerScheme('house', ['#005CA9', '#E6A000', '#7AB51D', '#A6A6A6']);
+// "land": { "column": "Bundesland", "fromData": true, "scheme": "house", "legend": {} }
 registerScheme('observable10', ['#005CA9', '#E6A000', '#7AB51D', '#A6A6A6']);
 ```
 
@@ -119,7 +119,7 @@ under that name before (or removes the name again), e.g. for a scheme that
 applies to one chart only:
 
 ```js
-const restore = registerScheme('wifo', ['#005CA9', '#E6A000']);
+const restore = registerScheme('house', ['#005CA9', '#E6A000']);
 // … draw or export …
 restore();
 ```

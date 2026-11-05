@@ -9,24 +9,29 @@
 
 .vis-error {
     font-size: 13px;
-    color: var(--gen-vis-error-color, #B00);
+    color: var(--gen-vis-error-color, #B42318);
 }
 
-/* the font can be set with options.fontFamily or the css variable */
+/* the font can be set with options.fontFamily or the css variable: Inter
+   where it is installed, the font of the system otherwise; numbers with
+   figures of the same width, so values in columns and ticks align */
 .vis text, .vis span, .vis div {
-    font-family: var(--gen-vis-font-family, Century Gothic, sans-serif);
+    font-family: var(--gen-vis-font-family, Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+    font-variant-numeric: tabular-nums;
 }
 
 .vis-header {
     margin-bottom: 10px;
 }
 .vis-header .vis-title {
-    font-size: 22px;
-    font-weight: bold;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
 }
 .vis-header .vis-subtitle {
     font-size: 13px;
-    margin-top: 3px;
+    margin-top: 4px;
+    color: var(--gen-vis-muted-color, #5F6670);
 }
 /* the line of the selection of the form elements in the images */
 .vis-header .vis-selection {
@@ -42,7 +47,8 @@
     gap: 10px;
 }
 .vis-footer-content > span {
-    font-size: 13px;
+    font-size: 12px;
+    color: var(--gen-vis-muted-color, #5F6670);
 }
 
 .vis-buttons {
@@ -61,13 +67,13 @@
 .vis-copy svg, .vis-csv svg, .vis-download-svg svg, .vis-download svg {
     display: block;
     fill: none;
-    stroke: var(--gen-vis-button-color, #BBB);
+    stroke: var(--gen-vis-button-color, #B8BDC4);
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 .vis-copy:hover svg, .vis-csv:hover svg, .vis-download-svg:hover svg, .vis-download:hover svg {
-    stroke: var(--gen-vis-button-hover-color, #777);
+    stroke: var(--gen-vis-button-hover-color, #5F6670);
 }
 
 /* the text instead of the plots */
@@ -100,7 +106,7 @@
 /* the facets */
 .vis-facet-title {
     font-size: 13px;
-    font-weight: bold;
+    font-weight: 600;
     margin-top: 8px;
     margin-left: var(--gen-vis-margin-left);
     margin-right: var(--gen-vis-margin-right);
@@ -114,7 +120,7 @@
    the columns are the titles of the first row (.vis-facet-col-title) */
 .vis-facet-row-title {
     font-size: 13px;
-    font-weight: bold;
+    font-weight: 600;
     vertical-align: bottom;
     box-sizing: border-box;
 }
@@ -149,7 +155,7 @@
 }
 /* the focus of the keyboard, e.g. to move the hover */
 .vis-facet .vis-svg:focus-visible {
-    outline: 2px solid var(--gen-vis-focus-color, #1E4F77);
+    outline: 2px solid var(--gen-vis-focus-color, #4269D0);
     outline-offset: 1px;
 }
 /* the part of the tick marks inside the plot area, `tickMarks.inset` */
@@ -159,20 +165,30 @@
 .vis-facet svg g.vis-axis-left g.tick line { transform: translate(var(--gen-vis-tick-inset, 5px), 0px); }
 /* the size of the labels of the ticks without one of their props, see `axis.labels` */
 .vis-facet svg g.tick text:not([font-size]) {
-    font-size: 13px;
+    font-size: 12px;
+}
+/* the axes in grey (their lines, marks and labels are of currentColor, the
+   props of the labels of the definition replace it), the labels darker
+   than the lines */
+.vis-facet svg g.vis-axis {
+    color: var(--gen-vis-axis-color, #9AA0A8);
+}
+.vis-facet svg g.vis-axis g.tick text {
+    color: var(--gen-vis-axis-label-color, #5F6670);
 }
 .vis-facet svg .vis-axis-title {
-    font-size: 13px;
+    font-size: 12px;
+    fill: var(--gen-vis-axis-label-color, #5F6670);
 }
 .vis-facet svg g.vis-grid {
-    stroke: var(--gen-vis-grid-color, #CCC);
-    stroke-width: 0.75px;
+    stroke: var(--gen-vis-grid-color, #E3E5E8);
+    stroke-width: 1px;
 }
 /* the texts of the plots without a fill of their props, black by default as in svg */
-.vis-facet svg .vis-plot:not(.vis-annotations) text:not([fill]) { fill: var(--gen-vis-text-color, black); }
+.vis-facet svg .vis-plot:not(.vis-annotations) text:not([fill]) { fill: var(--gen-vis-text-color, #1F2328); }
 /* the colors of the annotations without the ones of their props */
-.vis-facet svg .vis-annotation.vis-band:not([fill]), .vis-legend-annotations .vis-annotation.vis-band:not([fill]) { fill: var(--gen-vis-band-color, #EEE); }
-.vis-facet svg .vis-annotation.vis-line:not([stroke]), .vis-legend-annotations .vis-annotation.vis-line:not([stroke]) { stroke: var(--gen-vis-line-color, #999); }
+.vis-facet svg .vis-annotation.vis-band:not([fill]), .vis-legend-annotations .vis-annotation.vis-band:not([fill]) { fill: var(--gen-vis-band-color, #F1F2F4); }
+.vis-facet svg .vis-annotation.vis-line:not([stroke]), .vis-legend-annotations .vis-annotation.vis-line:not([stroke]) { stroke: var(--gen-vis-line-color, #9AA0A8); }
 .vis-legend-annotations .vis-annotation.vis-circle:not([fill]) { fill: var(--gen-vis-annotation-color, #666); }
 /* the entries of annotations are no toggles */
 .vis-legend.vis-legend-annotations .vis-legend-entries > div { cursor: default; }
@@ -182,7 +198,7 @@
    props of the labels of an axis replace its stroke and its width, see `axis.labels` */
 .vis-facet svg .vis-annotation-label {
     font-size: 11px;
-    fill: var(--gen-vis-annotation-color, #555);
+    fill: var(--gen-vis-annotation-color, #5F6670);
 }
 .vis-facet svg .vis-annotation-label, .vis-facet svg g.vis-axis-radial text {
     paint-order: stroke;
@@ -195,22 +211,28 @@
 }
 .vis-facet svg g.vis-hover-marker line {
     stroke-width: 0.75px;
-    stroke: var(--gen-vis-marker-color, #AAA);
+    stroke: var(--gen-vis-marker-color, #9AA0A8);
 }
 
-/* the hover */
+/* the hover, a card */
 .vis-hover {
     position: absolute;
-    font-size: 13px;
-    background-color: var(--gen-vis-hover-background, #FFFFFFCC);
+    font-size: 12px;
+    background-color: var(--gen-vis-hover-background, #FFFFFFF2);
+    border: 1px solid var(--gen-vis-hover-border-color, #E3E5E8);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
+    padding: 3px 2px;
     top: 40%;
     pointer-events: none;
 }
+/* the title of one line, not of the width of the table below it */
 .vis-hover .vis-hover-title {
-    font-weight: bold;
-    padding: 1px 3px;
-    border-bottom: 2px solid currentColor;
-    text-align: center;
+    font-weight: 600;
+    padding: 1px 5px 3px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid var(--gen-vis-hover-border-color, #E3E5E8);
+    white-space: nowrap;
 }
 /* the rows of the template of the definition */
 .vis-hover .vis-hover-row {
@@ -218,7 +240,7 @@
     padding: 1px 5px;
 }
 .vis-hover .vis-hover-row.vis-nearest {
-    font-weight: bold;
+    font-weight: 600;
 }
 .vis-hover table {
     border-collapse: collapse;
@@ -226,7 +248,7 @@
     margin-right: auto;
 }
 .vis-hover table tr.vis-nearest {
-    font-weight: bold;
+    font-weight: 600;
 }
 /* the hover is not wider than needed, its entries are not wrapped */
 .vis-hover table tr td {
@@ -242,13 +264,13 @@
 }
 /* the sum of the stacked values below the rows, see options.hover.total */
 .vis-hover table tr.vis-hover-total td {
-    border-top: 1px solid currentColor;
-    font-weight: bold;
+    border-top: 1px solid var(--gen-vis-hover-border-color, #E3E5E8);
+    font-weight: 600;
 }
 
 /* the legends of the categories */
 .vis-legend .vis-legend-title {
-    font-weight: bold;
+    font-weight: 600;
     font-size: 13px;
     margin: 3px;
     position: relative;
@@ -271,7 +293,7 @@
     border-radius: 2px;
 }
 .vis-legend .vis-legend-entries > div:focus-visible {
-    outline: 2px solid var(--gen-vis-focus-color, #1E4F77);
+    outline: 2px solid var(--gen-vis-focus-color, #4269D0);
     outline-offset: 1px;
 }
 .vis-legend .vis-legend-entries > div[data-visible="false"] {
@@ -300,7 +322,7 @@
     vertical-align: top;
 }
 .vis-color-legend .vis-legend-title {
-    font-weight: bold;
+    font-weight: 600;
     font-size: 13px;
     margin: 3px;
 }
@@ -331,7 +353,7 @@
     margin: 2px 16px 2px 4px;
 }
 .vis-form-element .vis-form-element-title {
-    font-weight: bold;
+    font-weight: 600;
     margin-right: 5px;
     display: inline-block;
 }

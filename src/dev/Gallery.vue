@@ -78,8 +78,8 @@ export default {
     /* the visualisations are not wider on the pages using them */
     body {
         margin: 0;
-        font-family: Century Gothic, sans-serif;
-        background: #F4F4F4;
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #F6F7F8;
     }
 
     .gallery {
@@ -121,7 +121,7 @@ export default {
                 margin-top: 8px;
                 font-size: 13px;
                 a {
-                    color: #1E4F77;
+                    color: #4269D0;
                     white-space: nowrap;
                 }
             }
