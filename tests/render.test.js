@@ -3319,3 +3319,21 @@ describe('axes at a value of the other axis (`at`)', () => {
         expect(validateDef(polar).filter(w => w.includes('.at'))).toEqual([`mapping.x.axis.at: only cartesian axes are at a value of the other axis`]);
     });
 });
+
+describe('the layer of annotations', () => {
+    test('right before a plot (`before`), above all plots or below them', async () => {
+        const def = lineDef();
+        def.plot[1].id = 'points';
+        def.annotations = [
+            { type: 'line', y: 2, before: 'points' },
+            { type: 'line', y: 3, layer: 'above' },
+            { type: 'line', y: 1 },
+        ];
+        const el = await mount({ def, data: lineData });
+        const order = [...el.querySelectorAll('.vis-facet svg > g > g[data-plot]')].map(g => g.getAttribute('data-plot'));
+        expect(order).toEqual(['annotation-2', 'plot-0', 'annotation-0', 'points', 'annotation-1']);
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef({ ...def, annotations: [{ type: 'line', y: 2, before: 'nope' }] }))
+            .toEqual([`annotations[0].before: unknown plot 'nope', expected one of 'plot-0', 'points'`]);
+    });
+});

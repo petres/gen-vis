@@ -7,7 +7,7 @@ import { bandCenter } from "@/utils/scales";
 import { directOf, elementOf } from "@/utils/draw";
 
 // the keys of an annotation which are not mappings
-const annotationKeys = ['type', 'props', 'label', 'text', 'above', 'facet', 'lon', 'lat'];
+const annotationKeys = ['type', 'props', 'label', 'text', 'above', 'layer', 'before', 'legend', 'facet', 'lon', 'lat'];
 
 // the mappings of an annotation with their values, e.g. { "x": ["2025-07-01", null] },
 // the values are converted as the ones of the rows, e.g. dates, a mapping

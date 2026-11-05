@@ -590,8 +590,13 @@ const checkAnnotations = ctx => {
         if (coordName == 'geo' && !(typeof a.lon == 'number' && typeof a.lat == 'number'))
             warn(path, `an annotation of a map needs 'lon' and 'lat'`);
         // the names of the facet and the ones of the row of the annotation, e.g. its value
-        const row = Object.keys(a).filter(k => !['type', 'props', 'above', 'facet'].includes(k));
+        const row = Object.keys(a).filter(k => !['type', 'props', 'above', 'layer', 'before', 'legend', 'facet'].includes(k));
         checkProp(a.props, `${path}.props`, warn, new Set([...names.facet, ...row]));
+        if (a.layer !== undefined && !['below', 'above'].includes(a.layer))
+            warn(`${path}.layer`, `expected 'below' (below the plots, the default) or 'above' (above them), or 'before' a plot`);
+        const ids = [ctx.def.plot ?? []].flat().map((p, j) => p?.id ?? `plot-${j}`);
+        if (a.before !== undefined && !ids.includes(a.before))
+            warn(`${path}.before`, `unknown plot '${a.before}'${ids.length ? `, expected one of ${list(ids)}` : ''}`);
     });
 };
 

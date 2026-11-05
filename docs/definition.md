@@ -1137,8 +1137,11 @@ globals, e.g. `"@target"`:
 - `label` and `text` are templates of the globals, e.g. `"Ziel {target}"`.
 - `props` are svg attributes, e.g. `fill` or `stroke`, the defaults are grey,
   their names are the ones of the facet and of the annotation, e.g. `@y`,
-  `above` draws the annotation above the plots, by default it is below the
-  plots and grid lines, labels are above them. `facet` is a key or a list of
+  `above` (or `"layer": "above"`) draws the annotation above the plots, by
+  default it is below the plots and grid lines (`"layer": "below"`), labels
+  are above them; `"before": "<plot id>"` draws it right before that plot,
+  in its layer, e.g. cap lines above the bars and points but below the
+  labels whose `halo` cuts them. `facet` is a key or a list of
   keys of the facets of the annotation, by default it is in all facets.
 - Polar plots: a `band` of the angle is a sector (also across the top, e.g.
   from November to February), of the radius a ring, a `line` of the angle a

@@ -218,18 +218,35 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = [], 
 }
 
 // the annotations are plots of a row of their values, of the types of
-// plots/annotations.js, below the axes and the plots, `above` above the plots
+// plots/annotations.js, below the axes and the plots (`layer`, `"above"` or
+// `above` above the plots), or right before the plot `before` in its layer,
+// see preparePlots
 const annotationPlots = (annotations = []) => [annotations].flat().map((a, i) => {
-    const { type, props = {}, above, facet, ...row } = object(a, `annotations[${i}]`, 'an annotation, e.g. { "type": "line", "y": 0 }');
+    const { type, props = {}, above, layer, before, legend, facet, ...row } = object(a, `annotations[${i}]`, 'an annotation, e.g. { "type": "line", "y": 0 }');
     return {
         type: `annotation:${type}`,
         id: `annotation-${i}`,
         data: [row],
         props,
-        layer: above ? 'above' : 'below',
+        layer: layer ?? (above ? 'above' : 'below'),
+        ...(before === undefined ? {} : { before }),
+        ...(legend === undefined ? {} : { legend }),
         ...(facet === undefined ? {} : { facet }),
     };
 });
+
+// the annotations with `before` right before their plot, in its layer, e.g.
+// lines above the bars but below the labels whose halo cuts them
+const placed = plots => {
+    const moved = plots.filter(p => p?.before !== undefined && plots.some(q => q?.id === p.before && q !== p));
+    const rest = plots.filter(p => !moved.includes(p));
+    moved.forEach(p => {
+        const target = rest.findIndex(q => q?.id === p.before);
+        const { layer, ...own } = p;
+        rest.splice(target, 0, rest[target].layer === undefined ? own : { ...own, layer: rest[target].layer });
+    });
+    return rest;
+};
 
 // the options of the definition, the height of a facet and the space around
 // its plots, e.g. of the axes
@@ -245,7 +262,7 @@ const partProps = part => isObject(part) ? Object.keys(part).filter(n => n != 'm
 // prefixes `highlight-` and `others-`, attributes which the highlight reads,
 // see highlighter of utils/draw.js.
 const preparePlots = (plot, annotations, files) => {
-    const plots = [...[plot ?? []].flat(), ...annotationPlots(annotations ?? [])];
+    const plots = placed([...[plot ?? []].flat(), ...annotationPlots(annotations ?? [])]);
     return plots.map((raw, i) => {
         const p = { ...object(raw, `plot[${i}]`, 'a plot, e.g. { "type": "svg:circle", "props": {} }') };
         p.props ??= {};

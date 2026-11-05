@@ -121,7 +121,9 @@
                 "props": { "$ref": "#/definitions/props" },
                 "label": { "type": "string", "description": "A label of a band or a line, a template of the globals." },
                 "text": { "type": "string", "description": "The text of a text, a template of the globals." },
-                "above": { "type": "boolean", "description": "Above the plots, below them by default." },
+                "above": { "type": "boolean", "description": "Above the plots, below them by default, as layer above." },
+                "layer": { "enum": ["below", "above"], "description": "Below the plots and the axes (default) or above all plots." },
+                "before": { "type": "string", "description": "Right before the plot of this id, in its layer, e.g. lines above the bars but below the labels whose halo cuts them." },
                 "facet": { "description": "The facets of the annotation, a key or a list of them, all by default." },
                 "lon": { "type": "number", "description": "The longitude of a map." },
                 "lat": { "type": "number", "description": "The latitude of a map." }

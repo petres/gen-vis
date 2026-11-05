@@ -62,6 +62,9 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- The layer of annotations: `"layer": "below"` (default) or `"above"`,
+  and `"before": "<plot id>"` right before a plot, e.g. lines above the
+  bars but below labels whose halo cuts them.
 - `"symbol": "auto"`: the symbol of a legend of the plots of its
   categories, a box of their bars or areas, a line of their lines and a dot
   of their points together, with their style, e.g. a light area under a

@@ -312,9 +312,17 @@ export interface Annotation {
      */
     text?: string;
     /**
-     * Above the plots, below them by default.
+     * Above the plots, below them by default, as layer above.
      */
     above?: boolean;
+    /**
+     * Below the plots and the axes (default) or above all plots.
+     */
+    layer?: 'below' | 'above';
+    /**
+     * Right before the plot of this id, in its layer, e.g. lines above the bars but below the labels whose halo cuts them.
+     */
+    before?: string;
     /**
      * The facets of the annotation, a key or a list of them, all by default.
      */
@@ -342,6 +350,8 @@ export interface Annotation {
         | Props
         | string
         | boolean
+        | 'below'
+        | 'above'
         | {
               [k: string]: unknown;
           }
