@@ -399,7 +399,7 @@ const layout = (store, width, before = null) => {
     const outerOf = (i, cell) => cell
         ? { top: !beyond(cell, 'colIndex', 'rowIndex', -1), bottom: !beyond(cell, 'colIndex', 'rowIndex', 1),
             left: !beyond(cell, 'rowIndex', 'colIndex', -1), right: !beyond(cell, 'rowIndex', 'colIndex', 1) }
-        :{ top: i < cols, bottom: i + cols >= count, left: i % cols == 0, right: i % cols == cols - 1 || i == count - 1 };
+        : { top: i < cols, bottom: i + cols >= count, left: i % cols == 0, right: i % cols == cols - 1 || i == count - 1 };
     const facets = (faceted ? entries : [{ key: undefined, name: undefined, rows }]).map((f, i) => {
         const scales = {
             ...common,
