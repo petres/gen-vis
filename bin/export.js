@@ -28,7 +28,8 @@ const types = {
 export const fileUrl = file => `${origin}/fs${pathToFileURL(path.resolve(file)).pathname}`;
 
 // the page of the print of an SVG
-const printPage = '<!doctype html><html><head><meta charset="utf-8"><style>@page { margin: 0; } html, body { margin: 0; } svg { display: block; }</style></head><body></body></html>';
+// (with the default font of gen-vis, Inter, of the module of the export page)
+const printPage = '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/__gen-vis/esm/chunks/fonts/inter.css"><style>@page { margin: 0; } html, body { margin: 0; } svg { display: block; }</style></head><body></body></html>';
 
 // the file of an url of the page, null if it is not one; a site-absolute
 // path, e.g. "/geo/europe.json", is a file in `root` (if given)

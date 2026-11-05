@@ -517,11 +517,28 @@ of circles), `--gen-vis-missing-color` (`#EEE`, the missing values of a
 legend), `--gen-vis-button-color` (`#B8BDC4`), `--gen-vis-button-hover-color`
 (`#5F6670`), `--gen-vis-focus-color` (`#4269D0`, the first color of
 observable10, the entries of legends and the facets) and
-`--gen-vis-error-color` (`#B42318`). The default look: Inter where it is
-installed (the font of the system otherwise), figures of the same width
+`--gen-vis-error-color` (`#B42318`). The default look: Inter, which the
+package brings (see [the font](#the-font)), figures of the same width
 in the hover (`tabular-nums`), grey axes, light grid lines, a hover card; the colors of
 categories without colors are d3's `observable10`. The colors of annotations are only the ones
 without a color of their `props`.
+
+### The font
+
+The default font is Inter (SIL Open Font License, `LICENSE-Inter.txt` next to
+the files), of the package: its Latin and Latin Extended letters of the
+weights 400 and 600 as woff2 files (about 120 kB, a browser loads only the
+ones of the texts, e.g. 50 kB of German), once in the package, in
+`dist-lib/esm/chunks/fonts/`: the module loads them next to its chunk, the
+es modules for bundlers (`dist/`) of `new URL("../dist-lib/esm/chunks/fonts/…",
+import.meta.url)`, which bundlers of applications copy (e.g. webpack 5 and
+vite), the single file of `esm/chunks/fonts/` next to its url (a copy of
+`dist-lib/`, e.g. of `npm run upload`, has them, unpkg and jsDelivr serve
+them; the single file alone draws in the font of the system). The rules are
+also a stylesheet next to them, `inter.css`. A page with a font of its
+own (`--gen-vis-font-family` or `fontFamily`) loads none of them. Charts
+measure their texts again when a font of the page is loaded after their
+first draw, the images load the font of the chart before they draw it.
 
 The props of a definition can be css variables, e.g. the ones of the page or
 of the package, `"stroke": "var(--gen-vis-grid-color)"` is the color of the

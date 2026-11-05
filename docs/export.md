@@ -18,7 +18,8 @@ HTML and no CSS:
 - the texts of the HTML (the title, the subtitle, the legends, the footer)
   are `<text>` elements at the positions the browser drew them, one per
   line, the texts stay texts (editable, in the fonts of the computer which
-  opens it, e.g. Inter), backgrounds and borders are `<rect>` and
+  opens it, e.g. Inter, which gen-vis brings for the PNG and the PDF but
+  an SVG does not contain), backgrounds and borders are `<rect>` and
   `<line>` elements;
 - the svg elements of the plots are copied with their styles as
   presentation attributes: no `foreignObject`, no `<style>`, no `class`
@@ -150,10 +151,11 @@ await genVisExport({ defUrl, schemes: merged =>
 The CLI has no functions of options (they do not come from the command
 line); a program of its own evaluates them in the page.
 
-The page has the fonts of the computer: the font of gen-vis is Inter
-(Debian: `fonts-inter`), then the font of the system (`system-ui`, e.g.
-DejaVu Sans of Linux) and sans-serif; a stylesheet of the options sets
-others (`--gen-vis-font-family`), e.g. the one of a house style. The version changes only
+The font of gen-vis is Inter, the one of the package (`dist-lib`, also of
+the PDF of the CLI), so the images are the same on every computer; a
+stylesheet of the options sets others (`--gen-vis-font-family`), e.g. the
+one of a house style, of the computer or of a web font of the stylesheet
+(the PDF of the CLI has the fonts of the computer and Inter). The version changes only
 with changes which are not compatible, e.g. a new meaning of an option, new
 options and new keys of the result are added without a new version.
 

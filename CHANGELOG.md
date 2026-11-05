@@ -16,9 +16,12 @@ differently, listed first.
 What existing definitions draw differently:
 
 - A new default look of its own, not the one of a house style: the font
-  is Inter where it is installed, otherwise the one of the system
-  (`system-ui`, …, before Century Gothic, also of the export page, which
-  had URW Gothic), the numbers of the hover with figures of the same width
+  is Inter, which the package brings (woff2 files of Latin and Latin
+  Extended, weights 400 and 600, SIL Open Font License, loaded only by
+  charts which use it, also of the PNG and the PDF of the export, so
+  images are the same on every computer; `fonts/` next to the scripts,
+  see the font in `docs/usage.md`; before Century Gothic, of the export
+  page URW Gothic), the numbers of the hover with figures of the same width
   (`tabular-nums`); its digits are wider than the ones of Century Gothic,
   so fixed margins sized for long tick labels may need a few pixels more
   (three examples of `data/` got 6 more); the title 20px semibold, the subtitle and the footer

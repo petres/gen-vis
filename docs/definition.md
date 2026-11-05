@@ -379,8 +379,8 @@ a new width is drawn at once, nothing moves if the user prefers less motion
 (`prefers-reduced-motion` of the system).
 
 `fontFamily` sets the font, by default the css variable
-`--gen-vis-font-family` or Inter (the font of the system where it is not
-installed), so the font of all visualisations of
+`--gen-vis-font-family` or Inter (of the package, see
+[the font](usage.md#the-font)), so the font of all visualisations of
 a page can be set with css (see [styles](usage.md#styles) for the colors):
 
 ```css

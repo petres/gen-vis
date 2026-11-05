@@ -77,6 +77,11 @@ describe.skipIf(!browser)('gen-vis export', () => {
         expect(pw).toBe(Math.round(16 / 2.54 * 300));
         expect(Math.abs(ph - h * 300 / 96)).toBeLessThan(2);
 
+        // the default font of gen-vis, Inter of the package, also where the
+        // computer has none, in the PDF too
+        expect(svg).toMatch(/font-family="Inter,/);
+        expect(readFileSync(out[2], 'latin1')).toMatch(/\/BaseFont\s*\/[A-Z]+\+Inter-Regular/);
+
         // the page of the PDF is rounded by the browser, e.g. 16.02cm
         const [mw, mh] = pdfSize(out[2]);
         expect(Math.abs(mw - 16 / 2.54 * 72)).toBeLessThan(1);

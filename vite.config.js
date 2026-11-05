@@ -26,13 +26,32 @@ const checkSchema = () => ({
     },
 });
 
+// the default font of the package, Inter (OFL, of @fontsource/inter): the
+// Latin and Latin Extended subsets of the weights 400 and 600 as woff2 files
+// next to the chunk which injects the styles (fonts/), with their license;
+// a browser loads a face only for texts which use it, so a page of its own
+// font (--gen-vis-font-family) loads none
+const fontDir = fileURLToPath(new URL('./node_modules/@fontsource/inter/', import.meta.url));
+const fontFaces = ['latin', 'latin-ext'].flatMap(subset => [400, 600].map(weight => {
+    const file = `inter-${subset}-${weight}-normal.woff2`;
+    const css = readFileSync(`${fontDir}${weight}.css`, 'utf8');
+    const range = new RegExp(`inter-${subset}-${weight}-normal\\.woff2[^}]*unicode-range: ([^;]+);`).exec(css)?.[1];
+    if (!range)
+        throw new Error(`the unicode range of ${file} is missing in @fontsource/inter`);
+    return { file, weight, range };
+}));
+// the code of the @font-face rules of the fonts, the url of a file of
+// `url(file)` (code of an expression), see injectCss
+const fontCode = url => `[${fontFaces.map(f => `"@font-face { font-family: 'Inter'; font-style: normal; font-weight: ${f.weight}; font-display: swap; `
+    + `src: url(" + ${url(f.file)} + ") format('woff2'); unicode-range: ${f.range}; }"`).join(', ')}].join("\\n")`;
+
 // the styles (src/styles.css) are injected by the script, once, when it is
 // loaded, so a single file is enough to use the library (as it was with the
 // style-loader of webpack), they are in the cascade layer `gen-vis`, so
 // every style of the page overrides them, regardless of its specificity and
 // order; they are part of the chunk of the visualisation (src/comp/app.js),
 // e.g. the entry of the package which the one of the Vue adapter imports
-const injectCss = () => ({
+const injectCss = (mode) => ({
     name: 'inject-css',
     apply: 'build',
     enforce: 'post',
@@ -44,8 +63,29 @@ const injectCss = () => ({
             const chunks = Object.values(bundle).filter(f => f.type == 'chunk');
             const entry = chunks.find(f => Object.keys(f.modules).some(id => id.endsWith('/src/comp/app.js')))
                 ?? chunks.find(f => f.isEntry && f.name == 'gen-vis');
+            // the fonts are files of the module (dist-lib/esm/chunks/fonts/,
+            // next to the chunk of the styles), once in the package: the module
+            // relative to itself, the es modules for bundlers (dist/) relative
+            // to their chunk (a literal new URL of import.meta.url, which
+            // bundlers of applications copy, e.g. webpack and vite), the
+            // single file relative to its own url (dist-lib/)
+            if (mode == 'module') {
+                const dir = entry.fileName.slice(0, entry.fileName.lastIndexOf('/') + 1);
+                if (dir != 'chunks/')
+                    throw new Error(`the fonts are in chunks/fonts/ of the module, see dist and lib, not in ${dir}fonts/`);
+                fontFaces.forEach(f => this.emitFile({ type: 'asset', fileName: `${dir}fonts/${f.file}`, source: readFileSync(`${fontDir}files/${f.file}`) }));
+                this.emitFile({ type: 'asset', fileName: `${dir}fonts/LICENSE-Inter.txt`, source: readFileSync(`${fontDir}LICENSE`) });
+                // the rules as a stylesheet next to them, e.g. of the print of
+                // the PDF of the CLI (bin/export.js) or of a page of its own
+                this.emitFile({ type: 'asset', fileName: `${dir}fonts/inter.css`, source: `${eval(fontCode(file => JSON.stringify(`./${file}`)))}\n` });
+            }
+            if (mode != 'module' && entry.fileName.includes('/'))
+                throw new Error(`the styles of ${mode} are in ${entry.fileName}, the urls of the fonts are relative to the directory of the build`);
+            const url = mode == 'module' ? file => `new URL("./fonts/${file}", import.meta.url).href`
+                : mode == 'lib' ? file => `new URL("esm/chunks/fonts/${file}", document.currentScript && document.currentScript.src || document.baseURI).href`
+                : file => `new URL("../dist-lib/esm/chunks/fonts/${file}", import.meta.url).href`;
             // not on a server, e.g. of server side rendering, only in the browser
-            entry.code = `(() => { if (typeof document == "undefined") return; const s = document.createElement("style"); s.textContent = ${JSON.stringify(css)}; document.head.appendChild(s); })();\n${entry.code}`;
+            entry.code = `(() => { if (typeof document == "undefined") return; const s = document.createElement("style"); s.textContent = ${fontCode(url)} + "\\n" + ${JSON.stringify(css)}; document.head.appendChild(s); })();\n${entry.code}`;
         }
     },
 });
@@ -102,7 +142,7 @@ export default defineConfig(({ mode }) => {
     const single = mode == 'lib';
     const module = mode == 'module';
     return {
-        plugins: [vue(), checkSchema(), injectCss(), ...(single ? [unversioned()] : []), ...(module ? [exportPage()] : [])],
+        plugins: [vue(), checkSchema(), injectCss(mode), ...(single ? [unversioned()] : []), ...(module ? [exportPage()] : [])],
         resolve: {
             alias: [
                 // the single file has the parts which are loaded when a chart needs

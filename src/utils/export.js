@@ -50,6 +50,25 @@ const prepare = (vis, { text, facets, space }) => {
 };
 
 /**
+ * The fonts of a visualisation in `holder` (e.g. Inter of gen-vis or the one
+ * of a stylesheet of the page) loaded before it is drawn, so the texts it
+ * measures (e.g. the headers of the rows of a grid) are the ones of the
+ * image: the regular and the semibold face of the family of a probe of the
+ * classes of a visualisation; faces of other families are not loaded.
+ */
+const fontsOf = async holder => {
+    if (!document.fonts?.load)
+        return;
+    const probe = holder.appendChild(document.createElement('div'));
+    probe.className = 'vis';
+    const span = probe.appendChild(document.createElement('span'));
+    const family = getComputedStyle(span).fontFamily;
+    probe.remove();
+    if (family)
+        await Promise.all(['400', '600'].map(weight => document.fonts.load(`${weight} 13px ${family}`, 'Äg0').catch(() => [])));
+};
+
+/**
  * A static copy of a visualisation of the given `width` (and `space` around
  * it), independent of the size of the screen, the one of the images: the
  * copy (`.vis`, see prepare) is drawn once, nothing of it changes anymore,
@@ -68,6 +87,7 @@ const staticCopy = async (place, mount, { width, space = padding, visible = fals
     const holder = wrapper.appendChild(document.createElement('div'));
     holder.style.width = `${width}px`;
     place(wrapper);
+    await fontsOf(holder);
 
     let shown = null;
     try {

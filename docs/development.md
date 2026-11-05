@@ -59,7 +59,8 @@ hovered and checked by the tests, so they have to stay valid. `data/energy/`
 is a selection of the energy dashboard, see its `README.md`.
 
 To try changes in an application, `npm install --no-save ../gen-vis` links the
-directory (with `npm run watch`). The `vue` of the Vue adapter of the linked
+directory (with `npm run watch`; `npm run lib` once, the fonts of `dist/`
+are the ones of `dist-lib/esm/chunks/fonts/`). The `vue` of the Vue adapter of the linked
 package would be the one of its own `node_modules`, a second Vue, so the
 bundler of the application has to resolve `vue` to its own, e.g. `resolve.alias: { vue:
 path.resolve('node_modules/vue') }` of webpack or `resolve.dedupe: ['vue']` of

@@ -254,6 +254,15 @@ const createVis = app => {
         measure();
         update(false, true);
     };
+    // the texts in a web font loaded after the first draw, e.g. Inter:
+    // their sizes are measured again, e.g. of the headers of the rows of a
+    // grid and the width beside legends
+    const fontsLoaded = () => guard(() => {
+        if (removed)
+            return;
+        measure();
+        update(false, true);
+    });
 
     const savePng = async () => {
         try {
@@ -491,6 +500,7 @@ const createVis = app => {
                 });
                 resizeObserver.observe(root);
             }
+            document.fonts?.addEventListener?.('loadingdone', fontsLoaded);
             const before = sides;
             queued = false;
             render();
@@ -506,6 +516,7 @@ const createVis = app => {
             removed = true;
             store.listeners.delete(stateListener);
             resizeObserver?.disconnect();
+            document.fonts?.removeEventListener?.('loadingdone', fontsLoaded);
             clearTimeout(resizeTimeout);
             clearTimeout(copiedTimeout);
             facets?.destroy();
