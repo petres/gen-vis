@@ -32,14 +32,20 @@ const checkSchema = () => ({
 // a browser loads a face only for texts which use it, so a page of its own
 // font (--gen-vis-font-family) loads none
 const fontDir = fileURLToPath(new URL('./node_modules/@fontsource/inter/', import.meta.url));
-const fontFaces = ['latin', 'latin-ext'].flatMap(subset => [400, 600].map(weight => {
+const fontFaces = [...['latin', 'latin-ext'].flatMap(subset => [400, 600].map(weight => {
     const file = `inter-${subset}-${weight}-normal.woff2`;
     const css = readFileSync(`${fontDir}${weight}.css`, 'utf8');
     const range = new RegExp(`inter-${subset}-${weight}-normal\\.woff2[^}]*unicode-range: ([^;]+);`).exec(css)?.[1];
     if (!range)
         throw new Error(`the unicode range of ${file} is missing in @fontsource/inter`);
-    return { file, weight, range };
-}));
+    return { file, weight, range, source: `${fontDir}files/${file}` };
+})),
+// the symbols of Inter which these subsets have not, e.g. CO₂, ≤, →, ½,
+// subset of the same version by scripts/fonts.sh into assets/fonts/
+...[400, 600].map(weight => ({
+    file: `inter-symbols-${weight}-normal.woff2`, weight, range: 'U+2070-209F,U+2100-214F,U+2150-218F,U+2190-21FF,U+2200-22FF,U+25A0-25FF',
+    source: fileURLToPath(new URL(`./assets/fonts/inter-symbols-${weight}-normal.woff2`, import.meta.url)),
+}))];
 // the code of the @font-face rules of the fonts, the url of a file of
 // `url(file)` (code of an expression), see injectCss
 const fontCode = url => `[${fontFaces.map(f => `"@font-face { font-family: 'Inter'; font-style: normal; font-weight: ${f.weight}; font-display: swap; `
@@ -73,7 +79,7 @@ const injectCss = (mode) => ({
                 const dir = entry.fileName.slice(0, entry.fileName.lastIndexOf('/') + 1);
                 if (dir != 'chunks/')
                     throw new Error(`the fonts are in chunks/fonts/ of the module, see dist and lib, not in ${dir}fonts/`);
-                fontFaces.forEach(f => this.emitFile({ type: 'asset', fileName: `${dir}fonts/${f.file}`, source: readFileSync(`${fontDir}files/${f.file}`) }));
+                fontFaces.forEach(f => this.emitFile({ type: 'asset', fileName: `${dir}fonts/${f.file}`, source: readFileSync(f.source) }));
                 this.emitFile({ type: 'asset', fileName: `${dir}fonts/LICENSE-Inter.txt`, source: readFileSync(`${fontDir}LICENSE`) });
                 // the rules as a stylesheet next to them, e.g. of the print of
                 // the PDF of the CLI (bin/export.js) or of a page of its own

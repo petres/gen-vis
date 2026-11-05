@@ -17,7 +17,8 @@ What existing definitions draw differently:
 
 - A new default look of its own, not the one of a house style: the font
   is Inter, which the package brings (woff2 files of Latin and Latin
-  Extended, weights 400 and 600, SIL Open Font License, loaded only by
+  Extended and of its symbols, e.g. CO₂, m³, ≤, →, ½, ℃, weights 400 and
+  600, SIL Open Font License, loaded only by
   charts which use it, also of the PNG and the PDF of the export, so
   images are the same on every computer; `fonts/` next to the scripts,
   see the font in `docs/usage.md`; before Century Gothic, of the export

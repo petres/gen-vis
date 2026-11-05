@@ -157,6 +157,23 @@ describe.skipIf(!browser)('gen-vis export', () => {
         }
     }, 60000);
 
+    test('the symbols of units in Inter of the package, e.g. CO₂, m³, ≤, →', async () => {
+        writeFileSync(path.join(dir, 'units.csv'), 'year,value\n2020,1\n2021,2\n');
+        writeFileSync(path.join(dir, 'units.json'), JSON.stringify({
+            $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', data: 'units.csv',
+            options: { title: 'CO₂ in m³ ≤ 2 → ½ ℃ ●', subtitle: 'Mt CO₂-Äquivalente ≥ 0', height: 200 },
+            mapping: { x: { column: 'year', type: 'numeric' }, y: { column: 'value', type: 'numeric' } },
+            plot: { type: 'line' },
+        }));
+        const pdf = path.join(dir, 'units.pdf');
+        const r = await run(['export', path.join(dir, 'units.json'), pdf]);
+        expect(r.code).toBe(0);
+        // no font of the computer for a glyph Inter has
+        const fonts = [...readFileSync(pdf, 'latin1').matchAll(/\/BaseFont\s*\/[A-Z]+\+([\w-]+)/g)].map(m => m[1]);
+        expect(fonts.length).toBeGreaterThan(0);
+        expect(fonts.filter(f => !f.startsWith('Inter-'))).toEqual([]);
+    }, 60000);
+
     test('the message of an error of gen-vis', async () => {
         writeFileSync(path.join(dir, 'broken.json'), JSON.stringify({ $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json',
             data: path.relative(dir, path.join(root, 'data/bev/data.csv')).replaceAll(path.sep, '/'), mapping: { x: 'Jahr' }, plot: { type: 'nope' } }));

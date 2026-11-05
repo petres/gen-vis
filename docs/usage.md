@@ -527,8 +527,12 @@ without a color of their `props`.
 
 The default font is Inter (SIL Open Font License, `LICENSE-Inter.txt` next to
 the files), of the package: its Latin and Latin Extended letters of the
-weights 400 and 600 as woff2 files (about 120 kB, a browser loads only the
-ones of the texts, e.g. 50 kB of German), once in the package, in
+weights 400 and 600 as woff2 files and its symbols which these have not,
+superscripts and subscripts (e.g. CO₂, m³), arrows, mathematical operators
+(≤, ≥, ≈, ∅), letterlike symbols (℃, №), fractions and Roman numerals and
+geometric shapes (●, ▲), subset by `scripts/fonts.sh` (about 140 kB, a
+browser loads only the ones of the texts, e.g. 50 kB of German; Inter has
+no ⌀, the font of the computer draws it), once in the package, in
 `dist-lib/esm/chunks/fonts/`: the module loads them next to its chunk, the
 es modules for bundlers (`dist/`) of `new URL("../dist-lib/esm/chunks/fonts/…",
 import.meta.url)`, which bundlers of applications copy (e.g. webpack 5 and
