@@ -284,7 +284,11 @@ const layout = (store, width, before = null) => {
     const shared = faceted && def.facets.scales ? evaluate(def.facets.scales, scope) : [];
     const common = Object.fromEntries([...new Set([...shared, ...colors])].map(n => [n, scaleOf(n, rows)]));
 
-    const facets = (faceted ? entries : [{ key: undefined, name: undefined, rows }]).map(f => {
+    // the edges of the grid of facets a facet is at, e.g. the bottom row
+    // without a facet below it, see `facets.axisTitles`
+    const count = faceted ? entries.length : 1;
+    const outerOf = i => ({ top: i < cols, bottom: i + cols >= count, left: i % cols == 0, right: i % cols == cols - 1 || i == count - 1 });
+    const facets = (faceted ? entries : [{ key: undefined, name: undefined, rows }]).map((f, i) => {
         const scales = {
             ...common,
             ...Object.fromEntries(scaled.filter(n => !Object.hasOwn(common, n)).map(n => [n, scaleOf(n, f.rows, f.key)])),
@@ -299,6 +303,7 @@ const layout = (store, width, before = null) => {
             stackOf,
             isStacked,
             stackOrder,
+            outer: outerOf(i),
             // the sizes of the bands of the scales, e.g. "@y:bandwidth" of annotations
             // also the key and the name of the facet, e.g. of a text once per facet
             scope: { ...facetScope, ...scaleSizes(scales), ...(faceted ? { facet: f.key, 'facet:name': f.name } : {}) },

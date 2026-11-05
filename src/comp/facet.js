@@ -192,7 +192,7 @@ const createFacet = (vis, initial) => {
 
         // the context of the plot types and the coordinate system, see
         // plots/index.js, the scales are only replaced with the facet
-        const { key, rows, scales, axis, stackOf, isStacked, stackOrder, scope, dims, innerWidth, innerHeight, margins } = facet;
+        const { key, rows, scales, axis, stackOf, isStacked, stackOrder, scope, dims, innerWidth, innerHeight, margins, outer } = facet;
         ctx = {
             store,
             // the id of the facet on the page, e.g. of the ids of elements
@@ -211,6 +211,8 @@ const createFacet = (vis, initial) => {
             innerWidth,
             innerHeight,
             margins,
+            // the edges of the grid of facets the facet is at, see layout.js
+            outer,
         };
 
         store.coord.prepare?.(ctx);

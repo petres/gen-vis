@@ -649,6 +649,8 @@ const checkFacets = ({ def, mapping, names, warn }) => {
     else if (!hasCategories(mapping[def.facets.dim]))
         warn('facets.dim', `the mapping '${def.facets.dim}' needs categories, e.g. "fromData": true`);
     checkProp(def.facets.cols, 'facets.cols', warn, names.global);
+    if (def.facets.axisTitles !== undefined && !['all', 'outer'].includes(def.facets.axisTitles))
+        warn('facets.axisTitles', `expected 'all' (in every facet, the default) or 'outer' (only at the outer facets)`);
     const dim = typeof def.facets.dim == 'string' && Object.hasOwn(mapping, def.facets.dim) ? mapping[def.facets.dim] : null;
     if (isObject(def.facets.title))
         checkProp(def.facets.title.props, 'facets.title.props', warn, new Set([...names.global, 'facet', 'facet:name', ...(dim ? categoryNames(dim) : [])]));

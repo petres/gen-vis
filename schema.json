@@ -783,6 +783,7 @@
                     "type": "string"
                 },
                 "cols": { "$ref": "#/definitions/number", "description": "The number of the columns of the facets, 1 by default." },
+                "axisTitles": { "enum": ["all", "outer"], "default": "all", "description": "The titles of the axes in every facet (all) or only at the outer ones (outer): of the bottom axis in the bottom row, of the left one in the first column, of the right one in the last column, of the top one in the first row." },
                 "title": {
                     "type": "object",
                     "additionalProperties": false,

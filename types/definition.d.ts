@@ -1288,6 +1288,10 @@ export interface Facets {
      */
     cols?: number | string | Expression;
     /**
+     * The titles of the axes in every facet (all) or only at the outer ones (outer): of the bottom axis in the bottom row, of the left one in the first column, of the right one in the last column, of the top one in the first row.
+     */
+    axisTitles?: 'all' | 'outer';
+    /**
      * The titles of the facets (.vis-facet-title).
      */
     title?: {

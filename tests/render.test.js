@@ -3416,6 +3416,22 @@ describe('rules', () => {
     });
 });
 
+describe('axis titles of facets', () => {
+    test('only at the outer facets: the bottom row, the first column', async () => {
+        const def = lineDef();
+        def.mapping.y.axis.title = { name: 'Wert' };
+        def.mapping.f = { column: 'land', categories: { Wien: {}, Tirol: {}, Salzburg: {} } };
+        def.mapping.c.categories.Salzburg = { color: 'green' };
+        def.facets = { dim: 'f', cols: 2, axisTitles: 'outer' };
+        const data = lineData + '\n2020,3,30,Salzburg\n2021,4,40,Salzburg';
+        const el = await mount({ def, data });
+        const titles = [...el.querySelectorAll('.vis-facet')].map(f => [...f.querySelectorAll('.vis-axis-title')].map(t => t.textContent));
+        // Wien and Tirol in the first row, Salzburg below Wien; Tirol has no facet below
+        expect(titles).toEqual([['Wert'], ['Jahr'], ['Jahr', 'Wert']]);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('facet titles', () => {
     test('the props of the definition as css properties, of the category of the facet', async () => {
         const def = lineDef();

@@ -133,7 +133,9 @@ const axes = ctx => {
             },
         });
 
-        if (i.title) {
+        // the titles only at the outer facets (`facets.axisTitles`), e.g.
+        // the one of the bottom axis in the bottom row
+        if (i.title && (store.def.facets?.axisTitles != 'outer' || ctx.outer?.[i.position] !== false)) {
             // the distance of the title from the axis, by default near the
             // edge of the margin, e.g. outside of the labels of the ticks
             const offset = i.title.offset ?? d.title?.offset ?? Math.max(0, ctx.margins[i.position] - 8);
