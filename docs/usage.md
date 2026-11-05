@@ -18,7 +18,7 @@ component](#vue-component)), `vue` is an optional peer dependency.
 
 The standalone script includes d3 and the styles, for pages without a
 bundler, e.g. from a CDN. Use the module (`dist-lib/esm/gen-vis.js`): it
-loads 70 kB (gzipped) at first and fetches optional parts, e.g. for maps,
+loads 80 kB (gzipped) at first and fetches optional parts, e.g. for maps,
 from the files next to it when a chart needs them:
 
 ```html
@@ -41,7 +41,7 @@ to the module, e.g. for `perRow` in a `registerPlotType`:
 <script>mountGenVisByClass('genVis').then(charts => ...)</script>
 ```
 
-The single file (`dist-lib/gen-vis.js`, 376 kB, 130 kB gzipped, 112 kB with
+The single file (`dist-lib/gen-vis.js`, 419 kB, 145 kB gzipped, 125 kB with
 brotli) has all parts in itself, without the check of the definitions
 (`check` and `debug` warn that it is missing), e.g. of a page which has to
 work with one file, its globals return the visualisations at once:
@@ -152,12 +152,12 @@ const def: Definition = { data: 'data.csv', mapping: { ... }, plot: { ... } };
 ```
 
 Optional parts load on demand, so your bundler splits them into separate
-chunks; the rest is ~62 kB gzipped. The sizes are gzipped: the check of the
-definitions (~12 kB) with the first one, the colors of d3
+chunks; the rest is ~68 kB gzipped. The sizes are gzipped: the check of the
+definitions (~16 kB) with the first one, the colors of d3
 (`d3-scale-chromatic`, ~8 kB) for definitions which name a scheme or an
 interpolator, the parts of maps (`d3-geo`, `topojson-client`, ~13 kB) with
 the first map, the parts of polar plots (~5 kB) with the first one, the
-transforms (~2 kB), the legend of scales of colors (~2 kB), the languages of
+transforms (~4 kB), the legend of scales of colors (~2 kB), the languages of
 `Intl` (~1 kB) other than `de` and `en`, the parquet reader (~18 kB) for
 parquet data and the PNG and the CSV (~11 kB) with the first one.
 
@@ -499,12 +499,12 @@ and the lines of the axes, `tick` and `domain`, as the ones of d3:
 |------|---------|
 | the visualisation | `vis-mounted` (an element mounted by `mountGenVisByClass` or `mountGenVisElement`), `vis-outer` (the root, `vis-loading` while it is loaded), `vis` (with `options.class` and the globals as `data-global-` attributes), `vis-message` (the text instead of the plots), `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
 | form elements | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`), the `id` of a form element and of its entries as `data-id`, e.g. `.vis-form-element[data-id="scale"]` |
-| legends | `vis-legends` (above the plots, `vis-legends-bottom`, `vis-legends-left` and `vis-legends-right`, the plots beside them are in `vis-plots`), `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, the mapping as `data-dim`, an entry with `data-key` and `data-visible`), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
-| facets | `vis-facet` (a facet), `vis-facet-title` (`vis-facet-title-center` of polar plots, centered), `vis-svg` |
+| legends | `vis-legends` (above the plots, `vis-legends-bottom`, `vis-legends-left` and `vis-legends-right`, the plots beside them are in `vis-plots`), `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, the mapping as `data-dim`, an entry with `data-key` and `data-visible`, `vis-legend-highlight` of the category of the hovered row), `vis-legend-annotations` (the entries of [annotations](definition.md#annotations)), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
+| facets | `vis-facet` (a facet), `vis-facet-title` (`vis-facet-title-center` of polar plots, centered, `vis-facet-col-title` of the columns of a grid), `vis-facet-row-title` (the headers of the rows of a grid, `vis-facet-row-title-left` or `-right`, `-horizontal` or `-vertical`), `vis-facet-empty` (a cell of a grid without rows), `vis-svg` |
 | plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base), `vis-mesh` (geo:mesh), the keys of the features of maps as `data-geo-key` |
-| axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`), `vis-axis-title`, `vis-grid` |
+| axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`, `vis-axis-at` of an axis at a value), `vis-axis-title` (`vis-axis-title-top`), `vis-grid` |
 | annotations | `vis-annotations` (the plot), `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or `vis-circle`, `vis-annotation-label`, `vis-annotation-labels` |
-| hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-hover-row` of a template, `vis-nearest`, the key of the category of every categorical mapping of a row as `data-` attribute, e.g. `data-type="load"` of the mapping `type` (`data-land-name` of `landName`), the cells of the values `vis-value`, the mapping of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`), `vis-hover-marker`, `vis-events` |
+| hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-hover-row` of a template, `vis-nearest`, the key of the category of every categorical mapping of a row as `data-` attribute, e.g. `data-type="load"` of the mapping `type` (`data-land-name` of `landName`), the cells of the values `vis-value`, the mapping of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`, `vis-hover-total` the row of the total), `vis-hover-marker`, `vis-events` |
 | footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-button` and `vis-copy`, `vis-csv`, `vis-download-svg` or `vis-download`) |
 
 Styles of the page which are in a cascade layer themselves only override the
@@ -537,7 +537,7 @@ legend), `--gen-vis-button-color` (`#B8BDC4`), `--gen-vis-button-hover-color`
 (`#5F6670`), `--gen-vis-button-disabled-color` (`#E3E5E8`, of the buttons
 of the page with the class `vis-button`), `--gen-vis-focus-color` (`#4269D0`, the first color of
 observable10, the entries of legends and the facets) and
-`--gen-vis-error-color` (`#B42318`). The default look: Inter, which the
+`--gen-vis-error-color` (`#B42318`); of sizes `--gen-vis-tick-inset` (the part of the tick marks inside the plot area, see [`tickMarks`](definition.md#mapping)) and `--gen-vis-legend-symbol-middle` (`0.36em`, the middle of the legend symbols above the baseline of their names). The default look: Inter, which the
 package brings (see [the font](#the-font)), figures of the same width
 in the hover (`tabular-nums`), grey axes, light grid lines, a hover card; the colors of
 categories without colors are d3's `observable10`. The colors of annotations are only the ones
@@ -559,7 +559,12 @@ import.meta.url)`, which bundlers of applications copy (e.g. webpack 5 and
 vite), the single file of `esm/chunks/fonts/` next to its url (a copy of
 `dist-lib/`, e.g. of `npm run upload`, has them, unpkg and jsDelivr serve
 them; the single file alone draws in the font of the system). The rules are
-also a stylesheet next to them, `inter.css`. A page with a font of its
+also a stylesheet next to them, `inter.css`, e.g. of the font for texts of
+the page: an application imports it from the package
+(`import '@preschen/gen-vis/inter.css'`, its bundler copies the woff2 files), a
+page without a bundler links it of a CDN (`<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/esm/chunks/fonts/inter.css">`).
+A page with a font of its
 own (`--gen-vis-font-family` or `fontFamily`) loads none of them. Charts
 measure their texts again when a font of the page is loaded after their
 first draw, the images load the font of the chart before they draw it.

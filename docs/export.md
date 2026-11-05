@@ -48,7 +48,7 @@ const svg = await vis.exportSvg({ parts: ['legend', 'plot'], unit: 'cm' });
 
 The prop `svg` adds a button which saves it (`exportSvg()` with the
 defaults, the name of the file is the one of `svg` or the title). The
-composer of the SVG is a part of its own, loaded with the first SVG (~4.5
+composer of the SVG is a part of its own, loaded with the first SVG (~5
 kB gzipped), not with the chart.
 
 Not drawn: shadows, gradients of CSS (their first color), images, rotated
@@ -118,7 +118,7 @@ unknown ones are an error):
 | `state` | the state, see [state](usage.md#state) |
 | `defaults` | the defaults of the parts instead of the built-in ones, e.g. `{ "axis": { "padding": 2, "tickMarks": { "size": 4, "inset": 0 } } }`, see [defaults](definition.md#defaults); also a function of the merged definition (see `resolve` below) which returns them (or a promise of them, `null` none), since 4.0.0 |
 | `parts` | the parts of the image, see above, default all |
-| `fontSize` | the size of the texts of gen-vis, e.g. `"8pt"`: 13px of most texts become it, the title (22px), the message (14px) and the small texts (11px) in proportion; sizes of the definition (props) stay as they are |
+| `fontSize` | the size of the texts of gen-vis, e.g. `"8pt"`: 13px of most texts become it, the title (20px), the message (14px), the labels and titles of the axes and the footer (12px) and the small texts (11px) in proportion; sizes of the definition (props) stay as they are |
 | `background` | a CSS color, `null` none (a transparent PNG), default the one of gen-vis (`--gen-vis-background` or white) |
 | `schemes` | schemes of colors registered before the chart is drawn, for this call only (the next one has the schemes of the page before), e.g. `{ "house": ["#005CA9", "#E6A000"] }`, also of several sizes (`[null, null, ["#9EC5E8", "#005CA9"], ...]`), see `registerScheme` in [extensions](extensions.md#extensions); also a function of the merged definition (see `resolve` below) which returns such an object (or a promise of it), called before the chart is drawn, e.g. of colors by the plot types, since 4.0.0 |
 | `timeout` | the time to wait for the chart in milliseconds, default 30000 |

@@ -678,7 +678,7 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   categories, e.g. the sources which are not stacked in italics:
   `"hover": {"row": {"props": {"font-style": "@hoverStyle"}}}` with
   `"common": {"hoverStyle": "normal"}` and `"hoverStyle": "italic"` of the
-  categories `total` and `load`. The nearest row stays bold, its
+  categories `total` and `load`. The nearest row stays semibold, its
   `font-weight` is the one of `vis-nearest`, of several mappings with a
   `row` the later ones override the ones before. The rows also have the
   keys of their categories as attributes, see [styles](usage.md#styles).
@@ -993,7 +993,7 @@ A plot or a list of plots, drawn in order:
   of `--gen-vis-halo-color`, `true` (3 pixels) or its width in pixels, e.g.
   labels on areas, the props of the plot replace its `stroke`,
   `stroke-width`, `paint-order` and `stroke-linejoin`. Texts without a
-  `fill` are in the color of `--gen-vis-text-color` (black by default), see
+  `fill` are in the color of `--gen-vis-text-color` (`#1F2328`, nearly black, by default), see
   [styles](usage.md#styles).
 
 The texts of `text` and of the labels of axes with a `max-width` prop

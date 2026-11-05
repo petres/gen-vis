@@ -1,13 +1,14 @@
 # gen-vis
 
-**[Examples](https://petres.github.io/gen-vis/)**: six charts with
+**[Examples](https://petres.github.io/gen-vis/)**: nine charts with
 different looks. You can edit their definitions and CSS on the page, and
 the charts update as you type.
 
 A declarative d3 visualisation library: a JSON definition (the *def*) and a
 data file (CSV, TSV, JSON or parquet) describe a chart. It draws line,
-point, bar, stacked bar and area charts, polar plots (e.g. radar and rose
-charts) and maps, with legends, hover, facets and form elements. A page
+point, bar, stacked bar and area charts, histograms and strip plots, polar
+plots (e.g. radar and rose charts) and maps, with legends, hover, facets
+(also grids of them) and form elements. A page
 draws a chart from a definition file or object and styles it with CSS; the
 same definition exports to SVG, PNG or PDF for documents.
 
@@ -94,7 +95,7 @@ dependency). All three take the same props, events and methods (see
   ```
 
 - **Standalone script** for a page without a bundler, e.g. from a CDN: the
-  module `dist-lib/esm/gen-vis.js` (above; 70 kB gzipped at first, optional
+  module `dist-lib/esm/gen-vis.js` (above; 80 kB gzipped at first, optional
   parts load when a chart needs them), the core loader
   `dist-lib/gen-vis.core.js` (less than 1 kB) for pages without modules, or
   the single file `dist-lib/gen-vis.js` with everything in it.
@@ -111,18 +112,24 @@ dependency). All three take the same props, events and methods (see
 - **Plots**: lines, bars (also stacked and horizontal), areas and SVG
   elements (circles, lines, rects, texts), in cartesian and polar
   coordinates (radar and rose charts) and on maps (GeoJSON or TopoJSON,
-  choropleths, circles), facets by a column.
+  choropleths, circles, labels which fit), facets by a column or grids of
+  facets by two (rows and columns), axes at a value (e.g. at zero) and
+  periods of dates (e.g. bars a month wide).
 - **Short definitions**: a mapping can be just its column name, types
   follow from the values, and each plot type has the props it needs by
   default. Parents and mixins for shared parts, data transforms (e.g. an
-  index to a base year), expressions as props, annotations, form elements
-  (radio buttons, selects, sliders), page globals and text templates in
-  several languages.
+  index to a base year, the classes of a histogram or densities with `bin`,
+  the jitter of a strip plot with `random`), expressions as props, annotations, form elements
+  (radio buttons, selects, sliders), page globals, text templates and texts in
+  several languages (`options.language`).
 - **Interaction**: hover (also by keyboard), legends which show and hide
-  categories, highlight, hover and selection events, linked charts on a
-  page, a state of the user's changes, transitions.
-- **Styles** from the page: classes start with `vis-`, the package styles
-  are in a cascade layer, colors and font are CSS variables. House color
+  categories (with symbols of the plots and entries of annotations), totals
+  of stacks in the hover, highlight, hover and selection events, linked charts on a
+  page, a state of the user's changes, transitions, lazy loading.
+- **Styles** from the page: a default look of its own (the font Inter,
+  which the package brings, grey axes, light grid lines, a hover card),
+  classes start with `vis-`, the package styles are in a cascade layer,
+  colors and font are CSS variables. House color
   schemes (`registerScheme`) and axis defaults (`registerDefaults`) apply
   to all charts on a page.
 - **Images and data**: buttons and methods for PNG, SVG and a CSV of the
