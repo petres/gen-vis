@@ -15,6 +15,13 @@ differently, listed first.
 
 What existing definitions draw differently:
 
+- The labels of the axes are `padding` (3 pixels) after the end of the
+  part of the tick marks outside of the plot area: their length without
+  the part inside (`tickMarks.inset`, `--gen-vis-tick-inset` of a page or
+  4 pixels of bottom and right axes, 5 of top and left ones); before, after
+  the whole length, as if no part were inside, 7 to 8 pixels from the
+  visible marks. The labels of cartesian axes move 4 (bottom, right) or 5
+  (top, left) pixels towards their axis; polar axes are the same.
 - The form elements and the legends above and below the plots start at the
   left edge of the title: the form elements without their margin of 4
   pixels at the left (16 pixels between them), the titles of legends

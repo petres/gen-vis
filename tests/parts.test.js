@@ -1016,11 +1016,11 @@ describe('the tick marks of axes', () => {
         const bottom = [...el.querySelectorAll('.vis-axis-bottom .tick line')];
         expect(bottom.length).toBeGreaterThan(0);
         expect(bottom.every(l => l.getAttribute('y2') == '4' && l.getAttribute('stroke-opacity') == '0.4')).toBe(true);
-        // the labels after the marks of 4 pixels, 3 of the padding
-        expect(el.querySelector('.vis-axis-bottom .tick text').getAttribute('y')).toBe('7');
-        // without marks the labels are at their places, 9 pixels of the marks and the padding
+        // the labels 3 pixels (the padding) after the marks of 4 pixels, of which the inset of 4 is inside
+        expect(el.querySelector('.vis-axis-bottom .tick text').getAttribute('y')).toBe('3');
+        // without marks the labels are at their places, 9 pixels of the marks without the inset of 5 and the padding
         expect(el.querySelectorAll('.vis-axis-left .tick line')).toHaveLength(0);
-        expect(el.querySelector('.vis-axis-left .tick text').getAttribute('x')).toBe('-12');
+        expect(el.querySelector('.vis-axis-left .tick text').getAttribute('x')).toBe('-7');
 
         // the marks of an angular axis outside of the circle of 150 pixels, a css variable is a style
         const polar = lineDef({ coord: 'polar', width: 400, height: 400, margins: { top: 50, right: 50, bottom: 50, left: 50 } });
@@ -1085,8 +1085,9 @@ describe('the defaults of the parts', () => {
         expect(new Set(marks(el, 'bottom', 'y'))).toEqual(new Set(['9']));
         // the part inside the plot area of the styles
         expect(el.querySelector('.vis-axis-bottom').hasAttribute('style')).toBe(false);
-        expect(label(el, 'bottom', 'y')).toBe('12');
-        expect(label(el, 'left', 'x')).toBe('-12');
+        // the padding after the part of the marks outside, 9 - 4 (or 5 of the left one) of the inset
+        expect(label(el, 'bottom', 'y')).toBe('8');
+        expect(label(el, 'left', 'x')).toBe('-7');
         expect(polarAxes(await mount({ def: polarDef(), data: lineData }))).toEqual({ mark: [-150, -156], label: -159, radial: -3, title: -166 });
     });
 
@@ -1096,10 +1097,11 @@ describe('the defaults of the parts', () => {
         def.mapping.y.axis = { ...def.mapping.y.axis, padding: 6, title: { name: 'Wert' } };
         const el = await mount({ def, data: lineData, defaults });
         expect(new Set(marks(el, 'bottom', 'y'))).toEqual(new Set(['4']));
-        expect(label(el, 'bottom', 'y')).toBe('5');
+        // the marks of 4 pixels all inside (the inset of 4), the padding of 1
+        expect(label(el, 'bottom', 'y')).toBe('1');
         expect(new Set(marks(el, 'left', 'x'))).toEqual(new Set(['-4']));
         // the padding of the definition
-        expect(label(el, 'left', 'x')).toBe('-10');
+        expect(label(el, 'left', 'x')).toBe('-6');
         expect(el.querySelector('.vis-axis-title').getAttribute('transform')).toMatch(/translate\(-\d+(\.\d+)? -20\)/);
         // the tick marks outside of the plot area, e.g. of ggplot2
         const outside = await mount({ def, data: lineData, defaults: { axis: { ...defaults.axis, tickMarks: { size: 4, inset: 0 } } } });
@@ -1109,13 +1111,15 @@ describe('the defaults of the parts', () => {
         const inset = await mount({ def, data: lineData, defaults: { axis: { ...defaults.axis, tickMarks: { size: 4, inset: 0 } } } });
         expect(inset.querySelector('.vis-axis-bottom').style.getPropertyValue('--gen-vis-tick-inset')).toBe('2px');
         expect(inset.querySelector('.vis-axis-left').style.getPropertyValue('--gen-vis-tick-inset')).toBe('0px');
+        // the labels after the part outside: 4 - 2 + the padding of 1, of the left axis 4 - 0 + 6
+        expect([label(inset, 'bottom', 'y'), label(inset, 'left', 'x')]).toEqual(['3', '-10']);
         // the size of the definition, the labels without marks at their places of the default
         def.mapping.x.axis.tickMarks = { size: 2 };
         def.mapping.y.axis.tickMarks = false;
         const own = await mount({ def, data: lineData, defaults });
         expect(new Set(marks(own, 'bottom', 'y'))).toEqual(new Set(['2']));
-        expect(label(own, 'bottom', 'y')).toBe('3');
-        expect(label(own, 'left', 'x')).toBe('-10');
+        expect(label(own, 'bottom', 'y')).toBe('1');
+        expect(label(own, 'left', 'x')).toBe('-6');
 
         // the angular axis and the radial one, the title of the radial one at its offset
         expect(polarAxes(await mount({ def: polarDef(), data: lineData, defaults }))).toEqual({ mark: [-150, -154], label: -155, radial: -1, title: -170 });
@@ -1124,7 +1128,7 @@ describe('the defaults of the parts', () => {
         expect(polarAxes(polar)).toEqual({ mark: [-148, -156], label: -159, radial: -5, title: -170 });
         // of a position of cartesian axes
         const left = await mount({ def: lineDef(), data: lineData, defaults: { ...defaults, leftAxis: { padding: 7 } } });
-        expect([label(left, 'bottom', 'y'), label(left, 'left', 'x')]).toEqual(['5', '-11']);
+        expect([label(left, 'bottom', 'y'), label(left, 'left', 'x')]).toEqual(['1', '-7']);
         const ownPolar = polarDef();
         ownPolar.mapping.x.axis = { ...ownPolar.mapping.x.axis, padding: 0, tickMarks: { size: 10 } };
         ownPolar.mapping.y.axis = { ...ownPolar.mapping.y.axis, padding: 2, title: { name: 'Wert', offset: 30 } };
@@ -1138,9 +1142,9 @@ describe('the defaults of the parts', () => {
         registerDefaults({ axis: { padding: 0, tickMarks: { size: 5 } } });
         const page = await mount({ def: lineDef(), data: lineData });
         expect(new Set(marks(page, 'bottom', 'y'))).toEqual(new Set(['5']));
-        expect(label(page, 'bottom', 'y')).toBe('5');
+        expect(label(page, 'bottom', 'y')).toBe('1');
         const prop = await mount({ def: lineDef(), data: lineData, defaults: { axis: { tickMarks: { size: 2 } } } });
-        expect(label(prop, 'bottom', 'y')).toBe('2');
+        expect(label(prop, 'bottom', 'y')).toBe('0');
         registerDefaults(null);
 
         const el = document.body.appendChild(document.createElement('div'));
@@ -1150,11 +1154,11 @@ describe('the defaults of the parts', () => {
         const vis = mountGenVisElement(el);
         await rendered(vis.el);
         await nextTick();
-        expect(label(el, 'bottom', 'y')).toBe('5');
+        expect(label(el, 'bottom', 'y')).toBe('1');
 
         // other defaults draw the chart anew
         vis.update({ defaults: { axis: { tickMarks: { size: 6 } } } });
-        await vi.waitFor(() => expect(label(el, 'bottom', 'y')).toBe('9'));
+        await vi.waitFor(() => expect(label(el, 'bottom', 'y')).toBe('5'));
         expect(new Set(marks(el, 'bottom', 'y'))).toEqual(new Set(['6']));
         expect(errors).toEqual([]);
     });

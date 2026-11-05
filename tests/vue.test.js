@@ -85,9 +85,10 @@ describe('the component', () => {
         const { el } = await mountApp(() => h(GenVis, { def: lineDef(), data: lineData, defaults: defaults.value }));
         const label = () => el.querySelector('.vis-axis-bottom .tick text').getAttribute('y');
         expect(el.querySelector('.vis-axis-bottom .tick line').getAttribute('y2')).toBe('4');
-        expect(label()).toBe('5');
+        // the marks inside (their inset of 4), the padding of 1
+        expect(label()).toBe('1');
         defaults.value = { axis: { tickMarks: { size: 2 } } };
-        await vi.waitFor(() => expect(label()).toBe('5'));
+        await vi.waitFor(() => expect(label()).toBe('3'));
         await vi.waitFor(() => expect(el.querySelector('.vis-axis-bottom .tick line').getAttribute('y2')).toBe('2'));
         expect(errors).toEqual([]);
     });

@@ -40,6 +40,10 @@ const center = (scale, offset) => {
     return d => +scale(d) + offset;
 };
 
+// the parts of the tick marks inside the plot area of the styles without a
+// --gen-vis-tick-inset, see styles.css
+const tickInset = { bottom: 4, top: 5, right: 4, left: 5 };
+
 // an axis whose labels were rotated or shifted in its last draw
 const labelsMoved = Symbol('labelsMoved');
 
@@ -71,12 +75,12 @@ const change = (node, attrs, moving) => {
 // into the element of the axis `ga`, `moving` with the animation of the
 // draw, the sizes of the ticks are the ones of `tickSizeInner`,
 // `tickSizeOuter` and `tickPadding`
-const ticks = (ga, moving, orient, scale, { values, format, tickSizeInner, tickSizeOuter, tickPadding }) => {
+const ticks = (ga, moving, orient, scale, { values, format, tickSizeInner, tickSizeOuter, tickPadding, labelSize = tickSizeInner }) => {
     const offset = pixelOffset();
     const k = orient == "top" || orient == "left" ? -1 : 1;
     const x = orient == "left" || orient == "right" ? "x" : "y";
     const transform = orient == "top" || orient == "bottom" ? translateX : translateY;
-    const spacing = Math.max(tickSizeInner, 0) + tickPadding;
+    const spacing = Math.max(labelSize, 0) + tickPadding;
     const range = scale.range();
     const range0 = +range[0] + offset;
     const range1 = +range[range.length - 1] + offset;
@@ -189,7 +193,20 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
     ga.querySelectorAll('*').forEach(node => interrupt(node, 'vis'));
     // the ticks of the draw before move with an animation
     const moving = motion.duration > 0 && ga.hasChildNodes();
-    ticks(ga, moving, position, scale, { values, format, tickSizeInner: marks?.size ?? markSize ?? builtInDefaults.axis.tickMarks.size, tickSizeOuter: 0, tickPadding: +(padding ?? builtInDefaults.axis.padding) });
+    // the part of the tick marks inside the plot area, the css variable of
+    // the styles, without one the one of the styles
+    if (Number.isFinite(marks?.inset))
+        ga.style.setProperty("--gen-vis-tick-inset", `${marks.inset}px`);
+    else if (ga.style.length)
+        ga.style.removeProperty("--gen-vis-tick-inset");
+    // the labels at `padding` from the end of the part of the marks outside
+    // of the plot area (their length without the inset, of the definition,
+    // a style of the page or the built-in one), also without marks
+    const size = marks?.size ?? markSize ?? builtInDefaults.axis.tickMarks.size;
+    const styled = typeof getComputedStyle == 'function' && ga.isConnected ? parseFloat(getComputedStyle(ga).getPropertyValue('--gen-vis-tick-inset')) : NaN;
+    const inset = Number.isFinite(marks?.inset) ? marks.inset : (Number.isFinite(styled) ? styled : tickInset[position] ?? 0);
+    ticks(ga, moving, position, scale, { values, format, tickSizeInner: size, tickSizeOuter: 0, tickPadding: +(padding ?? builtInDefaults.axis.padding),
+        labelSize: size - inset });
     // the props of the line and of the labels at once, the animations of
     // the path and of the texts (their positions) go on
     if (domain)
@@ -199,12 +216,6 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
         ga.querySelectorAll('.tick line').forEach(node => node.remove());
     else if (marks?.props)
         ga.querySelectorAll('.tick line').forEach(node => setAttrs(node, marks.props));
-    // the part of the tick marks inside the plot area, the css variable of
-    // the styles, without one the one of the styles
-    if (Number.isFinite(marks?.inset))
-        ga.style.setProperty("--gen-vis-tick-inset", `${marks.inset}px`);
-    else if (ga.style.length)
-        ga.style.removeProperty("--gen-vis-tick-inset");
     if (labels) {
         const texts = [...ga.querySelectorAll('.tick text')];
         texts.forEach(node => setAttrs(node, labels(node.parentNode[itemOf])));
