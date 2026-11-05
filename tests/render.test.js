@@ -1293,6 +1293,21 @@ describe('maps', () => {
         def.mapping.value.scale.closed = 'right';
         const right = await mount({ def, data: mapData });
         expect([...right.querySelectorAll('.vis-color-legend text')].map(t => t.textContent)).toEqual(['≤ 2,0', '2,0–3,5', '> 3,5']);
+        // a vertical legend as wide as the labels, after or before the scale
+        def.mapping.value.scale.domain = [2000, 3500];
+        def.mapping.value.legend = { ...def.mapping.value.legend, orientation: 'vertical' };
+        const vertical = await mount({ def, data: mapData });
+        const breadth = el => +el.querySelector('.vis-color-legend svg').getAttribute('width');
+        // the longest label in characters of 6 pixels, after the scale at 18
+        const longest = el => Math.max(...[...el.querySelectorAll('.vis-color-legend text')].map(t => t.textContent.length));
+        expect(longest(vertical)).toBeGreaterThan(10);
+        expect(breadth(vertical)).toBeGreaterThanOrEqual(18 + 6*longest(vertical));
+        def.mapping.value.legend.labels = 'before';
+        const before = await mount({ def, data: mapData });
+        // the scale right of the labels
+        const shift = +before.querySelector('.vis-color-legend svg g').getAttribute('transform').match(/translate\(([\d.]+)/)[1];
+        expect(shift).toBeGreaterThanOrEqual(6*longest(before) + 6);
+        expect(breadth(before)).toBeGreaterThan(shift + 10);
         expect(errors).toEqual([]);
     });
 

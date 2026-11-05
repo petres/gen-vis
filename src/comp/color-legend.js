@@ -85,7 +85,10 @@ function createColorLegend(vis, legend) {
 
     // the length of the scale drawn, e.g. wider of the labels of classes
     let drawnSize = null;
+    // the breadth of a vertical one, e.g. wider of long labels of classes
+    let drawnBreadth = null;
     const draw = vertical => {
+        drawnBreadth = null;
         const m = store.mapping(legend);
         const s = scale;
         const opts = options();
@@ -149,6 +152,17 @@ function createColorLegend(vis, legend) {
             // without a `size` of the legend
             if (opts.classes && !opts.size && !vertical)
                 width = Math.max(width, colors.length*Math.max(...colors.map((c, i) => text(i).length*6 + 8)));
+            // a vertical one as wide as the labels of its classes (the
+            // ones before it move the scale to the right)
+            if (opts.classes && vertical) {
+                const labels = Math.max(...colors.map((c, i) => text(i).length*6));
+                if (before) {
+                    const shift = Math.max(48, labels + 10);
+                    g.setAttribute('transform', `translate(${shift}, ${padding})`);
+                    drawnBreadth = shift + 14;
+                } else
+                    drawnBreadth = Math.max(64, 2 + 16 + labels + 4);
+            }
             const w = width/colors.length;
             colors.forEach((c, i) => box(i*w, w, c));
             // a label per class in its middle (`classes`), the open ends
@@ -187,7 +201,7 @@ function createColorLegend(vis, legend) {
         setText(title, name);
         patch(scaleBox, { class: 'vis-color-scale', style: vertical ? { flexDirection: 'column' } : null });
         const length = drawnSize ?? size();
-        patch(svg, { role: 'img', 'aria-label': name || undefined, width: vertical ? 64 : length + 2*padding, height: vertical ? length + 2*padding : 34 });
+        patch(svg, { role: 'img', 'aria-label': name || undefined, width: vertical ? drawnBreadth ?? 64 : length + 2*padding, height: vertical ? length + 2*padding : 34 });
         // the regions without a value, e.g. the color of geo:base
         const missing = options().missing;
         if (missing) {
