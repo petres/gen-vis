@@ -5,3 +5,4 @@ dist-lib
 .env
 dist-site
 .claude
+tests/png-diff
