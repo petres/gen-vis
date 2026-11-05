@@ -9,8 +9,8 @@ import { createApp, h, nextTick as vueTick, ref, reactive } from 'vue';
 import plugin, { GenVis, createVueComponent, vuePlugin } from '@/vue.js';
 import { errors, useDom, rendered, mount, pointer, nextTick } from './dom.js';
 
-vi.mock('modern-screenshot', () => ({
-    domToBlob: async () => new Blob(['png'], { type: 'image/png' }),
+vi.mock('@/utils/raster.js', () => ({
+    rasterize: async () => new Blob(['png'], { type: 'image/png' }),
 }));
 
 useDom();

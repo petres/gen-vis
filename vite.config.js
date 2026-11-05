@@ -85,10 +85,7 @@ const injectCss = (mode) => ({
                 // the PDF of the CLI (bin/export.js) or of a page of its own
                 this.emitFile({ type: 'asset', fileName: `${dir}fonts/inter.css`, source: `${(0, eval)(fontCode(file => JSON.stringify(`./${file}`)))}\n` });
             }
-            if (mode != 'module' && entry.fileName.includes('/'))
-                throw new Error(`the styles of ${mode} are in ${entry.fileName}, the urls of the fonts are relative to the directory of the build`);
             const url = mode == 'module' ? file => `new URL("./fonts/${file}", import.meta.url).href`
-                : mode == 'lib' ? file => `new URL("esm/chunks/fonts/${file}", document.currentScript && document.currentScript.src || document.baseURI).href`
                 : file => `new URL("../dist-lib/esm/chunks/fonts/${file}", import.meta.url).href`;
             // not on a server, e.g. of server side rendering, only in the browser
             entry.code = `(() => { if (typeof document == "undefined") return; const s = document.createElement("style"); s.textContent = ${fontCode(url)} + "\\n" + ${JSON.stringify(css)}; document.head.appendChild(s); })();\n${entry.code}`;
@@ -116,19 +113,6 @@ const atOnce = entry => {
     };
 };
 
-// the standalone script also as gen-vis.js, the one of the package, e.g. of a
-// CDN, beside the one of the version for the upload, see docs/usage.md
-const unversioned = () => ({
-    name: 'unversioned',
-    apply: 'build',
-    // after injectCss, with the styles
-    enforce: 'post',
-    generateBundle(options, bundle) {
-        const entry = Object.values(bundle).find(f => f.type == 'chunk' && f.isEntry);
-        this.emitFile({ type: 'asset', fileName: "gen-vis.js", source: entry.code });
-    },
-});
-
 // the export page next to the module of the standalone script
 // (dist-lib/export.html, it loads esm/export.js), see docs/export.md
 const exportPage = () => ({
@@ -139,21 +123,17 @@ const exportPage = () => ({
     },
 });
 
-// the builds of the standalone script (`npm run lib`), see docs/usage.md: the
-// single file (lib), the module with its parts next to it (module) and the
-// classic script which loads the module (core), none of them has Vue, the
-// component of the Vue of a page is a function of it (see src/vue-adapter.js);
-// the Vue plugin is the one of the pages of the dev server (src/dev/)
+// the builds: the es modules of the package (dist/, the default) and the
+// module of the browser (`npm run lib`, dist-lib/esm/ with the export page),
+// see docs/usage.md, neither has Vue, the component of the Vue of a page is
+// a function of it (see src/vue-adapter.js); the Vue plugin is the one of
+// the pages of the dev server (src/dev/)
 export default defineConfig(({ mode }) => {
-    const single = mode == 'lib';
     const module = mode == 'module';
     return {
-        plugins: [vue(), checkSchema(), injectCss(mode), ...(single ? [unversioned()] : []), ...(module ? [exportPage()] : [])],
+        plugins: [vue(), checkSchema(), injectCss(mode), ...(module ? [exportPage()] : [])],
         resolve: {
             alias: [
-                // the single file has the parts which are loaded when a chart needs
-                // them in itself, without the check, see utils/lazy-static.js
-                ...(single ? [{ find: /^@\/utils\/lazy$/, replacement: fileURLToPath(new URL('./src/utils/lazy-static.js', import.meta.url)) }] : []),
                 { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
             ],
         },
@@ -168,11 +148,8 @@ export default defineConfig(({ mode }) => {
             entries: ['index.html'],
         },
         define: {
-            // the standalone script reads parquet without the decompressors of
-            // other compressions than snappy, see src/utils/parquet.js
-            __GEN_VIS_STANDALONE__: JSON.stringify(single),
-            // the environment of the dependencies of the standalone scripts
-            ...(single || module ? { 'process.env.NODE_ENV': JSON.stringify('production') } : {}),
+            // the environment of the dependencies of the module of the browser
+            ...(module ? { 'process.env.NODE_ENV': JSON.stringify('production') } : {}),
         },
         build: module ? {
             // the standalone script as a module of a page, with d3, the parts
@@ -180,6 +157,7 @@ export default defineConfig(({ mode }) => {
             // next to it, e.g. the ones of maps, see docs/usage.md, and the
             // module of the export page (src/export.js)
             outDir: 'dist-lib/esm',
+            emptyOutDir: true,
             lib: {
                 entry: { 'gen-vis': 'src/lib.js', export: 'src/export.js' },
                 formats: ['es'],
@@ -193,28 +171,6 @@ export default defineConfig(({ mode }) => {
                     chunkFileNames: 'chunks/[name]-[hash].js',
                     codeSplitting: { groups: [{ name: atOnce(fileURLToPath(new URL('./src/lib.js', import.meta.url))) }] },
                 },
-            },
-        } : single ? {
-            // standalone script for embedding, see docs/usage.md, the first build
-            // (lib) empties dist-lib, the others are added to it
-            outDir: 'dist-lib',
-            emptyOutDir: true,
-            lib: {
-                // named as the entry of the es module, the styles are injected into it
-                entry: { 'gen-vis': 'src/lib.js' },
-                formats: ['iife'],
-                name: 'GenVis',
-                fileName: () => `gen-vis-${pkg.version}.js`,
-            },
-        } : mode == 'core' ? {
-            // the classic script which loads the module of esm/ next to it, see src/core.js
-            outDir: 'dist-lib',
-            emptyOutDir: false,
-            lib: {
-                entry: { 'gen-vis.core': 'src/core.js' },
-                formats: ['iife'],
-                name: 'GenVisCore',
-                fileName: () => 'gen-vis.core.js',
             },
         } : {
             // es module for bundlers, the dependencies are resolved by the host

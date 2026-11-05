@@ -1,13 +1,13 @@
 {
   "name": "@preschen/gen-vis",
-  "version": "4.1.0",
-  "description": "A declarative d3 visualisation library",
+  "version": "5.0.0-alpha.0",
+  "description": "A declarative d3 visualisation library: a JSON definition and a data file describe a chart",
   "type": "module",
   "main": "dist/gen-vis.js",
   "module": "dist/gen-vis.js",
   "types": "./types/index.d.ts",
-  "unpkg": "dist-lib/gen-vis.js",
-  "jsdelivr": "dist-lib/gen-vis.js",
+  "unpkg": "dist-lib/esm/gen-vis.js",
+  "jsdelivr": "dist-lib/esm/gen-vis.js",
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
@@ -22,7 +22,6 @@
       "default": "./dist/check.js"
     },
     "./schema.json": "./schema.json",
-    "./standalone": "./dist-lib/gen-vis.js",
     "./esm": "./dist-lib/esm/gen-vis.js",
     "./export.html": "./dist-lib/export.html",
     "./inter.css": "./dist-lib/esm/chunks/fonts/inter.css",
@@ -34,8 +33,6 @@
   "files": [
     "bin",
     "dist",
-    "dist-lib/gen-vis.js",
-    "dist-lib/gen-vis.core.js",
     "dist-lib/esm",
     "dist-lib/export.html",
     "types",
@@ -46,7 +43,7 @@
     "dev": "vite",
     "build": "vite build",
     "watch": "vite build --watch",
-    "lib": "vite build --mode lib && vite build --mode module && vite build --mode core",
+    "lib": "vite build --mode module",
     "site": "npm run build && npm run lib && vite --config site/vite.config.js",
     "site:build": "npm run build && npm run lib && vite build --config site/vite.config.js",
     "test": "vitest run",
@@ -105,11 +102,9 @@
     "d3-shape": "^3",
     "d3-time": "^3",
     "d3-time-format": "^4",
-    "deepmerge": "^4",
     "fzstd": "^0.1.1",
     "hyparquet": "^1",
     "hyparquet-compressors": "^1",
-    "modern-screenshot": "^4.7.0",
     "topojson-client": "^3"
   },
   "devDependencies": {

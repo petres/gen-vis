@@ -15,11 +15,12 @@ import { examples, errors, useDom, rendered, mount, mountVis, pointer, hover, ne
 // the image of the copy of the visualisation, the copy and the width of its
 // container are kept for the tests
 const screenshot = vi.hoisted(() => ({ copy: null, width: null, scale: null }));
-vi.mock('modern-screenshot', () => ({
-    domToBlob: async (node, options) => {
+vi.mock('@/utils/raster.js', () => ({
+    rasterize: async (node, options) => {
         screenshot.copy = node.cloneNode(true);
         screenshot.width = node.parentElement.style.width;
         screenshot.scale = options.scale;
+        screenshot.svg = options.svg;
         return new Blob(['png'], { type: 'image/png' });
     },
 }));
@@ -1434,9 +1435,6 @@ describe('data formats', () => {
         expect(circles(await mount({ def: { ...def(), data: 'http://h/api/parquet' } }))).toBe(3);
         expect(circles(await mount({ def: { ...def(), data: 'http://h/api/csv' } }))).toBe(7);
         document.body.innerHTML = '';
-        // jsdom has no layout of texts, see export.test.js
-        Range.prototype.getClientRects = () => [{ left: 0, top: 0, right: 10, bottom: 10, width: 10, height: 10 }];
-        onTestFinished(() => delete Range.prototype.getClientRects);
         await import('@/export.js');
         for (const [url, n] of [['http://h/api/parquet', 3], ['http://h/api/csv', 7]]) {
             await window.genVisExport({ def: def(), dataUrl: url });

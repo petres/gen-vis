@@ -1,6 +1,6 @@
 export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts, symbolOf, symbolShape, isInLanguages, inLanguage, languageOf, textsIn };
 
-import merge from 'deepmerge';
+import { deepMerge, mergeAll as mergeParts } from '@/utils/merge';
 import { ownColors, schemeColors } from '@/utils/d3';
 import { comparison, isObject, sameValue } from '@/utils/values';
 import { defaultScaleType, hasCategories } from '@/utils/normalize';
@@ -16,7 +16,7 @@ const arrayMerge = (target, source, options) => {
         return source;
     const merged = target.map(t => {
         const s = source.find(e => e.id == t.id);
-        return s ? merge(t, s, options) : t;
+        return s ? deepMerge(t, s, options) : t;
     });
     return [...merged, ...source.filter(s => !target.some(t => t.id == s.id))];
 };
@@ -33,11 +33,11 @@ const mergeMappings = (target, source, options) => {
         t[k] = columnOf(t[k], s[k]);
         s[k] = columnOf(s[k], t[k]);
     });
-    return merge(t, s, options);
+    return deepMerge(t, s, options);
 };
 const customMerge = key => key == 'mapping' ? mergeMappings : undefined;
 
-const mergeAll = parts => merge.all(parts, { arrayMerge, customMerge });
+const mergeAll = parts => mergeParts(parts, { arrayMerge, customMerge });
 
 // keys of categories ascending or descending, numbers by their value
 const sortKeys = (keys, descending) => {

@@ -170,13 +170,19 @@ const scaleOf = width => Math.max(2, Math.ceil(defaultWidth / width));
 
 /**
  * The PNG (a Blob, see scaleOf) of the static copy of a visualisation of
- * the given `width` next to `outer`, see staticCopy.
+ * the given `width` next to `outer`, see staticCopy: the SVG of the copy
+ * (see renderSvg, the same image as the SVG file) drawn on a canvas, see
+ * utils/raster.js.
  */
 const renderImage = async (outer, mount, { width }) => {
-    const { domToBlob } = await lazy.screenshot();
+    const [{ composeSvg }, { rasterize }] = await Promise.all([lazy.svg(), lazy.raster()]);
     const { copy, remove } = await staticCopy(wrapper => outer.after(wrapper), mount, { width });
     try {
-        return await domToBlob(copy, { scale: scaleOf(width), backgroundColor: backgroundOf(copy), type: 'image/png' });
+        const background = backgroundOf(copy);
+        copy.style.background = background;
+        const box = partsBox(copy, null);
+        const svg = composeSvg(copy, { box });
+        return await rasterize(copy, { svg, width: box.width, height: box.height, scale: scaleOf(width), background });
     } finally {
         remove();
     }

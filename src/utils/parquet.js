@@ -7,8 +7,7 @@ import { parquetMetadata, parquetReadObjects, parquetSchema } from 'hyparquet';
 // snappy, the default of arrow, pandas and duckdb, is part of hyparquet, the
 // decompressors of the other compressions are loaded one by one, only the
 // ones of the file, e.g. zstd of polars (3 kB), not all of
-// hyparquet-compressors (75 kB, most of it brotli), the standalone script
-// does not have them
+// hyparquet-compressors (75 kB, most of it brotli)
 const builtIn = ['UNCOMPRESSED', 'SNAPPY'];
 const decompressors = {
     GZIP: async () => {
@@ -27,8 +26,6 @@ const loadCompressors = async codecs => {
     const others = [...new Set(codecs.filter(c => !builtIn.includes(c)))];
     if (others.length == 0)
         return undefined;
-    if (__GEN_VIS_STANDALONE__)
-        throw new Error(`The standalone script reads parquet with snappy or without compression, not ${others.join(', ')}.`);
     const unknown = others.filter(c => !Object.hasOwn(decompressors, c));
     if (unknown.length)
         throw new Error(`Unknown compression of parquet: ${unknown.join(', ')}`);

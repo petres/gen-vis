@@ -11,15 +11,6 @@ import { errors, useDom, rendered } from './dom.js';
 
 useDom();
 
-beforeAll(() => {
-    // a line of 10 pixels of every text, jsdom has no canvas
-    Range.prototype.getClientRects = () => [{ left: 0, top: 0, right: 10, bottom: 10, width: 10, height: 10 }];
-    HTMLCanvasElement.prototype.getContext = () => null;
-    // jsdom has no styles of pseudo-elements, they have no content
-    const computed = window.getComputedStyle;
-    window.getComputedStyle = (e, pseudo) => pseudo ? Object.assign([], { content: 'none', display: 'inline' }) : computed(e);
-});
-
 const def = () => ({
     options: { width: 600, height: 300, title: 'Titel', subtitle: 'Untertitel', footer: 'Quelle' },
     globals: { unit: 'a' },

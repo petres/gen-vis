@@ -1,6 +1,6 @@
 export { builtInDefaults, registerDefaults, axisDefaults, symbolDefaults };
 
-import merge from 'deepmerge';
+import { mergeAll } from '@/utils/merge';
 import { isObject } from '@/utils/values';
 
 /**
@@ -51,7 +51,7 @@ const registerDefaults = defaults => {
  * built-in ones, the ones of the page and of the chart (`own`), see
  * symbolOf of utils/def.js.
  */
-const symbolDefaults = own => merge.all([builtInDefaults, registered, own].map(d => d?.legend?.symbol).filter(isObject));
+const symbolDefaults = own => mergeAll([builtInDefaults, registered, own].map(d => d?.legend?.symbol).filter(isObject));
 
-const axisDefaults = (own, position) => merge.all([builtInDefaults, registered, own]
+const axisDefaults = (own, position) => mergeAll([builtInDefaults, registered, own]
     .flatMap(d => [d?.axis, d?.[`${position}Axis`]]).filter(isObject));

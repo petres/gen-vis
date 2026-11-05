@@ -6,8 +6,8 @@ import { test, expect, vi, beforeEach } from 'vitest';
 import { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement } from '@/index.js';
 import { errors, useDom, rendered, mount, nextTick } from './dom.js';
 
-vi.mock('modern-screenshot', () => ({
-    domToBlob: async () => new Blob(['png'], { type: 'image/png' }),
+vi.mock('@/utils/raster.js', () => ({
+    rasterize: async () => new Blob(['png'], { type: 'image/png' }),
 }));
 
 useDom();

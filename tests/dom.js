@@ -36,6 +36,13 @@ export const useDom = () => {
     beforeAll(() => {
         // jsdom has no layout
         Element.prototype.getBoundingClientRect = () => ({ x: 0, y: 0, left: 0, top: 0, width: 800, height: 400, right: 800, bottom: 400 });
+        // the SVG of the images (see utils/export-svg.js) reads the rectangles of
+        // the words of the texts and the styles of pseudo-elements, jsdom has
+        // neither: a line of 10 pixels of every text, no content
+        Range.prototype.getClientRects = () => [{ left: 0, top: 0, right: 10, bottom: 10, width: 10, height: 10 }];
+        HTMLCanvasElement.prototype.getContext = () => null;
+        const computed = window.getComputedStyle;
+        window.getComputedStyle = (e, pseudo) => pseudo ? Object.assign([], { content: 'none', display: 'inline' }) : computed(e);
         globalThis.ResizeObserver = class {
             constructor(callback) { this.callback = callback; }
             observe() { resizeObservers.add(this); }
