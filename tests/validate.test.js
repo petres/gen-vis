@@ -119,7 +119,7 @@ describe('validateDef', () => {
         def.plot = { type: 'cartesian:line', categories: ['c'], highlight: 'row', props: { ...def.plot.props } };
         expect(validateDef(def)).toEqual([
             "mapping.c.props: unknown key, expected one of 'column', 'name', 'type', 'format', 'stacked', 'scale', 'axis', 'hover', 'legend', 'domain', 'nice', 'categories', 'scheme', 'common', 'fromData', 'order', 'ranks'",
-            "plot[0].categories: unknown key, expected one of 'type', 'id', 'by', 'data', 'dataFormat', 'filter', 'select', 'object', 'borders', 'dodge', 'halo', 'layer', 'facet', 'highlight', 'curve', 'props', 'others'",
+            "plot[0].categories: unknown key, expected one of 'type', 'id', 'by', 'data', 'dataFormat', 'filter', 'once', 'select', 'object', 'borders', 'dodge', 'halo', 'layer', 'facet', 'highlight', 'curve', 'props', 'others'",
             'plot[0].highlight: expected an object',
         ]);
     });

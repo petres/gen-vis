@@ -850,6 +850,11 @@ A plot or a list of plots, drawn in order:
   with the first one, e.g. of radar charts.
 - `data`: rows of the plot instead of the rows of the data, e.g. events or
   a target value, see below.
+- `once`: one element per facet, of no row (no `data`, `by` or `filter`),
+  its props are the names of the facet, e.g. a header or a unit label at the
+  edges of the plot area, `{"type": "svg:text", "once": true, "props": {"x":
+  "@plot:left", "y": {"-": ["@plot:top", 6]}, "text": "in €"}}`; the key
+  and the name of the facet are `@facet` and `@facet:name`.
 - `select`: one row of every group, of the rows with values of the mappings
   of the props: `first` or `last` (in the order of the rows) or the one with
   the least or the most value of a mapping, `{ "min": "y" }` or
@@ -1214,7 +1219,7 @@ parts add names:
 | everywhere | the `globals` and `totalWidth`, the width of the visualisation |
 | `options.height`, `options.margins`, `options.message`, `facets.cols`, `facets.scales`, `filter` | only these |
 | the `props` of `legend` (also of the `symbol`) and `hover` of a mapping | the props of its categories, e.g. `@color` and `@name` |
-| `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight` (`width` and `height` with the margins, the others of the plot area), the edges and the size of the plot area in the coordinates of the plots: `plot:left`, `plot:top`, `plot:right`, `plot:bottom` (e.g. a line from the top to the bottom of the plot area, `"y1": "@plot:top", "y2": "@plot:bottom"`, around the center of polar plots), `plot:width`, `plot:height`, of polar plots `radius` (e.g. of the hole of a donut), the sizes of the band and point scales, e.g. `y:bandwidth` and `y:step` |
+| `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight` (of facets also its key `facet` and its name `facet:name`; `width` and `height` with the margins, the others of the plot area), the edges and the size of the plot area in the coordinates of the plots: `plot:left`, `plot:top`, `plot:right`, `plot:bottom` (e.g. a line from the top to the bottom of the plot area, `"y1": "@plot:top", "y2": "@plot:bottom"`, around the center of polar plots), `plot:width`, `plot:height`, of polar plots `radius` (e.g. of the hole of a donut), the sizes of the band and point scales, e.g. `y:bandwidth` and `y:step` |
 | `scale.range` | the sizes of the coordinate system, e.g. `@radius` of polar plots; `width` and `height` are the ones of the plot area here (`plot:width`, `plot:height`), not the ones of the facet with its margins |
 | the `props` of a plot | the props of its categories and the values of the row: a mapping (e.g. `@x`), the value as a text of the format of its hover (`@x:formatted`, e.g. `1.234,5`, a label), the scaled value (`@x:scaled`, `@x:scaled:center` for the center of a band, the position of a value, e.g. `@x:scaled:0` or `@x:scaled:100`, `@x:scaled:min` and `@x:scaled:max` of the domain), the size of a band and the distance of the categories (`@y:bandwidth`, `@y:step`), the extent of the group of the row (`@y:group:start`, `@y:group:end`, see `groups` of scales), stacked values (`@y:start`, `@y:end:scaled`, ..., see `stacked`) |
 

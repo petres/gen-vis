@@ -1183,6 +1183,10 @@ export interface Plot {
     dataFormat?: 'csv' | 'tsv' | 'json' | 'parquet';
     filter?: Filter2;
     /**
+     * One element per facet, of no row: its props are the names of the facet, e.g. a header or a unit label at the edge of the plot area, "y": "@plot:top", "text": "@facet:name".
+     */
+    once?: boolean;
+    /**
      * One row of every group: the first or the last one, or the one with the least or the most value of a mapping, e.g. labels at the ends of lines.
      */
     select?:

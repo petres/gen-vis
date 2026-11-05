@@ -516,6 +516,10 @@ const checkPlots = ctx => {
             else if (!Object.hasOwn(mapping, name))
                 warn(`${path}.select.${which}`, `unknown mapping '${name}'`);
         }
+        if (p.once !== undefined && typeof p.once != 'boolean')
+            warn(`${path}.once`, `true: an element per facet, of no row, e.g. a header`);
+        else if (p.once && (p.data !== undefined || [p.by ?? []].flat().length > 0 || p.filter !== undefined))
+            warn(`${path}.once`, `a plot once per facet has no rows, no 'data', 'by' or 'filter'`);
         if (p.dodge !== undefined && (typeof p.dodge != 'number' || !['svg:text', 'polar:text'].includes(p.type)))
             warn(`${path}.dodge`, `the distance of the texts of a plot of 'svg:text' or 'polar:text', a number`);
         if (p.halo !== undefined && (!['boolean', 'number'].includes(typeof p.halo) || !['svg:text', 'polar:text'].includes(p.type)))
@@ -772,7 +776,7 @@ const context = (def, warn, rows) => {
     const bandNames = Object.entries(def.mapping ?? {}).filter(([, m]) => m?.scale?.orientation !== undefined && ['band', 'point'].includes(m.scale.type))
         .flatMap(([n]) => [`${n}:bandwidth`, `${n}:step`]);
     const facetNames = [...globalNames, 'width', 'innerWidth', 'height', 'innerHeight', ...(coordName == 'polar' ? ['radius'] : []), ...bandNames,
-        'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height'];
+        'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height', ...(def.facets ? ['facet', 'facet:name'] : [])];
     const names = {
         global: new Set(globalNames),
         facet: new Set(facetNames),

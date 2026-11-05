@@ -291,7 +291,8 @@ const layout = (store, width, before = null) => {
             isStacked,
             stackOrder,
             // the sizes of the bands of the scales, e.g. "@y:bandwidth" of annotations
-            scope: { ...facetScope, ...scaleSizes(scales) },
+            // also the key and the name of the facet, e.g. of a text once per facet
+            scope: { ...facetScope, ...scaleSizes(scales), ...(faceted ? { facet: f.key, 'facet:name': f.name } : {}) },
             scales,
         };
     });
@@ -319,6 +320,7 @@ const convertValue = (mapping, v) => Array.isArray(v)
 // same rows if the filter has only references to globals, e.g. of the
 // facet of a new width, see layout
 const plotRowsKept = new WeakMap();
+const onceRows = new WeakMap();
 const keptPlotRows = (store, plot, facet) => {
     const globals = store.def.globals ?? {};
     const names = refNames(plot.filter);
@@ -348,6 +350,13 @@ const keptPlotRows = (store, plot, facet) => {
  * out rows, see rowFilter.
  */
 const plotRows = (store, plot, facet) => {
+    // one row without values per facet, e.g. a header or a unit label at
+    // the edges of the plot area (@plot:top), the same one of a facet
+    if (plot.once) {
+        if (!onceRows.has(facet.rows))
+            onceRows.set(facet.rows, [{}]);
+        return onceRows.get(facet.rows);
+    }
     if (!plot.data && plot.filter)
         return keptPlotRows(store, plot, facet);
     const conditions = rowFilter(plot.filter, store.def.mapping, facet.scope, `plot ${plot.id}: filter`, unknownOf(store));

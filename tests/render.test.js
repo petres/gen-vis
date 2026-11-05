@@ -3361,3 +3361,19 @@ describe('annotations in the legend', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('plots once per facet', () => {
+    test('an element per facet of no row, at the edges of the plot area, with the name of the facet', async () => {
+        const def = lineDef();
+        def.mapping.f = { column: 'land', categories: { Wien: { name: 'Stadt Wien' }, Tirol: {} } };
+        def.facets = { dim: 'f', cols: 2 };
+        def.plot.push({ type: 'svg:text', id: 'header', once: true, props: { x: '@plot:right', y: '@plot:top', text: '@facet:name', 'text-anchor': 'end' } });
+        const el = await mount({ def, data: lineData });
+        const texts = [...el.querySelectorAll('[data-plot="header"] text')];
+        expect(texts.map(t => t.textContent)).toEqual(['Stadt Wien', 'Tirol']);
+        const facet = el.querySelector('.vis-facet svg');
+        expect(+texts[0].getAttribute('y')).toBe(0);
+        expect(+texts[0].getAttribute('x')).toBeGreaterThan(100);
+        expect(errors).toEqual([]);
+    });
+});
