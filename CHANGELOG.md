@@ -68,6 +68,11 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- The labels of maps: `geo:text` at the pole of inaccessibility of the
+  largest polygon of a feature, not its centroid (`"place": "centroid"`
+  keeps it), so labels of long or bent countries are inside them; the labels
+  of maps move. `"fit": true` and `"overlap": false` show only labels which
+  fit into their area and do not overlap, without a list of them.
 - `pad` of a scale: extends the domain at both ends, positive values extend
   (a number or `[start, end]`), instead of `domainRel`, whose values are
   added; `validateDef` warns of a positive start of `domainRel` or

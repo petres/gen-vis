@@ -1220,6 +1220,18 @@ export interface Plot {
     dataFormat?: 'csv' | 'tsv' | 'json' | 'parquet';
     filter?: Filter2;
     /**
+     * geo:text: a label at the pole of inaccessibility of the largest polygon of its feature, the point farthest from its edges (default), or at its centroid.
+     */
+    place?: 'pole' | 'centroid';
+    /**
+     * geo:text: only the labels which fit into the area around their place (estimated of their characters and font size).
+     */
+    fit?: boolean;
+    /**
+     * geo:text: false leaves out the labels which overlap the one of a larger area, so a map needs no list of the labels shown.
+     */
+    overlap?: boolean;
+    /**
      * One element per facet, of no row: its props are the names of the facet, e.g. a header or a unit label at the edge of the plot area, "y": "@plot:top", "text": "@facet:name".
      */
     once?: boolean;

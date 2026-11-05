@@ -1153,6 +1153,15 @@ mapping (`join`) whose values are the keys of the features:
   and `lat` of its props, e.g. proportional circles with a `sqrt` scale of
   `r`) and `geo:mesh` (the borders of an object of TopoJSON as one path,
   every border once, the props are fixed).
+- The labels of `geo:text` are at the pole of inaccessibility of the largest
+  polygon of their feature, the point farthest from its edges, also in long
+  or bent countries (`"place": "centroid"`: the center as `geo:circle`).
+  `"fit": true` shows only the labels which fit into the area around their
+  place, `"overlap": false` leaves out the ones which overlap the label of a
+  larger area, so a map needs no list of the labels: e.g. all zones,
+  `{"type": "geo:text", "by": "country", "fit": true, "overlap": false,
+  "props": {"text": "@label:formatted"}}`. The sizes of the labels are
+  estimated of their characters and their `font-size` (11 by default).
 - `geo:mesh` draws the borders of `object`, by default the one of the
   features (without the ones left out by `include` and `exclude`), e.g. the
   states above their districts, `borders` are all of them (`all`, default),

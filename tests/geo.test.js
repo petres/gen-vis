@@ -110,3 +110,14 @@ test('an annotation a map has not warns once', async () => {
     expect(w).toHaveLength(1);
     expect(w[0]).toMatch(/coordinate system 'geo' has no annotations of the type 'band', only 'text', 'circle'/);
 });
+
+describe('the place of the labels of a map', () => {
+    test('the pole of inaccessibility of a polygon, inside of it, not its centroid', async () => {
+        const { pole } = await import('@/plots/geo');
+        // an L of arms 20 wide: its centroid (about 32, 32) is outside of it
+        const l = [[[0, 0], [100, 0], [100, 20], [20, 20], [20, 100], [0, 100], [0, 0]]];
+        const p = pole(l, 0.5);
+        expect(p.d).toBeGreaterThan(9.4);
+        expect(p.x < 20 || p.y < 20).toBe(true);
+    });
+});

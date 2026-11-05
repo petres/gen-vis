@@ -748,7 +748,10 @@
                 },
                 "dataFormat": { "enum": ["csv", "tsv", "json", "parquet"], "description": "The format of the url of the data, by default the one of its extension." },
                 "filter": { "$ref": "#/definitions/filter", "description": "The rows of the plot, of the conditions of mappings, see filter of the definition." },
-                "once": { "type": "boolean", "description": "One element per facet, of no row: its props are the names of the facet, e.g. a header or a unit label at the edge of the plot area, \"y\": \"@plot:top\", \"text\": \"@facet:name\"." },
+"place": { "enum": ["pole", "centroid"], "default": "pole", "description": "geo:text: a label at the pole of inaccessibility of the largest polygon of its feature, the point farthest from its edges (default), or at its centroid." },
+                "fit": { "type": "boolean", "description": "geo:text: only the labels which fit into the area around their place (estimated of their characters and font size)." },
+                "overlap": { "type": "boolean", "default": true, "description": "geo:text: false leaves out the labels which overlap the one of a larger area, so a map needs no list of the labels shown." },
+                                "once": { "type": "boolean", "description": "One element per facet, of no row: its props are the names of the facet, e.g. a header or a unit label at the edge of the plot area, \"y\": \"@plot:top\", \"text\": \"@facet:name\"." },
                 "select": {
                     "description": "One row of every group: the first or the last one, or the one with the least or the most value of a mapping, e.g. labels at the ends of lines.",
                     "anyOf": [
