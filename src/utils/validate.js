@@ -797,6 +797,7 @@ const context = (def, warn, rows) => {
         category: n => new Set([...globalNames, ...categoryNames(mapping[n])]),
         plot: categories => new PlotNames([
             ...facetNames,
+            'row:index',
             ...Object.entries(mapping).flatMap(([n, m]) => rowNames(n, m ?? {})),
             ...categories.flatMap(c => categoryNames(mapping[c])),
         ]),

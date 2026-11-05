@@ -884,7 +884,17 @@ A plot or a list of plots, drawn in order:
   its props are the names of the facet, e.g. a header or a unit label at the
   edges of the plot area, `{"type": "svg:text", "once": true, "props": {"x":
   "@plot:left", "y": {"-": ["@plot:top", 6]}, "text": "in €"}}`; the key
-  and the name of the facet are `@facet` and `@facet:name`.
+  and the name of the facet are `@facet` and `@facet:name`. A small table
+  per facet is a header plot `once` and a text plot per column whose lines
+  are the rows of the plot, `@row:index` is the place of a row among them
+  (from 0), e.g. the counts of the categories at the top right:
+
+  ```json
+  { "type": "svg:text", "once": true, "props": { "x": "@plot:right", "y": "@plot:top", "text": "n", "text-anchor": "end", "dominant-baseline": "hanging" } },
+  { "type": "svg:text", "by": "regime", "filter": { "n": { "not": null } },
+    "props": { "x": "@plot:right", "y": { "+": ["@plot:top", 12, { "*": ["@row:index", 11] }] }, "text": "@n:formatted",
+               "text-anchor": "end", "dominant-baseline": "hanging", "fill": "@color" } }
+  ```
 - `select`: one row of every group, of the rows with values of the mappings
   of the props: `first` or `last` (in the order of the rows) or the one with
   the least or the most value of a mapping, `{ "min": "y" }` or
@@ -1251,7 +1261,7 @@ parts add names:
 | the `props` of `legend` (also of the `symbol`) and `hover` of a mapping | the props of its categories, e.g. `@color` and `@name` |
 | `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight` (of facets also its key `facet` and its name `facet:name`; `width` and `height` with the margins, the others of the plot area), the edges and the size of the plot area in the coordinates of the plots: `plot:left`, `plot:top`, `plot:right`, `plot:bottom` (e.g. a line from the top to the bottom of the plot area, `"y1": "@plot:top", "y2": "@plot:bottom"`, around the center of polar plots), `plot:width`, `plot:height`, of polar plots `radius` (e.g. of the hole of a donut), the sizes of the band and point scales, e.g. `y:bandwidth` and `y:step` |
 | `scale.range` | the sizes of the coordinate system, e.g. `@radius` of polar plots; `width` and `height` are the ones of the plot area here (`plot:width`, `plot:height`), not the ones of the facet with its margins |
-| the `props` of a plot | the props of its categories and the values of the row: a mapping (e.g. `@x`), the value as a text of the format of its hover (`@x:formatted`, e.g. `1.234,5`, a label), the scaled value (`@x:scaled`, `@x:scaled:center` for the center of a band, the position of a value, e.g. `@x:scaled:0` or `@x:scaled:100`, `@x:scaled:min` and `@x:scaled:max` of the domain), the size of a band and the distance of the categories (`@y:bandwidth`, `@y:step`), the extent of the group of the row (`@y:group:start`, `@y:group:end`, see `groups` of scales), stacked values (`@y:start`, `@y:end:scaled`, ..., see `stacked`) |
+| the `props` of a plot | the props of its categories, the place of the row among the rows of the plot in the facet (`row:index`, from 0) and the values of the row: a mapping (e.g. `@x`), the value as a text of the format of its hover (`@x:formatted`, e.g. `1.234,5`, a label), the scaled value (`@x:scaled`, `@x:scaled:center` for the center of a band, the position of a value, e.g. `@x:scaled:0` or `@x:scaled:100`, `@x:scaled:min` and `@x:scaled:max` of the domain), the size of a band and the distance of the categories (`@y:bandwidth`, `@y:step`), the extent of the group of the row (`@y:group:start`, `@y:group:end`, see `groups` of scales), stacked values (`@y:start`, `@y:end:scaled`, ..., see `stacked`) |
 
 Inner names replace outer ones, in a plot the mappings replace globals of the
 same name, e.g. `@year` is the one of the row. A reference to an unknown name

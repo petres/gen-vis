@@ -3443,3 +3443,22 @@ describe('facet titles', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('small tables per facet', () => {
+    test('the place of a row among the rows of the plot (@row:index), a header once per facet', async () => {
+        const def = lineDef();
+        def.mapping.f = { column: 'land', categories: { Wien: {}, Tirol: {} } };
+        def.facets = { dim: 'f', cols: 2 };
+        def.plot = [
+            { type: 'svg:text', id: 'header', once: true, props: { x: '@plot:right', y: '@plot:top', text: 'Wert', 'text-anchor': 'end' } },
+            { type: 'svg:text', id: 'rows', filter: { x: [2022, 2023] }, props: { x: '@plot:right', y: { '+': ['@plot:top', 12, { '*': ['@row:index', 11] }] }, text: '@y', 'text-anchor': 'end' } },
+        ];
+        const el = await mount({ def, data: lineData });
+        const facet = el.querySelector('.vis-facet');
+        expect([...facet.querySelectorAll('[data-plot="rows"] text')].map(t => [t.textContent, t.getAttribute('y')])).toEqual([['3', '12'], ['4', '23']]);
+        expect(facet.querySelector('[data-plot="header"] text').textContent).toBe('Wert');
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef(def)).toEqual([]);
+        expect(errors).toEqual([]);
+    });
+});

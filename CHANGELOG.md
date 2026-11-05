@@ -68,6 +68,9 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- `@row:index` of the props of a plot: the place of the row among the rows
+  of the plot in the facet, e.g. the lines of a small table per facet (with
+  a header `once` and `@plot:top`), without a column of positions.
 - `"facets": {"axisTitles": "outer"}`: the titles of the axes only at the
   outer facets, e.g. of x in the bottom row and of y in the first column.
 - `facets.title.props`: CSS properties of the titles of the facets in the
