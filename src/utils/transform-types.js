@@ -286,13 +286,19 @@ const binEdges = (t, values) => {
         edges = [t.edges].flat().flatMap(e => e !== null && typeof e == 'object' ? range(e) : [toNumber(e)]);
     else if (t.step !== undefined) {
         const step = Number(t.step);
-        const present = values.filter(v => v !== null);
         if (!(step > 0))
             throw new Error(`bin: 'step' is the width of the classes, e.g. 5`);
-        if (present.length == 0)
+        // a loop, not Math.min(...values), which fails for more values than
+        // the arguments of a call
+        let lo = Infinity;
+        let hi = -Infinity;
+        for (const v of values)
+            if (v !== null) {
+                lo = Math.min(lo, v);
+                hi = Math.max(hi, v);
+            }
+        if (lo > hi)
             return null;
-        const lo = Math.min(...present);
-        const hi = Math.max(...present);
         edges = range({ from: Math.floor(lo/step)*step, to: Math.max(Math.ceil(hi/step), Math.floor(lo/step) + 1)*step, step });
     } else
         throw new Error(`bin: the 'edges' of the classes are needed, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143], or a 'step'`);

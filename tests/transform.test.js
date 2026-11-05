@@ -264,6 +264,12 @@ describe('bin and random in a chart', () => {
         expect(checks(def().transform)).toEqual([]);
     });
 
+    test('the edges of a step of many values, more than the arguments of a function call', () => {
+        const many = Array.from({ length: 300000 }, (_, i) => ({ v: String(i % 1000) }));
+        const result = applyTransforms(many, { type: 'bin', column: 'v', step: 250, replace: true });
+        expect(result.rows.map(r => [r.start, r.end, r.count])).toEqual([[0, 250, 75000], [250, 500, 75000], [500, 750, 75000], [750, 1000, 75000]]);
+    });
+
     test('the columns of the data the transforms use, not their own ones', () => {
         expect(transformColumns([{ type: 'bin', column: 'v', by: 'g', weight: 'w' }, { type: 'calc', as: 'd', expr: { '/': ['@count', '@end'] } }]))
             .toEqual(['v', 'g', 'w']);
