@@ -1,5 +1,5 @@
 import * as d3 from "@/utils/d3";
-import { bandCenter } from "@/utils/scales";
+import { bandCenter, centerOf } from "@/utils/scales";
 import { keyOf } from "@/utils/draw";
 import { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
@@ -251,7 +251,7 @@ export default {
         point(ctx, row, names) {
             const [h, v] = [ctx.scales[names.h], ctx.scales[names.v]];
             const value = ctx.stackOf ? d3.mean(ctx.stackOf(row)) : row[names.v];
-            const p = [h(row[names.h]) + bandCenter(h), v(value) + bandCenter(v)];
+            const p = [centerOf(h, row[names.h]), v(value) + bandCenter(v)];
             return isVertical(ctx, names) ? [p[1], p[0]] : p;
         },
 
@@ -260,7 +260,7 @@ export default {
         // below it
         marker(ctx, key, names, line) {
             const s = ctx.scales[names.h];
-            const p = s(key) + bandCenter(s);
+            const p = centerOf(s, key);
             if (isVertical(ctx, names)) {
                 placeLine(line, 0, p, ctx.innerWidth, p);
                 return { x: ctx.innerWidth/2, y: p, side: p > ctx.innerHeight/2 ? "above" : "below" };

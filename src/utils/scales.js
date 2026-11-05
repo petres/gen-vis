@@ -1,4 +1,4 @@
-export { makeScale, bandCenter, intervalOf };
+export { makeScale, bandCenter, intervalOf, centerOf };
 
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/expr";
@@ -25,6 +25,10 @@ const intervalOf = (spec, utc = false) => {
 
 // the offset of the center of a band, the position of band scales is its start
 const bandCenter = s => s.bandwidth ? s.bandwidth()/2 : 0;
+
+// the position of the center of a value: of a band, or of the period of a
+// date (`interval`, see makeScale), its position otherwise
+const centerOf = (s, v) => s.period ? (s(v) + s(s.period.offset(v)))/2 : s(v) + bandCenter(s);
 
 // the colors of a scheme of d3, e.g. "Blues", schemes of several sizes have
 // `classes` colors, by default the number of classes of a threshold scale or 5
@@ -393,9 +397,16 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     }
 
     s.domain(domain);
-    // the periods of the dates, e.g. of bars in their period, see rowValue of layout.js
-    if (period)
+    // the periods of the dates, e.g. of bars in their period, see rowValue of
+    // layout.js, the nearest value of a position is the one of its period
+    if (period) {
         s.period = period;
+        s.nearest = p => {
+            const values = found.values;
+            const i = d3.bisectLeft(values.map(Number), +s.invert(p) + 1) - 1;
+            return values[Math.max(0, Math.min(values.length - 1, i))];
+        };
+    }
     if (scaleDef.type == 'threshold' && scaleDef.closed == 'right')
         return rightClosed(s);
     // the categories in groups with a space between them, e.g. the rows of

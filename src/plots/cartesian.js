@@ -187,7 +187,7 @@ export default {
             }
             const xScale = once(() => barScale(plot, ctx, 'x', type));
             // of the periods of dates (`interval` of the mapping of x): a bar
-            // in the middle of its period, 80% of its length by default
+            // in the middle of its period (@x:scaled), 80% of its length by default
             const periodOf = once(() => {
                 const s = xScale();
                 const name = refOf(plot.props.x)?.split(':');
@@ -203,7 +203,7 @@ export default {
                 const { y0: _, y1: __, ...props } = v;
                 return {
                     ...props,
-                    x: v.x + (period === undefined ? bandCenter(xScale()) : period/2) - width/2,
+                    x: v.x + (period === undefined ? bandCenter(xScale()) : 0) - width/2,
                     width,
                     y: Math.min(y0, v.y1),
                     height: Math.abs(v.y1 - y0),

@@ -458,11 +458,13 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   `2023-01-01` and `2023-07-01`: `day`, `week`, `month`, `quarter`, `half`,
   `year` or a number of them, e.g. `"6 months"`. The domain of the data
   reaches the end of the last period (without the 2% of other positions),
-  so bars at the ends fit; a `bar` at `@x:scaled` is in the middle of its
-  period, 80% of its length by default; `@x:scaled:center` and
-  `@x:scaled:end` are the middle and the end of the period of a row,
-  `@x:step` its length in pixels, e.g. `"width": {"*": ["@x:step", 0.6]}`;
-  the hover shows the period (`%b %Y` of months, `Q%q %Y` of quarters, `H%K
+  so bars at the ends fit; `@x:scaled` (also `@x:scaled:center`) is the
+  middle of the period of a row, so bars, points and lines are in the
+  middle of their periods, `@x:scaled:start` and `@x:scaled:end` are its
+  start and end, `@x:step` its length in pixels, e.g. `"width": {"*":
+  ["@x:step", 0.6]}` (80% of it by default); the hover is at the middle of
+  the period under the pointer (ticks, grid lines and annotations are at
+  their dates) and shows the period (`%b %Y` of months, `Q%q %Y` of quarters, `H%K
   %Y` of halves, `%Y` of years, a `format` of the hover replaces it). `%K`
   is the half of the year (1 or 2) in the time formats, e.g. `"%K. Halbjahr
   %Y"`, d3's `%q` the quarter.

@@ -549,7 +549,10 @@ const rowValue = (ctx, name, rows) => {
     const values = {
         '': () => row => row[m],
         'formatted': format,
-        'scaled': () => s && (row => s(row[m])),
+        // the position of the value, of the period of a date (`interval`) its
+        // middle, `scaled:start` its start
+        'scaled': () => s && (s.period ? row => (s(row[m]) + s(s.period.offset(row[m])))/2 : row => s(row[m])),
+        'scaled:start': () => s?.period && (row => s(row[m])),
         // the center of a band, e.g. of a label of a bar, or of the period of
         // a date (`interval`), its end
         'scaled:center': () => s && (s.period ? row => (s(row[m]) + s(s.period.offset(row[m])))/2 : row => s(row[m]) + bandCenter(s)),

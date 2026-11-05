@@ -83,9 +83,9 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   `domainAbs`, which shrinks the domain and cuts off data.
 - Periods of dates: `"interval": "half"` (also day, week, month, quarter,
   year, "6 months") of a date mapping: the domain reaches the end of the
-  last period, bars are in the middle of their period, `@x:scaled:center`,
-  `@x:scaled:end` and `@x:step` are its middle, end and length, the hover
-  shows the period; `%K` is the half of the year in time formats. Bars on
+  last period, a value is at the middle of its period (`@x:scaled`, also
+  of points, lines and the hover), `@x:scaled:start`, `@x:scaled:end` and
+  `@x:step` are its start, end and length, the hover shows the period; `%K` is the half of the year in time formats. Bars on
   time scales need no `domainAbs` and widths of the plot width.
 - The hover: `"total": true` (or a name) of `options.hover` is a row of the
   sum of the stacked values of the position, also `{total}` of the title;

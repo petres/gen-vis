@@ -127,7 +127,7 @@ const rowNames = (n, m) => [
     `${n}:formatted`,
     ...(m.scale ? [`${n}:scaled`, `${n}:scaled:center`, `${n}:scaled:min`, `${n}:scaled:max`, `${n}:bandwidth`, `${n}:step`] : []),
     ...(['band', 'point'].includes(m.scale?.type) ? [`${n}:group:start`, `${n}:group:end`] : []),
-    ...(m.interval !== undefined && m.scale ? [`${n}:scaled:end`] : []),
+    ...(m.interval !== undefined && m.scale ? [`${n}:scaled:start`, `${n}:scaled:end`] : []),
     ...(m.stacked ? [`${n}:start`, `${n}:end`, `${n}:mid`] : []),
     ...(m.stacked && m.scale ? [`${n}:start:scaled`, `${n}:end:scaled`, `${n}:height:scaled`, `${n}:mid:scaled`] : []),
 ];

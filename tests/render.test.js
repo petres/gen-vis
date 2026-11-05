@@ -3571,7 +3571,8 @@ describe('periods of dates (interval)', () => {
             y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical', domain: [0, null] }, axis: { position: 'left' } },
         },
         plot: [{ type: 'bar', id: 'bars', props: { fill: 'red' } },
-            { type: 'svg:circle', id: 'mid', props: { cx: '@x:scaled:center', cy: 0, r: { '/': ['@x:step', 10] } } }],
+            { type: 'svg:circle', id: 'mid', props: { cx: '@x:scaled:center', cy: 0, r: { '/': ['@x:step', 10] } } },
+            { type: 'svg:circle', id: 'scaled', props: { cx: '@x:scaled', cy: '@x:scaled:start', r: 1 } }],
     });
     const data = 'date,value\n2023-01-01,1\n2023-07-01,2\n2024-01-01,3';
 
@@ -3585,6 +3586,9 @@ describe('periods of dates (interval)', () => {
         const circles = [...el.querySelectorAll('[data-plot="mid"] circle')];
         expect(+circles[0].getAttribute('cx')).toBeCloseTo(half/2, 0);
         expect(+circles[0].getAttribute('r')).toBeCloseTo(half/10, 0);
+        // @x:scaled is the middle of the period, @x:scaled:start its start
+        const scaled = el.querySelector('[data-plot="scaled"] circle');
+        expect([+scaled.getAttribute('cx'), +scaled.getAttribute('cy')].map(Math.round)).toEqual([Math.round(half/2), 0]);
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 60, clientY: 100 }));
         await nextTick();
         expect(el.querySelector('.vis-hover-title').textContent).toBe('H1 2023');
