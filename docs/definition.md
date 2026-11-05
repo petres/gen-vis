@@ -1052,7 +1052,11 @@ left out (`"fit": false` puts it at its best place nevertheless). The labels
 follow the hidden categories, the form elements and the width, the texts are
 centered at their place (`text-anchor` and `dominant-baseline`), the plot
 has no `select`. Of polar plots the box is checked at the angles of its
-points against the rings of the areas.
+points against the rings of the areas. Known inconsistency: the room is
+measured with the text and font of the first row of the group, but the label
+is drawn with the props of the row nearest to its place, so a text or font
+which differs per row (e.g. a value of the row) may not fit its box; give a
+group one text and font.
 
 ```json
 { "id": "areas", "type": "area", "by": "type", "curve": "monotoneX", "props": { "d": { "y0": "@y:start:scaled", "y1": "@y:end:scaled" } } },

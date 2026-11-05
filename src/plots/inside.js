@@ -308,6 +308,11 @@ const placeInside = (groups, plot, ctx, polar) => {
         const profile = profiles.get(band);
         if (!profile)
             return [];
+        // KNOWN INCONSISTENCY: the box is measured of the text and font of
+        // the first row, but the label is drawn with the props of the row
+        // nearest to its place (see the end of placeInside), a text or font
+        // which differs per row may not fit; the fix: measure the text of
+        // each row (or draw the first row), see docs/definition.md
         const first = g.at(rows[0]);
         const text = String(first.text ?? '');
         if (!text)
