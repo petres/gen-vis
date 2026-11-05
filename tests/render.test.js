@@ -3462,3 +3462,51 @@ describe('small tables per facet', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('grids of facets', () => {
+    const data = `${lineData}\n2020,5,50,Salzburg\n2021,6,60,Salzburg`;
+    const grid = extra => {
+        const def = lineDef();
+        def.mapping.c.categories.Salzburg = { color: 'green' };
+        def.mapping.g = { column: 'land', categories: { Wien: { name: 'Stadt' }, Tirol: { name: 'Land' }, Salzburg: { name: 'Land' } } };
+        def.mapping.r = { column: 'other', type: 'categorical', fromData: true };
+        def.facets = { rows: 'c', cols: 'g', ...extra };
+        def.mapping.g = { column: 'land', categories: { Wien: { name: 'Wien' }, Tirol: { name: 'Tirol' } } };
+        return def;
+    };
+
+    test('headers of the columns above the first row, of the rows right of them rotated, an end after each row', async () => {
+        const def = lineDef();
+        def.mapping.half = { column: 'year', type: 'categorical', categories: { 2020: { name: 'früh' }, 2021: { name: 'mittel' }, 2022: {}, 2023: {} } };
+        def.facets = { rows: 'c', cols: 'half', scales: { y: 'row' } };
+        def.plot = [{ type: 'svg:circle', props: { r: 2 } }];
+        const el = await mount({ def, data: lineData.replace('2021,,20,Wien', '2021,2,20,Wien') });
+        expect([...el.querySelectorAll('.vis-facet-col-title')].map(t => t.textContent)).toEqual(['früh', 'mittel', '2022', '2023']);
+        const headers = [...el.querySelectorAll('svg.vis-facet-row-title text')];
+        expect(headers.map(t => t.textContent)).toEqual(['Wien', 'Tirol']);
+        expect(headers[0].getAttribute('transform')).toMatch(/^rotate\(90 /);
+        expect(el.querySelectorAll('.vis-facet-row-end')).toHaveLength(2);
+        // the labels of y of the row only in the first column
+        const facets = [...el.querySelectorAll('.vis-facet')];
+        const labels = f => [...f.querySelectorAll('.vis-axis-left .tick text')].map(t => t.textContent).filter(Boolean).length;
+        expect(facets.map(labels).map(n => n > 0)).toEqual([true, false, false, false, true, false, false, false]);
+        expect(errors).toEqual([]);
+    });
+
+    test('headers of the rows left of them, horizontal; plots of a column (facet of the mapping of the columns), empty cells', async () => {
+        const def = lineDef();
+        def.mapping.half = { column: 'year', type: 'categorical', categories: { 2020: {}, 2021: {} } };
+        def.facets = { rows: 'c', cols: 'half', rowHeaders: 'left' };
+        def.plot = [{ type: 'svg:circle', id: 'all', props: { r: 2 } }, { type: 'svg:circle', id: 'first', facet: { half: '2020' }, props: { r: 2 } }];
+        // Wien has no value in 2021
+        const el = await mount({ def, data: lineData.replace('2021,,20,Wien\n', '') });
+        expect([...el.querySelectorAll('div.vis-facet-row-title-left')].map(t => t.textContent)).toEqual(['Wien', 'Tirol']);
+        expect(el.querySelectorAll('.vis-facet-empty')).toHaveLength(1);
+        expect([...el.querySelectorAll('svg.vis-svg')].map(s => s.querySelectorAll('[data-plot="first"] circle').length)).toEqual([1, 1, 0]);
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef(def)).toEqual([]);
+        expect(validateDef({ ...def, facets: { rows: 'c', cols: 'nope', scales: { y: 'rows' } } })).toEqual([
+            `facets.cols: unknown mapping 'nope'`, `facets.scales.y: expected 'all', 'row' or 'col'`]);
+        expect(errors).toEqual([]);
+    });
+});

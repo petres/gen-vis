@@ -1288,6 +1288,41 @@ above the center of the plot area, the ones of polar plots are centered
 (`vis-facet-title-center`), a style of the page replaces both, e.g. its
 `margin-left`.
 
+A grid of facets of two mappings, with a header per column and per row, e.g.
+the contract types in the columns and the value bands in the rows:
+
+```json
+"mapping": {
+    "group": { "column": "contract_group", "categories": { "Bau": { "name": "Bauaufträge" }, "Liefer/DL": {} } },
+    "band": { "column": "value_band", "categories": { "50–100k": { "name": "50.000–100.000 €" }, "100–140k": {} } }
+},
+"facets": { "cols": "group", "rows": "band", "scales": { "x": "all", "y": "row" }, "rowHeaders": "left" }
+```
+
+`cols` and `rows` are mappings with categories (a string; a number of `cols`
+is the number of the columns of the facets of `dim`, as before), one of
+them alone is one row or one column. The cells are in the order of the
+categories of the two mappings, the ones with rows; a combination without
+rows is an empty box of the size of a facet (`.vis-facet-empty`, without
+axes). The names of the columns are the titles above the first row
+(`.vis-facet-title .vis-facet-col-title`), the names of the rows are the
+headers beside them (`.vis-facet-row-title`): `"rowHeaders": "right"` (the
+default) rotated right of the last column (an svg, also in the export),
+`"left"` horizontal left of the first column, in a column of the width of
+the longest one (at most 40% of the width, the facets have the rest). Both
+have the `title.props` of the facets, of the props of the category of the
+column or the row. `scales` is a list of the mappings of the scale of all
+facets, as before, or an object of the mappings and `"all"`, `"row"` (a
+scale per row, e.g. of `y`) or `"col"` (per column, e.g. of `x`); the
+labels of the ticks of a scale of all facets or of the row (of `y`) or of
+the column (of `x`) are only at the outer facets, e.g. of `y` in the first
+column. The names of a facet of a grid are also `@facet:row`, `@facet:col`,
+`@facet:row:name` and `@facet:col:name`; the `facet` of a plot or an
+annotation is a key or the values of the mappings of the rows and columns,
+e.g. `{"group": "Bau"}` (a column), `{"band": "50–100k"}` (a row) or both (a
+cell). `axisTitles` works as in other facets, e.g. `"outer"`.
+
+
 ## `formElements` and `globals`
 
 Form elements change `globals`, e.g. the shared scales of the facets, as

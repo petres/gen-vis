@@ -642,19 +642,41 @@ const checkFormElements = ({ formElements, warn }) => {
 const checkFacets = ({ def, mapping, names, warn }) => {
     if (!def.facets)
         return;
-    if (typeof def.facets.dim != 'string')
+    // a grid of the categories of `rows` and `cols` (a mapping), or the
+    // facets of `dim` in `cols` columns (a number)
+    const grid = typeof def.facets.rows == 'string' || typeof def.facets.cols == 'string';
+    const parts = grid ? ['rows', 'cols'].filter(k => typeof def.facets[k] == 'string') : ['dim'];
+    if (grid && def.facets.dim !== undefined)
+        warn('facets.dim', `a grid of 'rows' and 'cols' has no 'dim'`);
+    if (!grid && typeof def.facets.dim != 'string')
         warn('facets.dim', `expected the name of a mapping`);
-    else if (!Object.hasOwn(mapping, def.facets.dim))
-        warn('facets.dim', `unknown mapping '${def.facets.dim}'`);
-    else if (!hasCategories(mapping[def.facets.dim]))
-        warn('facets.dim', `the mapping '${def.facets.dim}' needs categories, e.g. "fromData": true`);
-    checkProp(def.facets.cols, 'facets.cols', warn, names.global);
+    parts.filter(k => typeof def.facets[k] == 'string').forEach(k => {
+        if (!Object.hasOwn(mapping, def.facets[k]))
+            warn(`facets.${k}`, `unknown mapping '${def.facets[k]}'`);
+        else if (!hasCategories(mapping[def.facets[k]]))
+            warn(`facets.${k}`, `the mapping '${def.facets[k]}' needs categories, e.g. "fromData": true`);
+    });
+    if (def.facets.rows !== undefined && typeof def.facets.rows != 'string')
+        warn('facets.rows', `expected the mapping of the rows of a grid`);
+    if (def.facets.rowHeaders !== undefined && !['left', 'right'].includes(def.facets.rowHeaders))
+        warn('facets.rowHeaders', `expected 'left' (horizontal) or 'right' (rotated, the default)`);
+    const scales = def.facets.scales;
+    if (isObject(scales))
+        Object.entries(scales).forEach(([n, v]) => {
+            if (!Object.hasOwn(mapping, n))
+                warn(`facets.scales.${n}`, `unknown mapping '${n}'`);
+            if (!['all', 'row', 'col'].includes(v) || (!grid && v != 'all'))
+                warn(`facets.scales.${n}`, grid ? `expected 'all', 'row' or 'col'` : `expected 'all', a scale per row or column is one of a grid of 'rows' and 'cols'`);
+        });
+    if (!grid)
+        checkProp(def.facets.cols, 'facets.cols', warn, names.global);
     if (def.facets.axisTitles !== undefined && !['all', 'outer'].includes(def.facets.axisTitles))
         warn('facets.axisTitles', `expected 'all' (in every facet, the default) or 'outer' (only at the outer facets)`);
     const dim = typeof def.facets.dim == 'string' && Object.hasOwn(mapping, def.facets.dim) ? mapping[def.facets.dim] : null;
     if (isObject(def.facets.title))
         checkProp(def.facets.title.props, 'facets.title.props', warn, new Set([...names.global, 'facet', 'facet:name', ...(dim ? categoryNames(dim) : [])]));
-    checkProp(def.facets.scales, 'facets.scales', warn, names.global);
+    if (!isObject(scales))
+        checkProp(def.facets.scales, 'facets.scales', warn, names.global);
 };
 
 // the templates of the columns, the texts and the hover

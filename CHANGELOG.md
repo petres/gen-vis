@@ -68,6 +68,14 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- Grids of facets: `"facets": {"cols": "group", "rows": "band"}`, a facet
+  per category of the two mappings, the names of the columns above the
+  first row and the ones of the rows beside them (`"rowHeaders": "right"`,
+  rotated, or `"left"`), empty boxes of combinations without rows, scales of
+  all facets, per row or per column (`"scales": {"y": "row"}`, the labels
+  only at the outer facets), `facet` of plots and annotations of a row, a
+  column or a cell (`{"group": "Bau"}`). The facets of `dim` and a number of
+  `cols` are the ones before.
 - `@row:index` of the props of a plot: the place of the row among the rows
   of the plot in the facet, e.g. the lines of a small table per facet (with
   a header `once` and `@plot:top`), without a column of positions.

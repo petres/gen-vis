@@ -290,3 +290,51 @@ describe('stacks at the positions of another mapping (stackBy)', () => {
         expect(v.facets[0].scales.y.domain()).toEqual([0, 3]);
     });
 });
+
+describe('grids of facets', () => {
+    const data = 'year,value,group,band\n2020,1,Bau,low\n2021,2,Bau,low\n2020,10,DL,low\n2021,20,DL,low\n2020,100,Bau,high\n2021,200,Bau,high';
+    const def = facets => ({
+        options: { height: 200 },
+        mapping: {
+            x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' } },
+            y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical', domain: [0, null], domainRel: [0, 0] } },
+            group: { column: 'group', categories: { Bau: { name: 'Bauaufträge' }, DL: {} } },
+            band: { column: 'band', categories: { low: { name: '50–100k' }, high: {} } },
+        },
+        plot: { type: 'line', props: {} },
+        facets,
+    });
+    const view = async (facets, width = 400) => {
+        const store = createStore();
+        await store.init({ def: def(facets), data });
+        store.rowHeaderWidth = 40;
+        return layout(store, width);
+    };
+
+    test('a cell per row and column in the order of their categories, empty ones, the width without the headers of the rows', async () => {
+        const v = await view({ rows: 'band', cols: 'group' });
+        expect(v.facets.map(f => [f.cell.row, f.cell.col, f.rows.length, Boolean(f.empty), f.width])).toEqual([
+            ['low', 'Bau', 2, false, 180], ['low', 'DL', 2, false, 180], ['high', 'Bau', 2, false, 180], ['high', 'DL', 0, true, 180]]);
+        expect(v.facets.map(f => f.outer)).toEqual([
+            { top: true, bottom: false, left: true, right: false }, { top: true, bottom: false, left: false, right: true },
+            { top: false, bottom: true, left: true, right: false }, { top: false, bottom: true, left: false, right: true }]);
+        expect(v.facets[0].scope).toMatchObject({ 'facet:row': 'low', 'facet:col': 'Bau', 'facet:row:name': '50–100k', 'facet:col:name': 'Bauaufträge' });
+    });
+
+    test('scales of all facets, of each row, of each facet', async () => {
+        const own = await view({ rows: 'band', cols: 'group' });
+        expect(own.facets.slice(0, 3).map(f => f.scales.y.domain()[1])).toEqual([2, 20, 200]);
+        const row = await view({ rows: 'band', cols: 'group', scales: { y: 'row' } });
+        expect(row.facets.map(f => f.scales.y.domain()[1])).toEqual([20, 20, 200, 200]);
+        expect(row.facets[0].scales.y).toBe(row.facets[1].scales.y);
+        const all = await view({ rows: 'band', cols: 'group', scales: ['y'] });
+        expect(new Set(all.facets.map(f => f.scales.y.domain()[1]))).toEqual(new Set([200]));
+    });
+
+    test('rows alone are one column, the facets of dim and cols as before', async () => {
+        const rows = await view({ rows: 'band' });
+        expect(rows.facets.map(f => [f.cell.row, f.cell.col, f.width])).toEqual([['low', undefined, 360], ['high', undefined, 360]]);
+        const old = await view({ dim: 'group', cols: 2 });
+        expect(old.facets.map(f => [f.key, f.cell, f.width])).toEqual([['Bau', undefined, 200], ['DL', undefined, 200]]);
+    });
+});

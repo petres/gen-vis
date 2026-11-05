@@ -32,8 +32,7 @@ const selection = def => (def.formElements ?? []).filter(e => e.inImage !== fals
 const prepare = (vis, { text, facets, space }) => {
     const copy = vis.cloneNode(true);
     copy.querySelectorAll('.vis-form-elements, .vis-buttons').forEach(e => e.remove());
-    if (facets)
-        copy.querySelector(`.vis-legend[data-dim="${CSS.escape(facets)}"]`)?.remove();
+    [facets ?? []].flat().forEach(dim => copy.querySelector(`.vis-legend[data-dim="${CSS.escape(dim)}"]`)?.remove());
     copy.querySelectorAll('.vis-legend [data-visible="false"]').forEach(e => e.remove());
 
     const subtitle = copy.querySelector('.vis-header .vis-subtitle');
@@ -86,7 +85,7 @@ const staticCopy = async (place, mount, { width, space = padding, visible = fals
         const shot = wrapper.appendChild(root.cloneNode(false));
         shot.style.cssText = `margin: 0; width: ${width + 2*space}px;`;
         const def = shown.store.def;
-        const copy = shot.appendChild(prepare(root.querySelector('.vis'), { text: selection(def), facets: def.facets?.dim, space }));
+        const copy = shot.appendChild(prepare(root.querySelector('.vis'), { text: selection(def), facets: [def.facets?.dim, def.facets?.rows, def.facets?.cols].filter(d => typeof d == 'string'), space }));
         return { copy, remove: () => wrapper.remove() };
     } catch (error) {
         wrapper.remove();

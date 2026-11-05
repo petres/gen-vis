@@ -4,7 +4,7 @@ import { drawLayer, highlighter, reducedMotion, withMotion } from "@/utils/draw"
 import { drawAxis } from "@/utils/axis";
 import { create, interruptAll, setAttr } from "@/utils/dom";
 import { plotTypes } from "@/plots";
-import { plotGroups, plotRows } from "@/layout";
+import { inFacet, plotGroups, plotRows } from "@/layout";
 import { el, patch, place, setText } from "@/comp/html";
 import { createFacetHover } from "@/comp/facet-hover";
 
@@ -192,7 +192,7 @@ const createFacet = (vis, initial) => {
 
         // the context of the plot types and the coordinate system, see
         // plots/index.js, the scales are only replaced with the facet
-        const { key, rows, scales, axis, stackOf, isStacked, stackOrder, scope, dims, innerWidth, innerHeight, margins, outer } = facet;
+        const { key, rows, scales, axis, stackOf, isStacked, stackOrder, scope, dims, innerWidth, innerHeight, margins, outer, cell, sharing } = facet;
         ctx = {
             store,
             // the id of the facet on the page, e.g. of the ids of elements
@@ -211,16 +211,18 @@ const createFacet = (vis, initial) => {
             innerWidth,
             innerHeight,
             margins,
-            // the edges of the grid of facets the facet is at, see layout.js
+            // the edges of the grid of facets the facet is at, its cell of a
+            // grid and the sharing of the scales, see layout.js
             outer,
+            cell,
+            sharing,
         };
 
         store.coord.prepare?.(ctx);
         // the plots below the axes and grid lines, e.g. the bands of annotations,
         // the ones above the other plots, e.g. labels, the elements of the
         // draw before move with the transition of the view, see utils/draw.js
-        const plots = store.def.plot.filter(p => p.facet === undefined
-            || [p.facet].flat().map(String).includes(String(key)));
+        const plots = store.def.plot.filter(p => inFacet(store.def, p, facet));
         withMotion(facet.transition ?? 0, () => {
             plot(plots.filter(p => p.layer == 'below'));
             drawParts(store.coord.axes(ctx));

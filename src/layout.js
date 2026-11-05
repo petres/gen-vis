@@ -1,4 +1,4 @@
-export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor, unknownOf };
+export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor, unknownOf, gridOf, facetDims, inFacet };
 
 import { categoryOrder, continuous, convert, filter, groupBy, keptRows, rowFilter, stack } from "@/utils/data";
 import * as d3 from "@/utils/d3";
@@ -69,7 +69,75 @@ const ownProp = (props, key) => props && Object.hasOwn(props, key) ? props[key] 
 
 // the facets in the order of the categories of their mapping, not of the
 // rows, only the ones with rows
+/**
+ * The mappings of the rows and the columns of a grid of facets
+ * (`"facets": { "rows": "band", "cols": "group" }`, a string of `cols` is a
+ * mapping, a number the columns of the facets of `dim`), null otherwise.
+ */
+const gridOf = def => {
+    const f = def.facets;
+    const rows = typeof f?.rows == 'string' ? f.rows : null;
+    const cols = typeof f?.cols == 'string' ? f.cols : null;
+    return rows || cols ? { rows, cols } : null;
+};
+
+// the mappings of the facets, e.g. of their groups of rows and stacks
+const facetDims = def => {
+    const g = gridOf(def);
+    return g ? [g.rows, g.cols].filter(Boolean) : def.facets ? [def.facets.dim] : [];
+};
+
+// the key of the facet of the values of the mappings of the facets (`values`,
+// e.g. a row or a group), of a grid the pair of its row and its column
+const facetKey = (def, values) => {
+    const g = gridOf(def);
+    return g ? JSON.stringify([g.rows ? String(values[g.rows]) : '', g.cols ? String(values[g.cols]) : '']) : values[def.facets.dim];
+};
+
+// the mapping of a part of a grid with the categories of the facets
+const gridMapping = (store, part, d) => {
+    const m = Object.hasOwn(store.def.mapping, d) ? store.mapping(d) : null;
+    if (!m?.categoryProps)
+        throw new Error(`facets.${part}: the facets are the categories of a mapping, e.g. { "fromData": true }, not '${d}'`);
+    return m;
+};
+
+/**
+ * The cells of a grid of facets: a facet per category of the mapping of the
+ * rows and of the columns which are in the rows, in the order of their
+ * categories, also of the combinations without rows (`empty`, a box of
+ * the size of a facet), each with its `cell`: the keys, the names and the
+ * indexes of its row and column. Without categories with rows none.
+ */
+const gridEntries = (store, rows, grid) => {
+    const groups = new Map(groupBy(rows, facetDims(store.def)).map(g => [facetKey(store.def, g.group), g.entries]));
+    const keysOf = (part, d) => {
+        if (!d)
+            return [{ key: undefined, name: undefined }];
+        const m = gridMapping(store, part, d);
+        const present = new Set(rows.map(r => String(r[d])));
+        return m.keys.filter(k => present.has(k)).map(k => ({ key: k, name: m.categoryProps[k].name }));
+    };
+    const rowKeys = keysOf('rows', grid.rows);
+    const colKeys = keysOf('cols', grid.cols);
+    return rowKeys.flatMap((r, ri) => colKeys.map((c, ci) => {
+        const key = JSON.stringify([r.key ?? '', c.key ?? '']);
+        const cellRows = groups.get(key) ?? [];
+        return {
+            key,
+            // the title of the cells of the first row, the names of the columns
+            name: c.name,
+            rows: cellRows,
+            empty: cellRows.length == 0,
+            cell: { row: r.key, col: c.key, rowName: r.name, colName: c.name, rowIndex: ri, colIndex: ci, rows: rowKeys.length, cols: colKeys.length },
+        };
+    }));
+};
+
 const facetEntries = (store, rows) => {
+    const grid = gridOf(store.def);
+    if (grid)
+        return gridEntries(store, rows, grid);
     const d = store.def.facets.dim;
     const m = Object.hasOwn(store.def.mapping, d) ? store.mapping(d) : null;
     if (!m?.categoryProps)
@@ -150,7 +218,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     const stackOrder = categoryOrder(visible.map(f => ({ dim: f.dim, keys: f.key })));
     const stackedRows = stacked && stacked !== true
         ? filter(rows, rowFilter(stacked, def.mapping, scope, `mapping.${axis.v}.stacked`)) : rows;
-    const stacks = stacked ? stack(...stackSource(def, axis, stackedRows), def.facets ? [def.facets.dim] : [], stackOrder) : null;
+    const stacks = stacked ? stack(...stackSource(def, axis, stackedRows), facetDims(def), stackOrder) : null;
     const stackOf = stacks ? row => stacks.get(row) ?? [row[axis.v], row[axis.v]] : null;
     const isStacked = stacks ? row => stacks.has(row) : null;
 
@@ -191,14 +259,14 @@ const domainRows = (store, def, axis, scope, stacked, shown, stackOrder) => {
             kept.set(key, filter(keptRows(store.data, store.columns), [...rowFilter(others, def.mapping, scope), ...shown]));
         }
         const rows = kept.get(key);
-        const dims = def.facets ? [def.facets.dim] : [];
+        const dims = facetDims(def);
         let stackOf = null;
         if (n == axis.v && stacked) {
             const stackedRows = stacked !== true ? filter(rows, rowFilter(stacked, def.mapping, scope, `mapping.${n}.stacked`)) : rows;
             const stacks = stack(...stackSource(def, axis, stackedRows), [...dims, ...names], stackOrder);
             stackOf = row => stacks.get(row) ?? [row[n], row[n]];
         }
-        const facets = def.facets ? new Map(groupBy(rows, dims).map(g => [String(g.group[dims[0]]), g.entries])) : null;
+        const facets = def.facets ? new Map(groupBy(rows, dims).map(g => [String(facetKey(def, g.group)), g.entries])) : null;
         domains[n] = { rows, stackOf, facets };
     });
     return domains;
@@ -249,11 +317,15 @@ const layout = (store, width, before = null) => {
     // the sizes of a facet
     // the margins can be props, e.g. steps of the width of the visualisation
     const margins = Object.fromEntries(Object.entries(def.options.margins).map(([k, v]) => [k, Number(evaluate(v, scope)) || 0]));
-    const cols = faceted ? evaluate(def.facets.cols, scope) : 1;
+    const grid = faceted ? gridOf(def) : null;
+    const cols = grid ? entries[0].cell.cols : (faceted ? evaluate(def.facets.cols, scope) : 1);
+    // the width of the facets of a grid without the one of the headers of
+    // its rows, see facets.js
+    const usable = grid ? Math.max(0, width - (store.rowHeaderWidth ?? 0)) : width;
     // the height of the categories of a scale with a `step`, e.g. of the rows
     // of horizontal bars, the height of the definition otherwise
     const stepped = stepHeight(store, faceted ? entries.map(f => [f.rows, f.key]) : [[rows]], scope, domainOf);
-    const size = { width: width/cols, height: stepped === undefined ? evaluate(def.options.height, scope) : stepped + margins.top + margins.bottom };
+    const size = { width: usable/cols, height: stepped === undefined ? evaluate(def.options.height, scope) : stepped + margins.top + margins.bottom };
     // a container smaller than its margins has no room, not a negative one,
     // which would flip the ranges of the scales, e.g. a negative radius
     size.innerWidth = Math.max(0, size.width - (margins.left + margins.right));
@@ -281,17 +353,33 @@ const layout = (store, width, before = null) => {
     // orientation, e.g. of colors
     const scaled = Object.keys(def.mapping).filter(n => def.mapping[n].scale && !borrowed.includes(n));
     const colors = scaled.filter(n => !def.mapping[n].scale.orientation);
-    const shared = faceted && def.facets.scales ? evaluate(def.facets.scales, scope) : [];
+    // the scales of all facets (a list of mappings) or of each row or column
+    // of a grid (`{ "y": "row", "x": "all" }`)
+    const raw = faceted && def.facets.scales ? evaluate(def.facets.scales, scope) : [];
+    const sharing = Array.isArray(raw) ? Object.fromEntries(raw.map(n => [n, 'all'])) : (raw && typeof raw == 'object' ? raw : {});
+    const shared = Object.keys(sharing).filter(n => sharing[n] == 'all');
     const common = Object.fromEntries([...new Set([...shared, ...colors])].map(n => [n, scaleOf(n, rows)]));
+    // the scales of a row or a column of a grid, of the rows of its facets
+    const partScales = new Map();
+    const partScale = (n, f) => {
+        const part = sharing[n] == 'row' ? f.cell.rowIndex : f.cell.colIndex;
+        const id = `${n} ${sharing[n]} ${part}`;
+        if (!partScales.has(id))
+            partScales.set(id, scaleOf(n, entries.filter(e => (sharing[n] == 'row' ? e.cell.rowIndex : e.cell.colIndex) === part).flatMap(e => e.rows)));
+        return partScales.get(id);
+    };
 
     // the edges of the grid of facets a facet is at, e.g. the bottom row
     // without a facet below it, see `facets.axisTitles`
     const count = faceted ? entries.length : 1;
-    const outerOf = i => ({ top: i < cols, bottom: i + cols >= count, left: i % cols == 0, right: i % cols == cols - 1 || i == count - 1 });
+    const outerOf = (i, cell) => cell
+        ? { top: cell.rowIndex == 0, bottom: cell.rowIndex == cell.rows - 1, left: cell.colIndex == 0, right: cell.colIndex == cell.cols - 1 }
+        : { top: i < cols, bottom: i + cols >= count, left: i % cols == 0, right: i % cols == cols - 1 || i == count - 1 };
     const facets = (faceted ? entries : [{ key: undefined, name: undefined, rows }]).map((f, i) => {
         const scales = {
             ...common,
-            ...Object.fromEntries(scaled.filter(n => !Object.hasOwn(common, n)).map(n => [n, scaleOf(n, f.rows, f.key)])),
+            ...Object.fromEntries(scaled.filter(n => !Object.hasOwn(common, n))
+                .map(n => [n, f.cell && ['row', 'col'].includes(sharing[n]) ? partScale(n, f) : scaleOf(n, f.rows, f.key)])),
         };
         borrowed.filter(n => Object.hasOwn(scales, def.mapping[n].scale.of)).forEach(n => scales[n] = scales[def.mapping[n].scale.of]);
         return {
@@ -303,10 +391,14 @@ const layout = (store, width, before = null) => {
             stackOf,
             isStacked,
             stackOrder,
-            outer: outerOf(i),
+            outer: outerOf(i, f.cell),
+            // the mappings whose scale is the one of all facets or of the row or the column
+            sharing,
             // the sizes of the bands of the scales, e.g. "@y:bandwidth" of annotations
             // also the key and the name of the facet, e.g. of a text once per facet
-            scope: { ...facetScope, ...scaleSizes(scales), ...(faceted ? { facet: f.key, 'facet:name': f.name } : {}) },
+            scope: { ...facetScope, ...scaleSizes(scales), ...(faceted ? { facet: f.key, 'facet:name': f.name } : {}),
+                // the row and the column of a facet of a grid
+                ...(f.cell ? { 'facet:row': f.cell.row, 'facet:col': f.cell.col, 'facet:row:name': f.cell.rowName, 'facet:col:name': f.cell.colName } : {}) },
             scales,
         };
     });
@@ -384,8 +476,36 @@ const plotRows = (store, plot, facet) => {
             const value = inline ? evaluate(v, facet.scope) : v;
             return [k, Object.hasOwn(mapping, k) ? convertValue(mapping[k], value) : value];
         })))
-        .filter(r => !dim || facet.key === undefined || !Object.hasOwn(r, dim) || String(r[dim]) == String(facet.key));
+        .filter(r => facet.key === undefined || (facet.cell ? inCell(store.def, facet.cell, r)
+            : !dim || !Object.hasOwn(r, dim) || String(r[dim]) == String(facet.key)));
     return conditions.length > 0 ? filter(rows, conditions) : rows;
+};
+
+// a row of a plot is in a cell of a grid if its values of the mappings of
+// the rows and the columns are the ones of the cell (or it has none)
+const inCell = (def, cell, r) => {
+    const g = gridOf(def);
+    return (!g.rows || !Object.hasOwn(r, g.rows) || String(r[g.rows]) == String(cell.row))
+        && (!g.cols || !Object.hasOwn(r, g.cols) || String(r[g.cols]) == String(cell.col));
+};
+
+/**
+ * The facets of a plot or an annotation (`facet`): a key or a list of keys
+ * of the facets of `dim`, of a grid also the values of the mappings of its
+ * rows and columns, e.g. { "group": "Bau" } (a column, a row or a cell);
+ * all facets without one.
+ */
+const inFacet = (def, part, facet) => {
+    if (part.facet === undefined)
+        return true;
+    if (part.facet !== null && typeof part.facet == 'object' && !Array.isArray(part.facet)) {
+        const g = gridOf(def);
+        return Object.entries(part.facet).every(([d, v]) => {
+            const value = g && d === g.rows ? facet.cell?.row : g && d === g.cols ? facet.cell?.col : undefined;
+            return value !== undefined && [v].flat().map(String).includes(String(value));
+        });
+    }
+    return [part.facet].flat().map(String).includes(String(facet.key));
 };
 
 // one row of the rows of a group: the first or the last one, in the order of

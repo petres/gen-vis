@@ -87,6 +87,12 @@ const axes = ctx => {
                 return text === null || text === undefined ? '' : String(text);
             };
 
+        // the labels of a scale of the row (or the column) of a grid, or of
+        // all facets, only at the outer facets, e.g. of y at the left column
+        const across = ['left', 'right'].includes(i.position) ? 'row' : 'col';
+        if (ctx.cell && ['all', across].includes(ctx.sharing?.[n]) && ctx.outer?.[i.position] === false)
+            format = () => '';
+
         // the line at a value of the other axis (`at`), the labels at the
         // edge (by default) or with it (`"labels": { "at": "axis" }`), then
         // without the label where the line of the other axis crosses it

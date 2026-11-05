@@ -1,6 +1,6 @@
 export { createVis };
 
-import { layout } from "@/layout";
+import { gridOf, layout } from "@/layout";
 import { evaluate } from "@/utils/expr";
 import { dataAttribute, reducedMotion } from "@/utils/draw";
 import { canCopy } from "@/utils/clipboard.js";
@@ -211,9 +211,29 @@ const createVis = app => {
             .reduce((sum, e) => sum + e.getBoundingClientRect().width + 10, 0);
         return options().width || !plots ? Math.max(0, total - besides) : innerWidth(plots);
     };
+    // the width of the headers of the rows of a grid of facets: of the
+    // longest one left of them, of a line of rotated text right of them,
+    // measured in elements of their class, see facets.js
+    const rowHeaderWidth = () => {
+        const grid = store.def?.facets ? gridOf(store.def) : null;
+        const m = grid?.rows ? store.def.mapping[grid.rows] : null;
+        if (!m?.categoryProps)
+            return 0;
+        const left = (store.def.facets.rowHeaders ?? 'right') == 'left';
+        const probe = root.appendChild(el('div', { class: `vis-facet-row-title ${left ? 'vis-facet-row-title-left' : ''}`,
+            style: 'position: absolute; visibility: hidden; height: auto; padding-top: 0; padding-bottom: 0;' }));
+        const names = m.keys.map(k => store.text(m.categoryProps[k].name));
+        const size = left
+            ? Math.max(0, ...names.map(n => { setText(probe, n); return probe.getBoundingClientRect().width; }))
+            : (setText(probe, names[0] ?? ''), probe.getBoundingClientRect().height + 4);
+        probe.remove();
+        // at most 40% of the width, the rest is the one of the facets
+        return Math.ceil(Math.min(size, 0.4*width));
+    };
     const measure = () => {
         width = plotsWidth();
         store.totalWidth = width;
+        store.rowHeaderWidth = rowHeaderWidth();
     };
     const resized = () => {
         if (removed)

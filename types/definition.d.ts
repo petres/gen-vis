@@ -328,7 +328,7 @@ export interface Annotation {
      */
     before?: string;
     /**
-     * The facets of the annotation, a key or a list of them, all by default.
+     * The facets of the annotation, a key or a list of them, all by default; of a grid also the values of the mappings of its rows and columns, e.g. { "group": "Bau" } (a column, a row or a cell).
      */
     facet?: {
         [k: string]: unknown;
@@ -1237,7 +1237,7 @@ export interface Plot {
      */
     layer?: 'below' | 'above';
     /**
-     * The facets of the plot, a key or a list of them, all by default.
+     * The facets of the plot, a key or a list of them, all by default; of a grid also the values of the mappings of its rows and columns, e.g. { "group": "Bau" } (a column, a row or a cell).
      */
     facet?: {
         [k: string]: unknown;
@@ -1280,13 +1280,21 @@ export interface Filter2 {
 }
 export interface Facets {
     /**
-     * A plot for every category of this mapping.
+     * A plot for every category of this mapping, in cols columns.
      */
     dim?: string;
     /**
-     * A number, a reference "@name", e.g. to a global, or an expression, e.g. of totalWidth.
+     * The number of the columns of the facets of dim, 1 by default; or the mapping of the columns of a grid, its categories are the columns (their names the headers above them).
      */
-    cols?: number | string | Expression;
+    cols?: NumberValue | string;
+    /**
+     * The mapping of the rows of a grid of facets, its categories are the rows (their names the headers beside them), with cols a mapping or alone (one column).
+     */
+    rows?: string;
+    /**
+     * The headers of the rows of a grid: right of them rotated (default) or left of them horizontal, in a column of the width of the longest one.
+     */
+    rowHeaders?: 'left' | 'right';
     /**
      * The titles of the axes in every facet (all) or only at the outer ones (outer): of the bottom axis in the bottom row, of the left one in the first column, of the right one in the last column, of the top one in the first row.
      */
@@ -1298,9 +1306,15 @@ export interface Facets {
         props?: Props1;
     };
     /**
-     * The mappings which share their scale across all facets, or a reference to a global.
+     * The mappings which share their scale across all facets, or a reference to a global; of a grid also an object of the mappings and all, row (a scale per row, e.g. y) or col (per column, e.g. x), the labels of such a scale only at the outer facets.
      */
-    scales?: string[] | string | Expression;
+    scales?:
+        | string[]
+        | {
+              [k: string]: 'all' | 'row' | 'col';
+          }
+        | string
+        | Expression;
 }
 /**
  * Svg attributes (and text), values, references "@name", expressions of operators or nested props, e.g. d of a path.

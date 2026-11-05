@@ -125,7 +125,7 @@
                 "layer": { "enum": ["below", "above"], "description": "Below the plots and the axes (default) or above all plots." },
                 "legend": { "type": "string", "description": "The name of the annotation in the legend (a template of the globals), with a symbol of it: a vertical line of a line at a value of x, a horizontal one of y, a box of a band, a dot of a circle; one entry per name, after the legends of the mappings." },
                 "before": { "type": "string", "description": "Right before the plot of this id, in its layer, e.g. lines above the bars but below the labels whose halo cuts them." },
-                "facet": { "description": "The facets of the annotation, a key or a list of them, all by default." },
+                "facet": { "description": "The facets of the annotation, a key or a list of them, all by default; of a grid also the values of the mappings of its rows and columns, e.g. { \"group\": \"Bau\" } (a column, a row or a cell)." },
                 "lon": { "type": "number", "description": "The longitude of a map." },
                 "lat": { "type": "number", "description": "The latitude of a map." }
             },
@@ -754,7 +754,7 @@
                 "dodge": { "type": "number", "description": "svg:text: the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines; polar:text: the texts of the same angle along the radius." },
                 "halo": { "anyOf": [{ "type": "boolean" }, { "type": "number" }], "description": "svg:text, polar:text: a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the props of the plot replace its stroke props." },
                 "layer": { "enum": ["below", "above"], "description": "below: below the axes and grid lines, above: above the other plots, between them by default." },
-                "facet": { "description": "The facets of the plot, a key or a list of them, all by default." },
+                "facet": { "description": "The facets of the plot, a key or a list of them, all by default; of a grid also the values of the mappings of its rows and columns, e.g. { \"group\": \"Bau\" } (a column, a row or a cell)." },
                 "highlight": {
                     "type": "object",
                     "description": "The props of the elements of the category of the hover or of the entry of the legend, e.g. { \"stroke-width\": 3 }, mode: the elements of the category (group, default) or only the one of its row (row), e.g. a segment of a stacked bar.",
@@ -779,10 +779,15 @@
             "additionalProperties": false,
             "properties": {
                 "dim": {
-                    "description": "A plot for every category of this mapping.",
+                    "description": "A plot for every category of this mapping, in cols columns.",
                     "type": "string"
                 },
-                "cols": { "$ref": "#/definitions/number", "description": "The number of the columns of the facets, 1 by default." },
+                "cols": {
+                    "anyOf": [{ "$ref": "#/definitions/number" }, { "type": "string", "pattern": "^[^@]" }],
+                    "description": "The number of the columns of the facets of dim, 1 by default; or the mapping of the columns of a grid, its categories are the columns (their names the headers above them)."
+                },
+                "rows": { "type": "string", "description": "The mapping of the rows of a grid of facets, its categories are the rows (their names the headers beside them), with cols a mapping or alone (one column)." },
+                "rowHeaders": { "enum": ["left", "right"], "default": "right", "description": "The headers of the rows of a grid: right of them rotated (default) or left of them horizontal, in a column of the width of the longest one." },
                 "axisTitles": { "enum": ["all", "outer"], "default": "all", "description": "The titles of the axes in every facet (all) or only at the outer ones (outer): of the bottom axis in the bottom row, of the left one in the first column, of the right one in the last column, of the top one in the first row." },
                 "title": {
                     "type": "object",
@@ -793,9 +798,10 @@
                     }
                 },
                 "scales": {
-                    "description": "The mappings which share their scale across all facets, or a reference to a global.",
+                    "description": "The mappings which share their scale across all facets, or a reference to a global; of a grid also an object of the mappings and all, row (a scale per row, e.g. y) or col (per column, e.g. x), the labels of such a scale only at the outer facets.",
                     "anyOf": [
                         { "type": "array", "items": { "type": "string" } },
+                        { "type": "object", "additionalProperties": { "enum": ["all", "row", "col"] } },
                         { "type": "string", "pattern": "^@" },
                         { "$ref": "#/definitions/expression" }
                     ]

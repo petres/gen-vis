@@ -205,7 +205,7 @@ const normalizeMappings = (mapping, coord, own, plots = [], used = new Set()) =>
 // are categorical, the categories of a plot (`by`) are not, they group the
 // rows of any type, e.g. of a year
 const categoryNames = def => new Set([
-    ...(isObject(def.facets) && typeof def.facets.dim == 'string' ? [def.facets.dim] : []),
+    ...(isObject(def.facets) ? [def.facets.dim, def.facets.rows, def.facets.cols].filter(d => typeof d == 'string') : []),
     ...Object.values(isObject(def.mapping) ? def.mapping : {}).filter(m => isObject(m) && isObject(m.scale)).map(m => m.scale.groups?.by),
 ].filter(n => typeof n == 'string'));
 

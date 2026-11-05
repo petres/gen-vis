@@ -109,6 +109,36 @@
 .vis-facet-title-center {
     text-align: center;
 }
+/* the headers of the rows of a grid of facets, beside the plot area of the
+   row: horizontal left of it, rotated right of it (an svg); the headers of
+   the columns are the titles of the first row (.vis-facet-col-title) */
+.vis-facet-row-title {
+    font-size: 13px;
+    font-weight: bold;
+    vertical-align: bottom;
+    box-sizing: border-box;
+}
+.vis-facet-row-title-left {
+    display: inline-flex;
+    align-items: center;
+    padding-right: 8px;
+    white-space: nowrap;
+}
+.vis-facet-row-title-right {
+    display: inline-block;
+    /* a header longer than the plot area is not cut */
+    overflow: visible;
+}
+.vis-facet-row-title-right text {
+    fill: currentColor;
+}
+/* the end of a row of a grid */
+.vis-facet-row-end {
+    display: block;
+}
+.vis-facet-empty {
+    display: inline-block;
+}
 
 .vis-facet {
     position: relative;
