@@ -1288,9 +1288,21 @@ export interface Facets {
      */
     cols?: number | string | Expression;
     /**
+     * The titles of the facets (.vis-facet-title).
+     */
+    title?: {
+        props?: Props1;
+    };
+    /**
      * The mappings which share their scale across all facets, or a reference to a global.
      */
     scales?: string[] | string | Expression;
+}
+/**
+ * Svg attributes (and text), values, references "@name", expressions of operators or nested props, e.g. d of a path.
+ */
+export interface Props1 {
+    [k: string]: PropEntry;
 }
 /**
  * Entries of a parent are patched by their id, so only the id is required.

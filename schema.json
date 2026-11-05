@@ -783,6 +783,14 @@
                     "type": "string"
                 },
                 "cols": { "$ref": "#/definitions/number", "description": "The number of the columns of the facets, 1 by default." },
+                "title": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "description": "The titles of the facets (.vis-facet-title).",
+                    "properties": {
+                        "props": { "$ref": "#/definitions/props", "description": "CSS properties of the titles, e.g. { \"font-weight\": \"normal\", \"text-align\": \"center\" }, of the props of the category of the facet (e.g. @color), @facet:name and the globals." }
+                    }
+                },
                 "scales": {
                     "description": "The mappings which share their scale across all facets, or a reference to a global.",
                     "anyOf": [

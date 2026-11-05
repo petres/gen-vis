@@ -3415,3 +3415,15 @@ describe('rules', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('facet titles', () => {
+    test('the props of the definition as css properties, of the category of the facet', async () => {
+        const def = lineDef();
+        def.mapping.f = { column: 'land', categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } };
+        def.facets = { dim: 'f', cols: 2, title: { props: { 'font-weight': 'normal', color: '@color', 'text-align': 'center' } } };
+        const el = await mount({ def, data: lineData });
+        const titles = [...el.querySelectorAll('.vis-facet-title')];
+        expect(titles.map(t => [t.style.fontWeight, t.style.color, t.style.textAlign])).toEqual([['normal', 'red', 'center'], ['normal', 'blue', 'center']]);
+        expect(errors).toEqual([]);
+    });
+});

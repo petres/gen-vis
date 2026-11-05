@@ -68,6 +68,8 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- `facets.title.props`: CSS properties of the titles of the facets in the
+  definition, also of the props of the category of a facet, e.g. its color.
 - `rule`: a line per row across the plot area at a value of x (or y), in
   the color of its category, optionally from `y1` to `y2`, e.g. the caps of
   regimes, instead of an `svg:line` with four props.

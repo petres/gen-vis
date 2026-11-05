@@ -1262,7 +1262,11 @@ is undefined, `validateDef` warns of it.
 A plot for every category of `dim` (the name of a mapping with `categories`, also `fromData`), in
 `cols` columns (1 by default). The mappings listed in `scales` share their
 scale across all facets. `cols` can be a prop based on `totalWidth`,
-`scales` a reference to `globals`. The title of a facet (`vis-facet-title`)
+`scales` a reference to `globals`. `title.props` are CSS properties of the
+titles, e.g. `{"font-weight": "normal", "text-align": "center"}`, of the
+props of the category of the facet (e.g. `@color`), `@facet:name` and the
+globals, so a definition looks the same everywhere without a style of the
+page. The title of a facet (`vis-facet-title`)
 spans its plot area, it has the margins of the facet (the css variables
 `--gen-vis-margin-left` and `--gen-vis-margin-right` of its style), so a
 title centered by the page, `.vis-facet-title { text-align: center }`, is

@@ -2,6 +2,7 @@ export { createFacets };
 
 import { el, patch, place, setText } from "@/comp/html";
 import { createFacet } from "@/comp/facet";
+import { evaluate } from "@/utils/expr";
 
 /**
  * The facets of the view (see layout.js), the children of `parent`, a
@@ -20,6 +21,22 @@ const createFacets = (vis, parent) => {
     const remove = entry => {
         entry.facet.destroy();
         entry.el.remove();
+    };
+
+    // the props of the title of a facet (`facets.title.props`), css
+    // properties, the ones of the facet before which are none anymore are removed
+    let propNames = new Set();
+    const titleProps = f => {
+        const raw = store.def.facets?.title?.props;
+        const category = store.prop(store.def.facets.dim, String(f.key)) ?? {};
+        const props = raw ? evaluate(raw, { ...store.scope, ...category, facet: f.key, 'facet:name': f.name }) : {};
+        const own = Object.fromEntries(Object.entries(props).filter(([, v]) => v !== undefined && v !== null && typeof v != 'object').map(([k, v]) => [k, String(v)]));
+        propNames.forEach(k => {
+            if (!Object.hasOwn(own, k))
+                own[k] = null;
+        });
+        propNames = new Set(Object.keys(own).filter(k => own[k] !== null));
+        return own;
     };
 
     const update = view => {
@@ -46,9 +63,12 @@ const createFacets = (vis, parent) => {
                 entry.facet.update(f);
             if (entry.title) {
                 patch(entry.el, { style: `width: ${f.width}px; display: inline-block;` });
+                // the props of the titles (css properties), of the props of
+                // the category of the facet, e.g. its color, and the globals
+                const props = titleProps(f);
                 patch(entry.title, {
                     class: store.coord.centered ? 'vis-facet-title vis-facet-title-center' : 'vis-facet-title',
-                    style: { '--gen-vis-margin-left': `${f.margins.left}px`, '--gen-vis-margin-right': `${f.margins.right}px` },
+                    style: { ...props, '--gen-vis-margin-left': `${f.margins.left}px`, '--gen-vis-margin-right': `${f.margins.right}px` },
                 });
                 setText(entry.title, store.text(f.name));
             }
