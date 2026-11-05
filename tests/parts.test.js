@@ -795,7 +795,7 @@ describe('the props of the labels and of the line of an axis, the titles of face
         def.mapping.x.axis.domain = 'none';
         expect(validateDef(def)).toEqual([
             `mapping.x.axis.domain: expected the props of the line of the axis, e.g. { "props": { "stroke-opacity": 0.4 } }`,
-            "mapping.y.axis.domain.props.stroke: unknown reference 'colour', expected one of 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight'",
+            "mapping.y.axis.domain.props.stroke: unknown reference 'colour', expected one of 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height'",
         ]);
         expect(errors).toEqual([]);
     });
@@ -1024,7 +1024,7 @@ describe('the tick marks of axes', () => {
         expect(validateDef(polar)).toEqual([
             'mapping.x.axis.tickMarks.size: expected the length of the tick marks in pixels, e.g. 4',
             'mapping.x.axis.tickMarks.inset: expected the part of the tick marks inside the plot area in pixels, e.g. 0',
-            "mapping.x.axis.tickMarks.props.stroke: unknown reference 'colour', expected one of 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'radius'",
+            "mapping.x.axis.tickMarks.props.stroke: unknown reference 'colour', expected one of 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'radius', 'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height'",
             'mapping.y.axis.tickMarks: a radial axis has no tick marks, the circles of the grid mark its values',
         ]);
         expect(errors).toEqual([]);

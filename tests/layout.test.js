@@ -253,3 +253,19 @@ describe('filters of no mapping', () => {
         warn.mockRestore();
     });
 });
+
+describe('the plot area', () => {
+    test('its edges and size in the coordinates of the plots, height of the facet with the margins', async () => {
+        const store = createStore();
+        await store.init({ def: { options: { height: 200, margins: { top: 10, right: 10, bottom: 30, left: 20 } }, mapping: mapping(), plot }, data });
+        const scope = layout(store, 400).facets[0].scope;
+        expect(scope).toMatchObject({ 'plot:left': 0, 'plot:top': 0, 'plot:right': 370, 'plot:bottom': 160, 'plot:width': 370, 'plot:height': 160, height: 200 });
+    });
+
+    test('around the center of polar plots', async () => {
+        const store = createStore();
+        await store.init({ def: { options: { height: 200, coord: 'polar', margins: { top: 0, right: 0, bottom: 0, left: 0 } },
+            mapping: { x: { column: 'land', type: 'categorical' }, y: { column: 'value', type: 'numeric' } }, plot: { type: 'polar:arc' } }, data });
+        expect(layout(store, 300).facets[0].scope).toMatchObject({ 'plot:left': -150, 'plot:top': -100, 'plot:right': 150, 'plot:bottom': 100 });
+    });
+});

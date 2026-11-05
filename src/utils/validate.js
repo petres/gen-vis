@@ -766,7 +766,8 @@ const context = (def, warn, rows) => {
     // the sizes of the bands of the scales of positions, e.g. `y:bandwidth`
     const bandNames = Object.entries(def.mapping ?? {}).filter(([, m]) => m?.scale?.orientation !== undefined && ['band', 'point'].includes(m.scale.type))
         .flatMap(([n]) => [`${n}:bandwidth`, `${n}:step`]);
-    const facetNames = [...globalNames, 'width', 'innerWidth', 'height', 'innerHeight', ...(coordName == 'polar' ? ['radius'] : []), ...bandNames];
+    const facetNames = [...globalNames, 'width', 'innerWidth', 'height', 'innerHeight', ...(coordName == 'polar' ? ['radius'] : []), ...bandNames,
+        'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height'];
     const names = {
         global: new Set(globalNames),
         facet: new Set(facetNames),

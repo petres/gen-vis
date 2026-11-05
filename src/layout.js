@@ -81,6 +81,17 @@ const facetEntries = (store, rows) => {
         .map(g => ({ key: g.group[d], name: props[String(g.group[d])].name, rows: g.entries }));
 };
 
+/**
+ * The edges and the size of the plot area in the coordinates of the plots
+ * (`@plot:top`, ...), e.g. 0 to innerHeight of cartesian plots and around the
+ * center of polar ones, unlike `height` of the facet, which includes the
+ * margins (the `height` of a range of a scale is the one of the plot area).
+ */
+const plotArea = (coord, { innerWidth: w, innerHeight: h }) => {
+    const [x, y] = coord.origin?.(w, h) ?? [0, 0];
+    return { 'plot:left': x ? -x : 0, 'plot:top': y ? -y : 0, 'plot:right': w - x, 'plot:bottom': h - y, 'plot:width': w, 'plot:height': h };
+};
+
 // the sizes of the categories of the scales of positions, e.g. `y:bandwidth`
 // and `y:step` of a band scale, for the names of a facet
 const scaleSizes = scales => Object.fromEntries(Object.entries(scales).filter(([, s]) => s.step)
@@ -242,7 +253,7 @@ const layout = (store, width, before = null) => {
     if (dims.radius !== undefined)
         dims.radius = Math.max(0, dims.radius);
     // the radius of polar plots is a size of the facet, e.g. of the hole of a donut
-    const facetScope = { ...scope, ...size, ...(dims.radius === undefined ? {} : { radius: dims.radius }) };
+    const facetScope = { ...scope, ...size, ...(dims.radius === undefined ? {} : { radius: dims.radius }), ...plotArea(store.coord, size) };
 
     // the mappings with the scale of another one (`"scale": { "of": "y" }`),
     // e.g. the end of a band, their values are in its domain

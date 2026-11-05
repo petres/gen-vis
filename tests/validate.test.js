@@ -379,12 +379,12 @@ describe('validateDef', () => {
         def.filter.c = '@h';
         def.annotations[0].props.stroke = '@color';
         expect(validateDef(def)).toEqual([
-            "mapping.x.scale.range[1]: unknown reference 'radius', expected one of 'g', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight'",
+            "mapping.x.scale.range[1]: unknown reference 'radius', expected one of 'g', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height'",
             "mapping.c.legend.props.title: unknown reference 'innerWidth', expected one of 'g', 'totalWidth', 'name', 'visible', 'color'",
             "plot[0].props.fill: unknown reference 'colour', did you mean 'color'?",
             "plot[0].props.y0: unknown reference 'y:start:scaled'",
             "filter.c: unknown reference 'h', expected one of 'g', 'totalWidth'",
-            "annotations[0].props.stroke: unknown reference 'color', expected one of 'g', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'y'",
+            "annotations[0].props.stroke: unknown reference 'color'",
             "options.height.steps[0]: unknown reference 'innerWidth', expected one of 'g', 'totalWidth'",
         ]);
 
@@ -437,7 +437,7 @@ describe('validateDef', () => {
         expect(validateDef(def)).toEqual([
             "plot[0].dodge: the distance of the texts of a plot of 'svg:text' or 'polar:text', a number",
             "plot[0].halo: a halo behind the texts of a plot of 'svg:text' or 'polar:text', true or its width",
-            "plot[1].data[0].y: unknown reference 'unknown', expected one of 'target', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight'",
+            "plot[1].data[0].y: unknown reference 'unknown', expected one of 'target', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height'",
             `plot[1].select: expected 'first', 'last' or the min or max of a mapping, e.g. { "max": "x" }`,
             "plot[1].props.text: unknown reference 'label'",
             "plot[1].layer: unknown layer 'front', expected one of 'below', 'above'",
@@ -451,7 +451,7 @@ describe('validateDef', () => {
         def.annotations = [{ type: 'line', y: '@target' }, { type: 'line', y: '@nope' }];
         expect(validateDef(def)).toEqual([
             "plot[1].data: expected a list of rows or the url of the data",
-            "annotations[1].y: unknown reference 'nope', expected one of 'target', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight'",
+            "annotations[1].y: unknown reference 'nope', expected one of 'target', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height'",
         ]);
     });
 

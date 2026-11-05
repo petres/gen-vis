@@ -53,6 +53,12 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
 
 ### Fixes
 
+- `@plot:top`, `@plot:bottom`, `@plot:left`, `@plot:right`, `@plot:width`
+  and `@plot:height`: the edges and the size of the plot area in the
+  coordinates of the plots, also of polar plots (around their center).
+  `@height` of a prop is the one of the facet with its margins, of a
+  `scale.range` the one of the plot area, so `"y2": "@height"` ended below
+  the plot area; the docs say it now.
 - A key of a `filter` (of the definition, a plot or the hover) which is no
   mapping, e.g. a column instead of its mapping, is named in a warning when
   the chart is drawn (the console, the CLI, the messages of the export
