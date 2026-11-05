@@ -34,7 +34,7 @@ const lengthOf = (value, name) => {
 };
 
 // the sizes of the texts of gen-vis of a size of its texts, e.g. 8pt: 13px
-// of most texts become it, the title (22px) and the small texts (11px) in
+// of most texts become it, the title (20px) and the smaller texts (14 to 11px) in
 // proportion; sizes of the definition (props) stay as they are
 const fontCss = px => {
     const f = px / 13;
