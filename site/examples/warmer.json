@@ -1,0 +1,57 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "data": "data/temperature.csv",
+    "options": {
+        "title": "Warmer or colder than usual",
+        "subtitle": "Temperature in Austria, weighted by population, 4-week rolling mean: the difference of every day to its mean of 1991–2020, in °C",
+        "footer": "Source: ERA5, Copernicus Climate Change Service",
+        "locale": "en",
+        "height": 380,
+        "margins": { "top": 30, "right": 12, "bottom": 30, "left": 40 }
+    },
+    "globals": { "selected": "2024" },
+    "formElements": [
+        {
+            "id": "selected", "name": "Year", "ref": "selected", "type": "radio",
+            "values": [
+                { "id": "2021", "name": "2021", "value": "2021" }, { "id": "2022", "name": "2022", "value": "2022" },
+                { "id": "2023", "name": "2023", "value": "2023" }, { "id": "2024", "name": "2024", "value": "2024" },
+                { "id": "2025", "name": "2025", "value": "2025" }
+            ]
+        }
+    ],
+    "transform": [
+        { "type": "mean", "column": "temperature", "by": "day", "base": { "year": "1991–2020" }, "as": "normal" },
+        { "type": "calc", "as": "difference", "expr": { "-": ["@temperature", "@normal"] } }
+    ],
+    "filter": { "year": "@selected" },
+    "mapping": {
+        "x": {
+            "column": "day", "type": "date", "interval": "day", "domain": ["2020-01-01", "2021-01-01"],
+            "scale": { "type": "utc" },
+            "axis": { "at": 0, "ticks": 12, "format": "%b", "tickMarks": false },
+            "hover": { "format": "%-d %B" }
+        },
+        "y": {
+            "column": "difference", "type": "numeric", "format": "+,.1f",
+            "scale": { "center": 0, "nice": true },
+            "axis": { "ticks": 6, "grid": true, "format": "d", "title": { "name": "°C", "position": "top" } },
+            "hover": {}
+        },
+        "year": { "column": "year", "type": "categorical" }
+    },
+    "plot": [
+        {
+            "type": "bar", "id": "days",
+            "props": {
+                "width": { "+": ["@x:step", 0.2] },
+                "shape-rendering": "crispEdges",
+                "fill": { "if": [{ ">=": ["@y", 0] }, "#D6452B", "#2F6DB5"] }
+            }
+        }
+    ],
+    "annotations": [
+        { "type": "text", "x": "2020-07-01", "y": 5.5, "text": "warmer", "props": { "fill": "#D6452B" } },
+        { "type": "text", "x": "2020-07-01", "y": -5.5, "text": "colder", "props": { "fill": "#2F6DB5" } }
+    ]
+}

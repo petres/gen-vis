@@ -1,0 +1,22 @@
+/* Swiss: white, a black rule, tight grotesque type, the colors only of the data */
+.theme-swiss {
+    background: #FFFFFF;
+    padding: 22px 24px 12px;
+    border-top: 4px solid #111111;
+}
+
+.theme-swiss .vis {
+    --gen-vis-grid-color: #ECECEC;
+    --gen-vis-axis-color: #BDBDBD;
+    --gen-vis-axis-label-color: #6B6B6B;
+    --gen-vis-muted-color: #6B6B6B;
+    --gen-vis-marker-color: #111111;
+    --gen-vis-focus-color: #111111;
+    color: #111111;
+}
+
+.theme-swiss .vis-title { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; }
+.theme-swiss .vis-facet-col-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+.theme-swiss .vis-facet-row-title { font-size: 12px; font-weight: 600; }
+/* the axes without lines */
+.theme-swiss .vis-axis path.domain { display: none; }

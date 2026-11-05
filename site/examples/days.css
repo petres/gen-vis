@@ -1,0 +1,26 @@
+/* A field notebook: warm paper, an orange pencil, quiet grey for the rest */
+.theme-field {
+    background: #FBF6EE;
+    padding: 24px 26px 14px;
+    border-radius: 6px;
+    border: 1px solid #EADFCB;
+}
+
+.theme-field .vis {
+    --gen-vis-grid-color: #EADFCB;
+    --gen-vis-axis-color: #B9AE9C;
+    --gen-vis-axis-label-color: #6F665A;
+    --gen-vis-muted-color: #6F665A;
+    --gen-vis-marker-color: #3B3530;
+    --gen-vis-hover-background: #FFFDF8;
+    --gen-vis-hover-border-color: #EADFCB;
+    --gen-vis-focus-color: #E8590C;
+    color: #3B3530;
+}
+
+.theme-field .vis-title { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+.theme-field .vis-slider input { accent-color: #E8590C; width: 180px; }
+.theme-field .vis-slider-value { font-weight: 700; color: #E8590C; }
+
+/* the years of the strip plot without a line */
+.theme-field .vis-axis[data-mapping="year"] path.domain { display: none; }

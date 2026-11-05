@@ -1,0 +1,26 @@
+/* A newspaper: newsprint, a serif headline, red and blue of the weather pages */
+.theme-news {
+    background: #F7F5F0;
+    padding: 22px 24px 12px;
+    border-top: 1px solid #1A1A1A;
+    border-bottom: 1px solid #1A1A1A;
+}
+
+.theme-news .vis {
+    --gen-vis-grid-color: #E2DED4;
+    --gen-vis-axis-color: #1A1A1A;
+    --gen-vis-axis-label-color: #55524B;
+    --gen-vis-muted-color: #55524B;
+    --gen-vis-marker-color: #1A1A1A;
+    --gen-vis-hover-background: #FFFFFF;
+    --gen-vis-focus-color: #1A1A1A;
+    color: #1A1A1A;
+}
+
+.theme-news .vis-title { font-family: Georgia, "Times New Roman", serif; font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+.theme-news .vis-form-element-title { display: none; }
+.theme-news .vis-radio > div label { font-weight: 600; }
+.theme-news .vis-radio input { accent-color: #D6452B; }
+/* the line at 0 crosses the bars, the labels of the months stay at the bottom */
+.theme-news .vis-axis-at path.domain { stroke-width: 1.2px; }
+.theme-news .vis-annotation.vis-text { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }

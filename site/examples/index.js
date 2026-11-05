@@ -12,6 +12,12 @@ import electricityDef from './electricity.json?raw';
 import electricityCss from './electricity.css?raw';
 import renewablesDef from './renewables.json?raw';
 import renewablesCss from './renewables.css?raw';
+import daysDef from './days.json?raw';
+import daysCss from './days.css?raw';
+import mixDef from './mix.json?raw';
+import mixCss from './mix.css?raw';
+import warmerDef from './warmer.json?raw';
+import warmerCss from './warmer.css?raw';
 
 export default [
     {
@@ -73,5 +79,35 @@ export default [
         features: ['scale: order, groups', 'transform: lookup', 'axis.labels', 'hover: box false', 'highlight, others'],
         def: renewablesDef,
         css: renewablesCss,
+    },
+    {
+        id: 'jitter',
+        name: 'Histogram and jitter',
+        look: 'Field notebook',
+        theme: 'theme-field',
+        description: 'The temperature of every day of a year in classes of 1 °C, computed from the days by a transform, and below it every day of every year as a dot, scattered vertically by random numbers which stay the same on every draw. The slider picks the year of the histogram and of the orange dots, the hover shows its days in the class under the pointer.',
+        features: ['transform: bin, random', 'bar: x0, x1 (range bars)', 'stackBy', 'band scale + jitter', 'once, @plot:right', 'formElements: slider'],
+        def: daysDef,
+        css: daysCss,
+    },
+    {
+        id: 'grid',
+        name: 'Grid of facets',
+        look: 'Swiss',
+        theme: 'theme-swiss',
+        description: 'A small chart per region and source of electricity, the regions of the countries are looked up in a second file. The rows have their headers at the left, the columns their names above them, the axes have labels only at the outer facets. Hover a line and the country is highlighted in every facet.',
+        features: ['facets: rows, cols', 'rowHeaders', 'axisTitles: outer', 'facets.title.props', 'transform: lookup', 'highlight, others'],
+        def: mixDef,
+        css: mixCss,
+    },
+    {
+        id: 'balance',
+        name: 'Above and below zero',
+        look: 'Newspaper',
+        theme: 'theme-news',
+        description: 'Every day of a year against its mean of 1991–2020, computed by two transforms from the same file as the polar lines. The bars of the days are a day wide (an interval of the dates), red above and blue below the line at zero, which crosses them while the months stay at the bottom.',
+        features: ['axis.at', 'interval: day', 'transform: mean, calc', 'scale: center', 'formElements: radio', 'annotations'],
+        def: warmerDef,
+        css: warmerCss,
     },
 ];

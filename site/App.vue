@@ -15,8 +15,8 @@
             <h1>Charts from JSON definitions</h1>
             <p class="lead">
                 A small d3 library for any page and for Vue which I write for the charts of my own pages: a chart is a
-                JSON definition and a data file. Lines, bars, areas, polar plots and maps, with legends,
-                hover, facets and form elements. It does what these charts need, use it if it fits
+                JSON definition and a data file. Lines, bars, areas, histograms, polar plots and maps, with
+                legends, hover, grids of facets and form elements. It does what these charts need, use it if it fits
                 yours, fork it if it nearly does, see <a href="guide.html">how it works</a>.
             </p>
             <pre class="install"><code>npm install @preschen/gen-vis</code></pre>
@@ -25,7 +25,8 @@
                     Schema checks it in the editor, <code>validateDef</code> in a build, shared parts are
                     parents and mixins.</li>
                 <li><strong>The data stays data.</strong> CSV, TSV, JSON or parquet (only the columns
-                    used), transforms compute e.g. an index of a base year or rolling means.</li>
+                    used), transforms compute e.g. an index of a base year, rolling means, the classes of a
+                    histogram or the jitter of a strip plot.</li>
                 <li><strong>Controls without code.</strong> Radio buttons, selects and sliders of the
                     definition patch any part of it, e.g. columns, filters, scales, texts or the language,
                     the state is a <code>v-model</code>, the page can set globals and link charts.</li>
@@ -35,7 +36,8 @@
                     editors whose texts stay texts, <code>gen-vis export</code> writes SVG, PNG and PDF files
                     of a definition at a physical size, e.g. 16 cm wide with texts of 8 pt.</li>
                 <li><strong>Built in:</strong> the hover by the keyboard and screen readers, PNG, SVG and
-                    CSV of the data shown.</li>
+                    CSV of the data shown, a look of its own with the font Inter in the package, the font and every color
+                    a CSS variable.</li>
             </ul>
             <nav class="toc" aria-label="Contents">
                 <a v-for="(e, i) in examples" :key="e.id" :href="`#${e.id}`">

@@ -1,0 +1,54 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "data": "data/electricity.csv",
+    "options": {
+        "title": "Where the electricity comes from",
+        "subtitle": "Share of the generation of electricity per country, by region and source",
+        "footer": "Source: Ember, yearly electricity data",
+        "locale": "en",
+        "height": 118,
+        "margins": { "top": 10, "right": 12, "bottom": 22, "left": 42 }
+    },
+    "transform": [
+        { "type": "lookup", "column": "country", "data": "data/countries.csv", "key": "code", "value": "name", "as": "name" },
+        { "type": "lookup", "column": "country", "data": "data/countries.csv", "key": "code", "value": "region", "as": "region" }
+    ],
+    "mapping": {
+        "x": {
+            "column": "year", "type": "numeric", "format": "d",
+            "scale": { "domainRel": [0, 0] },
+            "axis": { "values": [2019, 2022, 2025], "tickMarks": false }
+        },
+        "y": {
+            "column": "share", "type": "numeric", "format": ".0%", "domain": [0, 1],
+            "axis": { "values": [0, 0.5, 1], "grid": true },
+            "hover": {}
+        },
+        "country": { "column": "name", "name": "Country", "fromData": true, "hover": {} },
+        "source": {
+            "column": "source",
+            "categories": {
+                "renewable": { "name": "Renewable", "color": "#2F855A" },
+                "nuclear": { "name": "Nuclear", "color": "#B7791F" },
+                "non-renewable": { "name": "Fossil and other", "color": "#4A5568" }
+            }
+        },
+        "region": {
+            "column": "region",
+            "categories": { "Northern Europe": {}, "Western Europe": {}, "Southern Europe": {}, "Eastern Europe": {}, "Western Balkans": {} }
+        }
+    },
+    "facets": {
+        "rows": "region", "cols": "source", "rowHeaders": "left", "axisTitles": "outer",
+        "scales": { "x": "all", "y": "all" },
+        "title": { "props": { "color": "@color" } }
+    },
+    "plot": [
+        {
+            "type": "line", "id": "countries", "by": ["country", "source"],
+            "props": { "stroke": "@color", "stroke-width": 1.2, "opacity": 0.55 },
+            "highlight": { "opacity": 1, "stroke-width": 2.6 },
+            "others": { "opacity": 0.12 }
+        }
+    ]
+}
