@@ -634,5 +634,318 @@
       "column": "v"
     },
     "error": "bin: the 'edges' of the classes are needed"
+  },
+  {
+    "name": "a range of tenths: the number of steps of (to - from)/step + 1e-9 rounded down, each edge rounded to 12 significant digits (half away from zero)",
+    "rows": [
+      {
+        "v": "0.55"
+      },
+      {
+        "v": "0.7"
+      }
+    ],
+    "transform": {
+      "type": "bin",
+      "column": "v",
+      "edges": [
+        {
+          "from": 0.5,
+          "to": 0.7,
+          "step": 0.1
+        },
+        {
+          "from": 100000000000.5,
+          "to": 100000000001.5,
+          "step": 1
+        }
+      ],
+      "replace": true
+    },
+    "columns": {},
+    "result": [
+      {
+        "start": 0.5,
+        "end": 0.6,
+        "count": 1
+      },
+      {
+        "start": 0.6,
+        "end": 0.7,
+        "count": 0
+      },
+      {
+        "start": 0.7,
+        "end": 100000000001,
+        "count": 1
+      },
+      {
+        "start": 100000000001,
+        "end": 100000000002,
+        "count": 0
+      }
+    ]
+  },
+  {
+    "name": "a step alone: from the largest multiple not above the least value to the smallest multiple not below the largest one, at least one class",
+    "rows": [
+      {
+        "v": "10"
+      },
+      {
+        "v": "10"
+      }
+    ],
+    "transform": {
+      "type": "bin",
+      "column": "v",
+      "step": 10,
+      "replace": true
+    },
+    "columns": {},
+    "result": [
+      {
+        "start": 10,
+        "end": 20,
+        "count": 2
+      }
+    ]
+  },
+  {
+    "name": "a step alone of negative values and of a value between multiples",
+    "rows": [
+      {
+        "v": "-3"
+      },
+      {
+        "v": "7"
+      },
+      {
+        "v": "0.3"
+      }
+    ],
+    "transform": {
+      "type": "bin",
+      "column": "v",
+      "step": 5,
+      "replace": true
+    },
+    "columns": {},
+    "result": [
+      {
+        "start": -5,
+        "end": 0,
+        "count": 1
+      },
+      {
+        "start": 0,
+        "end": 5,
+        "count": 1
+      },
+      {
+        "start": 5,
+        "end": 10,
+        "count": 1
+      }
+    ]
+  },
+  {
+    "name": "a step of all values equal between multiples: one class",
+    "rows": [
+      {
+        "v": "5"
+      },
+      {
+        "v": "5"
+      }
+    ],
+    "transform": {
+      "type": "bin",
+      "column": "v",
+      "step": 10,
+      "replace": true
+    },
+    "columns": {},
+    "result": [
+      {
+        "start": 0,
+        "end": 10,
+        "count": 2
+      }
+    ]
+  },
+  {
+    "name": "fewer than two different edges: no classes and a note, a step without values: no classes and no note",
+    "rows": [
+      {
+        "v": "1"
+      }
+    ],
+    "transform": [
+      {
+        "type": "bin",
+        "column": "v",
+        "edges": [
+          5,
+          "5"
+        ]
+      },
+      {
+        "type": "bin",
+        "column": "w",
+        "step": 1,
+        "as": "n",
+        "start": "s",
+        "end": "e"
+      }
+    ],
+    "columns": {},
+    "result": [
+      {
+        "v": "1"
+      }
+    ],
+    "notes": [
+      "transform[0] (bin): the edges [5,\"5\"] are no classes, at least two different ones are needed"
+    ]
+  },
+  {
+    "name": "values outside the edges in several groups: one note of the bin",
+    "rows": [
+      {
+        "v": "1",
+        "g": "a"
+      },
+      {
+        "v": "20",
+        "g": "a"
+      },
+      {
+        "v": "-1",
+        "g": "b"
+      },
+      {
+        "v": "5",
+        "g": "b"
+      }
+    ],
+    "transform": {
+      "type": "bin",
+      "column": "v",
+      "by": "g",
+      "edges": [
+        0,
+        10
+      ],
+      "replace": true
+    },
+    "columns": {},
+    "result": [
+      {
+        "g": "a",
+        "start": 0,
+        "end": 10,
+        "count": 1
+      },
+      {
+        "g": "b",
+        "start": 0,
+        "end": 10,
+        "count": 1
+      }
+    ],
+    "notes": [
+      "transform[0] (bin): 2 values of 'v' outside the edges 0 to 10 are left out"
+    ]
+  },
+  {
+    "name": "the values of `by` of the rows of a group are the ones of its first row, as they are; 1 and \"1\" are one group",
+    "rows": [
+      {
+        "v": "1",
+        "h": 1
+      },
+      {
+        "v": "2",
+        "h": "1"
+      },
+      {
+        "v": "3",
+        "h": null
+      }
+    ],
+    "transform": {
+      "type": "bin",
+      "column": "v",
+      "by": "h",
+      "edges": [
+        0,
+        5
+      ],
+      "replace": true
+    },
+    "columns": {},
+    "result": [
+      {
+        "h": 1,
+        "start": 0,
+        "end": 5,
+        "count": 2
+      },
+      {
+        "h": null,
+        "start": 0,
+        "end": 5,
+        "count": 1
+      }
+    ]
+  },
+  {
+    "name": "replace after a filter: the classes of the kept rows, all rows are the classes",
+    "rows": [
+      {
+        "v": "1"
+      },
+      {
+        "v": "6"
+      },
+      {
+        "v": "7"
+      }
+    ],
+    "transform": [
+      {
+        "type": "filter",
+        "expr": {
+          ">": [
+            "@v",
+            5
+          ]
+        }
+      },
+      {
+        "type": "bin",
+        "column": "v",
+        "edges": [
+          0,
+          5,
+          10
+        ],
+        "replace": true
+      }
+    ],
+    "columns": {},
+    "result": [
+      {
+        "start": 0,
+        "end": 5,
+        "count": 0
+      },
+      {
+        "start": 5,
+        "end": 10,
+        "count": 2
+      }
+    ]
   }
 ]

@@ -280,7 +280,9 @@ column:
   `edges` are numbers and ranges `{"from", "to", "step"}`, e.g. classes of 5
   from 50 to 250 and an edge at 143, so no class crosses a threshold: `[{"from":
   50, "to": 250, "step": 5}, 143]`; without them `step` gives classes of the
-  multiples of it around the values. A class includes its start, the last
+  multiples of it from the largest one not above the least value to the
+  smallest one not below the largest value (a single 10 of a step of 10 is
+  the class 10 to 20). A class includes its start, the last
   one also its end, the values outside the edges are left out (a warning
   says how many). The rows stay, so the plots draw both: a plot draws the
   rows with the values it uses, e.g. the bars the rows of the classes and

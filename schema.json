@@ -630,7 +630,7 @@
                     },
                     "description": "bin: the edges of the classes, numbers and ranges { \"from\": 50, \"to\": 250, \"step\": 5 }, sorted together, e.g. [{ \"from\": 50, \"to\": 250, \"step\": 5 }, 143]. A class includes its start, the last one also its end, values outside the edges are left out."
                 },
-                "step": { "anyOf": [{ "type": "number", "exclusiveMinimum": 0 }, { "type": "string" }], "description": "bin: the width of the classes without edges, also a template of the globals, e.g. \"{step}\", from the multiple of it below the least value to the one above the largest one." },
+                "step": { "anyOf": [{ "type": "number", "exclusiveMinimum": 0 }, { "type": "string" }], "description": "bin: the width of the classes without edges, also a template of the globals, e.g. \"{step}\", from the largest multiple of it not above the least value to the smallest one not below the largest value." },
                 "weight": { "type": "string", "description": "bin: the column of the weights of the rows, the value of a class is the sum of the weights of its values, e.g. of a reporting lag." },
                 "normalize": { "enum": ["count", "share", "density"], "default": "count", "description": "bin: the value of a class, the count (or the sum of the weights), the share of the sum of the group or the density (the share per unit of column, per `per` units), e.g. densities of categories of different sizes." },
                 "per": { "type": "number", "exclusiveMinimum": 0, "description": "bin: the value per this many units of the width of a class, e.g. 5 of the count per 5k of classes of unequal widths, of a density the share per 5 units." },

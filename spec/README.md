@@ -102,34 +102,51 @@ The rules of all transforms (see `docs/definition.md` of the package, `transform
 - The values of `column` are numbers (above), the others are missing.
 
 `random`: the number of a row is `lo + (hi - lo)*u` of the `range` `[lo, hi]`
-(`[0, 1]` by default) and `u` of the text `"<seed>:<key>"`, the `seed` (0 by
-default) as a text and the key the index of the row in the rows (from 0, also
-of the rows left out by a filter before) or its value of the column `key`
-(`""` if missing). `u` is the 32 bits of FNV-1a of the UTF-16 code units of the
-text (offset 0x811c9dc5, prime 0x01000193), mixed by the finalizer of
-MurmurHash3 (`h ^= h >>> 16; h *= 0x85ebca6b; h ^= h >>> 13; h *= 0xc2b2ae35;
-h ^= h >>> 16`, 32-bit unsigned products), divided by 2^32.
+(numbers as above, `[0, 1]` by default, `[1, 0]` is `1 - u`) and `u` of the
+text `"<seed>:<key>"`, the `seed` (0 by default) as a text and the key the
+index of the row in the rows (from 0, also of the rows left out by a filter
+before; the rows of a `bin` before follow the rows, so their indexes are
+after them) or its value of the column `key` as a text, not trimmed (`""`
+if missing, also of a text of only whitespace; `1` and `"1"` are the same
+key). Numbers become texts as in JavaScript (`String(v)`: `1` not `1.0`,
+`1e-7`, `1e+21`). `u` is the 32 bits of FNV-1a of the UTF-16 code units of
+the text, `h = 0x811c9dc5`, then per code unit `c`: `h = ((h ^ c) *
+0x01000193) mod 2^32`, mixed by the finalizer of MurmurHash3 (`h ^= h >>>
+16; h *= 0x85ebca6b; h ^= h >>> 13; h *= 0xc2b2ae35; h ^= h >>> 16`, 32-bit
+unsigned products), divided by 2^32.
 
 `bin` adds a row per class and group after the rows (`by`, the groups of
-the rows with a number of `column`, in the order of their first row; without
-`by` one group, also without rows) with the values
-of the columns `by` of the first row of the group, `start`, `end` and the
-count (`as`) or the sum of the numbers of `weight` (missing ones are 0),
-`normalize`d: `share` divides it by the sum of the group (0 of a sum of 0),
-`density` also by the width of the class in units of `per` (1 by default),
-without `normalize` (or `count`) a `per` divides the count by the width in
-units of it. The
-`edges` are numbers (also strings of numbers) and ranges `{ "from", "to",
-"step" }` (from `from` in steps up to `to`, both included if they are steps,
-each edge rounded to 12 significant digits), sorted and without duplicates;
-of a `step` alone the edges are from the multiple of the step below the least
-value up to the one above the largest one. A class includes its start, the
-last one also its end; missing values are left out, values outside the edges
-too, with the note `transform[<i>] (bin): <n> values of '<column>' outside
-the edges <first> to <last> are left out`. The columns of the transforms
-before have no values of the added rows, the rows of the filters before
-include them. With `replace` the rows of the classes replace the rows, the
-columns of the transforms before are left out.
+the rows with a number of `column`, in the order of their first row, values
+compared as texts, so `1` and `"1"` are one group; without `by` one group,
+also without rows) with the values of the columns `by` of the first row of
+the group (as they are, not converted), `start`, `end` and the count (`as`)
+or the sum of the numbers of `weight` (missing ones are 0), `normalize`d:
+`share` divides it by the sum of the group (0 of a sum of 0), `density`
+also by the width of the class in units of `per` (1 by default), without
+`normalize` (or `count`) a `per` divides the count by the width in units of
+it (`sum/width` with `width = (end - start)/per`, the shares `sum/total`,
+the densities `sum/total/width`; `per` has no effect on shares).
+
+The `edges` are numbers (as above, also texts of numbers) and ranges `{
+"from", "to", "step" }`: the edges `from + k*step` for `k` from 0 to
+`floor((to - from)/step + 1e-9)`, each rounded to 12 significant digits (as
+`toPrecision(12)` of JavaScript, halves away from zero, not to the even
+digit), so `to` is one if it is a step; the edges are sorted and without
+duplicates. Of a `step` alone (if there are no `edges`) the edges are a
+range from the largest multiple of the step not above the least value
+(`floor(least/step)*step`) to the smallest multiple not below the largest
+value (`ceil(largest/step)*step`), at least one class, e.g. of a single 10
+and a step of 10 the class 10 to 20; without values there are no classes
+and no note. Fewer than two different edges are no classes, with the note
+`transform[<i>] (bin): the edges <edges as JSON> are no classes, at least
+two different ones are needed`. A class includes its start, the last one
+also its end; missing values are left out, values outside the edges too,
+with one note of the bin (of all groups) `transform[<i>] (bin): <n> values
+of '<column>' outside the edges <first> to <last> are left out`. The columns
+of the transforms before have no values of the added rows, the rows of the
+filters before include them. With `replace` the rows of the classes (of the
+rows of the filters before) replace the rows, the columns of the transforms
+before and the filters are left out (all rows are kept).
 
 ## Merging
 

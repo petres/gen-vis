@@ -534,7 +534,7 @@ export interface Transform {
           }
     )[];
     /**
-     * bin: the width of the classes without edges, also a template of the globals, e.g. "{step}", from the multiple of it below the least value to the one above the largest one.
+     * bin: the width of the classes without edges, also a template of the globals, e.g. "{step}", from the largest multiple of it not above the least value to the smallest one not below the largest value.
      */
     step?: number | string;
     /**

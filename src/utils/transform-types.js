@@ -226,7 +226,7 @@ const transformTypes = {
     // if others are left out, e.g. the vertical place of a point of a strip
     // plot in its band, see randomOf
     random: (t, { n, get, index }) => {
-        const [lo, hi] = Array.isArray(t.range) ? t.range.map(Number) : [0, 1];
+        const [lo, hi] = Array.isArray(t.range) ? t.range.map(toNumber) : [0, 1];
         const seed = String(t.seed ?? 0);
         return Array.from({ length: n }, (_, i) => {
             const key = t.key === undefined ? index(i) : get(i, t.key);
@@ -274,7 +274,7 @@ const randomOf = text => {
 // alone the multiples of it around the values, null without two of them
 const binEdges = (t, values) => {
     const range = ({ from, to, step }) => {
-        const [a, b, d] = [from, to, step].map(Number);
+        const [a, b, d] = [from, to, step].map(toNumber);
         if (![a, b, d].every(Number.isFinite) || !(d > 0) || b < a)
             throw new Error(`bin: a range of edges is { "from": 50, "to": 250, "step": 5 }`);
         // as integers of steps, so e.g. 0.1 steps have no rounding errors
@@ -285,7 +285,7 @@ const binEdges = (t, values) => {
     if (t.edges !== undefined)
         edges = [t.edges].flat().flatMap(e => e !== null && typeof e == 'object' ? range(e) : [toNumber(e)]);
     else if (t.step !== undefined) {
-        const step = Number(t.step);
+        const step = toNumber(t.step);
         if (!(step > 0))
             throw new Error(`bin: 'step' is the width of the classes, e.g. 5`);
         // a loop, not Math.min(...values), which fails for more values than
