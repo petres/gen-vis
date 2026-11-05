@@ -238,6 +238,10 @@ Warnings (console, CLI, `messages` of the export page):
 
 ### Fixes
 
+- A legend entry without a symbol (`{"size": 0, "elements": []}`, an
+  object without elements) has no empty svg before its name, so no space
+  of 5 pixels before the name and between the entries. `"symbol": null`
+  is no symbol, e.g. instead of the one of a parent (the schema accepts it).
 - The hover of a facet is above the facets after it: the box of a facet in
   the upper row of facets (of `dim` or a grid) was below the next row,
   whose labels and lines crossed it.

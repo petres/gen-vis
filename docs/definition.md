@@ -709,7 +709,9 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   sets the size of the names there, not on their `span`), so an element at
   half the height is at the middle of the text, e.g. the line of the
   shortcut. Without a size the ones of the [defaults](#defaults) (per
-  shortcut, e.g. smaller symbols of a house style), 16 pixels.
+  shortcut, e.g. smaller symbols of a house style), 16 pixels. `"symbol":
+  null` (or an object without `elements` or of a size of 0) is no symbol,
+  e.g. instead of the one of a parent: the entry has only its name.
   `"symbol": "auto"` (also `{"type": "auto", "width": 18}`) is the symbol of
   the plots of the categories (with the mapping in `by`): a box of the ones
   which fill (bars, areas, rects), a line of the lines and a dot of the

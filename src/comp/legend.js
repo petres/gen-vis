@@ -136,8 +136,12 @@ const createLegend = (vis, legend) => {
             patch(div, entryAttrs({ class: 'vis-legend-entry', 'data-visible': entry.props.visible, 'data-key': entry.key },
                 { ...filled, name: null },
                 { role: 'checkbox', tabindex: '0', 'aria-checked': String(entry.props.visible) }));
-            // the symbol of the category or the one of the legend
-            const symbol = entry.props.symbol ?? m.legend.symbol;
+            // the symbol of the category or the one of the legend, none of
+            // an empty one (no elements or a box of no size), so the name has
+            // no space before it
+            const given = entry.props.symbol ?? m.legend.symbol;
+            const symbol = given && !(Array.isArray(given.elements) && given.elements.length == 0)
+                && (given.width ?? given.size ?? 16) > 0 && (given.height ?? given.size ?? 16) > 0 ? given : null;
             let svg = div.firstElementChild?.tagName == 'svg' ? div.firstElementChild : null;
             let span = div.lastElementChild?.tagName == 'SPAN' ? div.lastElementChild : null;
             if (symbol && !svg)

@@ -125,9 +125,10 @@ export type Pair2 = [number | null, number | null];
  */
 export type Removed = null | false;
 /**
- * The symbol before the name of a category: line, rect or circle in its color, auto of the plots of the categories (a box of their bars or areas, a line of their lines, a dot of their points), or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name.
+ * The symbol before the name of a category: line, rect or circle in its color, auto of the plots of the categories (a box of their bars or areas, a line of their lines, a dot of their points), or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name; null (or an object without elements) is none, e.g. instead of the one of a parent.
  */
 export type LegendSymbol =
+    | null
     | ('line' | 'rect' | 'circle' | 'auto')
     | {
           type: 'line' | 'rect' | 'circle' | 'auto';
@@ -1119,9 +1120,10 @@ export interface CategoryProps {
      */
     legend?: boolean;
     /**
-     * The symbol before the name of a category: line, rect or circle in its color, auto of the plots of the categories (a box of their bars or areas, a line of their lines, a dot of their points), or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name.
+     * The symbol before the name of a category: line, rect or circle in its color, auto of the plots of the categories (a box of their bars or areas, a line of their lines, a dot of their points), or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name; null (or an object without elements) is none, e.g. instead of the one of a parent.
      */
     symbol?:
+        | null
         | ('line' | 'rect' | 'circle' | 'auto')
         | {
               type: 'line' | 'rect' | 'circle' | 'auto';
@@ -1154,9 +1156,10 @@ export interface CategoryProps1 {
      */
     legend?: boolean;
     /**
-     * The symbol before the name of a category: line, rect or circle in its color, auto of the plots of the categories (a box of their bars or areas, a line of their lines, a dot of their points), or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name.
+     * The symbol before the name of a category: line, rect or circle in its color, auto of the plots of the categories (a box of their bars or areas, a line of their lines, a dot of their points), or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name; null (or an object without elements) is none, e.g. instead of the one of a parent.
      */
     symbol?:
+        | null
         | ('line' | 'rect' | 'circle' | 'auto')
         | {
               type: 'line' | 'rect' | 'circle' | 'auto';

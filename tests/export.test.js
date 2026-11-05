@@ -366,3 +366,24 @@ describe('each call of the export page loads its files anew', () => {
         expect(ticks((await window.genVisExport(options)).svg)).not.toContain('30');
     });
 });
+
+describe('legend entries without a symbol', () => {
+    test('no svg before the name (null, no elements or no size), keyboard, highlight and export as with one', async () => {
+        for (const symbol of [null, { size: 0, elements: [] }, { elements: [] }]) {
+            const d = def();
+            d.mapping.c.legend = { symbol };
+            const vis = createGenVis(document.body.appendChild(document.createElement('div')), { def: d, data });
+            await rendered(vis.el);
+            const entries = [...vis.el.querySelectorAll('.vis-legend .vis-legend-entry')];
+            expect(entries.map(e => [e.querySelector('svg'), e.textContent, e.getAttribute('tabindex')])).toEqual([[null, 'Wien', '0'], [null, 'Tirol', '0']]);
+            // the highlight of the entry of a hovered category, the toggle by the keyboard
+            entries[0].dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
+            entries[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            await new Promise(resolve => setTimeout(resolve, 0));
+            expect(vis.el.querySelector('.vis-legend-entry[data-key="Tirol"]').getAttribute('aria-checked')).toBe('false');
+            const svg = parse(await vis.exportSvg({ parts: ['legend'] }));
+            expect(texts(svg)).toEqual(['Wien']);
+        }
+        expect(errors).toEqual([]);
+    });
+});
