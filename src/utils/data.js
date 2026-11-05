@@ -1,7 +1,7 @@
 export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
-import { fillTemplate, sameValue, templateRefs, variants } from "@/utils/def";
+import { fillTemplate, inLanguage, sameValue, templateRefs, variants } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
 import { evaluate } from "@/utils/expr";
@@ -407,9 +407,10 @@ const valuesSource = Symbol('valuesSource');
 // csv, of every format; the names of a column of the first row of the value
 // (`names`), formatted (`format`, of dates a time format, e.g. "%b %Y", a
 // number format otherwise, see `formatOf`), the values otherwise
-const dataValues = (spec, rows, columns, formatOf) => {
+const dataValues = (spec, rows, columns, formatOf, language) => {
     const values = distinctValues(rows, columns, spec.column).map(String);
-    const { names, format } = spec;
+    const { names } = spec;
+    const format = inLanguage(spec.format, language);
     let nameOf = v => v;
     if (typeof names == 'string') {
         const source = sourceRows(rows, columns);
@@ -444,15 +445,28 @@ const addDataValues = (def, rows, columns = null, formatOf = null) => {
  * The values of the form elements of columns of the prepared definition
  * `def` again, of the specs kept on the ones of the original one (`defOrg`,
  * see addDataValues), e.g. of the column of a transform of a global, the
- * classes of other edges of a bin; only the ones of `changed(spec)`.
+ * classes of other edges of a bin, their names in `language`; only the ones
+ * of `changed(spec)`. A global which is none of the new values becomes the
+ * last one, as of addDataValues, not one of `kept(ref)`, e.g. one set by the
+ * page; returns the refs of the globals changed.
  */
-const updateDataValues = (defOrg, def, rows, columns, formatOf = null, changed = () => true) => {
+const updateDataValues = (defOrg, def, rows, columns, formatOf = null, changed = () => true, language = undefined, kept = () => false) => {
+    const reset = [];
     (defOrg.formElements ?? []).forEach((e, i) => {
         const spec = e?.[valuesSource];
         const target = (def.formElements ?? []).find(f => f?.id !== undefined && f.id === e.id) ?? def.formElements?.[i];
-        if (spec && target && changed(spec))
-            target.values = dataValues(spec, rows, columns, formatOf);
+        if (!spec || !target || !changed(spec))
+            return;
+        target.values = dataValues(spec, rows, columns, formatOf, language);
+        const ref = target.ref ?? e.ref;
+        if (ref !== undefined && !kept(ref) && target.values.length > 0
+            && !target.values.some(v => sameValue(v.value, def.globals?.[ref]))) {
+            def.globals ??= {};
+            def.globals[ref] = target.values.at(-1).value;
+            reset.push(ref);
+        }
     });
+    return reset;
 };
 
 // the type of the values of a column: numeric if all of them are numbers,

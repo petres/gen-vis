@@ -184,10 +184,12 @@ const bestSpots = (band, { w, h, pad, allowed, prefer, fit = false }) => {
             // half of the smaller side of the box: of `fit` only the ones
             // which can fit (the box reaches at least that far)
             const m = fit ? Math.min(w, h)/2 : 0;
-            if (!finite(lo, hi) || hi - lo - 2*pad < 2*Math.min(w, h)/2)
+            if (!finite(lo, hi) || (fit && hi - lo - 2*pad < 2*m))
                 continue;
+            // of a band thinner than the padding (not `fit`): its middle
+            const [r0, r1] = lo + pad + m <= hi - pad - m ? [lo + pad + m, hi - pad - m] : [(lo + hi)/2, (lo + hi)/2];
             let best = null;
-            for (let r = lo + pad + m; r <= hi - pad - m; r += 2) {
+            for (let r = r0; r <= r1; r += 2) {
                 const [x, y] = [r*Math.sin(angle), -r*Math.cos(angle)];
                 let clearance = Infinity;
                 for (const [dx, dy] of offsets) {
@@ -332,12 +334,18 @@ const placeInside = (groups, plot, ctx, polar) => {
             ? (polar ? ctx.scales[mappingOf(plot.props.angle)]?.(plot.place.near) + profile.offset : ctx.scales[mappingOf(plot.props.x)]?.(plot.place.near))
             : (positions[0] + positions.at(-1))/2;
         const spots = bestSpots(profile, { w, h: size, pad, allowed, prefer: Number.isFinite(prefer) ? prefer : undefined, fit: plot.fit !== false });
-        return [{ g, rows, spots }];
+        return [{ g, rows, spots, offset: profile.offset ?? 0 }];
     });
     const chosen = chooseSpots(labels, { fit: plot.fit !== false, overlap: plot.overlap === true });
     return labels.map((l, i) => [l, chosen[i]]).filter(([, s]) => s).map(([l, s]) => {
-        // the row nearest to the place, e.g. of a prop of its values
-        const row = l.rows.reduce((a, b) => Math.abs((polar ? l.g.at(b).angle : l.g.at(b).x) - s.p) < Math.abs((polar ? l.g.at(a).angle : l.g.at(a).x) - s.p) ? b : a);
+        // the row nearest to the place, e.g. of a prop of its values, of
+        // the positions of the profile (angles with the offset of a band
+        // scale, around the circle)
+        const distance = r => {
+            const d = Math.abs((polar ? l.g.at(r).angle + l.offset : l.g.at(r).x) - s.p);
+            return polar ? Math.min(d % tau, tau - d % tau) : d;
+        };
+        const row = l.rows.reduce((a, b) => distance(b) < distance(a) ? b : a);
         return [l.g, row, s];
     });
 };

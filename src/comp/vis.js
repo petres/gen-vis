@@ -258,9 +258,17 @@ const createVis = app => {
     // the texts in a web font loaded after the first draw, e.g. Inter:
     // their sizes are measured again, e.g. of the headers of the rows of a
     // grid and the width beside legends
-    const fontsLoaded = () => guard(() => {
+    // only of the fonts of the visualisation, not of other charts or of the
+    // page (the families of its font, e.g. Inter of the 600 weight)
+    const fontsLoaded = event => guard(() => {
         if (removed)
             return;
+        const families = event?.fontfaces?.map(f => f.family.replace(/^["']|["']$/g, '').toLowerCase());
+        if (families?.length && typeof getComputedStyle == 'function') {
+            const used = getComputedStyle(root).fontFamily.toLowerCase();
+            if (!families.some(f => used.includes(f)))
+                return;
+        }
         measure();
         update(false, true);
     });

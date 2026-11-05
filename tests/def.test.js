@@ -392,3 +392,13 @@ describe('applyPatches of globals and of the categories of the data', () => {
         expect(def.mapping.c).toBe(mapping);
     });
 });
+
+describe('languageOf (review of 4.1)', () => {
+    test('a global without a value: the language of the locale', async () => {
+        const { languageOf } = await import('@/utils/def');
+        expect(languageOf({ language: '@lang', locale: 'en' }, {})).toBe('en');
+        expect(languageOf({ language: '@lang', locale: 'en' }, { lang: 'de' })).toBe('de');
+        expect(languageOf({ language: '@lang' }, {})).toBeUndefined();
+        expect(languageOf({ language: 'fr', locale: 'en' }, {})).toBe('fr');
+    });
+});

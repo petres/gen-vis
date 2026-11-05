@@ -138,8 +138,8 @@ const createLegend = (vis, legend) => {
                 { role: 'checkbox', tabindex: '0', 'aria-checked': String(entry.props.visible) }));
             // the symbol of the category or the one of the legend, none of
             // an empty one (no elements or a box of no size), so the name has
-            // no space before it
-            const given = entry.props.symbol ?? m.legend.symbol;
+            // no space before it, also of a category of "symbol": null
+            const given = entry.props.symbol !== undefined ? entry.props.symbol : m.legend.symbol;
             const symbol = given && !(Array.isArray(given.elements) && given.elements.length == 0)
                 && (given.width ?? given.size ?? 16) > 0 && (given.height ?? given.size ?? 16) > 0 ? given : null;
             let svg = div.firstElementChild?.tagName == 'svg' ? div.firstElementChild : null;

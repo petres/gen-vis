@@ -74,3 +74,15 @@ describe('the spots of the labels', () => {
         expect(chooseSpots([fits, crowded])).toEqual([fits.spots[0], null]);
     });
 });
+
+describe('polar labels inside thin bands (review of 4.1)', () => {
+    test('fit: false places a label also in a band thinner than the text', () => {
+        const n = 360;
+        const band = { start: 0, step: 2*Math.PI/n, n, lo: new Float64Array(n).fill(100), hi: new Float64Array(n).fill(108), cyclic: true, offset: 0 };
+        const allowed = new Uint8Array(n).fill(1);
+        expect(bestSpots(band, { w: 40, h: 11, pad: 2, allowed, fit: true })).toEqual([]);
+        const spots = bestSpots(band, { w: 40, h: 11, pad: 2, allowed, fit: false });
+        expect(spots.length).toBeGreaterThan(0);
+        expect(chooseSpots([{ spots }], { fit: false })[0]).not.toBeNull();
+    });
+});

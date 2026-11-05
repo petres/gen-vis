@@ -203,7 +203,9 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
     // of the plot area (their length without the inset, of the definition,
     // a style of the page or the built-in one), also without marks
     const size = marks?.size ?? markSize ?? builtInDefaults.axis.tickMarks.size;
-    const styled = typeof getComputedStyle == 'function' && ga.isConnected ? parseFloat(getComputedStyle(ga).getPropertyValue('--gen-vis-tick-inset')) : NaN;
+    // the style only without one of the definition (a style recalculation)
+    const styled = Number.isFinite(marks?.inset) || typeof getComputedStyle != 'function' || !ga.isConnected ? NaN
+        : parseFloat(getComputedStyle(ga).getPropertyValue('--gen-vis-tick-inset'));
     const inset = Number.isFinite(marks?.inset) ? marks.inset : (Number.isFinite(styled) ? styled : tickInset[position] ?? 0);
     ticks(ga, moving, position, scale, { values, format, tickSizeInner: size, tickSizeOuter: 0, tickPadding: +(padding ?? builtInDefaults.axis.padding),
         labelSize: size - inset });

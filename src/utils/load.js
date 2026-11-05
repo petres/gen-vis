@@ -3,7 +3,7 @@ export { valueFormat, resolveUrl, clearCache, resolveParents, readDef, requireme
 
 import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, toDate, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
-import { applyPatches, mergeAll, prepareDef, variants } from "@/utils/def";
+import { applyPatches, languageOf, mergeAll, prepareDef, variants } from "@/utils/def";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
 import { checkLocale, getLocale, loadLocale } from "@/utils/locale";
 import { loadCoord } from "@/coords";
@@ -343,9 +343,17 @@ const prepare = (defOrg, rows, files, state, globals, symbols = {}) => {
     applyState(prepared, { visible: state?.visible });
     transform();
     // the values of the columns of the transforms of the globals of the
-    // state and the page, not of the definition, e.g. the classes of a bin
-    if (columns.steps.length > 0)
-        updateDataValues(defOrg, prepared, rows, columns, valueFormat(prepared.options?.locale));
+    // state and the page, not of the definition, e.g. the classes of a bin,
+    // their names in the language and locale of the definition prepared
+    const language = languageOf(prepared.options, prepared.globals);
+    // a global which is none of the new values is the last one, the
+    // definition patched again with it, e.g. of a filter
+    if ((columns.steps.length > 0 || language !== undefined)
+        && updateDataValues(defOrg, prepared, rows, columns, valueFormat(prepared.options?.locale), () => true, language,
+            ref => globals?.[ref] !== undefined).length > 0) {
+        applyPatches(prepared, defOrg, { dataKeys: keysOf, files, transform, symbols });
+        transform();
+    }
     return { prepared, defaults, columns };
 };
 

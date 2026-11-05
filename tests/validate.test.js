@@ -791,6 +791,9 @@ describe('the names and the keys of 4.1', () => {
         expect(validateDef(d)).toEqual([`options.hover.total: the sum of the stacked values, there is no stacked mapping`]);
         d.mapping.y.stacked = true;
         expect(validateDef(d)).toEqual([]);
+        // its name in several languages
+        d.options.hover.total = { de: 'Gesamt', en: 'Total' };
+        expect(validateDef(d)).toEqual([]);
     });
 
     test('the facet of a plot or an annotation of a grid: its rows and columns', () => {

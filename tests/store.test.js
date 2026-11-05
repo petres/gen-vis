@@ -489,3 +489,54 @@ describe('form elements of globals, coordinate systems and maps', () => {
         expect(unhandled).toEqual([]);
     });
 });
+
+describe('form elements of the values of a column (review of 4.1)', () => {
+    const binDef = () => ({ globals: { step: '5' },
+        transform: [{ type: 'bin', column: 'v', step: '{step}', start: 'lo', end: 'hi' }],
+        formElements: [{ id: 'lo', ref: 'lo', type: 'select', values: { column: 'lo' } }],
+        mapping: { x: { column: 'v', type: 'numeric', scale: { orientation: 'horizontal' } }, y: { column: 'count', type: 'numeric', scale: { orientation: 'vertical' } } },
+        plot: [{ type: 'bar', props: { x0: '@x:scaled', y1: '@y:scaled' } }] });
+    const binData = 'v,g\n1,a\n3,a\n7,b\n9,b';
+
+    test('a global which is none of the values of other classes is the last one', async () => {
+        const s = createStore();
+        await s.init({ def: binDef(), data: binData, globals: { step: '2' } });
+        expect(s.def.formElements[0].values.map(v => v.value)).toEqual(['0', '2', '4', '6', '8']);
+        expect(s.def.globals.lo).toBe('8');
+        const t = createStore();
+        await t.init({ def: binDef(), data: binData });
+        t.setGlobals({ step: '3' });
+        expect(t.def.formElements[0].values.map(v => v.value)).toEqual(['0', '3', '6']);
+        expect(t.def.globals.lo).toBe('6');
+    });
+
+    test('a global of the page stays, also one which is none of the values', async () => {
+        const s = createStore();
+        await s.init({ def: binDef(), data: binData, globals: { step: '2', lo: '5' } });
+        expect(s.def.globals.lo).toBe('5');
+    });
+
+    const monthDef = (format, language) => ({ options: { width: 500, height: 300, language }, globals: { lang: 'de', m: '2026-10' },
+        formElements: [{ id: 'm', type: 'select', ref: 'm', values: { column: 'month', format } }],
+        mapping: { x: { column: 'month', type: 'categorical', scale: { type: 'band', orientation: 'horizontal' } }, y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' } } },
+        plot: { type: 'cartesian:bar' } });
+    const monthData = 'month,value\n2026-09,1\n2026-10,2';
+    const names = s => s.def.formElements[0].values.map(v => v.name);
+
+    test('the names of a format in the language of the definition, also of a format per language', async () => {
+        let s = createStore();
+        await s.init({ def: monthDef('%B', 'en'), data: monthData });
+        expect(names(s)).toEqual(['September', 'October']);
+        s = createStore();
+        await s.init({ def: monthDef({ de: '%B %Y', en: '%B, %Y' }, 'en'), data: monthData });
+        expect(names(s)).toEqual(['September, 2026', 'October, 2026']);
+    });
+
+    test('the names of another language of a global', async () => {
+        const s = createStore();
+        await s.init({ def: monthDef('%B', '@lang'), data: monthData });
+        expect(names(s)).toEqual(['September', 'Oktober']);
+        s.setGlobals({ lang: 'en' });
+        expect(names(s)).toEqual(['September', 'October']);
+    });
+});

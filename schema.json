@@ -266,7 +266,7 @@
                     "additionalProperties": false,
                     "description": "The content of the hover without the hover slot, templates of html, their values are text.",
                     "properties": {
-                        "total": { "anyOf": [{ "type": "boolean" }, { "type": "string" }], "description": "A row of the sum of the stacked values of the position below the rows (true, or its name, e.g. Gesamt), in the format of the values; also {total} of the title." },
+                        "total": { "anyOf": [{ "type": "boolean" }, { "type": "string" }, { "$ref": "#/definitions/inLanguages" }], "description": "A row of the sum of the stacked values of the position below the rows (true, or its name, e.g. Gesamt), in the format of the values; also {total} of the title." },
                         "mode": { "enum": ["position", "point"], "description": "The rows of the nearest position of the axis (position, by default) or the row of the nearest point, e.g. of a scatter plot." },
                         "radius": { "type": "number", "description": "The distance of the nearest point in pixels, 30 by default." },
                         "filter": { "$ref": "#/definitions/filter", "description": "The rows with a hover, e.g. not the ones of headers." },

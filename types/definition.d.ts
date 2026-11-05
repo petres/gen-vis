@@ -660,7 +660,7 @@ export interface Options {
         /**
          * A row of the sum of the stacked values of the position below the rows (true, or its name, e.g. Gesamt), in the format of the values; also {total} of the title.
          */
-        total?: boolean | string;
+        total?: boolean | string | InLanguages;
         /**
          * The rows of the nearest position of the axis (position, by default) or the row of the nearest point, e.g. of a scatter plot.
          */

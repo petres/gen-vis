@@ -362,8 +362,12 @@ const inLanguage = (v, language) => {
  */
 const languageOf = (options, globals = {}) => {
     const given = options?.language;
-    if (typeof given == 'string')
-        return given.startsWith('@') ? (globals?.[given.slice(1)] ?? undefined) && String(globals[given.slice(1)]) : given;
+    if (typeof given == 'string' && !given.startsWith('@'))
+        return given;
+    // a global without a value: the language of the locale
+    const global = typeof given == 'string' ? globals?.[given.slice(1)] : undefined;
+    if (global != null && global !== '')
+        return String(global);
     const locale = options?.locale;
     return typeof locale == 'string' ? locale : (isObject(locale) && typeof locale.base == 'string' ? locale.base : undefined);
 };

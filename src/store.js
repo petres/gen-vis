@@ -3,7 +3,7 @@ export { createStore };
 import { distinctValues, prepareData, scaleDef, sourceRows, updateData, updateDataValues } from "@/utils/data";
 import { warnOnce } from "@/utils/warn";
 import { applyTransforms, utcColumns } from "@/utils/transform";
-import { applyPatches, fillHtml, fillText, formatOf, templateNames } from "@/utils/def";
+import { applyPatches, fillHtml, fillText, formatOf, languageOf, templateNames } from "@/utils/def";
 import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { formatter } from "@/utils/expr";
@@ -186,18 +186,36 @@ class Store {
             }
         };
         const source = sourceRows(this.rows, this.columns);
-        const changed = applyPatches(this.def, this.defOrg, { dataKeys: column => this.dataKeys(column), keepVisible, transform, files: this.files,
-            symbols: symbolDefaults(this.chartDefaults) });
-        transform();
+        const changed = [];
+        // a second pass if a global of a form element of a column was none of
+        // its new values and is the last one now, see below
+        for (let pass = 0; pass < 2; pass++) {
+            const before = sourceRows(this.rows, this.columns);
+            const columnsBefore = new Set(changedColumns);
+            applyPatches(this.def, this.defOrg, { dataKeys: column => this.dataKeys(column), keepVisible, transform, files: this.files,
+                symbols: symbolDefaults(this.chartDefaults) }).forEach(n => changed.includes(n) || changed.push(n));
+            transform();
+            Object.keys(this.def.mapping).filter(n => changedColumns.has(this.def.mapping[n].column) && !changed.includes(n))
+                .forEach(n => changed.push(n));
+            // the values of form elements of columns of transforms computed
+            // again, e.g. the classes of other edges of a bin, and their names
+            // of another language; a global which is none of them anymore is
+            // the last one (not one of the page), e.g. of a filter
+            const passRows = sourceRows(this.rows, this.columns) !== before;
+            const passColumns = [...changedColumns].filter(c => !columnsBefore.has(c));
+            const language = languageOf(this.def.options, this.def.globals);
+            const languageChanged = language !== this.valuesLanguage;
+            this.valuesLanguage = language;
+            if (!passRows && passColumns.length == 0 && !languageChanged)
+                break;
+            const reset = updateDataValues(this.defOrg ?? {}, this.def, this.rows, this.columns, valueFormat(this.def.options?.locale),
+                spec => passRows || languageChanged || passColumns.includes(spec.column) || passColumns.includes(spec.names),
+                language, ref => this.globals?.[ref] !== undefined);
+            if (reset.length == 0)
+                break;
+        }
         this.warnNotes();
-        Object.keys(this.def.mapping).filter(n => changedColumns.has(this.def.mapping[n].column) && !changed.includes(n))
-            .forEach(n => changed.push(n));
-        // the values of form elements of columns of transforms computed
-        // again, e.g. the classes of other edges of a bin
         const rowsChanged = sourceRows(this.rows, this.columns) !== source;
-        if (rowsChanged || changedColumns.size > 0)
-            updateDataValues(this.defOrg ?? {}, this.def, this.rows, this.columns, valueFormat(this.def.options?.locale),
-                spec => rowsChanged || changedColumns.has(spec.column) || changedColumns.has(spec.names));
         // other rows of a transform of rows, e.g. the classes of other edges
         // of a bin, are prepared again, the same ones are updated in place
         if (rowsChanged)

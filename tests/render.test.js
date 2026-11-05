@@ -4032,3 +4032,15 @@ describe('labels inside the bands of an area plot (place)', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('legend symbols of categories (review of 4.1)', () => {
+    test('"symbol": null of a category: no symbol, also with one of the legend', async () => {
+        const values = [{ year: 2020, v: 1, c: 'A' }, { year: 2021, v: 2, c: 'A' }, { year: 2020, v: 2, c: 'B' }, { year: 2021, v: 3, c: 'B' }];
+        const el = await mount({ def: { options: { width: 500, height: 300 },
+            mapping: { x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' } }, y: { column: 'v', type: 'numeric', scale: { orientation: 'vertical' } },
+                color: { column: 'c', fromData: true, legend: { position: 'top', symbol: 'rect' }, categories: { A: { symbol: null } } } },
+            plot: [{ type: 'cartesian:line', by: 'color', props: { d: { x: '@x:scaled', y: '@y:scaled' }, stroke: '@color' } }] }, data: values });
+        const svg = key => !!el.querySelector(`.vis-legend-entry[data-key="${key}"] svg`);
+        expect([svg('A'), svg('B')]).toEqual([false, true]);
+    });
+});
