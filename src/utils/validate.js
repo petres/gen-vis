@@ -12,7 +12,7 @@ import { projectionNames } from "@/coords/geo.js";
 import { applyTransforms, transformNames, utcColumns } from "@/utils/transform";
 import { isObject } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
-import { defaultScaleType, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
+import { defaultScaleType, facetMappings, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
 import { inferTypes } from "@/utils/data";
 import { versionError } from "@/utils/version";
 // without its descriptions, see checkSchema of vite.config.js
@@ -660,8 +660,8 @@ const checkFacets = ({ def, mapping, names, warn }) => {
         return;
     // a grid of the categories of `rows` and `cols` (a mapping), or the
     // facets of `dim` in `cols` columns (a number)
-    const grid = typeof def.facets.rows == 'string' || typeof def.facets.cols == 'string';
-    const parts = grid ? ['rows', 'cols'].filter(k => typeof def.facets[k] == 'string') : ['dim'];
+    const { grid } = facetMappings(def.facets);
+    const parts = grid ? ['rows', 'cols'].filter(k => facetMappings(def.facets)[k] !== null) : ['dim'];
     if (grid && def.facets.dim !== undefined)
         warn('facets.dim', `a grid of 'rows' and 'cols' has no 'dim'`);
     if (!grid && typeof def.facets.dim != 'string')

@@ -2,6 +2,7 @@
 // first one, see comp/app.js, the SVG is composed by utils/export-svg.js
 export { selection, staticCopy, parts, selectParts, partsBox, backgroundOf, renderImage, renderSvg, saveFile, csvOf, defaultWidth, padding };
 
+import { facetMappings } from "@/utils/normalize";
 import * as d3 from "@/utils/d3";
 import { selectedEntry } from "@/utils/def";
 import { columnValues } from "@/utils/data";
@@ -85,7 +86,7 @@ const staticCopy = async (place, mount, { width, space = padding, visible = fals
         const shot = wrapper.appendChild(root.cloneNode(false));
         shot.style.cssText = `margin: 0; width: ${width + 2*space}px;`;
         const def = shown.store.def;
-        const copy = shot.appendChild(prepare(root.querySelector('.vis'), { text: selection(def), facets: [def.facets?.dim, def.facets?.rows, def.facets?.cols].filter(d => typeof d == 'string'), space }));
+        const copy = shot.appendChild(prepare(root.querySelector('.vis'), { text: selection(def), facets: facetMappings(def.facets).all, space }));
         return { copy, remove: () => wrapper.remove() };
     } catch (error) {
         wrapper.remove();

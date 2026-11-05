@@ -1,4 +1,4 @@
-export { normalize, scaleTypeOf, defaultScaleType, categoryKeys, hasCategories };
+export { normalize, scaleTypeOf, defaultScaleType, categoryKeys, hasCategories, facetMappings };
 
 import { isObject } from '@/utils/values';
 import { isOperator, refNames } from '@/utils/expr';
@@ -204,8 +204,21 @@ const normalizeMappings = (mapping, coord, own, plots = [], used = new Set()) =>
 // the names of the mappings of the facets and of the groups of scales, they
 // are categorical, the categories of a plot (`by`) are not, they group the
 // rows of any type, e.g. of a year
+/**
+ * The mappings of the facets: of a grid (`rows` and `cols`, the mappings of
+ * its rows and its columns) or `dim`, `cols` of `dim` is the number of
+ * columns, also a reference to a global ("@cols"), which is no mapping.
+ */
+const facetMappings = facets => {
+    const mapping = v => typeof v == 'string' && !v.startsWith('@') ? v : null;
+    const rows = mapping(facets?.rows);
+    const cols = mapping(facets?.cols);
+    return rows || cols ? { grid: true, rows, cols, all: [rows, cols].filter(Boolean) }
+        : { grid: false, rows: null, cols: null, all: typeof facets?.dim == 'string' ? [facets.dim] : [] };
+};
+
 const categoryNames = def => new Set([
-    ...(isObject(def.facets) ? [def.facets.dim, def.facets.rows, def.facets.cols].filter(d => typeof d == 'string') : []),
+    ...(isObject(def.facets) ? facetMappings(def.facets).all : []),
     ...Object.values(isObject(def.mapping) ? def.mapping : {}).filter(m => isObject(m) && isObject(m.scale)).map(m => m.scale.groups?.by),
 ].filter(n => typeof n == 'string'));
 

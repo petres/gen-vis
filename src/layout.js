@@ -5,6 +5,7 @@ import * as d3 from "@/utils/d3";
 import { bind, constant, evaluate, formatter, refNames } from "@/utils/expr";
 import { bandCenter, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
+import { facetMappings } from "@/utils/normalize";
 import { warnOnce } from "@/utils/warn";
 
 // the warning of a condition of a filter of no mapping, e.g. of a column
@@ -75,10 +76,8 @@ const ownProp = (props, key) => props && Object.hasOwn(props, key) ? props[key] 
  * mapping, a number the columns of the facets of `dim`), null otherwise.
  */
 const gridOf = def => {
-    const f = def.facets;
-    const rows = typeof f?.rows == 'string' ? f.rows : null;
-    const cols = typeof f?.cols == 'string' ? f.cols : null;
-    return rows || cols ? { rows, cols } : null;
+    const { grid, rows, cols } = facetMappings(def.facets);
+    return grid ? { rows, cols } : null;
 };
 
 // the mappings of the facets, e.g. of their groups of rows and stacks

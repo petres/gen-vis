@@ -50,6 +50,13 @@ describe('layout', () => {
         expect(shared.facets[0].scales.y).toBe(shared.facets[1].scales.y);
     });
 
+    test('the columns of facets of a global ("cols": "@cols"), no grid, as in 4.0', async () => {
+        const v = await view({ globals: { cols: 1 }, facets: { dim: 'c', cols: '@cols' } });
+        expect(v.facets.map(f => [f.key, f.width])).toEqual([['Wien', 400], ['Tirol', 400]]);
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef({ mapping: mapping(), plot, globals: { cols: 1 }, facets: { dim: 'c', cols: '@cols' } }).filter(w => w.startsWith('facets'))).toEqual([]);
+    });
+
     test('the scales of colors are the ones of all rows, also of the legend', async () => {
         const v = await view({ facets: { dim: 'c', cols: 2 } });
         expect(v.colors.color.domain()).toEqual([1, 20]);
