@@ -837,7 +837,11 @@
                             "required": ["column"],
                             "additionalProperties": false,
                             "description": "The distinct values of a column of the data, ascending.",
-                            "properties": { "column": { "type": "string" } }
+                            "properties": {
+                                "column": { "type": "string" },
+                                "format": { "type": "string", "description": "The format of the names of the values in the locale: of dates a time format, e.g. \"%b %Y\" (Okt 2026), \"%K. Halbjahr %Y\", a number format otherwise." },
+                                "names": { "type": "string", "description": "The column of the names of the values, of the first row of a value, e.g. monthName." }
+                            }
                         }
                     ]
                 }

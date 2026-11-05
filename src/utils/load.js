@@ -1,11 +1,11 @@
 export { resolveUrl, clearCache, resolveParents, readDef, requirements, raw, geoParts, loadGeo, load, fetchData };
 
 
-import { addDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, usedColumns } from "@/utils/data";
+import { addDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, toDate, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
 import { applyPatches, mergeAll, prepareDef, variants } from "@/utils/def";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
-import { loadLocale } from "@/utils/locale";
+import { getLocale, loadLocale } from "@/utils/locale";
 import { loadCoord } from "@/coords";
 import { loadColors, ownScheme } from "@/utils/d3";
 import { lazy } from "@/utils/lazy";
@@ -293,9 +293,22 @@ const loadFiles = async (defOrg, url) => {
  * to utc, the entries of the legends are the ones of the state, e.g. of the
  * categories of another column.
  */
+// the format of the names of the values of a form element of a column
+// (`values.format`) in the locale of the definition: a time format of dates
+// (a format with %), e.g. "%b %Y" of "2026-10", a number format otherwise
+const valueFormat = locale => format => {
+    const { time, number } = getLocale(locale ?? undefined);
+    const f = format.includes('%') ? time.format(format) : number.format(format);
+    return v => {
+        const date = format.includes('%') ? toDate(v) : null;
+        const n = Number(v);
+        return date !== null ? f(new Date(date)) : (!format.includes('%') && v.trim() !== '' && Number.isFinite(n) ? f(n) : v);
+    };
+};
+
 const prepare = (defOrg, rows, files, state, globals, symbols = {}) => {
     let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files);
-    addDataValues(defOrg, rows, columns);
+    addDataValues(defOrg, rows, columns, valueFormat(defOrg.options?.locale));
     inferTypes(defOrg, rows, columns);
     const keysOf = column => distinctValues(rows, columns, column).map(String);
     const transform = () => {

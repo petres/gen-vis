@@ -402,10 +402,28 @@ const distinctValues = (rows, columns, column) => {
 // value, the values are strings, as the ones of csv, of every format, a
 // global which is none of them (or missing) is the last value, e.g. the
 // latest year
-const addDataValues = (def, rows, columns = null) => {
+const addDataValues = (def, rows, columns = null, formatOf = null) => {
     (def.formElements ?? []).filter(e => e?.values && !Array.isArray(e.values)).forEach(e => {
         const values = distinctValues(rows, columns, e.values.column).map(String);
-        e.values = values.map(v => ({ id: v, name: v, value: v }));
+        // the names of the entries: of a column of the first row of the value
+        // (`names`), formatted (`format`, of dates a time format, e.g. "%b
+        // %Y", a number format otherwise, see formatOf), the values otherwise
+        const { names, format } = e.values;
+        let nameOf = v => v;
+        if (typeof names == 'string') {
+            const source = sourceRows(rows, columns);
+            const value = columnValues(rows, columns, e.values.column);
+            const name = columnValues(rows, columns, names);
+            const byValue = new Map();
+            source.forEach((r, i) => {
+                const k = String(value(i));
+                if (!byValue.has(k) && !missing(name(i)))
+                    byValue.set(k, String(name(i)));
+            });
+            nameOf = v => byValue.get(v) ?? v;
+        } else if (typeof format == 'string' && formatOf)
+            nameOf = formatOf(format);
+        e.values = values.map(v => ({ id: v, name: nameOf(v), value: v }));
         def.globals ??= {};
         if (values.length > 0 && !values.some(v => sameValue(v, def.globals[e.ref])))
             def.globals[e.ref] = values.at(-1);

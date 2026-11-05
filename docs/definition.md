@@ -1398,7 +1398,11 @@ hover). The scales are the ones of the filtered rows, `domainIgnores` of a
 ```
 
 `values` can also be the distinct values of a column of the data, in
-ascending order (numbers by their value), named as the values, strings as
+ascending order (numbers by their value), named as the values (`format`
+formats the names in the locale, of dates a time format, e.g. `"%b %Y"` of
+`2026-10` as `Okt 2026` or `"%K. Halbjahr %Y"`, a number format otherwise;
+`names` is a column of the names, the one of the first row of a value,
+e.g. `{"column": "month", "names": "monthName"}`), strings as
 the ones of CSV of every format of the data (also the globals and the state
 of them), so new
 values of the data are added, e.g. a new year. If the global is none of them,

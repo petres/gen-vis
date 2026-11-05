@@ -68,6 +68,8 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- The names of the values of a form element of a column: `format` (e.g.
+  `"%b %Y"` of `2026-10`) or a column of `names`, instead of the raw values.
 - The labels of maps: `geo:text` at the pole of inaccessibility of the
   largest polygon of a feature, not its centroid (`"place": "centroid"`
   keeps it), so labels of long or bent countries are inside them; the labels

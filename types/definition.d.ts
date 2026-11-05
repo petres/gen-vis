@@ -1372,5 +1372,13 @@ export interface FormElement {
         | FormElementValues
         | {
               column: string;
+              /**
+               * The format of the names of the values in the locale: of dates a time format, e.g. "%b %Y" (Okt 2026), "%K. Halbjahr %Y", a number format otherwise.
+               */
+              format?: string;
+              /**
+               * The column of the names of the values, of the first row of a value, e.g. monthName.
+               */
+              names?: string;
           };
 }
