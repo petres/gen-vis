@@ -2,7 +2,7 @@
 // share of renewables of the electricity of European countries, 2019 and
 // 2025, every step adds to the definition of the one before (`add`), its
 // definition (`def`) is the merge of the additions, lists are replaced
-import merge from 'deepmerge';
+import { deepMerge as merge } from '../../src/utils/merge.js';
 
 // the colors of the years, the earlier one is muted
 const colors = { from: '#A8A29E', to: '#0F766E' };
