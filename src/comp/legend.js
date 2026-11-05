@@ -6,6 +6,7 @@ import { setProps } from "@/utils/draw";
 import { withColor } from "@/layout";
 import { el, patch, setText } from "@/comp/html";
 import { symbolDefaults } from "@/utils/defaults";
+import { symbolOf, symbolShape } from "@/utils/def";
 
 // the class of a value of a prop, e.g. of the legend props, as Vue joins
 // them: a string, the names of an object with a true value, a list of them
@@ -146,13 +147,7 @@ const createLegend = (vis, legend) => {
                 svg = null;
             }
             if (svg) {
-                // the box of the symbol, its middle at the middle of the
-                // capitals of the name (--gen-vis-legend-symbol-middle above
-                // the baseline), the bottom of an inline svg is on the
-                // baseline, see styles.css
-                const height = symbol.height ?? symbol.size ?? 16;
-                patch(svg, { width: symbol.width ?? symbol.size ?? 16, height,
-                    style: `vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - ${height/2}px)` });
+                symbolBox(svg, symbol.width ?? symbol.size ?? 16, symbol.height ?? symbol.size ?? 16);
                 drawSymbol(svg, symbol, { ...scope, ...colored });
             }
             span ??= div.appendChild(el('span'));
@@ -162,6 +157,12 @@ const createLegend = (vis, legend) => {
 
     return { el: root, update };
 };
+
+// the box of the symbol of an entry, its middle at the middle of the
+// capitals of the name (--gen-vis-legend-symbol-middle above the baseline),
+// the bottom of an inline svg is on the baseline, see styles.css
+const symbolBox = (svg, width, height) => patch(svg, { width, height,
+    style: `vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - ${height/2}px)` });
 
 /**
  * The entries of the annotations with a `legend` (a name, also a template
@@ -173,11 +174,6 @@ const createLegend = (vis, legend) => {
  */
 const annotationEntries = store => {
     const defaults = symbolDefaults(store.chartDefaults);
-    const box = kind => {
-        const d = defaults?.[kind] ?? {};
-        const size = d.size ?? defaults?.size ?? 16;
-        return { width: d.width ?? defaults?.width ?? size, height: d.height ?? defaults?.height ?? size };
-    };
     const seen = new Set();
     return store.def.plot.filter(p => p.type?.startsWith('annotation:') && p.legend !== undefined && p.legend !== null).flatMap(p => {
         const name = store.text(String(p.legend));
@@ -188,13 +184,14 @@ const annotationEntries = store => {
         const row = p.data?.[0] ?? {};
         const vertical = Object.keys(row).some(k => row[k] !== null && store.def.mapping[k]?.scale?.orientation == 'horizontal');
         const kind = type == 'band' ? 'rect' : type == 'circle' ? 'circle' : 'line';
-        const { width, height } = box(kind);
-        const shape = type == 'band' ? { element: 'rect', attrs: { x: 0, y: 0.5, width, height: height - 1 } }
-            : type == 'circle' ? { element: 'circle', attrs: { cx: width/2, cy: height/2, r: Math.min(4, Math.min(width, height)/2 - 1) } }
-            : vertical ? { element: 'line', attrs: { x1: width/2, x2: width/2, y1: 0, y2: height } }
-            : { element: 'line', attrs: { x1: 0, x2: width, y1: height/2, y2: height/2 } };
+        // the box of the shortcut of the defaults, the shape without the
+        // colors of categories, the ones of the annotation and its class
+        const { width, height } = symbolOf(kind, new Set(), defaults);
+        const { stroke, fill, 'stroke-width': _, ...shape } = symbolShape(kind, width, height);
+        const attrs = type == 'circle' ? { ...shape, r: Math.min(4, Math.min(width, height)/2 - 1) }
+            : vertical ? { x1: width/2, x2: width/2, y1: 0, y2: height } : shape;
         const props = evaluate(p.props ?? {}, store.scope);
-        return [{ name, width, height, element: shape.element, attrs: { ...shape.attrs, ...props, class: `vis-annotation vis-${type}` } }];
+        return [{ name, width, height, element: kind, attrs: { ...attrs, ...props, class: `vis-annotation vis-${type}` } }];
     });
 };
 
@@ -211,8 +208,7 @@ const createAnnotationLegend = vis => {
             const e = entries[i];
             div.replaceChildren();
             const svg = div.appendChild(create('svg'));
-            patch(svg, { width: e.width, height: e.height,
-                style: `vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - ${e.height/2}px)` });
+            symbolBox(svg, e.width, e.height);
             const shape = svg.appendChild(create(e.element));
             setProps.call(shape, e.attrs);
             const span = div.appendChild(el('span'));

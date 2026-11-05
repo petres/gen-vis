@@ -1,4 +1,4 @@
-export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts };
+export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts, symbolOf, symbolShape };
 
 import merge from 'deepmerge';
 import { ownColors, schemeColors } from '@/utils/d3';
@@ -81,13 +81,20 @@ const symbolOf = (symbol, names, defaults = {}) => {
     const height = given.height ?? (given.size === undefined ? shortcut.height ?? defaults?.height : undefined) ?? size;
     const props = { ...shortcut.props, ...given.props };
     const own = keys => Object.fromEntries(keys.filter(k => names.has(k)).map(k => [k, `@${k}`]));
-    const shapes = {
-        line: { x1: 0, x2: width, y1: height/2, y2: height/2, stroke: '@color', 'stroke-width': 2, ...own(['stroke-width', 'stroke-dasharray', 'opacity']) },
-        rect: { x: 0, y: 0.5, width, height: height - 1, rx: 2, fill: '@color', ...own(['opacity']) },
-        circle: { cx: width/2, cy: height/2, r: Math.min(width, height)/2 - 2, fill: '@color', ...own(['opacity']) },
-    };
-    return { width, height, elements: [{ type, props: { ...shapes[type], ...props } }] };
+    const extra = { line: own(['stroke-width', 'stroke-dasharray', 'opacity']), rect: { rx: 2, ...own(['opacity']) }, circle: own(['opacity']) }[type];
+    return { width, height, elements: [{ type, props: { ...symbolShape(type, width, height), ...extra, ...props } }] };
 };
+
+/**
+ * The element of a symbol of a legend (`line`, `rect` or `circle`) in its
+ * box of `width` and `height`, in the color of the category: a line
+ * through its middle, a box of its height without the half pixels at its
+ * edges, a dot in its center, also of "auto" and of the annotations.
+ */
+const symbolShape = (kind, width, height) => kind == 'line'
+    ? { x1: 0, x2: width, y1: height/2, y2: height/2, stroke: '@color', 'stroke-width': 2 }
+    : kind == 'rect' ? { x: 0, y: 0.5, width, height: height - 1, fill: '@color' }
+    : { cx: width/2, cy: height/2, r: Math.min(width, height)/2 - 2, fill: '@color' };
 
 // the plot types drawn as a filled box, a line or a dot in a symbol of "auto"
 const symbolKinds = [
@@ -123,12 +130,7 @@ const autoSymbol = (symbol, name, plots, names, defaults) => {
     // the box of the line, of the area or of the dot
     const base = symbolOf({ ...given, type: parts.find(p => p.kind == 'line')?.kind ?? parts[0].kind, props: {} }, names, defaults);
     const { width, height } = base;
-    const shapes = {
-        rect: { x: 0, y: 0.5, width, height: height - 1, fill: '@color' },
-        line: { x1: 0, x2: width, y1: height/2, y2: height/2, stroke: '@color', 'stroke-width': 2 },
-        circle: { cx: width/2, cy: height/2, r: Math.min(width, height)/2 - 2, fill: '@color' },
-    };
-    return { width, height, elements: parts.map(p => ({ type: p.kind, props: { ...shapes[p.kind], ...p.props, ...given.props } })) };
+    return { width, height, elements: parts.map(p => ({ type: p.kind, props: { ...symbolShape(p.kind, width, height), ...p.props, ...given.props } })) };
 };
 
 // the colors of the categories without colors, the scheme observable10
