@@ -43,7 +43,7 @@
                     and 4.0 did). There is one author, no company and no promise of support.
                 </p>
                 <p>
-                    If it fits your charts, use it. If it nearly fits, fork it: the code is about 8 000 lines of
+                    If it fits your charts, use it. If it nearly fits, fork it: the code is about 11 000 lines of
                     JavaScript without a framework, the parts and their files are below. The
                     <a href="./#comparison">comparison</a> on the examples page names the libraries which
                     are the better choice for most other cases.
@@ -67,7 +67,8 @@
                         props, annotations become plots.
                     </li>
                     <li>
-                        <strong>Rows</strong> <code>src/utils/data.js</code>: transforms add columns, every row gets
+                        <strong>Rows</strong> <code>src/utils/data.js</code>: transforms add columns (and rows, e.g. the
+                        classes of a histogram of <code>bin</code>), every row gets
                         one value per mapping, converted by the type of the mapping: numbers, dates as timestamps,
                         categories as strings.
                     </li>
@@ -108,11 +109,15 @@
                     <code>date</code> or categorical, by default the one of its parts or of the values), and
                     everything which belongs to it: its <code>scale</code>, whose <code>orientation</code> is its
                     place in the coordinate system (horizontal or vertical, angular or radial), its
-                    <code>axis</code>, <code>legend</code> and <code>hover</code>, and its
+                    <code>axis</code>, <code>legend</code> and <code>hover</code> (of stacks also a row of their
+                    <code>total</code>), and its
                     <code>categories</code> with their props: a name, a color and any other value a plot can use.
                     <code>x</code> and <code>y</code> are the places of the coordinate system, they have a scale
                     and an axis of their own, <code>"x": "year"</code> is a mapping of the column. A mapping
                     without a scale is fine, e.g. one which only groups rows or carries props of its categories.
+                    Dates can be periods (<code>"interval": "month"</code>: a value is the month starting at it, a
+                    bar is as wide as it), an axis can cross the plot at a value of the other one
+                    (<code>"axis": {"at": 0}</code>).
                 </p>
 
                 <h3>Plots</h3>
@@ -166,6 +171,26 @@
                     <code>"column": "{unit}"</code>. An entry of a form element sets globals and
                     <code>patch</code>es any part of the definition, merged in the order of the form elements,
                     <code>null</code> removes a part. What the user chose and hid is the state of the chart.
+                    A text can be one per language, <code>{"de": "Bevölkerung", "en": "Population"}</code>, the one
+                    of <code>options.language</code>, e.g. a global of a form element.
+                </p>
+
+                <h3>Transforms</h3>
+                <p>
+                    <code>transform</code> is a list of steps of the rows in the browser, most add a column, e.g.
+                    <code>lookup</code> of another file, <code>index</code> of a base year, <code>share</code>,
+                    <code>rolling</code> means or <code>calc</code> of an expression, <code>filter</code> leaves
+                    rows out. <code>bin</code> adds the classes of a histogram (counts, shares or
+                    densities) as rows of their own, <code>random</code> a number per row which stays the same on
+                    every draw, e.g. the jitter of a strip plot.
+                </p>
+
+                <h3>Facets</h3>
+                <p>
+                    <code>facets</code> draws a small chart per category: of one mapping (<code>dim</code>) in
+                    <code>cols</code> columns, or a grid of two, <code>"rows": "region", "cols": "source"</code>,
+                    with the names of the rows and columns at its edges and scales of all facets, per row or per
+                    column.
                 </p>
 
                 <h3>Coordinate systems</h3>
@@ -173,7 +198,8 @@
                     <code>options.coord</code> is <code>cartesian</code> (the default), <code>polar</code> or
                     <code>geo</code>. A coordinate system gives the ranges of the orientations, draws the axes,
                     places the annotations and finds the rows of the hover. Polar plots and maps are loaded with
-                    their first chart.
+                    their first chart; labels of maps are placed inside their areas and can leave out the ones
+                    which do not fit (<code>"fit": true</code>).
                 </p>
             </section>
 
@@ -194,7 +220,11 @@
                     A new plot type is a function from the groups of rows to a layer, registered by its name, see
                     <a :href="`${docs}/extensions.md`">extensions</a>; a coordinate system is registered the same
                     way, a scheme of colors of a house style (<code>registerScheme</code>) and the defaults of
-                    the axes (<code>registerDefaults</code>) for all charts of a page as well. Anything else is a change of the code: the steps above are the places to start, the tests
+                    the axes (<code>registerDefaults</code>) for all charts of a page as well. The look is CSS:
+                    the package has a default one (the font Inter, which it brings, grey axes, light grid lines,
+                    a hover card), its font and colors are css variables, e.g.
+                    <code>--gen-vis-font-family</code> or <code>--gen-vis-axis-color</code> of a house style, see
+                    the <a :href="`${docs}/usage.md#styles`">styles</a>. Anything else is a change of the code: the steps above are the places to start, the tests
                     (<code>npm test</code>) draw every example of <code>data/</code> and of this site, and
                     <code>npm run dev</code> shows them in a gallery.
                 </p>

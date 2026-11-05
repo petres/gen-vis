@@ -31,7 +31,8 @@
                     definition patch any part of it, e.g. columns, filters, scales, texts or the language,
                     the state is a <code>v-model</code>, the page can set globals and link charts.</li>
                 <li><strong>For any page and for Vue.</strong> A core without a framework, a standalone
-                    script which loads the parts a chart needs when it needs them, and a component of Vue 3.</li>
+                    script which loads the parts a chart needs when it needs them, and a component of Vue 3;
+                    with <code>lazy</code> a chart is drawn when it comes near the viewport.</li>
                 <li><strong>Images for documents.</strong> <code>exportSvg</code> is an SVG for Word and
                     editors whose texts stay texts, <code>gen-vis export</code> writes SVG, PNG and PDF files
                     of a definition at a physical size, e.g. 16 cm wide with texts of 8 pt.</li>
@@ -85,7 +86,7 @@ createApp(App).use(GenVis).mount('#app');
                 <h2>Without a bundler</h2>
                 <p>
                     The standalone script includes d3 and no framework. As a module of the page it loads
-                    70 kB (gzipped) at first and the parts which not every chart needs, e.g. the ones of
+                    80 kB (gzipped) at first and the parts which not every chart needs, e.g. the ones of
                     maps, when a chart needs them. The page below is this file, it loads the script of
                     this build instead of the CDN.
                 </p>
@@ -98,7 +99,7 @@ createApp(App).use(GenVis).mount('#app');
                     script of less than 1 kB, its globals return promises:
                     <code>&lt;script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.core.js"&gt;&lt;/script&gt;</code>
                     and <code>mountGenVisByClass('chart')</code>. All parts in one file are
-                    <code>dist-lib/gen-vis.js</code> (130 kB gzipped), pages with Vue as a script have
+                    <code>dist-lib/gen-vis.js</code> (145 kB gzipped), pages with Vue as a script have
                     the component of their Vue, <code>GenVis.vuePlugin(Vue)</code>, see the
                     <a :href="`${docs}/usage.md#standalone-script`">usage</a>.
                 </p>

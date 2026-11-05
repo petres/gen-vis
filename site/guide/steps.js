@@ -89,12 +89,14 @@ const steps = [
         id: 'legend',
         title: 'Legend and hover',
         text: `A legend and a hover are parts of mappings, too. The entries of the legend hide and show their
-            year, the hover shows the rows of the country under the pointer, also by the keyboard. The props of
-            <code>highlight</code> replace the ones of the elements of the country under the pointer.`,
+            year, their <code>symbol</code> <code>auto</code> is the one of the plots of the year, a dot in its
+            color and size. The hover shows the rows of the country under the pointer, also by the keyboard, and
+            highlights their year in the legend. The props of <code>highlight</code> replace the ones of the
+            elements of the country under the pointer.`,
         add: {
             options: { title: 'Renewables in the electricity of Europe', subtitle: 'Share of the generation, 2019 and 2025' },
             mapping: {
-                year: { name: 'Year', legend: { symbol: 'circle', onlyData: true }, hover: {} },
+                year: { name: 'Year', legend: { symbol: 'auto', onlyData: true }, hover: {} },
                 x: { name: 'Share', hover: { format: '.1%' } },
             },
             plot: [
@@ -113,7 +115,8 @@ const steps = [
         text: `One more plot writes the share of 2025 in a column at the right, its <code>filter</code> keeps the
             rows of that year, its <code>x</code> is an expression of the width of the plot area and its text a
             <code>format</code> of the value. An annotation is a plot of its own values: a line at half of the
-            electricity.`,
+            electricity, with a label on the plot and an entry of the legend (<code>legend</code>), after the
+            years.`,
         add: {
             options: { margins: { right: 44 } },
             plot: [
@@ -131,7 +134,7 @@ const steps = [
                     },
                 },
             ],
-            annotations: [{ type: 'line', x: 0.5, label: 'half', props: { 'stroke-dasharray': '3 3' } }],
+            annotations: [{ type: 'line', x: 0.5, label: 'half', legend: 'Half of the generation', props: { 'stroke-dasharray': '3 3' } }],
         },
     },
     {

@@ -55,7 +55,7 @@ const rows = [
     },
     {
         label: 'Transforms of the data',
-        cells: ['index, share, rolling, cumulative, calc, rank, lookup, year, align', 'calculate, aggregate, window, fold, …', 'filter, sort (dataset)', '— (removed in v3)', '—', '—', 'bin, group, stack, window, …'],
+        cells: ['index, share, rolling, cumulative, calc, rank, lookup, year, align, bin, random', 'calculate, aggregate, window, fold, …', 'filter, sort (dataset)', '— (removed in v3)', '—', '—', 'bin, group, stack, window, …'],
     },
     {
         label: 'Controls in the definition',
@@ -63,7 +63,7 @@ const rows = [
     },
     {
         label: 'Kinds of charts',
-        cells: ['lines, areas, bars, points, texts, polar plots, pies, maps', 'many (a grammar of marks)', 'many, also graphs, sankey, 3D (GL)', 'many, also 3D and statistical', 'many, also stock and Gantt', '8 types', 'many (a grammar of marks)'],
+        cells: ['lines, areas, bars, points, texts, histograms, polar plots, pies, maps, grids of facets', 'many (a grammar of marks)', 'many, also graphs, sankey, 3D (GL)', 'many, also 3D and statistical', 'many, also stock and Gantt', '8 types', 'many (a grammar of marks)'],
     },
     {
         label: 'Maps',
@@ -87,7 +87,7 @@ const rows = [
     },
     {
         label: 'Size (gzipped)',
-        cells: ['as a module 68 kB at first, the single file 128 kB', '280 kB (Vega, Vega-Lite, vega-embed)', '367 kB', '1 475 kB', '102 kB, more with modules', '70 kB', '68 kB, with d3 160 kB'],
+        cells: ['as a module 80 kB at first, the single file 145 kB', '280 kB (Vega, Vega-Lite, vega-embed)', '367 kB', '1 475 kB', '102 kB, more with modules', '70 kB', '68 kB, with d3 160 kB'],
     },
     {
         label: 'License',
