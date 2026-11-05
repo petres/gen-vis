@@ -188,8 +188,10 @@
     font-size: 12px;
     fill: var(--gen-vis-axis-label-color, #5F6670);
 }
+/* the grid lines translucent (#E3E5E8 on white): above plots of the layer
+   below and bands of annotations a darker shade of them, not grey stripes */
 .vis-facet svg g.vis-grid {
-    stroke: var(--gen-vis-grid-color, #E3E5E8);
+    stroke: var(--gen-vis-grid-color, #01132E1C);
     stroke-width: 1px;
 }
 /* the texts of the plots without a fill of their props, black by default as in svg */

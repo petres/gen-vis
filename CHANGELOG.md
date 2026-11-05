@@ -35,7 +35,7 @@ What existing definitions draw differently:
   (three examples of `data/` got 6 more); the title 20px semibold, the subtitle and the footer
   grey (`--gen-vis-muted-color`), the lines and marks of the axes grey
   (`--gen-vis-axis-color`) and their labels and titles 12px a darker grey
-  (`--gen-vis-axis-label-color`), the grid lines lighter and 1px, the
+  (`--gen-vis-axis-label-color`), the grid lines lighter, 1px and translucent (`#01132E1C`, `#E3E5E8` on white, a darker shade of the plots below them, e.g. areas of `"layer": "below"`, instead of grey stripes), the
   hover an opaque card (before 80% white) with a border
   (`--gen-vis-hover-border-color`) and a shadow whose title is one line, the focus in the first color of
   `observable10` (the colors of categories without colors, as before),

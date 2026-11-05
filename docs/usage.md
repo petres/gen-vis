@@ -497,7 +497,7 @@ page (the default in brackets):
 ```css
 .vis {
     --gen-vis-font-family: Arial, sans-serif;  /* Inter, system-ui, …, sans-serif */
-    --gen-vis-grid-color: #444;                /* #E3E5E8, the grid lines */
+    --gen-vis-grid-color: #444;                /* #01132E1C (#E3E5E8 on white, translucent), the grid lines */
     --gen-vis-axis-color: #777;                /* #9AA0A8, the lines and marks of the axes */
     --gen-vis-axis-label-color: #BBB;          /* #5F6670, their labels and titles */
     --gen-vis-muted-color: #AAA;               /* #5F6670, the subtitle and the footer */
