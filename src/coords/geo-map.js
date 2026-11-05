@@ -121,6 +121,7 @@ const featureAt = (ctx, pointer, event) => {
 // outside of it
 const ringDistance = (x, y, rings) => {
     let inside = false;
+    // the squared distances, one root at the end
     let min = Infinity;
     for (const ring of rings)
         for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -132,21 +133,70 @@ const ringDistance = (x, y, rings) => {
             const dx = bx - ax;
             const dy = by - ay;
             const t = dx || dy ? Math.max(0, Math.min(1, ((x - ax)*dx + (y - ay)*dy)/(dx*dx + dy*dy))) : 0;
-            min = Math.min(min, Math.hypot(x - ax - t*dx, y - ay - t*dy));
+            const ex = x - ax - t*dx;
+            const ey = y - ay - t*dy;
+            const d = ex*ex + ey*ey;
+            if (d < min)
+                min = d;
         }
+    min = Math.sqrt(min);
     return inside ? min : -min;
+};
+
+// a queue of the cells of pole by their `max`, the largest first (a binary heap)
+const cellQueue = () => {
+    const heap = [];
+    return {
+        get size() { return heap.length; },
+        push(c) {
+            let i = heap.push(c) - 1;
+            while (i > 0) {
+                const parent = (i - 1) >> 1;
+                if (heap[parent].max >= c.max)
+                    break;
+                heap[i] = heap[parent];
+                i = parent;
+            }
+            heap[i] = c;
+        },
+        pop() {
+            const top = heap[0];
+            const last = heap.pop();
+            if (heap.length) {
+                let i = 0;
+                for (;;) {
+                    const l = 2*i + 1;
+                    const r = l + 1;
+                    let m = l < heap.length && heap[l].max > last.max ? l : -1;
+                    if (r < heap.length && heap[r].max > (m < 0 ? last.max : heap[l].max))
+                        m = r;
+                    if (m < 0)
+                        break;
+                    heap[i] = heap[m];
+                    i = m;
+                }
+                heap[i] = last;
+            }
+            return top;
+        },
+    };
 };
 
 /**
  * The pole of inaccessibility of a polygon (projected rings, the first one
  * the outer one): the point inside of it farthest from its edges, and the
  * distance (polylabel of Mapbox: cells of a grid split until they can not
- * have a farther point, within `precision` pixels).
+ * have a farther point, within `precision` pixels, the cell which can have
+ * the farthest point first, so the search ends at the first which can not).
  */
 export const pole = (rings, precision = 1) => {
-    const xs = rings[0].map(p => p[0]);
-    const ys = rings[0].map(p => p[1]);
-    const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+    let [x0, x1, y0, y1] = [Infinity, -Infinity, Infinity, -Infinity];
+    for (const [x, y] of rings[0]) {
+        x0 = Math.min(x0, x);
+        x1 = Math.max(x1, x);
+        y0 = Math.min(y0, y);
+        y1 = Math.max(y1, y);
+    }
     const size = Math.min(x1 - x0, y1 - y0);
     if (!(size > 0))
         return { x: x0, y: y0, d: 0 };
@@ -154,24 +204,23 @@ export const pole = (rings, precision = 1) => {
         const d = ringDistance(x, y, rings);
         return { x, y, h, d, max: d + h*Math.SQRT2 };
     };
-    const queue = [];
+    const queue = cellQueue();
     for (let x = x0; x < x1; x += size)
         for (let y = y0; y < y1; y += size)
             queue.push(cell(x + size/2, y + size/2, size/2));
     let best = cell((x0 + x1)/2, (y0 + y1)/2, 0);
-    while (queue.length) {
-        // the cell which can have the farthest point first
-        let k = 0;
-        for (let i = 1; i < queue.length; i++)
-            if (queue[i].max > queue[k].max)
-                k = i;
-        const c = queue.splice(k, 1)[0];
+    while (queue.size) {
+        const c = queue.pop();
         if (c.d > best.d)
             best = c;
+        // no cell left can have a point farther than the best one
         if (c.max - best.d <= precision)
-            continue;
+            break;
         const h = c.h/2;
-        queue.push(cell(c.x - h, c.y - h, h), cell(c.x + h, c.y - h, h), cell(c.x - h, c.y + h, h), cell(c.x + h, c.y + h, h));
+        queue.push(cell(c.x - h, c.y - h, h));
+        queue.push(cell(c.x + h, c.y - h, h));
+        queue.push(cell(c.x - h, c.y + h, h));
+        queue.push(cell(c.x + h, c.y + h, h));
     }
     return best;
 };
