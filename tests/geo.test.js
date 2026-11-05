@@ -113,7 +113,7 @@ test('an annotation a map has not warns once', async () => {
 
 describe('the place of the labels of a map', () => {
     test('the pole of inaccessibility of a polygon, inside of it, not its centroid', async () => {
-        const { pole } = await import('@/plots/geo');
+        const { pole } = await import('@/coords/geo-map');
         // an L of arms 20 wide: its centroid (about 32, 32) is outside of it
         const l = [[[0, 0], [100, 0], [100, 20], [20, 20], [20, 100], [0, 100], [0, 0]]];
         const p = pole(l, 0.5);
