@@ -3,7 +3,7 @@ export { schemaUrl, schemaMajor, versionError };
 // the version of the definition language of a definition is its `$schema`,
 // the url of the schema of gen-vis which editors validate it with, the
 // `$id` of schema.json
-const schemaUrl = 'https://unpkg.com/@preschen/gen-vis@4/schema.json';
+const schemaUrl = 'https://unpkg.com/@preschen/gen-vis@5/schema.json';
 
 /**
  * The major version of gen-vis of a `$schema`: a url or a path which ends in
@@ -21,23 +21,24 @@ const schemaMajor = schema => {
         return null;
     if (m[1] !== undefined)
         return Number(m[1]);
-    return /(^|\/)node_modules\/@preschen\/gen-vis\/schema\.json$/.test(schema) ? 4 : undefined;
+    return /(^|\/)node_modules\/@preschen\/gen-vis\/schema\.json$/.test(schema) ? 5 : undefined;
 };
 
 /**
- * Why a definition of its `$schema` is none of gen-vis 4, e.g. "its $schema
- * is the one of gen-vis 3", null if it is one. A definition file needs one
+ * Why a definition of its `$schema` is none of gen-vis 5 (or 4, which is
+ * migrated while it is loaded, see utils/migrate.js), e.g. "its $schema is
+ * the one of gen-vis 3", null if it is one. A definition file needs one
  * (`required`), an inline definition may have none.
  */
 const versionError = (schema, required = false) => {
     if (schema === undefined && !required)
         return null;
     const major = schemaMajor(schema);
-    if (major === 4)
+    if (major === 5 || major === 4)
         return null;
     const reason = schema === undefined ? 'its $schema is missing'
         : major === undefined ? `its $schema ${JSON.stringify(schema)} names no major version of gen-vis`
             : major === null ? `its $schema ${JSON.stringify(schema)} is none of gen-vis`
                 : `its $schema is the one of gen-vis ${major}`;
-    return `${reason}, e.g. "$schema": "${schemaUrl}", see the changelog of gen-vis 4.0.0 of the changes of the definitions`;
+    return `${reason}, e.g. "$schema": "${schemaUrl}", see the changelog of gen-vis 5.0.0 of the changes of the definitions`;
 };

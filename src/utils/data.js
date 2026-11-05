@@ -1,10 +1,10 @@
-export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
+export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, rawRow, rawIndex, rowResolver, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { fillTemplate, inLanguage, sameValue, templateRefs, variants } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
-import { evaluate } from "@/utils/expr";
+import { bind, constant, evaluate, isOperator } from "@/utils/expr";
 import { comparison, compareCategories, isObject, missing, toNumber } from "@/utils/values";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
@@ -190,6 +190,11 @@ const updateData = (rows, data, def, names, columns = null) => {
     return data;
 };
 
+// the row of the data a prepared row was made of and its index, e.g. for
+// the columns of a filter which are no mappings, see rowResolver
+const rawRow = Symbol('rawRow');
+const rawIndex = Symbol('rawIndex');
+
 // maps the parsed rows to the mappings, e.g. column `share` to `y`, also the
 // columns of transforms
 const prepareData = (data, def, columns = null) => {
@@ -204,9 +209,57 @@ const prepareData = (data, def, columns = null) => {
         mapping.forEach(c => {
             e[c.name] = c.convert(c.value(i));
         });
+        e[rawRow] = d;
+        e[rawIndex] = i;
         return e;
     })
 };
+
+/**
+ * The resolver of the names of an expression of a row, e.g. of a filter:
+ * the value of a mapping of the prepared row, else of a column of the
+ * transforms (`columns`) or of the data (see rawRow), else of the `scope`,
+ * e.g. a global; as the functions of the row of `bind`.
+ */
+const rowResolver = (mapping, columns, scope = {}) => name => {
+    if (typeof name == 'symbol')
+        return Object.hasOwn(scope, name) ? constant(scope[name]) : undefined;
+    if (Object.hasOwn(mapping, name))
+        return row => row[name];
+    if (columns?.has(name)) {
+        const values = columns.get(name);
+        return row => row[rawIndex] === undefined ? undefined : values[row[rawIndex]];
+    }
+    if (Object.hasOwn(scope, name))
+        return constant(scope[name]);
+    return row => row[rawRow]?.[name];
+};
+
+/**
+ * The rows of a filter `spec`: an expression of the row (see rowResolver,
+ * the names are the mappings, the columns and the `scope`), e.g.
+ * `"@year == @selected"`, true are all rows; or the conditions of mappings
+ * of 4.x, see rowFilter. `path` names it in errors, `unknown(path, dim)`
+ * reports a condition of no mapping.
+ */
+const filterRows = (rows, spec, mapping, scope = {}, { columns = null, path = 'filter', unknown = null } = {}) => {
+    if (spec === undefined || spec === null || spec === true)
+        return rows;
+    if (spec === false)
+        return [];
+    if (isObject(spec) && !isOperator(spec)) {
+        const conditions = rowFilter(spec, mapping, scope, path, unknown);
+        return conditions.length > 0 ? filter(rows, conditions) : rows;
+    }
+    const test = bind(spec, rowResolver(mapping, columns, scope));
+    if (test.constant)
+        return truthy(test()) ? rows : [];
+    return rows.filter(row => truthy(test(row)));
+};
+
+// false, 0, "", null, no value, NaN and empty lists are false, as the
+// conditions of expressions
+const truthy = v => Array.isArray(v) ? v.length > 0 : Boolean(v);
 
 // compares rows by the order of the categories in the definition, e.g. the
 // order of the `categories` of the props, `orders` are the dims with their ordered keys

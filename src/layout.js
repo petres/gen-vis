@@ -1,8 +1,9 @@
 export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor, unknownOf, gridOf, facetDims, inFacet };
 
-import { categoryOrder, continuous, convert, filter, groupBy, keptRows, rowFilter, stack } from "@/utils/data";
+import { categoryOrder, continuous, convert, filter, filterRows, groupBy, keptRows, stack } from "@/utils/data";
 import * as d3 from "@/utils/d3";
-import { bind, constant, evaluate, formatter, refNames } from "@/utils/expr";
+import { bind, constant, evaluate, formatter, isOperator, refNames } from "@/utils/expr";
+import { isObject } from "@/utils/values";
 import { bandCenter, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
 import { facetMappings } from "@/utils/normalize";
@@ -212,7 +213,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     // the rows of the conditions of `filter`, e.g. of a global of a form
     // element, see rowFilter, and of them the ones of the visible categories
     const visible = visibleKeys(def);
-    const filtered = filter(keptRows(store.data, store.columns), rowFilter(def.filter, def.mapping, scope, 'filter', unknownOf(store)));
+    const filtered = filterRows(keptRows(store.data, store.columns), def.filter, def.mapping, scope, { columns: store.columns, path: 'filter', unknown: unknownOf(store) });
     const shown = visibleRows(visible);
     const rows = shown.length > 0 ? filter(filtered, shown) : filtered;
 
@@ -223,7 +224,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     // on stacked areas
     const stackOrder = categoryOrder(visible.map(f => ({ dim: f.dim, keys: f.key })));
     const stackedRows = stacked && stacked !== true
-        ? filter(rows, rowFilter(stacked, def.mapping, scope, `mapping.${axis.v}.stacked`)) : rows;
+        ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `mapping.${axis.v}.stacked` }) : rows;
     const stacks = stacked ? stack(...stackSource(def, axis, stackedRows), facetDims(def), stackOrder) : null;
     const stackOf = stacks ? row => stacks.get(row) ?? [row[axis.v], row[axis.v]] : null;
     const isStacked = stacks ? row => stacks.has(row) : null;
@@ -261,14 +262,15 @@ const domainRows = (store, def, axis, scope, stacked, shown, stackOrder) => {
             return;
         const key = names.join('\0');
         if (!kept.has(key)) {
-            const others = Object.fromEntries(Object.entries(def.filter).filter(([c]) => !names.includes(c)));
-            kept.set(key, filter(keptRows(store.data, store.columns), [...rowFilter(others, def.mapping, scope), ...shown]));
+            // of an expression (5.0) all rows, the filter is ignored as a whole
+            const others = isObject(def.filter) && !isOperator(def.filter) ? Object.fromEntries(Object.entries(def.filter).filter(([c]) => !names.includes(c))) : undefined;
+            kept.set(key, filter(filterRows(keptRows(store.data, store.columns), others, def.mapping, scope, { columns: store.columns }), shown));
         }
         const rows = kept.get(key);
         const dims = facetDims(def);
         let stackOf = null;
         if (n == axis.v && stacked) {
-            const stackedRows = stacked !== true ? filter(rows, rowFilter(stacked, def.mapping, scope, `mapping.${n}.stacked`)) : rows;
+            const stackedRows = stacked !== true ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `mapping.${n}.stacked` }) : rows;
             const stacks = stack(...stackSource(def, axis, stackedRows), [...dims, ...names], stackOrder);
             stackOf = row => stacks.get(row) ?? [row[n], row[n]];
         }
@@ -298,7 +300,7 @@ const ofWidth = raw => raw !== undefined && raw !== null && typeof raw != 'boole
 const layout = (store, width, before = null) => {
     const def = store.def;
     const axis = axisNames(store);
-    const scope = { ...def.globals, totalWidth: width, [formatter]: store.scope[formatter] };
+    const scope = { ...store.names, totalWidth: width, [formatter]: store.scope[formatter] };
     const stacked = axis.v ? store.mapping(axis.v).stacked : undefined;
     const kept = before?.[rowsKept];
     const reuse = kept?.keep && kept.store === store && kept.def === def && kept.data === store.data && kept.columns === store.columns
@@ -462,8 +464,7 @@ const keptPlotRows = (store, plot, facet) => {
     const hit = kept?.get(plot);
     if (key !== null && hit?.key === key)
         return hit.rows;
-    const conditions = rowFilter(plot.filter, store.def.mapping, facet.scope, `plot ${plot.id}: filter`, unknownOf(store));
-    const rows = conditions.length > 0 ? filter(facet.rows, conditions) : facet.rows;
+    const rows = filterRows(facet.rows, plot.filter, store.def.mapping, facet.scope, { columns: store.columns, path: `plot ${plot.id}: filter`, unknown: unknownOf(store) });
     if (key !== null) {
         if (!kept)
             plotRowsKept.set(facet.rows, kept = new Map());
@@ -491,9 +492,9 @@ const plotRows = (store, plot, facet) => {
     }
     if (!plot.data && plot.filter)
         return keptPlotRows(store, plot, facet);
-    const conditions = rowFilter(plot.filter, store.def.mapping, facet.scope, `plot ${plot.id}: filter`, unknownOf(store));
+    const filtered = rows => filterRows(rows, plot.filter, store.def.mapping, facet.scope, { columns: store.columns, path: `plot ${plot.id}: filter`, unknown: unknownOf(store) });
     if (!plot.data)
-        return conditions.length > 0 ? filter(facet.rows, conditions) : facet.rows;
+        return filtered(facet.rows);
     const mapping = store.def.mapping;
     const dim = store.def.facets?.dim;
     const inline = !plot.loaded;
@@ -504,7 +505,7 @@ const plotRows = (store, plot, facet) => {
         })))
         .filter(r => facet.key === undefined || (facet.cell ? inCell(store.def, facet.cell, r)
             : !dim || !Object.hasOwn(r, dim) || String(r[dim]) == String(facet.key)));
-    return conditions.length > 0 ? filter(rows, conditions) : rows;
+    return filtered(rows);
 };
 
 // a row of a plot is in a cell of a grid if its values of the mappings of

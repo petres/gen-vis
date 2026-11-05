@@ -4,7 +4,7 @@ import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/expr";
 import { dataAttribute } from "@/utils/draw";
 import { create, pointer } from "@/utils/dom";
-import { filter, rowFilter } from "@/utils/data";
+import { filterRows } from "@/utils/data";
 import { unknownOf } from "@/layout";
 import { bandCenter } from "@/utils/scales";
 import { patch } from "@/comp/html";
@@ -247,7 +247,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // the rows of the hover, with a value and of its `filter`, by their
         // key, e.g. of the horizontal axis, compared as strings
         const options = hoverOptions();
-        const hoverRows = filter(ctx.rows.filter(e => e[v] !== null), rowFilter(options.filter, store.def.mapping, ctx.scope, 'options.hover.filter', unknownOf(store)));
+        const hoverRows = filterRows(ctx.rows.filter(e => e[v] !== null), options.filter, store.def.mapping, ctx.scope, { columns: store.columns, path: 'options.hover.filter', unknown: unknownOf(store) });
         const rowsByKey = d3.group(hoverRows, e => String(e[names.h]));
         // the nearest key is one with rows, e.g. not one of null values, of
         // the coordinate systems with the `nearest` of the context, unless
@@ -351,7 +351,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         });
 
         // the rows of the events and the slot, copies of the values of the mappings
-        const plain = row => ({ ...row });
+        const plain = row => Object.fromEntries(Object.entries(row));
         const payload = ({ key, rows, nearest }) => ({
             key,
             title: titleOf(key),

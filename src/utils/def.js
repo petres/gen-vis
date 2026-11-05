@@ -576,7 +576,8 @@ const fillTemplate = (column, names = {}) =>
 // fields of the selected entries of the form elements, e.g. `group:name` of
 // the name of the entry of the global `group`
 const templateNames = def => {
-    const names = { ...def.globals };
+    // also as `globals.<name>`, e.g. of a global which a dim of the same name shadows
+    const names = { ...def.globals, ...Object.fromEntries(Object.entries(def.globals ?? {}).map(([k, v]) => [`globals.${k}`, v])) };
     (def.formElements ?? []).forEach(e => {
         Object.entries(selectedEntry(def, e) ?? {}).filter(([, v]) => v === null || typeof v != 'object')
             .forEach(([k, v]) => names[`${e.ref}:${k}`] ??= v);
