@@ -94,11 +94,15 @@
 .vis-body-sides .vis-legends-left, .vis-body-sides .vis-legends-right {
     flex: none;
 }
-/* the entries of the categories one below the other */
+/* the entries of the categories one below the other, the titles with their
+   margin at the left as the entries */
 .vis-body-sides .vis-legends-left .vis-legend-entries > .vis-legend-entry,
 .vis-body-sides .vis-legends-right .vis-legend-entries > .vis-legend-entry {
     display: block;
     margin: 2px 5px;
+}
+.vis-body-sides :is(.vis-legends-left, .vis-legends-right) .vis-legend-title {
+    margin: 3px;
 }
 
 /* the facets */
@@ -275,10 +279,14 @@
 }
 
 /* the legends of the categories */
+/* the legends above and below the plots start at the left edge of the
+   title (no margin at their left), their entries 10px apart (a margin at
+   their right, none after the last one, so a centered legend stays
+   centered); the ones beside the plots below */
 .vis-legend .vis-legend-title {
     font-weight: 600;
     font-size: 13px;
-    margin: 3px;
+    margin: 3px 0;
     position: relative;
 }
 .vis-legend .vis-legend-entries > div {
@@ -293,10 +301,13 @@
     line-height: 1.5385;
     vertical-align: top;
     display: inline-block;
-    margin: 0px 5px;
+    margin: 0 10px 0 0;
     /* no selection of the text of a double click */
     user-select: none;
     border-radius: 2px;
+}
+.vis-legend .vis-legend-entries > div:last-child {
+    margin-right: 0;
 }
 .vis-legend .vis-legend-entries > div:focus-visible {
     outline: 2px solid var(--gen-vis-focus-color, #4269D0);
@@ -330,7 +341,7 @@
 .vis-color-legend .vis-legend-title {
     font-weight: 600;
     font-size: 13px;
-    margin: 3px;
+    margin: 3px 0;
 }
 .vis-color-legend .vis-color-scale {
     display: flex;
@@ -352,11 +363,12 @@
     margin-top: 2px;
 }
 
-/* the form elements, several are in one line, wrapped if there is not enough space */
+/* the form elements, several are in one line, wrapped if there is not
+   enough space, the first one at the left edge of the title, 16px apart */
 .vis-form-element {
     display: inline-block;
     font-size: 13px;
-    margin: 2px 16px 2px 4px;
+    margin: 2px 16px 2px 0;
 }
 .vis-form-element .vis-form-element-title {
     font-weight: 600;

@@ -15,6 +15,13 @@ differently, listed first.
 
 What existing definitions draw differently:
 
+- The form elements and the legends above and below the plots start at the
+  left edge of the title: the form elements without their margin of 4
+  pixels at the left (16 pixels between them), the titles of legends
+  without their margin of 3 pixels at the sides, the entries 10 pixels
+  apart by a margin at their right (before 5 pixels at both sides), none
+  after the last one, so a centered legend stays centered. The legends
+  beside the plots keep their margins.
 - A new default look of its own, not the one of a house style: the font
   is Inter, which the package brings (woff2 files of Latin and Latin
   Extended and of its symbols, e.g. CO₂, m³, ≤, →, ½, ℃, weights 400 and
