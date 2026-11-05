@@ -256,6 +256,34 @@ describe('bin and random in a chart', () => {
         expect(jitter()).toEqual(before);
     });
 
+    test('replaced rows of groups after a filter, a calc after them, other edges of a global', async () => {
+        const { createStore } = await import('@/store');
+        const store = createStore();
+        await store.init({ def: { ...def(), transform: [
+            { type: 'filter', expr: { '>': ['@v', 1] } },
+            { type: 'bin', column: 'v', step: '{step}', by: 'g', start: 'lo', end: 'hi', replace: true },
+            { type: 'calc', as: 'density', expr: { '/': ['@count', { '-': ['@hi', '@lo'] }] } },
+        ], mapping: { ...def().mapping, y: { column: 'density', type: 'numeric', scale: { orientation: 'vertical' } }, jitter: undefined } }, data });
+        // the classes with values, the empty ones are rows of 0
+        const classes = () => store.data.filter(r => r.y > 0).map(r => [r.g, r.lo, r.hi, r.y]);
+        expect(classes()).toEqual([['a', 0, 5, 0.2], ['b', 5, 10, 0.4]]);
+        expect(store.data).toHaveLength(4);
+        store.setGlobals({ step: '2' });
+        expect(classes()).toEqual([['a', 2, 4, 0.5], ['b', 6, 8, 0.5], ['b', 8, 10, 0.5]]);
+        expect(store.data).toHaveLength(8);
+        expect(store.def.mapping.g.keys).toEqual(['a', 'b']);
+    });
+
+    // the values of a form element are the ones of the transforms of the globals of the definition
+    test.fails('the values of a form element of a column of a bin follow other edges (known: they stay)', async () => {
+        const { createStore } = await import('@/store');
+        const store = createStore();
+        await store.init({ def: { ...def(), formElements: [{ id: 'lo', ref: 'lo', type: 'select', values: { column: 'lo' } }] }, data });
+        expect(store.def.formElements[0].values.map(v => v.value)).toEqual(['0', '5']);
+        store.setGlobals({ step: '2' });
+        expect(store.def.formElements[0].values.map(v => v.value)).toEqual(['0', '2', '4', '6', '8']);
+    });
+
     test('the rows of a bin: replaced, with later calc and share, after a filter, without values', () => {
         const source = [{ v: '1', g: 'a', y: '2020' }, { v: '3', g: 'a', y: '2021' }, { v: '7', g: 'b', y: '2020' }, { v: '', g: 'b', y: '2021' }, { v: '12', g: 'b', y: '2020' }];
         // the rows after the transforms with the columns of the transforms, of the filters
