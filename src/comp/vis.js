@@ -221,7 +221,7 @@ const createVis = app => {
             return 0;
         const left = (store.def.facets.rowHeaders ?? 'right') == 'left';
         const probe = root.appendChild(el('div', { class: `vis-facet-row-title ${left ? 'vis-facet-row-title-left' : ''}`,
-            style: 'position: absolute; visibility: hidden; height: auto; padding-top: 0; padding-bottom: 0;' }));
+            style: 'position: absolute; visibility: hidden; height: auto; padding-top: 0; padding-bottom: 0; white-space: nowrap;' }));
         const names = m.keys.map(k => store.text(m.categoryProps[k].name));
         const size = left
             ? Math.max(0, ...names.map(n => { setText(probe, n); return probe.getBoundingClientRect().width; }))

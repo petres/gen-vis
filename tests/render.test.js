@@ -3561,6 +3561,20 @@ describe('grids of facets: edge cases', () => {
         expect(errors).toEqual([]);
     });
 
+    test('headers left of the rows wider than 40% of the width: the column of 40%, the header wraps in it', async () => {
+        const { readFileSync } = await import('node:fs');
+        const { root } = await import('./dom.js');
+        // jsdom has no layout: every element is 800 pixels wide, so the names are measured wider than 40%
+        const el = await mount({ def: gridDef({ rows: 'c', cols: 'half', rowHeaders: 'left' }), data });
+        const header = el.querySelector('div.vis-facet-row-title-left');
+        expect(header.style.width).toBe('240px');
+        // the headers wrap (measured in one line, see rowHeaderWidth of comp/vis.js), checked in Chromium
+        const rule = /\.vis-facet-row-title-left \{([^}]*)\}/.exec(readFileSync(`${root}/src/styles.css`, 'utf8'))[1];
+        expect(rule).not.toMatch(/nowrap/);
+        expect(readFileSync(`${root}/src/comp/vis.js`, 'utf8')).toMatch(/visibility: hidden;[^']*white-space: nowrap;/);
+        expect(errors).toEqual([]);
+    });
+
     test('domainIgnores of a scale per row: the domain of the rows of the row, of all values of the condition', async () => {
         const def = gridDef({ rows: 'c', cols: 'half', scales: { y: 'row' } });
         def.mapping.y.scale.domainIgnores = true;

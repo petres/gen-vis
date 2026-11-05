@@ -122,7 +122,10 @@
     display: inline-flex;
     align-items: center;
     padding-right: 8px;
-    white-space: nowrap;
+    /* a header wider than its column (at most 40% of the width, see
+       rowHeaderWidth of comp/vis.js, which measures it in one line) wraps,
+       it does not cover the axis of the first facet */
+    overflow-wrap: break-word;
 }
 .vis-facet-row-title-right {
     display: inline-block;
