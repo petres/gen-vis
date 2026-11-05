@@ -1,0 +1,494 @@
+[
+  {
+    "name": "a column: the sum of the values of the group of every row of it, missing values are left out",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "aggregate",
+      "column": "value",
+      "by": "type",
+      "op": "sum",
+      "as": "total"
+    },
+    "columns": {
+      "total": [
+        80,
+        80,
+        80,
+        20,
+        20,
+        20
+      ]
+    }
+  },
+  {
+    "name": "the operations: mean, min, max, count, median, first, last",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": [
+      {
+        "type": "aggregate",
+        "column": "value",
+        "by": "type",
+        "op": "mean",
+        "as": "mean"
+      },
+      {
+        "type": "aggregate",
+        "column": "value",
+        "by": "type",
+        "op": "min",
+        "as": "min"
+      },
+      {
+        "type": "aggregate",
+        "column": "value",
+        "by": "type",
+        "op": "max",
+        "as": "max"
+      },
+      {
+        "type": "aggregate",
+        "column": "value",
+        "by": "type",
+        "op": "count",
+        "as": "count"
+      },
+      {
+        "type": "aggregate",
+        "column": "value",
+        "by": "type",
+        "op": "median",
+        "as": "median"
+      },
+      {
+        "type": "aggregate",
+        "column": "value",
+        "by": "type",
+        "op": "first",
+        "as": "first"
+      },
+      {
+        "type": "aggregate",
+        "column": "value",
+        "by": "type",
+        "op": "last",
+        "as": "last"
+      }
+    ],
+    "columns": {
+      "mean": [
+        26.666666666666668,
+        26.666666666666668,
+        26.666666666666668,
+        10,
+        10,
+        10
+      ],
+      "min": [
+        10,
+        10,
+        10,
+        5,
+        5,
+        5
+      ],
+      "max": [
+        40,
+        40,
+        40,
+        15,
+        15,
+        15
+      ],
+      "count": [
+        3,
+        3,
+        3,
+        2,
+        2,
+        2
+      ],
+      "median": [
+        30,
+        30,
+        30,
+        10,
+        10,
+        10
+      ],
+      "first": [
+        10,
+        10,
+        10,
+        5,
+        5,
+        5
+      ],
+      "last": [
+        40,
+        40,
+        40,
+        15,
+        15,
+        15
+      ]
+    }
+  },
+  {
+    "name": "first and last in the order of a column, missing values are left out, the median of an even number of values",
+    "rows": [
+      {
+        "d": "2019-07",
+        "v": "30"
+      },
+      {
+        "d": "2019-01",
+        "v": "10"
+      },
+      {
+        "d": "2020-01",
+        "v": ""
+      },
+      {
+        "d": "2019-10",
+        "v": "20"
+      },
+      {
+        "d": "2019-12",
+        "v": "40"
+      }
+    ],
+    "transform": [
+      {
+        "type": "aggregate",
+        "column": "v",
+        "op": "first",
+        "as": "first"
+      },
+      {
+        "type": "aggregate",
+        "column": "v",
+        "op": "last",
+        "as": "last"
+      },
+      {
+        "type": "aggregate",
+        "column": "v",
+        "order": "d",
+        "op": "first",
+        "as": "firstByDate"
+      },
+      {
+        "type": "aggregate",
+        "column": "v",
+        "order": "d",
+        "op": "last",
+        "as": "lastByDate"
+      },
+      {
+        "type": "aggregate",
+        "column": "v",
+        "op": "median",
+        "as": "median"
+      }
+    ],
+    "columns": {
+      "first": [
+        30,
+        30,
+        30,
+        30,
+        30
+      ],
+      "last": [
+        40,
+        40,
+        40,
+        40,
+        40
+      ],
+      "firstByDate": [
+        10,
+        10,
+        10,
+        10,
+        10
+      ],
+      "lastByDate": [
+        40,
+        40,
+        40,
+        40,
+        40
+      ],
+      "median": [
+        25,
+        25,
+        25,
+        25,
+        25
+      ]
+    }
+  },
+  {
+    "name": "without `by` all rows are one group, a group without numbers has no value, a count of 0",
+    "rows": [
+      {
+        "g": "a",
+        "v": ""
+      },
+      {
+        "g": "b",
+        "v": "2"
+      },
+      {
+        "g": "b",
+        "v": "x"
+      }
+    ],
+    "transform": [
+      {
+        "type": "aggregate",
+        "column": "v",
+        "op": "mean",
+        "as": "all"
+      },
+      {
+        "type": "aggregate",
+        "column": "v",
+        "by": "g",
+        "op": "sum",
+        "as": "sum"
+      },
+      {
+        "type": "aggregate",
+        "column": "v",
+        "by": "g",
+        "op": "count",
+        "as": "n"
+      }
+    ],
+    "columns": {
+      "all": [
+        2,
+        2,
+        2
+      ],
+      "sum": [
+        null,
+        2,
+        2
+      ],
+      "n": [
+        0,
+        1,
+        1
+      ]
+    }
+  },
+  {
+    "name": "rows: a row per group in the order of their first rows, with the values of `by` of the first row as they are, instead of the rows",
+    "rows": [
+      {
+        "g": "b",
+        "h": 1,
+        "v": "1"
+      },
+      {
+        "g": "a",
+        "h": "2",
+        "v": "2"
+      },
+      {
+        "g": "b",
+        "h": "1",
+        "v": "3"
+      }
+    ],
+    "transform": {
+      "type": "aggregate",
+      "column": "v",
+      "by": [
+        "g",
+        "h"
+      ],
+      "op": "sum",
+      "as": "total",
+      "rows": true
+    },
+    "result": [
+      {
+        "g": "b",
+        "h": 1,
+        "total": 4
+      },
+      {
+        "g": "a",
+        "h": "2",
+        "total": 2
+      }
+    ],
+    "columns": {}
+  },
+  {
+    "name": "rows without `by`: one row of all rows, also without rows; `as` is the column by default",
+    "rows": [],
+    "transform": [
+      {
+        "type": "aggregate",
+        "column": "v",
+        "op": "count",
+        "as": "n",
+        "rows": true
+      },
+      {
+        "type": "aggregate",
+        "column": "n",
+        "op": "sum",
+        "rows": true
+      }
+    ],
+    "result": [
+      {
+        "n": 0
+      }
+    ],
+    "columns": {}
+  },
+  {
+    "name": "rows of the rows of a filter before, the transforms after compute values of them, the operation and the column of the globals",
+    "globals": {
+      "op": "max",
+      "col": "v"
+    },
+    "rows": [
+      {
+        "g": "a",
+        "v": "1"
+      },
+      {
+        "g": "a",
+        "v": "5"
+      },
+      {
+        "g": "b",
+        "v": "9"
+      }
+    ],
+    "transform": [
+      {
+        "type": "filter",
+        "expr": {
+          "<": [
+            "@v",
+            9
+          ]
+        }
+      },
+      {
+        "type": "aggregate",
+        "column": "{col}",
+        "by": "g",
+        "op": "{op}",
+        "as": "m",
+        "rows": true
+      },
+      {
+        "type": "calc",
+        "as": "d",
+        "expr": {
+          "*": [
+            "@m",
+            2
+          ]
+        }
+      }
+    ],
+    "result": [
+      {
+        "g": "a",
+        "m": 5
+      }
+    ],
+    "columns": {
+      "d": [
+        10
+      ]
+    }
+  },
+  {
+    "name": "an unknown operation is an error",
+    "rows": [
+      {
+        "v": "1"
+      }
+    ],
+    "transform": {
+      "type": "aggregate",
+      "column": "v",
+      "op": "total"
+    },
+    "error": "aggregate: the op is one of"
+  }
+]

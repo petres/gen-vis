@@ -794,16 +794,24 @@ const checkTransforms = ({ def, globals, warn }) => {
         } else if (t.type == 'random') {
             if (typeof t.as != 'string')
                 warn(`${path}.as`, `the name of the new column is needed, e.g. "jitter"`);
+        } else if (t.type == 'fold') {
+            if (!(typeof t.columns == 'string' || (Array.isArray(t.columns) && t.columns.every(c => typeof c == 'string'))))
+                warn(`${path}.columns`, `the columns to fold are needed, a list or a pattern with a '*', e.g. ["2019", "2020"] or "20*"`);
+            else if (typeof t.columns == 'string' && t.columns.split('*').length > 2)
+                warn(`${path}.columns`, `a pattern of columns has a single '*', e.g. "20*"`);
+            ['key', 'value'].filter(k => t[k] !== undefined && typeof t[k] != 'string')
+                .forEach(k => warn(`${path}.${k}`, `the name of the column of the ${k}s, e.g. "${k == 'key' ? 'year' : 'value'}"`));
         } else if (typeof t.column != 'string')
             warn(`${path}.column`, `the column of the values is needed`);
         if (t.type == 'bin' && t.edges === undefined && t.step === undefined)
             warn(`${path}.edges`, `the edges of the classes are needed, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143], or a 'step'`);
-        if (t.replace !== undefined && t.type != 'bin')
-            warn(`${path}.replace`, `only of a bin: its rows replace the rows`);
-        // the keys of a bin or of random numbers on other transforms
-        const own = { bin: ['edges', 'step', 'weight', 'normalize', 'per', 'start', 'end'], random: ['range', 'seed'] };
-        Object.entries(own).filter(([type]) => t.type != type).forEach(([type, keys]) => keys.filter(k => t[k] !== undefined)
-            .forEach(k => warn(`${path}.${k}`, `only of a transform of the type '${type}'`)));
+        if (t.replace !== undefined && !['bin', 'fold'].includes(t.type))
+            warn(`${path}.replace`, `only of a bin or a fold: its rows replace the rows`);
+        // the keys of some types of transforms on other ones
+        const only = { edges: ['bin'], step: ['bin'], weight: ['bin'], normalize: ['bin'], per: ['bin'], start: ['bin'], end: ['bin'],
+            range: ['random'], seed: ['random'], columns: ['fold'], op: ['aggregate', 'window'], rows: ['aggregate'], offset: ['window'] };
+        Object.entries(only).filter(([k, types]) => t[k] !== undefined && !types.includes(t.type))
+            .forEach(([k, types]) => warn(`${path}.${k}`, `only of a transform of the type ${types.map(n => `'${n}'`).join(' or ')}`));
         if (t.type == 'bin') {
             [t.edges ?? []].flat().filter(e => isObject(e) && !(Number(e.step) > 0 && Number.isFinite(Number(e.from)) && Number.isFinite(Number(e.to))))
                 .forEach(() => warn(`${path}.edges`, `a range of edges is { "from": 50, "to": 250, "step": 5 }, a positive step`));
@@ -814,13 +822,25 @@ const checkTransforms = ({ def, globals, warn }) => {
             else if (t.per !== undefined && t.normalize == 'share')
                 warn(`${path}.per`, `a share is one of the group, without a unit, 'per' is of counts and densities`);
         }
+        // the operation of an aggregate or a window, also a template
+        const ops = { aggregate: ['sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last'], window: ['lag', 'lead', 'diff', 'pct', 'sum', 'mean', 'min', 'max'] };
+        if (Object.hasOwn(ops, t.type)) {
+            if (t.op === undefined)
+                warn(`${path}.op`, `the operation is needed, one of ${list(ops[t.type])}`);
+            else if (!ops[t.type].includes(t.op) && !String(t.op).includes('{'))
+                warn(`${path}.op`, `unknown op '${t.op}'${choices(t.op, ops[t.type])}`);
+        }
         if (t.type == 'lookup') {
             if (typeof t.data != 'string' || t.data.includes('{'))
                 warn(`${path}.data`, `the url of the rows is needed, not a template`);
             ['key', 'value'].filter(k => typeof t[k] != 'string').forEach(k => warn(`${path}.${k}`, `the column of the ${k}s of the rows is needed`));
         }
-        if (t.type == 'rolling' && !(Number.isInteger(t.size) && t.size > 0))
+        // the rows of the window of rolling and of the sums, means, least and
+        // largest values of window, the offset of its other operations
+        if ((t.type == 'rolling' || (t.type == 'window' && ['sum', 'mean', 'min', 'max'].includes(t.op))) && !(Number.isInteger(t.size) && t.size > 0))
             warn(`${path}.size`, `the number of the rows of the window is needed, e.g. 7`);
+        if (t.type == 'window' && t.offset !== undefined && !(Number.isInteger(t.offset) && t.offset > 0))
+            warn(`${path}.offset`, `the number of the rows before or after the row, a positive integer, e.g. 1`);
         if (t.type == 'index' && !isObject(t.base))
             warn(`${path}.base`, `the rows of the base are needed, e.g. { "year": "{base}" }`);
         if (t.type == 'mean' && t.base !== undefined && !isObject(t.base))

@@ -380,9 +380,13 @@ const usedColumns = def => {
         }
         return columns;
     };
+    // the columns of the transforms, unknown ones of a pattern of a fold
+    const ofTransforms = transformColumns(def.transform);
+    if (ofTransforms === null)
+        return null;
     const columns = [
         ...variants(def).flatMap(d => Object.values(d.mapping ?? {}).map(m => m?.column)),
-        ...transformColumns(def.transform),
+        ...ofTransforms,
     ].map(expand);
     if (columns.includes(null))
         return null;

@@ -311,6 +311,34 @@ column:
   month in `by`, e.g. `"by": ["month"]` and `"filter": {"month": "@month"}`.
   The bars of the classes are `bar` with `x0`, `x1` and `y1`, an outline is
   a `line` with `x0` and `x1`, see [plot](#plot).
+- `fold`: wide to long, e.g. a file with a column per year. It replaces the
+  rows by a row per row and column of `columns`, a list of names or a
+  pattern with a `*` (`"20*"`, the columns which match, also the ones of
+  the transforms before), with the other columns of the row, the name of
+  the column in `key` (`"key"` by default) and its value in `value`
+  (`"value"`), as it is: `{"type": "fold", "columns": "20*", "key":
+  "year"}` of the columns `2019`, `2020`, ... With `"replace": false` the
+  folded rows follow the rows instead, as the ones of a `bin`.
+- `aggregate`: an aggregate of the values of `column` of the group (`op`):
+  `sum`, `mean`, `min`, `max`, `count` (the number of values), `median`,
+  `first` or `last` (in the order of `order`), missing values are left out.
+  By default a column, the value of every row of the group, e.g. the total
+  of a country of all years, `{"type": "aggregate", "column": "value", "by":
+  "country", "op": "sum", "as": "total"}`, so a `calc` can divide by it.
+  With `"rows": true` a row per group replaces the rows, with the columns
+  `by` (the values of the first row of the group) and `as`, e.g. the mean
+  per category of a bar chart: `{"type": "aggregate", "column": "value",
+  "by": "category", "op": "mean", "rows": true}`.
+- `window`: a value of another row of the group in the order of `order`:
+  `lag` or `lead`, the value `offset` rows (1 by default) before or after
+  the row, `diff`, the value minus the one before, or `pct`, the change in
+  percent, e.g. the change to the previous month, `{"type": "window",
+  "column": "value", "by": "country", "order": "date", "op": "pct", "as":
+  "change"}`, without a value at the ends or of a missing one (also of a
+  division by 0). Or the `sum`, `mean`, `min` or `max` of the window of
+  `size` rows, as the mean of `rolling` (`align`), e.g. the sum of the last
+  7 days, `{"type": "window", "column": "cases", "order": "date", "op":
+  "sum", "size": 7, "as": "week"}`.
 
 The strings of a transform are templates of the globals, e.g. `{base}`, the
 transforms are computed again when the globals change, from the first one

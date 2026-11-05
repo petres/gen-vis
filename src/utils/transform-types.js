@@ -71,6 +71,82 @@ const pad = (v, n = 2) => String(v).padStart(n, '0');
 // a date without a time, e.g. "2024-06-01", as the ones of the data
 const dateOnly = /^\d{4}(-\d{2}(-\d{2})?)?$/;
 
+// the aggregate of numbers (`op`): the sum, mean, least or largest one, the
+// number of them (0 of none), the median (the mean of the two middle ones of
+// an even number) or the first or the last one, none of no numbers
+const aggregateOf = (op, values) => {
+    if (op == 'count')
+        return values.length;
+    if (values.length == 0)
+        return null;
+    switch (op) {
+    case 'sum': return values.reduce((a, b) => a + b, 0);
+    case 'mean': return values.reduce((a, b) => a + b, 0)/values.length;
+    case 'min': return values.reduce((a, b) => Math.min(a, b));
+    case 'max': return values.reduce((a, b) => Math.max(a, b));
+    case 'first': return values[0];
+    case 'last': return values[values.length - 1];
+    case 'median': {
+        const sorted = [...values].sort((a, b) => a - b);
+        const mid = sorted.length >> 1;
+        return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid])/2;
+    }
+    default:
+        throw new Error(`aggregate: the op is one of 'sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last'`);
+    }
+};
+
+/**
+ * The sum, mean, least or largest value (`op`) of the values of `size` rows
+ * of the group in their order, the ones before (`"align": "end"`, by
+ * default) or around the row (`"center"`), missing values are left out,
+ * only of whole windows, a row without a value has none, as of cumulative.
+ * The window moves along the rows, its sum is compensated (Neumaier), so
+ * small values beside large ones are kept, e.g. 1 beside 1e17.
+ */
+const slide = (t, { n, numbers, groups }, op) => {
+    const result = new Array(n).fill(null);
+    const size = Math.max(1, Math.round(toNumber(t.size) ?? 1));
+    const before = t.align == 'center' ? Math.floor((size - 1)/2) : size - 1;
+    // the least or the largest value of the window, of the values in it
+    const extreme = (values, start, end) => {
+        let result = null;
+        for (let k = start; k <= end; k++)
+            if (values[k] !== null)
+                result = result === null ? values[k] : (op == 'min' ? Math.min(result, values[k]) : Math.max(result, values[k]));
+        return result;
+    };
+    groups.forEach(g => {
+        const values = g.map(numbers);
+        let sum = 0;
+        let compensation = 0;
+        let count = 0;
+        const add = x => {
+            const s = sum + x;
+            compensation += Math.abs(sum) >= Math.abs(x) ? (sum - s) + x : (x - s) + sum;
+            sum = s;
+        };
+        for (let end = 0; end < values.length; end++) {
+            if (values[end] !== null) {
+                add(values[end]);
+                count++;
+            }
+            const start = end - size + 1;
+            if (start > 0 && values[start - 1] !== null) {
+                add(-values[start - 1]);
+                count--;
+            }
+            // the window of the row `start + before`
+            if (start >= 0 && values[start + before] !== null)
+                result[g[start + before]] = count == 0 ? null
+                    : op == 'mean' ? (sum + compensation)/count
+                    : op == 'sum' ? sum + compensation
+                    : extreme(values, start, end);
+        }
+    });
+    return result;
+};
+
 const transformTypes = {
     // the year of a date, e.g. 2024 of "2024-06-01"
     year: (t, { n, values, utc }) => Array.from({ length: n }, (_, i) => {
@@ -140,40 +216,8 @@ const transformTypes = {
     // the mean of the values of `size` rows of the group in their order, the
     // ones before (`"align": "end"`, by default) or around the row
     // (`"center"`), missing values are left out, only of whole windows, a row
-    // without a value has none, as of cumulative. The window moves along the
-    // rows, its sum is compensated (Neumaier), so small values beside large
-    // ones are kept, e.g. 1 beside 1e17.
-    rolling: (t, { n, numbers, groups }) => {
-        const result = new Array(n).fill(null);
-        const size = Math.max(1, Math.round(t.size ?? 1));
-        const before = t.align == 'center' ? Math.floor((size - 1)/2) : size - 1;
-        groups.forEach(g => {
-            const values = g.map(numbers);
-            let sum = 0;
-            let compensation = 0;
-            let count = 0;
-            const add = x => {
-                const s = sum + x;
-                compensation += Math.abs(sum) >= Math.abs(x) ? (sum - s) + x : (x - s) + sum;
-                sum = s;
-            };
-            for (let end = 0; end < values.length; end++) {
-                if (values[end] !== null) {
-                    add(values[end]);
-                    count++;
-                }
-                const start = end - size + 1;
-                if (start > 0 && values[start - 1] !== null) {
-                    add(-values[start - 1]);
-                    count--;
-                }
-                // the window of the row `start + before`
-                if (start >= 0 && values[start + before] !== null)
-                    result[g[start + before]] = count ? (sum + compensation)/count : null;
-            }
-        });
-        return result;
-    },
+    // without a value has none, as of cumulative, see slide
+    rolling: (t, context) => slide(t, context, 'mean'),
 
     // the sum of the values of the group up to the row in their order, e.g.
     // of the days of a year, rows without a value have none
@@ -360,12 +404,123 @@ const binRows = (t, { n, get, numbers, groups }) => {
             : (t.per === undefined ? sum : sum/width(k));
         return sums.map((sum, k) => ({ ...keys, [names.start]: edges[k], [names.end]: edges[k + 1], [names.value]: value(sum, k) }));
     });
-    return { rows, outside, edges };
+    const notes = [];
+    // edges of no class, e.g. a single one, not the ones of a step without values
+    if (edges === null && t.edges !== undefined)
+        notes.push(`the edges ${JSON.stringify(t.edges)} are no classes, at least two different ones are needed`);
+    if (outside > 0)
+        notes.push(`${outside} values of '${t.column}' outside the edges ${edges[0]} to ${edges.at(-1)} are left out`);
+    return { rows, notes };
 };
 
-// the transforms which change the rows, see applyTransforms
+// the columns of a fold: the list `columns` or the ones of the `names` of
+// the columns which match a pattern with a `*`, e.g. "20*", in their order
+const foldColumns = (t, names) => {
+    if (t.columns === undefined)
+        throw new Error(`fold: the 'columns' to fold are needed, e.g. ["2019", "2020"] or "20*"`);
+    if (Array.isArray(t.columns))
+        return t.columns.map(String);
+    const pattern = String(t.columns);
+    const parts = pattern.split('*');
+    if (parts.length == 1)
+        return [pattern];
+    if (parts.length > 2)
+        throw new Error(`fold: a pattern of columns has a single '*', e.g. "20*", not '${pattern}'`);
+    const [prefix, suffix] = parts;
+    return names.filter(c => c.length >= prefix.length + suffix.length && c.startsWith(prefix) && c.endsWith(suffix));
+};
+
+/**
+ * The rows of a fold, wide to long: of every row and every column of
+ * `columns` (a list or a pattern with a `*`, e.g. "20*", the columns of the
+ * row which match) in their order a row with the other columns of the row
+ * (also the ones of the transforms before), the name of the column (`key`,
+ * "key" by default) and its value (`value`, "value"), as it is.
+ */
+const foldRows = (t, { n, get, names }) => {
+    const columns = foldColumns(t, names);
+    const folded = new Set(columns);
+    const [key, value] = [t.key ?? 'key', t.value ?? 'value'];
+    const others = names.filter(c => !folded.has(c));
+    const rows = [];
+    for (let i = 0; i < n; i++) {
+        const row = Object.fromEntries(others.map(c => [c, get(i, c) ?? null]));
+        columns.forEach(c => rows.push({ ...row, [key]: c, [value]: get(i, c) ?? null }));
+    }
+    return { rows, notes: [] };
+};
+
+// the rows of an aggregate with `rows`: a row per group, in the order of
+// their first rows, with the values of the columns `by` of the first row
+// of the group (as they are) and the aggregate (`as`), without `by` one row
+// of all rows, also without rows
+const aggregateRows = (t, { n, get, numbers, groups }) => {
+    const by = [t.by ?? []].flat();
+    const all = by.length == 0 ? [Array.from({ length: n }, (_, i) => i)] : groups;
+    const rows = all.map(g => {
+        const first = g.reduce((a, b) => Math.min(a, b), Infinity);
+        const keys = Object.fromEntries(by.map(c => [c, get(first, c) ?? null]));
+        return { ...keys, [t.as ?? t.column]: aggregateOf(t.op, g.map(numbers).filter(v => v !== null)) };
+    });
+    return { rows, notes: [] };
+};
+
+// the value of another row of the group in their order, `offset` rows
+// (1 by default) before (`lag`) or after (`lead`) the row, or relative to
+// the one before: the difference (`diff`) or the change in percent
+// (`pct`, none of a value before of 0), none at the ends of the group or
+// of a missing value; or the sum, mean, least or largest value of a
+// window of `size` rows, as rolling (`sum`, `mean`, `min`, `max`)
+const windowOf = (t, context) => {
+    const { n, numbers, groups } = context;
+    if (['sum', 'mean', 'min', 'max'].includes(t.op))
+        return slide(t, context, t.op);
+    if (!['lag', 'lead', 'diff', 'pct'].includes(t.op))
+        throw new Error(`window: the op is one of 'lag', 'lead', 'diff', 'pct', 'sum', 'mean', 'min', 'max'`);
+    const result = new Array(n).fill(null);
+    const offset = Math.round(toNumber(t.offset) ?? 1);
+    groups.forEach(g => {
+        const values = g.map(numbers);
+        g.forEach((i, k) => {
+            const j = t.op == 'lead' ? k + offset : k - offset;
+            const other = j >= 0 && j < values.length ? values[j] : null;
+            const v = values[k];
+            result[i] = t.op == 'lag' || t.op == 'lead' ? other
+                : v === null || other === null ? null
+                : t.op == 'diff' ? v - other
+                : other === 0 ? null : (v/other - 1)*100;
+        });
+    });
+    return result;
+};
+
+// an aggregate of the values of the group: their sum, mean, least or
+// largest value, number (`count`), median, first or last one in their
+// order (`op`), missing values are left out, a value of every row of the
+// group, e.g. the total of a country of all years; with `rows` a row per
+// group instead, see aggregateRows
+const aggregateOfGroups = (t, { n, numbers, groups }) => {
+    const result = new Array(n).fill(null);
+    groups.forEach(g => {
+        const value = aggregateOf(t.op, g.map(numbers).filter(v => v !== null));
+        g.forEach(i => result[i] = value);
+    });
+    return result;
+};
+
+// the transforms which change the rows, see applyTransforms: a bin and a
+// fold, an aggregate with `rows`; their rows replace the rows (`replace`,
+// by default of a fold and always of an aggregate) or follow them; the
+// columns of their rows are their own, not ones of the data
 transformTypes.bin = binRows;
-const rowTransforms = new Set(['bin']);
+transformTypes.fold = foldRows;
+transformTypes.aggregate = aggregateOfGroups;
+transformTypes.window = windowOf;
+const producesRows = t => t.type == 'bin' || t.type == 'fold' || (t.type == 'aggregate' && Boolean(t.rows));
+const replaces = t => t.type == 'aggregate' || (t.replace ?? t.type == 'fold');
+const rowColumns = t => t.type == 'bin' ? [t.start ?? 'start', t.end ?? 'end', t.as ?? 'count', ...[t.by ?? []].flat()]
+    : t.type == 'fold' ? [t.key ?? 'key', t.value ?? 'value']
+    : [t.as ?? t.column, ...[t.by ?? []].flat()];
 
 // the strings of a transform with the values of the globals
 const filled = (t, globals) => {
@@ -383,8 +538,9 @@ const filled = (t, globals) => {
  * before it are kept, `changed` are the names of the columns computed again,
  * without changes the columns are the ones before. `files` are the rows of
  * the files of lookups by their url, see the store. A transform of rows
- * (`bin`) adds its rows after the rows or replaces them (`replace`): then `rows`
- * are the rows of the columns, the ones of the data otherwise (null).
+ * (`bin`, `fold`, `aggregate` with `rows`) adds its rows after the rows or
+ * replaces them (`replace`): then `rows` are the rows of the columns, the
+ * ones of the data otherwise (null).
  * `notes` are the warnings of the transforms, e.g. values outside the edges.
  */
 const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null) => {
@@ -398,8 +554,8 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
         // e.g. a calc of "@factor" is computed again if the global changes
         const refs = t.expr === undefined ? [] : [...new Set(refNames(t.expr))]
             .filter(n => typeof n == 'string' && !own.has(n) && !present.has(n) && Object.hasOwn(globals, n));
-        if (rowTransforms.has(t.type))
-            [t.start ?? 'start', t.end ?? 'end', t.as ?? 'count', ...[t.by ?? []].flat()].forEach(c => own.add(c));
+        if (producesRows(t))
+            rowColumns(t).forEach(c => own.add(c));
         else if (t.type != 'filter')
             own.add(t.as ?? t.column);
         return { t, inUtc: utc.has(t.column) || utc.has(t.as ?? t.column), refs: refs.map(n => [n, globals[n] ?? null]) };
@@ -431,7 +587,9 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
     for (const [k, { t, inUtc }] of list.entries()) {
         if (k < first)
             continue;
-        const compute = Object.hasOwn(transformTypes, t.type) ? transformTypes[t.type] : undefined;
+        let compute = Object.hasOwn(transformTypes, t.type) ? transformTypes[t.type] : undefined;
+        if (t.type == 'aggregate' && producesRows(t))
+            compute = aggregateRows;
         if (!compute)
             throw new Error(`Unknown transform '${t.type}', expected one of ${Object.keys(transformTypes).map(n => `'${n}'`).join(', ')}`);
         // the rows of the filters before, by their index among them
@@ -469,19 +627,19 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
             get groups() { return groups ??= groupsOf(n, get, by, t.order, inUtc); },
             matches: i => conditions.every(c => c(i)),
             utc: inUtc,
+            // the names of the columns of the rows and of the transforms
+            // before, in their order, e.g. of a pattern of a fold
+            get names() { return [...new Set([...Object.keys(base[0] ?? {}), ...columns.keys()])]; },
         });
-        if (rowTransforms.has(t.type)) {
-            // the rows of the classes after the rows (the columns before have
-            // no values of them, the filters before keep them), or instead of
+        if (producesRows(t)) {
+            // the rows of the transform after the rows (the columns before
+            // have the values of the rows which have them, e.g. of a fold,
+            // none otherwise, the filters before keep them), or instead of
             // them (`replace`, all columns are new)
-            // edges of no class, e.g. a single one, not the ones of a step without values
-            if (result.edges === null && t.edges !== undefined)
-                notes.push(`transform[${k}] (${t.type}): the edges ${JSON.stringify(t.edges)} are no classes, at least two different ones are needed`);
-            if (result.outside > 0)
-                notes.push(`transform[${k}] (${t.type}): ${result.outside} values of '${t.column}' outside the edges ${result.edges[0]} to ${result.edges.at(-1)} are left out`);
-            if (!t.replace) {
+            result.notes.forEach(note => notes.push(`transform[${k}] (${t.type}): ${note}`));
+            if (!replaces(t)) {
                 const added = result.rows.map((_, j) => base.length + j);
-                [...columns].forEach(([c, v]) => columns.set(c, [...v, ...result.rows.map(() => null)]));
+                [...columns].forEach(([c, v]) => columns.set(c, [...v, ...result.rows.map(r => r[c] ?? null)]));
                 columns.kept = index ? [...index, ...added] : null;
                 base = [...base, ...result.rows];
             } else {

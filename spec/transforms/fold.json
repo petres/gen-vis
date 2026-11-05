@@ -1,0 +1,371 @@
+[
+  {
+    "name": "wide to long: a row per row and column in their order, with the other columns, the name of the column and its value as it is, instead of the rows",
+    "rows": [
+      {
+        "id": "a",
+        "2019": "1",
+        "2020": "2"
+      },
+      {
+        "id": "b",
+        "2019": "",
+        "2020": 4
+      }
+    ],
+    "transform": {
+      "type": "fold",
+      "columns": [
+        "2019",
+        "2020"
+      ],
+      "key": "year"
+    },
+    "result": [
+      {
+        "id": "a",
+        "year": "2019",
+        "value": "1"
+      },
+      {
+        "id": "a",
+        "year": "2020",
+        "value": "2"
+      },
+      {
+        "id": "b",
+        "year": "2019",
+        "value": ""
+      },
+      {
+        "id": "b",
+        "year": "2020",
+        "value": 4
+      }
+    ],
+    "columns": {}
+  },
+  {
+    "name": "a pattern with a `*`: the columns which match, in the order of the columns of the rows, the names of the key and the value",
+    "rows": [
+      {
+        "id": "a",
+        "v_2020": "2",
+        "v_2019": "1",
+        "w": "x"
+      }
+    ],
+    "transform": {
+      "type": "fold",
+      "columns": "v_*",
+      "key": "k",
+      "value": "v"
+    },
+    "result": [
+      {
+        "id": "a",
+        "w": "x",
+        "k": "v_2020",
+        "v": "2"
+      },
+      {
+        "id": "a",
+        "w": "x",
+        "k": "v_2019",
+        "v": "1"
+      }
+    ],
+    "columns": {}
+  },
+  {
+    "name": "a pattern of a prefix and a suffix",
+    "rows": [
+      {
+        "a_eu": "1",
+        "a_us": "2",
+        "b_eu": "3"
+      }
+    ],
+    "transform": {
+      "type": "fold",
+      "columns": "*_eu",
+      "value": "v"
+    },
+    "result": [
+      {
+        "a_us": "2",
+        "key": "a_eu",
+        "v": "1"
+      },
+      {
+        "a_us": "2",
+        "key": "b_eu",
+        "v": "3"
+      }
+    ],
+    "columns": {}
+  },
+  {
+    "name": "a `*` alone is all columns",
+    "rows": [
+      {
+        "a": "1",
+        "b": "2"
+      }
+    ],
+    "transform": {
+      "type": "fold",
+      "columns": "*"
+    },
+    "result": [
+      {
+        "key": "a",
+        "value": "1"
+      },
+      {
+        "key": "b",
+        "value": "2"
+      }
+    ],
+    "columns": {}
+  },
+  {
+    "name": "a pattern also matches the columns of the transforms before, which are part of the rows",
+    "rows": [
+      {
+        "v": "1"
+      }
+    ],
+    "transform": [
+      {
+        "type": "calc",
+        "as": "v2",
+        "expr": {
+          "*": [
+            "@v",
+            2
+          ]
+        }
+      },
+      {
+        "type": "fold",
+        "columns": "v*"
+      }
+    ],
+    "result": [
+      {
+        "key": "v",
+        "value": "1"
+      },
+      {
+        "key": "v2",
+        "value": 2
+      }
+    ],
+    "columns": {}
+  },
+  {
+    "name": "after the rows (no `replace`): of the rows of a filter before, which keeps them, the columns before have the values of the folded rows",
+    "rows": [
+      {
+        "g": "a",
+        "x": "1",
+        "y": "2"
+      },
+      {
+        "g": "b",
+        "x": "3",
+        "y": "4"
+      }
+    ],
+    "transform": [
+      {
+        "type": "calc",
+        "as": "d",
+        "expr": {
+          "*": [
+            "@x",
+            2
+          ]
+        }
+      },
+      {
+        "type": "filter",
+        "expr": {
+          "==": [
+            "@g",
+            "b"
+          ]
+        }
+      },
+      {
+        "type": "fold",
+        "columns": [
+          "x",
+          "y"
+        ],
+        "replace": false
+      }
+    ],
+    "result": [
+      {
+        "g": "a",
+        "x": "1",
+        "y": "2"
+      },
+      {
+        "g": "b",
+        "x": "3",
+        "y": "4"
+      },
+      {
+        "g": "b",
+        "d": 6,
+        "key": "x",
+        "value": "3"
+      },
+      {
+        "g": "b",
+        "d": 6,
+        "key": "y",
+        "value": "4"
+      }
+    ],
+    "columns": {
+      "d": [
+        2,
+        6,
+        6,
+        6
+      ]
+    },
+    "kept": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "the transforms after it compute values of the folded rows, a column which is not there is missing",
+    "rows": [
+      {
+        "id": "a",
+        "x": "1",
+        "z": "2"
+      },
+      {
+        "id": "b",
+        "x": "3"
+      }
+    ],
+    "transform": [
+      {
+        "type": "fold",
+        "columns": [
+          "x",
+          "z"
+        ]
+      },
+      {
+        "type": "share",
+        "column": "value",
+        "by": "id",
+        "as": "share"
+      }
+    ],
+    "result": [
+      {
+        "id": "a",
+        "key": "x",
+        "value": "1"
+      },
+      {
+        "id": "a",
+        "key": "z",
+        "value": "2"
+      },
+      {
+        "id": "b",
+        "key": "x",
+        "value": "3"
+      },
+      {
+        "id": "b",
+        "key": "z",
+        "value": null
+      }
+    ],
+    "columns": {
+      "share": [
+        0.3333333333333333,
+        0.6666666666666666,
+        1,
+        null
+      ]
+    }
+  },
+  {
+    "name": "the columns, the key and the value are templates of the globals",
+    "globals": {
+      "col": "x",
+      "k": "name"
+    },
+    "rows": [
+      {
+        "x": "1",
+        "y": "2"
+      }
+    ],
+    "transform": {
+      "type": "fold",
+      "columns": [
+        "{col}"
+      ],
+      "key": "{k}",
+      "value": "{col}_value"
+    },
+    "result": [
+      {
+        "y": "2",
+        "name": "x",
+        "x_value": "1"
+      }
+    ],
+    "columns": {}
+  },
+  {
+    "name": "without rows no rows",
+    "rows": [],
+    "transform": {
+      "type": "fold",
+      "columns": "*"
+    },
+    "result": [],
+    "columns": {}
+  },
+  {
+    "name": "the columns are needed",
+    "rows": [
+      {
+        "x": "1"
+      }
+    ],
+    "transform": {
+      "type": "fold"
+    },
+    "error": "fold: the 'columns' to fold are needed"
+  },
+  {
+    "name": "a pattern has a single `*`",
+    "rows": [
+      {
+        "x": "1"
+      }
+    ],
+    "transform": {
+      "type": "fold",
+      "columns": "*_*"
+    },
+    "error": "fold: a pattern of columns has a single '*'"
+  }
+]

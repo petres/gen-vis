@@ -1,0 +1,442 @@
+[
+  {
+    "name": "lag: the value of the row before in the group in the order of a column, none of the first one",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "window",
+      "column": "value",
+      "by": "type",
+      "order": "date",
+      "op": "lag",
+      "as": "prev"
+    },
+    "columns": {
+      "prev": [
+        null,
+        10,
+        30,
+        null,
+        15,
+        5
+      ]
+    }
+  },
+  {
+    "name": "lead with an offset: the value two rows after, none at the end or of a missing value",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "window",
+      "column": "value",
+      "by": "type",
+      "order": "date",
+      "op": "lead",
+      "offset": 2,
+      "as": "next"
+    },
+    "columns": {
+      "next": [
+        40,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "diff and pct of the value before, none of a missing one, of a division by 0 no pct",
+    "rows": [
+      {
+        "v": "10"
+      },
+      {
+        "v": "15"
+      },
+      {
+        "v": ""
+      },
+      {
+        "v": "0"
+      },
+      {
+        "v": "5"
+      },
+      {
+        "v": "5"
+      }
+    ],
+    "transform": [
+      {
+        "type": "window",
+        "column": "v",
+        "op": "diff",
+        "as": "diff"
+      },
+      {
+        "type": "window",
+        "column": "v",
+        "op": "pct",
+        "as": "pct"
+      }
+    ],
+    "columns": {
+      "diff": [
+        null,
+        5,
+        null,
+        null,
+        5,
+        0
+      ],
+      "pct": [
+        null,
+        50,
+        null,
+        null,
+        null,
+        0
+      ]
+    }
+  },
+  {
+    "name": "lag in the order of the rows, of a missing value none",
+    "rows": [
+      {
+        "v": "1"
+      },
+      {
+        "v": ""
+      },
+      {
+        "v": "3"
+      }
+    ],
+    "transform": {
+      "type": "window",
+      "column": "v",
+      "op": "lag"
+    },
+    "columns": {
+      "v": [
+        null,
+        1,
+        null
+      ]
+    }
+  },
+  {
+    "name": "sum, mean, min and max of a window of `size` rows before the row, only of whole windows, missing values left out, as rolling",
+    "rows": [
+      {
+        "v": "3"
+      },
+      {
+        "v": "1"
+      },
+      {
+        "v": ""
+      },
+      {
+        "v": "4"
+      },
+      {
+        "v": "2"
+      }
+    ],
+    "transform": [
+      {
+        "type": "window",
+        "column": "v",
+        "op": "sum",
+        "size": 3,
+        "as": "sum"
+      },
+      {
+        "type": "window",
+        "column": "v",
+        "op": "mean",
+        "size": 3,
+        "as": "mean"
+      },
+      {
+        "type": "window",
+        "column": "v",
+        "op": "min",
+        "size": 3,
+        "as": "min"
+      },
+      {
+        "type": "window",
+        "column": "v",
+        "op": "max",
+        "size": 3,
+        "as": "max"
+      }
+    ],
+    "columns": {
+      "sum": [
+        null,
+        null,
+        null,
+        5,
+        6
+      ],
+      "mean": [
+        null,
+        null,
+        null,
+        2.5,
+        3
+      ],
+      "min": [
+        null,
+        null,
+        null,
+        1,
+        2
+      ],
+      "max": [
+        null,
+        null,
+        null,
+        4,
+        4
+      ]
+    }
+  },
+  {
+    "name": "a centered window",
+    "rows": [
+      {
+        "v": "3"
+      },
+      {
+        "v": "1"
+      },
+      {
+        "v": ""
+      },
+      {
+        "v": "4"
+      },
+      {
+        "v": "2"
+      }
+    ],
+    "transform": [
+      {
+        "type": "window",
+        "column": "v",
+        "op": "sum",
+        "size": 3,
+        "align": "center",
+        "as": "sum"
+      },
+      {
+        "type": "window",
+        "column": "v",
+        "op": "min",
+        "size": 3,
+        "align": "center",
+        "as": "min"
+      },
+      {
+        "type": "window",
+        "column": "v",
+        "op": "max",
+        "size": 3,
+        "align": "center",
+        "as": "max"
+      }
+    ],
+    "columns": {
+      "sum": [
+        null,
+        4,
+        null,
+        6,
+        null
+      ],
+      "min": [
+        null,
+        1,
+        null,
+        2,
+        null
+      ],
+      "max": [
+        null,
+        3,
+        null,
+        4,
+        null
+      ]
+    }
+  },
+  {
+    "name": "a sum of a window of large and small values is compensated",
+    "rows": [
+      {
+        "v": "1e17"
+      },
+      {
+        "v": "1"
+      },
+      {
+        "v": "1"
+      },
+      {
+        "v": "1"
+      }
+    ],
+    "transform": {
+      "type": "window",
+      "column": "v",
+      "op": "sum",
+      "size": 2
+    },
+    "columns": {
+      "v": [
+        null,
+        100000000000000000,
+        2,
+        2
+      ]
+    }
+  },
+  {
+    "name": "groups and the order of a column, the operation and the offset of the globals",
+    "globals": {
+      "op": "diff",
+      "k": "1"
+    },
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "window",
+      "column": "value",
+      "by": "type",
+      "order": "date",
+      "op": "{op}",
+      "offset": "{k}",
+      "as": "d"
+    },
+    "columns": {
+      "d": [
+        null,
+        20,
+        10,
+        null,
+        null,
+        10
+      ]
+    }
+  },
+  {
+    "name": "an unknown operation is an error",
+    "rows": [
+      {
+        "v": "1"
+      }
+    ],
+    "transform": {
+      "type": "window",
+      "column": "v",
+      "op": "cumsum"
+    },
+    "error": "window: the op is one of"
+  }
+]
