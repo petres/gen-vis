@@ -138,8 +138,11 @@
 /* the texts of the plots without a fill of their props, black by default as in svg */
 .vis-facet svg .vis-plot:not(.vis-annotations) text:not([fill]) { fill: var(--gen-vis-text-color, black); }
 /* the colors of the annotations without the ones of their props */
-.vis-facet svg .vis-annotation.vis-band:not([fill]) { fill: var(--gen-vis-band-color, #EEE); }
-.vis-facet svg .vis-annotation.vis-line:not([stroke]) { stroke: var(--gen-vis-line-color, #999); }
+.vis-facet svg .vis-annotation.vis-band:not([fill]), .vis-legend-annotations .vis-annotation.vis-band:not([fill]) { fill: var(--gen-vis-band-color, #EEE); }
+.vis-facet svg .vis-annotation.vis-line:not([stroke]), .vis-legend-annotations .vis-annotation.vis-line:not([stroke]) { stroke: var(--gen-vis-line-color, #999); }
+.vis-legend-annotations .vis-annotation.vis-circle:not([fill]) { fill: var(--gen-vis-annotation-color, #666); }
+/* the entries of annotations are no toggles */
+.vis-legend.vis-legend-annotations .vis-legend-entries > div { cursor: default; }
 .vis-facet svg .vis-annotation.vis-text:not([fill]) { fill: var(--gen-vis-annotation-color, #444); }
 .vis-facet svg .vis-annotation.vis-circle:not([fill]) { fill: var(--gen-vis-annotation-color, #666); }
 /* the labels of annotations and radial axes on the plots, with a halo, the

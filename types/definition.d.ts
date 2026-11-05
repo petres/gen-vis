@@ -320,6 +320,10 @@ export interface Annotation {
      */
     layer?: 'below' | 'above';
     /**
+     * The name of the annotation in the legend (a template of the globals), with a symbol of it: a vertical line of a line at a value of x, a horizontal one of y, a box of a band, a dot of a circle; one entry per name, after the legends of the mappings.
+     */
+    legend?: string;
+    /**
      * Right before the plot of this id, in its layer, e.g. lines above the bars but below the labels whose halo cuts them.
      */
     before?: string;

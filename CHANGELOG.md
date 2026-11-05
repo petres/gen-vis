@@ -62,6 +62,10 @@ Changes by version, newest first. Every version is on npm except 0.7.0 and
   (`.vis-legend-entry`, 13px), a style sets it there, not on the `span`.
   A rect symbol is at the middle of its box. Every legend moves by up to
   2 pixels.
+- Annotations in the legend: `"legend": "name"` of an annotation is an
+  entry of the legend with a symbol of it (a vertical line of a line at a
+  value of x, a horizontal one of y, a box of a band), after the legends of
+  the mappings.
 - The layer of annotations: `"layer": "below"` (default) or `"above"`,
   and `"before": "<plot id>"` right before a plot, e.g. lines above the
   bars but below labels whose halo cuts them.

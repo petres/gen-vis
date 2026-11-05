@@ -3337,3 +3337,27 @@ describe('the layer of annotations', () => {
             .toEqual([`annotations[0].before: unknown plot 'nope', expected one of 'plot-0', 'points'`]);
     });
 });
+
+describe('annotations in the legend', () => {
+    test('an entry per name with the symbol of the annotation, after the legends of the mappings', async () => {
+        const def = lineDef();
+        def.globals = { year: '2021' };
+        def.annotations = [
+            { type: 'line', x: 2021, legend: 'Reform {year}', props: { stroke: 'red', 'stroke-dasharray': '2 2' } },
+            { type: 'line', y: 3, legend: 'Ziel' },
+            { type: 'band', x: [2022, null], legend: 'Prognose' },
+            { type: 'line', x: 2022, legend: 'Reform {year}' },
+            { type: 'line', x: 2023 },
+        ];
+        const el = await mount({ def, data: lineData });
+        const legends = [...el.querySelectorAll('.vis-legends .vis-legend')];
+        expect(legends.at(-1).classList.contains('vis-legend-annotations')).toBe(true);
+        const entries = [...legends.at(-1).querySelectorAll('.vis-legend-entry')];
+        expect(entries.map(e => e.textContent)).toEqual(['Reform 2021', 'Ziel', 'Prognose']);
+        const [vertical, horizontal] = entries.map(e => e.querySelector('svg').firstElementChild);
+        expect(['x1', 'x2', 'y1', 'y2', 'stroke', 'stroke-dasharray', 'class'].map(a => vertical.getAttribute(a))).toEqual(['8', '8', '0', '16', 'red', '2 2', 'vis-annotation vis-line']);
+        expect(['y1', 'y2'].map(a => horizontal.getAttribute(a))).toEqual(['8', '8']);
+        expect(entries[2].querySelector('svg').firstElementChild.tagName).toBe('rect');
+        expect(errors).toEqual([]);
+    });
+});

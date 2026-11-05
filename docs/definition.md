@@ -1141,7 +1141,15 @@ globals, e.g. `"@target"`:
   default it is below the plots and grid lines (`"layer": "below"`), labels
   are above them; `"before": "<plot id>"` draws it right before that plot,
   in its layer, e.g. cap lines above the bars and points but below the
-  labels whose `halo` cuts them. `facet` is a key or a list of
+  labels whose `halo` cuts them. `legend` is the name of the annotation in
+  the legend (a template of the globals), e.g. `{"type": "line", "x":
+  "2025-07-22", "legend": "SchwellenwerteVO 2025"}`: an entry per name with
+  a symbol of the annotation (a vertical line of a line at a value of a
+  horizontal scale, a horizontal line of one of a vertical scale, a box of a
+  band, a dot of a circle, with its props and classes, in the box of the
+  [defaults](#defaults) of the line), after the legends of the mappings at
+  the position of the first one (`.vis-legend-annotations`, the entries are
+  no toggles). `facet` is a key or a list of
   keys of the facets of the annotation, by default it is in all facets.
 - Polar plots: a `band` of the angle is a sector (also across the top, e.g.
   from November to February), of the radius a ring, a `line` of the angle a

@@ -7,7 +7,7 @@ import { canCopy } from "@/utils/clipboard.js";
 import { create } from "@/utils/dom";
 import { el, patch, place, setHtml, setText, slotNodes, takeRange } from "@/comp/html";
 import { createFacets } from "@/comp/facets";
-import { createLegends } from "@/comp/legends";
+import { createLegends, annotationsLegend } from "@/comp/legends";
 import { createFormElement } from "@/comp/form-element";
 
 // the width of the visualisation inside its padding and border, e.g. of a card
@@ -127,6 +127,10 @@ const createVis = app => {
         const scope = { ...store.scope, totalWidth: fullWidth };
         // the legends of the width of the visualisation, see color-legend.js
         store.mappingNamesWithKey('legend').forEach(n => at[evaluate(store.mapping(n).legend.position, scope) ?? 'top']?.push(n));
+        // the annotations with a name after the legends of the mappings, at
+        // the position of the first one
+        if (store.def.plot.some(p => p.type?.startsWith('annotation:') && p.legend !== undefined && p.legend !== null))
+            (Object.values(at).find(names => names.length > 0) ?? at.top).push(annotationsLegend);
         return at;
     };
     // the text instead of the plots: `options.message`, a prop of the

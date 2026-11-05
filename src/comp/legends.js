@@ -1,7 +1,10 @@
-export { createLegends };
+export { createLegends, annotationsLegend };
+
+// the name of the legend of the annotations among the ones of the mappings
+const annotationsLegend = Symbol('annotations');
 
 import { place } from "@/comp/html";
-import { createLegend } from "@/comp/legend";
+import { createLegend, createAnnotationLegend } from "@/comp/legend";
 
 /**
  * The legends of the mappings `names` in `parent`: toggles of categories,
@@ -17,17 +20,19 @@ const createLegends = (vis, parent) => {
     const update = (names, view) => {
         const next = new Map();
         names.forEach(name => {
-            const kind = store.mapping(name).categoryProps ? 'entries'
+            // the legend of the annotations with a name, see createAnnotationLegend
+            const kind = name === annotationsLegend ? 'annotations' : store.mapping(name).categoryProps ? 'entries'
                 : store.colorLegend && view?.colors[name] ? 'colors' : null;
             if (!kind)
                 return;
             let legend = shown.get(name);
             if (legend?.kind !== kind) {
                 legend?.el.remove();
-                legend = kind == 'entries' ? createLegend(vis, name) : store.colorLegend(vis, name);
+                legend = kind == 'annotations' ? createAnnotationLegend(vis)
+                    : kind == 'entries' ? createLegend(vis, name) : store.colorLegend(vis, name);
                 legend.kind = kind;
             }
-            legend.update(kind == 'entries' ? view?.inData[name] : view.colors[name]);
+            legend.update(kind == 'entries' ? view?.inData[name] : view?.colors[name]);
             next.set(name, legend);
             shown.delete(name);
         });

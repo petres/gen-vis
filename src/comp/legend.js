@@ -1,10 +1,11 @@
-export { createLegend };
+export { createLegend, createAnnotationLegend, annotationEntries };
 
 import { create, itemOf, join } from "@/utils/dom";
 import { evaluate } from "@/utils/expr";
 import { setProps } from "@/utils/draw";
 import { withColor } from "@/layout";
 import { el, patch, setText } from "@/comp/html";
+import { symbolDefaults } from "@/utils/defaults";
 
 // the class of a value of a prop, e.g. of the legend props, as Vue joins
 // them: a string, the names of an object with a true value, a list of them
@@ -159,5 +160,64 @@ const createLegend = (vis, legend) => {
         });
     };
 
+    return { el: root, update };
+};
+
+/**
+ * The entries of the annotations with a `legend` (a name, also a template
+ * of the globals), one per name: its symbol of the type of the annotation,
+ * a vertical line of a line at a value of a horizontal scale (e.g. a date
+ * of x), a horizontal one otherwise, a box of a band, a dot of a circle,
+ * with the props and the classes of the annotation, in the box of the
+ * defaults of the line (or of the rect or circle) of the chart.
+ */
+const annotationEntries = store => {
+    const defaults = symbolDefaults(store.chartDefaults);
+    const box = kind => {
+        const d = defaults?.[kind] ?? {};
+        const size = d.size ?? defaults?.size ?? 16;
+        return { width: d.width ?? defaults?.width ?? size, height: d.height ?? defaults?.height ?? size };
+    };
+    const seen = new Set();
+    return store.def.plot.filter(p => p.type?.startsWith('annotation:') && p.legend !== undefined && p.legend !== null).flatMap(p => {
+        const name = store.text(String(p.legend));
+        if (seen.has(name))
+            return [];
+        seen.add(name);
+        const type = p.type.split(':')[1];
+        const row = p.data?.[0] ?? {};
+        const vertical = Object.keys(row).some(k => row[k] !== null && store.def.mapping[k]?.scale?.orientation == 'horizontal');
+        const kind = type == 'band' ? 'rect' : type == 'circle' ? 'circle' : 'line';
+        const { width, height } = box(kind);
+        const shape = type == 'band' ? { element: 'rect', attrs: { x: 0, y: 0.5, width, height: height - 1 } }
+            : type == 'circle' ? { element: 'circle', attrs: { cx: width/2, cy: height/2, r: Math.min(4, Math.min(width, height)/2 - 1) } }
+            : vertical ? { element: 'line', attrs: { x1: width/2, x2: width/2, y1: 0, y2: height } }
+            : { element: 'line', attrs: { x1: 0, x2: width, y1: height/2, y2: height/2 } };
+        const props = evaluate(p.props ?? {}, store.scope);
+        return [{ name, width, height, element: shape.element, attrs: { ...shape.attrs, ...props, class: `vis-annotation vis-${type}` } }];
+    });
+};
+
+/**
+ * The legend of the annotations with a `legend` (see annotationEntries):
+ * an entry per name with its symbol, not a toggle. `update()` draws it again.
+ */
+const createAnnotationLegend = vis => {
+    const root = el('div', { class: 'vis-legend vis-legend-annotations' });
+    const list = root.appendChild(el('div', { class: 'vis-legend-entries' }));
+    const update = () => {
+        const entries = annotationEntries(vis.store);
+        join(list, entries, { key: e => e.name, create: () => el('div', { class: 'vis-legend-entry' }) }).forEach((div, i) => {
+            const e = entries[i];
+            div.replaceChildren();
+            const svg = div.appendChild(create('svg'));
+            patch(svg, { width: e.width, height: e.height,
+                style: `vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - ${e.height/2}px)` });
+            const shape = svg.appendChild(create(e.element));
+            setProps.call(shape, e.attrs);
+            const span = div.appendChild(el('span'));
+            setText(span, e.name);
+        });
+    };
     return { el: root, update };
 };
