@@ -13,6 +13,7 @@ files.
 | `transforms/<type>.json` | the transforms of a definition, a file per type | `src/utils/transform-types.js` |
 | `merge/*.json`, `merge.md` | parents, mixins and the patches of form elements | `src/utils/def.js` (`mergeAll`, `patchedParts`), `src/utils/load.js` (`resolveParents`) |
 | `expressions/*.json` | the expressions of props | `src/utils/expr.js` |
+| `expressions/syntax.json` | the string syntax of expressions | `src/utils/expr-parse.js` |
 | `normalize/*.json` | a 4.0 definition as the renderer reads it | `src/utils/normalize.js` |
 
 Every file is a list of cases, every case has a `name` (what it shows, the
@@ -163,6 +164,19 @@ See `merge.md`.
 - `scope`: the values of the names, e.g. the globals or the values of a row.
 - `expr`: the expression, see `expressions.md`.
 - `result`: its value.
+
+`expressions/syntax.json`, the string syntax of expressions (see
+`expressions.md`, String syntax):
+
+```json
+{ "name": "* before +", "text": "@x * 2 + 1", "expr": { "+": [{ "*": ["@x", 2] }, 1] }, "scope": { "x": 3 }, "result": 7 }
+```
+
+- `text`: the text of an expression.
+- `expr`: the expression of the text.
+- `scope`, `result` (optional): the value of the expression.
+- `error` instead of `expr`: the text is no expression, the start of the
+  message.
 
 ## Normalize
 
