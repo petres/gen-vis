@@ -160,7 +160,7 @@ const withHalves = time => {
 // the formats of the values of dates of periods (`interval` of a mapping),
 // e.g. of the hover of half years, and the name of the period of an interval
 const periodFormats = { month: '%b %Y', quarter: 'Q%q %Y', half: 'H%K %Y', year: '%Y' };
-const periodName = interval => typeof interval == 'string' ? /^\s*(?:1\s*)?([a-z]+?)s?\s*$/.exec(interval.toLowerCase())?.[1] : undefined;
+const periodName = interval => typeof interval == 'string' ? /^\s*(?:1\s*)?([a-z]+?)s?\s*$/.exec(interval)?.[1] : undefined;
 
 const getLocale = (locale = 'de') => {
     const custom = typeof locale == 'string' ? { base: locale } : (locale ?? {});

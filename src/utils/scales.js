@@ -17,7 +17,7 @@ const units = {
 const intervalOf = (spec, utc = false) => {
     if (typeof spec != 'string')
         return null;
-    const m = /^\s*(\d+)?\s*([a-z]+?)s?\s*$/.exec(spec.toLowerCase());
+    const m = /^\s*(\d+)?\s*([a-z]+?)s?\s*$/.exec(spec);
     const unit = m && Object.hasOwn(units, m[2]) ? units[m[2]] : null;
     if (!unit)
         return null;

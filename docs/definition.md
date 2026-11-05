@@ -613,7 +613,8 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   `title` (`{"name", "offset"}`, the distance from the axis, by default 8
   pixels inside the edge of the margin, of a radial axis 16 pixels outside
   of the circle; in the middle of the range of the scale, e.g. of a scale of
-  the upper part of the plot area; of a left or right axis `"position":
+  the upper part of the plot area, rotated beside a left or right axis,
+  `"position": "side"`, the default; of a left or right axis `"position":
   "top"` puts it horizontal above the range of the scale, `gap` pixels (8)
   above it, starting at `offset` from the axis, e.g. the unit at the top
   left, class `vis-axis-title-top`) and `padding` (the space between the tick marks and the
@@ -714,8 +715,9 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   points, in this order, e.g. a light area under a line, with the props of
   their style which are the same for all rows of a category (values and
   references to the props of the categories, e.g. `@color`, `"fill-opacity":
-  0.08`, `"stroke-dasharray": "@dash"`), in the box of the line (or of the
-  box) of the defaults. A
+  0.08`, `"stroke-dasharray": "@dash"`), in the box of the line of the
+  defaults, without a line of the box or the dot; the `props` of the symbol
+  apply to all its parts; without a plot `by` the mapping it is a rect. A
   category can have a `symbol` of its own (in the same forms), e.g.
   `"categories": {"Direktvergabe": {"symbol": "rect"}}` of an area in a
   legend of lines. A click shows or hides the
@@ -735,8 +737,9 @@ axis `"axis": {}` or `"axis": {"position": "right"}`.
   ticks of a gradient, e.g. `[0, 50, 100]`. `"classes": true` labels the
   classes of a threshold, quantize or quantile scale in their middle instead
   of their limits, the open ends with `<` and `≥` (`≤` and `>` of `"closed":
-  "right"`), e.g. `< 50`, `50–100`, …, `≥ 300`; without a `size` of the
-  legend its classes are as wide as their labels. A category with `"legend":
+  "right"`), e.g. `< 50`, `50–100`, …, `≥ 300`; a horizontal legend without
+  a `size` is at least as wide as the labels of its classes (estimated of
+  their characters), a vertical one as wide as its labels. A category with `"legend":
   false` in its props has no entry, it stays visible, e.g. headers. With
   `"onlyData": true` the legend only has the categories of the rows after
   the `filter`, also the hidden ones, e.g. the sources of the selected
@@ -1170,7 +1173,7 @@ mapping (`join`) whose values are the keys of the features:
   polygon of their feature, the point farthest from its edges, also in long
   or bent countries (`"place": "centroid"`: the center as `geo:circle`).
   `"fit": true` shows only the labels which fit into the area around their
-  place, `"overlap": false` leaves out the ones which overlap the label of a
+  pole (not of `"place": "centroid"`, which has none), `"overlap": false` leaves out the ones which overlap the label of a
   larger area, so a map needs no list of the labels: e.g. all zones,
   `{"type": "geo:text", "by": "country", "fit": true, "overlap": false,
   "props": {"text": "@label:formatted"}}`. The sizes of the labels are
@@ -1306,9 +1309,10 @@ parts add names:
 | everywhere | the `globals` and `totalWidth`, the width of the visualisation |
 | `options.height`, `options.margins`, `options.message`, `facets.cols`, `facets.scales`, `filter` | only these |
 | the `props` of `legend` (also of the `symbol`) and `hover` of a mapping | the props of its categories, e.g. `@color` and `@name` |
-| `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight` (of facets also its key `facet` and its name `facet:name`; `width` and `height` with the margins, the others of the plot area), the edges and the size of the plot area in the coordinates of the plots: `plot:left`, `plot:top`, `plot:right`, `plot:bottom` (e.g. a line from the top to the bottom of the plot area, `"y1": "@plot:top", "y2": "@plot:bottom"`, around the center of polar plots), `plot:width`, `plot:height`, of polar plots `radius` (e.g. of the hole of a donut), the sizes of the band and point scales, e.g. `y:bandwidth` and `y:step` |
+| `axis.ticks`, `scale.domain`, the values and `props` of annotations, the values of the `data` of a plot | the size of the facet: `width`, `innerWidth`, `height`, `innerHeight` (of facets also its key `facet` and its name `facet:name`, of a grid the keys and the names of its row and its column, `facet:row`, `facet:col`, `facet:row:name`, `facet:col:name`; `width` and `height` with the margins, the others of the plot area), the edges and the size of the plot area in the coordinates of the plots: `plot:left`, `plot:top`, `plot:right`, `plot:bottom` (e.g. a line from the top to the bottom of the plot area, `"y1": "@plot:top", "y2": "@plot:bottom"`, around the center of polar plots), `plot:width`, `plot:height`, of polar plots `radius` (e.g. of the hole of a donut), the sizes of the band and point scales, e.g. `y:bandwidth` and `y:step` |
 | `scale.range` | the sizes of the coordinate system, e.g. `@radius` of polar plots; `width` and `height` are the ones of the plot area here (`plot:width`, `plot:height`), not the ones of the facet with its margins |
-| the `props` of a plot | the props of its categories, the place of the row among the rows of the plot in the facet (`row:index`, from 0) and the values of the row: a mapping (e.g. `@x`), the value as a text of the format of its hover (`@x:formatted`, e.g. `1.234,5`, a label), the scaled value (`@x:scaled`, `@x:scaled:center` for the center of a band, the position of a value, e.g. `@x:scaled:0` or `@x:scaled:100`, `@x:scaled:min` and `@x:scaled:max` of the domain), the size of a band and the distance of the categories (`@y:bandwidth`, `@y:step`), the extent of the group of the row (`@y:group:start`, `@y:group:end`, see `groups` of scales), stacked values (`@y:start`, `@y:end:scaled`, ..., see `stacked`) |
+| `facets.title.props` | the names of the facet (`facet`, `facet:name`) and the props of its category, of a grid the one of the column (or of the row of the headers of the rows), e.g. `@color` |
+| the `props` of a plot | the names of the facet above, the props of its categories, the place of the row among the rows of the plot in the facet (`row:index`, from 0, unless a mapping is named `row`) and the values of the row: a mapping (e.g. `@x`), the value as a text of the format of its hover (`@x:formatted`, e.g. `1.234,5`, a label), the scaled value (`@x:scaled`, `@x:scaled:center` for the center of a band, of a date mapping with an `interval` both the middle of the period of the row, `@x:scaled:start` and `@x:scaled:end` its start and end, the position of a value, e.g. `@x:scaled:0` or `@x:scaled:100`, `@x:scaled:min` and `@x:scaled:max` of the domain), the size of a band and the distance of the categories (`@y:bandwidth`, `@y:step`, of an `interval` the pixels of the period of the row), the extent of the group of the row (`@y:group:start`, `@y:group:end`, see `groups` of scales), stacked values (`@y:start`, `@y:end:scaled`, ..., see `stacked`) |
 
 Inner names replace outer ones, in a plot the mappings replace globals of the
 same name, e.g. `@year` is the one of the row. A reference to an unknown name
@@ -1347,7 +1351,8 @@ the contract types in the columns and the value bands in the rows:
 ```
 
 `cols` and `rows` are mappings with categories (a string; a number of `cols`
-is the number of the columns of the facets of `dim`, as before), one of
+or a reference to a global, `"@cols"`, is the number of the columns of the
+facets of `dim`, as before), one of
 them alone is one row or one column. The cells are in the order of the
 categories of the two mappings, the ones with rows; a combination without
 rows is an empty box of the size of a facet (`.vis-facet-empty`, without
