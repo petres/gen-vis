@@ -25,6 +25,7 @@
     "./standalone": "./dist-lib/gen-vis.js",
     "./esm": "./dist-lib/esm/gen-vis.js",
     "./export.html": "./dist-lib/export.html",
+    "./inter.css": "./dist-lib/esm/chunks/fonts/inter.css",
     "./package.json": "./package.json"
   },
   "bin": {

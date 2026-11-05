@@ -83,7 +83,7 @@ const injectCss = (mode) => ({
                 this.emitFile({ type: 'asset', fileName: `${dir}fonts/LICENSE-Inter.txt`, source: readFileSync(`${fontDir}LICENSE`) });
                 // the rules as a stylesheet next to them, e.g. of the print of
                 // the PDF of the CLI (bin/export.js) or of a page of its own
-                this.emitFile({ type: 'asset', fileName: `${dir}fonts/inter.css`, source: `${eval(fontCode(file => JSON.stringify(`./${file}`)))}\n` });
+                this.emitFile({ type: 'asset', fileName: `${dir}fonts/inter.css`, source: `${(0, eval)(fontCode(file => JSON.stringify(`./${file}`)))}\n` });
             }
             if (mode != 'module' && entry.fileName.includes('/'))
                 throw new Error(`the styles of ${mode} are in ${entry.fileName}, the urls of the fonts are relative to the directory of the build`);
