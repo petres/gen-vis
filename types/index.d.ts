@@ -3,7 +3,7 @@
 // (@preschen/gen-vis/vue) are in vue.d.ts
 import type { GenVisDefinition } from './definition.js';
 
-// the types of the parts of a definition, e.g. MappingEntry or Plot
+// the types of the parts of a definition, e.g. Dim, Mark or Control
 export type * from './definition.js';
 
 /** A definition of a visualisation, see schema.json and docs/definition.md. */

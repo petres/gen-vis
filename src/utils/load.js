@@ -4,7 +4,7 @@ export { valueFormat, resolveUrl, clearCache, resolveParents, readDef, requireme
 import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, toDate, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
 import { applyResolved, languageOf, mergeAll, prepareDef, variants, variantsOf } from "@/utils/def";
-import { translate, isDefinition4, authoredPath } from "@/utils/language";
+import { translate, isDefinition4 } from "@/utils/language";
 import { migrate } from "@/utils/migrate";
 import { resolve, namesOfGlobals, variants as resolvedVariants } from "@/utils/resolve";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
@@ -274,16 +274,12 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
     const engine = v => normalize(translate(v), { plotTypes });
     const defOrg = engine(resolve(source, namesOfGlobals(source.globals, source.controls)));
     defOrg[variantsOf] = resolvedVariants(source).map(engine);
-    // the check of the definition (translated, not normalized) with the
-    // rows, e.g. of years as dates, see load, it is loaded meanwhile, the
-    // places of the warnings are the ones of the definition
-    const validate = async rows => (await checks)?.validateDef(translate(resolve(source, namesOfGlobals(source.globals, source.controls))), rows)
-        .forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${authoredWarning(w)}`));
+    // the check of the definition (of 5.0, as written) with the rows, e.g.
+    // of years as dates, see load, it is loaded meanwhile
+    const validate = async rows => (await checks)?.validateDef(source, rows)
+        .forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
     return { url, defOrg, source, validate };
 };
-
-// a warning of the check with the place of the definition, see authoredPath
-const authoredWarning = w => w.replace(/^([\w.\[\]-]+)(?=:)/, p => authoredPath(p));
 
 // the rows of the data of the attribute or of the url of the definition,
 // the format by default the one of the extension of its url, parquet is

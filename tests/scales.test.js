@@ -199,9 +199,11 @@ describe('pad', () => {
         expect(scale({ pad: 0.1, domain: [-5, 20] }).domain()).toEqual([-5, 20]);
     });
 
-    test('validateDef warns of a positive start of domainRel', async () => {
+    test('validateDef warns of a positive start of domainAbs, domainRel is pad', async () => {
         const { validateDef } = await import('@/utils/validate');
-        const def = { mapping: { x: { column: 'x', type: 'numeric' }, y: { column: 'y', type: 'numeric', scale: { domainRel: [0.1, 0.1] } } }, plot: { type: 'line' } };
-        expect(validateDef(def)).toEqual([`mapping.y.scale.domainRel: a positive start shrinks the domain at its start and cuts off data (the value is added), it extends with a negative one, e.g. [-0.1, 0.1]; "pad": 0.1 extends both ends`]);
+        const def = { dims: { x: { column: 'x', type: 'numeric' }, y: { column: 'y', type: 'numeric', scale: { domainAbs: [1, 1] } } }, marks: { type: 'line' } };
+        expect(validateDef(def)).toEqual([`dims.y.scale.domainAbs: a positive start shrinks the domain at its start and cuts off data (the value is added), it extends with a negative one, e.g. [-1, 1]; "pad": 0.1 extends both ends`]);
+        def.dims.y.scale = { domainRel: [0.1, 0.1] };
+        expect(validateDef(def)).toEqual([expect.stringMatching(/^dims\.y\.scale\.domainRel: unknown key/)]);
     });
 });

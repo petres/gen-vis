@@ -823,8 +823,8 @@ describe('the props of the labels and of the line of an axis, the titles of face
         def.mapping.y.axis.domain = { props: { stroke: '@colour' } };
         def.mapping.x.axis.domain = 'none';
         expect(validateDef(def)).toEqual([
-            `mapping.x.axis.domain: expected the props of the line of the axis, e.g. { "props": { "stroke-opacity": 0.4 } }`,
-            "mapping.y.axis.domain.props.stroke: unknown reference 'colour', expected one of 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height'",
+            `dims.x.axis.domain: expected the props of the line of the axis, e.g. { "props": { "stroke-opacity": 0.4 } }`,
+            "dims.y.axis.domain.props.stroke: unknown reference 'colour', expected one of 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height'",
         ]);
         expect(errors).toEqual([]);
     });
@@ -1009,9 +1009,9 @@ describe('the scale of another mapping', () => {
         def.mapping.lo.scale = { of: 'hi', type: 'log' };
         def.mapping.hi.scale = { of: 'z' };
         expect(validateDef(def)).toEqual([
-            `mapping.lo.scale.of: expected a mapping with a scale of its own, e.g. "y"`,
-            `mapping.lo.scale.type: not used, the scale is the one of 'hi'`,
-            `mapping.hi.scale.of: expected a mapping with a scale of its own, e.g. "y"`,
+            `dims.lo.scale.of: expected a dim with a scale of its own, e.g. "y"`,
+            `dims.lo.scale.type: not used, the scale is the one of 'hi'`,
+            `dims.hi.scale.of: expected a dim with a scale of its own, e.g. "y"`,
         ]);
         expect(errors).toEqual([]);
     });
@@ -1051,10 +1051,10 @@ describe('the tick marks of axes', () => {
         polar.mapping.x.axis.tickMarks = { size: -1, inset: 'x', props: { stroke: '@colour' } };
         polar.mapping.y.axis = { position: 'radial', tickMarks: { size: 4 } };
         expect(validateDef(polar)).toEqual([
-            'mapping.x.axis.tickMarks.size: expected the length of the tick marks in pixels, e.g. 4',
-            'mapping.x.axis.tickMarks.inset: expected the part of the tick marks inside the plot area in pixels, e.g. 0',
-            "mapping.x.axis.tickMarks.props.stroke: unknown reference 'colour', expected one of 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'radius', 'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height'",
-            'mapping.y.axis.tickMarks: a radial axis has no tick marks, the circles of the grid mark its values',
+            'dims.x.axis.tickMarks.size: expected the length of the tick marks in pixels, e.g. 4',
+            'dims.x.axis.tickMarks.inset: expected the part of the tick marks inside the plot area in pixels, e.g. 0',
+            "dims.x.axis.tickMarks.props.stroke: unknown reference 'colour', expected one of 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'radius', 'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height'",
+            'dims.y.axis.tickMarks: a radial axis has no tick marks, the circles of the grid mark its values',
         ]);
         expect(errors).toEqual([]);
     });
@@ -1305,8 +1305,8 @@ describe('rows which are not stacked', () => {
         wrong.mapping.y.stacked = { kind: 'load' };
         wrong.mapping.x.stacked = 'yes';
         expect(validateDef(wrong)).toEqual([
-            `mapping.x.stacked: expected true or the conditions of the rows which are stacked, e.g. { "type": { "not": "load" } }`,
-            "mapping.y.stacked.kind: unknown mapping 'kind'",
+            `dims.x.stacked: expected true or the conditions of the rows which are stacked, e.g. { "type": { "not": "load" } }`,
+            "dims.y.stacked.==[0]: unknown reference 'kind'",
         ]);
         expect(errors).toEqual([]);
     });

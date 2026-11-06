@@ -594,8 +594,8 @@ describe('events and slots', () => {
 
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef({ ...def, options: { hover: { title: '{titel}', row: '{c.unit} {z}' } } })).toEqual([
-            "options.hover.title: unknown name 'titel' in the template",
-            "options.hover.row: unknown name 'z' in the template",
+            "hover.title: unknown name 'titel' in the template",
+            "hover.row: unknown name 'z' in the template",
         ]);
     });
 
@@ -663,9 +663,9 @@ describe('events and slots', () => {
 
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef({ ...def, mapping: { ...def.mapping, c: { ...def.mapping.c, hover: { row: { props: { color: '@colour' } } } } } }))
-            .toEqual([expect.stringMatching(/^mapping\.c\.hover\.row\.props\.color: unknown reference 'colour'/)]);
+            .toEqual([expect.stringMatching(/^dims\.c\.hover\.row\.props\.color: unknown reference 'colour'/)]);
         expect(validateDef({ ...def, mapping: { ...def.mapping, y: { ...def.mapping.y, hover: { row: { props: { color: 'red' } } } } } }))
-            .toEqual([`mapping.y.hover.row: the styles of the rows of the hover are props of the categories, the mapping needs 'categories' or 'fromData'`]);
+            .toEqual([`dims.y.hover.row: the styles of the rows of the hover are props of the categories, the dim needs 'categories' or 'fromData'`]);
     });
 
     test('hover and select with the rows of the mappings', async () => {
@@ -3348,7 +3348,7 @@ describe('histograms: the classes of a bin', () => {
         expect(open.querySelector('g.vis-plot path').getAttribute('d')).toBe('M0,125H150V187.5H300V187.5H750');
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef(def({ type: 'bar', ends: 'open', props: {} })).filter(w => w.includes('ends')))
-            .toEqual([`plot[0].ends: the ends of the stairs of a line of x0 and x1, 'base' (down to the base, the default) or 'open'`]);
+            .toEqual([`marks[0].ends: the ends of the stairs of a line of x0 and x1, 'base' (down to the base, the default) or 'open'`]);
         expect(errors).toEqual([]);
     });
 });
@@ -3437,7 +3437,7 @@ describe('axes at a value of the other axis (`at`)', () => {
         expect(p).toBeCloseTo(550*(Date.UTC(2022, 0, 1) - Date.UTC(2020, 0, 1))/(Date.UTC(2024, 0, 1) - Date.UTC(2020, 0, 1)), 0);
         const { validateDef } = await import('@/utils/validate');
         const polar = { options: { coord: 'polar' }, mapping: { x: { column: 'a', type: 'categorical', axis: { at: 0 } }, y: { column: 'v', type: 'numeric' } }, plot: { type: 'polar:arc' } };
-        expect(validateDef(polar).filter(w => w.includes('.at'))).toEqual([`mapping.x.axis.at: only cartesian axes are at a value of the other axis`]);
+        expect(validateDef(polar).filter(w => w.includes('.at'))).toEqual([`dims.x.axis.at: only cartesian axes are at a value of the other axis`]);
     });
 
     test('of a log scale at 0 or null at the edge, at a value of a band scale its center, per facet of own scales', async () => {
@@ -3483,7 +3483,7 @@ describe('the layer of annotations', () => {
         expect(order).toEqual(['annotation-2', 'plot-0', 'annotation-0', 'points', 'annotation-1']);
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef({ ...def, annotations: [{ type: 'line', y: 2, before: 'nope' }] }))
-            .toEqual([`annotations[0].before: unknown plot 'nope', expected one of 'plot-0', 'points'`]);
+            .toEqual([`annotations[0].before: unknown mark 'nope', expected one of 'plot-0', 'points'`]);
     });
 });
 
@@ -3671,8 +3671,8 @@ describe('grids of facets', () => {
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef(def)).toEqual([]);
         expect(validateDef({ ...def, facets: { rows: 'c', cols: 'nope', scales: { y: 'rows' } } })).toEqual([
-            `plot[1].facet.half: expected the mapping of the rows or the columns of the grid, 'c', 'nope'`,
-            `facets.cols: unknown mapping 'nope'`, `facets.scales.y: expected 'all', 'row' or 'col'`]);
+            `marks[1].facet.half: expected the dim of the rows or the columns of the grid, 'c', 'nope'`,
+            `facets.cols: unknown dim 'nope'`, `facets.scales.y: expected 'all', 'row' or 'col'`]);
         expect(errors).toEqual([]);
     });
 });
@@ -3835,7 +3835,7 @@ describe('periods of dates (interval)', () => {
         expect(getLocale('de').time.format('%K. Halbjahr %Y')(new Date(2023, 8, 1))).toBe('2. Halbjahr 2023');
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef({ ...def(), mapping: { ...def().mapping, x: { ...def().mapping.x, interval: 'fortnight' } } }).filter(w => w.includes('interval')))
-            .toEqual([`mapping.x.interval: expected day, week, month, quarter, half, year or a number of them, e.g. "6 months"`]);
+            .toEqual([`dims.x.interval: expected day, week, month, quarter, half, year or a number of them, e.g. "6 months"`]);
     });
 
     test('of a time scale only: a band scale of dates is a band per date, its hover works', async () => {
@@ -3843,7 +3843,7 @@ describe('periods of dates (interval)', () => {
         banded.mapping.x = { ...banded.mapping.x, type: 'categorical', scale: { type: 'band', orientation: 'horizontal' } };
         const { validateDef } = await import('@/utils/validate');
         const dated = { ...banded, mapping: { ...banded.mapping, x: { ...banded.mapping.x, type: 'date' } } };
-        expect(validateDef(dated).filter(w => w.includes('interval'))).toEqual([`mapping.x.interval: the periods of a time or utc scale, not of a band one`]);
+        expect(validateDef(dated).filter(w => w.includes('interval'))).toEqual([`dims.x.interval: the periods of a time or utc scale, not of a band one`]);
         const el = await mount({ def: dated, data });
         const rects = [...el.querySelectorAll('[data-plot="bars"] rect')];
         expect(rects).toHaveLength(3);
@@ -4023,8 +4023,8 @@ describe('labels inside the bands of an area plot (place)', () => {
         const bad = def();
         bad.plot[1] = { ...bad.plot[1], place: { in: 'names' }, select: { max: 'y' } };
         expect(validateDef(bad).filter(w => w.includes('place') || w.includes('select'))).toEqual([
-            `plot[1].place.in: expected an area plot, not one of 'svg:text'`,
-            `plot[1].select: the labels inside of bands are placed at the positions of all their rows, without a select`]);
+            `marks[1].place.in: expected an area mark, not one of 'svg:text'`,
+            `marks[1].select: the labels inside of bands are placed at the positions of all their rows, without a select`]);
         expect(errors).toEqual([]);
     });
 

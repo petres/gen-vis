@@ -3,7 +3,7 @@ export { validateDef, curveNames };
 import { intervalOf } from "@/utils/scales";
 import * as d3 from "@/utils/d3";
 import { checkLocale } from "@/utils/locale";
-import { mergeAll, patchable, templateRefs } from "@/utils/def";
+import { templateRefs } from "@/utils/def";
 import { curves } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
@@ -15,8 +15,10 @@ import { isOperator, operators, refNames } from "@/utils/expr";
 import { defaultScaleType, facetMappings, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
 import { inferTypes } from "@/utils/data";
 import { versionError } from "@/utils/version";
-// without its descriptions, see checkSchema of vite.config.js
-import schema from "../../schema.json?check";
+import { translate, isDefinition4, authoredPath } from "@/utils/language";
+import { migrate } from "@/utils/migrate";
+import { resolve, namesOfGlobals } from "@/utils/resolve";
+import { schema } from "@/schema/definition.js";
 
 // the interpolations of the plot types with a curve, e.g. cartesian:line
 const curveNames = Object.keys(curves);
@@ -158,7 +160,7 @@ const otherCase = (name, names) => typeof name == 'string' && !names.includes(na
 // --- the schema ---
 
 // the part of the schema of a reference, e.g. "#/definitions/scale"
-const resolve = node => {
+const resolveNode = node => {
     while (node?.$ref)
         node = node.$ref.substring(2).split('/').reduce((n, k) => n[k], schema);
     return node;
@@ -175,7 +177,7 @@ const matches = (v, pattern) => typeof v != 'string' || new RegExp(pattern, 'u')
 // a value is of a branch of anyOf if it is of its type, e.g. a string of an
 // enum of strings, its other warnings are the ones of the branch
 const fits = (v, node) => {
-    node = resolve(node);
+    node = resolveNode(node);
     const branches = node.anyOf ?? node.oneOf;
     if (branches)
         return branches.some(b => fits(v, b));
@@ -193,11 +195,11 @@ const fits = (v, node) => {
 const typeNames = { string: 'a string', number: 'a number', integer: 'an integer', boolean: 'true or false', object: 'an object', array: 'a list', null: 'null' };
 // the values of a part of the schema, e.g. "a number or a reference "@name""
 const describe = node => {
-    node = resolve(node);
+    node = resolveNode(node);
     const branches = node.anyOf ?? node.oneOf;
     if (branches)
         return [...new Set(branches.map(describe))].join(' or ');
-    if (node === schema.definitions.prop)
+    if (node === schema.definitions.expression)
         return 'an expression';
     if (node.enum)
         return node.enum.length == 1 ? show(node.enum[0]) : `one of ${list(node.enum)}`;
@@ -217,9 +219,11 @@ const describe = node => {
  * can be a part of its parent.
  */
 const schemaWarnings = (v, node, path = '', key = 'value', out = []) => {
-    node = resolve(node);
-    // undefined is no value of JSON, e.g. a part which is left out
-    if (!isObject(node) || registered.has(node) || v === undefined)
+    node = resolveNode(node);
+    // undefined is no value of JSON, e.g. a part which is left out; an
+    // expression of the rows or the sizes ("=..." or a reference "@...")
+    // stands for a value of any kind, the checks of the parts know them
+    if (!isObject(node) || registered.has(node) || v === undefined || (typeof v == 'string' && /^[=@]/.test(v)))
         return out;
     const at = message => (out.push([path, message]), out);
     if (node.type && !typeFits(v, node.type))
@@ -450,10 +454,8 @@ const checkScale = (ctx, n, m, path) => {
         ignores.filter(c => !Object.hasOwn(def.mapping ?? {}, c)).forEach(c => warn(`${path}.scale.domainIgnores`, `unknown mapping '${c}'`));
     // a positive start of domainRel or domainAbs moves the start up, the
     // domain shrinks and cuts off data, e.g. of bars below the plot area
-    ['domainRel', 'domainAbs'].filter(k => Array.isArray(m.scale[k]) && m.scale[k][0] > 0).forEach(k =>
-        warn(`${path}.scale.${k}`, `a positive start shrinks the domain at its start and cuts off data (the value is added), it extends with a negative one, e.g. [-0.1, 0.1]; "pad": 0.1 extends both ends`));
-    if (m.scale.pad !== undefined && m.scale.domainRel !== undefined)
-        warn(`${path}.scale.pad`, `pad replaces domainRel, one of them`);
+    if (Array.isArray(m.scale.domainAbs) && m.scale.domainAbs[0] > 0)
+        warn(`${path}.scale.domainAbs`, `a positive start shrinks the domain at its start and cuts off data (the value is added), it extends with a negative one, e.g. [-1, 1]; "pad": 0.1 extends both ends`);
     if (m.scale.closed !== undefined && type != 'threshold')
         warn(`${path}.scale.closed`, `the side of the classes of a threshold scale, 'left' (default) or 'right'`);
     if (m.scale.orientation !== undefined && !orientations.includes(m.scale.orientation))
@@ -661,8 +663,7 @@ const checkAnnotations = ctx => {
     });
 };
 
-// the form elements and their entries, the patches are checked as parts of
-// the definitions of the entries, see validateDef
+// the controls (the form elements of the engine) and their entries
 const checkFormElements = ({ formElements, warn }) => {
     formElements.forEach(([i, e]) => {
         const path = `formElements[${i}]`;
@@ -677,11 +678,6 @@ const checkFormElements = ({ formElements, warn }) => {
                 return warn(`${path}.values[${j}]`, `expected an entry, e.g. { "id": "a", "name": "A", "value": "a" }`);
             if (!('value' in v))
                 warn(`${path}.values`, `no value of '${v.id}'`);
-            // other fields are names of templates, e.g. {group:short}, so they are scalars
-            patchable.filter(k => isObject(v[k])).forEach(k =>
-                warn(`${path}.values[${j}].${k}`, `unknown key, a part of the definition is part of the patch, e.g. { "patch": { "${k}": ... } }`));
-            if (v.patch !== undefined && !isObject(v.patch))
-                warn(`${path}.values[${j}].patch`, `expected the parts of the definition, e.g. { "mapping": { "y": { "column": "share" } } }`);
         });
     });
 };
@@ -943,24 +939,15 @@ const withTypes = (def, rows) => {
     return def;
 };
 
-// the warnings of the checks of the parts of the normalized definition
-// (`normalized`) and of the schema of the definition of 4.0 (`def`, if
-// `schemaChecked`), a warning of the schema is left out if a check warns of
-// the same path, or of a value of a path above it, e.g. "expected a list" of
-// the parts of a list
-const checkDef = (def, normalized, rows, schemaChecked = true, plots = {}) => {
+// the warnings [path, message] of the checks of the parts of the normalized
+// definition (`normalized`), `def` is the engine's form as translated
+const checkDef = (def, normalized, rows, plots = {}) => {
     const warnings = [];
     const warn = (path, message) => warnings.push([path, message]);
     const ctx = { ...context(normalized, warn, rows), raw: def, ...plots };
     [checkMappings, checkPlots, checkGeo, checkFilters, checkAnnotations, checkFormElements, checkFacets, checkTexts, checkOptions, checkTransforms]
         .forEach(check => check(ctx));
-    const paths = new Set(warnings.map(([p]) => p));
-    const values = warnings.filter(([, m]) => /^(expected|unknown)/.test(m)).map(([p]) => p);
-    const below = p => values.some(v => p.startsWith(`${v}.`) || p.startsWith(`${v}[`));
-    // a plot, an annotation or a transform is the one of a list, e.g. plot[0]
-    const listed = { ...def, ...Object.fromEntries(['plot', 'annotations', 'transform'].filter(k => isObject(def[k])).map(k => [k, [def[k]]])) };
-    const fromSchema = schemaChecked ? schemaWarnings(listed, schema).filter(([p]) => !paths.has(p) && !below(p)) : [];
-    return [...new Set([...warnings, ...fromSchema].map(([p, m]) => `${p}: ${m}`))];
+    return warnings;
 };
 
 // the plot types without their default props, the props a definition writes
@@ -987,39 +974,88 @@ const defaultProps = (def, normalized) => {
     return { written, defaults };
 };
 
+// a warning of the engine's form in the words of the definition: the paths
+// (see authoredPath) and the names of its parts, dims, marks and controls
+const authoredText = m => m
+    .replace(/\bmappings\b/g, 'dims').replace(/\bmapping\b/g, 'dim')
+    .replace(/\bplot\[(\d+)\]\.props\./g, 'marks[$1].').replace(/\bplot\[(\d+)\]/g, 'marks[$1]')
+    .replace(/\bplots\b(?! area)/g, 'marks').replace(/(?<![:'])\bplot\b(?!:|-| area| type)/g, 'mark')
+    .replace(/\bform elements\b/g, 'controls').replace(/\bform element\b/g, 'control')
+    .replace(/\boptions\.hover\b/g, 'hover').replace(/\boptions\.height\b/g, 'height');
+const authored = ([p, m]) => [authoredPath(p), authoredText(m)];
+
+// the warnings of the engine's form of a definition of 5.0 resolved with
+// the globals `names`, in the words of the definition
+const checkResolved = (source, names, rows) => {
+    const resolved = resolve(source, names);
+    const engine = translate(resolved);
+    const normalized = withTypes(normalize(engine, { plotTypes: withoutDefaults() }), rows);
+    return { resolved, warnings: checkDef(engine, normalized, rows, defaultProps(engine, normalized)).map(authored) };
+};
+
 /**
- * Returns warnings for common mistakes in a (merged) definition, e.g. a
- * `$schema` of another version than gen-vis 5 or 4 (the load of a file needs one,
- * see resolveParents of utils/load.js, an object may have none), unknown
- * plot types, keys which are not in the schema or props which are not
- * evaluated. The parts are checked in the normalized definition (see
- * utils/normalize.js), the paths are the ones of the definition. The definitions of the entries of the form elements, the one
- * with the patch of an entry merged as the runtime merges it (see
- * applyPatches of utils/def.js), are checked as well, their warnings which
- * are not the ones of the definition have the entry before the path, e.g.
- * "formElements[0].values[1] > mapping.y.column: …". The `rows` of the data,
- * if given, are checked as well, e.g. years of a date mapping, the types of
- * the mappings without one are the ones of their values.
+ * Returns warnings for common mistakes in a (merged) definition of gen-vis 5
+ * (one of gen-vis 4 is migrated first, as by the load): a `$schema` of
+ * another version (the load of a file needs one, see resolveParents of
+ * utils/load.js, an object may have none), unknown mark types, keys which
+ * are not in the schema (checked in the definition as written, see
+ * src/schema/definition.js) or expressions which are not evaluated. The
+ * parts are checked in the form the engine reads (resolved with the
+ * defaults of the globals, translated and normalized, see utils/language.js
+ * and utils/normalize.js), the paths and the words are the ones of the
+ * definition. The definitions of the other values of the controls are
+ * checked as well, their warnings which are not the ones of the definition
+ * have the entry before the path, e.g. "controls[0].values[1] >
+ * dims.y.column: …". The `rows` of the data, if given, are checked as well,
+ * e.g. years of a date dim, the types of the dims without one are the ones
+ * of their values.
  */
-const validateDef = (def, rows = null) => {
-    const normalized = withTypes(normalize(def, { plotTypes: withoutDefaults() }), rows);
+const validateDef = (raw, rows = null) => {
     // a $schema of another version, a definition object may have none, see utils/version.js
-    const version = versionError(def?.$schema);
-    const warnings = [
-        ...(version ? [`$schema: no definition of gen-vis 5, ${version}`] : []),
-        ...checkDef(def, normalized, rows, true, defaultProps(def, normalized)),
-    ];
+    const version = versionError(raw?.$schema);
+    const head = version ? [`$schema: no definition of gen-vis 5, ${version}`] : [];
+    const source = isObject(raw) ? (isDefinition4(raw) ? migrate(raw) : raw) : {};
+    const controls = Array.isArray(source.controls) ? source.controls : [];
+    const globals = isObject(source.globals) ? source.globals : {};
+    let own, resolved;
+    try {
+        ({ warnings: own, resolved } = checkResolved(source, namesOfGlobals(globals, controls), rows));
+    } catch (error) {
+        // the shape of a part is none the engine reads, e.g. a dim of a number
+        return [...head, error.message];
+    }
+    // the schema of the definition as written, with the expressions of the
+    // globals resolved (their values are checked), a warning of the schema
+    // is left out if a check warns of the same path, or of a value of a path
+    // above it, e.g. "expected a list" of the parts of a list; a mark, an
+    // annotation or a transform is the one of a list, e.g. marks[0]
+    const paths = new Set(own.map(([p]) => p));
+    const values = own.filter(([, m]) => /^(expected|unknown)/.test(m)).map(([p]) => p);
+    const below = p => values.some(v => p.startsWith(`${v}.`) || p.startsWith(`${v}[`));
+    const listed = { ...resolved, ...Object.fromEntries(['marks', 'annotations', 'transform'].filter(k => isObject(resolved[k])).map(k => [k, [resolved[k]]])) };
+    const fromSchema = schemaWarnings(listed, schema).filter(([p]) => !paths.has(p) && !below(p));
+    const warnings = [...head, ...new Set([...own, ...fromSchema].map(([p, m]) => `${p}: ${m}`))];
     const known = new Set(warnings);
-    // the patches are checked by the schema as parts of the definition
-    const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));
-    (Array.isArray(normalized.formElements) ? normalized.formElements : []).forEach((e, i) => (Array.isArray(e?.values) ? e.values : []).forEach((v, j) => {
-        if (!isObject(v?.patch))
+    // the definitions of the other values of the controls
+    controls.forEach((c, i) => {
+        const g = isObject(c) ? c.global ?? c.ref : undefined;
+        if (typeof g != 'string' || !Array.isArray(c.values))
             return;
-        const variant = { ...normalized, ...mergeAll([pick(normalized), pick(v.patch)]), globals: { ...normalized.globals, ...(isObject(v.globals) ? v.globals : {}) } };
-        checkDef(def, variant, rows, false).filter(w => !known.has(w)).forEach(w => {
-            known.add(w);
-            warnings.push(`formElements[${i}].values[${j}] > ${w}`);
+        c.values.forEach((v, j) => {
+            const value = isObject(v) ? v.value : v;
+            if (value === undefined || value === globals[g])
+                return;
+            let variant;
+            try {
+                variant = checkResolved(source, namesOfGlobals({ ...globals, [g]: value }, controls), rows).warnings.map(([p, m]) => `${p}: ${m}`);
+            } catch (error) {
+                variant = [error.message];
+            }
+            variant.filter(w => !known.has(w)).forEach(w => {
+                known.add(w);
+                warnings.push(`controls[${i}].values[${j}] > ${w}`);
+            });
         });
-    }));
+    });
     return warnings;
 };

@@ -33,6 +33,12 @@ const drawn = new Set(['marks', 'annotations', 'props', 'highlight', 'others']);
 const rows = new Set(['filter', 'stack', 'stacked', 'expr']);
 
 const resolveIn = (value, names, key, inside) => {
+    // an operator at the marks or the annotations (a mark is no operator)
+    // is an expression of the whole part, as a text of one
+    if (!inside && (key == 'marks' || key == 'annotations') && isOperator(value)) {
+        const r = resolved(value, names);
+        return r === unresolved ? value : r;
+    }
     if (rows.has(key) || (drawn.has(key) && typeof value != 'string'))
         return value;
     if (typeof value == 'string') {

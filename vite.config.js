@@ -4,28 +4,6 @@ import { fileURLToPath } from 'node:url';
 import { readFileSync, copyFileSync } from 'node:fs';
 import pkg from './package.json' with { type: 'json' };
 
-// the schema of the check of the definitions (`schema.json?check`, see
-// src/utils/validate.js) without its texts, the check only needs the rules,
-// the descriptions are most of its size, the editor of the site and the
-// file of the package keep them; the names of `properties` are kept, e.g. a
-// property `default`
-const checkSchema = () => ({
-    name: 'check-schema',
-    enforce: 'pre',
-    load(id) {
-        const [file, query] = id.split('?');
-        if (query != 'check' || !file.endsWith('schema.json'))
-            return null;
-        const texts = new Set(['description', 'title', 'default', 'examples', '$comment']);
-        const strip = (v, names = false) => Array.isArray(v) ? v.map(e => strip(e))
-            : v && typeof v == 'object' ? Object.fromEntries(Object.entries(v)
-                .filter(([k]) => names || !texts.has(k))
-                .map(([k, e]) => [k, strip(e, !names && (k == 'properties' || k == 'definitions' || k == '$defs' || k == 'patternProperties'))]))
-            : v;
-        return `export default JSON.parse(${JSON.stringify(JSON.stringify(strip(JSON.parse(readFileSync(file, 'utf8')))))});`;
-    },
-});
-
 // the default font of the package, Inter (OFL, of @fontsource/inter): the
 // Latin and Latin Extended subsets of the weights 400 and 600 as woff2 files
 // next to the chunk which injects the styles (fonts/), with their license;
@@ -131,7 +109,7 @@ const exportPage = () => ({
 export default defineConfig(({ mode }) => {
     const module = mode == 'module';
     return {
-        plugins: [vue(), checkSchema(), injectCss(mode), ...(module ? [exportPage()] : [])],
+        plugins: [vue(), injectCss(mode), ...(module ? [exportPage()] : [])],
         resolve: {
             alias: [
                 { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
