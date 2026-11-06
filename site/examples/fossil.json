@@ -1,83 +1,87 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "data": "data/fossil.csv",
-    "options": {
-        "title": "Fossil fuel sales in Austria",
-        "subtitle": "Monthly, the {what} in {unit:name}",
-        "footer": "Source: Eurostat, calculations of the WIFO energy dashboard",
-        "locale": "en",
-        "height": 300,
-        "margins": { "top": 10, "right": 6, "bottom": 28, "left": 44 },
-        "transition": 400
-    },
-    "globals": { "unit": "twh", "share": "", "what": "energy content" },
-    "formElements": [
+    "title": "Fossil fuel sales in Austria",
+    "subtitle": "=match(@share, {'.share': 'Monthly, the shares of the products in the {what}'}, 'Monthly, the {what} in {unit:name}')",
+    "source": "Source: Eurostat, calculations of the WIFO energy dashboard",
+    "height": 300,
+    "margins": {"top": 10, "right": 6, "bottom": 28, "left": 44},
+    "locale": "en",
+    "transition": 400,
+    "globals": {"unit": "twh", "share": "", "what": "energy content"},
+    "controls": [
         {
-            "id": "unit", "name": "Unit", "ref": "unit", "type": "radio",
+            "type": "radio",
+            "global": "unit",
+            "name": "Unit",
+            "id": "unit",
             "values": [
-                { "id": "twh", "name": "TWh", "value": "twh", "globals": { "what": "energy content" } },
-                { "id": "co2", "name": "Mt CO₂", "value": "mt.co2", "globals": { "what": "CO₂ emitted when burned" } }
+                {"id": "twh", "name": "TWh", "value": "twh", "globals": {"what": "energy content"}},
+                {
+                    "id": "co2",
+                    "name": "Mt CO₂",
+                    "value": "mt.co2",
+                    "globals": {"what": "CO₂ emitted when burned"}
+                }
             ]
         },
         {
-            "id": "share", "name": "Values", "ref": "share", "type": "radio",
+            "type": "radio",
+            "global": "share",
+            "name": "Values",
+            "id": "share",
             "values": [
-                { "id": "absolute", "name": "Absolute", "value": "" },
-                {
-                    "id": "share", "name": "Share", "value": ".share",
-                    "patch": {
-                        "options": { "subtitle": "Monthly, the shares of the products in the {what}" },
-                        "mapping": { "y": { "domain": [0, 1], "axis": { "format": ".0%" }, "hover": { "format": ".1%" } } }
-                    }
-                }
+                {"id": "absolute", "name": "Absolute", "value": ""},
+                {"id": "share", "name": "Share", "value": ".share"}
             ]
         }
     ],
-    "mapping": {
+    "dims": {
         "x": {
             "column": "date",
-            "scale": { "type": "utc" },
-            "axis": { "ticks": 8, "format": "%Y" },
-            "hover": { "format": "%B %Y" }
+            "scale": {"type": "utc"},
+            "axis": {"ticks": 8, "format": "%Y"},
+            "hover": {"format": "%B %Y"}
         },
         "y": {
             "column": "{unit}{share}",
             "type": "numeric",
-            "domain": [0, null],
+            "domain": "=match(@share, {'.share': literal([0, 1])}, literal([0, null]))",
             "nice": true,
-            "stacked": true,
-            "axis": { "ticks": 5, "grid": true, "format": ",.0f" },
-            "hover": { "format": ",.2f" }
+            "axis": {"ticks": 5, "format": "=match(@share, {'.share': '.0%'}, ',.0f')"},
+            "hover": {"format": "=match(@share, {'.share': '.1%'}, ',.2f')"},
+            "grid": true
         },
         "product": {
             "column": "product",
             "legend": {
                 "symbol": {
                     "size": 12,
-                    "elements": [{ "type": "rect", "props": { "x": 0, "y": 1, "width": 10, "height": 10, "rx": 2, "fill": "@color" } }]
+                    "elements": [
+                        {
+                            "type": "rect",
+                            "props": {"x": 0, "y": 1, "width": 10, "height": 10, "rx": 2, "fill": "@color"}
+                        }
+                    ]
                 }
             },
             "categories": {
-                "oil":  { "name": "Oil",  "color": "#D97706" },
-                "gas":  { "name": "Gas",  "color": "#0EA5A4" },
-                "coal": { "name": "Coal", "color": "#8B5CF6" }
+                "oil": {"name": "Oil", "color": "#D97706"},
+                "gas": {"name": "Gas", "color": "#0EA5A4"},
+                "coal": {"name": "Coal", "color": "#8B5CF6"}
             },
             "hover": {}
         }
     },
-    "plot": {
+    "marks": {
         "type": "bar",
         "by": "product",
-        "props": {
-            "y0": "@y:start:scaled",
-            "y1": "@y:end:scaled",
-            "width": { "*": ["@innerWidth", 0.0075] },
-            "fill": "@color",
-            "stroke": "#0F172A",
-            "stroke-width": 1,
-            "opacity": 0.9
-        },
-        "highlight": { "mode": "row", "opacity": 1, "stroke": "#E2E8F0", "stroke-width": 1 },
-        "others": { "opacity": 0.5 }
+        "stack": true,
+        "width": "@innerWidth * 0.0075",
+        "stroke": "#0F172A",
+        "stroke-width": 1,
+        "opacity": 0.9,
+        "highlight": {"mode": "row", "opacity": 1, "stroke": "#E2E8F0", "stroke-width": 1},
+        "others": {"opacity": 0.5}
     }
 }

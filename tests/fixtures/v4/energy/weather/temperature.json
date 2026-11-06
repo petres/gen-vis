@@ -1,0 +1,44 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "parent": "../_years.json",
+    "data": "temperature.csv",
+    "options": {
+        "title": "Temperatur Österreich",
+        "subtitle": "gewichtet nach Bevölkerung, täglich (rollierender 4-Wochen Durchschnitt), in °C",
+        "footer": "Source: ERA5"
+    },
+    "mapping": {
+        "y": {
+            "column": "value",
+            "domain": [null, null],
+            "scale": { "domainRel": [-0.1, 0.1] }
+        },
+        "year": {
+            "legend": {
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": {
+                            "x1": 0, "x2": 16, "y1": 8, "y2": 8,
+                            "stroke": "@color",
+                            "stroke-width": "@stroke-width",
+                            "stroke-dasharray": "@stroke-dasharray",
+                            "opacity": "@opacity"
+                        }
+                    }]
+                }
+            },
+            "categories": {
+                "avg40-60": { "color": "#BBB", "opacity": 0.9, "stroke-dasharray": "1, 3", "name": "Ø\u00a01940\u00a0-\u00a01960"},
+                "avg60-90": { "color": "#888", "opacity": 0.9, "stroke-dasharray": "4, 3", "name": "Ø\u00a01961\u00a0-\u00a01990"},
+                "avg90-20": { "color": "#444", "opacity": 0.9, "stroke-dasharray": "8, 3", "name": "Ø\u00a01991\u00a0-\u00a02020"}
+            }
+        }
+    },
+    "plot": {
+        "props": {
+            "stroke-dasharray": "@stroke-dasharray"
+        }
+    }
+}

@@ -1,14 +1,4 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
-    "mapping": {
-        "facet": {
-            "legend": {
-                "symbol": {
-                    "size": 0,
-                    "elements": []
-                }
-            },
-            "hover": {}
-        }
-    }
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "dims": {"facet": {"legend": {"symbol": {"size": 0, "elements": []}}, "hover": {}}}
 }

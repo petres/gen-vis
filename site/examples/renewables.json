@@ -1,107 +1,113 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "data": "data/electricity.csv",
-    "options": {
-        "title": "Renewables, country by country",
-        "subtitle": "Share of renewables in the electricity generated in {year}, by region, sorted by the share",
-        "footer": "Source: ENTSO-E Transparency Platform",
-        "class": "renewables",
-        "locale": "en",
-        "height": 640,
-        "margins": {
-            "top": 26,
-            "right": 46,
-            "bottom": 4,
-            "left": { "steps": ["@totalWidth", { "0": 104, "560": 150 }] }
-        },
-        "transition": 400,
-        "hover": { "box": false, "marker": false, "area": "facet" },
-        "highlight": { "transition": 120 }
-    },
     "transform": [
-        { "type": "lookup", "column": "country", "data": "data/countries.csv", "key": "code", "value": "name", "as": "name" },
-        { "type": "lookup", "column": "country", "data": "data/countries.csv", "key": "code", "value": "region", "as": "region" }
+        {
+            "type": "lookup",
+            "column": "country",
+            "data": "data/countries.csv",
+            "key": "code",
+            "value": "name",
+            "as": "name"
+        },
+        {
+            "type": "lookup",
+            "column": "country",
+            "data": "data/countries.csv",
+            "key": "code",
+            "value": "region",
+            "as": "region"
+        }
     ],
-    "globals": { "year": "2025" },
-    "filter": { "source": "renewable", "year": "@year", "x": { "not": null } },
-    "formElements": [
-        { "id": "year", "name": "Year", "ref": "year", "type": "slider", "values": { "column": "year" } }
+    "title": "Renewables, country by country",
+    "subtitle": "Share of renewables in the electricity generated in {year}, by region, sorted by the share",
+    "source": "Source: ENTSO-E Transparency Platform",
+    "height": 640,
+    "margins": {"top": 26, "right": 46, "bottom": 4, "left": "=steps(@totalWidth, {0: 104, 560: 150})"},
+    "locale": "en",
+    "transition": 400,
+    "class": "renewables",
+    "hover": {"box": false, "marker": false, "area": "facet"},
+    "highlight": {"transition": 120},
+    "globals": {"year": "2025"},
+    "controls": [
+        {
+            "type": "slider",
+            "global": "year",
+            "name": "Year",
+            "id": "year",
+            "values": {"column": "year"}
+        }
     ],
-    "mapping": {
+    "filter": "@source == 'renewable' and @year == @globals.year and @x != null",
+    "dims": {
         "x": {
             "column": "share",
             "domain": [0, 1],
             "format": ".0%",
-            "scale": { "pad": 0 },
-            "axis": { "position": "top", "values": [0, 0.25, 0.5, 0.75, 1], "grid": true, "padding": 8 },
-            "hover": {}
+            "scale": {"pad": 0},
+            "axis": {"position": "top", "values": [0, 0.25, 0.5, 0.75, 1], "padding": 8},
+            "hover": {},
+            "grid": true
         },
         "y": {
             "column": "country",
             "type": "categorical",
             "scale": {
-                "range": [0, "@height"], "padding": 0.25,
-                "order": { "by": "x", "descending": true },
-                "groups": { "by": "region", "padding": 1.6 }
+                "range": [0, "@height"],
+                "padding": 0.25,
+                "order": {"by": "x", "descending": true},
+                "groups": {"by": "region", "padding": 1.6}
             },
             "axis": {
                 "padding": 6,
-                "labels": {
-                    "props": {
-                        "text": "@name",
-                        "max-width": { "steps": ["@totalWidth", { "0": 84, "560": 138 }] }
-                    }
-                }
+                "labels": {"props": {"text": "@name", "max-width": "=steps(@totalWidth, {0: 84, 560: 138})"}}
             }
         },
         "name": "name",
         "region": "region",
         "source": "source",
-        "year": { "column": "year", "type": "categorical" }
+        "year": {"column": "year", "type": "categorical"}
     },
-    "annotations": [
-        { "type": "line", "x": 0.5, "props": { "stroke": "#1D3557", "stroke-dasharray": "2 3" } }
-    ],
-    "plot": [
+    "marks": [
         {
-            "id": "bars",
             "type": "bar",
+            "id": "bars",
             "by": "y",
-            "props": {
-                "x1": "@x:scaled",
-                "y": "@y:scaled",
-                "fill": "#9CC9B9",
-                "rx": 2
-            },
-            "highlight": { "fill": "#0F766E" },
-            "others": { "opacity": 0.45 }
+            "orient": "horizontal",
+            "fill": "#9CC9B9",
+            "rx": 2,
+            "highlight": {"fill": "#0F766E"},
+            "others": {"opacity": 0.45}
         },
         {
+            "type": "text",
             "id": "values",
-            "type": "text",
             "by": "y",
-            "props": {
-                "dx": 5,
-                "y": "@y:scaled:center",
-                "dominant-baseline": "central",
-                "font-size": 11,
-                "font-weight": "bold",
-                "fill": "#0F766E",
-                "text": "@x:formatted",
-                "visibility": "hidden"
-            },
-            "highlight": { "visibility": "visible" }
+            "dx": 5,
+            "y": "@y:scaled:center",
+            "dominant-baseline": "central",
+            "font-size": 11,
+            "font-weight": "bold",
+            "fill": "#0F766E",
+            "text": "@x:formatted",
+            "visibility": "hidden",
+            "highlight": {"visibility": "visible"}
         },
         {
-            "id": "regions",
             "type": "text",
+            "id": "regions",
             "by": "region",
             "select": "first",
-            "props": {
-                "x": "@x:scaled:0", "y": "@y:group:start", "dy": -5,
-                "font-size": 10, "font-weight": "bold", "letter-spacing": "0.06em",
-                "text": "@region", "fill": "#1D3557"
-            }
+            "x": "@x:scaled:0",
+            "y": "@y:group:start",
+            "dy": -5,
+            "font-size": 10,
+            "font-weight": "bold",
+            "letter-spacing": "0.06em",
+            "text": "@region",
+            "fill": "#1D3557"
         }
-    ]
+    ],
+    "annotations": [{"type": "line", "x": 0.5, "props": {"stroke": "#1D3557", "stroke-dasharray": "2 3"}}]
 }

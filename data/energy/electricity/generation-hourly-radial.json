@@ -1,162 +1,74 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "parent": "_sources.json",
     "data": "generation-hourly.csv",
-    "options": {
-        "height": 460,
-        "margins": {
-            "top": 20,
-            "right": 40,
-            "bottom": 20,
-            "left": 40
-        },
-        "title": "Stromproduktion im Tagesverlauf, ein Tag im Kreis",
-        "subtitle": "im Jahr 2021, nach Quellen, in MWh, die Namen in ihren Flächen",
-        "footer": "Source: ENTSO-E - Aggregated Generation Per Type 16.1.B C",
-        "locale": {
-            "base": "de",
-            "number": {
-                "currency": [
-                    "",
-                    " Uhr"
-                ]
-            }
-        },
-        "highlight": {
-            "transition": 120
-        },
-        "coord": "polar"
-    },
-    "mapping": {
+    "title": "Stromproduktion im Tagesverlauf, ein Tag im Kreis",
+    "subtitle": "im Jahr 2021, nach Quellen, in MWh, die Namen in ihren Flächen",
+    "source": "Source: ENTSO-E - Aggregated Generation Per Type 16.1.B C",
+    "height": 460,
+    "margins": {"top": 20, "right": 40, "bottom": 20, "left": 40},
+    "coord": "polar",
+    "locale": {"base": "de", "number": {"currency": ["", " Uhr"]}},
+    "highlight": {"transition": 120},
+    "dims": {
         "x": {
             "column": "hour",
-            "domain": [
-                0,
-                24
-            ],
+            "domain": [0, 24],
             "format": "$d",
-            "axis": {
-                "values": [
-                    0,
-                    6,
-                    12,
-                    18
-                ],
-                "grid": true
-            },
-            "hover": {}
+            "axis": {"values": [0, 6, 12, 18]},
+            "hover": {},
+            "grid": true
         },
         "y": {
             "column": "value",
-            "domain": [
-                0,
-                null
-            ],
             "nice": true,
-            "stacked": true,
-            "scale": {
-                "range": [
-                    {
-                        "*": [
-                            "@radius",
-                            0.22
-                        ]
-                    },
-                    "@radius"
-                ]
-            },
-            "axis": {
-                "angle": 90,
-                "ticks": 3,
-                "grid": true,
-                "format": ".1f"
-            },
-            "hover": {
-                "format": ".2f"
-            }
+            "scale": {"range": ["@radius * 0.22", "@radius"]},
+            "axis": {"angle": 90, "ticks": 3, "format": ".1f"},
+            "hover": {"format": ".2f"},
+            "zero": true,
+            "grid": true
         },
         "type": {
-            "legend": {
-                "symbol": {
-                    "type": "rect",
-                    "size": 14
-                }
-            },
+            "legend": {"symbol": {"type": "rect", "size": 14}},
             "categories": {
-                "Hydro": {
-                    "text": "#0B5E80"
-                },
-                "Wind": {
-                    "text": "#2F5F8A"
-                },
-                "Solar": {
-                    "text": "#6B5500"
-                },
-                "Gas": {
-                    "text": "#FFFFFF"
-                },
-                "Coal": {
-                    "text": "#FFFFFF"
-                },
-                "Oil": {
-                    "color": "#000",
-                    "name": "Erdöl",
-                    "text": "#FFFFFF"
-                },
-                "others": {
-                    "color": "#CCC",
-                    "name": "Andere",
-                    "text": "#444444"
-                }
+                "Hydro": {"text": "#0B5E80"},
+                "Wind": {"text": "#2F5F8A"},
+                "Solar": {"text": "#6B5500"},
+                "Gas": {"text": "#FFFFFF"},
+                "Coal": {"text": "#FFFFFF"},
+                "Oil": {"color": "#000", "name": "Erdöl", "text": "#FFFFFF"},
+                "others": {"color": "#CCC", "name": "Andere", "text": "#444444"}
             },
             "hover": {}
         }
     },
-    "annotations": [],
-    "plot": [
+    "marks": [
         {
-            "id": "areas",
             "type": "area",
+            "id": "areas",
             "by": "type",
             "curve": "catmullRomClosed",
-            "props": {
-                "fill": "@color",
-                "d": {
-                    "innerRadius": "@y:start:scaled",
-                    "outerRadius": "@y:end:scaled"
-                },
-                "fill-opacity": 0.9,
-                "stroke": "#FFFFFF",
-                "stroke-width": 0.8
-            },
-            "highlight": {
-                "fill-opacity": 1
-            },
-            "others": {
-                "fill-opacity": 0.35
-            }
+            "stack": true,
+            "fill-opacity": 0.9,
+            "stroke": "#FFFFFF",
+            "stroke-width": 0.8,
+            "highlight": {"fill-opacity": 1},
+            "others": {"fill-opacity": 0.35}
         },
         {
+            "type": "text",
             "id": "names",
-            "type": "polar:text",
             "by": "type",
-            "props": {
-                "font-size": 11,
-                "font-weight": "bold",
-                "fill": "#1F2328",
-                "text": "@name",
-                "pointer-events": "none"
-            },
-            "highlight": {
-                "opacity": 1
-            },
-            "others": {
-                "opacity": 0.3
-            },
-            "place": {
-                "in": "areas"
-            },
-            "halo": true
+            "place": {"in": "areas"},
+            "halo": true,
+            "font-size": 11,
+            "font-weight": "bold",
+            "fill": "#1F2328",
+            "text": "@name",
+            "pointer-events": "none",
+            "highlight": {"opacity": 1},
+            "others": {"opacity": 0.3}
         }
-    ]
+    ],
+    "annotations": []
 }

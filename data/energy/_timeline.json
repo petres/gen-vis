@@ -1,22 +1,21 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
-    "mapping": {
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "dims": {
         "x": {
             "column": "date",
             "format": "%b %y",
-            "scale": { "domainAbs": [-2000000000, 2000000000] },
-            "axis": { "ticks": { "*": ["@innerWidth", 0.017] }, "rotate": 35 },
+            "scale": {"domainAbs": [-2000000000, 2000000000]},
+            "axis": {"ticks": "@innerWidth * 0.017", "rotate": 35},
             "hover": {}
         },
         "y": {
             "column": "value",
             "type": "numeric",
-            "domain": [0, null],
-            "scale": { "domainRel": [0, 0.1] },
-            "axis": { "ticks": 6, "grid": true, "format": ",.0f" },
-            "hover": {
-                "format": ",.1f"
-            }
+            "scale": {"pad": [0, 0.1]},
+            "axis": {"ticks": 6, "format": ",.0f"},
+            "hover": {"format": ",.1f"},
+            "zero": true,
+            "grid": true
         }
     }
 }

@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { migrate, conditionExpression } from '@/utils/migrate.js';
 import { translate } from '@/utils/language.js';
-import { resolve } from '@/utils/resolve.js';
+import { resolve, variants } from '@/utils/resolve.js';
 import { normalize } from '@/utils/normalize.js';
 import { parseExpression } from '@/utils/expr-parse.js';
 import { isOperator } from '@/utils/expr.js';
@@ -13,12 +13,14 @@ import { plotTypes } from '@/plots';
 import { definitions } from '@/dev/definitions.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const files = definitions(import.meta.glob('../data/**/*.json', { eager: true, import: 'default' })).map(d => `data/${d.path}`);
+// the definitions of 4.x of data/ as they were before their migration, with their parents
+const files = definitions(Object.fromEntries(Object.entries(import.meta.glob('./fixtures/v4/**/*.json', { eager: true, import: 'default' }))
+    .map(([file, def]) => [file.replace('./fixtures/v4/', 'data/'), def]))).map(d => `tests/fixtures/v4/${d.path}`);
 const load = async url => readFileSync(fileURLToPath(url), 'utf8');
 const merged = async file => resolveParents(JSON.parse(readFileSync(path.join(root, file), 'utf8')), pathToFileURL(path.join(root, file)).href, load);
 
-// the conditions of the filters of 4.x as the expressions of 5.0
-const conditions = v => v && typeof v == 'object' && !Array.isArray(v) && !isOperator(v) ? parseExpression(conditionExpression(v)) : v;
+// the conditions of the filters of 4.x and the objects of 5.0 as expressions
+const conditions = v => v && typeof v == 'object' && !Array.isArray(v) && !isOperator(v) ? parseExpression(String(conditionExpression(v)).replace(/^=/, '')) : v;
 
 // the parts which 5.0 writes differently but means the same
 const same = def => JSON.parse(JSON.stringify(def, function (k, v) {
@@ -49,6 +51,9 @@ const same = def => JSON.parse(JSON.stringify(def, function (k, v) {
 describe('the migration of the definitions of 4.x', () => {
     test('the conditions of filters as expressions', () => {
         expect(conditionExpression({ year: '@year' })).toBe('@year == @globals.year');
+        // the filter of a definition keeps conditions of values as an object, the shorthand of 5.0
+        expect(conditionExpression({ year: '@year', land: ['Wien', 'Tirol'] }, true)).toEqual({ year: '@globals.year', land: ['Wien', 'Tirol'] });
+        expect(conditionExpression({ year: '@year', y: { not: null } }, true)).toBe('@year == @globals.year and @y != null');
         expect(conditionExpression({ type: { not: 'load' }, land: ['Wien', 'Tirol'] })).toBe("@type != 'load' and (@land == 'Wien' or @land == 'Tirol')");
         expect(conditionExpression({ value: { range: [0, null] } })).toBe('@value >= 0');
         expect(conditionExpression({ d: { range: [1, 22] } })).toBe('=1 <= @d <= 22');
@@ -94,12 +99,42 @@ describe('the migration of the definitions of 4.x', () => {
             options: { subtitle: 'linear' },
             mapping: { y: { column: 'v', scale: { type: 'linear' } } },
         });
-        expect(def.controls).toEqual([{ type: 'radio', global: 'scale', values: [{ value: 'lin', name: 'linear' }, { value: 'log' }] }]);
+        expect(def.controls).toEqual([{ type: 'radio', global: 'scale', id: 'scale', values: [{ id: 'lin', name: 'linear', value: 'lin' }, { id: 'log', name: 'log', value: 'log' }] }]);
         expect(def.subtitle).toBe("=match(@scale, {log: 'log'}, 'linear')");
         expect(def.dims.y.scale.type).toBe("=match(@scale, {log: 'log'}, 'linear')");
         // resolved with the global
         expect(translate(resolve(def, { scale: 'log' })).mapping.y.scale.type).toBe('log');
         expect(translate(resolve(def, { scale: 'lin' })).options.subtitle).toBe('linear');
+    });
+
+    test('a child with a parent: the patches of both, their globals and the leaves of the child', () => {
+        const parents = {
+            globals: { v: 'a' },
+            formElements: [{ id: 'v', ref: 'v', type: 'radio', values: [
+                { id: 'a', name: 'A', value: 'a' },
+                { id: 'b', name: 'B', value: 'b', patch: { mapping: { y: { column: 'b', scale: { domainRel: [0, 0.1] } } }, options: { subtitle: 'B' } } },
+            ] }],
+            options: { subtitle: 'A' },
+            mapping: { y: { column: 'a', axis: { format: '.0f' } } },
+        };
+        const child = {
+            parent: 'parent.json',
+            formElements: [{ id: 'v', values: [{ id: 'b', patch: { mapping: { y: { axis: { format: '.0%' } } }, options: { title: 'B' } } }] }],
+            options: { title: 'Child' },
+            mapping: { y: { axis: { format: '.1f' } } },
+        };
+        const def = migrate(child, { parents });
+        // the own patches, a base of the child or of a parent
+        expect(def.controls).toEqual([{ id: 'v', values: [{ id: 'b' }] }]);
+        expect(def.title).toBe("=match(@v, {b: 'B'}, 'Child')");
+        expect(def.dims.y.axis.format).toBe("=match(@v, {b: '.0%'}, '.1f')");
+        // a leaf a parent patches and defines: the child carries the expression (its merge would override the parent's one)
+        expect(def.dims.y.column).toBe("=match(@v, {b: 'b'}, 'a')");
+        expect(def.subtitle).toBe("=match(@v, {b: 'B'}, 'A')");
+        // a leaf no part defines: the parent's expression
+        expect(def.dims.y.scale).toBeUndefined();
+        // without a ref: an error, not an expression of '@undefined'
+        expect(() => migrate(child)).toThrow('formElements[0]: no ref');
     });
 
     test.each(files)('%s migrated and translated is the same normalized definition', async file => {
@@ -116,6 +151,23 @@ describe('the migration of the definitions of 4.x', () => {
                     delete b.mapping[n].scale.type;
             }
         });
+        expect(b).toEqual(a);
+    });
+});
+
+// the files of data/ were migrated one by one (`gen-vis migrate`, a child
+// with its parents), the merged definition is the one of the merged 4.x
+// definition for every value of the controls (a patch of a child written
+// as a plain value, one of a parent as an expression, mean the same)
+describe('the migrated files of data/ (file by file) are the migration of the merged definitions', () => {
+    const merged5 = async file => resolveParents(JSON.parse(readFileSync(path.join(root, file), 'utf8')), pathToFileURL(path.join(root, file)).href, load);
+    const engine = def => variants(def).map(v => same(normalize(translate(v), { plotTypes })));
+    test.each(files)('%s', async file => {
+        const def4 = await merged(file);
+        const def5 = await merged5(file.replace('tests/fixtures/v4/', 'data/'));
+        const a = engine(migrate(def4));
+        const b = engine(def5);
+        expect(b.length).toBeGreaterThan(0);
         expect(b).toEqual(a);
     });
 });

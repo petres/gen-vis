@@ -1,36 +1,33 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "parent": "_group.json",
     "data": "d2-map.csv",
-    "options": {
-        "class": "fti fti-ranking",
-        "locale": { "base": "en" },
-        "height": 260,
-        "margins": { "top": 10, "right": 10, "bottom": 10, "left": 10 },
-        "title": "Efficiency",
-        "subtitle": "The first countries, relative to {group:name}",
-        "footer": "Source: <a href=\"https://fti-monitor.forwit.at/en/B/D.2\">FTI Monitor D.2</a>, FORWIT",
-        "hover": { "box": false, "marker": false, "area": "facet" }
-    },
-    "transform": { "type": "rank", "column": "{group}", "descending": true, "as": "rank" },
-    "filter": { "rank": { "range": [null, 10] } },
-    "formElements": [{
-        "id": "group",
-        "values": [
-            { "id": "top3", "patch": { "options": { "message": "The Top 3 are other countries for every indicator, see the sub-indicators." } } }
-        ]
-    }],
-    "mapping": {
+    "transform": {"type": "rank", "column": "{group}", "descending": true, "as": "rank"},
+    "title": "Efficiency",
+    "subtitle": "The first countries, relative to {group:name}",
+    "source": "Source: <a href=\"https://fti-monitor.forwit.at/en/B/D.2\">FTI Monitor D.2</a>, FORWIT",
+    "height": 260,
+    "margins": {"top": 10, "right": 10, "bottom": 10, "left": 10},
+    "locale": {"base": "en"},
+    "class": "fti fti-ranking",
+    "message": "=match(@group, {top3: 'The Top 3 are other countries for every indicator, see the sub-indicators.'}, null)",
+    "hover": {"box": false, "marker": false, "area": "facet", "columns": []},
+    "controls": [{"id": "group", "values": [{"id": "top3"}]}],
+    "filter": "@rank <= 10",
+    "dims": {
         "country": "country",
         "name": "name",
         "rank": {
-            "column": "rank", "type": "categorical", "domain": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            "scale": { "orientation": "vertical", "padding": 0.5, "range": [0, "@height"] }
+            "column": "rank",
+            "type": "categorical",
+            "domain": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            "scale": {"orientation": "vertical", "padding": 0.5, "range": [0, "@height"]}
         },
         "value": {
-            "column": "{group}", "domain": [0, 1],
-            "scale": { "orientation": "horizontal" },
-            "hover": { "format": ".0f" }
+            "column": "{group}",
+            "domain": [0, 1],
+            "scale": {"orientation": "horizontal"},
+            "hover": {"format": ".0f"}
         },
         "color": {
             "column": "{group}",
@@ -42,37 +39,41 @@
             }
         }
     },
-    "plot": [
+    "marks": [
         {
+            "type": "text",
             "id": "rank",
-            "type": "text",
             "by": "country",
-            "props": {
-                "x": 22,
-                "y": "@rank:scaled",
-                "text-anchor": "end",
-                "dominant-baseline": "central",
-                "font-size": 14,
-                "text": { "format": ["@rank", "d"] },
-                "fill": null
-            },
-            "highlight": { "mode": "row", "font-weight": "bold" }
+            "y": "rank",
+            "x": 22,
+            "text-anchor": "end",
+            "dominant-baseline": "central",
+            "font-size": 14,
+            "text": "=format(@rank, 'd')",
+            "fill": null,
+            "highlight": {"mode": "row", "font-weight": "bold"}
         },
-        { "id": "dot", "type": "point", "by": "country", "props": { "cx": 34, "cy": "@rank:scaled", "r": 5, "fill": "@color:scaled" } },
         {
-            "id": "name",
-            "type": "text",
+            "type": "point",
+            "id": "dot",
             "by": "country",
-            "props": {
-                "x": 46,
-                "y": "@rank:scaled",
-                "dominant-baseline": "central",
-                "font-size": 14,
-                "text": "@name",
-                "fill": null
-            },
-            "highlight": { "mode": "row", "font-weight": "bold" },
-            "others": { "opacity": 0.5 }
+            "cx": 34,
+            "cy": "@rank:scaled",
+            "r": 5,
+            "fill": "@color:scaled"
+        },
+        {
+            "type": "text",
+            "id": "name",
+            "by": "country",
+            "y": "rank",
+            "x": 46,
+            "dominant-baseline": "central",
+            "font-size": 14,
+            "text": "@name",
+            "fill": null,
+            "highlight": {"mode": "row", "font-weight": "bold"},
+            "others": {"opacity": 0.5}
         }
     ]
 }

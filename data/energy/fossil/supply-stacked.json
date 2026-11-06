@@ -1,48 +1,37 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "parent": ["../_stacked.json", "_unit-switch.json"],
     "data": "supply-stacked.csv",
-    "options": {
-        "title": "Absatz von fossilen Energieträgern",
-        "subtitle": "monatlich, nach Energiegehalt in TWh bzw. Emissionen in Mt CO₂, oder Anteile",
-        "footer": "Source: eurostat, eigene Berechnungen"
-    },
-    "globals": {
-        "share": ""
-    },
-    "formElements": [{
-        "id": "values",
-        "name": "Werte",
-        "ref": "share",
-        "type": "radio",
-        "values": [
-            { "id": "valuesAbs", "value": "", "name": "Absolut" },
-            {
-                "id": "valuesShare", "value": ".share", "name": "Anteil",
-                "patch": { "mapping": {
-                    "y": {
-                        "domain": [0, 1],
-                        "scale": { "domainRel": [0, 0] },
-                        "axis": { "format": ".0%" },
-                        "hover": { "format": ".1%" }
-                    }
-                } }
-            }
-        ]
-    }],
-    "mapping": {
+    "title": "Absatz von fossilen Energieträgern",
+    "subtitle": "monatlich, nach Energiegehalt in TWh bzw. Emissionen in Mt CO₂, oder Anteile",
+    "source": "Source: eurostat, eigene Berechnungen",
+    "globals": {"share": ""},
+    "controls": [
+        {
+            "type": "radio",
+            "global": "share",
+            "name": "Werte",
+            "id": "values",
+            "values": [
+                {"id": "valuesAbs", "value": "", "name": "Absolut"},
+                {"id": "valuesShare", "value": ".share", "name": "Anteil"}
+            ]
+        }
+    ],
+    "dims": {
         "y": {
             "column": "{unit}{share}",
-            "hover": {
-                "format": ",.2f"
-            }
+            "hover": {"format": "=match(@share, {'.share': '.1%'}, ',.2f')"},
+            "domain": "=match(@share, {'.share': literal([0, 1])}, literal([0, null]))",
+            "scale": {"pad": "=match(@share, {'.share': literal([0, 0])}, literal([0, 0.1]))"},
+            "axis": {"format": "=match(@share, {'.share': '.0%'}, ',.0f')"}
         },
         "type": {
             "column": "product",
             "categories": {
-                "oil":  { "color": "#6F625A", "name": "Mineralöl" },
-                "coal": { "color": "#8B4513", "name": "Kohle" },
-                "gas":  { "color": "#C3423F", "name": "Erdgas" }
+                "oil": {"color": "#6F625A", "name": "Mineralöl"},
+                "coal": {"color": "#8B4513", "name": "Kohle"},
+                "gas": {"color": "#C3423F", "name": "Erdgas"}
             }
         }
     }

@@ -1,191 +1,79 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "parent": "_sources.json",
     "data": "generation-hourly.csv",
-    "options": {
-        "height": 360,
-        "margins": {
-            "top": 18,
-            "right": 20,
-            "bottom": 35,
-            "left": 50
-        },
-        "title": "Stromproduktion im Tagesverlauf, die Namen in ihren Flächen",
-        "subtitle": "im Jahr 2021, nach Quellen, in MWh",
-        "footer": "Source: ENTSO-E - Aggregated Generation Per Type 16.1.B C",
-        "locale": {
-            "base": "de",
-            "number": {
-                "currency": [
-                    "",
-                    " Uhr"
-                ]
-            }
-        },
-        "highlight": {
-            "transition": 120
-        }
-    },
-    "mapping": {
+    "title": "Stromproduktion im Tagesverlauf, die Namen in ihren Flächen",
+    "subtitle": "im Jahr 2021, nach Quellen, in MWh",
+    "source": "Source: ENTSO-E - Aggregated Generation Per Type 16.1.B C",
+    "height": 360,
+    "margins": {"top": 18, "right": 20, "bottom": 35, "left": 50},
+    "locale": {"base": "de", "number": {"currency": ["", " Uhr"]}},
+    "highlight": {"transition": 120},
+    "dims": {
         "x": {
             "column": "hour",
-            "domain": [
-                0,
-                23
-            ],
+            "domain": [0, 23],
             "format": "$d",
-            "scale": {
-                "domainRel": [
-                    0,
-                    0
-                ]
-            },
+            "scale": {"pad": [0, 0]},
             "axis": {
-                "values": {
-                    "steps": [
-                        "@totalWidth",
-                        {
-                            "0": {
-                                "literal": [
-                                    0,
-                                    6,
-                                    12,
-                                    18
-                                ]
-                            },
-                            "600": {
-                                "literal": [
-                                    0,
-                                    3,
-                                    6,
-                                    9,
-                                    12,
-                                    15,
-                                    18,
-                                    21
-                                ]
-                            }
-                        }
-                    ]
-                }
+                "values": "=steps(@totalWidth, {0: literal([0, 6, 12, 18]), 600: literal([0, 3, 6, 9, 12, 15, 18, 21])})"
             },
             "hover": {}
         },
         "y": {
             "column": "value",
-            "domain": [
-                0,
-                null
-            ],
             "nice": true,
-            "stacked": true,
-            "scale": {
-                "domainRel": [
-                    0,
-                    0.1
-                ]
-            },
-            "axis": {
-                "ticks": 6,
-                "grid": true,
-                "format": ".1f"
-            },
-            "hover": {
-                "format": ".2f"
-            }
+            "scale": {"pad": [0, 0.1]},
+            "axis": {"ticks": 6, "format": ".1f"},
+            "hover": {"format": ".2f"},
+            "zero": true,
+            "grid": true
         },
         "type": {
-            "legend": {
-                "symbol": {
-                    "type": "rect",
-                    "size": 14
-                }
-            },
+            "legend": {"symbol": {"type": "rect", "size": 14}},
             "categories": {
-                "Hydro": {
-                    "text": "#0B5E80"
-                },
-                "Wind": {
-                    "text": "#2F5F8A"
-                },
-                "Solar": {
-                    "text": "#6B5500"
-                },
-                "Gas": {
-                    "text": "#FFFFFF"
-                },
-                "Coal": {
-                    "text": "#FFFFFF"
-                },
-                "Oil": {
-                    "color": "#000",
-                    "name": "Erdöl",
-                    "text": "#FFFFFF"
-                },
-                "others": {
-                    "color": "#CCC",
-                    "name": "Andere",
-                    "text": "#444444"
-                }
+                "Hydro": {"text": "#0B5E80"},
+                "Wind": {"text": "#2F5F8A"},
+                "Solar": {"text": "#6B5500"},
+                "Gas": {"text": "#FFFFFF"},
+                "Coal": {"text": "#FFFFFF"},
+                "Oil": {"color": "#000", "name": "Erdöl", "text": "#FFFFFF"},
+                "others": {"color": "#CCC", "name": "Andere", "text": "#444444"}
             },
             "hover": {}
         }
     },
-    "annotations": [],
-    "plot": [
+    "marks": [
         {
-            "id": "areas",
             "type": "area",
+            "id": "areas",
             "by": "type",
             "curve": "monotoneX",
             "layer": "below",
-            "props": {
-                "fill": "@color",
-                "d": {
-                    "y0": "@y:start:scaled",
-                    "y1": "@y:end:scaled"
-                },
-                "fill-opacity": 0.9,
-                "stroke": "#FFFFFF",
-                "stroke-width": 0.8
-            },
-            "highlight": {
-                "fill-opacity": 1
-            },
-            "others": {
-                "fill-opacity": 0.35
-            }
+            "stack": true,
+            "fill-opacity": 0.9,
+            "stroke": "#FFFFFF",
+            "stroke-width": 0.8,
+            "d": {"y0": "@y:start:scaled"},
+            "highlight": {"fill-opacity": 1},
+            "others": {"fill-opacity": 0.35}
         },
         {
-            "id": "names",
             "type": "text",
+            "id": "names",
             "by": "type",
-            "filter": {
-                "x": {
-                    "range": [
-                        1,
-                        22
-                    ]
-                }
-            },
             "layer": "above",
-            "props": {
-                "font-size": 11,
-                "font-weight": "bold",
-                "fill": "#1F2328",
-                "text": "@name",
-                "pointer-events": "none"
-            },
-            "highlight": {
-                "opacity": 1
-            },
-            "others": {
-                "opacity": 0.3
-            },
-            "place": {
-                "in": "areas"
-            },
-            "halo": true
+            "place": {"in": "areas"},
+            "halo": true,
+            "filter": "=1 <= @x <= 22",
+            "font-size": 11,
+            "font-weight": "bold",
+            "fill": "#1F2328",
+            "text": "@name",
+            "pointer-events": "none",
+            "highlight": {"opacity": 1},
+            "others": {"opacity": 0.3}
         }
-    ]
+    ],
+    "annotations": []
 }

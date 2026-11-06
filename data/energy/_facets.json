@@ -1,11 +1,6 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
-    "facets": {
-        "dim": "facet",
-        "scales": [],
-        "cols": {
-            "steps": ["@totalWidth", { "0": 1, "550": 2, "1000": 3 }]
-        }
-    },
-    "plot": { "by": ["year", "facet"] }
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "hover": {"columns": []},
+    "marks": {"by": ["year", "facet"]},
+    "facets": {"by": "facet", "cols": "=steps(@totalWidth, {0: 1, 550: 2, 1000: 3})", "scales": "own"}
 }

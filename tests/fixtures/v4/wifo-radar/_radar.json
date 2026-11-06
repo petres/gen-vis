@@ -1,0 +1,150 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "data": "values.csv",
+    "options": {
+        "coord": "polar",
+        "height": {
+            "steps": ["@totalWidth", { "0": 460, "760": 600 }]
+        },
+        "margins": {
+            "top": 50,
+            "right": 105,
+            "bottom": 50,
+            "left": 105
+        },
+        "footer": "Q: WIFO, <a href=\"https://www.wifo.ac.at/forschung/themenplattformen/wettbewerbsfaehigkeit/radar-der-wettbewerbsfaehigkeit/\">Radar der Wettbewerbsfähigkeit</a>; Prozentränge, der Anteil der Länder mit gleichen oder ungünstigeren Werten, ein höherer Prozentrang ist eine höhere Wettbewerbsfähigkeit",
+        "hover": {
+            "position": "pointer",
+            "title": "<b>{title}</b><br><small>{definition}<br>Q: {source}</small>"
+        }
+    },
+    "globals": {
+        "set": "H"
+    },
+    "transform": [
+        {
+            "type": "lookup",
+            "column": "indicator",
+            "data": "indicators.csv",
+            "key": "id",
+            "value": "name",
+            "as": "name"
+        },
+        {
+            "type": "lookup",
+            "column": "indicator",
+            "data": "indicators.csv",
+            "key": "id",
+            "value": "group",
+            "as": "group"
+        },
+        {
+            "type": "lookup",
+            "column": "indicator",
+            "data": "indicators.csv",
+            "key": "id",
+            "value": "order",
+            "as": "order"
+        },
+        {
+            "type": "lookup",
+            "column": "indicator",
+            "data": "indicators.csv",
+            "key": "id",
+            "value": "definition",
+            "as": "definition"
+        },
+        {
+            "type": "lookup",
+            "column": "indicator",
+            "data": "indicators.csv",
+            "key": "id",
+            "value": "source",
+            "as": "source"
+        },
+        {
+            "type": "lookup",
+            "column": "country",
+            "data": "countries.csv",
+            "key": "code",
+            "value": "name",
+            "as": "countryName"
+        }
+    ],
+    "filter": {
+        "group": "@set"
+    },
+    "formElements": [
+        {
+            "id": "set",
+            "name": "Indikatoren",
+            "ref": "set",
+            "type": "radio",
+            "values": [
+                {
+                    "id": "H",
+                    "name": "Hauptindikatoren",
+                    "value": "H"
+                },
+                {
+                    "id": "E",
+                    "name": "Ergänzende Indikatoren",
+                    "value": "E"
+                }
+            ]
+        }
+    ],
+    "mapping": {
+        "x": {
+            "column": "name",
+            "scale": { "padding": 0, "order": { "by": "order" } },
+            "axis": {
+                "grid": true,
+                "padding": 8,
+                "tickMarks": false,
+                "domain": {
+                    "props": {
+                        "stroke": "var(--gen-vis-grid-color, #CCC)"
+                    }
+                },
+                "labels": {
+                    "props": {
+                        "font-weight": "bold",
+                        "font-size": 12,
+                        "max-width": 130,
+                        "text-overflow": "wrap"
+                    }
+                }
+            }
+        },
+        "y": {
+            "column": "value",
+            "domain": [0, 100],
+            "scale": { "domainRel": [0, 0] },
+            "axis": {
+                "values": [20, 40, 60, 80, 100],
+                "grid": true,
+                "format": "d",
+                "angle": 15,
+                "domain": {
+                    "props": {
+                        "stroke-opacity": 0
+                    }
+                },
+                "labels": {
+                    "props": {
+                        "font-size": 10,
+                        "fill": "#777"
+                    }
+                }
+            },
+            "hover": {
+                "format": ".0f"
+            }
+        },
+        "order": "order",
+        "group": "group",
+        "definition": { "column": "definition", "fromData": true, "hover": {} },
+        "source": { "column": "source", "fromData": true, "hover": {} }
+    }
+}

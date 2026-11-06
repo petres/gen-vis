@@ -1,80 +1,78 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "data": "data.csv",
-    "options": {
-        "height": 380,
-        "margins": {"top": 22, "right": 10, "bottom": 28, "left": 50},
-        "title": "Wohnungsbestände nach Rechtsform",
-        "subtitle": "Anteile an allen Wohnungen, in %",
-        "footer": "<strong>Q:</strong> GWZ/HWZ 1971-2001, RZ 2011, MZ 2020",
-        "locale": { "base": "de", "number": { "percent": " %" } },
-        "transition": 400
-    },
-    "transform": { "type": "share", "column": "Anzahl", "as": "share", "by": ["Geo", "Jahr"] },
-    "mapping": {
-        "x": {
-            "column": "Jahr",
-            "scale": { "type": "band", "padding": 0.18 }
-        },
+    "transform": {"type": "share", "column": "Anzahl", "as": "share", "by": ["Geo", "Jahr"]},
+    "title": "Wohnungsbestände nach Rechtsform",
+    "subtitle": "Anteile an allen Wohnungen, in %",
+    "source": "<strong>Q:</strong> GWZ/HWZ 1971-2001, RZ 2011, MZ 2020",
+    "height": 380,
+    "margins": {"top": 22, "right": 10, "bottom": 28, "left": 50},
+    "locale": {"base": "de", "number": {"percent": " %"}},
+    "transition": 400,
+    "dims": {
+        "x": {"column": "Jahr", "scale": {"type": "band", "padding": 0.18}},
         "y": {
             "column": "share",
             "domain": [0, 1],
             "stacked": true,
-            "scale": { "domainRel": [0, 0] },
-            "axis": { "values": [0, 0.25, 0.5, 0.75, 1], "grid": true, "format": ".0%" },
-            "hover": { "format": ".1%" }
+            "scale": {"pad": [0, 0]},
+            "axis": {"values": [0, 0.25, 0.5, 0.75, 1], "format": ".0%"},
+            "hover": {"format": ".1%"},
+            "grid": true
         },
         "type": {
             "column": "Type",
-            "legend": { "symbol": { "type": "rect", "size": 14 } },
+            "legend": {"symbol": {"type": "rect", "size": 14}},
             "categories": {
-                "Hauseigentum":     { "color": "#264653", "text": "#FFFFFF" },
-                "Wohnungseigentum": { "color": "#2A9D8F", "text": "#FFFFFF" },
-                "GBV Miete":        { "color": "#8AB17D", "text": "#1B2B22" },
-                "Gemeinde Miete":   { "color": "#E9C46A", "text": "#3D2E00" },
-                "Private Miete":    { "color": "#F4A261", "text": "#3D2200" },
-                "Sonstige":         { "color": "#E76F51", "text": "#FFFFFF" }
+                "Hauseigentum": {"color": "#264653", "text": "#FFFFFF"},
+                "Wohnungseigentum": {"color": "#2A9D8F", "text": "#FFFFFF"},
+                "GBV Miete": {"color": "#8AB17D", "text": "#1B2B22"},
+                "Gemeinde Miete": {"color": "#E9C46A", "text": "#3D2E00"},
+                "Private Miete": {"color": "#F4A261", "text": "#3D2200"},
+                "Sonstige": {"color": "#E76F51", "text": "#FFFFFF"}
             },
             "hover": {}
         },
-        "geo": { "column": "Geo", "categories": { "Österreich": {}, "Wien": {} } }
+        "geo": {"column": "Geo", "categories": {"Österreich": {}, "Wien": {}}}
     },
-    "facets": { "dim": "geo", "cols": { "steps": ["@totalWidth", { "0": 1, "600": 2 }] } },
-    "annotations": [
-        { "type": "text", "x": "2020", "y": 1, "text": "Mikrozensus", "props": { "dy": -7, "text-anchor": "middle", "font-size": 10 } }
-    ],
-    "plot": [
+    "marks": [
         {
-            "id": "bars",
             "type": "rect",
+            "id": "bars",
             "by": "type",
-            "props": {
-                "x": "@x:scaled",
-                "width": "@x:bandwidth",
-                "y": "@y:end:scaled",
-                "height": "@y:height:scaled",
-                "fill": "@color",
-                "stroke": "white",
-                "stroke-width": 0.8
-            },
-            "highlight": { "mode": "row", "opacity": 1 },
-            "others": { "opacity": 0.55 }
+            "x": "x",
+            "width": "@x:bandwidth",
+            "y": "@y:end:scaled",
+            "height": "@y:height:scaled",
+            "fill": "@color",
+            "stroke": "white",
+            "stroke-width": 0.8,
+            "highlight": {"mode": "row", "opacity": 1},
+            "others": {"opacity": 0.55}
         },
         {
-            "id": "shares",
             "type": "text",
+            "id": "shares",
             "by": "type",
-            "filter": { "y": { "range": [0.07, null] } },
-            "props": {
-                "x": "@x:scaled:center",
-                "y": "@y:mid:scaled",
-                "text-anchor": "middle",
-                "dominant-baseline": "central",
-                "font-size": 10,
-                "fill": "@text",
-                "pointer-events": "none",
-                "text": { "format": ["@y", ".0%"] }
-            }
+            "filter": "@y >= 0.07",
+            "x": "@x:scaled:center",
+            "y": "@y:mid:scaled",
+            "text-anchor": "middle",
+            "dominant-baseline": "central",
+            "font-size": 10,
+            "fill": "@text",
+            "pointer-events": "none",
+            "text": "=format(@y, '.0%')"
         }
-    ]
+    ],
+    "annotations": [
+        {
+            "type": "text",
+            "x": "2020",
+            "y": 1,
+            "text": "Mikrozensus",
+            "props": {"dy": -7, "text-anchor": "middle", "font-size": 10}
+        }
+    ],
+    "facets": {"by": "geo", "cols": "=steps(@totalWidth, {0: 1, 600: 2})"}
 }

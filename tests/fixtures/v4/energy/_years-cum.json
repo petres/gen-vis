@@ -1,0 +1,30 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "parent": ["_years.json", "_facets.json"],
+    "mapping": {
+        "y": {
+            "axis": {
+                "format": ",.2f"
+            },
+            "hover": {
+                "format": ",.3r"
+            }
+        },
+        "facet": {
+            "column": "variable",
+            "categories": {
+                "rm7": {
+                    "name": "täglich (rollierender 7-Tages Durchschnitt)"
+                },
+                "cum": {
+                    "name": "kumuliert"
+                }
+            }
+        }
+    },
+    "facets": {
+        "cols": {
+            "steps": ["@totalWidth", { "0": 1, "850": 2 }]
+        }
+    }
+}

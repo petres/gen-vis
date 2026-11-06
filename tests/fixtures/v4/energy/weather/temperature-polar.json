@@ -1,0 +1,28 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "parent": "temperature.json",
+    "options": {
+        "coord": "polar",
+        "subtitle": "gewichtet nach Bevölkerung, täglich (rollierender 4-Wochen Durchschnitt), in °C, ein Jahr im Kreis",
+        "height": 520,
+        "margins": {
+            "top": 40,
+            "right": 40,
+            "bottom": 40,
+            "left": 40
+        }
+    },
+    "mapping": {
+        "x": {
+            "domain": ["2020-01-01", "2021-01-01"],
+            "scale": { "type": "utc" },
+            "axis": { "ticks": 12, "grid": true }
+        },
+        "y": { "axis": { "angle": 15, "grid": true, "ticks": 5 } }
+    },
+    "annotations": [
+        { "type": "band", "x": ["2020-06-01", "2020-09-01"], "label": "Sommer", "props": { "fill": "#FFF3D6" } },
+        { "type": "line", "y": 0, "label": "0 °C", "props": { "stroke": "#4A96D4", "stroke-dasharray": "3 3" } }
+    ],
+    "plot": { "type": "line" }
+}

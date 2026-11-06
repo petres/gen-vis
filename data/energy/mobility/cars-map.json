@@ -1,66 +1,57 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "parent": "../_europe-map.json",
     "data": "cars-map.csv",
-    "options": {
-        "title": "Pkw in Europa",
-        "subtitle": "Anteile nach Kraftstoffart bzw. Energiequelle, jährlich",
-        "footer": "Quelle: eurostat - road_eqr_carpda (Neuzulassungen), road_eqs_carpda (Bestand)"
-    },
-    "globals": {
-        "series": "registrations",
-        "type": "bev"
-    },
-    "filter": {
-        "series": "@series",
-        "type": "@type",
-        "year": "@year"
-    },
-    "formElements": [
+    "title": "Pkw in Europa",
+    "subtitle": "Anteile nach Kraftstoffart bzw. Energiequelle, jährlich",
+    "source": "Quelle: eurostat - road_eqr_carpda (Neuzulassungen), road_eqs_carpda (Bestand)",
+    "globals": {"series": "registrations", "type": "bev"},
+    "controls": [
         {
-            "id": "series",
+            "type": "radio",
+            "global": "series",
             "name": "Daten",
-            "ref": "series",
-            "type": "radio",
+            "id": "series",
             "values": [
-                { "id": "registrations", "name": "Neuzulassungen", "value": "registrations" },
-                { "id": "stock",         "name": "Bestand",        "value": "stock" }
+                {"id": "registrations", "name": "Neuzulassungen", "value": "registrations"},
+                {"id": "stock", "name": "Bestand", "value": "stock"}
             ]
         },
         {
-            "id": "type",
+            "type": "radio",
+            "global": "type",
             "name": "Kraftstoff",
-            "ref": "type",
-            "type": "radio",
+            "id": "type",
             "values": [
-                { "id": "bev",    "name": "Elektro",               "value": "bev" },
-                { "id": "phev",   "name": "Plug-in-Hybrid",        "value": "phev" },
-                { "id": "hybrid", "name": "Hybrid (ohne Plug-in)", "value": "hybrid" },
-                { "id": "petrol", "name": "Benzin",                "value": "petrol" },
-                { "id": "diesel", "name": "Diesel",                "value": "diesel" },
-                { "id": "other",  "name": "Sonstige",              "value": "other" }
+                {"id": "bev", "name": "Elektro", "value": "bev"},
+                {"id": "phev", "name": "Plug-in-Hybrid", "value": "phev"},
+                {"id": "hybrid", "name": "Hybrid (ohne Plug-in)", "value": "hybrid"},
+                {"id": "petrol", "name": "Benzin", "value": "petrol"},
+                {"id": "diesel", "name": "Diesel", "value": "diesel"},
+                {"id": "other", "name": "Sonstige", "value": "other"}
             ]
         },
         {
-            "id": "year",
-            "name": "Jahr",
-            "ref": "year",
             "type": "slider",
-            "values": { "column": "year" }
+            "global": "year",
+            "name": "Jahr",
+            "id": "year",
+            "values": {"column": "year"}
         }
     ],
-    "mapping": {
+    "filter": {"series": "@globals.series", "type": "@globals.type", "year": "@globals.year"},
+    "dims": {
         "series": "series",
         "type": "type",
-        "year": { "column": "year", "type": "categorical" },
+        "year": {"column": "year", "type": "categorical"},
         "value": {
             "name": "Anteil",
             "column": "share",
-            "domain": [0, null],
             "nice": true,
-            "scale": { "type": "sequentialSqrt", "interpolator": "Reds" },
-            "legend": { "format": ".1~%" },
-            "hover": { "format": ".1%" }
+            "scale": {"type": "sequentialSqrt", "interpolator": "Reds"},
+            "legend": {"format": ".1~%", "symbol": null},
+            "hover": {"format": ".1%"},
+            "zero": true
         }
     }
 }

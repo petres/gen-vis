@@ -1,0 +1,64 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "data": "data.csv",
+    "options": {
+        "coord": "polar",
+        "height": 340,
+        "margins": {"top": 10, "right": 10, "bottom": 10, "left": 10},
+        "title": "Wohnungsbestände nach Rechtsform {year}",
+        "subtitle": "Anteile der Wohnungen",
+        "footer": "<strong>Q:</strong> GWZ/HWZ 1971-2001, RZ 2011, MZ 2020"
+    },
+    "globals": { "year": "2020" },
+    "filter": { "year": "@year" },
+    "formElements": [
+        { "id": "year", "name": "Jahr", "ref": "year", "type": "slider", "values": { "column": "Jahr" } }
+    ],
+    "mapping": {
+        "year": { "column": "Jahr", "type": "categorical" },
+        "count": {
+            "column": "Anzahl",
+            "stacked": true,
+            "scale": { "orientation": "angular" },
+            "hover": { "format": ",.0f" }
+        },
+        "type": {
+            "column": "Type",
+            "legend": {
+                "symbol": {
+                    "size": 16,
+                    "elements": [{ "type": "rect", "props": { "x": 2, "y": 2, "width": 12, "height": 12, "fill": "@color" } }]
+                }
+            },
+            "categories": {
+                "Hauseigentum":     { "color": "#BBD7EE" },
+                "Wohnungseigentum": { "color": "#5BC5F2" },
+                "GBV Miete":        { "color": "#559BD5" },
+                "Gemeinde Miete":   { "color": "#C7DF71" },
+                "Private Miete":    { "color": "#4B9847" },
+                "Sonstige":         { "color": "#9CE1F8" }
+            },
+            "hover": {}
+        },
+        "geo": { "column": "Geo", "categories": { "Österreich": {}, "Wien": {} } }
+    },
+    "facets": {
+        "dim": "geo",
+        "cols": {
+            "steps": ["@totalWidth", { "0": 1, "600": 2 }]
+        }
+    },
+    "plot": {
+        "type": "arc",
+        "by": "type",
+        "props": {
+            "fill": "@color",
+            "stroke": "white",
+            "stroke-width": 1,
+            "startAngle": "@count:start:scaled",
+            "endAngle": "@count:end:scaled",
+            "innerRadius": { "*": ["@radius", 0.55] }
+        },
+        "highlight": { "opacity": 0.8 }
+    }
+}

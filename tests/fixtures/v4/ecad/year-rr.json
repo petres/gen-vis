@@ -1,0 +1,10 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "parent": "_year.json",
+    "data": "16-rr-y.csv",
+    "options": {
+        "title": "Wien Hohe Warte: the mean daily precipitation of the years",
+        "subtitle": "Years with less than 95% of the days without a value, the mean of all years in green",
+        "locale": { "number": { "currency": ["", " mm"] } }
+    }
+}

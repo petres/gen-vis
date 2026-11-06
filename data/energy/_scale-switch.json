@@ -1,20 +1,18 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
-    "globals": {
-        "shareScale": ["x"]
-    },
-    "formElements": [{
-        "id": "scale",
-        "name": "Y-Skala",
-        "ref": "shareScale",
-        "type": "radio",
-        "inImage": false,
-        "values": [
-            { "id": "shareAxisOff", "value": ["x"], "name": "Getrennt" },
-            { "id": "shareAxisOn", "value": ["x", "y"], "name": "Geteilt" }
-        ]
-    }],
-    "facets": {
-        "scales": "@shareScale"
-    }
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "globals": {"shareScale": ["x"]},
+    "controls": [
+        {
+            "type": "radio",
+            "global": "shareScale",
+            "name": "Y-Skala",
+            "id": "scale",
+            "values": [
+                {"id": "shareAxisOff", "value": ["x"], "name": "Getrennt"},
+                {"id": "shareAxisOn", "value": ["x", "y"], "name": "Geteilt"}
+            ],
+            "inImage": false
+        }
+    ],
+    "facets": {"scales": "@shareScale"}
 }

@@ -66,7 +66,9 @@ const checkRef = (ref, path, warn, names) => {
     if (!names || names.has(ref))
         return;
     const close = similar(ref, [...names]);
-    const known = close !== undefined ? `, did you mean ${show(close)}?` : names.size <= 12 ? `, expected one of ${list([...names])}` : '';
+    // the globals are listed once, not also as `globals.<name>`
+    const listed = [...names].filter(n => !n.startsWith('globals.'));
+    const known = close !== undefined ? `, did you mean ${show(close)}?` : listed.length <= 12 ? `, expected one of ${list(listed)}` : '';
     warn(path, `unknown reference '${ref}'${known}`);
 };
 
@@ -483,12 +485,15 @@ const checkCondition = (ctx, c, path, known) => {
         return ctx.warn(path, `expected a value, a list of values, null, { "not": ... }, { "range": [from, to] } or an expression`);
     checkProp(c, path, ctx.warn, known);
 };
-// null removes the conditions, e.g. of a parent
+// null removes the conditions, e.g. of a parent, an expression of the
+// values of the rows (`@dim`) and the globals is the condition of every row
 const checkFilter = (ctx, conditions, path, known) => {
     if (conditions === undefined || conditions === null)
         return;
+    if (isOperator(conditions))
+        return checkProp(conditions, path, ctx.warn, ctx.names.plot([]));
     if (!isObject(conditions))
-        return ctx.warn(path, `expected the conditions of mappings, e.g. { "year": "@year" }`);
+        return ctx.warn(path, `expected the conditions of mappings, e.g. { "year": "@year" }, or an expression`);
     Object.entries(conditions).forEach(([n, c]) => {
         if (!Object.hasOwn(ctx.mapping, n))
             ctx.warn(`${path}.${n}`, `unknown mapping '${n}'`);
@@ -888,7 +893,8 @@ const context = (def, warn, rows) => {
         ...Object.keys(def.globals ?? {}),
         ...formElements.map(([, e]) => e.ref).filter(r => typeof r == 'string'),
     ]);
-    const globalNames = [...globals, 'totalWidth'];
+    // a global also as `globals.<name>`, e.g. of a global a dim of the same name shadows
+    const globalNames = [...globals, ...[...globals].map(g => `globals.${g}`), 'totalWidth'];
     // the sizes of the bands of the scales of positions, e.g. `y:bandwidth`
     const bandNames = Object.entries(def.mapping ?? {}).filter(([, m]) => m?.scale?.orientation !== undefined && ['band', 'point'].includes(m.scale.type))
         .flatMap(([n]) => [`${n}:bandwidth`, `${n}:step`]);

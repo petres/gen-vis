@@ -8,6 +8,8 @@ import { loadTransforms } from '@/utils/transform';
 import { plotTypes, registerPlotType } from '@/plots';
 import { coords, registerCoord } from '@/coords';
 import { resolveParents } from '@/utils/load';
+import { translate } from '@/utils/language';
+import { resolve, namesOfGlobals } from '@/utils/resolve';
 import { definitions } from '@/dev/definitions.js';
 import { readFileSync } from 'node:fs';
 
@@ -88,11 +90,13 @@ describe('the example definitions', () => {
         expect(Object.keys(examples).length).toBeGreaterThan(10);
     });
 
-    // merged with their parents, as by a check before a deploy, normalized
-    // and prepared, as by the load
+    // merged with their parents, as by a check before a deploy, resolved
+    // with their globals and translated (the form the engine reads, which
+    // validateDef checks, see the load), normalized and prepared, as by the load
     test.each(Object.entries(examples))('%s is valid', async (file, org) => {
         const url = new URL(file, import.meta.url).href;
-        const def = await resolveParents(JSON.parse(JSON.stringify(org)), url, u => readFileSync(new URL(u), 'utf8'));
+        const source = await resolveParents(JSON.parse(JSON.stringify(org)), url, u => readFileSync(new URL(u), 'utf8'));
+        const def = translate(resolve(source, namesOfGlobals(source.globals, source.controls)));
         expect(validateDef(def)).toEqual([]);
         expect(() => prepareDef(normalize(def, { plotTypes }))).not.toThrow();
     });

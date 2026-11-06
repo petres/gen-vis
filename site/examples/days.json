@@ -1,72 +1,132 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "data": "data/temperature.csv",
-    "options": {
-        "title": "Every day of a year",
-        "subtitle": "Temperature in Austria, weighted by population, 4-week rolling mean: the days of the selected year in classes of 1 °C, below every day of every year as a dot",
-        "footer": "Source: ERA5, Copernicus Climate Change Service",
-        "locale": "en",
-        "height": 470,
-        "margins": { "top": 30, "right": 14, "bottom": 40, "left": 44 },
-        "hover": { "title": "{title} to {hi} °C", "filter": { "year": "@selected" } }
-    },
-    "globals": { "selected": "2025" },
-    "formElements": [
+    "transform": [
+        {"type": "random", "as": "jitter", "range": [0.1, 0.9], "seed": 7},
         {
-            "id": "selected", "name": "Year", "ref": "selected", "type": "slider",
+            "type": "bin",
+            "column": "temperature",
+            "by": "year",
+            "step": 1,
+            "start": "lo",
+            "end": "hi",
+            "as": "days"
+        }
+    ],
+    "title": "Every day of a year",
+    "subtitle": "Temperature in Austria, weighted by population, 4-week rolling mean: the days of the selected year in classes of 1 °C, below every day of every year as a dot",
+    "source": "Source: ERA5, Copernicus Climate Change Service",
+    "height": 470,
+    "margins": {"top": 30, "right": 14, "bottom": 40, "left": 44},
+    "locale": "en",
+    "hover": {"title": "{title} to {hi} °C", "filter": "@year == @globals.selected"},
+    "globals": {"selected": "2025"},
+    "controls": [
+        {
+            "type": "slider",
+            "global": "selected",
+            "name": "Year",
+            "id": "selected",
             "values": [
-                { "id": "2019", "name": "2019", "value": "2019" }, { "id": "2020", "name": "2020", "value": "2020" }, { "id": "2021", "name": "2021", "value": "2021" },
-                { "id": "2022", "name": "2022", "value": "2022" }, { "id": "2023", "name": "2023", "value": "2023" }, { "id": "2024", "name": "2024", "value": "2024" },
-                { "id": "2025", "name": "2025", "value": "2025" }
+                {"id": "2019", "name": "2019", "value": "2019"},
+                {"id": "2020", "name": "2020", "value": "2020"},
+                {"id": "2021", "name": "2021", "value": "2021"},
+                {"id": "2022", "name": "2022", "value": "2022"},
+                {"id": "2023", "name": "2023", "value": "2023"},
+                {"id": "2024", "name": "2024", "value": "2024"},
+                {"id": "2025", "name": "2025", "value": "2025"}
             ]
         }
     ],
-    "transform": [
-        { "type": "random", "as": "jitter", "range": [0.1, 0.9], "seed": 7 },
-        { "type": "bin", "column": "temperature", "by": "year", "step": 1, "start": "lo", "end": "hi", "as": "days" }
-    ],
-    "mapping": {
+    "dims": {
         "x": {
-            "column": "temperature", "type": "numeric", "domain": [-6, 26], "format": ",.1f",
-            "scale": { "pad": 0 },
-            "axis": { "values": [-5, 0, 5, 10, 15, 20, 25], "format": "d", "title": { "name": "°C", "offset": 30 } }
+            "column": "temperature",
+            "type": "numeric",
+            "domain": [-6, 26],
+            "format": ",.1f",
+            "scale": {"pad": 0},
+            "axis": {
+                "values": [-5, 0, 5, 10, 15, 20, 25],
+                "format": "d",
+                "title": {"name": "°C", "offset": 30}
+            }
         },
-        "lo": { "column": "lo", "type": "numeric", "format": "d", "scale": { "of": "x" }, "hover": {} },
-        "hi": { "column": "hi", "type": "numeric", "format": "d", "scale": { "of": "x" }, "hover": { "cell": false } },
+        "lo": {"column": "lo", "type": "numeric", "format": "d", "scale": {"of": "x"}, "hover": {}},
+        "hi": {
+            "column": "hi",
+            "type": "numeric",
+            "format": "d",
+            "scale": {"of": "x"},
+            "hover": {"cell": false}
+        },
         "days": {
-            "column": "days", "type": "numeric", "name": "Days", "format": "d",
-            "domain": [0, null], "nice": true, "stacked": { "year": "@selected" }, "stackBy": "lo",
-            "scale": { "orientation": "vertical", "range": [{ "*": ["@height", 0.46] }, 0] },
-            "axis": { "position": "left", "ticks": 4, "grid": true, "title": { "name": "days", "position": "top" } },
-            "hover": {}
+            "column": "days",
+            "type": "numeric",
+            "name": "Days",
+            "format": "d",
+            "nice": true,
+            "scale": {"orientation": "vertical", "range": ["@height * 0.46", 0]},
+            "axis": {"position": "left", "ticks": 4, "title": {"name": "days", "position": "top"}},
+            "hover": {},
+            "zero": true,
+            "grid": true
         },
         "year": {
             "column": "year",
-            "categories": { "2019": {}, "2020": {}, "2021": {}, "2022": {}, "2023": {}, "2024": {}, "2025": {}, "2026": { "name": "2026 *" } },
-            "scale": { "type": "band", "orientation": "vertical", "range": [{ "*": ["@height", 0.55] }, "@height"], "padding": 0.12 },
-            "axis": { "position": "left", "tickMarks": false },
+            "categories": {
+                "2019": {},
+                "2020": {},
+                "2021": {},
+                "2022": {},
+                "2023": {},
+                "2024": {},
+                "2025": {},
+                "2026": {"name": "2026 *"}
+            },
+            "scale": {
+                "type": "band",
+                "orientation": "vertical",
+                "range": ["@height * 0.55", "@height"],
+                "padding": 0.12
+            },
+            "axis": {"position": "left", "tickMarks": false},
             "hover": {}
         },
-        "jitter": { "column": "jitter", "type": "numeric" }
+        "jitter": {"column": "jitter", "type": "numeric"}
     },
-    "plot": [
+    "marks": [
         {
-            "type": "bar", "id": "classes", "filter": { "year": "@selected" },
-            "props": { "x0": "@lo:scaled", "x1": "@hi:scaled", "y0": "@days:start:scaled", "y1": "@days:end:scaled", "fill": "#E8590C", "stroke": "#FFF8F0", "stroke-width": 0.5 }
+            "type": "bar",
+            "id": "classes",
+            "filter": "@year == @globals.selected",
+            "stack": "@year == @globals.selected",
+            "y": "days",
+            "x0": "lo",
+            "x1": "hi",
+            "fill": "#E8590C",
+            "stroke": "#FFF8F0",
+            "stroke-width": 0.5
         },
         {
-            "type": "point", "id": "days",
-            "props": {
-                "cx": "@x:scaled",
-                "cy": { "+": ["@year:scaled", { "*": ["@jitter", "@year:bandwidth"] }] },
-                "r": 1.7,
-                "fill": { "if": [{ "==": ["@year", "@selected"] }, "#E8590C", "#8C8478"] },
-                "opacity": { "if": [{ "==": ["@year", "@selected"] }, 0.75, 0.3] }
-            }
+            "type": "point",
+            "id": "days",
+            "cx": "@x:scaled",
+            "cy": "@year:scaled + @jitter * @year:bandwidth",
+            "r": 1.7,
+            "fill": "@year == @selected ? '#E8590C' : '#8C8478'",
+            "opacity": "@year == @selected ? 0.75 : 0.3"
         },
         {
-            "type": "text", "id": "note", "once": true,
-            "props": { "x": "@plot:right", "y": "@plot:bottom", "dy": 34, "text": "* 2026 until the end of September", "text-anchor": "end", "font-size": 10, "fill": "#8C8478" }
+            "type": "text",
+            "id": "note",
+            "once": true,
+            "x": "@plot:right",
+            "y": "@plot:bottom",
+            "dy": 34,
+            "text": "* 2026 until the end of September",
+            "text-anchor": "end",
+            "font-size": 10,
+            "fill": "#8C8478"
         }
     ]
 }

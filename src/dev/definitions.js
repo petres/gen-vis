@@ -9,6 +9,6 @@ export const definitions = (files, mixins = false) => Object.entries(files)
         const name = path.split('/').pop();
         if (name.startsWith('_') || name.startsWith('shared'))
             return mixins;
-        return 'mapping' in def || 'parent' in def;
+        return 'dims' in def || 'marks' in def || 'mapping' in def || 'parent' in def;
     })
     .sort((a, b) => a.path.localeCompare(b.path));

@@ -1,88 +1,97 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "data": "../data/fossil.csv",
-    "options": {
-        "title": "The seasons of fossil fuels",
-        "subtitle": "Monthly sales in Austria in {unit:name}, a line per year",
-        "footer": "Source: Eurostat, calculations of the WIFO energy dashboard",
-        "locale": "en",
-        "height": { "steps": ["@totalWidth", { "0": 170, "500": 230 }] },
-        "margins": { "top": 8, "right": 12, "bottom": 26, "left": 36 },
-        "transition": 300
-    },
     "transform": [
-        { "type": "year", "column": "date", "as": "year" },
-        { "type": "align", "column": "date", "as": "month" }
+        {"type": "year", "column": "date", "as": "year"},
+        {"type": "align", "column": "date", "as": "month"}
     ],
-    "globals": { "unit": "twh", "scales": ["x"] },
-    "formElements": [
+    "title": "The seasons of fossil fuels",
+    "subtitle": "Monthly sales in Austria in {unit:name}, a line per year",
+    "source": "Source: Eurostat, calculations of the WIFO energy dashboard",
+    "height": "=steps(@totalWidth, {0: 170, 500: 230})",
+    "margins": {"top": 8, "right": 12, "bottom": 26, "left": 36},
+    "locale": "en",
+    "transition": 300,
+    "globals": {"unit": "twh", "scales": ["x"]},
+    "controls": [
         {
-            "id": "unit", "name": "Unit", "ref": "unit", "type": "radio",
+            "type": "radio",
+            "global": "unit",
+            "name": "Unit",
+            "id": "unit",
             "values": [
-                { "id": "twh", "name": "TWh", "value": "twh" },
-                { "id": "co2", "name": "Mt CO₂", "value": "mt.co2" }
+                {"id": "twh", "name": "TWh", "value": "twh"},
+                {"id": "co2", "name": "Mt CO₂", "value": "mt.co2"}
             ]
         },
         {
-            "id": "scales", "name": "Scale", "ref": "scales", "type": "radio", "inImage": false,
+            "type": "radio",
+            "global": "scales",
+            "name": "Scale",
+            "id": "scales",
             "values": [
-                { "id": "own", "name": "Per product", "value": ["x"] },
-                { "id": "shared", "name": "Shared", "value": ["x", "y"] }
-            ]
+                {"id": "own", "name": "Per product", "value": ["x"]},
+                {"id": "shared", "name": "Shared", "value": ["x", "y"]}
+            ],
+            "inImage": false
         }
     ],
-    "facets": {
-        "dim": "product",
-        "cols": { "steps": ["@totalWidth", { "0": 1, "500": 3 }] },
-        "scales": "@scales"
-    },
-    "mapping": {
+    "dims": {
         "x": {
-            "column": "month", "domain": ["2020-01-01", "2020-12-01"],
-            "scale": { "type": "utc", "inset": 4 },
-            "axis": { "values": ["2020-01-01", "2020-04-01", "2020-07-01", "2020-10-01"], "format": "%b" },
-            "hover": { "format": "%B" }
+            "column": "month",
+            "domain": ["2020-01-01", "2020-12-01"],
+            "scale": {"type": "utc", "inset": 4},
+            "axis": {"values": ["2020-01-01", "2020-04-01", "2020-07-01", "2020-10-01"], "format": "%b"},
+            "hover": {"format": "%B"}
         },
         "y": {
-            "column": "{unit}", "nice": true,
-            "scale": { "include": 0 },
-            "axis": { "ticks": 4, "grid": true, "format": ",.0f" },
-            "hover": { "format": ",.2f" }
+            "column": "{unit}",
+            "nice": true,
+            "scale": {"include": 0},
+            "axis": {"ticks": 4, "format": ",.0f"},
+            "hover": {"format": ",.2f"},
+            "grid": true
         },
-        "product": { "column": "product", "categories": { "oil": { "name": "Oil" }, "gas": { "name": "Gas" }, "coal": { "name": "Coal" } } },
+        "product": {
+            "column": "product",
+            "categories": {"oil": {"name": "Oil"}, "gas": {"name": "Gas"}, "coal": {"name": "Coal"}}
+        },
         "year": {
             "column": "year",
             "name": "Year",
-            "legend": { "symbol": "line" },
+            "legend": {"symbol": "line"},
             "hover": {},
             "fromData": true,
             "order": "descending",
             "ranks": [
-                { "color": "#C2410C", "width": 3, "label": "visible" },
-                { "color": "#0F766E", "width": 2, "label": "hidden" },
-                { "color": "#94A3B8", "width": 1.2, "label": "hidden" }
+                {"color": "#C2410C", "width": 3, "label": "visible"},
+                {"color": "#0F766E", "width": 2, "label": "hidden"},
+                {"color": "#94A3B8", "width": 1.2, "label": "hidden"}
             ]
         }
     },
-    "plot": [
+    "marks": [
         {
-            "id": "lines",
             "type": "line",
+            "id": "lines",
             "by": "year",
             "curve": "monotoneX",
-            "props": { "stroke": "@color", "stroke-width": "@width" },
-            "highlight": { "stroke-width": 3.5 },
-            "others": { "stroke-opacity": 0.25 }
+            "stroke-width": "@width",
+            "highlight": {"stroke-width": 3.5},
+            "others": {"stroke-opacity": 0.25}
         },
         {
-            "id": "labels",
             "type": "text",
+            "id": "labels",
             "by": "year",
             "select": "last",
-            "props": {
-                "dy": -8, "text-anchor": "end", "font-size": 11, "font-weight": "bold",
-                "text": "@year", "visibility": "@label"
-            }
+            "dy": -8,
+            "text-anchor": "end",
+            "font-size": 11,
+            "font-weight": "bold",
+            "text": "@year",
+            "visibility": "@label"
         }
-    ]
+    ],
+    "facets": {"by": "product", "cols": "=steps(@totalWidth, {0: 1, 500: 3})", "scales": "@scales"}
 }

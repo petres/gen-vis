@@ -1,0 +1,9 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "parent": "_polar.json",
+    "data": "16-tg-d.parquet",
+    "options": {
+        "title": "Wien Hohe Warte: a year of temperatures in a circle",
+        "subtitle": "The daily mean temperature of {year} and the mean of the day of 1951–2024, the years since 1951 in gray"
+    }
+}

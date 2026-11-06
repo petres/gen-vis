@@ -1,63 +1,59 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "data": "data/cars.csv",
-    "options": {
-        "title": "Diesel out, electric in",
-        "subtitle": "New passenger cars in Austria by powertrain, share of the registrations of each month",
-        "footer": "Source: Statistik Austria",
-        "locale": "en",
-        "height": 320,
-        "margins": { "top": 8, "right": 44, "bottom": 30, "left": 16 },
-        "transition": 400,
-        "highlight": { "transition": 150 },
-        "hover": { "position": "pointer" }
-    },
-    "mapping": {
+    "title": "Diesel out, electric in",
+    "subtitle": "New passenger cars in Austria by powertrain, share of the registrations of each month",
+    "source": "Source: Statistik Austria",
+    "height": 320,
+    "margins": {"top": 8, "right": 44, "bottom": 30, "left": 16},
+    "locale": "en",
+    "transition": 400,
+    "hover": {"position": "pointer"},
+    "highlight": {"transition": 150},
+    "dims": {
         "x": {
             "column": "month",
-            "scale": { "type": "utc", "pad": 0 },
-            "axis": { "ticks": 8, "format": "%Y" },
-            "hover": { "format": "%B %Y" }
+            "scale": {"type": "utc", "pad": 0},
+            "axis": {"ticks": 8, "format": "%Y"},
+            "hover": {"format": "%B %Y"}
         },
         "y": {
             "column": "share",
             "domain": [0, 1],
-            "stacked": true,
-            "axis": { "position": "right", "ticks": 4, "grid": true, "format": ".0%" },
-            "hover": { "format": ".1%" }
+            "axis": {"position": "right", "ticks": 4, "format": ".0%"},
+            "hover": {"format": ".1%"},
+            "grid": true
         },
         "powertrain": {
             "column": "powertrain",
             "legend": {
                 "symbol": {
                     "size": 14,
-                    "elements": [{ "type": "circle", "props": { "cx": 7, "cy": 7, "r": 5, "fill": "@color" } }]
+                    "elements": [{"type": "circle", "props": {"cx": 7, "cy": 7, "r": 5, "fill": "@color"}}]
                 }
             },
             "categories": {
-                "bev":    { "name": "Battery electric", "color": "#0E9F8E" },
-                "phev":   { "name": "Plug-in hybrid",   "color": "#4C8FE0" },
-                "hybrid": { "name": "Hybrid",           "color": "#D4A017" },
-                "petrol": { "name": "Petrol",           "color": "#9B7BE0" },
-                "diesel": { "name": "Diesel",           "color": "#E0607E" },
-                "other":  { "name": "Other",            "color": "#B8BEC8" }
+                "bev": {"name": "Battery electric", "color": "#0E9F8E"},
+                "phev": {"name": "Plug-in hybrid", "color": "#4C8FE0"},
+                "hybrid": {"name": "Hybrid", "color": "#D4A017"},
+                "petrol": {"name": "Petrol", "color": "#9B7BE0"},
+                "diesel": {"name": "Diesel", "color": "#E0607E"},
+                "other": {"name": "Other", "color": "#B8BEC8"}
             },
             "hover": {}
         }
     },
-    "plot": {
+    "marks": {
         "type": "area",
         "by": "powertrain",
         "curve": "monotoneX",
         "layer": "below",
-        "props": {
-            "fill": "@color",
-            "d": { "y0": "@y:start:scaled", "y1": "@y:end:scaled" },
-            "fill-opacity": 0.85,
-            "stroke": "#FFFFFF",
-            "stroke-width": 1.5
-        },
-        "highlight": { "fill-opacity": 1 },
-        "others": { "fill-opacity": 0.3 }
+        "stack": true,
+        "fill-opacity": 0.85,
+        "stroke": "#FFFFFF",
+        "stroke-width": 1.5,
+        "d": {"y0": "@y:start:scaled"},
+        "highlight": {"fill-opacity": 1},
+        "others": {"fill-opacity": 0.3}
     }
 }

@@ -1,31 +1,16 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "parent": "../_years-cum.json",
     "data": "hdd.csv",
-    "options": {
-        "title": "Heizgradtage",
-        "subtitle": "Raumtemperatur 20 °C, Heizgrenze 12 °C, gewichtet nach Bevölkerung",
-        "footer": "Source: Regionale Temperaturen von ERA5"
-    },
-    "mapping": {
-        "y": {
-            "axis": {
-                "format": ",.0f"
-            },
-            "hover": {
-                "format": ",.1f"
-            }
-        },
+    "title": "Heizgradtage",
+    "subtitle": "Raumtemperatur 20 °C, Heizgrenze 12 °C, gewichtet nach Bevölkerung",
+    "source": "Source: Regionale Temperaturen von ERA5",
+    "dims": {
+        "y": {"axis": {"format": ",.0f"}, "hover": {"format": ",.1f"}},
         "facet": {
             "categories": {
-                "rm": {
-                    "name": "Durchschnitt der letzten 28-Tage",
-                    "highlight-stroke-width": 3
-                },
-                "cum": {
-                    "name": "Summe seit Jahresbeginn",
-                    "highlight-stroke-width": 4
-                }
+                "rm": {"name": "Durchschnitt der letzten 28-Tage", "highlight-stroke-width": 3},
+                "cum": {"name": "Summe seit Jahresbeginn", "highlight-stroke-width": 4}
             }
         }
     }

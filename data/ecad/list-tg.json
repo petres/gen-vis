@@ -1,73 +1,108 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "data": "16-tg-y.csv",
-    "options": {
-        "title": "Wien Hohe Warte: warmer by the difference of the periods",
-        "subtitle": "The mean temperature of the years since 1959, the means of 1961–1990 and 1991–2020 (at least 22 years with values)",
-        "height": 130,
-        "margins": { "top": 26, "right": 8, "bottom": 10, "left": 62 },
-        "locale": { "base": "en", "number": { "currency": ["", " °C"] } },
-        "footer": "Source: <a href=\"https://www.ecad.eu/\">ECA&amp;D</a>, the original charts on <a href=\"https://ecad.abteil.org/\">ecad.abteil.org</a>"
-    },
     "transform": [
-        { "type": "calc", "as": "v", "expr": { "*": [{ "+": ["@value"] }, 0.1] } },
-        { "type": "mean", "column": "v", "base": { "date": [1959, null] }, "as": "avg" },
-        { "type": "mean", "column": "v", "base": { "date": [1961, 1990] }, "min": 22, "as": "p1" },
-        { "type": "mean", "column": "v", "base": { "date": [1991, 2020] }, "min": 22, "as": "p2" }
+        {"type": "calc", "as": "v", "expr": {"*": [{"+": ["@value"]}, 0.1]}},
+        {"type": "mean", "column": "v", "base": {"date": [1959, null]}, "as": "avg"},
+        {"type": "mean", "column": "v", "base": {"date": [1961, 1990]}, "min": 22, "as": "p1"},
+        {"type": "mean", "column": "v", "base": {"date": [1991, 2020]}, "min": 22, "as": "p2"}
     ],
-    "filter": { "x": { "range": [1959, null] } },
-    "mapping": {
+    "title": "Wien Hohe Warte: warmer by the difference of the periods",
+    "subtitle": "The mean temperature of the years since 1959, the means of 1961–1990 and 1991–2020 (at least 22 years with values)",
+    "source": "Source: <a href=\"https://www.ecad.eu/\">ECA&amp;D</a>, the original charts on <a href=\"https://ecad.abteil.org/\">ecad.abteil.org</a>",
+    "height": 130,
+    "margins": {"top": 26, "right": 8, "bottom": 10, "left": 62},
+    "locale": {"base": "en", "number": {"currency": ["", " °C"]}},
+    "filter": "@x >= 1959",
+    "dims": {
         "x": {
-            "column": "date", "domain": [1959, null], "format": "d",
-            "scale": { "domainRel": [0, 0] },
-            "axis": { "position": "top", "ticks": 7, "grid": true, "padding": 5 },
-            "hover": {}
+            "column": "date",
+            "domain": [1959, null],
+            "format": "d",
+            "scale": {"pad": [0, 0]},
+            "axis": {"position": "top", "ticks": 7, "padding": 5},
+            "hover": {},
+            "grid": true
         },
         "y": {
-            "column": "v", "format": "$.1f",
-            "scale": { "domainRel": [0, 0] },
-            "axis": { "ticks": 2, "grid": true },
-            "hover": {}
+            "column": "v",
+            "format": "$.1f",
+            "scale": {"pad": [0, 0]},
+            "axis": {"ticks": 2},
+            "hover": {},
+            "grid": true
         },
-        "avg": { "column": "avg", "scale": { "of": "y" } },
-        "p1": { "column": "p1", "scale": { "of": "y" }, "hover": { "format": "$.1f" } },
-        "p2": { "column": "p2", "scale": { "of": "y" }, "hover": { "format": "$.1f" } }
+        "avg": {"column": "avg", "scale": {"of": "y"}},
+        "p1": {"column": "p1", "scale": {"of": "y"}, "hover": {"format": "$.1f"}},
+        "p2": {"column": "p2", "scale": {"of": "y"}, "hover": {"format": "$.1f"}}
     },
-    "annotations": [
-        { "type": "band", "x": [1961, 1990], "props": { "fill": "#35d3da", "fill-opacity": 0.1 } },
-        { "type": "band", "x": [1991, 2020], "props": { "fill": "#f23c06", "fill-opacity": 0.1 } }
-    ],
-    "plot": [
+    "marks": [
         {
-            "id": "avg", "type": "line",
-            "props": { "stroke": "#9cb806", "stroke-width": 1.5, "stroke-opacity": 0.5, "d": { "y": "@avg:scaled" } }
+            "type": "line",
+            "id": "avg",
+            "y": "avg",
+            "stroke": "#9cb806",
+            "stroke-width": 1.5,
+            "stroke-opacity": 0.5
         },
         {
-            "id": "p1", "type": "line", "filter": { "x": { "range": [1961, 1990] } },
-            "props": { "stroke": "#35d3da", "stroke-width": 1.5, "stroke-opacity": 0.7, "d": { "y": "@p1:scaled" } }
+            "type": "line",
+            "id": "p1",
+            "filter": "=1961 <= @x <= 1990",
+            "y": "p1",
+            "stroke": "#35d3da",
+            "stroke-width": 1.5,
+            "stroke-opacity": 0.7
         },
         {
-            "id": "p2", "type": "line", "filter": { "x": { "range": [1991, 2020] } },
-            "props": { "stroke": "#f23c06", "stroke-width": 1.5, "stroke-opacity": 0.7, "d": { "y": "@p2:scaled" } }
+            "type": "line",
+            "id": "p2",
+            "filter": "=1991 <= @x <= 2020",
+            "y": "p2",
+            "stroke": "#f23c06",
+            "stroke-width": 1.5,
+            "stroke-opacity": 0.7
+        },
+        {"type": "line", "id": "line", "stroke": "#444", "stroke-width": 1.5},
+        {"type": "point", "id": "points", "r": 1.5, "fill": "#333", "fill-opacity": 0.8},
+        {
+            "type": "text",
+            "id": "p1-label",
+            "select": "last",
+            "layer": "above",
+            "filter": "=1961 <= @x <= 1990",
+            "y": "p1",
+            "dx": 6,
+            "text": "@p1:formatted",
+            "font-size": 12,
+            "dominant-baseline": "middle",
+            "fill": "#126064",
+            "stroke": "white",
+            "stroke-width": 4,
+            "stroke-opacity": 0.8,
+            "paint-order": "stroke"
         },
         {
-            "id": "line", "type": "line",
-            "props": { "stroke": "#444", "stroke-width": 1.5 }
-        },
-        {
-            "id": "points",
-            "type": "point",
-            "props": { "r": 1.5, "fill": "#333", "fill-opacity": 0.8 }
-        },
-        {
-            "id": "p1-label", "type": "text", "filter": { "x": { "range": [1961, 1990] } }, "select": "last", "layer": "above",
-            "props": { "dx": 6, "y": "@p1:scaled", "text": "@p1:formatted", "font-size": 12, "dominant-baseline": "middle",
-                "fill": "#126064", "stroke": "white", "stroke-width": 4, "stroke-opacity": 0.8, "paint-order": "stroke" }
-        },
-        {
-            "id": "p2-label", "type": "text", "filter": { "x": { "range": [1991, 2020] } }, "select": "first", "layer": "above",
-            "props": { "dx": -6, "y": "@p2:scaled", "text": "@p2:formatted", "font-size": 12, "dominant-baseline": "middle", "text-anchor": "end",
-                "fill": "#5d1702", "stroke": "white", "stroke-width": 4, "stroke-opacity": 0.8, "paint-order": "stroke" }
+            "type": "text",
+            "id": "p2-label",
+            "select": "first",
+            "layer": "above",
+            "filter": "=1991 <= @x <= 2020",
+            "y": "p2",
+            "dx": -6,
+            "text": "@p2:formatted",
+            "font-size": 12,
+            "dominant-baseline": "middle",
+            "text-anchor": "end",
+            "fill": "#5d1702",
+            "stroke": "white",
+            "stroke-width": 4,
+            "stroke-opacity": 0.8,
+            "paint-order": "stroke"
         }
+    ],
+    "annotations": [
+        {"type": "band", "x": [1961, 1990], "props": {"fill": "#35d3da", "fill-opacity": 0.1}},
+        {"type": "band", "x": [1991, 2020], "props": {"fill": "#f23c06", "fill-opacity": 0.1}}
     ]
 }

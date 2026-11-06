@@ -8,6 +8,7 @@ import { createExporter, formats } from './export.js';
 import { stopBrowsers } from './cdp.js';
 
 const usage = `Usage: gen-vis export <def.json> <out.svg|out.png|out.pdf>... [<def.json> <out>...]... [options]
+       gen-vis migrate <def.json>... [--write]
 
 Draws gen-vis definitions in a headless Chromium (Chrome, Edge) of the system
 and writes them as SVG, PNG or PDF, every definition is followed by its
@@ -34,6 +35,11 @@ Options:
   --browser <path>        the browser (default GEN_VIS_BROWSER, CHROME_PATH or one found)
   --no-sandbox            runs the browser without its sandbox (also GEN_VIS_NO_SANDBOX=1)
   -h, --help              this text
+
+migrate writes definitions of gen-vis 4 as ones of gen-vis 5 (also parents
+and mixins, file by file): to the standard output, with --write into the
+files themselves. A patch of a form element becomes an expression of its
+global (a match); check the fallback of a patch of a part of a parent.
 `;
 
 const fail = (message, code = 2) => {
@@ -172,9 +178,59 @@ const exportCommand = async args => {
     return failed ? 1 : 0;
 };
 
+// the migration of definitions of 4.x, see docs/definition.md and utils/migrate.js
+const migrateCommand = async args => {
+    let parsed;
+    try {
+        parsed = parseArgs({ args, allowPositionals: true, strict: true, options: { write: { type: 'boolean' }, help: { type: 'boolean', short: 'h' } } });
+    } catch (error) {
+        fail(`${error.message}\n\n${usage}`);
+    }
+    const { values: o, positionals: files } = parsed;
+    if (o.help || !files.length) {
+        process.stdout.write(usage);
+        return o.help ? 0 : 2;
+    }
+    const { migrate, formatJson, isDefinition4, resolveParents } = await import('../dist/check.js');
+    const { writeFileSync } = await import('node:fs');
+    const { pathToFileURL, fileURLToPath } = await import('node:url');
+    // all files are read first: the parents of a child are migrated with it
+    // as they are, also when they are written before it in this run
+    const texts = new Map(files.map(f => [pathToFileURL(path.resolve(f)).href, readFileSync(f, 'utf8')]));
+    const loadFile = async url => texts.get(url) ?? readFileSync(fileURLToPath(url), 'utf8');
+    let failed = 0;
+    for (const file of files) {
+        let text;
+        try {
+            const url = pathToFileURL(path.resolve(file)).href;
+            const def = JSON.parse(texts.get(url));
+            if (!isDefinition4(def)) {
+                process.stderr.write(`gen-vis: ${file}: already a definition of gen-vis 5\n`);
+                continue;
+            }
+            // the parents of a child, merged: the patches of their form
+            // elements and the ones of the child are expressions of the child
+            const parents = def.parent === undefined ? undefined : await resolveParents({ parent: def.parent }, url, loadFile);
+            text = `${formatJson(migrate(def, { parents }))}\n`;
+        } catch (error) {
+            failed++;
+            process.stderr.write(`gen-vis: ${file}: ${error.message}\n`);
+            continue;
+        }
+        if (o.write) {
+            writeFileSync(file, text);
+            process.stdout.write(`${file}: migrated\n`);
+        } else
+            process.stdout.write(text);
+    }
+    return failed ? 1 : 0;
+};
+
 const [command, ...rest] = process.argv.slice(2);
 if (command == 'export')
     process.exitCode = await exportCommand(rest);
+else if (command == 'migrate')
+    process.exitCode = await migrateCommand(rest);
 else if (command == '-h' || command == '--help' || command === undefined)
     process.stdout.write(usage);
 else

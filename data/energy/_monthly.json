@@ -1,13 +1,5 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
-    "mapping": {
-        "x": {
-            "hover": {
-                "format": "%b"
-            }
-        }
-    },
-    "plot": {
-        "curve": "monotoneX"
-    }
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "dims": {"x": {"hover": {"format": "%b"}}},
+    "marks": {"curve": "monotoneX"}
 }

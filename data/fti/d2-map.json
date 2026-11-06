@@ -1,39 +1,39 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "parent": "_group.json",
     "data": "d2-map.csv",
-    "options": {
-        "class": "fti fti-map",
-        "locale": { "base": "en", "number": { "currency": ["", " %"] } },
-        "coord": "geo",
-        "height": 420,
-        "margins": { "top": 5, "right": 5, "bottom": 5, "left": 5 },
-        "title": "Efficiency",
-        "subtitle": "International comparison, relative to the comparison group (= 100)",
-        "footer": "Source: <a href=\"https://fti-monitor.forwit.at/en/B/D.2\">FTI Monitor D.2</a>, FORWIT; map: Natural Earth",
-        "hover": { "title": "<small>In relation to {group:name}</small>{title}: ", "side": "above", "offset": [0, 10] }
+    "title": "Efficiency",
+    "subtitle": "International comparison, relative to the comparison group (= 100)",
+    "source": "Source: <a href=\"https://fti-monitor.forwit.at/en/B/D.2\">FTI Monitor D.2</a>, FORWIT; map: Natural Earth",
+    "height": 420,
+    "margins": {"top": 5, "right": 5, "bottom": 5, "left": 5},
+    "coord": "geo",
+    "locale": {"base": "en", "number": {"currency": ["", " %"]}},
+    "class": "fti fti-map",
+    "message": "=match(@group, {top3: 'The Top 3 are other countries for every indicator, see the sub-indicators.'}, null)",
+    "hover": {
+        "title": "<small>In relation to {group:name}</small>{title}: ",
+        "side": "above",
+        "offset": [0, 10],
+        "columns": []
     },
-    "geo": {
-        "data": "../geo/world.json",
-        "join": "country",
-        "fit": "data",
-        "exclude": ["AQ"],
-        "projection": { "type": "mercator" }
-    },
-    "globals": { "view": "world" },
-    "formElements": [{
-        "id": "group",
-        "values": [
-            { "id": "top3", "patch": { "options": { "message": "The Top 3 are other countries for every indicator, see the sub-indicators." } } }
-        ]
-    }, {
-        "id": "view", "name": "Map", "ref": "view", "type": "radio", "inImage": false,
-        "values": [
-            { "id": "europe", "name": "Europe", "value": "europe", "patch": { "filter": { "europe": "yes" } } },
-            { "id": "world", "name": "World", "value": "world" }
-        ]
-    }],
-    "mapping": {
+    "globals": {"view": "world"},
+    "controls": [
+        {"id": "group", "values": [{"id": "top3"}]},
+        {
+            "type": "radio",
+            "global": "view",
+            "name": "Map",
+            "id": "view",
+            "values": [
+                {"id": "europe", "name": "Europe", "value": "europe"},
+                {"id": "world", "name": "World", "value": "world"}
+            ],
+            "inImage": false
+        }
+    ],
+    "filter": "=match(@globals.view, {europe: @europe == 'yes'}, true)",
+    "dims": {
         "country": "country",
         "europe": "europe",
         "value": {
@@ -45,12 +45,33 @@
                 "closed": "right",
                 "range": ["#EA4B55", "#F59036", "#F9EB00", "#AFD24B", "#3CAF55"]
             },
-            "legend": { "format": ".0f", "position": "left", "orientation": "vertical", "size": 160, "labels": "before" },
-            "hover": { "format": "$.0f" }
+            "legend": {
+                "format": ".0f",
+                "position": "left",
+                "orientation": "vertical",
+                "size": 160,
+                "labels": "before",
+                "symbol": null
+            },
+            "hover": {"format": "$.0f"}
         }
     },
-    "plot": [
-        { "type": "base", "props": { "fill": "#D2D2D2", "stroke": "white", "stroke-width": 0.5 } },
-        { "type": "region", "by": "country", "props": { "fill": "@value:scaled", "stroke": "white", "stroke-width": 0.5 }, "highlight": { "opacity": 0.7 } }
-    ]
+    "marks": [
+        {"type": "base", "fill": "#D2D2D2", "stroke": "white", "stroke-width": 0.5},
+        {
+            "type": "region",
+            "by": "country",
+            "fill": "@value:scaled",
+            "stroke": "white",
+            "stroke-width": 0.5,
+            "highlight": {"opacity": 0.7}
+        }
+    ],
+    "geo": {
+        "data": "../geo/world.json",
+        "join": "country",
+        "fit": "data",
+        "exclude": ["AQ"],
+        "projection": {"type": "mercator"}
+    }
 }

@@ -1,42 +1,38 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
-    "parent": ["../_years.json", "../_facets.json", "../_share-switch.json", "../_scale-switch.json", "../_facet-toggle.json", "../_monthly.json"],
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "parent": [
+        "../_years.json",
+        "../_facets.json",
+        "../_share-switch.json",
+        "../_scale-switch.json",
+        "../_facet-toggle.json",
+        "../_monthly.json"
+    ],
     "data": "registrations.csv",
-    "options": {
-        "height": 220,
-        "margins": {"left": 56},
-        "title": "Pkw-Neuzulassungen",
-        "subtitle": "nach Kraftstoffart bzw. Energiequelle, monatlich",
-        "footer": "Source: Statistik Austria - Kfz-Neuzulassungen"
-    },
-    "formElements": [{
-        "id": "values",
-        "values": [
-            { "id": "valuesAbs", "name": "Anzahl" },
-            {
-                "id": "valuesShare",
-                "patch": { "mapping": {
-                    "y": { "domain": [0, null], "scale": { "domainRel": [0, 0.1] } }
-                } }
-            }
-        ]
-    }],
-    "mapping": {
+    "title": "Pkw-Neuzulassungen",
+    "subtitle": "nach Kraftstoffart bzw. Energiequelle, monatlich",
+    "source": "Source: Statistik Austria - Kfz-Neuzulassungen",
+    "height": 220,
+    "margins": {"left": 56},
+    "controls": [{"id": "values", "values": [{"id": "valuesAbs", "name": "Anzahl"}, {"id": "valuesShare"}]}],
+    "dims": {
         "y": {
-            "hover": {
-                "format": ",.0f"
-            }
+            "hover": {"format": "=match(@values, {share: '.1%'}, ',.0f')"},
+            "column": "=match(@values, {share: 'value.share'}, 'value')",
+            "domain": "=match(@values, {share: literal([0, null])}, literal([0, null]))",
+            "scale": {"pad": "=match(@values, {share: literal([0, 0.1])}, literal([0, 0.1]))"},
+            "axis": {"format": "=match(@values, {share: '.0%'}, ',.0f')"}
         },
         "facet": {
             "column": "type",
             "categories": {
-                "bev":    { "name": "Elektro", "visible": true },
-                "phev":   { "name": "Plug-in-Hybrid", "visible": true },
-                "hybrid": { "name": "Hybrid (ohne Plug-in)", "visible": true },
-                "petrol": { "name": "Benzin", "visible": true },
-                "diesel": { "name": "Diesel", "visible": true },
-                "other":  { "name": "Sonstige", "visible": false },
-                "total":  { "name": "Gesamt", "visible": false }
+                "bev": {"name": "Elektro", "visible": true},
+                "phev": {"name": "Plug-in-Hybrid", "visible": true},
+                "hybrid": {"name": "Hybrid (ohne Plug-in)", "visible": true},
+                "petrol": {"name": "Benzin", "visible": true},
+                "diesel": {"name": "Diesel", "visible": true},
+                "other": {"name": "Sonstige", "visible": false},
+                "total": {"name": "Gesamt", "visible": false}
             }
         }
     }

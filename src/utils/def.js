@@ -10,18 +10,19 @@ import { translate } from '@/utils/language';
 import { resolve, namesOfGlobals } from '@/utils/resolve';
 import { normalize } from '@/utils/normalize';
 
-// arrays whose entries all have an `id`, e.g. the form elements and their
-// values, are merged by it, entries with a new id are appended, all other
-// arrays are replaced
-const hasIds = a => a.length > 0 && a.every(e => e !== null && typeof e == 'object' && !Array.isArray(e) && 'id' in e);
+// arrays whose entries all have a key, an `id`, the `global` of controls or
+// the `value` of their entries, are merged by it, entries with a new key
+// are appended, all other arrays are replaced
+const keyOf = a => ['id', 'global', 'value'].find(k => a.every(e => e !== null && typeof e == 'object' && !Array.isArray(e) && k in e));
 const arrayMerge = (target, source, options) => {
-    if (!hasIds(target) || !hasIds(source))
+    const key = target.length > 0 && source.length > 0 ? keyOf(target) : undefined;
+    if (!key || keyOf(source) !== key)
         return source;
     const merged = target.map(t => {
-        const s = source.find(e => e.id == t.id);
+        const s = source.find(e => e[key] == t[key]);
         return s ? deepMerge(t, s, options) : t;
     });
-    return [...merged, ...source.filter(s => !target.some(t => t.id == s.id))];
+    return [...merged, ...source.filter(s => !target.some(t => t[key] == s[key]))];
 };
 
 // the mappings of two parts, a text of one which the other one writes as

@@ -1,0 +1,283 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "data": "awards.csv",
+    "options": {
+        "height": 330,
+        "margins": {
+            "top": 6,
+            "right": 60,
+            "bottom": 22,
+            "left": 130
+        },
+        "title": "Aufträge nach Auftragswert",
+        "subtitle": "Aufträge pro Monat und 5.000 € Auftragswert (Klassen von 5.000 €, eine Grenze bei 143.000 €), darunter jeder Auftrag als Punkt",
+        "footer": "Erfundene Daten, Beispiel des Transforms bin und random",
+        "locale": {
+            "base": "de"
+        },
+        "hover": {
+            "title": "{title}–{hi} Tsd. €"
+        }
+    },
+    "globals": {
+        "months": 36
+    },
+    "transform": [
+        {
+            "type": "random",
+            "as": "jitter",
+            "range": [
+                0.06,
+                0.94
+            ],
+            "seed": 1
+        },
+        {
+            "type": "bin",
+            "column": "value",
+            "edges": [
+                {
+                    "from": 50,
+                    "to": 250,
+                    "step": 5
+                },
+                143
+            ],
+            "start": "lo",
+            "end": "hi",
+            "per": 5,
+            "as": "perFive"
+        },
+        {
+            "type": "calc",
+            "as": "perMonth",
+            "expr": {
+                "/": [
+                    "@perFive",
+                    "@months"
+                ]
+            }
+        },
+        {
+            "type": "bin",
+            "column": "value",
+            "by": "group",
+            "edges": [
+                50,
+                250
+            ],
+            "as": "n",
+            "start": "nStart",
+            "end": "nEnd"
+        }
+    ],
+    "mapping": {
+        "x": {
+            "column": "value",
+            "domain": [
+                45,
+                255
+            ],
+            "axis": {
+                "values": [
+                    50,
+                    100,
+                    150,
+                    200,
+                    250
+                ],
+                "labels": {
+                    "props": {
+                        "text": {
+                            "cat": [
+                                {
+                                    "format": [
+                                        "@x",
+                                        ",.0f"
+                                    ]
+                                },
+                                "k"
+                            ]
+                        }
+                    }
+                }
+            },
+            "name": "Auftragswert (1.000 €)"
+        },
+        "lo": {
+            "column": "lo",
+            "scale": {
+                "of": "x"
+            },
+            "hover": {
+                "format": ",.0f"
+            }
+        },
+        "hi": {
+            "column": "hi",
+            "scale": {
+                "of": "x"
+            },
+            "hover": {
+                "format": ",.0f",
+                "cell": false
+            }
+        },
+        "y": {
+            "column": "perMonth",
+            "domain": [
+                0,
+                null
+            ],
+            "nice": true,
+            "format": ",.1f",
+            "scale": {
+                "range": [
+                    {
+                        "*": [
+                            "@height",
+                            0.62
+                        ]
+                    },
+                    0
+                ]
+            },
+            "axis": {
+                "ticks": 5,
+                "grid": true
+            },
+            "stacked": true,
+            "stackBy": "lo",
+            "hover": {
+                "format": ",.2f"
+            }
+        },
+        "group": {
+            "column": "group",
+            "categories": {
+                "Direktvergabe": {
+                    "color": "#4269D0"
+                },
+                "Andere Verfahren": {
+                    "color": "#3CA951"
+                }
+            },
+            "scale": {
+                "type": "band",
+                "orientation": "vertical",
+                "range": [
+                    {
+                        "*": [
+                            "@height",
+                            0.7
+                        ]
+                    },
+                    "@height"
+                ],
+                "padding": 0.08
+            },
+            "axis": {
+                "position": "left"
+            }
+        },
+        "jitter": {
+            "column": "jitter",
+            "type": "numeric"
+        },
+        "n": {
+            "column": "n",
+            "type": "numeric"
+        }
+    },
+    "annotations": [
+        {
+            "type": "line",
+            "x": 100,
+            "above": true,
+            "props": {
+                "stroke": "#888",
+                "stroke-dasharray": "2 2"
+            }
+        },
+        {
+            "type": "line",
+            "x": 143,
+            "above": true,
+            "props": {
+                "stroke": "#888",
+                "stroke-dasharray": "2 2"
+            }
+        },
+        {
+            "type": "line",
+            "x": 200,
+            "above": true,
+            "props": {
+                "stroke": "#888",
+                "stroke-dasharray": "2 2"
+            }
+        }
+    ],
+    "plot": [
+        {
+            "id": "bars",
+            "type": "bar",
+            "props": {
+                "x0": "@lo:scaled",
+                "x1": "@hi:scaled",
+                "y1": "@y:scaled",
+                "fill": "#4269D0"
+            }
+        },
+        {
+            "id": "awards",
+            "type": "point",
+            "by": "group",
+            "props": {
+                "cx": "@x:scaled",
+                "cy": {
+                    "+": [
+                        "@group:scaled",
+                        {
+                            "*": [
+                                "@jitter",
+                                "@group:bandwidth"
+                            ]
+                        }
+                    ]
+                },
+                "r": 1.5,
+                "fill": "@color",
+                "opacity": 0.4
+            }
+        },
+        {
+            "id": "counts",
+            "type": "svg:text",
+            "by": "group",
+            "props": {
+                "x": {
+                    "+": [
+                        "@x:scaled:250",
+                        6
+                    ]
+                },
+                "y": "@group:scaled:center",
+                "dominant-baseline": "middle",
+                "text": {
+                    "cat": [
+                        "n=",
+                        {
+                            "format": [
+                                "@n",
+                                ",.0f"
+                            ]
+                        }
+                    ]
+                },
+                "fill": "#333",
+                "font-size": 11
+            }
+        }
+    ]
+}

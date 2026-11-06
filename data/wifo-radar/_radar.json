@@ -1,26 +1,6 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "data": "values.csv",
-    "options": {
-        "coord": "polar",
-        "height": {
-            "steps": ["@totalWidth", { "0": 460, "760": 600 }]
-        },
-        "margins": {
-            "top": 50,
-            "right": 105,
-            "bottom": 50,
-            "left": 105
-        },
-        "footer": "Q: WIFO, <a href=\"https://www.wifo.ac.at/forschung/themenplattformen/wettbewerbsfaehigkeit/radar-der-wettbewerbsfaehigkeit/\">Radar der Wettbewerbsfähigkeit</a>; Prozentränge, der Anteil der Länder mit gleichen oder ungünstigeren Werten, ein höherer Prozentrang ist eine höhere Wettbewerbsfähigkeit",
-        "hover": {
-            "position": "pointer",
-            "title": "<b>{title}</b><br><small>{definition}<br>Q: {source}</small>"
-        }
-    },
-    "globals": {
-        "set": "H"
-    },
     "transform": [
         {
             "type": "lookup",
@@ -71,42 +51,33 @@
             "as": "countryName"
         }
     ],
-    "filter": {
-        "group": "@set"
-    },
-    "formElements": [
+    "source": "Q: WIFO, <a href=\"https://www.wifo.ac.at/forschung/themenplattformen/wettbewerbsfaehigkeit/radar-der-wettbewerbsfaehigkeit/\">Radar der Wettbewerbsfähigkeit</a>; Prozentränge, der Anteil der Länder mit gleichen oder ungünstigeren Werten, ein höherer Prozentrang ist eine höhere Wettbewerbsfähigkeit",
+    "height": "=steps(@totalWidth, {0: 460, 760: 600})",
+    "margins": {"top": 50, "right": 105, "bottom": 50, "left": 105},
+    "coord": "polar",
+    "hover": {"position": "pointer", "title": "<b>{title}</b><br><small>{definition}<br>Q: {source}</small>"},
+    "globals": {"set": "H"},
+    "controls": [
         {
-            "id": "set",
-            "name": "Indikatoren",
-            "ref": "set",
             "type": "radio",
+            "global": "set",
+            "name": "Indikatoren",
+            "id": "set",
             "values": [
-                {
-                    "id": "H",
-                    "name": "Hauptindikatoren",
-                    "value": "H"
-                },
-                {
-                    "id": "E",
-                    "name": "Ergänzende Indikatoren",
-                    "value": "E"
-                }
+                {"id": "H", "name": "Hauptindikatoren", "value": "H"},
+                {"id": "E", "name": "Ergänzende Indikatoren", "value": "E"}
             ]
         }
     ],
-    "mapping": {
+    "filter": {"group": "@globals.set"},
+    "dims": {
         "x": {
             "column": "name",
-            "scale": { "padding": 0, "order": { "by": "order" } },
+            "scale": {"padding": 0, "order": {"by": "order"}},
             "axis": {
-                "grid": true,
                 "padding": 8,
                 "tickMarks": false,
-                "domain": {
-                    "props": {
-                        "stroke": "var(--gen-vis-grid-color, #CCC)"
-                    }
-                },
+                "domain": {"props": {"stroke": "var(--gen-vis-grid-color, #CCC)"}},
                 "labels": {
                     "props": {
                         "font-weight": "bold",
@@ -115,36 +86,26 @@
                         "text-overflow": "wrap"
                     }
                 }
-            }
+            },
+            "grid": true
         },
         "y": {
             "column": "value",
             "domain": [0, 100],
-            "scale": { "domainRel": [0, 0] },
+            "scale": {"pad": [0, 0]},
             "axis": {
                 "values": [20, 40, 60, 80, 100],
-                "grid": true,
                 "format": "d",
                 "angle": 15,
-                "domain": {
-                    "props": {
-                        "stroke-opacity": 0
-                    }
-                },
-                "labels": {
-                    "props": {
-                        "font-size": 10,
-                        "fill": "#777"
-                    }
-                }
+                "domain": {"props": {"stroke-opacity": 0}},
+                "labels": {"props": {"font-size": 10, "fill": "#777"}}
             },
-            "hover": {
-                "format": ".0f"
-            }
+            "hover": {"format": ".0f"},
+            "grid": true
         },
         "order": "order",
         "group": "group",
-        "definition": { "column": "definition", "fromData": true, "hover": {} },
-        "source": { "column": "source", "fromData": true, "hover": {} }
+        "definition": {"column": "definition", "fromData": true, "hover": {}},
+        "source": {"column": "source", "fromData": true, "hover": {}}
     }
 }

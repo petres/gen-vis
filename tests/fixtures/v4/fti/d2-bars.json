@@ -1,0 +1,9 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "parent": "_bars.json",
+    "data": "d2-bars.csv",
+    "options": {
+        "title": "Efficiency",
+        "footer": "Source: <a href=\"https://fti-monitor.forwit.at/en/B/D.2\">FTI Monitor D.2</a>, FORWIT"
+    }
+}

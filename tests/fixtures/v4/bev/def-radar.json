@@ -1,0 +1,83 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "data": "data.csv",
+    "options": {
+        "coord": "polar",
+        "height": 420,
+        "margins": {"top": 30, "right": 90, "bottom": 30, "left": 90},
+        "title": "Bevölkerung",
+        "subtitle": "nach Bundesland",
+        "footer": "Q: Statistik Austria"
+    },
+    "mapping": {
+        "land": {
+            "column": "Bundesland",
+            "scale": { "orientation": "angular" },
+            "axis": { "grid": true, "padding": 4 },
+            "categories": {
+                "ÖSTERREICH":       { "visible": false },
+                "Wien":             {},
+                "Niederösterreich": {},
+                "Burgenland":       {},
+                "Steiermark":       {},
+                "Kärnten":          {},
+                "Tirol":            {},
+                "Vorarlberg":       {},
+                "Salzburg":         {},
+                "Oberösterreich":   {}
+            }
+        },
+        "y": {
+            "column": "Einwohner",
+            "domain": [0, null],
+            "scale": { "domainRel": [0, 0.05] },
+            "axis": {
+                "ticks": 4,
+                "angle": 40,
+                "grid": true,
+                "gridShape": "polygon",
+                "format": ".2s"
+            },
+            "hover": {
+                "format": ",.0f"
+            }
+        },
+        "year": {
+            "column": "Jahr",
+            "legend": {
+                "symbol": {
+                    "size": 16,
+                    "elements": [{
+                        "type": "line",
+                        "props": { "x1": 0, "x2": 16, "y1": 8, "y2": 8, "stroke": "@color", "stroke-width": 2.5 }
+                    }]
+                }
+            },
+            "categories": {
+                "2002": { "color": "#BBD7EE" },
+                "2012": { "color": "#559BD5" },
+                "2022": { "color": "#1E4F77" }
+            },
+            "hover": {}
+        }
+    },
+    "plot": [
+        {
+            "type": "line",
+            "by": "year",
+            "curve": "linearClosed",
+            "props": {
+                "stroke": "@color",
+                "stroke-width": 2.5,
+                "d": { "angle": "@land:scaled" }
+            },
+            "highlight": { "stroke-width": 4 }
+        },
+        {
+            "type": "point",
+            "by": "year",
+            "props": { "fill": "@color", "r": 3.5, "angle": "@land:scaled" },
+            "highlight": { "r": 5 }
+        }
+    ]
+}

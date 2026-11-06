@@ -1,14 +1,14 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
-    "mapping": {
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "dims": {
         "type": {
             "column": "source.group",
             "categories": {
-                "Hydro": { "color": "#5BC5F2", "name": "Hydro" },
-                "Wind":  { "color": "#BBD7EE", "name": "Wind" },
-                "Solar": { "color": "#F3D039", "name": "Solar" },
-                "Gas":   { "color": "#C3423F", "name": "Erdgas" },
-                "Coal":  { "color": "#8B4513", "name": "Kohle" }
+                "Hydro": {"color": "#5BC5F2", "name": "Hydro"},
+                "Wind": {"color": "#BBD7EE", "name": "Wind"},
+                "Solar": {"color": "#F3D039", "name": "Solar"},
+                "Gas": {"color": "#C3423F", "name": "Erdgas"},
+                "Coal": {"color": "#8B4513", "name": "Kohle"}
             }
         }
     }

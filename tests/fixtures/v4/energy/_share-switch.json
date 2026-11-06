@@ -1,0 +1,27 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "globals": {
+        "values": "abs"
+    },
+    "formElements": [{
+        "id": "values",
+        "name": "Werte",
+        "ref": "values",
+        "type": "radio",
+        "values": [
+            { "id": "valuesAbs", "value": "abs", "name": "Absolut" },
+            {
+                "id": "valuesShare", "value": "share", "name": "Anteil",
+                "patch": { "mapping": {
+                    "y": {
+                        "column": "value.share",
+                        "domain": [0, 1],
+                        "scale": { "domainRel": [0, 0] },
+                        "axis": { "format": ".0%" },
+                        "hover": { "format": ".1%" }
+                    }
+                } }
+            }
+        ]
+    }]
+}

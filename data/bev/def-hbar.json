@@ -1,44 +1,57 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "data": "data.csv",
-    "options": {
-        "height": 320,
-        "margins": {"top": 5, "right": 70, "bottom": 25, "left": 120},
-        "title": "Bevölkerung {year}",
-        "subtitle": "nach Bundesland, nach der Einwohnerzahl sortiert",
-        "footer": "Q: Statistik Austria"
-    },
-    "globals": { "year": "2022" },
-    "filter": { "year": "@year" },
-    "formElements": [{
-        "id": "year", "name": "Jahr", "ref": "year", "type": "slider", "inImage": false,
-        "values": { "column": "Jahr" }
-    }],
-    "mapping": {
+    "title": "Bevölkerung {year}",
+    "subtitle": "nach Bundesland, nach der Einwohnerzahl sortiert",
+    "source": "Q: Statistik Austria",
+    "height": 320,
+    "margins": {"top": 5, "right": 70, "bottom": 25, "left": 120},
+    "globals": {"year": "2022"},
+    "controls": [
+        {
+            "type": "slider",
+            "global": "year",
+            "name": "Jahr",
+            "id": "year",
+            "values": {"column": "Jahr"},
+            "inImage": false
+        }
+    ],
+    "filter": {"year": "@globals.year"},
+    "dims": {
         "year": "Jahr",
         "x": {
             "column": "Einwohner",
-            "domain": [0, null],
             "format": ",.0f",
-            "axis": { "grid": true, "tickSpacing": 110 },
-            "hover": {}
+            "axis": {"tickSpacing": 110},
+            "hover": {},
+            "zero": true,
+            "grid": true
         },
         "y": {
             "column": "Bundesland",
-            "scale": { "range": [0, "@height"], "padding": 0.25, "order": { "by": "x", "descending": true } },
+            "scale": {"range": [0, "@height"], "padding": 0.25, "order": {"by": "x", "descending": true}},
             "fromData": true,
-            "categories": { "ÖSTERREICH": { "visible": false } }
+            "categories": {"ÖSTERREICH": {"visible": false}}
         }
     },
-    "plot": [
-        { "type": "bar", "by": "y", "props": { "x1": "@x:scaled", "y": "@y:scaled", "fill": "#1E4F77" }, "highlight": { "fill": "#5BC5F2" } },
+    "hover": {"columns": []},
+    "marks": [
+        {
+            "type": "bar",
+            "by": "y",
+            "orient": "horizontal",
+            "fill": "#1E4F77",
+            "highlight": {"fill": "#5BC5F2"}
+        },
         {
             "type": "text",
             "by": "y",
-            "props": {
-                "dx": 4, "y": "@y:scaled:center", "dominant-baseline": "middle",
-                "font-size": 11, "text": "@x:formatted", "fill": null
-            }
+            "dx": 4,
+            "dominant-baseline": "middle",
+            "font-size": 11,
+            "text": "@x:formatted",
+            "fill": null
         }
     ]
 }

@@ -1,31 +1,21 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "parent": "_radar.json",
-    "options": {
-        "title": "Radar der Wettbewerbsfähigkeit: Zeitvergleich",
-        "subtitle": "Die Prozentränge von {country} in den Jahren, unter den Ländern der EU, Norwegen, Island, der Schweiz und dem Vereinigten Königreich",
-        "hover": {
-            "row": "{year}: <b>{y}</b>"
-        }
-    },
-    "globals": {
-        "country": "Österreich"
-    },
-    "filter": {
-        "countryName": "@country"
-    },
-    "formElements": [
+    "title": "Radar der Wettbewerbsfähigkeit: Zeitvergleich",
+    "subtitle": "Die Prozentränge von {country} in den Jahren, unter den Ländern der EU, Norwegen, Island, der Schweiz und dem Vereinigten Königreich",
+    "hover": {"row": "{year}: <b>{y}</b>"},
+    "globals": {"country": "Österreich"},
+    "controls": [
         {
-            "id": "country",
-            "name": "Land",
-            "ref": "country",
             "type": "select",
-            "values": {
-                "column": "countryName"
-            }
+            "global": "country",
+            "name": "Land",
+            "id": "country",
+            "values": {"column": "countryName"}
         }
     ],
-    "mapping": {
+    "filter": {"countryName": "@globals.country"},
+    "dims": {
         "countryName": "countryName",
         "year": {
             "column": "year",
@@ -37,13 +27,7 @@
                     "elements": [
                         {
                             "type": "rect",
-                            "props": {
-                                "x": 1,
-                                "y": 1,
-                                "width": 12,
-                                "height": 12,
-                                "fill": "@color"
-                            }
+                            "props": {"x": 1, "y": 1, "width": 12, "height": 12, "fill": "@color"}
                         }
                     ]
                 }
@@ -51,50 +35,38 @@
             "fromData": true,
             "order": "ascending",
             "scheme": "Tableau10",
-            "common": {
-                "visible": false
-            },
+            "common": {"visible": false},
             "categories": {
-                "2019": {
-                    "visible": true,
-                    "color": "#C3423F"
-                },
-                "2020": {
-                    "visible": true,
-                    "color": "#559BD5"
-                }
+                "2019": {"visible": true, "color": "#C3423F"},
+                "2020": {"visible": true, "color": "#559BD5"}
             }
         }
     },
-    "plot": [
+    "marks": [
         {
-            "id": "areas",
             "type": "area",
+            "id": "areas",
             "by": "year",
             "curve": "linearClosed",
-            "props": {
-                "fill": "@color",
-                "d": {
-                    "innerRadius": 0
-                },
-                "fill-opacity": 0.08
-            },
-            "highlight": { "fill-opacity": 0.2 }
+            "fill-opacity": 0.08,
+            "d": {"innerRadius": 0},
+            "highlight": {"fill-opacity": 0.2}
         },
         {
-            "id": "lines",
             "type": "line",
+            "id": "lines",
             "by": "year",
             "curve": "linearClosed",
-            "props": { "stroke": "@color", "stroke-width": 2.5 },
-            "highlight": { "stroke-width": 4 }
+            "stroke-width": 2.5,
+            "highlight": {"stroke-width": 4}
         },
         {
-            "id": "points",
             "type": "point",
+            "id": "points",
             "by": "year",
-            "props": { "fill": "@color", "r": 5 },
-            "highlight": { "r": 6 }
+            "fill": "@color",
+            "r": 5,
+            "highlight": {"r": 6}
         }
     ]
 }

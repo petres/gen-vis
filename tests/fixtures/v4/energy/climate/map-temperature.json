@@ -1,0 +1,45 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "parent": "../_austria-map.json",
+    "data": "districts.csv",
+    "options": {
+        "title": "Temperatur",
+        "subtitle": "Jahresmittel bzw. Abweichung vom Mittel 1961 - 1990, in °C",
+        "footer": "Quelle: GeoSphere Austria (SPARTACUS, SNOWGRID-CL), 1 km Raster, Mittel über die Bezirke"
+    },
+    "globals": {
+        "indicator": "tm.anomaly"
+    },
+    "formElements": [
+        {
+            "id": "indicator",
+            "name": "Werte",
+            "ref": "indicator",
+            "type": "radio",
+            "values": [
+                {
+                    "id": "absolute", "name": "Jahresmittel", "value": "tm",
+                    "patch": { "mapping": {
+                        "value": {
+                            "name": "Jahresmittel in °C",
+                            "domain": [0, 14],
+                            "scale": { "interpolator": "YlOrRd" },
+                            "legend": { "format": ".0f" },
+                            "hover": { "format": ".1f" }
+                        }
+                    } }
+                },
+                { "id": "anomaly", "name": "Abweichung", "value": "tm.anomaly" }
+            ]
+        }
+    ],
+    "mapping": {
+        "value": {
+            "name": "Abweichung in °C",
+            "domain": [3, -3],
+            "scale": { "type": "sequential", "interpolator": "RdBu" },
+            "legend": { "format": "+.1f" },
+            "hover": { "format": "+.1f" }
+        }
+    }
+}

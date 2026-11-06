@@ -1,190 +1,99 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "parent": "_radar.json",
-    "options": {
-        "title": "Radar der Wettbewerbsfähigkeit: Ländervergleich",
-        "subtitle": "Die Prozentränge der Länder in der EU, Norwegen, Island, der Schweiz und dem Vereinigten Königreich {year}",
-        "hover": {
-            "row": "{country}: <b>{y}</b>"
-        }
-    },
-    "globals": {
-        "year": "2019"
-    },
-    "filter": {
-        "year": "@year"
-    },
-    "formElements": [
+    "title": "Radar der Wettbewerbsfähigkeit: Ländervergleich",
+    "subtitle": "Die Prozentränge der Länder in der EU, Norwegen, Island, der Schweiz und dem Vereinigten Königreich {year}",
+    "hover": {"row": "{country}: <b>{y}</b>"},
+    "globals": {"year": "2019"},
+    "controls": [
         {
-            "id": "year",
-            "name": "Jahr",
-            "ref": "year",
             "type": "slider",
-            "values": {
-                "column": "year"
-            }
+            "global": "year",
+            "name": "Jahr",
+            "id": "year",
+            "values": {"column": "year"}
         }
     ],
-    "mapping": {
+    "filter": {"year": "@globals.year"},
+    "dims": {
         "country": {
             "column": "countryName",
             "hover": {},
             "legend": {
-                "position": {
-                    "steps": ["@totalWidth", { "0": "bottom", "760": "right" }]
-                },
+                "position": "=steps(@totalWidth, {0: 'bottom', 760: 'right'})",
                 "orientation": "vertical",
                 "symbol": {
                     "size": 14,
                     "elements": [
                         {
                             "type": "rect",
-                            "props": {
-                                "x": 1,
-                                "y": 1,
-                                "width": 12,
-                                "height": 12,
-                                "fill": "@color"
-                            }
+                            "props": {"x": 1, "y": 1, "width": 12, "height": 12, "fill": "@color"}
                         }
                     ]
                 }
             },
-            "common": {
-                "visible": false
-            },
+            "common": {"visible": false},
             "categories": {
-                "Österreich": {
-                    "color": "#C3423F",
-                    "visible": true
-                },
-                "Belgien": {
-                    "color": "#72BB6F"
-                },
-                "Bulgarien": {
-                    "color": "#F3D039"
-                },
-                "Dänemark": {
-                    "color": "#559E8F"
-                },
-                "Deutschland": {
-                    "color": "#559BD5",
-                    "visible": true
-                },
-                "Estland": {
-                    "color": "#12A7E7"
-                },
-                "Finnland": {
-                    "color": "#96B428"
-                },
-                "Frankreich": {
-                    "color": "#E7B3B1"
-                },
-                "Griechenland": {
-                    "color": "#BBD7EE"
-                },
-                "Irland": {
-                    "color": "#C7E3C6"
-                },
-                "Island": {
-                    "color": "#FAEBAF"
-                },
-                "Italien": {
-                    "color": "#B9D9D2"
-                },
-                "Kroatien": {
-                    "color": "#9CDCF8"
-                },
-                "Lettland": {
-                    "color": "#D9EA9F"
-                },
-                "Litauen": {
-                    "color": "#62201E"
-                },
-                "Luxemburg": {
-                    "color": "#1E4F77"
-                },
-                "Malta": {
-                    "color": "#336530"
-                },
-                "Niederlande": {
-                    "color": "#8C7209"
-                },
-                "Norwegen": {
-                    "color": "#2B4F47"
-                },
-                "Polen": {
-                    "color": "#095373"
-                },
-                "Portugal": {
-                    "color": "#4A5A14"
-                },
-                "Rumänien": {
-                    "color": "#C3423F"
-                },
-                "Schweden": {
-                    "color": "#559BD5"
-                },
-                "Schweiz": {
-                    "color": "#72BB6F"
-                },
-                "Slowakei": {
-                    "color": "#F3D039"
-                },
-                "Slowenien": {
-                    "color": "#559E8F"
-                },
-                "Spanien": {
-                    "color": "#12A7E7"
-                },
-                "Tschechien": {
-                    "color": "#96B428"
-                },
-                "Ungarn": {
-                    "color": "#E7B3B1"
-                },
-                "Vereinigtes Königreich": {
-                    "color": "#BBD7EE"
-                },
-                "Zypern": {
-                    "color": "#C7E3C6"
-                }
+                "Österreich": {"color": "#C3423F", "visible": true},
+                "Belgien": "#72BB6F",
+                "Bulgarien": "#F3D039",
+                "Dänemark": "#559E8F",
+                "Deutschland": {"color": "#559BD5", "visible": true},
+                "Estland": "#12A7E7",
+                "Finnland": "#96B428",
+                "Frankreich": "#E7B3B1",
+                "Griechenland": "#BBD7EE",
+                "Irland": "#C7E3C6",
+                "Island": "#FAEBAF",
+                "Italien": "#B9D9D2",
+                "Kroatien": "#9CDCF8",
+                "Lettland": "#D9EA9F",
+                "Litauen": "#62201E",
+                "Luxemburg": "#1E4F77",
+                "Malta": "#336530",
+                "Niederlande": "#8C7209",
+                "Norwegen": "#2B4F47",
+                "Polen": "#095373",
+                "Portugal": "#4A5A14",
+                "Rumänien": "#C3423F",
+                "Schweden": "#559BD5",
+                "Schweiz": "#72BB6F",
+                "Slowakei": "#F3D039",
+                "Slowenien": "#559E8F",
+                "Spanien": "#12A7E7",
+                "Tschechien": "#96B428",
+                "Ungarn": "#E7B3B1",
+                "Vereinigtes Königreich": "#BBD7EE",
+                "Zypern": "#C7E3C6"
             }
         },
-        "year": {
-            "column": "year",
-            "type": "categorical"
-        }
+        "year": {"column": "year", "type": "categorical"}
     },
-    "plot": [
+    "marks": [
         {
-            "id": "areas",
             "type": "area",
+            "id": "areas",
             "by": "country",
             "curve": "linearClosed",
-            "props": {
-                "fill": "@color",
-                "d": {
-                    "innerRadius": 0
-                },
-                "fill-opacity": 0.08
-            },
-            "highlight": { "fill-opacity": 0.2 }
+            "fill-opacity": 0.08,
+            "d": {"innerRadius": 0},
+            "highlight": {"fill-opacity": 0.2}
         },
         {
-            "id": "lines",
             "type": "line",
+            "id": "lines",
             "by": "country",
             "curve": "linearClosed",
-            "props": { "stroke": "@color", "stroke-width": 2.5 },
-            "highlight": { "stroke-width": 4 }
+            "stroke-width": 2.5,
+            "highlight": {"stroke-width": 4}
         },
         {
-            "id": "points",
             "type": "point",
+            "id": "points",
             "by": "country",
-            "props": { "fill": "@color", "r": 5 },
-            "highlight": { "r": 6 }
+            "fill": "@color",
+            "r": 5,
+            "highlight": {"r": 6}
         }
     ]
 }

@@ -1,0 +1,91 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "options": {
+        "coord": "geo",
+        "height": {
+            "steps": ["@totalWidth", { "0": 340, "450": 420, "550": 500 }]
+        },
+        "margins": {"top": 10, "right": 10, "bottom": 10, "left": 10}
+    },
+    "geo": {
+        "data": "../../geo/europe.json",
+        "object": "countries",
+        "include": ["AD", "AL", "AT", "BA", "BE", "BG", "BY", "CH", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FO", "FR", "UK", "GR", "HR", "HU", "IE", "IS", "IT", "LI", "LT", "LU", "LV", "MC", "MD", "ME", "MK", "MT", "NL", "NO", "PL", "PT", "RO", "RS", "SE", "SI", "SK", "SM", "TR", "UA", "VA"],
+        "key": "id",
+        "join": "country",
+        "name": "name",
+        "projection": { "type": "conicEquidistant", "rotate": [-20, 0], "parallels": [35, 65] }
+    },
+    "mapping": {
+        "country": {
+            "column": "country",
+            "categories": {
+                "AL": { "name": "Albanien" },
+                "AD": { "name": "Andorra" },
+                "BY": { "name": "Belarus" },
+                "BE": { "name": "Belgien" },
+                "BA": { "name": "Bosnien und Herzegowina" },
+                "BG": { "name": "Bulgarien" },
+                "DK": { "name": "Dänemark" },
+                "DE": { "name": "Deutschland" },
+                "EE": { "name": "Estland" },
+                "FO": { "name": "Färöer" },
+                "FI": { "name": "Finnland" },
+                "FR": { "name": "Frankreich" },
+                "GR": { "name": "Griechenland" },
+                "IE": { "name": "Irland" },
+                "IS": { "name": "Island" },
+                "IT": { "name": "Italien" },
+                "HR": { "name": "Kroatien" },
+                "LV": { "name": "Lettland" },
+                "LI": { "name": "Liechtenstein" },
+                "LT": { "name": "Litauen" },
+                "LU": { "name": "Luxemburg" },
+                "MT": { "name": "Malta" },
+                "MC": { "name": "Monaco" },
+                "ME": { "name": "Montenegro" },
+                "NL": { "name": "Niederlande" },
+                "MK": { "name": "Nordmazedonien" },
+                "NO": { "name": "Norwegen" },
+                "AT": { "name": "Österreich" },
+                "PL": { "name": "Polen" },
+                "PT": { "name": "Portugal" },
+                "MD": { "name": "Republik Moldau" },
+                "RO": { "name": "Rumänien" },
+                "SM": { "name": "San Marino" },
+                "SE": { "name": "Schweden" },
+                "CH": { "name": "Schweiz" },
+                "RS": { "name": "Serbien" },
+                "SK": { "name": "Slowakei" },
+                "SI": { "name": "Slowenien" },
+                "ES": { "name": "Spanien" },
+                "CZ": { "name": "Tschechien" },
+                "TR": { "name": "Türkei" },
+                "UA": { "name": "Ukraine" },
+                "HU": { "name": "Ungarn" },
+                "VA": { "name": "Vatikanstadt" },
+                "UK": { "name": "Vereinigtes Königreich" },
+                "CY": { "name": "Zypern" }
+            }
+        },
+        "value": {
+            "legend": { "missing": { "name": "keine Daten", "color": "#DADADA" } }
+        }
+    },
+    "plot": [
+        {
+            "type": "base",
+            "props": { "fill": "#DADADA", "stroke": "white", "stroke-width": 1 }
+        },
+        {
+            "type": "region",
+            "by": "country",
+            "props": {
+                "fill": "@value:scaled",
+                "stroke": "white",
+                "stroke-width": 1
+            },
+            "highlight": { "fill-opacity": 0.75 }
+        }
+    ]
+}

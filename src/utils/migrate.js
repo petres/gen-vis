@@ -1,4 +1,4 @@
-export { migrate, conditionExpression, expressionText };
+export { migrate, conditionExpression, expressionText, formatJson };
 
 import { isObject } from '@/utils/values';
 import { isOperator } from '@/utils/expr';
@@ -51,9 +51,12 @@ const texts = (v, key = undefined, inside = false) => {
     return v;
 };
 
+// a reference of a condition is one to a global (a dim of the same name would shadow it)
+const globalRef = v => typeof v == 'string' && v.startsWith('@') && !v.startsWith('@globals.') ? `@globals.${v.slice(1)}` : v;
+
 // a value of a condition as the text of an expression, a reference is one
 // to a global (a dim of the same name would shadow it)
-const literal = v => typeof v == 'string' ? (v.startsWith('@') ? `@globals.${v.slice(1)}` : `'${v.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`)
+const literal = v => typeof v == 'string' ? (v.startsWith('@') ? globalRef(v) : `'${v.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`)
     : v === null ? 'null' : isOperator(v) ? `(${formatExpression(v)})` : String(v);
 
 /**
@@ -61,9 +64,14 @@ const literal = v => typeof v == 'string' ? (v.startsWith('@') ? `@globals.${v.s
  * `{ "year": "@year", "type": { "not": "load" } }` is
  * `"@year == @year and @type != 'load'"`, see rowFilter of utils/data.js.
  */
-const conditionExpression = conditions => {
+const conditionExpression = (conditions, objects = false) => {
     if (conditions === undefined || conditions === null || typeof conditions == 'boolean' || typeof conditions == 'string' || isOperator(conditions))
         return conditions;
+    // conditions of values and lists of values stay an object, the shorthand
+    // of 5.0 (it merges with the one of a parent), a reference is one to a
+    // global; `not`, `range` and null need an expression
+    if (objects && Object.values(conditions).every(c => c !== null && (Array.isArray(c) ? c.every(v => v !== null && typeof v != 'object') : typeof c != 'object')))
+        return Object.fromEntries(Object.entries(conditions).map(([dim, c]) => [dim, Array.isArray(c) ? c.map(globalRef) : globalRef(c)]));
     const parts = Object.entries(conditions).map(([dim, c]) => conditionOf(dim, c));
     if (parts.length == 0)
         return true;
@@ -124,10 +132,9 @@ const dimOf = (m, name, hovered, grouped, consumed) => {
     if (!isObject(m))
         return m;
     const d = { ...m };
-    if (isObject(d.hover) && Object.keys(d.hover).length == 0) {
-        hovered.push(name);
-        delete d.hover;
-    } else if (isObject(d.hover))
+    // the hover of a dim stays on the dim (also an empty one, the opt-in of
+    // 4.x), it merges with the one of a parent
+    if (isObject(d.hover))
         hovered.push(name);
     // the stacking of a mark, a dim stacked by no mark keeps it (e.g. of the hover)
     if (consumed.has(name)) {
@@ -246,7 +253,10 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
             consumed.add(dim);
         return dim;
     };
-    const prefix = typeof mark.type == 'string' && type?.includes(':') ? type.split(':')[0] : (coord ?? 'cartesian');
+    // the coordinate system of a short type name as 4.x resolved it: the
+    // one of the coordinate system first, then an svg element (text, circle, rect)
+    const svgKinds = coord == 'cartesian' || coord === undefined ? ['text', 'circle', 'rect'] : ['rect'];
+    const prefix = typeof type == 'string' && type.includes(':') ? type.split(':')[0] : svgKinds.includes(kind) ? 'svg' : (coord ?? 'cartesian');
     // a position of an element of svg at a value of a scale ("@x:scaled:0")
     // stays an attribute, a number of a channel of these marks is pixels
     const setDim = (name, attr = name) => {
@@ -416,6 +426,18 @@ const leaves = (v, path = []) => isObject(v) && Object.keys(v).length > 0 && !['
 const caseValue = v => v !== null && typeof v == 'object' ? { literal: v } : v;
 
 const at = (o, path) => path.reduce((v, k) => isObject(v) || Array.isArray(v) ? v?.[k] : undefined, o);
+const deleteAt = (o, path) => {
+    const parent = at(o, path.slice(0, -1));
+    if (isObject(parent))
+        delete parent[path.at(-1)];
+};
+
+// a leaf of 4.x which 5.0 writes differently, converted before it becomes
+// an expression (dimOf converts the arrays of the dims, not expressions):
+// `scale.domainRel` [a, b] is `scale.pad` [-a, b]
+const convertLeaf = (path, value) => path[0] == 'mapping' && path.at(-2) == 'scale' && path.at(-1) == 'domainRel'
+    ? [[...path.slice(0, -1), 'pad'], Array.isArray(value) ? [-(value[0] ?? 0), value[1] ?? 0] : value]
+    : [path, value];
 const setAt = (o, path, value) => {
     let v = o;
     path.slice(0, -1).forEach(k => {
@@ -439,39 +461,80 @@ const mergedPart = (key, base, patch) => mergeAll([{ [key]: base === undefined ?
  * (see migrate, which converts the cases), the patches are removed.
  */
 const whole = ['plot', 'annotations', 'filter'];
-const applyPatchesAsExpressions = def => {
-    (def.formElements ?? []).forEach(e => {
+const applyPatchesAsExpressions = (def, parents) => {
+    // the form elements of a part of a definition (a child, a mixin) merged
+    // with the ones of its parents: an element may have no `ref` and its
+    // entries no `value` (the parents' ones), and a patch of a parent
+    // changes a leaf which the part defines
+    const merged = parents === undefined ? def : mergeAll([parents, def]);
+    (merged.formElements ?? []).forEach((e, i) => {
         const patched = Array.isArray(e?.values) ? e.values.filter(v => isObject(v?.patch)) : [];
         if (patched.length == 0)
             return;
+        if (typeof e.ref != 'string')
+            throw new Error(`formElements[${i}]: no ref, a form element of a parent? migrate it with its parents`);
+        const own = (def.formElements ?? []).find(o => isObject(o) && o.id !== undefined && o.id == e.id);
+        const ownValues = Array.isArray(own?.values) ? own.values : [];
+        const valueOf = (v, j) => {
+            if (v.value === undefined)
+                throw new Error(`formElements[${i}].values[${j}]: no value, an entry of a parent? migrate it with its parents`);
+            return String(v.value);
+        };
         const ref = `@${e.ref}`;
+        // the patched leaves (and whole parts) of every value, `own` if a
+        // value of the part itself patches it
         const paths = new Map();
-        patched.forEach(v => Object.entries(v.patch).forEach(([k, part]) => {
+        e.values.forEach((v, j) => isObject(v?.patch) && Object.entries(v.patch).forEach(([k, part]) => {
+            const value = valueOf(v, j);
+            const ownPatch = ownValues.find(o => isObject(o) && o.id !== undefined && o.id == v.id)?.patch;
             if (whole.includes(k)) {
                 if (!paths.has(k))
-                    paths.set(k, { path: [k], cases: {}, whole: true });
-                paths.get(k).cases[String(v.value)] = part;
+                    paths.set(k, { path: [k], cases: {}, whole: true, own: false });
+                paths.get(k).cases[value] = part;
+                paths.get(k).own ||= isObject(ownPatch) && ownPatch[k] !== undefined;
                 return;
             }
-            leaves(part, [k]).forEach(([path, value]) => {
+            leaves(part, [k]).forEach(([orig, raw]) => {
+                const [path, value_] = convertLeaf(orig, raw);
                 const key = JSON.stringify(path);
                 if (!paths.has(key))
-                    paths.set(key, { path, cases: {} });
-                paths.get(key).cases[String(v.value)] = caseValue(value);
+                    paths.set(key, { path, orig, cases: {}, own: false });
+                paths.get(key).cases[value] = caseValue(value_);
+                paths.get(key).own ||= isObject(ownPatch) && at(ownPatch, orig) !== undefined;
             });
         }));
-        paths.forEach(({ path, cases, whole: all }) => {
-            const base = at(def, path);
+        paths.forEach(({ path, orig, cases, whole: all, own: ownCase }) => {
+            const converted = orig !== undefined && JSON.stringify(orig) != JSON.stringify(path);
+            const baseOf = o => converted ? convertLeaf(orig, at(o, orig))[1] : at(o, path);
+            const ownBase = baseOf(def);
+            // a part with parents writes the expression if it patches the leaf
+            // or there is a base (its own or of the parents, as 4.x applied the
+            // patch last, after the merge); else its parents do
+            const base = ownBase !== undefined || parents === undefined ? ownBase : baseOf(parents);
+            if (parents !== undefined && !ownCase && base === undefined)
+                return;
+            if (converted)
+                deleteAt(def, orig);
+            // cases which are all the base (e.g. a patch which repeats the
+            // definition) are the base, unless a parent patches the leaf (its
+            // expression needs the override)
+            const same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+            const parentCase = parents !== undefined && (parents.formElements ?? []).some(pe => isObject(pe) && pe.id == e.id
+                && Array.isArray(pe.values) && pe.values.some(v => isObject(v?.patch) && at(v.patch, orig ?? path) !== undefined));
+            if (!all && !parentCase && base !== undefined && Object.values(cases).every(c => same(c, caseValue(base)))) {
+                setAt(def, path, base);
+                return;
+            }
             if (all) {
                 // the merged parts of every value, converted by migrate
-                const merged = Object.fromEntries(Object.entries(cases).map(([v, part]) => [v, mergedPart(path[0], base, part)]));
-                def[path[0]] = { match: [ref, merged, base === undefined ? null : base], [patchedKey]: true };
+                const parts = Object.fromEntries(Object.entries(cases).map(([v, part]) => [v, mergedPart(path[0], base, part)]));
+                def[path[0]] = { match: [ref, parts, base === undefined ? null : base], [patchedKey]: true };
                 return;
             }
             // a text, an expression at every place, also of a name, e.g. a column
             setAt(def, path, expressionText({ match: [ref, cases, base === undefined ? null : caseValue(base)] }));
         });
-        e.values.forEach(v => delete v.patch);
+        ownValues.forEach(v => isObject(v) && delete v.patch);
     });
 };
 // a part of a definition which is a match of the patches of its form elements
@@ -486,36 +549,28 @@ const patchedText = (v, convert) => {
     return expressionText({ match: [ref, Object.fromEntries(Object.entries(cases).map(([k, part]) => [k, literal(part)])), literal(base)] });
 };
 
-// a form element of 4.x as a control of 5.0
+// a form element of 4.x as a control of 5.0: `ref` is `global`, the ids
+// stay, a parent and its children merge the controls and their entries by them
 const controlOf = e => {
     if (!isObject(e))
         return e;
-    const { ref, id, values, ...rest } = e;
-    const c = { ...rest, global: ref };
-    if (id !== undefined && id !== ref)
-        c.id = id;
-    c.values = Array.isArray(values) ? values.map(v => {
-        if (!isObject(v))
-            return v;
-        const { id: vid, name, value, ...more } = v;
-        const entry = { value };
-        if (name !== undefined && name !== String(value))
-            entry.name = name;
-        if (vid !== undefined && vid !== String(value))
-            entry.id = vid;
-        return { ...entry, ...more };
-    }) : values;
+    const { ref, ...rest } = e;
+    const c = ref === undefined ? { ...rest } : { ...rest, global: ref };
     // the order of the keys: the type and the global first
     return Object.fromEntries(['type', 'global', 'name', 'id', 'values', ...Object.keys(c)].filter((k, i, a) => c[k] !== undefined && a.indexOf(k) == i).map(k => [k, c[k]]));
 };
 
 /**
  * The definition of gen-vis 5 of one of gen-vis 4 (merged with its parents
- * or a part of one, e.g. a parent), see above.
+ * or a part of one, e.g. a parent), see above. A part with parents is
+ * migrated with them merged (`parents`, of gen-vis 4): its form elements
+ * may give only the ids of the patched entries, and it writes the
+ * expressions of the leaves its parents patch and it (or they) define,
+ * as 4.x applied the patches after the merge.
  */
-const migrate = raw => {
+const migrate = (raw, { parents } = {}) => {
     const def = clone(raw);
-    applyPatchesAsExpressions(def);
+    applyPatchesAsExpressions(def, clone(parents));
     const out = {};
     out.$schema = schemaUrl;
     ['parent', 'data', 'dataFormat'].forEach(k => {
@@ -542,11 +597,11 @@ const migrate = raw => {
         const ast = c => c === null || c === undefined || c === true ? true : parseExpression(String(conditionExpression(c)).replace(/^=/, ''));
         out.filter = expressionText({ match: [`@globals.${ref.slice(1)}`, Object.fromEntries(Object.entries(cases).map(([k, c]) => [k, ast(c)])), ast(base)] });
     } else if (def.filter !== undefined)
-        out.filter = conditionExpression(def.filter);
+        out.filter = conditionExpression(def.filter, true);
     const mapping = isObject(def.mapping) ? def.mapping : {};
     const plotsOf = p => p === undefined || p === null ? [] : [p].flat();
     const plots = isPatched(def.plot) ? plotsOf(def.plot.match[2]) : plotsOf(def.plot);
-    const grouped = new Set([...plots.flatMap(p => isObject(p) ? [p.by ?? []].flat() : []), def.facets?.dim, def.facets?.rows, def.facets?.cols].filter(Boolean));
+    const grouped = new Set(plots.flatMap(p => isObject(p) ? [p.by ?? []].flat() : []).filter(Boolean));
     const stacked = Object.fromEntries(Object.entries(mapping).filter(([, m]) => isObject(m) && m.stacked !== undefined && m.stacked !== false)
         .map(([n, m]) => [n, m.stacked === true ? true : conditionExpression(m.stacked)]));
     const hovered = [];
@@ -555,13 +610,12 @@ const migrate = raw => {
     const marks = plots.map((p, i) => markOf(p, i, coord, stacked, mapping, consumed));
     if (def.mapping !== undefined)
         out.dims = Object.fromEntries(Object.entries(mapping).map(([n, m]) => [n, dimOf(m, n, hovered, grouped, consumed)]));
-    // the hover columns which are not the dims of the marks' `by` are listed
-    const byDefault = [...grouped].filter(n => Object.hasOwn(mapping, n));
-    const columns = hovered.filter(n => !byDefault.includes(n));
-    const missing = byDefault.filter(n => !hovered.includes(n) && isObject(mapping[n]));
-    if (columns.length > 0 || missing.length > 0) {
-        out.hover = { ...(isObject(out.hover) ? out.hover : {}), columns: hovered };
-    }
+    // the hover of 4.x has the dims with a `hover` only, the one of 5.0 also
+    // the dims of the marks' by: a definition (or a part of one) with marks
+    // by a dim without a hover (of its own) lists no columns, the chart
+    // stays the same
+    if ([...grouped].some(n => !hovered.includes(n)))
+        out.hover = { ...(isObject(out.hover) ? out.hover : {}), columns: [] };
     if (isObject(out.hover) && out.hover.filter !== undefined)
         out.hover.filter = conditionExpression(out.hover.filter);
     if (isPatched(def.plot))
@@ -592,4 +646,38 @@ const migrate = raw => {
     Object.keys(def).filter(k => !['$schema', 'parent', 'data', 'dataFormat', 'transform', 'options', 'globals', 'formElements', 'filter', 'mapping', 'plot', 'annotations', 'facets', 'geo'].includes(k))
         .forEach(k => out[k] = def[k]);
     return out;
+};
+
+/**
+ * The JSON of a definition as the files of gen-vis are written: an indent of
+ * four spaces, objects and lists which fit into a line (`width` characters,
+ * 100 by default) on one line, e.g. a category or a margin.
+ */
+const formatJson = (value, indent = 4, width = 100, level = 0) => {
+    if (value === undefined)
+        return 'null';
+    if (value === null || typeof value != 'object')
+        return JSON.stringify(value);
+    const line = oneLine(value);
+    if (line.length + level*indent <= width)
+        return line;
+    const pad = ' '.repeat((level + 1)*indent);
+    const end = ' '.repeat(level*indent);
+    if (Array.isArray(value))
+        return `[\n${value.map(v => pad + formatJson(v, indent, width, level + 1)).join(',\n')}\n${end}]`;
+    return `{\n${Object.entries(value).filter(([, v]) => v !== undefined).map(([k, v]) => `${pad}${JSON.stringify(k)}: ${formatJson(v, indent, width, level + 1)}`).join(',\n')}\n${end}}`;
+};
+
+// a value on one line, with a space after the commas and the colons (not
+// the ones in texts)
+const oneLine = value => {
+    if (value === undefined)
+        return 'null';
+    if (value === null || typeof value != 'object')
+        return JSON.stringify(value);
+    if (Array.isArray(value))
+        return `[${value.map(oneLine).join(', ')}]`;
+    // entries without a value are left out, as JSON.stringify does
+    const entries = Object.entries(value).filter(([, v]) => v !== undefined);
+    return entries.length == 0 ? '{}' : `{${entries.map(([k, v]) => `${JSON.stringify(k)}: ${oneLine(v)}`).join(', ')}}`;
 };

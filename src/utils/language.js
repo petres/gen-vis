@@ -520,6 +520,8 @@ const translate = raw => {
     // a dim of null (or false) is none, e.g. of a global which removes it
     const dims = {};
     Object.entries(isObject(def.dims) ? def.dims : {}).filter(([, d]) => d !== null && d !== false).forEach(([n, d]) => dims[n] = dim(d, n));
+    // an object is the shorthand of conditions of equality of dims, e.g.
+    // { "year": "@globals.year" } or { "land": ["Wien", "Tirol"] }, the engine's conditions
     if (def.filter !== undefined)
         out.filter = def.filter;
     if (Array.isArray(def.controls))
@@ -531,7 +533,9 @@ const translate = raw => {
     // mark groups rows of any type, e.g. of a year, it makes no categories)
     const facets = facetsOf(def.facets, dims);
     const rawMarks = def.marks === undefined ? [] : [def.marks].flat();
-    const grouped = [...rawMarks.flatMap(m => isObject(m) ? [m.by ?? []].flat() : []), ...(facets ? [facets.dim, facets.rows, facets.cols] : [])]
+    // the dims of the hover by default: the ones of the marks' by (the facets
+    // are the titles of their panels)
+    const grouped = rawMarks.flatMap(m => isObject(m) ? [m.by ?? []].flat() : [])
         .filter(n => typeof n == 'string' && Object.hasOwn(dims, n) && isObject(dims[n]));
     (facets ? [facets.dim, facets.rows, facets.cols] : []).filter(n => typeof n == 'string' && isObject(dims[n])).forEach(n => {
         if (dims[n].fromData === undefined && !isObject(dims[n].categories))

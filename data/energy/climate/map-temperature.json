@@ -1,45 +1,30 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "parent": "../_austria-map.json",
     "data": "districts.csv",
-    "options": {
-        "title": "Temperatur",
-        "subtitle": "Jahresmittel bzw. Abweichung vom Mittel 1961 - 1990, in °C",
-        "footer": "Quelle: GeoSphere Austria (SPARTACUS, SNOWGRID-CL), 1 km Raster, Mittel über die Bezirke"
-    },
-    "globals": {
-        "indicator": "tm.anomaly"
-    },
-    "formElements": [
+    "title": "Temperatur",
+    "subtitle": "Jahresmittel bzw. Abweichung vom Mittel 1961 - 1990, in °C",
+    "source": "Quelle: GeoSphere Austria (SPARTACUS, SNOWGRID-CL), 1 km Raster, Mittel über die Bezirke",
+    "globals": {"indicator": "tm.anomaly"},
+    "controls": [
         {
-            "id": "indicator",
-            "name": "Werte",
-            "ref": "indicator",
             "type": "radio",
+            "global": "indicator",
+            "name": "Werte",
+            "id": "indicator",
             "values": [
-                {
-                    "id": "absolute", "name": "Jahresmittel", "value": "tm",
-                    "patch": { "mapping": {
-                        "value": {
-                            "name": "Jahresmittel in °C",
-                            "domain": [0, 14],
-                            "scale": { "interpolator": "YlOrRd" },
-                            "legend": { "format": ".0f" },
-                            "hover": { "format": ".1f" }
-                        }
-                    } }
-                },
-                { "id": "anomaly", "name": "Abweichung", "value": "tm.anomaly" }
+                {"id": "absolute", "name": "Jahresmittel", "value": "tm"},
+                {"id": "anomaly", "name": "Abweichung", "value": "tm.anomaly"}
             ]
         }
     ],
-    "mapping": {
+    "dims": {
         "value": {
-            "name": "Abweichung in °C",
-            "domain": [3, -3],
-            "scale": { "type": "sequential", "interpolator": "RdBu" },
-            "legend": { "format": "+.1f" },
-            "hover": { "format": "+.1f" }
+            "name": "=match(@indicator, {tm: 'Jahresmittel in °C'}, 'Abweichung in °C')",
+            "domain": "=match(@indicator, {tm: literal([0, 14])}, literal([3, -3]))",
+            "scale": {"type": "sequential", "interpolator": "=match(@indicator, {tm: 'YlOrRd'}, 'RdBu')"},
+            "legend": {"format": "=match(@indicator, {tm: '.0f'}, '+.1f')", "symbol": null},
+            "hover": {"format": "=match(@indicator, {tm: '.1f'}, '+.1f')"}
         }
     }
 }

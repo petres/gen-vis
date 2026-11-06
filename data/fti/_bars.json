@@ -1,33 +1,33 @@
 {
-    "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "parent": "_group.json",
-    "options": {
-        "class": "fti fti-bars",
-        "locale": { "base": "en", "number": { "currency": ["", "%"] } },
-        "margins": {
-            "top": 34,
-            "right": 50,
-            "bottom": 6,
-            "left": { "steps": ["@totalWidth", { "0": 200, "760": 320 }] }
-        },
-        "message": { "steps": ["@totalWidth", { "0": "The display is too narrow, please rotate your device.", "480": null }] },
-        "subtitle": "Sub-indicators, Austria relative to the comparison group (= 100)",
-        "hover": { "box": false, "marker": false, "area": "facet" }
-    },
-    "mapping": {
+    "subtitle": "Sub-indicators, Austria relative to the comparison group (= 100)",
+    "margins": {"top": 34, "right": 50, "bottom": 6, "left": "=steps(@totalWidth, {0: 200, 760: 320})"},
+    "locale": {"base": "en", "number": {"currency": ["", "%"]}},
+    "class": "fti fti-bars",
+    "message": "=steps(@totalWidth, {0: 'The display is too narrow, please rotate your device.', 480: null})",
+    "hover": {"box": false, "marker": false, "area": "facet", "columns": []},
+    "dims": {
         "x": {
             "column": "{group}",
-            "domain": [0, null],
             "axis": {
-                "position": "top", "values": [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200], "format": "d",
-                "labels": { "props": { "font-size": 13, "font-weight": "bold" } }
+                "position": "top",
+                "values": [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200],
+                "format": "d",
+                "labels": {"props": {"font-size": 13, "font-weight": "bold"}}
             },
-            "hover": { "format": ".1f" }
+            "hover": {"format": ".1f"},
+            "zero": true
         },
         "y": {
             "column": "label",
             "type": "categorical",
-            "scale": { "padding": 0.45, "step": 23, "range": [0, "@height"], "groups": { "by": "group", "padding": 1 } },
+            "scale": {
+                "padding": 0.45,
+                "step": 23,
+                "range": [0, "@height"],
+                "groups": {"by": "group", "padding": 1}
+            },
             "axis": {
                 "padding": 19,
                 "labels": {
@@ -36,7 +36,7 @@
                         "font-size": 13,
                         "font-weight": "@weight",
                         "fill": "#222",
-                        "max-width": { "steps": ["@totalWidth", { "0": 170, "760": 290 }] }
+                        "max-width": "=steps(@totalWidth, {0: 170, 760: 290})"
                     }
                 }
             }
@@ -54,82 +54,93 @@
         "level": {
             "column": "level",
             "categories": {
-                "header": { "bar": "#C2C2C2", "barHover": "#9A9A9A", "weight": "bold" },
-                "item": { "bar": "#DCDCDC", "barHover": "#A6A6A6", "weight": "normal" }
+                "header": {"bar": "#C2C2C2", "barHover": "#9A9A9A", "weight": "bold"},
+                "item": {"bar": "#DCDCDC", "barHover": "#A6A6A6", "weight": "normal"}
             }
         },
         "io": {
             "column": "io",
             "categories": {
-                "input": { "name": "Input", "fill": "white" },
-                "output": { "name": "Output", "fill": "black" },
-                "none": { "legend": false }
+                "input": {"name": "Input", "fill": "white"},
+                "output": {"name": "Output", "fill": "black"},
+                "none": {"legend": false}
             },
-            "legend": { "position": "bottom", "symbol": { "type": "circle", "size": 14, "props": { "fill": "@fill", "stroke": "black", "stroke-width": 1.5 } } }
+            "legend": {
+                "position": "bottom",
+                "symbol": {
+                    "type": "circle",
+                    "size": 14,
+                    "props": {"fill": "@fill", "stroke": "black", "stroke-width": 1.5}
+                }
+            }
         }
     },
-    "plot": [
+    "marks": [
         {
-            "id": "bars",
             "type": "bar",
+            "id": "bars",
             "by": "level",
-            "props": { "x1": "@x:scaled", "y": "@y:scaled", "fill": "@bar" },
-            "highlight": { "mode": "row", "fill": "@barHover" }
+            "orient": "horizontal",
+            "fill": "@bar",
+            "highlight": {"mode": "row", "fill": "@barHover"}
         },
         {
-            "id": "axis",
             "type": "svg:line",
+            "id": "axis",
             "by": "group",
             "select": "first",
-            "props": { "x1": "@x:scaled:0", "x2": "@x:scaled:0", "y1": "@y:group:start", "y2": "@y:group:end", "stroke": "black", "stroke-width": 1.5 }
+            "x1": "@x:scaled:0",
+            "x2": "@x:scaled:0",
+            "y1": "@y:group:start",
+            "y2": "@y:group:end",
+            "stroke": "black",
+            "stroke-width": 1.5
         },
         {
+            "type": "point",
             "id": "dots",
-            "type": "point",
             "by": "level",
-            "props": { "cy": "@y:scaled:center", "r": 7.5, "fill": "@color:scaled" },
-            "highlight": { "mode": "row", "r": 11 }
+            "cy": "@y:scaled:center",
+            "r": 7.5,
+            "fill": "@color:scaled",
+            "highlight": {"mode": "row", "r": 11}
         },
         {
+            "type": "point",
             "id": "holes",
-            "type": "point",
             "by": "level",
-            "filter": { "level": "header" },
-            "props": { "cy": "@y:scaled:center", "r": 4.5, "fill": "white" },
-            "highlight": { "mode": "row", "r": 0 }
+            "filter": "@level == 'header'",
+            "cy": "@y:scaled:center",
+            "r": 4.5,
+            "fill": "white",
+            "highlight": {"mode": "row", "r": 0}
         },
         {
+            "type": "point",
             "id": "io",
-            "type": "point",
             "by": "io",
-            "filter": { "io": { "not": "none" } },
-            "props": {
-                "cx": { "+": ["@x:scaled:0", -14] },
-                "cy": "@y:scaled:center",
-                "r": 5,
-                "fill": "@fill",
-                "stroke": "black",
-                "stroke-width": 1.5
-            }
+            "filter": "@io != 'none'",
+            "cx": "@x:scaled:0 + -14",
+            "cy": "@y:scaled:center",
+            "r": 5,
+            "fill": "@fill",
+            "stroke": "black",
+            "stroke-width": 1.5
         },
         {
-            "id": "value",
             "type": "text",
+            "id": "value",
             "by": "level",
-            "props": {
-                "dx": 15,
-                "y": "@y:scaled:center",
-                "dominant-baseline": "central",
-                "font-size": 13,
-                "font-weight": "bold",
-                "text": { "format": ["@x", "$.0f"] },
-                "fill": null,
-                "visibility": "hidden"
-            },
-            "highlight": { "mode": "row", "visibility": "visible" }
+            "dx": 15,
+            "y": "@y:scaled:center",
+            "dominant-baseline": "central",
+            "font-size": 13,
+            "font-weight": "bold",
+            "text": "=format(@x, '$.0f')",
+            "fill": null,
+            "visibility": "hidden",
+            "highlight": {"mode": "row", "visibility": "visible"}
         }
     ],
-    "annotations": [
-        { "type": "line", "x": 100, "props": { "stroke": "#BBB", "stroke-width": 1.5 } }
-    ]
+    "annotations": [{"type": "line", "x": 100, "props": {"stroke": "#BBB", "stroke-width": 1.5}}]
 }
