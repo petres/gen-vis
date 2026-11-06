@@ -3,6 +3,260 @@
 Changes by version, newest first. Every version is on npm except 0.7.0 and
 2.0.0-alpha.1. The details are in the commits.
 
+## 5.0.0 (alpha)
+
+A new definition language: dims instead of mappings, marks with channels
+instead of plots with props of scaled positions, controls of globals
+instead of form elements with patches, the options at the top level and
+one expression language with a string syntax. The engine reads the same
+form as before (the one of 4.x, normalized), a definition of 5.0 is
+translated into it, so the charts are drawn as before; definitions of 4.x
+are migrated when they are loaded, `gen-vis migrate` writes them as ones of
+5.0. Besides the language: margins measured of the axes, dodged bars,
+labels, cells and rules of ranges, the highlight by classes and a
+stylesheet, PNG tests in a browser, the schema of one source and fewer
+builds and dependencies. The design is in `docs/design-5.0.md`.
+
+### The language
+
+- The options are keys of the top level: `title`, `subtitle`, `source`
+  (was `options.footer`), `height`, `width`, `margins`, `coord`, `locale`,
+  `language`, `transition`, `class`, `message`, `empty`, `hover`,
+  `highlight`, `fontFamily`. `options` is gone.
+- `dims` instead of `mapping`, with shorthands of the parts of the scale
+  and the axis: `zero: true` (a domain `[0, null]`), `pad`, `include`,
+  `reverse`, `range` of the scale and `grid`, `ticks`, `tickSpacing` of the
+  axis; a category which is a text is its color (`"Wien": "#C3423F"`). A
+  dim of `null` removes the one of a parent.
+- `marks` instead of `plot`. A mark has its type, its channels and its
+  attributes side by side, without `props`: `{"type": "bar", "by": "type",
+  "stack": true, "opacity": 0.7}`. The channels `x`, `y` (by default the
+  dims `x` and `y`), `x0`, `x1`, `y0`, `y1`, `x2`, `y2`, `lon` and `lat`
+  name dims, columns of the data (a dim of the column is added), numbers
+  (a value on the scale of bars and rules, e.g. a target) or expressions;
+  the translation writes the props of the scaled positions which a 4.x
+  definition wrote by hand (`"cx": "@x:scaled"`, `"y0":
+  "@y:start:scaled"`). A dim a channel names beside the dim of its axis
+  (e.g. `"y2": "hi"`) is on the scale of the axis, `scale.of` is rarely
+  written. `fill` or `stroke` naming a categorical dim are the colors of
+  its categories (the dim is added to `by`), naming another dim the scaled
+  value (a heatmap, a choropleth); `r`, `opacity`, `stroke-width` and
+  `font-size` naming a dim its scaled value.
+- The mark types are the kinds of the coordinate system of the definition:
+  `line`, `area`, `bar`, `rule`, `point`, `text`, `label`, `cell` of
+  cartesian charts, `line`, `area`, `arc`, `point`, `text` of polar ones,
+  `base`, `region`, `point`, `text`, `mesh` of maps, the full names
+  (`cartesian:bar`, `svg:rect`, `annotation:line`, ...) as before. New:
+  `label` (a text beside its position, `anchor`), `cell` (a rect of the
+  bands of `x` and `y`), `rule` of two dims (`"y1": "lo", "y2": "hi"`, an
+  error bar) or at a value (`"y": 100`).
+- `stack` of a mark stacks its values (`true` or an expression of the
+  rows), instead of `stacked` of the dim and the props of the start and the
+  end; `stacked` and `stackBy` of a dim stay for values which no mark
+  stacks, e.g. a stacked histogram of a `bin`. `dodge` of bars puts the
+  groups of `by` (or of another dim) beside each other in their band (also
+  of a dim without categories, a hidden category leaves its place to the
+  others), `dodge` of a label (true or a dim) puts it at the middle of the
+  slot of its bar. `orient` of bars (horizontal by default if `y` is
+  categorical and `x` is not). `anchor` of texts and labels (`start`, `end`,
+  `top`, `bottom`, `center`) instead of `dx`, `text-anchor` and
+  `dominant-baseline` written by hand. The names `@dim:index` and
+  `@dim:count` are the place of the category of the row among the visible
+  categories and their number.
+- `controls` instead of `formElements`: a control sets a `global` (was
+  `ref`), its `values` are entries or plain values (`["2024", "2025"]`),
+  `id` is the global by default. The `patch` of an entry is gone: every
+  part of the definition can be an expression of the globals, evaluated
+  before the definition is read, e.g. `"column": "=match(@values, {share:
+  'value.share'}, 'value')"`; `marks` and `annotations` can be an expression
+  of a global as a whole. `@globals.<name>` is the global also where a dim
+  of the same name shadows it. A change of a global evaluates the
+  definition again; the definitions of all values of the controls are the
+  variants which the load prepares and `check` checks.
+- Expressions have a string syntax: a text starting with `=` (or `@`) is an
+  expression, `"=@innerWidth * 0.5"`, `"=max(@a, 0)"`, `"=@v > 0 ? 'up' :
+  'down'"`, `"=match(@lang, {de: 'Quelle', en: 'Source'})"`, parsed to the
+  objects of 4.x (which stay valid), see `spec/expressions.md` and its
+  fixtures `spec/expressions/syntax.json`. A filter is an expression of the
+  row (`"@type != 'load' and @value > 0"`, dates compare as the texts of the
+  data) or the object of values of dims as before; the conditions `not` and
+  `range` are still read.
+- `hover.columns` lists the dims of the hover; without it the hover has the
+  dims of the `by` of the marks (and the dims with a `hover` of their own),
+  so the `"hover": {}` of every grouping dim of 4.x is not needed.
+- `facets.by` is the dim of the facets (was `facets.dim`) or `{"rows",
+  "cols"}` of a grid (were `rows` and `cols`); `scales` is `"own"` (the
+  default, was `[]`), `"shared"` (all dims), a list or an object of a grid
+  as before.
+- `$schema` of gen-vis 5 (`https://unpkg.com/@preschen/gen-vis@5/schema.json`);
+  the one of 4 is accepted, a definition of 4.x (by its keys) is migrated
+  while it is loaded, with a notice in the console.
+
+Removed keys: `options`, `mapping`, `plot`, the `props` of a plot,
+`formElements`, `patch` (and the `ref` of a form element), `domainRel`
+(`pad` replaces it), `facets.dim`. `stacked` and `stackBy` of a dim,
+`scale.of`, `domainAbs`, `domainIgnores`, `once`, `place`, `dataFormat`,
+`width`, `hover.mode` and `hover.radius` stay for the cases which need
+them.
+
+### Semantics decided
+
+- Listed categories are all of them: a dim with `categories` has these,
+  rows of other values are in no category; `fromData` adds the values of
+  the data which are not listed (`true` ascending, `"rows"` in the order of
+  the rows).
+- A dim without listed categories which is a dim of the facets, has a
+  legend (without a scale of colors) or parts of categories (`scheme`,
+  `common`, `ranks`, `order`) has the categories of the data in the order
+  of the rows (`"fromData": "rows"`); 4.x needed `fromData: true` and
+  sorted them.
+- `by` of a mark does not make a dim categorical, it groups rows of any
+  type, e.g. a line per id (as in 4.x).
+- A legend without a `symbol` has the symbols of the marks of its
+  categories (`"auto"`: a box of bars and areas, a line of lines, a dot of
+  points); 4.x had none. A migrated legend gets `"symbol": null`.
+- An option of `null` is none, e.g. a `message` of a `match` without a
+  case; an expression of the globals without a value leaves its key out
+  (not the value of a parent: the expressions are evaluated after the
+  merge).
+- The default dims of the hover are the ones of the marks' `by` only, not
+  the dims of the facets (their panels have titles). A migrated definition
+  whose marks are by a dim without a `hover` gets `"hover": {"columns":
+  []}`, so its hover stays the one of 4.x.
+
+### Margins
+
+`margins` are measured by default (`"auto"`, also per side): the layout
+builds the facets with provisional margins, measures the axes of every
+facet (the tick marks, the padding, the widest label of a left or right
+axis, the height of the labels of a top or bottom one, rotated labels by
+their projection, the title of the axis, the first and the last label of a
+horizontal axis which reach beyond the plot area, the labels of an angular
+axis around the circle; at least 8 pixels beside axes, none of a map) and
+builds them again with the measured ones (`src/utils/margins.js`). The
+texts are measured on a canvas in the font of the visualisation
+(`src/utils/measure.js`). 57 of 63 examples of 4.x set their margins by
+hand; 4.x had margins of 0 by default.
+
+A side is the one of the definition, else the css variable of the page
+(`--gen-vis-margin-top`, `-right`, `-bottom`, `-left` of `.vis` or an
+element above it, a length in pixels or `auto`), else the one of the
+defaults (`registerDefaults({ margins: { left: 64 } })` or the prop
+`defaults` of a chart), else measured. So a house style gives its margins
+once in a stylesheet and the definitions only the sides which differ. Not
+measured: the texts of marks outside of the plot area, e.g. labels at the
+ends of bars (give that side), the legends and the titles of facets (they
+are not in the margins).
+
+### Changed rendering
+
+- The highlight is a class and a stylesheet: the hover and the legends give
+  the elements of the highlight the class `vis-highlight` (their group
+  `vis-highlight-group` of a highlight of a row) and the plots of the facet
+  `vis-highlighting`, the chart has a `<style>` (scoped by `data-vis`) of
+  the attributes of `highlight` and `others` of every mark; props of the
+  categories, e.g. `@color`, are custom properties of the groups. The
+  `highlight-*`, `others-*` and `default-*` attributes and their
+  bookkeeping are gone, `highlight.transition` is a css transition. The
+  attributes of a highlight are css properties of svg (colors, opacities,
+  widths, `r`, `visibility`), not e.g. `dx`. The definitions are the same.
+- The mount of a chart forces no layout of the page; the height of a chart
+  drawn before is remembered by its definition (was its definition and
+  width).
+- The PNG is the export SVG drawn on a canvas (`src/utils/raster.js`) with
+  the fonts of the package, the same drawing as the SVG and the PDF of the
+  CLI (was a screenshot of the DOM of `modern-screenshot`).
+- Snapshots were re-baselined once for the highlight; `data/` and the site
+  examples are migrated, their images are the ones of 4.x.
+
+### Transforms
+
+`fold` (wide to long, a row per row and column of `columns`, a list or a
+pattern with a `*`), `aggregate` (the `sum`, `mean`, `min`, `max`, `count`,
+`median`, `first` or `last` of the group, a column of every row or a row
+per group with `rows`) and `window` (`lag`, `lead`, `diff`, `pct` of
+`offset` rows, or `sum`, `mean`, `min`, `max` of a window of `size` rows,
+of which `rolling` is a case). The transforms of rows share one mechanism,
+their rows replace the rows or follow them. Fixtures in `spec/transforms`.
+
+### Schema, check and migration
+
+- The schema is written in JavaScript, `src/schema/definition.js` (a
+  vocabulary of JSON Schema nodes in `src/schema/dsl.js`), with the text of
+  every key: `npm run schema` writes `schema.json` and
+  `types/definition.d.ts`, `tests/schema.test.js` checks that both are
+  current and that the names of the registries (mark types, coordinate
+  systems, curves, locales, scales, projections, transforms) are the code's.
+  The structural check of `validateDef` walks the same source (the
+  `schema.json?check` plugin of the build is gone).
+- `validateDef` takes a definition of 5.0 (one of 4.x is migrated first):
+  the schema on the definition with the expressions of the globals
+  evaluated, the semantic checks on the translated form with their paths
+  and words mapped back (`dims`, `marks[0].fill`, `controls`), and the
+  definition of every other value of the controls (`controls[0].values[1]
+  > ...`), as the patches were checked before. It knows `@globals.<name>`,
+  `@dim:index`, `@dim:count` and filters which are expressions.
+- `gen-vis migrate <def.json>... [--write]` writes definitions of 4.x as
+  ones of 5.0, to the standard output or into the files. A child is
+  migrated with its parents merged (all files are read before any is
+  written), so its form elements may give only the ids of the patched
+  entries. A patch becomes a `match` of its global at the patched leaf
+  (`"=match(@scale, {log: 'log'}, 'linear')"`), a patch of the plots, the
+  annotations or the filter a `match` of the whole part, a patch of
+  `scale.domainRel` one of `scale.pad`, a patch whose cases are all the
+  base the base. The conditions of filters become expressions (a
+  reference is `@globals.<name>`), objects of values stay; the objects of
+  expressions are written in the string syntax. The chart stays the same:
+  the margins stay, `"hover": {"columns": []}` and `"symbol": null` keep
+  the hover and the legends of 4.x. `@preschen/gen-vis/check` exports
+  `migrate`, `formatJson`, `translate`, `resolve`, `variants`,
+  `isDefinition4`, `isDefinition5` and `normalize` (which resolves and
+  translates a definition of 5.0 first).
+- Every definition of `data/`, `site/examples/` and `site/public/charts/`
+  is migrated; the 4.x originals of `data/` are fixtures
+  (`tests/fixtures/v4/`), `tests/migrate.test.js` compares the migration of
+  the merged 4.x definitions with the migrated files for every value of the
+  controls.
+
+Migration notes, to check by hand after `gen-vis migrate`:
+
+- A leaf which a parent patches and the child (or a parent) defines
+  becomes an expression of the child: 4.x applied the patches after the
+  merge, 5.0 merges the expressions as any value, the later part wins. A
+  leaf which a patch of a parent changes and no part defines is an
+  expression of the parent with the default `null`: check the default of a
+  patch of a part of a parent (the CLI says so).
+- Of two mixins which give the same key, the later one replaces the
+  expression of the earlier one; in 4.x both patches applied. Put the
+  expression where the key is given last.
+- Remove `margins`, `"hover": {"columns": []}` and `"symbol": null` where
+  the new defaults are wanted.
+- A part without keys of 4.x (e.g. a parent of only `data`) is not
+  rewritten, its `$schema` of 4 stays valid.
+
+### Package and builds
+
+- The deep merge is the package's own (`src/utils/merge.js`, the semantics
+  of deepmerge, the keys in the order of the target): lists are merged by
+  the `id`, the `global` or the `value` of their entries (the first of
+  these which all entries have), so the controls and their entries merge
+  by their globals and values without ids. `deepmerge` is no dependency.
+- Two builds: the package (`dist/`) and the browser module
+  (`dist-lib/esm/` and the export page). The single-file standalone script
+  (`dist-lib/gen-vis.js`, `gen-vis-<version>.js`), the core loader
+  (`gen-vis.core.js`), the `GenVis` globals and the export
+  `@preschen/gen-vis/standalone` are gone, no page used them; the module
+  sets `mountGenVisElement`, `mountGenVisByClass` and
+  `unmountGenVisElement` as globals of the window.
+- `modern-screenshot` is no dependency (the PNG is the export SVG).
+- `tests/png.test.js` draws every definition of `data/` and the site
+  examples with the CLI in one Chromium, 720 pixels wide, and compares the
+  images pixel by pixel with `tests/png/` (a test fails above 0.2% of the
+  pixels, the diff goes to `tests/png-diff/`, `UPDATE_PNG=1` takes new
+  images); `npm run test:png` runs it alone, `npm test` includes it.
+- `registerDefaults` and the prop `defaults` also take `margins`.
+- Version 5.0.0-alpha.0.
+
 ## 4.1.0
 
 Statistics (bins and random numbers in the transforms, histograms, densities

@@ -7,11 +7,13 @@ npm install
 npm run dev     # dev server with all definitions in data/, ?def=bev/def.json shows one with the prepared definition
 npm test        # unit tests, rendering and schema check of all definitions in data/
 npm run test:png  # the images of all definitions compared with tests/png/ (part of npm test)
-npm run types   # the types of the definitions (types/definition.d.ts) of schema.json, a test checks them
+npm run schema  # schema.json and the types of the definitions (types/definition.d.ts) of src/schema/definition.js, a test checks both
+npm run types   # only the types of the definitions of schema.json
 npm run build   # es modules for bundlers in dist/: gen-vis.js (the core), vue.js (the Vue adapter), check.js
 npm run watch   # rebuilds dist/ on changes, e.g. for `npm link`
-npm run lib     # standalone script in dist-lib/: gen-vis.js (in the package), gen-vis-<version>.js (for the upload), esm/, the core loader, the export page
+npm run lib     # the browser module in dist-lib/esm/ and the export page dist-lib/export.html
 node bin/gen-vis.js export data/bev/def.json bev.svg   # the CLI of the static export, of dist-lib/
+node bin/gen-vis.js migrate old/def.json               # a definition of gen-vis 4 as one of gen-vis 5, of dist/check.js
 npm run upload  # compresses dist-lib/ and copies all of it to GEN_VIS_UPLOAD (user@host:/path) in .env
 npm run deploy  # npm run lib, then npm run upload
 npm run site    # dev server of the examples site (site/), with the package built in dist/ and dist-lib/
@@ -27,7 +29,7 @@ definition and the CSS of its look in `site/examples/` (listed in
 relative to the page. The definitions and the CSS can be edited on the page,
 the editor completes the keys and values of the JSON Schema. The examples of
 the use are `site/components/VueDemo.vue` and `site/public/standalone.html`
-(with the module of the standalone script of `dist-lib/esm/`, copied to
+(with the browser module of `dist-lib/esm/`, copied to
 `lib/esm/` of the page) of the chart `site/public/charts/seasons.json`, the
 comparison with other libraries is `site/components/Comparison.vue`. The
 tests check and draw the examples, as the ones of `data/`.
@@ -47,8 +49,26 @@ browser or version may be a few pixels off, which stays below the limit.
 `spec/` has the fixtures of the parts of the definitions which other
 languages can implement ([spec/README.md](../spec/README.md)),
 `tests/spec.test.js` runs them. The design of the definition language of
-4.0 and where the implementation deviates from its first draft are in
+5.0 (the language, the translation into the form the engine reads, the
+schema of one source, the migration) is in [design-5.0.md](design-5.0.md),
+the one of 4.0 (the expressions, the normalized form) in
 [design-4.0.md](design-4.0.md).
+
+The schema of the definitions is written in JavaScript,
+`src/schema/definition.js` (with the vocabulary of `src/schema/dsl.js`),
+with the text of every key: `npm run schema` writes `schema.json` and
+`types/definition.d.ts` of it, `tests/schema.test.js` checks that both are
+current and that the names of the registries (mark types, coordinate
+systems, curves, locales, scales, projections, transforms) are the code's;
+the structural check of `validateDef` walks the same source. A change of
+the language is a change of the source, `npm run schema`, the translator
+(`src/utils/language.js`) and its tests (`tests/language.test.js`).
+
+`tests/fixtures/v4/` has the definitions of `data/` of gen-vis 4, as they
+were before `gen-vis migrate`: `tests/migrate.test.js` compares the
+migration of every merged 4.x definition with the migrated files, for every
+value of its controls, and the translated definition with the normalized
+one of 4.x.
 
 `tests/snapshots/` has the html of every definition in `data/`, drawn,
 hovered and with the first entry of the legend toggled, so changes of the
@@ -78,18 +98,17 @@ vite.
 ## Publishing
 
 Changes by version are in `CHANGELOG.md`. `npm publish` runs the tests and
-builds `dist/` and the standalone script (`prepublishOnly`).
+builds `dist/` and the browser module (`prepublishOnly`).
 
-A prerelease (e.g. `4.0.0-beta.0`) must be published with a tag, `npm
-publish --tag beta`; without one it becomes `latest`, the version that
-`npm install @preschen/gen-vis` installs. The `@4` URLs in the docs and in
+A prerelease (e.g. `5.0.0-alpha.1`) must be published with a tag, `npm
+publish --tag alpha`; without one it becomes `latest`, the version that
+`npm install @preschen/gen-vis` installs. The `@5` URLs in the docs and in
 every `$schema` (unpkg and jsDelivr, e.g.
-`https://unpkg.com/@preschen/gen-vis@4/schema.json`) resolve only to
-non-prerelease versions, so they work once a 4.x release, e.g. 4.0.0, is on
+`https://unpkg.com/@preschen/gen-vis@5/schema.json`) resolve only to
+non-prerelease versions, so they work once a 5.x release, e.g. 5.0.0, is on
 npm. Until then editors can not load the schema from that URL, but gen-vis
 itself accepts it: it only checks the URL, it does not fetch it.
 
 `npm run upload` is separate from npm: it copies `dist-lib/` to your own
-server. The versioned single file `gen-vis-<version>.js` lets a page pin a
-version there; the module (`esm/`) and the core loader are unversioned and
-always the latest upload, see [usage](usage.md#standalone-script).
+server. The module (`esm/`) is unversioned, always the latest upload, see
+[usage](usage.md#browser-module).

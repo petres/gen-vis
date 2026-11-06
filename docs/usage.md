@@ -1,6 +1,6 @@
 # Usage
 
-How a page draws charts from definitions: the standalone script, the
+How a page draws charts from definitions: the browser module, the
 core's JavaScript API and the Vue component, their props, events and slots,
 images and styles. The definitions themselves are in
 [definition](definition.md), the static export in [static export](export.md).
@@ -10,86 +10,56 @@ npm install @preschen/gen-vis
 ```
 
 The package is a core without a framework (`createGenVis`, see
-[JavaScript](#javascript)), with the standalone script for pages without a
+[JavaScript](#javascript)), with the browser module for pages without a
 bundler and an adapter of Vue 3 (`@preschen/gen-vis/vue`, see [Vue
 component](#vue-component)), `vue` is an optional peer dependency.
 
-## Standalone script
+## Browser module
 
-The standalone script includes d3 and the styles, for pages without a
-bundler, e.g. from a CDN. Use the module (`dist-lib/esm/gen-vis.js`): it
-loads 80 kB (gzipped) at first and fetches optional parts, e.g. for maps,
-from the files next to it when a chart needs them:
+The browser module includes d3 and the styles, for pages without a
+bundler, e.g. from a CDN (`dist-lib/esm/gen-vis.js`): it loads 80 kB
+(gzipped) at first and fetches optional parts, e.g. for maps, from the
+files next to it when a chart needs them:
 
 ```html
 <div class="genVis" data-def-file="/data/bev/def.json"></div>
 
 <script type="module">
-import { mountGenVisByClass } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/esm/gen-vis.js';
+import { mountGenVisByClass } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@5/dist-lib/esm/gen-vis.js';
 mountGenVisByClass('genVis');
 </script>
 ```
 
-A page without modules loads the same module through
-`dist-lib/gen-vis.core.js` (less than 1 kB), from the files next to it. Its
-globals exist at once and return promises (e.g. of the visualisations), so
-a page can call them before the module has loaded. `GenVis.ready` resolves
-to the module, e.g. for `perRow` in a `registerPlotType`:
+The module also sets `mountGenVisElement`, `mountGenVisByClass` and
+`unmountGenVisElement` as globals of the window, e.g. for the scripts of a
+page which run after it is loaded. (The single file `dist-lib/gen-vis.js`
+and the core loader `gen-vis.core.js` of gen-vis 4 are gone, they had no
+user; a page loads the module.)
 
-```html
-<script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.core.js"></script>
-<script>mountGenVisByClass('genVis').then(charts => ...)</script>
-```
-
-The single file (`dist-lib/gen-vis.js`, 419 kB, 145 kB gzipped, 125 kB with
-brotli) has all parts in itself, without the check of the definitions
-(`check` and `debug` warn that it is missing), e.g. of a page which has to
-work with one file, its globals return the visualisations at once:
-
-```html
-<script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.js"></script>
-<script>mountGenVisByClass('genVis')</script>
-```
-
-None of them contains Vue. A page that loads Vue 3 as a script (the global
+It contains no Vue. A page that loads Vue 3 as a script (the global
 `Vue` from `vue.global.prod.js`, or `vue` in its import map) gets a
-component for its own Vue from the same files: `vuePlugin(Vue)` is the
+component for its own Vue from the module: `vuePlugin(Vue)` is the
 plugin which registers `<GenVis>` (its `component` is the component),
 `createVueComponent(Vue)` the component itself, the same as the [Vue
-component](#vue-component). The single file has them as `GenVis.vuePlugin`
-and `GenVis.createVueComponent`, the module as named exports. The core
-loader only forwards the functions that may return a promise
-(`createGenVis`, the mount functions and the `register…` functions); use
-`vuePlugin`, `createVueComponent`, `perRow` and `perGroup` from the loaded
-module, e.g. `(await GenVis.ready).vuePlugin(Vue)`. The single file and the
-module:
-
-```html
-<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.js"></script>
-<script>Vue.createApp({ ... }).use(GenVis.vuePlugin(Vue)).mount('#app')</script>
-```
+component](#vue-component):
 
 ```js
 import * as Vue from 'vue';
-import { vuePlugin } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/esm/gen-vis.js';
+import { vuePlugin } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@5/dist-lib/esm/gen-vis.js';
 Vue.createApp(App).use(vuePlugin(Vue)).mount('#app');
 ```
 
-With a bundler the module is `@preschen/gen-vis/esm` and the single file
-`@preschen/gen-vis/standalone`, which only sets the globals. Neither has a
-`types` entry in `package.json`; the types are the ones of the main entry
+With a bundler the module is `@preschen/gen-vis/esm`. It has no `types`
+entry in `package.json`; the types are the ones of the main entry
 (`import type { GenVisInstance } from '@preschen/gen-vis'`).
 
-`npm run lib` builds them in `dist-lib/`, the single file also as
-`gen-vis-<version>.js`. `npm run upload` copies all of `dist-lib/` to your
-own server (`GEN_VIS_UPLOAD` in `.env`), so a page can pin the single file
-to a version by loading `gen-vis-<version>.js`. Only the single file has a
-versioned copy: the module and the core loader load the unversioned
-`esm/` files of the latest upload. The upload also writes compressed copies
-next to the files (`.br`, `.gz`) for servers which send them as they are,
-e.g. nginx with `brotli_static` and `gzip_static`; a CDN compresses them
-itself.
+`npm run lib` builds it in `dist-lib/esm/`, with the [export
+page](export.md#export-page). `npm run upload` copies all of `dist-lib/`
+to your own server (`GEN_VIS_UPLOAD` in `.env`): the module is
+unversioned, a page loads the latest upload. The upload also writes
+compressed copies next to the files (`.br`, `.gz`) for servers which send
+them as they are, e.g. nginx with `brotli_static` and `gzip_static`; a CDN
+compresses them itself.
 
 `mountGenVisByClass(className)` mounts all elements with the class which are
 not mounted yet and returns their visualisations, `mountGenVisElement(element,
@@ -102,7 +72,7 @@ The props are taken from the `data-` attributes, see below, and from `props`,
 e.g. the events:
 
 ```js
-GenVis.mountGenVisElement(element, { onSelect: e => location.href = `/region/${e.key}` });
+mountGenVisElement(element, { onSelect: e => location.href = `/region/${e.key}` });
 ```
 
 ## JavaScript
@@ -142,24 +112,25 @@ one only with `update`.
 
 The package has the types of TypeScript, e.g. of the props, the events, the
 visualisation and the methods, and of the definitions (`Definition` and its
-parts, e.g. `MappingEntry` and `Plot`), of the [schema](definition.md#schema), so an
+parts, e.g. `Dim`, `Mark` and `Control`), of the [schema](definition.md#schema), so an
 editor checks a definition of the code:
 
 ```ts
-import type { Definition } from '@preschen/gen-vis';
+import type { Definition, Mark } from '@preschen/gen-vis';
 
-const def: Definition = { data: 'data.csv', mapping: { ... }, plot: { ... } };
+const line: Mark = { type: 'line', by: 'land' };
+const def: Definition = { data: 'data.csv', dims: { x: 'Jahr', y: 'Einwohner', land: 'Bundesland' }, marks: line };
 ```
 
 Optional parts load on demand, so your bundler splits them into separate
 chunks; the rest is ~68 kB gzipped. The sizes are gzipped: the check of the
-definitions (~16 kB) with the first one, the colors of d3
+definitions (~30 kB, with the texts of the schema) with the first one of `check`, the colors of d3
 (`d3-scale-chromatic`, ~8 kB) for definitions which name a scheme or an
 interpolator, the parts of maps (`d3-geo`, `topojson-client`, ~13 kB) with
-the first map, the parts of polar plots (~5 kB) with the first one, the
+the first map, the parts of polar charts (~5 kB) with the first one, the
 transforms (~4 kB), the legend of scales of colors (~2 kB), the languages of
 `Intl` (~1 kB) other than `de` and `en`, the parquet reader (~18 kB) for
-parquet data and the PNG and the CSV (~11 kB) with the first one.
+parquet data and the PNG, the SVG and the CSV (~9 kB) with the first one.
 
 ## Vue component
 
@@ -192,11 +163,11 @@ plugin of another Vue, the types are the ones of `@preschen/gen-vis/vue`.
 | `def`      | `data-def`      | the definition, an object or a JSON string |
 | `data`     | `data-data`     | the data as rows, a CSV/JSON string or bytes (an `ArrayBuffer` or `Uint8Array`, parquet or the text of CSV/JSON), if not given it is loaded from the `data` url of the definition |
 | `debug`    | `data-debug`    | shows the prepared definition, with the warnings of `check` |
-| `check`    | `data-check`    | logs the warnings of the check of the definition in the console, e.g. unknown plot types, while it is written, the check is only loaded then (not part of the single file of the standalone script) |
+| `check`    | `data-check`    | logs the warnings of the check of the definition in the console, e.g. unknown mark types, while it is written, the check is only loaded then |
 | `state`    | `data-state`    | the changes of the user, see [state](#state), the attribute is JSON |
-| `highlight` | `data-highlight` | the rows highlighted by the page, values of mappings, e.g. `{"country": "AT"}` of the hover of another chart, see [linked charts](#linked-charts), the attribute is JSON |
-| `globals`  | `data-globals`  | the globals of the page, e.g. the language or the year of a menu of the page, also of hidden form elements, see [globals](definition.md#formelements-and-globals), the attribute is JSON |
-| `defaults` | `data-defaults` | the defaults of the parts instead of the built-in ones, e.g. `{"axis": {"padding": 2, "tickMarks": {"size": 4, "inset": 0}}}` for all axes, the values of the definition take precedence, see [defaults](definition.md#defaults), the attribute is JSON |
+| `highlight` | `data-highlight` | the rows highlighted by the page, values of dims, e.g. `{"country": "AT"}` of the hover of another chart, see [linked charts](#linked-charts), the attribute is JSON |
+| `globals`  | `data-globals`  | the globals of the page, e.g. the language or the year of a menu of the page, also of hidden controls, see [globals](definition.md#globals-and-controls), the attribute is JSON |
+| `defaults` | `data-defaults` | the defaults of the parts instead of the built-in ones, e.g. `{"axis": {"padding": 2, "tickMarks": {"size": 4, "inset": 0}}, "margins": {"left": 60}}` for all axes and the left margin, the values of the definition take precedence, see [defaults](definition.md#defaults), the attribute is JSON |
 | `download` | `data-download` | a button at the right of the footer to save it as a PNG, a string is the name of the file (default the title) |
 | `copy`     | `data-copy`     | a button at the right of the footer to copy the PNG to the clipboard (only on https or localhost) |
 | `csv`      | `data-csv`      | a button at the right of the footer to save the data shown as CSV, a string is the name of the file (default the title) |
@@ -235,7 +206,7 @@ the slot `hover`.
 
 `key` is the value of the position, e.g. of the horizontal axis or the key of
 the region of a map, `title` the title of the hover, the rows are the values
-of the mappings (the categories as strings, of every format of the data, see
+of the dims (the categories as strings, of every format of the data, see
 [data](definition.md#data)), `nearest` the row of the element under the mouse.
 
 The slots replace parts of the visualisation, `hover` the content of the
@@ -284,57 +255,19 @@ with `aria-pressed="true"`, e.g. a toggle:
 </template>
 ```
 
-Without the slot, e.g. with the standalone script, `hover` of the
-[options](definition.md#options) are templates of HTML of the hover: `title`, with
-`{title}`, the default one, e.g. the date, above the table or the rows, and
-`row`, a line per row instead of the table, with `{land}` (the name of the
-category of the mapping `land`), `{land.unit}` (another hover prop), `{y}`
-(the formatted value) and `{y.value}` (the value). Both have the globals,
-the title also the names of the nearest row (or the first one), e.g. the
-definition of a category of the position, `{definition}` of a mapping
-`definition` with a hover and props, the values are text, e.g. `<` of the
-data is shown as it is:
-
-```json
-"options": { "hover": { "title": "<b>{title}</b>", "row": "{land}: {y} <small>{land.unit}</small>" } }
-```
-
-`filter` of the `hover` of the options are the rows with a hover, the
-conditions of mappings as the ones of [filter](definition.md#formelements-and-globals),
-e.g. `{"level": "item"}`. A position without rows has no hover, e.g. a
-region of a map without a value, the hover is at the nearest position with
-rows, `"empty": true` shows it, e.g. the name
-of every region. The other options of the hover:
-
-- `box`: `false` leaves out the box of the hover, the highlight of its
-  elements (see `highlight` of the [plot](definition.md#plot)) and the events stay,
-  e.g. a larger circle with its value as the hover of a row of bars.
-- `marker`: `false` leaves out the line of the position.
-- `position`: the hover is beside the marker of the position, of a map the
-  center of the region (`marker`, the default), or at the pointer
-  (`pointer`, it moves with it, by the keyboard it is at the marker).
-- `side`: `left`, `right`, `above` or `below` of the position, by default
-  the side with more space, or on it (`center`), e.g. in the center of a
-  polar plot, and `offset`, `[x, y]` in pixels, e.g. `"side": "above",
-  "offset": [0, -10]` of a text above a region of a map, `null` is 0.
-- `area`: the hover of the plot area (`plot`, the default) or of the facet
-  with its margins (`facet`), e.g. the labels of the rows of horizontal bars
-  are part of the row, a click on them is a `select` of the row.
-
-`"mode": "point"` of the `hover` of the options shows the row of the point
-nearest to the mouse (within `radius` pixels, 30 by default) instead of the
-rows of the nearest position of the axis, e.g. of a scatter plot, in
-cartesian and polar plots.
+Without the slot `hover` of the definition has templates of HTML of the
+hover (`title` and `row`), its `filter`, `mode`, `box`, `marker`,
+`position`, `side`, `offset` and `area`, see [`hover`](definition.md#hover).
 
 ## Linked charts
 
 The charts of a page can be linked by their events and props, e.g. a map
 and a list of the countries beside it: the hover of one chart highlights the
-row of the other one (the prop `highlight`, values of mappings, as an entry
+row of the other one (the prop `highlight`, values of dims, as an entry
 of a legend highlights its category, see `highlight` and `others`
-props of the [plots](definition.md#plot)), a hover of the chart itself replaces it while
+of the [marks](definition.md#highlight-and-others)), a hover of the chart itself replaces it while
 it is shown, the method `setHighlight(entry)` does the same. With
-`v-model:state` and `globals` they share their form elements and the
+`v-model:state` and `globals` they share their controls and the
 globals of the page:
 
 ```html
@@ -354,11 +287,13 @@ of the screen in the width of `imageWidth`, so it is the same on every
 screen, e.g. the facets have the columns of this width, or with `screen` in
 the width it has on the screen, e.g. the layout of a phone. It is twice the
 size, narrow ones more (at least 800 pixels wide, e.g. three times of 360),
-has no form elements, their selection is a line below the subtitle, e.g.
+has no controls, their selection is a line below the subtitle, e.g.
 `Einheit: Anteil · Jahr: 2024`, the legends only have the entries shown and
-the legend of the facets is left out, their titles name them.
-The titles of the buttons are in the language of `options.locale`, see
-[options](definition.md#options).
+the legend of the facets is left out, their titles name them. The PNG is
+the SVG of the [static export](export.md#exportsvg) drawn on a canvas, with
+the fonts of the package, so the PNG, the SVG and the PDF of the CLI are
+the same drawing. The titles of the buttons are in the language of
+`locale`, see [the options](definition.md#the-options).
 
 Besides the buttons of `download` and `copy`, the methods of the
 visualisation (of `createGenVis`, `mountGenVisElement` and a ref of the
@@ -379,15 +314,16 @@ The height of a visualisation is known when it is drawn, so while it is loaded
 it has the space of the css variable `--gen-vis-loading-height` (0 by default,
 the root has the class `vis-loading`), e.g. of a typical one or per chart, so
 the page does not move when it is drawn. A visualisation which was drawn
-before on the page (with the same definition and width), e.g. after a
-navigation of the page, has the height it had then. A definition which is
+before on the page (with the same definition), e.g. after a navigation of
+the page, has the height it had then; the mount of a chart forces no
+layout of the page. A definition which is
 changed is drawn when it is loaded, until then the one before is shown.
 
 ```css
 .vis-outer { --gen-vis-loading-height: 450px; }
 ```
 
-With the standalone script the page is shown before the script mounts the
+With the browser module the page is shown before the script mounts the
 visualisations, so the space of the empty elements is set by the page:
 
 ```css
@@ -427,7 +363,7 @@ is printed leaves out `lazy`.
 ## Accessibility and the data
 
 Every facet is named by the title and the name of the facet, the entries of
-the legends are checkboxes of the keyboard, the titles of the form elements
+the legends are checkboxes of the keyboard, the titles of the controls
 are their labels. A facet with a hover is in the order of the tab key: the
 arrows to the left and the right move the hover to the position before and
 after (of a map the regions by their names, of the `point` mode the points
@@ -443,16 +379,16 @@ keys (`keys` of the locale), and they read the hover when the keys move it
 
 The data shown can be saved as CSV: the button of `csv` or the method
 `exportCsv(name)` save the rows shown (of the visible categories and the
-filter) in the columns of the mappings, with the values as they are in the
+filter) in the columns of the dims, with the values as they are in the
 data.
 
 ## State
 
 The state holds what the user changed compared to the definition: the
-globals of the form elements and the entries of the legends shown or hidden.
+globals of the controls and the entries of the legends shown or hidden.
 
 ```json
-{ "globals": { "column": "share" }, "visible": { "year": { "2019": true, "2022": false } } }
+{ "globals": { "values": "share" }, "visible": { "year": { "2019": true, "2022": false } } }
 ```
 
 The visualisation emits `update:state` on every change of the user, so with
@@ -471,14 +407,14 @@ definition keep their defaults.
 ## Styles
 
 The styles of the package are injected once by its script (a `<style>` in
-the head of the page, also of the standalone script), in the cascade layer `gen-vis`, so every style
+the head of the page, also of the browser module), in the cascade layer `gen-vis`, so every style
 of the page overrides them, regardless of its specificity and of the order of
 the styles, e.g.:
 
 ```css
 .vis-form-element { display: block; margin: 6px 4px; }
 .vis-subtitle { font-size: 15px; }
-/* the row of the category `load` of the mapping `type` in the hover */
+/* the row of the category `load` of the dim `type` in the hover */
 .vis-hover-entry[data-type="load"] { font-style: italic; }
 ```
 
@@ -492,19 +428,19 @@ the element of the component):
 
 All classes of the package start with `vis-`, so styles of the page for
 other elements do not apply to them, e.g. `.title` of a CSS framework, the
-others are the `id` of a plot, e.g. `plot-0`, and the classes of the ticks
+others are the `id` of a mark, e.g. `plot-0`, and the classes of the ticks
 and the lines of the axes, `tick` and `domain`, as the ones of d3:
 
 | Part | Classes |
 |------|---------|
-| the visualisation | `vis-mounted` (an element mounted by `mountGenVisByClass` or `mountGenVisElement`), `vis-outer` (the root, `vis-loading` while it is loaded), `vis` (with `options.class` and the globals as `data-global-` attributes), `vis-message` (the text instead of the plots), `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
-| form elements | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`), the `id` of a form element and of its entries as `data-id`, e.g. `.vis-form-element[data-id="scale"]` |
-| legends | `vis-legends` (above the plots, `vis-legends-bottom`, `vis-legends-left` and `vis-legends-right`, the plots beside them are in `vis-plots`), `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, the mapping as `data-dim`, an entry with `data-key` and `data-visible`, `vis-legend-highlight` of the category of the hovered row), `vis-legend-annotations` (the entries of [annotations](definition.md#annotations)), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
+| the visualisation | `vis-mounted` (an element mounted by `mountGenVisByClass` or `mountGenVisElement`), `vis-outer` (the root, `vis-loading` while it is loaded), `vis` (with the `class` of the definition and the globals as `data-global-` attributes, `data-vis` the number of the chart), `vis-message` (the text instead of the marks), `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
+| controls | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`), the `id` of a control and of its entries as `data-id`, e.g. `.vis-form-element[data-id="scale"]` |
+| legends | `vis-legends` (above the plots, `vis-legends-bottom`, `vis-legends-left` and `vis-legends-right`, the plots beside them are in `vis-plots`), `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, the dim as `data-dim`, an entry with `data-key` and `data-visible`, `vis-legend-highlight` of the category of the hovered row), `vis-legend-annotations` (the entries of [annotations](definition.md#annotations)), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
 | facets | `vis-facet` (a facet), `vis-facet-title` (`vis-facet-title-center` of polar plots, centered, `vis-facet-col-title` of the columns of a grid), `vis-facet-row-title` (the headers of the rows of a grid, `vis-facet-row-title-left` or `-right`, `-horizontal` or `-vertical`), `vis-facet-empty` (a cell of a grid without rows), `vis-svg` |
-| plots | `vis-plot` (with the `id` of the plot and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a plot with an element per row), `vis-highlight` (the highlighted elements), `vis-features` (geo:base), `vis-mesh` (geo:mesh), the keys of the features of maps as `data-geo-key` |
-| axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the mapping as `data-mapping`, `vis-axis-at` of an axis at a value), `vis-axis-title` (`vis-axis-title-top`), `vis-grid` |
+| marks | `vis-plot` (with the `id` of the mark and its `data-plot`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a mark with an element per row), `vis-highlight` (the highlighted elements, their group `vis-highlight-group` of a highlight of a row), `vis-highlighting` (the plots of a facet while a highlight is shown), `vis-features` (the base of a map), `vis-mesh` (the mesh of a map), the keys of the features of maps as `data-geo-key` |
+| axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the dim as `data-mapping`, `vis-axis-at` of an axis at a value), `vis-axis-title` (`vis-axis-title-top`), `vis-grid` |
 | annotations | `vis-annotations` (the plot), `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or `vis-circle`, `vis-annotation-label`, `vis-annotation-labels` |
-| hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-hover-row` of a template, `vis-nearest`, the key of the category of every categorical mapping of a row as `data-` attribute, e.g. `data-type="load"` of the mapping `type` (`data-land-name` of `landName`), the cells of the values `vis-value`, the mapping of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`, `vis-hover-total` the row of the total), `vis-hover-marker`, `vis-events` |
+| hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-hover-row` of a template, `vis-nearest`, the key of the category of every categorical dim of a row as `data-` attribute, e.g. `data-type="load"` of the dim `type` (`data-land-name` of `landName`), the cells of the values `vis-value`, the dim of a cell as `data-mapping`, the hover prop of a category other than its name as `data-prop`, `vis-hover-total` the row of the total), `vis-hover-marker`, `vis-events` |
 | footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-button` and `vis-copy`, `vis-csv`, `vis-download-svg` or `vis-download`) |
 
 Styles of the page which are in a cascade layer themselves only override the
@@ -523,7 +459,7 @@ page (the default in brackets):
     --gen-vis-hover-background: #222D;         /* #FFFFFF */
     --gen-vis-hover-border-color: #444;        /* #E3E5E8, the border and lines of the hover */
     --gen-vis-halo-color: #111;                /* white, behind labels on the plots */
-    --gen-vis-text-color: #EEE;                /* #1F2328, the texts of plots without a fill */
+    --gen-vis-text-color: #EEE;                /* #1F2328, the texts of marks without a fill */
     --gen-vis-background: #111;                /* #FFF, of the PNG */
     color: #EEE;                               /* the titles, legends and the hover */
 }
@@ -537,7 +473,7 @@ legend), `--gen-vis-button-color` (`#B8BDC4`), `--gen-vis-button-hover-color`
 (`#5F6670`), `--gen-vis-button-disabled-color` (`#E3E5E8`, of the buttons
 of the page with the class `vis-button`), `--gen-vis-focus-color` (`#4269D0`, the first color of
 observable10, the entries of legends and the facets) and
-`--gen-vis-error-color` (`#B42318`); of sizes `--gen-vis-tick-inset` (the part of the tick marks inside the plot area, see [`tickMarks`](definition.md#mapping)) and `--gen-vis-legend-symbol-middle` (`0.36em`, the middle of the legend symbols above the baseline of their names). The default look: Inter, which the
+`--gen-vis-error-color` (`#B42318`); of sizes `--gen-vis-tick-inset` (the part of the tick marks inside the plot area, see [`tickMarks`](definition.md#axes)) and the margins of a house style, `--gen-vis-margin-top`, `-right`, `-bottom` and `-left` (a length in pixels or `auto`, see [margins](definition.md#margins)) and `--gen-vis-legend-symbol-middle` (`0.36em`, the middle of the legend symbols above the baseline of their names). The default look: Inter, which the
 package brings (see [the font](#the-font)), figures of the same width
 in the hover (`tabular-nums`), grey axes, light grid lines, a hover card; the colors of
 categories without colors are d3's `observable10`. The colors of annotations are only the ones
@@ -556,25 +492,24 @@ no ⌀, the font of the computer draws it), once in the package, in
 `dist-lib/esm/chunks/fonts/`: the module loads them next to its chunk, the
 es modules for bundlers (`dist/`) of `new URL("../dist-lib/esm/chunks/fonts/…",
 import.meta.url)`, which bundlers of applications copy (e.g. webpack 5 and
-vite), the single file of `esm/chunks/fonts/` next to its url (a copy of
-`dist-lib/`, e.g. of `npm run upload`, has them, unpkg and jsDelivr serve
-them; the single file alone draws in the font of the system). The rules are
+vite; a copy of `dist-lib/`, e.g. of `npm run upload`, has them, unpkg and
+jsDelivr serve them). The rules are
 also a stylesheet next to them, `inter.css`, e.g. of the font for texts of
 the page: an application imports it from the package
 (`import '@preschen/gen-vis/inter.css'`, its bundler copies the woff2 files), a
 page without a bundler links it of a CDN (`<link rel="stylesheet"
-href="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/esm/chunks/fonts/inter.css">`).
+href="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@5/dist-lib/esm/chunks/fonts/inter.css">`).
 A page with a font of its
 own (`--gen-vis-font-family` or `fontFamily`) loads none of them. Charts
 measure their texts again when a font of the page is loaded after their
 first draw, the images load the font of the chart before they draw it.
 
-The props of a definition can be css variables, e.g. the ones of the page or
-of the package, `"stroke": "var(--gen-vis-grid-color)"` is the color of the
-grid lines, also after the page changes it. Svg attributes do not know
-variables, so a value with `var(` is a style of the element, not an
-attribute, it is set at once, also with a transition, and it works for the
-props which are css properties of svg, e.g. colors, widths, opacities and
-fonts, not for positions, e.g. `x`. Of all props: of plots, annotations,
-axes (`labels`, `domain`, `tickMarks`), legends and the highlight
-(`highlight` and `others` of plots).
+The attributes of a definition can be css variables, e.g. the ones of the
+page or of the package, `"stroke": "var(--gen-vis-grid-color)"` is the
+color of the grid lines, also after the page changes it. Svg attributes do
+not know variables, so a value with `var(` is a style of the element, not
+an attribute, it is set at once, also with a transition, and it works for
+the attributes which are css properties of svg, e.g. colors, widths,
+opacities and fonts, not for positions, e.g. `x`. Of all attributes: of
+marks, annotations, axes (`labels`, `domain`, `tickMarks`), legends and the
+highlight (`highlight` and `others` of marks).

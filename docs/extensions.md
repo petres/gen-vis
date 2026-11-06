@@ -1,19 +1,24 @@
 # Extensions
 
-A page can register plot types, coordinate systems, color schemes and
-defaults before its visualisations load. The definition checks also run
+A page can register mark types (plot types), coordinate systems, color
+schemes and defaults before its visualisations load. The definition checks also run
 outside the browser, and the schema and types describe definitions for
 editors.
 
 ## Plot types
 
-A plot type returns the marks of the groups of
-rows of a plot (`marks(groups, plot, ctx)`), one group per combination of
-its categories, the package draws them, it does not draw itself. A group has
+A mark of a definition is drawn by its type, a plot type of the engine
+(`registerPlotType`). The engine reads a mark as a plot: its attributes
+are the `props` of the plot, its channels the props of the scaled positions
+(e.g. `"x": "lo"` is `"x": "@lo:scaled"`), see
+[design-5.0.md](design-5.0.md). A plot type returns the marks of the
+groups of rows of a plot (`marks(groups, plot, ctx)`), one group per
+combination of its categories, the package draws them, it does not draw
+itself. A group has
 its `rows`, the keys of its categories (`categories`), their props (`props`)
 and the values of the props of the plot: of a row `at(row)`, of one prop
 `prop(name)(row)` and the ones which are the same for all rows `attrs`,
-e.g. the color of a line, `complete(row)` is false if a mapping of the props
+e.g. the color of a line, `complete(row)` is false if a dim of the props
 has no value. The values are plain values, e.g. the position of
 `"@x:scaled"`. `perRow(groups, element, translate, key)` are the marks of an
 element per row (without the rows of missing values) with the values of its
@@ -34,13 +39,17 @@ registerPlotType('my:tick', {
 ```
 
 `defaults` are the type's default props, an object or a function of the
-plot's props. They apply under the full name (`"type": "my:tick"`) and the
-short name (`"type": "tick"`) alike. A short name resolves to the type
+plot's props. They apply under the full name (`"type": "my:tick"` of a
+mark) and the short name (`"type": "tick"`) alike. A short name resolves to the type
 with the coordinate system's prefix (e.g. `cartesian:tick`), then to
 `svg:tick`, otherwise to the only registered type of that name (here
-`my:tick`). A plot's props are merged
+`my:tick`). The attributes of a mark are merged
 into the defaults (nested ones deeply, `null` removes one); the built-in
-defaults are in `src/plots/defaults.js`.
+defaults are in `src/plots/defaults.js`. The channels of the built-in
+kinds are not passed on to a registered type: a mark of a cartesian chart
+takes `x`, `y`, `x0`, `x1`, `y0` and `y1` as channels, so a registered type
+reads its positions from props of other names, e.g. `cx` of the defaults
+above or `{"type": "tick", "cx": "@lo:scaled"}` of a mark.
 
 The marks are a layer, `{ element, groups: [{ categories, items }] }` (an
 element per item in a `g.vis-group` per group) or `{ element, items }` (the
@@ -53,17 +62,17 @@ nothing, see `drawLayer` of `src/utils/draw.js`.
 `ctx` is the facet: the `store`, `inner` (the svg element `g` of its plots
 and axes, a DOM element, its origin is the one of the coordinate system),
 the `key` of the facet, its `rows`, the
-`scales` by the names of the mappings, `axis` (the names of the mappings of
+`scales` by the names of the dims, `axis` (the names of the dims of
 the positions and of the values), `stackOf(row)` (the start and the end of a
 stacked value), `scope` (the names of the references of the facet, see
-[props](definition.md#props-of-the-definition)), `innerWidth`, `innerHeight` and `dims`
+[names](definition.md#names)), `innerWidth`, `innerHeight` and `dims`
 (the sizes of the coordinate system, e.g. its `radius`), of maps also the
 `projection` and the `path`. `curve: true` passes the `curve` of the plot,
 `coords` limits a type to coordinate systems, e.g. `cartesian:bar` to
 `cartesian`. The types of `PlotType`, `PlotGroup` and `Layer` are in the
 package.
 
-A new view, e.g. of a toggle of a legend, a form element or a new width, is
+A new view, e.g. of a toggle of a legend, a control or a new width, is
 drawn into the elements of the one before, only the attributes which change
 are set. With `update: true` the marks of a type are drawn into the
 elements of the draw before (the groups are the ones of the same
@@ -110,7 +119,7 @@ style for every definition:
 import { registerScheme } from '@preschen/gen-vis';
 
 registerScheme('house', ['#005CA9', '#E6A000', '#7AB51D', '#A6A6A6']);
-// "land": { "column": "Bundesland", "fromData": true, "scheme": "house", "legend": {} }
+// "land": { "column": "Bundesland", "scheme": "house", "legend": {} }
 registerScheme('observable10', ['#005CA9', '#E6A000', '#7AB51D', '#A6A6A6']);
 ```
 
@@ -127,32 +136,45 @@ restore();
 ## Defaults of the page
 
 `registerDefaults(defaults)` replaces built-in defaults of the parts of all
-charts of the page, see [defaults](definition.md#defaults).
+charts of the page, see [defaults](definition.md#defaults): of the axes,
+of the symbols of the legends and the margins of the charts, e.g. of a
+house style:
 
-## The check and the standalone script
+```js
+import { registerDefaults } from '@preschen/gen-vis';
+
+registerDefaults({ axis: { padding: 2, tickMarks: { size: 4, inset: 0 } }, margins: { left: 64, right: 16 } });
+```
+
+A side of the margins which a definition does not give is the one of the
+css variable of the page (`--gen-vis-margin-left: 64px`), else the one of
+the defaults, else measured, see [margins](definition.md#margins); a
+stylesheet of a house style can give the margins instead of a script.
+
+## The check and the browser module
 
 `validateDef` knows registered plot types, coordinate systems and
 schemes; `@preschen/gen-vis/check` exports `registerPlotType`,
-`registerCoord` and `registerScheme` too. The single file has them as
-`GenVis.registerPlotType`, `GenVis.registerCoord`, `GenVis.registerScheme`,
-`GenVis.registerDefaults`, `GenVis.perRow` and `GenVis.perGroup`. The core
-loader (`gen-vis.core.js`) forwards the `register…` functions (they return
-promises), but `perRow` and `perGroup` are only on the loaded module:
-`const { perRow } = await GenVis.ready`. The schema only knows the built-in
-ones.
+`registerCoord` and `registerScheme` too. The browser module exports
+`registerPlotType`, `registerCoord`, `registerScheme`, `registerDefaults`,
+`perRow` and `perGroup` as the package does. The schema only knows the
+built-in ones.
 
 ## Schema and types
 
 The package contains the JSON Schema of the definitions, `schema.json`, see
 [`$schema`](definition.md#schema), and the types of TypeScript of the definitions and of
-the API, see [JavaScript](usage.md#javascript). The types of the definitions
-(`types/definition.d.ts`) are generated of the schema (`npm run types`), the
-schema only knows the built-in plot types, coordinate systems and schemes.
+the API, see [JavaScript](usage.md#javascript). Both are written of one
+source, `src/schema/definition.js` (`npm run schema`), which also has the
+text of every key the editors show, see
+[development](development.md); the schema only knows the built-in mark
+types, coordinate systems and schemes.
 
 ## Checks outside the browser
 
-`@preschen/gen-vis/check` merges and checks definitions in scripts, e.g. all
-definitions of a page before a deploy, `load` reads the file of an url:
+`@preschen/gen-vis/check` merges, checks and migrates definitions in
+scripts, e.g. all definitions of a page before a deploy, `load` reads the
+file of an url:
 
 ```js
 import { readFileSync } from 'node:fs';
@@ -162,15 +184,34 @@ import { resolveParents, validateDef } from '@preschen/gen-vis/check';
 const url = pathToFileURL('data/ecad/polar-tg.json').href;
 const def = await resolveParents(JSON.parse(readFileSync(new URL(url), 'utf8')), url,
     u => readFileSync(new URL(u), 'utf8'));
-console.log(validateDef(def));  // the warnings, e.g. unknown plot types
+console.log(validateDef(def));  // the warnings, e.g. unknown mark types
 ```
 
-`validateDef(def, rows)` also checks the data rows, e.g. years as numbers
-in a `date` mapping. Mappings without a type get the type the load infers
-from the values (also for transform columns).
+`validateDef(def, rows)` checks a definition of 5.0 (one of 4.x is
+migrated first, as by the load): the keys and values of the schema, then
+the meaning, e.g. unknown dims and references, with the paths of the
+definition (`marks[0].fill: ...`), also the definition of every other
+value of the controls (`controls[0].values[1] > marks[0].type: ...`), and
+the data rows, e.g. years as numbers in a `date` dim. Dims without a type
+get the type the load infers from the values (also for transform
+columns).
 
-`normalize(def)` writes out the defaults a definition leaves implicit, see
-`spec/normalize.md`.
+The steps of the load are exported as well, each JSON to JSON:
+
+- `migrate(def, { parents })`: a definition of gen-vis 4 as one of 5.0
+  (`parents` the merged parents of a child, see
+  [migration](definition.md#migration-from-4x)), `formatJson(def)` its text
+  as the files of gen-vis are written, `isDefinition4(def)` and
+  `isDefinition5(def)` tell them apart;
+- `resolve(def, names)`: the expressions of the globals evaluated, `names`
+  are the globals (and the fields of the entries of the controls), e.g.
+  `{ "scale": "log" }`; `variants(def)` the definition resolved with its
+  globals and with every value of every control;
+- `translate(def)`: a resolved definition of 5.0 in the form the engine
+  reads (`options`, `mapping`, `plot` with `props`, `formElements`);
+- `normalize(def)`: resolved with its globals, translated and with the
+  defaults written out which a definition leaves implicit, see
+  `spec/normalize.md`.
 
 The parts not bound to the browser (expressions, transforms, merging and
 normalize) are specified by the fixtures in `spec/` (`spec/README.md`), so

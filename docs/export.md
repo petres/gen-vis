@@ -11,7 +11,7 @@ size, e.g. 16cm wide with texts of 8pt for Word.
 `exportSvg(options)` (a method of the visualisation as `exportPng`, also of
 a ref of the component) returns the SVG of the image (a string): the copy
 of the [PNG](usage.md#png) (the width of `imageWidth`, the selection below the
-subtitle, without the form elements and the buttons) as one SVG of its own,
+subtitle, without the controls and the buttons) as one SVG of its own,
 made for Word, LaTeX (through a PDF) and editors, which draw SVG but no
 HTML and no CSS:
 
@@ -38,7 +38,7 @@ The options:
 
 | Option | Description |
 |--------|-------------|
-| `parts` | the parts of the image, some of `title`, `subtitle`, `selection` (the line of the form elements), `legend`, `plot` and `footer`, by default all; the image is cropped to them: the full width, the height from the first to the last part with the space of the image (15 pixels) above and below, e.g. `["legend", "plot"]` of a document which has the title in its text |
+| `parts` | the parts of the image, some of `title`, `subtitle`, `selection` (the line of the controls), `legend`, `plot` and `footer`, by default all; the image is cropped to them: the full width, the height from the first to the last part with the space of the image (15 pixels) above and below, e.g. `["legend", "plot"]` of a document which has the title in its text |
 | `unit` | the unit of the attributes `width` and `height`: `px` (default), `cm`, `mm` or `in` (a CSS pixel is 1/96 in), the `viewBox` is in CSS pixels |
 | `background` | a CSS color of the background, `null` none, by default the one of the PNG (`--gen-vis-background` or white) |
 
@@ -114,13 +114,13 @@ unknown ones are an error):
 | `unit` | the unit of the size of the SVG (`px`, `cm`, `mm`, `in`), default the one of `width` (`px` of `pt`); a width of `"16cm"` is the attribute `width="16cm"` |
 | `css` | a stylesheet or a list of them: a text with a `{` is CSS, others are urls (loaded before the chart is drawn) |
 | `classes` | a class or a list of classes of the element of the chart (`.vis-outer`), e.g. of a theme of `css` |
-| `globals` | the globals, see [globals](definition.md#formelements-and-globals) |
+| `globals` | the globals, see [globals](definition.md#globals-and-controls) |
 | `state` | the state, see [state](usage.md#state) |
-| `defaults` | the defaults of the parts instead of the built-in ones, e.g. `{ "axis": { "padding": 2, "tickMarks": { "size": 4, "inset": 0 } } }`, see [defaults](definition.md#defaults); also a function of the merged definition (see `resolve` below) which returns them (or a promise of them, `null` none), since 4.0.0 |
+| `defaults` | the defaults of the parts instead of the built-in ones, e.g. `{ "axis": { "padding": 2, "tickMarks": { "size": 4, "inset": 0 } }, "margins": { "left": 60 } }`, see [defaults](definition.md#defaults); also a function of the merged definition (see `resolve` below) which returns them (or a promise of them, `null` none), since 4.0.0 |
 | `parts` | the parts of the image, see above, default all |
 | `fontSize` | the size of the texts of gen-vis, e.g. `"8pt"`: 13px of most texts become it, the title (20px), the message (14px), the labels and titles of the axes and the footer (12px) and the small texts (11px) in proportion; sizes of the definition (props) stay as they are |
 | `background` | a CSS color, `null` none (a transparent PNG), default the one of gen-vis (`--gen-vis-background` or white) |
-| `schemes` | schemes of colors registered before the chart is drawn, for this call only (the next one has the schemes of the page before), e.g. `{ "house": ["#005CA9", "#E6A000"] }`, also of several sizes (`[null, null, ["#9EC5E8", "#005CA9"], ...]`), see `registerScheme` in [extensions](extensions.md#extensions); also a function of the merged definition (see `resolve` below) which returns such an object (or a promise of it), called before the chart is drawn, e.g. of colors by the plot types, since 4.0.0 |
+| `schemes` | schemes of colors registered before the chart is drawn, for this call only (the next one has the schemes of the page before), e.g. `{ "house": ["#005CA9", "#E6A000"] }`, also of several sizes (`[null, null, ["#9EC5E8", "#005CA9"], ...]`), see `registerScheme` in [extensions](extensions.md#extensions); also a function of the merged definition (see `resolve` below) which returns such an object (or a promise of it), called before the chart is drawn, e.g. of colors by the mark types, since 4.0.0 |
 | `timeout` | the time to wait for the chart in milliseconds, default 30000 |
 
 The result (sizes in CSS pixels):
@@ -135,17 +135,19 @@ The result (sizes in CSS pixels):
 `await window.genVisExport.resolve(options)` (since 4.0.0, of protocol
 version 1) is the definition of `def` or `defUrl` with its parents and
 mixins, merged as the load of the chart merges them (`parent`, relative to
-`baseUrl` or to `defUrl`, the files of the chart), not yet normalized; it takes the options of `genVisExport` (unknown ones are an
+`baseUrl` or to `defUrl`, the files of the chart), as it is written (a
+definition of gen-vis 4 is not migrated), not yet resolved with its
+globals; it takes the options of `genVisExport` (unknown ones are an
 error, the others than `def`, `defUrl` and `baseUrl` are not used), leaves
 the chart before as it is and rejects as `genVisExport` does, e.g. with
 `Could not load '…/base.json': 404 Not Found`. A wrapper chooses its
-colors by it, e.g. by the plot types of `merged.plot`, or gives a function
+colors by it, e.g. by the mark types of `merged.marks`, or gives a function
 of it as `schemes` (or `defaults`), the page calls it with the merged
 definition (its files are loaded once):
 
 ```js
 await genVisExport({ defUrl, schemes: merged =>
-    ({ house: [merged.plot].flat().some(p => p.type == 'bar') ? barColors : lineColors }) });
+    ({ house: [merged.marks].flat().some(m => m?.type == 'bar') ? barColors : lineColors }) });
 ```
 
 The CLI has no functions of options (they do not come from the command
@@ -162,7 +164,8 @@ options and new keys of the result are added without a new version.
 ## CLI
 
 `gen-vis export` is the package's `bin` (node 22 or newer, no
-dependencies). It draws definition files on the export page in a Chromium,
+dependencies); `gen-vis migrate` of the same `bin` writes definitions of
+gen-vis 4 as ones of gen-vis 5, see [migration](definition.md#migration-from-4x). It draws definition files on the export page in a Chromium,
 Chrome or Edge of the system and writes SVG, PNG and PDF files, chosen by
 their extensions. Each definition is followed by its outputs, and one
 browser draws them all:
@@ -183,7 +186,7 @@ options above:
 - `--css` (a file or CSS text) and `--class`, both repeatable;
   `--font-size`.
 - `--globals` and `--state` (JSON), `--defaults` (JSON or a JSON file, e.g.
-  `--defaults house-defaults.json`), `--data` (a CSV, JSON or parquet file
+  `--defaults house-defaults.json`, also the `margins` of a house style), `--data` (a CSV, JSON or parquet file
   instead of the definition's data), `--scheme name=color,color,...`
   (repeatable).
 - PNG resolution: `--scale` (pixels per CSS pixel, default 2) or `--dpi`.

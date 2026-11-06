@@ -11,10 +11,10 @@ files.
 | Directory | Part | JS |
 |-----------|------|----|
 | `transforms/<type>.json` | the transforms of a definition, a file per type | `src/utils/transform-types.js` |
-| `merge/*.json`, `merge.md` | parents, mixins and the patches of form elements | `src/utils/def.js` (`mergeAll`, `patchedParts`), `src/utils/load.js` (`resolveParents`) |
+| `merge/*.json`, `merge.md` | parents and mixins | `src/utils/def.js` (`mergeAll`), `src/utils/load.js` (`resolveParents`) |
 | `expressions/*.json` | the expressions of props | `src/utils/expr.js` |
 | `expressions/syntax.json` | the string syntax of expressions | `src/utils/expr-parse.js` |
-| `normalize/*.json` | a 4.0 definition as the renderer reads it | `src/utils/normalize.js` |
+| `normalize/*.json` | the form the engine reads (the one of 4.x, which a definition of 5.0 is translated into), normalized | `src/utils/language.js` (`translate`), `src/utils/normalize.js` |
 
 Every file is a list of cases, every case has a `name` (what it shows, the
 name of the test) and the fields of its part, see below. A case with an
@@ -221,7 +221,9 @@ See `merge.md`.
 
 ## Normalize
 
-`normalize/*.json` are `{ "name", "def", "result" }`: the 4.0 definition
-`def` (merged with its parents) and its normalized form `result`, the one
-which the renderer reads, see `normalize.md`. The plot types are the
+`normalize/*.json` are `{ "name", "def", "result" }`: a definition in the
+form the engine reads (the keys of 4.x, `options`, `mapping`, `plot`; a
+definition of 5.0 is translated into it first, see `normalize.md`), merged
+with its parents, and its normalized form `result`, the one which the
+renderer reads. The plot types are the
 built-in ones, their default props are the ones of `src/plots/defaults.js`.
