@@ -10,7 +10,7 @@ import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { formatter } from "@/utils/expr";
 import { axisNames } from "@/layout";
-import { axisDefaults, symbolDefaults } from "@/utils/defaults";
+import { axisDefaults, symbolDefaults, marginDefaults } from "@/utils/defaults";
 import { geoParts, load, loadGeo, raw, valueFormat } from "@/utils/load";
 
 // the formatters of the locales by their definition, the last ones are kept
@@ -59,6 +59,8 @@ class Store {
     visWidth = null;
     // the font of the visualisation, of the measure of its texts, e.g. of the margins of the axes
     fontFamily = null;
+    // the margins of the styles of the page (--gen-vis-margin-left, ...), set by the measure of the visualisation
+    styleMargins = null;
     runs = 0;
     // the number of the definitions loaded, a new one is drawn anew, while it
     // is loaded the one before is shown, see comp/app.js
@@ -123,6 +125,8 @@ class Store {
     // the defaults of the axes of a position, e.g. "left", see
     // axisDefaults of utils/defaults.js
     axisDefaults(position) { return axisDefaults(this.chartDefaults, position) }
+    // the margins of the defaults of the page and of the chart, see utils/defaults.js
+    marginDefaults() { return marginDefaults(this.chartDefaults) }
 
     // the names of the templates, the globals and the fields of the selected
     // entries of the form elements, e.g. `group:name`, see templateNames

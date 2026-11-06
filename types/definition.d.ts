@@ -18,7 +18,7 @@ export type Filter = string | Expression | Conditions | None;
  */
 export type None = null;
 /**
- * The space around the plot area of a facet in pixels, of the axes and their titles: by default ("auto") measured of the labels of the axes, their tick marks and their titles; a side given is as given, e.g. { "left": 60 }, the others stay measured; an expression of totalWidth, e.g. steps of it.
+ * The space around the plot area of a facet in pixels, of the axes and their titles, e.g. { "left": 60 }; a side without one is the one of the styles of the page (--gen-vis-margin-left: 60px, also auto) or of its defaults (registerDefaults, e.g. of a house style), else measured ("auto") of the labels of the axes, their tick marks and their titles; an expression of totalWidth, e.g. steps of it.
  */
 export type Margins =
     | {

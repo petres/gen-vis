@@ -1,4 +1,4 @@
-export { builtInDefaults, registerDefaults, axisDefaults, symbolDefaults };
+export { builtInDefaults, registerDefaults, axisDefaults, symbolDefaults, marginDefaults };
 
 import { mergeAll } from '@/utils/merge';
 import { isObject } from '@/utils/values';
@@ -16,6 +16,11 @@ import { isObject } from '@/utils/values';
  */
 const builtInDefaults = {
     axis: { padding: 3, tickMarks: { size: 9, inset: null }, title: { offset: null } },
+    // the margins of the facets of definitions without them, e.g. of a house
+    // style, a side in pixels or "auto" (measured of the axes, the default),
+    // also the css variables --gen-vis-margin-top, ... of the page, see
+    // utils/margins.js
+    margins: {},
     // the box of the symbols of the legends, all and per shortcut, e.g.
     // { "line": { "width": 18, "height": 9, "props": { "stroke-width": 1.6 } } }
     legend: { symbol: { size: 16 } },
@@ -55,3 +60,7 @@ const symbolDefaults = own => mergeAll([builtInDefaults, registered, own].map(d 
 
 const axisDefaults = (own, position) => mergeAll([builtInDefaults, registered, own]
     .flatMap(d => [d?.axis, d?.[`${position}Axis`]]).filter(isObject));
+
+// the margins of the defaults (`margins` of builtInDefaults), of the page
+// and of the chart (`own`), e.g. { "left": 60 }, a side without one is measured
+const marginDefaults = own => mergeAll([builtInDefaults, registered, own].map(d => d?.margins).filter(isObject));

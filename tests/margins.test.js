@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // the margins of the facets measured of the axes ("auto", the default),
 // see utils/margins.js; without a canvas (jsdom) a character of a label is
 // 0.55 em of 12 pixels, see utils/measure.js
@@ -6,8 +7,11 @@ import { loadColors } from '@/utils/d3';
 import { createStore } from '@/store';
 import { layout } from '@/layout';
 import { textWidth } from '@/utils/measure';
+import { createGenVis } from '@/index.js';
+import { useDom, rendered, nextTick } from './dom.js';
 
 beforeAll(loadColors);
+useDom();
 
 const data = 'year,value,land\n2020,1,Wien\n2021,2,Wien\n2020,1000000,Tirol\n2021,2000000,Tirol';
 
@@ -54,6 +58,25 @@ describe('auto margins', () => {
         expect(rotated.bottom).toBe(Math.ceil(marks + padding + widest(['2020', '2021']) + 2));
     });
 
+    test('the defaults of the page (registerDefaults) and of the chart give the sides without one, e.g. of a house style', async () => {
+        const { registerDefaults } = await import('@/utils/defaults');
+        const plain = await margins({});
+        registerDefaults({ margins: { left: 50, top: 'auto' } });
+        try {
+            const m = await margins({});
+            expect(m.left).toBe(50);
+            expect(m.top).toBe(plain.top);
+            // the definition wins
+            expect((await margins({ margins: { left: 40 } })).left).toBe(40);
+            // the defaults of the chart (its prop) before the ones of the page
+            const store = createStore();
+            await store.init({ def: { dims: { x: 'year', y: 'value' }, marks: { type: 'line' } }, data, defaults: { margins: { left: 33 } } });
+            expect(layout(store, 400).facets[0].margins.left).toBe(33);
+        } finally {
+            registerDefaults(null);
+        }
+    });
+
     test('the margins of the width of the visualisation and of expressions, as before', async () => {
         const m = await margins({ margins: { left: '=steps(@totalWidth, {0: 20, 500: 100})' } }, 600);
         expect(m.left).toBe(100);
@@ -70,5 +93,25 @@ describe('auto margins', () => {
         const f = v.facets[0];
         expect(f.innerWidth).toBe(f.width - f.margins.left - f.margins.right);
         expect(f.innerHeight).toBe(f.height - f.margins.top - f.margins.bottom);
+    });
+});
+
+// the styles of the page: the css variables --gen-vis-margin-<side> on the
+// visualisation or an element above it, a length or auto
+describe('the margins of the styles of the page', () => {
+    test('a side of a css variable, the others measured, the definition wins', async () => {
+        const wrapper = document.body.appendChild(document.createElement('div'));
+        wrapper.style.setProperty('--gen-vis-margin-left', '70px');
+        wrapper.style.setProperty('--gen-vis-margin-top', 'auto');
+        const el = wrapper.appendChild(document.createElement('div'));
+        const def = { height: 200, dims: { x: { column: 'year', type: 'numeric' }, y: { column: 'value', type: 'numeric', zero: true } }, marks: { type: 'line' } };
+        const vis = createGenVis(el, { def, data });
+        await rendered(el);
+        await nextTick();
+        const inner = el.querySelector('svg.vis-svg > g');
+        const [left, top] = /translate\(([\d.]+) ([\d.]+)\)/.exec(inner.getAttribute('transform')).slice(1).map(Number);
+        expect(left).toBe(70);
+        expect(top).toBe(Math.ceil(label/2 + 2));
+        wrapper.remove();
     });
 });

@@ -1087,6 +1087,7 @@ describe('the defaults of the parts', () => {
         const { builtInDefaults } = await import('@/utils/defaults');
         expect(builtInDefaults).toEqual({
             axis: { padding: 3, tickMarks: { size: 9, inset: null }, title: { offset: null } },
+            margins: {},
             angularAxis: { tickMarks: { size: 6, inset: 0 } },
             radialAxis: { title: { offset: 16 } },
             legend: { symbol: { size: 16 } },

@@ -326,9 +326,16 @@ const layout = (store, width, before = null) => {
     const faceted = entries.length > 0;
 
     // the sizes of a facet
-    // the margins can be props, e.g. steps of the width of the visualisation,
-    // "auto" is measured of the axes, see autoMargins of utils/margins.js
-    const given = Object.fromEntries(Object.entries(def.options.margins).map(([k, v]) => [k, v === 'auto' ? 'auto' : Number(evaluate(v, scope)) || 0]));
+    // the margins: of the definition, else of the styles of the page
+    // (--gen-vis-margin-left, ...), else of the defaults of the page or the
+    // chart (registerDefaults), else measured of the axes ("auto", see
+    // autoMargins of utils/margins.js); they can be props, e.g. steps of
+    // the width of the visualisation
+    const marginDefaults = store.marginDefaults?.() ?? {};
+    const given = Object.fromEntries(['top', 'right', 'bottom', 'left'].map(k => {
+        const v = def.options.margins?.[k] ?? store.styleMargins?.[k] ?? marginDefaults[k] ?? 'auto';
+        return [k, v === 'auto' ? 'auto' : Number(evaluate(v, scope)) || 0];
+    }));
     const auto = Object.values(given).includes('auto');
     const grid = faceted ? gridOf(def) : null;
     const cols = grid ? entries[0].cell.cols : (faceted ? evaluate(def.facets.cols, scope) : 1);

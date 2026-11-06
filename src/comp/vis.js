@@ -252,7 +252,14 @@ const createVis = app => {
         width = plotsWidth();
         store.totalWidth = width;
         store.rowHeaderWidth = rowHeaderWidth();
-        store.fontFamily = typeof getComputedStyle == 'function' ? getComputedStyle(root).fontFamily || null : null;
+        const styles = typeof getComputedStyle == 'function' ? getComputedStyle(root) : null;
+        store.fontFamily = styles?.fontFamily || null;
+        // the margins of the styles of the page, a length in pixels or "auto"
+        // (measured), e.g. --gen-vis-margin-left: 60px of a house style
+        store.styleMargins = styles ? Object.fromEntries(['top', 'right', 'bottom', 'left'].map(side => {
+            const value = styles.getPropertyValue(`--gen-vis-margin-${side}`).trim();
+            return [side, value == 'auto' ? 'auto' : (value && Number.isFinite(parseFloat(value)) ? parseFloat(value) : undefined)];
+        }).filter(([, v]) => v !== undefined)) : null;
     };
     const resized = () => {
         if (removed)
