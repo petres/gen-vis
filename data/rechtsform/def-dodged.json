@@ -1,0 +1,41 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "data.csv",
+    "title": "Wohnungsbestände nach Rechtsform",
+    "subtitle": "Anzahl Wohnungen, die Rechtsformen nebeneinander (dodge)",
+    "source": "<strong>Q:</strong> GWZ/HWZ 1971-2001, RZ 2011, MZ 2020",
+    "height": 400,
+    "margins": {"top": 20, "right": 20, "bottom": 50, "left": 76},
+    "dims": {
+        "x": {"column": "Jahr", "type": "categorical", "format": "c", "hover": {}},
+        "y": {"column": "Anzahl", "format": ",.0f", "axis": {"ticks": 8}, "hover": {}, "zero": true, "grid": true},
+        "type": {
+            "column": "Type",
+            "legend": {},
+            "categories": {
+                "Hauseigentum": "#BBD7EE",
+                "Wohnungseigentum": "#5BC5F2",
+                "GBV Miete": "#559BD5",
+                "Gemeinde Miete": "#C7DF71",
+                "Private Miete": "#4B9847",
+                "Sonstige": "#9CE1F8"
+            },
+            "hover": {}
+        },
+        "geo": {"column": "Geo", "categories": {"Österreich": {}, "Wien": {}}}
+    },
+    "filter": {"geo": "Österreich"},
+    "marks": [
+        {"type": "bar", "by": "type", "dodge": true, "highlight": {"stroke": "#333", "stroke-width": 1.5}},
+        {
+            "type": "label",
+            "by": "type",
+            "dodge": true,
+            "filter": {"type": ["Hauseigentum", "Private Miete"]},
+            "text": "=format(@y / 1000, '.0f')",
+            "anchor": "top",
+            "font-size": 9,
+            "fill": "#555"
+        }
+    ]
+}

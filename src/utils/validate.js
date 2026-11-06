@@ -129,6 +129,9 @@ const checkProp = (value, path, warn, names = null) => {
 const rowNames = (n, m) => [
     n,
     `${n}:formatted`,
+    // the place of the category of the row among the categories of the mapping and their number, e.g. of dodged bars
+    `${n}:index`,
+    `${n}:count`,
     ...(m.scale ? [`${n}:scaled`, `${n}:scaled:center`, `${n}:scaled:min`, `${n}:scaled:max`, `${n}:bandwidth`, `${n}:step`] : []),
     ...(['band', 'point'].includes(m.scale?.type) ? [`${n}:group:start`, `${n}:group:end`] : []),
     ...(m.interval !== undefined && m.scale ? [`${n}:scaled:start`, `${n}:scaled:end`] : []),

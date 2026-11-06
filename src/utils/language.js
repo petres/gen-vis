@@ -204,10 +204,13 @@ const typeOf = (type, coord) => {
     return type;
 };
 
-// the expression of the position of a dodged bar: the band of the position
-// dim `pos` split among the categories of `group`, and its width
+// the expressions of a dodged bar: the band of the position dim `pos` split
+// among the categories of `group`, its position (the bar plot adds half a
+// band, see plots/cartesian.js) and its width; `center` is the middle of
+// the slot of the category, e.g. of a label on a dodged bar
 const dodged = (pos, group) => ({
     position: { '+': [ref(pos), { '*': [ref(pos, 'bandwidth'), { '-': [{ '/': [{ '+': [ref(group, 'index'), 0.5] }, ref(group, 'count')] }, 0.5] }] }] },
+    center: { '+': [ref(pos), { '*': [ref(pos, 'bandwidth'), { '/': [{ '+': [ref(group, 'index'), 0.5] }, ref(group, 'count')] }] }] },
     size: { '/': [ref(pos, 'bandwidth'), ref(group, 'count')] },
 });
 
@@ -241,9 +244,11 @@ const mark = (raw, i, dims, coord, stacks) => {
     const take = (...names) => names.forEach(n => delete props[n]);
     const stack = p.stack;
     delete p.stack;
-    // `dodge` of bars are the groups beside each other, of texts their distance (the engine)
-    const dodge = kind == 'bar' ? p.dodge : undefined;
-    if (kind == 'bar')
+    // `dodge` of bars are the groups beside each other, of texts with true or
+    // a dim the same (e.g. labels of dodged bars), a number of texts their
+    // distance (the engine)
+    const dodge = kind == 'bar' || (kind == 'text' && (p.dodge === true || typeof p.dodge == 'string')) ? p.dodge : undefined;
+    if (dodge !== undefined)
         delete p.dodge;
     const orient = p.orient;
     delete p.orient;
@@ -404,6 +409,15 @@ const mark = (raw, i, dims, coord, stacks) => {
                 props.x = at(x);
             if (y)
                 props.y = at(y);
+            // on dodged bars: at the middle of the slot of the category
+            if (dodge) {
+                const group = dodge === true ? p.by[0] : dodge;
+                const horizontal = orient == 'horizontal' || (orient === undefined && y && centered(y.dim) && !(x && centered(x.dim)));
+                if (horizontal && y)
+                    props.y = dodged(y.dim, group).center;
+                else if (x)
+                    props.x = dodged(x.dim, group).center;
+            }
             if (anchor)
                 Object.entries(anchors[anchor] ?? {}).forEach(([k, v]) => props[k] ??= v);
             if (raw.type == 'label' && props.fill === undefined)
