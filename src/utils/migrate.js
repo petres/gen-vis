@@ -2,9 +2,10 @@ export { migrate, conditionExpression, expressionText };
 
 import { isObject } from '@/utils/values';
 import { isOperator } from '@/utils/expr';
-import { formatExpression } from '@/utils/expr-parse';
+import { formatExpression, parseExpression } from '@/utils/expr-parse';
 import { schemaUrl } from '@/utils/version';
 import { expressionKeys, optionKeys } from '@/utils/language';
+import { mergeAll } from '@/utils/def';
 
 /**
  * A definition of gen-vis 4 as one of gen-vis 5 (see docs/definition.md and
@@ -27,6 +28,8 @@ const expressionText = v => {
     let text;
     try {
         text = formatExpression(v);
+        // e.g. a template in a reference ("@{smooth}") has no text
+        parseExpression(text);
     } catch {
         // an expression the syntax has no text of, e.g. a sum of one argument, stays an object
         return v;
@@ -73,6 +76,9 @@ const conditionOf = (dim, c, negated = false) => {
     if (c === null || c === undefined)
         return `@${dim} ${eq} null`;
     if (Array.isArray(c)) {
+        // no values: no rows (all rows of a negation)
+        if (c.length == 0)
+            return negated ? 'true' : 'false';
         const alternatives = c.map(v => `@${dim} ${eq} ${literal(v)}`);
         return alternatives.join(negated ? ' and ' : ' or ');
     }
@@ -162,23 +168,14 @@ const dimOf = (m, name, hovered, grouped, consumed) => {
         else
             delete d.axis;
     }
-    // the categories of the data are the default of a categorical dim
-    if (d.fromData === true) {
-        if (!['categories', 'scheme', 'common', 'ranks', 'order'].some(k => d[k] !== undefined) && !grouped.has(name) && d.type === undefined)
-            d.type = 'categorical';
-        delete d.fromData;
-    }
+    // `fromData` stays: the categories of the data ascending, of 5.0 by
+    // default the ones of the dims of the marks' by in the order of the rows
     if (isObject(d.categories))
         d.categories = Object.fromEntries(Object.entries(d.categories).map(([k, c]) => [k, isObject(c) && Object.keys(c).length == 1 && typeof c.color == 'string' ? c.color : c]));
-    // the hand-drawn symbol of a legend in the color of the category is the one of the plots
-    if (isObject(d.legend?.symbol) && Array.isArray(d.legend.symbol.elements)) {
-        const refs = JSON.stringify(d.legend.symbol.elements).match(/"@[\w-]+"/g) ?? [];
-        if (refs.every(r => ['"@color"', '"@stroke-width"', '"@opacity"', '"@r"', '"@stroke-dasharray"', '"@fill"'].includes(r))) {
-            const legend = { ...d.legend };
-            delete legend.symbol;
-            d.legend = legend;
-        }
-    }
+    // a legend without a symbol of its own has the ones of the plots in 5.0
+    // ("auto"), of 4.x only the names: none
+    if (isObject(d.legend) && d.legend.symbol === undefined)
+        d.legend = { ...d.legend, symbol: null };
     return texts(d, 'dim');
 };
 
@@ -233,13 +230,13 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
         if (v === undefined)
             return;
         const s = scaledOf(v);
-        delete attrs[attr];
-        if (s && s.kind == 'scaled:center' && categorical(s.dim))
+        if (s && s.kind == 'scaled:center' && categorical(s.dim)) {
+            delete attrs[attr];
             setChannel(name, `@${s.dim}:scaled`, name, attr);
-        else if (s && s.kind == 'scaled' && categorical(s.dim))
-            attrs[attr] = v;
-        else
+        } else if (s && s.kind == 'scaled' && !categorical(s.dim)) {
+            delete attrs[attr];
             setChannel(name, v, name, attr);
+        }
     };
     // a stacked value: the start and the end of the value dim
     const stackOf = (v0, v1) => {
@@ -250,6 +247,15 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
         return dim;
     };
     const prefix = typeof mark.type == 'string' && type?.includes(':') ? type.split(':')[0] : (coord ?? 'cartesian');
+    // a position of an element of svg at a value of a scale ("@x:scaled:0")
+    // stays an attribute, a number of a channel of these marks is pixels
+    const setDim = (name, attr = name) => {
+        const v = attrs[attr];
+        if (v === undefined)
+            return;
+        if (scaledOf(v)?.kind == 'scaled')
+            setChannel(name, take(attr), undefined, attr);
+    };
     if (prefix == 'svg') {
         if (kind == 'circle') {
             setPoint('x', 'cx');
@@ -258,10 +264,7 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
             setPoint('x', 'x');
             setPoint('y', 'y');
         } else
-            ['x', 'y', 'x1', 'x2', 'y1', 'y2'].forEach(k => {
-                if (attrs[k] !== undefined)
-                    setChannel(k, take(k), undefined);
-            });
+            ['x', 'y', 'x1', 'x2', 'y1', 'y2'].forEach(k => setDim(k));
     } else if (prefix == 'cartesian') {
         if (kind == 'line' || kind == 'area') {
             const d = isObject(attrs.d) ? { ...attrs.d } : {};
@@ -385,8 +388,8 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
         }
     }
     // the colors of the categories are the default of the types which have one
-    const colored = { line: 'stroke', area: 'fill', bar: 'fill', arc: 'fill', circle: 'fill', text: 'fill', region: null, rule: 'stroke' };
-    if (prefix != 'svg' || kind == 'circle' || kind == 'text') {
+    const colored = { line: 'stroke', area: 'fill', bar: 'fill', arc: 'fill', circle: 'fill', text: 'fill', rule: 'stroke' };
+    if (prefix == 'cartesian' || prefix == 'polar' || (prefix == 'svg' && (kind == 'circle' || kind == 'text'))) {
         const k = colored[kind];
         if (k && attrs[k] === '@color')
             delete attrs[k];
@@ -401,10 +404,17 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
     return mark;
 };
 
-// the leaves of a patch (paths of keys, lists are leaves) with their values
-const leaves = (v, path = []) => isObject(v) && !isOperator(v) && Object.keys(v).length > 0
+// the leaves of a patch (paths of keys, lists are leaves) with their
+// values; the parts of the props of plots and of the rows of their data are
+// leaves, they are expressions or rows, not parts
+const leaves = (v, path = []) => isObject(v) && Object.keys(v).length > 0 && !['props', 'highlight', 'others', 'data'].includes(path.at(-1))
     ? Object.entries(v).flatMap(([k, e]) => leaves(e, [...path, k]))
     : [[path, v]];
+
+// a value of a case of a match: a part (an object or a list) is a literal,
+// so it is no expression, e.g. { "format": ".1%" }
+const caseValue = v => v !== null && typeof v == 'object' ? { literal: v } : v;
+
 const at = (o, path) => path.reduce((v, k) => isObject(v) || Array.isArray(v) ? v?.[k] : undefined, o);
 const setAt = (o, path, value) => {
     let v = o;
@@ -416,28 +426,64 @@ const setAt = (o, path, value) => {
     v[path.at(-1)] = value;
 };
 
-// the patches of the entries of the form elements as `match` expressions of
-// their globals at the patched places of the definition
+// the merge of a part of the definition with the one of a patch, as 4.x
+// merged them (objects deeply, lists of entries with ids by their ids)
+const mergedPart = (key, base, patch) => mergeAll([{ [key]: base === undefined ? null : base }, { [key]: patch }])[key];
+
+/**
+ * The patches of the entries of the form elements as `match` expressions
+ * of their globals at the patched places of the definition: the leaves of
+ * `options`, `mapping`, `facets`, `geo` and `transform` get the expression
+ * of their values by the value of the global, the plots and the annotations
+ * (lists merged by their ids) and the filter (conditions merged) as a whole
+ * (see migrate, which converts the cases), the patches are removed.
+ */
+const whole = ['plot', 'annotations', 'filter'];
 const applyPatchesAsExpressions = def => {
     (def.formElements ?? []).forEach(e => {
-        if (!Array.isArray(e?.values) || !e.values.some(v => isObject(v?.patch)))
+        const patched = Array.isArray(e?.values) ? e.values.filter(v => isObject(v?.patch)) : [];
+        if (patched.length == 0)
             return;
+        const ref = `@${e.ref}`;
         const paths = new Map();
-        e.values.filter(v => isObject(v?.patch)).forEach(v => leaves(v.patch).forEach(([path, value]) => {
-            if (path.length == 0)
+        patched.forEach(v => Object.entries(v.patch).forEach(([k, part]) => {
+            if (whole.includes(k)) {
+                if (!paths.has(k))
+                    paths.set(k, { path: [k], cases: {}, whole: true });
+                paths.get(k).cases[String(v.value)] = part;
                 return;
-            const key = JSON.stringify(path);
-            if (!paths.has(key))
-                paths.set(key, { path, cases: {} });
-            paths.get(key).cases[String(v.value)] = value;
+            }
+            leaves(part, [k]).forEach(([path, value]) => {
+                const key = JSON.stringify(path);
+                if (!paths.has(key))
+                    paths.set(key, { path, cases: {} });
+                paths.get(key).cases[String(v.value)] = caseValue(value);
+            });
         }));
-        paths.forEach(({ path, cases }) => {
+        paths.forEach(({ path, cases, whole: all }) => {
             const base = at(def, path);
+            if (all) {
+                // the merged parts of every value, converted by migrate
+                const merged = Object.fromEntries(Object.entries(cases).map(([v, part]) => [v, mergedPart(path[0], base, part)]));
+                def[path[0]] = { match: [ref, merged, base === undefined ? null : base], [patchedKey]: true };
+                return;
+            }
             // a text, an expression at every place, also of a name, e.g. a column
-            setAt(def, path, expressionText({ match: [`@${e.ref}`, cases, base === undefined ? null : base] }));
+            setAt(def, path, expressionText({ match: [ref, cases, base === undefined ? null : caseValue(base)] }));
         });
         e.values.forEach(v => delete v.patch);
     });
+};
+// a part of a definition which is a match of the patches of its form elements
+const patchedKey = Symbol('patched');
+const isPatched = v => isObject(v) && v[patchedKey] === true;
+
+// the match of a patched part with its cases converted (`convert(part)`),
+// e.g. the plots as marks, as the text of an expression, the parts as literals
+const patchedText = (v, convert) => {
+    const [ref, cases, base] = v.match;
+    const literal = part => part === null || part === undefined ? null : { literal: convert(part) };
+    return expressionText({ match: [ref, Object.fromEntries(Object.entries(cases).map(([k, part]) => [k, literal(part)])), literal(base)] });
 };
 
 // a form element of 4.x as a control of 5.0
@@ -490,10 +536,16 @@ const migrate = raw => {
         out.globals = def.globals;
     if (def.formElements !== undefined)
         out.controls = def.formElements.map(controlOf);
-    if (def.filter !== undefined)
+    if (isPatched(def.filter)) {
+        // the conditions of every value as expressions
+        const [ref, cases, base] = def.filter.match;
+        const ast = c => c === null || c === undefined || c === true ? true : parseExpression(String(conditionExpression(c)).replace(/^=/, ''));
+        out.filter = expressionText({ match: [`@globals.${ref.slice(1)}`, Object.fromEntries(Object.entries(cases).map(([k, c]) => [k, ast(c)])), ast(base)] });
+    } else if (def.filter !== undefined)
         out.filter = conditionExpression(def.filter);
     const mapping = isObject(def.mapping) ? def.mapping : {};
-    const plots = def.plot === undefined ? [] : [def.plot].flat();
+    const plotsOf = p => p === undefined || p === null ? [] : [p].flat();
+    const plots = isPatched(def.plot) ? plotsOf(def.plot.match[2]) : plotsOf(def.plot);
     const grouped = new Set([...plots.flatMap(p => isObject(p) ? [p.by ?? []].flat() : []), def.facets?.dim, def.facets?.rows, def.facets?.cols].filter(Boolean));
     const stacked = Object.fromEntries(Object.entries(mapping).filter(([, m]) => isObject(m) && m.stacked !== undefined && m.stacked !== false)
         .map(([n, m]) => [n, m.stacked === true ? true : conditionExpression(m.stacked)]));
@@ -512,9 +564,13 @@ const migrate = raw => {
     }
     if (isObject(out.hover) && out.hover.filter !== undefined)
         out.hover.filter = conditionExpression(out.hover.filter);
-    if (def.plot !== undefined)
+    if (isPatched(def.plot))
+        out.marks = patchedText(def.plot, part => plotsOf(part).map((p, i) => markOf(p, i, coord, stacked, mapping, consumed)));
+    else if (def.plot !== undefined)
         out.marks = marks.length == 1 && !Array.isArray(def.plot) ? marks[0] : marks;
-    if (def.annotations !== undefined)
+    if (isPatched(def.annotations))
+        out.annotations = patchedText(def.annotations, part => texts(part, 'annotations'));
+    else if (def.annotations !== undefined)
         out.annotations = texts(def.annotations, 'annotations');
     if (isObject(def.facets)) {
         const { dim, rows, cols, scales, ...rest } = def.facets;

@@ -1,6 +1,7 @@
 import { loadColors } from '@/utils/d3';
 import { describe, test, expect, beforeAll, vi } from 'vitest';
 import { createStore } from '@/store';
+import { filterRows } from '@/utils/data';
 import { layout, plotGroups } from '@/layout';
 
 // the colors of d3 are loaded by the store, see loadColors
@@ -213,7 +214,7 @@ describe('rows without a value', () => {
         const f = v.facets[0];
         const groups = id => {
             const p = store.def.plot.find(e => e.id == id);
-            return plotGroups(p, f.rows.filter(r => r.kind == p.filter.kind), { store, ...f });
+            return plotGroups(p, filterRows(f.rows, p.filter, store.def.mapping, f.scope), { store, ...f });
         };
         return { store, v, groups };
     };
@@ -248,16 +249,15 @@ describe('rows without a value', () => {
     });
 });
 
-describe('filters of no mapping', () => {
-    test('are named in a warning, e.g. a column instead of its mapping', async () => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+describe('filters of columns', () => {
+    test('a filter of a column which is no mapping, e.g. of the data', async () => {
         const store = createStore();
-        await store.init({ def: { options: { height: 200 }, mapping: mapping(), plot: { ...plot, filter: { year: 2020 } } }, data });
+        await store.init({ def: { options: { height: 200 }, mapping: mapping(), plot: { ...plot, filter: '@year == 2020' } }, data });
         const v = layout(store, 400);
         const p = store.def.plot[0];
-        expect(plotGroups(p, (await import('@/layout')).plotRows(store, p, v.facets[0]), { store, ...v.facets[0] })).toEqual([]);
-        expect(warn).toHaveBeenCalledWith(expect.stringContaining(`plot plot-0: filter.year: unknown mapping 'year', the keys of a filter are the names of mappings, not columns`));
-        warn.mockRestore();
+        const groups = plotGroups(p, (await import('@/layout')).plotRows(store, p, v.facets[0]), { store, ...v.facets[0] });
+        expect(groups.flatMap(g => g.rows).every(r => r.x == 2020)).toBe(true);
+        expect(groups.flatMap(g => g.rows).length).toBeGreaterThan(0);
     });
 });
 

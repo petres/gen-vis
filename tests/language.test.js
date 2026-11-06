@@ -18,7 +18,8 @@ describe('the language of 5.0', () => {
         });
         expect(def.options).toEqual({ title: 'Bevölkerung', subtitle: 'nach Bundesland', footer: 'Q', height: 300 });
         expect(def.mapping.y).toEqual({ column: 'Einwohner', format: ',.0f', domain: [0, null], axis: { grid: true } });
-        expect(def.mapping.land).toEqual({ column: 'Bundesland', scheme: 'Tableau10', 'stroke-width': 2.5, fromData: true, hover: {},
+        // listed categories are all of them, the hover has the dims of `by`
+        expect(def.mapping.land).toEqual({ column: 'Bundesland', scheme: 'Tableau10', 'stroke-width': 2.5, hover: {},
             categories: { Wien: { color: '#123' }, Tirol: { name: 'T' } } });
         expect(def.plot).toEqual([
             { type: 'cartesian:line', by: ['land'], highlight: { opacity: 1 }, props: { opacity: 0.7, d: { x: '@x:scaled', y: '@y:scaled' } } },
@@ -35,8 +36,10 @@ describe('the language of 5.0', () => {
             marks: { type: 'bar', by: 'type', stack: true, opacity: 0.7, highlight: { mode: 'row', opacity: 1 } },
         });
         expect(def.mapping.y).toEqual({ column: 'Anzahl', stacked: true });
-        expect(def.mapping.type).toEqual({ column: 'Type', fromData: true, hover: {} });
-        expect(def.mapping.geo).toEqual({ column: 'Geo', fromData: true });
+        // the categories of dims without listed ones are the ones of the data, in their order
+        // the dims of the facets have the categories of the data, in their order, the `by` of a mark groups rows of any type
+        expect(def.mapping.type).toEqual({ column: 'Type', hover: {} });
+        expect(def.mapping.geo).toEqual({ column: 'Geo', fromData: 'rows' });
         expect(def.facets).toEqual({ dim: 'geo', cols: 2, scales: [] });
         expect(def.options.hover).toEqual({ total: true });
         expect(def.plot[0].props).toEqual({ opacity: 0.7, x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' });
@@ -78,8 +81,9 @@ describe('the language of 5.0', () => {
         expect(def.plot[1].props).toEqual({ stroke: '#333', x: '@x:scaled', y1: '@lo:scaled', y2: '@hi:scaled' });
         expect(def.plot[2].props).toEqual({ fill: '@v:scaled', x: '@x:scaled', width: '@x:bandwidth', y: '@y:scaled', height: '@y:bandwidth' });
         expect(def.plot[3].props).toEqual({ 'stroke-dasharray': '2 2', y: '@y:scaled:100' });
-        expect(def.plot[4]).toEqual({ type: 'svg:circle', by: ['c'], props: { fill: '@color', cx: '@lo:scaled', cy: '@y:scaled' } });
-        expect(def.mapping.c.fromData).toBe(true);
+        // a fill of a dim without categories is its scaled value (of a scale of colors)
+        expect(def.plot[4]).toEqual({ type: 'svg:circle', by: [], props: { fill: '@c:scaled', cx: '@lo:scaled', cy: '@y:scaled' } });
+        expect(def.mapping.c.fromData).toBeUndefined();
     });
 
     test('polar and geo marks', () => {

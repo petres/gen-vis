@@ -20,7 +20,21 @@ import { expressionKeys, nameKeys } from '@/utils/language';
 // `inside` a part of expressions (a mark, an annotation, props, a key of
 // expressions), objects of one key which is an operator are expressions,
 // elsewhere they are parts, e.g. { "format": ".1f" }, see utils/language.js
-const resolve = (value, names, key = undefined, inside = false) => {
+const resolve = (value, names, key = undefined, inside = false) => resolveIn(value, names, key, inside);
+
+// the parts whose expressions are the ones of the rows or the categories,
+// evaluated when they are drawn (the globals are in their scope): the marks,
+// the annotations and the props of the parts, e.g. of a legend or a hover,
+// and the filters; a text of such a part is an expression of the whole
+// part, e.g. the marks of a global, and is resolved
+const drawn = new Set(['marks', 'annotations', 'props', 'highlight', 'others']);
+// the expressions of the rows, e.g. a filter, evaluated per row with the
+// globals in their scope, a text of them is the expression itself
+const rows = new Set(['filter', 'stack', 'stacked', 'expr']);
+
+const resolveIn = (value, names, key, inside) => {
+    if (rows.has(key) || (drawn.has(key) && typeof value != 'string'))
+        return value;
     if (typeof value == 'string') {
         if (!isExpressionText(value) || (key !== undefined && nameKeys.has(key) && value.startsWith('@')))
             return value;
@@ -30,24 +44,31 @@ const resolve = (value, names, key = undefined, inside = false) => {
         } catch {
             return value;
         }
-        return resolved(ast, names) ?? value;
+        const r = resolved(ast, names);
+        return r === unresolved ? value : r;
     }
     const expression = inside || (key !== undefined && expressionKeys.has(key));
     if (Array.isArray(value))
-        return value.map(v => resolve(v, names, key == 'marks' || key == 'annotations' ? 'marks' : undefined, expression || key == 'marks' || key == 'annotations'));
+        return value.map(v => resolveIn(v, names, key == 'marks' || key == 'annotations' ? 'marks' : undefined, expression || key == 'marks' || key == 'annotations'));
     if (!isObject(value))
         return value;
-    if (isOperator(value) && expression)
-        return resolved(value, names) ?? Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolve(v, names, k, true)]));
-    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolve(v, names, k, expression && key != 'marks')]));
+    if (isOperator(value) && expression) {
+        const r = resolved(value, names);
+        return r === unresolved ? Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolveIn(v, names, k, true)])) : r;
+    }
+    // a text of an expression without a value (null) is no part, e.g. of a
+    // match of a global without a case of its value
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolveIn(v, names, k, expression && key != 'marks')])
+        .filter(([k, v]) => !(v === null && typeof value[k] == 'string' && isExpressionText(value[k]))));
 };
 
-// the value of an expression of the names only, undefined of others (also
+// the value of an expression of the names only, unresolved of others (also
 // of a reference to a name, so "@lang" of options.language stays)
+const unresolved = Symbol('unresolved');
 const resolved = (ast, names) => {
     const refs = refNames(ast);
     if (refs.length == 0 || !refs.every(n => Object.hasOwn(names, n)))
-        return undefined;
+        return unresolved;
     const v = evaluate(ast, names);
     return v === undefined ? null : v;
 };
@@ -58,9 +79,17 @@ const namesOfGlobals = (globals = {}, controls = []) => {
     // also as `globals.<name>`, e.g. of a global a dim of the same name shadows
     const names = { ...globals, ...Object.fromEntries(Object.entries(globals ?? {}).map(([k, v]) => [`globals.${k}`, v])) };
     [controls ?? []].flat().forEach(c => {
-        if (!isObject(c) || !Array.isArray(c.values))
+        if (!isObject(c))
             return;
         const g = c.global ?? c.ref;
+        // the global of a control is a name, also without a value yet, e.g. a
+        // definition without globals: a match of it has no case, its default
+        if (typeof g == 'string' && !Object.hasOwn(names, g)) {
+            names[g] = undefined;
+            names[`globals.${g}`] = undefined;
+        }
+        if (!Array.isArray(c.values))
+            return;
         const entry = c.values.find(v => isObject(v) && String(v.value) === String(globals?.[g]));
         Object.entries(entry ?? {}).filter(([, v]) => v === null || typeof v != 'object')
             .forEach(([k, v]) => names[`${g}:${k}`] ??= v);

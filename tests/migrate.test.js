@@ -28,7 +28,8 @@ const same = def => JSON.parse(JSON.stringify(def, function (k, v) {
         return undefined;
     if (k == 'fromData' || k == 'domainRel' || k == 'pad' || k == '$schema')
         return undefined;
-    if (k == 'symbol' && v && v.elements)
+    // a legend of 4.x without a symbol has none in 5.0 (`null`), the default is the one of the plots
+    if (k == 'symbol' && (v === null || (v && v.elements)))
         return undefined;
     if (k == 'hover' && v && typeof v == 'object' && Object.keys(v).length == 0 && this.footer !== undefined)
         return undefined;
@@ -77,7 +78,7 @@ describe('the migration of the definitions of 4.x', () => {
             dims: {
                 x: { column: 'Jahr', format: 'c' },
                 y: { column: 'Einwohner', format: ',.0f', zero: true, grid: true },
-                land: { column: 'Bundesland', scheme: 'Tableau10', legend: { symbol: 'line', onlyData: true } },
+                land: { column: 'Bundesland', fromData: true, scheme: 'Tableau10', legend: { symbol: 'line', onlyData: true } },
             },
             marks: { type: 'line', by: 'land', 'stroke-width': 2, highlight: { 'stroke-width': 4 } },
         });

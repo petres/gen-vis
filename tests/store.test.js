@@ -2,6 +2,10 @@
 import { describe, test, expect, vi, afterEach, onTestFinished } from 'vitest';
 import { createStore } from '@/store';
 import { resolveUrl, resolveParents, clearCache, requirements } from '@/utils/load';
+import { migrate } from '@/utils/migrate';
+import { translate } from '@/utils/language';
+import { resolve, variants, namesOfGlobals } from '@/utils/resolve';
+import { variantsOf } from '@/utils/def';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import { coords, loadCoord, registerCoord } from '@/coords';
 
@@ -20,7 +24,7 @@ afterEach(() => {
 });
 
 // the version of the definition language, see utils/version.js
-const schema = 'https://unpkg.com/@preschen/gen-vis@4/schema.json';
+const schema = 'https://unpkg.com/@preschen/gen-vis@5/schema.json';
 
 const def = {
     $schema: schema,
@@ -93,7 +97,7 @@ describe('resolveParents', () => {
             .rejects.toThrow("Cyclic parent definition 'http://h/b.json'");
     });
 
-    test('a file of a definition declares gen-vis 4 by its $schema, in itself or in a parent, an inline one may omit it', async () => {
+    test('a file of a definition declares gen-vis 5 (or 4) by its $schema, in itself or in a parent, an inline one may omit it', async () => {
         const load = files => url => files[url];
         const of = s => JSON.stringify({ $schema: s, options: {} });
         // the major version of unpkg or jsdelivr, a full one or the schema of the installed package
@@ -104,7 +108,7 @@ describe('resolveParents', () => {
         expect((await resolveParents({ parent: 'p.json' }, 'http://h/a.json', load({ 'http://h/p.json': of(schema) }))).$schema).toBe(schema);
         // an inline definition without one, its parents need none
         expect(await resolveParents({ parent: 'p.json', options: { title: 'a' } }, undefined, () => '{}')).toEqual({ parent: 'p.json', options: { title: 'a' } });
-        const error = what => `'http://h/a.json' is no definition of gen-vis 4: ${what}, e.g. "$schema": "${schema}", see the changelog of gen-vis 4.0.0 of the changes of the definitions`;
+        const error = what => `'http://h/a.json' is no definition of gen-vis 5: ${what}, e.g. "$schema": "${schema}", see the changelog of gen-vis 5.0.0 of the changes of the definitions`;
         await expect(resolveParents({ options: {} }, 'http://h/a.json')).rejects.toThrow(error('its $schema is missing'));
         await expect(resolveParents({ $schema: 'https://unpkg.com/@preschen/gen-vis@3/schema.json' }, 'http://h/a.json')).rejects.toThrow(error('its $schema is the one of gen-vis 3'));
         await expect(resolveParents({ $schema: 'https://unpkg.com/@preschen/gen-vis/schema.json' }, 'http://h/a.json'))
@@ -113,12 +117,12 @@ describe('resolveParents', () => {
             .rejects.toThrow(error('its $schema "https://vega.github.io/schema/vega-lite/v5.json" is none of gen-vis'));
         // every part with one, also a parent of a file with the one of 4 and of an inline definition
         await expect(resolveParents({ $schema: schema, parent: 'p.json' }, 'http://h/a.json', load({ 'http://h/p.json': of('https://unpkg.com/@preschen/gen-vis@3/schema.json') })))
-            .rejects.toThrow("'http://h/p.json' is no definition of gen-vis 4: its $schema is the one of gen-vis 3");
+            .rejects.toThrow("'http://h/p.json' is no definition of gen-vis 5: its $schema is the one of gen-vis 3");
         await expect(resolveParents({ $schema: 'https://unpkg.com/@preschen/gen-vis@3.1.0/schema.json' }, undefined))
-            .rejects.toThrow('the inline definition is no definition of gen-vis 4: its $schema is the one of gen-vis 3');
+            .rejects.toThrow('the inline definition is no definition of gen-vis 5: its $schema is the one of gen-vis 3');
         // the load of a file
         serve({ 'http://h/data/def.json': JSON.stringify({ ...def, $schema: undefined }), 'http://h/data/data.csv': csv });
-        await expect(createStore().init({ defUrl: 'http://h/data/def.json' })).rejects.toThrow("'http://h/data/def.json' is no definition of gen-vis 4: its $schema is missing");
+        await expect(createStore().init({ defUrl: 'http://h/data/def.json' })).rejects.toThrow("'http://h/data/def.json' is no definition of gen-vis 5: its $schema is missing");
     });
 
     test('invalid JSON', async () => {
@@ -256,7 +260,8 @@ describe('Store.init', () => {
         expect(warn).not.toHaveBeenCalled();
         const store = createStore();
         await store.init({ def: wrong, data: csv, check: true });
-        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition: plot\[0\]\.type: unknown type 'path'/));
+        // the places of the warnings are the ones of the definition of 5.0
+        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition: marks\[0\]\.type: unknown type 'path'/));
     });
 
     // the check reads the definition, not the normalized one, e.g. of the
@@ -275,11 +280,11 @@ describe('Store.init', () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const dated = { mapping: { x: { column: 'year', type: 'date' }, y: { column: 'value' } }, plot: { type: 'cartesian:line' } };
         await createStore().init({ def: dated, data: [{ year: 2020, value: 1 }], check: true });
-        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/mapping\.x\.type: the values of 'year' are numbers, e\.g\. 2020/));
+        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/dims\.x\.type: the values of 'year' are numbers, e\.g\. 2020/));
         warn.mockClear();
         const wrong = { ...def, data: 'http://h/missing.csv', plot: { ...def.plot, type: 'path' } };
         await expect(createStore().init({ def: wrong, check: true })).rejects.toThrow(/Could not load/);
-        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/plot\[0\]\.type: unknown type 'path'/));
+        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/marks\[0\]\.type: unknown type 'path'/));
     });
 
     test('errors name the url', async () => {
@@ -324,6 +329,13 @@ describe('Store.init', () => {
 
 describe('requirements', () => {
     const entries = patches => [{ id: 'e', ref: 'e', values: patches.map((patch, i) => ({ value: String(i), patch })) }];
+    // the definition of the engine with the ones of all values of its form elements, as the load keeps them
+    const engineOf = def4 => {
+        const source = migrate(def4);
+        const engine = translate(resolve(source, namesOfGlobals(source.globals, source.controls)));
+        engine[variantsOf] = variants(source).map(translate);
+        return engine;
+    };
 
     test('nothing of a plain definition but the coordinate system and the locale', () => {
         expect(requirements(def)).toEqual({
@@ -349,15 +361,15 @@ describe('requirements', () => {
     });
 
     test('the parts of the patches of form elements', () => {
-        const need = requirements({ ...def, formElements: entries([
+        const need = requirements(engineOf({ ...def, formElements: entries([
             { mapping: { c: { scale: { interpolator: 'Reds' }, legend: {} } } },
             { transform: [{ type: 'rank', column: 'value', as: 'rank' }], options: { transition: true, locale: 'en' } },
             null,
             { mapping: { y: null } },
-        ]) });
+        ]) }));
         expect(need).toEqual({ colors: true, coords: [undefined], geo: false, transforms: true, colorLegend: true, inside: false, locales: [undefined, 'en'] });
         // the placement of labels inside the bands of an area, also of a patch
-        expect(requirements({ plot: [{ id: 'a', type: 'area' }], formElements: [{ values: [{ patch: { plot: [{ id: 't', type: 'text', place: { in: 'a' } }] } }] }] }).inside).toBe(true);
+        expect(requirements(engineOf({ plot: [{ id: 'a', type: 'area' }], formElements: [{ ref: 'e', values: [{ value: 'a' }, { value: 'b', patch: { plot: [{ id: 't', type: 'text', place: { in: 'a' } }] } }] }] })).inside).toBe(true);
     });
 
     test('a name of a color which is no part of a scale or of props needs no colors', () => {

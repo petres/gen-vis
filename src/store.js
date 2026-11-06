@@ -3,7 +3,9 @@ export { createStore };
 import { distinctValues, prepareData, scaleDef, sourceRows, updateData, updateDataValues } from "@/utils/data";
 import { warnOnce } from "@/utils/warn";
 import { applyTransforms, utcColumns } from "@/utils/transform";
-import { applyPatches, fillHtml, fillText, formatOf, languageOf, templateNames } from "@/utils/def";
+import { applyResolved, fillHtml, fillText, formatOf, languageOf, templateNames } from "@/utils/def";
+import { inferTypes } from "@/utils/data";
+import { plotTypes } from "@/plots";
 import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { formatter } from "@/utils/expr";
@@ -26,6 +28,9 @@ const localeOf = locale => {
 class Store {
     defUrl = null;
     defOrg = null;
+    // the definition of gen-vis 5 with its expressions of the globals, see
+    // utils/resolve.js and applyResolved of utils/def.js
+    source = null;
     // the coordinate system of the definition, of a patch its one, of the
     // ones loaded by their name (`coords`), see applyFormElements
     coord = null;
@@ -192,8 +197,9 @@ class Store {
         for (let pass = 0; pass < 2; pass++) {
             const before = sourceRows(this.rows, this.columns);
             const columnsBefore = new Set(changedColumns);
-            applyPatches(this.def, this.defOrg, { dataKeys: column => this.dataKeys(column), keepVisible, transform, files: this.files,
-                symbols: symbolDefaults(this.chartDefaults) }).forEach(n => changed.includes(n) || changed.push(n));
+            applyResolved(this.def, this.defOrg, { dataKeys: (column, inOrder) => this.dataKeys(column, inOrder), keepVisible, transform, files: this.files,
+                symbols: symbolDefaults(this.chartDefaults), source: this.source, plotTypes,
+                types: part => inferTypes(part, this.rows, this.columns) }).forEach(n => changed.includes(n) || changed.push(n));
             transform();
             Object.keys(this.def.mapping).filter(n => changedColumns.has(this.def.mapping[n].column) && !changed.includes(n))
                 .forEach(n => changed.push(n));
@@ -239,10 +245,10 @@ class Store {
 
     // the categories of the data of a column, e.g. of a column of a form
     // element, the last ones are kept
-    dataKeys(column) {
+    dataKeys(column, inOrder = false) {
         const source = this.columns?.get(column) ?? sourceRows(this.rows, this.columns);
-        if (this.keyCache?.column !== column || this.keyCache.source !== source)
-            this.keyCache = { column, source, keys: distinctValues(this.rows, this.columns, column).map(String) };
+        if (this.keyCache?.column !== column || this.keyCache.source !== source || this.keyCache.inOrder !== inOrder)
+            this.keyCache = { column, source, inOrder, keys: distinctValues(this.rows, this.columns, column, inOrder).map(String) };
         return this.keyCache.keys;
     }
 

@@ -2,7 +2,7 @@
 // spec/README.md, an implementation in another language runs the same files
 import { describe, test, expect, beforeAll } from 'vitest';
 import { applyTransforms, loadTransforms } from '@/utils/transform';
-import { mergeAll, patchedParts } from '@/utils/def';
+import { mergeAll } from '@/utils/def';
 import { resolveParents } from '@/utils/load';
 import { evaluate, bind, formatter } from '@/utils/expr';
 import { parseExpression } from '@/utils/expr-parse';
@@ -82,13 +82,6 @@ describe('spec/merge', () => {
             await expect(resolved).rejects.toThrow(c.error);
         else
             expect(await resolved).toEqual(c.result);
-    });
-
-    test.each(import.meta.glob('../spec/merge/patches.json', { eager: true, import: 'default' })['../spec/merge/patches.json'].map(c => [c.name, c]))('patches: %s', (name, c) => {
-        const def = clone(c.def);
-        def.globals ??= {};
-        const parts = patchedParts(def, c.def);
-        expect({ globals: def.globals, parts }).toEqual(c.result);
     });
 });
 

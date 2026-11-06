@@ -1,4 +1,4 @@
-export { mergeAll, sameValue, prepareDef, applyPatches, patchedParts, patchable, variants, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts, symbolOf, symbolShape, isInLanguages, inLanguage, languageOf, textsIn };
+export { mergeAll, sameValue, prepareDef, applyResolved, resolvedParts, patchable, variants, variantsOf, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts, symbolOf, symbolShape, isInLanguages, inLanguage, languageOf, textsIn };
 
 import { deepMerge, mergeAll as mergeParts } from '@/utils/merge';
 import { ownColors, schemeColors } from '@/utils/d3';
@@ -6,6 +6,9 @@ import { comparison, isObject, sameValue } from '@/utils/values';
 import { defaultScaleType, hasCategories } from '@/utils/normalize';
 import { operators, refNames } from '@/utils/expr';
 import { hasLocale } from '@/utils/locale';
+import { translate } from '@/utils/language';
+import { resolve, namesOfGlobals } from '@/utils/resolve';
+import { normalize } from '@/utils/normalize';
 
 // arrays whose entries all have an `id`, e.g. the form elements and their
 // values, are merged by it, entries with a new id are appended, all other
@@ -181,8 +184,9 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = [], 
         // facets and the stacks. The categories of the data which are not
         // listed are after the listed ones.
         const categories = { ...m.categories };
+        // `fromData` of "rows": the categories in the order of the rows, not ascending
         if (m.fromData && typeof m.column == 'string')
-            dataKeys(fillTemplate(m.column, globals)).filter(k => !Object.hasOwn(categories, k)).forEach(k => categories[k] = {});
+            dataKeys(fillTemplate(m.column, globals), m.fromData == 'rows').filter(k => !Object.hasOwn(categories, k)).forEach(k => categories[k] = {});
         const keys = orderKeys(Object.keys(categories), m.order);
         // the colors of a scheme, without one and without colors of the
         // categories the default colors, `defaultColor`, the color of a plot
@@ -215,6 +219,9 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = [], 
     if (m.legend) {
         if (m.legend.props === undefined)
             m.legend.props = {};
+        // the symbols of the plots of the categories by default, `null` is none
+        if (m.legend.symbol === undefined && m.categoryProps)
+            m.legend.symbol = 'auto';
 
         // the symbols of the legend and of its categories, e.g. a rect of
         // one category and lines of the others
@@ -276,14 +283,18 @@ const placed = plots => {
 
 // the options of the definition, the height of a facet and the space around
 // its plots, e.g. of the axes
-const prepareOptions = options => ({ height: 400, ...options, margins: { top: 0, right: 0, bottom: 0, left: 0, ...options?.margins } });
+// an option of null is none, e.g. of an expression of a global without a value
+const prepareOptions = options => {
+    const given = Object.fromEntries(Object.entries(options ?? {}).filter(([, v]) => v !== null));
+    return { height: 400, ...given, margins: { top: 0, right: 0, bottom: 0, left: 0, ...(given.margins ?? {}) } };
+};
 
 // the props of a highlight or of the others of a plot, without the mode of
 // the highlight, e.g. "highlight": { "mode": "row", "r": 5 }
 const partProps = part => isObject(part) ? Object.keys(part).filter(n => n != 'mode') : [];
 
 // the plots and the annotations, which are plots of their own, the rows of
-// files of plots are the ones loaded, see `files` of applyPatches. The names
+// files of plots are the ones loaded, see `files` of applyResolved. The names
 // of the props of the highlight and of the others (`highlightProps`,
 // `othersProps`) are the ones of the stylesheet of the highlight, see
 // utils/highlight.js.
@@ -307,11 +318,13 @@ const preparePlots = (plot, annotations, files) => {
 
 /**
  * The prepared definition: the globals, the form elements and the parts
- * which they can patch with the selected entries, see applyPatches, the
- * definition is changed, `options` are the ones of applyPatches.
+ * which the globals can change, see applyResolved, the definition is
+ * changed, `options` are the ones of applyResolved.
  */
 const prepareDef = (def, options = {}) => {
     const org = JSON.parse(JSON.stringify(def));
+    if (def[variantsOf])
+        org[variantsOf] = def[variantsOf];
     // the values of the form elements, also without globals of the definition
     def.globals ??= {};
     // a form element without entries has none
@@ -321,7 +334,7 @@ const prepareDef = (def, options = {}) => {
             e.values = [];
     });
     def.mapping ??= {};
-    applyPatches(def, org, options);
+    applyResolved(def, org, options);
     return def;
 };
 
@@ -396,14 +409,15 @@ const textsIn = (name, part, language) => {
     return (textPaths[name] ?? []).reduce((v, path) => resolve(v, path), part);
 };
 
-// the parts of a definition which the entries of form elements can patch
+// the parts of a definition which the globals can change, see resolvedParts
 const patchable = ['options', 'mapping', 'plot', 'annotations', 'filter', 'facets', 'geo', 'transform'];
 
-// the definition and the patches of the entries of its form elements, e.g.
-// to load the parts any of them needs, see requirements of store.js
-const variants = def => [def, ...(def.formElements ?? [])
-    .flatMap(e => Array.isArray(e?.values) ? e.values.map(v => v?.patch) : [])
-    .filter(isObject)];
+// the definitions of the engine of all values of the controls of a
+// definition, kept on the one of its load (see load of utils/load.js), e.g.
+// to load the parts any of them needs, see requirements of utils/load.js,
+// the definition itself without them
+const variantsOf = Symbol('variants');
+const variants = def => def[variantsOf] ?? [def];
 
 // the entry of a form element of the value of its global, undefined if
 // there is none
@@ -417,46 +431,52 @@ const selectedEntries = def => (def.formElements ?? []).map(e => selectedEntry(d
 const sources = Symbol('sources');
 
 /**
- * The patchable parts of the original definition `defOrg` with the patches
- * of the entries of the form elements selected by the globals of `def`, in
- * the order of the form elements, see spec/merge.md. The globals of an entry
- * can select the entry of a later form element, e.g. a language selects its
- * names, they are set in `def.globals` until no entry changes them anymore,
- * at most once per form element, e.g. of entries which set each other's
- * globals.
+ * The patchable parts of the definition `source` (the one of gen-vis 5 with
+ * its expressions of the globals, see utils/resolve.js) of the globals of
+ * `def`: resolved with them and the fields of the selected entries of the
+ * controls, translated and normalized (`plotTypes` are the plot types,
+ * see utils/normalize.js); without a source the parts of `defOrg`. The
+ * globals of an entry can select the entry of a later form element, e.g. a
+ * language selects its names, they are set in `def.globals` until no entry
+ * changes them anymore, at most once per form element, e.g. of entries
+ * which set each other's globals.
  */
-const patchedParts = (def, defOrg) => {
-    let selected;
+const resolvedParts = (def, defOrg, source = null, plotTypes = {}) => {
     for (let i = 0; i <= (def.formElements ?? []).length; i++) {
-        selected = selectedEntries(def);
+        const selected = selectedEntries(def);
         const globals = JSON.stringify(def.globals);
         selected.filter(v => isObject(v.globals)).forEach(v => Object.assign(def.globals, v.globals));
         if (JSON.stringify(def.globals) == globals)
             break;
     }
     const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));
-    return mergeAll([pick(defOrg), ...selected.filter(v => isObject(v.patch)).map(v => pick(v.patch))]);
+    if (!source)
+        return pick(JSON.parse(JSON.stringify(pick(defOrg))));
+    const names = namesOfGlobals(def.globals, source.controls);
+    return pick(normalize(translate(resolve(source, names)), { plotTypes }));
 };
 
 /**
- * The parts of a definition with the patches of the selected entries of the
- * form elements (`patch`, e.g. { "mapping": { "y": { "column": "share" } } }
- * or { "geo": { "fit": "data" } }), merged into the original definition
- * `defOrg` in the order of the form elements, `null` removes a part. An
- * entry can also set globals (`globals`). Column templates are filled with
- * the globals, e.g. "{values}{share}". Only the parts which differ from the
+ * The parts of a definition of its globals (see resolvedParts: the
+ * `source` of gen-vis 5 resolved with them, e.g. a column or a scale of a
+ * control, `plotTypes` of its normalization), prepared into `def`, `defOrg`
+ * is the definition of the load. Column templates are filled with the
+ * globals, e.g. "{values}{share}". Only the parts which differ from the
  * ones prepared before are prepared again, e.g. a mapping with the categories
  * of the data of another column (`dataKeys`, see prepareMapping), the
  * entries of the legends of the same categories keep their state shown or
  * hidden (`keepVisible`). `transform()` is called once the transforms are
  * the new ones, before the mappings, their categories can be the ones of a
- * transform, `files` are the rows of the files of plots, by their url,
- * `symbols` the defaults of the symbols of legends, see symbolDefaults.
- * Returns the names of the mappings whose values change, the ones of another
- * column or type.
+ * transform, `types(part)` sets the types of the mappings of a part
+ * without one from the values (see inferTypes of utils/data.js), `files`
+ * are the rows of the files of plots, by their url, `symbols` the defaults
+ * of the symbols of legends, see symbolDefaults. Returns the names of the
+ * mappings whose values change, the ones of another column or type.
  */
-const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {} } = {}) => {
-    const merged = patchedParts(def, defOrg);
+const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {}, source = null, plotTypes = {}, types = null } = {}) => {
+    const merged = resolvedParts(def, defOrg, source, plotTypes);
+    if (merged.mapping && types)
+        types({ mapping: merged.mapping, globals: def.globals });
     // the texts in the language of the definition, e.g. of a global of a
     // form element; the locale of the numbers and dates is the language
     // without one of its own
@@ -518,7 +538,7 @@ const applyPatches = (def, defOrg, { dataKeys = () => [], keepVisible = true, tr
             merged.column = fillTemplate(merged.column, names);
         // the categories of the data are part of the source, e.g. of a column
         // of a transform of the globals, such as the names of a language
-        const keys = merged.fromData && typeof merged.column == 'string' ? dataKeys(merged.column) : null;
+        const keys = merged.fromData && typeof merged.column == 'string' ? dataKeys(merged.column, merged.fromData == 'rows') : null;
         // a symbol "auto" of the legend or of a category is the one of the
         // plots, e.g. bars of a patch instead of lines
         const auto = [merged.legend?.symbol, ...Object.values(isObject(merged.categories) ? merged.categories : {}).map(c => c?.symbol)]

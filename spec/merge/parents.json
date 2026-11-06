@@ -250,7 +250,7 @@
         "height": 2
       }
     },
-    "error": "'http://h/def.json' is no definition of gen-vis 4: its $schema is missing"
+    "error": "'http://h/def.json' is no definition of gen-vis 5: its $schema is missing"
   },
   {
     "name": "a part with the $schema of another version of gen-vis is an error, also a parent",
@@ -267,6 +267,6 @@
       "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
       "parent": "base.json"
     },
-    "error": "'http://h/base.json' is no definition of gen-vis 4: its $schema is the one of gen-vis 3"
+    "error": "'http://h/base.json' is no definition of gen-vis 5: its $schema is the one of gen-vis 3"
   }
 ]

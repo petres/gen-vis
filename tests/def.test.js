@@ -1,6 +1,8 @@
 import { loadColors } from '@/utils/d3';
+import { migrate } from '@/utils/migrate';
+import { plotTypes } from '@/plots';
 import { describe, test, expect, beforeAll } from 'vitest';
-import { sameValue, applyPatches, fillTemplate, formatOf, mergeAll, prepareDef, selectedEntry, templateNames, templateRefs, variants } from '@/utils/def';
+import { sameValue, applyResolved, variantsOf, fillTemplate, formatOf, mergeAll, prepareDef, selectedEntry, templateNames, templateRefs, variants } from '@/utils/def';
 
 // the colors of d3 are loaded by the store, see loadColors
 beforeAll(loadColors);
@@ -133,7 +135,10 @@ describe('formatOf', () => {
     });
 });
 
-describe('applyPatches', () => {
+describe('applyResolved (the parts of the definition of its globals)', () => {
+    // the source of 5.0 of a definition of 4.x with patches, see utils/migrate.js
+    const sourceOf = def4 => migrate(def4);
+    const options = source => ({ source, plotTypes });
     const defOrg = {
         globals: { value: 'a' },
         formElements: [{ ref: 'value', type: 'radio', values: [
@@ -144,17 +149,20 @@ describe('applyPatches', () => {
         plot: { type: 'cartesian:line', props: {} },
     };
 
-    test('the selected entries patch the mappings', () => {
-        const def = prepareDef(JSON.parse(JSON.stringify(defOrg)));
+    test('the selected entries change the mappings', () => {
+        const source = sourceOf(defOrg);
+        expect(source.dims.y.column).toBe("=match(@value, {a: 'A', b: 'B'}, 'A')");
+        const def = prepareDef(JSON.parse(JSON.stringify(defOrg)), options(source));
+        expect(def.mapping.y.column).toBe('A');
         def.globals.value = 'b';
-        expect(applyPatches(def, defOrg)).toEqual(['y']);
+        expect(applyResolved(def, defOrg, options(source))).toEqual(['y']);
         expect(def.mapping.y).toMatchObject({ column: 'B', type: 'numeric', scale: { type: 'linear' } });
         expect(defOrg.mapping.y.column).toBe('A');
     });
 
-    test('nothing to do without patches', () => {
+    test('nothing to do without a source', () => {
         const def = prepareDef({ mapping: {} });
-        expect(applyPatches(def, { mapping: {} })).toEqual([]);
+        expect(applyResolved(def, { mapping: {} })).toEqual([]);
     });
 
     test('the other parts of the definition, unchanged ones are kept', () => {
@@ -175,25 +183,28 @@ describe('applyPatches', () => {
             mapping: { x: { column: 'x', type: 'numeric' }, region: { column: 'r', fromData: true } },
             plot: [{ id: 'dots', type: 'svg:circle', props: { r: 4, fill: 'red' } }],
         };
-        const def = prepareDef(JSON.parse(JSON.stringify(org)));
+        const source = sourceOf(org);
+        const def = prepareDef(JSON.parse(JSON.stringify(org)), options(source));
         const region = def.mapping.region;
         expect(def.options).toMatchObject({ title: 'World', height: 400 });
-        expect(def.filter).toBeUndefined();
+        // the filter of the rows is the expression of the global, all rows of the other values
+        expect(def.filter).toEqual({ match: ['@globals.view', { europe: { '==': ['@region', 'EU'] } }, true] });
 
         def.globals.view = 'europe';
-        applyPatches(def, org);
+        applyResolved(def, org, options(source));
         expect(def.options).toMatchObject({ title: 'Europe', height: 300, margins: { top: 0 } });
         expect(def.geo).toEqual({ data: 'world.json', fit: 'data' });
-        expect(def.filter).toEqual({ region: 'EU' });
-        expect(def.plot[0].props).toEqual({ r: 2, fill: 'red' });
+        expect(def.filter).toEqual({ match: ['@globals.view', { europe: { '==': ['@region', 'EU'] } }, true] });
+        expect(def.plot[0].props).toMatchObject({ r: 2, fill: 'red' });
         // null removes a part, the mappings which are the same are kept
         expect(Object.keys(def.mapping)).toEqual(['region']);
         expect(def.mapping.region).toBe(region);
 
         def.globals.view = 'world';
-        applyPatches(def, org);
+        applyResolved(def, org, options(source));
         expect(def.geo).toEqual({ data: 'world.json' });
-        expect(def.filter).toBeUndefined();
+        // the filter of the rows is the expression of the global, all rows of the other values
+        expect(def.filter).toEqual({ match: ['@globals.view', { europe: { '==': ['@region', 'EU'] } }, true] });
         expect(Object.keys(def.mapping)).toEqual(['x', 'region']);
     });
 
@@ -208,7 +219,7 @@ describe('applyPatches', () => {
         };
         const def = prepareDef(JSON.parse(JSON.stringify(org)));
         def.globals.group = 'eu';
-        applyPatches(def, org);
+        applyResolved(def, org);
         expect(def.globals).toEqual({ group: 'eu', label: 'EU-27' });
     });
 
@@ -225,13 +236,14 @@ describe('applyPatches', () => {
             mapping: { y: { column: '{values}{share}', type: 'numeric', axis: { format: ',.1f' } } },
             plot: { type: 'cartesian:line', props: {} },
         };
-        const def = prepareDef(JSON.parse(JSON.stringify(org)));
+        const source = sourceOf(org);
+        const def = prepareDef(JSON.parse(JSON.stringify(org)), options(source));
         expect(def.mapping.y).toMatchObject({ column: 'twh', axis: { format: ',.1f' } });
         // the same column, e.g. a form element of other globals
-        expect(applyPatches(def, org)).toEqual([]);
+        expect(applyResolved(def, org, options(source))).toEqual([]);
 
         Object.assign(def.globals, { values: 'co2', share: '.share' });
-        expect(applyPatches(def, org)).toEqual(['y']);
+        expect(applyResolved(def, org, options(source))).toEqual(['y']);
         expect(def.mapping.y).toMatchObject({ column: 'co2.share', axis: { format: '.0%' } });
         expect(org.mapping.y.column).toBe('{values}{share}');
     });
@@ -272,25 +284,12 @@ describe('column templates', () => {
 });
 
 describe('variants and selectedEntry', () => {
-    const def = {
-        mapping: { y: { column: 'value' } },
-        globals: { unit: 2024 },
-        formElements: [
-            { ref: 'unit', values: [{ value: '2023' }, { value: '2024', patch: { mapping: { y: { column: 'share' } } } }, { value: '2025', patch: null }] },
-            // the values of a column, not loaded yet
-            { ref: 'year', values: { column: 'year' } },
-            {},
-        ],
-    };
-
-    test('the definition and the patches of the entries of its form elements', () => {
-        expect(variants(def)).toEqual([def, { mapping: { y: { column: 'share' } } }]);
-        expect(variants({ mapping: {} })).toEqual([{ mapping: {} }]);
-    });
-
-    test('the entry of the value of the global, compared as strings', () => {
-        expect(selectedEntry(def, def.formElements[0])).toBe(def.formElements[0].values[1]);
-        expect(selectedEntry({ ...def, globals: {} }, def.formElements[0])).toBe(undefined);
+    test('the definitions of the engine of all values of the controls of the load, the definition itself without them', () => {
+        const def = { mapping: { y: { column: 'value' } } };
+        expect(variants(def)).toEqual([def]);
+        const own = { mapping: { y: { column: 'value' } } };
+        own[variantsOf] = [own, { mapping: { y: { column: 'share' } } }];
+        expect(variants(own)).toEqual([own, { mapping: { y: { column: 'share' } } }]);
     });
 });
 
@@ -342,7 +341,7 @@ describe('sameValue', () => {
     });
 });
 
-describe('applyPatches of globals and of the categories of the data', () => {
+describe('applyResolved of globals and of the categories of the data', () => {
     test('the globals of an entry select the entry of a later form element at once', () => {
         const org = {
             globals: { a: '2', b: 'x' },
@@ -352,14 +351,15 @@ describe('applyPatches of globals and of the categories of the data', () => {
             ],
             mapping: { y: { column: 'c0', type: 'numeric' } },
         };
-        const def = prepareDef(JSON.parse(JSON.stringify(org)));
+        const source = migrate(org);
+        const def = prepareDef(JSON.parse(JSON.stringify(org)), { source, plotTypes });
         expect(def.mapping.y.column).toBe('cx');
         def.globals.a = '1';
-        expect(applyPatches(def, org)).toEqual(['y']);
+        expect(applyResolved(def, org, { source, plotTypes })).toEqual(['y']);
         expect(def.globals.b).toBe('y');
         expect(def.mapping.y.column).toBe('cy');
         // a second one changes nothing
-        expect(applyPatches(def, org)).toEqual([]);
+        expect(applyResolved(def, org, { source, plotTypes })).toEqual([]);
         expect(def.mapping.y.column).toBe('cy');
     });
 
@@ -382,13 +382,13 @@ describe('applyPatches of globals and of the categories of the data', () => {
         expect(def.mapping.c.keys).toEqual(['Österreich', 'Deutschland']);
         def.globals.lang = 'en';
         keys = ['Austria', 'Germany'];
-        applyPatches(def, org, { dataKeys: () => keys });
+        applyResolved(def, org, { dataKeys: () => keys });
         expect(def.mapping.c.keys).toEqual(['Austria', 'Germany']);
         expect(Object.keys(def.mapping.c.categoryProps)).toEqual(['Austria', 'Germany']);
         // the same values keep the mapping, e.g. its entries hidden
         def.mapping.c.categoryProps.Austria.visible = false;
         const mapping = def.mapping.c;
-        applyPatches(def, org, { dataKeys: () => [...keys] });
+        applyResolved(def, org, { dataKeys: () => [...keys] });
         expect(def.mapping.c).toBe(mapping);
     });
 });

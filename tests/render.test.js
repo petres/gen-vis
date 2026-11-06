@@ -326,7 +326,8 @@ describe('rendering', () => {
         expect(strokes(await mount({ def, data: lineData }))).toEqual(['#121212', '#222222']);
         // with colors of the categories none
         def.mapping.c.categories.Wien.color = 'red';
-        expect(strokes(await mount({ def, data: lineData }))).toEqual(['red', null]);
+        // a plot without categories is drawn in the color of the text, see plots/defaults.js
+        expect(strokes(await mount({ def, data: lineData }))).toEqual(['red', 'currentColor']);
         expect(errors).toEqual([]);
     });
 
@@ -420,7 +421,7 @@ describe('rendering', () => {
     test('a definition which could not be drawn is replaced by a valid one', async () => {
         // the one which failed is not drawn again while the new one is loaded
         const { el, vis } = await mountVis({ def: { ...lineDef(), plot: { type: 'cartesian:lines', props: {} } }, data: lineData });
-        expect(el.querySelector('.vis-error').textContent).toBe("Unknown plot type 'cartesian:lines'");
+        expect(el.querySelector('.vis-error').textContent).toBe("Unknown plot type 'lines'");
 
         vis.update({ def: lineDef() });
         await vi.waitFor(() => expect(el.querySelector('svg.vis-svg')).not.toBeNull(), { timeout: 2000 });
@@ -2444,8 +2445,9 @@ describe('fixed bugs', () => {
         const def = lineDef();
         def.mapping.y.hover = true;
         expect(await message(def)).toBe('mapping.y.hover: expected an object, e.g. {}');
-        expect(await message({ ...lineDef(), facets: { dim: 'x' } })).toMatch(/^facets.dim: the facets are the categories of a mapping, e.g./);
-        expect(await message({ ...lineDef(), plot: [null] })).toMatch(/^plot\[0\]: expected a plot/);
+        // the facets of a dim which does not exist (of a numeric one its values are the categories)
+        expect(await message({ ...lineDef(), facets: { dim: 'nope' } })).toMatch(/^facets.dim: the facets are the categories of a mapping, e.g./);
+        expect(await message({ ...lineDef(), plot: [null] })).toMatch(/^marks\[0\]: expected a mark/);
     });
 
     test('a legend of a mapping of positions, a locale of null', async () => {

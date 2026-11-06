@@ -324,8 +324,10 @@ export default {
         title(ctx, key, names) {
             const f = featureByKey(ctx.store.geo, key);
             const property = (ctx.store.def.geo.name ?? 'name').replace(/^properties\./, '');
+            // the name of the category if it has one of its own, not the key
             const props = ctx.store.mapping(names.h).categoryProps;
-            return ctx.store.text(props && Object.hasOwn(props, key) ? props[key].name : undefined) ?? f?.properties?.[property] ?? key;
+            const own = props && Object.hasOwn(props, key) && props[key].name !== key ? props[key].name : undefined;
+            return ctx.store.text(own) ?? f?.properties?.[property] ?? key;
         },
     },
 };

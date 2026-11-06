@@ -1,6 +1,6 @@
 export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor, unknownOf, gridOf, facetDims, inFacet };
 
-import { categoryOrder, continuous, convert, filter, filterRows, groupBy, keptRows, stack } from "@/utils/data";
+import { categoryOrder, continuous, convert, filter, filterRows, groupBy, keptRows, stack, withoutConditions } from "@/utils/data";
 import * as d3 from "@/utils/d3";
 import { bind, constant, evaluate, formatter, isOperator, refNames } from "@/utils/expr";
 import { isObject } from "@/utils/values";
@@ -252,7 +252,10 @@ const rowsOf = (store, def, axis, scope, stacked) => {
  * also the ones of the values of the ignored conditions, e.g. per month.
  */
 const domainRows = (store, def, axis, scope, stacked, shown, stackOrder) => {
-    const conditions = Object.keys(def.filter ?? {});
+    // the conditions of the filter: the keys of conditions of 4.x, the dims
+    // an expression references, `true` ignores all of them
+    const expression = def.filter !== undefined && def.filter !== null && !(isObject(def.filter) && !isOperator(def.filter));
+    const conditions = def.filter === undefined || def.filter === null ? [] : expression ? [...new Set(refNames(def.filter).map(n => n.split(':')[0]))] : Object.keys(def.filter);
     const kept = new Map();
     const domains = {};
     Object.entries(def.mapping).forEach(([n, m]) => {
@@ -262,8 +265,7 @@ const domainRows = (store, def, axis, scope, stacked, shown, stackOrder) => {
             return;
         const key = names.join('\0');
         if (!kept.has(key)) {
-            // of an expression (5.0) all rows, the filter is ignored as a whole
-            const others = isObject(def.filter) && !isOperator(def.filter) ? Object.fromEntries(Object.entries(def.filter).filter(([c]) => !names.includes(c))) : undefined;
+            const others = ignores === true ? undefined : withoutConditions(def.filter, names);
             kept.set(key, filter(filterRows(keptRows(store.data, store.columns), others, def.mapping, scope, { columns: store.columns }), shown));
         }
         const rows = kept.get(key);

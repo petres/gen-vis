@@ -78,6 +78,9 @@ const parsed = (text, path) => {
     try {
         return parseExpression(text);
     } catch (error) {
+        // a reference with a template, e.g. "@{smooth}", is one of the engine
+        if (text.startsWith('@') && !/\s/.test(text))
+            return text;
         throw new Error(`${path}: ${error.message}`);
     }
 };
@@ -124,17 +127,22 @@ const dim = (raw, name) => {
     // a category of a text is its color
     if (isObject(m.categories))
         m.categories = Object.fromEntries(Object.entries(m.categories).map(([k, c]) => [k, typeof c == 'string' ? { color: c } : c]));
-    // the categories of a categorical dim are the ones of the data, after the listed ones
-    if (isCategorical(m) && m.fromData === undefined)
-        m.fromData = true;
+    // the categories of a dim with a legend or the parts of categories
+    // without listed ones are the ones of the data, in the order of the
+    // rows; listed categories are all of them (`fromData` adds the others)
+    // (a legend of a dim with a scale is the legend of its colors)
+    if (m.fromData === undefined && !isObject(m.categories) && (categoryParts.some(k => m[k] !== undefined)
+        || (m.legend !== undefined && m.legend !== false && !isObject(m.scale) && m.type !== 'numeric' && m.type !== 'date')))
+        m.fromData = 'rows';
     return m;
 };
 
 // the dim of a channel of a mark: a dim by its name, an implicit one of a
 // column (`dims` gets it), a number is a value on the scale of the axis of
-// the channel, an expression of the row as it is (pixels), undefined if
-// the mark has none and the dim of the axis does not exist
-const channelOf = (mark, channel, dims, axis = positionChannels[channel]) => {
+// the channel if `valued` (the base of a bar, the value of a rule), else
+// pixels, an expression of the row as it is (pixels), undefined if the
+// mark has none and the dim of the axis does not exist
+const channelOf = (mark, channel, dims, axis = positionChannels[channel], valued = false) => {
     const v = mark[channel];
     if (v === undefined)
         return axis && Object.hasOwn(dims, axis) ? { dim: axis, value: ref(axis) } : undefined;
@@ -144,7 +152,7 @@ const channelOf = (mark, channel, dims, axis = positionChannels[channel]) => {
             dims[v] = { column: v };
         return { dim: v, value: ref(v) };
     }
-    if (typeof v == 'number' && axis && Object.hasOwn(dims, axis))
+    if (typeof v == 'number' && valued && axis && Object.hasOwn(dims, axis))
         return { dim: axis, value: `@${axis}:scaled:${v}`, fixed: v };
     return { dim: undefined, value: v };
 };
@@ -187,7 +195,7 @@ const typeOf = (type, coord) => {
         return 'polar:arc';
     if (['base', 'region', 'mesh'].includes(type))
         return `geo:${type}`;
-    if (['circle', 'rect', 'line', 'text', 'path', 'polygon'].includes(type))
+    if (['circle', 'rect', 'line', 'text'].includes(type))
         return `svg:${type}`;
     return type;
 };
@@ -224,6 +232,8 @@ const mark = (raw, i, dims, coord, stacks) => {
     const ch = (name, axis) => channelOf({ ...p, ...props }, name, dims, axis);
     // a channel only if the mark has it, e.g. the start of a bar
     const given = (name, axis) => raw[name] !== undefined ? ch(name, axis) : undefined;
+    // a channel of a value: a number is one on the scale, e.g. the base of a bar
+    const valued = (name, axis = positionChannels[name]) => raw[name] !== undefined ? channelOf({ ...p, ...props }, name, dims, axis, true) : undefined;
     const take = (...names) => names.forEach(n => delete props[n]);
     const stack = p.stack;
     delete p.stack;
@@ -267,7 +277,10 @@ const mark = (raw, i, dims, coord, stacks) => {
                 props[k] = c.value;
         });
     } else if (coord == 'cartesian' || prefix == 'svg') {
-        const x = ch('x'), y = ch('y'), x0 = given('x0'), x1 = given('x1'), y0 = given('y0'), y1 = given('y1');
+        const base = kind == 'bar' || kind == 'area' || kind == 'rule';
+        const x = base && kind == 'rule' ? (raw.x !== undefined ? valued('x') : ch('x')) : ch('x');
+        const y = base && kind == 'rule' ? (raw.y !== undefined ? valued('y') : ch('y')) : (kind == 'bar' && raw.y !== undefined ? valued('y') : ch('y'));
+        const x0 = base ? valued('x0') : given('x0'), x1 = given('x1'), y0 = base ? valued('y0') : given('y0'), y1 = given('y1');
         take('x', 'y', 'x0', 'x1', 'y0', 'y1');
         if (kind == 'line' || kind == 'area') {
             const d = isObject(props.d) ? { ...props.d } : {};
@@ -504,8 +517,9 @@ const translate = raw => {
     out.options = options;
     const coord = options.coord ?? 'cartesian';
 
+    // a dim of null (or false) is none, e.g. of a global which removes it
     const dims = {};
-    Object.entries(isObject(def.dims) ? def.dims : {}).forEach(([n, d]) => dims[n] = dim(d, n));
+    Object.entries(isObject(def.dims) ? def.dims : {}).filter(([, d]) => d !== null && d !== false).forEach(([n, d]) => dims[n] = dim(d, n));
     if (def.filter !== undefined)
         out.filter = def.filter;
     if (Array.isArray(def.controls))
@@ -513,15 +527,15 @@ const translate = raw => {
     else if (def.controls !== undefined)
         throw new Error('controls: expected a list of controls');
 
-    // the dims of the marks' `by` and of the facets have the categories of
-    // the data, before the marks are translated, e.g. a fill of such a dim
+    // the dims of the facets have the categories of the data (the `by` of a
+    // mark groups rows of any type, e.g. of a year, it makes no categories)
     const facets = facetsOf(def.facets, dims);
     const rawMarks = def.marks === undefined ? [] : [def.marks].flat();
     const grouped = [...rawMarks.flatMap(m => isObject(m) ? [m.by ?? []].flat() : []), ...(facets ? [facets.dim, facets.rows, facets.cols] : [])]
         .filter(n => typeof n == 'string' && Object.hasOwn(dims, n) && isObject(dims[n]));
-    grouped.forEach(n => {
-        if (dims[n].fromData === undefined && dims[n].type !== 'numeric' && dims[n].type !== 'date')
-            dims[n].fromData = true;
+    (facets ? [facets.dim, facets.rows, facets.cols] : []).filter(n => typeof n == 'string' && isObject(dims[n])).forEach(n => {
+        if (dims[n].fromData === undefined && !isObject(dims[n].categories))
+            dims[n].fromData = 'rows';
     });
     const stacks = [];
     const marks = rawMarks.map((m, i) => mark(m, i, dims, coord, stacks));

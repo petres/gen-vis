@@ -3,7 +3,10 @@ export { valueFormat, resolveUrl, clearCache, resolveParents, readDef, requireme
 
 import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, toDate, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
-import { applyPatches, languageOf, mergeAll, prepareDef, variants } from "@/utils/def";
+import { applyResolved, languageOf, mergeAll, prepareDef, variants, variantsOf } from "@/utils/def";
+import { translate, isDefinition4, authoredPath } from "@/utils/language";
+import { migrate } from "@/utils/migrate";
+import { resolve, namesOfGlobals, variants as resolvedVariants } from "@/utils/resolve";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
 import { checkLocale, getLocale, loadLocale } from "@/utils/locale";
 import { loadCoord } from "@/coords";
@@ -78,12 +81,12 @@ const parseDef = (text, source, what = 'definition') => {
     }
 };
 
-// a definition of another version than gen-vis 4 (see utils/version.js),
+// a definition of another version than gen-vis 5 or 4 (see utils/version.js),
 // `source` is its url or the inline definition
 const checkVersion = (def, source, required = false) => {
     const error = versionError(def?.$schema, required);
     if (error)
-        throw new Error(`${source} is no definition of gen-vis 4: ${error}`);
+        throw new Error(`${source} is no definition of gen-vis 5: ${error}`);
 };
 
 // merges def with its parents, a parent url is relative to the def referencing
@@ -186,13 +189,13 @@ const requirements = defOrg => {
     const mappings = all.flatMap(d => Object.values(d.mapping ?? {})).filter(isObject);
     return {
         colors: mappings.some(m => Boolean(m.scale?.interpolator || [m.scale?.scheme, m.scheme].some(s => s && !ownScheme(s)))),
-        coords: [...new Set(all.filter((d, i) => i == 0 || d.options?.coord !== undefined).map(d => d.options?.coord ?? undefined))],
+        coords: [...new Set(all.filter((d, i) => i == 0 || d.options?.coord != null).map(d => d.options?.coord ?? undefined))],
         geo: all.some(d => Boolean(d.geo?.data)),
         transforms: all.some(d => Boolean(d.transform)),
         colorLegend: mappings.some(m => m.legend && !hasCategories(m)),
         // labels inside the bands of an area, see plots/inside.js
         inside: all.some(d => [d.plot ?? []].flat().some(p => isObject(p) && isObject(p.place) && p.place.in !== undefined)),
-        locales: [...all.filter((d, i) => i == 0 || d.options?.locale !== undefined).map(d => d.options?.locale ?? undefined), ...languagesOf(defOrg)],
+        locales: [...new Set([...all.filter((d, i) => i == 0 || d.options?.locale != null).map(d => d.options?.locale ?? undefined), ...languagesOf(defOrg)])],
     };
 };
 
@@ -259,15 +262,28 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
     if (typeof def.geo?.data == 'string')
         fetchText(resolveUrl(def.geo.data, url)).catch(() => {});
 
-    // the normalized merged definition, see utils/normalize.js
+    // the merged definition of gen-vis 5 (`source`, one of gen-vis 4 is
+    // migrated, see utils/migrate.js), resolved with its globals, translated
+    // and normalized as the engine reads it, see utils/language.js and
+    // utils/normalize.js, with the definitions of all values of its controls
     const merged = await resolveParents(JSON.parse(JSON.stringify(def)), url);
-    const defOrg = normalize(merged, { plotTypes });
-    // the check of the merged definition (not the normalized one) with
-    // the rows, e.g. of years as dates, see load, it is loaded meanwhile
-    const validate = async rows => (await checks)?.validateDef(merged, rows)
-        .forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
-    return { url, defOrg, validate };
+    const old = isDefinition4(merged);
+    if (old && url !== undefined)
+        console.info(`gen-vis '${url}': a definition of gen-vis 4, migrated while it is loaded, 'gen-vis migrate' writes it as one of gen-vis 5`);
+    const source = old ? migrate(merged) : merged;
+    const engine = v => normalize(translate(v), { plotTypes });
+    const defOrg = engine(resolve(source, namesOfGlobals(source.globals, source.controls)));
+    defOrg[variantsOf] = resolvedVariants(source).map(engine);
+    // the check of the definition (translated, not normalized) with the
+    // rows, e.g. of years as dates, see load, it is loaded meanwhile, the
+    // places of the warnings are the ones of the definition
+    const validate = async rows => (await checks)?.validateDef(translate(resolve(source, namesOfGlobals(source.globals, source.controls))), rows)
+        .forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${authoredWarning(w)}`));
+    return { url, defOrg, source, validate };
 };
+
+// a warning of the check with the place of the definition, see authoredPath
+const authoredWarning = w => w.replace(/^([\w.\[\]-]+)(?=:)/, p => authoredPath(p));
 
 // the rows of the data of the attribute or of the url of the definition,
 // the format by default the one of the extension of its url, parquet is
@@ -327,19 +343,22 @@ const valueFormat = locale => format => {
     };
 };
 
-const prepare = (defOrg, rows, files, state, globals, symbols = {}) => {
+const prepare = (defOrg, source, rows, files, state, globals, symbols = {}) => {
     let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files);
     addDataValues(defOrg, rows, columns, valueFormat(defOrg.options?.locale));
     inferTypes(defOrg, rows, columns);
-    const keysOf = column => distinctValues(rows, columns, column).map(String);
+    const keysOf = (column, inOrder = false) => distinctValues(rows, columns, column, inOrder).map(String);
     const transform = () => {
         columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns, files);
     };
-    const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), { dataKeys: keysOf, files, symbols });
+    // the types of the mappings of the definition resolved again from the values
+    const types = part => inferTypes(part, rows, columns);
+    const resolving = { dataKeys: keysOf, files, symbols, source, plotTypes, types };
+    const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), resolving);
     const defaults = snapshot(prepared);
     applyState(prepared, state);
     applyGlobals(prepared, globals);
-    applyPatches(prepared, defOrg, { dataKeys: keysOf, files, transform, symbols });
+    applyResolved(prepared, defOrg, { ...resolving, transform });
     applyState(prepared, { visible: state?.visible });
     transform();
     // the values of the columns of the transforms of the globals of the
@@ -351,7 +370,7 @@ const prepare = (defOrg, rows, files, state, globals, symbols = {}) => {
     if ((columns.steps.length > 0 || language !== undefined)
         && updateDataValues(defOrg, prepared, rows, columns, valueFormat(prepared.options?.locale), () => true, language,
             ref => globals?.[ref] !== undefined).length > 0) {
-        applyPatches(prepared, defOrg, { dataKeys: keysOf, files, transform, symbols });
+        applyResolved(prepared, defOrg, { ...resolving, transform });
         transform();
     }
     return { prepared, defaults, columns };
@@ -385,7 +404,7 @@ const loadGeo = (geometries, module, prepared) => {
 // definition and the geometry of its map. The coordinate systems and the
 // geometries of all patches are kept, a form element can switch them.
 const load = async ({ def = null, defUrl = null, data = null, state = null, globals = null, check = false, defaults: chartDefaults = null }) => {
-    const { url, defOrg, validate } = await resolveDef({ def, defUrl, data, check });
+    const { url, defOrg, source, validate } = await resolveDef({ def, defUrl, data, check });
     let loaded;
     try {
         loaded = await Promise.all([
@@ -402,11 +421,12 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     }
     const [{ coords, geo: geoModule, colorLegend, inside }, rows, files, geometries] = loaded;
     await validate(rows);
-    const { prepared, defaults, columns } = prepare(defOrg, rows, files, state, globals, symbolDefaults(chartDefaults));
+    const { prepared, defaults, columns } = prepare(defOrg, source, rows, files, state, globals, symbolDefaults(chartDefaults));
 
     return {
         defUrl: url ?? null,
         defOrg,
+        source,
         colorLegend: colorLegend ? colorLegend.default : null,
         coords,
         coord: coords.get(prepared.options.coord ?? 'cartesian'),

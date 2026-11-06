@@ -1,3 +1,6 @@
+import { translate } from '@/utils/language.js';
+import { resolve, variants } from '@/utils/resolve.js';
+import { variantsOf } from '@/utils/def.js';
 import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
@@ -152,14 +155,19 @@ describe('parseData', () => {
 });
 
 describe('the columns a definition uses', () => {
-    test('of the mappings, the patches and the values of form elements', () => {
-        expect(usedColumns({
-            mapping: { x: { column: 'year' }, y: { column: 'value' }, c: { column: 'land' } },
-            formElements: [
-                { ref: 'col', values: [{ value: 'a' }, { value: 'b', patch: { mapping: { y: { column: 'share' } } } }] },
-                { ref: 'year', values: { column: 'jahr' } },
+    test('of the mappings, the columns of all values of the controls and the values of form elements', () => {
+        // the definitions of all values of the controls, as the load keeps them, see utils/resolve.js
+        const def = {
+            globals: { col: 'a' },
+            dims: { x: 'year', y: { column: "=match(@col, {b: 'share'}, 'value')" }, c: 'land' },
+            controls: [
+                { global: 'col', values: [{ value: 'a' }, { value: 'b' }] },
+                { global: 'year', values: { column: 'jahr' } },
             ],
-        })).toEqual(['year', 'value', 'land', 'share', 'jahr']);
+        };
+        const engine = translate(resolve(def, { col: 'a' }));
+        engine[variantsOf] = variants(def).map(translate);
+        expect(usedColumns(engine)).toEqual(['year', 'value', 'land', 'share', 'jahr']);
     });
 
     test('a template is a column of every value of its globals', () => {

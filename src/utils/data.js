@@ -1,10 +1,10 @@
-export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, rawRow, rawIndex, rowResolver, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
+export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, rawRow, rawIndex, rowResolver, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { fillTemplate, inLanguage, sameValue, templateRefs, variants } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
-import { bind, constant, evaluate, isOperator } from "@/utils/expr";
+import { bind, constant, evaluate, isOperator, refNames } from "@/utils/expr";
 import { comparison, compareCategories, isObject, missing, toNumber } from "@/utils/values";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
@@ -209,8 +209,9 @@ const prepareData = (data, def, columns = null) => {
         mapping.forEach(c => {
             e[c.name] = c.convert(c.value(i));
         });
-        e[rawRow] = d;
-        e[rawIndex] = i;
+        // not enumerable, so a prepared row is only its values, e.g. of a copy of it
+        Object.defineProperty(e, rawRow, { value: d });
+        Object.defineProperty(e, rawIndex, { value: i });
         return e;
     })
 };
@@ -224,8 +225,14 @@ const prepareData = (data, def, columns = null) => {
 const rowResolver = (mapping, columns, scope = {}) => name => {
     if (typeof name == 'symbol')
         return Object.hasOwn(scope, name) ? constant(scope[name]) : undefined;
-    if (Object.hasOwn(mapping, name))
+    if (Object.hasOwn(mapping, name)) {
+        // a date as the text of the data, e.g. "2022-06-01", so it compares
+        // with the texts of globals and of the definition, not as its timestamp
+        const m = mapping[name];
+        if (m?.type == 'date' && typeof m.column == 'string')
+            return row => row[rawRow] ? (row[rawRow][m.column] ?? row[name]) : row[name];
         return row => row[name];
+    }
     if (columns?.has(name)) {
         const values = columns.get(name);
         return row => row[rawIndex] === undefined ? undefined : values[row[rawIndex]];
@@ -260,6 +267,28 @@ const filterRows = (rows, spec, mapping, scope = {}, { columns = null, path = 'f
 // false, 0, "", null, no value, NaN and empty lists are false, as the
 // conditions of expressions
 const truthy = v => Array.isArray(v) ? v.length > 0 : Boolean(v);
+
+/**
+ * A filter expression without its conditions of the dims `names`: a
+ * comparison which references one of them is true, e.g. of the domain of a
+ * scale which ignores the filter of a slider (`domainIgnores`), see
+ * domainRows of layout.js; conditions of 4.x (an object) without their keys.
+ */
+const comparisons = ['==', '!=', '<', '<=', '>', '>='];
+const withoutConditions = (spec, names) => {
+    if (isObject(spec) && !isOperator(spec))
+        return Object.fromEntries(Object.entries(spec).filter(([k]) => !names.includes(k)));
+    if (!isOperator(spec))
+        return spec;
+    const op = Object.keys(spec)[0];
+    const args = [spec[op]].flat();
+    const mentions = args.some(a => refNames(a).some(n => names.includes(n) || names.includes(n.split(':')[0])));
+    if (comparisons.includes(op) || op == 'not' || op == 'match' || op == 'steps')
+        return mentions ? true : spec;
+    if (op == 'and' || op == 'or' || op == 'if')
+        return { [op]: args.map(a => withoutConditions(a, names)) };
+    return spec;
+};
 
 // compares rows by the order of the categories in the definition, e.g. the
 // order of the `categories` of the props, `orders` are the dims with their ordered keys
@@ -447,11 +476,12 @@ const usedColumns = def => {
 };
 
 // the distinct values of a column of the rows (or of a transform, see
-// columnValues), without missing ones, ascending, numbers by their value
-const distinctValues = (rows, columns, column) => {
+// columnValues), without missing ones, ascending, numbers by their value,
+// or in the order of the rows (`inOrder`)
+const distinctValues = (rows, columns, column, inOrder = false) => {
     const value = columnValues(rows, columns, column);
     const values = [...new Set(sourceRows(rows, columns).map((r, i) => value(i)))].filter(v => v !== null && v !== undefined && v !== '');
-    return values.sort(comparison(values));
+    return inOrder ? values : values.sort(comparison(values));
 };
 
 // the spec of the values of a form element of a column (`values` of the

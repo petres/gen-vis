@@ -983,7 +983,7 @@ const defaultProps = (def, normalized) => {
 
 /**
  * Returns warnings for common mistakes in a (merged) definition, e.g. a
- * `$schema` of another version than gen-vis 4 (the load of a file needs one,
+ * `$schema` of another version than gen-vis 5 or 4 (the load of a file needs one,
  * see resolveParents of utils/load.js, an object may have none), unknown
  * plot types, keys which are not in the schema or props which are not
  * evaluated. The parts are checked in the normalized definition (see
@@ -1000,7 +1000,7 @@ const validateDef = (def, rows = null) => {
     // a $schema of another version, a definition object may have none, see utils/version.js
     const version = versionError(def?.$schema);
     const warnings = [
-        ...(version ? [`$schema: no definition of gen-vis 4, ${version}`] : []),
+        ...(version ? [`$schema: no definition of gen-vis 5, ${version}`] : []),
         ...checkDef(def, normalized, rows, true, defaultProps(def, normalized)),
     ];
     const known = new Set(warnings);
