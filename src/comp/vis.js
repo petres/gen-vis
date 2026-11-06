@@ -1,6 +1,7 @@
 export { createVis };
 
 import { gridOf, layout } from "@/layout";
+import { clearMeasures } from '@/utils/measure';
 import { rowHeadersOf } from "@/utils/normalize";
 import { evaluate } from "@/utils/expr";
 import { dataAttribute, reducedMotion } from "@/utils/draw";
@@ -284,6 +285,7 @@ const createVis = app => {
             if (!families.some(f => used.includes(f)))
                 return;
         }
+        clearMeasures();
         measure();
         update(false, true);
     });

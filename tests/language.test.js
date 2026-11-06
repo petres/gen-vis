@@ -78,7 +78,8 @@ describe('the language of 5.0', () => {
             width: { '/': ['@x:bandwidth', '@c:count'] },
             y1: '@y:scaled',
         });
-        expect(def.plot[1].props).toEqual({ stroke: '#333', x: '@x:scaled', y1: '@lo:scaled', y2: '@hi:scaled' });
+        // at the center of the band of the categorical x
+        expect(def.plot[1].props).toEqual({ stroke: '#333', x: '@x:scaled:center', y1: '@lo:scaled', y2: '@hi:scaled' });
         expect(def.plot[2].props).toEqual({ fill: '@v:scaled', x: '@x:scaled', width: '@x:bandwidth', y: '@y:scaled', height: '@y:bandwidth' });
         expect(def.plot[3].props).toEqual({ 'stroke-dasharray': '2 2', y: '@y:scaled:100' });
         // a fill of a dim without categories is its scaled value (of a scale of colors); the

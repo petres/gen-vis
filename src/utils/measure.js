@@ -1,4 +1,4 @@
-export { textWidth };
+export { textWidth, clearMeasures };
 
 // the width of a text in a font (a css font, e.g. "12px Inter, sans-serif")
 // in pixels, measured on a canvas, kept per text and font (the labels of
@@ -6,6 +6,9 @@ export { textWidth };
 // character, about the width of a digit
 const cache = new Map();
 let context;
+
+// the widths measured before a web font was loaded are stale, see fontsLoaded of comp/vis.js
+const clearMeasures = () => cache.clear();
 
 const textWidth = (text, font) => {
     const key = `${font}\u0000${text}`;

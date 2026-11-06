@@ -371,15 +371,16 @@ const mark = (raw, i, dims, coord, stacks) => {
         } else if (kind == 'rule') {
             const x2 = given('x2', 'x'), y2 = given('y2', 'y');
             take('x2', 'y2');
+            // at the center of the band of a categorical position, as bars and points
             if (raw.y !== undefined && raw.x === undefined) {
-                props.y = y.value;
+                props.y = at(y);
                 if (x1)
                     props.x1 = x1.value;
                 if (x2)
                     props.x2 = x2.value;
             } else {
                 if (x)
-                    props.x = x.value;
+                    props.x = at(x);
                 if (y1)
                     props.y1 = y1.value;
                 if (y2)
@@ -422,6 +423,12 @@ const mark = (raw, i, dims, coord, stacks) => {
                 Object.entries(anchors[anchor] ?? {}).forEach(([k, v]) => props[k] ??= v);
             if (raw.type == 'label' && props.fill === undefined)
                 props.fill = null;
+        } else {
+            // a registered type: the channels given are attributes of its elements, e.g. "x": "@x:scaled"
+            [['x', x], ['y', y], ['x0', x0], ['x1', x1], ['y0', y0], ['y1', y1]].forEach(([k, c]) => {
+                if (c && raw[k] !== undefined)
+                    props[k] = c.value;
+            });
         }
     } else if (coord == 'polar') {
         const x = ch('x'), y = ch('y');

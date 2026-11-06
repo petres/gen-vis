@@ -178,3 +178,32 @@ describe('the reverse of a scale', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('fixes of the review of the docs', () => {
+    test('a rule at a categorical position is at the center of its band, as the bars', async () => {
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical' }, y: { column: 'value', domain: [0, 10] }, lo: 'lo', hi: 'hi' },
+            marks: [{ type: 'bar' }, { type: 'rule', y1: 'lo', y2: 'hi', stroke: '#333' }],
+        };
+        const el = await mount({ def, data: 'year,value,lo,hi\n2020,2,1,3\n2021,6,4,8' });
+        const bar = rects(el)[0];
+        const rule = lines(el).find(l => l.getAttribute('stroke') == '#333');
+        // the rule at the half pixel of the center, see utils/axis.js
+        expect(Math.abs(num(rule, 'x1') - (num(bar, 'x') + num(bar, 'width')/2))).toBeLessThanOrEqual(1);
+        expect(errors).toEqual([]);
+    });
+
+    test('a dim of a text of a parent merged with an object of a child keeps the column', async () => {
+        const { mergeAll } = await import('@/utils/def');
+        expect(mergeAll([{ dims: { facet: 'group' } }, { dims: { facet: { categories: { a: {} } } } }]).dims.facet).toEqual({ column: 'group', categories: { a: {} } });
+    });
+
+    test('"auto" of all margins of a definition is measured, also over the defaults of the page', async () => {
+        const { prepareDef } = await import('@/utils/def');
+        const { translate } = await import('@/utils/language');
+        const { normalize } = await import('@/utils/normalize');
+        const { plotTypes } = await import('@/plots');
+        const def = prepareDef(normalize(translate({ margins: 'auto', dims: { x: 'a', y: 'b' }, marks: { type: 'line' } }), { plotTypes }));
+        expect(def.options.margins).toEqual({ top: 'auto', right: 'auto', bottom: 'auto', left: 'auto' });
+    });
+});
