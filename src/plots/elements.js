@@ -1,7 +1,7 @@
 export { perRow, perGroup, finite, curve, points, propScale, dodge, halo, inside, centered };
 
 import * as d3 from "@/utils/d3";
-import { refOf } from "@/utils/expr";
+import { refOf, refNames } from '@/utils/expr';
 import { curves, groupAttrs, groupKey, keyOf, rowOf } from "@/utils/draw";
 
 const finite = (...values) => values.every(v => Number.isFinite(v));
@@ -29,7 +29,9 @@ const points = (g, plot, ctx, path) => {
 // the scale of the mapping a prop of a plot refers to, e.g. the one of `x`
 // of "@x:scaled" or of `d.angle`, undefined if it is no reference
 const propScale = (plot, ctx, path) => {
-    const ref = refOf(path.split('.').reduce((p, k) => p?.[k], plot.props));
+    const value = path.split('.').reduce((p, k) => p?.[k], plot.props);
+    // a reference, or the scaled position in an expression, e.g. "@x:scaled" of dodged bars
+    const ref = refOf(value) ?? refNames(value).find(n => n.split(':')[1] == 'scaled');
     return ref === undefined ? undefined : ctx.scales[ref.split(':')[0]];
 };
 

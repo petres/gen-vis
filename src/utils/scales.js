@@ -310,6 +310,10 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
             s.range([r0 + direction*i0, r1 - direction*i1]);
         }
     }
+    // the range in the other direction, e.g. the largest value at the bottom
+    // or the first category at the end
+    if (scaleDef.reverse === true)
+        s.range([...s.range()].reverse());
 
     // the values of a fixed domain are converted as the ones of the data, e.g.
     // dates of "2020-01-01" or numbers of a global "100", the values can be

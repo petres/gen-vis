@@ -150,6 +150,10 @@ const channelOf = (mark, channel, dims, axis = positionChannels[channel], valued
     if (typeof v == 'string' && !v.startsWith('@')) {
         if (!Object.hasOwn(dims, v))
             dims[v] = { column: v };
+        // another dim of a position (e.g. "hi" of a rule of y1 and y2) is on
+        // the scale of the axis of the channel, its values in its domain
+        if (axis && v != axis && !['x', 'y'].includes(v) && isObject(dims[v]) && dims[v].scale === undefined && !isCategorical(dims[v]))
+            dims[v].scale = { of: axis };
         return { dim: v, value: ref(v) };
     }
     if (typeof v == 'number' && valued && axis && Object.hasOwn(dims, axis))
@@ -382,6 +386,11 @@ const mark = (raw, i, dims, coord, stacks) => {
             if (y)
                 props.cy ??= at(y);
         } else if (kind == 'rect' && raw.type == 'cell') {
+            // the cells need the bands of their positions
+            [x, y].forEach(c => {
+                if (c?.dim && isObject(dims[c.dim]) && dims[c.dim].scale?.type === undefined)
+                    dims[c.dim].scale = { ...(isObject(dims[c.dim].scale) ? dims[c.dim].scale : {}), type: 'band' };
+            });
             if (x) {
                 props.x = x.value;
                 props.width ??= ref(x.dim, 'bandwidth');

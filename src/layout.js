@@ -605,6 +605,25 @@ const rowValue = (ctx, name, rows) => {
         // the middle of a stacked value, e.g. of a label in its stack
         'mid': () => stackOf && (row => (start(row) + end(row))/2),
         'mid:scaled': () => stackOf && s && (row => s((start(row) + end(row))/2)),
+        // the place of the category of the row among the visible categories
+        // of the mapping, from 0, and their number, e.g. of dodged bars (see
+        // `dodge` of utils/language.js); of a mapping without categories the
+        // distinct values of the rows of the plot in their order
+        'index': () => {
+            const keys = categoryKeys();
+            return row => keys.indexOf(String(row[m]));
+        },
+        'count': () => constant(categoryKeys().length),
+    };
+    let keysOf;
+    const categoryKeys = () => {
+        if (keysOf)
+            return keysOf;
+        const mapping = ctx.store.def.mapping[m];
+        keysOf = Array.isArray(mapping?.keys)
+            ? mapping.keys.filter(k => mapping.categoryProps?.[k]?.visible !== false).map(String)
+            : [...new Set(rows.map(r => String(r[m])))];
+        return keysOf;
     };
     const kind = parts.join(':');
     // the position of a value, e.g. "@x:scaled:0" or "@y:scaled:100"

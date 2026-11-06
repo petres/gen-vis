@@ -81,8 +81,13 @@ describe('the language of 5.0', () => {
         expect(def.plot[1].props).toEqual({ stroke: '#333', x: '@x:scaled', y1: '@lo:scaled', y2: '@hi:scaled' });
         expect(def.plot[2].props).toEqual({ fill: '@v:scaled', x: '@x:scaled', width: '@x:bandwidth', y: '@y:scaled', height: '@y:bandwidth' });
         expect(def.plot[3].props).toEqual({ 'stroke-dasharray': '2 2', y: '@y:scaled:100' });
-        // a fill of a dim without categories is its scaled value (of a scale of colors)
-        expect(def.plot[4]).toEqual({ type: 'svg:circle', by: [], props: { fill: '@c:scaled', cx: '@lo:scaled', cy: '@y:scaled' } });
+        // a fill of a dim without categories is its scaled value (of a scale of colors); the
+        // cell made y a band scale, so the point is at the center of the band
+        expect(def.plot[4]).toEqual({ type: 'svg:circle', by: [], props: { fill: '@c:scaled', cx: '@lo:scaled', cy: '@y:scaled:center' } });
+        expect(def.mapping.y.scale.type).toBe('band');
+        // the dims of the ranges of the rule are on the scale of y
+        expect(def.mapping.lo.scale).toEqual({ of: 'y' });
+        expect(def.mapping.hi.scale).toEqual({ of: 'y' });
         expect(def.mapping.c.fromData).toBeUndefined();
     });
 
