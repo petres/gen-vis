@@ -5,7 +5,6 @@ import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
 import { applyResolved, languageOf, mergeAll, prepareDef, variants, variantsOf } from "@/utils/def";
 import { translate, isDefinition4 } from "@/utils/language";
-import { migrate } from "@/utils/migrate";
 import { resolve, namesOfGlobals, variants as resolvedVariants } from "@/utils/resolve";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
 import { checkLocale, getLocale, loadLocale } from "@/utils/locale";
@@ -270,7 +269,8 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
     const old = isDefinition4(merged);
     if (old && url !== undefined)
         console.info(`gen-vis '${url}': a definition of gen-vis 4, migrated while it is loaded, 'gen-vis migrate' writes it as one of gen-vis 5`);
-    const source = old ? migrate(merged) : merged;
+    // the migration is a chunk of its own, definitions of 5.0 do not need it
+    const source = old ? (await lazy.migrate()).migrate(merged) : merged;
     const engine = v => normalize(translate(v), { plotTypes });
     const defOrg = engine(resolve(source, namesOfGlobals(source.globals, source.controls)));
     defOrg[variantsOf] = resolvedVariants(source).map(engine);

@@ -1,9 +1,10 @@
 // the parts which are loaded when a chart needs them, so a bundler of an
 // application puts them into chunks of their own: the check of the
-// definitions, the colors of d3, the parts of maps, the parquet reader,
-// the SVG of the images and their PNG.
+// definitions, the migration of definitions of gen-vis 4, the colors of d3,
+// the parts of maps, the parquet reader, the SVG of the images and their PNG.
 export const lazy = {
     validate: () => import('@/utils/validate.js'),
+    migrate: () => import('@/utils/migrate.js'),
     transform: () => import('@/utils/transform-types.js'),
     inside: () => import('@/plots/inside.js'),
     intl: () => import('@/utils/locale-intl.js'),
