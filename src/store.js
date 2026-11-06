@@ -57,6 +57,8 @@ class Store {
     // they differ with legends beside the plots
     totalWidth = null;
     visWidth = null;
+    // the font of the visualisation, of the measure of its texts, e.g. of the margins of the axes
+    fontFamily = null;
     runs = 0;
     // the number of the definitions loaded, a new one is drawn anew, while it
     // is loaded the one before is shown, see comp/app.js

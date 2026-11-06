@@ -350,18 +350,15 @@
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "top": { "$ref": "#/definitions/number" },
-                        "right": { "$ref": "#/definitions/number" },
-                        "bottom": { "$ref": "#/definitions/number" },
-                        "left": { "$ref": "#/definitions/number" }
+                        "top": { "anyOf": [{ "$ref": "#/definitions/number" }, { "const": "auto" }] },
+                        "right": { "anyOf": [{ "$ref": "#/definitions/number" }, { "const": "auto" }] },
+                        "bottom": { "anyOf": [{ "$ref": "#/definitions/number" }, { "const": "auto" }] },
+                        "left": { "anyOf": [{ "$ref": "#/definitions/number" }, { "const": "auto" }] }
                     }
                 },
-                {
-                    "const": "auto",
-                    "description": "The margins of the labels of the axes, their titles and the legends, measured."
-                }
+                { "const": "auto", "description": "All sides measured." }
             ],
-            "description": "The space around the plot area of a facet in pixels, of the axes, their titles and the legends, \"auto\" measures it (the default of 5.0 once it is there), e.g. { \"left\": 60 }."
+            "description": "The space around the plot area of a facet in pixels, of the axes and their titles: by default (\"auto\") measured of the labels of the axes, their tick marks and their titles; a side given is as given, e.g. { \"left\": 60 }, the others stay measured; an expression of totalWidth, e.g. steps of it."
         },
         "hover": {
             "type": "object",

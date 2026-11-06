@@ -4,6 +4,7 @@ import { categoryOrder, continuous, convert, filter, filterRows, groupBy, keptRo
 import * as d3 from "@/utils/d3";
 import { bind, constant, evaluate, formatter, isOperator, refNames } from "@/utils/expr";
 import { isObject } from "@/utils/values";
+import { autoMargins } from "@/utils/margins";
 import { bandCenter, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
 import { facetMappings } from "@/utils/normalize";
@@ -325,8 +326,10 @@ const layout = (store, width, before = null) => {
     const faceted = entries.length > 0;
 
     // the sizes of a facet
-    // the margins can be props, e.g. steps of the width of the visualisation
-    const margins = Object.fromEntries(Object.entries(def.options.margins).map(([k, v]) => [k, Number(evaluate(v, scope)) || 0]));
+    // the margins can be props, e.g. steps of the width of the visualisation,
+    // "auto" is measured of the axes, see autoMargins of utils/margins.js
+    const given = Object.fromEntries(Object.entries(def.options.margins).map(([k, v]) => [k, v === 'auto' ? 'auto' : Number(evaluate(v, scope)) || 0]));
+    const auto = Object.values(given).includes('auto');
     const grid = faceted ? gridOf(def) : null;
     const cols = grid ? entries[0].cell.cols : (faceted ? evaluate(def.facets.cols, scope) : 1);
     // the width of the facets of a grid without the one of the headers of
@@ -354,84 +357,94 @@ const layout = (store, width, before = null) => {
     // of the scale of each facet, e.g. the ones of its row of a grid
     const stepped = stepHeight(store, n => !faceted || sharing[n] == 'all' ? [[rows, domainOf(n)?.rows]]
         : entries.map(f => partOf(n, f)).map(part => [part.flatMap(e => e.rows), domainOfAll(n, part)?.rows]), scope);
-    const size = { width: usable/cols, height: stepped === undefined ? evaluate(def.options.height, scope) : stepped + margins.top + margins.bottom };
-    // a container smaller than its margins has no room, not a negative one,
-    // which would flip the ranges of the scales, e.g. a negative radius
-    size.innerWidth = Math.max(0, size.width - (margins.left + margins.right));
-    size.innerHeight = Math.max(0, size.height - (margins.top + margins.bottom));
-    const dims = store.coord.dims(size.innerWidth, size.innerHeight);
-    if (dims.radius !== undefined)
-        dims.radius = Math.max(0, dims.radius);
-    // the radius of polar plots is a size of the facet, e.g. of the hole of a donut
-    const facetScope = { ...scope, ...size, ...(dims.radius === undefined ? {} : { radius: dims.radius }), ...plotArea(store.coord, size) };
+    // the facets of the margins: their sizes, scopes and scales
+    const build = margins => {
+        const size = { width: usable/cols, height: stepped === undefined ? evaluate(def.options.height, scope) : stepped + margins.top + margins.bottom };
+        // a container smaller than its margins has no room, not a negative one,
+        // which would flip the ranges of the scales, e.g. a negative radius
+        size.innerWidth = Math.max(0, size.width - (margins.left + margins.right));
+        size.innerHeight = Math.max(0, size.height - (margins.top + margins.bottom));
+        const dims = store.coord.dims(size.innerWidth, size.innerHeight);
+        if (dims.radius !== undefined)
+            dims.radius = Math.max(0, dims.radius);
+        // the radius of polar plots is a size of the facet, e.g. of the hole of a donut
+        const facetScope = { ...scope, ...size, ...(dims.radius === undefined ? {} : { radius: dims.radius }), ...plotArea(store.coord, size) };
 
-    // the mappings with the scale of another one (`"scale": { "of": "y" }`),
-    // e.g. the end of a band, their values are in its domain
-    const borrowed = Object.keys(def.mapping).filter(n => def.mapping[n].scale?.of !== undefined);
-    const also = name => borrowed.filter(n => def.mapping[n].scale.of === name);
+        // the mappings with the scale of another one (`"scale": { "of": "y" }`),
+        // e.g. the end of a band, their values are in its domain
+        const borrowed = Object.keys(def.mapping).filter(n => def.mapping[n].scale?.of !== undefined);
+        const also = name => borrowed.filter(n => def.mapping[n].scale.of === name);
 
-    // the scale of a mapping for the rows, in the sizes of a facet, of the
-    // facet `key` (undefined of all rows), of the rows of `domain` if given
-    const scaleOf = (name, rows, key, domain = domainOf(name, key)) => {
-        return makeScale(name, store.mapping(name), rows, { dims, coord: store.coord, scope: facetScope, mappings: def.mapping,
-            stackOf: name == axis.v ? stackOf : null, also: also(name), domainRows: domain?.rows, domainStackOf: domain?.stackOf });
-    };
-
-    // the scales of all facets: the shared ones and the ones without
-    // orientation, e.g. of colors
-    const scaled = Object.keys(def.mapping).filter(n => def.mapping[n].scale && !borrowed.includes(n));
-    const colors = scaled.filter(n => !def.mapping[n].scale.orientation);
-    const shared = Object.keys(sharing).filter(n => sharing[n] == 'all');
-    const common = Object.fromEntries([...new Set([...shared, ...colors])].map(n => [n, scaleOf(n, rows)]));
-    // the scales of a row or a column of a grid, of the rows of its facets
-    const partScales = new Map();
-    // of the rows of the domains of its facets, e.g. of `domainIgnores`
-    const partScale = (n, f) => {
-        const id = `${n} ${sharing[n]} ${sharing[n] == 'row' ? f.cell.rowIndex : f.cell.colIndex}`;
-        if (!partScales.has(id)) {
-            const part = partOf(n, f);
-            partScales.set(id, scaleOf(n, part.flatMap(e => e.rows), undefined, domainOfAll(n, part)));
-        }
-        return partScales.get(id);
-    };
-
-    // the edges of the grid of facets a facet is at, e.g. the bottom row
-    // without a facet below it, see `facets.axisTitles`, of a grid without a
-    // facet (not an empty cell) beyond it, e.g. the facet above an empty
-    // cell of the bottom row has the labels and the title of x
-    const count = faceted ? entries.length : 1;
-    const beyond = (cell, same, index, side) => entries.some(e => !e.empty && e.cell[same] == cell[same] && Math.sign(e.cell[index] - cell[index]) == side);
-    const outerOf = (i, cell) => cell
-        ? { top: !beyond(cell, 'colIndex', 'rowIndex', -1), bottom: !beyond(cell, 'colIndex', 'rowIndex', 1),
-            left: !beyond(cell, 'rowIndex', 'colIndex', -1), right: !beyond(cell, 'rowIndex', 'colIndex', 1) }
-        : { top: i < cols, bottom: i + cols >= count, left: i % cols == 0, right: i % cols == cols - 1 || i == count - 1 };
-    const facets = (faceted ? entries : [{ key: undefined, name: undefined, rows }]).map((f, i) => {
-        const scales = {
-            ...common,
-            ...Object.fromEntries(scaled.filter(n => !Object.hasOwn(common, n))
-                .map(n => [n, f.cell && ['row', 'col'].includes(sharing[n]) ? partScale(n, f) : scaleOf(n, f.rows, f.key)])),
+        // the scale of a mapping for the rows, in the sizes of a facet, of the
+        // facet `key` (undefined of all rows), of the rows of `domain` if given
+        const scaleOf = (name, rows, key, domain = domainOf(name, key)) => {
+            return makeScale(name, store.mapping(name), rows, { dims, coord: store.coord, scope: facetScope, mappings: def.mapping,
+                stackOf: name == axis.v ? stackOf : null, also: also(name), domainRows: domain?.rows, domainStackOf: domain?.stackOf });
         };
-        borrowed.filter(n => Object.hasOwn(scales, def.mapping[n].scale.of)).forEach(n => scales[n] = scales[def.mapping[n].scale.of]);
-        return {
-            ...f,
-            ...size,
-            margins,
-            dims,
-            axis,
-            stackOf,
-            isStacked,
-            stackOrder,
-            outer: outerOf(i, f.cell),
-            // the mappings whose scale is the one of all facets or of the row or the column
-            sharing,
-            // the sizes of the bands of the scales, e.g. "@y:bandwidth" of annotations
-            // also the key and the name of the facet, e.g. of a text once per facet
-            scope: { ...facetScope, ...scaleSizes(scales), ...(faceted ? { facet: f.key, 'facet:name': f.name } : {}),
-                // the row and the column of a facet of a grid
-                ...(f.cell ? { 'facet:row': f.cell.row, 'facet:col': f.cell.col, 'facet:row:name': f.cell.rowName, 'facet:col:name': f.cell.colName } : {}) },
-            scales,
+
+        // the scales of all facets: the shared ones and the ones without
+        // orientation, e.g. of colors
+        const scaled = Object.keys(def.mapping).filter(n => def.mapping[n].scale && !borrowed.includes(n));
+        const colors = scaled.filter(n => !def.mapping[n].scale.orientation);
+        const shared = Object.keys(sharing).filter(n => sharing[n] == 'all');
+        const common = Object.fromEntries([...new Set([...shared, ...colors])].map(n => [n, scaleOf(n, rows)]));
+        // the scales of a row or a column of a grid, of the rows of its facets
+        const partScales = new Map();
+        // of the rows of the domains of its facets, e.g. of `domainIgnores`
+        const partScale = (n, f) => {
+            const id = `${n} ${sharing[n]} ${sharing[n] == 'row' ? f.cell.rowIndex : f.cell.colIndex}`;
+            if (!partScales.has(id)) {
+                const part = partOf(n, f);
+                partScales.set(id, scaleOf(n, part.flatMap(e => e.rows), undefined, domainOfAll(n, part)));
+            }
+            return partScales.get(id);
         };
-    });
+
+        // the edges of the grid of facets a facet is at, e.g. the bottom row
+        // without a facet below it, see `facets.axisTitles`, of a grid without a
+        // facet (not an empty cell) beyond it, e.g. the facet above an empty
+        // cell of the bottom row has the labels and the title of x
+        const count = faceted ? entries.length : 1;
+        const beyond = (cell, same, index, side) => entries.some(e => !e.empty && e.cell[same] == cell[same] && Math.sign(e.cell[index] - cell[index]) == side);
+        const outerOf = (i, cell) => cell
+            ? { top: !beyond(cell, 'colIndex', 'rowIndex', -1), bottom: !beyond(cell, 'colIndex', 'rowIndex', 1),
+                left: !beyond(cell, 'rowIndex', 'colIndex', -1), right: !beyond(cell, 'rowIndex', 'colIndex', 1) }
+            : { top: i < cols, bottom: i + cols >= count, left: i % cols == 0, right: i % cols == cols - 1 || i == count - 1 };
+        const facets = (faceted ? entries : [{ key: undefined, name: undefined, rows }]).map((f, i) => {
+            const scales = {
+                ...common,
+                ...Object.fromEntries(scaled.filter(n => !Object.hasOwn(common, n))
+                    .map(n => [n, f.cell && ['row', 'col'].includes(sharing[n]) ? partScale(n, f) : scaleOf(n, f.rows, f.key)])),
+            };
+            borrowed.filter(n => Object.hasOwn(scales, def.mapping[n].scale.of)).forEach(n => scales[n] = scales[def.mapping[n].scale.of]);
+            return {
+                ...f,
+                ...size,
+                margins,
+                dims,
+                axis,
+                stackOf,
+                isStacked,
+                stackOrder,
+                outer: outerOf(i, f.cell),
+                // the mappings whose scale is the one of all facets or of the row or the column
+                sharing,
+                // the sizes of the bands of the scales, e.g. "@y:bandwidth" of annotations
+                // also the key and the name of the facet, e.g. of a text once per facet
+                scope: { ...facetScope, ...scaleSizes(scales), ...(faceted ? { facet: f.key, 'facet:name': f.name } : {}),
+                    // the row and the column of a facet of a grid
+                    ...(f.cell ? { 'facet:row': f.cell.row, 'facet:col': f.cell.col, 'facet:row:name': f.cell.rowName, 'facet:col:name': f.cell.colName } : {}) },
+                scales,
+            };
+        });
+        return { size, facets, colors: Object.fromEntries(colors.map(n => [n, common[n]])) };
+    };
+    // the margins of "auto" are measured of the axes of the facets of
+    // provisional margins, then the facets are built again with them
+    let built = build(auto ? Object.fromEntries(Object.entries(given).map(([k, v]) => [k, v === 'auto' ? 30 : v])) : given);
+    if (auto)
+        built = build(autoMargins(store, built.facets, given));
+    const { size, facets } = built;
 
     return {
         axis,
@@ -439,7 +452,7 @@ const layout = (store, width, before = null) => {
         stackOf,
         faceted,
         facets,
-        colors: Object.fromEntries(colors.map(n => [n, common[n]])),
+        colors: built.colors,
         inData: parts.inData,
         height: size.height,
         [rowsKept]: parts,

@@ -186,7 +186,7 @@ describe('plotGroups', () => {
     });
 
     test('the props of the categories, then the rows, then the globals and the facet', async () => {
-        const def = { globals: { y: 'global', g: 'global' }, mapping: { ...mapping(), c: { column: 'land', categories: { Wien: { x: 'category' }, Tirol: {} } } } };
+        const def = { globals: { y: 'global', g: 'global' }, options: { margins: { top: 0, right: 0, bottom: 0, left: 0 } }, mapping: { ...mapping(), c: { column: 'land', categories: { Wien: { x: 'category' }, Tirol: {} } } } };
         const { groups: [wien, tirol] } = await groups({ type: 'svg:rect', by: ['c'], props: { a: '@x', b: '@y', c: '@g', d: '@innerWidth' } }, def);
         expect(wien.at(wien.rows[0])).toEqual({ a: 'category', b: 1, c: 'global', d: 400 });
         expect(tirol.at(tirol.rows[0])).toEqual({ a: 2020, b: 10, c: 'global', d: 400 });

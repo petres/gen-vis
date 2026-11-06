@@ -252,6 +252,7 @@ const createVis = app => {
         width = plotsWidth();
         store.totalWidth = width;
         store.rowHeaderWidth = rowHeaderWidth();
+        store.fontFamily = typeof getComputedStyle == 'function' ? getComputedStyle(root).fontFamily || null : null;
     };
     const resized = () => {
         if (removed)

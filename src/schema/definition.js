@@ -133,14 +133,9 @@ const definitions = {
     ], 'Number and date formats, the name of a built-in locale, a language of Intl (e.g. fr or de-CH) or a d3 locale definition merged into one.'),
 
     margins: anyOf([
-        object({
-            top: ref('number'),
-            right: ref('number'),
-            bottom: ref('number'),
-            left: ref('number'),
-        }),
-        constant('auto', 'The margins of the labels of the axes, their titles and the legends, measured.'),
-    ], 'The space around the plot area of a facet in pixels, of the axes, their titles and the legends, "auto" measures it (the default of 5.0 once it is there), e.g. { "left": 60 }.'),
+        object(Object.fromEntries(['top', 'right', 'bottom', 'left'].map(side => [side, anyOf([ref('number'), constant('auto')])]))),
+        constant('auto', 'All sides measured.'),
+    ], 'The space around the plot area of a facet in pixels, of the axes and their titles: by default ("auto") measured of the labels of the axes, their tick marks and their titles; a side given is as given, e.g. { "left": 60 }, the others stay measured; an expression of totalWidth, e.g. steps of it.'),
 
     hover: object({
         columns: array(string(), 'The dims of the hover (its rows of their values, in this order), by default the dims of the `by` of the marks; a dim with a `hover` of its own is in it as well, [] only those.'),

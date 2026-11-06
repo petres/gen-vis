@@ -285,9 +285,12 @@ const placed = plots => {
 // the options of the definition, the height of a facet and the space around
 // its plots, e.g. of the axes
 // an option of null is none, e.g. of an expression of a global without a value
+// the margins are measured of the axes by default ("auto", see
+// utils/margins.js), the sides given are the ones of the definition
 const prepareOptions = options => {
     const given = Object.fromEntries(Object.entries(options ?? {}).filter(([, v]) => v !== null));
-    return { height: 400, ...given, margins: { top: 0, right: 0, bottom: 0, left: 0, ...(given.margins ?? {}) } };
+    const margins = isObject(given.margins) ? given.margins : {};
+    return { height: 400, ...given, margins: { top: 'auto', right: 'auto', bottom: 'auto', left: 'auto', ...margins } };
 };
 
 // the props of a highlight or of the others of a plot, without the mode of

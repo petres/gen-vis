@@ -23,7 +23,7 @@ describe('prepareDef', () => {
         // the names of the props of the highlight and of the others, of the stylesheet of the highlight, see utils/highlight.js
         expect(def.plot[0]).toMatchObject({ id: 'plot-0', by: [], highlightProps: ['r'], othersProps: ['opacity'], props: { r: '@r' } });
         expect(def.plot[0].props).not.toHaveProperty('highlight-r');
-        expect(def.options.margins).toEqual({ top: 0, right: 0, bottom: 0, left: 0 });
+        expect(def.options.margins).toEqual({ top: 'auto', right: 'auto', bottom: 'auto', left: 'auto' });
     });
 });
 
@@ -192,7 +192,7 @@ describe('applyResolved (the parts of the definition of its globals)', () => {
 
         def.globals.view = 'europe';
         applyResolved(def, org, options(source));
-        expect(def.options).toMatchObject({ title: 'Europe', height: 300, margins: { top: 0 } });
+        expect(def.options).toMatchObject({ title: 'Europe', height: 300, margins: { top: 'auto' } });
         expect(def.geo).toEqual({ data: 'world.json', fit: 'data' });
         expect(def.filter).toEqual({ match: ['@globals.view', { europe: { '==': ['@region', 'EU'] } }, true] });
         expect(def.plot[0].props).toMatchObject({ r: 2, fill: 'red' });

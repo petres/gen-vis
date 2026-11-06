@@ -18,14 +18,14 @@ export type Filter = string | Expression | Conditions | None;
  */
 export type None = null;
 /**
- * The space around the plot area of a facet in pixels, of the axes, their titles and the legends, "auto" measures it (the default of 5.0 once it is there), e.g. { "left": 60 }.
+ * The space around the plot area of a facet in pixels, of the axes and their titles: by default ("auto") measured of the labels of the axes, their tick marks and their titles; a side given is as given, e.g. { "left": 60 }, the others stay measured; an expression of totalWidth, e.g. steps of it.
  */
 export type Margins =
     | {
-          top?: NumberValue;
-          right?: NumberValue;
-          bottom?: NumberValue;
-          left?: NumberValue;
+          top?: NumberValue | 'auto';
+          right?: NumberValue | 'auto';
+          bottom?: NumberValue | 'auto';
+          left?: NumberValue | 'auto';
       }
     | 'auto';
 /**
