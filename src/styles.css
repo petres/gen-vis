@@ -331,16 +331,19 @@
 .vis-legend .vis-legend-entries > div[data-visible="false"] {
     opacity: 0.3;
 }
+/* the name of an entry, as wide as its bold one (min-width, measured, see
+   comp/legend.js), so no entry moves when it is highlighted */
 .vis-legend .vis-legend-entries > div span {
     font-size: inherit;
+    display: inline-block;
 }
 .vis-legend .vis-legend-entries > div.bold {
     font-weight: bold;
 }
 /* the entry of the category of the highlighted row, e.g. of the line
-   under the pointer, a bold look of the same width, so no entry moves */
+   under the pointer, is bold (the weight 600 of Inter is in the package) */
 .vis-legend .vis-legend-entries > div.vis-legend-highlight span {
-    text-shadow: 0.4px 0 0 currentColor, -0.4px 0 0 currentColor;
+    font-weight: 600;
 }
 /* the symbol of an entry */
 .vis-legend-entry > svg {

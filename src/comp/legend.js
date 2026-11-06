@@ -1,6 +1,7 @@
 export { createLegend, createAnnotationLegend, annotationEntries };
 
 import { create, itemOf, join } from "@/utils/dom";
+import { textWidth } from '@/utils/measure';
 import { evaluate } from "@/utils/expr";
 import { setProps } from "@/utils/draw";
 import { withColor } from "@/layout";
@@ -155,7 +156,12 @@ const createLegend = (vis, legend) => {
                 drawSymbol(svg, symbol, { ...scope, ...colored });
             }
             span ??= div.appendChild(el('span'));
-            setText(span, store.text(filled.name));
+            const name = store.text(filled.name);
+            setText(span, name);
+            // as wide as the bold name of the highlight, so no entry moves, see styles.css
+            const cs = typeof getComputedStyle == 'function' && span.isConnected ? getComputedStyle(span) : null;
+            if (cs?.fontSize)
+                span.style.minWidth = `${Math.ceil(textWidth(name, `600 ${cs.fontSize} ${cs.fontFamily}`))}px`;
         });
     };
 

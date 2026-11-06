@@ -22,7 +22,7 @@ const textWidth = (text, font) => {
         context.font = font;
         width = context.measureText(String(text)).width;
     } else
-        width = 0.55*(parseFloat(font) || 12)*String(text).length;
+        width = 0.55*(parseFloat(/(\d+(?:\.\d+)?)px/.exec(font)?.[1]) || 12)*String(text).length;
     // the labels of charts are few, the cache stays small
     if (cache.size > 5000)
         cache.clear();
