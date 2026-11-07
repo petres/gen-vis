@@ -16,8 +16,7 @@
                         }
                     ]
                 }
-            },
-            "hover": {}
+            }
         }
     },
     "marks": [{"type": "bar", "by": "type", "stack": true, "opacity": 0.9, "width": "@innerWidth * 0.008"}]

@@ -3,7 +3,7 @@
     "parent": "_radar.json",
     "title": "Radar der Wettbewerbsfähigkeit: Ländervergleich",
     "subtitle": "Die Prozentränge der Länder in der EU, Norwegen, Island, der Schweiz und dem Vereinigten Königreich {year}",
-    "hover": {"row": "{country}: <b>{y}</b>"},
+    "hover": {"row": "{country}: <b>{y}</b>", "columns": ["y"]},
     "globals": {"year": "2019"},
     "controls": [
         {

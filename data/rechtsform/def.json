@@ -11,17 +11,9 @@
             "column": "Jahr",
             "format": "c",
             "scale": {"domainAbs": [-4, 4]},
-            "axis": {"ticks": 6, "rotate": 0, "values": [1971, 1981, 1991, 2001, 2011, 2020]},
-            "hover": {}
+            "axis": {"ticks": 6, "rotate": 0, "values": [1971, 1981, 1991, 2001, 2011, 2020]}
         },
-        "y": {
-            "column": "Anzahl",
-            "format": ",.0f",
-            "axis": {"ticks": 8},
-            "hover": {},
-            "zero": true,
-            "grid": true
-        },
+        "y": {"column": "Anzahl", "format": ",.0f", "axis": {"ticks": 8}, "zero": true, "grid": true},
         "type": {
             "column": "Type",
             "legend": {
@@ -49,8 +41,7 @@
                 "Gemeinde Miete": {"color": "#C7DF71", "transform": "translate(  5 0)"},
                 "Private Miete": {"color": "#4B9847", "transform": "translate( 15 0)"},
                 "Sonstige": {"color": "#9CE1F8", "transform": "translate( 25 0)"}
-            },
-            "hover": {}
+            }
         },
         "geo": {
             "column": "Geo",

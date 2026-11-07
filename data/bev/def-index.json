@@ -29,8 +29,7 @@
             "column": "Jahr",
             "format": "c",
             "scale": {"inset": 6, "pad": [0, 0]},
-            "axis": {"tickSpacing": 80},
-            "hover": {}
+            "axis": {"tickSpacing": 80}
         },
         "y": {
             "column": "index",
@@ -45,8 +44,7 @@
             "scheme": "Tableau10",
             "common": {"stroke-width": 1.5},
             "categories": {"ÖSTERREICH": {"name": "Gesamt", "color": "#000", "stroke-width": 3}},
-            "legend": {"symbol": "line"},
-            "hover": {}
+            "legend": {"symbol": "line"}
         }
     },
     "marks": {

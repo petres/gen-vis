@@ -57,7 +57,6 @@
         },
         "value": {"legend": {"missing": {"name": "keine Daten", "color": "#DADADA"}, "symbol": null}}
     },
-    "hover": {"columns": []},
     "marks": [
         {"type": "base", "fill": "#DADADA", "stroke": "white", "stroke-width": 1},
         {
@@ -124,5 +123,6 @@
         "join": "country",
         "name": "name",
         "projection": {"type": "conicEquidistant", "rotate": [-20, 0], "parallels": [35, 65]}
-    }
+    },
+    "hover": {"columns": []}
 }

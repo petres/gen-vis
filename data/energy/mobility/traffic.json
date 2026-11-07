@@ -38,12 +38,12 @@
             "hover": {}
         }
     },
-    "hover": {"columns": []},
     "marks": {
         "type": "line",
         "by": ["road", "vehicle"],
         "curve": "monotoneX",
         "stroke-width": "@stroke-width",
         "highlight": {"stroke-width": "@highlight-stroke-width"}
-    }
+    },
+    "hover": {"columns": ["x", "y"]}
 }

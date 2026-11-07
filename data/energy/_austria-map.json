@@ -23,7 +23,6 @@
             "legend": {"missing": {"name": "keine Daten", "color": "#DADADA"}, "symbol": null}
         }
     },
-    "hover": {"columns": []},
     "marks": [
         {"type": "base", "fill": "#DADADA", "stroke": "white", "stroke-width": 0.5},
         {
@@ -49,5 +48,6 @@
         "join": "district",
         "name": "NAME",
         "projection": {"type": "conicEquidistant", "rotate": [-13.3, 0], "parallels": [46, 49]}
-    }
+    },
+    "hover": {"columns": []}
 }

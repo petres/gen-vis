@@ -17,7 +17,8 @@ describe('the language of 5.0', () => {
             ],
         });
         expect(def.options).toEqual({ title: 'Bevölkerung', subtitle: 'nach Bundesland', footer: 'Q', height: 300 });
-        expect(def.mapping.y).toEqual({ column: 'Einwohner', format: ',.0f', domain: [0, null], axis: { grid: true } });
+        // the dims the marks use are in the hover
+        expect(def.mapping.y).toEqual({ column: 'Einwohner', format: ',.0f', domain: [0, null], axis: { grid: true }, hover: {} });
         // listed categories are all of them, the hover has the dims of `by`
         expect(def.mapping.land).toEqual({ column: 'Bundesland', scheme: 'Tableau10', 'stroke-width': 2.5, hover: {},
             categories: { Wien: { color: '#123' }, Tirol: { name: 'T' } } });

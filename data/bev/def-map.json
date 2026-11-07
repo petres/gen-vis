@@ -48,7 +48,6 @@
             "hover": {"format": ",.0f"}
         }
     },
-    "hover": {"columns": []},
     "marks": [
         {"type": "base", "fill": "#E6EEF4", "stroke": "white", "stroke-width": 1.5},
         {
@@ -75,5 +74,6 @@
             "paint-order": "stroke"
         }
     ],
-    "geo": {"data": "../geo/austria.json", "key": "name", "join": "land"}
+    "geo": {"data": "../geo/austria.json", "key": "name", "join": "land"},
+    "hover": {"columns": []}
 }

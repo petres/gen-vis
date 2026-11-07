@@ -11,5 +11,6 @@
             }
         }
     },
-    "facets": {"cols": "=steps(@totalWidth, {0: 1, 850: 2})"}
+    "facets": {"cols": "=steps(@totalWidth, {0: 1, 850: 2})"},
+    "hover": {"columns": ["x", "year"]}
 }

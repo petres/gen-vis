@@ -74,5 +74,6 @@
             "props": {"dy": -7, "text-anchor": "middle", "font-size": 10}
         }
     ],
-    "facets": {"by": "geo", "cols": "=steps(@totalWidth, {0: 1, 600: 2})"}
+    "facets": {"by": "geo", "cols": "=steps(@totalWidth, {0: 1, 600: 2})"},
+    "hover": {"columns": []}
 }

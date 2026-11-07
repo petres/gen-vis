@@ -4,7 +4,6 @@
     "subtitle": "nach Bundesland, mit den Namen der Linien, einer Marke und einer Annotation",
     "margins": {"top": 10, "right": 130, "bottom": 40, "left": 80},
     "globals": {"mark": 1500000},
-    "hover": {"columns": []},
     "marks": [
         {
             "type": "line",

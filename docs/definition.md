@@ -95,10 +95,14 @@ later ones override earlier ones, e.g. a chart type and a control:
 
 A parent shared by several mixins is merged once, before the first mixin
 using it, so it does not override the mixins in between. The merge comes
-first, then the expressions of the globals are evaluated: a value of a
-later part replaces an expression of an earlier one, e.g. a child which
-gives the column of a dim replaces a `match` of a mixin which switches it
-(see [globals and controls](#globals-and-controls)).
+first, then the expressions of the globals are evaluated. A `match` of a
+global without a default (see [globals and controls](#globals-and-controls))
+is a switch over the value of the other parts: a mixin which switches the
+column of `y` for the shares, `"column": "=match(@values, {share:
+'value.share'})"`, applies to the `"column": "value"` of an earlier parent
+and of a child alike (the value becomes the default of the match); two
+matches of the same global merge their cases. A child replaces the switch
+with a `match` of its own (with a default) or removes the key with `null`.
 
 With `check` (or `debug`) the merged definition is checked for common
 mistakes, e.g. unknown mark types, unknown keys of the
@@ -1758,10 +1762,11 @@ of the hover, the other numeric ones with a `hover` are further columns.
 On touch devices it is shown by a tap and stays until a tap outside of the
 plot, horizontal swipes move it, vertical ones scroll the page.
 
-- `columns`: the dims of the hover, by default the dims of the `by` of the
-  marks (not the dims of the facets, their panels have titles); a dim with
-  a `hover` of its own is in it as well, `[]` only those. The columns are in
-  the order of the dims.
+- `columns`: the dims of the hover, by default the dims the marks use,
+  their `by` and the dims of their positions (`x`, `y`, `y1`, ... of the
+  channels; not the dims of the facets, their panels have titles); a dim
+  with a `hover` of its own is in it as well, `[]` only those. The columns
+  are in the order of the dims.
   ```json
   { "hover": { "columns": ["land", "unit"] } }
   ```
@@ -2039,12 +2044,13 @@ control of the kind of the chart:
   without a case of the value and without a default) leaves the key out (an
   expression of the string syntax; an object of an operator is `null`, which
   the options and the parts of dims read as none):
-  `"title": "=match(@lang, {en: 'Population'})"` has no title in German. The
-  expressions are evaluated after the merge with the parents, so a key
-  left out is not the one of a parent: a mixin which switches a part writes
-  every value in its `match`, and a child which gives the same key replaces
-  the expression of the mixin (it repeats the expression with its own
-  default, see [migration](#migration-from-4x)).
+  `"title": "=match(@lang, {en: 'Population'})"` has no title in German.
+  A `match` of a global without a default is a switch over the value of
+  the other parts of the definition (see [parents and
+  mixins](#parents-and-mixins)): `"column": "=match(@values, {share:
+  'value.share'})"` of a mixin over `"column": "value"` of a parent or a
+  child is `value.share` for the share and `value` otherwise; only without
+  a value anywhere the key is left out.
 - Expressions of the rows, the categories or the sizes (e.g. `@x`,
   `@color`, `@innerWidth`, `@totalWidth`) are evaluated when they are
   drawn, at the places which have such names, see [names](#names); a part
@@ -2242,23 +2248,15 @@ hand). The migration keeps the chart as it was:
 
 To check by hand:
 
-- **Patches of parts of a parent.** 4.x applied the patches after the
-  merge with the parents, 5.0 merges the expressions like any value: the
-  later part wins. A leaf which a parent patches and the child (or another
-  parent) defines becomes an expression of the child, with the child's
-  value as the default, e.g. the column of a dim which a mixin switches and
-  the child gives:
-  ```json
-  { "dims": { "y": { "column": "=match(@values, {share: 'value.share'}, 'value')" } } }
-  ```
-  A leaf which a patch of a parent changes and no part defines stays an
-  expression of the parent with the default `null` (no value). `gen-vis
-  migrate` says so: check the default of a patch of a part of a parent,
-  e.g. a mixin used by children which do and which do not give the leaf.
-- **The merge order of the expressions of mixins.** Of two mixins which
-  give the same key, the later one replaces the expression of the earlier
-  one; in 4.x both patches applied. Put the expression where the key is
-  given last, or write one expression of both globals.
+- **Patches of parts of a parent.** A patch becomes a `match` of the
+  global at the leaf it changes, without a default if the part has no
+  value of the leaf: a switch over the value of the other parts, which
+  applies after the merge as the patch did (see [parents and
+  mixins](#parents-and-mixins)). A mixin which switches the column of `y`
+  reads `"column": "=match(@values, {share: 'value.share'})"`, a child
+  which gives `"column": "value"` keeps it. Two mixins which patch the
+  same leaf by the same global merge their cases; by different globals the
+  later one is the switch over the earlier one.
 - **Patches of whole parts.** A patch of the plots, the annotations or the
   filter is a `match` of the whole list or filter (the marks of every value
   in it), shorten it by hand if only an attribute differs.

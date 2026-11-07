@@ -191,7 +191,7 @@ const migrateCommand = async args => {
         process.stdout.write(usage);
         return o.help ? 0 : 2;
     }
-    const { migrate, formatJson, isDefinition4, resolveParents } = await import('../dist/check.js');
+    const { migrate, formatJson, isDefinition4, resolveParents, schemaMajor } = await import('../dist/check.js');
     const { writeFileSync } = await import('node:fs');
     const { pathToFileURL, fileURLToPath } = await import('node:url');
     // all files are read first: the parents of a child are migrated with it
@@ -204,7 +204,7 @@ const migrateCommand = async args => {
         try {
             const url = pathToFileURL(path.resolve(file)).href;
             const def = JSON.parse(texts.get(url));
-            if (!isDefinition4(def)) {
+            if (!isDefinition4(def) && schemaMajor(def.$schema) !== 4) {
                 process.stderr.write(`gen-vis: ${file}: already a definition of gen-vis 5\n`);
                 continue;
             }

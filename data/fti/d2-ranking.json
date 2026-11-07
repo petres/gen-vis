@@ -10,7 +10,7 @@
     "margins": {"top": 10, "right": 10, "bottom": 10, "left": 10},
     "locale": {"base": "en"},
     "class": "fti fti-ranking",
-    "message": "=match(@group, {top3: 'The Top 3 are other countries for every indicator, see the sub-indicators.'}, null)",
+    "message": "=match(@group, {top3: 'The Top 3 are other countries for every indicator, see the sub-indicators.'})",
     "hover": {"box": false, "marker": false, "area": "facet", "columns": []},
     "controls": [{"id": "group", "values": [{"id": "top3"}]}],
     "filter": "@rank <= 10",

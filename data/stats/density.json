@@ -53,7 +53,6 @@
         },
         "group": {"column": "group", "categories": {"Direktvergabe": {}, "Andere Verfahren": {}}}
     },
-    "hover": {"columns": []},
     "marks": [
         {
             "type": "line",
@@ -65,5 +64,6 @@
             "stroke-dasharray": "@dash"
         }
     ],
-    "facets": {"by": "group", "cols": 2, "scales": ["x"]}
+    "facets": {"by": "group", "cols": 2, "scales": ["x"]},
+    "hover": {"columns": []}
 }

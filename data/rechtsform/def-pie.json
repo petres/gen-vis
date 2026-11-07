@@ -41,8 +41,7 @@
                 "Gemeinde Miete": "#C7DF71",
                 "Private Miete": "#4B9847",
                 "Sonstige": "#9CE1F8"
-            },
-            "hover": {}
+            }
         },
         "geo": {"column": "Geo", "categories": {"Österreich": {}, "Wien": {}}}
     },

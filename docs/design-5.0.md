@@ -201,14 +201,19 @@ while it is loaded.
   the control at that leaf, with the base as the default; a patch of the
   plots, the annotations or the filter (lists merged by id, conditions
   merged) is a `match` of the whole part. 4.x applied the patches after the
-  merge with the parents, 5.0 evaluates the expressions after the merge
-  too, but the merge itself decides which expression is there: so a child
-  is migrated with its parents merged (`migrate(def, { parents })`), and a
-  leaf which a parent patches and the child defines becomes an expression
-  of the child. The CLI reads all files before it writes one.
-- The same chart: a definition whose marks are by a dim without a hover
-  gets `hover.columns: []`, a legend without a symbol `"symbol": null`, the
-  margins stay. The test of the migration compares, for every value of
+  merge with the parents; in 5.0 the merge does the same for a `match` of
+  a global: without a default it is a switch over the value of the other
+  parts (the value below or above it becomes its default, two matches of
+  the same global merge their cases), so a mixin's switch applies to the
+  value of a parent or a child, and a child writes only its own cases. A
+  child is migrated with its parents merged (`migrate(def, { parents })`)
+  for the ids of its controls and the hover; the CLI reads all files
+  before it writes one.
+- The same chart: the hovers of 4.x which the default of 5.0 implies (the
+  dims the marks use) are left out, a definition with such a dim without a
+  hover lists `hover.columns` (the implied ones of its parents, `[]` of a
+  definition of its own), a legend without a symbol gets `"symbol": null`,
+  the margins stay. The test of the migration compares, for every value of
   every control, the normalized 4.x definition with the normalized
   translation of the migrated files.
 
@@ -250,9 +255,9 @@ while it is loaded.
   the default of dims with a legend, parts of categories or facets (in the
   order of the rows), not of every dim: a dim only used as `by` stays of
   any type (a line per id), as decided in 4.0.
-- **The default dims of the hover are the marks' `by` only**, not every
-  dim the marks use: the positions are in the hover anyway, the facets are
-  titled.
+- **The default dims of the hover are the ones the marks use**, their
+  `by` and the dims of their positions, not the dims of the facets (their
+  panels are titled).
 - **A categorical `y` is not top-down by default.** The review proposed
   `range: [0, "@height"]` as the default of horizontal bars; the first
   category stays at the bottom, `reverse: true` turns it.

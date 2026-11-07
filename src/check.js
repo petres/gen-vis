@@ -9,6 +9,7 @@ export { registerPlotType } from '@/plots';
 export { registerCoord } from '@/coords';
 export { registerScheme } from '@/utils/d3';
 export { migrate, formatJson } from '@/utils/migrate';
+export { schemaMajor } from '@/utils/version';
 export { translate, isDefinition4, isDefinition5 } from '@/utils/language';
 export { resolve, variants } from '@/utils/resolve';
 

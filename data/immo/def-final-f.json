@@ -137,7 +137,6 @@
             "hover": {}
         }
     },
-    "hover": {"columns": []},
     "marks": [
         {"type": "line", "by": ["quali", "werr", "bundesland", "wfrist"], "stroke-width": "2"},
         {
@@ -147,5 +146,6 @@
             "r": "3"
         }
     ],
-    "facets": {"by": "wrecht", "cols": 3, "scales": ["x", "y"]}
+    "facets": {"by": "wrecht", "cols": 3, "scales": ["x", "y"]},
+    "hover": {"columns": []}
 }

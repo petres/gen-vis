@@ -17,8 +17,7 @@
             "scale": {"pad": [0, 0]},
             "axis": {
                 "values": "=steps(@totalWidth, {0: literal([0, 6, 12, 18]), 600: literal([0, 3, 6, 9, 12, 15, 18, 21])})"
-            },
-            "hover": {}
+            }
         },
         "y": {
             "column": "value",
@@ -39,8 +38,7 @@
                 "Coal": {"text": "#FFFFFF"},
                 "Oil": {"color": "#000", "name": "Erdöl", "text": "#FFFFFF"},
                 "others": {"color": "#CCC", "name": "Andere", "text": "#444444"}
-            },
-            "hover": {}
+            }
         }
     },
     "marks": [

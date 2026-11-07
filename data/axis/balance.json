@@ -28,5 +28,6 @@
             "hover": {}
         }
     },
-    "marks": {"type": "bar", "by": "part", "stack": true}
+    "marks": {"type": "bar", "by": "part", "stack": true},
+    "hover": {"columns": []}
 }

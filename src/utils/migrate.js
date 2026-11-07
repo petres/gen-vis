@@ -4,7 +4,8 @@ import { isObject } from '@/utils/values';
 import { isOperator } from '@/utils/expr';
 import { formatExpression, parseExpression } from '@/utils/expr-parse';
 import { schemaUrl } from '@/utils/version';
-import { expressionKeys, optionKeys } from '@/utils/language';
+import { expressionKeys, optionKeys, translate } from '@/utils/language';
+import { resolve, namesOfGlobals } from '@/utils/resolve';
 import { mergeAll } from '@/utils/def';
 
 /**
@@ -126,7 +127,7 @@ const channel = v => {
 
 // a mapping of 4.x as a dim of 5.0, the names of the dims with a hover are
 // collected in `hovered`
-const dimOf = (m, name, hovered, grouped, consumed) => {
+const dimOf = (m, name, hovered, consumed) => {
     if (typeof m == 'string')
         return m;
     if (!isObject(m))
@@ -484,40 +485,42 @@ const applyPatchesAsExpressions = (def, parents) => {
         // the patched leaves (and whole parts) of every value, `own` if a
         // value of the part itself patches it
         const paths = new Map();
-        e.values.forEach((v, j) => isObject(v?.patch) && Object.entries(v.patch).forEach(([k, part]) => {
-            const value = valueOf(v, j);
-            const ownPatch = ownValues.find(o => isObject(o) && o.id !== undefined && o.id == v.id)?.patch;
-            if (whole.includes(k)) {
-                if (!paths.has(k))
-                    paths.set(k, { path: [k], cases: {}, whole: true, own: false });
-                paths.get(k).cases[value] = part;
-                paths.get(k).own ||= isObject(ownPatch) && ownPatch[k] !== undefined;
+        // the patches of the part itself (of a part with parents only its
+        // own, the parents write theirs): a `match` without a default is a
+        // switch over the value of the other parts, see leafMerge of utils/def.js
+        e.values.forEach((v, j) => {
+            const patch = parents === undefined ? v.patch : ownValues.find(o => isObject(o) && o.id !== undefined && o.id == v.id)?.patch;
+            if (!isObject(patch))
                 return;
-            }
-            leaves(part, [k]).forEach(([orig, raw]) => {
-                const [path, value_] = convertLeaf(orig, raw);
-                const key = JSON.stringify(path);
-                if (!paths.has(key))
-                    paths.set(key, { path, orig, cases: {}, own: false });
-                paths.get(key).cases[value] = caseValue(value_);
-                paths.get(key).own ||= isObject(ownPatch) && at(ownPatch, orig) !== undefined;
+            const value = valueOf(v, j);
+            Object.entries(patch).forEach(([k, part]) => {
+                if (whole.includes(k)) {
+                    if (!paths.has(k))
+                        paths.set(k, { path: [k], cases: {}, whole: true });
+                    paths.get(k).cases[value] = part;
+                    return;
+                }
+                leaves(part, [k]).forEach(([orig, raw]) => {
+                    const [path, value_] = convertLeaf(orig, raw);
+                    const key = JSON.stringify(path);
+                    if (!paths.has(key))
+                        paths.set(key, { path, orig, cases: {} });
+                    paths.get(key).cases[value] = caseValue(value_);
+                });
             });
-        }));
-        paths.forEach(({ path, orig, cases, whole: all, own: ownCase }) => {
+        });
+        paths.forEach(({ path, orig, cases, whole: all }) => {
             const converted = orig !== undefined && JSON.stringify(orig) != JSON.stringify(path);
             const baseOf = o => converted ? convertLeaf(orig, at(o, orig))[1] : at(o, path);
             const ownBase = baseOf(def);
-            // a part with parents writes the expression if it patches the leaf
-            // or there is a base (its own or of the parents, as 4.x applied the
-            // patch last, after the merge); else its parents do
-            const base = ownBase !== undefined || parents === undefined ? ownBase : baseOf(parents);
-            if (parents !== undefined && !ownCase && base === undefined)
-                return;
+            // a whole part (the marks, the annotations, the filter) is the merge
+            // of the base and the patch, of the parents' base if the part has none
+            const base = all && ownBase === undefined && parents !== undefined ? baseOf(parents) : ownBase;
             if (converted)
                 deleteAt(def, orig);
             // cases which are all the base (e.g. a patch which repeats the
             // definition) are the base, unless a parent patches the leaf (its
-            // expression needs the override)
+            // switch would apply to the base)
             const same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
             const parentCase = parents !== undefined && (parents.formElements ?? []).some(pe => isObject(pe) && pe.id == e.id
                 && Array.isArray(pe.values) && pe.values.some(v => isObject(v?.patch) && at(v.patch, orig ?? path) !== undefined));
@@ -531,8 +534,10 @@ const applyPatchesAsExpressions = (def, parents) => {
                 def[path[0]] = { match: [ref, parts, base === undefined ? null : base], [patchedKey]: true };
                 return;
             }
-            // a text, an expression at every place, also of a name, e.g. a column
-            setAt(def, path, expressionText({ match: [ref, cases, base === undefined ? null : caseValue(base)] }));
+            // a text, an expression at every place, also of a name, e.g. a
+            // column; without a base of its own no default: the value of the
+            // other parts, or none
+            setAt(def, path, expressionText({ match: base === undefined ? [ref, cases] : [ref, cases, caseValue(base)] }));
         });
         ownValues.forEach(v => isObject(v) && delete v.patch);
     });
@@ -568,7 +573,7 @@ const controlOf = e => {
  * expressions of the leaves its parents patch and it (or they) define,
  * as 4.x applied the patches after the merge.
  */
-const migrate = (raw, { parents } = {}) => {
+const migrate = (raw, { parents, noHover = false } = {}) => {
     const def = clone(raw);
     applyPatchesAsExpressions(def, clone(parents));
     const out = {};
@@ -601,7 +606,6 @@ const migrate = (raw, { parents } = {}) => {
     const mapping = isObject(def.mapping) ? def.mapping : {};
     const plotsOf = p => p === undefined || p === null ? [] : [p].flat();
     const plots = isPatched(def.plot) ? plotsOf(def.plot.match[2]) : plotsOf(def.plot);
-    const grouped = new Set(plots.flatMap(p => isObject(p) ? [p.by ?? []].flat() : []).filter(Boolean));
     const stacked = Object.fromEntries(Object.entries(mapping).filter(([, m]) => isObject(m) && m.stacked !== undefined && m.stacked !== false)
         .map(([n, m]) => [n, m.stacked === true ? true : conditionExpression(m.stacked)]));
     const hovered = [];
@@ -609,13 +613,7 @@ const migrate = (raw, { parents } = {}) => {
     const consumed = new Set();
     const marks = plots.map((p, i) => markOf(p, i, coord, stacked, mapping, consumed));
     if (def.mapping !== undefined)
-        out.dims = Object.fromEntries(Object.entries(mapping).map(([n, m]) => [n, dimOf(m, n, hovered, grouped, consumed)]));
-    // the hover of 4.x has the dims with a `hover` only, the one of 5.0 also
-    // the dims of the marks' by: a definition (or a part of one) with marks
-    // by a dim without a hover (of its own) lists no columns, the chart
-    // stays the same
-    if ([...grouped].some(n => !hovered.includes(n)))
-        out.hover = { ...(isObject(out.hover) ? out.hover : {}), columns: [] };
+        out.dims = Object.fromEntries(Object.entries(mapping).map(([n, m]) => [n, dimOf(m, n, hovered, consumed)]));
     if (isObject(out.hover) && out.hover.filter !== undefined)
         out.hover.filter = conditionExpression(out.hover.filter);
     if (isPatched(def.plot))
@@ -645,7 +643,37 @@ const migrate = (raw, { parents } = {}) => {
         out.geo = def.geo;
     Object.keys(def).filter(k => !['$schema', 'parent', 'data', 'dataFormat', 'transform', 'options', 'globals', 'formElements', 'filter', 'mapping', 'plot', 'annotations', 'facets', 'geo'].includes(k))
         .forEach(k => out[k] = def[k]);
+    // the hover of 4.x has the dims with a `hover` only, the one of 5.0 by
+    // default the dims the marks use (see translate), of the whole
+    // definition (with the parents): the empty hovers of these dims are
+    // implied and left out; if one of them has no hover (of the part or of
+    // the parents), the part lists the columns of the implied dims of the
+    // parents (the parents left them out as well), so the chart stays the same
+    if (!noHover) {
+        const whole = parents === undefined ? out : migrate(mergeAll([parents, raw]), { noHover: true });
+        const implied = hoverDefault(whole);
+        const inherited = Object.entries(isObject(parents?.mapping) ? parents.mapping : {}).filter(([, m]) => isObject(m) && isObject(m.hover)).map(([n]) => n);
+        const empty = n => isObject(out.dims?.[n]) && isObject(out.dims[n].hover) && Object.keys(out.dims[n].hover).length == 0;
+        if (implied.every(n => hovered.includes(n) || inherited.includes(n)))
+            implied.filter(empty).forEach(n => delete out.dims[n].hover);
+        else
+            out.hover = { ...(isObject(out.hover) ? out.hover : {}), columns: implied.filter(n => inherited.includes(n) && !hovered.includes(n)) };
+    }
     return out;
+};
+
+// the dims of the hover by default of a part of 5.0 (the dims its marks
+// use, see translate of utils/language.js), of the defaults of its globals
+const hoverDefault = part => {
+    const probe = clone(part);
+    Object.values(isObject(probe.dims) ? probe.dims : {}).forEach(d => isObject(d) && delete d.hover);
+    delete probe.hover;
+    try {
+        const mapping = translate(resolve(probe, namesOfGlobals(probe.globals, probe.controls))).mapping;
+        return Object.keys(mapping).filter(n => isObject(mapping[n]) && mapping[n].hover !== undefined);
+    } catch {
+        return [];
+    }
 };
 
 /**

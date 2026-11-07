@@ -553,5 +553,297 @@
         "y": "share"
       }
     }
+  },
+  {
+    "name": "a match of a global without a default is a switch over the value below it, of the string syntax or an operator object",
+    "parts": [
+      {
+        "dims": {
+          "y": {
+            "column": "value",
+            "format": ",.0f"
+          }
+        }
+      },
+      {
+        "dims": {
+          "y": {
+            "column": "=match(@values, {share: 'value.share'})",
+            "format": {
+              "match": [
+                "@values",
+                {
+                  "share": ".0%"
+                }
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "result": {
+      "dims": {
+        "y": {
+          "column": {
+            "match": [
+              "@values",
+              {
+                "share": "value.share"
+              },
+              "value"
+            ]
+          },
+          "format": {
+            "match": [
+              "@values",
+              {
+                "share": ".0%"
+              },
+              ",.0f"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "a match without a default over no value stays without one (no value unless a case holds)",
+    "parts": [
+      {
+        "dims": {
+          "y": {}
+        }
+      },
+      {
+        "dims": {
+          "y": {
+            "column": "=match(@values, {share: 'value.share'})"
+          }
+        }
+      }
+    ],
+    "result": {
+      "dims": {
+        "y": {
+          "column": "=match(@values, {share: 'value.share'})"
+        }
+      }
+    }
+  },
+  {
+    "name": "two matches of the same global merge their cases, the later ones win, the default of the later one, else of the earlier one",
+    "parts": [
+      {
+        "title": "=match(@kind, {a: 'A', b: 'B'}, 'none')"
+      },
+      {
+        "title": "=match(@kind, {b: 'Bee', c: 'C'})"
+      },
+      {
+        "subtitle": "=match(@kind, {a: 'a'})"
+      },
+      {
+        "subtitle": "=match(@kind, {b: 'b'}, 'sub')"
+      }
+    ],
+    "result": {
+      "title": {
+        "match": [
+          "@kind",
+          {
+            "a": "A",
+            "b": "Bee",
+            "c": "C"
+          },
+          "none"
+        ]
+      },
+      "subtitle": {
+        "match": [
+          "@kind",
+          {
+            "a": "a",
+            "b": "b"
+          },
+          "sub"
+        ]
+      }
+    }
+  },
+  {
+    "name": "a value merged onto a match of a global becomes its default, with or without one: the switch applies after the merge as a patch of 4.x",
+    "parts": [
+      {
+        "dims": {
+          "y": {
+            "column": "=match(@values, {share: 'value.share'})",
+            "format": "=match(@values, {share: '.0%'}, ',.1f')"
+          }
+        }
+      },
+      {
+        "dims": {
+          "y": {
+            "column": "value",
+            "format": ",.0f"
+          }
+        }
+      }
+    ],
+    "result": {
+      "dims": {
+        "y": {
+          "column": {
+            "match": [
+              "@values",
+              {
+                "share": "value.share"
+              },
+              "value"
+            ]
+          },
+          "format": {
+            "match": [
+              "@values",
+              {
+                "share": ".0%"
+              },
+              ",.0f"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "a match with a default and null replace, a match of another global without a default falls through to the switch below it",
+    "parts": [
+      {
+        "dims": {
+          "y": {
+            "column": "=match(@values, {share: 'value.share'})",
+            "format": "=match(@values, {share: '.0%'})",
+            "nice": "=match(@values, {share: true})"
+          }
+        }
+      },
+      {
+        "dims": {
+          "y": {
+            "column": "=match(@values, {share: 's'}, 'v')",
+            "format": "=match(@other, {x: '.1f'})",
+            "nice": null
+          }
+        }
+      }
+    ],
+    "result": {
+      "dims": {
+        "y": {
+          "column": {
+            "match": [
+              "@values",
+              {
+                "share": "s"
+              },
+              "v"
+            ]
+          },
+          "format": {
+            "match": [
+              "@other",
+              {
+                "x": ".1f"
+              },
+              "=match(@values, {share: '.0%'})"
+            ]
+          },
+          "nice": null
+        }
+      }
+    }
+  },
+  {
+    "name": "the attributes of marks and annotations are expressions of the rows, their matches are no switches",
+    "parts": [
+      {
+        "marks": [
+          {
+            "id": "a",
+            "fill": "=match(@c, {x: 'red'})"
+          }
+        ],
+        "annotations": [
+          {
+            "type": "line",
+            "y": "=match(@c, {x: 1})"
+          }
+        ]
+      },
+      {
+        "marks": [
+          {
+            "id": "a",
+            "fill": "blue"
+          }
+        ],
+        "annotations": [
+          {
+            "type": "line",
+            "y": 2
+          }
+        ]
+      }
+    ],
+    "result": {
+      "marks": [
+        {
+          "id": "a",
+          "fill": "blue"
+        }
+      ],
+      "annotations": [
+        {
+          "type": "line",
+          "y": 2
+        }
+      ]
+    }
+  },
+  {
+    "name": "a part as a whole, e.g. the marks of a global, over the marks of a parent",
+    "parts": [
+      {
+        "marks": [
+          {
+            "type": "line"
+          }
+        ]
+      },
+      {
+        "marks": "=match(@kind, {map: literal([{type: 'region'}])})"
+      }
+    ],
+    "result": {
+      "marks": {
+        "match": [
+          "@kind",
+          {
+            "map": {
+              "literal": [
+                {
+                  "type": "region"
+                }
+              ]
+            }
+          },
+          [
+            {
+              "type": "line"
+            }
+          ]
+        ]
+      }
+    }
   }
 ]

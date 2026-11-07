@@ -22,7 +22,6 @@
             "format": "$.0f",
             "scale": {"include": 100},
             "axis": {"ticks": 3},
-            "hover": {},
             "grid": true
         },
         "color": {
@@ -70,8 +69,7 @@
                         }
                     ]
                 }
-            },
-            "hover": {}
+            }
         }
     },
     "marks": [

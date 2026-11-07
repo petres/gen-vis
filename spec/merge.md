@@ -27,13 +27,29 @@ The parts are merged in their order, a later part overrides an earlier one
   earlier array stay in their order, each merged with the entry of the
   later array of the same key (compared as strings, `1` and `"1"` are the
   same), then the entries of the later one with new keys are appended.
-- A text of a mapping (the column, e.g. `"facet": "group"`) and an object of
-  the same mapping (of the key `mapping`, the dims of 4.x and of the form the
-  engine reads) are merged as the object `{"column": "group"}` and the other
-  one, in both orders: a child adds the categories of the column of its
-  parent, or a text changes only the column of an object. Two texts replace
-  each other. (The `dims` of a definition of 5.0 are merged as other
-  objects: a text and an object of a dim replace each other.)
+- A text of a dim (the column, e.g. `"facet": "group"`) and an object of
+  the same dim (of the keys `dims` and `mapping`, the latter of 4.x and of
+  the form the engine reads) are merged as the object `{"column": "group"}`
+  and the other one, in both orders: a child adds the categories of the
+  column of its parent, or a text changes only the column of an object. Two
+  texts replace each other.
+- A `match` of a global without a default (`"=match(@values, {share:
+  'value.share'})"` in the string syntax, or the operator object `{"match":
+  ["@values", {...}]}`) is a switch of cases over the value of the other
+  parts: merged onto a value, the value becomes its default (`{"match":
+  ["@values", {"share": "value.share"}, "value"]}`, the result is the
+  operator object); a value merged onto a match of a global (with or without
+  a default) becomes its default, so the switch of a mixin applies to the
+  value of a child merged after it (as the patches of 4.x applied after the
+  merge), a child replaces a switch with a match of its own or with `null`;
+  two matches of the
+  same global merge their cases (the later ones win) and keep the default
+  of the later one, else of the earlier one; a match of another global
+  without a default falls through to the switch below it (it is its
+  default). A match with a default and `null` replace the value, as other
+  values. This does
+  not apply inside `marks` and `annotations`, whose expressions are the ones
+  of the rows: their matches are values.
 - All other values replace the earlier one, also arrays (of numbers, strings
   or of entries of which one has none of the keys, or of different keys),
   `null` (it stays in the merged definition) and an object of an array or of

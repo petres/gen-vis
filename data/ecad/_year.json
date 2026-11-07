@@ -24,7 +24,6 @@
             "format": "d",
             "scale": {"pad": [0, 0]},
             "axis": {"position": "top", "ticks": 5},
-            "hover": {},
             "grid": true
         },
         "y": {
@@ -32,7 +31,6 @@
             "format": "$.1f",
             "scale": {"pad": [0, 0]},
             "axis": {"ticks": 3},
-            "hover": {},
             "grid": true
         },
         "avg": {"column": "avg", "scale": {"of": "y"}, "hover": {"format": "$.1f"}}

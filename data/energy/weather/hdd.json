@@ -13,5 +13,6 @@
                 "cum": {"name": "Summe seit Jahresbeginn", "highlight-stroke-width": 4}
             }
         }
-    }
+    },
+    "hover": {"columns": ["x", "year"]}
 }

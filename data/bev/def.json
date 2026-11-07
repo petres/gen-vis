@@ -11,15 +11,13 @@
             "column": "Jahr",
             "format": "c",
             "scale": {"domainAbs": [-0.5, 0.5]},
-            "axis": {"ticks": "@innerWidth * 0.013"},
-            "hover": {}
+            "axis": {"ticks": "@innerWidth * 0.013"}
         },
         "y": {
             "column": "Einwohner",
             "format": ",.0f",
             "scale": {"pad": [0, 0.2]},
             "axis": {"ticks": 5},
-            "hover": {},
             "zero": true,
             "grid": true
         },
@@ -64,8 +62,7 @@
                 "Kärnten": {},
                 "Tirol": {},
                 "Vorarlberg": {}
-            },
-            "hover": {}
+            }
         }
     },
     "marks": [

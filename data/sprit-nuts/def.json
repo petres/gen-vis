@@ -76,7 +76,6 @@
             }
         }
     },
-    "hover": {"columns": []},
     "marks": [
         {
             "type": "line",
@@ -85,5 +84,6 @@
             "stroke-dasharray": "@stroke-dasharray"
         }
     ],
-    "annotations": [{"type": "band", "x": ["2022-02-24", null], "label": "Krieg in der Ukraine"}]
+    "annotations": [{"type": "band", "x": ["2022-02-24", null], "label": "Krieg in der Ukraine"}],
+    "hover": {"columns": []}
 }

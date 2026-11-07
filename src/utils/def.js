@@ -5,6 +5,7 @@ import { ownColors, schemeColors } from '@/utils/d3';
 import { comparison, isObject, sameValue } from '@/utils/values';
 import { defaultScaleType, hasCategories } from '@/utils/normalize';
 import { operators, refNames } from '@/utils/expr';
+import { parseExpression } from '@/utils/expr-parse';
 import { hasLocale } from '@/utils/locale';
 import { translate } from '@/utils/language';
 import { resolve, namesOfGlobals } from '@/utils/resolve';
@@ -39,9 +40,61 @@ const mergeMappings = (target, source, options) => {
     });
     return deepMerge(t, s, options);
 };
-const customMerge = key => key == 'mapping' || key == 'dims' ? mergeMappings : undefined;
+// the attributes of marks and annotations are expressions of the rows, a
+// `match` of them is no switch of a global: no leaf merge in them
+const withoutLeaves = (t, s, options) => (Array.isArray(t) && Array.isArray(s) ? arrayMerge : deepMerge)(t, s, { ...options, leafMerge: undefined });
+const customMerge = key => key == 'mapping' || key == 'dims' ? mergeMappings : (key == 'marks' || key == 'annotations' ? withoutLeaves : undefined);
 
-const mergeAll = parts => mergeParts(parts, { arrayMerge, customMerge });
+// a `match` of a global at a leaf: its reference, cases and default, of
+// the string syntax ("=match(@values, {share: '.1%'})") or of an operator
+// object, null of other values
+const matchOf = v => {
+    let ast = v;
+    if (typeof v == 'string' && v.startsWith('=match(')) {
+        try {
+            ast = parseExpression(v);
+        } catch {
+            return null;
+        }
+    }
+    if (!isObject(ast) || !Array.isArray(ast.match) || typeof ast.match[0] != 'string' || !ast.match[0].startsWith('@') || !isObject(ast.match[1]))
+        return null;
+    const [ref, cases, ...rest] = ast.match;
+    return { ref, cases, hasDefault: rest.length > 0, default: rest[0] };
+};
+const matchExpression = (ref, cases, hasDefault, value) => ({ match: hasDefault ? [ref, cases, value] : [ref, cases] });
+
+/**
+ * A switch of a global over the value of the parts before it: a `match`
+ * without a default merged onto a value (`target`) has it as its default,
+ * e.g. `"column": "=match(@values, {share: 'value.share'})"` of a mixin
+ * over `"column": "value"` of an earlier parent; two matches of the same
+ * global merge their cases (the later ones win) and keep the default of
+ * the later one, or of the earlier one if the later has none; a value
+ * merged onto a match (with or without a default) becomes its default, so
+ * the switch of a mixin also applies to the value of a child merged after
+ * it, as the patches of 4.x applied after the merge. Null replaces
+ * (removes), as a match with a default replaces a value.
+ */
+const leafMerge = (target, source) => {
+    const s = matchOf(source);
+    const t = target === undefined || target === null ? null : matchOf(target);
+    if (s) {
+        if (t && t.ref == s.ref)
+            return matchExpression(s.ref, { ...t.cases, ...s.cases }, s.hasDefault || t.hasDefault, s.hasDefault ? s.default : t.default);
+        if (!s.hasDefault && target !== undefined && target !== null)
+            return matchExpression(s.ref, s.cases, true, structuredClone(target));
+        return undefined;
+    }
+    if (t && source !== undefined && source !== null)
+        return matchExpression(t.ref, t.cases, true, structuredClone(source));
+    return undefined;
+};
+
+// only a `match` object is a leaf of the merge: an object of one other
+// operator may be a part, e.g. { "format": ".1f" } of a hover
+const isMatchObject = v => isObject(v) && Object.keys(v).length == 1 && Array.isArray(v.match);
+const mergeAll = parts => mergeParts(parts, { arrayMerge, customMerge, leafMerge, isOperator: isMatchObject });
 
 // keys of categories ascending or descending, numbers by their value
 const sortKeys = (keys, descending) => {

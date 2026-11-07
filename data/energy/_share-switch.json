@@ -15,11 +15,11 @@
     ],
     "dims": {
         "y": {
-            "column": "=match(@values, {share: 'value.share'}, null)",
-            "domain": "=match(@values, {share: literal([0, 1])}, null)",
-            "scale": {"pad": "=match(@values, {share: literal([0, 0])}, null)"},
-            "axis": {"format": "=match(@values, {share: '.0%'}, null)"},
-            "hover": {"format": "=match(@values, {share: '.1%'}, null)"}
+            "column": "=match(@values, {share: 'value.share'})",
+            "domain": "=match(@values, {share: literal([0, 1])})",
+            "scale": {"pad": "=match(@values, {share: literal([0, 0])})"},
+            "axis": {"format": "=match(@values, {share: '.0%'})"},
+            "hover": {"format": "=match(@values, {share: '.1%'})"}
         }
     }
 }

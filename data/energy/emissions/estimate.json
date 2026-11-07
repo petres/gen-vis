@@ -34,8 +34,7 @@
             "categories": {
                 "estimate": {"color": "#C3423F", "name": "Schätzung", "stroke": "#C3423F", "r": 0},
                 "inventory": {"color": "#444444", "name": "Inventur", "stroke": "none", "r": 3}
-            },
-            "hover": {}
+            }
         },
         "facet": {
             "column": "facet",
@@ -47,7 +46,6 @@
             }
         }
     },
-    "hover": {"columns": []},
     "marks": [
         {
             "type": "line",

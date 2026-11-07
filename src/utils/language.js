@@ -231,12 +231,18 @@ const anchors = {
  * `stacks` collects the stacked value dims (`{ dim, by, condition }`),
  * `coord` is the coordinate system.
  */
-const mark = (raw, i, dims, coord, stacks) => {
+const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
     const { p, props } = markParts(raw, i);
     const type = typeOf(p.type, coord);
     p.type = type;
     const kind = type.split(':')[1];
     const ch = (name, axis) => channelOf({ ...p, ...props }, name, dims, axis);
+    // the dims of the positions the mark uses, e.g. of the hover by default
+    ['x', 'y', 'x0', 'x1', 'x2', 'y0', 'y1', 'y2'].forEach(n => {
+        const c = raw[n] !== undefined || n == 'x' || n == 'y' ? ch(n, n == 'x2' ? 'x' : n == 'y2' ? 'y' : undefined) : undefined;
+        if (c?.dim !== undefined)
+            used.add(c.dim);
+    });
     // a channel only if the mark has it, e.g. the start of a bar
     const given = (name, axis) => raw[name] !== undefined ? ch(name, axis) : undefined;
     // a channel of a value: a number is one on the scale, e.g. the base of a bar
@@ -563,8 +569,9 @@ const translate = raw => {
     // mark groups rows of any type, e.g. of a year, it makes no categories)
     const facets = facetsOf(def.facets, dims);
     const rawMarks = def.marks === undefined ? [] : [def.marks].flat();
-    // the dims of the hover by default: the ones of the marks' by (the facets
-    // are the titles of their panels)
+    // the dims of the hover by default: the ones the marks use, their `by`
+    // and the dims of their positions (the facets are the titles of their panels)
+    const used = new Set();
     const grouped = rawMarks.flatMap(m => isObject(m) ? [m.by ?? []].flat() : [])
         .filter(n => typeof n == 'string' && Object.hasOwn(dims, n) && isObject(dims[n]));
     (facets ? [facets.dim, facets.rows, facets.cols] : []).filter(n => typeof n == 'string' && isObject(dims[n])).forEach(n => {
@@ -572,7 +579,11 @@ const translate = raw => {
             dims[n].fromData = 'rows';
     });
     const stacks = [];
-    const marks = rawMarks.map((m, i) => mark(m, i, dims, coord, stacks));
+    const marks = rawMarks.map((m, i) => mark(m, i, dims, coord, stacks, used));
+    used.forEach(n => {
+        if (!grouped.includes(n) && Object.hasOwn(dims, n) && isObject(dims[n]))
+            grouped.push(n);
+    });
     // the stacked value dims, a condition of the rows which are stacked
     stacks.forEach(({ dim: n, by, condition }) => {
         const m = dims[n];

@@ -30,7 +30,7 @@
     "height": 330,
     "margins": {"top": 18, "right": 10, "bottom": 34, "left": 30},
     "locale": {"base": "de"},
-    "hover": {"total": "Gesamt", "title": "ab {title} Tsd. €"},
+    "hover": {"total": "Gesamt", "title": "ab {title} Tsd. €", "columns": []},
     "globals": {"months": 36},
     "dims": {
         "x": {

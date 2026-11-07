@@ -33,7 +33,6 @@
             "hover": {"format": "$,.3f"}
         }
     },
-    "hover": {"columns": []},
     "marks": [
         {"type": "base", "fill": "#EEE", "stroke": "white", "stroke-width": 0.5},
         {
@@ -80,5 +79,6 @@
             "SK"
         ],
         "projection": {"type": "azimuthalEqualArea", "rotate": [-10, -52]}
-    }
+    },
+    "hover": {"columns": []}
 }

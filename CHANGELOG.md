@@ -82,8 +82,9 @@ builds and dependencies. The design is in `docs/design-5.0.md`.
   data) or the object of values of dims as before; the conditions `not` and
   `range` are still read.
 - `hover.columns` lists the dims of the hover; without it the hover has the
-  dims of the `by` of the marks (and the dims with a `hover` of their own),
-  so the `"hover": {}` of every grouping dim of 4.x is not needed.
+  dims the marks use, their `by` and the dims of their positions (and the
+  dims with a `hover` of their own), so the `"hover": {}` of the dims of
+  4.x is not needed.
 - `facets.by` is the dim of the facets (was `facets.dim`) or `{"rows",
   "cols"}` of a grid (were `rows` and `cols`); `scales` is `"own"` (the
   default, was `[]`), `"shared"` (all dims), a list or an object of a grid
@@ -117,12 +118,19 @@ them.
   points); 4.x had none. A migrated legend gets `"symbol": null`.
 - An option of `null` is none, e.g. a `message` of a `match` without a
   case; an expression of the globals without a value leaves its key out
-  (not the value of a parent: the expressions are evaluated after the
-  merge).
-- The default dims of the hover are the ones of the marks' `by` only, not
-  the dims of the facets (their panels have titles). A migrated definition
-  whose marks are by a dim without a `hover` gets `"hover": {"columns":
-  []}`, so its hover stays the one of 4.x.
+  (a `match` without a default over the value of another part is a switch
+  over it, see below).
+- The default dims of the hover are the ones the marks use (their `by`
+  and the dims of their positions), not the dims of the facets (their
+  panels have titles). The migration leaves the implied `"hover": {}` out;
+  a migrated definition which uses a dim without a `hover` lists
+  `hover.columns`, so its hover stays the one of 4.x.
+- A `match` of a global without a default is a switch over the value of
+  the other parts of the definition, merged as the patches of 4.x applied:
+  the value of a parent or a child becomes its default, two matches of the
+  same global merge their cases (see spec/merge.md). A mixin which switches
+  a value writes its cases once, the children write only their own values
+  and cases.
 
 ### Margins
 

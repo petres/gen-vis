@@ -17,11 +17,9 @@
     "controls": [{"id": "values", "values": [{"id": "valuesAbs", "name": "Anzahl"}, {"id": "valuesShare"}]}],
     "dims": {
         "y": {
-            "hover": {"format": "=match(@values, {share: '.1%'}, ',.0f')"},
-            "column": "=match(@values, {share: 'value.share'}, 'value')",
-            "domain": "=match(@values, {share: literal([0, null])}, literal([0, null]))",
-            "scale": {"pad": "=match(@values, {share: literal([0, 0.1])}, literal([0, 0.1]))"},
-            "axis": {"format": "=match(@values, {share: '.0%'}, ',.0f')"}
+            "hover": {"format": ",.0f"},
+            "domain": "=match(@values, {share: literal([0, null])})",
+            "scale": {"pad": "=match(@values, {share: literal([0, 0.1])})"}
         },
         "facet": {
             "column": "type",

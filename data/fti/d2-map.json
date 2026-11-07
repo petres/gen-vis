@@ -10,7 +10,7 @@
     "coord": "geo",
     "locale": {"base": "en", "number": {"currency": ["", " %"]}},
     "class": "fti fti-map",
-    "message": "=match(@group, {top3: 'The Top 3 are other countries for every indicator, see the sub-indicators.'}, null)",
+    "message": "=match(@group, {top3: 'The Top 3 are other countries for every indicator, see the sub-indicators.'})",
     "hover": {
         "title": "<small>In relation to {group:name}</small>{title}: ",
         "side": "above",

@@ -4,5 +4,5 @@
     "data": "16-tg-d.parquet",
     "title": "Wien Hohe Warte: a year of temperatures in a circle",
     "subtitle": "The daily mean temperature of {year} and the mean of the day of 1951–2024, the years since 1951 in gray",
-    "dims": {"y": {"axis": {"format": "=match(@type, {abs: '$.0f', rel: '+$.0f'}, '+$.0f')"}}}
+    "hover": {"columns": ["x"]}
 }

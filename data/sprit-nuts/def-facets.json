@@ -27,8 +27,7 @@
             "categories": {
                 "DIE": {"name": "Diesel", "color": "#B5432B"},
                 "SUP": {"name": "Benzin", "color": "#2B6CB5"}
-            },
-            "hover": {}
+            }
         },
         "nuts": {
             "column": "nuts2",

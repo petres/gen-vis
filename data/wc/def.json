@@ -11,8 +11,7 @@
             "column": "Jahr",
             "format": "d",
             "scale": {"inset": [6, 6], "pad": [0, 0]},
-            "axis": {"values": [1971, 1981, 1991, 2001]},
-            "hover": {}
+            "axis": {"values": [1971, 1981, 1991, 2001]}
         },
         "y": {
             "column": "Anteil",
@@ -34,8 +33,7 @@
                 "Private Miete": {},
                 "Sonstiges": {},
                 "Alle Haushalte": {"color": "#111", "width": 3.5}
-            },
-            "hover": {}
+            }
         },
         "einheit": {"column": "Einheit", "categories": {"Österreich": {}, "Wien": {}}}
     },

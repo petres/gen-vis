@@ -158,7 +158,6 @@
             "categories": {"price.m2.n": {"name": "Beobachtungen"}, "price.m2.v": {"name": "Preis"}}
         }
     },
-    "hover": {"columns": []},
     "marks": [
         {
             "type": "line",
@@ -173,5 +172,6 @@
             "r": "3"
         }
     ],
-    "facets": {"by": "var", "cols": 2, "scales": "own"}
+    "facets": {"by": "var", "cols": 2, "scales": "own"},
+    "hover": {"columns": []}
 }

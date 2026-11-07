@@ -11,15 +11,13 @@
             "column": "Jahr",
             "format": "c",
             "scale": {"orientation": "horizontal", "domainAbs": [-6, 6]},
-            "axis": {"ticks": 6, "rotate": 0, "values": [1971, 1981, 1991, 2001, 2011, 2020]},
-            "hover": {}
+            "axis": {"ticks": 6, "rotate": 0, "values": [1971, 1981, 1991, 2001, 2011, 2020]}
         },
         "yy": {
             "column": "Anzahl",
             "format": ",.0f",
             "scale": {"orientation": "vertical", "pad": [0, 0.02]},
             "axis": {"ticks": 8},
-            "hover": {},
             "zero": true,
             "grid": true
         },
@@ -52,8 +50,7 @@
                 "Gemeinde Miete": "#C7DF71",
                 "Private Miete": "#4B9847",
                 "Sonstige": "#9CE1F8"
-            },
-            "hover": {}
+            }
         },
         "geo": {
             "column": "Geo",

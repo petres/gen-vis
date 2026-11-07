@@ -104,5 +104,6 @@
     "annotations": [
         {"type": "band", "x": [1961, 1990], "props": {"fill": "#35d3da", "fill-opacity": 0.1}},
         {"type": "band", "x": [1991, 2020], "props": {"fill": "#f23c06", "fill-opacity": 0.1}}
-    ]
+    ],
+    "hover": {"columns": []}
 }

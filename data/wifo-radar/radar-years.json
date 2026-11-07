@@ -3,7 +3,7 @@
     "parent": "_radar.json",
     "title": "Radar der Wettbewerbsfähigkeit: Zeitvergleich",
     "subtitle": "Die Prozentränge von {country} in den Jahren, unter den Ländern der EU, Norwegen, Island, der Schweiz und dem Vereinigten Königreich",
-    "hover": {"row": "{year}: <b>{y}</b>"},
+    "hover": {"row": "{year}: <b>{y}</b>", "columns": ["y"]},
     "globals": {"country": "Österreich"},
     "controls": [
         {

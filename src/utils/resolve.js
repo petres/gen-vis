@@ -32,6 +32,9 @@ const drawn = new Set(['marks', 'annotations', 'props', 'highlight', 'others']);
 // globals in their scope, a text of them is the expression itself
 const rows = new Set(['filter', 'stack', 'stacked', 'expr']);
 
+// a `match` object, e.g. of the merge, see leafMerge of utils/def.js
+const isMatch = v => isObject(v) && Object.keys(v).length == 1 && Array.isArray(v.match);
+
 const resolveIn = (value, names, key, inside) => {
     // an operator at the marks or the annotations (a mark is no operator)
     // is an expression of the whole part, as a text of one
@@ -54,6 +57,14 @@ const resolveIn = (value, names, key, inside) => {
         return r === unresolved ? value : r;
     }
     const expression = inside || (key !== undefined && expressionKeys.has(key));
+    // a `match` object at any key, e.g. of the merge of a switch of a global
+    // with the value of another part (see leafMerge of utils/def.js), as
+    // the text of one
+    if (!expression && isMatch(value)) {
+        const r = resolved(value, names);
+        if (r !== unresolved)
+            return r;
+    }
     if (Array.isArray(value))
         return value.map(v => resolveIn(v, names, key == 'marks' || key == 'annotations' ? 'marks' : undefined, expression || key == 'marks' || key == 'annotations'));
     if (!isObject(value))
@@ -64,8 +75,10 @@ const resolveIn = (value, names, key, inside) => {
     }
     // a text of an expression without a value (null) is no part, e.g. of a
     // match of a global without a case of its value
-    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolveIn(v, names, k, expression && key != 'marks')])
-        .filter(([k, v]) => !(v === null && typeof value[k] == 'string' && isExpressionText(value[k]))));
+    // the dims by their names, e.g. a dim named `x`, are no expressions (the channel `x` of a mark is)
+    const dims = key == 'dims' || key == 'mapping';
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolveIn(v, names, dims ? undefined : k, expression && key != 'marks' && !dims)])
+        .filter(([k, v]) => !(v === null && ((typeof value[k] == 'string' && isExpressionText(value[k])) || isMatch(value[k])))));
 };
 
 // the value of an expression of the names only, unresolved of others (also

@@ -22,9 +22,9 @@
         "y": {
             "column": "{unit}{share}",
             "hover": {"format": "=match(@share, {'.share': '.1%'}, ',.2f')"},
-            "domain": "=match(@share, {'.share': literal([0, 1])}, literal([0, null]))",
-            "scale": {"pad": "=match(@share, {'.share': literal([0, 0])}, literal([0, 0.1]))"},
-            "axis": {"format": "=match(@share, {'.share': '.0%'}, ',.0f')"}
+            "domain": "=match(@share, {'.share': literal([0, 1])})",
+            "scale": {"pad": "=match(@share, {'.share': literal([0, 0])})"},
+            "axis": {"format": "=match(@share, {'.share': '.0%'})"}
         },
         "type": {
             "column": "product",

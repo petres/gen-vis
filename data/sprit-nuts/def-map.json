@@ -38,7 +38,6 @@
             "name": "Preis in €/l"
         }
     },
-    "hover": {"columns": []},
     "marks": [
         {"type": "base", "fill": "#EEE", "stroke": "white"},
         {
@@ -51,5 +50,6 @@
         }
     ],
     "facets": {"by": "type", "cols": "=steps(@totalWidth, {0: 1, 700: 2})"},
-    "geo": {"data": "../geo/austria.json", "key": "code", "join": "nuts"}
+    "geo": {"data": "../geo/austria.json", "key": "code", "join": "nuts"},
+    "hover": {"columns": []}
 }

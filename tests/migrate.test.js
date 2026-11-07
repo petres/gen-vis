@@ -124,15 +124,18 @@ describe('the migration of the definitions of 4.x', () => {
             mapping: { y: { axis: { format: '.1f' } } },
         };
         const def = migrate(child, { parents });
-        // the own patches, a base of the child or of a parent
+        // the own patches with the own base
         expect(def.controls).toEqual([{ id: 'v', values: [{ id: 'b' }] }]);
         expect(def.title).toBe("=match(@v, {b: 'B'}, 'Child')");
         expect(def.dims.y.axis.format).toBe("=match(@v, {b: '.0%'}, '.1f')");
-        // a leaf a parent patches and defines: the child carries the expression (its merge would override the parent's one)
-        expect(def.dims.y.column).toBe("=match(@v, {b: 'b'}, 'a')");
-        expect(def.subtitle).toBe("=match(@v, {b: 'B'}, 'A')");
-        // a leaf no part defines: the parent's expression
+        // the leaves the parent patches are its own, a switch over the values of the merge (see leafMerge of utils/def.js)
+        expect(def.dims.y.column).toBeUndefined();
+        expect(def.subtitle).toBeUndefined();
         expect(def.dims.y.scale).toBeUndefined();
+        const parent = migrate(parents);
+        expect(parent.dims.y.column).toBe("=match(@v, {b: 'b'}, 'a')");
+        expect(parent.dims.y.scale.pad).toBe("=match(@v, {b: literal([0, 0.1])})");
+        expect(parent.subtitle).toBe("=match(@v, {b: 'B'}, 'A')");
         // without a ref: an error, not an expression of '@undefined'
         expect(() => migrate(child)).toThrow('formElements[0]: no ref');
     });

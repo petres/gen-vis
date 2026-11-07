@@ -16,7 +16,6 @@
             "domain": [0, 24],
             "format": "$d",
             "axis": {"values": [0, 6, 12, 18]},
-            "hover": {},
             "grid": true
         },
         "y": {
@@ -38,8 +37,7 @@
                 "Coal": {"text": "#FFFFFF"},
                 "Oil": {"color": "#000", "name": "Erdöl", "text": "#FFFFFF"},
                 "others": {"color": "#CCC", "name": "Andere", "text": "#444444"}
-            },
-            "hover": {}
+            }
         }
     },
     "marks": [
