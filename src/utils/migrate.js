@@ -649,7 +649,10 @@ const migrate = (raw, { parents, noHover = false } = {}) => {
     // implied and left out; if one of them has no hover (of the part or of
     // the parents), the part lists the columns of the implied dims of the
     // parents (the parents left them out as well), so the chart stays the same
-    if (!noHover) {
+    // a child without dims and marks of its own changes nothing of the
+    // hover, its parents decided
+    const changes = parents === undefined || out.marks !== undefined || (isObject(out.dims) && Object.keys(out.dims).length > 0);
+    if (!noHover && changes) {
         const whole = parents === undefined ? out : migrate(mergeAll([parents, raw]), { noHover: true });
         const implied = hoverDefault(whole);
         const inherited = Object.entries(isObject(parents?.mapping) ? parents.mapping : {}).filter(([, m]) => isObject(m) && isObject(m.hover)).map(([n]) => n);

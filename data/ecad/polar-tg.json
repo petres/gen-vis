@@ -3,6 +3,5 @@
     "parent": "_polar.json",
     "data": "16-tg-d.parquet",
     "title": "Wien Hohe Warte: a year of temperatures in a circle",
-    "subtitle": "The daily mean temperature of {year} and the mean of the day of 1951–2024, the years since 1951 in gray",
-    "hover": {"columns": ["x"]}
+    "subtitle": "The daily mean temperature of {year} and the mean of the day of 1951–2024, the years since 1951 in gray"
 }

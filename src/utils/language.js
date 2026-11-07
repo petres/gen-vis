@@ -572,8 +572,9 @@ const translate = raw => {
     // the dims of the hover by default: the ones the marks use, their `by`
     // and the dims of their positions (the facets are the titles of their panels)
     const used = new Set();
+    const facetDims = facets ? [facets.dim, facets.rows, facets.cols].filter(n => typeof n == 'string') : [];
     const grouped = rawMarks.flatMap(m => isObject(m) ? [m.by ?? []].flat() : [])
-        .filter(n => typeof n == 'string' && Object.hasOwn(dims, n) && isObject(dims[n]));
+        .filter(n => typeof n == 'string' && Object.hasOwn(dims, n) && isObject(dims[n]) && !facetDims.includes(n));
     (facets ? [facets.dim, facets.rows, facets.cols] : []).filter(n => typeof n == 'string' && isObject(dims[n])).forEach(n => {
         if (dims[n].fromData === undefined && !isObject(dims[n].categories))
             dims[n].fromData = 'rows';
@@ -581,7 +582,7 @@ const translate = raw => {
     const stacks = [];
     const marks = rawMarks.map((m, i) => mark(m, i, dims, coord, stacks, used));
     used.forEach(n => {
-        if (!grouped.includes(n) && Object.hasOwn(dims, n) && isObject(dims[n]))
+        if (!grouped.includes(n) && Object.hasOwn(dims, n) && isObject(dims[n]) && !facetDims.includes(n))
             grouped.push(n);
     });
     // the stacked value dims, a condition of the rows which are stacked
