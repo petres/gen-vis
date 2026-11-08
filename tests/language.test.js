@@ -143,3 +143,28 @@ describe('the language of 5.0', () => {
         expect(() => translate({ marks: [{ type: { match: ['@s', {}] } }] })).toThrow(/marks\[0\]\.type: expected a mark type/);
     });
 });
+
+describe('controls of plain values', () => {
+    test('are variants and have the fields of their entries', async () => {
+        const { variants, namesOfGlobals } = await import('@/utils/resolve.js');
+        const def = { globals: { kind: 'lines' }, controls: [{ type: 'radio', global: 'kind', values: ['lines', 'polar'] }],
+            coord: "=match(@kind, {polar: 'polar'}, 'cartesian')", title: '{kind:name}' };
+        expect(variants(def).map(v => v.coord)).toEqual(['cartesian', 'polar']);
+        expect(namesOfGlobals({ kind: 'polar' }, def.controls)['kind:name']).toBe('polar');
+    });
+});
+
+describe('the shorthands of a removed part', () => {
+    test('"axis": false with grid or ticks stays without an axis, "scale": false with pad without a scale', () => {
+        const m = translate({ dims: { x: 'year', y: { column: 'v', axis: false, grid: true, ticks: 5 }, z: { column: 'w', scale: false, pad: 0.1 } }, marks: { type: 'line' } }).mapping;
+        expect(m.y.axis).toBe(false);
+        expect(m.y.grid).toBeUndefined();
+        expect(m.z.scale).toBe(false);
+        expect(m.z.pad).toBeUndefined();
+    });
+});
+
+test('dodge: true without by is a named error', () => {
+    expect(() => translate({ dims: { x: { column: 'g', type: 'categorical' }, y: 'v' }, marks: { type: 'bar', dodge: true } }))
+        .toThrow(/marks\[0\]\.dodge: true puts the groups/);
+});

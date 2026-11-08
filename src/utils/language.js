@@ -104,6 +104,11 @@ const dim = (raw, name) => {
     const scale = isObject(m.scale) ? { ...m.scale } : m.scale;
     const into = (keys, target, make) => {
         const own = keys.filter(k => m[k] !== undefined);
+        // a part removed (`"axis": false`) stays removed, its shorthands are none
+        if (target === false || target === null) {
+            own.forEach(k => delete m[k]);
+            return target;
+        }
         if (own.length == 0)
             return target;
         const t = isObject(target) ? { ...target } : {};
@@ -259,6 +264,8 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
     const dodge = kind == 'bar' || (kind == 'text' && (p.dodge === true || typeof p.dodge == 'string')) ? p.dodge : undefined;
     if (dodge !== undefined)
         delete p.dodge;
+    if (dodge === true && p.by.length == 0)
+        throw new Error(`marks[${i}].dodge: true puts the groups of the first dim of "by" side by side, the mark has no "by", e.g. "by": "year" or "dodge": "year"`);
     const orient = p.orient;
     delete p.orient;
     const anchor = p.anchor;

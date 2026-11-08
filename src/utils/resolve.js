@@ -103,6 +103,10 @@ const resolved = (ast, names) => {
     return v === undefined ? null : v;
 };
 
+// an entry of a control, a value (e.g. "2024") is its value, name and id, as
+// the controls of the engine, see control of utils/language.js
+const entryOf = v => isObject(v) ? v : (v === null || typeof v != 'object' ? { value: v, name: String(v), id: String(v) } : v);
+
 // the names of the globals of a definition and the fields of the entries
 // of its controls selected by them, e.g. `year:name`
 const namesOfGlobals = (globals = {}, controls = []) => {
@@ -120,7 +124,7 @@ const namesOfGlobals = (globals = {}, controls = []) => {
         }
         if (!Array.isArray(c.values))
             return;
-        const entry = c.values.find(v => isObject(v) && String(v.value) === String(globals?.[g]));
+        const entry = c.values.map(entryOf).find(v => isObject(v) && String(v.value) === String(globals?.[g]));
         Object.entries(entry ?? {}).filter(([, v]) => v === null || typeof v != 'object')
             .forEach(([k, v]) => names[`${g}:${k}`] ??= v);
     });
@@ -136,7 +140,7 @@ const namesOfGlobals = (globals = {}, controls = []) => {
 const variants = def => {
     const globals = isObject(def.globals) ? def.globals : {};
     const controls = [def.controls ?? []].flat().filter(c => isObject(c) && Array.isArray(c.values));
-    const sets = [globals, ...controls.flatMap(c => c.values.filter(isObject).map(v => ({ ...globals, [c.global ?? c.ref]: v.value })))];
+    const sets = [globals, ...controls.flatMap(c => c.values.map(entryOf).filter(isObject).map(v => ({ ...globals, [c.global ?? c.ref]: v.value })))];
     const seen = new Set();
     return sets.filter(s => {
         const key = JSON.stringify(s);
