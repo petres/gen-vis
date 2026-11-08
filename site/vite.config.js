@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import pkg from '../package.json' with { type: 'json' };
+import gallery from './gallery/index.js';
+import { galleryFiles } from './gallery/files.js';
 
 // the standalone script as a module (`npm run lib` first) in lib/esm/ of the
 // page, of its example without a bundler (public/standalone.html)
@@ -27,6 +29,26 @@ const standalone = () => ({
     },
 });
 
+// the definitions of data/ of the gallery (gallery.html) and the files they
+// need, served as gallery-data/ of the page, see site/gallery/index.js
+const dataDir = fileURLToPath(new URL('../data', import.meta.url));
+const galleryData = () => ({
+    name: 'gallery-data',
+    configureServer(server) {
+        server.middlewares.use('/gallery-data', (req, res, next) => {
+            const file = path.join(dataDir, decodeURIComponent(req.url.split('?')[0]));
+            if (!file.startsWith(dataDir) || !existsSync(file) || !statSync(file).isFile())
+                return next();
+            res.setHeader('Content-Type', file.endsWith('.json') ? 'application/json' : 'text/plain; charset=utf-8');
+            res.end(readFileSync(file));
+        });
+    },
+    generateBundle() {
+        galleryFiles(dataDir, gallery.map(e => e.file)).forEach(f =>
+            this.emitFile({ type: 'asset', fileName: `gallery-data/${f}`, source: readFileSync(path.join(dataDir, f)) }));
+    },
+});
+
 // the page of the examples (GitHub Pages), see docs/development.md, it uses the
 // package as it is published, the es module of dist/ (`npm run build` first),
 // so its styles are in the cascade layer `gen-vis` as in the applications
@@ -34,7 +56,7 @@ export default defineConfig({
     root: fileURLToPath(new URL('.', import.meta.url)),
     // relative urls, the page is at /gen-vis/ of github.io
     base: './',
-    plugins: [vue(), standalone()],
+    plugins: [vue(), standalone(), galleryData()],
     resolve: {
         alias: {
             '@preschen/gen-vis/schema.json': fileURLToPath(new URL('../schema.json', import.meta.url)),
@@ -58,6 +80,7 @@ export default defineConfig({
             input: {
                 index: fileURLToPath(new URL('index.html', import.meta.url)),
                 guide: fileURLToPath(new URL('guide.html', import.meta.url)),
+                gallery: fileURLToPath(new URL('gallery.html', import.meta.url)),
             },
         },
     },

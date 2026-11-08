@@ -35,6 +35,8 @@ export default {
         modelValue: { type: String, default: '' },
         lang: { type: String, default: 'json' },
         label: { type: String, default: null },
+        // a text shown, not edited, e.g. a definition merged with its parents
+        readonly: { type: Boolean, default: false },
     },
     emits: ['update:modelValue'],
     mounted() {
@@ -47,6 +49,7 @@ export default {
                 EditorView.lineWrapping,
                 ...languages[this.lang](),
                 EditorView.contentAttributes.of(this.label ? { 'aria-label': this.label } : {}),
+                EditorView.editable.of(!this.readonly),
                 EditorView.updateListener.of(u => {
                     if (u.docChanged)
                         this.$emit('update:modelValue', u.state.doc.toString());

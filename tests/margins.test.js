@@ -22,17 +22,18 @@ const view = async (def, width = 400) => {
 };
 const margins = async (def, width) => (await view(def, width)).facets[0].margins;
 
-// the extents of the parts of an axis: the tick marks, the padding of the
-// labels and the height of a label
-const marks = 9, padding = 3, label = 12;
+// the extents of the parts of an axis: the tick marks outside of the plot
+// area (their size of 9 less the inset of 5 of a left axis and 4 of a
+// bottom one), the padding of the labels and the height of a label
+const marksLeft = 9 - 5, marksBottom = 9 - 4, padding = 3, label = 12;
 const widest = texts => Math.max(...texts.map(t => textWidth(t, '12px sans-serif')));
 
 describe('auto margins', () => {
     test('the widest label of the left axis, the height of the labels of the bottom axis, a floor beside them', async () => {
         const m = await margins({});
         // the ticks of y up to 2.000.000, the widest label "2.000.000"
-        expect(m.left).toBe(Math.ceil(marks + padding + widest(['2.000.000']) + 2));
-        expect(m.bottom).toBe(Math.ceil(marks + padding + label + 2));
+        expect(m.left).toBe(Math.ceil(marksLeft + padding + widest(['2.000.000']) + 2));
+        expect(m.bottom).toBe(Math.ceil(marksBottom + padding + label + 2));
         // the labels of the ends of the left axis reach above and below the plot area
         expect(m.top).toBe(Math.ceil(label/2 + 2));
         expect(m.right).toBeGreaterThanOrEqual(8);
@@ -55,7 +56,7 @@ describe('auto margins', () => {
         expect(wide.left).toBeGreaterThanOrEqual(8);
         const rotated = await margins({ dims: { x: { column: 'year', type: 'numeric', format: 'd', axis: { rotate: 90, values: [2020, 2021] } }, y: { column: 'value', zero: true } } });
         // the labels of the years are vertical, their width below the axis
-        expect(rotated.bottom).toBe(Math.ceil(marks + padding + widest(['2020', '2021']) + 2));
+        expect(rotated.bottom).toBe(Math.ceil(marksBottom + padding + widest(['2020', '2021']) + 2));
     });
 
     test('the defaults of the page (registerDefaults) and of the chart give the sides without one, e.g. of a house style', async () => {

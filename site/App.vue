@@ -5,6 +5,7 @@
                 <span class="wordmark">gen-vis</span>
                 <span class="version">{{ version }}</span>
                 <nav class="links">
+                    <a href="gallery.html">Gallery</a>
                     <a href="guide.html">How it works</a>
                     <a :href="readme">Readme</a>
                     <a :href="`${repo}/blob/${branch}/CHANGELOG.md`">Changelog</a>
@@ -48,6 +49,7 @@
                 <a href="#standalone">Without a bundler</a>
                 <a href="#export">Static export</a>
                 <a href="#comparison">Comparison</a>
+                <a href="gallery.html">Gallery</a>
                 <a href="guide.html">How it works</a>
             </nav>
         </header>

@@ -187,6 +187,13 @@ const genVisExport = async (options = {}) => {
     Object.entries(await ofMerged(options.schemes, 'schemes', merged) ?? {}).forEach(([name, colors]) => restoreSchemes.push(registerScheme(name, colors)));
     const defaults = await ofMerged(options.defaults, 'defaults', merged);
     await addStyles(options.css, options.fontSize);
+    // the fonts of the page (e.g. Inter of the package, the ones of `css`)
+    // before the chart is drawn: the margins and the legends are measured in
+    // them, a font face loads only when a text uses it
+    if (document.fonts) {
+        await Promise.all([...document.fonts].map(f => f.load().catch(() => null)));
+        await document.fonts.ready;
+    }
     const data = await dataOf(options);
     const classes = listOf(options.classes).flatMap(c => String(c).split(/\s+/)).filter(Boolean);
 

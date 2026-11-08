@@ -8,6 +8,8 @@ import schema from '../schema.json';
 import { validateDef } from '@/utils/validate';
 import { errors, useDom, mount, root } from './dom.js';
 import steps from '../site/guide/steps.js';
+import gallery from '../site/gallery/index.js';
+import { galleryFiles } from '../site/gallery/files.js';
 
 useDom();
 
@@ -68,6 +70,40 @@ describe('the steps of the page how it works', () => {
         expect(nuclear.querySelector('.vis-annotation.vis-line')).toBeNull();
         expect(nuclear.querySelector('.vis-subtitle').textContent).toBe('Share of the generation of nuclear power, 2021 and 2025');
         expect([...nuclear.querySelectorAll('.vis-legend-entry')].map(e => e.textContent.trim())).toEqual(['2021', '2025']);
+        expect(errors).toEqual([]);
+    });
+});
+
+// the gallery of the page (site/gallery.html): definitions of data/ with
+// their parents, data and geometries, served as gallery-data/
+describe('the gallery of the page', () => {
+    // the files of the gallery are the ones of data/ of the repository (served as gallery-data/ by the page)
+    beforeEach(() => {
+        vi.stubGlobal('fetch', async url => {
+            const file = `${root}${decodeURIComponent(new URL(url).pathname)}`;
+            return existsSync(file) ? new Response(readFileSync(file)) : new Response('', { status: 404, statusText: 'Not Found' });
+        });
+    });
+
+    test('the files of the definitions exist, the ids are unique', () => {
+        const files = galleryFiles(`${root}/data`, gallery.map(e => e.file));
+        expect(files.length).toBeGreaterThan(gallery.length);
+        files.forEach(f => expect(existsSync(`${root}/data/${f}`), f).toBe(true));
+        expect(new Set(gallery.map(e => e.id)).size).toBe(gallery.length);
+    });
+
+    test.each(gallery.map(e => [e.id, e.file]))('%s is valid and drawn', async (id, file) => {
+        const el = await mount({ defFile: `/data/${file}` });
+        expect(el.querySelector('.vis-error')).toBeNull();
+        expect(el.querySelectorAll('svg.vis-svg g.vis-plot').length).toBeGreaterThan(0);
+        expect(errors).toEqual([]);
+    });
+
+    test('a definition edited on the page keeps the urls of its file (def with defFile)', async () => {
+        const el = await mount({ def: { parent: 'def.json', title: 'Edited' }, defFile: '/data/bev/edited.json' });
+        expect(el.querySelector('.vis-error')).toBeNull();
+        expect(el.querySelector('.vis-title').textContent).toBe('Edited');
+        expect(el.querySelectorAll('svg.vis-svg g.vis-plot').length).toBeGreaterThan(0);
         expect(errors).toEqual([]);
     });
 });

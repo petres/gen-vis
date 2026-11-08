@@ -6,6 +6,7 @@
                 <span class="version">{{ version }}</span>
                 <nav class="links">
                     <a href="./">Examples</a>
+                    <a href="gallery.html">Gallery</a>
                     <a :href="readme">Readme</a>
                     <a :href="`${repo}/blob/${branch}/CHANGELOG.md`">Changelog</a>
                     <a :href="repo">GitHub</a>

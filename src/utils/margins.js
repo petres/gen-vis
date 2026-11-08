@@ -8,6 +8,8 @@ import { bandCenter } from '@/utils/scales';
 // the ones of the styles (see styles.css)
 const labelFontSize = 12;
 const titleFontSize = 12;
+// the parts of the tick marks inside the plot area of the styles, see utils/axis.js
+const tickInset = { bottom: 4, top: 5, right: 4, left: 5 };
 
 /**
  * The margins of the facets of the sides which are "auto" (`given`, the
@@ -51,7 +53,12 @@ const autoMargins = (store, facets, given) => {
         const widths = texts.map(t => textWidth(t, font));
         const widest = Math.max(0, ...widths);
         const d = store.axisDefaults(pos);
-        const marks = i.tickMarks === false ? 0 : (i.tickMarks?.size ?? d.tickMarks?.size ?? 9);
+        // the labels are at the end of the part of the tick marks outside of
+        // the plot area (their size less the inset, also without marks) plus
+        // the padding, see drawAxis of utils/axis.js
+        const size = (i.tickMarks !== false ? i.tickMarks?.size : undefined) ?? d.tickMarks?.size ?? 9;
+        const inset = Number.isFinite(i.tickMarks?.inset) ? i.tickMarks.inset : (Number.isFinite(d.tickMarks?.inset) ? d.tickMarks.inset : (tickInset[pos] ?? 0));
+        const marks = Math.max(size - inset, 0);
         const padding = Number(i.padding ?? d.padding ?? 3);
         const titled = i.title && (def.facets?.axisTitles != 'outer' || f.outer?.[pos] !== false);
         // the title at the distance of the margin less 8 pixels from the axis, see axes of coords/cartesian.js

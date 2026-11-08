@@ -1,0 +1,26 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "data.csv",
+    "transform": {"type": "index", "column": "Einwohner", "as": "index", "by": "Bundesland", "base": {"Jahr": "2002"}},
+    "title": "Bevölkerung",
+    "subtitle": "Index, 2002 = 100, nach Bundesland und Jahr",
+    "source": "Q: Statistik Austria",
+    "height": 320,
+    "filter": "@y != 'ÖSTERREICH'",
+    "dims": {
+        "x": {"column": "Jahr", "type": "categorical", "format": "c", "axis": {"tickMarks": false}},
+        "y": {"column": "Bundesland", "type": "categorical", "axis": {"tickMarks": false}},
+        "v": {
+            "column": "index",
+            "name": "Index",
+            "domain": [95, 125],
+            "scale": {"type": "sequential", "interpolator": "YlGnBu"},
+            "legend": {"format": ".0f"},
+            "hover": {"format": ".1f"}
+        }
+    },
+    "marks": [
+        {"type": "cell", "fill": "v", "stroke": "white", "stroke-width": 1},
+        {"type": "label", "text": "=format(@v, '.0f')", "anchor": "center", "font-size": 9, "fill": "#333"}
+    ]
+}

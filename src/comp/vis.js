@@ -249,12 +249,16 @@ const createVis = app => {
         // at most 40% of the width, the rest is the one of the facets
         return Math.ceil(Math.min(size, 0.4*width));
     };
+    // an element of the texts of the chart, of their font, see measure
+    const fontProbe = root.appendChild(el('span', { 'aria-hidden': 'true', style: 'position: absolute; visibility: hidden; width: 0; height: 0; overflow: hidden;' }));
     const measure = () => {
         width = plotsWidth();
         store.totalWidth = width;
         store.rowHeaderWidth = rowHeaderWidth();
         const styles = typeof getComputedStyle == 'function' ? getComputedStyle(root) : null;
-        store.fontFamily = styles?.fontFamily || null;
+        // the font of the texts of the chart (`.vis span`, see styles.css: the
+        // variable of the page or Inter), not the one of the page around it
+        store.fontFamily = typeof getComputedStyle == 'function' ? getComputedStyle(fontProbe).fontFamily || null : null;
         // the margins of the styles of the page, a length in pixels or "auto"
         // (measured), e.g. --gen-vis-margin-left: 60px of a house style
         store.styleMargins = styles ? Object.fromEntries(['top', 'right', 'bottom', 'left'].map(side => {

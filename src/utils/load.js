@@ -236,12 +236,15 @@ const loadParts = need => {
 
 // the definition of the attribute (an object or a JSON text) or, of null,
 // the one of its url, and its url, undefined of the attribute
+// a definition given with a url (`defUrl`, e.g. the prop defFile beside
+// def) has the url as the one of its file: its parents, its data and its
+// geometry are relative to it, e.g. a definition of a file edited on a page
 const readDef = async (def, defUrl) => {
     if (def === null) {
         const url = resolveUrl(defUrl);
         return { def: parseDef(await fetchText(url), `'${url}'`), url };
     }
-    return { def: typeof def == 'string' ? parseDef(def, 'attribute') : def, url: undefined };
+    return { def: typeof def == 'string' ? parseDef(def, 'attribute') : def, url: defUrl ? resolveUrl(defUrl) : undefined };
 };
 
 // the definition of the attribute or of its url, with its parents, the

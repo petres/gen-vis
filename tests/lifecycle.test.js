@@ -2,7 +2,7 @@
 // the lifecycle of a visualisation: definitions and globals changed while it is
 // loaded, unmounted while it is loaded, exports while it is loaded, mounting
 // by class and the buttons of the footer
-import { test, expect, vi, beforeEach } from 'vitest';
+import { test, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement } from '@/index.js';
 import { errors, useDom, rendered, mount, nextTick } from './dom.js';
 
@@ -30,20 +30,28 @@ const csv = 'year,value\n2020,1\n2021,2';
 
 // the files by their name, a delay per name simulates slow responses
 const delays = {};
+const files = async url => {
+    const name = new URL(url).pathname.slice(1);
+    await new Promise(r => setTimeout(r, delays[name] ?? 0));
+    if (name.startsWith('def'))
+        return new Response(JSON.stringify(defOf(name)));
+    if (name.startsWith('g'))
+        return new Response(JSON.stringify(globalDef(name)));
+    if (name.endsWith('.csv'))
+        return new Response(csv);
+    return new Response('', { status: 404, statusText: 'Not Found' });
+};
+// also between the tests, when the stubs are removed (see useDom): a
+// delayed request of a visualisation of the test before still answers,
+// otherwise it fails with the real fetch and the next test shares the
+// pending request (fetchCached of utils/load.js)
+beforeAll(() => {
+    globalThis.fetch = files;
+});
 beforeEach(() => {
     for (const k in delays)
         delete delays[k];
-    vi.stubGlobal('fetch', async url => {
-        const name = new URL(url).pathname.slice(1);
-        await new Promise(r => setTimeout(r, delays[name] ?? 0));
-        if (name.startsWith('def'))
-            return new Response(JSON.stringify(defOf(name)));
-        if (name.startsWith('g'))
-            return new Response(JSON.stringify(globalDef(name)));
-        if (name.endsWith('.csv'))
-            return new Response(csv);
-        return new Response('', { status: 404, statusText: 'Not Found' });
-    });
+    vi.stubGlobal('fetch', files);
     URL.createObjectURL = () => 'blob:png';
     URL.revokeObjectURL = () => {};
 });
