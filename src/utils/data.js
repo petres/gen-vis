@@ -620,6 +620,10 @@ const formatType = m => [m.format, m.axis?.format, m.hover?.format, m.legend?.fo
  * definition, the definition is changed. Only the columns which are `known`
  * (all by default), e.g. of the check of the definition.
  */
+// the types of the columns of a source of values (the rows of the data or
+// the values of a column of a transform), inferred once: a change of the
+// globals infers the types of the definition again, the values are the same
+const typesOf = new WeakMap();
 const inferTypes = (def, rows, columns = null, known = () => true) => {
     const infer = m => {
         if (!isObject(m) || m.type !== undefined || typeof m.column != 'string')
@@ -627,8 +631,13 @@ const inferTypes = (def, rows, columns = null, known = () => true) => {
         const column = fillTemplate(m.column, def.globals ?? {});
         if (!known(column))
             return;
-        const value = columnValues(rows, columns, column);
-        m.type = inferType(value, sourceRows(rows, columns).length) ?? formatType(m);
+        const source = columns?.has(column) ? columns.get(column) : sourceRows(rows, columns);
+        if (!typesOf.has(source))
+            typesOf.set(source, new Map());
+        const types = typesOf.get(source);
+        if (!types.has(column))
+            types.set(column, inferType(columnValues(rows, columns, column), sourceRows(rows, columns).length));
+        m.type = types.get(column) ?? formatType(m);
     };
     Object.values(def.mapping ?? {}).forEach(infer);
     variants(def).slice(1).forEach(patch => Object.entries(isObject(patch.mapping) ? patch.mapping : {})

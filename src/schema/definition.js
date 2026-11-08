@@ -452,7 +452,7 @@ const definitions = {
     controlValue: describe(map(anyOf([{ type: 'string' }, { type: 'number' }, { type: 'boolean' }, { type: 'null' }]),
         'An entry, other fields of scalars are names of the templates while it is selected, e.g. {group:short} of a field short of the entry of the global group.', {
             properties: {
-                value: { description: 'The value of the global while the entry is selected.' },
+                value: { anyOf: [{ type: 'string' }, { type: 'number' }, { type: 'boolean' }, { type: 'null' }, { type: 'array' }], description: 'The value of the global while the entry is selected.' },
                 name: text('The value by default.'),
                 id: string('The value by default, of the merge with the entries of a parent.'),
                 globals: describe({ type: 'object' }, 'Globals which are set when the entry is selected, e.g. a name used by the texts.'),

@@ -579,9 +579,7 @@ export interface ControlValue {
     /**
      * The value of the global while the entry is selected.
      */
-    value?: {
-        [k: string]: unknown;
-    };
+    value?: string | number | boolean | null | unknown[];
     /**
      * The value by default.
      */
@@ -601,10 +599,11 @@ export interface ControlValue {
         | number
         | boolean
         | null
+        | unknown[]
+        | InLanguages
         | {
               [k: string]: unknown;
           }
-        | InLanguages
         | undefined;
 }
 /**

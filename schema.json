@@ -1635,7 +1635,16 @@
             "additionalProperties": { "anyOf": [{ "type": "string" }, { "type": "number" }, { "type": "boolean" }, { "type": "null" }] },
             "description": "An entry, other fields of scalars are names of the templates while it is selected, e.g. {group:short} of a field short of the entry of the global group.",
             "properties": {
-                "value": { "description": "The value of the global while the entry is selected." },
+                "value": {
+                    "anyOf": [
+                        { "type": "string" },
+                        { "type": "number" },
+                        { "type": "boolean" },
+                        { "type": "null" },
+                        { "type": "array" }
+                    ],
+                    "description": "The value of the global while the entry is selected."
+                },
                 "name": {
                     "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
                     "description": "The value by default."
