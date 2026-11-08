@@ -755,7 +755,14 @@
               {
                 "x": ".1f"
               },
-              "=match(@values, {share: '.0%'})"
+              {
+                "match": [
+                  "@values",
+                  {
+                    "share": ".0%"
+                  }
+                ]
+              }
             ]
           },
           "nice": null
@@ -837,11 +844,13 @@
               ]
             }
           },
-          [
-            {
-              "type": "line"
-            }
-          ]
+          {
+            "literal": [
+              {
+                "type": "line"
+              }
+            ]
+          }
         ]
       }
     }
@@ -888,6 +897,50 @@
                   },
                   "value"
                 ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "a switch over an object: the object is its default as a literal (it is not evaluated as an expression), a switch below as its object",
+    "parts": [
+      {
+        "dims": {
+          "y": {
+            "axis": {
+              "format": ",.0f"
+            }
+          }
+        }
+      },
+      {
+        "dims": {
+          "y": {
+            "axis": "=match(@values, {share: literal({format: '.0%'})})"
+          }
+        }
+      }
+    ],
+    "result": {
+      "dims": {
+        "y": {
+          "axis": {
+            "match": [
+              "@values",
+              {
+                "share": {
+                  "literal": {
+                    "format": ".0%"
+                  }
+                }
+              },
+              {
+                "literal": {
+                  "format": ",.0f"
+                }
               }
             ]
           }

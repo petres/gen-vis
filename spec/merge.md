@@ -42,7 +42,9 @@ The parts are merged in their order, a later part overrides an earlier one
   operator object); a value merged onto a match of a global (with or without
   a default) becomes its default, so the switch of a mixin applies to the
   value of a child merged after it (as the patches of 4.x applied after the
-  merge), of nested switches (mixins of different globals) the default of
+  merge; an object or a list is the default as a `literal`, so it is not
+  evaluated as an expression, a match of the string syntax as its object;
+  of nested switches (mixins of different globals) the default of
   the innermost one, so both stay; a child replaces a switch with a match
   of its own or with `null`;
   two matches of the

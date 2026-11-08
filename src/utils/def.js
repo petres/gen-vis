@@ -63,11 +63,21 @@ const matchOf = v => {
     return { ref, cases, hasDefault: rest.length > 0, default: rest[0] };
 };
 const matchExpression = (ref, cases, hasDefault, value) => ({ match: hasDefault ? [ref, cases, value] : [ref, cases] });
+// a value of a part as the default of a match: a match of a global (also
+// of the string syntax) as its object, an object or a list as a literal,
+// so it is not evaluated as an expression, e.g. { "format": ".0%" } of an axis
+const asDefault = v => {
+    const m = matchOf(v);
+    if (m)
+        return matchExpression(m.ref, m.cases, m.hasDefault, m.hasDefault ? asDefault(m.default) : undefined);
+    return v !== null && typeof v == 'object' && !isLiteral(v) ? { literal: structuredClone(v) } : structuredClone(v);
+};
+const isLiteral = v => isObject(v) && Object.keys(v).length == 1 && Object.hasOwn(v, 'literal');
 // a value as the default of a match, of the innermost one of nested
 // switches, e.g. of two mixins of different globals, so both stay
 const withDefault = (m, value) => {
     const inner = m.hasDefault ? matchOf(m.default) : null;
-    return matchExpression(m.ref, m.cases, true, inner ? withDefault(inner, value) : structuredClone(value));
+    return matchExpression(m.ref, m.cases, true, inner ? withDefault(inner, value) : asDefault(value));
 };
 
 /**
@@ -90,7 +100,7 @@ const leafMerge = (target, source) => {
         if (t && t.ref == s.ref)
             return matchExpression(s.ref, { ...t.cases, ...s.cases }, s.hasDefault || t.hasDefault, s.hasDefault ? s.default : t.default);
         if (!s.hasDefault && target !== undefined && target !== null)
-            return matchExpression(s.ref, s.cases, true, structuredClone(target));
+            return matchExpression(s.ref, s.cases, true, asDefault(target));
         return undefined;
     }
     if (t && source !== undefined && source !== null)
