@@ -127,12 +127,19 @@ const channel = v => {
 
 // a mapping of 4.x as a dim of 5.0, the names of the dims with a hover are
 // collected in `hovered`
-const dimOf = (m, name, hovered, consumed) => {
+const dimOf = (m, name, hovered, consumed, coord = 'cartesian') => {
     if (typeof m == 'string')
         return m;
     if (!isObject(m))
         return m;
     const d = { ...m };
+    // a categorical vertical scale without a range of 4.x had its first
+    // category at the bottom, of 5.0 at the top: `reverse` keeps the picture
+    const orientation = isObject(d.scale) && d.scale.orientation !== undefined ? d.scale.orientation : (coord == 'cartesian' && name == 'y' ? 'vertical' : undefined);
+    const ofCategories = d.type == 'categorical' || ['band', 'point'].includes(d.scale?.type)
+        || ['categories', 'scheme', 'common', 'order', 'fromData', 'ranks'].some(k => d[k] !== undefined);
+    if (orientation == 'vertical' && ofCategories && d.scale !== false && !Array.isArray(d.scale?.range) && d.scale?.reverse === undefined)
+        d.reverse = true;
     // the hover of a dim stays on the dim (also an empty one, the opt-in of
     // 4.x), it merges with the one of a parent
     if (isObject(d.hover))
@@ -613,7 +620,7 @@ const migrate = (raw, { parents, noHover = false } = {}) => {
     const consumed = new Set();
     const marks = plots.map((p, i) => markOf(p, i, coord, stacked, mapping, consumed));
     if (def.mapping !== undefined)
-        out.dims = Object.fromEntries(Object.entries(mapping).map(([n, m]) => [n, dimOf(m, n, hovered, consumed)]));
+        out.dims = Object.fromEntries(Object.entries(mapping).map(([n, m]) => [n, dimOf(m, n, hovered, consumed, coord)]));
     if (isObject(out.hover) && out.hover.filter !== undefined)
         out.hover.filter = conditionExpression(out.hover.filter);
     if (isPatched(def.plot))

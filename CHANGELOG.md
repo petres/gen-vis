@@ -176,6 +176,10 @@ are not in the margins).
 - The PNG is the export SVG drawn on a canvas (`src/utils/raster.js`) with
   the fonts of the package, the same drawing as the SVG and the PDF of the
   CLI (was a screenshot of the DOM of `modern-screenshot`).
+- The categories of a vertical band or point scale without a range of
+  its own run from the top down (were from the bottom up), as the rows of a
+  table, e.g. horizontal bars and heatmaps; `"reverse": true` puts the first
+  category at the bottom, `gen-vis migrate` writes it for such dims of 4.x.
 - Snapshots were re-baselined once for the highlight; `data/` and the site
   examples are migrated, their images are the ones of 4.x.
 

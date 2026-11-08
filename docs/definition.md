@@ -719,7 +719,8 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   the legend of colors ends at 100%, only of numeric dims, `validateDef`
   warns of others.
 - `reverse` (also of the dim) turns the range around, e.g. the largest
-  value at the bottom or ranks from the top.
+  value at the bottom or the first category of a vertical axis at the
+  bottom.
 - `range` (also of the dim): by default the width or the height of the
   plot area, of a scale without `orientation` the range given, e.g. colors
   or the radius of points; references to the sizes of the coordinate
@@ -743,9 +744,11 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
 - The categories of a `band`, `point` or `ordinal` scale are in the order
   of the `categories` of the dim (the one of the legend, the stacks and
   the facets). The first category is at the start of the range: left of a
-  horizontal scale, at the bottom of a vertical one (its range is
-  `["@height", 0]`), so horizontal bars from the top down need `"reverse":
-  true` (or `"range": [0, "@height"]`).
+  horizontal scale, at the top of a vertical one (a `band` or `point`
+  scale of a vertical orientation without a range of its own runs from the
+  top down, `[0, "@height"]`, as the rows of a table), so horizontal bars
+  are from the top down; `"reverse": true` puts the first category at the
+  bottom.
 - `order` of a `band`, `point` or `ordinal` scale is the order of its
   categories taken from the data: the one of the rows (by default, after
   the listed `categories`), `ascending`, `descending` or by the value of a
@@ -1229,7 +1232,7 @@ Horizontal bars of a year of a slider, with their values beside them
     "dims": {
         "year": "Jahr",
         "x": { "column": "Einwohner", "format": ",.0f", "zero": true, "grid": true, "tickSpacing": 100 },
-        "y": { "column": "Bundesland", "type": "categorical", "reverse": true, "scale": { "order": { "by": "x", "descending": true } } }
+        "y": { "column": "Bundesland", "type": "categorical", "scale": { "order": { "by": "x", "descending": true } } }
     },
     "marks": [
         { "type": "bar", "fill": "#1E4F77", "highlight": { "fill": "#5BC5F2" } },

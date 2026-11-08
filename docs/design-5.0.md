@@ -258,9 +258,11 @@ while it is loaded.
 - **The default dims of the hover are the ones the marks use**, their
   `by` and the dims of their positions, not the dims of the facets (their
   panels are titled).
-- **A categorical `y` is not top-down by default.** The review proposed
-  `range: [0, "@height"]` as the default of horizontal bars; the first
-  category stays at the bottom, `reverse: true` turns it.
+- **A categorical `y` is top-down by default** (decided 2026-11-08): a
+  vertical band or point scale without a range of its own runs from the
+  top, as the rows of a table and as in Vega-Lite and Plot; `reverse: true`
+  puts the first category at the bottom. The migration writes `reverse`
+  for such dims of 4.x, so their pictures stay.
 - **The `{name}` templates stay a mechanism of their own** (not specified
   as `cat`): they are texts with holes, which an author reads as text.
 - **The `$schema` gate stays an error** of a file without one or of another

@@ -162,6 +162,17 @@ describe('the migration of the definitions of 4.x', () => {
 // with its parents), the merged definition is the one of the merged 4.x
 // definition for every value of the controls (a patch of a child written
 // as a plain value, one of a parent as an expression, mean the same)
+describe('the order of categories of a vertical scale', () => {
+    test('one of 4.x without a range had its first category at the bottom: reverse keeps it, 5.0 is top-down', () => {
+        const dims = def => migrate(def).dims;
+        expect(dims({ mapping: { y: { column: 'land', type: 'categorical' }, x: 'v' } }).y.reverse).toBe(true);
+        expect(dims({ mapping: { y: { column: 'land', categories: { a: {} } }, x: 'v' } }).y.reverse).toBe(true);
+        expect(dims({ mapping: { y: { column: 'land', type: 'categorical', scale: { range: [0, '@height'] } }, x: 'v' } }).y.reverse).toBeUndefined();
+        expect(dims({ mapping: { y: { column: 'v' }, x: { column: 'land', type: 'categorical' } } }).y.reverse).toBeUndefined();
+        expect(dims({ options: { coord: 'polar' }, mapping: { y: { column: 'land', type: 'categorical' }, x: 'v' } }).y.reverse).toBeUndefined();
+    });
+});
+
 describe('the migrated files of data/ (file by file) are the migration of the merged definitions', () => {
     const merged5 = async file => resolveParents(JSON.parse(readFileSync(path.join(root, file), 'utf8')), pathToFileURL(path.join(root, file)).href, load);
     const engine = def => variants(def).map(v => same(normalize(translate(v), { plotTypes })));

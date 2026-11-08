@@ -294,9 +294,12 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         s.interpolator(interpolator);
     }
 
-    // scales without orientation and range keep the range of d3, e.g. [0, 1]
+    // scales without orientation and range keep the range of d3, e.g. [0, 1];
+    // the categories of a vertical band or point scale are from the top down,
+    // as the rows of a table, e.g. of horizontal bars (`reverse` turns them)
+    const topDown = scaleDef.orientation == 'vertical' && ['band', 'point'].includes(scaleDef.type) && Array.isArray(ranges.vertical);
     const range = Array.isArray(scaleDef.range) ? scaleDef.range :
-        (scaleDef.scheme ? schemeRange(scaleDef) : ranges[scaleDef.orientation]);
+        (scaleDef.scheme ? schemeRange(scaleDef) : topDown ? [...ranges.vertical].reverse() : ranges[scaleDef.orientation]);
     if (range)
         s.range(evaluate(range, { ...scope, ...dims }));
 
