@@ -45,3 +45,19 @@ describe('the filter transform', () => {
         expect(el.querySelectorAll('g.vis-plot circle')).toHaveLength(0);
     });
 });
+
+describe('the names of a filter expression', () => {
+    test('a column of the data before a global of the same name, @globals.<name> is the global', async () => {
+        const el = await mount({ def: {
+            $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json',
+            height: 200,
+            globals: { country: 'AT' },
+            controls: [{ type: 'select', global: 'country', values: ['AT', 'DE'] }],
+            filter: "@country == @globals.country and @year == 2021",
+            dims: { x: { column: 'value', zero: true }, y: { column: 'year', type: 'categorical' } },
+            marks: { type: 'bar', 'data-c': '@x' },
+        }, data: 'country,year,value\nAT,2020,1\nAT,2021,2\nDE,2021,3\nDE,2020,4\n' });
+        expect([...el.querySelectorAll('g.vis-plot rect')].map(r => r.getAttribute('data-c'))).toEqual(['2']);
+        expect(errors).toEqual([]);
+    });
+});

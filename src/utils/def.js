@@ -7,7 +7,7 @@ import { defaultScaleType, hasCategories } from '@/utils/normalize';
 import { operators, refNames } from '@/utils/expr';
 import { parseExpression } from '@/utils/expr-parse';
 import { hasLocale } from '@/utils/locale';
-import { translate } from '@/utils/language';
+import { translate, checkDims } from '@/utils/language';
 import { resolve, namesOfGlobals } from '@/utils/resolve';
 import { normalize } from '@/utils/normalize';
 
@@ -519,7 +519,7 @@ const resolvedParts = (def, defOrg, source = null, plotTypes = {}) => {
     if (!source)
         return pick(JSON.parse(JSON.stringify(pick(defOrg))));
     const names = namesOfGlobals(def.globals, source.controls);
-    return pick(normalize(translate(resolve(source, names)), { plotTypes }));
+    return pick(normalize(checkDims(translate(resolve(source, names))), { plotTypes }));
 };
 
 /**

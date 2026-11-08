@@ -393,7 +393,8 @@ const layout = (store, width, before = null) => {
         // orientation, e.g. of colors
         const scaled = Object.keys(def.mapping).filter(n => def.mapping[n].scale && !borrowed.includes(n));
         const colors = scaled.filter(n => !def.mapping[n].scale.orientation);
-        const shared = Object.keys(sharing).filter(n => sharing[n] == 'all');
+        // of the dims with a scale ("shared" names all dims, also the ones without one)
+        const shared = Object.keys(sharing).filter(n => sharing[n] == 'all' && scaled.includes(n));
         const common = Object.fromEntries([...new Set([...shared, ...colors])].map(n => [n, scaleOf(n, rows)]));
         // the scales of a row or a column of a grid, of the rows of its facets
         const partScales = new Map();

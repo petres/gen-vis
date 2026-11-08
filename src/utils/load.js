@@ -4,7 +4,7 @@ export { valueFormat, resolveUrl, clearCache, resolveParents, readDef, requireme
 import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, toDate, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
 import { applyResolved, languageOf, mergeAll, prepareDef, variants, variantsOf } from "@/utils/def";
-import { translate, isDefinition4 } from "@/utils/language";
+import { translate, checkDims, isDefinition4 } from "@/utils/language";
 import { resolve, namesOfGlobals, variants as resolvedVariants } from "@/utils/resolve";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
 import { checkLocale, getLocale, loadLocale } from "@/utils/locale";
@@ -274,7 +274,7 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
         console.info(`gen-vis '${url}': a definition of gen-vis 4, migrated while it is loaded, 'gen-vis migrate' writes it as one of gen-vis 5`);
     // the migration is a chunk of its own, definitions of 5.0 do not need it
     const source = old ? (await lazy.migrate()).migrate(merged) : merged;
-    const engine = v => normalize(translate(v), { plotTypes });
+    const engine = v => normalize(checkDims(translate(v)), { plotTypes });
     const defOrg = engine(resolve(source, namesOfGlobals(source.globals, source.controls)));
     defOrg[variantsOf] = resolvedVariants(source).map(engine);
     // the check of the definition (of 5.0, as written) with the rows, e.g.

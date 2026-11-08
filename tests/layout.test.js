@@ -348,3 +348,23 @@ describe('grids of facets', () => {
         expect(old.facets.map(f => [f.key, f.cell, f.width])).toEqual([['Bau', undefined, 200], ['DL', undefined, 200]]);
     });
 });
+
+describe('facets of 5.0', () => {
+    test('"scales": "shared" shares the scales of the dims with one, dims without a scale are no error', async () => {
+        const store = createStore();
+        await store.init({ def: { height: 120, dims: { x: { column: 'year', type: 'numeric' }, y: 'value', land: 'land', other: 'land' },
+            facets: { by: 'land', scales: 'shared' }, marks: { type: 'line' } }, data });
+        const v = layout(store, 400);
+        expect(v.facets).toHaveLength(3);
+        expect(v.facets[0].scales.y.domain()).toEqual(v.facets[1].scales.y.domain());
+        expect(v.facets[0].scales.y.domain()[1]).toBeGreaterThanOrEqual(20);
+    });
+});
+
+describe('named errors of the marks', () => {
+    test('a `by` of an unknown dim is an error of the definition, not of the draw', async () => {
+        const store = createStore();
+        await expect(store.init({ def: { dims: { x: 'year', y: 'value' }, marks: { type: 'line', by: 'land2' } }, data }))
+            .rejects.toThrow("marks[0].by: unknown dim 'land2', the dims are 'x', 'y'");
+    });
+});

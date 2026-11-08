@@ -1,4 +1,4 @@
-export { translate, compileStrings, isDefinition4, isDefinition5, optionKeys, markKeys, expressionKeys, nameKeys, positionChannels, channelOf, typeOf, authoredPath };
+export { translate, checkDims, compileStrings, isDefinition4, isDefinition5, optionKeys, markKeys, expressionKeys, nameKeys, positionChannels, channelOf, typeOf, authoredPath };
 
 import { isObject } from '@/utils/values';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
@@ -237,6 +237,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
         throw new Error(`marks[${i}].type: expected a mark type, e.g. "line" or "bar"${p.type === undefined ? '' : `, not ${JSON.stringify(p.type)}`}`);
     const type = typeOf(p.type, coord);
     p.type = type;
+
     const kind = type.split(':')[1];
     const ch = (name, axis) => channelOf({ ...p, ...props }, name, dims, axis);
     // the dims of the positions the mark uses, e.g. of the hover by default
@@ -611,6 +612,21 @@ const translate = raw => {
     Object.keys(def).filter(k => !out[k] && !optionKeys.includes(k) && !['dims', 'marks', 'controls', 'filter', 'facets'].includes(k) && out[k] === undefined)
         .forEach(k => out[k] = def[k]);
     return out;
+};
+
+/**
+ * The engine's form of a definition (of translate) checked for names of
+ * dims which no mark can draw without, a named error instead of a failure
+ * of the draw: the dims of `by` of the marks. validateDef reports them as
+ * warnings, with the others.
+ */
+const checkDims = def => {
+    [def.plot ?? []].flat().forEach((p, i) => {
+        const unknown = (p?.by ?? []).find(b => typeof b == 'string' && !Object.hasOwn(def.mapping ?? {}, b));
+        if (unknown !== undefined)
+            throw new Error(`marks[${i}].by: unknown dim '${unknown}', the dims are ${Object.keys(def.mapping ?? {}).map(n => `'${n}'`).join(', ') || 'none'}`);
+    });
+    return def;
 };
 
 // the path of a part of the engine's form as the one of the definition,

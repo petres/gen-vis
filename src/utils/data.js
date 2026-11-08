@@ -237,8 +237,15 @@ const rowResolver = (mapping, columns, scope = {}) => name => {
         const values = columns.get(name);
         return row => row[rawIndex] === undefined ? undefined : values[row[rawIndex]];
     }
-    if (Object.hasOwn(scope, name))
-        return constant(scope[name]);
+    // a column of the data before a global of the same name, e.g. a column
+    // `country` beside the global `country` of a select (`@globals.country`)
+    if (Object.hasOwn(scope, name)) {
+        const value = scope[name];
+        return row => {
+            const raw = row?.[rawRow];
+            return raw && Object.hasOwn(raw, name) ? raw[name] : value;
+        };
+    }
     return row => row[rawRow]?.[name];
 };
 
