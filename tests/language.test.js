@@ -40,7 +40,8 @@ describe('the language of 5.0', () => {
         expect(def.mapping.y).toEqual({ column: 'Anzahl', stacked: true });
         // the categories of dims without listed ones are the ones of the data, in their order
         // the dims of the facets have the categories of the data, in their order, the `by` of a mark groups rows of any type
-        expect(def.mapping.type).toEqual({ column: 'Type', hover: {} });
+        // a dim of the groups of a mark in the colors of its categories (the bars) has the categories of the data
+        expect(def.mapping.type).toEqual({ column: 'Type', hover: {}, fromData: 'rows' });
         expect(def.mapping.geo).toEqual({ column: 'Geo', fromData: 'rows' });
         expect(def.facets).toEqual({ dim: 'geo', cols: 2, scales: [] });
         expect(def.options.hover).toEqual({ total: true });
@@ -84,14 +85,14 @@ describe('the language of 5.0', () => {
         expect(def.plot[1].props).toEqual({ stroke: '#333', x: '@x:scaled:center', y1: '@lo:scaled', y2: '@hi:scaled' });
         expect(def.plot[2].props).toEqual({ fill: '@v:scaled', x: '@x:scaled', width: '@x:bandwidth', y: '@y:scaled', height: '@y:bandwidth' });
         expect(def.plot[3].props).toEqual({ 'stroke-dasharray': '2 2', y: '@y:scaled:100' });
-        // a fill of a dim without categories is its scaled value (of a scale of colors); the
-        // cell made y a band scale, so the point is at the center of the band
-        expect(def.plot[4]).toEqual({ type: 'svg:circle', by: [], props: { fill: '@c:scaled', cx: '@lo:scaled', cy: '@y:scaled:center' } });
+        // a fill of a dim of only a column is the color of its categories (the ones of the
+        // data); the cell made y a band scale, so the point is at the center of the band
+        expect(def.plot[4]).toEqual({ type: 'svg:circle', by: ['c'], props: { fill: '@color', cx: '@lo:scaled', cy: '@y:scaled:center' } });
         expect(def.mapping.y.scale.type).toBe('band');
         // the dims of the ranges of the rule are on the scale of y
         expect(def.mapping.lo.scale).toEqual({ of: 'y' });
         expect(def.mapping.hi.scale).toEqual({ of: 'y' });
-        expect(def.mapping.c.fromData).toBeUndefined();
+        expect(def.mapping.c.fromData).toBe('rows');
     });
 
     test('polar and geo marks', () => {
@@ -167,4 +168,18 @@ describe('the shorthands of a removed part', () => {
 test('dodge: true without by is a named error', () => {
     expect(() => translate({ dims: { x: { column: 'g', type: 'categorical' }, y: 'v' }, marks: { type: 'bar', dodge: true } }))
         .toThrow(/marks\[0\]\.dodge: true puts the groups/);
+});
+
+describe('the categories of the dims of the groups', () => {
+    test('a dim of only a column of marks in the colors of their categories has the ones of the data, fromData false keeps it without', () => {
+        const t = (land, marks) => translate({ dims: { x: 'year', y: 'value', land }, marks }).mapping.land;
+        expect(t('land', { type: 'line', by: 'land' }).fromData).toBe('rows');
+        // a mark of a color of its own, a label (the color of the text) and a dim of a type or a scale have none
+        expect(t('land', { type: 'line', by: 'land', stroke: '#333' }).fromData).toBeUndefined();
+        expect(t('land', { type: 'label', by: 'land', text: '@name' }).fromData).toBeUndefined();
+        expect(t({ column: 'land', type: 'numeric' }, { type: 'line', by: 'land' }).fromData).toBeUndefined();
+        expect(t({ column: 'land', fromData: false }, { type: 'line', by: 'land' }).fromData).toBeUndefined();
+        // a color of an attribute of the color of the category
+        expect(t('land', { type: 'line', by: 'land', stroke: '#333', highlight: { stroke: '@color' } }).fromData).toBe('rows');
+    });
 });

@@ -880,8 +880,19 @@ a text is the color, `"Wien": "#C3423F"` is `"Wien": {"color": "#C3423F"}`:
 - Without listed categories a dim with a legend or with parts of its
   categories (`scheme`, `common`, `ranks`, `order`) and a dim of the
   facets has the categories of the data, in the order of the rows
-  (`"fromData": "rows"` by default). The categories of the data are the
-  ones of all rows, also of the rows a transform `filter` leaves out.
+  (`"fromData": "rows"` by default). So has a dim of only a column (no
+  scale, type, categories or legend of its own, no position) which a mark
+  draws in the colors of its categories: the `by` of a line, an area, a
+  bar, an arc, a point or a text without a color of its own (or with
+  `@color` in its attributes) and a dim named by `fill` or `stroke`, e.g.
+  a line per country in the colors of the default scheme without listing
+  the countries. `"fromData": false` keeps such a dim without categories,
+  e.g. a line per id in the color of the mark. The categories of the data
+  are the ones of all rows, also of the rows a transform `filter` leaves
+  out. The props of the categories (e.g. `name`) come before the columns
+  of a row in the attributes of a mark: a column `name` of a dim of the
+  data's categories is `@name` of the category, write the dim of the
+  column, e.g. `@country:name`, or `"fromData": false`.
 - The order of the `categories` is the order of the legend, the facets, the
   stacks and of a band, point or ordinal scale, not the order of the rows.
   Keys which are integers, e.g. years, are ordered ascending by JavaScript,

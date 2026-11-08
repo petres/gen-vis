@@ -185,3 +185,14 @@ describe('the migrated files of data/ (file by file) are the migration of the me
         expect(b).toEqual(a);
     });
 });
+
+describe('the dims of groups of marks in the colors of their categories', () => {
+    test('one of 4.x without categories keeps none: fromData false', () => {
+        const def = migrate({ mapping: { x: 'year', y: 'value', land: 'land' }, plot: { type: 'cartesian:line', by: ['land'] } });
+        expect(def.dims.land).toEqual({ column: 'land', fromData: false });
+        expect(translate(def).mapping.land.fromData).toBeUndefined();
+        // a mark of a color of its own, a dim of categories: as it is
+        expect(migrate({ mapping: { x: 'year', y: 'value', land: 'land' }, plot: { type: 'cartesian:line', by: ['land'], props: { stroke: '#333' } } }).dims.land).toBe('land');
+        expect(migrate({ mapping: { x: 'year', y: 'value', land: { column: 'land', fromData: true } }, plot: { type: 'cartesian:line', by: ['land'] } }).dims.land).toEqual({ column: 'land', fromData: true });
+    });
+});

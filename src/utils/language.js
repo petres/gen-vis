@@ -1,4 +1,4 @@
-export { translate, checkDims, compileStrings, isDefinition4, isDefinition5, optionKeys, markKeys, expressionKeys, nameKeys, positionChannels, channelOf, typeOf, authoredPath };
+export { translate, checkDims, colorDims, dim as dimOf, compileStrings, isDefinition4, isDefinition5, optionKeys, markKeys, expressionKeys, nameKeys, positionChannels, channelOf, typeOf, authoredPath };
 
 import { isObject } from '@/utils/values';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
@@ -535,6 +535,38 @@ const facetsOf = (f, dims) => {
     return out;
 };
 
+// the attribute of the color of the category of the group of a mark type
+// by default, see plots/defaults.js
+const colorAttribute = { line: 'stroke', rule: 'stroke', area: 'fill', bar: 'fill', arc: 'fill', circle: 'fill', text: 'fill' };
+// a mark of the definition draws in the colors of the categories of its
+// groups: by the default of its type (not of a label) or by "@color" in
+// its attributes
+const usesColor = (m, coord) => {
+    const [prefix, kind] = String(typeOf(m.type, coord)).split(':');
+    const attribute = prefix == 'geo' || m.type == 'label' ? undefined : colorAttribute[kind];
+    const attributes = Object.fromEntries(Object.entries(m).filter(([k]) => !markKeys.includes(k) || k == 'highlight' || k == 'others'));
+    return (attribute !== undefined && m[attribute] === undefined) || refNames(compileStrings(attributes)).includes('color');
+};
+
+/**
+ * The names of the dims (of `dim`) which have the categories of the data
+ * because marks draw their groups in the colors of their categories, see
+ * translate: a `by` of a mark in the colors of its categories or a fill or
+ * a stroke naming the dim, of a dim of only a column (no scale, categories,
+ * fromData or type of its own, no position).
+ */
+const colorDims = (dims, rawMarks, coord = 'cartesian') => {
+    const positionNames = coord == 'polar' ? ['x', 'y', 'angle', 'radius'] : coord == 'geo' ? [] : ['x', 'y'];
+    const plain = n => typeof n == 'string' && Object.hasOwn(dims, n) && isObject(dims[n]) && !positionNames.includes(n)
+        && dims[n].scale === undefined && (dims[n].type === undefined || dims[n].type == 'categorical') && dims[n].fromData === undefined
+        && !isObject(dims[n].categories) && !categoryParts.some(k => dims[n][k] !== undefined);
+    const names = rawMarks.filter(isObject).flatMap(m => {
+        const named = ['fill', 'stroke'].map(k => m[k]).filter(plain);
+        return (usesColor(m, coord) ? [...[m.by ?? []].flat(), ...named] : named).filter(plain);
+    });
+    return [...new Set(names)];
+};
+
 /**
  * The definition of 5.0 (merged with its parents, the expressions of
  * globals resolved, see utils/resolve.js) as the engine reads it. Unknown
@@ -588,6 +620,17 @@ const translate = raw => {
     (facets ? [facets.dim, facets.rows, facets.cols] : []).filter(n => typeof n == 'string' && isObject(dims[n])).forEach(n => {
         if (dims[n].fromData === undefined && !isObject(dims[n].categories))
             dims[n].fromData = 'rows';
+    });
+    // the dims of the groups of the marks which draw in the colors of their
+    // categories (`by`, or a fill or stroke naming a dim), which are only a
+    // column (no scale, categories or type of their own, no position), have
+    // the categories of the data, in the order of the rows, so the groups
+    // have their colors, e.g. a line per country; `"fromData": false` keeps
+    // a dim without, e.g. a line per id in one color
+    colorDims(dims, rawMarks, coord).forEach(n => dims[n].fromData = 'rows');
+    Object.values(dims).forEach(d => {
+        if (isObject(d) && d.fromData === false)
+            delete d.fromData;
     });
     const stacks = [];
     const marks = rawMarks.map((m, i) => mark(m, i, dims, coord, stacks, used));

@@ -111,8 +111,14 @@ them.
   `common`, `ranks`, `order`) has the categories of the data in the order
   of the rows (`"fromData": "rows"`); 4.x needed `fromData: true` and
   sorted them.
-- `by` of a mark does not make a dim categorical, it groups rows of any
-  type, e.g. a line per id (as in 4.x).
+- A dim of only a column (no scale, type, categories or legend) which a
+  mark draws in the colors of its categories (its `by`, by the default
+  color of the mark type or `@color`, or a `fill`/`stroke` naming the dim)
+  has the categories of the data, so a line per country has the colors of
+  the default scheme (4.x drew all of them in one color); `"fromData":
+  false` keeps it without, `gen-vis migrate` writes that for such dims of
+  4.x. A `by` of marks of a color of their own groups rows of any type,
+  e.g. a line per id.
 - A legend without a `symbol` has the symbols of the marks of its
   categories (`"auto"`: a box of bars and areas, a line of lines, a dot of
   points); 4.x had none. A migrated legend gets `"symbol": null`.

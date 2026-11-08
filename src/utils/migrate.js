@@ -4,7 +4,7 @@ import { isObject } from '@/utils/values';
 import { isOperator } from '@/utils/expr';
 import { formatExpression, parseExpression } from '@/utils/expr-parse';
 import { schemaUrl } from '@/utils/version';
-import { expressionKeys, optionKeys, translate } from '@/utils/language';
+import { expressionKeys, optionKeys, translate, colorDims, dimOf as languageDim } from '@/utils/language';
 import { resolve, namesOfGlobals } from '@/utils/resolve';
 import { mergeAll } from '@/utils/def';
 
@@ -669,7 +669,32 @@ const migrate = (raw, { parents, noHover = false } = {}) => {
         else
             out.hover = { ...(isObject(out.hover) ? out.hover : {}), columns: implied.filter(n => inherited.includes(n) && !hovered.includes(n)) };
     }
+    // the dims of the groups of marks in the colors of their categories have
+    // the categories of the data in 5.0 (see colorDims of utils/language.js),
+    // of 4.x none: `"fromData": false` keeps the colors of the marks
+    if (!noHover && changes) {
+        const whole = parents === undefined ? out : migrate(mergeAll([parents, raw]), { noHover: true });
+        colorDimsOf(whole).forEach(n => {
+            out.dims = isObject(out.dims) ? out.dims : {};
+            const d = out.dims[n];
+            out.dims[n] = typeof d == 'string' ? { column: d, fromData: false } : { ...(isObject(d) ? d : {}), fromData: false };
+        });
+    }
     return out;
+};
+
+// the names of the dims of a part of 5.0 which have the categories of the
+// data as the groups of marks in the colors of their categories, of the
+// defaults of its globals
+const colorDimsOf = part => {
+    try {
+        const probe = resolve(clone(part), namesOfGlobals(part.globals, part.controls));
+        const dims = Object.fromEntries(Object.entries(isObject(probe.dims) ? probe.dims : {}).filter(([, d]) => d !== null && d !== false)
+            .map(([n, d]) => [n, languageDim(d, n)]));
+        return colorDims(dims, probe.marks === undefined ? [] : [probe.marks].flat(), probe.coord ?? 'cartesian');
+    } catch {
+        return [];
+    }
 };
 
 // the dims of the hover by default of a part of 5.0 (the dims its marks

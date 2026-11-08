@@ -253,8 +253,11 @@ while it is loaded.
   of a mark is the common case.
 - **`fromData` stays, with a new default.** The categories of the data are
   the default of dims with a legend, parts of categories or facets (in the
-  order of the rows), not of every dim: a dim only used as `by` stays of
-  any type (a line per id), as decided in 4.0.
+  order of the rows), and (decided 2026-11-08) of a dim of only a column
+  which marks draw in the colors of its categories, e.g. a line `by` it
+  without a stroke of its own: lines of one color were the most common
+  surprise of a new author. A `by` of marks of their own color stays of any
+  type (a line per id), `"fromData": false` opts out.
 - **The default dims of the hover are the ones the marks use**, their
   `by` and the dims of their positions, not the dims of the facets (their
   panels are titled).
