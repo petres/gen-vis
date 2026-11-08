@@ -89,6 +89,36 @@ describe('auto margins', () => {
         expect(layout(store, 400).facets[0].margins).toEqual({ top: 0, right: 0, bottom: 0, left: 0 });
     });
 
+    test('a grid of shared scales: the facets without labels (inner ones) have margins too', async () => {
+        const store = createStore();
+        await store.init({ def: { height: 120, dims: { x: { column: 'year', type: 'numeric', axis: { values: [2020, 2021] } }, y: { column: 'value', type: 'numeric' },
+            a: { column: 'land' }, b: { column: 'land' } },
+        facets: { by: { rows: 'a', cols: 'b' }, scales: { x: 'all', y: 'all' } }, marks: { type: 'line' } }, data });
+        const facets = layout(store, 600).facets;
+        expect(facets.length).toBe(4);
+        facets.forEach(f => {
+            Object.values(f.margins).forEach(v => expect(Number.isFinite(v)).toBe(true));
+            expect(f.innerWidth).toBeGreaterThan(100);
+        });
+    });
+
+    test('labels of their own texts (labels.props.text) are measured as drawn, at most their max-width', async () => {
+        // the long names are props of the categories
+        const dims = text => ({ x: { column: 'value', zero: true },
+            y: { column: 'land', categories: { Wien: { long: 'Bundeshauptstadt Wien' }, Tirol: { long: 'Tirol' } }, axis: { labels: { props: text } } } });
+        const named = await margins({ dims: dims({ text: '@long' }), marks: { type: 'bar' } });
+        expect(named.left).toBe(Math.ceil(marksLeft + padding + widest(['Bundeshauptstadt Wien']) + 2));
+        const capped = await margins({ dims: dims({ text: '@long', 'max-width': 40 }), marks: { type: 'bar' } });
+        expect(capped.left).toBe(Math.ceil(marksLeft + padding + 40 + 2));
+    });
+
+    test('the title of a vertical axis at the top is above the plot area, not beside the labels', async () => {
+        const plain = await margins({});
+        const top = await margins({ dims: { x: { column: 'year', type: 'numeric' }, y: { column: 'value', type: 'numeric', zero: true, format: ',.0f', axis: { title: { name: '€', position: 'top' } } } } });
+        expect(top.left).toBe(plain.left);
+        expect(top.top).toBe(8 + 12 + 2);
+    });
+
     test('the plot area is the facet without the measured margins, also of a facet of a step height', async () => {
         const v = await view({});
         const f = v.facets[0];

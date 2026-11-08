@@ -5,7 +5,6 @@
     "subtitle": "Share of a source in the electricity generated in each country, by year (2026: year to date)",
     "source": "Source: ENTSO-E Transparency Platform · Boundaries © EuroGeographics",
     "height": "=steps(@totalWidth, {0: 380, 560: 500})",
-    "margins": {"top": 0, "right": 0, "bottom": 0, "left": 0},
     "coord": "geo",
     "locale": "en",
     "transition": 400,

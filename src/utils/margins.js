@@ -1,6 +1,6 @@
 export { autoMargins, labelFontSize, titleFontSize };
 
-import { tickCount, tickValues, tickFormat } from '@/coords/ticks';
+import { tickCount, tickValues, tickFormat, labelProps } from '@/coords/ticks';
 import { textWidth } from '@/utils/measure';
 import { bandCenter } from '@/utils/scales';
 
@@ -46,11 +46,18 @@ const autoMargins = (store, facets, given) => {
         // the labels of a shared scale only at the outer facets of a grid, see axes of coords/cartesian.js
         const across = ['left', 'right'].includes(pos) ? 'row' : 'col';
         const hidden = f.cell && ['all', across].includes(f.sharing?.[n]) && f.outer?.[pos] === false;
-        const texts = hidden ? [] : values.map(v => {
-            const t = format(v);
+        // the props of the labels, e.g. their texts (`"text": "@name"`) and
+        // their `max-width`, see labelProps of coords/ticks.js
+        const labelsOf = labelProps({ store, rows: f.rows ?? [], scope: f.scope }, n, i.labels);
+        const props = labelsOf ? values.map(v => labelsOf(v) ?? {}) : [];
+        const texts = hidden ? [] : values.map((v, j) => {
+            const t = labelsOf && 'text' in i.labels.props ? props[j].text : format(v);
             return t === null || t === undefined ? '' : String(t);
         });
-        const widths = texts.map(t => textWidth(t, font));
+        const widths = texts.map((t, j) => {
+            const max = Number(props[j]?.['max-width']);
+            return Math.min(textWidth(t, font), max > 0 ? max : Infinity);
+        });
         const widest = Math.max(0, ...widths);
         const d = store.axisDefaults(pos);
         // the labels are at the end of the part of the tick marks outside of
@@ -61,8 +68,13 @@ const autoMargins = (store, facets, given) => {
         const marks = Math.max(size - inset, 0);
         const padding = Number(i.padding ?? d.padding ?? 3);
         const titled = i.title && (def.facets?.axisTitles != 'outer' || f.outer?.[pos] !== false);
-        // the title at the distance of the margin less 8 pixels from the axis, see axes of coords/cartesian.js
-        const title = titled ? titleFontSize + 8 : 2;
+        // the title at the distance of the margin less 8 pixels from the
+        // axis, see axes of coords/cartesian.js; the one of a vertical axis
+        // at the top is horizontal, `gap` above the plot area
+        const above = titled && (pos == 'left' || pos == 'right') && i.title.position == 'top';
+        if (above)
+            more('top', (i.title.gap ?? 8) + titleFontSize + 2);
+        const title = titled && !above ? titleFontSize + 8 : 2;
         const angle = (Number(i.rotate) || 0)*Math.PI/180;
         if (pos == 'left' || pos == 'right') {
             const extent = angle ? widest*Math.abs(Math.cos(angle)) + labelFontSize*Math.abs(Math.sin(angle)) : widest;
@@ -75,8 +87,9 @@ const autoMargins = (store, facets, given) => {
         } else if (pos == 'top' || pos == 'bottom') {
             const extent = angle ? widest*Math.abs(Math.sin(angle)) + labelFontSize*Math.abs(Math.cos(angle)) : labelFontSize;
             more(pos, marks + padding + extent + title);
-            // the first and the last label, centered on their ticks, reach beyond the plot area
-            if (!angle && values.length > 0) {
+            // the first and the last label, centered on their ticks, reach
+            // beyond the plot area (not the hidden ones of inner facets)
+            if (!angle && texts.length > 0) {
                 const [lo, hi] = [Math.min(range[0], range[range.length - 1]), Math.max(range[0], range[range.length - 1])];
                 const at = v => s(v) + bandCenter(s);
                 values.forEach((v, j) => {

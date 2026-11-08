@@ -23,7 +23,6 @@
     "subtitle": "Share of renewables in the electricity generated in {year}, by region, sorted by the share",
     "source": "Source: ENTSO-E Transparency Platform",
     "height": 640,
-    "margins": {"top": 26, "right": 46, "bottom": 4, "left": "=steps(@totalWidth, {0: 104, 560: 150})"},
     "locale": "en",
     "transition": 400,
     "class": "renewables",

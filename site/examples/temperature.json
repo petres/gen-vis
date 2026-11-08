@@ -11,7 +11,6 @@
         "en": "Source: ERA5, Copernicus Climate Change Service"
     },
     "height": 470,
-    "margins": {"top": 34, "right": 34, "bottom": 34, "left": 34},
     "coord": "polar",
     "language": "@lang",
     "globals": {"lang": "de"},

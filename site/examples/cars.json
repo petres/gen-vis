@@ -5,7 +5,6 @@
     "subtitle": "New passenger cars in Austria by powertrain, share of the registrations of each month",
     "source": "Source: Statistik Austria",
     "height": 320,
-    "margins": {"top": 8, "right": 44, "bottom": 30, "left": 16},
     "locale": "en",
     "transition": 400,
     "hover": {"position": "pointer"},

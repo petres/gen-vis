@@ -502,9 +502,11 @@ definitions give only the sides which differ:
 ```
 
 A measured side is the space of the axes of every facet: the tick marks,
-the padding of the labels, the widest label of a left or right axis, the
+the padding of the labels, the widest label of a left or right axis (the
+text of `labels.props` if it has one, at most its `max-width`), the
 height of the labels of a top or bottom one, rotated labels by their
-projection, the title of the axis, the first and the last label of a
+projection, the title of the axis (of a vertical axis at the top above the
+plot area), the first and the last label of a
 horizontal axis which reach beyond the plot area (the left and the right
 side), the labels of an angular axis around the circle; at least 8 pixels
 beside axes (e.g. a point at the end of a line), none of a map. The texts

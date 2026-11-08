@@ -5,7 +5,6 @@
     "subtitle": "=match(@share, {'.share': 'Monthly, the shares of the products in the {what}'}, 'Monthly, the {what} in {unit:name}')",
     "source": "Source: Eurostat, calculations of the WIFO energy dashboard",
     "height": 300,
-    "margins": {"top": 10, "right": 6, "bottom": 28, "left": 44},
     "locale": "en",
     "transition": 400,
     "globals": {"unit": "twh", "share": "", "what": "energy content"},

@@ -23,7 +23,6 @@
     "subtitle": "Share of the generation of electricity per country, by region and source",
     "source": "Source: Ember, yearly electricity data",
     "height": 118,
-    "margins": {"top": 10, "right": 12, "bottom": 22, "left": 42},
     "locale": "en",
     "dims": {
         "x": {

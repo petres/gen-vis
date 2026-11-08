@@ -137,8 +137,10 @@ them.
 `margins` are measured by default (`"auto"`, also per side): the layout
 builds the facets with provisional margins, measures the axes of every
 facet (the tick marks, the padding, the widest label of a left or right
-axis, the height of the labels of a top or bottom one, rotated labels by
-their projection, the title of the axis, the first and the last label of a
+axis, also of the texts of `labels.props` and at most their `max-width`,
+the height of the labels of a top or bottom one, rotated labels by
+their projection, the title of the axis, of a vertical axis at the top
+above the plot area, the first and the last label of a
 horizontal axis which reach beyond the plot area, the labels of an angular
 axis around the circle; at least 8 pixels beside axes, none of a map) and
 builds them again with the measured ones (`src/utils/margins.js`). The

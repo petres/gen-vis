@@ -15,7 +15,6 @@
     "subtitle": "Temperature in Austria, weighted by population, 4-week rolling mean: the difference of every day to its mean of 1991–2020, in °C",
     "source": "Source: ERA5, Copernicus Climate Change Service",
     "height": 380,
-    "margins": {"top": 30, "right": 12, "bottom": 30, "left": 40},
     "locale": "en",
     "globals": {"selected": "2024"},
     "controls": [

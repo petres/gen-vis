@@ -17,7 +17,6 @@
     "subtitle": "Temperature in Austria, weighted by population, 4-week rolling mean: the days of the selected year in classes of 1 °C, below every day of every year as a dot",
     "source": "Source: ERA5, Copernicus Climate Change Service",
     "height": 470,
-    "margins": {"top": 30, "right": 14, "bottom": 40, "left": 44},
     "locale": "en",
     "hover": {"title": "{title} to {hi} °C", "filter": "@year == @globals.selected"},
     "globals": {"selected": "2025"},
