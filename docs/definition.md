@@ -890,9 +890,10 @@ a text is the color, `"Wien": "#C3423F"` is `"Wien": {"color": "#C3423F"}`:
   e.g. a line per id in the color of the mark. The categories of the data
   are the ones of all rows, also of the rows a transform `filter` leaves
   out. The props of the categories (e.g. `name`) come before the columns
-  of a row in the attributes of a mark: a column `name` of a dim of the
-  data's categories is `@name` of the category, write the dim of the
-  column, e.g. `@country:name`, or `"fromData": false`.
+  of a row in the attributes of a mark: with a dim of the data's
+  categories, `@name` is the name of the category, not a column `name` of
+  the row; name such a column by a dim of another name, or give the dim
+  `"fromData": false`.
 - The order of the `categories` is the order of the legend, the facets, the
   stacks and of a band, point or ordinal scale, not the order of the rows.
   Keys which are integers, e.g. years, are ordered ascending by JavaScript,
