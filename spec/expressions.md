@@ -37,7 +37,7 @@ and texts of decimal numbers, others are no number.
 | `/` | the first argument divided by the others |
 | `min`, `max` | the least, the largest argument |
 | `round` | `[x]` or `[x, digits]`: x rounded to `digits` decimals (0 by default, negative ones are tens, hundreds, ...), halves up (towards +∞): `Math.round(x·10^digits)/10^digits` |
-| `==`, `!=` | the same values or not: as texts, `0` and `""` are different, missing values (`null`, no value, `""` and whitespace) are the same, lists and objects by their JSON |
+| `==`, `!=` | the same values or not: as texts, `0` and `""` are different, missing values (`null`, no value, `""` and whitespace) are the same, lists and objects by their JSON; more than two arguments are a chain of every pair of neighbours, e.g. `{"==": ["@a", "@b", "@c"]}` (all the same), `{"!=": ["@a", "@b", "@c"]}` (`a` not `b` and `b` not `c`) |
 | `<`, `<=`, `>`, `>=` | of numbers if both are numbers, otherwise of texts (by code units), false if one is missing (also `""`); more than two arguments are a chain, e.g. `{"<": [0, "@x", 10]}` |
 | `and` | the first argument which is false, otherwise the last one |
 | `or` | the first argument which is true, otherwise the last one, e.g. a default `{"or": ["@color", "black"]}` |
@@ -89,7 +89,8 @@ level nest from the left:
 
 A run of the same operator is one operator of all of its operands: `1 + 2 +
 3` is `{"+": [1, 2, 3]}`, `10 - 4 - 1` is `{"-": [10, 4, 1]}`, `0 < @x <
-10` is `{"<": [0, "@x", 10]}` (a value between two) and `@a or @b or
+10` is `{"<": [0, "@x", 10]}` (a value between two; every comparison of
+more operands compares all neighbours, also `@a == @b == @c`) and `@a or @b or
 'black'` is `{"or": ["@a", "@b", "black"]}`. Mixed operators of a level
 nest from the left: `10 - 4 + 1` is `{"+": [{"-": [10, 4]}, 1]}`, and `0 <
 @x <= 10` is `{"<=": [{"<": [0, "@x"]}, 10]}`, no chain. Parentheses keep

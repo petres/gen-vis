@@ -137,6 +137,9 @@ them.
   same global merge their cases (see spec/merge.md). A mixin which switches
   a value writes its cases once, the children write only their own values
   and cases.
+- A comparison of more than two operands is a chain of every pair of
+  neighbours, also `==` and `!=`: `@a == @b == @c` is true if all three
+  are the same (the alpha compared the first two).
 
 ### Margins
 

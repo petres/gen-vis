@@ -15,6 +15,8 @@
   { "name": "an empty text is missing in comparisons, also of whitespace", "scope": { "e": "", "w": " " }, "expr": [{ "<": ["@e", "a"] }, { ">": ["a", "@e"] }, { "<=": ["@w", 0] }, { ">=": ["@e", "@e"] }], "result": [false, false, false, false] },
   { "name": "a chain of < is a value between two", "scope": { "x": 5 }, "expr": { "<": [0, "@x", 10] }, "result": true },
   { "name": "a chain of < outside", "scope": { "x": 15 }, "expr": { "<": [0, "@x", 10] }, "result": false },
+  { "name": "a chain of == is true if all neighbours are the same", "scope": { "a": 1, "b": "1", "c": 2 }, "expr": [{ "==": ["@a", "@b", 1] }, { "==": ["@a", "@b", "@c"] }], "result": [true, false] },
+  { "name": "a chain of != is true if all neighbours differ", "scope": { "a": 1, "b": 2 }, "expr": [{ "!=": ["@a", "@b", "@a"] }, { "!=": ["@a", "@b", "@b"] }], "result": [true, false] },
   { "name": "if of a condition, then and else", "scope": { "v": 3 }, "expr": { "if": [{ ">": ["@v", 2] }, "big", "small"] }, "result": "big" },
   { "name": "if, the else", "scope": { "v": 1 }, "expr": { "if": [{ ">": ["@v", 2] }, "big", "small"] }, "result": "small" },
   { "name": "if of several conditions, the first one which is true", "scope": { "v": 5 }, "expr": { "if": [{ ">": ["@v", 10] }, "a", { ">": ["@v", 4] }, "b", "c"] }, "result": "b" },

@@ -30,6 +30,8 @@
   { "name": "a comparison", "text": "@value > 0", "expr": { ">": ["@value", 0] }, "scope": { "value": 10 }, "result": true },
   { "name": "== and != of texts", "text": "=[@type == 'gas', @type != 'gas']", "expr": [{ "==": ["@type", "gas"] }, { "!=": ["@type", "gas"] }], "scope": { "type": "gas" }, "result": [true, false] },
   { "name": "a chain of the same comparison is one operator of three operands", "text": "=0 < @x < 10", "expr": { "<": [0, "@x", 10] }, "scope": { "x": 5 }, "result": true },
+  { "name": "a chain of == compares every pair of neighbours, also the third operand", "text": "=[@a == @b == @c, @a == @b == @a]", "expr": [{ "==": ["@a", "@b", "@c"] }, { "==": ["@a", "@b", "@a"] }], "scope": { "a": 1, "b": 1, "c": 2 }, "result": [false, true] },
+  { "name": "a chain of != compares every pair of neighbours", "text": "=[@a != @b != @c, @a != @b != @a]", "expr": [{ "!=": ["@a", "@b", "@c"] }, { "!=": ["@a", "@b", "@a"] }], "scope": { "a": 1, "b": 2, "c": 2 }, "result": [false, true] },
   { "name": "a chain of <=", "text": "=0 <= @x <= 10", "expr": { "<=": [0, "@x", 10] }, "scope": { "x": 10 }, "result": true },
   { "name": "mixed comparisons nest from the left, no chain: true is compared with 10 as texts", "text": "=0 < @x <= 10", "expr": { "<=": [{ "<": [0, "@x"] }, 10] }, "scope": { "x": 5 }, "result": false },
   { "name": "comparisons bind looser than arithmetic", "text": "@a + 1 > @b * 2", "expr": { ">": [{ "+": ["@a", 1] }, { "*": ["@b", 2] }] }, "scope": { "a": 5, "b": 2 }, "result": true },
