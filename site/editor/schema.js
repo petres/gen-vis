@@ -1,5 +1,5 @@
 // completion of the keys and values of a definition from the JSON Schema of the
-// package, e.g. the keys of `mapping.x.axis` or the plot types, with their
+// package, e.g. the keys of `dims.x.axis` or the mark types, with their
 // descriptions, the path of the cursor is taken from the syntax tree
 import { syntaxTree } from '@codemirror/language';
 
@@ -96,7 +96,7 @@ const schemaCompletion = root => context => {
         return options.size ? { from, options: [...options.values()], validFor: word } : null;
     }
 
-    // the value of a key, e.g. the plot types, the labels are the values without quotes
+    // the value of a key, e.g. the mark types, the labels are the values without quotes
     const property = /"([^"]+)"\s*:\s*$/.exec(before);
     const object = property && objectOf(node);
     if (!object)

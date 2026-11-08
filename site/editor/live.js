@@ -23,8 +23,8 @@ const parseDef = text => {
 };
 
 // the warnings of the package and the errors of the schema which the package
-// does not name, e.g. not an unknown key twice (`"/mapping/x": unknown key
-// "colum"` beside `mapping.x.colum: unknown key, did you mean 'column'?`)
+// does not name, e.g. not an unknown key twice (`"/dims/x": unknown key
+// "colum"` beside `dims.x.colum: unknown key, did you mean 'column'?`)
 const checkDef = def => {
     let warnings;
     try {

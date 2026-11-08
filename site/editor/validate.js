@@ -1,6 +1,6 @@
 // the errors of the JSON Schema of the package, e.g. typos of keys, without
 // the summaries of the alternatives (oneOf, anyOf) and the ones the warnings of
-// the package already name, e.g. an unknown plot type
+// the package already name, e.g. an unknown mark type
 import Ajv from 'ajv';
 import schema from '@preschen/gen-vis/schema.json';
 

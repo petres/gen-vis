@@ -16,8 +16,8 @@
             <h1>Charts from JSON definitions</h1>
             <p class="lead">
                 A small d3 library for any page and for Vue which I write for the charts of my own pages: a chart is a
-                JSON definition and a data file. Lines, bars, areas, histograms, polar plots and maps, with
-                legends, hover, grids of facets and form elements. It does what these charts need, use it if it fits
+                JSON definition and a data file. Lines, bars, areas, histograms, heatmaps, polar plots and maps, with
+                legends, hover, grids of facets and controls. It does what these charts need, use it if it fits
                 yours, fork it if it nearly does, see <a href="guide.html">how it works</a>.
             </p>
             <pre class="install"><code>npm install @preschen/gen-vis</code></pre>
@@ -25,21 +25,27 @@
                 <li><strong>A chart is a file.</strong> The definition lies next to its data, a JSON
                     Schema checks it in the editor, <code>validateDef</code> in a build, shared parts are
                     parents and mixins.</li>
+                <li><strong>It says what is drawn.</strong> Dims name the columns, marks name their dims
+                    by channels (<code>x</code>, <code>y</code>, <code>y1</code>, …): bars are stacked or
+                    dodged by a word, the positions, the colors of the categories and the margins of the axes
+                    are the library's work, every attribute of the SVG stays open to an expression.</li>
                 <li><strong>The data stays data.</strong> CSV, TSV, JSON or parquet (only the columns
-                    used), transforms compute e.g. an index of a base year, rolling means, the classes of a
-                    histogram or the jitter of a strip plot.</li>
-                <li><strong>Controls without code.</strong> Radio buttons, selects and sliders of the
-                    definition patch any part of it, e.g. columns, filters, scales, texts or the language,
+                    used), transforms compute e.g. an index of a base year, rolling means, wide to long,
+                    aggregates of groups, the classes of a histogram or the jitter of a strip plot.</li>
+                <li><strong>Controls without code.</strong> Radio buttons, selects and sliders set globals,
+                    any part of the definition can be an expression of them, e.g. a column, a filter, the type
+                    of a scale, a text or the language (<code>"=match(@unit, {pj: ',.0f'}, ',.1f')"</code>),
                     the state is a <code>v-model</code>, the page can set globals and link charts.</li>
-                <li><strong>For any page and for Vue.</strong> A core without a framework, a standalone
-                    script which loads the parts a chart needs when it needs them, and a component of Vue 3;
+                <li><strong>For any page and for Vue.</strong> A core without a framework, a browser module
+                    which loads the parts a chart needs when it needs them, and a component of Vue 3;
                     with <code>lazy</code> a chart is drawn when it comes near the viewport.</li>
                 <li><strong>Images for documents.</strong> <code>exportSvg</code> is an SVG for Word and
-                    editors whose texts stay texts, <code>gen-vis export</code> writes SVG, PNG and PDF files
-                    of a definition at a physical size, e.g. 16 cm wide with texts of 8 pt.</li>
+                    editors whose texts stay texts, the PNG is the same SVG drawn by the browser,
+                    <code>gen-vis export</code> writes SVG, PNG and PDF files of a definition at a physical
+                    size, e.g. 16 cm wide with texts of 8 pt.</li>
                 <li><strong>Built in:</strong> the hover by the keyboard and screen readers, PNG, SVG and
-                    CSV of the data shown, a look of its own with the font Inter in the package, the font and every color
-                    a CSS variable.</li>
+                    CSV of the data shown, a look of its own with the font Inter in the package, the font,
+                    every color and the margins of a house style CSS variables.</li>
             </ul>
             <nav class="toc" aria-label="Contents">
                 <a v-for="(e, i) in examples" :key="e.id" :href="`#${e.id}`">
@@ -67,7 +73,7 @@
                 <h2>In a Vue application</h2>
                 <p>
                     The component loads the definition and its data, <code>v-model:state</code> keeps the
-                    changes of the user (the form elements and the legend), the events have the rows
+                    changes of the user (the globals of the controls and the legend), the events have the rows
                     of the hover and of a click.
                 </p>
                 <div class="demo">
@@ -87,23 +93,20 @@ createApp(App).use(GenVis).mount('#app');
             <section id="standalone" class="usage">
                 <h2>Without a bundler</h2>
                 <p>
-                    The standalone script includes d3 and no framework. As a module of the page it loads
-                    80 kB (gzipped) at first and the parts which not every chart needs, e.g. the ones of
-                    maps, when a chart needs them. The page below is this file, it loads the script of
-                    this build instead of the CDN.
+                    The browser module includes d3 and no framework. A page loads about 90 kB (gzipped) of
+                    it at first and the parts which not every chart needs, e.g. the ones of maps or of
+                    parquet files, when a chart needs them. The page below is this file, it loads the module
+                    of this build instead of the CDN.
                 </p>
                 <div class="demo">
-                    <iframe class="demo-live" src="standalone.html" title="A page with the standalone script" loading="lazy"/>
+                    <iframe class="demo-live" src="standalone.html" title="A page with the browser module" loading="lazy"/>
 <pre class="demo-code"><code>{{ standaloneSource }}</code></pre>
                 </div>
                 <p>
-                    A page which loads its scripts without modules loads the same module with a classic
-                    script of less than 1 kB, its globals return promises:
-                    <code>&lt;script src="https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/gen-vis.core.js"&gt;&lt;/script&gt;</code>
-                    and <code>mountGenVisByClass('chart')</code>. All parts in one file are
-                    <code>dist-lib/gen-vis.js</code> (145 kB gzipped), pages with Vue as a script have
-                    the component of their Vue, <code>GenVis.vuePlugin(Vue)</code>, see the
-                    <a :href="`${docs}/usage.md#standalone-script`">usage</a>.
+                    The module also sets <code>mountGenVisByClass</code>, <code>mountGenVisElement</code> and
+                    <code>unmountGenVisElement</code> as globals of the window, for the scripts of a page which
+                    run after it is loaded. Pages with Vue as a script get the component of their Vue from it,
+                    <code>vuePlugin(Vue)</code>, see the <a :href="`${docs}/usage.md#browser-module`">usage</a>.
                 </p>
             </section>
 
@@ -128,10 +131,10 @@ createApp(App).use(GenVis).mount('#app');
             <section id="comparison" class="usage">
                 <h2>Compared with other libraries</h2>
                 <p>
-                    gen-vis is small: a few kinds of plots which are combined, in SVG. For many kinds of
-                    charts (e.g. sankey, treemaps, 3D), very large data (canvas, WebGL), a grammar of
-                    statistical graphics or a large community, the libraries beside it are the better
-                    choice. Where it fits: charts of a page or a dashboard which are files, with their
+                    gen-vis is small: a few kinds of marks which are combined in layers and facets, in SVG.
+                    For many kinds of charts (e.g. sankey, treemaps, 3D), very large data (canvas, WebGL),
+                    the statistics of a grammar of graphics or a large community, the libraries beside it
+                    are the better choice. Where it fits: charts of a page or a dashboard which are files, with their
                     controls, the data as it is and a Vue application or none.
                 </p>
                 <Comparison/>
@@ -146,7 +149,8 @@ createApp(App).use(GenVis).mount('#app');
                     the package are in the cascade layer <code>gen-vis</code>, so any CSS of the page
                     overrides them, and all its classes start with <code>vis-</code>; the colors of a house
                     style are a scheme of the page (<code>registerScheme</code>), the sizes of its axes its
-                    defaults (<code>registerDefaults</code>). Editors like VS Code
+                    defaults (<code>registerDefaults</code>), its margins CSS variables
+                    (<code>--gen-vis-margin-left</code>, …) or defaults. Editors like VS Code
                     complete and check definitions with the JSON Schema of the package, as the editor
                     here does (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).
                 </p>
@@ -171,7 +175,7 @@ import vueSource from './components/VueDemo.vue?raw';
 import examples from './examples/index.js';
 
 const repo = 'https://github.com/petres/gen-vis';
-const cdn = 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4/dist-lib/esm/gen-vis.js';
+const cdn = 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@5/dist-lib/esm/gen-vis.js';
 
 export default {
     components: { Example, Comparison, VueDemo },

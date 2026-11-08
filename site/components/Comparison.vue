@@ -47,7 +47,7 @@ const rows = [
     },
     {
         label: 'Shared parts of definitions',
-        cells: ['parents and mixins, any part; schemes and defaults of the page', 'config of defaults', 'themes', 'templates of the layout', 'global options, themes', 'global defaults', '—'],
+        cells: ['parents and mixins, any part; schemes, defaults and CSS variables of the page', 'config of defaults', 'themes', 'templates of the layout', 'global options, themes', 'global defaults', '—'],
     },
     {
         label: 'Loads its data',
@@ -55,15 +55,15 @@ const rows = [
     },
     {
         label: 'Transforms of the data',
-        cells: ['index, share, rolling, cumulative, calc, rank, lookup, year, align, bin, random, fold, aggregate, window', 'calculate, aggregate, window, fold, …', 'filter, sort (dataset)', '— (removed in v3)', '—', '—', 'bin, group, stack, window, …'],
+        cells: ['index, mean, share, rolling, cumulative, calc, filter, rank, lookup, year, align, bin, random, fold, aggregate, window', 'calculate, aggregate, window, fold, …', 'filter, sort (dataset)', '— (removed in v3)', '—', '—', 'bin, group, stack, window, …'],
     },
     {
         label: 'Controls in the definition',
-        cells: ['radio, select, slider, hidden, they patch any part of the definition', 'inputs bound to parameters', 'legend, data zoom, timeline', 'buttons, dropdowns, sliders', 'legend, range selector (Stock)', 'legend', '—'],
+        cells: ['radio, select, slider, hidden, any part of the definition an expression of their globals', 'inputs bound to parameters', 'legend, data zoom, timeline', 'buttons, dropdowns, sliders', 'legend, range selector (Stock)', 'legend', '—'],
     },
     {
         label: 'Kinds of charts',
-        cells: ['lines, areas, bars, points, texts, histograms, polar plots, pies, maps, grids of facets', 'many (a grammar of marks)', 'many, also graphs, sankey, 3D (GL)', 'many, also 3D and statistical', 'many, also stock and Gantt', '8 types', 'many (a grammar of marks)'],
+        cells: ['lines, areas, bars (stacked, dodged), points, texts, rules, cells (heatmaps), histograms, polar plots, pies, maps, grids of facets', 'many (a grammar of marks)', 'many, also graphs, sankey, 3D (GL)', 'many, also 3D and statistical', 'many, also stock and Gantt', '8 types', 'many (a grammar of marks)'],
     },
     {
         label: 'Maps',
@@ -87,7 +87,7 @@ const rows = [
     },
     {
         label: 'Size (gzipped)',
-        cells: ['as a module 80 kB at first, the single file 145 kB', '280 kB (Vega, Vega-Lite, vega-embed)', '367 kB', '1 475 kB', '102 kB, more with modules', '70 kB', '68 kB, with d3 160 kB'],
+        cells: ['as a module 90 kB at first, more parts when a chart needs them', '280 kB (Vega, Vega-Lite, vega-embed)', '367 kB', '1 475 kB', '102 kB, more with modules', '70 kB', '68 kB, with d3 160 kB'],
     },
     {
         label: 'License',
