@@ -96,7 +96,7 @@ dependency). All three take the same props, events and methods (see
   ```
 
 - **Browser module** for a page without a bundler, e.g. from a CDN:
-  `dist-lib/esm/gen-vis.js` (above; 80 kB gzipped at first, optional parts
+  `dist-lib/esm/gen-vis.js` (above; 87 kB gzipped at first, optional parts
   load when a chart needs them). `mountGenVisByClass(className)` mounts the
   elements with that class, the `data-` attributes are their props:
 

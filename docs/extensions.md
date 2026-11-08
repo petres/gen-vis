@@ -45,11 +45,11 @@ with the coordinate system's prefix (e.g. `cartesian:tick`), then to
 `svg:tick`, otherwise to the only registered type of that name (here
 `my:tick`). The attributes of a mark are merged
 into the defaults (nested ones deeply, `null` removes one); the built-in
-defaults are in `src/plots/defaults.js`. The channels of the built-in
-kinds are not passed on to a registered type: a mark of a cartesian chart
-takes `x`, `y`, `x0`, `x1`, `y0` and `y1` as channels, so a registered type
-reads its positions from props of other names, e.g. `cx` of the defaults
-above or `{"type": "tick", "cx": "@lo:scaled"}` of a mark.
+defaults are in `src/plots/defaults.js`. A registered type gets the
+channels of a mark as attributes of its elements, as written: `x: "lo"` of
+a mark is `x: "@lo:scaled"` of the item (a dim is its scaled position), a
+number stays a number; the type reads them as any other attribute, e.g.
+`cx` of the defaults above.
 
 The marks are a layer, `{ element, groups: [{ categories, items }] }` (an
 element per item in a `g.vis-group` per group) or `{ element, items }` (the
