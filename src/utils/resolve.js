@@ -3,7 +3,7 @@ export { resolve, variants, namesOfGlobals };
 import { isObject } from '@/utils/values';
 import { evaluate, isOperator, refNames } from '@/utils/expr';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
-import { expressionKeys, nameKeys } from '@/utils/language';
+import { expressionKeys, nameKeys, markKeys } from '@/utils/language';
 
 /**
  * A definition with the expressions of its globals evaluated: every
@@ -35,6 +35,11 @@ const rows = new Set(['filter', 'stack', 'stacked', 'expr']);
 // a `match` object, e.g. of the merge, see leafMerge of utils/def.js
 const isMatch = v => isObject(v) && Object.keys(v).length == 1 && Array.isArray(v.match);
 
+// the keys of a mark which are read when the definition is translated,
+// e.g. its type, its `by` or its curve: expressions of the globals at them
+// are resolved, its attributes and the expressions of its rows are drawn
+const markOptions = new Set(markKeys.filter(k => !['filter', 'stack', 'data', 'highlight', 'others'].includes(k)));
+
 const resolveIn = (value, names, key, inside) => {
     // an operator at the marks or the annotations (a mark is no operator)
     // is an expression of the whole part, as a text of one
@@ -42,6 +47,12 @@ const resolveIn = (value, names, key, inside) => {
         const r = resolved(value, names);
         return r === unresolved ? value : r;
     }
+    // a mark: the expressions of the globals of its options
+    if (key == 'marks' && Array.isArray(value))
+        return value.map(v => resolveIn(v, names, 'marks', true));
+    if (key == 'marks' && isObject(value) && !isOperator(value))
+        return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, markOptions.has(k) ? resolveIn(v, names, k, false) : v])
+            .filter(([k, v]) => !(v === null && markOptions.has(k) && ((typeof value[k] == 'string' && isExpressionText(value[k])) || isMatch(value[k])))));
     if (rows.has(key) || (drawn.has(key) && typeof value != 'string'))
         return value;
     if (typeof value == 'string') {

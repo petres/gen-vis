@@ -63,6 +63,12 @@ const matchOf = v => {
     return { ref, cases, hasDefault: rest.length > 0, default: rest[0] };
 };
 const matchExpression = (ref, cases, hasDefault, value) => ({ match: hasDefault ? [ref, cases, value] : [ref, cases] });
+// a value as the default of a match, of the innermost one of nested
+// switches, e.g. of two mixins of different globals, so both stay
+const withDefault = (m, value) => {
+    const inner = m.hasDefault ? matchOf(m.default) : null;
+    return matchExpression(m.ref, m.cases, true, inner ? withDefault(inner, value) : structuredClone(value));
+};
 
 /**
  * A switch of a global over the value of the parts before it: a `match`
@@ -73,7 +79,8 @@ const matchExpression = (ref, cases, hasDefault, value) => ({ match: hasDefault 
  * the later one, or of the earlier one if the later has none; a value
  * merged onto a match (with or without a default) becomes its default, so
  * the switch of a mixin also applies to the value of a child merged after
- * it, as the patches of 4.x applied after the merge. Null replaces
+ * it, as the patches of 4.x applied after the merge; of nested switches
+ * (mixins of different globals) the innermost default. Null replaces
  * (removes), as a match with a default replaces a value.
  */
 const leafMerge = (target, source) => {
@@ -87,7 +94,7 @@ const leafMerge = (target, source) => {
         return undefined;
     }
     if (t && source !== undefined && source !== null)
-        return matchExpression(t.ref, t.cases, true, structuredClone(source));
+        return withDefault(t, source);
     return undefined;
 };
 

@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { translate, compileStrings, isDefinition4, isDefinition5, authoredPath } from '@/utils/language.js';
+import { resolve } from '@/utils/resolve.js';
 
 describe('the language of 5.0', () => {
     test('the options, the dims and the marks of a line chart', () => {
@@ -119,5 +120,26 @@ describe('the language of 5.0', () => {
         expect(authoredPath('plot[1].props.fill')).toBe('marks[1].fill');
         expect(authoredPath('options.footer')).toBe('source');
         expect(authoredPath('formElements[0].ref')).toBe('controls[0].global');
+        expect(authoredPath('plot')).toBe('marks');
+    });
+
+    test('expressions of the globals at the options of a mark (type, curve, by, ...) are resolved, its attributes are drawn', () => {
+        const def = {
+            dims: { x: 'year', y: 'value', land: 'land', kind: 'kind' },
+            marks: [{ type: "=match(@s, {p: 'point'}, 'line')", by: "=match(@s, {p: 'kind'}, 'land')", curve: "=match(@s, {p: 'step'})",
+                stroke: "=match(@s, {p: 'red'}, 'blue')", 'stroke-width': '=@w * 2' }],
+        };
+        const p = translate(resolve(def, { s: 'p', w: 1 })).plot[0];
+        expect(p.type).toBe('svg:circle');
+        expect(p.by).toEqual(['kind']);
+        expect(p.curve).toBe('step');
+        const l = translate(resolve(def, { s: 'l', w: 1 })).plot[0];
+        expect(l.type).toBe('cartesian:line');
+        expect(l.by).toEqual(['land']);
+        // a match without a case of the value and without a default: no curve
+        expect(l.curve).toBeUndefined();
+        // the attributes stay expressions, evaluated when they are drawn (with the globals)
+        expect(l.props['stroke-width']).toEqual({ '*': ['@w', 2] });
+        expect(() => translate({ marks: [{ type: { match: ['@s', {}] } }] })).toThrow(/marks\[0\]\.type: expected a mark type/);
     });
 });

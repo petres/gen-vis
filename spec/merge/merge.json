@@ -845,5 +845,54 @@
         ]
       }
     }
+  },
+  {
+    "name": "switches of two mixins of different globals nest, a value of a child is the default of the innermost one, so both switches stay",
+    "parts": [
+      {
+        "dims": {
+          "y": {
+            "column": "=match(@values, {share: 'value.share'})"
+          }
+        }
+      },
+      {
+        "dims": {
+          "y": {
+            "column": "=match(@unit, {pj: 'value.pj'})"
+          }
+        }
+      },
+      {
+        "dims": {
+          "y": {
+            "column": "value"
+          }
+        }
+      }
+    ],
+    "result": {
+      "dims": {
+        "y": {
+          "column": {
+            "match": [
+              "@unit",
+              {
+                "pj": "value.pj"
+              },
+              {
+                "match": [
+                  "@values",
+                  {
+                    "share": "value.share"
+                  },
+                  "value"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
   }
 ]

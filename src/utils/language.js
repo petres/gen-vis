@@ -233,6 +233,8 @@ const anchors = {
  */
 const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
     const { p, props } = markParts(raw, i);
+    if (typeof p.type != 'string')
+        throw new Error(`marks[${i}].type: expected a mark type, e.g. "line" or "bar"${p.type === undefined ? '' : `, not ${JSON.stringify(p.type)}`}`);
     const type = typeOf(p.type, coord);
     p.type = type;
     const kind = type.split(':')[1];
@@ -619,6 +621,7 @@ const authoredPath = path => String(path)
     .replace(/^plot\[(\d+)\]\.props\./, 'marks[$1].')
     .replace(/^plot\[/, 'marks[')
     .replace(/^plot\./, 'marks.')
+    .replace(/^plot$/, 'marks')
     .replace(/^options\.footer\b/, 'source')
     .replace(/^options\./, '')
     .replace(/^formElements\[(\d+)\]\.ref\b/, 'controls[$1].global')

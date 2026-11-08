@@ -6,7 +6,8 @@ the mixins) by the rule of `merge`. The fixtures are `merge/merge.json`
 then the expressions of the globals are evaluated (see `expressions.md`
 and `resolve` of the package), then the definition is translated and
 normalized (see `normalize.md`): an expression of a parent is merged as
-any other value, a later part replaces it. (The patches of the form
+any other value, a later part replaces it, except a `match` of a global,
+which is a switch (see below). (The patches of the form
 elements of 4.x, merged into the patchable parts after the parents, are
 gone; a definition of 4.x is migrated after the merge, its patches become
 expressions of the globals.)
@@ -41,7 +42,9 @@ The parts are merged in their order, a later part overrides an earlier one
   operator object); a value merged onto a match of a global (with or without
   a default) becomes its default, so the switch of a mixin applies to the
   value of a child merged after it (as the patches of 4.x applied after the
-  merge), a child replaces a switch with a match of its own or with `null`;
+  merge), of nested switches (mixins of different globals) the default of
+  the innermost one, so both stay; a child replaces a switch with a match
+  of its own or with `null`;
   two matches of the
   same global merge their cases (the later ones win) and keep the default
   of the later one, else of the earlier one; a match of another global
