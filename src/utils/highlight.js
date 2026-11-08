@@ -24,10 +24,14 @@ import { evaluate, refNames } from '@/utils/expr';
 // others (`ot`) of a plot
 const varName = (kind, prop) => `--vis-${kind}-${prop}`;
 
-// the value of a prop in the stylesheet, none of a value which would end
-// the declaration or the rule
-const cssValue = v => v === null || v === undefined ? null
-    : typeof v == 'number' ? String(v) : typeof v == 'string' && !/[;{}]/.test(v) ? v : null;
+// the props of texts whose numbers need a unit in a stylesheet (the ones
+// of the geometry, e.g. r or stroke-width, take numbers as pixels)
+const lengths = new Set(['font-size', 'letter-spacing', 'word-spacing']);
+
+// the value of a prop `n` in the stylesheet, none of a value which would end
+// the declaration or the rule, numbers of lengths of texts in pixels
+const cssValue = (v, n) => v === null || v === undefined ? null
+    : typeof v == 'number' ? (lengths.has(n) ? `${v}px` : String(v)) : typeof v == 'string' && !/[;{}]/.test(v) ? v : null;
 
 // the value of a prop which is the same for all groups of the plot, e.g.
 // 3 or "black", undefined of one of the categories or the rows, e.g. "@color"
@@ -50,7 +54,7 @@ const highlightVars = (plot, bound, row) => {
     const names = varNames(plot);
     if (names.length == 0)
         return null;
-    return Object.fromEntries(names.map(([kind, n, value]) => [varName(kind, n), cssValue(bound(value)(row))]));
+    return Object.fromEntries(names.map(([kind, n, value]) => [varName(kind, n), cssValue(bound(value)(row), n)]));
 };
 
 // the selector of the attribute of the plot, its id quoted
@@ -60,7 +64,7 @@ const plotSelector = id => `[data-plot="${String(id).replace(/["\\]/g, '\\$&')}"
 // for all groups as they are, the others as their custom properties
 const declarations = (kind, names, values) => names.map(n => {
     const v = fixed(values[n]);
-    const css = v === undefined ? `var(${varName(kind, n)})` : cssValue(v);
+    const css = v === undefined ? `var(${varName(kind, n)})` : cssValue(v, n);
     return css === null ? null : `${n}: ${css}`;
 }).filter(Boolean).join('; ');
 

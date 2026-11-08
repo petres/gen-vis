@@ -22,9 +22,10 @@ const curves = {
 
 // the props whose values are styles of an element, not attributes, values
 // with css variables, e.g. "var(--gen-vis-grid-color)", svg attributes do not
-// know them, the names of data are attributes
+// know them, the names of data are attributes; custom properties, e.g. the
+// ones of the highlight of a group (`--vis-hl-stroke-width`), are styles
 const styles = Symbol('styles');
-const isStyle = (k, v) => typeof v == 'string' && v.includes('var(') && !/^data-/.test(k);
+const isStyle = (k, v) => (k.startsWith('--') && v !== null && v !== undefined) || (typeof v == 'string' && v.includes('var(') && !/^data-/.test(k));
 
 // the value of a prop of an element, a style or an attribute, null without one
 const readValue = (node, k) => node[styles]?.has(k) ? node.style.getPropertyValue(k) : node.getAttribute(k);

@@ -199,3 +199,35 @@ describe('the end of a facet', () => {
         expect(nodes.filter(n => targetOf(n))).toEqual([]);
     });
 });
+
+describe('the highlight of props of the categories', () => {
+    test('the custom properties of the groups are on their elements, of lines and of elements per row', async () => {
+        const el = await mount({ def: {
+            $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', height: 200,
+            dims: { x: { column: 'year', type: 'numeric' }, y: 'value',
+                land: { column: 'land', categories: { Wien: { hw: 4 }, Tirol: { hw: 6 } } } },
+            marks: [{ type: 'line', by: 'land', highlight: { 'stroke-width': '@hw' } }, { type: 'point', by: 'land', highlight: { r: '@hw' } }],
+        }, data: 'year,value,land\n2020,1,Wien\n2021,2,Wien\n2020,3,Tirol\n2021,4,Tirol\n' });
+        const paths = [...el.querySelectorAll('g.vis-plot path')];
+        expect(paths.map(p => p.style.getPropertyValue('--vis-hl-stroke-width'))).toEqual(['4', '6']);
+        const groups = [...el.querySelectorAll('g.vis-plot g.vis-group')];
+        expect(groups.map(g => g.style.getPropertyValue('--vis-hl-r'))).toEqual(['4', '6']);
+    });
+});
+
+describe('the stylesheet of the highlight', () => {
+    test('numbers of the font size of texts in pixels (a stylesheet ignores a unitless one), of the geometry as they are', async () => {
+        const el = await mount({ def: {
+            $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', height: 200,
+            dims: { x: { column: 'year', type: 'numeric' }, y: 'value',
+                land: { column: 'land', categories: { Wien: { fs: 15 }, Tirol: { fs: 16 } } } },
+            marks: [{ type: 'line', by: 'land', highlight: { 'stroke-width': 3 } }, { type: 'text', by: 'land', text: '@land', highlight: { 'font-size': 14 } },
+                { type: 'label', by: 'land', text: '@land', highlight: { 'font-size': '@fs' } }],
+        }, data: 'year,value,land\n2020,1,Wien\n2021,2,Wien\n2020,3,Tirol\n2021,4,Tirol\n' });
+        const css = [...document.querySelectorAll('style')].map(s => s.textContent).join('\n');
+        expect(css).toContain('font-size: 14px');
+        expect(css).toContain('stroke-width: 3');
+        expect(css).not.toContain('stroke-width: 3px');
+        expect([...el.querySelectorAll('g.vis-group')].map(g => g.style.getPropertyValue('--vis-hl-font-size')).filter(Boolean)).toEqual(['15px', '16px']);
+    });
+});

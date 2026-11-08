@@ -41,7 +41,8 @@ const propScale = (plot, ctx, path) => {
 const perGroup = (groups, d) => ({
     element: 'path',
     key: item => item[keyOf],
-    items: groups.map(g => ({ ...g.attrs, ...groupAttrs(g), ...(d ? { d: d(g) } : {}), [keyOf]: groupKey(g) })),
+    // the custom properties of the highlight of the group (see highlightVars) on its path
+    items: groups.map(g => ({ ...g.attrs, ...groupAttrs(g), ...(g.vars ?? {}), ...(d ? { d: d(g) } : {}), [keyOf]: groupKey(g) })),
 });
 
 // the layer of an element of `element` per row, without the rows of missing
@@ -54,6 +55,8 @@ const perRow = (groups, element, translate = v => v, key) => ({
     key,
     groups: groups.map(g => ({
         categories: g.categories,
+        // the custom properties of the highlight of the group, set on its element, see setGroupData
+        vars: g.vars,
         items: g.rows.filter(g.complete).map(row => {
             // the row of the element, e.g. for the highlight of a row
             const v = translate(g.at(row), row, g);
