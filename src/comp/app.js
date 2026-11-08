@@ -54,7 +54,7 @@ const defaults = {
     // definition otherwise or 800, `screen` is the one on the screen
     imageWidth: null,
     // loads the definition and the data when the visualisation is near
-    // the viewport, true within 400px, a string is the rootMargin of the
+    // the viewport, true within one height of it, a string is the rootMargin of the
     // IntersectionObserver, e.g. "800px 0px", see observe
     lazy: false,
     // the content of the header, the footer, the buttons and the hover, functions

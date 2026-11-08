@@ -31,9 +31,9 @@ import { registerPlotType, perRow } from '@preschen/gen-vis';
 
 registerPlotType('my:tick', {
     update: true,
-    defaults: { cx: '@x:scaled', fill: { or: ['@color', 'currentColor'] } },
+    defaults: { x: '@x:scaled', fill: { or: ['@color', 'currentColor'] } },
     marks: (groups, plot, ctx) => perRow(groups, 'rect', v => ({
-        ...v, x: v.cx - 1, width: 2, height: ctx.innerHeight,
+        ...v, x: v.x - 1, width: 2, height: ctx.innerHeight,
     })),
 });
 ```
@@ -49,7 +49,7 @@ defaults are in `src/plots/defaults.js`. A registered type gets the
 channels of a mark as attributes of its elements, as written: `x: "lo"` of
 a mark is `x: "@lo:scaled"` of the item (a dim is its scaled position), a
 number stays a number; the type reads them as any other attribute, e.g.
-`cx` of the defaults above.
+`x` of the defaults above, which `"x": "lo"` of a mark replaces.
 
 The marks are a layer, `{ element, groups: [{ categories, items }] }` (an
 element per item in a `g.vis-group` per group) or `{ element, items }` (the

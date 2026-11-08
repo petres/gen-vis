@@ -8,8 +8,8 @@ const schemaUrl = 'https://unpkg.com/@preschen/gen-vis@5/schema.json';
 /**
  * The major version of gen-vis of a `$schema`: a url or a path which ends in
  * `@preschen/gen-vis@<version>/schema.json`, e.g. of unpkg or jsdelivr, the
- * version a major one or a full one (`@4`, `@4.1`, `@4.0.2`,
- * `@4.0.0-beta.1`), or the schema.json of the installed package
+ * version a major one or a full one (`@5`, `@5.1`, `@5.0.2`,
+ * `@5.0.0-alpha.1`), or the schema.json of the installed package
  * (`node_modules/@preschen/gen-vis/schema.json`, also a relative path), the
  * one of this version. Undefined of a schema of gen-vis without a version
  * (the newest one, e.g. https://unpkg.com/@preschen/gen-vis/schema.json),

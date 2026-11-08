@@ -10,9 +10,9 @@ export type * from './index.js';
 export interface GenVisSlots {
     /** The title and the subtitle, with the values of the globals. */
     header?(props: { title?: string; subtitle?: string }): VNodeChild;
-    /** The footer, HTML of options.footer with the values of the globals. */
+    /** The footer, HTML of `source` with the values of the globals. */
     footer?(props: { footer?: string }): VNodeChild;
-    /** The content of the hover instead of the table or the templates of options.hover. */
+    /** The content of the hover instead of the table or the templates of `hover`. */
     hover?(props: HoverSlotProps): VNodeChild;
     /** Buttons of the PNG, the CSV and the SVG, `canCopy` if the clipboard takes images. */
     buttons?(props: { save: () => Promise<void>; copy: () => Promise<void>; csv: () => Promise<void>; svg: () => Promise<void>; canCopy: boolean }): VNodeChild;
@@ -28,7 +28,7 @@ export type GenVisComponent = DefineComponent<GenVisProps, {}, {}, {}, { [K in k
 /** The component of the Vue of the application, see docs/usage.md "Vue component". */
 export declare const GenVis: GenVisComponent;
 
-/** The component of another Vue, e.g. the global `Vue` of a page with the standalone script, `import * as Vue from 'vue'`. */
+/** The component of another Vue, e.g. the global `Vue` of a page with the browser module, `import * as Vue from 'vue'`. */
 export declare function createVueComponent(vue: object): GenVisComponent;
 
 /** The plugin of another Vue, it registers <GenVis>, `component` is the component. */

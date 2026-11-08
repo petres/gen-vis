@@ -574,7 +574,7 @@ const selected = (rows, select, mapping) => {
 };
 
 // a name of the rows of a facet as a function of the row, e.g. "x" or
-// "x:scaled", undefined for other names, see docs/definition.md "Props of the definition"
+// "x:scaled", undefined for other names, see docs/definition.md "Expressions" > "Names"
 const rowValue = (ctx, name, rows) => {
     // the place of the row among the rows of the plot in the facet, from 0,
     // e.g. the line of a small table, without a mapping `row`

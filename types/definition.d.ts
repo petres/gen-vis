@@ -242,7 +242,7 @@ export interface GenVisDefinition {
     hover?: Hover;
     highlight?: Highlight;
     /**
-     * Css font-family, by default the css variable --gen-vis-font-family or Century Gothic.
+     * Css font-family, by default the css variable --gen-vis-font-family or Inter (in the package).
      */
     fontFamily?: string;
     /**
@@ -612,7 +612,7 @@ export interface ControlValue {
  */
 export interface Hover {
     /**
-     * The dims of the hover (its rows of their values, in this order), by default the dims of the `by` of the marks; a dim with a `hover` of its own is in it as well, [] only those.
+     * The dims of the hover (its rows of their values, in this order), by default the dims the marks use, of their `by` and their positions (not the ones of the facets); a dim with a `hover` of its own is in it as well, [] only those.
      */
     columns?: string[];
     /**
@@ -683,7 +683,7 @@ export interface Dim {
      */
     column?: string;
     /**
-     * The title of the legend and of the axis.
+     * The title of the legend (the title of the axis is axis.title).
      */
     name?: string | InLanguages;
     /**
@@ -1288,11 +1288,11 @@ export interface Mark {
      */
     by?: string | string[];
     /**
-     * The dim of the horizontal position (x by default), a number is a value on its scale, e.g. the base of a bar.
+     * The dim of the horizontal position (x by default); a number is a value on the scale of x of a rule, pixels otherwise.
      */
     x?: string | number | Expression;
     /**
-     * The dim of the vertical position (y by default), a number is a value on its scale.
+     * The dim of the vertical position (y by default); a number is a value on the scale of y of a bar or a rule, pixels otherwise.
      */
     y?: string | number | Expression;
     /**
@@ -1308,11 +1308,11 @@ export interface Mark {
      */
     x2?: string | number | Expression;
     /**
-     * The start of a bar or an area (a dim, a number on the scale of y), 0 by default; of a rule its start.
+     * The start of a bar or an area (a dim, a number on the scale of y), 0 by default.
      */
     y0?: string | number | Expression;
     /**
-     * The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start.
+     * The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start (its other end is y2).
      */
     y1?: string | number | Expression;
     /**
@@ -1440,7 +1440,7 @@ export interface Mark {
      */
     borders?: 'all' | 'inner' | 'outer';
     /**
-     * Of a mark of an annotation type: right before the mark of this id, in its layer.
+     * Right before the mark of this id, in its layer, e.g. lines above the bars but below the labels whose halo cuts them.
      */
     before?: string;
     /**

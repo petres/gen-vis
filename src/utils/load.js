@@ -136,7 +136,7 @@ const raw = rows => Array.from(rows);
 // the check of the definitions (`check` of Store.init, e.g. while a
 // definition is written), loaded with the first one, together with its
 // parents, a definition is drawn without it if it could not be loaded, e.g.
-// of the single file of the standalone script, which has none
+// a chunk of the browser module missing on its server
 let validator = null;
 const loadValidator = () => validator ??= lazy.validate().catch(error => {
     console.warn(`gen-vis: the definition is not checked, ${error.message}`);

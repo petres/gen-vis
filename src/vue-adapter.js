@@ -140,7 +140,7 @@ const createVueComponent = Vue => {
 };
 
 // the plugin of Vue which registers the component <GenVis>, of the Vue of
-// the page, e.g. `app.use(GenVis.vuePlugin(Vue))` of the standalone script
+// the page, e.g. `app.use(vuePlugin(Vue))` of a page with the browser module
 const vuePlugin = Vue => {
     const component = createVueComponent(Vue);
     return {

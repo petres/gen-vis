@@ -1107,7 +1107,7 @@ row:
 |---------|-|
 | `x`, `y` | the dims of the horizontal and the vertical position, `x` and `y` by default; of polar charts the angle and the radius |
 | `x0`, `x1` | the start and the end of a bar or an area on the horizontal axis, e.g. the start and the end of a class of a [bin](#transform) |
-| `y0`, `y1` | the start (0 by default) and the end of a bar or an area, e.g. the lower and the upper edge of a band; of a rule its start and end |
+| `y0`, `y1` | the start (0 by default) and the end of a bar or an area, e.g. the lower and the upper edge of a band; `y1` of a rule its start |
 | `x2`, `y2` | the other end of a rule, e.g. `"y1": "lo", "y2": "hi"` of an error bar |
 | `lon`, `lat` | of maps: the dims of the longitude and the latitude of a point or a text |
 
@@ -1152,7 +1152,7 @@ attributes are merged into the defaults, e.g. `d` of a path.
   categorical are its scaled value, e.g. `"r": "size"` of a dim `size` with
   `"scale": {"type": "sqrt", "range": [0, 20]}`.
 - Values with `var(` are css variables, e.g. `"stroke":
-  "var(--gen-vis-grid-color)"`, set as a style, see [styles](usage.md#the-font).
+  "var(--gen-vis-grid-color)"`, set as a style, see [styles](usage.md#styles).
 - The texts of `text`, `label` and of the labels of axes with a `max-width`
   attribute (pixels) are cut with an ellipsis, the full text is their title
   (the tooltip of the browser, also below the area of the hover, e.g. of
@@ -1214,7 +1214,7 @@ attributes are merged into the defaults, e.g. `d` of a path.
 ### Examples
 
 Horizontal bars of a year of a slider, with their values beside them
-(`data/bev/def-hbar.json`):
+(a shorter form of `data/bev/def-hbar.json`, which is migrated from 4.x):
 
 ```json
 {
@@ -1243,7 +1243,7 @@ dim `year` is the column of the filter, `@globals.year` the global of the
 same name.
 
 Stacked bars, a facet per region, the total in the hover
-(`data/rechtsform/def-stacked.json`):
+(a shorter form of `data/rechtsform/def-stacked.json`, which is migrated from 4.x):
 
 ```json
 {
@@ -1274,7 +1274,7 @@ Bars with error bars and a target line, rules of two dims and at a value:
     },
     "marks": [
         { "type": "bar", "fill": "#BBD7EE" },
-        { "type": "rule", "x": "@x:scaled:center", "y1": "lo", "y2": "hi", "stroke": "#333", "stroke-width": 1.5 },
+        { "type": "rule", "y1": "lo", "y2": "hi", "stroke": "#333", "stroke-width": 1.5 },
         { "type": "rule", "y": 5, "stroke": "#C3423F", "stroke-dasharray": "3 3" }
     ]
 }
@@ -1282,8 +1282,8 @@ Bars with error bars and a target line, rules of two dims and at a value:
 
 A rule with `x` (by default the dim `x`) is vertical, from `y1` to `y2`
 (by default the edges of the plot area), one with only `y` horizontal,
-from `x1` to `x2`; a rule at a category of a band is at the start of its
-band, `@x:scaled:center` is its middle.
+from `x1` to `x2`; a rule at a category of a band is at the middle of its
+band, as bars and points.
 
 A heatmap, a cell per year and type colored by a scale, with its values:
 
@@ -2216,7 +2216,7 @@ form as before, a definition of 5.0 is translated into it (see
 | `"scales": []` of facets | `"own"` (the default), `"shared"` all dims |
 | margins of 0 by default | measured by default |
 
-Gone without a replacement in the definition: `options`, `mapping`,
+Removed (their replacements are above): `options`, `mapping`,
 `plot` and the `props` of a plot, `formElements`, `patch`, `domainRel`.
 Kept for the rare case: `stacked` and `stackBy` of a dim (values stacked
 by no mark, e.g. of a histogram of a bin), `scale.of`, `domainAbs`,
@@ -2258,7 +2258,8 @@ To check by hand:
   reads `"column": "=match(@values, {share: 'value.share'})"`, a child
   which gives `"column": "value"` keeps it. Two mixins which patch the
   same leaf by the same global merge their cases; by different globals the
-  later one is the switch over the earlier one.
+  later one is the switch over the earlier one, a child's value is the
+  default of the innermost one, so both apply.
 - **Patches of whole parts.** A patch of the plots, the annotations or the
   filter is a `match` of the whole list or filter (the marks of every value
   in it), shorten it by hand if only an attribute differs.

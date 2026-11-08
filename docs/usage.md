@@ -130,7 +130,8 @@ interpolator, the parts of maps (`d3-geo`, `topojson-client`, ~13 kB) with
 the first map, the parts of polar charts (~5 kB) with the first one, the
 transforms (~4 kB), the legend of scales of colors (~2 kB), the languages of
 `Intl` (~1 kB) other than `de` and `en`, the parquet reader (~18 kB) for
-parquet data and the PNG, the SVG and the CSV (~9 kB) with the first one.
+parquet data, the PNG, the SVG and the CSV (~9 kB) with the first one, and
+the migration of definitions of 4.x (~5 kB) with the first one.
 
 ## Vue component
 

@@ -12,7 +12,7 @@
     color: var(--gen-vis-error-color, #B42318);
 }
 
-/* the font can be set with options.fontFamily or the css variable: Inter
+/* the font can be set with fontFamily of the definition or the css variable: Inter
    where it is installed, the font of the system otherwise */
 .vis text, .vis span, .vis div {
     font-family: var(--gen-vis-font-family, Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);

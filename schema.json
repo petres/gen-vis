@@ -96,7 +96,7 @@
         "highlight": { "$ref": "#/definitions/highlight" },
         "fontFamily": {
             "type": "string",
-            "description": "Css font-family, by default the css variable --gen-vis-font-family or Century Gothic."
+            "description": "Css font-family, by default the css variable --gen-vis-font-family or Inter (in the package)."
         },
         "dims": {
             "type": "object",
@@ -367,7 +367,7 @@
                 "columns": {
                     "type": "array",
                     "items": { "type": "string" },
-                    "description": "The dims of the hover (its rows of their values, in this order), by default the dims of the `by` of the marks; a dim with a `hover` of its own is in it as well, [] only those."
+                    "description": "The dims of the hover (its rows of their values, in this order), by default the dims the marks use, of their `by` and their positions (not the ones of the facets); a dim with a `hover` of its own is in it as well, [] only those."
                 },
                 "total": {
                     "anyOf": [{ "type": "boolean" }, { "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
@@ -954,7 +954,7 @@
                 },
                 "name": {
                     "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
-                    "description": "The title of the legend and of the axis."
+                    "description": "The title of the legend (the title of the axis is axis.title)."
                 },
                 "type": {
                     "enum": ["numeric", "date", "categorical"],
@@ -1175,11 +1175,11 @@
                 },
                 "x": {
                     "$ref": "#/definitions/channel",
-                    "description": "The dim of the horizontal position (x by default), a number is a value on its scale, e.g. the base of a bar."
+                    "description": "The dim of the horizontal position (x by default); a number is a value on the scale of x of a rule, pixels otherwise."
                 },
                 "y": {
                     "$ref": "#/definitions/channel",
-                    "description": "The dim of the vertical position (y by default), a number is a value on its scale."
+                    "description": "The dim of the vertical position (y by default); a number is a value on the scale of y of a bar or a rule, pixels otherwise."
                 },
                 "x0": {
                     "$ref": "#/definitions/channel",
@@ -1192,11 +1192,11 @@
                 "x2": { "$ref": "#/definitions/channel", "description": "The other end of a rule." },
                 "y0": {
                     "$ref": "#/definitions/channel",
-                    "description": "The start of a bar or an area (a dim, a number on the scale of y), 0 by default; of a rule its start."
+                    "description": "The start of a bar or an area (a dim, a number on the scale of y), 0 by default."
                 },
                 "y1": {
                     "$ref": "#/definitions/channel",
-                    "description": "The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start."
+                    "description": "The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start (its other end is y2)."
                 },
                 "y2": {
                     "$ref": "#/definitions/channel",
@@ -1351,7 +1351,7 @@
                 },
                 "before": {
                     "type": "string",
-                    "description": "Of a mark of an annotation type: right before the mark of this id, in its layer."
+                    "description": "Right before the mark of this id, in its layer, e.g. lines above the bars but below the labels whose halo cuts them."
                 },
                 "highlight": {
                     "type": "object",

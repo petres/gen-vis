@@ -32,7 +32,12 @@ the use are `site/components/VueDemo.vue` and `site/public/standalone.html`
 (with the browser module of `dist-lib/esm/`, copied to
 `lib/esm/` of the page) of the chart `site/public/charts/seasons.json`, the
 comparison with other libraries is `site/components/Comparison.vue`. The
-tests check and draw the examples, as the ones of `data/`.
+page "How it works" is `site/guide.html` (`site/Guide.vue`, its chart built
+step by step in `site/guide/steps.js`), the gallery of one chart of every
+kind of `data/` is `site/gallery.html` (`site/Gallery.vue`, the charts in
+`site/gallery/index.js`, the files they need are served from `data/` in dev
+and copied at the build). The tests check and draw the examples, as the
+ones of `data/`.
 
 `tests/cli.test.js` draws a chart with the CLI of the static export in a
 Chromium, Chrome or Edge of the system (it builds the export page if it is

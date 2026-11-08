@@ -12,7 +12,7 @@ export type Definition = GenVisDefinition;
 /** A row of the data, the values of its columns. */
 export type Row = Record<string, unknown>;
 
-/** The changes of the user, the globals of the form elements and the entries of the legends shown. */
+/** The changes of the user, the globals of the controls and the entries of the legends shown. */
 export interface State {
     globals?: Record<string, unknown>;
     visible?: Record<string, Record<string, boolean>>;
@@ -43,6 +43,10 @@ export interface GenVisDefaults {
     rightAxis?: AxisDefaults;
     bottomAxis?: AxisDefaults;
     leftAxis?: AxisDefaults;
+    /** The margins of the definitions without them, a number of pixels or "auto" (measured) per side, see docs/definition.md "Margins". */
+    margins?: { top?: number | 'auto'; right?: number | 'auto'; bottom?: number | 'auto'; left?: number | 'auto' };
+    /** The box of the symbols of the legends, of all and per shortcut (`line`, `rect`, `circle`), e.g. `{ symbol: { size: 16, rect: { width: 12 } } }`. */
+    legend?: { symbol?: Record<string, unknown> };
 }
 
 export interface GenVisProps {
@@ -58,9 +62,9 @@ export interface GenVisProps {
     check?: boolean;
     /** The changes of the user, with v-model:state. */
     state?: State | null;
-    /** The globals of the page, e.g. the language, also of hidden form elements. */
+    /** The globals of the page, e.g. the language, also of hidden controls. */
     globals?: Record<string, unknown> | null;
-    /** The rows highlighted by the page, values of mappings, e.g. `{ country: 'AT' }` of another chart. */
+    /** The rows highlighted by the page, values of dims, e.g. `{ country: 'AT' }` of another chart. */
     highlight?: Record<string, unknown> | null;
     /** The defaults of the parts instead of the built-in ones, e.g. `{ axis: { padding: 2, tickMarks: { size: 4, inset: 0 } } }`, values of the definition take precedence. */
     defaults?: GenVisDefaults | null;
@@ -74,11 +78,11 @@ export interface GenVisProps {
     svg?: boolean | string;
     /** The width of the PNG in pixels, `screen` for the one on the screen. */
     imageWidth?: number | 'screen' | null;
-    /** Loads the definition and the data when it is near the viewport, `true` within 400px, a string is the `rootMargin`, e.g. `'800px 0px'`. */
+    /** Loads the definition and the data when it is near the viewport, `true` within one height of the viewport, a string is the `rootMargin`, e.g. `'800px 0px'`. */
     lazy?: boolean | string;
 }
 
-/** The rows of the hover and of a click or a tap (`select`), the values of the mappings. */
+/** The rows of the hover and of a click or a tap (`select`), the values of the dims. */
 export interface HoverEvent {
     key: unknown;
     title: string;
@@ -94,7 +98,7 @@ export interface GenVisMethods {
     /** The SVG of the image (a string), made for Word and editors, see docs/export.md. */
     exportSvg(options?: ExportSvgOptions): Promise<string>;
     exportCsv(name?: string): Promise<void>;
-    /** Highlights the rows of the values of mappings, e.g. `{ country: 'AT' }`, null ends it. */
+    /** Highlights the rows of the values of dims, e.g. `{ country: 'AT' }`, null ends it. */
     setHighlight(entry: Record<string, unknown> | null): void;
 }
 
@@ -156,7 +160,7 @@ export interface GenVisExportResult {
 
 /** The events of the visualisation, e.g. `on('hover', e => …)`, the props `on…` (e.g. `onHover`) and the events of the Vue component. */
 export type GenVisEmits = {
-    /** The changes of the user, the globals of the form elements and the legends, see v-model:state. */
+    /** The changes of the user, the globals of the controls and the legends, see v-model:state. */
     'update:state': (state: State) => void;
     /** The rows of the position of the pointer, null if the hover ends. */
     hover: (event: HoverEvent | null) => void;
@@ -173,7 +177,7 @@ export type GenVisEvent = keyof GenVisEmits;
 
 /** The props of the hover slot, the ones of the event and the entries of the rows. */
 export interface HoverSlotProps extends HoverEvent {
-    /** The rows of the hover, their values and the props of their categories by the names of the mappings, e.g. `entries[0].land.name`. */
+    /** The rows of the hover, their values and the props of their categories by the names of the dims, e.g. `entries[0].land.name`. */
     entries: (Record<string, Record<string, unknown>> & { nearest: boolean })[];
 }
 
@@ -184,9 +188,9 @@ export type SlotContent = Node | string | null | undefined | false | SlotContent
 export interface GenVisSlotFunctions {
     /** The title and the subtitle, with the values of the globals. */
     header?(props: { title?: string; subtitle?: string }): SlotContent;
-    /** The footer, HTML of options.footer with the values of the globals. */
+    /** The footer, HTML of `source` with the values of the globals. */
     footer?(props: { footer?: string }): SlotContent;
-    /** The content of the hover instead of the table or the templates of options.hover. */
+    /** The content of the hover instead of the table or the templates of `hover`. */
     hover?(props: HoverSlotProps): SlotContent;
     /** Buttons of the PNG, the CSV and the SVG, `canCopy` if the clipboard takes images. */
     buttons?(props: { save: () => Promise<void>; copy: () => Promise<void>; csv: () => Promise<void>; svg: () => Promise<void>; canCopy: boolean }): SlotContent;
@@ -274,8 +278,7 @@ export declare function mountGenVisByClass(className: string): GenVisInstance[];
 export declare function unmountGenVisElement(element: Element): boolean;
 export declare function registerPlotType(name: string, type: PlotType): void;
 export declare function registerCoord(name: string, coord: Record<string, unknown>): void;
-/** A scheme of its own, e.g. the colors of a house style, for `scheme` of the categories and the scales as the ones of d3, `colors` are CSS colors, of a scheme of several sizes entry n the n colors (others null), `observable10` also the default colors. */
-/** Returns a function which restores the scheme registered before under that name. */
+/** A scheme of its own, e.g. the colors of a house style, for `scheme` of the categories and the scales as the ones of d3, `colors` are CSS colors, of a scheme of several sizes entry n the n colors (others null), `observable10` also the default colors; returns a function which restores the scheme registered before under that name. */
 export declare function registerScheme(name: string, colors: string[] | (string[] | null | undefined)[]): () => void;
 /** The defaults of the parts of all charts of the page instead of the built-in ones, the prop `defaults` of a chart takes precedence, null removes them. */
 export declare function registerDefaults(defaults: GenVisDefaults | null): void;

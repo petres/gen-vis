@@ -230,15 +230,16 @@ their rows replace the rows or follow them. Fixtures in `spec/transforms`.
 
 Migration notes, to check by hand after `gen-vis migrate`:
 
-- A leaf which a parent patches and the child (or a parent) defines
-  becomes an expression of the child: 4.x applied the patches after the
-  merge, 5.0 merges the expressions as any value, the later part wins. A
-  leaf which a patch of a parent changes and no part defines is an
-  expression of the parent with the default `null`: check the default of a
-  patch of a part of a parent (the CLI says so).
-- Of two mixins which give the same key, the later one replaces the
-  expression of the earlier one; in 4.x both patches applied. Put the
-  expression where the key is given last.
+- A patch of a part of a parent becomes a `match` of the global at the
+  leaf it changes, without a default if the part has no value of the
+  leaf: a switch over the value of the other parts, which applies after
+  the merge as the patch did; a child which gives the leaf (e.g.
+  `"column": "value"`) is its default.
+- Two mixins which patch the same leaf by the same global merge their
+  cases; by different globals the later one is the switch over the earlier
+  one, a child's value is the default of the innermost one.
+- A patch of the plots, the annotations or the filter is a `match` of the
+  whole part; shorten it by hand if only an attribute differs.
 - Remove `margins`, `"hover": {"columns": []}` and `"symbol": null` where
   the new defaults are wanted.
 - A part without keys of 4.x (e.g. a parent of only `data`) is not

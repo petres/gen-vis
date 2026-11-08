@@ -120,7 +120,7 @@ unknown ones are an error):
 | `parts` | the parts of the image, see above, default all |
 | `fontSize` | the size of the texts of gen-vis, e.g. `"8pt"`: 13px of most texts become it, the title (20px), the message (14px), the labels and titles of the axes and the footer (12px) and the small texts (11px) in proportion; sizes of the definition (props) stay as they are |
 | `background` | a CSS color, `null` none (a transparent PNG), default the one of gen-vis (`--gen-vis-background` or white) |
-| `schemes` | schemes of colors registered before the chart is drawn, for this call only (the next one has the schemes of the page before), e.g. `{ "house": ["#005CA9", "#E6A000"] }`, also of several sizes (`[null, null, ["#9EC5E8", "#005CA9"], ...]`), see `registerScheme` in [extensions](extensions.md#extensions); also a function of the merged definition (see `resolve` below) which returns such an object (or a promise of it), called before the chart is drawn, e.g. of colors by the mark types, since 4.0.0 |
+| `schemes` | schemes of colors registered before the chart is drawn, for this call only (the next one has the schemes of the page before), e.g. `{ "house": ["#005CA9", "#E6A000"] }`, also of several sizes (`[null, null, ["#9EC5E8", "#005CA9"], ...]`), see `registerScheme` in [extensions](extensions.md#schemes-of-colors); also a function of the merged definition (see `resolve` below) which returns such an object (or a promise of it), called before the chart is drawn, e.g. of colors by the mark types, since 4.0.0 |
 | `timeout` | the time to wait for the chart in milliseconds, default 30000 |
 
 The result (sizes in CSS pixels):

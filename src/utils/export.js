@@ -18,12 +18,13 @@ const defaultWidth = 800;
 // the time to wait for the copy of the visualisation
 const timeout = 20000;
 
-// the chosen entries of the form elements of a prepared definition, e.g.
-// "Einheit: Anteil · Jahr: 2024", the image has no form elements, the ones
-// with `"inImage": false` only change the presentation, e.g. shared scales
+// the chosen entries of the controls of a prepared definition, e.g.
+// "Einheit: Anteil · Jahr: 2024" (of a control without a name only the
+// entry), the image has no controls, the ones with `"inImage": false` only
+// change the presentation, e.g. shared scales
 const selection = def => (def.formElements ?? []).filter(e => e.inImage !== false && e.type != 'hidden').map(e => {
     const entry = selectedEntry(def, e);
-    return entry ? `${e.name}: ${entry.name}` : null;
+    return entry ? (e.name === undefined || e.name === null || e.name === '' ? `${entry.name}` : `${e.name}: ${entry.name}`) : null;
 }).filter(Boolean).join(' · ');
 
 // a copy of the visualisation without the form elements, the buttons and the

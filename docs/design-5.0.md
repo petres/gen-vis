@@ -268,4 +268,6 @@ while it is loaded.
 - **Not done in the alpha:** arrows on annotations (`marker`), `--strict`
   of the CLI, the checks of the data in `validateDef` (unknown columns,
   texts in numeric dims), runtime errors of `by` of unknown dims,
-  `hover.cross`, dark CSS variables, one gallery of `data/` and the site.
+  `hover.cross`, dark CSS variables. (The site has a gallery of one chart
+  of every kind, `site/gallery.html`; `npm run dev` keeps the gallery of
+  all of `data/`.)

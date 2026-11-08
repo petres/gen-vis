@@ -6,7 +6,7 @@ import { evaluate, refNames } from '@/utils/expr';
 
 /**
  * The highlight of the elements of a facet by classes and a stylesheet,
- * see docs/definition.md "plot" (`highlight`, `others`): the elements of
+ * see docs/definition.md "Highlight and others" (`highlight`, `others` of marks): the elements of
  * the categories of a row (of the hover, of an entry of a legend or of the
  * page) get the class `vis-highlight` (their group, with `"mode": "row"`
  * only the element of the row, its group `vis-highlight-group`), the plots
