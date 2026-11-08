@@ -510,9 +510,12 @@ plot area), the first and the last label of a
 horizontal axis which reach beyond the plot area (the left and the right
 side), the labels of an angular axis around the circle; at least 8 pixels
 beside axes (e.g. a point at the end of a line), none of a map. The texts
-are measured in the font of the visualisation. Not measured are the texts
-of marks outside of the plot area, e.g. labels at the ends of lines or
-bars: give that side, e.g. `"margins": {"right": 60}`. The legends and the
+are measured in the font of the visualisation. The texts of `text` and
+`label` marks beyond the plot area are measured too, e.g. labels at the
+ends of lines or bars or above the points of a scatter plot, laid out as
+they are drawn (`dx`, `dy`, `text-anchor`, `dominant-baseline`, `font-size`,
+`max-width`; not rotated texts, annotations, texts inside areas and the
+ones of maps). The legends and the
 titles of facets are not part of the margins, they are beside or above the
 facets. `"margins": "auto"` is the same as no margins.
 

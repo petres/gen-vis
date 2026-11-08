@@ -5,7 +5,6 @@
     "subtitle": "Average pump price, weekly, in euros per litre",
     "source": "Source: spritpreisrechner.at, weekly means of the daily prices",
     "height": 340,
-    "margins": {"right": 64},
     "locale": {"base": "en", "number": {"currency": ["€", ""]}},
     "dims": {
         "x": {

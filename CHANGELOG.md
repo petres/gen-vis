@@ -159,10 +159,11 @@ A side is the one of the definition, else the css variable of the page
 element above it, a length in pixels or `auto`), else the one of the
 defaults (`registerDefaults({ margins: { left: 64 } })` or the prop
 `defaults` of a chart), else measured. So a house style gives its margins
-once in a stylesheet and the definitions only the sides which differ. Not
-measured: the texts of marks outside of the plot area, e.g. labels at the
-ends of bars (give that side), the legends and the titles of facets (they
-are not in the margins).
+once in a stylesheet and the definitions only the sides which differ. The
+texts of `text` and `label` marks beyond the plot area are measured too
+(labels at the ends of lines or bars, above points; in the font size of the
+chart for texts without one), not rotated ones, annotations and texts of
+maps; the legends and the titles of facets are not in the margins.
 
 ### Changed rendering
 

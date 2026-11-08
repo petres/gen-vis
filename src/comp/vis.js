@@ -259,6 +259,8 @@ const createVis = app => {
         // the font of the texts of the chart (`.vis span`, see styles.css: the
         // variable of the page or Inter), not the one of the page around it
         store.fontFamily = typeof getComputedStyle == 'function' ? getComputedStyle(fontProbe).fontFamily || null : null;
+        // the size of the texts of the marks without one of their own (they inherit it), see textBoxes of layout.js
+        store.fontSize = parseFloat(styles?.fontSize) || null;
         // the margins of the styles of the page, a length in pixels or "auto"
         // (measured), e.g. --gen-vis-margin-left: 60px of a house style
         store.styleMargins = styles ? Object.fromEntries(['top', 'right', 'bottom', 'left'].map(side => {

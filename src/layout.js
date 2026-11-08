@@ -10,6 +10,8 @@ import { compareCategories } from "@/utils/values";
 import { facetMappings } from "@/utils/normalize";
 import { warnOnce } from "@/utils/warn";
 import { highlightVars } from "@/utils/highlight";
+import { textWidth } from "@/utils/measure";
+import { plotTypes } from "@/plots";
 
 // the warning of a condition of a filter of no mapping, e.g. of a column
 // instead of the mapping of it, which no row has, see rowFilter
@@ -451,7 +453,7 @@ const layout = (store, width, before = null) => {
     // provisional margins, then the facets are built again with them
     let built = build(auto ? Object.fromEntries(Object.entries(given).map(([k, v]) => [k, v === 'auto' ? 30 : v])) : given);
     if (auto)
-        built = build(autoMargins(store, built.facets, given));
+        built = build(autoMargins(store, built.facets, given, f => textBoxes(store, f)));
     const { size, facets } = built;
 
     return {
@@ -681,6 +683,60 @@ const ofScale = /^(scaled:(min|max|-?\d+(\.\d+)?)|bandwidth|step)$/;
  * this order. `complete(row)` is false if a mapping of the props has no
  * value, e.g. a point is not drawn.
  */
+// the length of an attribute of a text in pixels, e.g. dy of "0.35em"
+const lengthOf = (v, fontSize) => {
+    if (v === undefined || v === null || v === '')
+        return 0;
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? (/em$/.test(String(v).trim()) ? n*fontSize : n) : 0;
+};
+
+/**
+ * The boxes of the texts of the text marks of a facet of the layout (the
+ * ones of `svg:text`, e.g. labels at the ends of lines or bars), in the
+ * coordinates of the plot area, `{ left, right, top, bottom }`, measured in
+ * the font of the visualisation, see autoMargins of utils/margins.js: texts
+ * of the plot types as they are drawn (positions, `dx`, `dy`, anchors and
+ * baselines, `max-width`), not the rotated ones (a transform).
+ */
+const textBoxes = (store, f) => {
+    const family = store.fontFamily || 'sans-serif';
+    const plots = (store.def.plot ?? []).filter(p => p.type == 'svg:text' && p.place?.in === undefined && inFacet(store.def, p, f));
+    if (plots.length == 0)
+        return [];
+    const groups = new Map();
+    const ctx = { ...f, store, groupsOf: id => {
+        if (!groups.has(id)) {
+            const p = store.def.plot.find(q => q.id === id);
+            groups.set(id, p ? plotGroups(p, plotRows(store, p, f), ctx) : []);
+        }
+        return groups.get(id);
+    } };
+    return plots.flatMap(p => {
+        let layer;
+        try {
+            layer = plotTypes[p.type].marks(ctx.groupsOf(p.id), p, ctx);
+        } catch {
+            return [];
+        }
+        return (layer?.groups ? layer.groups.flatMap(g => g.items) : layer?.items ?? []).map(v => {
+            const text = v.text;
+            if (text === null || text === undefined || text === '' || v.transform || v.visibility == 'hidden')
+                return null;
+            const size = parseFloat(v['font-size']) || store.fontSize || 12;
+            const max = parseFloat(v['max-width']);
+            const width = Math.min(textWidth(String(text), `${v['font-weight'] ?? ''} ${size}px ${family}`.trim()), max > 0 ? max : Infinity);
+            const x = parseFloat(v.x) + lengthOf(v.dx, size), y = parseFloat(v.y) + lengthOf(v.dy, size);
+            if (!Number.isFinite(x) || !Number.isFinite(y))
+                return null;
+            const anchor = v['text-anchor'], baseline = v['dominant-baseline'];
+            const left = anchor == 'middle' ? x - width/2 : anchor == 'end' ? x - width : x;
+            const top = ['middle', 'central'].includes(baseline) ? y - size/2 : ['hanging', 'text-before-edge'].includes(baseline) ? y : y - 0.8*size;
+            return { left, right: left + width, top, bottom: top + size };
+        }).filter(Boolean);
+    });
+};
+
 const plotGroups = (plot, rows, ctx) => {
     const mapping = ctx.store.def.mapping;
     const needed = [...new Set(refNames(plot.props).filter(n => !ofScale.test(n.split(':').slice(1).join(':')))

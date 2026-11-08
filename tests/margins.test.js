@@ -119,6 +119,23 @@ describe('auto margins', () => {
         expect(top.top).toBe(8 + 12 + 2);
     });
 
+    test('the texts of marks beyond the plot area, e.g. labels at the ends of lines, are in the margins', async () => {
+        const plain = await margins({});
+        // a label after the last point of each line, of 10 characters
+        // (a domain of the years, so the last point is at the end of the plot area)
+        const dims = { x: { column: 'year', type: 'numeric', domain: [2020, 2021] }, y: { column: 'value', type: 'numeric', zero: true, format: ',.0f' } };
+        const ends = await margins({ dims, marks: [{ type: 'line' }, { type: 'text', select: 'last', text: 'abcdefghij', dx: 6, 'font-size': 12 }] });
+        expect(ends.right).toBe(Math.ceil(6 + widest(['abcdefghij']) + 2));
+        expect(ends.left).toBe(plain.left);
+        // centered above a point at the top of the plot area: the top margin
+        const above = await margins({ dims, marks: [{ type: 'line' }, { type: 'text', select: 'last', text: 'x', dy: -20, 'text-anchor': 'middle', 'font-size': 12 }] });
+        // (the domain of y reaches a bit above the largest value)
+        expect(above.top).toBeGreaterThan(20 + 0.8*12 + 2 - 8);
+        expect(above.top).toBeLessThanOrEqual(Math.ceil(20 + 0.8*12 + 2));
+        // texts inside the plot area change nothing
+        expect(await margins({ dims, marks: [{ type: 'line' }, { type: 'text', select: 'first', text: 'a', dx: 4, 'font-size': 12 }] })).toEqual(await margins({ dims }));
+    });
+
     test('the plot area is the facet without the measured margins, also of a facet of a step height', async () => {
         const v = await view({});
         const f = v.facets[0];

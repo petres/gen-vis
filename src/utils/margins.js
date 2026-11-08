@@ -23,7 +23,7 @@ const tickInset = { bottom: 4, top: 5, right: 4, left: 5 };
  * at least 8 pixels beside axes (e.g. a point at the end of a line), none
  * of a map.
  */
-const autoMargins = (store, facets, given) => {
+const autoMargins = (store, facets, given, texts = () => []) => {
     const def = store.def;
     const sides = ['top', 'right', 'bottom', 'left'];
     const need = Object.fromEntries(sides.map(k => [k, 0]));
@@ -54,9 +54,15 @@ const autoMargins = (store, facets, given) => {
             const t = labelsOf && 'text' in i.labels.props ? props[j].text : format(v);
             return t === null || t === undefined ? '' : String(t);
         });
+        // of the font size and weight of the props of a label, e.g. a bold header
+        const fontOf = j => {
+            const size = parseFloat(props[j]?.['font-size']);
+            const weight = props[j]?.['font-weight'];
+            return size > 0 || weight ? `${weight ?? ''} ${size > 0 ? size : labelFontSize}px ${family}`.trim() : font;
+        };
         const widths = texts.map((t, j) => {
             const max = Number(props[j]?.['max-width']);
-            return Math.min(textWidth(t, font), max > 0 ? max : Infinity);
+            return Math.min(textWidth(t, fontOf(j)), max > 0 ? max : Infinity);
         });
         const widest = Math.max(0, ...widths);
         const d = store.axisDefaults(pos);
@@ -108,6 +114,14 @@ const autoMargins = (store, facets, given) => {
             more('top', space + labelFontSize);
             more('bottom', space + labelFontSize);
         }
+    }));
+    // the texts of marks beyond the plot area, e.g. labels at the ends of
+    // lines or bars, a unit at the top (see textBoxes of layout.js)
+    facets.forEach(f => texts(f).forEach(b => {
+        more('left', -b.left + 2);
+        more('right', b.right - f.innerWidth + 2);
+        more('top', -b.top + 2);
+        more('bottom', b.bottom - f.innerHeight + 2);
     }));
     const floor = hasAxes ? 8 : 0;
     return Object.fromEntries(sides.map(k => [k, given[k] === 'auto' ? Math.ceil(Math.max(floor, need[k])) : given[k]]));
