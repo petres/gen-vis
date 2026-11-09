@@ -2268,6 +2268,10 @@ hand). The migration keeps the chart as it was:
   top), a `reverse` of 4.x is removed.
 - A reference of a condition of a filter is written `@globals.<name>`,
   4.x read the globals there.
+- Conditions of dates (of a dim of dates or with texts of dates, e.g.
+  `{"range": ["2020-01-01", null]}`) stay the object of 4.x, which compares
+  dates; an expression compares the texts of the rows. Of a patch of the
+  filter they are expressions (check them by hand).
 - The objects of expressions are written in the string syntax where it has
   a text of them.
 - A text which starts with `=` (a title `"= Summe"`, an axis title

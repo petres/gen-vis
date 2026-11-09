@@ -65,9 +65,13 @@ const literal = v => typeof v == 'string' ? (v.startsWith('@') ? globalRef(v) : 
  * `{ "year": "@year", "type": { "not": "load" } }` is
  * `"@year == @year and @type != 'load'"`, see rowFilter of utils/data.js.
  */
-const conditionExpression = (conditions, objects = false) => {
+const conditionExpression = (conditions, objects = false, dims = undefined) => {
     if (conditions === undefined || conditions === null || typeof conditions == 'boolean' || typeof conditions == 'string' || isOperator(conditions))
         return conditions;
+    // conditions of dates stay an object (the conditions of 4.x, which 5.0
+    // reads): it compares the dates, an expression the texts of the rows
+    if (dims !== undefined && comparedAsDates(conditions, dims))
+        return globalRefs(conditions);
     // conditions of values and lists of values stay an object, the shorthand
     // of 5.0 (it merges with the one of a parent), a reference is one to a
     // global; `not`, `range` and null need an expression
@@ -80,6 +84,14 @@ const conditionExpression = (conditions, objects = false) => {
     // an expression text starts with a reference or `=`
     return text.startsWith('@') ? text : `=${text}`;
 };
+// the dims of dates and the texts of dates (ISO, e.g. 2020-01 or
+// 2020-01-01, or day first, 31.12.2020), a year alone is a number
+const dateText = /^\s*(\d{4}-\d{1,2}(-\d{1,2})?([T ]\d.*)?|\d{1,2}\.\d{1,2}\.\d{4}.*)\s*$/;
+const isDateDim = m => isObject(m) && (m.type == 'date' || ['time', 'utc'].includes(m.scale?.type));
+const valuesOf = c => Array.isArray(c) ? c.flatMap(valuesOf) : isObject(c) && 'not' in c ? valuesOf(c.not) : isObject(c) && Array.isArray(c.range) ? c.range : [c];
+const comparedAsDates = (conditions, dims) => Object.entries(conditions)
+    .some(([dim, c]) => isDateDim(dims?.[dim]) || valuesOf(c).some(v => typeof v == 'string' && dateText.test(v)));
+const globalRefs = c => Array.isArray(c) ? c.map(globalRefs) : isObject(c) && !isOperator(c) ? Object.fromEntries(Object.entries(c).map(([k, v]) => [k, globalRefs(v)])) : globalRef(c);
 const conditionOf = (dim, c, negated = false) => {
     const eq = negated ? '!=' : '==';
     if (c === null || c === undefined)
@@ -127,7 +139,7 @@ const channel = v => {
 
 // a mapping of 4.x as a dim of 5.0, the names of the dims with a hover are
 // collected in `hovered`
-const dimOf = (m, name, hovered, consumed, coord = 'cartesian') => {
+const dimOf = (m, name, hovered, consumed, coord = 'cartesian', dims = {}) => {
     if (typeof m == 'string')
         return m;
     if (!isObject(m))
@@ -159,7 +171,7 @@ const dimOf = (m, name, hovered, consumed, coord = 'cartesian') => {
         delete d.stacked;
         delete d.stackBy;
     } else if (d.stacked !== undefined && isObject(d.stacked))
-        d.stacked = conditionExpression(d.stacked);
+        d.stacked = conditionExpression(d.stacked, false, dims);
     if (isObject(d.scale)) {
         const scale = { ...d.scale };
         if (Array.isArray(scale.domainRel)) {
@@ -233,7 +245,7 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
         mark.by = Array.isArray(by) && by.length == 1 ? by[0] : by;
     Object.entries(rest).forEach(([k, v]) => mark[k] = v);
     if (filter !== undefined)
-        mark.filter = conditionExpression(filter);
+        mark.filter = conditionExpression(filter, false, dims);
     const attrs = { ...props };
     const kind = typeof mark.type == 'string' ? mark.type.split(':').at(-1) : '';
     const take = k => { const v = attrs[k]; delete attrs[k]; return v; };
@@ -767,20 +779,20 @@ const migrate = (raw, { parents, noHover = false } = {}) => {
             : c === null || c === undefined || c === true ? true : parseExpression(String(conditionExpression(c)).replace(/^=/, ''));
         out.filter = expressionText(ast(def.filter));
     } else if (def.filter !== undefined)
-        out.filter = conditionExpression(def.filter, true);
+        out.filter = conditionExpression(def.filter, true, isObject(def.mapping) ? def.mapping : {});
     const mapping = isObject(def.mapping) ? def.mapping : {};
     const plotsOf = p => p === undefined || p === null ? [] : [p].flat();
     const plots = plotsOf(patchedBase(def.plot));
     const stacked = Object.fromEntries(Object.entries(mapping).filter(([, m]) => isObject(m) && m.stacked !== undefined && m.stacked !== false)
-        .map(([n, m]) => [n, m.stacked === true ? true : conditionExpression(m.stacked)]));
+        .map(([n, m]) => [n, m.stacked === true ? true : conditionExpression(m.stacked, false, mapping)]));
     const hovered = [];
     // the marks first, they consume the stacking of the dims
     const consumed = new Set();
     const marks = plots.map((p, i) => markOf(p, i, coord, stacked, mapping, consumed));
     if (def.mapping !== undefined)
-        out.dims = Object.fromEntries(Object.entries(mapping).map(([n, m]) => [n, dimOf(m, n, hovered, consumed, coord)]));
+        out.dims = Object.fromEntries(Object.entries(mapping).map(([n, m]) => [n, dimOf(m, n, hovered, consumed, coord, mapping)]));
     if (isObject(out.hover) && out.hover.filter !== undefined)
-        out.hover.filter = conditionExpression(out.hover.filter);
+        out.hover.filter = conditionExpression(out.hover.filter, false, mapping);
     if (isPatched(def.plot))
         out.marks = patchedText(def.plot, part => plotsOf(part).map((p, i) => markOf(p, i, coord, stacked, mapping, consumed)));
     else if (def.plot !== undefined)

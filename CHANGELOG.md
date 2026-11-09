@@ -239,8 +239,10 @@ their rows replace the rows or follow them. Fixtures in `spec/transforms`.
   a category (`@y:scaled` of a dim of a type categorical) stays an attribute.
   A text of 4.x which starts with `=` is the expression of the text
   (`"='= Summe'"`). The conditions of filters become expressions (a
-  reference is `@globals.<name>`), objects of values stay; the objects of
-  expressions are written in the string syntax. The chart stays the same:
+  reference is `@globals.<name>`), objects of values stay, and so do
+  conditions of dates (of a dim of dates or with texts of dates), which
+  compare as dates; the objects of expressions are written in the string
+  syntax. The chart stays the same:
   the margins stay, `"hover": {"columns": []}` and `"symbol": null` keep
   the hover and the legends of 4.x. `@preschen/gen-vis/check` exports
   `migrate`, `formatJson`, `translate`, `resolve`, `variants`,
