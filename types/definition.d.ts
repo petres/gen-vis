@@ -403,11 +403,11 @@ export interface Transform {
      */
     align?: 'end' | 'center';
     /**
-     * fold: the columns to fold, a list of names or a pattern with a single `*`, e.g. "20*", the columns which match, in their order, templates of the globals.
+     * fold: the columns to fold, a list of names or a pattern with a single `*`, e.g. "20*", the columns of all rows which match, in their order, templates of the globals.
      */
     columns?: string | string[];
     /**
-     * aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows.
+     * aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows.
      */
     op?: 'sum' | 'mean' | 'min' | 'max' | 'count' | 'median' | 'first' | 'last' | 'lag' | 'lead' | 'diff' | 'pct';
     /**

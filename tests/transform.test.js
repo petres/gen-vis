@@ -408,3 +408,39 @@ describe('fold, aggregate and window', () => {
         expect(transformColumns([{ type: 'aggregate', column: 'v', by: 'g', order: 'd', op: 'sum', rows: true }, { type: 'window', column: 'v', op: 'lag', order: 'd' }])).toEqual(['v', 'g', 'd']);
     });
 });
+
+describe('fold, aggregate and window: rows of JSON, collisions, values', () => {
+    const run = (rows, t) => applyTransforms(rows, t, {});
+
+    test('a fold of a pattern reads the columns of all rows, not of the first one', () => {
+        const c = run([{ id: 'a', 2019: 1 }, { id: 'b', 2019: 2, 2020: 3 }], { type: 'fold', columns: '20*' });
+        expect(c.rows).toEqual([
+            { id: 'a', key: '2019', value: 1 }, { id: 'a', key: '2020', value: null },
+            { id: 'b', key: '2019', value: 2 }, { id: 'b', key: '2020', value: 3 },
+        ]);
+        // the other columns too, e.g. one only of a later row
+        expect(run([{ id: 'a', 2019: 1 }, { id: 'b', 2019: 2, region: 'x' }], { type: 'fold', columns: ['2019'] }).rows)
+            .toEqual([{ id: 'a', region: null, key: '2019', value: 1 }, { id: 'b', region: 'x', key: '2019', value: 2 }]);
+    });
+
+    test('a fold or an aggregate which replaces a column of the rows says so', () => {
+        const fold = run([{ value: 'keep', a: 1, b: 2 }], { type: 'fold', columns: ['a', 'b'] });
+        expect(fold.notes).toEqual([`transform[0] (fold): the column 'value' of the rows is replaced by the value of the fold, see 'key' and 'value'`]);
+        expect(run([{ a: 1, b: 2 }], { type: 'fold', columns: ['a', 'b'], key: 'k', value: 'k' }).notes)
+            .toEqual([`transform[0] (fold): the key and the value have the same name 'k', the value replaces the key`]);
+        const aggregate = run([{ g: 'a', v: 1 }, { g: 'a', v: 2 }], { type: 'aggregate', column: 'v', by: 'g', op: 'sum', as: 'g', rows: true });
+        expect(aggregate.notes).toEqual([`transform[0] (aggregate): the aggregate 'g' replaces the column 'g' of 'by', see 'as'`]);
+        expect(run([{ a: 1, b: 2 }], { type: 'fold', columns: ['a', 'b'] }).notes).toEqual([]);
+    });
+
+    test('an aggregate without a known op is an error, also of no rows', () => {
+        expect(() => run([{ g: 'a', v: '' }], { type: 'aggregate', column: 'v', by: 'g' })).toThrow(/the op is one of/);
+        expect(() => run([], { type: 'aggregate', column: 'v', by: 'g', rows: true })).toThrow(/the op is one of/);
+    });
+
+    test('lag and lead of texts and dates are the values, numbers of numbers', () => {
+        expect(run([{ v: 'a' }, { v: 'b' }], { type: 'window', column: 'v', op: 'lag', as: 'p' }).get('p')).toEqual([null, 'a']);
+        expect(run([{ v: '2020-01-01' }, { v: '2020-02-01' }], { type: 'window', column: 'v', op: 'lead', as: 'p' }).get('p')).toEqual(['2020-02-01', null]);
+        expect(run([{ v: '1' }, { v: '' }, { v: 3 }], { type: 'window', column: 'v', op: 'lag', as: 'p' }).get('p')).toEqual([null, 1, null]);
+    });
+});

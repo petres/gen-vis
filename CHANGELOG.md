@@ -276,6 +276,12 @@ Migration notes, to check by hand after `gen-vis migrate`:
   object form; the texts of the data were compared, which failed for dates of
   a transform, JSON timestamps and day-first dates. In other expressions of
   a filter a date dim is its time in milliseconds (was the text of the data).
+- `fold` reads the columns of all rows (was of the first one), e.g. of JSON
+  rows without the columns of missing values; `lag` and `lead` give values
+  which are no numbers as they are (were none); a `fold` whose `key` or
+  `value` replaces a column and an `aggregate` with `rows` whose `as` is a
+  column of `by` warn; an aggregate without a known `op` is an error also
+  of no rows.
 
 ### Package and builds
 

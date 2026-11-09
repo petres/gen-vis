@@ -342,12 +342,15 @@ column:
   a `line` with `x0` and `x1`, see [marks](#marks).
 - `fold`: wide to long, e.g. a file with a column per year. It replaces the
   rows by a row per row and column of `columns`, a list of names or a
-  pattern with a `*` (`"20*"`, the columns which match, also the ones of
-  the transforms before), with the other columns of the row, the name of
+  pattern with a `*` (`"20*"`, the columns which match, of all rows, also
+  the ones of the transforms before), with the other columns of the row
+  (of all rows, `null` in a row without one), the name of
   the column in `key` (`"key"` by default) and its value in `value`
   (`"value"`), as it is: `{"type": "fold", "columns": "20*", "key":
   "year"}` of the columns `2019`, `2020`, ... With `"replace": false` the
-  folded rows follow the rows instead, as the ones of a `bin`.
+  folded rows follow the rows instead, as the ones of a `bin`. A column of
+  the rows named as the `key` or the `value` is replaced by it, the warning
+  of the transform says so.
 - `aggregate`: an aggregate of the values of `column` of the group (`op`):
   `sum`, `mean`, `min`, `max`, `count` (the number of values), `median`,
   `first` or `last` (in the order of `order`), missing values are left out.
@@ -357,10 +360,12 @@ column:
   With `"rows": true` a row per group replaces the rows, with the columns
   `by` (the values of the first row of the group) and `as`, e.g. the mean
   per category of a bar chart: `{"type": "aggregate", "column": "value",
-  "by": "category", "op": "mean", "rows": true}`.
+  "by": "category", "op": "mean", "rows": true}`; an `as` of a column of
+  `by` replaces it (with a warning). An unknown or missing `op` is an
+  error, also of data without rows.
 - `window`: a value of another row of the group in the order of `order`:
   `lag` or `lead`, the value `offset` rows (1 by default) before or after
-  the row, `diff`, the value minus the one before, or `pct`, the change in
+  the row (a number, other values as they are, e.g. a text or a date), `diff`, the value minus the one before, or `pct`, the change in
   percent, e.g. the change to the previous month, `{"type": "window",
   "column": "value", "by": "country", "order": "date", "op": "pct", "as":
   "change"}`, without a value at the ends or of a missing one (also of a
