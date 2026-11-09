@@ -23,7 +23,8 @@ by its outputs, one browser draws them all. It prints the warnings of the
 check of every definition (see check) and of its draw first.
 
 Options of export:
-  --width <length>        the width of the image: 800 (pixels), 800px, 16cm, 160mm, 6in (default 800)
+  --width <length>        the width of the image: 800 (pixels), 800px, 16cm, 160mm, 6in (default the width of
+                          the definition, else 800)
   --parts <list>          the parts of the image, of title,subtitle,selection,legend,plot,footer (default all)
   --css <file|text>       a stylesheet, repeatable
   --class <name>          a class of the element of the chart, e.g. of a theme, repeatable

@@ -468,7 +468,7 @@ describe('validateDef', () => {
         def.marks[0].dodge = 12;
         expect(validateDef(def)).toEqual([
             "marks[0].dodge: the distance of the texts of a mark of 'svg:text' or 'polar:text', a number",
-            "marks[0].halo: a halo behind the texts of a mark of 'svg:text' or 'polar:text', true or its width",
+            "marks[0].halo: a halo behind the texts of a text or label mark (also of polar charts and maps), true or its width",
             "marks[1].data[0].y: unknown reference 'unknown', expected one of 'target', 'totalWidth', 'width', 'innerWidth', 'height', 'innerHeight', 'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height'",
             `marks[1].select: expected 'first', 'last' or the min or max of a dim, e.g. { "max": "x" }`,
             "marks[1].text: unknown reference 'label'",
