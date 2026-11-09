@@ -17,7 +17,7 @@ component](#vue-component)), `vue` is an optional peer dependency.
 ## Browser module
 
 The browser module includes d3 and the styles, for pages without a
-bundler, e.g. from a CDN (`dist-lib/esm/gen-vis.js`): it loads 87 kB
+bundler, e.g. from a CDN (`dist-lib/esm/gen-vis.js`): it loads 94 kB
 (gzipped) at first and fetches optional parts, e.g. for maps, from the
 files next to it when a chart needs them:
 
