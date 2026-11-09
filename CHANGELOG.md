@@ -241,6 +241,9 @@ are not in the margins.
   of a bin, the bounds of an error bar; `hover.columns` lists them), and a
   column of the hover without a value in any of its rows is left out, so
   histograms and strip plots need no `hover.columns`.
+- The swatch of a row of the hover is the symbol of the entry of its
+  category in the legend (e.g. a line of a line, a box of an area, a dashed
+  line of its own symbol), a square of its color of a dim without a legend.
 - The hover table: a swatch of the color of the category before each row,
   a row of the names of the values above them when there are more than one,
   the values of a dim of texts without categories, the categories of a

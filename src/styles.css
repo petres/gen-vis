@@ -291,6 +291,10 @@
 .vis-hover table tr td.vis-swatch {
     padding-right: 0;
 }
+.vis-hover table tr td.vis-swatch svg {
+    vertical-align: -0.08em;
+    overflow: visible;
+}
 .vis-hover table tr td.vis-swatch span {
     display: inline-block;
     width: 9px;

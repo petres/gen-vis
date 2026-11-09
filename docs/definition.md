@@ -1839,9 +1839,10 @@ dates in their format, texts of a dim without categories as they are).
 On touch devices it is shown by a tap and stays until a tap outside of the
 plot, horizontal swipes move it, vertical ones scroll the page.
 
-The table of the hover has a row per row of the position: a swatch of the
-color of its category (`vis-swatch`, of the first dim of the hover with
-colors), the names of its categories and its values; with more than one
+The table of the hover has a row per row of the position: a swatch of its
+category (`vis-swatch`, of the first dim of the hover with colors: the
+symbol of its entry of the legend, e.g. a line of a line, a square of its
+color of a dim without a legend), the names of its categories and its values; with more than one
 value a row of the names of the values is above them (`vis-hover-head`, the
 `name` of a dim, else the title of its axis, else its name). The hover of a
 point (`"mode": "point"`) has the names of the categories of the point as

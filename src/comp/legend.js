@@ -1,4 +1,4 @@
-export { createLegend, createAnnotationLegend, annotationEntries };
+export { createLegend, createAnnotationLegend, annotationEntries, drawSymbol, entrySymbol };
 
 import { create, itemOf, join } from "@/utils/dom";
 import { textWidth } from '@/utils/measure';
@@ -46,6 +46,15 @@ const drawSymbol = (svg, info, scope) => {
         const node = svg.appendChild(create(e.type));
         setProps.call(node, props[i]);
     });
+};
+
+// the symbol of the entry of a category (its props, of the mapping `m`):
+// the one of the category or the one of the legend, null of none or of an
+// empty one (no elements or a box of no size), e.g. of "symbol": null
+const entrySymbol = (m, props) => {
+    const given = props?.symbol !== undefined ? props.symbol : m.legend?.symbol;
+    return given && !(Array.isArray(given.elements) && given.elements.length == 0)
+        && (given.width ?? given.size ?? 16) > 0 && (given.height ?? given.size ?? 16) > 0 ? given : null;
 };
 
 /**
@@ -140,9 +149,7 @@ const createLegend = (vis, legend) => {
             // the symbol of the category or the one of the legend, none of
             // an empty one (no elements or a box of no size), so the name has
             // no space before it, also of a category of "symbol": null
-            const given = entry.props.symbol !== undefined ? entry.props.symbol : m.legend.symbol;
-            const symbol = given && !(Array.isArray(given.elements) && given.elements.length == 0)
-                && (given.width ?? given.size ?? 16) > 0 && (given.height ?? given.size ?? 16) > 0 ? given : null;
+            const symbol = entrySymbol(m, entry.props);
             let svg = div.firstElementChild?.tagName == 'svg' ? div.firstElementChild : null;
             let span = div.lastElementChild?.tagName == 'SPAN' ? div.lastElementChild : null;
             if (symbol && !svg)

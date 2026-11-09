@@ -2,6 +2,8 @@ export { createHover, byOrder };
 
 import { join, setAttr } from "@/utils/dom";
 import { fillHtml } from "@/utils/def";
+import { create } from "@/utils/dom";
+import { drawSymbol } from "@/comp/legend";
 import { el, patch, setHtml, setText, slotNodes, takeRange } from "@/comp/html";
 
 // the higher order first, a total order, also of two rows above or below
@@ -148,8 +150,15 @@ const createHover = (store, slots) => {
             if (swatched) {
                 const td = document.createElement('td');
                 td.setAttribute('class', 'vis-swatch');
-                if (d.swatch)
-                    td.appendChild(el('span', { style: { background: d.swatch } }));
+                if (d.swatch?.symbol) {
+                    // the symbol of the legend, in the height of a square of the swatch
+                    const { symbol } = d.swatch;
+                    const width = symbol.width ?? symbol.size ?? 16, height = symbol.height ?? symbol.size ?? 16;
+                    const svg = td.appendChild(create('svg'));
+                    patch(svg, { class: 'vis-swatch-symbol', viewBox: `0 0 ${width} ${height}`, width: `${(width/height*0.85).toFixed(3)}em`, height: '0.85em' });
+                    drawSymbol(svg, symbol, d.swatch.scope);
+                } else if (d.swatch)
+                    td.appendChild(el('span', { style: { background: d.swatch.color } }));
                 swatch.push(td);
             }
             tr.replaceChildren(...swatch, ...d.cells.map(c => {

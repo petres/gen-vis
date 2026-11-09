@@ -5,7 +5,8 @@ import { evaluate } from "@/utils/expr";
 import { dataAttribute } from "@/utils/draw";
 import { create, pointer } from "@/utils/dom";
 import { filterRows } from "@/utils/data";
-import { unknownOf } from "@/layout";
+import { unknownOf, withColor } from "@/layout";
+import { entrySymbol } from "@/comp/legend";
 import { bandCenter } from "@/utils/scales";
 import { patch } from "@/comp/html";
 import { createHover, byOrder } from "@/comp/hover";
@@ -243,11 +244,17 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         };
         // the color of the category of a row, of the first dim of categories
         // of the hover with a color, e.g. a swatch beside its name
+        // (the symbol of its entry of the legend of the dim, if it has one, e.g. a line
+        // of a line and a box of an area, drawn with the props of the category)
         const swatchOf = row => {
             for (const n of categories) {
-                const color = store.prop(n, row[n])?.color;
-                if (typeof color == 'string' && color)
-                    return color;
+                const props = store.prop(n, row[n]);
+                const color = props?.color;
+                if (typeof color != 'string' || !color)
+                    continue;
+                const m = store.mapping(n);
+                const symbol = m.legend ? entrySymbol(m, props) : null;
+                return symbol ? { color, symbol, scope: { ...scope, ...withColor([props]) } } : { color };
             }
             return null;
         };
