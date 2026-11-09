@@ -454,7 +454,7 @@ Migration notes, to check by hand after `gen-vis migrate`:
   pixels, the diff goes to `tests/png-diff/`, `UPDATE_PNG=1` takes new
   images); `npm run test:png` runs it alone, `npm test` includes it.
 - `registerDefaults` and the prop `defaults` also take `margins`.
-- Version 5.0.0-alpha.0.
+- Version 5.0.0-alpha.1 (5.0.0-alpha.0 was the first one, not published).
 
 ## 4.1.0
 
