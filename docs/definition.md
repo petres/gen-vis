@@ -1032,7 +1032,10 @@ vertical scale of colors left of a map:
 ```
 
 `props` of a legend are HTML attributes of the entries, e.g. a `title`, of
-the props of the categories.
+the props of the categories. The class `bold` is a style of the package:
+an entry with it is bold, e.g. of a total,
+`"legend": { "props": { "class": "@class" } }` with
+`"categories": { "Gesamt": { "class": "bold" } }`.
 
 ### The hover of a dim
 
