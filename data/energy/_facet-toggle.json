@@ -1,4 +1,4 @@
 {
     "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
-    "dims": {"facet": {"legend": {"symbol": {"size": 0, "elements": []}}, "hover": {}}}
+    "dims": { "facet": { "legend": { "symbol": null }, "hover": {} } }
 }
