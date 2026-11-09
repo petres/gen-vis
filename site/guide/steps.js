@@ -21,13 +21,12 @@ const steps = [
         add: {
             data: 'data/electricity.csv',
             locale: 'en',
-            margins: { top: 10, right: 10, bottom: 10, left: 10 },
             filter: { source: 'renewable', year: ['2019', '2025'] },
             dims: {
                 source: 'source',
                 year: { column: 'year', type: 'categorical' },
                 x: { column: 'share', domain: [0, 1], axis: false },
-                y: { column: 'country', scale: { type: 'point', range: [0, '@height'], step: 15, padding: 0.5 }, axis: false },
+                y: { column: 'country', scale: { type: 'point', step: 15, padding: 0.5 }, axis: false },
             },
             marks: { type: 'point', r: 4 },
         },
@@ -66,14 +65,13 @@ const steps = [
         title: 'Transforms, axes and the order',
         text: `Transforms add columns in the browser: <code>lookup</code> the names of the countries of another
             file, <code>mean</code> the share of 2025 to every row of the country. The countries are in the
-            <code>order</code> of this share. The axes are parts of their dims, they are drawn into the
-            margins.`,
+            <code>order</code> of this share. The axes are parts of their dims, the margins around the plot
+            area are measured of their labels.`,
         add: {
             transform: [
                 { type: 'lookup', column: 'country', data: 'data/countries.csv', key: 'code', value: 'name', as: 'name' },
                 { type: 'mean', column: 'share', by: ['country', 'source'], base: { year: ['2025', '2025'] }, as: 'latest' },
             ],
-            margins: { top: 30, right: 16, bottom: 10, left: 165 },
             dims: {
                 latest: { column: 'latest', type: 'numeric' },
                 x: { axis: { position: 'top', format: '.0%', ticks: 5 }, grid: true },
@@ -111,11 +109,10 @@ const steps = [
         title: 'Labels and annotations',
         text: `One more mark writes the share of 2025 in a column at the right, its <code>filter</code> keeps the
             rows of that year, its <code>x</code> is an expression of the width of the plot area and its text a
-            <code>format</code> of the value. An annotation is a mark of its own values: a line at half of the
+            <code>format</code> of the value, the right margin is measured of these texts. An annotation is a mark of its own values: a line at half of the
             electricity, with a label on the plot and an entry of the legend (<code>legend</code>), after the
             years.`,
         add: {
-            margins: { right: 44 },
             marks: [
                 { type: 'line', by: 'y', stroke: '#D6D3D1', 'stroke-width': 3, 'stroke-linecap': 'round', highlight: { stroke: '#78716C' } },
                 { type: 'point', by: 'year', r: 4.5, highlight: { r: 6 } },
@@ -136,10 +133,10 @@ const steps = [
             has fewer ticks. The same works for fonts, the place of the legend or a message instead of the
             chart.`,
         add: {
-            margins: { left: '=steps(@totalWidth, {0: 120, 560: 165})' },
             dims: {
                 x: { axis: { ticks: '=steps(@totalWidth, {0: 3, 560: 5})' } },
-                y: { scale: { step: '=steps(@totalWidth, {0: 13, 560: 15})' } },
+                // the names are cut at their max-width, the margin is measured of them
+                y: { scale: { step: '=steps(@totalWidth, {0: 13, 560: 15})' }, axis: { labels: { props: { 'max-width': '=steps(@totalWidth, {0: 110, 560: 160})' } } } },
             },
         },
     },
