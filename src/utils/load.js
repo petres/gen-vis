@@ -14,6 +14,7 @@ import { lazy } from "@/utils/lazy";
 import { isObject } from "@/utils/values";
 import { hasCategories, normalize } from "@/utils/normalize";
 import { versionError } from "@/utils/version";
+import { refNames } from "@/utils/expr";
 import { plotTypes } from "@/plots";
 import { symbolDefaults } from "@/utils/defaults";
 
@@ -465,6 +466,38 @@ const missingColumns = (source, globals, rows, columns) => {
         + `the dims are ${Object.keys(isObject(source.dims) ? source.dims : {}).map(n => `'${n}'`).join(', ') || 'none'}, the columns ${names.map(n => `'${n}'`).join(', ')}`);
 };
 
+// the references of the attributes of the marks (also of their highlight
+// and others) to columns of the data which are no dim (nor a global or a
+// prop of categories): a row has the values of the dims, so they have no
+// value, a warning instead of empty texts (the check warns of every unknown
+// reference), e.g. "@note" of a column `note`, or "@Jahr" of the dim `x`
+const columnReferences = (prepared, rows, columns) => {
+    const data = sourceRows(rows, columns);
+    if (!data?.length)
+        return [];
+    const mapping = prepared.mapping ?? {};
+    const own = new Set([...Object.keys(mapping), ...Object.keys(prepared.globals ?? {}),
+        ...Object.values(mapping).flatMap(m => Object.values(m?.categoryProps ?? {}).flatMap(p => Object.keys(p ?? {})))]);
+    const dimOf = new Map(Object.entries(mapping).map(([n, m]) => [m?.column, n]));
+    const columnNames = new Set([...Object.keys(data[0]), ...columns.keys()]);
+    const warnings = [];
+    [].concat(prepared.plot ?? []).forEach((p, i) => [['props', p?.props], ['highlight', p?.highlight], ['others', p?.others]]
+        .filter(([, props]) => isObject(props)).forEach(([part, props]) => Object.entries(props).forEach(([k, v]) => {
+            let names;
+            try {
+                names = refNames(v);
+            } catch {
+                return;
+            }
+            [...new Set(names.filter(n => typeof n == 'string').map(n => n.split(':')[0]))].filter(n => columnNames.has(n) && !own.has(n)).forEach(n => {
+                const path = authoredPath(part == 'props' ? `plot[${i}].props.${k}` : `plot[${i}].${part}.${k}`);
+                warnings.push(dimOf.has(n) ? `${path}: '@${n}' is the column of the dim '${dimOf.get(n)}', a reference names the dim: @${dimOf.get(n)}`
+                    : `${path}: '@${n}' is a column of the data without a dim, it has no value: a reference names a dim, e.g. "dims": { "${n}": "${n}" }`);
+            });
+        })));
+    return warnings;
+};
+
 // the geometries of maps of the definition and of the patches of its form
 // elements, of the url of GeoJSON or TopoJSON or itself, by their key (see
 // geoData), a patch can switch to another one, e.g. of other regions
@@ -519,7 +552,8 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     const { prepared, defaults, columns } = ready;
     // (with the check its warning of such a channel, see validateDef, not twice)
     if (!check)
-        missingColumns(source, prepared.globals, rows, columns).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
+        [...missingColumns(source, prepared.globals, rows, columns), ...columnReferences(prepared, rows, columns)]
+            .forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
 
     return {
         defUrl: url ?? null,

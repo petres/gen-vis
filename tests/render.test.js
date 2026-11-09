@@ -4112,6 +4112,20 @@ describe('a channel of no dim and no column (review of 5.0)', () => {
         await mount({ def: { dims: { x: 'year', y: 'value' }, marks: { type: 'point', x: 'yaer' } }, data: 'year,value\n2020,1\n2021,2' });
         expect(errors).toContain("gen-vis inline definition: marks[0].x: no dim and no column 'yaer' in the data, the dims are 'x', 'y', the columns 'year', 'value'");
     });
+    test('a reference of an attribute to a column without a dim, or to the column of a dim: a warning of the load', async () => {
+        const def = { dims: { x: { column: 'a', type: 'categorical' }, y: 'b' },
+            marks: [{ type: 'bar' }, { type: 'label', text: "=cat(@note, '/', @y)", fill: '@b', highlight: { opacity: '@note' } }] };
+        await mount({ def, data: 'a,b,note\nX,1,n1\nY,2,n2' });
+        expect(errors).toEqual([
+            "gen-vis inline definition: marks[1].fill: '@b' is the column of the dim 'y', a reference names the dim: @y",
+            `gen-vis inline definition: marks[1].text: '@note' is a column of the data without a dim, it has no value: a reference names a dim, e.g. "dims": { "note": "note" }`,
+            `gen-vis inline definition: marks[1].highlight.opacity: '@note' is a column of the data without a dim, it has no value: a reference names a dim, e.g. "dims": { "note": "note" }`,
+        ]);
+        errors.length = 0;
+        // of a dim of it, a global of the same name: no warning
+        await mount({ def: { ...def, globals: { b: 1 }, dims: { ...def.dims, note: 'note' } }, data: 'a,b,note\nX,1,n1\nY,2,n2' });
+        expect(errors).toEqual([]);
+    });
     test('a chart without dims of the columns of the channels', async () => {
         const el = await mount({ def: { marks: { type: 'point', x: 'year', y: 'value' } }, data: 'year,value\n2020,1\n2021,2' });
         expect([...el.querySelectorAll('g.vis-mark circle')].every(c => Number.isFinite(parseFloat(c.getAttribute('cx'))))).toBe(true);
