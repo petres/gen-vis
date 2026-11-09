@@ -212,6 +212,11 @@ const stackSource = (def, axis, rows) => {
     return by === undefined ? [rows, axis] : [rows.filter(r => r[by] !== null && r[by] !== undefined), { ...axis, h: by }];
 };
 
+// the dims of the groups of the stacks besides the facets: the slots of
+// dodged stacked bars (`stackGroups` of the stacked dim, see translate of
+// utils/language.js), a stack per position and slot
+const stackGroups = (def, axis) => [...facetDims(def), ...(def.mapping[axis.v]?.stackGroups ?? [])];
+
 // the rows of a view, see layout
 const rowsOf = (store, def, axis, scope, stacked) => {
     // the rows of the conditions of `filter`, e.g. of a global of a form
@@ -229,7 +234,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     const stackOrder = categoryOrder(visible.map(f => ({ dim: f.dim, keys: f.key })));
     const stackedRows = stacked && stacked !== true
         ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `dims.${axis.v}.stacked` }) : rows;
-    const stacks = stacked ? stack(...stackSource(def, axis, stackedRows), facetDims(def), stackOrder) : null;
+    const stacks = stacked ? stack(...stackSource(def, axis, stackedRows), stackGroups(def, axis), stackOrder) : null;
     const stackOf = stacks ? row => stacks.get(row) ?? [row[axis.v], row[axis.v]] : null;
     const isStacked = stacks ? row => stacks.has(row) : null;
 
@@ -277,7 +282,7 @@ const domainRows = (store, def, axis, scope, stacked, shown, stackOrder) => {
         let stackOf = null;
         if (n == axis.v && stacked) {
             const stackedRows = stacked !== true ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `dims.${n}.stacked` }) : rows;
-            const stacks = stack(...stackSource(def, axis, stackedRows), [...dims, ...names], stackOrder);
+            const stacks = stack(...stackSource(def, axis, stackedRows), [...stackGroups(def, axis), ...names], stackOrder);
             stackOf = row => stacks.get(row) ?? [row[n], row[n]];
         }
         const facets = def.facets ? new Map(groupBy(rows, dims).map(g => [String(facetKey(def, g.group)), g.entries])) : null;
@@ -327,6 +332,14 @@ const layout = (store, width, before = null) => {
     };
 
     const faceted = entries.length > 0;
+    // the distinct values of a mapping of all rows, e.g. the slots of dodged
+    // bars of a dim without categories, see rowValue
+    const slots = new Map();
+    const slotKeys = name => {
+        if (!slots.has(name))
+            slots.set(name, distinctKeys(rows, name));
+        return slots.get(name);
+    };
 
     // the sizes of a facet
     // the margins: of the definition, else of the styles of the page
@@ -335,10 +348,16 @@ const layout = (store, width, before = null) => {
     // autoMargins of utils/margins.js); they can be props, e.g. steps of
     // the width of the visualisation
     const marginDefaults = store.marginDefaults?.() ?? {};
-    const given = Object.fromEntries(['top', 'right', 'bottom', 'left'].map(k => {
-        const v = def.options.margins?.[k] ?? store.styleMargins?.[k] ?? marginDefaults[k] ?? 'auto';
-        return [k, v === 'auto' ? 'auto' : Number(evaluate(v, scope)) || 0];
-    }));
+    // an expression of the side, e.g. of the width, may be "auto" too, one
+    // without a value (null) is no side of the definition
+    const side = v => {
+        if (v === undefined || v === null || v === 'auto')
+            return v;
+        const e = evaluate(v, scope);
+        return e === undefined || e === null || e === 'auto' ? e : Number(e) || 0;
+    };
+    const given = Object.fromEntries(['top', 'right', 'bottom', 'left'].map(k =>
+        [k, side(def.options.margins?.[k]) ?? store.styleMargins?.[k] ?? side(marginDefaults[k]) ?? 'auto']));
     const auto = Object.values(given).includes('auto');
     const grid = faceted ? gridOf(def) : null;
     const cols = grid ? entries[0].cell.cols : (faceted ? evaluate(def.facets.cols, scope) : 1);
@@ -443,6 +462,7 @@ const layout = (store, width, before = null) => {
                 isStacked,
                 stackOrder,
                 outer: outerOf(i, f.cell),
+                slotKeys,
                 // the mappings whose scale is the one of all facets or of the row or the column
                 sharing,
                 // the sizes of the bands of the scales, e.g. "@y:bandwidth" of annotations
@@ -637,10 +657,14 @@ const rowValue = (ctx, name, rows) => {
         // the place of the category of the row among the visible categories
         // of the mapping, from 0, and their number, e.g. of dodged bars (see
         // `dodge` of utils/language.js); of a mapping without categories the
-        // distinct values of the rows of the plot in their order
+        // distinct values of the rows of the chart (of all facets, before the
+        // filters of the marks, see slotKeys of layout) in their order, so
+        // the slots are the same in all facets and marks; a row without a
+        // value or of another category has none
         'index': () => {
             const keys = categoryKeys();
-            return row => keys.indexOf(String(row[m]));
+            const index = new Map(keys.map((k, i) => [k, i]));
+            return row => row[m] === null || row[m] === undefined ? undefined : index.get(String(row[m]));
         },
         'count': () => constant(categoryKeys().length),
     };
@@ -651,7 +675,7 @@ const rowValue = (ctx, name, rows) => {
         const mapping = ctx.store.def.mapping[m];
         keysOf = Array.isArray(mapping?.keys)
             ? mapping.keys.filter(k => mapping.categoryProps?.[k]?.visible !== false).map(String)
-            : [...new Set(rows.map(r => String(r[m])))];
+            : (ctx.slotKeys?.(m) ?? distinctKeys(rows, m));
         return keysOf;
     };
     const kind = parts.join(':');
@@ -660,6 +684,18 @@ const rowValue = (ctx, name, rows) => {
     if (at)
         return s ? constant(s(convert(ctx.store.mapping(m), at[1]))) : undefined;
     return Object.hasOwn(values, kind) ? values[kind]() || undefined : undefined;
+};
+
+// the distinct values of a mapping of rows as texts, in the order of the
+// rows, without missing ones
+const distinctKeys = (rows, name) => {
+    const keys = new Set();
+    for (const r of rows) {
+        const v = r[name];
+        if (v !== null && v !== undefined)
+            keys.add(String(v));
+    }
+    return [...keys];
 };
 
 // the props of categories (a list of them, the later ones override the ones
@@ -738,7 +774,8 @@ const textBoxes = (store, f) => {
             const anchor = v['text-anchor'], baseline = v['dominant-baseline'];
             const left = anchor == 'middle' ? x - width/2 : anchor == 'end' ? x - width : x;
             const top = ['middle', 'central'].includes(baseline) ? y - size/2 : ['hanging', 'text-before-edge'].includes(baseline) ? y : y - 0.8*size;
-            return { left, right: left + width, top, bottom: top + size };
+            // the place of the text in the plot area (without `dx`), e.g. the end of a line
+            return { left, right: left + width, top, bottom: top + size, x: parseFloat(v.x) };
         }).filter(Boolean);
     });
 };

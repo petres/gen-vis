@@ -121,3 +121,37 @@ describe('the place of the labels of a map', () => {
         expect(p.x < 20 || p.y < 20).toBe(true);
     });
 });
+
+describe('the labels of maps', () => {
+    const labelDef = mark => ({
+        coord: 'geo', width: 300, height: 100, margins: { top: 0, right: 0, bottom: 0, left: 0 },
+        geo: { data: regions, join: 'region' },
+        dims: { region: { column: 'region', type: 'categorical' } },
+        marks: [{ type: 'base', fill: '#EEE' }, { type: 'text', by: 'region', text: '@region', ...mark }],
+    });
+    const labels = el => [...el.querySelectorAll('g.vis-plot.plot-1 text')];
+
+    test('centered on their place by default, an anchor of the mark wins, a halo', async () => {
+        const el = await mount({ def: labelDef({ halo: true }), data: 'region,value\n01,1\n02,2' });
+        const [t] = labels(el);
+        expect(t.getAttribute('text-anchor')).toBe('middle');
+        expect(t.getAttribute('dominant-baseline')).toBe('middle');
+        expect(t.getAttribute('paint-order')).toBe('stroke');
+        expect(t.getAttribute('stroke-width')).toBe('3');
+        const start = labels(await mount({ def: labelDef({ 'text-anchor': 'start' }), data: 'region,value\n01,1' }))[0];
+        expect(start.getAttribute('text-anchor')).toBe('start');
+        expect(start.getAttribute('stroke')).toBeNull();
+        expect(errors).toEqual([]);
+    });
+
+    test('fit leaves out the labels which do not fit their area, also at the centroid', async () => {
+        const data = 'region,value\n01,1\n02,2';
+        const short = { text: '=if(@region == "01", "A", "A very long name of a region")' };
+        for (const place of [{}, { place: 'centroid' }]) {
+            expect(labels(await mount({ def: labelDef({ ...short, ...place }), data }))).toHaveLength(2);
+            const fitted = labels(await mount({ def: labelDef({ ...short, ...place, fit: true }), data }));
+            expect(fitted.map(t => t.textContent)).toEqual(['A']);
+        }
+        expect(errors).toEqual([]);
+    });
+});

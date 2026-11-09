@@ -349,12 +349,15 @@ column:
   a `line` with `x0` and `x1`, see [marks](#marks).
 - `fold`: wide to long, e.g. a file with a column per year. It replaces the
   rows by a row per row and column of `columns`, a list of names or a
-  pattern with a `*` (`"20*"`, the columns which match, also the ones of
-  the transforms before), with the other columns of the row, the name of
+  pattern with a `*` (`"20*"`, the columns which match, of all rows, also
+  the ones of the transforms before), with the other columns of the row
+  (of all rows, `null` in a row without one), the name of
   the column in `key` (`"key"` by default) and its value in `value`
   (`"value"`), as it is: `{"type": "fold", "columns": "20*", "key":
   "year"}` of the columns `2019`, `2020`, ... With `"replace": false` the
-  folded rows follow the rows instead, as the ones of a `bin`.
+  folded rows follow the rows instead, as the ones of a `bin`. A column of
+  the rows named as the `key` or the `value` is replaced by it, the warning
+  of the transform says so.
 - `aggregate`: an aggregate of the values of `column` of the group (`op`):
   `sum`, `mean`, `min`, `max`, `count` (the number of values), `median`,
   `first` or `last` (in the order of `order`), missing values are left out.
@@ -364,10 +367,12 @@ column:
   With `"rows": true` a row per group replaces the rows, with the columns
   `by` (the values of the first row of the group) and `as`, e.g. the mean
   per category of a bar chart: `{"type": "aggregate", "column": "value",
-  "by": "category", "op": "mean", "rows": true}`.
+  "by": "category", "op": "mean", "rows": true}`; an `as` of a column of
+  `by` replaces it (with a warning). An unknown or missing `op` is an
+  error, also of data without rows.
 - `window`: a value of another row of the group in the order of `order`:
   `lag` or `lead`, the value `offset` rows (1 by default) before or after
-  the row, `diff`, the value minus the one before, or `pct`, the change in
+  the row (a number, other values as they are, e.g. a text or a date), `diff`, the value minus the one before, or `pct`, the change in
   percent, e.g. the change to the previous month, `{"type": "window",
   "column": "value", "by": "country", "order": "date", "op": "pct", "as":
   "change"}`, without a value at the ends or of a missing one (also of a
@@ -489,13 +494,16 @@ the ones of a column of the language, e.g. `"column": "name_{lang}"` or a
 `margins` is the space around the plot area of a facet in pixels, of the
 axes and their titles: `{"top", "right", "bottom", "left"}`, each a number,
 an expression of `totalWidth` (e.g. `"=steps(@totalWidth, {0: 40, 560:
-80})"`) or `"auto"`. A side is, the first one which gives it:
+80})"`, which may also yield `"auto"`; one without a value, e.g. an `if`
+without an else, is no side) or `"auto"`. A side is, the first one which
+gives it:
 
 1. the side of the definition, e.g. `"margins": {"left": 60}`;
 2. the css variable of the side of the styles of the page, of the element
    `.vis` or an element above it: `--gen-vis-margin-top`,
    `--gen-vis-margin-right`, `--gen-vis-margin-bottom`,
-   `--gen-vis-margin-left`, a length in pixels or `auto`;
+   `--gen-vis-margin-left`, a length (a number of pixels, `px`, `rem` of
+   the font size of the page, `em` of the one of the chart, `pt`) or `auto`;
 3. the margins of the defaults of the chart (the prop `defaults`, e.g.
    `{"margins": {"left": 60}}`) or of the page (`registerDefaults`), see
    [defaults](#defaults);
@@ -513,18 +521,22 @@ the padding of the labels, the widest label of a left or right axis (the
 text of `labels.props` if it has one, at most its `max-width`), the
 height of the labels of a top or bottom one, rotated labels by their
 projection, the title of the axis (of a vertical axis at the top above the
-plot area), the first and the last label of a
-horizontal axis which reach beyond the plot area (the left and the right
-side), the labels of an angular axis around the circle; at least 8 pixels
+plot area), the labels of a horizontal axis which reach beyond the plot
+area at its ends (the left and the right side, also rotated ones), the labels of an angular axis around the circle; at least 8 pixels
 beside axes (e.g. a point at the end of a line), none of a map. The texts
 are measured in the font of the visualisation. The texts of `text` and
 `label` marks beyond the plot area are measured too, e.g. labels at the
 ends of lines or bars or above the points of a scatter plot, laid out as
 they are drawn (`dx`, `dy`, `text-anchor`, `dominant-baseline`, `font-size`,
 `max-width`; not rotated texts, annotations, texts inside areas and the
-ones of maps). The legends and the
+ones of maps). The texts along the width (the labels of a
+horizontal axis, the texts of marks) are measured at their place in the
+plot area of the final width, the one less the margins, so a narrow chart
+gets the margins it needs (they keep half of the width for the plot area
+at least). The legends and the
 titles of facets are not part of the margins, they are beside or above the
-facets. `"margins": "auto"` is the same as no margins.
+facets. `"margins": "auto"` is the same as no margins (the styles and the
+defaults of the page, else measured); `"auto"` of a side is measured.
 
 ### Defaults
 
@@ -825,7 +837,10 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   of a band scale of years, the ones outside of the domain are left out,
   also the ones which are no category of a `band` or `point` scale, also an
   expression of the names of the facet, e.g. steps of `totalWidth`. A band
-  or point scale has a tick per category.
+  or point scale has a tick per category. The labels of a horizontal axis
+  which overlap (measured) are thinned: every n-th one is shown, the tick
+  marks stay, e.g. the years of a heatmap in a narrow chart; not the ones
+  of fixed `values` or rotated labels.
 - `format`: a d3 number or time format.
 - `rotate`: the angle of the labels in degrees, positive counterclockwise,
   negative clockwise.
@@ -1221,8 +1236,14 @@ attributes are merged into the defaults, e.g. `d` of a path.
   the sources; `hover.total` adds the sum.
 - `dodge` of bars: the groups of `by` (`true`, the first dim of `by`) or of
   this dim beside each other in the band of their position, a hidden
-  category leaves its place to the others; of a `text` or a `label` (`true`
-  or a dim) the text at the middle of the slot of its category, as its bar:
+  category leaves its place to the others (a dim without categories has
+  a slot per value of the rows of the chart, the same in all facets); of a
+  date `x` with an `interval` (or a point scale) the slots share 80% of
+  the period (the step); with `stack` a stack per slot,
+  e.g. `"by": ["type", "source"], "dodge": "type", "stack": true` stacks the
+  sources of each type beside the ones of the other types; of a `text` or a `label` (`true`
+  or a dim) the text at the middle of the slot of its category, as its bar,
+  likewise of a `point` and a `rule`, e.g. error bars on dodged bars:
   ```json
   {
       "marks": [
@@ -1236,8 +1257,12 @@ attributes are merged into the defaults, e.g. `d` of a path.
   chart of the same angle along the radius (outwards from the inner radius,
   0 and 360° are the same angle), labels of other angles are not moved.
 - `orient`: `horizontal` or `vertical` bars, by default horizontal ones if
-  `y` is categorical and `x` is not: the bars go from 0 (or `x0`) to `x`,
-  their thickness is the band of `y`.
+  `y` is categorical and `x` is not, or if `x` is continuous (its `type`,
+  `zero`, an open `domain` or a continuous scale) and `y` is not, e.g. a
+  column of names without a type: the bars go from 0 (or `x0`) to `x`,
+  their thickness is the band of `y`. The parts of a scale of categories
+  (`order`, `groups`, `padding`, `step`) make a dim categorical; `reverse`
+  and `range` leave its type to the rows.
 - `anchor` of texts and labels: the text beside its position, after it
   (`end`, e.g. of horizontal bars, 4 pixels to the right), before it
   (`start`), above it (`top`), below it (`bottom`) or on it (`center`),
@@ -1335,7 +1360,9 @@ A heatmap, a cell per year and type colored by a scale, with its values:
 }
 ```
 
-A cell gives the dims of its positions band scales, its `width` and
+A cell gives the dims of its positions band scales without a `padding`
+(the cells are next to each other, a white `stroke` draws the lines
+between them; a `scale.padding` of the dim stays), its `width` and
 `height` are the bands (`@x:bandwidth`, `@y:bandwidth`).
 
 A histogram: the bars of the classes of a [bin](#transform) from their
@@ -1679,9 +1706,12 @@ dim (`join`) whose values are the keys of the features:
   map has no margins by default.
 - The labels of `text` are at the pole of inaccessibility of the largest
   polygon of their feature, the point farthest from its edges, also in long
-  or bent countries (`"place": "centroid"`: the center as `point`).
-  `"fit": true` shows only the labels which fit into the area around their
-  pole (not of `"place": "centroid"`, which has none), `"overlap": false`
+  or bent countries (`"place": "centroid"`: the center as `point`),
+  centered on it (`text-anchor` and, without a `dy`, `dominant-baseline`
+  are `middle` by default), `halo` draws a halo behind them as of other
+  texts.
+  `"fit": true` shows only the labels which fit into the area around the
+  pole (also of `"place": "centroid"`), `"overlap": false`
   leaves out the ones which overlap the label of a larger area, so a map
   needs no list of the labels: e.g. all zones, `{"type": "text", "by":
   "country", "fit": true, "overlap": false, "text": "@label:formatted"}`.
@@ -1950,8 +1980,12 @@ facets, e.g. `"outer"`.
 `filter` shows only the rows of an expression of the row: its names are
 the dims (the values of the row), then the columns of the data (also of the
 transforms) and the globals, e.g. `"@year == @globals.year and @value >
-0"`. Dates compare as the texts of the data, e.g. `"@date >=
-'2020-01-01'"`. A dim of the same name as a global shadows it,
+0"`. A date dim compares as a date: the other values of a comparison
+(`==`, `!=`, `<`, `<=`, `>`, `>=`) of it and the cases of a `match` of it
+are dates as the ones of the dim, e.g. `"@date >= '2020-01-01'"` or `"@date
+== @globals.day"`, whatever the format of the data (ISO, day first, JSON
+timestamps, a date of a transform), as of the object form; in other
+expressions its value is the time in milliseconds. A dim of the same name as a global shadows it,
 `@globals.<name>` is the global.
 
 An object is the shorthand of conditions of the values of dims, every
@@ -2225,7 +2259,7 @@ The values of a row of a dim `x`:
 | `@x:scaled:min`, `@x:scaled:max` | the position of the start and the end of the domain |
 | `@x:bandwidth`, `@x:step` | the size of a band and the distance of the categories, of an `interval` the pixels of the period of the row |
 | `@x:group:start`, `@x:group:end` | the extent of the group of the row, see `groups` of [scales](#scales) |
-| `@x:index`, `@x:count` | the place of the category of the row among the visible categories of the dim (from 0) and their number, of a dim without categories the distinct values of the rows of the mark, e.g. of dodged bars |
+| `@x:index`, `@x:count` | the place of the category of the row among the visible categories of the dim (from 0) and their number, of a dim without categories the distinct values of the rows of the chart (all facets, before the filters of the marks) in the order of the rows, so the slots of dodged bars are the same in all facets and marks; a row without a value has no place |
 | `@y:start`, `@y:end`, `@y:mid` | of a stacked value its start, its end and its middle |
 | `@y:start:scaled`, `@y:end:scaled`, `@y:mid:scaled`, `@y:height:scaled` | their positions and the difference, e.g. the height of a `rect` |
 

@@ -89,6 +89,15 @@ const ref = (dim, kind = 'scaled') => `@${dim}:${kind}`;
 // the parts of the categories of a dim besides `fromData`, see
 // hasCategories and isCategorical of utils/normalize.js
 const categoryParts = categoryKeys.filter(k => k != 'fromData');
+const categoricalScales = ['band', 'point', 'ordinal'];
+// a dim of numbers or dates by its parts (of the definition, the rows are
+// not known): its type, a continuous scale, a domain from the data
+// (`"zero": true`, an open end) or the parts of a continuous scale
+const continuousParts = ['nice', 'include', 'center', 'pad'];
+const isContinuous = d => isObject(d) && (d.type == 'numeric' || d.type == 'date' || (d.type === undefined && !isCategorical(d)
+    && ((isObject(d.scale) && typeof d.scale.type == 'string' && !categoricalScales.includes(d.scale.type))
+        || [d.domain, d.scale?.domain].some(v => Array.isArray(v) && v.includes(null))
+        || d.interval !== undefined || continuousParts.some(k => d[k] !== undefined || (isObject(d.scale) && d.scale[k] !== undefined)))));
 
 // a dim of the definition as a mapping of the engine
 const dim = (raw, name) => {
@@ -222,12 +231,19 @@ const typeOf = (type, coord) => {
 // the expressions of a dodged bar: the band of the position dim `pos` split
 // among the categories of `group`, its position (the bar plot adds half a
 // band, see plots/cartesian.js) and its width; `center` is the middle of
-// the slot of the category, e.g. of a label on a dodged bar
-const dodged = (pos, group) => ({
-    position: { '+': [ref(pos), { '*': [ref(pos, 'bandwidth'), { '-': [{ '/': [{ '+': [ref(group, 'index'), 0.5] }, ref(group, 'count')] }, 0.5] }] }] },
-    center: { '+': [ref(pos), { '*': [ref(pos, 'bandwidth'), { '/': [{ '+': [ref(group, 'index'), 0.5] }, ref(group, 'count')] }] }] },
-    size: { '/': [ref(pos, 'bandwidth'), ref(group, 'count')] },
-});
+// the slot of the category, e.g. of a label on a dodged bar. The band of a
+// scale without one (a date of an `interval`, a point scale) is 80% of the
+// period or the step, as the width of a bar, around the middle of the period
+const dodged = (pos, group) => {
+    const band = { if: [ref(pos, 'bandwidth'), ref(pos, 'bandwidth'), { '*': [0.8, ref(pos, 'step')] }] };
+    const start = { if: [ref(pos, 'bandwidth'), ref(pos), { '-': [ref(pos), { '/': [band, 2] }] }] };
+    const slot = { '/': [{ '+': [ref(group, 'index'), 0.5] }, ref(group, 'count')] };
+    return {
+        position: { '+': [ref(pos), { '*': [band, { '-': [slot, 0.5] }] }] },
+        center: { '+': [start, { '*': [band, slot] }] },
+        size: { '/': [band, ref(group, 'count')] },
+    };
+};
 
 // the label of a value, `anchor` places the text beside the position:
 // `end` after it (horizontal bars), `start` before it, `top` above it,
@@ -272,10 +288,10 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
     const take = (...names) => names.forEach(n => delete props[n]);
     const stack = p.stack;
     delete p.stack;
-    // `dodge` of bars are the groups beside each other, of texts with true or
-    // a dim the same (e.g. labels of dodged bars), a number of texts their
-    // distance (the engine)
-    const dodge = kind == 'bar' || (kind == 'text' && (p.dodge === true || typeof p.dodge == 'string')) ? p.dodge : undefined;
+    // `dodge` of bars are the groups beside each other, of texts, points and
+    // rules with true or a dim the same (e.g. labels or error bars of dodged
+    // bars), a number of texts their distance (the engine)
+    const dodge = kind == 'bar' || (['text', 'circle', 'rule'].includes(kind) && (p.dodge === true || typeof p.dodge == 'string')) ? p.dodge : undefined;
     if (dodge !== undefined)
         delete p.dodge;
     if (dodge === true && p.by.length == 0)
@@ -285,9 +301,29 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
     const anchor = p.anchor;
     delete p.anchor;
     const centered = d => d && Object.hasOwn(dims, d) && isCategorical(dims[d]);
+    // a dim of a position which is not continuous (e.g. a column of names,
+    // its type follows from the rows) beside a continuous one is the one of
+    // the bands, its texts and points at their centers, see at
+    // (only a vertical one, e.g. names beside the values of horizontal bars;
+    // a horizontal dim of no type is usually one of numbers, e.g. years)
+    const banded = (x, y) => [[y, x]].forEach(([c, other]) => {
+        if (c?.dim && other?.dim && !centered(c.dim) && !centered(other.dim) && !isContinuous(ofDim(c.dim)) && isContinuous(ofDim(other.dim)))
+            bands.add(c.dim);
+    });
+    // the bars of the positions are horizontal ones, see `orient`: of a
+    // categorical y and an x which is not, or of a y which is not continuous
+    // (e.g. a column of names, its type follows from the rows) and an x
+    // which is, e.g. of `"zero": true`
+    const ofDim = d => d && Object.hasOwn(dims, d) ? dims[d] : undefined;
+    const horizontalOf = (x, y) => orient == 'horizontal' || (orient === undefined && y && ((centered(y.dim) && !(x && centered(x.dim)))
+        || (x && isContinuous(ofDim(x.dim)) && !isContinuous(ofDim(y.dim)) && !centered(x.dim))));
+    // the dims of positions which are bands by the other one, see banded
+    const bands = new Set();
     // the position of a dim, of a categorical one the center of its band
-    const at = (c, kind = 'scaled') => c ? (c.fixed === undefined && kind == 'scaled' && centered(c.dim) ? ref(c.dim, 'scaled:center') : c.value) : undefined;
-    const stacked = (dim, by, condition) => stacks.push({ dim, by, condition: condition === undefined ? true : condition });
+    const at = (c, kind = 'scaled') => c ? (c.fixed === undefined && kind == 'scaled' && (centered(c.dim) || bands.has(c.dim)) ? ref(c.dim, 'scaled:center') : c.value) : undefined;
+    // `group` of dodged stacked bars: a stack per slot, e.g. per year and type
+    const stacked = (dim, by, condition, group) => stacks.push({ dim, by, condition: condition === undefined ? true : condition, group });
+    const dodgeGroup = dodge === undefined || dodge === false ? undefined : (dodge === true ? p.by[0] : dodge);
     // the colors of the categories, of a dim of a scale (e.g. of a color
     // scale) its scaled value, of a categorical dim the color of its category
     ['fill', 'stroke'].forEach(k => {
@@ -325,6 +361,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
         const end = (name, axis) => kind == 'rule' ? valued(name, axis) : given(name, axis);
         const x0 = base ? valued('x0') : given('x0'), x1 = end('x1', 'x'), y0 = base ? valued('y0') : given('y0'), y1 = end('y1', 'y');
         take('x', 'y', 'x0', 'x1', 'y0', 'y1');
+        banded(x, y);
         if (kind == 'line' || kind == 'area') {
             const d = isObject(props.d) ? { ...props.d } : {};
             if (x0 || x1) {
@@ -347,7 +384,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
             }
             props.d = d;
         } else if (kind == 'bar') {
-            const horizontal = orient == 'horizontal' || (orient === undefined && y && centered(y.dim) && !(x && centered(x.dim)));
+            const horizontal = horizontalOf(x, y);
             if (x0 && x1 && y) {
                 // the classes of a bin, from x0 to x1
                 props.x0 = x0.value;
@@ -366,7 +403,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
                     props.y = y.value;
                 if (x) {
                     if (stack) {
-                        stacked(x.dim, undefined, stack);
+                        stacked(x.dim, undefined, stack, dodgeGroup);
                         props.x0 = ref(x.dim, 'start:scaled');
                         props.x1 = ref(x.dim, 'end:scaled');
                     } else {
@@ -386,7 +423,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
                     props.x = x.value;
                 if (y) {
                     if (stack) {
-                        stacked(y.dim, undefined, stack);
+                        stacked(y.dim, undefined, stack, dodgeGroup);
                         props.y0 = ref(y.dim, 'start:scaled');
                         props.y1 = ref(y.dim, 'end:scaled');
                     } else {
@@ -405,16 +442,17 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
         } else if (kind == 'rule') {
             const x2 = end('x2', 'x'), y2 = end('y2', 'y');
             take('x2', 'y2');
-            // at the center of the band of a categorical position, as bars and points
+            // at the center of the band of a categorical position, as bars and
+            // points, of dodged bars the middle of the slot of the category
             if (raw.y !== undefined && raw.x === undefined) {
-                props.y = at(y);
+                props.y = dodgeGroup !== undefined && y ? dodged(y.dim, dodgeGroup).center : at(y);
                 if (x1)
                     props.x1 = x1.value;
                 if (x2)
                     props.x2 = x2.value;
             } else {
                 if (x)
-                    props.x = at(x);
+                    props.x = dodgeGroup !== undefined ? dodged(x.dim, dodgeGroup).center : at(x);
                 if (y1)
                     props.y1 = y1.value;
                 if (y2)
@@ -425,11 +463,21 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
                 props.cx ??= at(x);
             if (y)
                 props.cy ??= at(y);
+            // on dodged bars: at the middle of the slot of the category
+            if (dodge) {
+                if (horizontalOf(x, y) && y)
+                    props.cy = dodged(y.dim, dodgeGroup).center;
+                else if (x)
+                    props.cx = dodged(x.dim, dodgeGroup).center;
+            }
         } else if (kind == 'rect' && raw.type == 'cell') {
-            // the cells need the bands of their positions
+            // the cells need the bands of their positions, next to each other
+            // (a `padding` of 0, a `stroke` draws lines between them)
             [x, y].forEach(c => {
-                if (c?.dim && isObject(dims[c.dim]) && dims[c.dim].scale?.type === undefined)
-                    dims[c.dim].scale = { ...(isObject(dims[c.dim].scale) ? dims[c.dim].scale : {}), type: 'band' };
+                if (c?.dim && isObject(dims[c.dim]) && dims[c.dim].scale?.type === undefined) {
+                    const own = isObject(dims[c.dim].scale) ? dims[c.dim].scale : {};
+                    dims[c.dim].scale = { ...own, type: 'band', padding: own.padding ?? 0 };
+                }
             });
             if (x) {
                 props.x = x.value;
@@ -446,12 +494,10 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
                 props.y = at(y);
             // on dodged bars: at the middle of the slot of the category
             if (dodge) {
-                const group = dodge === true ? p.by[0] : dodge;
-                const horizontal = orient == 'horizontal' || (orient === undefined && y && centered(y.dim) && !(x && centered(x.dim)));
-                if (horizontal && y)
-                    props.y = dodged(y.dim, group).center;
+                if (horizontalOf(x, y) && y)
+                    props.y = dodged(y.dim, dodgeGroup).center;
                 else if (x)
-                    props.x = dodged(x.dim, group).center;
+                    props.x = dodged(x.dim, dodgeGroup).center;
             }
             if (anchor)
                 Object.entries(anchors[anchor] ?? {}).forEach(([k, v]) => props[k] ??= v);
@@ -685,7 +731,7 @@ const translated = raw => {
             grouped.push(n);
     });
     // the stacked value dims, a condition of the rows which are stacked
-    stacks.forEach(({ dim: n, by, condition }) => {
+    stacks.forEach(({ dim: n, by, condition, group }) => {
         const m = dims[n];
         if (!isObject(m))
             return;
@@ -693,6 +739,9 @@ const translated = raw => {
             : { or: [m.stacked, condition] };
         if (by !== undefined)
             m.stackBy = by;
+        // the stacks of dodged bars are the ones of each slot, see stackGroups of layout.js
+        if (typeof group == 'string')
+            m.stackGroups = [...new Set([...(m.stackGroups ?? []), group])];
     });
     // the dims of the hover: the columns given, else the dims of the marks' `by`
     const inHover = columns !== undefined ? [columns].flat() : grouped;

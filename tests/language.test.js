@@ -25,6 +25,7 @@ describe('the language of 5.0', () => {
             categories: { Wien: { color: '#123' }, Tirol: { name: 'T' } } });
         expect(def.plot).toEqual([
             { type: 'cartesian:line', by: ['land'], highlight: { opacity: 1 }, props: { opacity: 0.7, d: { x: '@x:scaled', y: '@y:scaled' } } },
+            // x of no type beside a continuous y is no band (e.g. years), only a vertical dim beside a continuous x is one
             { type: 'svg:circle', by: ['land'], props: { r: 4, cx: '@x:scaled', cy: '@y:scaled' } },
         ]);
         expect(def.formElements).toBeUndefined();
@@ -76,9 +77,11 @@ describe('the language of 5.0', () => {
                 { type: 'point', x: 'lo', fill: 'c' },
             ],
         });
+        // the band, of a scale without bands 80% of the step or the period
+        const band = { if: ['@x:bandwidth', '@x:bandwidth', { '*': [0.8, '@x:step'] }] };
         expect(def.plot[0].props).toEqual({
-            x: { '+': ['@x:scaled', { '*': ['@x:bandwidth', { '-': [{ '/': [{ '+': ['@c:index', 0.5] }, '@c:count'] }, 0.5] }] }] },
-            width: { '/': ['@x:bandwidth', '@c:count'] },
+            x: { '+': ['@x:scaled', { '*': [band, { '-': [{ '/': [{ '+': ['@c:index', 0.5] }, '@c:count'] }, 0.5] }] }] },
+            width: { '/': [band, '@c:count'] },
             y1: '@y:scaled',
         });
         // at the center of the band of the categorical x

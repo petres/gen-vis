@@ -316,12 +316,38 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
         }
     };
     const defOrg = engine(resolve(source, namesOfGlobals(source.globals, source.controls)));
-    defOrg[variantsOf] = resolvedVariants(source).map(engine);
+    defOrg[variantsOf] = engineVariants(resolvedVariants(source), defOrg, engine);
     // the check of the definition (of 5.0, as written) with the rows, e.g.
     // of years as dates, see load, it is loaded meanwhile
     const validate = async rows => (await checks)?.validateDef(source, rows)
         .forEach(w => console.warn(`gen-vis ${name}${migrated ? ' (migrated from gen-vis 4, the paths are the ones of 5)' : ''}: ${w}`));
     return { url, defOrg, source, validate };
+};
+
+// the parts of a resolved definition the variants are needed for (see
+// variants of utils/def.js): the columns, the types and the categories of
+// the dims, the files of marks and transforms, the requirements of the load
+// (coordinate systems, maps, transforms, locales), see requirements
+const variantParts = v => JSON.stringify([v.dims, v.marks, v.filter, v.transform, v.geo, v.coord, v.locale, v.language, v.facets,
+    v.hover, v.data, v.dataFormat]);
+
+/**
+ * The variants of the definition of the values of its controls as the
+ * engine reads them (`engine(v)`, translated and normalized), the first one
+ * is the one of the globals (`own`); a variant whose parts of variantParts
+ * are the ones of an earlier variant is left out, e.g. the years of a
+ * slider which only change the title, so only the ones which differ are
+ * translated and normalized.
+ */
+const engineVariants = (resolved, own, engine) => {
+    const seen = new Set();
+    return resolved.flatMap((v, i) => {
+        const key = variantParts(v);
+        if (seen.has(key))
+            return [];
+        seen.add(key);
+        return [i == 0 ? own : engine(v)];
+    });
 };
 
 // the rows of the data of the attribute or of the url of the definition,

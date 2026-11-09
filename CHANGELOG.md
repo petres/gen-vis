@@ -351,6 +351,72 @@ Migration notes, to check by hand after `gen-vis migrate`:
   beside its CSS pixels. `gen-vis --version`. `@preschen/gen-vis/check`
   exports `parseData`, `dataFormat` and `loadTransforms`.
 
+### Fixes of the review of the engine
+
+- `dodge` with `stack`: a stack per slot of the dodge dim (was one over
+  all rows of the position), also of the domain.
+- `@dim:index` and `@dim:count` of a dim without categories: the distinct
+  values of the rows of the chart (all facets, before the filters of the
+  marks; were the ones of the mark in the facet), so the slots of dodged
+  bars agree across facets and labels of a filtered mark are on their bar;
+  a row without a value has no slot. Dodged bars on a date `x` with an
+  `interval` (were 0 wide) share 80% of the period.
+- `dodge` of `point` and `rule` marks (`true` or a dim): at the middle of
+  the slot of their category, e.g. error bars on dodged bars (was ignored).
+- Parquet: the columns named in the expressions of `filter` (of the chart
+  and of marks), `stack` and `hover.filter` are read; a filter on a column
+  which is no dim dropped every row.
+- Filters on a date dim compare dates: the values compared with it (and
+  the cases of a `match` of it) are converted as the dim's values, as of the
+  object form; the texts of the data were compared, which failed for dates of
+  a transform, JSON timestamps and day-first dates. In other expressions of
+  a filter a date dim is its time in milliseconds (was the text of the data).
+- `fold` reads the columns of all rows (was of the first one), e.g. of JSON
+  rows without the columns of missing values; `lag` and `lead` give values
+  which are no numbers as they are (were none); a `fold` whose `key` or
+  `value` replaces a column and an `aggregate` with `rows` whose `as` is a
+  column of `by` warn; an aggregate without a known `op` is an error also
+  of no rows.
+- `"margins": "auto"` is the same as no margins, as documented (it
+  overrode the css variables and the defaults of the page); an expression
+  of a side which yields `"auto"` is measured (was 0), one without a value
+  is no side; the css variables of the margins in `rem`, `em` and `pt` are
+  converted to pixels (`4rem` was 4 px).
+- Measured margins: rotated labels of a horizontal axis reach beyond the
+  ends of the plot area by their projection (were not measured there); the
+  labels of the ends of a horizontal axis and the texts of marks are
+  measured at their place in the plot area of the final width (were of the
+  provisional one, the right margin of narrow charts was up to 10 px
+  short), the plot area keeps half of the width at least.
+- The band scales a `cell` makes have no padding (were 0.4, a heatmap had
+  gaps wider than its cells); the labels of a horizontal axis which overlap
+  are thinned to every n-th one (not fixed `values` or rotated labels),
+  e.g. the 21 years of the heatmap example. Its PNG baseline is redone.
+- The labels of maps (`text` and `label` of `geo`) are centered on their
+  place by default (`text-anchor` `middle` and, without a `dy` of the mark,
+  `dominant-baseline` `middle`; were the ones of svg, the start at the
+  baseline), so the 4.x labels which set `dy: "0.35em"` by hand stay where
+  they were; `halo` draws their halo (was ignored) and `fit` works also
+  with `"place": "centroid"`.
+- Horizontal bars of a column of names without a type: bars are horizontal
+  also if `x` is continuous by its parts (`zero`, `type`, an open domain, a
+  continuous scale) and `y` is not; they were vertical, which failed with
+  "a 'width' is needed for a continuous scale" (also with `reverse`,
+  `range` or `scale.order` on `y`). `scale.order`, `groups`, `padding` and
+  `step` make a dim categorical; texts and points on such a dim are at the
+  center of its band.
+- The width of an export wins over the `width` of the definition (the
+  export page's `width`, `--width`, the prop `imageWidth`): a definition of
+  `"width": 300` was a 300 px chart in an 800 px image. Without one the
+  definition's `width` is the one of the chart, the image has it and the
+  padding (was 800).
+- Speed: the prepared rows keep their raw row and index in private fields
+  (were two properties defined per row), and the load translates and
+  normalizes only the variants of the values of the controls which differ
+  in the parts the load needs of them (dims, marks, filter, transforms,
+  maps, coordinate system, locale); the mount of the 52 examples: 1370 ->
+  1195 ms (4.1.0: 1173 ms).
+
 ### Package and builds
 
 - The deep merge is the package's own (`src/utils/merge.js`, the semantics

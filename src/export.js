@@ -206,8 +206,12 @@ const genVisExport = async (options = {}) => {
         shown.el.classList.add(...classes);
         return shown;
     };
-    const { copy, remove } = await staticCopy(wrapper => document.body.append(wrapper), mount,
-        { width: width.px - 2 * space, space, visible: true, wait: options.timeout ?? 30000 });
+    // the width asked for is the one of the image, also of a definition with a
+    // width of its own, without one the width of such a definition is the one
+    // of the chart (at most the default)
+    const fixed = options.width !== undefined && options.width !== null;
+    const { copy, remove, width: chart } = await staticCopy(wrapper => document.body.append(wrapper), mount,
+        { width: width.px - 2 * space, space, visible: true, wait: options.timeout ?? 30000, fixed });
     removeBefore = remove;
     selectParts(copy, options.parts ?? null);
     copy.style.background = options.background === undefined ? backgroundOf(copy) : (options.background ?? 'none');
@@ -216,7 +220,7 @@ const genVisExport = async (options = {}) => {
     await frame();
 
     const b = partsBox(copy, options.parts ?? null, space);
-    const svg = composeSvg(copy, { box: b, unit, width: width.px });
+    const svg = composeSvg(copy, { box: b, unit, width: fixed ? width.px : chart + 2 * space });
     return { version, svg, width: b.width, height: b.height, box: { x: b.left + scrollX, y: b.top + scrollY, width: b.width, height: b.height } };
 };
 genVisExport.version = version;

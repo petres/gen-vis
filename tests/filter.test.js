@@ -61,3 +61,32 @@ describe('the names of a filter expression', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('filters of dates compare dates', () => {
+    const dateDef = (filter, extra = {}) => ({
+        dims: { x: { column: 'day', type: 'date' }, y: 'value' }, filter, marks: { type: 'point' }, ...extra,
+    });
+    const drawn = el => el.querySelectorAll('g.vis-plot circle').length;
+
+    test('of dates of every format: ISO, day first, JSON timestamps, as the object form', async () => {
+        const iso = 'day,value\n2020-01-01,1\n2020-06-01,2\n2021-01-01,3';
+        const dayFirst = 'day,value\n01.01.2020,1\n01.06.2020,2\n01.01.2021,3';
+        // the timestamps of the local midnights, as the dates without a time zone
+        const json = JSON.stringify([[2020, 0, 1], [2020, 5, 1], [2021, 0, 1]].map(([y, m, d], i) => ({ day: new Date(y, m, d).getTime(), value: i + 1 })));
+        for (const data of [iso, dayFirst, json]) {
+            expect(drawn(await mount({ def: dateDef("@x >= '2020-06-01'"), data }))).toBe(2);
+            expect(drawn(await mount({ def: dateDef("@x == '2020-06-01'"), data }))).toBe(1);
+            expect(drawn(await mount({ def: dateDef("@x == @sel", { globals: { sel: '2021-01-01' } }), data }))).toBe(1);
+            expect(drawn(await mount({ def: dateDef("=match(@x, {'2020-01-01': true}, false)"), data }))).toBe(1);
+            expect(drawn(await mount({ def: dateDef({ x: { range: ['2020-06-01', null] } }), data }))).toBe(2);
+        }
+        expect(errors).toEqual([]);
+    });
+
+    test('of a date column of a transform', async () => {
+        const def = dateDef("@x < '2021-01-01'", { transform: { type: 'calc', as: 'day', expr: "=cat(@year, '-01-01')" } });
+        const el = await mount({ def, data: 'year,value\n2019,1\n2020,2\n2021,3' });
+        expect(drawn(el)).toBe(2);
+        expect(errors).toEqual([]);
+    });
+});

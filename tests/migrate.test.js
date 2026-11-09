@@ -5,7 +5,7 @@ import path from 'node:path';
 import { migrate, conditionExpression } from '@/utils/migrate.js';
 import { translate } from '@/utils/language.js';
 import { resolve, namesOfGlobals } from '@/utils/resolve.js';
-import { normalize } from '@/utils/normalize.js';
+import { normalize, isCategorical } from '@/utils/normalize.js';
 import { parseExpression } from '@/utils/expr-parse.js';
 import { isOperator } from '@/utils/expr.js';
 import { isObject } from '@/utils/values.js';
@@ -213,6 +213,25 @@ const byTypes = (a, b) => Object.keys(b.mapping ?? {}).forEach(n => {
             delete b.mapping[n].scale.type;
     }
 });
+// the center of a position of a dim which is no band (a continuous or a
+// point scale) is its position: 5.0 writes `@d:scaled:center` where 4.x
+// wrote `@d:scaled` of a dim beside a continuous one (it can be a band),
+// the same place unless the dim is one of a band scale, which stays a difference
+const centers = (a, b) => {
+    const same = d => !isCategorical(a.mapping?.[d]) || a.mapping[d].scale?.type == 'point';
+    const walk = (x, y) => {
+        if (!isObject(x) || !isObject(y))
+            return;
+        Object.keys(y).forEach(k => {
+            const m = typeof y[k] == 'string' ? /^@([^:]+):scaled:center$/.exec(y[k]) : null;
+            if (m && x[k] === `@${m[1]}:scaled` && same(m[1]))
+                y[k] = x[k];
+            else
+                walk(x[k], y[k]);
+        });
+    };
+    (b.plot ?? []).forEach((p, i) => walk(a.plot?.[i], p));
+};
 // a definition of 4.x (merged with its parents) and one of 5.0 (by default
 // its migration) with every combination of the values of the form
 // elements: the 5.0 one resolved with the globals is the 4.x one with the
@@ -222,6 +241,7 @@ const drawsAs4 = (def4, def5 = migrate(def4), what = 'migrated') => {
         const a = engine4(patched4(def4, globals));
         const b = engine5(def5, globals);
         byTypes(a, b);
+        centers(a, b);
         expect(b, `${what}, globals ${JSON.stringify(globals)}`).toEqual(a);
     }
 };

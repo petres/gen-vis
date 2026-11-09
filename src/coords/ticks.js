@@ -1,8 +1,9 @@
-export { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks };
+export { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks, labelStep };
 
 import { formatOf } from "@/utils/def";
 import { evaluate } from "@/utils/expr";
 import { convert } from "@/utils/data";
+import { textWidth } from "@/utils/measure";
 
 // fixed values outside of the range of the scale are not drawn, e.g. 10 of a
 // log scale from 14, d3 would draw them in the margins, also the ones which
@@ -94,4 +95,35 @@ const tickMarks = (ctx, axis, defaults) => axis.tickMarks === false ? false : {
     size: Number.isFinite(axis.tickMarks?.size) ? axis.tickMarks.size : defaults?.size,
     inset: Number.isFinite(axis.tickMarks?.inset) ? axis.tickMarks.inset : defaults?.inset,
     props: axis.tickMarks?.props ? evaluate(axis.tickMarks.props, ctx.scope) : null,
+};
+
+/**
+ * The step of the labels of a horizontal axis which are shown, 1 of all of
+ * them: every n-th one if the ones next to each other overlap (measured in
+ * `font(i)`, the one of the label i), the smallest n whose labels are at
+ * least `gap` pixels apart, e.g. a year per band of a heatmap of 21 years
+ * in a narrow chart; `positions` are the ones of the centers of the labels,
+ * `texts` their texts, empty ones take no place.
+ */
+const labelStep = (texts, positions, font, gap = 4) => {
+    const n = texts.length;
+    if (n < 3)
+        return 1;
+    let widths = null;
+    const width = i => (widths ??= texts.map((t, j) => t ? textWidth(t, font(j)) : 0))[i];
+    const fits = step => {
+        let before = -1;
+        for (let i = 0; i < n; i += step) {
+            if (!texts[i] || !Number.isFinite(positions[i]))
+                continue;
+            if (before >= 0 && Math.abs(positions[i] - positions[before]) < (width(i) + width(before))/2 + gap)
+                return false;
+            before = i;
+        }
+        return true;
+    };
+    for (let step = 1; step < n; step++)
+        if (fits(step))
+            return step;
+    return n;
 };

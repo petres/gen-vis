@@ -446,9 +446,12 @@
                         "left": { "anyOf": [{ "$ref": "#/definitions/number" }, { "const": "auto" }] }
                     }
                 },
-                { "const": "auto", "description": "All sides measured." }
+                {
+                    "const": "auto",
+                    "description": "The same as no margins: the sides of the styles or the defaults of the page, else measured."
+                }
             ],
-            "description": "The space around the plot area of a facet in pixels, of the axes and their titles, e.g. { \"left\": 60 }; a side without one is the one of the styles of the page (--gen-vis-margin-left: 60px, also auto) or of its defaults (registerDefaults, e.g. of a house style), else measured (\"auto\") of the labels of the axes, their tick marks and their titles; an expression of totalWidth, e.g. steps of it."
+            "description": "The space around the plot area of a facet in pixels, of the axes and their titles, e.g. { \"left\": 60 }; a side without one is the one of the styles of the page (--gen-vis-margin-left: 60px, also of rem, em or pt, or auto) or of its defaults (registerDefaults, e.g. of a house style), else measured (\"auto\") of the labels of the axes, their tick marks and their titles; an expression of totalWidth, e.g. steps of it, also of \"auto\" (an expression without a value is no side)."
         },
         "hover": {
             "type": "object",
@@ -838,7 +841,7 @@
                         },
                         { "$ref": "#/definitions/expression" }
                     ],
-                    "description": "Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or [\"2004\", \"2008\"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth."
+                    "description": "Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or [\"2004\", \"2008\"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth; all of them are labelled (other labels of a horizontal axis which overlap show every n-th one)."
                 },
                 "format": {
                     "if": { "type": "string" },
@@ -1400,7 +1403,7 @@
                                         "rule",
                                         "text"
                                     ],
-                                    "description": "A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y, e.g. of a heatmap."
+                                    "description": "A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap."
                                 },
                                 {
                                     "enum": [
@@ -1547,13 +1550,13 @@
                 },
                 "dodge": {
                     "anyOf": [{ "type": "boolean" }, { "type": "string" }, { "type": "number" }],
-                    "description": "Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position; texts: the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines."
+                    "description": "Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position, with `stack` a stack per slot; texts, points and rules (true or a dim): at the middle of the slot of their category, e.g. labels or error bars of dodged bars; texts (a number): the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines."
                 },
                 "orient": {
                     "if": { "type": "string", "pattern": "^=" },
                     "then": { "type": "string", "pattern": "^=" },
                     "else": { "enum": ["horizontal", "vertical"] },
-                    "description": "Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y."
+                    "description": "Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y or of a continuous x (e.g. zero) and a y which is not."
                 },
                 "anchor": {
                     "if": { "type": "string", "pattern": "^=" },
@@ -1665,7 +1668,7 @@
                 },
                 "fit": {
                     "type": "boolean",
-                    "description": "geo:text: only the labels which fit into the area around their place (estimated of their characters and font size); texts of place in: true (default) leaves out a label without room in its band, false places it where it violates the least."
+                    "description": "geo:text: only the labels which fit into the area around the pole of their feature (estimated of their characters and font size), also of place centroid; texts of place in: true (default) leaves out a label without room in its band, false places it where it violates the least."
                 },
                 "overlap": {
                     "type": "boolean",
@@ -1681,7 +1684,7 @@
                 },
                 "halo": {
                     "anyOf": [{ "type": "boolean" }, { "type": "number" }],
-                    "description": "Texts: a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the stroke attributes of the mark replace its stroke."
+                    "description": "Texts (also of maps): a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the stroke attributes of the mark replace its stroke."
                 },
                 "object": {
                     "type": "string",
@@ -2166,11 +2169,11 @@
                 },
                 "columns": {
                     "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }],
-                    "description": "fold: the columns to fold, a list of names or a pattern with a single `*`, e.g. \"20*\", the columns which match, in their order, templates of the globals."
+                    "description": "fold: the columns to fold, a list of names or a pattern with a single `*`, e.g. \"20*\", the columns of all rows which match, in their order, templates of the globals."
                 },
                 "op": {
                     "enum": ["sum", "mean", "min", "max", "count", "median", "first", "last", "lag", "lead", "diff", "pct"],
-                    "description": "aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows."
+                    "description": "aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows."
                 },
                 "rows": {
                     "type": "boolean",

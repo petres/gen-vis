@@ -84,6 +84,21 @@ const slotPart = () => {
     };
 };
 
+// a length of css in pixels, e.g. of a variable of the margins: a number
+// or of the units px, rem (of the font size of the page), em (of the one of
+// the chart, `styles`) or pt, undefined otherwise
+const cssPixels = (value, styles) => {
+    const m = /^(-?\d*\.?\d+(?:e[-+]?\d+)?)\s*(px|rem|em|pt)?$/i.exec(value ?? '');
+    if (!m)
+        return undefined;
+    const n = Number(m[1]);
+    const unit = (m[2] ?? 'px').toLowerCase();
+    const fontSize = element => parseFloat(element ? getComputedStyle(element).fontSize : NaN) || 16;
+    return unit == 'px' ? n : unit == 'pt' ? n*4/3
+        : unit == 'rem' ? n*fontSize(typeof document != 'undefined' ? document.documentElement : null)
+        : n*(parseFloat(styles?.fontSize) || 16);
+};
+
 /**
  * The visualisation of a loaded definition (the element `.vis`): the
  * header, the form elements, the legends, the facets and the footer. `app`
@@ -221,14 +236,17 @@ const createVis = app => {
 
     // the width of the plots, of the visualisation or of the definition,
     // beside legends the rest of it
+    // the width of the chart of its own: of an export (`store.fixedWidth`,
+    // see staticCopy of utils/export.js), else of the definition
+    const ownWidth = () => store.fixedWidth || options().width;
     const plotsWidth = () => {
-        const total = options().width || innerWidth(root);
+        const total = ownWidth() || innerWidth(root);
         fullWidth = store.visWidth = total;
         if (!sidesOf(legendsAt()))
             return total;
         const besides = [...root.querySelectorAll(':scope > .vis-body-sides > .vis-legends')]
             .reduce((sum, e) => sum + e.getBoundingClientRect().width + 10, 0);
-        return options().width || !plots ? Math.max(0, total - besides) : innerWidth(plots);
+        return ownWidth() || !plots ? Math.max(0, total - besides) : innerWidth(plots);
     };
     // the width of the headers of the rows of a grid of facets: of the
     // longest one left of them, of a line of rotated text right of them,
@@ -265,7 +283,7 @@ const createVis = app => {
         // (measured), e.g. --gen-vis-margin-left: 60px of a house style
         store.styleMargins = styles ? Object.fromEntries(['top', 'right', 'bottom', 'left'].map(side => {
             const value = styles.getPropertyValue(`--gen-vis-margin-${side}`).trim();
-            return [side, value == 'auto' ? 'auto' : (value && Number.isFinite(parseFloat(value)) ? parseFloat(value) : undefined)];
+            return [side, value == 'auto' ? 'auto' : cssPixels(value, styles)];
         }).filter(([, v]) => v !== undefined)) : null;
     };
     const resized = () => {
@@ -528,7 +546,7 @@ const createVis = app => {
             update();
             store.listeners.add(stateListener);
             // without a fixed width the visualisation fills its container
-            if (!options().width && typeof ResizeObserver == 'function') {
+            if (!ownWidth() && typeof ResizeObserver == 'function') {
                 resizeObserver = new ResizeObserver(() => {
                     clearTimeout(resizeTimeout);
                     resizeTimeout = setTimeout(() => guard(resized), 100);

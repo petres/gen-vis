@@ -1,7 +1,7 @@
 import * as d3 from "@/utils/d3";
 import { bandCenter, centerOf } from "@/utils/scales";
 import { keyOf } from "@/utils/draw";
-import { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks } from "@/coords/ticks";
+import { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks, labelStep } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
 import { rect, placeLine } from "@/coords/hover";
 import { pixelOffset, tickPosition } from "@/utils/axis";
@@ -107,6 +107,28 @@ const axes = ctx => {
             format = d => String(+d === +d ? +d : d) == String(+crossed.value === +crossed.value ? +crossed.value : crossed.value) ? '' : shown(d);
         }
 
+        const values = i.values ? tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.mapping) : (s.ticks ? s.ticks(ticks) : s.domain());
+        // the labels of a horizontal axis which overlap: every n-th one, not
+        // of values given (`values`) nor rotated labels, see labelStep
+        if (['top', 'bottom'].includes(i.position) && !i.values && !i.rotate && values.length > 2) {
+            const texts = values.map(v => {
+                const t = format(v);
+                return t === null || t === undefined ? '' : String(t);
+            });
+            const family = store.fontFamily || 'sans-serif';
+            const font = j => {
+                const props = labelsOf ? labelsOf(values[j]) ?? {} : {};
+                const size = parseFloat(props['font-size']);
+                return `${props['font-weight'] ?? ''} ${size > 0 ? size : 12}px ${family}`.trim();
+            };
+            const step = labelStep(texts, values.map(v => s(v) + bandCenter(s)), font);
+            if (step > 1) {
+                const shown = format;
+                const index = new Map(values.map((v, j) => [String(+v === +v ? +v : v), j]));
+                format = d => (index.get(String(+d === +d ? +d : d)) ?? 0) % step == 0 ? shown(d) : '';
+            }
+        }
+
         // the values without ones of the axis, see utils/defaults.js
         const d = store.axisDefaults(i.position);
         const parts = [];
@@ -121,7 +143,7 @@ const axes = ctx => {
                 name: n,
                 position: i.position,
                 scale: s,
-                values: i.values ? tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.mapping) : (s.ticks ? s.ticks(ticks) : s.domain()),
+                values,
                 format,
                 labels: labelsOf && (d => {
                     const { text, ...attrs } = labelsOf(d);

@@ -213,7 +213,7 @@ const createFacet = (vis, initial) => {
 
         // the context of the plot types and the coordinate system, see
         // plots/index.js, the scales are only replaced with the facet
-        const { key, rows, scales, axis, stackOf, isStacked, stackOrder, scope, dims, innerWidth, innerHeight, margins, outer, cell, sharing } = facet;
+        const { key, rows, scales, axis, stackOf, isStacked, stackOrder, scope, dims, innerWidth, innerHeight, margins, outer, cell, sharing, slotKeys } = facet;
         ctx = {
             store,
             // the id of the facet on the page, e.g. of the ids of elements
@@ -237,6 +237,8 @@ const createFacet = (vis, initial) => {
             outer,
             cell,
             sharing,
+            // the distinct values of a mapping of all facets, see rowValue of layout.js
+            slotKeys,
             // the groups of a plot of the facet by its id, of this draw, e.g.
             // the bands of an area of labels inside them (plots/inside.js)
             groupsOf: id => {

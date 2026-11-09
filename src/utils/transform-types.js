@@ -74,6 +74,11 @@ const dateOnly = /^\d{4}(-\d{2}(-\d{2})?)?$/;
 // the aggregate of numbers (`op`): the sum, mean, least or largest one, the
 // number of them (0 of none), the median (the mean of the two middle ones of
 // an even number) or the first or the last one, none of no numbers
+const aggregateOps = ['sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last'];
+const checkOp = op => {
+    if (!aggregateOps.includes(op))
+        throw new Error(`aggregate: the op is one of ${aggregateOps.map(o => `'${o}'`).join(', ')}`);
+};
 const aggregateOf = (op, values) => {
     if (op == 'count')
         return values.length;
@@ -442,12 +447,19 @@ const foldRows = (t, { n, get, names }) => {
     const folded = new Set(columns);
     const [key, value] = [t.key ?? 'key', t.value ?? 'value'];
     const others = names.filter(c => !folded.has(c));
+    const notes = [];
+    // a column of the name of the key or the value is replaced by it
+    const replaced = others.filter(c => c == key || c == value);
+    if (replaced.length > 0)
+        notes.push(`the column${replaced.length > 1 ? 's' : ''} ${replaced.map(c => `'${c}'`).join(', ')} of the rows ${replaced.length > 1 ? 'are' : 'is'} replaced by the ${replaced.map(c => c == key ? 'key' : 'value').join(' and the ')} of the fold, see 'key' and 'value'`);
+    if (key == value)
+        notes.push(`the key and the value have the same name '${key}', the value replaces the key`);
     const rows = [];
     for (let i = 0; i < n; i++) {
         const row = Object.fromEntries(others.map(c => [c, get(i, c) ?? null]));
         columns.forEach(c => rows.push({ ...row, [key]: c, [value]: get(i, c) ?? null }));
     }
-    return { rows, notes: [] };
+    return { rows, notes };
 };
 
 // the rows of an aggregate with `rows`: a row per group, in the order of
@@ -455,14 +467,18 @@ const foldRows = (t, { n, get, names }) => {
 // of the group (as they are) and the aggregate (`as`), without `by` one row
 // of all rows, also without rows
 const aggregateRows = (t, { n, get, numbers, groups }) => {
+    checkOp(t.op);
     const by = [t.by ?? []].flat();
     const all = by.length == 0 ? [Array.from({ length: n }, (_, i) => i)] : groups;
+    const as = t.as ?? t.column;
     const rows = all.map(g => {
         const first = g.reduce((a, b) => Math.min(a, b), Infinity);
         const keys = Object.fromEntries(by.map(c => [c, get(first, c) ?? null]));
-        return { ...keys, [t.as ?? t.column]: aggregateOf(t.op, g.map(numbers).filter(v => v !== null)) };
+        return { ...keys, [as]: aggregateOf(t.op, g.map(numbers).filter(v => v !== null)) };
     });
-    return { rows, notes: [] };
+    // the aggregate replaces a column of the groups of its name
+    const notes = by.includes(as) ? [`the aggregate '${as}' replaces the column '${as}' of 'by', see 'as'`] : [];
+    return { rows, notes };
 };
 
 // the value of another row of the group in their order, `offset` rows
@@ -479,8 +495,14 @@ const windowOf = (t, context) => {
         throw new Error(`window: the op is one of 'lag', 'lead', 'diff', 'pct', 'sum', 'mean', 'min', 'max'`);
     const result = new Array(n).fill(null);
     const offset = Math.round(toNumber(t.offset) ?? 1);
+    // the values of lag and lead: numbers, other values as they are, e.g.
+    // texts or dates; numbers of the differences
+    const valueOf = t.op == 'lag' || t.op == 'lead' ? i => {
+        const v = context.values(i);
+        return toNumber(v) ?? (v === undefined || v === '' ? null : v);
+    } : numbers;
     groups.forEach(g => {
-        const values = g.map(numbers);
+        const values = g.map(valueOf);
         g.forEach((i, k) => {
             const j = t.op == 'lead' ? k + offset : k - offset;
             const other = j >= 0 && j < values.length ? values[j] : null;
@@ -500,6 +522,7 @@ const windowOf = (t, context) => {
 // group, e.g. the total of a country of all years; with `rows` a row per
 // group instead, see aggregateRows
 const aggregateOfGroups = (t, { n, numbers, groups }) => {
+    checkOp(t.op);
     const result = new Array(n).fill(null);
     groups.forEach(g => {
         const value = aggregateOf(t.op, g.map(numbers).filter(v => v !== null));
@@ -521,6 +544,19 @@ const replaces = t => t.type == 'aggregate' || (t.replace ?? t.type == 'fold');
 const rowColumns = t => t.type == 'bin' ? [t.start ?? 'start', t.end ?? 'end', t.as ?? 'count', ...[t.by ?? []].flat()]
     : t.type == 'fold' ? [t.key ?? 'key', t.value ?? 'value']
     : [t.as ?? t.column, ...[t.by ?? []].flat()];
+
+// the names of the columns of rows: of csv the ones of its header, of JSON
+// the ones of all rows (a row may lack some, e.g. a year without a value),
+// in the order they first appear
+const rowNames = rows => {
+    if (Array.isArray(rows.columns))
+        return rows.columns;
+    const names = new Set();
+    for (const r of rows)
+        for (const k in r)
+            names.add(k);
+    return [...names];
+};
 
 // the strings of a transform with the values of the globals
 const filled = (t, globals) => {
@@ -629,7 +665,7 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
             utc: inUtc,
             // the names of the columns of the rows and of the transforms
             // before, in their order, e.g. of a pattern of a fold
-            get names() { return [...new Set([...Object.keys(base[0] ?? {}), ...columns.keys()])]; },
+            get names() { return [...new Set([...rowNames(base), ...columns.keys()])]; },
         });
         if (producesRows(t)) {
             // the rows of the transform after the rows (the columns before

@@ -66,6 +66,94 @@ describe('dodged bars', () => {
     });
 });
 
+describe('the slots of a dodge dim without categories', () => {
+    test('the same slots in all facets: the values of all rows', async () => {
+        const rows = 'year,value,type,f\n2020,1,a,F1\n2020,2,b,F1\n2020,3,c,F1\n2020,3,a,F2\n2020,4,c,F2';
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical' }, y: 'value', c: 'type', f: 'f' },
+            facets: { by: 'f', cols: 2 },
+            marks: { type: 'bar', by: 'c', dodge: true, fill: '#333' },
+        };
+        const el = await mount({ def, data: rows });
+        const bars = rects(el).map(r => ({ f: r[itemOf][rowOf].f, c: r[itemOf][rowOf].c, x: num(r, 'x'), w: num(r, 'width') }));
+        const of = (f, c) => bars.find(b => b.f == f && b.c == c);
+        expect(of('F1', 'a').w).toBeCloseTo(of('F2', 'a').w);
+        // c is in the third slot of both facets, a gap of the slot of b in F2
+        expect(of('F2', 'c').x - of('F2', 'a').x).toBeCloseTo(of('F1', 'c').x - of('F1', 'a').x);
+        expect(errors).toEqual([]);
+    });
+
+    test('a label of a filtered mark at the slot of its bar', async () => {
+        const rows = 'year,value,type\n2020,1,a\n2020,2,b\n2020,3,c';
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical' }, y: 'value', c: 'type' },
+            marks: [{ type: 'bar', by: 'c', dodge: true, fill: '#333' }, { type: 'label', by: 'c', dodge: true, filter: { c: 'c' }, text: '@y', anchor: 'top' }],
+        };
+        const el = await mount({ def, data: rows });
+        const bar = rects(el).find(r => r[itemOf][rowOf].c == 'c');
+        expect(num(texts(el)[0], 'x')).toBeCloseTo(num(bar, 'x') + num(bar, 'width')/2);
+        expect(errors).toEqual([]);
+    });
+
+    test('a row without a value takes no slot', async () => {
+        const rows = 'year,value,type\n2020,1,a\n2020,2,\n2020,3,b';
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical' }, y: 'value', c: 'type' },
+            marks: { type: 'bar', dodge: 'c', fill: '#333' },
+        };
+        const el = await mount({ def, data: rows });
+        const bars = rects(el).filter(r => Number.isFinite(num(r, 'x')) && r.getAttribute('x') !== null);
+        // two slots of a and b, adjacent, each half of the band
+        const [a, b] = ['a', 'b'].map(c => bars.find(r => r[itemOf][rowOf].c == c));
+        expect(num(a, 'x') + num(a, 'width')).toBeCloseTo(num(b, 'x'));
+        expect(bars.filter(r => r[itemOf][rowOf].c === null).length).toBe(0);
+    });
+
+    test('dodged bars on dates of an interval: slots of 80% of the period', async () => {
+        const rows = 'year,value,type\n2020-01-01,1,a\n2020-01-01,2,b\n2021-01-01,3,a\n2021-01-01,4,b';
+        const def = {
+            dims: { x: { column: 'year', type: 'date', interval: 'year' }, y: { column: 'value', zero: true }, c: { column: 'type', categories: { a: {}, b: {} } } },
+            marks: [{ type: 'bar', by: 'c', dodge: true }, { type: 'label', by: 'c', dodge: true, text: '@y', anchor: 'top' }],
+        };
+        const el = await mount({ def, data: rows });
+        const bars = rects(el);
+        expect(bars.length).toBe(4);
+        const [a, b] = ['a', 'b'].map(c => bars.find(r => r[itemOf][rowOf].c == c));
+        expect(num(a, 'width')).toBeGreaterThan(10);
+        expect(num(a, 'x') + num(a, 'width')).toBeCloseTo(num(b, 'x'));
+        const next = bars.find(r => r[itemOf][rowOf].c == 'a' && r !== a);
+        // the two slots are 80% of the period of a year
+        expect(2*num(a, 'width')).toBeCloseTo(0.8*(num(next, 'x') - num(a, 'x')), 0);
+        const label = texts(el).find(t => t[itemOf][rowOf].c == 'b');
+        const bar = bars.find(r => r[itemOf][rowOf] === label[itemOf][rowOf]) ?? b;
+        expect(num(label, 'x')).toBeCloseTo(num(bar, 'x') + num(bar, 'width')/2);
+        expect(errors).toEqual([]);
+    });
+});
+
+describe('dodged stacked bars', () => {
+    test('a stack per slot of the dodge dim, not over all rows of the x, also of the domain', async () => {
+        const rows = 'year,value,type,sub\n2020,15,a,p\n2020,20,a,q\n2020,10,b,p\n2020,20,b,q';
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical' }, y: { column: 'value', zero: true }, c: { column: 'type', categories: { a: {}, b: {} } },
+                s: { column: 'sub', categories: { p: {}, q: {} } } },
+            marks: { type: 'bar', by: ['c', 's'], dodge: 'c', stack: true },
+        };
+        const el = await mount({ def, data: rows });
+        const bars = Object.fromEntries(rects(el).map(r => [`${r[itemOf][rowOf].c}${r[itemOf][rowOf].s}`, r]));
+        const bottom = r => num(r, 'y') + num(r, 'height');
+        // both stacks start at 0, q on top of p in its own slot
+        expect(bottom(bars.ap)).toBeCloseTo(bottom(bars.bp));
+        expect(bottom(bars.aq)).toBeCloseTo(num(bars.ap, 'y'));
+        expect(bottom(bars.bq)).toBeCloseTo(num(bars.bp, 'y'));
+        // the domain is the one of the highest stack (35), not of all (65)
+        const ticks = [...el.querySelectorAll('[data-mapping="y"] .tick text')].map(t => Number(t.textContent));
+        expect(Math.max(...ticks)).toBe(35);
+        expect(num(bars.ap, 'x') + num(bars.ap, 'width')).toBeCloseTo(num(bars.bp, 'x'));
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('labels with an anchor', () => {
     test('the text of a value beside its bar', async () => {
         const def = {
@@ -132,7 +220,20 @@ describe('cells', () => {
         // the colors of the values, darker of a larger one
         const fills = cells.map(r => r.getAttribute('fill'));
         expect(new Set(fills).size).toBe(4);
+        // next to each other, the bands have no padding
+        const xs = [...new Set(cells.map(r => num(r, 'x')))].sort((a, b) => a - b);
+        expect(xs[0] + num(cells[0], 'width')).toBeCloseTo(xs[1]);
         expect(errors).toEqual([]);
+    });
+
+    test('the padding of a scale of the dim stays', async () => {
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical', scale: { padding: 0.5 } }, y: { column: 'type', type: 'categorical' }, v: 'value' },
+            marks: { type: 'cell', fill: 'v' },
+        };
+        const cells = rects(await mount({ def, data }));
+        const xs = [...new Set(cells.map(r => num(r, 'x')))].sort((a, b) => a - b);
+        expect(xs[1] - xs[0]).toBeCloseTo(2*num(cells[0], 'width'));
     });
 });
 
@@ -159,6 +260,50 @@ describe('rules', () => {
         expect(at.length).toBeGreaterThan(0);
         expect(num(at[0], 'y1')).toBeCloseTo(num(at[0], 'y2'));
         expect(num(at[0], 'x2')).toBeGreaterThan(num(at[0], 'x1'));
+        expect(errors).toEqual([]);
+    });
+});
+
+describe('dodged rules and points', () => {
+    test('error bars and points on dodged bars: in the slot of their bar', async () => {
+        const rows = 'year,value,type,lo,hi\n2020,2,a,1,3\n2020,5,b,4,6\n2021,6,a,5,7\n2021,3,b,2,4';
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical' }, y: { column: 'value', domain: [0, 10] }, c: { column: 'type', categories: { a: {}, b: {} } }, lo: 'lo', hi: 'hi' },
+            marks: [
+                { type: 'bar', by: 'c', dodge: true },
+                { type: 'rule', by: 'c', dodge: true, y1: 'lo', y2: 'hi', stroke: '#333' },
+                { type: 'point', by: 'c', dodge: true, r: 2 },
+            ],
+        };
+        const el = await mount({ def, data: rows });
+        const bars = rects(el);
+        const rules = lines(el);
+        const points = [...el.querySelectorAll('g.vis-plot circle')].filter(r => r[itemOf]);
+        expect(rules.length).toBe(4);
+        expect(points.length).toBe(4);
+        bars.forEach(b => {
+            const row = b[itemOf][rowOf];
+            const center = num(b, 'x') + num(b, 'width')/2;
+            const rule = rules.find(l => l[itemOf][rowOf] === row);
+            // at the half pixel of the ticks
+            expect(Math.abs(num(rule, 'x1') - center)).toBeLessThanOrEqual(0.5);
+            const point = points.find(c => c[itemOf][rowOf] === row);
+            expect(num(point, 'cx')).toBeCloseTo(center);
+        });
+        expect(errors).toEqual([]);
+    });
+
+    test('a horizontal rule on dodged horizontal bars', async () => {
+        const rows = 'land,value,type,lo,hi\nW,2,a,1,3\nW,5,b,4,6';
+        const def = {
+            dims: { y: { column: 'land', type: 'categorical' }, x: { column: 'value', domain: [0, 10] }, c: { column: 'type', categories: { a: {}, b: {} } }, lo: 'lo', hi: 'hi' },
+            marks: [{ type: 'bar', by: 'c', dodge: true }, { type: 'rule', by: 'c', dodge: true, y: 'y', x1: 'lo', x2: 'hi' }],
+        };
+        const el = await mount({ def, data: rows });
+        rects(el).forEach(b => {
+            const rule = lines(el).find(l => l[itemOf][rowOf] === b[itemOf][rowOf]);
+            expect(Math.abs(num(rule, 'y1') - (num(b, 'y') + num(b, 'height')/2))).toBeLessThanOrEqual(0.5);
+        });
         expect(errors).toEqual([]);
     });
 });
@@ -198,12 +343,32 @@ describe('fixes of the review of the docs', () => {
         expect(mergeAll([{ dims: { facet: 'group' } }, { dims: { facet: { categories: { a: {} } } } }]).dims.facet).toEqual({ column: 'group', categories: { a: {} } });
     });
 
-    test('"auto" of all margins of a definition is measured, also over the defaults of the page', async () => {
+    test('"auto" of all margins of a definition is the same as no margins (the styles, the defaults, else measured)', async () => {
         const { prepareDef } = await import('@/utils/def');
         const { translate } = await import('@/utils/language');
         const { normalize } = await import('@/utils/normalize');
         const { plotTypes } = await import('@/plots');
         const def = prepareDef(normalize(translate({ margins: 'auto', dims: { x: 'a', y: 'b' }, marks: { type: 'line' } }), { plotTypes }));
-        expect(def.options.margins).toEqual({ top: 'auto', right: 'auto', bottom: 'auto', left: 'auto' });
+        expect(def.options.margins).toEqual({});
+    });
+});
+
+describe('the orientation of bars of a dim without a type', () => {
+    const rows = 'land,value\nWien,1\nTirol,3';
+    test('horizontal bars of a column of names beside a continuous x, also with the shorthands of its scale', async () => {
+        for (const y of ['land', { column: 'land', reverse: true }, { column: 'land', range: [0, 100] }, { column: 'land', scale: { order: 'ascending' } },
+            { column: 'land', scale: { padding: 0.1 } }]) {
+            const def = { dims: { y, x: { column: 'value', zero: true } }, marks: [{ type: 'bar' }, { type: 'label', text: '@x', anchor: 'end' }] };
+            const el = await mount({ def, data: rows });
+            expect(el.querySelector('.vis-error')).toBeNull();
+            const bars = rects(el);
+            expect(bars).toHaveLength(2);
+            // the length of the bar is its value, its label at the middle of its band
+            const [wien, tirol] = ['Wien', 'Tirol'].map(l => bars.find(b => b[itemOf][rowOf].y == l));
+            expect(num(tirol, 'width')).toBeCloseTo(3*num(wien, 'width'));
+            const label = texts(el).find(t => t[itemOf][rowOf].y == 'Wien');
+            expect(num(label, 'y')).toBeCloseTo(num(wien, 'y') + num(wien, 'height')/2);
+        }
+        expect(errors).toEqual([]);
     });
 });

@@ -1,6 +1,6 @@
 import { evaluate } from "@/utils/expr";
 import { directOf, rowOf } from "@/utils/draw";
-import { perRow, finite } from "@/plots/elements";
+import { perRow, finite, halo } from "@/plots/elements";
 import { warnOnce } from "@/utils/warn";
 
 const keyOf = (ctx, row) => String(row[ctx.store.def.geo.join]);
@@ -83,16 +83,21 @@ const positioned = (type, x, y, labels = false) => ({
         const join = joined(ctx);
         const atPole = labels && plot.place != 'centroid';
         const places = new Map();
+        // the halo of the texts (`halo`), as of the texts of other charts
+        const around = labels ? halo(plot) : {};
         const layer = perRow(groups, type, (v, row) => {
-            const { lon, lat, ...props } = v;
+            const { lon, lat, ...own } = v;
+            const props = { ...around, ...own };
             let p;
             if ('lon' in v && 'lat' in v) {
                 p = ctx.projection([lon, lat]);
             } else {
                 const f = featureOf(ctx, row);
                 join.add(row, f);
-                const place = f && atPole ? ctx.store.coord.labelPlace(ctx, f) : null;
-                p = place ? [place.x, place.y] : f && ctx.path.centroid(f);
+                // the room around the pole of the area also of a label at the
+                // centroid, of `fit`
+                const place = f && (atPole || (labels && plot.fit)) ? ctx.store.coord.labelPlace(ctx, f) : null;
+                p = place && atPole ? [place.x, place.y] : f && ctx.path.centroid(f);
                 if (place)
                     places.set(row, place);
             }

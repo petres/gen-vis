@@ -733,6 +733,40 @@ describe('ticks of null', () => {
     });
 });
 
+describe('labels of a horizontal axis which overlap', () => {
+    const years = Array.from({ length: 21 }, (_, i) => 2002 + i);
+    const rows = 'year,value\n' + years.map(y => `${y},1`).join('\n');
+    const labels = el => [...el.querySelectorAll('.vis-axis-bottom .tick text')].map(t => t.textContent);
+
+    test('every n-th label of the categories of a narrow chart, all of a wide one, the tick marks stay', async () => {
+        const def = { width: 300, height: 200, dims: { x: { column: 'year', type: 'categorical' }, y: 'value' }, marks: { type: 'bar' } };
+        const narrow = await mount({ def, data: rows });
+        const texts = labels(narrow);
+        expect(texts).toHaveLength(21);
+        const shown = texts.filter(Boolean);
+        expect(shown.length).toBeLessThan(21);
+        expect(shown[0]).toBe('2002');
+        // the same step between the ones shown
+        const step = texts.indexOf(shown[1]);
+        expect(texts.every((t, i) => (i % step == 0) == (t !== ''))).toBe(true);
+        const wide = await mount({ def: { ...def, width: 2000 }, data: rows });
+        expect(labels(wide).filter(Boolean)).toHaveLength(21);
+        expect(errors).toEqual([]);
+    });
+
+    test('of numbers of many ticks, not of values given or rotated labels', async () => {
+        const def = { width: 200, height: 200, dims: { x: { column: 'year', type: 'numeric', format: 'd', axis: { ticks: 21 } }, y: 'value' }, marks: { type: 'line' } };
+        const shown = labels(await mount({ def, data: rows })).filter(Boolean);
+        expect(shown.length).toBeGreaterThan(1);
+        expect(shown.length).toBeLessThan(labels(await mount({ def, data: rows })).length);
+        const given = { ...def, dims: { ...def.dims, x: { ...def.dims.x, axis: { values: years } } } };
+        expect(labels(await mount({ def: given, data: rows })).filter(Boolean)).toHaveLength(21);
+        const rotated = { ...def, dims: { ...def.dims, x: { ...def.dims.x, axis: { ticks: 21, rotate: 90 } } } };
+        expect(labels(await mount({ def: rotated, data: rows })).every(Boolean)).toBe(true);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('fixed ticks as a prop', () => {
     test('e.g. fewer of a narrow visualisation', async () => {
         const def = lineDef({ width: 400 });
@@ -851,6 +885,23 @@ describe('the props of the labels and of the line of an axis, the titles of face
 // has arrays of its own, which the writer does not take
 const parquetOf = columns => parquetWriteBuffer({ columnData: columns.map(c => c.type == 'STRING'
     ? { ...c, data: c.data.map(v => new Uint8Array(Buffer.from(v))) } : c) });
+
+describe('parquet: the columns read', () => {
+    test('a filter on a column which is no dim reads the column, of the chart and of a mark', async () => {
+        const data = parquetOf([
+            { name: 'year', data: [2020, 2021, 2020, 2021], type: 'INT32' },
+            { name: 'value', data: [1, 2, 3, 4], type: 'INT32' },
+            { name: 'region', data: ['W', 'W', 'T', 'T'], type: 'STRING' },
+            { name: 'kind', data: ['a', 'b', 'a', 'b'], type: 'STRING' },
+        ]);
+        const def = { dims: { x: { column: 'year', type: 'categorical' }, y: 'value' }, filter: "@region == 'W'",
+            marks: [{ type: 'bar' }, { type: 'label', filter: "@kind == 'b'", text: '@y' }] };
+        const el = await mount({ def, data });
+        expect(el.querySelectorAll('g.vis-plot.plot-0 rect')).toHaveLength(2);
+        expect([...el.querySelectorAll('g.vis-plot.plot-1 text')].map(t => t.textContent)).toEqual(['2']);
+        expect(errors).toEqual([]);
+    });
+});
 
 describe('the categories of every format of the data', () => {
     // the same rows as csv, JSON and parquet (the years as INT32, as of R arrow)

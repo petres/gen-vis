@@ -1,4 +1,4 @@
-export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, rawRow, rawIndex, rowResolver, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
+export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, rawOf, rawIndexOf, rowResolver, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { fillTemplate, inLanguage, sameValue, templateRefs, variants } from "@/utils/def";
@@ -191,9 +191,27 @@ const updateData = (rows, data, def, names, columns = null) => {
 };
 
 // the row of the data a prepared row was made of and its index, e.g. for
-// the columns of a filter which are no mappings, see rowResolver
-const rawRow = Symbol('rawRow');
-const rawIndex = Symbol('rawIndex');
+// the columns of a filter which are no mappings, see rowResolver: private
+// fields of the prepared rows, so a row is only its values (e.g. of a copy
+// or of toEqual) and is made as fast as a plain object (two properties
+// defined per row cost three times as much, e.g. 40 ms of 253k rows)
+class PreparedRow {
+    #raw;
+    #index;
+    constructor(raw, index) {
+        this.#raw = raw;
+        this.#index = index;
+    }
+    // undefined of other rows, e.g. of the data of a mark, also of a proxy of a row
+    static raw(row) {
+        return #raw in row ? row.#raw : undefined;
+    }
+    static index(row) {
+        return #index in row ? row.#index : undefined;
+    }
+}
+const rawOf = PreparedRow.raw;
+const rawIndexOf = PreparedRow.index;
 
 // maps the parsed rows to the mappings, e.g. column `share` to `y`, also the
 // columns of transforms
@@ -205,13 +223,9 @@ const prepareData = (data, def, columns = null) => {
     }));
 
     return sourceRows(data, columns).map((d, i) => {
-        const e = {};
-        mapping.forEach(c => {
+        const e = new PreparedRow(d, i);
+        for (const c of mapping)
             e[c.name] = c.convert(c.value(i));
-        });
-        // not enumerable, so a prepared row is only its values, e.g. of a copy of it
-        Object.defineProperty(e, rawRow, { value: d });
-        Object.defineProperty(e, rawIndex, { value: i });
         return e;
     })
 };
@@ -219,34 +233,45 @@ const prepareData = (data, def, columns = null) => {
 /**
  * The resolver of the names of an expression of a row, e.g. of a filter:
  * the value of a mapping of the prepared row, else of a column of the
- * transforms (`columns`) or of the data (see rawRow), else of the `scope`,
+ * transforms (`columns`) or of the data (see rawOf), else of the `scope`,
  * e.g. a global; as the functions of the row of `bind`.
  */
-const rowResolver = (mapping, columns, scope = {}) => name => {
-    if (typeof name == 'symbol')
-        return Object.hasOwn(scope, name) ? constant(scope[name]) : undefined;
-    if (Object.hasOwn(mapping, name)) {
-        // a date as the text of the data, e.g. "2022-06-01", so it compares
-        // with the texts of globals and of the definition, not as its timestamp
-        const m = mapping[name];
-        if (m?.type == 'date' && typeof m.column == 'string')
-            return row => row[rawRow] ? (row[rawRow][m.column] ?? row[name]) : row[name];
+const rowResolver = (mapping, columns, scope = {}, converted = null) => {
+    const resolve = name => {
+        if (typeof name == 'symbol')
+            return Object.hasOwn(scope, name) ? constant(scope[name]) : undefined;
+        // a value compared with a date as a date, see datesAsDates
+        if (converted?.has(name)) {
+            const { m, raw } = converted.get(name);
+            const value = bind(raw, resolve);
+            return value.constant ? constant(convert(m, value(), mapping)) : row => convert(m, value(row), mapping);
+        }
+        return resolveName(name);
+    };
+    const resolveName = rowName(mapping, columns, scope);
+    return resolve;
+};
+const rowName = (mapping, columns, scope) => name => {
+    // the value of the row, of a date its time, see datesAsDates
+    if (Object.hasOwn(mapping, name))
         return row => row[name];
-    }
     if (columns?.has(name)) {
         const values = columns.get(name);
-        return row => row[rawIndex] === undefined ? undefined : values[row[rawIndex]];
+        return row => {
+            const i = rawIndexOf(row);
+            return i === undefined ? undefined : values[i];
+        };
     }
     // a column of the data before a global of the same name, e.g. a column
     // `country` beside the global `country` of a select (`@globals.country`)
     if (Object.hasOwn(scope, name)) {
         const value = scope[name];
         return row => {
-            const raw = row?.[rawRow];
+            const raw = row ? rawOf(row) : undefined;
             return raw && Object.hasOwn(raw, name) ? raw[name] : value;
         };
     }
-    return row => row[rawRow]?.[name];
+    return row => rawOf(row)?.[name];
 };
 
 /**
@@ -265,11 +290,72 @@ const filterRows = (rows, spec, mapping, scope = {}, { columns = null, path = 'f
         const conditions = rowFilter(spec, mapping, scope, path, unknown);
         return conditions.length > 0 ? filter(rows, conditions) : rows;
     }
-    const test = bind(spec, rowResolver(mapping, columns, scope));
+    const { expression, converted } = datesAsDates(spec, mapping);
+    const test = bind(expression, rowResolver(mapping, columns, scope, converted));
     if (test.constant)
         return truthy(test()) ? rows : [];
     return rows.filter(row => truthy(test(row)));
 };
+
+/**
+ * An expression of the rows whose comparisons of a date dim compare dates:
+ * the other values of a comparison (`==`, `!=`, `<`, ...) of a reference to
+ * a mapping of dates, e.g. `"@date >= '2020-06-01'"` or `"@year == @selected"`,
+ * and the cases of a `match` of one are converted as the values of the
+ * mapping (timestamps, see convert), as the conditions of the object form,
+ * so dates of every format compare, e.g. of a transform, of JSON timestamps
+ * or "01.06.2020". `converted` are the names of the references which replace
+ * the values converted at the row, see rowResolver; kept per expression.
+ */
+const dateComparisons = ['==', '!=', '<', '<=', '>', '>='];
+const convertedOf = new WeakMap();
+const datesAsDates = (spec, mapping) => {
+    if (!isObject(spec) && !Array.isArray(spec))
+        return { expression: spec, converted: null };
+    const kept = convertedOf.get(spec);
+    if (kept?.mapping === mapping && kept.types === typesKey(mapping))
+        return kept.result;
+    const converted = new Map();
+    const dateOf = raw => {
+        const name = typeof raw == 'string' && raw.startsWith('@') ? raw.slice(1) : undefined;
+        return name !== undefined && Object.hasOwn(mapping, name) && mapping[name]?.type == 'date' ? mapping[name] : undefined;
+    };
+    const rewrite = raw => {
+        if (Array.isArray(raw))
+            return raw.map(rewrite);
+        if (!isOperator(raw))
+            return raw;
+        const op = Object.keys(raw)[0];
+        if (op == 'literal')
+            return raw;
+        const args = raw[op];
+        const list = Array.isArray(args) ? args : [args];
+        if (dateComparisons.includes(op)) {
+            const m = list.map(dateOf).find(Boolean);
+            if (m) {
+                return { [op]: list.map(a => {
+                    if (dateOf(a))
+                        return a;
+                    const name = `\0date${converted.size}`;
+                    converted.set(name, { m, raw: a });
+                    return `@${name}`;
+                }) };
+            }
+        }
+        if (op == 'match' && dateOf(list[0]) && isObject(list[1])) {
+            const m = dateOf(list[0]);
+            const cases = Object.fromEntries(Object.entries(list[1]).map(([k, v]) => [String(convert(m, k, mapping)), rewrite(v)]));
+            return { match: [list[0], cases, ...list.slice(2).map(rewrite)] };
+        }
+        return { [op]: Array.isArray(args) ? args.map(rewrite) : rewrite(args) };
+    };
+    const expression = rewrite(spec);
+    const result = { expression: converted.size > 0 || expression !== spec ? expression : spec, converted: converted.size > 0 ? converted : null };
+    convertedOf.set(spec, { mapping, types: typesKey(mapping), result });
+    return result;
+};
+// the types of the mappings, of the date ones, e.g. inferred after a change of the globals
+const typesKey = mapping => Object.keys(mapping).filter(n => mapping[n]?.type == 'date').join('\0');
 
 // false, 0, "", null, no value, NaN and empty lists are false, as the
 // conditions of expressions
@@ -479,7 +565,20 @@ const usedColumns = def => {
     ].map(expand);
     if (columns.includes(null))
         return null;
-    return [...new Set([...columns.flat(), ...elements.map(e => e.values?.column).filter(c => typeof c == 'string')])];
+    return [...new Set([...columns.flat(), ...elements.map(e => e.values?.column).filter(c => typeof c == 'string'),
+        ...variants(def).flatMap(expressionColumns)])];
+};
+
+// the names of the expressions of the rows a definition filters by, which
+// can be columns of the data, not only mappings, see rowResolver: of the
+// `filter` of the definition and of its plots, the conditions of the
+// stacked mappings and of the hover (conditions of 4.x, objects, name
+// mappings), e.g. "@region == 'W'" of a column `region`
+const expressionColumns = def => {
+    const expressions = [def.filter, ...[def.plot ?? []].flat().map(p => p?.filter),
+        ...Object.values(def.mapping ?? {}).map(m => m?.stacked), def.options?.hover?.filter];
+    return expressions.filter(e => e !== undefined && e !== null && typeof e != 'boolean' && !(isObject(e) && !isOperator(e)))
+        .flatMap(e => refNames(e)).filter(n => typeof n == 'string').map(n => n.split(':')[0]);
 };
 
 // the distinct values of a column of the rows (or of a transform, see

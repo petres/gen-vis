@@ -398,6 +398,9 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         // the classes of the page, e.g. of the styles of a card
         const classes = [...outer.classList].filter(c => c != 'vis-loading' && c != 'vis-outer');
         const exporting = await lazy.exporting();
+        // the width of `imageWidth` is the one of the chart, also of a
+        // definition with a width of its own, see staticCopy
+        const fixed = Boolean(props.imageWidth);
         const width = props.imageWidth == 'screen'
             ? outer.querySelector('.vis').getBoundingClientRect().width
             : Number(props.imageWidth || def.options.width || exporting.defaultWidth);
@@ -406,21 +409,21 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             shown.el.classList.add(...classes);
             return shown;
         };
-        return { exporting, mount, width };
+        return { exporting, mount, width, fixed };
     };
 
     // the visualisation as a PNG (a Blob) without the form elements, of a
     // copy of the width of the images, see utils/export.js
     const image = async () => {
-        const { exporting, mount, width } = await imageSource();
-        return await exporting.renderImage(outer, mount, { width });
+        const { exporting, mount, width, fixed } = await imageSource();
+        return await exporting.renderImage(outer, mount, { width, fixed });
     };
 
     // the visualisation as an SVG (a string) of the copy of the images, of
     // the `parts` chosen, see docs/export.md and utils/export-svg.js
     const exportSvg = async (options = {}) => {
-        const { exporting, mount, width } = await imageSource();
-        return await exporting.renderSvg(outer, mount, { ...options, width });
+        const { exporting, mount, width, fixed } = await imageSource();
+        return await exporting.renderSvg(outer, mount, { ...options, width, fixed });
     };
 
     // the name of a file, the one of the prop, e.g. `download`, or the

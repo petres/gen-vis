@@ -56,7 +56,11 @@ const dateScales = ['time', 'utc'];
 
 // a mapping (or a dim of 5.0) of categories by its parts: categories (see
 // hasCategories) or a band, point or ordinal scale
-const ofCategories = m => hasCategories(m) || (isObject(m.scale) && categoricalScales.includes(m.scale.type));
+// (a scale without a type of the parts of a scale of categories, e.g. the
+// order of the categories or the space between the bands, is one of them)
+const categoryScaleParts = ['order', 'groups', 'padding', 'step'];
+const ofCategories = m => hasCategories(m) || (isObject(m.scale) && (categoricalScales.includes(m.scale.type)
+    || (m.scale.type === undefined && categoryScaleParts.some(k => m.scale[k] !== undefined))));
 
 /**
  * Whether a mapping (or a dim of 5.0) is categorical before the types of
@@ -131,6 +135,9 @@ const typeOf = (m, name, used) => {
     if (ofCategories(m))
         return 'categorical';
     const type = isObject(m.scale) ? m.scale.type : undefined;
+    // a band or a point scale, also of its parts, e.g. the order of the categories
+    if (categoricalScales.includes(type) || (type === undefined && isObject(m.scale) && ['order', 'groups', 'padding', 'step'].some(k => m.scale[k] !== undefined)))
+        return 'categorical';
     if (dateScales.includes(type))
         return 'date';
     if (typeof type == 'string')

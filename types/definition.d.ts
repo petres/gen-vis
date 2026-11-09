@@ -18,7 +18,7 @@ export type Filter = `=${string}` | `@${string}` | Expression | Conditions | Non
  */
 export type None = null;
 /**
- * The space around the plot area of a facet in pixels, of the axes and their titles, e.g. { "left": 60 }; a side without one is the one of the styles of the page (--gen-vis-margin-left: 60px, also auto) or of its defaults (registerDefaults, e.g. of a house style), else measured ("auto") of the labels of the axes, their tick marks and their titles; an expression of totalWidth, e.g. steps of it.
+ * The space around the plot area of a facet in pixels, of the axes and their titles, e.g. { "left": 60 }; a side without one is the one of the styles of the page (--gen-vis-margin-left: 60px, also of rem, em or pt, or auto) or of its defaults (registerDefaults, e.g. of a house style), else measured ("auto") of the labels of the axes, their tick marks and their titles; an expression of totalWidth, e.g. steps of it, also of "auto" (an expression without a value is no side).
  */
 export type Margins =
     | {
@@ -403,11 +403,11 @@ export interface Transform {
      */
     align?: 'end' | 'center';
     /**
-     * fold: the columns to fold, a list of names or a pattern with a single `*`, e.g. "20*", the columns which match, in their order, templates of the globals.
+     * fold: the columns to fold, a list of names or a pattern with a single `*`, e.g. "20*", the columns of all rows which match, in their order, templates of the globals.
      */
     columns?: string | string[];
     /**
-     * aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows.
+     * aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows.
      */
     op?: 'sum' | 'mean' | 'min' | 'max' | 'count' | 'median' | 'first' | 'last' | 'lag' | 'lead' | 'diff' | 'pct';
     /**
@@ -935,7 +935,7 @@ export interface Axis {
      */
     tickSpacing?: number | `=${string}` | `@${string}` | Expression;
     /**
-     * Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or ["2004", "2008"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth.
+     * Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or ["2004", "2008"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth; all of them are labelled (other labels of a horizontal axis which overlap show every n-th one).
      */
     values?: unknown[] | `=${string}` | `@${string}` | Expression;
     /**
@@ -1341,11 +1341,11 @@ export interface Mark {
      */
     stack?: boolean | `=${string}` | `@${string}` | Expression | Conditions;
     /**
-     * Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position; texts: the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines.
+     * Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position, with `stack` a stack per slot; texts, points and rules (true or a dim): at the middle of the slot of their category, e.g. labels or error bars of dodged bars; texts (a number): the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines.
      */
     dodge?: boolean | string | number;
     /**
-     * Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y.
+     * Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y or of a continuous x (e.g. zero) and a y which is not.
      */
     orient?: `=${string}` | ('horizontal' | 'vertical');
     /**
@@ -1428,7 +1428,7 @@ export interface Mark {
               padding?: number;
           };
     /**
-     * geo:text: only the labels which fit into the area around their place (estimated of their characters and font size); texts of place in: true (default) leaves out a label without room in its band, false places it where it violates the least.
+     * geo:text: only the labels which fit into the area around the pole of their feature (estimated of their characters and font size), also of place centroid; texts of place in: true (default) leaves out a label without room in its band, false places it where it violates the least.
      */
     fit?: boolean;
     /**
@@ -1440,7 +1440,7 @@ export interface Mark {
      */
     ends?: `=${string}` | ('base' | 'open');
     /**
-     * Texts: a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the stroke attributes of the mark replace its stroke.
+     * Texts (also of maps): a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the stroke attributes of the mark replace its stroke.
      */
     halo?: boolean | number;
     /**

@@ -7,6 +7,7 @@ import { loadColors } from '@/utils/d3';
 import { createStore } from '@/store';
 import { layout } from '@/layout';
 import { textWidth } from '@/utils/measure';
+import { autoMargins } from '@/utils/margins';
 import { createGenVis } from '@/index.js';
 import { useDom, rendered, nextTick } from './dom.js';
 
@@ -161,5 +162,101 @@ describe('the margins of the styles of the page', () => {
         expect(left).toBe(70);
         expect(top).toBe(Math.ceil(label/2 + 2));
         wrapper.remove();
+    });
+
+    test('lengths of rem, em and pt in pixels, "margins": "auto" of the definition is no margins', async () => {
+        const left = async (value, def = {}) => {
+            const wrapper = document.body.appendChild(document.createElement('div'));
+            wrapper.style.setProperty('--gen-vis-margin-left', value);
+            const el = wrapper.appendChild(document.createElement('div'));
+            createGenVis(el, { def: { height: 200, dims: { x: { column: 'year', type: 'numeric' }, y: { column: 'value', type: 'numeric', zero: true } }, marks: { type: 'line' }, ...def }, data });
+            await rendered(el);
+            await nextTick();
+            const inner = el.querySelector('svg.vis-svg > g');
+            wrapper.remove();
+            return Number(/translate\(([\d.]+) /.exec(inner.getAttribute('transform'))[1]);
+        };
+        document.documentElement.style.fontSize = '16px';
+        expect(await left('4rem')).toBe(64);
+        expect(await left('30pt')).toBe(40);
+        expect(await left('55')).toBe(55);
+        expect(await left('70px', { margins: 'auto' })).toBe(70);
+        document.documentElement.style.fontSize = '';
+    });
+});
+
+describe('the ends of a horizontal axis of the final width', () => {
+    const long = 'Niederösterreich und Burgenland';
+    const bars = axis => ({ dims: { x: { column: 'name', type: 'categorical', ...(axis ? { axis } : {}) }, y: { column: 'value', zero: true } }, marks: { type: 'bar' } });
+    const of = async (def, width, rows) => {
+        const store = createStore();
+        await store.init({ def: { height: 200, ...def }, data: rows });
+        return { store, v: layout(store, width) };
+    };
+
+    test('rotated labels reach beyond the start of the plot area by their projection', async () => {
+        const rows = `name,value\n${long},1\nWien,2\nTirol,3`;
+        const { v } = await of(bars({ rotate: 45 }), 400, rows);
+        const f = v.facets[0];
+        const s = f.scales.x;
+        // text-anchor end at the tick, rotated counterclockwise: its width to the left
+        const reach = textWidth(long, '12px sans-serif')*Math.cos(Math.PI/4) - (s(long) + s.bandwidth()/2);
+        expect(f.margins.left).toBeGreaterThanOrEqual(reach);
+        // of a negative angle the last label to the right
+        const { v: w } = await of(bars({ rotate: -45 }), 400, `name,value\nWien,2\nTirol,3\n${long},1`);
+        const g = w.facets[0];
+        const t = g.scales.x;
+        expect(g.margins.right).toBeGreaterThanOrEqual(textWidth(long, '12px sans-serif')*Math.cos(Math.PI/4) - (g.innerWidth - t(long) - t.bandwidth()/2));
+    });
+
+    test('the margins of narrow charts are the ones of their final width: measured again, the same', async () => {
+        const rows = `name,value\nA,1\nB,2\n${long},3`;
+        for (const width of [200, 250, 300]) {
+            const { store, v } = await of(bars(), width, rows);
+            const f = v.facets[0];
+            const again = autoMargins(store, v.facets, { top: 'auto', right: 'auto', bottom: 'auto', left: 'auto' });
+            expect(again).toEqual(f.margins);
+            const s = f.scales.x;
+            // the last label ends in the chart, at its right edge at most
+            // (of 200 pixels it is wider than the half of the chart, the
+            // plot area keeps that)
+            if (width > 200)
+                expect(textWidth(long, '12px sans-serif')/2 - (f.innerWidth - s(long) - s.bandwidth()/2)).toBeLessThanOrEqual(f.margins.right);
+        }
+    });
+
+    test('a text at the end of a line, also of a narrow chart', async () => {
+        const rows = 'year,value\n2020,1\n2021,2';
+        const def = { dims: { x: { column: 'year', type: 'numeric', format: 'd' }, y: { column: 'value', zero: true } },
+            marks: [{ type: 'line' }, { type: 'text', select: 'last', text: 'Ein langer Name', dx: 4 }] };
+        for (const width of [220, 300, 600]) {
+            const { v } = await of(def, width, rows);
+            const f = v.facets[0];
+            const end = f.scales.x(2021) + 4 + textWidth('Ein langer Name', '12px sans-serif');
+            expect(end).toBeLessThanOrEqual(f.innerWidth + f.margins.right);
+            expect(end).toBeGreaterThan(f.innerWidth + f.margins.right - 4);
+        }
+    });
+});
+
+describe('"auto" and expressions of the margins', () => {
+    test('"margins": "auto" is the same as no margins, also with the defaults of the page', async () => {
+        const { registerDefaults } = await import('@/utils/defaults');
+        registerDefaults({ margins: { left: 50 } });
+        try {
+            expect(await margins({ margins: 'auto' })).toEqual(await margins({}));
+            expect((await margins({ margins: 'auto' })).left).toBe(50);
+            // a side of "auto" is measured
+            expect((await margins({ margins: { left: 'auto' } })).left).not.toBe(50);
+        } finally {
+            registerDefaults(null);
+        }
+    });
+
+    test('an expression of a side may be "auto", one without a value is no side', async () => {
+        const measured = await margins({}, 300);
+        expect(await margins({ margins: { left: "=if(@totalWidth > 500, 80, 'auto')" } }, 300)).toEqual(measured);
+        expect((await margins({ margins: { left: "=if(@totalWidth > 500, 80, 'auto')" } }, 600)).left).toBe(80);
+        expect(await margins({ margins: { left: '=if(@totalWidth > 500, 80)' } }, 300)).toEqual(measured);
     });
 });

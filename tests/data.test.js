@@ -170,6 +170,12 @@ describe('the columns a definition uses', () => {
         expect(usedColumns(engine)).toEqual(['year', 'value', 'land', 'share', 'jahr']);
     });
 
+    test('the names of the expressions of filters, stacks and the hover filter, which can be columns', () => {
+        const engine = translate({ dims: { x: 'year', y: { column: 'value', stacked: "@kind != 'total'" } }, filter: "@region == 'W'",
+            hover: { filter: "@flag == 1" }, marks: { type: 'line', filter: "@other:scaled > 2" } });
+        expect(usedColumns(engine)).toEqual(['year', 'value', 'region', 'other', 'kind', 'flag']);
+    });
+
     test('a template is a column of every value of its globals', () => {
         expect(usedColumns({
             globals: { values: 'twh', share: '', other: 'x' },

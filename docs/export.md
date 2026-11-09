@@ -109,7 +109,7 @@ unknown ones are an error):
 | `data` | the data instead of the one of the definition: rows, a CSV or JSON text, or bytes (e.g. parquet) as `{ "base64": "..." }` |
 | `dataUrl` | the url of the data instead of the one of the definition (parquet by its content) |
 | `baseUrl` | the url of the relative urls of `def` (a `<base>` of the page) |
-| `width` | the width of the whole image (with its padding): a number of CSS pixels (`800`, the default), `"800px"`, `"16cm"`, `"160mm"`, `"6in"` or `"480pt"`; the chart is laid out at exactly that width, nothing is scaled afterwards, so 8pt in it is 8pt in a document |
+| `width` | the width of the whole image (with its padding): a number of CSS pixels (`800`, the default), `"800px"`, `"16cm"`, `"160mm"`, `"6in"` or `"480pt"`; the chart is laid out at exactly that width, also a definition with a `width` of its own, nothing is scaled afterwards, so 8pt in it is 8pt in a document; without it a definition with a `width` is an image of that width and the padding |
 | `padding` | the space around the chart in CSS pixels, 0 or more, default 15 (the one of the PNG) |
 | `unit` | the unit of the size of the SVG (`px`, `cm`, `mm`, `in`), default the one of `width` (`px` of `pt`); a width of `"16cm"` is the attribute `width="16cm"` |
 | `css` | a stylesheet or a list of them: a text with a `{` is CSS, others are urls (loaded before the chart is drawn) |
@@ -183,7 +183,8 @@ npx gen-vis export a.json a.svg b.json b.svg b.png --parts legend,plot --css hou
 `npx gen-vis export --help` lists all options. They match the export page's
 options above:
 
-- `--width` (default 800), `--unit`, `--padding` (pixels, 0 or more,
+- `--width` (default the `width` of the definition and the padding,
+  else 800; it wins over the one of the definition), `--unit`, `--padding` (pixels, 0 or more,
   default 15), `--parts` (a comma-separated list), `--background` (`none`
   for a transparent one).
 - `--css` (a file or CSS text) and `--class`, both repeatable;

@@ -145,8 +145,8 @@ const definitions = {
 
     margins: anyOf([
         object(Object.fromEntries(['top', 'right', 'bottom', 'left'].map(side => [side, anyOf([ref('number'), constant('auto')])]))),
-        constant('auto', 'All sides measured.'),
-    ], 'The space around the plot area of a facet in pixels, of the axes and their titles, e.g. { "left": 60 }; a side without one is the one of the styles of the page (--gen-vis-margin-left: 60px, also auto) or of its defaults (registerDefaults, e.g. of a house style), else measured ("auto") of the labels of the axes, their tick marks and their titles; an expression of totalWidth, e.g. steps of it.'),
+        constant('auto', 'The same as no margins: the sides of the styles or the defaults of the page, else measured.'),
+    ], 'The space around the plot area of a facet in pixels, of the axes and their titles, e.g. { "left": 60 }; a side without one is the one of the styles of the page (--gen-vis-margin-left: 60px, also of rem, em or pt, or auto) or of its defaults (registerDefaults, e.g. of a house style), else measured ("auto") of the labels of the axes, their tick marks and their titles; an expression of totalWidth, e.g. steps of it, also of "auto" (an expression without a value is no side).'),
 
     hover: object({
         columns: array(string(), 'The dims of the hover beside the value of the position (its rows of their values, in this order), by default the dims the marks use, of their `by` and their positions (not the ones of the facets); a dim with a `hover` of its own is in it as well, [] only those.'),
@@ -207,7 +207,7 @@ const definitions = {
         gridShape: option(['circle', 'polygon'], 'The grid lines of a radial axis, circles or polygons through the ticks of the angle, e.g. of radar charts.'),
         ticks: anyOf([ref('number'), ref('none')], 'The number of the ticks, null for the ones of tickSpacing, e.g. of a parent; also `ticks` of the dim.'),
         tickSpacing: ref('number', 'Without ticks, a tick per this many pixels of the length of the axis, e.g. 80; also `tickSpacing` of the dim.'),
-        values: ofGlobals({ type: 'array' }, 'Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or ["2004", "2008"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth.'),
+        values: ofGlobals({ type: 'array' }, 'Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or ["2004", "2008"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth; all of them are labelled (other labels of a horizontal axis which overlap show every n-th one).'),
         format: text('A d3 number or time format.'),
         labels: object({
             by: anyOf([{ type: 'string' }, array(string())], 'The dims of categories whose props the labels have, of the categories of the row of the tick, a dim or a list of them, as `by` of a mark.'),
@@ -327,7 +327,7 @@ const definitions = {
     mark: describe(map(ref('propEntry'), 'A mark, a layer of the chart: its type and the dims of its channels (x, y, ...), the attributes of its elements (e.g. "stroke-width": 2, "fill": "@color" of its categories), expressions of the row, the names of the facet and the globals, nested props, e.g. d of a path.', {
         properties: {
             type: cases([[globalText, globalText], [{ type: 'string', pattern: registeredName }, anyOf([
-                choice(markNames, 'A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y, e.g. of a heatmap.'),
+                choice(markNames, 'A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap.'),
                 choice(markTypes, 'The full name of a type of a coordinate system, as the name without the prefix. The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations.'),
                 pattern('^[a-z][\\w-]*:[\\w-]+$', 'A registered plot type, see registerPlotType.'),
                 pattern('^[a-z][\\w-]*$', 'A registered plot type of the coordinate system without its prefix, see registerPlotType.'),
@@ -346,8 +346,8 @@ const definitions = {
             lon: ref('channel', 'Of a map: the dim of the longitude of a point or a text, or an expression of the row.'),
             lat: ref('channel', 'Of a map: the dim of the latitude, or an expression of the row.'),
             stack: anyOf([{ type: 'boolean' }, expressionText, expression, ref('conditions')], 'Stacks the values of the mark (bars, areas, arcs) by the groups of `by`, true all rows or the condition of the rows which are stacked, the others have their own value as start and end.'),
-            dodge: anyOf([{ type: 'boolean' }, { type: 'string' }, { type: 'number' }], 'Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position; texts: the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines.'),
-            orient: option(['horizontal', 'vertical'], 'Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y.'),
+            dodge: anyOf([{ type: 'boolean' }, { type: 'string' }, { type: 'number' }], 'Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position, with `stack` a stack per slot; texts, points and rules (true or a dim): at the middle of the slot of their category, e.g. labels or error bars of dodged bars; texts (a number): the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines.'),
+            orient: option(['horizontal', 'vertical'], 'Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y or of a continuous x (e.g. zero) and a y which is not.'),
             anchor: option(['start', 'end', 'top', 'bottom', 'center'], 'Labels: the text beside its position, after it (end, e.g. of horizontal bars), before it (start), above it (top), below it (bottom) or on it (center).'),
             filter: conditions('The rows of the mark, an expression of the row or the values of dims, see filter of the definition.'),
             curve: option(curveNames, 'The interpolation of the paths and areas between their points, monotoneX is smooth without overshooting the values, the closed ones connect the last point with the first one, e.g. of radar charts.', { default: 'linear' }),
@@ -368,10 +368,10 @@ const definitions = {
                     padding: number('The pixels around a text inside its band, besides the halo.', { default: 2 }),
                 }, 'Texts: a label per group inside the band of its categories of an area mark, at the place of the most room over the width of the text, at the positions of its rows (e.g. a filter of x).', { required: ['in'] }),
             ]),
-            fit: boolean('geo:text: only the labels which fit into the area around their place (estimated of their characters and font size); texts of place in: true (default) leaves out a label without room in its band, false places it where it violates the least.'),
+            fit: boolean('geo:text: only the labels which fit into the area around the pole of their feature (estimated of their characters and font size), also of place centroid; texts of place in: true (default) leaves out a label without room in its band, false places it where it violates the least.'),
             overlap: boolean('geo:text: false leaves out the labels which overlap the one of a larger area, so a map needs no list of the labels shown; texts of place in: false (default) places the labels apart, true lets them overlap.', { default: true }),
             ends: option(['base', 'open'], 'Of the stairs of a line of x0 and x1: down to the base at both ends (base) or from the first step to the last one (open), e.g. of shares.', { default: 'base' }),
-            halo: anyOf([{ type: 'boolean' }, { type: 'number' }], 'Texts: a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the stroke attributes of the mark replace its stroke.'),
+            halo: anyOf([{ type: 'boolean' }, { type: 'number' }], 'Texts (also of maps): a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the stroke attributes of the mark replace its stroke.'),
             object: string('geo:mesh: the object of the TopoJSON of the borders, the one of the geometry by default, e.g. the states above the districts.'),
             borders: option(['all', 'inner', 'outer'], 'geo:mesh: all borders, the ones between two features (inner) or the outline (outer).', { default: 'all' }),
             before: string('Right before the mark of this id, in its layer, e.g. lines above the bars but below the labels whose halo cuts them.'),
@@ -502,8 +502,8 @@ const definitions = {
         scale: number('The value of the base of an index (100 by default).'),
         size: integer('The number of the rows of the window of rolling and of the sums, means, least and largest values of window.', { minimum: 1 }),
         align: choice(['end', 'center'], 'The window of rolling and window: the rows before the row (end, by default) or around it.'),
-        columns: anyOf([{ type: 'string' }, array(string())], 'fold: the columns to fold, a list of names or a pattern with a single `*`, e.g. "20*", the columns which match, in their order, templates of the globals.'),
-        op: choice(['sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last', 'lag', 'lead', 'diff', 'pct'], 'aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows.'),
+        columns: anyOf([{ type: 'string' }, array(string())], 'fold: the columns to fold, a list of names or a pattern with a single `*`, e.g. "20*", the columns of all rows which match, in their order, templates of the globals.'),
+        op: choice(['sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last', 'lag', 'lead', 'diff', 'pct'], 'aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows.'),
         rows: boolean('aggregate: a row per group instead of a column, with the columns `by` and `as`, the rows replace the rows.', { default: false }),
         offset: integer('window: the number of rows before (lag, diff, pct) or after (lead) the row, 1 by default.', { minimum: 1 }),
         year: integer('The year of align, 2020 by default.'),
