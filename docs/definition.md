@@ -384,6 +384,16 @@ column:
   `q3` or `quantile` (of `p`) of the window of `size` rows, as the mean of
   `rolling` (`align`), e.g. a rolling median, or the sum of the last 7 days, `{"type": "window", "column": "cases", "order": "date", "op":
   "sum", "size": 7, "as": "week"}`.
+- `regression`: the fitted value of the least squares fit of the values of
+  `column` on the ones of the column `x` (numbers or dates) in the group, a
+  value of every row with an x, so a `line` of it draws the trend through
+  the range of x of the data, e.g. a trend line per group of a scatter plot,
+  `{"type": "regression", "column": "growth", "x": "gdp_pc", "by":
+  "region", "as": "trend"}`. `method`: `linear` (y = a + bx, the default),
+  `log` (y = a + b ln x, of the rows of x > 0), `exp` (y = a e^(bx), of the
+  values > 0, a constant rate of growth) or `poly` (a polynomial of
+  `degree` 2 or 3). A group of fewer points than coefficients has no
+  values.
 
 The strings of a transform are templates of the globals, e.g. `{base}`, the
 transforms are computed again when the globals change, from the first one

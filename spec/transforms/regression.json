@@ -1,0 +1,196 @@
+[
+  {
+    "name": "linear: the least squares line of the values on x per group, a value of every row with an x, also of one without a value; a group of one x has none",
+    "rows": [
+      {
+        "g": "a",
+        "x": "1",
+        "y": "1"
+      },
+      {
+        "g": "a",
+        "x": "2",
+        "y": "3"
+      },
+      {
+        "g": "a",
+        "x": "3",
+        "y": "2"
+      },
+      {
+        "g": "a",
+        "x": "4",
+        "y": ""
+      },
+      {
+        "g": "b",
+        "x": "5",
+        "y": "7"
+      },
+      {
+        "g": "b",
+        "x": "5",
+        "y": "9"
+      },
+      {
+        "g": "b",
+        "x": "",
+        "y": "1"
+      }
+    ],
+    "transform": {
+      "type": "regression",
+      "column": "y",
+      "x": "x",
+      "by": "g",
+      "as": "fit"
+    },
+    "columns": {
+      "fit": [
+        1.5,
+        2,
+        2.5,
+        3,
+        null,
+        null,
+        null
+      ]
+    }
+  },
+  {
+    "name": "dates as x (milliseconds), exp of positive values, log of positive x",
+    "rows": [
+      {
+        "d": "2020-01-01",
+        "y": "1",
+        "x": "1"
+      },
+      {
+        "d": "2020-01-03",
+        "y": "4",
+        "x": "2"
+      },
+      {
+        "d": "2020-01-05",
+        "y": "16",
+        "x": "3"
+      }
+    ],
+    "transform": [
+      {
+        "type": "regression",
+        "column": "y",
+        "x": "d",
+        "method": "exp",
+        "as": "e"
+      },
+      {
+        "type": "regression",
+        "column": "x",
+        "x": "y",
+        "method": "log",
+        "as": "l"
+      },
+      {
+        "type": "regression",
+        "column": "y",
+        "x": "d",
+        "as": "lin"
+      }
+    ],
+    "utc": [
+      "d"
+    ],
+    "columns": {
+      "e": [
+        1,
+        4,
+        16
+      ],
+      "l": [
+        1,
+        2,
+        3
+      ],
+      "lin": [
+        -0.5,
+        7,
+        14.5
+      ]
+    }
+  },
+  {
+    "name": "poly: a parabola of degree 2 through exact points, of large x",
+    "rows": [
+      {
+        "x": "1000",
+        "y": "3"
+      },
+      {
+        "x": "1001",
+        "y": "2"
+      },
+      {
+        "x": "1002",
+        "y": "3"
+      },
+      {
+        "x": "1003",
+        "y": "6"
+      },
+      {
+        "x": "1004",
+        "y": "11"
+      }
+    ],
+    "transform": {
+      "type": "regression",
+      "column": "y",
+      "x": "x",
+      "method": "poly",
+      "degree": 2,
+      "as": "fit"
+    },
+    "columns": {
+      "fit": [
+        3,
+        2,
+        3,
+        6,
+        11
+      ]
+    }
+  },
+  {
+    "name": "an unknown method is an error",
+    "rows": [
+      {
+        "x": "1",
+        "y": "1"
+      }
+    ],
+    "transform": {
+      "type": "regression",
+      "column": "y",
+      "x": "x",
+      "method": "loess",
+      "as": "f"
+    },
+    "error": "regression: the method is one of"
+  },
+  {
+    "name": "x is needed",
+    "rows": [
+      {
+        "x": "1",
+        "y": "1"
+      }
+    ],
+    "transform": {
+      "type": "regression",
+      "column": "y",
+      "as": "f"
+    },
+    "error": "regression: the column of the x values"
+  }
+]

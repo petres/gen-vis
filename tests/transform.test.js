@@ -193,7 +193,7 @@ describe('transforms', () => {
             "transform[0]: unknown global 'base' in the template",
             "transform[1].size: the number of the rows of the window is needed, e.g. 7",
             "transform[1].align: expected 'end' or 'center'",
-            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window'",
+            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window', 'regression'",
             "transform[2].column: the column of the values is needed",
         ]);
         expect(schema.definitions.transform.properties.type.enum).toEqual(Object.keys(transformTypes));
@@ -429,11 +429,31 @@ describe('fold, aggregate and window', () => {
         ]);
         // the keys the type does not read, e.g. a by of a calc, an order of a share
         expect(checks([{ type: 'calc', as: 'c', expr: 1, by: 'g' }, { type: 'share', column: 'value', order: 'date' }])).toEqual([
-            `transform[0].by: only of a transform of the type 'index', 'mean', 'share', 'rolling', 'cumulative', 'rank', 'bin', 'aggregate' or 'window'`,
+            `transform[0].by: only of a transform of the type 'index', 'mean', 'share', 'rolling', 'cumulative', 'rank', 'bin', 'aggregate', 'window' or 'regression'`,
             `transform[1].order: only of a transform of the type 'rolling', 'cumulative', 'aggregate' or 'window'`,
         ]);
         // templates of the globals are values of their type
         expect(checks([{ type: 'window', column: 'value', op: '{op}', offset: '{k}', size: '{k}' }], { op: 'diff', k: '1' })).toEqual([]);
+    });
+
+    test('regression: the fitted values per group, validateDef of its x, as, method and degree', () => {
+        const checks = transform => validateDef({ mapping: { y: { column: 'value', type: 'numeric' } }, plot: { type: 'svg:rect', props: {} }, transform }).filter(w => w.startsWith('transform'));
+        // gas 10, 30, 40 at 2019-01-01, 2019-07-01, 2020-01-01: the dates are milliseconds
+        const fit = column({ type: 'regression', column: 'value', x: 'date', by: 'type', as: 'fit' }, 'fit');
+        expect(fit.slice(0, 3).map(v => Math.round(v*100)/100)).toEqual([11.72, 26.58, 41.69]);
+        // oil: two values, the line through them, also at the date without a value
+        expect(fit.slice(3).map(v => Math.round(v*100)/100)).toEqual([5, 25.17, 15]);
+        expect(checks([{ type: 'regression', column: 'value' }])).toEqual([
+            `transform[0].x: the column of the x values is needed, e.g. "x": "gdp"`,
+            `transform[0].as: the name of the column of the fitted values is needed, e.g. "trend"`,
+        ]);
+        expect(checks([{ type: 'regression', column: 'value', x: 'date', as: 'f', method: 'lin', degree: 2 }])).toEqual([
+            `transform[0].method: unknown method 'lin', expected one of 'linear', 'log', 'exp', 'poly'`,
+            `transform[0].degree: only of the method 'poly', e.g. "method": "poly", "degree": 2`,
+        ]);
+        expect(checks([{ type: 'regression', column: 'value', x: 'date', as: 'f', method: 'poly', degree: 4 }])).toEqual([`transform[0].degree: the degree of the polynomial, 2 or 3`]);
+        expect(checks([{ type: 'regression', column: 'value', x: 'date', as: 'f', method: 'poly', degree: 3 }])).toEqual([]);
+        expect(transformColumns([{ type: 'regression', column: 'value', x: 'date', by: 'type', as: 'f' }])).toEqual(['value', 'type', 'date']);
     });
 
     test('the columns of the data: the folded ones, unknown of a pattern', () => {

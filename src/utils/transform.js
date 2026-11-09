@@ -12,7 +12,7 @@ import { refNames } from "@/utils/expr";
  */
 
 // the types of the transforms, e.g. for validateDef
-const transformNames = ['year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window'];
+const transformNames = ['year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window', 'regression'];
 
 const list = transforms => [transforms ?? []].flat();
 
@@ -60,7 +60,7 @@ const columnsOf = transforms => {
         const folded = t.type == 'fold' ? [t.columns ?? []].flat() : [];
         if (folded.some(c => typeof c == 'string' && c.includes('*')))
             unknown = true;
-        [t.column, ...[t.by ?? []].flat(), t.order, t.weight, t.type == 'random' ? t.key : undefined,
+        [t.column, ...[t.by ?? []].flat(), t.order, t.weight, t.type == 'random' ? t.key : undefined, t.type == 'regression' ? t.x : undefined,
             ...Object.keys(t.base ?? {}), ...(t.expr === undefined ? [] : refNames(t.expr)), ...folded]
             .filter(c => typeof c == 'string' && !own.has(c)).forEach(c => used.add(c));
         // the columns of the rows of a bin or a fold are its own

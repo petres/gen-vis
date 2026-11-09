@@ -270,7 +270,7 @@ export interface GenVisDefinition {
  */
 export interface Transform {
     /**
-     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, median, q1, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max, median, ...) of a window of `size` rows.
+     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, median, q1, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max, median, ...) of a window of `size` rows, regression: the value of the least squares fit of `column` on `x` in the group (`method`), e.g. a trend line.
      */
     type:
         | 'year'
@@ -288,7 +288,8 @@ export interface Transform {
         | 'bin'
         | 'fold'
         | 'aggregate'
-        | 'window';
+        | 'window'
+        | 'regression';
     /**
      * The column of the values, a template of the globals, of a lookup the one of the keys.
      */
@@ -441,6 +442,18 @@ export interface Transform {
      * The year of align, 2020 by default.
      */
     year?: number;
+    /**
+     * regression: the column of the x values, numbers or dates.
+     */
+    x?: string;
+    /**
+     * regression: the curve fitted, linear (y = a + bx), log (y = a + b ln x, of x > 0), exp (y = a e^(bx), of y > 0) or poly (a polynomial of `degree`).
+     */
+    method?: 'linear' | 'log' | 'exp' | 'poly';
+    /**
+     * regression: the degree of the polynomial of the method poly, 2 by default.
+     */
+    degree?: number;
 }
 /**
  * An operator, an object of one key, the operator, and its arguments, e.g. { "*": ["@innerWidth", 0.5] } or { "steps": ["@totalWidth", { "0": 220, "550": 250 }] }; the string syntax writes it as "=@innerWidth * 0.5", see spec/expressions.md of the package.

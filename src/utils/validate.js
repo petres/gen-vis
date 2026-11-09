@@ -842,6 +842,7 @@ const transformKeys = {
     fold: ['columns', 'key', 'value', 'replace'],
     aggregate: ['column', 'as', 'by', 'op', 'p', 'rows', 'order'],
     window: ['column', 'as', 'by', 'order', 'op', 'p', 'size', 'offset', 'align'],
+    regression: ['column', 'as', 'by', 'x', 'method', 'degree'],
 };
 // 'a', 'b' or 'c'
 const or = names => names.length < 2 ? list(names) : `${list(names.slice(0, -1))} or ${show(names.at(-1))}`;
@@ -956,6 +957,19 @@ const checkTransforms = ({ def, globals, warn, rows }) => {
                 warn(`${path}.p`, `the probability of the quantile is needed, a number from 0 to 1, e.g. 0.9`);
             else if (t.p !== undefined && t.op != 'quantile' && !isTemplate(t.op))
                 warn(`${path}.p`, `only of the op 'quantile', e.g. "op": "quantile", "p": 0.9`);
+        }
+        // the x of a regression, its method and the degree of a polynomial
+        if (t.type == 'regression') {
+            if (typeof t.x != 'string')
+                warn(`${path}.x`, `the column of the x values is needed, e.g. "x": "gdp"`);
+            if (typeof t.as != 'string')
+                warn(`${path}.as`, `the name of the column of the fitted values is needed, e.g. "trend"`);
+            if (t.method !== undefined && !['linear', 'log', 'exp', 'poly'].includes(t.method) && !isTemplate(t.method))
+                warn(`${path}.method`, `unknown method '${t.method}'${choices(t.method, ['linear', 'log', 'exp', 'poly'])}`);
+            if (t.degree !== undefined && t.method != 'poly' && !isTemplate(t.method))
+                warn(`${path}.degree`, `only of the method 'poly', e.g. "method": "poly", "degree": 2`);
+            else if (t.degree !== undefined && ![2, 3].includes(t.degree) && !isTemplate(t.degree))
+                warn(`${path}.degree`, `the degree of the polynomial, 2 or 3`);
         }
         if (t.type == 'lookup') {
             if (typeof t.data != 'string' || t.data.includes('{'))

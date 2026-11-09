@@ -320,6 +320,96 @@ const transformTypes = {
     },
 };
 
+/**
+ * The least squares fit of the values of `column` (y) on the ones of the
+ * column `x` (numbers, or dates as milliseconds) of the rows of the group,
+ * the fitted value of every row with an x (also of one without a y), e.g.
+ * the trend line of a scatter plot drawn as a line through the data's x
+ * range: `method` linear (y = a + bx, the default), log (y = a + b ln x, of
+ * x > 0), exp (y = a e^(bx), the fit of ln y, of y > 0) or poly (a
+ * polynomial of `degree` 2 or 3). x is centered and scaled for the fit, so
+ * dates and large numbers are fitted as small ones. A group of fewer
+ * points than coefficients (or of one x) has no values.
+ */
+const regressionMethods = ['linear', 'log', 'exp', 'poly'];
+const regression = (t, { n, get, numbers, groups, utc }) => {
+    const method = t.method ?? 'linear';
+    if (!regressionMethods.includes(method))
+        throw new Error(`regression: the method is one of ${regressionMethods.map(m => `'${m}'`).join(', ')}`);
+    if (typeof t.x != 'string')
+        throw new Error(`regression: the column of the x values ('x') is needed`);
+    const degree = method == 'poly' ? Math.round(toNumber(t.degree) ?? 2) : 1;
+    if (!(degree >= 1 && degree <= 3))
+        throw new Error(`regression: the degree of a poly is 2 or 3`);
+    const xOf = comparable(Array.from({ length: n }, (_, i) => get(i, t.x)), utc);
+    // x of the fit: ln x of log, nothing of x <= 0; y: ln y of exp
+    const fx = i => {
+        const x = xOf(get(i, t.x));
+        return typeof x != 'number' || !Number.isFinite(x) || (method == 'log' && x <= 0) ? null : (method == 'log' ? Math.log(x) : x);
+    };
+    const fy = i => {
+        const y = numbers(i);
+        return y === null || (method == 'exp' && y <= 0) ? null : (method == 'exp' ? Math.log(y) : y);
+    };
+    const result = new Array(n).fill(null);
+    groups.forEach(g => {
+        const points = g.map(i => [fx(i), fy(i)]).filter(([x, y]) => x !== null && y !== null);
+        if (points.length < degree + 1)
+            return;
+        const mean = points.reduce((a, [x]) => a + x, 0)/points.length;
+        const spread = Math.sqrt(points.reduce((a, [x]) => a + (x - mean)**2, 0)/points.length);
+        if (!(spread > 0))
+            return;
+        const z = x => (x - mean)/spread;
+        // the normal equations of the coefficients of 1, z, z², ...
+        const k = degree + 1;
+        const a = Array.from({ length: k }, () => new Array(k + 1).fill(0));
+        points.forEach(([x, y]) => {
+            const powers = Array.from({ length: k }, (_, j) => z(x)**j);
+            for (let r = 0; r < k; r++) {
+                for (let c = 0; c < k; c++)
+                    a[r][c] += powers[r]*powers[c];
+                a[r][k] += powers[r]*y;
+            }
+        });
+        const coefficients = solve(a);
+        if (!coefficients)
+            return;
+        g.forEach(i => {
+            const x = fx(i);
+            if (x === null)
+                return;
+            const v = coefficients.reduce((sum, c, j) => sum + c*z(x)**j, 0);
+            result[i] = method == 'exp' ? Math.exp(v) : v;
+        });
+    });
+    return result;
+};
+
+// the solution of the linear equations of an augmented matrix (Gauss with
+// partial pivoting), null of a singular one, e.g. of too few distinct x
+const solve = a => {
+    const k = a.length;
+    for (let c = 0; c < k; c++) {
+        let pivot = c;
+        for (let r = c + 1; r < k; r++)
+            if (Math.abs(a[r][c]) > Math.abs(a[pivot][c]))
+                pivot = r;
+        if (Math.abs(a[pivot][c]) < 1e-12)
+            return null;
+        [a[c], a[pivot]] = [a[pivot], a[c]];
+        for (let r = c + 1; r < k; r++) {
+            const f = a[r][c]/a[c][c];
+            for (let j = c; j <= k; j++)
+                a[r][j] -= f*a[c][j];
+        }
+    }
+    const x = new Array(k).fill(0);
+    for (let r = k - 1; r >= 0; r--)
+        x[r] = (a[r][k] - a[r].slice(r + 1, k).reduce((sum, v, j) => sum + v*x[r + 1 + j], 0))/a[r][r];
+    return x;
+};
+
 // a number in [0, 1) of a text, the same of every run and implementation:
 // the 32 bits of FNV-1a of its UTF-16 code units, mixed by the finalizer of
 // MurmurHash3, divided by 2^32
@@ -560,6 +650,7 @@ transformTypes.bin = binRows;
 transformTypes.fold = foldRows;
 transformTypes.aggregate = aggregateOfGroups;
 transformTypes.window = windowOf;
+transformTypes.regression = regression;
 const producesRows = t => t.type == 'bin' || t.type == 'fold' || (t.type == 'aggregate' && Boolean(t.rows));
 const replaces = t => t.type == 'aggregate' || (t.replace ?? t.type == 'fold');
 const rowColumns = t => t.type == 'bin' ? [t.start ?? 'start', t.end ?? 'end', t.as ?? 'count', ...[t.by ?? []].flat()]

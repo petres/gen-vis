@@ -280,6 +280,10 @@ their rows replace the rows or follow them. Fixtures in `spec/transforms`.
   `quantile` of `p` (0 to 1), interpolated as the `median` (R-7), e.g. the
   box and the whiskers of a box plot; `median` also of a window, a rolling
   median.
+- The transform `regression`: the least squares fit of `column` on `x`
+  (numbers or dates) per group, `linear`, `log`, `exp` or `poly` (of
+  `degree` 2 or 3), the fitted value of every row, e.g. trend lines of a
+  scatter plot drawn as a `line` of the fitted column.
 
 ### Schema, check and migration
 
