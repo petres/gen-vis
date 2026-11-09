@@ -159,17 +159,19 @@ The fixtures are `normalize/*.json`.
   ones (the order of the attributes of the elements).
 
 The default props (`src/plots/defaults.js`), `color` is
-`{"or": ["@color", "currentColor"]}`:
+`{"or": ["@color", "currentColor"]}` (the color of the text without
+categories), `fill` is `{"or": ["@color", "#4269D0"]}` (the first of the
+default colors of categories):
 
 | Type | Defaults |
 |------|----------|
 | `cartesian:line` | `stroke`: color, `fill`: `none`, `d`: `{x: "@x:scaled", y: "@y:scaled"}` |
-| `cartesian:area` | `fill`: color, `d`: `{x: "@x:scaled", y0: "@y:scaled:0", y1: "@y:scaled"}` |
-| `cartesian:bar` | `fill`: color, `x`: `@x:scaled`, `y1`: `@y:scaled`; with `x1` (horizontal): `fill`, `x1`: `@x:scaled`, `y`: `@y:scaled` |
+| `cartesian:area` | `fill`: fill, `d`: `{x: "@x:scaled", y0: "@y:scaled:0", y1: "@y:scaled"}` |
+| `cartesian:bar` | `fill`: fill, `x`: `@x:scaled`, `y1`: `@y:scaled`; with `x1` (horizontal): `fill`, `x1`: `@x:scaled`, `y`: `@y:scaled` |
 | `svg:circle` | `cx`: `@x:scaled`, `cy`: `@y:scaled`, `r`: 3, `fill`: color |
 | `svg:text` | `x`: `@x:scaled`, `y`: `@y:scaled`, `fill`: `@color` |
 | `polar:line` | `stroke`: color, `fill`: `none`, `d`: `{angle: "@x:scaled", radius: "@y:scaled"}` |
-| `polar:area` | `fill`: color, `d`: `{angle: "@x:scaled", innerRadius: "@y:scaled:0", outerRadius: "@y:scaled"}` |
-| `polar:arc` | `fill`: color |
+| `polar:area` | `fill`: fill, `d`: `{angle: "@x:scaled", innerRadius: "@y:scaled:0", outerRadius: "@y:scaled"}` |
+| `polar:arc` | `fill`: fill |
 | `polar:circle` | `angle`: `@x:scaled`, `radius`: `@y:scaled`, `r`: 3, `fill`: color |
 | `polar:text` | `angle`: `@x:scaled`, `radius`: `@y:scaled`, `fill`: `@color` |

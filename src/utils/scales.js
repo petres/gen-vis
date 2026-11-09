@@ -1,4 +1,4 @@
-export { makeScale, bandCenter, intervalOf, centerOf };
+export { makeScale, bandCenter, intervalOf, centerOf, logProblems };
 
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/expr";
@@ -176,6 +176,32 @@ const logValues = values => {
     return positive.length ? positive : values.filter(v => v < 0);
 };
 
+/**
+ * The problems of a numeric mapping of a log scale (log, sequentialLog,
+ * divergingLog, not symlog) of the rows as texts of a warning, none of
+ * another scale: values without a position (0, the ones of the other sign,
+ * see logValues), which are not drawn, `zero` (a log scale has no 0) and
+ * stacks (they start at 0).
+ */
+const logProblems = (name, mapping, rows) => {
+    const type = mapping?.scale?.type;
+    if (mapping?.type != 'numeric' || typeof type != 'string' || !isLog(type) || mapping.scale.of !== undefined)
+        return [];
+    const values = rows.map(r => r[name]).filter(v => typeof v == 'number' && !Number.isNaN(v));
+    const kept = new Set(logValues(values));
+    const dropped = values.filter(v => !kept.has(v));
+    const problems = [];
+    if (dropped.length > 0) {
+        const shown = [...new Set(dropped)].slice(0, 3).join(', ');
+        problems.push(`a ${type} scale has no position of 0 and of values of the other sign, ${dropped.length} of ${values.length} values of dim '${name}' are not drawn (${shown}${new Set(dropped).size > 3 ? ', ...' : ''}), e.g. "type": "symlog" has them`);
+    }
+    if (mapping.scale.zero === true)
+        problems.push(`a ${type} scale has no 0, \`zero\` is ignored`);
+    if (mapping.stacked !== undefined && mapping.stacked !== false)
+        problems.push(`stacks start at 0, which a ${type} scale has no position of, the stacked marks are not drawn`);
+    return problems;
+};
+
 // the values of a mapping in the rows, continuous ones sorted for the lookup
 // of the nearest value (sorted when they are read, e.g. not for a scale
 // which only needs the extent), and their extent, of stacked values
@@ -262,9 +288,14 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     // 100, around `center` it is symmetric, e.g. of 0 of changes
     // a value of the definition as the ones of the data, e.g. a date or a category as a string
     const valueOf = v => v === null || v === undefined ? null : convert(mapping, v, mappings);
+    // `zero`: the domain of the data includes 0 and an end at 0 is not
+    // extended, e.g. the base of bars and areas, not of a log scale (no 0)
+    const zero = scaleDef.zero === true && mapping.type == 'numeric' && !log;
     if (continuous(mapping)) {
         let included = scaleDef.include === undefined ? []
             : [evaluate(scaleDef.include, scope)].flat().map(valueOf).filter(v => v !== null && v !== undefined);
+        if (zero)
+            included.push(0);
         if (log)
             included = included.filter(v => extent ? Math.sign(v) == Math.sign(extent[0]) : v > 0);
         // without values, e.g. of empty rows, the extent of the included
@@ -332,6 +363,12 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     } else if (extent && !['ordinal', 'band', 'point'].includes(scaleDef.type)) {
         domain = fixed();
         // the first and the last entry, a diverging domain has a middle one
+        // (of a domain of two entries or none it is taken from the data)
+        const diverging = scaleDef.type.toLowerCase().startsWith('diverging');
+        if (diverging)
+            domain = domain.length == 3 ? domain : [domain[0] ?? null, null, domain.at(-1) ?? null];
+        else if (domain.length < 2)
+            domain = [domain[0] ?? null, null];
         const last = domain.length - 1;
 
         // without fixed values the domain of a position is extended a bit, not
@@ -341,14 +378,17 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         // replaces, a fixed end stays, e.g. 0 of bars; `domainRel` adds to
         // all ends
         const pad = scaleDef.pad === undefined ? null : [scaleDef.pad].flat().map(Number);
-        const domainRel = pad ? [domain[0] === null ? -pad[0] : 0, domain[last] === null ? pad[1] ?? pad[0] : 0] : scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic || period || !scaleDef.orientation ? [0, 0] :
-            [domain[0] === null ? -0.02 : 0, domain[last] === null ? 0.02 : 0]);
+        const domainRel = [...(pad ? [domain[0] === null ? -pad[0] : 0, domain[last] === null ? pad[1] ?? pad[0] : 0] : scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic || period || !scaleDef.orientation ? [0, 0] :
+            [domain[0] === null ? -0.02 : 0, domain[last] === null ? 0.02 : 0]))];
         const domainAbs = scaleDef.domainAbs ?? [0, 0];
 
         // the ends taken from the data, `nice` rounds them
         const fromData = [domain[0] === null, domain[last] === null];
         domain[0] ??= extent[0];
         domain[last] ??= extent[1];
+        // an end at 0 of `zero` stays, as a fixed one, e.g. bars start at the axis
+        if (zero)
+            [0, last].forEach((i, j) => domainRel[j] = fromData[j] && domain[i] === 0 ? 0 : domainRel[j]);
 
         // relative to the positions, e.g. of a log or a sqrt scale 2% of the
         // height below and above, values of a log scale do not get below 0
@@ -371,6 +411,17 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
                 domain[0] = lo;
             if (fromData[1])
                 domain[last] = hi;
+        }
+
+        // the middle of a diverging domain: `center`, else the middle of the
+        // ends (of a log scale in its positions, e.g. 10 of 1 and 100), the
+        // ends reach it, e.g. [0, 0, 9] of [null, 0, null] and 2 to 9, so the
+        // domain is in order and no value is without a color
+        if (diverging) {
+            const c = scaleDef.center === undefined ? null : valueOf(evaluate(scaleDef.center, scope));
+            domain[1] ??= c ?? from((to(domain[0]) + to(domain[2]))/2);
+            domain[0] = Math.min(domain[0], domain[1]);
+            domain[2] = Math.max(domain[2], domain[1]);
         }
 
         // the nearest value with data

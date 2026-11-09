@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import { useDom, mount, errors, nextTick } from './dom.js';
 
 useDom();
@@ -147,5 +147,29 @@ describe('polar plots', () => {
         const circles = [...el2.querySelectorAll('g.vis-mark circle')].map(point);
         expect(circles.length).toBeGreaterThan(0);
         expect(circles.every(([x, y]) => x == 0 && y == 0)).toBe(true);
+    });
+});
+
+describe('a pie of negative values', () => {
+    test('a negative value is left out of the stacks around the circle, with a warning', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        try {
+            const def = { coord: 'polar', width: 300, height: 300, margins: { top: 0, right: 0, bottom: 0, left: 0 },
+                dims: { x: 'b', c: { column: 'c', legend: {} } }, marks: { type: 'arc', by: 'c', stack: true } };
+            const el = await mount({ def, data: 'b,c\n5,A\n-2,B\n3,C' });
+            const d = [...el.querySelectorAll('g.vis-mark path')].map(p => p.getAttribute('d'));
+            // A 5/8 of the circle from the top, B none, C the rest to the top
+            expect(d).toHaveLength(3);
+            expect(d[1]).not.toMatch(/A/);
+            const end = d[0].match(/A[^A]*?,(-?[\d.]+),(-?[\d.]+)L/).slice(1).map(Number);
+            const start = d[2].match(/^M(-?[\d.]+),(-?[\d.]+)A/).slice(1).map(Number);
+            expect(end).toEqual(start);
+            expect(Math.atan2(end[0], -end[1])).toBeCloseTo(-2*Math.PI*3/8, 3);
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining(
+                `dims.x: 1 negative values of dim 'x' are left out of the stacks around the circle (e.g. the slices of a pie), a slice has no negative size`));
+        } finally {
+            warn.mockRestore();
+            errors.length = 0;
+        }
     });
 });

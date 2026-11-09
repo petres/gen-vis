@@ -83,6 +83,15 @@ const parsed = (text, path) => {
     }
 };
 
+// a dim of a log scale (of its own or of the dim of its scale, `of`), which
+// has no 0, not a symlog one
+const isLogDim = (dims, name) => {
+    const d = dims[name];
+    const of = isObject(d?.scale) && typeof d.scale.of == 'string' && Object.hasOwn(dims, d.scale.of) ? dims[d.scale.of] : d;
+    const type = isObject(of?.scale) ? of.scale.type : undefined;
+    return typeof type == 'string' && /log$/i.test(type) && !/symlog$/i.test(type);
+};
+
 // a reference to a value of a row of a dim, e.g. "@x:scaled"
 const ref = (dim, kind = 'scaled') => `@${dim}:${kind}`;
 
@@ -92,8 +101,8 @@ const categoryParts = categoryKeys.filter(k => k != 'fromData');
 const categoricalScales = ['band', 'point', 'ordinal'];
 // a dim of numbers or dates by its parts (of the definition, the rows are
 // not known): its type, a continuous scale, a domain from the data
-// (`"zero": true`, an open end) or the parts of a continuous scale
-const continuousParts = ['nice', 'include', 'center', 'pad'];
+// (an open end) or the parts of a continuous scale (e.g. `"zero": true`)
+const continuousParts = ['nice', 'include', 'center', 'pad', 'zero'];
 const isContinuous = d => isObject(d) && (d.type == 'numeric' || d.type == 'date' || (d.type === undefined && !isCategorical(d)
     && ((isObject(d.scale) && typeof d.scale.type == 'string' && !categoricalScales.includes(d.scale.type))
         || [d.domain, d.scale?.domain].some(v => Array.isArray(v) && v.includes(null))
@@ -121,13 +130,9 @@ const dim = (raw, name) => {
         own.forEach(k => delete m[k]);
         return t;
     };
-    // the shorthands of the scale: `zero` is a domain from 0
-    if (m.zero !== undefined) {
-        if (m.zero && m.domain === undefined && scale?.domain === undefined)
-            m.domain = [0, null];
-        delete m.zero;
-    }
-    m.scale = into(['pad', 'include', 'reverse', 'range'], scale, (t, k, v) => t[k] = v);
+    // the shorthands of the scale: `zero` includes 0 in the domain, see
+    // makeScale of utils/scales.js (false: not the 0 of the base of bars)
+    m.scale = into(['zero', 'pad', 'include', 'reverse', 'range'], scale, (t, k, v) => t[k] = v);
     if (m.scale === undefined)
         delete m.scale;
     // the shorthands of the axis
@@ -266,9 +271,10 @@ const anchors = {
  * A mark as a plot of the engine: its channels as the props of the scaled
  * positions, `dims` are the mappings (implicit dims of columns are added),
  * `stacks` collects the stacked value dims (`{ dim, by, condition }`),
- * `coord` is the coordinate system.
+ * `bases` the value dims of bars and areas from their base (0 of the scale,
+ * see translate), `coord` is the coordinate system.
  */
-const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) => {
+const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], bases = new Set()) => {
     const { p, props } = markParts(raw, i);
     const implicit = (channel, column) => {
         if (!implicitDims.some(d => d.path == `marks[${i}].${channel}`))
@@ -330,8 +336,22 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
     const bands = new Set();
     // the position of a dim, of a categorical one the center of its band
     const at = (c, kind = 'scaled') => c ? (c.fixed === undefined && kind == 'scaled' && (centered(c.dim) || bands.has(c.dim)) ? ref(c.dim, 'scaled:center') : c.value) : undefined;
-    // `group` of dodged stacked bars: a stack per slot, e.g. per year and type
-    const stacked = (dim, by, condition, group) => stacks.push({ dim, by, condition: condition === undefined ? true : condition, group });
+    // `group` of dodged stacked bars: a stack per slot, e.g. per year and type,
+    // the stacks start at 0, the base
+    const stacked = (dim, by, condition, group) => {
+        bases.add(dim);
+        stacks.push({ dim, by, condition: condition === undefined ? true : condition, group });
+    };
+    // the base of a bar or an area of the value of a dim without a start of
+    // its own: 0 (the domain includes it, see translate), of an area on a
+    // log scale, which has no 0, the start of the domain (bars: the end of
+    // the domain nearest to 0, see baseOf of plots/cartesian.js)
+    const based = c => {
+        if (c?.dim === undefined)
+            return undefined;
+        bases.add(c.dim);
+        return isLogDim(dims, c.dim) ? ref(c.dim, 'scaled:min') : undefined;
+    };
     const dodgeGroup = dodge === undefined || dodge === false ? undefined : (dodge === true ? p.by[0] : dodge);
     // the colors of the categories, of a dim of a scale (e.g. of a color
     // scale) its scaled value, of a categorical dim the color of its category
@@ -392,7 +412,8 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
                     d.y1 ??= ref(y.dim, 'end:scaled');
                 } else if (y) {
                     d.y1 ??= y.value;
-                    d.y0 ??= y0 ? y0.value : `@${y.dim}:scaled:0`;
+                    if (d.y0 === undefined)
+                        d.y0 = y0 ? y0.value : based(y) ?? `@${y.dim}:scaled:0`;
                 }
             }
             props.d = d;
@@ -410,6 +431,8 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
                     props.y1 = y.value;
                     if (y0)
                         props.y0 = y0.value;
+                    else
+                        based(y);
                 }
             } else if (horizontal) {
                 if (y)
@@ -423,6 +446,8 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
                         props.x1 = x.value;
                         if (x0)
                             props.x0 = x0.value;
+                        else
+                            based(x);
                     }
                 }
                 if (dodge && y) {
@@ -443,6 +468,8 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
                         props.y1 = y.value;
                         if (y0)
                             props.y0 = y0.value;
+                        else
+                            based(y);
                     }
                 }
                 if (dodge && x) {
@@ -540,7 +567,8 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
                     d.outerRadius ??= ref(y.dim, 'end:scaled');
                 } else {
                     d.outerRadius ??= y.value;
-                    d.innerRadius ??= `@${y.dim}:scaled:0`;
+                    if (d.innerRadius === undefined)
+                        d.innerRadius = based(y) ?? `@${y.dim}:scaled:0`;
                 }
             }
             props.d = d;
@@ -743,7 +771,8 @@ const translated = raw => {
             delete d.fromData;
     });
     const stacks = [];
-    const marks = rawMarks.map((m, i) => mark(m, i, dims, coord, stacks, used, implicit));
+    const bases = new Set();
+    const marks = rawMarks.map((m, i) => mark(m, i, dims, coord, stacks, used, implicit, bases));
     if (isObject(facets) && def.facets.scales == 'shared')
         facets.scales = sharedScales(dims);
     used.forEach(n => {
@@ -762,6 +791,20 @@ const translated = raw => {
         // the stacks of dodged bars are the ones of each slot, see stackGroups of layout.js
         if (typeof group == 'string')
             m.stackGroups = [...new Set([...(m.stackGroups ?? []), group])];
+    });
+    // the value dims of bars and areas from 0 (their default base, also of
+    // stacks) include 0, so the bars start at the axis, not below the plot
+    // (`zero` of the scale, an end at 0 is not extended), not of a log scale
+    // (the bars start at the start of its domain), not with `"zero": false`
+    // of the dim; the ends of a fixed domain stay
+    bases.forEach(n => {
+        const own = dims[n];
+        const name = isObject(own?.scale) && typeof own.scale.of == 'string' && Object.hasOwn(dims, own.scale.of) ? own.scale.of : n;
+        const m = dims[name];
+        if (!isObject(m) || m.scale === false || m.scale === null || isLogDim(dims, name) || isCategorical(m))
+            return;
+        if (!isObject(m.scale) || m.scale.zero === undefined)
+            m.scale = { ...(isObject(m.scale) ? m.scale : {}), zero: true };
     });
     // the dims of the hover: the columns given, else the dims of the marks' `by`
     const inHover = columns !== undefined ? [columns].flat() : grouped;

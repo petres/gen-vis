@@ -666,7 +666,11 @@
                 },
                 "center": {
                     "$ref": "#/definitions/domainValue",
-                    "description": "The domain taken from the data is symmetric around this value, e.g. 0 of changes."
+                    "description": "The domain taken from the data is symmetric around this value, e.g. 0 of changes; the middle of a diverging scale."
+                },
+                "zero": {
+                    "type": "boolean",
+                    "description": "The domain taken from the data includes 0 and an end at 0 is not extended (by pad), e.g. of the base of bars, which include it by default (false: not), not of a log scale; also `zero` of the dim."
                 },
                 "closed": {
                     "if": { "type": "string", "pattern": "^=" },
@@ -1256,7 +1260,10 @@
                     ],
                     "description": "The domain of the scale, see scale.domain, e.g. [0, null]."
                 },
-                "zero": { "type": "boolean", "description": "The domain starts at 0, e.g. of bars (a domain [0, null])." },
+                "zero": {
+                    "type": "boolean",
+                    "description": "The domain includes 0 and an end at 0 is not extended, e.g. of bars, negative values below it; bars and areas from 0 include it by default, false keeps the domain of the data; also `scale.zero`."
+                },
                 "nice": {
                     "anyOf": [{ "type": "boolean" }, { "type": "number" }],
                     "description": "Rounds the ends of the domain of the scale, see scale.nice."

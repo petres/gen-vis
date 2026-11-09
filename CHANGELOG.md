@@ -390,6 +390,50 @@ Migration notes, to check by hand after `gen-vis migrate`:
   beside its CSS pixels. `gen-vis --version`. `@preschen/gen-vis/check`
   exports `parseData`, `dataFormat` and `loadTransforms`.
 
+### Scales: the base of bars, diverging and log scales
+
+- The base of bars and areas is in the domain: the value dim of bars and
+  areas from 0 (no `y0`, or `x0` of horizontal ones; also stacked ones,
+  histograms, polar areas and roses) includes 0 (`scale.zero`), so bars
+  start at the axis. Without `zero` the domain was the extent of the data,
+  the bars started at 0 below the plot, over the axis, and of 5 and 10 the 5
+  was a sliver. `"zero": false` of the dim keeps the domain of the data; of
+  a fixed domain without 0 the bars start at the edge of the plot area
+  (they ran beyond it). Charts of 4.x without a domain from 0 change so (in
+  the examples only the toggled states of `axis/balance` and
+  `recipes/pyramid`, whose bars started outside the plot).
+- `zero: true` includes 0 (`scale.zero`: an end of the data at 0 is not
+  extended), it was the domain `[0, null]`: negative values are drawn below
+  0 now (they hung below the plot), only negative ones end at 0. The same
+  of the `"domain": [0, null]` of 4.x, which `gen-vis migrate` writes as
+  `zero`; of values from 0 the charts are the same.
+- Bars on a log scale, which has no 0, start at the end of the domain
+  nearest to 0, areas at its start (`@y:scaled:min`); they were not drawn
+  (NaN).
+- Log scales (`log`, `sequentialLog`, `divergingLog`) warn once per dim of
+  the values they have no position of (0, and the ones of the other sign),
+  with their count, which are not drawn (silently NaN before); `zero` and
+  stacks on a log scale warn in the console and in `validateDef`/`gen-vis
+  check` (a log scale has no 0, `symlog` has).
+- Stacks around the circle (the slices of a pie, `arc` with `stack` of the
+  angle) leave out negative values, with a warning: a slice has no
+  negative size (they were stacked backwards from 0 and overlapped the
+  others, the pie was not a full circle).
+- The default fill of bars, areas and arcs without a category color is
+  `#4269D0`, the first of the default colors of categories (`observable10`),
+  as a single category of `by` gets; it was the color of the text
+  (`currentColor`), black blocks. `"fill": "currentColor"` is the color of
+  the text. Lines, rules and points keep the color of the text. No example
+  draws such a mark, their images are the same.
+- A diverging scale (`diverging`, `divergingLog`, ...) without a domain of
+  three entries has the middle `center`, else the middle of the ends of the
+  data (of a log one in its positions); the nulls of a domain of three
+  entries are taken from the data, and the ends reach the middle, e.g.
+  `[0, 0, 9]` of `[null, 0, null]` and the values 2 to 9. The middle was
+  never filled (also with the documented `center: 0`): NaN, black cells. Its
+  legend shows the colors of the domain only, e.g. the upper half of
+  `[0, 0, 9]`, from 0 at its start.
+
 ### Fixes of the review of the engine
 
 - `dodge` with `stack`: a stack per slot of the dodge dim (was one over
