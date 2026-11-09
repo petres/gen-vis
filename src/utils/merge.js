@@ -14,6 +14,11 @@ export { deepMerge, mergeAll };
 const isPlain = v => v !== null && typeof v == 'object' && !Array.isArray(v);
 const clone = v => Array.isArray(v) ? v.map(clone) : isPlain(v) ? Object.fromEntries(Object.entries(v).map(([k, e]) => [k, clone(e)])) : v;
 const mergeable = v => Array.isArray(v) || isPlain(v);
+// an entry of an object, also one named __proto__ (e.g. a category of the
+// data), which an assignment would make the prototype of the object
+const put = (o, k, v) => k === '__proto__'
+    ? Object.defineProperty(o, k, { value: v, writable: true, enumerable: true, configurable: true })
+    : (o[k] = v, o);
 
 const deepMerge = (target, source, options = {}) => {
     // `isOperator(value)`: an object which is an expression, e.g. { "match": [...] }, a leaf of the merge
@@ -32,8 +37,8 @@ const deepMerge = (target, source, options = {}) => {
         const leaf = leafMerge?.(Object.hasOwn(target, k) ? target[k] : undefined, source[k], options);
         return leaf === undefined ? clone(source[k]) : leaf;
     };
-    Object.keys(target).forEach(k => result[k] = Object.hasOwn(source, k) ? merged(k) : clone(target[k]));
-    Object.keys(source).filter(k => !Object.hasOwn(target, k)).forEach(k => result[k] = merged(k));
+    Object.keys(target).forEach(k => put(result, k, Object.hasOwn(source, k) ? merged(k) : clone(target[k])));
+    Object.keys(source).filter(k => !Object.hasOwn(target, k)).forEach(k => put(result, k, merged(k)));
     return result;
 };
 

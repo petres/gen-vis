@@ -269,8 +269,13 @@ const bindNode = (n, resolve) => {
             const entries = n.kind == 'list' ? n.items.map((e, i) => [i, bindNode(e, resolve)]) : n.entries.map(([k, e]) => [k, bindNode(e, resolve)]);
             const make = n.kind == 'list' ? row => entries.map(([, f]) => f(row)) : row => {
                 const o = {};
-                for (const [k, f] of entries)
-                    o[k] = f(row);
+                for (const [k, f] of entries) {
+                    // a key __proto__ is an entry, not the prototype
+                    if (k === '__proto__')
+                        Object.defineProperty(o, k, { value: f(row), writable: true, enumerable: true, configurable: true });
+                    else
+                        o[k] = f(row);
+                }
                 return o;
             };
             const f = entries.every(([, e]) => e.constant) ? constant(make()) : make;

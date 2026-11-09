@@ -456,6 +456,17 @@ Migration notes, to check by hand after `gen-vis migrate`:
   maps, coordinate system, locale); the mount of the 52 examples: 1370 ->
   1195 ms (4.1.0: 1173 ms).
 
+### Fixes of the data (review of the release)
+
+- The categories of the data (`fromData: "rows"`, the default of a
+  legend, and `"order": "rows"`) are in the order of the rows also if they
+  are integers: years 2024, 2023, Total were 2022, 2023, 2024, Total, and
+  "01", "1" changed places; this is the order of the legend, the stacks and
+  the colors. (Listed `categories` are the keys of a JSON object, whose
+  integer keys JavaScript puts first and ascending; `order` sets another
+  order.) A category `__proto__` keeps its props and rows (was lost), also
+  as a key of a merged part and of an object of an expression.
+
 ### Package and builds
 
 - The deep merge is the package's own (`src/utils/merge.js`, the semantics
