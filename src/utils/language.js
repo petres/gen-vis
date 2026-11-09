@@ -305,7 +305,9 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
         const base = kind == 'bar' || kind == 'area' || kind == 'rule';
         const x = base && kind == 'rule' ? (raw.x !== undefined ? valued('x') : ch('x')) : ch('x');
         const y = base && kind == 'rule' ? (raw.y !== undefined ? valued('y') : ch('y')) : (kind == 'bar' && raw.y !== undefined ? valued('y') : ch('y'));
-        const x0 = base ? valued('x0') : given('x0'), x1 = given('x1'), y0 = base ? valued('y0') : given('y0'), y1 = given('y1');
+        // the ends of a rule: a number is a value on the scale of its axis, as x0 and y0 of bars
+        const end = (name, axis) => kind == 'rule' ? valued(name, axis) : given(name, axis);
+        const x0 = base ? valued('x0') : given('x0'), x1 = end('x1', 'x'), y0 = base ? valued('y0') : given('y0'), y1 = end('y1', 'y');
         take('x', 'y', 'x0', 'x1', 'y0', 'y1');
         if (kind == 'line' || kind == 'area') {
             const d = isObject(props.d) ? { ...props.d } : {};
@@ -385,7 +387,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
                 }
             }
         } else if (kind == 'rule') {
-            const x2 = given('x2', 'x'), y2 = given('y2', 'y');
+            const x2 = end('x2', 'x'), y2 = end('y2', 'y');
             take('x2', 'y2');
             // at the center of the band of a categorical position, as bars and points
             if (raw.y !== undefined && raw.x === undefined) {

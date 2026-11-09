@@ -33,7 +33,9 @@ builds and dependencies. The design is in `docs/design-5.0.md`.
   "stack": true, "opacity": 0.7}`. The channels `x`, `y` (by default the
   dims `x` and `y`), `x0`, `x1`, `y0`, `y1`, `x2`, `y2`, `lon` and `lat`
   name dims, columns of the data (a dim of the column is added), numbers
-  (a value on the scale of bars and rules, e.g. a target) or expressions;
+  (a value on the scale of the base and the value of bars and areas and of
+  every channel of rules, also their ends `x1`, `x2`, `y1`, `y2`, e.g. a
+  target or a rule from 0; pixels otherwise) or expressions;
   the translation writes the props of the scaled positions which a 4.x
   definition wrote by hand (`"cx": "@x:scaled"`, `"y0":
   "@y:start:scaled"`). A dim a channel names beside the dim of its axis
@@ -231,7 +233,10 @@ their rows replace the rows or follow them. Fixtures in `spec/transforms`.
   form element whose cases and default are the ones of the earlier, the
   patches applied in their order as in 4.x; a patch of a part of a mapping
   given as its column keeps the column, null of a patch of its scale,
-  axis, legend or hover is `false`. The conditions of filters become expressions (a
+  axis, legend or hover is `false`. A rule at `@x:scaled:0` is `"x1": 0`
+  (a value on the scale), a number of 4.x (pixels) at a channel of a value
+  on the scale is `"=literal(10)"`; a position at the start of the band of
+  a category (`@y:scaled` of a dim of a type categorical) stays an attribute. The conditions of filters become expressions (a
   reference is `@globals.<name>`), objects of values stay; the objects of
   expressions are written in the string syntax. The chart stays the same:
   the margins stay, `"hover": {"columns": []}` and `"symbol": null` keep

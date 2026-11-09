@@ -1137,9 +1137,11 @@ row:
   (`"scale": {"of": "y"}`), so its values are positions of the axis and
   they are in its domain.
 - A number is a value on the scale of the axis of the channel
-  (`@y:scaled:100`) of `x0` and `y0` of bars, areas and rules, of `y` of
-  bars and of `x` and `y` of rules, e.g. the base of bars or a rule at a
-  target: `{"type": "rule", "y": 100}`; other numbers are pixels.
+  (`@y:scaled:100`) of `x0` and `y0` of bars and areas, of `y` of bars and
+  of every channel of rules (`x`, `y` and the ends `x1`, `x2`, `y1`,
+  `y2`), e.g. the base of bars, a rule at a target, `{"type": "rule", "y":
+  100}`, or one from 0, `"x1": 0`; other numbers are pixels, an expression
+  of pixels at these channels is e.g. `"=literal(10)"`.
 - An expression is the position in pixels, e.g. `"y": "@group:scaled +
   @jitter * @group:bandwidth"` of the points of a strip plot within the
   band of their category, or `"x": "=@innerWidth + 10"` of texts in a

@@ -372,7 +372,14 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
             }
         } else if (kind == 'rule') {
             ['x', 'y', 'x1', 'x2', 'y1', 'y2'].forEach(k => {
-                if (attrs[k] !== undefined)
+                const s = scaledOf(attrs[k]);
+                // the position at a category: the center of its band, the start stays an attribute
+                if ((k == 'x' || k == 'y') && s && categorical(s.dim) && (s.kind == 'scaled' || s.kind == 'scaled:center')) {
+                    if (s.kind == 'scaled:center') {
+                        delete attrs[k];
+                        setChannel(k, `@${s.dim}:scaled`, k == 'x' ? 'x' : undefined);
+                    }
+                } else if (attrs[k] !== undefined)
                     setChannel(k, take(k), k == 'x' ? 'x' : undefined);
             });
         }
@@ -426,7 +433,11 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
     }
     if (prefix == 'cartesian' && kind == 'line' && attrs.fill === 'none')
         delete attrs.fill;
-    Object.entries(attrs).forEach(([k, v]) => mark[k] = texts(v, k, true));
+    // a number of 4.x (pixels) at a channel which 5.0 reads as a value on
+    // the scale of its axis (the base of bars and areas, the value of bars,
+    // the positions and the ends of rules) is a literal, an expression of pixels
+    const valued = prefix != 'cartesian' ? [] : kind == 'rule' ? ['x', 'y', 'x1', 'x2', 'y1', 'y2'] : kind == 'bar' ? ['x0', 'y0', 'y'] : kind == 'area' ? ['x0', 'y0'] : [];
+    Object.entries(attrs).forEach(([k, v]) => mark[k] = valued.includes(k) && typeof v == 'number' ? `=literal(${v})` : texts(v, k, true));
     if (highlight !== undefined)
         mark.highlight = texts(highlight, 'highlight', true);
     if (others !== undefined)

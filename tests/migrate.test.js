@@ -297,4 +297,9 @@ describe('patches, rules and texts of 4.x, drawn as 4.x drew them', () => {
                 radio('b', [{ value: 'b1' }, { value: 'b2', patch: { mapping: { y: { axis: null } } } }]),
             ] });
     });
+    test('a rule from a value of the scale: at the value, not at pixels', () => {
+        drawsAs4({ $schema: S4, mapping: { x: { column: 'v', domain: [-10, 10] }, y: { column: 'land', categories: { a: {}, b: {} } } },
+            plot: { type: 'rule', props: { y: '@y:scaled', x1: '@x:scaled:0', x2: '@x:scaled' } } });
+        drawsAs4({ $schema: S4, mapping: { x: 'year', y: 'v' }, plot: { type: 'rule', props: { x1: '@x:scaled:2000', x2: '@x:scaled:2010', y: '@y:scaled:100' } } });
+    });
 });
