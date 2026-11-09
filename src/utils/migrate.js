@@ -7,6 +7,7 @@ import { schemaUrl } from '@/utils/version';
 import { expressionKeys, optionKeys, translate, colorDims, dimOf as languageDim } from '@/utils/language';
 import { resolve, namesOfGlobals } from '@/utils/resolve';
 import { mergeAll } from '@/utils/def';
+import { isCategorical } from '@/utils/normalize';
 
 /**
  * A definition of gen-vis 4 as one of gen-vis 5 (see docs/definition.md and
@@ -236,7 +237,7 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
         else if (c !== fallback)
             mark[name] = c;
     };
-    const categorical = d => isObject(dims[d]) && ['categories', 'scheme', 'common', 'order', 'fromData', 'ranks'].some(q => dims[d][q] !== undefined);
+    const categorical = d => isCategorical(dims[d]);
     // the channel of a position of an element at a value, of a categorical
     // dim the center of its band (`@x:scaled:center`), the start of the band
     // (`@x:scaled`) stays an attribute

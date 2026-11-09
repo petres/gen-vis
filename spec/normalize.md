@@ -143,10 +143,6 @@ The fixtures are `normalize/*.json`.
   numeric `linear`, date `time`, categorical `band` of a position of the
   bars of a plot (`cartesian:bar`, `polar:arc`, a prop of `@name:scaled`),
   `point` of other positions, `ordinal` without an orientation.
-- The mappings of patches are parts: they are only normalized (text,
-  domain), they have no default parts, their types
-  are the ones of the merged mapping. (Patches are only of the form of 4.x
-  given to `normalize` as it is; `translate` writes none.)
 
 ### Plots
 
@@ -161,11 +157,6 @@ The fixtures are `normalize/*.json`.
   the type: nested props (objects which are no operators, e.g. `d`) deeply,
   `null` removes a default. The order of the props is the one of the defaults, then the other
   ones (the order of the attributes of the elements).
-- The plots of a patch are normalized in the coordinate system of the patch
-  (its `options.coord`, otherwise the one of the definition). A patch of
-  another coordinate system has the orientations and the axis positions of
-  the mappings of the positions of the definition whose orientation is not
-  written.
 
 The default props (`src/plots/defaults.js`), `color` is
 `{"or": ["@color", "currentColor"]}`:

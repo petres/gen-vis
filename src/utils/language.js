@@ -3,6 +3,7 @@ export { translate, checkDims, colorDims, dim as dimOf, compileStrings, isDefini
 import { isObject } from '@/utils/values';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
 import { isOperator, refNames } from '@/utils/expr';
+import { categoryKeys, isCategorical } from '@/utils/normalize';
 
 /**
  * The definition language of gen-vis 5 (see docs/definition.md) translated
@@ -88,11 +89,9 @@ const parsed = (text, path) => {
 // a reference to a value of a row of a dim, e.g. "@x:scaled"
 const ref = (dim, kind = 'scaled') => `@${dim}:${kind}`;
 
-// the parts of a dim which make it categorical, see hasCategories of normalize.js
-const categoryParts = ['categories', 'scheme', 'common', 'ranks', 'order'];
-const categoricalScales = ['band', 'point', 'ordinal'];
-const isCategorical = d => isObject(d) && (d.type == 'categorical' || (d.type === undefined && (categoryParts.some(k => d[k] !== undefined)
-    || d.fromData || categoricalScales.includes(d.scale?.type))));
+// the parts of the categories of a dim besides `fromData`, see
+// hasCategories and isCategorical of utils/normalize.js
+const categoryParts = categoryKeys.filter(k => k != 'fromData');
 
 // a dim of the definition as a mapping of the engine
 const dim = (raw, name) => {

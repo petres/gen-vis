@@ -196,3 +196,14 @@ describe('the dims of groups of marks in the colors of their categories', () => 
         expect(migrate({ mapping: { x: 'year', y: 'value', land: { column: 'land', fromData: true } }, plot: { type: 'cartesian:line', by: ['land'] } }).dims.land).toEqual({ column: 'land', fromData: true });
     });
 });
+
+describe('categorical dims of the migration (review of 5.0)', () => {
+    test('the center of the band of a dim of the type or the scale of categories is the channel', () => {
+        const marks = x => migrate({ mapping: { x, y: { column: 'v' } }, plot: { type: 'svg:text', props: { x: '@x:scaled:center', y: '@y:scaled', text: 'a' } } }).marks;
+        expect(marks({ column: 'g', type: 'categorical' })).toEqual({ type: 'text', text: 'a' });
+        expect(marks({ column: 'g', scale: { type: 'band' } })).toEqual({ type: 'text', text: 'a' });
+        expect(marks({ column: 'g', categories: {} })).toEqual({ type: 'text', text: 'a' });
+        // of a numeric dim the center is no channel
+        expect(marks({ column: 'g', type: 'numeric' })).toEqual({ type: 'text', x: '@x:scaled:center', text: 'a' });
+    });
+});
