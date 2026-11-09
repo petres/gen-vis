@@ -315,6 +315,12 @@ Migration notes, to check by hand after `gen-vis migrate`:
   `"width": 300` was a 300 px chart in an 800 px image. Without one the
   definition's `width` is the one of the chart, the image has it and the
   padding (was 800).
+- Speed: the prepared rows keep their raw row and index in private fields
+  (were two properties defined per row), and the load translates and
+  normalizes only the variants of the values of the controls which differ
+  in the parts the load needs of them (dims, marks, filter, transforms,
+  maps, coordinate system, locale); the mount of the 52 examples: 1370 ->
+  1195 ms (4.1.0: 1173 ms).
 
 ### Package and builds
 
