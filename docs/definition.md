@@ -1206,7 +1206,9 @@ attributes are merged into the defaults, e.g. `d` of a path.
   the sources; `hover.total` adds the sum.
 - `dodge` of bars: the groups of `by` (`true`, the first dim of `by`) or of
   this dim beside each other in the band of their position, a hidden
-  category leaves its place to the others; of a `text` or a `label` (`true`
+  category leaves its place to the others; with `stack` a stack per slot,
+  e.g. `"by": ["type", "source"], "dodge": "type", "stack": true` stacks the
+  sources of each type beside the ones of the other types; of a `text` or a `label` (`true`
   or a dim) the text at the middle of the slot of its category, as its bar:
   ```json
   {

@@ -256,6 +256,11 @@ Migration notes, to check by hand after `gen-vis migrate`:
 - A part without keys of 4.x (e.g. a parent of only `data`) is not
   rewritten, its `$schema` of 4 stays valid.
 
+### Fixes of the review of the engine
+
+- `dodge` with `stack`: a stack per slot of the dodge dim (was one over
+  all rows of the position), also of the domain.
+
 ### Package and builds
 
 - The deep merge is the package's own (`src/utils/merge.js`, the semantics

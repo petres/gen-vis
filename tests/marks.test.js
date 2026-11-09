@@ -66,6 +66,29 @@ describe('dodged bars', () => {
     });
 });
 
+describe('dodged stacked bars', () => {
+    test('a stack per slot of the dodge dim, not over all rows of the x, also of the domain', async () => {
+        const rows = 'year,value,type,sub\n2020,15,a,p\n2020,20,a,q\n2020,10,b,p\n2020,20,b,q';
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical' }, y: { column: 'value', zero: true }, c: { column: 'type', categories: { a: {}, b: {} } },
+                s: { column: 'sub', categories: { p: {}, q: {} } } },
+            marks: { type: 'bar', by: ['c', 's'], dodge: 'c', stack: true },
+        };
+        const el = await mount({ def, data: rows });
+        const bars = Object.fromEntries(rects(el).map(r => [`${r[itemOf][rowOf].c}${r[itemOf][rowOf].s}`, r]));
+        const bottom = r => num(r, 'y') + num(r, 'height');
+        // both stacks start at 0, q on top of p in its own slot
+        expect(bottom(bars.ap)).toBeCloseTo(bottom(bars.bp));
+        expect(bottom(bars.aq)).toBeCloseTo(num(bars.ap, 'y'));
+        expect(bottom(bars.bq)).toBeCloseTo(num(bars.bp, 'y'));
+        // the domain is the one of the highest stack (35), not of all (65)
+        const ticks = [...el.querySelectorAll('[data-mapping="y"] .tick text')].map(t => Number(t.textContent));
+        expect(Math.max(...ticks)).toBe(35);
+        expect(num(bars.ap, 'x') + num(bars.ap, 'width')).toBeCloseTo(num(bars.bp, 'x'));
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('labels with an anchor', () => {
     test('the text of a value beside its bar', async () => {
         const def = {

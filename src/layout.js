@@ -211,6 +211,11 @@ const stackSource = (def, axis, rows) => {
     return by === undefined ? [rows, axis] : [rows.filter(r => r[by] !== null && r[by] !== undefined), { ...axis, h: by }];
 };
 
+// the dims of the groups of the stacks besides the facets: the slots of
+// dodged stacked bars (`stackGroups` of the stacked dim, see translate of
+// utils/language.js), a stack per position and slot
+const stackGroups = (def, axis) => [...facetDims(def), ...(def.mapping[axis.v]?.stackGroups ?? [])];
+
 // the rows of a view, see layout
 const rowsOf = (store, def, axis, scope, stacked) => {
     // the rows of the conditions of `filter`, e.g. of a global of a form
@@ -228,7 +233,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     const stackOrder = categoryOrder(visible.map(f => ({ dim: f.dim, keys: f.key })));
     const stackedRows = stacked && stacked !== true
         ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `mapping.${axis.v}.stacked` }) : rows;
-    const stacks = stacked ? stack(...stackSource(def, axis, stackedRows), facetDims(def), stackOrder) : null;
+    const stacks = stacked ? stack(...stackSource(def, axis, stackedRows), stackGroups(def, axis), stackOrder) : null;
     const stackOf = stacks ? row => stacks.get(row) ?? [row[axis.v], row[axis.v]] : null;
     const isStacked = stacks ? row => stacks.has(row) : null;
 
@@ -276,7 +281,7 @@ const domainRows = (store, def, axis, scope, stacked, shown, stackOrder) => {
         let stackOf = null;
         if (n == axis.v && stacked) {
             const stackedRows = stacked !== true ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `mapping.${n}.stacked` }) : rows;
-            const stacks = stack(...stackSource(def, axis, stackedRows), [...dims, ...names], stackOrder);
+            const stacks = stack(...stackSource(def, axis, stackedRows), [...stackGroups(def, axis), ...names], stackOrder);
             stackOf = row => stacks.get(row) ?? [row[n], row[n]];
         }
         const facets = def.facets ? new Map(groupBy(rows, dims).map(g => [String(facetKey(def, g.group)), g.entries])) : null;

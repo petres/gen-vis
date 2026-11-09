@@ -273,7 +273,9 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
     const centered = d => d && Object.hasOwn(dims, d) && isCategorical(dims[d]);
     // the position of a dim, of a categorical one the center of its band
     const at = (c, kind = 'scaled') => c ? (c.fixed === undefined && kind == 'scaled' && centered(c.dim) ? ref(c.dim, 'scaled:center') : c.value) : undefined;
-    const stacked = (dim, by, condition) => stacks.push({ dim, by, condition: condition === undefined ? true : condition });
+    // `group` of dodged stacked bars: a stack per slot, e.g. per year and type
+    const stacked = (dim, by, condition, group) => stacks.push({ dim, by, condition: condition === undefined ? true : condition, group });
+    const dodgeGroup = dodge === undefined || dodge === false ? undefined : (dodge === true ? p.by[0] : dodge);
     // the colors of the categories, of a dim of a scale (e.g. of a color
     // scale) its scaled value, of a categorical dim the color of its category
     ['fill', 'stroke'].forEach(k => {
@@ -348,7 +350,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
                     props.y = y.value;
                 if (x) {
                     if (stack) {
-                        stacked(x.dim, undefined, stack);
+                        stacked(x.dim, undefined, stack, dodgeGroup);
                         props.x0 = ref(x.dim, 'start:scaled');
                         props.x1 = ref(x.dim, 'end:scaled');
                     } else {
@@ -368,7 +370,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
                     props.x = x.value;
                 if (y) {
                     if (stack) {
-                        stacked(y.dim, undefined, stack);
+                        stacked(y.dim, undefined, stack, dodgeGroup);
                         props.y0 = ref(y.dim, 'start:scaled');
                         props.y1 = ref(y.dim, 'end:scaled');
                     } else {
@@ -639,7 +641,7 @@ const translate = raw => {
             grouped.push(n);
     });
     // the stacked value dims, a condition of the rows which are stacked
-    stacks.forEach(({ dim: n, by, condition }) => {
+    stacks.forEach(({ dim: n, by, condition, group }) => {
         const m = dims[n];
         if (!isObject(m))
             return;
@@ -647,6 +649,9 @@ const translate = raw => {
             : { or: [m.stacked, condition] };
         if (by !== undefined)
             m.stackBy = by;
+        // the stacks of dodged bars are the ones of each slot, see stackGroups of layout.js
+        if (typeof group == 'string')
+            m.stackGroups = [...new Set([...(m.stackGroups ?? []), group])];
     });
     // the dims of the hover: the columns given, else the dims of the marks' `by`
     const inHover = columns !== undefined ? [columns].flat() : grouped;
