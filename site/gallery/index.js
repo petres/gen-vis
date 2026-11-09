@@ -92,4 +92,10 @@ export default [
     { id: 'bullet', name: 'Bullet chart', file: 'recipes/bullet.json',
         description: 'Ranges as layered bars, the value as a thinner bar, the target as a tick across the band.',
         features: ['bar: height', 'tick: size'] },
+    { id: 'calendar', name: 'Calendar heatmap', file: 'recipes/calendar.json',
+        description: 'A cell per day at its week and weekday, columns of a time format of the date, filled by a sequential scale; the months as labels of fixed ticks.',
+        features: ['transform: format', 'cell', 'scale: sequential', 'axis: values, labels', 'hover: title'] },
+    { id: 'likert', name: 'Diverging stacked bars of a survey', file: 'recipes/likert.json',
+        description: 'The answers of disagreement to the left, of agreement to the right, the neutral ones split around the middle by a fold; a dim of the distance from the middle orders the stacks.',
+        features: ['transform: calc, fold, filter', 'bar: stack', 'hover: filter'] },
 ];

@@ -547,6 +547,87 @@ columns of a row per indicator, the dims of the bars on the scale of x.
 }
 ```
 
+## A calendar heatmap
+
+A cell per day: the week of the year (`%W`, weeks from Monday) and the
+weekday (`%u`, 1 is Monday) of the date are columns of a `format`
+transform, the dims of the bands of `x` and `y`. The weekdays are listed
+categories with their names (the labels of the axis are the `@name` of the
+category), the months are labels of fixed ticks at the weeks of their first
+days. The hover of a cell is titled by the date (`title` of the template
+of the nearest row, the date without a cell of its own).
+
+<!-- data/recipes/calendar.json -->
+```json
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "prices.csv",
+    "title": "Electricity prices, 2025",
+    "subtitle": "day-ahead price per day, EUR/MWh",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 220,
+    "transform": [
+        {"type": "format", "column": "date", "format": "%W", "as": "week"},
+        {"type": "format", "column": "date", "format": "%u", "as": "weekday"}
+    ],
+    "dims": {
+        "x": {"column": "week", "type": "categorical", "axis": {"tickMarks": false, "domain": {"props": {"stroke": "none"}}, "values": ["00", "04", "08", "13", "17", "21", "26", "30", "35", "39", "43", "48"],
+            "labels": {"props": {"text": "=match(@x, {'00': 'Jan', '04': 'Feb', '08': 'Mar', '13': 'Apr', '17': 'May', '21': 'Jun', '26': 'Jul', '30': 'Aug', '35': 'Sep', '39': 'Oct', '43': 'Nov', '48': 'Dec'})", "text-anchor": "start"}}}},
+        "y": {"column": "weekday", "type": "categorical", "axis": {"tickMarks": false, "domain": {"props": {"stroke": "none"}}, "labels": {"props": {"text": "@name"}}}, "categories": {
+            "1": {"name": "Mon"}, "2": {"name": "Tue"}, "3": {"name": "Wed"}, "4": {"name": "Thu"}, "5": {"name": "Fri"}, "6": {"name": "Sat"}, "7": {"name": "Sun"}}},
+        "price": {"column": "price", "name": "Price", "format": ",.0f", "legend": {}, "scale": {"type": "sequential", "interpolator": "YlOrRd"}},
+        "date": {"column": "date", "type": "date", "format": "%a, %-d %b %Y", "hover": {"cell": false}}
+    },
+    "hover": {"mode": "point", "value": false, "columns": ["date", "price"], "title": "{date}"},
+    "marks": {"type": "cell", "fill": "price", "stroke": "white", "stroke-width": 1.5}
+}
+```
+
+## A diverging stacked bar of a survey
+
+The answers which disagree are negative values, the ones which agree
+positive ones, the neutral ones are split in half around the middle: a
+`calc` of each side and a `fold` of the two give the neutral answers a row
+on each side (the rows without a part are filtered out). The stack puts the
+first category nearest to 0 on both sides, the dim `rank` (the distance of
+an answer from the middle, before `answer` in `dims`) is the first order of
+the stacks, so the neutral answers are in the middle and the strong ones
+outside, while the legend keeps the order of the answers. The labels of
+the axis are the shares without their sign, the hover shows each answer
+once (`filter`).
+
+<!-- data/recipes/likert.json -->
+```json
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "likert.csv",
+    "title": "Business expectations for the next 12 months",
+    "subtitle": "share of the answers of firms, the neutral ones split around the middle",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 300,
+    "transform": [
+        {"type": "calc", "as": "rank", "expr": "=match(@answer, {'Neutral': 0, 'Disagree': 1, 'Agree': 1}, 2)"},
+        {"type": "calc", "as": "left", "expr": "=match(@answer, {'Strongly disagree': -@share, 'Disagree': -@share, 'Neutral': -@share / 2})"},
+        {"type": "calc", "as": "right", "expr": "=match(@answer, {'Strongly agree': @share, 'Agree': @share, 'Neutral': @share / 2})"},
+        {"type": "fold", "columns": ["left", "right"], "key": "side", "value": "part"},
+        {"type": "filter", "expr": "@part != null"}
+    ],
+    "dims": {
+        "x": {"column": "part", "format": ".0%", "grid": true, "axis": {"labels": {"props": {"text": "=format(max(@x, -@x), '.0%')"}}}},
+        "y": {"column": "statement", "type": "categorical", "order": "rows"},
+        "rank": {"column": "rank", "categories": {"0": {}, "1": {}, "2": {}}},
+        "answer": {"column": "answer", "legend": {"symbol": "rect"}, "categories": {
+            "Strongly disagree": "#C3423F", "Disagree": "#E8A09A", "Neutral": "#D3D8DD", "Agree": "#9EC5E8", "Strongly agree": "#1E4F77"}},
+        "share": {"column": "share", "name": "Share", "format": ".0%"}
+    },
+    "hover": {"value": false, "columns": ["answer", "share"], "filter": "@side == 'right' or @answer != 'Neutral'"},
+    "annotations": {"type": "line", "x": 0, "layer": "above", "props": {"stroke": "#5F6670"}},
+    "marks": {"type": "bar", "by": "answer", "stack": true, "stroke": "white", "stroke-width": 0.5}
+}
+```
+
 ## Things to know
 
 - The default locale is `de` (decimal commas, `1.234,5`): `"locale": "en"`
