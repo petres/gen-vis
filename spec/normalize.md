@@ -111,11 +111,11 @@ engine reads; `tests/language.test.js` has cases of step 3.
 
 ## normalize
 
-The fixtures are `normalize/*.json`.
+The fixtures are `normalize/*.json`. The input is the form `translate`
+writes: the mappings are objects, `plot` is a list of objects.
 
 ### Mappings
 
-- A text is the column: `"x": "year"` is `"x": {"column": "year"}`.
 - `categories`, `scheme`, `common`, `fromData`, `ranks` and `order` stay at
   the mapping, they are the parts of its categories.
 - `domain` and `nice` of a mapping are the ones of its scale.
@@ -151,8 +151,8 @@ The fixtures are `normalize/*.json`.
 - A type without the prefix of a coordinate system (`line`) is the one of
   the coordinate system of the definition (`options.coord`, `cartesian` by
   default), `<coord>:<name>`, otherwise `svg:<name>`, otherwise the only
-  registered type `<prefix>:<name>` of the coordinate system; `point` is
-  `circle` (`translate` writes the full names of the built-in types).
+  registered type `<prefix>:<name>` of the coordinate system (`translate`
+  writes the full names of the built-in types).
 - The props of a plot of a registered type, of its short or its full name
   (`line` and `cartesian:line` alike), are merged into the default props of
   the type: nested props (objects which are no operators, e.g. `d`) deeply,

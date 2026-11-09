@@ -1,10 +1,14 @@
 [
   {
-    "name": "a text is the column, x and y have a scale and an axis of their orientation",
+    "name": "x and y have a scale and an axis of their orientation",
     "def": {
       "mapping": {
-        "x": "year",
-        "y": "value"
+        "x": {
+          "column": "year"
+        },
+        "y": {
+          "column": "value"
+        }
       }
     },
     "result": {
@@ -421,18 +425,20 @@
       "facets": {
         "dim": "f"
       },
-      "plot": {
-        "type": "cartesian:line",
-        "by": [
-          "g"
-        ],
-        "props": {
-          "d": {
-            "x": "@x:scaled",
-            "y": "@y:scaled"
+      "plot": [
+        {
+          "type": "cartesian:line",
+          "by": [
+            "g"
+          ],
+          "props": {
+            "d": {
+              "x": "@x:scaled",
+              "y": "@y:scaled"
+            }
           }
         }
-      }
+      ]
     },
     "result": {
       "mapping": {
@@ -447,25 +453,27 @@
       "facets": {
         "dim": "f"
       },
-      "plot": {
-        "type": "cartesian:line",
-        "by": [
-          "g"
-        ],
-        "props": {
-          "stroke": {
-            "or": [
-              "@color",
-              "currentColor"
-            ]
-          },
-          "fill": "none",
-          "d": {
-            "x": "@x:scaled",
-            "y": "@y:scaled"
+      "plot": [
+        {
+          "type": "cartesian:line",
+          "by": [
+            "g"
+          ],
+          "props": {
+            "stroke": {
+              "or": [
+                "@color",
+                "currentColor"
+              ]
+            },
+            "fill": "none",
+            "d": {
+              "x": "@x:scaled",
+              "y": "@y:scaled"
+            }
           }
         }
-      }
+      ]
     }
   },
   {
@@ -505,13 +513,15 @@
           }
         }
       },
-      "plot": {
-        "type": "cartesian:bar",
-        "props": {
-          "x": "@x:scaled",
-          "y1": "@y:scaled"
+      "plot": [
+        {
+          "type": "cartesian:bar",
+          "props": {
+            "x": "@x:scaled",
+            "y1": "@y:scaled"
+          }
         }
-      }
+      ]
     },
     "result": {
       "mapping": {
@@ -565,19 +575,21 @@
           }
         }
       },
-      "plot": {
-        "type": "cartesian:bar",
-        "props": {
-          "fill": {
-            "or": [
-              "@color",
-              "#4269D0"
-            ]
-          },
-          "x": "@x:scaled",
-          "y1": "@y:scaled"
+      "plot": [
+        {
+          "type": "cartesian:bar",
+          "props": {
+            "fill": {
+              "or": [
+                "@color",
+                "#4269D0"
+              ]
+            },
+            "x": "@x:scaled",
+            "y1": "@y:scaled"
+          }
         }
-      }
+      ]
     }
   },
   {

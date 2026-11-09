@@ -4,14 +4,15 @@ import { isObject } from '@/utils/values';
 import { isOperator, refNames } from '@/utils/expr';
 
 /**
- * The normalization of a definition of 4.0 (merged with its parents) into the
- * form the renderer reads, see docs/design-4.0.md and spec/normalize. It
- * keeps the names of 4.0 and writes out what a definition may leave out. It
- * is pure, JSON to JSON, the parts which need the rows, the types of mappings
- * without a type, follow when the rows are loaded, see inferTypes of
- * utils/data.js and prepareMapping of utils/def.js.
+ * The normalization of the form the engine reads (of a definition of 5.0
+ * merged with its parents, resolved and translated, see translate of
+ * utils/language.js) into the form the renderer reads, see spec/normalize.
+ * It keeps the names of the engine (`mapping`, `plot`, ...) and writes out
+ * what the form may leave out. It is pure, JSON to JSON, the parts which
+ * need the rows, the types of mappings without a type, follow when the rows
+ * are loaded, see inferTypes of utils/data.js and prepareMapping of
+ * utils/def.js.
  *
- * - a mapping of a text is the one of the column, e.g. "x": "year"
  * - `domain` and `nice` of a mapping are the ones of its scale
  * - the mappings of the positions of the coordinate system (`x` and `y`,
  *   polar also `angle` and `radius`) have a scale of the orientation of the
@@ -22,17 +23,14 @@ import { isOperator, refNames } from '@/utils/expr';
  *   or utc scale a date, other scales numeric, a mapping of the facets or of
  *   the groups of a scale is categorical, the type of a scale follows from
  *   the type of the mapping, see scaleTypeOf
- * - the type of a plot without the prefix of the coordinate system is the one
- *   of the coordinate system (`line` is `cartesian:line` or `polar:line`), of
- *   svg elements (`circle` is `svg:circle` of cartesian plots) or the only
- *   registered one of the name, `point` is `circle`
+ * - the type of a plot without the prefix of the coordinate system (translate
+ *   writes the full names of the built-in types) is the one of the coordinate
+ *   system, of svg elements or the only registered one of the name
  * - the props of a plot are merged into the `defaults` of its type, of a
  *   short name and of a full one alike (`line` is `cartesian:line`), null
  *   removes a default
  *
- * `plotTypes` are the plot types by name, see plots/index.js. (The
- * patches of the form elements of 4.x are no part of it: a definition of
- * 4.x is migrated before, its patches are expressions of the globals.)
+ * `plotTypes` are the plot types by name, see plots/index.js.
  */
 
 // the parts of the categories of a mapping, a mapping with any of them has
@@ -79,8 +77,7 @@ const clone = v => v === undefined ? undefined : JSON.parse(JSON.stringify(v));
  * The plot type of a name without the prefix of a coordinate system, e.g.
  * "cartesian:line" of "line", see normalize, undefined if there is none.
  */
-const resolveType = (name, coord, plotTypes) => {
-    const n = name == 'point' ? 'circle' : name;
+const resolveType = (n, coord, plotTypes) => {
     for (const t of [`${coord}:${n}`, `svg:${n}`])
         if (Object.hasOwn(plotTypes, t) && (!plotTypes[t].coords || plotTypes[t].coords.includes(coord)))
             return t;
@@ -135,9 +132,6 @@ const typeOf = (m, name, used) => {
     if (ofCategories(m))
         return 'categorical';
     const type = isObject(m.scale) ? m.scale.type : undefined;
-    // a band or a point scale, also of its parts, e.g. the order of the categories
-    if (categoricalScales.includes(type) || (type === undefined && isObject(m.scale) && ['order', 'groups', 'padding', 'step'].some(k => m.scale[k] !== undefined)))
-        return 'categorical';
     if (dateScales.includes(type))
         return 'date';
     if (typeof type == 'string')
@@ -147,9 +141,7 @@ const typeOf = (m, name, used) => {
 
 // the normalized mapping, `orientation` the one of its name in the coordinate system
 const normalizeMapping = (raw, orientation) => {
-    if (!isObject(raw) && typeof raw != 'string')
-        return raw;
-    const m = typeof raw == 'string' ? { column: raw } : { ...raw };
+    const m = { ...raw };
     const scaled = scaleKeys.filter(k => k in m);
     if (scaled.length > 0) {
         if (m.scale !== null && m.scale !== false)
@@ -177,8 +169,6 @@ const normalizeMapping = (raw, orientation) => {
 
 // the normalized plot, its type of the coordinate system `coord`
 const normalizePlot = (raw, coord, plotTypes) => {
-    if (!isObject(raw))
-        return raw;
     const p = { ...raw };
     if (typeof p.type == 'string') {
         const type = p.type.includes(':') ? p.type : resolveType(p.type, coord, plotTypes);
@@ -193,24 +183,17 @@ const normalizePlot = (raw, coord, plotTypes) => {
     return p;
 };
 
-const normalizePlots = (plot, coord, plotTypes) => Array.isArray(plot) ? plot.map(p => normalizePlot(p, coord, plotTypes))
-    : normalizePlot(plot, coord, plotTypes);
-
 // the normalized mappings, `coord` the coordinate system of the
 // definition, `used` the names of the mappings of categories
 const normalizeMappings = (mapping, coord, plots = [], used = new Set()) => {
-    if (!isObject(mapping))
-        return mapping;
     const names = positions[coord] ?? {};
     return Object.fromEntries(Object.entries(mapping).map(([n, raw]) => {
         const m = normalizeMapping(raw, Object.hasOwn(names, n) ? names[n] : undefined);
-        if (isObject(m)) {
-            m.type ??= typeOf(m, n, used);
-            if (m.type === undefined)
-                delete m.type;
-            if (isObject(m.scale) && m.scale.of === undefined && m.scale.type === undefined && m.type !== undefined)
-                m.scale = { ...m.scale, type: scaleTypeOf(m, n, plots) };
-        }
+        m.type ??= typeOf(m, n, used);
+        if (m.type === undefined)
+            delete m.type;
+        if (isObject(m.scale) && m.scale.of === undefined && m.scale.type === undefined && m.type !== undefined)
+            m.scale = { ...m.scale, type: scaleTypeOf(m, n, plots) };
         return [n, m];
     }));
 };
@@ -250,16 +233,14 @@ const categoryNames = def => new Set([
 ].filter(n => typeof n == 'string'));
 
 /**
- * The normalized definition of 4.0 (merged with its parents), see above,
- * the definition is not changed.
+ * The normalized form of a translated definition, see above, the
+ * definition is not changed.
  */
 const normalize = (raw, { plotTypes = {} } = {}) => {
     const def = clone(raw);
-    if (!isObject(def))
-        return def;
     const coord = def.options?.coord ?? 'cartesian';
     if (def.plot !== undefined)
-        def.plot = normalizePlots(def.plot, coord, plotTypes);
+        def.plot = def.plot.map(p => normalizePlot(p, coord, plotTypes));
     const used = categoryNames(def);
     if (def.mapping !== undefined)
         def.mapping = normalizeMappings(def.mapping, coord, def.plot, used);
