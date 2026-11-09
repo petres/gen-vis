@@ -1,0 +1,17 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "unemp.csv",
+    "title": "Unemployment rate 2025",
+    "subtitle": "in % of the labour force",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 320,
+    "dims": {
+        "x": {"column": "rate", "format": ".1f", "zero": true, "grid": true},
+        "y": {"column": "country", "scale": {"order": {"by": "x", "descending": true}}}
+    },
+    "marks": [
+        {"type": "bar", "fill": "#1E4F77"},
+        {"type": "label", "text": "@x:formatted", "anchor": "end", "font-size": 11}
+    ]
+}

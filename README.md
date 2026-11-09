@@ -159,6 +159,9 @@ npx gen-vis migrate old/*.json --write   # definitions of gen-vis 4 as ones of g
 
 ## Documentation
 
+- [Recipes](docs/recipes.md): definitions of common charts (sorted bars,
+  a pyramid, error bars, bubbles, a donut, a choropleth, labelled lines)
+  and the things to know.
 - [Reference](docs/reference.md): the keys of every part of a definition in
   tables, with their types and texts (generated of the schema).
 - [Definition](docs/definition.md): the definition language, `$schema`,

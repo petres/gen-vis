@@ -55,4 +55,17 @@ export default [
     { id: 'symbol-map', name: 'Symbols on a map', file: 'bev/def-map.json',
         description: 'A map of Austria with a circle per state whose area is the population, its name as a label, a select of the year.',
         features: ['coord: geo', 'base', 'point: lon lat', 'text', 'scale: sqrt', 'controls: select'] },
+    // the recipes of docs/recipes.md
+    { id: 'pyramid', name: 'Population pyramid', file: 'recipes/pyramid.json',
+        description: 'The men to the left as negative values of a transform, the labels of the axis without their sign, the hover of the unsigned values.',
+        features: ['transform: calc', 'bar', 'axis.labels', 'hover: value false', 'reverse'] },
+    { id: 'errorbars', name: 'Error bars on grouped bars', file: 'recipes/errorbars.json',
+        description: 'Dodged bars of two years with a rule from the lower to the upper bound at the middle of every bar.',
+        features: ['bar: dodge', 'rule: dodge, y1 y2', 'legend: symbol rect'] },
+    { id: 'bubbles', name: 'Bubbles with labels', file: 'recipes/bubbles.json',
+        description: 'The size of a point a dim of a sqrt scale, labels above some points, the hover of the nearest point with its country as title.',
+        features: ['point: r of a dim', 'label: anchor top, filter', 'hover: point', 'annotations'] },
+    { id: 'choropleth', name: 'Choropleth with labels', file: 'recipes/map.json',
+        description: 'The regions filled by a sequential scale, the value as a centered label with a halo, the color bar as the legend.',
+        features: ['coord: geo', 'region: fill of a dim', 'text: halo', 'scale: sequential'] },
 ];

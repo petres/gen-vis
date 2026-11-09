@@ -1,0 +1,20 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "survey.csv",
+    "title": "Trust in public institutions",
+    "subtitle": "share of respondents in %, with 95% confidence intervals",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 300,
+    "dims": {
+        "x": {"column": "region", "type": "categorical"},
+        "y": {"column": "value", "zero": true, "grid": true},
+        "year": {"column": "year", "legend": {"symbol": "rect"}, "categories": {"2024": "#9EC5E8", "2025": "#1E4F77"}},
+        "lo": "lo",
+        "hi": "hi"
+    },
+    "marks": [
+        {"type": "bar", "by": "year", "dodge": true},
+        {"type": "rule", "by": "year", "dodge": true, "y1": "lo", "y2": "hi", "stroke": "#333", "stroke-width": 1.5}
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "pyramid.csv",
+    "title": "Population by age and sex, 2025",
+    "subtitle": "in thousands",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 320,
+    "transform": {"type": "calc", "as": "signed", "expr": "@sex == 'Men' ? -@pop : @pop"},
+    "dims": {
+        "x": {"column": "signed", "grid": true, "axis": {"labels": {"props": {"text": "=format(max(@x, -@x), ',.0f')"}}}},
+        "y": {"column": "age", "type": "categorical", "reverse": true},
+        "sex": {"column": "sex", "legend": {}, "categories": {"Men": "#4E79A7", "Women": "#E15759"}},
+        "pop": {"column": "pop", "format": ",.0f"}
+    },
+    "hover": {"value": false, "columns": ["sex", "pop"]},
+    "marks": {"type": "bar", "by": "sex"}
+}
