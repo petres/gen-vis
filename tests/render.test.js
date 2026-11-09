@@ -4050,3 +4050,16 @@ describe('legend symbols of categories (review of 4.1)', () => {
         expect([svg('A'), svg('B')]).toEqual([false, true]);
     });
 });
+
+describe('a channel of no dim and no column (review of 5.0)', () => {
+    test('a named warning with the dims and the columns', async () => {
+        await mount({ def: { dims: { x: 'year', y: 'value' }, marks: { type: 'point', x: 'yaer' } }, data: 'year,value\n2020,1\n2021,2' });
+        expect(errors).toContain("gen-vis inline definition: marks[0].x: no dim and no column 'yaer' in the data, the dims are 'x', 'y', the columns 'year', 'value'");
+    });
+    test('a chart without dims of the columns of the channels', async () => {
+        const el = await mount({ def: { marks: { type: 'point', x: 'year', y: 'value' } }, data: 'year,value\n2020,1\n2021,2' });
+        expect([...el.querySelectorAll('g.vis-plot circle')].every(c => Number.isFinite(parseFloat(c.getAttribute('cx'))))).toBe(true);
+        expect(el.querySelectorAll('g.vis-plot circle').length).toBe(2);
+        expect(errors).toEqual([]);
+    });
+});

@@ -1,4 +1,4 @@
-export { applyTransforms, loadTransforms, transformNames, transformColumns, transformGlobals, utcColumns };
+export { applyTransforms, loadTransforms, transformNames, transformColumns, transformGlobals, utcColumns, madeColumns };
 
 import { fillTemplate, templateRefs } from "@/utils/def";
 import { scaleDef } from "@/utils/data";
@@ -44,6 +44,15 @@ const utcColumns = def => new Set(Object.values(def.mapping ?? {})
 // the transforms themselves are no columns of the data, null if they are
 // not known, e.g. of a pattern of a fold ("20*")
 const transformColumns = transforms => {
+    const { used, unknown } = columnsOf(transforms);
+    return unknown ? null : [...used];
+};
+
+// the columns the transforms make (e.g. the start, the end and the count
+// of a bin), a column of a pattern of a fold unknown
+const madeColumns = transforms => columnsOf(transforms).own;
+
+const columnsOf = transforms => {
     const own = new Set();
     const used = new Set();
     let unknown = false;
@@ -62,5 +71,5 @@ const transformColumns = transforms => {
         else if (t.type != 'filter')
             own.add(t.as ?? t.column);
     });
-    return unknown ? null : [...used];
+    return { own, used, unknown };
 };

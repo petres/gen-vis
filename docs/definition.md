@@ -1125,8 +1125,12 @@ The ones of maps (`base`, `region`, `point`, `text`, `mesh`) have none:
 ### Channels
 
 The channels of a mark are its positions. A channel names a dim, a column
-of the data (a dim of it is added) or is a number or an expression of the
-row:
+of the data (a dim of it is added; of `x` or `y` without a dim `x` or `y`
+the dim of the axis, so `{"type": "point", "x": "year", "y": "value"}`
+needs no dims) or is a number or an expression of the row. A channel
+which names neither a dim nor a column of the data (e.g. a typo, `"x":
+"yaer"`) is a warning of the load (`marks[0].x: no dim and no column
+'yaer' in the data, ...`):
 
 | Channel | |
 |---------|-|
@@ -1134,7 +1138,7 @@ row:
 | `x0`, `x1` | the start and the end of a bar or an area on the horizontal axis, e.g. the start and the end of a class of a [bin](#transform) |
 | `y0`, `y1` | the start (0 by default) and the end of a bar or an area, e.g. the lower and the upper edge of a band; `y1` of a rule its start |
 | `x2`, `y2` | the other end of a rule, e.g. `"y1": "lo", "y2": "hi"` of an error bar |
-| `lon`, `lat` | of maps: the dims of the longitude and the latitude of a point or a text |
+| `lon`, `lat` | of maps: the dims of the longitude and the latitude of a point or a text, or expressions of the row (e.g. `"=@lng + 0.1"`) |
 
 - A dim of a channel is drawn at the scaled value of the row (`@x:scaled`),
   a categorical one of a band at the center of the band
@@ -1142,7 +1146,8 @@ row:
 - A dim a channel names beside the dim of its axis (e.g. `"y2": "hi"` of a
   rule, `"x1": "hi"` of a bar) is on the scale of that axis
   (`"scale": {"of": "y"}`), so its values are positions of the axis and
-  they are in its domain.
+  they are in its domain; without the dim of the axis it has a scale of
+  its own.
 - A number is a value on the scale of the axis of the channel
   (`@y:scaled:100`) of `x0` and `y0` of bars, areas and rules, of `y` of
   bars and of `x` and `y` of rules, e.g. the base of bars or a rule at a
@@ -1790,7 +1795,8 @@ On touch devices it is shown by a tap and stays until a tap outside of the
 plot, horizontal swipes move it, vertical ones scroll the page.
 
 - `columns`: the dims of the hover, by default the dims the marks use,
-  their `by` and the dims of their positions (`x`, `y`, `y1`, ... of the
+  their `by` (also a categorical dim of a `fill` or a `stroke`, which is
+  a `by` of the mark) and the dims of their positions (`x`, `y`, `y1`, ... of the
   channels; not the dims of the facets, their panels have titles); a dim
   with a `hover` of its own is in it as well, `[]` only those. The columns
   are in the order of the dims.
@@ -1858,7 +1864,8 @@ default); the dim of the facets has the categories of the data in the
 order of the rows, unless it lists them. `cols` can be an expression of
 `totalWidth`, e.g. `"=steps(@totalWidth, {0: 1, 600: 2})"`. `scales`: every
 facet has its own scales (`"own"`, the default), all facets share the
-scales of their dims (`"shared"`), or a list of the dims which share their
+scales of their dims (`"shared"`, all dims, also the ones of the columns
+of channels), or a list of the dims which share their
 scale, e.g. `["x"]`, also an expression of a global, e.g. of a control of
 shared or separate scales:
 

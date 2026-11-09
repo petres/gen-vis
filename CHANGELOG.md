@@ -148,6 +148,17 @@ them.
   are entries when the other part has objects (a child's entry of a value
   dropped the parent's other plain values). An entry of an object without
   a `name` has the text of its value as `@global:name`, as a value has.
+- A channel of `x` or `y` which names a column without a dim `x` or `y` is
+  the dim of the axis (`{"type": "point", "x": "year", "y": "value"}`
+  draws without dims; the alpha drew no positions), another column on an
+  axis without its dim has a scale of its own (was `{"of": "x"}` of a
+  missing `x`); a channel of neither a dim nor a column of the data is a
+  warning of the load (`marks[0].x: no dim and no column 'yaer' in the
+  data, the dims are ..., the columns ...`).
+- `"scales": "shared"` of the facets shares the dims of the columns of
+  channels too; a categorical dim of a `fill` or `stroke` is in the
+  default hover, as a `by`; `lon` and `lat` of expressions are the ones of
+  the props (were `"@undefined"`).
 - A comparison of more than two operands is a chain of every pair of
   neighbours, also `==` and `!=`: `@a == @b == @c` is true if all three
   are the same (the alpha compared the first two).

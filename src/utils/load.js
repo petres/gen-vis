@@ -1,10 +1,10 @@
 export { valueFormat, resolveUrl, clearCache, resolveParents, readDef, requirements, raw, geoParts, loadGeo, load, fetchData };
 
 
-import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, toDate, usedColumns } from "@/utils/data";
-import { applyTransforms, loadTransforms, utcColumns } from "@/utils/transform";
-import { applyResolved, languageOf, mergeAll, prepareDef, variants, variantsOf } from "@/utils/def";
-import { translate, checkDims, isDefinition4 } from "@/utils/language";
+import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, sourceRows, toDate, usedColumns } from "@/utils/data";
+import { applyTransforms, loadTransforms, madeColumns, utcColumns } from "@/utils/transform";
+import { applyResolved, fillTemplate, languageOf, mergeAll, prepareDef, variants, variantsOf } from "@/utils/def";
+import { translate, checkDims, implicitDims, isDefinition4 } from "@/utils/language";
 import { resolve, namesOfGlobals, variants as resolvedVariants } from "@/utils/resolve";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
 import { checkLocale, getLocale, loadLocale } from "@/utils/locale";
@@ -375,6 +375,30 @@ const prepare = (defOrg, source, rows, files, state, globals, symbols = {}) => {
     return { prepared, defaults, columns };
 };
 
+/**
+ * The warnings of the channels of marks which name neither a dim nor a
+ * column of the data (of the rows or of a transform), e.g. a typo of
+ * `"x": "yaer"`: a channel which names no dim is the dim of its column (see
+ * implicitDims of utils/language.js), of the definition `source` resolved
+ * with the `globals`; none without rows.
+ */
+const missingColumns = (source, globals, rows, columns) => {
+    const data = sourceRows(rows, columns);
+    if (!data?.length)
+        return [];
+    let resolved;
+    try {
+        resolved = resolve(source, namesOfGlobals(globals, source.controls));
+    } catch {
+        return [];
+    }
+    const names = [...new Set([...Object.keys(data[0]), ...columns.keys(), ...[...madeColumns(resolved.transform)].map(c => fillTemplate(String(c), globals ?? {}))])];
+    const known = new Set(names);
+    const implicit = implicitDims(resolved);
+    return implicit.filter(d => !known.has(d.column)).map(d => `${d.path}: no dim and no column '${d.column}' in the data, `
+        + `the dims are ${Object.keys(isObject(source.dims) ? source.dims : {}).map(n => `'${n}'`).join(', ') || 'none'}, the columns ${names.map(n => `'${n}'`).join(', ')}`);
+};
+
 // the geometries of maps of the definition and of the patches of its form
 // elements, of the url of GeoJSON or TopoJSON or itself, by their key (see
 // geoData), a patch can switch to another one, e.g. of other regions
@@ -421,6 +445,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     const [{ coords, geo: geoModule, colorLegend, inside }, rows, files, geometries] = loaded;
     await validate(rows);
     const { prepared, defaults, columns } = prepare(defOrg, source, rows, files, state, globals, symbolDefaults(chartDefaults));
+    missingColumns(source, prepared.globals, rows, columns).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
 
     return {
         defUrl: url ?? null,

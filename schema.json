@@ -1210,9 +1210,12 @@
                 },
                 "lon": {
                     "$ref": "#/definitions/channel",
-                    "description": "Of a map: the dim of the longitude of a point or a text."
+                    "description": "Of a map: the dim of the longitude of a point or a text, or an expression of the row."
                 },
-                "lat": { "$ref": "#/definitions/channel", "description": "Of a map: the dim of the latitude." },
+                "lat": {
+                    "$ref": "#/definitions/channel",
+                    "description": "Of a map: the dim of the latitude, or an expression of the row."
+                },
                 "stack": {
                     "anyOf": [
                         { "type": "boolean" },
@@ -1374,7 +1377,7 @@
         },
         "channel": {
             "anyOf": [{ "type": "string" }, { "type": "number" }, { "$ref": "#/definitions/expression" }],
-            "description": "A dim by its name (a column of the data is a dim of it), a number (a value on the scale of the axis of the channel of bars and rules, else pixels) or an expression of the row, e.g. \"@y:scaled:center\"."
+            "description": "A dim by its name (a column of the data is a dim of it, of x or y without a dim x or y the dim of the axis), a number (a value on the scale of the axis of the channel of bars and rules, else pixels) or an expression of the row, e.g. \"@y:scaled:center\"."
         },
         "annotation": {
             "type": "object",

@@ -1319,11 +1319,11 @@ export interface Mark {
      */
     y2?: string | number | Expression;
     /**
-     * Of a map: the dim of the longitude of a point or a text.
+     * Of a map: the dim of the longitude of a point or a text, or an expression of the row.
      */
     lon?: string | number | Expression;
     /**
-     * Of a map: the dim of the latitude.
+     * Of a map: the dim of the latitude, or an expression of the row.
      */
     lat?: string | number | Expression;
     /**
