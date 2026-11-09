@@ -7,7 +7,11 @@
 // the diff is written to tests/png-diff/ then. `UPDATE_PNG=1 npx vitest
 // run tests/png.test.js` takes the new images, a missing baseline is
 // written too. The width of 720 px keeps the images small (the polar
-// charts double in size at 800 px).
+// charts double in size at 800 px). The baselines are the images of the
+// Chromium of the development box (Debian, arm64); another browser, e.g.
+// google-chrome of a CI runner, draws the texts a few pixels apart, so the
+// test is skipped in CI (`CI` set, as GitHub Actions does), see
+// docs/development.md.
 import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
@@ -35,7 +39,9 @@ const defs = [
 // the name of the image of a definition, e.g. data__bev__def
 const nameOf = def => def.replace(/\.json$/, '').replaceAll('/', '__');
 
-describe.skipIf(!browser)('the images of the definitions', () => {
+const ci = !!process.env.CI && process.env.CI != 'false';
+
+describe.skipIf(!browser || ci)('the images of the definitions', () => {
     let dir, result;
     beforeAll(() => {
         buildExportPage();

@@ -27,6 +27,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # the PNG test skips itself in CI (its baselines are of another browser, see docs/development.md)
       - run: npm test
       - run: npm run site:build
       - uses: actions/configure-pages@v6

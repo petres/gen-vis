@@ -6,7 +6,7 @@ Repository scripts, tests, builds, publishing and the examples site.
 npm install
 npm run dev     # dev server with all definitions in data/, ?def=bev/def.json shows one with the prepared definition
 npm test        # unit tests, rendering and schema check of all definitions in data/
-npm run test:png  # the images of all definitions compared with tests/png/ (part of npm test)
+npm run test:png  # the images of all definitions compared with tests/png/ (part of npm test, skipped in CI)
 npm run schema  # schema.json and the types of the definitions (types/definition.d.ts) of src/schema/definition.js, a test checks both
 npm run types   # only the types of the definitions of schema.json
 npm run build   # es modules for bundlers in dist/: gen-vis.js (the core), vue.js (the Vue adapter), check.js
@@ -48,8 +48,13 @@ wide, and compares the images pixel by pixel with the ones of `tests/png/`
 pixels, the diff is written to `tests/png-diff/` then. Intended changes of
 the images are taken by `UPDATE_PNG=1 npx vitest run tests/png.test.js`
 (a missing baseline is written in any run), commit them with the change.
-The images are the ones of the Chromium of the box, the text of another
-browser or version may be a few pixels off, which stays below the limit.
+The images are the ones of the Chromium of the development box (Debian,
+arm64), the text of another browser or version may be a few pixels off,
+which usually stays below the limit. In CI (the variable `CI` set, as by
+GitHub Actions) the test is skipped: the runner's google-chrome is another
+browser than the one of the baselines, and a failure there would block the
+deploy of the site, so the images are compared on the development box
+before a push (`npm test`, or `npm run test:png`).
 
 `spec/` has the fixtures of the parts of the definitions which other
 languages can implement ([spec/README.md](../spec/README.md)),
