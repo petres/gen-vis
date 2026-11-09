@@ -9,7 +9,7 @@
     "dims": {
         "x": { "column": "Jahr", "type": "categorical", "scale": { "padding": 0.1 } },
         "y": {
-            "column": "Anzahl", "stacked": true, "zero": true, "ticks": 4, "grid": true,
+            "column": "Anzahl", "zero": true, "ticks": 4, "grid": true,
             "scale": { "type": "sqrt", "range": [20, "@radius"] }, "axis": { "format": ".2s" }, "hover": { "format": ",.0f" }
         },
         "type": { "column": "Type", "legend": {}, "categories": {
@@ -18,5 +18,5 @@
         "geo": "Geo"
     },
     "facets": { "by": "geo", "cols": "=steps(@totalWidth, {0: 1, 700: 2})" },
-    "marks": { "type": "arc", "by": "type", "innerRadius": "@y:start:scaled", "outerRadius": "@y:end:scaled", "stroke": "white", "stroke-width": 0.5, "highlight": { "opacity": 0.8 } }
+    "marks": { "type": "arc", "by": "type", "stack": true, "stroke": "white", "stroke-width": 0.5, "highlight": { "opacity": 0.8 } }
 }

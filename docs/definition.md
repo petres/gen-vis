@@ -1612,7 +1612,10 @@ The years of daily data, the dates aligned to 2020, a line per year.
   scale are in the center of the band. The `svg:` types draw with the
   center as origin, the cartesian types are cartesian only.
 - Stacked values (`stack` of an area or an arc) are stacked from the
-  center, of an arc of a `y` from the inner radius.
+  center: the arcs of categories around the circle (a categorical `x`)
+  with a `y` stack their radius outwards, e.g. a rose chart
+  (`{"type": "arc", "by": "type", "stack": true}`), the arcs of a value of
+  `x` stack their angle, e.g. the slices of a pie.
 - The hover shows the values of the angle nearest to the pointer, also
   across the top, it is in the center, on the other side of the marker.
 

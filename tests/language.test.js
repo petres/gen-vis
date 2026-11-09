@@ -227,3 +227,11 @@ test('a control of 5.0 sets its global, `ref` is no key of it (review of 5.0)', 
     expect(translate({ controls: [{ type: 'radio', global: 'a', values: ['x'] }] }).formElements[0]).toMatchObject({ ref: 'a', id: 'a' });
     expect(translate({ controls: [{ type: 'radio', ref: 'a', values: ['x'] }] }).formElements[0].ref).toBeUndefined();
 });
+
+test('stack of arcs: of categories around the circle the radius (a rose), else the angle (a pie)', () => {
+    const rose = translate({ coord: 'polar', dims: { x: { column: 'year', type: 'categorical' }, y: 'n', t: { column: 't', legend: {} } }, marks: { type: 'arc', by: 't', stack: true } });
+    expect(rose.plot[0].props).toMatchObject({ angle: '@x:scaled', innerRadius: '@y:start:scaled', outerRadius: '@y:end:scaled' });
+    expect(rose.mapping.y.stacked).toBe(true);
+    const pie = translate({ coord: 'polar', dims: { x: 'share', t: { column: 't', legend: {} } }, marks: { type: 'arc', by: 't', stack: true } });
+    expect(pie.plot[0].props).toMatchObject({ startAngle: '@x:start:scaled', endAngle: '@x:end:scaled' });
+});

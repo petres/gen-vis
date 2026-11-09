@@ -532,7 +532,14 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
             }
             props.d = d;
         } else if (kind == 'arc') {
-            if (stack && x) {
+            // of categories around the circle (a rose) the values stacked
+            // outwards, the radius from the start to the end of the stack
+            if (stack && x && centered(x.dim) && y) {
+                stacked(y.dim, undefined, stack);
+                props.angle = x.value;
+                props.innerRadius ??= ref(y.dim, 'start:scaled');
+                props.outerRadius ??= ref(y.dim, 'end:scaled');
+            } else if (stack && x) {
                 stacked(x.dim, undefined, stack);
                 props.startAngle = ref(x.dim, 'start:scaled');
                 props.endAngle = ref(x.dim, 'end:scaled');
