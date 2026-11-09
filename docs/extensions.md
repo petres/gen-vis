@@ -1,22 +1,21 @@
 # Extensions
 
-A page can register mark types (plot types), coordinate systems, color
+A page can register mark types, coordinate systems, color
 schemes and defaults before its visualisations load. The definition checks also run
 outside the browser, and the schema and types describe definitions for
 editors.
 
-## Plot types
+## Mark types
 
-A mark of a definition is drawn by its type, a plot type of the engine
-(`registerMarkType`). The engine reads a mark as a plot: its attributes
-are the `props` of the plot, its channels the props of the scaled positions
-(e.g. `"x": "lo"` is `"x": "@lo:scaled"`), see
-[design-5.0.md](design-5.0.md). A plot type returns the marks of the
-groups of rows of a plot (`marks(groups, plot, ctx)`), one group per
-combination of its categories, the package draws them, it does not draw
-itself. A group has
+A mark of a definition is drawn by its type, a mark type of the engine
+(`registerMarkType`). The type gets the mark with its attributes as
+`props`, its channels as the props of the scaled positions (e.g.
+`"x": "lo"` is `"x": "@lo:scaled"`), see [design-5.0.md](design-5.0.md). A
+mark type returns the shapes of the groups of rows of a mark
+(`marks(groups, mark, ctx)`), one group per combination of its categories,
+the package draws them, it does not draw itself. A group has
 its `rows`, the keys of its categories (`categories`), their props (`props`)
-and the values of the props of the plot: of a row `at(row)`, of one prop
+and the values of the props of the mark: of a row `at(row)`, of one prop
 `prop(name)(row)` and the ones which are the same for all rows `attrs`,
 e.g. the color of a line, `complete(row)` is false if a dim of the props
 has no value. The values are plain values, e.g. the position of
@@ -32,14 +31,14 @@ import { registerMarkType, perRow } from '@preschen/gen-vis';
 registerMarkType('my:tick', {
     update: true,
     defaults: { x: '@x:scaled', fill: { or: ['@color', 'currentColor'] } },
-    marks: (groups, plot, ctx) => perRow(groups, 'rect', v => ({
+    marks: (groups, mark, ctx) => perRow(groups, 'rect', v => ({
         ...v, x: v.x - 1, width: 2, height: ctx.innerHeight,
     })),
 });
 ```
 
 `defaults` are the type's default props, an object or a function of the
-plot's props. They apply under the full name (`"type": "my:tick"` of a
+mark's props. They apply under the full name (`"type": "my:tick"` of a
 mark) and the short name (`"type": "tick"`) alike. A short name resolves to the type
 with the coordinate system's prefix (e.g. `cartesian:tick`), then to
 `svg:tick`, otherwise to the only registered type of that name (here
@@ -51,15 +50,15 @@ a mark is `x: "@lo:scaled"` of the item (a dim is its scaled position), a
 number stays a number; the type reads them as any other attribute, e.g.
 `x` of the defaults above, which `"x": "lo"` of a mark replaces.
 
-The marks are a layer, `{ element, groups: [{ categories, items }] }` (an
+The shapes are a layer, `{ element, groups: [{ categories, items }] }` (an
 element per item in a `g.vis-group` per group) or `{ element, items }` (the
-elements directly in the group of the plot), an item has the attributes of
+elements directly in the group of the mark), an item has the attributes of
 its element (`text` is its text), `key(item)` of the layer is the key of its
 element, by default its row or its index, `class` is a class of the group of
-the plot and `fit` cuts or wraps the texts with a `max-width`, null draws
+the mark and `fit` cuts or wraps the texts with a `max-width`, null draws
 nothing, see `drawLayer` of `src/utils/draw.js`.
 
-`ctx` is the facet: the `store`, `inner` (the svg element `g` of its plots
+`ctx` is the facet: the `store`, `inner` (the svg element `g` of its marks
 and axes, a DOM element, its origin is the one of the coordinate system),
 the `key` of the facet, its `rows`, the
 `scales` by the names of the dims, `axis` (the names of the dims of
@@ -67,7 +66,7 @@ the positions and of the values), `stackOf(row)` (the start and the end of a
 stacked value), `scope` (the names of the references of the facet, see
 [names](definition.md#names)), `innerWidth`, `innerHeight` and `dims`
 (the sizes of the coordinate system, e.g. its `radius`), of maps also the
-`projection` and the `path`. `curve: true` passes the `curve` of the plot,
+`projection` and the `path`. `curve: true` passes the `curve` of the mark,
 `coords` limits a type to coordinate systems, e.g. `cartesian:bar` to
 `cartesian`. The types of `MarkType`, `MarkGroup` and `Layer` are in the
 package.
@@ -153,7 +152,7 @@ stylesheet of a house style can give the margins instead of a script.
 
 ## The check and the browser module
 
-`validateDef` knows registered plot types, coordinate systems and
+`validateDef` knows registered mark types, coordinate systems and
 schemes; `@preschen/gen-vis/check` exports `registerMarkType`,
 `registerCoord` and `registerScheme` too. The browser module exports
 `registerMarkType`, `registerCoord`, `registerScheme`, `registerDefaults`,
@@ -216,12 +215,11 @@ The steps of the load are exported as well, each JSON to JSON:
 - `resolve(def, names)`: the expressions of the globals evaluated, `names`
   are the globals (and the fields of the entries of the controls), e.g.
   `{ "scale": "log" }`; `variants(def)` the definition resolved with its
-  globals and with every value of every control;
-- `translate(def)`: a resolved definition of 5.0 in the form the engine
-  reads (`options`, `mapping`, `plot` with `props`, `formElements`);
-- `normalize(def)`: resolved with its globals, translated and with the
-  defaults written out which a definition leaves implicit, see
-  `spec/normalize.md`.
+  globals and with every value of every control.
+
+The form the engine reads (a definition translated and normalized, see
+`spec/normalize.md`) is internal: it may change in any release, so it is
+not exported.
 
 The parts not bound to the browser (expressions, transforms, merging and
 normalize) are specified by the fixtures in `spec/` (`spec/README.md`), so

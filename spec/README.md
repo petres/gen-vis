@@ -14,7 +14,7 @@ files.
 | `merge/*.json`, `merge.md` | parents and mixins | `src/utils/def.js` (`mergeAll`), `src/utils/load.js` (`resolveParents`) |
 | `expressions/*.json` | the expressions of props | `src/utils/expr.js` |
 | `expressions/syntax.json` | the string syntax of expressions | `src/utils/expr-parse.js` |
-| `normalize/*.json` | the form the engine reads (the one of 4.x, which a definition of 5.0 is translated into), normalized | `src/utils/language.js` (`translate`), `src/utils/normalize.js` |
+| `normalize/*.json` | the form the engine reads (internal and unstable: the one of 4.x, which a definition of 5.0 is translated into), normalized | `src/utils/language.js` (`translate`), `src/utils/normalize.js` |
 
 Every file is a list of cases, every case has a `name` (what it shows, the
 name of the test) and the fields of its part, see below. A case with an

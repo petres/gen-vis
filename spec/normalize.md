@@ -3,9 +3,10 @@
 A definition of 5.0 may leave out parts which the renderer reads, e.g. the
 scale of `x`, and it names them with the words of 5.0 (`dims`, `marks`
 with channels, `controls`). The engine reads the form of 4.x: `options`,
-`mapping`, `plot` with `props`, `formElements`. The load (and `normalize`
-of `@preschen/gen-vis/check`, `src/check.js`) goes through four steps, each
-JSON to JSON:
+`mapping`, `plot` with `props`, `formElements`. This form is internal and
+unstable (it is not exported by the package and may change in any
+release); the fixtures describe what the renderer of the JS implementation
+reads. The load goes through four steps, each JSON to JSON:
 
 1. the parents are merged (see `merge.md`), a definition of 4.x is
    migrated (`migrate`, `src/utils/migrate.js`);

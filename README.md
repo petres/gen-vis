@@ -148,7 +148,7 @@ dependency). All three take the same props, events and methods (see
 - **Checks**: `check` warns about mistakes while you write a definition,
   `@preschen/gen-vis/check` checks and migrates definitions in scripts, and
   the JSON Schema and TypeScript types describe the definitions.
-- **Extensions**: register your own mark (plot) types, coordinate systems
+- **Extensions**: register your own mark types, coordinate systems
   and color schemes.
 
 ```sh

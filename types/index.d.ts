@@ -229,7 +229,7 @@ export interface GenVisInstance extends GenVisMethods {
 /** A visualisation at the end of `element` (in a new element `.vis-outer`), `root` makes `element` the one of the visualisation. */
 export declare function createGenVis(element: Element, props?: GenVisOptions, options?: { root?: boolean }): GenVisInstance;
 
-/** A group of the rows of a plot, see docs/extensions.md. */
+/** A group of the rows of a mark, see docs/extensions.md. */
 export interface MarkGroup {
     categories: Record<string, unknown>;
     props: Record<string, unknown>;
@@ -243,30 +243,30 @@ export interface MarkGroup {
 /** An element of a layer, the values of its attributes (`text` is its text). */
 export type LayerItem = Record<string, unknown>;
 
-/** The marks of a plot, drawn by the package, see docs/extensions.md and drawLayer of src/utils/draw.js. */
+/** The shapes of a mark, drawn by the package, see docs/extensions.md and drawLayer of src/utils/draw.js. */
 export interface Layer {
     /** The svg element of the items, e.g. "rect". */
     element?: string;
     /** An element per item in a `g.vis-group` per group, its categories are its `data-group-` attributes. */
     groups?: { categories: Record<string, unknown>; items: LayerItem[] }[];
-    /** The elements directly in the group of the plot, e.g. a path per group. */
+    /** The elements directly in the group of the mark, e.g. a path per group. */
     items?: LayerItem[];
     /** The key of the element of an item, of the draw before, by default its row or its index. */
     key?: (item: LayerItem) => unknown;
-    /** A class of the group of the plot. */
+    /** A class of the group of the mark. */
     class?: string;
     /** The texts with a `max-width` are cut or wrapped. */
     fit?: boolean;
 }
 
-/** A plot type, see docs/extensions.md and src/plots/index.js. */
+/** A mark type, see docs/extensions.md and src/plots/index.js. */
 export interface MarkType {
-    /** The marks of the groups of rows of a plot, null draws nothing. */
-    marks(groups: MarkGroup[], plot: Record<string, any>, ctx: Record<string, any>): Layer | null;
+    /** The shapes of the groups of rows of a mark (`mark` with its attributes and channels as `props`), null draws nothing. */
+    marks(groups: MarkGroup[], mark: Record<string, any>, ctx: Record<string, any>): Layer | null;
     update?: boolean;
     curve?: boolean;
     coords?: string[];
-    /** The default props of the plots of the type, of its full name and without its prefix alike ("tick" of "my:tick"), or a function of the props of the plot; null of a plot removes one. */
+    /** The default props of the marks of the type, of its full name and without its prefix alike ("tick" of "my:tick"), or a function of the props of the mark; null of a mark removes one. */
     defaults?: Record<string, unknown> | ((props: Record<string, unknown>) => Record<string, unknown>);
 }
 
