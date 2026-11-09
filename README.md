@@ -16,7 +16,7 @@ same definition exports to SVG, PNG or PDF for documents.
 
 A definition `def.json` next to its data
 [`data.csv`](data/bev/data.csv) (the population of the Austrian states; a
-longer version, migrated from 4.x, is `data/bev/def.json`):
+longer version is `data/bev/def.json`):
 
 ```json
 {
