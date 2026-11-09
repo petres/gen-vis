@@ -1,0 +1,23 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "inflation.csv",
+    "title": "Inflation, outcome and forecast",
+    "subtitle": "change of consumer prices to the year before in %, the forecast with its 80% interval",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 320,
+    "dims": {
+        "x": {"column": "date", "type": "date", "format": "%b %Y", "axis": {"format": "%Y"}},
+        "y": {"column": "value", "name": "Inflation", "format": ".1f", "zero": true, "grid": true, "axis": {"format": ".0f"}},
+        "forecast": {"column": "forecast", "name": "Forecast", "format": ".1f"},
+        "lo": {"column": "lo", "name": "Lower bound", "format": ".1f"},
+        "hi": {"column": "hi", "name": "Upper bound", "format": ".1f"}
+    },
+    "hover": {"columns": ["forecast", "lo", "hi"]},
+    "annotations": {"type": "band", "x": ["2025-09-01", null], "label": "Forecast"},
+    "marks": [
+        {"type": "area", "y": "hi", "y0": "lo", "fill": "#1E4F77", "fill-opacity": 0.18},
+        {"type": "line", "y": "forecast", "stroke": "#1E4F77", "stroke-width": 2, "stroke-dasharray": "5 3"},
+        {"type": "line", "stroke": "#1E4F77", "stroke-width": 2.5}
+    ]
+}

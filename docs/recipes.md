@@ -228,6 +228,130 @@ to at least 12 pixels (`dodge`). The right margin is measured of them.
 }
 ```
 
+## A box plot
+
+The quartiles and the median of the earnings of every sector are columns
+of its rows (`aggregate` with `q1`, `median` and `q3` by `sector`), the
+whiskers end at the least and the largest value within 1.5 times the
+interquartile range of the box (a `calc` of the values inside, their `min`
+and `max`), the values outside are the outliers. Every mark but the
+outliers draws one row per sector (`by` the dim `x`, `select: "first"`):
+the whisker a `rule` from `lo` to `hi`, its caps and the median `tick`s
+across the band (`size` a share of it), the box a `bar` from `q1` (`y0`) to
+`q3`. The sectors are in the order of their medians (`scale.order`); the
+hover of the nearest point (`"mode": "point"`) shows its value and the
+quartiles of its sector.
+
+<!-- data/recipes/boxplot.json -->
+```json
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "wages.csv",
+    "title": "Gross hourly earnings by sector",
+    "subtitle": "in EUR, box: quartiles, whiskers: 1.5 times the interquartile range",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 340,
+    "transform": [
+        {"type": "aggregate", "column": "wage", "by": "sector", "op": "q1", "as": "q1"},
+        {"type": "aggregate", "column": "wage", "by": "sector", "op": "median", "as": "median"},
+        {"type": "aggregate", "column": "wage", "by": "sector", "op": "q3", "as": "q3"},
+        {"type": "calc", "as": "inner", "expr": "=@q1 - 1.5 * (@q3 - @q1) <= @wage <= @q3 + 1.5 * (@q3 - @q1) ? @wage : null"},
+        {"type": "aggregate", "column": "inner", "by": "sector", "op": "min", "as": "lo"},
+        {"type": "aggregate", "column": "inner", "by": "sector", "op": "max", "as": "hi"}
+    ],
+    "dims": {
+        "x": {"column": "sector", "type": "categorical", "scale": {"order": {"by": "median"}, "padding": 0.4}},
+        "y": {"column": "wage", "name": "Hourly earnings", "format": ",.2f", "zero": true, "grid": true, "axis": {"format": ",.0f"}},
+        "q1": {"column": "q1", "name": "Lower quartile", "format": ",.2f"},
+        "median": {"column": "median", "name": "Median", "format": ",.2f"},
+        "q3": {"column": "q3", "name": "Upper quartile", "format": ",.2f"}
+    },
+    "hover": {"mode": "point", "columns": ["q1", "median", "q3"]},
+    "marks": [
+        {"type": "rule", "by": "x", "select": "first", "y1": "lo", "y2": "hi", "stroke": "#5F6670"},
+        {"type": "tick", "by": "x", "select": "first", "y": "lo", "size": 0.4, "stroke": "#5F6670"},
+        {"type": "tick", "by": "x", "select": "first", "y": "hi", "size": 0.4, "stroke": "#5F6670"},
+        {"type": "bar", "by": "x", "select": "first", "y": "q3", "y0": "q1", "fill": "#BBD7EE", "stroke": "#1E4F77"},
+        {"type": "tick", "by": "x", "select": "first", "y": "median", "stroke": "#1E4F77", "stroke-width": 2.5},
+        {"type": "point", "filter": "@inner == null", "r": 2.5, "fill": "none", "stroke": "#1E4F77"}
+    ]
+}
+```
+
+## A scatter plot with trend lines
+
+A `regression` of the change of the unemployment rate on the growth per
+country writes the fitted value of every row (`trend`), a `line` of it per
+country draws the trend through the range of the growth of the country
+(Okun's law: the steeper the line, the more unemployment follows the
+cycle). `method` fits other curves (`log`, `exp`, `poly`). The hover of the
+nearest point has a crosshair (`cross`) through it, its title is the
+country of the point.
+
+<!-- data/recipes/trend.json -->
+```json
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "okun.csv",
+    "title": "Growth and unemployment, 2001–2024",
+    "subtitle": "change of the unemployment rate against real GDP growth, with linear trends",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 380,
+    "transform": {"type": "regression", "column": "unemp_change", "x": "growth", "by": "country", "as": "trend"},
+    "dims": {
+        "x": {"column": "growth", "name": "GDP growth", "format": ".1f", "grid": true, "axis": {"format": ".1~f", "title": {"name": "Real GDP growth, %"}}},
+        "y": {"column": "unemp_change", "name": "Change of unemployment", "format": "+.1f", "grid": true, "axis": {"format": "+.1~f", "title": {"name": "Change of the unemployment rate, pp"}}},
+        "country": {"column": "country", "legend": {}, "categories": {"Austria": "#C3423F", "Germany": "#5B5B5B", "Spain": "#E6A000"}},
+        "year": {"column": "year", "format": "c"}
+    },
+    "hover": {"mode": "point", "cross": true, "columns": ["country", "year"]},
+    "annotations": [{"type": "line", "x": 0}, {"type": "line", "y": 0}],
+    "marks": [
+        {"type": "point", "by": "country", "r": 3.5, "fill-opacity": 0.55, "stroke": "white", "stroke-width": 0.5},
+        {"type": "line", "by": "country", "y": "trend", "stroke-width": 2}
+    ]
+}
+```
+
+## A forecast with a confidence band
+
+An `area` from `lo` (`y0`) to `hi` (`y`) draws the interval of the forecast,
+the rows without bounds (the outcomes) are gaps of it; the outcome and the
+forecast are two `line`s of two columns, the last outcome is the first row
+of the forecast, so they meet. A `band` annotation marks the period of the
+forecast. The bounds are columns of the data here; a `regression` or an
+`aggregate` of quantiles (`q1`, `q3`, `quantile`) computes them of the
+rows.
+
+<!-- data/recipes/band.json -->
+```json
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "inflation.csv",
+    "title": "Inflation, outcome and forecast",
+    "subtitle": "change of consumer prices to the year before in %, the forecast with its 80% interval",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 320,
+    "dims": {
+        "x": {"column": "date", "type": "date", "format": "%b %Y", "axis": {"format": "%Y"}},
+        "y": {"column": "value", "name": "Inflation", "format": ".1f", "zero": true, "grid": true, "axis": {"format": ".0f"}},
+        "forecast": {"column": "forecast", "name": "Forecast", "format": ".1f"},
+        "lo": {"column": "lo", "name": "Lower bound", "format": ".1f"},
+        "hi": {"column": "hi", "name": "Upper bound", "format": ".1f"}
+    },
+    "hover": {"columns": ["forecast", "lo", "hi"]},
+    "annotations": {"type": "band", "x": ["2025-09-01", null], "label": "Forecast"},
+    "marks": [
+        {"type": "area", "y": "hi", "y0": "lo", "fill": "#1E4F77", "fill-opacity": 0.18},
+        {"type": "line", "y": "forecast", "stroke": "#1E4F77", "stroke-width": 2, "stroke-dasharray": "5 3"},
+        {"type": "line", "stroke": "#1E4F77", "stroke-width": 2.5}
+    ]
+}
+```
+
 ## Things to know
 
 - The default locale is `de` (decimal commas, `1.234,5`): `"locale": "en"`

@@ -68,4 +68,13 @@ export default [
     { id: 'choropleth', name: 'Choropleth with labels', file: 'recipes/map.json',
         description: 'The regions filled by a sequential scale, the value as a centered label with a halo, the color bar as the legend.',
         features: ['coord: geo', 'region: fill of a dim', 'text: halo', 'scale: sequential'] },
+    { id: 'boxplot', name: 'Box plot', file: 'recipes/boxplot.json',
+        description: 'The quartiles and the median of every group as columns of an aggregate, whiskers of 1.5 times the interquartile range, the values outside as points.',
+        features: ['transform: aggregate q1 q3', 'bar: y0', 'tick', 'rule', 'select', 'hover: point'] },
+    { id: 'trend', name: 'Scatter plot with trend lines', file: 'recipes/trend.json',
+        description: 'A regression per country writes the fitted value of every row, a line of it is the trend; the hover of the nearest point with a crosshair.',
+        features: ['transform: regression', 'line', 'point', 'hover: cross'] },
+    { id: 'band', name: 'Forecast with a confidence band', file: 'recipes/band.json',
+        description: 'An area from the lower to the upper bound of the forecast, the outcome and the forecast as two lines, a band annotation of the forecast period.',
+        features: ['area: y0', 'line', 'annotations: band'] },
 ];

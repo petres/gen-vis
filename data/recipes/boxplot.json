@@ -1,0 +1,33 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "wages.csv",
+    "title": "Gross hourly earnings by sector",
+    "subtitle": "in EUR, box: quartiles, whiskers: 1.5 times the interquartile range",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 340,
+    "transform": [
+        {"type": "aggregate", "column": "wage", "by": "sector", "op": "q1", "as": "q1"},
+        {"type": "aggregate", "column": "wage", "by": "sector", "op": "median", "as": "median"},
+        {"type": "aggregate", "column": "wage", "by": "sector", "op": "q3", "as": "q3"},
+        {"type": "calc", "as": "inner", "expr": "=@q1 - 1.5 * (@q3 - @q1) <= @wage <= @q3 + 1.5 * (@q3 - @q1) ? @wage : null"},
+        {"type": "aggregate", "column": "inner", "by": "sector", "op": "min", "as": "lo"},
+        {"type": "aggregate", "column": "inner", "by": "sector", "op": "max", "as": "hi"}
+    ],
+    "dims": {
+        "x": {"column": "sector", "type": "categorical", "scale": {"order": {"by": "median"}, "padding": 0.4}},
+        "y": {"column": "wage", "name": "Hourly earnings", "format": ",.2f", "zero": true, "grid": true, "axis": {"format": ",.0f"}},
+        "q1": {"column": "q1", "name": "Lower quartile", "format": ",.2f"},
+        "median": {"column": "median", "name": "Median", "format": ",.2f"},
+        "q3": {"column": "q3", "name": "Upper quartile", "format": ",.2f"}
+    },
+    "hover": {"mode": "point", "columns": ["q1", "median", "q3"]},
+    "marks": [
+        {"type": "rule", "by": "x", "select": "first", "y1": "lo", "y2": "hi", "stroke": "#5F6670"},
+        {"type": "tick", "by": "x", "select": "first", "y": "lo", "size": 0.4, "stroke": "#5F6670"},
+        {"type": "tick", "by": "x", "select": "first", "y": "hi", "size": 0.4, "stroke": "#5F6670"},
+        {"type": "bar", "by": "x", "select": "first", "y": "q3", "y0": "q1", "fill": "#BBD7EE", "stroke": "#1E4F77"},
+        {"type": "tick", "by": "x", "select": "first", "y": "median", "stroke": "#1E4F77", "stroke-width": 2.5},
+        {"type": "point", "filter": "@inner == null", "r": 2.5, "fill": "none", "stroke": "#1E4F77"}
+    ]
+}
