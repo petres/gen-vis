@@ -597,6 +597,10 @@ const checkPlots = ctx => {
             warn(`${path}.once`, `a plot once per facet has no rows, no 'data', 'by' or 'filter'`);
         if (p.dodge !== undefined && (typeof p.dodge != 'number' || !['svg:text', 'polar:text'].includes(p.type)))
             warn(`${path}.dodge`, `the distance of the texts of a plot of 'svg:text' or 'polar:text', a number`);
+        // a text or label mark without a text draws empty texts
+        if (['text', 'svg:text', 'polar:text', 'geo:text'].includes(p.type) && (!isObject(p.props) || p.props.text === undefined)
+            && plotTypes[p.type]?.defaults?.text === undefined)
+            warn(`${path}.props.text`, `missing: the texts of a ${ctx.written?.get(i) ?? 'text'} mark are empty without it, e.g. "text": "@y" or "=format(@y, ',.0f')"`);
         if (p.halo !== undefined && (!['boolean', 'number'].includes(typeof p.halo) || !['svg:text', 'polar:text', 'geo:text'].includes(p.type)))
             warn(`${path}.halo`, `a halo behind the texts of a text or label mark (also of polar charts and maps), true or its width`);
         if (p.object !== undefined && (typeof p.object != 'string' || p.type != 'geo:mesh'))

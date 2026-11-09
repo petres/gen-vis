@@ -855,6 +855,14 @@ describe('validateDef in the words of 5.0, the keys of marks and the data', () =
             `marks[0]: a mark of the type 'point' reads '@y:scaled': it needs a dim 'y' with a scale (the channel y), e.g. "dims": { "y": "value" }, or the attributes which replace its defaults`]);
     });
 
+    test('a text or label mark without a text', () => {
+        expect(validateDef({ ...base(), marks: { type: 'label' } })).toEqual([
+            `marks[0].text: missing: the texts of a label mark are empty without it, e.g. "text": "@y" or "=format(@y, ',.0f')"`]);
+        expect(validateDef({ ...base(), marks: [{ type: 'line' }, { type: 'text', x: 'x', y: 'y' }] })).toEqual([
+            `marks[1].text: missing: the texts of a text mark are empty without it, e.g. "text": "@y" or "=format(@y, ',.0f')"`]);
+        expect(validateDef({ ...base(), marks: { type: 'label', text: '@y' } })).toEqual([]);
+    });
+
     test('typos of the keys of a mark and of attributes of svg, other keys are attributes', () => {
         const marks = { type: 'line', by: 'c', bye: 'c', filtr: { c: 'Wien' }, stak: true, curv: 'step', highligt: { opacity: 1 }, 'strok-width': 2,
             'stroke-width': 2, 'data-kind': 'a', label: 'x', mode: 'm' };
