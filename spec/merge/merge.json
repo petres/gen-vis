@@ -1352,5 +1352,159 @@
         ]
       }
     }
+  },
+  {
+    "name": "lists are merged by the first key which all entries of both have: a control of a parent with an id and a child with only its global",
+    "parts": [
+      {
+        "controls": [
+          {
+            "id": "c1",
+            "type": "radio",
+            "global": "a",
+            "values": [
+              {
+                "value": "x"
+              },
+              {
+                "value": "y"
+              }
+            ]
+          },
+          {
+            "id": "c2",
+            "type": "radio",
+            "global": "b",
+            "values": [
+              "p"
+            ]
+          }
+        ]
+      },
+      {
+        "controls": [
+          {
+            "global": "a",
+            "name": "Neu"
+          },
+          {
+            "global": "c",
+            "type": "select",
+            "values": [
+              "q"
+            ]
+          }
+        ]
+      }
+    ],
+    "result": {
+      "controls": [
+        {
+          "id": "c1",
+          "type": "radio",
+          "global": "a",
+          "values": [
+            {
+              "value": "x"
+            },
+            {
+              "value": "y"
+            }
+          ],
+          "name": "Neu"
+        },
+        {
+          "id": "c2",
+          "type": "radio",
+          "global": "b",
+          "values": [
+            "p"
+          ]
+        },
+        {
+          "global": "c",
+          "type": "select",
+          "values": [
+            "q"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "the values of a control and the entries of another part are entries: merged by the value, values of both parts replace",
+    "parts": [
+      {
+        "controls": [
+          {
+            "type": "radio",
+            "global": "a",
+            "values": [
+              "x",
+              "y"
+            ]
+          },
+          {
+            "type": "select",
+            "global": "year",
+            "values": [
+              "2023",
+              "2024"
+            ]
+          }
+        ]
+      },
+      {
+        "controls": [
+          {
+            "global": "a",
+            "values": [
+              {
+                "value": "x",
+                "name": "X!"
+              },
+              {
+                "value": "z"
+              }
+            ]
+          },
+          {
+            "global": "year",
+            "values": [
+              "2024",
+              "2025"
+            ]
+          }
+        ]
+      }
+    ],
+    "result": {
+      "controls": [
+        {
+          "type": "radio",
+          "global": "a",
+          "values": [
+            {
+              "value": "x",
+              "name": "X!"
+            },
+            {
+              "value": "y"
+            },
+            {
+              "value": "z"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "global": "year",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        }
+      ]
+    }
   }
 ]

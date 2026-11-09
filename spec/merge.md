@@ -21,13 +21,20 @@ The parts are merged in their order, a later part overrides an earlier one
   one first, then the new keys of the later one.
 - Two arrays (not empty) whose entries are all objects with the same key
   are merged by it: the key is the first one of `id`, `global` and `value`
-  which all entries of the earlier array have, and all entries of the later
-  array have the same first key of these, e.g. the marks by their `id`, the
-  controls by their `id` (otherwise by their `global`) and the entries of a
-  control by their `id` (otherwise by their `value`). The entries of the
-  earlier array stay in their order, each merged with the entry of the
-  later array of the same key (compared as strings, `1` and `"1"` are the
-  same), then the entries of the later one with new keys are appended.
+  which all entries of both arrays have, e.g. the marks by their `id`, the
+  controls by their `id` (otherwise by their `global`, e.g. a control of a
+  parent with an `id` and a `global` and a child's of only the `global`)
+  and the entries of a control by their `id` (otherwise by their `value`).
+  The entries of the earlier array stay in their order, each merged with
+  the entry of the later array of the same key (compared as strings, `1`
+  and `"1"` are the same), then the entries of the later one with new keys
+  are appended.
+- The `values` of a control (of 4.x of a form element) are entries: if
+  one of the two lists has an object, a value of the other one (e.g.
+  `"2024"`) is the entry `{"value": "2024"}`, so a child's
+  `[{"value": "x", "name": "X"}]` onto a parent's `["x", "y"]` is
+  `[{"value": "x", "name": "X"}, {"value": "y"}]`; two lists of values
+  replace each other, as other arrays.
 - A text of a dim (the column, e.g. `"facet": "group"`) and an object of
   the same dim (of the keys `dims` and `mapping`, the latter of 4.x and of
   the form the engine reads) are merged as the object `{"column": "group"}`

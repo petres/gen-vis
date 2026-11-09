@@ -434,7 +434,7 @@ const definitions = {
         type: choice(controlTypes, 'Radio buttons, a drop down list, a slider over the entries or hidden, the global is set by the page (the prop globals).'),
         global: string('The global the control sets, the parts of the definition refer to it in expressions, e.g. "=match(@scale, {log: \'log\'}, \'linear\')".'),
         name: text('The label of the control.'),
-        id: string('The id of the control, the global by default; the controls of a parent and its children are merged by it, so a child may give only the id and the ids of the entries it changes.'),
+        id: string('The id of the control, the global by default; the controls of a parent and its children are merged by it (by the global if one of them has no id), so a child may give only the id and the ids (or values) of the entries it changes.'),
         inImage: boolean('The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales.', { default: true }),
         values: oneOf([
             array(anyOf([

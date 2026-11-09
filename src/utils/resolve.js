@@ -3,7 +3,7 @@ export { resolve, variants, namesOfGlobals };
 import { isObject } from '@/utils/values';
 import { evaluate, isMatch, isOperator, refNames } from '@/utils/expr';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
-import { expressionKeys, nameKeys, markKeys } from '@/utils/language';
+import { entriesOf, expressionKeys, nameKeys, markKeys } from '@/utils/language';
 
 /**
  * A definition with the expressions of its globals evaluated: every
@@ -106,10 +106,6 @@ const resolved = (ast, names) => {
     return v === undefined ? null : v;
 };
 
-// an entry of a control, a value (e.g. "2024") is its value, name and id, as
-// the controls of the engine, see control of utils/language.js
-const entryOf = v => isObject(v) ? v : (v === null || typeof v != 'object' ? { value: v, name: String(v), id: String(v) } : v);
-
 // the names of the globals of a definition and the fields of the entries
 // of its controls selected by them, e.g. `year:name`
 const namesOfGlobals = (globals = {}, controls = []) => {
@@ -118,7 +114,7 @@ const namesOfGlobals = (globals = {}, controls = []) => {
     [controls ?? []].flat().forEach(c => {
         if (!isObject(c))
             return;
-        const g = c.global ?? c.ref;
+        const g = c.global;
         // the global of a control is a name, also without a value yet, e.g. a
         // definition without globals: a match of it has no case, its default
         if (typeof g == 'string' && !Object.hasOwn(names, g)) {
@@ -127,7 +123,7 @@ const namesOfGlobals = (globals = {}, controls = []) => {
         }
         if (!Array.isArray(c.values))
             return;
-        const entry = c.values.map(entryOf).find(v => isObject(v) && String(v.value) === String(globals?.[g]));
+        const entry = entriesOf(c.values).find(v => String(v.value) === String(globals?.[g]));
         Object.entries(entry ?? {}).filter(([, v]) => v === null || typeof v != 'object')
             .forEach(([k, v]) => names[`${g}:${k}`] ??= v);
     });
@@ -143,7 +139,7 @@ const namesOfGlobals = (globals = {}, controls = []) => {
 const variants = def => {
     const globals = isObject(def.globals) ? def.globals : {};
     const controls = [def.controls ?? []].flat().filter(c => isObject(c) && Array.isArray(c.values));
-    const sets = [globals, ...controls.flatMap(c => c.values.map(entryOf).filter(isObject).map(v => ({ ...globals, [c.global ?? c.ref]: v.value })))];
+    const sets = [globals, ...controls.flatMap(c => entriesOf(c.values).map(v => ({ ...globals, [c.global]: v.value })))];
     const seen = new Set();
     return sets.filter(s => {
         const key = JSON.stringify(s);

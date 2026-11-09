@@ -7,24 +7,33 @@ import { defaultScaleType, hasCategories } from '@/utils/normalize';
 import { isMatch, operators, refNames } from '@/utils/expr';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
 import { hasLocale } from '@/utils/locale';
-import { translate, checkDims } from '@/utils/language';
+import { translate, checkDims, entryOf } from '@/utils/language';
 import { resolve, namesOfGlobals } from '@/utils/resolve';
 import { normalize } from '@/utils/normalize';
 
 // arrays whose entries all have a key, an `id`, the `global` of controls or
-// the `value` of their entries, are merged by it, entries with a new key
-// are appended, all other arrays are replaced
-const keyOf = a => ['id', 'global', 'value'].find(k => a.every(e => e !== null && typeof e == 'object' && !Array.isArray(e) && k in e));
+// the `value` of their entries, are merged by it, the first of these which
+// all entries of both arrays have, e.g. the controls of a parent with an
+// `id` and a `global` and of a child with only the `global` by it; entries
+// with a new key are appended, all other arrays are replaced. The entries
+// of a control (`values`) are entries first (see entryOf of
+// utils/language.js), so a value of a parent, e.g. "2024", is the entry
+// of an object of a child of the value, the values of both are values
+// (replaced).
+const keys = ['id', 'global', 'value'];
+const keyOf = (a, b) => keys.find(k => [...a, ...b].every(e => isObject(e) && k in e));
 const arrayMerge = (target, source, options) => {
-    const key = target.length > 0 && source.length > 0 ? keyOf(target) : undefined;
-    if (!key || keyOf(source) !== key)
-        return source;
+    const key = target.length > 0 && source.length > 0 ? keyOf(target, source) : undefined;
+    if (!key)
+        return structuredClone(source);
     const merged = target.map(t => {
         const s = source.find(e => e[key] == t[key]);
-        return s ? deepMerge(t, s, options) : t;
+        return s ? deepMerge(t, s, options) : structuredClone(t);
     });
-    return [...merged, ...source.filter(s => !target.some(t => t[key] == s[key]))];
+    return [...merged, ...source.filter(s => !target.some(t => t[key] == s[key])).map(s => structuredClone(s))];
 };
+const entriesMerge = (target, source, options) => Array.isArray(target) && Array.isArray(source) && [...target, ...source].some(isObject)
+    ? arrayMerge(target.map(entryOf), source.map(entryOf), options) : deepMerge(target, source, options);
 
 // the mappings of two parts, a text of one which the other one writes as
 // an object is the mapping of its column, e.g. "facet": "group" of a parent
@@ -43,7 +52,14 @@ const mergeMappings = (target, source, options) => {
 // the attributes of marks and annotations are expressions of the rows, a
 // `match` of them is no switch of a global: no leaf merge in them
 const withoutLeaves = (t, s, options) => (Array.isArray(t) && Array.isArray(s) ? arrayMerge : deepMerge)(t, s, { ...options, leafMerge: undefined });
-const customMerge = key => key == 'mapping' || key == 'dims' ? mergeMappings : (key == 'marks' || key == 'annotations' ? withoutLeaves : undefined);
+const customMerge = key => key == 'mapping' || key == 'dims' ? mergeMappings : key == 'marks' || key == 'annotations' ? withoutLeaves
+    : key == 'controls' || key == 'formElements' ? controlsMerge : undefined;
+// the controls (of 4.x the form elements) merged by their keys, their
+// entries (`values`) as entries, see entriesMerge
+const controlsMerge = (target, source, options) => {
+    const own = { ...options, customMerge: key => key == 'values' ? entriesMerge : customMerge(key) };
+    return (Array.isArray(target) && Array.isArray(source) ? arrayMerge : deepMerge)(target, source, own);
+};
 
 // the name of the global of a reference, e.g. `year` of "@year",
 // "@globals.year" and "@year:name" (a field of its selected entry)

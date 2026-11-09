@@ -1,4 +1,4 @@
-export { translate, checkDims, colorDims, dim as dimOf, compileStrings, isDefinition4, isDefinition5, optionKeys, markKeys, expressionKeys, nameKeys, positionChannels, channelOf, typeOf, authoredPath };
+export { translate, checkDims, colorDims, dim as dimOf, compileStrings, isDefinition4, isDefinition5, optionKeys, markKeys, expressionKeys, nameKeys, positionChannels, channelOf, typeOf, authoredPath, entryOf, entriesOf };
 
 import { isObject } from '@/utils/values';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
@@ -499,15 +499,28 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
     return p;
 };
 
+/**
+ * An entry of a control: a value (e.g. "2024") is the entry of the value,
+ * an object is the entry itself (the merge of the entries of a parent and
+ * a child, see arrayMerge of utils/def.js). `entriesOf` are the entries of
+ * a list of `values` with their `id` and `name`, the text of the value by
+ * default, as the form elements of the engine have them (e.g. the fields
+ * `@year:name` of the selected entry, see namesOfGlobals of
+ * utils/resolve.js), other values (e.g. the column of the values of the
+ * data) as they are.
+ */
+const entryOf = v => isObject(v) ? v : { value: v };
+const entriesOf = values => Array.isArray(values)
+    ? values.map(entryOf).map(e => ({ ...e, id: e.id ?? String(e.value), name: e.name ?? String(e.value) })) : values;
+
 // the control of 5.0 as a form element of the engine
 const control = (c, i) => {
     if (!isObject(c))
         throw new Error(`controls[${i}]: expected a control, e.g. { "type": "select", "global": "year", "values": [...] }`);
     const { global, values, ...rest } = c;
-    const e = { ...rest, ref: global ?? c.ref };
+    const e = { ...rest, ref: global };
     e.id ??= e.ref;
-    e.values = Array.isArray(values) ? values.map(v => isObject(v) ? { ...v, id: v.id ?? String(v.value), name: v.name ?? String(v.value) }
-        : { id: String(v), name: String(v), value: v }) : values;
+    e.values = entriesOf(values);
     return e;
 };
 

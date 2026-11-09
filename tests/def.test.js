@@ -437,3 +437,11 @@ describe('the merge of switches and their resolution (review of 5.0)', () => {
         expect(evaluate(props.fill, { mode: 'b', land: 'W' })).toBe('blue');
     });
 });
+
+describe('the entries of controls (review of 5.0)', () => {
+    test('a value and an entry without a name have the text of the value as their name and id, also as fields of the selected entry', () => {
+        const controls = [{ type: 'radio', global: 'year', values: [{ value: 2024 }, '2025'] }];
+        expect(namesOfGlobals({ year: 2024 }, controls)).toMatchObject({ 'year:name': '2024', 'year:id': '2024', 'year:value': 2024 });
+        expect(namesOfGlobals({ year: '2025' }, controls)).toMatchObject({ 'year:name': '2025', 'year:id': '2025' });
+    });
+});

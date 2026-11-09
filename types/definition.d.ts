@@ -545,7 +545,7 @@ export interface Control {
      */
     name?: string | InLanguages;
     /**
-     * The id of the control, the global by default; the controls of a parent and its children are merged by it, so a child may give only the id and the ids of the entries it changes.
+     * The id of the control, the global by default; the controls of a parent and its children are merged by it (by the global if one of them has no id), so a child may give only the id and the ids (or values) of the entries it changes.
      */
     id?: string;
     /**

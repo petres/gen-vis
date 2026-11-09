@@ -2022,7 +2022,9 @@ be an expression of the globals:
   with the controls of a parent (the global by default). The controls of a
   parent and its children are merged by their `id` (if all of them have
   one, otherwise by their `global`), their entries by their `id` (otherwise
-  by their `value`), so a child may give only the ids of the control and of
+  by their `value`; a value of a list, e.g. `"2024"`, is the entry of the
+  value, a list of values of a child replaces the parent's), so a child may
+  give only the ids (or the globals and the values) of the control and of
   the entries it changes, e.g. another name:
   ```json
   { "controls": [{ "id": "values", "values": [{ "id": "valuesAbs", "name": "Anzahl" }] }] }

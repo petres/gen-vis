@@ -1041,7 +1041,7 @@ const validateDef = (raw, rows = null) => {
     const known = new Set(warnings);
     // the definitions of the other values of the controls
     controls.forEach((c, i) => {
-        const g = isObject(c) ? c.global ?? c.ref : undefined;
+        const g = isObject(c) ? c.global : undefined;
         if (typeof g != 'string' || !Array.isArray(c.values))
             return;
         c.values.forEach((v, j) => {

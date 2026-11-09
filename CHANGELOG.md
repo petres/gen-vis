@@ -142,6 +142,12 @@ them.
   onto a switch whose default is an object is merged into the default (the
   alpha mixed it into the match object), the cases stay whole; the
   expressions of the globals in a part chosen by a switch are evaluated.
+- Lists are merged by the first of `id`, `global` and `value` which all
+  entries of both lists have (a child's control of only the `global`
+  replaced the parent's control with an `id`); the `values` of a control
+  are entries when the other part has objects (a child's entry of a value
+  dropped the parent's other plain values). An entry of an object without
+  a `name` has the text of its value as `@global:name`, as a value has.
 - A comparison of more than two operands is a chain of every pair of
   neighbours, also `==` and `!=`: `@a == @b == @c` is true if all three
   are the same (the alpha compared the first two).
