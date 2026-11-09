@@ -5,7 +5,10 @@
 // and SVG are the same drawing. The files reach the page without a server:
 // the requests of the origin of the page are answered by the program
 // (Fetch of CDP), `/fs/<path>` is the file of the file system, so a
-// definition loads its data and its parents relative to its own file.
+// definition loads its data and its parents relative to its own file. Only
+// the files of the directories of the definition, its parents, --root,
+// --data and --css are answered, requests of other origins fail unless
+// `allowNet` (--allow-net) lets http(s) through, see docs/export.md.
 import { readFileSync, writeFileSync, existsSync, statSync, mkdirSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
@@ -49,11 +52,48 @@ export const fileOf = (url, root) => {
     return null;
 };
 
-// the answer of a request of the page
-const answer = (url, root) => {
+/**
+ * The files of a definition and of its parents (resolved as the page
+ * does, of their `parent`), e.g. to allow their directories; the ones
+ * which cannot be read end the chain, the page reports them.
+ */
+export const definitionFiles = (def, root = null, files = new Set()) => {
+    const file = path.resolve(def);
+    if (files.has(file))
+        return files;
+    files.add(file);
+    let parsed;
+    try {
+        parsed = JSON.parse(readFileSync(file, 'utf8'));
+    } catch {
+        return files;
+    }
+    for (const parent of [parsed?.parent ?? []].flat()) {
+        if (typeof parent != 'string')
+            continue;
+        const url = new URL(parent, fileUrl(file));
+        const of = url.origin == origin ? fileOf(url.href, root) : null;
+        if (of && existsSync(of))
+            definitionFiles(of, root, files);
+    }
+    return files;
+};
+
+// the reason a file is not answered, null of an allowed one; by its path
+// (`..` resolved), links in the directories are followed: they are the
+// choice of the owner of the directory, not of the definition
+const refusal = (file, dirs) => dirs.some(d => within(d, path.resolve(file))) ? null
+    : `${file} is outside the directories gen-vis export reads (of the definition and its parents, --root, --data and --css; --root <dir> of a directory above them allows it)`;
+
+// the answer of a request of the origin of the page, of the files in
+// `dirs` (and the files of the package)
+const answer = (url, root, dirs) => {
     if (new URL(url).pathname == '/__print.html')
         return { responseCode: 200, type: 'text/html', body: Buffer.from(printPage) };
     const file = fileOf(url, root);
+    const refused = file && refusal(file, [lib, ...dirs]);
+    if (refused)
+        return { responseCode: 403, type: 'text/plain', body: Buffer.from(`refused: ${refused}`), refused };
     if (!file || !existsSync(file) || !statSync(file).isFile())
         return { responseCode: 404, type: 'text/plain', body: Buffer.from(`not found: ${file ?? `${url}${root ? '' : ' (a site-absolute path needs --root)'}`}`) };
     return { responseCode: 200, type: types[path.extname(file).toLowerCase()] ?? 'application/octet-stream', body: readFileSync(file) };
@@ -66,21 +106,55 @@ const answer = (url, root) => {
  * value of an expression of the export page, `close()` ends the browser.
  * `browser` is its path (see findBrowser), `sandbox: false` runs it
  * without its sandbox, `root` is the directory of site-absolute paths
- * (e.g. "/geo/europe.json"), `note(text)` gets the notes, e.g. the warnings of
- * the page.
+ * (e.g. "/geo/europe.json"), `allow` more directories whose files the
+ * page may read (besides the ones of each chart, see exportChart),
+ * `allowNet: true` lets the requests of http(s) urls of other origins
+ * through (by default they fail), `note(text)` gets the notes, e.g. the
+ * warnings of the page.
  */
-export const createExporter = async ({ browser, sandbox = true, root, note = () => {} } = {}) => {
+export const createExporter = async ({ browser, sandbox = true, root, allow = [], allowNet = false, note = () => {} } = {}) => {
     root = root == null ? null : path.resolve(root);
     if (root && !(existsSync(root) && statSync(root).isDirectory()))
         throw new Error(`the root ${root} is no directory`);
+    // the directories of the files the page may read: of the exporter and
+    // of the chart being drawn
+    const base = [root, ...allow].filter(d => d != null).map(d => path.resolve(d));
+    let dirs = base;
     if (!existsSync(path.join(lib, 'export.html')))
         throw new Error(`the export page ${path.join(lib, 'export.html')} is missing, it is built by npm run lib`);
     const cdp = await launch(findBrowser(browser), { sandbox, note });
     const sessions = new Set();
     let messages = [];
+    // the answer of a request of another origin, fetched by the program
+    const proxy = async ({ url, method, headers, postData }, requestId, sessionId) => {
+        try {
+            const response = await fetch(url, { method, headers, body: postData });
+            const body = Buffer.from(await response.arrayBuffer());
+            // (of any server, also one without the headers of CORS)
+            const responseHeaders = [...response.headers].filter(([name]) => !/^(content-encoding|content-length|transfer-encoding|access-control-.*)$/i.test(name))
+                .map(([name, value]) => ({ name, value })).concat({ name: 'Access-Control-Allow-Origin', value: '*' });
+            await cdp.send('Fetch.fulfillRequest', { requestId, responseCode: response.status, responseHeaders, body: body.toString('base64') }, sessionId);
+        } catch (error) {
+            messages.push(`error: ${url}: ${error.cause?.message ?? error.message}`);
+            await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' }, sessionId).catch(() => {});
+        }
+    };
     try {
         cdp.on('Fetch.requestPaused', ({ requestId, request }, sessionId) => {
-            const { responseCode, type, body } = answer(request.url, root);
+            const { protocol, origin: of } = new URL(request.url);
+            if (of != origin) {
+                // other origins: http(s) with allowNet, nothing else (e.g. ws:),
+                // fetched by the program, so the rules of the browser for the
+                // requests of a page of another origin (CORS, the ones of
+                // the local network) do not apply, as for the files
+                if (allowNet && (protocol == 'http:' || protocol == 'https:'))
+                    return proxy(request, requestId, sessionId);
+                messages.push(`error: refused ${request.url}: requests to other origins need --allow-net (allowNet)`);
+                return cdp.send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' }, sessionId).catch(() => {});
+            }
+            const { responseCode, type, body, refused } = answer(request.url, root, dirs);
+            if (refused)
+                messages.push(`error: refused ${refused}`);
             cdp.send('Fetch.fulfillRequest', {
                 requestId, responseCode, body: body.toString('base64'),
                 responseHeaders: [{ name: 'Content-Type', value: type }, { name: 'Cache-Control', value: 'no-store' }],
@@ -101,7 +175,8 @@ export const createExporter = async ({ browser, sandbox = true, root, note = () 
             const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
             sessions.add(sessionId);
             const send = (method, params) => cdp.send(method, params, sessionId);
-            await send('Fetch.enable', { patterns: [{ urlPattern: `${origin}/*` }] });
+            // every request, the ones of other origins too (see above)
+            await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] });
             await send('Page.enable');
             await send('Runtime.enable');
             // the background of the images is the one of the chart, none of none
@@ -154,6 +229,10 @@ export const createExporter = async ({ browser, sandbox = true, root, note = () 
                 throw new Error(`unknown formats of ${unknown.join(', ')}, expected .${formats.join(', .')}`);
             if (!existsSync(def))
                 throw new Error(`the definition ${def} does not exist`);
+            // the files of this chart: the directories of its definition, its
+            // parents, its data and its stylesheets
+            const files = [...definitionFiles(def, root), ...(data != null ? [data] : []), ...css.filter(c => !c.includes('{'))];
+            dirs = [...base, ...files.map(f => path.dirname(path.resolve(f)))];
             const given = {
                 ...options, defUrl: fileUrl(def),
                 ...(data != null ? { dataUrl: fileUrl(data) } : {}),

@@ -40,7 +40,10 @@ Options of export:
   --unit <px|cm|mm|in>    the unit of the size of the SVG (default the one of the width)
   --padding <px>          the space around the chart (default 15)
   --timeout <ms>          the time to wait for a chart (default 30000)
-  --root <dir>            the directory of site-absolute paths, e.g. /geo/europe.json (a site's root)
+  --root <dir>            the directory of site-absolute paths, e.g. /geo/europe.json (a site's root);
+                          the page reads only the files of the directories of the definition, its
+                          parents, --root, --data and --css
+  --allow-net             lets the page load http(s) urls, e.g. remote data (default: refused)
   --browser <path>        the browser (default GEN_VIS_BROWSER, CHROME_PATH or one found)
   --no-sandbox            runs the browser without its sandbox (also GEN_VIS_NO_SANDBOX=1)
   --no-check              no check of the definitions, only the warnings of the draw
@@ -138,7 +141,7 @@ const exportCommand = async args => {
                 scale: { type: 'string' }, globals: { type: 'string' }, state: { type: 'string' }, defaults: { type: 'string' }, data: { type: 'string' },
                 background: { type: 'string' }, scheme: { type: 'string', multiple: true }, unit: { type: 'string' },
                 padding: { type: 'string' }, timeout: { type: 'string' }, browser: { type: 'string' },
-                root: { type: 'string' }, 'no-sandbox': { type: 'boolean' }, 'no-check': { type: 'boolean' }, strict: { type: 'boolean' },
+                root: { type: 'string' }, 'allow-net': { type: 'boolean' }, 'no-sandbox': { type: 'boolean' }, 'no-check': { type: 'boolean' }, strict: { type: 'boolean' },
                 help: { type: 'boolean', short: 'h' },
             },
         });
@@ -185,7 +188,7 @@ const exportCommand = async args => {
     const sandbox = !(o['no-sandbox'] || ['1', 'true'].includes(process.env.GEN_VIS_NO_SANDBOX ?? ''));
     let exporter;
     try {
-        exporter = await createExporter({ browser: o.browser, sandbox, root: o.root, note });
+        exporter = await createExporter({ browser: o.browser, sandbox, root: o.root, allowNet: o['allow-net'] ?? false, note });
     } catch (error) {
         fail(error.message, 1);
     }

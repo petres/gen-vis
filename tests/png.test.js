@@ -53,7 +53,8 @@ describe.skipIf(!browser)('the images of the definitions', () => {
             }
             return [file, path.join(dir, `${nameOf(def)}.png`)];
         });
-        result = spawnSync(process.execPath, [path.join(root, 'bin/gen-vis.js'), 'export', ...args, '--width', '720', '--dpi', '96'],
+        // --root: the files of the repository, e.g. the maps of data/geo/ of data/bev/
+        result = spawnSync(process.execPath, [path.join(root, 'bin/gen-vis.js'), 'export', ...args, '--width', '720', '--dpi', '96', '--root', root],
             { cwd: root, encoding: 'utf8', timeout: 120000 });
         result.stderr = result.stderr.replace(/^gen-vis: the browser has no sandbox.*\n/m, '');
     }, 150000);

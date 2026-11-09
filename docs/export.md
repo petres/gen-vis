@@ -197,6 +197,8 @@ options above:
   The width is rounded to whole pixels, e.g. 1890 for 16cm at 300 dpi.
 - `--timeout` (ms per chart, default 30000).
 - `--root <dir>`: the directory of site-absolute paths (see below).
+- `--allow-net`: the page may load `http://` and `https://` urls, e.g.
+  remote data or a stylesheet of web fonts (see below).
 - `--browser <path>`; otherwise `GEN_VIS_BROWSER` or `CHROME_PATH`, then
   `chromium`, `chromium-browser`, `google-chrome`, `chrome` or `msedge` on
   the PATH and the usual Chrome and Edge locations on macOS and Windows.
@@ -215,6 +217,23 @@ How it works and what to expect:
   own file. Site-absolute paths such as `"/geo/europe.json"` are files in
   `--root <dir>`, the directory the site serves (without it they fail with a
   404 and a hint), e.g. `--root web/dist` or a directory with `geo/` in it.
+- The page reads only the files of the directories (and their
+  subdirectories) of the definition and of its parents, of `--root`, of
+  `--data` and of the `--css` files. A definition is code from somewhere
+  else (e.g. a definition of a user of a server which exports charts), so
+  it cannot put another file into its image, e.g. `"data":
+  "../../.ssh/config"`: such a request fails with `refused: <file> is
+  outside the directories gen-vis export reads ...` and a 403. The check
+  is of the paths (links in these directories are followed: they are the
+  choice of their owner, not of the definition). Data of a sibling
+  directory needs `--root` of a directory above both, e.g. `--root .` of
+  a project.
+- Requests to other origins (`http://`, `https://`, e.g. remote data, or a
+  `url()` of an expression of a style) fail, with `refused <url>: requests
+  to other origins need --allow-net`, so an export does not reach the
+  network or the local network. With `--allow-net` the program fetches
+  `http(s)` urls itself (also of servers without CORS headers); other
+  schemes stay refused.
 - Every chart is checked first, as by `gen-vis check`, its warnings are
   printed to the standard error with `check:` before them
   (`gen-vis: a.json: check: dims.x.column: 'yaer' is not a column of the

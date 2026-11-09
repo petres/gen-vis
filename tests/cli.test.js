@@ -33,11 +33,16 @@ const pngSize = file => {
 // the size of the first page of a PDF in points
 const pdfSize = file => readFileSync(file, 'latin1').match(/\/MediaBox\s*\[\s*0 0 ([\d.]+) ([\d.]+)\s*\]/).slice(1).map(Number);
 
-// a definition of the data of bev (data/bev/data.csv) in `dir`, its dims
-// and marks changed by `change`
+// a definition of the data of bev (data/bev/data.csv, copied to `dir`, the
+// export reads only the files of the directory of a definition) in `dir`,
+// its dims and marks changed by `change`
+const bevData = dir => {
+    writeFileSync(path.join(dir, 'bev.csv'), readFileSync(path.join(root, 'data/bev/data.csv')));
+    return 'bev.csv';
+};
 const bevDef = (dir, change = d => d) => {
     const def = JSON.parse(readFileSync(path.join(root, 'data/bev/def.json'), 'utf8'));
-    def.data = path.relative(dir, path.join(root, 'data/bev/data.csv')).replaceAll(path.sep, '/');
+    def.data = bevData(dir);
     return change(def);
 };
 
@@ -159,7 +164,7 @@ describe.skipIf(!browser)('gen-vis export', () => {
 
     test('the parts, a scheme, the font size and several charts of one browser', async () => {
         const def = JSON.parse(readFileSync(path.join(root, 'data/bev/def.json'), 'utf8'));
-        def.data = path.relative(dir, path.join(root, 'data/bev/data.csv')).replaceAll(path.sep, '/');
+        def.data = bevData(dir);
         const land = Object.entries(def.dims).find(([, m]) => m.legend)?.[0];
         def.dims[land] = { ...def.dims[land], scheme: 'house', fromData: true };
         delete def.dims[land].categories;
@@ -209,7 +214,7 @@ describe.skipIf(!browser)('gen-vis export', () => {
     test('the merged definition of the page (genVisExport.resolve) and schemes of a function of it', async () => {
         // a definition of the one of house.json (the test before) as parent
         writeFileSync(path.join(dir, 'kind.json'), JSON.stringify({ parent: 'house.json', title: 'Kind' }));
-        const exporter = await createExporter({ browser });
+        const exporter = await createExporter({ browser, allow: [dir] });
         try {
             const url = JSON.stringify(fileUrl(path.join(dir, 'kind.json')));
             const merged = await exporter.evaluate(`genVisExport.resolve({ defUrl: ${url} })`);
@@ -230,7 +235,7 @@ describe.skipIf(!browser)('gen-vis export', () => {
         writeFileSync(path.join(dir, 'narrow.json'), JSON.stringify({ $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', width: 300, height: 200, dims: { x: { column: 'year', type: 'numeric' }, y: 'value' },
             marks: { type: 'line' }, data: 'narrow.csv' }));
         writeFileSync(path.join(dir, 'narrow.csv'), 'year,value\n2020,1\n2021,2\n');
-        const exporter = await createExporter({ browser });
+        const exporter = await createExporter({ browser, allow: [dir] });
         try {
             const url = JSON.stringify(fileUrl(path.join(dir, 'narrow.json')));
             // the width of the svg of the plots in the image
@@ -266,7 +271,7 @@ describe.skipIf(!browser)('gen-vis export', () => {
 
     test('the message of an error of gen-vis', async () => {
         writeFileSync(path.join(dir, 'broken.json'), JSON.stringify({ $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json',
-            data: path.relative(dir, path.join(root, 'data/bev/data.csv')).replaceAll(path.sep, '/'), mapping: { x: 'Jahr' }, plot: { type: 'nope' } }));
+            data: bevData(dir), mapping: { x: 'Jahr' }, plot: { type: 'nope' } }));
         const r = await run(['export', path.join(dir, 'broken.json'), path.join(dir, 'broken.svg'), 'data/bev/missing.json', path.join(dir, 'missing.svg')]);
         expect(r.code).toBe(1);
         expect(r.stderr).toMatch(/broken\.json: .*marks\[0\]\.type: unknown mark type 'nope'/);
@@ -404,6 +409,59 @@ describe.skipIf(!browser)('gen-vis export', () => {
         expect((await run(['--help'])).stdout).toContain('Usage: gen-vis export');
         expect((await run(['--help'])).stdout).toContain('--no-check');
     });
+    test('only the files of the directories of the definition, its parents, --root and --data; other origins with --allow-net', async () => {
+        const base = mkdtempSync(path.join(dir, 'files-'));
+        const sub = path.join(base, 'charts');
+        const shared = path.join(base, 'shared');
+        spawnSync('mkdir', ['-p', sub, shared]);
+        const def = bevDef(sub);
+        const write = (file, value) => {
+            writeFileSync(file, JSON.stringify(value));
+            return file;
+        };
+        // a file of the file system, a relative path out of the directory
+        const svg = path.join(dir, 'files.svg');
+        writeFileSync(path.join(shared, 'bev.csv'), readFileSync(path.join(root, 'data/bev/data.csv')));
+        for (const data of ['/fs/etc/os-release', '../shared/bev.csv', '/fs' + path.join(shared, 'bev.csv')]) {
+            const r = await run(['export', write(path.join(sub, 'out.json'), { ...def, data }), svg, '--no-check']);
+            expect(r.code).toBe(1);
+            expect(r.stderr).toMatch(/refused .* is outside the directories gen-vis export reads/);
+            expect(r.stderr).toMatch(/403 Forbidden/);
+        }
+        // allowed: the directory of a parent (the data of a parent is relative
+        // to the definition which is drawn), --root and --data
+        write(path.join(shared, 'base.json'), { ...def, data: '../shared/bev.csv' });
+        const child = write(path.join(sub, 'child.json'), { $schema: def.$schema, parent: '../shared/base.json', title: 'Child' });
+        expect((await run(['export', child, svg, '--no-check'])).code).toBe(0);
+        const up = write(path.join(sub, 'up.json'), { ...def, data: '../shared/bev.csv' });
+        expect((await run(['export', up, svg, '--no-check', '--root', base])).code).toBe(0);
+        expect((await run(['export', write(path.join(sub, 'os.json'), { ...def, data: '/fs/etc/os-release' }), svg, '--no-check',
+            '--data', path.join(shared, 'bev.csv')])).code).toBe(0);
+
+        // another origin: refused, with --allow-net loaded
+        const http = await import('node:http');
+        let requests = 0;
+        const server = http.createServer((req, res) => {
+            requests++;
+            // (without the headers of CORS, the program fetches it)
+            res.writeHead(200, { 'Content-Type': 'text/csv' });
+            res.end(readFileSync(path.join(root, 'data/bev/data.csv')));
+        });
+        await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+        try {
+            const remote = write(path.join(sub, 'remote.json'), { ...def, data: `http://127.0.0.1:${server.address().port}/bev.csv` });
+            const refused = await run(['export', remote, svg, '--no-check']);
+            expect(refused.code).toBe(1);
+            expect(refused.stderr).toMatch(/refused http:\/\/127\.0\.0\.1:\d+\/bev\.csv: requests to other origins need --allow-net/);
+            expect(requests).toBe(0);
+            const allowed = await run(['export', remote, svg, '--no-check', '--allow-net']);
+            expect(allowed.stderr).not.toMatch(/refused/);
+            expect(allowed.code).toBe(0);
+            expect(requests).toBe(1);
+        } finally {
+            server.close();
+        }
+    }, 120000);
     test('site-absolute paths are files of --root', async () => {
         // a site: the data at /bev/data.csv, the definition elsewhere
         const site = mkdtempSync(path.join(dir, 'site-'));
