@@ -559,7 +559,7 @@ const checkPlots = ctx => {
             warn(`${path}.once`, `a plot once per facet has no rows, no 'data', 'by' or 'filter'`);
         if (p.dodge !== undefined && (typeof p.dodge != 'number' || !['svg:text', 'polar:text'].includes(p.type)))
             warn(`${path}.dodge`, `the distance of the texts of a plot of 'svg:text' or 'polar:text', a number`);
-        if (p.halo !== undefined && (!['boolean', 'number'].includes(typeof p.halo) || !['svg:text', 'polar:text'].includes(p.type)))
+        if (p.halo !== undefined && (!['boolean', 'number'].includes(typeof p.halo) || !['svg:text', 'polar:text', 'geo:text'].includes(p.type)))
             warn(`${path}.halo`, `a halo behind the texts of a plot of 'svg:text' or 'polar:text', true or its width`);
         if (p.object !== undefined && (typeof p.object != 'string' || p.type != 'geo:mesh'))
             warn(`${path}.object`, `the object of the TopoJSON of a plot of 'geo:mesh', a string`);

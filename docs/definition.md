@@ -1687,9 +1687,12 @@ dim (`join`) whose values are the keys of the features:
   map has no margins by default.
 - The labels of `text` are at the pole of inaccessibility of the largest
   polygon of their feature, the point farthest from its edges, also in long
-  or bent countries (`"place": "centroid"`: the center as `point`).
-  `"fit": true` shows only the labels which fit into the area around their
-  pole (not of `"place": "centroid"`, which has none), `"overlap": false`
+  or bent countries (`"place": "centroid"`: the center as `point`),
+  centered on it (`text-anchor` and, without a `dy`, `dominant-baseline`
+  are `middle` by default), `halo` draws a halo behind them as of other
+  texts.
+  `"fit": true` shows only the labels which fit into the area around the
+  pole (also of `"place": "centroid"`), `"overlap": false`
   leaves out the ones which overlap the label of a larger area, so a map
   needs no list of the labels: e.g. all zones, `{"type": "text", "by":
   "country", "fit": true, "overlap": false, "text": "@label:formatted"}`.

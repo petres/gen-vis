@@ -297,6 +297,12 @@ Migration notes, to check by hand after `gen-vis migrate`:
   gaps wider than its cells); the labels of a horizontal axis which overlap
   are thinned to every n-th one (not fixed `values` or rotated labels),
   e.g. the 21 years of the heatmap example. Its PNG baseline is redone.
+- The labels of maps (`text` and `label` of `geo`) are centered on their
+  place by default (`text-anchor` `middle` and, without a `dy` of the mark,
+  `dominant-baseline` `middle`; were the ones of svg, the start at the
+  baseline), so the 4.x labels which set `dy: "0.35em"` by hand stay where
+  they were; `halo` draws their halo (was ignored) and `fit` works also
+  with `"place": "centroid"`.
 
 ### Package and builds
 

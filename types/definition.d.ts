@@ -1415,7 +1415,7 @@ export interface Mark {
               padding?: number;
           };
     /**
-     * geo:text: only the labels which fit into the area around their place (estimated of their characters and font size); texts of place in: true (default) leaves out a label without room in its band, false places it where it violates the least.
+     * geo:text: only the labels which fit into the area around the pole of their feature (estimated of their characters and font size), also of place centroid; texts of place in: true (default) leaves out a label without room in its band, false places it where it violates the least.
      */
     fit?: boolean;
     /**
@@ -1427,7 +1427,7 @@ export interface Mark {
      */
     ends?: 'base' | 'open';
     /**
-     * Texts: a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the stroke attributes of the mark replace its stroke.
+     * Texts (also of maps): a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the stroke attributes of the mark replace its stroke.
      */
     halo?: boolean | number;
     /**
