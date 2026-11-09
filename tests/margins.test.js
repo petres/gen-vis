@@ -137,6 +137,17 @@ describe('auto margins', () => {
         expect(await margins({ dims, marks: [{ type: 'line' }, { type: 'text', select: 'first', text: 'a', dx: 4, 'font-size': 12 }] })).toEqual(await margins({ dims }));
     });
 
+    test('the labels of annotations beyond the plot area are in the margins, of cartesian charts', async () => {
+        const dims = { x: { column: 'year', type: 'numeric', domain: [2020, 2021] }, y: { column: 'value', type: 'numeric', zero: true, format: ',.0f' } };
+        const plain = await margins({ dims });
+        // a band at the end of x, its label starts at its start (the end of the plot area)
+        const band = await margins({ dims, annotations: [{ type: 'band', x: [2021, 2021], label: 'abcdefghijklmnop' }] });
+        expect(band.right).toBeGreaterThan(plain.right);
+        // the label of 11 pixels (the size of its style) from about the end of the plot area
+        expect(band.right).toBeGreaterThanOrEqual(Math.floor(textWidth('abcdefghijklmnop', '11px sans-serif')) - 8);
+        expect(band.right).toBeLessThanOrEqual(Math.ceil(textWidth('abcdefghijklmnop', '11px sans-serif')) + 8);
+    });
+
     test('the plot area is the facet without the measured margins, also of a facet of a step height', async () => {
         const v = await view({});
         const f = v.facets[0];

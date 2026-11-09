@@ -11,6 +11,7 @@ import { facetMappings } from "@/utils/normalize";
 import { markPath, warnOnce, withPath } from "@/utils/warn";
 import { highlightVars } from "@/utils/highlight";
 import { textWidth } from "@/utils/measure";
+import { directOf, elementOf } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 
 // the warning of a condition of a filter of no mapping, e.g. of a column
@@ -743,7 +744,11 @@ const lengthOf = (v, fontSize) => {
  */
 const textBoxes = (store, f) => {
     const family = store.fontFamily || 'sans-serif';
-    const plots = (store.def.plot ?? []).filter(p => p.type == 'svg:text' && p.place?.in === undefined && inFacet(store.def, p, f));
+    // of cartesian charts (the positions of polar ones are around the center, maps have no margins)
+    if ((store.def.options?.coord ?? 'cartesian') != 'cartesian')
+        return [];
+    const plots = (store.def.plot ?? []).filter(p => (p.type == 'svg:text' || String(p.type).startsWith('annotation:'))
+        && p.place?.in === undefined && inFacet(store.def, p, f));
     if (plots.length == 0)
         return [];
     const groups = new Map();
@@ -761,7 +766,14 @@ const textBoxes = (store, f) => {
         } catch {
             return [];
         }
-        return (layer?.groups ? layer.groups.flatMap(g => g.items) : layer?.items ?? []).map(v => {
+        // the texts of the layer: of a text mark all, of annotations their
+        // texts and labels (their position and anchor in the attributes set at
+        // once, a label in the size of its style, see styles.css)
+        const items = layer?.groups ? layer.groups.flatMap(g => g.items) : layer?.items ?? [];
+        return items.filter(v => (v[elementOf] ?? layer.element) == 'text').map(item => {
+            const v = { ...(item[directOf] ?? {}), ...item };
+            if (String(v.class ?? '').includes('vis-annotation-label') && v['font-size'] === undefined)
+                v['font-size'] = 11;
             const text = v.text;
             if (text === null || text === undefined || text === '' || v.transform || v.visibility == 'hidden')
                 return null;
