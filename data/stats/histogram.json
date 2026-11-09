@@ -2,113 +2,46 @@
     "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "data": "awards.csv",
     "transform": [
-        {"type": "random", "as": "jitter", "range": [0.06, 0.94], "seed": 1},
-        {
-            "type": "bin",
-            "column": "value",
-            "edges": [{"from": 50, "to": 250, "step": 5}, 143],
-            "start": "lo",
-            "end": "hi",
-            "per": 5,
-            "as": "perFive"
-        },
-        {"type": "calc", "as": "perMonth", "expr": "@perFive / @months"},
-        {
-            "type": "bin",
-            "column": "value",
-            "by": "group",
-            "edges": [50, 250],
-            "as": "n",
-            "start": "nStart",
-            "end": "nEnd"
-        }
+        { "type": "random", "as": "jitter", "range": [0.06, 0.94], "seed": 1 },
+        { "type": "bin", "column": "value", "edges": [{ "from": 50, "to": 250, "step": 5 }, 143], "start": "lo", "end": "hi", "per": 5, "as": "perFive" },
+        { "type": "calc", "as": "perMonth", "expr": "@perFive / @months" },
+        { "type": "bin", "column": "value", "by": "group", "edges": [50, 250], "as": "n", "start": "nStart", "end": "nEnd" }
     ],
     "title": "Aufträge nach Auftragswert",
     "subtitle": "Aufträge pro Monat und 5.000 € Auftragswert (Klassen von 5.000 €, eine Grenze bei 143.000 €), darunter jeder Auftrag als Punkt",
     "source": "Erfundene Daten, Beispiel des Transforms bin und random",
     "height": 330,
-    "margins": {"top": 6, "right": 60, "bottom": 22, "left": 130},
-    "locale": {"base": "de"},
-    "hover": {"title": "{title}–{hi} Tsd. €", "columns": []},
-    "globals": {"months": 36},
+    "locale": { "base": "de" },
+    "hover": { "title": "{title}–{hi} Tsd. €", "columns": [] },
+    "globals": { "months": 36 },
     "dims": {
         "x": {
-            "column": "value",
-            "domain": [45, 255],
-            "axis": {
-                "values": [50, 100, 150, 200, 250],
-                "labels": {"props": {"text": "=cat(format(@x, ',.0f'), 'k')"}}
-            },
-            "name": "Auftragswert (1.000 €)"
+            "column": "value", "name": "Auftragswert (1.000 €)", "domain": [45, 255],
+            "axis": { "values": [50, 100, 150, 200, 250], "labels": { "props": { "text": "=cat(format(@x, ',.0f'), 'k')" } } }
         },
-        "lo": {"column": "lo", "scale": {"of": "x"}, "hover": {"format": ",.0f"}},
-        "hi": {"column": "hi", "scale": {"of": "x"}, "hover": {"format": ",.0f", "cell": false}},
+        "lo": { "column": "lo", "hover": { "format": ",.0f" } },
+        "hi": { "column": "hi", "hover": { "format": ",.0f", "cell": false } },
         "y": {
-            "column": "perMonth",
-            "nice": true,
-            "format": ",.1f",
-            "scale": {"range": ["@height * 0.62", 0]},
-            "axis": {"ticks": 5},
-            "stacked": true,
-            "stackBy": "lo",
-            "hover": {"format": ",.2f"},
-            "zero": true,
-            "grid": true
+            "column": "perMonth", "format": ",.1f", "zero": true, "nice": true, "range": ["@height * 0.62", 0], "ticks": 5, "grid": true,
+            "stacked": true, "stackBy": "lo", "hover": { "format": ",.2f" }
         },
         "group": {
             "column": "group",
-            "categories": {"Direktvergabe": "#4269D0", "Andere Verfahren": "#3CA951"},
-            "scale": {
-                "type": "band",
-                "orientation": "vertical",
-                "range": ["@height * 0.7", "@height"],
-                "padding": 0.08
-            },
-            "axis": {"position": "left"}
+            "categories": { "Direktvergabe": "#4269D0", "Andere Verfahren": "#3CA951" },
+            "scale": { "type": "band", "orientation": "vertical", "range": ["@height * 0.7", "@height"], "padding": 0.08 },
+            "axis": {}
         },
-        "jitter": {"column": "jitter", "type": "numeric"},
-        "n": {"column": "n", "type": "numeric"}
+        "jitter": { "column": "jitter", "type": "numeric" },
+        "n": { "column": "n", "type": "numeric" }
     },
     "marks": [
-        {"type": "bar", "id": "bars", "x0": "lo", "x1": "hi", "fill": "#4269D0"},
-        {
-            "type": "point",
-            "id": "awards",
-            "by": "group",
-            "cy": "@group:scaled + @jitter * @group:bandwidth",
-            "r": 1.5,
-            "opacity": 0.4
-        },
-        {
-            "type": "text",
-            "id": "counts",
-            "by": "group",
-            "y": "group",
-            "x": "@x:scaled:250 + 6",
-            "dominant-baseline": "middle",
-            "text": "=cat('n=', format(@n, ',.0f'))",
-            "fill": "#333",
-            "font-size": 11
-        }
+        { "type": "bar", "x0": "lo", "x1": "hi", "fill": "#4269D0" },
+        { "type": "point", "by": "group", "y": "@group:scaled + @jitter * @group:bandwidth", "r": 1.5, "opacity": 0.4 },
+        { "type": "label", "by": "group", "x": "@x:scaled:250", "y": "group", "anchor": "end", "dx": 6, "text": "=cat('n=', format(@n, ',.0f'))", "fill": "#333", "font-size": 11 }
     ],
     "annotations": [
-        {
-            "type": "line",
-            "x": 100,
-            "above": true,
-            "props": {"stroke": "#888", "stroke-dasharray": "2 2"}
-        },
-        {
-            "type": "line",
-            "x": 143,
-            "above": true,
-            "props": {"stroke": "#888", "stroke-dasharray": "2 2"}
-        },
-        {
-            "type": "line",
-            "x": 200,
-            "above": true,
-            "props": {"stroke": "#888", "stroke-dasharray": "2 2"}
-        }
+        { "type": "line", "x": 100, "above": true, "props": { "stroke": "#888", "stroke-dasharray": "2 2" } },
+        { "type": "line", "x": 143, "above": true, "props": { "stroke": "#888", "stroke-dasharray": "2 2" } },
+        { "type": "line", "x": 200, "above": true, "props": { "stroke": "#888", "stroke-dasharray": "2 2" } }
     ]
 }
