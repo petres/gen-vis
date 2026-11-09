@@ -61,7 +61,9 @@ const resolveIn = (value, names, key, inside) => {
         } catch {
             return value;
         }
-        const r = resolved(ast, names);
+        // of html (the source below the chart) the texts of the names, e.g.
+        // globals of the page, are text, the ones of the expression html
+        const r = resolved(ast, key == 'source' ? escapedNames(names) : names);
         return r === unresolved ? value : chosen(r, names, key, inside);
     }
     const expression = inside || (key !== undefined && expressionKeys.has(key));
@@ -94,6 +96,9 @@ const resolveIn = (value, names, key, inside) => {
 // utils/def.js: a parent's object, with a child's one merged into it), is a
 // part of the definition: its own expressions of the globals are resolved
 const chosen = (r, names, key, inside) => r !== null && typeof r == 'object' ? resolveIn(r, names, key, inside) : r;
+
+const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+const escapedNames = names => Object.fromEntries(Object.entries(names).map(([k, v]) => [k, typeof v == 'string' ? v.replace(/[&<>"']/g, c => escapes[c]) : v]));
 
 // the value of an expression of the names only, unresolved of others (also
 // of a reference to a name, so "@lang" of options.language stays)

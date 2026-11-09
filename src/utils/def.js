@@ -1,4 +1,4 @@
-export { mergeAll, sameValue, prepareDef, applyResolved, resolvedParts, patchable, variants, variantsOf, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts, symbolOf, symbolShape, isInLanguages, inLanguage, languageOf, textsIn };
+export { escapeHtml, mergeAll, sameValue, prepareDef, applyResolved, resolvedParts, patchable, variants, variantsOf, selectedEntry, selectedEntries, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolShortcuts, symbolOf, symbolShape, isInLanguages, inLanguage, languageOf, textsIn };
 
 import { deepMerge, mergeAll as mergeParts } from '@/utils/merge';
 import { ownColors, schemeColors } from '@/utils/d3';

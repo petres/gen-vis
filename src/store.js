@@ -3,7 +3,7 @@ export { createStore };
 import { distinctValues, prepareData, scaleDef, sourceRows, updateData, updateDataValues } from "@/utils/data";
 import { warnOnce } from "@/utils/warn";
 import { applyTransforms, utcColumns } from "@/utils/transform";
-import { applyResolved, fillHtml, fillText, formatOf, languageOf, templateNames } from "@/utils/def";
+import { applyResolved, escapeHtml, fillHtml, fillText, formatOf, languageOf, templateNames } from "@/utils/def";
 import { inferTypes } from "@/utils/data";
 import { plotTypes } from "@/plots";
 import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
@@ -137,16 +137,18 @@ class Store {
     text(t) { return fillText(this.textOf(t), this.names) }
     // html of the definition, e.g. the footer, with the values of the globals
     // as text, they can be values of the data, e.g. of a form element
-    html(t) { const v = this.textOf(t); return typeof v == 'string' ? fillHtml(v, this.names) : v }
+    // (of an expression the texts of its names, e.g. globals of the page, as
+    // text, the texts of the expression itself as html)
+    html(t) { const v = this.textOf(t, true); return typeof v == 'string' ? fillHtml(v, this.names) : v }
     // a text which is an expression of names which are not all globals
     // (those are evaluated before, see utils/resolve.js), evaluated in the
     // scope of the chart, e.g. "=cat('Breite ', @totalWidth)", no value is
     // the empty text, never the expression; a name which is none of the
     // scope (no global, no size) has no value, a warning once
-    textOf(t) {
+    textOf(t, html = false) {
         if (!isOperator(t))
             return t;
-        const scope = this.scope;
+        const scope = html ? Object.fromEntries(Object.entries(this.scope).map(([k, v]) => [k, typeof v == 'string' ? escapeHtml(v) : v])) : this.scope;
         const unknown = refNames(t).filter(n => typeof n == 'string' && !Object.hasOwn(scope, n));
         if (unknown.length > 0)
             warnOnce(this, `text:${JSON.stringify(t)}`, `the text "=${formatExpression(t)}" names ${unknown.map(n => `'${n}'`).join(', ')}, `

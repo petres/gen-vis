@@ -4076,6 +4076,12 @@ describe('texts of expressions of other names than globals (review of 5.0)', () 
         expect(el.querySelector('.vis-subtitle').textContent).toBe('en');
         expect(errors).toEqual([]);
     });
+    test('of html (the source) the texts of the names are text, the ones of the expression html', async () => {
+        const el = await mount({ def: { ...base, source: "=cat('<b>', @who, '</b>')" }, data, globals: { who: '<i>x</i>' } });
+        const footer = el.querySelector('.vis-footer');
+        expect(footer.querySelector('b').textContent).toBe('<i>x</i>');
+        expect(footer.querySelector('i')).toBeNull();
+    });
     test('a name which is no global and no size has no value, the text is never the expression, a warning once', async () => {
         const el = await mount({ def: { ...base, title: "=match(@lang, {en: 'Population'}, 'Bevölkerung')", subtitle: "=match(@lang, {en: 'by state'})" }, data });
         expect(el.querySelector('.vis-title').textContent).toBe('Bevölkerung');
