@@ -10,7 +10,7 @@ import { create } from "@/utils/dom";
 import { el, patch, place, setHtml, setText, slotNodes, takeRange } from "@/comp/html";
 import { createFacets } from "@/comp/facets";
 import { createLegends, annotationsLegend } from "@/comp/legends";
-import { createFormElement } from "@/comp/form-element";
+import { createControl } from "@/comp/control";
 import { highlightStyle } from "@/utils/highlight";
 
 // the width of the visualisation inside its padding and border, e.g. of a card
@@ -173,7 +173,7 @@ const createVis = app => {
     // the stylesheet of the highlights of the plots, see utils/highlight.js
     const style = root.appendChild(el('style'));
     const header = root.appendChild(el('div', { class: 'vis-header' }));
-    const form = root.appendChild(el('div', { class: 'vis-form-elements' }));
+    const form = root.appendChild(el('div', { class: 'vis-controls' }));
     const footer = el('div', { class: 'vis-footer' });
     const footerContent = footer.appendChild(el('div', { class: 'vis-footer-content' }));
     let headerTitle = null, headerSubtitle = null, footerSpan = null;
@@ -540,7 +540,7 @@ const createVis = app => {
             // hidden form elements have no element, their globals are set by the page
             globals = store.def.globals;
             formElements = store.def.formElements.filter(e => e.type != 'hidden')
-                .map(e => createFormElement(vis, e, globals, formChanged));
+                .map(e => createControl(vis, e, globals, formChanged));
             form.append(...formElements.map(f => f.el));
             measure();
             update();

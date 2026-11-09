@@ -18,7 +18,7 @@
 }
 
 .theme-news .vis-title { font-family: Georgia, "Times New Roman", serif; font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
-.theme-news .vis-form-element-title { display: none; }
+.theme-news .vis-control-title { display: none; }
 .theme-news .vis-radio > div label { font-weight: 600; }
 .theme-news .vis-radio input { accent-color: #D6452B; }
 /* the line at 0 crosses the bars, the labels of the months stay at the bottom */

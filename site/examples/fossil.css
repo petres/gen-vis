@@ -1,4 +1,4 @@
-/* A dark dashboard: monospace, the form elements as segmented controls */
+/* A dark dashboard: monospace, the controls as segmented buttons */
 .theme-dashboard {
     background: #0F172A;
     padding: 20px 22px 14px;
@@ -35,9 +35,9 @@
 .theme-dashboard .vis-axis text { font-size: 11px; }
 
 /* the radio buttons as a segmented control */
-.theme-dashboard .vis-form-elements { margin: 4px 0 8px; }
-.theme-dashboard .vis-form-element { margin: 4px 18px 4px 0; }
-.theme-dashboard .vis-form-element-title {
+.theme-dashboard .vis-controls { margin: 4px 0 8px; }
+.theme-dashboard .vis-control { margin: 4px 18px 4px 0; }
+.theme-dashboard .vis-control-title {
     font-weight: normal;
     font-size: 11px;
     text-transform: uppercase;

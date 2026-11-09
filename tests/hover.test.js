@@ -57,12 +57,12 @@ describe('the legend', () => {
         const data = 'year,value,land\n2020,1,Wien\n2022,2,Wien\n2022,3,Tirol\n2021,5,Salzburg';
         const el = await mount({ def, data });
         const entries = () => [...el.querySelectorAll('.vis-legend-entry')].map(e => [e.dataset.key, e.dataset.visible]);
-        el.querySelector('.vis-form-element input[value="b"]').click();
+        el.querySelector('.vis-control input[value="b"]').click();
         await nextTick();
         expect(entries()).toEqual([['Wien', 'true'], ['Tirol', 'true']]);
         el.querySelector('.vis-legend-entry[data-key="Wien"]').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
         await nextTick();
-        el.querySelector('.vis-form-element input[value="a"]').click();
+        el.querySelector('.vis-control input[value="a"]').click();
         await nextTick();
         expect(entries()).toEqual([['Wien', 'true'], ['Tirol', 'false'], ['Salzburg', 'false']]);
         // again all entries, also the ones not in the data

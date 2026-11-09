@@ -17,7 +17,7 @@
 
 .theme-report .vis-title { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
 
-.theme-report .vis-form-element-title { font-weight: 600; }
+.theme-report .vis-control-title { font-weight: 600; }
 .theme-report .vis-slider input { accent-color: #0F766E; width: 160px; }
 .theme-report .vis-slider-value { font-weight: 700; font-variant-numeric: tabular-nums; }
 

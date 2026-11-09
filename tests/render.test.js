@@ -183,7 +183,7 @@ describe('rendering', () => {
         const ticks = () => [...el.querySelectorAll('g.vis-axis-left g.tick text')].map(t => parseFloat(t.textContent));
         expect(ticks().at(-1)).toBe(4);
 
-        el.querySelectorAll('.vis-form-element .vis-radio input')[1].click();
+        el.querySelectorAll('.vis-control .vis-radio input')[1].click();
         await nextTick();
         expect(ticks().at(-1)).toBe(40);
         expect(el.querySelectorAll('g.vis-mark.mark-1 circle')).toHaveLength(8);
@@ -207,7 +207,7 @@ describe('rendering', () => {
         ];
         const el = await mount({ def, data });
         const ticks = () => [...el.querySelectorAll('g.vis-axis-left g.tick text')].map(t => t.textContent);
-        const entries = i => el.querySelectorAll('.vis-form-element')[i].querySelectorAll('.vis-radio input');
+        const entries = i => el.querySelectorAll('.vis-control')[i].querySelectorAll('.vis-radio input');
         expect(ticks().at(-1)).toBe('2,0');
 
         entries(0)[1].click();
@@ -237,7 +237,7 @@ describe('rendering', () => {
     };
     const maxTick = el => Math.max(...[...el.querySelectorAll('g.vis-axis-left g.tick text')].map(t => parseFloat(t.textContent)));
     const legendVisible = el => [...el.querySelectorAll('.vis-legend .vis-legend-entries > div')].map(e => e.dataset.visible);
-    const checked = el => [...el.querySelectorAll('.vis-form-element input')].map(i => i.checked);
+    const checked = el => [...el.querySelectorAll('.vis-control input')].map(i => i.checked);
 
     test('the globals and the width are references everywhere, the rows replace globals', async () => {
         const def = lineDef();
@@ -261,7 +261,7 @@ describe('rendering', () => {
         const legend = () => el.querySelector('.vis-legend .vis-legend-entries > div').getAttribute('data-accent');
         expect(legend()).toBe('green');
 
-        el.querySelectorAll('.vis-form-element .vis-radio input')[1].click();
+        el.querySelectorAll('.vis-control .vis-radio input')[1].click();
         await nextTick();
         expect(circle().getAttribute('stroke')).toBe('black');
         expect(line().getAttribute('stroke')).toBe('black');
@@ -379,7 +379,7 @@ describe('rendering', () => {
             vis.update({ state: s });
         } });
 
-        el.querySelectorAll('.vis-form-element .vis-radio input')[1].click();
+        el.querySelectorAll('.vis-control .vis-radio input')[1].click();
         await nextTick();
         el.querySelectorAll('.vis-legend .vis-legend-entries > div')[1].click();
         await nextTick();
@@ -522,10 +522,10 @@ describe('controls', () => {
 
     test('a click on the label of a radio button is one change', async () => {
         const { el, updates } = await mountWithUpdates(switchDef());
-        el.querySelectorAll('.vis-form-element label')[1].click();
+        el.querySelectorAll('.vis-control label')[1].click();
         await nextTick();
         expect(updates).toEqual([{ globals: { column: 'other' } }]);
-        expect(el.querySelectorAll('.vis-form-element input')[1].checked).toBe(true);
+        expect(el.querySelectorAll('.vis-control input')[1].checked).toBe(true);
     });
 
     test('the entries of a legend by the keyboard, the focus highlights them', async () => {
@@ -1018,7 +1018,7 @@ describe('maps', () => {
 
     test('the rows of a global of a select', async () => {
         const el = await mount({ def: mapDef(), data: mapData });
-        const select = el.querySelector('.vis-form-element select');
+        const select = el.querySelector('.vis-control select');
         expect(select.value).toBe('2020');
         select.selectedIndex = 1;
         select.dispatchEvent(new Event('change'));
@@ -1037,10 +1037,10 @@ describe('maps', () => {
         delete def.globals;
         const updates = [];
         const el = await mount({ def, data: mapData, 'onUpdate:state': s => updates.push(s) });
-        const slider = el.querySelector('.vis-form-element input[type="range"]');
+        const slider = el.querySelector('.vis-control input[type="range"]');
         const legend = () => [...el.querySelectorAll('.vis-color-legend text')].map(t => t.textContent);
         expect([slider.min, slider.max, slider.value]).toEqual(['0', '1', '1']);
-        expect(el.querySelector('.vis-form-element .vis-slider .vis-slider-value').textContent).toBe('2021');
+        expect(el.querySelector('.vis-control .vis-slider .vis-slider-value').textContent).toBe('2021');
         // 2 to 4
         expect(legend()).toContain('3,0');
         // moved to 2020, while it is moved, in the next frame
@@ -1050,7 +1050,7 @@ describe('maps', () => {
         expect(updates).toEqual([]);
         await new Promise(r => requestAnimationFrame(r));
         await nextTick();
-        expect(el.querySelector('.vis-form-element .vis-slider .vis-slider-value').textContent).toBe('2020');
+        expect(el.querySelector('.vis-control .vis-slider .vis-slider-value').textContent).toBe('2020');
         expect(legend()).toContain('2,0');
         expect(updates).toEqual([{ globals: { year: '2020' } }]);
 
@@ -1069,7 +1069,7 @@ describe('maps', () => {
         const el = await mount({ def: mapDef(), data: mapData });
         const paths = () => [...el.querySelectorAll('g.vis-mark.mark-1 path')];
         const before = paths();
-        const select = el.querySelector('.vis-form-element select');
+        const select = el.querySelector('.vis-control select');
         select.selectedIndex = 1;
         select.dispatchEvent(new Event('change'));
         await nextTick();
@@ -1083,7 +1083,7 @@ describe('maps', () => {
         await rendered(vm.el);
         const paths = () => [...vm.el.querySelectorAll('g.vis-mark.mark-0 path')].map(p => p.getAttribute('d'));
         const before = paths();
-        const select = vm.el.querySelector('.vis-form-element select');
+        const select = vm.el.querySelector('.vis-control select');
         for (const year of ['1', '0', '1']) {
             select.selectedIndex = +year;
             select.dispatchEvent(new Event('change'));
@@ -1098,11 +1098,11 @@ describe('maps', () => {
         def.formElements = [{ id: 'year', name: 'Jahr', ref: 'year', type: 'select', values: { column: 'year' } }];
         // a global which is none of the values is the last one, the state is applied
         def.globals = { year: '1999' };
-        const options = el => [...el.querySelectorAll('.vis-form-element option')].map(o => o.textContent);
+        const options = el => [...el.querySelectorAll('.vis-control option')].map(o => o.textContent);
         expect(options(await mount({ def, data: mapData }))).toEqual(['2020', '2021']);
-        expect((await mount({ def, data: mapData })).querySelector('.vis-form-element select').value).toBe('2021');
+        expect((await mount({ def, data: mapData })).querySelector('.vis-control select').value).toBe('2021');
         const el = await mount({ def, data: mapData, state: { globals: { year: '2020' } } });
-        expect(el.querySelector('.vis-form-element select').value).toBe('2020');
+        expect(el.querySelector('.vis-control select').value).toBe('2020');
         // numbers by their value
         expect(options(await mount({ def, data: 'region,year,value\nA,10,1\nA,9,2\nB,100,3' }))).toEqual(['9', '10', '100']);
         expect(errors).toEqual([]);
@@ -2474,7 +2474,7 @@ describe('fixed bugs', () => {
         const fills = () => [...el.querySelectorAll('g.mark-1 g.vis-group')].map(g => [g.dataset.groupC, g.querySelector('circle').getAttribute('fill')]);
         expect(fills()).toEqual([['Wien', 'red'], ['Tirol', 'blue']]);
         el.querySelector('.vis-legend-entry[data-key="Tirol"]').click();
-        el.querySelector('.vis-form-element input[value="b"]').click();
+        el.querySelector('.vis-control input[value="b"]').click();
         await nextTick();
         // the patched color, the legend keeps its state
         expect(fills()).toEqual([['Wien', 'green']]);
@@ -2494,7 +2494,7 @@ describe('fixed bugs', () => {
         const el = await mount({ def, data: lineData, 'onUpdate:state': s => updates.push(s) });
         const keys = () => [...el.querySelectorAll('.vis-legend-entry')].map(e => e.dataset.key);
         expect(keys()).toEqual(['Tirol', 'Wien']);
-        el.querySelector('.vis-form-element input[value="other"]').click();
+        el.querySelector('.vis-control input[value="other"]').click();
         await nextTick();
         expect(keys()).toEqual(['10', '20', '30', '40']);
         expect(el.querySelectorAll('g.mark-0 path')).toHaveLength(4);
@@ -2526,10 +2526,10 @@ describe('fixed bugs', () => {
         el.querySelector('.vis-legend-entry[data-key="Tirol"]').click();
         await nextTick();
         expect(keys()).toEqual(['Wien', 'Tirol', 'Salzburg']);
-        el.querySelector('.vis-form-element input[value="b"]').click();
+        el.querySelector('.vis-control input[value="b"]').click();
         await nextTick();
         expect(keys()).toEqual(['Wien', 'Tirol']);
-        el.querySelector('.vis-form-element input[value="a"]').click();
+        el.querySelector('.vis-control input[value="a"]').click();
         await nextTick();
         expect(keys()).toEqual(['Wien', 'Tirol', 'Salzburg']);
 
@@ -2554,7 +2554,7 @@ describe('fixed bugs', () => {
             { id: 'a', name: 'A', value: 'a' }, { id: 'b', name: 'B', value: 'b', patch: { mapping: { c: { legend: null } } } },
         ] }];
         el = await mount({ def: patched, data: lineData });
-        el.querySelector('.vis-form-element input[value="b"]').click();
+        el.querySelector('.vis-control input[value="b"]').click();
         await nextTick();
         expect(el.querySelector('.vis-error')).toBeNull();
         expect(errors).toEqual([]);
@@ -2591,7 +2591,7 @@ describe('fixed bugs', () => {
         const el = await mount({ def, data });
         const keys = () => [...el.querySelectorAll('.vis-legend-entry')].map(e => e.dataset.key);
         expect(keys()).toEqual(['2020', '2021']);
-        el.querySelector('.vis-form-element input[value="d2"]').click();
+        el.querySelector('.vis-control input[value="d2"]').click();
         await nextTick();
         expect(keys()).toEqual(['2030', '2031']);
         expect(el.querySelectorAll('g.mark-1 circle')).toHaveLength(2);
@@ -2604,9 +2604,9 @@ describe('fixed bugs', () => {
             { id: 'other', name: 'Anderer', value: 'other', patch: { mapping: { y: { column: 'other' } } } },
         ] }];
         const el = await mount({ def, data: lineData });
-        el.querySelector('.vis-form-element input[value="other"]').click();
+        el.querySelector('.vis-control input[value="other"]').click();
         await nextTick();
-        expect(el.querySelector('.vis-form-element input[value="other"]').checked).toBe(true);
+        expect(el.querySelector('.vis-control input[value="other"]').checked).toBe(true);
         expect(el.querySelector('.vis-error')).toBeNull();
         expect(errors).toEqual([]);
     });
@@ -2743,8 +2743,8 @@ describe('fixed bugs', () => {
             { id: 'other', name: 'Other', value: 'other' },
         ] }];
         const el = await mount({ def, data: lineData });
-        expect(el.querySelectorAll('.vis-form-element label')).toHaveLength(2);
-        el.querySelectorAll('.vis-form-element label').forEach(l => {
+        expect(el.querySelectorAll('.vis-control label')).toHaveLength(2);
+        el.querySelectorAll('.vis-control label').forEach(l => {
             expect(document.getElementById(l.htmlFor)).toBe(l.previousElementSibling);
         });
     });
@@ -2852,7 +2852,7 @@ describe('accessibility and the data', () => {
         const ids = [...document.querySelectorAll('[id]')].map(e => e.id);
         expect(ids.length).toBeGreaterThan(0);
         expect(new Set(ids).size).toBe(ids.length);
-        expect([...document.querySelectorAll('.vis-form-element')].map(e => e.dataset.id)).toEqual(['col', 'col']);
+        expect([...document.querySelectorAll('.vis-control')].map(e => e.dataset.id)).toEqual(['col', 'col']);
         expect([...document.querySelectorAll('.vis-radio > div')].map(e => e.dataset.id)).toEqual(['value', 'other', 'value', 'other']);
     });
 
@@ -2874,7 +2874,7 @@ describe('accessibility and the data', () => {
         const image = await mount({ def, data: lineData });
         expect(image.querySelector('svg.vis-svg').getAttribute('role')).toBe('img');
         expect(image.querySelector('svg.vis-svg').hasAttribute('aria-describedby')).toBe(false);
-        const [select, radio] = el.querySelectorAll('.vis-form-element');
+        const [select, radio] = el.querySelectorAll('.vis-control');
         expect(select.querySelector('label').getAttribute('for')).toBe(select.querySelector('select').id);
         const group = radio.querySelector('[role="radiogroup"]');
         expect(radio.querySelector(`#${group.getAttribute('aria-labelledby')}`).textContent).toBe('Einheit:');
@@ -3181,7 +3181,7 @@ describe('images', () => {
         const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () { screenshot.file = this.download; });
         const el = await mount({ def: def(), data: lineData, download: 'chart' });
 
-        el.querySelector('.vis-form-element input[value="b"]').click();
+        el.querySelector('.vis-control input[value="b"]').click();
         el.querySelector('.vis-legend [data-key="Tirol"]').click();
         await nextTick();
         el.querySelector('.vis-download').click();
@@ -3192,11 +3192,11 @@ describe('images', () => {
         expect([...copy.querySelectorAll('.vis-header > div')].map(e => [e.className, e.textContent])).toEqual([
             ['vis-title', 'Titel'], ['vis-subtitle', 'Untertitel'], ['vis-selection', 'Einheit: Anteil'],
         ]);
-        expect(copy.querySelector('.vis-form-elements, .vis-buttons')).toBeNull();
+        expect(copy.querySelector('.vis-controls, .vis-buttons')).toBeNull();
         expect([...copy.querySelectorAll('.vis-legend .vis-legend-entries > div')].map(e => e.dataset.key)).toEqual(['Wien']);
         // the copy is removed again, the visualisation keeps its state
         expect(document.querySelectorAll('.vis')).toHaveLength(1);
-        expect(el.querySelector('.vis-form-element input[value="b"]').checked).toBe(true);
+        expect(el.querySelector('.vis-control input[value="b"]').checked).toBe(true);
         expect(errors).toEqual([]);
     });
 
@@ -3209,7 +3209,7 @@ describe('images', () => {
         const header = e => [...e.querySelectorAll('.vis-header > div')].map(e => e.textContent);
         expect(header(el)).toEqual(['Titel a', 'Einheit a, Untertitel']);
 
-        el.querySelector('.vis-form-element input[value="b"]').click();
+        el.querySelector('.vis-control input[value="b"]').click();
         await nextTick();
         expect(header(el)).toEqual(['Titel b', 'Einheit b, Untertitel']);
         el.querySelector('.vis-download').click();
@@ -3953,7 +3953,7 @@ describe('texts in several languages', () => {
     const texts = el => ({
         title: el.querySelector('.vis-title').textContent,
         subtitle: el.querySelector('.vis-subtitle').textContent,
-        form: [el.querySelector('.vis-form-element-title').textContent, ...[...el.querySelectorAll('.vis-radio label')].map(l => l.textContent)],
+        form: [el.querySelector('.vis-control-title').textContent, ...[...el.querySelectorAll('.vis-radio label')].map(l => l.textContent)],
         legend: [el.querySelector('.vis-legend-title').textContent, ...[...el.querySelectorAll('.vis-legend-entry span')].map(s => s.textContent)],
         axis: el.querySelector('.vis-axis-title').textContent,
         // the numbers of the locale: 1.000,0 (de) or 1,000.0 (en)

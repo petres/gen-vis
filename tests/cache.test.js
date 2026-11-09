@@ -36,7 +36,7 @@ const lineData = `year,value,other,land
 // the html of the visualisation without the counters of the ids, the
 // attributes sorted, see snapshots.test.js
 const drawing = el => (el.querySelector('.vis')?.outerHTML ?? '')
-    .replace(/gen-vis-(gradient|form|facet)-\d+/g, 'gen-vis-$1-N')
+    .replace(/gen-vis-(gradient|control|facet)-\d+/g, 'gen-vis-$1-N')
     .replace(/data-vis="\d+"/g, 'data-vis="N"')
     .replace(/<([a-zA-Z][^\s/>]*)((?:\s+[^\s"'>/=]+(?:="[^"]*")?)*)(\s*\/?)>/g, (tag, name, attrs, end) =>
         `<${name}${(attrs.match(/[^\s"'>/=]+(?:="[^"]*")?/g) ?? []).sort((a, b) => a.split('=')[0] < b.split('=')[0] ? -1 : 1).map(a => ` ${a}`).join('')}${end}>`);
@@ -154,7 +154,7 @@ describe('a resize after a change draws the new rows', () => {
         const fresh = withForm();
         fresh.globals.column = 'other';
         const el = await resizedAfter({ def: withForm(), data: lineData },
-            el => el.querySelectorAll('.vis-form-element .vis-radio input')[1].click(),
+            el => el.querySelectorAll('.vis-control .vis-radio input')[1].click(),
             { def: fresh, data: lineData });
         const ticks = [...el.querySelectorAll('g.vis-axis-left g.tick text')].map(t => parseFloat(t.textContent));
         expect(Math.max(...ticks)).toBe(80);

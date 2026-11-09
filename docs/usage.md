@@ -413,7 +413,7 @@ of the page overrides them, regardless of its specificity and of the order of
 the styles, e.g.:
 
 ```css
-.vis-form-element { display: block; margin: 6px 4px; }
+.vis-control { display: block; margin: 6px 4px; }
 .vis-subtitle { font-size: 15px; }
 /* the row of the category `load` of the dim `type` in the hover */
 .vis-hover-entry[data-type="load"] { font-style: italic; }
@@ -435,7 +435,7 @@ and the lines of the axes, `tick` and `domain`, as the ones of d3:
 | Part | Classes |
 |------|---------|
 | the visualisation | `vis-mounted` (an element mounted by `mountGenVisByClass` or `mountGenVisElement`), `vis-outer` (the root, `vis-loading` while it is loaded), `vis` (with the `class` of the definition and the globals as `data-global-` attributes, `data-vis` the number of the chart), `vis-message` (the text instead of the marks), `vis-header` (`vis-title`, `vis-subtitle`, in the [PNG](#png) `vis-selection`), `vis-body`, `vis-error` |
-| controls | `vis-form-elements`, `vis-form-element` (`vis-form-element-title`, `vis-radio`, `vis-slider`, `vis-slider-value`), the `id` of a control and of its entries as `data-id`, e.g. `.vis-form-element[data-id="scale"]` |
+| controls | `vis-controls`, `vis-control` (`vis-control-title`, `vis-radio`, `vis-slider`, `vis-slider-value`), the `id` of a control and of its entries as `data-id`, e.g. `.vis-control[data-id="scale"]` |
 | legends | `vis-legends` (above the plots, `vis-legends-bottom`, `vis-legends-left` and `vis-legends-right`, the plots beside them are in `vis-plots`), `vis-legend` (`vis-legend-title`, `vis-legend-entries`, `vis-legend-entry`, the dim as `data-dim`, an entry with `data-key` and `data-visible`, `vis-legend-highlight` of the category of the hovered row), `vis-legend-annotations` (the entries of [annotations](definition.md#annotations)), `vis-color-legend` (`vis-color-scale`, `vis-legend-missing`, `vis-swatch`) |
 | facets | `vis-facet` (a facet), `vis-facet-title` (`vis-facet-title-center` of polar plots, centered, `vis-facet-col-title` of the columns of a grid), `vis-facet-row-title` (the headers of the rows of a grid, `vis-facet-row-title-left` or `-right`, `-horizontal` or `-vertical`), `vis-facet-empty` (a cell of a grid without rows), `vis-svg` |
 | marks | `vis-mark` (with the `id` of the mark and its `data-mark`, `vis-below` or `vis-above` of its layer), `vis-group` (the elements of a group of a mark with an element per row), `vis-highlight` (the highlighted elements, their group `vis-highlight-group` of a highlight of a row), `vis-highlighting` (the plots of a facet while a highlight is shown), `vis-features` (the base of a map), `vis-mesh` (the mesh of a map), the keys of the features of maps as `data-geo-key` |

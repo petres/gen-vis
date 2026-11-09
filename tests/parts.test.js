@@ -32,7 +32,7 @@ const lineData = `year,value,other,land
 2023,2,20,Tirol`;
 
 const select = async (el, id) => {
-    el.querySelector(`.vis-form-element input[value="${id}"]`).click();
+    el.querySelector(`.vis-control input[value="${id}"]`).click();
     await nextTick();
 };
 
@@ -107,7 +107,7 @@ describe('globals of the page', () => {
     test('a hidden form element is set by the page, not by the user', async () => {
         const states = [];
         const { el, vis } = await mountVis({ def: def(), data: lineData, globals: { lang: 'en' }, 'onUpdate:state': s => states.push(s) });
-        expect(el.querySelector('.vis-form-element')).toBeNull();
+        expect(el.querySelector('.vis-control')).toBeNull();
         expect(el.querySelector('.vis-title').textContent).toBe('Values');
         expect(el.querySelector('.vis-legend-entry[data-key="Wien"]').textContent).toBe('Vienna');
 
@@ -991,8 +991,8 @@ describe('the categories of every format of the data', () => {
             { name: 'land', data: ['Wien', 'Wien'], type: 'STRING' },
         ]);
         const chart = await mount({ def: years, data: parquet, 'onUpdate:state': s => state = s });
-        expect([...chart.querySelectorAll('.vis-form-element option')].map(o => o.value)).toEqual(['2020', '2021']);
-        const select = chart.querySelector('.vis-form-element select');
+        expect([...chart.querySelectorAll('.vis-control option')].map(o => o.value)).toEqual(['2020', '2021']);
+        const select = chart.querySelector('.vis-control select');
         select.value = '2020';
         select.dispatchEvent(new Event('change'));
         await nextTick();
@@ -1343,7 +1343,7 @@ describe('rows which are not stacked', () => {
         expect(rows()).toEqual(['Verbrauch4,0', 'Wind3,0', 'Wasser1,0']);
 
         // the share of the consumption of the column of the patch, its own value
-        el.querySelector('.vis-form-element input[value="share"]').click();
+        el.querySelector('.vis-control input[value="share"]').click();
         await nextTick();
         expect(points(el.querySelector('g.vis-mark.load path').getAttribute('d')).map(([, y]) => y)).toEqual([250 - 250/1.6, 0]);
 

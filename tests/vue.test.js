@@ -46,7 +46,7 @@ const mountApp = async (render, setup = {}) => {
     return { el, app };
 };
 
-const html = el => el.innerHTML.replace(/<!--[\s\S]*?-->/g, '').replace(/ gen-vis-(gradient|form|facet)-\d+/g, ' gen-vis-$1-N').replace(/"gen-vis-(gradient|form|facet)-\d+/g, '"gen-vis-$1-N');
+const html = el => el.innerHTML.replace(/<!--[\s\S]*?-->/g, '').replace(/ gen-vis-(gradient|control|facet)-\d+/g, ' gen-vis-$1-N').replace(/"gen-vis-(gradient|control|facet)-\d+/g, '"gen-vis-$1-N');
 
 describe('the component', () => {
     test('draws the same elements as the core, in the element of the component with the classes of the page', async () => {
@@ -74,7 +74,7 @@ describe('the component', () => {
         await vueTick();
         await nextTick();
         expect([...el.querySelectorAll('.vis-legend-entry')].map(e => e.dataset.visible)).toEqual(['true', 'false']);
-        expect(el.querySelectorAll('.vis-form-element input')[1].checked).toBe(true);
+        expect(el.querySelectorAll('.vis-control input')[1].checked).toBe(true);
 
         def.value = lineDef({ title: 'Neu' });
         await vi.waitFor(() => expect(el.querySelector('.vis-title').textContent).toBe('Neu'));
@@ -103,7 +103,7 @@ describe('the component', () => {
             updates.push(s);
             state.value = s;
         } }));
-        el.querySelectorAll('.vis-form-element .vis-radio input')[1].click();
+        el.querySelectorAll('.vis-control .vis-radio input')[1].click();
         await vueTick();
         el.querySelector('.vis-legend-entry[data-key="Tirol"]').click();
         await vueTick();
@@ -175,7 +175,7 @@ describe('the component', () => {
         expect(el.querySelectorAll('.vis-hover .own')).toHaveLength(1);
 
         // a new state draws the header again
-        el.querySelectorAll('.vis-form-element .vis-radio input')[1].click();
+        el.querySelectorAll('.vis-control .vis-radio input')[1].click();
         await nextTick();
         expect(el.querySelectorAll('.vis-header h2')).toHaveLength(1);
         expect(errors).toEqual([]);

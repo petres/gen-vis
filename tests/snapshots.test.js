@@ -24,7 +24,7 @@ const sortAttributes = html => html.replace(/<([a-zA-Z][^\s/>]*)((?:\s+[^\s"'>\/
 // positions, so a different order of the computation is no change, three
 // decimals are kept, e.g. 1.234 in german, the attributes sorted
 const normalize = html => sortAttributes(html
-    .replace(/gen-vis-(gradient|form|facet)-\d+/g, 'gen-vis-$1-N')
+    .replace(/gen-vis-(gradient|control|facet)-\d+/g, 'gen-vis-$1-N')
     .replace(/data-vis="\d+"/g, 'data-vis="N"')
     .replace(/-?\d+\.\d{4,}(e-?\d+)?/g, n => String(+Number(n).toFixed(3))))
     .replace(/></g, '>\n<');

@@ -5,10 +5,10 @@
 <div class="vis-title">Wien Hohe Warte: a year of precipitation in a circle</div>
 <div class="vis-subtitle">The daily precipitation of 2023 and the mean of the day of 1951–2024, the years since 1951 in gray</div>
 </div>
-<div class="vis-form-elements">
-<div class="vis-form-element" data-id="year">
-<label class="vis-form-element-title" for="gen-vis-form-N-year">Year:</label>
-<select id="gen-vis-form-N-year">
+<div class="vis-controls">
+<div class="vis-control" data-id="year">
+<label class="vis-control-title" for="gen-vis-control-N-year">Year:</label>
+<select id="gen-vis-control-N-year">
 <option value="1951">1951</option>
 <option value="1952">1952</option>
 <option value="1953">1953</option>
@@ -85,9 +85,9 @@
 <option value="2024">2024</option>
 </select>
 </div>
-<div class="vis-form-element" data-id="smooth">
-<label class="vis-form-element-title" for="gen-vis-form-N-smooth">Mean of:</label>
-<select id="gen-vis-form-N-smooth">
+<div class="vis-control" data-id="smooth">
+<label class="vis-control-title" for="gen-vis-control-N-smooth">Mean of:</label>
+<select id="gen-vis-control-N-smooth">
 <option value="avg365">a year</option>
 <option selected="" value="avg31">a month</option>
 <option value="avg15">2 weeks</option>
@@ -95,16 +95,16 @@
 <option value="value">a day</option>
 </select>
 </div>
-<div class="vis-form-element" data-id="type">
-<div class="vis-form-element-title" id="gen-vis-form-N-type-title">Values:</div>
-<div aria-labelledby="gen-vis-form-N-type-title" class="vis-radio" role="radiogroup">
+<div class="vis-control" data-id="type">
+<div class="vis-control-title" id="gen-vis-control-N-type-title">Values:</div>
+<div aria-labelledby="gen-vis-control-N-type-title" class="vis-radio" role="radiogroup">
 <div data-id="abs">
-<input id="gen-vis-form-N-type-abs" name="gen-vis-form-N-type" type="radio" value="abs">
-<label for="gen-vis-form-N-type-abs">absolute</label>
+<input id="gen-vis-control-N-type-abs" name="gen-vis-control-N-type" type="radio" value="abs">
+<label for="gen-vis-control-N-type-abs">absolute</label>
 </div>
 <div data-id="rel">
-<input checked="" id="gen-vis-form-N-type-rel" name="gen-vis-form-N-type" type="radio" value="rel">
-<label for="gen-vis-form-N-type-rel">relative to the mean</label>
+<input checked="" id="gen-vis-control-N-type-rel" name="gen-vis-control-N-type" type="radio" value="rel">
+<label for="gen-vis-control-N-type-rel">relative to the mean</label>
 </div>
 </div>
 </div>

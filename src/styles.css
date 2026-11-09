@@ -31,7 +31,7 @@
     margin-top: 4px;
     color: var(--gen-vis-muted-color, #5F6670);
 }
-/* the line of the selection of the form elements in the images */
+/* the line of the selection of the controls in the images */
 .vis-header .vis-selection {
     font-size: 13px;
     margin-top: 6px;
@@ -400,39 +400,39 @@
     margin-top: 2px;
 }
 
-/* the form elements, several are in one line, wrapped if there is not
+/* the controls, several are in one line, wrapped if there is not
    enough space, the first one at the left edge of the title, 16px apart */
-.vis-form-element {
+.vis-control {
     display: inline-block;
     font-size: 13px;
     margin: 2px 16px 2px 0;
 }
-.vis-form-element .vis-form-element-title {
+.vis-control .vis-control-title {
     font-weight: 600;
     margin-right: 5px;
     display: inline-block;
 }
-.vis-form-element .vis-slider {
+.vis-control .vis-slider {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     vertical-align: middle;
 }
-.vis-form-element .vis-slider input {
+.vis-control .vis-slider input {
     cursor: pointer;
 }
-.vis-form-element .vis-radio {
+.vis-control .vis-radio {
     display: inline-block;
 }
-.vis-form-element .vis-radio > div {
+.vis-control .vis-radio > div {
     display: inline-block;
     margin-right: 5px;
 }
-.vis-form-element .vis-radio > div input {
+.vis-control .vis-radio > div input {
     position: relative;
     display: inline-block;
     top: 1px;
 }
-.vis-form-element .vis-radio > div input, .vis-form-element .vis-radio > div label {
+.vis-control .vis-radio > div input, .vis-control .vis-radio > div label {
     cursor: pointer;
 }

@@ -33,7 +33,7 @@ const selection = def => (def.formElements ?? []).filter(e => e.inImage !== fals
 // the subtitle) and the legends only have the entries shown
 const prepare = (vis, { text, facets, space }) => {
     const copy = vis.cloneNode(true);
-    copy.querySelectorAll('.vis-form-elements, .vis-buttons').forEach(e => e.remove());
+    copy.querySelectorAll('.vis-controls, .vis-buttons').forEach(e => e.remove());
     [facets ?? []].flat().forEach(dim => copy.querySelector(`.vis-legend[data-dim="${CSS.escape(dim)}"]`)?.remove());
     copy.querySelectorAll('.vis-legend [data-visible="false"]').forEach(e => e.remove());
 

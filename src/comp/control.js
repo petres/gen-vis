@@ -1,23 +1,23 @@
-export { createFormElement };
+export { createControl };
 
 import { itemOf, join } from "@/utils/dom";
 import { sameValue } from "@/utils/def";
 import { el, patch, setText } from "@/comp/html";
 
-// the radio buttons of a form element are a group of their own, also if
+// the radio buttons of a control are a group of their own, also if
 // several visualisations on a page use the same ids
 let count = 0;
 
 /**
- * A form element of the definition (a select, radio buttons or a slider),
+ * A control of the definition (a select, radio buttons or a slider),
  * its entry is the value of the global `element.ref` of `globals`, a change
  * of the user sets it and calls `changed()`. `update()` draws it again,
  * e.g. of a new state, `destroy()` ends a move of a slider.
  */
-const createFormElement = (vis, element, globals, changed) => {
-    const uid = `gen-vis-form-${count++}`;
+const createControl = (vis, element, globals, changed) => {
+    const uid = `gen-vis-control-${count++}`;
     const type = element.type;
-    const root = el('div', { class: 'vis-form-element', 'data-id': element.id });
+    const root = el('div', { class: 'vis-control', 'data-id': element.id });
     let frame = null;
     let position = null;
 
@@ -63,8 +63,8 @@ const createFormElement = (vis, element, globals, changed) => {
 
     const update = () => {
         const id = `${uid}-${element.id}`;
-        patch(root, { class: 'vis-form-element', 'data-id': element.id });
-        patch(title, type == 'radio' ? { class: 'vis-form-element-title', id: `${id}-title` } : { class: 'vis-form-element-title', for: id });
+        patch(root, { class: 'vis-control', 'data-id': element.id });
+        patch(title, type == 'radio' ? { class: 'vis-control-title', id: `${id}-title` } : { class: 'vis-control-title', for: id });
         setText(title, `${element.name ?? ''}:`);
         if (type == 'select') {
             patch(input, { id });

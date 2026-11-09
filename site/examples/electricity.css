@@ -35,7 +35,7 @@
 }
 .theme-atlas .vis-title { font-size: 25px; font-weight: 600; font-variant: small-caps; letter-spacing: 0.02em; }
 
-.theme-atlas .vis-form-element-title { font-weight: 600; }
+.theme-atlas .vis-control-title { font-weight: 600; }
 .theme-atlas .vis-slider input { accent-color: #11573C; width: 150px; }
 .theme-atlas .vis-slider-value { font-weight: 700; font-variant-numeric: tabular-nums; }
 .theme-atlas .vis-radio input { accent-color: #11573C; }
