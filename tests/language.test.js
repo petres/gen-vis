@@ -216,3 +216,8 @@ describe('the dims of the channels (review of 5.0)', () => {
         expect(translate({ coord: 'geo', marks: { type: 'point', lon: '@lng', lat: '@lat' } }).plot[0].props).toMatchObject({ lon: '@lng', lat: '@lat' });
     });
 });
+
+test('a control of 5.0 sets its global, `ref` is no key of it (review of 5.0)', () => {
+    expect(translate({ controls: [{ type: 'radio', global: 'a', values: ['x'] }] }).formElements[0]).toMatchObject({ ref: 'a', id: 'a' });
+    expect(translate({ controls: [{ type: 'radio', ref: 'a', values: ['x'] }] }).formElements[0].ref).toBeUndefined();
+});

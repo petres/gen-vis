@@ -1,4 +1,4 @@
-export { translate, checkDims, colorDims, dim as dimOf, compileStrings, isDefinition4, isDefinition5, optionKeys, markKeys, expressionKeys, nameKeys, positionChannels, channelOf, typeOf, authoredPath, entryOf, entriesOf, implicitDims };
+export { translate, checkDims, colorDims, dim as dimOf, compileStrings, isDefinition4, isDefinition5, optionKeys, markKeys, expressionKeys, nameKeys, typeOf, authoredPath, entryOf, entriesOf, implicitDims };
 
 import { isObject } from '@/utils/values';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
@@ -72,9 +72,6 @@ const compileStrings = (value, path = '') => {
     return out;
 };
 
-// a part of a definition is one of expressions: of the keys of expressions,
-// the marks and the annotations, and everything in it, see expressionKeys
-const expressionPart = (key, parent) => expressionKeys.has(key) || parent == 'marks' || parent == 'annotations';
 const parsed = (text, path) => {
     try {
         return parseExpression(text);
