@@ -1,20 +1,28 @@
 #!/usr/bin/env node
 // the command line of gen-vis, see docs/export.md:
 //   gen-vis export <def.json> <out.svg|out.png|out.pdf>... [<def.json> <out>...]... [options]
+//   gen-vis check <def.json>... [--data <file>] [--root <dir>] [--strict]
+//   gen-vis migrate <def.json>... [--write]
 import { parseArgs } from 'node:util';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { createExporter, formats } from './export.js';
+import { createChecker } from './check.js';
 import { stopBrowsers } from './cdp.js';
 
+const version = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
+
 const usage = `Usage: gen-vis export <def.json> <out.svg|out.png|out.pdf>... [<def.json> <out>...]... [options]
+       gen-vis check <def.json>... [--data <file>] [--root <dir>] [--strict]
        gen-vis migrate <def.json>... [--write]
+       gen-vis --version
 
-Draws gen-vis definitions in a headless Chromium (Chrome, Edge) of the system
-and writes them as SVG, PNG or PDF, every definition is followed by its
-outputs, one browser draws them all.
+export draws gen-vis definitions in a headless Chromium (Chrome, Edge) of
+the system and writes them as SVG, PNG or PDF, every definition is followed
+by its outputs, one browser draws them all. It prints the warnings of the
+check of every definition (see check) and of its draw first.
 
-Options:
+Options of export:
   --width <length>        the width of the image: 800 (pixels), 800px, 16cm, 160mm, 6in (default 800)
   --parts <list>          the parts of the image, of title,subtitle,selection,legend,plot,footer (default all)
   --css <file|text>       a stylesheet, repeatable
@@ -34,7 +42,20 @@ Options:
   --root <dir>            the directory of site-absolute paths, e.g. /geo/europe.json (a site's root)
   --browser <path>        the browser (default GEN_VIS_BROWSER, CHROME_PATH or one found)
   --no-sandbox            runs the browser without its sandbox (also GEN_VIS_NO_SANDBOX=1)
+  --no-check              no check of the definitions, only the warnings of the draw
+  --strict                a warning (of the check or of the draw) fails the chart, its
+                          outputs are not written, the exit code is 1
   -h, --help              this text
+
+check checks definitions without a browser: merged with their parents, the
+JSON Schema of the package and the checks of gen-vis (validateDef) with the
+rows of their data (CSV, TSV, JSON or parquet), e.g. unknown keys and mark
+types, typos of the keys of marks, columns which are not in the data. It
+prints a line per warning, "<def.json>: <path>: <message>"; the exit code is
+1 if a definition could not be read, with --strict also of a warning.
+  --data <file>           the data instead of the one of the definition
+  --root <dir>            the directory of site-absolute paths
+  --strict                exit code 1 of a warning
 
 migrate writes definitions of gen-vis 4 as ones of gen-vis 5 (also parents
 and mixins, file by file): to the standard output, with --write into the
@@ -116,7 +137,8 @@ const exportCommand = async args => {
                 scale: { type: 'string' }, globals: { type: 'string' }, state: { type: 'string' }, defaults: { type: 'string' }, data: { type: 'string' },
                 background: { type: 'string' }, scheme: { type: 'string', multiple: true }, unit: { type: 'string' },
                 padding: { type: 'string' }, timeout: { type: 'string' }, browser: { type: 'string' },
-                root: { type: 'string' }, 'no-sandbox': { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
+                root: { type: 'string' }, 'no-sandbox': { type: 'boolean' }, 'no-check': { type: 'boolean' }, strict: { type: 'boolean' },
+                help: { type: 'boolean', short: 'h' },
             },
         });
     } catch (error) {
@@ -137,8 +159,18 @@ const exportCommand = async args => {
         globals: json(o.globals, 'globals'), state: json(o.state, 'state'), defaults: defaultsOf(o.defaults), data: o.data,
         background: o.background === undefined ? undefined : o.background == 'none' ? null : o.background,
         schemes: schemesOf(o.scheme ?? []), unit: o.unit, padding: number(o.padding, 'padding', true),
-        timeout: number(o.timeout, 'timeout'),
+        timeout: number(o.timeout, 'timeout'), strict: o.strict || undefined,
     }).filter(([, v]) => v !== undefined));
+    // the check of the definitions before they are drawn, in node
+    let checker = null;
+    if (!o['no-check']) {
+        try {
+            checker = await createChecker({ root: o.root ? path.resolve(o.root) : null });
+        } catch (error) {
+            // e.g. a checkout without the build of the package
+            process.stderr.write(`gen-vis: the definitions are not checked, ${error.message}\n`);
+        }
+    }
 
     // a signal ends the browser and removes its profile, the exit code is
     // the one of the shells, 128 and the number of the signal
@@ -161,9 +193,16 @@ const exportCommand = async args => {
         for (const { def, outputs } of charts) {
             const start = performance.now();
             try {
+                // the warnings of the check, with --strict no draw
+                const warnings = checker ? await checker.check(def, { data: o.data ?? null }).catch(() => []) : [];
+                warnings.forEach(w => note(`${def}: check: ${w}`));
+                if (o.strict && warnings.length)
+                    throw new Error(`${warnings.length} warning${warnings.length > 1 ? 's' : ''} of the check (--strict), no output is written`);
                 const r = await exporter.exportChart(def, outputs, options);
                 r.messages.forEach(m => note(`${def}: ${m}`));
-                process.stdout.write(`${def} -> ${outputs.join(', ')} (${Math.round(r.width)}x${Math.round(r.height)} px, ${((performance.now() - start) / 1000).toFixed(2)} s)\n`);
+                // the size of the chart in CSS pixels, of a PNG also its pixels
+                const png = r.png ? `, PNG ${r.png.width}x${r.png.height} px` : '';
+                process.stdout.write(`${def} -> ${outputs.join(', ')} (${Math.round(r.width)}x${Math.round(r.height)} CSS px${png}, ${((performance.now() - start) / 1000).toFixed(2)} s)\n`);
             } catch (error) {
                 failed++;
                 (error.messages ?? []).forEach(m => note(`${def}: ${m}`));
@@ -226,9 +265,55 @@ const migrateCommand = async args => {
     return failed ? 1 : 0;
 };
 
+// the check of definitions in node, see bin/check.js
+const checkCommand = async args => {
+    let parsed;
+    try {
+        parsed = parseArgs({ args, allowPositionals: true, strict: true, options: {
+            data: { type: 'string' }, root: { type: 'string' }, strict: { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
+        } });
+    } catch (error) {
+        fail(`${error.message}\n\n${usage}`);
+    }
+    const { values: o, positionals: files } = parsed;
+    if (o.help || !files.length) {
+        process.stdout.write(usage);
+        return o.help ? 0 : 2;
+    }
+    if (o.root && !(existsSync(o.root)))
+        fail(`the root ${o.root} is no directory`, 1);
+    let checker;
+    try {
+        checker = await createChecker({ root: o.root ? path.resolve(o.root) : null });
+    } catch (error) {
+        fail(error.message, 1);
+    }
+    let failed = 0, warned = 0, count = 0;
+    for (const file of files) {
+        try {
+            const warnings = await checker.check(file, { data: o.data ?? null });
+            if (warnings.migrated)
+                process.stdout.write(`${file}: note: a definition of gen-vis 4, checked as migrated (gen-vis migrate writes it as one of 5.0)\n`);
+            warnings.forEach(w => process.stdout.write(`${file}: ${w}\n`));
+            count += warnings.length;
+            warned += warnings.length > 0;
+        } catch (error) {
+            failed++;
+            process.stderr.write(`gen-vis: ${file}: ${error.message}\n`);
+        }
+    }
+    process.stderr.write(`gen-vis: ${files.length} definition${files.length > 1 ? 's' : ''}, ${count} warning${count == 1 ? '' : 's'}`
+        + `${warned ? ` in ${warned}` : ''}${failed ? `, ${failed} not read` : ''}\n`);
+    return failed || (o.strict && count) ? 1 : 0;
+};
+
 const [command, ...rest] = process.argv.slice(2);
 if (command == 'export')
     process.exitCode = await exportCommand(rest);
+else if (command == 'check')
+    process.exitCode = await checkCommand(rest);
+else if (command == '-v' || command == '--version' || command == 'version')
+    process.stdout.write(`gen-vis ${version}\n`);
 else if (command == 'migrate')
     process.exitCode = await migrateCommand(rest);
 else if (command == '-h' || command == '--help' || command === undefined)

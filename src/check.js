@@ -10,6 +10,10 @@ export { registerCoord } from '@/coords';
 export { registerScheme } from '@/utils/d3';
 export { migrate, formatJson } from '@/utils/migrate';
 export { schemaMajor } from '@/utils/version';
+// the rows of data as the load reads them (CSV, TSV, JSON, parquet), the
+// transforms (validateDef infers the types of their columns once loaded)
+export { parseData, dataFormat } from '@/utils/data';
+export { loadTransforms } from '@/utils/transform';
 export { translate, isDefinition4, isDefinition5 } from '@/utils/language';
 export { resolve, variants } from '@/utils/resolve';
 

@@ -913,3 +913,17 @@ describe('validateDef in the words of 5.0, the keys of marks and the data', () =
             `marks[0].by: unknown dim 'kind', a column of the data: a dim of it is needed, e.g. "dims": { "kind": "kind" }`]);
     });
 });
+
+test('the formats of numbers are formats of d3, of the rows given also of the dims without a type', () => {
+    const def = base();
+    def.dims.y.format = '%,.0f';
+    expect(validateDef(def)).toEqual([`dims.y.format: '%,.0f' is no d3 format of numbers (invalid format: %,.0f), a time format is one of a date dim, "type": "date", e.g. ",.0f"`]);
+    def.dims.y = { column: 'value', format: '%,.0f', axis: { format: ',.1f' }, hover: { format: 'x.y' } };
+    // without a type a time format is the one of a date dim
+    expect(validateDef(def)).toEqual([`dims.y.hover.format: 'x.y' is no d3 format of numbers (invalid format: x.y), e.g. ",.0f"`]);
+    expect(validateDef(def, [{ year: 2020, value: 1, land: 'Wien' }])).toEqual([
+        `dims.y.format: '%,.0f' is no d3 format of numbers (invalid format: %,.0f), a time format is one of a date dim, "type": "date", e.g. ",.0f"`,
+        `dims.y.hover.format: 'x.y' is no d3 format of numbers (invalid format: x.y), e.g. ",.0f"`]);
+    def.dims.x = { column: 'year', type: 'date', format: '%Y' };
+    expect(validateDef({ ...def, dims: { ...def.dims, y: { column: 'value', format: ',.2~f' } } })).toEqual([]);
+});

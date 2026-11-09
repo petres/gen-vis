@@ -27,3 +27,9 @@ export declare function registerPlotType(name: string, type: PlotType): void;
 export declare function registerCoord(name: string, coord: Record<string, unknown>): void;
 /** A scheme of its own, e.g. the colors of a house style, for `scheme` of the categories and the scales as the ones of d3, `colors` are CSS colors; returns a function which restores the scheme registered before under that name. */
 export declare function registerScheme(name: string, colors: string[] | (string[] | null | undefined)[]): () => void;
+/** The rows of data as the load reads them: CSV, TSV, JSON (a list of rows) or parquet (bytes), by `format` or by the content. */
+export declare function parseData(data: string | ArrayBuffer | ArrayBufferView | Record<string, unknown>[], format?: 'csv' | 'tsv' | 'json' | 'parquet', columns?: string[] | null): Promise<Record<string, unknown>[]>;
+/** The format of the data of a url: `format` or the one of its extension, undefined of neither. */
+export declare function dataFormat(url: string, format?: string): 'csv' | 'tsv' | 'json' | 'parquet' | undefined;
+/** Loads the transforms, so validateDef infers the types of their columns. */
+export declare function loadTransforms(): Promise<unknown>;

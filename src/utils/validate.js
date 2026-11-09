@@ -372,6 +372,7 @@ const checkMappings = ctx => {
             checkProp(m.legend?.symbol?.props, `${path}.legend.symbol.props`, warn, known);
         }
         checkDates(ctx, n, m, path);
+        checkFormats(n, m, path, warn);
     });
     // the rows which are stacked, `true` all, the conditions of mappings, e.g. { "type": { "not": "load" } }
     Object.entries(mapping).filter(([, m]) => m.stacked !== undefined && typeof m.stacked != 'boolean').forEach(([n, m]) => isObject(m.stacked)
@@ -479,6 +480,24 @@ const checkScale = (ctx, n, m, path) => {
         warn(`${path}.scale.orientation`, orientations.length > 0
             ? `unknown orientation '${m.scale.orientation}'${choices(m.scale.orientation, orientations)}`
             : `the coordinate system '${coordName}' has no orientations, e.g. a scale of colors has none`);
+};
+
+// the formats of the values of a mapping which is no date one (of a time
+// scale): a d3 format of numbers, e.g. not "%,.0f", see Store.format; a
+// format with a template or an expression is known when it is drawn
+const numberFormat = d3.formatLocale({ decimal: '.', thousands: ',', grouping: [3], currency: ['', ''] });
+const checkFormats = (n, m, path, warn) => {
+    if (m.type == 'date' || ['time', 'utc'].includes(m.scale?.type))
+        return;
+    [['format', m.format], ['axis.format', m.axis?.format], ['hover.format', m.hover?.format], ['legend.format', m.legend?.format]]
+        // without a type a time format makes a date dim, see inferTypes
+        .filter(([, f]) => typeof f == 'string' && !/[{@=]/.test(f) && !(m.type === undefined && f.includes('%'))).forEach(([k, f]) => {
+            try {
+                numberFormat.format(f);
+            } catch (error) {
+                warn(`${path}.${k}`, `'${f}' is no d3 format of numbers (${error.message})${f.includes('%') ? ', a time format is one of a date dim, "type": "date"' : ''}, e.g. ",.0f"`);
+            }
+        });
 };
 
 // the values of a date mapping which are numbers are milliseconds since
