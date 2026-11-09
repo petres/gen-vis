@@ -1,3 +1,4 @@
+import vm from 'node:vm';
 import { translate } from '@/utils/language.js';
 import { resolve, variants } from '@/utils/resolve.js';
 import { variantsOf } from '@/utils/def.js';
@@ -5,7 +6,7 @@ import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import { toNumber } from '@/utils/values';
-import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, inferType, inferTypes, parseData, prepareData, rowFilter, stack, toDate, updateData, usedColumns } from '@/utils/data';
+import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, inferType, inferTypes, isBinary, oddValues, parseData, prepareData, rowFilter, stack, toDate, updateData, usedColumns } from '@/utils/data';
 import { prepareDef } from '@/utils/def';
 
 const def = {
@@ -34,6 +35,43 @@ describe('parseData', () => {
     test('parsed data is passed through', async () => {
         const rows = [{ a: 1 }];
         expect(await parseData(rows)).toBe(rows);
+    });
+
+    test('rows which are no objects are left out with a warning, a list of lists is an error (review of 5.0)', async () => {
+        const warnings = [];
+        const warn = w => warnings.push(w);
+        expect(await parseData('[null, {"a": 1}]', undefined, null, warn)).toEqual([{ a: 1 }]);
+        expect(await parseData([{ a: 1 }, null, 5, { a: 2 }], undefined, null, warn)).toEqual([{ a: 1 }, { a: 2 }]);
+        expect(warnings).toEqual([
+            'the row 0 (counted from 0) is null, not an object of values, it is left out',
+            '2 rows (1, 2, counted from 0) are null or number, not objects of values, they are left out',
+        ]);
+        await expect(parseData('[[1, 2], [2, 3]]')).rejects.toThrow('expected a list of rows as objects, e.g. [{"year": 2024, "value": 1.5}], the first row is a list');
+        // without a warning a list of rows is passed through
+        expect(await parseData('[]', undefined, null, warn)).toEqual([]);
+        expect(warnings.length).toBe(2);
+    });
+
+    test('a page of HTML is an error, e.g. of a wrong url (review of 5.0)', async () => {
+        for (const page of ['<!DOCTYPE html><html><body>Not found</body></html>', '\uFEFF\n <html lang="en">', '<html>'])
+            await expect(parseData(page)).rejects.toThrow('it is a page of HTML, not CSV, TSV or JSON, e.g. the page a server answers for a wrong url');
+        await expect(parseData('<!doctype html>', 'csv')).rejects.toThrow('not CSV');
+        await expect(parseData(new TextEncoder().encode('<!doctype html>'))).rejects.toThrow('a page of HTML');
+        // a column of CSV in angle brackets is none
+        expect([...await parseData('<a>,b\n1,2')]).toEqual([{ '<a>': '1', b: '2' }]);
+    });
+
+    test('a column in the header twice: a warning, the values of the last one (review of 5.0)', async () => {
+        const warnings = [];
+        expect([...await parseData('a,b,b\n1,2,9', undefined, null, w => warnings.push(w))]).toEqual([{ a: '1', b: '9' }]);
+        expect(warnings).toEqual(["the column 'b' is in the header 2 times, the rows have the values of the last one"]);
+    });
+
+    test('binary data of another realm, e.g. of a worker (review of 5.0)', async () => {
+        const buffer = vm.runInNewContext('new Uint8Array([97, 44, 98, 10, 49, 44, 50]).buffer');
+        expect(buffer instanceof ArrayBuffer).toBe(false);
+        expect(isBinary(buffer)).toBe(true);
+        expect([...await parseData(buffer)]).toEqual([{ a: '1', b: '2' }]);
     });
 
     test('the format of the data', async () => {
@@ -276,17 +314,74 @@ describe('prepareData', () => {
         expect(inferType(['2024-06-01T13:00:00Z', '2024-06-01T14:00:00+01:00'])).toBe('date');
     });
 
-    test('a column without values is a date of a time format, otherwise categorical', () => {
+    test('a column without values is a date of a time format, numeric of the parts of numbers, otherwise categorical', () => {
         expect(inferType([])).toBeUndefined();
         expect(inferType(['', null, ' '])).toBeUndefined();
+        expect(inferType(['NA', ':'])).toBeUndefined();
         const def = { mapping: {
             t: { column: 't', axis: { format: '%Y' } },
             h: { column: 'h', hover: { format: '%b %y' } },
             p: { column: 'p', format: '.0%' },
+            z: { column: 'z', scale: { domain: [0, null] } },
             c: { column: 'c' },
         } };
         inferTypes(def, []);
-        expect(Object.values(def.mapping).map(m => m.type)).toEqual(['date', 'date', 'categorical', 'categorical']);
+        expect(Object.values(def.mapping).map(m => m.type)).toEqual(['date', 'date', 'numeric', 'numeric', 'categorical']);
+    });
+
+    test('the usual texts of missing values among numbers and dates are missing ones (review of 5.0)', () => {
+        expect(inferType(['10', 'NA', '30'])).toBe('numeric');
+        for (const token of ['NaN', 'n/a', 'N.A.', '-', '.', '..', ':', '\u2013', 'null', '#N/A', ' na '])
+            expect(inferType(['10', token, '30'])).toBe('numeric');
+        expect(inferType([1, NaN, 3])).toBe('numeric');
+        expect(inferType(['2024-01-01', 'NA', '2024-03-01'])).toBe('date');
+        // categories stay categories, also with such texts
+        expect(inferType(['A', '-', 'B'])).toBe('categorical');
+        const rows = [{ v: '10' }, { v: 'NA' }, { v: ':' }, { v: '30' }];
+        const def = { mapping: { y: { column: 'v' } } };
+        inferTypes(def, rows);
+        expect(def.mapping.y.type).toBe('numeric');
+        const odd = new Map();
+        expect(prepareData(rows, def, null, odd).map(r => r.y)).toEqual([10, null, null, 30]);
+        // without a warning
+        expect(oddValues(def, odd)).toEqual([]);
+    });
+
+    test('mostly numbers and texts with digits: numeric, the texts are missing with a warning (review of 5.0)', () => {
+        // e.g. separators of thousands, a limit or a unit
+        expect(inferType(['10', '1,234', '30', '<5', '7'])).toBe('numeric');
+        // not of fewer numbers, nor of words, e.g. a total among years
+        expect(inferType(['10', '1,234', '<5'])).toBe('categorical');
+        expect(inferType(['2022', '2023', '2024', 'Total'])).toBe('categorical');
+        expect(inferType(['2023', '2024', 'Phase 1'])).toBe('numeric');
+        // dates stay dates
+        expect(inferType(['2001', '2002', '2003-01-01'])).toBe('date');
+        const rows = [{ v: '10' }, { v: '1,234' }, { v: '30' }, { v: '1,234' }, { v: '<5' }, { v: '7' }, { v: 'NA' }, { v: '8' }];
+        const def = { mapping: { y: { column: 'v' } } };
+        inferTypes(def, rows);
+        expect(def.mapping.y.type).toBe('numeric');
+        const odd = new Map();
+        expect(prepareData(rows, def, null, odd).map(r => r.y)).toEqual([10, null, 30, null, null, 7, null, 8]);
+        expect(oddValues(def, odd)).toEqual([
+            "dims.y: values of the column 'v' are no numbers, they are missing: '1,234' (2 rows), '<5' (1 row) (a number is written as 1234.5, without a separator of thousands)",
+        ]);
+    });
+
+    test('the parts of numbers make a dim numeric, also with other texts (review of 5.0)', () => {
+        const rows = ['A', 'B', 'C', 'D'].map((a, i) => ({ a, b: ['10', 'n.a', 'Total', '30'][i] }));
+        const typeOf = m => {
+            const def = { mapping: { y: { column: 'b', ...m } } };
+            inferTypes(def, rows);
+            return def.mapping.y.type;
+        };
+        expect(typeOf({})).toBe('categorical');
+        for (const parts of [{ scale: { domain: [0, null] } }, { domain: [0, 100] }, { scale: { include: 0 } }, { format: ',.1f' }, { axis: { format: '.0%' } },
+            { scale: { nice: true } }, { scale: { pad: 0.1 } }, { scale: { domain: [null, null] } }])
+            expect(typeOf(parts)).toBe('numeric');
+        // a time format is no part of numbers
+        expect(typeOf({ format: '%Y' })).toBe('categorical');
+        // the type of the column is kept per hint
+        expect(typeOf({})).toBe('categorical');
     });
 
     test('missing and invalid values are null, not 0, missing categories too, e.g. an empty cell of csv as null of JSON', () => {
@@ -546,29 +641,24 @@ describe('the faster dates and types are the ones of before', () => {
         return valid ? date.getTime() : null;
     };
 
-    const inferTypeBefore = values => {
-        const seen = new Set();
-        let present = false;
-        let numeric = true;
-        for (const v of values) {
-            if (seen.has(v))
-                continue;
-            seen.add(v);
-            if (v === null || v === undefined || (typeof v == 'string' && v.trim() === ''))
-                continue;
-            present = true;
-            if (numeric && toNumber(v) !== null)
-                continue;
-            if (numeric) {
-                numeric = false;
-                for (const w of seen)
-                    if (w !== v && !(w === null || w === undefined || (typeof w == 'string' && w.trim() === '')) && toDate(w) === null)
-                        return 'categorical';
-            }
-            if (toDate(v) === null)
-                return 'categorical';
-        }
-        return !present ? undefined : (numeric ? 'numeric' : 'date');
+    // the rules of inferType written plainly: the usual texts of missing
+    // values are missing ones, all numbers numeric, all dates date, then
+    // numeric of a hint and some numbers, or of more numbers than other
+    // values which all have digits, categorical otherwise
+    const missingTexts = ['na', 'n/a', 'n.a.', 'nan', 'null', 'none', '-', '--', '\u2013', '\u2014', '.', '..', '...', '\u2026', ':', '?', '#n/a', 'n.v.', 'k.a.'];
+    const inferTypeBefore = (values, hint) => {
+        const absent = v => v === null || v === undefined || (typeof v == 'string' && (v.trim() === '' || missingTexts.includes(v.trim().toLowerCase())))
+            || (typeof v == 'number' && isNaN(v));
+        const present = values.filter(v => !absent(v));
+        if (present.length == 0)
+            return undefined;
+        if (present.every(v => toNumber(v) !== null))
+            return 'numeric';
+        if (present.every(v => toDate(v) !== null))
+            return 'date';
+        const numbers = present.filter(v => toNumber(v) !== null).length;
+        const others = present.filter(v => toNumber(v) === null);
+        return numbers > 0 && (hint !== undefined || (others.every(v => /\d/.test(String(v))) && numbers > others.length)) ? 'numeric' : 'categorical';
     };
 
     test('random dates and times, also ones which do not exist, in UTC and local time', () => {
@@ -593,6 +683,11 @@ describe('the faster dates and types are the ones of before', () => {
         expect(differences).toEqual([]);
     });
 
+    test('a local time skipped at the change to summer time is the one an hour later, as documented', () => {
+        expect(toDate('2024-03-31 02:30')).toBe(toDate('2024-03-31 03:30'));
+        expect(toDate('2024-03-31 02:30', true)).toBe(Date.UTC(2024, 2, 31, 2, 30));
+    });
+
     test('every minute of the days of the changes of the summer time of Vienna', () => {
         const differences = [];
         for (const day of ['2024-03-31', '2024-10-27', '2023-03-26', '2023-10-29'])
@@ -606,12 +701,14 @@ describe('the faster dates and types are the ones of before', () => {
     });
 
     test('random columns of numbers, dates, categories and missing values', () => {
-        const pool = [1, 2.5, NaN, Infinity, '3', ' 4 ', '1e3', '2024-06-01', '2024-06', '01.06.2024', '2024-06-01T13:00Z', 'Wien', 'Phase 1', '', ' ', null, undefined, 0, Date.UTC(2024, 0, 1)];
+        const pool = [1, 2.5, NaN, Infinity, '3', ' 4 ', '1e3', '2024-06-01', '2024-06', '01.06.2024', '2024-06-01T13:00Z', 'Wien', 'Phase 1', '', ' ', null, undefined, 0, Date.UTC(2024, 0, 1),
+            'NA', ' n/a ', ':', '-', '1,234', '<5'];
         const differences = [];
         for (let k = 0; k < 20000; k++) {
             const values = Array.from({ length: int(0, 8) }, () => pool[int(0, pool.length - 1)]);
-            if (inferType(values) !== inferTypeBefore(values))
-                differences.push(values);
+            const hint = [undefined, 'numeric', 'continuous'][int(0, 2)];
+            if (inferType(values, values.length, hint) !== inferTypeBefore(values, hint))
+                differences.push([values, hint]);
         }
         expect(differences).toEqual([]);
     });

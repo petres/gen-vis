@@ -165,6 +165,20 @@ column without a dim, and expressions nest at most 100 levels.
   the warnings of its check say that their paths are the ones of 5.0). In
   a chain of parents of parts of 4.x and 5.0 every part of 4.x is migrated
   before the merge (with the parts of 4.x before it as its parents).
+- The mark `tick`: a short rule at the value across the band of its
+  category (`size`, the share of the band, 1 by default), vertical across
+  the band of a categorical `y`, across the slot of a dodged one; e.g. the
+  median of a box plot, the target of a bullet chart, a strip plot.
+- Arrowheads: `"marker-end": "arrow"` (or `marker-start`) of a rule, a
+  line or an annotation line draws an arrowhead in the color of its stroke,
+  a `<marker>` per color in the defs of the svg, also in the exports.
+- `hover.cross`: a crosshair through the point of the nearest row, a
+  horizontal and a vertical dashed line across the plot area instead of the
+  line of the position (`vis-hover-cross`, `--gen-vis-cross-color`), also
+  of the hover of points.
+- A channel naming the column of the dim of its axis is that dim (`"x":
+  "year"` of a dim `x` of the column `year`), not a second dim of the
+  same column with categories of its own.
 
 Removed keys: `options`, `mapping`, `plot`, the `props` of a plot,
 `formElements`, `patch` (and the `ref` of a form element), `domainRel`
@@ -343,6 +357,17 @@ per group with `rows`) and `window` (`lag`, `lead`, `diff`, `pct` of
 of which `rolling` is a case). The transforms of rows share one mechanism,
 their rows replace the rows or follow them. Fixtures in `spec/transforms`.
 
+- The quartiles and quantiles of `aggregate` and `window`: `q1`, `q3` and
+  `quantile` of `p` (0 to 1), interpolated as the `median` (R-7), e.g. the
+  box and the whiskers of a box plot; `median` also of a window, a rolling
+  median.
+- The transform `regression`: the least squares fit of `column` on `x`
+  (numbers or dates) per group, `linear`, `log`, `exp` or `poly` (of
+  `degree` 2 or 3), the fitted value of every row, e.g. trend lines of a
+  scatter plot drawn as a `line` of the fitted column.
+- The transform `format`: the text of a date in a time format, e.g. the
+  week of the year (`%W`) and the weekday (`%u`) of a calendar heatmap.
+
 ### Schema, check and migration
 
 - The schema is written in JavaScript, `src/schema/definition.js` (a
@@ -457,6 +482,50 @@ Migration notes, to check by hand after `gen-vis migrate`:
   beside its CSS pixels. `gen-vis --version`. `@preschen/gen-vis/check`
   exports `parseData`, `dataFormat` and `loadTransforms`.
 
+### Scales: the base of bars, diverging and log scales
+
+- The base of bars and areas is in the domain: the value dim of bars and
+  areas from 0 (no `y0`, or `x0` of horizontal ones; also stacked ones,
+  histograms, polar areas and roses) includes 0 (`scale.zero`), so bars
+  start at the axis. Without `zero` the domain was the extent of the data,
+  the bars started at 0 below the plot, over the axis, and of 5 and 10 the 5
+  was a sliver. `"zero": false` of the dim keeps the domain of the data; of
+  a fixed domain without 0 the bars start at the edge of the plot area
+  (they ran beyond it). Charts of 4.x without a domain from 0 change so (in
+  the examples only the toggled states of `axis/balance` and
+  `recipes/pyramid`, whose bars started outside the plot).
+- `zero: true` includes 0 (`scale.zero`: an end of the data at 0 is not
+  extended), it was the domain `[0, null]`: negative values are drawn below
+  0 now (they hung below the plot), only negative ones end at 0. The same
+  of the `"domain": [0, null]` of 4.x, which `gen-vis migrate` writes as
+  `zero`; of values from 0 the charts are the same.
+- Bars on a log scale, which has no 0, start at the end of the domain
+  nearest to 0, areas at its start (`@y:scaled:min`); they were not drawn
+  (NaN).
+- Log scales (`log`, `sequentialLog`, `divergingLog`) warn once per dim of
+  the values they have no position of (0, and the ones of the other sign),
+  with their count, which are not drawn (silently NaN before); `zero` and
+  stacks on a log scale warn in the console and in `validateDef`/`gen-vis
+  check` (a log scale has no 0, `symlog` has).
+- Stacks around the circle (the slices of a pie, `arc` with `stack` of the
+  angle) leave out negative values, with a warning: a slice has no
+  negative size (they were stacked backwards from 0 and overlapped the
+  others, the pie was not a full circle).
+- The default fill of bars, areas and arcs without a category color is
+  `#4269D0`, the first of the default colors of categories (`observable10`),
+  as a single category of `by` gets; it was the color of the text
+  (`currentColor`), black blocks. `"fill": "currentColor"` is the color of
+  the text. Lines, rules and points keep the color of the text. No example
+  draws such a mark, their images are the same.
+- A diverging scale (`diverging`, `divergingLog`, ...) without a domain of
+  three entries has the middle `center`, else the middle of the ends of the
+  data (of a log one in its positions); the nulls of a domain of three
+  entries are taken from the data, and the ends reach the middle, e.g.
+  `[0, 0, 9]` of `[null, 0, null]` and the values 2 to 9. The middle was
+  never filled (also with the documented `center: 0`): NaN, black cells. Its
+  legend shows the colors of the domain only, e.g. the upper half of
+  `[0, 0, 9]`, from 0 at its start.
+
 ### Fixes of the review of the engine
 
 - `dodge` with `stack`: a stack per slot of the dodge dim (was one over
@@ -522,6 +591,59 @@ Migration notes, to check by hand after `gen-vis migrate`:
   in the parts the load needs of them (dims, marks, filter, transforms,
   maps, coordinate system, locale); the mount of the 52 examples: 1370 ->
   1195 ms (4.1.0: 1173 ms).
+
+### Fixes of the data (review of the release)
+
+- Documented: a local time skipped at the change to summer time (e.g.
+  `2024-03-31 02:30` in Vienna) is the one an hour later, as of `Date`; an
+  offset, `Z` or a `utc` scale makes such times unambiguous.
+- `height` and `width` of the definition are pixels: a text of pixels
+  such as `"300px"` is read as its number with a warning, another text
+  (`"50%"`) is the default with a warning (both gave NaN positions and an
+  empty chart without a message).
+- Reading the data: a row of JSON (or of the rows of the page) which is
+  no object, e.g. `null`, is left out with a warning naming its index (was
+  the TypeError "Cannot convert undefined or null to object"); a list of
+  lists is an error which shows the expected form. A page of HTML (e.g. the
+  index.html a server answers for a wrong url) is an error "it is a page of
+  HTML, not CSV" (was a blank chart). Data of a file or a text without
+  rows (a CSV of only its header, `[]`) warns unless the definition has a
+  text of `empty`, and the columns of the channels are checked against the
+  header (were not checked without rows); rows of the page, e.g. `[]` while
+  they are loaded, do not warn. A column twice in the header of CSV warns
+  (the rows have the values of the last one, as before). Binary data of
+  another realm (an ArrayBuffer of a worker or of node's vm) is binary
+  (`instanceof ArrayBuffer` was false).
+- Lines and areas are drawn along `x` (were in the order of the rows, so
+  unsorted rows zig-zagged): along a continuous dim ascending, along a
+  categorical one in the order of its categories (as before), along `y` if
+  `y` is categorical and `x` is not; of polar charts along the angle.
+  `select: "first"` and `"last"` are the ends along `x` (were the first and
+  the last row). The new key `order` of a mark (`"x"`, `"y"`, `"rows"`)
+  names the dim or keeps the order of the rows, e.g. of a connected
+  scatter plot.
+- One text among numbers no longer makes a column categorical (the ticks
+  read "10, NA, 30", bars had NaN heights and the chart was empty, also
+  with `zero`). The usual texts of missing values (`NA`, `NaN`, `n/a`,
+  `-`, `.`, `..`, `:`, `#N/A`, `n.v.`, `k.A.`, ...) are missing values of
+  numbers and dates, silently, as Eurostat's `:`. Other texts are missing
+  values with a warning naming the dim, the column and the texts with their
+  rows if the dim has parts of numbers (a number `format`, a `domain` or
+  `include` of numbers, `zero`, `nice`, `pad`, an open domain), or if more
+  than half of the values are numbers and the texts have digits (`1,234`,
+  `<5`); words such as `Total` among years keep a column categorical. A
+  column without values with parts of numbers is numeric (was
+  categorical). The warning also names texts which are no numbers or dates
+  of a dim with a `type`, and objects or lists as values (they became
+  "[object Object]").
+- The categories of the data (`fromData: "rows"`, the default of a
+  legend, and `"order": "rows"`) are in the order of the rows also if they
+  are integers: years 2024, 2023, Total were 2022, 2023, 2024, Total, and
+  "01", "1" changed places; this is the order of the legend, the stacks and
+  the colors. (Listed `categories` are the keys of a JSON object, whose
+  integer keys JavaScript puts first and ascending; `order` sets another
+  order.) A category `__proto__` keeps its props and rows (was lost), also
+  as a key of a merged part and of an object of an expression.
 
 ### Package and builds
 

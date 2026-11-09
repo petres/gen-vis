@@ -469,6 +469,7 @@ page (the default in brackets):
 ```
 
 The others are `--gen-vis-marker-color` (`#9AA0A8`, the line of the hover),
+`--gen-vis-cross-color` (the marker color, the crosshair of `hover.cross`),
 `--gen-vis-band-color` (`#F1F2F4`), `--gen-vis-line-color` (`#9AA0A8`),
 `--gen-vis-annotation-color` (`#444` of texts, `#5F6670` of labels, `#666`
 of circles), `--gen-vis-missing-color` (`#EEE`, the missing values of a

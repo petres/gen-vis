@@ -1,4 +1,4 @@
-export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, rawOf, rawIndexOf, rowResolver, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
+export { oddValues, sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, rawOf, rawIndexOf, rowResolver, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { fillTemplate, inLanguage, sameValue, templateRefs, variants } from "@/utils/def";
@@ -14,14 +14,55 @@ const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 const dataFormat = (url, format) => format ??
     dataFormats.find(f => new URL(url, 'file:///').pathname.toLowerCase().endsWith(`.${f}`));
 
-const isBinary = data => data instanceof ArrayBuffer || ArrayBuffer.isView(data);
+// binary data, also of another realm, e.g. an ArrayBuffer of a worker or
+// of node's vm, which `instanceof ArrayBuffer` of this one is not
+const isArrayBuffer = data => Object.prototype.toString.call(data) == '[object ArrayBuffer]';
+const isBinary = data => isArrayBuffer(data) || ArrayBuffer.isView(data);
 
-const bytesOf = data => data instanceof ArrayBuffer ? new Uint8Array(data) : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+const bytesOf = data => isArrayBuffer(data) ? new Uint8Array(data) : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
 
 // parquet files begin with PAR1
 const isParquet = data => {
     const b = bytesOf(data);
     return b.length >= 4 && b[0] == 0x50 && b[1] == 0x41 && b[2] == 0x52 && b[3] == 0x31;
+};
+
+// a page of HTML, e.g. the one a server answers for a wrong url (the
+// index.html of a single page app), not data
+const htmlPage = /^\s*<(?:!doctype\s+html|html|head|body)[\s>]/i;
+
+// a row of the data is an object, not null, a number or a list
+const isRow = r => r !== null && typeof r == 'object' && !Array.isArray(r);
+
+// the indices of a list, the first `max` ones, e.g. "0, 3 and 2 others"
+const indices = (list, max = 5) => list.length > max ? `${list.slice(0, max).join(', ')} and ${list.length - max} others` : list.join(', ');
+
+// the rows which are objects, the others (e.g. null of JSON) are left out
+// with a warning (`warn`) which names their indices; an error if no row is
+// one, e.g. a list of lists
+const rowsOf = (rows, warn) => {
+    if (rows.every(isRow))
+        return rows;
+    const kept = rows.filter(isRow);
+    const kind = r => r === null ? 'null' : Array.isArray(r) ? 'a list' : typeof r;
+    if (kept.length == 0)
+        throw new Error(`expected a list of rows as objects, e.g. [{"year": 2024, "value": 1.5}], the first row is ${kind(rows[0])}`);
+    const others = rows.map((r, i) => isRow(r) ? -1 : i).filter(i => i >= 0);
+    const kinds = [...new Set(others.map(i => kind(rows[i])))].join(' or ');
+    warn?.(others.length == 1 ? `the row ${others[0]} (counted from 0) is ${kinds}, not an object of values, it is left out`
+        : `${others.length} rows (${indices(others)}, counted from 0) are ${kinds}, not objects of values, they are left out`);
+    return kept;
+};
+
+// the columns of the header of CSV or TSV which are in it more than once,
+// of which the rows have the values of the last one
+const duplicateColumns = (rows, warn) => {
+    const counts = new Map();
+    (rows.columns ?? []).forEach(c => counts.set(c, (counts.get(c) ?? 0) + 1));
+    const twice = [...counts].filter(([, n]) => n > 1);
+    if (twice.length > 0)
+        warn?.(`${twice.map(([c, n]) => `the column '${c}' is in the header ${n} times`).join(', ')}, the rows have the values of the last one`);
+    return rows;
 };
 
 /**
@@ -30,9 +71,11 @@ const isParquet = data => {
  * are parsed in their `format`, without one as JSON (a list of rows) or CSV
  * by their content, already parsed rows are passed through. The parquet
  * reader is only loaded for parquet data, it reads only the `columns`
- * given, all without them.
+ * given, all without them. A page of HTML is an error (e.g. of a wrong url);
+ * rows which are no objects (e.g. null) are left out and a column in the
+ * header of CSV more than once is used once, `warn(message)` tells of them.
  */
-const parseData = async (data, format, columns = null) => {
+const parseData = async (data, format, columns = null, warn = null) => {
     if (isBinary(data)) {
         if (format == 'parquet' || isParquet(data)) {
             const { parseParquet } = await lazy.parquet();
@@ -41,21 +84,23 @@ const parseData = async (data, format, columns = null) => {
         data = new TextDecoder().decode(bytesOf(data));
     }
     if (Array.isArray(data))
-        return data;
+        return rowsOf(data, warn);
     if (typeof data != "string")
         throw new Error('expected rows, a string of CSV, TSV or JSON or parquet');
+    if (htmlPage.test(data))
+        throw new Error(`it is a page of HTML, not ${format == 'parquet' ? 'parquet' : format ? format.toUpperCase() : 'CSV, TSV or JSON'}, e.g. the page a server answers for a wrong url`);
     if (format == 'parquet')
         throw new Error('Parquet data needs to be binary, e.g. an ArrayBuffer.');
     data = data.replace(/^\uFEFF/, '');
     if (format == 'tsv')
-        return d3.tsvParse(data);
+        return duplicateColumns(d3.tsvParse(data), warn);
     if (format == 'json' || (format != 'csv' && /^\s*[[{]/.test(data))) {
         const rows = JSON.parse(data);
         if (!Array.isArray(rows))
             throw new Error('the JSON is not a list of rows');
-        return rows;
+        return rowsOf(rows, warn);
     }
-    return d3.csvParse(data);
+    return duplicateColumns(d3.csvParse(data), warn);
 };
 
 // a date without a time zone: of ISO, e.g. "2022-06-01", "2022-06", "2022"
@@ -75,7 +120,9 @@ const cycle = 146097*86400000;
 // the time of a date and a time of the time zone of a scale, local or UTC,
 // NaN if it does not exist, e.g. "2022-02-30", which Date.parse reads as the
 // 2nd of March, 24:00 is the midnight at the end of the day, a fraction of a
-// second is cut to milliseconds, e.g. of pandas
+// second is cut to milliseconds, e.g. of pandas; a local time skipped at the
+// change to summer time (02:30 in Vienna) is the one an hour later, as of
+// Date (decided: it keeps its row, an offset or utc makes it unambiguous)
 const wallTime = (utc, y, m = 1, d = 1, h = 0, mi = 0, s = 0, fraction = '') => {
     y = +y; m = +m; d = +d; h = +h; mi = +mi; s = +s;
     const ms = fraction ? +`${fraction}00`.slice(0, 3) : 0;
@@ -214,12 +261,13 @@ const rawOf = PreparedRow.raw;
 const rawIndexOf = PreparedRow.index;
 
 // maps the parsed rows to the mappings, e.g. column `share` to `y`, also the
-// columns of transforms
-const prepareData = (data, def, columns = null) => {
+// columns of transforms; `odd` collects the values the mappings cannot use,
+// see oddValues
+const prepareData = (data, def, columns = null, odd = null) => {
     const mapping = Object.keys(def.mapping).map(n => ({
         name: n,
         value: columnValues(data, columns, def.mapping[n].column),
-        convert: converter(def.mapping[n], def.mapping),
+        convert: odd ? checked(n, def.mapping[n], converter(def.mapping[n], def.mapping), odd) : converter(def.mapping[n], def.mapping),
     }));
 
     return sourceRows(data, columns).map((d, i) => {
@@ -228,6 +276,56 @@ const prepareData = (data, def, columns = null) => {
             e[c.name] = c.convert(c.value(i));
         return e;
     })
+};
+
+// the conversion of the values of a mapping `n` which collects the ones it
+// cannot use in `odd` (a map of the names of the mappings), by their text:
+// of numbers and dates the ones which are none (`values`, not the usual
+// texts of missing values, see missingToken) and of every type objects and
+// lists (`objects`), e.g. of nested JSON, which are no values of a dim
+const checked = (n, m, convert, odd) => v => {
+    const c = convert(v);
+    const object = v !== null && typeof v == 'object' && !(v instanceof Date);
+    if (object || (c === null && (m.type == 'numeric' || m.type == 'date') && !absent(v))) {
+        if (!odd.has(n))
+            odd.set(n, { values: new Map(), objects: new Map() });
+        const kind = odd.get(n)[object ? 'objects' : 'values'];
+        const text = object ? JSON.stringify(v) : String(v);
+        kind.set(text, (kind.get(text) ?? 0) + 1);
+    }
+    return c;
+};
+
+// the texts of the values and their numbers of rows, at most `max` of them, e.g. "'NA' (2 rows), 'x' (1 row)"
+const counted = (values, max = 4) => {
+    const entries = [...values].sort(([, a], [, b]) => b - a);
+    const shown = entries.slice(0, max).map(([v, k]) => `'${v.length > 40 ? `${v.slice(0, 40)}...` : v}' (${k} ${k == 1 ? 'row' : 'rows'})`);
+    return entries.length > max ? `${shown.join(', ')} and ${entries.length - max} other${entries.length - max == 1 ? '' : 's'}` : shown.join(', ');
+};
+
+/**
+ * The warnings of the values the mappings of the prepared definition `def`
+ * could not use (`odd` of prepareData), once per column: texts of a dim of
+ * numbers or dates which are none, e.g. "1,234" or "<5" (the usual texts of
+ * missing values, e.g. NA or ":", are missing values without a warning, see
+ * missingToken), and objects or lists, e.g. of nested JSON.
+ */
+const oddValues = (def, odd) => {
+    const warned = new Set();
+    return [...odd].flatMap(([n, { values, objects }]) => {
+        const m = def.mapping[n];
+        const column = fillTemplate(m.column, def.globals ?? {});
+        if (warned.has(column))
+            return [];
+        warned.add(column);
+        const what = m.type == 'date' ? 'dates' : 'numbers';
+        const written = m.type == 'numeric' && [...values.keys()].some(v => /\d[,'\s]\d/.test(v))
+            ? ' (a number is written as 1234.5, without a separator of thousands)' : '';
+        return [
+            ...(values.size > 0 ? [`dims.${n}: values of the column '${column}' are no ${what}, they are missing: ${counted(values)}${written}`] : []),
+            ...(objects.size > 0 ? [`dims.${n}: values of the column '${column}' are objects or lists, not numbers, dates or texts: ${counted(objects, 2)}`] : []),
+        ];
+    });
 };
 
 /**
@@ -399,8 +497,9 @@ const categoryOrder = orders => {
 
 // the stacks of the values of `axis.v` at the positions of `axis.h` (and of
 // `dims`, e.g. the facets), in the order of `compare`, by default the one of
-// the rows, positive and negative values separately, a map of the rows to the
-// start and the end of their value
+// the rows, positive and negative values separately (of `axis.positive` the
+// negative ones have no size, at the end of the positive ones, e.g. of a
+// pie), a map of the rows to the start and the end of their value
 const stack = (rows, axis, dims = [], compare = null) => {
     const stacks = new Map();
     groupBy(rows, [...dims, axis.h]).forEach(g => {
@@ -410,6 +509,8 @@ const stack = (rows, axis, dims = [], compare = null) => {
             const v = e[axis.v];
             if (v >= 0)
                 stacks.set(e, [positive, positive += v]);
+            else if (axis.positive)
+                stacks.set(e, [positive, positive]);
             else
                 stacks.set(e, [negative, negative += v]);
         }
@@ -662,14 +763,34 @@ const updateDataValues = (defOrg, def, rows, columns, formatOf = null, changed =
     return reset;
 };
 
-// the type of the values of a column: numeric if all of them are numbers,
-// date if all of them are dates, otherwise categorical, undefined without
-// values (e.g. of empty data). A pass of numbers which ends at the first
-// value which is none (a value which is the one before is skipped, e.g. the
-// years of many rows), then a pass of dates of the distinct values, which
-// ends at the first value which is no date, `value(i)` is the one of the
-// row i of `n` rows (or `values` an array)
-const inferType = (values, n = values.length) => {
+// the usual texts of missing values of statistics, e.g. NA and NaN of R and
+// pandas, ":" of Eurostat, "-", "." and ".." of statistical offices, "n.v."
+// and "k.A." of German tables, compared trimmed and in lower case; a column
+// of numbers or dates with them is one of numbers or dates, they are missing
+// values (null) without a warning, see inferType and oddValues; NaN of
+// parquet or of rows of JavaScript too
+const missingTokens = new Set(['na', 'n/a', 'n.a.', 'nan', 'null', 'none', '-', '--', '\u2013', '\u2014', '.', '..', '...', '\u2026', ':', '?', '#n/a', 'n.v.', 'k.a.']);
+const missingToken = v => (typeof v == 'string' && v.length < 8 && missingTokens.has(v.trim().toLowerCase())) || (typeof v == 'number' && Number.isNaN(v));
+// missing or one of the texts of missing values
+const absent = v => missing(v) || missingToken(v);
+
+/**
+ * The type of the values of a column: numeric if all of them are numbers,
+ * date if all of them are dates, the usual texts of missing values aside
+ * (see missingToken), otherwise categorical, undefined without values
+ * (e.g. of empty data). A pass of numbers which ends at the first value
+ * which is none (a value which is the one before is skipped, e.g. the years
+ * of many rows), then a pass of dates of the distinct values, which ends at
+ * the first value which is no date; then numeric if `hint` says the dim is
+ * continuous (its parts, see typeHint: 'numeric' or 'continuous') and some
+ * values are numbers, or without a hint if more than half of the values
+ * are numbers and the others have digits, e.g. "1,234", "<5" or "12 %",
+ * numbers written otherwise, which are missing values with a warning (see
+ * oddValues), not "Total", "Wien" or "Phase 1" among "2023", "2024", e.g. the
+ * categories of a legend. `value(i)` is the one of the row i of `n` rows
+ * (or `values` an array).
+ */
+const inferType = (values, n = values.length, hint = undefined) => {
     const at = typeof values == 'function' ? values : i => values[i];
     let present = false;
     let before;
@@ -683,7 +804,7 @@ const inferType = (values, n = values.length) => {
             present = true;
             continue;
         }
-        if (missing(v))
+        if (absent(v))
             continue;
         if (toNumber(v) === null)
             break;
@@ -692,15 +813,66 @@ const inferType = (values, n = values.length) => {
     if (i == n)
         return present ? 'numeric' : undefined;
     const seen = new Set();
-    for (let j = 0; j < n; j++) {
+    let dates = true;
+    for (let j = 0; j < n && dates; j++) {
         const v = at(j);
         if (seen.has(v))
             continue;
         seen.add(v);
-        if (!missing(v) && toDate(v) === null)
-            return 'categorical';
+        if (!absent(v) && toDate(v) === null)
+            dates = false;
     }
-    return 'date';
+    if (dates)
+        return 'date';
+    // the numbers among the other values
+    let numbers = 0;
+    let others = 0;
+    let digits = true;
+    before = undefined;
+    let wasNumber = false;
+    for (let j = 0; j < n; j++) {
+        const v = at(j);
+        if (j == 0 || v !== before) {
+            before = v;
+            if (absent(v)) {
+                wasNumber = null;
+                continue;
+            }
+            wasNumber = toNumber(v) !== null;
+            if (!wasNumber && digits && !/\d/.test(typeof v == 'object' ? '' : String(v)))
+                digits = false;
+        }
+        if (wasNumber)
+            numbers++;
+        else if (wasNumber === false)
+            others++;
+    }
+    return numbers > 0 && (hint !== undefined || (digits && numbers > others)) ? 'numeric' : 'categorical';
+};
+
+// a d3 number format, e.g. ",.1f" or ".0%", see d3-format (not an empty one)
+const numberFormat = /^(?:(.)?([<>=^]))?([+\-( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?(~)?([a-z%])?$/i;
+
+/**
+ * Whether the parts of a mapping without a type say that its values are
+ * numbers or dates, not categories, e.g. "NA" among numbers: 'numeric' of a
+ * number format (of the mapping, its axis, hover or legend), of a domain or
+ * an `include` of numbers, 'continuous' of the
+ * other parts of a continuous scale (an open domain, `nice`, `pad`,
+ * `center`, `zero`, e.g. of the value of bars, an `interval`), undefined otherwise. A scale type and the
+ * categories make the type already, see normalize.
+ */
+const typeHint = m => {
+    const scale = isObject(m.scale) ? m.scale : {};
+    const formats = [m.format, m.axis?.format, m.hover?.format, m.legend?.format].filter(f => typeof f == 'string' && f !== '');
+    if (formats.some(f => !timeFormat.test(f) && numberFormat.test(f))
+        || [m.domain, scale.domain, m.include, scale.include].some(v => [v].flat().some(e => typeof e == 'number')))
+        return 'numeric';
+    if ([m.domain, scale.domain].some(v => Array.isArray(v) && v.includes(null))
+        || ['nice', 'pad', 'center'].some(k => m[k] !== undefined || scale[k] !== undefined) || m.interval !== undefined
+        || scale.zero === true || m.zero === true)
+        return 'continuous';
+    return undefined;
 };
 
 // a d3 time format, e.g. "%b %Y", not a number format, e.g. ".0%"
@@ -734,9 +906,12 @@ const inferTypes = (def, rows, columns = null, known = () => true) => {
         if (!typesOf.has(source))
             typesOf.set(source, new Map());
         const types = typesOf.get(source);
-        if (!types.has(column))
-            types.set(column, inferType(columnValues(rows, columns, column), sourceRows(rows, columns).length));
-        m.type = types.get(column) ?? formatType(m);
+        const hint = typeHint(m);
+        const key = `${hint ?? ''}\0${column}`;
+        if (!types.has(key))
+            types.set(key, inferType(columnValues(rows, columns, column), sourceRows(rows, columns).length, hint));
+        // without values of the parts of a continuous dim numeric, e.g. of `"zero": true`
+        m.type = types.get(key) ?? (hint && formatType(m) != 'date' ? 'numeric' : formatType(m));
     };
     Object.values(def.mapping ?? {}).forEach(infer);
     variants(def).slice(1).forEach(patch => Object.entries(isObject(patch.mapping) ? patch.mapping : {})

@@ -22,10 +22,12 @@ const barWidth = (scale, type) => {
 };
 
 // the position of the base of the values of a scale: of 0, or of the end of
-// the range nearest to it if 0 is outside the domain
+// the range nearest to it if 0 is outside the domain (e.g. a fixed one), of
+// a log scale (no 0) the one of the end of the domain nearest to 0
 const baseOf = scale => {
     const [lo, hi] = d3.extent(scale.range());
-    return Math.max(lo, Math.min(hi, scale(0)));
+    const zero = scale(0);
+    return Number.isFinite(zero) ? Math.max(lo, Math.min(hi, zero)) : scale(d3.least(scale.domain(), Math.abs));
 };
 
 /**
@@ -124,7 +126,8 @@ export default {
         },
     },
 
-    // a bar per row from `y0` (by default the position of 0 of the scale of `y1`)
+    // a bar per row from `y0` (by default the position of 0 of the scale of
+    // `y1`, within the plot area, see baseOf)
     // to `y1`, e.g. "@y:start:scaled" and "@y:end:scaled" of stacked values,
     // centered at `x`, in the middle of a band, `width` defaults to the width
     // of a band or the step of a point scale. With `x1` a horizontal bar from
@@ -155,7 +158,7 @@ export default {
             if ('x1' in plot.props) {
                 const yScale = once(() => barScale(plot, ctx, 'y', type));
                 const thickness = once(() => barWidth(yScale(), type));
-                const base = once(() => barScale(plot, ctx, 'x1', type)(0));
+                const base = once(() => baseOf(barScale(plot, ctx, 'x1', type)));
                 return perRow(groups, "rect", v => {
                     const height = v.height ?? thickness();
                     const x0 = 'x0' in v ? v.x0 : base();
@@ -179,7 +182,7 @@ export default {
                     ? row => (s(s.period.offset(row[name[0]])) - s(row[name[0]])) : null;
             });
             const thickness = once(() => barWidth(xScale(), type));
-            const base = once(() => barScale(plot, ctx, 'y1', type)(0));
+            const base = once(() => baseOf(barScale(plot, ctx, 'y1', type)));
             return perRow(groups, "rect", (v, row) => {
                 const period = periodOf()?.(row);
                 const width = v.width ?? (period === undefined ? thickness() : 0.8*period);

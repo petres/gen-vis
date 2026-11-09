@@ -24,6 +24,47 @@ const move = async (el, x, y = 100) => {
 };
 const title = el => el.querySelector('.vis-hover-title')?.textContent;
 
+describe('the crosshair of the hover (cross)', () => {
+    const lines = el => Object.fromEntries(['h', 'v'].map(d => [d, el.querySelector(`g.vis-hover-marker line.vis-hover-cross-${d}`)]));
+    const at = (l, a) => Number(l.getAttribute(a));
+    test('a horizontal and a vertical line through the point of the nearest row instead of the line of the position, none without', async () => {
+        const data = 'year,value,land\n2020,1,Wien\n2021,2,Wien\n2022,3,Wien\n2022,1,Tirol';
+        const plain = await mount({ def: lineDef(), data });
+        expect(plain.querySelector('line.vis-hover-cross')).toBeNull();
+        const el = await mount({ def: lineDef({ hover: { cross: true } }), data });
+        await move(el, 540, 20);
+        const { h, v } = lines(el);
+        const circle = [...el.querySelectorAll('circle')].find(c => c.getAttribute('fill') == 'red' && at(c, 'cx') > 500);
+        expect(Math.abs(at(h, 'y1') - at(circle, 'cy'))).toBeLessThanOrEqual(0.5);
+        expect(at(h, 'y2')).toBe(at(h, 'y1'));
+        expect(at(h, 'x2') - at(h, 'x1')).toBe(550);
+        expect(Math.abs(at(v, 'x1') - at(circle, 'cx'))).toBeLessThanOrEqual(0.5);
+        expect(at(v, 'y2') - at(v, 'y1')).toBe(250);
+        // the line of the position is left out, the marker is shown
+        expect(el.querySelector('g.vis-hover-marker line:not(.vis-hover-cross)').hasAttribute('x1')).toBe(false);
+        expect(el.querySelector('g.vis-hover-marker').getAttribute('visibility')).toBe('visible');
+        // the nearest row of the pointer, the one of Tirol below
+        await move(el, 540, 240);
+        const tirol = [...el.querySelectorAll('circle')].find(c => c.getAttribute('fill') == 'blue');
+        expect(Math.abs(at(lines(el).h, 'y1') - at(tirol, 'cy'))).toBeLessThanOrEqual(0.5);
+        // hidden: no lines
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointerleave', { pointerType: 'mouse' }));
+        await nextTick();
+        expect(lines(el).h.hasAttribute('x1')).toBe(false);
+        expect(errors).toEqual([]);
+    });
+
+    test('also of the hover of points, with marker false', async () => {
+        const el = await mount({ def: lineDef({ hover: { cross: true, marker: false, mode: 'point' } }), data: 'year,value,land\n2020,1,Wien\n2022,3,Wien' });
+        await move(el, 545, 5);
+        const { h, v } = lines(el);
+        expect(h.hasAttribute('y1')).toBe(true);
+        expect(v.hasAttribute('x1')).toBe(true);
+        expect(el.querySelector('g.vis-hover-marker').getAttribute('visibility')).toBe('visible');
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('the nearest position of the hover', () => {
     // 2020 at 0, 2021 at 275, 2022 at 550 of the inner width
     test('a position without a value is skipped', async () => {

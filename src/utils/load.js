@@ -1,7 +1,7 @@
 export { valueFormat, resolveUrl, clearCache, resolveParents, readDef, requirements, raw, geoParts, loadGeo, load, fetchData };
 
 
-import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, sourceRows, toDate, usedColumns } from "@/utils/data";
+import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, oddValues, parseData, prepareData, sourceRows, toDate, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, madeColumns, utcColumns } from "@/utils/transform";
 import { applyResolved, fillTemplate, languageOf, mergeAll, prepareDef, variants, variantsOf } from "@/utils/def";
 import { translate, checkDims, implicitDims, isDefinition4, isDefinition5, optionKeys, authoredPath } from "@/utils/language";
@@ -146,10 +146,14 @@ const migratedParts = async (parts, old) => {
     });
 };
 
-// the rows of data, errors name its url (`source`)
-const readData = async (data, format, source, columns = null) => {
+// the warnings of the data of the definition of `url` (`source` names the
+// data, its url or the attribute), e.g. of rows left out, see parseData
+const dataWarning = (url, source) => message => console.warn(`gen-vis ${url ?? 'inline definition'}: the data ${source}: ${message}`);
+
+// the rows of data, errors name its url (`source`), `warn` tells of rows left out, see parseData
+const readData = async (data, format, source, columns = null, warn = null) => {
     try {
-        return await parseData(data, format, columns);
+        return await parseData(data, format, columns, warn);
     } catch (error) {
         throw new Error(`Could not read the data ${source}: ${error.message}`);
     }
@@ -365,8 +369,21 @@ const loadRows = async (defOrg, url, data) => {
         data = await fetchData(dataUrl, format);
         source = `'${dataUrl}'`;
     }
-    return raw(await readData(data, format, source, usedColumns(defOrg)));
+    const warn = dataWarning(url, source);
+    const parsed = await readData(data, format, source, usedColumns(defOrg), warn);
+    const rows = raw(parsed);
+    // the columns of the header of CSV, also without rows, see missingColumns
+    if (Array.isArray(parsed.columns))
+        headers.set(rows, parsed.columns);
+    // a chart of no rows is blank, a text of `empty` says why; not of rows
+    // of the page, e.g. none while they are loaded
+    if (rows.length == 0 && !Array.isArray(data) && !defOrg.options?.empty)
+        warn(`no rows${Array.isArray(parsed.columns) ? ` (only the header ${parsed.columns.map(c => `'${c}'`).join(', ')})` : ''}, the chart is empty; 'empty' is a text instead of the marks`);
+    return rows;
 };
+
+// the columns of the headers of the rows of CSV and TSV
+const headers = new WeakMap();
 
 // the data of plots of their own, e.g. events, and of the lookups of
 // transforms, also of the patches of form elements, by their url relative
@@ -381,7 +398,7 @@ const loadFiles = async (defOrg, url) => {
     return new Map(await Promise.all([...new Set(withFiles.map(p => p.data))].map(async data => {
         const dataUrl = resolveUrl(data, url);
         const format = dataFormat(dataUrl, withFiles.find(p => p.data == data).dataFormat);
-        return [data, raw(await readData(await fetchData(dataUrl, format), format, `'${dataUrl}'`))];
+        return [data, raw(await readData(await fetchData(dataUrl, format), format, `'${dataUrl}'`, null, dataWarning(url, `'${dataUrl}'`)))];
     })));
 };
 
@@ -447,11 +464,14 @@ const prepare = (defOrg, source, rows, files, state, globals, symbols = {}) => {
  * column of the data (of the rows or of a transform), e.g. a typo of
  * `"x": "yaer"`: a channel which names no dim is the dim of its column (see
  * implicitDims of utils/language.js), of the definition `source` resolved
- * with the `globals`; none without rows.
+ * with the `globals`; none without rows, unless the header of CSV names
+ * the columns.
  */
 const missingColumns = (source, globals, rows, columns) => {
     const data = sourceRows(rows, columns);
-    if (!data?.length)
+    // without rows the columns of the header of CSV, if there is one
+    const header = data === rows ? headers.get(rows) : undefined;
+    if (!data?.length && !header)
         return [];
     let resolved;
     try {
@@ -459,7 +479,7 @@ const missingColumns = (source, globals, rows, columns) => {
     } catch {
         return [];
     }
-    const names = [...new Set([...Object.keys(data[0]), ...columns.keys(), ...[...madeColumns(resolved.transform)].map(c => fillTemplate(String(c), globals ?? {}))])];
+    const names = [...new Set([...(data.length ? Object.keys(data[0]) : header), ...columns.keys(), ...[...madeColumns(resolved.transform)].map(c => fillTemplate(String(c), globals ?? {}))])];
     const known = new Set(names);
     const implicit = implicitDims(resolved);
     return implicit.filter(d => !known.has(d.column)).map(d => `${d.path}: no dim and no column '${d.column}' in the data, `
@@ -554,6 +574,10 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     if (!check)
         [...missingColumns(source, prepared.globals, rows, columns), ...columnReferences(prepared, rows, columns)]
             .forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
+    // the values the dims cannot use, e.g. "1,234" among numbers
+    const odd = new Map();
+    const prepRows = raw(prepareData(rows, prepared, columns, odd));
+    oddValues(prepared, odd).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
 
     return {
         defUrl: url ?? null,
@@ -571,6 +595,6 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
         columns,
         def: prepared,
         defaults,
-        data: raw(prepareData(rows, prepared, columns)),
+        data: prepRows,
     };
 };

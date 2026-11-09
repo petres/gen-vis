@@ -4,6 +4,7 @@ import { createStore } from '@/store.js';
 import { sameValue } from "@/utils/def";
 import { copyImage } from '@/utils/clipboard.js';
 import { lazy } from '@/utils/lazy';
+import { pixelsOf } from '@/utils/warn';
 import { layout } from '@/layout';
 import { el, emitter, setText } from '@/comp/html';
 import { createVis } from '@/comp/vis';
@@ -403,7 +404,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         const fixed = Boolean(props.imageWidth);
         const width = props.imageWidth == 'screen'
             ? outer.querySelector('.vis').getBoundingClientRect().width
-            : Number(props.imageWidth || def.options.width || exporting.defaultWidth);
+            : Number(props.imageWidth || pixelsOf(def.options.width) || exporting.defaultWidth);
         const mount = (holder, done) => {
             const shown = createGenVis(holder, { ...copy, onRendered: done.resolve, onError: done.reject });
             shown.el.classList.add(...classes);

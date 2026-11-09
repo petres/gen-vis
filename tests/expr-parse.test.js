@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { isExpressionText, parseExpression, formatExpression } from '@/utils/expr-parse';
-import { evaluate, formatter, isOperator } from '@/utils/expr';
+import { bind, evaluate, formatter, isOperator } from '@/utils/expr';
 import { format } from 'd3-format';
 
 // the fixtures of spec/expressions by the name of their file, the ASTs of
@@ -254,5 +254,18 @@ describe('formatExpression', () => {
         expect(() => formatExpression({ '==': ['@a'] })).toThrow('no text of "=="');
         expect(() => formatExpression(Infinity)).toThrow('no text');
         expect(() => formatExpression(undefined)).toThrow('no text');
+    });
+});
+
+describe('objects of expressions (review of 5.0)', () => {
+    test('a key __proto__ is an entry, not the prototype', () => {
+        const expr = parseExpression('={"__proto__": @v, "a": 1}');
+        // of the rows (bind) and once (evaluate)
+        const ofRow = bind(expr, name => name == 'v' ? row => row.v : undefined)({ v: 2 });
+        for (const o of [ofRow, evaluate(expr, { v: 2 })]) {
+            expect(Object.keys(o)).toEqual(['__proto__', 'a']);
+            expect(Object.getPrototypeOf(o)).toBe(Object.prototype);
+            expect(o.__proto__).toBe(2);
+        }
     });
 });

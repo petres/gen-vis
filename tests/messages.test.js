@@ -69,6 +69,22 @@ describe('the messages of the draw', () => {
         }
     });
 
+    test('a log scale: the values it has no position of, zero and stacks, once per dim', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        try {
+            const y = { column: 'value', type: 'numeric', scale: { type: 'log' } };
+            await mount({ def: def({ dims: { ...def().dims, y }, marks: { type: 'point' } }), data: 'year,value,land\n2020,0,Wien\n2021,-2,Wien\n2022,10,Wien\n2023,0,Wien' });
+            expect(warn.mock.calls.map(c => c[0]).filter(m => m.includes('dims.y'))).toEqual([expect.stringContaining(
+                `dims.y.scale: a log scale has no position of 0 and of values of the other sign, 3 of 4 values of dim 'y' are not drawn (0, -2), e.g. "type": "symlog" has them`)]);
+            warn.mockClear();
+            await mount({ def: def({ dims: { ...def().dims, y: { ...y, zero: true } }, marks: { type: 'point' } }), data });
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining('dims.y.scale: a log scale has no 0, `zero` is ignored'));
+        } finally {
+            warn.mockRestore();
+            errors.length = 0;
+        }
+    });
+
     test('an unknown dim of a filter object, the expressions read columns', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         try {

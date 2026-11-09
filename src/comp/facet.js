@@ -1,6 +1,7 @@
 export { createFacet };
 
 import { drawLayer, withMotion } from "@/utils/draw";
+import { arrowheads } from "@/utils/arrows";
 import { highlighter } from "@/utils/highlight";
 import { drawAxis } from "@/utils/axis";
 import { create, interruptAll, setAttr } from "@/utils/dom";
@@ -11,9 +12,9 @@ import { el, patch, place, setText } from "@/comp/html";
 import { createFacetHover } from "@/comp/facet-hover";
 
 // the message of an unknown mark type, of a typo the name it probably is,
-// e.g. "line" of "lines": the names of 5.0 (also point, label and cell) of
+// e.g. "line" of "lines": the names of 5.0 (also point, label, cell and tick) of
 // the coordinate system, a full name of the ones of the registry
-const aliases = ['point', 'label', 'cell'];
+const aliases = ['point', 'label', 'cell', 'tick'];
 const unknownType = (type, coord) => {
     const full = Object.keys(plotTypes).filter(t => !t.startsWith('annotation:'));
     const names = String(type).includes(':') ? full : [...new Set([...full.filter(t => !plotTypes[t].coords || plotTypes[t].coords.includes(coord))
@@ -184,7 +185,8 @@ const createFacet = (vis, initial) => {
             } catch (error) {
                 throw withPath(error, markPath(store.def, plot, true));
             }
-            drawLayer(parent, layer);
+            // the arrowheads of "marker-end": "arrow", see utils/arrows.js
+            drawLayer(parent, arrowheads(layer, svg, uid));
         });
     };
 

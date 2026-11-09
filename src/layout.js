@@ -5,14 +5,15 @@ import * as d3 from "@/utils/d3";
 import { bind, constant, evaluate, formatter, isOperator, refNames } from "@/utils/expr";
 import { isObject } from "@/utils/values";
 import { autoMargins } from "@/utils/margins";
-import { bandCenter, makeScale } from "@/utils/scales";
+import { bandCenter, logProblems, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
 import { facetMappings } from "@/utils/normalize";
-import { markPath, warnOnce, withPath } from "@/utils/warn";
+import { markPath, sizeOf, warnOnce, withPath } from "@/utils/warn";
 import { highlightVars } from "@/utils/highlight";
 import { textWidth } from "@/utils/measure";
 import { directOf, elementOf } from "@/utils/draw";
 import { plotTypes } from "@/plots";
+import { alongRows } from "@/plots/elements";
 
 // the warning of a condition of a filter of no mapping, e.g. of a column
 // instead of the mapping of it, which no row has, see rowFilter
@@ -207,11 +208,17 @@ const stepHeight = (store, rowsOf, scope) => {
 // the rows and the positions of the stacks of the stacked mapping: the ones
 // of the positions (`axis.h`) or of `stackBy` of the mapping, e.g. the
 // start of the class of a bin (`lo`) of a histogram whose x are the values
-// of the rows, the rows without one are not stacked
+// of the rows, the rows without one are not stacked; the slices of a pie
+// (stacked angles) have no negative size, see aroundOf
 const stackSource = (def, axis, rows) => {
     const by = def.mapping[axis.v]?.stackBy;
-    return by === undefined ? [rows, axis] : [rows.filter(r => r[by] !== null && r[by] !== undefined), { ...axis, h: by }];
+    const around = aroundOf(def, axis) ? { positive: true } : {};
+    return by === undefined ? [rows, { ...axis, ...around }] : [rows.filter(r => r[by] !== null && r[by] !== undefined), { ...axis, ...around, h: by }];
 };
+// stacks around the circle (of an angular scale), e.g. the slices of a pie:
+// a negative value is left out (a slice of no size at the end of the
+// stack), it would overlap the others
+const aroundOf = (def, axis) => def.mapping[axis.v]?.scale?.orientation == 'angular';
 
 // the dims of the groups of the stacks besides the facets: the slots of
 // dodged stacked bars (`stackGroups` of the stacked dim, see translate of
@@ -236,6 +243,9 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     const stackedRows = stacked && stacked !== true
         ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `dims.${axis.v}.stacked` }) : rows;
     const stacks = stacked ? stack(...stackSource(def, axis, stackedRows), stackGroups(def, axis), stackOrder) : null;
+    const negative = stacks && aroundOf(def, axis) ? stackedRows.filter(r => r[axis.v] < 0).length : 0;
+    if (negative > 0)
+        warnOnce(store, `around:${axis.v}`, `dims.${axis.v}: ${negative} negative values of dim '${axis.v}' are left out of the stacks around the circle (e.g. the slices of a pie), a slice has no negative size`);
     const stackOf = stacks ? row => stacks.get(row) ?? [row[axis.v], row[axis.v]] : null;
     const isStacked = stacks ? row => stacks.has(row) : null;
 
@@ -342,6 +352,10 @@ const layout = (store, width, before = null) => {
         return slots.get(name);
     };
 
+    // values a log scale has no position of, e.g. 0, once per dim
+    Object.keys(def.mapping).forEach(n => logProblems(n, def.mapping[n], rows)
+        .forEach(p => warnOnce(store, `log:${n}:${p.split(',')[0]}`, `dims.${n}.scale: ${p}`)));
+
     // the sizes of a facet
     // the margins: of the definition, else of the styles of the page
     // (--gen-vis-margin-left, ...), else of the defaults of the page or the
@@ -389,7 +403,7 @@ const layout = (store, width, before = null) => {
         : entries.map(f => partOf(n, f)).map(part => [part.flatMap(e => e.rows), domainOfAll(n, part)?.rows]), scope);
     // the facets of the margins: their sizes, scopes and scales
     const build = margins => {
-        const size = { width: usable/cols, height: stepped === undefined ? evaluate(def.options.height, scope) : stepped + margins.top + margins.bottom };
+        const size = { width: usable/cols, height: stepped === undefined ? sizeOf(store, evaluate(def.options.height, scope), 'height', 400) : stepped + margins.top + margins.bottom };
         // a container smaller than its margins has no room, not a negative one,
         // which would flip the ranges of the scales, e.g. a negative radius
         size.innerWidth = Math.max(0, size.width - (margins.left + margins.right));
@@ -587,13 +601,17 @@ const inFacet = (def, part, facet) => {
     return [part.facet].flat().map(String).includes(String(facet.key));
 };
 
-// one row of the rows of a group: the first or the last one, in the order of
-// the rows, or the one with the least or the most value of a mapping, e.g.
-// { "max": "x" }, of the rows with values of the mappings of the props,
-// categories as numbers if they are numbers, e.g. "10" after "9"
-const selected = (rows, select, mapping) => {
-    if (select == 'first' || select == 'last')
-        return select == 'first' ? rows.slice(0, 1) : rows.slice(-1);
+// one row of the rows of a group: the first or the last one along the dim
+// of the position of the plot (as the points of a line, see alongRows, in
+// the order of the rows with `"order": "rows"`), or the one with the least
+// or the most value of a mapping, e.g. { "max": "x" }, of the rows with
+// values of the mappings of the props, categories as numbers if they are
+// numbers, e.g. "10" after "9"
+const selected = (rows, select, mapping, plot, ctx) => {
+    if (select == 'first' || select == 'last') {
+        const along = alongRows(rows, plot, ctx);
+        return select == 'first' ? along.slice(0, 1) : along.slice(-1);
+    }
     const [kind, name] = Object.entries(select ?? {})[0] ?? [];
     const values = rows.filter(r => r[name] !== null && r[name] !== undefined);
     const compare = Object.hasOwn(mapping, name) && !continuous(mapping[name])
@@ -824,7 +842,7 @@ const plotGroups = (plot, rows, ctx) => {
         return {
             categories: g.group,
             props,
-            rows: plot.select === undefined ? g.entries : selected(g.entries.filter(complete), plot.select, mapping),
+            rows: plot.select === undefined ? g.entries : selected(g.entries.filter(complete), plot.select, mapping, plot, ctx),
             at,
             prop: name => at.entries.get(name) ?? constant(undefined),
             attrs: Object.fromEntries([...at.entries].filter(([, f]) => f.constant).map(([k, f]) => [k, f()])),

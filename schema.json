@@ -495,6 +495,11 @@
                     "default": true
                 },
                 "marker": { "type": "boolean", "description": "false: no line of the position of the hover.", "default": true },
+                "cross": {
+                    "type": "boolean",
+                    "description": "true: a crosshair, a horizontal and a vertical line across the plot area through the point of the nearest row (of a stacked value the end of its stack), instead of the line of the position, e.g. to read the value at the axis; of cartesian charts, also of the hover of points.",
+                    "default": false
+                },
                 "empty": {
                     "type": "boolean",
                     "description": "true: a hover also without rows, e.g. the name of a region without a value.",
@@ -666,7 +671,11 @@
                 },
                 "center": {
                     "$ref": "#/definitions/domainValue",
-                    "description": "The domain taken from the data is symmetric around this value, e.g. 0 of changes."
+                    "description": "The domain taken from the data is symmetric around this value, e.g. 0 of changes; the middle of a diverging scale."
+                },
+                "zero": {
+                    "type": "boolean",
+                    "description": "The domain taken from the data includes 0 and an end at 0 is not extended (by pad), e.g. of the base of bars, which include it by default (false: not), not of a log scale; also `zero` of the dim."
                 },
                 "closed": {
                     "if": { "type": "string", "pattern": "^=" },
@@ -1211,7 +1220,7 @@
                     "if": { "type": "string", "pattern": "^=" },
                     "then": { "type": "string", "pattern": "^=" },
                     "else": { "enum": ["numeric", "date", "categorical"] },
-                    "description": "Without a type it follows from the other parts (categories or a band, point or ordinal scale are categorical, a time or utc scale date, other scales numeric, a dim of the facets categorical, not one only used as `by` of a mark) or from the values of the column: numbers numeric, dates date, otherwise categorical (a column without values, e.g. of empty data, date of a time format of the dim, its axis or its hover, otherwise categorical). Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values are strings of every format of the data, e.g. \"2004\" of the number 2004 of JSON or parquet."
+                    "description": "Without a type it follows from the other parts (categories or a band, point or ordinal scale are categorical, a time or utc scale date, other scales numeric, a dim of the facets categorical, not one only used as `by` of a mark) or from the values of the column: numbers numeric, dates date, otherwise categorical (a column without values, e.g. of empty data, date of a time format of the dim, its axis or its hover, numeric of the parts of numbers, otherwise categorical). The usual texts of missing values, e.g. NA, NaN, n/a, -, . or :, are missing values; other texts among numbers are missing values with a warning if the dim has parts of numbers (a number format, a domain or include of numbers, zero, nice, pad, an open domain) or if more than half of the values are numbers and the texts have digits, e.g. 1,234 or <5. Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values are strings of every format of the data, e.g. \"2004\" of the number 2004 of JSON or parquet."
                 },
                 "format": {
                     "if": { "type": "string" },
@@ -1256,7 +1265,10 @@
                     ],
                     "description": "The domain of the scale, see scale.domain, e.g. [0, null]."
                 },
-                "zero": { "type": "boolean", "description": "The domain starts at 0, e.g. of bars (a domain [0, null])." },
+                "zero": {
+                    "type": "boolean",
+                    "description": "The domain includes 0 and an end at 0 is not extended, e.g. of bars, negative values below it; bars and areas from 0 include it by default, false keeps the domain of the data; also `scale.zero`."
+                },
                 "nice": {
                     "anyOf": [{ "type": "boolean" }, { "type": "number" }],
                     "description": "Rounds the ends of the domain of the scale, see scale.nice."
@@ -1401,9 +1413,10 @@
                                         "rect",
                                         "region",
                                         "rule",
-                                        "text"
+                                        "text",
+                                        "tick"
                                     ],
-                                    "description": "A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap."
+                                    "description": "A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap, tick a short rule at the value across the band of its category (`size`), e.g. the median of a box plot or a target."
                                 },
                                 {
                                     "enum": [
@@ -1460,6 +1473,7 @@
                                 "region",
                                 "rule",
                                 "text",
+                                "tick",
                                 "svg:circle",
                                 "svg:line",
                                 "svg:rect",
@@ -1485,7 +1499,7 @@
                             ]
                         }
                     },
-                    "description": "The type of the mark, line, area, bar, rule, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ."
+                    "description": "The type of the mark, line, area, bar, rule, tick, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ."
                 },
                 "id": {
                     "type": "string",
@@ -1551,6 +1565,11 @@
                 "dodge": {
                     "anyOf": [{ "type": "boolean" }, { "type": "string" }, { "type": "number" }],
                     "description": "Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position, with `stack` a stack per slot; texts, points and rules (true or a dim): at the middle of the slot of their category, e.g. labels or error bars of dodged bars; texts (a number): the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines."
+                },
+                "size": {
+                    "type": "number",
+                    "description": "tick: its length, the share of the band of its category (or of the slot of a dodged one), 1 by default, e.g. 0.5 of a target narrower than its bar.",
+                    "exclusiveMinimum": 0
                 },
                 "orient": {
                     "if": { "type": "string", "pattern": "^=" },
@@ -1632,7 +1651,13 @@
                             "maxProperties": 1
                         }
                     ],
-                    "description": "One row of every group: the first or the last one, or the one with the least or the most value of a dim, e.g. labels at the ends of lines."
+                    "description": "One row of every group: the first or the last one along the dim of x (as the points of a line, see order), or the one with the least or the most value of a dim, e.g. labels at the ends of lines."
+                },
+                "order": {
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["x", "y", "rows"] },
+                    "description": "Lines and areas (and the first and the last row of select): the order of the points, along x (the angle of polar charts) by default, along y if y is categorical and x is not; along a categorical dim in the order of its categories, a continuous one ascending; rows keeps the order of the rows, e.g. of a connected scatter plot."
                 },
                 "layer": {
                     "if": { "type": "string", "pattern": "^=" },
@@ -2050,6 +2075,7 @@
                     "enum": [
                         "year",
                         "align",
+                        "format",
                         "index",
                         "mean",
                         "share",
@@ -2063,9 +2089,10 @@
                         "bin",
                         "fold",
                         "aggregate",
-                        "window"
+                        "window",
+                        "regression"
                     ],
-                    "description": "year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max) of a window of `size` rows."
+                    "description": "year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, median, q1, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max, median, ...) of a window of `size` rows, regression: the value of the least squares fit of `column` on `x` in the group (`method`), e.g. a trend line, format: the text of a date in a time `format`, e.g. %W the week of the year."
                 },
                 "column": {
                     "type": "string",
@@ -2184,8 +2211,30 @@
                     "description": "fold: the columns to fold, a list of names or a pattern with a single `*`, e.g. \"20*\", the columns of all rows which match, in their order, templates of the globals."
                 },
                 "op": {
-                    "enum": ["sum", "mean", "min", "max", "count", "median", "first", "last", "lag", "lead", "diff", "pct"],
-                    "description": "aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows."
+                    "enum": [
+                        "sum",
+                        "mean",
+                        "min",
+                        "max",
+                        "count",
+                        "median",
+                        "q1",
+                        "q3",
+                        "quantile",
+                        "first",
+                        "last",
+                        "lag",
+                        "lead",
+                        "diff",
+                        "pct"
+                    ],
+                    "description": "aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, q1 and q3 (the lower and the upper quartile), quantile (of `p`), first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max, median, q1, q3, quantile of the window of `size` rows."
+                },
+                "p": {
+                    "type": "number",
+                    "description": "aggregate and window of the op quantile: the probability, from 0 to 1, e.g. 0.9 of the 90th percentile; interpolated between the two nearest values (R-7, as median, q1 and q3).",
+                    "minimum": 0,
+                    "maximum": 1
                 },
                 "rows": {
                     "type": "boolean",
@@ -2197,7 +2246,23 @@
                     "description": "window: the number of rows before (lag, diff, pct) or after (lead) the row, 1 by default.",
                     "minimum": 1
                 },
-                "year": { "type": "integer", "description": "The year of align, 2020 by default." }
+                "year": { "type": "integer", "description": "The year of align, 2020 by default." },
+                "format": {
+                    "type": "string",
+                    "description": "format: the time format (d3-time-format) of the dates of `column`, e.g. %W (the week of the year from Monday, 00 to 53), %u (the weekday, 1 is Monday), %m (the month), %q (the quarter), %Y-%m (a month of a year); the names of months and days (%b, %a) are English."
+                },
+                "x": { "type": "string", "description": "regression: the column of the x values, numbers or dates." },
+                "method": {
+                    "enum": ["linear", "log", "exp", "poly"],
+                    "description": "regression: the curve fitted, linear (y = a + bx), log (y = a + b ln x, of x > 0), exp (y = a e^(bx), of y > 0) or poly (a polynomial of `degree`).",
+                    "default": "linear"
+                },
+                "degree": {
+                    "type": "integer",
+                    "description": "regression: the degree of the polynomial of the method poly, 2 by default.",
+                    "minimum": 2,
+                    "maximum": 3
+                }
             },
             "description": "A column computed of the data, e.g. an index of a base year.",
             "required": ["type"]

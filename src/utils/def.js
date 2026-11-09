@@ -337,19 +337,25 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = [], 
         // `keys` is the order of the categories, the one of the legend, the
         // facets and the stacks. The categories of the data which are not
         // listed are after the listed ones.
-        const categories = { ...m.categories };
+        // a Map, not an object: the keys of an object which are integers
+        // come first and ascending (2024, 2023, Total would be 2023, 2024,
+        // Total) and one named __proto__ would be its prototype. (The listed
+        // categories are the keys of an object of the JSON, their order is
+        // the one of the object, `order` sets another one.)
+        const categories = new Map(Object.entries(m.categories ?? {}));
         // `fromData` of "rows": the categories in the order of the rows, not ascending
         if (m.fromData && typeof m.column == 'string')
-            dataKeys(fillTemplate(m.column, globals), m.fromData == 'rows').filter(k => !Object.hasOwn(categories, k)).forEach(k => categories[k] = {});
+            dataKeys(fillTemplate(m.column, globals), m.fromData == 'rows').filter(k => !categories.has(k)).forEach(k => categories.set(k, {}));
         // `"order": "rows"`: all categories in the order of the rows of the
         // data, also the listed ones (their props stay theirs), e.g. one with
         // a name or a class of its own among the ones of the data
         const rowsOrder = m.order == 'rows' && typeof m.column == 'string' ? dataKeys(fillTemplate(m.column, globals), true) : null;
-        const keys = rowsOrder ? orderKeys(Object.keys(categories), [...rowsOrder, ...Object.keys(categories)]) : orderKeys(Object.keys(categories), m.order);
+        const own = [...categories.keys()];
+        const keys = rowsOrder ? orderKeys(own, [...rowsOrder, ...own]) : orderKeys(own, m.order);
         // the colors of a scheme, without one and without colors of the
         // categories the default colors, `defaultColor`, the color of a plot
         // or a legend if no category of it has a color, see plotGroups
-        const given = [m.common, ...[m.ranks ?? []].flat(), ...Object.values(categories)].some(c => c?.color !== undefined);
+        const given = [m.common, ...[m.ranks ?? []].flat(), ...categories.values()].some(c => c?.color !== undefined);
         const colors = m.scheme ? schemeColors(m.scheme, keys.length) : undefined;
         if (m.scheme && !colors)
             throw new Error(`Unknown scheme '${m.scheme}', e.g. 'Tableau10' or 'Blues'`);
@@ -358,7 +364,7 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = [], 
         m.keys = keys;
         m.categoryProps = Object.fromEntries(keys.map((k, i) => {
             const rank = ranks.length > 0 ? ranks[Math.min(i, ranks.length - 1)] : {};
-            const t = Object.assign({}, colors ? { color: colors[i % colors.length] } : {}, m.common, rank, categories[k]);
+            const t = Object.assign({}, colors ? { color: colors[i % colors.length] } : {}, m.common, rank, categories.get(k));
             t.name ??= k;
             t.visible ??= true;
             if (palette)

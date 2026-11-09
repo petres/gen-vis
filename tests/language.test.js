@@ -19,7 +19,7 @@ describe('the language of 5.0', () => {
         });
         expect(def.options).toEqual({ title: 'Bevölkerung', subtitle: 'nach Bundesland', footer: 'Q', height: 300 });
         // the dims the marks use are in the hover
-        expect(def.mapping.y).toEqual({ column: 'Einwohner', format: ',.0f', domain: [0, null], axis: { grid: true }, hover: {} });
+        expect(def.mapping.y).toEqual({ column: 'Einwohner', format: ',.0f', scale: { zero: true }, axis: { grid: true }, hover: {} });
         // listed categories are all of them, the hover has the dims of `by`
         expect(def.mapping.land).toEqual({ column: 'Bundesland', scheme: 'Tableau10', 'stroke-width': 2.5, hover: {},
             categories: { Wien: { color: '#123' }, Tirol: { name: 'T' } } });
@@ -38,7 +38,8 @@ describe('the language of 5.0', () => {
             hover: { columns: ['type'], total: true },
             marks: { type: 'bar', by: 'type', stack: true, opacity: 0.7, highlight: { mode: 'row', opacity: 1 } },
         });
-        expect(def.mapping.y).toEqual({ column: 'Anzahl', stacked: true });
+        // the stacks start at 0, the domain includes it
+        expect(def.mapping.y).toEqual({ column: 'Anzahl', stacked: true, scale: { zero: true } });
         // the categories of dims without listed ones are the ones of the data, in their order
         // the dims of the facets have the categories of the data, in their order, the `by` of a mark groups rows of any type
         // a dim of the groups of a mark in the colors of its categories (the bars) has the categories of the data
@@ -47,6 +48,34 @@ describe('the language of 5.0', () => {
         expect(def.facets).toEqual({ dim: 'geo', cols: 2, scales: [] });
         expect(def.options.hover).toEqual({ total: true });
         expect(def.plot[0].props).toEqual({ opacity: 0.7, x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' });
+    });
+
+    test('the value dims of bars and areas from their base 0 include 0, of a log scale they start at the domain', () => {
+        const scale = (marks, y = 'v', x = 'a', coord) => {
+            const def = translate({ ...(coord ? { coord } : {}), dims: { x, y }, marks });
+            return { y: def.mapping.y.scale, x: def.mapping.x.scale, props: def.plot[0].props };
+        };
+        expect(scale({ type: 'bar' }).y).toEqual({ zero: true });
+        expect(scale({ type: 'bar', dodge: 'c', by: 'c' }).y).toEqual({ zero: true });
+        expect(scale({ type: 'area' }).y).toEqual({ zero: true });
+        expect(scale({ type: 'area' }).props.d.y0).toBe('@y:scaled:0');
+        // horizontal bars: x
+        const h = scale({ type: 'bar' }, { column: 'name', type: 'categorical' }, 'v');
+        expect([h.x, h.y]).toEqual([{ zero: true }, undefined]);
+        // a start of their own, a line: none
+        expect(scale({ type: 'bar', y0: 'lo' }).y).toBeUndefined();
+        expect(scale({ type: 'line' }).y).toBeUndefined();
+        // `"zero": false` keeps the domain of the data, a fixed domain stays as it is
+        expect(scale({ type: 'bar' }, { column: 'v', zero: false }).y).toEqual({ zero: false });
+        expect(scale({ type: 'bar' }, { column: 'v', domain: [5, 10] })).toMatchObject({ y: { zero: true } });
+        // a log scale has no 0: from the start of its domain
+        const log = scale({ type: 'bar' }, { column: 'v', scale: { type: 'log' } });
+        expect(log.y).toEqual({ type: 'log' });
+        expect(log.props.y0).toBeUndefined();
+        expect(scale({ type: 'area' }, { column: 'v', scale: { type: 'log' } }).props.d.y0).toBe('@y:scaled:min');
+        // polar areas: the radius
+        const polar = scale({ type: 'area' }, 'v', 'a', 'polar');
+        expect([polar.y, polar.props.d.innerRadius]).toEqual([{ zero: true }, '@y:scaled:0']);
     });
 
     test('horizontal bars, labels, controls and an expression filter', () => {
@@ -210,6 +239,14 @@ describe('the dims of the channels (review of 5.0)', () => {
             .toEqual([{ path: 'marks[1].x', column: 'yaer' }]);
         expect(implicitDims({ marks: { type: 'point', x: 'year', y: 'value' } }))
             .toEqual([{ path: 'marks[0].x', column: 'year' }, { path: 'marks[0].y', column: 'value' }]);
+    });
+    test('a channel of the column of the dim of its axis is that dim, not a dim of its own', () => {
+        const t = translate({ dims: { x: { column: 'year', type: 'categorical' }, y: 'value' }, marks: [{ type: 'line', x: 'year' }, { type: 'point', y: 'value', x: 'year' }] });
+        expect(Object.keys(t.mapping)).toEqual(['x', 'y']);
+        expect(t.plot[0].props.d.x).toBe('@x:scaled');
+        expect(implicitDims({ dims: { x: 'year', y: 'value' }, marks: { type: 'point', x: 'year', y: 'value' } })).toEqual([]);
+        // the column of another axis stays a dim of its own on the scale of the axis, e.g. y2 of the column of y
+        expect(translate({ dims: { x: 'year', y: 'v' }, marks: { type: 'rule', y1: 'v', y2: 'hi' } }).mapping.hi.scale).toEqual({ of: 'y' });
     });
     test('a fill of a categorical dim is in the default hover, as a by', () => {
         const t = translate({ dims: { x: 'a', y: 'b', land: { column: 'land', categories: { W: 'red', T: 'blue' } } }, marks: { type: 'point', fill: 'land' } });

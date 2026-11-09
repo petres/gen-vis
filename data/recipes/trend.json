@@ -1,0 +1,22 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "okun.csv",
+    "title": "Growth and unemployment, 2001–2024",
+    "subtitle": "change of the unemployment rate against real GDP growth, with linear trends",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 380,
+    "transform": {"type": "regression", "column": "unemp_change", "x": "growth", "by": "country", "as": "trend"},
+    "dims": {
+        "x": {"column": "growth", "name": "GDP growth", "format": ".1f", "grid": true, "axis": {"format": ".1~f", "title": {"name": "Real GDP growth, %"}}},
+        "y": {"column": "unemp_change", "name": "Change of unemployment", "format": "+.1f", "grid": true, "axis": {"format": "+.1~f", "title": {"name": "Change of the unemployment rate, pp"}}},
+        "country": {"column": "country", "legend": {}, "categories": {"Austria": "#C3423F", "Germany": "#5B5B5B", "Spain": "#E6A000"}},
+        "year": {"column": "year", "format": "c"}
+    },
+    "hover": {"mode": "point", "cross": true, "columns": ["country", "year"]},
+    "annotations": [{"type": "line", "x": 0}, {"type": "line", "y": 0}],
+    "marks": [
+        {"type": "point", "by": "country", "r": 3.5, "fill-opacity": 0.55, "stroke": "white", "stroke-width": 0.5},
+        {"type": "line", "by": "country", "y": "trend", "stroke-width": 2}
+    ]
+}

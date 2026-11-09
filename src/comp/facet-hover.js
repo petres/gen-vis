@@ -4,6 +4,7 @@ import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/expr";
 import { dataAttribute } from "@/utils/draw";
 import { create, pointer } from "@/utils/dom";
+import { placeLine } from "@/coords/hover";
 import { filterRows } from "@/utils/data";
 import { unknownOf, withColor } from "@/layout";
 import { entrySymbol } from "@/comp/legend";
@@ -180,7 +181,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
     // the marker of the position and the box of the hover beside it, also
     // of the hover slot
     const render = (o = origin()) => {
-        patch(marker, { visibility: hover.visible && hoverOptions().marker !== false ? 'visible' : 'hidden', class: 'vis-hover-marker' });
+        patch(marker, { visibility: hover.visible && (hoverOptions().marker !== false || hoverOptions().cross) ? 'visible' : 'hidden', class: 'vis-hover-marker' });
         // above the other facets (positioned after this one, e.g. the next
         // row of a grid): the transform makes the element a layer of its own,
         // so its z-index decides, not the one of the box in it
@@ -264,12 +265,23 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         const keyed = Object.keys(store.def.mapping).filter(n => store.mapping(n).categoryProps && dataAttribute(n));
 
         const line = marker.querySelector("line");
+        // the lines of the crosshair (`cross`) through the point of the
+        // nearest row, of the coordinate systems which have one (cartesian),
+        // instead of the line of the position
+        const crossing = Boolean(hoverOptions().cross && coord.hover.cross);
+        const crossLines = !crossing ? [] : ['h', 'v'].map(d => marker.querySelector(`line.vis-hover-cross-${d}`) ?? (() => {
+            const l = marker.appendChild(create('line'));
+            l.setAttribute('class', `vis-hover-cross vis-hover-cross-${d}`);
+            return l;
+        })());
+        const noCross = () => crossLines.forEach(l => placeLine(l, null));
         // the marker without a line, e.g. of a hidden hover or of a point
         const noLine = () => {
             line.removeAttribute("x1");
             line.removeAttribute("x2");
             line.removeAttribute("y1");
             line.removeAttribute("y2");
+            noCross();
         };
         const scope = store.scope;
 
@@ -433,6 +445,12 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
             const position = found.point
                 ? (noLine(), pointPosition(found.point, ctx.innerWidth))
                 : coord.hover.marker(classes ? { ...ctx, markerAt: classes.middle } : ctx, key, names, line, nearest);
+            // the crosshair through the nearest row replaces the line of the position
+            if (crossing) {
+                noLine();
+                if (!nearest || !coord.hover.cross(ctx, nearest, names, crossLines))
+                    noCross();
+            }
             last = { key, nearest, position };
             // the sum of the stacked values of the position (`total`), of the
             // format of the values

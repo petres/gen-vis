@@ -270,11 +270,12 @@ export interface GenVisDefinition {
  */
 export interface Transform {
     /**
-     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max) of a window of `size` rows.
+     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, median, q1, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max, median, ...) of a window of `size` rows, regression: the value of the least squares fit of `column` on `x` in the group (`method`), e.g. a trend line, format: the text of a date in a time `format`, e.g. %W the week of the year.
      */
     type:
         | 'year'
         | 'align'
+        | 'format'
         | 'index'
         | 'mean'
         | 'share'
@@ -288,7 +289,8 @@ export interface Transform {
         | 'bin'
         | 'fold'
         | 'aggregate'
-        | 'window';
+        | 'window'
+        | 'regression';
     /**
      * The column of the values, a template of the globals, of a lookup the one of the keys.
      */
@@ -407,9 +409,28 @@ export interface Transform {
      */
     columns?: string | string[];
     /**
-     * aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows.
+     * aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, q1 and q3 (the lower and the upper quartile), quantile (of `p`), first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max, median, q1, q3, quantile of the window of `size` rows.
      */
-    op?: 'sum' | 'mean' | 'min' | 'max' | 'count' | 'median' | 'first' | 'last' | 'lag' | 'lead' | 'diff' | 'pct';
+    op?:
+        | 'sum'
+        | 'mean'
+        | 'min'
+        | 'max'
+        | 'count'
+        | 'median'
+        | 'q1'
+        | 'q3'
+        | 'quantile'
+        | 'first'
+        | 'last'
+        | 'lag'
+        | 'lead'
+        | 'diff'
+        | 'pct';
+    /**
+     * aggregate and window of the op quantile: the probability, from 0 to 1, e.g. 0.9 of the 90th percentile; interpolated between the two nearest values (R-7, as median, q1 and q3).
+     */
+    p?: number;
     /**
      * aggregate: a row per group instead of a column, with the columns `by` and `as`, the rows replace the rows.
      */
@@ -422,6 +443,22 @@ export interface Transform {
      * The year of align, 2020 by default.
      */
     year?: number;
+    /**
+     * format: the time format (d3-time-format) of the dates of `column`, e.g. %W (the week of the year from Monday, 00 to 53), %u (the weekday, 1 is Monday), %m (the month), %q (the quarter), %Y-%m (a month of a year); the names of months and days (%b, %a) are English.
+     */
+    format?: string;
+    /**
+     * regression: the column of the x values, numbers or dates.
+     */
+    x?: string;
+    /**
+     * regression: the curve fitted, linear (y = a + bx), log (y = a + b ln x, of x > 0), exp (y = a e^(bx), of y > 0) or poly (a polynomial of `degree`).
+     */
+    method?: 'linear' | 'log' | 'exp' | 'poly';
+    /**
+     * regression: the degree of the polynomial of the method poly, 2 by default.
+     */
+    degree?: number;
 }
 /**
  * An operator, an object of one key, the operator, and its arguments, e.g. { "*": ["@innerWidth", 0.5] } or { "steps": ["@totalWidth", { "0": 220, "550": 250 }] }; the string syntax writes it as "=@innerWidth * 0.5", see spec/expressions.md of the package.
@@ -643,6 +680,10 @@ export interface Hover {
      */
     marker?: boolean;
     /**
+     * true: a crosshair, a horizontal and a vertical line across the plot area through the point of the nearest row (of a stacked value the end of its stack), instead of the line of the position, e.g. to read the value at the axis; of cartesian charts, also of the hover of points.
+     */
+    cross?: boolean;
+    /**
      * true: a hover also without rows, e.g. the name of a region without a value.
      */
     empty?: boolean;
@@ -690,7 +731,7 @@ export interface Dim {
      */
     name?: string | InLanguages;
     /**
-     * Without a type it follows from the other parts (categories or a band, point or ordinal scale are categorical, a time or utc scale date, other scales numeric, a dim of the facets categorical, not one only used as `by` of a mark) or from the values of the column: numbers numeric, dates date, otherwise categorical (a column without values, e.g. of empty data, date of a time format of the dim, its axis or its hover, otherwise categorical). Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values are strings of every format of the data, e.g. "2004" of the number 2004 of JSON or parquet.
+     * Without a type it follows from the other parts (categories or a band, point or ordinal scale are categorical, a time or utc scale date, other scales numeric, a dim of the facets categorical, not one only used as `by` of a mark) or from the values of the column: numbers numeric, dates date, otherwise categorical (a column without values, e.g. of empty data, date of a time format of the dim, its axis or its hover, numeric of the parts of numbers, otherwise categorical). The usual texts of missing values, e.g. NA, NaN, n/a, -, . or :, are missing values; other texts among numbers are missing values with a warning if the dim has parts of numbers (a number format, a domain or include of numbers, zero, nice, pad, an open domain) or if more than half of the values are numbers and the texts have digits, e.g. 1,234 or <5. Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values are strings of every format of the data, e.g. "2004" of the number 2004 of JSON or parquet.
      */
     type?: `=${string}` | ('numeric' | 'date' | 'categorical');
     /**
@@ -710,7 +751,7 @@ export interface Dim {
      */
     domain?: [DomainValue, ...DomainValue[]] | `=${string}` | `@${string}` | Expression;
     /**
-     * The domain starts at 0, e.g. of bars (a domain [0, null]).
+     * The domain includes 0 and an end at 0 is not extended, e.g. of bars, negative values below it; bars and areas from 0 include it by default, false keeps the domain of the data; also `scale.zero`.
      */
     zero?: boolean;
     /**
@@ -834,6 +875,10 @@ export interface Scale {
      * A value of a dim, e.g. a date of a string, a reference "@name", e.g. to a global, or an expression, null is taken from the data.
      */
     center?: number | string | null | Expression;
+    /**
+     * The domain taken from the data includes 0 and an end at 0 is not extended (by pad), e.g. of the base of bars, which include it by default (false: not), not of a log scale; also `zero` of the dim.
+     */
+    zero?: boolean;
     /**
      * The end of the classes of a threshold scale they include, the lower one (left, value >= limit) or the upper one (right, value > limit).
      */
@@ -1243,7 +1288,7 @@ export interface CategoryProps1 {
  */
 export interface Mark {
     /**
-     * The type of the mark, line, area, bar, rule, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ.
+     * The type of the mark, line, area, bar, rule, tick, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ.
      */
     type?:
         | `=${string}`
@@ -1262,6 +1307,7 @@ export interface Mark {
               | 'region'
               | 'rule'
               | 'text'
+              | 'tick'
           )
         | (
               | 'svg:circle'
@@ -1345,6 +1391,10 @@ export interface Mark {
      */
     dodge?: boolean | string | number;
     /**
+     * tick: its length, the share of the band of its category (or of the slot of a dodged one), 1 by default, e.g. 0.5 of a target narrower than its bar.
+     */
+    size?: number;
+    /**
      * Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y or of a continuous x (e.g. zero) and a y which is not.
      */
     orient?: `=${string}` | ('horizontal' | 'vertical');
@@ -1389,7 +1439,7 @@ export interface Mark {
      */
     dataFormat?: 'csv' | 'tsv' | 'json' | 'parquet';
     /**
-     * One row of every group: the first or the last one, or the one with the least or the most value of a dim, e.g. labels at the ends of lines.
+     * One row of every group: the first or the last one along the dim of x (as the points of a line, see order), or the one with the least or the most value of a dim, e.g. labels at the ends of lines.
      */
     select?:
         | (`=${string}` | ('first' | 'last'))
@@ -1397,6 +1447,10 @@ export interface Mark {
               min?: string;
               max?: string;
           };
+    /**
+     * Lines and areas (and the first and the last row of select): the order of the points, along x (the angle of polar charts) by default, along y if y is categorical and x is not; along a categorical dim in the order of its categories, a continuous one ascending; rows keeps the order of the rows, e.g. of a connected scatter plot.
+     */
+    order?: `=${string}` | ('x' | 'y' | 'rows');
     /**
      * below: below the axes and grid lines, above: above the other marks, between them by default.
      */
@@ -1487,6 +1541,7 @@ export interface Mark {
         | 'region'
         | 'rule'
         | 'text'
+        | 'tick'
         | 'svg:circle'
         | 'svg:line'
         | 'svg:rect'
@@ -1552,6 +1607,9 @@ export interface Mark {
               min?: string;
               max?: string;
           }
+        | 'x'
+        | 'y'
+        | 'rows'
         | 'below'
         | 'above'
         | {

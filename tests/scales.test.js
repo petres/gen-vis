@@ -1,3 +1,4 @@
+import * as d3 from 'd3-scale-chromatic';
 import { loadColors } from '@/utils/d3';
 import { describe, test, expect, beforeAll } from 'vitest';
 import { makeScale, bandCenter } from '@/utils/scales';
@@ -134,6 +135,36 @@ describe('the domains of scales', () => {
     });
 });
 
+describe('the domain of a diverging scale', () => {
+    const diverging = (scale, rows) => makeScale('v', { type: 'numeric', scale: { type: 'diverging', interpolator: 'RdBu', domain: [null, null], ...scale } }, rows, options);
+    const rows = [{ v: -2 }, { v: 0 }, { v: 3 }];
+
+    test('the middle is the one of the ends of the data, `center` or the given one, every value has a color', () => {
+        expect(diverging({}, rows).domain()).toEqual([-2, 0.5, 3]);
+        expect(diverging({ center: 0 }, rows).domain()).toEqual([-3, 0, 3]);
+        expect(diverging({ domain: [null, 0, null] }, rows).domain()).toEqual([-2, 0, 3]);
+        expect(diverging({ domain: [-10, null, 10] }, rows).domain()).toEqual([-10, 0, 10]);
+        const s = diverging({ center: 0 }, rows);
+        expect(rows.map(r => s(r.v)).every(c => typeof c == 'string' && !c.includes('NaN'))).toBe(true);
+        expect(s(0)).toBe(d3.interpolateRdBu(0.5));
+    });
+
+    test('the ends reach the middle, e.g. of positive values around 0, a domain in order', () => {
+        const s = diverging({ domain: [null, 0, null] }, [{ v: 2 }, { v: 5 }]);
+        expect(s.domain()).toEqual([0, 0, 5]);
+        expect(s(5)).toBe(d3.interpolateRdBu(1));
+        expect(s(2)).toBe(d3.interpolateRdBu(0.7));
+        expect(diverging({ domain: [null, 10, null] }, [{ v: 2 }, { v: 5 }]).domain()).toEqual([2, 10, 10]);
+        // one value
+        expect(diverging({ center: 0 }, [{ v: 0 }]).domain()).toEqual([0, 0, 0]);
+    });
+
+    test('the middle of a divergingLog scale is the one of its positions', () => {
+        const s = makeScale('v', { type: 'numeric', scale: { type: 'divergingLog', interpolator: 'RdBu', domain: [null, null] } }, [{ v: 1 }, { v: 100 }], options);
+        expect(s.domain()[1]).toBeCloseTo(10, 9);
+    });
+});
+
 describe('makeScale, log scales and rows without values', () => {
     const log = { type: 'numeric', scale: { type: 'log', orientation: 'vertical', domain: [null, null], domainRel: [0, 0] } };
 
@@ -183,6 +214,26 @@ describe('values of the definition of a mapping with the scale of another one', 
         const include = { ...mappings.x, scale: { ...mappings.x.scale, include: '2019-01-01', domain: [null, null], domainRel: [0, 0] } };
         expect(makeScale('x', include, [{ x: Date.UTC(2020, 0, 1) }], { ...options, mappings }).domain().map(Number))
             .toEqual([Date.UTC(2019, 0, 1), Date.UTC(2020, 0, 1)]);
+    });
+});
+
+describe('zero: the domain of the data includes 0, an end at 0 is exact', () => {
+    const scale = (s, rows, type = 'linear') => makeScale('y', { type: 'numeric', scale: { type, orientation: 'vertical', domain: [null, null], ...s } }, rows, options);
+
+    test('of positive and of negative values, the other end is extended', () => {
+        expect(scale({ zero: true }, [{ y: 5 }, { y: 10 }]).domain()).toEqual([0, 10.2]);
+        expect(scale({ zero: true }, [{ y: -5 }, { y: -10 }]).domain()).toEqual([-10.2, 0]);
+        // both signs: both ends of the data are extended, 0 is inside
+        expect(scale({ zero: true, pad: 0.1 }, [{ y: -5 }, { y: 5 }]).domain()).toEqual([-6, 6]);
+        // nice keeps 0, a fixed end stays
+        expect(scale({ zero: true, nice: true }, [{ y: 5 }, { y: 9.3 }]).domain()).toEqual([0, 10]);
+        expect(scale({ zero: true, domain: [null, 100] }, [{ y: 5 }]).domain()).toEqual([0, 100]);
+        // without: the extent of the data, extended at both ends
+        expect(scale({}, [{ y: 5 }, { y: 10 }]).domain()).toEqual([4.9, 10.1]);
+    });
+
+    test('not of a log scale, which has no 0', () => {
+        expect(scale({ zero: true, pad: 0 }, [{ y: 5 }, { y: 50 }], 'log').domain()).toEqual([5, 50]);
     });
 });
 

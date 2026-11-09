@@ -225,7 +225,7 @@
             "fill": {
               "or": [
                 "@color",
-                "currentColor"
+                "#4269D0"
               ]
             },
             "x1": "@v:scaled",
@@ -238,7 +238,7 @@
             "fill": {
               "or": [
                 "@color",
-                "currentColor"
+                "#4269D0"
               ]
             },
             "x": "@x:scaled",
@@ -312,7 +312,7 @@
             "fill": {
               "or": [
                 "@color",
-                "currentColor"
+                "#4269D0"
               ]
             },
             "startAngle": "@v:start:scaled"

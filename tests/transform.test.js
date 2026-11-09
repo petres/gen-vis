@@ -193,7 +193,7 @@ describe('transforms', () => {
             "transform[0]: unknown global 'base' in the template",
             "transform[1].size: the number of the rows of the window is needed, e.g. 7",
             "transform[1].align: expected 'end' or 'center'",
-            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window'",
+            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'format', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window', 'regression'",
             "transform[2].column: the column of the values is needed",
         ]);
         expect(schema.definitions.transform.properties.type.enum).toEqual(Object.keys(transformTypes));
@@ -370,6 +370,20 @@ describe('fold, aggregate and window', () => {
         expect(() => applyTransforms(rows, { type: 'aggregate', column: 'value', op: 'total' })).toThrow('aggregate: the op is one of');
     });
 
+    test('aggregate: quartiles and quantiles, as the median, also of rows (a box plot) and of a window', () => {
+        // gas 10, 30, 40; oil 5, 15
+        expect(column({ type: 'aggregate', column: 'value', by: 'type', op: 'q1', as: 'q' }, 'q')).toEqual([20, 20, 20, 7.5, 7.5, 7.5]);
+        expect(column({ type: 'aggregate', column: 'value', by: 'type', op: 'q3', as: 'q' }, 'q')).toEqual([35, 35, 35, 12.5, 12.5, 12.5]);
+        expect(column({ type: 'aggregate', column: 'value', by: 'type', op: 'quantile', p: 0.5, as: 'q' }, 'q'))
+            .toEqual(column({ type: 'aggregate', column: 'value', by: 'type', op: 'median', as: 'q' }, 'q'));
+        expect(column({ type: 'aggregate', column: 'value', op: 'quantile', p: '{p}', as: 'q' }, 'q', { p: '1' })).toEqual([40, 40, 40, 40, 40, 40]);
+        expect(rowsOf(rows, { type: 'aggregate', column: 'value', by: 'type', op: 'q3', as: 'hi', rows: true })).toEqual([{ type: 'gas', hi: 35 }, { type: 'oil', hi: 12.5 }]);
+        expect(() => applyTransforms(rows, { type: 'aggregate', column: 'value', op: 'quantile' })).toThrow("aggregate: the quantile needs 'p'");
+        // a rolling median of 3 rows, only of whole windows
+        expect(column({ type: 'window', column: 'value', by: 'type', order: 'date', op: 'median', size: 3, align: 'center', as: 'm' }, 'm')).toEqual([null, 30, null, null, null, 10]);
+        expect(() => applyTransforms(rows, { type: 'window', column: 'value', op: 'quantile', size: 2, p: -1 })).toThrow("window: the quantile needs 'p'");
+    });
+
     test('window: lag, lead, diff and pct in the order of a column, sums and extremes of a window as rolling', () => {
         expect(column({ type: 'window', column: 'value', by: 'type', order: 'date', op: 'lag', as: 'prev' }, 'prev')).toEqual([null, 10, 30, null, 15, 5]);
         expect(column({ type: 'window', column: 'value', by: 'type', order: 'date', op: 'lead', as: 'next' }, 'next')).toEqual([30, 40, null, 15, null, null]);
@@ -393,8 +407,16 @@ describe('fold, aggregate and window', () => {
         expect(checks([{ type: 'fold', columns: '20*' }], {}, wide)).toEqual([`transform[0].key: the column 'key' of the rows is replaced by the keys of the folded columns, e.g. "key": "name"`]);
         expect(checks([{ type: 'fold', columns: ['2019', '2020'], key: 'year', value: 'id' }], {}, wide)).toEqual([`transform[0].value: the column 'id' of the rows is replaced by the values of the folded columns, e.g. "value": "amount"`]);
         expect(checks([{ type: 'fold', columns: ['key', '2019'] }], {}, wide)).toEqual([]);
-        expect(checks([{ type: 'aggregate', column: 'value' }])).toEqual([`transform[0].op: the operation is needed, one of 'sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last'`]);
-        expect(checks([{ type: 'aggregate', column: 'value', op: 'lag', rows: true }])).toEqual([`transform[0].op: unknown op 'lag', expected one of 'sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last'`]);
+        const aggregates = `'sum', 'mean', 'min', 'max', 'count', 'median', 'q1', 'q3', 'quantile', 'first', 'last'`;
+        expect(checks([{ type: 'aggregate', column: 'value' }])).toEqual([`transform[0].op: the operation is needed, one of ${aggregates}`]);
+        expect(checks([{ type: 'aggregate', column: 'value', op: 'lag', rows: true }])).toEqual([`transform[0].op: unknown op 'lag', expected one of ${aggregates}`]);
+        // the probability of a quantile, only of a quantile
+        expect(checks([{ type: 'aggregate', column: 'value', op: 'quantile' }])).toEqual([`transform[0].p: the probability of the quantile is needed, a number from 0 to 1, e.g. 0.9`]);
+        expect(checks([{ type: 'aggregate', column: 'value', op: 'quantile', p: 2 }])).toEqual([`transform[0].p: the probability of the quantile is needed, a number from 0 to 1, e.g. 0.9`]);
+        expect(checks([{ type: 'aggregate', column: 'value', op: 'median', p: 0.9 }])).toEqual([`transform[0].p: only of the op 'quantile', e.g. "op": "quantile", "p": 0.9`]);
+        expect(checks([{ type: 'aggregate', column: 'value', op: 'quantile', p: 0.9 }, { type: 'window', column: 'value', op: 'quantile', p: '{p}', size: 5, as: 'w' }], { p: '0.1' })).toEqual([]);
+        expect(checks([{ type: 'window', column: 'value', op: 'median' }])).toEqual([`transform[0].size: the number of the rows of the window is needed, e.g. 7`]);
+        expect(checks([{ type: 'share', column: 'value', p: 0.5 }])).toEqual([`transform[0].p: only of a transform of the type 'aggregate' or 'window'`]);
         expect(checks([{ type: 'aggregate', column: 'value', op: '{op}' }])).toEqual([`transform[0]: unknown global 'op' in the template`]);
         expect(checks([{ type: 'window', column: 'value', op: 'sum' }])).toEqual([`transform[0].size: the number of the rows of the window is needed, e.g. 7`]);
         expect(checks([{ type: 'window', column: 'value', op: 'lag', offset: 0 }])).toEqual([`transform[0].offset: the number of the rows before or after the row, a positive integer, e.g. 1`]);
@@ -407,11 +429,38 @@ describe('fold, aggregate and window', () => {
         ]);
         // the keys the type does not read, e.g. a by of a calc, an order of a share
         expect(checks([{ type: 'calc', as: 'c', expr: 1, by: 'g' }, { type: 'share', column: 'value', order: 'date' }])).toEqual([
-            `transform[0].by: only of a transform of the type 'index', 'mean', 'share', 'rolling', 'cumulative', 'rank', 'bin', 'aggregate' or 'window'`,
+            `transform[0].by: only of a transform of the type 'index', 'mean', 'share', 'rolling', 'cumulative', 'rank', 'bin', 'aggregate', 'window' or 'regression'`,
             `transform[1].order: only of a transform of the type 'rolling', 'cumulative', 'aggregate' or 'window'`,
         ]);
         // templates of the globals are values of their type
         expect(checks([{ type: 'window', column: 'value', op: '{op}', offset: '{k}', size: '{k}' }], { op: 'diff', k: '1' })).toEqual([]);
+    });
+
+    test('regression: the fitted values per group, validateDef of its x, as, method and degree', () => {
+        const checks = transform => validateDef({ mapping: { y: { column: 'value', type: 'numeric' } }, plot: { type: 'svg:rect', props: {} }, transform }).filter(w => w.startsWith('transform'));
+        // gas 10, 30, 40 at 2019-01-01, 2019-07-01, 2020-01-01: the dates are milliseconds
+        const fit = column({ type: 'regression', column: 'value', x: 'date', by: 'type', as: 'fit' }, 'fit');
+        expect(fit.slice(0, 3).map(v => Math.round(v*100)/100)).toEqual([11.72, 26.58, 41.69]);
+        // oil: two values, the line through them, also at the date without a value
+        expect(fit.slice(3).map(v => Math.round(v*100)/100)).toEqual([5, 25.17, 15]);
+        expect(checks([{ type: 'regression', column: 'value' }])).toEqual([
+            `transform[0].x: the column of the x values is needed, e.g. "x": "gdp"`,
+            `transform[0].as: the name of the column of the fitted values is needed, e.g. "trend"`,
+        ]);
+        expect(checks([{ type: 'regression', column: 'value', x: 'date', as: 'f', method: 'lin', degree: 2 }])).toEqual([
+            `transform[0].method: unknown method 'lin', expected one of 'linear', 'log', 'exp', 'poly'`,
+            `transform[0].degree: only of the method 'poly', e.g. "method": "poly", "degree": 2`,
+        ]);
+        expect(checks([{ type: 'regression', column: 'value', x: 'date', as: 'f', method: 'poly', degree: 4 }])).toEqual([`transform[0].degree: the degree of the polynomial, 2 or 3`]);
+        expect(checks([{ type: 'regression', column: 'value', x: 'date', as: 'f', method: 'poly', degree: 3 }])).toEqual([]);
+        expect(transformColumns([{ type: 'regression', column: 'value', x: 'date', by: 'type', as: 'f' }])).toEqual(['value', 'type', 'date']);
+    });
+
+    test('format: the text of a date in a time format, validateDef of its format', () => {
+        expect(column({ type: 'format', column: 'date', format: '%W-%u', as: 'w' }, 'w')).toEqual(['00-2', '26-1', '00-3', '00-2', '00-3', '26-1']);
+        const checks = transform => validateDef({ mapping: { y: { column: 'value', type: 'numeric' } }, plot: { type: 'svg:rect', props: {} }, transform }).filter(w => w.startsWith('transform'));
+        expect(checks([{ type: 'format', column: 'date', as: 'w' }])).toEqual([`transform[0].format: the time format is needed, e.g. "%W" (the week of the year) or "%u" (the weekday)`]);
+        expect(checks([{ type: 'format', column: 'date', as: 'w', format: '%W' }])).toEqual([]);
     });
 
     test('the columns of the data: the folded ones, unknown of a pattern', () => {

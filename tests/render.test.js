@@ -1280,6 +1280,20 @@ describe('maps', () => {
         expect(errors).toEqual([]);
     });
 
+    test('a diverging scale with only a middle of 0 and positive values: colors, the legend of the upper half', async () => {
+        const def = mapDef();
+        def.mapping.value.scale = { type: 'diverging', interpolator: 'RdBu', domain: [null, 0, null] };
+        const el = await mount({ def, data: mapData });
+        expect(fills(el)).toEqual([['A', d3.interpolateRdBu(0.5 + 0.5/3)], ['B', d3.interpolateRdBu(1)]]);
+        // the gradient of the colors of the domain, 0 at the start
+        const stops = [...el.querySelectorAll('.vis-color-legend stop')].map(s => s.getAttribute('stop-color'));
+        expect([stops[0], stops.at(-1)]).toEqual([d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
+        const ticks = [...el.querySelectorAll('.vis-color-legend line')].map(l => [Math.round(num(l, 'x1')), l.nextSibling.textContent]);
+        expect(ticks[0]).toEqual([0, '0,0']);
+        expect(ticks.at(-1)).toEqual([160, '2,0']);
+        expect(errors).toEqual([]);
+    });
+
     test('classes of a threshold scale and their legend', async () => {
         const def = mapDef();
         def.mapping.value.scale = { type: 'threshold', domain: [2, 3.5], scheme: 'Greens' };

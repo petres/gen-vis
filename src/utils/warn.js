@@ -1,4 +1,4 @@
-export { warnOnce, markPath, withPath, distance, similar };
+export { warnOnce, markPath, withPath, distance, similar, pixelsOf, sizeOf };
 
 // the warnings given, by the store of a chart, a chart drawn again (e.g. by a
 // slider) does not repeat them
@@ -16,6 +16,34 @@ const warnOnce = (store, id, message) => {
         return;
     ids.add(id);
     console.warn(`gen-vis ${store.defUrl ?? 'inline definition'}: ${message}`);
+};
+
+// a number of pixels of a size of the definition (`height`, `width`): a
+// number, also the text of one or of one in px, e.g. "300px" of css,
+// undefined otherwise, e.g. "50%"
+const pixelsOf = v => {
+    if (typeof v == 'number')
+        return Number.isFinite(v) ? v : undefined;
+    const m = typeof v == 'string' ? /^\s*(\d+(?:\.\d*)?|\.\d+)\s*(?:px)?\s*$/i.exec(v) : null;
+    return m ? +m[1] : undefined;
+};
+
+/**
+ * The pixels of a size of the definition (`name`, e.g. "height") of the
+ * store: a number as it is, a text of pixels (e.g. "300px") as its number
+ * and other values (e.g. "50%") as the `fallback` with a warning, once;
+ * no value is the fallback.
+ */
+const sizeOf = (store, value, name, fallback) => {
+    if (value === null || value === undefined)
+        return fallback;
+    const px = pixelsOf(value);
+    if (typeof value == 'number' && px !== undefined)
+        return px;
+    warnOnce(store, `size:${name}:${value}`, px !== undefined
+        ? `${name}: a number of pixels, e.g. ${px}, not ${JSON.stringify(value)} (read as ${px})`
+        : `${name}: expected a number of pixels, e.g. 300, not ${JSON.stringify(value)}, ${fallback ? `${fallback} is used` : 'it is left out'}`);
+    return px ?? fallback;
 };
 
 // the path of a plot of the engine (`def.plot`) in the definition, the mark

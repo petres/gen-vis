@@ -37,8 +37,8 @@ states:
 ```
 
 `Jahr` holds numbers, so the dim `x` is numeric and `"format": "c"` writes
-the years without a thousands separator. `zero` starts the domain of `y` at
-0, `grid` draws the lines of its ticks. The dim `land` has a category per
+the years without a thousands separator. `zero` includes 0 in the domain of
+`y`, `grid` draws the lines of its ticks. The dim `land` has a category per
 state, the total first, hidden at the start, the others of the data after
 it in the order of the rows (`fromData`), with the colors of the scheme
 `Tableau10`; its legend shows and hides them, its symbols are the ones of
@@ -360,7 +360,11 @@ column:
   of the transform says so.
 - `aggregate`: an aggregate of the values of `column` of the group (`op`):
   `sum`, `mean`, `min`, `max`, `count` (the number of values), `median`,
-  `first` or `last` (in the order of `order`), missing values are left out.
+  `q1` and `q3` (the lower and the upper quartile), `quantile` (of `p`, from
+  0 to 1, e.g. `"p": 0.9`), `first` or `last` (in the order of `order`),
+  missing values are left out. The median, the quartiles and the quantiles
+  are interpolated between the two nearest values (R-7, as Excel, R and
+  d3), e.g. the box of a box plot, see the [recipes](recipes.md).
   By default a column, the value of every row of the group, e.g. the total
   of a country of all years, `{"type": "aggregate", "column": "value", "by":
   "country", "op": "sum", "as": "total"}`, so a `calc` can divide by it.
@@ -376,10 +380,28 @@ column:
   percent, e.g. the change to the previous month, `{"type": "window",
   "column": "value", "by": "country", "order": "date", "op": "pct", "as":
   "change"}`, without a value at the ends or of a missing one (also of a
-  division by 0). Or the `sum`, `mean`, `min` or `max` of the window of
-  `size` rows, as the mean of `rolling` (`align`), e.g. the sum of the last
-  7 days, `{"type": "window", "column": "cases", "order": "date", "op":
+  division by 0). Or the `sum`, `mean`, `min`, `max`, `median`, `q1`,
+  `q3` or `quantile` (of `p`) of the window of `size` rows, as the mean of
+  `rolling` (`align`), e.g. a rolling median, or the sum of the last 7 days, `{"type": "window", "column": "cases", "order": "date", "op":
   "sum", "size": 7, "as": "week"}`.
+- `format`: the text of a date in a time format (`format`, of
+  [d3-time-format](https://d3js.org/d3-time-format#locale_format)), in the
+  time zone of the scale of the column, e.g. the week of the year (`%W`,
+  weeks from Monday, `00` before the first Monday) and the weekday (`%u`, 1
+  is Monday) of the cells of a calendar, the month (`%m`) or the quarter
+  (`Q%q`): `{"type": "format", "column": "date", "format": "%W", "as":
+  "week"}`. The names of months and days (`%b`, `%a`) are English, the
+  `name` of the categories of a dim gives others.
+- `regression`: the fitted value of the least squares fit of the values of
+  `column` on the ones of the column `x` (numbers or dates) in the group, a
+  value of every row with an x, so a `line` of it draws the trend through
+  the range of x of the data, e.g. a trend line per group of a scatter plot,
+  `{"type": "regression", "column": "growth", "x": "gdp_pc", "by":
+  "region", "as": "trend"}`. `method`: `linear` (y = a + bx, the default),
+  `log` (y = a + b ln x, of the rows of x > 0), `exp` (y = a e^(bx), of the
+  values > 0, a constant rate of growth) or `poly` (a polynomial of
+  `degree` 2 or 3). A group of fewer points than coefficients has no
+  values.
 
 The strings of a transform are templates of the globals, e.g. `{base}`, the
 transforms are computed again when the globals change, from the first one
@@ -399,6 +421,10 @@ The texts, the sizes and the look are keys of the top level:
   visualisation), e.g. `"=steps(@totalWidth, {0: 220, 550: 250})"`.
 - `width`: the width of the image of the export (and of the PNG) without
   one given, the chart fills the width of its element otherwise.
+
+  Both are numbers of pixels: a text of pixels of css, e.g. `"300px"`, is
+  read as its number with a warning, other texts, e.g. `"50%"`, are
+  replaced by the default with a warning.
 - `margins`: the space around the plot area of a facet, see
   [margins](#margins).
 - `coord`: the coordinate system of the marks, `cartesian` (the default, a
@@ -612,7 +638,7 @@ removes a dim or a part of a dim of a parent, e.g. `"hover": null`.
 
 is the dim `y` of the numbers of the column `value` with all its parts
 which follow from the rest: `"type": "numeric"` (of the values),
-`"scale": {"type": "linear", "orientation": "vertical", "domain": [0, null]}`
+`"scale": {"type": "linear", "orientation": "vertical", "domain": [null, null], "zero": true}`
 and `"axis": {"position": "left", "format": ".1f", "ticks": 8, "grid": true}`.
 
 The dims of the positions of the coordinate system have a scale of the
@@ -631,7 +657,7 @@ The shorthands of a dim are parts of its scale and its axis:
 
 | Shorthand | Is |
 |-----------|----|
-| `zero: true` | `"domain": [0, null]`, the domain starts at 0, e.g. of bars |
+| `zero: true` | `scale.zero`: the domain of the data includes 0, an end at 0 is not extended, e.g. a line chart from 0; the value dims of bars and areas from 0 (also stacked) have it by default, `false` keeps the domain of the data |
 | `domain` | `scale.domain` |
 | `nice` | `scale.nice` |
 | `pad` | `scale.pad` |
@@ -656,12 +682,34 @@ are numeric, a dim of the facets is categorical (one only used as `by` of
 a mark is not, it groups rows of any type), otherwise it is the one of the
 values of the column: numbers are numeric, dates (as below) a date, others
 categorical (a column without values, e.g. of empty data, is a date with a
-time `format` of the dim, its axis or its hover, otherwise categorical),
-e.g. years of a column are numeric, so a dim of the categories of years is
-categorical by its `categories` or with `"type": "categorical"`. The type
-of the values reads the values of the column (once per value, until one is
-neither a number nor a date), a few milliseconds of data of hundred
-thousands of rows, a dim with a `type` does not read them.
+time `format` of the dim, its axis or its hover, numeric with the parts of
+numbers below, otherwise categorical), e.g. years of a column are numeric,
+so a dim of the categories of years is categorical by its `categories` or
+with `"type": "categorical"`. The type of the values reads the values of
+the column (once per value, until one is neither a number nor a date), a
+few milliseconds of data of hundred thousands of rows, a dim with a `type`
+does not read them.
+
+The usual texts of missing values are missing values of numbers and dates,
+without a warning: `NA`, `NaN`, `n/a`, `n.a.`, `null`, `none`, `-`, `--`,
+`–`, `—`, `.`, `..`, `...`, `…`, `:` (Eurostat), `?`, `#N/A`, `n.v.` and
+`k.A.` (in any case, with spaces around them), so `10, NA, 30` is a column
+of numbers. Other texts among numbers make the column categorical, except:
+
+- the dim has parts of numbers: a number `format` (of the dim, its axis,
+  its hover or its legend), a `domain` or `include` of numbers (also of
+  `zero`), or the parts of a continuous scale (an open `domain`, `nice`,
+  `pad`, `center`); then it is numeric if some values are numbers;
+- more than half of the values are numbers and the other texts have digits,
+  e.g. `1,234` (a separator of thousands), `<5` or `12 %`, numbers written
+  otherwise; words such as `Total` among years keep a column categorical.
+
+Then these texts are missing values with a warning which names the dim, the
+column and the texts with their numbers of rows, e.g. `dims.y: values of
+the column 'b' are no numbers, they are missing: '1,234' (1 row)`. The same
+warning names texts of a dim with `"type": "numeric"` or `"date"` which are
+no numbers or dates, and objects or lists as values of a dim (e.g. of nested
+JSON).
 
 Numeric and date values which are missing, invalid or infinite are `null`:
 they are gaps in lines and areas, points and bars are not drawn, and they
@@ -681,7 +729,11 @@ west of UTC in local time, and `01.06.2024` as the 6th of January). A date
 and a time with a time zone, `Z` or an offset, e.g. `2024-06-01T13:00:00Z`
 or `2024-06-01 13:00+02:00`, is the same time of every scale, other strings
 are no dates, e.g. `Phase 1` (which `Date.parse` of some browsers reads as
-one).
+one). A local time which does not exist, the hour skipped at the change to
+summer time (e.g. `2024-03-31 02:30` in Vienna), is the one an hour later
+(`03:30`), as of JavaScript's `Date`, so it shares its place with that
+one; times of hours around the changes are unambiguous with an offset or
+`Z`, or of a `utc` scale.
 
 `interval` makes the dates of a time (or utc) scale periods which start
 at them, e.g. half years of `2023-01-01` and `2023-07-01`: `minute`,
@@ -1114,6 +1166,7 @@ the page:
 | `area` | an area per group (`cartesian:area`) | an area per group (`polar:area`) | |
 | `bar` | a bar per row (`cartesian:bar`) | | |
 | `rule` | a line per row across the plot area or between two values (`cartesian:rule`) | | |
+| `tick` | a short line per row at the value across the band of its category (`cartesian:rule`) | | |
 | `point` | a circle per row (`svg:circle`) | `polar:circle` | at its feature or at `lon` and `lat` (`geo:circle`) |
 | `text`, `label` | a text per row (`svg:text`) | `polar:text` | at its feature or at `lon` and `lat` (`geo:text`) |
 | `cell` | a rect per row of the bands of `x` and `y` (`svg:rect`), e.g. a heatmap | | |
@@ -1143,7 +1196,7 @@ color of the text:
 | Type | Default attributes |
 |------|--------------------|
 | `line` | `stroke`: color, `fill`: `none` |
-| `area`, `bar`, `arc` | `fill`: color |
+| `area`, `bar`, `arc` | `fill`: `{"or": ["@color", "#4269D0"]}`, without a category the first of the default colors of categories (`"fill": "currentColor"` is the color of the text) |
 | `point` | `r`: 3, `fill`: color |
 | `text` | `fill`: `@color` |
 | `rule` | `stroke`: color, at the half pixel of the ticks |
@@ -1185,6 +1238,11 @@ which names neither a dim nor a column of the data (e.g. a typo, `"x":
   from 0, `"x1": 0`, or a label at 250 of x, `"x": 250`; other numbers are
   pixels, an expression of pixels at these channels is e.g.
   `"=literal(10)"`.
+- The base of bars and areas without `y0` (`x0` of horizontal bars) is 0:
+  the domain of their value dim includes it (`zero`), so they start at the
+  axis, negative values below it. Of a fixed domain without 0 bars start at
+  the edge of the plot area; of a log scale, which has no 0, at the end of
+  the domain nearest to 0 (areas at its start).
 - An expression is the position in pixels, e.g. `"y": "@group:scaled +
   @jitter * @group:bandwidth"` of the points of a strip plot within the
   band of their category, or `"x": "=@innerWidth + 10"` of texts in a
@@ -1216,6 +1274,15 @@ attributes are merged into the defaults, e.g. `d` of a path.
   `"scale": {"type": "sqrt", "range": [0, 20]}`.
 - Values with `var(` are css variables, e.g. `"stroke":
   "var(--gen-vis-grid-color)"`, set as a style, see [styles](usage.md#styles).
+- `marker-end` and `marker-start` of `"arrow"` are arrowheads at the end or
+  the start of a line, e.g. of a `rule`, a `line`, an `svg:line` or a `line`
+  annotation (in its `props`): a `<marker>` in the color of the `stroke` of
+  the element (one per color, in the `defs` of the svg of the facet, so the
+  exports of SVG, PNG and PDF have them), of the size of the stroke width
+  (6 widths long); of an element without a stroke of its own in the color of
+  annotation lines or of the text. Other values are as they are, e.g. the
+  url of a marker of the page: `{"type": "rule", "x": "year", "y1": "from",
+  "y2": "to", "stroke": "#C3423F", "marker-end": "arrow"}`.
 - The texts of `text`, `label` and of the labels of axes with a `max-width`
   attribute (pixels) are cut with an ellipsis, the full text is their title
   (the tooltip of the browser, also below the area of the hover, e.g. of
@@ -1361,6 +1428,18 @@ A rule with `x` (by default the dim `x`) is vertical, from `y1` to `y2`
 from `x1` to `x2`; a rule at a category of a band is at the middle of its
 band, as bars and points.
 
+A `tick` is a short rule at the value of `y` across the band of the
+category of `x` (of a categorical `y` and an `x` which is not, as the
+bars, a vertical one at `x` across the band of `y`), `size` is its share
+of the band (1 by default), a dodged one (`dodge`) is across the slot of
+its category; a scale without bands (a point scale, a date of an
+`interval`) has the band of a bar, 80% of its step. E.g. the median of a
+box plot, the target of a bullet chart or a strip plot of ticks:
+
+```json
+{ "marks": [{ "type": "bar", "fill": "#BBD7EE" }, { "type": "tick", "y": "target", "size": 0.5, "stroke": "#333", "stroke-width": 2 }] }
+```
+
 A heatmap, a cell per year and type colored by a scale, with its values:
 
 ```json
@@ -1491,8 +1570,16 @@ them (from 0), e.g. the counts of the categories at the top right:
   the dim of the facets is only in its facet. `data` can also be the url of
   a file of rows (`dataFormat` as the one of the definition), relative to
   the definition, its values are no expressions.
+- `order`: the order of the points of a line or an area: along `x` by
+  default (the angle of polar charts), along `y` if `y` is categorical and
+  `x` is not (a vertical line through the categories); along a categorical
+  dim in the order of its categories, along a continuous one ascending (rows
+  without a value at the end), so unsorted rows draw no zig-zag. `"x"` or
+  `"y"` names the dim, `"rows"` keeps the order of the rows, e.g. of a
+  connected scatter plot (`x` and `y` continuous, a point per year).
 - `select`: one row of every group, of the rows with values of the dims of
-  the attributes: `first` or `last` (in the order of the rows) or the one
+  the attributes: `first` or `last` (along `x` as the points of a line, see
+  `order`; of `"order": "rows"` in the order of the rows) or the one
   with the least or the most value of a dim, `{"min": "y"}` or `{"max":
   "x"}` (categories which are numbers by their value, e.g. `"10"` after
   `"9"`), e.g. labels at the ends of lines.
@@ -1797,7 +1884,8 @@ globals, e.g. `"@target"`:
 - `text` (`text`) and `circle` at the values, without one (or with `null`)
   of an axis at the start of the other one.
 - `label` and `text` are templates of the globals, e.g. `"Ziel {target}"`.
-- `props` are svg attributes, e.g. `fill` or `stroke`, the defaults are grey,
+- `props` are svg attributes, e.g. `fill` or `stroke` (or `"marker-end":
+  "arrow"`, an arrowhead, see [attributes](#attributes)), the defaults are grey,
   their names are the ones of the facet and of the annotation, e.g. `@y`,
   `above` (or `"layer": "above"`) draws the annotation above the marks, by
   default it is below the marks and grid lines (`"layer": "below"`), labels
@@ -1905,6 +1993,13 @@ of a scatter plot above its x and y.
   elements (see [highlight](#highlight-and-others)) and the events stay,
   e.g. a larger circle with its value as the hover of a row of bars.
 - `marker`: `false` leaves out the line of the position.
+- `cross`: `true` draws a crosshair instead of the line of the position: a
+  horizontal and a vertical line across the plot area through the point of
+  the nearest row (of a stacked value the end of its stack), e.g. to read
+  the value of a line or of a point of a scatter plot (`"mode": "point"`)
+  at the axes; thin and dashed (`vis-hover-cross`, in the color of
+  `--gen-vis-cross-color`, by default the one of the marker), of cartesian
+  charts.
 - `position`: the hover is beside the marker of the position, of a map the
   center of the region (`marker`, the default), or at the pointer
   (`pointer`, it moves with it, by the keyboard it is at the marker).
@@ -2306,7 +2401,7 @@ form as before, a definition of 5.0 is translated into it (see
 | `"options": {"title": ..., "height": ...}` | `"title": ..., "height": ...` at the top level |
 | `options.footer` | `source` |
 | `mapping` | `dims` |
-| `"domain": [0, null]` | `"zero": true` |
+| `"domain": [0, null]` | `"zero": true` (the domain includes 0: the same of values from 0, negative ones are drawn below it) |
 | `"axis": {"grid": true}`, `"axis": {"ticks": 5}` | `"grid": true`, `"ticks": 5` (the axis parts stay valid) |
 | `"scale": {"domainRel": [-0.1, 0.1]}` | `"scale": {"pad": [0.1, 0.1]}` (`pad` of the dim too) |
 | `"categories": {"Wien": {"color": "#C3423F"}}` | `"categories": {"Wien": "#C3423F"}` (both are valid) |

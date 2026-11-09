@@ -39,6 +39,22 @@ describe('the props of categories', () => {
         expect(c.categoryProps.all.color).toBe('#111');
     });
 
+    test('the categories of the data in the order of the rows, also integers and keys of objects (review of 5.0)', () => {
+        // an object would put the integers first and ascending, and make
+        // __proto__ its prototype
+        const dataKeys = () => ['2024', '2023', 'Total', '2022', '01', '1', '__proto__', 'constructor'];
+        const c = prepareDef({ mapping: { c: { column: 'c', fromData: 'rows', legend: {} } }, plot: [] }, { dataKeys }).mapping.c;
+        expect(c.keys).toEqual(['2024', '2023', 'Total', '2022', '01', '1', '__proto__', 'constructor']);
+        expect(Object.hasOwn(c.categoryProps, '__proto__')).toBe(true);
+        expect(c.categoryProps.__proto__.name).toBe('__proto__');
+        expect(c.categoryProps.constructor.name).toBe('constructor');
+        // the colors of the default palette in the order of the rows
+        expect(c.categoryProps['2024'].defaultColor).toBe('#4269D0');
+        // the listed ones first, then the ones of the data in their order
+        const listed = prepareDef({ mapping: { c: { column: 'c', fromData: 'rows', categories: { Total: { color: '#000' } } } }, plot: [] }, { dataKeys }).mapping.c;
+        expect(listed.keys.slice(0, 4)).toEqual(['Total', '2024', '2023', '2022']);
+    });
+
     test('the order of the categories, of integers ascending as JavaScript orders them', () => {
         const categories = { 2024: {}, 2026: {}, 2025: {} };
         expect(prepared({ categories }).keys).toEqual(['2024', '2025', '2026']);
@@ -323,6 +339,15 @@ describe('mergeAll', () => {
         ]);
         // values without ids, e.g. the ones of a switch, are replaced
         expect(mergeAll([{ v: [{ id: 'a' }, 'x'] }, { v: [{ id: 'a', n: 1 }] }]).v).toEqual([{ id: 'a', n: 1 }]);
+    });
+});
+
+describe('mergeAll of a key __proto__ (review of 5.0)', () => {
+    test('an entry, e.g. a category of the data, not the prototype', () => {
+        const merged = mergeAll([{ categories: JSON.parse('{"__proto__": {"color": "red"}, "a": {}}') }, { categories: JSON.parse('{"__proto__": {"name": "P"}}') }]);
+        expect(Object.keys(merged.categories)).toEqual(['__proto__', 'a']);
+        expect(Object.getPrototypeOf(merged.categories)).toBe(Object.prototype);
+        expect(merged.categories.__proto__).toEqual({ color: 'red', name: 'P' });
     });
 });
 

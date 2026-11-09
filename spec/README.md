@@ -167,9 +167,12 @@ e.g. the `d` of a `calc` before a fold or a `by` of a bin, no value
 otherwise.
 
 `aggregate` computes an aggregate of the numbers of `column` of the group
-(`op`: `sum`, `mean`, `min`, `max`, `count`, `median`, `first`, `last`),
-missing values are left out, `count` is the number of the numbers (0 of
-none), `median` the middle number or the mean of the two middle ones,
+(`op`: `sum`, `mean`, `min`, `max`, `count`, `median`, `q1`, `q3`,
+`quantile`, `first`, `last`), missing values are left out, `count` is the
+number of the numbers (0 of none), `median` the middle number or the mean
+of the two middle ones, `q1`, `q3` and `quantile` the quantile of the
+probability 0.25, 0.75 or `p` (0 to 1, else an error) of the sorted numbers
+`x` (from 0 to `n - 1`): at `h = (n - 1)*p`, `x[floor(h)] + (h - floor(h))*(x[floor(h) + 1] - x[floor(h)])` (R-7, so `median` is the one of 0.5),
 `first` and `last` the first or the last number in the order of `order` or
 of the rows; a group without numbers has no value (except `count`). By
 default a column, the value of every row of the group. With `rows` a row
@@ -184,11 +187,28 @@ rows, also without rows. An unknown `op` is an error.
 after the row in the group (`null` beyond the ends or if that row has no
 number), `diff` the number minus the one `offset` rows before, `pct` the
 change in percent, `(value/before - 1)*100` (`null` of a missing one or of
-a `before` of 0); `sum`, `mean`, `min` and `max` the ones of the window of
+a `before` of 0); `sum`, `mean`, `min`, `max`, `median`, `q1`, `q3` and
+`quantile` (of `p`) the ones of the window of
 `size` rows as the mean of `rolling` (the rows before the row or around it
 with `"align": "center"`, only whole windows, missing values left out, a
 row without a number has no value, the sums compensated as the ones of
 `rolling`). An unknown `op` is an error.
+
+`regression` computes of every row of the group with an x (the numbers of
+the column `x`, or of dates their milliseconds, as `order`) the value of the
+least squares fit of the numbers of `column` on x of the rows with both
+(`method`): `linear` `a + b*x`, `log` `a + b*ln(x)` of the rows of `x > 0`
+(rows of `x <= 0` have no value), `exp` `a*exp(b*x)`, the fit of `ln(y)` of
+the rows of `y > 0`, `poly` the polynomial of `degree` (2 by default, 2 or
+3). A group of fewer points than coefficients (2, or `degree + 1`) or of a
+single x has no values. An unknown `method` or a missing `x` is an error.
+
+`format` is the text of the date of `column` of the row in the time format
+`format` (the directives of strftime as d3-time-format has them, e.g. `%W`
+the week of the year of weeks from Monday, `00` before the first Monday,
+`%u` the weekday from 1, Monday, `%m`, `%q` the quarter), in the time zone
+of the transform (local, or UTC of a column of a `utc` scale); a row
+without a date has none. A missing `format` is an error.
 
 ## Merging
 
