@@ -266,7 +266,7 @@ export interface MarkType {
     update?: boolean;
     curve?: boolean;
     coords?: string[];
-    /** The default props of the marks of the type, of its full name and without its prefix alike ("tick" of "my:tick"), or a function of the props of the mark; null of a mark removes one. */
+    /** The default props of the marks of the type, of its full name and without its prefix alike ("spike" of "my:spike"), or a function of the props of the mark; null of a mark removes one. */
     defaults?: Record<string, unknown> | ((props: Record<string, unknown>) => Record<string, unknown>);
 }
 

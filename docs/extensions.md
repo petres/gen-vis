@@ -28,7 +28,7 @@ props as attributes, `translate(values, row, group)` changes them,
 ```js
 import { registerMarkType, perRow } from '@preschen/gen-vis';
 
-registerMarkType('my:tick', {
+registerMarkType('my:spike', {
     update: true,
     defaults: { x: '@x:scaled', fill: { or: ['@color', 'currentColor'] } },
     marks: (groups, mark, ctx) => perRow(groups, 'rect', v => ({
@@ -38,11 +38,11 @@ registerMarkType('my:tick', {
 ```
 
 `defaults` are the type's default props, an object or a function of the
-mark's props. They apply under the full name (`"type": "my:tick"` of a
-mark) and the short name (`"type": "tick"`) alike. A short name resolves to the type
-with the coordinate system's prefix (e.g. `cartesian:tick`), then to
-`svg:tick`, otherwise to the only registered type of that name (here
-`my:tick`). The attributes of a mark are merged
+mark's props. They apply under the full name (`"type": "my:spike"` of a
+mark) and the short name (`"type": "spike"`) alike. A short name resolves to the type
+with the coordinate system's prefix (e.g. `cartesian:spike`), then to
+`svg:spike`, otherwise to the only registered type of that name (here
+`my:spike`). The attributes of a mark are merged
 into the defaults (nested ones deeply, `null` removes one); the built-in
 defaults are in `src/plots/defaults.js`. A registered type gets the
 channels of a mark as attributes of its elements, as written: `x: "lo"` of
