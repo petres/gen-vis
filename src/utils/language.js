@@ -752,6 +752,8 @@ const translated = raw => {
             out[k] = def[k];
     });
     const options = {};
+    // `source` of 5.0 is the `footer` of the engine (its name of 4.x, e.g.
+    // of the element of the footer), authoredPath names it `source` again
     optionKeys.forEach(k => {
         if (def[k] !== undefined)
             options[k == 'source' ? 'footer' : k] = def[k];
@@ -873,8 +875,13 @@ const checkDims = def => {
 
 // the path of a part of the engine's form as the one of the definition,
 // e.g. "mapping.y.scale" is "dims.y.scale", "plot[0].props.fill" is
-// "marks[0].fill", "options.title" is "title", "facets.rows" (the dim of
-// the rows of a grid) is "facets.by.rows"
+// "marks[0].fill", "options.title" is "title", "options.footer" is
+// "source" (see translated), "facets.rows" (the dim of the rows of a grid)
+// is "facets.by.rows". "facets.cols" stays: it is the number of columns of
+// facets of a dim in both forms; the dim of the columns of a grid, also
+// `cols` of the engine, is "facets.by.cols", which its checks name
+// themselves (see checkFacets of utils/validate.js and facetMapping of
+// layout.js), a path does not tell the two apart
 const authoredPath = path => String(path)
     .replace(/^mapping\./, 'dims.')
     .replace(/^plot\[(\d+)\]\.props\./, 'marks[$1].')

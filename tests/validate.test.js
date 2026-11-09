@@ -885,6 +885,8 @@ describe('validateDef in the words of 5.0, the keys of marks and the data', () =
         expect(validateDef({ ...base(), facets: { by: { rows: 3 } } })).toEqual(['facets.by.rows: expected the dim of the rows of a grid']);
         expect(validateDef({ ...base(), facets: { by: 'c', scales: ['y', 'yy'] } })).toEqual(["facets.scales: unknown dim 'yy', expected one of 'x', 'y', 'c'"]);
         expect(validateDef({ ...base(), facets: { by: 'c', scales: 'shared' } })).toEqual([]);
+        // `cols` of facets of a dim is the number of columns, facets.cols in both forms
+        expect(validateDef({ ...base(), facets: { by: 'c', cols: '@nope' } })).toEqual([expect.stringMatching(/^facets\.cols: /)]);
     });
 
     test('the templates of transforms are the values of the globals', () => {
