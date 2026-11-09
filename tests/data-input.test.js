@@ -133,3 +133,27 @@ describe('data without rows and data which is no data', () => {
         expect(errors).toEqual(['gen-vis inline definition: the data of the attribute: the row 0 (counted from 0) is null, not an object of values, it is left out']);
     });
 });
+
+describe('sizes of the definition in pixels', () => {
+    const def = size => ({ ...size, dims: { x: 'a', y: 'b' }, marks: [{ type: 'point' }] });
+    const data = 'a,b\n1,2\n2,3';
+    const svgSize = el => [...el.querySelectorAll('svg')].map(s => [s.getAttribute('width'), s.getAttribute('height')]).find(([w, h]) => w && h);
+    const finite = el => [...el.querySelectorAll('g[transform]')].every(g => !/NaN/.test(g.getAttribute('transform')));
+
+    test('a text of pixels is read as their number with a warning', async () => {
+        const el = await mount({ def: def({ height: '300px', width: '500px' }), data });
+        expect(finite(el)).toBe(true);
+        expect(svgSize(el)).toEqual(['500', '300']);
+        expect([...errors].sort()).toEqual([
+            'gen-vis inline definition: height: a number of pixels, e.g. 300, not "300px" (read as 300)',
+            'gen-vis inline definition: width: a number of pixels, e.g. 500, not "500px" (read as 500)',
+        ]);
+    });
+
+    test('other texts are the default with a warning', async () => {
+        const el = await mount({ def: def({ height: '50%' }), data });
+        expect(finite(el)).toBe(true);
+        expect(svgSize(el)[1]).toBe('400');
+        expect(errors).toEqual(['gen-vis inline definition: height: expected a number of pixels, e.g. 300, not "50%", 400 is used']);
+    });
+});

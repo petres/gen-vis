@@ -4,6 +4,7 @@ import { gridOf, layout } from "@/layout";
 import { clearMeasures } from '@/utils/measure';
 import { rowHeadersOf } from "@/utils/normalize";
 import { evaluate } from "@/utils/expr";
+import { sizeOf } from "@/utils/warn";
 import { dataAttribute, reducedMotion } from "@/utils/draw";
 import { canCopy } from "@/utils/clipboard.js";
 import { create } from "@/utils/dom";
@@ -238,7 +239,7 @@ const createVis = app => {
     // beside legends the rest of it
     // the width of the chart of its own: of an export (`store.fixedWidth`,
     // see staticCopy of utils/export.js), else of the definition
-    const ownWidth = () => store.fixedWidth || options().width;
+    const ownWidth = () => store.fixedWidth || sizeOf(store, options().width, 'width', null);
     const plotsWidth = () => {
         const total = ownWidth() || innerWidth(root);
         fullWidth = store.visWidth = total;

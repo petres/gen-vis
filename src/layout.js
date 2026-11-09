@@ -8,7 +8,7 @@ import { autoMargins } from "@/utils/margins";
 import { bandCenter, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
 import { facetMappings } from "@/utils/normalize";
-import { markPath, warnOnce, withPath } from "@/utils/warn";
+import { markPath, sizeOf, warnOnce, withPath } from "@/utils/warn";
 import { highlightVars } from "@/utils/highlight";
 import { textWidth } from "@/utils/measure";
 import { directOf, elementOf } from "@/utils/draw";
@@ -390,7 +390,7 @@ const layout = (store, width, before = null) => {
         : entries.map(f => partOf(n, f)).map(part => [part.flatMap(e => e.rows), domainOfAll(n, part)?.rows]), scope);
     // the facets of the margins: their sizes, scopes and scales
     const build = margins => {
-        const size = { width: usable/cols, height: stepped === undefined ? evaluate(def.options.height, scope) : stepped + margins.top + margins.bottom };
+        const size = { width: usable/cols, height: stepped === undefined ? sizeOf(store, evaluate(def.options.height, scope), 'height', 400) : stepped + margins.top + margins.bottom };
         // a container smaller than its margins has no room, not a negative one,
         // which would flip the ranges of the scales, e.g. a negative radius
         size.innerWidth = Math.max(0, size.width - (margins.left + margins.right));

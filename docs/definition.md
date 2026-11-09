@@ -399,6 +399,10 @@ The texts, the sizes and the look are keys of the top level:
   visualisation), e.g. `"=steps(@totalWidth, {0: 220, 550: 250})"`.
 - `width`: the width of the image of the export (and of the PNG) without
   one given, the chart fills the width of its element otherwise.
+
+  Both are numbers of pixels: a text of pixels of css, e.g. `"300px"`, is
+  read as its number with a warning, other texts, e.g. `"50%"`, are
+  replaced by the default with a warning.
 - `margins`: the space around the plot area of a facet, see
   [margins](#margins).
 - `coord`: the coordinate system of the marks, `cartesian` (the default, a

@@ -458,6 +458,10 @@ Migration notes, to check by hand after `gen-vis migrate`:
 
 ### Fixes of the data (review of the release)
 
+- `height` and `width` of the definition are pixels: a text of pixels
+  such as `"300px"` is read as its number with a warning, another text
+  (`"50%"`) is the default with a warning (both gave NaN positions and an
+  empty chart without a message).
 - Reading the data: a row of JSON (or of the rows of the page) which is
   no object, e.g. `null`, is left out with a warning naming its index (was
   the TypeError "Cannot convert undefined or null to object"); a list of
