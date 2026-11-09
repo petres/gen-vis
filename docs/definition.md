@@ -684,8 +684,9 @@ are no dates, e.g. `Phase 1` (which `Date.parse` of some browsers reads as
 one).
 
 `interval` makes the dates of a time (or utc) scale periods which start
-at them, e.g. half years of `2023-01-01` and `2023-07-01`: `day`, `week`,
-`month`, `quarter`, `half`, `year` or a number of them, e.g. `"6 months"`
+at them, e.g. half years of `2023-01-01` and `2023-07-01`: `minute`,
+`hour`, `day`, `week`, `month`, `quarter`, `half`, `year` or a number of
+them, e.g. `"6 months"`
 (a band scale of dates has a band per date instead, in their order). The
 domain of the data reaches the end of the last period (without the 2% of
 other positions), so bars at the ends fit; `@x:scaled` (also
@@ -694,7 +695,8 @@ and lines are in the middle of their periods, `@x:scaled:start` and
 `@x:scaled:end` are its start and end, `@x:step` its length in pixels, e.g.
 `"width": "=@x:step * 0.6"` of a bar (80% of it by default); the hover is
 at the middle of the period under the pointer (ticks, grid lines and
-annotations are at their dates) and shows the period (`%b %Y` of months,
+annotations are at their dates, the ticks at the starts of the units, e.g.
+whole days) and shows the period (`%x %H:%M` of minutes and hours, `%b %Y` of months,
 `Q%q %Y` of quarters, `H%K %Y` of halves, `%Y` of years, a `format` of the
 hover replaces it). `%K` is the half of the year (1 or 2) in the time
 formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
@@ -840,8 +842,13 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   or point scale has a tick per category. The labels of a horizontal axis
   which overlap (measured) are thinned: every n-th one is shown, the tick
   marks stay, e.g. the years of a heatmap in a narrow chart; not the ones
-  of fixed `values` or rotated labels.
-- `format`: a d3 number or time format.
+  of fixed `values` or rotated labels. The ticks of a numeric dim whose
+  values are all whole numbers (e.g. years) are whole numbers, the ones
+  of an `interval` the starts of its units (days of `day`, not noons).
+- `format`: a d3 number or time format. Without one numbers have the
+  decimals of the distance of the ticks (none of whole numbers) and
+  thousands separators only if the domain reaches 10 000, as the hover, so
+  years are e.g. 2024; dates the format of their interval (`timeTicks`).
 - `rotate`: the angle of the labels in degrees, positive counterclockwise,
   negative clockwise.
 - `labels` (of all axes, also of polar charts): the `props` of the labels,

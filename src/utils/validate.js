@@ -382,7 +382,7 @@ const checkMappings = ctx => {
         if (m.type !== undefined && m.type != 'date')
             warn(`mapping.${n}.interval`, `the periods of the values of a date mapping, not of a ${m.type} one`);
         else if (!intervalOf(m.interval))
-            warn(`mapping.${n}.interval`, `expected day, week, month, quarter, half, year or a number of them, e.g. "6 months"`);
+            warn(`mapping.${n}.interval`, `expected minute, hour, day, week, month, quarter, half, year or a number of them, e.g. "6 months"`);
         else if (m.scale?.type !== undefined && !['time', 'utc'].includes(m.scale.type))
             warn(`mapping.${n}.interval`, `the periods of a time or utc scale, not of a ${m.scale.type} one`);
     });

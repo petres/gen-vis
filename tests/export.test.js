@@ -194,7 +194,7 @@ describe('the defaults of the parts in the export', () => {
     test('the SVG of a chart with defaults has them, also the one of the export page (genVisExport)', async () => {
         const vis = await chart({ defaults: { axis: { tickMarks: { size: 4 } } } });
         const svg = await vis.exportSvg();
-        expect(marks(svg).filter(Boolean)).toEqual(Array(11).fill('4'));
+        expect(marks(svg).filter(Boolean)).toEqual(Array(2).fill('4'));
         vis.el.remove();
 
         // the export page, of the protocol version 1
@@ -202,7 +202,7 @@ describe('the defaults of the parts in the export', () => {
         expect(window.genVisExport.version).toBe(1);
         const page = await window.genVisExport({ def: def(), data, defaults: { axis: { tickMarks: { size: 3 } } } });
         expect(page.version).toBe(1);
-        expect(marks(page.svg).filter(Boolean)).toEqual(Array(11).fill('3'));
+        expect(marks(page.svg).filter(Boolean)).toEqual(Array(2).fill('3'));
         // without defaults the built-in ones
         expect(new Set(marks((await window.genVisExport({ def: def(), data })).svg).filter(Boolean))).toEqual(new Set(['9']));
         await expect(window.genVisExport({ def: def(), data, defaultz: {} })).rejects.toThrow(/unknown options defaultz, expected some of .*defaults/);
@@ -278,7 +278,7 @@ describe('the merged definition of the export page (genVisExport.resolve, scheme
         const defaults = async merged => ({ axis: { tickMarks: { size: merged.plot.length + 2 } } });
         const promised = await window.genVisExport({ def: child, baseUrl: 'http://h/defs/', data, schemes: later, defaults });
         expect(strokes()).toEqual([['Wien', '#AA0000'], ['Tirol', '#AA0000']]);
-        expect(marks(promised.svg)).toEqual(Array(11).fill('4'));
+        expect(marks(promised.svg)).toEqual(Array(2).fill('4'));
         // the object form as before
         await window.genVisExport({ def: child, baseUrl: 'http://h/defs/', data, schemes: { house: ['#00AA00'] } });
         expect(strokes()).toEqual([['Wien', '#00AA00'], ['Tirol', '#00AA00']]);
@@ -308,7 +308,7 @@ describe('the merged definition of the export page (genVisExport.resolve, scheme
             .rejects.toThrow("Could not load 'http://h/defs/missing.json': 404 Not Found");
         // null of a function: no defaults, the built-in ones
         const none = await genVisExport({ ...options, schemes: () => ({ house: ['#123456'] }), defaults: () => null });
-        expect(marks(none.svg)).toEqual(Array(11).fill('9'));
+        expect(marks(none.svg)).toEqual(Array(2).fill('9'));
         expect(errors).toEqual([]);
     });
 });
@@ -353,7 +353,7 @@ describe('each call of the export page loads its files anew', () => {
         files['http://h/defs/data.csv'] = tens;
         const after = await window.genVisExport(options);
         expect(after.svg).not.toBe(before.svg);
-        expect(ticks(before.svg)).toContain('3,0');
+        expect(ticks(before.svg)).toContain('3');
         expect(ticks(before.svg)).not.toContain('30');
         expect(ticks(after.svg)).toContain('30');
         // the definition and its data are loaded again, once by each call

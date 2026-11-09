@@ -208,7 +208,8 @@ describe('rendering', () => {
         const el = await mount({ def, data });
         const ticks = () => [...el.querySelectorAll('g.vis-axis-left g.tick text')].map(t => t.textContent);
         const entries = i => el.querySelectorAll('.vis-control')[i].querySelectorAll('.vis-radio input');
-        expect(ticks().at(-1)).toBe('2,0');
+        // whole numbers of whole numbers
+        expect(ticks().at(-1)).toBe('2');
 
         entries(0)[1].click();
         await nextTick();
@@ -2277,14 +2278,15 @@ describe('the space of the ticks', () => {
 
 describe('locale and font', () => {
     const labels = (el, position) => [...el.querySelectorAll(`g.vis-axis-${position} g.tick text`)].map(t => t.textContent);
-    const bigData = 'year,value,land\n2020,1000,Wien\n2021,2500,Wien';
+    // thousands separators of a domain reaching 10 000
+    const bigData = 'year,value,land\n2020,10000,Wien\n2021,25000,Wien';
 
     test('german by default, also the ticks of axes without format', async () => {
         const def = lineDef();
         def.mapping.x.axis.format = ',.1f';
         const el = await mount({ def, data: bigData });
         expect(labels(el, 'bottom')).toContain('2.020,0');
-        expect(labels(el, 'left')).toContain('2.000');
+        expect(labels(el, 'left')).toContain('20.000');
     });
 
     test('a built-in locale', async () => {
@@ -2292,13 +2294,13 @@ describe('locale and font', () => {
         def.mapping.x.axis.format = ',.1f';
         const el = await mount({ def, data: bigData });
         expect(labels(el, 'bottom')).toContain('2,020.0');
-        expect(labels(el, 'left')).toContain('2,000');
+        expect(labels(el, 'left')).toContain('20,000');
     });
 
     test('a locale merged into a built-in one', async () => {
         const def = lineDef({ locale: { number: { thousands: ' ' } } });
         const el = await mount({ def, data: bigData });
-        expect(labels(el, 'left')).toContain('2 000');
+        expect(labels(el, 'left')).toContain('20 000');
     });
 
     test('month names of time axes', async () => {
@@ -3838,7 +3840,7 @@ describe('periods of dates (interval)', () => {
         expect(getLocale('de').time.format('%K. Halbjahr %Y')(new Date(2023, 8, 1))).toBe('2. Halbjahr 2023');
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef({ ...def(), mapping: { ...def().mapping, x: { ...def().mapping.x, interval: 'fortnight' } } }).filter(w => w.includes('interval')))
-            .toEqual([`dims.x.interval: expected day, week, month, quarter, half, year or a number of them, e.g. "6 months"`]);
+            .toEqual([`dims.x.interval: expected minute, hour, day, week, month, quarter, half, year or a number of them, e.g. "6 months"`]);
     });
 
     test('of a time scale only: a band scale of dates is a band per date, its hover works', async () => {
@@ -3874,6 +3876,57 @@ describe('periods of dates (interval)', () => {
         const widths = [...el.querySelectorAll('[data-mark="bars"] rect')].map(r => Math.round(+r.getAttribute('width')));
         expect(widths[0]).toBe(widths[1]);
         expect(errors).toEqual([]);
+    });
+});
+
+describe('the ticks of whole numbers and of periods', () => {
+    const labels = el => [...el.querySelectorAll('g.vis-axis-bottom g.tick text')].map(t => t.textContent);
+    const dated = (interval, data) => ({
+        options: { width: 600, height: 300, margins: { top: 10, right: 10, bottom: 40, left: 40 }, locale: 'de' },
+        mapping: {
+            x: { column: 'date', type: 'date', interval, scale: { orientation: 'horizontal' }, axis: { position: 'bottom', ticks: 10 }, hover: {} },
+            y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical', domain: [0, null] }, axis: { position: 'left' } },
+        },
+        plot: [{ type: 'bar', id: 'bars', props: { fill: 'red' } }],
+    });
+
+    test('years of a numeric x: whole ticks without a thousands separator, other numbers as before', async () => {
+        const years = lineDef();
+        years.mapping.x.axis.ticks = 10;
+        const el = await mount({ def: years, data: 'year,value,land\n2001,1,Wien\n2002,2,Wien\n2003,3,Wien' });
+        expect(labels(el)).toEqual(['2001', '2002', '2003']);
+        // the y values are whole too, 10 ticks of 1 to 3 are 1, 2, 3
+        expect([...el.querySelectorAll('g.vis-axis-left g.tick text')].map(t => t.textContent)).toEqual(['1', '2', '3']);
+        // decimals of the data, and a domain beyond 10 000 with separators
+        const el2 = await mount({ def: years, data: 'year,value,land\n0.5,1,Wien\n2,2,Wien' });
+        expect(labels(el2)).toContain('0,6');
+        const el3 = await mount({ def: years, data: 'year,value,land\n0,1,Wien\n20000,2,Wien' });
+        expect(labels(el3)).toContain('10.000');
+        expect(errors).toEqual([]);
+    });
+
+    test('the ticks of days are whole days, of hours whole hours; hours and minutes are intervals', async () => {
+        const days = await mount({ def: dated('day'), data: 'date,value\n2024-03-01,1\n2024-03-02,2\n2024-03-03,3' });
+        expect(labels(days).some(t => t.includes(':'))).toBe(false);
+        expect(labels(days).length).toBeGreaterThanOrEqual(2);
+        const hours = await mount({ def: dated('hour'), data: 'date,value\n2024-03-01 10:00,1\n2024-03-01 11:00,2\n2024-03-01 12:00,3' });
+        expect(labels(hours)).toEqual(['10:00', '11:00', '12:00', '13:00']);
+        const rects = [...hours.querySelectorAll('[data-mark="bars"] rect')].map(r => +r.getAttribute('width'));
+        expect(rects).toHaveLength(3);
+        // 80% of an hour of 3 hours in 550 pixels
+        rects.forEach(w => expect(w).toBeCloseTo(0.8*550/3, 0));
+        hours.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 60, clientY: 100 }));
+        await nextTick();
+        expect(hours.querySelector('.vis-hover-title').textContent).toBe('01.03.2024 10:00');
+        const minutes = await mount({ def: dated('15 minutes'), data: 'date,value\n2024-03-01 10:00,1\n2024-03-01 10:15,2' });
+        expect(minutes.querySelectorAll('[data-mark="bars"] rect')).toHaveLength(2);
+        expect(errors).toEqual([]);
+    });
+
+    test('an unknown interval is an error naming it, not one of the width of bars', async () => {
+        const el = await mount({ def: dated('fortnight'), data: 'date,value\n2024-03-01,1\n2024-03-15,2' });
+        expect(el.querySelector('.vis-error')?.textContent ?? errors.join(' ')).toMatch(/Unknown interval 'fortnight' of 'x', expected minute, hour, day/);
+        errors.length = 0;
     });
 });
 

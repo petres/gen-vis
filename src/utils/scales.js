@@ -5,13 +5,14 @@ import { evaluate } from "@/utils/expr";
 import { continuous, convert } from "@/utils/data";
 import { comparison } from "@/utils/values";
 
-// the periods of the dates of a mapping (`interval`): day, week, month,
-// quarter, half (a year), year or a number of them, e.g. "6 months", of the
-// time zone of the scale, null without one or of another value
+// the periods of the dates of a mapping (`interval`): minute, hour, day,
+// week, month, quarter, half (a year), year or a number of them, e.g.
+// "6 months", of the time zone of the scale, null without one or of another
+// value; `floor(date)` is the start of the unit of a date, e.g. the day
 // (the intervals of d3 by name, not d3[name], which would keep all of d3's
 // parts of the bundle)
 const units = {
-    day: [d3.timeDay, d3.utcDay], week: [d3.timeWeek, d3.utcWeek], month: [d3.timeMonth, d3.utcMonth],
+    minute: [d3.timeMinute, d3.utcMinute], hour: [d3.timeHour, d3.utcHour], day: [d3.timeDay, d3.utcDay], week: [d3.timeWeek, d3.utcWeek], month: [d3.timeMonth, d3.utcMonth],
     quarter: [d3.timeMonth, d3.utcMonth, 3], half: [d3.timeMonth, d3.utcMonth, 6], year: [d3.timeYear, d3.utcYear],
 };
 const intervalOf = (spec, utc = false) => {
@@ -26,7 +27,7 @@ const intervalOf = (spec, utc = false) => {
     const base = utc ? inUtc : local;
     // the period starts at the date, e.g. a half year in April, so it is
     // `count` units long, not up to the next multiple of them (d3's `every`)
-    return count > 0 ? { offset: d => base.offset(d instanceof Date ? d : new Date(d), count) } : null;
+    return count > 0 ? { offset: d => base.offset(d instanceof Date ? d : new Date(d), count), floor: d => base.floor(d) } : null;
 };
 
 // the offset of the center of a band, the position of band scales is its start
@@ -258,6 +259,8 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     const period = mapping.type == 'date' && ['time', 'utc'].includes(scaleDef.type) ? intervalOf(mapping.interval, scaleDef.type == 'utc') : null;
     if (period && extent)
         extent = [extent[0], +period.offset(extent[1])];
+    else if (!period && mapping.interval !== undefined && mapping.type == 'date' && ['time', 'utc'].includes(scaleDef.type))
+        throw new Error(`Unknown interval '${mapping.interval}' of '${name}', expected minute, hour, day, week, month, quarter, half, year or a number of them, e.g. "6 months"`);
     // the extent of the data includes the values of `include`, e.g. 0 or
     // 100, around `center` it is symmetric, e.g. of 0 of changes
     // a value of the definition as the ones of the data, e.g. a date or a category as a string
@@ -415,6 +418,22 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     }
 
     s.domain(domain);
+    // the ticks of data of whole numbers are whole numbers (`integers`, e.g.
+    // years: 2001 and 2002, not 2001.5, see tickFormat of utils/locale.js),
+    // the ones of periods the starts of their units (e.g. days, not noons)
+    if (s.ticks && !log && mapping.type == 'numeric' && !mapping.stacked && found.extent && found.values.every(Number.isInteger)) {
+        const ticks = s.ticks;
+        s.integers = true;
+        s.ticks = count => ticks.call(s, count).filter(Number.isInteger);
+    }
+    if (s.ticks && period) {
+        const ticks = s.ticks;
+        s.ticks = count => {
+            const all = ticks.call(s, count);
+            const whole = all.filter(t => +period.floor(t) == +t);
+            return whole.length >= 2 ? whole : all;
+        };
+    }
     // the periods of the dates, e.g. of bars in their period, see rowValue of
     // layout.js, the nearest value of a position is the one of its period
     if (period) {

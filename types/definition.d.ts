@@ -698,7 +698,7 @@ export interface Dim {
      */
     format?: string | InLanguages;
     /**
-     * Of a date dim of a time or utc scale: a value is the period starting at it, day, week, month, quarter, half (a year), year or a number of them, e.g. "6 months": the domain of the data reaches the end of the last period; @x:scaled (also @x:scaled:center) is the middle of the period of a row, so bars, points, lines and the hover are in the middle of their period, @x:scaled:start and @x:scaled:end are its start and end, @x:step its length in pixels (bars 80% of it by default); ticks, grid lines and annotations stay at their dates; the hover shows the period, e.g. H2 2023 (%K is the half of the year in formats).
+     * Of a date dim of a time or utc scale: a value is the period starting at it, minute, hour, day, week, month, quarter, half (a year), year or a number of them, e.g. "6 months": the domain of the data reaches the end of the last period; @x:scaled (also @x:scaled:center) is the middle of the period of a row, so bars, points, lines and the hover are in the middle of their period, @x:scaled:start and @x:scaled:end are its start and end, @x:step its length in pixels (bars 80% of it by default); ticks, grid lines and annotations stay at their dates (the ticks at the starts of the units, e.g. days, not noons); the hover shows the period, e.g. H2 2023 (%K is the half of the year in formats).
      */
     interval?: string;
     scale?: Scale | Removed;

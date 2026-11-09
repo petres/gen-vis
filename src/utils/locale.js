@@ -163,7 +163,7 @@ const withHalves = time => {
 
 // the formats of the values of dates of periods (`interval` of a mapping),
 // e.g. of the hover of half years, and the name of the period of an interval
-const periodFormats = { month: '%b %Y', quarter: 'Q%q %Y', half: 'H%K %Y', year: '%Y' };
+const periodFormats = { minute: '%x %H:%M', hour: '%x %H:%M', month: '%b %Y', quarter: 'Q%q %Y', half: 'H%K %Y', year: '%Y' };
 const periodName = interval => typeof interval == 'string' ? /^\s*(?:1\s*)?([a-z]+?)s?\s*$/.exec(interval)?.[1] : undefined;
 
 const getLocale = (locale = 'de') => {
@@ -179,10 +179,14 @@ const getLocale = (locale = 'de') => {
         // the default format of the ticks of an axis without format, as the
         // one of d3 but in the locale, null for other scales
         tickFormat(scale, type, count = 10) {
+            // whole numbers of whole numbers (see makeScale), thousands
+            // separators if the domain reaches 10 000, as the valueFormat,
+            // so years are e.g. 2024
             if (['linear', 'pow', 'sqrt'].includes(type)) {
                 const [d0, d1] = scale.domain();
-                const precision = d3.precisionFixed(d3.tickStep(d0, d1, count));
-                return number.format(`,.${Number.isFinite(precision) ? precision : 0}f`);
+                const precision = scale.integers ? 0 : d3.precisionFixed(d3.tickStep(d0, d1, count));
+                const grouping = Math.max(Math.abs(d0), Math.abs(d1)) >= 10000 ? ',' : '';
+                return number.format(`${grouping}.${Number.isFinite(precision) ? precision : 0}f`);
             }
             if (type == 'time')
                 return timeTickFormat(time.format, timeTicks, timeIntervals.time);
