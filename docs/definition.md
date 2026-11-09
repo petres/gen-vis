@@ -1206,7 +1206,10 @@ attributes are merged into the defaults, e.g. `d` of a path.
   the sources; `hover.total` adds the sum.
 - `dodge` of bars: the groups of `by` (`true`, the first dim of `by`) or of
   this dim beside each other in the band of their position, a hidden
-  category leaves its place to the others; with `stack` a stack per slot,
+  category leaves its place to the others (a dim without categories has
+  a slot per value of the rows of the chart, the same in all facets); of a
+  date `x` with an `interval` (or a point scale) the slots share 80% of
+  the period (the step); with `stack` a stack per slot,
   e.g. `"by": ["type", "source"], "dodge": "type", "stack": true` stacks the
   sources of each type beside the ones of the other types; of a `text` or a `label` (`true`
   or a dim) the text at the middle of the slot of its category, as its bar:
@@ -2190,7 +2193,7 @@ The values of a row of a dim `x`:
 | `@x:scaled:min`, `@x:scaled:max` | the position of the start and the end of the domain |
 | `@x:bandwidth`, `@x:step` | the size of a band and the distance of the categories, of an `interval` the pixels of the period of the row |
 | `@x:group:start`, `@x:group:end` | the extent of the group of the row, see `groups` of [scales](#scales) |
-| `@x:index`, `@x:count` | the place of the category of the row among the visible categories of the dim (from 0) and their number, of a dim without categories the distinct values of the rows of the mark, e.g. of dodged bars |
+| `@x:index`, `@x:count` | the place of the category of the row among the visible categories of the dim (from 0) and their number, of a dim without categories the distinct values of the rows of the chart (all facets, before the filters of the marks) in the order of the rows, so the slots of dodged bars are the same in all facets and marks; a row without a value has no place |
 | `@y:start`, `@y:end`, `@y:mid` | of a stacked value its start, its end and its middle |
 | `@y:start:scaled`, `@y:end:scaled`, `@y:mid:scaled`, `@y:height:scaled` | their positions and the difference, e.g. the height of a `rect` |
 

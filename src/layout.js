@@ -331,6 +331,14 @@ const layout = (store, width, before = null) => {
     };
 
     const faceted = entries.length > 0;
+    // the distinct values of a mapping of all rows, e.g. the slots of dodged
+    // bars of a dim without categories, see rowValue
+    const slots = new Map();
+    const slotKeys = name => {
+        if (!slots.has(name))
+            slots.set(name, distinctKeys(rows, name));
+        return slots.get(name);
+    };
 
     // the sizes of a facet
     // the margins: of the definition, else of the styles of the page
@@ -442,6 +450,7 @@ const layout = (store, width, before = null) => {
                 isStacked,
                 stackOrder,
                 outer: outerOf(i, f.cell),
+                slotKeys,
                 // the mappings whose scale is the one of all facets or of the row or the column
                 sharing,
                 // the sizes of the bands of the scales, e.g. "@y:bandwidth" of annotations
@@ -636,10 +645,14 @@ const rowValue = (ctx, name, rows) => {
         // the place of the category of the row among the visible categories
         // of the mapping, from 0, and their number, e.g. of dodged bars (see
         // `dodge` of utils/language.js); of a mapping without categories the
-        // distinct values of the rows of the plot in their order
+        // distinct values of the rows of the chart (of all facets, before the
+        // filters of the marks, see slotKeys of layout) in their order, so
+        // the slots are the same in all facets and marks; a row without a
+        // value or of another category has none
         'index': () => {
             const keys = categoryKeys();
-            return row => keys.indexOf(String(row[m]));
+            const index = new Map(keys.map((k, i) => [k, i]));
+            return row => row[m] === null || row[m] === undefined ? undefined : index.get(String(row[m]));
         },
         'count': () => constant(categoryKeys().length),
     };
@@ -650,7 +663,7 @@ const rowValue = (ctx, name, rows) => {
         const mapping = ctx.store.def.mapping[m];
         keysOf = Array.isArray(mapping?.keys)
             ? mapping.keys.filter(k => mapping.categoryProps?.[k]?.visible !== false).map(String)
-            : [...new Set(rows.map(r => String(r[m])))];
+            : (ctx.slotKeys?.(m) ?? distinctKeys(rows, m));
         return keysOf;
     };
     const kind = parts.join(':');
@@ -659,6 +672,18 @@ const rowValue = (ctx, name, rows) => {
     if (at)
         return s ? constant(s(convert(ctx.store.mapping(m), at[1]))) : undefined;
     return Object.hasOwn(values, kind) ? values[kind]() || undefined : undefined;
+};
+
+// the distinct values of a mapping of rows as texts, in the order of the
+// rows, without missing ones
+const distinctKeys = (rows, name) => {
+    const keys = new Set();
+    for (const r of rows) {
+        const v = r[name];
+        if (v !== null && v !== undefined)
+            keys.add(String(v));
+    }
+    return [...keys];
 };
 
 // the props of categories (a list of them, the later ones override the ones

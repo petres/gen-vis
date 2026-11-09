@@ -212,12 +212,19 @@ const typeOf = (type, coord) => {
 // the expressions of a dodged bar: the band of the position dim `pos` split
 // among the categories of `group`, its position (the bar plot adds half a
 // band, see plots/cartesian.js) and its width; `center` is the middle of
-// the slot of the category, e.g. of a label on a dodged bar
-const dodged = (pos, group) => ({
-    position: { '+': [ref(pos), { '*': [ref(pos, 'bandwidth'), { '-': [{ '/': [{ '+': [ref(group, 'index'), 0.5] }, ref(group, 'count')] }, 0.5] }] }] },
-    center: { '+': [ref(pos), { '*': [ref(pos, 'bandwidth'), { '/': [{ '+': [ref(group, 'index'), 0.5] }, ref(group, 'count')] }] }] },
-    size: { '/': [ref(pos, 'bandwidth'), ref(group, 'count')] },
-});
+// the slot of the category, e.g. of a label on a dodged bar. The band of a
+// scale without one (a date of an `interval`, a point scale) is 80% of the
+// period or the step, as the width of a bar, around the middle of the period
+const dodged = (pos, group) => {
+    const band = { if: [ref(pos, 'bandwidth'), ref(pos, 'bandwidth'), { '*': [0.8, ref(pos, 'step')] }] };
+    const start = { if: [ref(pos, 'bandwidth'), ref(pos), { '-': [ref(pos), { '/': [band, 2] }] }] };
+    const slot = { '/': [{ '+': [ref(group, 'index'), 0.5] }, ref(group, 'count')] };
+    return {
+        position: { '+': [ref(pos), { '*': [band, { '-': [slot, 0.5] }] }] },
+        center: { '+': [start, { '*': [band, slot] }] },
+        size: { '/': [band, ref(group, 'count')] },
+    };
+};
 
 // the label of a value, `anchor` places the text beside the position:
 // `end` after it (horizontal bars), `start` before it, `top` above it,
