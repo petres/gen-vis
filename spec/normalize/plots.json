@@ -1,171 +1,175 @@
 [
   {
-    "name": "a type without prefix of the coordinate system with its default props, by are the categories",
+    "name": "a plot of a type with its default props, the props given after them",
     "def": {
       "mapping": {},
-      "plot": {
-        "type": "line",
-        "by": "land",
-        "props": {
-          "stroke-width": 2
+      "plot": [
+        {
+          "type": "cartesian:line",
+          "by": [
+            "land"
+          ],
+          "props": {
+            "d": {
+              "x": "@x:scaled",
+              "y": "@y:scaled"
+            },
+            "stroke-width": 2
+          }
         }
-      }
+      ]
     },
     "result": {
       "mapping": {},
-      "plot": {
-        "type": "cartesian:line",
-        "props": {
-          "stroke": {
-            "or": [
-              "@color",
-              "currentColor"
-            ]
-          },
-          "fill": "none",
-          "d": {
-            "x": "@x:scaled",
-            "y": "@y:scaled"
-          },
-          "stroke-width": 2
-        },
-        "by": "land"
-      }
+      "plot": [
+        {
+          "type": "cartesian:line",
+          "by": [
+            "land"
+          ],
+          "props": {
+            "stroke": {
+              "or": [
+                "@color",
+                "currentColor"
+              ]
+            },
+            "fill": "none",
+            "d": {
+              "x": "@x:scaled",
+              "y": "@y:scaled"
+            },
+            "stroke-width": 2
+          }
+        }
+      ]
     }
   },
   {
-    "name": "the props are merged into the defaults, nested props deeply, null removes one",
+    "name": "the props are merged into the defaults, null removes one",
     "def": {
       "mapping": {},
-      "plot": {
-        "type": "line",
-        "props": {
-          "fill": null,
-          "d": {
-            "x": "@date:scaled"
-          },
-          "stroke": {
-            "if": [
-              {
-                ">": [
-                  "@y",
-                  0
-                ]
-              },
-              "green",
-              "red"
-            ]
+      "plot": [
+        {
+          "type": "cartesian:line",
+          "props": {
+            "fill": null,
+            "d": {
+              "x": "@date:scaled",
+              "y": "@y:scaled"
+            },
+            "stroke": {
+              "if": [
+                {
+                  ">": [
+                    "@y",
+                    0
+                  ]
+                },
+                "green",
+                "red"
+              ]
+            }
           }
         }
-      }
+      ]
     },
     "result": {
       "mapping": {},
-      "plot": {
-        "type": "cartesian:line",
-        "props": {
-          "stroke": {
-            "if": [
-              {
-                ">": [
-                  "@y",
-                  0
-                ]
-              },
-              "green",
-              "red"
-            ]
-          },
-          "d": {
-            "x": "@date:scaled",
-            "y": "@y:scaled"
+      "plot": [
+        {
+          "type": "cartesian:line",
+          "props": {
+            "stroke": {
+              "if": [
+                {
+                  ">": [
+                    "@y",
+                    0
+                  ]
+                },
+                "green",
+                "red"
+              ]
+            },
+            "d": {
+              "x": "@date:scaled",
+              "y": "@y:scaled"
+            }
           }
         }
-      }
+      ]
     }
   },
   {
     "name": "highlight and others are objects of props, mode the one of the highlight",
     "def": {
       "mapping": {},
-      "plot": {
-        "type": "cartesian:bar",
-        "highlight": {
-          "mode": "row",
-          "fill": "#333"
-        },
-        "others": {
-          "opacity": 0.3
-        },
-        "props": {
-          "fill": "@color"
-        }
-      }
-    },
-    "result": {
-      "mapping": {},
-      "plot": {
-        "type": "cartesian:bar",
-        "props": {
-          "fill": "@color",
-          "x": "@x:scaled",
-          "y1": "@y:scaled"
-        },
-        "highlight": {
-          "mode": "row",
-          "fill": "#333"
-        },
-        "others": {
-          "opacity": 0.3
-        }
-      }
-    }
-  },
-  {
-    "name": "a type of a full name has the defaults of its type, the same as the short name",
-    "def": {
-      "mapping": {},
-      "plot": {
-        "type": "cartesian:line",
-        "props": {
-          "d": {
-            "x": "@x:scaled",
-            "y": "@y:scaled"
-          }
-        }
-      }
-    },
-    "result": {
-      "mapping": {},
-      "plot": {
-        "type": "cartesian:line",
-        "props": {
-          "stroke": {
-            "or": [
-              "@color",
-              "currentColor"
-            ]
+      "plot": [
+        {
+          "type": "cartesian:bar",
+          "highlight": {
+            "mode": "row",
+            "fill": "#333"
           },
-          "fill": "none",
-          "d": {
+          "others": {
+            "opacity": 0.3
+          },
+          "props": {
+            "fill": "@color",
             "x": "@x:scaled",
-            "y": "@y:scaled"
+            "y1": "@y:scaled"
           }
         }
-      }
+      ]
+    },
+    "result": {
+      "mapping": {},
+      "plot": [
+        {
+          "type": "cartesian:bar",
+          "props": {
+            "fill": "@color",
+            "x": "@x:scaled",
+            "y1": "@y:scaled"
+          },
+          "highlight": {
+            "mode": "row",
+            "fill": "#333"
+          },
+          "others": {
+            "opacity": 0.3
+          }
+        }
+      ]
     }
   },
   {
-    "name": "point and circle of cartesian plots are svg:circle, text svg:text",
+    "name": "a type without the prefix of the coordinate system is the one of the coordinate system, of svg elements otherwise",
     "def": {
       "mapping": {},
       "plot": [
         {
-          "type": "point"
+          "type": "line",
+          "props": {
+            "d": {
+              "x": "@x:scaled",
+              "y": "@y:scaled"
+            }
+          }
+        },
+        {
+          "type": "circle",
+          "props": {
+            "cx": "@x:scaled",
+            "cy": "@y:scaled"
+          }
         },
         {
           "type": "text",
           "props": {
+            "x": "@x:scaled",
+            "y": "@y:scaled",
             "text": "@name"
           }
         }
@@ -175,25 +179,41 @@
       "mapping": {},
       "plot": [
         {
+          "type": "cartesian:line",
+          "props": {
+            "stroke": {
+              "or": [
+                "@color",
+                "currentColor"
+              ]
+            },
+            "fill": "none",
+            "d": {
+              "x": "@x:scaled",
+              "y": "@y:scaled"
+            }
+          }
+        },
+        {
           "type": "svg:circle",
           "props": {
-            "cx": "@x:scaled",
-            "cy": "@y:scaled",
             "r": 3,
             "fill": {
               "or": [
                 "@color",
                 "currentColor"
               ]
-            }
+            },
+            "cx": "@x:scaled",
+            "cy": "@y:scaled"
           }
         },
         {
           "type": "svg:text",
           "props": {
+            "fill": "@color",
             "x": "@x:scaled",
             "y": "@y:scaled",
-            "fill": "@color",
             "text": "@name"
           }
         }
@@ -201,24 +221,45 @@
     }
   },
   {
-    "name": "a horizontal bar of x1, a vertical one otherwise",
+    "name": "the bars of a bin from x0 to x1 have crisp edges, other bars not",
     "def": {
       "mapping": {},
       "plot": [
         {
-          "type": "bar",
+          "type": "cartesian:bar",
           "props": {
-            "x1": "@v:scaled"
+            "x0": "@lo:scaled",
+            "x1": "@hi:scaled",
+            "y1": "@y:scaled"
           }
         },
         {
-          "type": "bar"
+          "type": "cartesian:bar",
+          "props": {
+            "x1": "@v:scaled",
+            "y": "@y:scaled"
+          }
         }
       ]
     },
     "result": {
       "mapping": {},
       "plot": [
+        {
+          "type": "cartesian:bar",
+          "props": {
+            "fill": {
+              "or": [
+                "@color",
+                "#4269D0"
+              ]
+            },
+            "shape-rendering": "crispEdges",
+            "x0": "@lo:scaled",
+            "x1": "@hi:scaled",
+            "y1": "@y:scaled"
+          }
+        },
         {
           "type": "cartesian:bar",
           "props": {
@@ -230,19 +271,6 @@
             },
             "x1": "@v:scaled",
             "y": "@y:scaled"
-          }
-        },
-        {
-          "type": "cartesian:bar",
-          "props": {
-            "fill": {
-              "or": [
-                "@color",
-                "#4269D0"
-              ]
-            },
-            "x": "@x:scaled",
-            "y1": "@y:scaled"
           }
         }
       ]
@@ -257,13 +285,23 @@
       "mapping": {},
       "plot": [
         {
-          "type": "line"
+          "type": "polar:line",
+          "props": {
+            "d": {
+              "angle": "@x:scaled",
+              "radius": "@y:scaled"
+            }
+          }
         },
         {
-          "type": "point"
+          "type": "polar:circle",
+          "props": {
+            "angle": "@x:scaled",
+            "radius": "@y:scaled"
+          }
         },
         {
-          "type": "arc",
+          "type": "polar:arc",
           "props": {
             "startAngle": "@v:start:scaled"
           }
@@ -295,15 +333,15 @@
         {
           "type": "polar:circle",
           "props": {
-            "angle": "@x:scaled",
-            "radius": "@y:scaled",
             "r": 3,
             "fill": {
               "or": [
                 "@color",
                 "currentColor"
               ]
-            }
+            },
+            "angle": "@x:scaled",
+            "radius": "@y:scaled"
           }
         },
         {
@@ -322,7 +360,7 @@
     }
   },
   {
-    "name": "the types of maps without defaults",
+    "name": "the types of maps: the labels centered on their place",
     "def": {
       "options": {
         "coord": "geo"
@@ -330,13 +368,19 @@
       "mapping": {},
       "plot": [
         {
-          "type": "region",
+          "type": "geo:region",
           "props": {
             "fill": "@value:scaled"
           }
         },
         {
-          "type": "mesh"
+          "type": "geo:mesh"
+        },
+        {
+          "type": "geo:text",
+          "props": {
+            "text": "@name"
+          }
         }
       ]
     },
@@ -354,6 +398,14 @@
         },
         {
           "type": "geo:mesh"
+        },
+        {
+          "type": "geo:text",
+          "props": {
+            "text-anchor": "middle",
+            "dominant-baseline": "middle",
+            "text": "@name"
+          }
         }
       ]
     }
@@ -362,15 +414,19 @@
     "name": "an unknown type stays as it is",
     "def": {
       "mapping": {},
-      "plot": {
-        "type": "dots"
-      }
+      "plot": [
+        {
+          "type": "dots"
+        }
+      ]
     },
     "result": {
       "mapping": {},
-      "plot": {
-        "type": "dots"
-      }
+      "plot": [
+        {
+          "type": "dots"
+        }
+      ]
     }
   }
 ]

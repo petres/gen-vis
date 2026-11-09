@@ -1,37 +1,28 @@
 // the default props of the built-in plot types, the `defaults` of the types
 // (see plots/index.js), of the plots of the type, "line" and
 // "cartesian:line" alike, see utils/normalize.js, a definition writes only
-// the props which differ, null removes one. A position is the one of the
-// mappings x and y, the color of a plot without categories the one of the
-// text, the fill of bars, areas and arcs the first color of the default
+// the props which differ, null removes one. The positions are no defaults,
+// translate writes them of the channels of the marks (see mark of
+// utils/language.js). The color of a plot without categories is the one of
+// the text, the fill of bars, areas and arcs the first color of the default
 // colors of categories (observable10, see utils/def.js), not a black block.
 const color = { or: ['@color', 'currentColor'] };
 const fill = { or: ['@color', '#4269D0'] };
 
 export const defaults = {
-    // stairs with `x0` and `x1` of `d`, e.g. the classes of a bin, without an `x`
-    'cartesian:line': props => props?.d && typeof props.d == 'object' && ('x0' in props.d || 'x1' in props.d)
-        ? { stroke: color, fill: 'none', d: { y: '@y:scaled' } }
-        : { stroke: color, fill: 'none', d: { x: '@x:scaled', y: '@y:scaled' } },
-    // filled stairs with `x0` and `x1` of `d`, without an `x`
-    'cartesian:area': props => props?.d && typeof props.d == 'object' && ('x0' in props.d || 'x1' in props.d)
-        ? { fill, d: { y0: '@y:scaled:0', y1: '@y:scaled' } }
-        : { fill, d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } },
-    // a horizontal bar with `x1`, a vertical one from `x0` to `x1` with `x1`
-    // and `y1` (e.g. the classes of a bin, with crisp edges, so neighbours
-    // meet without a seam also in a scaled image), otherwise a vertical one
-    'cartesian:bar': props => props && 'x1' in props && 'y1' in props ? { fill, 'shape-rendering': 'crispEdges' }
-        : (props && 'x1' in props ? { fill, x1: '@x:scaled', y: '@y:scaled' }
-            : { fill, x: '@x:scaled', y1: '@y:scaled' }),
-    // vertical at `x`, horizontal at `y` without an `x`
-    'cartesian:rule': props => props && 'y' in props && !('x' in props) ? { stroke: color, y: '@y:scaled' } : { stroke: color, x: '@x:scaled' },
-    'svg:circle': { cx: '@x:scaled', cy: '@y:scaled', r: 3, fill: color },
-    'svg:text': { x: '@x:scaled', y: '@y:scaled', fill: '@color' },
-    'polar:line': { stroke: color, fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } },
-    'polar:area': { fill, d: { angle: '@x:scaled', innerRadius: '@y:scaled:0', outerRadius: '@y:scaled' } },
+    'cartesian:line': { stroke: color, fill: 'none' },
+    'cartesian:area': { fill },
+    // the classes of a bin, a bar from `x0` to `x1` with `x1` and `y1`, with
+    // crisp edges, so neighbours meet without a seam also in a scaled image
+    'cartesian:bar': props => props && 'x1' in props && 'y1' in props ? { fill, 'shape-rendering': 'crispEdges' } : { fill },
+    'cartesian:rule': { stroke: color },
+    'svg:circle': { r: 3, fill: color },
+    'svg:text': { fill: '@color' },
+    'polar:line': { stroke: color, fill: 'none' },
+    'polar:area': { fill },
     'polar:arc': { fill },
-    'polar:circle': { angle: '@x:scaled', radius: '@y:scaled', r: 3, fill: color },
-    'polar:text': { angle: '@x:scaled', radius: '@y:scaled', fill: '@color' },
+    'polar:circle': { r: 3, fill: color },
+    'polar:text': { fill: '@color' },
     // the labels of a map are centered on their place, e.g. the pole of their
     // area, vertically without a `dy` of their own (one of 4.x, e.g. 0.35em,
     // moves them from their baseline)

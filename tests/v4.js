@@ -8,6 +8,9 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { deepMerge } from '@/utils/merge.js';
 import { sameValue, isObject } from '@/utils/values.js';
+import { isOperator } from '@/utils/expr.js';
+import { normalize } from '@/utils/normalize.js';
+import { plotTypes } from '@/plots';
 
 // lists whose entries all have an `id` merge by it (4.x knew no other keys)
 const hasIds = a => a.length > 0 && a.every(e => e !== null && typeof e == 'object' && !Array.isArray(e) && 'id' in e);
@@ -103,4 +106,52 @@ const globalSets = (def, limit = 64) => {
     });
 };
 
-export { mergeAll4, resolveParents4, patched4, globalSets };
+// the positions of the default props of the plot types of 4.x (5.0 writes
+// them of the channels of the marks, see mark of utils/language.js)
+const positions4 = {
+    'cartesian:line': props => isObject(props.d) && ('x0' in props.d || 'x1' in props.d) ? { d: { y: '@y:scaled' } } : { d: { x: '@x:scaled', y: '@y:scaled' } },
+    'cartesian:area': props => isObject(props.d) && ('x0' in props.d || 'x1' in props.d) ? { d: { y0: '@y:scaled:0', y1: '@y:scaled' } }
+        : { d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } },
+    'cartesian:bar': props => 'x1' in props && 'y1' in props ? {} : ('x1' in props ? { x1: '@x:scaled', y: '@y:scaled' } : { x: '@x:scaled', y1: '@y:scaled' }),
+    'cartesian:rule': props => 'y' in props && !('x' in props) ? { y: '@y:scaled' } : { x: '@x:scaled' },
+    'svg:circle': () => ({ cx: '@x:scaled', cy: '@y:scaled' }),
+    'svg:text': () => ({ x: '@x:scaled', y: '@y:scaled' }),
+    'polar:line': () => ({ d: { angle: '@x:scaled', radius: '@y:scaled' } }),
+    'polar:area': () => ({ d: { angle: '@x:scaled', innerRadius: '@y:scaled:0', outerRadius: '@y:scaled' } }),
+    'polar:circle': () => ({ angle: '@x:scaled', radius: '@y:scaled' }),
+    'polar:text': () => ({ angle: '@x:scaled', radius: '@y:scaled' }),
+};
+// the props merged into the positions, nested ones deeply, null removes
+// one (the engine's normalize the other defaults)
+const nested = v => isObject(v) && !isOperator(v);
+const withPositions = (positions, props) => {
+    const merged = { ...positions };
+    Object.entries(props).forEach(([k, v]) => merged[k] = nested(v) && nested(merged[k]) ? withPositions(merged[k], v) : v);
+    Object.keys(positions).filter(k => merged[k] === null).forEach(k => delete merged[k]);
+    return merged;
+};
+
+/**
+ * The form the engine reads (see utils/normalize.js) of a merged and
+ * patched definition of 4.x, as 4.x normalized it: a mapping of a text is
+ * its column, `plot` a list, `point` is `circle`, the full names of the
+ * plot types and the positions of their default props.
+ */
+const normalize4 = def => {
+    const d = structuredClone(def);
+    const coord = d.options?.coord ?? 'cartesian';
+    if (isObject(d.mapping))
+        Object.entries(d.mapping).forEach(([n, m]) => typeof m == 'string' && (d.mapping[n] = { column: m }));
+    if (d.plot !== undefined)
+        d.plot = [d.plot].flat().map(p => {
+            if (!isObject(p) || typeof p.type != 'string')
+                return p;
+            const name = p.type == 'point' ? 'circle' : p.type;
+            const type = normalize({ options: { coord }, plot: [{ type: name }] }, { plotTypes }).plot[0].type;
+            const props = isObject(p.props) ? p.props : {};
+            return { ...p, type, props: withPositions(positions4[type]?.(props) ?? {}, props) };
+        });
+    return normalize(d, { plotTypes });
+};
+
+export { mergeAll4, resolveParents4, patched4, globalSets, normalize4 };

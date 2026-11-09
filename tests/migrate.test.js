@@ -12,7 +12,7 @@ import { isObject } from '@/utils/values.js';
 import { resolveParents } from '@/utils/load.js';
 import { plotTypes } from '@/plots';
 import { definitions } from '@/dev/definitions.js';
-import { resolveParents4, patched4, globalSets } from './v4.js';
+import { resolveParents4, patched4, globalSets, normalize4 } from './v4.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // the definitions of 4.x of data/ as they were before their migration, with their parents
@@ -176,7 +176,7 @@ describe('the order of categories of a vertical scale', () => {
 const json = file => JSON.parse(readFileSync(path.join(root, file), 'utf8'));
 const url = file => pathToFileURL(path.join(root, file)).href;
 const engine4 = def => {
-    const n = same(normalize(def, { plotTypes }));
+    const n = same(normalize4(def));
     // 4.x read a reference to a global of the scales of facets when it drew them, 5.0 resolves it
     const scales = n.facets?.scales;
     if (typeof scales == 'string' && scales.startsWith('@') && Object.hasOwn(def.globals ?? {}, scales.slice(1)))

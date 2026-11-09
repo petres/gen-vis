@@ -425,7 +425,13 @@
         "type": "cartesian:line",
         "by": [
           "g"
-        ]
+        ],
+        "props": {
+          "d": {
+            "x": "@x:scaled",
+            "y": "@y:scaled"
+          }
+        }
       }
     },
     "result": {

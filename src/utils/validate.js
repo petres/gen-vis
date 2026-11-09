@@ -1147,9 +1147,29 @@ const checkDef = (def, normalized, rows, extra = {}) => {
 // the plot types without their default props, the props a definition writes
 const withoutDefaults = () => Object.fromEntries(Object.entries(plotTypes).map(([n, t]) => [n, { ...t, defaults: undefined }]));
 
-// the plots of a registered type: their default props which the plot does
-// not write (`defaults`) and the type as it is written (`written`, of the
-// `marks` of the definition), by the index of the plot
+// the positions of the marks of the built-in types which translate writes
+// of the dims of the axes (see mark of utils/language.js): a position the
+// plot has not, e.g. the y of a point without a dim y, is one of the dim of
+// its axis, which does not exist, see defaultProps (the defaults of the
+// types have no positions, see plots/defaults.js)
+const positions = {
+    'cartesian:line': props => isObject(props.d) && ('x0' in props.d || 'x1' in props.d) ? { d: { y: '@y:scaled' } } : { d: { x: '@x:scaled', y: '@y:scaled' } },
+    'cartesian:area': props => isObject(props.d) && ('x0' in props.d || 'x1' in props.d) ? { d: { y0: '@y:scaled:0', y1: '@y:scaled' } }
+        : { d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } },
+    'cartesian:bar': props => 'x1' in props && 'y1' in props ? {} : ('x1' in props ? { x1: '@x:scaled', y: '@y:scaled' } : { x: '@x:scaled', y1: '@y:scaled' }),
+    'cartesian:rule': props => 'y' in props && !('x' in props) ? { y: '@y:scaled' } : { x: '@x:scaled' },
+    'svg:circle': () => ({ cx: '@x:scaled', cy: '@y:scaled' }),
+    'svg:text': () => ({ x: '@x:scaled', y: '@y:scaled' }),
+    'polar:line': () => ({ d: { angle: '@x:scaled', radius: '@y:scaled' } }),
+    'polar:area': () => ({ d: { angle: '@x:scaled', innerRadius: '@y:scaled:0', outerRadius: '@y:scaled' } }),
+    'polar:circle': () => ({ angle: '@x:scaled', radius: '@y:scaled' }),
+    'polar:text': () => ({ angle: '@x:scaled', radius: '@y:scaled' }),
+};
+
+// the plots of a registered type: their default props and positions (see
+// positions) which the plot does not write (`defaults`) and the type as it
+// is written (`written`, of the `marks` of the definition), by the index of
+// the plot
 const defaultProps = (def, normalized, marks = []) => {
     const written = new Map();
     const defaults = new Map();
@@ -1159,11 +1179,12 @@ const defaultProps = (def, normalized, marks = []) => {
         if (typeof type != 'string' || !isObject(p) || !Object.hasOwn(plotTypes, p.type))
             return;
         written.set(i, type);
+        const props = isObject(raw[i].props) ? raw[i].props : {};
         const d = plotTypes[p.type].defaults;
-        const own = typeof d == 'function' ? d(isObject(raw[i].props) ? raw[i].props : {}) : d;
+        const typed = typeof d == 'function' ? d(props) : d;
+        const own = { ...positions[p.type]?.(props), ...(isObject(typed) ? typed : {}) };
         // the defaults which the plot does not replace
-        if (isObject(own))
-            defaults.set(i, Object.fromEntries(Object.entries(own).filter(([k]) => !Object.hasOwn(isObject(raw[i].props) ? raw[i].props : {}, k))));
+        defaults.set(i, Object.fromEntries(Object.entries(own).filter(([k]) => !Object.hasOwn(props, k))));
     });
     return { written, defaults };
 };

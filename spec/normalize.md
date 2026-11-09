@@ -162,17 +162,20 @@ The fixtures are `normalize/*.json`.
 The default props (`src/plots/defaults.js`), `color` is
 `{"or": ["@color", "currentColor"]}` (the color of the text without
 categories), `fill` is `{"or": ["@color", "#4269D0"]}` (the first of the
-default colors of categories):
+default colors of categories). The positions are no defaults, `translate`
+writes them of the channels of the marks:
 
 | Type | Defaults |
 |------|----------|
-| `cartesian:line` | `stroke`: color, `fill`: `none`, `d`: `{x: "@x:scaled", y: "@y:scaled"}` |
-| `cartesian:area` | `fill`: fill, `d`: `{x: "@x:scaled", y0: "@y:scaled:0", y1: "@y:scaled"}` |
-| `cartesian:bar` | `fill`: fill, `x`: `@x:scaled`, `y1`: `@y:scaled`; with `x1` (horizontal): `fill`, `x1`: `@x:scaled`, `y`: `@y:scaled` |
-| `svg:circle` | `cx`: `@x:scaled`, `cy`: `@y:scaled`, `r`: 3, `fill`: color |
-| `svg:text` | `x`: `@x:scaled`, `y`: `@y:scaled`, `fill`: `@color` |
-| `polar:line` | `stroke`: color, `fill`: `none`, `d`: `{angle: "@x:scaled", radius: "@y:scaled"}` |
-| `polar:area` | `fill`: fill, `d`: `{angle: "@x:scaled", innerRadius: "@y:scaled:0", outerRadius: "@y:scaled"}` |
+| `cartesian:line` | `stroke`: color, `fill`: `none` |
+| `cartesian:area` | `fill`: fill |
+| `cartesian:bar` | `fill`: fill; with `x1` and `y1` (the classes of a bin) also `shape-rendering`: `crispEdges` |
+| `cartesian:rule` | `stroke`: color |
+| `svg:circle` | `r`: 3, `fill`: color |
+| `svg:text` | `fill`: `@color` |
+| `polar:line` | `stroke`: color, `fill`: `none` |
+| `polar:area` | `fill`: fill |
 | `polar:arc` | `fill`: fill |
-| `polar:circle` | `angle`: `@x:scaled`, `radius`: `@y:scaled`, `r`: 3, `fill`: color |
-| `polar:text` | `angle`: `@x:scaled`, `radius`: `@y:scaled`, `fill`: `@color` |
+| `polar:circle` | `r`: 3, `fill`: color |
+| `polar:text` | `fill`: `@color` |
+| `geo:text` | `text-anchor`: `middle`, without a `dy` also `dominant-baseline`: `middle` |
