@@ -268,6 +268,9 @@ Migration notes, to check by hand after `gen-vis migrate`:
   `interval` (were 0 wide) share 80% of the period.
 - `dodge` of `point` and `rule` marks (`true` or a dim): at the middle of
   the slot of their category, e.g. error bars on dodged bars (was ignored).
+- Parquet: the columns named in the expressions of `filter` (of the chart
+  and of marks), `stack` and `hover.filter` are read; a filter on a column
+  which is no dim dropped every row.
 
 ### Package and builds
 

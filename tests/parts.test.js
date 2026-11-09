@@ -852,6 +852,23 @@ describe('the props of the labels and of the line of an axis, the titles of face
 const parquetOf = columns => parquetWriteBuffer({ columnData: columns.map(c => c.type == 'STRING'
     ? { ...c, data: c.data.map(v => new Uint8Array(Buffer.from(v))) } : c) });
 
+describe('parquet: the columns read', () => {
+    test('a filter on a column which is no dim reads the column, of the chart and of a mark', async () => {
+        const data = parquetOf([
+            { name: 'year', data: [2020, 2021, 2020, 2021], type: 'INT32' },
+            { name: 'value', data: [1, 2, 3, 4], type: 'INT32' },
+            { name: 'region', data: ['W', 'W', 'T', 'T'], type: 'STRING' },
+            { name: 'kind', data: ['a', 'b', 'a', 'b'], type: 'STRING' },
+        ]);
+        const def = { dims: { x: { column: 'year', type: 'categorical' }, y: 'value' }, filter: "@region == 'W'",
+            marks: [{ type: 'bar' }, { type: 'label', filter: "@kind == 'b'", text: '@y' }] };
+        const el = await mount({ def, data });
+        expect(el.querySelectorAll('g.vis-plot.plot-0 rect')).toHaveLength(2);
+        expect([...el.querySelectorAll('g.vis-plot.plot-1 text')].map(t => t.textContent)).toEqual(['2']);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('the categories of every format of the data', () => {
     // the same rows as csv, JSON and parquet (the years as INT32, as of R arrow)
     const years = [2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012];
