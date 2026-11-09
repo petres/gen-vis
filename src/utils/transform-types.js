@@ -3,6 +3,7 @@
 export { applyTransforms, transformTypes, randomOf };
 
 import { quantile } from "d3-array";
+import { timeFormat, utcFormat } from "d3-time-format";
 import { toDate, toNumber } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
 import { bind, constant, refNames } from "@/utils/expr";
@@ -189,6 +190,21 @@ const transformTypes = {
         return typeof v == 'string' && dateOnly.test(v.trim()) ? day
             : `${day}T${pad(d.hours)}:${pad(d.minutes)}:${pad(d.seconds)}`;
     }),
+
+    // the text of a date in a time format (`format`, of d3-time-format), in
+    // the time zone of the scale, e.g. the week of the year (%W, from
+    // Monday), the weekday (%u, 1 is Monday), the month (%m) or the quarter
+    // (%q), e.g. the rows and columns of a calendar; the names of months
+    // and days (%b, %a) are English, rows without a date have none
+    format: (t, { n, values, utc }) => {
+        if (typeof t.format != 'string')
+            throw new Error(`format: the time format is needed, e.g. "%W" (the week of the year)`);
+        const f = (utc ? utcFormat : timeFormat)(t.format);
+        return Array.from({ length: n }, (_, i) => {
+            const time = toDate(values(i), utc);
+            return time === null ? null : f(new Date(time));
+        });
+    },
 
     // the values relative to the mean of the values of the rows of `base`
     // in the group, times `scale` (100 by default), e.g. 100 in the base year

@@ -193,7 +193,7 @@ describe('transforms', () => {
             "transform[0]: unknown global 'base' in the template",
             "transform[1].size: the number of the rows of the window is needed, e.g. 7",
             "transform[1].align: expected 'end' or 'center'",
-            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window', 'regression'",
+            "transform[2].type: unknown transform 'sum', expected one of 'year', 'align', 'format', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window', 'regression'",
             "transform[2].column: the column of the values is needed",
         ]);
         expect(schema.definitions.transform.properties.type.enum).toEqual(Object.keys(transformTypes));
@@ -454,6 +454,13 @@ describe('fold, aggregate and window', () => {
         expect(checks([{ type: 'regression', column: 'value', x: 'date', as: 'f', method: 'poly', degree: 4 }])).toEqual([`transform[0].degree: the degree of the polynomial, 2 or 3`]);
         expect(checks([{ type: 'regression', column: 'value', x: 'date', as: 'f', method: 'poly', degree: 3 }])).toEqual([]);
         expect(transformColumns([{ type: 'regression', column: 'value', x: 'date', by: 'type', as: 'f' }])).toEqual(['value', 'type', 'date']);
+    });
+
+    test('format: the text of a date in a time format, validateDef of its format', () => {
+        expect(column({ type: 'format', column: 'date', format: '%W-%u', as: 'w' }, 'w')).toEqual(['00-2', '26-1', '00-3', '00-2', '00-3', '26-1']);
+        const checks = transform => validateDef({ mapping: { y: { column: 'value', type: 'numeric' } }, plot: { type: 'svg:rect', props: {} }, transform }).filter(w => w.startsWith('transform'));
+        expect(checks([{ type: 'format', column: 'date', as: 'w' }])).toEqual([`transform[0].format: the time format is needed, e.g. "%W" (the week of the year) or "%u" (the weekday)`]);
+        expect(checks([{ type: 'format', column: 'date', as: 'w', format: '%W' }])).toEqual([]);
     });
 
     test('the columns of the data: the folded ones, unknown of a pattern', () => {

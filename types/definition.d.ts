@@ -270,11 +270,12 @@ export interface GenVisDefinition {
  */
 export interface Transform {
     /**
-     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, median, q1, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max, median, ...) of a window of `size` rows, regression: the value of the least squares fit of `column` on `x` in the group (`method`), e.g. a trend line.
+     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, median, q1, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max, median, ...) of a window of `size` rows, regression: the value of the least squares fit of `column` on `x` in the group (`method`), e.g. a trend line, format: the text of a date in a time `format`, e.g. %W the week of the year.
      */
     type:
         | 'year'
         | 'align'
+        | 'format'
         | 'index'
         | 'mean'
         | 'share'
@@ -442,6 +443,10 @@ export interface Transform {
      * The year of align, 2020 by default.
      */
     year?: number;
+    /**
+     * format: the time format (d3-time-format) of the dates of `column`, e.g. %W (the week of the year from Monday, 00 to 53), %u (the weekday, 1 is Monday), %m (the month), %q (the quarter), %Y-%m (a month of a year); the names of months and days (%b, %a) are English.
+     */
+    format?: string;
     /**
      * regression: the column of the x values, numbers or dates.
      */

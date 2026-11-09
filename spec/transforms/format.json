@@ -1,0 +1,107 @@
+[
+  {
+    "name": "the week of the year from Monday (%W), the weekday (%u, 1 is Monday), the month and the quarter of dates, rows without a date have none",
+    "rows": [
+      {
+        "date": "2025-01-01"
+      },
+      {
+        "date": "2025-01-06"
+      },
+      {
+        "date": "2025-12-31"
+      },
+      {
+        "date": ""
+      }
+    ],
+    "transform": [
+      {
+        "type": "format",
+        "column": "date",
+        "format": "%W",
+        "as": "week"
+      },
+      {
+        "type": "format",
+        "column": "date",
+        "format": "%u",
+        "as": "weekday"
+      },
+      {
+        "type": "format",
+        "column": "date",
+        "format": "%Y-%m",
+        "as": "month"
+      },
+      {
+        "type": "format",
+        "column": "date",
+        "format": "Q%q",
+        "as": "quarter"
+      }
+    ],
+    "columns": {
+      "week": [
+        "00",
+        "01",
+        "52",
+        null
+      ],
+      "weekday": [
+        "3",
+        "1",
+        "3",
+        null
+      ],
+      "month": [
+        "2025-01",
+        "2025-01",
+        "2025-12",
+        null
+      ],
+      "quarter": [
+        "Q1",
+        "Q1",
+        "Q4",
+        null
+      ]
+    }
+  },
+  {
+    "name": "of a time in UTC, a column of a utc scale",
+    "rows": [
+      {
+        "t": "2025-03-30T23:30:00Z"
+      }
+    ],
+    "transform": {
+      "type": "format",
+      "column": "t",
+      "format": "%Y-%m-%d %H",
+      "as": "hour"
+    },
+    "utc": [
+      "t"
+    ],
+    "columns": {
+      "hour": [
+        "2025-03-30 23"
+      ]
+    }
+  },
+  {
+    "name": "the format is needed",
+    "rows": [
+      {
+        "date": "2025-01-01"
+      }
+    ],
+    "transform": {
+      "type": "format",
+      "column": "date",
+      "as": "w"
+    },
+    "error": "format: the time format is needed"
+  }
+]

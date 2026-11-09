@@ -384,6 +384,14 @@ column:
   `q3` or `quantile` (of `p`) of the window of `size` rows, as the mean of
   `rolling` (`align`), e.g. a rolling median, or the sum of the last 7 days, `{"type": "window", "column": "cases", "order": "date", "op":
   "sum", "size": 7, "as": "week"}`.
+- `format`: the text of a date in a time format (`format`, of
+  [d3-time-format](https://d3js.org/d3-time-format#locale_format)), in the
+  time zone of the scale of the column, e.g. the week of the year (`%W`,
+  weeks from Monday, `00` before the first Monday) and the weekday (`%u`, 1
+  is Monday) of the cells of a calendar, the month (`%m`) or the quarter
+  (`Q%q`): `{"type": "format", "column": "date", "format": "%W", "as":
+  "week"}`. The names of months and days (`%b`, `%a`) are English, the
+  `name` of the categories of a dim gives others.
 - `regression`: the fitted value of the least squares fit of the values of
   `column` on the ones of the column `x` (numbers or dates) in the group, a
   value of every row with an x, so a `line` of it draws the trend through

@@ -843,6 +843,7 @@ const transformKeys = {
     aggregate: ['column', 'as', 'by', 'op', 'p', 'rows', 'order'],
     window: ['column', 'as', 'by', 'order', 'op', 'p', 'size', 'offset', 'align'],
     regression: ['column', 'as', 'by', 'x', 'method', 'degree'],
+    format: ['column', 'as', 'format'],
 };
 // 'a', 'b' or 'c'
 const or = names => names.length < 2 ? list(names) : `${list(names.slice(0, -1))} or ${show(names.at(-1))}`;
@@ -958,6 +959,9 @@ const checkTransforms = ({ def, globals, warn, rows }) => {
             else if (t.p !== undefined && t.op != 'quantile' && !isTemplate(t.op))
                 warn(`${path}.p`, `only of the op 'quantile', e.g. "op": "quantile", "p": 0.9`);
         }
+        // the time format of a format
+        if (t.type == 'format' && typeof t.format != 'string')
+            warn(`${path}.format`, `the time format is needed, e.g. "%W" (the week of the year) or "%u" (the weekday)`);
         // the x of a regression, its method and the degree of a polynomial
         if (t.type == 'regression') {
             if (typeof t.x != 'string')

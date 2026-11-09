@@ -295,6 +295,8 @@ their rows replace the rows or follow them. Fixtures in `spec/transforms`.
   (numbers or dates) per group, `linear`, `log`, `exp` or `poly` (of
   `degree` 2 or 3), the fitted value of every row, e.g. trend lines of a
   scatter plot drawn as a `line` of the fitted column.
+- The transform `format`: the text of a date in a time format, e.g. the
+  week of the year (`%W`) and the weekday (`%u`) of a calendar heatmap.
 
 ### Schema, check and migration
 

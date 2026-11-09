@@ -12,7 +12,7 @@ import { refNames } from "@/utils/expr";
  */
 
 // the types of the transforms, e.g. for validateDef
-const transformNames = ['year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window', 'regression'];
+const transformNames = ['year', 'align', 'format', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window', 'regression'];
 
 const list = transforms => [transforms ?? []].flat();
 
