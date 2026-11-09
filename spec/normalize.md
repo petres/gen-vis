@@ -49,11 +49,11 @@ engine reads; `tests/language.test.js` has cases of step 3.
 - `marks` (a mark or a list) are `plot`, `by` a list. The type of the
   coordinate system (`coord`, `cartesian` by default): `point` is
   `svg:circle` (`polar:circle`, `geo:circle`), `label` and `text` are
-  `svg:text` (`polar:text`, `geo:text`), `cell` is `svg:rect`, `line` and
-  `area` of polar charts `polar:<kind>`, otherwise `line`, `area`, `bar` and
-  `rule` are `cartesian:<kind>`, `arc` is `polar:arc`, `base`, `region` and
-  `mesh` are `geo:<kind>`, `circle`, `rect`, `line` and `text` otherwise
-  `svg:<kind>`; a name with a `:` stays.
+  `svg:text` (`polar:text`, `geo:text`), `cell` is `svg:rect`, `tick` is
+  `cartesian:rule`, `line` and `area` of polar charts `polar:<kind>`,
+  otherwise `line`, `area`, `bar` and `rule` are `cartesian:<kind>`, `arc`
+  is `polar:arc`, `base`, `region` and `mesh` are `geo:<kind>`, `circle`
+  and `rect` are `svg:<kind>`; a name with a `:` stays.
 - The keys of a mark which are no options (`type`, `id`, `by`, `filter`,
   `curve`, `stack`, `dodge`, `orient`, `select`, `layer`, `facet`, `data`,
   `dataFormat`, `once`, `place`, `halo`, `ends`, `fit`, `overlap`,
@@ -106,8 +106,8 @@ engine reads; `tests/language.test.js` has cases of step 3.
 - The dims of the hover get `"hover": {}` unless they have one: the ones of
   `hover.columns`, without it the dims of the `by` of the marks.
 - The other keys (`$schema`, `parent`, `data`, `dataFormat`, `transform`,
-  `filter`, `globals`, `geo`, `annotations`, keys of extensions) stay as
-  they are.
+  `filter`, `globals`, `geo`, `annotations`) stay as they are, keys which
+  the schema does not know are left out.
 
 ## normalize
 

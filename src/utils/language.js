@@ -2,7 +2,7 @@ export { translate, checkDims, colorDims, isCategorical, dim as dimOf, compileSt
 
 import { isObject } from '@/utils/values';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
-import { isOperator, refNames } from '@/utils/expr';
+import { refNames } from '@/utils/expr';
 import { categoryKeys, isCategorical } from '@/utils/normalize';
 
 /**
@@ -220,22 +220,20 @@ const typeOf = (type, coord) => {
         return type;
     if (type == 'point')
         return coord == 'polar' ? 'polar:circle' : coord == 'geo' ? 'geo:circle' : 'svg:circle';
-    if (type == 'label')
+    if (type == 'label' || type == 'text')
         return coord == 'polar' ? 'polar:text' : coord == 'geo' ? 'geo:text' : 'svg:text';
     if (type == 'cell')
         return 'svg:rect';
     // a short rule across the band of a categorical position, see tickOf
     if (type == 'tick')
         return 'cartesian:rule';
-    if (type == 'text')
-        return coord == 'polar' ? 'polar:text' : coord == 'geo' ? 'geo:text' : 'svg:text';
     if (['line', 'area', 'bar', 'rule'].includes(type))
         return coord == 'polar' && type != 'bar' && type != 'rule' ? `polar:${type}` : `cartesian:${type}`;
     if (type == 'arc')
         return 'polar:arc';
     if (['base', 'region', 'mesh'].includes(type))
         return `geo:${type}`;
-    if (['circle', 'rect', 'line', 'text'].includes(type))
+    if (type == 'circle' || type == 'rect')
         return `svg:${type}`;
     return type;
 };
@@ -732,8 +730,8 @@ const colorDims = (dims, rawMarks, coord = 'cartesian') => {
 
 /**
  * The definition of 5.0 (merged with its parents, the expressions of
- * globals resolved, see utils/resolve.js) as the engine reads it. Unknown
- * top-level keys are kept (e.g. for validateDef).
+ * globals resolved, see utils/resolve.js) as the engine reads it. Keys of
+ * the top level which the schema does not know are left out.
  */
 const translate = raw => translated(raw).def;
 
@@ -852,9 +850,6 @@ const translated = raw => {
     out.plot = marks;
     if (facets !== undefined)
         out.facets = facets;
-    // the other keys, e.g. of extensions, as they are
-    Object.keys(def).filter(k => !out[k] && !optionKeys.includes(k) && !['dims', 'marks', 'controls', 'filter', 'facets'].includes(k) && out[k] === undefined)
-        .forEach(k => out[k] = def[k]);
     return { def: out, implicit };
 };
 
