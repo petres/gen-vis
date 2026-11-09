@@ -1,69 +1,29 @@
 {
     "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "data": "awards.csv",
-    "transform": [
-        {
-            "type": "bin",
-            "column": "value",
-            "edges": [{"from": 50, "to": 250, "step": 5}, 143],
-            "by": ["group", "period"],
-            "start": "lo",
-            "end": "hi",
-            "normalize": "density",
-            "as": "density"
-        }
-    ],
+    "transform": {
+        "type": "bin", "column": "value", "edges": [{ "from": 50, "to": 250, "step": 5 }, 143], "by": ["group", "period"],
+        "start": "lo", "end": "hi", "normalize": "density", "as": "density"
+    },
     "title": "Verteilung der Auftragswerte nach Zeitraum",
     "subtitle": "Dichte in Klassen von 5.000 € (eine Grenze bei 143.000 €), nach Vergabeverfahren",
     "source": "Erfundene Daten, Beispiel des Transforms bin und der Treppen einer Linie",
     "height": 180,
-    "margins": {"top": 6, "right": 10, "bottom": 22, "left": 10},
-    "locale": {"base": "de"},
+    "locale": { "base": "de" },
     "dims": {
         "x": {
-            "column": "lo",
-            "type": "numeric",
-            "domain": [46, 254],
-            "axis": {
-                "values": [50, 100, 150, 200, 250],
-                "labels": {"props": {"text": "=cat(format(@x, ',.0f'), 'k')"}}
-            }
+            "column": "lo", "type": "numeric", "domain": [46, 254],
+            "axis": { "values": [50, 100, 150, 200, 250], "labels": { "props": { "text": "=cat(format(@x, ',.0f'), 'k')" } } }
         },
-        "hi": {"column": "hi", "scale": {"of": "x"}},
-        "y": {
-            "column": "density",
-            "scale": {"pad": [0, 0.1]},
-            "axis": {"values": [], "tickMarks": false},
-            "zero": true
-        },
+        "y": { "column": "density", "zero": true, "pad": [0, 0.1], "axis": { "values": [], "tickMarks": false } },
         "period": {
             "column": "period",
-            "categories": {
-                "bis Jul 2025": "#6CC5B0",
-                "VO 2025": {"color": "#EFB118", "dash": "4 2"},
-                "VRG 2026": "#A463F2"
-            },
-            "legend": {
-                "symbol": {
-                    "type": "line",
-                    "width": 24,
-                    "props": {"stroke-width": 1.6, "stroke-dasharray": "@dash"}
-                }
-            }
+            "categories": { "bis Jul 2025": "#6CC5B0", "VO 2025": { "color": "#EFB118", "dash": "4 2" }, "VRG 2026": "#A463F2" },
+            "legend": { "symbol": { "type": "auto", "width": 24 } }
         },
-        "group": {"column": "group", "categories": {"Direktvergabe": {}, "Andere Verfahren": {}}}
+        "group": "group"
     },
-    "marks": [
-        {
-            "type": "line",
-            "id": "outlines",
-            "by": "period",
-            "x0": "x",
-            "x1": "hi",
-            "stroke-width": 1.4,
-            "stroke-dasharray": "@dash"
-        }
-    ],
-    "facets": {"by": "group", "cols": 2, "scales": ["x"]},
-    "hover": {"columns": []}
+    "facets": { "by": "group", "cols": 2, "scales": ["x"] },
+    "hover": { "columns": ["period"] },
+    "marks": { "type": "line", "by": "period", "x0": "x", "x1": "hi", "stroke-width": 1.4, "stroke-dasharray": "@dash" }
 }

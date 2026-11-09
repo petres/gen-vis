@@ -1,78 +1,36 @@
 {
     "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "data": "data.csv",
-    "transform": {
-        "type": "index",
-        "column": "Einwohner",
-        "as": "index",
-        "by": "Bundesland",
-        "base": {"Jahr": "2002"}
-    },
+    "transform": { "type": "index", "column": "Einwohner", "as": "index", "by": "Bundesland", "base": { "Jahr": "2002" } },
     "title": "Wachstum seit 2002",
     "subtitle": "Veränderung der Bevölkerung bis {year} in %, nach Bundesland",
     "source": "Q: Statistik Austria",
     "height": 330,
-    "margins": {"top": 26, "right": 60, "bottom": 6, "left": 120},
-    "locale": {"base": "de", "number": {"currency": ["", " %"]}},
+    "locale": { "base": "de", "number": { "currency": ["", " %"] } },
     "transition": 400,
-    "hover": {"box": false, "marker": false, "area": "facet", "columns": []},
-    "globals": {"year": "2022"},
-    "controls": [
-        {
-            "type": "slider",
-            "global": "year",
-            "name": "Jahr",
-            "id": "year",
-            "values": {"column": "Jahr"},
-            "inImage": false
-        }
-    ],
-    "filter": {"year": "@globals.year"},
+    "hover": { "box": false, "marker": false, "area": "facet" },
+    "globals": { "year": "2022" },
+    "controls": [{ "type": "slider", "global": "year", "name": "Jahr", "values": { "column": "Jahr" }, "inImage": false }],
+    "filter": { "year": "@globals.year" },
     "dims": {
         "year": "Jahr",
         "x": {
-            "column": "index",
-            "scale": {"include": [100, 110], "pad": [0.03, 0.03]},
-            "axis": {
-                "position": "top",
-                "tickSpacing": 90,
-                "labels": {"props": {"text": "=format(@x + -100, '+$.0f')"}}
-            },
-            "grid": true
+            "column": "index", "include": [100, 110], "pad": 0.03, "grid": true,
+            "axis": { "position": "top", "tickSpacing": 90, "labels": { "props": { "text": "=format(@x - 100, '+$.0f')" } } }
         },
         "y": {
             "column": "Bundesland",
-            "scale": {"range": [0, "@height"], "padding": 0.3, "order": {"by": "x", "descending": true}},
-            "axis": {"labels": {"props": {"font-weight": "@weight", "text": "@name"}}},
+            "scale": { "padding": 0.3, "order": { "by": "x", "descending": true } },
+            "axis": { "labels": { "props": { "font-weight": "@weight", "text": "@name" } } },
             "fromData": true,
-            "common": {"fill": "#4C9F70", "weight": "normal"},
-            "categories": {"ÖSTERREICH": {"name": "Österreich", "fill": "#1F3A33", "weight": "bold"}}
+            "common": { "color": "#4C9F70", "weight": "normal" },
+            "categories": { "ÖSTERREICH": { "name": "Österreich", "color": "#1F3A33", "weight": "bold" } }
         }
     },
     "marks": [
-        {
-            "type": "bar",
-            "id": "bars",
-            "by": "y",
-            "orient": "horizontal",
-            "x0": 100,
-            "fill": "@fill",
-            "highlight": {"opacity": 1},
-            "others": {"opacity": 0.5}
-        },
-        {
-            "type": "text",
-            "id": "values",
-            "by": "y",
-            "dx": 5,
-            "dominant-baseline": "central",
-            "font-size": 11,
-            "font-weight": "@weight",
-            "fill": "#333",
-            "text": "=format(@x + -100, '+$.1f')",
-            "highlight": {"opacity": 1},
-            "others": {"opacity": 0.5}
-        }
+        { "type": "bar", "by": "y", "x0": 100, "highlight": { "opacity": 1 }, "others": { "opacity": 0.5 } },
+        { "type": "label", "by": "y", "anchor": "end", "text": "=format(@x - 100, '+$.1f')", "font-size": 11, "font-weight": "@weight", "fill": "#333",
+          "highlight": { "opacity": 1 }, "others": { "opacity": 0.5 } }
     ],
-    "annotations": [{"type": "line", "x": 100, "props": {"stroke": "#333"}}]
+    "annotations": { "type": "line", "x": 100, "props": { "stroke": "#333" } }
 }

@@ -1272,7 +1272,7 @@ attributes are merged into the defaults, e.g. `d` of a path.
 ### Examples
 
 Horizontal bars of a year of a slider, with their values beside them
-(a shorter form of `data/bev/def-hbar.json`, which is migrated from 4.x):
+(`data/bev/def-hbar.json`):
 
 ```json
 {
@@ -1280,28 +1280,29 @@ Horizontal bars of a year of a slider, with their values beside them
     "data": "data.csv",
     "title": "Bevölkerung {year}",
     "height": 320,
-    "margins": { "right": 60 },
     "globals": { "year": "2022" },
     "controls": [{ "type": "slider", "global": "year", "name": "Jahr", "values": { "column": "Jahr" } }],
     "filter": "@year == @globals.year and @y != 'ÖSTERREICH'",
     "dims": {
         "year": "Jahr",
-        "x": { "column": "Einwohner", "format": ",.0f", "zero": true, "grid": true, "tickSpacing": 100 },
-        "y": { "column": "Bundesland", "type": "categorical", "scale": { "order": { "by": "x", "descending": true } } }
+        "x": { "column": "Einwohner", "format": ",.0f", "zero": true, "grid": true, "tickSpacing": 110 },
+        "y": { "column": "Bundesland", "type": "categorical", "scale": { "padding": 0.25, "order": { "by": "x", "descending": true } } }
     },
     "marks": [
-        { "type": "bar", "fill": "#1E4F77", "highlight": { "fill": "#5BC5F2" } },
+        { "type": "bar", "by": "y", "fill": "#1E4F77", "highlight": { "fill": "#5BC5F2" } },
         { "type": "label", "text": "@x:formatted", "anchor": "end", "font-size": 11 }
     ]
 }
 ```
 
-The labels are beyond the plot area, so the right margin is given; the
-dim `year` is the column of the filter, `@globals.year` the global of the
-same name.
+The labels beyond the plot area are in the measured right margin; the
+bars are `by` the dim `y`, the groups of their highlight (the bar under
+the pointer); the dim `year` is the column of the filter, `@globals.year`
+the global of the same name.
 
 Stacked bars, a facet per region, the total in the hover
-(a shorter form of `data/rechtsform/def-stacked.json`, which is migrated from 4.x):
+(`data/rechtsform/def-stacked.json` is the same without the total, its
+bars of an opacity of 0.7):
 
 ```json
 {

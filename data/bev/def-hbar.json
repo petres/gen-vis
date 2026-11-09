@@ -5,53 +5,16 @@
     "subtitle": "nach Bundesland, nach der Einwohnerzahl sortiert",
     "source": "Q: Statistik Austria",
     "height": 320,
-    "margins": {"top": 5, "right": 70, "bottom": 25, "left": 120},
-    "globals": {"year": "2022"},
-    "controls": [
-        {
-            "type": "slider",
-            "global": "year",
-            "name": "Jahr",
-            "id": "year",
-            "values": {"column": "Jahr"},
-            "inImage": false
-        }
-    ],
-    "filter": {"year": "@globals.year"},
+    "globals": { "year": "2022" },
+    "controls": [{ "type": "slider", "global": "year", "name": "Jahr", "values": { "column": "Jahr" }, "inImage": false }],
+    "filter": "@year == @globals.year and @y != 'ÖSTERREICH'",
     "dims": {
         "year": "Jahr",
-        "x": {
-            "column": "Einwohner",
-            "format": ",.0f",
-            "axis": {"tickSpacing": 110},
-            "hover": {},
-            "zero": true,
-            "grid": true
-        },
-        "y": {
-            "column": "Bundesland",
-            "scale": {"range": [0, "@height"], "padding": 0.25, "order": {"by": "x", "descending": true}},
-            "fromData": true,
-            "categories": {"ÖSTERREICH": {"visible": false}}
-        }
+        "x": { "column": "Einwohner", "format": ",.0f", "zero": true, "grid": true, "tickSpacing": 110 },
+        "y": { "column": "Bundesland", "type": "categorical", "scale": { "padding": 0.25, "order": { "by": "x", "descending": true } } }
     },
     "marks": [
-        {
-            "type": "bar",
-            "by": "y",
-            "orient": "horizontal",
-            "fill": "#1E4F77",
-            "highlight": {"fill": "#5BC5F2"}
-        },
-        {
-            "type": "text",
-            "by": "y",
-            "dx": 4,
-            "dominant-baseline": "middle",
-            "font-size": 11,
-            "text": "@x:formatted",
-            "fill": null
-        }
-    ],
-    "hover": {"columns": []}
+        { "type": "bar", "by": "y", "fill": "#1E4F77", "highlight": { "fill": "#5BC5F2" } },
+        { "type": "label", "text": "@x:formatted", "anchor": "end", "font-size": 11 }
+    ]
 }

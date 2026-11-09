@@ -5,49 +5,14 @@
     "subtitle": "Anzahl Wohnungen",
     "source": "<strong>Q:</strong> GWZ/HWZ 1971-2001, RZ 2011, MZ 2020",
     "height": 400,
-    "margins": {"top": 20, "right": 20, "bottom": 50, "left": 70},
     "dims": {
-        "x": {
-            "column": "Jahr",
-            "format": "c",
-            "scale": {"domainAbs": [-4, 4]},
-            "axis": {"ticks": 6, "rotate": 0, "values": [1971, 1981, 1991, 2001, 2011, 2020]}
-        },
-        "y": {"column": "Anzahl", "format": ",.0f", "axis": {"ticks": 8}, "zero": true, "grid": true},
-        "type": {
-            "column": "Type",
-            "legend": {
-                "symbol": {
-                    "size": 16,
-                    "elements": [
-                        {
-                            "type": "rect",
-                            "props": {"x": 0, "y": 0, "width": 16, "height": 16, "fill": "@color", "rx": 3}
-                        }
-                    ]
-                }
-            },
-            "common": {
-                "visible": true,
-                "stroke-width": 3,
-                "r": 4,
-                "width": 10,
-                "transform": "translate(-20 0)"
-            },
-            "categories": {
-                "Hauseigentum": {"color": "#BBD7EE", "transform": "translate(-25 0)"},
-                "Wohnungseigentum": {"color": "#5BC5F2", "transform": "translate(-15 0)"},
-                "GBV Miete": {"color": "#559BD5", "transform": "translate( -5 0)"},
-                "Gemeinde Miete": {"color": "#C7DF71", "transform": "translate(  5 0)"},
-                "Private Miete": {"color": "#4B9847", "transform": "translate( 15 0)"},
-                "Sonstige": {"color": "#9CE1F8", "transform": "translate( 25 0)"}
-            }
-        },
-        "geo": {
-            "column": "Geo",
-            "categories": {"Österreich": {"name": "Österreich"}, "Wien": {"name": "Wien"}}
-        }
+        "x": { "column": "Jahr", "type": "categorical", "scale": { "padding": 0.2 } },
+        "y": { "column": "Anzahl", "format": ",.0f", "zero": true, "ticks": 8, "grid": true },
+        "type": { "column": "Type", "legend": {}, "categories": {
+            "Hauseigentum": "#BBD7EE", "Wohnungseigentum": "#5BC5F2", "GBV Miete": "#559BD5",
+            "Gemeinde Miete": "#C7DF71", "Private Miete": "#4B9847", "Sonstige": "#9CE1F8" } },
+        "geo": "Geo"
     },
-    "marks": [{"type": "bar", "by": "type", "opacity": 1, "width": "@width", "transform": "@transform"}],
-    "facets": {"by": "geo", "cols": 2, "scales": "own"}
+    "facets": { "by": "geo", "cols": 2 },
+    "marks": { "type": "bar", "by": "type", "dodge": true }
 }

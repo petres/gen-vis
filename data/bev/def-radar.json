@@ -5,69 +5,24 @@
     "subtitle": "nach Bundesland",
     "source": "Q: Statistik Austria",
     "height": 420,
-    "margins": {"top": 30, "right": 90, "bottom": 30, "left": 90},
     "coord": "polar",
     "dims": {
-        "land": {
-            "column": "Bundesland",
-            "scale": {"orientation": "angular"},
-            "axis": {"padding": 4},
+        "x": {
+            "column": "Bundesland", "grid": true, "axis": { "padding": 4 },
             "categories": {
-                "ÖSTERREICH": {"visible": false},
-                "Wien": {},
-                "Niederösterreich": {},
-                "Burgenland": {},
-                "Steiermark": {},
-                "Kärnten": {},
-                "Tirol": {},
-                "Vorarlberg": {},
-                "Salzburg": {},
-                "Oberösterreich": {}
-            },
-            "grid": true
+                "Wien": {}, "Niederösterreich": {}, "Burgenland": {}, "Steiermark": {}, "Kärnten": {},
+                "Tirol": {}, "Vorarlberg": {}, "Salzburg": {}, "Oberösterreich": {}
+            }
         },
         "y": {
-            "column": "Einwohner",
-            "scale": {"pad": [0, 0.05]},
-            "axis": {"ticks": 4, "angle": 40, "gridShape": "polygon", "format": ".2s"},
-            "hover": {"format": ",.0f"},
-            "zero": true,
-            "grid": true
+            "column": "Einwohner", "zero": true, "pad": [0, 0.05], "ticks": 4, "grid": true,
+            "axis": { "angle": 40, "gridShape": "polygon", "format": ".2s" },
+            "hover": { "format": ",.0f" }
         },
-        "year": {
-            "column": "Jahr",
-            "legend": {
-                "symbol": {
-                    "size": 16,
-                    "elements": [
-                        {
-                            "type": "line",
-                            "props": {
-                                "x1": 0,
-                                "x2": 16,
-                                "y1": 8,
-                                "y2": 8,
-                                "stroke": "@color",
-                                "stroke-width": 2.5
-                            }
-                        }
-                    ]
-                }
-            },
-            "categories": {"2002": "#BBD7EE", "2012": "#559BD5", "2022": "#1E4F77"},
-            "hover": {}
-        }
+        "year": { "column": "Jahr", "legend": {}, "categories": { "2002": "#BBD7EE", "2012": "#559BD5", "2022": "#1E4F77" } }
     },
     "marks": [
-        {
-            "type": "line",
-            "by": "year",
-            "curve": "linearClosed",
-            "x": "land",
-            "stroke-width": 2.5,
-            "highlight": {"stroke-width": 4}
-        },
-        {"type": "point", "by": "year", "r": 3.5, "angle": "@land:scaled", "highlight": {"r": 5}}
-    ],
-    "hover": {"columns": []}
+        { "type": "line", "by": "year", "curve": "linearClosed", "stroke-width": 2.5, "highlight": { "stroke-width": 4 } },
+        { "type": "point", "by": "year", "r": 3.5, "highlight": { "r": 5 } }
+    ]
 }
