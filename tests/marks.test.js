@@ -220,7 +220,20 @@ describe('cells', () => {
         // the colors of the values, darker of a larger one
         const fills = cells.map(r => r.getAttribute('fill'));
         expect(new Set(fills).size).toBe(4);
+        // next to each other, the bands have no padding
+        const xs = [...new Set(cells.map(r => num(r, 'x')))].sort((a, b) => a - b);
+        expect(xs[0] + num(cells[0], 'width')).toBeCloseTo(xs[1]);
         expect(errors).toEqual([]);
+    });
+
+    test('the padding of a scale of the dim stays', async () => {
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical', scale: { padding: 0.5 } }, y: { column: 'type', type: 'categorical' }, v: 'value' },
+            marks: { type: 'cell', fill: 'v' },
+        };
+        const cells = rects(await mount({ def, data }));
+        const xs = [...new Set(cells.map(r => num(r, 'x')))].sort((a, b) => a - b);
+        expect(xs[1] - xs[0]).toBeCloseTo(2*num(cells[0], 'width'));
     });
 });
 

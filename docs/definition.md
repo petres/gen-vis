@@ -829,7 +829,10 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   of a band scale of years, the ones outside of the domain are left out,
   also the ones which are no category of a `band` or `point` scale, also an
   expression of the names of the facet, e.g. steps of `totalWidth`. A band
-  or point scale has a tick per category.
+  or point scale has a tick per category. The labels of a horizontal axis
+  which overlap (measured) are thinned: every n-th one is shown, the tick
+  marks stay, e.g. the years of a heatmap in a narrow chart; not the ones
+  of fixed `values` or rotated labels.
 - `format`: a d3 number or time format.
 - `rotate`: the angle of the labels in degrees, positive counterclockwise,
   negative clockwise.
@@ -1338,7 +1341,9 @@ A heatmap, a cell per year and type colored by a scale, with its values:
 }
 ```
 
-A cell gives the dims of its positions band scales, its `width` and
+A cell gives the dims of its positions band scales without a `padding`
+(the cells are next to each other, a white `stroke` draws the lines
+between them; a `scale.padding` of the dim stays), its `width` and
 `height` are the bands (`@x:bandwidth`, `@y:bandwidth`).
 
 A histogram: the bars of the classes of a [bin](#transform) from their

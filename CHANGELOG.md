@@ -293,6 +293,10 @@ Migration notes, to check by hand after `gen-vis migrate`:
   measured at their place in the plot area of the final width (were of the
   provisional one, the right margin of narrow charts was up to 10 px
   short), the plot area keeps half of the width at least.
+- The band scales a `cell` makes have no padding (were 0.4, a heatmap had
+  gaps wider than its cells); the labels of a horizontal axis which overlap
+  are thinned to every n-th one (not fixed `values` or rotated labels),
+  e.g. the 21 years of the heatmap example. Its PNG baseline is redone.
 
 ### Package and builds
 

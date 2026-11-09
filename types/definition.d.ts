@@ -928,7 +928,7 @@ export interface Axis {
      */
     tickSpacing?: number | string | Expression;
     /**
-     * Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or ["2004", "2008"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth.
+     * Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or ["2004", "2008"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth; all of them are labelled (other labels of a horizontal axis which overlap show every n-th one).
      */
     values?: unknown[] | string | Expression;
     /**

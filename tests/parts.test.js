@@ -733,6 +733,40 @@ describe('ticks of null', () => {
     });
 });
 
+describe('labels of a horizontal axis which overlap', () => {
+    const years = Array.from({ length: 21 }, (_, i) => 2002 + i);
+    const rows = 'year,value\n' + years.map(y => `${y},1`).join('\n');
+    const labels = el => [...el.querySelectorAll('.vis-axis-bottom .tick text')].map(t => t.textContent);
+
+    test('every n-th label of the categories of a narrow chart, all of a wide one, the tick marks stay', async () => {
+        const def = { width: 300, height: 200, dims: { x: { column: 'year', type: 'categorical' }, y: 'value' }, marks: { type: 'bar' } };
+        const narrow = await mount({ def, data: rows });
+        const texts = labels(narrow);
+        expect(texts).toHaveLength(21);
+        const shown = texts.filter(Boolean);
+        expect(shown.length).toBeLessThan(21);
+        expect(shown[0]).toBe('2002');
+        // the same step between the ones shown
+        const step = texts.indexOf(shown[1]);
+        expect(texts.every((t, i) => (i % step == 0) == (t !== ''))).toBe(true);
+        const wide = await mount({ def: { ...def, width: 2000 }, data: rows });
+        expect(labels(wide).filter(Boolean)).toHaveLength(21);
+        expect(errors).toEqual([]);
+    });
+
+    test('of numbers of many ticks, not of values given or rotated labels', async () => {
+        const def = { width: 200, height: 200, dims: { x: { column: 'year', type: 'numeric', format: 'd', axis: { ticks: 21 } }, y: 'value' }, marks: { type: 'line' } };
+        const shown = labels(await mount({ def, data: rows })).filter(Boolean);
+        expect(shown.length).toBeGreaterThan(1);
+        expect(shown.length).toBeLessThan(labels(await mount({ def, data: rows })).length);
+        const given = { ...def, dims: { ...def.dims, x: { ...def.dims.x, axis: { values: years } } } };
+        expect(labels(await mount({ def: given, data: rows })).filter(Boolean)).toHaveLength(21);
+        const rotated = { ...def, dims: { ...def.dims, x: { ...def.dims.x, axis: { ticks: 21, rotate: 90 } } } };
+        expect(labels(await mount({ def: rotated, data: rows })).every(Boolean)).toBe(true);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('fixed ticks as a prop', () => {
     test('e.g. fewer of a narrow visualisation', async () => {
         const def = lineDef({ width: 400 });

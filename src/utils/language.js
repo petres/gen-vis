@@ -427,10 +427,13 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
                     props.cx = dodged(x.dim, dodgeGroup).center;
             }
         } else if (kind == 'rect' && raw.type == 'cell') {
-            // the cells need the bands of their positions
+            // the cells need the bands of their positions, next to each other
+            // (a `padding` of 0, a `stroke` draws lines between them)
             [x, y].forEach(c => {
-                if (c?.dim && isObject(dims[c.dim]) && dims[c.dim].scale?.type === undefined)
-                    dims[c.dim].scale = { ...(isObject(dims[c.dim].scale) ? dims[c.dim].scale : {}), type: 'band' };
+                if (c?.dim && isObject(dims[c.dim]) && dims[c.dim].scale?.type === undefined) {
+                    const own = isObject(dims[c.dim].scale) ? dims[c.dim].scale : {};
+                    dims[c.dim].scale = { ...own, type: 'band', padding: own.padding ?? 0 };
+                }
             });
             if (x) {
                 props.x = x.value;

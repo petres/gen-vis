@@ -195,7 +195,7 @@ const definitions = {
         gridShape: choice(['circle', 'polygon'], 'The grid lines of a radial axis, circles or polygons through the ticks of the angle, e.g. of radar charts.'),
         ticks: anyOf([ref('number'), ref('none')], 'The number of the ticks, null for the ones of tickSpacing, e.g. of a parent; also `ticks` of the dim.'),
         tickSpacing: ref('number', 'Without ticks, a tick per this many pixels of the length of the axis, e.g. 80; also `tickSpacing` of the dim.'),
-        values: ofGlobals({ type: 'array' }, 'Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or ["2004", "2008"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth.'),
+        values: ofGlobals({ type: 'array' }, 'Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or ["2004", "2008"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth; all of them are labelled (other labels of a horizontal axis which overlap show every n-th one).'),
         format: text('A d3 number or time format.'),
         labels: object({
             by: anyOf([{ type: 'string' }, array(string())], 'The dims of categories whose props the labels have, of the categories of the row of the tick, a dim or a list of them, as `by` of a mark.'),
@@ -315,7 +315,7 @@ const definitions = {
     mark: describe(map(ref('propEntry'), 'A mark, a layer of the chart: its type and the dims of its channels (x, y, ...), the attributes of its elements (e.g. "stroke-width": 2, "fill": "@color" of its categories), expressions of the row, the names of the facet and the globals, nested props, e.g. d of a path.', {
         properties: {
             type: anyOf([
-                choice(markNames, 'A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y, e.g. of a heatmap.'),
+                choice(markNames, 'A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap.'),
                 choice(markTypes, 'The full name of a type of a coordinate system, as the name without the prefix. The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations.'),
                 pattern('^[a-z][\\w-]*:[\\w-]+$', 'A registered plot type, see registerPlotType.'),
                 pattern('^[a-z][\\w-]*$', 'A registered plot type of the coordinate system without its prefix, see registerPlotType.'),

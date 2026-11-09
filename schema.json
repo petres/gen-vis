@@ -689,7 +689,7 @@
                         },
                         { "$ref": "#/definitions/expression" }
                     ],
-                    "description": "Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or [\"2004\", \"2008\"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth."
+                    "description": "Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or [\"2004\", \"2008\"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth; all of them are labelled (other labels of a horizontal axis which overlap show every n-th one)."
                 },
                 "format": {
                     "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
@@ -1126,7 +1126,7 @@
                                 "rule",
                                 "text"
                             ],
-                            "description": "A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y, e.g. of a heatmap."
+                            "description": "A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap."
                         },
                         {
                             "enum": [
