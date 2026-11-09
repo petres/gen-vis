@@ -750,7 +750,9 @@ const textsOf4 = (v, key = undefined) => {
  * expressions of the leaves its parents patch and it (or they) define,
  * as 4.x applied the patches after the merge.
  */
-const migrate = (raw, { parents, noHover = false } = {}) => {
+const migrate = (raw, { parents: given, noHover = false } = {}) => {
+    // parents of 5.0 are no context of the patches and the hover of 4.x
+    const parents = isObject(given) && ['dims', 'marks', 'controls'].some(k => given[k] !== undefined) ? undefined : given;
     const def = textsOf4(clone(raw));
     applyPatchesAsExpressions(def, textsOf4(clone(parents)));
     const out = {};

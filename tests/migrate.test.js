@@ -312,3 +312,37 @@ describe('patches, rules and texts of 4.x, drawn as 4.x drew them', () => {
         expect([t.options.title, t.options.footer, t.options.subtitle, t.mapping.y.axis.title, t.plot[0].props.text]).toEqual(['= Summe der Länder', '=Quelle', '=B', '=200', '=Total']);
     });
 });
+
+// a chain of parents of 4.x and 5.0 parts (F12 of the review): every part
+// of 4.x migrated before the merge, as `gen-vis migrate` does per file
+describe('a chain of parents of parts of 4.x and 5.0', () => {
+    const S4 = 'https://unpkg.com/@preschen/gen-vis@4/schema.json';
+    const S5 = 'https://unpkg.com/@preschen/gen-vis@5/schema.json';
+    const parent4 = { $schema: S4, data: 'data.csv', globals: { scale: 'lin' }, options: { title: 'Parent', height: 300 },
+        formElements: [{ id: 'scale', ref: 'scale', type: 'radio', values: [{ value: 'lin' }, { value: 'log', patch: { mapping: { y: { scale: { type: 'log' } } } } }] }],
+        mapping: { x: 'year', y: { column: 'v', axis: { grid: true } } }, plot: { type: 'line', props: { 'stroke-width': 2 } } };
+    const parent5 = migrate(parent4);
+    const resolved = async (files, url) => resolveParents(structuredClone(files[url]), url, async u => JSON.stringify(files[u]));
+    test('a child of 5.0 of a parent of 4.x', async () => {
+        const child = { $schema: S5, parent: 'parent.json', title: 'Child', dims: { y: { format: '.1f' } } };
+        const merged = await resolved({ 'file:///p/parent.json': parent4, 'file:///p/child.json': child }, 'file:///p/child.json');
+        // the same as the child of the migrated parent
+        const expected = await resolved({ 'file:///p/parent.json': parent5, 'file:///p/child.json': child }, 'file:///p/child.json');
+        for (const scale of ['lin', 'log'])
+            expect(engine5(merged, { scale })).toEqual(engine5(expected, { scale }));
+        const t = engine5(merged, { scale: 'log' });
+        expect([t.options.title, t.options.height, t.mapping.y.column, t.mapping.y.format, t.mapping.y.scale.type, t.plot[0].props['stroke-width']])
+            .toEqual(['Child', 300, 'v', '.1f', 'log', 2]);
+    });
+    test('a child of 4.x of a parent of 5.0, and of 4.x of both', async () => {
+        const child4 = { $schema: S4, parent: 'mid.json', options: { subtitle: 'Child' }, mapping: { y: { format: '.1f' } } };
+        const mid = { $schema: S5, parent: 'parent.json', title: 'Mid' };
+        const files = { 'file:///p/parent.json': parent4, 'file:///p/mid.json': mid, 'file:///p/child.json': child4 };
+        const merged = await resolved(files, 'file:///p/child.json');
+        const t = engine5(merged, { scale: 'log' });
+        expect([t.options.title, t.options.subtitle, t.mapping.y.column, t.mapping.y.format, t.mapping.y.scale.type]).toEqual(['Mid', 'Child', 'v', '.1f', 'log']);
+        // a chain of 4.x only stays one of 4.x, migrated as a whole
+        const old = await resolved({ ...files, 'file:///p/child.json': { ...child4, parent: 'parent.json' } }, 'file:///p/child.json');
+        expect(old.mapping.y).toEqual({ column: 'v', axis: { grid: true }, format: '.1f' });
+    });
+});
