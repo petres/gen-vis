@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi, beforeEach, onTestFinished } from 'vitest';
-import { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, registerScheme, perRow } from '@/index.js';
+import { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerMarkType, registerScheme, perRow } from '@/index.js';
 import { plotTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import * as d3 from 'd3-scale-chromatic';
@@ -27,7 +27,7 @@ vi.mock('@/utils/raster.js', () => ({
 
 useDom();
 
-const plotElements = el => el.querySelectorAll('g.vis-plot path, g.vis-plot circle, g.vis-plot rect, g.vis-plot text').length;
+const plotElements = el => el.querySelectorAll('g.vis-mark path, g.vis-mark circle, g.vis-mark rect, g.vis-mark text').length;
 
 const lineDef = (options = {}) => ({
     options: { width: 600, height: 300, margins: { top: 10, right: 10, bottom: 40, left: 40 }, ...options },
@@ -84,10 +84,10 @@ describe('the example definitions', () => {
 describe('rendering', () => {
     test('missing values are gaps in lines and are not drawn as points', async () => {
         const el = await mount({ def: lineDef(), data: lineData });
-        const [wien, tirol] = el.querySelectorAll('g.vis-plot.plot-0 path');
+        const [wien, tirol] = el.querySelectorAll('g.vis-mark.mark-0 path');
         expect(wien.getAttribute('d').match(/M/g)).toHaveLength(2);
         expect(tirol.getAttribute('d').match(/M/g)).toHaveLength(1);
-        expect(el.querySelectorAll('g.vis-plot.plot-1 circle')).toHaveLength(7);
+        expect(el.querySelectorAll('g.vis-mark.mark-1 circle')).toHaveLength(7);
         expect(await hover(el)).toBe(2);
         expect(errors).toEqual([]);
     });
@@ -101,7 +101,7 @@ describe('rendering', () => {
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 300, clientY: 150 }));
         await nextTick();
         // a swatch of the color of the category first
-        expect([...el.querySelector('.vis-hover tr.vis-hover-entry').children].map(td => [td.getAttribute('data-mapping'), td.className])).toEqual([[null, 'vis-swatch'], ['c', ''], ['price', 'vis-value']]);
+        expect([...el.querySelector('.vis-hover tr.vis-hover-entry').children].map(td => [td.getAttribute('data-dim'), td.className])).toEqual([[null, 'vis-swatch'], ['c', ''], ['price', 'vis-value']]);
     });
 
     test('hover at a position with only missing values', async () => {
@@ -145,14 +145,14 @@ describe('rendering', () => {
         const wien = async curve => {
             def.plot[0].curve = curve;
             const el = await mount({ def, data });
-            return el.querySelector('g.vis-plot.plot-0 path').getAttribute('d');
+            return el.querySelector('g.vis-mark.mark-0 path').getAttribute('d');
         };
         // linear by default, smooth curves are bezier curves
         expect(await wien(undefined)).not.toMatch(/C/);
         expect(await wien('monotoneX')).toMatch(/C/);
         def.plot = { type: 'cartesian:area', curve: 'monotoneX', by: ['c'], props: { fill: '@color', d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } } };
         const el = await mount({ def, data });
-        expect(el.querySelector('g.vis-plot path').getAttribute('d')).toMatch(/C/);
+        expect(el.querySelector('g.vis-mark path').getAttribute('d')).toMatch(/C/);
         expect(errors).toEqual([]);
     });
 
@@ -160,7 +160,7 @@ describe('rendering', () => {
         const def = lineDef();
         def.plot = { type: 'cartesian:area', by: ['c'], props: { fill: '@color', d: { x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' } } };
         const el = await mount({ def, data: lineData });
-        expect(el.querySelectorAll('g.vis-plot path')).toHaveLength(2);
+        expect(el.querySelectorAll('g.vis-mark path')).toHaveLength(2);
         expect(errors).toEqual([]);
     });
 
@@ -186,7 +186,7 @@ describe('rendering', () => {
         el.querySelectorAll('.vis-form-element .vis-radio input')[1].click();
         await nextTick();
         expect(ticks().at(-1)).toBe(40);
-        expect(el.querySelectorAll('g.vis-plot.plot-1 circle')).toHaveLength(8);
+        expect(el.querySelectorAll('g.vis-mark.mark-1 circle')).toHaveLength(8);
         expect(errors).toEqual([]);
     });
 
@@ -251,7 +251,7 @@ describe('rendering', () => {
         def.mapping.c.legend = { props: { 'data-accent': '@accent' } };
         def.annotations = [{ type: 'line', y: 2, props: { stroke: '@accent', 'stroke-width': { '*': ['@totalWidth', 0.005] } } }];
         const el = await mount({ def, data: lineData });
-        const circle = () => el.querySelector('g.vis-plot.plot-1 circle');
+        const circle = () => el.querySelector('g.vis-mark.mark-1 circle');
         expect(circle().getAttribute('stroke')).toBe('green');
         expect(circle().getAttribute('data-x')).toBe('2020');
         expect(circle().getAttribute('data-width')).toBe('600');
@@ -295,7 +295,7 @@ describe('rendering', () => {
         const el = await mount({ def, data });
         // the listed one first, the others of the data in ascending order
         expect([...el.querySelectorAll('.vis-legend .vis-legend-entries > div')].map(e => e.getAttribute('data-key'))).toEqual(['Tirol', 'Salzburg', 'Wien']);
-        expect([...el.querySelectorAll('g.vis-plot.plot-0 path')].map(p => [p.getAttribute('data-group-c'), p.getAttribute('stroke')]))
+        expect([...el.querySelectorAll('g.vis-mark.mark-0 path')].map(p => [p.getAttribute('data-group-c'), p.getAttribute('stroke')]))
             .toEqual([['Wien', '#e15759'], ['Tirol', '#4e79a7'], ['Salzburg', '#f28e2c']]);
         expect(errors).toEqual([]);
     });
@@ -307,7 +307,7 @@ describe('rendering', () => {
         const data = lineData + '\n2020,3,30,Salzburg\n2021,3,30,Salzburg';
         const el = await mount({ def, data });
         // the colors in the order of the categories, again from the first one
-        expect([...el.querySelectorAll('g.vis-plot.plot-0 path')].map(p => [p.getAttribute('data-group-c'), p.getAttribute('stroke')]))
+        expect([...el.querySelectorAll('g.vis-mark.mark-0 path')].map(p => [p.getAttribute('data-group-c'), p.getAttribute('stroke')]))
             .toEqual([['Wien', '#111111'], ['Tirol', '#111111'], ['Salzburg', '#222222']]);
         expect(() => registerScheme('test-empty', [])).toThrow('an array of CSS colors');
         expect(errors).toEqual([]);
@@ -316,7 +316,7 @@ describe('rendering', () => {
     test('the default colors of categories without colors, of a registered scheme observable10', async () => {
         const def = lineDef();
         def.mapping.c = { column: 'land', type: 'categorical', legend: {}, categories: { Wien: {}, Tirol: {} } };
-        const strokes = el => [...el.querySelectorAll('g.vis-plot.plot-0 path')].map(p => p.getAttribute('stroke'));
+        const strokes = el => [...el.querySelectorAll('g.vis-mark.mark-0 path')].map(p => p.getAttribute('stroke'));
         expect(strokes(await mount({ def, data: lineData }))).toEqual(['#4269D0', '#EFB118']);
         // the observable10 of the page, e.g. of a house style, with the original colors afterwards
         onTestFinished(() => registerScheme('observable10', ['#4269D0', '#EFB118', '#FF725C', '#6CC5B0', '#3CA951', '#FF8AB7', '#A463F2', '#97BBF5', '#9C6B4E', '#9498A0']));
@@ -366,7 +366,7 @@ describe('rendering', () => {
         expect(legendVisible(el)).toEqual(['true', 'false']);
         // other of Wien
         expect(maxTick(el)).toBe(40);
-        expect(el.querySelectorAll('g.vis-plot.plot-1 circle')).toHaveLength(4);
+        expect(el.querySelectorAll('g.vis-mark.mark-1 circle')).toHaveLength(4);
         expect(errors).toEqual([]);
     });
 
@@ -396,7 +396,7 @@ describe('rendering', () => {
         expect(checked(el)).toEqual([true, false]);
         expect(legendVisible(el)).toEqual(['true', 'true']);
         expect(maxTick(el)).toBe(4);
-        expect(el.querySelectorAll('g.vis-plot.plot-1 circle')).toHaveLength(7);
+        expect(el.querySelectorAll('g.vis-mark.mark-1 circle')).toHaveLength(7);
         expect(updates).toHaveLength(2);
         expect(errors).toEqual([]);
     });
@@ -408,8 +408,8 @@ describe('rendering', () => {
 
         a.querySelector('.vis-legend .vis-legend-entries > div').click();
         await nextTick();
-        expect(a.querySelectorAll('g.vis-plot circle')).toHaveLength(4);
-        expect(b.querySelectorAll('g.vis-plot circle')).toHaveLength(7);
+        expect(a.querySelectorAll('g.vis-mark circle')).toHaveLength(4);
+        expect(b.querySelectorAll('g.vis-mark circle')).toHaveLength(7);
     });
 
     test('errors are shown', async () => {
@@ -542,9 +542,9 @@ describe('controls', () => {
         expect(updates).toHaveLength(2);
 
         wien.dispatchEvent(new FocusEvent('focus'));
-        expect(el.querySelector('g.vis-plot.plot-0 path.vis-highlight').getAttribute('data-group-c')).toBe('Wien');
+        expect(el.querySelector('g.vis-mark.mark-0 path.vis-highlight').getAttribute('data-group-c')).toBe('Wien');
         wien.dispatchEvent(new FocusEvent('blur'));
-        expect(el.querySelector('g.vis-plot.plot-0 path.vis-highlight')).toBeNull();
+        expect(el.querySelector('g.vis-mark.mark-0 path.vis-highlight')).toBeNull();
     });
 
     test('a double click shows only the entry, the next one all', async () => {
@@ -561,10 +561,10 @@ describe('controls', () => {
         };
         await double(tirol);
         expect(visible(el)).toEqual(['false', 'true', 'false']);
-        expect(el.querySelectorAll('g.vis-plot.plot-1 circle')).toHaveLength(4);
+        expect(el.querySelectorAll('g.vis-mark.mark-1 circle')).toHaveLength(4);
         await double(tirol);
         expect(visible(el)).toEqual(['true', 'true', 'true']);
-        expect(el.querySelectorAll('g.vis-plot.plot-1 circle')).toHaveLength(7);
+        expect(el.querySelectorAll('g.vis-mark.mark-1 circle')).toHaveLength(7);
         expect(errors).toEqual([]);
     });
 
@@ -572,9 +572,9 @@ describe('controls', () => {
         const { el } = await mountWithUpdates(switchDef());
         const [wien] = el.querySelectorAll('.vis-legend .vis-legend-entries > div');
         wien.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }));
-        expect(el.querySelector('g.vis-plot.plot-0 path.vis-highlight')).toBeNull();
+        expect(el.querySelector('g.vis-mark.mark-0 path.vis-highlight')).toBeNull();
         wien.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
-        expect(el.querySelector('g.vis-plot.plot-0 path.vis-highlight')).not.toBeNull();
+        expect(el.querySelector('g.vis-mark.mark-0 path.vis-highlight')).not.toBeNull();
     });
 });
 
@@ -618,7 +618,7 @@ describe('events and slots', () => {
         const el = await mount({ def, data: lineData });
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
         await nextTick();
-        const cells = [...el.querySelectorAll('.vis-hover tr.vis-hover-entry')].map(tr => [...tr.cells].filter(td => !td.classList.contains('vis-swatch')).map(td => [td.dataset.mapping, td.dataset.prop ?? null, td.textContent]));
+        const cells = [...el.querySelectorAll('.vis-hover tr.vis-hover-entry')].map(tr => [...tr.cells].filter(td => !td.classList.contains('vis-swatch')).map(td => [td.dataset.dim, td.dataset.prop ?? null, td.textContent]));
         expect(cells).toEqual([
             [['c', null, 'Tirol'], ['c', 'unit', 'Tsd.'], ['y', null, '2,0']],
             [['c', null, 'Wien'], ['c', 'unit', 'Mio.'], ['y', null, '1,0']],
@@ -726,7 +726,7 @@ describe('annotations', () => {
             { type: 'circle', x: 2022, y: 1, above: true },
         ]), data: lineData });
         const band = el.querySelector('g.vis-annotations.vis-below rect.vis-band');
-        expect(band.parentNode.getAttribute('data-plot')).toBe('annotation-0');
+        expect(band.parentNode.getAttribute('data-mark')).toBe('annotation-0');
         expect(['x', 'y', 'width', 'height'].map(a => num(band, a))).toEqual([275, 0, 275, 250]);
         // the labels are above the plots
         expect(el.querySelector('g.vis-annotation-labels .vis-annotation-label').textContent).toBe('Schätzung');
@@ -737,10 +737,10 @@ describe('annotations', () => {
         expect(el.querySelector('g.vis-annotations text.vis-text').textContent).toBe('Hinweis');
         expect(num(el.querySelector('g.vis-annotations.vis-above circle'), 'cx')).toBeCloseTo(1100/3);
         // below the grid lines and the plots, the circle above them
-        const order = [...el.querySelector('svg.vis-svg > g').children].map(c => c.getAttribute('data-plot') ?? c.getAttribute('class'));
+        const order = [...el.querySelector('svg.vis-svg > g').children].map(c => c.getAttribute('data-mark') ?? c.getAttribute('class'));
         expect(order.indexOf('annotation-3')).toBeLessThan(order.indexOf('vis-grid'));
-        expect(order.indexOf('annotation-3')).toBeLessThan(order.indexOf('plot-0'));
-        expect(order.indexOf('annotation-4')).toBeGreaterThan(order.indexOf('plot-1'));
+        expect(order.indexOf('annotation-3')).toBeLessThan(order.indexOf('mark-0'));
+        expect(order.indexOf('annotation-4')).toBeGreaterThan(order.indexOf('mark-1'));
         expect(order.indexOf('vis-annotation-labels')).toBeGreaterThan(order.indexOf('annotation-4'));
         expect(errors).toEqual([]);
     });
@@ -758,7 +758,7 @@ describe('annotations', () => {
         const el = await mount({ def, data: lineData.replace('year,', 'date,year,').replace(/\n(\d{4})/g, (m, y) => `\n${y}-01-01,${y}`) });
         const [wien, tirol] = el.querySelectorAll('svg.vis-svg');
         const band = wien.querySelector('rect.vis-band');
-        const bar = wien.querySelectorAll('g.vis-plot rect')[0];
+        const bar = wien.querySelectorAll('g.vis-mark rect')[0];
         // the band of the category, the bar is in its middle
         expect(num(band, 'width')).toBeGreaterThanOrEqual(num(bar, 'width') - 1e-9);
         expect(num(band, 'x') + num(band, 'width')/2).toBeCloseTo(num(bar, 'x') + num(bar, 'width')/2);
@@ -802,7 +802,7 @@ describe('annotations', () => {
             props: { stroke: '@color' },
         }];
         const el = await mount({ def, data: lineData });
-        const lines = [...el.querySelectorAll('g.vis-plot.plot-1 line.vis-line')];
+        const lines = [...el.querySelectorAll('g.vis-mark.mark-1 line.vis-line')];
         expect(lines.map(l => [Math.round(num(l, 'x1')), l.getAttribute('stroke')])).toEqual([[184, 'red'], [367, 'blue']]);
         expect([...el.querySelectorAll('.vis-annotation-label')].map(l => l.textContent)).toEqual(['A', 'B']);
     });
@@ -845,7 +845,7 @@ describe('the highlight of a row', () => {
             props: { x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled', width: 10, stroke: 'none' } };
         const data = 'year,value,land,type\n2020,1,Wien,a\n2020,2,Wien,b\n2023,3,Wien,a\n2023,1,Wien,b';
         const el = await mount({ def, data });
-        const marked = () => highlighted(el, 'g.vis-plot rect');
+        const marked = () => highlighted(el, 'g.vis-mark rect');
         expect(highlightCss(el)).toContain('.vis-highlight *:not(g) { stroke: black; }');
 
         // the bottom segment of 2020, a of the value 1
@@ -873,7 +873,7 @@ describe('the data of a plot', () => {
             props: { x: '@x:scaled:max', y: '@y:scaled', text: '@label', 'text-anchor': 'end' },
         }];
         const el = await mount({ def, data: lineData });
-        const text = el.querySelector('g.vis-plot.plot-1 text');
+        const text = el.querySelector('g.vis-mark.mark-1 text');
         expect([num(text, 'x'), num(text, 'y'), text.textContent]).toEqual([550, 62.5, 'Ziel']);
         expect(errors).toEqual([]);
     });
@@ -884,7 +884,7 @@ describe('the data of a plot', () => {
         def.facets = { dim: 'c', cols: 2 };
         def.plot = [def.plot[0], { type: 'svg:circle', data: [{ x: '2022-01-01' }, { x: '2023-01-01', c: 'Tirol' }], props: { cx: '@x:scaled', cy: 0, r: 2 } }];
         const el = await mount({ def, data: lineData });
-        const [wien, tirol] = [...el.querySelectorAll('svg.vis-svg')].map(f => [...f.querySelectorAll('g.vis-plot.plot-1 circle')].map(c => Math.round(num(c, 'cx'))));
+        const [wien, tirol] = [...el.querySelectorAll('svg.vis-svg')].map(f => [...f.querySelectorAll('g.vis-mark.mark-1 circle')].map(c => Math.round(num(c, 'cx'))));
         expect(wien).toEqual([125]);
         expect(tirol).toEqual([125, 188]);
     });
@@ -904,7 +904,7 @@ describe('the selection of the rows of a plot', () => {
         def.plot = [def.plot[0], { type: 'svg:text', by: ['c'], select, props: { x: '@x:scaled', y: '@y:scaled', text: '@name', fill: '@color' } }];
         return def;
     };
-    const labels = async select => [...(await mount({ def: labelDef(select), data: lineData })).querySelectorAll('g.vis-plot.plot-1 text')]
+    const labels = async select => [...(await mount({ def: labelDef(select), data: lineData })).querySelectorAll('g.vis-mark.mark-1 text')]
         .map(t => [t.textContent, t[itemOf][rowOf].x]);
 
     test('the last or the first row of every group, e.g. labels at the end of lines', async () => {
@@ -916,24 +916,24 @@ describe('the selection of the rows of a plot', () => {
         const def = labelDef('last');
         def.plot[1].dodge = 20;
         const el = await mount({ def, data: lineData.replace('2023,4,40,Wien', '2023,2.1,40,Wien') });
-        const ys = [...el.querySelectorAll('g.vis-plot.plot-1 text')].map(t => parseFloat(t.getAttribute('y')));
+        const ys = [...el.querySelectorAll('g.vis-mark.mark-1 text')].map(t => parseFloat(t.getAttribute('y')));
         expect(Math.abs(ys[0] - ys[1])).toBeCloseTo(20);
     });
 
     test('a halo behind the texts, the props of the plot replace its props', async () => {
         const def = labelDef('last');
         def.plot[1].halo = true;
-        let text = (await mount({ def, data: lineData })).querySelector('g.vis-plot.plot-1 text');
+        let text = (await mount({ def, data: lineData })).querySelector('g.vis-mark.mark-1 text');
         expect(text.style.getPropertyValue('stroke')).toBe('var(--gen-vis-halo-color, white)');
         expect([text.getAttribute('stroke-width'), text.getAttribute('paint-order'), text.getAttribute('stroke-linejoin')]).toEqual(['3', 'stroke', 'round']);
         def.plot[1].halo = 2;
         def.plot[1].props.stroke = '#EEE';
-        text = (await mount({ def, data: lineData })).querySelector('g.vis-plot.plot-1 text');
+        text = (await mount({ def, data: lineData })).querySelector('g.vis-mark.mark-1 text');
         expect([text.getAttribute('stroke'), text.getAttribute('stroke-width')]).toEqual(['#EEE', '2']);
         expect(text.style.getPropertyValue('stroke')).toBe('');
         // without one none
         delete def.plot[1].halo;
-        text = (await mount({ def, data: lineData })).querySelector('g.vis-plot.plot-1 text');
+        text = (await mount({ def, data: lineData })).querySelector('g.vis-mark.mark-1 text');
         expect(text.hasAttribute('stroke-width')).toBe(false);
     });
 
@@ -946,12 +946,12 @@ describe('the selection of the rows of a plot', () => {
         const def = labelDef('first');
         def.plot = [{ ...def.plot[1], id: 'labels' }, { ...def.plot[1], id: 'labels', select: 'last' }];
         let el = await mount({ def, data: lineData });
-        expect(el.querySelectorAll('g.vis-plot[data-plot="labels"]')).toHaveLength(2);
-        expect(el.querySelectorAll('g.vis-plot text')).toHaveLength(4);
+        expect(el.querySelectorAll('g.vis-mark[data-mark="labels"]')).toHaveLength(2);
+        expect(el.querySelectorAll('g.vis-mark text')).toHaveLength(4);
 
-        def.plot = [{ ...lineDef().plot[1], id: 'plot-1' }, { ...lineDef().plot[1], r: 5 }];
+        def.plot = [{ ...lineDef().plot[1], id: 'mark-1' }, { ...lineDef().plot[1], r: 5 }];
         el = await mount({ def, data: lineData });
-        expect(el.querySelectorAll('g.vis-plot circle')).toHaveLength(14);
+        expect(el.querySelectorAll('g.vis-mark circle')).toHaveLength(14);
     });
 });
 
@@ -966,7 +966,7 @@ describe('the layers and facets of plots', () => {
         ];
         const el = await mount({ def, data: lineData });
         const [wien, tirol] = el.querySelectorAll('svg.vis-svg > g');
-        const order = g => [...g.children].map(c => c.getAttribute('data-plot') ?? c.getAttribute('class').split(' ')[0]);
+        const order = g => [...g.children].map(c => c.getAttribute('data-mark') ?? c.getAttribute('class').split(' ')[0]);
         expect(order(tirol).filter(c => !['vis-hover-marker', 'vis-events'].includes(c))).toEqual(['background', 'vis-grid', 'vis-axis', 'vis-axis-title', 'vis-axis', 'line', 'note']);
         expect(order(wien)).not.toContain('note');
         expect(wien.querySelector('g.vis-below rect').getAttribute('width')).toBe('250');
@@ -998,20 +998,20 @@ describe('maps', () => {
         ],
     });
     const num = (e, a) => parseFloat(e.getAttribute(a));
-    const fills = el => [...el.querySelectorAll('g.vis-plot.plot-1 path')].map(p => [p.getAttribute('data-geo-key'), p.getAttribute('fill')]);
+    const fills = el => [...el.querySelectorAll('g.vis-mark.mark-1 path')].map(p => [p.getAttribute('data-geo-key'), p.getAttribute('fill')]);
 
     test('the features and the rows joined to them, colored by a scale', async () => {
         const el = await mount({ def: mapDef(), data: mapData });
         // all features, also the ones without rows
-        expect(el.querySelectorAll('g.vis-plot.plot-0 path')).toHaveLength(3);
+        expect(el.querySelectorAll('g.vis-mark.mark-0 path')).toHaveLength(3);
         // the domain of the colors is the one of the rows, not extended
         expect(fills(el)).toEqual([['A', d3.interpolateBlues(0)], ['B', d3.interpolateBlues(1)]]);
         // the rings are in the order of d3, the squares are fitted to the facet
-        const [a, b] = [...el.querySelectorAll('g.vis-plot.plot-0 path')].map(p => p.getAttribute('d'));
+        const [a, b] = [...el.querySelectorAll('g.vis-mark.mark-0 path')].map(p => p.getAttribute('d'));
         expect(a).toMatch(/^M0[.\d]*,100L/);
         expect(b).not.toBe(a);
         // the circles at the centers
-        const circles = [...el.querySelectorAll('g.vis-plot.plot-2 circle')].map(c => Math.round(num(c, 'cx')));
+        const circles = [...el.querySelectorAll('g.vis-mark.mark-2 circle')].map(c => Math.round(num(c, 'cx')));
         expect(circles).toEqual([50, 150]);
         expect(errors).toEqual([]);
     });
@@ -1067,7 +1067,7 @@ describe('maps', () => {
 
     test('the region of a feature is the element of the draw before, also of another row', async () => {
         const el = await mount({ def: mapDef(), data: mapData });
-        const paths = () => [...el.querySelectorAll('g.vis-plot.plot-1 path')];
+        const paths = () => [...el.querySelectorAll('g.vis-mark.mark-1 path')];
         const before = paths();
         const select = el.querySelector('.vis-form-element select');
         select.selectedIndex = 1;
@@ -1081,7 +1081,7 @@ describe('maps', () => {
     test('the projection and the paths are computed once for the same facet', async () => {
         const vm = createGenVis(document.body.appendChild(document.createElement('div')), { def: mapDef(), data: mapData });
         await rendered(vm.el);
-        const paths = () => [...vm.el.querySelectorAll('g.vis-plot.plot-0 path')].map(p => p.getAttribute('d'));
+        const paths = () => [...vm.el.querySelectorAll('g.vis-mark.mark-0 path')].map(p => p.getAttribute('d'));
         const before = paths();
         const select = vm.el.querySelector('.vis-form-element select');
         for (const year of ['1', '0', '1']) {
@@ -1119,11 +1119,11 @@ describe('maps', () => {
         expect(await at(150)).toBe('Region B');
         expect([...el.querySelectorAll('.vis-hover td')].map(t => t.textContent)).toEqual(['3.0'.replace('.', ',')]);
         // the region is highlighted
-        expect(highlighted(el, 'g.vis-plot.plot-1 path')).toHaveLength(1);
-        expect(highlightCss(el)).toContain('[data-plot="plot-1"] .vis-highlight:not(g)');
+        expect(highlighted(el, 'g.vis-mark.mark-1 path')).toHaveLength(1);
+        expect(highlightCss(el)).toContain('[data-mark="mark-1"] .vis-highlight:not(g)');
         // a region without rows has no hover, with `empty` its name
         expect(await at(250)).toBeUndefined();
-        expect(highlighted(el, 'g.vis-plot.plot-1 path')).toHaveLength(0);
+        expect(highlighted(el, 'g.vis-mark.mark-1 path')).toHaveLength(0);
         const def = mapDef();
         def.options.hover = { empty: true };
         const all = await mount({ def, data: mapData });
@@ -1151,7 +1151,7 @@ describe('maps', () => {
         expect(el.querySelector('.vis-hover .vis-hover-title').textContent).toBe('Region B');
         await move(25);
         expect(el.querySelector('.vis-hover')).toBeNull();
-        expect(el.querySelector('g.vis-plot.plot-1 path.vis-highlight')).toBeNull();
+        expect(el.querySelector('g.vis-mark.mark-1 path.vis-highlight')).toBeNull();
         expect(errors).toEqual([]);
     });
 
@@ -1161,7 +1161,7 @@ describe('maps', () => {
         const el = await mount({ def, data: mapData.replace(/\n([AB])/g, (m, r) => `\n${r.toLowerCase()}`) });
         expect(fills(el).map(f => f[0])).toEqual(['a', 'b']);
         // a and b fill the height in the center, c is outside
-        const circles = [...el.querySelectorAll('g.vis-plot.plot-2 circle')].map(c => Math.round(num(c, 'cx')));
+        const circles = [...el.querySelectorAll('g.vis-mark.mark-2 circle')].map(c => Math.round(num(c, 'cx')));
         expect(circles).toEqual([100, 200]);
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 225, clientY: 50 }));
         await nextTick();
@@ -1196,10 +1196,10 @@ describe('maps', () => {
             { type: 'geo:mesh', object: 'groups', borders: 'outer', props: { stroke: 'black' } },
         ];
         let el = await mount({ def, data: mapData });
-        const mesh = i => el.querySelectorAll(`g.vis-plot.plot-${i} path`);
+        const mesh = i => el.querySelectorAll(`g.vis-mark.mark-${i} path`);
         const lines = i => mesh(i)[0].getAttribute('d').match(/M/g).length;
         // the features of the TopoJSON
-        expect(el.querySelectorAll('g.vis-plot.plot-0 path')).toHaveLength(3);
+        expect(el.querySelectorAll('g.vis-mark.mark-0 path')).toHaveLength(3);
         // one path, not filled
         expect(mesh(3)).toHaveLength(1);
         expect(mesh(3)[0].getAttribute('fill')).toBe('none');
@@ -1324,7 +1324,7 @@ describe('maps', () => {
         def.geo = { data: topo, join: 'region' };
         let el = await mount({ def, data: mapData });
         // B has no feature, it is not drawn
-        expect([...el.querySelectorAll('g.vis-plot.plot-1 path')].map(p => p.getAttribute('data-geo-key'))).toEqual(['A']);
+        expect([...el.querySelectorAll('g.vis-mark.mark-1 path')].map(p => p.getAttribute('data-geo-key'))).toEqual(['A']);
 
         def.geo.object = 'circles';
         el = await mount({ def, data: mapData });
@@ -1337,9 +1337,9 @@ describe('maps', () => {
         def.geo.exclude = ['B'];
         def.annotations = [{ type: 'text', lon: 0.5, lat: 0.5, text: 'A' }, { type: 'circle', lon: 0.5, lat: 0.5, above: true }];
         const el = await mount({ def, data: mapData });
-        expect([...el.querySelectorAll('g.vis-plot.plot-0 path')].map(p => p.getAttribute('data-geo-key'))).toEqual(['A']);
+        expect([...el.querySelectorAll('g.vis-mark.mark-0 path')].map(p => p.getAttribute('data-geo-key'))).toEqual(['A']);
         // A fills the facet, B has no feature, it is not drawn
-        expect([...el.querySelectorAll('g.vis-plot.plot-1 path')].map(p => p.getAttribute('data-geo-key'))).toEqual(['A']);
+        expect([...el.querySelectorAll('g.vis-mark.mark-1 path')].map(p => p.getAttribute('data-geo-key'))).toEqual(['A']);
         const text = el.querySelector('g.vis-annotations text.vis-text');
         expect([num(text, 'x'), num(text, 'y')].map(Math.round)).toEqual([150, 50]);
         expect(el.querySelector('g.vis-annotations.vis-above circle')).not.toBeNull();
@@ -1360,9 +1360,9 @@ describe('highlight', () => {
         def.plot[1].highlight = { ...def.plot[1].highlight, r: 6 };
         const el = await mount({ def, data: lineData });
         el.querySelector('.vis-legend .vis-legend-entries > div').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
-        const circles = 'g.vis-plot.plot-1 g.vis-group[data-group-c="Wien"] circle';
+        const circles = 'g.vis-mark.mark-1 g.vis-group[data-group-c="Wien"] circle';
         expect(highlighted(el, circles)).toHaveLength(3);
-        expect(highlightCss(el)).toContain('[data-plot="plot-1"] .vis-highlight *:not(g) { r: 6; }');
+        expect(highlightCss(el)).toContain('[data-mark="mark-1"] .vis-highlight *:not(g) { r: 6; }');
         el.querySelector('.vis-legend .vis-legend-entries > div').dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
         expect(highlighted(el, circles)).toHaveLength(0);
     });
@@ -1378,7 +1378,7 @@ describe('highlight', () => {
         entry.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
         expect(highlighted(el, 'g.vis-group[data-group-c="Tirol"] circle')).toHaveLength(4);
         expect(el.querySelector('path[data-group-c="Tirol"]').classList.contains('vis-highlight')).toBe(true);
-        expect(highlightCss(el)).toContain('[data-plot="plot-0"] .vis-highlight *:not(g) { stroke-width: 3; }');
+        expect(highlightCss(el)).toContain('[data-mark="mark-0"] .vis-highlight *:not(g) { stroke-width: 3; }');
         entry.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
         expect(el.querySelectorAll('[stroke="black"], .vis-highlight, .vis-highlighting')).toHaveLength(0);
         // the groups are in their order again after the next draw, see the update of the facets
@@ -1413,13 +1413,13 @@ describe('data formats', () => {
         ] });
         const el = await mount({ def, data });
         // 2022 has no props, it is not shown
-        expect(el.querySelectorAll('g.vis-plot.plot-0 path')).toHaveLength(2);
-        expect(el.querySelectorAll('g.vis-plot.plot-1 circle')).toHaveLength(3);
+        expect(el.querySelectorAll('g.vis-mark.mark-0 path')).toHaveLength(2);
+        expect(el.querySelectorAll('g.vis-mark.mark-1 circle')).toHaveLength(3);
         expect(await hover(el)).toBe(2);
 
         el.querySelector('.vis-legend .vis-legend-entries > div').click();
         await nextTick();
-        expect(el.querySelectorAll('g.vis-plot.plot-1 circle')).toHaveLength(1);
+        expect(el.querySelectorAll('g.vis-mark.mark-1 circle')).toHaveLength(1);
         expect(errors).toEqual([]);
     });
 
@@ -1437,7 +1437,7 @@ describe('data formats', () => {
         };
         const files = { 'http://h/api/parquet': parquet, 'http://h/api/csv': new TextEncoder().encode(lineData) };
         vi.stubGlobal('fetch', async url => url in files ? new Response(files[url]) : new Response('', { status: 404, statusText: 'Not Found' }));
-        const circles = el => el.querySelectorAll('g.vis-plot.plot-1 circle').length;
+        const circles = el => el.querySelectorAll('g.vis-mark.mark-1 circle').length;
         expect(circles(await mount({ def: { ...def(), data: 'http://h/api/parquet' } }))).toBe(3);
         expect(circles(await mount({ def: { ...def(), data: 'http://h/api/csv' } }))).toBe(7);
         document.body.innerHTML = '';
@@ -1454,7 +1454,7 @@ describe('data formats', () => {
     test('tsv by the format of the definition', async () => {
         const def = { ...lineDef(), dataFormat: 'tsv' };
         const el = await mount({ def, data: lineData.replaceAll(',', '\t') });
-        expect(el.querySelectorAll('g.vis-plot.plot-1 circle')).toHaveLength(7);
+        expect(el.querySelectorAll('g.vis-mark.mark-1 circle')).toHaveLength(7);
         expect(errors).toEqual([]);
     });
 });
@@ -1604,7 +1604,7 @@ describe('formatted values', () => {
             'data-x': { format: ['@x', '.1f'] }, 'data-g': { format: ['@g', '.0%'] } } }];
         def.globals = { g: 0.25 };
         const el = await mount({ def, data: lineData.replace('2023,4,40,Wien', '2023,1234.5,40,Wien') });
-        const texts = [...el.querySelectorAll('g.vis-plot text')];
+        const texts = [...el.querySelectorAll('g.vis-mark text')];
         expect(texts.map(t => t.textContent)).toEqual(['1.234,50', '2,00']);
         expect(texts.map(t => t.getAttribute('data-x'))).toEqual(['2023,0', '2023,0']);
         expect(texts[0].getAttribute('data-g')).toBe('25%');
@@ -1615,7 +1615,7 @@ describe('formatted values', () => {
         delete dates.mapping.y.hover.format;
         dates.plot = { type: 'svg:text', by: ['c'], props: { x: '@x:scaled', y: '@y:scaled', text: '@y:formatted', 'data-d': '@x:formatted', 'data-m': { format: ['@x', '%b %Y'] } } };
         const other = await mount({ def: dates, data: 'date,value,land\n2020-03-15,1234.5,Wien' });
-        const text = other.querySelector('g.vis-plot text');
+        const text = other.querySelector('g.vis-mark text');
         expect([text.textContent, text.getAttribute('data-d'), text.getAttribute('data-m')]).toEqual(['1234,5', '15.03.2020', 'Mrz 2020']);
         expect(errors).toEqual([]);
     });
@@ -1633,7 +1633,7 @@ describe('horizontal bars and several value axes', () => {
     test('stacked horizontal bars, the hover of a row of bars', async () => {
         const el = await mount({ def: barDef(), data: lineData });
         // 2023: Wien 4, Tirol 2, stacked from 0 to 6 of the width 550
-        const bars = [...el.querySelectorAll('g.vis-plot rect')].filter(r => r.getAttribute('fill') && r[itemOf]);
+        const bars = [...el.querySelectorAll('g.vis-mark rect')].filter(r => r.getAttribute('fill') && r[itemOf]);
         const wien = el.querySelectorAll('g.vis-group[data-group-c="Wien"] rect');
         expect(wien).toHaveLength(3);
         const last = [...wien].at(-1);
@@ -1720,7 +1720,7 @@ describe('transforms', () => {
         };
         const data = [{ x: '1', v: '1' }, { x: '2', v: '2' }, { x: '3', v: '3' }];
         const { el, vis } = await mountVis({ def, data });
-        const shown = () => [...el.querySelectorAll('.vis-plot circle')].map(c => c.getAttribute('data-w'));
+        const shown = () => [...el.querySelectorAll('.vis-mark circle')].map(c => c.getAttribute('data-w'));
         expect(shown()).toEqual(['1', '2', '3']);
         const radios = el.querySelectorAll('input[type=radio]');
         radios[1].click();
@@ -1824,24 +1824,24 @@ describe('the update of the facets', () => {
         await toggle(el, 'Wien');
         expect(tirol.map(c => c.getAttribute('cy'))).toEqual(y);
         // the groups in the order of the categories, as in a new draw
-        expect([...el.querySelectorAll('g.plot-1 g.vis-group')].map(g => g.dataset.groupC)).toEqual(['Wien', 'Tirol']);
+        expect([...el.querySelectorAll('g.mark-1 g.vis-group')].map(g => g.dataset.groupC)).toEqual(['Wien', 'Tirol']);
         const fresh = await mount({ def: lineDef(), data: lineData });
         expect(svgHtml(el)).toBe(svgHtml(fresh));
         expect(errors).toEqual([]);
     });
 
     test('the elements of a plot type without update are drawn anew', async () => {
-        registerPlotType('test:append', {
+        registerMarkType('test:append', {
             marks: groups => ({ element: 'rect', items: groups.flatMap(g => g.rows.filter(g.complete).map(row => ({ x: g.at(row).x }))) }),
         });
         const def = lineDef();
         def.plot = { type: 'test:append', by: ['c'], props: { x: '@x:scaled' } };
         const el = await mount({ def, data: lineData });
-        expect(el.querySelectorAll('g.vis-plot rect')).toHaveLength(8);
+        expect(el.querySelectorAll('g.vis-mark rect')).toHaveLength(8);
         await toggle(el, 'Tirol');
-        expect(el.querySelectorAll('g.vis-plot rect')).toHaveLength(4);
+        expect(el.querySelectorAll('g.vis-mark rect')).toHaveLength(4);
         await toggle(el, 'Tirol');
-        expect(el.querySelectorAll('g.vis-plot rect')).toHaveLength(8);
+        expect(el.querySelectorAll('g.vis-mark rect')).toHaveLength(8);
         delete plotTypes['test:append'];
     });
 
@@ -1893,7 +1893,7 @@ describe('the update of the facets', () => {
 
     test('a new width moves the plots before they are drawn, e.g. the center of a polar plot', async () => {
         const seen = [];
-        registerPlotType('test:origin', { marks: (groups, plot, ctx) => { seen.push(ctx.inner.getAttribute('transform')); return null; } });
+        registerMarkType('test:origin', { marks: (groups, plot, ctx) => { seen.push(ctx.inner.getAttribute('transform')); return null; } });
         onTestFinished(() => delete plotTypes['test:origin']);
         const def = lineDef({ coord: 'polar', width: undefined, margins: { top: 0, right: 0, bottom: 0, left: 0 } });
         def.mapping.x.scale.orientation = 'angular';
@@ -1931,7 +1931,7 @@ describe('the update of the facets', () => {
 
 describe('extensions', () => {
     test('a registered plot type', async () => {
-        registerPlotType('test:square', {
+        registerMarkType('test:square', {
             marks: (groups, plot, ctx) => perRow(groups, 'rect', v => ({
                 ...v, x: v.cx - 2, width: 4, height: ctx.innerHeight,
             })),
@@ -1939,7 +1939,7 @@ describe('extensions', () => {
         const def = lineDef();
         def.plot = { type: 'test:square', by: ['c'], props: { cx: '@x:scaled', fill: '@color' } };
         const el = await mount({ def, data: lineData });
-        const rects = el.querySelectorAll('g.vis-plot rect');
+        const rects = el.querySelectorAll('g.vis-mark rect');
         expect(rects).toHaveLength(8);
         expect(rects[0].getAttribute('height')).toBe('250');
         expect(rects[0].getAttribute('fill')).toBe('red');
@@ -1950,7 +1950,7 @@ describe('extensions', () => {
 
     test('the groups of a plot type, the values of the props are plain values', async () => {
         let seen;
-        registerPlotType('test:groups', { marks: (groups, plot, ctx) => { seen = { groups, ctx }; return null; } });
+        registerMarkType('test:groups', { marks: (groups, plot, ctx) => { seen = { groups, ctx }; return null; } });
         const def = lineDef();
         def.plot = { type: 'test:groups', by: ['c'], props: { stroke: '@color', width: { '*': ['@innerWidth', 0.1] }, d: { x: '@x:scaled', y: '@y' } } };
         await mount({ def, data: lineData });
@@ -1981,7 +1981,7 @@ describe('extensions', () => {
         def.mapping.col = { column: 'other', type: 'numeric', scale: { type: 'linear', domain: [0, 40], range: ['white', 'red'] } };
         def.plot = { type: 'svg:circle', props: { r: '@v:scaled', fill: '@col:scaled', cx: '@x:scaled', cy: '@y:scaled' } };
         const el = await mount({ def, data: lineData });
-        const circles = [...el.querySelectorAll('g.vis-plot circle')];
+        const circles = [...el.querySelectorAll('g.vis-mark circle')];
         expect(circles.map(c => c.getAttribute('r'))).toContain('1');
         expect(circles.map(c => c.getAttribute('fill'))).toContain('rgb(255, 0, 0)');
         expect(errors).toEqual([]);
@@ -2008,11 +2008,11 @@ describe('polar', () => {
         const el = await mount({ def: polarDef(), data: polarData });
         // inner size 300, the radius is 150
         expect(el.querySelector('svg.vis-svg > g').getAttribute('transform')).toBe('translate(200 200)');
-        expect(el.querySelectorAll('g.vis-plot.plot-0 path')).toHaveLength(2);
-        expect(el.querySelector('g.vis-plot.plot-0 path').getAttribute('d')).toMatch(/Z$/);
+        expect(el.querySelectorAll('g.vis-mark.mark-0 path')).toHaveLength(2);
+        expect(el.querySelector('g.vis-mark.mark-0 path').getAttribute('d')).toMatch(/Z$/);
 
         // month 3 of Tirol (radius 2 of 12) is on the right of the center
-        const circles = [...el.querySelectorAll('g.vis-plot.plot-1 g.vis-group[data-group-c="Tirol"] circle')];
+        const circles = [...el.querySelectorAll('g.vis-mark.mark-1 g.vis-group[data-group-c="Tirol"] circle')];
         expect(circles).toHaveLength(12);
         expect(num(circles[3], 'cx')).toBeCloseTo(25);
         expect(num(circles[3], 'cy')).toBeCloseTo(0);
@@ -2023,7 +2023,7 @@ describe('polar', () => {
         const def = polarDef();
         def.plot[1] = { type: 'polar:text', by: ['c'], halo: true, filter: { x: 3 }, props: { text: '@name', angle: '@x:scaled', radius: '@y:scaled' } };
         const el = await mount({ def, data: polarData });
-        const texts = [...el.querySelectorAll('g.vis-plot.plot-1 text')];
+        const texts = [...el.querySelectorAll('g.vis-mark.mark-1 text')];
         expect(texts.map(t => [t.textContent, Math.round(num(t, 'x')), Math.round(num(t, 'y'))])).toEqual([['Wien', 50], ['Tirol', 25]].map(([n, x]) => [n, x, 0]));
         expect(texts[0].getAttribute('stroke-width')).toBe('3');
         expect(errors).toEqual([]);
@@ -2034,12 +2034,12 @@ describe('polar', () => {
         def.plot[1] = { type: 'polar:text', by: ['c'], dodge: 20, filter: { x: [2, 3] }, props: { text: '@name', angle: '@x:scaled', radius: '@y:scaled' } };
         // month 2: Wien 3, Tirol 2 (radii 37.5 and 25), month 3: Wien 4 (50), Tirol 2 (25)
         const el = await mount({ def, data: polarData });
-        const at = month => [...el.querySelectorAll('g.vis-plot.plot-1 text')].filter(t => t[itemOf][rowOf].x == month)
+        const at = month => [...el.querySelectorAll('g.vis-mark.mark-1 text')].filter(t => t[itemOf][rowOf].x == month)
             .map(t => Math.hypot(num(t, 'x'), num(t, 'y')));
         expect(at(2).map(Math.round)).toEqual([41, 21]);
         expect(at(3).map(Math.round)).toEqual([50, 25]);
         // on the right, month 3 at its angle
-        const right = [...el.querySelectorAll('g.vis-plot.plot-1 text')].filter(t => Math.abs(num(t, 'y')) < 1e-6);
+        const right = [...el.querySelectorAll('g.vis-mark.mark-1 text')].filter(t => Math.abs(num(t, 'y')) < 1e-6);
         expect(right).toHaveLength(2);
         expect(errors).toEqual([]);
     });
@@ -2148,7 +2148,7 @@ describe('polar', () => {
         def.mapping.y.scale.domain = [0, null];
         def.plot = { type: 'polar:arc', by: ['c'], props: { fill: '@color', angle: '@x:scaled', innerRadius: '@y:start:scaled', outerRadius: '@y:end:scaled' } };
         const el = await mount({ def, data: polarData });
-        const arcs = el.querySelectorAll('g.vis-plot path');
+        const arcs = el.querySelectorAll('g.vis-mark path');
         expect(arcs).toHaveLength(24);
         arcs.forEach(a => expect(a.getAttribute('d')).toMatch(/^M.*A/));
         expect(await hover(el)).toBe(2);
@@ -2171,7 +2171,7 @@ describe('polar', () => {
         def.plot = { type: 'polar:arc', by: ['c'], props: { fill: '@color', startAngle: '@share:start:scaled', endAngle: '@share:end:scaled', innerRadius: 50 }, highlight: { stroke: 'black' } };
         const data = 'c,share\nA,1\nB,2\nC,1';
         const el = await mount({ def, data });
-        const arcs = [...el.querySelectorAll('g.vis-plot path')];
+        const arcs = [...el.querySelectorAll('g.vis-mark path')];
         expect(arcs).toHaveLength(3);
         // the whole circle, A from the top to the right, B to the left, C to the top
         const { arc } = await import('d3-shape');
@@ -2201,7 +2201,7 @@ describe('polar', () => {
         // the rings from the center, of 75 pixels, stacked per year, the circle
         // is the largest sum (a share of every year closes every ring)
         // the arcs of A, then the ones of B, of the years in their order
-        const ringArcs = [...rings.querySelectorAll('g.vis-plot path')];
+        const ringArcs = [...rings.querySelectorAll('g.vis-mark path')];
         expect(ringArcs.map(a => a.getAttribute('d'))).toEqual([
             arc()({ startAngle: 0, endAngle: Math.PI/2, innerRadius: 0, outerRadius: 75 }),
             arc()({ startAngle: 0, endAngle: Math.PI/2, innerRadius: 75, outerRadius: 150 }),
@@ -2429,7 +2429,7 @@ describe('fixed bugs', () => {
         return def;
     };
     const stackData = 'year,value,land,type\n2020,5,Wien,a\n2020,2,Wien,b\n2021,8,Wien,a\n2021,2,Wien,b';
-    const rects = el => [...el.querySelectorAll('g.vis-plot rect')].map(r => ['x', 'y', 'width', 'height'].map(a => parseFloat(r.getAttribute(a))));
+    const rects = el => [...el.querySelectorAll('g.vis-mark rect')].map(r => ['x', 'y', 'width', 'height'].map(a => parseFloat(r.getAttribute(a))));
 
     test('the defaults of the height, the columns of the facets and the offset of the title of an axis', async () => {
         const def = lineDef();
@@ -2459,7 +2459,7 @@ describe('fixed bugs', () => {
         def.plot[0].by = 'c';
         const el = await mount({ def, data: lineData });
         expect(el.querySelector('.vis-error')).toBeNull();
-        expect(el.querySelectorAll('g.vis-plot path')).toHaveLength(2);
+        expect(el.querySelectorAll('g.vis-mark path')).toHaveLength(2);
         expect(errors.filter(e => !e.includes('validateDef') && !e.includes('a legend needs'))).toEqual([]);
     });
 
@@ -2471,7 +2471,7 @@ describe('fixed bugs', () => {
             { id: 'b', name: 'B', value: 'b', patch: { mapping: { c: { categories: { Wien: { color: 'green' } } } } } },
         ] }];
         const el = await mount({ def, data: lineData });
-        const fills = () => [...el.querySelectorAll('g.plot-1 g.vis-group')].map(g => [g.dataset.groupC, g.querySelector('circle').getAttribute('fill')]);
+        const fills = () => [...el.querySelectorAll('g.mark-1 g.vis-group')].map(g => [g.dataset.groupC, g.querySelector('circle').getAttribute('fill')]);
         expect(fills()).toEqual([['Wien', 'red'], ['Tirol', 'blue']]);
         el.querySelector('.vis-legend-entry[data-key="Tirol"]').click();
         el.querySelector('.vis-form-element input[value="b"]').click();
@@ -2497,7 +2497,7 @@ describe('fixed bugs', () => {
         el.querySelector('.vis-form-element input[value="other"]').click();
         await nextTick();
         expect(keys()).toEqual(['10', '20', '30', '40']);
-        expect(el.querySelectorAll('g.plot-0 path')).toHaveLength(4);
+        expect(el.querySelectorAll('g.mark-0 path')).toHaveLength(4);
         el.querySelector('.vis-legend-entry[data-key="20"]').click();
         await nextTick();
         expect(updates.at(-1)).toEqual({ globals: { col: 'other' }, visible: { c: { 20: false } } });
@@ -2546,7 +2546,7 @@ describe('fixed bugs', () => {
         def.mapping.y.axis = null;
         let el = await mount({ def, data: lineData });
         expect(el.querySelectorAll('g.vis-axis')).toHaveLength(1);
-        expect(el.querySelectorAll('g.vis-plot circle')).toHaveLength(7);
+        expect(el.querySelectorAll('g.vis-mark circle')).toHaveLength(7);
 
         const patched = lineDef();
         patched.globals = { mode: 'a' };
@@ -2594,7 +2594,7 @@ describe('fixed bugs', () => {
         el.querySelector('.vis-form-element input[value="d2"]').click();
         await nextTick();
         expect(keys()).toEqual(['2030', '2031']);
-        expect(el.querySelectorAll('g.plot-1 circle')).toHaveLength(2);
+        expect(el.querySelectorAll('g.mark-1 circle')).toHaveLength(2);
     });
 
     test('form elements of a definition without globals', async () => {
@@ -2618,7 +2618,7 @@ describe('fixed bugs', () => {
         const el = await mount({ def, data });
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
         await nextTick();
-        expect([...el.querySelectorAll('.vis-hover td[data-mapping="d"]')].map(td => td.textContent)).toEqual(['01.06.2024', '01.06.2024']);
+        expect([...el.querySelectorAll('.vis-hover td[data-dim="d"]')].map(td => td.textContent)).toEqual(['01.06.2024', '01.06.2024']);
         expect(errors).toEqual([]);
     });
 
@@ -2688,7 +2688,7 @@ describe('fixed bugs', () => {
         const el = await mount({ def, data });
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
         await nextTick();
-        const names = [...el.querySelectorAll('.vis-hover tr.vis-hover-entry td[data-mapping="type"]')].map(t => t.textContent);
+        const names = [...el.querySelectorAll('.vis-hover tr.vis-hover-entry td[data-dim="type"]')].map(t => t.textContent);
         expect(names).toEqual(['b', 'a', 'n', 'm']);
     });
 
@@ -2719,7 +2719,7 @@ describe('fixed bugs', () => {
         def.plot[0].by = ['id'];
         def.plot[0].props.stroke = 'black';
         const el = await mount({ def, data: lineData });
-        expect(el.querySelectorAll('g.vis-plot.plot-0 path')).toHaveLength(2);
+        expect(el.querySelectorAll('g.vis-mark.mark-0 path')).toHaveLength(2);
         expect(errors).toEqual([]);
     });
 
@@ -2731,7 +2731,7 @@ describe('fixed bugs', () => {
         expect(await hover(el)).toBe(2);
         el.querySelector('.vis-legend .vis-legend-entries > div').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
         expect(el.querySelector('path.vis-highlight')).not.toBeNull();
-        expect(highlightCss(el)).toContain('[data-plot="1st line"] .vis-highlight *:not(g) { stroke-width: 3; }');
+        expect(highlightCss(el)).toContain('[data-mark="1st line"] .vis-highlight *:not(g) { stroke-width: 3; }');
         expect(errors).toEqual([]);
     });
 
@@ -2759,15 +2759,15 @@ describe('fixed bugs', () => {
 
         const [first, second] = el.querySelectorAll('.vis-legend .vis-legend-entries > div');
         second.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
-        const marked = el.querySelectorAll('g.vis-plot.plot-0 path.vis-highlight');
+        const marked = el.querySelectorAll('g.vis-mark.mark-0 path.vis-highlight');
         expect(marked).toHaveLength(1);
         expect(marked[0].getAttribute('data-group-c')).toBe('Say "hi"');
         expect(highlightCss(el)).toContain('.vis-highlight *:not(g) { stroke-width: 3; }');
 
         second.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
         first.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
-        expect(el.querySelector('g.vis-plot.plot-0 path.vis-highlight').getAttribute('data-group-c')).toBe(`O'Brien`);
-        expect(el.querySelector(`g.vis-plot.plot-0 path[data-group-c='Say "hi"']`).getAttribute('stroke-width')).toBe('1');
+        expect(el.querySelector('g.vis-mark.mark-0 path.vis-highlight').getAttribute('data-group-c')).toBe(`O'Brien`);
+        expect(el.querySelector(`g.vis-mark.mark-0 path[data-group-c='Say "hi"']`).getAttribute('stroke-width')).toBe('1');
         expect(errors).toEqual([]);
     });
 
@@ -2956,7 +2956,7 @@ describe('layout shifts', () => {
         await nextTick();
         // the old one while the new one is loaded
         expect(el.querySelector('.vis-title')?.textContent).toBe('Bevölkerung');
-        await vi.waitFor(() => expect(el.querySelector('g.vis-plot rect')).not.toBeNull());
+        await vi.waitFor(() => expect(el.querySelector('g.vis-mark rect')).not.toBeNull());
         expect(el.querySelectorAll('.vis')).toHaveLength(1);
     });
 });
@@ -3028,7 +3028,7 @@ describe('lazy', () => {
         expect(fetched).toEqual([]);
         expect(observers.map(o => o.options.rootMargin)).toEqual(['800px 0px', '300% 0px']);
         show();
-        await vi.waitFor(() => expect(el.querySelector('g.vis-plot rect')).not.toBeNull());
+        await vi.waitFor(() => expect(el.querySelector('g.vis-mark rect')).not.toBeNull());
         expect(fetched[0]).toBe('/data/bev/def-bar.json');
         expect(fetched).not.toContain('/data/bev/def.json');
         // after it is loaded a change loads it again, as without lazy
@@ -3059,7 +3059,7 @@ describe('lazy', () => {
         await new Promise(resolve => setTimeout(resolve, 200));
         changed.update({ defFile: '/data/bev/def-bar.json' });
         show();
-        await vi.waitFor(() => expect(other.querySelector('g.vis-plot rect')).not.toBeNull());
+        await vi.waitFor(() => expect(other.querySelector('g.vis-mark rect')).not.toBeNull());
         vis.destroy?.();
         expect(errors).toEqual([]);
     });
@@ -3150,7 +3150,7 @@ describe('images', () => {
         clearCache();
         await vm.image();
         expect(fetched).toEqual(['/data/bev/def.json']);
-        expect(screenshot.copy.querySelectorAll('g.vis-plot path').length).toBeGreaterThan(0);
+        expect(screenshot.copy.querySelectorAll('g.vis-mark path').length).toBeGreaterThan(0);
     });
 
     test('the buttons are only shown with the props', async () => {
@@ -3247,7 +3247,7 @@ describe('images', () => {
     });
 
     test('an error of the copy rejects the image', async () => {
-        registerPlotType('test:once', plotTypes['cartesian:line']);
+        registerMarkType('test:once', plotTypes['cartesian:line']);
         const vm = createGenVis(document.body.appendChild(document.createElement('div')), { def: { ...def(), plot: [{ ...def().plot[0], type: 'test:once' }] }, data: lineData });
         await rendered(vm.el);
         // the copy is drawn again, without the plot type
@@ -3326,29 +3326,29 @@ describe('histograms: the classes of a bin', () => {
 
     test('bars from the start to the end of a class, with crisp edges, empty ones of no height', async () => {
         const el = await mount({ def: def({ type: 'bar', by: 'g', props: { x0: '@lo:scaled', x1: '@hi:scaled', y1: '@y:scaled' } }), data });
-        const rects = [...el.querySelectorAll('g.vis-plot rect')].map(r => ['x', 'width', 'y', 'height'].map(a => +r.getAttribute(a)));
+        const rects = [...el.querySelectorAll('g.vis-mark rect')].map(r => ['x', 'width', 'y', 'height'].map(a => +r.getAttribute(a)));
         // a: 2 in 0-2, 1 in 2-4, 1 in 4-10; b: 1 in 0-2, none in the others
         expect(rects.slice(0, 3)).toEqual([[0, 150, 125, 125], [150, 150, 187.5, 62.5], [300, 450, 187.5, 62.5]]);
         expect(rects[4]).toEqual([150, 150, 250, 0]);
-        expect(el.querySelector('g.vis-plot rect').getAttribute('shape-rendering')).toBe('crispEdges');
+        expect(el.querySelector('g.vis-mark rect').getAttribute('shape-rendering')).toBe('crispEdges');
         expect(errors).toEqual([]);
     });
 
     test('filled stairs of an area of x0 and x1, closed along the base', async () => {
         const el = await mount({ def: def({ type: 'area', by: 'g', props: { d: { x0: '@lo:scaled', x1: '@hi:scaled' } } }), data });
-        const [a] = [...el.querySelectorAll('g.vis-plot path')].map(p => p.getAttribute('d'));
+        const [a] = [...el.querySelectorAll('g.vis-mark path')].map(p => p.getAttribute('d'));
         expect(a).toBe('M0,250V125H150V187.5H300V187.5H750V250Z');
         expect(errors).toEqual([]);
     });
 
     test('stairs of a line of x0 and x1: down to the base at both ends', async () => {
         const el = await mount({ def: def({ type: 'line', by: 'g', props: { d: { x0: '@lo:scaled', x1: '@hi:scaled' } } }), data });
-        const [a, b] = [...el.querySelectorAll('g.vis-plot path')].map(p => p.getAttribute('d'));
+        const [a, b] = [...el.querySelectorAll('g.vis-mark path')].map(p => p.getAttribute('d'));
         expect(a).toBe('M0,250V125H150V187.5H300V187.5H750V250');
         expect(b).toBe('M0,250V187.5H150V250H300V250H750V250');
         // open ends: from the first step to the last one, e.g. of shares
         const open = await mount({ def: def({ type: 'line', by: 'g', ends: 'open', props: { d: { x0: '@lo:scaled', x1: '@hi:scaled' } } }), data });
-        expect(open.querySelector('g.vis-plot path').getAttribute('d')).toBe('M0,125H150V187.5H300V187.5H750');
+        expect(open.querySelector('g.vis-mark path').getAttribute('d')).toBe('M0,125H150V187.5H300V187.5H750');
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef(def({ type: 'bar', ends: 'open', props: {} })).filter(w => w.includes('ends')))
             .toEqual([`marks[0].ends: the ends of the stairs of a line of x0 and x1, 'base' (down to the base, the default) or 'open'`]);
@@ -3405,7 +3405,7 @@ describe('axes at a value of the other axis (`at`)', () => {
         expect(x.querySelector('.tick line').getAttribute('transform')).toBeNull();
         // above the plots, as it crosses them
         expect(x.classList.contains('vis-axis-at')).toBe(true);
-        const plots = [...x.parentNode.querySelectorAll(':scope > .vis-plot')];
+        const plots = [...x.parentNode.querySelectorAll(':scope > .vis-mark')];
         expect(plots.length).toBeGreaterThan(0);
         expect(plots.every(p => p.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
         expect(errors).toEqual([]);
@@ -3482,11 +3482,11 @@ describe('the layer of annotations', () => {
             { type: 'line', y: 1 },
         ];
         const el = await mount({ def, data: lineData });
-        const order = [...el.querySelectorAll('.vis-facet svg > g > g[data-plot]')].map(g => g.getAttribute('data-plot'));
-        expect(order).toEqual(['annotation-2', 'plot-0', 'annotation-0', 'points', 'annotation-1']);
+        const order = [...el.querySelectorAll('.vis-facet svg > g > g[data-mark]')].map(g => g.getAttribute('data-mark'));
+        expect(order).toEqual(['annotation-2', 'mark-0', 'annotation-0', 'points', 'annotation-1']);
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef({ ...def, annotations: [{ type: 'line', y: 2, before: 'nope' }] }))
-            .toEqual([`annotations[0].before: unknown mark 'nope', expected one of 'plot-0', 'points'`]);
+            .toEqual([`annotations[0].before: unknown mark 'nope', expected one of 'mark-0', 'points'`]);
     });
 });
 
@@ -3521,7 +3521,7 @@ describe('plots once per facet', () => {
         def.facets = { dim: 'f', cols: 2 };
         def.plot.push({ type: 'svg:text', id: 'header', once: true, props: { x: '@plot:right', y: '@plot:top', text: '@facet:name', 'text-anchor': 'end' } });
         const el = await mount({ def, data: lineData });
-        const texts = [...el.querySelectorAll('[data-plot="header"] text')];
+        const texts = [...el.querySelectorAll('[data-mark="header"] text')];
         expect(texts.map(t => t.textContent)).toEqual(['Stadt Wien', 'Tirol']);
         const facet = el.querySelector('.vis-facet svg');
         expect(+texts[0].getAttribute('y')).toBe(0);
@@ -3538,10 +3538,10 @@ describe('rules', () => {
         def.plot = [{ type: 'rule', by: 'c', filter: { x: 2021 }, props: { 'stroke-dasharray': '2 2' } },
             { type: 'rule', id: 'h', filter: { x: 2020, c: 'Wien' }, props: { y: '@y:scaled', x2: 100 } }];
         const el = await mount({ def, data: lineData });
-        const lines = [...el.querySelectorAll('[data-plot="plot-0"] line')];
+        const lines = [...el.querySelectorAll('[data-mark="mark-0"] line')];
         expect(lines.map(l => ['y1', 'y2', 'stroke'].map(a => l.getAttribute(a)))).toEqual([['0', '250', 'red'], ['0', '250', 'blue']]);
         lines.forEach(l => ['x1', 'x2'].forEach(a => expect(+l.getAttribute(a)).toBeCloseTo(550/3 + 0.5, 9)));
-        const h = el.querySelector('[data-plot="h"] line');
+        const h = el.querySelector('[data-mark="h"] line');
         expect(['x1', 'x2'].map(a => h.getAttribute(a))).toEqual(['0', '100']);
         expect(h.getAttribute('y1')).toBe(h.getAttribute('y2'));
         expect(errors).toEqual([]);
@@ -3587,8 +3587,8 @@ describe('small tables per facet', () => {
         ];
         const el = await mount({ def, data: lineData });
         const facet = el.querySelector('.vis-facet');
-        expect([...facet.querySelectorAll('[data-plot="rows"] text')].map(t => [t.textContent, t.getAttribute('y')])).toEqual([['3', '12'], ['4', '23']]);
-        expect(facet.querySelector('[data-plot="header"] text').textContent).toBe('Wert');
+        expect([...facet.querySelectorAll('[data-mark="rows"] text')].map(t => [t.textContent, t.getAttribute('y')])).toEqual([['3', '12'], ['4', '23']]);
+        expect(facet.querySelector('[data-mark="header"] text').textContent).toBe('Wert');
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef(def)).toEqual([]);
         expect(errors).toEqual([]);
@@ -3670,7 +3670,7 @@ describe('grids of facets', () => {
         const el = await mount({ def, data: lineData.replace('2021,,20,Wien\n', '') });
         expect([...el.querySelectorAll('div.vis-facet-row-title-horizontal')].map(t => t.textContent)).toEqual(['Wien', 'Tirol']);
         expect(el.querySelectorAll('.vis-facet-empty')).toHaveLength(1);
-        expect([...el.querySelectorAll('svg.vis-svg')].map(s => s.querySelectorAll('[data-plot="first"] circle').length)).toEqual([1, 1, 0]);
+        expect([...el.querySelectorAll('svg.vis-svg')].map(s => s.querySelectorAll('[data-mark="first"] circle').length)).toEqual([1, 1, 0]);
         const { validateDef } = await import('@/utils/validate');
         expect(validateDef(def)).toEqual([]);
         expect(validateDef({ ...def, facets: { rows: 'c', cols: 'nope', scales: { y: 'rows' } } })).toEqual([
@@ -3778,7 +3778,7 @@ describe('the total of the stacked values in the hover', () => {
         const total = el.querySelector('.vis-hover tr.vis-hover-total');
         expect([...total.querySelectorAll('td')].map(t => t.textContent).filter(Boolean)).toEqual(['Gesamt', '6,0']);
         expect(el.querySelector('.vis-hover-title').textContent).toBe('H1: 6,0');
-        expect(el.querySelectorAll('.vis-hover td[data-mapping="half"]')).toHaveLength(0);
+        expect(el.querySelectorAll('.vis-hover td[data-dim="half"]')).toHaveLength(0);
         // the rows of the table are the rows before the total
         expect(total.previousElementSibling.classList.contains('vis-hover-entry')).toBe(true);
         // true: the name of the locale
@@ -3817,15 +3817,15 @@ describe('periods of dates (interval)', () => {
     test('the domain to the end of the last period, bars in the middle of theirs, the step of a period, the hover of the period', async () => {
         const el = await mount({ def: def(), data });
         // three halves of a year in 550 pixels, without the extension of 2%
-        const rects = [...el.querySelectorAll('[data-plot="bars"] rect')].map(r => [+r.getAttribute('x'), +r.getAttribute('width')]);
+        const rects = [...el.querySelectorAll('[data-mark="bars"] rect')].map(r => [+r.getAttribute('x'), +r.getAttribute('width')]);
         const half = 550*181/(365 + 182);
         expect(rects[0][1]).toBeCloseTo(0.8*half, 0);
         expect(rects[0][0]).toBeCloseTo(0.1*half, 0);
-        const circles = [...el.querySelectorAll('[data-plot="mid"] circle')];
+        const circles = [...el.querySelectorAll('[data-mark="mid"] circle')];
         expect(+circles[0].getAttribute('cx')).toBeCloseTo(half/2, 0);
         expect(+circles[0].getAttribute('r')).toBeCloseTo(half/10, 0);
         // @x:scaled is the middle of the period, @x:scaled:start its start
-        const scaled = el.querySelector('[data-plot="scaled"] circle');
+        const scaled = el.querySelector('[data-mark="scaled"] circle');
         expect([+scaled.getAttribute('cx'), +scaled.getAttribute('cy')].map(Math.round)).toEqual([Math.round(half/2), 0]);
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 60, clientY: 100 }));
         await nextTick();
@@ -3848,7 +3848,7 @@ describe('periods of dates (interval)', () => {
         const dated = { ...banded, mapping: { ...banded.mapping, x: { ...banded.mapping.x, type: 'date' } } };
         expect(validateDef(dated).filter(w => w.includes('interval'))).toEqual([`dims.x.interval: the periods of a time or utc scale, not of a band one`]);
         const el = await mount({ def: dated, data });
-        const rects = [...el.querySelectorAll('[data-plot="bars"] rect')];
+        const rects = [...el.querySelectorAll('[data-mark="bars"] rect')];
         expect(rects).toHaveLength(3);
         expect(new Set(rects.map(r => r.getAttribute('width'))).size).toBe(1);
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 60, clientY: 100 }));
@@ -3871,7 +3871,7 @@ describe('periods of dates (interval)', () => {
         const d = def();
         d.mapping.x.scale.type = 'utc';
         const el = await mount({ def: d, data: 'date,value\n2023-04-01,1\n2023-10-01,2' });
-        const widths = [...el.querySelectorAll('[data-plot="bars"] rect')].map(r => Math.round(+r.getAttribute('width')));
+        const widths = [...el.querySelectorAll('[data-mark="bars"] rect')].map(r => Math.round(+r.getAttribute('width')));
         expect(widths[0]).toBe(widths[1]);
         expect(errors).toEqual([]);
     });
@@ -3891,12 +3891,12 @@ describe('the categories of band and point scales in the order of the categories
 
     test('the points of the scale and the lines and areas through them in this order, not the one of the rows', async () => {
         const el = await mount({ def: def(), data });
-        const cx = [...el.querySelectorAll('[data-plot="dots"] circle')].map(c => +c.getAttribute('cx'));
+        const cx = [...el.querySelectorAll('[data-mark="dots"] circle')].map(c => +c.getAttribute('cx'));
         // Burgenland, Tirol, Wien in the rows, the last one at the right
         expect(cx[0]).toBeGreaterThan(cx[1]);
         expect(cx[1]).toBeGreaterThan(cx[2]);
         for (const plot of ['line', 'area']) {
-            const d = el.querySelector(`[data-plot="${plot}"] path`).getAttribute('d');
+            const d = el.querySelector(`[data-mark="${plot}"] path`).getAttribute('d');
             const xs = [...d.matchAll(/[ML]([\d.]+),/g)].map(m => +m[1]).slice(0, 3);
             expect(xs.map(Math.round)).toEqual([...cx].sort((a, b) => a - b).map(Math.round));
         }
@@ -4006,7 +4006,7 @@ describe('labels inside the bands of an area plot (place)', () => {
         ],
     });
     const data = 'hour,c,value\n' + Array.from({ length: 24 }, (_, h) => [`${h},a,${10 + Math.sin(h/4)*3}`, `${h},b,${8}`, `${h},thin,0.2`]).flat().join('\n');
-    const labels = el => [...el.querySelectorAll('[data-plot="names"] text')];
+    const labels = el => [...el.querySelectorAll('[data-mark="names"] text')];
 
     test('a label per band where it fits, centered, inside the band, none of a thin band; again of a hidden category', async () => {
         const el = await mount({ def: def(), data });
@@ -4061,8 +4061,8 @@ describe('a channel of no dim and no column (review of 5.0)', () => {
     });
     test('a chart without dims of the columns of the channels', async () => {
         const el = await mount({ def: { marks: { type: 'point', x: 'year', y: 'value' } }, data: 'year,value\n2020,1\n2021,2' });
-        expect([...el.querySelectorAll('g.vis-plot circle')].every(c => Number.isFinite(parseFloat(c.getAttribute('cx'))))).toBe(true);
-        expect(el.querySelectorAll('g.vis-plot circle').length).toBe(2);
+        expect([...el.querySelectorAll('g.vis-mark circle')].every(c => Number.isFinite(parseFloat(c.getAttribute('cx'))))).toBe(true);
+        expect(el.querySelectorAll('g.vis-mark circle').length).toBe(2);
         expect(errors).toEqual([]);
     });
 });

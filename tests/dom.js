@@ -115,7 +115,7 @@ export const pointer = (type, init = {}) => new PointerEvent(type, { pointerType
 // if it highlights elements
 const hoverRows = el => {
     const rows = el.querySelectorAll('.vis-hover tr.vis-hover-entry, .vis-hover .vis-hover-row').length;
-    return rows > 0 || el.querySelector('.vis-hover') ? rows : (el.querySelector('.vis-plot .vis-highlight') ? 1 : 0);
+    return rows > 0 || el.querySelector('.vis-hover') ? rows : (el.querySelector('.vis-mark .vis-highlight') ? 1 : 0);
 };
 
 // moves the mouse over all facets, returns the most hover rows at a position

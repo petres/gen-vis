@@ -1,7 +1,7 @@
-export { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerPlotType, registerCoord, registerScheme, registerDefaults, perRow, perGroup };
+export { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerMarkType, registerCoord, registerScheme, registerDefaults, perRow, perGroup };
 
 import { createGenVis } from '@/comp/app'
-import { registerPlotType } from '@/plots'
+import { registerMarkType } from '@/plots'
 import { perRow, perGroup } from '@/plots/elements'
 import { registerCoord } from '@/coords'
 import { registerScheme } from '@/utils/d3'

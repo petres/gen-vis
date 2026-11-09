@@ -23,4 +23,4 @@
 .theme-field .vis-slider-value { font-weight: 700; color: #E8590C; }
 
 /* the years of the strip plot without a line */
-.theme-field .vis-axis[data-mapping="year"] path.domain { display: none; }
+.theme-field .vis-axis[data-dim="year"] path.domain { display: none; }

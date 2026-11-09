@@ -45,7 +45,7 @@ describe('the examples of the page', () => {
         expect(validateDef(def)).toEqual([]);
         const el = await mount(file.startsWith('charts/') ? { def, data: chartData } : { def });
         expect(el.querySelector('.vis-error')).toBeNull();
-        expect(el.querySelectorAll('svg.vis-svg g.vis-plot').length).toBeGreaterThan(0);
+        expect(el.querySelectorAll('svg.vis-svg g.vis-mark').length).toBeGreaterThan(0);
         expect(errors).toEqual([]);
     });
 });
@@ -57,7 +57,7 @@ describe('the steps of the page how it works', () => {
         expect(validateDef(def)).toEqual([]);
         const el = await mount({ def });
         expect(el.querySelector('.vis-error')).toBeNull();
-        expect(el.querySelectorAll('svg.vis-svg g.vis-plot').length).toBeGreaterThan(0);
+        expect(el.querySelectorAll('svg.vis-svg g.vis-mark').length).toBeGreaterThan(0);
         expect(errors).toEqual([]);
     });
 
@@ -95,7 +95,7 @@ describe('the gallery of the page', () => {
     test.each(gallery.map(e => [e.id, e.file]))('%s is valid and drawn', async (id, file) => {
         const el = await mount({ defFile: `/data/${file}` });
         expect(el.querySelector('.vis-error')).toBeNull();
-        expect(el.querySelectorAll('svg.vis-svg g.vis-plot').length).toBeGreaterThan(0);
+        expect(el.querySelectorAll('svg.vis-svg g.vis-mark').length).toBeGreaterThan(0);
         expect(errors).toEqual([]);
     });
 
@@ -103,7 +103,7 @@ describe('the gallery of the page', () => {
         const el = await mount({ def: { parent: 'def.json', title: 'Edited' }, defFile: '/data/bev/edited.json' });
         expect(el.querySelector('.vis-error')).toBeNull();
         expect(el.querySelector('.vis-title').textContent).toBe('Edited');
-        expect(el.querySelectorAll('svg.vis-svg g.vis-plot').length).toBeGreaterThan(0);
+        expect(el.querySelectorAll('svg.vis-svg g.vis-mark').length).toBeGreaterThan(0);
         expect(errors).toEqual([]);
     });
 });

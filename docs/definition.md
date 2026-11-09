@@ -1449,8 +1449,8 @@ them (from 0), e.g. the counts of the categories at the top right:
 
 ### The other keys of a mark
 
-- `id`: the class and the `data-plot` of the group of the mark,
-  `plot-<index>` by default, the marks of a parent are merged by their ids
+- `id`: the class and the `data-mark` of the group of the mark,
+  `mark-<index>` by default, the marks of a parent are merged by their ids
   (if all of them have one), `place` and `before` name it.
 - `by`: the rows are grouped by this dim or these dims, e.g. a line per
   category, the props of their categories are names of the attributes

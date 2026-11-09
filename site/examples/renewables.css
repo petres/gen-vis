@@ -27,6 +27,6 @@
 .theme-report .vis-axis-left text { fill: #1D3557; font-size: 12px; }
 
 /* the names of the regions above their groups */
-.theme-report [data-plot="regions"] text { text-transform: uppercase; }
+.theme-report [data-mark="regions"] text { text-transform: uppercase; }
 
 .theme-report .vis-footer span { font-size: 11px; color: #7B8794; }

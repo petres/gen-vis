@@ -1435,12 +1435,12 @@
                                 {
                                     "type": "string",
                                     "pattern": "^[a-z][\\w-]*:[\\w-]+$",
-                                    "description": "A registered plot type, see registerPlotType."
+                                    "description": "A registered plot type, see registerMarkType."
                                 },
                                 {
                                     "type": "string",
                                     "pattern": "^[a-z][\\w-]*$",
-                                    "description": "A registered plot type of the coordinate system without its prefix, see registerPlotType."
+                                    "description": "A registered plot type of the coordinate system without its prefix, see registerMarkType."
                                 }
                             ]
                         },
@@ -1489,7 +1489,7 @@
                 },
                 "id": {
                     "type": "string",
-                    "description": "The class and the data-plot of the group of the mark, plot-<index> by default, the marks of a parent are merged by their ids."
+                    "description": "The class and the data-mark of the group of the mark, mark-<index> by default, the marks of a parent are merged by their ids."
                 },
                 "by": {
                     "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }],

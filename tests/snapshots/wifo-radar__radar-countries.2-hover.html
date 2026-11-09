@@ -1,7 +1,7 @@
 <div class="vis" data-global-set="H" data-global-year="2019" data-vis="N">
-<style>.vis[data-vis="N"] [data-plot="areas"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="areas"] .vis-highlight *:not(g) { fill-opacity: 0.2; }
-.vis[data-vis="N"] [data-plot="lines"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="lines"] .vis-highlight *:not(g) { stroke-width: 4; }
-.vis[data-vis="N"] [data-plot="points"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="points"] .vis-highlight *:not(g) { r: 6; }</style>
+<style>.vis[data-vis="N"] [data-mark="areas"] .vis-highlight:not(g), .vis[data-vis="N"] [data-mark="areas"] .vis-highlight *:not(g) { fill-opacity: 0.2; }
+.vis[data-vis="N"] [data-mark="lines"] .vis-highlight:not(g), .vis[data-vis="N"] [data-mark="lines"] .vis-highlight *:not(g) { stroke-width: 4; }
+.vis[data-vis="N"] [data-mark="points"] .vis-highlight:not(g), .vis[data-vis="N"] [data-mark="points"] .vis-highlight *:not(g) { r: 6; }</style>
 <div class="vis-header">
 <div class="vis-title">Radar der Wettbewerbsfähigkeit: Ländervergleich</div>
 <div class="vis-subtitle">Die Prozentränge der Länder in der EU, Norwegen, Island, der Schweiz und dem Vereinigten Königreich 2019</div>
@@ -65,7 +65,7 @@
 <line x1="0" x2="-125" y1="0" y2="-216.506">
 </line>
 </g>
-<g class="vis-axis vis-axis-angular" data-mapping="x" font-family="sans-serif" font-size="10">
+<g class="vis-axis vis-axis-angular" data-dim="x" font-family="sans-serif" font-size="10">
 <circle class="domain" fill="none" r="250" style="stroke: var(--gen-vis-grid-color, #CCC);">
 </circle>
 <g class="tick">
@@ -128,19 +128,19 @@
 <circle r="250">
 </circle>
 </g>
-<g class="vis-plot areas" data-plot="areas">
+<g class="vis-mark areas" data-mark="areas">
 <path d="M0,-161.3L101.85,-176.409L76.816,-44.35L177.425,0L111.739,64.512L51.725,89.59L0,146.55L-120.837,209.297L-187.646,108.338L-94.825,0L-40.097,-23.15L-116.663,-202.065ZM0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0Z" data-group-country="Deutschland" fill="#559BD5" fill-opacity="0.08">
 </path>
 <path class="vis-highlight" d="M0,-177.425L92.587,-160.366L41.894,-24.187L137.1,0L153.655,88.712L99.138,171.711L0,181.025L-75,129.904L-151.554,87.5L-172.425,0L-184.442,-106.487L-75,-129.904ZM0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0L0,0Z" data-group-country="Österreich" fill="#C3423F" fill-opacity="0.08">
 </path>
 </g>
-<g class="vis-plot lines" data-plot="lines">
+<g class="vis-mark lines" data-mark="lines">
 <path d="M0,-161.3L101.85,-176.409L76.816,-44.35L177.425,0L111.739,64.512L51.725,89.59L0,146.55L-120.837,209.297L-187.646,108.338L-94.825,0L-40.097,-23.15L-116.663,-202.065Z" data-group-country="Deutschland" fill="none" stroke="#559BD5" stroke-width="2.5">
 </path>
 <path class="vis-highlight" d="M0,-177.425L92.587,-160.366L41.894,-24.187L137.1,0L153.655,88.712L99.138,171.711L0,181.025L-75,129.904L-151.554,87.5L-172.425,0L-184.442,-106.487L-75,-129.904Z" data-group-country="Österreich" fill="none" stroke="#C3423F" stroke-width="2.5">
 </path>
 </g>
-<g class="vis-plot points" data-plot="points">
+<g class="vis-mark points" data-mark="points">
 <g class="vis-group" data-group-country="Deutschland">
 <circle cx="0" cy="-161.3" fill="#559BD5" r="5">
 </circle>
@@ -194,7 +194,7 @@
 </circle>
 </g>
 </g>
-<g class="vis-axis vis-axis-radial" data-mapping="y" font-family="sans-serif" font-size="10">
+<g class="vis-axis vis-axis-radial" data-dim="y" font-family="sans-serif" font-size="10">
 <line class="domain" stroke="currentColor" stroke-opacity="0" x1="0" x2="64.705" y1="0" y2="-241.481">
 </line>
 <g class="tick">

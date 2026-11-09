@@ -23,7 +23,7 @@ const mapDef = (geo = {}) => ({
         { type: 'geo:circle', by: ['region'], props: { r: 3 } },
     ],
 });
-const regionsDrawn = el => [...el.querySelectorAll('g.vis-plot.plot-1 path')]
+const regionsDrawn = el => [...el.querySelectorAll('g.vis-mark.mark-1 path')]
     .map(p => [p.getAttribute('data-geo-key'), p.getAttribute('d') !== null]);
 const errorOf = el => el.querySelector('.vis-error')?.textContent;
 const warnings = () => errors.filter(e => e.startsWith('gen-vis'));
@@ -32,7 +32,7 @@ describe('the join of rows to the features', () => {
     test('keys with leading zeros match integers, e.g. 1 of a CSV the id "01"', async () => {
         const el = await mount({ def: mapDef(), data: 'region,value\n1,1\n2,2\n3,3' });
         expect(regionsDrawn(el)).toEqual([['1', true], ['2', true], ['3', true]]);
-        expect(el.querySelectorAll('g.vis-plot.plot-2 circle')).toHaveLength(3);
+        expect(el.querySelectorAll('g.vis-mark.mark-2 circle')).toHaveLength(3);
         expect(errors).toEqual([]);
     });
 
@@ -47,7 +47,7 @@ describe('the join of rows to the features', () => {
     test('rows without a feature are not drawn', async () => {
         const el = await mount({ def: mapDef(), data: 'region,value\n01,1\nX,2' });
         expect(regionsDrawn(el)).toEqual([['01', true]]);
-        expect(el.querySelectorAll('g.vis-plot.plot-2 circle')).toHaveLength(1);
+        expect(el.querySelectorAll('g.vis-mark.mark-2 circle')).toHaveLength(1);
         // a region the geometry has not, the join works
         expect(warnings()).toEqual([]);
     });
@@ -55,7 +55,7 @@ describe('the join of rows to the features', () => {
     test('a join of no row warns once, with the first keys and the key of the features', async () => {
         const el = await mount({ def: mapDef({ key: 'properties.name' }), data: 'region,value\nX,1\nY,2\nZ,3\nW,4' });
         expect(regionsDrawn(el)).toEqual([]);
-        expect(el.querySelectorAll('g.vis-plot.plot-2 circle')).toHaveLength(0);
+        expect(el.querySelectorAll('g.vis-mark.mark-2 circle')).toHaveLength(0);
         // one warning of both plots
         expect(warnings()).toEqual([expect.stringMatching(/no value of the join 'region' \('X', 'Y', 'Z', \.\.\.\) matches a feature by its key 'properties\.name'/)]);
     });
@@ -64,7 +64,7 @@ describe('the join of rows to the features', () => {
         const def = mapDef();
         def.geo.data = { type: 'FeatureCollection', features: [square(undefined, 0), square(undefined, 1)] };
         const el = await mount({ def, data: 'region,value\n01,1' });
-        expect(el.querySelectorAll('g.vis-plot.plot-0 path')).toHaveLength(2);
+        expect(el.querySelectorAll('g.vis-mark.mark-0 path')).toHaveLength(2);
         expect(regionsDrawn(el)).toEqual([]);
         expect(warnings()[0]).toMatch(/key 'id'.*geo\.key/);
     });
@@ -129,7 +129,7 @@ describe('the labels of maps', () => {
         dims: { region: { column: 'region', type: 'categorical' } },
         marks: [{ type: 'base', fill: '#EEE' }, { type: 'text', by: 'region', text: '@region', ...mark }],
     });
-    const labels = el => [...el.querySelectorAll('g.vis-plot.plot-1 text')];
+    const labels = el => [...el.querySelectorAll('g.vis-mark.mark-1 text')];
 
     test('centered on their place by default, an anchor of the mark wins, a halo', async () => {
         const el = await mount({ def: labelDef({ halo: true }), data: 'region,value\n01,1\n02,2' });

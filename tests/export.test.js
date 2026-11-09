@@ -231,7 +231,7 @@ describe('the merged definition of the export page (genVisExport.resolve, scheme
     };
     // the colors of the lines of the chart in the page, jsdom computes no
     // styles of svg elements, the SVG has none of them
-    const strokes = () => [...document.querySelectorAll('g.vis-plot.plot-0 path')].map(p => [p.getAttribute('data-group-c'), p.getAttribute('stroke')]);
+    const strokes = () => [...document.querySelectorAll('g.vis-mark.mark-0 path')].map(p => [p.getAttribute('data-group-c'), p.getAttribute('stroke')]);
     // the ends of the tick marks
     const marks = svg => [...parse(svg).querySelectorAll('line')].map(l => l.getAttribute('y2')).filter(Boolean);
 

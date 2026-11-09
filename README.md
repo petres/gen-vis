@@ -190,7 +190,7 @@ npx gen-vis migrate old/*.json --write   # definitions of gen-vis 4 as ones of g
 - [Static export](docs/export.md): [`exportSvg`](docs/export.md#exportsvg),
   the [export page](docs/export.md#export-page) (`window.genVisExport`) and
   the [CLI](docs/export.md#cli) `gen-vis export`.
-- [Extensions](docs/extensions.md): `registerPlotType`, `registerCoord`,
+- [Extensions](docs/extensions.md): `registerMarkType`, `registerCoord`,
   `registerScheme`, `registerDefaults`, the schema and the types, [checks
   outside the browser](docs/extensions.md#checks-outside-the-browser)
   (`validateDef`, `migrate`, `@preschen/gen-vis/check`).

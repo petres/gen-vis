@@ -8,7 +8,7 @@ editors.
 ## Plot types
 
 A mark of a definition is drawn by its type, a plot type of the engine
-(`registerPlotType`). The engine reads a mark as a plot: its attributes
+(`registerMarkType`). The engine reads a mark as a plot: its attributes
 are the `props` of the plot, its channels the props of the scaled positions
 (e.g. `"x": "lo"` is `"x": "@lo:scaled"`), see
 [design-5.0.md](design-5.0.md). A plot type returns the marks of the
@@ -27,9 +27,9 @@ props as attributes, `translate(values, row, group)` changes them,
 `d(group)`, both move their elements with the `transition` of the options:
 
 ```js
-import { registerPlotType, perRow } from '@preschen/gen-vis';
+import { registerMarkType, perRow } from '@preschen/gen-vis';
 
-registerPlotType('my:tick', {
+registerMarkType('my:tick', {
     update: true,
     defaults: { x: '@x:scaled', fill: { or: ['@color', 'currentColor'] } },
     marks: (groups, plot, ctx) => perRow(groups, 'rect', v => ({
@@ -69,7 +69,7 @@ stacked value), `scope` (the names of the references of the facet, see
 (the sizes of the coordinate system, e.g. its `radius`), of maps also the
 `projection` and the `path`. `curve: true` passes the `curve` of the plot,
 `coords` limits a type to coordinate systems, e.g. `cartesian:bar` to
-`cartesian`. The types of `PlotType`, `PlotGroup` and `Layer` are in the
+`cartesian`. The types of `MarkType`, `MarkGroup` and `Layer` are in the
 package.
 
 A new view, e.g. of a toggle of a legend, a control or a new width, is
@@ -154,9 +154,9 @@ stylesheet of a house style can give the margins instead of a script.
 ## The check and the browser module
 
 `validateDef` knows registered plot types, coordinate systems and
-schemes; `@preschen/gen-vis/check` exports `registerPlotType`,
+schemes; `@preschen/gen-vis/check` exports `registerMarkType`,
 `registerCoord` and `registerScheme` too. The browser module exports
-`registerPlotType`, `registerCoord`, `registerScheme`, `registerDefaults`,
+`registerMarkType`, `registerCoord`, `registerScheme`, `registerDefaults`,
 `perRow` and `perGroup` as the package does. The schema only knows the
 built-in ones.
 

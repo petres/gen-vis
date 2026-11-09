@@ -186,7 +186,7 @@ const ticks = (ga, moving, orient, scale, { values, format, tickSizeInner, tickS
 const drawAxis = (ga, { name, position, scale, values, format, labels, padding, rotate, domain, marks, markSize, width, height, at = null, labelShift = 0 }) => {
     // an axis at a value of the other axis is in the plot area (vis-axis-at)
     setAttr(ga, "class", `vis-axis vis-axis-${position}${at === null ? '' : ' vis-axis-at'}`);
-    setAttr(ga, "data-mapping", name);
+    setAttr(ga, "data-dim", name);
     // the animations of the draw before stop where they are, the ticks
     // which disappear are removed
     interrupt(ga, 'vis');

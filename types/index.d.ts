@@ -230,7 +230,7 @@ export interface GenVisInstance extends GenVisMethods {
 export declare function createGenVis(element: Element, props?: GenVisOptions, options?: { root?: boolean }): GenVisInstance;
 
 /** A group of the rows of a plot, see docs/extensions.md. */
-export interface PlotGroup {
+export interface MarkGroup {
     categories: Record<string, unknown>;
     props: Record<string, unknown>;
     rows: Row[];
@@ -260,9 +260,9 @@ export interface Layer {
 }
 
 /** A plot type, see docs/extensions.md and src/plots/index.js. */
-export interface PlotType {
+export interface MarkType {
     /** The marks of the groups of rows of a plot, null draws nothing. */
-    marks(groups: PlotGroup[], plot: Record<string, any>, ctx: Record<string, any>): Layer | null;
+    marks(groups: MarkGroup[], plot: Record<string, any>, ctx: Record<string, any>): Layer | null;
     update?: boolean;
     curve?: boolean;
     coords?: string[];
@@ -276,15 +276,15 @@ export declare function mountGenVisElement(element: Element, props?: GenVisOptio
 export declare function mountGenVisByClass(className: string): GenVisInstance[];
 /** Removes the visualisation of a mounted element, false if it is not mounted. */
 export declare function unmountGenVisElement(element: Element): boolean;
-export declare function registerPlotType(name: string, type: PlotType): void;
+export declare function registerMarkType(name: string, type: MarkType): void;
 export declare function registerCoord(name: string, coord: Record<string, unknown>): void;
 /** A scheme of its own, e.g. the colors of a house style, for `scheme` of the categories and the scales as the ones of d3, `colors` are CSS colors, of a scheme of several sizes entry n the n colors (others null), `observable10` also the default colors; returns a function which restores the scheme registered before under that name. */
 export declare function registerScheme(name: string, colors: string[] | (string[] | null | undefined)[]): () => void;
 /** The defaults of the parts of all charts of the page instead of the built-in ones, the prop `defaults` of a chart takes precedence, null removes them. */
 export declare function registerDefaults(defaults: GenVisDefaults | null): void;
 /** The marks of an element of `element` per row, the elements of the draw before are updated. */
-export declare function perRow(groups: PlotGroup[], element: string,
-    translate?: (values: Record<string, unknown>, row: Row, group: PlotGroup) => Record<string, unknown>,
+export declare function perRow(groups: MarkGroup[], element: string,
+    translate?: (values: Record<string, unknown>, row: Row, group: MarkGroup) => Record<string, unknown>,
     key?: (item: LayerItem) => unknown): Layer;
 /** The marks of a path per group with the `attrs` of the group and the path `d(group)`. */
-export declare function perGroup(groups: PlotGroup[], d?: (group: PlotGroup) => string | null): Layer;
+export declare function perGroup(groups: MarkGroup[], d?: (group: MarkGroup) => string | null): Layer;

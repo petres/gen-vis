@@ -10,7 +10,7 @@ useDom();
 const S4 = 'https://unpkg.com/@preschen/gen-vis@4/schema.json';
 
 // the migrated definitions of 4.x drawn: the values (y) of the rows of their points
-const drawnRows = async (def, data) => [...(await mount({ def, data })).querySelectorAll('g.vis-plot circle')].map(c => c[itemOf][rowOf].y);
+const drawnRows = async (def, data) => [...(await mount({ def, data })).querySelectorAll('g.vis-mark circle')].map(c => c[itemOf][rowOf].y);
 
 describe('the conditions of filters of dates of 4.x compare dates', () => {
     const def = (filter, x = { column: 'm', type: 'date' }, own = false) => ({ $schema: S4, mapping: { x, y: 'v' }, ...(own ? {} : { filter }),

@@ -438,7 +438,7 @@ const preparePlots = (plot, annotations, files) => {
         p.props ??= {};
         // a mapping or a list of them
         p.by = [p.by ?? []].flat();
-        p.id ??= `plot-${i}`;
+        p.id ??= `mark-${i}`;
         p.highlightProps = partProps(p.highlight);
         p.othersProps = partProps(p.others);
         if (typeof p.data == 'string' && files?.has(p.data)) {

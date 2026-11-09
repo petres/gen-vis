@@ -208,9 +208,9 @@ describe('the highlight of props of the categories', () => {
                 land: { column: 'land', categories: { Wien: { hw: 4 }, Tirol: { hw: 6 } } } },
             marks: [{ type: 'line', by: 'land', highlight: { 'stroke-width': '@hw' } }, { type: 'point', by: 'land', highlight: { r: '@hw' } }],
         }, data: 'year,value,land\n2020,1,Wien\n2021,2,Wien\n2020,3,Tirol\n2021,4,Tirol\n' });
-        const paths = [...el.querySelectorAll('g.vis-plot path')];
+        const paths = [...el.querySelectorAll('g.vis-mark path')];
         expect(paths.map(p => p.style.getPropertyValue('--vis-hl-stroke-width'))).toEqual(['4', '6']);
-        const groups = [...el.querySelectorAll('g.vis-plot g.vis-group')];
+        const groups = [...el.querySelectorAll('g.vis-mark g.vis-group')];
         expect(groups.map(g => g.style.getPropertyValue('--vis-hl-r'))).toEqual(['4', '6']);
     });
 });

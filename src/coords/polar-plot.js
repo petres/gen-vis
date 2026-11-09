@@ -257,7 +257,7 @@ const axes = ctx => {
                 key: `axis ${n}`,
                 fresh: true,
                 element: "g",
-                attrs: { class: `vis-axis vis-axis-${i.position}`, "data-mapping": n, "font-size": 10, "font-family": "sans-serif" },
+                attrs: { class: `vis-axis vis-axis-${i.position}`, "data-dim": n, "font-size": 10, "font-family": "sans-serif" },
                 // the labels with a max-width are cut or wrapped
                 layer: { items, fit: true },
             },

@@ -1,6 +1,6 @@
 <div class="vis" data-vis="N">
-<style>.vis[data-vis="N"] [data-plot="bars"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="bars"] .vis-highlight *:not(g) { opacity: 1; }
-.vis[data-vis="N"] .vis-highlighting [data-plot="bars"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { opacity: 0.55; }</style>
+<style>.vis[data-vis="N"] [data-mark="bars"] .vis-highlight:not(g), .vis[data-vis="N"] [data-mark="bars"] .vis-highlight *:not(g) { opacity: 1; }
+.vis[data-vis="N"] .vis-highlighting [data-mark="bars"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { opacity: 0.55; }</style>
 <div class="vis-header">
 <div class="vis-title">Wohnungsbestände nach Rechtsform</div>
 <div class="vis-subtitle">Anteile an allen Wohnungen, in %</div>
@@ -67,10 +67,10 @@
 <line x1="307.54" x2="307.54" y1="0" y2="330">
 </line>
 </g>
-<g class="vis-plot annotation-0 vis-below vis-annotations" data-plot="annotation-0">
+<g class="vis-mark annotation-0 vis-below vis-annotations" data-mark="annotation-0">
 <text class="vis-annotation vis-text" dy="-7" font-size="10" text-anchor="middle" x="307.54" y="0">Mikrozensus</text>
 </g>
-<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-family="sans-serif" font-size="10" text-anchor="middle" transform="translate(0, 330)">
+<g class="vis-axis vis-axis-bottom" data-dim="x" fill="none" font-family="sans-serif" font-size="10" text-anchor="middle" transform="translate(0, 330)">
 <path class="domain" d="M0.5,0.5H340.5" stroke="currentColor">
 </path>
 <g class="tick" opacity="1" transform="translate(32.46,0)">
@@ -116,7 +116,7 @@
 <line x1="0" x2="340" y1="0" y2="0">
 </line>
 </g>
-<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-family="sans-serif" font-size="10" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-dim="y" fill="none" font-family="sans-serif" font-size="10" text-anchor="end">
 <path class="domain" d="M0.5,330.5V0.5" stroke="currentColor">
 </path>
 <g class="tick" opacity="1" transform="translate(0,330.5)">
@@ -145,7 +145,7 @@
 <text dy="0.32em" fill="currentColor" x="-7">100 %</text>
 </g>
 </g>
-<g class="vis-plot bars" data-plot="bars">
+<g class="vis-mark bars" data-mark="bars">
 <g class="vis-group" data-group-type="Hauseigentum">
 <rect fill="#264653" height="121.896" stroke="white" stroke-width="0.8" width="45.113" x="9.903" y="208.104">
 </rect>
@@ -231,7 +231,7 @@
 </rect>
 </g>
 </g>
-<g class="vis-plot shares" data-plot="shares">
+<g class="vis-mark shares" data-mark="shares">
 <g class="vis-group" data-group-type="Hauseigentum">
 <text dominant-baseline="central" fill="#FFFFFF" font-size="10" pointer-events="none" text-anchor="middle" x="32.46" y="269.052">37 %</text>
 <text dominant-baseline="central" fill="#FFFFFF" font-size="10" pointer-events="none" text-anchor="middle" x="87.476" y="264.744">40 %</text>
@@ -294,48 +294,48 @@
 <span style="background: rgb(231, 111, 81);">
 </span>
 </td>
-<td data-mapping="type">Sonstige</td>
-<td class="vis-value" data-mapping="y">9,2 %</td>
+<td data-dim="type">Sonstige</td>
+<td class="vis-value" data-dim="y">9,2 %</td>
 </tr>
 <tr class="vis-hover-entry" data-geo="Österreich" data-type="Private Miete">
 <td class="vis-swatch">
 <span style="background: rgb(244, 162, 97);">
 </span>
 </td>
-<td data-mapping="type">Private Miete</td>
-<td class="vis-value" data-mapping="y">18,4 %</td>
+<td data-dim="type">Private Miete</td>
+<td class="vis-value" data-dim="y">18,4 %</td>
 </tr>
 <tr class="vis-hover-entry" data-geo="Österreich" data-type="Gemeinde Miete">
 <td class="vis-swatch">
 <span style="background: rgb(233, 196, 106);">
 </span>
 </td>
-<td data-mapping="type">Gemeinde Miete</td>
-<td class="vis-value" data-mapping="y">6,9 %</td>
+<td data-dim="type">Gemeinde Miete</td>
+<td class="vis-value" data-dim="y">6,9 %</td>
 </tr>
 <tr class="vis-hover-entry vis-nearest" data-geo="Österreich" data-type="GBV Miete">
 <td class="vis-swatch">
 <span style="background: rgb(138, 177, 125);">
 </span>
 </td>
-<td data-mapping="type">GBV Miete</td>
-<td class="vis-value" data-mapping="y">16,7 %</td>
+<td data-dim="type">GBV Miete</td>
+<td class="vis-value" data-dim="y">16,7 %</td>
 </tr>
 <tr class="vis-hover-entry" data-geo="Österreich" data-type="Wohnungseigentum">
 <td class="vis-swatch">
 <span style="background: rgb(42, 157, 143);">
 </span>
 </td>
-<td data-mapping="type">Wohnungseigentum</td>
-<td class="vis-value" data-mapping="y">11,4 %</td>
+<td data-dim="type">Wohnungseigentum</td>
+<td class="vis-value" data-dim="y">11,4 %</td>
 </tr>
 <tr class="vis-hover-entry" data-geo="Österreich" data-type="Hauseigentum">
 <td class="vis-swatch">
 <span style="background: rgb(38, 70, 83);">
 </span>
 </td>
-<td data-mapping="type">Hauseigentum</td>
-<td class="vis-value" data-mapping="y">37,4 %</td>
+<td data-dim="type">Hauseigentum</td>
+<td class="vis-value" data-dim="y">37,4 %</td>
 </tr>
 </table>
 </div>
@@ -351,10 +351,10 @@
 <line>
 </line>
 </g>
-<g class="vis-plot annotation-0 vis-below vis-annotations" data-plot="annotation-0">
+<g class="vis-mark annotation-0 vis-below vis-annotations" data-mark="annotation-0">
 <text class="vis-annotation vis-text" dy="-7" font-size="10" text-anchor="middle" x="307.54" y="0">Mikrozensus</text>
 </g>
-<g class="vis-axis vis-axis-bottom" data-mapping="x" fill="none" font-family="sans-serif" font-size="10" text-anchor="middle" transform="translate(0, 330)">
+<g class="vis-axis vis-axis-bottom" data-dim="x" fill="none" font-family="sans-serif" font-size="10" text-anchor="middle" transform="translate(0, 330)">
 <path class="domain" d="M0.5,0.5H340.5" stroke="currentColor">
 </path>
 <g class="tick" opacity="1" transform="translate(32.46,0)">
@@ -400,7 +400,7 @@
 <line x1="0" x2="340" y1="0" y2="0">
 </line>
 </g>
-<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-family="sans-serif" font-size="10" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-dim="y" fill="none" font-family="sans-serif" font-size="10" text-anchor="end">
 <path class="domain" d="M0.5,330.5V0.5" stroke="currentColor">
 </path>
 <g class="tick" opacity="1" transform="translate(0,330.5)">
@@ -429,7 +429,7 @@
 <text dy="0.32em" fill="currentColor" x="-7">100 %</text>
 </g>
 </g>
-<g class="vis-plot bars" data-plot="bars">
+<g class="vis-mark bars" data-mark="bars">
 <g class="vis-group" data-group-type="Hauseigentum">
 <rect fill="#264653" height="18.975" stroke="white" stroke-width="0.8" width="45.113" x="9.903" y="311.025">
 </rect>
@@ -515,7 +515,7 @@
 </rect>
 </g>
 </g>
-<g class="vis-plot shares" data-plot="shares">
+<g class="vis-mark shares" data-mark="shares">
 <g class="vis-group" data-group-type="Wohnungseigentum">
 <text dominant-baseline="central" fill="#FFFFFF" font-size="10" pointer-events="none" text-anchor="middle" x="32.46" y="298.984">7 %</text>
 <text dominant-baseline="central" fill="#FFFFFF" font-size="10" pointer-events="none" text-anchor="middle" x="87.476" y="292.764">11 %</text>

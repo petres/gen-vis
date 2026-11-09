@@ -225,6 +225,14 @@ are not in the margins.
   point as the title of a hover of points (`"mode": "point"`) and its
   horizontal value as a cell; `hover.value: false` leaves out the value of
   the position.
+- The names of 4.x in the page and the API are the ones of 5.0: the group
+  of a mark is `g.vis-mark` with `data-mark` (was `vis-plot`, `data-plot`),
+  the default id of a mark `mark-<index>` (was `plot-<index>`; the
+  migration writes a `before` of such an id as the new one), the cells of
+  the hover and the axes have `data-dim` (was `data-mapping`, the legends
+  had `data-dim` already), the extension API is `registerMarkType` and the
+  types `MarkType` and `MarkGroup` (was `registerPlotType`, `PlotType`,
+  `PlotGroup`). Styles of a page with the old names need the new ones.
 - The categories of a vertical band or point scale without a range of
   its own run from the top down (were from the bottom up), as the rows of a
   table, e.g. horizontal bars and heatmaps; `"reverse": true` puts the first

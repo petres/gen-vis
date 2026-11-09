@@ -5,7 +5,7 @@
 // systems and schemes are known to validateDef
 export { resolveParents } from '@/utils/load';
 export { validateDef } from '@/utils/validate';
-export { registerPlotType } from '@/plots';
+export { registerMarkType } from '@/plots';
 export { registerCoord } from '@/coords';
 export { registerScheme } from '@/utils/d3';
 export { migrate, formatJson } from '@/utils/migrate';

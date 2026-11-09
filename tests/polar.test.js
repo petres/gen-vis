@@ -106,11 +106,11 @@ describe('polar plots', () => {
         def.mapping.y.scale.range = [40, '@radius'];
         def.plot.push({ type: 'polar:line', by: ['c'], props: { stroke: '@color', fill: 'none', d: { angle: '@x:scaled', radius: '@y:scaled' } } });
         const el = await mount({ def, data: 'month,value,land\n3,-3,Wien\n6,-3,Wien\n3,3,Tirol' });
-        const [wien] = [...el.querySelectorAll('g.vis-plot circle')].map(point);
+        const [wien] = [...el.querySelectorAll('g.vis-mark circle')].map(point);
         // month 3 is on the right
         expect(wien[0]).toBeCloseTo(40);
         expect(wien[1]).toBeCloseTo(0);
-        const d = el.querySelector('g.vis-plot path').getAttribute('d');
+        const d = el.querySelector('g.vis-mark path').getAttribute('d');
         expect(d.startsWith('M40,0')).toBe(true);
     });
 
@@ -118,7 +118,7 @@ describe('polar plots', () => {
         const def = polarDef();
         def.plot = [{ type: 'polar:text', dodge: 20, props: { text: '@c', angle: '@x:scaled', radius: '@y:scaled' } }];
         const el = await mount({ def, data: 'month,value,land\n3,0,Wien\n3,0,Tirol\n0,6,Wien\n12,6,Tirol' });
-        const texts = [...el.querySelectorAll('g.vis-plot text')].map(t => [+t.getAttribute('x'), +t.getAttribute('y')]);
+        const texts = [...el.querySelectorAll('g.vis-mark text')].map(t => [+t.getAttribute('x'), +t.getAttribute('y')]);
         // month 3 on the right, from the center outward
         const right = texts.slice(0, 2).map(([x, y]) => (expect(y).toBeCloseTo(0), x)).sort((a, b) => a - b);
         expect(right[0]).toBeCloseTo(0);
@@ -144,7 +144,7 @@ describe('polar plots', () => {
             plot: [{ type: 'svg:circle', props: { r: 3, cx: '@x:scaled', cy: '@y:scaled' } }],
         };
         const el2 = await mount({ def: cartesian, data: polarData });
-        const circles = [...el2.querySelectorAll('g.vis-plot circle')].map(point);
+        const circles = [...el2.querySelectorAll('g.vis-mark circle')].map(point);
         expect(circles.length).toBeGreaterThan(0);
         expect(circles.every(([x, y]) => x == 0 && y == 0)).toBe(true);
     });

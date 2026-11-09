@@ -23,7 +23,7 @@ describe('prepareDef', () => {
         expect(def.mapping.c.categoryProps).toEqual({ a: { r: 3, name: 'a', visible: true, defaultColor: '#4269D0' }, b: { r: 3, name: 'B', visible: false, defaultColor: '#EFB118' } });
         expect(def.plot).toHaveLength(1);
         // the names of the props of the highlight and of the others, of the stylesheet of the highlight, see utils/highlight.js
-        expect(def.plot[0]).toMatchObject({ id: 'plot-0', by: [], highlightProps: ['r'], othersProps: ['opacity'], props: { r: '@r' } });
+        expect(def.plot[0]).toMatchObject({ id: 'mark-0', by: [], highlightProps: ['r'], othersProps: ['opacity'], props: { r: '@r' } });
         expect(def.plot[0].props).not.toHaveProperty('highlight-r');
         expect(def.options.margins).toEqual({});
     });

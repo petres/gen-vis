@@ -1289,7 +1289,7 @@ export interface Mark {
           )
         | (string & {});
     /**
-     * The class and the data-plot of the group of the mark, plot-<index> by default, the marks of a parent are merged by their ids.
+     * The class and the data-mark of the group of the mark, mark-<index> by default, the marks of a parent are merged by their ids.
      */
     id?: string;
     /**

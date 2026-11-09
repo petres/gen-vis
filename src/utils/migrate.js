@@ -242,6 +242,9 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
     if (rest.id !== undefined && rest.id !== `plot-${i}`)
         mark.id = rest.id;
     delete rest.id;
+    // the default ids of 4.x (plot-<index>) are mark-<index> of 5.0
+    if (typeof rest.before == 'string' && /^plot-\d+$/.test(rest.before))
+        rest.before = rest.before.replace('plot-', 'mark-');
     if (by !== undefined)
         mark.by = Array.isArray(by) && by.length == 1 ? by[0] : by;
     Object.entries(rest).forEach(([k, v]) => mark[k] = v);

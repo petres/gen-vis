@@ -9,9 +9,9 @@ import { rowOf } from '@/utils/draw';
 useDom();
 
 const num = (el, attr) => Number(el.getAttribute(attr));
-const rects = el => [...el.querySelectorAll('g.vis-plot rect')].filter(r => r[itemOf]);
-const texts = el => [...el.querySelectorAll('g.vis-plot text')].filter(r => r[itemOf]);
-const lines = el => [...el.querySelectorAll('g.vis-plot line')].filter(r => r[itemOf]);
+const rects = el => [...el.querySelectorAll('g.vis-mark rect')].filter(r => r[itemOf]);
+const texts = el => [...el.querySelectorAll('g.vis-mark text')].filter(r => r[itemOf]);
+const lines = el => [...el.querySelectorAll('g.vis-mark line')].filter(r => r[itemOf]);
 
 const data = 'year,value,type\n2020,1,a\n2020,2,b\n2021,3,a\n2021,4,b';
 
@@ -147,7 +147,7 @@ describe('dodged stacked bars', () => {
         expect(bottom(bars.aq)).toBeCloseTo(num(bars.ap, 'y'));
         expect(bottom(bars.bq)).toBeCloseTo(num(bars.bp, 'y'));
         // the domain is the one of the highest stack (35), not of all (65)
-        const ticks = [...el.querySelectorAll('[data-mapping="y"] .tick text')].map(t => Number(t.textContent));
+        const ticks = [...el.querySelectorAll('[data-dim="y"] .tick text')].map(t => Number(t.textContent));
         expect(Math.max(...ticks)).toBe(35);
         expect(num(bars.ap, 'x') + num(bars.ap, 'width')).toBeCloseTo(num(bars.bp, 'x'));
         expect(errors).toEqual([]);
@@ -278,7 +278,7 @@ describe('dodged rules and points', () => {
         const el = await mount({ def, data: rows });
         const bars = rects(el);
         const rules = lines(el);
-        const points = [...el.querySelectorAll('g.vis-plot circle')].filter(r => r[itemOf]);
+        const points = [...el.querySelectorAll('g.vis-mark circle')].filter(r => r[itemOf]);
         expect(rules.length).toBe(4);
         expect(points.length).toBe(4);
         bars.forEach(b => {
@@ -315,8 +315,8 @@ describe('the reverse of a scale', () => {
             marks: { type: 'point', filter: '@c == "a"' },
         };
         const el = await mount({ def, data });
-        const up = [...el.querySelectorAll('g.vis-plot circle')].map(c => num(c, 'cy'));
-        const down = [...(await mount({ def: { ...def, dims: { ...def.dims, y: { ...def.dims.y, reverse: true } } }, data })).querySelectorAll('g.vis-plot circle')].map(c => num(c, 'cy'));
+        const up = [...el.querySelectorAll('g.vis-mark circle')].map(c => num(c, 'cy'));
+        const down = [...(await mount({ def: { ...def, dims: { ...def.dims, y: { ...def.dims.y, reverse: true } } }, data })).querySelectorAll('g.vis-mark circle')].map(c => num(c, 'cy'));
         // the value 3 is above the value 1, reversed below it
         expect(up[1]).toBeLessThan(up[0]);
         expect(down[1]).toBeGreaterThan(down[0]);

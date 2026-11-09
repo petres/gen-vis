@@ -58,7 +58,7 @@ const highlightVars = (plot, bound, row) => {
 };
 
 // the selector of the attribute of the plot, its id quoted
-const plotSelector = id => `[data-plot="${String(id).replace(/["\\]/g, '\\$&')}"]`;
+const plotSelector = id => `[data-mark="${String(id).replace(/["\\]/g, '\\$&')}"]`;
 
 // the declarations of the props of a plot: the values which are the same
 // for all groups as they are, the others as their custom properties
@@ -95,8 +95,8 @@ const highlightStyle = (plots, { scope = '', transition = 0 } = {}) => {
     });
     if (rules.length > 0 && transition > 0) {
         const props = [...new Set(plots.flatMap(p => [...(p.highlightProps ?? []), ...(p.othersProps ?? [])]))];
-        rules.push(`${scope} [data-plot] ${leaves} { transition-property: ${props.join(', ')}; transition-duration: ${transition}ms; }`);
-        rules.push(`@media (prefers-reduced-motion: reduce) { ${scope} [data-plot] ${leaves} { transition-duration: 0s; } }`);
+        rules.push(`${scope} [data-mark] ${leaves} { transition-property: ${props.join(', ')}; transition-duration: ${transition}ms; }`);
+        rules.push(`@media (prefers-reduced-motion: reduce) { ${scope} [data-mark] ${leaves} { transition-duration: 0s; } }`);
     }
     return rules.join('\n');
 };

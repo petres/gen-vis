@@ -208,7 +208,7 @@
     stroke-width: 1px;
 }
 /* the texts of the plots without a fill of their props, black by default as in svg */
-.vis-facet svg .vis-plot:not(.vis-annotations) text:not([fill]) { fill: var(--gen-vis-text-color, #1F2328); }
+.vis-facet svg .vis-mark:not(.vis-annotations) text:not([fill]) { fill: var(--gen-vis-text-color, #1F2328); }
 /* the colors of the annotations without the ones of their props */
 .vis-facet svg .vis-annotation.vis-band:not([fill]), .vis-legend-annotations .vis-annotation.vis-band:not([fill]) { fill: var(--gen-vis-band-color, #F1F2F4); }
 .vis-facet svg .vis-annotation.vis-line:not([stroke]), .vis-legend-annotations .vis-annotation.vis-line:not([stroke]) { stroke: var(--gen-vis-line-color, #9AA0A8); }

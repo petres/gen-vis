@@ -169,8 +169,8 @@ const createFacet = (vis, initial) => {
             const parent = keep(plotKey(plot), () => {
                 const g = create("g");
                 // an id with spaces is several classes, e.g. "1st line"
-                g.classList.add("vis-plot", ...String(plot.id).trim().split(/^|\s+/));
-                g.setAttribute("data-plot", plot.id);
+                g.classList.add("vis-mark", ...String(plot.id).trim().split(/^|\s+/));
+                g.setAttribute("data-mark", plot.id);
                 if (plot.layer)
                     g.classList.add(`vis-${plot.layer}`);
                 return g;

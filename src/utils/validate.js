@@ -551,7 +551,7 @@ const checkPlots = ctx => {
     if (plotList.length == 0)
         warn('plot', 'missing');
     // the ids name the plots, e.g. of their classes and of the merge with a parent
-    const ids = plotList.map((p, i) => p?.id ?? `plot-${i}`);
+    const ids = plotList.map((p, i) => p?.id ?? `mark-${i}`);
     ids.forEach((id, i) => {
         if (ids.indexOf(id) < i)
             warn(`plot[${i}].id`, `the id '${id}' is the one of plot[${ids.indexOf(id)}]`);
@@ -700,7 +700,7 @@ const checkAnnotations = ctx => {
         checkProp(a.props, `${path}.props`, warn, new Set([...names.facet, ...row]));
         if (a.layer !== undefined && !['below', 'above'].includes(a.layer))
             warn(`${path}.layer`, `expected 'below' (below the plots, the default) or 'above' (above them), or 'before' a plot`);
-        const ids = [ctx.def.plot ?? []].flat().map((p, j) => p?.id ?? `plot-${j}`);
+        const ids = [ctx.def.plot ?? []].flat().map((p, j) => p?.id ?? `mark-${j}`);
         if (a.before !== undefined && !ids.includes(a.before))
             warn(`${path}.before`, `unknown plot '${a.before}'${ids.length ? `, expected one of ${list(ids)}` : ''}`);
     });

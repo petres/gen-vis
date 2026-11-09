@@ -5,7 +5,7 @@ import { prepareDef } from '@/utils/def';
 import { normalize } from '@/utils/normalize';
 import { rowFilter, parseData, dataFormat } from '@/utils/data';
 import { loadTransforms } from '@/utils/transform';
-import { plotTypes, registerPlotType } from '@/plots';
+import { plotTypes, registerMarkType } from '@/plots';
 import { coords, registerCoord } from '@/coords';
 import { resolveParents } from '@/utils/load';
 import { translate } from '@/utils/language';
@@ -220,17 +220,17 @@ describe('validateDef', () => {
         const def = base();
         def.marks.type = 'test:type';
         expect(validateDef(def)).toEqual([expect.stringMatching(/^marks\[0\]\.type: unknown type 'test:type'/)]);
-        registerPlotType('test:type', { marks() {} });
+        registerMarkType('test:type', { marks() {} });
         expect(validateDef(def)).toEqual([]);
         delete plotTypes['test:type'];
     });
 
     test('the ids of the marks are unique', () => {
         const def = base();
-        def.marks = [{ ...def.marks, id: 'plot-1' }, { ...def.marks }, { ...def.marks, id: 'plot-1' }];
+        def.marks = [{ ...def.marks, id: 'mark-1' }, { ...def.marks }, { ...def.marks, id: 'mark-1' }];
         expect(validateDef(def)).toEqual([
-            "marks[1].id: the id 'plot-1' is the one of marks[0]",
-            "marks[2].id: the id 'plot-1' is the one of marks[0]",
+            "marks[1].id: the id 'mark-1' is the one of marks[0]",
+            "marks[2].id: the id 'mark-1' is the one of marks[0]",
         ]);
     });
 

@@ -54,7 +54,7 @@ const resizeTo = async width => {
     await nextTick();
 };
 
-const cys = el => [...el.querySelectorAll('g.vis-plot.plot-1 circle')].map(c => c.getAttribute('cy'));
+const cys = el => [...el.querySelectorAll('g.vis-mark.mark-1 circle')].map(c => c.getAttribute('cy'));
 
 describe('a new width keeps the rows', () => {
     const store = async def => {

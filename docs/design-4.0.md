@@ -101,7 +101,7 @@ renderer (JS only)
 - `highlight` / `others` objects of props; `highlight: {"mode": "row", ...}`
   is the mode of the highlight.
 - Default props (`defaults` of the plot types, `src/plots/defaults.js`,
-  an object or a function of the props, documented for `registerPlotType`)
+  an object or a function of the props, documented for `registerMarkType`)
   apply to the plots of the type, of its short and its full name alike
   (`line` is `cartesian:line`); nested props are merged deeply, `null`
   removes a default. The color default is `{"or": ["@color", "currentColor"]}`

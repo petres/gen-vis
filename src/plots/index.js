@@ -1,4 +1,4 @@
-export { plotTypes, registerPlotType };
+export { plotTypes, registerMarkType };
 
 import elements from "@/plots/elements";
 import cartesian from "@/plots/cartesian";
@@ -53,6 +53,6 @@ const polar = {
 const plotTypes = { ...elements, ...cartesian, ...polar, ...geo, ...annotations };
 Object.entries(defaults).forEach(([name, d]) => plotTypes[name].defaults = d);
 
-const registerPlotType = (name, type) => {
+const registerMarkType = (name, type) => {
     plotTypes[name] = type;
 };

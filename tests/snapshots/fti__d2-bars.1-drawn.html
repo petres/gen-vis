@@ -1,8 +1,8 @@
 <div class="vis fti fti-bars" data-global-group="inno" data-vis="N">
-<style>.vis[data-vis="N"] [data-plot="bars"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="bars"] .vis-highlight *:not(g) { fill: var(--vis-hl-fill); }
-.vis[data-vis="N"] [data-plot="dots"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="dots"] .vis-highlight *:not(g) { r: 11; }
-.vis[data-vis="N"] [data-plot="holes"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="holes"] .vis-highlight *:not(g) { r: 0; }
-.vis[data-vis="N"] [data-plot="value"] .vis-highlight:not(g), .vis[data-vis="N"] [data-plot="value"] .vis-highlight *:not(g) { visibility: visible; }</style>
+<style>.vis[data-vis="N"] [data-mark="bars"] .vis-highlight:not(g), .vis[data-vis="N"] [data-mark="bars"] .vis-highlight *:not(g) { fill: var(--vis-hl-fill); }
+.vis[data-vis="N"] [data-mark="dots"] .vis-highlight:not(g), .vis[data-vis="N"] [data-mark="dots"] .vis-highlight *:not(g) { r: 11; }
+.vis[data-vis="N"] [data-mark="holes"] .vis-highlight:not(g), .vis[data-vis="N"] [data-mark="holes"] .vis-highlight *:not(g) { r: 0; }
+.vis[data-vis="N"] [data-mark="value"] .vis-highlight:not(g), .vis[data-vis="N"] [data-mark="value"] .vis-highlight *:not(g) { visibility: visible; }</style>
 <div class="vis-header">
 <div class="vis-title">Efficiency</div>
 <div class="vis-subtitle">Sub-indicators, Austria relative to the comparison group (= 100)</div>
@@ -36,11 +36,11 @@
 <line>
 </line>
 </g>
-<g class="vis-plot annotation-0 vis-below vis-annotations" data-plot="annotation-0">
+<g class="vis-mark annotation-0 vis-below vis-annotations" data-mark="annotation-0">
 <line class="vis-annotation vis-line" stroke="#BBB" stroke-width="1.5" x1="369.941" x2="369.941" y1="0" y2="539">
 </line>
 </g>
-<g class="vis-axis vis-axis-top" data-mapping="x" fill="none" font-family="sans-serif" font-size="10" text-anchor="middle">
+<g class="vis-axis vis-axis-top" data-dim="x" fill="none" font-family="sans-serif" font-size="10" text-anchor="middle">
 <path class="domain" d="M0.5,0.5H430.5" stroke="currentColor">
 </path>
 <g class="tick" opacity="1" transform="translate(0.5,0)">
@@ -74,7 +74,7 @@
 <text dy="0em" fill="currentColor" font-size="13" font-weight="bold" y="-7">100</text>
 </g>
 </g>
-<g class="vis-axis vis-axis-left" data-mapping="y" fill="none" font-family="sans-serif" font-size="10" text-anchor="end">
+<g class="vis-axis vis-axis-left" data-dim="y" fill="none" font-family="sans-serif" font-size="10" text-anchor="end">
 <path class="domain" d="M0.5,0.5V539.5" stroke="currentColor">
 </path>
 <g class="tick" opacity="1" transform="translate(0,16.664)">
@@ -186,7 +186,7 @@
 <text dy="0.32em" fill="#222" font-size="13" font-weight="normal" max-width="290" x="-23">Unicorn valuation, % of GDP</text>
 </g>
 </g>
-<g class="vis-plot bars" data-plot="bars">
+<g class="vis-mark bars" data-mark="bars">
 <g class="vis-group" data-group-level="header" style="--vis-hl-fill: #9A9A9A;">
 <rect fill="#C2C2C2" height="12.642" width="283.028" x="0" y="10.343">
 </rect>
@@ -234,7 +234,7 @@
 </rect>
 </g>
 </g>
-<g class="vis-plot axis" data-plot="axis">
+<g class="vis-mark axis" data-mark="axis">
 <g class="vis-group" data-group-group="1">
 <line stroke="black" stroke-width="1.5" x1="0" x2="0" y1="10.343" y2="137.91">
 </line>
@@ -248,7 +248,7 @@
 </line>
 </g>
 </g>
-<g class="vis-plot dots" data-plot="dots">
+<g class="vis-mark dots" data-mark="dots">
 <g class="vis-group" data-group-level="header">
 <circle cx="283.028" cy="16.664" fill="#F59036" r="7.5">
 </circle>
@@ -296,7 +296,7 @@
 </circle>
 </g>
 </g>
-<g class="vis-plot holes" data-plot="holes">
+<g class="vis-mark holes" data-mark="holes">
 <g class="vis-group" data-group-level="header">
 <circle cx="283.028" cy="16.664" fill="white" r="4.5">
 </circle>
@@ -306,7 +306,7 @@
 </circle>
 </g>
 </g>
-<g class="vis-plot io" data-plot="io">
+<g class="vis-mark io" data-mark="io">
 <g class="vis-group" data-group-io="input">
 <circle cx="-14" cy="39.649" fill="white" r="5" stroke="black" stroke-width="1.5">
 </circle>
@@ -348,7 +348,7 @@
 </circle>
 </g>
 </g>
-<g class="vis-plot value" data-plot="value">
+<g class="vis-mark value" data-mark="value">
 <g class="vis-group" data-group-level="header">
 <text dominant-baseline="central" dx="15" font-size="13" font-weight="bold" visibility="hidden" x="283.028" y="16.664">77%</text>
 <text dominant-baseline="central" dx="15" font-size="13" font-weight="bold" visibility="hidden" x="258.608" y="177.56">70%</text>

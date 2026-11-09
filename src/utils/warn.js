@@ -24,7 +24,7 @@ const warnOnce = (store, id, message) => {
 const markPath = (def, plot, named = false) => {
     const i = [def?.plot ?? []].flat().indexOf(plot);
     const at = i < 0 ? 'marks' : `marks[${i}]`;
-    return named && plot?.id !== undefined && plot.id !== `plot-${i}` ? `${at} ('${plot.id}')` : at;
+    return named && plot?.id !== undefined && plot.id !== `mark-${i}` ? `${at} ('${plot.id}')` : at;
 };
 
 // a message which begins with the path of a part of the definition, e.g.

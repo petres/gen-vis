@@ -43,7 +43,7 @@ const styleOf = row => {
  * The box of the hover of a facet, beside the marker, on the `side` with
  * more space. `show(hover)` draws the `title`, the `data` and the `payload`
  * of the rows of the slot and the events (see init of comp/facet-hover.js): the
- * `cells` of a row are the hover props of its categories (`data-mapping`,
+ * `cells` of a row are the hover props of its categories (`data-dim`,
  * other props than the name as `data-prop`) and the value (`vis-value`),
  * the `style` of a row are the styles of the props of its categories
  * (`hover.row.props`), the nearest one stays bold, its `attrs` the keys of
@@ -154,7 +154,7 @@ const createHover = (store, slots) => {
             }
             tr.replaceChildren(...swatch, ...d.cells.map(c => {
                 const td = document.createElement('td');
-                setAttr(td, 'data-mapping', c.mapping);
+                setAttr(td, 'data-dim', c.mapping);
                 setAttr(td, 'data-prop', c.prop);
                 if (c.value)
                     td.setAttribute('class', 'vis-value');
