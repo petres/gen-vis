@@ -211,6 +211,14 @@ describe('the dims of the channels (review of 5.0)', () => {
         expect(implicitDims({ marks: { type: 'point', x: 'year', y: 'value' } }))
             .toEqual([{ path: 'marks[0].x', column: 'year' }, { path: 'marks[0].y', column: 'value' }]);
     });
+    test('a channel of the column of the dim of its axis is that dim, not a dim of its own', () => {
+        const t = translate({ dims: { x: { column: 'year', type: 'categorical' }, y: 'value' }, marks: [{ type: 'line', x: 'year' }, { type: 'point', y: 'value', x: 'year' }] });
+        expect(Object.keys(t.mapping)).toEqual(['x', 'y']);
+        expect(t.plot[0].props.d.x).toBe('@x:scaled');
+        expect(implicitDims({ dims: { x: 'year', y: 'value' }, marks: { type: 'point', x: 'year', y: 'value' } })).toEqual([]);
+        // the column of another axis stays a dim of its own on the scale of the axis, e.g. y2 of the column of y
+        expect(translate({ dims: { x: 'year', y: 'v' }, marks: { type: 'rule', y1: 'v', y2: 'hi' } }).mapping.hi.scale).toEqual({ of: 'y' });
+    });
     test('a fill of a categorical dim is in the default hover, as a by', () => {
         const t = translate({ dims: { x: 'a', y: 'b', land: { column: 'land', categories: { W: 'red', T: 'blue' } } }, marks: { type: 'point', fill: 'land' } });
         expect(t.plot[0].by).toEqual(['land']);

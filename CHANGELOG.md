@@ -108,6 +108,9 @@ builds and dependencies. The design is in `docs/design-5.0.md`.
   horizontal and a vertical dashed line across the plot area instead of the
   line of the position (`vis-hover-cross`, `--gen-vis-cross-color`), also
   of the hover of points.
+- A channel naming the column of the dim of its axis is that dim (`"x":
+  "year"` of a dim `x` of the column `year`), not a second dim of the
+  same column with categories of its own.
 
 Removed keys: `options`, `mapping`, `plot`, the `props` of a plot,
 `formElements`, `patch` (and the `ref` of a form element), `domainRel`

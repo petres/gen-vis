@@ -163,6 +163,9 @@ const channelOf = (mark, channel, dims, axis = positionChannels[channel], valued
         return axis && Object.hasOwn(dims, axis) ? { dim: axis, value: ref(axis) } : undefined;
     // a reference or an expression as it is, e.g. "@y:group:start"
     if (typeof v == 'string' && !v.startsWith('@')) {
+        // the column of the dim of the axis is that dim, e.g. "x": "year" of a dim x of the column year
+        if (!Object.hasOwn(dims, v) && axis && channel == axis && isObject(dims[axis]) && dims[axis].column === v)
+            return { dim: axis, value: ref(axis) };
         if (!Object.hasOwn(dims, v)) {
             const name = axis && channel == axis && (!Object.hasOwn(dims, axis) || (axisDims.has(dims[axis]) && dims[axis].column === v)) ? axis : v;
             if (!Object.hasOwn(dims, name)) {
