@@ -399,8 +399,9 @@ const categoryOrder = orders => {
 
 // the stacks of the values of `axis.v` at the positions of `axis.h` (and of
 // `dims`, e.g. the facets), in the order of `compare`, by default the one of
-// the rows, positive and negative values separately, a map of the rows to the
-// start and the end of their value
+// the rows, positive and negative values separately (of `axis.positive` the
+// negative ones have no size, at the end of the positive ones, e.g. of a
+// pie), a map of the rows to the start and the end of their value
 const stack = (rows, axis, dims = [], compare = null) => {
     const stacks = new Map();
     groupBy(rows, [...dims, axis.h]).forEach(g => {
@@ -410,6 +411,8 @@ const stack = (rows, axis, dims = [], compare = null) => {
             const v = e[axis.v];
             if (v >= 0)
                 stacks.set(e, [positive, positive += v]);
+            else if (axis.positive)
+                stacks.set(e, [positive, positive]);
             else
                 stacks.set(e, [negative, negative += v]);
         }

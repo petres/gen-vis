@@ -415,6 +415,10 @@ Migration notes, to check by hand after `gen-vis migrate`:
   with their count, which are not drawn (silently NaN before); `zero` and
   stacks on a log scale warn in the console and in `validateDef`/`gen-vis
   check` (a log scale has no 0, `symlog` has).
+- Stacks around the circle (the slices of a pie, `arc` with `stack` of the
+  angle) leave out negative values, with a warning: a slice has no
+  negative size (they were stacked backwards from 0 and overlapped the
+  others, the pie was not a full circle).
 - A diverging scale (`diverging`, `divergingLog`, ...) without a domain of
   three entries has the middle `center`, else the middle of the ends of the
   data (of a log one in its positions); the nulls of a domain of three
