@@ -1639,7 +1639,7 @@ describe('formatted values', () => {
 describe('horizontal bars and several value axes', () => {
     const barDef = () => {
         const def = lineDef();
-        def.mapping.x = { column: 'value', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, null], domainRel: [0, 0] }, axis: { position: 'bottom' }, stacked: true, hover: { format: '.1f' } };
+        def.mapping.x = { column: 'value', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, null], pad: 0 }, axis: { position: 'bottom' }, stacked: true, hover: { format: '.1f' } };
         def.mapping.y = { column: 'year', type: 'categorical', scale: { type: 'band', orientation: 'vertical' }, axis: { position: 'left' } };
         def.plot = { type: 'cartesian:bar', by: ['c'], highlight: { mode: 'row', stroke: 'black' }, props: { x0: '@x:start:scaled', x1: '@x:end:scaled', y: '@y:scaled', fill: '@color' } };
         return def;
@@ -2257,7 +2257,7 @@ describe('scales', () => {
     test('the extension of a log domain is relative to its positions', async () => {
         const def = lineDef();
         // the values from 1 to 4, linear 10% of 3 would be 0.7 and 4.3
-        def.mapping.y.scale = { orientation: 'vertical', type: 'log', domainRel: [-0.1, 0.1] };
+        def.mapping.y.scale = { orientation: 'vertical', type: 'log', pad: 0.1 };
         def.mapping.y.axis = { position: 'left', format: ',.0f', values: [1, 4] };
         const el = await mount({ def, data: lineData });
         const ys = [...el.querySelectorAll('g.vis-axis-left g.tick')].map(t => parseFloat(t.getAttribute('transform').match(/,\s*([\d.]+)/)[1]));
@@ -2642,7 +2642,7 @@ describe('fixed bugs', () => {
         const def = lineDef();
         // the values are from 1 to 4, d3 drew the others in the margins
         def.mapping.x.axis.grid = false;
-        def.mapping.y.scale = { orientation: 'vertical', type: 'log', domainRel: [0, 0] };
+        def.mapping.y.scale = { orientation: 'vertical', type: 'log', pad: 0 };
         def.mapping.y.axis = { position: 'left', grid: true, format: ',.0f', values: [0.5, 1, 2, 5, 10] };
         const el = await mount({ def, data: lineData });
         expect([...el.querySelectorAll('g.vis-axis-left g.tick text')].map(t => t.textContent)).toEqual(['1', '2']);
@@ -3330,10 +3330,10 @@ describe('histograms: the classes of a bin', () => {
         options: { height: 300, margins: { top: 25, right: 25, bottom: 25, left: 25 } },
         transform: { type: 'bin', column: 'v', edges: [0, 2, 4, 10], by: 'g', start: 'lo', end: 'hi' },
         mapping: {
-            x: { column: 'v', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, 10], domainRel: [0, 0] } },
+            x: { column: 'v', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, 10], pad: 0 } },
             lo: { column: 'lo', type: 'numeric', scale: { of: 'x' } },
             hi: { column: 'hi', type: 'numeric', scale: { of: 'x' } },
-            y: { column: 'count', type: 'numeric', scale: { orientation: 'vertical', domain: [0, 4], domainRel: [0, 0] } },
+            y: { column: 'count', type: 'numeric', scale: { orientation: 'vertical', domain: [0, 4], pad: 0 } },
             g: { column: 'g', type: 'categorical', fromData: true },
         },
         plot,
@@ -3397,9 +3397,9 @@ describe('axes at a value of the other axis (`at`)', () => {
     const def = (x = {}, y = {}) => {
         const d = lineDef();
         d.mapping.x.scale.domain = [2020, 2023];
-        d.mapping.x.scale.domainRel = [0, 0];
+        d.mapping.x.scale.pad = 0;
         d.mapping.y.scale.domain = [-2, 4];
-        d.mapping.y.scale.domainRel = [0, 0];
+        d.mapping.y.scale.pad = 0;
         Object.assign(d.mapping.x.axis, x);
         Object.assign(d.mapping.y.axis, y);
         return d;
@@ -3449,7 +3449,7 @@ describe('axes at a value of the other axis (`at`)', () => {
     test('at a date and a reference, validateDef of polar axes', async () => {
         const d = def({}, { at: '@start' });
         d.globals = { start: '2022-01-01' };
-        d.mapping.x = { column: 'date', type: 'date', scale: { orientation: 'horizontal', domain: ['2020-01-01', '2024-01-01'], domainRel: [0, 0] }, axis: { position: 'bottom' } };
+        d.mapping.x = { column: 'date', type: 'date', scale: { orientation: 'horizontal', domain: ['2020-01-01', '2024-01-01'], pad: 0 }, axis: { position: 'bottom' } };
         const data = 'date,value,land\n2020-01-01,1,Wien\n2024-01-01,2,Wien';
         const el = await mount({ def: d, data });
         const p = +axis(el, 'left').getAttribute('transform').match(/translate\(([\d.]+)/)[1];
@@ -3550,7 +3550,7 @@ describe('rules', () => {
     test('a line per row across the plot area at x, in the color of its category, limited by y1 and y2; at y horizontal', async () => {
         const def = lineDef();
         def.mapping.x.scale.domain = [2020, 2023];
-        def.mapping.x.scale.domainRel = [0, 0];
+        def.mapping.x.scale.pad = 0;
         def.plot = [{ type: 'rule', by: 'c', filter: { x: 2021 }, props: { 'stroke-dasharray': '2 2' } },
             { type: 'rule', id: 'h', filter: { x: 2020, c: 'Wien' }, props: { y: '@y:scaled', x2: 100 } }];
         const el = await mount({ def, data: lineData });
@@ -3750,7 +3750,7 @@ describe('grids of facets: edge cases', () => {
     test('domainIgnores of a scale per row: the domain of the rows of the row, of all values of the condition', async () => {
         const def = gridDef({ rows: 'c', cols: 'half', scales: { y: 'row' } });
         def.mapping.y.scale.domainIgnores = true;
-        def.mapping.y.scale.domainRel = [0, 0];
+        def.mapping.y.scale.pad = 0;
         def.mapping.y.axis.values = [1, 3, 10, 20];
         def.filter = { x: 2020 };
         // Wien from 10 to 20, Tirol from 1 to 3 of both years, the rows of 2020 drawn
@@ -3977,7 +3977,7 @@ describe('the hover of the stacks of stackBy', () => {
             options: { width: 440, height: 240, margins: { top: 10, right: 20, bottom: 30, left: 20 } },
             transform: { type: 'bin', column: 'v', edges: [0, 5, 10], by: 'g', start: 'lo', end: 'hi' },
             mapping: {
-                x: { column: 'v', type: 'numeric', domain: [0, 10], scale: { orientation: 'horizontal', domainRel: [0, 0] }, axis: { position: 'bottom' } },
+                x: { column: 'v', type: 'numeric', domain: [0, 10], scale: { orientation: 'horizontal', pad: 0 }, axis: { position: 'bottom' } },
                 lo: { column: 'lo', type: 'numeric', scale: { of: 'x' }, hover: {} },
                 y: { column: 'count', type: 'numeric', stacked: true, stackBy: 'lo', hover: {}, scale: { orientation: 'vertical', domain: [0, null] } },
                 g: { column: 'g', type: 'categorical', categories: { a: {}, b: {} }, hover: {} },
@@ -4061,8 +4061,8 @@ describe('labels inside the bands of an area plot (place)', () => {
     const def = (coord = 'cartesian') => ({
         options: { coord, width: 600, height: 300, margins: { top: 10, right: 10, bottom: 30, left: 40 } },
         mapping: {
-            x: { column: 'hour', type: 'numeric', domain: [0, 23], scale: { domainRel: [0, 0] } },
-            y: { column: 'value', type: 'numeric', domain: [0, null], stacked: true, scale: { domainRel: [0, 0] } },
+            x: { column: 'hour', type: 'numeric', domain: [0, 23], scale: { pad: 0 } },
+            y: { column: 'value', type: 'numeric', domain: [0, null], stacked: true, scale: { pad: 0 } },
             c: { column: 'c', legend: {}, categories: { a: { name: 'Erster' }, b: { name: 'Zweiter' }, thin: { name: 'Dünn' } } },
         },
         plot: [

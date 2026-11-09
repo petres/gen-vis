@@ -378,11 +378,11 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         // if it is cyclic, e.g. not the domain of colors
         // `pad` extends both ends taken from the data relative to the size
         // (a number or [start, end], positive values extend), as the 2% it
-        // replaces, a fixed end stays, e.g. 0 of bars; `domainRel` adds to
-        // all ends
+        // replaces, a fixed end stays, e.g. 0 of bars; `rel` are the parts
+        // of the size added to the ends
         const pad = scaleDef.pad === undefined ? null : [scaleDef.pad].flat().map(Number);
-        const domainRel = [...(pad ? [domain[0] === null ? -pad[0] : 0, domain[last] === null ? pad[1] ?? pad[0] : 0] : scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic || period || !scaleDef.orientation ? [0, 0] :
-            [domain[0] === null ? -0.02 : 0, domain[last] === null ? 0.02 : 0]))];
+        const rel = pad ? [domain[0] === null ? -pad[0] : 0, domain[last] === null ? pad[1] ?? pad[0] : 0]
+            : scaleDef.domainAbs || cyclic || period || !scaleDef.orientation ? [0, 0] : [domain[0] === null ? -0.02 : 0, domain[last] === null ? 0.02 : 0];
         const domainAbs = scaleDef.domainAbs ?? [0, 0];
 
         // the ends taken from the data, `nice` rounds them
@@ -391,7 +391,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         domain[last] ??= extent[1];
         // an end at 0 of `zero` stays, as a fixed one, e.g. bars start at the axis
         if (zero)
-            [0, last].forEach((i, j) => domainRel[j] = fromData[j] && domain[i] === 0 ? 0 : domainRel[j]);
+            [0, last].forEach((i, j) => rel[j] = fromData[j] && domain[i] === 0 ? 0 : rel[j]);
 
         // relative to the positions, e.g. of a log or a sqrt scale 2% of the
         // height below and above, values of a log scale do not get below 0
@@ -399,10 +399,10 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         // only the ends which are extended, so fixed ones stay exact, e.g. 3 of a sqrt scale
         const [d0, d1] = [to(domain[0]), to(domain[last])];
         const da = d1 - d0;
-        if (domainRel[0])
-            domain[0] = from(d0 + da*domainRel[0]);
-        if (domainRel[1])
-            domain[last] = from(d1 + da*domainRel[1]);
+        if (rel[0])
+            domain[0] = from(d0 + da*rel[0]);
+        if (rel[1])
+            domain[last] = from(d1 + da*rel[1]);
         domain[0] += domainAbs[0];
         domain[last] += domainAbs[1];
 

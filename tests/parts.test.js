@@ -176,7 +176,7 @@ describe('props', () => {
     test('margins of the width of the visualisation, offsets and matches of plots', async () => {
         const def = lineDef();
         def.options.margins.left = { steps: ['@totalWidth', { 0: 20, 500: 100 }] };
-        def.mapping.x.scale.domainRel = [0, 0];
+        def.mapping.x.scale.pad = 0;
         def.plot[1].props.cx = { '+': ['@x:scaled', -5] };
         def.plot[1].props.r = { match: ['@c', { Wien: 6 }, 2] };
         const el = await mount({ def, data: lineData });
@@ -192,12 +192,12 @@ describe('scales', () => {
     test('include, center and the classes closed on the right', async () => {
         const { makeScale } = await import('@/utils/scales');
         const rows = [{ v: 2 }, { v: 6 }];
-        const scale = (s, type = 'numeric') => makeScale('v', { type, scale: { type: 'linear', orientation: 'horizontal', domain: [null, null], domainRel: [0, 0], ...s } }, rows, { coord: { ranges: { horizontal: [0, 100] } } });
+        const scale = (s, type = 'numeric') => makeScale('v', { type, scale: { type: 'linear', orientation: 'horizontal', domain: [null, null], pad: 0, ...s } }, rows, { coord: { ranges: { horizontal: [0, 100] } } });
         expect(scale({ include: 0 }).domain()).toEqual([0, 6]);
         expect(scale({ include: [10, '@max'] }).domain()).toEqual([2, 10]);
         expect(makeScale('v', { type: 'numeric', scale: { type: 'linear', domain: [null, null], include: ['@max'] } }, rows, { scope: { max: 20 } }).domain()).toEqual([2, 20]);
         expect(scale({ center: 0 }).domain()).toEqual([-6, 6]);
-        expect(scale({ include: 0, domainRel: [-0.5, 0.5] }).domain()).toEqual([-3, 9]);
+        expect(scale({ include: 0, pad: 0.5 }).domain()).toEqual([-3, 9]);
         // fixed ends stay
         expect(scale({ include: 10, domain: [null, 8] }).domain()).toEqual([2, 8]);
 
@@ -212,7 +212,7 @@ describe('scales', () => {
     test('the sizes of bands and the positions of values as references', async () => {
         const def = lineDef();
         def.mapping.y = { column: 'land', type: 'categorical', scale: { type: 'band', orientation: 'vertical', padding: 0 } };
-        def.mapping.x.scale.domainRel = [0, 0];
+        def.mapping.x.scale.pad = 0;
         def.plot = [{ id: 'zero', type: 'svg:rect', props: { x: '@x:scaled:2021', y: '@y:scaled', height: '@y:bandwidth', width: '@y:step' } }];
         def.annotations = [{ type: 'text', x: 2020, y: 'Wien', text: 'a', props: { dy: '@y:bandwidth' } }];
         const el = await mount({ def, data: lineData });
@@ -254,7 +254,7 @@ describe('groups of band scales', () => {
         const def = {
             options: { width: 400, height: 260, margins: { top: 0, right: 0, bottom: 0, left: 60 } },
             mapping: {
-                x: { column: 'v', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, 10], domainRel: [0, 0] } },
+                x: { column: 'v', type: 'numeric', scale: { orientation: 'horizontal', domain: [0, 10], pad: 0 } },
                 y: { column: 'y', type: 'categorical', scale: { type: 'band', orientation: 'vertical', range: [0, '@height'], padding: 0, groups: { by: 'g' } }, axis: { position: 'left' } },
                 g: { column: 'g', type: 'categorical' },
             },
@@ -1304,7 +1304,7 @@ describe('rows which are not stacked', () => {
         ] }],
         mapping: {
             x: { column: 'hour', type: 'numeric', scale: { orientation: 'horizontal' }, axis: { position: 'bottom' } },
-            y: { column: '{values}', type: 'numeric', stacked: { type: { not: 'load' } }, scale: { orientation: 'vertical', domain: [0, null], domainRel: [0, 0] },
+            y: { column: '{values}', type: 'numeric', stacked: { type: { not: 'load' } }, scale: { orientation: 'vertical', domain: [0, null], pad: 0 },
                 axis: { position: 'left', ticks: 4 }, hover: { format: '.1f' } },
             type: { column: 'type', type: 'categorical', legend: {}, hover: {},
                 categories: Object.fromEntries(order.map(k => [k, { name: { hydro: 'Wasser', wind: 'Wind', load: 'Verbrauch' }[k] }])) },

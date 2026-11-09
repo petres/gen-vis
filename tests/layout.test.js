@@ -73,7 +73,7 @@ describe('layout', () => {
                 month: { column: 'month', type: 'categorical' },
                 fuel: { column: 'fuel', type: 'categorical', fromData: true },
                 x: { column: 'zone', type: 'categorical', scale: { orientation: 'horizontal' } },
-                y: { column: 'price', type: 'numeric', scale: { orientation: 'vertical', domain: [0, null], domainRel: [0, 0], ...scale } },
+                y: { column: 'price', type: 'numeric', scale: { orientation: 'vertical', domain: [0, null], pad: 0, ...scale } },
                 color: { column: 'price', type: 'numeric', scale: { type: 'sequential', interpolator: 'Reds', ...scale } },
             },
             plot: { type: 'cartesian:bar', props: { x: '@x:scaled', y: '@y:scaled' } },
@@ -286,7 +286,7 @@ describe('stacks at the positions of another mapping (stackBy)', () => {
             mapping: {
                 x: { column: 'v', type: 'numeric', scale: { orientation: 'horizontal' } },
                 lo: { column: 'lo', type: 'numeric', scale: { of: 'x' } },
-                y: { column: 'count', type: 'numeric', stacked: true, stackBy: 'lo', scale: { orientation: 'vertical', domain: [0, null], domainRel: [0, 0] } },
+                y: { column: 'count', type: 'numeric', stacked: true, stackBy: 'lo', scale: { orientation: 'vertical', domain: [0, null], pad: 0 } },
                 g: { column: 'g', type: 'categorical', categories: { a: {}, b: {} } },
             },
             plot: { type: 'bar', by: 'g', props: { x0: '@lo:scaled', x1: '@lo:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' } },
@@ -306,7 +306,7 @@ describe('grids of facets', () => {
         options: { height: 200 },
         mapping: {
             x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' } },
-            y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical', domain: [0, null], domainRel: [0, 0] } },
+            y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical', domain: [0, null], pad: 0 } },
             group: { column: 'group', categories: { Bau: { name: 'Bauaufträge' }, DL: {} } },
             band: { column: 'band', categories: { low: { name: '50–100k' }, high: {} } },
         },

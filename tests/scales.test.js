@@ -12,7 +12,7 @@ const options = { dims: { width: 100, height: 50 }, coord };
 
 describe('makeScale', () => {
     test('continuous values, the nearest one with data', () => {
-        const mapping = { type: 'numeric', scale: { type: 'linear', orientation: 'horizontal', domain: [null, null], domainRel: [0, 0] } };
+        const mapping = { type: 'numeric', scale: { type: 'linear', orientation: 'horizontal', domain: [null, null], pad: 0 } };
         const s = makeScale('x', mapping, [{ x: 3 }, { x: null }, { x: 1 }, { x: 2 }, { x: 1 }], options);
         expect(s.domain()).toEqual([1, 3]);
         expect(s.range()).toEqual([0, 100]);
@@ -28,14 +28,14 @@ describe('makeScale', () => {
     test('the extent of stacked values is the one of the stacks', () => {
         const rows = [{ y: 2 }, { y: 3 }];
         const stacks = new Map([[rows[0], [0, 2]], [rows[1], [2, 5]]]);
-        const mapping = { type: 'numeric', stacked: true, scale: { type: 'linear', orientation: 'vertical', domain: [null, null], domainRel: [0, 0] } };
+        const mapping = { type: 'numeric', stacked: true, scale: { type: 'linear', orientation: 'vertical', domain: [null, null], pad: 0 } };
         expect(makeScale('y', mapping, rows, { ...options, stackOf: r => stacks.get(r) }).domain()).toEqual([0, 5]);
     });
 
     test('the nearest value is one of the rows, not of the rows of the domain (domainIgnores), also of periods', () => {
         const rows = [{ x: 2 }, { x: 3 }];
         const domainRows = [{ x: 0 }, { x: 2 }, { x: 3 }, { x: 10 }];
-        const mapping = { type: 'numeric', scale: { type: 'linear', orientation: 'horizontal', domain: [null, null], domainRel: [0, 0] } };
+        const mapping = { type: 'numeric', scale: { type: 'linear', orientation: 'horizontal', domain: [null, null], pad: 0 } };
         const s = makeScale('x', mapping, rows, { ...options, domainRows });
         expect(s.domain()).toEqual([0, 10]);
         expect([s.nearest(0), s.nearest(100)]).toEqual([2, 3]);
@@ -67,7 +67,7 @@ describe('makeScale', () => {
         expect(scale('vertical', [5, 10]).range()).toEqual([45, 10]);
         expect(scale('horizontal', { '*': ['@width', 0.1] }).range()).toEqual([10, 90]);
         // the dates of a time scale, the categories of a band scale
-        const time = makeScale('x', { type: 'date', scale: { type: 'time', orientation: 'horizontal', domain: [null, null], domainRel: [0, 0], inset: 20 } },
+        const time = makeScale('x', { type: 'date', scale: { type: 'time', orientation: 'horizontal', domain: [null, null], pad: 0, inset: 20 } },
             [{ x: Date.UTC(2020, 0, 1) }, { x: Date.UTC(2021, 0, 1) }], options);
         expect(time(Date.UTC(2020, 0, 1))).toBe(20);
         const band = makeScale('c', { type: 'categorical', scale: { type: 'band', orientation: 'horizontal', padding: 0, inset: 10 } }, [{ c: 'a' }, { c: 'b' }], options);
@@ -166,7 +166,7 @@ describe('the domain of a diverging scale', () => {
 });
 
 describe('makeScale, log scales and rows without values', () => {
-    const log = { type: 'numeric', scale: { type: 'log', orientation: 'vertical', domain: [null, null], domainRel: [0, 0] } };
+    const log = { type: 'numeric', scale: { type: 'log', orientation: 'vertical', domain: [null, null], pad: 0 } };
 
     test('values of a log scale without a position are left out of the domain, e.g. 0', () => {
         const s = makeScale('y', log, [{ y: 0 }, { y: 10 }, { y: 100 }], options);
@@ -186,7 +186,7 @@ describe('makeScale, log scales and rows without values', () => {
     });
 
     test('without rows the domain is 0 to 1 or the one of the values of include or center', () => {
-        const linear = { type: 'numeric', scale: { type: 'linear', orientation: 'vertical', domain: [null, null], domainRel: [0, 0], nice: true } };
+        const linear = { type: 'numeric', scale: { type: 'linear', orientation: 'vertical', domain: [null, null], pad: 0, nice: true } };
         expect(makeScale('y', linear, [], options).domain()).toEqual([0, 1]);
         expect(makeScale('y', linear, [{ y: null }], options).domain()).toEqual([0, 1]);
         expect(makeScale('y', { ...linear, scale: { ...linear.scale, include: [0, 50] } }, [], options).domain()).toEqual([0, 50]);
@@ -211,7 +211,7 @@ describe('values of the definition of a mapping with the scale of another one', 
         };
         const s = makeScale('x', mappings.x, [{ x: Date.UTC(2020, 0, 1) }, { x: Date.UTC(2021, 0, 1) }], options);
         expect(tickValues({ values: ['2020-07-01'] }, s, 5, mappings.x2, {}, mappings)).toEqual([Date.UTC(2020, 6, 1)]);
-        const include = { ...mappings.x, scale: { ...mappings.x.scale, include: '2019-01-01', domain: [null, null], domainRel: [0, 0] } };
+        const include = { ...mappings.x, scale: { ...mappings.x.scale, include: '2019-01-01', domain: [null, null], pad: 0 } };
         expect(makeScale('x', include, [{ x: Date.UTC(2020, 0, 1) }], { ...options, mappings }).domain().map(Number))
             .toEqual([Date.UTC(2019, 0, 1), Date.UTC(2020, 0, 1)]);
     });
@@ -238,13 +238,12 @@ describe('zero: the domain of the data includes 0, an end at 0 is exact', () => 
 });
 
 describe('pad', () => {
-    test('extends both ends, positive values, instead of domainRel', async () => {
+    test('extends both ends, positive values', async () => {
         const { makeScale } = await import('@/utils/scales');
         const rows = [{ v: 0 }, { v: 10 }];
         const scale = s => makeScale('v', { type: 'numeric', scale: { type: 'linear', orientation: 'vertical', domain: [null, null], ...s } }, rows, { coord: { ranges: { vertical: [100, 0] } } });
         expect(scale({ pad: 0.1 }).domain()).toEqual([-1, 11]);
         expect(scale({ pad: [0, 0.2] }).domain()).toEqual([0, 12]);
-        expect(scale({ domainRel: [0.1, 0.1] }).domain()).toEqual([1, 11]);
         // only the ends taken from the data, as the 2% it replaces, e.g. not 0 of bars
         expect(scale({ pad: 0.1, domain: [0, null] }).domain()).toEqual([0, 11]);
         expect(scale({ pad: 0.1, domain: [-5, 20] }).domain()).toEqual([-5, 20]);
