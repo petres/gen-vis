@@ -28,6 +28,16 @@ describe('the messages of the draw', () => {
             .toBe(`marks[1] ('bars'): the bars of a continuous scale need a 'width' in pixels, e.g. "width": 8, or a categorical dim of their position`);
     });
 
+    test('the errors of the load and of the scales name the parts of the definition, not the engine', async () => {
+        const d = def();
+        d.dims.y.scale = 'linear';
+        expect(await errorOf(d)).toBe('dims.y.scale: expected an object, e.g. {}');
+        expect(await errorOf(def({ marks: { type: 'line', by: 5 } }))).toBe('marks[0].by: expected a dim or a list of dims, e.g. "land", not 5');
+        const domain = def();
+        domain.dims.y.domain = 'auto';
+        expect(await errorOf(domain)).toMatch(/^dims\.y\.scale: /);
+    });
+
     test('a format of numbers which d3 has not names its dim', async () => {
         const d = def();
         d.dims.y.format = '%,.0f';

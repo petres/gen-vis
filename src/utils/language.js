@@ -672,6 +672,9 @@ const translate = raw => {
  */
 const checkDims = def => {
     [def.plot ?? []].flat().forEach((p, i) => {
+        const other = (p?.by ?? []).find(b => typeof b != 'string');
+        if (other !== undefined)
+            throw new Error(`marks[${i}].by: expected a dim or a list of dims, e.g. "land", not ${JSON.stringify(other)}`);
         const unknown = (p?.by ?? []).find(b => typeof b == 'string' && !Object.hasOwn(def.mapping ?? {}, b));
         if (unknown !== undefined)
             throw new Error(`marks[${i}].by: unknown dim '${unknown}', the dims are ${Object.keys(def.mapping ?? {}).map(n => `'${n}'`).join(', ') || 'none'}`);

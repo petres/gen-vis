@@ -2444,7 +2444,7 @@ describe('fixed bugs', () => {
         const message = async def => (await mount({ def, data: lineData })).querySelector('.vis-error')?.textContent;
         const def = lineDef();
         def.mapping.y.hover = true;
-        expect(await message(def)).toBe('mapping.y.hover: expected an object, e.g. {}');
+        expect(await message(def)).toBe('dims.y.hover: expected an object, e.g. {}');
         // the facets of a dim which does not exist (of a numeric one its values are the categories)
         expect(await message({ ...lineDef(), facets: { dim: 'nope' } })).toBe("facets.by: unknown dim 'nope', the dims are 'x', 'y', 'c'");
         expect(await message({ ...lineDef(), plot: [null] })).toMatch(/^marks\[0\]: expected a mark/);

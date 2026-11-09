@@ -8,7 +8,7 @@ import { autoMargins } from "@/utils/margins";
 import { bandCenter, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
 import { facetMappings } from "@/utils/normalize";
-import { markPath, warnOnce } from "@/utils/warn";
+import { markPath, warnOnce, withPath } from "@/utils/warn";
 import { highlightVars } from "@/utils/highlight";
 import { textWidth } from "@/utils/measure";
 import { plotTypes } from "@/plots";
@@ -387,9 +387,14 @@ const layout = (store, width, before = null) => {
 
         // the scale of a mapping for the rows, in the sizes of a facet, of the
         // facet `key` (undefined of all rows), of the rows of `domain` if given
+        // an error names the dim, e.g. of a domain which is no list
         const scaleOf = (name, rows, key, domain = domainOf(name, key)) => {
-            return makeScale(name, store.mapping(name), rows, { dims, coord: store.coord, scope: facetScope, mappings: def.mapping,
-                stackOf: name == axis.v ? stackOf : null, also: also(name), domainRows: domain?.rows, domainStackOf: domain?.stackOf });
+            try {
+                return makeScale(name, store.mapping(name), rows, { dims, coord: store.coord, scope: facetScope, mappings: def.mapping,
+                    stackOf: name == axis.v ? stackOf : null, also: also(name), domainRows: domain?.rows, domainStackOf: domain?.stackOf });
+            } catch (error) {
+                throw withPath(error, `dims.${name}.scale`);
+            }
         };
 
         // the scales of all facets: the shared ones and the ones without
