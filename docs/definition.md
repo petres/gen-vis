@@ -100,9 +100,16 @@ global without a default (see [globals and controls](#globals-and-controls))
 is a switch over the value of the other parts: a mixin which switches the
 column of `y` for the shares, `"column": "=match(@values, {share:
 'value.share'})"`, applies to the `"column": "value"` of an earlier parent
-and of a child alike (the value becomes the default of the match); two
-matches of the same global merge their cases. A child replaces the switch
-with a `match` of its own (with a default) or removes the key with `null`.
+and of a child alike (the value becomes the default of the match; an
+object of a child onto an object of the default is merged into it, e.g.
+`"scale": {"nice": true}` onto a switch of the type of the scale, the cases
+stay as they are); two matches of the same global merge their cases. A
+child replaces the switch with a `match` of its own (with a default) or
+removes the key with `null`. A global is a name of `globals` or the
+`global` of a control of any of the parts: a global which only the page
+sets is declared with its default in `globals` (or by a hidden control)
+to be switched by a mixin. A `match` of other names, e.g. of the
+categories in the `props` of a legend, is a value, which a child replaces.
 
 With `check` (or `debug`) the merged definition is checked for common
 mistakes, e.g. unknown mark types, unknown keys of the
@@ -1118,8 +1125,12 @@ The ones of maps (`base`, `region`, `point`, `text`, `mesh`) have none:
 ### Channels
 
 The channels of a mark are its positions. A channel names a dim, a column
-of the data (a dim of it is added) or is a number or an expression of the
-row:
+of the data (a dim of it is added; of `x` or `y` without a dim `x` or `y`
+the dim of the axis, so `{"type": "point", "x": "year", "y": "value"}`
+needs no dims) or is a number or an expression of the row. A channel
+which names neither a dim nor a column of the data (e.g. a typo, `"x":
+"yaer"`) is a warning of the load (`marks[0].x: no dim and no column
+'yaer' in the data, ...`):
 
 | Channel | |
 |---------|-|
@@ -1127,7 +1138,7 @@ row:
 | `x0`, `x1` | the start and the end of a bar or an area on the horizontal axis, e.g. the start and the end of a class of a [bin](#transform) |
 | `y0`, `y1` | the start (0 by default) and the end of a bar or an area, e.g. the lower and the upper edge of a band; `y1` of a rule its start |
 | `x2`, `y2` | the other end of a rule, e.g. `"y1": "lo", "y2": "hi"` of an error bar |
-| `lon`, `lat` | of maps: the dims of the longitude and the latitude of a point or a text |
+| `lon`, `lat` | of maps: the dims of the longitude and the latitude of a point or a text, or expressions of the row (e.g. `"=@lng + 0.1"`) |
 
 - A dim of a channel is drawn at the scaled value of the row (`@x:scaled`),
   a categorical one of a band at the center of the band
@@ -1135,7 +1146,8 @@ row:
 - A dim a channel names beside the dim of its axis (e.g. `"y2": "hi"` of a
   rule, `"x1": "hi"` of a bar) is on the scale of that axis
   (`"scale": {"of": "y"}`), so its values are positions of the axis and
-  they are in its domain.
+  they are in its domain; without the dim of the axis it has a scale of
+  its own.
 - A number is a value on the scale of the axis of the channel
   (`@y:scaled:100`) of `x0` and `y0` of bars, areas and rules, of `y` of
   bars and of `x` and `y` of rules, e.g. the base of bars or a rule at a
@@ -1793,7 +1805,8 @@ its title and its horizontal value as a cell, e.g. the country of a point
 of a scatter plot above its x and y.
 
 - `columns`: the dims of the hover beside the value of the position, by default the dims the marks use,
-  their `by` and the dims of their positions (`x`, `y`, `y1`, ... of the
+  their `by` (also a categorical dim of a `fill` or a `stroke`, which is a
+  `by` of the mark) and the dims of their positions (`x`, `y`, `y1`, ... of the
   channels; not the dims of the facets, their panels have titles); a dim
   with a `hover` of its own is in it as well, `[]` only those. The columns
   are in the order of the dims.
@@ -1864,7 +1877,8 @@ default); the dim of the facets has the categories of the data in the
 order of the rows, unless it lists them. `cols` can be an expression of
 `totalWidth`, e.g. `"=steps(@totalWidth, {0: 1, 600: 2})"`. `scales`: every
 facet has its own scales (`"own"`, the default), all facets share the
-scales of their dims (`"shared"`), or a list of the dims which share their
+scales of their dims (`"shared"`, all dims, also the ones of the columns
+of channels), or a list of the dims which share their
 scale, e.g. `["x"]`, also an expression of a global, e.g. of a control of
 shared or separate scales:
 
@@ -2028,7 +2042,9 @@ be an expression of the globals:
   with the controls of a parent (the global by default). The controls of a
   parent and its children are merged by their `id` (if all of them have
   one, otherwise by their `global`), their entries by their `id` (otherwise
-  by their `value`), so a child may give only the ids of the control and of
+  by their `value`; a value of a list, e.g. `"2024"`, is the entry of the
+  value, a list of values of a child replaces the parent's), so a child may
+  give only the ids (or the globals and the values) of the control and of
   the entries it changes, e.g. another name:
   ```json
   { "controls": [{ "id": "values", "values": [{ "id": "valuesAbs", "name": "Anzahl" }] }] }
@@ -2087,7 +2103,12 @@ control of the kind of the chart:
 - Expressions of the rows, the categories or the sizes (e.g. `@x`,
   `@color`, `@innerWidth`, `@totalWidth`) are evaluated when they are
   drawn, at the places which have such names, see [names](#names); a part
-  of an expression of the globals in them is evaluated with them.
+  of an expression of the globals in them is evaluated with them. A text
+  (the title, the subtitle, the source, the names of the dims and their
+  categories, the titles of the axes, ...) of an expression of other names
+  is evaluated when it is drawn, with the globals of the page and
+  `totalWidth`, e.g. `"title": "=cat('Breite ', @totalWidth)"`; a name it
+  does not know has no value (a warning once), no value is the empty text.
 - A change of a global evaluates the definition again, only the parts which
   change are prepared again, the entries of the legends of the same
   categories keep their state. The definitions of all values of the
@@ -2144,7 +2165,7 @@ The operators and their string syntax:
 |----------|---------------|-------|
 | `+`, `-`, `*`, `/` | `a + b`, `a - b`, `-a`, `a * b`, `a / b` | the sum, the difference (of one argument its negation), the product, the quotient; no value if a value is no number (also a text of the data which is no decimal number) or of a division by 0 |
 | `min`, `max`, `round` | `min(a, b)`, `max(a, b)`, `round(a, digits)` | the least, the largest value, the value rounded to digits (0 by default), halves up |
-| `==`, `!=` | `a == b`, `a != b` | the same as texts, e.g. `2024` and `"2024"`, missing values are the same, e.g. `null` and `""` |
+| `==`, `!=` | `a == b`, `a != b` | the same as texts, e.g. `2024` and `"2024"`, missing values are the same, e.g. `null` and `""`; more values are a chain, e.g. `@a == @b == @c` (all the same) |
 | `<`, `<=`, `>`, `>=` | `a < b`, `0 < @x < 10` | numbers by their value, otherwise texts, false of a missing value, also of `""`, more values are a chain |
 | `and`, `or`, `not` | `a and b`, `a or b`, `not a` | the first false value, the first true value (e.g. a default `@color or 'black'`), the negation |
 | `if` | `c ? a : b`, `if(c, a, c2, b, d)` | the value of the first true condition, otherwise the last one |

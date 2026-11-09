@@ -1,6 +1,6 @@
 // the PNG of the SVG of an image, drawn by the browser on a canvas, loaded
 // with the first image, see renderImage of utils/export.js
-export { rasterize, fontFaces };
+export { rasterize };
 
 // the @font-face rules of the fonts of the package (Inter, injected by the
 // script, see vite.config.js) with their files inlined, so the SVG drawn as

@@ -1,9 +1,9 @@
 export { resolve, variants, namesOfGlobals };
 
 import { isObject } from '@/utils/values';
-import { evaluate, isOperator, refNames } from '@/utils/expr';
+import { evaluate, isMatch, isOperator, refNames } from '@/utils/expr';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
-import { expressionKeys, nameKeys, markKeys } from '@/utils/language';
+import { entriesOf, expressionKeys, nameKeys, markKeys } from '@/utils/language';
 
 /**
  * A definition with the expressions of its globals evaluated: every
@@ -32,9 +32,6 @@ const drawn = new Set(['marks', 'annotations', 'props', 'highlight', 'others']);
 // globals in their scope, a text of them is the expression itself
 const rows = new Set(['filter', 'stack', 'stacked', 'expr']);
 
-// a `match` object, e.g. of the merge, see leafMerge of utils/def.js
-const isMatch = v => isObject(v) && Object.keys(v).length == 1 && Array.isArray(v.match);
-
 // the keys of a mark which are read when the definition is translated,
 // e.g. its type, its `by` or its curve: expressions of the globals at them
 // are resolved, its attributes and the expressions of its rows are drawn
@@ -45,7 +42,7 @@ const resolveIn = (value, names, key, inside) => {
     // is an expression of the whole part, as a text of one
     if (!inside && (key == 'marks' || key == 'annotations') && isOperator(value)) {
         const r = resolved(value, names);
-        return r === unresolved ? value : r;
+        return r === unresolved ? value : chosen(r, names, key, inside);
     }
     // a mark: the expressions of the globals of its options
     if (key == 'marks' && Array.isArray(value))
@@ -65,7 +62,7 @@ const resolveIn = (value, names, key, inside) => {
             return value;
         }
         const r = resolved(ast, names);
-        return r === unresolved ? value : r;
+        return r === unresolved ? value : chosen(r, names, key, inside);
     }
     const expression = inside || (key !== undefined && expressionKeys.has(key));
     // a `match` object at any key, e.g. of the merge of a switch of a global
@@ -74,7 +71,7 @@ const resolveIn = (value, names, key, inside) => {
     if (!expression && isMatch(value)) {
         const r = resolved(value, names);
         if (r !== unresolved)
-            return r;
+            return chosen(r, names, key, inside);
     }
     if (Array.isArray(value))
         return value.map(v => resolveIn(v, names, key == 'marks' || key == 'annotations' ? 'marks' : undefined, expression || key == 'marks' || key == 'annotations'));
@@ -92,6 +89,12 @@ const resolveIn = (value, names, key, inside) => {
         .filter(([k, v]) => !(v === null && ((typeof value[k] == 'string' && isExpressionText(value[k])) || isMatch(value[k])))));
 };
 
+// a part chosen by an expression of the globals, e.g. the object of a
+// `literal` of a case or of the default of a switch (see leafMerge of
+// utils/def.js: a parent's object, with a child's one merged into it), is a
+// part of the definition: its own expressions of the globals are resolved
+const chosen = (r, names, key, inside) => r !== null && typeof r == 'object' ? resolveIn(r, names, key, inside) : r;
+
 // the value of an expression of the names only, unresolved of others (also
 // of a reference to a name, so "@lang" of options.language stays)
 const unresolved = Symbol('unresolved');
@@ -103,10 +106,6 @@ const resolved = (ast, names) => {
     return v === undefined ? null : v;
 };
 
-// an entry of a control, a value (e.g. "2024") is its value, name and id, as
-// the controls of the engine, see control of utils/language.js
-const entryOf = v => isObject(v) ? v : (v === null || typeof v != 'object' ? { value: v, name: String(v), id: String(v) } : v);
-
 // the names of the globals of a definition and the fields of the entries
 // of its controls selected by them, e.g. `year:name`
 const namesOfGlobals = (globals = {}, controls = []) => {
@@ -115,7 +114,7 @@ const namesOfGlobals = (globals = {}, controls = []) => {
     [controls ?? []].flat().forEach(c => {
         if (!isObject(c))
             return;
-        const g = c.global ?? c.ref;
+        const g = c.global;
         // the global of a control is a name, also without a value yet, e.g. a
         // definition without globals: a match of it has no case, its default
         if (typeof g == 'string' && !Object.hasOwn(names, g)) {
@@ -124,7 +123,7 @@ const namesOfGlobals = (globals = {}, controls = []) => {
         }
         if (!Array.isArray(c.values))
             return;
-        const entry = c.values.map(entryOf).find(v => isObject(v) && String(v.value) === String(globals?.[g]));
+        const entry = entriesOf(c.values).find(v => String(v.value) === String(globals?.[g]));
         Object.entries(entry ?? {}).filter(([, v]) => v === null || typeof v != 'object')
             .forEach(([k, v]) => names[`${g}:${k}`] ??= v);
     });
@@ -140,7 +139,7 @@ const namesOfGlobals = (globals = {}, controls = []) => {
 const variants = def => {
     const globals = isObject(def.globals) ? def.globals : {};
     const controls = [def.controls ?? []].flat().filter(c => isObject(c) && Array.isArray(c.values));
-    const sets = [globals, ...controls.flatMap(c => c.values.map(entryOf).filter(isObject).map(v => ({ ...globals, [c.global ?? c.ref]: v.value })))];
+    const sets = [globals, ...controls.flatMap(c => entriesOf(c.values).map(v => ({ ...globals, [c.global]: v.value })))];
     const seen = new Set();
     return sets.filter(s => {
         const key = JSON.stringify(s);

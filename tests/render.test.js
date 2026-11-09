@@ -4053,3 +4053,36 @@ describe('legend symbols of categories (review of 4.1)', () => {
         expect([svg('A'), svg('B')]).toEqual([false, true]);
     });
 });
+
+describe('a channel of no dim and no column (review of 5.0)', () => {
+    test('a named warning with the dims and the columns', async () => {
+        await mount({ def: { dims: { x: 'year', y: 'value' }, marks: { type: 'point', x: 'yaer' } }, data: 'year,value\n2020,1\n2021,2' });
+        expect(errors).toContain("gen-vis inline definition: marks[0].x: no dim and no column 'yaer' in the data, the dims are 'x', 'y', the columns 'year', 'value'");
+    });
+    test('a chart without dims of the columns of the channels', async () => {
+        const el = await mount({ def: { marks: { type: 'point', x: 'year', y: 'value' } }, data: 'year,value\n2020,1\n2021,2' });
+        expect([...el.querySelectorAll('g.vis-plot circle')].every(c => Number.isFinite(parseFloat(c.getAttribute('cx'))))).toBe(true);
+        expect(el.querySelectorAll('g.vis-plot circle').length).toBe(2);
+        expect(errors).toEqual([]);
+    });
+});
+
+describe('texts of expressions of other names than globals (review of 5.0)', () => {
+    const data = 'year,value\n2020,1\n2021,2';
+    const base = { dims: { x: 'year', y: 'value' }, marks: { type: 'point' } };
+    test('evaluated in the scope of the chart, e.g. of its width', async () => {
+        const el = await mount({ def: { ...base, title: "=cat('W ', @totalWidth)", subtitle: '=@lang', source: "=match(@lang, {en: 'Source'}, 'Quelle')" }, data, globals: { lang: 'en' } });
+        expect(el.querySelector('.vis-title').textContent).toBe('W 800');
+        expect(el.querySelector('.vis-subtitle').textContent).toBe('en');
+        expect(errors).toEqual([]);
+    });
+    test('a name which is no global and no size has no value, the text is never the expression, a warning once', async () => {
+        const el = await mount({ def: { ...base, title: "=match(@lang, {en: 'Population'}, 'Bevölkerung')", subtitle: "=match(@lang, {en: 'by state'})" }, data });
+        expect(el.querySelector('.vis-title').textContent).toBe('Bevölkerung');
+        expect(el.querySelector('.vis-subtitle').textContent).toBe('');
+        expect(errors).toEqual([
+            `gen-vis inline definition: the text "=match(@lang, {en: 'Population'}, 'Bevölkerung')" names 'lang', no global (of "globals" or a control) and no size (totalWidth): no value`,
+            `gen-vis inline definition: the text "=match(@lang, {en: 'by state'})" names 'lang', no global (of "globals" or a control) and no size (totalWidth): no value`,
+        ]);
+    });
+});

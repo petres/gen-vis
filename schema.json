@@ -12,7 +12,7 @@
         },
         "parent": {
             "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }],
-            "description": "Url of the definition this one is deep merged into, relative to this definition, or a list of them (mixins) merged in their order, later ones override earlier ones. Lists are replaced, lists of entries with ids (marks, controls and their entries) are merged by them."
+            "description": "Url of the definition this one is deep merged into, relative to this definition, or a list of them (mixins) merged in their order, later ones override earlier ones. Lists are replaced, lists of entries with ids (marks, controls and their entries) are merged by them. A match of a global (of globals or of a control) without a default is a switch over the value of the other parts."
         },
         "data": {
             "type": "string",
@@ -181,8 +181,14 @@
                     "$ref": "#/definitions/args",
                     "description": "[value, digits]: the value rounded to digits (0 by default), halves up."
                 },
-                "==": { "$ref": "#/definitions/args", "description": "The same values, as texts, e.g. 2024 and \"2024\"." },
-                "!=": { "$ref": "#/definitions/args", "description": "Not the same values." },
+                "==": {
+                    "$ref": "#/definitions/args",
+                    "description": "The same values, as texts, e.g. 2024 and \"2024\", more values are a chain of every pair of neighbours."
+                },
+                "!=": {
+                    "$ref": "#/definitions/args",
+                    "description": "Not the same values, more values are a chain of every pair of neighbours."
+                },
                 "<": {
                     "$ref": "#/definitions/args",
                     "description": "Numbers by their value, otherwise texts, false of a missing value, more values are a chain, e.g. [0, \"@x\", 10]."
@@ -1208,9 +1214,12 @@
                 },
                 "lon": {
                     "$ref": "#/definitions/channel",
-                    "description": "Of a map: the dim of the longitude of a point or a text."
+                    "description": "Of a map: the dim of the longitude of a point or a text, or an expression of the row."
                 },
-                "lat": { "$ref": "#/definitions/channel", "description": "Of a map: the dim of the latitude." },
+                "lat": {
+                    "$ref": "#/definitions/channel",
+                    "description": "Of a map: the dim of the latitude, or an expression of the row."
+                },
                 "stack": {
                     "anyOf": [
                         { "type": "boolean" },
@@ -1372,7 +1381,7 @@
         },
         "channel": {
             "anyOf": [{ "type": "string" }, { "type": "number" }, { "$ref": "#/definitions/expression" }],
-            "description": "A dim by its name (a column of the data is a dim of it), a number (a value on the scale of the axis of the channel of bars and rules, else pixels) or an expression of the row, e.g. \"@y:scaled:center\"."
+            "description": "A dim by its name (a column of the data is a dim of it, of x or y without a dim x or y the dim of the axis), a number (a value on the scale of the axis of the channel of bars and rules, else pixels) or an expression of the row, e.g. \"@y:scaled:center\"."
         },
         "annotation": {
             "type": "object",
@@ -1592,7 +1601,7 @@
                 },
                 "id": {
                     "type": "string",
-                    "description": "The id of the control, the global by default; the controls of a parent and its children are merged by it, so a child may give only the id and the ids of the entries it changes."
+                    "description": "The id of the control, the global by default; the controls of a parent and its children are merged by it (by the global if one of them has no id), so a child may give only the id and the ids (or values) of the entries it changes."
                 },
                 "inImage": {
                     "type": "boolean",

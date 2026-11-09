@@ -2,6 +2,8 @@ import { loadColors } from '@/utils/d3';
 import { migrate } from '@/utils/migrate';
 import { plotTypes } from '@/plots';
 import { describe, test, expect, beforeAll } from 'vitest';
+import { resolve, namesOfGlobals } from '@/utils/resolve';
+import { evaluate } from '@/utils/expr';
 import { sameValue, applyResolved, variantsOf, fillTemplate, formatOf, mergeAll, prepareDef, selectedEntry, templateNames, templateRefs, variants } from '@/utils/def';
 
 // the colors of d3 are loaded by the store, see loadColors
@@ -400,5 +402,46 @@ describe('languageOf (review of 4.1)', () => {
         expect(languageOf({ language: '@lang', locale: 'en' }, { lang: 'de' })).toBe('de');
         expect(languageOf({ language: '@lang' }, {})).toBeUndefined();
         expect(languageOf({ language: 'fr', locale: 'en' }, {})).toBe('fr');
+    });
+});
+
+describe('the merge of switches and their resolution (review of 5.0)', () => {
+    const names = (def, globals) => namesOfGlobals({ ...def.globals, ...globals }, def.controls);
+    const switched = [
+        { globals: { s: 'lin' }, controls: [{ type: 'radio', global: 's', values: ['lin', 'log'] }], dims: { y: { column: 'v', scale: { type: 'linear' } } } },
+        { dims: { y: { scale: "=match(@s, {log: literal({type: 'log'})})" } } },
+        { dims: { y: { scale: { nice: true, clamp: "=match(@s, {log: true}, false)" } } } },
+    ];
+    test('a child\'s object onto a switch of objects is merged into its default, the cases stay whole', () => {
+        const merged = mergeAll(switched);
+        expect(resolve(merged, names(merged)).dims.y.scale).toEqual({ type: 'linear', nice: true, clamp: false });
+        expect(resolve(merged, names(merged, { s: 'log' })).dims.y.scale).toEqual({ type: 'log' });
+    });
+    test('the expressions of the globals in a part chosen by a switch are resolved', () => {
+        const merged = mergeAll([
+            { globals: { values: 'abs', unit: 'pj' }, dims: { y: { axis: { format: "=match(@unit, {pj: ',.0f'}, ',.1f')" } } } },
+            { dims: { y: { axis: "=match(@values, {share: literal({format: '.0%'})})" } } },
+        ]);
+        expect(resolve(merged, names(merged)).dims.y.axis).toEqual({ format: ',.0f' });
+        expect(resolve(merged, names(merged, { unit: 'twh' })).dims.y.axis).toEqual({ format: ',.1f' });
+        expect(resolve(merged, names(merged, { values: 'share' })).dims.y.axis).toEqual({ format: '.0%' });
+    });
+    test('a match of the categories in the props of a legend is a value, also below a switch', () => {
+        const merged = mergeAll([
+            { globals: { mode: 'a' }, dims: { land: { column: 'land', legend: { props: { fill: "=match(@land, {W: 'red'}, 'gray')" } } } } },
+            { dims: { land: { legend: { props: { fill: "=match(@mode, {b: 'blue'})" } } } } },
+        ]);
+        const props = resolve(merged, names(merged)).dims.land.legend.props;
+        expect(props.fill).toEqual({ match: ['@mode', { b: 'blue' }, { match: ['@land', { W: 'red' }, 'gray'] }] });
+        expect(evaluate(props.fill, { mode: 'a', land: 'W' })).toBe('red');
+        expect(evaluate(props.fill, { mode: 'b', land: 'W' })).toBe('blue');
+    });
+});
+
+describe('the entries of controls (review of 5.0)', () => {
+    test('a value and an entry without a name have the text of the value as their name and id, also as fields of the selected entry', () => {
+        const controls = [{ type: 'radio', global: 'year', values: [{ value: 2024 }, '2025'] }];
+        expect(namesOfGlobals({ year: 2024 }, controls)).toMatchObject({ 'year:name': '2024', 'year:id': '2024', 'year:value': 2024 });
+        expect(namesOfGlobals({ year: '2025' }, controls)).toMatchObject({ 'year:name': '2025', 'year:id': '2025' });
     });
 });

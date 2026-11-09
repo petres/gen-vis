@@ -4,27 +4,36 @@ import { deepMerge, mergeAll as mergeParts } from '@/utils/merge';
 import { ownColors, schemeColors } from '@/utils/d3';
 import { comparison, isObject, sameValue } from '@/utils/values';
 import { defaultScaleType, hasCategories } from '@/utils/normalize';
-import { operators, refNames } from '@/utils/expr';
-import { parseExpression } from '@/utils/expr-parse';
+import { isMatch, operators, refNames } from '@/utils/expr';
+import { isExpressionText, parseExpression } from '@/utils/expr-parse';
 import { hasLocale } from '@/utils/locale';
-import { translate, checkDims } from '@/utils/language';
+import { translate, checkDims, entryOf } from '@/utils/language';
 import { resolve, namesOfGlobals } from '@/utils/resolve';
 import { normalize } from '@/utils/normalize';
 
 // arrays whose entries all have a key, an `id`, the `global` of controls or
-// the `value` of their entries, are merged by it, entries with a new key
-// are appended, all other arrays are replaced
-const keyOf = a => ['id', 'global', 'value'].find(k => a.every(e => e !== null && typeof e == 'object' && !Array.isArray(e) && k in e));
+// the `value` of their entries, are merged by it, the first of these which
+// all entries of both arrays have, e.g. the controls of a parent with an
+// `id` and a `global` and of a child with only the `global` by it; entries
+// with a new key are appended, all other arrays are replaced. The entries
+// of a control (`values`) are entries first (see entryOf of
+// utils/language.js), so a value of a parent, e.g. "2024", is the entry
+// of an object of a child of the value, the values of both are values
+// (replaced).
+const keys = ['id', 'global', 'value'];
+const keyOf = (a, b) => keys.find(k => [...a, ...b].every(e => isObject(e) && k in e));
 const arrayMerge = (target, source, options) => {
-    const key = target.length > 0 && source.length > 0 ? keyOf(target) : undefined;
-    if (!key || keyOf(source) !== key)
-        return source;
+    const key = target.length > 0 && source.length > 0 ? keyOf(target, source) : undefined;
+    if (!key)
+        return structuredClone(source);
     const merged = target.map(t => {
         const s = source.find(e => e[key] == t[key]);
-        return s ? deepMerge(t, s, options) : t;
+        return s ? deepMerge(t, s, options) : structuredClone(t);
     });
-    return [...merged, ...source.filter(s => !target.some(t => t[key] == s[key]))];
+    return [...merged, ...source.filter(s => !target.some(t => t[key] == s[key])).map(s => structuredClone(s))];
 };
+const entriesMerge = (target, source, options) => Array.isArray(target) && Array.isArray(source) && [...target, ...source].some(isObject)
+    ? arrayMerge(target.map(entryOf), source.map(entryOf), options) : deepMerge(target, source, options);
 
 // the mappings of two parts, a text of one which the other one writes as
 // an object is the mapping of its column, e.g. "facet": "group" of a parent
@@ -43,12 +52,26 @@ const mergeMappings = (target, source, options) => {
 // the attributes of marks and annotations are expressions of the rows, a
 // `match` of them is no switch of a global: no leaf merge in them
 const withoutLeaves = (t, s, options) => (Array.isArray(t) && Array.isArray(s) ? arrayMerge : deepMerge)(t, s, { ...options, leafMerge: undefined });
-const customMerge = key => key == 'mapping' || key == 'dims' ? mergeMappings : (key == 'marks' || key == 'annotations' ? withoutLeaves : undefined);
+const customMerge = key => key == 'mapping' || key == 'dims' ? mergeMappings : key == 'marks' || key == 'annotations' ? withoutLeaves
+    : key == 'controls' || key == 'formElements' ? controlsMerge : undefined;
+// the controls (of 4.x the form elements) merged by their keys, their
+// entries (`values`) as entries, see entriesMerge
+const controlsMerge = (target, source, options) => {
+    const own = { ...options, customMerge: key => key == 'values' ? entriesMerge : customMerge(key) };
+    return (Array.isArray(target) && Array.isArray(source) ? arrayMerge : deepMerge)(target, source, own);
+};
+
+// the name of the global of a reference, e.g. `year` of "@year",
+// "@globals.year" and "@year:name" (a field of its selected entry)
+const globalOfRef = ref => ref.slice(1).replace(/^globals\./, '').split(':')[0];
 
 // a `match` of a global at a leaf: its reference, cases and default, of
 // the string syntax ("=match(@values, {share: '.1%'})") or of an operator
-// object, null of other values
-const matchOf = v => {
+// object, null of other values; only a match of a global (`globals`, the
+// names of the globals of the parts merged, see globalNames) is a switch,
+// e.g. not a match of the categories in `legend.props` or of the rows in
+// `stacked`, it is a value
+const matchOf = (v, globals) => {
     let ast = v;
     if (typeof v == 'string' && v.startsWith('=match(')) {
         try {
@@ -57,61 +80,94 @@ const matchOf = v => {
             return null;
         }
     }
-    if (!isObject(ast) || !Array.isArray(ast.match) || typeof ast.match[0] != 'string' || !ast.match[0].startsWith('@') || !isObject(ast.match[1]))
+    if (!isMatch(ast) || typeof ast.match[0] != 'string' || !ast.match[0].startsWith('@') || !isObject(ast.match[1]))
         return null;
     const [ref, cases, ...rest] = ast.match;
+    if (!globals?.has(globalOfRef(ref)))
+        return null;
     return { ref, cases, hasDefault: rest.length > 0, default: rest[0] };
 };
 const matchExpression = (ref, cases, hasDefault, value) => ({ match: hasDefault ? [ref, cases, value] : [ref, cases] });
-// a value of a part as the default of a match: a match of a global (also
-// of the string syntax) as its object, an object or a list as a literal,
-// so it is not evaluated as an expression, e.g. { "format": ".0%" } of an axis
-const asDefault = v => {
-    const m = matchOf(v);
-    if (m)
-        return matchExpression(m.ref, m.cases, m.hasDefault, m.hasDefault ? asDefault(m.default) : undefined);
-    return v !== null && typeof v == 'object' && !isLiteral(v) ? { literal: structuredClone(v) } : structuredClone(v);
-};
 const isLiteral = v => isObject(v) && Object.keys(v).length == 1 && Object.hasOwn(v, 'literal');
+// a value of a part as the default of a match: a match of a global as its
+// object (with its default as one), another expression (a text of the
+// string syntax or a match object, e.g. of the categories in the props of a
+// legend) as its object, which is evaluated with the match, an object or a
+// list as a literal, so it is not evaluated as an expression, e.g. {
+// "format": ".0%" } of an axis
+const asDefault = (v, globals) => {
+    const m = matchOf(v, globals);
+    if (m)
+        return matchExpression(m.ref, m.cases, m.hasDefault, m.hasDefault ? asDefault(m.default, globals) : undefined);
+    if (typeof v == 'string' && isExpressionText(v)) {
+        try {
+            return parseExpression(v);
+        } catch {
+            return v;
+        }
+    }
+    return v !== null && typeof v == 'object' && !isLiteral(v) && !isMatch(v) ? { literal: structuredClone(v) } : structuredClone(v);
+};
 // a value as the default of a match, of the innermost one of nested
-// switches, e.g. of two mixins of different globals, so both stay
-const withDefault = (m, value) => {
-    const inner = m.hasDefault ? matchOf(m.default) : null;
-    return matchExpression(m.ref, m.cases, true, inner ? withDefault(inner, value) : asDefault(value));
+// switches, e.g. of two mixins of different globals, so both stay; an
+// object merged onto a default which is an object is merged into it (the
+// cases stay as they are), e.g. { "nice": true } of a child onto a scale
+// of a switch of its type
+const withDefault = (m, value, options) => {
+    const inner = m.hasDefault ? matchOf(m.default, options.globals) : null;
+    if (inner)
+        return matchExpression(m.ref, m.cases, true, withDefault(inner, value, options));
+    const merged = m.hasDefault && isLiteral(m.default) && isObject(m.default.literal) && isObject(value) && !isMatch(value)
+        ? { literal: deepMerge(m.default.literal, value, options) } : asDefault(value, options.globals);
+    return matchExpression(m.ref, m.cases, true, merged);
 };
 
 /**
  * A switch of a global over the value of the parts before it: a `match`
- * without a default merged onto a value (`target`) has it as its default,
- * e.g. `"column": "=match(@values, {share: 'value.share'})"` of a mixin
- * over `"column": "value"` of an earlier parent; two matches of the same
- * global merge their cases (the later ones win) and keep the default of
- * the later one, or of the earlier one if the later has none; a value
- * merged onto a match (with or without a default) becomes its default, so
- * the switch of a mixin also applies to the value of a child merged after
- * it, as the patches of 4.x applied after the merge; of nested switches
- * (mixins of different globals) the innermost default. Null replaces
- * (removes), as a match with a default replaces a value.
+ * of a global (`options.globals`, see globalNames) without a default merged
+ * onto a value (`target`) has it as its default, e.g. `"column":
+ * "=match(@values, {share: 'value.share'})"` of a mixin over `"column":
+ * "value"` of an earlier parent; two matches of the same global merge
+ * their cases (the later ones win) and keep the default of the later one,
+ * or of the earlier one if the later has none; a value merged onto a match
+ * (with or without a default) becomes its default, so the switch of a
+ * mixin also applies to the value of a child merged after it, as the
+ * patches of 4.x applied after the merge, an object onto a default which
+ * is an object is merged into it; of nested switches (mixins of different
+ * globals) the innermost default. Null replaces (removes), as a match with
+ * a default replaces a value. Matches of other names are values.
  */
-const leafMerge = (target, source) => {
-    const s = matchOf(source);
-    const t = target === undefined || target === null ? null : matchOf(target);
+const leafMerge = (target, source, options = {}) => {
+    const { globals } = options;
+    const s = matchOf(source, globals);
+    const t = target === undefined || target === null ? null : matchOf(target, globals);
     if (s) {
         if (t && t.ref == s.ref)
             return matchExpression(s.ref, { ...t.cases, ...s.cases }, s.hasDefault || t.hasDefault, s.hasDefault ? s.default : t.default);
         if (!s.hasDefault && target !== undefined && target !== null)
-            return matchExpression(s.ref, s.cases, true, asDefault(target));
+            return matchExpression(s.ref, s.cases, true, asDefault(target, globals));
         return undefined;
     }
     if (t && source !== undefined && source !== null)
-        return withDefault(t, source);
+        return withDefault(t, source, options);
     return undefined;
 };
 
+/**
+ * The names of the globals of the parts of a definition (its parents and
+ * mixins), whose matches are switches in the merge: the keys of `globals`
+ * and the globals of the controls (of 4.x the `ref` of the form elements,
+ * before their migration).
+ */
+const globalNames = parts => new Set(parts.filter(isObject).flatMap(p => [
+    ...(isObject(p.globals) ? Object.keys(p.globals) : []),
+    ...[p.controls ?? []].flat().filter(isObject).map(c => c.global),
+    ...[p.formElements ?? []].flat().filter(isObject).map(e => e.ref),
+]).filter(n => typeof n == 'string'));
+
 // only a `match` object is a leaf of the merge: an object of one other
 // operator may be a part, e.g. { "format": ".1f" } of a hover
-const isMatchObject = v => isObject(v) && Object.keys(v).length == 1 && Array.isArray(v.match);
-const mergeAll = parts => mergeParts(parts, { arrayMerge, customMerge, leafMerge, isOperator: isMatchObject });
+const mergeAll = parts => mergeParts(parts, { arrayMerge, customMerge, leafMerge, isOperator: isMatch, globals: globalNames(parts) });
 
 // keys of categories ascending or descending, numbers by their value
 const sortKeys = (keys, descending) => {

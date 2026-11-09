@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { translate, compileStrings, isDefinition4, isDefinition5, authoredPath } from '@/utils/language.js';
+import { translate, compileStrings, implicitDims, isDefinition4, isDefinition5, authoredPath } from '@/utils/language.js';
 import { resolve } from '@/utils/resolve.js';
 
 describe('the language of 5.0', () => {
@@ -182,4 +182,42 @@ describe('the categories of the dims of the groups', () => {
         // a color of an attribute of the color of the category
         expect(t('land', { type: 'line', by: 'land', stroke: '#333', highlight: { stroke: '@color' } }).fromData).toBe('rows');
     });
+});
+
+describe('the dims of the channels (review of 5.0)', () => {
+    test('shared scales of the facets have the dims the channels add', () => {
+        const t = translate({ dims: { g: 'group', x: 'year' }, facets: { by: 'g', scales: 'shared' }, marks: { type: 'point', y: 'value', x1: 'from' } });
+        expect(t.facets.scales).toEqual(['g', 'x', 'y', 'from']);
+    });
+    test('a channel of an axis without the dim of the axis is the dim of the axis, of no other dim\'s scale', () => {
+        const t = translate({ marks: { type: 'point', x: 'year', y: 'value' } });
+        expect(t.mapping).toEqual({ x: { column: 'year', hover: {} }, y: { column: 'value', hover: {} } });
+        expect(t.plot[0].props).toMatchObject({ cx: '@x:scaled', cy: '@y:scaled' });
+        // another column on the axis of x without a dim x: its own scale
+        const r = translate({ dims: { y: 'v' }, marks: { type: 'rule', y: 'v', x1: 'lo', x2: 'hi' } });
+        expect(r.mapping.lo.scale).toBeUndefined();
+        expect(r.mapping.hi.scale).toBeUndefined();
+        expect(translate({ dims: { x: 'year', y: 'v' }, marks: { type: 'rule', y: 'v', x1: 'lo' } }).mapping.lo.scale).toEqual({ of: 'x' });
+    });
+    test('the implicit dims of the channels, their paths and columns', () => {
+        expect(implicitDims({ dims: { x: 'year', y: 'value' }, marks: [{ type: 'line' }, { type: 'point', x: 'yaer', y: 'y' }] }))
+            .toEqual([{ path: 'marks[1].x', column: 'yaer' }]);
+        expect(implicitDims({ marks: { type: 'point', x: 'year', y: 'value' } }))
+            .toEqual([{ path: 'marks[0].x', column: 'year' }, { path: 'marks[0].y', column: 'value' }]);
+    });
+    test('a fill of a categorical dim is in the default hover, as a by', () => {
+        const t = translate({ dims: { x: 'a', y: 'b', land: { column: 'land', categories: { W: 'red', T: 'blue' } } }, marks: { type: 'point', fill: 'land' } });
+        expect(t.plot[0].by).toEqual(['land']);
+        expect(t.mapping.land.hover).toEqual({});
+    });
+    test('lon and lat of expressions and references are the ones of the props', () => {
+        const t = translate({ coord: 'geo', geo: { data: 'x.json' }, dims: { lng: 'lng', lt: 'lat' }, marks: { type: 'point', lon: '=@lng + 1', lat: 'lt' } });
+        expect(t.plot[0].props).toMatchObject({ lon: { '+': ['@lng', 1] }, lat: '@lt' });
+        expect(translate({ coord: 'geo', marks: { type: 'point', lon: '@lng', lat: '@lat' } }).plot[0].props).toMatchObject({ lon: '@lng', lat: '@lat' });
+    });
+});
+
+test('a control of 5.0 sets its global, `ref` is no key of it (review of 5.0)', () => {
+    expect(translate({ controls: [{ type: 'radio', global: 'a', values: ['x'] }] }).formElements[0]).toMatchObject({ ref: 'a', id: 'a' });
+    expect(translate({ controls: [{ type: 'radio', ref: 'a', values: ['x'] }] }).formElements[0].ref).toBeUndefined();
 });

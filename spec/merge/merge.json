@@ -558,6 +558,9 @@
     "name": "a match of a global without a default is a switch over the value below it, of the string syntax or an operator object",
     "parts": [
       {
+        "globals": {
+          "values": "abs"
+        },
         "dims": {
           "y": {
             "column": "value",
@@ -582,6 +585,9 @@
       }
     ],
     "result": {
+      "globals": {
+        "values": "abs"
+      },
       "dims": {
         "y": {
           "column": {
@@ -610,6 +616,9 @@
     "name": "a match without a default over no value stays without one (no value unless a case holds)",
     "parts": [
       {
+        "globals": {
+          "values": "abs"
+        },
         "dims": {
           "y": {}
         }
@@ -623,6 +632,9 @@
       }
     ],
     "result": {
+      "globals": {
+        "values": "abs"
+      },
       "dims": {
         "y": {
           "column": "=match(@values, {share: 'value.share'})"
@@ -634,6 +646,9 @@
     "name": "two matches of the same global merge their cases, the later ones win, the default of the later one, else of the earlier one",
     "parts": [
       {
+        "globals": {
+          "kind": "a"
+        },
         "title": "=match(@kind, {a: 'A', b: 'B'}, 'none')"
       },
       {
@@ -647,6 +662,9 @@
       }
     ],
     "result": {
+      "globals": {
+        "kind": "a"
+      },
       "title": {
         "match": [
           "@kind",
@@ -674,6 +692,9 @@
     "name": "a value merged onto a match of a global becomes its default, with or without one: the switch applies after the merge as a patch of 4.x",
     "parts": [
       {
+        "globals": {
+          "values": "abs"
+        },
         "dims": {
           "y": {
             "column": "=match(@values, {share: 'value.share'})",
@@ -691,6 +712,9 @@
       }
     ],
     "result": {
+      "globals": {
+        "values": "abs"
+      },
       "dims": {
         "y": {
           "column": {
@@ -719,6 +743,10 @@
     "name": "a match with a default and null replace, a match of another global without a default falls through to the switch below it",
     "parts": [
       {
+        "globals": {
+          "values": "abs",
+          "other": "y"
+        },
         "dims": {
           "y": {
             "column": "=match(@values, {share: 'value.share'})",
@@ -738,6 +766,10 @@
       }
     ],
     "result": {
+      "globals": {
+        "values": "abs",
+        "other": "y"
+      },
       "dims": {
         "y": {
           "column": {
@@ -774,6 +806,9 @@
     "name": "the attributes of marks and annotations are expressions of the rows, their matches are no switches",
     "parts": [
       {
+        "globals": {
+          "c": "x"
+        },
         "marks": [
           {
             "id": "a",
@@ -803,6 +838,9 @@
       }
     ],
     "result": {
+      "globals": {
+        "c": "x"
+      },
       "marks": [
         {
           "id": "a",
@@ -821,6 +859,9 @@
     "name": "a part as a whole, e.g. the marks of a global, over the marks of a parent",
     "parts": [
       {
+        "globals": {
+          "kind": "lines"
+        },
         "marks": [
           {
             "type": "line"
@@ -832,6 +873,9 @@
       }
     ],
     "result": {
+      "globals": {
+        "kind": "lines"
+      },
       "marks": {
         "match": [
           "@kind",
@@ -859,6 +903,10 @@
     "name": "switches of two mixins of different globals nest, a value of a child is the default of the innermost one, so both switches stay",
     "parts": [
       {
+        "globals": {
+          "values": "abs",
+          "unit": "twh"
+        },
         "dims": {
           "y": {
             "column": "=match(@values, {share: 'value.share'})"
@@ -881,6 +929,10 @@
       }
     ],
     "result": {
+      "globals": {
+        "values": "abs",
+        "unit": "twh"
+      },
       "dims": {
         "y": {
           "column": {
@@ -908,6 +960,9 @@
     "name": "a switch over an object: the object is its default as a literal (it is not evaluated as an expression), a switch below as its object",
     "parts": [
       {
+        "globals": {
+          "values": "abs"
+        },
         "dims": {
           "y": {
             "axis": {
@@ -925,6 +980,9 @@
       }
     ],
     "result": {
+      "globals": {
+        "values": "abs"
+      },
       "dims": {
         "y": {
           "axis": {
@@ -946,6 +1004,507 @@
           }
         }
       }
+    }
+  },
+  {
+    "name": "an object merged onto a switch is merged into its default if that is an object, the cases stay whole values; without a default the object is its default",
+    "parts": [
+      {
+        "globals": {
+          "s": "lin"
+        },
+        "dims": {
+          "y": {
+            "column": "v",
+            "scale": {
+              "type": "linear"
+            }
+          }
+        }
+      },
+      {
+        "dims": {
+          "y": {
+            "scale": "=match(@s, {log: literal({type: 'log'})})"
+          },
+          "x": {
+            "axis": {
+              "match": [
+                "@s",
+                {
+                  "log": {
+                    "literal": {
+                      "ticks": 3
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "dims": {
+          "y": {
+            "scale": {
+              "nice": true
+            }
+          },
+          "x": {
+            "axis": {
+              "grid": true
+            }
+          }
+        }
+      }
+    ],
+    "result": {
+      "globals": {
+        "s": "lin"
+      },
+      "dims": {
+        "y": {
+          "column": "v",
+          "scale": {
+            "match": [
+              "@s",
+              {
+                "log": {
+                  "literal": {
+                    "type": "log"
+                  }
+                }
+              },
+              {
+                "literal": {
+                  "type": "linear",
+                  "nice": true
+                }
+              }
+            ]
+          }
+        },
+        "x": {
+          "axis": {
+            "match": [
+              "@s",
+              {
+                "log": {
+                  "literal": {
+                    "ticks": 3
+                  }
+                }
+              },
+              {
+                "literal": {
+                  "grid": true
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "only a match of a global is a switch: of a name of the globals or of the global of a control of any part, also as @globals.name or a field @name:field",
+    "parts": [
+      {
+        "controls": [
+          {
+            "type": "radio",
+            "global": "lang",
+            "values": [
+              "de",
+              "en"
+            ]
+          }
+        ],
+        "title": "Bevölkerung",
+        "subtitle": "Wien",
+        "source": "Statistik"
+      },
+      {
+        "globals": {
+          "year": "2024"
+        },
+        "title": "=match(@lang, {en: 'Population'})",
+        "subtitle": "=match(@globals.year, {'2025': 'Wien 2025'})",
+        "source": "=match(@year:name, {'2025': 'neu'})"
+      }
+    ],
+    "result": {
+      "controls": [
+        {
+          "type": "radio",
+          "global": "lang",
+          "values": [
+            "de",
+            "en"
+          ]
+        }
+      ],
+      "globals": {
+        "year": "2024"
+      },
+      "title": {
+        "match": [
+          "@lang",
+          {
+            "en": "Population"
+          },
+          "Bevölkerung"
+        ]
+      },
+      "subtitle": {
+        "match": [
+          "@globals.year",
+          {
+            "2025": "Wien 2025"
+          },
+          "Wien"
+        ]
+      },
+      "source": {
+        "match": [
+          "@year:name",
+          {
+            "2025": "neu"
+          },
+          "Statistik"
+        ]
+      }
+    }
+  },
+  {
+    "name": "a match of a name which is no global is a value, e.g. of the categories in the props of a legend or of the rows in stacked: it replaces and is replaced",
+    "parts": [
+      {
+        "globals": {
+          "kind": "a"
+        },
+        "title": "Wien",
+        "dims": {
+          "land": {
+            "legend": {
+              "props": {
+                "fill": "=match(@land, {W: 'red'})",
+                "opacity": {
+                  "match": [
+                    "@land",
+                    {
+                      "W": 1
+                    },
+                    0.5
+                  ]
+                }
+              }
+            }
+          },
+          "y": {
+            "stacked": {
+              "match": [
+                "@type",
+                {
+                  "a": true
+                },
+                false
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "=match(@lang, {en: 'Vienna'})",
+        "dims": {
+          "land": {
+            "legend": {
+              "props": {
+                "fill": "blue",
+                "opacity": {
+                  "min": [
+                    1,
+                    0.8
+                  ]
+                }
+              }
+            }
+          },
+          "y": {
+            "stacked": {
+              "==": [
+                "@type",
+                "a"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "result": {
+      "globals": {
+        "kind": "a"
+      },
+      "title": "=match(@lang, {en: 'Vienna'})",
+      "dims": {
+        "land": {
+          "legend": {
+            "props": {
+              "fill": "blue",
+              "opacity": {
+                "min": [
+                  1,
+                  0.8
+                ]
+              }
+            }
+          }
+        },
+        "y": {
+          "stacked": {
+            "==": [
+              "@type",
+              "a"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "a value below a switch which is an expression is its default as an expression, not as a literal, e.g. a match of the categories or a text of the string syntax",
+    "parts": [
+      {
+        "globals": {
+          "mode": "a"
+        },
+        "dims": {
+          "land": {
+            "legend": {
+              "props": {
+                "fill": {
+                  "match": [
+                    "@land",
+                    {
+                      "W": "red"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "title": "=cat('Wien ', @year)"
+      },
+      {
+        "dims": {
+          "land": {
+            "legend": {
+              "props": {
+                "fill": "=match(@mode, {b: 'gray'})"
+              }
+            }
+          }
+        },
+        "title": "=match(@mode, {b: 'B'})"
+      }
+    ],
+    "result": {
+      "globals": {
+        "mode": "a"
+      },
+      "dims": {
+        "land": {
+          "legend": {
+            "props": {
+              "fill": {
+                "match": [
+                  "@mode",
+                  {
+                    "b": "gray"
+                  },
+                  {
+                    "match": [
+                      "@land",
+                      {
+                        "W": "red"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "title": {
+        "match": [
+          "@mode",
+          {
+            "b": "B"
+          },
+          {
+            "cat": [
+              "Wien ",
+              "@year"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "lists are merged by the first key which all entries of both have: a control of a parent with an id and a child with only its global",
+    "parts": [
+      {
+        "controls": [
+          {
+            "id": "c1",
+            "type": "radio",
+            "global": "a",
+            "values": [
+              {
+                "value": "x"
+              },
+              {
+                "value": "y"
+              }
+            ]
+          },
+          {
+            "id": "c2",
+            "type": "radio",
+            "global": "b",
+            "values": [
+              "p"
+            ]
+          }
+        ]
+      },
+      {
+        "controls": [
+          {
+            "global": "a",
+            "name": "Neu"
+          },
+          {
+            "global": "c",
+            "type": "select",
+            "values": [
+              "q"
+            ]
+          }
+        ]
+      }
+    ],
+    "result": {
+      "controls": [
+        {
+          "id": "c1",
+          "type": "radio",
+          "global": "a",
+          "values": [
+            {
+              "value": "x"
+            },
+            {
+              "value": "y"
+            }
+          ],
+          "name": "Neu"
+        },
+        {
+          "id": "c2",
+          "type": "radio",
+          "global": "b",
+          "values": [
+            "p"
+          ]
+        },
+        {
+          "global": "c",
+          "type": "select",
+          "values": [
+            "q"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "the values of a control and the entries of another part are entries: merged by the value, values of both parts replace",
+    "parts": [
+      {
+        "controls": [
+          {
+            "type": "radio",
+            "global": "a",
+            "values": [
+              "x",
+              "y"
+            ]
+          },
+          {
+            "type": "select",
+            "global": "year",
+            "values": [
+              "2023",
+              "2024"
+            ]
+          }
+        ]
+      },
+      {
+        "controls": [
+          {
+            "global": "a",
+            "values": [
+              {
+                "value": "x",
+                "name": "X!"
+              },
+              {
+                "value": "z"
+              }
+            ]
+          },
+          {
+            "global": "year",
+            "values": [
+              "2024",
+              "2025"
+            ]
+          }
+        ]
+      }
+    ],
+    "result": {
+      "controls": [
+        {
+          "type": "radio",
+          "global": "a",
+          "values": [
+            {
+              "value": "x",
+              "name": "X!"
+            },
+            {
+              "value": "y"
+            },
+            {
+              "value": "z"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "global": "year",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        }
+      ]
     }
   }
 ]

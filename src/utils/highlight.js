@@ -1,4 +1,4 @@
-export { highlighter, highlightStyle, highlightVars, varNames };
+export { highlighter, highlightStyle, highlightVars };
 
 import { itemOf } from '@/utils/dom';
 import { rowOf } from '@/utils/draw';

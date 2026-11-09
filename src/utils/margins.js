@@ -1,4 +1,4 @@
-export { autoMargins, labelFontSize, titleFontSize };
+export { autoMargins };
 
 import { tickCount, tickValues, tickFormat, labelProps } from '@/coords/ticks';
 import { textWidth } from '@/utils/measure';

@@ -1,4 +1,4 @@
-export { normalize, scaleTypeOf, defaultScaleType, categoryKeys, hasCategories, facetMappings, rowHeadersOf };
+export { normalize, scaleTypeOf, defaultScaleType, categoryKeys, hasCategories, isCategorical, facetMappings, rowHeadersOf };
 
 import { isObject } from '@/utils/values';
 import { isOperator, refNames } from '@/utils/expr';
@@ -30,11 +30,9 @@ import { isOperator, refNames } from '@/utils/expr';
  *   short name and of a full one alike (`line` is `cartesian:line`), null
  *   removes a default
  *
- * The patches of the entries of form elements are parts, they are only
- * normalized, without the defaults, except the plots of a type, of the
- * coordinate system of the patch, and the positions of the mappings of the
- * definition in another coordinate system of a patch. `plotTypes` are the
- * plot types by name, see plots/index.js.
+ * `plotTypes` are the plot types by name, see plots/index.js. (The
+ * patches of the form elements of 4.x are no part of it: a definition of
+ * 4.x is migrated before, its patches are expressions of the globals.)
  */
 
 // the parts of the categories of a mapping, a mapping with any of them has
@@ -55,6 +53,18 @@ const axisPositions = { horizontal: 'bottom', vertical: 'left', angular: 'angula
 
 const categoricalScales = ['band', 'point', 'ordinal'];
 const dateScales = ['time', 'utc'];
+
+// a mapping (or a dim of 5.0) of categories by its parts: categories (see
+// hasCategories) or a band, point or ordinal scale
+const ofCategories = m => hasCategories(m) || (isObject(m.scale) && categoricalScales.includes(m.scale.type));
+
+/**
+ * Whether a mapping (or a dim of 5.0) is categorical before the types of
+ * the rows are known: of its type, without one of its parts (see
+ * ofCategories), e.g. the center of the band of its position, the color of
+ * its categories of a fill (see utils/language.js), of the migration.
+ */
+const isCategorical = m => isObject(m) && (m.type == 'categorical' || (m.type === undefined && ofCategories(m)));
 
 // the plot types of bars, a categorical scale of their position is a band scale
 const barTypes = ['cartesian:bar', 'polar:arc'];
@@ -118,11 +128,9 @@ const defaultScaleType = (m, name, plots = []) => scaleTypeOf(m, name, plots) ??
 
 // the type of a mapping of its parts, see normalize, undefined if they do not tell
 const typeOf = (m, name, used) => {
-    if (hasCategories(m))
+    if (ofCategories(m))
         return 'categorical';
     const type = isObject(m.scale) ? m.scale.type : undefined;
-    if (categoricalScales.includes(type))
-        return 'categorical';
     if (dateScales.includes(type))
         return 'date';
     if (typeof type == 'string')
@@ -130,9 +138,8 @@ const typeOf = (m, name, used) => {
     return used.has(name) ? 'categorical' : undefined;
 };
 
-// the normalized mapping, `own` if it is one of the definition, not
-// of a patch, `orientation` the one of its name in the coordinate system
-const normalizeMapping = (raw, orientation, own) => {
+// the normalized mapping, `orientation` the one of its name in the coordinate system
+const normalizeMapping = (raw, orientation) => {
     if (!isObject(raw) && typeof raw != 'string')
         return raw;
     const m = typeof raw == 'string' ? { column: raw } : { ...raw };
@@ -142,7 +149,7 @@ const normalizeMapping = (raw, orientation, own) => {
             m.scale = { ...(isObject(m.scale) ? m.scale : {}), ...Object.fromEntries(scaled.map(k => [k, m[k]])) };
         scaled.forEach(k => delete m[k]);
     }
-    if (own && orientation) {
+    if (orientation) {
         if (m.scale === undefined)
             m.scale = {};
         if (isObject(m.scale) && m.scale.of === undefined) {
@@ -182,15 +189,15 @@ const normalizePlot = (raw, coord, plotTypes) => {
 const normalizePlots = (plot, coord, plotTypes) => Array.isArray(plot) ? plot.map(p => normalizePlot(p, coord, plotTypes))
     : normalizePlot(plot, coord, plotTypes);
 
-// the normalized mappings, `own` of the definition, `coord` its
-// coordinate system, `used` the names of the mappings of categories
-const normalizeMappings = (mapping, coord, own, plots = [], used = new Set()) => {
+// the normalized mappings, `coord` the coordinate system of the
+// definition, `used` the names of the mappings of categories
+const normalizeMappings = (mapping, coord, plots = [], used = new Set()) => {
     if (!isObject(mapping))
         return mapping;
     const names = positions[coord] ?? {};
     return Object.fromEntries(Object.entries(mapping).map(([n, raw]) => {
-        const m = normalizeMapping(raw, Object.hasOwn(names, n) ? names[n] : undefined, own);
-        if (own && isObject(m)) {
+        const m = normalizeMapping(raw, Object.hasOwn(names, n) ? names[n] : undefined);
+        if (isObject(m)) {
             m.type ??= typeOf(m, n, used);
             if (m.type === undefined)
                 delete m.type;
@@ -246,36 +253,8 @@ const normalize = (raw, { plotTypes = {} } = {}) => {
     const coord = def.options?.coord ?? 'cartesian';
     if (def.plot !== undefined)
         def.plot = normalizePlots(def.plot, coord, plotTypes);
-    const ownNames = new Set(Object.keys(isObject(def.mapping) ? def.mapping : {}));
-    const patches = (Array.isArray(def.formElements) ? def.formElements : []).flatMap(e => Array.isArray(e?.values) ? e.values : []).filter(v => isObject(v?.patch));
     const used = categoryNames(def);
     if (def.mapping !== undefined)
-        def.mapping = normalizeMappings(def.mapping, coord, true, def.plot, used);
-    patches.forEach(v => {
-        const patch = v.patch;
-        const own = patch.options?.coord ?? coord;
-        if (patch.plot !== undefined)
-            patch.plot = normalizePlots(patch.plot, own, plotTypes);
-        if (patch.mapping !== undefined)
-            patch.mapping = normalizeMappings(patch.mapping, own, false);
-        // the positions of the mappings of the definition in another coordinate system
-        const names = positions[own] ?? {};
-        if (own != coord && isObject(def.mapping) && (patch.mapping === undefined || isObject(patch.mapping))) {
-            [...ownNames].filter(n => Object.hasOwn(names, n) && isObject(def.mapping[n]?.scale) && def.mapping[n].scale.of === undefined
-                && raw.mapping?.[n]?.scale?.orientation === undefined).forEach(n => {
-                const m = patch.mapping?.[n];
-                if (m === null)
-                    return;
-                patch.mapping ??= {};
-                // false and null of the patch stay, no scale or no axis, a
-                // mapping without a scale has no axis of the definition
-                const removed = v => v === false || v === null;
-                const scale = removed(m?.scale) ? m.scale : { orientation: names[n], ...(isObject(m?.scale) ? m.scale : {}) };
-                const axis = removed(m?.axis) ? { axis: m.axis }
-                    : (isObject(def.mapping[n].axis) ? { axis: isObject(scale) ? { position: axisPositions[scale.orientation], ...m?.axis } : false } : {});
-                patch.mapping[n] = { ...(isObject(m) ? m : {}), scale, ...axis };
-            });
-        }
-    });
+        def.mapping = normalizeMappings(def.mapping, coord, def.plot, used);
     return def;
 };

@@ -13,7 +13,7 @@ See [definition.md](definition.md#definition).
 | Key | Type | Default | |
 |-----|------|---------|-|
 | `$schema` | string |  | The version of the definition language, the schema of gen-vis 5 (https://unpkg.com/@preschen/gen-vis@5/schema.json, also of jsdelivr, a full version, e.g. @5.0.0, or node_modules/@preschen/gen-vis/schema.json of the installed package), a definition file needs it, in itself or in a parent; a definition of gen-vis 4 is migrated when it is loaded, 'gen-vis migrate' writes it as one of gen-vis 5. |
-| `parent` | string \| list of string |  | Url of the definition this one is deep merged into, relative to this definition, or a list of them (mixins) merged in their order, later ones override earlier ones. Lists are replaced, lists of entries with ids (marks, controls and their entries) are merged by them. |
+| `parent` | string \| list of string |  | Url of the definition this one is deep merged into, relative to this definition, or a list of them (mixins) merged in their order, later ones override earlier ones. Lists are replaced, lists of entries with ids (marks, controls and their entries) are merged by them. A match of a global (of globals or of a control) without a default is a switch over the value of the other parts. |
 | `data` | string |  | Url of the data, relative to the definition, CSV, TSV, JSON or parquet, by the extension or dataFormat. |
 | `dataFormat` | `"csv"`, `"tsv"`, `"json"`, `"parquet"` |  | The format of the data, by default the one of the extension of its url, without one parquet, CSV or JSON by the content. |
 | `transform` | transform \| list of transform |  | Columns computed of the data, e.g. an index of a base year, in their order, see https://github.com/petres/gen-vis/blob/main/docs/definition.md#transform. |
@@ -172,8 +172,8 @@ See [definition.md](definition.md#marks).
 | `y0` | dim, number or expression |  | The start of a bar or an area (a dim, a number on the scale of y), 0 by default. |
 | `y1` | dim, number or expression |  | The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start (its other end is y2). |
 | `y2` | dim, number or expression |  | The other end of a rule, e.g. "hi" of an error bar. |
-| `lon` | dim, number or expression |  | Of a map: the dim of the longitude of a point or a text. |
-| `lat` | dim, number or expression |  | Of a map: the dim of the latitude. |
+| `lon` | dim, number or expression |  | Of a map: the dim of the longitude of a point or a text, or an expression of the row. |
+| `lat` | dim, number or expression |  | Of a map: the dim of the latitude, or an expression of the row. |
 | `stack` | boolean \| expression \| condition |  | Stacks the values of the mark (bars, areas, arcs) by the groups of `by`, true all rows or the condition of the rows which are stacked, the others have their own value as start and end. |
 | `dodge` | boolean \| string \| number |  | Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position; texts: the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines. |
 | `orient` | `"horizontal"`, `"vertical"` |  | Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y. |
@@ -283,7 +283,7 @@ See [definition.md](definition.md#globals-and-controls).
 | `type` | `"radio"`, `"select"`, `"slider"`, `"hidden"` |  | Radio buttons, a drop down list, a slider over the entries or hidden, the global is set by the page (the prop globals). |
 | `global` | string |  | The global the control sets, the parts of the definition refer to it in expressions, e.g. "=match(@scale, {log: 'log'}, 'linear')". |
 | `name` | string \| text |  | The label of the control. |
-| `id` | string |  | The id of the control, the global by default; the controls of a parent and its children are merged by it, so a child may give only the id and the ids of the entries it changes. |
+| `id` | string |  | The id of the control, the global by default; the controls of a parent and its children are merged by it (by the global if one of them has no id), so a child may give only the id and the ids (or values) of the entries it changes. |
 | `inImage` | boolean | `true` | The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales. |
 | `values` | list of [controlValue](#controlValue) \| string \| number \| object |  |  |
 

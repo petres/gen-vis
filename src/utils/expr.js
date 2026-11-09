@@ -1,4 +1,4 @@
-export { compile, evaluate, bind, constant, refNames, refOf, formatter, operators, isOperator };
+export { compile, evaluate, bind, constant, refNames, refOf, formatter, operators, isOperator, isMatch };
 
 import { isObject, missing, sameValue, toNumber } from '@/utils/values';
 
@@ -56,13 +56,16 @@ const order = (a, b) => {
 // not a case "null"
 const caseOf = (cases, v) => missing(v) ? undefined : cases.get(String(v));
 
-// a chain of comparisons, e.g. { "<": [0, "@x", 10] } of a value between two
-const ordered = test => values => {
+// a chain of comparisons, every pair of neighbours, e.g. { "<": [0, "@x",
+// 10] } of a value between two or { "==": ["@a", "@b", "@c"] } of three
+// same values
+const chain = test => values => {
     for (let i = 1; i < values.length; i++)
-        if (!test(order(values[i - 1], values[i])))
+        if (!test(values[i - 1], values[i]))
             return false;
     return values.length > 1;
 };
+const ordered = test => chain((a, b) => test(order(a, b)));
 
 const sum = n => n.reduce((a, b) => a + b, 0);
 
@@ -78,8 +81,8 @@ const strict = {
     'max': v => numbers(v, n => n.length ? Math.max(...n) : NaN),
     // halves are rounded up, as Math.round, e.g. of -2.5 -2, with `digits`
     'round': v => numbers(v, ([x, digits = 0]) => Math.round(x*10**digits)/10**digits),
-    '==': ([a, b]) => sameValue(a, b),
-    '!=': ([a, b]) => !sameValue(a, b),
+    '==': chain(sameValue),
+    '!=': chain((a, b) => !sameValue(a, b)),
     '<': ordered(d => d < 0),
     '<=': ordered(d => d <= 0),
     '>': ordered(d => d > 0),
@@ -104,6 +107,11 @@ const isOperator = raw => {
     }
     return name !== undefined && known.has(name);
 };
+
+// a `match` object, e.g. { "match": ["@values", { "share": ".0%" }] }: of
+// the merge a leaf (a switch of a global or a value), see leafMerge of
+// utils/def.js, and resolved as the text of one, see utils/resolve.js
+const isMatch = raw => isObject(raw) && Object.keys(raw).length == 1 && Array.isArray(raw.match);
 
 // the arguments of an operator, a single one is a list of it
 const argsOf = a => Array.isArray(a) ? a : [a];

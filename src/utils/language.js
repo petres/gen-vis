@@ -1,8 +1,9 @@
-export { translate, checkDims, colorDims, dim as dimOf, compileStrings, isDefinition4, isDefinition5, optionKeys, markKeys, expressionKeys, nameKeys, positionChannels, channelOf, typeOf, authoredPath };
+export { translate, checkDims, colorDims, dim as dimOf, compileStrings, isDefinition4, isDefinition5, optionKeys, markKeys, expressionKeys, nameKeys, typeOf, authoredPath, entryOf, entriesOf, implicitDims };
 
 import { isObject } from '@/utils/values';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
 import { isOperator, refNames } from '@/utils/expr';
+import { categoryKeys, isCategorical } from '@/utils/normalize';
 
 /**
  * The definition language of gen-vis 5 (see docs/definition.md) translated
@@ -71,9 +72,6 @@ const compileStrings = (value, path = '') => {
     return out;
 };
 
-// a part of a definition is one of expressions: of the keys of expressions,
-// the marks and the annotations, and everything in it, see expressionKeys
-const expressionPart = (key, parent) => expressionKeys.has(key) || parent == 'marks' || parent == 'annotations';
 const parsed = (text, path) => {
     try {
         return parseExpression(text);
@@ -88,11 +86,9 @@ const parsed = (text, path) => {
 // a reference to a value of a row of a dim, e.g. "@x:scaled"
 const ref = (dim, kind = 'scaled') => `@${dim}:${kind}`;
 
-// the parts of a dim which make it categorical, see hasCategories of normalize.js
-const categoryParts = ['categories', 'scheme', 'common', 'ranks', 'order'];
-const categoricalScales = ['band', 'point', 'ordinal'];
-const isCategorical = d => isObject(d) && (d.type == 'categorical' || (d.type === undefined && (categoryParts.some(k => d[k] !== undefined)
-    || d.fromData || categoricalScales.includes(d.scale?.type))));
+// the parts of the categories of a dim besides `fromData`, see
+// hasCategories and isCategorical of utils/normalize.js
+const categoryParts = categoryKeys.filter(k => k != 'fromData');
 
 // a dim of the definition as a mapping of the engine
 const dim = (raw, name) => {
@@ -143,21 +139,35 @@ const dim = (raw, name) => {
 };
 
 // the dim of a channel of a mark: a dim by its name, an implicit one of a
-// column (`dims` gets it), a number is a value on the scale of the axis of
-// the channel if `valued` (the base of a bar, the value of a rule), else
-// pixels, an expression of the row as it is (pixels), undefined if the
-// mark has none and the dim of the axis does not exist
-const channelOf = (mark, channel, dims, axis = positionChannels[channel], valued = false) => {
+// column (`dims` gets it, `implicit(channel, column)` is told of it),
+// of the channel of an axis without the dim of the axis the dim of the axis
+// (e.g. "x": "year" without dims is the dim x of the column year), a
+// number is a value on the scale of the axis of the channel if `valued`
+// (the base of a bar, the value of a rule), else pixels, an expression of
+// the row as it is (pixels), undefined if the mark has none and the dim of
+// the axis does not exist
+// the dims of the axes of the columns of channels, see channelOf
+const axisDims = new WeakSet();
+const channelOf = (mark, channel, dims, axis = positionChannels[channel], valued = false, implicit = null) => {
     const v = mark[channel];
     if (v === undefined)
         return axis && Object.hasOwn(dims, axis) ? { dim: axis, value: ref(axis) } : undefined;
     // a reference or an expression as it is, e.g. "@y:group:start"
     if (typeof v == 'string' && !v.startsWith('@')) {
-        if (!Object.hasOwn(dims, v))
-            dims[v] = { column: v };
+        if (!Object.hasOwn(dims, v)) {
+            const name = axis && channel == axis && (!Object.hasOwn(dims, axis) || (axisDims.has(dims[axis]) && dims[axis].column === v)) ? axis : v;
+            if (!Object.hasOwn(dims, name)) {
+                dims[name] = { column: v };
+                if (name == axis)
+                    axisDims.add(dims[name]);
+            }
+            implicit?.(channel, v);
+            if (name != v)
+                return { dim: name, value: ref(name) };
+        }
         // another dim of a position (e.g. "hi" of a rule of y1 and y2) is on
         // the scale of the axis of the channel, its values in its domain
-        if (axis && v != axis && !['x', 'y'].includes(v) && isObject(dims[v]) && dims[v].scale === undefined && !isCategorical(dims[v]))
+        if (axis && v != axis && Object.hasOwn(dims, axis) && !['x', 'y'].includes(v) && isObject(dims[v]) && dims[v].scale === undefined && !isCategorical(dims[v]))
             dims[v].scale = { of: axis };
         return { dim: v, value: ref(v) };
     }
@@ -236,15 +246,19 @@ const anchors = {
  * `stacks` collects the stacked value dims (`{ dim, by, condition }`),
  * `coord` is the coordinate system.
  */
-const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
+const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) => {
     const { p, props } = markParts(raw, i);
+    const implicit = (channel, column) => {
+        if (!implicitDims.some(d => d.path == `marks[${i}].${channel}`))
+            implicitDims.push({ path: `marks[${i}].${channel}`, column });
+    };
     if (typeof p.type != 'string')
         throw new Error(`marks[${i}].type: expected a mark type, e.g. "line" or "bar"${p.type === undefined ? '' : `, not ${JSON.stringify(p.type)}`}`);
     const type = typeOf(p.type, coord);
     p.type = type;
 
     const kind = type.split(':')[1];
-    const ch = (name, axis) => channelOf({ ...p, ...props }, name, dims, axis);
+    const ch = (name, axis) => channelOf({ ...p, ...props }, name, dims, axis, false, implicit);
     // the dims of the positions the mark uses, e.g. of the hover by default
     ['x', 'y', 'x0', 'x1', 'x2', 'y0', 'y1', 'y2'].forEach(n => {
         const c = raw[n] !== undefined || n == 'x' || n == 'y' ? ch(n, n == 'x2' ? 'x' : n == 'y2' ? 'y' : undefined) : undefined;
@@ -254,7 +268,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
     // a channel only if the mark has it, e.g. the start of a bar
     const given = (name, axis) => raw[name] !== undefined ? ch(name, axis) : undefined;
     // a channel of a value: a number is one on the scale, e.g. the base of a bar
-    const valued = (name, axis = positionChannels[name]) => raw[name] !== undefined ? channelOf({ ...p, ...props }, name, dims, axis, true) : undefined;
+    const valued = (name, axis = positionChannels[name]) => raw[name] !== undefined ? channelOf({ ...p, ...props }, name, dims, axis, true, implicit) : undefined;
     const take = (...names) => names.forEach(n => delete props[n]);
     const stack = p.stack;
     delete p.stack;
@@ -282,6 +296,8 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
             if (isCategorical(dims[v])) {
                 if (!p.by.includes(v))
                     p.by.push(v);
+                // a group of the mark, as one of its `by`, e.g. in the hover
+                used.add(v);
                 props[k] = '@color';
             } else
                 props[k] = ref(v);
@@ -488,9 +504,10 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
         const lon = raw.lon !== undefined ? ch('lon', null) : undefined;
         const lat = raw.lat !== undefined ? ch('lat', null) : undefined;
         take('lon', 'lat');
+        // the values of the dims, not scaled (the projection), an expression as it is
         if (lon && lat) {
-            props.lon = `@${lon.dim}`;
-            props.lat = `@${lat.dim}`;
+            props.lon = lon.dim === undefined ? lon.value : `@${lon.dim}`;
+            props.lat = lat.dim === undefined ? lat.value : `@${lat.dim}`;
         }
         if (anchor)
             Object.entries(anchors[anchor] ?? {}).forEach(([k, v]) => props[k] ??= v);
@@ -499,22 +516,35 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
     return p;
 };
 
+/**
+ * An entry of a control: a value (e.g. "2024") is the entry of the value,
+ * an object is the entry itself (the merge of the entries of a parent and
+ * a child, see arrayMerge of utils/def.js). `entriesOf` are the entries of
+ * a list of `values` with their `id` and `name`, the text of the value by
+ * default, as the form elements of the engine have them (e.g. the fields
+ * `@year:name` of the selected entry, see namesOfGlobals of
+ * utils/resolve.js), other values (e.g. the column of the values of the
+ * data) as they are.
+ */
+const entryOf = v => isObject(v) ? v : { value: v };
+const entriesOf = values => Array.isArray(values)
+    ? values.map(entryOf).map(e => ({ ...e, id: e.id ?? String(e.value), name: e.name ?? String(e.value) })) : values;
+
 // the control of 5.0 as a form element of the engine
 const control = (c, i) => {
     if (!isObject(c))
         throw new Error(`controls[${i}]: expected a control, e.g. { "type": "select", "global": "year", "values": [...] }`);
     const { global, values, ...rest } = c;
-    const e = { ...rest, ref: global ?? c.ref };
+    const e = { ...rest, ref: global };
     e.id ??= e.ref;
-    e.values = Array.isArray(values) ? values.map(v => isObject(v) ? { ...v, id: v.id ?? String(v.value), name: v.name ?? String(v.value) }
-        : { id: String(v), name: String(v), value: v }) : values;
+    e.values = entriesOf(values);
     return e;
 };
 
 // the facets of 5.0 as the ones of the engine: `by` is the dim or the
 // dims of the rows and the columns of a grid, `scales` is "own" (the
 // default), "shared" or a list or an object of dims
-const facetsOf = (f, dims) => {
+const facetsOf = f => {
     if (!isObject(f))
         return f;
     const out = { ...f };
@@ -530,10 +560,11 @@ const facetsOf = (f, dims) => {
     }
     if (f.scales == 'own')
         out.scales = [];
-    else if (f.scales == 'shared')
-        out.scales = Object.keys(dims).filter(n => isObject(dims[n]) ? dims[n].scale?.orientation !== null : true);
     return out;
 };
+// the dims of shared scales of the facets ("shared"), of the dims after the
+// marks, which add the dims of the columns of their channels
+const sharedScales = dims => Object.keys(dims).filter(n => isObject(dims[n]) ? dims[n].scale?.orientation !== null : true);
 
 // the attribute of the color of the category of the group of a mark type
 // by default, see plots/defaults.js
@@ -572,8 +603,19 @@ const colorDims = (dims, rawMarks, coord = 'cartesian') => {
  * globals resolved, see utils/resolve.js) as the engine reads it. Unknown
  * top-level keys are kept (e.g. for validateDef).
  */
-const translate = raw => {
+const translate = raw => translated(raw).def;
+
+/**
+ * The implicit dims of the channels of the marks of a definition (as
+ * translate reads it, merged and resolved): the channels which name no dim,
+ * a dim of their column, `{ path, column }`, e.g. `{ "path": "marks[0].x",
+ * "column": "yaer" }`, see missingColumns of utils/load.js.
+ */
+const implicitDims = raw => translated(raw).implicit;
+
+const translated = raw => {
     const def = compileStrings(clone(raw));
+    const implicit = [];
     const out = {};
     ['$schema', 'parent', 'data', 'dataFormat', 'transform', 'globals', 'geo', 'annotations'].forEach(k => {
         if (def[k] !== undefined)
@@ -609,7 +651,7 @@ const translate = raw => {
 
     // the dims of the facets have the categories of the data (the `by` of a
     // mark groups rows of any type, e.g. of a year, it makes no categories)
-    const facets = facetsOf(def.facets, dims);
+    const facets = facetsOf(def.facets);
     const rawMarks = def.marks === undefined ? [] : [def.marks].flat();
     // the dims of the hover by default: the ones the marks use, their `by`
     // and the dims of their positions (the facets are the titles of their panels)
@@ -633,7 +675,9 @@ const translate = raw => {
             delete d.fromData;
     });
     const stacks = [];
-    const marks = rawMarks.map((m, i) => mark(m, i, dims, coord, stacks, used));
+    const marks = rawMarks.map((m, i) => mark(m, i, dims, coord, stacks, used, implicit));
+    if (isObject(facets) && def.facets.scales == 'shared')
+        facets.scales = sharedScales(dims);
     used.forEach(n => {
         if (!grouped.includes(n) && Object.hasOwn(dims, n) && isObject(dims[n]) && !facetDims.includes(n))
             grouped.push(n);
@@ -661,7 +705,7 @@ const translate = raw => {
     // the other keys, e.g. of extensions, as they are
     Object.keys(def).filter(k => !out[k] && !optionKeys.includes(k) && !['dims', 'marks', 'controls', 'filter', 'facets'].includes(k) && out[k] === undefined)
         .forEach(k => out[k] = def[k]);
-    return out;
+    return { def: out, implicit };
 };
 
 /**

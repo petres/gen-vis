@@ -136,7 +136,37 @@ them.
   the value of a parent or a child becomes its default, two matches of the
   same global merge their cases (see spec/merge.md). A mixin which switches
   a value writes its cases once, the children write only their own values
-  and cases.
+  and cases. Only a match of a global (of `globals` or of a control of any
+  part) is a switch, a match of the rows or the categories (e.g. in the
+  `props` of a legend or in `stacked`) is a value; an object of a child
+  onto a switch whose default is an object is merged into the default (the
+  alpha mixed it into the match object), the cases stay whole; the
+  expressions of the globals in a part chosen by a switch are evaluated.
+- Lists are merged by the first of `id`, `global` and `value` which all
+  entries of both lists have (a child's control of only the `global`
+  replaced the parent's control with an `id`); the `values` of a control
+  are entries when the other part has objects (a child's entry of a value
+  dropped the parent's other plain values). An entry of an object without
+  a `name` has the text of its value as `@global:name`, as a value has.
+- A channel of `x` or `y` which names a column without a dim `x` or `y` is
+  the dim of the axis (`{"type": "point", "x": "year", "y": "value"}`
+  draws without dims; the alpha drew no positions), another column on an
+  axis without its dim has a scale of its own (was `{"of": "x"}` of a
+  missing `x`); a channel of neither a dim nor a column of the data is a
+  warning of the load (`marks[0].x: no dim and no column 'yaer' in the
+  data, the dims are ..., the columns ...`).
+- `"scales": "shared"` of the facets shares the dims of the columns of
+  channels too; a categorical dim of a `fill` or `stroke` is in the
+  default hover, as a `by`; `lon` and `lat` of expressions are the ones of
+  the props (were `"@undefined"`).
+- A text (title, subtitle, source, names, axis titles, ...) of an
+  expression of names which are not all globals is evaluated when it is
+  drawn, with the globals of the page and `totalWidth`; an unknown name has
+  no value and a warning once, no value is the empty text (the alpha showed
+  the expression as JSON).
+- A comparison of more than two operands is a chain of every pair of
+  neighbours, also `==` and `!=`: `@a == @b == @c` is true if all three
+  are the same (the alpha compared the first two).
 
 ### Margins
 

@@ -6,8 +6,8 @@ export { deepMerge, mergeAll };
 // shared with the result; `arrayMerge(target, source, options)` merges two
 // lists (by default the source replaces the target), `customMerge(key)`
 // returns the merge of the values of a key, e.g. of the mappings, or
-// undefined for the default; `leafMerge(target, source)` merges two values
-// of which one is no object or list (or the source is an operator, see
+// undefined for the default; `leafMerge(target, source, options)` merges
+// two values of which one is no object or list or an operator (see
 // def.js), e.g. a switch of a global over the value below it, undefined for
 // the default (the source replaces the target)
 
@@ -16,7 +16,8 @@ const clone = v => Array.isArray(v) ? v.map(clone) : isPlain(v) ? Object.fromEnt
 const mergeable = v => Array.isArray(v) || isPlain(v);
 
 const deepMerge = (target, source, options = {}) => {
-    // `isOperator(value)`: an object which is an expression, e.g. { "match": [...] }, a leaf of leafMerge
+    // `isOperator(value)`: an object which is an expression, e.g. { "match": [...] }, a leaf of the merge
+    // (of leafMerge), on either side: it is not merged key by key with an object
     const { arrayMerge = (t, s) => clone(s), customMerge, leafMerge, isOperator = () => false } = options;
     if (Array.isArray(target) && Array.isArray(source))
         return arrayMerge(target, source, options);
@@ -26,9 +27,9 @@ const deepMerge = (target, source, options = {}) => {
     const result = {};
     const merged = k => {
         const merge = customMerge?.(k) ?? deepMerge;
-        if (Object.hasOwn(target, k) && mergeable(target[k]) && mergeable(source[k]) && !(leafMerge && isOperator(source[k])))
+        if (Object.hasOwn(target, k) && mergeable(target[k]) && mergeable(source[k]) && !isOperator(source[k]) && !isOperator(target[k]))
             return merge(target[k], source[k], options);
-        const leaf = leafMerge?.(Object.hasOwn(target, k) ? target[k] : undefined, source[k]);
+        const leaf = leafMerge?.(Object.hasOwn(target, k) ? target[k] : undefined, source[k], options);
         return leaf === undefined ? clone(source[k]) : leaf;
     };
     Object.keys(target).forEach(k => result[k] = Object.hasOwn(source, k) ? merged(k) : clone(target[k]));
