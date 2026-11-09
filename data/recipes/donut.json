@@ -1,0 +1,18 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "energy.csv",
+    "title": "Electricity mix of {country}, 2025",
+    "source": "Illustrative data",
+    "locale": "en",
+    "coord": "polar",
+    "height": 320,
+    "globals": {"country": "Austria"},
+    "controls": [{"type": "select", "global": "country", "name": "Country", "values": {"column": "country"}}],
+    "filter": "@country == @globals.country and @year == 2025",
+    "dims": {
+        "x": {"column": "twh_share", "format": ".0%", "axis": false},
+        "source": {"column": "source", "legend": {}, "categories": {
+            "Coal": "#5B5B5B", "Gas": "#B07AA1", "Nuclear": "#F28E2B", "Hydro": "#4E79A7", "Wind": "#76B7B2", "Solar": "#EDC948"}}
+    },
+    "marks": {"type": "arc", "by": "source", "stack": true, "stroke": "white", "innerRadius": "@radius * 0.55"}
+}

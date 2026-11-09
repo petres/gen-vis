@@ -1,0 +1,22 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "scatter.csv",
+    "title": "Income level and growth, 2025",
+    "subtitle": "circle area: population",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 360,
+    "dims": {
+        "x": {"column": "gdp_pc", "name": "GDP per capita", "format": ",.0f", "grid": true, "axis": {"title": {"name": "GDP per capita, thousand EUR"}}},
+        "y": {"column": "growth", "name": "Growth", "format": ".1f", "grid": true, "pad": 0.06, "axis": {"title": {"name": "Real GDP growth, %"}}},
+        "pop": {"column": "pop", "name": "Population, m", "format": ",.1f", "zero": true, "hover": {}, "scale": {"type": "sqrt", "range": [0, 24]}},
+        "country": {"column": "country", "fromData": "rows", "hover": {}}
+    },
+    "hover": {"mode": "point"},
+    "annotations": {"type": "line", "y": 0},
+    "marks": [
+        {"type": "point", "by": "country", "r": "pop", "fill": "#4269D0", "fill-opacity": 0.6, "stroke": "white"},
+        {"type": "label", "filter": "@country == 'Germany' or @country == 'Ireland' or @country == 'Poland'",
+         "text": "@country", "anchor": "top", "dy": "=-@pop:scaled - 2", "font-size": 11}
+    ]
+}

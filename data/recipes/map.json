@@ -1,0 +1,20 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "states.csv",
+    "title": "Unemployment rate by state, 2025",
+    "subtitle": "in %",
+    "source": "Illustrative data",
+    "locale": "en",
+    "coord": "geo",
+    "height": 320,
+    "geo": {"data": "../geo/austria.json", "join": "state", "projection": {"type": "conicConformal", "parallels": [46, 49]}},
+    "dims": {
+        "state": "nuts",
+        "rate": {"column": "rate", "name": "Unemployment rate, %", "format": ".1f", "zero": true, "legend": {}, "hover": {},
+                 "scale": {"type": "sequential", "interpolator": "Blues"}}
+    },
+    "marks": [
+        {"type": "region", "by": "state", "fill": "rate", "stroke": "white", "highlight": {"stroke": "#333"}},
+        {"type": "text", "by": "state", "text": "@rate:formatted", "font-size": 11, "halo": true, "fill": "#222"}
+    ]
+}

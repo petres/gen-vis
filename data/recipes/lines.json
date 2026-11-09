@@ -1,0 +1,22 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "gdp.csv",
+    "title": "Real GDP, 2015–2025",
+    "subtitle": "{values:name}",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 320,
+    "globals": {"values": "abs"},
+    "controls": [{"type": "radio", "global": "values", "name": "Values", "inImage": false,
+        "values": [{"value": "abs", "name": "bn EUR"}, {"value": "index", "name": "Index 2015 = 100"}]}],
+    "transform": {"type": "index", "column": "gdp", "as": "index", "by": "country", "base": {"year": 2015}},
+    "dims": {
+        "x": {"column": "year", "format": "c"},
+        "y": {"column": "=match(@values, {index: 'index'}, 'gdp')", "format": ",.0f", "grid": true},
+        "country": "country"
+    },
+    "marks": [
+        {"type": "line", "by": "country", "stroke-width": 2},
+        {"type": "text", "by": "country", "select": "last", "dodge": 12, "dx": 6, "dominant-baseline": "middle", "text": "@name", "font-size": 11}
+    ]
+}
