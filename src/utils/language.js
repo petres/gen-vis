@@ -216,6 +216,9 @@ const typeOf = (type, coord) => {
         return coord == 'polar' ? 'polar:text' : coord == 'geo' ? 'geo:text' : 'svg:text';
     if (type == 'cell')
         return 'svg:rect';
+    // a short rule across the band of a categorical position, see tickOf
+    if (type == 'tick')
+        return 'cartesian:rule';
     if (type == 'text')
         return coord == 'polar' ? 'polar:text' : coord == 'geo' ? 'geo:text' : 'svg:text';
     if (['line', 'area', 'bar', 'rule'].includes(type))
@@ -244,6 +247,18 @@ const dodged = (pos, group) => {
         center: { '+': [start, { '*': [band, slot] }] },
         size: { '/': [band, ref(group, 'count')] },
     };
+};
+
+// the ends of a tick across the band of the categorical position `pos`
+// (`size` of it, 1 by default), of a dodged mark across the slot of the
+// category of `group`: a scale without bands (a point scale, a date of an
+// `interval`) has the band of a bar, 80% of the step, see dodged
+const tickOf = (pos, size = 1, group) => {
+    const band = { if: [ref(pos, 'bandwidth'), ref(pos, 'bandwidth'), { '*': [0.8, ref(pos, 'step')] }] };
+    const center = group !== undefined ? dodged(pos, group).center
+        : { if: [ref(pos, 'bandwidth'), { '+': [ref(pos), { '/': [band, 2] }] }, ref(pos)] };
+    const half = { '*': [size / 2, group !== undefined ? dodged(pos, group).size : band] };
+    return [{ '-': [center, half] }, { '+': [center, half] }];
 };
 
 // the label of a value, `anchor` places the text beside the position:
@@ -451,6 +466,24 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
                     props.x = position;
                     props.width ??= size;
                 }
+            }
+        } else if (kind == 'rule' && raw.type == 'tick') {
+            // a short rule at the value across the band of the category, e.g.
+            // the median of a box plot, a target of a bullet chart; of
+            // horizontal bars (a categorical y) a vertical one across the
+            // band of y
+            const size = typeof props.size == 'number' ? props.size : 1;
+            take('size', 'x2', 'y2');
+            if (horizontalOf(x, y)) {
+                if (x)
+                    props.x = x.value;
+                if (y)
+                    [props.y1, props.y2] = tickOf(y.dim, size, dodgeGroup);
+            } else {
+                if (y)
+                    props.y = y.value;
+                if (x)
+                    [props.x1, props.x2] = tickOf(x.dim, size, dodgeGroup);
             }
         } else if (kind == 'rule') {
             const x2 = end('x2', 'x'), y2 = end('y2', 'y');

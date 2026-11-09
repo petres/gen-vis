@@ -1118,6 +1118,7 @@ the page:
 | `area` | an area per group (`cartesian:area`) | an area per group (`polar:area`) | |
 | `bar` | a bar per row (`cartesian:bar`) | | |
 | `rule` | a line per row across the plot area or between two values (`cartesian:rule`) | | |
+| `tick` | a short line per row at the value across the band of its category (`cartesian:rule`) | | |
 | `point` | a circle per row (`svg:circle`) | `polar:circle` | at its feature or at `lon` and `lat` (`geo:circle`) |
 | `text`, `label` | a text per row (`svg:text`) | `polar:text` | at its feature or at `lon` and `lat` (`geo:text`) |
 | `cell` | a rect per row of the bands of `x` and `y` (`svg:rect`), e.g. a heatmap | | |
@@ -1364,6 +1365,18 @@ A rule with `x` (by default the dim `x`) is vertical, from `y1` to `y2`
 (by default the edges of the plot area), one with only `y` horizontal,
 from `x1` to `x2`; a rule at a category of a band is at the middle of its
 band, as bars and points.
+
+A `tick` is a short rule at the value of `y` across the band of the
+category of `x` (of a categorical `y` and an `x` which is not, as the
+bars, a vertical one at `x` across the band of `y`), `size` is its share
+of the band (1 by default), a dodged one (`dodge`) is across the slot of
+its category; a scale without bands (a point scale, a date of an
+`interval`) has the band of a bar, 80% of its step. E.g. the median of a
+box plot, the target of a bullet chart or a strip plot of ticks:
+
+```json
+{ "marks": [{ "type": "bar", "fill": "#BBD7EE" }, { "type": "tick", "y": "target", "size": 0.5, "stroke": "#333", "stroke-width": 2 }] }
+```
 
 A heatmap, a cell per year and type colored by a scale, with its values:
 

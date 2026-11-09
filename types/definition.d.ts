@@ -1275,7 +1275,7 @@ export interface CategoryProps1 {
  */
 export interface Mark {
     /**
-     * The type of the mark, line, area, bar, rule, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ.
+     * The type of the mark, line, area, bar, rule, tick, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ.
      */
     type?:
         | `=${string}`
@@ -1294,6 +1294,7 @@ export interface Mark {
               | 'region'
               | 'rule'
               | 'text'
+              | 'tick'
           )
         | (
               | 'svg:circle'
@@ -1376,6 +1377,10 @@ export interface Mark {
      * Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position, with `stack` a stack per slot; texts, points and rules (true or a dim): at the middle of the slot of their category, e.g. labels or error bars of dodged bars; texts (a number): the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines.
      */
     dodge?: boolean | string | number;
+    /**
+     * tick: its length, the share of the band of its category (or of the slot of a dodged one), 1 by default, e.g. 0.5 of a target narrower than its bar.
+     */
+    size?: number;
     /**
      * Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y or of a continuous x (e.g. zero) and a y which is not.
      */
@@ -1519,6 +1524,7 @@ export interface Mark {
         | 'region'
         | 'rule'
         | 'text'
+        | 'tick'
         | 'svg:circle'
         | 'svg:line'
         | 'svg:rect'

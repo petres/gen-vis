@@ -1401,9 +1401,10 @@
                                         "rect",
                                         "region",
                                         "rule",
-                                        "text"
+                                        "text",
+                                        "tick"
                                     ],
-                                    "description": "A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap."
+                                    "description": "A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap, tick a short rule at the value across the band of its category (`size`), e.g. the median of a box plot or a target."
                                 },
                                 {
                                     "enum": [
@@ -1460,6 +1461,7 @@
                                 "region",
                                 "rule",
                                 "text",
+                                "tick",
                                 "svg:circle",
                                 "svg:line",
                                 "svg:rect",
@@ -1485,7 +1487,7 @@
                             ]
                         }
                     },
-                    "description": "The type of the mark, line, area, bar, rule, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ."
+                    "description": "The type of the mark, line, area, bar, rule, tick, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ."
                 },
                 "id": {
                     "type": "string",
@@ -1551,6 +1553,11 @@
                 "dodge": {
                     "anyOf": [{ "type": "boolean" }, { "type": "string" }, { "type": "number" }],
                     "description": "Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position, with `stack` a stack per slot; texts, points and rules (true or a dim): at the middle of the slot of their category, e.g. labels or error bars of dodged bars; texts (a number): the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines."
+                },
+                "size": {
+                    "type": "number",
+                    "description": "tick: its length, the share of the band of its category (or of the slot of a dodged one), 1 by default, e.g. 0.5 of a target narrower than its bar.",
+                    "exclusiveMinimum": 0
                 },
                 "orient": {
                     "if": { "type": "string", "pattern": "^=" },

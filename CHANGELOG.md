@@ -97,6 +97,10 @@ builds and dependencies. The design is in `docs/design-5.0.md`.
   the warnings of its check say that their paths are the ones of 5.0). In
   a chain of parents of parts of 4.x and 5.0 every part of 4.x is migrated
   before the merge (with the parts of 4.x before it as its parents).
+- The mark `tick`: a short rule at the value across the band of its
+  category (`size`, the share of the band, 1 by default), vertical across
+  the band of a categorical `y`, across the slot of a dodged one; e.g. the
+  median of a box plot, the target of a bullet chart, a strip plot.
 
 Removed keys: `options`, `mapping`, `plot`, the `props` of a plot,
 `formElements`, `patch` (and the `ref` of a form element), `domainRel`

@@ -20,8 +20,8 @@ const markTypes = ['svg:circle', 'svg:line', 'svg:rect', 'svg:text', 'cartesian:
     'polar:line', 'polar:area', 'polar:arc', 'polar:circle', 'polar:text', 'geo:base', 'geo:region', 'geo:circle', 'geo:text', 'geo:mesh',
     'annotation:band', 'annotation:line', 'annotation:text', 'annotation:circle'];
 // the names of the marks of the definitions, the kinds of the coordinate
-// system of the definition and the ones of 5.0 (point, label, cell), see typeOf of utils/language.js
-const markNames = ['arc', 'area', 'bar', 'base', 'cell', 'circle', 'label', 'line', 'mesh', 'point', 'rect', 'region', 'rule', 'text'];
+// system of the definition and the ones of 5.0 (point, label, cell, tick), see typeOf of utils/language.js
+const markNames = ['arc', 'area', 'bar', 'base', 'cell', 'circle', 'label', 'line', 'mesh', 'point', 'rect', 'region', 'rule', 'text', 'tick'];
 const coordNames = ['cartesian', 'polar', 'geo'];
 const curveNames = ['linear', 'monotoneX', 'natural', 'catmullRom', 'basis', 'step', 'stepBefore', 'stepAfter', 'linearClosed', 'catmullRomClosed', 'basisClosed'];
 const localeNames = ['de', 'en'];
@@ -327,12 +327,12 @@ const definitions = {
     mark: describe(map(ref('propEntry'), 'A mark, a layer of the chart: its type and the dims of its channels (x, y, ...), the attributes of its elements (e.g. "stroke-width": 2, "fill": "@color" of its categories), expressions of the row, the names of the facet and the globals, nested props, e.g. d of a path.', {
         properties: {
             type: cases([[globalText, globalText], [{ type: 'string', pattern: registeredName }, anyOf([
-                choice(markNames, 'A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap.'),
+                choice(markNames, 'A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap, tick a short rule at the value across the band of its category (`size`), e.g. the median of a box plot or a target.'),
                 choice(markTypes, 'The full name of a type of a coordinate system, as the name without the prefix. The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations.'),
                 pattern('^[a-z][\\w-]*:[\\w-]+$', 'A registered plot type, see registerMarkType.'),
                 pattern('^[a-z][\\w-]*$', 'A registered plot type of the coordinate system without its prefix, see registerMarkType.'),
             ])]],
-                { enum: [...markNames, ...markTypes] }, 'The type of the mark, line, area, bar, rule, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ.'),
+                { enum: [...markNames, ...markTypes] }, 'The type of the mark, line, area, bar, rule, tick, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ.'),
             id: string('The class and the data-mark of the group of the mark, mark-<index> by default, the marks of a parent are merged by their ids.'),
             by: anyOf([{ type: 'string' }, array(string())], 'The rows are grouped by this dim or these dims, e.g. a line per category, the props of their categories are known to the attributes (@color, @name, ...).'),
             x: ref('channel', 'The dim of the horizontal position (x by default); a number is a value on the scale of x of a rule, a point or a text (cartesian), pixels otherwise (=literal(n) are pixels).'),
@@ -347,6 +347,7 @@ const definitions = {
             lat: ref('channel', 'Of a map: the dim of the latitude, or an expression of the row.'),
             stack: anyOf([{ type: 'boolean' }, expressionText, expression, ref('conditions')], 'Stacks the values of the mark (bars, areas, arcs) by the groups of `by`, true all rows or the condition of the rows which are stacked, the others have their own value as start and end.'),
             dodge: anyOf([{ type: 'boolean' }, { type: 'string' }, { type: 'number' }], 'Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position, with `stack` a stack per slot; texts, points and rules (true or a dim): at the middle of the slot of their category, e.g. labels or error bars of dodged bars; texts (a number): the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines.'),
+            size: number('tick: its length, the share of the band of its category (or of the slot of a dodged one), 1 by default, e.g. 0.5 of a target narrower than its bar.', { exclusiveMinimum: 0 }),
             orient: option(['horizontal', 'vertical'], 'Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y or of a continuous x (e.g. zero) and a y which is not.'),
             anchor: option(['start', 'end', 'top', 'bottom', 'center', 'top-start', 'top-end', 'bottom-start', 'bottom-end'], 'Labels: the text beside its position, after it (end, e.g. of horizontal bars), before it (start), above it (top), below it (bottom), on it (center) or at a corner, above and after it (top-end), ....'),
             filter: conditions('The rows of the mark, an expression of the row or the values of dims, see filter of the definition.'),

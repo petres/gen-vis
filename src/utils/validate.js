@@ -540,7 +540,7 @@ const checkFilter = (ctx, conditions, path, known) => {
 };
 
 // the names of marks of 5.0 which are no kind of a plot type, see typeOf of utils/language.js
-const aliases = ['point', 'label', 'cell'];
+const aliases = ['point', 'label', 'cell', 'tick'];
 
 // the plots: their types, categories, data and props
 const checkPlots = ctx => {
