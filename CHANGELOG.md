@@ -392,6 +392,24 @@ Migration notes, to check by hand after `gen-vis migrate`:
 
 ### Scales: the base of bars, diverging and log scales
 
+- The base of bars and areas is in the domain: the value dim of bars and
+  areas from 0 (no `y0`, or `x0` of horizontal ones; also stacked ones,
+  histograms, polar areas and roses) includes 0 (`scale.zero`), so bars
+  start at the axis. Without `zero` the domain was the extent of the data,
+  the bars started at 0 below the plot, over the axis, and of 5 and 10 the 5
+  was a sliver. `"zero": false` of the dim keeps the domain of the data; of
+  a fixed domain without 0 the bars start at the edge of the plot area
+  (they ran beyond it). Charts of 4.x without a domain from 0 change so (in
+  the examples only the toggled states of `axis/balance` and
+  `recipes/pyramid`, whose bars started outside the plot).
+- `zero: true` includes 0 (`scale.zero`: an end of the data at 0 is not
+  extended), it was the domain `[0, null]`: negative values are drawn below
+  0 now (they hung below the plot), only negative ones end at 0. The same
+  of the `"domain": [0, null]` of 4.x, which `gen-vis migrate` writes as
+  `zero`; of values from 0 the charts are the same.
+- Bars on a log scale, which has no 0, start at the end of the domain
+  nearest to 0, areas at its start (`@y:scaled:min`); they were not drawn
+  (NaN).
 - A diverging scale (`diverging`, `divergingLog`, ...) without a domain of
   three entries has the middle `center`, else the middle of the ends of the
   data (of a log one in its positions); the nulls of a domain of three

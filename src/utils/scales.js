@@ -262,9 +262,14 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     // 100, around `center` it is symmetric, e.g. of 0 of changes
     // a value of the definition as the ones of the data, e.g. a date or a category as a string
     const valueOf = v => v === null || v === undefined ? null : convert(mapping, v, mappings);
+    // `zero`: the domain of the data includes 0 and an end at 0 is not
+    // extended, e.g. the base of bars and areas, not of a log scale (no 0)
+    const zero = scaleDef.zero === true && mapping.type == 'numeric' && !log;
     if (continuous(mapping)) {
         let included = scaleDef.include === undefined ? []
             : [evaluate(scaleDef.include, scope)].flat().map(valueOf).filter(v => v !== null && v !== undefined);
+        if (zero)
+            included.push(0);
         if (log)
             included = included.filter(v => extent ? Math.sign(v) == Math.sign(extent[0]) : v > 0);
         // without values, e.g. of empty rows, the extent of the included
@@ -347,14 +352,17 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         // replaces, a fixed end stays, e.g. 0 of bars; `domainRel` adds to
         // all ends
         const pad = scaleDef.pad === undefined ? null : [scaleDef.pad].flat().map(Number);
-        const domainRel = pad ? [domain[0] === null ? -pad[0] : 0, domain[last] === null ? pad[1] ?? pad[0] : 0] : scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic || period || !scaleDef.orientation ? [0, 0] :
-            [domain[0] === null ? -0.02 : 0, domain[last] === null ? 0.02 : 0]);
+        const domainRel = [...(pad ? [domain[0] === null ? -pad[0] : 0, domain[last] === null ? pad[1] ?? pad[0] : 0] : scaleDef.domainRel ?? (scaleDef.domainAbs || cyclic || period || !scaleDef.orientation ? [0, 0] :
+            [domain[0] === null ? -0.02 : 0, domain[last] === null ? 0.02 : 0]))];
         const domainAbs = scaleDef.domainAbs ?? [0, 0];
 
         // the ends taken from the data, `nice` rounds them
         const fromData = [domain[0] === null, domain[last] === null];
         domain[0] ??= extent[0];
         domain[last] ??= extent[1];
+        // an end at 0 of `zero` stays, as a fixed one, e.g. bars start at the axis
+        if (zero)
+            [0, last].forEach((i, j) => domainRel[j] = fromData[j] && domain[i] === 0 ? 0 : domainRel[j]);
 
         // relative to the positions, e.g. of a log or a sqrt scale 2% of the
         // height below and above, values of a log scale do not get below 0

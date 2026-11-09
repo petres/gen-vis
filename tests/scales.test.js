@@ -217,6 +217,26 @@ describe('values of the definition of a mapping with the scale of another one', 
     });
 });
 
+describe('zero: the domain of the data includes 0, an end at 0 is exact', () => {
+    const scale = (s, rows, type = 'linear') => makeScale('y', { type: 'numeric', scale: { type, orientation: 'vertical', domain: [null, null], ...s } }, rows, options);
+
+    test('of positive and of negative values, the other end is extended', () => {
+        expect(scale({ zero: true }, [{ y: 5 }, { y: 10 }]).domain()).toEqual([0, 10.2]);
+        expect(scale({ zero: true }, [{ y: -5 }, { y: -10 }]).domain()).toEqual([-10.2, 0]);
+        // both signs: both ends of the data are extended, 0 is inside
+        expect(scale({ zero: true, pad: 0.1 }, [{ y: -5 }, { y: 5 }]).domain()).toEqual([-6, 6]);
+        // nice keeps 0, a fixed end stays
+        expect(scale({ zero: true, nice: true }, [{ y: 5 }, { y: 9.3 }]).domain()).toEqual([0, 10]);
+        expect(scale({ zero: true, domain: [null, 100] }, [{ y: 5 }]).domain()).toEqual([0, 100]);
+        // without: the extent of the data, extended at both ends
+        expect(scale({}, [{ y: 5 }, { y: 10 }]).domain()).toEqual([4.9, 10.1]);
+    });
+
+    test('not of a log scale, which has no 0', () => {
+        expect(scale({ zero: true, pad: 0 }, [{ y: 5 }, { y: 50 }], 'log').domain()).toEqual([5, 50]);
+    });
+});
+
 describe('pad', () => {
     test('extends both ends, positive values, instead of domainRel', async () => {
         const { makeScale } = await import('@/utils/scales');

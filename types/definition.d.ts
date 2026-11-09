@@ -710,7 +710,7 @@ export interface Dim {
      */
     domain?: [DomainValue, ...DomainValue[]] | `=${string}` | `@${string}` | Expression;
     /**
-     * The domain starts at 0, e.g. of bars (a domain [0, null]).
+     * The domain includes 0 and an end at 0 is not extended, e.g. of bars, negative values below it; bars and areas from 0 include it by default, false keeps the domain of the data; also `scale.zero`.
      */
     zero?: boolean;
     /**
@@ -834,6 +834,10 @@ export interface Scale {
      * A value of a dim, e.g. a date of a string, a reference "@name", e.g. to a global, or an expression, null is taken from the data.
      */
     center?: number | string | null | Expression;
+    /**
+     * The domain taken from the data includes 0 and an end at 0 is not extended (by pad), e.g. of the base of bars, which include it by default (false: not), not of a log scale; also `zero` of the dim.
+     */
+    zero?: boolean;
     /**
      * The end of the classes of a threshold scale they include, the lower one (left, value >= limit) or the upper one (right, value > limit).
      */

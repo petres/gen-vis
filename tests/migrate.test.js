@@ -247,6 +247,20 @@ const centers = (a, b) => {
     };
     (b.plot ?? []).forEach((p, i) => walk(a.plot?.[i], p));
 };
+// `zero` of a scale of 5.0: a domain from 0 of 4.x (`[0, null]`) includes 0
+// (the same of values from 0, negative ones are in the domain in 5.0), the
+// value dims of bars and areas from 0 include it in 5.0 (the bars of 4.x
+// started below the plot if 0 was not in the domain of the data)
+const zeros = (a, b) => Object.keys(b.mapping ?? {}).forEach(n => {
+    const s = b.mapping[n]?.scale, s4 = a.mapping?.[n]?.scale;
+    if (s?.zero !== true || !isObject(s4))
+        return;
+    if (Array.isArray(s4.domain) && s4.domain.length == 2 && s4.domain[0] === 0 && s4.domain[1] === null) {
+        s4.domain = s.domain;
+        s4.zero = true;
+    } else
+        delete s.zero;
+});
 // a definition of 4.x (merged with its parents) and one of 5.0 (by default
 // its migration) with every combination of the values of the form
 // elements: the 5.0 one resolved with the globals is the 4.x one with the
@@ -257,6 +271,7 @@ const drawsAs4 = (def4, def5 = migrate(def4), what = 'migrated') => {
         const b = engine5(def5, globals);
         byTypes(a, b);
         centers(a, b);
+        zeros(a, b);
         expect(b, `${what}, globals ${JSON.stringify(globals)}`).toEqual(a);
     }
 };

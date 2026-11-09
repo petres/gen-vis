@@ -37,8 +37,8 @@ states:
 ```
 
 `Jahr` holds numbers, so the dim `x` is numeric and `"format": "c"` writes
-the years without a thousands separator. `zero` starts the domain of `y` at
-0, `grid` draws the lines of its ticks. The dim `land` has a category per
+the years without a thousands separator. `zero` includes 0 in the domain of
+`y`, `grid` draws the lines of its ticks. The dim `land` has a category per
 state, the total first, hidden at the start, the others of the data after
 it in the order of the rows (`fromData`), with the colors of the scheme
 `Tableau10`; its legend shows and hides them, its symbols are the ones of
@@ -612,7 +612,7 @@ removes a dim or a part of a dim of a parent, e.g. `"hover": null`.
 
 is the dim `y` of the numbers of the column `value` with all its parts
 which follow from the rest: `"type": "numeric"` (of the values),
-`"scale": {"type": "linear", "orientation": "vertical", "domain": [0, null]}`
+`"scale": {"type": "linear", "orientation": "vertical", "domain": [null, null], "zero": true}`
 and `"axis": {"position": "left", "format": ".1f", "ticks": 8, "grid": true}`.
 
 The dims of the positions of the coordinate system have a scale of the
@@ -631,7 +631,7 @@ The shorthands of a dim are parts of its scale and its axis:
 
 | Shorthand | Is |
 |-----------|----|
-| `zero: true` | `"domain": [0, null]`, the domain starts at 0, e.g. of bars |
+| `zero: true` | `scale.zero`: the domain of the data includes 0, an end at 0 is not extended, e.g. a line chart from 0; the value dims of bars and areas from 0 (also stacked) have it by default, `false` keeps the domain of the data |
 | `domain` | `scale.domain` |
 | `nice` | `scale.nice` |
 | `pad` | `scale.pad` |
@@ -1175,6 +1175,11 @@ which names neither a dim nor a column of the data (e.g. a typo, `"x":
   from 0, `"x1": 0`, or a label at 250 of x, `"x": 250`; other numbers are
   pixels, an expression of pixels at these channels is e.g.
   `"=literal(10)"`.
+- The base of bars and areas without `y0` (`x0` of horizontal bars) is 0:
+  the domain of their value dim includes it (`zero`), so they start at the
+  axis, negative values below it. Of a fixed domain without 0 bars start at
+  the edge of the plot area; of a log scale, which has no 0, at the end of
+  the domain nearest to 0 (areas at its start).
 - An expression is the position in pixels, e.g. `"y": "@group:scaled +
   @jitter * @group:bandwidth"` of the points of a strip plot within the
   band of their category, or `"x": "=@innerWidth + 10"` of texts in a
@@ -2296,7 +2301,7 @@ form as before, a definition of 5.0 is translated into it (see
 | `"options": {"title": ..., "height": ...}` | `"title": ..., "height": ...` at the top level |
 | `options.footer` | `source` |
 | `mapping` | `dims` |
-| `"domain": [0, null]` | `"zero": true` |
+| `"domain": [0, null]` | `"zero": true` (the domain includes 0: the same of values from 0, negative ones are drawn below it) |
 | `"axis": {"grid": true}`, `"axis": {"ticks": 5}` | `"grid": true`, `"ticks": 5` (the axis parts stay valid) |
 | `"scale": {"domainRel": [-0.1, 0.1]}` | `"scale": {"pad": [0.1, 0.1]}` (`pad` of the dim too) |
 | `"categories": {"Wien": {"color": "#C3423F"}}` | `"categories": {"Wien": "#C3423F"}` (both are valid) |

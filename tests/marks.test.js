@@ -372,3 +372,49 @@ describe('the orientation of bars of a dim without a type', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the base of bars and areas', () => {
+    const margins = { top: 0, right: 0, bottom: 0, left: 0 };
+    const bars = async (y, data, marks = { type: 'bar' }, extra = {}) => {
+        const el = await mount({ def: { height: 100, width: 200, margins, dims: { x: { column: 'a', type: 'categorical' }, y }, marks, ...extra }, data });
+        return el;
+    };
+    const ends = el => rects(el).map(r => [Math.round(num(r, 'y')), Math.round(num(r, 'y') + num(r, 'height'))]);
+
+    test('bars without zero start at the axis: the domain of the data includes 0', async () => {
+        // 5 is half of 10, not a sliver above the 2% below 5
+        const el = await bars('b', 'a,b\nA,5\nB,10');
+        const [a, b] = ends(el);
+        expect(a[1]).toBe(100);
+        expect(b[1]).toBe(100);
+        expect((a[1] - a[0])/(b[1] - b[0])).toBeCloseTo(0.5, 5);
+        // of negative values from the top, of both signs from 0 inside
+        expect(ends(await bars('b', 'a,b\nA,-5\nB,-10')).map(e => e[0])).toEqual([0, 0]);
+        const both = ends(await bars('b', 'a,b\nA,-5\nB,10'));
+        expect(both[0][0]).toBe(both[1][1]);
+        expect(both[0][0]).toBeGreaterThan(0);
+        expect(errors).toEqual([]);
+    });
+
+    test('zero: true includes 0, negative values hang below it within the plot', async () => {
+        const [a, b] = ends(await bars({ column: 'b', zero: true }, 'a,b\nA,-5\nB,10'));
+        expect(a[1]).toBeLessThanOrEqual(100);
+        expect(a[0]).toBe(b[1]);
+        expect(errors).toEqual([]);
+    });
+
+    test('a fixed domain without 0: the bars start at the edge of the plot area', async () => {
+        const el = await bars({ column: 'b', domain: [4, 10] }, 'a,b\nA,5\nB,10');
+        expect(ends(el)).toEqual([[83, 100], [0, 100]]);
+        expect(errors).toEqual([]);
+    });
+
+    test('a log scale: the bars start at the end of the domain nearest to 0, areas at its start', async () => {
+        const y = { column: 'b', scale: { type: 'log' }, pad: 0 };
+        const el = await bars(y, 'a,b\nA,1\nB,100');
+        expect(ends(el)).toEqual([[100, 100], [0, 100]]);
+        const area = await mount({ def: { height: 100, width: 200, margins, dims: { x: 'a', y }, marks: { type: 'area' } }, data: 'a,b\n1,1\n2,100' });
+        expect(area.querySelector('g.vis-mark path').getAttribute('d')).not.toMatch(/NaN/);
+        expect(errors).toEqual([]);
+    });
+});
