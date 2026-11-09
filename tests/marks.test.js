@@ -324,6 +324,41 @@ describe('ticks', () => {
     });
 });
 
+describe('arrows', () => {
+    test('marker-end and marker-start "arrow": a marker of an arrowhead per color in the defs of the svg, also of annotations and lines', async () => {
+        const rows = 'year,value,lo,hi\n2020,2,1,3\n2021,6,4,8';
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical' }, y: { column: 'value', domain: [0, 10] }, lo: 'lo', hi: 'hi' },
+            annotations: { type: 'line', y: 5, props: { 'marker-end': 'arrow' } },
+            marks: [
+                { type: 'rule', y1: 'lo', y2: 'hi', stroke: '#C3423F', 'marker-end': 'arrow', 'marker-start': 'arrow' },
+                { type: 'line', stroke: '#1E4F77', 'marker-end': 'arrow' },
+                { type: 'rule', y: 9, 'marker-end': 'url(#own)' },
+            ],
+        };
+        const el = await mount({ def, data: rows });
+        const svg = el.querySelector('.vis-facet svg');
+        const markers = [...svg.querySelectorAll(':scope > defs.vis-defs > marker.vis-arrow')];
+        // one per color: the rules, the line and the annotation of the color of the styles
+        expect(markers.map(m => m.getAttribute('data-color'))).toEqual(['var(--gen-vis-line-color, #9AA0A8)', '#C3423F', '#1E4F77']);
+        expect(markers[1].querySelector('path').style.fill).toBe('rgb(195, 66, 63)');
+        const url = color => `url(#${markers.find(m => m.getAttribute('data-color') == color).id})`;
+        const rules = lines(el).filter(l => l.getAttribute('stroke') == '#C3423F');
+        expect(rules.length).toBe(2);
+        rules.forEach(r => {
+            expect(r.getAttribute('marker-end')).toBe(url('#C3423F'));
+            expect(r.getAttribute('marker-start')).toBe(url('#C3423F'));
+        });
+        expect(el.querySelector('g.vis-mark path').getAttribute('marker-end')).toBe(url('#1E4F77'));
+        expect(el.querySelector('line.vis-annotation').getAttribute('marker-end')).toBe(url('var(--gen-vis-line-color, #9AA0A8)'));
+        // other values as they are
+        expect(lines(el).find(l => l.getAttribute('marker-end') == 'url(#own)')).toBeDefined();
+        // the ids are the ones of the facet, unique on the page
+        expect(markers[0].id).toMatch(/^gen-vis-facet-\d+-arrow-0$/);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('dodged rules and points', () => {
     test('error bars and points on dodged bars: in the slot of their bar', async () => {
         const rows = 'year,value,type,lo,hi\n2020,2,a,1,3\n2020,5,b,4,6\n2021,6,a,5,7\n2021,3,b,2,4';

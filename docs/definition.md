@@ -1221,6 +1221,15 @@ attributes are merged into the defaults, e.g. `d` of a path.
   `"scale": {"type": "sqrt", "range": [0, 20]}`.
 - Values with `var(` are css variables, e.g. `"stroke":
   "var(--gen-vis-grid-color)"`, set as a style, see [styles](usage.md#styles).
+- `marker-end` and `marker-start` of `"arrow"` are arrowheads at the end or
+  the start of a line, e.g. of a `rule`, a `line`, an `svg:line` or a `line`
+  annotation (in its `props`): a `<marker>` in the color of the `stroke` of
+  the element (one per color, in the `defs` of the svg of the facet, so the
+  exports of SVG, PNG and PDF have them), of the size of the stroke width
+  (6 widths long); of an element without a stroke of its own in the color of
+  annotation lines or of the text. Other values are as they are, e.g. the
+  url of a marker of the page: `{"type": "rule", "x": "year", "y1": "from",
+  "y2": "to", "stroke": "#C3423F", "marker-end": "arrow"}`.
 - The texts of `text`, `label` and of the labels of axes with a `max-width`
   attribute (pixels) are cut with an ellipsis, the full text is their title
   (the tooltip of the browser, also below the area of the hover, e.g. of
@@ -1814,7 +1823,8 @@ globals, e.g. `"@target"`:
 - `text` (`text`) and `circle` at the values, without one (or with `null`)
   of an axis at the start of the other one.
 - `label` and `text` are templates of the globals, e.g. `"Ziel {target}"`.
-- `props` are svg attributes, e.g. `fill` or `stroke`, the defaults are grey,
+- `props` are svg attributes, e.g. `fill` or `stroke` (or `"marker-end":
+  "arrow"`, an arrowhead, see [attributes](#attributes)), the defaults are grey,
   their names are the ones of the facet and of the annotation, e.g. `@y`,
   `above` (or `"layer": "above"`) draws the annotation above the marks, by
   default it is below the marks and grid lines (`"layer": "below"`), labels

@@ -101,6 +101,9 @@ builds and dependencies. The design is in `docs/design-5.0.md`.
   category (`size`, the share of the band, 1 by default), vertical across
   the band of a categorical `y`, across the slot of a dodged one; e.g. the
   median of a box plot, the target of a bullet chart, a strip plot.
+- Arrowheads: `"marker-end": "arrow"` (or `marker-start`) of a rule, a
+  line or an annotation line draws an arrowhead in the color of its stroke,
+  a `<marker>` per color in the defs of the svg, also in the exports.
 
 Removed keys: `options`, `mapping`, `plot`, the `props` of a plot,
 `formElements`, `patch` (and the `ref` of a form element), `domainRel`

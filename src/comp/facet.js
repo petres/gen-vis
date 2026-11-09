@@ -1,6 +1,7 @@
 export { createFacet };
 
 import { drawLayer, withMotion } from "@/utils/draw";
+import { arrowheads } from "@/utils/arrows";
 import { highlighter } from "@/utils/highlight";
 import { drawAxis } from "@/utils/axis";
 import { create, interruptAll, setAttr } from "@/utils/dom";
@@ -184,7 +185,8 @@ const createFacet = (vis, initial) => {
             } catch (error) {
                 throw withPath(error, markPath(store.def, plot, true));
             }
-            drawLayer(parent, layer);
+            // the arrowheads of "marker-end": "arrow", see utils/arrows.js
+            drawLayer(parent, arrowheads(layer, svg, uid));
         });
     };
 
