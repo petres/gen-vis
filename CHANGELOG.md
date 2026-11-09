@@ -271,6 +271,11 @@ Migration notes, to check by hand after `gen-vis migrate`:
 - Parquet: the columns named in the expressions of `filter` (of the chart
   and of marks), `stack` and `hover.filter` are read; a filter on a column
   which is no dim dropped every row.
+- Filters on a date dim compare dates: the values compared with it (and
+  the cases of a `match` of it) are converted as the dim's values, as of the
+  object form; the texts of the data were compared, which failed for dates of
+  a transform, JSON timestamps and day-first dates. In other expressions of
+  a filter a date dim is its time in milliseconds (was the text of the data).
 
 ### Package and builds
 

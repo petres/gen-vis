@@ -1926,8 +1926,12 @@ facets, e.g. `"outer"`.
 `filter` shows only the rows of an expression of the row: its names are
 the dims (the values of the row), then the columns of the data (also of the
 transforms) and the globals, e.g. `"@year == @globals.year and @value >
-0"`. Dates compare as the texts of the data, e.g. `"@date >=
-'2020-01-01'"`. A dim of the same name as a global shadows it,
+0"`. A date dim compares as a date: the other values of a comparison
+(`==`, `!=`, `<`, `<=`, `>`, `>=`) of it and the cases of a `match` of it
+are dates as the ones of the dim, e.g. `"@date >= '2020-01-01'"` or `"@date
+== @globals.day"`, whatever the format of the data (ISO, day first, JSON
+timestamps, a date of a transform), as of the object form; in other
+expressions its value is the time in milliseconds. A dim of the same name as a global shadows it,
 `@globals.<name>` is the global.
 
 An object is the shorthand of conditions of the values of dims, every

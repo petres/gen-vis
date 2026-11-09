@@ -222,17 +222,25 @@ const prepareData = (data, def, columns = null) => {
  * transforms (`columns`) or of the data (see rawRow), else of the `scope`,
  * e.g. a global; as the functions of the row of `bind`.
  */
-const rowResolver = (mapping, columns, scope = {}) => name => {
-    if (typeof name == 'symbol')
-        return Object.hasOwn(scope, name) ? constant(scope[name]) : undefined;
-    if (Object.hasOwn(mapping, name)) {
-        // a date as the text of the data, e.g. "2022-06-01", so it compares
-        // with the texts of globals and of the definition, not as its timestamp
-        const m = mapping[name];
-        if (m?.type == 'date' && typeof m.column == 'string')
-            return row => row[rawRow] ? (row[rawRow][m.column] ?? row[name]) : row[name];
+const rowResolver = (mapping, columns, scope = {}, converted = null) => {
+    const resolve = name => {
+        if (typeof name == 'symbol')
+            return Object.hasOwn(scope, name) ? constant(scope[name]) : undefined;
+        // a value compared with a date as a date, see datesAsDates
+        if (converted?.has(name)) {
+            const { m, raw } = converted.get(name);
+            const value = bind(raw, resolve);
+            return value.constant ? constant(convert(m, value(), mapping)) : row => convert(m, value(row), mapping);
+        }
+        return resolveName(name);
+    };
+    const resolveName = rowName(mapping, columns, scope);
+    return resolve;
+};
+const rowName = (mapping, columns, scope) => name => {
+    // the value of the row, of a date its time, see datesAsDates
+    if (Object.hasOwn(mapping, name))
         return row => row[name];
-    }
     if (columns?.has(name)) {
         const values = columns.get(name);
         return row => row[rawIndex] === undefined ? undefined : values[row[rawIndex]];
@@ -265,11 +273,72 @@ const filterRows = (rows, spec, mapping, scope = {}, { columns = null, path = 'f
         const conditions = rowFilter(spec, mapping, scope, path, unknown);
         return conditions.length > 0 ? filter(rows, conditions) : rows;
     }
-    const test = bind(spec, rowResolver(mapping, columns, scope));
+    const { expression, converted } = datesAsDates(spec, mapping);
+    const test = bind(expression, rowResolver(mapping, columns, scope, converted));
     if (test.constant)
         return truthy(test()) ? rows : [];
     return rows.filter(row => truthy(test(row)));
 };
+
+/**
+ * An expression of the rows whose comparisons of a date dim compare dates:
+ * the other values of a comparison (`==`, `!=`, `<`, ...) of a reference to
+ * a mapping of dates, e.g. `"@date >= '2020-06-01'"` or `"@year == @selected"`,
+ * and the cases of a `match` of one are converted as the values of the
+ * mapping (timestamps, see convert), as the conditions of the object form,
+ * so dates of every format compare, e.g. of a transform, of JSON timestamps
+ * or "01.06.2020". `converted` are the names of the references which replace
+ * the values converted at the row, see rowResolver; kept per expression.
+ */
+const dateComparisons = ['==', '!=', '<', '<=', '>', '>='];
+const convertedOf = new WeakMap();
+const datesAsDates = (spec, mapping) => {
+    if (!isObject(spec) && !Array.isArray(spec))
+        return { expression: spec, converted: null };
+    const kept = convertedOf.get(spec);
+    if (kept?.mapping === mapping && kept.types === typesKey(mapping))
+        return kept.result;
+    const converted = new Map();
+    const dateOf = raw => {
+        const name = typeof raw == 'string' && raw.startsWith('@') ? raw.slice(1) : undefined;
+        return name !== undefined && Object.hasOwn(mapping, name) && mapping[name]?.type == 'date' ? mapping[name] : undefined;
+    };
+    const rewrite = raw => {
+        if (Array.isArray(raw))
+            return raw.map(rewrite);
+        if (!isOperator(raw))
+            return raw;
+        const op = Object.keys(raw)[0];
+        if (op == 'literal')
+            return raw;
+        const args = raw[op];
+        const list = Array.isArray(args) ? args : [args];
+        if (dateComparisons.includes(op)) {
+            const m = list.map(dateOf).find(Boolean);
+            if (m) {
+                return { [op]: list.map(a => {
+                    if (dateOf(a))
+                        return a;
+                    const name = `\0date${converted.size}`;
+                    converted.set(name, { m, raw: a });
+                    return `@${name}`;
+                }) };
+            }
+        }
+        if (op == 'match' && dateOf(list[0]) && isObject(list[1])) {
+            const m = dateOf(list[0]);
+            const cases = Object.fromEntries(Object.entries(list[1]).map(([k, v]) => [String(convert(m, k, mapping)), rewrite(v)]));
+            return { match: [list[0], cases, ...list.slice(2).map(rewrite)] };
+        }
+        return { [op]: Array.isArray(args) ? args.map(rewrite) : rewrite(args) };
+    };
+    const expression = rewrite(spec);
+    const result = { expression: converted.size > 0 || expression !== spec ? expression : spec, converted: converted.size > 0 ? converted : null };
+    convertedOf.set(spec, { mapping, types: typesKey(mapping), result });
+    return result;
+};
+// the types of the mappings, of the date ones, e.g. inferred after a change of the globals
+const typesKey = mapping => Object.keys(mapping).filter(n => mapping[n]?.type == 'date').join('\0');
 
 // false, 0, "", null, no value, NaN and empty lists are false, as the
 // conditions of expressions
