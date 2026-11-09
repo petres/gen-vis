@@ -715,6 +715,21 @@ const controlOf = e => {
     return Object.fromEntries(['type', 'global', 'name', 'id', 'values', ...Object.keys(c)].filter((k, i, a) => c[k] !== undefined && a.indexOf(k) == i).map(k => [k, c[k]]));
 };
 
+// the texts of 4.x which start with "=" (a title "= Summe", an axis title
+// "=100") are texts, of 5.0 expressions: the expression of the text,
+// "='= Summe'"; not the values of conditions of filters and of
+// expressions (compared with the rows, written in the string syntax), of
+// globals and of the entries of form elements and the data
+const textsOf4 = (v, key = undefined) => {
+    if (typeof v == 'string')
+        return v.startsWith('=') ? `=${literal(v)}` : v;
+    if (['filter', 'stacked', 'expr', 'globals', 'value', 'data'].includes(key) || isOperator(v))
+        return v;
+    if (Array.isArray(v))
+        return v.map(e => textsOf4(e));
+    return isObject(v) ? Object.fromEntries(Object.entries(v).map(([k, e]) => [k, textsOf4(e, k)])) : v;
+};
+
 /**
  * The definition of gen-vis 5 of one of gen-vis 4 (merged with its parents
  * or a part of one, e.g. a parent), see above. A part with parents is
@@ -724,8 +739,8 @@ const controlOf = e => {
  * as 4.x applied the patches after the merge.
  */
 const migrate = (raw, { parents, noHover = false } = {}) => {
-    const def = clone(raw);
-    applyPatchesAsExpressions(def, clone(parents));
+    const def = textsOf4(clone(raw));
+    applyPatchesAsExpressions(def, textsOf4(clone(parents)));
     const out = {};
     out.$schema = schemaUrl;
     ['parent', 'data', 'dataFormat'].forEach(k => {

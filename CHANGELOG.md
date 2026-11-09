@@ -236,7 +236,9 @@ their rows replace the rows or follow them. Fixtures in `spec/transforms`.
   axis, legend or hover is `false`. A rule at `@x:scaled:0` is `"x1": 0`
   (a value on the scale), a number of 4.x (pixels) at a channel of a value
   on the scale is `"=literal(10)"`; a position at the start of the band of
-  a category (`@y:scaled` of a dim of a type categorical) stays an attribute. The conditions of filters become expressions (a
+  a category (`@y:scaled` of a dim of a type categorical) stays an attribute.
+  A text of 4.x which starts with `=` is the expression of the text
+  (`"='= Summe'"`). The conditions of filters become expressions (a
   reference is `@globals.<name>`), objects of values stay; the objects of
   expressions are written in the string syntax. The chart stays the same:
   the margins stay, `"hover": {"columns": []}` and `"symbol": null` keep

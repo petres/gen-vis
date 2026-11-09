@@ -2270,6 +2270,9 @@ hand). The migration keeps the chart as it was:
   4.x read the globals there.
 - The objects of expressions are written in the string syntax where it has
   a text of them.
+- A text which starts with `=` (a title `"= Summe"`, an axis title
+  `"=100"`), an expression in 5.0, is written as the expression of the
+  text, `"='= Summe'"`.
 
 To check by hand:
 
