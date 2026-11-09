@@ -158,6 +158,8 @@ npx gen-vis migrate old/*.json --write   # definitions of gen-vis 4 as ones of g
 
 ## Documentation
 
+- [Reference](docs/reference.md): the keys of every part of a definition in
+  tables, with their types and texts (generated of the schema).
 - [Definition](docs/definition.md): the definition language, `$schema`,
   parents and mixins, [data](docs/definition.md#data),
   [`transform`](docs/definition.md#transform),

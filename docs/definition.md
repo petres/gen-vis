@@ -66,7 +66,7 @@ part which is merged into its parent):
 | `facets` | a plot per category, see [`facets`](#facets) |
 | `geo` | the geometry of a map, see [maps](#maps) |
 
-Values are [expressions](#expressions) almost everywhere, e.g.
+Every key of every part in a table: the [reference](reference.md). Values are [expressions](#expressions) almost everywhere, e.g.
 `"=@innerWidth * 0.5"` or a `match` of a global. Definitions of gen-vis 4
 are migrated when they are loaded, `gen-vis migrate` writes them as ones
 of gen-vis 5, see [migration from 4.x](#migration-from-4x).

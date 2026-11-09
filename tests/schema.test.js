@@ -34,6 +34,11 @@ describe('the schema', () => {
         expect(schemaFile).toEqual(JSON.parse(JSON.stringify(schema)));
     });
 
+    test('docs/reference.md is the one of the schema, see npm run schema', async () => {
+        const { referenceText } = await import('../scripts/reference.js');
+        expect(readFileSync(new URL('../docs/reference.md', import.meta.url), 'utf8')).toBe(referenceText());
+    });
+
     test('the types of TypeScript of the definitions are the ones of the schema, see npm run types', async () => {
         const { definitionTypes } = await import('../scripts/types.js');
         expect(readFileSync(new URL('../types/definition.d.ts', import.meta.url), 'utf8')).toBe(await definitionTypes());
