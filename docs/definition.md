@@ -2027,12 +2027,12 @@ be an expression of the globals:
 An expression whose names are all globals (or fields of the selected
 entries, `@year:name`) is evaluated before the definition is read, with
 the globals of the state, at any place of the definition: a column, a type
-of a scale, a coordinate system, a part of a dim, the marks (the schema of
-the editors knows expressions only at the places of values; at a name of a
+of a scale, a coordinate system, a part of a dim, the marks. At a name of a
 fixed list, e.g. `"scale": {"type": "=match(@scale, {log: 'log'},
-'linear')"}`, an editor marks it, the chart and `check` take it). `match` of a
-global chooses a value per entry, the last argument is the value of the
-other entries:
+'linear')"}`, the schema takes a text starting with `=` beside the names
+(the types of TypeScript a `` `=${string}` ``), so an editor completes the
+names and accepts the expression. `match` of a global chooses a value per
+entry, the last argument is the value of the other entries:
 
 ```json
 {

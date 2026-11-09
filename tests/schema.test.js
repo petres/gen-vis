@@ -147,6 +147,35 @@ describe('the schema', () => {
         expect(errors({ height: { '*': ['@totalWidth', 0.5], '+': [1] } })).not.toEqual([]);
     });
 
+    test('expressions of the globals at the names of fixed lists, as the engine resolves them before it reads them', () => {
+        const g = "=match(@g, {a: 'log'}, 'linear')";
+        expect(errors({ coord: g, marks: { type: g, curve: g, orient: g, anchor: g, layer: g }, hover: { mode: g, position: g },
+            dims: { x: { type: g, order: g, scale: { type: g, orientation: g, closed: g }, axis: { position: g, gridShape: g },
+                legend: { position: g, orientation: g, labels: g, symbol: { type: g } } } },
+            facets: { by: 'x', axisTitles: g, scales: g, rowHeaders: g }, geo: { fit: g, projection: { type: g } } })).toEqual([]);
+        // the positions and orientations of the sizes too, e.g. steps of totalWidth
+        expect(errors({ dims: { c: { legend: { position: { steps: ['@totalWidth', { 0: 'bottom', 600: 'right' }] }, orientation: '@o' } } } })).toEqual([]);
+        // not a text which is no expression, the types of TypeScript keep the names
+        expect(errors({ dims: { x: { scale: { type: 'lin' } } } })).not.toEqual([]);
+        expect(errors({ coord: 'Polar' })).not.toEqual([]);
+        expect(readFileSync(new URL('../types/definition.d.ts', import.meta.url), 'utf8')).toMatch(/curve\?:\s*\| `=\$\{string\}`\s*\| \(\s*\| 'linear'/);
+    });
+
+    test('a typo is one error, not one of every alternative (if/then/else of the type of a value)', () => {
+        // the errors without the ones of the keyword if, which the tools leave out
+        const own = def => (validate(def) ? [] : validate.errors.filter(e => e.keyword != 'if')).map(e => `${e.instancePath} ${e.keyword}`);
+        expect(own({ dims: { country: { column: 'country', lgend: {} } } })).toEqual(['/dims/country additionalProperties']);
+        expect(own({ dims: { x: { axis: { positon: 'left' } } } })).toEqual(['/dims/x/axis additionalProperties']);
+        expect(own({ dims: { x: { scale: { type: 'lin' } } } })).toEqual(['/dims/x/scale/type enum']);
+        expect(own({ marks: [{ type: 'Line' }] })).toEqual(['/marks/0/type enum']);
+        expect(own({ marks: { type: 'line', curve: 'smooth' } })).toEqual(['/marks/curve enum']);
+        expect(own({ transform: [{ type: 'index', colum: 'a' }] })).toEqual(['/transform/0 additionalProperties']);
+        expect(own({ annotations: { type: 'line', layer: 'top' } })).toEqual(['/annotations/layer enum']);
+        expect(own({ controls: [{ type: 'radio', global: 'g', values: { colum: 'year' } }] })).toEqual(['/controls/0/values required', '/controls/0/values additionalProperties']);
+        expect(own({ coord: 'Polar' })).toEqual(['/coord enum']);
+        expect(own({ title: 5 })).toEqual(['/title type']);
+    });
+
     test('registered plot types and coordinate systems beside the built-in ones', () => {
         expect(errors({ marks: { type: 'my-coord:dots' }, coord: 'my-coord' })).toEqual([]);
         expect(errors({ coord: 'test:coord' })).toEqual([]);
@@ -160,7 +189,7 @@ describe('the schema', () => {
 
     test('the types of TypeScript keep the built-in plot types and coordinate systems of registered ones', async () => {
         const types = readFileSync(new URL('../types/definition.d.ts', import.meta.url), 'utf8');
-        expect(types).toContain(`coord?: ('cartesian' | 'polar' | 'geo') | (string & {});`);
+        expect(types).toContain('coord?: `=${string}` | (\'cartesian\' | \'polar\' | \'geo\') | (string & {});');
         expect(types).toMatch(/'annotation:circle'\n\s+\)\n\s+\| \(string & \{\}\);/);
         expect(types).toContain('export interface Dim ');
         expect(types).toContain('export interface Mark ');

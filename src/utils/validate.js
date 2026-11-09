@@ -171,10 +171,20 @@ const kind = v => v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v;
 const typeFits = (v, type) => type == 'integer' ? Number.isInteger(v) : type == 'object' ? isObject(v) : kind(v) == type;
 const matches = (v, pattern) => typeof v != 'string' || new RegExp(pattern, 'u').test(v);
 
+// the condition of an if/then/else of the schema holds (see cases of
+// src/schema/dsl.js): its type, pattern, number of keys and their names
+const holds = (v, c) => (c.type === undefined || typeFits(v, c.type)) && (c.pattern === undefined || typeof v != 'string' || matches(v, c.pattern))
+    && (c.maxProperties === undefined || !isObject(v) || Object.keys(v).length <= c.maxProperties)
+    && (c.propertyNames?.enum === undefined || !isObject(v) || Object.keys(v).every(k => c.propertyNames.enum.includes(k)));
+// the branch of an if/then/else of a value, undefined of none
+const branchOf = (v, node) => holds(v, node.if) ? node.then : node.else;
+
 // a value is of a branch of anyOf if it is of its type, e.g. a string of an
 // enum of strings, its other warnings are the ones of the branch
 const fits = (v, node) => {
     node = resolveNode(node);
+    if (node?.if)
+        return branchOf(v, node) === undefined || fits(v, branchOf(v, node));
     const branches = node.anyOf ?? node.oneOf;
     if (branches)
         return branches.some(b => fits(v, b));
@@ -193,6 +203,9 @@ const typeNames = { string: 'a string', number: 'a number', integer: 'an integer
 // the values of a part of the schema, e.g. "a number or a reference "@name""
 const describe = node => {
     node = resolveNode(node);
+    // the values of all branches of an if/then/else, not of an expression of the globals
+    if (node.if)
+        return [...new Set([node.then, node.else].filter(b => b && b.pattern != '^=').map(describe))].join(' or ');
     const branches = node.anyOf ?? node.oneOf;
     if (branches)
         return [...new Set(branches.map(describe))].join(' or ');
@@ -225,6 +238,11 @@ const schemaWarnings = (v, node, path = '', key = 'value', out = []) => {
         || (path.startsWith('transform') && isTemplate(v)))
         return out;
     const at = message => (out.push([path, message]), out);
+    // the branch of the value, e.g. of its type, see cases of src/schema/dsl.js
+    if (node.if) {
+        const branch = branchOf(v, node);
+        return branch === undefined ? out : schemaWarnings(v, branch, path, key, out);
+    }
     if (node.type && !typeFits(v, node.type))
         return at(`expected ${describe(node)}`);
     if (node.enum && !node.enum.includes(v))

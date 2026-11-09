@@ -23,7 +23,9 @@
             "description": "The format of the data, by default the one of the extension of its url, without one parquet, CSV or JSON by the content."
         },
         "transform": {
-            "anyOf": [{ "$ref": "#/definitions/transform" }, { "type": "array", "items": { "$ref": "#/definitions/transform" } }],
+            "if": { "type": "array" },
+            "then": { "type": "array", "items": { "$ref": "#/definitions/transform" } },
+            "else": { "$ref": "#/definitions/transform" },
             "description": "Columns computed of the data, e.g. an index of a base year, in their order, see https://github.com/petres/gen-vis/blob/main/docs/definition.md#transform."
         },
         "filter": { "$ref": "#/definitions/filter" },
@@ -36,10 +38,12 @@
             "items": { "$ref": "#/definitions/control" },
             "description": "The controls of the globals, e.g. radio buttons of the scale or a slider over the years."
         },
-        "title": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }] },
-        "subtitle": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }] },
+        "title": { "if": { "type": "string" }, "then": { "type": "string" }, "else": { "$ref": "#/definitions/inLanguages" } },
+        "subtitle": { "if": { "type": "string" }, "then": { "type": "string" }, "else": { "$ref": "#/definitions/inLanguages" } },
         "source": {
-            "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+            "if": { "type": "string" },
+            "then": { "type": "string" },
+            "else": { "$ref": "#/definitions/inLanguages" },
             "description": "The source of the data below the chart, HTML, e.g. a link, a template of the globals, their values are text."
         },
         "height": {
@@ -52,14 +56,22 @@
         },
         "margins": { "$ref": "#/definitions/margins" },
         "coord": {
-            "anyOf": [
-                { "enum": ["cartesian", "polar", "geo"] },
-                {
-                    "type": "string",
-                    "pattern": "^[a-z][\\w-]*(:[\\w-]+)?$",
-                    "description": "A registered coordinate system, see registerCoord."
-                }
-            ],
+            "if": { "type": "string", "pattern": "^=" },
+            "then": { "type": "string", "pattern": "^=" },
+            "else": {
+                "if": { "type": "string", "pattern": "^[a-z][\\w-]*(:[\\w-]+)?$" },
+                "then": {
+                    "anyOf": [
+                        { "enum": ["cartesian", "polar", "geo"] },
+                        {
+                            "type": "string",
+                            "pattern": "^[a-z][\\w-]*(:[\\w-]+)?$",
+                            "description": "A registered coordinate system, see registerCoord."
+                        }
+                    ]
+                },
+                "else": { "enum": ["cartesian", "polar", "geo"] }
+            },
             "description": "The coordinate system of the marks, cartesian (a horizontal and a vertical axis) by default, polar (an angle and a radius) or geo (a map)."
         },
         "locale": { "$ref": "#/definitions/locale" },
@@ -101,38 +113,110 @@
         "dims": {
             "type": "object",
             "additionalProperties": {
-                "anyOf": [
-                    { "$ref": "#/definitions/dim" },
-                    { "type": "string", "description": "The column, e.g. \"year\"." },
-                    { "$ref": "#/definitions/none" }
-                ]
+                "if": { "type": "object" },
+                "then": { "$ref": "#/definitions/dim" },
+                "else": {
+                    "if": { "type": "string" },
+                    "then": { "type": "string", "description": "The column, e.g. \"year\"." },
+                    "else": { "$ref": "#/definitions/none" }
+                }
             },
             "description": "The dims of the columns of the data by their names, the marks and all other parts of the definition refer to them, a text is the column, null removes a dim, e.g. of a parent."
         },
         "marks": {
-            "anyOf": [
-                { "$ref": "#/definitions/mark" },
-                { "type": "array", "items": { "$ref": "#/definitions/mark" } },
-                {
+            "if": { "type": "array" },
+            "then": { "type": "array", "items": { "$ref": "#/definitions/mark" } },
+            "else": {
+                "if": { "type": "string" },
+                "then": {
                     "type": "string",
                     "pattern": "^[=@]",
                     "description": "An expression in its string syntax, e.g. \"=@innerWidth * 0.5\", or a reference \"@name\", e.g. to a global."
                 },
-                { "$ref": "#/definitions/expression" }
-            ],
+                "else": {
+                    "if": {
+                        "type": "object",
+                        "maxProperties": 1,
+                        "propertyNames": {
+                            "enum": [
+                                "+",
+                                "-",
+                                "*",
+                                "/",
+                                "min",
+                                "max",
+                                "round",
+                                "==",
+                                "!=",
+                                "<",
+                                "<=",
+                                ">",
+                                ">=",
+                                "not",
+                                "cat",
+                                "if",
+                                "and",
+                                "or",
+                                "steps",
+                                "match",
+                                "format",
+                                "literal",
+                                "var"
+                            ]
+                        }
+                    },
+                    "then": { "$ref": "#/definitions/expression" },
+                    "else": { "$ref": "#/definitions/mark" }
+                }
+            },
             "description": "A mark or a list of marks, the layers of the chart, drawn in order; also an expression of a global, e.g. \"=match(@kind, {map: literal([...])}, literal([...]))\"."
         },
         "annotations": {
-            "anyOf": [
-                { "$ref": "#/definitions/annotation" },
-                { "type": "array", "items": { "$ref": "#/definitions/annotation" } },
-                {
+            "if": { "type": "array" },
+            "then": { "type": "array", "items": { "$ref": "#/definitions/annotation" } },
+            "else": {
+                "if": { "type": "string" },
+                "then": {
                     "type": "string",
                     "pattern": "^[=@]",
                     "description": "An expression in its string syntax, e.g. \"=@innerWidth * 0.5\", or a reference \"@name\", e.g. to a global."
                 },
-                { "$ref": "#/definitions/expression" }
-            ],
+                "else": {
+                    "if": {
+                        "type": "object",
+                        "maxProperties": 1,
+                        "propertyNames": {
+                            "enum": [
+                                "+",
+                                "-",
+                                "*",
+                                "/",
+                                "min",
+                                "max",
+                                "round",
+                                "==",
+                                "!=",
+                                "<",
+                                "<=",
+                                ">",
+                                ">=",
+                                "not",
+                                "cat",
+                                "if",
+                                "and",
+                                "or",
+                                "steps",
+                                "match",
+                                "format",
+                                "literal",
+                                "var"
+                            ]
+                        }
+                    },
+                    "then": { "$ref": "#/definitions/expression" },
+                    "else": { "$ref": "#/definitions/annotation" }
+                }
+            },
             "description": "An annotation or a list of them, bands, lines, texts and circles at values of the dims, e.g. { \"type\": \"band\", \"x\": [\"2025-07-01\", null], \"label\": \"Schätzung\" }; also an expression of a global."
         },
         "facets": { "$ref": "#/definitions/facets" },
@@ -374,7 +458,9 @@
                     "description": "A row of the sum of the stacked values of the position below the rows (true, or its name, e.g. Gesamt), in the format of the values; also {total} of the title."
                 },
                 "mode": {
-                    "enum": ["position", "point"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["position", "point"] },
                     "description": "The rows of the nearest position of the axis (position, by default) or the row of the nearest point, e.g. of a scatter plot."
                 },
                 "radius": { "type": "number", "description": "The distance of the nearest point in pixels, 30 by default." },
@@ -402,26 +488,36 @@
                     "default": false
                 },
                 "position": {
-                    "enum": ["marker", "pointer"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["marker", "pointer"] },
                     "description": "The hover is beside the marker of the position (or the center of a region) or at the pointer.",
                     "default": "marker"
                 },
                 "side": {
-                    "enum": ["left", "right", "above", "below", "center"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["left", "right", "above", "below", "center"] },
                     "description": "The side of the hover, by default the one with more space, center on the position, e.g. in the center of a polar plot."
                 },
                 "offset": { "$ref": "#/definitions/pair", "description": "Moves the hover by [x, y] pixels." },
                 "area": {
-                    "enum": ["plot", "facet"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["plot", "facet"] },
                     "description": "The area of the hover, the plot area or the facet with its margins, e.g. the labels of the rows of horizontal bars.",
                     "default": "plot"
                 },
                 "title": {
-                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": { "$ref": "#/definitions/inLanguages" },
                     "description": "The title, {title} is the default one, e.g. the date, and the globals."
                 },
                 "row": {
-                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": { "$ref": "#/definitions/inLanguages" },
                     "description": "A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, and the globals."
                 }
             },
@@ -448,46 +544,82 @@
                     "description": "The scale of another dim, e.g. \"y\", the values of this one are positions on it too, e.g. the other end of a band, and they are in its domain, without the other parts of a scale."
                 },
                 "type": {
-                    "enum": [
-                        "band",
-                        "diverging",
-                        "divergingLog",
-                        "divergingPow",
-                        "divergingSqrt",
-                        "divergingSymlog",
-                        "identity",
-                        "linear",
-                        "log",
-                        "ordinal",
-                        "point",
-                        "pow",
-                        "quantile",
-                        "quantize",
-                        "radial",
-                        "sequential",
-                        "sequentialLog",
-                        "sequentialPow",
-                        "sequentialQuantile",
-                        "sequentialSqrt",
-                        "sequentialSymlog",
-                        "sqrt",
-                        "symlog",
-                        "threshold",
-                        "time",
-                        "utc"
-                    ],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": {
+                        "enum": [
+                            "band",
+                            "diverging",
+                            "divergingLog",
+                            "divergingPow",
+                            "divergingSqrt",
+                            "divergingSymlog",
+                            "identity",
+                            "linear",
+                            "log",
+                            "ordinal",
+                            "point",
+                            "pow",
+                            "quantile",
+                            "quantize",
+                            "radial",
+                            "sequential",
+                            "sequentialLog",
+                            "sequentialPow",
+                            "sequentialQuantile",
+                            "sequentialSqrt",
+                            "sequentialSymlog",
+                            "sqrt",
+                            "symlog",
+                            "threshold",
+                            "time",
+                            "utc"
+                        ]
+                    },
                     "description": "By default linear for a numeric dim, time for a date one, band (bars) or point for a categorical position and ordinal for other categorical ones. A d3 scale, continuous scales and the ones of classes (quantize, quantile, threshold) need a numeric or date dim, point and band a categorical one, ordinal ones are of any values, e.g. colors of categories, positions of dates need a time or utc scale."
                 },
                 "orientation": {
-                    "anyOf": [
-                        { "enum": ["horizontal", "vertical", "angular", "radial", null] },
-                        {
-                            "type": "string",
-                            "pattern": "^[=@]",
-                            "description": "An expression in its string syntax, e.g. \"=@innerWidth * 0.5\", or a reference \"@name\", e.g. to a global."
+                    "if": { "type": "string", "pattern": "^[=@]" },
+                    "then": {
+                        "type": "string",
+                        "pattern": "^[=@]",
+                        "description": "An expression in its string syntax, e.g. \"=@innerWidth * 0.5\", or a reference \"@name\", e.g. to a global."
+                    },
+                    "else": {
+                        "if": {
+                            "type": "object",
+                            "maxProperties": 1,
+                            "propertyNames": {
+                                "enum": [
+                                    "+",
+                                    "-",
+                                    "*",
+                                    "/",
+                                    "min",
+                                    "max",
+                                    "round",
+                                    "==",
+                                    "!=",
+                                    "<",
+                                    "<=",
+                                    ">",
+                                    ">=",
+                                    "not",
+                                    "cat",
+                                    "if",
+                                    "and",
+                                    "or",
+                                    "steps",
+                                    "match",
+                                    "format",
+                                    "literal",
+                                    "var"
+                                ]
+                            }
                         },
-                        { "$ref": "#/definitions/expression" }
-                    ],
+                        "then": { "$ref": "#/definitions/expression" },
+                        "else": { "enum": ["horizontal", "vertical", "angular", "radial", null] }
+                    },
                     "description": "null: no position, e.g. a y dim of the sizes of points. Places the scale on the plot, horizontal and vertical in the cartesian coordinate system, angular and radial in the polar one."
                 },
                 "domain": {
@@ -524,7 +656,9 @@
                     "description": "The domain taken from the data is symmetric around this value, e.g. 0 of changes."
                 },
                 "closed": {
-                    "enum": ["left", "right"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["left", "right"] },
                     "description": "The end of the classes of a threshold scale they include, the lower one (left, value >= limit) or the upper one (right, value > limit).",
                     "default": "left"
                 },
@@ -588,7 +722,11 @@
                 },
                 "order": {
                     "anyOf": [
-                        { "enum": ["ascending", "descending"] },
+                        {
+                            "if": { "type": "string", "pattern": "^=" },
+                            "then": { "type": "string", "pattern": "^=" },
+                            "else": { "enum": ["ascending", "descending"] }
+                        },
                         {
                             "type": "object",
                             "additionalProperties": false,
@@ -653,7 +791,9 @@
             "additionalProperties": false,
             "properties": {
                 "position": {
-                    "enum": ["top", "bottom", "left", "right", "angular", "radial"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["top", "bottom", "left", "right", "angular", "radial"] },
                     "description": "top, bottom, left or right of the cartesian coordinate system, angular (around the circle) or radial (from the center) of the polar one."
                 },
                 "at": {
@@ -665,7 +805,9 @@
                     "description": "The angle of a radial axis in degrees, clockwise from the top, 0 by default."
                 },
                 "gridShape": {
-                    "enum": ["circle", "polygon"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["circle", "polygon"] },
                     "description": "The grid lines of a radial axis, circles or polygons through the ticks of the angle, e.g. of radar charts."
                 },
                 "ticks": {
@@ -689,7 +831,9 @@
                     "description": "Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or [\"2004\", \"2008\"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth."
                 },
                 "format": {
-                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": { "$ref": "#/definitions/inLanguages" },
                     "description": "A d3 number or time format."
                 },
                 "labels": {
@@ -702,7 +846,9 @@
                         },
                         "props": { "$ref": "#/definitions/props" },
                         "at": {
-                            "enum": ["edge", "axis"],
+                            "if": { "type": "string", "pattern": "^=" },
+                            "then": { "type": "string", "pattern": "^=" },
+                            "else": { "enum": ["edge", "axis"] },
                             "description": "Of an axis at a value (`at`): the labels at the edge of the plot area (edge, by default), only the line and the tick marks at the value, or with them (axis), without the label where the other axis crosses.",
                             "default": "edge"
                         },
@@ -743,13 +889,19 @@
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "name": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }] },
+                        "name": {
+                            "if": { "type": "string" },
+                            "then": { "type": "string" },
+                            "else": { "$ref": "#/definitions/inLanguages" }
+                        },
                         "offset": {
                             "type": "number",
                             "description": "The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults)."
                         },
                         "position": {
-                            "enum": ["side", "top"],
+                            "if": { "type": "string", "pattern": "^=" },
+                            "then": { "type": "string", "pattern": "^=" },
+                            "else": { "enum": ["side", "top"] },
                             "description": "Of a vertical axis: beside it, rotated, in the middle of the range of its scale (side), or horizontal above its range (top), e.g. the unit at the top left, starting at the distance offset from the axis.",
                             "default": "side"
                         },
@@ -770,12 +922,20 @@
         "legendSymbol": {
             "anyOf": [
                 { "type": "null" },
-                { "enum": ["line", "rect", "circle", "auto"] },
+                {
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["line", "rect", "circle", "auto"] }
+                },
                 {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "type": { "enum": ["line", "rect", "circle", "auto"] },
+                        "type": {
+                            "if": { "type": "string", "pattern": "^=" },
+                            "then": { "type": "string", "pattern": "^=" },
+                            "else": { "enum": ["line", "rect", "circle", "auto"] }
+                        },
                         "size": { "type": "number" },
                         "width": {
                             "type": "number",
@@ -820,27 +980,91 @@
             "additionalProperties": false,
             "properties": {
                 "position": {
-                    "anyOf": [
-                        { "enum": ["top", "bottom", "left", "right"] },
-                        {
-                            "type": "string",
-                            "pattern": "^[=@]",
-                            "description": "An expression in its string syntax, e.g. \"=@innerWidth * 0.5\", or a reference \"@name\", e.g. to a global."
+                    "if": { "type": "string", "pattern": "^[=@]" },
+                    "then": {
+                        "type": "string",
+                        "pattern": "^[=@]",
+                        "description": "An expression in its string syntax, e.g. \"=@innerWidth * 0.5\", or a reference \"@name\", e.g. to a global."
+                    },
+                    "else": {
+                        "if": {
+                            "type": "object",
+                            "maxProperties": 1,
+                            "propertyNames": {
+                                "enum": [
+                                    "+",
+                                    "-",
+                                    "*",
+                                    "/",
+                                    "min",
+                                    "max",
+                                    "round",
+                                    "==",
+                                    "!=",
+                                    "<",
+                                    "<=",
+                                    ">",
+                                    ">=",
+                                    "not",
+                                    "cat",
+                                    "if",
+                                    "and",
+                                    "or",
+                                    "steps",
+                                    "match",
+                                    "format",
+                                    "literal",
+                                    "var"
+                                ]
+                            }
                         },
-                        { "$ref": "#/definitions/expression" }
-                    ],
+                        "then": { "$ref": "#/definitions/expression" },
+                        "else": { "enum": ["top", "bottom", "left", "right"] }
+                    },
                     "description": "The place of the legend, above or below the plots or beside them, the plots have the rest of the width, an expression of totalWidth (the width of the visualisation), e.g. below the plots of a phone."
                 },
                 "orientation": {
-                    "anyOf": [
-                        { "enum": ["horizontal", "vertical"] },
-                        {
-                            "type": "string",
-                            "pattern": "^[=@]",
-                            "description": "An expression in its string syntax, e.g. \"=@innerWidth * 0.5\", or a reference \"@name\", e.g. to a global."
+                    "if": { "type": "string", "pattern": "^[=@]" },
+                    "then": {
+                        "type": "string",
+                        "pattern": "^[=@]",
+                        "description": "An expression in its string syntax, e.g. \"=@innerWidth * 0.5\", or a reference \"@name\", e.g. to a global."
+                    },
+                    "else": {
+                        "if": {
+                            "type": "object",
+                            "maxProperties": 1,
+                            "propertyNames": {
+                                "enum": [
+                                    "+",
+                                    "-",
+                                    "*",
+                                    "/",
+                                    "min",
+                                    "max",
+                                    "round",
+                                    "==",
+                                    "!=",
+                                    "<",
+                                    "<=",
+                                    ">",
+                                    ">=",
+                                    "not",
+                                    "cat",
+                                    "if",
+                                    "and",
+                                    "or",
+                                    "steps",
+                                    "match",
+                                    "format",
+                                    "literal",
+                                    "var"
+                                ]
+                            }
                         },
-                        { "$ref": "#/definitions/expression" }
-                    ],
+                        "then": { "$ref": "#/definitions/expression" },
+                        "else": { "enum": ["horizontal", "vertical"] }
+                    },
                     "description": "The direction of the scale of the colors, a vertical one has the high values at the top, an expression of totalWidth (the width of the visualisation)."
                 },
                 "classes": {
@@ -859,19 +1083,27 @@
                     "description": "The ticks of a gradient of colors, e.g. [0, 50, 100]."
                 },
                 "labels": {
-                    "enum": ["before", "after"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["before", "after"] },
                     "description": "The labels of the scale of colors after it (below, right of a vertical one) or before it.",
                     "default": "after"
                 },
                 "format": {
-                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": { "$ref": "#/definitions/inLanguages" },
                     "description": "The format of the values of the colors of a scale, by default the one of the hover."
                 },
                 "missing": {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "name": { "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }] },
+                        "name": {
+                            "if": { "type": "string" },
+                            "then": { "type": "string" },
+                            "else": { "$ref": "#/definitions/inLanguages" }
+                        },
                         "color": { "type": "string", "description": "By default #EEE." }
                     },
                     "description": "An entry of the regions without a value beside the colors of a scale, e.g. { \"name\": \"no data\", \"color\": \"#EEE\" }.",
@@ -892,7 +1124,9 @@
             "description": "The props of a category (name, color, visible, legend, symbol and any attribute of the marks of the category, e.g. \"stroke-width\"), a text is its color.",
             "properties": {
                 "name": {
-                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": { "$ref": "#/definitions/inLanguages" },
                     "description": "The key by default."
                 },
                 "color": {
@@ -921,7 +1155,9 @@
                     "default": true
                 },
                 "format": {
-                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": { "$ref": "#/definitions/inLanguages" },
                     "description": "By default the format of the axis."
                 },
                 "props": {
@@ -953,15 +1189,21 @@
                     "description": "The column of the data, can be a template of globals, e.g. \"{values}{share}\", see controls."
                 },
                 "name": {
-                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": { "$ref": "#/definitions/inLanguages" },
                     "description": "The title of the legend (the title of the axis is axis.title)."
                 },
                 "type": {
-                    "enum": ["numeric", "date", "categorical"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["numeric", "date", "categorical"] },
                     "description": "Without a type it follows from the other parts (categories or a band, point or ordinal scale are categorical, a time or utc scale date, other scales numeric, a dim of the facets categorical, not one only used as `by` of a mark) or from the values of the column: numbers numeric, dates date, otherwise categorical (a column without values, e.g. of empty data, date of a time format of the dim, its axis or its hover, otherwise categorical). Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values are strings of every format of the data, e.g. \"2004\" of the number 2004 of JSON or parquet."
                 },
                 "format": {
-                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": { "$ref": "#/definitions/inLanguages" },
                     "description": "The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. \",.0f\"."
                 },
                 "interval": {
@@ -969,10 +1211,26 @@
                     "pattern": "^\\s*([1-9]\\d*)?\\s*(day|week|month|quarter|half|year)s?\\s*$",
                     "description": "Of a date dim of a time or utc scale: a value is the period starting at it, day, week, month, quarter, half (a year), year or a number of them, e.g. \"6 months\": the domain of the data reaches the end of the last period; @x:scaled (also @x:scaled:center) is the middle of the period of a row, so bars, points, lines and the hover are in the middle of their period, @x:scaled:start and @x:scaled:end are its start and end, @x:step its length in pixels (bars 80% of it by default); ticks, grid lines and annotations stay at their dates; the hover shows the period, e.g. H2 2023 (%K is the half of the year in formats)."
                 },
-                "scale": { "anyOf": [{ "$ref": "#/definitions/scale" }, { "$ref": "#/definitions/removed" }] },
-                "axis": { "anyOf": [{ "$ref": "#/definitions/axis" }, { "$ref": "#/definitions/removed" }] },
-                "legend": { "anyOf": [{ "$ref": "#/definitions/legend" }, { "$ref": "#/definitions/removed" }] },
-                "hover": { "anyOf": [{ "$ref": "#/definitions/dimHover" }, { "$ref": "#/definitions/removed" }] },
+                "scale": {
+                    "if": { "type": "object" },
+                    "then": { "$ref": "#/definitions/scale" },
+                    "else": { "$ref": "#/definitions/removed" }
+                },
+                "axis": {
+                    "if": { "type": "object" },
+                    "then": { "$ref": "#/definitions/axis" },
+                    "else": { "$ref": "#/definitions/removed" }
+                },
+                "legend": {
+                    "if": { "type": "object" },
+                    "then": { "$ref": "#/definitions/legend" },
+                    "else": { "$ref": "#/definitions/removed" }
+                },
+                "hover": {
+                    "if": { "type": "object" },
+                    "then": { "$ref": "#/definitions/dimHover" },
+                    "else": { "$ref": "#/definitions/removed" }
+                },
                 "domain": {
                     "anyOf": [
                         { "type": "array", "items": { "$ref": "#/definitions/domainValue" }, "minItems": 1 },
@@ -1069,7 +1327,11 @@
                 },
                 "order": {
                     "anyOf": [
-                        { "enum": ["ascending", "descending"] },
+                        {
+                            "if": { "type": "string", "pattern": "^=" },
+                            "then": { "type": "string", "pattern": "^=" },
+                            "else": { "enum": ["ascending", "descending"] }
+                        },
                         { "type": "array", "items": { "$ref": "#/definitions/key" } }
                     ],
                     "description": "The order of the categories: the one of categories (keys which are integers ascending first), ascending, descending (numbers by their value) or a list of keys which are first."
@@ -1105,8 +1367,71 @@
             "description": "A mark, a layer of the chart: its type and the dims of its channels (x, y, ...), the attributes of its elements (e.g. \"stroke-width\": 2, \"fill\": \"@color\" of its categories), expressions of the row, the names of the facet and the globals, nested props, e.g. d of a path.",
             "properties": {
                 "type": {
-                    "anyOf": [
-                        {
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": {
+                        "if": { "type": "string", "pattern": "^[a-z][\\w-]*(:[\\w-]+)?$" },
+                        "then": {
+                            "anyOf": [
+                                {
+                                    "enum": [
+                                        "arc",
+                                        "area",
+                                        "bar",
+                                        "base",
+                                        "cell",
+                                        "circle",
+                                        "label",
+                                        "line",
+                                        "mesh",
+                                        "point",
+                                        "rect",
+                                        "region",
+                                        "rule",
+                                        "text"
+                                    ],
+                                    "description": "A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y, e.g. of a heatmap."
+                                },
+                                {
+                                    "enum": [
+                                        "svg:circle",
+                                        "svg:line",
+                                        "svg:rect",
+                                        "svg:text",
+                                        "cartesian:line",
+                                        "cartesian:area",
+                                        "cartesian:rule",
+                                        "cartesian:bar",
+                                        "polar:line",
+                                        "polar:area",
+                                        "polar:arc",
+                                        "polar:circle",
+                                        "polar:text",
+                                        "geo:base",
+                                        "geo:region",
+                                        "geo:circle",
+                                        "geo:text",
+                                        "geo:mesh",
+                                        "annotation:band",
+                                        "annotation:line",
+                                        "annotation:text",
+                                        "annotation:circle"
+                                    ],
+                                    "description": "The full name of a type of a coordinate system, as the name without the prefix. The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations."
+                                },
+                                {
+                                    "type": "string",
+                                    "pattern": "^[a-z][\\w-]*:[\\w-]+$",
+                                    "description": "A registered plot type, see registerPlotType."
+                                },
+                                {
+                                    "type": "string",
+                                    "pattern": "^[a-z][\\w-]*$",
+                                    "description": "A registered plot type of the coordinate system without its prefix, see registerPlotType."
+                                }
+                            ]
+                        },
+                        "else": {
                             "enum": [
                                 "arc",
                                 "area",
@@ -1121,12 +1446,7 @@
                                 "rect",
                                 "region",
                                 "rule",
-                                "text"
-                            ],
-                            "description": "A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y, e.g. of a heatmap."
-                        },
-                        {
-                            "enum": [
+                                "text",
                                 "svg:circle",
                                 "svg:line",
                                 "svg:rect",
@@ -1149,20 +1469,9 @@
                                 "annotation:line",
                                 "annotation:text",
                                 "annotation:circle"
-                            ],
-                            "description": "The full name of a type of a coordinate system, as the name without the prefix. The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations."
-                        },
-                        {
-                            "type": "string",
-                            "pattern": "^[a-z][\\w-]*:[\\w-]+$",
-                            "description": "A registered plot type, see registerPlotType."
-                        },
-                        {
-                            "type": "string",
-                            "pattern": "^[a-z][\\w-]*$",
-                            "description": "A registered plot type of the coordinate system without its prefix, see registerPlotType."
+                            ]
                         }
-                    ],
+                    },
                     "description": "The type of the mark, line, area, bar, rule, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ."
                 },
                 "id": {
@@ -1225,11 +1534,15 @@
                     "description": "Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position; texts: the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines."
                 },
                 "orient": {
-                    "enum": ["horizontal", "vertical"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["horizontal", "vertical"] },
                     "description": "Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y."
                 },
                 "anchor": {
-                    "enum": ["start", "end", "top", "bottom", "center"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["start", "end", "top", "bottom", "center"] },
                     "description": "Labels: the text beside its position, after it (end, e.g. of horizontal bars), before it (start), above it (top), below it (bottom) or on it (center)."
                 },
                 "filter": {
@@ -1245,19 +1558,23 @@
                     "description": "The rows of the mark, an expression of the row or the values of dims, see filter of the definition."
                 },
                 "curve": {
-                    "enum": [
-                        "linear",
-                        "monotoneX",
-                        "natural",
-                        "catmullRom",
-                        "basis",
-                        "step",
-                        "stepBefore",
-                        "stepAfter",
-                        "linearClosed",
-                        "catmullRomClosed",
-                        "basisClosed"
-                    ],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": {
+                        "enum": [
+                            "linear",
+                            "monotoneX",
+                            "natural",
+                            "catmullRom",
+                            "basis",
+                            "step",
+                            "stepBefore",
+                            "stepAfter",
+                            "linearClosed",
+                            "catmullRomClosed",
+                            "basisClosed"
+                        ]
+                    },
                     "description": "The interpolation of the paths and areas between their points, monotoneX is smooth without overshooting the values, the closed ones connect the last point with the first one, e.g. of radar charts.",
                     "default": "linear"
                 },
@@ -1271,7 +1588,11 @@
                 },
                 "select": {
                     "anyOf": [
-                        { "enum": ["first", "last"] },
+                        {
+                            "if": { "type": "string", "pattern": "^=" },
+                            "then": { "type": "string", "pattern": "^=" },
+                            "else": { "enum": ["first", "last"] }
+                        },
                         {
                             "type": "object",
                             "additionalProperties": false,
@@ -1283,7 +1604,9 @@
                     "description": "One row of every group: the first or the last one, or the one with the least or the most value of a dim, e.g. labels at the ends of lines."
                 },
                 "layer": {
-                    "enum": ["below", "above"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["below", "above"] },
                     "description": "below: below the axes and grid lines, above: above the other marks, between them by default."
                 },
                 "facet": {
@@ -1296,7 +1619,9 @@
                 "place": {
                     "anyOf": [
                         {
-                            "enum": ["pole", "centroid"],
+                            "if": { "type": "string", "pattern": "^=" },
+                            "then": { "type": "string", "pattern": "^=" },
+                            "else": { "enum": ["pole", "centroid"] },
                             "description": "geo:text: a label at the pole of inaccessibility of the largest polygon of its feature, the point farthest from its edges (default), or at its centroid.",
                             "default": "pole"
                         },
@@ -1332,7 +1657,9 @@
                     "default": true
                 },
                 "ends": {
-                    "enum": ["base", "open"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["base", "open"] },
                     "description": "Of the stairs of a line of x0 and x1: down to the base at both ends (base) or from the first step to the last one (open), e.g. of shares.",
                     "default": "base"
                 },
@@ -1345,7 +1672,9 @@
                     "description": "geo:mesh: the object of the TopoJSON of the borders, the one of the geometry by default, e.g. the states above the districts."
                 },
                 "borders": {
-                    "enum": ["all", "inner", "outer"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["all", "inner", "outer"] },
                     "description": "geo:mesh: all borders, the ones between two features (inner) or the outline (outer).",
                     "default": "all"
                 },
@@ -1385,11 +1714,15 @@
                 "type": { "enum": ["band", "line", "text", "circle"] },
                 "props": { "$ref": "#/definitions/props" },
                 "label": {
-                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": { "$ref": "#/definitions/inLanguages" },
                     "description": "A label of a band or a line, a template of the globals."
                 },
                 "text": {
-                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": { "$ref": "#/definitions/inLanguages" },
                     "description": "The text of a text, a template of the globals."
                 },
                 "above": { "type": "boolean", "description": "Above the marks, below them by default, as layer above." },
@@ -1446,7 +1779,11 @@
                 },
                 "rowHeaders": {
                     "anyOf": [
-                        { "enum": ["left", "right"] },
+                        {
+                            "if": { "type": "string", "pattern": "^=" },
+                            "then": { "type": "string", "pattern": "^=" },
+                            "else": { "enum": ["left", "right"] }
+                        },
                         {
                             "type": "object",
                             "additionalProperties": false,
@@ -1467,7 +1804,9 @@
                     "default": "right"
                 },
                 "axisTitles": {
-                    "enum": ["all", "outer"],
+                    "if": { "type": "string", "pattern": "^=" },
+                    "then": { "type": "string", "pattern": "^=" },
+                    "else": { "enum": ["all", "outer"] },
                     "description": "The titles of the axes in every facet (all) or only at the outer ones (outer): of the bottom axis in the bottom row, of the left one in the first column, of the right one in the last column, of the top one in the first row.",
                     "default": "all"
                 },
@@ -1485,7 +1824,9 @@
                 "scales": {
                     "anyOf": [
                         {
-                            "enum": ["own", "shared"],
+                            "if": { "type": "string", "pattern": "^=" },
+                            "then": { "type": "string", "pattern": "^=" },
+                            "else": { "enum": ["own", "shared"] },
                             "description": "Every facet has its own scales (own, the default) or all facets share the scales of their dims (shared)."
                         },
                         {
@@ -1540,31 +1881,42 @@
                     "additionalProperties": true,
                     "properties": {
                         "type": {
-                            "enum": [
-                                "albers",
-                                "albersUsa",
-                                "azimuthalEqualArea",
-                                "azimuthalEquidistant",
-                                "conicConformal",
-                                "conicEqualArea",
-                                "conicEquidistant",
-                                "equalEarth",
-                                "equirectangular",
-                                "gnomonic",
-                                "identity",
-                                "mercator",
-                                "naturalEarth1",
-                                "orthographic",
-                                "stereographic",
-                                "transverseMercator"
-                            ],
+                            "if": { "type": "string", "pattern": "^=" },
+                            "then": { "type": "string", "pattern": "^=" },
+                            "else": {
+                                "enum": [
+                                    "albers",
+                                    "albersUsa",
+                                    "azimuthalEqualArea",
+                                    "azimuthalEquidistant",
+                                    "conicConformal",
+                                    "conicEqualArea",
+                                    "conicEquidistant",
+                                    "equalEarth",
+                                    "equirectangular",
+                                    "gnomonic",
+                                    "identity",
+                                    "mercator",
+                                    "naturalEarth1",
+                                    "orthographic",
+                                    "stereographic",
+                                    "transverseMercator"
+                                ]
+                            },
                             "default": "mercator"
                         }
                     },
                     "description": "A d3 projection (type, mercator by default) and its parameters, e.g. rotate, center or parallels."
                 },
                 "fit": {
-                    "anyOf": [{ "enum": ["all", "data"] }, { "type": "array", "items": { "$ref": "#/definitions/key" } }],
+                    "anyOf": [
+                        {
+                            "if": { "type": "string", "pattern": "^=" },
+                            "then": { "type": "string", "pattern": "^=" },
+                            "else": { "enum": ["all", "data"] }
+                        },
+                        { "type": "array", "items": { "$ref": "#/definitions/key" } }
+                    ],
                     "description": "The features the projection is fitted to, all (default), the ones with data or a list of keys."
                 }
             },
@@ -1583,7 +1935,9 @@
                     "description": "The global the control sets, the parts of the definition refer to it in expressions, e.g. \"=match(@scale, {log: 'log'}, 'linear')\"."
                 },
                 "name": {
-                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": { "$ref": "#/definitions/inLanguages" },
                     "description": "The label of the control."
                 },
                 "id": {
@@ -1596,36 +1950,35 @@
                     "default": true
                 },
                 "values": {
-                    "oneOf": [
-                        {
-                            "type": "array",
-                            "items": {
-                                "anyOf": [
-                                    { "$ref": "#/definitions/controlValue" },
-                                    { "type": "string", "description": "A value, also its name and id." },
-                                    { "type": "number", "description": "A value, also its name and id." }
-                                ]
-                            },
-                            "description": "The entries, values with their names, or values."
+                    "if": { "type": "array" },
+                    "then": {
+                        "type": "array",
+                        "items": {
+                            "anyOf": [
+                                { "$ref": "#/definitions/controlValue" },
+                                { "type": "string", "description": "A value, also its name and id." },
+                                { "type": "number", "description": "A value, also its name and id." }
+                            ]
                         },
-                        {
-                            "type": "object",
-                            "additionalProperties": false,
-                            "properties": {
-                                "column": { "type": "string" },
-                                "format": {
-                                    "type": "string",
-                                    "description": "The format of the names of the values in the locale: of dates a time format, e.g. \"%b %Y\" (Okt 2026), \"%K. Halbjahr %Y\", a number format otherwise."
-                                },
-                                "names": {
-                                    "type": "string",
-                                    "description": "The column of the names of the values, of the first row of a value, e.g. monthName."
-                                }
+                        "description": "The entries, values with their names, or values."
+                    },
+                    "else": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "column": { "type": "string" },
+                            "format": {
+                                "type": "string",
+                                "description": "The format of the names of the values in the locale: of dates a time format, e.g. \"%b %Y\" (Okt 2026), \"%K. Halbjahr %Y\", a number format otherwise."
                             },
-                            "description": "The distinct values of a column of the data, ascending.",
-                            "required": ["column"]
-                        }
-                    ]
+                            "names": {
+                                "type": "string",
+                                "description": "The column of the names of the values, of the first row of a value, e.g. monthName."
+                            }
+                        },
+                        "description": "The distinct values of a column of the data, ascending.",
+                        "required": ["column"]
+                    }
                 }
             },
             "description": "A control of a global, e.g. { \"type\": \"radio\", \"global\": \"scale\", \"values\": [\"linear\", \"log\"] }: its value is the one of the global, the parts of the definition are expressions of it."
@@ -1646,7 +1999,9 @@
                     "description": "The value of the global while the entry is selected."
                 },
                 "name": {
-                    "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }],
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": { "$ref": "#/definitions/inLanguages" },
                     "description": "The value by default."
                 },
                 "id": { "type": "string", "description": "The value by default, of the merge with the entries of a parent." },
