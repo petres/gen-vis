@@ -2,6 +2,7 @@
 // utils/transform.js
 export { applyTransforms, transformTypes, randomOf };
 
+import { quantile } from "d3-array";
 import { toDate, toNumber } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
 import { bind, constant, refNames } from "@/utils/expr";
@@ -73,15 +74,33 @@ const dateOnly = /^\d{4}(-\d{2}(-\d{2})?)?$/;
 
 // the aggregate of numbers (`op`): the sum, mean, least or largest one, the
 // number of them (0 of none), the median (the mean of the two middle ones of
-// an even number) or the first or the last one, none of no numbers
-const aggregateOps = ['sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last'];
-const checkOp = op => {
-    if (!aggregateOps.includes(op))
+// an even number), the quartiles (`q1`, `q3`) or the quantile `p` (between
+// 0 and 1, interpolated between the two nearest values as the median, the
+// R-7 rule of d3-array, Excel and R) or the first or the last one, none of
+// no numbers
+const aggregateOps = ['sum', 'mean', 'min', 'max', 'count', 'median', 'q1', 'q3', 'quantile', 'first', 'last'];
+const checkOp = t => {
+    if (!aggregateOps.includes(t.op))
         throw new Error(`aggregate: the op is one of ${aggregateOps.map(o => `'${o}'`).join(', ')}`);
+    probabilityOf(t.op, t);
 };
-const aggregateOf = (op, values) => {
+// the probability of a quantile op, of `p` of the transform
+const quantiles = { median: 0.5, q1: 0.25, q3: 0.75 };
+const probabilityOf = (op, t) => {
+    if (op != 'quantile')
+        return quantiles[op];
+    const p = toNumber(t?.p);
+    if (p === null || p < 0 || p > 1)
+        throw new Error(`${t?.type ?? 'aggregate'}: the quantile needs 'p', a number from 0 to 1, e.g. 0.9`);
+    return p;
+};
+const aggregateOf = (op, values, t) => {
     if (op == 'count')
         return values.length;
+    if (Object.hasOwn(quantiles, op) || op == 'quantile') {
+        const p = probabilityOf(op, t);
+        return values.length == 0 ? null : quantile(values, p);
+    }
     if (values.length == 0)
         return null;
     switch (op) {
@@ -91,18 +110,13 @@ const aggregateOf = (op, values) => {
     case 'max': return values.reduce((a, b) => Math.max(a, b));
     case 'first': return values[0];
     case 'last': return values[values.length - 1];
-    case 'median': {
-        const sorted = [...values].sort((a, b) => a - b);
-        const mid = sorted.length >> 1;
-        return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid])/2;
-    }
     default:
-        throw new Error(`aggregate: the op is one of 'sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last'`);
+        throw new Error(`aggregate: the op is one of ${aggregateOps.map(o => `'${o}'`).join(', ')}`);
     }
 };
 
 /**
- * The sum, mean, least or largest value (`op`) of the values of `size` rows
+ * The sum, mean, least or largest value, the median or a quantile (`op`) of the values of `size` rows
  * of the group in their order, the ones before (`"align": "end"`, by
  * default) or around the row (`"center"`), missing values are left out,
  * only of whole windows, a row without a value has none, as of cumulative.
@@ -113,8 +127,11 @@ const slide = (t, { n, numbers, groups }, op) => {
     const result = new Array(n).fill(null);
     const size = Math.max(1, Math.round(toNumber(t.size) ?? 1));
     const before = t.align == 'center' ? Math.floor((size - 1)/2) : size - 1;
-    // the least or the largest value of the window, of the values in it
-    const extreme = (values, start, end) => {
+    // the least or the largest value, the median or a quantile of the
+    // window, of the values in it
+    const ofWindow = (values, start, end) => {
+        if (op != 'min' && op != 'max')
+            return aggregateOf(op, values.slice(start, end + 1).filter(v => v !== null), t);
         let result = null;
         for (let k = start; k <= end; k++)
             if (values[k] !== null)
@@ -146,7 +163,7 @@ const slide = (t, { n, numbers, groups }, op) => {
                 result[g[start + before]] = count == 0 ? null
                     : op == 'mean' ? (sum + compensation)/count
                     : op == 'sum' ? sum + compensation
-                    : extreme(values, start, end);
+                    : ofWindow(values, start, end);
         }
     });
     return result;
@@ -467,14 +484,14 @@ const foldRows = (t, { n, get, names }) => {
 // of the group (as they are) and the aggregate (`as`), without `by` one row
 // of all rows, also without rows
 const aggregateRows = (t, { n, get, numbers, groups }) => {
-    checkOp(t.op);
+    checkOp(t);
     const by = [t.by ?? []].flat();
     const all = by.length == 0 ? [Array.from({ length: n }, (_, i) => i)] : groups;
     const as = t.as ?? t.column;
     const rows = all.map(g => {
         const first = g.reduce((a, b) => Math.min(a, b), Infinity);
         const keys = Object.fromEntries(by.map(c => [c, get(first, c) ?? null]));
-        return { ...keys, [as]: aggregateOf(t.op, g.map(numbers).filter(v => v !== null)) };
+        return { ...keys, [as]: aggregateOf(t.op, g.map(numbers).filter(v => v !== null), t) };
     });
     // the aggregate replaces a column of the groups of its name
     const notes = by.includes(as) ? [`the aggregate '${as}' replaces the column '${as}' of 'by', see 'as'`] : [];
@@ -486,13 +503,17 @@ const aggregateRows = (t, { n, get, numbers, groups }) => {
 // the one before: the difference (`diff`) or the change in percent
 // (`pct`, none of a value before of 0), none at the ends of the group or
 // of a missing value; or the sum, mean, least or largest value of a
-// window of `size` rows, as rolling (`sum`, `mean`, `min`, `max`)
+// window of `size` rows, as rolling (`sum`, `mean`, `min`, `max`, `median`,
+// `q1`, `q3`, `quantile` of `p`), e.g. a rolling median
+const windowOps = ['sum', 'mean', 'min', 'max', 'median', 'q1', 'q3', 'quantile'];
 const windowOf = (t, context) => {
     const { n, numbers, groups } = context;
-    if (['sum', 'mean', 'min', 'max'].includes(t.op))
+    if (windowOps.includes(t.op)) {
+        probabilityOf(t.op, t);
         return slide(t, context, t.op);
+    }
     if (!['lag', 'lead', 'diff', 'pct'].includes(t.op))
-        throw new Error(`window: the op is one of 'lag', 'lead', 'diff', 'pct', 'sum', 'mean', 'min', 'max'`);
+        throw new Error(`window: the op is one of ${['lag', 'lead', 'diff', 'pct', ...windowOps].map(o => `'${o}'`).join(', ')}`);
     const result = new Array(n).fill(null);
     const offset = Math.round(toNumber(t.offset) ?? 1);
     // the values of lag and lead: numbers, other values as they are, e.g.
@@ -517,15 +538,15 @@ const windowOf = (t, context) => {
 };
 
 // an aggregate of the values of the group: their sum, mean, least or
-// largest value, number (`count`), median, first or last one in their
+// largest value, number (`count`), median, quartile or quantile, first or last one in their
 // order (`op`), missing values are left out, a value of every row of the
 // group, e.g. the total of a country of all years; with `rows` a row per
 // group instead, see aggregateRows
 const aggregateOfGroups = (t, { n, numbers, groups }) => {
-    checkOp(t.op);
+    checkOp(t);
     const result = new Array(n).fill(null);
     groups.forEach(g => {
-        const value = aggregateOf(t.op, g.map(numbers).filter(v => v !== null));
+        const value = aggregateOf(t.op, g.map(numbers).filter(v => v !== null), t);
         g.forEach(i => result[i] = value);
     });
     return result;

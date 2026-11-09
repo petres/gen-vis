@@ -276,6 +276,11 @@ per group with `rows`) and `window` (`lag`, `lead`, `diff`, `pct` of
 of which `rolling` is a case). The transforms of rows share one mechanism,
 their rows replace the rows or follow them. Fixtures in `spec/transforms`.
 
+- The quartiles and quantiles of `aggregate` and `window`: `q1`, `q3` and
+  `quantile` of `p` (0 to 1), interpolated as the `median` (R-7), e.g. the
+  box and the whiskers of a box plot; `median` also of a window, a rolling
+  median.
+
 ### Schema, check and migration
 
 - The schema is written in JavaScript, `src/schema/definition.js` (a

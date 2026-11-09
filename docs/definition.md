@@ -360,7 +360,11 @@ column:
   of the transform says so.
 - `aggregate`: an aggregate of the values of `column` of the group (`op`):
   `sum`, `mean`, `min`, `max`, `count` (the number of values), `median`,
-  `first` or `last` (in the order of `order`), missing values are left out.
+  `q1` and `q3` (the lower and the upper quartile), `quantile` (of `p`, from
+  0 to 1, e.g. `"p": 0.9`), `first` or `last` (in the order of `order`),
+  missing values are left out. The median, the quartiles and the quantiles
+  are interpolated between the two nearest values (R-7, as Excel, R and
+  d3), e.g. the box of a box plot, see the [recipes](recipes.md).
   By default a column, the value of every row of the group, e.g. the total
   of a country of all years, `{"type": "aggregate", "column": "value", "by":
   "country", "op": "sum", "as": "total"}`, so a `calc` can divide by it.
@@ -376,9 +380,9 @@ column:
   percent, e.g. the change to the previous month, `{"type": "window",
   "column": "value", "by": "country", "order": "date", "op": "pct", "as":
   "change"}`, without a value at the ends or of a missing one (also of a
-  division by 0). Or the `sum`, `mean`, `min` or `max` of the window of
-  `size` rows, as the mean of `rolling` (`align`), e.g. the sum of the last
-  7 days, `{"type": "window", "column": "cases", "order": "date", "op":
+  division by 0). Or the `sum`, `mean`, `min`, `max`, `median`, `q1`,
+  `q3` or `quantile` (of `p`) of the window of `size` rows, as the mean of
+  `rolling` (`align`), e.g. a rolling median, or the sum of the last 7 days, `{"type": "window", "column": "cases", "order": "date", "op":
   "sum", "size": 7, "as": "week"}`.
 
 The strings of a transform are templates of the globals, e.g. `{base}`, the
