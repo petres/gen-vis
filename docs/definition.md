@@ -1778,11 +1778,21 @@ vertical axis at the horizontal position of the pointer, of horizontal bars
 horizontal one is not) the values of the horizontal axis at the vertical
 position. Of several dims of an orientation, e.g. a second vertical axis,
 the stacked one or the one with a `hover` (or the first one) has the values
-of the hover, the other numeric ones with a `hover` are further columns.
+of the hover, the other ones with a `hover` are further columns (numbers and
+dates in their format, texts of a dim without categories as they are).
 On touch devices it is shown by a tap and stays until a tap outside of the
 plot, horizontal swipes move it, vertical ones scroll the page.
 
-- `columns`: the dims of the hover, by default the dims the marks use,
+The table of the hover has a row per row of the position: a swatch of the
+color of its category (`vis-swatch`, of the first dim of the hover with
+colors), the names of its categories and its values; with more than one
+value a row of the names of the values is above them (`vis-hover-head`, the
+`name` of a dim, else the title of its axis, else its name). The hover of a
+point (`"mode": "point"`) has the names of the categories of the point as
+its title and its horizontal value as a cell, e.g. the country of a point
+of a scatter plot above its x and y.
+
+- `columns`: the dims of the hover beside the value of the position, by default the dims the marks use,
   their `by` and the dims of their positions (`x`, `y`, `y1`, ... of the
   channels; not the dims of the facets, their panels have titles); a dim
   with a `hover` of its own is in it as well, `[]` only those. The columns
@@ -1790,6 +1800,9 @@ plot, horizontal swipes move it, vertical ones scroll the page.
   ```json
   { "hover": { "columns": ["land", "unit"] } }
   ```
+- `value`: `false` leaves out the value of the position (e.g. `y` of a
+  line, `x` of horizontal bars), e.g. of a population pyramid of signed
+  values with the unsigned ones of another dim in the `columns`.
 - `total`: a row of the sum of the stacked values of the position below the
   rows (`true`: the name of the locale, `Gesamt` of `de`, `Total` of `en`,
   `texts.total` of a locale of the definition, or a name, e.g. `"Summe"`),

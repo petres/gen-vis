@@ -183,6 +183,12 @@ maps; the legends and the titles of facets are not in the margins.
 - The PNG is the export SVG drawn on a canvas (`src/utils/raster.js`) with
   the fonts of the package, the same drawing as the SVG and the PDF of the
   CLI (was a screenshot of the DOM of `modern-screenshot`).
+- The hover table: a swatch of the color of the category before each row,
+  a row of the names of the values above them when there are more than one,
+  the values of a dim of texts without categories, the categories of a
+  point as the title of a hover of points (`"mode": "point"`) and its
+  horizontal value as a cell; `hover.value: false` leaves out the value of
+  the position.
 - The categories of a vertical band or point scale without a range of
   its own run from the top down (were from the bottom up), as the rows of a
   table, e.g. horizontal bars and heatmaps; `"reverse": true` puts the first

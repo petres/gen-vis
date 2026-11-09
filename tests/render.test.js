@@ -100,7 +100,8 @@ describe('rendering', () => {
         const el = await mount({ def, data: lineData });
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 300, clientY: 150 }));
         await nextTick();
-        expect([...el.querySelector('.vis-hover tr.vis-hover-entry').children].map(td => [td.getAttribute('data-mapping'), td.className])).toEqual([['c', ''], ['price', 'vis-value']]);
+        // a swatch of the color of the category first
+        expect([...el.querySelector('.vis-hover tr.vis-hover-entry').children].map(td => [td.getAttribute('data-mapping'), td.className])).toEqual([[null, 'vis-swatch'], ['c', ''], ['price', 'vis-value']]);
     });
 
     test('hover at a position with only missing values', async () => {
@@ -617,7 +618,7 @@ describe('events and slots', () => {
         const el = await mount({ def, data: lineData });
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
         await nextTick();
-        const cells = [...el.querySelectorAll('.vis-hover tr.vis-hover-entry')].map(tr => [...tr.cells].map(td => [td.dataset.mapping, td.dataset.prop ?? null, td.textContent]));
+        const cells = [...el.querySelectorAll('.vis-hover tr.vis-hover-entry')].map(tr => [...tr.cells].filter(td => !td.classList.contains('vis-swatch')).map(td => [td.dataset.mapping, td.dataset.prop ?? null, td.textContent]));
         expect(cells).toEqual([
             [['c', null, 'Tirol'], ['c', 'unit', 'Tsd.'], ['y', null, '2,0']],
             [['c', null, 'Wien'], ['c', 'unit', 'Mio.'], ['y', null, '1,0']],
@@ -1568,8 +1569,9 @@ describe('the hover of the nearest point', () => {
         // the plot area is at 0, 0 in jsdom, see tests/dom.js
         events.dispatchEvent(pointer('pointermove', { clientX: cx + 5, clientY: cy - 5 }));
         await nextTick();
-        expect(el.querySelector('.vis-hover-title').textContent).toBe('2023');
-        expect([...el.querySelectorAll('.vis-hover tr')].map(tr => tr.textContent)).toEqual(['Wien4,0']);
+        // the title of a point is its category, its values are the cells, under their names
+        expect(el.querySelector('.vis-hover-title').textContent).toBe('Wien');
+        expect([...el.querySelectorAll('.vis-hover tr')].map(tr => tr.textContent)).toEqual(['Jahry', '20234,0']);
         expect(el.querySelector('.vis-hover-marker line').hasAttribute('x1')).toBe(false);
         // too far from every point
         events.dispatchEvent(pointer('pointermove', { clientX: cx - 60, clientY: cy }));
@@ -1581,7 +1583,7 @@ describe('the hover of the nearest point', () => {
         expect(Math.floor(across/20)).not.toBe(Math.floor(cx/20));
         events.dispatchEvent(pointer('pointermove', { clientX: across, clientY: cy + 1 }));
         await nextTick();
-        expect([...el.querySelectorAll('.vis-hover tr')].map(tr => tr.textContent)).toEqual(['Wien4,0']);
+        expect([...el.querySelectorAll('.vis-hover tr')].map(tr => tr.textContent)).toEqual(['Jahry', '20234,0']);
 
         const { default: polar } = await import('@/coords/polar');
         const { scaleLinear } = await import('d3-scale');
@@ -1663,11 +1665,12 @@ describe('horizontal bars and several value axes', () => {
             const el = await mount({ def, data: lineData });
             el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
             await nextTick();
-            return [...el.querySelectorAll('.vis-hover tr')].map(tr => [...tr.cells].map(td => td.textContent));
+            return [...el.querySelectorAll('.vis-hover tr')].map(tr => [...tr.cells].filter(td => !td.classList.contains('vis-swatch')).map(td => td.textContent));
         };
         expect(await values(def)).toEqual([['Tirol', '2,0'], ['Wien', '1,0']]);
         def.mapping.y2.hover = { format: '.0f' };
-        expect(await values(def)).toEqual([['Tirol', '2,0', '20'], ['Wien', '1,0', '10']]);
+        // two values: a row of their names above
+        expect(await values(def)).toEqual([['', 'y', 'y2'], ['Tirol', '2,0', '20'], ['Wien', '1,0', '10']]);
     });
 });
 
@@ -1922,7 +1925,7 @@ describe('the update of the facets', () => {
         el.querySelector('.vis-legend-entry[data-key="Tirol"]').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
         await nextTick();
         expect(el.querySelectorAll('.vis-hover tr.vis-hover-entry')).toHaveLength(1);
-        expect(el.querySelector('.vis-hover td').textContent).toBe('Wien');
+        expect(el.querySelector('.vis-hover td:not(.vis-swatch)').textContent).toBe('Wien');
     });
 });
 

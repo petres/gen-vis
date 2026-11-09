@@ -226,9 +226,31 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // categorical mappings, and other values with a hover, e.g. of a second vertical axis
         const categories = store.mappingNamesWithKey('hover')
             .filter(n => n != names.h && n != v && store.mapping(n).categoryProps);
+        // the other dims with a hover: numbers and dates in their format, the
+        // values of a dim of texts without categories as they are
         const others = store.mappingNamesWithKey('hover')
-            .filter(n => n != names.h && n != v && !store.mapping(n).categoryProps && ['numeric', 'date'].includes(store.mapping(n).type));
-        const formats = Object.fromEntries(others.map(n => [n, store.valueFormat(n, ctx.scales[n])]));
+            .filter(n => n != names.h && n != v && !store.mapping(n).categoryProps);
+        const formats = Object.fromEntries(others.map(n => [n, ['numeric', 'date'].includes(store.mapping(n).type)
+            ? store.valueFormat(n, ctx.scales[n]) : (x => String(x))]));
+        // the value of the position is a cell unless `"value": false`, e.g. a
+        // hover of only the categories of a map or of other dims
+        const valueCell = hoverOptions().value !== false;
+        // the label of a column, the name of its dim, its axis title or its name
+        const labelOf = n => {
+            const m = store.mapping(n);
+            const title = m.axis?.title;
+            return store.text(m.name ?? (typeof title == 'object' && title !== null ? title.name : title) ?? n) ?? n;
+        };
+        // the color of the category of a row, of the first dim of categories
+        // of the hover with a color, e.g. a swatch beside its name
+        const swatchOf = row => {
+            for (const n of categories) {
+                const color = store.prop(n, row[n])?.color;
+                if (typeof color == 'string' && color)
+                    return color;
+            }
+            return null;
+        };
         // the mappings whose categories style the rows (`hover.row.props`),
         // and the ones of categories as attributes of the rows, e.g. data-type="load"
         const styled = categories.filter(n => store.mapping(n).hover.row?.props);
@@ -328,16 +350,23 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
             const entries = Object.fromEntries(categories.map(n => {
                 const values = evaluate(store.mapping(n).hover.props, { ...scope, ...store.prop(n, row[n]) });
                 const texts = Object.fromEntries(Object.entries(values).map(([k, t]) => [k, store.text(t)]));
-                Object.entries(texts).filter(([, t]) => t !== null && t !== undefined && celled(n))
+                // of a point the categories are the title, see pointTitle
+                Object.entries(texts).filter(([, t]) => t !== null && t !== undefined && celled(n) && !(pointMode && names.h))
                     .forEach(([k, t]) => cells.push({ mapping: n, prop: k == 'name' ? null : k, text: t }));
                 return [n, texts];
             }));
             entries[v] = { value: row[v], name: format.v(row[v]) };
-            cells.push({ mapping: v, value: true, text: entries[v].name });
+            // of a point (a scatter plot) the horizontal value is a cell, the title names the categories
+            if (pointMode && names.h && categories.length > 0) {
+                entries[names.h] = { value: row[names.h], name: format.h(row[names.h]) };
+                cells.push({ mapping: names.h, value: true, text: entries[names.h].name, label: labelOf(names.h) });
+            }
+            if (valueCell)
+                cells.push({ mapping: v, value: true, text: entries[v].name, label: labelOf(v) });
             others.forEach(n => {
                 entries[n] = { value: row[n], name: row[n] === null ? '' : formats[n](row[n]) };
                 if (celled(n))
-                    cells.push({ mapping: n, value: true, text: entries[n].name });
+                    cells.push({ mapping: n, value: true, text: entries[n].name, label: labelOf(n) });
             });
             // the styles of the row, of the props of its categories, the
             // later mappings override the ones before, see hover.js
@@ -347,14 +376,17 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
                 .forEach(([k, s]) => style[k] = String(s)));
             const attrs = Object.fromEntries(keyed.filter(n => row[n] !== null && row[n] !== undefined)
                 .map(n => [dataAttribute(n), String(row[n])]));
-            return { entries, cells, data: row, nearest: row === nearest, order: orderOf(row, rows, stacks), style, attrs };
+            return { entries, cells, swatch: swatchOf(row), data: row, nearest: row === nearest, order: orderOf(row, rows, stacks), style, attrs };
         });
 
         // the rows of the events and the slot, copies of the values of the mappings
         const plain = row => Object.fromEntries(Object.entries(row));
-        const payload = ({ key, rows, nearest }) => ({
+        // the title of a point: the names of the categories of its row, e.g.
+        // the country of a point of a scatter plot, else the horizontal value
+        const pointTitle = row => categories.map(n => store.text(store.prop(n, row?.[n])?.name ?? row?.[n])).filter(t => t !== null && t !== undefined && t !== '').join(' · ');
+        const payload = ({ key, rows, nearest, point }) => ({
             key,
-            title: titleOf(key),
+            title: point && categories.length > 0 && nearest ? pointTitle(nearest) : titleOf(key),
             rows: rows.map(plain),
             nearest: nearest ? plain(nearest) : null,
         });

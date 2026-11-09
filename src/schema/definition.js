@@ -138,7 +138,8 @@ const definitions = {
     ], 'The space around the plot area of a facet in pixels, of the axes and their titles, e.g. { "left": 60 }; a side without one is the one of the styles of the page (--gen-vis-margin-left: 60px, also auto) or of its defaults (registerDefaults, e.g. of a house style), else measured ("auto") of the labels of the axes, their tick marks and their titles; an expression of totalWidth, e.g. steps of it.'),
 
     hover: object({
-        columns: array(string(), 'The dims of the hover (its rows of their values, in this order), by default the dims the marks use, of their `by` and their positions (not the ones of the facets); a dim with a `hover` of its own is in it as well, [] only those.'),
+        columns: array(string(), 'The dims of the hover beside the value of the position (its rows of their values, in this order), by default the dims the marks use, of their `by` and their positions (not the ones of the facets); a dim with a `hover` of its own is in it as well, [] only those.'),
+        value: boolean('The value of the position (e.g. y of a line, x of horizontal bars) as a cell of the rows, true by default; false shows only the categories and the dims of the columns, e.g. the unsigned values of a population pyramid.'),
         total: anyOf([{ type: 'boolean' }, { type: 'string' }, ref('inLanguages')], 'A row of the sum of the stacked values of the position below the rows (true, or its name, e.g. Gesamt), in the format of the values; also {total} of the title.'),
         mode: choice(['position', 'point'], 'The rows of the nearest position of the axis (position, by default) or the row of the nearest point, e.g. of a scatter plot.'),
         radius: number('The distance of the nearest point in pixels, 30 by default.'),

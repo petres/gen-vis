@@ -367,7 +367,11 @@
                 "columns": {
                     "type": "array",
                     "items": { "type": "string" },
-                    "description": "The dims of the hover (its rows of their values, in this order), by default the dims the marks use, of their `by` and their positions (not the ones of the facets); a dim with a `hover` of its own is in it as well, [] only those."
+                    "description": "The dims of the hover beside the value of the position (its rows of their values, in this order), by default the dims the marks use, of their `by` and their positions (not the ones of the facets); a dim with a `hover` of its own is in it as well, [] only those."
+                },
+                "value": {
+                    "type": "boolean",
+                    "description": "The value of the position (e.g. y of a line, x of horizontal bars) as a cell of the rows, true by default; false shows only the categories and the dims of the columns, e.g. the unsigned values of a population pyramid."
                 },
                 "total": {
                     "anyOf": [{ "type": "boolean" }, { "type": "string" }, { "$ref": "#/definitions/inLanguages" }],

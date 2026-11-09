@@ -86,8 +86,10 @@ const createHover = (store, slots) => {
         }
         tr ??= table[totalOf] = table.appendChild(document.createElement('tr'));
         tr.setAttribute('class', 'vis-hover-total');
-        const width = Math.max(...(hover.data ?? []).map(d => d.cells.length), 2);
-        const value = (hover.data?.[0]?.cells ?? []).findIndex(c => c.value);
+        const swatched = (hover.data ?? []).some(d => d.swatch) ? 1 : 0;
+        const width = Math.max(...(hover.data ?? []).map(d => d.cells.length + swatched), 2);
+        const found = (hover.data?.[0]?.cells ?? []).findIndex(c => c.value);
+        const value = found < 0 ? -1 : found + swatched;
         const at = value < 0 ? width - 1 : value;
         tr.replaceChildren(...Array.from({ length: width }, (_, i) => {
             const td = document.createElement('td');
@@ -102,8 +104,35 @@ const createHover = (store, slots) => {
         table.appendChild(tr);
     };
 
-    // the rows of the table of the default content
+    // the row of the names of the values above the rows (`vis-hover-head`),
+    // if a row has more than one value, e.g. x, y and the size of a point
+    const head = (data, swatched) => {
+        const cells = data[0]?.cells ?? [];
+        const named = cells.filter(c => c.value).length > 1;
+        let tr = table.querySelector(':scope > tr.vis-hover-head');
+        if (!named) {
+            tr?.remove();
+            return;
+        }
+        tr ??= table.insertBefore(document.createElement('tr'), table.firstChild);
+        tr.setAttribute('class', 'vis-hover-head');
+        tr.replaceChildren(...[...(swatched ? [{ swatch: true }] : []), ...cells].map(c => {
+            const td = document.createElement('td');
+            if (c.swatch)
+                td.setAttribute('class', 'vis-swatch');
+            if (c.value) {
+                td.setAttribute('class', 'vis-value');
+                td.textContent = c.label ?? '';
+            }
+            return td;
+        }));
+    };
+
+    // the rows of the table of the default content, a swatch of the color
+    // of the category of a row before its cells (`vis-swatch`), if a row has one
     const rows = data => {
+        const swatched = data.some(d => d.swatch);
+        head(data, swatched);
         const tr = join(table, data, { select: 'tr.vis-hover-entry', create: () => document.createElement('tr') });
         tr.forEach((tr, i) => {
             const d = data[i];
@@ -115,7 +144,15 @@ const createHover = (store, slots) => {
             Object.entries(styleOf(d)).forEach(([k, v]) => tr.style.setProperty(k, v));
             Object.entries(d.attrs ?? {}).forEach(([k, v]) => tr.setAttribute(k, v));
             // the cells are new ones
-            tr.replaceChildren(...d.cells.map(c => {
+            const swatch = [];
+            if (swatched) {
+                const td = document.createElement('td');
+                td.setAttribute('class', 'vis-swatch');
+                if (d.swatch)
+                    td.appendChild(el('span', { style: { background: d.swatch } }));
+                swatch.push(td);
+            }
+            tr.replaceChildren(...swatch, ...d.cells.map(c => {
                 const td = document.createElement('td');
                 setAttr(td, 'data-mapping', c.mapping);
                 setAttr(td, 'data-prop', c.prop);

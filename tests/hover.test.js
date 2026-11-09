@@ -231,3 +231,24 @@ describe('the stylesheet of the highlight', () => {
         expect([...el.querySelectorAll('g.vis-group')].map(g => g.style.getPropertyValue('--vis-hl-font-size')).filter(Boolean)).toEqual(['15px', '16px']);
     });
 });
+
+describe('the table of the hover', () => {
+    const def = hover => ({
+        $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', height: 200, hover,
+        dims: { x: { column: 'year', type: 'numeric' }, y: 'value', land: { column: 'land', categories: { Wien: '#C3423F', Tirol: '#4269D0' } }, note: { column: 'note', hover: {} } },
+        marks: { type: 'line', by: 'land' },
+    });
+    const data = 'year,value,land,note\n2020,1,Wien,a\n2021,2,Wien,b\n2020,3,Tirol,c\n2021,4,Tirol,d\n';
+    const table = async hover => {
+        const el = await mount({ def: def(hover), data });
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 5, clientY: 100 }));
+        await nextTick();
+        return [...el.querySelectorAll('.vis-hover tr')].map(tr => [...tr.cells].map(td => td.classList.contains('vis-swatch') ? (td.firstChild?.style.background ? 'swatch' : '') : td.textContent));
+    };
+    test('a swatch of the color of the category, a dim of texts without categories, a row of the names of two values', async () => {
+        expect(await table(undefined)).toEqual([['', '', 'y', 'note'], ['swatch', 'Tirol', '3', 'c'], ['swatch', 'Wien', '1', 'a']]);
+    });
+    test('"value": false leaves out the value of the position', async () => {
+        expect(await table({ value: false })).toEqual([['swatch', 'Tirol', 'c'], ['swatch', 'Wien', 'a']]);
+    });
+});
