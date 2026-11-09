@@ -311,6 +311,46 @@ Migration notes, to check by hand after `gen-vis migrate`:
 - A part without keys of 4.x (e.g. a parent of only `data`) is not
   rewritten, its `$schema` of 4 stays valid.
 
+### Messages, check and CLI
+
+- The messages of the load and the draw speak 5.0 and name the path of the
+  definition: `marks[0].type: unknown mark type 'lines', did you mean
+  'line'?`, `marks[1] ('bars'): the bars of a continuous scale need a
+  'width' ...`, `marks[0]: none of its 66 rows is drawn, 66 without a value
+  of dim 'x' (column 'yaer' is not in the data)`, `facets.by: unknown dim
+  'nope'`, `facets.by.rows`, `dims.y.scale: expected an object`,
+  `dims.y.format: '%,.0f' is no d3 format of numbers`, `geo.data`,
+  `coord`; an error of a mark type or a scale names its mark or dim.
+- `validateDef`: the strings of transforms are templates of the globals
+  (no unknown `"{op}"`); the names of filters are dims, columns and globals
+  (of the rows given the columns of the data and the transforms, without
+  them any plain name may be a column); `facets.by.rows`; the default
+  attributes of a type in the words of 5.0; the names of 5.0 (`point`,
+  `label`, `cell`) in suggestions, a swap of two letters is one edit. New:
+  keys of a mark near a key of a mark (`bye`, `filtr`, `stak`, `curv`,
+  `highligt`) or an attribute of svg (`strok-width`), the keys of a
+  transform its type does not read, a `fold` whose key or value replaces a
+  column, unknown dims of `facets.scales`, number formats d3 has not; of
+  the rows: a dim's column which is no column of the data or the
+  transforms (`dims.x.column: 'yaer' is not a column of the data, did you
+  mean 'year'?`), a channel of neither a dim nor a column, a `by` of a
+  column without a dim, texts in a numeric dim.
+- The schema takes an expression of the globals (`"=..."`) at every name
+  of a fixed list the engine resolves before reading it (`scale.type`,
+  `coord`, `curve`, the mark `type`, `legend.position`, the dim `type`,
+  ...), the types of TypeScript a `` `=${string}` `` beside the names (the
+  string syntax `` `=${string}` | `@${string}` `` instead of `string`). A
+  value of several forms is an if/then/else by its type, so a typo is one
+  error of ajv instead of 3 to 9.
+- `gen-vis check <def.json>... [--data] [--root] [--strict]`: in node, the
+  schema (ajv where it is installed, not a dependency: `validateDef` walks the same schema) and `validateDef` with the rows of the
+  data (CSV, TSV, JSON, parquet), a line per warning, exit code 1 with
+  `--strict`. `gen-vis export` prints the check's warnings first
+  (`--no-check` leaves it out), `--strict` fails a chart of a warning of
+  the check or of the draw. The line of a chart names the pixels of a PNG
+  beside its CSS pixels. `gen-vis --version`. `@preschen/gen-vis/check`
+  exports `parseData`, `dataFormat` and `loadTransforms`.
+
 ### Package and builds
 
 - The deep merge is the package's own (`src/utils/merge.js`, the semantics

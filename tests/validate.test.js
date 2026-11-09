@@ -3,7 +3,7 @@ import { loadColors, registerScheme } from '@/utils/d3';
 import { validateDef, curveNames } from '@/utils/validate';
 import { prepareDef } from '@/utils/def';
 import { normalize } from '@/utils/normalize';
-import { rowFilter } from '@/utils/data';
+import { rowFilter, parseData, dataFormat } from '@/utils/data';
 import { loadTransforms } from '@/utils/transform';
 import { plotTypes, registerPlotType } from '@/plots';
 import { coords, registerCoord } from '@/coords';
@@ -11,7 +11,7 @@ import { resolveParents } from '@/utils/load';
 import { translate } from '@/utils/language';
 import { resolve, namesOfGlobals } from '@/utils/resolve';
 import { definitions } from '@/dev/definitions.js';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 
 // the colors of d3 are loaded by the store, see loadColors
 beforeAll(loadColors);
@@ -32,7 +32,7 @@ const base = () => ({
 
 test('the facets need a known dim', () => {
     expect(validateDef({ ...base(), facets: { by: 'c' } })).toEqual([]);
-    expect(validateDef({ ...base(), facets: { by: 'z' } })).toEqual([`facets.by: unknown dim 'z'`]);
+    expect(validateDef({ ...base(), facets: { by: 'z' } })).toEqual([`facets.by: unknown dim 'z', expected one of 'x', 'y', 'c'`]);
     expect(validateDef({ ...base(), facets: { by: ['c'] } })).toEqual([`facets.by: expected the name of a dim`]);
 });
 
@@ -51,7 +51,10 @@ test('the conditions of a filter: values, not, range and expressions, not other 
     ]);
     // an expression of the rows and the globals
     expect(validateDef({ ...base(), globals: { lo: 2020 }, filter: '@x >= @globals.lo and @c != "Wien"' })).toEqual([]);
-    expect(validateDef({ ...base(), filter: '@x >= @lo' })).toEqual([expect.stringMatching(/^filter\.>=\[1\]: unknown reference 'lo'/)]);
+    // a plain name may be a column of the data, of the rows given the columns are known
+    expect(validateDef({ ...base(), filter: '@x >= @lo' })).toEqual([]);
+    expect(validateDef({ ...base(), filter: '@x >= @lo and @kind != 1' }, [{ year: 2020, value: 1, land: 'Wien', kind: 'a' }]))
+        .toEqual([expect.stringMatching(/^filter\.and\[0\]\.>=\[1\]: unknown reference 'lo'/)]);
 });
 
 test('the symbols of legends, the order and the ranks of categories', () => {
@@ -101,6 +104,16 @@ describe('the example definitions', () => {
         const url = new URL(file, import.meta.url).href;
         const source = await resolveParents(JSON.parse(JSON.stringify(org)), url, u => readFileSync(new URL(u), 'utf8'));
         expect(validateDef(source)).toEqual([]);
+        // with the rows of its data, as gen-vis check does
+        if (typeof source.data == 'string' && !source.data.includes('{')) {
+            const data = new URL(source.data, url);
+            const format = dataFormat(data.href, source.dataFormat);
+            if (existsSync(data)) {
+                await loadTransforms();
+                const rows = await parseData(format == 'parquet' ? readFileSync(data) : readFileSync(data, 'utf8'), format);
+                expect(validateDef(source, rows)).toEqual([]);
+            }
+        }
         const def = translate(resolve(source, namesOfGlobals(source.globals, source.controls)));
         expect(() => prepareDef(normalize(def, { plotTypes }))).not.toThrow();
     });
@@ -127,7 +140,7 @@ describe('validateDef', () => {
             mapping: { x: { column: 'year', type: 'numeric' }, y: { column: 'value', type: 'numeric', nice: 5 }, c: { column: 'land', categories: { Wien: {} } } },
             plot: { type: 'cartesian:line', by: ['z'], props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
         };
-        expect(validateDef(def)).toEqual(["marks[0].by: unknown dim 'z'"]);
+        expect(validateDef(def)).toEqual(["marks[0].by: unknown dim 'z', expected one of 'x', 'y', 'c'"]);
     });
 
     test('the keys of 3.x are unknown: categories of a mark, props of a dim, a text of the highlight', () => {
@@ -226,7 +239,7 @@ describe('validateDef', () => {
         def.marks = [{ ...def.marks, type: 'path', by: ['land'] }];
         expect(validateDef(def)).toEqual([
             expect.stringMatching(/^marks\[0\]\.type: unknown type 'path'/),
-            "marks[0].by: unknown dim 'land'",
+            "marks[0].by: unknown dim 'land', expected one of 'x', 'y', 'c'",
         ]);
     });
 
@@ -639,7 +652,7 @@ describe('validateDef and the schema', () => {
         expect(validateDef(def)).toEqual([
             "dims.y.scale.type: use 'linear'",
             "controls[0].values[1] > dims.y.scale.type: the positions of dates need a 'time' or a 'utc' scale",
-            "controls[0].values[2] > marks[0].by: unknown dim 'z'",
+            "controls[0].values[2] > marks[0].by: unknown dim 'z', expected one of 'x', 'y', 'c'",
             "controls[0].values[2] > geo.data: a map needs its geometry, GeoJSON or TopoJSON or their url",
         ]);
         // the values of the expressions of the globals are checked by the schema
@@ -712,8 +725,8 @@ describe('validateDef and the schema', () => {
         const def = base();
         def.dims.x = { column: 'year', type: 'date' };
         expect(validateDef(def)).toEqual([]);
-        expect(validateDef(def, [{ year: '2020' }, { year: Date.UTC(2021, 0, 1) }])).toEqual([]);
-        expect(validateDef(def, [{ year: 2020 }])).toEqual([
+        expect(validateDef(def, [{ year: '2020', value: 1, land: 'Wien' }, { year: Date.UTC(2021, 0, 1), value: 2, land: 'Wien' }])).toEqual([]);
+        expect(validateDef(def, [{ year: 2020, value: 1, land: 'Wien' }])).toEqual([
             `dims.x.type: the values of 'year' are numbers, e.g. 2020, which are milliseconds since 1970 as dates, years are numeric or strings, e.g. "2020"`,
         ]);
     });
@@ -765,6 +778,7 @@ describe('validateDef of the types of the rows', () => {
         expect(validateDef(def, [{ date: '2024-06-01', land: 'Wien' }]).filter(w => w.startsWith('dims.'))).toEqual([
             "dims.t.nice: only the domains of numeric dims are rounded, not the ones of the type 'date'",
             "dims.n.nice: only the domains of numeric dims are rounded, not the ones of the type 'categorical'",
+            "dims.u.column: 'unknown' is not a column of the data, expected one of 'date', 'land', 'day'",
         ]);
     });
 });
@@ -827,4 +841,89 @@ describe('the names and the keys of 4.1', () => {
         expect(checks({ type: 'share', column: 'value', step: 5, seed: 1 })).toEqual(
             [`transform[0].step: only of a transform of the type 'bin'`, `transform[0].seed: only of a transform of the type 'random'`]);
     });
+});
+
+describe('validateDef in the words of 5.0, the keys of marks and the data', () => {
+    const rows = [{ year: 2020, value: 1, land: 'Wien', kind: 'a' }, { year: 2021, value: 2, land: 'Tirol', kind: 'b' }];
+
+    test('the names of 5.0 of the mark types, the default attributes of a type', () => {
+        expect(validateDef({ ...base(), marks: { type: 'piont' } })).toEqual([
+            "marks[0].type: unknown type 'piont' of the coordinate system 'cartesian', did you mean 'point'?"]);
+        expect(validateDef({ ...base(), marks: { type: 'lable' } })).toEqual([
+            "marks[0].type: unknown type 'lable' of the coordinate system 'cartesian', did you mean 'label'?"]);
+        expect(validateDef({ dims: { x: 'year' }, marks: { type: 'point' } })).toEqual([
+            `marks[0]: a mark of the type 'point' reads '@y:scaled': it needs a dim 'y' with a scale (the channel y), e.g. "dims": { "y": "value" }, or the attributes which replace its defaults`]);
+    });
+
+    test('typos of the keys of a mark and of attributes of svg, other keys are attributes', () => {
+        const marks = { type: 'line', by: 'c', bye: 'c', filtr: { c: 'Wien' }, stak: true, curv: 'step', highligt: { opacity: 1 }, 'strok-width': 2,
+            'stroke-width': 2, 'data-kind': 'a', label: 'x', mode: 'm' };
+        expect(validateDef({ ...base(), marks })).toEqual([
+            "marks[0].bye: unknown key, did you mean 'by'? (other keys are attributes of the elements)",
+            "marks[0].filtr: unknown key, did you mean 'filter'? (other keys are attributes of the elements)",
+            "marks[0].stak: unknown key, did you mean 'stack'? (other keys are attributes of the elements)",
+            "marks[0].curv: unknown key, did you mean 'curve'? (other keys are attributes of the elements)",
+            "marks[0].highligt: unknown key, did you mean 'highlight'? (other keys are attributes of the elements)",
+            "marks[0].strok-width: no attribute of svg, did you mean 'stroke-width'?",
+            "marks[0].label: unknown key, did you mean 'layer'? (other keys are attributes of the elements)",
+        ]);
+    });
+
+    test('the dims of a grid of facets are facets.by.rows and facets.by.cols, the dims of shared scales', () => {
+        expect(validateDef({ ...base(), facets: { by: { rows: 'z', cols: 'q' } } })).toEqual([
+            "facets.by.rows: unknown dim 'z', expected one of 'x', 'y', 'c'",
+            "facets.by.cols: unknown dim 'q', expected one of 'x', 'y', 'c'",
+        ]);
+        expect(validateDef({ ...base(), facets: { by: { rows: 3 } } })).toEqual(['facets.by.rows: expected the dim of the rows of a grid']);
+        expect(validateDef({ ...base(), facets: { by: 'c', scales: ['y', 'yy'] } })).toEqual(["facets.scales: unknown dim 'yy', expected one of 'x', 'y', 'c'"]);
+        expect(validateDef({ ...base(), facets: { by: 'c', scales: 'shared' } })).toEqual([]);
+    });
+
+    test('the templates of transforms are the values of the globals', () => {
+        const def = { ...base(), globals: { op: 'diff', k: '1' }, transform: { type: 'window', column: 'value', by: 'land', order: 'year', op: '{op}', offset: '{k}', as: 'd' } };
+        expect(validateDef(def)).toEqual([]);
+        expect(validateDef({ ...def, globals: {} })).toEqual(["transform[0]: unknown global 'op' in the template", "transform[0]: unknown global 'k' in the template"]);
+    });
+
+    test('the names of filters: plain names are columns, of the rows given the columns of the data and the transforms', async () => {
+        await loadTransforms();
+        const def = { ...base(), filter: '@kind != "x"', marks: { ...base().marks, filter: '@share > 0.1' } };
+        expect(validateDef(def)).toEqual([]);
+        expect(validateDef(def, rows)).toEqual([expect.stringMatching(/^marks\[0\]\.filter\.>\[0\]: unknown reference 'share'/)]);
+        expect(validateDef({ ...def, transform: { type: 'share', column: 'value', by: 'year', as: 'share' } }, rows)).toEqual([]);
+        // a part of a dim is no column
+        expect(validateDef({ ...base(), filter: '@x:nope > 1' })).toEqual([expect.stringMatching(/^filter\.>\[0\]: unknown reference 'x:nope'/)]);
+    });
+
+    test('the data: the column of a dim, a channel of no dim and no column, texts of a numeric dim, a by of a column', () => {
+        const def = base();
+        expect(validateDef(def, rows)).toEqual([]);
+        def.dims.x.column = 'yaer';
+        expect(validateDef(def, rows)).toEqual(["dims.x.column: 'yaer' is not a column of the data, did you mean 'year'?"]);
+        // a channel of a column which is no dim is an implicit dim of it
+        expect(validateDef({ ...base(), marks: { type: 'point', x: 'year', y: 'vlaue' } }, rows))
+            .toEqual(["marks[0].y: 'vlaue' is neither a dim nor a column of the data, did you mean 'value'?"]);
+        expect(validateDef({ ...base(), marks: { type: 'point', x: 'year', y: 'kind' } }, rows)).toEqual([]);
+        // the texts of a numeric dim are no values
+        const texts = [...rows, { year: 2022, value: 'n/a', land: 'Wien' }];
+        expect(validateDef(base(), texts)).toEqual([
+            `dims.y.type: numeric, but 1 of the values of 'value' are texts, e.g. "n/a", they are no values (left out); "type": "categorical" keeps them`]);
+        // a by of a column of the data which is no dim
+        expect(validateDef({ ...base(), marks: { ...base().marks, by: ['kind'] } }, rows)).toEqual([
+            `marks[0].by: unknown dim 'kind', a column of the data: a dim of it is needed, e.g. "dims": { "kind": "kind" }`]);
+    });
+});
+
+test('the formats of numbers are formats of d3, of the rows given also of the dims without a type', () => {
+    const def = base();
+    def.dims.y.format = '%,.0f';
+    expect(validateDef(def)).toEqual([`dims.y.format: '%,.0f' is no d3 format of numbers (invalid format: %,.0f), a time format is one of a date dim, "type": "date", e.g. ",.0f"`]);
+    def.dims.y = { column: 'value', format: '%,.0f', axis: { format: ',.1f' }, hover: { format: 'x.y' } };
+    // without a type a time format is the one of a date dim
+    expect(validateDef(def)).toEqual([`dims.y.hover.format: 'x.y' is no d3 format of numbers (invalid format: x.y), e.g. ",.0f"`]);
+    expect(validateDef(def, [{ year: 2020, value: 1, land: 'Wien' }])).toEqual([
+        `dims.y.format: '%,.0f' is no d3 format of numbers (invalid format: %,.0f), a time format is one of a date dim, "type": "date", e.g. ",.0f"`,
+        `dims.y.hover.format: 'x.y' is no d3 format of numbers (invalid format: x.y), e.g. ",.0f"`]);
+    def.dims.x = { column: 'year', type: 'date', format: '%Y' };
+    expect(validateDef({ ...def, dims: { ...def.dims, y: { column: 'value', format: ',.2~f' } } })).toEqual([]);
 });

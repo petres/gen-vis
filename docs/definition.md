@@ -656,8 +656,9 @@ they are gaps in lines and areas, points and bars are not drawn, and they
 are not shown in the hover, only of the marks which use the value of the row
 (not e.g. `@y:scaled:max`, the end of the scale). A mark none of whose rows
 has the values it uses is named in a warning of the console (also of the
-CLI), e.g. `plot 'caps': none of its 312 rows is drawn, 312 without a value
-of mapping 'y'`. Dates are timestamps or strings. A date without a time
+CLI), e.g. `marks[1] ('caps'): none of its 312 rows is drawn, 312 without a
+value of dim 'y'`, of a column which is not in the data also `(column 'yaer'
+is not in the data)`. Dates are timestamps or strings. A date without a time
 zone, e.g. `2024-06-01`, `2024-06`, `2024`, `2024-06-01 13:00` (also with a
 `T`, seconds and their fraction, `24:00` is the end of the day) or
 `01.06.2024` (the day first, also with a time), is the one of the time zone
@@ -2057,12 +2058,12 @@ be an expression of the globals:
 An expression whose names are all globals (or fields of the selected
 entries, `@year:name`) is evaluated before the definition is read, with
 the globals of the state, at any place of the definition: a column, a type
-of a scale, a coordinate system, a part of a dim, the marks (the schema of
-the editors knows expressions only at the places of values; at a name of a
+of a scale, a coordinate system, a part of a dim, the marks. At a name of a
 fixed list, e.g. `"scale": {"type": "=match(@scale, {log: 'log'},
-'linear')"}`, an editor marks it, the chart and `check` take it). `match` of a
-global chooses a value per entry, the last argument is the value of the
-other entries:
+'linear')"}`, the schema takes a text starting with `=` beside the names
+(the types of TypeScript a `` `=${string}` ``), so an editor completes the
+names and accepts the expression. `match` of a global chooses a value per
+entry, the last argument is the value of the other entries:
 
 ```json
 {

@@ -153,6 +153,7 @@ dependency). All three take the same props, events and methods (see
 
 ```sh
 npx gen-vis export data/bev/def.json bev.svg bev.png bev.pdf --width 16cm --font-size 8pt --dpi 300
+npx gen-vis check data/*/def*.json --strict   # the schema, the checks and the data, without a browser
 npx gen-vis migrate old/*.json --write   # definitions of gen-vis 4 as ones of gen-vis 5
 ```
 

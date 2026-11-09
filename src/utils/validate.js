@@ -3,49 +3,29 @@ export { validateDef, curveNames };
 import { intervalOf } from "@/utils/scales";
 import * as d3 from "@/utils/d3";
 import { checkLocale } from "@/utils/locale";
-import { templateRefs } from "@/utils/def";
+import { fillTemplate, templateRefs } from "@/utils/def";
 import { curves } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
 import { annotationKeys } from "@/coords/annotations.js";
 import { projectionNames } from "@/coords/geo.js";
 import { applyTransforms, transformNames, utcColumns } from "@/utils/transform";
-import { isObject } from "@/utils/values";
+import { isObject, missing, toNumber } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
 import { defaultScaleType, facetMappings, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
 import { inferTypes } from "@/utils/data";
 import { versionError } from "@/utils/version";
-import { translate, isDefinition4, authoredPath } from "@/utils/language";
+import { translate, isDefinition4, authoredPath, markKeys, positionChannels } from "@/utils/language";
 import { migrate } from "@/utils/migrate";
 import { resolve, namesOfGlobals } from "@/utils/resolve";
-import { schema } from "@/schema/definition.js";
+import { schema, markNames } from "@/schema/definition.js";
+import { similar } from "@/utils/warn";
 
 // the interpolations of the plot types with a curve, e.g. cartesian:line
 const curveNames = Object.keys(curves);
 
 const show = v => typeof v == 'string' ? `'${v}'` : String(v);
 const list = a => a.map(show).join(', ');
-
-// the number of the edits of one name to the other one (Levenshtein), e.g. 1
-// of "positon" and "position"
-const distance = (a, b) => {
-    let row = [...Array(b.length + 1).keys()];
-    for (let i = 1; i <= a.length; i++) {
-        const next = [i];
-        for (let j = 1; j <= b.length; j++)
-            next[j] = Math.min(row[j] + 1, next[j - 1] + 1, row[j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1));
-        row = next;
-    }
-    return row[b.length];
-};
-
-// the known name a typo of a name probably is, at most two edits away and
-// fewer than half of its length, e.g. not "y" of "x", undefined otherwise
-const similar = (name, names) => typeof name != 'string' ? undefined : names
-    .filter(n => typeof n == 'string')
-    .map(n => [distance(name, n), n])
-    .filter(([d]) => d <= 2 && 2*d < name.length)
-    .sort(([a], [b]) => a - b)[0]?.[1];
 
 // the known names of a warning of an unknown one, the one it is probably a
 // typo of or a list of them if it is short
@@ -155,6 +135,20 @@ class PlotNames extends Set {
     }
 }
 
+// the names of an expression of the rows of the data, e.g. of a filter: the
+// ones of the mark and the columns (`columns`, of the data and the
+// transforms); without the rows any plain name may be a column, e.g.
+// "@type", not one of a part of a dim, e.g. "@x:index"
+class RowNames extends PlotNames {
+    constructor(names, columns) {
+        super(names);
+        this.columns = columns;
+    }
+    has(name) {
+        return super.has(name) || (this.columns ? this.columns.has(name) : typeof name == 'string' && !name.includes(':') && !name.startsWith('globals.'));
+    }
+}
+
 // the name of a registry of d3 in another case than the one of the schema,
 // e.g. "Linear", which the registry accepts, see named of utils/registry.js
 const otherCase = (name, names) => typeof name == 'string' && !names.includes(name)
@@ -177,10 +171,20 @@ const kind = v => v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v;
 const typeFits = (v, type) => type == 'integer' ? Number.isInteger(v) : type == 'object' ? isObject(v) : kind(v) == type;
 const matches = (v, pattern) => typeof v != 'string' || new RegExp(pattern, 'u').test(v);
 
+// the condition of an if/then/else of the schema holds (see cases of
+// src/schema/dsl.js): its type, pattern, number of keys and their names
+const holds = (v, c) => (c.type === undefined || typeFits(v, c.type)) && (c.pattern === undefined || typeof v != 'string' || matches(v, c.pattern))
+    && (c.maxProperties === undefined || !isObject(v) || Object.keys(v).length <= c.maxProperties)
+    && (c.propertyNames?.enum === undefined || !isObject(v) || Object.keys(v).every(k => c.propertyNames.enum.includes(k)));
+// the branch of an if/then/else of a value, undefined of none
+const branchOf = (v, node) => holds(v, node.if) ? node.then : node.else;
+
 // a value is of a branch of anyOf if it is of its type, e.g. a string of an
 // enum of strings, its other warnings are the ones of the branch
 const fits = (v, node) => {
     node = resolveNode(node);
+    if (node?.if)
+        return branchOf(v, node) === undefined || fits(v, branchOf(v, node));
     const branches = node.anyOf ?? node.oneOf;
     if (branches)
         return branches.some(b => fits(v, b));
@@ -199,6 +203,9 @@ const typeNames = { string: 'a string', number: 'a number', integer: 'an integer
 // the values of a part of the schema, e.g. "a number or a reference "@name""
 const describe = node => {
     node = resolveNode(node);
+    // the values of all branches of an if/then/else, not of an expression of the globals
+    if (node.if)
+        return [...new Set([node.then, node.else].filter(b => b && b.pattern != '^=').map(describe))].join(' or ');
     const branches = node.anyOf ?? node.oneOf;
     if (branches)
         return [...new Set(branches.map(describe))].join(' or ');
@@ -226,9 +233,16 @@ const schemaWarnings = (v, node, path = '', key = 'value', out = []) => {
     // undefined is no value of JSON, e.g. a part which is left out; an
     // expression of the rows or the sizes ("=..." or a reference "@...")
     // stands for a value of any kind, the checks of the parts know them
-    if (!isObject(node) || registered.has(node) || v === undefined || (typeof v == 'string' && /^[=@]/.test(v)))
+    // a string of a transform is a template of the globals, e.g. "{op}"
+    if (!isObject(node) || registered.has(node) || v === undefined || (typeof v == 'string' && /^[=@]/.test(v))
+        || (path.startsWith('transform') && isTemplate(v)))
         return out;
     const at = message => (out.push([path, message]), out);
+    // the branch of the value, e.g. of its type, see cases of src/schema/dsl.js
+    if (node.if) {
+        const branch = branchOf(v, node);
+        return branch === undefined ? out : schemaWarnings(v, branch, path, key, out);
+    }
     if (node.type && !typeFits(v, node.type))
         return at(`expected ${describe(node)}`);
     if (node.enum && !node.enum.includes(v))
@@ -358,6 +372,7 @@ const checkMappings = ctx => {
             checkProp(m.legend?.symbol?.props, `${path}.legend.symbol.props`, warn, known);
         }
         checkDates(ctx, n, m, path);
+        checkFormats(n, m, path, warn);
     });
     // the rows which are stacked, `true` all, the conditions of mappings, e.g. { "type": { "not": "load" } }
     Object.entries(mapping).filter(([, m]) => m.stacked !== undefined && typeof m.stacked != 'boolean').forEach(([n, m]) => isObject(m.stacked)
@@ -467,6 +482,24 @@ const checkScale = (ctx, n, m, path) => {
             : `the coordinate system '${coordName}' has no orientations, e.g. a scale of colors has none`);
 };
 
+// the formats of the values of a mapping which is no date one (of a time
+// scale): a d3 format of numbers, e.g. not "%,.0f", see Store.format; a
+// format with a template or an expression is known when it is drawn
+const numberFormat = d3.formatLocale({ decimal: '.', thousands: ',', grouping: [3], currency: ['', ''] });
+const checkFormats = (n, m, path, warn) => {
+    if (m.type == 'date' || ['time', 'utc'].includes(m.scale?.type))
+        return;
+    [['format', m.format], ['axis.format', m.axis?.format], ['hover.format', m.hover?.format], ['legend.format', m.legend?.format]]
+        // without a type a time format makes a date dim, see inferTypes
+        .filter(([, f]) => typeof f == 'string' && !/[{@=]/.test(f) && !(m.type === undefined && f.includes('%'))).forEach(([k, f]) => {
+            try {
+                numberFormat.format(f);
+            } catch (error) {
+                warn(`${path}.${k}`, `'${f}' is no d3 format of numbers (${error.message})${f.includes('%') ? ', a time format is one of a date dim, "type": "date"' : ''}, e.g. ",.0f"`);
+            }
+        });
+};
+
 // the values of a date mapping which are numbers are milliseconds since
 // 1970, small ones are probably years, e.g. 2024, only if the rows are given
 const checkDates = ({ rows, warn }, n, m, path) => {
@@ -496,7 +529,7 @@ const checkFilter = (ctx, conditions, path, known) => {
     if (conditions === undefined || conditions === null)
         return;
     if (isOperator(conditions))
-        return checkProp(conditions, path, ctx.warn, ctx.names.plot([]));
+        return checkProp(conditions, path, ctx.warn, ctx.names.rows);
     if (!isObject(conditions))
         return ctx.warn(path, `expected the conditions of mappings, e.g. { "year": "@year" }, or an expression`);
     Object.entries(conditions).forEach(([n, c]) => {
@@ -505,6 +538,9 @@ const checkFilter = (ctx, conditions, path, known) => {
         checkCondition(ctx, c, `${path}.${n}`, known);
     });
 };
+
+// the names of marks of 5.0 which are no kind of a plot type, see typeOf of utils/language.js
+const aliases = ['point', 'label', 'cell'];
 
 // the plots: their types, categories, data and props
 const checkPlots = ctx => {
@@ -524,7 +560,8 @@ const checkPlots = ctx => {
         const path = `plot[${i}]`;
         // a type without the prefix of the coordinate system is one which normalize did not find
         const short = typeof p.type == 'string' && !p.type.includes(':')
-            ? [...new Set(types.filter(t => !t.startsWith('annotation:') && (!plotTypes[t].coords || plotTypes[t].coords.includes(coordName))).map(t => t.split(':')[1]))] : null;
+            ? [...new Set([...types.filter(t => !t.startsWith('annotation:') && (!plotTypes[t].coords || plotTypes[t].coords.includes(coordName))).map(t => t.split(':')[1]),
+                ...aliases.filter(n => markNames.includes(n))])] : null;
         if (short)
             warn(`${path}.type`, `unknown type '${p.type}' of the coordinate system '${coordName}'${choices(p.type, short)}`);
         else if (!types.includes(p.type))
@@ -535,7 +572,8 @@ const checkPlots = ctx => {
             warn(`${path}.by`, `expected a mapping or a list of mappings, e.g. ["land"]`);
         const categories = [p.by ?? []].flat().filter(c => typeof c == 'string');
         categories.filter(c => !Object.hasOwn(mapping, c)).forEach(c =>
-            warn(`${path}.by`, `unknown mapping '${c}'`));
+            warn(`${path}.by`, ctx.columns?.has(c) ? `unknown mapping '${c}', a column of the data: a dim of it is needed, e.g. "dims": { "${c}": "${c}" }`
+                : `unknown mapping '${c}'${choices(c, Object.keys(mapping))}`));
         if (p.curve !== undefined && curveNames.includes(p.curve) && types.includes(p.type) && !curvePlots.includes(p.type))
             warn(`${path}.curve`, `only used by ${list(curvePlots)}`);
         // the data of the plot: rows of the definition, their names are known
@@ -591,8 +629,10 @@ const checkPlots = ctx => {
         // the references of the default props of the type, e.g. "@x:scaled" of a line
         const defaults = ctx.defaults?.get(i);
         if (defaults && plotNames)
-            [...new Set(refNames(defaults).filter(r => r != 'color' && !plotNames.has(r)))].forEach(r =>
-                warn(`${path}.props`, `the default props of '${ctx.written?.get(i) ?? p.type}' need '${r}', e.g. a mapping '${r.split(':')[0]}' with a scale, or the props which use it`));
+            [...new Set(refNames(defaults).filter(r => r != 'color' && !plotNames.has(r)))].forEach(r => {
+                const dim = r.split(':')[0];
+                warn(path, `a mark of the type '${ctx.written?.get(i) ?? p.type}' reads '@${r}': it needs a dim '${dim}' with a scale (the channel ${dim}), e.g. "dims": { "${dim}": "value" }, or the attributes which replace its defaults`);
+            });
     });
 };
 
@@ -695,13 +735,15 @@ const checkFacets = ({ def, mapping, names, warn }) => {
     const parts = grid ? ['rows', 'cols'].filter(k => facetMappings(def.facets)[k] !== null) : ['dim'];
     if (grid && def.facets.dim !== undefined)
         warn('facets.dim', `a grid of 'rows' and 'cols' has no 'dim'`);
-    if (!grid && typeof def.facets.dim != 'string')
+    if (!grid && typeof def.facets.dim != 'string' && def.facets.rows === undefined)
         warn('facets.dim', `expected the name of a mapping`);
+    // the dims of a grid are the ones of facets.by.rows and facets.by.cols
+    const at = k => k == 'cols' ? 'facets.by.cols' : `facets.${k}`;
     parts.filter(k => typeof def.facets[k] == 'string').forEach(k => {
         if (!Object.hasOwn(mapping, def.facets[k]))
-            warn(`facets.${k}`, `unknown mapping '${def.facets[k]}'`);
+            warn(at(k), `unknown mapping '${def.facets[k]}'${choices(def.facets[k], Object.keys(mapping))}`);
         else if (!hasCategories(mapping[def.facets[k]]))
-            warn(`facets.${k}`, `the mapping '${def.facets[k]}' needs categories, e.g. "fromData": true`);
+            warn(at(k), `the mapping '${def.facets[k]}' needs categories, e.g. "type": "categorical"`);
     });
     if (def.facets.rows !== undefined && typeof def.facets.rows != 'string')
         warn('facets.rows', `expected the mapping of the rows of a grid`);
@@ -710,6 +752,9 @@ const checkFacets = ({ def, mapping, names, warn }) => {
         && (headers.side === undefined || ['left', 'right'].includes(headers.side)) && (headers.vertical === undefined || typeof headers.vertical == 'boolean')))
         warn('facets.rowHeaders', `expected 'left' (horizontal), 'right' (vertical, the default) or { "side": "left", "vertical": true }`);
     const scales = def.facets.scales;
+    if (Array.isArray(scales))
+        scales.filter(n => !Object.hasOwn(mapping, n)).forEach(n =>
+            warn('facets.scales', `unknown mapping '${n}'${choices(n, Object.keys(mapping))}`));
     if (isObject(scales))
         Object.entries(scales).forEach(([n, v]) => {
             if (!Object.hasOwn(mapping, n))
@@ -726,7 +771,7 @@ const checkFacets = ({ def, mapping, names, warn }) => {
     const own = facetMappings(def.facets).all.filter(d => Object.hasOwn(mapping, d)).flatMap(d => categoryNames(mapping[d]));
     if (isObject(def.facets.title))
         checkProp(def.facets.title.props, 'facets.title.props', warn, new Set([...names.global, 'facet', 'facet:name', ...own]));
-    if (!isObject(scales))
+    if (!isObject(scales) && !Array.isArray(scales))
         checkProp(def.facets.scales, 'facets.scales', warn, names.global);
 };
 
@@ -779,8 +824,67 @@ const checkOptions = ({ def, names, warn }) => {
     Object.entries(isObject(options.margins) ? options.margins : {}).forEach(([k, v]) => checkProp(v, `options.margins.${k}`, warn, names.global));
 };
 
+// the keys each type of transform reads, see utils/transform-types.js
+const transformKeys = {
+    year: ['column', 'as'],
+    align: ['column', 'as', 'year'],
+    index: ['column', 'as', 'by', 'base', 'scale'],
+    mean: ['column', 'as', 'by', 'base', 'min'],
+    share: ['column', 'as', 'by'],
+    rolling: ['column', 'as', 'by', 'order', 'size', 'align'],
+    cumulative: ['column', 'as', 'by', 'order'],
+    calc: ['expr', 'as'],
+    filter: ['expr'],
+    rank: ['column', 'as', 'by', 'descending'],
+    random: ['as', 'range', 'seed', 'key'],
+    lookup: ['column', 'as', 'data', 'dataFormat', 'key', 'value'],
+    bin: ['column', 'as', 'by', 'edges', 'step', 'weight', 'normalize', 'per', 'start', 'end', 'replace'],
+    fold: ['columns', 'key', 'value', 'replace'],
+    aggregate: ['column', 'as', 'by', 'op', 'rows', 'order'],
+    window: ['column', 'as', 'by', 'order', 'op', 'size', 'offset', 'align'],
+};
+// 'a', 'b' or 'c'
+const or = names => names.length < 2 ? list(names) : `${list(names.slice(0, -1))} or ${show(names.at(-1))}`;
+// a template of the globals, e.g. "{op}", its value is known when it is computed
+const isTemplate = v => typeof v == 'string' && templateNames(v).length > 0;
+
+// the columns of the rows after the transforms: the ones of the data
+// (`present`) and the ones the transforms add, by their names (the
+// templates filled with the globals `values`), a fold removes the folded ones
+const transformedColumns = (transforms, present, values = {}) => {
+    const columns = new Set(present);
+    [transforms ?? []].flat().filter(isObject).forEach(raw => {
+        const t = JSON.parse(fillTemplate(JSON.stringify(raw), values));
+        const by = [t.by ?? []].flat();
+        if (t.type == 'filter')
+            return;
+        if (t.type == 'fold') {
+            foldedColumns(t, columns).forEach(c => columns.delete(c));
+            [t.key ?? 'key', t.value ?? 'value'].forEach(c => columns.add(c));
+        } else if (t.type == 'bin')
+            [t.start ?? 'start', t.end ?? 'end', t.as ?? 'count', ...by].forEach(c => columns.add(c));
+        else if (t.type == 'aggregate' && t.rows) {
+            columns.clear();
+            [t.as ?? t.column, ...by].forEach(c => columns.add(c));
+        } else
+            columns.add(t.as ?? t.column);
+    });
+    columns.delete(undefined);
+    return columns;
+};
+// the columns a fold folds of the columns `columns`: a list or a pattern
+const foldedColumns = (t, columns) => {
+    if (Array.isArray(t.columns))
+        return t.columns;
+    if (typeof t.columns != 'string' || t.columns.split('*').length > 2)
+        return [];
+    const [start, end] = t.columns.split('*');
+    return t.columns.includes('*') ? [...columns].filter(c => typeof c == 'string' && c.startsWith(start) && c.endsWith(end) && c.length >= start.length + end.length)
+        : [t.columns];
+};
+
 // the transforms, a column of the values, the globals of their templates
-const checkTransforms = ({ def, globals, warn }) => {
+const checkTransforms = ({ def, globals, warn, rows }) => {
     [def.transform ?? []].flat().forEach((t, i) => {
         const path = `transform[${i}]`;
         if (!isObject(t))
@@ -805,23 +909,34 @@ const checkTransforms = ({ def, globals, warn }) => {
                 warn(`${path}.columns`, `a pattern of columns has a single '*', e.g. "20*"`);
             ['key', 'value'].filter(k => t[k] !== undefined && typeof t[k] != 'string')
                 .forEach(k => warn(`${path}.${k}`, `the name of the column of the ${k}s, e.g. "${k == 'key' ? 'year' : 'value'}"`));
+            // the names of the key and the value replace the columns of the
+            // rows of the same name which are not folded (of the rows given)
+            const key = t.key ?? 'key', value = t.value ?? 'value';
+            if (key === value)
+                warn(`${path}.value`, `the column of the values is the one of the keys, '${key}', e.g. "key": "year", "value": "value"`);
+            const before = Array.isArray(rows) && rows.length ? transformedColumns([def.transform].flat().slice(0, i), Object.keys(rows[0] ?? {}), def.globals) : null;
+            if (before) {
+                const folded = new Set(foldedColumns(t, before));
+                [['key', key], ['value', value]].filter(([, c]) => typeof c == 'string' && before.has(c) && !folded.has(c) && !isTemplate(c))
+                    .forEach(([k, c]) => warn(`${path}.${k}`, `the column '${c}' of the rows is replaced by the ${k}s of the folded columns, e.g. "${k}": "${k == 'key' ? 'name' : 'amount'}"`));
+            }
         } else if (typeof t.column != 'string')
             warn(`${path}.column`, `the column of the values is needed`);
         if (t.type == 'bin' && t.edges === undefined && t.step === undefined)
             warn(`${path}.edges`, `the edges of the classes are needed, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143], or a 'step'`);
         if (t.replace !== undefined && !['bin', 'fold'].includes(t.type))
             warn(`${path}.replace`, `only of a bin or a fold: its rows replace the rows`);
-        // the keys of some types of transforms on other ones
-        const only = { edges: ['bin'], step: ['bin'], weight: ['bin'], normalize: ['bin'], per: ['bin'], start: ['bin'], end: ['bin'],
-            range: ['random'], seed: ['random'], columns: ['fold'], op: ['aggregate', 'window'], rows: ['aggregate'], offset: ['window'] };
-        Object.entries(only).filter(([k, types]) => t[k] !== undefined && !types.includes(t.type))
-            .forEach(([k, types]) => warn(`${path}.${k}`, `only of a transform of the type ${types.map(n => `'${n}'`).join(' or ')}`));
+        // the keys of the other types of transforms, which this one does not
+        // read, e.g. a `by` of a calc (`replace` above)
+        if (Object.hasOwn(transformKeys, t.type))
+            Object.keys(t).filter(k => !['type', 'replace', 'min'].includes(k) && !transformKeys[t.type].includes(k) && Object.values(transformKeys).some(keys => keys.includes(k)))
+                .forEach(k => warn(`${path}.${k}`, `only of a transform of the type ${or(Object.keys(transformKeys).filter(n => transformKeys[n].includes(k)))}`));
         if (t.type == 'bin') {
             [t.edges ?? []].flat().filter(e => isObject(e) && !(Number(e.step) > 0 && Number.isFinite(Number(e.from)) && Number.isFinite(Number(e.to))))
                 .forEach(() => warn(`${path}.edges`, `a range of edges is { "from": 50, "to": 250, "step": 5 }, a positive step`));
             if (t.edges === undefined && t.step !== undefined && !(Number(t.step) > 0) && !String(t.step).includes('{'))
                 warn(`${path}.step`, `the width of the classes, a positive number, e.g. 5`);
-            if (t.per !== undefined && !(Number(t.per) > 0))
+            if (t.per !== undefined && !(Number(t.per) > 0) && !isTemplate(t.per))
                 warn(`${path}.per`, `a positive number of units, e.g. 5`);
             else if (t.per !== undefined && t.normalize == 'share')
                 warn(`${path}.per`, `a share is one of the group, without a unit, 'per' is of counts and densities`);
@@ -841,15 +956,15 @@ const checkTransforms = ({ def, globals, warn }) => {
         }
         // the rows of the window of rolling and of the sums, means, least and
         // largest values of window, the offset of its other operations
-        if ((t.type == 'rolling' || (t.type == 'window' && ['sum', 'mean', 'min', 'max'].includes(t.op))) && !(Number.isInteger(t.size) && t.size > 0))
+        if ((t.type == 'rolling' || (t.type == 'window' && ['sum', 'mean', 'min', 'max'].includes(t.op))) && !(Number.isInteger(t.size) && t.size > 0) && !isTemplate(t.size))
             warn(`${path}.size`, `the number of the rows of the window is needed, e.g. 7`);
-        if (t.type == 'window' && t.offset !== undefined && !(Number.isInteger(t.offset) && t.offset > 0))
+        if (t.type == 'window' && t.offset !== undefined && !(Number.isInteger(t.offset) && t.offset > 0) && !isTemplate(t.offset))
             warn(`${path}.offset`, `the number of the rows before or after the row, a positive integer, e.g. 1`);
         if (t.type == 'index' && !isObject(t.base))
             warn(`${path}.base`, `the rows of the base are needed, e.g. { "year": "{base}" }`);
         if (t.type == 'mean' && t.base !== undefined && !isObject(t.base))
             warn(`${path}.base`, `the rows of the mean, e.g. { "year": [1961, 1990] }`);
-        if (t.min !== undefined && !(t.type == 'mean' && Number.isInteger(t.min) && t.min > 0))
+        if (t.min !== undefined && !(t.type == 'mean' && ((Number.isInteger(t.min) && t.min > 0) || isTemplate(t.min))))
             warn(`${path}.min`, `the least number of values of a mean, e.g. 22`);
         if (t.align !== undefined && !['end', 'center'].includes(t.align))
             warn(`${path}.align`, `expected 'end' or 'center'`);
@@ -858,10 +973,45 @@ const checkTransforms = ({ def, globals, warn }) => {
     });
 };
 
+// the data, of the rows given: the columns of the dims (of a channel naming
+// no dim, an implicit dim of its column) and the texts of numeric dims
+const checkData = ({ raw, mapping, rows, columns, warn, source }) => {
+    if (!columns)
+        return;
+    const named = isObject(source?.dims) ? source.dims : {};
+    const names = [...columns].filter(c => typeof c == 'string');
+    const unknownColumn = c => `'${c}' is not a column of the data${choices(c, names)}`;
+    // the channels of the marks of the definition which name no dim of it
+    const implicit = new Map();
+    [source?.marks ?? []].flat().forEach((m, i) => isObject(m) && Object.keys(positionChannels).forEach(k => {
+        const v = m[k];
+        if (typeof v == 'string' && !/^[@=]/.test(v) && !Object.hasOwn(named, v) && !implicit.has(v))
+            implicit.set(v, `marks[${i}].${k}`);
+    }));
+    Object.entries(mapping).forEach(([n, m]) => {
+        const column = typeof m.column == 'string' ? fillTemplate(m.column, raw.globals ?? {}) : undefined;
+        if (column === undefined || templateNames(column).length > 0)
+            return;
+        if (!columns.has(column)) {
+            if (implicit.has(n))
+                warn(implicit.get(n), `'${n}' is neither a dim nor a column of the data${choices(n, [...Object.keys(named), ...names])}`);
+            else
+                warn(`mapping.${n}.column`, unknownColumn(column));
+            return;
+        }
+        // the texts of a numeric dim, of the rows of the data
+        if (raw.mapping?.[n]?.type == 'numeric' && Array.isArray(rows)) {
+            const texts = rows.map(r => r?.[column]).filter(v => typeof v == 'string' && !missing(v) && toNumber(v) === null);
+            if (texts.length > 0)
+                warn(`mapping.${n}.type`, `numeric, but ${texts.length} of the values of '${column}' are texts, e.g. ${JSON.stringify(texts[0])}, they are no values (left out); "type": "categorical" keeps them`);
+        }
+    });
+};
+
 // the context of the checks of the parts of a definition: the mappings, the
 // form elements, the plots and the annotations which are objects (the others
 // are warnings), the coordinate system and the names of the references
-const context = (def, warn, rows) => {
+const context = (def, warn, rows, columns = null) => {
     // the entries which are objects, the others are warnings, e.g. null
     const objects = (entries, path, expected) => entries.filter(([k, e]) => isObject(e) || (warn(path(k), `expected ${expected}`), false));
     // the mappings, their parts which are no objects are left out of the checks
@@ -911,9 +1061,11 @@ const context = (def, warn, rows) => {
             ...categories.flatMap(c => categoryNames(mapping[c])),
         ]),
         range: new Set([...facetNames, ...Object.keys(coord.dims?.(1, 1) ?? {})]),
+        // the expressions of the rows, e.g. of a filter, also of the columns
+        rows: new RowNames([...facetNames, 'row:index', ...Object.entries(mapping).flatMap(([n, m]) => rowNames(n, m ?? {}))], columns),
     };
     return {
-        def, warn, rows, mapping, formElements, globals, names, coord, coordName,
+        def, warn, rows, columns, mapping, formElements, globals, names, coord, coordName,
         orientations: Object.keys(coord.ranges),
         plots: objects([...[].concat(def.plot ?? []).entries()], i => `plot[${i}]`, 'a plot, e.g. { "type": "svg:circle", "props": {} }'),
         annotations: objects([...[].concat(def.annotations ?? []).entries()], i => `annotations[${i}]`, 'an annotation, e.g. { "type": "line", "y": 0 }'),
@@ -944,11 +1096,11 @@ const withTypes = (def, rows) => {
 
 // the warnings [path, message] of the checks of the parts of the normalized
 // definition (`normalized`), `def` is the engine's form as translated
-const checkDef = (def, normalized, rows, plots = {}) => {
+const checkDef = (def, normalized, rows, extra = {}) => {
     const warnings = [];
     const warn = (path, message) => warnings.push([path, message]);
-    const ctx = { ...context(normalized, warn, rows), raw: def, ...plots };
-    [checkMappings, checkPlots, checkGeo, checkFilters, checkAnnotations, checkFormElements, checkFacets, checkTexts, checkOptions, checkTransforms]
+    const ctx = { ...context(normalized, warn, rows, extra.columns), raw: def, ...extra };
+    [checkMappings, checkPlots, checkGeo, checkFilters, checkAnnotations, checkFormElements, checkFacets, checkTexts, checkOptions, checkTransforms, checkData]
         .forEach(check => check(ctx));
     return warnings;
 };
@@ -957,14 +1109,14 @@ const checkDef = (def, normalized, rows, plots = {}) => {
 const withoutDefaults = () => Object.fromEntries(Object.entries(plotTypes).map(([n, t]) => [n, { ...t, defaults: undefined }]));
 
 // the plots of a registered type: their default props which the plot does
-// not write (`defaults`) and the type as it is written (`written`), by the
-// index of the plot
-const defaultProps = (def, normalized) => {
+// not write (`defaults`) and the type as it is written (`written`, of the
+// `marks` of the definition), by the index of the plot
+const defaultProps = (def, normalized, marks = []) => {
     const written = new Map();
     const defaults = new Map();
     const raw = [].concat(def.plot ?? []);
     [].concat(normalized.plot ?? []).forEach((p, i) => {
-        const type = raw[i]?.type;
+        const type = isObject(marks[i]) && typeof marks[i].type == 'string' ? marks[i].type : raw[i]?.type;
         if (typeof type != 'string' || !isObject(p) || !Object.hasOwn(plotTypes, p.type))
             return;
         written.set(i, type);
@@ -993,7 +1145,42 @@ const checkResolved = (source, names, rows) => {
     const resolved = resolve(source, names);
     const engine = translate(resolved);
     const normalized = withTypes(normalize(engine, { plotTypes: withoutDefaults() }), rows);
-    return { resolved, warnings: checkDef(engine, normalized, rows, defaultProps(engine, normalized)).map(authored) };
+    // the columns of the rows given, of the data and of the transforms
+    const columns = Array.isArray(rows) && rows.length > 0
+        ? transformedColumns(engine.transform, new Set(rows.slice(0, 1000).flatMap(r => isObject(r) ? Object.keys(r) : [])), engine.globals) : null;
+    const warnings = [...checkDef(engine, normalized, rows, { ...defaultProps(engine, normalized, [resolved.marks ?? []].flat()), columns, source: resolved }).map(authored),
+        ...markKeyWarnings(resolved)];
+    return { resolved, warnings };
+};
+
+// the attributes of svg (and of gen-vis, e.g. text, max-width and the
+// angles of polar marks) a mark may have, its other keys are attributes too,
+// e.g. data-*; a name near one of them or of a key of a mark is a typo
+const svgAttributes = ['alignment-baseline', 'baseline-shift', 'clip', 'clip-path', 'clip-rule', 'color', 'color-interpolation', 'cursor', 'd',
+    'direction', 'display', 'dominant-baseline', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'flood-color', 'flood-opacity', 'font-family',
+    'font-size', 'font-size-adjust', 'font-stretch', 'font-style', 'font-variant', 'font-weight', 'image-rendering', 'letter-spacing', 'marker-end',
+    'marker-mid', 'marker-start', 'mask', 'opacity', 'overflow', 'paint-order', 'pointer-events', 'shape-rendering', 'stop-color', 'stop-opacity',
+    'stroke', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke-width',
+    'text-anchor', 'text-decoration', 'text-rendering', 'transform', 'transform-origin', 'vector-effect', 'visibility', 'word-spacing', 'writing-mode',
+    'cx', 'cy', 'r', 'rx', 'ry', 'width', 'height', 'dx', 'dy', 'rotate', 'textLength', 'lengthAdjust', 'points', 'pathLength', 'href', 'class',
+    'id', 'style', 'title', 'text', 'max-width', 'angle', 'radius', 'startAngle', 'endAngle', 'innerRadius', 'outerRadius', 'padAngle',
+    'cornerRadius', 'mix-blend-mode', 'isolation'];
+const markOptionKeys = [...markKeys, ...Object.keys(positionChannels)];
+
+// the keys of the marks which are probably typos of a key of a mark (they
+// become attributes, e.g. "bye", "stak") or of an attribute of svg (e.g.
+// "strok-width"), of the definition as written
+const markKeyWarnings = resolved => {
+    const marks = resolved.marks;
+    const list = Array.isArray(marks) ? marks : isObject(marks) ? [marks] : [];
+    return list.flatMap((m, i) => !isObject(m) ? [] : Object.keys(m).filter(k => !markOptionKeys.includes(k) && !svgAttributes.includes(k) && !k.startsWith('data-') && !k.startsWith('aria-'))
+        .flatMap(k => {
+            const option = similar(k, markOptionKeys);
+            if (option !== undefined)
+                return [[`marks[${i}].${k}`, `unknown key, did you mean '${option}'? (other keys are attributes of the elements)`]];
+            const attribute = similar(k, svgAttributes);
+            return attribute !== undefined ? [[`marks[${i}].${k}`, `no attribute of svg, did you mean '${attribute}'?`]] : [];
+        }));
 };
 
 /**

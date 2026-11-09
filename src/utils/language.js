@@ -1,4 +1,4 @@
-export { translate, checkDims, colorDims, isCategorical, dim as dimOf, compileStrings, isDefinition4, isDefinition5, optionKeys, markKeys, expressionKeys, nameKeys, typeOf, authoredPath, entryOf, entriesOf, implicitDims };
+export { translate, checkDims, colorDims, isCategorical, dim as dimOf, compileStrings, isDefinition4, isDefinition5, optionKeys, markKeys, expressionKeys, nameKeys, typeOf, positionChannels, authoredPath, entryOf, entriesOf, implicitDims };
 
 import { isObject } from '@/utils/values';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
@@ -718,6 +718,9 @@ const translated = raw => {
  */
 const checkDims = def => {
     [def.plot ?? []].flat().forEach((p, i) => {
+        const other = (p?.by ?? []).find(b => typeof b != 'string');
+        if (other !== undefined)
+            throw new Error(`marks[${i}].by: expected a dim or a list of dims, e.g. "land", not ${JSON.stringify(other)}`);
         const unknown = (p?.by ?? []).find(b => typeof b == 'string' && !Object.hasOwn(def.mapping ?? {}, b));
         if (unknown !== undefined)
             throw new Error(`marks[${i}].by: unknown dim '${unknown}', the dims are ${Object.keys(def.mapping ?? {}).map(n => `'${n}'`).join(', ') || 'none'}`);
@@ -727,7 +730,8 @@ const checkDims = def => {
 
 // the path of a part of the engine's form as the one of the definition,
 // e.g. "mapping.y.scale" is "dims.y.scale", "plot[0].props.fill" is
-// "marks[0].fill", "options.title" is "title"
+// "marks[0].fill", "options.title" is "title", "facets.rows" (the dim of
+// the rows of a grid) is "facets.by.rows"
 const authoredPath = path => String(path)
     .replace(/^mapping\./, 'dims.')
     .replace(/^plot\[(\d+)\]\.props\./, 'marks[$1].')
@@ -738,4 +742,5 @@ const authoredPath = path => String(path)
     .replace(/^options\./, '')
     .replace(/^formElements\[(\d+)\]\.ref\b/, 'controls[$1].global')
     .replace(/^formElements/, 'controls')
-    .replace(/^facets\.dim\b/, 'facets.by');
+    .replace(/^facets\.dim\b/, 'facets.by')
+    .replace(/^facets\.rows\b/, 'facets.by.rows');

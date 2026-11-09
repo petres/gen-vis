@@ -270,9 +270,9 @@ while it is loaded.
   as `cat`): they are texts with holes, which an author reads as text.
 - **The `$schema` gate stays an error** of a file without one or of another
   version; the one of 4 is accepted, the migration decides by the keys.
-- **Not done in the alpha:** arrows on annotations (`marker`), `--strict`
-  of the CLI, the checks of the data in `validateDef` (unknown columns,
-  texts in numeric dims), runtime errors of `by` of unknown dims,
-  `hover.cross`, dark CSS variables. (The site has a gallery of one chart
+- **Not done in the alpha:** arrows on annotations (`marker`),
+  `hover.cross`, dark CSS variables. (`gen-vis check`, `--strict` and the
+  checks of the data in `validateDef`, unknown columns and texts in
+  numeric dims, came with the review of the alpha.) (The site has a gallery of one chart
   of every kind, `site/gallery.html`; `npm run dev` keeps the gallery of
   all of `data/`.)

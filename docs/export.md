@@ -75,7 +75,7 @@ Playwright, `chromote` of R or a client of its own:
    `awaitPromise: true` and `returnByValue: true`), one chart at a time,
    each call removes the chart before. It resolves with the result below or
    rejects with an `Error` whose `message` is the message of gen-vis, e.g.
-   `Unknown plot type 'nope'`; of CDP, evaluate
+   `marks[0].type: unknown mark type 'nope', e.g. 'line', 'bar' or 'point'`; of CDP, evaluate
    `genVisExport(o).then(r => ({ result: r }), e => ({ error: e.message }))`.
    A page in the background draws no frames: the page is the one in front
    (`Page.bringToFront`) while it runs.
@@ -164,8 +164,11 @@ options and new keys of the result are added without a new version.
 ## CLI
 
 `gen-vis export` is the package's `bin` (node 22 or newer, no
-dependencies); `gen-vis migrate` of the same `bin` writes definitions of
-gen-vis 4 as ones of gen-vis 5, see [migration](definition.md#migration-from-4x). It draws definition files on the export page in a Chromium,
+dependencies beside the package's); [`gen-vis check`](#check) of the same
+`bin` checks definition files without a browser, `gen-vis migrate` writes
+definitions of gen-vis 4 as ones of gen-vis 5, see
+[migration](definition.md#migration-from-4x), `gen-vis --version` prints the
+version of the package. `export` draws definition files on the export page in a Chromium,
 Chrome or Edge of the system and writes SVG, PNG and PDF files, chosen by
 their extensions. Each definition is followed by its outputs, and one
 browser draws them all:
@@ -199,6 +202,10 @@ options above:
 - `--no-sandbox` (or `GEN_VIS_NO_SANDBOX=1`). The browser runs without its
   sandbox anyway as root, or when it cannot start one (e.g. in a
   container); it says so.
+- `--no-check`: no [check](#check) of the definitions before they are
+  drawn, only the warnings of the draw are printed.
+- `--strict`: a warning of the check or of the draw fails the chart: its
+  outputs are not written, the exit code is 1.
 
 How it works and what to expect:
 
@@ -207,8 +214,49 @@ How it works and what to expect:
   own file. Site-absolute paths such as `"/geo/europe.json"` are files in
   `--root <dir>`, the directory the site serves (without it they fail with a
   404 and a hint), e.g. `--root web/dist` or a directory with `geo/` in it.
+- Every chart is checked first, as by `gen-vis check`, its warnings are
+  printed to the standard error with `check:` before them
+  (`gen-vis: a.json: check: dims.x.column: 'yaer' is not a column of the
+  data, did you mean 'year'?`), then the warnings of the draw (`gen-vis:
+  a.json: warning: marks[0]: none of its 66 rows is drawn, ...`).
+- A line per chart on the standard output names its outputs, the size of
+  the chart in CSS pixels and, of a PNG, the pixels of the PNG, e.g.
+  `bev.json -> bev.svg, bev.png (605x412 CSS px, PNG 1890x1287 px, 0.31 s)`.
 - A chart that fails is reported with gen-vis's message, the others are
   still drawn, and the exit code is 1.
 - SIGINT, SIGTERM and SIGHUP close the browser and remove its profile; the
   exit code is the shell's (130, 143, 129).
 - The PDF is a print of the SVG, so PDF and SVG are the same drawing.
+
+## Check
+
+`gen-vis check <def.json>...` checks definition files in node, without a
+browser, e.g. all definitions of a site before a deploy or in CI:
+
+```sh
+npx gen-vis check data/*/def*.json --strict
+```
+
+A definition is merged with its parents (and mixins), then checked by the
+JSON Schema of the package (with ajv where it is installed, e.g. in a
+project which validates its definitions; `validateDef` walks the same
+schema without it) and by `validateDef` (see
+[checks outside the browser](extensions.md#checks-outside-the-browser))
+with the rows of its data, read as the load reads them (CSV, TSV, JSON or
+parquet, a template of the url of the data with the defaults of the
+globals). It prints a line per warning to the standard output,
+`<def.json>: <path>: <message>`, in the paths and words of the definition:
+
+```
+p1.json: dims.x.column: 'yaer' is not a column of the data, did you mean 'year'?
+p3.json: marks[0].type: unknown type 'lines' of the coordinate system 'cartesian', did you mean 'line'?
+p6.json: marks[0].strok-width: no attribute of svg, did you mean 'stroke-width'?
+```
+
+and a summary to the standard error (`gen-vis: 11 definitions, 6
+warnings in 6, 2 not read`). A definition of gen-vis 4 is checked as
+migrated (a `note:` line says so). The exit code is 1 if a definition could
+not be read (a missing file or parent, invalid JSON, no `$schema`), with
+`--strict` also of a warning, 2 of wrong arguments. Options: `--data
+<file>` (the data instead of the one of the definitions), `--root <dir>`
+(the directory of site-absolute paths, as of `export`), `--strict`.

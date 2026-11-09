@@ -1,6 +1,6 @@
 export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor, unknownOf, gridOf, facetDims, inFacet };
 
-import { categoryOrder, continuous, convert, filter, filterRows, groupBy, keptRows, stack, withoutConditions } from "@/utils/data";
+import { categoryOrder, continuous, convert, filter, filterRows, groupBy, keptRows, sourceRows, stack, withoutConditions } from "@/utils/data";
 import * as d3 from "@/utils/d3";
 import { bind, constant, evaluate, formatter, isOperator, refNames } from "@/utils/expr";
 import { isObject } from "@/utils/values";
@@ -8,7 +8,7 @@ import { autoMargins } from "@/utils/margins";
 import { bandCenter, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
 import { facetMappings } from "@/utils/normalize";
-import { warnOnce } from "@/utils/warn";
+import { markPath, warnOnce, withPath } from "@/utils/warn";
 import { highlightVars } from "@/utils/highlight";
 import { textWidth } from "@/utils/measure";
 import { plotTypes } from "@/plots";
@@ -16,7 +16,7 @@ import { plotTypes } from "@/plots";
 // the warning of a condition of a filter of no mapping, e.g. of a column
 // instead of the mapping of it, which no row has, see rowFilter
 const unknownOf = store => (path, dim) => warnOnce(store, `unknown ${path}`,
-    `${path}: unknown mapping '${dim}', the keys of a filter are the names of mappings, not columns, no row is drawn`);
+    `${path}: unknown dim '${dim}', the keys of a filter object are the names of dims, not columns (an expression reads columns, e.g. "@${dim} == 1"), no row is drawn`);
 
 /**
  * The view of a visualisation, computed from its store without Vue: the rows
@@ -103,11 +103,15 @@ const facetKey = (def, values) => {
     return g ? JSON.stringify([g.rows ? String(values[g.rows]) : '', g.cols ? String(values[g.cols]) : '']) : values[def.facets.dim];
 };
 
-// the mapping of a part of a grid with the categories of the facets
-const gridMapping = (store, part, d) => {
+// the mapping of the facets (of a part of a grid, `part`) with its
+// categories, an error names the path of the definition, e.g. facets.by.rows
+const facetMapping = (store, part, d) => {
     const m = Object.hasOwn(store.def.mapping, d) ? store.mapping(d) : null;
-    if (!m?.categoryProps)
-        throw new Error(`facets.${part}: the facets are the categories of a mapping, e.g. { "fromData": true }, not '${d}'`);
+    const path = part ? `facets.by.${part}` : 'facets.by';
+    if (!m)
+        throw new Error(`${path}: unknown dim '${d}', the dims are ${Object.keys(store.def.mapping).map(n => `'${n}'`).join(', ') || 'none'}`);
+    if (!m.categoryProps)
+        throw new Error(`${path}: the facets are the categories of a dim, '${d}' has none${m.type ? ` (a ${m.type} dim)` : ''}, e.g. "type": "categorical"`);
     return m;
 };
 
@@ -123,7 +127,7 @@ const gridEntries = (store, rows, grid) => {
     const keysOf = (part, d) => {
         if (!d)
             return [{ key: undefined, name: undefined }];
-        const m = gridMapping(store, part, d);
+        const m = facetMapping(store, part, d);
         const present = new Set(rows.map(r => String(r[d])));
         return m.keys.filter(k => present.has(k)).map(k => ({ key: k, name: m.categoryProps[k].name }));
     };
@@ -148,10 +152,7 @@ const facetEntries = (store, rows) => {
     if (grid)
         return gridEntries(store, rows, grid);
     const d = store.def.facets.dim;
-    const m = Object.hasOwn(store.def.mapping, d) ? store.mapping(d) : null;
-    if (!m?.categoryProps)
-        throw new Error(`facets.dim: the facets are the categories of a mapping, e.g. { "fromData": true }, not '${d}'`);
-    const { categoryProps: props, keys } = m;
+    const { categoryProps: props, keys } = facetMapping(store, null, d);
     return groupBy(rows, [d])
         .filter(g => keys.includes(String(g.group[d])))
         .sort((a, b) => keys.indexOf(String(a.group[d])) - keys.indexOf(String(b.group[d])))
@@ -227,7 +228,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     // on stacked areas
     const stackOrder = categoryOrder(visible.map(f => ({ dim: f.dim, keys: f.key })));
     const stackedRows = stacked && stacked !== true
-        ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `mapping.${axis.v}.stacked` }) : rows;
+        ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `dims.${axis.v}.stacked` }) : rows;
     const stacks = stacked ? stack(...stackSource(def, axis, stackedRows), facetDims(def), stackOrder) : null;
     const stackOf = stacks ? row => stacks.get(row) ?? [row[axis.v], row[axis.v]] : null;
     const isStacked = stacks ? row => stacks.has(row) : null;
@@ -275,7 +276,7 @@ const domainRows = (store, def, axis, scope, stacked, shown, stackOrder) => {
         const dims = facetDims(def);
         let stackOf = null;
         if (n == axis.v && stacked) {
-            const stackedRows = stacked !== true ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `mapping.${n}.stacked` }) : rows;
+            const stackedRows = stacked !== true ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `dims.${n}.stacked` }) : rows;
             const stacks = stack(...stackSource(def, axis, stackedRows), [...dims, ...names], stackOrder);
             stackOf = row => stacks.get(row) ?? [row[n], row[n]];
         }
@@ -386,9 +387,14 @@ const layout = (store, width, before = null) => {
 
         // the scale of a mapping for the rows, in the sizes of a facet, of the
         // facet `key` (undefined of all rows), of the rows of `domain` if given
+        // an error names the dim, e.g. of a domain which is no list
         const scaleOf = (name, rows, key, domain = domainOf(name, key)) => {
-            return makeScale(name, store.mapping(name), rows, { dims, coord: store.coord, scope: facetScope, mappings: def.mapping,
-                stackOf: name == axis.v ? stackOf : null, also: also(name), domainRows: domain?.rows, domainStackOf: domain?.stackOf });
+            try {
+                return makeScale(name, store.mapping(name), rows, { dims, coord: store.coord, scope: facetScope, mappings: def.mapping,
+                    stackOf: name == axis.v ? stackOf : null, also: also(name), domainRows: domain?.rows, domainStackOf: domain?.stackOf });
+            } catch (error) {
+                throw withPath(error, `dims.${name}.scale`);
+            }
         };
 
         // the scales of all facets: the shared ones and the ones without
@@ -489,7 +495,7 @@ const keptPlotRows = (store, plot, facet) => {
     const hit = kept?.get(plot);
     if (key !== null && hit?.key === key)
         return hit.rows;
-    const rows = filterRows(facet.rows, plot.filter, store.def.mapping, facet.scope, { columns: store.columns, path: `plot ${plot.id}: filter`, unknown: unknownOf(store) });
+    const rows = filterRows(facet.rows, plot.filter, store.def.mapping, facet.scope, { columns: store.columns, path: `${markPath(store.def, plot)}.filter`, unknown: unknownOf(store) });
     if (key !== null) {
         if (!kept)
             plotRowsKept.set(facet.rows, kept = new Map());
@@ -517,7 +523,7 @@ const plotRows = (store, plot, facet) => {
     }
     if (!plot.data && plot.filter)
         return keptPlotRows(store, plot, facet);
-    const filtered = rows => filterRows(rows, plot.filter, store.def.mapping, facet.scope, { columns: store.columns, path: `plot ${plot.id}: filter`, unknown: unknownOf(store) });
+    const filtered = rows => filterRows(rows, plot.filter, store.def.mapping, facet.scope, { columns: store.columns, path: `${markPath(store.def, plot)}.filter`, unknown: unknownOf(store) });
     if (!plot.data)
         return filtered(facet.rows);
     const mapping = store.def.mapping;
@@ -737,6 +743,15 @@ const textBoxes = (store, f) => {
     });
 };
 
+// the note of a column which is not in the data (no row and no transform
+// has it), e.g. of a typo of a dim's column
+const absentColumn = (store, column) => {
+    if (typeof column != 'string' || store.columns?.has?.(column))
+        return '';
+    const rows = sourceRows(store.rows ?? [], store.columns);
+    return rows.some(r => r && Object.hasOwn(r, column)) ? '' : ` (column '${column}' is not in the data)`;
+};
+
 const plotGroups = (plot, rows, ctx) => {
     const mapping = ctx.store.def.mapping;
     const needed = [...new Set(refNames(plot.props).filter(n => !ofScale.test(n.split(':').slice(1).join(':')))
@@ -744,9 +759,9 @@ const plotGroups = (plot, rows, ctx) => {
     const complete = row => needed.every(m => row[m] !== null);
     // not without data, e.g. the empty classes of a bin of no rows
     if (needed.length > 0 && rows.length > 0 && ctx.store.rows?.length > 0 && !rows.some(complete))
-        warnOnce(ctx.store, `plot:${plot.id}:missing`, `plot '${plot.id}': none of its ${rows.length} rows is drawn, `
+        warnOnce(ctx.store, `plot:${plot.id}:missing`, `${markPath(ctx.store.def, plot, true)}: none of its ${rows.length} rows is drawn, `
             + needed.map(m => [m, rows.filter(r => r[m] === null).length]).filter(([, n]) => n > 0)
-                .map(([m, n]) => `${n} without a value of mapping '${m}'`).join(', '));
+                .map(([m, n]) => `${n} without a value of dim '${m}'${plot.data === undefined ? absentColumn(ctx.store, mapping[m].column) : ''}`).join(', '));
     // the rows without a value of a mapping of categories of `by` are in
     // no category, e.g. rows of other plots
     const categorized = plot.by.filter(c => mapping[c].categoryProps);

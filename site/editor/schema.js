@@ -8,12 +8,14 @@ export { schemaCompletion };
 // the schema of a `$ref` of the definitions, e.g. #/definitions/plot
 const resolve = (root, s) => s?.$ref ? resolve(root, s.$ref.split('/').slice(1).reduce((o, k) => o[k], root)) : s;
 
-// the alternatives of a schema, e.g. a plot or a list of plots
+// the alternatives of a schema, e.g. a mark or a list of marks, also the
+// branches of an if/then/else (of the type of a value, e.g. a scale type or
+// an expression of the globals)
 const variants = (root, s) => {
     s = resolve(root, s);
     if (!s || typeof s != 'object')
         return [];
-    const parts = [...(s.oneOf ?? []), ...(s.anyOf ?? [])];
+    const parts = [...(s.oneOf ?? []), ...(s.anyOf ?? []), ...[s.then, s.else].filter(b => b && typeof b == 'object')];
     return parts.length ? [s, ...parts.flatMap(p => variants(root, p))] : [s];
 };
 

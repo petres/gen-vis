@@ -57,7 +57,7 @@ const coords = { cartesian, polar, geo };
 
 const getCoord = (name = 'cartesian') => {
     if (!Object.hasOwn(coords, name))
-        throw new Error(`Unknown coordinate system '${name}', expected one of ${Object.keys(coords).map(n => `'${n}'`).join(', ')}`);
+        throw new Error(`coord: unknown coordinate system '${name}', expected one of ${Object.keys(coords).map(n => `'${n}'`).join(', ')}`);
     return coords[name];
 };
 

@@ -34,7 +34,7 @@ const printPage = '<!doctype html><html><head><meta charset="utf-8"><link rel="s
 // the file of an url of the page, null if it is not one; a site-absolute
 // path, e.g. "/geo/europe.json", is a file in `root` (if given)
 const within = (dir, file) => file == dir || file.startsWith(dir.endsWith(path.sep) ? dir : dir + path.sep);
-const fileOf = (url, root) => {
+export const fileOf = (url, root) => {
     const { pathname } = new URL(url);
     if (pathname.startsWith('/__gen-vis/')) {
         const file = path.resolve(lib, decodeURIComponent(pathname.slice('/__gen-vis/'.length)));
@@ -142,10 +142,12 @@ export const createExporter = async ({ browser, sandbox = true, root, note = () 
          * options are the ones of genVisExport (docs/export.md)
          * with files instead of urls (`data`, `css` files or texts) and
          * `scale` (pixels of the PNG per CSS pixel, default 2) or `dpi`.
-         * Returns the result of genVisExport without the SVG and the notes
-         * of the page.
+         * Returns the result of genVisExport without the SVG, the notes of
+         * the page (`messages`, the warnings and errors of its console) and
+         * the size of the PNG in pixels (`png`, of a PNG output). `strict`:
+         * a warning of the page is an error, no output is written.
          */
-        const exportChart = async (def, outputs, { data, css = [], scale, dpi, ...options } = {}) => {
+        const exportChart = async (def, outputs, { data, css = [], scale, dpi, strict = false, ...options } = {}) => {
             const kinds = outputs.map(o => path.extname(o).slice(1).toLowerCase());
             const unknown = outputs.filter((o, i) => !formats.includes(kinds[i]));
             if (unknown.length)
@@ -162,13 +164,20 @@ export const createExporter = async ({ browser, sandbox = true, root, note = () 
             await exporter.send('Page.bringToFront');
             const r = await evaluate(exporter,
                 `window.genVisExport(${JSON.stringify(given)}).then(r => ({ result: r }), e => ({ error: String(e && e.message || e) }))`);
+            // the notes of the page without the url of the definition, e.g.
+            // "warning: marks[0]: none of its rows is drawn, ..."
+            const own = `gen-vis ${given.defUrl}: `;
+            messages = messages.map(m => m.replace(own, ''));
             if (r.error)
                 throw Object.assign(new Error(r.error), { messages: messages.filter(m => !m.includes(r.error)) });
+            if (strict && messages.length)
+                throw Object.assign(new Error(`${messages.length} warning${messages.length > 1 ? 's' : ''} of the draw (--strict), no output is written`), { messages: [...messages] });
             const { svg, box } = r.result;
             // the pixels of the PNG: of the scale of the dpi, its width a whole number of them
             const perPx = dpi ? dpi / 96 : (scale ?? 2);
             const pngScale = Math.max(1, Math.round(box.width * perPx)) / box.width;
             let pdf = null;
+            let pngSize = null;
             for (const [i, out] of outputs.entries()) {
                 mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
                 if (kinds[i] == 'svg')
@@ -177,12 +186,15 @@ export const createExporter = async ({ browser, sandbox = true, root, note = () 
                     const { data: png } = await exporter.send('Page.captureScreenshot', {
                         format: 'png', clip: { ...box, scale: pngScale }, captureBeyondViewport: true,
                     });
-                    writeFileSync(out, Buffer.from(png, 'base64'));
+                    const bytes = Buffer.from(png, 'base64');
+                    // the size of the image of its header, in pixels
+                    pngSize = { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+                    writeFileSync(out, bytes);
                 } else
                     writeFileSync(out, pdf ??= await pdfOf(svg, box));
             }
             const { svg: _, ...rest } = r.result;
-            return { ...rest, messages: [...messages] };
+            return { ...rest, messages: [...messages], ...(pngSize ? { png: pngSize } : {}) };
         };
 
         // the value of an expression of the export page (awaited), e.g. of

@@ -6,7 +6,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { root, browser, buildExportPage } from './browser.js';
+import { root, browser, buildExportPage, buildPackage } from './browser.js';
 import { createExporter, fileUrl } from '../bin/export.js';
 
 // the CLI of `args`, `env` added to the environment, `started(child)` gets
@@ -33,10 +33,92 @@ const pngSize = file => {
 // the size of the first page of a PDF in points
 const pdfSize = file => readFileSync(file, 'latin1').match(/\/MediaBox\s*\[\s*0 0 ([\d.]+) ([\d.]+)\s*\]/).slice(1).map(Number);
 
+// a definition of the data of bev (data/bev/data.csv) in `dir`, its dims
+// and marks changed by `change`
+const bevDef = (dir, change = d => d) => {
+    const def = JSON.parse(readFileSync(path.join(root, 'data/bev/def.json'), 'utf8'));
+    def.data = path.relative(dir, path.join(root, 'data/bev/data.csv')).replaceAll(path.sep, '/');
+    return change(def);
+};
+
+describe('gen-vis check', () => {
+    let dir;
+    beforeAll(() => {
+        buildPackage();
+        dir = mkdtempSync(path.join(tmpdir(), 'gen-vis-check-'));
+    }, 120000);
+    afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+    // a definition file in `dir`
+    const file = (name, def) => {
+        writeFileSync(path.join(dir, name), typeof def == 'string' ? def : JSON.stringify(def));
+        return path.join(dir, name);
+    };
+
+    test('a definition without warnings, with the rows of its data (CSV and parquet)', async () => {
+        const r = await run(['check', 'data/bev/def.json', 'data/bev/def-parquet.json']);
+        expect(r.stdout).toBe('');
+        expect(r.stderr).toBe('gen-vis: 2 definitions, 0 warnings\n');
+        expect(r.code).toBe(0);
+    });
+
+    test('the warnings of the schema, of validateDef and of the data, a line per warning; --strict', async () => {
+        const typos = file('typos.json', bevDef(dir, d => {
+            const [x] = Object.keys(d.dims);
+            d.dims[x] = { ...(typeof d.dims[x] == 'string' ? { column: d.dims[x] } : d.dims[x]), column: 'Jahrr' };
+            d.marks = [{ type: 'lines', by: 'land', stak: true, 'strok-width': 2 }];
+            d.titel = 'x';
+            return d;
+        }));
+        const r = await run(['check', typos, 'data/bev/def.json']);
+        const lines = r.stdout.split('\n').filter(Boolean);
+        expect(lines.every(l => l.startsWith(`${typos}: `))).toBe(true);
+        expect(lines.map(l => l.slice(typos.length + 2))).toEqual(expect.arrayContaining([
+            "titel: unknown key, did you mean 'title'?",
+            expect.stringMatching(/^dims\.\w+\.column: 'Jahrr' is not a column of the data, did you mean 'Jahr'\?$/),
+            "marks[0].type: unknown type 'lines' of the coordinate system 'cartesian', did you mean 'line'?",
+            "marks[0].stak: unknown key, did you mean 'stack'? (other keys are attributes of the elements)",
+            "marks[0].strok-width: no attribute of svg, did you mean 'stroke-width'?",
+        ]));
+        expect(r.stderr).toBe(`gen-vis: 2 definitions, ${lines.length} warnings in 1\n`);
+        expect(r.code).toBe(0);
+        expect((await run(['check', '--strict', typos])).code).toBe(1);
+        expect((await run(['check', '--strict', 'data/bev/def.json'])).code).toBe(0);
+        // the data of --data instead of the one of the definition
+        writeFileSync(path.join(dir, 'other.csv'), 'year,value\n2020,1\n');
+        const other = await run(['check', 'data/bev/def.json', '--data', path.join(dir, 'other.csv')]);
+        expect(other.stdout).toMatch(/is not a column of the data/);
+    }, 60000);
+
+    test('errors: a missing file or parent, invalid JSON, no $schema; a definition of 4.x is checked as migrated', async () => {
+        const broken = file('broken.json', '{ "dims": ');
+        const orphan = file('orphan.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', parent: 'nothing.json' });
+        const none = file('none.json', { dims: {} });
+        const old = file('old.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', data: path.relative(dir, path.join(root, 'data/bev/data.csv')),
+            mapping: { x: { column: 'Jahr', type: 'numeric' }, y: { column: 'Wert', type: 'numeric' } }, plot: { type: 'line' } });
+        const r = await run(['check', broken, orphan, none, path.join(dir, 'missing.json'), old]);
+        expect(r.code).toBe(1);
+        expect(r.stderr).toContain(`gen-vis: ${broken}: invalid JSON:`);
+        expect(r.stderr).toContain(`gen-vis: ${orphan}: the file ${path.join(dir, 'nothing.json')} does not exist`);
+        expect(r.stderr).toMatch(new RegExp(`gen-vis: ${none}: '${none}' is no definition of gen-vis 5: its \\$schema is missing`));
+        expect(r.stderr).toContain(`gen-vis: ${path.join(dir, 'missing.json')}: the definition ${path.join(dir, 'missing.json')} does not exist`);
+        expect(r.stdout).toContain(`${old}: note: a definition of gen-vis 4, checked as migrated`);
+        expect(r.stderr).toMatch(/gen-vis: 5 definitions, \d+ warnings?( in 1)?, 4 not read\n$/);
+    }, 60000);
+
+    test('the usage and the version', async () => {
+        expect((await run(['check'])).code).toBe(2);
+        expect((await run(['check', '--help'])).stdout).toContain('gen-vis check <def.json>...');
+        const version = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')).version;
+        expect((await run(['--version'])).stdout).toBe(`gen-vis ${version}\n`);
+    });
+});
+
 describe.skipIf(!browser)('gen-vis export', () => {
     let dir;
     beforeAll(() => {
         buildExportPage();
+        buildPackage();
         dir = mkdtempSync(path.join(tmpdir(), 'gen-vis-cli-'));
     }, 120000);
     afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -46,7 +128,8 @@ describe.skipIf(!browser)('gen-vis export', () => {
         const r = await run(['export', 'data/bev/def.json', ...out, '--width', '16cm', '--dpi', '300']);
         expect(r.stderr.replace(/^gen-vis: the browser has no sandbox.*\n/m, '')).toBe('');
         expect(r.code).toBe(0);
-        expect(r.stdout).toMatch(/^data\/bev\/def\.json -> .*bev\.svg, .*bev\.png, .*bev\.pdf \(605x\d+ px, [\d.]+ s\)/);
+        // the size of the chart in CSS pixels and the one of the PNG in its pixels
+        expect(r.stdout).toMatch(new RegExp(`^data/bev/def\\.json -> .*bev\\.svg, .*bev\\.png, .*bev\\.pdf \\(605x\\d+ CSS px, PNG ${Math.round(16 / 2.54 * 300)}x\\d+ px, [\\d.]+ s\\)`));
 
         const svg = readFileSync(out[0], 'utf8');
         const [, width, height, w, h] = svg.match(/<svg [^>]*width="([^"]+)" height="([^"]+)" viewBox="0 0 ([\d.]+) ([\d.]+)"/);
@@ -60,6 +143,7 @@ describe.skipIf(!browser)('gen-vis export', () => {
 
         const [pw, ph] = pngSize(out[1]);
         expect(pw).toBe(Math.round(16 / 2.54 * 300));
+        expect(r.stdout).toContain(`PNG ${pw}x${ph} px`);
         expect(Math.abs(ph - h * 300 / 96)).toBeLessThan(2);
 
         // the default font of gen-vis, Inter of the package, also where the
@@ -164,9 +248,40 @@ describe.skipIf(!browser)('gen-vis export', () => {
             data: path.relative(dir, path.join(root, 'data/bev/data.csv')).replaceAll(path.sep, '/'), mapping: { x: 'Jahr' }, plot: { type: 'nope' } }));
         const r = await run(['export', path.join(dir, 'broken.json'), path.join(dir, 'broken.svg'), 'data/bev/missing.json', path.join(dir, 'missing.svg')]);
         expect(r.code).toBe(1);
-        expect(r.stderr).toMatch(/broken\.json: .*Unknown plot type 'nope'/);
+        expect(r.stderr).toMatch(/broken\.json: .*marks\[0\]\.type: unknown mark type 'nope'/);
         expect(r.stderr).toMatch(/missing\.json: the definition data\/bev\/missing\.json does not exist/);
         expect(existsSync(path.join(dir, 'broken.svg'))).toBe(false);
+    }, 60000);
+
+    test('the warnings of the check and of the draw, --no-check, --strict', async () => {
+        const typo = path.join(dir, 'typo.json');
+        writeFileSync(typo, JSON.stringify(bevDef(dir, d => {
+            const [x] = Object.keys(d.dims);
+            d.dims[x] = { ...(typeof d.dims[x] == 'string' ? { column: d.dims[x] } : d.dims[x]), column: 'Jahrr' };
+            return d;
+        })));
+        const out = path.join(dir, 'typo.svg');
+        const r = await run(['export', typo, out]);
+        expect(r.code).toBe(0);
+        // the check, then the draw, without the url of the definition
+        expect(r.stderr).toMatch(new RegExp(`gen-vis: ${typo}: check: dims\\.\\w+\\.column: 'Jahrr' is not a column of the data, did you mean 'Jahr'\\?`));
+        expect(r.stderr).toMatch(new RegExp(`gen-vis: ${typo}: warning: marks\\[0\\]: none of its \\d+ rows is drawn, \\d+ without a value of dim '\\w+' \\(column 'Jahrr' is not in the data\\)`));
+        expect(r.stderr).not.toContain('gen-vis.local');
+        expect(existsSync(out)).toBe(true);
+        const quiet = await run(['export', typo, out, '--no-check']);
+        expect(quiet.stderr).not.toContain('check:');
+        expect(quiet.stderr).toContain('none of its');
+        rmSync(out);
+        const strict = await run(['export', typo, out, 'data/bev/def.json', path.join(dir, 'fine.svg'), '--strict']);
+        expect(strict.code).toBe(1);
+        expect(strict.stderr).toMatch(/warning of the check \(--strict\), no output is written/);
+        expect(existsSync(out)).toBe(false);
+        expect(existsSync(path.join(dir, 'fine.svg'))).toBe(true);
+        // a warning of the draw only
+        const drawn = await run(['export', typo, out, '--strict', '--no-check']);
+        expect(drawn.code).toBe(1);
+        expect(drawn.stderr).toMatch(/\d+ warnings? of the draw \(--strict\), no output is written/);
+        expect(existsSync(out)).toBe(false);
     }, 60000);
 
     test('a signal ends the browser and removes its profile', async () => {
@@ -266,6 +381,7 @@ describe.skipIf(!browser)('gen-vis export', () => {
         expect(r.code).toBe(2);
         expect(r.stderr).toContain('has no output');
         expect((await run(['--help'])).stdout).toContain('Usage: gen-vis export');
+        expect((await run(['--help'])).stdout).toContain('--no-check');
     });
     test('site-absolute paths are files of --root', async () => {
         // a site: the data at /bev/data.csv, the definition elsewhere

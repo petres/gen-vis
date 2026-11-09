@@ -122,6 +122,9 @@ describe('the language of 5.0', () => {
         expect(authoredPath('options.footer')).toBe('source');
         expect(authoredPath('formElements[0].ref')).toBe('controls[0].global');
         expect(authoredPath('plot')).toBe('marks');
+        expect(authoredPath('facets.rows')).toBe('facets.by.rows');
+        expect(authoredPath('facets.dim')).toBe('facets.by');
+        expect(authoredPath('facets.cols')).toBe('facets.cols');
     });
 
     test('expressions of the globals at the options of a mark (type, curve, by, ...) are resolved, its attributes are drawn', () => {

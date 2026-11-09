@@ -4,7 +4,7 @@ export { valueFormat, resolveUrl, clearCache, resolveParents, readDef, requireme
 import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, sourceRows, toDate, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, madeColumns, utcColumns } from "@/utils/transform";
 import { applyResolved, fillTemplate, languageOf, mergeAll, prepareDef, variants, variantsOf } from "@/utils/def";
-import { translate, checkDims, implicitDims, isDefinition4, isDefinition5, optionKeys } from "@/utils/language";
+import { translate, checkDims, implicitDims, isDefinition4, isDefinition5, optionKeys, authoredPath } from "@/utils/language";
 import { resolve, namesOfGlobals, variants as resolvedVariants } from "@/utils/resolve";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
 import { checkLocale, getLocale, loadLocale } from "@/utils/locale";
@@ -258,6 +258,13 @@ const loadParts = need => {
     return parts;
 };
 
+// an error of the engine's form with the path of the definition, e.g.
+// "dims.y.scale: ..." of "mapping.y.scale: ..."
+const authoredError = error => {
+    const m = /^(mapping|plot|options|formElements|facets)\b([^\s:]*): /.exec(error?.message ?? '');
+    return m ? new Error(`${authoredPath(m[1] + m[2])}: ${error.message.slice(m[0].length)}`, { cause: error }) : error;
+};
+
 // the definition of the attribute (an object or a JSON text) or, of null,
 // the one of its url, and its url, undefined of the attribute
 // a definition given with a url (`defUrl`, e.g. the prop defFile beside
@@ -301,7 +308,13 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
         console.info(`gen-vis ${url === undefined ? 'inline definition' : `'${url}'`}: ${old ? 'a definition' : 'parts of a definition'} of gen-vis 4, migrated while it is loaded, 'gen-vis migrate' writes ${old ? 'it' : 'them'} as one of gen-vis 5`);
     // the migration is a chunk of its own, definitions of 5.0 do not need it
     const source = old ? (await lazy.migrate()).migrate(merged) : merged;
-    const engine = v => normalize(checkDims(translate(v)), { plotTypes });
+    const engine = v => {
+        try {
+            return normalize(checkDims(translate(v)), { plotTypes });
+        } catch (error) {
+            throw authoredError(error);
+        }
+    };
     const defOrg = engine(resolve(source, namesOfGlobals(source.globals, source.controls)));
     defOrg[variantsOf] = resolvedVariants(source).map(engine);
     // the check of the definition (of 5.0, as written) with the rows, e.g.
@@ -471,8 +484,16 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     }
     const [{ coords, geo: geoModule, colorLegend, inside }, rows, files, geometries] = loaded;
     await validate(rows);
-    const { prepared, defaults, columns } = prepare(defOrg, source, rows, files, state, globals, symbolDefaults(chartDefaults));
-    missingColumns(source, prepared.globals, rows, columns).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
+    let ready;
+    try {
+        ready = prepare(defOrg, source, rows, files, state, globals, symbolDefaults(chartDefaults));
+    } catch (error) {
+        throw authoredError(error);
+    }
+    const { prepared, defaults, columns } = ready;
+    // (with the check its warning of such a channel, see validateDef, not twice)
+    if (!check)
+        missingColumns(source, prepared.globals, rows, columns).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
 
     return {
         defUrl: url ?? null,

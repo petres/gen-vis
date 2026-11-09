@@ -244,7 +244,7 @@ describe('rows without a value', () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const { groups } = await setup([{ ...plots[1], id: 'caps', props: { x1: '@x:scaled', y1: '@y:scaled' } }]);
         groups('caps');
-        expect(warn).toHaveBeenCalledWith(expect.stringContaining(`plot 'caps': none of its 2 rows is drawn, 2 without a value of mapping 'y'`));
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining(`marks[0] ('caps'): none of its 2 rows is drawn, 2 without a value of dim 'y'`));
         warn.mockRestore();
     });
 });

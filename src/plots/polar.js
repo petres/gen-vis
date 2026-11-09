@@ -62,7 +62,7 @@ const positioned = (name, type, x, y) => ({
         const radii = text && plot.dodge ? dodgedRadii(groups, plot.dodge, r0) : null;
         return perRow(groups, type, (v, row) => {
             if (!('angle' in v && 'radius' in v))
-                throw new Error(`${name}: the props 'angle' and 'radius' are needed`);
+                throw new Error(`a ${name.split(':')[1]} of a polar chart needs an angle and a radius, the channels x and y (or the attributes angle and radius)`);
             const [px, py] = pointRadial(v.angle + offset, radii ? radii.get(row) : clampRadius(v.radius, r0));
             const { angle, radius, ...props } = v;
             return { ...below, ...props, [x]: px, [y]: py };
@@ -124,7 +124,7 @@ const types = {
             let [start, end] = [v.startAngle, v.endAngle];
             if (!('startAngle' in v && 'endAngle' in v)) {
                 if (!('angle' in v))
-                    throw new Error(`polar:arc: the props 'angle' or 'startAngle' and 'endAngle' are needed`);
+                    throw new Error(`an arc needs an angle, the channel x (or the attribute angle, or startAngle and endAngle)`);
                 const s = barScale(plot, ctx, 'angle', 'polar:arc');
                 const width = v.width ?? barWidth(s, 'polar:arc');
                 const a = v.angle + bandCenter(s);

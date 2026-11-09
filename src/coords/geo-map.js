@@ -40,11 +40,11 @@ const projection = (ctx, keys) => {
     const { type = 'mercator', ...params } = ctx.store.def.geo?.projection ?? {};
     const make = named(projections, type);
     if (!make)
-        throw new Error(`Unknown projection '${type}', e.g. 'mercator' or 'conicConformal'`);
+        throw new Error(`geo.projection.type: unknown projection '${type}', e.g. 'mercator' or 'conicConformal'`);
     const p = make();
     Object.entries(params).forEach(([k, v]) => {
         if (typeof p[k] != 'function')
-            throw new Error(`The projection '${type}' has no parameter '${k}' (geo.projection.${k})`);
+            throw new Error(`geo.projection.${k}: the projection '${type}' has no parameter '${k}'`);
         p[k](v);
     });
 
@@ -65,8 +65,8 @@ const checkFeatures = store => {
         return;
     const { include, exclude, key = 'id' } = store.def.geo;
     if (include || exclude)
-        throw new Error(`The map has no features: none of the geometry is left by geo.include or geo.exclude, matched to their key '${key}' (geo.key)`);
-    throw new Error('The map has no features: the geometry is empty');
+        throw new Error(`geo: the map has no features, none of the geometry is left by geo.include or geo.exclude, matched to their key '${key}' (geo.key)`);
+    throw new Error('geo.data: the map has no features, the geometry is empty');
 };
 
 // the paths and their centers of the features of a projection, computed once
@@ -285,7 +285,7 @@ export default {
     fitLabels,
     prepare(ctx) {
         if (!ctx.store.geo)
-            throw new Error(`A map needs a geometry, e.g. "geo": { "data": "regions.json" }`);
+            throw new Error(`geo.data: a map needs a geometry, e.g. "geo": { "data": "regions.json" }`);
         checkFeatures(ctx.store);
         const { projection, path } = projected(ctx);
         ctx.projection = projection;

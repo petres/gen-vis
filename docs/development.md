@@ -65,7 +65,13 @@ with the text of every key: `npm run schema` writes `schema.json` and
 `types/definition.d.ts` of it, `tests/schema.test.js` checks that both are
 current and that the names of the registries (mark types, coordinate
 systems, curves, locales, scales, projections, transforms) are the code's;
-the structural check of `validateDef` walks the same source. A change of
+the structural check of `validateDef` walks the same source. A value of
+several forms is a `cases` node of the dsl (if/then/else by the type of the
+value, e.g. a mark or a list of marks), so a typo gives one error of ajv
+(and an `if` error, which the tools leave out) instead of one per branch of
+an `anyOf`; `option` is a name of a fixed list or an expression of the
+globals (`"=..."`), the types of TypeScript make the branches a union and
+the expression a template literal type (`scripts/types.js`). A change of
 the language is a change of the source, `npm run schema`, the translator
 (`src/utils/language.js`) and its tests (`tests/language.test.js`).
 

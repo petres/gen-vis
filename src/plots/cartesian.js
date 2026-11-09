@@ -10,14 +10,14 @@ import { refOf } from "@/utils/expr";
 const barScale = (plot, ctx, prop, type) => {
     const scale = propScale(plot, ctx, prop);
     if (!scale)
-        throw new Error(`${type}: the positions need a scaled value, e.g. "@x:scaled"`);
+        throw new Error(`the position of a ${type.split(':')[1]} is no value of the scale of a dim, e.g. "@x:scaled"`);
     return scale;
 };
 
 // the default width of the bars of a categorical scale
 const barWidth = (scale, type) => {
     if (!scale.step)
-        throw new Error(`${type}: a 'width' is needed for a continuous scale`);
+        throw new Error(`the ${type.split(':')[1]}s of a continuous scale need a 'width' in pixels, e.g. "width": 8, or a categorical dim of their position`);
     return scale.bandwidth() || scale.step()*(1 - scale.padding());
 };
 

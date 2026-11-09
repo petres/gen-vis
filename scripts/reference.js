@@ -45,7 +45,7 @@ const typeOf = (node, depth = 0) => {
         return node.enum.map(v => `\`${JSON.stringify(v)}\``).join(', ');
     if ('const' in node)
         return `\`${JSON.stringify(node.const)}\``;
-    const branches = node.anyOf ?? node.oneOf;
+    const branches = node.anyOf ?? node.oneOf ?? (node.if ? [node.then, node.else].filter(Boolean) : undefined);
     if (branches)
         return [...new Set(branches.map(b => typeOf(b, depth + 1)).filter(Boolean))].join(' | ');
     if (node.pattern == '^[=@]' || node.pattern == '^=')
@@ -62,7 +62,7 @@ const cell = text => String(text ?? '').replace(/\|/g, '\\|').replace(/\n+/g, ' 
 const table = node => {
     const n = resolveNode(node);
     // a part of several forms: the keys of all of its objects
-    const objects = n.properties ? [n] : (n.anyOf ?? n.oneOf ?? []).map(resolveNode).filter(b => b?.properties);
+    const objects = n.properties ? [n] : (n.anyOf ?? n.oneOf ?? (n.if ? [n.then, n.else].filter(Boolean) : [])).map(resolveNode).filter(b => b?.properties);
     const keys = new Map();
     objects.forEach(o => Object.entries(o.properties).forEach(([k, v]) => keys.has(k) || keys.set(k, v)));
     const rows = [...keys].map(([k, v]) => {
