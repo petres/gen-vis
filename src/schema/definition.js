@@ -356,7 +356,8 @@ const definitions = {
             select: anyOf([
                 option(['first', 'last']),
                 object({ min: string(), max: string() }, undefined, { minProperties: 1, maxProperties: 1 }),
-            ], 'One row of every group: the first or the last one, or the one with the least or the most value of a dim, e.g. labels at the ends of lines.'),
+            ], 'One row of every group: the first or the last one along the dim of x (as the points of a line, see order), or the one with the least or the most value of a dim, e.g. labels at the ends of lines.'),
+            order: option(['x', 'y', 'rows'], 'Lines and areas (and the first and the last row of select): the order of the points, along x (the angle of polar charts) by default, along y if y is categorical and x is not; along a categorical dim in the order of its categories, a continuous one ascending; rows keeps the order of the rows, e.g. of a connected scatter plot.'),
             layer: option(['below', 'above'], 'below: below the axes and grid lines, above: above the other marks, between them by default.'),
             facet: { description: 'The facets of the mark, a key or a list of them, all by default; of a grid also the values of the dims of its rows and columns, e.g. { "group": "Bau" } (a column, a row or a cell).' },
             once: boolean('One element per facet, of no row: its attributes are the names of the facet, e.g. a header or a unit label at the edge of the plot area, "y": "@plot:top", "text": "@facet:name".'),

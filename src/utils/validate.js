@@ -589,6 +589,8 @@ const checkPlots = ctx => {
             else if (!Object.hasOwn(mapping, name))
                 warn(`${path}.select.${which}`, `unknown mapping '${name}'`);
         }
+        if (p.order !== undefined && !['x', 'y', 'rows'].includes(p.order))
+            warn(`${path}.order`, `the order of the points of a line or an area, 'x' or 'y' (along the dim, the default is x) or 'rows' (the order of the rows)`);
         if (p.ends !== undefined && (!['base', 'open'].includes(p.ends) || !['line', 'cartesian:line'].includes(p.type)))
             warn(`${path}.ends`, `the ends of the stairs of a line of x0 and x1, 'base' (down to the base, the default) or 'open'`);
         if (p.once !== undefined && typeof p.once != 'boolean')

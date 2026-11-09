@@ -59,3 +59,42 @@ describe('texts among numbers', () => {
         expect(errors).toEqual(["gen-vis inline definition: dims.y: values of the column 'b' are no numbers, they are missing: 'unknown' (1 row)"]);
     });
 });
+
+describe('lines and areas along x, not in the order of the rows', () => {
+    const def = (marks, dims = { x: 'a', y: 'b' }) => ({ width: 600, margins: { left: 40, right: 60, top: 10, bottom: 30 }, dims, marks });
+    // the x of the points of a path
+    const xs = d => [...d.matchAll(/[ML]([-\d.]+),/g)].map(m => parseFloat(m[1]));
+    const ascending = v => v.every((x, i) => i == 0 || v[i - 1] <= x);
+    const paths = el => [...el.querySelectorAll('g[data-mark] path')].map(p => p.getAttribute('d'));
+
+    test('unsorted numbers and dates, the label of select last at the end', async () => {
+        let el = await mount({ def: def([{ type: 'line' }, { type: 'label', select: 'last', text: 'last' }]), data: 'a,b\n3,2\n1,3\n2,4' });
+        expect(ascending(xs(paths(el)[0]))).toBe(true);
+        const label = el.querySelector('g[data-mark] text');
+        expect(parseFloat(label.getAttribute('x'))).toBeCloseTo(Math.max(...xs(paths(el)[0])));
+        el = await mount({ def: def([{ type: 'line' }, { type: 'label', select: 'first', text: 'first' }]), data: 'a,b\n2024-03-01,1\n2024-01-01,3\n2024-02-01,2' });
+        expect(ascending(xs(paths(el)[0]))).toBe(true);
+        expect(parseFloat(el.querySelector('g[data-mark] text').getAttribute('x'))).toBeCloseTo(Math.min(...xs(paths(el)[0])));
+        // an area: the upper edge along x
+        el = await mount({ def: def([{ type: 'area' }]), data: 'a,b\n3,2\n1,3\n2,4' });
+        const upper = xs(paths(el)[0]).slice(0, 3);
+        expect(ascending(upper)).toBe(true);
+        expect(errors).toEqual([]);
+    });
+
+    test('"order": "rows" keeps the order of the rows, e.g. a connected scatter plot', async () => {
+        const el = await mount({ def: def([{ type: 'line', order: 'rows' }, { type: 'label', order: 'rows', select: 'last', text: 'last' }]), data: 'a,b\n3,2\n1,3\n2,4' });
+        const x = xs(paths(el)[0]);
+        expect(x[0]).toBeGreaterThan(x[1]);
+        expect(parseFloat(el.querySelector('g[data-mark] text').getAttribute('x'))).toBeCloseTo(x[2]);
+        expect(errors).toEqual([]);
+    });
+
+    test('along a categorical y if x is continuous, in the order of its categories', async () => {
+        const el = await mount({ def: def([{ type: 'line' }], { x: 'b', y: { column: 'a', categories: { A: {}, B: {}, C: {} } } }), data: 'a,b\nC,3\nA,1\nB,2' });
+        const ys = [...paths(el)[0].matchAll(/[ML][-\d.]+,([-\d.]+)/g)].map(m => parseFloat(m[1]));
+        // A at the top (vertical bands top-down), then B and C
+        expect(ascending(ys)).toBe(true);
+        expect(errors).toEqual([]);
+    });
+});

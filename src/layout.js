@@ -13,6 +13,7 @@ import { highlightVars } from "@/utils/highlight";
 import { textWidth } from "@/utils/measure";
 import { directOf, elementOf } from "@/utils/draw";
 import { plotTypes } from "@/plots";
+import { alongRows } from "@/plots/elements";
 
 // the warning of a condition of a filter of no mapping, e.g. of a column
 // instead of the mapping of it, which no row has, see rowFilter
@@ -587,13 +588,17 @@ const inFacet = (def, part, facet) => {
     return [part.facet].flat().map(String).includes(String(facet.key));
 };
 
-// one row of the rows of a group: the first or the last one, in the order of
-// the rows, or the one with the least or the most value of a mapping, e.g.
-// { "max": "x" }, of the rows with values of the mappings of the props,
-// categories as numbers if they are numbers, e.g. "10" after "9"
-const selected = (rows, select, mapping) => {
-    if (select == 'first' || select == 'last')
-        return select == 'first' ? rows.slice(0, 1) : rows.slice(-1);
+// one row of the rows of a group: the first or the last one along the dim
+// of the position of the plot (as the points of a line, see alongRows, in
+// the order of the rows with `"order": "rows"`), or the one with the least
+// or the most value of a mapping, e.g. { "max": "x" }, of the rows with
+// values of the mappings of the props, categories as numbers if they are
+// numbers, e.g. "10" after "9"
+const selected = (rows, select, mapping, plot, ctx) => {
+    if (select == 'first' || select == 'last') {
+        const along = alongRows(rows, plot, ctx);
+        return select == 'first' ? along.slice(0, 1) : along.slice(-1);
+    }
     const [kind, name] = Object.entries(select ?? {})[0] ?? [];
     const values = rows.filter(r => r[name] !== null && r[name] !== undefined);
     const compare = Object.hasOwn(mapping, name) && !continuous(mapping[name])
@@ -824,7 +829,7 @@ const plotGroups = (plot, rows, ctx) => {
         return {
             categories: g.group,
             props,
-            rows: plot.select === undefined ? g.entries : selected(g.entries.filter(complete), plot.select, mapping),
+            rows: plot.select === undefined ? g.entries : selected(g.entries.filter(complete), plot.select, mapping, plot, ctx),
             at,
             prop: name => at.entries.get(name) ?? constant(undefined),
             attrs: Object.fromEntries([...at.entries].filter(([, f]) => f.constant).map(([k, f]) => [k, f()])),

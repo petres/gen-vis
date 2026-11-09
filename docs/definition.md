@@ -1503,8 +1503,16 @@ them (from 0), e.g. the counts of the categories at the top right:
   the dim of the facets is only in its facet. `data` can also be the url of
   a file of rows (`dataFormat` as the one of the definition), relative to
   the definition, its values are no expressions.
+- `order`: the order of the points of a line or an area: along `x` by
+  default (the angle of polar charts), along `y` if `y` is categorical and
+  `x` is not (a vertical line through the categories); along a categorical
+  dim in the order of its categories, along a continuous one ascending (rows
+  without a value at the end), so unsorted rows draw no zig-zag. `"x"` or
+  `"y"` names the dim, `"rows"` keeps the order of the rows, e.g. of a
+  connected scatter plot (`x` and `y` continuous, a point per year).
 - `select`: one row of every group, of the rows with values of the dims of
-  the attributes: `first` or `last` (in the order of the rows) or the one
+  the attributes: `first` or `last` (along `x` as the points of a line, see
+  `order`; of `"order": "rows"` in the order of the rows) or the one
   with the least or the most value of a dim, `{"min": "y"}` or `{"max":
   "x"}` (categories which are numbers by their value, e.g. `"10"` after
   `"9"`), e.g. labels at the ends of lines.

@@ -458,6 +458,14 @@ Migration notes, to check by hand after `gen-vis migrate`:
 
 ### Fixes of the data (review of the release)
 
+- Lines and areas are drawn along `x` (were in the order of the rows, so
+  unsorted rows zig-zagged): along a continuous dim ascending, along a
+  categorical one in the order of its categories (as before), along `y` if
+  `y` is categorical and `x` is not; of polar charts along the angle.
+  `select: "first"` and `"last"` are the ends along `x` (were the first and
+  the last row). The new key `order` of a mark (`"x"`, `"y"`, `"rows"`)
+  names the dim or keeps the order of the rows, e.g. of a connected
+  scatter plot.
 - One text among numbers no longer makes a column categorical (the ticks
   read "10, NA, 30", bars had NaN heights and the chart was empty, also
   with `zero`). The usual texts of missing values (`NA`, `NaN`, `n/a`,
