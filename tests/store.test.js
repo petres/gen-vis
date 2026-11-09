@@ -207,8 +207,11 @@ describe('Store.init', () => {
         expect(store.defUrl).toBe('http://h/data/def.json');
         expect(store.axis).toEqual({ h: 'x', v: 'y' });
         expect(store.data).toEqual([{ x: 2020, y: 1 }, { x: 2021, y: null }, { x: 2022, y: 3 }]);
-        // the rows are plain objects
-        expect(Object.getPrototypeOf(store.data[0])).toBe(Object.prototype);
+        // the rows are only their values, no proxies (the row of the data and
+        // its index are private fields, see prepareData)
+        expect(Object.keys(store.data[0])).toEqual(['x', 'y']);
+        expect(Object.getOwnPropertySymbols(store.data[0])).toEqual([]);
+        expect(JSON.parse(JSON.stringify(store.data[0]))).toEqual({ x: 2020, y: 1 });
     });
 
     test('inline def and data', async () => {

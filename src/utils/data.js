@@ -1,4 +1,4 @@
-export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, rawRow, rawIndex, rowResolver, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
+export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, rawOf, rawIndexOf, rowResolver, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { fillTemplate, inLanguage, sameValue, templateRefs, variants } from "@/utils/def";
@@ -191,9 +191,27 @@ const updateData = (rows, data, def, names, columns = null) => {
 };
 
 // the row of the data a prepared row was made of and its index, e.g. for
-// the columns of a filter which are no mappings, see rowResolver
-const rawRow = Symbol('rawRow');
-const rawIndex = Symbol('rawIndex');
+// the columns of a filter which are no mappings, see rowResolver: private
+// fields of the prepared rows, so a row is only its values (e.g. of a copy
+// or of toEqual) and is made as fast as a plain object (two properties
+// defined per row cost three times as much, e.g. 40 ms of 253k rows)
+class PreparedRow {
+    #raw;
+    #index;
+    constructor(raw, index) {
+        this.#raw = raw;
+        this.#index = index;
+    }
+    // undefined of other rows, e.g. of the data of a mark, also of a proxy of a row
+    static raw(row) {
+        return #raw in row ? row.#raw : undefined;
+    }
+    static index(row) {
+        return #index in row ? row.#index : undefined;
+    }
+}
+const rawOf = PreparedRow.raw;
+const rawIndexOf = PreparedRow.index;
 
 // maps the parsed rows to the mappings, e.g. column `share` to `y`, also the
 // columns of transforms
@@ -205,13 +223,9 @@ const prepareData = (data, def, columns = null) => {
     }));
 
     return sourceRows(data, columns).map((d, i) => {
-        const e = {};
-        mapping.forEach(c => {
+        const e = new PreparedRow(d, i);
+        for (const c of mapping)
             e[c.name] = c.convert(c.value(i));
-        });
-        // not enumerable, so a prepared row is only its values, e.g. of a copy of it
-        Object.defineProperty(e, rawRow, { value: d });
-        Object.defineProperty(e, rawIndex, { value: i });
         return e;
     })
 };
@@ -219,7 +233,7 @@ const prepareData = (data, def, columns = null) => {
 /**
  * The resolver of the names of an expression of a row, e.g. of a filter:
  * the value of a mapping of the prepared row, else of a column of the
- * transforms (`columns`) or of the data (see rawRow), else of the `scope`,
+ * transforms (`columns`) or of the data (see rawOf), else of the `scope`,
  * e.g. a global; as the functions of the row of `bind`.
  */
 const rowResolver = (mapping, columns, scope = {}, converted = null) => {
@@ -243,18 +257,21 @@ const rowName = (mapping, columns, scope) => name => {
         return row => row[name];
     if (columns?.has(name)) {
         const values = columns.get(name);
-        return row => row[rawIndex] === undefined ? undefined : values[row[rawIndex]];
+        return row => {
+            const i = rawIndexOf(row);
+            return i === undefined ? undefined : values[i];
+        };
     }
     // a column of the data before a global of the same name, e.g. a column
     // `country` beside the global `country` of a select (`@globals.country`)
     if (Object.hasOwn(scope, name)) {
         const value = scope[name];
         return row => {
-            const raw = row?.[rawRow];
+            const raw = row ? rawOf(row) : undefined;
             return raw && Object.hasOwn(raw, name) ? raw[name] : value;
         };
     }
-    return row => row[rawRow]?.[name];
+    return row => rawOf(row)?.[name];
 };
 
 /**
