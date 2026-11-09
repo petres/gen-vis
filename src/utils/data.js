@@ -857,9 +857,9 @@ const numberFormat = /^(?:(.)?([<>=^]))?([+\-( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?(
  * Whether the parts of a mapping without a type say that its values are
  * numbers or dates, not categories, e.g. "NA" among numbers: 'numeric' of a
  * number format (of the mapping, its axis, hover or legend), of a domain or
- * an `include` of numbers (e.g. of `"zero": true`), 'continuous' of the
+ * an `include` of numbers, 'continuous' of the
  * other parts of a continuous scale (an open domain, `nice`, `pad`,
- * `center`, an `interval`), undefined otherwise. A scale type and the
+ * `center`, `zero`, e.g. of the value of bars, an `interval`), undefined otherwise. A scale type and the
  * categories make the type already, see normalize.
  */
 const typeHint = m => {
@@ -869,7 +869,8 @@ const typeHint = m => {
         || [m.domain, scale.domain, m.include, scale.include].some(v => [v].flat().some(e => typeof e == 'number')))
         return 'numeric';
     if ([m.domain, scale.domain].some(v => Array.isArray(v) && v.includes(null))
-        || ['nice', 'pad', 'center'].some(k => m[k] !== undefined || scale[k] !== undefined) || m.interval !== undefined)
+        || ['nice', 'pad', 'center'].some(k => m[k] !== undefined || scale[k] !== undefined) || m.interval !== undefined
+        || scale.zero === true || m.zero === true)
         return 'continuous';
     return undefined;
 };

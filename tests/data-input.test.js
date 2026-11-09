@@ -58,6 +58,12 @@ describe('texts among numbers', () => {
         expect(heights(el).length).toBe(2);
         expect(errors).toEqual(["gen-vis inline definition: dims.y: values of the column 'b' are no numbers, they are missing: 'unknown' (1 row)"]);
     });
+
+    test('the value of bars is numeric: a word among numbers is missing, also without zero', async () => {
+        const el = await mount({ def: bars('b'), data: 'a,b\nA,10\nB,unknown\nC,30' });
+        expect(heights(el).length).toBe(2);
+        expect(errors).toEqual(["gen-vis inline definition: dims.y: values of the column 'b' are no numbers, they are missing: 'unknown' (1 row)"]);
+    });
 });
 
 describe('lines and areas along x, not in the order of the rows', () => {
