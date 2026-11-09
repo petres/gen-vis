@@ -251,6 +251,50 @@ describe('rules', () => {
     });
 });
 
+describe('dodged rules and points', () => {
+    test('error bars and points on dodged bars: in the slot of their bar', async () => {
+        const rows = 'year,value,type,lo,hi\n2020,2,a,1,3\n2020,5,b,4,6\n2021,6,a,5,7\n2021,3,b,2,4';
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical' }, y: { column: 'value', domain: [0, 10] }, c: { column: 'type', categories: { a: {}, b: {} } }, lo: 'lo', hi: 'hi' },
+            marks: [
+                { type: 'bar', by: 'c', dodge: true },
+                { type: 'rule', by: 'c', dodge: true, y1: 'lo', y2: 'hi', stroke: '#333' },
+                { type: 'point', by: 'c', dodge: true, r: 2 },
+            ],
+        };
+        const el = await mount({ def, data: rows });
+        const bars = rects(el);
+        const rules = lines(el);
+        const points = [...el.querySelectorAll('g.vis-plot circle')].filter(r => r[itemOf]);
+        expect(rules.length).toBe(4);
+        expect(points.length).toBe(4);
+        bars.forEach(b => {
+            const row = b[itemOf][rowOf];
+            const center = num(b, 'x') + num(b, 'width')/2;
+            const rule = rules.find(l => l[itemOf][rowOf] === row);
+            // at the half pixel of the ticks
+            expect(Math.abs(num(rule, 'x1') - center)).toBeLessThanOrEqual(0.5);
+            const point = points.find(c => c[itemOf][rowOf] === row);
+            expect(num(point, 'cx')).toBeCloseTo(center);
+        });
+        expect(errors).toEqual([]);
+    });
+
+    test('a horizontal rule on dodged horizontal bars', async () => {
+        const rows = 'land,value,type,lo,hi\nW,2,a,1,3\nW,5,b,4,6';
+        const def = {
+            dims: { y: { column: 'land', type: 'categorical' }, x: { column: 'value', domain: [0, 10] }, c: { column: 'type', categories: { a: {}, b: {} } }, lo: 'lo', hi: 'hi' },
+            marks: [{ type: 'bar', by: 'c', dodge: true }, { type: 'rule', by: 'c', dodge: true, y: 'y', x1: 'lo', x2: 'hi' }],
+        };
+        const el = await mount({ def, data: rows });
+        rects(el).forEach(b => {
+            const rule = lines(el).find(l => l[itemOf][rowOf] === b[itemOf][rowOf]);
+            expect(Math.abs(num(rule, 'y1') - (num(b, 'y') + num(b, 'height')/2))).toBeLessThanOrEqual(0.5);
+        });
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('the reverse of a scale', () => {
     test('the largest value at the bottom', async () => {
         const def = {

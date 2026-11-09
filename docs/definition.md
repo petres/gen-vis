@@ -1212,7 +1212,8 @@ attributes are merged into the defaults, e.g. `d` of a path.
   the period (the step); with `stack` a stack per slot,
   e.g. `"by": ["type", "source"], "dodge": "type", "stack": true` stacks the
   sources of each type beside the ones of the other types; of a `text` or a `label` (`true`
-  or a dim) the text at the middle of the slot of its category, as its bar:
+  or a dim) the text at the middle of the slot of its category, as its bar,
+  likewise of a `point` and a `rule`, e.g. error bars on dodged bars:
   ```json
   {
       "marks": [

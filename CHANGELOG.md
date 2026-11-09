@@ -266,6 +266,8 @@ Migration notes, to check by hand after `gen-vis migrate`:
   bars agree across facets and labels of a filtered mark are on their bar;
   a row without a value has no slot. Dodged bars on a date `x` with an
   `interval` (were 0 wide) share 80% of the period.
+- `dodge` of `point` and `rule` marks (`true` or a dim): at the middle of
+  the slot of their category, e.g. error bars on dodged bars (was ignored).
 
 ### Package and builds
 

@@ -265,10 +265,10 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
     const take = (...names) => names.forEach(n => delete props[n]);
     const stack = p.stack;
     delete p.stack;
-    // `dodge` of bars are the groups beside each other, of texts with true or
-    // a dim the same (e.g. labels of dodged bars), a number of texts their
-    // distance (the engine)
-    const dodge = kind == 'bar' || (kind == 'text' && (p.dodge === true || typeof p.dodge == 'string')) ? p.dodge : undefined;
+    // `dodge` of bars are the groups beside each other, of texts, points and
+    // rules with true or a dim the same (e.g. labels or error bars of dodged
+    // bars), a number of texts their distance (the engine)
+    const dodge = kind == 'bar' || (['text', 'circle', 'rule'].includes(kind) && (p.dodge === true || typeof p.dodge == 'string')) ? p.dodge : undefined;
     if (dodge !== undefined)
         delete p.dodge;
     if (dodge === true && p.by.length == 0)
@@ -278,6 +278,8 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
     const anchor = p.anchor;
     delete p.anchor;
     const centered = d => d && Object.hasOwn(dims, d) && isCategorical(dims[d]);
+    // the bars of the positions are horizontal ones, see `orient`
+    const horizontalOf = (x, y) => orient == 'horizontal' || (orient === undefined && y && centered(y.dim) && !(x && centered(x.dim)));
     // the position of a dim, of a categorical one the center of its band
     const at = (c, kind = 'scaled') => c ? (c.fixed === undefined && kind == 'scaled' && centered(c.dim) ? ref(c.dim, 'scaled:center') : c.value) : undefined;
     // `group` of dodged stacked bars: a stack per slot, e.g. per year and type
@@ -396,16 +398,17 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
         } else if (kind == 'rule') {
             const x2 = given('x2', 'x'), y2 = given('y2', 'y');
             take('x2', 'y2');
-            // at the center of the band of a categorical position, as bars and points
+            // at the center of the band of a categorical position, as bars and
+            // points, of dodged bars the middle of the slot of the category
             if (raw.y !== undefined && raw.x === undefined) {
-                props.y = at(y);
+                props.y = dodgeGroup !== undefined && y ? dodged(y.dim, dodgeGroup).center : at(y);
                 if (x1)
                     props.x1 = x1.value;
                 if (x2)
                     props.x2 = x2.value;
             } else {
                 if (x)
-                    props.x = at(x);
+                    props.x = dodgeGroup !== undefined ? dodged(x.dim, dodgeGroup).center : at(x);
                 if (y1)
                     props.y1 = y1.value;
                 if (y2)
@@ -416,6 +419,13 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
                 props.cx ??= at(x);
             if (y)
                 props.cy ??= at(y);
+            // on dodged bars: at the middle of the slot of the category
+            if (dodge) {
+                if (horizontalOf(x, y) && y)
+                    props.cy = dodged(y.dim, dodgeGroup).center;
+                else if (x)
+                    props.cx = dodged(x.dim, dodgeGroup).center;
+            }
         } else if (kind == 'rect' && raw.type == 'cell') {
             // the cells need the bands of their positions
             [x, y].forEach(c => {
@@ -437,12 +447,10 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
                 props.y = at(y);
             // on dodged bars: at the middle of the slot of the category
             if (dodge) {
-                const group = dodge === true ? p.by[0] : dodge;
-                const horizontal = orient == 'horizontal' || (orient === undefined && y && centered(y.dim) && !(x && centered(x.dim)));
-                if (horizontal && y)
-                    props.y = dodged(y.dim, group).center;
+                if (horizontalOf(x, y) && y)
+                    props.y = dodged(y.dim, dodgeGroup).center;
                 else if (x)
-                    props.x = dodged(x.dim, group).center;
+                    props.x = dodged(x.dim, dodgeGroup).center;
             }
             if (anchor)
                 Object.entries(anchors[anchor] ?? {}).forEach(([k, v]) => props[k] ??= v);
