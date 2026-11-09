@@ -2306,7 +2306,12 @@ To check by hand:
 
 A definition of 4.x which is loaded (by its keys, also with the `$schema`
 of 4) is migrated while it is loaded, with a notice in the console
-(`a definition of gen-vis 4, migrated while it is loaded`), so pages keep
-working until their files are migrated. `@preschen/gen-vis/check` exports
+(`a definition of gen-vis 4, migrated while it is loaded`, also of an
+inline one), so pages keep working until their files are migrated; the
+warnings of its check name the places of 5.0 (`dims.y`, `marks[0]`) and
+say so. A chain of parents of parts of 4.x and 5.0 (e.g. a child of 5.0
+of a parent which is still one of 4.x) is merged as one of 5.0: every
+part of 4.x is migrated first, with the parts of 4.x before it as its
+parents, as `gen-vis migrate` writes the files one by one. `@preschen/gen-vis/check` exports
 `migrate(def, {parents})` and `formatJson(def)` of a script of its own, see
 [checks outside the browser](extensions.md#checks-outside-the-browser).

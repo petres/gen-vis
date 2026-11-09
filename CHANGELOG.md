@@ -93,7 +93,10 @@ builds and dependencies. The design is in `docs/design-5.0.md`.
   as before.
 - `$schema` of gen-vis 5 (`https://unpkg.com/@preschen/gen-vis@5/schema.json`);
   the one of 4 is accepted, a definition of 4.x (by its keys) is migrated
-  while it is loaded, with a notice in the console.
+  while it is loaded, with a notice in the console (also of an inline one;
+  the warnings of its check say that their paths are the ones of 5.0). In
+  a chain of parents of parts of 4.x and 5.0 every part of 4.x is migrated
+  before the merge (with the parts of 4.x before it as its parents).
 
 Removed keys: `options`, `mapping`, `plot`, the `props` of a plot,
 `formElements`, `patch` (and the `ref` of a form element), `domainRel`

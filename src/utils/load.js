@@ -294,8 +294,11 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
     // utils/normalize.js, with the definitions of all values of its controls
     const merged = await resolveParents(JSON.parse(JSON.stringify(def)), url);
     const old = isDefinition4(merged);
-    if (old && url !== undefined)
-        console.info(`gen-vis '${url}': a definition of gen-vis 4, migrated while it is loaded, 'gen-vis migrate' writes it as one of gen-vis 5`);
+    // also an inline one, its warnings name the paths of 5.0
+    const migrated = old || merged[migratedKey] === true;
+    const name = url === undefined ? 'inline definition' : url;
+    if (migrated)
+        console.info(`gen-vis ${url === undefined ? 'inline definition' : `'${url}'`}: ${old ? 'a definition' : 'parts of a definition'} of gen-vis 4, migrated while it is loaded, 'gen-vis migrate' writes ${old ? 'it' : 'them'} as one of gen-vis 5`);
     // the migration is a chunk of its own, definitions of 5.0 do not need it
     const source = old ? (await lazy.migrate()).migrate(merged) : merged;
     const engine = v => normalize(checkDims(translate(v)), { plotTypes });
@@ -304,7 +307,7 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
     // the check of the definition (of 5.0, as written) with the rows, e.g.
     // of years as dates, see load, it is loaded meanwhile
     const validate = async rows => (await checks)?.validateDef(source, rows)
-        .forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
+        .forEach(w => console.warn(`gen-vis ${name}${migrated ? ' (migrated from gen-vis 4, the paths are the ones of 5)' : ''}: ${w}`));
     return { url, defOrg, source, validate };
 };
 

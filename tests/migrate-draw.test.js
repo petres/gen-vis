@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, vi, afterEach } from 'vitest';
 import { useDom, mount } from './dom.js';
 import { migrate } from '@/utils/migrate.js';
+import { createStore } from '@/store';
 import { itemOf } from '@/utils/dom';
 import { rowOf } from '@/utils/draw';
 
@@ -33,5 +34,26 @@ describe('the conditions of filters of dates of 4.x compare dates', () => {
         expect(migrate(def({ x: { range: ['@from', null] } })).filter).toEqual({ x: { range: ['@globals.from', null] } });
         // numbers and texts as expressions
         expect(migrate({ ...def({ v: { range: [1, null] } }), mapping: { x: 'm', y: 'v' } }).filter).toBe('@v >= 1');
+    });
+});
+
+// the review of 5.0 (E7): the warnings of a migrated definition name the
+// paths of 5.0, the console says once that it was migrated, also of an
+// inline one
+describe('a definition of 4.x migrated while it is loaded', () => {
+    afterEach(() => vi.restoreAllMocks());
+    test('a notice, and its warnings say that their paths are the ones of 5.0', async () => {
+        const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        await createStore().init({ def: { $schema: S4, mapping: { x: 'year', y: { column: 'v', bogus: 1 } }, plot: { type: 'line' } }, data: 'year,v\n2020,1\n2021,2', check: true });
+        expect(info).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition: a definition of gen-vis 4, migrated while it is loaded/));
+        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition \(migrated from gen-vis 4, the paths are the ones of 5\): dims\.y\.bogus/));
+    });
+    test('a definition of 5.0: neither', async () => {
+        const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        await createStore().init({ def: { dims: { x: 'year', y: { column: 'v', bogus: 1 } }, marks: { type: 'line' } }, data: 'year,v\n2020,1\n2021,2', check: true });
+        expect(info).not.toHaveBeenCalled();
+        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition: dims\.y\.bogus/));
     });
 });
