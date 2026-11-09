@@ -252,3 +252,19 @@ describe('the table of the hover', () => {
         expect(await table({ value: false })).toEqual([['swatch', 'Tirol', 'c'], ['swatch', 'Wien', 'a']]);
     });
 });
+
+describe('the highlight of a mark without groups', () => {
+    test('the element of the row under the pointer, e.g. a bar of horizontal bars', async () => {
+        const el = await mount({ def: {
+            $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', height: 200,
+            dims: { x: { column: 'value', zero: true }, y: 'land' },
+            marks: { type: 'bar', fill: '#1E4F77', highlight: { fill: '#5BC5F2' } },
+        }, data: 'land,value\nWien,1\nTirol,2\nSalzburg,3\n' });
+        const rect = el.querySelectorAll('g.vis-mark rect')[1];
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 5, clientY: +rect.getAttribute('y') + 1 }));
+        await nextTick();
+        const highlighted = [...el.querySelectorAll('g.vis-mark rect.vis-highlight')];
+        expect(highlighted).toHaveLength(1);
+        expect(el.querySelector('.vis-highlighting')).not.toBeNull();
+    });
+});

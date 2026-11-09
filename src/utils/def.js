@@ -255,14 +255,16 @@ const autoSymbol = (symbol, name, plots, names, defaults, key) => {
         if (!plot)
             return [];
         const props = Object.fromEntries(keys.filter(k => plot.props?.[k] !== undefined && own(plot.props[k])).map(k => [k, plot.props[k]]));
-        return [{ kind, props }];
+        return [{ kind, props, plot }];
     });
     if (parts.length == 0)
         return symbolOf({ ...given, type: 'rect' }, names, defaults);
     // the box of the line, of the area or of the dot
     const base = symbolOf({ ...given, type: parts.find(p => p.kind == 'line')?.kind ?? parts[0].kind, props: {} }, names, defaults);
     const { width, height } = base;
-    return { width, height, elements: parts.map(p => ({ type: p.kind, props: { ...symbolShape(p.kind, width, height), ...p.props, ...given.props } })) };
+    // the dot of points in the size of their radius (a number), within its box
+    const radius = p => p.kind == 'circle' && typeof p.plot?.props?.r == 'number' ? { r: Math.min(p.plot.props.r, Math.min(width, height)/2 - 1) } : {};
+    return { width, height, elements: parts.map(p => ({ type: p.kind, props: { ...symbolShape(p.kind, width, height), ...p.props, ...radius(p), ...given.props } })) };
 };
 
 // whether a plot draws a category of a mapping by its `filter` on the

@@ -219,6 +219,10 @@ are not in the margins.
 - The PNG is the export SVG drawn on a canvas (`src/utils/raster.js`) with
   the fonts of the package, the same drawing as the SVG and the PDF of the
   CLI (was a screenshot of the DOM of `modern-screenshot`).
+- A mark without `by` highlights the element of the row under the pointer
+  (it had no highlight), e.g. a bar of horizontal bars.
+- The dot of a legend symbol `auto` of points has their radius (a number),
+  within its box (was half the box less 2 pixels).
 - The hover table: a swatch of the color of the category before each row,
   a row of the names of the values above them when there are more than one,
   the values of a dim of texts without categories, the categories of a

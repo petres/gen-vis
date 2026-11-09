@@ -118,7 +118,8 @@ const unclass = (node, name) => {
  * first highlight. A highlight of the same elements changes nothing.
  */
 const highlighter = (plotDefs, nodeOf, inner) => {
-    const plots = plotDefs.filter(p => p.highlightProps.length > 0 && p.by.length > 0);
+    // (a plot without `by` highlights the elements of the row, e.g. a bar)
+    const plots = plotDefs.filter(p => p.highlightProps.length > 0);
     let index = null;
 
     const build = () => plots.map(plot => {
@@ -126,6 +127,7 @@ const highlighter = (plotDefs, nodeOf, inner) => {
         const attrs = plot.by.map(c => `data-group-${c}`);
         return {
             plot,
+            node,
             // the groups of the plot and the elements per group, e.g. the path of a line
             groups: node ? [...node.querySelectorAll('*')].filter(g => attrs.some(a => g.hasAttribute(a))).map(node => ({
                 node,
@@ -149,7 +151,16 @@ const highlighter = (plotDefs, nodeOf, inner) => {
         if (!dataEntry)
             return found;
         index ??= build();
-        index.forEach(({ plot, groups: all }) => {
+        index.forEach(({ plot, node, groups: all }) => {
+            // a plot without groups: the elements of the row, e.g. the bar under the pointer
+            if (plot.by.length == 0) {
+                const rows = node ? [...node.querySelectorAll('*')].filter(n => n[itemOf]?.[rowOf] === dataEntry) : [];
+                rows.forEach(n => {
+                    found.targets.push(n);
+                    found.groups.push(n.closest('g.vis-group') ?? n);
+                });
+                return;
+            }
             // the values are compared as strings, as the ones of the attributes
             const conditions = plot.by.filter(c => c in dataEntry).map(c => [c, String(dataEntry[c])]);
             if (conditions.length == 0)
