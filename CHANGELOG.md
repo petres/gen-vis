@@ -197,8 +197,9 @@ defaults (`registerDefaults({ margins: { left: 64 } })` or the prop
 once in a stylesheet and the definitions only the sides which differ. The
 texts of `text` and `label` marks beyond the plot area are measured too
 (labels at the ends of lines or bars, above points; in the font size of the
-chart for texts without one), not rotated ones, annotations and texts of
-maps; the legends and the titles of facets are not in the margins.
+chart for texts without one) and the texts and labels of annotations, of
+cartesian charts, not rotated ones; the legends and the titles of facets
+are not in the margins.
 
 ### Changed rendering
 

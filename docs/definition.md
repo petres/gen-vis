@@ -528,8 +528,8 @@ are measured in the font of the visualisation. The texts of `text` and
 `label` marks beyond the plot area are measured too, e.g. labels at the
 ends of lines or bars or above the points of a scatter plot, laid out as
 they are drawn (`dx`, `dy`, `text-anchor`, `dominant-baseline`, `font-size`,
-`max-width`; not rotated texts, annotations, texts inside areas and the
-ones of maps). The texts along the width (the labels of a
+`max-width`), also the texts and labels of annotations, of cartesian charts
+(not rotated texts and texts inside areas). The texts along the width (the labels of a
 horizontal axis, the texts of marks) are measured at their place in the
 plot area of the final width, the one less the margins, so a narrow chart
 gets the margins it needs (they keep half of the width for the plot area
