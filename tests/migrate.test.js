@@ -31,6 +31,9 @@ const same = def => JSON.parse(JSON.stringify(def, function (k, v) {
         v = conditions(v);
     if (k == 'by' && Array.isArray(v) && v.length == 0)
         return undefined;
+    // null and false remove a part of a mapping
+    if (['scale', 'axis', 'legend', 'hover'].includes(k) && v === null && this.column !== undefined)
+        return false;
     if (k == 'fromData' || k == 'domainRel' || k == 'pad' || k == '$schema')
         return undefined;
     // a legend of 4.x without a symbol has none in 5.0 (`null`), the default is the one of the plots
@@ -153,6 +156,76 @@ describe('the order of categories of a vertical scale', () => {
     });
 });
 
+// the engine's form of a definition of 4.x as 4.x drew it and of one of 5.0
+// resolved with globals, the parts which 5.0 writes differently but means the same alike
+const json = file => JSON.parse(readFileSync(path.join(root, file), 'utf8'));
+const url = file => pathToFileURL(path.join(root, file)).href;
+const engine4 = def => {
+    const n = same(normalize(def, { plotTypes }));
+    // 4.x read a reference to a global of the scales of facets when it drew them, 5.0 resolves it
+    const scales = n.facets?.scales;
+    if (typeof scales == 'string' && scales.startsWith('@') && Object.hasOwn(def.globals ?? {}, scales.slice(1)))
+        n.facets.scales = def.globals[scales.slice(1)];
+    // the categories of a vertical scale without a range of its own were
+    // from the bottom up in 4.x, from the top down in 5.0 (reverse turns them)
+    Object.values(n.mapping ?? {}).forEach(m => {
+        const s = m?.scale;
+        if (isObject(s) && s.orientation == 'vertical' && ['band', 'point'].includes(s.type) && !Array.isArray(s.range) && !s.scheme)
+            s.reverse = !s.reverse;
+        if (s?.reverse === false)
+            delete s.reverse;
+    });
+    delete n.globals;
+    if (isObject(n.options) && Object.keys(n.options).length == 0)
+        delete n.options;
+    return n;
+};
+// a filter which switches over a global between conditions of the rows
+// (e.g. one of a patch of the filter) stays an expression, the engine
+// evaluates it with the globals: its case of the global here, `true` is none
+const selected = (v, globals) => {
+    const m = isObject(v) && Array.isArray(v.match) && typeof v.match[0] == 'string' && v.match[0].startsWith('@globals.') ? v.match : null;
+    if (!m)
+        return v;
+    const g = globals[m[0].slice('@globals.'.length)];
+    return selected(Object.hasOwn(m[1], String(g)) ? m[1][String(g)] : m[2] ?? null, globals);
+};
+const engine5 = (def, globals) => {
+    const g = { ...def.globals, ...globals };
+    const n = translate(resolve(def, namesOfGlobals(g, def.controls)));
+    if (n.filter !== undefined) {
+        n.filter = selected(n.filter, g);
+        if (n.filter === true || n.filter === null)
+            delete n.filter;
+    }
+    const out = same(normalize(n, { plotTypes }));
+    ['globals', 'formElements', 'controls'].forEach(k => delete out[k]);
+    if (isObject(out.options) && Object.keys(out.options).length == 0)
+        delete out.options;
+    Object.values(out.mapping ?? {}).forEach(m => m?.scale?.reverse === false && delete m.scale.reverse);
+    return out;
+};
+// the dims of the marks' `by` are categorical in 5.0, 4.x infers their type from the values
+const byTypes = (a, b) => Object.keys(b.mapping ?? {}).forEach(n => {
+    if (a.mapping?.[n] && a.mapping[n].type === undefined && b.mapping[n].type == 'categorical') {
+        delete b.mapping[n].type;
+        if (a.mapping[n].scale?.type === undefined && b.mapping[n].scale)
+            delete b.mapping[n].scale.type;
+    }
+});
+// a definition of 4.x (merged with its parents) and one of 5.0 (by default
+// its migration) with every combination of the values of the form
+// elements: the 5.0 one resolved with the globals is the 4.x one with the
+// patches of the selected entries (`what` names the 5.0 one)
+const drawsAs4 = (def4, def5 = migrate(def4), what = 'migrated') => {
+    for (const globals of globalSets(def4)) {
+        const a = engine4(patched4(def4, globals));
+        const b = engine5(def5, globals);
+        byTypes(a, b);
+        expect(b, `${what}, globals ${JSON.stringify(globals)}`).toEqual(a);
+    }
+};
+
 // every definition of 4.x of data/ (as it was before its migration) with
 // every combination of the values of its form elements, as 4.x drew it (the
 // patches of the selected entries merged, see tests/v4.js), is the
@@ -160,61 +233,11 @@ describe('the order of categories of a vertical scale', () => {
 // by one, `gen-vis migrate`, a child with its parents) resolved with the
 // same globals
 describe('the migrated definitions draw what 4.x drew, for every value of the controls', () => {
-    const json = file => JSON.parse(readFileSync(path.join(root, file), 'utf8'));
-    const url = file => pathToFileURL(path.join(root, file)).href;
-    const engine4 = def => {
-        const n = same(normalize(def, { plotTypes }));
-        // 4.x read a reference to a global of the scales of facets when it drew them, 5.0 resolves it
-        const scales = n.facets?.scales;
-        if (typeof scales == 'string' && scales.startsWith('@') && Object.hasOwn(def.globals ?? {}, scales.slice(1)))
-            n.facets.scales = def.globals[scales.slice(1)];
-        delete n.globals;
-        return n;
-    };
-    // a filter which switches over a global between conditions of the rows
-    // (e.g. one of a patch of the filter) stays an expression, the engine
-    // evaluates it with the globals: its case of the global here, `true` is none
-    const selected = (v, globals) => {
-        const m = isObject(v) && Array.isArray(v.match) && typeof v.match[0] == 'string' && v.match[0].startsWith('@globals.') ? v.match : null;
-        if (!m)
-            return v;
-        const g = globals[m[0].slice('@globals.'.length)];
-        return selected(Object.hasOwn(m[1], String(g)) ? m[1][String(g)] : m[2] ?? null, globals);
-    };
-    const engine5 = (def, globals) => {
-        const g = { ...def.globals, ...globals };
-        const n = translate(resolve(def, namesOfGlobals(g, def.controls)));
-        if (n.filter !== undefined) {
-            n.filter = selected(n.filter, g);
-            if (n.filter === true || n.filter === null)
-                delete n.filter;
-        }
-        const out = same(normalize(n, { plotTypes }));
-        ['globals', 'formElements', 'controls'].forEach(k => delete out[k]);
-        return out;
-    };
-    // the dims of the marks' `by` are categorical in 5.0, 4.x infers their type from the values
-    const byTypes = (a, b) => Object.keys(b.mapping ?? {}).forEach(n => {
-        if (a.mapping?.[n] && a.mapping[n].type === undefined && b.mapping[n].type == 'categorical') {
-            delete b.mapping[n].type;
-            if (a.mapping[n].scale?.type === undefined && b.mapping[n].scale)
-                delete b.mapping[n].scale.type;
-        }
-    });
     test.each(files)('%s', async file => {
         const def4 = resolveParents4(json(file), url(file));
-        const migrated = migrate(def4);
+        drawsAs4(def4);
         const file5 = file.replace('tests/fixtures/v4/', 'data/');
-        const def5 = await merged5(file5);
-        for (const globals of globalSets(def4)) {
-            const a = engine4(patched4(def4, globals));
-            const b = engine5(migrated, globals);
-            const c = engine5(def5, globals);
-            byTypes(a, b);
-            byTypes(a, c);
-            expect(b, `migrated, globals ${JSON.stringify(globals)}`).toEqual(a);
-            expect(c, `${file5}, globals ${JSON.stringify(globals)}`).toEqual(a);
-        }
+        drawsAs4(def4, await merged5(file5), file5);
     });
 });
 
@@ -226,5 +249,45 @@ describe('the dims of groups of marks in the colors of their categories', () => 
         // a mark of a color of its own, a dim of categories: as it is
         expect(migrate({ mapping: { x: 'year', y: 'value', land: 'land' }, plot: { type: 'cartesian:line', by: ['land'], props: { stroke: '#333' } } }).dims.land).toBe('land');
         expect(migrate({ mapping: { x: 'year', y: 'value', land: { column: 'land', fromData: true } }, plot: { type: 'cartesian:line', by: ['land'] } }).dims.land).toEqual({ column: 'land', fromData: true });
+    });
+});
+
+// the review of 5.0 (M1–M6): patches, rules and texts of 4.x which the
+// migration drew differently, each drawn as 4.x drew it
+describe('patches, rules and texts of 4.x, drawn as 4.x drew them', () => {
+    const S4 = 'https://unpkg.com/@preschen/gen-vis@4/schema.json';
+    const radio = (ref, values, id = ref) => ({ ...(id === null ? {} : { id }), ref, type: 'radio', values });
+    test('a patch of a part of a dim written as its column keeps the column', () => {
+        drawsAs4({ $schema: S4, globals: { m: 'a' }, mapping: { x: 'year', y: 'v' }, plot: { type: 'line' },
+            formElements: [radio('m', [{ value: 'a' }, { value: 'b', patch: { mapping: { y: { axis: { title: 'T' } }, x: { format: 'd' } } } }])] });
+    });
+    test('form elements without an id: no patches in the controls', () => {
+        const def4 = { $schema: S4, globals: { m: 'a' }, options: { subtitle: 'A' }, mapping: { x: 'year', y: 'v' }, plot: { type: 'line' },
+            formElements: [radio('m', [{ value: 'a' }, { value: 'b', patch: { options: { subtitle: 'B' } } }], null)] };
+        expect(JSON.stringify(migrate(def4).controls)).not.toContain('patch');
+        drawsAs4(def4);
+    });
+    test('two form elements patching the same leaf: nested switches', () => {
+        const def4 = { $schema: S4, globals: { a: 'a1', b: 'b1' }, mapping: { x: 'year', y: { column: 'v' } }, plot: { type: 'line' },
+            formElements: [
+                radio('a', [{ value: 'a1' }, { value: 'a2', patch: { mapping: { y: { column: 'va', format: '.1f' } }, options: { title: 'A' } } }]),
+                radio('b', [{ value: 'b1' }, { value: 'b2', patch: { mapping: { y: { column: 'vb' } }, options: { title: 'B' } } }]),
+            ] };
+        drawsAs4(def4);
+        expect(typeof migrate(def4).dims.y.column).toBe('string');
+    });
+    test('two form elements patching the same whole part: the plots, the filter', () => {
+        drawsAs4({ $schema: S4, globals: { a: 'a1', b: 'b1' }, mapping: { x: 'year', y: 'v', l: 'land' }, plot: [{ id: 'p', type: 'line' }], filter: { l: 'Wien' },
+            formElements: [
+                radio('a', [{ value: 'a1' }, { value: 'a2', patch: { plot: [{ id: 'p', props: { 'stroke-width': 5 } }], filter: { l: 'Tirol' } } }]),
+                radio('b', [{ value: 'b1' }, { value: 'b2', patch: { plot: [{ id: 'p', type: 'area' }], filter: { year: 2020 } } }]),
+            ] });
+    });
+    test('a patch of a leaf and one of the whole part of another form element', () => {
+        drawsAs4({ $schema: S4, globals: { a: 'a1', b: 'b1' }, mapping: { x: 'year', y: { column: 'v', axis: { title: 'V' } } }, plot: { type: 'line' },
+            formElements: [
+                radio('a', [{ value: 'a1' }, { value: 'a2', patch: { mapping: { y: { axis: { title: 'A' } } } } }]),
+                radio('b', [{ value: 'b1' }, { value: 'b2', patch: { mapping: { y: { axis: null } } } }]),
+            ] });
     });
 });

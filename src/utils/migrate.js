@@ -445,9 +445,33 @@ const deleteAt = (o, path) => {
 // a leaf of 4.x which 5.0 writes differently, converted before it becomes
 // an expression (dimOf converts the arrays of the dims, not expressions):
 // `scale.domainRel` [a, b] is `scale.pad` [-a, b]
+const padOf = value => Array.isArray(value) ? [-(value[0] ?? 0), value[1] ?? 0] : value;
 const convertLeaf = (path, value) => path[0] == 'mapping' && path.at(-2) == 'scale' && path.at(-1) == 'domainRel'
-    ? [[...path.slice(0, -1), 'pad'], Array.isArray(value) ? [-(value[0] ?? 0), value[1] ?? 0] : value]
+    ? [[...path.slice(0, -1), 'pad'], padOf(value)]
     : [path, value];
+// a part of 4.x at a path (of a switch of several form elements) as 5.0
+// writes it: the `domainRel` of the scales of the mappings as `pad`
+const convertPart = (path, value) => {
+    if (path[0] != 'mapping')
+        return value;
+    if (path.at(-2) == 'scale' && path.at(-1) == 'domainRel')
+        return padOf(value);
+    const walk = (v, p) => {
+        if (!isObject(v))
+            return v;
+        const out = Object.fromEntries(Object.entries(v).map(([k, e]) => [k, walk(e, [...p, k])]));
+        if (p.at(-1) == 'scale' && p.length == 3 && Array.isArray(out.domainRel)) {
+            out.pad = padOf(out.domainRel);
+            delete out.domainRel;
+        }
+        return out;
+    };
+    return walk(value, path);
+};
+// null of a patch removes a part, of the scale, the axis, the legend and
+// the hover of a mapping `false` (a switch of null is no value, the default part)
+const removable = ['scale', 'axis', 'legend', 'hover'];
+const removedPart = (path, value) => value === null && path[0] == 'mapping' && path.length == 3 && removable.includes(path[2]) ? false : value;
 const setAt = (o, path, value) => {
     let v = o;
     path.slice(0, -1).forEach(k => {
@@ -461,6 +485,18 @@ const setAt = (o, path, value) => {
 // the merge of a part of the definition with the one of a patch, as 4.x
 // merged them (objects deeply, lists of entries with ids by their ids)
 const mergedPart = (key, base, patch) => mergeAll([{ [key]: base === undefined ? null : base }, { [key]: patch }])[key];
+// the same of a part at a path, e.g. of the axis of a mapping, a mapping
+// written as its column is one of a column (mergeMappings of 4.x)
+const mergedAt = (path, base, patch) => {
+    if (base === undefined || base === null || patch === null || !isObject(base) || !isObject(patch))
+        return clone(patch);
+    const wrap = v => path.reduceRight((inner, k) => ({ [k]: inner }), v);
+    return at(mergeAll([wrap(base), wrap(patch)]), path);
+};
+
+const same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+// whether a path is the one of another or of a part of it
+const within = (a, b) => a.length <= b.length && a.every((k, i) => k === b[i]);
 
 /**
  * The patches of the entries of the form elements as `match` expressions
@@ -468,7 +504,12 @@ const mergedPart = (key, base, patch) => mergeAll([{ [key]: base === undefined ?
  * `options`, `mapping`, `facets`, `geo` and `transform` get the expression
  * of their values by the value of the global, the plots and the annotations
  * (lists merged by their ids) and the filter (conditions merged) as a whole
- * (see migrate, which converts the cases), the patches are removed.
+ * (see migrate, which converts the cases), the patches are removed. Places
+ * which several form elements patch (the same leaf, or a part and a leaf in
+ * it) are nested switches, a `match` of the last form element whose default
+ * and cases are the ones of the earlier form elements, the patches applied
+ * in their order as 4.x did; the place is the outermost one, e.g. the axis
+ * of a mapping of which one patch removes the axis and another its title.
  */
 const whole = ['plot', 'annotations', 'filter'];
 const applyPatchesAsExpressions = (def, parents) => {
@@ -477,91 +518,170 @@ const applyPatchesAsExpressions = (def, parents) => {
     // entries no `value` (the parents' ones), and a patch of a parent
     // changes a leaf which the part defines
     const merged = parents === undefined ? def : mergeAll([parents, def]);
+    // an entry of the part of one of the merged form elements: the same id,
+    // without ids the same value
+    const sameEntry = (o, v) => isObject(o) && (o.id !== undefined || v.id !== undefined ? o.id == v.id : o.value !== undefined && String(o.value) === String(v.value));
+    const elements = [];
     (merged.formElements ?? []).forEach((e, i) => {
         const patched = Array.isArray(e?.values) ? e.values.filter(v => isObject(v?.patch)) : [];
         if (patched.length == 0)
             return;
         if (typeof e.ref != 'string')
             throw new Error(`formElements[${i}]: no ref, a form element of a parent? migrate it with its parents`);
-        const own = (def.formElements ?? []).find(o => isObject(o) && o.id !== undefined && o.id == e.id);
+        // the form element of the part itself: of the same id, without one
+        // the one at the same place (the merge replaced the list of the parents)
+        const own = e.id !== undefined ? (def.formElements ?? []).find(o => isObject(o) && o.id == e.id) : def.formElements?.[i];
         const ownValues = Array.isArray(own?.values) ? own.values : [];
-        const valueOf = (v, j) => {
-            if (v.value === undefined)
-                throw new Error(`formElements[${i}].values[${j}]: no value, an entry of a parent? migrate it with its parents`);
-            return String(v.value);
-        };
-        const ref = `@${e.ref}`;
-        // the patched leaves (and whole parts) of every value, `own` if a
-        // value of the part itself patches it
-        const paths = new Map();
         // the patches of the part itself (of a part with parents only its
         // own, the parents write theirs): a `match` without a default is a
         // switch over the value of the other parts, see leafMerge of utils/def.js
+        const values = [];
         e.values.forEach((v, j) => {
-            const patch = parents === undefined ? v.patch : ownValues.find(o => isObject(o) && o.id !== undefined && o.id == v.id)?.patch;
+            const patch = parents === undefined ? v.patch : ownValues.find(o => sameEntry(o, v))?.patch;
             if (!isObject(patch))
                 return;
-            const value = valueOf(v, j);
-            Object.entries(patch).forEach(([k, part]) => {
-                if (whole.includes(k)) {
-                    if (!paths.has(k))
-                        paths.set(k, { path: [k], cases: {}, whole: true });
-                    paths.get(k).cases[value] = part;
-                    return;
-                }
-                leaves(part, [k]).forEach(([orig, raw]) => {
-                    const [path, value_] = convertLeaf(orig, raw);
-                    const key = JSON.stringify(path);
-                    if (!paths.has(key))
-                        paths.set(key, { path, orig, cases: {} });
-                    paths.get(key).cases[value] = caseValue(value_);
-                });
-            });
+            if (v.value === undefined)
+                throw new Error(`formElements[${i}].values[${j}]: no value, an entry of a parent? migrate it with its parents`);
+            values.push({ value: String(v.value), patch });
         });
-        paths.forEach(({ path, orig, cases, whole: all }) => {
-            const converted = orig !== undefined && JSON.stringify(orig) != JSON.stringify(path);
-            const baseOf = o => converted ? convertLeaf(orig, at(o, orig))[1] : at(o, path);
-            const ownBase = baseOf(def);
-            // a whole part (the marks, the annotations, the filter) is the merge
-            // of the base and the patch, of the parents' base if the part has none
-            const base = all && ownBase === undefined && parents !== undefined ? baseOf(parents) : ownBase;
-            if (converted)
-                deleteAt(def, orig);
-            // cases which are all the base (e.g. a patch which repeats the
-            // definition) are the base, unless a parent patches the leaf (its
-            // switch would apply to the base)
-            const same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
-            const parentCase = parents !== undefined && (parents.formElements ?? []).some(pe => isObject(pe) && pe.id == e.id
-                && Array.isArray(pe.values) && pe.values.some(v => isObject(v?.patch) && at(v.patch, orig ?? path) !== undefined));
-            if (!all && !parentCase && base !== undefined && Object.values(cases).every(c => same(c, caseValue(base)))) {
-                setAt(def, path, base);
-                return;
-            }
-            if (all) {
-                // the merged parts of every value, converted by migrate
-                const parts = Object.fromEntries(Object.entries(cases).map(([v, part]) => [v, mergedPart(path[0], base, part)]));
-                def[path[0]] = { match: [ref, parts, base === undefined ? null : base], [patchedKey]: true };
-                return;
-            }
-            // a text, an expression at every place, also of a name, e.g. a
-            // column; without a base of its own no default: the value of the
-            // other parts, or none
-            setAt(def, path, expressionText({ match: base === undefined ? [ref, cases] : [ref, cases, caseValue(base)] }));
-        });
-        ownValues.forEach(v => isObject(v) && delete v.patch);
+        // whether a parent patches a place (its switch applies to the base)
+        const parentCase = path => parents !== undefined && (parents.formElements ?? []).some(pe => isObject(pe) && pe.id == e.id
+            && Array.isArray(pe.values) && pe.values.some(v => isObject(v?.patch) && at(v.patch, path) !== undefined));
+        elements.push({ ref: `@${e.ref}`, values, parentCase, ownValues });
     });
+    // a mapping of a column which a patch changes a part of is an object
+    // of the column (mergeMappings of 4.x), e.g. "y": "v" and a patch of its axis
+    elements.forEach(el => el.values.forEach(({ patch }) => Object.entries(isObject(patch.mapping) ? patch.mapping : {}).forEach(([n, m]) => {
+        if (isObject(m) && isObject(def.mapping) && typeof def.mapping[n] == 'string')
+            def.mapping[n] = { column: def.mapping[n] };
+    })));
+    // the patched places: the leaves and the whole parts of every entry
+    const units = [];
+    elements.forEach((el, index) => el.values.forEach(({ value, patch }) => Object.entries(patch).forEach(([k, part]) => {
+        if (whole.includes(k))
+            units.push({ index, value, path: [k], orig: [k], case: part, whole: true });
+        else
+            leaves(part, [k]).forEach(([orig, raw]) => {
+                const [path, converted] = convertLeaf(orig, raw);
+                units.push({ index, value, path, orig, case: caseValue(removedPart(orig, converted)) });
+            });
+    })));
+    // the places patched by several form elements or of which a patch
+    // changes a part, the leaves of another patch in it (groups by the outermost place)
+    const groups = [];
+    units.forEach(u => {
+        const overlapping = groups.filter(g => g.some(o => within(o.orig, u.orig) || within(u.orig, o.orig)));
+        const group = [...overlapping.flat(), u].sort((a, b) => units.indexOf(a) - units.indexOf(b));
+        overlapping.forEach(g => groups.splice(groups.indexOf(g), 1));
+        groups.push(group);
+    });
+    // in the order of the form elements, as 4.x applied them
+    groups.sort((a, b) => Math.min(...a.map(u => units.indexOf(u))) - Math.min(...b.map(u => units.indexOf(u))));
+    groups.forEach(group => {
+        const indexes = [...new Set(group.map(u => u.index))].sort((a, b) => a - b);
+        const single = indexes.length == 1 && group.every(u => same(u.orig, group[0].orig));
+        if (single)
+            writeSingle(def, parents, elements[indexes[0]], group);
+        else
+            writeNested(def, parents, indexes.map(i => elements[i]), group.map(u => ({ ...u, index: indexes.indexOf(u.index) })));
+    });
+    elements.forEach(el => el.ownValues.forEach(v => isObject(v) && delete v.patch));
+};
+
+// the switch of one form element at one place: its cases, the base the default
+const writeSingle = (def, parents, el, group) => {
+    const { path, orig, whole: all } = group[0];
+    const cases = Object.fromEntries(group.map(u => [u.value, u.case]));
+    const converted = !same(orig, path);
+    const baseOf = o => converted ? convertLeaf(orig, at(o, orig))[1] : at(o, path);
+    const ownBase = baseOf(def);
+    // a whole part (the marks, the annotations, the filter) is the merge
+    // of the base and the patch, of the parents' base if the part has none
+    const base = all && ownBase === undefined && parents !== undefined ? baseOf(parents) : ownBase;
+    if (converted)
+        deleteAt(def, orig);
+    // cases which are all the base (e.g. a patch which repeats the
+    // definition) are the base, unless a parent patches the leaf (its
+    // switch would apply to the base)
+    if (!all && !el.parentCase(orig) && base !== undefined && Object.values(cases).every(c => same(c, caseValue(base)))) {
+        setAt(def, path, base);
+        return;
+    }
+    if (all) {
+        // the merged parts of every value, converted by migrate
+        const parts = Object.fromEntries(Object.entries(cases).map(([v, part]) => [v, mergedPart(path[0], base, part)]));
+        def[path[0]] = { match: [el.ref, parts, base === undefined ? null : base], [patchedKey]: true };
+        return;
+    }
+    // a text, an expression at every place, also of a name, e.g. a
+    // column; without a base of its own no default: the value of the
+    // other parts, or none
+    setAt(def, path, expressionText({ match: base === undefined ? [el.ref, cases] : [el.ref, cases, caseValue(base)] }));
+};
+
+// the nested switches of several form elements (or of the entries of one
+// which patch a part and a leaf in it) at the outermost place of their
+// patches: the part of every combination of their values, the patches in
+// the order of the form elements merged into the base; the units of the
+// patches (`group`) name the form element by its index in `els`
+const writeNested = (def, parents, els, group) => {
+    const outer = group.reduce((p, u) => u.orig.length < p.length ? u.orig : p, group[0].orig);
+    const all = group[0].whole === true;
+    const ownBase = at(def, outer);
+    const base = all && ownBase === undefined && parents !== undefined ? at(parents, outer) : ownBase;
+    // the part of the values of the form elements (`chosen`, by their index in els)
+    const partOf = chosen => els.reduce((v, el, i) => {
+        const entry = chosen[i] === undefined ? undefined : el.values.find(e => e.value === chosen[i]);
+        const patch = entry === undefined ? undefined : at(entry.patch, outer);
+        return patch === undefined ? v : all ? mergedPart(outer[0], v, patch) : mergedAt(outer, v, patch);
+    }, base);
+    const keep = els.some(el => el.parentCase(outer));
+    // the switch of the form elements before `n` with the values `chosen`
+    // of the later ones: a value of a leaf (an object or a list a literal),
+    // a match of the last of them with the cases of its patched values
+    const node = (n, chosen) => {
+        if (n == 0) {
+            const v = partOf(chosen);
+            return all ? v : v === undefined ? undefined : caseValue(removedPart(outer, convertPart(outer, v)));
+        }
+        const el = els[n - 1];
+        const fallback = node(n - 1, chosen);
+        const values = [...new Set(group.filter(u => u.index == n - 1).map(u => u.value))];
+        const cases = Object.fromEntries(values.map(v => [v, node(n - 1, { ...chosen, [n - 1]: v })]).filter(([, c]) => keep || !same(c, fallback)));
+        if (Object.keys(cases).length == 0)
+            return fallback;
+        if (all)
+            return { match: [el.ref, cases, fallback === undefined ? null : fallback], [patchedKey]: true };
+        return { match: fallback === undefined ? [el.ref, cases] : [el.ref, cases, fallback] };
+    };
+    const v = node(els.length, {});
+    if (all)
+        def[outer[0]] = v === undefined ? null : v;
+    else if (v === undefined)
+        deleteAt(def, outer);
+    else {
+        const [path] = convertLeaf(outer, undefined);
+        if (!same(path, outer))
+            deleteAt(def, outer);
+        setAt(def, path, expressionText(v));
+    }
 };
 // a part of a definition which is a match of the patches of its form elements
 const patchedKey = Symbol('patched');
 const isPatched = v => isObject(v) && v[patchedKey] === true;
+// the default of the innermost switch of a patched part, the part without patches
+const patchedBase = v => isPatched(v) ? patchedBase(v.match[2]) : v;
 
-// the match of a patched part with its cases converted (`convert(part)`),
-// e.g. the plots as marks, as the text of an expression, the parts as literals
-const patchedText = (v, convert) => {
+// the match of a patched part (of nested switches) with its cases
+// converted (`convert(part)`), e.g. the plots as marks, as the text of an
+// expression, the parts as literals
+const patchedAst = (v, convert) => {
+    if (!isPatched(v))
+        return v === null || v === undefined ? null : { literal: convert(v) };
     const [ref, cases, base] = v.match;
-    const literal = part => part === null || part === undefined ? null : { literal: convert(part) };
-    return expressionText({ match: [ref, Object.fromEntries(Object.entries(cases).map(([k, part]) => [k, literal(part)])), literal(base)] });
+    return { match: [ref, Object.fromEntries(Object.entries(cases).map(([k, part]) => [k, patchedAst(part, convert)])), patchedAst(base, convert)] };
 };
+const patchedText = (v, convert) => expressionText(patchedAst(v, convert));
 
 // a form element of 4.x as a control of 5.0: `ref` is `global`, the ids
 // stay, a parent and its children merge the controls and their entries by them
@@ -606,15 +726,15 @@ const migrate = (raw, { parents, noHover = false } = {}) => {
     if (def.formElements !== undefined)
         out.controls = def.formElements.map(controlOf);
     if (isPatched(def.filter)) {
-        // the conditions of every value as expressions
-        const [ref, cases, base] = def.filter.match;
-        const ast = c => c === null || c === undefined || c === true ? true : parseExpression(String(conditionExpression(c)).replace(/^=/, ''));
-        out.filter = expressionText({ match: [`@globals.${ref.slice(1)}`, Object.fromEntries(Object.entries(cases).map(([k, c]) => [k, ast(c)])), ast(base)] });
+        // the conditions of every value as expressions, of nested switches too
+        const ast = c => isPatched(c) ? { match: [`@globals.${c.match[0].slice(1)}`, Object.fromEntries(Object.entries(c.match[1]).map(([k, e]) => [k, ast(e)])), ast(c.match[2])] }
+            : c === null || c === undefined || c === true ? true : parseExpression(String(conditionExpression(c)).replace(/^=/, ''));
+        out.filter = expressionText(ast(def.filter));
     } else if (def.filter !== undefined)
         out.filter = conditionExpression(def.filter, true);
     const mapping = isObject(def.mapping) ? def.mapping : {};
     const plotsOf = p => p === undefined || p === null ? [] : [p].flat();
-    const plots = isPatched(def.plot) ? plotsOf(def.plot.match[2]) : plotsOf(def.plot);
+    const plots = plotsOf(patchedBase(def.plot));
     const stacked = Object.fromEntries(Object.entries(mapping).filter(([, m]) => isObject(m) && m.stacked !== undefined && m.stacked !== false)
         .map(([n, m]) => [n, m.stacked === true ? true : conditionExpression(m.stacked)]));
     const hovered = [];
