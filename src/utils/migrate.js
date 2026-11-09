@@ -4,7 +4,7 @@ import { isObject } from '@/utils/values';
 import { isOperator } from '@/utils/expr';
 import { formatExpression, parseExpression } from '@/utils/expr-parse';
 import { schemaUrl } from '@/utils/version';
-import { expressionKeys, optionKeys, translate, colorDims, dimOf as languageDim } from '@/utils/language';
+import { expressionKeys, optionKeys, translate, colorDims, isCategorical, dimOf as languageDim } from '@/utils/language';
 import { resolve, namesOfGlobals } from '@/utils/resolve';
 import { mergeAll } from '@/utils/def';
 
@@ -236,7 +236,9 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
         else if (c !== fallback)
             mark[name] = c;
     };
-    const categorical = d => isObject(dims[d]) && ['categories', 'scheme', 'common', 'order', 'fromData', 'ranks'].some(q => dims[d][q] !== undefined);
+    // a dim which 5.0 positions at the center of its band (see translate),
+    // also one of a type categorical without categories
+    const categorical = d => isCategorical(dims[d]);
     // the channel of a position of an element at a value, of a categorical
     // dim the center of its band (`@x:scaled:center`), the start of the band
     // (`@x:scaled`) stays an attribute

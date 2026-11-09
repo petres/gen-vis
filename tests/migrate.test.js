@@ -4,20 +4,23 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { migrate, conditionExpression } from '@/utils/migrate.js';
 import { translate } from '@/utils/language.js';
-import { resolve, variants } from '@/utils/resolve.js';
+import { resolve, namesOfGlobals } from '@/utils/resolve.js';
 import { normalize } from '@/utils/normalize.js';
 import { parseExpression } from '@/utils/expr-parse.js';
 import { isOperator } from '@/utils/expr.js';
+import { isObject } from '@/utils/values.js';
 import { resolveParents } from '@/utils/load.js';
 import { plotTypes } from '@/plots';
 import { definitions } from '@/dev/definitions.js';
+import { resolveParents4, patched4, globalSets } from './v4.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // the definitions of 4.x of data/ as they were before their migration, with their parents
 const files = definitions(Object.fromEntries(Object.entries(import.meta.glob('./fixtures/v4/**/*.json', { eager: true, import: 'default' }))
     .map(([file, def]) => [file.replace('./fixtures/v4/', 'data/'), def]))).map(d => `tests/fixtures/v4/${d.path}`);
 const load = async url => readFileSync(fileURLToPath(url), 'utf8');
-const merged = async file => resolveParents(JSON.parse(readFileSync(path.join(root, file), 'utf8')), pathToFileURL(path.join(root, file)).href, load);
+// a file of 5.0 merged with its parents
+const merged5 = async file => resolveParents(JSON.parse(readFileSync(path.join(root, file), 'utf8')), pathToFileURL(path.join(root, file)).href, load);
 
 // the conditions of the filters of 4.x and the objects of 5.0 as expressions
 const conditions = v => v && typeof v == 'object' && !Array.isArray(v) && !isOperator(v) ? parseExpression(String(conditionExpression(v)).replace(/^=/, '')) : v;
@@ -41,8 +44,6 @@ const same = def => JSON.parse(JSON.stringify(def, function (k, v) {
         return [v];
     if (k == 'plot' && v && !Array.isArray(v))
         return [v];
-    if (['cx', 'cy', 'angle', 'x', 'y'].includes(k) && typeof v == 'string' && v.endsWith(':scaled:center'))
-        return v.replace(/:center$/, '');
     if ((k == 'stroke' || k == 'fill') && v && v.or && v.or[0] == '@color')
         return '@color';
     return v;
@@ -139,29 +140,8 @@ describe('the migration of the definitions of 4.x', () => {
         // without a ref: an error, not an expression of '@undefined'
         expect(() => migrate(child)).toThrow('formElements[0]: no ref');
     });
-
-    test.each(files)('%s migrated and translated is the same normalized definition', async file => {
-        const def4 = await merged(file);
-        if (JSON.stringify(def4).includes('"patch"'))
-            return;
-        const a = same(normalize(def4, { plotTypes }));
-        const b = same(normalize(translate(resolve(migrate(def4), {})), { plotTypes }));
-        // the dims of the marks' `by` are categorical in 5.0, 4.x infers their type from the values
-        Object.keys(b.mapping ?? {}).forEach(n => {
-            if (a.mapping?.[n] && a.mapping[n].type === undefined && b.mapping[n].type == 'categorical') {
-                delete b.mapping[n].type;
-                if (a.mapping[n].scale?.type === undefined && b.mapping[n].scale)
-                    delete b.mapping[n].scale.type;
-            }
-        });
-        expect(b).toEqual(a);
-    });
 });
 
-// the files of data/ were migrated one by one (`gen-vis migrate`, a child
-// with its parents), the merged definition is the one of the merged 4.x
-// definition for every value of the controls (a patch of a child written
-// as a plain value, one of a parent as an expression, mean the same)
 describe('the order of categories of a vertical scale', () => {
     test('one of 4.x without a range had its first category at the bottom: reverse keeps it, 5.0 is top-down', () => {
         const dims = def => migrate(def).dims;
@@ -173,16 +153,68 @@ describe('the order of categories of a vertical scale', () => {
     });
 });
 
-describe('the migrated files of data/ (file by file) are the migration of the merged definitions', () => {
-    const merged5 = async file => resolveParents(JSON.parse(readFileSync(path.join(root, file), 'utf8')), pathToFileURL(path.join(root, file)).href, load);
-    const engine = def => variants(def).map(v => same(normalize(translate(v), { plotTypes })));
+// every definition of 4.x of data/ (as it was before its migration) with
+// every combination of the values of its form elements, as 4.x drew it (the
+// patches of the selected entries merged, see tests/v4.js), is the
+// migration of the merged definition and the migrated files of data/ (one
+// by one, `gen-vis migrate`, a child with its parents) resolved with the
+// same globals
+describe('the migrated definitions draw what 4.x drew, for every value of the controls', () => {
+    const json = file => JSON.parse(readFileSync(path.join(root, file), 'utf8'));
+    const url = file => pathToFileURL(path.join(root, file)).href;
+    const engine4 = def => {
+        const n = same(normalize(def, { plotTypes }));
+        // 4.x read a reference to a global of the scales of facets when it drew them, 5.0 resolves it
+        const scales = n.facets?.scales;
+        if (typeof scales == 'string' && scales.startsWith('@') && Object.hasOwn(def.globals ?? {}, scales.slice(1)))
+            n.facets.scales = def.globals[scales.slice(1)];
+        delete n.globals;
+        return n;
+    };
+    // a filter which switches over a global between conditions of the rows
+    // (e.g. one of a patch of the filter) stays an expression, the engine
+    // evaluates it with the globals: its case of the global here, `true` is none
+    const selected = (v, globals) => {
+        const m = isObject(v) && Array.isArray(v.match) && typeof v.match[0] == 'string' && v.match[0].startsWith('@globals.') ? v.match : null;
+        if (!m)
+            return v;
+        const g = globals[m[0].slice('@globals.'.length)];
+        return selected(Object.hasOwn(m[1], String(g)) ? m[1][String(g)] : m[2] ?? null, globals);
+    };
+    const engine5 = (def, globals) => {
+        const g = { ...def.globals, ...globals };
+        const n = translate(resolve(def, namesOfGlobals(g, def.controls)));
+        if (n.filter !== undefined) {
+            n.filter = selected(n.filter, g);
+            if (n.filter === true || n.filter === null)
+                delete n.filter;
+        }
+        const out = same(normalize(n, { plotTypes }));
+        ['globals', 'formElements', 'controls'].forEach(k => delete out[k]);
+        return out;
+    };
+    // the dims of the marks' `by` are categorical in 5.0, 4.x infers their type from the values
+    const byTypes = (a, b) => Object.keys(b.mapping ?? {}).forEach(n => {
+        if (a.mapping?.[n] && a.mapping[n].type === undefined && b.mapping[n].type == 'categorical') {
+            delete b.mapping[n].type;
+            if (a.mapping[n].scale?.type === undefined && b.mapping[n].scale)
+                delete b.mapping[n].scale.type;
+        }
+    });
     test.each(files)('%s', async file => {
-        const def4 = await merged(file);
-        const def5 = await merged5(file.replace('tests/fixtures/v4/', 'data/'));
-        const a = engine(migrate(def4));
-        const b = engine(def5);
-        expect(b.length).toBeGreaterThan(0);
-        expect(b).toEqual(a);
+        const def4 = resolveParents4(json(file), url(file));
+        const migrated = migrate(def4);
+        const file5 = file.replace('tests/fixtures/v4/', 'data/');
+        const def5 = await merged5(file5);
+        for (const globals of globalSets(def4)) {
+            const a = engine4(patched4(def4, globals));
+            const b = engine5(migrated, globals);
+            const c = engine5(def5, globals);
+            byTypes(a, b);
+            byTypes(a, c);
+            expect(b, `migrated, globals ${JSON.stringify(globals)}`).toEqual(a);
+            expect(c, `${file5}, globals ${JSON.stringify(globals)}`).toEqual(a);
+        }
     });
 });
 
