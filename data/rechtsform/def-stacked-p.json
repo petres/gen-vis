@@ -55,7 +55,6 @@
             "id": "shares",
             "by": "type",
             "filter": "@y >= 0.07",
-            "x": "@x:scaled:center",
             "y": "@y:mid:scaled",
             "text-anchor": "middle",
             "dominant-baseline": "central",

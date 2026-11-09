@@ -1197,20 +1197,23 @@
                 },
                 "x1": {
                     "$ref": "#/definitions/channel",
-                    "description": "The end of a bar of a class of a bin, or of an area."
+                    "description": "The end of a bar of a class of a bin, or of an area; of a rule its start (a number on the scale of x)."
                 },
-                "x2": { "$ref": "#/definitions/channel", "description": "The other end of a rule." },
+                "x2": {
+                    "$ref": "#/definitions/channel",
+                    "description": "The other end of a rule (a number on the scale of x)."
+                },
                 "y0": {
                     "$ref": "#/definitions/channel",
                     "description": "The start of a bar or an area (a dim, a number on the scale of y), 0 by default."
                 },
                 "y1": {
                     "$ref": "#/definitions/channel",
-                    "description": "The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start (its other end is y2)."
+                    "description": "The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start (its other end is y2, a number on the scale of y)."
                 },
                 "y2": {
                     "$ref": "#/definitions/channel",
-                    "description": "The other end of a rule, e.g. \"hi\" of an error bar."
+                    "description": "The other end of a rule, e.g. \"hi\" of an error bar (a number on the scale of y)."
                 },
                 "lon": {
                     "$ref": "#/definitions/channel",

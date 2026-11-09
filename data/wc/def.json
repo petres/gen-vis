@@ -50,7 +50,6 @@
             "type": "point",
             "id": "points",
             "by": "type",
-            "fill": "@color",
             "highlight": {"r": 4.5},
             "others": {"opacity": 0.25}
         },

@@ -73,13 +73,6 @@
             "opacity": 0.7,
             "highlight": {"opacity": 1, "stroke-width": 3}
         },
-        {
-            "type": "point",
-            "by": "land",
-            "fill": "@color",
-            "opacity": 0.7,
-            "r": 4,
-            "highlight": {"r": 5, "opacity": 1}
-        }
+        {"type": "point", "by": "land", "opacity": 0.7, "r": 4, "highlight": {"r": 5, "opacity": 1}}
     ]
 }

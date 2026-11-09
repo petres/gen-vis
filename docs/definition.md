@@ -1149,9 +1149,11 @@ which names neither a dim nor a column of the data (e.g. a typo, `"x":
   they are in its domain; without the dim of the axis it has a scale of
   its own.
 - A number is a value on the scale of the axis of the channel
-  (`@y:scaled:100`) of `x0` and `y0` of bars, areas and rules, of `y` of
-  bars and of `x` and `y` of rules, e.g. the base of bars or a rule at a
-  target: `{"type": "rule", "y": 100}`; other numbers are pixels.
+  (`@y:scaled:100`) of `x0` and `y0` of bars and areas, of `y` of bars and
+  of every channel of rules (`x`, `y` and the ends `x1`, `x2`, `y1`,
+  `y2`), e.g. the base of bars, a rule at a target, `{"type": "rule", "y":
+  100}`, or one from 0, `"x1": 0`; other numbers are pixels, an expression
+  of pixels at these channels is e.g. `"=literal(10)"`.
 - An expression is the position in pixels, e.g. `"y": "@group:scaled +
   @jitter * @group:bandwidth"` of the points of a strip plot within the
   band of their category, or `"x": "=@innerWidth + 10"` of texts in a
@@ -2295,10 +2297,20 @@ hand). The migration keeps the chart as it was:
 - A legend without a symbol gets `"symbol": null`, remove it for the
   symbols of the marks.
 - A dim with `fromData: true` keeps it (ascending order).
+- A categorical vertical dim without a range of its scale gets
+  `"reverse": true` (4.x had its first category at the bottom, 5.0 at the
+  top), a `reverse` of 4.x is removed.
 - A reference of a condition of a filter is written `@globals.<name>`,
   4.x read the globals there.
+- Conditions of dates (of a dim of dates or with texts of dates, e.g.
+  `{"range": ["2020-01-01", null]}`) stay the object of 4.x, which compares
+  dates; an expression compares the texts of the rows. Of a patch of the
+  filter they are expressions (check them by hand).
 - The objects of expressions are written in the string syntax where it has
   a text of them.
+- A text which starts with `=` (a title `"= Summe"`, an axis title
+  `"=100"`), an expression in 5.0, is written as the expression of the
+  text, `"='= Summe'"`.
 
 To check by hand:
 
@@ -2315,12 +2327,25 @@ To check by hand:
 - **Patches of whole parts.** A patch of the plots, the annotations or the
   filter is a `match` of the whole list or filter (the marks of every value
   in it), shorten it by hand if only an attribute differs.
+- **Several form elements at one place.** Patches of different form
+  elements of the same leaf, or of a part and a leaf in it (e.g. one
+  removes the axis, another changes its title), are nested switches: a
+  `match` of the later form element whose cases and default are the
+  `match` of the earlier one, e.g. `"column": "=match(@b, {b2: 'vb'},
+  match(@a, {a2: 'va'}, 'v'))"`, the patches applied in their order as in
+  4.x. A patch which removes the scale, the axis, the legend or the hover
+  of a dim (null) is `false` in the switch.
 - **Types of dims.** A dim with a legend gets the categories of the data
   and is categorical, a dim only used as `by` is not, as in 4.x.
 
 A definition of 4.x which is loaded (by its keys, also with the `$schema`
 of 4) is migrated while it is loaded, with a notice in the console
-(`a definition of gen-vis 4, migrated while it is loaded`), so pages keep
-working until their files are migrated. `@preschen/gen-vis/check` exports
+(`a definition of gen-vis 4, migrated while it is loaded`, also of an
+inline one), so pages keep working until their files are migrated; the
+warnings of its check name the places of 5.0 (`dims.y`, `marks[0]`) and
+say so. A chain of parents of parts of 4.x and 5.0 (e.g. a child of 5.0
+of a parent which is still one of 4.x) is merged as one of 5.0: every
+part of 4.x is migrated first, with the parts of 4.x before it as its
+parents, as `gen-vis migrate` writes the files one by one. `@preschen/gen-vis/check` exports
 `migrate(def, {parents})` and `formatJson(def)` of a script of its own, see
 [checks outside the browser](extensions.md#checks-outside-the-browser).

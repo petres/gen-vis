@@ -139,12 +139,7 @@
     },
     "marks": [
         {"type": "line", "by": ["quali", "werr", "bundesland", "wfrist"], "stroke-width": "2"},
-        {
-            "type": "point",
-            "by": ["quali", "werr", "bundesland", "wfrist"],
-            "fill": "@color",
-            "r": "3"
-        }
+        {"type": "point", "by": ["quali", "werr", "bundesland", "wfrist"], "r": "3"}
     ],
     "facets": {"by": "wrecht", "cols": 3, "scales": ["x", "y"]},
     "hover": {"columns": []}

@@ -261,7 +261,7 @@ describe('Store.init', () => {
         const store = createStore();
         await store.init({ def: wrong, data: csv, check: true });
         // the places of the warnings are the ones of the definition of 5.0
-        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition: marks\[0\]\.type: unknown type 'path'/));
+        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition \(migrated from gen-vis 4, the paths are the ones of 5\): marks\[0\]\.type: unknown type 'path'/));
     });
 
     // the check reads the definition, not the normalized one, e.g. of the

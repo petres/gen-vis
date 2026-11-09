@@ -1303,11 +1303,11 @@ export interface Mark {
      */
     x0?: string | number | Expression;
     /**
-     * The end of a bar of a class of a bin, or of an area.
+     * The end of a bar of a class of a bin, or of an area; of a rule its start (a number on the scale of x).
      */
     x1?: string | number | Expression;
     /**
-     * The other end of a rule.
+     * The other end of a rule (a number on the scale of x).
      */
     x2?: string | number | Expression;
     /**
@@ -1315,11 +1315,11 @@ export interface Mark {
      */
     y0?: string | number | Expression;
     /**
-     * The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start (its other end is y2).
+     * The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start (its other end is y2, a number on the scale of y).
      */
     y1?: string | number | Expression;
     /**
-     * The other end of a rule, e.g. "hi" of an error bar.
+     * The other end of a rule, e.g. "hi" of an error bar (a number on the scale of y).
      */
     y2?: string | number | Expression;
     /**

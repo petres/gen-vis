@@ -167,11 +167,11 @@ See [definition.md](definition.md#marks).
 | `x` | dim, number or expression |  | The dim of the horizontal position (x by default); a number is a value on the scale of x of a rule, pixels otherwise. |
 | `y` | dim, number or expression |  | The dim of the vertical position (y by default); a number is a value on the scale of y of a bar or a rule, pixels otherwise. |
 | `x0` | dim, number or expression |  | The start of a bar or an area (a dim, a number on the scale of x), e.g. the start of a class of a bin, 0 by default. |
-| `x1` | dim, number or expression |  | The end of a bar of a class of a bin, or of an area. |
-| `x2` | dim, number or expression |  | The other end of a rule. |
+| `x1` | dim, number or expression |  | The end of a bar of a class of a bin, or of an area; of a rule its start (a number on the scale of x). |
+| `x2` | dim, number or expression |  | The other end of a rule (a number on the scale of x). |
 | `y0` | dim, number or expression |  | The start of a bar or an area (a dim, a number on the scale of y), 0 by default. |
-| `y1` | dim, number or expression |  | The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start (its other end is y2). |
-| `y2` | dim, number or expression |  | The other end of a rule, e.g. "hi" of an error bar. |
+| `y1` | dim, number or expression |  | The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start (its other end is y2, a number on the scale of y). |
+| `y2` | dim, number or expression |  | The other end of a rule, e.g. "hi" of an error bar (a number on the scale of y). |
 | `lon` | dim, number or expression |  | Of a map: the dim of the longitude of a point or a text, or an expression of the row. |
 | `lat` | dim, number or expression |  | Of a map: the dim of the latitude, or an expression of the row. |
 | `stack` | boolean \| expression \| condition |  | Stacks the values of the mark (bars, areas, arcs) by the groups of `by`, true all rows or the condition of the rows which are stacked, the others have their own value as start and end. |

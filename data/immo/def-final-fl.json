@@ -165,12 +165,7 @@
             "stroke-width": "2",
             "stroke-dasharray": "@stroke-dasharray"
         },
-        {
-            "type": "point",
-            "by": ["quali", "werr", "wrecht", "bundesland", "wfrist"],
-            "fill": "@color",
-            "r": "3"
-        }
+        {"type": "point", "by": ["quali", "werr", "wrecht", "bundesland", "wfrist"], "r": "3"}
     ],
     "facets": {"by": "var", "cols": 2, "scales": "own"},
     "hover": {"columns": []}
