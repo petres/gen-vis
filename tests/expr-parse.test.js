@@ -152,6 +152,16 @@ describe('parseExpression', () => {
         expect(() => parseExpression("='\\u12'")).toThrow('expected four hex digits after "\\u" at 4');
         expect(() => parseExpression(3)).toThrow('expression 3: no text');
     });
+
+    test('a depth of 100 levels, deeper ones are an error, not a stack overflow', () => {
+        const deep = n => `=${'('.repeat(n)}1${')'.repeat(n)}`;
+        expect(parseExpression(deep(99))).toBe(1);
+        expect(() => parseExpression(deep(100000))).toThrow(/nested deeper than 100 levels at 101$/);
+        expect(() => parseExpression(`=${'['.repeat(5000)}`)).toThrow('nested deeper than 100 levels');
+        expect(() => parseExpression(`=${'not '.repeat(5000)}true`)).toThrow('nested deeper than 100 levels');
+        expect(() => parseExpression(`=${'- '.repeat(5000)}@a`)).toThrow('nested deeper than 100 levels');
+        expect(() => parseExpression(`=${'min('.repeat(5000)}`)).toThrow('nested deeper than 100 levels');
+    });
 });
 
 describe('formatExpression', () => {

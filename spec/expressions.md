@@ -125,7 +125,9 @@ The values:
 
 Whitespace between the tokens does not matter, also newlines. An error
 names the text and the position (from 0) of the problem, e.g. `expression
-"@a +": unexpected end at 4`.
+"@a +": unexpected end at 4`. An expression nests at most 100 levels
+(parentheses, lists, objects, calls, runs of `not` and of `-`), a deeper
+one is the error `nested deeper than 100 levels`.
 
 The fixtures `expressions/syntax.json` are `{ "name", "text", "expr" }`:
 the text and its expression, the ones with a `scope` and a `result` also

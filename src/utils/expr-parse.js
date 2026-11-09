@@ -69,6 +69,11 @@ const escapes = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f', '\\': '\\', '/': 
 
 // a text of a definition which is an expression, not a text: "=..." or a
 // reference "@name" (also an expression starting with one)
+// the levels of nesting of an expression (parentheses, lists, objects,
+// calls, runs of not and of -), deeper ones are an error instead of a stack
+// overflow of the parser and of the evaluation
+const maxDepth = 100;
+
 const isExpressionText = s => typeof s == 'string' && (s.startsWith('=') || s.startsWith('@'));
 
 // the tokens of the text from `start`: { type, value, pos, end }, the last
@@ -158,6 +163,17 @@ const parseExpression = text => {
     };
     const tokens = tokenize(text, text.startsWith('=') ? 1 : 0, fail);
     let i = 0;
+    let depth = 0;
+    // a level deeper, at the position of the token
+    const nested = fn => {
+        if (++depth > maxDepth)
+            fail(`nested deeper than ${maxDepth} levels`, tokens[i].pos);
+        try {
+            return fn();
+        } finally {
+            depth--;
+        }
+    };
     const peek = () => tokens[i];
     const next = () => tokens[i++];
     const is = (type, value) => tokens[i].type == type && (value === undefined || tokens[i].value === value);
@@ -207,7 +223,7 @@ const parseExpression = text => {
         }
         return left;
     };
-    const ternary = raw => {
+    const ternary = raw => nested(() => {
         const c = or(raw);
         if (!isPunct('?'))
             return c;
@@ -216,7 +232,7 @@ const parseExpression = text => {
         expect(':');
         const b = ternary(raw);
         return { if: [c, a, b] };
-    };
+    });
     const or = raw => binary('word', ['or'], and, raw);
     const and = raw => binary('word', ['and'], not, raw);
     // `not(` without a space is a call
@@ -224,7 +240,7 @@ const parseExpression = text => {
         const t = tokens[i + 1];
         if (is('word', 'not') && !(t.type == 'punct' && t.value == '(' && t.pos == peek().end)) {
             next();
-            return { not: [not(raw)] };
+            return nested(() => ({ not: [not(raw)] }));
         }
         return comparison(raw);
     };
@@ -239,7 +255,7 @@ const parseExpression = text => {
             const v = next().value;
             return v === 0 ? 0 : -v;
         }
-        return { '-': [unary(raw)] };
+        return nested(() => ({ '-': [unary(raw)] }));
     };
     const call = (t, raw) => {
         const name = t.value;
