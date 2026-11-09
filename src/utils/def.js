@@ -321,7 +321,8 @@ const object = (v, path, expected) => {
 
 // `dataKeys(column)` are the distinct values of a column of the data as
 // strings, see distinctValues of utils/data.js, the categories of `fromData`
-const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = [], symbols = {}) => {
+// (the templates of the column are filled, see resolvedParts)
+const prepareMapping = (m, name, dataKeys = () => [], plots = [], symbols = {}) => {
     object(m, `mapping.${name}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`);
     // null or false removes a part, e.g. the hover of a parent
     ['scale', 'axis', 'legend', 'hover'].forEach(k => {
@@ -345,11 +346,11 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = [], 
         const categories = new Map(Object.entries(m.categories ?? {}));
         // `fromData` of "rows": the categories in the order of the rows, not ascending
         if (m.fromData && typeof m.column == 'string')
-            dataKeys(fillTemplate(m.column, globals), m.fromData == 'rows').filter(k => !categories.has(k)).forEach(k => categories.set(k, {}));
+            dataKeys(m.column, m.fromData == 'rows').filter(k => !categories.has(k)).forEach(k => categories.set(k, {}));
         // `"order": "rows"`: all categories in the order of the rows of the
         // data, also the listed ones (their props stay theirs), e.g. one with
         // a name or a class of its own among the ones of the data
-        const rowsOrder = m.order == 'rows' && typeof m.column == 'string' ? dataKeys(fillTemplate(m.column, globals), true) : null;
+        const rowsOrder = m.order == 'rows' && typeof m.column == 'string' ? dataKeys(m.column, true) : null;
         const own = [...categories.keys()];
         const keys = rowsOrder ? orderKeys(own, [...rowsOrder, ...own]) : orderKeys(own, m.order);
         // the colors of a scheme, without one and without colors of the
@@ -472,9 +473,8 @@ const preparePlots = (plot, annotations, files) => {
     const plots = placed([...[plot ?? []].flat(), ...annotationPlots(annotations ?? [])]);
     return plots.map((raw, i) => {
         const p = { ...object(raw, `plot[${i}]`, 'a plot, e.g. { "type": "svg:circle", "props": {} }') };
-        p.props ??= {};
-        // a mapping or a list of them
-        p.by = [p.by ?? []].flat();
+        // translate writes the props and `by` of the marks, an annotation has none
+        p.by ??= [];
         p.id ??= `mark-${i}`;
         p.highlightProps = partProps(p.highlight);
         p.othersProps = partProps(p.others);
@@ -554,7 +554,7 @@ const languageOf = (options, globals = {}) => {
 // objects of short keys are not texts, e.g. { "of": "x" } of a scale
 const textPaths = {
     options: [['title'], ['subtitle'], ['footer'], ['empty'], ['hover', 'title'], ['hover', 'row'], ['hover', 'total']],
-    mapping: [['*', 'name'], ['*', 'format'], ['*', 'axis', 'format'], ['*', 'axis', 'title'], ['*', 'axis', 'title', 'name'], ['*', 'hover', 'format'],
+    mapping: [['*', 'name'], ['*', 'format'], ['*', 'axis', 'format'], ['*', 'axis', 'title', 'name'], ['*', 'hover', 'format'],
         ['*', 'legend', 'format'], ['*', 'legend', 'missing', 'name'], ['*', 'common', 'name'], ['*', 'categories', '*', 'name'], ['*', 'ranks', '*', 'name']],
     annotations: [['*', 'label'], ['*', 'text']],
 };
@@ -721,7 +721,7 @@ const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, t
             mapping[n] = old;
             return;
         }
-        const m = prepareMapping(merged, n, dataKeys, {}, def.plot, symbols);
+        const m = prepareMapping(merged, n, dataKeys, def.plot, symbols);
         if (keepVisible && old?.categoryProps && m.categoryProps)
             m.keys.filter(k => Object.hasOwn(old.categoryProps, k)).forEach(k => m.categoryProps[k].visible = old.categoryProps[k].visible);
         if (old?.column !== m.column || old?.type !== m.type)

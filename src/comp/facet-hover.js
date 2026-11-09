@@ -240,8 +240,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // the label of a column, the name of its dim, its axis title or its name
         const labelOf = n => {
             const m = store.mapping(n);
-            const title = m.axis?.title;
-            return store.text(m.name ?? (typeof title == 'object' && title !== null ? title.name : title) ?? n) ?? n;
+            return store.text(m.name ?? m.axis?.title?.name ?? n) ?? n;
         };
         // the color of the category of a row, of the first dim of categories
         // of the hover with a color, e.g. a swatch beside its name
