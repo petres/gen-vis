@@ -221,6 +221,10 @@ are not in the margins.
   CLI (was a screenshot of the DOM of `modern-screenshot`).
 - A mark without `by` highlights the element of the row under the pointer
   (it had no highlight), e.g. a bar of horizontal bars.
+- A number at `x` or `y` of a point or a text of a cartesian chart is a
+  value on the scale of its axis, as of rules and bars, e.g. a label at
+  250 of x (`"x": 250`, was `"x": "@x:scaled:250"`); pixels are
+  `"=literal(34)"` (`gen-vis migrate` writes the numbers of texts of 4.x so).
 - A legend symbol `auto` of a box and dots without a line is the box (the
   dots of a strip below a histogram were drawn over it).
 - The dot of a legend symbol `auto` of points has their radius (a number),

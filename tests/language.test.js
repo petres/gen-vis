@@ -235,3 +235,10 @@ test('stack of arcs: of categories around the circle the radius (a rose), else t
     const pie = translate({ coord: 'polar', dims: { x: 'share', t: { column: 't', legend: {} } }, marks: { type: 'arc', by: 't', stack: true } });
     expect(pie.plot[0].props).toMatchObject({ startAngle: '@x:start:scaled', endAngle: '@x:end:scaled' });
 });
+
+test('numbers at x and y of points and texts of cartesian charts are values on the scale, literals pixels', () => {
+    const p = translate({ dims: { x: 'v', y: 'w' }, marks: [{ type: 'label', x: 250, text: 'a' }, { type: 'point', y: 3 }, { type: 'text', x: '=literal(34)', text: 'b' }] }).plot;
+    expect(p[0].props.x).toBe('@x:scaled:250');
+    expect(p[1].props.cy).toBe('@y:scaled:3');
+    expect(p[2].props.x).toBe(34);
+});

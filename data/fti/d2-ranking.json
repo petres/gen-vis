@@ -20,9 +20,9 @@
         "color": { "column": "{group}", "domain": [74.5, 89.5, 99.5, 109.5], "scale": { "type": "threshold", "closed": "right", "range": ["#EA4B55", "#F59036", "#F9EB00", "#AFD24B", "#3CAF55"] } }
     },
     "marks": [
-        { "type": "label", "by": "country", "x": 34, "anchor": "start", "dx": -12, "text": "@y", "font-size": 14, "highlight": { "mode": "row", "font-weight": "bold" } },
-        { "type": "point", "by": "country", "x": 34, "r": 5, "fill": "color" },
-        { "type": "label", "by": "country", "x": 34, "anchor": "end", "dx": 12, "text": "@name", "font-size": 14,
+        { "type": "label", "by": "country", "x": "=literal(34)", "anchor": "start", "dx": -12, "text": "@y", "font-size": 14, "highlight": { "mode": "row", "font-weight": "bold" } },
+        { "type": "point", "by": "country", "x": "=literal(34)", "r": 5, "fill": "color" },
+        { "type": "label", "by": "country", "x": "=literal(34)", "anchor": "end", "dx": 12, "text": "@name", "font-size": 14,
           "highlight": { "mode": "row", "font-weight": "bold" }, "others": { "opacity": 0.5 } }
     ]
 }

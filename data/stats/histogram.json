@@ -37,7 +37,7 @@
     "marks": [
         { "type": "bar", "x0": "lo", "x1": "hi", "fill": "#4269D0" },
         { "type": "point", "by": "group", "y": "@group:scaled + @jitter * @group:bandwidth", "r": 1.5, "opacity": 0.4 },
-        { "type": "label", "by": "group", "x": "@x:scaled:250", "y": "group", "anchor": "end", "dx": 6, "text": "=cat('n=', format(@n, ',.0f'))", "fill": "#333", "font-size": 11 }
+        { "type": "label", "by": "group", "x": 250, "y": "group", "anchor": "end", "dx": 6, "text": "=cat('n=', format(@n, ',.0f'))", "fill": "#333", "font-size": 11 }
     ],
     "annotations": [
         { "type": "line", "x": 100, "above": true, "props": { "stroke": "#888", "stroke-dasharray": "2 2" } },

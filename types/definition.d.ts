@@ -1297,11 +1297,11 @@ export interface Mark {
      */
     by?: string | string[];
     /**
-     * The dim of the horizontal position (x by default); a number is a value on the scale of x of a rule, pixels otherwise.
+     * The dim of the horizontal position (x by default); a number is a value on the scale of x of a rule, a point or a text (cartesian), pixels otherwise (=literal(n) are pixels).
      */
     x?: string | number | Expression;
     /**
-     * The dim of the vertical position (y by default); a number is a value on the scale of y of a bar or a rule, pixels otherwise.
+     * The dim of the vertical position (y by default); a number is a value on the scale of y of a bar, a rule, a point or a text (cartesian), pixels otherwise (=literal(n) are pixels).
      */
     y?: string | number | Expression;
     /**

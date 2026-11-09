@@ -1167,9 +1167,11 @@ which names neither a dim nor a column of the data (e.g. a typo, `"x":
 - A number is a value on the scale of the axis of the channel
   (`@y:scaled:100`) of `x0` and `y0` of bars and areas, of `y` of bars and
   of every channel of rules (`x`, `y` and the ends `x1`, `x2`, `y1`,
-  `y2`), e.g. the base of bars, a rule at a target, `{"type": "rule", "y":
-  100}`, or one from 0, `"x1": 0`; other numbers are pixels, an expression
-  of pixels at these channels is e.g. `"=literal(10)"`.
+  `y2`) and of `x` and `y` of points and texts of cartesian charts, e.g.
+  the base of bars, a rule at a target, `{"type": "rule", "y": 100}`, one
+  from 0, `"x1": 0`, or a label at 250 of x, `"x": 250`; other numbers are
+  pixels, an expression of pixels at these channels is e.g.
+  `"=literal(10)"`.
 - An expression is the position in pixels, e.g. `"y": "@group:scaled +
   @jitter * @group:bandwidth"` of the points of a strip plot within the
   band of their category, or `"x": "=@innerWidth + 10"` of texts in a

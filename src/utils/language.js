@@ -182,7 +182,8 @@ const channelOf = (mark, channel, dims, axis = positionChannels[channel], valued
     }
     if (typeof v == 'number' && valued && axis && Object.hasOwn(dims, axis))
         return { dim: axis, value: `@${axis}:scaled:${v}`, fixed: v };
-    return { dim: undefined, value: v };
+    // a literal number (`"=literal(10)"`) is pixels
+    return { dim: undefined, value: isObject(v) && Object.keys(v).length == 1 && typeof v.literal == 'number' ? v.literal : v };
 };
 
 // a mark whose `by` is a list, the attributes of its elements are `props`
@@ -358,8 +359,12 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
         });
     } else if (coord == 'cartesian' || prefix == 'svg') {
         const base = kind == 'bar' || kind == 'area' || kind == 'rule';
-        const x = base && kind == 'rule' ? (raw.x !== undefined ? valued('x') : ch('x')) : ch('x');
-        const y = base && kind == 'rule' ? (raw.y !== undefined ? valued('y') : ch('y')) : (kind == 'bar' && raw.y !== undefined ? valued('y') : ch('y'));
+        // a number is a value on the scale of the axis of a rule, of y of a
+        // bar and of the positions of texts and points of cartesian charts,
+        // e.g. a label at 250 of x; pixels are an expression ("=literal(10)")
+        const placed = (kind == 'text' || kind == 'circle') && coord == 'cartesian';
+        const x = (base && kind == 'rule') || (placed && typeof raw.x == 'number') ? (raw.x !== undefined ? valued('x') : ch('x')) : ch('x');
+        const y = (base && kind == 'rule') || (placed && typeof raw.y == 'number') ? (raw.y !== undefined ? valued('y') : ch('y')) : (kind == 'bar' && raw.y !== undefined ? valued('y') : ch('y'));
         // the ends of a rule: a number is a value on the scale of its axis, as x0 and y0 of bars
         const end = (name, axis) => kind == 'rule' ? valued(name, axis) : given(name, axis);
         const x0 = base ? valued('x0') : given('x0'), x1 = end('x1', 'x'), y0 = base ? valued('y0') : given('y0'), y1 = end('y1', 'y');
