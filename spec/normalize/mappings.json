@@ -565,7 +565,7 @@
           "fill": {
             "or": [
               "@color",
-              "currentColor"
+              "#4269D0"
             ]
           },
           "x": "@x:scaled",

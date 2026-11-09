@@ -418,3 +418,19 @@ describe('the base of bars and areas', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the default fill of bars, areas and arcs without categories', () => {
+    test('the first of the default colors of categories, not the color of the text', async () => {
+        const fills = async (marks, coord) => {
+            const el = await mount({ def: { ...(coord ? { coord } : {}), dims: { x: { column: 'year', type: 'categorical' }, y: 'value' }, marks }, data });
+            return [...el.querySelectorAll('g.vis-mark rect, g.vis-mark path')].map(e => e.getAttribute('fill'));
+        };
+        expect(new Set(await fills({ type: 'bar' }))).toEqual(new Set(['#4269D0']));
+        expect(await fills({ type: 'area' })).toEqual(['#4269D0']);
+        expect(new Set(await fills({ type: 'arc', y: 'value' }, 'polar'))).toEqual(new Set(['#4269D0']));
+        // a fill of its own, the color of the text, lines and points as before
+        expect(new Set(await fills({ type: 'bar', fill: 'currentColor' }))).toEqual(new Set(['currentColor']));
+        expect(await fills({ type: 'line' })).toEqual(['none']);
+        expect(errors).toEqual([]);
+    });
+});

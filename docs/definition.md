@@ -1133,7 +1133,7 @@ color of the text:
 | Type | Default attributes |
 |------|--------------------|
 | `line` | `stroke`: color, `fill`: `none` |
-| `area`, `bar`, `arc` | `fill`: color |
+| `area`, `bar`, `arc` | `fill`: `{"or": ["@color", "#4269D0"]}`, without a category the first of the default colors of categories (`"fill": "currentColor"` is the color of the text) |
 | `point` | `r`: 3, `fill`: color |
 | `text` | `fill`: `@color` |
 | `rule` | `stroke`: color, at the half pixel of the ticks |

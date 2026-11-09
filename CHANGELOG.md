@@ -419,6 +419,12 @@ Migration notes, to check by hand after `gen-vis migrate`:
   angle) leave out negative values, with a warning: a slice has no
   negative size (they were stacked backwards from 0 and overlapped the
   others, the pie was not a full circle).
+- The default fill of bars, areas and arcs without a category color is
+  `#4269D0`, the first of the default colors of categories (`observable10`),
+  as a single category of `by` gets; it was the color of the text
+  (`currentColor`), black blocks. `"fill": "currentColor"` is the color of
+  the text. Lines, rules and points keep the color of the text. No example
+  draws such a mark, their images are the same.
 - A diverging scale (`diverging`, `divergingLog`, ...) without a domain of
   three entries has the middle `center`, else the middle of the ends of the
   data (of a log one in its positions); the nulls of a domain of three
