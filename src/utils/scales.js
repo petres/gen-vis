@@ -1,4 +1,4 @@
-export { makeScale, bandCenter, intervalOf, centerOf };
+export { makeScale, bandCenter, intervalOf, centerOf, logProblems };
 
 import * as d3 from "@/utils/d3";
 import { evaluate } from "@/utils/expr";
@@ -174,6 +174,32 @@ const isLog = type => type.toLowerCase().endsWith('log') && !type.toLowerCase().
 const logValues = values => {
     const positive = values.filter(v => v > 0);
     return positive.length ? positive : values.filter(v => v < 0);
+};
+
+/**
+ * The problems of a numeric mapping of a log scale (log, sequentialLog,
+ * divergingLog, not symlog) of the rows as texts of a warning, none of
+ * another scale: values without a position (0, the ones of the other sign,
+ * see logValues), which are not drawn, `zero` (a log scale has no 0) and
+ * stacks (they start at 0).
+ */
+const logProblems = (name, mapping, rows) => {
+    const type = mapping?.scale?.type;
+    if (mapping?.type != 'numeric' || typeof type != 'string' || !isLog(type) || mapping.scale.of !== undefined)
+        return [];
+    const values = rows.map(r => r[name]).filter(v => typeof v == 'number' && !Number.isNaN(v));
+    const kept = new Set(logValues(values));
+    const dropped = values.filter(v => !kept.has(v));
+    const problems = [];
+    if (dropped.length > 0) {
+        const shown = [...new Set(dropped)].slice(0, 3).join(', ');
+        problems.push(`a ${type} scale has no position of 0 and of values of the other sign, ${dropped.length} of ${values.length} values of dim '${name}' are not drawn (${shown}${new Set(dropped).size > 3 ? ', ...' : ''}), e.g. "type": "symlog" has them`);
+    }
+    if (mapping.scale.zero === true)
+        problems.push(`a ${type} scale has no 0, \`zero\` is ignored`);
+    if (mapping.stacked !== undefined && mapping.stacked !== false)
+        problems.push(`stacks start at 0, which a ${type} scale has no position of, the stacked marks are not drawn`);
+    return problems;
 };
 
 // the values of a mapping in the rows, continuous ones sorted for the lookup

@@ -927,3 +927,13 @@ test('the formats of numbers are formats of d3, of the rows given also of the di
     def.dims.x = { column: 'year', type: 'date', format: '%Y' };
     expect(validateDef({ ...def, dims: { ...def.dims, y: { column: 'value', format: ',.2~f' } } })).toEqual([]);
 });
+
+test('validateDef: zero and stacks of a log scale, which has no 0; bars on it are fine', () => {
+    const def = y => ({ dims: { x: { column: 'a', type: 'categorical' }, y: { column: 'v', type: 'numeric', ...y } }, marks: { type: 'bar' } });
+    expect(validateDef(def({ scale: { type: 'log' } }))).toEqual([]);
+    expect(validateDef(def({ zero: true, scale: { type: 'log' } }))).toEqual([
+        `dims.y.zero: a log scale has no 0, the domain cannot include it; bars and areas start at the end of the domain nearest to 0, e.g. "type": "symlog" has a 0`]);
+    expect(validateDef({ ...def({ scale: { type: 'log' } }), marks: { type: 'bar', by: 'c', stack: true } }).filter(w => w.startsWith('dims.y'))).toEqual([
+        `dims.y.scale.type: stacks start at 0, which a log scale has no position of, the stacked marks are not drawn, e.g. "type": "symlog" has a 0`]);
+    expect(validateDef(def({ zero: true }))).toEqual([]);
+});

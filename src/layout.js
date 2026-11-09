@@ -5,7 +5,7 @@ import * as d3 from "@/utils/d3";
 import { bind, constant, evaluate, formatter, isOperator, refNames } from "@/utils/expr";
 import { isObject } from "@/utils/values";
 import { autoMargins } from "@/utils/margins";
-import { bandCenter, makeScale } from "@/utils/scales";
+import { bandCenter, logProblems, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
 import { facetMappings } from "@/utils/normalize";
 import { markPath, warnOnce, withPath } from "@/utils/warn";
@@ -341,6 +341,10 @@ const layout = (store, width, before = null) => {
             slots.set(name, distinctKeys(rows, name));
         return slots.get(name);
     };
+
+    // values a log scale has no position of, e.g. 0, once per dim
+    Object.keys(def.mapping).forEach(n => logProblems(n, def.mapping[n], rows)
+        .forEach(p => warnOnce(store, `log:${n}:${p.split(',')[0]}`, `dims.${n}.scale: ${p}`)));
 
     // the sizes of a facet
     // the margins: of the definition, else of the styles of the page

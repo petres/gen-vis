@@ -410,6 +410,11 @@ Migration notes, to check by hand after `gen-vis migrate`:
 - Bars on a log scale, which has no 0, start at the end of the domain
   nearest to 0, areas at its start (`@y:scaled:min`); they were not drawn
   (NaN).
+- Log scales (`log`, `sequentialLog`, `divergingLog`) warn once per dim of
+  the values they have no position of (0, and the ones of the other sign),
+  with their count, which are not drawn (silently NaN before); `zero` and
+  stacks on a log scale warn in the console and in `validateDef`/`gen-vis
+  check` (a log scale has no 0, `symlog` has).
 - A diverging scale (`diverging`, `divergingLog`, ...) without a domain of
   three entries has the middle `center`, else the middle of the ends of the
   data (of a log one in its positions); the nulls of a domain of three

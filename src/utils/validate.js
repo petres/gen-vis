@@ -431,6 +431,13 @@ const checkScale = (ctx, n, m, path) => {
         if (m.scale.interpolator !== undefined && typeof s.interpolator != 'function')
             warn(`${path}.scale.interpolator`, `a ${type} scale has no interpolator, e.g. a sequential one has`);
     }
+    // a log scale has no position of 0 (and of negative values with positive ones)
+    if (typeof type == 'string' && /log$/i.test(type) && !/symlog$/i.test(type)) {
+        if (m.scale.zero === true)
+            warn(`${path}.zero`, `a ${type} scale has no 0, the domain cannot include it; bars and areas start at the end of the domain nearest to 0, e.g. "type": "symlog" has a 0`);
+        if (m.stacked !== undefined && m.stacked !== false)
+            warn(`${path}.scale.type`, `stacks start at 0, which a ${type} scale has no position of, the stacked marks are not drawn, e.g. "type": "symlog" has a 0`);
+    }
     if (m.scale.interpolator !== undefined && !d3.named(d3.interpolatorNames, m.scale.interpolator))
         warn(`${path}.scale.interpolator`, `unknown interpolator '${m.scale.interpolator}', e.g. 'Blues'`);
     if (m.scale.scheme !== undefined && !d3.named(d3.schemeNames, m.scale.scheme))
