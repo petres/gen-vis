@@ -43,7 +43,7 @@ const applyState = (def, state) => {
     Object.entries(state?.globals ?? {}).forEach(([r, v]) => {
         const entry = userElements(def).filter(e => e.ref == r)
             .flatMap(e => e.values).find(e => sameValue(e.value, v));
-        if (entry && def.globals)
+        if (entry)
             def.globals[r] = entry.value;
     });
 

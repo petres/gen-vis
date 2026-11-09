@@ -86,7 +86,7 @@ const resolveIn = (value, names, key, inside) => {
     // a text of an expression without a value (null) is no part, e.g. of a
     // match of a global without a case of its value
     // the dims by their names, e.g. a dim named `x`, are no expressions (the channel `x` of a mark is)
-    const dims = key == 'dims' || key == 'mapping';
+    const dims = key == 'dims';
     return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolveIn(v, names, dims ? undefined : k, expression && key != 'marks' && !dims)])
         .filter(([k, v]) => !(v === null && ((typeof value[k] == 'string' && isExpressionText(value[k])) || isMatch(value[k])))));
 };

@@ -41,7 +41,7 @@ const fixed = v => refNames(v).length == 0 ? evaluate(v, {}) : undefined;
 // values are the ones of the groups, see highlightVars
 const varNames = plot => [
     ...plot.highlightProps.filter(n => fixed(plot.highlight[n]) === undefined).map(n => ['hl', n, plot.highlight[n]]),
-    ...(plot.othersProps ?? []).filter(n => fixed(plot.others[n]) === undefined).map(n => ['ot', n, plot.others[n]]),
+    ...plot.othersProps.filter(n => fixed(plot.others[n]) === undefined).map(n => ['ot', n, plot.others[n]]),
 ];
 
 /**
@@ -82,19 +82,19 @@ const highlightStyle = (plots, { scope = '', transition = 0 } = {}) => {
     const leaves = '*:not(g)';
     plots.forEach(p => {
         const plot = `${scope} ${plotSelector(p.id)}`;
-        if (p.highlightProps?.length > 0) {
+        if (p.highlightProps.length > 0) {
             const css = declarations('hl', p.highlightProps, p.highlight);
             if (css)
                 rules.push(`${plot} .vis-highlight${leaves.slice(1)}, ${plot} .vis-highlight ${leaves} { ${css}; }`);
         }
-        if (p.othersProps?.length > 0) {
+        if (p.othersProps.length > 0) {
             const css = declarations('ot', p.othersProps, p.others);
             if (css)
                 rules.push(`${scope} .vis-highlighting ${plotSelector(p.id)} ${leaves}:not(.vis-highlight):not(.vis-highlight *) { ${css}; }`);
         }
     });
     if (rules.length > 0 && transition > 0) {
-        const props = [...new Set(plots.flatMap(p => [...(p.highlightProps ?? []), ...(p.othersProps ?? [])]))];
+        const props = [...new Set(plots.flatMap(p => [...p.highlightProps, ...p.othersProps]))];
         rules.push(`${scope} [data-mark] ${leaves} { transition-property: ${props.join(', ')}; transition-duration: ${transition}ms; }`);
         rules.push(`@media (prefers-reduced-motion: reduce) { ${scope} [data-mark] ${leaves} { transition-duration: 0s; } }`);
     }
