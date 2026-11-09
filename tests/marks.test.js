@@ -352,3 +352,23 @@ describe('fixes of the review of the docs', () => {
         expect(def.options.margins).toEqual({});
     });
 });
+
+describe('the orientation of bars of a dim without a type', () => {
+    const rows = 'land,value\nWien,1\nTirol,3';
+    test('horizontal bars of a column of names beside a continuous x, also with the shorthands of its scale', async () => {
+        for (const y of ['land', { column: 'land', reverse: true }, { column: 'land', range: [0, 100] }, { column: 'land', scale: { order: 'ascending' } },
+            { column: 'land', scale: { padding: 0.1 } }]) {
+            const def = { dims: { y, x: { column: 'value', zero: true } }, marks: [{ type: 'bar' }, { type: 'label', text: '@x', anchor: 'end' }] };
+            const el = await mount({ def, data: rows });
+            expect(el.querySelector('.vis-error')).toBeNull();
+            const bars = rects(el);
+            expect(bars).toHaveLength(2);
+            // the length of the bar is its value, its label at the middle of its band
+            const [wien, tirol] = ['Wien', 'Tirol'].map(l => bars.find(b => b[itemOf][rowOf].y == l));
+            expect(num(tirol, 'width')).toBeCloseTo(3*num(wien, 'width'));
+            const label = texts(el).find(t => t[itemOf][rowOf].y == 'Wien');
+            expect(num(label, 'y')).toBeCloseTo(num(wien, 'y') + num(wien, 'height')/2);
+        }
+        expect(errors).toEqual([]);
+    });
+});

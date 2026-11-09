@@ -1242,8 +1242,12 @@ attributes are merged into the defaults, e.g. `d` of a path.
   chart of the same angle along the radius (outwards from the inner radius,
   0 and 360° are the same angle), labels of other angles are not moved.
 - `orient`: `horizontal` or `vertical` bars, by default horizontal ones if
-  `y` is categorical and `x` is not: the bars go from 0 (or `x0`) to `x`,
-  their thickness is the band of `y`.
+  `y` is categorical and `x` is not, or if `x` is continuous (its `type`,
+  `zero`, an open `domain` or a continuous scale) and `y` is not, e.g. a
+  column of names without a type: the bars go from 0 (or `x0`) to `x`,
+  their thickness is the band of `y`. The parts of a scale of categories
+  (`order`, `groups`, `padding`, `step`) make a dim categorical; `reverse`
+  and `range` leave its type to the rows.
 - `anchor` of texts and labels: the text beside its position, after it
   (`end`, e.g. of horizontal bars, 4 pixels to the right), before it
   (`start`), above it (`top`), below it (`bottom`) or on it (`center`),

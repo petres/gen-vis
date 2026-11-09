@@ -1229,7 +1229,7 @@
                 },
                 "orient": {
                     "enum": ["horizontal", "vertical"],
-                    "description": "Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y."
+                    "description": "Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y or of a continuous x (e.g. zero) and a y which is not."
                 },
                 "anchor": {
                     "enum": ["start", "end", "top", "bottom", "center"],

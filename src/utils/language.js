@@ -91,8 +91,19 @@ const ref = (dim, kind = 'scaled') => `@${dim}:${kind}`;
 // the parts of a dim which make it categorical, see hasCategories of normalize.js
 const categoryParts = ['categories', 'scheme', 'common', 'ranks', 'order'];
 const categoricalScales = ['band', 'point', 'ordinal'];
+// the parts of a scale of categories, e.g. the space between the bands
+const categoryScaleParts = ['order', 'groups', 'padding', 'step'];
 const isCategorical = d => isObject(d) && (d.type == 'categorical' || (d.type === undefined && (categoryParts.some(k => d[k] !== undefined)
-    || d.fromData || categoricalScales.includes(d.scale?.type))));
+    || d.fromData || categoricalScales.includes(d.scale?.type)
+    || (isObject(d.scale) && d.scale.type === undefined && categoryScaleParts.some(k => d.scale[k] !== undefined)))));
+// a dim of numbers or dates by its parts (of the definition, the rows are
+// not known): its type, a continuous scale, a domain from the data
+// (`"zero": true`, an open end) or the parts of a continuous scale
+const continuousParts = ['nice', 'include', 'center', 'pad'];
+const isContinuous = d => isObject(d) && (d.type == 'numeric' || d.type == 'date' || (d.type === undefined && !isCategorical(d)
+    && ((isObject(d.scale) && typeof d.scale.type == 'string' && !categoricalScales.includes(d.scale.type))
+        || [d.domain, d.scale?.domain].some(v => Array.isArray(v) && v.includes(null))
+        || d.interval !== undefined || continuousParts.some(k => d[k] !== undefined || (isObject(d.scale) && d.scale[k] !== undefined)))));
 
 // a dim of the definition as a mapping of the engine
 const dim = (raw, name) => {
@@ -278,10 +289,24 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
     const anchor = p.anchor;
     delete p.anchor;
     const centered = d => d && Object.hasOwn(dims, d) && isCategorical(dims[d]);
-    // the bars of the positions are horizontal ones, see `orient`
-    const horizontalOf = (x, y) => orient == 'horizontal' || (orient === undefined && y && centered(y.dim) && !(x && centered(x.dim)));
+    // a dim of a position which is not continuous (e.g. a column of names,
+    // its type follows from the rows) beside a continuous one is the one of
+    // the bands, its texts and points at their centers, see at
+    const banded = (x, y) => [[x, y], [y, x]].forEach(([c, other]) => {
+        if (c?.dim && other?.dim && !centered(c.dim) && !centered(other.dim) && !isContinuous(ofDim(c.dim)) && isContinuous(ofDim(other.dim)))
+            bands.add(c.dim);
+    });
+    // the bars of the positions are horizontal ones, see `orient`: of a
+    // categorical y and an x which is not, or of a y which is not continuous
+    // (e.g. a column of names, its type follows from the rows) and an x
+    // which is, e.g. of `"zero": true`
+    const ofDim = d => d && Object.hasOwn(dims, d) ? dims[d] : undefined;
+    const horizontalOf = (x, y) => orient == 'horizontal' || (orient === undefined && y && ((centered(y.dim) && !(x && centered(x.dim)))
+        || (x && isContinuous(ofDim(x.dim)) && !isContinuous(ofDim(y.dim)) && !centered(x.dim))));
+    // the dims of positions which are bands by the other one, see banded
+    const bands = new Set();
     // the position of a dim, of a categorical one the center of its band
-    const at = (c, kind = 'scaled') => c ? (c.fixed === undefined && kind == 'scaled' && centered(c.dim) ? ref(c.dim, 'scaled:center') : c.value) : undefined;
+    const at = (c, kind = 'scaled') => c ? (c.fixed === undefined && kind == 'scaled' && (centered(c.dim) || bands.has(c.dim)) ? ref(c.dim, 'scaled:center') : c.value) : undefined;
     // `group` of dodged stacked bars: a stack per slot, e.g. per year and type
     const stacked = (dim, by, condition, group) => stacks.push({ dim, by, condition: condition === undefined ? true : condition, group });
     const dodgeGroup = dodge === undefined || dodge === false ? undefined : (dodge === true ? p.by[0] : dodge);
@@ -318,6 +343,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
         const y = base && kind == 'rule' ? (raw.y !== undefined ? valued('y') : ch('y')) : (kind == 'bar' && raw.y !== undefined ? valued('y') : ch('y'));
         const x0 = base ? valued('x0') : given('x0'), x1 = given('x1'), y0 = base ? valued('y0') : given('y0'), y1 = given('y1');
         take('x', 'y', 'x0', 'x1', 'y0', 'y1');
+        banded(x, y);
         if (kind == 'line' || kind == 'area') {
             const d = isObject(props.d) ? { ...props.d } : {};
             if (x0 || x1) {
@@ -340,7 +366,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set()) => {
             }
             props.d = d;
         } else if (kind == 'bar') {
-            const horizontal = orient == 'horizontal' || (orient === undefined && y && centered(y.dim) && !(x && centered(x.dim)));
+            const horizontal = horizontalOf(x, y);
             if (x0 && x1 && y) {
                 // the classes of a bin, from x0 to x1
                 props.x0 = x0.value;

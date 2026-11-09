@@ -25,7 +25,8 @@ describe('the language of 5.0', () => {
             categories: { Wien: { color: '#123' }, Tirol: { name: 'T' } } });
         expect(def.plot).toEqual([
             { type: 'cartesian:line', by: ['land'], highlight: { opacity: 1 }, props: { opacity: 0.7, d: { x: '@x:scaled', y: '@y:scaled' } } },
-            { type: 'svg:circle', by: ['land'], props: { r: 4, cx: '@x:scaled', cy: '@y:scaled' } },
+            // x of no type beside a continuous y may be bands (its type follows from the rows): the center
+            { type: 'svg:circle', by: ['land'], props: { r: 4, cx: '@x:scaled:center', cy: '@y:scaled' } },
         ]);
         expect(def.formElements).toBeUndefined();
     });

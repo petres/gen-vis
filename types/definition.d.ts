@@ -1335,7 +1335,7 @@ export interface Mark {
      */
     dodge?: boolean | string | number;
     /**
-     * Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y.
+     * Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y or of a continuous x (e.g. zero) and a y which is not.
      */
     orient?: 'horizontal' | 'vertical';
     /**

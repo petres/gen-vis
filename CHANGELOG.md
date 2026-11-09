@@ -303,6 +303,13 @@ Migration notes, to check by hand after `gen-vis migrate`:
   baseline), so the 4.x labels which set `dy: "0.35em"` by hand stay where
   they were; `halo` draws their halo (was ignored) and `fit` works also
   with `"place": "centroid"`.
+- Horizontal bars of a column of names without a type: bars are horizontal
+  also if `x` is continuous by its parts (`zero`, `type`, an open domain, a
+  continuous scale) and `y` is not; they were vertical, which failed with
+  "a 'width' is needed for a continuous scale" (also with `reverse`,
+  `range` or `scale.order` on `y`). `scale.order`, `groups`, `padding` and
+  `step` make a dim categorical; texts and points on such a dim are at the
+  center of its band.
 
 ### Package and builds
 

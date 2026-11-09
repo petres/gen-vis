@@ -121,7 +121,8 @@ const typeOf = (m, name, used) => {
     if (hasCategories(m))
         return 'categorical';
     const type = isObject(m.scale) ? m.scale.type : undefined;
-    if (categoricalScales.includes(type))
+    // a band or a point scale, also of its parts, e.g. the order of the categories
+    if (categoricalScales.includes(type) || (type === undefined && isObject(m.scale) && ['order', 'groups', 'padding', 'step'].some(k => m.scale[k] !== undefined)))
         return 'categorical';
     if (dateScales.includes(type))
         return 'date';
