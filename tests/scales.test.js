@@ -1,3 +1,4 @@
+import * as d3 from 'd3-scale-chromatic';
 import { loadColors } from '@/utils/d3';
 import { describe, test, expect, beforeAll } from 'vitest';
 import { makeScale, bandCenter } from '@/utils/scales';
@@ -131,6 +132,36 @@ describe('the domains of scales', () => {
             [{ v: 1 }, { v: 2 }, { v: 10 }], options);
         expect(quantile.domain()).toEqual([1, 2, 10]);
         expect(quantile(2)).toBe(quantile.interpolator()(0.5));
+    });
+});
+
+describe('the domain of a diverging scale', () => {
+    const diverging = (scale, rows) => makeScale('v', { type: 'numeric', scale: { type: 'diverging', interpolator: 'RdBu', domain: [null, null], ...scale } }, rows, options);
+    const rows = [{ v: -2 }, { v: 0 }, { v: 3 }];
+
+    test('the middle is the one of the ends of the data, `center` or the given one, every value has a color', () => {
+        expect(diverging({}, rows).domain()).toEqual([-2, 0.5, 3]);
+        expect(diverging({ center: 0 }, rows).domain()).toEqual([-3, 0, 3]);
+        expect(diverging({ domain: [null, 0, null] }, rows).domain()).toEqual([-2, 0, 3]);
+        expect(diverging({ domain: [-10, null, 10] }, rows).domain()).toEqual([-10, 0, 10]);
+        const s = diverging({ center: 0 }, rows);
+        expect(rows.map(r => s(r.v)).every(c => typeof c == 'string' && !c.includes('NaN'))).toBe(true);
+        expect(s(0)).toBe(d3.interpolateRdBu(0.5));
+    });
+
+    test('the ends reach the middle, e.g. of positive values around 0, a domain in order', () => {
+        const s = diverging({ domain: [null, 0, null] }, [{ v: 2 }, { v: 5 }]);
+        expect(s.domain()).toEqual([0, 0, 5]);
+        expect(s(5)).toBe(d3.interpolateRdBu(1));
+        expect(s(2)).toBe(d3.interpolateRdBu(0.7));
+        expect(diverging({ domain: [null, 10, null] }, [{ v: 2 }, { v: 5 }]).domain()).toEqual([2, 10, 10]);
+        // one value
+        expect(diverging({ center: 0 }, [{ v: 0 }]).domain()).toEqual([0, 0, 0]);
+    });
+
+    test('the middle of a divergingLog scale is the one of its positions', () => {
+        const s = makeScale('v', { type: 'numeric', scale: { type: 'divergingLog', interpolator: 'RdBu', domain: [null, null] } }, [{ v: 1 }, { v: 100 }], options);
+        expect(s.domain()[1]).toBeCloseTo(10, 9);
     });
 });
 

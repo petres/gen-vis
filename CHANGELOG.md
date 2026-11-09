@@ -390,6 +390,17 @@ Migration notes, to check by hand after `gen-vis migrate`:
   beside its CSS pixels. `gen-vis --version`. `@preschen/gen-vis/check`
   exports `parseData`, `dataFormat` and `loadTransforms`.
 
+### Scales: the base of bars, diverging and log scales
+
+- A diverging scale (`diverging`, `divergingLog`, ...) without a domain of
+  three entries has the middle `center`, else the middle of the ends of the
+  data (of a log one in its positions); the nulls of a domain of three
+  entries are taken from the data, and the ends reach the middle, e.g.
+  `[0, 0, 9]` of `[null, 0, null]` and the values 2 to 9. The middle was
+  never filled (also with the documented `center: 0`): NaN, black cells. Its
+  legend shows the colors of the domain only, e.g. the upper half of
+  `[0, 0, 9]`, from 0 at its start.
+
 ### Fixes of the review of the engine
 
 - `dodge` with `stack`: a stack per slot of the dodge dim (was one over

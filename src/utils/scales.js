@@ -332,6 +332,12 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     } else if (extent && !['ordinal', 'band', 'point'].includes(scaleDef.type)) {
         domain = fixed();
         // the first and the last entry, a diverging domain has a middle one
+        // (of a domain of two entries or none it is taken from the data)
+        const diverging = scaleDef.type.toLowerCase().startsWith('diverging');
+        if (diverging)
+            domain = domain.length == 3 ? domain : [domain[0] ?? null, null, domain.at(-1) ?? null];
+        else if (domain.length < 2)
+            domain = [domain[0] ?? null, null];
         const last = domain.length - 1;
 
         // without fixed values the domain of a position is extended a bit, not
@@ -371,6 +377,17 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
                 domain[0] = lo;
             if (fromData[1])
                 domain[last] = hi;
+        }
+
+        // the middle of a diverging domain: `center`, else the middle of the
+        // ends (of a log scale in its positions, e.g. 10 of 1 and 100), the
+        // ends reach it, e.g. [0, 0, 9] of [null, 0, null] and 2 to 9, so the
+        // domain is in order and no value is without a color
+        if (diverging) {
+            const c = scaleDef.center === undefined ? null : valueOf(evaluate(scaleDef.center, scope));
+            domain[1] ??= c ?? from((to(domain[0]) + to(domain[2]))/2);
+            domain[0] = Math.min(domain[0], domain[1]);
+            domain[2] = Math.max(domain[2], domain[1]);
         }
 
         // the nearest value with data

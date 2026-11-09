@@ -174,10 +174,13 @@ function createColorLegend(vis, legend) {
         } else if (s.interpolator) {
             // sequential and diverging scales: the gradient and the ticks at
             // the positions of the colors, e.g. of a sqrt or a log scale, the
-            // middle of a diverging domain is in the middle
-            const position = s.copy().interpolator(t => t*width);
-            gradient(t => s.interpolator()(t));
+            // middle of a diverging domain is in the middle; only the colors of
+            // the domain, e.g. the upper half of a diverging one of [0, 0, 9]
             const domain = s.domain();
+            const unit = s.copy().interpolator(t => t);
+            const [t0, t1] = unit(domain.at(-1)) > unit(domain[0]) ? [unit(domain[0]), unit(domain.at(-1))] : [0, 1];
+            const position = v => (unit(v) - t0)/(t1 - t0)*width;
+            gradient(t => s.interpolator()(t0 + t*(t1 - t0)));
             const ticks = fixed(domain) ?? (isLinear(s) ? d3.ticks(domain[0], domain.at(-1), 4) : spacedTicks(domain, position, 30));
             const format = given || isLinear(s) ? formatter(ticks) : fixedFormat(store.locale, ticks);
             ticks.forEach(v => label(position(v), v, format));
