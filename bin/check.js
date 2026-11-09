@@ -124,7 +124,10 @@ export const createChecker = async ({ root = null } = {}) => {
         const warnings = gv.validateDef(def, rows);
         // the errors of the schema of a definition of 5.0, not the ones validateDef names
         const old = gv.isDefinition4(def);
-        const schema = validate && !old && !validate(def) ? schemaErrors(validate.errors, def) : [];
+        // (of the file as it is written, as an editor checks it: the merge
+        // writes the switches of the parts as operator objects, e.g. a match
+        // at a text, which no file has)
+        const schema = validate && !old && !gv.isDefinition4(raw) && !validate(raw) ? schemaErrors(validate.errors, raw) : [];
         const named = warnings.map(w => w.split(': ')[0]);
         const extra = schema.filter(([p]) => !named.some(n => n == p || p.startsWith(`${n}.`) || p.startsWith(`${n}[`) || n.startsWith(`${p}.`)));
         // `migrated`: a definition of 4.x, the warnings are the ones of its migration
