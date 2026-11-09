@@ -5,74 +5,23 @@
     "subtitle": "nach Bundesland",
     "source": "Q: Statistik Austria",
     "height": 300,
-    "margins": {"top": 10, "right": 10, "bottom": 40, "left": 80},
     "dims": {
-        "x": {
-            "column": "Jahr",
-            "format": "c",
-            "scale": {"domainAbs": [-0.5, 0.5]},
-            "axis": {"ticks": "@innerWidth * 0.013"}
-        },
-        "y": {
-            "column": "Einwohner",
-            "format": ",.0f",
-            "scale": {"pad": [0, 0.2]},
-            "axis": {"ticks": 5},
-            "zero": true,
-            "grid": true
-        },
+        "x": { "column": "Jahr", "format": "c", "tickSpacing": 77 },
+        "y": { "column": "Einwohner", "format": ",.0f", "zero": true, "pad": [0, 0.2], "ticks": 5, "grid": true },
         "land": {
             "column": "Bundesland",
-            "legend": {
-                "props": {"class": "@class"},
-                "symbol": {
-                    "size": 16,
-                    "elements": [
-                        {
-                            "type": "line",
-                            "props": {
-                                "x1": 0,
-                                "x2": 16,
-                                "y1": 8,
-                                "y2": 8,
-                                "stroke": "@color",
-                                "stroke-width": "@stroke-width"
-                            }
-                        },
-                        {"type": "circle", "props": {"cx": 8, "cy": 8, "r": 3, "fill": "@color"}}
-                    ]
-                }
-            },
             "scheme": "Tableau10",
-            "common": {"stroke-width": 2.5},
+            "common": { "stroke-width": 2.5 },
+            "legend": { "props": { "class": "@class" } },
             "categories": {
-                "ÖSTERREICH": {
-                    "color": "#1E4F77",
-                    "stroke-width": 4,
-                    "name": "Gesamt",
-                    "visible": false,
-                    "class": "bold"
-                },
-                "Wien": {},
-                "Niederösterreich": {},
-                "Burgenland": {},
-                "Oberösterreich": {},
-                "Salzburg": {},
-                "Steiermark": {},
-                "Kärnten": {},
-                "Tirol": {},
-                "Vorarlberg": {}
+                "ÖSTERREICH": { "name": "Gesamt", "color": "#1E4F77", "stroke-width": 4, "visible": false, "class": "bold" },
+                "Wien": {}, "Niederösterreich": {}, "Burgenland": {}, "Oberösterreich": {}, "Salzburg": {},
+                "Steiermark": {}, "Kärnten": {}, "Tirol": {}, "Vorarlberg": {}
             }
         }
     },
     "marks": [
-        {
-            "type": "line",
-            "by": "land",
-            "stroke-width": "@stroke-width",
-            "opacity": 0.7,
-            "highlight": {"opacity": 1, "stroke-width": 3}
-        },
-        {"type": "point", "by": "land", "opacity": 0.7, "r": 4, "highlight": {"r": 5, "opacity": 1}}
+        { "type": "line", "by": "land", "stroke-width": "@stroke-width", "opacity": 0.7, "highlight": { "opacity": 1, "stroke-width": 3 } },
+        { "type": "point", "by": "land", "r": 4, "opacity": 0.7, "highlight": { "r": 5, "opacity": 1 } }
     ]
 }
