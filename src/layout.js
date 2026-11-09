@@ -768,7 +768,8 @@ const textBoxes = (store, f) => {
             const anchor = v['text-anchor'], baseline = v['dominant-baseline'];
             const left = anchor == 'middle' ? x - width/2 : anchor == 'end' ? x - width : x;
             const top = ['middle', 'central'].includes(baseline) ? y - size/2 : ['hanging', 'text-before-edge'].includes(baseline) ? y : y - 0.8*size;
-            return { left, right: left + width, top, bottom: top + size };
+            // the place of the text in the plot area (without `dx`), e.g. the end of a line
+            return { left, right: left + width, top, bottom: top + size, x: parseFloat(v.x) };
         }).filter(Boolean);
     });
 };

@@ -287,6 +287,12 @@ Migration notes, to check by hand after `gen-vis migrate`:
   of a side which yields `"auto"` is measured (was 0), one without a value
   is no side; the css variables of the margins in `rem`, `em` and `pt` are
   converted to pixels (`4rem` was 4 px).
+- Measured margins: rotated labels of a horizontal axis reach beyond the
+  ends of the plot area by their projection (were not measured there); the
+  labels of the ends of a horizontal axis and the texts of marks are
+  measured at their place in the plot area of the final width (were of the
+  provisional one, the right margin of narrow charts was up to 10 px
+  short), the plot area keeps half of the width at least.
 
 ### Package and builds
 

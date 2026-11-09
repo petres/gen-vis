@@ -514,16 +514,19 @@ the padding of the labels, the widest label of a left or right axis (the
 text of `labels.props` if it has one, at most its `max-width`), the
 height of the labels of a top or bottom one, rotated labels by their
 projection, the title of the axis (of a vertical axis at the top above the
-plot area), the first and the last label of a
-horizontal axis which reach beyond the plot area (the left and the right
-side), the labels of an angular axis around the circle; at least 8 pixels
+plot area), the labels of a horizontal axis which reach beyond the plot
+area at its ends (the left and the right side, also rotated ones), the labels of an angular axis around the circle; at least 8 pixels
 beside axes (e.g. a point at the end of a line), none of a map. The texts
 are measured in the font of the visualisation. The texts of `text` and
 `label` marks beyond the plot area are measured too, e.g. labels at the
 ends of lines or bars or above the points of a scatter plot, laid out as
 they are drawn (`dx`, `dy`, `text-anchor`, `dominant-baseline`, `font-size`,
 `max-width`; not rotated texts, annotations, texts inside areas and the
-ones of maps). The legends and the
+ones of maps). The texts along the width (the labels of a
+horizontal axis, the texts of marks) are measured at their place in the
+plot area of the final width, the one less the margins, so a narrow chart
+gets the margins it needs (they keep half of the width for the plot area
+at least). The legends and the
 titles of facets are not part of the margins, they are beside or above the
 facets. `"margins": "auto"` is the same as no margins (the styles and the
 defaults of the page, else measured); `"auto"` of a side is measured.

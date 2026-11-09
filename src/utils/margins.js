@@ -31,6 +31,8 @@ const autoMargins = (store, facets, given, texts = () => []) => {
     const family = store.fontFamily || 'sans-serif';
     const font = `${labelFontSize}px ${family}`;
     const hasAxes = (store.coord?.positions ?? []).length > 0;
+    // the texts along the width of the plot area, see below
+    const spans = [];
     facets.forEach(f => store.mappingNamesWithKey('axis').forEach(n => {
         const m = store.mapping(n);
         const i = m.axis;
@@ -93,17 +95,23 @@ const autoMargins = (store, facets, given, texts = () => []) => {
         } else if (pos == 'top' || pos == 'bottom') {
             const extent = angle ? widest*Math.abs(Math.sin(angle)) + labelFontSize*Math.abs(Math.cos(angle)) : labelFontSize;
             more(pos, marks + padding + extent + title);
-            // the first and the last label, centered on their ticks, reach
-            // beyond the plot area (not the hidden ones of inner facets)
-            if (!angle && texts.length > 0) {
-                const [lo, hi] = [Math.min(range[0], range[range.length - 1]), Math.max(range[0], range[range.length - 1])];
+            // the labels, centered on their ticks or rotated (ending at
+            // their tick of a positive angle, starting at it of a negative
+            // one, see drawAxis of utils/axis.js), reach beyond the plot area
+            // at its ends (not the hidden ones of inner facets), of their
+            // place along the axis, see spans
+            const [lo, hi] = [Math.min(range[0], range[range.length - 1]), Math.max(range[0], range[range.length - 1])];
+            if (texts.length > 0 && hi > lo) {
                 const at = v => s(v) + bandCenter(s);
+                const across = labelFontSize/2*Math.abs(Math.sin(angle));
+                const along = w => w*Math.abs(Math.cos(angle));
                 values.forEach((v, j) => {
                     const p = at(v);
-                    if (!Number.isFinite(p))
+                    if (!Number.isFinite(p) || !texts[j])
                         return;
-                    more('left', widths[j]/2 - (p - lo) + 1);
-                    more('right', widths[j]/2 - (hi - p) + 1);
+                    const [left, right] = !angle ? [widths[j]/2, widths[j]/2]
+                        : angle > 0 ? [along(widths[j]) + across, across] : [across, along(widths[j]) + across];
+                    spans.push({ t: (p - lo)/(hi - lo), left: left + 1, right: right + 1 });
                 });
             }
         } else if (pos == 'angular') {
@@ -116,13 +124,45 @@ const autoMargins = (store, facets, given, texts = () => []) => {
         }
     }));
     // the texts of marks beyond the plot area, e.g. labels at the ends of
-    // lines or bars, a unit at the top (see textBoxes of layout.js)
+    // lines or bars, a unit at the top (see textBoxes of layout.js), along
+    // the width of their place in the plot area (`x`), see spans
     facets.forEach(f => texts(f).forEach(b => {
-        more('left', -b.left + 2);
-        more('right', b.right - f.innerWidth + 2);
+        if (Number.isFinite(b.x) && f.innerWidth > 0)
+            spans.push({ t: b.x/f.innerWidth, left: b.x - b.left + 2, right: b.right - b.x + 2 });
+        else {
+            more('left', -b.left + 2);
+            more('right', b.right - f.innerWidth + 2);
+        }
         more('top', -b.top + 2);
         more('bottom', b.bottom - f.innerHeight + 2);
     }));
     const floor = hasAxes ? 8 : 0;
-    return Object.fromEntries(sides.map(k => [k, given[k] === 'auto' ? Math.ceil(Math.max(floor, need[k])) : given[k]]));
+    const sideOf = (k, v) => given[k] === 'auto' ? Math.max(floor, v) : given[k];
+    // the left and the right margin of the texts along the width (`spans`):
+    // a text at the place `t` of the width of the plot area (0 at the left,
+    // 1 at the right) which reaches `left` and `right` pixels beside it
+    // needs `left - t*w` and `right - (1 - t)*w` of a plot area of the
+    // width w, the width of the facet less the margins, so the margins are
+    // the ones of the final width, not of the provisional one of the layout
+    // (a fixed point, the margins grow until it, a few steps); texts wider
+    // than the chart do not fit, the plot area keeps half of the width
+    if (spans.length > 0 && facets.length > 0) {
+        const width = facets[0].width;
+        let [left, right] = [need.left, need.right];
+        for (let i = 0; i < 50; i++) {
+            const w = Math.max(width/2, width - sideOf('left', left) - sideOf('right', right));
+            let [l, r] = [need.left, need.right];
+            for (const p of spans) {
+                l = Math.max(l, p.left - p.t*w);
+                r = Math.max(r, p.right - (1 - p.t)*w);
+            }
+            const done = Math.abs(l - left) < 0.01 && Math.abs(r - right) < 0.01;
+            [left, right] = [l, r];
+            if (done)
+                break;
+        }
+        need.left = left;
+        need.right = right;
+    }
+    return Object.fromEntries(sides.map(k => [k, given[k] === 'auto' ? Math.ceil(sideOf(k, need[k])) : given[k]]));
 };
