@@ -1,9 +1,9 @@
 # Changelog
 
-Changes by version, newest first. Every version is on npm except 0.7.0 and
-2.0.0-alpha.1. The details are in the commits.
+Changes by version, newest first. Every version is on npm except 0.7.0,
+2.0.0-alpha.1 and the alphas of 5.0.0. The details are in the commits.
 
-## 5.0.0 (alpha)
+## 5.0.0
 
 A new definition language: dims instead of mappings, marks with channels
 instead of plots with props of scaled positions, controls of globals
@@ -16,6 +16,74 @@ are migrated when they are loaded, `gen-vis migrate` writes them as ones of
 labels, cells and rules of ranges, the highlight by classes and a
 stylesheet, PNG tests in a browser, the schema of one source and fewer
 builds and dependencies. The design is in `docs/design-5.0.md`.
+
+### Upgrading from 4.x
+
+The details are in [the migration from 4.x](docs/definition.md#migration-from-4x)
+and in the sections below. What a page, a script or a definition of 4.x
+meets:
+
+- **Definitions of 4.x still load**: they are migrated while they are
+  loaded (with an info in the console). `gen-vis migrate <def.json>...
+  --write` writes them as definitions of 5.0, children with their parents;
+  some defaults changed (see "Semantics decided"), the migration writes
+  what keeps a 4.x chart as it was.
+- **A definition file needs its `$schema`**, the one of 5 (4 is migrated):
+  `"$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json"`. A file
+  without one (or with an unversioned or a 3.x schema) fails to load with
+  `'<url>' is no definition of gen-vis 5: its $schema is missing, e.g.
+  "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json", see the
+  changelog of gen-vis 5.0.0 of the changes of the definitions`. An inline
+  definition may have none.
+- **The standalone builds are gone**: `dist-lib/gen-vis.js`
+  (`gen-vis-<version>.js`), `gen-vis.core.js`, the `GenVis` globals and
+  the export `@preschen/gen-vis/standalone`. A page without a bundler loads
+  the browser module `dist-lib/esm/gen-vis.js` (`@preschen/gen-vis/esm`,
+  now with types), which also sets `mountGenVisElement`,
+  `mountGenVisByClass` and `unmountGenVisElement` on the window.
+- **The names in the page are the ones of 5.0**: the group of a mark is
+  `g.vis-mark` with `data-mark` (was `g.vis-plot`, `data-plot`), the
+  default id of a mark `mark-<n>` (was `plot-<n>`), the cells of the
+  hover and the axes have `data-dim` (was `data-mapping`), the controls
+  are `vis-controls`, `vis-control` and `vis-control-title` (were
+  `vis-form-elements`, `vis-form-element`, `vis-form-element-title`, the
+  ids of radio groups `gen-vis-control-<n>-<id>`). Styles of a page and
+  scripts which select the old names (e.g. gen-vis-py's export of SVGs,
+  which removes the controls) need the new ones.
+- **The extension API**: `registerMarkType`, `MarkType` and `MarkGroup`
+  (were `registerPlotType`, `PlotType`, `PlotGroup`); a mark type's
+  `marks(groups, mark, ctx)`.
+- **`@preschen/gen-vis/check`** no longer exports `translate` and
+  `normalize`: the form the engine reads (the one of 4.x) is internal.
+  `resolveParents`, `validateDef`, `migrate`, `resolve`, `variants` and the
+  others stay.
+- **Dependencies**: `deepmerge` and `modern-screenshot` are no
+  dependencies (the merge is the package's own, the PNG is the export SVG);
+  the optional peer `vue` is `^3.3`.
+- **The width of an export** is the `width` of the definition by default
+  (was 800), an explicit width (`--width`, `imageWidth`, the export page's
+  `width`) wins over it.
+- **Vertical band and point scales run from the top down** (were from the
+  bottom up), as the rows of a table; `"reverse": true` puts the first
+  category at the bottom, `gen-vis migrate` writes it for such dims.
+- **Ticks**: the ticks of a numeric dim of whole numbers (e.g. years) are
+  whole numbers, and the default tick format has thousands separators
+  only if the domain reaches 10 000, as the hover (4.x drew "2.001,5" of
+  years without `"format": "c"`, and "2.500" on an axis to 5 000). The
+  ticks of an `interval` are the starts of its units (whole days).
+- **`gen-vis export` reads only the files of the definition's directory**
+  (and of its parents, `--root`, `--data` and `--css`); a definition that
+  loads data from a sibling directory needs `--root` of a directory above
+  both. Requests to other origins (remote data, a `url()` in a style)
+  need `--allow-net` (see [export](docs/export.md#cli)).
+- **The CSV of the data shown** puts a `'` before texts which a
+  spreadsheet reads as formulas (`=`, `+`, `-`, `@`, a tab first), numbers
+  stay.
+
+Also new in the last steps: `interval` of `minute` and `hour` (an unknown
+interval is an error naming it), a warning of a `text` or `label` mark
+without a `text`, a warning of the load of a reference (`@note`) to a
+column without a dim, and expressions nest at most 100 levels.
 
 ### The language
 
@@ -144,8 +212,8 @@ them.
   and cases. Only a match of a global (of `globals` or of a control of any
   part) is a switch, a match of the rows or the categories (e.g. in the
   `props` of a legend or in `stacked`) is a value; an object of a child
-  onto a switch whose default is an object is merged into the default (the
-  alpha mixed it into the match object), the cases stay whole; the
+  onto a switch whose default is an object is merged into the default,
+  the cases stay whole; the
   expressions of the globals in a part chosen by a switch are evaluated.
 - Lists are merged by the first of `id`, `global` and `value` which all
   entries of both lists have (a child's control of only the `global`
@@ -155,7 +223,7 @@ them.
   a `name` has the text of its value as `@global:name`, as a value has.
 - A channel of `x` or `y` which names a column without a dim `x` or `y` is
   the dim of the axis (`{"type": "point", "x": "year", "y": "value"}`
-  draws without dims; the alpha drew no positions), another column on an
+  draws without dims), another column on an
   axis without its dim has a scale of its own (was `{"of": "x"}` of a
   missing `x`); a channel of neither a dim nor a column of the data is a
   warning of the load (`marks[0].x: no dim and no column 'yaer' in the
@@ -167,11 +235,10 @@ them.
 - A text (title, subtitle, source, names, axis titles, ...) of an
   expression of names which are not all globals is evaluated when it is
   drawn, with the globals of the page and `totalWidth`; an unknown name has
-  no value and a warning once, no value is the empty text (the alpha showed
-  the expression as JSON).
+  no value and a warning once, no value is the empty text.
 - A comparison of more than two operands is a chain of every pair of
   neighbours, also `==` and `!=`: `@a == @b == @c` is true if all three
-  are the same (the alpha compared the first two).
+  are the same.
 
 ### Margins
 
@@ -477,7 +544,8 @@ Migration notes, to check by hand after `gen-vis migrate`:
   pixels, the diff goes to `tests/png-diff/`, `UPDATE_PNG=1` takes new
   images); `npm run test:png` runs it alone, `npm test` includes it.
 - `registerDefaults` and the prop `defaults` also take `margins`.
-- Version 5.0.0-alpha.1 (5.0.0-alpha.0 was the first one, not published).
+- 5.0.0-alpha.0 and 5.0.0-alpha.1 were tested from git and a tarball,
+  neither was published.
 
 ## 4.1.0
 
