@@ -1,7 +1,7 @@
 export { curves, setProps, setAttrs, groupAttrs, groupKey, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, reducedMotion, dataAttribute, fitText };
 
 import * as d3 from "@/utils/d3";
-import { animate, create, finish as finishAnimation, interrupt, itemOf, join, onEnd, setAttr, targetOf } from "@/utils/dom";
+import { animate, create, finish as finishAnimation, interrupt, itemOf, join, setAttr, targetOf } from "@/utils/dom";
 
 // the interpolations of the paths and areas between their points, `monotoneX`
 // is smooth without overshooting the values, e.g. for monthly data

@@ -1,4 +1,4 @@
-export { createLegend, createAnnotationLegend, annotationEntries, drawSymbol, entrySymbol };
+export { createLegend, createAnnotationLegend, drawSymbol, entrySymbol };
 
 import { create, itemOf, join } from "@/utils/dom";
 import { textWidth } from '@/utils/measure';

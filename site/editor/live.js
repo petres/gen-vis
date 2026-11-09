@@ -4,7 +4,7 @@
 import { validateDef } from '@preschen/gen-vis/check';
 import { schemaErrors } from './validate.js';
 
-export { liveDefinition, parseDef, checkDef, json };
+export { liveDefinition, parseDef, json };
 
 // the time after the last key stroke the chart is drawn again
 const delay = 300;

@@ -1,4 +1,4 @@
-export { coords, getCoord, loadCoord, registerCoord };
+export { coords, loadCoord, registerCoord };
 
 import cartesian from "@/coords/cartesian";
 import polar from "@/coords/polar";

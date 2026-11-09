@@ -1,6 +1,6 @@
 // the comparisons of the values of definitions and of the data, e.g. of
 // categories, used by the other parts, so they import no part of their own
-export { isObject, missing, numericText, compareCategories, comparison, toNumber, sameValue };
+export { isObject, missing, compareCategories, comparison, toNumber, sameValue };
 
 // an object of a definition, e.g. a mapping, not a list and not null
 const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);

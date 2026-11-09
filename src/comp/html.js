@@ -1,4 +1,4 @@
-export { el, patch, setStyle, setText, setHtml, display, slotNodes, takeRange, place, emitter };
+export { el, patch, setText, setHtml, slotNodes, takeRange, place, emitter };
 
 // the html elements of the visualisation without a framework: an element
 // with its attributes (el), the attributes of an element patched (patch),

@@ -3,8 +3,8 @@
 // loaded, unmounted while it is loaded, exports while it is loaded, mounting
 // by class and the buttons of the footer
 import { test, expect, vi, beforeEach, beforeAll } from 'vitest';
-import { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement } from '@/index.js';
-import { errors, useDom, rendered, mount, nextTick } from './dom.js';
+import { createGenVis, mountGenVisByClass, unmountGenVisElement } from '@/index.js';
+import { errors, useDom, rendered, nextTick } from './dom.js';
 
 vi.mock('@/utils/raster.js', () => ({
     rasterize: async () => new Blob(['png'], { type: 'image/png' }),

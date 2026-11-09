@@ -1,4 +1,4 @@
-export { itemOf, namespaces, create, setAttr, getAttr, join, pointer, cubicInOut, animate, interrupt, interruptAll, finish, targetOf, onEnd };
+export { itemOf, create, setAttr, getAttr, join, pointer, cubicInOut, animate, interrupt, interruptAll, finish, targetOf, onEnd };
 
 import { interpolate, interpolateTransformSvg } from 'd3-interpolate';
 

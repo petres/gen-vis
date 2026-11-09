@@ -1,4 +1,4 @@
-export { oddValues, sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, rawOf, rawIndexOf, rowResolver, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
+export { oddValues, sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { fillTemplate, inLanguage, sameValue, templateRefs, variants } from "@/utils/def";

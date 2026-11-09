@@ -6,7 +6,7 @@
 // schemaWarnings of utils/validate.js); the names of the registries of the
 // code (plot types, coordinate systems, ...) are listed here and checked
 // against the code by tests/schema.test.js
-export { schema, markTypes, markNames, coordNames, curveNames, localeNames, dataFormats, scaleTypes, projectionNames, transformTypes, annotationTypes, controlTypes };
+export { schema, markTypes, markNames, coordNames, curveNames, localeNames, dataFormats, scaleTypes, projectionNames, transformTypes, controlTypes };
 
 import { describe, string, number, integer, boolean, nul, constant, choice, option, object, map, array, anyOf, oneOf, cases, ref, pattern, text, globalText, isArray, isString, isObject } from './dsl.js';
 

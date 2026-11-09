@@ -1,4 +1,4 @@
-export { compile, evaluate, bind, constant, refNames, refOf, formatter, operators, isOperator, isMatch };
+export { evaluate, bind, constant, refNames, refOf, formatter, operators, isOperator, isMatch };
 
 import { isObject, missing, sameValue, toNumber } from '@/utils/values';
 

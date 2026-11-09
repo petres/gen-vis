@@ -1,4 +1,4 @@
-export { warnOnce, markPath, withPath, distance, similar, pixelsOf, sizeOf };
+export { warnOnce, markPath, withPath, similar, pixelsOf, sizeOf };
 
 // the warnings given, by the store of a chart, a chart drawn again (e.g. by a
 // slider) does not repeat them

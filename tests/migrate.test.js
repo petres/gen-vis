@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { migrate, conditionExpression } from '@/utils/migrate.js';

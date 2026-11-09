@@ -23,7 +23,7 @@ export {
 export { timeFormatLocale } from 'd3-time-format';
 import { lazy } from '@/utils/lazy';
 
-export { byPrefix, named };
+export { named };
 
 // the scales (`scale.type`), e.g. linear, time, band or sequential, not the
 // value scaleImplicit
