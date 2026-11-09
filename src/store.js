@@ -113,11 +113,15 @@ class Store {
     format(format, name) {
         const m = Object.hasOwn(this.def.mapping, name) ? this.def.mapping[name] : undefined;
         const type = scaleDef(this.def.mapping, m)?.type;
-        if (type == 'utc')
-            return this.locale.time.utcFormat(format);
-        if (type == 'time' || m?.type == 'date')
-            return this.locale.time.format(format);
-        return this.locale.number.format(format);
+        if (type == 'utc' || type == 'time' || m?.type == 'date')
+            return this.locale.time[type == 'utc' ? 'utcFormat' : 'format'](format);
+        // an invalid format of numbers names its dim, e.g. "%,.0f" of a time
+        // format and a number format
+        try {
+            return this.locale.number.format(format);
+        } catch (error) {
+            throw new Error(`${m ? `dims.${name}.format` : 'format'}: '${format}' is no d3 format of numbers (${error.message}), e.g. ",.0f"`, { cause: error });
+        }
     }
 
     mapping(n) { return this.def.mapping[n] }

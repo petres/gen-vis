@@ -19,33 +19,13 @@ import { translate, isDefinition4, authoredPath } from "@/utils/language";
 import { migrate } from "@/utils/migrate";
 import { resolve, namesOfGlobals } from "@/utils/resolve";
 import { schema } from "@/schema/definition.js";
+import { similar } from "@/utils/warn";
 
 // the interpolations of the plot types with a curve, e.g. cartesian:line
 const curveNames = Object.keys(curves);
 
 const show = v => typeof v == 'string' ? `'${v}'` : String(v);
 const list = a => a.map(show).join(', ');
-
-// the number of the edits of one name to the other one (Levenshtein), e.g. 1
-// of "positon" and "position"
-const distance = (a, b) => {
-    let row = [...Array(b.length + 1).keys()];
-    for (let i = 1; i <= a.length; i++) {
-        const next = [i];
-        for (let j = 1; j <= b.length; j++)
-            next[j] = Math.min(row[j] + 1, next[j - 1] + 1, row[j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1));
-        row = next;
-    }
-    return row[b.length];
-};
-
-// the known name a typo of a name probably is, at most two edits away and
-// fewer than half of its length, e.g. not "y" of "x", undefined otherwise
-const similar = (name, names) => typeof name != 'string' ? undefined : names
-    .filter(n => typeof n == 'string')
-    .map(n => [distance(name, n), n])
-    .filter(([d]) => d <= 2 && 2*d < name.length)
-    .sort(([a], [b]) => a - b)[0]?.[1];
 
 // the known names of a warning of an unknown one, the one it is probably a
 // typo of or a list of them if it is short

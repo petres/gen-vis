@@ -247,7 +247,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // the rows of the hover, with a value and of its `filter`, by their
         // key, e.g. of the horizontal axis, compared as strings
         const options = hoverOptions();
-        const hoverRows = filterRows(ctx.rows.filter(e => e[v] !== null), options.filter, store.def.mapping, ctx.scope, { columns: store.columns, path: 'options.hover.filter', unknown: unknownOf(store) });
+        const hoverRows = filterRows(ctx.rows.filter(e => e[v] !== null), options.filter, store.def.mapping, ctx.scope, { columns: store.columns, path: 'hover.filter', unknown: unknownOf(store) });
         const rowsByKey = d3.group(hoverRows, e => String(e[names.h]));
         // the nearest key is one with rows, e.g. not one of null values, of
         // the coordinate systems with the `nearest` of the context, unless

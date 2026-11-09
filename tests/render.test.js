@@ -421,7 +421,7 @@ describe('rendering', () => {
     test('a definition which could not be drawn is replaced by a valid one', async () => {
         // the one which failed is not drawn again while the new one is loaded
         const { el, vis } = await mountVis({ def: { ...lineDef(), plot: { type: 'cartesian:lines', props: {} } }, data: lineData });
-        expect(el.querySelector('.vis-error').textContent).toBe("Unknown plot type 'lines'");
+        expect(el.querySelector('.vis-error').textContent).toBe("marks[0].type: unknown mark type 'lines', did you mean 'line'?");
 
         vis.update({ def: lineDef() });
         await vi.waitFor(() => expect(el.querySelector('svg.vis-svg')).not.toBeNull(), { timeout: 2000 });
@@ -1349,7 +1349,7 @@ describe('maps', () => {
         const def = mapDef();
         delete def.geo;
         const el = await mount({ def, data: mapData });
-        expect(el.querySelector('.vis-error').textContent).toBe('A map needs a geometry, e.g. "geo": { "data": "regions.json" }');
+        expect(el.querySelector('.vis-error').textContent).toBe('geo.data: a map needs a geometry, e.g. "geo": { "data": "regions.json" }');
     });
 });
 
@@ -1969,7 +1969,7 @@ describe('extensions', () => {
 
     test('an unknown coordinate system is an error', async () => {
         const el = await mount({ def: lineDef({ coord: 'spherical' }), data: lineData });
-        expect(el.querySelector('.vis-error').textContent).toBe(`Unknown coordinate system 'spherical', expected one of 'cartesian', 'polar', 'geo'`);
+        expect(el.querySelector('.vis-error').textContent).toBe(`coord: unknown coordinate system 'spherical', expected one of 'cartesian', 'polar', 'geo'`);
     });
 
     test('scales without orientation and range, e.g. of colors', async () => {
@@ -2221,7 +2221,7 @@ describe('polar', () => {
         const def = polarDef();
         def.plot = { type: 'cartesian:bar', by: ['c'], props: { x: '@x:scaled', y1: '@y:scaled' } };
         const el = await mount({ def, data: polarData });
-        expect(el.querySelector('.vis-error').textContent).toBe("The plot type 'cartesian:bar' is not available in the coordinate system 'polar'");
+        expect(el.querySelector('.vis-error').textContent).toBe("marks[0].type: the mark type 'cartesian:bar' is not available in the coordinate system 'polar'");
     });
 });
 
@@ -2446,7 +2446,7 @@ describe('fixed bugs', () => {
         def.mapping.y.hover = true;
         expect(await message(def)).toBe('mapping.y.hover: expected an object, e.g. {}');
         // the facets of a dim which does not exist (of a numeric one its values are the categories)
-        expect(await message({ ...lineDef(), facets: { dim: 'nope' } })).toMatch(/^facets.dim: the facets are the categories of a mapping, e.g./);
+        expect(await message({ ...lineDef(), facets: { dim: 'nope' } })).toBe("facets.by: unknown dim 'nope', the dims are 'x', 'y', 'c'");
         expect(await message({ ...lineDef(), plot: [null] })).toMatch(/^marks\[0\]: expected a mark/);
     });
 
@@ -2693,7 +2693,7 @@ describe('fixed bugs', () => {
         const def = stackDef();
         delete def.plot.props.width;
         const el = await mount({ def, data: stackData });
-        expect(el.querySelector('.vis-error').textContent).toBe(`cartesian:bar: a 'width' is needed for a continuous scale`);
+        expect(el.querySelector('.vis-error').textContent).toBe(`marks[0]: the bars of a continuous scale need a 'width' in pixels, e.g. "width": 8, or a categorical dim of their position`);
     });
 
     test('the hover of a band scale shows the band under the mouse', async () => {
@@ -3249,7 +3249,7 @@ describe('images', () => {
         await rendered(vm.el);
         // the copy is drawn again, without the plot type
         delete plotTypes['test:once'];
-        await expect(vm.image()).rejects.toThrow("Unknown plot type 'test:once'");
+        await expect(vm.image()).rejects.toThrow("marks[0].type: unknown mark type 'test:once'");
         expect(document.querySelectorAll('.vis')).toHaveLength(1);
         vm.destroy();
         errors.length = 0;

@@ -75,7 +75,7 @@ Playwright, `chromote` of R or a client of its own:
    `awaitPromise: true` and `returnByValue: true`), one chart at a time,
    each call removes the chart before. It resolves with the result below or
    rejects with an `Error` whose `message` is the message of gen-vis, e.g.
-   `Unknown plot type 'nope'`; of CDP, evaluate
+   `marks[0].type: unknown mark type 'nope', e.g. 'line', 'bar' or 'point'`; of CDP, evaluate
    `genVisExport(o).then(r => ({ result: r }), e => ({ error: e.message }))`.
    A page in the background draws no frames: the page is the one in front
    (`Page.bringToFront`) while it runs.

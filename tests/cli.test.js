@@ -164,7 +164,7 @@ describe.skipIf(!browser)('gen-vis export', () => {
             data: path.relative(dir, path.join(root, 'data/bev/data.csv')).replaceAll(path.sep, '/'), mapping: { x: 'Jahr' }, plot: { type: 'nope' } }));
         const r = await run(['export', path.join(dir, 'broken.json'), path.join(dir, 'broken.svg'), 'data/bev/missing.json', path.join(dir, 'missing.svg')]);
         expect(r.code).toBe(1);
-        expect(r.stderr).toMatch(/broken\.json: .*Unknown plot type 'nope'/);
+        expect(r.stderr).toMatch(/broken\.json: .*marks\[0\]\.type: unknown mark type 'nope'/);
         expect(r.stderr).toMatch(/missing\.json: the definition data\/bev\/missing\.json does not exist/);
         expect(existsSync(path.join(dir, 'broken.svg'))).toBe(false);
     }, 60000);

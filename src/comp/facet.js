@@ -5,9 +5,22 @@ import { highlighter } from "@/utils/highlight";
 import { drawAxis } from "@/utils/axis";
 import { create, interruptAll, setAttr } from "@/utils/dom";
 import { plotTypes } from "@/plots";
+import { markPath, similar, withPath } from "@/utils/warn";
 import { inFacet, plotGroups, plotRows } from "@/layout";
 import { el, patch, place, setText } from "@/comp/html";
 import { createFacetHover } from "@/comp/facet-hover";
+
+// the message of an unknown mark type, of a typo the name it probably is,
+// e.g. "line" of "lines": the names of 5.0 (also point, label and cell) of
+// the coordinate system, a full name of the ones of the registry
+const aliases = ['point', 'label', 'cell'];
+const unknownType = (type, coord) => {
+    const full = Object.keys(plotTypes).filter(t => !t.startsWith('annotation:'));
+    const names = String(type).includes(':') ? full : [...new Set([...full.filter(t => !plotTypes[t].coords || plotTypes[t].coords.includes(coord))
+        .map(t => t.split(':')[1]), ...aliases])];
+    const close = similar(type, names);
+    return `unknown mark type '${type}'${close !== undefined ? `, did you mean '${close}'?` : `, e.g. 'line', 'bar' or 'point'`}`;
+};
 
 // the elements in an element are removed
 const removeElements = node => [...node.children].forEach(c => c.remove());
@@ -145,13 +158,14 @@ const createFacet = (vis, initial) => {
     // elements of the others are removed
     const plot = plots => {
         plots.forEach(plot => {
+            const path = markPath(store.def, plot);
+            const coord = store.def.options.coord ?? 'cartesian';
             if (!Object.hasOwn(plotTypes, plot.type))
-                throw new Error(`Unknown plot type '${plot.type}'`);
+                throw new Error(`${path}.type: ${unknownType(plot.type, coord)}`);
             const type = plotTypes[plot.type];
             // the types of a coordinate system, e.g. no bars in a map
-            const coord = store.def.options.coord ?? 'cartesian';
             if (type.coords && !type.coords.includes(coord))
-                throw new Error(`The plot type '${plot.type}' is not available in the coordinate system '${coord}'`);
+                throw new Error(`${path}.type: the mark type '${plot.type}' is not available in the coordinate system '${coord}'`);
             const parent = keep(plotKey(plot), () => {
                 const g = create("g");
                 // an id with spaces is several classes, e.g. "1st line"
@@ -163,8 +177,14 @@ const createFacet = (vis, initial) => {
             });
             if (!type.update)
                 removeElements(parent);
-            const groups = ctx.groupsOf(plot.id);
-            drawLayer(parent, type.marks(groups, plot, ctx));
+            // an error of the type names the mark, e.g. "marks[0]: ..."
+            let layer;
+            try {
+                layer = type.marks(ctx.groupsOf(plot.id), plot, ctx);
+            } catch (error) {
+                throw withPath(error, markPath(store.def, plot, true));
+            }
+            drawLayer(parent, layer);
         });
     };
 

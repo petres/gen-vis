@@ -40,7 +40,7 @@ const later = (name, parts) => ({
     ...parts,
     coords: ['polar'],
     update: true,
-    marks() { throw new Error(`${name}: a plot type of polar plots, of "coord": "polar"`); },
+    marks() { throw new Error(`the mark type '${name}' is one of polar charts, of "coord": "polar"`); },
 });
 const polar = {
     'polar:line': later('polar:line', { curve: true }),

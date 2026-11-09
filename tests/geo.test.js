@@ -86,7 +86,7 @@ describe('the errors of the geometry and the projection', () => {
 
     test('an empty geometry or an include of no feature', async () => {
         const el = await mount({ def: mapDef({ data: { type: 'FeatureCollection', features: [] } }), data: 'region,value\n01,1' });
-        expect(errorOf(el)).toMatch(/no features: the geometry is empty/);
+        expect(errorOf(el)).toMatch(/^geo.data: the map has no features, the geometry is empty/);
         const el2 = await mount({ def: mapDef({ include: ['nope'] }), data: 'region,value\n01,1' });
         expect(errorOf(el2)).toMatch(/no features.*geo\.include.*key 'id'/);
     });
