@@ -398,3 +398,12 @@ describe('a chain of parents of parts of 4.x and 5.0', () => {
         expect(old.mapping.y).toEqual({ column: 'v', axis: { grid: true }, format: '.1f' });
     });
 });
+
+describe('the filter of the hover of 4.x', () => {
+    test('conditions of not are comparisons, not texts of the string syntax (energy site, household prices)', () => {
+        const hover = f => migrate({ mapping: { x: 'year', y: 'v', type: 'type' }, plot: { type: 'line', by: ['type'] }, options: { hover: { filter: { type: f } } } }).hover.filter;
+        expect(hover({ not: 'total' })).toBe("@type != 'total'");
+        expect(hover({ not: ['a', 'b'] })).toBe("@type != 'a' and @type != 'b'");
+        expect(hover('total')).toBe("@type == 'total'");
+    });
+});

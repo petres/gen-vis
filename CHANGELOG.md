@@ -339,6 +339,8 @@ Migration notes, to check by hand after `gen-vis migrate`:
   whole part; shorten it by hand if only an attribute differs.
 - Remove `margins`, `"hover": {"columns": []}` and `"symbol": null` where
   the new defaults are wanted.
+- A condition of `not` in the filter of the hover of 4.x is migrated as a
+  comparison (it was a text of the string syntax, the hover had no rows).
 - Texts of maps (`geo:text`) are centered on their place by default (4.x
   started them at it, shifted right by half their width); a migrated map
   label with a `text-anchor` of its own is as it was.

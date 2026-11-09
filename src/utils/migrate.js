@@ -801,8 +801,11 @@ const migrate = (raw, { parents: given, noHover = false } = {}) => {
     const marks = plots.map((p, i) => markOf(p, i, coord, stacked, mapping, consumed));
     if (def.mapping !== undefined)
         out.dims = Object.fromEntries(Object.entries(mapping).map(([n, m]) => [n, dimOf(m, n, hovered, consumed, coord, mapping)]));
+    // the conditions of the filter of the hover of 4.x (as written, the
+    // options' operator objects are texts of the string syntax by now)
+    const hoverFilter = isObject(def.options?.hover) ? def.options.hover.filter : undefined;
     if (isObject(out.hover) && out.hover.filter !== undefined)
-        out.hover.filter = conditionExpression(out.hover.filter, false, mapping);
+        out.hover.filter = conditionExpression(hoverFilter !== undefined ? hoverFilter : out.hover.filter, false, mapping);
     if (isPatched(def.plot))
         out.marks = patchedText(def.plot, part => plotsOf(part).map((p, i) => markOf(p, i, coord, stacked, mapping, consumed)));
     else if (def.plot !== undefined)
