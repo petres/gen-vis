@@ -264,6 +264,101 @@ describe('rules', () => {
     });
 });
 
+describe('ticks', () => {
+    test('a short rule at the value across the band of the bar, a share of it (size), of dodged bars across the slot', async () => {
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical' }, y: { column: 'value', domain: [0, 10] }, c: { column: 'type', categories: { a: {}, b: {} } } },
+            marks: [
+                { type: 'bar', fill: '#ccc', filter: "@c == 'a'" },
+                { type: 'tick', stroke: '#111', filter: "@c == 'a'" },
+                { type: 'tick', stroke: '#222', size: 0.5, filter: "@c == 'a'" },
+                { type: 'tick', stroke: '#333', by: 'c', dodge: true },
+            ],
+        };
+        const el = await mount({ def, data });
+        const bars = rects(el);
+        const ticks = stroke => lines(el).filter(l => l.getAttribute('stroke') == stroke);
+        expect(ticks('#111').length).toBe(2);
+        bars.forEach(b => {
+            const row = b[itemOf][rowOf];
+            const [full] = ticks('#111').filter(l => l[itemOf][rowOf] === row);
+            const [half] = ticks('#222').filter(l => l[itemOf][rowOf] === row);
+            // horizontal, at the top of the bar, as wide as the bar
+            expect(num(full, 'y1')).toBeCloseTo(num(full, 'y2'));
+            expect(Math.abs(num(full, 'y1') - num(b, 'y'))).toBeLessThanOrEqual(0.5);
+            expect(num(full, 'x1')).toBeCloseTo(num(b, 'x'));
+            expect(num(full, 'x2')).toBeCloseTo(num(b, 'x') + num(b, 'width'));
+            // half of it around the middle
+            expect(num(half, 'x2') - num(half, 'x1')).toBeCloseTo(num(b, 'width')/2);
+            expect((num(half, 'x1') + num(half, 'x2'))/2).toBeCloseTo(num(b, 'x') + num(b, 'width')/2);
+        });
+        // dodged: half a band each, a before b
+        const dodged = ticks('#333');
+        expect(dodged.length).toBe(4);
+        const [a, b] = ['a', 'b'].map(c => dodged.find(l => l[itemOf][rowOf].c == c && l[itemOf][rowOf].x == '2020'));
+        expect(num(a, 'x2')).toBeCloseTo(num(b, 'x1'));
+        expect(num(a, 'x2') - num(a, 'x1')).toBeCloseTo(num(bars[0], 'width')/2);
+        expect(errors).toEqual([]);
+    });
+
+    test('a vertical tick across the band of a categorical y, e.g. a target of horizontal bars; of a point scale 80% of the step', async () => {
+        const rows = 'land,value,target\nW,2,3\nT,5,4';
+        const def = {
+            dims: { y: { column: 'land', type: 'categorical' }, x: { column: 'value', domain: [0, 10] }, t: 'target' },
+            marks: [{ type: 'bar' }, { type: 'tick', x: 't', stroke: '#111' }],
+        };
+        const el = await mount({ def, data: rows });
+        const bars = rects(el);
+        bars.forEach(b => {
+            const tick = lines(el).find(l => l[itemOf][rowOf] === b[itemOf][rowOf]);
+            expect(num(tick, 'x1')).toBeCloseTo(num(tick, 'x2'));
+            expect(num(tick, 'y1')).toBeCloseTo(num(b, 'y'));
+            expect(num(tick, 'y2')).toBeCloseTo(num(b, 'y') + num(b, 'height'));
+        });
+        // a point scale: a strip plot of ticks without bars
+        const strip = await mount({ def: { dims: { x: { column: 'type', type: 'categorical' }, y: 'value' }, marks: { type: 'tick' } }, data });
+        const [t] = lines(strip);
+        const step = Math.abs(num(lines(strip).find(l => l[itemOf][rowOf].x == 'b'), 'x1') - num(t, 'x1'));
+        expect(num(t, 'x2') - num(t, 'x1')).toBeCloseTo(0.8*step);
+        expect(errors).toEqual([]);
+    });
+});
+
+describe('arrows', () => {
+    test('marker-end and marker-start "arrow": a marker of an arrowhead per color in the defs of the svg, also of annotations and lines', async () => {
+        const rows = 'year,value,lo,hi\n2020,2,1,3\n2021,6,4,8';
+        const def = {
+            dims: { x: { column: 'year', type: 'categorical' }, y: { column: 'value', domain: [0, 10] }, lo: 'lo', hi: 'hi' },
+            annotations: { type: 'line', y: 5, props: { 'marker-end': 'arrow' } },
+            marks: [
+                { type: 'rule', y1: 'lo', y2: 'hi', stroke: '#C3423F', 'marker-end': 'arrow', 'marker-start': 'arrow' },
+                { type: 'line', stroke: '#1E4F77', 'marker-end': 'arrow' },
+                { type: 'rule', y: 9, 'marker-end': 'url(#own)' },
+            ],
+        };
+        const el = await mount({ def, data: rows });
+        const svg = el.querySelector('.vis-facet svg');
+        const markers = [...svg.querySelectorAll(':scope > defs.vis-defs > marker.vis-arrow')];
+        // one per color: the rules, the line and the annotation of the color of the styles
+        expect(markers.map(m => m.getAttribute('data-color'))).toEqual(['var(--gen-vis-line-color, #9AA0A8)', '#C3423F', '#1E4F77']);
+        expect(markers[1].querySelector('path').style.fill).toBe('rgb(195, 66, 63)');
+        const url = color => `url(#${markers.find(m => m.getAttribute('data-color') == color).id})`;
+        const rules = lines(el).filter(l => l.getAttribute('stroke') == '#C3423F');
+        expect(rules.length).toBe(2);
+        rules.forEach(r => {
+            expect(r.getAttribute('marker-end')).toBe(url('#C3423F'));
+            expect(r.getAttribute('marker-start')).toBe(url('#C3423F'));
+        });
+        expect(el.querySelector('g.vis-mark path').getAttribute('marker-end')).toBe(url('#1E4F77'));
+        expect(el.querySelector('line.vis-annotation').getAttribute('marker-end')).toBe(url('var(--gen-vis-line-color, #9AA0A8)'));
+        // other values as they are
+        expect(lines(el).find(l => l.getAttribute('marker-end') == 'url(#own)')).toBeDefined();
+        // the ids are the ones of the facet, unique on the page
+        expect(markers[0].id).toMatch(/^gen-vis-facet-\d+-arrow-0$/);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('dodged rules and points', () => {
     test('error bars and points on dodged bars: in the slot of their bar', async () => {
         const rows = 'year,value,type,lo,hi\n2020,2,a,1,3\n2020,5,b,4,6\n2021,6,a,5,7\n2021,3,b,2,4';

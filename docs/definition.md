@@ -360,7 +360,11 @@ column:
   of the transform says so.
 - `aggregate`: an aggregate of the values of `column` of the group (`op`):
   `sum`, `mean`, `min`, `max`, `count` (the number of values), `median`,
-  `first` or `last` (in the order of `order`), missing values are left out.
+  `q1` and `q3` (the lower and the upper quartile), `quantile` (of `p`, from
+  0 to 1, e.g. `"p": 0.9`), `first` or `last` (in the order of `order`),
+  missing values are left out. The median, the quartiles and the quantiles
+  are interpolated between the two nearest values (R-7, as Excel, R and
+  d3), e.g. the box of a box plot, see the [recipes](recipes.md).
   By default a column, the value of every row of the group, e.g. the total
   of a country of all years, `{"type": "aggregate", "column": "value", "by":
   "country", "op": "sum", "as": "total"}`, so a `calc` can divide by it.
@@ -376,10 +380,28 @@ column:
   percent, e.g. the change to the previous month, `{"type": "window",
   "column": "value", "by": "country", "order": "date", "op": "pct", "as":
   "change"}`, without a value at the ends or of a missing one (also of a
-  division by 0). Or the `sum`, `mean`, `min` or `max` of the window of
-  `size` rows, as the mean of `rolling` (`align`), e.g. the sum of the last
-  7 days, `{"type": "window", "column": "cases", "order": "date", "op":
+  division by 0). Or the `sum`, `mean`, `min`, `max`, `median`, `q1`,
+  `q3` or `quantile` (of `p`) of the window of `size` rows, as the mean of
+  `rolling` (`align`), e.g. a rolling median, or the sum of the last 7 days, `{"type": "window", "column": "cases", "order": "date", "op":
   "sum", "size": 7, "as": "week"}`.
+- `format`: the text of a date in a time format (`format`, of
+  [d3-time-format](https://d3js.org/d3-time-format#locale_format)), in the
+  time zone of the scale of the column, e.g. the week of the year (`%W`,
+  weeks from Monday, `00` before the first Monday) and the weekday (`%u`, 1
+  is Monday) of the cells of a calendar, the month (`%m`) or the quarter
+  (`Q%q`): `{"type": "format", "column": "date", "format": "%W", "as":
+  "week"}`. The names of months and days (`%b`, `%a`) are English, the
+  `name` of the categories of a dim gives others.
+- `regression`: the fitted value of the least squares fit of the values of
+  `column` on the ones of the column `x` (numbers or dates) in the group, a
+  value of every row with an x, so a `line` of it draws the trend through
+  the range of x of the data, e.g. a trend line per group of a scatter plot,
+  `{"type": "regression", "column": "growth", "x": "gdp_pc", "by":
+  "region", "as": "trend"}`. `method`: `linear` (y = a + bx, the default),
+  `log` (y = a + b ln x, of the rows of x > 0), `exp` (y = a e^(bx), of the
+  values > 0, a constant rate of growth) or `poly` (a polynomial of
+  `degree` 2 or 3). A group of fewer points than coefficients has no
+  values.
 
 The strings of a transform are templates of the globals, e.g. `{base}`, the
 transforms are computed again when the globals change, from the first one
@@ -1134,6 +1156,7 @@ the page:
 | `area` | an area per group (`cartesian:area`) | an area per group (`polar:area`) | |
 | `bar` | a bar per row (`cartesian:bar`) | | |
 | `rule` | a line per row across the plot area or between two values (`cartesian:rule`) | | |
+| `tick` | a short line per row at the value across the band of its category (`cartesian:rule`) | | |
 | `point` | a circle per row (`svg:circle`) | `polar:circle` | at its feature or at `lon` and `lat` (`geo:circle`) |
 | `text`, `label` | a text per row (`svg:text`) | `polar:text` | at its feature or at `lon` and `lat` (`geo:text`) |
 | `cell` | a rect per row of the bands of `x` and `y` (`svg:rect`), e.g. a heatmap | | |
@@ -1241,6 +1264,15 @@ attributes are merged into the defaults, e.g. `d` of a path.
   `"scale": {"type": "sqrt", "range": [0, 20]}`.
 - Values with `var(` are css variables, e.g. `"stroke":
   "var(--gen-vis-grid-color)"`, set as a style, see [styles](usage.md#styles).
+- `marker-end` and `marker-start` of `"arrow"` are arrowheads at the end or
+  the start of a line, e.g. of a `rule`, a `line`, an `svg:line` or a `line`
+  annotation (in its `props`): a `<marker>` in the color of the `stroke` of
+  the element (one per color, in the `defs` of the svg of the facet, so the
+  exports of SVG, PNG and PDF have them), of the size of the stroke width
+  (6 widths long); of an element without a stroke of its own in the color of
+  annotation lines or of the text. Other values are as they are, e.g. the
+  url of a marker of the page: `{"type": "rule", "x": "year", "y1": "from",
+  "y2": "to", "stroke": "#C3423F", "marker-end": "arrow"}`.
 - The texts of `text`, `label` and of the labels of axes with a `max-width`
   attribute (pixels) are cut with an ellipsis, the full text is their title
   (the tooltip of the browser, also below the area of the hover, e.g. of
@@ -1385,6 +1417,18 @@ A rule with `x` (by default the dim `x`) is vertical, from `y1` to `y2`
 (by default the edges of the plot area), one with only `y` horizontal,
 from `x1` to `x2`; a rule at a category of a band is at the middle of its
 band, as bars and points.
+
+A `tick` is a short rule at the value of `y` across the band of the
+category of `x` (of a categorical `y` and an `x` which is not, as the
+bars, a vertical one at `x` across the band of `y`), `size` is its share
+of the band (1 by default), a dodged one (`dodge`) is across the slot of
+its category; a scale without bands (a point scale, a date of an
+`interval`) has the band of a bar, 80% of its step. E.g. the median of a
+box plot, the target of a bullet chart or a strip plot of ticks:
+
+```json
+{ "marks": [{ "type": "bar", "fill": "#BBD7EE" }, { "type": "tick", "y": "target", "size": 0.5, "stroke": "#333", "stroke-width": 2 }] }
+```
 
 A heatmap, a cell per year and type colored by a scale, with its values:
 
@@ -1830,7 +1874,8 @@ globals, e.g. `"@target"`:
 - `text` (`text`) and `circle` at the values, without one (or with `null`)
   of an axis at the start of the other one.
 - `label` and `text` are templates of the globals, e.g. `"Ziel {target}"`.
-- `props` are svg attributes, e.g. `fill` or `stroke`, the defaults are grey,
+- `props` are svg attributes, e.g. `fill` or `stroke` (or `"marker-end":
+  "arrow"`, an arrowhead, see [attributes](#attributes)), the defaults are grey,
   their names are the ones of the facet and of the annotation, e.g. `@y`,
   `above` (or `"layer": "above"`) draws the annotation above the marks, by
   default it is below the marks and grid lines (`"layer": "below"`), labels
@@ -1938,6 +1983,13 @@ of a scatter plot above its x and y.
   elements (see [highlight](#highlight-and-others)) and the events stay,
   e.g. a larger circle with its value as the hover of a row of bars.
 - `marker`: `false` leaves out the line of the position.
+- `cross`: `true` draws a crosshair instead of the line of the position: a
+  horizontal and a vertical line across the plot area through the point of
+  the nearest row (of a stacked value the end of its stack), e.g. to read
+  the value of a line or of a point of a scatter plot (`"mode": "point"`)
+  at the axes; thin and dashed (`vis-hover-cross`, in the color of
+  `--gen-vis-cross-color`, by default the one of the marker), of cartesian
+  charts.
 - `position`: the hover is beside the marker of the position, of a map the
   center of the region (`marker`, the default), or at the pointer
   (`pointer`, it moves with it, by the keyboard it is at the marker).

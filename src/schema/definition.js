@@ -20,8 +20,8 @@ const markTypes = ['svg:circle', 'svg:line', 'svg:rect', 'svg:text', 'cartesian:
     'polar:line', 'polar:area', 'polar:arc', 'polar:circle', 'polar:text', 'geo:base', 'geo:region', 'geo:circle', 'geo:text', 'geo:mesh',
     'annotation:band', 'annotation:line', 'annotation:text', 'annotation:circle'];
 // the names of the marks of the definitions, the kinds of the coordinate
-// system of the definition and the ones of 5.0 (point, label, cell), see typeOf of utils/language.js
-const markNames = ['arc', 'area', 'bar', 'base', 'cell', 'circle', 'label', 'line', 'mesh', 'point', 'rect', 'region', 'rule', 'text'];
+// system of the definition and the ones of 5.0 (point, label, cell, tick), see typeOf of utils/language.js
+const markNames = ['arc', 'area', 'bar', 'base', 'cell', 'circle', 'label', 'line', 'mesh', 'point', 'rect', 'region', 'rule', 'text', 'tick'];
 const coordNames = ['cartesian', 'polar', 'geo'];
 const curveNames = ['linear', 'monotoneX', 'natural', 'catmullRom', 'basis', 'step', 'stepBefore', 'stepAfter', 'linearClosed', 'catmullRomClosed', 'basisClosed'];
 const localeNames = ['de', 'en'];
@@ -31,7 +31,7 @@ const scaleTypes = ['band', 'diverging', 'divergingLog', 'divergingPow', 'diverg
     'threshold', 'time', 'utc'];
 const projectionNames = ['albers', 'albersUsa', 'azimuthalEqualArea', 'azimuthalEquidistant', 'conicConformal', 'conicEqualArea', 'conicEquidistant', 'equalEarth',
     'equirectangular', 'gnomonic', 'identity', 'mercator', 'naturalEarth1', 'orthographic', 'stereographic', 'transverseMercator'];
-const transformTypes = ['year', 'align', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window'];
+const transformTypes = ['year', 'align', 'format', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window', 'regression'];
 const annotationTypes = ['band', 'line', 'text', 'circle'];
 const controlTypes = ['radio', 'select', 'slider', 'hidden'];
 
@@ -157,6 +157,7 @@ const definitions = {
         filter: conditions('The rows with a hover, e.g. not the ones of headers, an expression of the row or the values of dims.'),
         box: boolean('false: no box of the hover, its highlight and the events stay, e.g. a hover of the highlight only.', { default: true }),
         marker: boolean('false: no line of the position of the hover.', { default: true }),
+        cross: boolean('true: a crosshair, a horizontal and a vertical line across the plot area through the point of the nearest row (of a stacked value the end of its stack), instead of the line of the position, e.g. to read the value at the axis; of cartesian charts, also of the hover of points.', { default: false }),
         empty: boolean('true: a hover also without rows, e.g. the name of a region without a value.', { default: false }),
         position: option(['marker', 'pointer'], 'The hover is beside the marker of the position (or the center of a region) or at the pointer.', { default: 'marker' }),
         side: option(['left', 'right', 'above', 'below', 'center'], 'The side of the hover, by default the one with more space, center on the position, e.g. in the center of a polar plot.'),
@@ -328,12 +329,12 @@ const definitions = {
     mark: describe(map(ref('propEntry'), 'A mark, a layer of the chart: its type and the dims of its channels (x, y, ...), the attributes of its elements (e.g. "stroke-width": 2, "fill": "@color" of its categories), expressions of the row, the names of the facet and the globals, nested props, e.g. d of a path.', {
         properties: {
             type: cases([[globalText, globalText], [{ type: 'string', pattern: registeredName }, anyOf([
-                choice(markNames, 'A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap.'),
+                choice(markNames, 'A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap, tick a short rule at the value across the band of its category (`size`), e.g. the median of a box plot or a target.'),
                 choice(markTypes, 'The full name of a type of a coordinate system, as the name without the prefix. The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations.'),
                 pattern('^[a-z][\\w-]*:[\\w-]+$', 'A registered plot type, see registerMarkType.'),
                 pattern('^[a-z][\\w-]*$', 'A registered plot type of the coordinate system without its prefix, see registerMarkType.'),
             ])]],
-                { enum: [...markNames, ...markTypes] }, 'The type of the mark, line, area, bar, rule, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ.'),
+                { enum: [...markNames, ...markTypes] }, 'The type of the mark, line, area, bar, rule, tick, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ.'),
             id: string('The class and the data-mark of the group of the mark, mark-<index> by default, the marks of a parent are merged by their ids.'),
             by: anyOf([{ type: 'string' }, array(string())], 'The rows are grouped by this dim or these dims, e.g. a line per category, the props of their categories are known to the attributes (@color, @name, ...).'),
             x: ref('channel', 'The dim of the horizontal position (x by default); a number is a value on the scale of x of a rule, a point or a text (cartesian), pixels otherwise (=literal(n) are pixels).'),
@@ -348,6 +349,7 @@ const definitions = {
             lat: ref('channel', 'Of a map: the dim of the latitude, or an expression of the row.'),
             stack: anyOf([{ type: 'boolean' }, expressionText, expression, ref('conditions')], 'Stacks the values of the mark (bars, areas, arcs) by the groups of `by`, true all rows or the condition of the rows which are stacked, the others have their own value as start and end.'),
             dodge: anyOf([{ type: 'boolean' }, { type: 'string' }, { type: 'number' }], 'Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position, with `stack` a stack per slot; texts, points and rules (true or a dim): at the middle of the slot of their category, e.g. labels or error bars of dodged bars; texts (a number): the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines.'),
+            size: number('tick: its length, the share of the band of its category (or of the slot of a dodged one), 1 by default, e.g. 0.5 of a target narrower than its bar.', { exclusiveMinimum: 0 }),
             orient: option(['horizontal', 'vertical'], 'Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y or of a continuous x (e.g. zero) and a y which is not.'),
             anchor: option(['start', 'end', 'top', 'bottom', 'center', 'top-start', 'top-end', 'bottom-start', 'bottom-end'], 'Labels: the text beside its position, after it (end, e.g. of horizontal bars), before it (start), above it (top), below it (bottom), on it (center) or at a corner, above and after it (top-end), ....'),
             filter: conditions('The rows of the mark, an expression of the row or the values of dims, see filter of the definition.'),
@@ -474,7 +476,7 @@ const definitions = {
         })),
 
     transform: object({
-        type: choice(transformTypes, 'year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max) of a window of `size` rows.'),
+        type: choice(transformTypes, 'year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, median, q1, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max, median, ...) of a window of `size` rows, regression: the value of the least squares fit of `column` on `x` in the group (`method`), e.g. a trend line, format: the text of a date in a time `format`, e.g. %W the week of the year.'),
         column: string('The column of the values, a template of the globals, of a lookup the one of the keys.'),
         expr: ref('value', 'calc: the expression of the value of the row, filter: the expression of the rows which are kept, its names are the columns of the row and the globals, e.g. "@value / @inno * 100" or "@value > 0".'),
         min: integer('mean: the least number of values, without as many values the mean is missing, 1 by default.', { minimum: 1 }),
@@ -505,10 +507,15 @@ const definitions = {
         size: integer('The number of the rows of the window of rolling and of the sums, means, least and largest values of window.', { minimum: 1 }),
         align: choice(['end', 'center'], 'The window of rolling and window: the rows before the row (end, by default) or around it.'),
         columns: anyOf([{ type: 'string' }, array(string())], 'fold: the columns to fold, a list of names or a pattern with a single `*`, e.g. "20*", the columns of all rows which match, in their order, templates of the globals.'),
-        op: choice(['sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last', 'lag', 'lead', 'diff', 'pct'], 'aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows.'),
+        op: choice(['sum', 'mean', 'min', 'max', 'count', 'median', 'q1', 'q3', 'quantile', 'first', 'last', 'lag', 'lead', 'diff', 'pct'], 'aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, q1 and q3 (the lower and the upper quartile), quantile (of `p`), first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max, median, q1, q3, quantile of the window of `size` rows.'),
+        p: number('aggregate and window of the op quantile: the probability, from 0 to 1, e.g. 0.9 of the 90th percentile; interpolated between the two nearest values (R-7, as median, q1 and q3).', { minimum: 0, maximum: 1 }),
         rows: boolean('aggregate: a row per group instead of a column, with the columns `by` and `as`, the rows replace the rows.', { default: false }),
         offset: integer('window: the number of rows before (lag, diff, pct) or after (lead) the row, 1 by default.', { minimum: 1 }),
         year: integer('The year of align, 2020 by default.'),
+        format: string('format: the time format (d3-time-format) of the dates of `column`, e.g. %W (the week of the year from Monday, 00 to 53), %u (the weekday, 1 is Monday), %m (the month), %q (the quarter), %Y-%m (a month of a year); the names of months and days (%b, %a) are English.'),
+        x: string('regression: the column of the x values, numbers or dates.'),
+        method: choice(['linear', 'log', 'exp', 'poly'], 'regression: the curve fitted, linear (y = a + bx), log (y = a + b ln x, of x > 0), exp (y = a e^(bx), of y > 0) or poly (a polynomial of `degree`).', { default: 'linear' }),
+        degree: integer('regression: the degree of the polynomial of the method poly, 2 by default.', { minimum: 2, maximum: 3 }),
     }, 'A column computed of the data, e.g. an index of a base year.', { required: ['type'] }),
 };
 

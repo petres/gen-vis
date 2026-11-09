@@ -1,0 +1,18 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "rd.csv",
+    "title": "Spending on research and development, 2023",
+    "subtitle": "in % of GDP",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 420,
+    "dims": {
+        "x": {"column": "rd", "name": "R&D", "format": ".1f", "zero": true, "grid": true},
+        "y": {"column": "country", "scale": {"order": {"by": "x", "descending": true}}}
+    },
+    "marks": [
+        {"type": "rule", "y": "y", "x1": 0, "x2": "x", "stroke": "#9AA0A8", "stroke-width": 1.5},
+        {"type": "point", "r": 5, "fill": "=@y == 'Austria' ? '#C3423F' : '#1E4F77'"},
+        {"type": "label", "text": "@x:formatted", "anchor": "end", "dx": 9, "font-size": 11}
+    ]
+}

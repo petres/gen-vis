@@ -547,7 +547,7 @@ const checkFilter = (ctx, conditions, path, known) => {
 };
 
 // the names of marks of 5.0 which are no kind of a plot type, see typeOf of utils/language.js
-const aliases = ['point', 'label', 'cell'];
+const aliases = ['point', 'label', 'cell', 'tick'];
 
 // the plots: their types, categories, data and props
 const checkPlots = ctx => {
@@ -849,13 +849,17 @@ const transformKeys = {
     lookup: ['column', 'as', 'data', 'dataFormat', 'key', 'value'],
     bin: ['column', 'as', 'by', 'edges', 'step', 'weight', 'normalize', 'per', 'start', 'end', 'replace'],
     fold: ['columns', 'key', 'value', 'replace'],
-    aggregate: ['column', 'as', 'by', 'op', 'rows', 'order'],
-    window: ['column', 'as', 'by', 'order', 'op', 'size', 'offset', 'align'],
+    aggregate: ['column', 'as', 'by', 'op', 'p', 'rows', 'order'],
+    window: ['column', 'as', 'by', 'order', 'op', 'p', 'size', 'offset', 'align'],
+    regression: ['column', 'as', 'by', 'x', 'method', 'degree'],
+    format: ['column', 'as', 'format'],
 };
 // 'a', 'b' or 'c'
 const or = names => names.length < 2 ? list(names) : `${list(names.slice(0, -1))} or ${show(names.at(-1))}`;
 // a template of the globals, e.g. "{op}", its value is known when it is computed
 const isTemplate = v => typeof v == 'string' && templateNames(v).length > 0;
+// the ops of a window of `size` rows, see windowOf of utils/transform-types.js
+const windowOps = ['sum', 'mean', 'min', 'max', 'median', 'q1', 'q3', 'quantile'];
 
 // the columns of the rows after the transforms: the ones of the data
 // (`present`) and the ones the transforms add, by their names (the
@@ -951,12 +955,34 @@ const checkTransforms = ({ def, globals, warn, rows }) => {
                 warn(`${path}.per`, `a share is one of the group, without a unit, 'per' is of counts and densities`);
         }
         // the operation of an aggregate or a window, also a template
-        const ops = { aggregate: ['sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last'], window: ['lag', 'lead', 'diff', 'pct', 'sum', 'mean', 'min', 'max'] };
+        const ops = { aggregate: ['sum', 'mean', 'min', 'max', 'count', 'median', 'q1', 'q3', 'quantile', 'first', 'last'],
+            window: ['lag', 'lead', 'diff', 'pct', ...windowOps] };
         if (Object.hasOwn(ops, t.type)) {
             if (t.op === undefined)
                 warn(`${path}.op`, `the operation is needed, one of ${list(ops[t.type])}`);
             else if (!ops[t.type].includes(t.op) && !String(t.op).includes('{'))
                 warn(`${path}.op`, `unknown op '${t.op}'${choices(t.op, ops[t.type])}`);
+            // the probability of a quantile
+            if (t.op == 'quantile' && !(Number(t.p) >= 0 && Number(t.p) <= 1 && t.p !== null && t.p !== '') && !isTemplate(t.p))
+                warn(`${path}.p`, `the probability of the quantile is needed, a number from 0 to 1, e.g. 0.9`);
+            else if (t.p !== undefined && t.op != 'quantile' && !isTemplate(t.op))
+                warn(`${path}.p`, `only of the op 'quantile', e.g. "op": "quantile", "p": 0.9`);
+        }
+        // the time format of a format
+        if (t.type == 'format' && typeof t.format != 'string')
+            warn(`${path}.format`, `the time format is needed, e.g. "%W" (the week of the year) or "%u" (the weekday)`);
+        // the x of a regression, its method and the degree of a polynomial
+        if (t.type == 'regression') {
+            if (typeof t.x != 'string')
+                warn(`${path}.x`, `the column of the x values is needed, e.g. "x": "gdp"`);
+            if (typeof t.as != 'string')
+                warn(`${path}.as`, `the name of the column of the fitted values is needed, e.g. "trend"`);
+            if (t.method !== undefined && !['linear', 'log', 'exp', 'poly'].includes(t.method) && !isTemplate(t.method))
+                warn(`${path}.method`, `unknown method '${t.method}'${choices(t.method, ['linear', 'log', 'exp', 'poly'])}`);
+            if (t.degree !== undefined && t.method != 'poly' && !isTemplate(t.method))
+                warn(`${path}.degree`, `only of the method 'poly', e.g. "method": "poly", "degree": 2`);
+            else if (t.degree !== undefined && ![2, 3].includes(t.degree) && !isTemplate(t.degree))
+                warn(`${path}.degree`, `the degree of the polynomial, 2 or 3`);
         }
         if (t.type == 'lookup') {
             if (typeof t.data != 'string' || t.data.includes('{'))
@@ -965,7 +991,7 @@ const checkTransforms = ({ def, globals, warn, rows }) => {
         }
         // the rows of the window of rolling and of the sums, means, least and
         // largest values of window, the offset of its other operations
-        if ((t.type == 'rolling' || (t.type == 'window' && ['sum', 'mean', 'min', 'max'].includes(t.op))) && !(Number.isInteger(t.size) && t.size > 0) && !isTemplate(t.size))
+        if ((t.type == 'rolling' || (t.type == 'window' && windowOps.includes(t.op))) && !(Number.isInteger(t.size) && t.size > 0) && !isTemplate(t.size))
             warn(`${path}.size`, `the number of the rows of the window is needed, e.g. 7`);
         if (t.type == 'window' && t.offset !== undefined && !(Number.isInteger(t.offset) && t.offset > 0) && !isTemplate(t.offset))
             warn(`${path}.offset`, `the number of the rows before or after the row, a positive integer, e.g. 1`);

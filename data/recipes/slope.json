@@ -1,0 +1,28 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "slope.csv",
+    "title": "Unemployment rate, 2015 and 2025",
+    "subtitle": "in % of the labour force, rising in red",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 420,
+    "width": 520,
+    "transform": [
+        {"type": "window", "column": "rate", "by": "country", "order": "year", "op": "diff", "as": "diff"},
+        {"type": "aggregate", "column": "diff", "by": "country", "op": "max", "as": "change"},
+        {"type": "calc", "as": "trend", "expr": "=@change > 0 ? 'rising' : 'falling'"}
+    ],
+    "dims": {
+        "x": {"column": "year", "type": "categorical", "scale": {"padding": 0}, "axis": {"position": "top", "tickMarks": false}},
+        "y": {"column": "rate", "name": "Unemployment rate", "format": ".1f", "axis": false},
+        "country": "country",
+        "trend": {"column": "trend", "categories": {"falling": "#7A8794", "rising": "#C3423F"}}
+    },
+    "hover": {"columns": ["country"]},
+    "marks": [
+        {"type": "line", "by": ["country", "trend"], "stroke-width": 2, "highlight": {"stroke-width": 3.5}},
+        {"type": "point", "by": ["country", "trend"], "r": 3.5},
+        {"type": "text", "by": ["country", "trend"], "select": "last", "dodge": 13, "dx": 8, "dominant-baseline": "middle", "text": "=cat(@country, '  ', format(@y, '.1f'))", "font-size": 11},
+        {"type": "text", "by": ["country", "trend"], "select": "first", "dodge": 13, "dx": -8, "dominant-baseline": "middle", "text-anchor": "end", "text": "=format(@y, '.1f')", "font-size": 11}
+    ]
+}

@@ -1,0 +1,32 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "contributions.csv",
+    "title": "Contributions to real GDP growth, 2025",
+    "subtitle": "in percentage points",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 320,
+    "transform": [
+        {"type": "calc", "as": "delta", "expr": "=@total == 'yes' ? null : @value"},
+        {"type": "cumulative", "column": "delta", "as": "end"},
+        {"type": "window", "column": "end", "op": "lag", "as": "start"},
+        {"type": "calc", "as": "from", "expr": "=@total == 'yes' ? 0 : (@start or 0)"},
+        {"type": "calc", "as": "to", "expr": "=@total == 'yes' ? @value : @end"},
+        {"type": "calc", "as": "top", "expr": "=max(@from, @to)"},
+        {"type": "calc", "as": "sign", "expr": "=@total == 'yes' ? 'Total' : (@value < 0 ? 'Decrease' : 'Increase')"}
+    ],
+    "dims": {
+        "x": {"column": "component", "type": "categorical", "order": "rows", "scale": {"padding": 0.25}},
+        "y": {"column": "to", "format": ".1f", "grid": true},
+        "sign": {"column": "sign", "legend": {"symbol": "rect"}, "categories": {"Increase": "#4B9847", "Decrease": "#C3423F", "Total": "#1E4F77"}},
+        "value": {"column": "value", "name": "Contribution", "format": "+.1f"}
+    },
+    "hover": {"value": false, "columns": ["value"]},
+    "annotations": {"type": "line", "y": 0},
+    "marks": [
+        {"type": "bar", "y0": "from", "fill": "sign"},
+        {"type": "rule", "filter": "@total != 'yes'", "y": "end", "x1": "=@x:scaled + @x:bandwidth", "x2": "=@x:scaled + @x:step",
+         "stroke": "#5F6670", "stroke-dasharray": "2 2"},
+        {"type": "label", "y": "top", "anchor": "top", "text": "=format(@value, '+.1f')", "font-size": 11}
+    ]
+}

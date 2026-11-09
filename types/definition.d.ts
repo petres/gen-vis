@@ -270,11 +270,12 @@ export interface GenVisDefinition {
  */
 export interface Transform {
     /**
-     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max) of a window of `size` rows.
+     * year: the year of a date, align: the date in the year `year`, index: relative to the mean of the base, mean: the mean of the base (all rows by default) of the group, share: of the sum of the group, rolling: the mean of `size` rows, cumulative: the sum up to the row, calc: the value of the expression `expr` of the row, filter: only the rows whose expression `expr` is true, rank: the rank in the group, random: a random number of the row in `range`, the same of every draw (`seed`), lookup: the `value` of the row of a file of `data` of the `key`, bin: a row per class of `edges` and group of `by` with its `start`, `end` and the number of the values of `column` in it (`as`), after the rows or instead of them (`replace`), fold: wide to long, a row per row and column of `columns` with its name (`key`) and its value (`value`), aggregate: the `op` (sum, mean, median, q1, ...) of the values of the group, a column or a row per group (`rows`), window: the value `offset` rows before or after the row (`op` lag, lead, diff, pct) or the `op` (sum, mean, min, max, median, ...) of a window of `size` rows, regression: the value of the least squares fit of `column` on `x` in the group (`method`), e.g. a trend line, format: the text of a date in a time `format`, e.g. %W the week of the year.
      */
     type:
         | 'year'
         | 'align'
+        | 'format'
         | 'index'
         | 'mean'
         | 'share'
@@ -288,7 +289,8 @@ export interface Transform {
         | 'bin'
         | 'fold'
         | 'aggregate'
-        | 'window';
+        | 'window'
+        | 'regression';
     /**
      * The column of the values, a template of the globals, of a lookup the one of the keys.
      */
@@ -407,9 +409,28 @@ export interface Transform {
      */
     columns?: string | string[];
     /**
-     * aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max of the window of `size` rows.
+     * aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, q1 and q3 (the lower and the upper quartile), quantile (of `p`), first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max, median, q1, q3, quantile of the window of `size` rows.
      */
-    op?: 'sum' | 'mean' | 'min' | 'max' | 'count' | 'median' | 'first' | 'last' | 'lag' | 'lead' | 'diff' | 'pct';
+    op?:
+        | 'sum'
+        | 'mean'
+        | 'min'
+        | 'max'
+        | 'count'
+        | 'median'
+        | 'q1'
+        | 'q3'
+        | 'quantile'
+        | 'first'
+        | 'last'
+        | 'lag'
+        | 'lead'
+        | 'diff'
+        | 'pct';
+    /**
+     * aggregate and window of the op quantile: the probability, from 0 to 1, e.g. 0.9 of the 90th percentile; interpolated between the two nearest values (R-7, as median, q1 and q3).
+     */
+    p?: number;
     /**
      * aggregate: a row per group instead of a column, with the columns `by` and `as`, the rows replace the rows.
      */
@@ -422,6 +443,22 @@ export interface Transform {
      * The year of align, 2020 by default.
      */
     year?: number;
+    /**
+     * format: the time format (d3-time-format) of the dates of `column`, e.g. %W (the week of the year from Monday, 00 to 53), %u (the weekday, 1 is Monday), %m (the month), %q (the quarter), %Y-%m (a month of a year); the names of months and days (%b, %a) are English.
+     */
+    format?: string;
+    /**
+     * regression: the column of the x values, numbers or dates.
+     */
+    x?: string;
+    /**
+     * regression: the curve fitted, linear (y = a + bx), log (y = a + b ln x, of x > 0), exp (y = a e^(bx), of y > 0) or poly (a polynomial of `degree`).
+     */
+    method?: 'linear' | 'log' | 'exp' | 'poly';
+    /**
+     * regression: the degree of the polynomial of the method poly, 2 by default.
+     */
+    degree?: number;
 }
 /**
  * An operator, an object of one key, the operator, and its arguments, e.g. { "*": ["@innerWidth", 0.5] } or { "steps": ["@totalWidth", { "0": 220, "550": 250 }] }; the string syntax writes it as "=@innerWidth * 0.5", see spec/expressions.md of the package.
@@ -642,6 +679,10 @@ export interface Hover {
      * false: no line of the position of the hover.
      */
     marker?: boolean;
+    /**
+     * true: a crosshair, a horizontal and a vertical line across the plot area through the point of the nearest row (of a stacked value the end of its stack), instead of the line of the position, e.g. to read the value at the axis; of cartesian charts, also of the hover of points.
+     */
+    cross?: boolean;
     /**
      * true: a hover also without rows, e.g. the name of a region without a value.
      */
@@ -1247,7 +1288,7 @@ export interface CategoryProps1 {
  */
 export interface Mark {
     /**
-     * The type of the mark, line, area, bar, rule, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ.
+     * The type of the mark, line, area, bar, rule, tick, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ.
      */
     type?:
         | `=${string}`
@@ -1266,6 +1307,7 @@ export interface Mark {
               | 'region'
               | 'rule'
               | 'text'
+              | 'tick'
           )
         | (
               | 'svg:circle'
@@ -1348,6 +1390,10 @@ export interface Mark {
      * Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position, with `stack` a stack per slot; texts, points and rules (true or a dim): at the middle of the slot of their category, e.g. labels or error bars of dodged bars; texts (a number): the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines.
      */
     dodge?: boolean | string | number;
+    /**
+     * tick: its length, the share of the band of its category (or of the slot of a dodged one), 1 by default, e.g. 0.5 of a target narrower than its bar.
+     */
+    size?: number;
     /**
      * Bars: horizontal bars (the values of x, the categories of y), by default of a categorical y or of a continuous x (e.g. zero) and a y which is not.
      */
@@ -1495,6 +1541,7 @@ export interface Mark {
         | 'region'
         | 'rule'
         | 'text'
+        | 'tick'
         | 'svg:circle'
         | 'svg:line'
         | 'svg:rect'

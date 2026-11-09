@@ -97,6 +97,20 @@ builds and dependencies. The design is in `docs/design-5.0.md`.
   the warnings of its check say that their paths are the ones of 5.0). In
   a chain of parents of parts of 4.x and 5.0 every part of 4.x is migrated
   before the merge (with the parts of 4.x before it as its parents).
+- The mark `tick`: a short rule at the value across the band of its
+  category (`size`, the share of the band, 1 by default), vertical across
+  the band of a categorical `y`, across the slot of a dodged one; e.g. the
+  median of a box plot, the target of a bullet chart, a strip plot.
+- Arrowheads: `"marker-end": "arrow"` (or `marker-start`) of a rule, a
+  line or an annotation line draws an arrowhead in the color of its stroke,
+  a `<marker>` per color in the defs of the svg, also in the exports.
+- `hover.cross`: a crosshair through the point of the nearest row, a
+  horizontal and a vertical dashed line across the plot area instead of the
+  line of the position (`vis-hover-cross`, `--gen-vis-cross-color`), also
+  of the hover of points.
+- A channel naming the column of the dim of its axis is that dim (`"x":
+  "year"` of a dim `x` of the column `year`), not a second dim of the
+  same column with categories of its own.
 
 Removed keys: `options`, `mapping`, `plot`, the `props` of a plot,
 `formElements`, `patch` (and the `ref` of a form element), `domainRel`
@@ -275,6 +289,17 @@ per group with `rows`) and `window` (`lag`, `lead`, `diff`, `pct` of
 `offset` rows, or `sum`, `mean`, `min`, `max` of a window of `size` rows,
 of which `rolling` is a case). The transforms of rows share one mechanism,
 their rows replace the rows or follow them. Fixtures in `spec/transforms`.
+
+- The quartiles and quantiles of `aggregate` and `window`: `q1`, `q3` and
+  `quantile` of `p` (0 to 1), interpolated as the `median` (R-7), e.g. the
+  box and the whiskers of a box plot; `median` also of a window, a rolling
+  median.
+- The transform `regression`: the least squares fit of `column` on `x`
+  (numbers or dates) per group, `linear`, `log`, `exp` or `poly` (of
+  `degree` 2 or 3), the fitted value of every row, e.g. trend lines of a
+  scatter plot drawn as a `line` of the fitted column.
+- The transform `format`: the text of a date in a time format, e.g. the
+  week of the year (`%W`) and the weekday (`%u`) of a calendar heatmap.
 
 ### Schema, check and migration
 
