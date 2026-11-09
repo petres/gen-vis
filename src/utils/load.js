@@ -20,7 +20,7 @@ import { symbolDefaults } from "@/utils/defaults";
 
 // the load of a visualisation: its definition with its parents, the parts
 // of the package it needs, its data and the files and geometries of it and
-// of its patches, see Store.init of store.js
+// of the values of its controls (see variants), see Store.init of store.js
 
 // relative urls are resolved against `base`, e.g. the url of the def referencing them
 const resolveUrl = (url, base = document.baseURI) => new URL(url, base).href;
@@ -177,7 +177,8 @@ const loadValidator = () => validator ??= lazy.validate().catch(error => {
 // prepared definition: only the ones of `include`, without the ones of
 // `exclude`, they are not drawn at all, the borders of the objects of
 // TopoJSON (`mesh`) and the projections of the facets, see coords/geo.js,
-// `source` are the parts it depends on, a patch of them makes a new one
+// `source` are the parts it depends on, a global which changes them makes
+// a new one
 const geoParts = g => JSON.stringify([geoData(g), g?.key ?? 'id', g?.object ?? null, g?.include ?? null, g?.exclude ?? null]);
 // the key of the geometry of the part `geo`, its url or itself, see loadGeometries
 const geoData = g => typeof g?.data == 'string' ? g.data : JSON.stringify(g?.data ?? null);
@@ -204,8 +205,7 @@ const geoOf = (module, json, def = {}) => {
 
 /**
  * The parts of the package a definition needs, loaded with its data, also
- * the ones of the patches of the entries of its form elements (see
- * variants): the colors of d3 (`colors`, of schemes and interpolators, not
+ * the ones of the other values of its controls (see variants): the colors of d3 (`colors`, of schemes and interpolators, not
  * of the schemes registered by the page), the
  * coordinate systems (`coords`, the one of the definition first, undefined
  * for the default), the parts of maps (`geo`), the transforms, the legend
@@ -386,7 +386,7 @@ const loadRows = async (defOrg, url, data) => {
 const headers = new WeakMap();
 
 // the data of plots of their own, e.g. events, and of the lookups of
-// transforms, also of the patches of form elements, by their url relative
+// transforms, also of the other values of the controls, by their url relative
 // to the def, the rows are not evaluated as the ones of the definition, see
 // layout.js
 const loadFiles = async (defOrg, url) => {
@@ -409,8 +409,8 @@ const loadFiles = async (defOrg, url) => {
  * the columns of the transforms. The form elements can have the values of
  * the data, the state needs them. The transforms of the globals of the
  * state are computed before the mappings, their categories can be the ones
- * of a transform, and again after them, e.g. of a patch of a scale of dates
- * to utc, the entries of the legends are the ones of the state, e.g. of the
+ * of a transform, and again after them, e.g. of a global of a scale of
+ * dates to utc, the entries of the legends are the ones of the state, e.g. of the
  * categories of another column.
  */
 // the format of the names of the values of a form element of a column
@@ -449,7 +449,7 @@ const prepare = (defOrg, source, rows, files, state, globals, symbols = {}) => {
     // their names in the language and locale of the definition prepared
     const language = languageOf(prepared.options, prepared.globals);
     // a global which is none of the new values is the last one, the
-    // definition patched again with it, e.g. of a filter
+    // definition resolved again with it, e.g. of a filter
     if ((columns.steps.length > 0 || language !== undefined)
         && updateDataValues(defOrg, prepared, rows, columns, valueFormat(prepared.options?.locale), () => true, language,
             ref => globals?.[ref] !== undefined).length > 0) {
@@ -518,9 +518,9 @@ const columnReferences = (prepared, rows, columns) => {
     return warnings;
 };
 
-// the geometries of maps of the definition and of the patches of its form
-// elements, of the url of GeoJSON or TopoJSON or itself, by their key (see
-// geoData), a patch can switch to another one, e.g. of other regions
+// the geometries of maps of the definition and of the other values of its
+// controls, of the url of GeoJSON or TopoJSON or itself, by their key (see
+// geoData), a control can switch to another one, e.g. of other regions
 const loadGeometries = async (defOrg, url) => {
     const data = [...new Map(variants(defOrg).filter(d => d.geo?.data).map(d => [geoData(d.geo), d.geo.data])).entries()];
     return new Map(await Promise.all(data.map(async ([key, json]) => {
@@ -544,7 +544,8 @@ const loadGeo = (geometries, module, prepared) => {
 // plots and transforms and the geometries of maps (an error of one is the
 // one of the load, the others are handled by Promise.all), the prepared
 // definition and the geometry of its map. The coordinate systems and the
-// geometries of all patches are kept, a form element can switch them.
+// geometries of all values of the controls are kept, a control can switch
+// them.
 const load = async ({ def = null, defUrl = null, data = null, state = null, globals = null, check = false, defaults: chartDefaults = null }) => {
     const { url, defOrg, source, validate } = await resolveDef({ def, defUrl, data, check });
     let loaded;

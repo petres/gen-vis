@@ -114,7 +114,7 @@ const checkLocale = tag => {
 };
 
 // a locale which can be used: a built-in one or a loaded one of Intl, e.g.
-// a language of the texts as the locale, see applyPatches of utils/def.js
+// a language of the texts as the locale, see applyResolved of utils/def.js
 const hasLocale = tag => typeof tag == 'string' && (Object.hasOwn(locales, tag) || intlLocales.has(tag));
 
 // the tag of the base of a locale, see getLocale

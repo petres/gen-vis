@@ -32,12 +32,14 @@ class Store {
     // the definition of gen-vis 5 with its expressions of the globals, see
     // utils/resolve.js and applyResolved of utils/def.js
     source = null;
-    // the coordinate system of the definition, of a patch its one, of the
-    // ones loaded by their name (`coords`), see applyFormElements
+    // the coordinate system of the definition, of the values of its globals
+    // the one of them, of the ones loaded by their name (`coords`), see
+    // applyFormElements
     coord = null;
     coords = null;
     // the map of the definition, see geoOf, of the module of maps and of the
-    // geometries of all patches by their key, see loadGeometries
+    // geometries of all values of the controls by their key, see
+    // loadGeometries of utils/load.js
     geo = null;
     geoModule = null;
     // the placement of labels inside of bands, loaded for them, see plots/inside.js
@@ -47,7 +49,8 @@ class Store {
     rows = null;
     // the columns of the transforms, see utils/transform.js
     columns = null;
-    // the rows of the files of plots by their url, see applyPatches
+    // the rows of the files of plots by their url, see applyResolved of
+    // utils/def.js
     files = null;
     data = null;
     defaults = null;
@@ -82,8 +85,8 @@ class Store {
 
     get loaded() { return this.def !== null && this.data !== null }
 
-    // the formatters of the locale of the definition, also of a patch, e.g.
-    // of a form element of the language, see utils/locale.js
+    // the formatters of the locale of the definition, also of a global,
+    // e.g. of a control of the language, see utils/locale.js
     get locale() { return localeOf(this.def?.options?.locale) }
 
     // the changes of the user compared to the definition, see utils/state.js
@@ -202,14 +205,14 @@ class Store {
         this.loading = false;
     }
 
-    // the parts of the definition patched by the entries of the form
-    // elements, see applyPatches, the columns of patched mappings might have
-    // changed, and the ones of transforms of the globals, e.g. an index of a
-    // base year, the transforms are computed from the first one of a changed
-    // global before the mappings, their categories can be the ones of a
-    // transform, and again after them, e.g. of a patch of a scale of dates to
-    // utc, `keepVisible` keeps the entries shown or hidden of the mappings
-    // prepared again
+    // the parts of the definition of the values of the globals (of the
+    // controls), see applyResolved of utils/def.js, the columns of mappings
+    // might have changed, and the ones of transforms of the globals, e.g. an
+    // index of a base year, the transforms are computed from the first one of
+    // a changed global before the mappings, their categories can be the ones
+    // of a transform, and again after them, e.g. of a global of a scale of
+    // dates to utc, `keepVisible` keeps the entries shown or hidden of the
+    // mappings prepared again
     applyFormElements(keepVisible = true) {
         const changedColumns = new Set();
         const transform = () => {
@@ -257,7 +260,7 @@ class Store {
             this.data = raw(prepareData(this.rows, this.def, this.columns));
         else if (changed.length > 0)
             this.data = raw(updateData(this.rows, this.data, this.def, changed, this.columns));
-        // the coordinate system of a patch, e.g. polar instead of cartesian
+        // the coordinate system of a global, e.g. polar instead of cartesian
         const coord = this.coords?.get(this.def.options.coord ?? 'cartesian');
         if (coord && coord !== this.coord)
             this.coord = coord;

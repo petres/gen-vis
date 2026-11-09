@@ -142,7 +142,7 @@ const createVis = app => {
     };
 
     // the mappings of the legends by their position, `top` by default, a
-    // form element can patch them
+    // global can change them
     const legendsAt = () => {
         const at = { top: [], bottom: [], left: [], right: [] };
         // a prop of the width of the visualisation, e.g. below the plots of a phone
@@ -156,8 +156,8 @@ const createVis = app => {
         return at;
     };
     // the text instead of the plots: `options.message`, a prop of the
-    // globals and the width, e.g. steps of `totalWidth` or a patch of a
-    // form element, or `options.empty` without rows
+    // globals and the width, e.g. steps of `totalWidth` or a global of a
+    // control, or `options.empty` without rows
     const messageOf = () => {
         const scope = { ...store.scope, totalWidth: width };
         const message = store.text(evaluate(options().message ?? null, scope));

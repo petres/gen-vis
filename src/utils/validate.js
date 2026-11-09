@@ -722,7 +722,8 @@ const checkAnnotations = ctx => {
 const checkFormElements = ({ formElements, warn }) => {
     formElements.forEach(([i, e]) => {
         const path = `formElements[${i}]`;
-        // parts of entries are patches of a parent, the merged ones are complete
+        // parts of entries are merged into the ones of a parent (by their
+        // id), the merged ones are complete
         if (typeof e.ref != 'string')
             warn(`${path}.ref`, `no global`);
         // a list of entries or the values of a column of the data

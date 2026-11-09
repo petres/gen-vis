@@ -630,8 +630,8 @@ const conditionValues = (c, scope) => {
 
 /**
  * The columns of the data a definition can use, null if they are not known:
- * the ones of the mappings, also of the patches of form elements, and of the
- * values of form elements. A column template is a column of every value of
+ * the ones of the mappings, also of the other values of the controls (see
+ * variants), and of the values of the controls. A column template is a column of every value of
  * its globals, e.g. "{values}{share}" of the entries of two form elements,
  * a global of a form element with the values of a column has unknown ones.
  */
@@ -887,8 +887,8 @@ const formatType = m => [m.format, m.axis?.format, m.hover?.format, m.legend?.fo
  * The types of the mappings without a type of the values of their columns
  * (see inferType, of a column without values see formatType), of the rows
  * and the columns of the transforms, a column template of the globals, also
- * the ones of the mappings of patches which are not mappings of the
- * definition, the definition is changed. Only the columns which are `known`
+ * the ones of the mappings of the other values of the controls which are
+ * not mappings of the definition, the definition is changed. Only the columns which are `known`
  * (all by default), e.g. of the check of the definition.
  */
 // the types of the columns of a source of values (the rows of the data or
@@ -914,7 +914,7 @@ const inferTypes = (def, rows, columns = null, known = () => true) => {
         m.type = types.get(key) ?? (hint && formatType(m) != 'date' ? 'numeric' : formatType(m));
     };
     Object.values(def.mapping ?? {}).forEach(infer);
-    variants(def).slice(1).forEach(patch => Object.entries(isObject(patch.mapping) ? patch.mapping : {})
+    variants(def).slice(1).forEach(variant => Object.entries(isObject(variant.mapping) ? variant.mapping : {})
         .filter(([n]) => !Object.hasOwn(def.mapping ?? {}, n)).forEach(([, m]) => infer(m)));
 };
 
