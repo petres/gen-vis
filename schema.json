@@ -495,6 +495,11 @@
                     "default": true
                 },
                 "marker": { "type": "boolean", "description": "false: no line of the position of the hover.", "default": true },
+                "cross": {
+                    "type": "boolean",
+                    "description": "true: a crosshair, a horizontal and a vertical line across the plot area through the point of the nearest row (of a stacked value the end of its stack), instead of the line of the position, e.g. to read the value at the axis; of cartesian charts, also of the hover of points.",
+                    "default": false
+                },
                 "empty": {
                     "type": "boolean",
                     "description": "true: a hover also without rows, e.g. the name of a region without a value.",

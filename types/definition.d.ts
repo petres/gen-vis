@@ -675,6 +675,10 @@ export interface Hover {
      */
     marker?: boolean;
     /**
+     * true: a crosshair, a horizontal and a vertical line across the plot area through the point of the nearest row (of a stacked value the end of its stack), instead of the line of the position, e.g. to read the value at the axis; of cartesian charts, also of the hover of points.
+     */
+    cross?: boolean;
+    /**
      * true: a hover also without rows, e.g. the name of a region without a value.
      */
     empty?: boolean;

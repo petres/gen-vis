@@ -104,6 +104,10 @@ builds and dependencies. The design is in `docs/design-5.0.md`.
 - Arrowheads: `"marker-end": "arrow"` (or `marker-start`) of a rule, a
   line or an annotation line draws an arrowhead in the color of its stroke,
   a `<marker>` per color in the defs of the svg, also in the exports.
+- `hover.cross`: a crosshair through the point of the nearest row, a
+  horizontal and a vertical dashed line across the plot area instead of the
+  line of the position (`vis-hover-cross`, `--gen-vis-cross-color`), also
+  of the hover of points.
 
 Removed keys: `options`, `mapping`, `plot`, the `props` of a plot,
 `formElements`, `patch` (and the `ref` of a form element), `domainRel`

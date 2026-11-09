@@ -277,6 +277,22 @@ export default {
             return isVertical(ctx, names) ? [p[1], p[0]] : p;
         },
 
+        // the crosshair of `hover.cross`: a horizontal and a vertical line
+        // across the plot area through the point of the row, of a stacked
+        // value at the end of its stack (the value read at the axis), at
+        // the half pixel of the ticks
+        cross(ctx, row, names, [horizontal, vertical]) {
+            const [h, v] = [ctx.scales[names.h], ctx.scales[names.v]];
+            const value = ctx.stackOf && ctx.isStacked?.(row) ? ctx.stackOf(row)[1] : row[names.v];
+            const p = [centerOf(h, row[names.h]), v(value) + bandCenter(v)];
+            const [x, y] = (isVertical(ctx, names) ? [p[1], p[0]] : p).map(c => c + pixelOffset());
+            if (!Number.isFinite(x) || !Number.isFinite(y))
+                return false;
+            placeLine(horizontal, 0, y, ctx.innerWidth, y);
+            placeLine(vertical, x, 0, x, ctx.innerHeight);
+            return true;
+        },
+
         // a vertical line, the hover is beside it, on the side with more
         // space, of vertical positions a horizontal line, the hover above or
         // below it

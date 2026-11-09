@@ -236,6 +236,12 @@
     stroke-width: 0.75px;
     stroke: var(--gen-vis-marker-color, #9AA0A8);
 }
+/* the crosshair of hover.cross, thin and dashed in the color of the axes */
+.vis-facet svg g.vis-hover-marker line.vis-hover-cross {
+    stroke-width: 1px;
+    stroke-dasharray: 3 3;
+    stroke: var(--gen-vis-cross-color, var(--gen-vis-marker-color, #9AA0A8));
+}
 
 /* the hover, a card */
 .vis-hover {

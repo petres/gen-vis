@@ -157,6 +157,7 @@ const definitions = {
         filter: conditions('The rows with a hover, e.g. not the ones of headers, an expression of the row or the values of dims.'),
         box: boolean('false: no box of the hover, its highlight and the events stay, e.g. a hover of the highlight only.', { default: true }),
         marker: boolean('false: no line of the position of the hover.', { default: true }),
+        cross: boolean('true: a crosshair, a horizontal and a vertical line across the plot area through the point of the nearest row (of a stacked value the end of its stack), instead of the line of the position, e.g. to read the value at the axis; of cartesian charts, also of the hover of points.', { default: false }),
         empty: boolean('true: a hover also without rows, e.g. the name of a region without a value.', { default: false }),
         position: option(['marker', 'pointer'], 'The hover is beside the marker of the position (or the center of a region) or at the pointer.', { default: 'marker' }),
         side: option(['left', 'right', 'above', 'below', 'center'], 'The side of the hover, by default the one with more space, center on the position, e.g. in the center of a polar plot.'),

@@ -1932,6 +1932,13 @@ of a scatter plot above its x and y.
   elements (see [highlight](#highlight-and-others)) and the events stay,
   e.g. a larger circle with its value as the hover of a row of bars.
 - `marker`: `false` leaves out the line of the position.
+- `cross`: `true` draws a crosshair instead of the line of the position: a
+  horizontal and a vertical line across the plot area through the point of
+  the nearest row (of a stacked value the end of its stack), e.g. to read
+  the value of a line or of a point of a scatter plot (`"mode": "point"`)
+  at the axes; thin and dashed (`vis-hover-cross`, in the color of
+  `--gen-vis-cross-color`, by default the one of the marker), of cartesian
+  charts.
 - `position`: the hover is beside the marker of the position, of a map the
   center of the region (`marker`, the default), or at the pointer
   (`pointer`, it moves with it, by the keyboard it is at the marker).

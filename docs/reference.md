@@ -230,6 +230,7 @@ See [definition.md](definition.md#hover).
 | `filter` | expression \| condition |  | The rows with a hover, e.g. not the ones of headers, an expression of the row or the values of dims. |
 | `box` | boolean | `true` | false: no box of the hover, its highlight and the events stay, e.g. a hover of the highlight only. |
 | `marker` | boolean | `true` | false: no line of the position of the hover. |
+| `cross` | boolean | `false` | true: a crosshair, a horizontal and a vertical line across the plot area through the point of the nearest row (of a stacked value the end of its stack), instead of the line of the position, e.g. to read the value at the axis; of cartesian charts, also of the hover of points. |
 | `empty` | boolean | `false` | true: a hover also without rows, e.g. the name of a region without a value. |
 | `position` | expression \| `"marker"`, `"pointer"` | `"marker"` | The hover is beside the marker of the position (or the center of a region) or at the pointer. |
 | `side` | expression \| `"left"`, `"right"`, `"above"`, `"below"`, `"center"` |  | The side of the hover, by default the one with more space, center on the position, e.g. in the center of a polar plot. |
