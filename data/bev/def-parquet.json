@@ -4,29 +4,14 @@
     "data": "data.parquet",
     "title": "Bevölkerung",
     "subtitle": "nach Bundesland, gestapelt, aus einer Parquet-Datei",
-    "margins": {"top": 10, "right": 10, "bottom": 30, "left": 80},
     "filter": "@land != 'ÖSTERREICH'",
     "dims": {
-        "x": {"scale": {"pad": [0, 0]}},
-        "y": {"scale": {"pad": [0, 0.05]}},
-        "land": {
-            "legend": {"symbol": {"type": "rect", "size": 14}},
-            "categories": {"ÖSTERREICH": {"legend": false}}
-        }
+        "x": { "pad": 0 },
+        "y": { "pad": [0, 0.05] },
+        "land": { "legend": { "symbol": { "type": "rect", "size": 14 } }, "categories": { "ÖSTERREICH": { "legend": false } } }
     },
-    "marks": [
-        {
-            "type": "area",
-            "by": "land",
-            "curve": "monotoneX",
-            "layer": "below",
-            "stack": true,
-            "fill-opacity": 0.85,
-            "stroke": "white",
-            "stroke-width": 0.8,
-            "d": {"y0": "@y:start:scaled"},
-            "highlight": {"fill-opacity": 1},
-            "others": {"fill-opacity": 0.35}
-        }
-    ]
+    "marks": {
+        "type": "area", "by": "land", "stack": true, "curve": "monotoneX", "layer": "below",
+        "fill-opacity": 0.85, "stroke": "white", "stroke-width": 0.8, "highlight": { "fill-opacity": 1 }, "others": { "fill-opacity": 0.35 }
+    }
 }
