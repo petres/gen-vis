@@ -1,6 +1,6 @@
 // the images (PNG, SVG) and the CSV of a visualisation, loaded with the
 // first one, see comp/app.js, the SVG is composed by utils/export-svg.js
-export { selection, staticCopy, parts, selectParts, partsBox, backgroundOf, renderImage, renderSvg, saveFile, csvOf, defaultWidth, padding };
+export { selection, staticCopy, parts, selectParts, partsBox, backgroundOf, renderImage, renderSvg, saveFile, csvOf, csvCell, defaultWidth, padding };
 
 import { facetMappings } from "@/utils/normalize";
 import * as d3 from "@/utils/d3";
@@ -226,16 +226,23 @@ const saveFile = (blob, name) => {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
+// a text of a cell which a spreadsheet would read as a formula (=, +, -, @,
+// a tab or a carriage return first, e.g. "=HYPERLINK(...)" of the data of
+// someone else) with a ' before it, so it is a text; numbers stay as they
+// are, also negative ones and ones of a string, e.g. "-1.5"
+const csvCell = value => typeof value == 'string' && value.length > 1 && /^[=+\-@\t\r]/.test(value)
+    && !/^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(value) ? `'${value}` : value;
+
 // the rows shown as CSV, in the columns of the mappings, the values as the
 // ones of the data, e.g. dates as they are in the file, also the columns of
-// transforms
+// transforms; the names and the texts guarded by csvCell
 const csvOf = (store, rows) => {
     const positions = new Map(store.data.map((r, i) => [r, i]));
     const columns = [...new Set(Object.values(store.def.mapping).map(m => m.column).filter(c => typeof c == 'string'))];
     const values = columns.map(c => columnValues(store.rows, store.columns, c));
     return d3.csvFormat(rows.map(r => {
         const i = positions.get(r);
-        return Object.fromEntries(columns.map((c, j) => [c, values[j](i)]));
-    }), columns);
+        return Object.fromEntries(columns.map((c, j) => [csvCell(c), csvCell(values[j](i))]));
+    }), columns.map(csvCell));
 };
 

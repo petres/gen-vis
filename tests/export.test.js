@@ -7,7 +7,7 @@
 import { describe, test, expect, vi, beforeAll } from 'vitest';
 import { createGenVis } from '@/index.js';
 import { composeSvg } from '@/utils/export-svg.js';
-import { selection } from '@/utils/export.js';
+import { selection, csvCell } from '@/utils/export.js';
 import { errors, useDom, rendered } from './dom.js';
 
 useDom();
@@ -402,5 +402,14 @@ describe('legend entries without a symbol', () => {
             expect(texts(svg)).toEqual(['Wien']);
         }
         expect(errors).toEqual([]);
+    });
+});
+
+describe('the cells of the CSV', () => {
+    test('texts a spreadsheet would read as a formula get a \' before them, numbers stay', () => {
+        expect(['=1+2', '+A1', '-A1', '@SUM(A1)', '\tx', '\r=1', '=HYPERLINK("http://x")'].map(csvCell))
+            .toEqual(["'=1+2", "'+A1", "'-A1", "'@SUM(A1)", "'\tx", "'\r=1", '\'=HYPERLINK("http://x")']);
+        expect(['-1.5', '+3', '-.5', '-1e3', '-', '=', 'Wien', 'a=b', '', null, -2, 3].map(csvCell))
+            .toEqual(['-1.5', '+3', '-.5', '-1e3', '-', '=', 'Wien', 'a=b', '', null, -2, 3]);
     });
 });

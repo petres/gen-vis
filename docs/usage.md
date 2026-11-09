@@ -381,7 +381,9 @@ keys (`keys` of the locale), and they read the hover when the keys move it
 The data shown can be saved as CSV: the button of `csv` or the method
 `exportCsv(name)` save the rows shown (of the visible categories and the
 filter) in the columns of the dims, with the values as they are in the
-data.
+data. A text which a spreadsheet would read as a formula (starting with
+`=`, `+`, `-`, `@`, a tab or a carriage return, e.g. `=HYPERLINK(...)`)
+gets a `'` before it; numbers, also negative ones, stay as they are.
 
 ## State
 
