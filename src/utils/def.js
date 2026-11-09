@@ -46,8 +46,29 @@ const mergeMappings = (target, source, options) => {
     Object.keys(s).filter(k => Object.hasOwn(t, k)).forEach(k => {
         t[k] = columnOf(t[k], s[k]);
         s[k] = columnOf(s[k], t[k]);
+        t[k] = withoutOtherTicks(t[k], s[k]);
     });
     return deepMerge(t, s, options);
+};
+// the number of the ticks of an axis and their distance (`ticks`,
+// `tickSpacing`, of the dim or of its axis) are one choice: the one of a
+// later part replaces the other one of an earlier part, e.g. a child of
+// tickSpacing of a parent of ticks (of which ticks would win)
+const tickKeys = ['ticks', 'tickSpacing'];
+const withoutOtherTicks = (target, source) => {
+    if (!isObject(target) || !isObject(source))
+        return target;
+    const given = tickKeys.filter(k => source[k] !== undefined || (isObject(source.axis) && source.axis[k] !== undefined));
+    if (given.length != 1)
+        return target;
+    const other = tickKeys.find(k => k != given[0]);
+    const t = { ...target };
+    delete t[other];
+    if (isObject(t.axis)) {
+        t.axis = { ...t.axis };
+        delete t.axis[other];
+    }
+    return t;
 };
 // the attributes of marks and annotations are expressions of the rows, a
 // `match` of them is no switch of a global: no leaf merge in them

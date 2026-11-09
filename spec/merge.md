@@ -84,6 +84,9 @@ The parts are merged in their order, a later part overrides an earlier one
   of a switch) is a part of the definition: its own expressions of the
   globals are evaluated, e.g. a switch in the `format` of an axis which is
   the default of a switch of the whole axis.
+- `ticks` and `tickSpacing` of a dim (or of its axis) are one choice: a
+  part which gives one of them removes the other one of the parts before
+  it, e.g. a child of a distance over a parent of a number of ticks.
 - All other values replace the earlier one, also arrays (of numbers, strings
   or of entries of which one has none of the keys, or of different keys),
   `null` (it stays in the merged definition) and an object of an array or of

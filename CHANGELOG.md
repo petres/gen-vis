@@ -221,6 +221,8 @@ are not in the margins.
   CLI (was a screenshot of the DOM of `modern-screenshot`).
 - A mark without `by` highlights the element of the row under the pointer
   (it had no highlight), e.g. a bar of horizontal bars.
+- `ticks` and `tickSpacing` of a dim are one choice in the merge: the one
+  of a child replaces the other of a parent (`ticks` of a parent won).
 - The corners as anchors of labels: `top-end` (above and after the
   position), `top-start`, `bottom-end`, `bottom-start`.
 - A number at `x` or `y` of a point or a text of a cartesian chart is a

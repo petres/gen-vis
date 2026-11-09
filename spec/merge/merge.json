@@ -1506,5 +1506,37 @@
         }
       ]
     }
+  },
+  {
+    "name": "the ticks of an axis and their distance are one choice: the one of a later part replaces the other of an earlier part",
+    "parts": [
+      {
+        "dims": {
+          "x": {
+            "column": "date",
+            "ticks": 5,
+            "axis": {
+              "ticks": 5
+            }
+          }
+        }
+      },
+      {
+        "dims": {
+          "x": {
+            "tickSpacing": 80
+          }
+        }
+      }
+    ],
+    "result": {
+      "dims": {
+        "x": {
+          "column": "date",
+          "axis": {},
+          "tickSpacing": 80
+        }
+      }
+    }
   }
 ]
