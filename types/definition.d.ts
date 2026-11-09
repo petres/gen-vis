@@ -611,7 +611,7 @@ export interface ControlValue {
  */
 export interface Hover {
     /**
-     * The dims of the hover beside the value of the position (its rows of their values, in this order), by default the dims the marks use, of their `by` and their positions (not the ones of the facets); a dim with a `hover` of its own is in it as well, [] only those.
+     * The dims of the hover beside the value of the position (its rows of their values, in this order), by default the dims the marks use, of their `by` and their positions x and y (not the ends of ranges, not the ones of the facets); a dim with a `hover` of its own is in it as well, [] only those.
      */
     columns?: string[];
     /**

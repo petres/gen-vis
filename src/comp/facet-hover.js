@@ -342,42 +342,46 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // the rows of the table from the top to the bottom, stacks as they
         // are drawn, the cells are a cell per hover prop of the categories,
         // e.g. their name, and the value
-        const entriesOf = (rows, nearest) => rows.map(row => {
-            const cells = [];
-            // the values of the mappings with `"cell": false` are names of
-            // the templates, without a cell of the table
-            const celled = n => store.mapping(n).hover.cell !== false;
-            const entries = Object.fromEntries(categories.map(n => {
-                const values = evaluate(store.mapping(n).hover.props, { ...scope, ...store.prop(n, row[n]) });
-                const texts = Object.fromEntries(Object.entries(values).map(([k, t]) => [k, store.text(t)]));
-                // of a point the categories are the title, see pointTitle
-                Object.entries(texts).filter(([, t]) => t !== null && t !== undefined && celled(n) && !(pointMode && names.h))
-                    .forEach(([k, t]) => cells.push({ mapping: n, prop: k == 'name' ? null : k, text: t }));
-                return [n, texts];
-            }));
-            entries[v] = { value: row[v], name: format.v(row[v]) };
-            // of a point (a scatter plot) the horizontal value is a cell, the title names the categories
-            if (pointMode && names.h && categories.length > 0) {
-                entries[names.h] = { value: row[names.h], name: format.h(row[names.h]) };
-                cells.push({ mapping: names.h, value: true, text: entries[names.h].name, label: labelOf(names.h) });
-            }
-            if (valueCell)
-                cells.push({ mapping: v, value: true, text: entries[v].name, label: labelOf(v) });
-            others.forEach(n => {
-                entries[n] = { value: row[n], name: row[n] === null ? '' : formats[n](row[n]) };
-                if (celled(n))
-                    cells.push({ mapping: n, value: true, text: entries[n].name, label: labelOf(n) });
+        const entriesOf = (rows, nearest) => {
+            // the other dims with a value in a row of the hover, a column of no values is none
+            const present = new Set(others.filter(n => rows.some(r => r[n] !== null && r[n] !== undefined)));
+            return rows.map(row => {
+                const cells = [];
+                // the values of the mappings with `"cell": false` are names of
+                // the templates, without a cell of the table
+                const celled = n => store.mapping(n).hover.cell !== false;
+                const entries = Object.fromEntries(categories.map(n => {
+                    const values = evaluate(store.mapping(n).hover.props, { ...scope, ...store.prop(n, row[n]) });
+                    const texts = Object.fromEntries(Object.entries(values).map(([k, t]) => [k, store.text(t)]));
+                    // of a point the categories are the title, see pointTitle
+                    Object.entries(texts).filter(([, t]) => t !== null && t !== undefined && celled(n) && !(pointMode && names.h))
+                        .forEach(([k, t]) => cells.push({ mapping: n, prop: k == 'name' ? null : k, text: t }));
+                    return [n, texts];
+                }));
+                entries[v] = { value: row[v], name: format.v(row[v]) };
+                // of a point (a scatter plot) the horizontal value is a cell, the title names the categories
+                if (pointMode && names.h && categories.length > 0) {
+                    entries[names.h] = { value: row[names.h], name: format.h(row[names.h]) };
+                    cells.push({ mapping: names.h, value: true, text: entries[names.h].name, label: labelOf(names.h) });
+                }
+                if (valueCell)
+                    cells.push({ mapping: v, value: true, text: entries[v].name, label: labelOf(v) });
+                others.forEach(n => {
+                    entries[n] = { value: row[n], name: row[n] === null || row[n] === undefined ? '' : formats[n](row[n]) };
+                    if (celled(n) && present.has(n))
+                        cells.push({ mapping: n, value: true, text: entries[n].name, label: labelOf(n) });
+                });
+                // the styles of the row, of the props of its categories, the
+                // later mappings override the ones before, see hover.js
+                const style = {};
+                styled.forEach(n => Object.entries(evaluate(store.mapping(n).hover.row.props, { ...scope, ...store.prop(n, row[n]) }))
+                    .filter(([, s]) => s !== null && s !== undefined && s !== '')
+                    .forEach(([k, s]) => style[k] = String(s)));
+                const attrs = Object.fromEntries(keyed.filter(n => row[n] !== null && row[n] !== undefined)
+                    .map(n => [dataAttribute(n), String(row[n])]));
+                return { entries, cells, swatch: swatchOf(row), data: row, nearest: row === nearest, order: orderOf(row, rows, stacks), style, attrs };
             });
-            // the styles of the row, of the props of its categories, the
-            // later mappings override the ones before, see hover.js
-            const style = {};
-            styled.forEach(n => Object.entries(evaluate(store.mapping(n).hover.row.props, { ...scope, ...store.prop(n, row[n]) }))
-                .filter(([, s]) => s !== null && s !== undefined && s !== '')
-                .forEach(([k, s]) => style[k] = String(s)));
-            const attrs = Object.fromEntries(keyed.filter(n => row[n] !== null && row[n] !== undefined)
-                .map(n => [dataAttribute(n), String(row[n])]));
-            return { entries, cells, swatch: swatchOf(row), data: row, nearest: row === nearest, order: orderOf(row, rows, stacks), style, attrs };
-        });
+        };
 
         // the rows of the events and the slot, copies of the values of the mappings
         const plain = row => Object.fromEntries(Object.entries(row));

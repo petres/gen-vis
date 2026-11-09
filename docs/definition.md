@@ -1843,10 +1843,12 @@ of a scatter plot above its x and y.
 
 - `columns`: the dims of the hover beside the value of the position, by default the dims the marks use,
   their `by` (also a categorical dim of a `fill` or a `stroke`, which is a
-  `by` of the mark) and the dims of their positions (`x`, `y`, `y1`, ... of the
-  channels; not the dims of the facets, their panels have titles); a dim
-  with a `hover` of its own is in it as well, `[]` only those. The columns
-  are in the order of the dims.
+  `by` of the mark) and the dims of their positions `x` and `y` (not of
+  the ends of ranges, `x0`, `x1`, `y1`, ..., e.g. the bounds of an error
+  bar, list them; not the dims of the facets, their panels have titles); a
+  dim with a `hover` of its own is in it as well, `[]` only those. The
+  columns are in the order of the dims; a column without a value in any
+  row of the hover is left out.
   ```json
   { "hover": { "columns": ["land", "unit"] } }
   ```

@@ -12,7 +12,7 @@
     "source": "Erfundene Daten, Beispiel des Transforms bin und random",
     "height": 330,
     "locale": { "base": "de" },
-    "hover": { "title": "{title}–{hi} Tsd. €", "columns": [] },
+    "hover": { "title": "{title}–{hi} Tsd. €"},
     "globals": { "months": 36 },
     "dims": {
         "x": {

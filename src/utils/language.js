@@ -278,7 +278,10 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = []) 
     // the dims of the positions the mark uses, e.g. of the hover by default
     ['x', 'y', 'x0', 'x1', 'x2', 'y0', 'y1', 'y2'].forEach(n => {
         const c = raw[n] !== undefined || n == 'x' || n == 'y' ? ch(n, n == 'x2' ? 'x' : n == 'y2' ? 'y' : undefined) : undefined;
-        if (c?.dim !== undefined)
+        // the dims of the hover by default: of the positions x and y, not of
+        // the ends of ranges (e.g. the classes of a bin, the bounds of an
+        // error bar, which hover.columns lists where they are wanted)
+        if (c?.dim !== undefined && (n == 'x' || n == 'y'))
             used.add(c.dim);
     });
     // a channel only if the mark has it, e.g. the start of a bar

@@ -221,7 +221,7 @@ See [definition.md](definition.md#hover).
 
 | Key | Type | Default | |
 |-----|------|---------|-|
-| `columns` | list of string |  | The dims of the hover beside the value of the position (its rows of their values, in this order), by default the dims the marks use, of their `by` and their positions (not the ones of the facets); a dim with a `hover` of its own is in it as well, [] only those. |
+| `columns` | list of string |  | The dims of the hover beside the value of the position (its rows of their values, in this order), by default the dims the marks use, of their `by` and their positions x and y (not the ends of ranges, not the ones of the facets); a dim with a `hover` of its own is in it as well, [] only those. |
 | `value` | boolean |  | The value of the position (e.g. y of a line, x of horizontal bars) as a cell of the rows, true by default; false shows only the categories and the dims of the columns, e.g. the unsigned values of a population pyramid. |
 | `total` | boolean \| string \| text |  | A row of the sum of the stacked values of the position below the rows (true, or its name, e.g. Gesamt), in the format of the values; also {total} of the title. |
 | `mode` | expression \| `"position"`, `"point"` |  | The rows of the nearest position of the axis (position, by default) or the row of the nearest point, e.g. of a scatter plot. |

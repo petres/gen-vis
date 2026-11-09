@@ -12,7 +12,7 @@
     "source": "Erfundene Daten, Beispiel von bin, random und stackBy",
     "height": 330,
     "locale": { "base": "de" },
-    "hover": { "total": "Gesamt", "title": "ab {title} Tsd. €", "columns": [] },
+    "hover": { "total": "Gesamt", "title": "ab {title} Tsd. €"},
     "globals": { "months": 36 },
     "dims": {
         "x": {

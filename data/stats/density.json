@@ -24,6 +24,5 @@
         "group": "group"
     },
     "facets": { "by": "group", "cols": 2, "scales": ["x"] },
-    "hover": { "columns": ["period"] },
     "marks": { "type": "line", "by": "period", "x0": "x", "x1": "hi", "stroke-width": 1.4, "stroke-dasharray": "@dash" }
 }

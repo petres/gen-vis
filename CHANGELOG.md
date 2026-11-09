@@ -223,6 +223,11 @@ are not in the margins.
   (it had no highlight), e.g. a bar of horizontal bars.
 - The dot of a legend symbol `auto` of points has their radius (a number),
   within its box (was half the box less 2 pixels).
+- The default dims of the hover are the ones of `by` and of the positions
+  `x` and `y`, not of the ends of ranges (`x0`, `x1`, `y1`, ...: the classes
+  of a bin, the bounds of an error bar; `hover.columns` lists them), and a
+  column of the hover without a value in any of its rows is left out, so
+  histograms and strip plots need no `hover.columns`.
 - The hover table: a swatch of the color of the category before each row,
   a row of the names of the values above them when there are more than one,
   the values of a dim of texts without categories, the categories of a

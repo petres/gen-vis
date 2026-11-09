@@ -70,7 +70,8 @@ of the position (`"value": false`).
 `dodge` puts the bars of the years side by side in the band of their region,
 a `rule` with the same `dodge` is at the middle of the bar of its year, from
 `lo` to `hi` (`y1`, `y2`), on the scale of `y`. The legend draws the rects of
-the bars (`"symbol": "rect"`), not the rule through them.
+the bars (`"symbol": "rect"`), not the rule through them. The bounds are
+in the hover by `columns` (the ends of ranges are not by default).
 
 <!-- data/recipes/errorbars.json -->
 ```json
@@ -84,11 +85,12 @@ the bars (`"symbol": "rect"`), not the rule through them.
     "height": 300,
     "dims": {
         "x": {"column": "region", "type": "categorical"},
-        "y": {"column": "value", "zero": true, "grid": true},
+        "y": {"column": "value", "name": "share", "zero": true, "grid": true},
         "year": {"column": "year", "legend": {"symbol": "rect"}, "categories": {"2024": "#9EC5E8", "2025": "#1E4F77"}},
-        "lo": "lo",
-        "hi": "hi"
+        "lo": {"column": "lo", "name": "lower"},
+        "hi": {"column": "hi", "name": "upper"}
     },
+    "hover": {"columns": ["year", "lo", "hi"]},
     "marks": [
         {"type": "bar", "by": "year", "dodge": true},
         {"type": "rule", "by": "year", "dodge": true, "y1": "lo", "y2": "hi", "stroke": "#333", "stroke-width": 1.5}
