@@ -221,6 +221,8 @@ are not in the margins.
   CLI (was a screenshot of the DOM of `modern-screenshot`).
 - A mark without `by` highlights the element of the row under the pointer
   (it had no highlight), e.g. a bar of horizontal bars.
+- A legend symbol `auto` of a box and dots without a line is the box (the
+  dots of a strip below a histogram were drawn over it).
 - The dot of a legend symbol `auto` of points has their radius (a number),
   within its box (was half the box less 2 pixels).
 - The default dims of the hover are the ones of `by` and of the positions

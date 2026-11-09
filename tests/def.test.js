@@ -82,7 +82,8 @@ describe('the props of categories', () => {
             { type: 'svg:circle', by: 'c', filter: { c: '@year' }, props: {} },
         ] });
         const kinds = k => def.mapping.c.categoryProps[k].symbol.elements.map(e => e.type);
-        expect([kinds('a'), kinds('b'), kinds('c'), kinds('d')]).toEqual([['line', 'circle'], ['rect', 'circle'], ['circle'], ['circle']]);
+        // (a dot beside a box without a line: the box)
+        expect([kinds('a'), kinds('b'), kinds('c'), kinds('d')]).toEqual([['line', 'circle'], ['rect'], ['circle'], ['circle']]);
         // the one of the legend of all plots
         expect(def.mapping.c.legend.symbol.elements.map(e => e.type)).toEqual(['rect', 'line', 'circle']);
     });

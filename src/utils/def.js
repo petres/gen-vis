@@ -257,6 +257,10 @@ const autoSymbol = (symbol, name, plots, names, defaults, key) => {
         const props = Object.fromEntries(keys.filter(k => plot.props?.[k] !== undefined && own(plot.props[k])).map(k => [k, plot.props[k]]));
         return [{ kind, props, plot }];
     });
+    // a dot joins a line (a line with points), beside a box without a line
+    // the box is the symbol, e.g. of a strip of points below a histogram
+    if (parts.some(p => p.kind == 'rect') && !parts.some(p => p.kind == 'line'))
+        parts.splice(0, parts.length, ...parts.filter(p => p.kind != 'circle'));
     if (parts.length == 0)
         return symbolOf({ ...given, type: 'rect' }, names, defaults);
     // the box of the line, of the area or of the dot
