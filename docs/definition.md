@@ -707,7 +707,11 @@ west of UTC in local time, and `01.06.2024` as the 6th of January). A date
 and a time with a time zone, `Z` or an offset, e.g. `2024-06-01T13:00:00Z`
 or `2024-06-01 13:00+02:00`, is the same time of every scale, other strings
 are no dates, e.g. `Phase 1` (which `Date.parse` of some browsers reads as
-one).
+one). A local time which does not exist, the hour skipped at the change to
+summer time (e.g. `2024-03-31 02:30` in Vienna), is the one an hour later
+(`03:30`), as of JavaScript's `Date`, so it shares its place with that
+one; times of hours around the changes are unambiguous with an offset or
+`Z`, or of a `utc` scale.
 
 `interval` makes the dates of a time (or utc) scale periods which start
 at them, e.g. half years of `2023-01-01` and `2023-07-01`: `day`, `week`,

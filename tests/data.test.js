@@ -683,6 +683,11 @@ describe('the faster dates and types are the ones of before', () => {
         expect(differences).toEqual([]);
     });
 
+    test('a local time skipped at the change to summer time is the one an hour later, as documented', () => {
+        expect(toDate('2024-03-31 02:30')).toBe(toDate('2024-03-31 03:30'));
+        expect(toDate('2024-03-31 02:30', true)).toBe(Date.UTC(2024, 2, 31, 2, 30));
+    });
+
     test('every minute of the days of the changes of the summer time of Vienna', () => {
         const differences = [];
         for (const day of ['2024-03-31', '2024-10-27', '2023-03-26', '2023-10-29'])

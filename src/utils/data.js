@@ -120,7 +120,9 @@ const cycle = 146097*86400000;
 // the time of a date and a time of the time zone of a scale, local or UTC,
 // NaN if it does not exist, e.g. "2022-02-30", which Date.parse reads as the
 // 2nd of March, 24:00 is the midnight at the end of the day, a fraction of a
-// second is cut to milliseconds, e.g. of pandas
+// second is cut to milliseconds, e.g. of pandas; a local time skipped at the
+// change to summer time (02:30 in Vienna) is the one an hour later, as of
+// Date (decided: it keeps its row, an offset or utc makes it unambiguous)
 const wallTime = (utc, y, m = 1, d = 1, h = 0, mi = 0, s = 0, fraction = '') => {
     y = +y; m = +m; d = +d; h = +h; mi = +mi; s = +s;
     const ms = fraction ? +`${fraction}00`.slice(0, 3) : 0;

@@ -458,6 +458,9 @@ Migration notes, to check by hand after `gen-vis migrate`:
 
 ### Fixes of the data (review of the release)
 
+- Documented: a local time skipped at the change to summer time (e.g.
+  `2024-03-31 02:30` in Vienna) is the one an hour later, as of `Date`; an
+  offset, `Z` or a `utc` scale makes such times unambiguous.
 - `height` and `width` of the definition are pixels: a text of pixels
   such as `"300px"` is read as its number with a warning, another text
   (`"50%"`) is the default with a warning (both gave NaN positions and an
