@@ -283,6 +283,13 @@ describe('patches, rules and texts of 4.x, drawn as 4.x drew them', () => {
                 radio('b', [{ value: 'b1' }, { value: 'b2', patch: { plot: [{ id: 'p', type: 'area' }], filter: { year: 2020 } } }]),
             ] });
     });
+    test('vertical categories reversed in 4.x: from the top, the default of 5.0', () => {
+        const def4 = { $schema: S4, mapping: { x: 'v', y: { column: 'land', type: 'categorical', scale: { reverse: true } } },
+            plot: { type: 'bar', props: { y: '@y:scaled', x1: '@x:scaled', x0: '@x:scaled:0' } } };
+        drawsAs4(def4);
+        expect(migrate(def4).dims.y).toEqual({ column: 'land', type: 'categorical' });
+        drawsAs4({ ...def4, mapping: { ...def4.mapping, y: { column: 'land', type: 'categorical', scale: { reverse: false } } } });
+    });
     test('a patch of a leaf and one of the whole part of another form element', () => {
         drawsAs4({ $schema: S4, globals: { a: 'a1', b: 'b1' }, mapping: { x: 'year', y: { column: 'v', axis: { title: 'V' } } }, plot: { type: 'line' },
             formElements: [

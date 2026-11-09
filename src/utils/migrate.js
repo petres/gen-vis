@@ -138,8 +138,18 @@ const dimOf = (m, name, hovered, consumed, coord = 'cartesian') => {
     const orientation = isObject(d.scale) && d.scale.orientation !== undefined ? d.scale.orientation : (coord == 'cartesian' && name == 'y' ? 'vertical' : undefined);
     const ofCategories = d.type == 'categorical' || ['band', 'point'].includes(d.scale?.type)
         || ['categories', 'scheme', 'common', 'order', 'fromData', 'ranks'].some(k => d[k] !== undefined);
-    if (orientation == 'vertical' && ofCategories && d.scale !== false && !Array.isArray(d.scale?.range) && d.scale?.reverse === undefined)
-        d.reverse = true;
+    // (and reversed of 4.x from the top: of 5.0 not reversed)
+    if (orientation == 'vertical' && ofCategories && d.scale !== false && !Array.isArray(d.scale?.range)) {
+        const reverse = d.scale?.reverse;
+        if (reverse === true || reverse === false) {
+            d.scale = { ...d.scale };
+            delete d.scale.reverse;
+            if (Object.keys(d.scale).length == 0)
+                delete d.scale;
+        }
+        if (reverse !== true && !(typeof reverse == 'string' || isObject(reverse)))
+            d.reverse = true;
+    }
     // the hover of a dim stays on the dim (also an empty one, the opt-in of
     // 4.x), it merges with the one of a parent
     if (isObject(d.hover))

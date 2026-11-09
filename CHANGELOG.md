@@ -186,7 +186,8 @@ maps; the legends and the titles of facets are not in the margins.
 - The categories of a vertical band or point scale without a range of
   its own run from the top down (were from the bottom up), as the rows of a
   table, e.g. horizontal bars and heatmaps; `"reverse": true` puts the first
-  category at the bottom, `gen-vis migrate` writes it for such dims of 4.x.
+  category at the bottom, `gen-vis migrate` writes it for such dims of 4.x
+  (and removes a `reverse` of 4.x, which put the first one at the top).
 - Snapshots were re-baselined once for the highlight; `data/` and the site
   examples are migrated, their images are the ones of 4.x.
 
@@ -225,7 +226,12 @@ their rows replace the rows or follow them. Fixtures in `spec/transforms`.
   (`"=match(@scale, {log: 'log'}, 'linear')"`), a patch of the plots, the
   annotations or the filter a `match` of the whole part, a patch of
   `scale.domainRel` one of `scale.pad`, a patch whose cases are all the
-  base the base. The conditions of filters become expressions (a
+  base the base. Places which several form elements patch (the same leaf,
+  or a part and a leaf in it) are nested switches: a `match` of the later
+  form element whose cases and default are the ones of the earlier, the
+  patches applied in their order as in 4.x; a patch of a part of a mapping
+  given as its column keeps the column, null of a patch of its scale,
+  axis, legend or hover is `false`. The conditions of filters become expressions (a
   reference is `@globals.<name>`), objects of values stay; the objects of
   expressions are written in the string syntax. The chart stays the same:
   the margins stay, `"hover": {"columns": []}` and `"symbol": null` keep
@@ -235,9 +241,10 @@ their rows replace the rows or follow them. Fixtures in `spec/transforms`.
   translates a definition of 5.0 first).
 - Every definition of `data/`, `site/examples/` and `site/public/charts/`
   is migrated; the 4.x originals of `data/` are fixtures
-  (`tests/fixtures/v4/`), `tests/migrate.test.js` compares the migration of
-  the merged 4.x definitions with the migrated files for every value of the
-  controls.
+  (`tests/fixtures/v4/`), `tests/migrate.test.js` draws them as 4.x drew
+  them (its merge and patches, `tests/v4.js`) for every combination of the
+  values of the form elements and compares the migration of the merged
+  definition and the migrated files with it.
 
 Migration notes, to check by hand after `gen-vis migrate`:
 

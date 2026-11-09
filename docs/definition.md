@@ -2261,6 +2261,9 @@ hand). The migration keeps the chart as it was:
 - A legend without a symbol gets `"symbol": null`, remove it for the
   symbols of the marks.
 - A dim with `fromData: true` keeps it (ascending order).
+- A categorical vertical dim without a range of its scale gets
+  `"reverse": true` (4.x had its first category at the bottom, 5.0 at the
+  top), a `reverse` of 4.x is removed.
 - A reference of a condition of a filter is written `@globals.<name>`,
   4.x read the globals there.
 - The objects of expressions are written in the string syntax where it has
@@ -2281,6 +2284,14 @@ To check by hand:
 - **Patches of whole parts.** A patch of the plots, the annotations or the
   filter is a `match` of the whole list or filter (the marks of every value
   in it), shorten it by hand if only an attribute differs.
+- **Several form elements at one place.** Patches of different form
+  elements of the same leaf, or of a part and a leaf in it (e.g. one
+  removes the axis, another changes its title), are nested switches: a
+  `match` of the later form element whose cases and default are the
+  `match` of the earlier one, e.g. `"column": "=match(@b, {b2: 'vb'},
+  match(@a, {a2: 'va'}, 'v'))"`, the patches applied in their order as in
+  4.x. A patch which removes the scale, the axis, the legend or the hover
+  of a dim (null) is `false` in the switch.
 - **Types of dims.** A dim with a legend gets the categories of the data
   and is categorical, a dim only used as `by` is not, as in 4.x.
 
