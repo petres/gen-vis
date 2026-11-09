@@ -221,6 +221,8 @@ are not in the margins.
   CLI (was a screenshot of the DOM of `modern-screenshot`).
 - A mark without `by` highlights the element of the row under the pointer
   (it had no highlight), e.g. a bar of horizontal bars.
+- The corners as anchors of labels: `top-end` (above and after the
+  position), `top-start`, `bottom-end`, `bottom-start`.
 - A number at `x` or `y` of a point or a text of a cartesian chart is a
   value on the scale of its axis, as of rules and bars, e.g. a label at
   250 of x (`"x": 250`, was `"x": "@x:scaled:250"`); pixels are

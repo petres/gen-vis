@@ -255,6 +255,11 @@ const anchors = {
     top: { dy: -4, 'text-anchor': 'middle', 'dominant-baseline': 'auto' },
     bottom: { dy: 4, 'text-anchor': 'middle', 'dominant-baseline': 'hanging' },
     center: { 'text-anchor': 'middle', 'dominant-baseline': 'middle' },
+    // the corners: above or below the position and after it (end) or before it (start)
+    'top-end': { dx: 4, dy: -4, 'text-anchor': 'start', 'dominant-baseline': 'auto' },
+    'top-start': { dx: -4, dy: -4, 'text-anchor': 'end', 'dominant-baseline': 'auto' },
+    'bottom-end': { dx: 4, dy: 4, 'text-anchor': 'start', 'dominant-baseline': 'hanging' },
+    'bottom-start': { dx: -4, dy: 4, 'text-anchor': 'end', 'dominant-baseline': 'hanging' },
 };
 
 /**

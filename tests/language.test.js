@@ -242,3 +242,9 @@ test('numbers at x and y of points and texts of cartesian charts are values on t
     expect(p[1].props.cy).toBe('@y:scaled:3');
     expect(p[2].props.x).toBe(34);
 });
+
+test('the corners as anchors of labels', () => {
+    const p = translate({ dims: { x: 'v', y: 'w' }, marks: [{ type: 'label', anchor: 'top-end', text: 'a' }, { type: 'label', anchor: 'bottom-start', dx: 2, text: 'b' }] }).plot;
+    expect(p[0].props).toMatchObject({ dx: 4, dy: -4, 'text-anchor': 'start', 'dominant-baseline': 'auto' });
+    expect(p[1].props).toMatchObject({ dx: 2, dy: 4, 'text-anchor': 'end', 'dominant-baseline': 'hanging' });
+});

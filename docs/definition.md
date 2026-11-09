@@ -1267,9 +1267,11 @@ attributes are merged into the defaults, e.g. `d` of a path.
   and `range` leave its type to the rows.
 - `anchor` of texts and labels: the text beside its position, after it
   (`end`, e.g. of horizontal bars, 4 pixels to the right), before it
-  (`start`), above it (`top`), below it (`bottom`) or on it (`center`),
-  with the `text-anchor` and `dominant-baseline` of it; `dx` and `dy` of
-  the mark replace the distance.
+  (`start`), above it (`top`), below it (`bottom`), on it (`center`) or at
+  a corner (`top-end` above it and after it, e.g. a note at the start of a
+  line, `top-start`, `bottom-end`, `bottom-start`), with the `text-anchor`
+  and `dominant-baseline` of it; `dx` and `dy` of the mark replace the
+  distance.
 
 ### Examples
 

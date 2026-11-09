@@ -1349,9 +1349,11 @@ export interface Mark {
      */
     orient?: `=${string}` | ('horizontal' | 'vertical');
     /**
-     * Labels: the text beside its position, after it (end, e.g. of horizontal bars), before it (start), above it (top), below it (bottom) or on it (center).
+     * Labels: the text beside its position, after it (end, e.g. of horizontal bars), before it (start), above it (top), below it (bottom), on it (center) or at a corner, above and after it (top-end), ....
      */
-    anchor?: `=${string}` | ('start' | 'end' | 'top' | 'bottom' | 'center');
+    anchor?:
+        | `=${string}`
+        | ('start' | 'end' | 'top' | 'bottom' | 'center' | 'top-start' | 'top-end' | 'bottom-start' | 'bottom-end');
     /**
      * The rows of the mark, an expression of the row or the values of dims, see filter of the definition.
      */
@@ -1522,6 +1524,10 @@ export interface Mark {
         | 'top'
         | 'bottom'
         | 'center'
+        | 'top-start'
+        | 'top-end'
+        | 'bottom-start'
+        | 'bottom-end'
         | 'linear'
         | 'monotoneX'
         | 'natural'

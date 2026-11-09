@@ -1561,8 +1561,20 @@
                 "anchor": {
                     "if": { "type": "string", "pattern": "^=" },
                     "then": { "type": "string", "pattern": "^=" },
-                    "else": { "enum": ["start", "end", "top", "bottom", "center"] },
-                    "description": "Labels: the text beside its position, after it (end, e.g. of horizontal bars), before it (start), above it (top), below it (bottom) or on it (center)."
+                    "else": {
+                        "enum": [
+                            "start",
+                            "end",
+                            "top",
+                            "bottom",
+                            "center",
+                            "top-start",
+                            "top-end",
+                            "bottom-start",
+                            "bottom-end"
+                        ]
+                    },
+                    "description": "Labels: the text beside its position, after it (end, e.g. of horizontal bars), before it (start), above it (top), below it (bottom), on it (center) or at a corner, above and after it (top-end), ...."
                 },
                 "filter": {
                     "anyOf": [
