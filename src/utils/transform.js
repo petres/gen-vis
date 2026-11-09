@@ -1,6 +1,6 @@
-export { applyTransforms, loadTransforms, transformNames, transformColumns, transformGlobals, utcColumns, madeColumns };
+export { applyTransforms, loadTransforms, transformNames, transformColumns, utcColumns, madeColumns };
 
-import { fillTemplate, templateRefs } from "@/utils/def";
+import { fillTemplate } from "@/utils/def";
 import { scaleDef } from "@/utils/data";
 import { lazy } from "@/utils/lazy";
 import { refNames } from "@/utils/expr";
@@ -30,9 +30,6 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
         throw new Error('The transforms are not loaded, see loadTransforms');
     return types.applyTransforms(rows, transforms, globals, utc, before, files);
 };
-
-// the names of the globals of the transforms, e.g. `base` of "{base}"
-const transformGlobals = transforms => [...new Set(templateRefs(JSON.stringify(transforms ?? [])))];
 
 // the columns of the mappings of dates of `utc` scales, with the values of
 // the globals, the transforms of them are in UTC

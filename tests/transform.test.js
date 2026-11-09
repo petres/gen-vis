@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from 'vitest';
-import { applyTransforms, loadTransforms, transformColumns, transformGlobals, transformNames } from '@/utils/transform';
+import { applyTransforms, loadTransforms, transformColumns, transformNames } from '@/utils/transform';
 import { transformTypes } from '@/utils/transform-types';
 import { usedColumns } from '@/utils/data';
 import { validateDef } from '@/utils/validate';
@@ -125,14 +125,13 @@ describe('transforms', () => {
         expect(() => applyTransforms(rows, [{ type: 'nope', column: 'value' }])).toThrow("Unknown transform 'nope'");
     });
 
-    test('the columns of the data and the globals of the transforms', () => {
+    test('the columns of the data of the transforms', () => {
         const transforms = [
             { type: 'year', column: 'date', as: 'year' },
             { type: 'index', column: 'value', as: 'index', by: ['type'], base: { year: '{base}' } },
             { type: 'rolling', column: 'index', size: 2, order: 'date' },
         ];
         expect(transformColumns(transforms)).toEqual(['date', 'value', 'type']);
-        expect(transformGlobals(transforms)).toEqual(['base']);
         expect(usedColumns({ mapping: { y: { column: 'index' } }, transform: transforms })).toEqual(['index', 'date', 'value', 'type']);
     });
 
