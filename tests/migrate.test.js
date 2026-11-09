@@ -19,8 +19,23 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const files = definitions(Object.fromEntries(Object.entries(import.meta.glob('./fixtures/v4/**/*.json', { eager: true, import: 'default' }))
     .map(([file, def]) => [file.replace('./fixtures/v4/', 'data/'), def]))).map(d => `tests/fixtures/v4/${d.path}`);
 const load = async url => readFileSync(fileURLToPath(url), 'utf8');
-// a file of 5.0 merged with its parents
-const merged5 = async file => resolveParents(JSON.parse(readFileSync(path.join(root, file), 'utf8')), pathToFileURL(path.join(root, file)).href, load);
+// a file of 4.x migrated as `gen-vis migrate` writes it, one by one (a
+// child with its parents merged, see bin/gen-vis.js), and merged with its
+// parents migrated the same way: the definitions of data/ are free to be
+// written in 5.0, the migration of the files of 4.x is tested of the fixtures
+const migratedTexts = new Map();
+const migratedText = async u => {
+    if (!migratedTexts.has(u)) {
+        const def = JSON.parse(await load(u));
+        const parents = def.parent === undefined ? undefined : await resolveParents({ parent: def.parent }, u, load);
+        migratedTexts.set(u, JSON.stringify(migrate(def, { parents })));
+    }
+    return migratedTexts.get(u);
+};
+const merged5 = async file => {
+    const u = pathToFileURL(path.join(root, file)).href;
+    return resolveParents(JSON.parse(await migratedText(u)), u, migratedText);
+};
 
 // the conditions of the filters of 4.x and the objects of 5.0 as expressions
 const conditions = v => v && typeof v == 'object' && !Array.isArray(v) && !isOperator(v) ? parseExpression(String(conditionExpression(v)).replace(/^=/, '')) : v;
@@ -246,18 +261,17 @@ const drawsAs4 = (def4, def5 = migrate(def4), what = 'migrated') => {
     }
 };
 
-// every definition of 4.x of data/ (as it was before its migration) with
-// every combination of the values of its form elements, as 4.x drew it (the
-// patches of the selected entries merged, see tests/v4.js), is the
-// migration of the merged definition and the migrated files of data/ (one
-// by one, `gen-vis migrate`, a child with its parents) resolved with the
-// same globals
+// every definition of 4.x of data/ (as it was before its migration, the
+// fixtures) with every combination of the values of its form elements, as
+// 4.x drew it (the patches of the selected entries merged, see
+// tests/v4.js), is the migration of the merged definition and the one of
+// the files one by one (`gen-vis migrate`, a child with its parents)
+// resolved with the same globals
 describe('the migrated definitions draw what 4.x drew, for every value of the controls', () => {
     test.each(files)('%s', async file => {
         const def4 = resolveParents4(json(file), url(file));
         drawsAs4(def4);
-        const file5 = file.replace('tests/fixtures/v4/', 'data/');
-        drawsAs4(def4, await merged5(file5), file5);
+        drawsAs4(def4, await merged5(file), `${file} migrated file by file`);
     });
 });
 
