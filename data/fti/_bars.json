@@ -100,7 +100,6 @@
             "type": "point",
             "id": "dots",
             "by": "level",
-            "cy": "@y:scaled:center",
             "r": 7.5,
             "fill": "@color:scaled",
             "highlight": {"mode": "row", "r": 11}
@@ -110,7 +109,6 @@
             "id": "holes",
             "by": "level",
             "filter": "@level == 'header'",
-            "cy": "@y:scaled:center",
             "r": 4.5,
             "fill": "white",
             "highlight": {"mode": "row", "r": 0}
@@ -121,7 +119,6 @@
             "by": "io",
             "filter": "@io != 'none'",
             "cx": "@x:scaled:0 + -14",
-            "cy": "@y:scaled:center",
             "r": 5,
             "fill": "@fill",
             "stroke": "black",
@@ -132,7 +129,6 @@
             "id": "value",
             "by": "level",
             "dx": 15,
-            "y": "@y:scaled:center",
             "dominant-baseline": "central",
             "font-size": 13,
             "font-weight": "bold",

@@ -302,6 +302,13 @@ describe('patches, rules and texts of 4.x, drawn as 4.x drew them', () => {
             plot: { type: 'rule', props: { y: '@y:scaled', x1: '@x:scaled:0', x2: '@x:scaled' } } });
         drawsAs4({ $schema: S4, mapping: { x: 'year', y: 'v' }, plot: { type: 'rule', props: { x1: '@x:scaled:2000', x2: '@x:scaled:2010', y: '@y:scaled:100' } } });
     });
+    test('circles of svg: their positions are channels', () => {
+        const def4 = { $schema: S4, mapping: { x: { column: 'land', categories: { a: {}, b: {} } }, y: 'v' },
+            plot: [{ type: 'svg:circle', props: { cx: '@x:scaled:center', cy: '@y:scaled', r: 3, fill: '@color' } }, { type: 'point', props: { cx: '@x:scaled', cy: '@y:scaled' } }] };
+        drawsAs4(def4);
+        // the start of the band of a category stays an attribute
+        expect(migrate(def4).marks).toEqual([{ type: 'point', r: 3 }, { type: 'point', cx: '@x:scaled' }]);
+    });
     test('texts starting with "=" stay texts', () => {
         const def4 = { $schema: S4, globals: { m: 'a' }, options: { title: '= Summe der Länder', footer: '=Quelle' },
             mapping: { x: 'year', y: { column: 'v', axis: { title: '=100' } }, l: { column: 'land', categories: { a: { name: '=A' } } } },

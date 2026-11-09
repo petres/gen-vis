@@ -87,13 +87,6 @@
             "stroke-width": 2.5,
             "highlight": {"stroke-width": 4}
         },
-        {
-            "type": "point",
-            "id": "points",
-            "by": "country",
-            "fill": "@color",
-            "r": 5,
-            "highlight": {"r": 6}
-        }
+        {"type": "point", "id": "points", "by": "country", "r": 5, "highlight": {"r": 6}}
     ]
 }

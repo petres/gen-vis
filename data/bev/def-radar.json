@@ -67,14 +67,7 @@
             "stroke-width": 2.5,
             "highlight": {"stroke-width": 4}
         },
-        {
-            "type": "point",
-            "by": "year",
-            "fill": "@color",
-            "r": 3.5,
-            "angle": "@land:scaled",
-            "highlight": {"r": 5}
-        }
+        {"type": "point", "by": "year", "r": 3.5, "angle": "@land:scaled", "highlight": {"r": 5}}
     ],
     "hover": {"columns": []}
 }

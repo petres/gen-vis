@@ -247,7 +247,9 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
     if (filter !== undefined)
         mark.filter = conditionExpression(filter, false, dims);
     const attrs = { ...props };
-    const kind = typeof mark.type == 'string' ? mark.type.split(':').at(-1) : '';
+    // the kind of the type of 4.x (`point` is a circle), not of the short
+    // name of 5.0, e.g. `point` of svg:circle
+    const kind = (k => k == 'point' ? 'circle' : k)(typeof type == 'string' ? type.split(':').at(-1) : '');
     const take = k => { const v = attrs[k]; delete attrs[k]; return v; };
     // the channel `name` of the value of the attribute `attr` (by default the
     // channel), the attribute stays as it is if the value is none of a dim

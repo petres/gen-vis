@@ -75,10 +75,8 @@
             "type": "point",
             "id": "awards",
             "by": "group",
-            "cx": "@x:scaled",
             "cy": "@group:scaled + @jitter * @group:bandwidth",
             "r": 1.5,
-            "fill": "@color",
             "opacity": 0.4
         },
         {

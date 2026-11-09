@@ -54,7 +54,7 @@
             "stroke-width": 2,
             "highlight": {"stroke-width": 3}
         },
-        {"type": "point", "by": ["type", "facet"], "r": "@r", "fill": "@color"}
+        {"type": "point", "by": ["type", "facet"], "r": "@r"}
     ],
     "facets": {"cols": "=steps(@totalWidth, {0: 1, 550: 2})", "scales": ["x"]}
 }
