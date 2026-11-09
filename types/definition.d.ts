@@ -173,7 +173,7 @@ export interface GenVisDefinition {
      */
     $schema?: string;
     /**
-     * Url of the definition this one is deep merged into, relative to this definition, or a list of them (mixins) merged in their order, later ones override earlier ones. Lists are replaced, lists of entries with ids (marks, controls and their entries) are merged by them.
+     * Url of the definition this one is deep merged into, relative to this definition, or a list of them (mixins) merged in their order, later ones override earlier ones. Lists are replaced, lists of entries with ids (marks, controls and their entries) are merged by them. A match of a global (of globals or of a control) without a default is a switch over the value of the other parts.
      */
     parent?: string | string[];
     /**
@@ -456,11 +456,11 @@ export interface Expression {
      */
     round?: PropEntry[] | PropEntry;
     /**
-     * The same values, as texts, e.g. 2024 and "2024".
+     * The same values, as texts, e.g. 2024 and "2024", more values are a chain of every pair of neighbours.
      */
     '=='?: PropEntry[] | PropEntry;
     /**
-     * Not the same values.
+     * Not the same values, more values are a chain of every pair of neighbours.
      */
     '!='?: PropEntry[] | PropEntry;
     /**

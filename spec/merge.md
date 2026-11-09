@@ -37,24 +37,46 @@ The parts are merged in their order, a later part overrides an earlier one
 - A `match` of a global without a default (`"=match(@values, {share:
   'value.share'})"` in the string syntax, or the operator object `{"match":
   ["@values", {...}]}`) is a switch of cases over the value of the other
-  parts: merged onto a value, the value becomes its default (`{"match":
-  ["@values", {"share": "value.share"}, "value"]}`, the result is the
-  operator object); a value merged onto a match of a global (with or without
-  a default) becomes its default, so the switch of a mixin applies to the
-  value of a child merged after it (as the patches of 4.x applied after the
-  merge; an object or a list is the default as a `literal`, so it is not
-  evaluated as an expression, a match of the string syntax as its object;
-  of nested switches (mixins of different globals) the default of
-  the innermost one, so both stay; a child replaces a switch with a match
-  of its own or with `null`;
-  two matches of the
-  same global merge their cases (the later ones win) and keep the default
-  of the later one, else of the earlier one; a match of another global
-  without a default falls through to the switch below it (it is its
-  default). A match with a default and `null` replace the value, as other
-  values. This does
-  not apply inside `marks` and `annotations`, whose expressions are the ones
-  of the rows: their matches are values.
+  parts. A global is a name of the `globals` or the `global` of a control
+  (of 4.x the `ref` of a form element) of any of the parts merged; the
+  reference may be `@name`, `@globals.name` or a field `@name:field`. A
+  match of another name (e.g. of the categories in the `props` of a
+  legend, of the rows in `stacked` or a `filter`, or of a global which only
+  the page sets) is a value as any other: it replaces and is replaced.
+  - Merged onto a value, the value becomes its default (`{"match":
+    ["@values", {"share": "value.share"}, "value"]}`, the result is the
+    operator object).
+  - A value merged onto a match of a global (with or without a default)
+    becomes its default, so the switch of a mixin applies to the value of
+    a child merged after it (as the patches of 4.x applied after the
+    merge). An object onto a default which is an object is merged into it
+    (by these rules), e.g. `{"nice": true}` of a child onto `"scale":
+    "=match(@s, {log: literal({type: 'log'})})"` over `{"type": "linear"}`
+    of a parent is the default `{"type": "linear", "nice": true}`; the
+    cases stay as they are (`{"type": "log"}`).
+  - A default which is an object or a list is a `literal`, so it is not
+    evaluated as an expression; a match of a global of the string syntax
+    as its object, another expression (a text of the string syntax or a
+    `match` object of other names) as its object, which is evaluated with
+    the switch, e.g. `{"match": ["@mode", {"b": "gray"}, {"match":
+    ["@land", {"W": "red"}]}]}` in the props of a legend.
+  - Of nested switches (mixins of different globals) the default of the
+    innermost one, so both stay; a child replaces a switch with a match of
+    its own or with `null`.
+  - Two matches of the same global merge their cases (the later ones win)
+    and keep the default of the later one, else of the earlier one; a
+    match of another global without a default falls through to the switch
+    below it (it is its default). A match with a default and `null`
+    replace the value, as other values.
+  - This does not apply inside `marks` and `annotations`, whose expressions
+    are the ones of the rows: their matches are values.
+  - A `match` object is never merged key by key with an object, on either
+    side.
+
+  A part chosen by an expression of the globals (a case or the default
+  of a switch) is a part of the definition: its own expressions of the
+  globals are evaluated, e.g. a switch in the `format` of an axis which is
+  the default of a switch of the whole axis.
 - All other values replace the earlier one, also arrays (of numbers, strings
   or of entries of which one has none of the keys, or of different keys),
   `null` (it stays in the merged definition) and an object of an array or of

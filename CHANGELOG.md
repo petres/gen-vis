@@ -136,7 +136,12 @@ them.
   the value of a parent or a child becomes its default, two matches of the
   same global merge their cases (see spec/merge.md). A mixin which switches
   a value writes its cases once, the children write only their own values
-  and cases.
+  and cases. Only a match of a global (of `globals` or of a control of any
+  part) is a switch, a match of the rows or the categories (e.g. in the
+  `props` of a legend or in `stacked`) is a value; an object of a child
+  onto a switch whose default is an object is merged into the default (the
+  alpha mixed it into the match object), the cases stay whole; the
+  expressions of the globals in a part chosen by a switch are evaluated.
 - A comparison of more than two operands is a chain of every pair of
   neighbours, also `==` and `!=`: `@a == @b == @c` is true if all three
   are the same (the alpha compared the first two).

@@ -100,9 +100,16 @@ global without a default (see [globals and controls](#globals-and-controls))
 is a switch over the value of the other parts: a mixin which switches the
 column of `y` for the shares, `"column": "=match(@values, {share:
 'value.share'})"`, applies to the `"column": "value"` of an earlier parent
-and of a child alike (the value becomes the default of the match); two
-matches of the same global merge their cases. A child replaces the switch
-with a `match` of its own (with a default) or removes the key with `null`.
+and of a child alike (the value becomes the default of the match; an
+object of a child onto an object of the default is merged into it, e.g.
+`"scale": {"nice": true}` onto a switch of the type of the scale, the cases
+stay as they are); two matches of the same global merge their cases. A
+child replaces the switch with a `match` of its own (with a default) or
+removes the key with `null`. A global is a name of `globals` or the
+`global` of a control of any of the parts: a global which only the page
+sets is declared with its default in `globals` (or by a hidden control)
+to be switched by a mixin. A `match` of other names, e.g. of the
+categories in the `props` of a legend, is a value, which a child replaces.
 
 With `check` (or `debug`) the merged definition is checked for common
 mistakes, e.g. unknown mark types, unknown keys of the

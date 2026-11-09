@@ -1,4 +1,4 @@
-export { compile, evaluate, bind, constant, refNames, refOf, formatter, operators, isOperator };
+export { compile, evaluate, bind, constant, refNames, refOf, formatter, operators, isOperator, isMatch };
 
 import { isObject, missing, sameValue, toNumber } from '@/utils/values';
 
@@ -107,6 +107,11 @@ const isOperator = raw => {
     }
     return name !== undefined && known.has(name);
 };
+
+// a `match` object, e.g. { "match": ["@values", { "share": ".0%" }] }: of
+// the merge a leaf (a switch of a global or a value), see leafMerge of
+// utils/def.js, and resolved as the text of one, see utils/resolve.js
+const isMatch = raw => isObject(raw) && Object.keys(raw).length == 1 && Array.isArray(raw.match);
 
 // the arguments of an operator, a single one is a list of it
 const argsOf = a => Array.isArray(a) ? a : [a];
