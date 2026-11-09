@@ -142,6 +142,27 @@ describe.skipIf(!browser)('gen-vis export', () => {
         }
     }, 60000);
 
+    test('the width of the export wins over the one of the definition, which is the default', async () => {
+        writeFileSync(path.join(dir, 'narrow.json'), JSON.stringify({ $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', width: 300, height: 200, dims: { x: { column: 'year', type: 'numeric' }, y: 'value' },
+            marks: { type: 'line' }, data: 'narrow.csv' }));
+        writeFileSync(path.join(dir, 'narrow.csv'), 'year,value\n2020,1\n2021,2\n');
+        const exporter = await createExporter({ browser });
+        try {
+            const url = JSON.stringify(fileUrl(path.join(dir, 'narrow.json')));
+            // the width of the svg of the plots in the image
+            const of = options => exporter.evaluate(`genVisExport({ defUrl: ${url}${options} }).then(r =>
+                [r.width, Number(document.querySelector('.gen-vis-export svg.vis-svg, svg.vis-svg').getAttribute('width'))])`);
+            const [wide, wideChart] = await of(', width: 800');
+            expect(wide).toBeCloseTo(800, 0);
+            expect(wideChart).toBeCloseTo(770, 0);
+            const [own, ownChart] = await of('');
+            expect(own).toBeCloseTo(330, 0);
+            expect(ownChart).toBeCloseTo(300, 0);
+        } finally {
+            await exporter.close();
+        }
+    }, 60000);
+
     test('the symbols of units in Inter of the package, e.g. CO₂, m³, ≤, →', async () => {
         writeFileSync(path.join(dir, 'units.csv'), 'year,value\n2020,1\n2021,2\n');
         writeFileSync(path.join(dir, 'units.json'), JSON.stringify({

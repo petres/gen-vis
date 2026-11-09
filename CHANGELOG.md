@@ -310,6 +310,11 @@ Migration notes, to check by hand after `gen-vis migrate`:
   `range` or `scale.order` on `y`). `scale.order`, `groups`, `padding` and
   `step` make a dim categorical; texts and points on such a dim are at the
   center of its band.
+- The width of an export wins over the `width` of the definition (the
+  export page's `width`, `--width`, the prop `imageWidth`): a definition of
+  `"width": 300` was a 300 px chart in an 800 px image. Without one the
+  definition's `width` is the one of the chart, the image has it and the
+  padding (was 800).
 
 ### Package and builds
 

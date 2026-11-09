@@ -236,14 +236,17 @@ const createVis = app => {
 
     // the width of the plots, of the visualisation or of the definition,
     // beside legends the rest of it
+    // the width of the chart of its own: of an export (`store.fixedWidth`,
+    // see staticCopy of utils/export.js), else of the definition
+    const ownWidth = () => store.fixedWidth || options().width;
     const plotsWidth = () => {
-        const total = options().width || innerWidth(root);
+        const total = ownWidth() || innerWidth(root);
         fullWidth = store.visWidth = total;
         if (!sidesOf(legendsAt()))
             return total;
         const besides = [...root.querySelectorAll(':scope > .vis-body-sides > .vis-legends')]
             .reduce((sum, e) => sum + e.getBoundingClientRect().width + 10, 0);
-        return options().width || !plots ? Math.max(0, total - besides) : innerWidth(plots);
+        return ownWidth() || !plots ? Math.max(0, total - besides) : innerWidth(plots);
     };
     // the width of the headers of the rows of a grid of facets: of the
     // longest one left of them, of a line of rotated text right of them,
@@ -543,7 +546,7 @@ const createVis = app => {
             update();
             store.listeners.add(stateListener);
             // without a fixed width the visualisation fills its container
-            if (!options().width && typeof ResizeObserver == 'function') {
+            if (!ownWidth() && typeof ResizeObserver == 'function') {
                 resizeObserver = new ResizeObserver(() => {
                     clearTimeout(resizeTimeout);
                     resizeTimeout = setTimeout(() => guard(resized), 100);

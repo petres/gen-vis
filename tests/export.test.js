@@ -50,6 +50,21 @@ describe('the selection line of the images', () => {
     });
 });
 
+describe('the width of an export', () => {
+    // the end of the line of the horizontal axis, the width of the plot area
+    const plotWidth = svg => Math.max(...[...parse(svg).querySelectorAll('path')].map(p => p.getAttribute('d') ?? '')
+        .map(d => /^M[-\d.]+,[-\d.]+H([-\d.]+)/.exec(d)?.[1]).filter(Boolean).map(Number));
+
+    test('imageWidth wins over the width of the definition, without one the chart has its own width', async () => {
+        const own = plotWidth(await (await chart()).exportSvg());
+        const wide = plotWidth(await (await chart({ imageWidth: 1000 })).exportSvg());
+        // about 400 pixels wider (the measured margins of other ticks differ a bit)
+        expect(wide - own).toBeGreaterThan(380);
+        expect(wide - own).toBeLessThan(420);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('exportSvg', () => {
     test('an SVG of its own, without HTML, classes, styles and css variables', async () => {
         const vis = await chart();

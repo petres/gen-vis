@@ -80,9 +80,13 @@ const fontsOf = async holder => {
  * element of the copy into the page, e.g. next to the visualisation, so
  * the styles of the page apply, it is outside of the screen, `visible` at
  * the top left of the page (e.g. of a screenshot of the export page).
- * Returns the copy and `remove()`, which removes it.
+ * The `width` of an export (`fixed`, e.g. `--width` or `imageWidth`) is the
+ * one of the chart, also of a definition with a `width` of its own;
+ * otherwise a chart of a width of its own is copied at that one.
+ * Returns the copy, `remove()`, which removes it, and the `width` of the
+ * chart copied.
  */
-const staticCopy = async (place, mount, { width, space = padding, visible = false, wait = timeout }) => {
+const staticCopy = async (place, mount, { width, space = padding, visible = false, wait = timeout, fixed = false }) => {
     const wrapper = document.createElement('div');
     wrapper.style.cssText = visible ? 'position: absolute; top: 0; left: 0;' : 'position: fixed; top: 0; left: -100000px;';
     const holder = wrapper.appendChild(document.createElement('div'));
@@ -98,6 +102,9 @@ const staticCopy = async (place, mount, { width, space = padding, visible = fals
                 resolve: () => { clearTimeout(timer); resolve(); },
                 reject: message => { clearTimeout(timer); reject(new Error(message)); },
             });
+            // before the first draw, the load is asynchronous, see vis.js
+            if (fixed)
+                shown.store.fixedWidth = width;
         });
         // the texts in their fonts, e.g. of a stylesheet of the page
         await document.fonts?.ready;
@@ -105,10 +112,12 @@ const staticCopy = async (place, mount, { width, space = padding, visible = fals
         // the copy is in an element as the one of the visualisation, e.g. of its classes
         const root = holder.firstElementChild;
         const shot = wrapper.appendChild(root.cloneNode(false));
-        shot.style.cssText = `margin: 0; width: ${width + 2*space}px;`;
+        // the width of a chart of a width of its own (of the definition)
+        const own = fixed ? width : (shown.store.visWidth || width);
+        shot.style.cssText = `margin: 0; width: ${own + 2*space}px;`;
         const def = shown.store.def;
         const copy = shot.appendChild(prepare(root.querySelector('.vis'), { text: selection(def), facets: facetMappings(def.facets).all, space }));
-        return { copy, remove: () => wrapper.remove() };
+        return { copy, remove: () => wrapper.remove(), width: own };
     } catch (error) {
         wrapper.remove();
         throw error;
@@ -175,9 +184,9 @@ const scaleOf = width => Math.max(2, Math.ceil(defaultWidth / width));
  * (see renderSvg, the same image as the SVG file) drawn on a canvas, see
  * utils/raster.js.
  */
-const renderImage = async (outer, mount, { width }) => {
+const renderImage = async (outer, mount, { width, fixed = false }) => {
     const [{ composeSvg }, { rasterize }] = await Promise.all([lazy.svg(), lazy.raster()]);
-    const { copy, remove } = await staticCopy(wrapper => outer.after(wrapper), mount, { width });
+    const { copy, remove } = await staticCopy(wrapper => outer.after(wrapper), mount, { width, fixed });
     try {
         const background = backgroundOf(copy);
         copy.style.background = background;
@@ -195,9 +204,9 @@ const renderImage = async (outer, mount, { width }) => {
  * all), its size in `unit`, on its `background` (by default the one of the
  * PNG, null none), see docs/export.md and utils/export-svg.js.
  */
-const renderSvg = async (outer, mount, { width, parts = null, unit = 'px', background }) => {
+const renderSvg = async (outer, mount, { width, fixed = false, parts = null, unit = 'px', background }) => {
     const { composeSvg } = await lazy.svg();
-    const { copy, remove } = await staticCopy(wrapper => outer.after(wrapper), mount, { width });
+    const { copy, remove } = await staticCopy(wrapper => outer.after(wrapper), mount, { width, fixed });
     try {
         selectParts(copy, parts);
         copy.style.background = background === undefined ? backgroundOf(copy) : (background ?? 'none');
