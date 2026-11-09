@@ -341,7 +341,11 @@ const prepareMapping = (m, name, dataKeys = () => [], globals = {}, plots = [], 
         // `fromData` of "rows": the categories in the order of the rows, not ascending
         if (m.fromData && typeof m.column == 'string')
             dataKeys(fillTemplate(m.column, globals), m.fromData == 'rows').filter(k => !Object.hasOwn(categories, k)).forEach(k => categories[k] = {});
-        const keys = orderKeys(Object.keys(categories), m.order);
+        // `"order": "rows"`: all categories in the order of the rows of the
+        // data, also the listed ones (their props stay theirs), e.g. one with
+        // a name or a class of its own among the ones of the data
+        const rowsOrder = m.order == 'rows' && typeof m.column == 'string' ? dataKeys(fillTemplate(m.column, globals), true) : null;
+        const keys = rowsOrder ? orderKeys(Object.keys(categories), [...rowsOrder, ...Object.keys(categories)]) : orderKeys(Object.keys(categories), m.order);
         // the colors of a scheme, without one and without colors of the
         // categories the default colors, `defaultColor`, the color of a plot
         // or a legend if no category of it has a color, see plotGroups

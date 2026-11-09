@@ -12,10 +12,9 @@
             "column": "Wohnungssegment",
             "scheme": "Tableau10",
             "common": { "width": 2 },
-            "categories": {
-                "Hauseigentum": {}, "Wohnungseigentum": {}, "GBV Miete": {}, "Kommunale Miete": {}, "Private Miete": {}, "Sonstiges": {},
-                "Alle Haushalte": { "color": "#111", "width": 3.5 }
-            }
+            "order": "rows",
+            "fromData": "rows",
+            "categories": { "Alle Haushalte": { "color": "#111", "width": 3.5 } }
         },
         "einheit": "Einheit"
     },

@@ -292,8 +292,8 @@ const checkMappings = ctx => {
         const categorical = hasCategories(m);
         if (categorical && !m.categories && !m.fromData)
             warn(path, `the categories need 'categories' or the ones of the data ('fromData'), 'common' are the props of all of them`);
-        if (m.order !== undefined && m.order != 'ascending' && m.order != 'descending' && !Array.isArray(m.order))
-            warn(`${path}.order`, `expected 'ascending', 'descending' or a list of keys`);
+        if (m.order !== undefined && !['ascending', 'descending', 'rows'].includes(m.order) && !Array.isArray(m.order))
+            warn(`${path}.order`, `expected 'ascending', 'descending', 'rows' or a list of keys`);
         if (m.ranks !== undefined && !(Array.isArray(m.ranks) && m.ranks.every(isObject)))
             warn(`${path}.ranks`, `expected a list of props, of the first category, the second one, ...`);
         if (m.scheme !== undefined && !d3.named(d3.schemeNames, m.scheme))

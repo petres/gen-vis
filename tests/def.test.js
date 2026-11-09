@@ -32,6 +32,13 @@ describe('prepareDef', () => {
 describe('the props of categories', () => {
     const prepared = parts => prepareDef({ mapping: { c: { column: 'c', ...parts } }, plot: [] }).mapping.c;
 
+    test('"order": "rows": all categories in the order of the rows, also the listed ones', () => {
+        const dataKeys = () => ['b', 'all', 'a', 'c'];
+        const c = prepareDef({ mapping: { c: { column: 'c', order: 'rows', fromData: 'rows', scheme: 'Tableau10', categories: { all: { color: '#111' } } } }, plot: [] }, { dataKeys }).mapping.c;
+        expect(c.keys).toEqual(['b', 'all', 'a', 'c']);
+        expect(c.categoryProps.all.color).toBe('#111');
+    });
+
     test('the order of the categories, of integers ascending as JavaScript orders them', () => {
         const categories = { 2024: {}, 2026: {}, 2025: {} };
         expect(prepared({ categories }).keys).toEqual(['2024', '2025', '2026']);

@@ -761,9 +761,9 @@ export interface Dim {
      */
     fromData?: boolean | 'rows';
     /**
-     * The order of the categories: the one of categories (keys which are integers ascending first), ascending, descending (numbers by their value) or a list of keys which are first.
+     * The order of the categories: the one of categories (keys which are integers ascending first), ascending, descending (numbers by their value), rows (all in the order of the rows of the data, also the listed ones) or a list of keys which are first.
      */
-    order?: (`=${string}` | ('ascending' | 'descending')) | Key[];
+    order?: (`=${string}` | ('ascending' | 'descending' | 'rows')) | Key[];
     /**
      * The props of the categories by their rank in the order: of the first one, the second one, ..., the last entry is the one of all others, e.g. the newest year red.
      */

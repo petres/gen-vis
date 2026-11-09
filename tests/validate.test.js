@@ -68,7 +68,7 @@ test('the symbols of legends, the order and the ranks of categories', () => {
     def.dims.c.order = 'down';
     def.dims.c.ranks = { color: 'red' };
     expect(validateDef(def)).toEqual([
-        "dims.c.order: expected 'ascending', 'descending' or a list of keys",
+        "dims.c.order: expected 'ascending', 'descending', 'rows' or a list of keys",
         "dims.c.ranks: expected a list of props, of the first category, the second one, ...",
         "dims.c.legend.onlyData: only the entries of the categories of the rows, true or false, of a legend of categories",
         expect.stringMatching(/^dims.c.legend.symbol.props.fill: unknown reference 'nope'/),

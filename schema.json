@@ -1343,11 +1343,11 @@
                         {
                             "if": { "type": "string", "pattern": "^=" },
                             "then": { "type": "string", "pattern": "^=" },
-                            "else": { "enum": ["ascending", "descending"] }
+                            "else": { "enum": ["ascending", "descending", "rows"] }
                         },
                         { "type": "array", "items": { "$ref": "#/definitions/key" } }
                     ],
-                    "description": "The order of the categories: the one of categories (keys which are integers ascending first), ascending, descending (numbers by their value) or a list of keys which are first."
+                    "description": "The order of the categories: the one of categories (keys which are integers ascending first), ascending, descending (numbers by their value), rows (all in the order of the rows of the data, also the listed ones) or a list of keys which are first."
                 },
                 "ranks": {
                     "type": "array",
