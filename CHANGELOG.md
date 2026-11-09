@@ -458,6 +458,20 @@ Migration notes, to check by hand after `gen-vis migrate`:
 
 ### Fixes of the data (review of the release)
 
+- One text among numbers no longer makes a column categorical (the ticks
+  read "10, NA, 30", bars had NaN heights and the chart was empty, also
+  with `zero`). The usual texts of missing values (`NA`, `NaN`, `n/a`,
+  `-`, `.`, `..`, `:`, `#N/A`, `n.v.`, `k.A.`, ...) are missing values of
+  numbers and dates, silently, as Eurostat's `:`. Other texts are missing
+  values with a warning naming the dim, the column and the texts with their
+  rows if the dim has parts of numbers (a number `format`, a `domain` or
+  `include` of numbers, `zero`, `nice`, `pad`, an open domain), or if more
+  than half of the values are numbers and the texts have digits (`1,234`,
+  `<5`); words such as `Total` among years keep a column categorical. A
+  column without values with parts of numbers is numeric (was
+  categorical). The warning also names texts which are no numbers or dates
+  of a dim with a `type`, and objects or lists as values (they became
+  "[object Object]").
 - The categories of the data (`fromData: "rows"`, the default of a
   legend, and `"order": "rows"`) are in the order of the rows also if they
   are integers: years 2024, 2023, Total were 2022, 2023, 2024, Total, and

@@ -656,12 +656,34 @@ are numeric, a dim of the facets is categorical (one only used as `by` of
 a mark is not, it groups rows of any type), otherwise it is the one of the
 values of the column: numbers are numeric, dates (as below) a date, others
 categorical (a column without values, e.g. of empty data, is a date with a
-time `format` of the dim, its axis or its hover, otherwise categorical),
-e.g. years of a column are numeric, so a dim of the categories of years is
-categorical by its `categories` or with `"type": "categorical"`. The type
-of the values reads the values of the column (once per value, until one is
-neither a number nor a date), a few milliseconds of data of hundred
-thousands of rows, a dim with a `type` does not read them.
+time `format` of the dim, its axis or its hover, numeric with the parts of
+numbers below, otherwise categorical), e.g. years of a column are numeric,
+so a dim of the categories of years is categorical by its `categories` or
+with `"type": "categorical"`. The type of the values reads the values of
+the column (once per value, until one is neither a number nor a date), a
+few milliseconds of data of hundred thousands of rows, a dim with a `type`
+does not read them.
+
+The usual texts of missing values are missing values of numbers and dates,
+without a warning: `NA`, `NaN`, `n/a`, `n.a.`, `null`, `none`, `-`, `--`,
+`–`, `—`, `.`, `..`, `...`, `…`, `:` (Eurostat), `?`, `#N/A`, `n.v.` and
+`k.A.` (in any case, with spaces around them), so `10, NA, 30` is a column
+of numbers. Other texts among numbers make the column categorical, except:
+
+- the dim has parts of numbers: a number `format` (of the dim, its axis,
+  its hover or its legend), a `domain` or `include` of numbers (also of
+  `zero`), or the parts of a continuous scale (an open `domain`, `nice`,
+  `pad`, `center`); then it is numeric if some values are numbers;
+- more than half of the values are numbers and the other texts have digits,
+  e.g. `1,234` (a separator of thousands), `<5` or `12 %`, numbers written
+  otherwise; words such as `Total` among years keep a column categorical.
+
+Then these texts are missing values with a warning which names the dim, the
+column and the texts with their numbers of rows, e.g. `dims.y: values of
+the column 'b' are no numbers, they are missing: '1,234' (1 row)`. The same
+warning names texts of a dim with `"type": "numeric"` or `"date"` which are
+no numbers or dates, and objects or lists as values of a dim (e.g. of nested
+JSON).
 
 Numeric and date values which are missing, invalid or infinite are `null`:
 they are gaps in lines and areas, points and bars are not drawn, and they

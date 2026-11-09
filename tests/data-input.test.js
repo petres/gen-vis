@@ -32,3 +32,30 @@ describe('the categories of the data in the order of the rows', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('texts among numbers', () => {
+    const bars = y => ({ dims: { x: 'a', y }, marks: [{ type: 'bar' }] });
+    const heights = el => [...el.querySelectorAll('g.vis-mark rect')].map(r => r.getAttribute('height'));
+
+    test('the usual texts of missing values are missing values, without a warning', async () => {
+        const el = await mount({ def: bars({ column: 'b', zero: true }), data: 'a,b\nA,10\nB,NA\nC,30\nD,:\nE,-' });
+        const ticks = [...el.querySelectorAll('.vis-axis-left .tick text, .vis-axis.left .tick text')].map(t => t.textContent);
+        expect(ticks.length).toBeGreaterThan(0);
+        expect(ticks).not.toContain('NA');
+        expect(heights(el).length).toBe(2);
+        expect(heights(el).every(h => Number.isFinite(parseFloat(h)))).toBe(true);
+        expect(errors).toEqual([]);
+    });
+
+    test('other texts with digits among more numbers are missing values with a warning', async () => {
+        const el = await mount({ def: bars('b'), data: 'a,b\nA,10\nB,"1,234"\nC,30\nD,5' });
+        expect(heights(el).length).toBe(3);
+        expect(errors).toEqual(["gen-vis inline definition: dims.y: values of the column 'b' are no numbers, they are missing: '1,234' (1 row) (a number is written as 1234.5, without a separator of thousands)"]);
+    });
+
+    test('the parts of numbers make a dim numeric, e.g. a number format', async () => {
+        const el = await mount({ def: bars({ column: 'b', format: ',.1f', zero: true }), data: 'a,b\nA,10\nB,unknown\nC,30' });
+        expect(heights(el).length).toBe(2);
+        expect(errors).toEqual(["gen-vis inline definition: dims.y: values of the column 'b' are no numbers, they are missing: 'unknown' (1 row)"]);
+    });
+});

@@ -1,4 +1,4 @@
-export { sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, rawOf, rawIndexOf, rowResolver, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
+export { oddValues, sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, rawOf, rawIndexOf, rowResolver, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { fillTemplate, inLanguage, sameValue, templateRefs, variants } from "@/utils/def";
@@ -214,12 +214,13 @@ const rawOf = PreparedRow.raw;
 const rawIndexOf = PreparedRow.index;
 
 // maps the parsed rows to the mappings, e.g. column `share` to `y`, also the
-// columns of transforms
-const prepareData = (data, def, columns = null) => {
+// columns of transforms; `odd` collects the values the mappings cannot use,
+// see oddValues
+const prepareData = (data, def, columns = null, odd = null) => {
     const mapping = Object.keys(def.mapping).map(n => ({
         name: n,
         value: columnValues(data, columns, def.mapping[n].column),
-        convert: converter(def.mapping[n], def.mapping),
+        convert: odd ? checked(n, def.mapping[n], converter(def.mapping[n], def.mapping), odd) : converter(def.mapping[n], def.mapping),
     }));
 
     return sourceRows(data, columns).map((d, i) => {
@@ -228,6 +229,56 @@ const prepareData = (data, def, columns = null) => {
             e[c.name] = c.convert(c.value(i));
         return e;
     })
+};
+
+// the conversion of the values of a mapping `n` which collects the ones it
+// cannot use in `odd` (a map of the names of the mappings), by their text:
+// of numbers and dates the ones which are none (`values`, not the usual
+// texts of missing values, see missingToken) and of every type objects and
+// lists (`objects`), e.g. of nested JSON, which are no values of a dim
+const checked = (n, m, convert, odd) => v => {
+    const c = convert(v);
+    const object = v !== null && typeof v == 'object' && !(v instanceof Date);
+    if (object || (c === null && (m.type == 'numeric' || m.type == 'date') && !absent(v))) {
+        if (!odd.has(n))
+            odd.set(n, { values: new Map(), objects: new Map() });
+        const kind = odd.get(n)[object ? 'objects' : 'values'];
+        const text = object ? JSON.stringify(v) : String(v);
+        kind.set(text, (kind.get(text) ?? 0) + 1);
+    }
+    return c;
+};
+
+// the texts of the values and their numbers of rows, at most `max` of them, e.g. "'NA' (2 rows), 'x' (1 row)"
+const counted = (values, max = 4) => {
+    const entries = [...values].sort(([, a], [, b]) => b - a);
+    const shown = entries.slice(0, max).map(([v, k]) => `'${v.length > 40 ? `${v.slice(0, 40)}...` : v}' (${k} ${k == 1 ? 'row' : 'rows'})`);
+    return entries.length > max ? `${shown.join(', ')} and ${entries.length - max} other${entries.length - max == 1 ? '' : 's'}` : shown.join(', ');
+};
+
+/**
+ * The warnings of the values the mappings of the prepared definition `def`
+ * could not use (`odd` of prepareData), once per column: texts of a dim of
+ * numbers or dates which are none, e.g. "1,234" or "<5" (the usual texts of
+ * missing values, e.g. NA or ":", are missing values without a warning, see
+ * missingToken), and objects or lists, e.g. of nested JSON.
+ */
+const oddValues = (def, odd) => {
+    const warned = new Set();
+    return [...odd].flatMap(([n, { values, objects }]) => {
+        const m = def.mapping[n];
+        const column = fillTemplate(m.column, def.globals ?? {});
+        if (warned.has(column))
+            return [];
+        warned.add(column);
+        const what = m.type == 'date' ? 'dates' : 'numbers';
+        const written = m.type == 'numeric' && [...values.keys()].some(v => /\d[,'\s]\d/.test(v))
+            ? ' (a number is written as 1234.5, without a separator of thousands)' : '';
+        return [
+            ...(values.size > 0 ? [`dims.${n}: values of the column '${column}' are no ${what}, they are missing: ${counted(values)}${written}`] : []),
+            ...(objects.size > 0 ? [`dims.${n}: values of the column '${column}' are objects or lists, not numbers, dates or texts: ${counted(objects, 2)}`] : []),
+        ];
+    });
 };
 
 /**
@@ -662,14 +713,34 @@ const updateDataValues = (defOrg, def, rows, columns, formatOf = null, changed =
     return reset;
 };
 
-// the type of the values of a column: numeric if all of them are numbers,
-// date if all of them are dates, otherwise categorical, undefined without
-// values (e.g. of empty data). A pass of numbers which ends at the first
-// value which is none (a value which is the one before is skipped, e.g. the
-// years of many rows), then a pass of dates of the distinct values, which
-// ends at the first value which is no date, `value(i)` is the one of the
-// row i of `n` rows (or `values` an array)
-const inferType = (values, n = values.length) => {
+// the usual texts of missing values of statistics, e.g. NA and NaN of R and
+// pandas, ":" of Eurostat, "-", "." and ".." of statistical offices, "n.v."
+// and "k.A." of German tables, compared trimmed and in lower case; a column
+// of numbers or dates with them is one of numbers or dates, they are missing
+// values (null) without a warning, see inferType and oddValues; NaN of
+// parquet or of rows of JavaScript too
+const missingTokens = new Set(['na', 'n/a', 'n.a.', 'nan', 'null', 'none', '-', '--', '\u2013', '\u2014', '.', '..', '...', '\u2026', ':', '?', '#n/a', 'n.v.', 'k.a.']);
+const missingToken = v => (typeof v == 'string' && v.length < 8 && missingTokens.has(v.trim().toLowerCase())) || (typeof v == 'number' && Number.isNaN(v));
+// missing or one of the texts of missing values
+const absent = v => missing(v) || missingToken(v);
+
+/**
+ * The type of the values of a column: numeric if all of them are numbers,
+ * date if all of them are dates, the usual texts of missing values aside
+ * (see missingToken), otherwise categorical, undefined without values
+ * (e.g. of empty data). A pass of numbers which ends at the first value
+ * which is none (a value which is the one before is skipped, e.g. the years
+ * of many rows), then a pass of dates of the distinct values, which ends at
+ * the first value which is no date; then numeric if `hint` says the dim is
+ * continuous (its parts, see typeHint: 'numeric' or 'continuous') and some
+ * values are numbers, or without a hint if more than half of the values
+ * are numbers and the others have digits, e.g. "1,234", "<5" or "12 %",
+ * numbers written otherwise, which are missing values with a warning (see
+ * oddValues), not "Total", "Wien" or "Phase 1" among "2023", "2024", e.g. the
+ * categories of a legend. `value(i)` is the one of the row i of `n` rows
+ * (or `values` an array).
+ */
+const inferType = (values, n = values.length, hint = undefined) => {
     const at = typeof values == 'function' ? values : i => values[i];
     let present = false;
     let before;
@@ -683,7 +754,7 @@ const inferType = (values, n = values.length) => {
             present = true;
             continue;
         }
-        if (missing(v))
+        if (absent(v))
             continue;
         if (toNumber(v) === null)
             break;
@@ -692,15 +763,65 @@ const inferType = (values, n = values.length) => {
     if (i == n)
         return present ? 'numeric' : undefined;
     const seen = new Set();
-    for (let j = 0; j < n; j++) {
+    let dates = true;
+    for (let j = 0; j < n && dates; j++) {
         const v = at(j);
         if (seen.has(v))
             continue;
         seen.add(v);
-        if (!missing(v) && toDate(v) === null)
-            return 'categorical';
+        if (!absent(v) && toDate(v) === null)
+            dates = false;
     }
-    return 'date';
+    if (dates)
+        return 'date';
+    // the numbers among the other values
+    let numbers = 0;
+    let others = 0;
+    let digits = true;
+    before = undefined;
+    let wasNumber = false;
+    for (let j = 0; j < n; j++) {
+        const v = at(j);
+        if (j == 0 || v !== before) {
+            before = v;
+            if (absent(v)) {
+                wasNumber = null;
+                continue;
+            }
+            wasNumber = toNumber(v) !== null;
+            if (!wasNumber && digits && !/\d/.test(typeof v == 'object' ? '' : String(v)))
+                digits = false;
+        }
+        if (wasNumber)
+            numbers++;
+        else if (wasNumber === false)
+            others++;
+    }
+    return numbers > 0 && (hint !== undefined || (digits && numbers > others)) ? 'numeric' : 'categorical';
+};
+
+// a d3 number format, e.g. ",.1f" or ".0%", see d3-format (not an empty one)
+const numberFormat = /^(?:(.)?([<>=^]))?([+\-( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?(~)?([a-z%])?$/i;
+
+/**
+ * Whether the parts of a mapping without a type say that its values are
+ * numbers or dates, not categories, e.g. "NA" among numbers: 'numeric' of a
+ * number format (of the mapping, its axis, hover or legend), of a domain or
+ * an `include` of numbers (e.g. of `"zero": true`), 'continuous' of the
+ * other parts of a continuous scale (an open domain, `nice`, `pad`,
+ * `center`, an `interval`), undefined otherwise. A scale type and the
+ * categories make the type already, see normalize.
+ */
+const typeHint = m => {
+    const scale = isObject(m.scale) ? m.scale : {};
+    const formats = [m.format, m.axis?.format, m.hover?.format, m.legend?.format].filter(f => typeof f == 'string' && f !== '');
+    if (formats.some(f => !timeFormat.test(f) && numberFormat.test(f))
+        || [m.domain, scale.domain, m.include, scale.include].some(v => [v].flat().some(e => typeof e == 'number')))
+        return 'numeric';
+    if ([m.domain, scale.domain].some(v => Array.isArray(v) && v.includes(null))
+        || ['nice', 'pad', 'center'].some(k => m[k] !== undefined || scale[k] !== undefined) || m.interval !== undefined)
+        return 'continuous';
+    return undefined;
 };
 
 // a d3 time format, e.g. "%b %Y", not a number format, e.g. ".0%"
@@ -734,9 +855,12 @@ const inferTypes = (def, rows, columns = null, known = () => true) => {
         if (!typesOf.has(source))
             typesOf.set(source, new Map());
         const types = typesOf.get(source);
-        if (!types.has(column))
-            types.set(column, inferType(columnValues(rows, columns, column), sourceRows(rows, columns).length));
-        m.type = types.get(column) ?? formatType(m);
+        const hint = typeHint(m);
+        const key = `${hint ?? ''}\0${column}`;
+        if (!types.has(key))
+            types.set(key, inferType(columnValues(rows, columns, column), sourceRows(rows, columns).length, hint));
+        // without values of the parts of a continuous dim numeric, e.g. of `"zero": true`
+        m.type = types.get(key) ?? (hint && formatType(m) != 'date' ? 'numeric' : formatType(m));
     };
     Object.values(def.mapping ?? {}).forEach(infer);
     variants(def).slice(1).forEach(patch => Object.entries(isObject(patch.mapping) ? patch.mapping : {})

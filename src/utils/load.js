@@ -1,7 +1,7 @@
 export { valueFormat, resolveUrl, clearCache, resolveParents, readDef, requirements, raw, geoParts, loadGeo, load, fetchData };
 
 
-import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, parseData, prepareData, sourceRows, toDate, usedColumns } from "@/utils/data";
+import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, oddValues, parseData, prepareData, sourceRows, toDate, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, madeColumns, utcColumns } from "@/utils/transform";
 import { applyResolved, fillTemplate, languageOf, mergeAll, prepareDef, variants, variantsOf } from "@/utils/def";
 import { translate, checkDims, implicitDims, isDefinition4, isDefinition5, optionKeys, authoredPath } from "@/utils/language";
@@ -520,6 +520,10 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     // (with the check its warning of such a channel, see validateDef, not twice)
     if (!check)
         missingColumns(source, prepared.globals, rows, columns).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
+    // the values the dims cannot use, e.g. "1,234" among numbers
+    const odd = new Map();
+    const prepRows = raw(prepareData(rows, prepared, columns, odd));
+    oddValues(prepared, odd).forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
 
     return {
         defUrl: url ?? null,
@@ -537,6 +541,6 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
         columns,
         def: prepared,
         defaults,
-        data: raw(prepareData(rows, prepared, columns)),
+        data: prepRows,
     };
 };
