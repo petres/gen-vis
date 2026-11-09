@@ -1,21 +1,7 @@
 {
     "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
     "dims": {
-        "x": {
-            "column": "date",
-            "format": "%b %y",
-            "scale": {"domainAbs": [-2000000000, 2000000000]},
-            "axis": {"ticks": "@innerWidth * 0.017", "rotate": 35},
-            "hover": {}
-        },
-        "y": {
-            "column": "value",
-            "type": "numeric",
-            "scale": {"pad": [0, 0.1]},
-            "axis": {"ticks": 6, "format": ",.0f"},
-            "hover": {"format": ",.1f"},
-            "zero": true,
-            "grid": true
-        }
+        "x": { "column": "date", "format": "%b %y", "scale": { "domainAbs": [-2000000000, 2000000000] }, "tickSpacing": 59, "axis": { "rotate": 35 } },
+        "y": { "column": "value", "type": "numeric", "zero": true, "pad": [0, 0.1], "ticks": 6, "grid": true, "axis": { "format": ",.0f" }, "hover": { "format": ",.1f" } }
     }
 }

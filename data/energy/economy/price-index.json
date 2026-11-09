@@ -6,85 +6,28 @@
     "subtitle": "Preise in €, monatlich, Durchschnitt {base} = 100, logarithmische Skala",
     "source": "Quelle: cismo (Gas, CEGH), Macrobond, ICE (Brent, Kohle, EUA), ENTSO-E (Strom), Statistik Austria (Brennholz), proPellets Austria (Pellets); Brent und Kohle von $ umgerechnet",
     "height": "=steps(@totalWidth, {0: 250, 550: 280, 600: 320})",
-    "margins": {"top": 5, "right": 30, "bottom": 30, "left": 50},
-    "globals": {"base": "2019"},
-    "controls": [
-        {
-            "type": "slider",
-            "global": "base",
-            "name": "Basisjahr",
-            "id": "base",
-            "values": {"column": "base"},
-            "inImage": false
-        }
-    ],
-    "filter": {"base": "@globals.base"},
+    "globals": { "base": "2019" },
+    "controls": [{ "type": "slider", "global": "base", "name": "Basisjahr", "values": { "column": "base" }, "inImage": false }],
+    "filter": { "base": "@globals.base" },
     "dims": {
-        "x": {"axis": {"ticks": "@innerWidth * 0.014", "rotate": 0, "format": "%Y"}},
-        "y": {
-            "domain": [null, null],
-            "scale": {"type": "log", "pad": [0.05, 0.05]},
-            "axis": {"values": [2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]}
-        },
-        "base": {"column": "base", "type": "categorical"},
+        "x": { "tickSpacing": 71, "axis": { "rotate": 0, "format": "%Y" } },
+        "y": { "zero": false, "pad": 0.05, "scale": { "type": "log" }, "axis": { "values": [2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000] } },
+        "base": "base",
         "type": {
             "column": "type",
-            "legend": {
-                "symbol": {
-                    "size": 16,
-                    "elements": [
-                        {
-                            "type": "line",
-                            "props": {
-                                "x1": 0,
-                                "x2": 16,
-                                "y1": 8,
-                                "y2": 8,
-                                "stroke": "@color",
-                                "stroke-width": 2,
-                                "stroke-dasharray": "@stroke-dasharray",
-                                "opacity": "@opacity"
-                            }
-                        }
-                    ]
-                }
-            },
-            "common": {
-                "stroke-width": 2,
-                "highlight-stroke-width": 3,
-                "opacity": 0.7,
-                "highlight-opacity": 1,
-                "stroke-dasharray": 0
-            },
+            "legend": {},
             "categories": {
-                "gas": {"color": "#C3423F", "name": "Erdgas"},
-                "oil": {"color": "#C3423F", "name": "Rohöl (Brent)", "stroke-dasharray": "6, 3"},
-                "coal": {"color": "#C3423F", "name": "Kohle", "stroke-dasharray": "2, 2"},
-                "firewood": {"color": "#b5c969", "name": "Brennholz"},
-                "pellets": {
-                    "color": "#b5c969",
-                    "name": "Pellets",
-                    "stroke-dasharray": "6, 3",
-                    "visible": false
-                },
-                "electricity": {"color": "#86cae7", "name": "Strom"},
-                "eua": {
-                    "color": "#F3D039",
-                    "name": "CO₂-Zertifikate (EUA)",
-                    "stroke-dasharray": "6, 3",
-                    "visible": false
-                }
+                "gas": { "name": "Erdgas", "color": "#C3423F" },
+                "oil": { "name": "Rohöl (Brent)", "color": "#C3423F", "dash": "6, 3" },
+                "coal": { "name": "Kohle", "color": "#C3423F", "dash": "2, 2" },
+                "firewood": { "name": "Brennholz", "color": "#b5c969" },
+                "pellets": { "name": "Pellets", "color": "#b5c969", "dash": "6, 3", "visible": false },
+                "electricity": { "name": "Strom", "color": "#86cae7" },
+                "eua": { "name": "CO₂-Zertifikate (EUA)", "color": "#F3D039", "dash": "6, 3", "visible": false }
             }
         }
     },
-    "marks": {
-        "type": "line",
-        "by": "type",
-        "curve": "monotoneX",
-        "stroke-width": "@stroke-width",
-        "stroke-dasharray": "@stroke-dasharray",
-        "opacity": "@opacity",
-        "highlight": {"opacity": "@highlight-opacity", "stroke-width": "@highlight-stroke-width"}
-    },
-    "annotations": [{"type": "line", "y": 100, "props": {"stroke": "#999", "stroke-dasharray": "3 3"}}]
+    "marks": { "type": "line", "by": "type", "curve": "monotoneX", "stroke-width": 2, "stroke-dasharray": "@dash", "opacity": 0.7,
+               "highlight": { "opacity": 1, "stroke-width": 3 } },
+    "annotations": { "type": "line", "y": 100, "props": { "stroke": "#999", "stroke-dasharray": "3 3" } }
 }
