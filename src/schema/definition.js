@@ -134,8 +134,8 @@ const definitions = {
 
     margins: anyOf([
         object(Object.fromEntries(['top', 'right', 'bottom', 'left'].map(side => [side, anyOf([ref('number'), constant('auto')])]))),
-        constant('auto', 'All sides measured.'),
-    ], 'The space around the plot area of a facet in pixels, of the axes and their titles, e.g. { "left": 60 }; a side without one is the one of the styles of the page (--gen-vis-margin-left: 60px, also auto) or of its defaults (registerDefaults, e.g. of a house style), else measured ("auto") of the labels of the axes, their tick marks and their titles; an expression of totalWidth, e.g. steps of it.'),
+        constant('auto', 'The same as no margins: the sides of the styles or the defaults of the page, else measured.'),
+    ], 'The space around the plot area of a facet in pixels, of the axes and their titles, e.g. { "left": 60 }; a side without one is the one of the styles of the page (--gen-vis-margin-left: 60px, also of rem, em or pt, or auto) or of its defaults (registerDefaults, e.g. of a house style), else measured ("auto") of the labels of the axes, their tick marks and their titles; an expression of totalWidth, e.g. steps of it, also of "auto" (an expression without a value is no side).'),
 
     hover: object({
         columns: array(string(), 'The dims of the hover (its rows of their values, in this order), by default the dims the marks use, of their `by` and their positions (not the ones of the facets); a dim with a `hover` of its own is in it as well, [] only those.'),

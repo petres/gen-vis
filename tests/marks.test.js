@@ -330,12 +330,12 @@ describe('fixes of the review of the docs', () => {
         expect(mergeAll([{ dims: { facet: 'group' } }, { dims: { facet: { categories: { a: {} } } } }]).dims.facet).toEqual({ column: 'group', categories: { a: {} } });
     });
 
-    test('"auto" of all margins of a definition is measured, also over the defaults of the page', async () => {
+    test('"auto" of all margins of a definition is the same as no margins (the styles, the defaults, else measured)', async () => {
         const { prepareDef } = await import('@/utils/def');
         const { translate } = await import('@/utils/language');
         const { normalize } = await import('@/utils/normalize');
         const { plotTypes } = await import('@/plots');
         const def = prepareDef(normalize(translate({ margins: 'auto', dims: { x: 'a', y: 'b' }, marks: { type: 'line' } }), { plotTypes }));
-        expect(def.options.margins).toEqual({ top: 'auto', right: 'auto', bottom: 'auto', left: 'auto' });
+        expect(def.options.margins).toEqual({});
     });
 });

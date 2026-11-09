@@ -487,13 +487,16 @@ the ones of a column of the language, e.g. `"column": "name_{lang}"` or a
 `margins` is the space around the plot area of a facet in pixels, of the
 axes and their titles: `{"top", "right", "bottom", "left"}`, each a number,
 an expression of `totalWidth` (e.g. `"=steps(@totalWidth, {0: 40, 560:
-80})"`) or `"auto"`. A side is, the first one which gives it:
+80})"`, which may also yield `"auto"`; one without a value, e.g. an `if`
+without an else, is no side) or `"auto"`. A side is, the first one which
+gives it:
 
 1. the side of the definition, e.g. `"margins": {"left": 60}`;
 2. the css variable of the side of the styles of the page, of the element
    `.vis` or an element above it: `--gen-vis-margin-top`,
    `--gen-vis-margin-right`, `--gen-vis-margin-bottom`,
-   `--gen-vis-margin-left`, a length in pixels or `auto`;
+   `--gen-vis-margin-left`, a length (a number of pixels, `px`, `rem` of
+   the font size of the page, `em` of the one of the chart, `pt`) or `auto`;
 3. the margins of the defaults of the chart (the prop `defaults`, e.g.
    `{"margins": {"left": 60}}`) or of the page (`registerDefaults`), see
    [defaults](#defaults);
@@ -522,7 +525,8 @@ they are drawn (`dx`, `dy`, `text-anchor`, `dominant-baseline`, `font-size`,
 `max-width`; not rotated texts, annotations, texts inside areas and the
 ones of maps). The legends and the
 titles of facets are not part of the margins, they are beside or above the
-facets. `"margins": "auto"` is the same as no margins.
+facets. `"margins": "auto"` is the same as no margins (the styles and the
+defaults of the page, else measured); `"auto"` of a side is measured.
 
 ### Defaults
 

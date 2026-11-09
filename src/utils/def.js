@@ -360,8 +360,9 @@ const placed = plots => {
 // ("auto"), see layout
 const prepareOptions = options => {
     const given = Object.fromEntries(Object.entries(options ?? {}).filter(([, v]) => v !== null));
-    // "auto" of all sides: measured, also where the styles or the defaults of the page have margins
-    const margins = given.margins === 'auto' ? { top: 'auto', right: 'auto', bottom: 'auto', left: 'auto' } : (isObject(given.margins) ? given.margins : {});
+    // "auto" is the same as no margins: the styles or the defaults of the
+    // page, else measured; a side of "auto" is measured
+    const margins = isObject(given.margins) ? given.margins : {};
     return { height: 400, ...given, margins };
 };
 

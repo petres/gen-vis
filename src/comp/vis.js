@@ -84,6 +84,21 @@ const slotPart = () => {
     };
 };
 
+// a length of css in pixels, e.g. of a variable of the margins: a number
+// or of the units px, rem (of the font size of the page), em (of the one of
+// the chart, `styles`) or pt, undefined otherwise
+const cssPixels = (value, styles) => {
+    const m = /^(-?\d*\.?\d+(?:e[-+]?\d+)?)\s*(px|rem|em|pt)?$/i.exec(value ?? '');
+    if (!m)
+        return undefined;
+    const n = Number(m[1]);
+    const unit = (m[2] ?? 'px').toLowerCase();
+    const fontSize = element => parseFloat(element ? getComputedStyle(element).fontSize : NaN) || 16;
+    return unit == 'px' ? n : unit == 'pt' ? n*4/3
+        : unit == 'rem' ? n*fontSize(typeof document != 'undefined' ? document.documentElement : null)
+        : n*(parseFloat(styles?.fontSize) || 16);
+};
+
 /**
  * The visualisation of a loaded definition (the element `.vis`): the
  * header, the form elements, the legends, the facets and the footer. `app`
@@ -265,7 +280,7 @@ const createVis = app => {
         // (measured), e.g. --gen-vis-margin-left: 60px of a house style
         store.styleMargins = styles ? Object.fromEntries(['top', 'right', 'bottom', 'left'].map(side => {
             const value = styles.getPropertyValue(`--gen-vis-margin-${side}`).trim();
-            return [side, value == 'auto' ? 'auto' : (value && Number.isFinite(parseFloat(value)) ? parseFloat(value) : undefined)];
+            return [side, value == 'auto' ? 'auto' : cssPixels(value, styles)];
         }).filter(([, v]) => v !== undefined)) : null;
     };
     const resized = () => {

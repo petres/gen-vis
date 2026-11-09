@@ -162,4 +162,46 @@ describe('the margins of the styles of the page', () => {
         expect(top).toBe(Math.ceil(label/2 + 2));
         wrapper.remove();
     });
+
+    test('lengths of rem, em and pt in pixels, "margins": "auto" of the definition is no margins', async () => {
+        const left = async (value, def = {}) => {
+            const wrapper = document.body.appendChild(document.createElement('div'));
+            wrapper.style.setProperty('--gen-vis-margin-left', value);
+            const el = wrapper.appendChild(document.createElement('div'));
+            createGenVis(el, { def: { height: 200, dims: { x: { column: 'year', type: 'numeric' }, y: { column: 'value', type: 'numeric', zero: true } }, marks: { type: 'line' }, ...def }, data });
+            await rendered(el);
+            await nextTick();
+            const inner = el.querySelector('svg.vis-svg > g');
+            wrapper.remove();
+            return Number(/translate\(([\d.]+) /.exec(inner.getAttribute('transform'))[1]);
+        };
+        document.documentElement.style.fontSize = '16px';
+        expect(await left('4rem')).toBe(64);
+        expect(await left('30pt')).toBe(40);
+        expect(await left('55')).toBe(55);
+        expect(await left('70px', { margins: 'auto' })).toBe(70);
+        document.documentElement.style.fontSize = '';
+    });
+});
+
+describe('"auto" and expressions of the margins', () => {
+    test('"margins": "auto" is the same as no margins, also with the defaults of the page', async () => {
+        const { registerDefaults } = await import('@/utils/defaults');
+        registerDefaults({ margins: { left: 50 } });
+        try {
+            expect(await margins({ margins: 'auto' })).toEqual(await margins({}));
+            expect((await margins({ margins: 'auto' })).left).toBe(50);
+            // a side of "auto" is measured
+            expect((await margins({ margins: { left: 'auto' } })).left).not.toBe(50);
+        } finally {
+            registerDefaults(null);
+        }
+    });
+
+    test('an expression of a side may be "auto", one without a value is no side', async () => {
+        const measured = await margins({}, 300);
+        expect(await margins({ margins: { left: "=if(@totalWidth > 500, 80, 'auto')" } }, 300)).toEqual(measured);
+        expect((await margins({ margins: { left: "=if(@totalWidth > 500, 80, 'auto')" } }, 600)).left).toBe(80);
+        expect(await margins({ margins: { left: '=if(@totalWidth > 500, 80)' } }, 300)).toEqual(measured);
+    });
 });

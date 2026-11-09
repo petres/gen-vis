@@ -282,6 +282,11 @@ Migration notes, to check by hand after `gen-vis migrate`:
   `value` replaces a column and an `aggregate` with `rows` whose `as` is a
   column of `by` warn; an aggregate without a known `op` is an error also
   of no rows.
+- `"margins": "auto"` is the same as no margins, as documented (it
+  overrode the css variables and the defaults of the page); an expression
+  of a side which yields `"auto"` is measured (was 0), one without a value
+  is no side; the css variables of the margins in `rem`, `em` and `pt` are
+  converted to pixels (`4rem` was 4 px).
 
 ### Package and builds
 

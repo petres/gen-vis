@@ -347,10 +347,16 @@ const layout = (store, width, before = null) => {
     // autoMargins of utils/margins.js); they can be props, e.g. steps of
     // the width of the visualisation
     const marginDefaults = store.marginDefaults?.() ?? {};
-    const given = Object.fromEntries(['top', 'right', 'bottom', 'left'].map(k => {
-        const v = def.options.margins?.[k] ?? store.styleMargins?.[k] ?? marginDefaults[k] ?? 'auto';
-        return [k, v === 'auto' ? 'auto' : Number(evaluate(v, scope)) || 0];
-    }));
+    // an expression of the side, e.g. of the width, may be "auto" too, one
+    // without a value (null) is no side of the definition
+    const side = v => {
+        if (v === undefined || v === null || v === 'auto')
+            return v;
+        const e = evaluate(v, scope);
+        return e === undefined || e === null || e === 'auto' ? e : Number(e) || 0;
+    };
+    const given = Object.fromEntries(['top', 'right', 'bottom', 'left'].map(k =>
+        [k, side(def.options.margins?.[k]) ?? store.styleMargins?.[k] ?? side(marginDefaults[k]) ?? 'auto']));
     const auto = Object.values(given).includes('auto');
     const grid = faceted ? gridOf(def) : null;
     const cols = grid ? entries[0].cell.cols : (faceted ? evaluate(def.facets.cols, scope) : 1);
