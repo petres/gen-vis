@@ -8,7 +8,8 @@ import { inferTypes } from "@/utils/data";
 import { plotTypes } from "@/plots";
 import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
-import { formatter } from "@/utils/expr";
+import { evaluate, formatter, isOperator, refNames } from "@/utils/expr";
+import { formatExpression } from "@/utils/expr-parse";
 import { axisNames } from "@/layout";
 import { axisDefaults, symbolDefaults, marginDefaults } from "@/utils/defaults";
 import { geoParts, load, loadGeo, raw, valueFormat } from "@/utils/load";
@@ -133,10 +134,26 @@ class Store {
     get names() { return templateNames(this.def) }
 
     // a text of the definition with the values of the globals, e.g. "{base} = 100"
-    text(t) { return fillText(t, this.names) }
+    text(t) { return fillText(this.textOf(t), this.names) }
     // html of the definition, e.g. the footer, with the values of the globals
     // as text, they can be values of the data, e.g. of a form element
-    html(t) { return typeof t == 'string' ? fillHtml(t, this.names) : t }
+    html(t) { const v = this.textOf(t); return typeof v == 'string' ? fillHtml(v, this.names) : v }
+    // a text which is an expression of names which are not all globals
+    // (those are evaluated before, see utils/resolve.js), evaluated in the
+    // scope of the chart, e.g. "=cat('Breite ', @totalWidth)", no value is
+    // the empty text, never the expression; a name which is none of the
+    // scope (no global, no size) has no value, a warning once
+    textOf(t) {
+        if (!isOperator(t))
+            return t;
+        const scope = this.scope;
+        const unknown = refNames(t).filter(n => typeof n == 'string' && !Object.hasOwn(scope, n));
+        if (unknown.length > 0)
+            warnOnce(this, `text:${JSON.stringify(t)}`, `the text "=${formatExpression(t)}" names ${unknown.map(n => `'${n}'`).join(', ')}, `
+                + `no global (of "globals" or a control) and no size (totalWidth): no value`);
+        const v = evaluate(t, scope);
+        return v === null || v === undefined ? '' : String(v);
+    }
     // the props of a category, e.g. of a value of the data, undefined for other values
     prop(n, k) { const props = this.def.mapping[n].categoryProps; return Object.hasOwn(props, k) ? props[k] : undefined }
     mappingNamesWithKey(k) { return Object.keys(this.def.mapping).filter(n => Boolean(this.def.mapping[n][k])) }

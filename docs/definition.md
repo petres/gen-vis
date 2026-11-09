@@ -2090,7 +2090,12 @@ control of the kind of the chart:
 - Expressions of the rows, the categories or the sizes (e.g. `@x`,
   `@color`, `@innerWidth`, `@totalWidth`) are evaluated when they are
   drawn, at the places which have such names, see [names](#names); a part
-  of an expression of the globals in them is evaluated with them.
+  of an expression of the globals in them is evaluated with them. A text
+  (the title, the subtitle, the source, the names of the dims and their
+  categories, the titles of the axes, ...) of an expression of other names
+  is evaluated when it is drawn, with the globals of the page and
+  `totalWidth`, e.g. `"title": "=cat('Breite ', @totalWidth)"`; a name it
+  does not know has no value (a warning once), no value is the empty text.
 - A change of a global evaluates the definition again, only the parts which
   change are prepared again, the entries of the legends of the same
   categories keep their state. The definitions of all values of the

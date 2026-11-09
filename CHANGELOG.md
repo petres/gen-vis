@@ -159,6 +159,11 @@ them.
   channels too; a categorical dim of a `fill` or `stroke` is in the
   default hover, as a `by`; `lon` and `lat` of expressions are the ones of
   the props (were `"@undefined"`).
+- A text (title, subtitle, source, names, axis titles, ...) of an
+  expression of names which are not all globals is evaluated when it is
+  drawn, with the globals of the page and `totalWidth`; an unknown name has
+  no value and a warning once, no value is the empty text (the alpha showed
+  the expression as JSON).
 - A comparison of more than two operands is a chain of every pair of
   neighbours, also `==` and `!=`: `@a == @b == @c` is true if all three
   are the same (the alpha compared the first two).
