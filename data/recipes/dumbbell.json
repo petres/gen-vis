@@ -1,0 +1,26 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "employment.csv",
+    "title": "Employment rate of women and men, 2024",
+    "subtitle": "in % of the population aged 20–64, sorted by the gap",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 340,
+    "transform": [
+        {"type": "aggregate", "column": "rate", "by": "country", "op": "min", "as": "lo"},
+        {"type": "aggregate", "column": "rate", "by": "country", "op": "max", "as": "hi"},
+        {"type": "calc", "as": "gap", "expr": "=@hi - @lo"}
+    ],
+    "dims": {
+        "x": {"column": "rate", "name": "Employment rate", "format": ".1f", "grid": true, "pad": 0.05, "axis": {"format": ".0f"}},
+        "y": {"column": "country", "scale": {"order": {"by": "gap"}}},
+        "sex": {"column": "sex", "legend": {"symbol": "circle"}, "categories": {"Women": "#C3423F", "Men": "#1E4F77"}},
+        "gap": {"column": "gap", "name": "Gap, pp", "format": ".1f"}
+    },
+    "hover": {"columns": ["sex", "gap"]},
+    "marks": [
+        {"type": "rule", "by": "y", "select": "first", "y": "y", "x1": "lo", "x2": "hi", "stroke": "#BFC4CA", "stroke-width": 3},
+        {"type": "point", "by": "sex", "r": 5.5, "stroke": "white", "stroke-width": 1},
+        {"type": "label", "by": "y", "select": "first", "x": "hi", "anchor": "end", "dx": 10, "text": "=format(@gap, '+.1f')", "font-size": 11, "fill": "#5F6670"}
+    ]
+}

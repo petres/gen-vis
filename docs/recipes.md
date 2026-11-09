@@ -352,6 +352,201 @@ rows.
 }
 ```
 
+## A waterfall
+
+The bars of the contributions start where the one before ends: the
+`cumulative` sum of the contributions is the end of each bar, the end of
+the bar before (a `window` of `lag`) its start, the total starts at 0. A
+`bar` with `y0` draws them from `from` to `to`, its color of a dim of the
+sign (`fill`), a `rule` from the end of each bar to the start of the next
+one (pixels of the band: `@x:scaled + @x:bandwidth` to `@x:scaled +
+@x:step`) connects them, a `label` above each bar writes its contribution
+with its sign.
+
+<!-- data/recipes/waterfall.json -->
+```json
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "contributions.csv",
+    "title": "Contributions to real GDP growth, 2025",
+    "subtitle": "in percentage points",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 320,
+    "transform": [
+        {"type": "calc", "as": "delta", "expr": "=@total == 'yes' ? null : @value"},
+        {"type": "cumulative", "column": "delta", "as": "end"},
+        {"type": "window", "column": "end", "op": "lag", "as": "start"},
+        {"type": "calc", "as": "from", "expr": "=@total == 'yes' ? 0 : (@start or 0)"},
+        {"type": "calc", "as": "to", "expr": "=@total == 'yes' ? @value : @end"},
+        {"type": "calc", "as": "top", "expr": "=max(@from, @to)"},
+        {"type": "calc", "as": "sign", "expr": "=@total == 'yes' ? 'Total' : (@value < 0 ? 'Decrease' : 'Increase')"}
+    ],
+    "dims": {
+        "x": {"column": "component", "type": "categorical", "order": "rows", "scale": {"padding": 0.25}},
+        "y": {"column": "to", "format": ".1f", "grid": true},
+        "sign": {"column": "sign", "legend": {"symbol": "rect"}, "categories": {"Increase": "#4B9847", "Decrease": "#C3423F", "Total": "#1E4F77"}},
+        "value": {"column": "value", "name": "Contribution", "format": "+.1f"}
+    },
+    "hover": {"value": false, "columns": ["value"]},
+    "annotations": {"type": "line", "y": 0},
+    "marks": [
+        {"type": "bar", "y0": "from", "fill": "sign"},
+        {"type": "rule", "filter": "@total != 'yes'", "y": "end", "x1": "=@x:scaled + @x:bandwidth", "x2": "=@x:scaled + @x:step",
+         "stroke": "#5F6670", "stroke-dasharray": "2 2"},
+        {"type": "label", "y": "top", "anchor": "top", "text": "=format(@value, '+.1f')", "font-size": 11}
+    ]
+}
+```
+
+## A lollipop chart
+
+A `rule` from 0 (`x1`, a number on the scale of x) to the value (`x2`) at
+the band of every country (`"y": "y"`) and a `point` at its end; the fill
+of the points is an expression of the row, one country stands out. The
+countries are in the order of their values, the labels after the points
+(`dx` beyond the radius).
+
+<!-- data/recipes/lollipop.json -->
+```json
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "rd.csv",
+    "title": "Spending on research and development, 2023",
+    "subtitle": "in % of GDP",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 420,
+    "dims": {
+        "x": {"column": "rd", "name": "R&D", "format": ".1f", "zero": true, "grid": true},
+        "y": {"column": "country", "scale": {"order": {"by": "x", "descending": true}}}
+    },
+    "marks": [
+        {"type": "rule", "y": "y", "x1": 0, "x2": "x", "stroke": "#9AA0A8", "stroke-width": 1.5},
+        {"type": "point", "r": 5, "fill": "=@y == 'Austria' ? '#C3423F' : '#1E4F77'"},
+        {"type": "label", "text": "@x:formatted", "anchor": "end", "dx": 9, "font-size": 11}
+    ]
+}
+```
+
+## A dumbbell chart
+
+The two values of every country are rows of the data (`sex`), their least
+and largest one are columns of every row of the country (`aggregate` with
+`min` and `max`), so a `rule` of one row per country (`select: "first"`)
+connects them; the points are the rows in the colors of their category, a
+label after the larger one writes the gap. The countries are in the order
+of the gap (`scale.order` by a dim of it).
+
+<!-- data/recipes/dumbbell.json -->
+```json
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "employment.csv",
+    "title": "Employment rate of women and men, 2024",
+    "subtitle": "in % of the population aged 20–64, sorted by the gap",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 340,
+    "transform": [
+        {"type": "aggregate", "column": "rate", "by": "country", "op": "min", "as": "lo"},
+        {"type": "aggregate", "column": "rate", "by": "country", "op": "max", "as": "hi"},
+        {"type": "calc", "as": "gap", "expr": "=@hi - @lo"}
+    ],
+    "dims": {
+        "x": {"column": "rate", "name": "Employment rate", "format": ".1f", "grid": true, "pad": 0.05, "axis": {"format": ".0f"}},
+        "y": {"column": "country", "scale": {"order": {"by": "gap"}}},
+        "sex": {"column": "sex", "legend": {"symbol": "circle"}, "categories": {"Women": "#C3423F", "Men": "#1E4F77"}},
+        "gap": {"column": "gap", "name": "Gap, pp", "format": ".1f"}
+    },
+    "hover": {"columns": ["sex", "gap"]},
+    "marks": [
+        {"type": "rule", "by": "y", "select": "first", "y": "y", "x1": "lo", "x2": "hi", "stroke": "#BFC4CA", "stroke-width": 3},
+        {"type": "point", "by": "sex", "r": 5.5, "stroke": "white", "stroke-width": 1},
+        {"type": "label", "by": "y", "select": "first", "x": "hi", "anchor": "end", "dx": 10, "text": "=format(@gap, '+.1f')", "font-size": 11, "fill": "#5F6670"}
+    ]
+}
+```
+
+## A slope chart
+
+Two years as the categories of `x` (a point scale without padding: the
+lines span the plot), a line per country, colored by a dim of the
+direction of its change (a `window` of `diff` to the year before, its
+`max` per country is the change of every row of the country, a `calc` of
+its sign). The labels at the ends are texts of the first and the last row
+of each line (`select`), moved apart (`dodge`); the axis of the values is
+left out, the labels are the values.
+
+<!-- data/recipes/slope.json -->
+```json
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "slope.csv",
+    "title": "Unemployment rate, 2015 and 2025",
+    "subtitle": "in % of the labour force, rising in red",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 420,
+    "width": 520,
+    "transform": [
+        {"type": "window", "column": "rate", "by": "country", "order": "year", "op": "diff", "as": "diff"},
+        {"type": "aggregate", "column": "diff", "by": "country", "op": "max", "as": "change"},
+        {"type": "calc", "as": "trend", "expr": "=@change > 0 ? 'rising' : 'falling'"}
+    ],
+    "dims": {
+        "x": {"column": "year", "type": "categorical", "scale": {"padding": 0}, "axis": {"position": "top", "tickMarks": false}},
+        "y": {"column": "rate", "name": "Unemployment rate", "format": ".1f", "axis": false},
+        "country": "country",
+        "trend": {"column": "trend", "categories": {"falling": "#7A8794", "rising": "#C3423F"}}
+    },
+    "hover": {"columns": ["country"]},
+    "marks": [
+        {"type": "line", "by": ["country", "trend"], "stroke-width": 2, "highlight": {"stroke-width": 3.5}},
+        {"type": "point", "by": ["country", "trend"], "r": 3.5},
+        {"type": "text", "by": ["country", "trend"], "select": "last", "dodge": 13, "dx": 8, "dominant-baseline": "middle", "text": "=cat(@country, '  ', format(@y, '.1f'))", "font-size": 11},
+        {"type": "text", "by": ["country", "trend"], "select": "first", "dodge": 13, "dx": -8, "dominant-baseline": "middle", "text-anchor": "end", "text": "=format(@y, '.1f')", "font-size": 11}
+    ]
+}
+```
+
+## A bullet chart
+
+Horizontal bars of the ranges, the largest one first (the lightest, from
+the least value of the EU to the largest one), a thinner bar of the value
+(its `height` a share of the band, centered) and a `tick` of the target
+across 70% of the band (`size`). The ranges, the target and the value are
+columns of a row per indicator, the dims of the bars on the scale of x.
+
+<!-- data/recipes/bullet.json -->
+```json
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "targets.csv",
+    "title": "Austria and its targets for 2030",
+    "subtitle": "in %; bands: the least, the average and the largest value of the EU, line: the target",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 260,
+    "dims": {
+        "x": {"column": "value", "name": "Austria", "format": ".1f", "zero": true, "grid": true, "axis": {"format": ".0f"}},
+        "y": {"column": "indicator", "scale": {"padding": 0.3}},
+        "target": {"column": "target", "name": "Target", "format": ".1f"},
+        "low": {"column": "low", "name": "EU least"},
+        "mid": {"column": "mid", "name": "EU average"},
+        "high": {"column": "high", "name": "EU largest"}
+    },
+    "hover": {"columns": ["target", "low", "mid", "high"]},
+    "marks": [
+        {"type": "bar", "x": "high", "fill": "#E8EBEE"},
+        {"type": "bar", "x": "mid", "fill": "#D3D8DD"},
+        {"type": "bar", "x": "low", "fill": "#BCC3CA"},
+        {"type": "bar", "fill": "#1E4F77", "height": "=@y:bandwidth * 0.35"},
+        {"type": "tick", "x": "target", "size": 0.7, "stroke": "#C3423F", "stroke-width": 2.5}
+    ]
+}
+```
+
 ## Things to know
 
 - The default locale is `de` (decimal commas, `1.234,5`): `"locale": "en"`

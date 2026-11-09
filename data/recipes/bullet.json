@@ -1,0 +1,25 @@
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "targets.csv",
+    "title": "Austria and its targets for 2030",
+    "subtitle": "in %; bands: the least, the average and the largest value of the EU, line: the target",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 260,
+    "dims": {
+        "x": {"column": "value", "name": "Austria", "format": ".1f", "zero": true, "grid": true, "axis": {"format": ".0f"}},
+        "y": {"column": "indicator", "scale": {"padding": 0.3}},
+        "target": {"column": "target", "name": "Target", "format": ".1f"},
+        "low": {"column": "low", "name": "EU least"},
+        "mid": {"column": "mid", "name": "EU average"},
+        "high": {"column": "high", "name": "EU largest"}
+    },
+    "hover": {"columns": ["target", "low", "mid", "high"]},
+    "marks": [
+        {"type": "bar", "x": "high", "fill": "#E8EBEE"},
+        {"type": "bar", "x": "mid", "fill": "#D3D8DD"},
+        {"type": "bar", "x": "low", "fill": "#BCC3CA"},
+        {"type": "bar", "fill": "#1E4F77", "height": "=@y:bandwidth * 0.35"},
+        {"type": "tick", "x": "target", "size": 0.7, "stroke": "#C3423F", "stroke-width": 2.5}
+    ]
+}
