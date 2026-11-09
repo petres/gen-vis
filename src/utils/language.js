@@ -681,7 +681,8 @@ const checkDims = def => {
 
 // the path of a part of the engine's form as the one of the definition,
 // e.g. "mapping.y.scale" is "dims.y.scale", "plot[0].props.fill" is
-// "marks[0].fill", "options.title" is "title"
+// "marks[0].fill", "options.title" is "title", "facets.rows" (the dim of
+// the rows of a grid) is "facets.by.rows"
 const authoredPath = path => String(path)
     .replace(/^mapping\./, 'dims.')
     .replace(/^plot\[(\d+)\]\.props\./, 'marks[$1].')
@@ -692,4 +693,5 @@ const authoredPath = path => String(path)
     .replace(/^options\./, '')
     .replace(/^formElements\[(\d+)\]\.ref\b/, 'controls[$1].global')
     .replace(/^formElements/, 'controls')
-    .replace(/^facets\.dim\b/, 'facets.by');
+    .replace(/^facets\.dim\b/, 'facets.by')
+    .replace(/^facets\.rows\b/, 'facets.by.rows');

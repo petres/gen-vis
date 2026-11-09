@@ -3672,7 +3672,7 @@ describe('grids of facets', () => {
         expect(validateDef(def)).toEqual([]);
         expect(validateDef({ ...def, facets: { rows: 'c', cols: 'nope', scales: { y: 'rows' } } })).toEqual([
             `marks[1].facet.half: expected the dim of the rows or the columns of the grid, 'c', 'nope'`,
-            `facets.cols: unknown dim 'nope'`, `facets.scales.y: expected 'all', 'row' or 'col'`]);
+            `facets.by.cols: unknown dim 'nope', expected one of 'x', 'y', 'c', 'half'`, `facets.scales.y: expected 'all', 'row' or 'col'`]);
         expect(errors).toEqual([]);
     });
 });

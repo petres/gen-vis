@@ -38,14 +38,20 @@ const withPath = (error, path) => {
     return pathed.test(message) ? error : new Error(`${path}: ${message}`, { cause: error });
 };
 
-// the number of the edits of one name to the other one (Levenshtein), e.g. 1
-// of "positon" and "position"
+// the number of the edits of one name to the other one (Levenshtein, a swap
+// of two letters is one), e.g. 1 of "positon" and "position" or of "yaer"
+// and "year"
 const distance = (a, b) => {
+    let before = null;
     let row = [...Array(b.length + 1).keys()];
     for (let i = 1; i <= a.length; i++) {
         const next = [i];
-        for (let j = 1; j <= b.length; j++)
+        for (let j = 1; j <= b.length; j++) {
             next[j] = Math.min(row[j] + 1, next[j - 1] + 1, row[j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1));
+            if (before && i > 1 && j > 1 && a[i - 1] == b[j - 2] && a[i - 2] == b[j - 1])
+                next[j] = Math.min(next[j], before[j - 2] + 1);
+        }
+        before = row;
         row = next;
     }
     return row[b.length];

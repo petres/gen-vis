@@ -191,10 +191,20 @@ console.log(validateDef(def));  // the warnings, e.g. unknown mark types
 migrated first, as by the load): the keys and values of the schema, then
 the meaning, e.g. unknown dims and references, with the paths of the
 definition (`marks[0].fill: ...`), also the definition of every other
-value of the controls (`controls[0].values[1] > marks[0].type: ...`), and
-the data rows, e.g. years as numbers in a `date` dim. Dims without a type
+value of the controls (`controls[0].values[1] > marks[0].type: ...`).
+It also warns of keys of a mark which are probably typos of a key of a mark
+or of an attribute of svg (`marks[0].stak: unknown key, did you mean
+'stack'?`, `marks[0].strok-width: no attribute of svg, ...`; other keys are
+attributes of the elements), of keys of a transform its type does not read
+and of a fold whose key or value replaces a column. With the `rows` of the
+data it checks the data too: a dim's column which is not one of the data
+or the transforms (`dims.x.column: 'yaer' is not a column of the data, did
+you mean 'year'?`), a channel naming neither a dim nor a column, a `by` of
+a column without a dim, texts in a `numeric` dim and years as numbers in a
+`date` dim; the names of filters are the dims, the columns and the
+globals (without rows any plain name may be a column). Dims without a type
 get the type the load infers from the values (also for transform
-columns).
+columns). `gen-vis check` runs it on files, see [export](export.md#check).
 
 The steps of the load are exported as well, each JSON to JSON:
 

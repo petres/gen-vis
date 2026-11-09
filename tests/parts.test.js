@@ -1307,7 +1307,6 @@ describe('rows which are not stacked', () => {
         wrong.mapping.x.stacked = 'yes';
         expect(validateDef(wrong)).toEqual([
             `dims.x.stacked: expected true or the conditions of the rows which are stacked, e.g. { "type": { "not": "load" } }`,
-            "dims.y.stacked.==[0]: unknown reference 'kind'",
         ]);
         expect(errors).toEqual([]);
     });

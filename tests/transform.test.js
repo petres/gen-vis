@@ -383,10 +383,16 @@ describe('fold, aggregate and window', () => {
     });
 
     test('validateDef: the columns of a fold, the op of an aggregate and a window, the size and the offset, the keys of other types', () => {
-        const checks = transform => validateDef({ mapping: { y: { column: 'value', type: 'numeric' } }, plot: { type: 'svg:rect', props: {} }, transform }).filter(w => w.startsWith('transform'));
+        const checks = (transform, globals = {}, rows = null) => validateDef({ mapping: { y: { column: 'value', type: 'numeric' } }, plot: { type: 'svg:rect', props: {} }, transform, globals }, rows).filter(w => w.startsWith('transform'));
         expect(checks([{ type: 'fold' }])).toEqual([`transform[0].columns: the columns to fold are needed, a list or a pattern with a '*', e.g. ["2019", "2020"] or "20*"`]);
         expect(checks([{ type: 'fold', columns: '*_*' }])).toEqual([`transform[0].columns: a pattern of columns has a single '*', e.g. "20*"`]);
         expect(checks([{ type: 'fold', columns: '20*', key: 'year', value: 'v', replace: false }])).toEqual([]);
+        // the key and the value replace the columns of the same names which are not folded
+        expect(checks([{ type: 'fold', columns: '20*', key: 'v', value: 'v' }])).toEqual([`transform[0].value: the column of the values is the one of the keys, 'v', e.g. "key": "year", "value": "value"`]);
+        const wide = [{ id: 'a', key: 'x', 2019: 1, 2020: 2 }];
+        expect(checks([{ type: 'fold', columns: '20*' }], {}, wide)).toEqual([`transform[0].key: the column 'key' of the rows is replaced by the keys of the folded columns, e.g. "key": "name"`]);
+        expect(checks([{ type: 'fold', columns: ['2019', '2020'], key: 'year', value: 'id' }], {}, wide)).toEqual([`transform[0].value: the column 'id' of the rows is replaced by the values of the folded columns, e.g. "value": "amount"`]);
+        expect(checks([{ type: 'fold', columns: ['key', '2019'] }], {}, wide)).toEqual([]);
         expect(checks([{ type: 'aggregate', column: 'value' }])).toEqual([`transform[0].op: the operation is needed, one of 'sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last'`]);
         expect(checks([{ type: 'aggregate', column: 'value', op: 'lag', rows: true }])).toEqual([`transform[0].op: unknown op 'lag', expected one of 'sum', 'mean', 'min', 'max', 'count', 'median', 'first', 'last'`]);
         expect(checks([{ type: 'aggregate', column: 'value', op: '{op}' }])).toEqual([`transform[0]: unknown global 'op' in the template`]);
@@ -394,11 +400,18 @@ describe('fold, aggregate and window', () => {
         expect(checks([{ type: 'window', column: 'value', op: 'lag', offset: 0 }])).toEqual([`transform[0].offset: the number of the rows before or after the row, a positive integer, e.g. 1`]);
         expect(checks([{ type: 'window', column: 'value', op: 'lag', offset: 2 }])).toEqual([]);
         expect(checks([{ type: 'share', column: 'value', op: 'sum', rows: true, offset: 1, columns: ['a'] }])).toEqual([
-            `transform[0].columns: only of a transform of the type 'fold'`,
             `transform[0].op: only of a transform of the type 'aggregate' or 'window'`,
             `transform[0].rows: only of a transform of the type 'aggregate'`,
             `transform[0].offset: only of a transform of the type 'window'`,
+            `transform[0].columns: only of a transform of the type 'fold'`,
         ]);
+        // the keys the type does not read, e.g. a by of a calc, an order of a share
+        expect(checks([{ type: 'calc', as: 'c', expr: 1, by: 'g' }, { type: 'share', column: 'value', order: 'date' }])).toEqual([
+            `transform[0].by: only of a transform of the type 'index', 'mean', 'share', 'rolling', 'cumulative', 'rank', 'bin', 'aggregate' or 'window'`,
+            `transform[1].order: only of a transform of the type 'rolling', 'cumulative', 'aggregate' or 'window'`,
+        ]);
+        // templates of the globals are values of their type
+        expect(checks([{ type: 'window', column: 'value', op: '{op}', offset: '{k}', size: '{k}' }], { op: 'diff', k: '1' })).toEqual([]);
     });
 
     test('the columns of the data: the folded ones, unknown of a pattern', () => {
