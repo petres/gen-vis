@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // the data as it comes (review of the release of 5.0): odd values, the order
 // of the rows, missing rows and columns
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import { errors, useDom, mount } from './dom.js';
 
 useDom();
@@ -96,5 +96,40 @@ describe('lines and areas along x, not in the order of the rows', () => {
         // A at the top (vertical bands top-down), then B and C
         expect(ascending(ys)).toBe(true);
         expect(errors).toEqual([]);
+    });
+});
+
+describe('data without rows and data which is no data', () => {
+    const def = { dims: { x: 'a', y: 'b' }, marks: [{ type: 'line' }] };
+
+    test('no rows: a warning, unless the definition has a text of empty; the columns of the header are checked', async () => {
+        await mount({ def, data: 'a,b\n' });
+        expect(errors).toEqual(["gen-vis inline definition: the data of the attribute: no rows (only the header 'a', 'b'), the chart is empty; 'empty' is a text instead of the marks"]);
+        errors.length = 0;
+        const el = await mount({ def: { ...def, empty: 'No data' }, data: 'a,b\n' });
+        expect(el.textContent).toContain('No data');
+        expect(errors).toEqual([]);
+        // a column of no dim which is not in the header
+        await mount({ def: { ...def, empty: 'No data', marks: [{ type: 'line', y: 'c' }] }, data: 'a,b\n' });
+        expect(errors).toEqual(["gen-vis inline definition: marks[0].y: no dim and no column 'c' in the data, the dims are 'x', 'y', the columns 'a', 'b'"]);
+        errors.length = 0;
+        await mount({ def, data: '[]' });
+        expect(errors).toEqual(["gen-vis inline definition: the data of the attribute: no rows, the chart is empty; 'empty' is a text instead of the marks"]);
+        // not of rows of the page, e.g. none while they are loaded
+        errors.length = 0;
+        await mount({ def, data: [] });
+        expect(errors).toEqual([]);
+    });
+
+    test('a page of HTML of the url of the data is an error', async () => {
+        vi.stubGlobal('fetch', async () => new Response('<!doctype html><html><body>App</body></html>', { status: 200 }));
+        const el = await mount({ def: { $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', data: 'missing.csv', ...def } });
+        expect(el.textContent).toContain('it is a page of HTML, not CSV, e.g. the page a server answers for a wrong url');
+    });
+
+    test('a null row is left out with a warning', async () => {
+        const el = await mount({ def, data: [null, { a: 1, b: 2 }, { a: 2, b: 3 }] });
+        expect(el.querySelectorAll('g[data-mark] path').length).toBe(1);
+        expect(errors).toEqual(['gen-vis inline definition: the data of the attribute: the row 0 (counted from 0) is null, not an object of values, it is left out']);
     });
 });

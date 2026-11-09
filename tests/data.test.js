@@ -1,3 +1,4 @@
+import vm from 'node:vm';
 import { translate } from '@/utils/language.js';
 import { resolve, variants } from '@/utils/resolve.js';
 import { variantsOf } from '@/utils/def.js';
@@ -5,7 +6,7 @@ import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import { toNumber } from '@/utils/values';
-import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, inferType, inferTypes, oddValues, parseData, prepareData, rowFilter, stack, toDate, updateData, usedColumns } from '@/utils/data';
+import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, inferType, inferTypes, isBinary, oddValues, parseData, prepareData, rowFilter, stack, toDate, updateData, usedColumns } from '@/utils/data';
 import { prepareDef } from '@/utils/def';
 
 const def = {
@@ -34,6 +35,43 @@ describe('parseData', () => {
     test('parsed data is passed through', async () => {
         const rows = [{ a: 1 }];
         expect(await parseData(rows)).toBe(rows);
+    });
+
+    test('rows which are no objects are left out with a warning, a list of lists is an error (review of 5.0)', async () => {
+        const warnings = [];
+        const warn = w => warnings.push(w);
+        expect(await parseData('[null, {"a": 1}]', undefined, null, warn)).toEqual([{ a: 1 }]);
+        expect(await parseData([{ a: 1 }, null, 5, { a: 2 }], undefined, null, warn)).toEqual([{ a: 1 }, { a: 2 }]);
+        expect(warnings).toEqual([
+            'the row 0 (counted from 0) is null, not an object of values, it is left out',
+            '2 rows (1, 2, counted from 0) are null or number, not objects of values, they are left out',
+        ]);
+        await expect(parseData('[[1, 2], [2, 3]]')).rejects.toThrow('expected a list of rows as objects, e.g. [{"year": 2024, "value": 1.5}], the first row is a list');
+        // without a warning a list of rows is passed through
+        expect(await parseData('[]', undefined, null, warn)).toEqual([]);
+        expect(warnings.length).toBe(2);
+    });
+
+    test('a page of HTML is an error, e.g. of a wrong url (review of 5.0)', async () => {
+        for (const page of ['<!DOCTYPE html><html><body>Not found</body></html>', '\uFEFF\n <html lang="en">', '<html>'])
+            await expect(parseData(page)).rejects.toThrow('it is a page of HTML, not CSV, TSV or JSON, e.g. the page a server answers for a wrong url');
+        await expect(parseData('<!doctype html>', 'csv')).rejects.toThrow('not CSV');
+        await expect(parseData(new TextEncoder().encode('<!doctype html>'))).rejects.toThrow('a page of HTML');
+        // a column of CSV in angle brackets is none
+        expect([...await parseData('<a>,b\n1,2')]).toEqual([{ '<a>': '1', b: '2' }]);
+    });
+
+    test('a column in the header twice: a warning, the values of the last one (review of 5.0)', async () => {
+        const warnings = [];
+        expect([...await parseData('a,b,b\n1,2,9', undefined, null, w => warnings.push(w))]).toEqual([{ a: '1', b: '9' }]);
+        expect(warnings).toEqual(["the column 'b' is in the header 2 times, the rows have the values of the last one"]);
+    });
+
+    test('binary data of another realm, e.g. of a worker (review of 5.0)', async () => {
+        const buffer = vm.runInNewContext('new Uint8Array([97, 44, 98, 10, 49, 44, 50]).buffer');
+        expect(buffer instanceof ArrayBuffer).toBe(false);
+        expect(isBinary(buffer)).toBe(true);
+        expect([...await parseData(buffer)]).toEqual([{ a: '1', b: '2' }]);
     });
 
     test('the format of the data', async () => {

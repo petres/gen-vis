@@ -458,6 +458,19 @@ Migration notes, to check by hand after `gen-vis migrate`:
 
 ### Fixes of the data (review of the release)
 
+- Reading the data: a row of JSON (or of the rows of the page) which is
+  no object, e.g. `null`, is left out with a warning naming its index (was
+  the TypeError "Cannot convert undefined or null to object"); a list of
+  lists is an error which shows the expected form. A page of HTML (e.g. the
+  index.html a server answers for a wrong url) is an error "it is a page of
+  HTML, not CSV" (was a blank chart). Data of a file or a text without
+  rows (a CSV of only its header, `[]`) warns unless the definition has a
+  text of `empty`, and the columns of the channels are checked against the
+  header (were not checked without rows); rows of the page, e.g. `[]` while
+  they are loaded, do not warn. A column twice in the header of CSV warns
+  (the rows have the values of the last one, as before). Binary data of
+  another realm (an ArrayBuffer of a worker or of node's vm) is binary
+  (`instanceof ArrayBuffer` was false).
 - Lines and areas are drawn along `x` (were in the order of the rows, so
   unsorted rows zig-zagged): along a continuous dim ascending, along a
   categorical one in the order of its categories (as before), along `y` if

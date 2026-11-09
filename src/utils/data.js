@@ -14,14 +14,55 @@ const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 const dataFormat = (url, format) => format ??
     dataFormats.find(f => new URL(url, 'file:///').pathname.toLowerCase().endsWith(`.${f}`));
 
-const isBinary = data => data instanceof ArrayBuffer || ArrayBuffer.isView(data);
+// binary data, also of another realm, e.g. an ArrayBuffer of a worker or
+// of node's vm, which `instanceof ArrayBuffer` of this one is not
+const isArrayBuffer = data => Object.prototype.toString.call(data) == '[object ArrayBuffer]';
+const isBinary = data => isArrayBuffer(data) || ArrayBuffer.isView(data);
 
-const bytesOf = data => data instanceof ArrayBuffer ? new Uint8Array(data) : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+const bytesOf = data => isArrayBuffer(data) ? new Uint8Array(data) : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
 
 // parquet files begin with PAR1
 const isParquet = data => {
     const b = bytesOf(data);
     return b.length >= 4 && b[0] == 0x50 && b[1] == 0x41 && b[2] == 0x52 && b[3] == 0x31;
+};
+
+// a page of HTML, e.g. the one a server answers for a wrong url (the
+// index.html of a single page app), not data
+const htmlPage = /^\s*<(?:!doctype\s+html|html|head|body)[\s>]/i;
+
+// a row of the data is an object, not null, a number or a list
+const isRow = r => r !== null && typeof r == 'object' && !Array.isArray(r);
+
+// the indices of a list, the first `max` ones, e.g. "0, 3 and 2 others"
+const indices = (list, max = 5) => list.length > max ? `${list.slice(0, max).join(', ')} and ${list.length - max} others` : list.join(', ');
+
+// the rows which are objects, the others (e.g. null of JSON) are left out
+// with a warning (`warn`) which names their indices; an error if no row is
+// one, e.g. a list of lists
+const rowsOf = (rows, warn) => {
+    if (rows.every(isRow))
+        return rows;
+    const kept = rows.filter(isRow);
+    const kind = r => r === null ? 'null' : Array.isArray(r) ? 'a list' : typeof r;
+    if (kept.length == 0)
+        throw new Error(`expected a list of rows as objects, e.g. [{"year": 2024, "value": 1.5}], the first row is ${kind(rows[0])}`);
+    const others = rows.map((r, i) => isRow(r) ? -1 : i).filter(i => i >= 0);
+    const kinds = [...new Set(others.map(i => kind(rows[i])))].join(' or ');
+    warn?.(others.length == 1 ? `the row ${others[0]} (counted from 0) is ${kinds}, not an object of values, it is left out`
+        : `${others.length} rows (${indices(others)}, counted from 0) are ${kinds}, not objects of values, they are left out`);
+    return kept;
+};
+
+// the columns of the header of CSV or TSV which are in it more than once,
+// of which the rows have the values of the last one
+const duplicateColumns = (rows, warn) => {
+    const counts = new Map();
+    (rows.columns ?? []).forEach(c => counts.set(c, (counts.get(c) ?? 0) + 1));
+    const twice = [...counts].filter(([, n]) => n > 1);
+    if (twice.length > 0)
+        warn?.(`${twice.map(([c, n]) => `the column '${c}' is in the header ${n} times`).join(', ')}, the rows have the values of the last one`);
+    return rows;
 };
 
 /**
@@ -30,9 +71,11 @@ const isParquet = data => {
  * are parsed in their `format`, without one as JSON (a list of rows) or CSV
  * by their content, already parsed rows are passed through. The parquet
  * reader is only loaded for parquet data, it reads only the `columns`
- * given, all without them.
+ * given, all without them. A page of HTML is an error (e.g. of a wrong url);
+ * rows which are no objects (e.g. null) are left out and a column in the
+ * header of CSV more than once is used once, `warn(message)` tells of them.
  */
-const parseData = async (data, format, columns = null) => {
+const parseData = async (data, format, columns = null, warn = null) => {
     if (isBinary(data)) {
         if (format == 'parquet' || isParquet(data)) {
             const { parseParquet } = await lazy.parquet();
@@ -41,21 +84,23 @@ const parseData = async (data, format, columns = null) => {
         data = new TextDecoder().decode(bytesOf(data));
     }
     if (Array.isArray(data))
-        return data;
+        return rowsOf(data, warn);
     if (typeof data != "string")
         throw new Error('expected rows, a string of CSV, TSV or JSON or parquet');
+    if (htmlPage.test(data))
+        throw new Error(`it is a page of HTML, not ${format == 'parquet' ? 'parquet' : format ? format.toUpperCase() : 'CSV, TSV or JSON'}, e.g. the page a server answers for a wrong url`);
     if (format == 'parquet')
         throw new Error('Parquet data needs to be binary, e.g. an ArrayBuffer.');
     data = data.replace(/^\uFEFF/, '');
     if (format == 'tsv')
-        return d3.tsvParse(data);
+        return duplicateColumns(d3.tsvParse(data), warn);
     if (format == 'json' || (format != 'csv' && /^\s*[[{]/.test(data))) {
         const rows = JSON.parse(data);
         if (!Array.isArray(rows))
             throw new Error('the JSON is not a list of rows');
-        return rows;
+        return rowsOf(rows, warn);
     }
-    return d3.csvParse(data);
+    return duplicateColumns(d3.csvParse(data), warn);
 };
 
 // a date without a time zone: of ISO, e.g. "2022-06-01", "2022-06", "2022"

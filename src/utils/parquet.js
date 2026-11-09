@@ -137,7 +137,7 @@ const exact = (v, { scale, scaled }) => {
 // `columns` of the file which are given, e.g. the ones a definition uses, all
 // without them, a file is read by its columns, so the others are skipped
 const parseParquet = async (data, columns = null) => {
-    const file = data instanceof ArrayBuffer ? data : data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+    const file = Object.prototype.toString.call(data) == '[object ArrayBuffer]' ? data : data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
     const metadata = parquetMetadata(file);
     const columnNodes = new Map(parquetSchema(metadata).children.map(c => [c.element.name, c]));
     const names = [...columnNodes.keys()];
