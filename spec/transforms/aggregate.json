@@ -626,6 +626,186 @@
     "columns": {}
   },
   {
+    "name": "a list of ops: a column of each, named by the ops by default",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "aggregate",
+      "column": "value",
+      "by": "type",
+      "op": [
+        "min",
+        "median",
+        "max"
+      ]
+    },
+    "columns": {
+      "min": [
+        10,
+        10,
+        10,
+        5,
+        5,
+        5
+      ],
+      "median": [
+        30,
+        30,
+        30,
+        10,
+        10,
+        10
+      ],
+      "max": [
+        40,
+        40,
+        40,
+        15,
+        15,
+        15
+      ]
+    }
+  },
+  {
+    "name": "a list of ops of rows, named by the list `as`",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "aggregate",
+      "column": "value",
+      "by": "type",
+      "op": [
+        "count",
+        "sum"
+      ],
+      "as": [
+        "n",
+        "total"
+      ],
+      "rows": true
+    },
+    "result": [
+      {
+        "type": "gas",
+        "n": 3,
+        "total": 80
+      },
+      {
+        "type": "oil",
+        "n": 2,
+        "total": 20
+      }
+    ],
+    "columns": {}
+  },
+  {
+    "name": "a list of ops needs a name per op, the names differ",
+    "rows": [
+      {
+        "date": "2019-01-01",
+        "type": "gas",
+        "value": "10"
+      },
+      {
+        "date": "2019-07-01",
+        "type": "gas",
+        "value": "30"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "gas",
+        "value": "40"
+      },
+      {
+        "date": "2019-01-01",
+        "type": "oil",
+        "value": "5"
+      },
+      {
+        "date": "2020-01-01",
+        "type": "oil",
+        "value": ""
+      },
+      {
+        "date": "2019-07-01",
+        "type": "oil",
+        "value": "15"
+      }
+    ],
+    "transform": {
+      "type": "aggregate",
+      "column": "value",
+      "op": [
+        "min",
+        "max"
+      ],
+      "as": [
+        "lo"
+      ]
+    },
+    "error": "aggregate: 'as' is a list of the names of the columns of a list of ops, one per op"
+  },
+  {
     "name": "an unknown operation is an error",
     "rows": [
       {
