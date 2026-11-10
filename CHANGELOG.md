@@ -637,7 +637,9 @@ Migration notes, to check by hand after `gen-vis migrate`:
   `select: "first"` and `"last"` are the ends along `x` (were the first and
   the last row). The new key `order` of a mark (`"x"`, `"y"`, `"rows"`)
   names the dim or keeps the order of the rows, e.g. of a connected
-  scatter plot.
+  scatter plot. A definition of 4.x (migrated while it is loaded) whose
+  rows are not in the order of a numeric `x` (not dates) gets a warning
+  which names `"order": "rows"`, e.g. a connected scatter plot of 4.x.
 - One text among numbers no longer makes a column categorical (the ticks
   read "10, NA, 30", bars had NaN heights and the chart was empty, also
   with `zero`). The usual texts of missing values (`NA`, `NaN`, `n/a`,

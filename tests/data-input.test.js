@@ -88,6 +88,18 @@ describe('lines and areas along x, not in the order of the rows', () => {
         expect(errors).toEqual([]);
     });
 
+    test('a definition of 4.x, which drew lines in the order of the rows: a warning of unsorted numbers, not of dates nor with order', async () => {
+        const v4 = (plot, column = 'a') => ({ $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', options: { width: 600 },
+            mapping: { x: { column, type: column == 'a' ? 'numeric' : 'date', scale: { orientation: 'horizontal' } }, y: { column: 'b', type: 'numeric', scale: { orientation: 'vertical' } } },
+            plot: { type: 'cartesian:line', props: { d: { x: '@x:scaled', y: '@y:scaled' } }, ...plot } });
+        await mount({ def: v4({}), data: 'a,b\n3,2\n1,3\n2,4' });
+        expect(errors.filter(e => e.startsWith('gen-vis'))).toEqual([`gen-vis inline definition: marks[0]: the rows are not in the order of 'x', gen-vis 5 draws them along it, 4.x in their order; "order": "rows" keeps the order of the rows, e.g. of a connected scatter plot ("order": "x" without this warning)`]);
+        errors.length = 0;
+        await mount({ def: v4({ order: 'x' }), data: 'a,b\n3,2\n1,3\n2,4' });
+        await mount({ def: v4({}, 'd'), data: 'd,b\n2024-03-01,2\n2024-01-01,3\n2024-02-01,4' });
+        expect(errors.filter(e => e.startsWith('gen-vis'))).toEqual([]);
+    });
+
     test('"order": "rows" keeps the order of the rows, e.g. a connected scatter plot', async () => {
         const el = await mount({ def: def([{ type: 'line', order: 'rows' }, { type: 'label', order: 'rows', select: 'last', text: 'last' }]), data: 'a,b\n3,2\n1,3\n2,4' });
         const x = xs(paths(el)[0]);

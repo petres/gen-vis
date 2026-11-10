@@ -1,4 +1,9 @@
-export { warnOnce, markPath, withPath, similar, pixelsOf, sizeOf };
+export { warnOnce, markPath, withPath, similar, pixelsOf, sizeOf, fromVersion4 };
+
+// the key of the engine's form of a definition of gen-vis 4 (migrated while
+// it is loaded, see utils/load.js), e.g. of the warnings of what 4.x did
+// otherwise
+const fromVersion4 = Symbol('fromVersion4');
 
 // the warnings given, by the store of a chart, a chart drawn again (e.g. by a
 // slider) does not repeat them

@@ -328,7 +328,8 @@ describe('the highlight', () => {
     test('the props of the others, the elements which are not highlighted, also of plots without categories', async () => {
         const def = lineDef();
         def.plot[1] = { ...def.plot[1], highlight: { mode: 'row', r: 6 }, others: { opacity: 0.3 } };
-        def.plot.push({ id: 'last', type: 'svg:text', select: 'last', props: { x: '@x:scaled', y: '@y:scaled', text: 'last' }, others: { visibility: 'hidden' } });
+        // (along x, the rows of both lands are not in its order; without `order` a 4.x definition warns of it)
+        def.plot.push({ id: 'last', type: 'svg:text', select: 'last', order: 'x', props: { x: '@x:scaled', y: '@y:scaled', text: 'last' }, others: { visibility: 'hidden' } });
         const el = await mount({ def, data: lineData });
         const { pointer } = await import('./dom.js');
         el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));

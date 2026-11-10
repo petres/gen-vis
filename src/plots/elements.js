@@ -2,6 +2,7 @@ export { perRow, perGroup, finite, curve, points, alongRows, propScale, dodge, h
 
 import * as d3 from "@/utils/d3";
 import { refOf, refNames } from '@/utils/expr';
+import { fromVersion4, markPath, warnOnce } from '@/utils/warn';
 import { curves, groupAttrs, groupKey, keyOf, rowOf } from "@/utils/draw";
 
 const finite = (...values) => values.every(v => Number.isFinite(v));
@@ -60,6 +61,11 @@ const alongRows = (rows, plot, ctx, prefix = '') => {
         sorted = ranks[i - 1] <= ranks[i];
     if (sorted)
         return rows;
+    // a numeric dim (not dates) of unsorted rows of a definition of 4.x,
+    // which drew them in the order of the rows: maybe a connected scatter
+    // plot, a warning says how to keep it (once per mark, `order` given none)
+    if (order === undefined && ctx?.store?.defOrg?.[fromVersion4] && !dim.scale.step && !(dim.scale.domain()[0] instanceof Date))
+        warnOnce(ctx.store, `order:${plot.id}`, `${markPath(ctx.store.def, plot, true)}: the rows are not in the order of '${dim.name}', gen-vis 5 draws them along it, 4.x in their order; "order": "rows" keeps the order of the rows, e.g. of a connected scatter plot ("order": "${dim === first ? 'x' : 'y'}" without this warning)`);
     // stable: rows of the same place keep their order
     return rows.map((row, i) => i).sort((a, b) => ranks[a] - ranks[b] || a - b).map(i => rows[i]);
 };

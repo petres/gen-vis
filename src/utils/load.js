@@ -14,6 +14,7 @@ import { lazy } from "@/utils/lazy";
 import { isObject } from "@/utils/values";
 import { hasCategories, normalize } from "@/utils/normalize";
 import { versionError } from "@/utils/version";
+import { fromVersion4 } from "@/utils/warn";
 import { refNames } from "@/utils/expr";
 import { plotTypes } from "@/plots";
 import { symbolDefaults } from "@/utils/defaults";
@@ -322,6 +323,8 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
     };
     const defOrg = engine(resolve(source, namesOfGlobals(source.globals, source.controls)));
     defOrg[variantsOf] = engineVariants(resolvedVariants(source), defOrg, engine);
+    if (migrated)
+        defOrg[fromVersion4] = true;
     // the check of the definition (of 5.0, as written) with the rows, e.g.
     // of years as dates, see load, it is loaded meanwhile
     const validate = async rows => (await checks)?.validateDef(source, rows)

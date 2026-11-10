@@ -2502,6 +2502,8 @@ describe('fixed bugs', () => {
         const def = lineDef();
         def.globals = { col: 'land' };
         def.mapping.c = { column: '{col}', type: 'categorical', legend: {}, hover: {}, fromData: true, scheme: 'Tableau10' };
+        // the groups of the other column are not in the order of x, along it without the warning of 4.x
+        def.plot[0].order = 'x';
         def.formElements = [{ id: 'col', name: 'Spalte', ref: 'col', type: 'radio', values: [
             { id: 'land', name: 'Land', value: 'land' },
             { id: 'other', name: 'Anderer', value: 'other' },
