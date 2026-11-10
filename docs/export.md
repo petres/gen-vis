@@ -218,16 +218,18 @@ How it works and what to expect:
   `--root <dir>`, the directory the site serves (without it they fail with a
   404 and a hint), e.g. `--root web/dist` or a directory with `geo/` in it.
 - The page reads only the files of the directories (and their
-  subdirectories) of the definition and of its parents, of `--root`, of
-  `--data` and of the `--css` files. A definition is code from somewhere
-  else (e.g. a definition of a user of a server which exports charts), so
-  it cannot put another file into its image, e.g. `"data":
-  "../../.ssh/config"`: such a request fails with `refused: <file> is
-  outside the directories gen-vis export reads ...` and a 403. The check
-  is of the paths (links in these directories are followed: they are the
-  choice of their owner, not of the definition). Data of a sibling
-  directory needs `--root` of a directory above both, e.g. `--root .` of
-  a project.
+  subdirectories) of the definition, of `--root`, of `--data` and of the
+  `--css` files. A definition is code from somewhere else (e.g. a
+  definition of a user of a server which exports charts), so it cannot put
+  another file into its image, e.g. `"data": "../../.ssh/config"`: such a
+  request fails with `refused: <file> is outside the directories gen-vis
+  reads ...` and a 403. Its parents open no directory either (else a
+  `"parent": "../.config/x.json"` would open its directory): a parent or
+  data of a sibling directory (e.g. `"parent": "../_timeline.json"`) needs
+  `--root` of a directory above both, e.g. `--root .` of a project. The
+  check is of the paths (links in these directories are followed: they are
+  the choice of their owner, not of the definition), the check before the
+  draw reads the same files.
 - Requests to other origins (`http://`, `https://`, e.g. remote data, or a
   `url()` of an expression of a style) fail, with `refused <url>: requests
   to other origins need --allow-net`, so an export does not reach the

@@ -6,8 +6,9 @@
 // the requests of the origin of the page are answered by the program
 // (Fetch of CDP), `/fs/<path>` is the file of the file system, so a
 // definition loads its data and its parents relative to its own file. Only
-// the files of the directories of the definition, its parents, --root,
-// --data and --css are answered, requests of other origins fail unless
+// the files of the directories of the definition, --root, --data and --css
+// are answered (a parent elsewhere needs --root), requests of other
+// origins fail unless
 // `allowNet` (--allow-net) lets http(s) through, see docs/export.md.
 import { readFileSync, writeFileSync, existsSync, statSync, mkdirSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -34,56 +35,48 @@ export const fileUrl = file => `${origin}/fs${pathToFileURL(path.resolve(file)).
 // (with the default font of gen-vis, Inter, of the module of the export page)
 const printPage = '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/__gen-vis/esm/chunks/fonts/inter.css"><style>@page { margin: 0; } html, body { margin: 0; } svg { display: block; }</style></head><body></body></html>';
 
-// the file of an url of the page, null if it is not one; a site-absolute
-// path, e.g. "/geo/europe.json", is a file in `root` (if given)
+// the file of an url of the page, null if it is not one (also of a path
+// which is no file, e.g. of an encoded "/" or a malformed escape); a
+// site-absolute path, e.g. "/geo/europe.json", is a file in `root` (if given)
 const within = (dir, file) => file == dir || file.startsWith(dir.endsWith(path.sep) ? dir : dir + path.sep);
 export const fileOf = (url, root) => {
-    const { pathname } = new URL(url);
-    if (pathname.startsWith('/__gen-vis/')) {
-        const file = path.resolve(lib, decodeURIComponent(pathname.slice('/__gen-vis/'.length)));
-        return file.startsWith(lib) ? file : null;
-    }
-    if (pathname.startsWith('/fs/'))
-        return fileURLToPath(`file://${pathname.slice('/fs'.length)}`);
-    if (root) {
-        const file = path.resolve(root, `.${decodeURIComponent(pathname)}`);
-        return within(root, file) ? file : null;
+    try {
+        const { pathname } = new URL(url);
+        if (pathname.startsWith('/__gen-vis/')) {
+            const file = path.resolve(lib, decodeURIComponent(pathname.slice('/__gen-vis/'.length)));
+            return file.startsWith(lib) ? file : null;
+        }
+        if (pathname.startsWith('/fs/'))
+            return fileURLToPath(`file://${pathname.slice('/fs'.length)}`);
+        if (root) {
+            const file = path.resolve(root, `.${decodeURIComponent(pathname)}`);
+            return within(root, file) ? file : null;
+        }
+    } catch {
+        // (ERR_INVALID_FILE_URL_PATH, URIError)
     }
     return null;
 };
 
 /**
- * The files of a definition and of its parents (resolved as the page
- * does, of their `parent`), e.g. to allow their directories; the ones
- * which cannot be read end the chain, the page reports them.
+ * The directories whose files (and the ones of their subdirectories) a
+ * chart may read: `base` (the root and the allowed directories of the
+ * exporter) and the ones of the definition file `def`, of its data file
+ * (`data`) and of its stylesheet files (`css`, texts of css are none).
+ * Not the ones of its parents: a definition is code from somewhere else,
+ * a parent of its choice, e.g. "../.config/x.json", must not open a
+ * directory, so a parent outside of them needs --root (see docs/export.md).
  */
-export const definitionFiles = (def, root = null, files = new Set()) => {
-    const file = path.resolve(def);
-    if (files.has(file))
-        return files;
-    files.add(file);
-    let parsed;
-    try {
-        parsed = JSON.parse(readFileSync(file, 'utf8'));
-    } catch {
-        return files;
-    }
-    for (const parent of [parsed?.parent ?? []].flat()) {
-        if (typeof parent != 'string')
-            continue;
-        const url = new URL(parent, fileUrl(file));
-        const of = url.origin == origin ? fileOf(url.href, root) : null;
-        if (of && existsSync(of))
-            definitionFiles(of, root, files);
-    }
-    return files;
-};
+export const chartDirs = (def, { base = [], data = null, css = [] } = {}) => [...new Set([
+    ...base.filter(d => d != null).map(d => path.resolve(d)),
+    ...[def, ...(data != null ? [data] : []), ...css.filter(c => !c.includes('{'))].map(f => path.dirname(path.resolve(f))),
+])];
 
 // the reason a file is not answered, null of an allowed one; by its path
 // (`..` resolved), links in the directories are followed: they are the
 // choice of the owner of the directory, not of the definition
-const refusal = (file, dirs) => dirs.some(d => within(d, path.resolve(file))) ? null
-    : `${file} is outside the directories gen-vis export reads (of the definition and its parents, --root, --data and --css; --root <dir> of a directory above them allows it)`;
+export const refusal = (file, dirs) => dirs.some(d => within(d, path.resolve(file))) ? null
+    : `${file} is outside the directories gen-vis reads (of the definition, --root, --data and --css; --root <dir> of a directory above them allows it)`;
 
 // the answer of a request of the origin of the page, of the files in
 // `dirs` (and the files of the package)
@@ -152,7 +145,14 @@ export const createExporter = async ({ browser, sandbox = true, root, allow = []
                 messages.push(`error: refused ${request.url}: requests to other origins need --allow-net (allowNet)`);
                 return cdp.send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' }, sessionId).catch(() => {});
             }
-            const { responseCode, type, body, refused } = answer(request.url, root, dirs);
+            let answered;
+            try {
+                answered = answer(request.url, root, dirs);
+            } catch (error) {
+                // (e.g. a file which cannot be read)
+                answered = { responseCode: 500, type: 'text/plain', body: Buffer.from(`error: ${error.message}`) };
+            }
+            const { responseCode, type, body, refused } = answered;
             if (refused)
                 messages.push(`error: refused ${refused}`);
             cdp.send('Fetch.fulfillRequest', {
@@ -229,10 +229,9 @@ export const createExporter = async ({ browser, sandbox = true, root, allow = []
                 throw new Error(`unknown formats of ${unknown.join(', ')}, expected .${formats.join(', .')}`);
             if (!existsSync(def))
                 throw new Error(`the definition ${def} does not exist`);
-            // the files of this chart: the directories of its definition, its
-            // parents, its data and its stylesheets
-            const files = [...definitionFiles(def, root), ...(data != null ? [data] : []), ...css.filter(c => !c.includes('{'))];
-            dirs = [...base, ...files.map(f => path.dirname(path.resolve(f)))];
+            // the files of this chart: of the directories of its definition,
+            // its data and its stylesheets
+            dirs = chartDirs(def, { base, data, css });
             const given = {
                 ...options, defUrl: fileUrl(def),
                 ...(data != null ? { dataUrl: fileUrl(data) } : {}),

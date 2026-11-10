@@ -71,9 +71,10 @@ meets:
   only if the domain reaches 10 000, as the hover (4.x drew "2.001,5" of
   years without `"format": "c"`, and "2.500" on an axis to 5 000). The
   ticks of an `interval` are the starts of its units (whole days).
-- **`gen-vis export` reads only the files of the definition's directory**
-  (and of its parents, `--root`, `--data` and `--css`); a definition that
-  loads data from a sibling directory needs `--root` of a directory above
+- **`gen-vis export` and `gen-vis check` read only the files of the
+  definition's directory** (and of `--root`, `--data` and `--css`); a
+  definition that loads a parent or data from a sibling directory (e.g.
+  `"parent": "../_timeline.json"`) needs `--root` of a directory above
   both. Requests to other origins (remote data, a `url()` in a style)
   need `--allow-net` (see [export](docs/export.md#cli)).
 - **The CSV of the data shown** puts a `'` before texts which a

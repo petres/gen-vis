@@ -4,11 +4,13 @@
 // (ajv) on the merged definition and validateDef with the rows of its data,
 // read as the load reads them (CSV, TSV, JSON, parquet). The files are the
 // ones of the paths of the urls of the export page (bin/export.js), so a
-// site-absolute path, e.g. "/geo/europe.json", is a file of `root`.
+// site-absolute path, e.g. "/geo/europe.json", is a file of `root`, and
+// only the ones the export reads (of the directories of the definition,
+// `root`, `allow` and the data, see chartDirs) are read.
 import { readFileSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { fileOf, fileUrl } from './export.js';
+import { fileOf, fileUrl, chartDirs, refusal } from './export.js';
 
 const require = createRequire(import.meta.url);
 const schemaFile = fileURLToPath(new URL('../schema.json', import.meta.url));
@@ -63,10 +65,11 @@ const schemaErrors = (errors, def) => {
  * warnings of the file (texts "path: message", `migrated` of a definition
  * of gen-vis 4, which is checked as migrated), `data` is a file of the
  * data instead of the one of the definition; it rejects of an error, e.g.
- * a missing parent or invalid JSON. `root` is the directory of
- * site-absolute paths.
+ * a missing parent or invalid JSON or a file outside of the directories
+ * it reads (as the ones of the export, see chartDirs). `root` is the
+ * directory of site-absolute paths, `allow` more directories it reads.
  */
-export const createChecker = async ({ root = null } = {}) => {
+export const createChecker = async ({ root = null, allow = [] } = {}) => {
     if (!existsSync(checkModule))
         throw new Error(`the check module ${checkModule} is missing, it is built by npm run build`);
     const gv = await import(checkModule);
@@ -79,15 +82,19 @@ export const createChecker = async ({ root = null } = {}) => {
     } catch {
         // without ajv only validateDef, which walks the same schema
     }
-    // the file of an url of a definition, its parents or its data
-    const fileOfUrl = url => {
+    // the file of an url of a definition, its parents or its data, of the
+    // directories `dirs`
+    const fileOfUrl = (url, dirs) => {
         const file = fileOf(url, root);
+        const refused = file && refusal(file, dirs);
+        if (refused)
+            throw new Error(`refused: ${refused}`);
         if (!file || !existsSync(file))
             throw new Error(`the file ${file ?? new URL(url).pathname} does not exist${file || root ? '' : ' (a site-absolute path: set --root to the site\'s directory)'}`);
         return file;
     };
     // `warn(message)` of the warnings of the data, e.g. CSV of semicolons
-    const rowsOf = async (def, url, data, warn) => {
+    const rowsOf = async (def, url, data, dirs, warn) => {
         let file = data ?? null;
         if (file === null) {
             if (typeof def.data != 'string')
@@ -96,7 +103,7 @@ export const createChecker = async ({ root = null } = {}) => {
             const name = def.data.replace(/\{([^{}]+)\}/g, (t, n) => def.globals?.[n] !== undefined ? String(def.globals[n]) : t);
             if (/\{[^{}]+\}/.test(name))
                 return null;
-            file = fileOfUrl(new URL(name, url).href);
+            file = fileOfUrl(new URL(name, url).href, dirs);
         } else if (!existsSync(file))
             throw new Error(`the data ${file} does not exist`);
         const format = gv.dataFormat(file, data == null ? def.dataFormat : undefined);
@@ -119,11 +126,12 @@ export const createChecker = async ({ root = null } = {}) => {
         }
         // the urls of the messages as the paths of their files
         const paths = error => Object.assign(error, { message: error.message.replaceAll(`${fileUrl('/').replace(/\/$/, '')}`, '') });
-        const def = await gv.resolveParents(raw, url, u => readFileSync(fileOfUrl(u), 'utf8')).catch(error => {
+        const dirs = chartDirs(file, { base: [root, ...allow], data });
+        const def = await gv.resolveParents(raw, url, u => readFileSync(fileOfUrl(u, dirs), 'utf8')).catch(error => {
             throw paths(error);
         });
         const read = [];
-        const rows = await rowsOf(def, url, data, message => read.push(message));
+        const rows = await rowsOf(def, url, data, dirs, message => read.push(message));
         const warnings = [...read, ...gv.validateDef(def, rows)];
         // the errors of the schema of a definition of 5.0, not the ones validateDef names
         const old = gv.isDefinition4(def);

@@ -41,8 +41,8 @@ Options of export:
   --padding <px>          the space around the chart (default 15)
   --timeout <ms>          the time to wait for a chart (default 30000)
   --root <dir>            the directory of site-absolute paths, e.g. /geo/europe.json (a site's root);
-                          the page reads only the files of the directories of the definition, its
-                          parents, --root, --data and --css
+                          the page reads only the files of the directories of the definition,
+                          --root, --data and --css (a parent elsewhere needs --root)
   --allow-net             lets the page load http(s) urls, e.g. remote data (default: refused)
   --browser <path>        the browser (default GEN_VIS_BROWSER, CHROME_PATH or one found)
   --no-sandbox            runs the browser without its sandbox (also GEN_VIS_NO_SANDBOX=1)
@@ -58,7 +58,8 @@ types, typos of the keys of marks, columns which are not in the data. It
 prints a line per warning, "<def.json>: <path>: <message>"; the exit code is
 1 if a definition could not be read, with --strict also of a warning.
   --data <file>           the data instead of the one of the definition
-  --root <dir>            the directory of site-absolute paths
+  --root <dir>            the directory of site-absolute paths; check reads the files export
+                          reads (of the directories of the definition, --root and --data)
   --strict                exit code 1 of a warning
 
 migrate writes definitions of gen-vis 4 as ones of gen-vis 5 (also parents
@@ -239,13 +240,16 @@ const migrateCommand = async args => {
     const { pathToFileURL, fileURLToPath } = await import('node:url');
     // all files are read first: the parents of a child are migrated with it
     // as they are, also when they are written before it in this run
-    const texts = new Map(files.map(f => [pathToFileURL(path.resolve(f)).href, readFileSync(f, 'utf8')]));
+    // (a file which cannot be read fails alone, see below)
+    const texts = new Map(files.flatMap(f => existsSync(f) ? [[pathToFileURL(path.resolve(f)).href, readFileSync(f, 'utf8')]] : []));
     const loadFile = async url => texts.get(url) ?? readFileSync(fileURLToPath(url), 'utf8');
     let failed = 0;
     for (const file of files) {
         let text;
         try {
             const url = pathToFileURL(path.resolve(file)).href;
+            if (!texts.has(url))
+                throw new Error('the file does not exist');
             const def = JSON.parse(texts.get(url));
             if (!isDefinition4(def) && schemaMajor(def.$schema) !== 4) {
                 process.stderr.write(`gen-vis: ${file}: already a definition of gen-vis 5\n`);

@@ -103,7 +103,7 @@ describe('gen-vis check', () => {
         const broken = file('broken.json', '{ "dims": ');
         const orphan = file('orphan.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', parent: 'nothing.json' });
         const none = file('none.json', { dims: {} });
-        const old = file('old.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', data: path.relative(dir, path.join(root, 'data/bev/data.csv')),
+        const old = file('old.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', data: bevData(dir),
             mapping: { x: { column: 'Jahr', type: 'numeric' }, y: { column: 'Wert', type: 'numeric' } }, plot: { type: 'line' } });
         const r = await run(['check', broken, orphan, none, path.join(dir, 'missing.json'), old]);
         expect(r.code).toBe(1);
@@ -113,6 +113,25 @@ describe('gen-vis check', () => {
         expect(r.stderr).toContain(`gen-vis: ${path.join(dir, 'missing.json')}: the definition ${path.join(dir, 'missing.json')} does not exist`);
         expect(r.stdout).toContain(`${old}: note: a definition of gen-vis 4, checked as migrated`);
         expect(r.stderr).toMatch(/gen-vis: 5 definitions, \d+ warnings?( in 1)?, 4 not read\n$/);
+    }, 60000);
+
+    test('only the files the export reads: of the directories of the definition, --root and --data, not of its parents', async () => {
+        const sub = mkdtempSync(path.join(dir, 'files-'));
+        const inner = path.join(sub, 'charts');
+        spawnSync('mkdir', ['-p', inner]);
+        writeFileSync(path.join(sub, 'secret.csv'), 'SECRET-abc,def\n1,2\n');
+        writeFileSync(path.join(sub, 'cfg.json'), '{}');
+        const def = { $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', dims: { y: 'nope' }, marks: { type: 'point' } };
+        for (const changed of [{ data: '../secret.csv' }, { parent: '../cfg.json', data: '../secret.csv' }, { parent: '../secret.csv', data: 'x.csv' }]) {
+            writeFileSync(path.join(inner, 'leak.json'), JSON.stringify({ ...def, ...changed }));
+            const r = await run(['check', path.join(inner, 'leak.json')]);
+            expect(r.code).toBe(1);
+            expect(r.stderr).toMatch(/refused: .* is outside the directories gen-vis reads/);
+            expect(r.stdout + r.stderr).not.toContain('SECRET');
+        }
+        writeFileSync(path.join(inner, 'leak.json'), JSON.stringify({ ...def, parent: '../cfg.json', data: '../secret.csv' }));
+        const rooted = await run(['check', path.join(inner, 'leak.json'), '--root', sub]);
+        expect(rooted.stdout).toContain("'nope' is not a column of the data");
     }, 60000);
 
     test('the usage and the version', async () => {
@@ -420,7 +439,7 @@ describe.skipIf(!browser)('gen-vis export', () => {
         expect((await run(['--help'])).stdout).toContain('Usage: gen-vis export');
         expect((await run(['--help'])).stdout).toContain('--no-check');
     });
-    test('only the files of the directories of the definition, its parents, --root and --data; other origins with --allow-net', async () => {
+    test('only the files of the directories of the definition, --root and --data (not of its parents); other origins with --allow-net', async () => {
         const base = mkdtempSync(path.join(dir, 'files-'));
         const sub = path.join(base, 'charts');
         const shared = path.join(base, 'shared');
@@ -436,14 +455,36 @@ describe.skipIf(!browser)('gen-vis export', () => {
         for (const data of ['/fs/etc/os-release', '../shared/bev.csv', '/fs' + path.join(shared, 'bev.csv')]) {
             const r = await run(['export', write(path.join(sub, 'out.json'), { ...def, data }), svg, '--no-check']);
             expect(r.code).toBe(1);
-            expect(r.stderr).toMatch(/refused .* is outside the directories gen-vis export reads/);
+            expect(r.stderr).toMatch(/refused .* is outside the directories gen-vis reads/);
             expect(r.stderr).toMatch(/403 Forbidden/);
         }
-        // allowed: the directory of a parent (the data of a parent is relative
-        // to the definition which is drawn), --root and --data
+        // a parent opens no directory: a definition chooses its parents, e.g.
+        // "../.cfg.json" of a home directory, and then its data beside it;
+        // with --root of a directory above both it is drawn (the data of a
+        // parent is relative to the definition which is drawn)
         write(path.join(shared, 'base.json'), { ...def, data: '../shared/bev.csv' });
         const child = write(path.join(sub, 'child.json'), { $schema: def.$schema, parent: '../shared/base.json', title: 'Child' });
-        expect((await run(['export', child, svg, '--no-check'])).code).toBe(0);
+        const refused = await run(['export', child, svg]);
+        expect(refused.code).toBe(1);
+        expect(refused.stderr).toMatch(/refused .*shared\/base\.json is outside the directories gen-vis reads/);
+        expect(refused.stderr).not.toMatch(/check:/);
+        expect((await run(['export', child, svg, '--root', base])).code).toBe(0);
+        // the check of the export reads no file outside either, e.g. the
+        // header of a file in a message of an unknown column
+        writeFileSync(path.join(shared, 'secret.csv'), 'SECRET-abc,def\n1,2\n');
+        const leak = await run(['export', write(path.join(sub, 'leak.json'), { ...def, data: '../shared/secret.csv' }), svg]);
+        expect(leak.code).toBe(1);
+        expect(leak.stderr).not.toContain('SECRET');
+        // a path of an encoded "/" or a malformed escape is no file, the
+        // other charts of the run are drawn
+        const encoded = await run(['export', write(path.join(sub, 'enc.json'), { ...def, data: '/fs/tmp/x%2F.ssh/id' }), svg,
+            write(path.join(sub, 'bad.json'), { ...def, data: '/%E0%A4%A.csv' }), svg, write(path.join(sub, 'ok.json'), def), svg, '--no-check', '--root', base]);
+        expect(encoded.stderr).not.toMatch(/TypeError|URIError|    at /);
+        expect(encoded.stderr).toMatch(/enc\.json: .*404/);
+        expect(encoded.stderr).toMatch(/bad\.json: .*404/);
+        expect(encoded.stdout).toMatch(/ok\.json -> /);
+        expect(encoded.code).toBe(1);
+        // allowed: --root and --data
         const up = write(path.join(sub, 'up.json'), { ...def, data: '../shared/bev.csv' });
         expect((await run(['export', up, svg, '--no-check', '--root', base])).code).toBe(0);
         expect((await run(['export', write(path.join(sub, 'os.json'), { ...def, data: '/fs/etc/os-release' }), svg, '--no-check',
