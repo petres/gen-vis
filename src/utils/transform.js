@@ -1,4 +1,4 @@
-export { applyTransforms, loadTransforms, transformNames, transformColumns, utcColumns, madeColumns };
+export { applyTransforms, loadTransforms, transformNames, transformColumns, utcColumns, madeColumns, madeBy };
 
 import { fillTemplate } from "@/utils/def";
 import { scaleDef } from "@/utils/data";
@@ -15,6 +15,12 @@ import { refNames } from "@/utils/expr";
 const transformNames = ['year', 'align', 'format', 'index', 'mean', 'share', 'rolling', 'cumulative', 'calc', 'filter', 'rank', 'random', 'lookup', 'bin', 'fold', 'aggregate', 'window', 'regression'];
 
 const list = transforms => [transforms ?? []].flat();
+
+// the columns of the values of a transform which adds columns: `as` (by
+// default `column`, which it replaces); of an aggregate of a list of ops
+// (e.g. ["q1", "median", "q3"]) a column per op, `as` the list of their
+// names, by default the names of the ops
+const madeBy = t => t.type == 'aggregate' && Array.isArray(t.op) ? t.op.map((op, j) => Array.isArray(t.as) ? t.as[j] : op) : [t.as ?? t.column];
 
 let types = null;
 const loadTransforms = async () => types ??= await lazy.transform();
@@ -66,7 +72,7 @@ const columnsOf = transforms => {
         else if (t.type == 'fold')
             [t.key ?? 'key', t.value ?? 'value'].forEach(c => own.add(c));
         else if (t.type != 'filter')
-            own.add(t.as ?? t.column);
+            madeBy(t).forEach(c => own.add(c));
     });
     return { own, used, unknown };
 };

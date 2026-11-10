@@ -231,10 +231,11 @@ to at least 12 pixels (`dodge`). The right margin is measured of them.
 ## A box plot
 
 The quartiles and the median of the earnings of every sector are columns
-of its rows (`aggregate` with `q1`, `median` and `q3` by `sector`), the
-whiskers end at the least and the largest value within 1.5 times the
-interquartile range of the box (a `calc` of the values inside, their `min`
-and `max`), the values outside are the outliers. Every mark but the
+of its rows (an `aggregate` of the ops `q1`, `median` and `q3` by `sector`,
+a column of each, named by the op), the whiskers end at the least and the
+largest value within 1.5 times the interquartile range of the box (a
+`calc` of the values inside, their `min` and `max` as `lo` and `hi`), the
+values outside are the outliers. Every mark but the
 outliers draws one row per sector (`by` the dim `x`, `select: "first"`):
 the whisker a `rule` from `lo` to `hi`, its caps and the median `tick`s
 across the band (`size` a share of it), the box a `bar` from `q1` (`y0`) to
@@ -253,12 +254,9 @@ quartiles of its sector.
     "locale": "en",
     "height": 340,
     "transform": [
-        {"type": "aggregate", "column": "wage", "by": "sector", "op": "q1", "as": "q1"},
-        {"type": "aggregate", "column": "wage", "by": "sector", "op": "median", "as": "median"},
-        {"type": "aggregate", "column": "wage", "by": "sector", "op": "q3", "as": "q3"},
+        {"type": "aggregate", "column": "wage", "by": "sector", "op": ["q1", "median", "q3"]},
         {"type": "calc", "as": "inner", "expr": "=@q1 - 1.5 * (@q3 - @q1) <= @wage <= @q3 + 1.5 * (@q3 - @q1) ? @wage : null"},
-        {"type": "aggregate", "column": "inner", "by": "sector", "op": "min", "as": "lo"},
-        {"type": "aggregate", "column": "inner", "by": "sector", "op": "max", "as": "hi"}
+        {"type": "aggregate", "column": "inner", "by": "sector", "op": ["min", "max"], "as": ["lo", "hi"]}
     ],
     "dims": {
         "x": {"column": "sector", "type": "categorical", "scale": {"order": {"by": "median"}, "padding": 0.4}},

@@ -324,9 +324,9 @@ export interface Transform {
      */
     value?: string;
     /**
-     * The name of the new column, by default the one of `column`, which it replaces; bin: the column of the number of the values of the class, count by default; aggregate with `rows`: the column of the aggregate of the group.
+     * The name of the new column, by default the one of `column`, which it replaces; bin: the column of the number of the values of the class, count by default; aggregate with `rows`: the column of the aggregate of the group; aggregate of a list of ops: the list of the names of their columns, by default the names of the ops.
      */
-    as?: string;
+    as?: string | [string, ...string[]];
     /**
      * bin: the edges of the classes, numbers and ranges { "from": 50, "to": 250, "step": 5 }, sorted together, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143]. A class includes its start, the last one also its end, values outside the edges are left out.
      */
@@ -409,24 +409,30 @@ export interface Transform {
      */
     columns?: string | string[];
     /**
-     * aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, q1 and q3 (the lower and the upper quartile), quantile (of `p`), first or last (in the order of `order`), missing values are left out; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max, median, q1, q3, quantile of the window of `size` rows.
+     * aggregate: the aggregate of the values of the group, sum, mean, min, max, count (the number of values), median, q1 and q3 (the lower and the upper quartile), quantile (of `p`), first or last (in the order of `order`), missing values are left out, a list of ops a column of each (named by `as` or by the op), e.g. ["q1", "median", "q3"] of a box plot; window: lag or lead (the value `offset` rows before or after the row, a number or the value as it is, e.g. a text), diff (the value minus the one before) or pct (the change in percent), or sum, mean, min, max, median, q1, q3, quantile of the window of `size` rows.
      */
     op?:
-        | 'sum'
-        | 'mean'
-        | 'min'
-        | 'max'
-        | 'count'
-        | 'median'
-        | 'q1'
-        | 'q3'
-        | 'quantile'
-        | 'first'
-        | 'last'
-        | 'lag'
-        | 'lead'
-        | 'diff'
-        | 'pct';
+        | (
+              | 'sum'
+              | 'mean'
+              | 'min'
+              | 'max'
+              | 'count'
+              | 'median'
+              | 'q1'
+              | 'q3'
+              | 'quantile'
+              | 'first'
+              | 'last'
+              | 'lag'
+              | 'lead'
+              | 'diff'
+              | 'pct'
+          )
+        | [
+              'sum' | 'mean' | 'min' | 'max' | 'count' | 'median' | 'q1' | 'q3' | 'quantile' | 'first' | 'last',
+              ...('sum' | 'mean' | 'min' | 'max' | 'count' | 'median' | 'q1' | 'q3' | 'quantile' | 'first' | 'last')[]
+          ];
     /**
      * aggregate and window of the op quantile: the probability, from 0 to 1, e.g. 0.9 of the 90th percentile; interpolated between the two nearest values (R-7, as median, q1 and q3).
      */

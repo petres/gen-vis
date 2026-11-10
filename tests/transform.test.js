@@ -378,6 +378,23 @@ describe('fold, aggregate and window', () => {
         expect(column({ type: 'aggregate', column: 'value', op: 'quantile', p: '{p}', as: 'q' }, 'q', { p: '1' })).toEqual([40, 40, 40, 40, 40, 40]);
         expect(rowsOf(rows, { type: 'aggregate', column: 'value', by: 'type', op: 'q3', as: 'hi', rows: true })).toEqual([{ type: 'gas', hi: 35 }, { type: 'oil', hi: 12.5 }]);
         expect(() => applyTransforms(rows, { type: 'aggregate', column: 'value', op: 'quantile' })).toThrow("aggregate: the quantile needs 'p'");
+        // several ops, a column of each, named by the op or by `as`, also of rows
+        const several = applyTransforms(rows, { type: 'aggregate', column: 'value', by: 'type', op: ['q1', 'median', 'q3'] });
+        expect([...several.keys()]).toEqual(['q1', 'median', 'q3']);
+        expect(several.get('q1')).toEqual(column({ type: 'aggregate', column: 'value', by: 'type', op: 'q1', as: 'q' }, 'q'));
+        expect(several.get('q3')).toEqual([35, 35, 35, 12.5, 12.5, 12.5]);
+        expect(column({ type: 'aggregate', column: 'value', by: 'type', op: ['min', 'max'], as: ['lo', 'hi'] }, 'hi')).toEqual([40, 40, 40, 15, 15, 15]);
+        expect(rowsOf(rows, { type: 'aggregate', column: 'value', by: 'type', op: ['min', 'max', 'count'], as: ['lo', 'hi', 'n'], rows: true }))
+            .toEqual([{ type: 'gas', lo: 10, hi: 40, n: 3 }, { type: 'oil', lo: 5, hi: 15, n: 2 }]);
+        // a later transform reads them, a change of the ops computes them again
+        const before = applyTransforms(rows, [{ type: 'aggregate', column: 'value', op: ['min', 'max'], as: ['lo', 'hi'] }, { type: 'calc', as: 'range', expr: { '-': ['@hi', '@lo'] } }]);
+        expect(before.get('range')).toEqual([35, 35, 35, 35, 35, 35]);
+        const after = applyTransforms(rows, [{ type: 'aggregate', column: 'value', op: ['min', 'mean'], as: ['lo', 'hi'] }, { type: 'calc', as: 'range', expr: { '-': ['@hi', '@lo'] } }], {}, new Set(), before);
+        expect(after.get('range')).toEqual([15, 15, 15, 15, 15, 15]);
+        expect([...after.changed].sort()).toEqual(['hi', 'lo', 'range']);
+        expect(() => applyTransforms(rows, { type: 'aggregate', column: 'value', op: ['min', 'max'], as: 'x' })).toThrow("aggregate: 'as' is a list");
+        expect(() => applyTransforms(rows, { type: 'aggregate', column: 'value', op: ['min', 'max'], as: ['x', 'x'] })).toThrow('named alike');
+        expect(() => applyTransforms(rows, { type: 'aggregate', column: 'value', op: [] })).toThrow('aggregate: the op is one of');
         // a rolling median of 3 rows, only of whole windows
         expect(column({ type: 'window', column: 'value', by: 'type', order: 'date', op: 'median', size: 3, align: 'center', as: 'm' }, 'm')).toEqual([null, 30, null, null, null, 10]);
         expect(() => applyTransforms(rows, { type: 'window', column: 'value', op: 'quantile', size: 2, p: -1 })).toThrow("window: the quantile needs 'p'");
@@ -409,6 +426,13 @@ describe('fold, aggregate and window', () => {
         const aggregates = `'sum', 'mean', 'min', 'max', 'count', 'median', 'q1', 'q3', 'quantile', 'first', 'last'`;
         expect(checks([{ type: 'aggregate', column: 'value' }])).toEqual([`transform[0].op: the operation is needed, one of ${aggregates}`]);
         expect(checks([{ type: 'aggregate', column: 'value', op: 'lag', rows: true }])).toEqual([`transform[0].op: unknown op 'lag', expected one of ${aggregates}`]);
+        // several ops, a name of each
+        expect(checks([{ type: 'aggregate', column: 'value', op: ['q1', 'median', 'q3'] }, { type: 'calc', as: 'iqr', expr: '=@q3 - @q1' }])).toEqual([]);
+        expect(checks([{ type: 'aggregate', column: 'value', op: ['min', 'lag'] }])).toEqual([`transform[0].op: unknown op 'lag', expected one of ${aggregates}`]);
+        expect(checks([{ type: 'aggregate', column: 'value', op: ['min', 'max'], as: ['lo'] }])).toEqual([`transform[0].as: a name per op, 2 names, e.g. "op": ["min", "max"], "as": ["lo", "hi"]`]);
+        expect(checks([{ type: 'aggregate', column: 'value', op: ['min', 'max'], as: 'lo' }])).toEqual([`transform[0].as: a name per op, 2 names, e.g. "op": ["min", "max"], "as": ["lo", "hi"]`]);
+        expect(checks([{ type: 'aggregate', column: 'value', op: 'min', as: ['lo'] }])).toEqual([`transform[0].as: a list of names is the one of a list of ops, e.g. "op": ["min", "max"], "as": ["lo", "hi"]`]);
+        expect(checks([{ type: 'aggregate', column: 'value', op: ['min', 'min'] }])).toEqual([`transform[0].as: the columns of the ops are named alike, a name per op is needed, e.g. "op": ["min", "max"], "as": ["lo", "hi"]`]);
         // the probability of a quantile, only of a quantile
         expect(checks([{ type: 'aggregate', column: 'value', op: 'quantile' }])).toEqual([`transform[0].p: the probability of the quantile is needed, a number from 0 to 1, e.g. 0.9`]);
         expect(checks([{ type: 'aggregate', column: 'value', op: 'quantile', p: 2 }])).toEqual([`transform[0].p: the probability of the quantile is needed, a number from 0 to 1, e.g. 0.9`]);

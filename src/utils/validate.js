@@ -9,7 +9,7 @@ import { plotTypes } from "@/plots";
 import { coords } from "@/coords";
 import { annotationKeys } from "@/coords/annotations.js";
 import { projectionNames } from "@/coords/geo.js";
-import { applyTransforms, transformNames, utcColumns } from "@/utils/transform";
+import { applyTransforms, madeBy, transformNames, utcColumns } from "@/utils/transform";
 import { isObject, missing, toNumber } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
 import { defaultScaleType, facetMappings, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
@@ -882,9 +882,9 @@ const transformedColumns = (transforms, present, values = {}) => {
             [t.start ?? 'start', t.end ?? 'end', t.as ?? 'count', ...by].forEach(c => columns.add(c));
         else if (t.type == 'aggregate' && t.rows) {
             columns.clear();
-            [t.as ?? t.column, ...by].forEach(c => columns.add(c));
+            [...madeBy(t), ...by].forEach(c => columns.add(c));
         } else
-            columns.add(t.as ?? t.column);
+            madeBy(t).forEach(c => columns.add(c));
     });
     columns.delete(undefined);
     return columns;
@@ -962,15 +962,25 @@ const checkTransforms = ({ def, globals, warn, rows }) => {
         const ops = { aggregate: ['sum', 'mean', 'min', 'max', 'count', 'median', 'q1', 'q3', 'quantile', 'first', 'last'],
             window: ['lag', 'lead', 'diff', 'pct', ...windowOps] };
         if (Object.hasOwn(ops, t.type)) {
-            if (t.op === undefined)
+            // several ops of an aggregate, a column of each
+            const several = t.type == 'aggregate' && Array.isArray(t.op);
+            const given = several ? t.op : [t.op];
+            if (t.op === undefined || (several && t.op.length == 0))
                 warn(`${path}.op`, `the operation is needed, one of ${list(ops[t.type])}`);
-            else if (!ops[t.type].includes(t.op) && !String(t.op).includes('{'))
-                warn(`${path}.op`, `unknown op '${t.op}'${choices(t.op, ops[t.type])}`);
+            else
+                given.filter(op => !ops[t.type].includes(op) && !String(op).includes('{'))
+                    .forEach(op => warn(`${path}.op`, `unknown op '${op}'${choices(op, ops[t.type])}`));
             // the probability of a quantile
-            if (t.op == 'quantile' && !(Number(t.p) >= 0 && Number(t.p) <= 1 && t.p !== null && t.p !== '') && !isTemplate(t.p))
+            if (given.includes('quantile') && !(Number(t.p) >= 0 && Number(t.p) <= 1 && t.p !== null && t.p !== '') && !isTemplate(t.p))
                 warn(`${path}.p`, `the probability of the quantile is needed, a number from 0 to 1, e.g. 0.9`);
-            else if (t.p !== undefined && t.op != 'quantile' && !isTemplate(t.op))
+            else if (t.p !== undefined && !given.includes('quantile') && !given.some(isTemplate))
                 warn(`${path}.p`, `only of the op 'quantile', e.g. "op": "quantile", "p": 0.9`);
+            // the names of the columns of several ops
+            if (several ? t.as !== undefined && (!Array.isArray(t.as) || t.as.length != t.op.length) : Array.isArray(t.as))
+                warn(`${path}.as`, several ? `a name per op, ${t.op.length} names, e.g. "op": ["min", "max"], "as": ["lo", "hi"]`
+                    : `a list of names is the one of a list of ops, e.g. "op": ["min", "max"], "as": ["lo", "hi"]`);
+            else if (several && new Set(madeBy(t)).size < t.op.length)
+                warn(`${path}.as`, `the columns of the ops are named alike, a name per op is needed, e.g. "op": ["min", "max"], "as": ["lo", "hi"]`);
         }
         // the time format of a format
         if (t.type == 'format' && typeof t.format != 'string')

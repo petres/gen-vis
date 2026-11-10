@@ -8,6 +8,7 @@ import { toDate, toNumber } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
 import { bind, constant, refNames } from "@/utils/expr";
 import { missing } from "@/utils/values";
+import { madeBy } from "@/utils/transform";
 
 /**
  * The transforms of a definition compute columns of the data in the browser,
@@ -81,9 +82,15 @@ const dateOnly = /^\d{4}(-\d{2}(-\d{2})?)?$/;
 // no numbers
 const aggregateOps = ['sum', 'mean', 'min', 'max', 'count', 'median', 'q1', 'q3', 'quantile', 'first', 'last'];
 const checkOp = t => {
-    if (!aggregateOps.includes(t.op))
-        throw new Error(`aggregate: the op is one of ${aggregateOps.map(o => `'${o}'`).join(', ')}`);
-    probabilityOf(t.op, t);
+    const ops = [t.op].flat();
+    if (ops.length == 0 || ops.some(op => !aggregateOps.includes(op)))
+        throw new Error(`aggregate: the op is one of ${aggregateOps.map(o => `'${o}'`).join(', ')}, or a list of them`);
+    ops.forEach(op => probabilityOf(op, t));
+    if (Array.isArray(t.op) ? t.as !== undefined && (!Array.isArray(t.as) || t.as.length != t.op.length || t.as.some(c => typeof c != 'string')) : Array.isArray(t.as))
+        throw new Error(`aggregate: 'as' is a list of the names of the columns of a list of ops, one per op, e.g. "op": ["min", "max"], "as": ["lo", "hi"]`);
+    const names = madeBy(t);
+    if (new Set(names).size < names.length)
+        throw new Error(`aggregate: the columns of the ops are named alike, ${names.map(c => `'${c}'`).join(', ')}, see 'as'`);
 };
 // the probability of a quantile op, of `p` of the transform
 const quantiles = { median: 0.5, q1: 0.25, q3: 0.75 };
@@ -593,14 +600,16 @@ const aggregateRows = (t, { n, get, numbers, groups }) => {
     checkOp(t);
     const by = [t.by ?? []].flat();
     const all = by.length == 0 ? [Array.from({ length: n }, (_, i) => i)] : groups;
-    const as = t.as ?? t.column;
+    const ops = [t.op].flat();
+    const names = madeBy(t);
     const rows = all.map(g => {
         const first = g.reduce((a, b) => Math.min(a, b), Infinity);
         const keys = Object.fromEntries(by.map(c => [c, get(first, c) ?? null]));
-        return { ...keys, [as]: aggregateOf(t.op, g.map(numbers).filter(v => v !== null), t) };
+        const values = g.map(numbers).filter(v => v !== null);
+        return { ...keys, ...Object.fromEntries(ops.map((op, j) => [names[j], aggregateOf(op, values, t)])) };
     });
     // the aggregate replaces a column of the groups of its name
-    const notes = by.includes(as) ? [`the aggregate '${as}' replaces the column '${as}' of 'by', see 'as'`] : [];
+    const notes = names.filter(as => by.includes(as)).map(as => `the aggregate '${as}' replaces the column '${as}' of 'by', see 'as'`);
     return { rows, notes };
 };
 
@@ -647,15 +656,20 @@ const windowOf = (t, context) => {
 // largest value, number (`count`), median, quartile or quantile, first or last one in their
 // order (`op`), missing values are left out, a value of every row of the
 // group, e.g. the total of a country of all years; with `rows` a row per
-// group instead, see aggregateRows
+// group instead, see aggregateRows; of a list of ops a column of each
+// (`columns`, the names and the values)
 const aggregateOfGroups = (t, { n, numbers, groups }) => {
     checkOp(t);
-    const result = new Array(n).fill(null);
+    const ops = [t.op].flat();
+    const results = ops.map(() => new Array(n).fill(null));
     groups.forEach(g => {
-        const value = aggregateOf(t.op, g.map(numbers).filter(v => v !== null), t);
-        g.forEach(i => result[i] = value);
+        const values = g.map(numbers).filter(v => v !== null);
+        ops.forEach((op, j) => {
+            const value = aggregateOf(op, values, t);
+            g.forEach(i => results[j][i] = value);
+        });
     });
-    return result;
+    return Array.isArray(t.op) ? { columns: madeBy(t).map((name, j) => [name, results[j]]) } : results[0];
 };
 
 // the transforms which change the rows, see applyTransforms: a bin and a
@@ -671,7 +685,7 @@ const producesRows = t => t.type == 'bin' || t.type == 'fold' || (t.type == 'agg
 const replaces = t => t.type == 'aggregate' || (t.replace ?? t.type == 'fold');
 const rowColumns = t => t.type == 'bin' ? [t.start ?? 'start', t.end ?? 'end', t.as ?? 'count', ...[t.by ?? []].flat()]
     : t.type == 'fold' ? [t.key ?? 'key', t.value ?? 'value']
-    : [t.as ?? t.column, ...[t.by ?? []].flat()];
+    : [...madeBy(t), ...[t.by ?? []].flat()];
 
 // the names of the columns of rows: of csv the ones of its header, of JSON
 // the ones of all rows (a row may lack some, e.g. a year without a value),
@@ -721,8 +735,8 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
         if (producesRows(t))
             rowColumns(t).forEach(c => own.add(c));
         else if (t.type != 'filter')
-            own.add(t.as ?? t.column);
-        return { t, inUtc: utc.has(t.column) || utc.has(t.as ?? t.column), refs: refs.map(n => [n, globals[n] ?? null]) };
+            madeBy(t).forEach(c => own.add(c));
+        return { t, inUtc: utc.has(t.column) || madeBy(t).some(c => utc.has(c)), refs: refs.map(n => [n, globals[n] ?? null]) };
     });
     const keys = list.map(({ t, inUtc, refs }) => JSON.stringify([t, inUtc, refs]));
     const steps = before?.steps ?? [];
@@ -744,9 +758,9 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
     columns.kept = state.kept;
     const notes = [...state.notes];
     // also the columns which are not computed anymore, e.g. of another `as`
-    columns.changed = new Set(steps.slice(first).map(s => s.name).filter(n => n !== null));
+    columns.changed = new Set(steps.slice(first).flatMap(s => s.names));
     const read = (i, c) => columns.has(c) ? columns.get(c)[i] ?? null : base[i][c];
-    const save = (key, name) => columns.steps.push({ key, name,
+    const save = (key, names) => columns.steps.push({ key, names,
         state: { rows: base, columns: [...columns], kept: columns.kept, notes: [...notes] } });
     for (const [k, { t, inUtc }] of list.entries()) {
         if (k < first)
@@ -812,22 +826,25 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
                 base = result.rows;
             }
             result.rows.forEach(r => Object.keys(r).forEach(c => present.add(c)));
-            save(keys[k], null);
+            save(keys[k], []);
             continue;
         }
         if (t.type == 'filter') {
             columns.kept = (index ?? Array.from({ length: n }, (_, i) => i)).filter((r, i) => result[i]);
-            save(keys[k], null);
+            save(keys[k], []);
             continue;
         }
-        const name = t.as ?? t.column;
-        // the values of all rows, none of the ones of the filters before
-        const all = index ? new Array(base.length).fill(null) : result;
-        if (index)
-            index.forEach((r, i) => all[r] = result[i]);
-        columns.set(name, all);
-        save(keys[k], name);
-        columns.changed.add(name);
+        // the columns of the transform, of an aggregate of several ops one per op
+        const made = result.columns ?? [[t.as ?? t.column, result]];
+        made.forEach(([name, values]) => {
+            // the values of all rows, none of the ones of the filters before
+            const all = index ? new Array(base.length).fill(null) : values;
+            if (index)
+                index.forEach((r, i) => all[r] = values[i]);
+            columns.set(name, all);
+            columns.changed.add(name);
+        });
+        save(keys[k], made.map(([name]) => name));
     }
     columns.rows = base === rows ? null : base;
     columns.notes = notes;

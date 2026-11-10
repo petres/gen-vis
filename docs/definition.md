@@ -372,7 +372,11 @@ column:
   `by` (the values of the first row of the group) and `as`, e.g. the mean
   per category of a bar chart: `{"type": "aggregate", "column": "value",
   "by": "category", "op": "mean", "rows": true}`; an `as` of a column of
-  `by` replaces it (with a warning). An unknown or missing `op` is an
+  `by` replaces it (with a warning). A list of ops is a column of each
+  (a column of each in the rows of `rows`), named by the list `as`, by
+  default by the ops, e.g. the box of a box plot, `{"type": "aggregate",
+  "column": "wage", "by": "sector", "op": ["q1", "median", "q3"]}`, or
+  `"op": ["min", "max"], "as": ["lo", "hi"]`. An unknown or missing `op` is an
   error, also of data without rows.
 - `window`: a value of another row of the group in the order of `order`:
   `lag` or `lead`, the value `offset` rows (1 by default) before or after
