@@ -41,9 +41,22 @@ const tickValues = (axis, scale, ticks, mapping, scope = {}, mappings) => {
 };
 
 // the format of the ticks of the axis of a mapping, by default as the one of
-// d3 but in the locale, null for the default of d3
+// d3 but in the locale, null for the default of d3; the categories with a
+// name of their own are labelled by it, as in the legend, e.g. "Mon" of the
+// key 1 (`labels.props.text` of the axis comes before it)
 const tickFormat = (store, name, scale, ticks) => {
     const mapping = store.mapping(name);
+    const format = numberFormat(store, mapping, name, scale, ticks);
+    const props = mapping.categoryProps;
+    if (!props || !Object.entries(props).some(([k, p]) => p.name !== undefined && p.name !== null && String(p.name) !== k))
+        return format;
+    const other = format ?? (scale.tickFormat ? scale.tickFormat(ticks) : d => d);
+    return d => {
+        const p = Object.hasOwn(props, String(d)) ? props[String(d)] : undefined;
+        return p?.name !== undefined && p.name !== null && String(p.name) !== String(d) ? String(p.name) : other(d);
+    };
+};
+const numberFormat = (store, mapping, name, scale, ticks) => {
     const format = formatOf(mapping, 'axis');
     if (format)
         return store.format(format, name);

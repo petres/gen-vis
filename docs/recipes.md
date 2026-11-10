@@ -550,9 +550,9 @@ columns of a row per indicator, the dims of the bars on the scale of x.
 A cell per day: the week of the year (`%W`, weeks from Monday) and the
 weekday (`%u`, 1 is Monday) of the date are columns of a `format`
 transform, the dims of the bands of `x` and `y`. The weekdays are listed
-categories with their names (the labels of the axis are the `@name` of the
-category), the months are labels of fixed ticks at the weeks of their first
-days. The hover of a cell is titled by the date (`title` of the template
+categories with their names (the labels of the axis are the names of the
+categories, as in a legend), the months are labels of fixed ticks at the
+weeks of their first days. The hover of a cell is titled by the date (`title` of the template
 of the nearest row, the date without a cell of its own).
 
 <!-- data/recipes/calendar.json -->
@@ -572,7 +572,7 @@ of the nearest row, the date without a cell of its own).
     "dims": {
         "x": {"column": "week", "type": "categorical", "axis": {"tickMarks": false, "domain": {"props": {"stroke": "none"}}, "values": ["00", "04", "08", "13", "17", "21", "26", "30", "35", "39", "43", "48"],
             "labels": {"props": {"text": "=match(@x, {'00': 'Jan', '04': 'Feb', '08': 'Mar', '13': 'Apr', '17': 'May', '21': 'Jun', '26': 'Jul', '30': 'Aug', '35': 'Sep', '39': 'Oct', '43': 'Nov', '48': 'Dec'})", "text-anchor": "start"}}}},
-        "y": {"column": "weekday", "type": "categorical", "axis": {"tickMarks": false, "domain": {"props": {"stroke": "none"}}, "labels": {"props": {"text": "@name"}}}, "categories": {
+        "y": {"column": "weekday", "type": "categorical", "axis": {"tickMarks": false, "domain": {"props": {"stroke": "none"}}}, "categories": {
             "1": {"name": "Mon"}, "2": {"name": "Tue"}, "3": {"name": "Wed"}, "4": {"name": "Thu"}, "5": {"name": "Fri"}, "6": {"name": "Sat"}, "7": {"name": "Sun"}}},
         "price": {"column": "price", "name": "Price", "format": ",.0f", "legend": {}, "scale": {"type": "sequential", "interpolator": "YlOrRd"}},
         "date": {"column": "date", "type": "date", "format": "%a, %-d %b %Y", "hover": {"cell": false}}

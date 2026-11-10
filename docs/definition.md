@@ -905,6 +905,9 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   decimals of the distance of the ticks (none of whole numbers) and
   thousands separators only if the domain reaches 10 000, as the hover, so
   years are e.g. 2024; dates the format of their interval (`timeTicks`).
+  A category with a `name` of its own is labelled by it, as in the legend,
+  e.g. `"categories": {"1": {"name": "Mon"}}` of weekdays; the others by
+  their key in the format. `labels.props.text` comes before both.
 - `rotate`: the angle of the labels in degrees, positive counterclockwise,
   negative clockwise.
 - `labels` (of all axes, also of polar charts): the `props` of the labels,

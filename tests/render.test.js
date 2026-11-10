@@ -4173,3 +4173,14 @@ describe('texts of expressions of other names than globals (review of 5.0)', () 
         ]);
     });
 });
+
+describe('the names of the categories on the axes', () => {
+    test('a category with a name of its own is labelled by it, the others by their key, labels.props.text before it', async () => {
+        const def = { width: 400, height: 200, dims: { x: { column: 'd', type: 'categorical', categories: { 1: { name: 'Mon' }, 2: {}, 3: { name: 'Wed' } } }, y: 'v' }, marks: { type: 'bar' } };
+        const data = 'd,v\n1,1\n2,2\n3,3';
+        const texts = el => [...el.querySelectorAll('g.vis-axis-bottom g.tick text')].map(t => t.textContent);
+        expect(texts(await mount({ def, data }))).toEqual(['Mon', '2', 'Wed']);
+        const own = { ...def, dims: { ...def.dims, x: { ...def.dims.x, axis: { labels: { props: { text: '=cat(@x, \'!\')' } } } } } };
+        expect(texts(await mount({ def: own, data }))).toEqual(['1!', '2!', '3!']);
+    });
+});

@@ -179,6 +179,9 @@ column without a dim, and expressions nest at most 100 levels.
   horizontal and a vertical dashed line across the plot area instead of the
   line of the position (`vis-hover-cross`, `--gen-vis-cross-color`), also
   of the hover of points.
+- The labels of an axis of categories are their names (a category with a
+  `name` of its own, e.g. `"1": {"name": "Mon"}`), as in the legend; 4.x
+  labelled them by their keys unless `labels.props.text` was `"@name"`.
 - A channel naming the column of the dim of its axis is that dim (`"x":
   "year"` of a dim `x` of the column `year`), not a second dim of the
   same column with categories of its own.
