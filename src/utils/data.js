@@ -940,11 +940,21 @@ const inferTypes = (def, rows, columns = null, known = () => true) => {
         const key = `${hint ?? ''}\0${column}`;
         if (!types.has(key))
             types.set(key, inferType(columnValues(rows, columns, column), sourceRows(rows, columns).length, hint));
+        // a dim on the scale of another one without values of its own, e.g.
+        // of a column of the rows of a mark only (the ends of an arrow), has
+        // the type of that one (below), so the values of the rows are
+        // converted as its ones
+        if (types.get(key) === undefined && typeof m.scale?.of == 'string' && isObject(def.mapping?.[m.scale.of])) {
+            ofScale.push(m);
+            return;
+        }
         // without values of the parts of a continuous dim numeric, e.g. of `"zero": true`
         m.type = types.get(key) ?? (hint && formatType(m) != 'date' ? 'numeric' : formatType(m));
     };
+    const ofScale = [];
     Object.values(def.mapping ?? {}).forEach(infer);
     variants(def).slice(1).forEach(variant => Object.entries(isObject(variant.mapping) ? variant.mapping : {})
         .filter(([n]) => !Object.hasOwn(def.mapping ?? {}, n)).forEach(([, m]) => infer(m)));
+    ofScale.forEach(m => m.type = def.mapping[m.scale.of].type ?? (typeHint(m) && formatType(m) != 'date' ? 'numeric' : formatType(m)));
 };
 

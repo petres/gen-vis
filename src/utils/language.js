@@ -528,7 +528,9 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
             take('x2', 'y2');
             // at the center of the band of a categorical position, as bars and
             // points, of dodged bars the middle of the slot of the category
-            if (raw.y !== undefined && raw.x === undefined) {
+            // (horizontal also of only the ends of x, e.g. of the rows of the
+            // mark, which have their y)
+            if (raw.x === undefined && (raw.y !== undefined || raw.x1 !== undefined || raw.x2 !== undefined)) {
                 props.y = dodgeGroup !== undefined && y ? dodged(y.dim, dodgeGroup).center : at(y);
                 if (x1)
                     props.x1 = x1.value;

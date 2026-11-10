@@ -97,7 +97,12 @@ letters among numbers keep a column categorical (`"2025 (Prognose)"` or
 `"<5"`, have no letters), a `height` or `width` of 0 or less is the
 default with a warning, and the types of `@preschen/gen-vis/esm` need no
 `vue` (its Vue factories are untyped there, typed in
-`@preschen/gen-vis/vue`).
+`@preschen/gen-vis/vue`). A rule of only the ends of x (`x1`, `x2`) is
+horizontal, columns of the rows of a mark of its own (`data`) are known to
+the checks and take the type of the dim of their scale (e.g. the dates of
+the ends of an arrow), and an axis of dates labels a larger unit of its
+format once (`"format": "%Y"` of quarterly ticks: the year at its first
+tick, not four times). A recipe of arrows (`data/recipes/arrows.json`).
 
 ### The language
 

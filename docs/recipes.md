@@ -623,6 +623,46 @@ answer once (`filter`).
 }
 ```
 
+## An annotated line chart with arrows
+
+Arrows point at what the text says: `"marker-end": "arrow"` (and
+`"marker-start"`) of a `rule`, a `line` or the `props` of an annotation
+`line` draws an arrowhead in the color of the stroke, in the page and in
+the exports. The marks of the notes have rows of their own (`data`), one
+per note: a rule from `start` to `end` at the `y` of the row (columns of
+the rows of the mark, on the scale of x as its dates), arrowheads at both
+ends, is the period of the crisis, a rule from `from` to `to` points at the
+peak, a `text` of the same row is its note. `include` gives the notes room
+above the line; an annotation `line` marks the event. The axis labels the
+years (`"format": "%Y"`) once, at their first tick.
+
+<!-- data/recipes/arrows.json -->
+```json
+{
+    "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+    "data": "power.csv",
+    "title": "Wholesale electricity prices",
+    "subtitle": "monthly average of the day-ahead market, EUR per MWh",
+    "source": "Illustrative data",
+    "locale": "en",
+    "height": 340,
+    "dims": {
+        "x": {"column": "date", "type": "date", "format": "%b %Y", "axis": {"format": "%Y"}},
+        "y": {"column": "price", "name": "Price", "format": ".0f", "zero": true, "include": 600, "grid": true}
+    },
+    "annotations": {"type": "line", "x": "2022-02-24", "label": "Invasion of Ukraine", "props": {"stroke": "#888", "stroke-dasharray": "3 3"}},
+    "marks": [
+        {"type": "line", "stroke": "#1E4F77", "stroke-width": 2.5},
+        {"type": "rule", "data": [{"y": 30, "start": "2021-09-01", "end": "2023-03-01"}], "x1": "start", "x2": "end",
+            "stroke": "#C3423F", "stroke-width": 1.5, "marker-start": "arrow", "marker-end": "arrow"},
+        {"type": "text", "data": [{"x": "2022-06-01", "y": 30, "note": "Energy crisis"}], "text": "@note", "anchor": "top",
+            "fill": "#C3423F", "font-size": 12, "font-weight": "bold"},
+        {"type": "rule", "data": [{"x": "2022-08-01", "from": 550, "to": 485}], "y1": "from", "y2": "to", "stroke": "#333", "marker-end": "arrow"},
+        {"type": "text", "data": [{"x": "2022-08-01", "y": 550, "note": "Peak: 471 in August 2022"}], "text": "@note", "anchor": "end", "font-size": 11}
+    ]
+}
+```
+
 ## Things to know
 
 - The default locale is `de` (decimal commas, `1.234,5`): `"locale": "en"`

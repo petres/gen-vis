@@ -560,3 +560,36 @@ describe('bars and ticks of periods and of the scale of another dim (final revie
         errors.length = 0;
     });
 });
+
+describe('arrows of rows of a mark of their own (final review of 5.0)', () => {
+    const lines = el => [...el.querySelectorAll('g.vis-mark line')].filter(l => l[itemOf]);
+    const data = 'date,price\n2021-01-01,50\n2021-07-01,120\n2022-01-01,300\n2022-07-01,450\n2023-01-01,150\n2023-07-01,90';
+
+    test('a rule of the ends of x of its rows is horizontal, the ends are dates as the ones of x, no warning of their columns', async () => {
+        const def = { width: 600, height: 300, dims: { x: { column: 'date', type: 'date', axis: { format: '%Y' } }, y: { column: 'price', zero: true } },
+            marks: [{ type: 'line' },
+                { type: 'rule', data: [{ y: 30, start: '2021-07-01', end: '2023-01-01' }], x1: 'start', x2: 'end', 'marker-start': 'arrow', 'marker-end': 'arrow' },
+                { type: 'rule', data: [{ x: '2022-07-01', from: 520, to: 470 }], y1: 'from', y2: 'to', 'marker-end': 'arrow' }] };
+        const el = await mount({ def, data });
+        const [span, down] = lines(el);
+        expect(num(span, 'y1')).toBeCloseTo(num(span, 'y2'));
+        expect(num(span, 'x1')).toBeGreaterThan(0);
+        expect(num(span, 'x2')).toBeGreaterThan(num(span, 'x1') + 100);
+        expect(num(down, 'x1')).toBeCloseTo(num(down, 'x2'));
+        expect(num(down, 'y2')).toBeGreaterThan(num(down, 'y1'));
+        expect(span.getAttribute('marker-start')).toMatch(/^url\(#.*arrow/);
+        expect(errors).toEqual([]);
+        const { validateDef } = await import('@/check.js');
+        const { parseData } = await import('@/check.js');
+        expect(validateDef({ $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', ...def }, await parseData(data, 'csv'))).toEqual([]);
+    });
+
+    test('the labels of an axis of dates in a format of a larger unit are at its first tick only, the tick marks stay', async () => {
+        const el = await mount({ def: { width: 600, height: 300, dims: { x: { column: 'date', type: 'date', axis: { format: '%Y' } }, y: 'price' }, marks: { type: 'line' } }, data });
+        const ticks = [...el.querySelectorAll('[data-dim="x"] .tick, .vis-axis-x .tick')];
+        const texts = ticks.map(t => t.querySelector('text')?.textContent ?? '');
+        expect(texts.filter(Boolean)).toEqual(['2021', '2022', '2023']);
+        expect(ticks.length).toBeGreaterThan(3);
+        expect(errors).toEqual([]);
+    });
+});

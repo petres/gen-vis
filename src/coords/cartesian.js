@@ -108,6 +108,23 @@ const axes = ctx => {
         }
 
         const values = i.values ? tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.mapping) : (s.ticks ? s.ticks(ticks) : s.domain());
+        // the labels of an axis of dates which repeat the one before are left
+        // out, e.g. of quarterly ticks of the format "%Y" (the year at its
+        // first tick); the tick marks stay. (Not of numbers: a rounded label
+        // is not at the first tick of its value.)
+        if (!s.step && m?.type == 'date' && values.length > 1) {
+            const shown = format;
+            const kept = new Set();
+            let before;
+            values.forEach(v => {
+                const t = String(shown(v) ?? '');
+                if (t !== before)
+                    kept.add(+v);
+                before = t;
+            });
+            if (kept.size < values.length)
+                format = d => kept.has(+d) ? shown(d) : '';
+        }
         // the labels of a horizontal axis which overlap: every n-th one, not
         // of values given (`values`) nor rotated labels, see labelStep
         if (['top', 'bottom'].includes(i.position) && !i.values && !i.rotate && values.length > 2) {

@@ -4,7 +4,7 @@ import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
 import { perGroup, perRow, finite, curve, points, propScale } from "@/plots/elements";
 import { pixelOffset } from "@/utils/axis";
-import { refOf } from "@/utils/expr";
+import { refOf, refNames } from "@/utils/expr";
 import { markPath, warnOnce } from "@/utils/warn";
 
 // the scale of a prop of a bar, e.g. of "@x:scaled"
@@ -124,11 +124,13 @@ export default {
                     ? { ...props, x1: x + o, x2: x + o, y1: y1 ?? 0, y2: y2 ?? ctx.innerHeight }
                     : { ...props, x1: x1 ?? 0, x2: x2 ?? ctx.innerWidth, y1: y + o, y2: y + o };
             });
-            // rules of given ends which are all of no length, e.g. ticks across
-            // a continuous scale, which has no bands
+            // ticks (ends of the band of their category, see tickOf of
+            // utils/language.js) which are all of no length: across a
+            // continuous scale, which has no bands
             const [a, b] = vertical ? ['y1', 'y2'] : ['x1', 'x2'];
             const items = [...(layer.items ?? []), ...(layer.groups ?? []).flatMap(g => g.items)];
-            if (a in plot.props && b in plot.props && items.length && items.every(e => !(Math.abs(e[a] - e[b]) > 0)))
+            const tick = refNames(plot.props[a]).some(n => /:bandwidth$/.test(n));
+            if (tick && items.length && items.every(e => !(Math.abs(e[a] - e[b]) > 0)))
                 warnOnce(ctx.store, `rule:${plot.id}`, `${markPath(ctx.store?.def, plot, true)}: the rules have no length, e.g. ticks across a continuous ${vertical ? 'y' : 'x'}: a tick runs across the band of a categorical dim or the period of an "interval" of dates`);
             return layer;
         },

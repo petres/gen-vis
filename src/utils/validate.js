@@ -1037,9 +1037,14 @@ const checkData = ({ raw, mapping, rows, columns, warn, source }) => {
         if (typeof v == 'string' && !/^[@=]/.test(v) && !Object.hasOwn(named, v) && !implicit.has(v))
             implicit.set(v, `marks[${i}].${k}`);
     }));
+    // the columns of the rows of the marks of their own (`data`), e.g. the
+    // ends of an arrow
+    const own = new Set([source?.marks ?? []].flat().flatMap(m => isObject(m) && Array.isArray(m.data) ? m.data.flatMap(r => isObject(r) ? Object.keys(r) : []) : []));
     Object.entries(mapping).forEach(([n, m]) => {
         const column = typeof m.column == 'string' ? fillTemplate(m.column, raw.globals ?? {}) : undefined;
         if (column === undefined || templateNames(column).length > 0)
+            return;
+        if (!columns.has(column) && own.has(column))
             return;
         if (!columns.has(column)) {
             if (implicit.has(n))

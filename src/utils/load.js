@@ -481,8 +481,14 @@ const missingColumns = (source, globals, rows, columns) => {
     }
     const names = [...new Set([...(data.length ? Object.keys(data[0]) : header), ...columns.keys(), ...[...madeColumns(resolved.transform)].map(c => fillTemplate(String(c), globals ?? {}))])];
     const known = new Set(names);
+    // (also the columns of the rows of the mark of its own, `data`)
+    const ownOf = path => {
+        const i = /^marks\[(\d+)\]/.exec(path)?.[1];
+        const data = i === undefined ? undefined : [resolved.marks ?? []].flat()[+i]?.data;
+        return Array.isArray(data) ? data : [];
+    };
     const implicit = implicitDims(resolved);
-    return implicit.filter(d => !known.has(d.column)).map(d => `${d.path}: no dim and no column '${d.column}' in the data, `
+    return implicit.filter(d => !known.has(d.column) && !ownOf(d.path).some(r => isObject(r) && Object.hasOwn(r, d.column))).map(d => `${d.path}: no dim and no column '${d.column}' in the data, `
         + `the dims are ${Object.keys(isObject(source.dims) ? source.dims : {}).map(n => `'${n}'`).join(', ') || 'none'}, the columns ${names.map(n => `'${n}'`).join(', ')}`);
 };
 
