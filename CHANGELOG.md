@@ -174,7 +174,9 @@ column without a dim, and expressions nest at most 100 levels.
   median of a box plot, the target of a bullet chart, a strip plot.
 - Arrowheads: `"marker-end": "arrow"` (or `marker-start`) of a rule, a
   line or an annotation line draws an arrowhead in the color of its stroke,
-  a `<marker>` per color in the defs of the svg, also in the exports.
+  a `<marker>` per color in the defs of the svg, also in the exports; in
+  the page it follows the stroke of the line, also of a `highlight`
+  (`context-stroke`).
 - `hover.cross`: a crosshair through the point of the nearest row, a
   horizontal and a vertical dashed line across the plot area instead of the
   line of the position (`vis-hover-cross`, `--gen-vis-cross-color`), also

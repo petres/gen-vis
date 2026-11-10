@@ -14,8 +14,11 @@ import { directOf } from "@/utils/draw";
  * its styles: of an annotation line the color of the lines of
  * annotations, else the color of the text. The arrowhead is in units of
  * the stroke width (a thicker line has a larger head), at the start turned
- * around (auto-start-reverse). Other values are as they are, e.g. the url
- * of a marker of the page.
+ * around (auto-start-reverse). In a browser the stylesheet paints it in the
+ * stroke of its line as it is (context-stroke, see styles.css), so it
+ * follows a highlight of the line; the color of the marker is the one of
+ * the exports and of browsers without context-stroke. Other values are as
+ * they are, e.g. the url of a marker of the page.
  */
 const markerProps = ['marker-start', 'marker-end'];
 

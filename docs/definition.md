@@ -1287,7 +1287,10 @@ attributes are merged into the defaults, e.g. `d` of a path.
   the element (one per color, in the `defs` of the svg of the facet, so the
   exports of SVG, PNG and PDF have them), of the size of the stroke width
   (6 widths long); of an element without a stroke of its own in the color of
-  annotation lines or of the text. Other values are as they are, e.g. the
+  annotation lines or of the text. In the page the arrowhead is in the
+  stroke of its line as it is (`context-stroke`), so it follows a
+  `highlight` of the stroke; the exports have the color of the marker.
+  Other values are as they are, e.g. the
   url of a marker of the page: `{"type": "rule", "x": "year", "y1": "from",
   "y2": "to", "stroke": "#C3423F", "marker-end": "arrow"}`.
 - The texts of `text`, `label` and of the labels of axes with a `max-width`

@@ -236,6 +236,14 @@
     stroke-width: 0.75px;
     stroke: var(--gen-vis-marker-color, #9AA0A8);
 }
+/* the arrowheads (see utils/arrows.js) in the stroke of their line as it
+   is, also of a highlight; the color of the marker where a browser has no
+   context-stroke, and in the exports (see utils/export-svg.js) */
+@supports (fill: context-stroke) {
+    .vis-facet svg marker.vis-arrow > path {
+        fill: context-stroke !important;
+    }
+}
 /* the crosshair of hover.cross, thin and dashed in the color of the axes */
 .vis-facet svg g.vis-hover-marker line.vis-hover-cross {
     stroke-width: 1px;

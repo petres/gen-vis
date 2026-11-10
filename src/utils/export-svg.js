@@ -125,6 +125,19 @@ const transformText = (text, t) =>
     t == 'uppercase' ? text.toUpperCase() : t == 'lowercase' ? text.toLowerCase()
         : t == 'capitalize' ? text.replace(/(^|\s)(\p{L})/gu, (_, s, c) => s + c.toUpperCase()) : text;
 
+// the arrowheads in the color of their marker while the svg is copied,
+// not in the stroke of their line (context-stroke, see styles.css), which
+// other programs do not know and which is no color of an attribute; an
+// export shows no highlight, the color is the one of the line (the
+// inline style wins over the !important of the stylesheet), returns the
+// function which restores them
+const pinnedArrows = svg => {
+    const paths = [...svg.querySelectorAll('marker.vis-arrow > path')];
+    const priorities = paths.map(p => p.style.getPropertyPriority('fill'));
+    paths.forEach(p => p.style.setProperty('fill', p.style.getPropertyValue('fill'), 'important'));
+    return () => paths.forEach((p, i) => p.style.setProperty('fill', p.style.getPropertyValue('fill'), priorities[i]));
+};
+
 // the attributes which are left out, of the styles of the page and of the
 // screen readers (the ids stay, e.g. of the clips of the plots)
 const dropped = ['style', 'class', 'dominant-baseline', 'alignment-baseline', 'paint-order', 'tabindex', 'role', 'focusable'];
@@ -446,7 +459,9 @@ const compose = (root, B, unit, asked) => {
             height: outer.height - t - px('borderBottomWidth') - px('paddingBottom') };
         const copy = s.cloneNode(true);
         const halos = [];
+        const unpin = pinnedArrows(s);
         inlineSvg(s, copy, {}, baselineShifts(s), halos);
+        unpin();
         splitHalos(halos);
         const g = svgEl('g');
         // the opacity of the svg element itself is in the one of the walk

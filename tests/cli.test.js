@@ -372,6 +372,13 @@ describe.skipIf(!browser)('gen-vis export', () => {
             // the ticks of d3 (dy="0.71em") in pixels
             expect(colors).toMatch(/dy="[\d.]+"/);
             expect(colors).not.toMatch(/\s(dx|dy|x|y)="[^"]*em"/);
+            // the arrowheads in the color of their marker, not context-stroke
+            writeFileSync(path.join(dir, 'arrow.csv'), 'x,y\n1,1\n2,3\n3,2\n');
+            writeFileSync(path.join(dir, 'arrow.json'), JSON.stringify({ $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', data: 'arrow.csv',
+                width: 300, height: 200, dims: { x: 'x', y: 'y' }, marks: { type: 'line', stroke: '#C3423F', 'marker-end': 'arrow', highlight: { stroke: '#000000' } } }));
+            const arrow = await svgOf(path.join(dir, 'arrow.json'));
+            expect(arrow).toMatch(/<marker [^>]*>\s*<path [^>]*fill="#C3423F"/);
+            expect(arrow).not.toMatch(/context-stroke/);
             // the labels along a path of the polar charts of SVG 1.1 too
             const polar = await svgOf('data/ecad/polar-tg.json');
             expect(polar).toMatch(/^<\?xml[^>]*>\n<svg [^>]*xmlns:xlink="http:\/\/www\.w3\.org\/1999\/xlink"/);
