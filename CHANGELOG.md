@@ -91,7 +91,13 @@ periods tick at their starts (not weeks of 3 months), a `tick` of a
 column beside horizontal bars runs across their bands, and rules of no
 length (a `tick` across a continuous scale) warn. A `scheme` of a
 sequential or a diverging scale spreads all its colors along it (d3 took
-the first 2 or 3, all values were red to white of `RdBu`).
+the first 2 or 3, all values were red to white of `RdBu`). Texts with
+letters among numbers keep a column categorical (`"2025 (Prognose)"` or
+`"Phase 1"` among years; numbers written otherwise, e.g. `"1,234"` or
+`"<5"`, have no letters), a `height` or `width` of 0 or less is the
+default with a warning, and the types of `@preschen/gen-vis/esm` need no
+`vue` (its Vue factories are untyped there, typed in
+`@preschen/gen-vis/vue`).
 
 ### The language
 
@@ -660,8 +666,9 @@ Migration notes, to check by hand after `gen-vis migrate`:
   values with a warning naming the dim, the column and the texts with their
   rows if the dim has parts of numbers (a number `format`, a `domain` or
   `include` of numbers, `zero`, `nice`, `pad`, an open domain), or if more
-  than half of the values are numbers and the texts have digits (`1,234`,
-  `<5`); words such as `Total` among years keep a column categorical. A
+  than half of the values are numbers and the texts have digits and no
+  letters (`1,234`, `<5`); words such as `Total` or `Phase 1` among years
+  keep a column categorical. A
   column without values with parts of numbers is numeric (was
   categorical). The warning also names texts which are no numbers or dates
   of a dim with a `type`, and objects or lists as values (they became

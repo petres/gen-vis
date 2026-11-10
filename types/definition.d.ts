@@ -450,7 +450,7 @@ export interface Transform {
      */
     year?: number;
     /**
-     * format: the time format (d3-time-format) of the dates of `column`, e.g. %W (the week of the year from Monday, 00 to 53), %u (the weekday, 1 is Monday), %m (the month), %q (the quarter), %Y-%m (a month of a year); the names of months and days (%b, %a) are English.
+     * format: the time format (d3-time-format) of the dates of `column`, e.g. %W (the week of the year from Monday, 00 to 53), %u (the weekday, 1 is Monday), %m (the month), %q (the quarter), %Y-%m (a month of a year); the names of months and days (%b, %B, %a, %A) are the ones of the locale of the chart (`locale`, `language`).
      */
     format?: string;
     /**

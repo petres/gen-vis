@@ -127,6 +127,12 @@ describe('data without rows and data which is no data', () => {
         await mount({ def, data: 'a,b\n' });
         expect(errors).toEqual(["gen-vis inline definition: the data of the attribute: no rows (only the header 'a', 'b'), the chart is empty; 'empty' is a text instead of the marks"]);
         errors.length = 0;
+        // an empty text, no header to name
+        for (const empty of ['', '\n']) {
+            await mount({ def, data: empty });
+            expect(errors.filter(e => e.includes('no rows'))).toEqual(["gen-vis inline definition: the data of the attribute: no rows, the chart is empty; 'empty' is a text instead of the marks"]);
+            errors.length = 0;
+        }
         const el = await mount({ def: { ...def, empty: 'No data' }, data: 'a,b\n' });
         expect(el.textContent).toContain('No data');
         expect(errors).toEqual([]);
@@ -176,5 +182,14 @@ describe('sizes of the definition in pixels', () => {
         expect(finite(el)).toBe(true);
         expect(svgSize(el)[1]).toBe('400');
         expect(errors).toEqual(['gen-vis inline definition: height: expected a number of pixels, e.g. 300, not "50%", 400 is used']);
+    });
+
+    test('a size of 0 or less is the default with a warning (final review of 5.0)', async () => {
+        for (const height of [-100, 0]) {
+            const el = await mount({ def: def({ height }), data });
+            expect(svgSize(el)[1]).toBe('400');
+            expect(errors).toEqual([`gen-vis inline definition: height: expected a number of pixels above 0, not ${height}, 400 is used`]);
+            errors.length = 0;
+        }
     });
 });

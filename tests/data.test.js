@@ -369,7 +369,9 @@ describe('prepareData', () => {
         // not of fewer numbers, nor of words, e.g. a total among years
         expect(inferType(['10', '1,234', '<5'])).toBe('categorical');
         expect(inferType(['2022', '2023', '2024', 'Total'])).toBe('categorical');
-        expect(inferType(['2023', '2024', 'Phase 1'])).toBe('numeric');
+        expect(inferType(['2023', '2024', 'Phase 1'])).toBe('categorical');
+        expect(inferType(['2022', '2023', '2024', '2025 (Prognose)'])).toBe('categorical');
+        expect(inferType(['10', '20', '30', '12 %'])).toBe('numeric');
         // dates stay dates
         expect(inferType(['2001', '2002', '2003-01-01'])).toBe('date');
         const rows = [{ v: '10' }, { v: '1,234' }, { v: '30' }, { v: '1,234' }, { v: '<5' }, { v: '7' }, { v: 'NA' }, { v: '8' }];
@@ -684,7 +686,7 @@ describe('the faster dates and types are the ones of before', () => {
             return 'date';
         const numbers = present.filter(v => toNumber(v) !== null).length;
         const others = present.filter(v => toNumber(v) === null);
-        return numbers > 0 && (hint !== undefined || (others.every(v => /\d/.test(String(v))) && numbers > others.length)) ? 'numeric' : 'categorical';
+        return numbers > 0 && (hint !== undefined || (others.every(v => /\d/.test(String(v)) && !/\p{L}/u.test(String(v))) && numbers > others.length)) ? 'numeric' : 'categorical';
     };
 
     test('random dates and times, also ones which do not exist, in UTC and local time', () => {

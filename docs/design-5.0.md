@@ -8,7 +8,7 @@ stays: 5.0 rewrites the front of the pipeline, the vocabulary of the
 definition, its translation into the form the engine reads, the validation
 and the state.
 
-This document is the design as implemented in the 5.0 alpha; it follows
+This document is the design as implemented in 5.0; it follows
 the review of 4.1 (not in the repository), "Deviations" at the end lists
 where it differs from it and why. The reference of the language is
 `docs/definition.md`, the per-key texts are the ones of
@@ -270,9 +270,10 @@ while it is loaded.
   as `cat`): they are texts with holes, which an author reads as text.
 - **The `$schema` gate stays an error** of a file without one or of another
   version; the one of 4 is accepted, the migration decides by the keys.
-- **Not done in the alpha:** arrows on annotations (`marker`),
-  `hover.cross`, dark CSS variables. (`gen-vis check`, `--strict` and the
-  checks of the data in `validateDef`, unknown columns and texts in
-  numeric dims, came with the review of the alpha.) (The site has a gallery of one chart
+- **Not done in 5.0:** dark CSS variables. (Arrows of rules, lines and
+  annotations, `"marker-end": "arrow"`, and `hover.cross` came with the
+  release review; `gen-vis check`, `--strict` and the checks of the data
+  in `validateDef`, unknown columns and texts in numeric dims, came with
+  the review of the alpha.) (The site has a gallery of one chart
   of every kind, `site/gallery.html`; `npm run dev` keeps the gallery of
   all of `data/`.)

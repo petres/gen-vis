@@ -38,6 +38,11 @@ const sizeOf = (store, value, name, fallback) => {
     if (value === null || value === undefined)
         return fallback;
     const px = pixelsOf(value);
+    // (a size of 0 or less draws nothing, e.g. a negative height)
+    if (px !== undefined && px <= 0) {
+        warnOnce(store, `size:${name}:${value}`, `${name}: expected a number of pixels above 0, not ${JSON.stringify(value)}, ${fallback ? `${fallback} is used` : 'it is left out'}`);
+        return fallback;
+    }
     if (typeof value == 'number' && px !== undefined)
         return px;
     warnOnce(store, `size:${name}:${value}`, px !== undefined

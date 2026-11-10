@@ -708,9 +708,10 @@ of numbers. Other texts among numbers make the column categorical, except:
   its hover or its legend), a `domain` or `include` of numbers (also of
   `zero`), or the parts of a continuous scale (an open `domain`, `nice`,
   `pad`, `center`); then it is numeric if some values are numbers;
-- more than half of the values are numbers and the other texts have digits,
-  e.g. `1,234` (a separator of thousands), `<5` or `12 %`, numbers written
-  otherwise; words such as `Total` among years keep a column categorical.
+- more than half of the values are numbers and the other texts have digits
+  and no letters, e.g. `1,234` (a separator of thousands), `<5` or `12 %`,
+  numbers written otherwise; texts with letters such as `Total`, `Phase 1`
+  or `2025 (Prognose)` among years keep a column categorical.
 
 Then these texts are missing values with a warning which names the dim, the
 column and the texts with their numbers of rows, e.g. `dims.y: values of

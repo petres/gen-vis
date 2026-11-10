@@ -378,7 +378,7 @@ const loadRows = async (defOrg, url, data) => {
     // a chart of no rows is blank, a text of `empty` says why; not of rows
     // of the page, e.g. none while they are loaded
     if (rows.length == 0 && !Array.isArray(data) && !defOrg.options?.empty)
-        warn(`no rows${Array.isArray(parsed.columns) ? ` (only the header ${parsed.columns.map(c => `'${c}'`).join(', ')})` : ''}, the chart is empty; 'empty' is a text instead of the marks`);
+        warn(`no rows${Array.isArray(parsed.columns) && parsed.columns.some(c => c !== '') ? ` (only the header ${parsed.columns.map(c => `'${c}'`).join(', ')})` : ''}, the chart is empty; 'empty' is a text instead of the marks`);
     return rows;
 };
 

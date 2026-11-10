@@ -812,10 +812,10 @@ const absent = v => missing(v) || missingToken(v);
  * the first value which is no date; then numeric if `hint` says the dim is
  * continuous (its parts, see typeHint: 'numeric' or 'continuous') and some
  * values are numbers, or without a hint if more than half of the values
- * are numbers and the others have digits, e.g. "1,234", "<5" or "12 %",
- * numbers written otherwise, which are missing values with a warning (see
- * oddValues), not "Total", "Wien" or "Phase 1" among "2023", "2024", e.g. the
- * categories of a legend. `value(i)` is the one of the row i of `n` rows
+ * are numbers and the others have digits and no letters, e.g. "1,234",
+ * "<5" or "12 %", numbers written otherwise, which are missing values with
+ * a warning (see oddValues), not "Total", "Wien", "Phase 1" or "2025
+ * (Prognose)" among "2023", "2024", e.g. the categories of a legend. `value(i)` is the one of the row i of `n` rows
  * (or `values` an array).
  */
 const inferType = (values, n = values.length, hint = undefined) => {
@@ -867,7 +867,9 @@ const inferType = (values, n = values.length, hint = undefined) => {
                 continue;
             }
             wasNumber = toNumber(v) !== null;
-            if (!wasNumber && digits && !/\d/.test(typeof v == 'object' ? '' : String(v)))
+            // (a number written otherwise has digits and no letters, e.g.
+            // "1,234", "<5", "12 %", not "Phase 1" or "2025 (Prognose)")
+            if (!wasNumber && digits && (typeof v == 'object' || !/\d/.test(String(v)) || /\p{L}/u.test(String(v))))
                 digits = false;
         }
         if (wasNumber)

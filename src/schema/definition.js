@@ -514,7 +514,7 @@ const definitions = {
         rows: boolean('aggregate: a row per group instead of a column, with the columns `by` and `as`, the rows replace the rows.', { default: false }),
         offset: integer('window: the number of rows before (lag, diff, pct) or after (lead) the row, 1 by default.', { minimum: 1 }),
         year: integer('The year of align, 2020 by default.'),
-        format: string('format: the time format (d3-time-format) of the dates of `column`, e.g. %W (the week of the year from Monday, 00 to 53), %u (the weekday, 1 is Monday), %m (the month), %q (the quarter), %Y-%m (a month of a year); the names of months and days (%b, %a) are English.'),
+        format: string('format: the time format (d3-time-format) of the dates of `column`, e.g. %W (the week of the year from Monday, 00 to 53), %u (the weekday, 1 is Monday), %m (the month), %q (the quarter), %Y-%m (a month of a year); the names of months and days (%b, %B, %a, %A) are the ones of the locale of the chart (`locale`, `language`).'),
         x: string('regression: the column of the x values, numbers or dates.'),
         method: choice(['linear', 'log', 'exp', 'poly'], 'regression: the curve fitted, linear (y = a + bx), log (y = a + b ln x, of x > 0), exp (y = a e^(bx), of y > 0) or poly (a polynomial of `degree`).', { default: 'linear' }),
         degree: integer('regression: the degree of the polynomial of the method poly, 2 by default.', { minimum: 2, maximum: 3 }),
