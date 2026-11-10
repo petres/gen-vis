@@ -48,8 +48,8 @@ meets:
   are `vis-controls`, `vis-control` and `vis-control-title` (were
   `vis-form-elements`, `vis-form-element`, `vis-form-element-title`, the
   ids of radio groups `gen-vis-control-<n>-<id>`). Styles of a page and
-  scripts which select the old names (e.g. gen-vis-py's export of SVGs,
-  which removes the controls) need the new ones.
+  scripts which select the old names (e.g. to remove the controls from a
+  copy of the chart) need the new ones.
 - **The extension API**: `registerMarkType`, `MarkType` and `MarkGroup`
   (were `registerPlotType`, `PlotType`, `PlotGroup`); a mark type's
   `marks(groups, mark, ctx)`.
