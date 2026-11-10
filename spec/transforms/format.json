@@ -91,6 +91,87 @@
     }
   },
   {
+    "name": "the names of months and days in the locale of the chart, de by default",
+    "rows": [
+      {
+        "date": "2025-01-06"
+      },
+      {
+        "date": "2025-03-02"
+      },
+      {
+        "date": ""
+      }
+    ],
+    "transform": [
+      {
+        "type": "format",
+        "column": "date",
+        "format": "%a %b",
+        "as": "short"
+      },
+      {
+        "type": "format",
+        "column": "date",
+        "format": "%A, %-d. %B",
+        "as": "long"
+      }
+    ],
+    "columns": {
+      "short": [
+        "Mo Jan",
+        "So Mrz",
+        null
+      ],
+      "long": [
+        "Montag, 6. Januar",
+        "Sonntag, 2. März",
+        null
+      ]
+    }
+  },
+  {
+    "name": "the names of months and days of the locale en",
+    "locale": "en",
+    "rows": [
+      {
+        "date": "2025-01-06"
+      },
+      {
+        "date": "2025-03-02"
+      },
+      {
+        "date": ""
+      }
+    ],
+    "transform": [
+      {
+        "type": "format",
+        "column": "date",
+        "format": "%a %b",
+        "as": "short"
+      },
+      {
+        "type": "format",
+        "column": "date",
+        "format": "%A, %-d. %B",
+        "as": "long"
+      }
+    ],
+    "columns": {
+      "short": [
+        "Mon Jan",
+        "Sun Mar",
+        null
+      ],
+      "long": [
+        "Monday, 6. January",
+        "Sunday, 2. March",
+        null
+      ]
+    }
+  },
+  {
     "name": "the format is needed",
     "rows": [
       {

@@ -79,6 +79,9 @@ the rules of the values:
   `column` or an `as` of them reads and writes its dates in UTC.
 - `timezone` (optional): the local time zone of the case (IANA), cases
   without one do not depend on it.
+- `locale` (optional): the locale of the chart (`locale` of the
+  definition), e.g. of the names of months and days of a `format`, `de`
+  by default.
 - `files` (optional): the rows of the files of `lookup`, by their url.
 - `columns`: the computed columns, by their name (`as`, by default
   `column`), a value per row, in the order of the rows, `null` is no value.

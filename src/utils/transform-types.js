@@ -3,12 +3,12 @@
 export { applyTransforms, transformTypes, randomOf };
 
 import { quantile } from "d3-array";
-import { timeFormat, utcFormat } from "d3-time-format";
 import { toDate, toNumber } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
 import { bind, constant, refNames } from "@/utils/expr";
 import { missing } from "@/utils/values";
 import { madeBy } from "@/utils/transform";
+import { getLocale } from "@/utils/locale";
 
 /**
  * The transforms of a definition compute columns of the data in the browser,
@@ -202,11 +202,12 @@ const transformTypes = {
     // the time zone of the scale, e.g. the week of the year (%W, from
     // Monday), the weekday (%u, 1 is Monday), the month (%m) or the quarter
     // (%q), e.g. the rows and columns of a calendar; the names of months
-    // and days (%b, %a) are English, rows without a date have none
-    format: (t, { n, values, utc }) => {
+    // and days (%b, %a) are the ones of the locale of the chart, rows
+    // without a date have none
+    format: (t, { n, values, utc, time }) => {
         if (typeof t.format != 'string')
             throw new Error(`format: the time format is needed, e.g. "%W" (the week of the year)`);
-        const f = (utc ? utcFormat : timeFormat)(t.format);
+        const f = (utc ? time.utcFormat : time.format)(t.format);
         return Array.from({ length: n }, (_, i) => {
             const time = toDate(values(i), utc);
             return time === null ? null : f(new Date(time));
@@ -707,6 +708,16 @@ const filled = (t, globals) => {
     return fill(t);
 };
 
+// the time formats of a locale (`options.locale`), of the default one
+// while the locale is not resolved yet, e.g. an expression of a global
+const timeLocale = locale => {
+    try {
+        return getLocale(locale ?? undefined).time;
+    } catch {
+        return getLocale().time;
+    }
+};
+
 /**
  * The columns of the transforms, a Map of the names of the columns to their
  * values, one per row, `globals` are the values of the templates, `utc` the
@@ -720,8 +731,10 @@ const filled = (t, globals) => {
  * replaces them (`replace`): then `rows` are the rows of the columns, the
  * ones of the data otherwise (null).
  * `notes` are the warnings of the transforms, e.g. values outside the edges.
+ * `locale` is the one of the chart (`options.locale`), e.g. of the names of
+ * months of a format.
  */
-const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null) => {
+const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null, locale = undefined) => {
     const present = new Set(rows.length ? Object.keys(rows[0]) : []);
     // the columns of the transforms before, the names of an expression which
     // are none of them or of the rows are globals
@@ -738,7 +751,9 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
             madeBy(t).forEach(c => own.add(c));
         return { t, inUtc: utc.has(t.column) || madeBy(t).some(c => utc.has(c)), refs: refs.map(n => [n, globals[n] ?? null]) };
     });
-    const keys = list.map(({ t, inUtc, refs }) => JSON.stringify([t, inUtc, refs]));
+    // the names of months and days of a format are the ones of the locale,
+    // its key a part of the one of the transform
+    const keys = list.map(({ t, inUtc, refs }) => JSON.stringify([t, inUtc, refs, ...(t.type == 'format' ? [locale ?? null] : [])]));
     const steps = before?.steps ?? [];
     let first = 0;
     while (first < list.length && first < steps.length && steps[first].key === keys[first])
@@ -805,6 +820,8 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
             get groups() { return groups ??= groupsOf(n, get, by, t.order, inUtc); },
             matches: i => conditions.every(c => c(i)),
             utc: inUtc,
+            // the time formats of the locale of the chart, e.g. of the names of months
+            get time() { return timeLocale(locale); },
             // the names of the columns of the rows and of the transforms
             // before, in their order, e.g. of a pattern of a fold
             get names() { return [...new Set([...rowNames(base), ...columns.keys()])]; },

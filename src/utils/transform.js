@@ -29,12 +29,12 @@ const loadTransforms = async () => types ??= await lazy.transform();
  * The columns of the transforms, see applyTransforms of utils/transform-types.js,
  * without transforms none, otherwise they are loaded, see loadTransforms.
  */
-const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null) => {
+const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null, locale = undefined) => {
     if (list(transforms).length == 0)
         return Object.assign(new Map(), { steps: [], changed: new Set(), kept: null, rows: null, notes: [] });
     if (!types)
         throw new Error('The transforms are not loaded, see loadTransforms');
-    return types.applyTransforms(rows, transforms, globals, utc, before, files);
+    return types.applyTransforms(rows, transforms, globals, utc, before, files, locale);
 };
 
 // the columns of the mappings of dates of `utc` scales, with the values of

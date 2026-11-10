@@ -1130,7 +1130,7 @@ const withTypes = (def, rows) => {
         return def;
     let columns = null;
     try {
-        columns = applyTransforms(rows, def.transform, def.globals ?? {}, utcColumns(def));
+        columns = applyTransforms(rows, def.transform, def.globals ?? {}, utcColumns(def), null, null, def.options?.locale);
     } catch {
         // not loaded or a transform of a file, e.g. a lookup
     }

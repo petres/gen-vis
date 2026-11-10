@@ -4042,6 +4042,19 @@ describe('texts in several languages', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the names of months and days of a format transform are the ones of the locale, also after a switch of the language', async () => {
+        const d = def();
+        d.transform = { type: 'format', column: 'date', format: '%b', as: 'month' };
+        d.mapping.m = { column: 'month', hover: {} };
+        const { el, vis } = await mountVis({ def: d, data: 'year,value,land,date\n2020,1000,Wien,2020-03-01\n2021,2000,Wien,2021-05-01\n2020,3000,Tirol,2020-03-01\n2021,3500,Tirol,2021-05-01' });
+        const months = () => vis.store.columns.get('month');
+        expect(months()).toEqual(['Mrz', 'Mai', 'Mrz', 'Mai']);
+        el.querySelectorAll('.vis-radio input')[1].click();
+        await nextTick();
+        expect(months()).toEqual(['Mar', 'May', 'Mar', 'May']);
+        expect(errors).toEqual([]);
+    });
+
     test('the language of the locale, of its region, the first text of another one; a locale of its own', async () => {
         const of = async options => texts(await mount({ def: { ...def(), options: { ...def().options, ...options } }, data }));
         expect((await of({ language: undefined, locale: 'en' })).title).toBe('Population');

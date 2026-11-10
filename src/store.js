@@ -216,7 +216,7 @@ class Store {
     applyFormElements(keepVisible = true) {
         const changedColumns = new Set();
         const transform = () => {
-            const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns, this.files);
+            const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns, this.files, this.def.options?.locale);
             if (columns !== this.columns) {
                 this.columns = columns;
                 columns.changed.forEach(c => changedColumns.add(c));

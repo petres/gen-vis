@@ -49,7 +49,7 @@ describe('spec/transforms', () => {
     describe.each(fixtures(files))('%s', (type, cases) => {
         test.each(cases.map(c => [c.name, c]))('%s', (name, c) => {
             const run = () => applyTransforms(clone(c.rows), clone(c.transform), c.globals ?? {}, new Set(c.utc ?? []), null,
-                c.files ? new Map(Object.entries(c.files)) : null);
+                c.files ? new Map(Object.entries(c.files)) : null, c.locale);
             inZone(c.timezone, () => {
                 if (c.error !== undefined)
                     expect(run).toThrow(c.error);

@@ -427,12 +427,12 @@ const valueFormat = locale => format => {
 };
 
 const prepare = (defOrg, source, rows, files, state, globals, symbols = {}) => {
-    let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files);
+    let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files, defOrg.options?.locale);
     addDataValues(defOrg, rows, columns, valueFormat(defOrg.options?.locale));
     inferTypes(defOrg, rows, columns);
     const keysOf = (column, inOrder = false) => distinctValues(rows, columns, column, inOrder).map(String);
     const transform = () => {
-        columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns, files);
+        columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns, files, prepared.options?.locale);
     };
     // the types of the mappings of the definition resolved again from the values
     const types = part => inferTypes(part, rows, columns);
