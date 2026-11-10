@@ -339,6 +339,29 @@ describe('the highlight', () => {
         expect(errors).toEqual([]);
     });
 
+    test('a highlight value of the rows is none of the symbols; the hover of default colors has swatches, unless another dim of the row has a color of its own', async () => {
+        const def = { width: 500, height: 200, dims: { x: 'year', y: 'v', c: { column: 'c', legend: {} } },
+            marks: [{ type: 'line', by: 'c', 'stroke-width': 2, highlight: { 'stroke-width': '=@y > 1 ? 4 : 2', stroke: '@color' } }] };
+        const data = 'year,v,c\n2020,1,a\n2021,2,a\n2020,2,b\n2021,3,b';
+        const el = await mount({ def, data });
+        const lines = [...el.querySelectorAll('.vis-legend-entry svg line')];
+        expect(lines.map(l => [l.style.getPropertyValue('--vis-hl-stroke-width'), l.style.getPropertyValue('--vis-hl-stroke')]))
+            .toEqual([['', '#4269D0'], ['', '#EFB118']]);
+        const { pointer } = await import('./dom.js');
+        const swatches = async el => {
+            el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
+            await new Promise(r => setTimeout(r, 0));
+            return el.querySelectorAll('.vis-hover .vis-swatch').length;
+        };
+        expect(await swatches(el)).toBe(2);
+        // the lines of the colors of t, not of the default ones of c
+        const other = await mount({ def: { ...def, hover: { columns: ['c'] }, dims: { ...def.dims, t: { column: 't', categories: { u: '#111111' } } },
+            marks: [{ type: 'line', by: ['c', 't'] }] }, data: 'year,v,c,t\n2020,1,a,u\n2021,2,a,u\n2020,2,b,u\n2021,3,b,u' });
+        expect(await swatches(other)).toBe(0);
+        expect(other.querySelectorAll('.vis-hover .vis-hover-entry').length).toBe(2);
+        expect(errors).toEqual([]);
+    });
+
     test('the props of the others, the elements which are not highlighted, also of plots without categories', async () => {
         const def = lineDef();
         def.plot[1] = { ...def.plot[1], highlight: { mode: 'row', r: 6 }, others: { opacity: 0.3 } };

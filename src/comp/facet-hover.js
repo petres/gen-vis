@@ -246,15 +246,21 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // of the hover with a color, e.g. a swatch beside its name
         // (the symbol of its entry of the legend of the dim, if it has one, e.g. a line
         // of a line and a box of an area, drawn with the props of the category)
+        // (also a default color of the categories, e.g. of observable10, if
+        // no other dim of the row has a color of its own, which the marks
+        // draw instead, e.g. of a line by country and trend)
+        const colorDims = Object.keys(store.def.mapping).filter(n => store.mapping(n).categoryProps);
+        const ownColor = (row, but) => colorDims.some(o => o != but && typeof store.prop(o, row[o])?.color == 'string');
         const swatchOf = row => {
             for (const n of categories) {
                 const props = store.prop(n, row[n]);
-                const color = props?.color;
+                const colored = !props ? null : props.color !== undefined || !ownColor(row, n) ? withColor([props]) : props;
+                const color = colored?.color;
                 if (typeof color != 'string' || !color)
                     continue;
                 const m = store.mapping(n);
                 const symbol = m.legend ? entrySymbol(m, props) : null;
-                return symbol ? { color, symbol, scope: { ...scope, ...withColor([props]) } } : { color };
+                return symbol ? { color, symbol, scope: { ...scope, ...colored } } : { color };
             }
             return null;
         };

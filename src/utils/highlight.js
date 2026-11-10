@@ -61,10 +61,13 @@ const highlightVars = (plot, bound, row) => {
  * The custom properties of an element of a symbol of a legend (see
  * drawSymbol of comp/legend.js): the values of its props of the highlight
  * (`highlight`, see symbolHighlight of utils/def.js) which are the ones of
- * the category, e.g. "@color", of `scope`, the props of the category.
+ * the category, e.g. "@color", of `scope`, the props of the category (and
+ * the globals). A value of the rows, e.g. "=@y > 1 ? 4 : 2", has none (the
+ * symbol keeps its prop), a symbol is of no row.
  */
 const symbolVars = (highlight, scope) => Object.fromEntries(Object.entries(highlight ?? {})
-    .filter(([, v]) => fixed(v) === undefined).map(([n, v]) => [varName('hl', n), cssValue(evaluate(v, scope), n)]));
+    .filter(([, v]) => fixed(v) === undefined)
+    .map(([n, v]) => [varName('hl', n), refNames(v).every(r => r.startsWith('globals.') || scope?.[r.split(':')[0]] !== undefined) ? cssValue(evaluate(v, scope), n) : null]));
 
 // the selector of the attribute of the plot, its id quoted
 const plotSelector = id => `[data-mark="${String(id).replace(/["\\]/g, '\\$&')}"]`;
