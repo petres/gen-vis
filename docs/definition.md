@@ -2483,6 +2483,9 @@ hand). The migration keeps the chart as it was:
 - A categorical vertical dim without a range of its scale gets
   `"reverse": true` (4.x had its first category at the bottom, 5.0 at the
   top), a `reverse` of 4.x is removed.
+- Lines and areas get `"order": "rows"`: 4.x drew them in the order of
+  the rows, 5.0 along x. Remove it where the rows are in the order of x
+  (or a line should run along x), keep it of a connected scatter plot.
 - A reference of a condition of a filter is written `@globals.<name>`,
   4.x read the globals there.
 - Conditions of dates (of a dim of dates or with texts of dates, e.g.

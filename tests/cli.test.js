@@ -134,6 +134,15 @@ describe('gen-vis check', () => {
         expect(rooted.stdout).toContain("'nope' is not a column of the data");
     }, 60000);
 
+    test('gen-vis migrate: a missing file fails alone, without a stack; lines get "order": "rows"', async () => {
+        const old = file('old-line.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', data: 'x.csv',
+            mapping: { x: { column: 'a', type: 'numeric' }, y: { column: 'b', type: 'numeric' } }, plot: { type: 'line' } });
+        const r = await run(['migrate', path.join(dir, 'nope.json'), old]);
+        expect(r.code).toBe(1);
+        expect(r.stderr).toBe(`gen-vis: ${path.join(dir, 'nope.json')}: the file does not exist\n`);
+        expect(JSON.parse(r.stdout).marks).toEqual({ type: 'line', order: 'rows' });
+    });
+
     test('the usage and the version', async () => {
         expect((await run(['check'])).code).toBe(2);
         expect((await run(['check', '--help'])).stdout).toContain('gen-vis check <def.json>...');

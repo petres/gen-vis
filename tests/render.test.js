@@ -3953,7 +3953,8 @@ describe('the categories of band and point scales in the order of the categories
             x: { column: 'land', categories: { Wien: {}, Tirol: {}, Burgenland: {} }, scale: { type: 'point', orientation: 'horizontal' } },
             y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' } },
         },
-        plot: [{ type: 'line', id: 'line' }, { type: 'area', id: 'area' }, { type: 'point', id: 'dots', props: { r: 2 } }],
+        // (a definition of 4.x: its lines and areas are migrated with "order": "rows", as 4.x drew them)
+        plot: [{ type: 'line', id: 'line', order: 'x' }, { type: 'area', id: 'area', order: 'x' }, { type: 'point', id: 'dots', props: { r: 2 } }],
     });
     // the rows in another order than the categories
     const data = 'land,value\nBurgenland,1\nTirol,2\nWien,3';

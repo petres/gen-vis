@@ -104,7 +104,8 @@ describe('the migration of the definitions of 4.x', () => {
                 y: { column: 'Einwohner', format: ',.0f', zero: true, grid: true },
                 land: { column: 'Bundesland', fromData: true, scheme: 'Tableau10', legend: { symbol: 'line', onlyData: true } },
             },
-            marks: { type: 'line', by: 'land', 'stroke-width': 2, highlight: { 'stroke-width': 4 } },
+            // (the order of the rows, as 4.x drew lines)
+            marks: { type: 'line', by: 'land', order: 'rows', 'stroke-width': 2, highlight: { 'stroke-width': 4 } },
         });
     });
 
@@ -261,6 +262,12 @@ const zeros = (a, b) => Object.keys(b.mapping ?? {}).forEach(n => {
     } else
         delete s.zero;
 });
+// `"order": "rows"` of lines and areas of 5.0 is the order of 4.x, which
+// drew them in the order of the rows (5.0 along x by default)
+const orders = (a, b) => (b.plot ?? []).forEach((p, i) => {
+    if (p?.order == 'rows' && a.plot?.[i] && a.plot[i].order === undefined)
+        a.plot[i].order = 'rows';
+});
 // a definition of 4.x (merged with its parents) and one of 5.0 (by default
 // its migration) with every combination of the values of the form
 // elements: the 5.0 one resolved with the globals is the 4.x one with the
@@ -272,6 +279,7 @@ const drawsAs4 = (def4, def5 = migrate(def4), what = 'migrated') => {
         byTypes(a, b);
         centers(a, b);
         zeros(a, b);
+        orders(a, b);
         expect(b, `${what}, globals ${JSON.stringify(globals)}`).toEqual(a);
     }
 };

@@ -457,6 +457,11 @@ const markOf = (p, i, coord, stacked, dims, consumed) => {
     // cartesian charts) is a literal, an expression of pixels
     const valued = prefix == 'svg' && kind == 'text' && coord == 'cartesian' ? ['x', 'y']
         : prefix != 'cartesian' ? [] : kind == 'rule' ? ['x', 'y', 'x1', 'x2', 'y1', 'y2'] : kind == 'bar' ? ['x0', 'y0', 'y'] : kind == 'area' ? ['x0', 'y0'] : [];
+    // 4.x drew the paths of lines and areas in the order of the rows, 5.0
+    // along x (e.g. of unsorted rows), "rows" keeps the picture, e.g. of a
+    // connected scatter plot
+    if ((prefix == 'cartesian' || prefix == 'polar') && (kind == 'line' || kind == 'area'))
+        mark.order ??= 'rows';
     Object.entries(attrs).forEach(([k, v]) => mark[k] = valued.includes(k) && typeof v == 'number' ? `=literal(${v})` : texts(v, k, true));
     if (highlight !== undefined)
         mark.highlight = texts(highlight, 'highlight', true);
