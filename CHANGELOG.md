@@ -1,7 +1,8 @@
 # Changelog
 
 Changes by version, newest first. Every version is on npm except 0.7.0,
-2.0.0-alpha.1 and the alphas of 5.0.0. The details are in the commits.
+2.0.0-alpha.1, 5.0.0-alpha.0 and 5.0.0-alpha.1. The details are in the
+commits.
 
 ## 5.0.0
 
@@ -709,7 +710,9 @@ Migration notes, to check by hand after `gen-vis migrate`:
   images); `npm run test:png` runs it alone, `npm test` includes it.
 - `registerDefaults` and the prop `defaults` also take `margins`.
 - 5.0.0-alpha.0 and 5.0.0-alpha.1 were tested from git and a tarball,
-  neither was published.
+  neither was published; 5.0.0-alpha.2 is the first one on npm (`npm
+  install @preschen/gen-vis@alpha`). The `@5` urls (the `$schema`, the
+  CDN) resolve with 5.0.0.
 
 ## 4.1.0
 
