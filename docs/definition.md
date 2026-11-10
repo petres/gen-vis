@@ -1295,7 +1295,8 @@ attributes are merged into the defaults, e.g. `d` of a path.
 ### Stacking and dodging
 
 - `stack`: stacks the values of a bar, an area or an arc by the groups of
-  `by` (the first category at the bottom), `true` all rows or an expression
+  `by` (the first category nearest to 0, at the bottom of the positive
+  values, at the top of the negative ones), `true` all rows or an expression
   of the rows which are stacked (or the values of dims, as a
   [`filter`](#filter)), the others are not stacked, their start and end are
   their value, e.g. a line of the consumption or a total on stacked areas
@@ -1315,7 +1316,12 @@ attributes are merged into the defaults, e.g. `d` of a path.
   values in the order of the stacks, from the top, a row which is not
   stacked is above them if its category is after theirs in the order of the
   categories, below them if it is before them, e.g. the consumption above
-  the sources; `hover.total` adds the sum.
+  the sources; `hover.total` adds the sum. `"stack": "diverging"` stacks
+  all rows, the negative values in the reverse order: the categories run
+  in their order from the negative end of the stack to the positive one,
+  e.g. a diverging bar of the answers of a survey, from "strongly
+  disagree" on the left to "strongly agree" on the right (see the
+  [recipe](recipes.md#a-diverging-stacked-bar-of-a-survey)).
 - `dodge` of bars: the groups of `by` (`true`, the first dim of `by`) or of
   this dim beside each other in the band of their position, a hidden
   category leaves its place to the others (a dim without categories has

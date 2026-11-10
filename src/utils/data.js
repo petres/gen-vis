@@ -497,23 +497,35 @@ const categoryOrder = orders => {
 
 // the stacks of the values of `axis.v` at the positions of `axis.h` (and of
 // `dims`, e.g. the facets), in the order of `compare`, by default the one of
-// the rows, positive and negative values separately (of `axis.positive` the
-// negative ones have no size, at the end of the positive ones, e.g. of a
-// pie), a map of the rows to the start and the end of their value
+// the rows, positive and negative values separately, the first one nearest
+// to 0 on both sides (of `axis.diverging` the negative ones in the reverse
+// order, the last one nearest to 0: the rows run in their order from the
+// negative end to the positive one, e.g. the answers of a Likert scale; of
+// `axis.positive` the negative ones have no size, at the end of the
+// positive ones, e.g. of a pie), a map of the rows to the start and the end
+// of their value
 const stack = (rows, axis, dims = [], compare = null) => {
     const stacks = new Map();
     groupBy(rows, [...dims, axis.h]).forEach(g => {
         let positive = 0;
         let negative = 0;
-        for (const e of compare ? [...g.entries].sort(compare) : g.entries) {
+        const entries = compare ? [...g.entries].sort(compare) : g.entries;
+        for (const e of entries) {
             const v = e[axis.v];
             if (v >= 0)
                 stacks.set(e, [positive, positive += v]);
             else if (axis.positive)
                 stacks.set(e, [positive, positive]);
-            else
+            else if (!axis.diverging)
                 stacks.set(e, [negative, negative += v]);
         }
+        if (axis.diverging && !axis.positive)
+            for (let i = entries.length - 1; i >= 0; i--) {
+                const e = entries[i];
+                const v = e[axis.v];
+                if (!(v >= 0))
+                    stacks.set(e, [negative, negative += v]);
+            }
     });
     return stacks;
 };

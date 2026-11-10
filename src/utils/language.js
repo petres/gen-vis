@@ -354,9 +354,12 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
     const at = (c, kind = 'scaled') => c ? (c.fixed === undefined && kind == 'scaled' && (centered(c.dim) || bands.has(c.dim)) ? ref(c.dim, 'scaled:center') : c.value) : undefined;
     // `group` of dodged stacked bars: a stack per slot, e.g. per year and type,
     // the stacks start at 0, the base
+    // `"diverging"` stacks all rows, the negative values in the reverse
+    // order, see stack of utils/data.js
     const stacked = (dim, by, condition, group) => {
         bases.add(dim);
-        stacks.push({ dim, by, condition: condition === undefined ? true : condition, group });
+        const diverging = condition === 'diverging';
+        stacks.push({ dim, by, condition: condition === undefined || diverging ? true : condition, group, diverging });
     };
     // the base of a bar or an area of the value of a dim without a start of
     // its own: 0 (the domain includes it, see translate), of an area on a
@@ -816,10 +819,12 @@ const translated = raw => {
             grouped.push(n);
     });
     // the stacked value dims, a condition of the rows which are stacked
-    stacks.forEach(({ dim: n, by, condition, group }) => {
+    stacks.forEach(({ dim: n, by, condition, group, diverging }) => {
         const m = dims[n];
         if (!isObject(m))
             return;
+        if (diverging)
+            m.stackDiverging = true;
         m.stacked = m.stacked === undefined || m.stacked === true || condition === true ? (m.stacked === true || condition === true ? true : condition)
             : { or: [m.stacked, condition] };
         if (by !== undefined)

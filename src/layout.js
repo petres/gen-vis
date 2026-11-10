@@ -212,7 +212,7 @@ const stepHeight = (store, rowsOf, scope) => {
 // (stacked angles) have no negative size, see aroundOf
 const stackSource = (def, axis, rows) => {
     const by = def.mapping[axis.v]?.stackBy;
-    const around = aroundOf(def, axis) ? { positive: true } : {};
+    const around = aroundOf(def, axis) ? { positive: true } : def.mapping[axis.v]?.stackDiverging ? { diverging: true } : {};
     return by === undefined ? [rows, { ...axis, ...around }] : [rows.filter(r => r[by] !== null && r[by] !== undefined), { ...axis, ...around, h: by }];
 };
 // stacks around the circle (of an angular scale), e.g. the slices of a pie:

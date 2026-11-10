@@ -7,7 +7,6 @@
     "locale": "en",
     "height": 300,
     "transform": [
-        {"type": "calc", "as": "rank", "expr": "=match(@answer, {'Neutral': 0, 'Disagree': 1, 'Agree': 1}, 2)"},
         {"type": "calc", "as": "left", "expr": "=match(@answer, {'Strongly disagree': -@share, 'Disagree': -@share, 'Neutral': -@share / 2})"},
         {"type": "calc", "as": "right", "expr": "=match(@answer, {'Strongly agree': @share, 'Agree': @share, 'Neutral': @share / 2})"},
         {"type": "fold", "columns": ["left", "right"], "key": "side", "value": "part"},
@@ -16,12 +15,11 @@
     "dims": {
         "x": {"column": "part", "format": ".0%", "grid": true, "axis": {"labels": {"props": {"text": "=format(max(@x, -@x), '.0%')"}}}},
         "y": {"column": "statement", "type": "categorical", "order": "rows"},
-        "rank": {"column": "rank", "categories": {"0": {}, "1": {}, "2": {}}},
         "answer": {"column": "answer", "legend": {"symbol": "rect"}, "categories": {
             "Strongly disagree": "#C3423F", "Disagree": "#E8A09A", "Neutral": "#D3D8DD", "Agree": "#9EC5E8", "Strongly agree": "#1E4F77"}},
         "share": {"column": "share", "name": "Share", "format": ".0%"}
     },
     "hover": {"value": false, "columns": ["answer", "share"], "filter": "@side == 'right' or @answer != 'Neutral'"},
     "annotations": {"type": "line", "x": 0, "layer": "above", "props": {"stroke": "#5F6670"}},
-    "marks": {"type": "bar", "by": "answer", "stack": true, "stroke": "white", "stroke-width": 0.5}
+    "marks": {"type": "bar", "by": "answer", "stack": "diverging", "stroke": "white", "stroke-width": 0.5}
 }

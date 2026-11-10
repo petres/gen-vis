@@ -589,13 +589,12 @@ of the nearest row, the date without a cell of its own).
 The answers which disagree are negative values, the ones which agree
 positive ones, the neutral ones are split in half around the middle: a
 `calc` of each side and a `fold` of the two give the neutral answers a row
-on each side (the rows without a part are filtered out). The stack puts the
-first category nearest to 0 on both sides, the dim `rank` (the distance of
-an answer from the middle, before `answer` in `dims`) is the first order of
-the stacks, so the neutral answers are in the middle and the strong ones
-outside, while the legend keeps the order of the answers. The labels of
-the axis are the shares without their sign, the hover shows each answer
-once (`filter`).
+on each side (the rows without a part are filtered out). A `"diverging"`
+stack runs through the answers in their order from the left end to the
+right one: the negative values are stacked in the reverse order, so the
+neutral answers meet in the middle and the strong ones are outside. The
+labels of the axis are the shares without their sign, the hover shows each
+answer once (`filter`).
 
 <!-- data/recipes/likert.json -->
 ```json
@@ -608,7 +607,6 @@ once (`filter`).
     "locale": "en",
     "height": 300,
     "transform": [
-        {"type": "calc", "as": "rank", "expr": "=match(@answer, {'Neutral': 0, 'Disagree': 1, 'Agree': 1}, 2)"},
         {"type": "calc", "as": "left", "expr": "=match(@answer, {'Strongly disagree': -@share, 'Disagree': -@share, 'Neutral': -@share / 2})"},
         {"type": "calc", "as": "right", "expr": "=match(@answer, {'Strongly agree': @share, 'Agree': @share, 'Neutral': @share / 2})"},
         {"type": "fold", "columns": ["left", "right"], "key": "side", "value": "part"},
@@ -617,14 +615,13 @@ once (`filter`).
     "dims": {
         "x": {"column": "part", "format": ".0%", "grid": true, "axis": {"labels": {"props": {"text": "=format(max(@x, -@x), '.0%')"}}}},
         "y": {"column": "statement", "type": "categorical", "order": "rows"},
-        "rank": {"column": "rank", "categories": {"0": {}, "1": {}, "2": {}}},
         "answer": {"column": "answer", "legend": {"symbol": "rect"}, "categories": {
             "Strongly disagree": "#C3423F", "Disagree": "#E8A09A", "Neutral": "#D3D8DD", "Agree": "#9EC5E8", "Strongly agree": "#1E4F77"}},
         "share": {"column": "share", "name": "Share", "format": ".0%"}
     },
     "hover": {"value": false, "columns": ["answer", "share"], "filter": "@side == 'right' or @answer != 'Neutral'"},
     "annotations": {"type": "line", "x": 0, "layer": "above", "props": {"stroke": "#5F6670"}},
-    "marks": {"type": "bar", "by": "answer", "stack": true, "stroke": "white", "stroke-width": 0.5}
+    "marks": {"type": "bar", "by": "answer", "stack": "diverging", "stroke": "white", "stroke-width": 0.5}
 }
 ```
 

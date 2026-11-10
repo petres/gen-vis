@@ -123,7 +123,10 @@ column without a dim, and expressions nest at most 100 levels.
 - `stack` of a mark stacks its values (`true` or an expression of the
   rows), instead of `stacked` of the dim and the props of the start and the
   end; `stacked` and `stackBy` of a dim stay for values which no mark
-  stacks, e.g. a stacked histogram of a `bin`. `dodge` of bars puts the
+  stacks, e.g. a stacked histogram of a `bin`. `"stack": "diverging"`
+  stacks the negative values in the reverse order, so the categories run
+  in their order from the negative end to the positive one, e.g. the
+  answers of a Likert scale. `dodge` of bars puts the
   groups of `by` (or of another dim) beside each other in their band (also
   of a dim without categories, a hidden category leaves its place to the
   others), `dodge` of a label (true or a dim) puts it at the middle of the

@@ -1552,6 +1552,7 @@
                 "stack": {
                     "anyOf": [
                         { "type": "boolean" },
+                        { "const": "diverging" },
                         {
                             "type": "string",
                             "pattern": "^[=@]",
@@ -1560,7 +1561,7 @@
                         { "$ref": "#/definitions/expression" },
                         { "$ref": "#/definitions/conditions" }
                     ],
-                    "description": "Stacks the values of the mark (bars, areas, arcs) by the groups of `by`, true all rows or the condition of the rows which are stacked, the others have their own value as start and end."
+                    "description": "Stacks the values of the mark (bars, areas, arcs) by the groups of `by`, the first category nearest to 0 (above and below it), true all rows or the condition of the rows which are stacked, the others have their own value as start and end; \"diverging\" stacks all rows, the negative values in the reverse order: the categories run in their order from the negative end to the positive one, e.g. the answers of a Likert scale."
                 },
                 "dodge": {
                     "anyOf": [{ "type": "boolean" }, { "type": "string" }, { "type": "number" }],

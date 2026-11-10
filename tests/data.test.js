@@ -450,6 +450,16 @@ describe('stack', () => {
         expect(data.map(d => [d.c, ...stacks.get(d)])).toEqual([['b', 2, 3], ['a', 0, 2], ['c', 3, 7]]);
     });
 
+    test('diverging: the negative values in the reverse order, the categories run from the negative end to the positive one', () => {
+        const data = [{ x: 1, y: -2, c: 'sd' }, { x: 1, y: -3, c: 'd' }, { x: 1, y: -1, c: 'n' }, { x: 1, y: 1, c: 'n' }, { x: 1, y: 4, c: 'a' }, { x: 1, y: 5, c: 'sa' }];
+        const order = categoryOrder([{ dim: 'c', keys: ['sd', 'd', 'n', 'a', 'sa'] }]);
+        const stacks = stack(data, { h: 'x', v: 'y', diverging: true }, [], order);
+        expect(data.map(d => [d.c, ...stacks.get(d)])).toEqual([['sd', -4, -6], ['d', -1, -4], ['n', 0, -1], ['n', 0, 1], ['a', 1, 5], ['sa', 5, 10]]);
+        // the same order on both sides without
+        const plain = stack(data, { h: 'x', v: 'y' }, [], order);
+        expect(plain.get(data[0])).toEqual([0, -2]);
+    });
+
     test('separately for the values of the dims, e.g. the facets', () => {
         const data = [{ x: 1, y: 1, f: 'a' }, { x: 1, y: 2, f: 'b' }, { x: 1, y: 4, f: 'a' }];
         const stacks = stack(data, { h: 'x', v: 'y' }, ['f']);

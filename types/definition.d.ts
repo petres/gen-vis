@@ -1383,9 +1383,9 @@ export interface Mark {
      */
     lat?: string | number | Expression;
     /**
-     * Stacks the values of the mark (bars, areas, arcs) by the groups of `by`, true all rows or the condition of the rows which are stacked, the others have their own value as start and end.
+     * Stacks the values of the mark (bars, areas, arcs) by the groups of `by`, the first category nearest to 0 (above and below it), true all rows or the condition of the rows which are stacked, the others have their own value as start and end; "diverging" stacks all rows, the negative values in the reverse order: the categories run in their order from the negative end to the positive one, e.g. the answers of a Likert scale.
      */
-    stack?: boolean | `=${string}` | `@${string}` | Expression | Conditions;
+    stack?: boolean | 'diverging' | `=${string}` | `@${string}` | Expression | Conditions;
     /**
      * Bars: the groups of `by` (true, the first one) or of this dim beside each other in the band of their position, with `stack` a stack per slot; texts, points and rules (true or a dim): at the middle of the slot of their category, e.g. labels or error bars of dodged bars; texts (a number): the texts are moved apart vertically to at least this distance, e.g. labels at the ends of lines.
      */
@@ -1570,6 +1570,7 @@ export interface Mark {
         | number
         | Expression
         | boolean
+        | 'diverging'
         | (`=${string}` | `@${string}`)
         | Conditions
         | 'horizontal'

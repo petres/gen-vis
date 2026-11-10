@@ -285,3 +285,9 @@ test('the corners as anchors of labels', () => {
     expect(p[0].props).toMatchObject({ dx: 4, dy: -4, 'text-anchor': 'start', 'dominant-baseline': 'auto' });
     expect(p[1].props).toMatchObject({ dx: 2, dy: 4, 'text-anchor': 'end', 'dominant-baseline': 'hanging' });
 });
+
+test('"stack": "diverging" stacks all rows, the negative values in the reverse order', () => {
+    const def = translate({ dims: { x: 'part', y: { column: 'statement', type: 'categorical' }, answer: { column: 'answer', legend: {} } }, marks: { type: 'bar', by: 'answer', stack: 'diverging' } });
+    expect(def.mapping.x).toMatchObject({ stacked: true, stackDiverging: true });
+    expect(translate({ dims: { x: 'year', y: 'n', t: 't' }, marks: { type: 'bar', by: 't', stack: true } }).mapping.y.stackDiverging).toBeUndefined();
+});
