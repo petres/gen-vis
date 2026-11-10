@@ -149,6 +149,17 @@ describe('the domain of a diverging scale', () => {
         expect(s(0)).toBe(d3.interpolateRdBu(0.5));
     });
 
+    test('the colors of a scheme of 5: all of them along the scale, of sequential ones too (d3 takes the first 3 or 2)', () => {
+        const colors = d3.schemeRdBu[5];
+        const s = makeScale('v', { type: 'numeric', scale: { type: 'diverging', scheme: 'RdBu', domain: [null, null] } }, [{ v: -4 }, { v: 4 }], options);
+        expect([-4, -2, 0, 2, 4].map(v => s(v))).toEqual(colors.map(c => {
+            const [r, g, b] = [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+            return `rgb(${r}, ${g}, ${b})`;
+        }));
+        const q = makeScale('v', { type: 'numeric', scale: { type: 'sequential', scheme: 'RdBu', domain: [null, null] } }, [{ v: 0 }, { v: 4 }], options);
+        expect(q(4)).toBe(s(4));
+    });
+
     test('the ends reach the middle, e.g. of positive values around 0, a domain in order', () => {
         const s = diverging({ domain: [null, 0, null] }, [{ v: 2 }, { v: 5 }]);
         expect(s.domain()).toEqual([0, 0, 5]);

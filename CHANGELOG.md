@@ -89,7 +89,9 @@ an `interval` of dates (e.g. months) are vertical also of a `y` of no
 type (they were horizontal and failed for a missing `width`), a few
 periods tick at their starts (not weeks of 3 months), a `tick` of a
 column beside horizontal bars runs across their bands, and rules of no
-length (a `tick` across a continuous scale) warn.
+length (a `tick` across a continuous scale) warn. A `scheme` of a
+sequential or a diverging scale spreads all its colors along it (d3 took
+the first 2 or 3, all values were red to white of `RdBu`).
 
 ### The language
 

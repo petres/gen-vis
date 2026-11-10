@@ -335,8 +335,17 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     const topDown = scaleDef.orientation == 'vertical' && ['band', 'point'].includes(scaleDef.type) && Array.isArray(ranges.vertical);
     const range = Array.isArray(scaleDef.range) ? scaleDef.range :
         (scaleDef.scheme ? schemeRange(scaleDef) : topDown ? [...ranges.vertical].reverse() : ranges[scaleDef.orientation]);
-    if (range)
-        s.range(evaluate(range, { ...scope, ...dims }));
+    if (range) {
+        const values = evaluate(range, { ...scope, ...dims });
+        // the colors of a sequential (2) or a diverging scale (3) of more
+        // colors, e.g. of a scheme of 5: all of them evenly along it, d3
+        // takes the first ones only
+        const takes = s.interpolator && !scaleDef.interpolator && /^(sequential|diverging)/i.test(scaleDef.type) ? (/^diverging/i.test(scaleDef.type) ? 3 : 2) : Infinity;
+        if (Array.isArray(values) && values.length > takes)
+            s.interpolator(d3.piecewise(d3.interpolate, values));
+        else
+            s.range(values);
+    }
 
     // the space at the start and the end of a range of numbers, of positions
     // in pixels, e.g. so the first and the last point are not at the edges
