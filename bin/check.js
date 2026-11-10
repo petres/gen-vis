@@ -67,13 +67,19 @@ const schemaErrors = (errors, def) => {
  * data instead of the one of the definition; it rejects of an error, e.g.
  * a missing parent or invalid JSON or a file outside of the directories
  * it reads (as the ones of the export, see chartDirs). `root` is the
- * directory of site-absolute paths, `allow` more directories it reads.
+ * directory of site-absolute paths, `allow` more directories it reads,
+ * `schemes` the schemes of colors the page registers (names, or an object
+ * of names and colors, e.g. the ones of --scheme of the export or of a
+ * wrapper of genVisExport), which are known to the check.
  */
-export const createChecker = async ({ root = null, allow = [] } = {}) => {
+export const createChecker = async ({ root = null, allow = [], schemes = [] } = {}) => {
     if (!existsSync(checkModule))
         throw new Error(`the check module ${checkModule} is missing, it is built by npm run build`);
     const gv = await import(checkModule);
     await gv.loadTransforms();
+    // (the colors do not matter to the check, a name alone has a placeholder)
+    (Array.isArray(schemes) ? schemes.map(n => [n, null]) : Object.entries(schemes ?? {}))
+        .forEach(([name, colors]) => gv.registerScheme(name, colors ?? ['#000000']));
     // the schema of the package with ajv, if it is installed
     let validate = null;
     try {

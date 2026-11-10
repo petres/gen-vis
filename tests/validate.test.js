@@ -760,6 +760,26 @@ describe('validateDef of the types of the rows', () => {
         expect(normalize(translate(def), { plotTypes }).mapping.value.type).toBe('numeric');
     });
 
+    test('bars on a continuous scale without a width: the dims of the orientation as declared', () => {
+        const rows = [{ land: 'Wien', wert: 2.1 }, { land: 'Tirol', wert: 1.2 }];
+        // y a column of names, x of numbers: vertical bars (nothing declares y categorical) on the continuous x
+        const def = { dims: { x: 'wert', y: 'land' }, marks: { type: 'bar' } };
+        expect(validateDef(def, rows)).toEqual([
+            `marks[0]: the bars are vertical on the continuous scale of the dim 'x', they need a 'width' in pixels; horizontal bars along 'x' need "orient": "horizontal" or "type": "categorical" of the dim 'y' (the orientation follows from the dims as the definition declares them, not from the types of the data)`,
+        ]);
+        // declared: horizontal bars, no warning
+        expect(validateDef({ ...def, dims: { x: 'wert', y: { column: 'land', type: 'categorical' } } }, rows)).toEqual([]);
+        expect(validateDef({ ...def, dims: { x: { column: 'wert', zero: true }, y: 'land' } }, rows)).toEqual([]);
+        expect(validateDef({ ...def, marks: { type: 'bar', orient: 'horizontal' } }, rows)).toEqual([]);
+        // a width, the classes of a bin, bars of categories: no warning
+        expect(validateDef({ ...def, marks: { type: 'bar', width: 8 } }, rows)).toEqual([]);
+        expect(validateDef({ dims: { x: 'land', y: 'wert' }, marks: { type: 'bar' } }, rows)).toEqual([]);
+        // two numeric dims: vertical bars on x, the general hint
+        expect(validateDef({ dims: { x: 'a', y: 'b' }, marks: { type: 'bar' } }, [{ a: 1, b: 2 }])).toEqual([
+            `marks[0]: the bars are vertical on the continuous scale of the dim 'x', they need a 'width' in pixels, a categorical dim of their position or an "interval" of dates`,
+        ]);
+    });
+
     test('the scale of a dim of the type of its values', () => {
         const def = { dims: { n: { column: 'land', nice: 5 } }, marks: { type: 'cartesian:line' } };
         expect(validateDef(def, [{ land: 'Wien' }]).filter(w => w.startsWith('dims.n'))).toEqual([

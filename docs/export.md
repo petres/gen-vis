@@ -188,7 +188,10 @@ options above:
   default 15), `--parts` (a comma-separated list), `--background` (`none`
   for a transparent one).
 - `--css` (a file or CSS text) and `--class`, both repeatable;
-  `--font-size`.
+  `--font-size`. The files a stylesheet loads (the `url()` of an
+  `@font-face`) are in the directory of the stylesheet or under `--root`,
+  others are refused (an error line, the chart falls back to another
+  font).
 - `--globals` and `--state` (JSON), `--defaults` (JSON or a JSON file, e.g.
   `--defaults house-defaults.json`, also the `margins` of a house style), `--data` (a CSV, JSON or parquet file
   instead of the definition's data), `--scheme name=color,color,...`
@@ -281,4 +284,8 @@ migrated (a `note:` line says so). The exit code is 1 if a definition could
 not be read (a missing file or parent, invalid JSON, no `$schema`), with
 `--strict` also of a warning, 2 of wrong arguments. Options: `--data
 <file>` (the data instead of the one of the definitions), `--root <dir>`
-(the directory of site-absolute paths, as of `export`), `--strict`.
+(the directory of site-absolute paths, as of `export`), `--scheme
+<name>` or `--scheme <name>=<colors>` (repeatable, a scheme the page
+registers, e.g. a house scheme of a wrapper of `genVisExport`: the check
+knows it; the check of `export` knows the schemes of its `--scheme`),
+`--strict`.

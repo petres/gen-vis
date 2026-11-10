@@ -609,6 +609,8 @@ const checkPlots = ctx => {
         if (['text', 'svg:text', 'polar:text', 'geo:text'].includes(p.type) && (!isObject(p.props) || p.props.text === undefined)
             && plotTypes[p.type]?.defaults?.text === undefined)
             warn(`${path}.props.text`, `missing: the texts of a ${ctx.written?.get(i) ?? 'text'} mark are empty without it, e.g. "text": "@y" or "=format(@y, ',.0f')"`);
+        if (p.type == 'cartesian:bar' && coordName == 'cartesian')
+            checkBarBands(ctx, path, isObject(p.props) ? p.props : {});
         if (p.halo !== undefined && (!['boolean', 'number'].includes(typeof p.halo) || !['svg:text', 'polar:text', 'geo:text'].includes(p.type)))
             warn(`${path}.halo`, `a halo behind the texts of a text or label mark (also of polar charts and maps), true or its width`);
         if (p.object !== undefined && (typeof p.object != 'string' || p.type != 'geo:mesh'))
@@ -648,8 +650,36 @@ const checkPlots = ctx => {
     });
 };
 
+// the dim of a scaled position of a prop, e.g. "x" of "@x:scaled"
+const scaledDim = v => typeof v == 'string' ? /^@([^:\s]+):scaled(?::center)?$/.exec(v)?.[1] : undefined;
+// a dim of numbers or dates without the bands of an interval, by its type
+// of the definition or of the rows (see withTypes)
+const continuousMapping = m => isObject(m) && (m.type == 'numeric' || m.type == 'date') && m.interval === undefined
+    && !(isObject(m.scale) && ['band', 'point', 'ordinal'].includes(m.scale.type));
+
+// bars need bands: the dim of their position (x of vertical bars, y of
+// horizontal ones) is categorical, an interval of dates or they have a
+// width; the orientation follows from what the definition declares of the
+// dims, not from the rows (see horizontalOf of utils/language.js), so a
+// column of names as y beside numbers as x gives vertical bars on a
+// continuous x, which the draw refuses
+const checkBarBands = ({ mapping, warn }, path, props) => {
+    if (('x0' in props && 'x1' in props) || ('y0' in props && 'y1' in props && !('x' in props)))
+        return;
+    const horizontal = 'x1' in props && !('x' in props);
+    const [size, band, value] = horizontal ? ['height', props.y ?? '@y:scaled', props.x1] : ['width', props.x ?? '@x:scaled', props.y1 ?? '@y:scaled'];
+    const name = scaledDim(band);
+    if (size in props || !name || !Object.hasOwn(mapping, name) || !continuousMapping(mapping[name]))
+        return;
+    const other = scaledDim(value);
+    const flip = !horizontal && other && Object.hasOwn(mapping, other) && !continuousMapping(mapping[other]);
+    warn(path, `the bars are ${horizontal ? 'horizontal' : 'vertical'} on the continuous scale of the dim '${name}', they need a '${size}' in pixels`
+        + (flip ? `; horizontal bars along '${name}' need "orient": "horizontal" or "type": "categorical" of the dim '${other}' (the orientation follows from the dims as the definition declares them, not from the types of the data)`
+            : `, a categorical dim of their position or an "interval" of dates`));
+};
+
 // the geometry of a map
-const checkGeo = ({ def, mapping, warn, coordName }) => {
+const checkGeo =({ def, mapping, warn, coordName }) => {
     if (coordName != 'geo')
         return;
     if (typeof def.geo?.data != 'string' && !isObject(def.geo?.data))

@@ -2714,7 +2714,7 @@ describe('fixed bugs', () => {
         const def = stackDef();
         delete def.plot.props.width;
         const el = await mount({ def, data: stackData });
-        expect(el.querySelector('.vis-error').textContent).toBe(`marks[0]: the bars of a continuous scale need a 'width' in pixels, e.g. "width": 8, a categorical dim of their position or an "interval" of dates (horizontal bars: "orient": "horizontal")`);
+        expect(el.querySelector('.vis-error').textContent).toBe(`marks[0]: the bars of a continuous scale need a 'width' in pixels, e.g. "width": 8, a categorical dim of their position or an "interval" of dates (horizontal bars: "orient": "horizontal" or "type": "categorical" of the dim y, the orientation follows from the dims as the definition declares them, not from the data)`);
     });
 
     test('the hover of a band scale shows the band under the mouse', async () => {

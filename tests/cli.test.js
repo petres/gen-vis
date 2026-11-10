@@ -143,6 +143,17 @@ describe('gen-vis check', () => {
         expect(JSON.parse(r.stdout).marks).toEqual({ type: 'line', order: 'rows' });
     });
 
+    test('the schemes of --scheme are known to the check, a name alone or with its colors', async () => {
+        file('house.csv', 'land,wert\nWien,1\n');
+        const def = file('house-scheme.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', data: 'house.csv',
+            dims: { x: 'wert', y: { column: 'land', type: 'categorical', scheme: 'house' } }, marks: { type: 'bar' } });
+        expect((await run(['check', def])).stdout).toContain("dims.y.scheme: unknown scheme 'house'");
+        for (const scheme of ['house', 'house=#123456,#654321']) {
+            const r = await run(['check', '--strict', def, '--scheme', scheme]);
+            expect([r.code, r.stdout]).toEqual([0, '']);
+        }
+    });
+
     test('the usage and the version', async () => {
         expect((await run(['check'])).code).toBe(2);
         expect((await run(['check', '--help'])).stdout).toContain('gen-vis check <def.json>...');
@@ -213,6 +224,8 @@ describe.skipIf(!browser)('gen-vis export', () => {
         expect(all).not.toContain('>Bevölkerung</text>');
         expect(parts).not.toContain('>Q: Statistik Austria</text>');
         expect(parts).toMatch(/stroke="#123456"/);
+        // the check of the export knows the schemes of --scheme
+        expect(r.stderr).not.toContain('unknown scheme');
         expect(parts).toMatch(/stroke="#654321"/);
         // 13px of the legend of 8pt
         expect(parts).toMatch(/font-size="10\.667"/);

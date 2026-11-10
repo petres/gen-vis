@@ -1365,7 +1365,13 @@ attributes are merged into the defaults, e.g. `d` of a path.
   column of names without a type: the bars go from 0 (or `x0`) to `x`,
   their thickness is the band of `y`. The parts of a scale of categories
   (`order`, `groups`, `padding`, `step`) make a dim categorical; `reverse`
-  and `range` leave its type to the rows.
+  and `range` leave its type to the rows. The orientation follows from the
+  dims as the definition declares them, not from the types of the rows: a
+  column of names as `y` beside a column of numbers as `x`, both without a
+  type or other parts, gives vertical bars on a continuous `x`, which fail
+  for a missing `width` (`gen-vis check` warns of it); declare
+  `"type": "categorical"` of `y`, `"zero": true` of `x` or write
+  `"orient": "horizontal"`.
 - `anchor` of texts and labels: the text beside its position, after it
   (`end`, e.g. of horizontal bars, 4 pixels to the right), before it
   (`start`), above it (`top`), below it (`bottom`), on it (`center`) or at

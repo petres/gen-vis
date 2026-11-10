@@ -64,6 +64,10 @@ meets:
 - **The width of an export** is the `width` of the definition by default
   (was 800), an explicit width (`--width`, `imageWidth`, the export page's
   `width`) wins over it.
+- **`"fromData": true` sorts the categories** (ascending), 4.x kept the
+  order of the rows with some builds; `"fromData": "rows"` keeps the order
+  of the rows, the default of a dim with a legend, a `scheme` or `common`
+  and without listed categories.
 - **Vertical band and point scales run from the top down** (were from the
   bottom up), as the rows of a table; `"reverse": true` puts the first
   category at the bottom, `gen-vis migrate` writes it for such dims.
@@ -103,7 +107,13 @@ horizontal, columns of the rows of a mark of its own (`data`) are known to
 the checks and take the type of the dim of their scale (e.g. the dates of
 the ends of an arrow), and an axis of dates labels a larger unit of its
 format once (`"format": "%Y"` of quarterly ticks: the year at its first
-tick, not four times). A recipe of arrows (`data/recipes/arrows.json`).
+tick, not four times). A recipe of arrows (`data/recipes/arrows.json`). `gen-vis check` warns of
+bars on a continuous scale without a `width`, e.g. vertical bars of a
+column of names as `y` (the orientation follows from the dims as declared,
+not from the rows: `"type": "categorical"` of `y` or `"orient":
+"horizontal"`), and knows the schemes of `--scheme <name>[=colors]`
+(also the check of `export` the ones of its `--scheme`, which warned of
+them as unknown).
 
 ### The language
 

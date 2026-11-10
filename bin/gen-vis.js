@@ -60,6 +60,8 @@ prints a line per warning, "<def.json>: <path>: <message>"; the exit code is
   --data <file>           the data instead of the one of the definition
   --root <dir>            the directory of site-absolute paths; check reads the files export
                           reads (of the directories of the definition, --root and --data)
+  --scheme <name[=colors]> a scheme of colors the page has, e.g. of a wrapper which registers
+                          it, repeatable (its colors are optional, e.g. --scheme wifo-blue)
   --strict                exit code 1 of a warning
 
 migrate writes definitions of gen-vis 4 as ones of gen-vis 5 (also parents
@@ -170,7 +172,7 @@ const exportCommand = async args => {
     let checker = null;
     if (!o['no-check']) {
         try {
-            checker = await createChecker({ root: o.root ? path.resolve(o.root) : null });
+            checker = await createChecker({ root: o.root ? path.resolve(o.root) : null, schemes: options.schemes ?? {} });
         } catch (error) {
             // e.g. a checkout without the build of the package
             process.stderr.write(`gen-vis: the definitions are not checked, ${error.message}\n`);
@@ -274,11 +276,15 @@ const migrateCommand = async args => {
 };
 
 // the check of definitions in node, see bin/check.js
+// the schemes of --scheme of check: name or name=#hex,#hex (the colors are optional)
+const checkSchemesOf = list => Object.assign({}, ...list.map(s => s.includes('=') ? schemesOf([s]) : { [s.trim()]: null }));
+
 const checkCommand = async args => {
     let parsed;
     try {
         parsed = parseArgs({ args, allowPositionals: true, strict: true, options: {
-            data: { type: 'string' }, root: { type: 'string' }, strict: { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
+            data: { type: 'string' }, root: { type: 'string' }, scheme: { type: 'string', multiple: true }, strict: { type: 'boolean' },
+            help: { type: 'boolean', short: 'h' },
         } });
     } catch (error) {
         fail(`${error.message}\n\n${usage}`);
@@ -292,7 +298,7 @@ const checkCommand = async args => {
         fail(`the root ${o.root} is no directory`, 1);
     let checker;
     try {
-        checker = await createChecker({ root: o.root ? path.resolve(o.root) : null });
+        checker = await createChecker({ root: o.root ? path.resolve(o.root) : null, schemes: checkSchemesOf(o.scheme ?? []) });
     } catch (error) {
         fail(error.message, 1);
     }

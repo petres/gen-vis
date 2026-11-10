@@ -18,7 +18,7 @@ const barScale = (plot, ctx, prop, type) => {
 // the default width of the bars of a categorical scale
 const barWidth = (scale, type) => {
     if (!scale.step)
-        throw new Error(`the ${type.split(':')[1]}s of a continuous scale need a 'width' in pixels, e.g. "width": 8, a categorical dim of their position or an "interval" of dates (horizontal bars: "orient": "horizontal")`);
+        throw new Error(`the ${type.split(':')[1]}s of a continuous scale need a 'width' in pixels, e.g. "width": 8, a categorical dim of their position or an "interval" of dates (horizontal bars: "orient": "horizontal" or "type": "categorical" of the dim y, the orientation follows from the dims as the definition declares them, not from the data)`);
     return scale.bandwidth() || scale.step()*(1 - scale.padding());
 };
 
