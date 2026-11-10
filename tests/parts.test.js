@@ -325,6 +325,20 @@ describe('the hover', () => {
 });
 
 describe('the highlight', () => {
+    test('the symbols of the legend and of the hover of a plot with a highlight: of the stylesheet of the highlighted entry and the nearest row, the props of a category as custom properties', async () => {
+        const def = { width: 500, height: 200, dims: { x: 'year', y: 'v', c: { column: 'c', legend: {}, categories: { a: { color: '#C3423F', wide: 4 }, b: { color: '#1E4F77', wide: 5 } } } },
+            marks: [{ type: 'line', by: 'c', 'stroke-width': 2, highlight: { 'stroke-width': '@wide', opacity: 1, 'font-weight': 'bold' } }, { type: 'point', by: 'c', r: 2 }] };
+        const el = await mount({ def, data: 'year,v,c\n2020,1,a\n2021,2,a\n2020,2,b\n2021,3,b' });
+        const lines = [...el.querySelectorAll('.vis-legend-entry svg line')];
+        expect(lines.map(l => [l.getAttribute('data-symbol-of'), l.style.getPropertyValue('--vis-hl-stroke-width')])).toEqual([['mark-0', '4'], ['mark-0', '5']]);
+        // the points have no highlight: no attribute
+        expect(el.querySelector('.vis-legend-entry svg circle').hasAttribute('data-symbol-of')).toBe(false);
+        // only the props a symbol shows, not a font-weight
+        const rule = highlightCss(el).split('\n').find(r => r.includes('[data-symbol-of="mark-0"]'));
+        expect(rule).toMatch(/\.vis-legend-highlight \[data-symbol-of="mark-0"\], .* \.vis-hover \.vis-nearest \[data-symbol-of="mark-0"\] \{ stroke-width: var\(--vis-hl-stroke-width\); opacity: 1; \}$/);
+        expect(errors).toEqual([]);
+    });
+
     test('the props of the others, the elements which are not highlighted, also of plots without categories', async () => {
         const def = lineDef();
         def.plot[1] = { ...def.plot[1], highlight: { mode: 'row', r: 6 }, others: { opacity: 0.3 } };

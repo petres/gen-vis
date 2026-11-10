@@ -1,4 +1,4 @@
-export { highlighter, highlightStyle, highlightVars };
+export { highlighter, highlightStyle, highlightVars, symbolVars };
 
 import { itemOf } from '@/utils/dom';
 import { rowOf } from '@/utils/draw';
@@ -57,8 +57,20 @@ const highlightVars = (plot, bound, row) => {
     return Object.fromEntries(names.map(([kind, n, value]) => [varName(kind, n), cssValue(bound(value)(row), n)]));
 };
 
+/**
+ * The custom properties of an element of a symbol of a legend (see
+ * drawSymbol of comp/legend.js): the values of its props of the highlight
+ * (`highlight`, see symbolHighlight of utils/def.js) which are the ones of
+ * the category, e.g. "@color", of `scope`, the props of the category.
+ */
+const symbolVars = (highlight, scope) => Object.fromEntries(Object.entries(highlight ?? {})
+    .filter(([, v]) => fixed(v) === undefined).map(([n, v]) => [varName('hl', n), cssValue(evaluate(v, scope), n)]));
+
 // the selector of the attribute of the plot, its id quoted
 const plotSelector = id => `[data-mark="${String(id).replace(/["\\]/g, '\\$&')}"]`;
+// the props of the highlight of the symbols, see symbolHighlight of utils/def.js
+const symbolProps = new Set(['fill', 'fill-opacity', 'opacity', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity']);
+const quoted = id => `"${String(id).replace(/["\\]/g, '\\$&')}"`;
 
 // the declarations of the props of a plot: the values which are the same
 // for all groups as they are, the others as their custom properties
@@ -86,6 +98,13 @@ const highlightStyle = (plots, { scope = '', transition = 0 } = {}) => {
             const css = declarations('hl', p.highlightProps, p.highlight);
             if (css)
                 rules.push(`${plot} .vis-highlight${leaves.slice(1)}, ${plot} .vis-highlight ${leaves} { ${css}; }`);
+            // the symbols of the plot of the highlighted entry of a legend and
+            // of the nearest row of the hover (their elements have only the
+            // props of the highlight they have, see symbolHighlight)
+            const symbol = `[data-symbol-of=${quoted(p.id)}]`;
+            const own = declarations('hl', p.highlightProps.filter(n => symbolProps.has(n)), p.highlight);
+            if (own)
+                rules.push(`${scope} .vis-legend-highlight ${symbol}, ${scope} .vis-hover .vis-nearest ${symbol} { ${own}; }`);
         }
         if (p.othersProps.length > 0) {
             const css = declarations('ot', p.othersProps, p.others);

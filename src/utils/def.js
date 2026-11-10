@@ -289,7 +289,30 @@ const autoSymbol = (symbol, name, plots, names, defaults, key) => {
     const { width, height } = base;
     // the dot of points in the size of their radius (a number), within its box
     const radius = p => p.kind == 'circle' && typeof p.plot?.props?.r == 'number' ? { r: Math.min(p.plot.props.r, Math.min(width, height)/2 - 1) } : {};
-    return { width, height, elements: parts.map(p => ({ type: p.kind, props: { ...symbolShape(p.kind, width, height), ...p.props, ...radius(p), ...given.props } })) };
+    return { width, height, elements: parts.map(p => ({ type: p.kind, props: { ...symbolShape(p.kind, width, height), ...p.props, ...radius(p), ...given.props },
+        ...symbolHighlight(p.kind, p.plot)})) };
+};
+
+// a symbol of a shortcut (e.g. "line") with the highlight of the first plot
+// of its kind which draws the categories of the mapping `name`, e.g. the
+// line of a year of the lines by year
+const ofPlots = (symbol, name, plots) => ({ ...symbol, elements: symbol.elements.map(e => {
+    const types = symbolKinds.find(([kind]) => kind == e.type)?.[1] ?? [];
+    const of = [plots ?? []].flat().filter(p => [p?.by ?? []].flat().includes(name));
+    const plot = types.map(t => of.find(p => p?.type == t)).find(Boolean);
+    return plot ? { ...e, ...symbolHighlight(e.type, plot) } : e;
+}) });
+
+// the highlight of the element of a symbol of a plot: the id of the plot
+// (`mark`) and the props of its highlight which the element has (`highlight`),
+// e.g. the stroke-width of a line, so the symbol of the entry of the legend
+// of a highlighted category and the one of the nearest row of the hover are
+// highlighted as the plot, see highlightStyle of utils/highlight.js
+const highlightKeys = { rect: ['fill', 'fill-opacity', 'opacity', 'stroke', 'stroke-width'], line: ['stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity', 'opacity'],
+    circle: ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'opacity'] };
+const symbolHighlight = (kind, plot) => {
+    const keys = (plot.highlightProps ?? []).filter(k => highlightKeys[kind].includes(k));
+    return keys.length == 0 ? {} : { mark: plot.id, highlight: Object.fromEntries(keys.map(k => [k, plot.highlight[k]])) };
 };
 
 // whether a plot draws a category of a mapping by its `filter` on the
@@ -391,8 +414,10 @@ const prepareMapping = (m, name, dataKeys = () => [], plots = [], symbols = {}) 
         // the symbols of the legend and of its categories, e.g. a rect of
         // one category and lines of the others
         const names = new Set(Object.values(m.categoryProps ?? {}).flatMap(p => Object.keys(p)));
+        // a shortcut (e.g. "line") is of the first plot of its kind of the
+        // categories, as one of "auto", so it has the highlight of the plot
         const prepared = symbol => symbol === 'auto' || symbol?.type == 'auto' ? autoSymbol(symbol, name, plots, names, symbols)
-            : (typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type) ? symbolOf(symbol, names, symbols) : symbol);
+            : (typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type) ? ofPlots(symbolOf(symbol, names, symbols), name, plots) : symbol);
         const auto = m.legend.symbol === 'auto' || m.legend.symbol?.type == 'auto' ? m.legend.symbol : null;
         m.legend.symbol = prepared(m.legend.symbol);
         Object.values(m.categoryProps ?? {}).filter(p => p.symbol !== undefined).forEach(p => p.symbol = prepared(p.symbol));

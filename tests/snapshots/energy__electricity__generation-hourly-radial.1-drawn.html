@@ -1,7 +1,9 @@
 <div class="vis" data-vis="N">
 <style>.vis[data-vis="N"] [data-mark="areas"] .vis-highlight:not(g), .vis[data-vis="N"] [data-mark="areas"] .vis-highlight *:not(g) { fill-opacity: 1; }
+.vis[data-vis="N"] .vis-legend-highlight [data-symbol-of="areas"], .vis[data-vis="N"] .vis-hover .vis-nearest [data-symbol-of="areas"] { fill-opacity: 1; }
 .vis[data-vis="N"] .vis-highlighting [data-mark="areas"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { fill-opacity: 0.35; }
 .vis[data-vis="N"] [data-mark="names"] .vis-highlight:not(g), .vis[data-vis="N"] [data-mark="names"] .vis-highlight *:not(g) { opacity: 1; }
+.vis[data-vis="N"] .vis-legend-highlight [data-symbol-of="names"], .vis[data-vis="N"] .vis-hover .vis-nearest [data-symbol-of="names"] { opacity: 1; }
 .vis[data-vis="N"] .vis-highlighting [data-mark="names"] *:not(g):not(.vis-highlight):not(.vis-highlight *) { opacity: 0.3; }
 .vis[data-vis="N"] [data-mark] *:not(g) { transition-property: fill-opacity, opacity; transition-duration: 120ms; }
 @media (prefers-reduced-motion: reduce) { .vis[data-vis="N"] [data-mark] *:not(g) { transition-duration: 0s; } }</style>
@@ -18,49 +20,49 @@
 <div class="vis-legend-entries" role="group">
 <div aria-checked="true" class="vis-legend-entry" data-key="Hydro" data-visible="true" role="checkbox" tabindex="0">
 <svg height="14" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 7px);" width="14">
-<rect fill="#5BC5F2" height="13" rx="2" width="14" x="0" y="0.5">
+<rect data-symbol-of="areas" fill="#5BC5F2" height="13" rx="2" width="14" x="0" y="0.5">
 </rect>
 </svg>
 <span style="min-width: 44px;">Hydro</span>
 </div>
 <div aria-checked="true" class="vis-legend-entry" data-key="Wind" data-visible="true" role="checkbox" tabindex="0">
 <svg height="14" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 7px);" width="14">
-<rect fill="#BBD7EE" height="13" rx="2" width="14" x="0" y="0.5">
+<rect data-symbol-of="areas" fill="#BBD7EE" height="13" rx="2" width="14" x="0" y="0.5">
 </rect>
 </svg>
 <span style="min-width: 36px;">Wind</span>
 </div>
 <div aria-checked="true" class="vis-legend-entry" data-key="Solar" data-visible="true" role="checkbox" tabindex="0">
 <svg height="14" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 7px);" width="14">
-<rect fill="#F3D039" height="13" rx="2" width="14" x="0" y="0.5">
+<rect data-symbol-of="areas" fill="#F3D039" height="13" rx="2" width="14" x="0" y="0.5">
 </rect>
 </svg>
 <span style="min-width: 44px;">Solar</span>
 </div>
 <div aria-checked="true" class="vis-legend-entry" data-key="Gas" data-visible="true" role="checkbox" tabindex="0">
 <svg height="14" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 7px);" width="14">
-<rect fill="#C3423F" height="13" rx="2" width="14" x="0" y="0.5">
+<rect data-symbol-of="areas" fill="#C3423F" height="13" rx="2" width="14" x="0" y="0.5">
 </rect>
 </svg>
 <span style="min-width: 53px;">Erdgas</span>
 </div>
 <div aria-checked="true" class="vis-legend-entry" data-key="Coal" data-visible="true" role="checkbox" tabindex="0">
 <svg height="14" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 7px);" width="14">
-<rect fill="#8B4513" height="13" rx="2" width="14" x="0" y="0.5">
+<rect data-symbol-of="areas" fill="#8B4513" height="13" rx="2" width="14" x="0" y="0.5">
 </rect>
 </svg>
 <span style="min-width: 44px;">Kohle</span>
 </div>
 <div aria-checked="true" class="vis-legend-entry" data-key="Oil" data-visible="true" role="checkbox" tabindex="0">
 <svg height="14" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 7px);" width="14">
-<rect fill="#000" height="13" rx="2" width="14" x="0" y="0.5">
+<rect data-symbol-of="areas" fill="#000" height="13" rx="2" width="14" x="0" y="0.5">
 </rect>
 </svg>
 <span style="min-width: 44px;">Erdöl</span>
 </div>
 <div aria-checked="true" class="vis-legend-entry" data-key="others" data-visible="true" role="checkbox" tabindex="0">
 <svg height="14" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 7px);" width="14">
-<rect fill="#CCC" height="13" rx="2" width="14" x="0" y="0.5">
+<rect data-symbol-of="areas" fill="#CCC" height="13" rx="2" width="14" x="0" y="0.5">
 </rect>
 </svg>
 <span style="min-width: 53px;">Andere</span>

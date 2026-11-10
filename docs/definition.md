@@ -1654,6 +1654,15 @@ drop-shadow(0 0 2px #0006) }`, see [styles](usage.md#styles), and the
 prop `highlight` of a chart highlights the rows of another one, see
 [linked charts](usage.md#linked-charts).
 
+The symbol of the highlighted category in the legend (its name is bold)
+and the one of the nearest row of the hover have the highlight of their
+mark too, e.g. a thicker line of the year under the pointer: the symbols
+of `"symbol": "auto"` and of a shortcut (`"line"`, `"rect"`, `"circle"`,
+of the first mark of its kind with the dim in its `by`), only the
+attributes a symbol shows (colors, opacities, `stroke-width`,
+`stroke-dasharray`), not `others`. Their elements have `data-symbol-of`,
+the id of the mark.
+
 ## Polar charts
 
 With `"coord": "polar"` the marks are in a circle in the center of the

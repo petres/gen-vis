@@ -177,6 +177,10 @@ column without a dim, and expressions nest at most 100 levels.
   a `<marker>` per color in the defs of the svg, also in the exports; in
   the page it follows the stroke of the line, also of a `highlight`
   (`context-stroke`).
+- The symbol of the highlighted category in the legend and the one of the
+  nearest row of the hover have the `highlight` of their mark, e.g. the
+  thicker line of the year under the pointer (symbols of `"auto"` and of a
+  shortcut such as `"line"`; colors, opacities and stroke widths).
 - `hover.cross`: a crosshair through the point of the nearest row, a
   horizontal and a vertical dashed line across the plot area instead of the
   line of the position (`vis-hover-cross`, `--gen-vis-cross-color`), also

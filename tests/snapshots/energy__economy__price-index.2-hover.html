@@ -1,5 +1,6 @@
 <div class="vis" data-global-base="2019" data-vis="N">
-<style>.vis[data-vis="N"] [data-mark="mark-0"] .vis-highlight:not(g), .vis[data-vis="N"] [data-mark="mark-0"] .vis-highlight *:not(g) { opacity: 1; stroke-width: 3; }</style>
+<style>.vis[data-vis="N"] [data-mark="mark-0"] .vis-highlight:not(g), .vis[data-vis="N"] [data-mark="mark-0"] .vis-highlight *:not(g) { opacity: 1; stroke-width: 3; }
+.vis[data-vis="N"] .vis-legend-highlight [data-symbol-of="mark-0"], .vis[data-vis="N"] .vis-hover .vis-nearest [data-symbol-of="mark-0"] { opacity: 1; stroke-width: 3; }</style>
 <div class="vis-header">
 <div class="vis-title">Preisindex der Energieträger</div>
 <div class="vis-subtitle">Preise in €, monatlich, Durchschnitt 2019 = 100, logarithmische Skala</div>
@@ -20,49 +21,49 @@
 <div class="vis-legend-entries" role="group">
 <div aria-checked="true" class="vis-legend-entry" data-key="gas" data-visible="true" role="checkbox" tabindex="0">
 <svg height="16" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 8px);" width="16">
-<line opacity="0.7" stroke="#C3423F" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
+<line data-symbol-of="mark-0" opacity="0.7" stroke="#C3423F" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
 </line>
 </svg>
 <span style="min-width: 53px;">Erdgas</span>
 </div>
 <div aria-checked="true" class="vis-legend-entry" data-key="oil" data-visible="true" role="checkbox" tabindex="0">
 <svg height="16" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 8px);" width="16">
-<line opacity="0.7" stroke="#C3423F" stroke-dasharray="6, 3" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
+<line data-symbol-of="mark-0" opacity="0.7" stroke="#C3423F" stroke-dasharray="6, 3" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
 </line>
 </svg>
 <span style="min-width: 115px;">Rohöl (Brent)</span>
 </div>
 <div aria-checked="true" class="vis-legend-entry vis-legend-highlight" data-key="coal" data-visible="true" role="checkbox" tabindex="0">
 <svg height="16" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 8px);" width="16">
-<line opacity="0.7" stroke="#C3423F" stroke-dasharray="2, 2" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
+<line data-symbol-of="mark-0" opacity="0.7" stroke="#C3423F" stroke-dasharray="2, 2" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
 </line>
 </svg>
 <span style="min-width: 44px;">Kohle</span>
 </div>
 <div aria-checked="true" class="vis-legend-entry" data-key="firewood" data-visible="true" role="checkbox" tabindex="0">
 <svg height="16" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 8px);" width="16">
-<line opacity="0.7" stroke="#b5c969" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
+<line data-symbol-of="mark-0" opacity="0.7" stroke="#b5c969" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
 </line>
 </svg>
 <span style="min-width: 80px;">Brennholz</span>
 </div>
 <div aria-checked="false" class="vis-legend-entry" data-key="pellets" data-visible="false" role="checkbox" tabindex="0">
 <svg height="16" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 8px);" width="16">
-<line opacity="0.7" stroke="#b5c969" stroke-dasharray="6, 3" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
+<line data-symbol-of="mark-0" opacity="0.7" stroke="#b5c969" stroke-dasharray="6, 3" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
 </line>
 </svg>
 <span style="min-width: 62px;">Pellets</span>
 </div>
 <div aria-checked="true" class="vis-legend-entry" data-key="electricity" data-visible="true" role="checkbox" tabindex="0">
 <svg height="16" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 8px);" width="16">
-<line opacity="0.7" stroke="#86cae7" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
+<line data-symbol-of="mark-0" opacity="0.7" stroke="#86cae7" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
 </line>
 </svg>
 <span style="min-width: 44px;">Strom</span>
 </div>
 <div aria-checked="false" class="vis-legend-entry" data-key="eua" data-visible="false" role="checkbox" tabindex="0">
 <svg height="16" style="vertical-align: calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 8px);" width="16">
-<line opacity="0.7" stroke="#F3D039" stroke-dasharray="6, 3" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
+<line data-symbol-of="mark-0" opacity="0.7" stroke="#F3D039" stroke-dasharray="6, 3" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
 </line>
 </svg>
 <span style="min-width: 185px;">CO₂-Zertifikate (EUA)</span>
@@ -192,7 +193,7 @@
 <tr class="vis-hover-entry" data-type="gas">
 <td class="vis-swatch">
 <svg class="vis-swatch-symbol" height="0.85em" viewBox="0 0 16 16" width="0.850em">
-<line opacity="0.7" stroke="#C3423F" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
+<line data-symbol-of="mark-0" opacity="0.7" stroke="#C3423F" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
 </line>
 </svg>
 </td>
@@ -202,7 +203,7 @@
 <tr class="vis-hover-entry" data-type="electricity">
 <td class="vis-swatch">
 <svg class="vis-swatch-symbol" height="0.85em" viewBox="0 0 16 16" width="0.850em">
-<line opacity="0.7" stroke="#86cae7" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
+<line data-symbol-of="mark-0" opacity="0.7" stroke="#86cae7" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
 </line>
 </svg>
 </td>
@@ -212,7 +213,7 @@
 <tr class="vis-hover-entry vis-nearest" data-type="coal">
 <td class="vis-swatch">
 <svg class="vis-swatch-symbol" height="0.85em" viewBox="0 0 16 16" width="0.850em">
-<line opacity="0.7" stroke="#C3423F" stroke-dasharray="2, 2" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
+<line data-symbol-of="mark-0" opacity="0.7" stroke="#C3423F" stroke-dasharray="2, 2" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
 </line>
 </svg>
 </td>
@@ -222,7 +223,7 @@
 <tr class="vis-hover-entry" data-type="oil">
 <td class="vis-swatch">
 <svg class="vis-swatch-symbol" height="0.85em" viewBox="0 0 16 16" width="0.850em">
-<line opacity="0.7" stroke="#C3423F" stroke-dasharray="6, 3" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
+<line data-symbol-of="mark-0" opacity="0.7" stroke="#C3423F" stroke-dasharray="6, 3" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
 </line>
 </svg>
 </td>
@@ -232,7 +233,7 @@
 <tr class="vis-hover-entry" data-type="firewood">
 <td class="vis-swatch">
 <svg class="vis-swatch-symbol" height="0.85em" viewBox="0 0 16 16" width="0.850em">
-<line opacity="0.7" stroke="#b5c969" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
+<line data-symbol-of="mark-0" opacity="0.7" stroke="#b5c969" stroke-width="2" x1="0" x2="16" y1="8" y2="8">
 </line>
 </svg>
 </td>

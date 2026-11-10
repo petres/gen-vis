@@ -8,6 +8,7 @@ import { withColor } from "@/layout";
 import { el, patch, setText } from "@/comp/html";
 import { symbolDefaults } from "@/utils/defaults";
 import { symbolOf, symbolShape } from "@/utils/def";
+import { symbolVars } from "@/utils/highlight";
 
 // the class of a value of a prop, e.g. of the legend props, as Vue joins
 // them: a string, the names of an object with a true value, a list of them
@@ -34,10 +35,14 @@ const entryAttrs = (own, props, after) => {
 const drawn = Symbol('symbol');
 
 // the symbol of an entry, its elements with the props of the category, drawn
-// again if they change, e.g. of the globals of a form element
+// again if they change, e.g. of the globals of a form element; an element
+// of a plot with a highlight (`mark`, see symbolHighlight of utils/def.js)
+// is of the stylesheet of its highlight (`data-symbol-of`), with the values
+// of the category of its props, e.g. "@color" (see symbolVars)
 const drawSymbol = (svg, info, scope) => {
     const props = info.elements.map(e => evaluate(e.props, scope));
-    const key = JSON.stringify(props);
+    const vars = info.elements.map(e => e.mark === undefined ? null : symbolVars(e.highlight, scope));
+    const key = JSON.stringify([props, vars]);
     if (svg[drawn] === key)
         return;
     svg[drawn] = key;
@@ -45,6 +50,10 @@ const drawSymbol = (svg, info, scope) => {
     info.elements.forEach((e, i) => {
         const node = svg.appendChild(create(e.type));
         setProps.call(node, props[i]);
+        if (e.mark !== undefined) {
+            node.setAttribute('data-symbol-of', e.mark);
+            Object.entries(vars[i]).forEach(([k, v]) => v !== null && node.style.setProperty(k, v));
+        }
     });
 };
 
