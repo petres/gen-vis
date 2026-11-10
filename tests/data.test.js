@@ -67,6 +67,22 @@ describe('parseData', () => {
         expect(warnings).toEqual(["the column 'b' is in the header 2 times, the rows have the values of the last one"]);
     });
 
+    test('CSV of one column of semicolons or of tabs: a hint how to read it', async () => {
+        const warnings = [];
+        const parse = (text, format) => parseData(text, format, null, w => warnings.push(w));
+        expect([...await parse('jahr;wert\n2024;1,5')]).toEqual([{ 'jahr;wert': '2024;1' }]);
+        expect(warnings).toEqual([`the CSV has one column 'jahr;wert', its values are separated by semicolons: gen-vis reads CSV of commas (with decimal points) or TSV ("dataFormat": "tsv"), save the file in one of them`]);
+        warnings.length = 0;
+        await parse('jahr\twert\n2024\t1.5', 'csv');
+        expect(warnings).toEqual([`the CSV has one column 'jahr\\twert' of tabs, it is TSV: "dataFormat": "tsv" reads it`]);
+        // one column, of commas, or TSV: none
+        warnings.length = 0;
+        await parse('jahr\n2024');
+        await parse('a;b,c\n1;2,3');
+        await parse('a;b\tc\n1;2\t3', 'tsv');
+        expect(warnings).toEqual([]);
+    });
+
     test('binary data of another realm, e.g. of a worker (review of 5.0)', async () => {
         const buffer = vm.runInNewContext('new Uint8Array([97, 44, 98, 10, 49, 44, 50]).buffer');
         expect(buffer instanceof ArrayBuffer).toBe(false);

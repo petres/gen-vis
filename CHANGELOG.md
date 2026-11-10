@@ -606,6 +606,10 @@ Migration notes, to check by hand after `gen-vis migrate`:
 
 ### Fixes of the data (review of the release)
 
+- CSV of one column of semicolons (e.g. of a spreadsheet in German) or of
+  tabs gets a warning which says how to read it, before the dims miss its
+  columns; `gen-vis check` prints the warnings of the data (also of a
+  column twice in the header).
 - Documented: a local time skipped at the change to summer time (e.g.
   `2024-03-31 02:30` in Vienna) is the one an hour later, as of `Date`; an
   offset, `Z` or a `utc` scale makes such times unambiguous.

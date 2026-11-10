@@ -100,7 +100,23 @@ const parseData = async (data, format, columns = null, warn = null) => {
             throw new Error('the JSON is not a list of rows');
         return rowsOf(rows, warn);
     }
-    return duplicateColumns(d3.csvParse(data), warn);
+    return separators(duplicateColumns(d3.csvParse(data), warn), warn);
+};
+
+// CSV of one column whose name has semicolons or tabs is of another
+// separator, e.g. of a spreadsheet in German (semicolons, decimal commas),
+// `warn(message)` tells how to read it, before the dims miss its columns
+const separators = (rows, warn) => {
+    const columns = rows.columns ?? [];
+    const name = columns[0];
+    if (columns.length != 1 || typeof name != 'string')
+        return rows;
+    const short = name.length > 40 ? `${name.slice(0, 40)}…` : name;
+    if (name.includes('\t'))
+        warn?.(`the CSV has one column '${short.replaceAll('\t', '\\t')}' of tabs, it is TSV: "dataFormat": "tsv" reads it`);
+    else if (name.includes(';'))
+        warn?.(`the CSV has one column '${short}', its values are separated by semicolons: gen-vis reads CSV of commas (with decimal points) or TSV ("dataFormat": "tsv"), save the file in one of them`);
+    return rows;
 };
 
 // a date without a time zone: of ISO, e.g. "2022-06-01", "2022-06", "2022"

@@ -86,7 +86,8 @@ export const createChecker = async ({ root = null } = {}) => {
             throw new Error(`the file ${file ?? new URL(url).pathname} does not exist${file || root ? '' : ' (a site-absolute path: set --root to the site\'s directory)'}`);
         return file;
     };
-    const rowsOf = async (def, url, data) => {
+    // `warn(message)` of the warnings of the data, e.g. CSV of semicolons
+    const rowsOf = async (def, url, data, warn) => {
         let file = data ?? null;
         if (file === null) {
             if (typeof def.data != 'string')
@@ -100,7 +101,8 @@ export const createChecker = async ({ root = null } = {}) => {
             throw new Error(`the data ${file} does not exist`);
         const format = gv.dataFormat(file, data == null ? def.dataFormat : undefined);
         try {
-            return await gv.parseData(format == 'parquet' || /\.parquet$/i.test(file) ? readFileSync(file) : readFileSync(file, 'utf8'), format);
+            return await gv.parseData(format == 'parquet' || /\.parquet$/i.test(file) ? readFileSync(file) : readFileSync(file, 'utf8'), format, null,
+                message => warn(`${data == null ? 'data' : `data ${file}`}: ${message}`));
         } catch (error) {
             throw new Error(`the data ${file} could not be read: ${error.message}`);
         }
@@ -120,8 +122,9 @@ export const createChecker = async ({ root = null } = {}) => {
         const def = await gv.resolveParents(raw, url, u => readFileSync(fileOfUrl(u), 'utf8')).catch(error => {
             throw paths(error);
         });
-        const rows = await rowsOf(def, url, data);
-        const warnings = gv.validateDef(def, rows);
+        const read = [];
+        const rows = await rowsOf(def, url, data, message => read.push(message));
+        const warnings = [...read, ...gv.validateDef(def, rows)];
         // the errors of the schema of a definition of 5.0, not the ones validateDef names
         const old = gv.isDefinition4(def);
         // (of the file as it is written, as an editor checks it: the merge
