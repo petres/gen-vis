@@ -344,10 +344,17 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
     // the bars of the positions are horizontal ones, see `orient`: of a
     // categorical y and an x which is not, or of a y which is not continuous
     // (e.g. a column of names, its type follows from the rows) and an x
-    // which is, e.g. of `"zero": true`
-    const ofDim = d => d && Object.hasOwn(dims, d) ? dims[d] : undefined;
+    // which is, e.g. of `"zero": true`; not of an x of an `interval` (its
+    // periods are the bands of vertical bars, e.g. months, y a column of
+    // numbers of no type)
+    // (a dim of the scale of another one, e.g. the column of the target of a
+    // tick beside bars, `"scale": { "of": "x" }`, is of that one)
+    const ofDim = (d, depth = 0) => {
+        const m = d && Object.hasOwn(dims, d) ? dims[d] : undefined;
+        return depth < 8 && typeof m?.scale?.of == 'string' && m.scale.of != d ? ofDim(m.scale.of, depth + 1) ?? m : m;
+    };
     const horizontalOf = (x, y) => orient == 'horizontal' || (orient === undefined && y && ((centered(y.dim) && !(x && centered(x.dim)))
-        || (x && isContinuous(ofDim(x.dim)) && !isContinuous(ofDim(y.dim)) && !centered(x.dim))));
+        || (x && isContinuous(ofDim(x.dim)) && ofDim(x.dim)?.interval === undefined && !isContinuous(ofDim(y.dim)) && !centered(x.dim))));
     // the dims of positions which are bands by the other one, see banded
     const bands = new Set();
     // the position of a dim, of a categorical one the center of its band

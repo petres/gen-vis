@@ -27,7 +27,8 @@ const intervalOf = (spec, utc = false) => {
     const base = utc ? inUtc : local;
     // the period starts at the date, e.g. a half year in April, so it is
     // `count` units long, not up to the next multiple of them (d3's `every`)
-    return count > 0 ? { offset: d => base.offset(d instanceof Date ? d : new Date(d), count), floor: d => base.floor(d) } : null;
+    // (`range` the starts of the units from `lo` to before `hi`, e.g. ticks)
+    return count > 0 ? { offset: d => base.offset(d instanceof Date ? d : new Date(d), count), floor: d => base.floor(d), range: (lo, hi) => base.range(lo, hi) } : null;
 };
 
 // the offset of the center of a band, the position of band scales is its start
@@ -482,7 +483,14 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         s.ticks = count => {
             const all = ticks.call(s, count);
             const whole = all.filter(t => +period.floor(t) == +t);
-            return whole.length >= 2 ? whole : all;
+            if (whole.length >= 2)
+                return whole;
+            // a domain of a few periods (e.g. 3 months, d3 ticks weeks):
+            // the starts of its periods, every n-th of more than `count`
+            const [lo, hi] = d3.extent(s.domain());
+            const starts = period.range(lo, new Date(+hi + 1));
+            const every = Math.ceil(starts.length/Math.max(1, count ?? 10));
+            return starts.length ? starts.filter((t, i) => i % every == 0) : all;
         };
     }
     // the periods of the dates, e.g. of bars in their period, see rowValue of

@@ -25,7 +25,7 @@ describe('the messages of the draw', () => {
     test('an error of a mark type names the mark, also by its id', async () => {
         const bars = { type: 'bar', id: 'bars', by: 'land' };
         expect(await errorOf(def({ marks: [{ type: 'line' }, bars] })))
-            .toBe(`marks[1] ('bars'): the bars of a continuous scale need a 'width' in pixels, e.g. "width": 8, or a categorical dim of their position`);
+            .toBe(`marks[1] ('bars'): the bars of a continuous scale need a 'width' in pixels, e.g. "width": 8, a categorical dim of their position or an "interval" of dates (horizontal bars: "orient": "horizontal")`);
     });
 
     test('the errors of the load and of the scales name the parts of the definition, not the engine', async () => {

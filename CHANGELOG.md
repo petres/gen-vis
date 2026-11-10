@@ -84,7 +84,12 @@ meets:
 Also new in the last steps: `interval` of `minute` and `hour` (an unknown
 interval is an error naming it), a warning of a `text` or `label` mark
 without a `text`, a warning of the load of a reference (`@note`) to a
-column without a dim, and expressions nest at most 100 levels.
+column without a dim, and expressions nest at most 100 levels. Bars of
+an `interval` of dates (e.g. months) are vertical also of a `y` of no
+type (they were horizontal and failed for a missing `width`), a few
+periods tick at their starts (not weeks of 3 months), a `tick` of a
+column beside horizontal bars runs across their bands, and rules of no
+length (a `tick` across a continuous scale) warn.
 
 ### The language
 

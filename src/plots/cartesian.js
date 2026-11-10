@@ -5,6 +5,7 @@ import { bandCenter } from "@/utils/scales";
 import { perGroup, perRow, finite, curve, points, propScale } from "@/plots/elements";
 import { pixelOffset } from "@/utils/axis";
 import { refOf } from "@/utils/expr";
+import { markPath, warnOnce } from "@/utils/warn";
 
 // the scale of a prop of a bar, e.g. of "@x:scaled"
 const barScale = (plot, ctx, prop, type) => {
@@ -17,7 +18,7 @@ const barScale = (plot, ctx, prop, type) => {
 // the default width of the bars of a categorical scale
 const barWidth = (scale, type) => {
     if (!scale.step)
-        throw new Error(`the ${type.split(':')[1]}s of a continuous scale need a 'width' in pixels, e.g. "width": 8, or a categorical dim of their position`);
+        throw new Error(`the ${type.split(':')[1]}s of a continuous scale need a 'width' in pixels, e.g. "width": 8, a categorical dim of their position or an "interval" of dates (horizontal bars: "orient": "horizontal")`);
     return scale.bandwidth() || scale.step()*(1 - scale.padding());
 };
 
@@ -117,12 +118,19 @@ export default {
         marks(groups, plot, ctx) {
             const o = pixelOffset();
             const vertical = 'x' in plot.props;
-            return perRow(groups, "line", v => {
+            const layer = perRow(groups, "line", v => {
                 const { x, y, x1, x2, y1, y2, ...props } = v;
                 return vertical
                     ? { ...props, x1: x + o, x2: x + o, y1: y1 ?? 0, y2: y2 ?? ctx.innerHeight }
                     : { ...props, x1: x1 ?? 0, x2: x2 ?? ctx.innerWidth, y1: y + o, y2: y + o };
             });
+            // rules of given ends which are all of no length, e.g. ticks across
+            // a continuous scale, which has no bands
+            const [a, b] = vertical ? ['y1', 'y2'] : ['x1', 'x2'];
+            const items = [...(layer.items ?? []), ...(layer.groups ?? []).flatMap(g => g.items)];
+            if (a in plot.props && b in plot.props && items.length && items.every(e => !(Math.abs(e[a] - e[b]) > 0)))
+                warnOnce(ctx.store, `rule:${plot.id}`, `${markPath(ctx.store?.def, plot, true)}: the rules have no length, e.g. ticks across a continuous ${vertical ? 'y' : 'x'}: a tick runs across the band of a categorical dim or the period of an "interval" of dates`);
+            return layer;
         },
     },
 

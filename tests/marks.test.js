@@ -529,3 +529,34 @@ describe('the default fill of bars, areas and arcs without categories', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('bars and ticks of periods and of the scale of another dim (final review of 5.0)', () => {
+    const lines = el => [...el.querySelectorAll('g.vis-mark line')].filter(l => l[itemOf]);
+    const months = 'd,b\n2020-01-01,3\n2020-02-01,4\n2020-03-01,5';
+
+    test('bars of an interval of months are vertical without a numeric part of y, the ticks are the starts of the months', async () => {
+        const el = await mount({ def: { width: 500, height: 250, dims: { x: { column: 'd', interval: 'month' }, y: 'b' }, marks: { type: 'bar' } }, data: months });
+        const bars = rects(el);
+        expect(bars.length).toBe(3);
+        // vertical: of the same base, heights of the values
+        expect(new Set(bars.map(r => Math.round(num(r, 'y') + num(r, 'height')))).size).toBe(1);
+        expect(num(bars[2], 'height')).toBeGreaterThan(num(bars[0], 'height'));
+        const ticks = [...el.querySelectorAll('.vis-axis-x .tick text, [data-dim="x"] .tick text')].map(t => t.textContent);
+        expect(ticks.length).toBeGreaterThanOrEqual(3);
+        expect(ticks.length).toBeLessThanOrEqual(4);
+        expect(ticks.join(' ')).not.toMatch(/\d\d\. /);
+        expect(errors).toEqual([]);
+    });
+
+    test('a tick of a column beside horizontal bars runs across their bands, a tick of no length warns', async () => {
+        const el = await mount({ def: { width: 400, height: 200, dims: { x: { column: 'b', zero: true }, y: 'a' },
+            marks: [{ type: 'bar' }, { type: 'tick', x: 't', stroke: 'red' }] }, data: 'a,b,t\nA,3,4\nB,4,2\nC,5,6' });
+        const [tick] = lines(el);
+        expect(num(tick, 'x1')).toBeCloseTo(num(tick, 'x2'));
+        expect(num(tick, 'y2') - num(tick, 'y1')).toBeGreaterThan(10);
+        expect(errors).toEqual([]);
+        await mount({ def: { width: 400, height: 200, dims: { x: { column: 'g', type: 'numeric' }, y: 'v' }, marks: { type: 'tick' } }, data: 'g,v\n1,2\n2,3' });
+        expect(errors).toEqual(['gen-vis inline definition: marks[0]: the rules have no length, e.g. ticks across a continuous y: a tick runs across the band of a categorical dim or the period of an "interval" of dates']);
+        errors.length = 0;
+    });
+});
