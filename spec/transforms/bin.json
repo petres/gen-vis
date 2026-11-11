@@ -947,5 +947,80 @@
         "count": 2
       }
     ]
+  },
+  {
+    "name": "a step: a value next to an edge is on it, e.g. below the first edge or the start of its class by the rounding of the edges",
+    "rows": [
+      {
+        "v": -29.900000000000002
+      },
+      {
+        "v": -29.6
+      },
+      {
+        "v": -29.700000000000003
+      }
+    ],
+    "transform": {
+      "type": "bin",
+      "column": "v",
+      "step": 0.1,
+      "replace": true
+    },
+    "columns": {},
+    "result": [
+      {
+        "start": -29.9,
+        "end": -29.8,
+        "count": 1
+      },
+      {
+        "start": -29.8,
+        "end": -29.7,
+        "count": 0
+      },
+      {
+        "start": -29.7,
+        "end": -29.6,
+        "count": 2
+      }
+    ]
+  },
+  {
+    "name": "a step of more than 10000 classes is an error",
+    "rows": [
+      {
+        "v": 0
+      },
+      {
+        "v": 1000000000
+      }
+    ],
+    "transform": {
+      "type": "bin",
+      "column": "v",
+      "step": 1
+    },
+    "error": "bin: the step 1 makes 1000000000 classes of 0 to 1000000000, more than 10000, a larger step makes fewer"
+  },
+  {
+    "name": "a range of edges of more than 10000 classes is an error",
+    "rows": [
+      {
+        "v": 1
+      }
+    ],
+    "transform": {
+      "type": "bin",
+      "column": "v",
+      "edges": [
+        {
+          "from": 0,
+          "to": 20000,
+          "step": 1
+        }
+      ]
+    },
+    "error": "bin: the step 1 makes 20000 classes of 0 to 20000, more than 10000"
   }
 ]

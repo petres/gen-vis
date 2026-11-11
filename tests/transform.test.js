@@ -539,3 +539,25 @@ describe('names of the prototype of objects are no columns (review of 5.0)', () 
         expect(applyTransforms([{ constructor: 'a' }, { constructor: 'b' }], [{ type: 'calc', expr: '@constructor', as: 'out' }]).get('out')).toEqual(['a', 'b']);
     });
 });
+
+describe('the classes of a step of a bin (review of 5.0)', () => {
+    const bin = (data, step) => applyTransforms(data, [{ type: 'bin', column: 'v', step, replace: true }]);
+
+    test('more than 10000 classes are an error which names the range and the step, not rows without end', () => {
+        expect(() => bin([{ v: 0 }, { v: 1e9 }], 1)).toThrow('bin: the step 1 makes 1000000000 classes of 0 to 1000000000, more than 10000');
+        expect(() => applyTransforms([{ v: 1 }], [{ type: 'bin', column: 'v', edges: [{ from: 0, to: 1, step: 0.00001 }] }])).toThrow('more than 10000');
+        expect(bin([{ v: 0 }, { v: 10000 }], 1).rows).toHaveLength(10000);
+    });
+
+    test('a value one ulp below the first edge is in the first class, without a warning', () => {
+        const columns = bin([{ v: -29.900000000000002 }, { v: -29.6 }], 0.1);
+        expect(columns.notes).toEqual([]);
+        expect(columns.rows.map(r => [r.start, r.count])).toEqual([[-29.9, 1], [-29.8, 0], [-29.7, 1]]);
+        // also one above the last edge, and one next to an edge between
+        const above = bin([{ v: 0.1 }, { v: 0.30000000000000004 }, { v: 0.19999999999999998 }], 0.1);
+        expect(above.notes).toEqual([]);
+        expect(above.rows.map(r => [r.start, r.count])).toEqual([[0.1, 1], [0.2, 2]]);
+        // the edges of `edges` are the ones given
+        expect(applyTransforms([{ v: 0.09999999999999999 }], [{ type: 'bin', column: 'v', edges: [0.1, 0.2], replace: true }]).notes).toHaveLength(1);
+    });
+});

@@ -142,7 +142,14 @@ range from the largest multiple of the step not above the least value
 (`floor(least/step)*step`) to the smallest multiple not below the largest
 value (`ceil(largest/step)*step`), at least one class, e.g. of a single 10
 and a step of 10 the class 10 to 20; without values there are no classes
-and no note. Fewer than two different edges are no classes, with the note
+and no note. A value within `step*1e-9` of an edge of a `step` alone is
+on it, e.g. -29.900000000000002 on the rounded edge -29.9 of the step 0.1,
+not outside the edges or in the class before, also the least and the
+largest value of the range (`floor(least/step + 1e-9)`, `ceil(largest/step
+- 1e-9)`). A range of more than 10000
+classes (of the `edges` or of a `step` alone) is the error `bin: the step
+<step> makes <n> classes of <from> to <to>, more than 10000, a larger step
+makes fewer`. Fewer than two different edges are no classes, with the note
 `transform[<i>] (bin): the edges <edges as JSON> are no classes, at least
 two different ones are needed`. A class includes its start, the last one
 also its end; missing values are left out, values outside the edges too,

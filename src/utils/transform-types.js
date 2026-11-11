@@ -449,6 +449,9 @@ const randomOf = text => {
 // the edges of the classes of a bin: numbers and ranges { "from", "to",
 // "step" } (from and to included if they are steps), sorted, or of `step`
 // alone the multiples of it around the values, null without two of them
+// (a range of more than `maxClasses` classes is an error, e.g. of a step of
+// 1 of values up to 1e9, not rows which use up the memory)
+const maxClasses = 10000;
 const binEdges = (t, values) => {
     const range = ({ from, to, step }) => {
         const [a, b, d] = [from, to, step].map(toNumber);
@@ -456,6 +459,8 @@ const binEdges = (t, values) => {
             throw new Error(`bin: a range of edges is { "from": 50, "to": 250, "step": 5 }`);
         // as integers of steps, so e.g. 0.1 steps have no rounding errors
         const count = Math.floor((b - a)/d + 1e-9);
+        if (count > maxClasses)
+            throw new Error(`bin: the step ${d} makes ${count} classes of ${a} to ${b}, more than ${maxClasses}, a larger step makes fewer`);
         return Array.from({ length: count + 1 }, (_, k) => +(a + k*d).toPrecision(12));
     };
     let edges;
@@ -476,7 +481,9 @@ const binEdges = (t, values) => {
             }
         if (lo > hi)
             return null;
-        edges = range({ from: Math.floor(lo/step)*step, to: Math.max(Math.ceil(hi/step), Math.floor(lo/step) + 1)*step, step });
+        // (a value next to a multiple of the step is on it, see binRows)
+        const first = Math.floor(lo/step + 1e-9);
+        edges = range({ from: first*step, to: Math.max(Math.ceil(hi/step - 1e-9), first + 1)*step, step });
     } else
         throw new Error(`bin: the 'edges' of the classes are needed, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143], or a 'step'`);
     edges = [...new Set(edges.filter(e => e !== null && Number.isFinite(e)))].sort((a, b) => a - b);
@@ -500,6 +507,10 @@ const binRows = (t, { n, get, numbers, groups }) => {
     const names = { start: t.start ?? 'start', end: t.end ?? 'end', value: t.as ?? 'count' };
     const last = edges ? edges.length - 2 : -1;
     let outside = 0;
+    // the edges of a `step` are rounded multiples of it, a value next to one
+    // is on it, e.g. -29.900000000000002 on the edge -29.9 of the step 0.1,
+    // not outside the edges or in the class before
+    const near = t.edges === undefined && edges ? toNumber(t.step)*1e-9 : 0;
     // one group of all rows without `by`, also without rows, otherwise the
     // groups of rows with values, e.g. not the ones of the rows of another bin
     const all = by.length == 0 ? [Array.from({ length: n }, (_, i) => i)] : groups.filter(g => g.some(i => values[i] !== null));
@@ -509,7 +520,7 @@ const binRows = (t, { n, get, numbers, groups }) => {
             const v = values[i];
             if (v === null)
                 continue;
-            if (v < edges[0] || v > edges[last + 1]) {
+            if (v < edges[0] - near || v > edges[last + 1] + near) {
                 outside++;
                 continue;
             }
@@ -518,7 +529,7 @@ const binRows = (t, { n, get, numbers, groups }) => {
             let hi = last + 1;
             while (hi - lo > 1) {
                 const mid = (lo + hi) >> 1;
-                if (edges[mid] <= v)
+                if (edges[mid] <= v + near)
                     lo = mid;
                 else
                     hi = mid;

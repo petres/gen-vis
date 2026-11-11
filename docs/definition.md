@@ -321,7 +321,8 @@ column:
   smallest one not below the largest value (a single 10 of a step of 10 is
   the class 10 to 20). A class includes its start, the last
   one also its end, the values outside the edges are left out (a warning
-  says how many). The rows stay, so the marks draw both: a mark draws the
+  says how many). A step which makes more than 10,000 classes of the values
+  is an error, e.g. a step of 1 of values up to a billion. The rows stay, so the marks draw both: a mark draws the
   rows with the values it uses, e.g. the bars the rows of the classes and
   the points of a strip plot the rows of the data, see
   `data/stats/histogram.json`. With `"replace": true` the rows of the
