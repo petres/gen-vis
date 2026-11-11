@@ -12,21 +12,22 @@ import { errors, useDom, rendered } from './dom.js';
 
 useDom();
 
+// the legend of names only: the lines of the SVG are the tick marks
 const def = () => ({
-    options: { width: 600, height: 300, title: 'Titel', subtitle: 'Untertitel', footer: 'Quelle' },
+    width: 600, height: 300, title: 'Titel', subtitle: 'Untertitel', source: 'Quelle',
     globals: { unit: 'a' },
-    formElements: [{ id: 'unit', name: 'Einheit', ref: 'unit', type: 'radio', values: [
+    controls: [{ id: 'unit', name: 'Einheit', global: 'unit', type: 'radio', values: [
         { id: 'a', name: 'Absolut', value: 'a' },
         { id: 'b', name: 'Anteil', value: 'b' },
     ] }],
-    mapping: {
+    dims: {
         x: { column: 'year', type: 'numeric', axis: { title: { name: 'Jahr', offset: 30 } } },
         y: 'value',
-        c: { column: 'land', legend: {}, categories: { Wien: { color: 'rgba(255, 0, 0, 0.5)' }, Tirol: { color: 'blue' } } },
+        c: { column: 'land', legend: { symbol: null }, categories: { Wien: 'rgba(255, 0, 0, 0.5)', Tirol: 'blue' } },
     },
-    plot: [
-        { type: 'line', by: ['c'] },
-        { type: 'text', by: ['c'], props: { text: '@c', x: '@x:scaled', y: '@y:scaled', 'dominant-baseline': 'middle', class: 'own', style: 'font-weight: bold' } },
+    marks: [
+        { type: 'line', by: 'c' },
+        { type: 'text', by: 'c', text: '@c', 'dominant-baseline': 'middle', class: 'own', style: 'font-weight: bold' },
     ],
 });
 const data = 'year,value,land\n2020,1,Wien\n2021,2,Wien\n2020,2,Tirol\n2021,3,Tirol';
@@ -83,7 +84,7 @@ describe('exportSvg', () => {
         // only elements of SVG
         expect(all.filter(e => e.namespaceURI != 'http://www.w3.org/2000/svg')).toEqual([]);
         // the background of the PNG, then the texts of the HTML as text, with
-        // the selection and without the form elements
+        // the selection and without the controls
         expect(root.firstElementChild.tagName).toBe('rect');
         expect(root.firstElementChild.getAttribute('fill')).toBe('#FFFFFF');
         expect(texts(root)).toEqual(expect.arrayContaining(['Titel', 'Untertitel', 'Einheit: Absolut', 'Wien', 'Tirol', 'Quelle', 'Jahr']));
@@ -99,7 +100,7 @@ describe('exportSvg', () => {
 
     test('the clip of the plot area of a mark with `clip` is in the SVG, with its id', async () => {
         const clipped = def();
-        clipped.plot[0].clip = true;
+        clipped.marks[0].clip = true;
         const vis = await chart({ def: clipped });
         const root = parse(await vis.exportSvg());
         const clip = root.querySelector('clipPath[id$="-clip"]');
@@ -262,11 +263,11 @@ describe('the merged definition of the export page (genVisExport.resolve, scheme
     // which colors the categories with the scheme house
     const parent = () => {
         const d = def();
-        d.$schema = 'https://unpkg.com/@preschen/gen-vis@4/schema.json';
-        d.mapping.c = { column: 'land', fromData: true, legend: {} };
+        d.$schema = 'https://unpkg.com/@preschen/gen-vis@5/schema.json';
+        d.dims.c = { column: 'land', fromData: true, legend: { symbol: null } };
         return d;
     };
-    const child = { parent: 'parent.json', options: { title: 'Kind' }, mapping: { c: { scheme: 'house' } } };
+    const child = { parent: 'parent.json', title: 'Kind', dims: { c: { scheme: 'house' } } };
     const files = { 'http://h/defs/parent.json': JSON.stringify(parent()), 'http://h/defs/child.json': JSON.stringify(child) };
     let fetched;
     const serve = () => {
@@ -287,14 +288,15 @@ describe('the merged definition of the export page (genVisExport.resolve, scheme
     test('resolve: the definition with its parents, merged and not normalized, of def and baseUrl or of defUrl', async () => {
         serve();
         const merged = await window.genVisExport.resolve({ def: child, baseUrl: 'http://h/defs/' });
-        expect(merged.options).toEqual({ ...parent().options, title: 'Kind' });
-        expect(merged.plot).toEqual(parent().plot);
-        expect(merged.mapping.c).toEqual({ column: 'land', fromData: true, legend: {}, scheme: 'house' });
+        const options = d => ({ width: d.width, height: d.height, title: d.title, subtitle: d.subtitle, source: d.source });
+        expect(options(merged)).toEqual({ ...options(parent()), title: 'Kind' });
+        expect(merged.marks).toEqual(parent().marks);
+        expect(merged.dims.c).toEqual({ column: 'land', fromData: true, legend: { symbol: null }, scheme: 'house' });
         // the y of the definition, not the normalized one
-        expect(merged.mapping.y).toBe('value');
+        expect(merged.dims.y).toBe('value');
         // the base of the page is removed again, the definition object is as it was
         expect(document.querySelector('base')).toBeNull();
-        expect(child.options).toEqual({ title: 'Kind' });
+        expect(child).toEqual({ parent: 'parent.json', title: 'Kind', dims: { c: { scheme: 'house' } } });
         expect(await window.genVisExport.resolve({ defUrl: 'http://h/defs/child.json', width: '16cm' })).toEqual(merged);
         expect(await window.genVisExport.resolve({ def: JSON.stringify(child), baseUrl: 'http://h/defs/' })).toEqual(merged);
         // a chart drawn before stays
@@ -308,8 +310,8 @@ describe('the merged definition of the export page (genVisExport.resolve, scheme
         serve();
         const seen = [];
         const schemes = merged => {
-            seen.push(merged.plot.map(p => p.type));
-            return { house: merged.plot.some(p => p.type == 'line') ? ['#112233', '#445566'] : ['#FFFFFF'] };
+            seen.push(merged.marks.map(p => p.type));
+            return { house: merged.marks.some(p => p.type == 'line') ? ['#112233', '#445566'] : ['#FFFFFF'] };
         };
         await window.genVisExport({ defUrl: 'http://h/defs/child.json', data, schemes });
         expect(seen).toEqual([['line', 'text']]);
@@ -320,9 +322,9 @@ describe('the merged definition of the export page (genVisExport.resolve, scheme
 
         const later = async merged => {
             await new Promise(r => setTimeout(r, 10));
-            return { house: [merged.options.title == 'Kind' ? '#AA0000' : '#FFFFFF'] };
+            return { house: [merged.title == 'Kind' ? '#AA0000' : '#FFFFFF'] };
         };
-        const defaults = async merged => ({ axis: { tickMarks: { size: merged.plot.length + 2 } } });
+        const defaults = async merged => ({ axis: { tickMarks: { size: merged.marks.length + 2 } } });
         const promised = await window.genVisExport({ def: child, baseUrl: 'http://h/defs/', data, schemes: later, defaults });
         expect(strokes()).toEqual([['Wien', '#AA0000'], ['Tirol', '#AA0000']]);
         expect(marks(promised.svg)).toEqual(Array(2).fill('4'));
@@ -340,7 +342,7 @@ describe('the merged definition of the export page (genVisExport.resolve, scheme
         await expect(genVisExport.resolve({ def: { ...child, parent: 'missing.json' }, baseUrl: 'http://h/defs/' }))
             .rejects.toThrow("Could not load 'http://h/defs/missing.json': 404 Not Found");
         await expect(genVisExport.resolve({ defUrl: 'http://h/defs/nope.json' })).rejects.toThrow("Could not load 'http://h/defs/nope.json'");
-        await expect(genVisExport.resolve({ def: '{"plot": ' })).rejects.toThrow('Invalid JSON in definition attribute');
+        await expect(genVisExport.resolve({ def: '{"marks": ' })).rejects.toThrow('Invalid JSON in definition attribute');
         await expect(genVisExport.resolve({})).rejects.toThrow('either def (a definition) or defUrl');
         await expect(genVisExport.resolve({ def: child, sheme: {} })).rejects.toThrow('unknown options sheme');
         expect([...document.querySelectorAll('base')]).toEqual(bases);
@@ -363,7 +365,7 @@ describe('the merged definition of the export page (genVisExport.resolve, scheme
 describe('each call of the export page loads its files anew', () => {
     // a definition file with its data file, of the responses of `files`,
     // a response of `slow` is answered once `release` is called
-    const file = { ...def(), $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', data: 'data.csv' };
+    const file = { ...def(), $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', data: 'data.csv' };
     const files = {};
     const slow = new Set();
     let fetched;
@@ -407,8 +409,8 @@ describe('each call of the export page loads its files anew', () => {
         expect(fetched.filter(u => u.endsWith('def.json'))).toHaveLength(2);
         expect(fetched.filter(u => u.endsWith('data.csv'))).toHaveLength(2);
         // also by resolve
-        files['http://h/defs/def.json'] = JSON.stringify({ ...file, options: { ...file.options, title: 'Neu' } });
-        expect((await window.genVisExport.resolve(options)).options.title).toBe('Neu');
+        files['http://h/defs/def.json'] = JSON.stringify({ ...file, title: 'Neu' });
+        expect((await window.genVisExport.resolve(options)).title).toBe('Neu');
         expect(errors).toEqual([]);
     });
 
@@ -435,7 +437,7 @@ describe('legend entries without a symbol', () => {
     test('no svg before the name (null, no elements or no size), keyboard, highlight and export as with one', async () => {
         for (const symbol of [null, { size: 0, elements: [] }, { elements: [] }]) {
             const d = def();
-            d.mapping.c.legend = { symbol };
+            d.dims.c.legend = { symbol };
             const vis = createGenVis(document.body.appendChild(document.createElement('div')), { def: d, data });
             await rendered(vis.el);
             const entries = [...vis.el.querySelectorAll('.vis-legend .vis-legend-entry')];
