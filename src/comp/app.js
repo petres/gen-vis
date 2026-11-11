@@ -240,7 +240,11 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         emit,
         files: { save: () => exportPng(), copy: () => copyPng(), csv: () => exportCsv(), svg: () => saveSvg() },
         stateChanged: () => emit('update:state', store.state),
-        drawn: () => drawDebug(),
+        // after every draw, e.g. of a new width or a legend toggled
+        drawn: () => {
+            drawDebug();
+            measureLater();
+        },
         showError: e => showError(e),
     };
 
@@ -348,19 +352,30 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         }
     };
 
-    // the height is measured at the next frame, when the browser lays the
-    // page out anyway, a measure now would lay it out once more, e.g. of
-    // every chart of a page drawn at once
     const rendered = () => {
+        measureLater();
+        emit('rendered');
+    };
+
+    // the height of a draw is measured at the next frame, when the browser
+    // lays the page out anyway, a measure now would lay it out once more,
+    // e.g. of every chart of a page drawn at once; the destroy measures it
+    // only if that frame has not come yet (`unmeasured`), a measure of every
+    // chart removed would lay out the page once per chart
+    let unmeasured = false;
+    const measureLater = () => {
+        if (unmeasured)
+            return;
+        unmeasured = true;
         requestAnimationFrame(() => {
-            if (!removed)
+            if (!removed && unmeasured)
                 remember();
         });
-        emit('rendered');
     };
 
     // the height of the visualisation drawn, see heights
     const remember = () => {
+        unmeasured = false;
         if (!store.loaded || error || props.debug)
             return;
         heights.delete(heightKey);
@@ -547,7 +562,8 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             if (removed)
                 return;
             stopObserving();
-            remember();
+            if (unmeasured)
+                remember();
             // a definition still loaded is not shown, nor its error
             store.cancel();
             // a hover shown ends with `hover` null, e.g. for the highlights

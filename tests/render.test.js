@@ -2945,6 +2945,43 @@ describe('layout shifts', () => {
         expect(outer(other).style.minHeight).toBe('');
     });
 
+    test('the height is measured in the frame after a draw, the destroy measures only a draw not measured yet', async () => {
+        const measured = [];
+        const measure = Element.prototype.getBoundingClientRect;
+        Element.prototype.getBoundingClientRect = function () {
+            measured.push(this);
+            return measure.call(this);
+        };
+        onTestFinished(() => Element.prototype.getBoundingClientRect = measure);
+        const frame = () => new Promise(r => requestAnimationFrame(r));
+        const def = lineDef({ title: 'Gemessen' });
+        const el = document.body.appendChild(document.createElement('div'));
+        const vis = createGenVis(el, { def, data: lineData });
+        await rendered(el);
+        await nextTick();
+        await frame();
+        const node = outer(el);
+        expect(measured).toContain(node);
+        measured.length = 0;
+        vis.destroy();
+        expect(measured).toEqual([]);
+
+        // a draw (a legend toggled) is measured in its frame
+        const again = document.body.appendChild(document.createElement('div'));
+        const shown = createGenVis(again, { def, data: lineData });
+        await rendered(again);
+        await nextTick();
+        await frame();
+        measured.length = 0;
+        again.querySelector('.vis-legend-entry').click();
+        await nextTick();
+        await frame();
+        expect(measured).toContain(outer(again));
+        measured.length = 0;
+        shown.destroy();
+        expect(measured).toEqual([]);
+    });
+
     test('a definition loaded after a newer one was given is not shown, also not instead of its error', async () => {
         const serve = fetch;
         let release;
