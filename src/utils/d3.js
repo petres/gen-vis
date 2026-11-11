@@ -8,7 +8,7 @@ import * as d3Scale from 'd3-scale';
 import { byPrefix, named } from '@/utils/registry';
 
 export { bisectCenter, bisectLeft, bisectRight, extent, greatest, group, least, max, mean, min, nice, range, tickStep, ticks } from 'd3-array';
-export { csvFormat, csvParse, tsvParse } from 'd3-dsv';
+export { csvFormat, dsvFormat } from 'd3-dsv';
 export { formatLocale, precisionFixed } from 'd3-format';
 export { interpolate, piecewise } from 'd3-interpolate';
 export { scaleLinear } from 'd3-scale';

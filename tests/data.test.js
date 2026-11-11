@@ -27,6 +27,40 @@ describe('parseData', () => {
         expect(await parseData(' \n[{"a": 1}]')).toEqual([{ a: 1 }]);
     });
 
+    test('csv and tsv are read without a compiled function, e.g. of a page with a Content Security Policy without unsafe-eval', async () => {
+        const compile = globalThis.Function;
+        // as the browser of such a page: new Function and Function() throw
+        globalThis.Function = new Proxy(compile, {
+            construct() { throw new EvalError('unsafe-eval is not allowed'); },
+            apply() { throw new EvalError('unsafe-eval is not allowed'); },
+        });
+        try {
+            expect(() => new Function('return 1')).toThrow('unsafe-eval');
+            const rows = await parseData('a,b,"c d"\n1,"x, y",\n2,"say ""hi""",3\n4\n');
+            expect([...rows]).toEqual([{ a: '1', b: 'x, y', 'c d': '' }, { a: '2', b: 'say "hi"', 'c d': '3' }, { a: '4', b: '', 'c d': '' }]);
+            expect(rows.columns).toEqual(['a', 'b', 'c d']);
+            const tsv = await parseData('a\tb\r\n1\t2\r\n', 'tsv');
+            expect([...tsv]).toEqual([{ a: '1', b: '2' }]);
+            expect(tsv.columns).toEqual(['a', 'b']);
+        } finally {
+            globalThis.Function = compile;
+        }
+        // only the header, and nothing
+        const header = await parseData('a,b\n');
+        expect([[...header], header.columns]).toEqual([[], ['a', 'b']]);
+        const nothing = await parseData('', 'csv');
+        expect([[...nothing], nothing.columns]).toEqual([[], []]);
+    });
+
+    test('a column __proto__ of csv is left out with a warning, the rows are plain objects', async () => {
+        const warnings = [];
+        const rows = await parseData('a,__proto__,b\n1,x,2', 'csv', null, w => warnings.push(w));
+        expect([...rows]).toEqual([{ a: '1', b: '2' }]);
+        expect(rows.columns).toEqual(['a', 'b']);
+        expect(Object.getPrototypeOf(rows[0])).toBe(Object.prototype);
+        expect(warnings).toEqual(["the column '__proto__' is left out, it is no name of a column"]);
+    });
+
     test('a byte order mark is removed', async () => {
         expect((await parseData('\uFEFFa,b\n1,2')).columns).toEqual(['a', 'b']);
         expect(await parseData('\uFEFF[{"a": 1}]')).toEqual([{ a: 1 }]);

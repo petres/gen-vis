@@ -54,6 +54,42 @@ const rowsOf = (rows, warn) => {
     return kept;
 };
 
+/**
+ * The rows of CSV, TSV or other text of a `delimiter`: objects of the
+ * columns of the header (the first line) with the texts of their values,
+ * '' of the ones a line lacks, `columns` of the rows are the names of the
+ * header, as csvParse of d3-dsv, which compiles a function of the header
+ * (`new Function`): a page with a Content Security Policy without
+ * `unsafe-eval` could not read its data. A column `__proto__` is no column
+ * (it would be the prototype of its rows), `warn(message)` tells of it.
+ */
+const delimited = (text, delimiter, warn) => {
+    // the names of the columns and their places in a line
+    let names = [];
+    let at = [];
+    let header = false;
+    // (the rows are made line by line, not of a list of all lines)
+    const rows = (formats[delimiter] ??= d3.dsvFormat(delimiter)).parseRows(text, line => {
+        if (!header) {
+            header = true;
+            if (line.includes('__proto__'))
+                warn?.(`the column '__proto__' is left out, it is no name of a column`);
+            const places = line.map((name, i) => [name, i]).filter(([name]) => name !== '__proto__');
+            names = places.map(([name]) => name);
+            at = places.map(([, i]) => i);
+            return null;
+        }
+        const row = {};
+        for (let j = 0; j < names.length; j++)
+            row[names[j]] = line[at[j]] || '';
+        return row;
+    });
+    rows.columns = names;
+    return rows;
+};
+// the readers of d3-dsv by their delimiter
+const formats = {};
+
 // the columns of the header of CSV or TSV which are in it more than once,
 // of which the rows have the values of the last one
 const duplicateColumns = (rows, warn) => {
@@ -93,14 +129,14 @@ const parseData = async (data, format, columns = null, warn = null) => {
         throw new Error('Parquet data needs to be binary, e.g. an ArrayBuffer.');
     data = data.replace(/^\uFEFF/, '');
     if (format == 'tsv')
-        return duplicateColumns(d3.tsvParse(data), warn);
+        return duplicateColumns(delimited(data, '\t', warn), warn);
     if (format == 'json' || (format != 'csv' && /^\s*[[{]/.test(data))) {
         const rows = JSON.parse(data);
         if (!Array.isArray(rows))
             throw new Error('the JSON is not a list of rows');
         return rowsOf(rows, warn);
     }
-    return separators(duplicateColumns(d3.csvParse(data), warn), warn);
+    return separators(duplicateColumns(delimited(data, ',', warn), warn), warn);
 };
 
 // CSV of one column whose name has semicolons or tabs is of another
