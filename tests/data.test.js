@@ -358,7 +358,7 @@ describe('the columns a definition uses', () => {
             { name: 'value', data: [1, 2], type: 'DOUBLE' },
             { name: 'other', data: [10, 20], type: 'DOUBLE' },
         ] });
-        const def = { globals: { col: 'value' }, mapping: { x: { column: 'year' }, y: { column: '{col}' } }, plot: { type: 'line' } };
+        const def = { globals: { col: 'value' }, dims: { x: { column: 'year' }, y: { column: '{col}' } }, marks: { type: 'line' } };
         const store = createStore();
         await store.init({ def, data: buffer, globals: { col: 'other' } });
         expect(store.data.map(r => r.y)).toEqual([10, 20]);
