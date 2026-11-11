@@ -226,7 +226,7 @@ export interface GenVisInstance extends GenVisMethods {
     destroy(): void;
 }
 
-/** A visualisation at the end of `element` (in a new element `.vis-outer`), `root` makes `element` the one of the visualisation. */
+/** A visualisation at the end of `element` (in a new element `.vis-outer`), `root` makes `element` the one of the visualisation (`destroy()` leaves it without its content, its classes and the space it held). */
 export declare function createGenVis(element: Element, props?: GenVisOptions, options?: { root?: boolean }): GenVisInstance;
 
 /** A group of the rows of a mark, see docs/extensions.md. */

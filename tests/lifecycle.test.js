@@ -197,3 +197,31 @@ test('a highlight set while it is loaded is shown once it is drawn, it is the pr
     expect(vis.store.highlighted).toEqual({ c: 'Tirol' });
     expect(errors).toEqual([]);
 });
+
+test('the element of the page of { root: true } is left as it was after the destroy, also while it is loaded', async () => {
+    const { el, vis } = create({ defFile: 'defRoot.json' });
+    await rendered(el);
+    await nextTick();
+    // the height of the one drawn before (400 of jsdom)
+    vis.destroy();
+    delays['defRoot.json'] = 50;
+    const card = document.body.appendChild(document.createElement('div'));
+    card.className = 'card';
+    card.style.color = 'red';
+    const loading = createGenVis(card, { defFile: 'defRoot.json' }, { root: true });
+    expect(card.className).toBe('card vis-outer vis-loading');
+    expect(card.style.minHeight).toBe('400px');
+    loading.destroy();
+    expect(card.outerHTML).toBe('<div class="card" style="color: red;"></div>');
+
+    // drawn, a min-height of the page stays
+    const page = document.body.appendChild(document.createElement('div'));
+    page.style.minHeight = '100px';
+    const drawn = createGenVis(page, { defFile: 'defRoot.json' }, { root: true });
+    await rendered(page);
+    await nextTick();
+    expect(page.style.minHeight).toBe('100px');
+    drawn.destroy();
+    expect(page.outerHTML).toBe('<div style="min-height: 100px;"></div>');
+    expect(errors).toEqual([]);
+});

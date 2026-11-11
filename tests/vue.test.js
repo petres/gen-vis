@@ -252,6 +252,28 @@ describe('the component', () => {
         expect(el.firstElementChild.classList.contains('vis-loading')).toBe(false);
     });
 
+    test('a component of a new key while the one before is loaded: a new element of the visualisation', async () => {
+        const key = ref(1);
+        const cls = ref('a');
+        const def = lineDef({ title: 'Schlüssel' });
+        const { el } = await mountApp(() => h(GenVis, { key: key.value, class: cls.value, def, data: lineData }));
+        const first = el.firstElementChild;
+        // drawn anew, the one before is destroyed while it is loaded (with its height of 400)
+        key.value = 2;
+        await vueTick();
+        key.value = 3;
+        cls.value = 'b';
+        await vueTick();
+        await rendered(el);
+        await nextTick();
+        expect(el.children).toHaveLength(1);
+        expect(el.firstElementChild).not.toBe(first);
+        expect(el.firstElementChild.className).toBe('vis-outer b');
+        expect(el.firstElementChild.getAttribute('style')).toBeNull();
+        expect(el.querySelector('.vis-title').textContent).toBe('Schlüssel');
+        expect(errors).toEqual([]);
+    });
+
     test('the unmount removes the visualisation, its listeners and the slots', async () => {
         const remove = vi.spyOn(document, 'removeEventListener');
         const show = ref(true);

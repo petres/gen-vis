@@ -86,7 +86,8 @@ const copyOf = v => v ? JSON.parse(JSON.stringify(v)) : null;
  * `update(props)` changes props (together in a microtask, a new
  * definition or new data is loaded again, a new state, globals and
  * highlight are applied), `on(event, fn)` and `off(event, fn)` of the
- * events, `destroy()` removes it, the methods of the files (`exportPng`,
+ * events, `destroy()` removes it (of `root` the element stays, without
+ * its content, its classes and its min-height), the methods of the files (`exportPng`,
  * `copyPng`, `image`, `exportSvg`, `exportCsv`), `setHighlight(entry)`, `state` (the
  * changes of the user) and `el`, its element.
  */
@@ -109,6 +110,9 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
     // the height of the visualisation of the same definition and width
     // drawn before, null if there is none, see heights
     let reserved = null;
+    // the min-height set of it while it is loaded and the one of the page
+    // before, which it has again, see release
+    let held = null;
     // the props given while they are applied, see update
     let pending = null;
     // the listeners of the props, see setListeners
@@ -148,12 +152,11 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         const wait = waiting();
         outer.classList.add('vis-outer');
         outer.classList.toggle('vis-loading', wait);
-        if (wait && reserved)
-            outer.style.minHeight = `${reserved}px`;
-        else if (outer.style.minHeight)
-            outer.style.minHeight = '';
-        if (!outer.getAttribute('style'))
-            outer.removeAttribute('style');
+        if (wait && reserved) {
+            held ??= { before: outer.style.minHeight };
+            outer.style.minHeight = held.value = `${reserved}px`;
+        } else
+            release();
         if (error) {
             errorEl ??= el('div', { class: 'vis-error' });
             setText(errorEl, error);
@@ -163,6 +166,14 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             errorEl = null;
         }
         drawDebug();
+    };
+
+    const release = () => {
+        if (held && outer.style.minHeight === held.value)
+            outer.style.minHeight = held.before;
+        held = null;
+        if (outer.hasAttribute('style') && !outer.getAttribute('style'))
+            outer.removeAttribute('style');
     };
 
     // the prepared definition and the one of the file, e.g. while it is written
@@ -544,9 +555,14 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             dropVis();
             removed = true;
             bus.clear();
+            // the element of the page is left as it was, without the
+            // classes and the space of the visualisation
             if (root) {
                 outer.replaceChildren();
-                outer.classList.remove('vis-loading');
+                outer.classList.remove('vis-outer', 'vis-loading');
+                release();
+                if (outer.hasAttribute('class') && !outer.getAttribute('class'))
+                    outer.removeAttribute('class');
             } else
                 outer.remove();
         },
