@@ -157,7 +157,7 @@ describe('transforms', () => {
             .toEqual(Array(6).fill(15));
         // without the least number of values none
         expect(column({ type: 'mean', column: 'value', by: 'type', min: 3, as: 'm' }, 'm')).toEqual([80/3, 80/3, 80/3, null, null, null]);
-        expect(validateDef({ mapping: { y: { column: 'm', type: 'numeric' } }, transform: [
+        expect(validateDef({ dims: { y: { column: 'm', type: 'numeric' } }, transform: [
             { type: 'mean', column: 'value', base: [2019], as: 'm' },
             { type: 'share', column: 'value', min: 2, as: 's' },
         ] }).filter(w => w.startsWith('transform'))).toEqual([
@@ -184,8 +184,8 @@ describe('transforms', () => {
 
     test('the checks of validateDef and the schema', () => {
         const def = {
-            mapping: { y: { column: 'index', type: 'numeric' } },
-            plot: { type: 'svg:rect', props: { y: '@y' } },
+            dims: { y: { column: 'index', type: 'numeric' } },
+            marks: { type: 'rect', y: '@y' },
             transform: [{ type: 'index', column: 'value', base: { year: '{base}' } }, { type: 'rolling', column: 'value', align: 'left' }, { type: 'sum' }],
         };
         expect(validateDef(def)).toEqual([
@@ -222,17 +222,16 @@ describe('bin and random in a chart', () => {
             { type: 'random', as: 'jitter', seed: 1 },
             { type: 'bin', column: 'v', step: '{step}', start: 'lo', end: 'hi' },
         ],
-        mapping: {
-            x: { column: 'v', type: 'numeric', scale: { orientation: 'horizontal' } },
-            lo: { column: 'lo', type: 'numeric', scale: { of: 'x' } },
-            hi: { column: 'hi', type: 'numeric', scale: { of: 'x' } },
-            y: { column: 'count', type: 'numeric', scale: { orientation: 'vertical', domain: [0, null] } },
-            g: { column: 'g', type: 'categorical', fromData: true, legend: {} },
+        dims: {
+            x: { column: 'v', type: 'numeric' },
+            y: { column: 'count', type: 'numeric' },
+            g: { column: 'g', type: 'categorical', legend: {} },
             jitter: { column: 'jitter', type: 'numeric' },
         },
-        plot: [
-            { type: 'bar', props: { x0: '@lo:scaled', x1: '@hi:scaled', y1: '@y:scaled' } },
-            { type: 'point', by: 'g', props: { cy: '@jitter' } },
+        // the classes on the scale of x, the points at the random numbers (pixels)
+        marks: [
+            { type: 'bar', x0: 'lo', x1: 'hi' },
+            { type: 'point', by: 'g', cy: '@jitter' },
         ],
     });
 
@@ -259,10 +258,10 @@ describe('bin and random in a chart', () => {
         const { createStore } = await import('@/store');
         const store = createStore();
         await store.init({ def: { ...def(), transform: [
-            { type: 'filter', expr: { '>': ['@v', 1] } },
+            { type: 'filter', expr: '@v > 1' },
             { type: 'bin', column: 'v', step: '{step}', by: 'g', start: 'lo', end: 'hi', replace: true },
-            { type: 'calc', as: 'density', expr: { '/': ['@count', { '-': ['@hi', '@lo'] }] } },
-        ], mapping: { ...def().mapping, y: { column: 'density', type: 'numeric', scale: { orientation: 'vertical' } }, jitter: undefined } }, data });
+            { type: 'calc', as: 'density', expr: '@count / (@hi - @lo)' },
+        ], dims: { ...def().dims, y: { column: 'density', type: 'numeric' }, jitter: undefined } }, data });
         // the classes with values, the empty ones are rows of 0
         const classes = () => store.data.filter(r => r.y > 0).map(r => [r.g, r.lo, r.hi, r.y]);
         expect(classes()).toEqual([['a', 0, 5, 0.2], ['b', 5, 10, 0.4]]);
@@ -273,17 +272,17 @@ describe('bin and random in a chart', () => {
         expect(store.def.dims.g.keys).toEqual(['a', 'b']);
     });
 
-    // the values of a form element are the ones of the transforms of the globals of the definition
-    test('the values of a form element of a column of a bin follow other edges', async () => {
+    // the values of a control are the ones of the transforms of the globals of the definition
+    test('the values of a control of a column of a bin follow other edges', async () => {
         const { createStore } = await import('@/store');
         const store = createStore();
-        await store.init({ def: { ...def(), formElements: [{ id: 'lo', ref: 'lo', type: 'select', values: { column: 'lo' } }] }, data });
+        await store.init({ def: { ...def(), controls: [{ id: 'lo', global: 'lo', type: 'select', values: { column: 'lo' } }] }, data });
         expect(store.def.controls[0].values.map(v => v.value)).toEqual(['0', '5']);
         store.setGlobals({ step: '2' });
         expect(store.def.controls[0].values.map(v => v.value)).toEqual(['0', '2', '4', '6', '8']);
         // also of a global of the page when the chart is loaded
         const page = createStore();
-        await page.init({ def: { ...def(), formElements: [{ id: 'lo', ref: 'lo', type: 'select', values: { column: 'lo' } }] }, data, globals: { step: '2' } });
+        await page.init({ def: { ...def(), controls: [{ id: 'lo', global: 'lo', type: 'select', values: { column: 'lo' } }] }, data, globals: { step: '2' } });
         expect(page.def.controls[0].values.map(v => v.value)).toEqual(['0', '2', '4', '6', '8']);
     });
 
@@ -413,7 +412,7 @@ describe('fold, aggregate and window', () => {
     });
 
     test('validateDef: the columns of a fold, the op of an aggregate and a window, the size and the offset, the keys of other types', () => {
-        const checks = (transform, globals = {}, rows = null) => validateDef({ mapping: { y: { column: 'value', type: 'numeric' } }, plot: { type: 'svg:rect', props: {} }, transform, globals }, rows).filter(w => w.startsWith('transform'));
+        const checks = (transform, globals = {}, rows = null) => validateDef({ dims: { y: { column: 'value', type: 'numeric' } }, marks: { type: 'rect' }, transform, globals }, rows).filter(w => w.startsWith('transform'));
         expect(checks([{ type: 'fold' }])).toEqual([`transform[0].columns: the columns to fold are needed, a list or a pattern with a '*', e.g. ["2019", "2020"] or "20*"`]);
         expect(checks([{ type: 'fold', columns: '*_*' }])).toEqual([`transform[0].columns: a pattern of columns has a single '*', e.g. "20*"`]);
         expect(checks([{ type: 'fold', columns: '20*', key: 'year', value: 'v', replace: false }])).toEqual([]);
@@ -460,7 +459,7 @@ describe('fold, aggregate and window', () => {
     });
 
     test('regression: the fitted values per group, validateDef of its x, as, method and degree', () => {
-        const checks = transform => validateDef({ mapping: { y: { column: 'value', type: 'numeric' } }, plot: { type: 'svg:rect', props: {} }, transform }).filter(w => w.startsWith('transform'));
+        const checks = transform => validateDef({ dims: { y: { column: 'value', type: 'numeric' } }, marks: { type: 'rect' }, transform }).filter(w => w.startsWith('transform'));
         // gas 10, 30, 40 at 2019-01-01, 2019-07-01, 2020-01-01: the dates are milliseconds
         const fit = column({ type: 'regression', column: 'value', x: 'date', by: 'type', as: 'fit' }, 'fit');
         expect(fit.slice(0, 3).map(v => Math.round(v*100)/100)).toEqual([11.72, 26.58, 41.69]);
@@ -481,7 +480,7 @@ describe('fold, aggregate and window', () => {
 
     test('format: the text of a date in a time format, validateDef of its format', () => {
         expect(column({ type: 'format', column: 'date', format: '%W-%u', as: 'w' }, 'w')).toEqual(['00-2', '26-1', '00-3', '00-2', '00-3', '26-1']);
-        const checks = transform => validateDef({ mapping: { y: { column: 'value', type: 'numeric' } }, plot: { type: 'svg:rect', props: {} }, transform }).filter(w => w.startsWith('transform'));
+        const checks = transform => validateDef({ dims: { y: { column: 'value', type: 'numeric' } }, marks: { type: 'rect' }, transform }).filter(w => w.startsWith('transform'));
         expect(checks([{ type: 'format', column: 'date', as: 'w' }])).toEqual([`transform[0].format: the time format is needed, e.g. "%W" (the week of the year) or "%u" (the weekday)`]);
         expect(checks([{ type: 'format', column: 'date', as: 'w', format: '%W' }])).toEqual([]);
     });
