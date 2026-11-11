@@ -21,7 +21,7 @@ const props = {
     csv: { type: [Boolean, String], default: false },
     svg: { type: [Boolean, String], default: false },
     imageWidth: { type: [Number, String], default: null },
-    lazy: { type: [Boolean, String], default: false },
+    lazy: { type: [Boolean, String, Number], default: false },
 };
 
 // the events of the visualisation, see docs/usage.md "Events and slots"

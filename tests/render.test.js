@@ -3037,6 +3037,34 @@ describe('lazy', () => {
         expect(errors).toEqual([]);
     });
 
+    test('a margin without a unit is pixels, one the browser refuses is the default one with a warning', async () => {
+        // as Chromium: lengths of pixels or percents
+        const Stub = IntersectionObserver;
+        vi.stubGlobal('IntersectionObserver', class extends Stub {
+            constructor(callback, options) {
+                if (!(options.rootMargin ?? '').split(' ').every(m => /^-?\d*\.?\d+(px|%)$/.test(m)))
+                    throw new DOMException("Failed to construct 'IntersectionObserver': rootMargin must be specified in pixels or percent.", 'SyntaxError');
+                super(callback, options);
+            }
+        });
+        const margins = lazy => {
+            observers = [];
+            const el = document.body.appendChild(document.createElement('div'));
+            const vis = createGenVis(el, { defFile: '/data/bev/def.json', lazy });
+            expect(vis.el.parentNode).toBe(el);
+            return observers.map(o => o.options.rootMargin)[0];
+        };
+        expect(margins(800)).toBe('800px');
+        expect(margins('800')).toBe('800px');
+        expect(margins('800 0')).toBe('800px 0px');
+        expect(margins('50% 0px')).toBe('50% 0px');
+        expect(errors).toEqual([]);
+        expect(margins('800em')).toBe('100% 0px');
+        expect(errors).toEqual([expect.stringContaining("lazy: the margin '800em'")]);
+        await wait();
+        expect(fetched).toEqual([]);
+    });
+
     test('changes of the props before are used when it is near the viewport', async () => {
         const el = document.body.appendChild(document.createElement('div'));
         const vis = createGenVis(el, { defFile: '/data/bev/def.json', state: null, lazy: '800px 0px' });

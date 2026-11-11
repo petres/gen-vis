@@ -174,7 +174,7 @@ plugin of another Vue, the types are the ones of `@preschen/gen-vis/vue`.
 | `csv`      | `data-csv`      | a button at the right of the footer to save the data shown as CSV, a string is the name of the file (default the title) |
 | `svg`      | `data-svg`      | a button at the right of the footer to save it as an SVG, see [static export](export.md#static-export), a string is the name of the file (default the title) |
 | `imageWidth` | `data-image-width` | the width of the PNG in pixels (the chart is laid out at it, also a definition with a `width` of its own), the one of the definition otherwise or 800, `screen` for the one on the screen (as it is seen, e.g. on a phone) |
-| `lazy`     | `data-lazy`     | draws the visualisation only when it is near the viewport, `true` within one height of the viewport, a string is the `rootMargin` of the `IntersectionObserver`, e.g. `"800px 0px"`; its files are loaded ahead (three heights) when the browser is idle, see [lazy loading](#lazy-loading) |
+| `lazy`     | `data-lazy`     | draws the visualisation only when it is near the viewport, `true` within one height of the viewport, a string is the `rootMargin` of the `IntersectionObserver`, e.g. `"800px 0px"`, a number or a length without a unit is pixels, e.g. `800` or `"800"` (a margin the browser refuses is the default one, with a warning); its files are loaded ahead (three heights) when the browser is idle, see [lazy loading](#lazy-loading) |
 
 The attributes are strings: `data-download`, `data-csv`, `data-svg`,
 `data-copy`, `data-check`, `data-debug` and `data-lazy` without a value or

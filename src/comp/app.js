@@ -56,7 +56,7 @@ const defaults = {
     imageWidth: null,
     // loads the definition and the data when the visualisation is near
     // the viewport, true within one height of it, a string is the rootMargin of the
-    // IntersectionObserver, e.g. "800px 0px", see observe
+    // IntersectionObserver, e.g. "800px 0px", a number pixels, see observe
     lazy: false,
     // the content of the header, the footer, the buttons and the hover, functions
     // of their props which return a node, a text or null
@@ -66,6 +66,14 @@ const propNames = Object.keys(defaults);
 
 // the events, see docs/usage.md "Events and slots"
 const events = { onRendered: 'rendered', onError: 'error', onHover: 'hover', onSelect: 'select', 'onUpdate:state': 'update:state' };
+
+// the margin of a lazy visualisation (see observe), one height of the
+// viewport, a string of the prop `lazy` (its numbers without a unit are
+// pixels, e.g. "800" of data-lazy) or a number of pixels
+const defaultMargin = '100% 0px';
+const rootMarginOf = lazy => typeof lazy == 'number' && Number.isFinite(lazy) ? `${lazy}px`
+    : typeof lazy == 'string' && lazy.trim() ? lazy.trim().split(/\s+/).map(m => /^-?\d*\.?\d+$/.test(m) ? `${m}px` : m).join(' ')
+    : defaultMargin;
 
 // a copy of JSON, e.g. of the globals given by the page, the store changes its own
 const copyOf = v => v ? JSON.parse(JSON.stringify(v)) : null;
@@ -235,13 +243,19 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
     const observe = () => {
         if (props.lazy === false || typeof IntersectionObserver != 'function')
             return false;
-        const rootMargin = typeof props.lazy == 'string' && props.lazy ? props.lazy : '100% 0px';
-        observer = new IntersectionObserver(entries => {
+        const near = entries => {
             if (entries.some(e => e.isIntersecting)) {
                 stopObserving();
                 init();
             }
-        }, { rootMargin });
+        };
+        // a margin the browser refuses is the default one
+        try {
+            observer = new IntersectionObserver(near, { rootMargin: rootMarginOf(props.lazy) });
+        } catch (e) {
+            console.warn(`gen-vis: lazy: the margin '${props.lazy}' is not one of an IntersectionObserver, e.g. "800px 0px", one height of the viewport is used: ${e.message}`);
+            observer = new IntersectionObserver(near, { rootMargin: defaultMargin });
+        }
         observer.observe(outer);
         ahead = new IntersectionObserver(entries => {
             if (entries.some(e => e.isIntersecting)) {
