@@ -3,7 +3,7 @@
 export { applyTransforms, transformTypes, randomOf };
 
 import { quantile } from "d3-array";
-import { toDate, toNumber } from "@/utils/data";
+import { dateReader, toNumber } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
 import { bind, constant, refNames } from "@/utils/expr";
 import { inherited, missing, ownValue, truthy } from "@/utils/values";
@@ -29,8 +29,9 @@ const comparable = (values, utc = false) => {
     const present = values.filter(v => !missing(v));
     if (present.every(v => toNumber(v) !== null))
         return v => toNumber(v);
-    if (present.every(v => toDate(v, utc) !== null))
-        return v => toDate(v, utc);
+    const date = dateReader(utc);
+    if (present.every(v => date(v) !== null))
+        return date;
     return v => missing(v) ? null : String(v);
 };
 
@@ -176,24 +177,30 @@ const slide = (t, { n, numbers, groups }, op) => {
 
 const transformTypes = {
     // the year of a date, e.g. 2024 of "2024-06-01"
-    year: (t, { n, values, utc }) => Array.from({ length: n }, (_, i) => {
-        const time = toDate(values(i), utc);
-        return time === null ? null : partsOf(time, utc).year;
-    }),
+    year: (t, { n, values, utc }) => {
+        const date = dateReader(utc);
+        return Array.from({ length: n }, (_, i) => {
+            const time = date(values(i));
+            return time === null ? null : partsOf(time, utc).year;
+        });
+    },
 
     // the same day and time of a date in the year `year` (2020 by default,
     // a leap year, so the 29th of February is kept), e.g. to compare the
     // years of daily data, a date without a time is one without a time
-    align: (t, { n, values, utc }) => Array.from({ length: n }, (_, i) => {
-        const v = values(i);
-        const time = toDate(v, utc);
-        if (time === null)
-            return null;
-        const d = partsOf(time, utc);
-        const day = `${pad(t.year ?? 2020, 4)}-${pad(d.month + 1)}-${pad(d.day)}`;
-        return typeof v == 'string' && dateOnly.test(v.trim()) ? day
-            : `${day}T${pad(d.hours)}:${pad(d.minutes)}:${pad(d.seconds)}`;
-    }),
+    align: (t, { n, values, utc }) => {
+        const date = dateReader(utc);
+        return Array.from({ length: n }, (_, i) => {
+            const v = values(i);
+            const time = date(v);
+            if (time === null)
+                return null;
+            const d = partsOf(time, utc);
+            const day = `${pad(t.year ?? 2020, 4)}-${pad(d.month + 1)}-${pad(d.day)}`;
+            return typeof v == 'string' && dateOnly.test(v.trim()) ? day
+                : `${day}T${pad(d.hours)}:${pad(d.minutes)}:${pad(d.seconds)}`;
+        });
+    },
 
     // the text of a date in a time format (`format`, of d3-time-format), in
     // the time zone of the scale, e.g. the week of the year (%W, from
@@ -205,8 +212,9 @@ const transformTypes = {
         if (typeof t.format != 'string')
             throw new Error(`format: the time format is needed, e.g. "%W" (the week of the year)`);
         const f = (utc ? time.utcFormat : time.format)(t.format);
+        const date = dateReader(utc);
         return Array.from({ length: n }, (_, i) => {
-            const time = toDate(values(i), utc);
+            const time = date(values(i));
             return time === null ? null : f(new Date(time));
         });
     },

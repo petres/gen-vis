@@ -6,7 +6,7 @@ import { describe, test, expect } from 'vitest';
 import zlib from 'node:zlib';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import { toNumber } from '@/utils/values';
-import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, inferType, inferTypes, isBinary, oddValues, parseData, prepareData, rowFilter, stack, toDate, updateData, usedColumns } from '@/utils/data';
+import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, groupBy, inferType, inferTypes, isBinary, oddValues, parseData, prepareData, rowFilter, stack, toDate, dateReader, updateData, usedColumns } from '@/utils/data';
 import { prepareDef } from '@/utils/def';
 
 const def = {
@@ -862,6 +862,31 @@ describe('the faster dates and types are the ones of before', () => {
                     differences.push([text, utc]);
             }
         expect(differences).toEqual([]);
+    });
+
+    test('the dates of a column read once per text are the ones of toDate, of every form and of the time zone of each loop', () => {
+        const texts = ['2023-05-01', '2023-05', '2023', '2023-02-30', '2023-05-01T12:00:00Z', '2024-06-01 13:00', '2024-06-01T13:00:00.5', '2024-06-01T24:00',
+            '01.06.2022', '1.6.2022 13:05', '2024-06-01 13:00+02:00', '0050-06-01', 'Phase 1', '', ' 2023-05-01 ', '2024-03-31 02:30', 'NA'];
+        // every text several times, also values which are no texts
+        const values = [...texts, ...texts, new Date(2020, 0, 1), 1700000000000, null, undefined, 10n, ...texts];
+        const zone = process.env.TZ;
+        try {
+            for (const tz of ['Europe/Vienna', 'America/New_York', 'Asia/Kolkata']) {
+                process.env.TZ = tz;
+                for (const utc of [false, true]) {
+                    const read = dateReader(utc);
+                    expect(values.map(read)).toEqual(values.map(v => toDate(v, utc)));
+                }
+                const rows = values.filter(v => typeof v == 'string').map(date => ({ date }));
+                for (const type of ['time', 'utc'])
+                    expect(prepareData(rows, { mapping: { t: { column: 'date', type: 'date', scale: { type } } } }).map(r => r.t))
+                        .toEqual(rows.map(r => toDate(r.date, type == 'utc')));
+            }
+        } finally {
+            process.env.TZ = zone;
+        }
+        // the local times of the zones differ, so none is the one of a loop before
+        expect(toDate('2023-05-01')).toBe(new Date(2023, 4, 1).getTime());
     });
 
     test('a local time skipped at the change to summer time is the one an hour later, as documented', () => {

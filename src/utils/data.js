@@ -1,4 +1,4 @@
-export { oddValues, sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
+export { oddValues, sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, dateReader, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { fillTemplate, inLanguage, sameValue, templateKeys, variants } from "@/utils/def";
@@ -266,8 +266,10 @@ const wallTime = (utc, y, m = 1, d = 1, h = 0, mi = 0, s = 0, fraction = '') => 
     // years before 100 are not the ones of 1900, as of new Date(y, m, d), but
     // the ones of 400 years later, before them
     const early = y < 100;
-    const args = [early ? y + 400 : y, m - 1, d + (end ? 1 : 0), end ? 0 : h, mi, s, ms];
-    return (utc ? Date.UTC(...args) : new Date(...args).getTime()) - (early ? cycle : 0);
+    const year = early ? y + 400 : y;
+    const day = end ? d + 1 : d;
+    const hour = end ? 0 : h;
+    return (utc ? Date.UTC(year, m - 1, day, hour, mi, s, ms) : new Date(year, m - 1, day, hour, mi, s, ms).getTime()) - (early ? cycle : 0);
 };
 
 // the time of a date with a time zone, see isoZoned, NaN if it does not exist
@@ -294,16 +296,43 @@ const toDate = (v, utc = false) => {
         t = v.getTime();
     else if (typeof v == 'number' || typeof v == 'bigint')
         t = Number(v);
-    else {
-        const text = String(v).trim();
-        const iso = isoDate.exec(text);
-        const day = !iso && dayFirst.exec(text);
-        const zoned = !iso && !day && isoZoned.exec(text);
-        t = iso ? wallTime(utc, ...iso.slice(1).map(p => p ?? undefined))
-            : (day ? wallTime(utc, day[3], day[2], day[1], ...day.slice(4).map(p => p ?? undefined))
-                : (zoned ? zonedTime(zoned.map(p => p ?? undefined)) : NaN));
-    }
+    else
+        t = textTime(String(v).trim(), utc);
     return isNaN(t) ? null : t;
+};
+// the time of the text of a date, NaN if it is none
+const textTime = (text, utc) => {
+    const iso = isoDate.exec(text);
+    if (iso)
+        return wallTime(utc, iso[1], iso[2], iso[3], iso[4], iso[5], iso[6], iso[7]);
+    const day = dayFirst.exec(text);
+    if (day)
+        return wallTime(utc, day[3], day[2], day[1], day[4], day[5], day[6], day[7]);
+    const zoned = isoZoned.exec(text);
+    return zoned ? zonedTime(zoned) : NaN;
+};
+
+/**
+ * toDate of the values of a column, e.g. of the rows of a dim: the time of
+ * a text is kept and read once, the dates of a time series are the same
+ * ones of every series (at most `memoSize` texts, the others are read each
+ * time). Of one loop over the values, not kept longer: the time zone of
+ * local times is the one of the loop.
+ */
+const memoSize = 100000;
+const dateReader = (utc = false) => {
+    const times = new Map();
+    return v => {
+        if (typeof v != 'string')
+            return toDate(v, utc);
+        let t = times.get(v);
+        if (t === undefined) {
+            t = toDate(v, utc);
+            if (times.size < memoSize)
+                times.set(v, t);
+        }
+        return t;
+    };
 };
 
 // the values of the mapping are numbers or dates (timestamps), the others,
@@ -322,13 +351,14 @@ const scaleDef = (mappings, m) => m?.scale?.of !== undefined ? mappings?.[m.scal
 
 // the conversion of the values of a mapping, e.g. the dates of a `utc` scale
 // (also the one of another mapping, of the `mappings` of the definition) or
-// the categories as strings
-const converter = (mapping, mappings) => {
+// the categories as strings; of the values of a column (`column`) the
+// dates of the same text are read once, see dateReader
+const converter = (mapping, mappings, column = false) => {
     if (mapping?.type == 'numeric')
         return toNumber;
     if (mapping?.type == 'date') {
         const utc = scaleDef(mappings, mapping)?.type == 'utc';
-        return v => toDate(v, utc);
+        return column ? dateReader(utc) : v => toDate(v, utc);
     }
     return toCategory;
 };
@@ -363,7 +393,7 @@ const updateData = (rows, data, def, names, columns = null) => {
     const mapping = names.map(n => ({
         name: n,
         value: columnValues(rows, columns, def.mapping[n].column),
-        convert: converter(def.mapping[n], def.mapping),
+        convert: converter(def.mapping[n], def.mapping, true),
     }));
     sourceRows(rows, columns).forEach((r, i) => {
         const e = data[i];
@@ -403,7 +433,7 @@ const prepareData = (data, def, columns = null, odd = null) => {
     const mapping = Object.keys(def.mapping).map(n => ({
         name: n,
         value: columnValues(data, columns, def.mapping[n].column),
-        convert: odd ? checked(n, def.mapping[n], converter(def.mapping[n], def.mapping), odd) : converter(def.mapping[n], def.mapping),
+        convert: odd ? checked(n, def.mapping[n], converter(def.mapping[n], def.mapping, true), odd) : converter(def.mapping[n], def.mapping, true),
     }));
 
     return sourceRows(data, columns).map((d, i) => {
