@@ -290,14 +290,22 @@ const autoSymbol = (symbol, name, marks, names, defaults, key) => {
         ...symbolHighlight(p.kind, p.mark)})) };
 };
 
-// a symbol of a shortcut (e.g. "line") with the highlight of the first mark
-// of its kind which draws the categories of the dim `name`, e.g. the
-// line of a year of the lines by year
-const ofMarks = (symbol, name, marks) => ({ ...symbol, elements: symbol.elements.map(e => {
-    const types = symbolKinds.find(([kind]) => kind == e.type)?.[1] ?? [];
+// a symbol of a shortcut (e.g. "line") of the first mark of its kind which
+// draws the categories of the dim `name`, e.g. the line of a year of the
+// lines by year: its highlight and the props of its style which are the
+// same for a category (see autoSymbol), e.g. the dash and the width of the
+// line, but its color, after the ones of the defaults, before the props of
+// the symbol (`given`, the shortcut or its object)
+const ofMarks = (symbol, name, marks, given, names) => ({ ...symbol, elements: symbol.elements.map(e => {
+    const [, types = [], keys = []] = symbolKinds.find(([kind]) => kind == e.type) ?? [];
     const of = [marks ?? []].flat().filter(p => [p?.by ?? []].flat().includes(name));
     const mark = types.map(t => of.find(p => p?.type == t)).find(Boolean);
-    return mark ? { ...e, ...symbolHighlight(e.type, mark) } : e;
+    if (!mark)
+        return e;
+    const color = e.type == 'line' ? 'stroke' : 'fill';
+    const own = v => !refNames(v).some(n => typeof n != 'string' || (n != 'color' && !names.has(n)));
+    const props = Object.fromEntries(keys.filter(k => k != color && mark.props?.[k] !== undefined && own(mark.props[k])).map(k => [k, mark.props[k]]));
+    return { ...e, props: { ...e.props, ...props, ...(isObject(given) ? given.props : undefined) }, ...symbolHighlight(e.type, mark) };
 }) });
 
 // the highlight of the element of a symbol of a mark: the id of the mark
@@ -414,7 +422,7 @@ const prepareDim = (m, name, dataKeys = () => [], marks = [], symbols = {}) => {
         // a shortcut (e.g. "line") is of the first mark of its kind of the
         // categories, as one of "auto", so it has the highlight of the mark
         const prepared = symbol => symbol === 'auto' || symbol?.type == 'auto' ? autoSymbol(symbol, name, marks, names, symbols)
-            : (typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type) ? ofMarks(symbolOf(symbol, names, symbols), name, marks) : symbol);
+            : (typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type) ? ofMarks(symbolOf(symbol, names, symbols), name, marks, symbol, names) : symbol);
         const auto = m.legend.symbol === 'auto' || m.legend.symbol?.type == 'auto' ? m.legend.symbol : null;
         m.legend.symbol = prepared(m.legend.symbol);
         Object.values(m.categoryProps ?? {}).filter(p => p.symbol !== undefined).forEach(p => p.symbol = prepared(p.symbol));

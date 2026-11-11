@@ -87,6 +87,19 @@ describe('the props of categories', () => {
         expect(symbol(elements)).toEqual(elements);
     });
 
+    test('a shortcut follows the style of the first mark of its kind: the dash and the width of the line, not its color', () => {
+        const symbol = (symbol, props, defaults) => prepareDef({ dims: { c: { column: 'c', legend: { symbol }, categories: { a: { dash: '4 2' } } } }, marks: [
+            { type: 'cartesian:line', by: 'c', props: { stroke: 'black', 'stroke-width': 1.4, 'stroke-dasharray': '@dash', opacity: '@y', d: { x: '@x:scaled', y: '@y:scaled' }, ...props } },
+        ] }, { symbols: defaults }).dims.c.legend.symbol.elements[0].props;
+        // the dash of the category and the width, not a value of the rows (@y) nor the color
+        expect(symbol('line')).toEqual({ x1: 0, x2: 16, y1: 8, y2: 8, stroke: '@color', 'stroke-width': 1.4, 'stroke-dasharray': '@dash' });
+        // the mark before the defaults of the shortcut, the props of the symbol before the mark
+        expect(symbol('line', {}, { line: { props: { 'stroke-width': 2.5, 'stroke-linecap': 'round' } } })).toMatchObject({ 'stroke-width': 1.4, 'stroke-linecap': 'round' });
+        expect(symbol({ type: 'line', props: { 'stroke-dasharray': 'none' } })).toMatchObject({ 'stroke-width': 1.4, 'stroke-dasharray': 'none' });
+        // a box of the lines: no props of a line
+        expect(symbol('rect')).toEqual({ x: 0, y: 0.5, width: 16, height: 15, rx: 2, fill: '@color' });
+    });
+
     test('a symbol of the marks of the categories: a light area under a line, the style which is the same for a category', () => {
         const def = prepareDef({ dims: { c: { column: 'c', legend: { symbol: 'auto' }, categories: { a: { dash: '4 2' } } } }, marks: [
             { type: 'cartesian:bar', by: 'c', props: { x: '@x:scaled', y1: '@y:scaled', fill: '@color', 'fill-opacity': 0.08, opacity: '@y' } },

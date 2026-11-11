@@ -141,7 +141,7 @@ export type Pair1 = [number | null, number | null];
  */
 export type Removed = null | false;
 /**
- * The symbol before the name of a category: auto (the default) of the marks of the categories (a box of their bars or areas, a line of their lines, a dot of their points), line, rect or circle in its color, or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name; null (or an object without elements) is none, e.g. instead of the one of a parent.
+ * The symbol before the name of a category: auto (the default) of the marks of the categories (a box of their bars or areas, a line of their lines, a dot of their points), line, rect or circle in its color with the style of the first mark of its kind of the categories (e.g. the dash and the width of the lines), or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name; null (or an object without elements) is none, e.g. instead of the one of a parent.
  */
 export type LegendSymbol =
     | null
@@ -1187,7 +1187,7 @@ export interface CategoryProps {
      */
     legend?: boolean;
     /**
-     * The symbol before the name of a category: auto (the default) of the marks of the categories (a box of their bars or areas, a line of their lines, a dot of their points), line, rect or circle in its color, or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name; null (or an object without elements) is none, e.g. instead of the one of a parent.
+     * The symbol before the name of a category: auto (the default) of the marks of the categories (a box of their bars or areas, a line of their lines, a dot of their points), line, rect or circle in its color with the style of the first mark of its kind of the categories (e.g. the dash and the width of the lines), or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name; null (or an object without elements) is none, e.g. instead of the one of a parent.
      */
     symbol?:
         | null
@@ -1253,7 +1253,7 @@ export interface CategoryProps1 {
      */
     legend?: boolean;
     /**
-     * The symbol before the name of a category: auto (the default) of the marks of the categories (a box of their bars or areas, a line of their lines, a dot of their points), line, rect or circle in its color, or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name; null (or an object without elements) is none, e.g. instead of the one of a parent.
+     * The symbol before the name of a category: auto (the default) of the marks of the categories (a box of their bars or areas, a line of their lines, a dot of their points), line, rect or circle in its color with the style of the first mark of its kind of the categories (e.g. the dash and the width of the lines), or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name; null (or an object without elements) is none, e.g. instead of the one of a parent.
      */
     symbol?:
         | null

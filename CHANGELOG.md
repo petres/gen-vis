@@ -945,6 +945,14 @@ From the wishes of the WIFO styles, useful to any house style:
   and columns, whichever side they are on. `tickMarks: false` in the
   defaults works now (it was ignored and the marks were drawn); an
   object of a later entry or of the definition shows them again.
+- The shortcuts of the symbols of legends (`"line"`, `"rect"`,
+  `"circle"`) have the style of the first mark of their kind which draws
+  the categories, as `"auto"`, but its color: a legend of dashed lines
+  (`"stroke-dasharray": "@dash"`) has dashed lines, also of `"symbol":
+  "line"`, which was solid without the dash in the props of the symbol;
+  the width of the line, the `fill-opacity` of areas and the outline of
+  points also. The props of the symbol win, the mark comes before the
+  defaults of the shortcut.
 
 ### Package and builds
 

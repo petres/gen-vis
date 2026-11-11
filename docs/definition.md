@@ -1107,7 +1107,10 @@ they stay hidden when they come back.
 - `"line"` (with the `stroke-width`, `stroke-dasharray` and `opacity` of the
   categories if they have them, a width of 2 otherwise), `"rect"` or
   `"circle"` (with their `opacity`), in the color of the category
-  (`@color`); the object `{"type": "line", "size": 20, "props":
+  (`@color`), with the style of the first mark of its kind which draws the
+  categories as `"auto"` but its color, e.g. the dash (`"@dash"`) and the
+  width of the lines, so a legend of dashed lines is dashed (before the
+  defaults of the shortcut, after the props of the symbol); the object `{"type": "line", "size": 20, "props":
   {"stroke-width": 3}}` sets the size (16 by default) and props of the
   element.
 - svg `elements` (with props) in a box of `width` × `height` pixels from
