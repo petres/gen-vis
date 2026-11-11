@@ -1,14 +1,19 @@
 import { loadColors } from '@/utils/d3';
-import { migrate } from '@/utils/migrate';
 import { markTypes } from '@/marks';
 import { describe, test, expect, beforeAll } from 'vitest';
-import { engineNames } from './v4.js';
 import { resolve, namesOfGlobals } from '@/utils/resolve';
+import { translate, checkDims } from '@/utils/language';
+import { normalize } from '@/utils/normalize';
 import { evaluate } from '@/utils/expr';
 import { sameValue, applyResolved, variantsOf, fillTemplate, formatOf, mergeAll, prepareDef, selectedEntry, templateNames, templateRefs, variants } from '@/utils/def';
 
 // the colors of d3 are loaded by the store, see loadColors
 beforeAll(loadColors);
+
+// the definition the engine reads of a definition as written (`authored`,
+// with its expressions of the globals) and of its globals, as the load
+// makes it, see resolveDef of utils/load.js
+const engineOf = source => normalize(checkDims(translate(resolve(source, namesOfGlobals(source.globals, source.controls)))), { markTypes });
 
 describe('prepareDef', () => {
     test('defaults', () => {
@@ -163,28 +168,22 @@ describe('formatOf', () => {
 });
 
 describe('applyResolved (the parts of the definition of its globals)', () => {
-    // the source of 5.0 of a definition of 4.x with patches, see utils/migrate.js
-    const sourceOf = def4 => migrate(def4);
     const options = source => ({ authored: source, markTypes });
-    const defOrg = {
-        globals: { value: 'a' },
-        formElements: [{ ref: 'value', type: 'radio', values: [
-            { value: 'a', patch: { mapping: { y: { column: 'A' } } } },
-            { value: 'b', patch: { mapping: { y: { column: 'B' } } } },
-        ] }],
-        mapping: { y: { column: 'A', type: 'numeric', scale: { orientation: 'vertical' } } },
-        plot: { type: 'cartesian:line', props: {} },
-    };
 
     test('the selected entries change the dims', () => {
-        const source = sourceOf(defOrg);
-        expect(source.dims.y.column).toBe("=match(@value, {a: 'A', b: 'B'}, 'A')");
-        const def = prepareDef(engineNames(defOrg), options(source));
+        const source = {
+            globals: { value: 'a' },
+            controls: [{ type: 'radio', global: 'value', values: ['a', 'b'] }],
+            dims: { y: { column: "=match(@value, {a: 'A', b: 'B'})", type: 'numeric' } },
+            marks: { type: 'line' },
+        };
+        const def = prepareDef(engineOf(source), options(source));
         expect(def.dims.y.column).toBe('A');
         def.globals.value = 'b';
-        expect(applyResolved(def, engineNames(defOrg), options(source))).toEqual(['y']);
+        expect(applyResolved(def, engineOf(source), options(source))).toEqual(['y']);
         expect(def.dims.y).toMatchObject({ column: 'B', type: 'numeric', scale: { type: 'linear' } });
-        expect(defOrg.mapping.y.column).toBe('A');
+        // the definition as written is not changed
+        expect(source.dims.y.column).toBe("=match(@value, {a: 'A', b: 'B'})");
     });
 
     test('nothing to do without a source', () => {
@@ -193,32 +192,28 @@ describe('applyResolved (the parts of the definition of its globals)', () => {
     });
 
     test('the other parts of the definition, unchanged ones are kept', () => {
-        const org = {
+        const source = {
             globals: { view: 'world' },
-            formElements: [{ ref: 'view', type: 'radio', values: [
-                { value: 'world' },
-                { value: 'europe', patch: {
-                    options: { height: 300, title: 'Europe' },
-                    geo: { fit: 'data' },
-                    filter: { region: 'EU' },
-                    plot: [{ id: 'dots', props: { r: 2 } }],
-                    mapping: { x: null },
-                } },
-            ] }],
-            options: { title: 'World' },
-            geo: { data: 'world.json' },
-            mapping: { x: { column: 'x', type: 'numeric' }, region: { column: 'r', fromData: true } },
-            plot: [{ id: 'dots', type: 'svg:circle', props: { r: 4, fill: 'red' } }],
+            controls: [{ type: 'radio', global: 'view', values: ['world', 'europe'] }],
+            title: "=match(@view, {europe: 'Europe'}, 'World')",
+            height: "=match(@view, {europe: 300})",
+            geo: { data: 'world.json', fit: "=match(@view, {europe: 'data'})" },
+            filter: "=match(@globals.view, {europe: @region == 'EU'}, true)",
+            dims: {
+                x: "=match(@view, {europe: null}, literal({column: 'x', type: 'numeric'}))",
+                region: { column: 'r', fromData: true },
+            },
+            // the attributes of a mark are drawn with the globals, the marks of a global are other marks
+            marks: "=match(@view, {europe: literal([{type: 'point', id: 'dots', r: 2, fill: 'red'}])}, literal([{type: 'point', id: 'dots', r: 4, fill: 'red'}]))",
         };
-        const source = sourceOf(org);
-        const def = prepareDef(engineNames(org), options(source));
+        const def = prepareDef(engineOf(source), options(source));
         const region = def.dims.region;
         expect(def).toMatchObject({ title: 'World', height: 400 });
         // the filter of the rows is the expression of the global, all rows of the other values
         expect(def.filter).toEqual({ match: ['@globals.view', { europe: { '==': ['@region', 'EU'] } }, true] });
 
         def.globals.view = 'europe';
-        applyResolved(def, engineNames(org), options(source));
+        applyResolved(def, engineOf(source), options(source));
         expect(def).toMatchObject({ title: 'Europe', height: 300, margins: {} });
         expect(def.geo).toEqual({ data: 'world.json', fit: 'data' });
         expect(def.filter).toEqual({ match: ['@globals.view', { europe: { '==': ['@region', 'EU'] } }, true] });
@@ -228,7 +223,7 @@ describe('applyResolved (the parts of the definition of its globals)', () => {
         expect(def.dims.region).toBe(region);
 
         def.globals.view = 'world';
-        applyResolved(def, engineNames(org), options(source));
+        applyResolved(def, engineOf(source), options(source));
         expect(def.geo).toEqual({ data: 'world.json' });
         // the filter of the rows is the expression of the global, all rows of the other values
         expect(def.filter).toEqual({ match: ['@globals.view', { europe: { '==': ['@region', 'EU'] } }, true] });
@@ -250,29 +245,25 @@ describe('applyResolved (the parts of the definition of its globals)', () => {
         expect(def.globals).toEqual({ group: 'eu', label: 'EU-27' });
     });
 
-    test('columns are filled from the globals of several form elements', () => {
-        const org = {
+    test('columns are filled from the globals of several controls', () => {
+        const source = {
             globals: { values: 'twh', share: '' },
-            formElements: [
-                { ref: 'values', type: 'radio', values: [{ value: 'twh' }, { value: 'co2' }] },
-                { ref: 'share', type: 'radio', values: [
-                    { value: '' },
-                    { value: '.share', patch: { mapping: { y: { axis: { format: '.0%' } } } } },
-                ] },
+            controls: [
+                { type: 'radio', global: 'values', values: ['twh', 'co2'] },
+                { type: 'radio', global: 'share', values: ['', '.share'] },
             ],
-            mapping: { y: { column: '{values}{share}', type: 'numeric', axis: { format: ',.1f' } } },
-            plot: { type: 'cartesian:line', props: {} },
+            dims: { y: { column: '{values}{share}', type: 'numeric', axis: { format: "=match(@share, {'.share': '.0%'}, ',.1f')" } } },
+            marks: { type: 'line' },
         };
-        const source = sourceOf(org);
-        const def = prepareDef(engineNames(org), options(source));
+        const def = prepareDef(engineOf(source), options(source));
         expect(def.dims.y).toMatchObject({ column: 'twh', axis: { format: ',.1f' } });
-        // the same column, e.g. a form element of other globals
-        expect(applyResolved(def, engineNames(org), options(source))).toEqual([]);
+        // the same column, e.g. a control of other globals
+        expect(applyResolved(def, engineOf(source), options(source))).toEqual([]);
 
         Object.assign(def.globals, { values: 'co2', share: '.share' });
-        expect(applyResolved(def, engineNames(org), options(source))).toEqual(['y']);
+        expect(applyResolved(def, engineOf(source), options(source))).toEqual(['y']);
         expect(def.dims.y).toMatchObject({ column: 'co2.share', axis: { format: '.0%' } });
-        expect(org.mapping.y.column).toBe('{values}{share}');
+        expect(source.dims.y.column).toBe('{values}{share}');
     });
 });
 
@@ -298,13 +289,14 @@ describe('column templates', () => {
             globals: { group: 'eu' },
             controls: [{ global: 'group', type: 'radio', values: [
                 { id: 'inno', name: 'Innovation Leaders', value: 'inno' },
-                { id: 'eu', name: 'EU-27', value: 'eu', short: 'EU', patch: { dims: {} } },
+                { id: 'eu', name: 'EU-27', value: 'eu', short: 'EU', globals: { label: 'EU-27' } },
             ] }],
             dims: {},
         });
         const names = templateNames(def);
         expect(names).toMatchObject({ group: 'eu', 'group:name': 'EU-27', 'group:id': 'eu', 'group:short': 'EU' });
-        expect(names).not.toHaveProperty('group:patch');
+        // only the fields which are values, not e.g. the globals of the entry
+        expect(names).not.toHaveProperty('group:globals');
         expect(fillTemplate('relative to {group:name} ({group})', names)).toBe('relative to EU-27 (eu)');
         expect(templateRefs('{group:name}')).toEqual(['group']);
     });
@@ -323,17 +315,17 @@ describe('variants and selectedEntry', () => {
 describe('mergeAll', () => {
     test('arrays are replaced, arrays of entries with an id are merged by it', () => {
         const merged = mergeAll([
-            { plot: [{ type: 'a' }], formElements: [
+            { marks: [{ type: 'a' }], controls: [
                 { id: 'values', name: 'Werte', values: [{ id: 'abs', name: 'Absolut' }, { id: 'share', name: 'Anteil' }] },
                 { id: 'scale', name: 'Skala' },
             ] },
-            { plot: [{ type: 'b' }], formElements: [
+            { marks: [{ type: 'b' }], controls: [
                 { id: 'values', values: [{ id: 'abs', name: 'Anzahl' }] },
                 { id: 'unit', name: 'Einheit' },
             ] },
         ]);
-        expect(merged.plot).toEqual([{ type: 'b' }]);
-        expect(merged.formElements).toEqual([
+        expect(merged.marks).toEqual([{ type: 'b' }]);
+        expect(merged.controls).toEqual([
             { id: 'values', name: 'Werte', values: [{ id: 'abs', name: 'Anzahl' }, { id: 'share', name: 'Anteil' }] },
             { id: 'scale', name: 'Skala' },
             { id: 'unit', name: 'Einheit' },
@@ -383,24 +375,23 @@ describe('sameValue', () => {
 });
 
 describe('applyResolved of globals and of the categories of the data', () => {
-    test('the globals of an entry select the entry of a later form element at once', () => {
-        const org = {
+    test('the globals of an entry select the entry of a later control at once', () => {
+        const source = {
             globals: { a: '2', b: 'x' },
-            formElements: [
-                { ref: 'a', values: [{ value: '1', globals: { b: 'y' } }, { value: '2' }] },
-                { ref: 'b', values: [{ value: 'x', patch: { mapping: { y: { column: 'cx' } } } }, { value: 'y', patch: { mapping: { y: { column: 'cy' } } } }] },
+            controls: [
+                { global: 'a', values: [{ value: '1', globals: { b: 'y' } }, '2'] },
+                { global: 'b', values: ['x', 'y'] },
             ],
-            mapping: { y: { column: 'c0', type: 'numeric' } },
+            dims: { y: { column: "=match(@b, {x: 'cx', y: 'cy'})", type: 'numeric' } },
         };
-        const source = migrate(org);
-        const def = prepareDef(engineNames(org), { authored: source, markTypes });
+        const def = prepareDef(engineOf(source), { authored: source, markTypes });
         expect(def.dims.y.column).toBe('cx');
         def.globals.a = '1';
-        expect(applyResolved(def, engineNames(org), { authored: source, markTypes })).toEqual(['y']);
+        expect(applyResolved(def, engineOf(source), { authored: source, markTypes })).toEqual(['y']);
         expect(def.globals.b).toBe('y');
         expect(def.dims.y.column).toBe('cy');
         // a second one changes nothing
-        expect(applyResolved(def, engineNames(org), { authored: source, markTypes })).toEqual([]);
+        expect(applyResolved(def, engineOf(source), { authored: source, markTypes })).toEqual([]);
         expect(def.dims.y.column).toBe('cy');
     });
 
