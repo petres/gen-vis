@@ -119,7 +119,7 @@ describe('parseData', () => {
         expect(dataFormat('/api/data', 'csv')).toBe('csv');
     });
 
-    test('parquet, integers of 64 bits are numbers and timestamps are the ones of Date.parse', async () => {
+    test('parquet, integers of 64 bits are numbers and timestamps of UTC are the texts of ISO, dates of every scale', async () => {
         const buffer = parquetWriteBuffer({ columnData: [
             { name: 'year', data: [2020n, 2021n, null], type: 'INT64' },
             { name: 'id', data: [2n**60n, 1n, 2n], type: 'INT64' },
@@ -128,10 +128,15 @@ describe('parseData', () => {
             { name: 'value', data: [1.5, 2, null], type: 'DOUBLE' },
         ] });
         expect(await parseData(buffer)).toEqual([
-            { year: 2020, id: String(2n**60n), date: Date.parse('2020-01-01'), land: 'Wien', value: 1.5 },
-            { year: 2021, id: 1, date: Date.parse('2021-06-15T12:00:00Z'), land: 'Tirol', value: 2 },
+            { year: 2020, id: String(2n**60n), date: '2020-01-01T00:00:00.000Z', land: 'Wien', value: 1.5 },
+            { year: 2021, id: 1, date: '2021-06-15T12:00:00.000Z', land: 'Tirol', value: 2 },
             { year: null, id: 2, date: null, land: 'Wien', value: null },
         ]);
+        // the type of the column is date, not numeric, the values the times of UTC
+        const rows = await parseData(buffer);
+        expect(inferType(rows.map(r => r.date))).toBe('date');
+        expect(rows.map(r => toDate(r.date))).toEqual([Date.parse('2020-01-01'), Date.parse('2021-06-15T12:00:00Z'), null]);
+        expect(rows.map(r => toDate(r.date, true))).toEqual([Date.parse('2020-01-01'), Date.parse('2021-06-15T12:00:00Z'), null]);
         // also a view of a buffer
         expect(await parseData(new Uint8Array(buffer))).toHaveLength(3);
     });

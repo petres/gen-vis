@@ -194,8 +194,9 @@ can use are read: the ones of the dims (also of every value of the
 controls, a column template in every value of its globals), of the
 transforms and of the values of controls, so a wide file costs only its
 columns which are used. Integers of 64 bits are numbers, unless they are too
-large for them, e.g. ids, then they are strings, also in lists and structs, timestamps are the ones of
-the other formats, dates (without a time) and timestamps without a time zone
+large for them, e.g. ids, then they are strings, also in lists and structs, timestamps of UTC are
+dates of ISO with a `Z`, e.g. `2024-06-01T13:00:00.000Z` (so a dim of them
+is one of dates, the same time everywhere), dates (without a time) and timestamps without a time zone
 (e.g. of pandas, polars and duckdb) are strings as the ones of csv, e.g.
 `2024-06-01` and `2024-06-01T13:00:00.000`, see `type` of
 [dims](#the-type-of-a-dim), decimals (`DECIMAL`, e.g. doubles written as integers

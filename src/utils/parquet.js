@@ -35,10 +35,12 @@ const loadCompressors = async codecs => {
 const decoder = new TextDecoder();
 
 // integers of 64 bits are numbers if they are exact, e.g. years, otherwise
-// strings, e.g. ids, also in lists, timestamps are the ones of Date.parse,
-// dates (without a time) and timestamps without a time zone are strings as
-// the ones of csv, e.g. "2024-06-01" or "2024-06-01T13:00:00.000", so they
-// are the same day and time in every time zone, see toDate of utils/data.js,
+// strings, e.g. ids, also in lists, timestamps (of UTC) are the texts of
+// ISO with a Z, e.g. "2024-06-01T13:00:00.000Z", so their column is one of
+// dates, not of numbers, dates (without a time) and timestamps without a
+// time zone are strings as the ones of csv, e.g. "2024-06-01" or
+// "2024-06-01T13:00:00.000", so they are the same day and time in every
+// time zone, see toDate of utils/data.js,
 // floats of 32 bits are the shortest decimals of them, as the ones of csv,
 // e.g. 22.1637 (not 22.163700103759766), bytes are text, e.g. of writers
 // without the type STRING, values of lists and structs are the ones of their
@@ -56,7 +58,7 @@ const normalize = (v, node) => {
     if (v instanceof Uint8Array)
         return !e || e.type == 'BYTE_ARRAY' ? decoder.decode(v) : v;
     if (v instanceof Date)
-        return kind == 'date' ? v.toISOString().slice(0, 10) : (kind == 'local' ? v.toISOString().slice(0, 23) : v.getTime());
+        return isNaN(v) ? null : (kind == 'date' ? v.toISOString().slice(0, 10) : v.toISOString().slice(0, kind == 'local' ? 23 : 24));
     if (typeof v == 'number')
         // the days of a date of only the logical type, the reader keeps them
         return kind == 'date' ? new Date(v*86400000).toISOString().slice(0, 10) : (e?.type == 'FLOAT' ? shortest(v) : v);
