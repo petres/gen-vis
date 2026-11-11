@@ -1,4 +1,4 @@
-export { curves, setProps, setAttrs, groupAttrs, groupKey, rowOf, keyOf, elementOf, directOf, childrenOf, shapeOf, drawLayer, motion, withMotion, reducedMotion, dataAttribute, fitText };
+export { curves, setProps, setAttrs, groupAttrs, groupKey, rowOf, keyOf, elementOf, directOf, childrenOf, shapeOf, replaceRow, drawLayer, motion, withMotion, reducedMotion, dataAttribute, fitText };
 
 import * as d3 from "@/utils/d3";
 import { animate, create, finish as finishAnimation, interrupt, itemOf, join, scriptAttr, setAttr, targetOf } from "@/utils/dom";
@@ -189,11 +189,19 @@ const groupKey = g => JSON.stringify(Object.values(g.categories));
 // objects in every draw, e.g. after a toggle of a legend
 const ids = new WeakMap();
 let id = 0;
-const rowKey = v => {
-    const row = v[rowOf];
+const idOf = row => {
     if (!ids.has(row))
         ids.set(row, ++id);
     return ids.get(row);
+};
+const rowKey = v => idOf(v[rowOf]);
+
+// a row which replaces the row `before` has its key, so its element is the
+// one of the row before, e.g. a row of the data of a mark of another value
+// of a global, see plotRows of layout.js
+const replaceRow = (before, row) => {
+    ids.set(row, idOf(before));
+    return row;
 };
 
 // the attributes of an element at once, without a transition and without

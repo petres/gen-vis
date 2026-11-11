@@ -11,7 +11,7 @@ import { facetMappings } from "@/utils/normalize";
 import { markPath, sizeOf, warnOnce, withPath } from "@/utils/warn";
 import { highlightVars } from "@/utils/highlight";
 import { textWidth } from "@/utils/measure";
-import { directOf, elementOf } from "@/utils/draw";
+import { directOf, elementOf, replaceRow } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 import { alongRows } from "@/plots/elements";
 
@@ -565,14 +565,46 @@ const plotRows = (store, plot, facet) => {
     const mapping = store.def.mapping;
     const dim = store.def.facets?.dim;
     const inline = !plot.loaded;
+    // the rows of the draw before of the same values are kept, the others
+    // have their keys, so the elements are the ones of the draw before, see
+    // ownRows
+    const before = ownRows(plot, facet.key);
     const rows = plot.data
-        .map(r => Object.fromEntries(Object.entries(r).map(([k, v]) => {
-            const value = inline ? evaluate(v, facet.scope) : v;
-            return [k, Object.hasOwn(mapping, k) ? convertValue(mapping[k], value) : value];
-        })))
+        .map((r, i) => {
+            const row = Object.fromEntries(Object.entries(r).map(([k, v]) => {
+                const value = inline ? evaluate(v, facet.scope) : v;
+                return [k, Object.hasOwn(mapping, k) ? convertValue(mapping[k], value) : value];
+            }));
+            return before[i] = !before[i] ? row : sameRow(before[i], row) ? before[i] : replaceRow(before[i], row);
+        })
         .filter(r => facet.key === undefined || (facet.cell ? inCell(store.def, facet.cell, r)
             : !dim || !Object.hasOwn(r, dim) || String(r[dim]) == String(facet.key)));
     return filtered(rows);
+};
+
+// the rows of the `data` of a plot of its last draw in the facet of `key`,
+// by their index: the elements of a draw are the ones of the same rows (see
+// rowKey of utils/draw.js), a row of the same values is the same object in
+// every draw, one of other values (e.g. of a global) has the key of the
+// row before (see replaceRow), so their elements are kept and move with a
+// transition; not the ones of other data of the plot
+const ownRowsKept = new WeakMap();
+const ownRows = (plot, key) => {
+    let kept = ownRowsKept.get(plot);
+    if (kept?.data !== plot.data)
+        ownRowsKept.set(plot, kept = { data: plot.data, facets: new Map() });
+    if (!kept.facets.has(key))
+        kept.facets.set(key, []);
+    return kept.facets.get(key);
+};
+
+// two rows of a plot have the same values: the same keys, dates of the same
+// time and ranges of the same values, e.g. ["2020-01-01", null] of a band
+const sameRow = (a, b) => {
+    const keys = Object.keys(a);
+    const same = (x, y) => Object.is(x, y) || (x instanceof Date && y instanceof Date && +x == +y)
+        || (Array.isArray(x) && Array.isArray(y) && x.length == y.length && x.every((v, i) => same(v, y[i])));
+    return keys.length == Object.keys(b).length && keys.every(k => Object.hasOwn(b, k) && same(a[k], b[k]));
 };
 
 // a row of a plot is in a cell of a grid if its values of the mappings of

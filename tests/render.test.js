@@ -897,6 +897,30 @@ describe('the data of a plot', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the elements of its rows are kept from one draw to the next, also of a row of other values', async () => {
+        const def = lineDef();
+        def.globals = { target: 3 };
+        def.plot = [...def.plot, { type: 'svg:circle', id: 'own', data: [{ x: 2021, y: 1 }, { x: 2022, y: '@target' }], props: { cx: '@x:scaled', cy: '@y:scaled', r: 2 } }];
+        const { el, vis } = await mountVis({ def, data: lineData });
+        const circles = () => [...el.querySelectorAll('[data-mark="own"] circle')];
+        const [a, b] = circles();
+        const cy = b.getAttribute('cy');
+        // a toggle of the legend: other scales, the same rows
+        el.querySelector('.vis-legend-entry[data-key="Wien"]').click();
+        await nextTick();
+        expect(circles()).toEqual([a, b]);
+        expect(circles().map(c => c[itemOf][rowOf])).toEqual([a[itemOf][rowOf], b[itemOf][rowOf]]);
+        // a global of the second row: a new row in the element of the row before
+        const rows = circles().map(c => c[itemOf][rowOf]);
+        vis.update({ globals: { target: 2 } });
+        await nextTick();
+        expect(circles()).toEqual([a, b]);
+        expect(a[itemOf][rowOf]).toBe(rows[0]);
+        expect(b[itemOf][rowOf]).not.toBe(rows[1]);
+        expect(b.getAttribute('cy')).not.toBe(cy);
+        expect(errors).toEqual([]);
+    });
+
     test('dates are converted, a row of a facet is only in its facet', async () => {
         const def = lineDef();
         def.mapping.x = { column: 'year', type: 'date', scale: { type: 'utc', orientation: 'horizontal', domain: ['2020-01-01', '2024-01-01'] } };
