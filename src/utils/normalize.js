@@ -52,7 +52,7 @@ const axisPositions = { horizontal: 'bottom', vertical: 'left', angular: 'angula
 const categoricalScales = ['band', 'point', 'ordinal'];
 const dateScales = ['time', 'utc'];
 
-// a dim (or a dim of 5.0) of categories by its parts: categories (see
+// a dim (as written or of the engine's form) of categories by its parts: categories (see
 // hasCategories) or a band, point or ordinal scale
 // (a scale without a type of the parts of a scale of categories, e.g. the
 // order of the categories or the space between the bands, is one of them)
@@ -61,10 +61,10 @@ const ofCategories = m => hasCategories(m) || (isObject(m.scale) && (categorical
     || (m.scale.type === undefined && categoryScaleParts.some(k => m.scale[k] !== undefined))));
 
 /**
- * Whether a dim (or a dim of 5.0) is categorical before the types of
+ * Whether a dim (as written or of the engine's form) is categorical before the types of
  * the rows are known: of its type, without one of its parts (see
  * ofCategories), e.g. the center of the band of its position, the color of
- * its categories of a fill (see utils/language.js), of the migration.
+ * its categories of a fill (see utils/language.js).
  */
 const isCategorical = m => isObject(m) && (m.type == 'categorical' || (m.type === undefined && ofCategories(m)));
 

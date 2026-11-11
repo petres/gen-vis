@@ -274,7 +274,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
  * also the ones of the values of the ignored conditions, e.g. per month.
  */
 const domainRows = (store, def, axis, scope, stacked, shown, stackOrder) => {
-    // the conditions of the filter: the keys of conditions of 4.x, the dims
+    // the conditions of the filter: the keys of an object of conditions, the dims
     // an expression references, `true` ignores all of them
     const expression = def.filter !== undefined && def.filter !== null && !(isObject(def.filter) && !isOperator(def.filter));
     const conditions = def.filter === undefined || def.filter === null ? [] : expression ? [...new Set(refNames(def.filter).map(n => n.split(':')[0]))] : Object.keys(def.filter);

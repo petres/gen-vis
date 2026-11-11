@@ -1,4 +1,4 @@
-export { translate, checkDims, colorDims, dim as dimOf, compileStrings, optionKeys, markKeys, expressionKeys, nameKeys, typeOf, positionChannels, authoredPath, entryOf, entriesOf, implicitDims };
+export { translate, checkDims, compileStrings, optionKeys, markKeys, expressionKeys, nameKeys, typeOf, positionChannels, authoredPath, entryOf, entriesOf, implicitDims };
 
 import { isObject } from '@/utils/values';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';

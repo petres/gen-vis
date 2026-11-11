@@ -24,7 +24,7 @@ export const defaults = {
     'polar:circle': { r: 3, fill: color },
     'polar:text': { fill: '@color' },
     // the labels of a map are centered on their place, e.g. the pole of their
-    // area, vertically without a `dy` of their own (one of 4.x, e.g. 0.35em,
+    // area, vertically without a `dy` of their own (one, e.g. 0.35em,
     // moves them from their baseline)
     'geo:text': props => props && 'dy' in props ? { 'text-anchor': 'middle' } : { 'text-anchor': 'middle', 'dominant-baseline': 'middle' },
 };

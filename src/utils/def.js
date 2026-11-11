@@ -73,9 +73,9 @@ const withoutOtherTicks = (target, source) => {
 // the attributes of marks and annotations are expressions of the rows, a
 // `match` of them is no switch of a global: no leaf merge in them
 const withoutLeaves = (t, s, options) => (Array.isArray(t) && Array.isArray(s) ? arrayMerge : deepMerge)(t, s, { ...options, leafMerge: undefined });
-const customMerge = key => key == 'mapping' || key == 'dims' ? mergeDims : key == 'marks' || key == 'annotations' ? withoutLeaves
-    : key == 'controls' || key == 'formElements' ? controlsMerge : undefined;
-// the controls (of 4.x the form elements) merged by their keys, their
+const customMerge = key => key == 'dims' ? mergeDims : key == 'marks' || key == 'annotations' ? withoutLeaves
+    : key == 'controls' ? controlsMerge : undefined;
+// the controls merged by their keys, their
 // entries (`values`) as entries, see entriesMerge
 const controlsMerge = (target, source, options) => {
     const own = { ...options, customMerge: key => key == 'values' ? entriesMerge : customMerge(key) };
@@ -152,9 +152,8 @@ const withDefault = (m, value, options) => {
  * their cases (the later ones win) and keep the default of the later one,
  * or of the earlier one if the later has none; a value merged onto a match
  * (with or without a default) becomes its default, so the switch of a
- * mixin also applies to the value of a child merged after it, as the
- * patches of 4.x applied after the merge, an object onto a default which
- * is an object is merged into it; of nested switches (mixins of different
+ * mixin also applies to the value of a child merged after it, an object
+ * onto a default which is an object is merged into it; of nested switches (mixins of different
  * globals) the innermost default. Null replaces (removes), as a match with
  * a default replaces a value. Matches of other names are values.
  */
@@ -177,13 +176,11 @@ const leafMerge = (target, source, options = {}) => {
 /**
  * The names of the globals of the parts of a definition (its parents and
  * mixins), whose matches are switches in the merge: the keys of `globals`
- * and the globals of the controls (of 4.x the `ref` of the form elements,
- * before their migration).
+ * and the globals of the controls.
  */
 const globalNames = parts => new Set(parts.filter(isObject).flatMap(p => [
     ...(isObject(p.globals) ? Object.keys(p.globals) : []),
     ...[p.controls ?? []].flat().filter(isObject).map(c => c.global),
-    ...[p.formElements ?? []].flat().filter(isObject).map(e => e.ref),
 ]).filter(n => typeof n == 'string'));
 
 // only a `match` object is a leaf of the merge: an object of one other

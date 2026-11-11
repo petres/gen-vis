@@ -542,7 +542,7 @@ const rowName = (dims, columns, scope) => name => {
  * The rows of a filter `spec`: an expression of the row (see rowResolver,
  * the names are the dims, the columns and the `scope`), e.g.
  * `"@year == @selected"`, true are all rows; or the conditions of dims
- * of 4.x, see rowFilter. `path` names it in errors, `unknown(path, dim)`
+ * (an object), see rowFilter. `path` names it in errors, `unknown(path, dim)`
  * reports a condition of no dim.
  */
 const filterRows = (rows, spec, dims, scope = {}, { columns = null, path = 'filter', unknown = null } = {}) => {
@@ -625,7 +625,7 @@ const typesKey = dims => Object.keys(dims).filter(n => dims[n]?.type == 'date').
  * A filter expression without its conditions of the dims `names`: a
  * comparison which references one of them is true, e.g. of the domain of a
  * scale which ignores the filter of a slider (`domainIgnores`), see
- * domainRows of layout.js; conditions of 4.x (an object) without their keys.
+ * domainRows of layout.js; the conditions of an object without their keys.
  */
 const comparisons = ['==', '!=', '<', '<=', '>', '>='];
 const withoutConditions = (spec, names) => {
@@ -857,7 +857,7 @@ const usedColumns = def => {
 // the names of the expressions of the rows a definition filters by, which
 // can be columns of the data, not only dims, see rowResolver: of the
 // `filter` of the definition and of its marks, the conditions of the
-// stacked dims and of the hover (conditions of 4.x, objects, name
+// stacked dims and of the hover (the conditions of an object name
 // dims), e.g. "@region == 'W'" of a column `region`
 const expressionColumns = def => {
     const expressions = [def.filter, ...[def.marks ?? []].flat().map(p => p?.filter),
