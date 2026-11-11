@@ -32,7 +32,11 @@ HTML and no CSS:
   the polar charts), the baselines of CSS
   (`dominant-baseline`) are offsets of the texts, halos of labels
   (`paint-order`) two texts, nested svg elements groups (with a clip only
-  where their content overflows them, e.g. a map).
+  where their content overflows them, e.g. a map);
+- the ids (e.g. of the clips and the gradients of color legends) have a
+  prefix of the content of the file (e.g. `gv1k3x9z-`), so several SVGs
+  inlined in one HTML page keep their own, and an export of the same
+  chart is the same file; no scripts and no handlers of events.
 
 The options:
 

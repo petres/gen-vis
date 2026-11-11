@@ -122,6 +122,30 @@ describe('exportSvg', () => {
         root.remove();
     });
 
+    test('the ids and their references have a prefix of the content, the same of the same file', () => {
+        const svgOf = color => {
+            const root = document.body.appendChild(document.createElement('div'));
+            root.innerHTML = `<svg><defs><linearGradient id="gen-vis-gradient-1"><stop offset="0" stop-color="${color}"/></linearGradient>`
+                + '<clipPath id="clip"><rect width="5" height="5"/></clipPath><path id="p" d="M0,0L100,0"/></defs>'
+                + '<rect clip-path="url(#clip)" mask=\'url("#gen-vis-gradient-1")\' width="10" height="10"/>'
+                + '<text><textPath href="#p">A</textPath></text><use href="#other"/></svg>';
+            const svg = composeSvg(root);
+            root.remove();
+            return svg;
+        };
+        const red = svgOf('#FF0000');
+        const [, prefix] = red.match(/id="(gv[0-9a-z]+-)gen-vis-gradient-1"/);
+        expect(red).toContain(`clip-path="url(#${prefix}clip)"`);
+        expect(red).toContain(`mask="url(&quot;#${prefix}gen-vis-gradient-1&quot;)"`);
+        expect(red).toContain(`id="${prefix}p"`);
+        expect(red).toMatch(new RegExp(`<textPath href="#${prefix}p" xlink:href="#${prefix}p"`));
+        // a reference of an id which the file does not have stays
+        expect(red).toContain('href="#other"');
+        expect(red).not.toMatch(/id="(gen-vis-gradient-1|p)"/);
+        expect(svgOf('#FF0000')).toBe(red);
+        expect(svgOf('#0000FF')).not.toContain(prefix);
+    });
+
     test('the opacity of an svg once, lengths of texts in pixels, href also as xlink:href', () => {
         const root = document.body.appendChild(document.createElement('div'));
         root.innerHTML = '<svg style="opacity: 0.5"><path id="p" d="M0,0L100,0"/>'
@@ -133,8 +157,10 @@ describe('exportSvg', () => {
         const [a] = out.querySelectorAll('text');
         expect([a.getAttribute('x'), a.getAttribute('dy')]).toEqual(['15', '7.1']);
         const path = out.querySelector('textPath');
-        expect(path.getAttribute('href')).toBe('#p');
-        expect(path.getAttributeNS('http://www.w3.org/1999/xlink', 'href')).toBe('#p');
+        const id = out.querySelector('path').id;
+        expect(id).toMatch(/^gv[0-9a-z]+-p$/);
+        expect(path.getAttribute('href')).toBe(`#${id}`);
+        expect(path.getAttributeNS('http://www.w3.org/1999/xlink', 'href')).toBe(`#${id}`);
         expect(out.getAttribute('xmlns:xlink')).toBe('http://www.w3.org/1999/xlink');
         root.remove();
     });

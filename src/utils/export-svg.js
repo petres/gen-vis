@@ -14,7 +14,8 @@
 // (dominant-baseline) are offsets, the halos of labels (paint-order) are
 // two texts, nested svg elements are groups (with a clip only where their
 // content overflows them), lengths of texts in em are pixels, an href is
-// also an xlink:href (SVG 1.1).
+// also an xlink:href (SVG 1.1), the ids have a prefix of the content of the
+// file (see prefixIds).
 export { composeSvg, units };
 
 import { scriptAttr, scriptElement } from "@/utils/dom";
@@ -534,5 +535,35 @@ const compose = (root, B, unit, asked) => {
     // the serializer declares the namespace of the root (xmlns)
     if (defs.childNodes.length)
         out.prepend(defs);
+    prefixIds(out);
     return new XMLSerializer().serializeToString(out);
+};
+
+// a short hash of a text (FNV-1a of 32 bits) in base 36
+const hashOf = text => {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < text.length; i++)
+        h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
+    return (h >>> 0).toString(36);
+};
+
+// the ids of an svg (e.g. of the clips and the gradients) and their
+// references (url(#id) and href="#id") with a prefix of its content, so
+// two files in one page do not draw the elements of each other (an
+// url(#id) is the first element of the id in the page); the same content
+// has the same prefix, an export of the same chart is the same file
+const prefixIds = out => {
+    const elements = [...out.querySelectorAll('[id]')];
+    if (!elements.length)
+        return;
+    const prefix = `gv${hashOf(new XMLSerializer().serializeToString(out))}-`;
+    const ids = new Set(elements.map(e => e.getAttribute('id')));
+    const ref = id => ids.has(id) ? prefix + id : id;
+    elements.forEach(e => e.setAttribute('id', prefix + e.getAttribute('id')));
+    out.querySelectorAll('*').forEach(e => [...e.attributes].forEach(a => {
+        const v = a.localName == 'href' && a.value.startsWith('#') ? `#${ref(a.value.slice(1))}`
+            : a.value.replace(/url\((['"]?)#([^'")]+)\1\)/g, (m, q, id) => `url(${q}#${ref(id)}${q})`);
+        if (v != a.value)
+            a.value = v;
+    }));
 };
