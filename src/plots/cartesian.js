@@ -2,7 +2,7 @@ export { barScale, barWidth };
 
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, points, propScale } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, points, propScale, bandOffset } from "@/plots/elements";
 import { pixelOffset } from "@/utils/axis";
 import { refOf, refNames } from "@/utils/expr";
 import { markPath, warnOnce } from "@/utils/warn";
@@ -75,11 +75,13 @@ export default {
                 const base = scale ? baseOf(scale) : ctx.innerHeight;
                 return perGroup(groups, g => stairs(points(g), base, false, plot.ends == 'open'));
             }
+            // through the centers of the bands of a band scale, as the bars
+            const [dx, dy] = [bandOffset(plot, ctx, 'd.x'), bandOffset(plot, ctx, 'd.y')];
             return perGroup(groups, g => d3.line()
                 .curve(curve(plot))
                 .defined(e => finite(e.x, e.y))
-                .x(e => e.x)
-                .y(e => e.y)
+                .x(e => e.x + dx)
+                .y(e => e.y + dy)
                 (points(g, plot, ctx, 'd.x'))
             );
         },
@@ -97,10 +99,12 @@ export default {
                 const base = scale ? baseOf(scale) : ctx.innerHeight;
                 return perGroup(groups, g => stairs(points(g), base, true));
             }
+            // through the centers of the bands of a band scale, as the bars
+            const dx = bandOffset(plot, ctx, 'd.x');
             return perGroup(groups, g => d3.area()
                 .curve(curve(plot))
                 .defined(e => finite(e.x, e.y0, e.y1))
-                .x(e => e.x)
+                .x(e => e.x + dx)
                 .y1(e => e.y1)
                 .y0(e => e.y0)
                 (points(g, plot, ctx, 'd.x'))

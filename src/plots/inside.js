@@ -4,7 +4,7 @@
 export { placeInside, bandProfile, bestSpots, chooseSpots };
 
 import { line, lineRadial } from 'd3-shape';
-import { curve, finite, points, propScale } from '@/plots/elements';
+import { curve, finite, points, propScale, bandOffset } from '@/plots/elements';
 import { bandCenter } from '@/utils/scales';
 
 const tau = 2*Math.PI;
@@ -95,7 +95,9 @@ const unwrapped = lines => lines.map(l => {
 const bandProfile = (group, plot, ctx, polar) => {
     const c = curve(plot);
     if (!polar) {
-        const pts = points(group, plot, ctx, 'd.x').filter(p => finite(p.x));
+        // at the centers of the bands of a band scale, as the area is drawn
+        const dx = bandOffset(plot, ctx, 'd.x');
+        const pts = points(group, plot, ctx, 'd.x').filter(p => finite(p.x)).map(p => dx ? { ...p, x: p.x + dx } : p);
         if (pts.length < 2)
             return null;
         const edge = key => {

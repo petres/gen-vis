@@ -593,3 +593,38 @@ describe('arrows of rows of a mark of their own (final review of 5.0)', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('lines and areas of a band scale', () => {
+    const data = 'k,v\na,1\nb,2\nc,3';
+    const xs = d => [...d.matchAll(/[ML](-?[\d.]+),(-?[\d.]+)/g)].map(m => [Number(m[1]), Number(m[2])]);
+    const paths = el => [...el.querySelectorAll('g.vis-mark path')].map(p => xs(p.getAttribute('d')));
+    const centers = el => rects(el).map(r => [num(r, 'x') + num(r, 'width')/2, num(r, 'y') + num(r, 'height')/2]);
+
+    test('a line and an area with bars run through the centers of the bands, as the points', async () => {
+        const def = { dims: { x: { column: 'k', type: 'categorical' }, y: 'v' }, marks: [{ type: 'bar' }, { type: 'line' }, { type: 'area' }, { type: 'point' }] };
+        const el = await mount({ def, data });
+        const [line, area] = paths(el);
+        const mid = centers(el).map(c => c[0]);
+        const points = [...el.querySelectorAll('g.vis-mark circle')].map(c => num(c, 'cx'));
+        line.forEach((p, i) => expect(p[0]).toBeCloseTo(mid[i], 2));
+        area.slice(0, 3).forEach((p, i) => expect(p[0]).toBeCloseTo(mid[i], 2));
+        points.forEach((p, i) => expect(p).toBeCloseTo(mid[i], 2));
+        expect(errors).toEqual([]);
+    });
+
+    test('a line with horizontal bars runs through the centers of the bands of y', async () => {
+        const def = { dims: { y: { column: 'k', type: 'categorical' }, x: 'v' }, marks: [{ type: 'bar' }, { type: 'line' }] };
+        const el = await mount({ def, data });
+        const mid = centers(el).map(c => c[1]);
+        paths(el)[0].forEach((p, i) => expect(p[1]).toBeCloseTo(mid[i], 2));
+        expect(errors).toEqual([]);
+    });
+
+    test('a line alone (a point scale) is at the positions of its points', async () => {
+        const def = { dims: { x: { column: 'k', type: 'categorical' }, y: 'v' }, marks: [{ type: 'line' }, { type: 'point' }] };
+        const el = await mount({ def, data });
+        const points = [...el.querySelectorAll('g.vis-mark circle')].map(c => num(c, 'cx'));
+        paths(el)[0].forEach((p, i) => expect(p[0]).toBeCloseTo(points[i], 2));
+        expect(errors).toEqual([]);
+    });
+});

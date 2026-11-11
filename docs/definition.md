@@ -1268,7 +1268,8 @@ which names neither a dim nor a column of the data (e.g. a typo, `"x":
 
 - A dim of a channel is drawn at the scaled value of the row (`@x:scaled`),
   a categorical one of a band at the center of the band
-  (`@x:scaled:center`) of points and texts; a bar is in its band.
+  (`@x:scaled:center`) of points and texts; a bar is in its band, lines
+  and areas run through the centers of the bands, e.g. a line on bars.
 - A dim a channel names beside the dim of its axis (e.g. `"y2": "hi"` of a
   rule, `"x1": "hi"` of a bar) is on the scale of that axis
   (`"scale": {"of": "y"}`), so its values are positions of the axis and

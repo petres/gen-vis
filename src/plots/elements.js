@@ -1,8 +1,9 @@
-export { perRow, perGroup, finite, curve, points, alongRows, propScale, dodge, halo, inside, centered };
+export { perRow, perGroup, finite, curve, points, alongRows, propScale, bandOffset, dodge, halo, inside, centered };
 
 import * as d3 from "@/utils/d3";
 import { refOf, refNames } from '@/utils/expr';
 import { curves, groupAttrs, groupKey, keyOf, rowOf } from "@/utils/draw";
+import { bandCenter } from "@/utils/scales";
 
 const finite = (...values) => values.every(v => Number.isFinite(v));
 
@@ -80,6 +81,18 @@ const propScale = (plot, ctx, path) => {
     // a reference, or the scaled position in an expression, e.g. "@x:scaled" of dodged bars
     const ref = refOf(value) ?? refNames(value).find(n => n.split(':')[1] == 'scaled');
     return ref === undefined ? undefined : ctx.scales[ref.split(':')[0]];
+};
+
+// the offset of the center of the band of a position of a path (`path`, e.g.
+// `d.x` of a line): of the scaled value of a dim of a band scale
+// ("@x:scaled", its start), so a line runs through the centers of the bars
+// of its categories, 0 of other scales and of other names, e.g.
+// "@x:scaled:center"
+const bandOffset = (plot, ctx, path) => {
+    const value = path.split('.').reduce((p, k) => p?.[k], plot.props);
+    const name = refNames(value).map(n => n.split(':')).find(n => n.length == 2 && n[1] == 'scaled')?.[0];
+    const scale = name === undefined ? undefined : ctx.scales?.[name];
+    return scale ? bandCenter(scale) : 0;
 };
 
 // the layer of a path per group, e.g. a line, with the props of the group
