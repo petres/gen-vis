@@ -386,6 +386,10 @@ const checkDims = ctx => {
         }
         checkDates(ctx, n, m, path);
         checkFormats(n, m, path, warn);
+        // a format as an expression of the value, e.g. "=format(@y / 1000, ',.0f')": the value is the name of the dim
+        [['format', m.format], ['axis.format', m.axis?.format], ['hover.format', m.hover?.format], ['legend.format', m.legend?.format]]
+            .filter(([, f]) => isObject(f) || (typeof f == 'string' && f.startsWith('@')))
+            .forEach(([k, f]) => checkProp(f, `${path}.${k}`, warn, new Set([...names.global, n])));
     });
     // the rows which are stacked, `true` all, the conditions of dims, e.g. { "type": { "not": "load" } }
     Object.entries(dims).filter(([, m]) => m.stacked !== undefined && typeof m.stacked != 'boolean').forEach(([n, m]) => isObject(m.stacked)

@@ -660,7 +660,10 @@ number of pixels or `"auto"`), see [margins](#margins).
 type of scale before them, e.g. `bandAxis` (the categories of bars),
 `pointAxis` (other categories), `linearAxis`, `logAxis` or `timeAxis`, and
 `<position>Axis` the ones of the axes of a position before both, e.g.
-`angularAxis` and `radialAxis` of polar charts or `leftAxis`. A house style
+`angularAxis` and `radialAxis` of polar charts or `leftAxis`. Besides the
+built-in ones the defaults of a cartesian axis can have its `at` (see
+[axes](#axes)), e.g. `{"bandAxis": {"at": 0}}`: the category axis at 0
+wherever 0 is in the domain of the values, else at its edge. A house style
 without tick marks at the categories of bars and columns, whichever side
 they are on: `{"bandAxis": {"tickMarks": false}}`; `tickMarks: false` of
 the defaults leaves them out of the axes without `tickMarks` of their own
@@ -746,7 +749,10 @@ The shorthands of a dim are parts of its scale and its axis:
 
 - `format`: the d3 format of the values (a time format of dates), the one
   of the axis and of the hover (and of `@y:formatted`) which have none of
-  their own.
+  their own; also an expression of the value, the name of the dim, e.g.
+  `"=format(@y / 1000, ',.0f')"` of values in thousands (the labels of the
+  axis, `@y:formatted` and the hover) or `"=cat(format(@y, ',.1f'), ' %')"`
+  (`axis.format`, `hover.format` and `legend.format` the same).
 - `name`: the title of the legend (the title of the axis is `axis.title`).
 
 ### The type of a dim
@@ -954,7 +960,11 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   the other axis instead of at the edge, e.g. `"x": {"axis": {"at": 0}}` at
   y = 0 of bars of negative values, or `"y": {"axis": {"at":
   "2020-01-01"}}` at a date of x, converted as the values of the data, also
-  a reference, e.g. `"@zero"`; the line is at the half pixel of the tick of
+  a reference to a global, e.g. `"@base"` (there is no built-in name of 0:
+  `0` is at 0); `null` is at the edge, also against the defaults: without
+  `at` the one of the [defaults](#defaults) of the position or of the type
+  of the scale, e.g. `{"bandAxis": {"at": 0}}` of a house style whose
+  category axes cross at 0 when there are negative values; the line is at the half pixel of the tick of
   the value, on the tick and the grid line of it, above the marks (class
   `vis-axis-at`), a value outside of the domain of the other scale or
   without a position, e.g. 0 of a log scale, leaves the axis at its edge.
@@ -1587,7 +1597,11 @@ A histogram: the bars of the classes of a [bin](#transform) from their
 start to their end on a continuous scale (with crisp edges, so neighbours
 meet without a seam), or a `line` with `x0` and `x1`, stairs, its outline,
 down to the base at the ends (`"ends": "open"` starts and ends it at its
-first and last step, e.g. of shares):
+first and last step, e.g. of shares). The hover of vertical bars from `x0`
+to `x1` (of dims, e.g. `lo` and `hi`) is the one of the class under the
+pointer, also when the class rows have no `x` (the rows of the values have
+it), its marker in the middle of the class, `{lo}` and `{hi}` names of its
+templates:
 
 ```json
 {
@@ -2121,7 +2135,10 @@ of a scatter plot above its x and y.
   `{title}`, the default one, e.g. the date, above the table or the rows,
   and `row`, a line per row instead of the table, with `{land}` (the name
   of the category of the dim `land`), `{land.unit}` (another hover prop),
-  `{y}` (the formatted value) and `{y.value}` (the value). Both have the
+  `{y}` (the formatted value) and `{y.value}` (the value), `{x}` (the
+  position, also without a cell, e.g. the start of the class of a bar of a
+  histogram, `"title": "{x} bis unter {hi} kg"` with a dim `hi` of the end
+  with `"hover": {"cell": false}`). Both have the
   globals, the title also the names of the nearest row (or the first one),
   e.g. the definition of a category of the position, `{definition}` of a
   dim `definition` with a hover and props, the values are text, e.g. `<` of
@@ -2335,7 +2352,10 @@ be an expression of the globals:
 - `inImage`: the selected entries are named below the subtitle of the
   [PNG](usage.md#png), `false` leaves out a control which only changes the
   presentation, which the image shows anyway, e.g. shared or separate scales
-  of the facets.
+  of the facets. Without `inImage` a control whose global the title or the
+  subtitle names (a template, `"title": "Bevölkerung {year}"` or
+  `{year:name}`, or a reference of an expression, `@year`) is left out, the
+  image would name it twice; `true` names it always.
 - `id`: the id of the control, of `data-id` of its element and of the merge
   with the controls of a parent (the global by default). The controls of a
   parent and its children are merged by their `id` (if all of them have

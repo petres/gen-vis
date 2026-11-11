@@ -59,7 +59,23 @@ const axisNames = store => {
     const by = v === undefined ? undefined : dims[v].stacked && dims[v].stackBy;
     if (by && Object.hasOwn(dims, by))
         h = by;
+    // the classes of bars over a range of the horizontal position (x0 to
+    // x1, e.g. of a bin) are the positions of the hover, their start (h)
+    // and their end (`end`), e.g. of a histogram whose x are the values of
+    // the rows and whose class rows have no x
+    const range = !by && h !== undefined && v !== undefined ? barRange(store.def.marks, v) : null;
+    if (range && Object.hasOwn(dims, range.start) && Object.hasOwn(dims, range.end))
+        return { h: range.start, v, end: range.end };
     return { ...(h === undefined ? {} : { h }), ...(v === undefined ? {} : { v }) };
+};
+
+// the dims of the start and the end of the first mark of vertical bars over
+// a range of the horizontal position (`x0` and `x1` of a dim each) to the
+// values of `v`, e.g. the classes of a bin, null without one
+const barRange = (marks, v) => {
+    const dim = p => typeof p == 'string' ? /^@([^:\s]+):scaled$/.exec(p)?.[1] : undefined;
+    const bar = [marks ?? []].flat().find(p => p?.type == 'cartesian:bar' && dim(p.props?.x0) && dim(p.props?.x1) && dim(p.props?.y1) == v);
+    return bar ? { start: dim(bar.props.x0), end: dim(bar.props.x1) } : null;
 };
 
 // the visible categories of the dims with categories, e.g. of the legends,

@@ -983,3 +983,12 @@ test('validateDef: zero and stacks of a log scale, which has no 0; bars on it ar
         `dims.y.scale.type: stacks start at 0, which a log scale has no position of, the stacked marks are not drawn, e.g. "type": "symlog" has a 0`]);
     expect(validateDef(def({ zero: true }))).toEqual([]);
 });
+
+test('a format as an expression of the value (the name of the dim): its references are checked, no d3 format', () => {
+    const def = base();
+    def.dims.y.format = "=format(@y / 1000, ',.0f')";
+    def.dims.y.hover = { format: "=cat(format(@y / 1e6, ',.1f'), ' Mio.')" };
+    expect(validateDef(def)).toEqual([]);
+    def.dims.y.axis = { format: '=@nope' };
+    expect(validateDef(def)).toEqual([expect.stringMatching(/^dims\.y\.axis\.format: unknown reference 'nope'/)]);
+});

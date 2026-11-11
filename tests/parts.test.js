@@ -733,6 +733,27 @@ describe('the order of the categories of a scale', () => {
     });
 });
 
+describe('a format of a dim as an expression of the value', () => {
+    test('the labels of the axis, @y:formatted and the hover, in thousands; the hover its own', async () => {
+        const def = lineDef();
+        def.dims.y = { column: 'other', format: "=format(@y / 10, ',.1f')", ticks: 3 };
+        def.marks = [{ id: 'lines', type: 'line', by: 'c' }, { id: 'labels', type: 'text', by: 'c', text: '@y:formatted' }];
+        def.hover = { row: '{c}: {y}' };
+        const el = await mount({ def, data: lineData });
+        expect([...el.querySelectorAll('.vis-axis-left .tick text')].map(t => t.textContent)).toEqual(['1,0', '2,0', '3,0', '4,0']);
+        expect([...el.querySelectorAll('g.vis-mark-text text')].map(t => t.textContent).slice(0, 2)).toEqual(['1,0', '2,0']);
+        el.querySelector('rect.vis-events').dispatchEvent((await import('./dom.js')).pointer('pointermove', { clientX: 40, clientY: 100 }));
+        await nextTick();
+        expect([...el.querySelectorAll('.vis-hover-row')].map(r => r.textContent)).toContain('Wien: 1,0');
+        // of the hover alone, with a unit
+        def.dims.y.hover = { format: "=cat(format(@y, ',.0f'), ' Pers.')" };
+        const own = await mount({ def, data: lineData });
+        expect(own.querySelector('g.vis-mark-text text').textContent).toBe('10 Pers.');
+        expect(own.querySelector('.vis-axis-left .tick text').textContent).toBe('1,0');
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('the full text of a cut text', () => {
     test('is the title of the area of the hover above it', async () => {
         const def = lineDef();

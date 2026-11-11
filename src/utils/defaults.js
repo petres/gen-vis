@@ -15,6 +15,7 @@ import { typeOf } from '@/utils/language';
  * ones), `title.offset` the distance of the title from the axis, null is
  * 8 pixels inside the edge of the margin.
  */
+// (not built in: `at` of cartesian axes, see axisAt of coords/cartesian.js)
 const builtInDefaults = {
     axis: { padding: 3, tickMarks: { size: 9, inset: null }, title: { offset: null } },
     // the margins of the facets of definitions without them, e.g. of a house

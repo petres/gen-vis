@@ -297,7 +297,9 @@ screen, e.g. the facets have the columns of this width, or with `screen` in
 the width it has on the screen, e.g. the layout of a phone. It is twice the
 size, narrow ones more (at least 800 pixels wide, e.g. three times of 360),
 has no controls, their selection is a line below the subtitle, e.g.
-`Einheit: Anteil · Jahr: 2024`, the legends only have the entries shown and
+`Einheit: Anteil · Jahr: 2024` (without the controls whose global the
+title or the subtitle names, e.g. a year of `"title": "Bevölkerung
+{year}"`, see `inImage` of the controls), the legends only have the entries shown and
 the legend of the facets is left out, their titles name them. The PNG is
 the SVG of the [static export](export.md#exportsvg) drawn on a canvas, with
 the faces of the fonts of the package its texts draw (their weights and

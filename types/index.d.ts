@@ -22,6 +22,8 @@ export interface State {
 export interface AxisDefaults {
     /** The space between the tick marks and the labels in pixels. */
     padding?: number;
+    /** Cartesian axes: the value of the other axis at which the axis is, e.g. 0 (at the edge if it is outside the domain), see `axis.at`. */
+    at?: number | string | null;
     /** false leaves them out of the axes without tick marks of their own (the labels stay at their places), an object of a later entry shows them again. */
     tickMarks?: false | {
         /** The length of the tick marks in pixels, also the space of the labels without them. */

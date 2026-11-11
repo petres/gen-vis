@@ -604,7 +604,7 @@ export interface Control {
      */
     id?: string;
     /**
-     * The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales.
+     * The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales; without it not if the title or the subtitle names its global ({year} or @year), true always.
      */
     inImage?: boolean;
     values?:
@@ -719,11 +719,11 @@ export interface Hover {
      */
     area?: `=${string}` | ('plot' | 'facet');
     /**
-     * The title, {title} is the default one, e.g. the date, and the globals.
+     * The title, {title} is the default one, e.g. the date, the names of the nearest row (e.g. {x}, the position, or {hi}, the end of a bar of a dim hi with a hover) and the globals.
      */
     title?: string | InLanguages;
     /**
-     * A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, and the globals.
+     * A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, {x} the position, and the globals.
      */
     row?: string | InLanguages;
 }
@@ -753,7 +753,7 @@ export interface Dim {
      */
     type?: `=${string}` | ('numeric' | 'date' | 'categorical');
     /**
-     * The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. ",.0f".
+     * The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. ",.0f"; or an expression of the value (the name of the dim), e.g. "=format(@y / 1000, ',.0f')" in thousands.
      */
     format?: string | InLanguages;
     /**
@@ -1002,7 +1002,7 @@ export interface Axis {
      */
     values?: unknown[] | `=${string}` | `@${string}` | Expression;
     /**
-     * A d3 number or time format.
+     * A d3 number or time format, or an expression of the value (the name of the dim), e.g. "=format(@y / 1000, ',.0f')" of an axis in thousands.
      */
     format?: string | InLanguages;
     /**

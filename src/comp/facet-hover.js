@@ -302,11 +302,16 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // starts, e.g. of the classes of a bin): the class under the pointer,
         // the last start not after it, its marker in its middle, up to the
         // next start (the last class as wide as the one before)
+        // (also of bars over a range, x0 to x1, see axisNames of layout.js:
+        // the end of a class is its own, `names.end`)
         const hs = ctx.scales[names.h];
-        const classes = names.v && store.dim(names.v).stackBy === names.h && hs?.invert ? (() => {
-            const starts = [...rowsByKey.values()].map(rows => rows[0][names.h]).sort((a, b) => a - b);
+        const ranged = names.end !== undefined || (names.v && store.dim(names.v).stackBy === names.h);
+        const classes = ranged && hs?.invert ? (() => {
+            const starts = [...rowsByKey.values()].map(rows => rows[0][names.h]).filter(k => k !== null && k !== undefined).sort((a, b) => a - b);
+            const ends = names.end === undefined ? null : new Map([...rowsByKey.values()].map(rows => [+rows[0][names.h], rows[0][names.end]]));
             const index = k => d3.bisectLeft(starts, +k);
-            const end = i => i + 1 < starts.length ? starts[i + 1] : 2*starts[i] - (starts[i - 1] ?? starts[i]);
+            const next = i => i + 1 < starts.length ? starts[i + 1] : 2*starts[i] - (starts[i - 1] ?? starts[i]);
+            const end = i => ends?.get(+starts[i]) ?? next(i);
             return {
                 nearest: p => starts.length ? starts[Math.max(0, d3.bisectRight(starts, +hs.invert(p)) - 1)] : undefined,
                 middle: k => (hs(k) + hs(end(index(k))))/2,
@@ -384,6 +389,11 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
                     return [n, texts];
                 }));
                 entries[v] = { value: row[v], name: format.v(row[v]) };
+                // the position of the row is a name of the templates also
+                // without a cell, as the title of its key (e.g. the name of
+                // a category), e.g. {x} of the start of the class of a bar
+                if (names.h && !Object.hasOwn(entries, names.h))
+                    entries[names.h] = { value: row[names.h], name: row[names.h] === null || row[names.h] === undefined ? '' : titleOf(row[names.h]) };
                 // of a point (a scatter plot) the horizontal value is a cell, the title names the categories
                 if (pointMode && names.h && categories.length > 0) {
                     entries[names.h] = { value: row[names.h], name: format.h(row[names.h]) };

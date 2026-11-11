@@ -969,6 +969,27 @@ From the wishes of the WIFO styles, useful to any house style:
   marks the dashes of a house style are one word of a definition. An
   unknown name is an error naming the lists; `gen-vis check` takes plain
   references of the marks of such a dim for its props.
+- `at` of cartesian axes also from the defaults (of all axes, a type of
+  scale or a position), e.g. `{"bandAxis": {"at": 0}}`: the category axis
+  crosses at 0 when there are negative values, at its edge otherwise; a
+  dim's `"at": null` keeps it at the edge.
+- The `format` of a dim (also `axis.format`, `hover.format`,
+  `legend.format`) can be an expression of the value, the name of the dim,
+  e.g. `"=format(@y / 1000, ',.0f')"` of values in thousands for the labels
+  of the axis, `@y:formatted` and the hover at once (was refused, "no d3
+  format of numbers"); `gen-vis check` checks its references.
+- The position of a row (`{x}`) is a name of the templates of the hover
+  (`title`, `row`) also without a cell of its own (was left as `{x}`).
+- The hover of vertical bars over a range (`x0` and `x1` of dims, e.g. the
+  classes of a bin) is the one of the class under the pointer, also without
+  a stacked `y` with `stackBy` and when the class rows have no `x`, e.g. of a
+  histogram above a strip of its values (was no hover).
+- The selection line of an image leaves out a control whose global the
+  title or the subtitle names (`{year}`, `{year:name}` or `@year`), it
+  would be named twice; `"inImage": true` names it always. Images of such
+  definitions are a line shorter.
+- Docs: `at` of an axis is a reference to a global; `"@zero"` was an
+  example, not a built-in name (`0` is at 0).
 
 ### Package and builds
 

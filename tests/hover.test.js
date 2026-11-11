@@ -385,3 +385,52 @@ describe('the position of the pointer', () => {
         expect(el.querySelector('.vis-hover')).not.toBeNull();
     });
 });
+
+describe('the hover of bars over a range (x0 to x1), e.g. of the classes of a bin', () => {
+    // the values, their classes (a bin) as bars from lo to hi, the rows of the values without lo, hi and count
+    const histogram = (dims = {}, options = {}) => ({
+        width: 400, height: 200, margins: { top: 10, right: 10, bottom: 30, left: 40 },
+        transform: [{ type: 'bin', column: 'value', edges: [0, 10, 20, 40], start: 'lo', end: 'hi' }],
+        dims: {
+            x: { column: 'value', domain: [0, 40] },
+            lo: { column: 'lo', scale: { of: 'x' } },
+            hi: { column: 'hi', scale: { of: 'x' }, hover: { cell: false } },
+            y: { column: 'count', zero: true },
+            ...dims,
+        },
+        marks: [{ type: 'bar', x0: 'lo', x1: 'hi' }, { type: 'point', y: 0 }],
+        ...options,
+    });
+    const data = 'value\n1\n2\n15\n30\n35\n36';
+    // the plot area of 350 pixels from 0 to 40
+    const at = value => 40 + value/40*350;
+
+    test('the class under the pointer, its middle, also the last one; its start and end in the templates ({x} the position)', async () => {
+        const el = await mount({ def: histogram({}, { hover: { title: '{lo} bis unter {hi}' } }), data });
+        await move(el, at(25));
+        expect(title(el)).toBe('20 bis unter 40');
+        // the count of the class, 3 values
+        expect(el.querySelector('.vis-hover').textContent.replace(title(el), '')).toContain('3');
+        const line = el.querySelector('g.vis-hover-marker line');
+        expect(Math.abs(Number(line.getAttribute('x1')) - 30/40*350)).toBeLessThanOrEqual(1);
+        await move(el, at(5));
+        expect(title(el)).toBe('0 bis unter 10');
+        await move(el, at(12));
+        expect(title(el)).toBe('10 bis unter 20');
+        expect(errors).toEqual([]);
+    });
+
+    test('bars of a dim x from x0 to x1 (the values are the starts): {x} in the title and the rows', async () => {
+        const def = {
+            width: 400, height: 200, margins: { top: 10, right: 10, bottom: 30, left: 40 },
+            dims: { x: { column: 'lo', domain: [0, 40] }, hi: { column: 'hi', scale: { of: 'x' }, hover: { cell: false } }, y: { column: 'n' } },
+            marks: [{ type: 'bar', x0: 'x', x1: 'hi' }],
+            hover: { title: '{x} bis unter {hi} kg', row: '{x}: {y}' },
+        };
+        const el = await mount({ def, data: 'lo,hi,n\n0,10,2\n10,20,1\n20,40,3' });
+        await move(el, at(25));
+        expect(title(el)).toBe('20 bis unter 40 kg');
+        expect(el.querySelector('.vis-hover-row').textContent).toBe('20: 3');
+        expect(errors).toEqual([]);
+    });
+});

@@ -3504,7 +3504,8 @@ describe('images', () => {
         el.querySelector('.vis-download').click();
         await vi.waitFor(() => expect(click).toHaveBeenCalled());
         expect(screenshot.file).toBe('Titel b.png');
-        expect(header(screenshot.copy)).toEqual(['Titel b', 'Einheit b, Untertitel', 'Einheit: Anteil']);
+        // the title names the unit: no line of the selection, which would name it twice
+        expect(header(screenshot.copy)).toEqual(['Titel b', 'Einheit b, Untertitel']);
         expect(errors).toEqual([]);
     });
 
@@ -3741,6 +3742,26 @@ describe('axes at a value of the other axis (`at`)', () => {
         const { validateDef } = await import('@/utils/validate');
         const polar = { coord: 'polar', dims: { x: { column: 'a', type: 'categorical', axis: { at: 0 } }, y: { column: 'v', type: 'numeric' } }, marks: { type: 'arc' } };
         expect(validateDef(polar).filter(w => w.includes('.at'))).toEqual([`dims.x.axis.at: only cartesian axes are at a value of the other axis`]);
+    });
+
+    test('of the defaults (by position or type of scale), the one of the dim wins, null of the dim at the edge; "@zero" is no name', async () => {
+        const el = await mount({ def: def(), data: lineData, defaults: { bottomAxis: { at: 0 } } });
+        expect(axis(el, 'bottom').getAttribute('transform')).toBe(`translate(0, ${250 - 250/3})`);
+        expect(axis(el, 'bottom').classList.contains('vis-axis-at')).toBe(true);
+        // the type of the scale, the dim's own value, null
+        const linear = await mount({ def: def({ at: 2 }), data: lineData, defaults: { linearAxis: { at: 0 } } });
+        expect(axis(linear, 'bottom').getAttribute('transform')).toBe(`translate(0, ${250 - 250*4/6})`);
+        const none = await mount({ def: def({ at: null }), data: lineData, defaults: { bottomAxis: { at: 0 } } });
+        expect(axis(none, 'bottom').getAttribute('transform')).toBe('translate(0, 250)');
+        // a value outside of the domain of y: at the edge
+        const positive = def();
+        positive.dims.y.domain = [1, 4];
+        const edge = await mount({ def: positive, data: lineData, defaults: { bottomAxis: { at: 0 } } });
+        expect(axis(edge, 'bottom').getAttribute('transform')).toBe('translate(0, 250)');
+        expect(errors).toEqual([]);
+        // a reference is one of a global, "@zero" an unknown one
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef(def({ at: '@zero' })).filter(w => w.includes('.at'))).toEqual([expect.stringMatching(/^dims\.x\.axis\.at: unknown reference 'zero'/)]);
     });
 
     test('of a log scale at 0 or null at the edge, at a value of a band scale its center, per facet of own scales', async () => {

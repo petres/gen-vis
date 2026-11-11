@@ -51,7 +51,7 @@ See [definition.md](definition.md#dims).
 | `column` | string |  | The column of the data, can be a template of globals, e.g. "{values}{share}", see controls. |
 | `name` | string \| text |  | The title of the legend (the title of the axis is axis.title). |
 | `type` | expression \| `"numeric"`, `"date"`, `"categorical"` |  | Without a type it follows from the other parts (categories or a band, point or ordinal scale are categorical, a time or utc scale date, other scales numeric, a dim of the facets categorical, not one only used as `by` of a mark) or from the values of the column: numbers numeric, dates date, otherwise categorical (a column without values, e.g. of empty data, date of a time format of the dim, its axis or its hover, numeric of the parts of numbers, otherwise categorical). The usual texts of missing values, e.g. NA, NaN, n/a, -, . or :, are missing values; other texts among numbers are missing values with a warning if the dim has parts of numbers (a number format, a domain or include of numbers, zero, nice, pad, an open domain) or if more than half of the values are numbers and the texts have digits, e.g. 1,234 or <5. Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values are strings of every format of the data, e.g. "2004" of the number 2004 of JSON or parquet. |
-| `format` | string \| text |  | The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. ",.0f". |
+| `format` | string \| text |  | The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. ",.0f"; or an expression of the value (the name of the dim), e.g. "=format(@y / 1000, ',.0f')" in thousands. |
 | `interval` | string |  | Of a date dim of a time or utc scale: a value is the period starting at it, minute, hour, day, week, month, quarter, half (a year), year or a number of them, e.g. "6 months": the domain of the data reaches the end of the last period; @x:scaled (also @x:scaled:center) is the middle of the period of a row, so bars, points, lines and the hover are in the middle of their period, @x:scaled:start and @x:scaled:end are its start and end, @x:step its length in pixels (bars 80% of it by default); ticks, grid lines and annotations stay at their dates (the ticks at the starts of the units, e.g. days, not noons); the hover shows the period, e.g. H2 2023 (%K is the half of the year in formats). |
 | `scale` | [scale](#scale) \| null |  |  |
 | `axis` | [axis](#axis) \| null |  |  |
@@ -112,13 +112,13 @@ See [definition.md](definition.md#axes).
 | Key | Type | Default | |
 |-----|------|---------|-|
 | `position` | expression \| `"top"`, `"bottom"`, `"left"`, `"right"`, `"angular"`, `"radial"` |  | top, bottom, left or right of the cartesian coordinate system, angular (around the circle) or radial (from the center) of the polar one. |
-| `at` | domainValue |  | Cartesian axes: the line of the axis at this value of the dim of the other axis, e.g. 0 of an axis of x at y = 0 or a date of an axis of y, converted as the values of the data, also a reference "@zero"; a value outside of the domain of the other scale leaves it at its edge (`position`, also the side of its labels and tick marks). |
+| `at` | domainValue |  | Cartesian axes: the line of the axis at this value of the dim of the other axis, e.g. 0 of an axis of x at y = 0 or a date of an axis of y, converted as the values of the data, also a reference to a global (e.g. "@base"), null at the edge, by default the one of the defaults (e.g. "bandAxis": { "at": 0 }); a value outside of the domain of the other scale leaves it at its edge (`position`, also the side of its labels and tick marks). |
 | `angle` | number |  | The angle of a radial axis in degrees, clockwise from the top, 0 by default. |
 | `gridShape` | expression \| `"circle"`, `"polygon"` |  | The grid lines of a radial axis, circles or polygons through the ticks of the angle, e.g. of radar charts. |
 | `ticks` | number \| null |  | The number of the ticks, null for the ones of tickSpacing, e.g. of a parent; also `ticks` of the dim. |
 | `tickSpacing` | number |  | Without ticks, a tick per this many pixels of the length of the axis, e.g. 80; also `tickSpacing` of the dim. |
 | `values` | list of values \| expression |  | Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or ["2004", "2008"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth; all of them are labelled (other labels of a horizontal axis which overlap show every n-th one). |
-| `format` | string \| text |  | A d3 number or time format. |
+| `format` | string \| text |  | A d3 number or time format, or an expression of the value (the name of the dim), e.g. "=format(@y / 1000, ',.0f')" of an axis in thousands. |
 | `labels` | object |  | The props of the labels of the ticks (svg attributes and text), of the props of the categories of the tick and of the categories of its row of the dims `by`, its values and the names of the facet, e.g. { "by": ["level"], "props": { "font-weight": "@weight", "text": "@short", "max-width": 300 } }, of all axes, e.g. { "props": { "fill": "#777", "font-size": 10, "stroke-width": 2 } } of the values of a radial axis in the background, the stroke and its width replace the halo of the labels of radial axes. |
 | `tickMarks` | `false` \| object |  | The tick marks: false leaves them out (the labels stay at their places), their length (size, 9 pixels across the line of cartesian axes, 6 outside of the circle of angular ones by default, the labels move with it), the part of it inside the plot area (inset, by default 4 pixels of bottom and right axes, 5 of top and left ones, 0 of angular ones, e.g. 0 for marks outside only) and their props (svg attributes of the names of the facet), e.g. { "props": { "stroke": "var(--gen-vis-grid-color)" } }, radial axes have none. |
 | `domain` | object |  | The props of the line of the axis (svg attributes, its class is domain, a circle of an angular axis) of the names of the facet, e.g. { "props": { "stroke-opacity": 0.4 } }. |
@@ -239,8 +239,8 @@ See [definition.md](definition.md#hover).
 | `side` | expression \| `"left"`, `"right"`, `"above"`, `"below"`, `"center"` |  | The side of the hover, by default the one with more space, center on the position, e.g. in the center of a polar plot. |
 | `offset` | pair |  | Moves the hover by [x, y] pixels. |
 | `area` | expression \| `"plot"`, `"facet"` | `"plot"` | The area of the hover, the plot area or the facet with its margins, e.g. the labels of the rows of horizontal bars. |
-| `title` | string \| text |  | The title, {title} is the default one, e.g. the date, and the globals. |
-| `row` | string \| text |  | A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, and the globals. |
+| `title` | string \| text |  | The title, {title} is the default one, e.g. the date, the names of the nearest row (e.g. {x}, the position, or {hi}, the end of a bar of a dim hi with a hover) and the globals. |
+| `row` | string \| text |  | A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, {x} the position, and the globals. |
 
 ## The highlight (`highlight`)<a id="highlight"></a>
 
@@ -289,7 +289,7 @@ See [definition.md](definition.md#globals-and-controls).
 | `global` | string |  | The global the control sets, the parts of the definition refer to it in expressions, e.g. "=match(@scale, {log: 'log'}, 'linear')". |
 | `name` | string \| text |  | The label of the control. |
 | `id` | string |  | The id of the control, the global by default; the controls of a parent and its children are merged by it (by the global if one of them has no id), so a child may give only the id and the ids (or values) of the entries it changes. |
-| `inImage` | boolean | `true` | The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales. |
+| `inImage` | boolean |  | The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales; without it not if the title or the subtitle names its global ({year} or @year), true always. |
 | `values` | list of [controlValue](#controlValue) \| string \| number \| object |  |  |
 
 ## An entry of a control (`controls[].values[]`)<a id="controlValue"></a>

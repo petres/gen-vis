@@ -166,8 +166,8 @@ const definitions = {
         side: option(['left', 'right', 'above', 'below', 'center'], 'The side of the hover, by default the one with more space, center on the position, e.g. in the center of a polar plot.'),
         offset: ref('pair', 'Moves the hover by [x, y] pixels.'),
         area: option(['plot', 'facet'], 'The area of the hover, the plot area or the facet with its margins, e.g. the labels of the rows of horizontal bars.', { default: 'plot' }),
-        title: text('The title, {title} is the default one, e.g. the date, and the globals.'),
-        row: text('A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, and the globals.'),
+        title: text('The title, {title} is the default one, e.g. the date, the names of the nearest row (e.g. {x}, the position, or {hi}, the end of a bar of a dim hi with a hover) and the globals.'),
+        row: text('A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, {x} the position, and the globals.'),
     }, 'The hover: the dims of its rows (columns) and its box, templates of html, their values are text.'),
 
     highlight: object({
@@ -207,13 +207,13 @@ const definitions = {
 
     axis: object({
         position: option(['top', 'bottom', 'left', 'right', 'angular', 'radial'], 'top, bottom, left or right of the cartesian coordinate system, angular (around the circle) or radial (from the center) of the polar one.'),
-        at: ref('domainValue', 'Cartesian axes: the line of the axis at this value of the dim of the other axis, e.g. 0 of an axis of x at y = 0 or a date of an axis of y, converted as the values of the data, also a reference "@zero"; a value outside of the domain of the other scale leaves it at its edge (`position`, also the side of its labels and tick marks).'),
+        at: ref('domainValue', 'Cartesian axes: the line of the axis at this value of the dim of the other axis, e.g. 0 of an axis of x at y = 0 or a date of an axis of y, converted as the values of the data, also a reference to a global (e.g. "@base"), null at the edge, by default the one of the defaults (e.g. "bandAxis": { "at": 0 }); a value outside of the domain of the other scale leaves it at its edge (`position`, also the side of its labels and tick marks).'),
         angle: number('The angle of a radial axis in degrees, clockwise from the top, 0 by default.'),
         gridShape: option(['circle', 'polygon'], 'The grid lines of a radial axis, circles or polygons through the ticks of the angle, e.g. of radar charts.'),
         ticks: anyOf([ref('number'), ref('none')], 'The number of the ticks, null for the ones of tickSpacing, e.g. of a parent; also `ticks` of the dim.'),
         tickSpacing: ref('number', 'Without ticks, a tick per this many pixels of the length of the axis, e.g. 80; also `tickSpacing` of the dim.'),
         values: ofGlobals({ type: 'array' }, 'Fixed ticks, converted as the values of the data, categories as strings, e.g. [2004, 2008] or ["2004", "2008"] of the years of any format of the data, the ones outside of the domain or which are no category of a band or point scale are left out, also an expression, e.g. steps of totalWidth; all of them are labelled (other labels of a horizontal axis which overlap show every n-th one).'),
-        format: text('A d3 number or time format.'),
+        format: text('A d3 number or time format, or an expression of the value (the name of the dim), e.g. "=format(@y / 1000, \',.0f\')" of an axis in thousands.'),
         labels: object({
             by: anyOf([{ type: 'string' }, array(string())], 'The dims of categories whose props the labels have, of the categories of the row of the tick, a dim or a list of them, as `by` of a mark.'),
             props: props(),
@@ -303,7 +303,7 @@ const definitions = {
         column: string('The column of the data, can be a template of globals, e.g. "{values}{share}", see controls.'),
         name: text('The title of the legend (the title of the axis is axis.title).'),
         type: option(['numeric', 'date', 'categorical'], 'Without a type it follows from the other parts (categories or a band, point or ordinal scale are categorical, a time or utc scale date, other scales numeric, a dim of the facets categorical, not one only used as `by` of a mark) or from the values of the column: numbers numeric, dates date, otherwise categorical (a column without values, e.g. of empty data, date of a time format of the dim, its axis or its hover, numeric of the parts of numbers, otherwise categorical). The usual texts of missing values, e.g. NA, NaN, n/a, -, . or :, are missing values; other texts among numbers are missing values with a warning if the dim has parts of numbers (a number format, a domain or include of numbers, zero, nice, pad, an open domain) or if more than half of the values are numbers and the texts have digits, e.g. 1,234 or <5. Missing and invalid numeric and date values are null, dates are timestamps or strings, a date without a time zone, e.g. 2024-06-01 or 01.06.2024 13:00, is the one of the time zone of the scale, local or UTC (utc). Categorical values are strings of every format of the data, e.g. "2004" of the number 2004 of JSON or parquet.'),
-        format: text('The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. ",.0f".'),
+        format: text('The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. ",.0f"; or an expression of the value (the name of the dim), e.g. "=format(@y / 1000, \',.0f\')" in thousands.'),
         interval: pattern('^\\s*([1-9]\\d*)?\\s*(minute|hour|day|week|month|quarter|half|year)s?\\s*$', 'Of a date dim of a time or utc scale: a value is the period starting at it, minute, hour, day, week, month, quarter, half (a year), year or a number of them, e.g. "6 months": the domain of the data reaches the end of the last period; @x:scaled (also @x:scaled:center) is the middle of the period of a row, so bars, points, lines and the hover are in the middle of their period, @x:scaled:start and @x:scaled:end are its start and end, @x:step its length in pixels (bars 80% of it by default); ticks, grid lines and annotations stay at their dates (the ticks at the starts of the units, e.g. days, not noons); the hover shows the period, e.g. H2 2023 (%K is the half of the year in formats).'),
         scale: removable(ref('scale')),
         axis: removable(ref('axis')),
@@ -456,7 +456,7 @@ const definitions = {
         global: string('The global the control sets, the parts of the definition refer to it in expressions, e.g. "=match(@scale, {log: \'log\'}, \'linear\')".'),
         name: text('The label of the control.'),
         id: string('The id of the control, the global by default; the controls of a parent and its children are merged by it (by the global if one of them has no id), so a child may give only the id and the ids (or values) of the entries it changes.'),
-        inImage: boolean('The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales.', { default: true }),
+        inImage: boolean('The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales; without it not if the title or the subtitle names its global ({year} or @year), true always.'),
         values: cases([[isArray,
             array(anyOf([
                 ref('controlValue'),

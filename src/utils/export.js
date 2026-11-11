@@ -4,7 +4,10 @@ export { selection, staticCopy, parts, selectParts, partsBox, backgroundOf, rend
 
 import { facetBy } from "@/utils/normalize";
 import * as d3 from "@/utils/d3";
-import { selectedEntry } from "@/utils/def";
+import { selectedEntry, templateRefs } from "@/utils/def";
+import { isOperator, refNames } from "@/utils/expr";
+import { isExpressionText, parseExpression } from "@/utils/expr-parse";
+import { isObject } from "@/utils/values";
 import { tableOf } from "@/utils/table";
 import { lazy } from "@/utils/lazy";
 
@@ -18,14 +21,41 @@ const defaultWidth = 800;
 // the time to wait for the copy of the visualisation
 const timeout = 20000;
 
+// the globals which the title or the subtitle names, of their templates
+// ({year}, {year:name}) and of their expressions (@year), of the prepared
+// definition and the authored one (its expressions as written), texts in
+// several languages too
+const titleGlobals = (...defs) => {
+    const names = new Set();
+    const add = n => typeof n == 'string' && names.add(n.replace(/^globals\./, '').split(':')[0]);
+    const visit = t => {
+        if (typeof t == 'string') {
+            templateRefs(t).forEach(add);
+            if (isExpressionText(t))
+                try { refNames(parseExpression(t)).forEach(add); } catch { /* no expression */ }
+        } else if (isOperator(t))
+            refNames(t).forEach(add);
+        else if (isObject(t))
+            Object.values(t).forEach(visit);
+    };
+    defs.forEach(d => [d?.title, d?.subtitle].forEach(visit));
+    return names;
+};
+
 // the chosen entries of the controls of a prepared definition, e.g.
 // "Einheit: Anteil · Jahr: 2024" (of a control without a name only the
 // entry), the image has no controls, the ones with `"inImage": false` only
-// change the presentation, e.g. shared scales
-const selection = def => (def.controls ?? []).filter(e => e.inImage !== false && e.type != 'hidden').map(e => {
+// change the presentation, e.g. shared scales; a control whose global the
+// title or the subtitle names (`"title": "Bevölkerung {year}"`) is not
+// named twice, unless `"inImage": true` (`authored`: the definition as
+// written, its expressions of the globals)
+const selection = (def, authored = null) => {
+    const named = titleGlobals(def, authored);
+    return (def.controls ?? []).filter(e => e.type != 'hidden' && (e.inImage === true || (e.inImage !== false && !named.has(e.global)))).map(e => {
     const entry = selectedEntry(def, e);
-    return entry ? (e.name === undefined || e.name === null || e.name === '' ? `${entry.name}` : `${e.name}: ${entry.name}`) : null;
-}).filter(Boolean).join(' · ');
+        return entry ? (e.name === undefined || e.name === null || e.name === '' ? `${entry.name}` : `${e.name}: ${entry.name}`) : null;
+    }).filter(Boolean).join(' · ');
+};
 
 // a copy of the visualisation without the controls, the buttons and the
 // legend of the facets (their titles name them), the selection is a line
@@ -116,7 +146,7 @@ const staticCopy = async (place, mount, { width, space = padding, visible = fals
         const own = fixed ? width : (shown.store.visWidth || width);
         shot.style.cssText = `margin: 0; width: ${own + 2*space}px;`;
         const def = shown.store.def;
-        const copy = shot.appendChild(prepare(root.querySelector('.vis'), { text: selection(def), facets: facetBy(def.facets).all, space }));
+        const copy = shot.appendChild(prepare(root.querySelector('.vis'), { text: selection(def, shown.store.authored), facets: facetBy(def.facets).all, space }));
         return { copy, remove: () => wrapper.remove(), width: own };
     } catch (error) {
         wrapper.remove();

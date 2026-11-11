@@ -49,6 +49,22 @@ describe('the selection line of the images', () => {
         ] };
         expect(selection(def)).toBe('Unit: PJ · 2024');
     });
+
+    test('without the controls whose global the title or the subtitle names, unless "inImage": true', () => {
+        const controls = () => [
+            { global: 'u', type: 'radio', name: 'Unit', values: [{ id: 'b', name: 'PJ', value: 'b' }] },
+            { global: 'y', type: 'select', name: 'Jahr', values: [{ id: '2024', name: '2024', value: '2024' }] },
+        ];
+        const def = (title, subtitle, own = {}) => ({ globals: { u: 'b', y: '2024' }, title, subtitle, controls: controls().map(e => ({ ...e, ...own[e.global] })) });
+        expect(selection(def('Bevölkerung {y}'))).toBe('Unit: PJ');
+        expect(selection(def('Bevölkerung', 'in {u:name}, {y}'))).toBe('');
+        expect(selection(def({ de: 'Bevölkerung {y}', en: 'Population' }))).toBe('Unit: PJ');
+        // an expression of the authored definition, the prepared one has its text
+        expect(selection(def('Bevölkerung 2024'), { title: "=cat('Bevölkerung ', @y)" })).toBe('Unit: PJ');
+        expect(selection(def('Bevölkerung 2024'), { title: { cat: ['Bevölkerung ', '@y'] } })).toBe('Unit: PJ');
+        expect(selection(def('Bevölkerung {y}', null, { y: { inImage: true } }))).toBe('Unit: PJ · Jahr: 2024');
+        expect(selection(def('Bevölkerung'))).toBe('Unit: PJ · Jahr: 2024');
+    });
 });
 
 describe('the width of an export', () => {

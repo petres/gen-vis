@@ -114,9 +114,18 @@ class Store {
 
     // a d3 format in the locale of the values of a dim, of times if it is
     // a dim of dates or of a time scale, e.g. "%Y", local or UTC of a
-    // `utc` scale, of numbers otherwise, see also the prop format of
-    // utils/expr.js
+    // `utc` scale, of numbers otherwise, or an expression of the value (the
+    // name of the dim `name`), see also the prop format of utils/expr.js
     format(format, name) {
+        // an expression of the value, the name of the dim, e.g.
+        // "=format(@y / 1000, ',.0f')" of an axis in thousands
+        if (isOperator(format) || (format !== null && typeof format == 'object') || (typeof format == 'string' && format.startsWith('@'))) {
+            const scope = this.scope;
+            return v => {
+                const t = evaluate(format, { ...scope, [name]: v });
+                return t === null || t === undefined ? '' : String(t);
+            };
+        }
         const m = Object.hasOwn(this.def.dims, name) ? this.def.dims[name] : undefined;
         const type = scaleDef(this.def.dims, m)?.type;
         if (type == 'utc' || type == 'time' || m?.type == 'date')

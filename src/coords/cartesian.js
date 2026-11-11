@@ -24,6 +24,15 @@ const atValue = (ctx, n, at) => {
     return v === null || v === undefined ? undefined : { name: o, value: convert(ctx.store.dim(o), v, ctx.store.def.dims) };
 };
 
+// the value of the other axis at which the axis of the dim `n` is: its
+// `at`, else the one of the defaults of its position or the type of its
+// scale (e.g. { "bandAxis": { "at": 0 } } of a house style), null of a
+// dim's `"at": null` is at the edge
+const axisAt = (store, n) => {
+    const m = store.dim(n);
+    return m.axis.at !== undefined ? m.axis.at : store.axisDefaults(m.axis.position, m.scale?.type).at;
+};
+
 // the position of the line of an axis at a value of the other axis
 // (`at`), e.g. 0 of y of an axis of x: the one of the tick of the value
 // without the half pixel of the line (see tickPosition), null at its edge,
@@ -96,12 +105,12 @@ const axes = ctx => {
         // the line at a value of the other axis (`at`), the labels at the
         // edge (by default) or with it (`"labels": { "at": "axis" }`), then
         // without the label where the line of the other axis crosses it
-        const cross = crossing(ctx, n, i.at);
+        const cross = crossing(ctx, n, axisAt(store, n));
         const edge = { bottom: innerHeight, right: innerWidth }[i.position] ?? 0;
         const withLine = i.labels?.at == 'axis';
         const other = otherDim(ctx, n);
-        const crossed = withLine && other !== undefined && store.dim(other).axis && crossing(ctx, other, store.dim(other).axis.at) !== null
-            ? atValue(ctx, other, store.dim(other).axis.at) : undefined;
+        const crossed = withLine && other !== undefined && store.dim(other).axis && crossing(ctx, other, axisAt(store, other)) !== null
+            ? atValue(ctx, other, axisAt(store, other)) : undefined;
         if (crossed?.name == n) {
             const shown = format;
             format = d => String(+d === +d ? +d : d) == String(+crossed.value === +crossed.value ? +crossed.value : crossed.value) ? '' : shown(d);

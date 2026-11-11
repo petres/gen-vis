@@ -542,13 +542,13 @@
                     "if": { "type": "string" },
                     "then": { "type": "string" },
                     "else": { "$ref": "#/definitions/inLanguages" },
-                    "description": "The title, {title} is the default one, e.g. the date, and the globals."
+                    "description": "The title, {title} is the default one, e.g. the date, the names of the nearest row (e.g. {x}, the position, or {hi}, the end of a bar of a dim hi with a hover) and the globals."
                 },
                 "row": {
                     "if": { "type": "string" },
                     "then": { "type": "string" },
                     "else": { "$ref": "#/definitions/inLanguages" },
-                    "description": "A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, and the globals."
+                    "description": "A row instead of the table: {land} the name of a category, {land.unit} another hover prop, {y} the formatted value, {y.value} the value, {x} the position, and the globals."
                 }
             },
             "description": "The hover: the dims of its rows (columns) and its box, templates of html, their values are text."
@@ -832,7 +832,7 @@
                 },
                 "at": {
                     "$ref": "#/definitions/domainValue",
-                    "description": "Cartesian axes: the line of the axis at this value of the dim of the other axis, e.g. 0 of an axis of x at y = 0 or a date of an axis of y, converted as the values of the data, also a reference \"@zero\"; a value outside of the domain of the other scale leaves it at its edge (`position`, also the side of its labels and tick marks)."
+                    "description": "Cartesian axes: the line of the axis at this value of the dim of the other axis, e.g. 0 of an axis of x at y = 0 or a date of an axis of y, converted as the values of the data, also a reference to a global (e.g. \"@base\"), null at the edge, by default the one of the defaults (e.g. \"bandAxis\": { \"at\": 0 }); a value outside of the domain of the other scale leaves it at its edge (`position`, also the side of its labels and tick marks)."
                 },
                 "angle": {
                     "type": "number",
@@ -868,7 +868,7 @@
                     "if": { "type": "string" },
                     "then": { "type": "string" },
                     "else": { "$ref": "#/definitions/inLanguages" },
-                    "description": "A d3 number or time format."
+                    "description": "A d3 number or time format, or an expression of the value (the name of the dim), e.g. \"=format(@y / 1000, ',.0f')\" of an axis in thousands."
                 },
                 "labels": {
                     "type": "object",
@@ -1238,7 +1238,7 @@
                     "if": { "type": "string" },
                     "then": { "type": "string" },
                     "else": { "$ref": "#/definitions/inLanguages" },
-                    "description": "The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. \",.0f\"."
+                    "description": "The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. \",.0f\"; or an expression of the value (the name of the dim), e.g. \"=format(@y / 1000, ',.0f')\" in thousands."
                 },
                 "interval": {
                     "type": "string",
@@ -2027,8 +2027,7 @@
                 },
                 "inImage": {
                     "type": "boolean",
-                    "description": "The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales.",
-                    "default": true
+                    "description": "The selection is named below the subtitle of the PNG, false for ones which only change the presentation, e.g. shared scales; without it not if the title or the subtitle names its global ({year} or @year), true always."
                 },
                 "values": {
                     "if": { "type": "array" },
