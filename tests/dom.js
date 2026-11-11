@@ -19,8 +19,9 @@ export let errors = [];
 // the observers of the sizes of the visualisations, see resize
 const resizeObservers = new Set();
 
-// a new size of the visualisations, their ResizeObservers are called
-export const resize = () => resizeObservers.forEach(o => o.callback([]));
+// a new size of the visualisations, their ResizeObservers are called, with
+// `width` an entry of that width of its content box
+export const resize = width => resizeObservers.forEach(o => o.callback(width === undefined ? [] : [{ contentRect: { width } }]));
 
 // an html element of the content of a slot, its attributes, its listeners
 // (`onClick`) and its text

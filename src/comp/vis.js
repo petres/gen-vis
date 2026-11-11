@@ -236,12 +236,14 @@ const createVis = app => {
     };
 
     // the width of the plots, of the visualisation or of the definition,
-    // beside legends the rest of it
+    // beside legends the rest of it, `rootWidth` the one inside the padding
+    // of the visualisation if it is known, e.g. of the ResizeObserver, it
+    // is measured otherwise
     // the width of the chart of its own: of an export (`store.fixedWidth`,
     // see staticCopy of utils/export.js), else of the definition
     const ownWidth = () => store.fixedWidth || sizeOf(store, options().width, 'width', null);
-    const plotsWidth = () => {
-        const total = ownWidth() || innerWidth(root);
+    const plotsWidth = (rootWidth = undefined) => {
+        const total = ownWidth() || (rootWidth ?? innerWidth(root));
         fullWidth = store.visWidth = total;
         if (!sidesOf(legendsAt()))
             return total;
@@ -270,8 +272,8 @@ const createVis = app => {
     };
     // an element of the texts of the chart, of their font, see measure
     const fontProbe = root.appendChild(el('span', { 'aria-hidden': 'true', style: 'position: absolute; visibility: hidden; width: 0; height: 0; overflow: hidden;' }));
-    const measure = () => {
-        width = plotsWidth();
+    const measure = (rootWidth = undefined) => {
+        width = plotsWidth(rootWidth);
         store.totalWidth = width;
         store.rowHeaderWidth = rowHeaderWidth();
         const styles = typeof getComputedStyle == 'function' ? getComputedStyle(root) : null;
@@ -287,13 +289,14 @@ const createVis = app => {
             return [side, value == 'auto' ? 'auto' : cssPixels(value, styles)];
         }).filter(([, v]) => v !== undefined)) : null;
     };
-    const resized = () => {
+    // `rootWidth` is the one of the ResizeObserver, see plotsWidth
+    const resized = (rootWidth = undefined) => {
         if (removed)
             return;
-        const w = plotsWidth();
+        const w = plotsWidth(rootWidth);
         if (!w || w == width)
             return;
-        measure();
+        measure(rootWidth);
         update(false, true);
     };
     // the texts in a web font loaded after the first draw, e.g. Inter:
@@ -548,9 +551,11 @@ const createVis = app => {
             store.listeners.add(stateListener);
             // without a fixed width the visualisation fills its container
             if (!ownWidth() && typeof ResizeObserver == 'function') {
-                resizeObserver = new ResizeObserver(() => {
+                // the width of its content box (the one of innerWidth) without a measure
+                resizeObserver = new ResizeObserver(entries => {
+                    const rootWidth = entries.at(-1)?.contentRect.width;
                     clearTimeout(resizeTimeout);
-                    resizeTimeout = setTimeout(() => guard(resized), 100);
+                    resizeTimeout = setTimeout(() => guard(() => resized(rootWidth)), 100);
                 });
                 resizeObserver.observe(root);
             }

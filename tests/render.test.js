@@ -1927,6 +1927,25 @@ describe('the update of the facets', () => {
         expect(seen).toEqual(['translate(400 150)', 'translate(300 150)']);
     });
 
+    test('the width of the ResizeObserver is the one of the chart, it is not measured again', async () => {
+        const def = lineDef({ width: undefined });
+        const { el } = await mountVis({ def, data: lineData });
+        const svg = () => el.querySelector('svg.vis-svg').getAttribute('width');
+        expect(svg()).toBe('800');
+        const measure = Element.prototype.getBoundingClientRect;
+        const measured = [];
+        Element.prototype.getBoundingClientRect = function () {
+            measured.push(this);
+            return measure.call(this);
+        };
+        onTestFinished(() => Element.prototype.getBoundingClientRect = measure);
+        resize(500);
+        await new Promise(resolve => setTimeout(resolve, 150));
+        await nextTick();
+        expect(svg()).toBe('500');
+        expect(measured).not.toContain(el.querySelector('.vis'));
+    });
+
     test('the built-in plot types update their elements, the annotations are drawn anew', () => {
         const types = Object.entries(plotTypes).filter(([, t]) => !t.update).map(([n]) => n);
         expect(types).toEqual(['annotation:band', 'annotation:line', 'annotation:text', 'annotation:circle']);
