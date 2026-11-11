@@ -1,7 +1,8 @@
-export { builtInDefaults, registerDefaults, axisDefaults, symbolDefaults, marginDefaults };
+export { builtInDefaults, registerDefaults, axisDefaults, symbolDefaults, marginDefaults, withMarkDefaults };
 
 import { mergeAll } from '@/utils/merge';
 import { isObject } from '@/utils/values';
+import { typeOf } from '@/utils/language';
 
 /**
  * The built-in defaults of the parts of a chart, the values used where a
@@ -82,3 +83,36 @@ const axisDefaults = (own, position, scaleType) => {
 // the margins of the defaults (`margins` of builtInDefaults), of the page
 // and of the chart (`own`), e.g. { "left": 60 }, a side without one is measured
 const marginDefaults = own => mergeAll([builtInDefaults, registered, own].map(d => d?.margins).filter(isObject));
+
+/**
+ * The mark types `types` (see marks/index.js) with the defaults of the
+ * attributes of their marks of the page and of the chart (`own`, its prop)
+ * after their built-in ones (see marks/defaults.js), below the props of a
+ * mark: `marks` of the defaults by the type as a definition writes it
+ * (e.g. `line`, `point`, `bar`, of all coordinate systems) or its full name
+ * (e.g. `polar:line`, after the short one), e.g. { "marks": { "line": {
+ * "stroke-width": 1.33 }, "point": { "r": 2 } } } of a house style; null
+ * removes a built-in one. `types` without such defaults are returned as they are.
+ */
+const withMarkDefaults = (types, own) => {
+    const parts = [registered, own].map(d => d?.marks).filter(isObject);
+    if (parts.length == 0)
+        return types;
+    // the full names of a written type, e.g. svg:circle, polar:circle and geo:circle of point
+    const named = new Map();
+    parts.forEach(p => Object.keys(p).forEach(k => new Set(['cartesian', 'polar', 'geo'].map(c => typeOf(k, c))).forEach(t => {
+        if (Object.hasOwn(types, t) && !named.get(t)?.includes(k))
+            named.set(t, [...named.get(t) ?? [], k]);
+    })));
+    if (named.size == 0)
+        return types;
+    return Object.fromEntries(Object.entries(types).map(([name, type]) => {
+        // of each level the written types, then the full name
+        const extra = parts.flatMap(p => [...(named.get(name) ?? []).filter(k => k != name), name].map(k => p[k])).filter(isObject);
+        if (extra.length == 0)
+            return [name, type];
+        const base = type.defaults;
+        const added = Object.assign({}, ...extra);
+        return [name, { ...type, defaults: props => ({ ...(typeof base == 'function' ? base(props) : base), ...added }) }];
+    }));
+};

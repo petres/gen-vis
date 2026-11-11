@@ -1299,6 +1299,37 @@ describe('the defaults of the parts', () => {
         expect(errors).toEqual([]);
     });
 
+    test('of the attributes of marks by type (`marks`), below the props of a mark, a reference of no category is none', async () => {
+        const defaults = { marks: { line: { 'stroke-width': 1.33, 'stroke-dasharray': '@dash' }, point: { r: 2, fill: 'white' }, 'svg:circle': { fill: 'black' } } };
+        const path = el => el.querySelector('g.vis-mark-line path');
+        const dot = el => el.querySelector('g.vis-mark-circle circle');
+        const def = lineDef();
+        def.dims.c.ranks = [{ dash: 'none' }, { dash: '4 2' }];
+        const el = await mount({ def, data: lineData, defaults });
+        const paths = [...el.querySelectorAll('g.vis-mark-line path')];
+        expect(paths.map(p => [p.getAttribute('stroke-width'), p.getAttribute('stroke-dasharray')])).toEqual([['1.33', 'none'], ['1.33', '4 2']]);
+        // the type as written (point), then its full name (svg:circle)
+        expect([dot(el).getAttribute('r'), dot(el).getAttribute('fill')]).toEqual(['2', 'black']);
+        // the categories have no dash: no dasharray, no warning
+        const plain = await mount({ def: lineDef(), data: lineData, defaults });
+        expect(path(plain).hasAttribute('stroke-dasharray')).toBe(false);
+        expect(path(plain).getAttribute('stroke-width')).toBe('1.33');
+        // the props of the mark win, also null (the default removed)
+        const own = lineDef();
+        own.marks[0] = { ...own.marks[0], 'stroke-width': 3 };
+        own.marks[1] = { ...own.marks[1], r: null };
+        const mark = await mount({ def: own, data: lineData, defaults });
+        expect(path(mark).getAttribute('stroke-width')).toBe('3');
+        expect(dot(mark).hasAttribute('r')).toBe(false);
+        // of the page, the prop of the chart after it, also a control redraws with them
+        const { registerDefaults } = await import('@/index.js');
+        onTestFinished(() => registerDefaults(null));
+        registerDefaults({ marks: { line: { 'stroke-width': 0.5, opacity: 0.8 } } });
+        const page = await mount({ def: lineDef(), data: lineData, defaults: { marks: { line: { 'stroke-width': 2 } } } });
+        expect([path(page).getAttribute('stroke-width'), path(page).getAttribute('opacity')]).toEqual(['2', '0.8']);
+        expect(errors).toEqual([]);
+    });
+
     test('of the page (registerDefaults), the prop takes precedence, of a data attribute and of an update', async () => {
         const { registerDefaults, mountGenVisElement } = await import('@/index.js');
         onTestFinished(() => registerDefaults(null));

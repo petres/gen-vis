@@ -954,6 +954,15 @@ From the wishes of the WIFO styles, useful to any house style:
   points also. The props of the symbol win, the mark comes before the
   defaults of the shortcut.
 
+- Defaults of the attributes of marks by type, `marks` of the defaults
+  (the prop `defaults`, `registerDefaults`, the export page, `--defaults`),
+  e.g. `{"marks": {"line": {"stroke-width": 1.33}, "point": {"r": 2}}}`:
+  after the default attributes of the type, below the props of a mark, by
+  the type as written or its full name (`polar:line`). A reference to a
+  prop of the categories which a dim does not have is none, e.g.
+  `"stroke-dasharray": "@dash"` of a house style dashes only the lines of
+  dims with dashes.
+
 ### Package and builds
 
 - One vocabulary: the engine reads the names of 5.0. The translated and

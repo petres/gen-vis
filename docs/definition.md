@@ -626,6 +626,20 @@ the axes, of the symbols of the legends and of the margins:
 }
 ```
 
+`marks` are attributes of the marks of a type, after the default
+attributes of the type and below the props of a mark (see [marks](#marks)),
+by the type as a definition writes it (`line`, `point`, `bar`, ..., of all
+coordinate systems) or its full name (`polar:line`, after the short one),
+e.g. the line width and the size of the points of a house style:
+`{"marks": {"line": {"stroke-width": 1.33}, "point": {"r": 2}}}`. A
+stylesheet of the classes of the types (`.vis-mark-line path`) would also
+replace the widths a definition sets on purpose, e.g. of a highlight. A
+reference to a prop of the categories (`"stroke-dasharray": "@dash"`) is
+no attribute of the marks of a dim without it, so a house style can dash
+the lines of all dims with dashes (see `ranks`), its legends with them (the
+symbols follow the lines). The defaults of marks are not checked by
+`gen-vis check`, which reads the definition alone.
+
 `legend.symbol` is the box of the symbols of the shortcuts (`size`, or
 `width` and `height`), for all and per shortcut, with props of their own,
 e.g. smaller symbols of a house style, `{"legend": {"symbol": {"rect":
@@ -1271,6 +1285,10 @@ color of the text:
 
 The ones of maps (`base`, `region`, `point`, `text`, `mesh`) have none:
 `"fill": "value"` colors a region by the scale of the dim `value`.
+
+A house style adds defaults of its own after them, `marks` of the
+[defaults](#defaults), e.g. lines of 1pt and smaller points; the props of
+a mark win.
 
 ### Channels
 

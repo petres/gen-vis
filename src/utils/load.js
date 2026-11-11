@@ -15,8 +15,8 @@ import { isObject } from "@/utils/values";
 import { hasCategories, normalize } from "@/utils/normalize";
 import { versionError, languageError } from "@/utils/version";
 import { refNames } from "@/utils/expr";
-import { markTypes } from "@/marks";
-import { symbolDefaults } from "@/utils/defaults";
+import { markTypes as builtInTypes } from "@/marks";
+import { symbolDefaults, withMarkDefaults } from "@/utils/defaults";
 
 // the load of a visualisation: its definition with its parents, the parts
 // of the package it needs, its data and the files and geometries of it and
@@ -326,7 +326,7 @@ const plainUrl = v => typeof v == 'string' && !v.includes('{') && !v.startsWith(
 // with the parents, if the def names them by a plain url (see plainUrl), the
 // data if its format is known, it can be the one of a parent, `url` is
 // undefined for inline definitions
-const resolveDef = async ({ def: given, defUrl, data, check }) => {
+const resolveDef = async ({ def: given, defUrl, data, check, markTypes = builtInTypes }) => {
     const checks = check ? loadValidator() : null;
     const { def, url } = await readDef(given, defUrl);
 
@@ -455,7 +455,7 @@ const valueFormat = locale => format => {
     };
 };
 
-const prepare = (defOrg, authored, rows, files, state, globals, symbols = {}) => {
+const prepare = (defOrg, authored, rows, files, state, globals, symbols = {}, markTypes = builtInTypes) => {
     let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files, defOrg.locale);
     addDataValues(defOrg, rows, columns, valueFormat(defOrg.locale));
     inferTypes(defOrg, rows, columns);
@@ -583,7 +583,9 @@ const loadGeo = (geometries, module, prepared) => {
 // geometries of all values of the controls are kept, a control can switch
 // them.
 const load = async ({ def = null, defUrl = null, data = null, state = null, globals = null, check = false, defaults: chartDefaults = null }) => {
-    const { url, defOrg, authored, validate } = await resolveDef({ def, defUrl, data, check });
+    // the mark types with the defaults of their marks of the page and of the chart
+    const markTypes = withMarkDefaults(builtInTypes, chartDefaults);
+    const { url, defOrg, authored, validate } = await resolveDef({ def, defUrl, data, check, markTypes });
     let loaded;
     try {
         loaded = await Promise.all([
@@ -602,7 +604,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     await validate(rows);
     let ready;
     try {
-        ready = prepare(defOrg, authored, rows, files, state, globals, symbolDefaults(chartDefaults));
+        ready = prepare(defOrg, authored, rows, files, state, globals, symbolDefaults(chartDefaults), markTypes);
     } catch (error) {
         throw authoredError(error);
     }

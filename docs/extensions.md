@@ -138,14 +138,20 @@ restore();
 ## Defaults of the page
 
 `registerDefaults(defaults)` replaces built-in defaults of the parts of all
-charts of the page, see [defaults](definition.md#defaults): of the axes,
-of the symbols of the legends and the margins of the charts, e.g. of a
-house style:
+charts of the page, see [defaults](definition.md#defaults): of the axes
+(of all, of a type of scale, of a position), of the attributes of the
+marks of a type, of the symbols of the legends and the margins of the
+charts, e.g. of a house style:
 
 ```js
 import { registerDefaults } from '@preschen/gen-vis';
 
-registerDefaults({ axis: { padding: 2, tickMarks: { size: 4, inset: 0 } }, margins: { left: 64, right: 16 } });
+registerDefaults({
+    axis: { padding: 2, tickMarks: { size: 4, inset: 0 } },
+    bandAxis: { tickMarks: false },
+    marks: { line: { 'stroke-width': 1.33 }, point: { r: 2 } },
+    margins: { left: 64, right: 16 },
+});
 ```
 
 A side of the margins which a definition does not give is the one of the

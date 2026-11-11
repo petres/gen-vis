@@ -55,6 +55,8 @@ export interface GenVisDefaults {
     leftAxis?: AxisDefaults;
     /** The margins of the definitions without them, a number of pixels or "auto" (measured) per side, see docs/definition.md "Margins". */
     margins?: { top?: number | 'auto'; right?: number | 'auto'; bottom?: number | 'auto'; left?: number | 'auto' };
+    /** The attributes of the marks of a type below the props of a mark, by the type as written (`line`, `point`, ...) or its full name (`polar:line`), e.g. `{ line: { 'stroke-width': 1.33 }, point: { r: 2 } }`. */
+    marks?: Record<string, Record<string, unknown>>;
     /** The box of the symbols of the legends, of all and per shortcut (`line`, `rect`, `circle`), e.g. `{ symbol: { size: 16, rect: { width: 12 } } }`. */
     legend?: { symbol?: Record<string, unknown> };
 }
