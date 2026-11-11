@@ -720,6 +720,22 @@ describe('annotations', () => {
         return def;
     };
 
+    test('an annotation at a category which is not one of the scale is not drawn, with a warning', async () => {
+        const def = { dims: { x: { column: 'k', type: 'categorical' }, y: 'v' }, marks: [{ type: 'bar' }],
+            annotations: [{ type: 'band', x: 'zz', label: 'none' }, { type: 'line', x: 'zz' }, { type: 'text', x: 'zz', y: 1, text: 'none' }, { type: 'band', x: 'b' }] };
+        const el = await mount({ def, data: 'k,v\na,1\nb,2\nc,3' });
+        expect(el.querySelectorAll('.vis-annotation').length).toBe(1);
+        expect(el.querySelectorAll('.vis-annotation-label').length).toBe(0);
+        expect(el.querySelector('.vis-svg').outerHTML).not.toMatch(/NaN/);
+        expect(errors).toEqual(['band', 'line', 'text'].map((t, i) => expect.stringContaining(`annotations[${i}]: the ${t} has no position (x: "zz"`)));
+        errors.length = 0;
+        // a category of rows a filter leaves out is known, no warning
+        const filtered = await mount({ def: { ...def, filter: '=@x != "b"' }, data: 'k,v\na,1\nb,2\nc,3' });
+        expect(filtered.querySelectorAll('.vis-annotation').length).toBe(0);
+        expect(errors.filter(e => e.includes('"b"'))).toEqual([]);
+        errors.length = 0;
+    });
+
     test('bands, lines, texts and circles of cartesian plots', async () => {
         const el = await mount({ def: annotated([
             { type: 'band', x: [2021.5, null], label: 'Schätzung' },

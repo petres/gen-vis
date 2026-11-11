@@ -1955,6 +1955,9 @@ globals, e.g. `"@target"`:
 - `text` (`text`) and `circle` at the values, without one (or with `null`)
   of an axis at the start of the other one.
 - `label` and `text` are templates of the globals, e.g. `"Ziel {target}"`.
+- An annotation at a value without a position is not drawn, e.g. at a
+  category whose rows a filter leaves out; a category which is not in the
+  data at all (or 0 of a log scale) warns in the console.
 - `props` are svg attributes, e.g. `fill` or `stroke` (or `"marker-end":
   "arrow"`, an arrowhead, see [attributes](#attributes)), the defaults are grey,
   their names are the ones of the facet and of the annotation, e.g. `@y`,
