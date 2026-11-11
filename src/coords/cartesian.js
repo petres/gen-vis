@@ -147,7 +147,7 @@ const axes = ctx => {
         }
 
         // the values without ones of the axis, see utils/defaults.js
-        const d = store.axisDefaults(i.position);
+        const d = store.axisDefaults(i.position, m.scale?.type);
         const parts = [];
         // the grid lines are at the ticks of the axis
         if (i.grid)

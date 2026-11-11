@@ -1266,6 +1266,39 @@ describe('the defaults of the parts', () => {
         expect(errors).toEqual([]);
     });
 
+    test('of the type of the scale (`bandAxis`, ...) between all axes and a position, `tickMarks: false` of the defaults', async () => {
+        const bars = (axis = {}) => ({
+            width: 400, height: 260, margins: { top: 10, right: 10, bottom: 40, left: 60 },
+            dims: { x: { column: 'value', zero: true, axis: {} }, y: { column: 'name', type: 'categorical', axis } },
+            marks: { type: 'bar' },
+        });
+        const data = 'name,value\nA,1\nB,2';
+        // no marks of the categories of the bars (left), the ones of the values (bottom) stay
+        const el = await mount({ def: bars(), data, defaults: { bandAxis: { tickMarks: false, padding: 2 } } });
+        expect(el.querySelector('.vis-axis-left').getAttribute('data-dim')).toBe('y');
+        expect(el.querySelectorAll('.vis-axis-left .tick line')).toHaveLength(0);
+        expect(el.querySelectorAll('.vis-axis-bottom .tick line').length).toBeGreaterThan(0);
+        // the labels at their places of the marks: 9 - 5 of the inset and the padding of the band axes
+        expect(label(el, 'left', 'x')).toBe('-6');
+        expect(label(el, 'bottom', 'y')).toBe('8');
+        // the definition shows them again, also an object of a position of the defaults
+        expect(marks(await mount({ def: bars({ tickMarks: { size: 4 } }), data, defaults: { bandAxis: { tickMarks: false } } }), 'left', 'x')[0]).toBe('-4');
+        expect(marks(await mount({ def: bars(), data, defaults: { bandAxis: { tickMarks: false }, leftAxis: { tickMarks: { size: 3 } } } }), 'left', 'x')[0]).toBe('-3');
+        // a position before the type, also of the page: the prop of the chart wins
+        expect(label(await mount({ def: bars(), data, defaults: { bandAxis: { padding: 2 }, leftAxis: { padding: 5 } } }), 'left', 'x')).toBe('-9');
+        // of all axes, false of the defaults
+        const none = await mount({ def: lineDef(), data: lineData, defaults: { axis: { tickMarks: false } } });
+        expect(none.querySelectorAll('.tick line')).toHaveLength(0);
+        expect(label(none, 'bottom', 'y')).toBe('8');
+        // a point scale of a categorical axis of lines, not a band one
+        const points = lineDef();
+        points.dims.x = { column: 'year', type: 'categorical' };
+        const p = await mount({ def: points, data: lineData, defaults: { bandAxis: { tickMarks: false }, pointAxis: { tickMarks: { size: 2 } }, linearAxis: { padding: 0 } } });
+        expect(new Set(marks(p, 'bottom', 'y'))).toEqual(new Set(['2']));
+        expect(label(p, 'left', 'x')).toBe('-4');
+        expect(errors).toEqual([]);
+    });
+
     test('of the page (registerDefaults), the prop takes precedence, of a data attribute and of an update', async () => {
         const { registerDefaults, mountGenVisElement } = await import('@/index.js');
         onTestFinished(() => registerDefaults(null));

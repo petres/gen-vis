@@ -22,7 +22,8 @@ export interface State {
 export interface AxisDefaults {
     /** The space between the tick marks and the labels in pixels. */
     padding?: number;
-    tickMarks?: {
+    /** false leaves them out of the axes without tick marks of their own (the labels stay at their places), an object of a later entry shows them again. */
+    tickMarks?: false | {
         /** The length of the tick marks in pixels, also the space of the labels without them. */
         size?: number;
         /** The part of the length inside the plot area in pixels, null of the one of the styles (4 pixels of bottom and right axes, 5 of top and left ones). */
@@ -34,9 +35,18 @@ export interface AxisDefaults {
     };
 }
 
-/** The defaults of the parts of a chart instead of the built-in ones (`builtInDefaults`, see docs/definition.md "Defaults"): of all axes, the ones of the axes of a position before them, e.g. `angularAxis`. */
+/** The defaults of the parts of a chart instead of the built-in ones (`builtInDefaults`, see docs/definition.md "Defaults"): of all axes, the ones of the axes of a type of scale before them (e.g. `bandAxis` of the categories of bars), the ones of the axes of a position before both, e.g. `angularAxis`. */
 export interface GenVisDefaults {
     axis?: AxisDefaults;
+    bandAxis?: AxisDefaults;
+    pointAxis?: AxisDefaults;
+    linearAxis?: AxisDefaults;
+    logAxis?: AxisDefaults;
+    sqrtAxis?: AxisDefaults;
+    powAxis?: AxisDefaults;
+    symlogAxis?: AxisDefaults;
+    timeAxis?: AxisDefaults;
+    utcAxis?: AxisDefaults;
     angularAxis?: AxisDefaults;
     radialAxis?: AxisDefaults;
     topAxis?: AxisDefaults;

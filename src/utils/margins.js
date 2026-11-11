@@ -67,7 +67,7 @@ const autoMargins = (store, facets, given, texts = () => []) => {
             return Math.min(textWidth(t, fontOf(j)), max > 0 ? max : Infinity);
         });
         const widest = Math.max(0, ...widths);
-        const d = store.axisDefaults(pos);
+        const d = store.axisDefaults(pos, m.scale?.type);
         // the labels are at the end of the part of the tick marks outside of
         // the plot area (their size less the inset, also without marks) plus
         // the padding, see drawAxis of utils/axis.js

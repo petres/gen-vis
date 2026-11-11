@@ -689,7 +689,8 @@ years (`"format": "%Y"`) once, at their first tick.
   give the sides of a house style once as css variables
   (`--gen-vis-margin-left`).
 - The DOM names of 5.0: the group of a mark is `g.vis-mark` with
-  `data-mark` (its id, `mark-<index>` by default), the cells of the hover
+  `data-mark` (its id, `mark-<index>` by default) and the class of its type
+  (`vis-mark-line`, `vis-mark-bar`, ...), the cells of the hover
   and the axes have `data-dim`.
 - `gen-vis check def.json` checks a definition with its data (the schema
   and `validateDef`), `gen-vis export` prints the same warnings before it

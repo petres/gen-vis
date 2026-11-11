@@ -187,8 +187,10 @@ const createFacet = (vis, initial) => {
                 throw new Error(`${path}.type: the mark type '${mark.type}' is not available in the coordinate system '${coord}'`);
             const parent = keep(markKey(mark), () => {
                 const g = create("g");
-                // an id with spaces is several classes, e.g. "1st line"
-                g.classList.add("vis-mark", ...String(mark.id).trim().split(/^|\s+/));
+                // an id with spaces is several classes, e.g. "1st line"; the
+                // type without its coordinate system, e.g. vis-mark-line of
+                // "cartesian:line", for the styles of a house style
+                g.classList.add("vis-mark", `vis-mark-${String(mark.type).split(':').pop()}`, ...String(mark.id).trim().split(/^|\s+/));
                 g.setAttribute("data-mark", mark.id);
                 if (mark.layer)
                     g.classList.add(`vis-${mark.layer}`);

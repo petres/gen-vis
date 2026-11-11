@@ -102,9 +102,9 @@ const domainProps = (ctx, axis) => axis.domain?.props ? evaluate(axis.domain.pro
 // labels stay at their places, otherwise their length (`size`), the part of
 // it inside the plot area (`inset`, null of the one of the styles), by
 // default the ones of `defaults` (`tickMarks` of the defaults of the axis,
-// see utils/defaults.js), and their props of the names of the facet (`props`, null
+// see utils/defaults.js, none of `hidden` without tick marks of the axis), and their props of the names of the facet (`props`, null
 // without), e.g. their stroke
-const tickMarks = (ctx, axis, defaults) => axis.tickMarks === false ? false : {
+const tickMarks = (ctx, axis, defaults) => axis.tickMarks === false || (axis.tickMarks == null && defaults?.hidden) ? false : {
     size: Number.isFinite(axis.tickMarks?.size) ? axis.tickMarks.size : defaults?.size,
     inset: Number.isFinite(axis.tickMarks?.inset) ? axis.tickMarks.inset : defaults?.inset,
     props: axis.tickMarks?.props ? evaluate(axis.tickMarks.props, ctx.scope) : null,

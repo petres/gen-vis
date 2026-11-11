@@ -132,9 +132,9 @@ class Store {
 
     dim(n) { return this.def.dims[n] }
 
-    // the defaults of the axes of a position, e.g. "left", see
-    // axisDefaults of utils/defaults.js
-    axisDefaults(position) { return axisDefaults(this.chartDefaults, position) }
+    // the defaults of the axes of a position, e.g. "left", and of the type
+    // of their scale, e.g. "band", see axisDefaults of utils/defaults.js
+    axisDefaults(position, scaleType) { return axisDefaults(this.chartDefaults, position, scaleType) }
     // the margins of the defaults of the page and of the chart, see utils/defaults.js
     marginDefaults() { return marginDefaults(this.chartDefaults) }
 

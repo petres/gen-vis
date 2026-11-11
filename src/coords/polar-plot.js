@@ -108,7 +108,7 @@ const curvedLabel = (id, a, r, text, props) => {
 // with `labels.curved`, at the tick (true) or between it and the next one
 // (`between`), e.g. the names of the months
 const angularAxis = (ctx, n, s, values, label, domain, axis) => {
-    const d = ctx.store.axisDefaults('angular');
+    const d = ctx.store.axisDefaults('angular', ctx.store.dim(n)?.scale?.type);
     const marks = tickMarks(ctx, axis, d.tickMarks);
     const size = marks ? marks.size : d.tickMarks?.size;
     const inset = marks ? marks.inset ?? 0 : 0;
@@ -166,7 +166,7 @@ const angularAxis = (ctx, n, s, values, label, domain, axis) => {
 const radialAxis = (ctx, n, s, values, label, domain, axis) => {
     const a = (axis.angle ?? 0)/180*Math.PI;
     const [r0, r1] = d3.extent(s.range());
-    const d = ctx.store.axisDefaults('radial');
+    const d = ctx.store.axisDefaults('radial', ctx.store.dim(n)?.scale?.type);
     const padding = axis.padding ?? d.padding;
     const parts = [];
 

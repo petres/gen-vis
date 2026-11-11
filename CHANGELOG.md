@@ -930,6 +930,22 @@ Security, the events and the exports:
   format (e.g. `.jpg`) names its extension and the formats, `gen-vis`
   without a command is a usage error (exit 2).
 
+### Features of house styles
+
+From the wishes of the WIFO styles, useful to any house style:
+
+- The group of a mark has the class of its type without the coordinate
+  system beside `vis-mark`, e.g. `g.vis-mark.vis-mark-line`,
+  `vis-mark-bar`, `vis-mark-circle` (of points), so a stylesheet styles
+  marks by type without knowing the ids of a definition.
+- Defaults of the axes of a type of scale (`bandAxis`, `pointAxis`,
+  `linearAxis`, `timeAxis`, ...) between the ones of all axes (`axis`) and
+  the ones of a position (`leftAxis`, ...), e.g. `{"bandAxis":
+  {"tickMarks": false}}` leaves the tick marks out of the categories of bars
+  and columns, whichever side they are on. `tickMarks: false` in the
+  defaults works now (it was ignored and the marks were drawn); an
+  object of a later entry or of the definition shows them again.
+
 ### Package and builds
 
 - One vocabulary: the engine reads the names of 5.0. The translated and

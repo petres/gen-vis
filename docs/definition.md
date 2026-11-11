@@ -634,9 +634,16 @@ e.g. smaller symbols of a house style, `{"legend": {"symbol": {"rect":
 definition win. `margins` are the sides of the charts without one (a
 number of pixels or `"auto"`), see [margins](#margins).
 
-`axis` are the ones of all axes, `<position>Axis` the ones of the axes of a
-position before them, e.g. `angularAxis` and `radialAxis` of polar charts or
-`leftAxis`; an `inset` of `null` is the one of the styles (the css variable
+`axis` are the ones of all axes, `<scaleType>Axis` the ones of the axes of a
+type of scale before them, e.g. `bandAxis` (the categories of bars),
+`pointAxis` (other categories), `linearAxis`, `logAxis` or `timeAxis`, and
+`<position>Axis` the ones of the axes of a position before both, e.g.
+`angularAxis` and `radialAxis` of polar charts or `leftAxis`. A house style
+without tick marks at the categories of bars and columns, whichever side
+they are on: `{"bandAxis": {"tickMarks": false}}`; `tickMarks: false` of
+the defaults leaves them out of the axes without `tickMarks` of their own
+(the labels stay at their places), an object of a later entry or of the
+definition shows them again. An `inset` of `null` is the one of the styles (the css variable
 `--gen-vis-tick-inset`, 4 pixels of bottom and right axes, 5 of top and
 left ones), a `title.offset` of `null` of cartesian axes 8 pixels inside
 the edge of the margin. Defaults of the same shape replace them without
@@ -647,7 +654,8 @@ and `registerDefaults(defaults)` of all charts of the page (called before
 the charts are drawn, `null` removes them). Precedence: the definition,
 then the prop, then the page, then the built-in defaults (of the margins
 the styles of the page come after the definition). Within one level an
-axis-specific entry (e.g. `angularAxis`) beats `axis`, but a higher level
+entry of a position (e.g. `angularAxis`) beats one of a type of scale (e.g.
+`bandAxis`), which beats `axis`, but a higher level
 always wins, so the prop's `axis` beats the page's `angularAxis`. E.g.
 ggplot2 spacing (3pt tick marks outside the plot area, labels close to
 them) and the margins of a house style for every definition:
