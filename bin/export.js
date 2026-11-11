@@ -36,12 +36,16 @@ export const fileUrl = file => `${origin}/fs${pathToFileURL(path.resolve(file)).
 const printPage = '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/__gen-vis/esm/chunks/fonts/inter.css"><style>@page { margin: 0; } html, body { margin: 0; } svg { display: block; }</style></head><body></body></html>';
 
 // the file of an url of the page, null if it is not one (also of a path
-// which is no file, e.g. of an encoded "/" or a malformed escape); a
+// which is no file, e.g. of an encoded "/" or a malformed escape, and of an
+// url of another origin, e.g. https://example.org/data.csv); a
 // site-absolute path, e.g. "/geo/europe.json", is a file in `root` (if given)
 const within = (dir, file) => file == dir || file.startsWith(dir.endsWith(path.sep) ? dir : dir + path.sep);
+export const isLocal = url => new URL(url).origin == origin;
 export const fileOf = (url, root) => {
     try {
         const { pathname } = new URL(url);
+        if (!isLocal(url))
+            return null;
         if (pathname.startsWith('/__gen-vis/')) {
             const file = path.resolve(lib, decodeURIComponent(pathname.slice('/__gen-vis/'.length)));
             return file.startsWith(lib) ? file : null;

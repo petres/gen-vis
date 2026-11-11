@@ -67,6 +67,25 @@ describe('gen-vis check', () => {
         expect(r.code).toBe(0);
     });
 
+    test('remote data is not checked (a note), a remote parent is not read, also with --root', async () => {
+        const schema = 'https://unpkg.com/@preschen/gen-vis@5/schema.json';
+        const dims = { x: { column: 'year', type: 'numeric' }, y: 'value' };
+        // a local file of the path of the url, which is not the data
+        file('data.csv', 'other\n1\n');
+        const remote = file('remote.json', { $schema: schema, data: 'https://example.org/data.csv', dims, marks: { type: 'line' } });
+        for (const args of [[], ['--root', dir]]) {
+            const r = await run(['check', remote, ...args]);
+            expect(r.stdout).toBe(`${remote}: note: the data https://example.org/data.csv is not local, it is not checked (--data <file> checks a local copy)\n`);
+            expect(r.stderr).toBe('gen-vis: 1 definition, 0 warnings\n');
+            expect(r.code).toBe(0);
+        }
+        const child = file('remote-parent.json', { $schema: schema, parent: 'https://example.org/data.json', data: 'data.csv', dims, marks: { type: 'line' } });
+        file('data.json', { $schema: schema });
+        const p = await run(['check', child, '--root', dir]);
+        expect(p.stderr).toContain('https://example.org/data.json is no local file, check reads only local files');
+        expect(p.code).toBe(1);
+    });
+
     test('the warnings of the schema, of validateDef and of the data, a line per warning; --strict', async () => {
         const typos = file('typos.json', bevDef(dir, d => {
             const [x] = Object.keys(d.dims);

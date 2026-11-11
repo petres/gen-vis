@@ -284,8 +284,11 @@ p6.json: marks[0].strok-width: no attribute of svg, did you mean 'stroke-width'?
 
 and a summary to the standard error (`gen-vis: 11 definitions, 6
 warnings in 6, 2 not read`). A definition of gen-vis 4 is checked as
-migrated (a `note:` line says so). The exit code is 1 if a definition could
-not be read (a missing file or parent, invalid JSON, no `$schema`), with
+migrated (a `note:` line says so). The check reads only local files: data
+of an url of another origin (e.g. `https://example.org/data.csv`) is not
+checked (a `note:` line says so, `--data <file>` checks a local copy), a
+parent of one is not read. The exit code is 1 if a definition could
+not be read (a missing file, a missing or remote parent, invalid JSON, no `$schema`), with
 `--strict` also of a warning, 2 of wrong arguments. Options: `--data
 <file>` (the data instead of the one of the definitions), `--root <dir>`
 (the directory of site-absolute paths, as of `export`), `--scheme

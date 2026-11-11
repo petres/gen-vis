@@ -10,7 +10,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { fileOf, fileUrl, chartDirs, refusal } from './export.js';
+import { fileOf, fileUrl, chartDirs, refusal, isLocal } from './export.js';
 
 const require = createRequire(import.meta.url);
 const schemaFile = fileURLToPath(new URL('../schema.json', import.meta.url));
@@ -63,10 +63,11 @@ const schemaErrors = (errors, def) => {
 /**
  * The checker of definition files: `check(file, { data })` resolves to the
  * warnings of the file (texts "path: message", `migrated` of a definition
- * of gen-vis 4, which is checked as migrated), `data` is a file of the
+ * of gen-vis 4, which is checked as migrated, `notes` of the parts not
+ * checked, e.g. data of an url of another origin), `data` is a file of the
  * data instead of the one of the definition; it rejects of an error, e.g.
- * a missing parent or invalid JSON or a file outside of the directories
- * it reads (as the ones of the export, see chartDirs). `root` is the
+ * a missing parent (or one of another origin, e.g. of https:) or invalid
+ * JSON or a file outside of the directories it reads (as the ones of the export, see chartDirs). `root` is the
  * directory of site-absolute paths, `allow` more directories it reads,
  * `schemes` the schemes of colors the page registers (names, or an object
  * of names and colors, e.g. the ones of --scheme of the export or of a
@@ -91,6 +92,9 @@ export const createChecker = async ({ root = null, allow = [], schemes = [] } = 
     // the file of an url of a definition, its parents or its data, of the
     // directories `dirs`
     const fileOfUrl = (url, dirs) => {
+        // (an url of another origin, e.g. a parent of https://, is no file)
+        if (!isLocal(url))
+            throw new Error(`${url} is no local file, check reads only local files (e.g. a local copy of it)`);
         const file = fileOf(url, root);
         const refused = file && refusal(file, dirs);
         if (refused)
@@ -99,8 +103,9 @@ export const createChecker = async ({ root = null, allow = [], schemes = [] } = 
             throw new Error(`the file ${file ?? new URL(url).pathname} does not exist${file || root ? '' : ' (a site-absolute path: set --root to the site\'s directory)'}`);
         return file;
     };
-    // `warn(message)` of the warnings of the data, e.g. CSV of semicolons
-    const rowsOf = async (def, url, data, dirs, warn) => {
+    // `warn(message)` of the warnings of the data, e.g. CSV of semicolons,
+    // `note(message)` of data which is not checked, e.g. of another origin
+    const rowsOf = async (def, url, data, dirs, warn, note) => {
         let file = data ?? null;
         if (file === null) {
             if (typeof def.data != 'string')
@@ -109,7 +114,12 @@ export const createChecker = async ({ root = null, allow = [], schemes = [] } = 
             const name = def.data.replace(/\{([^{}]+)\}/g, (t, n) => def.globals?.[n] !== undefined ? String(def.globals[n]) : t);
             if (/\{[^{}]+\}/.test(name))
                 return null;
-            file = fileOfUrl(new URL(name, url).href, dirs);
+            const href = new URL(name, url).href;
+            if (!isLocal(href)) {
+                note(`the data ${href} is not local, it is not checked (--data <file> checks a local copy)`);
+                return null;
+            }
+            file = fileOfUrl(href, dirs);
         } else if (!existsSync(file))
             throw new Error(`the data ${file} does not exist`);
         const format = gv.dataFormat(file, data == null ? def.dataFormat : undefined);
@@ -136,8 +146,8 @@ export const createChecker = async ({ root = null, allow = [], schemes = [] } = 
         const def = await gv.resolveParents(raw, url, u => readFileSync(fileOfUrl(u, dirs), 'utf8')).catch(error => {
             throw paths(error);
         });
-        const read = [];
-        const rows = await rowsOf(def, url, data, dirs, message => read.push(message));
+        const read = [], notes = [];
+        const rows = await rowsOf(def, url, data, dirs, message => read.push(message), message => notes.push(message));
         const warnings = [...read, ...gv.validateDef(def, rows)];
         // the errors of the schema of a definition of 5.0, not the ones validateDef names
         const old = gv.isDefinition4(def);
@@ -147,8 +157,9 @@ export const createChecker = async ({ root = null, allow = [], schemes = [] } = 
         const schema = validate && !old && !gv.isDefinition4(raw) && !validate(raw) ? schemaErrors(validate.errors, raw) : [];
         const named = warnings.map(w => w.split(': ')[0]);
         const extra = schema.filter(([p]) => !named.some(n => n == p || p.startsWith(`${n}.`) || p.startsWith(`${n}[`) || n.startsWith(`${p}.`)));
-        // `migrated`: a definition of 4.x, the warnings are the ones of its migration
-        return Object.assign([...warnings, ...extra.map(([p, m]) => `${p || 'the definition'}: ${m}`)], { migrated: old });
+        // `migrated`: a definition of 4.x, the warnings are the ones of its
+        // migration, `notes` what is not checked, e.g. remote data
+        return Object.assign([...warnings, ...extra.map(([p, m]) => `${p || 'the definition'}: ${m}`)], { migrated: old, notes });
     };
     return { check };
 };

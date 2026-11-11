@@ -308,6 +308,7 @@ const checkCommand = async args => {
             const warnings = await checker.check(file, { data: o.data ?? null });
             if (warnings.migrated)
                 process.stdout.write(`${file}: note: a definition of gen-vis 4, checked as migrated (gen-vis migrate writes it as one of 5.0)\n`);
+            warnings.notes?.forEach(n => process.stdout.write(`${file}: note: ${n}\n`));
             warnings.forEach(w => process.stdout.write(`${file}: ${w}\n`));
             count += warnings.length;
             warned += warnings.length > 0;
