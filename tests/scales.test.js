@@ -228,6 +228,38 @@ describe('values of the definition of a mapping with the scale of another one', 
     });
 });
 
+describe('the ticks of whole numbers', () => {
+    const linear = domain => ({ type: 'numeric', scale: { type: 'linear', orientation: 'vertical', domain, pad: 0 } });
+    const whole = [{ y: 0, w: 0.5 }, { y: 1, w: 0.7 }];
+
+    test('are whole numbers, e.g. years', () => {
+        const s = makeScale('y', linear([null, null]), [{ y: 2001 }, { y: 2003 }], options);
+        expect(s.ticks(10)).toEqual([2001, 2002, 2003]);
+        expect(s.integers).toBe(true);
+    });
+
+    test('not of a fixed end of the domain which is none, e.g. [0, 0.5]', () => {
+        const s = makeScale('y', linear([0, 0.5]), whole, options);
+        expect(s.ticks(5)).toEqual([0, 0.1, 0.2, 0.3, 0.4, 0.5]);
+        expect(s.integers).toBeUndefined();
+        // whole ends stay whole ticks
+        expect(makeScale('y', linear([0, 2]), whole, options).ticks(10)).toEqual([0, 1, 2]);
+    });
+
+    test('not with the values of a dim of the same scale (`of`) which are none', () => {
+        const s = makeScale('y', linear([null, null]), whole, { ...options, also: ['w'] });
+        expect(s.ticks(5)).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1]);
+        expect(makeScale('y', linear([null, null]), [{ y: 0, w: 2 }, { y: 1, w: 3 }], { ...options, also: ['w'] }).ticks(5)).toEqual([0, 1, 2, 3]);
+    });
+
+    test('not if fewer than two ticks are whole, e.g. of a domain of an expression within two whole numbers', () => {
+        const mapping = { type: 'numeric', scale: { type: 'linear', orientation: 'vertical', domain: [null, null], domainAbs: [0.2, -0.3] } };
+        const s = makeScale('y', mapping, whole, options);
+        expect(s.domain()).toEqual([0.2, 0.7]);
+        expect(s.ticks(5)).toEqual([0.2, 0.3, 0.4, 0.5, 0.6, 0.7]);
+    });
+});
+
 describe('the fixed values of the ticks of an axis', () => {
     test('a value without a position is no tick, e.g. 0 of a log scale, nor one outside of the domain', () => {
         const mapping = { type: 'numeric', scale: { type: 'log', orientation: 'vertical', domain: [1, 100] } };

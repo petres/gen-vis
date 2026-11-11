@@ -225,7 +225,13 @@ const computeValues = (name, numeric, rows, stackOf, also, log) => {
         all = logValues(all);
     const extent = all.length ? d3.extent(all) : null;
     let sorted = null;
+    let whole = null;
     return {
+        // the values are whole numbers, also the ones of `also`, see the
+        // ticks of makeScale
+        get whole() {
+            return whole ??= present.every(Number.isInteger) && others.every(Number.isInteger);
+        },
         get values() {
             if (sorted === null) {
                 sorted = present.sort((a, b) => a - b);
@@ -367,6 +373,8 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     // references, e.g. to a global, categories are kept
     const fixed = () => (evaluate(scaleDef.domain, scope) ?? []).map(valueOf);
     let domain;
+    // the fixed ends of the domain, e.g. 0.5 of [0, 0.5], see the ticks
+    let ends = [];
     if (scaleDef.type == 'threshold') {
         // the values between the classes
         domain = fixed();
@@ -375,6 +383,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         domain = found.values;
     } else if (extent && !['ordinal', 'band', 'point'].includes(scaleDef.type)) {
         domain = fixed();
+        ends = domain.filter(v => v !== null);
         // the first and the last entry, a diverging domain has a middle one
         // (of a domain of two entries or none it is taken from the data)
         const diverging = scaleDef.type.toLowerCase().startsWith('diverging');
@@ -481,11 +490,18 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     s.domain(domain);
     // the ticks of data of whole numbers are whole numbers (`integers`, e.g.
     // years: 2001 and 2002, not 2001.5, see tickFormat of utils/locale.js),
-    // the ones of periods the starts of their units (e.g. days, not noons)
-    if (s.ticks && !log && mapping.type == 'numeric' && !mapping.stacked && found.extent && found.values.every(Number.isInteger)) {
+    // the ones of periods the starts of their units (e.g. days, not noons);
+    // not with other values on the scale: the ones of the dims with this
+    // scale (`also`) or a fixed end of the domain, e.g. 0.5 of [0, 0.5],
+    // and not if fewer than two ticks are whole
+    if (s.ticks && !log && mapping.type == 'numeric' && !mapping.stacked && found.extent && found.whole && ends.every(Number.isInteger)) {
         const ticks = s.ticks;
         s.integers = true;
-        s.ticks = count => ticks.call(s, count).filter(Number.isInteger);
+        s.ticks = count => {
+            const all = ticks.call(s, count);
+            const whole = all.filter(Number.isInteger);
+            return whole.length >= 2 ? whole : all;
+        };
     }
     if (s.ticks && period) {
         const ticks = s.ticks;

@@ -4215,6 +4215,18 @@ describe('the ticks of whole numbers and of periods', () => {
         expect(errors).toEqual([]);
     });
 
+    test('whole numbers of the data: the ticks of a fixed domain between them and of a dim of the same scale are not left out', async () => {
+        const left = el => [...el.querySelectorAll('g.vis-axis-left g.tick text')].map(t => t.textContent);
+        const fixed = await mount({ def: { locale: 'en', dims: { x: 'k', y: { column: 'v', domain: [0, 0.5] } }, marks: [{ type: 'point' }] }, data: 'k,v\n1,0\n2,1' });
+        expect(left(fixed).length).toBeGreaterThan(2);
+        expect(left(fixed).map(Number)).toContain(0.5);
+        const borrowed = await mount({ def: { locale: 'en', dims: { x: 'k', y: 'v', y2: { column: 'w', scale: { of: 'y' } } }, marks: [{ type: 'point' }, { type: 'point', y: 'y2' }] },
+            data: 'k,v,w\n1,0,0.5\n2,1,0.7' });
+        expect(left(borrowed).length).toBeGreaterThan(2);
+        expect(left(borrowed).map(Number)).toContain(0.5);
+        expect(errors).toEqual([]);
+    });
+
     test('the ticks of days are whole days, of hours whole hours; hours and minutes are intervals', async () => {
         const days = await mount({ def: dated('day'), data: 'date,value\n2024-03-01,1\n2024-03-02,2\n2024-03-03,3' });
         expect(labels(days).some(t => t.includes(':'))).toBe(false);

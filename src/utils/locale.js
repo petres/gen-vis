@@ -192,7 +192,9 @@ const getLocale = (locale = 'de') => {
             // so years are e.g. 2024
             if (['linear', 'pow', 'sqrt'].includes(type)) {
                 const [d0, d1] = scale.domain();
-                const precision = scale.integers ? 0 : d3.precisionFixed(d3.tickStep(d0, d1, count));
+                // (not of ticks between them, e.g. of a domain within two whole numbers)
+                const whole = scale.integers && scale.ticks(count).every(Number.isInteger);
+                const precision = whole ? 0 : d3.precisionFixed(d3.tickStep(d0, d1, count));
                 const grouping = Math.max(Math.abs(d0), Math.abs(d1)) >= 10000 ? ',' : '';
                 return number.format(`${grouping}.${Number.isFinite(precision) ? precision : 0}f`);
             }
