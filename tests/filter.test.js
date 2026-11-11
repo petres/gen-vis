@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// the filter transform: the plots, the scales and the later transforms have
+// the filter transform: the marks, the scales and the later transforms have
 // only its rows
 import { describe, test, expect } from 'vitest';
 import { useDom, mount, errors } from './dom.js';
@@ -7,22 +7,19 @@ import { useDom, mount, errors } from './dom.js';
 useDom();
 
 const def = transform => ({
-    options: { width: 400, height: 200 },
+    width: 400,
+    height: 200,
     globals: { min: 0 },
     transform,
-    mapping: {
-        x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' } },
-        y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' } },
-        share: { column: 'share', type: 'numeric' },
-    },
-    plot: { type: 'svg:circle', props: { cx: '@x:scaled', cy: '@y:scaled', r: 3, 'data-share': '@share' } },
+    dims: { x: { column: 'year', type: 'numeric' }, y: { column: 'value', type: 'numeric' }, share: { column: 'share', type: 'numeric' } },
+    marks: { type: 'point', 'data-share': '@share' },
 });
 const data = 'year,value\n2020,1\n2021,-2\n2022,3\n2023,5\n';
 
 describe('the filter transform', () => {
     test('the rows whose expression is true are drawn, later transforms have only them', async () => {
         const el = await mount({ def: def([
-            { type: 'filter', expr: { '>': ['@value', '@min'] } },
+            { type: 'filter', expr: '@value > @min' },
             { type: 'share', column: 'value', as: 'share' },
         ]), data });
         const circles = [...el.querySelectorAll('g.vis-mark circle')];
@@ -30,8 +27,8 @@ describe('the filter transform', () => {
         expect(errors).toEqual([]);
     });
 
-    test('a definition of the shorthand of 4.0: the types of the values, the scales and axes of x and y, a line of its defaults', async () => {
-        const el = await mount({ def: { options: { width: 400, height: 200 }, mapping: { x: 'year', y: 'value' }, plot: { type: 'line' } }, data });
+    test('a definition of the shorthands: the types of the values, the scales and axes of x and y, a line of its defaults', async () => {
+        const el = await mount({ def: { width: 400, height: 200, dims: { x: 'year', y: 'value' }, marks: { type: 'line' } }, data });
         expect(el.querySelectorAll('.vis-axis')).toHaveLength(2);
         const path = el.querySelector('g.vis-mark path');
         expect(path.getAttribute('d')).toMatch(/^M[\d.]+,[\d.]+L/);
