@@ -193,6 +193,7 @@ See [definition.md](definition.md#marks).
 | `fit` | boolean |  | geo:text: only the labels which fit into the area around the pole of their feature (estimated of their characters and font size), also of place centroid; texts of place in: true (default) leaves out a label without room in its band, false places it where it violates the least. |
 | `overlap` | boolean | `true` | geo:text: false leaves out the labels which overlap the one of a larger area, so a map needs no list of the labels shown; texts of place in: false (default) places the labels apart, true lets them overlap. |
 | `ends` | expression \| `"base"`, `"open"` | `"base"` | Of the stairs of a line of x0 and x1: down to the base at both ends (base) or from the first step to the last one (open), e.g. of shares. |
+| `clip` | boolean | `false` | Clips the elements of the mark to the plot area, e.g. the lines and bars of values outside of a fixed `domain`, which are drawn over the axes and the margins otherwise; also the half of a stroke or a point at its edge. |
 | `halo` | boolean \| number |  | Texts (also of maps): a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the stroke attributes of the mark replace its stroke. |
 | `object` | string |  | geo:mesh: the object of the TopoJSON of the borders, the one of the geometry by default, e.g. the states above the districts. |
 | `borders` | expression \| `"all"`, `"inner"`, `"outer"` | `"all"` | geo:mesh: all borders, the ones between two features (inner) or the outline (outer). |

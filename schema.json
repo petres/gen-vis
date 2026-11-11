@@ -1732,6 +1732,11 @@
                     "description": "Of the stairs of a line of x0 and x1: down to the base at both ends (base) or from the first step to the last one (open), e.g. of shares.",
                     "default": "base"
                 },
+                "clip": {
+                    "type": "boolean",
+                    "description": "Clips the elements of the mark to the plot area, e.g. the lines and bars of values outside of a fixed `domain`, which are drawn over the axes and the margins otherwise; also the half of a stroke or a point at its edge.",
+                    "default": false
+                },
                 "halo": {
                     "anyOf": [{ "type": "boolean" }, { "type": "number" }],
                     "description": "Texts (also of maps): a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the stroke attributes of the mark replace its stroke."

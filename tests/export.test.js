@@ -97,6 +97,17 @@ describe('exportSvg', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the clip of the plot area of a mark with `clip` is in the SVG, with its id', async () => {
+        const clipped = def();
+        clipped.plot[0].clip = true;
+        const vis = await chart({ def: clipped });
+        const root = parse(await vis.exportSvg());
+        const clip = root.querySelector('clipPath[id$="-clip"]');
+        expect(clip.querySelector('rect').getAttribute('width')).toBe(vis.el.querySelector('clipPath.vis-clip rect').getAttribute('width'));
+        expect([...root.querySelectorAll('g[clip-path]')].map(g => g.getAttribute('clip-path'))).toContain(`url(#${clip.id})`);
+        expect(errors).toEqual([]);
+    });
+
     test('colors as hex colors and their opacities, no rgb', () => {
         // the computed colors of jsdom are the ones of the styles, the ones of
         // svg elements are not computed, see cli.test.js of the browser

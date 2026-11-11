@@ -819,6 +819,8 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   of a global, the domain of a `point` or `band` scale are its categories
   in their order. A `log` scale has no 0: a fixed end of 0 (or of the
   other sign than the values) is taken from the data, with a warning.
+  Values outside of a fixed domain are drawn outside of the plot area,
+  `"clip": true` of a [mark](#marks) clips them.
 - `pad` (also of the dim) extends the ends taken from the data relative to
   the size of the domain (a fixed end stays, e.g. `0` of bars), positive
   values extend: a number, e.g. `0.1` of 10% below and above, or `[start,
@@ -1667,6 +1669,15 @@ them (from 0), e.g. the counts of the categories at the top right:
 - `facet`: a key or a list of keys of the facets of the mark, by default it
   is in all facets; of a grid also the values of the dims of its rows and
   columns, e.g. `{"group": "Bau"}`.
+- `clip`: `true` clips the elements of the mark to the plot area of its
+  facet. By default a mark is not clipped: the values outside of a fixed
+  `domain` (e.g. `"domain": [2, 4]` of a zoom or of a control) are drawn
+  over the axes and into the margins, e.g. a bar below the axis, so the
+  lines, areas and bars of such a dim want `"clip": true`; a clip also cuts
+  what is at the edge of the plot area, e.g. half of the stroke of a line
+  at the end of the domain or half of a point, so labels and points
+  usually stay without one. The clip is a `<clipPath>` of the facet
+  (`clipPath.vis-clip`), the images of the export have it.
 - `halo` (texts): a halo behind the texts in the color of
   `--gen-vis-halo-color`, `true` (3 pixels) or its width in pixels, e.g.
   labels on areas, the attributes of the mark replace its `stroke`,

@@ -1514,6 +1514,10 @@ export interface Mark {
      */
     ends?: `=${string}` | ('base' | 'open');
     /**
+     * Clips the elements of the mark to the plot area, e.g. the lines and bars of values outside of a fixed `domain`, which are drawn over the axes and the margins otherwise; also the half of a stroke or a point at its edge.
+     */
+    clip?: boolean;
+    /**
      * Texts (also of maps): a halo behind the texts in the color of --gen-vis-halo-color, true (3 pixels) or its width, the stroke attributes of the mark replace its stroke.
      */
     halo?: boolean | number;

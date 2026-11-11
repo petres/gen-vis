@@ -1,4 +1,4 @@
-export { arrowheads };
+export { arrowheads, defsOf };
 
 import { create } from "@/utils/dom";
 import { directOf } from "@/utils/draw";
@@ -37,15 +37,22 @@ const arrowheads = (layer, svg, uid) => {
     return layer;
 };
 
-// the id of the marker of an arrowhead of a color in the defs of the svg,
-// a new one of a new color
-const markerOf = (svg, uid, color) => {
+// the <defs> of the svg of a facet, e.g. of the markers of its arrowheads
+// and the clip of its plot area, a new one without one
+const defsOf = svg => {
     let defs = svg.querySelector(':scope > defs.vis-defs');
     if (!defs) {
         defs = create('defs');
         defs.setAttribute('class', 'vis-defs');
         svg.insertBefore(defs, svg.firstChild);
     }
+    return defs;
+};
+
+// the id of the marker of an arrowhead of a color in the defs of the svg,
+// a new one of a new color
+const markerOf = (svg, uid, color) => {
+    const defs = defsOf(svg);
     const markers = [...defs.querySelectorAll(':scope > marker.vis-arrow')];
     const same = markers.find(m => m.getAttribute('data-color') === color);
     if (same)

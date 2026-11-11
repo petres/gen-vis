@@ -730,3 +730,40 @@ describe('stacked areas of groups without a row at a position', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('clip', () => {
+    const data = 'k,v\na,1\nb,3\nc,5';
+    const def = (marks, more = {}) => ({ dims: { x: { column: 'k', type: 'categorical' }, y: { column: 'v', domain: [2, 4] } }, marks, ...more });
+
+    test('a mark with `clip` is clipped to the plot area of its facet, the others are not', async () => {
+        const el = await mount({ def: def([{ type: 'bar', clip: true }, { type: 'line' }]), data });
+        const [bars, line] = el.querySelectorAll('g.vis-mark');
+        const clip = el.querySelector('svg.vis-svg > defs.vis-defs > clipPath.vis-clip');
+        expect(clip.id).toMatch(/^gen-vis-facet-\d+-clip$/);
+        expect(bars.getAttribute('clip-path')).toBe(`url(#${clip.id})`);
+        expect(line.hasAttribute('clip-path')).toBe(false);
+        // the plot area of 776 x 370, the bar of 1 hangs below it without the clip
+        expect(['x', 'y', 'width', 'height'].map(a => num(clip.firstChild, a))).toEqual([0, 0, 776, 370]);
+        expect(Math.max(...rects(el).map(r => num(r, 'y') + num(r, 'height')))).toBeGreaterThan(370);
+        expect(errors).toEqual([]);
+    });
+
+    test('a clip per facet, around the center of a polar chart, none without a mark with `clip`', async () => {
+        const facets = await mount({ def: { dims: { x: 'x', y: { column: 'v', domain: [2, 4] }, f: 'k' }, facets: { by: 'f', cols: 3 }, marks: [{ type: 'line', clip: true }] },
+            data: 'k,x,v\na,1,1\na,2,5\nb,1,3\nb,2,3\nc,1,5\nc,2,1' });
+        const ids = [...facets.querySelectorAll('clipPath.vis-clip')].map(c => c.id);
+        expect(new Set(ids).size).toBe(3);
+        expect([...facets.querySelectorAll('g.vis-mark')].map(g => g.getAttribute('clip-path'))).toEqual(ids.map(id => `url(#${id})`));
+        const polar = await mount({ def: { coord: 'polar', width: 400, height: 400, margins: { top: 0, right: 0, bottom: 0, left: 0 }, dims: { x: { column: 'k', type: 'categorical' }, y: 'v' }, marks: [{ type: 'line', clip: true }] }, data });
+        expect(['x', 'y', 'width', 'height'].map(a => num(polar.querySelector('clipPath.vis-clip rect'), a))).toEqual([-200, -200, 400, 400]);
+        const none = await mount({ def: def([{ type: 'bar' }]), data });
+        expect(none.querySelector('clipPath')).toBe(null);
+        expect(errors).toEqual([]);
+    });
+
+    test('`clip` is a boolean of the schema', async () => {
+        const { validateDef } = await import('@/utils/validate');
+        expect(validateDef(def([{ type: 'bar', clip: true }]))).toEqual([]);
+        expect(validateDef(def([{ type: 'bar', clip: 'yes' }])).join(' ')).toContain('marks[0].clip');
+    });
+});

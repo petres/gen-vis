@@ -1,7 +1,7 @@
 export { createFacet };
 
 import { drawLayer, withMotion } from "@/utils/draw";
-import { arrowheads } from "@/utils/arrows";
+import { arrowheads, defsOf } from "@/utils/arrows";
 import { highlighter } from "@/utils/highlight";
 import { drawAxis } from "@/utils/axis";
 import { create, interruptAll, setAttr } from "@/utils/dom";
@@ -148,6 +148,23 @@ const createFacet = (vis, initial) => {
         });
     };
 
+    // the id of the clip of the plot area of the facet (`clip` of a mark):
+    // a <clipPath> of the edges of the plot area in the coordinates of the
+    // plots in the <defs> of the svg, with the id of the facet, so it is
+    // unique on the page and an export of the svg copies it
+    const clipOf = () => {
+        const id = `${uid}-clip`;
+        const defs = defsOf(svg);
+        let clip = defs.querySelector(':scope > clipPath.vis-clip');
+        if (!clip) {
+            clip = defs.appendChild(create('clipPath'));
+            patch(clip, { id, class: 'vis-clip' });
+            clip.appendChild(create('rect'));
+        }
+        patch(clip.firstChild, { x: ctx.scope['plot:left'], y: ctx.scope['plot:top'], width: facet.innerWidth, height: facet.innerHeight });
+        return id;
+    };
+
     // the key of the group of a plot, its place in the definition (the ids
     // of two plots can be the same, e.g. of a parent), its id and type,
     // e.g. a plot of a value of a control is not drawn into the elements of
@@ -177,6 +194,11 @@ const createFacet = (vis, initial) => {
                     g.classList.add(`vis-${plot.layer}`);
                 return g;
             });
+            // the elements of a mark with `clip` only in the plot area
+            if (plot.clip)
+                parent.setAttribute('clip-path', `url(#${clipOf()})`);
+            else if (parent.hasAttribute('clip-path'))
+                parent.removeAttribute('clip-path');
             if (!type.update)
                 removeElements(parent);
             // an error of the type names the mark, e.g. "marks[0]: ..."
@@ -274,6 +296,9 @@ const createFacet = (vis, initial) => {
         }
         store.coord.raise?.(ctx);
 
+        // the clip of the plot area without a mark with `clip`
+        if (!plots.some(p => p.clip))
+            svg.querySelector(':scope > defs.vis-defs > clipPath.vis-clip')?.remove();
         // the elements of the draw before which are not drawn again
         kept.forEach((node, k) => {
             if (!used.has(k)) {

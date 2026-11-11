@@ -25,7 +25,7 @@ const optionKeys = ['title', 'subtitle', 'source', 'height', 'width', 'margins',
 
 // the keys of a mark which are no attributes of its elements
 const markKeys = ['type', 'id', 'by', 'filter', 'curve', 'stack', 'dodge', 'orient', 'select', 'layer', 'facet', 'data', 'dataFormat',
-    'once', 'place', 'halo', 'ends', 'fit', 'overlap', 'object', 'borders', 'highlight', 'others', 'anchor', 'before', 'order'];
+    'once', 'place', 'halo', 'ends', 'fit', 'overlap', 'object', 'borders', 'highlight', 'others', 'anchor', 'before', 'order', 'clip'];
 
 // the channels of the positions and the axis of each: a value of a channel
 // is a dim (the one of its axis by default, `x` or `y`), a number is a
