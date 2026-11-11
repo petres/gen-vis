@@ -10,7 +10,7 @@ useDom();
 
 // the attributes of the start tags of serialized html sorted by their names,
 // their order does not change the drawing, e.g. the one of the props of a
-// plot and of its defaults; the values of the serialization are quoted with
+// mark and of its defaults; the values of the serialization are quoted with
 // `"`, which is escaped in them, a `<` of a text is escaped as well
 const sortAttributes = html => html.replace(/<([a-zA-Z][^\s/>]*)((?:\s+[^\s"'>\/=]+(?:="[^"]*")?)*)(\s*\/?)>/g, (tag, name, attrs, end) => {
     const sorted = (attrs.match(/[^\s"'>\/=]+(?:="[^"]*")?/g) ?? []).sort((a, b) => {

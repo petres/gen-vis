@@ -302,7 +302,7 @@ describe.skipIf(!browser)('gen-vis export', () => {
         const exporter = await createExporter({ browser, allow: [dir] });
         try {
             const url = JSON.stringify(fileUrl(path.join(dir, 'narrow.json')));
-            // the width of the svg of the plots in the image
+            // the width of the svg of the chart in the image
             const of = options => exporter.evaluate(`genVisExport({ defUrl: ${url}${options} }).then(r =>
                 [r.width, Number(document.querySelector('.gen-vis-export svg.vis-svg, svg.vis-svg').getAttribute('width'))])`);
             const [wide, wideChart] = await of(', width: 800');

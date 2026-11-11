@@ -662,13 +662,13 @@ describe('validateDef and the schema', () => {
 
     test('registered mark types and coordinate systems are valid in the schema, unknown ones are warnings', () => {
         const def = base();
-        def.marks.type = 'my:plot';
+        def.marks.type = 'my:mark';
         def.coord = 'mine';
         // an unknown coordinate system has no positions, so x and y have no scales
         const unscaled = ["marks[0].d.x: unknown reference 'x:scaled'", "marks[0].d.y: unknown reference 'y:scaled'"];
         expect(validateDef(def)).toEqual([
             "coord: unknown coordinate system 'mine', expected one of 'cartesian', 'polar', 'geo'",
-            expect.stringMatching(/^marks\[0\]\.type: unknown type 'my:plot', expected one of 'svg:circle', /),
+            expect.stringMatching(/^marks\[0\]\.type: unknown type 'my:mark', expected one of 'svg:circle', /),
             ...unscaled,
         ]);
         def.marks.type = 'cartesian:lin';
