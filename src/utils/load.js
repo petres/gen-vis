@@ -315,10 +315,10 @@ const loadParts = need => {
 };
 
 // an error of the engine's form with the path of the definition, where
-// they differ (see authoredPath), e.g. "marks[0].fill: ..." of
-// "marks[0].props.fill: ..."
+// they differ (the attributes of a mark, see authoredPath), e.g.
+// "marks[0].fill: ..." of "marks[0].props.fill: ..."
 const authoredError = error => {
-    const m = /^(marks|facets)\b([^\s:]*): /.exec(error?.message ?? '');
+    const m = /^(marks)\b([^\s:]*): /.exec(error?.message ?? '');
     return m ? new Error(`${authoredPath(m[1] + m[2])}: ${error.message.slice(m[0].length)}`, { cause: error }) : error;
 };
 

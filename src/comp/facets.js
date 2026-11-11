@@ -5,7 +5,7 @@ import { createFacet } from "@/comp/facet";
 import { evaluate } from "@/utils/expr";
 import { create } from "@/utils/dom";
 import { gridOf } from "@/layout";
-import { rowHeadersOf } from "@/utils/normalize";
+import { facetBy, rowHeadersOf } from "@/utils/normalize";
 
 /**
  * The facets of the view (see layout.js), the children of `parent`, a
@@ -56,7 +56,7 @@ const createFacets = (vis, parent) => {
     // the props of the title of a facet (`facets.title.props`), css
     // properties, the ones of the facet before which are none anymore are removed
     let propNames = new Set();
-    const titleProps = (f, dim = store.def.facets.dim, key = f.key) => {
+    const titleProps = (f, dim = facetBy(store.def.facets).dim, key = f.key) => {
         const raw = store.def.facets?.title?.props;
         const category = (dim && key !== undefined ? store.prop(dim, String(key)) : null) ?? {};
         const props = raw ? evaluate(raw, { ...store.scope, ...category, facet: f.key, 'facet:name': f.name }) : {};

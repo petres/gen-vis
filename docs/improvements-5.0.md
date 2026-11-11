@@ -145,9 +145,8 @@ engine spoke 4.
 The engine has the vocabulary of 5 now (`dims`, `marks`, `controls` of a
 `global`, the options at the top level, `src/marks/`): the translation is a
 set of shorthand expansions, the paths of the checks are the ones of the
-definition (but for the `props` of a mark and the dims of the facets), and
-nothing changes for a definition. Open: the facets of the engine are still
-`dim`, `rows` and `cols` (a dim or the number of columns), not `by`.
+definition (but for the `props` of a mark), and nothing changes for a
+definition.
 
 ### A2: data in columns (later)
 

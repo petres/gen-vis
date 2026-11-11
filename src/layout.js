@@ -84,8 +84,8 @@ const ownProp = (props, key) => props && Object.hasOwn(props, key) ? props[key] 
 // rows, only the ones with rows
 /**
  * The dims of the rows and the columns of a grid of facets
- * (`"facets": { "rows": "band", "cols": "group" }`, a string of `cols` is a
- * dim, a number the columns of the facets of `dim`), null otherwise.
+ * (`"facets": { "by": { "rows": "band", "cols": "group" } }`), null
+ * otherwise, e.g. of the facets of one dim.
  */
 const gridOf = def => {
     const { grid, rows, cols } = facetBy(def.facets);
@@ -95,14 +95,14 @@ const gridOf = def => {
 // the dims of the facets, e.g. of their groups of rows and stacks
 const facetDims = def => {
     const g = gridOf(def);
-    return g ? [g.rows, g.cols].filter(Boolean) : def.facets ? [def.facets.dim] : [];
+    return g ? [g.rows, g.cols].filter(Boolean) : def.facets ? [facetBy(def.facets).dim] : [];
 };
 
 // the key of the facet of the values of the dims of the facets (`values`,
 // e.g. a row or a group), of a grid the pair of its row and its column
 const facetKey = (def, values) => {
     const g = gridOf(def);
-    return g ? JSON.stringify([g.rows ? String(values[g.rows]) : '', g.cols ? String(values[g.cols]) : '']) : values[def.facets.dim];
+    return g ? JSON.stringify([g.rows ? String(values[g.rows]) : '', g.cols ? String(values[g.cols]) : '']) : values[facetBy(def.facets).dim];
 };
 
 // the dim of the facets (of a part of a grid, `part`) with its
@@ -153,7 +153,7 @@ const facetEntries = (store, rows) => {
     const grid = gridOf(store.def);
     if (grid)
         return gridEntries(store, rows, grid);
-    const d = store.def.facets.dim;
+    const d = facetBy(store.def.facets).dim;
     const { categoryProps: props, keys } = facetDim(store, null, d);
     return groupBy(rows, [d])
         .filter(g => keys.includes(String(g.group[d])))
@@ -563,7 +563,7 @@ const markRows = (store, mark, facet) => {
     if (!mark.data)
         return filtered(facet.rows);
     const dims = store.def.dims;
-    const dim = store.def.facets?.dim;
+    const dim = facetBy(store.def.facets).dim;
     const inline = !mark.loaded;
     // the rows of the draw before of the same values are kept, the others
     // have their keys, so the elements are the ones of the draw before, see
@@ -617,7 +617,7 @@ const inCell = (def, cell, r) => {
 
 /**
  * The facets of a mark or an annotation (`facet`): a key or a list of keys
- * of the facets of `dim`, of a grid also the values of the dims of its
+ * of the facets of a dim, of a grid also the values of the dims of its
  * rows and columns, e.g. { "group": "Bau" } (a column, a row or a cell);
  * all facets without one.
  */

@@ -160,10 +160,22 @@ const normalize4 = def => {
  * the engine which are written of a definition of 4.x (e.g. one which is
  * also migrated) read it so; `mapping` are `dims`, `plot` are `marks`, `formElements` are `controls`
  * and their `ref` is their `global`, the `options` are at the top level,
- * their `footer` is the `source`. A copy.
+ * their `footer` is the `source`, the dim of the facets (`dim`) or the dims
+ * of a grid (`rows`, `cols` of a text which is no reference) are their
+ * `by`. A copy.
  */
+const facetsBy = ({ dim, rows, cols, ...f }) => {
+    const grid = typeof cols == 'string' && !cols.startsWith('@');
+    return {
+        ...f,
+        ...(rows !== undefined || grid ? { by: { ...(rows === undefined ? {} : { rows }), ...(grid ? { cols } : {}) } } : dim === undefined ? {} : { by: dim }),
+        ...(grid || cols === undefined ? {} : { cols }),
+    };
+};
 const engineNames = def => {
     const { mapping, plot, formElements, options, ...rest } = structuredClone(def);
+    if (rest.facets !== null && typeof rest.facets == 'object')
+        rest.facets = facetsBy(rest.facets);
     const control = ({ ref, ...e }) => ({ ...e, ...(ref === undefined ? {} : { global: ref }) });
     const { footer, ...top } = options !== null && typeof options == 'object' ? options : {};
     return {

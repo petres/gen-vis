@@ -772,24 +772,21 @@ const checkControls = ({ controls, warn }) => {
 const checkFacets = ({ def, dims, names, warn }) => {
     if (!def.facets)
         return;
-    // a grid of the categories of `rows` and `cols` (a dim), or the
-    // facets of `dim` in `cols` columns (a number)
-    const { grid } = facetBy(def.facets);
-    const parts = grid ? ['rows', 'cols'].filter(k => facetBy(def.facets)[k] !== null) : ['dim'];
-    if (grid && def.facets.dim !== undefined)
-        warn('facets.dim', `a grid of 'rows' and 'cols' has no 'dim'`);
-    if (!grid && typeof def.facets.dim != 'string' && def.facets.rows === undefined)
-        warn('facets.dim', `expected the name of a dim`);
-    // the dims of a grid are the ones of facets.by.rows and facets.by.cols
-    const at = k => k == 'cols' ? 'facets.by.cols' : `facets.${k}`;
-    parts.filter(k => typeof def.facets[k] == 'string').forEach(k => {
-        if (!Object.hasOwn(dims, def.facets[k]))
-            warn(at(k), `unknown dim '${def.facets[k]}'${choices(def.facets[k], Object.keys(dims))}`);
-        else if (!hasCategories(dims[def.facets[k]]))
-            warn(at(k), `the dim '${def.facets[k]}' needs categories, e.g. "type": "categorical"`);
+    // a grid of the categories of the dims `by.rows` and `by.cols`, or the
+    // facets of the dim `by` in `cols` columns (a number)
+    const by = def.facets.by;
+    const { grid, rows, cols } = facetBy(def.facets);
+    if (!grid && typeof by != 'string' && !(isObject(by) && by.rows !== undefined))
+        warn('facets.by', `expected the name of a dim`);
+    const named = grid ? [['facets.by.rows', rows], ['facets.by.cols', cols]].filter(([, d]) => d !== null) : typeof by == 'string' ? [['facets.by', by]] : [];
+    named.forEach(([path, d]) => {
+        if (!Object.hasOwn(dims, d))
+            warn(path, `unknown dim '${d}'${choices(d, Object.keys(dims))}`);
+        else if (!hasCategories(dims[d]))
+            warn(path, `the dim '${d}' needs categories, e.g. "type": "categorical"`);
     });
-    if (def.facets.rows !== undefined && typeof def.facets.rows != 'string')
-        warn('facets.rows', `expected the dim of the rows of a grid`);
+    if (isObject(by) && by.rows !== undefined && typeof by.rows != 'string')
+        warn('facets.by.rows', `expected the dim of the rows of a grid`);
     const headers = def.facets.rowHeaders;
     if (headers !== undefined && !['left', 'right'].includes(headers) && !(isObject(headers)
         && (headers.side === undefined || ['left', 'right'].includes(headers.side)) && (headers.vertical === undefined || typeof headers.vertical == 'boolean')))

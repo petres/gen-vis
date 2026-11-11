@@ -202,16 +202,17 @@ const normalizeDims = (dims, coord, marks = [], used = new Set()) => {
 // are categorical, the categories of a mark (`by`) are not, they group the
 // rows of any type, e.g. of a year
 /**
- * The dims of the facets: of a grid (`rows` and `cols`, the dims of
- * its rows and its columns) or `dim`, `cols` of `dim` is the number of
- * columns, also a reference to a global ("@cols"), which is no dim.
+ * The dims of the facets (`facets.by`): of a grid (an object of `rows` and
+ * `cols`, the dims of its rows and its columns) or the dim `dim` (a text),
+ * `all` are the names of both; a reference to a global ("@by") is no dim.
  */
 const facetBy = facets => {
+    const by = facets?.by;
     const dim = v => typeof v == 'string' && !v.startsWith('@') ? v : null;
-    const rows = dim(facets?.rows);
-    const cols = dim(facets?.cols);
+    const rows = isObject(by) ? dim(by.rows) : null;
+    const cols = isObject(by) ? dim(by.cols) : null;
     return rows || cols ? { grid: true, rows, cols, all: [rows, cols].filter(Boolean) }
-        : { grid: false, rows: null, cols: null, all: typeof facets?.dim == 'string' ? [facets.dim] : [] };
+        : { grid: false, rows: null, cols: null, dim: isObject(by) ? undefined : by, all: typeof by == 'string' ? [by] : [] };
 };
 
 /**

@@ -47,7 +47,7 @@ describe('the language of 5.0', () => {
         // a dim of the groups of a mark in the colors of its categories (the bars) has the categories of the data
         expect(def.dims.type).toEqual({ column: 'Type', hover: {}, fromData: 'rows' });
         expect(def.dims.geo).toEqual({ column: 'Geo', fromData: 'rows' });
-        expect(def.facets).toEqual({ dim: 'geo', cols: 2, scales: [] });
+        expect(def.facets).toEqual({ by: 'geo', cols: 2, scales: [] });
         expect(def.hover).toEqual({ total: true });
         expect(def.marks[0].props).toEqual({ opacity: 0.7, x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' });
     });
@@ -152,9 +152,7 @@ describe('the language of 5.0', () => {
         expect(isDefinition5({ dims: {}, marks: [] })).toBe(true);
         expect(isDefinition5({ data: 'x.csv' })).toBe(true);
         expect(authoredPath('marks[1].props.fill')).toBe('marks[1].fill');
-        expect(authoredPath('facets.rows')).toBe('facets.by.rows');
-        expect(authoredPath('facets.dim')).toBe('facets.by');
-        expect(authoredPath('facets.cols')).toBe('facets.cols');
+        expect(authoredPath('facets.by.rows')).toBe('facets.by.rows');
     });
 
     test('expressions of the globals at the options of a mark (type, curve, by, ...) are resolved, its attributes are drawn', () => {

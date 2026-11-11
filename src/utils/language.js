@@ -14,8 +14,7 @@ import { categoryKeys, isCategorical } from '@/utils/normalize';
  * channels as marks with the `props` of the scaled positions and the full
  * name of their type, the values of the controls as entries, the hover
  * columns as the `hover` of the dims, `stack` and `dodge` of marks as the
- * parts of the dims and the props, `facets.by` as the dims of the facets,
- * the string syntax of expressions as their objects. `translate` is pure,
+ * parts of the dims and the props, the string syntax of expressions as their objects. `translate` is pure,
  * JSON to JSON; the rows are not known, the types of the dims follow later
  * (see inferTypes of utils/data.js).
  */
@@ -694,27 +693,9 @@ const control = (c, i) => {
     return e;
 };
 
-// the facets of 5.0 as the ones of the engine: `by` is the dim or the
-// dims of the rows and the columns of a grid, `scales` is "own" (the
-// default), "shared" or a list or an object of dims
-const facetsOf = f => {
-    if (!isObject(f))
-        return f;
-    const out = { ...f };
-    if (f.by !== undefined) {
-        delete out.by;
-        if (isObject(f.by)) {
-            if (f.by.rows !== undefined)
-                out.rows = f.by.rows;
-            if (f.by.cols !== undefined)
-                out.cols = f.by.cols;
-        } else
-            out.dim = f.by;
-    }
-    if (f.scales == 'own')
-        out.scales = [];
-    return out;
-};
+// the facets as the engine reads them: `scales` is "own" (the default, no
+// dim), "shared" (see sharedScales) or a list or an object of dims
+const facetsOf = f => isObject(f) && f.scales == 'own' ? { ...f, scales: [] } : f;
 // the dims of shared scales of the facets ("shared"), of the dims after the
 // marks, which add the dims of the columns of their channels
 const sharedScales = dims => Object.keys(dims).filter(n => isObject(dims[n]) ? dims[n].scale?.orientation !== null : true);
@@ -808,10 +789,10 @@ const translated = raw => {
     // the dims of the hover by default: the ones the marks use, their `by`
     // and the dims of their positions (the facets are the titles of their panels)
     const used = new Set();
-    const facetDims = facets ? [facets.dim, facets.rows, facets.cols].filter(n => typeof n == 'string') : [];
+    const facetDims = (isObject(facets?.by) ? [facets.by.rows, facets.by.cols] : [facets?.by]).filter(n => typeof n == 'string');
     const grouped = rawMarks.flatMap(m => isObject(m) ? [m.by ?? []].flat() : [])
         .filter(n => typeof n == 'string' && Object.hasOwn(dims, n) && isObject(dims[n]) && !facetDims.includes(n));
-    (facets ? [facets.dim, facets.rows, facets.cols] : []).filter(n => typeof n == 'string' && isObject(dims[n])).forEach(n => {
+    facetDims.filter(n => isObject(dims[n])).forEach(n => {
         if (dims[n].fromData === undefined && !isObject(dims[n].categories))
             dims[n].fromData = 'rows';
     });
@@ -896,15 +877,6 @@ const checkDims = def => {
 };
 
 // the path of a part of the engine's form as the one of the definition,
-// where the forms differ: the attributes of a mark are its `props`
-// ("marks[0].props.fill" is "marks[0].fill"), the dim of the facets and
-// the dim of the rows of a grid are `dim` and `rows` of the facets
-// ("facets.by", "facets.by.rows", see facetsOf). "facets.cols" stays: it is
-// the number of columns of facets of a dim in both forms; the dim of the
-// columns of a grid, also `cols` of the engine, is "facets.by.cols", which
-// its checks name themselves (see checkFacets of utils/validate.js and
-// facetDim of layout.js), a path does not tell the two apart
-const authoredPath = path => String(path)
-    .replace(/^marks\[(\d+)\]\.props\./, 'marks[$1].')
-    .replace(/^facets\.dim\b/, 'facets.by')
-    .replace(/^facets\.rows\b/, 'facets.by.rows');
+// where the forms differ: the attributes of a mark are its `props`,
+// "marks[0].props.fill" is "marks[0].fill"
+const authoredPath = path => String(path).replace(/^marks\[(\d+)\]\.props\./, 'marks[$1].');

@@ -44,9 +44,9 @@ engine reads; `tests/language.test.js` has cases of step 3.
   list of `values` which is no object is the entry
   `{"id": text, "name": text, "value": value}`, an entry without `id` or
   `name` has the text of its value.
-- `facets.by` of a text is `facets.dim`, of an object its `rows` and
-  `cols`; `scales` `"own"` is `[]`, `"shared"` the list of the dims whose
-  scale has an orientation (not `null`).
+- `facets.by` stays (a dim, or the dims `rows` and `cols` of a grid);
+  `scales` `"own"` is `[]`, `"shared"` the list of the dims whose scale has
+  an orientation (not `null`).
 - `marks` (a mark or a list) are a list, `by` of a mark a list. The type of the
   coordinate system (`coord`, `cartesian` by default): `point` is
   `svg:circle` (`polar:circle`, `geo:circle`), `label` and `text` are
@@ -135,7 +135,7 @@ writes: the dims are objects, `marks` is a list of objects.
 - The type of a dim without one follows from its parts: categorical with
   categories (any of their parts) or a `band`, `point` or `ordinal` scale, date with a
   `time` or `utc` scale, numeric with another scale, categorical if it is a
-  dim of the facets (`facets.dim`) or of the groups of a scale
+  dim of the facets (`facets.by`) or of the groups of a scale
   (`scale.groups.by`), not of the categories of a mark (`by`), they group the
   rows of any type. Otherwise it is the type
   of the values of the column (when the rows are known): numeric if all

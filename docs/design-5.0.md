@@ -135,10 +135,9 @@ renderer (JS only): facets, drawLayer joins, hover, highlight stylesheet
   coordinate system), `stack` into `stacked` of the value dim, `dodge`
   into expressions of `@dim:index` and `@dim:count`, `anchor` into the
   attributes of the text, the hover columns into the `hover` of the dims,
-  the values of the controls into entries, and `facets.by` into `dim` or
-  `rows` and `cols` of the facets. `authoredPath` maps the paths of the two
-  places where the forms differ back (the `props` of a mark, the dims of the
-  facets), so errors and warnings name `marks[1].fill` and `facets.by`.
+  the values of the controls into entries. `authoredPath` maps the paths
+  of the one place where the forms differ back (the `props` of a mark), so
+  errors and warnings name `marks[1].fill`.
 - `normalize` is the one of 4.0 (`docs/design-4.0.md`) in the names of 5:
   defaults of the positions, the types of scales, the default props of the
   mark types.
@@ -183,7 +182,7 @@ checked after it is resolved.
 the expressions of the globals resolved), then the semantic checks on the
 translated form (dims, references, operators, the data), whose paths and
 words are the ones of the definition (`authoredPath` maps the `props` of a
-mark and the dims of the facets).
+mark).
 
 ## 4. The migration
 
