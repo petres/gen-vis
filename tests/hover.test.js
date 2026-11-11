@@ -364,3 +364,22 @@ describe('the end of the hover', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('the position of the pointer', () => {
+    test('is read once per move', async () => {
+        const el = await mount({ def: lineDef(), data: 'year,value,land\n2020,1,Wien\n2021,2,Wien' });
+        const inner = el.querySelector('svg.vis-svg > g');
+        const measure = Element.prototype.getBoundingClientRect;
+        let reads = 0;
+        Element.prototype.getBoundingClientRect = function () {
+            if (this === inner)
+                reads++;
+            return measure.call(this);
+        };
+        onTestFinished(() => Element.prototype.getBoundingClientRect = measure);
+        await move(el, 10);
+        await move(el, 500);
+        expect(reads).toBe(2);
+        expect(el.querySelector('.vis-hover')).not.toBeNull();
+    });
+});

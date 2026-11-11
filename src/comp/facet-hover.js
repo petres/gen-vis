@@ -346,14 +346,15 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
 
         // the rows at the pointer and the nearest one, stacked: the segment
         // under the pointer, outside of the stack the closest one, null
-        // without a key, the rows are not formatted yet
-        const at = e => {
+        // without a key, the rows are not formatted yet, `p` the position of
+        // the pointer in the plots, read once per event (see move)
+        const at = (e, p = pointer(e, ctx.inner)) => {
             if (pointMode) {
                 preparePoints();
-                const point = nearestPoint(pointer(e, ctx.inner));
+                const point = nearestPoint(p);
                 return point && { key: point[2][names.h], rows: [point[2]], nearest: point[2], point };
             }
-            const position = coord.hover.locate(located, pointer(e, ctx.inner), names, e);
+            const position = coord.hover.locate(located, p, names, e);
             if (!position)
                 return null;
             const { key, value } = position;
@@ -475,7 +476,8 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // position, e.g. after a toggle by the keyboard
         const move = e => {
             // nothing under the pointer, e.g. the sea of a map, no empty or old hover
-            const found = at(e);
+            const p = pointer(e, ctx.inner);
+            const found = at(e, p);
             if (!found) {
                 hide();
                 return;
@@ -484,7 +486,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
             lastKey = null;
             // the hover of the pointer is not read by screen readers
             announced = false;
-            pointerAt = pointer(e, ctx.inner);
+            pointerAt = p;
             show(found);
         };
 
