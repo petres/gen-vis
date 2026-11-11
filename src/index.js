@@ -9,8 +9,8 @@ import { registerDefaults } from '@/utils/defaults'
 
 // the props of the buttons, the debug output and lazy, "false" is false, a
 // string other than "true" and "" is the name of the file, e.g. of
-// download, or the margin of lazy, e.g. "800px"
-const flags = ['debug', 'check', 'copy', 'download', 'csv', 'svg', 'lazy'];
+// download, or the margin of lazy, e.g. "800px", of the others true
+const flags = ['debug', 'check', 'copy', 'table', 'download', 'csv', 'svg', 'lazy'];
 
 // the value of a data attribute as the one of its prop, e.g. "false" of
 // data-copy, the state, the globals, the highlight and the defaults are JSON
@@ -18,7 +18,7 @@ const attributeValue = (name, value) => {
     if (flags.includes(name)) {
         if (value === 'false')
             return false;
-        return value === '' || value === 'true' || ['debug', 'check', 'copy'].includes(name) ? true : value;
+        return value === '' || value === 'true' || ['debug', 'check', 'copy', 'table'].includes(name) ? true : value;
     }
     if (['state', 'globals', 'highlight', 'defaults'].includes(name)) {
         try {

@@ -11,7 +11,7 @@
 
         <div class="example-body">
             <div class="stage" :class="example.theme">
-                <GenVis :def="def" download csv svg/>
+                <GenVis :def="def" table download csv svg/>
             </div>
 
             <div class="panel">

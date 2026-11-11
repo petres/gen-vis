@@ -2930,6 +2930,110 @@ describe('accessibility and the data', () => {
         expect(await saved.blob.text()).toBe('year,value,land\n2020,1,Wien\n2021,,Wien\n2022,3,Wien\n2023,4,Wien');
         expect(el.querySelector('.vis-csv').title).toBe('Die Daten als CSV speichern');
     });
+
+    // the rows of the table, the texts of the header and of the cells
+    const tableRows = el => [...el.querySelectorAll('table.vis-table tr')].map(tr => [...tr.children].map(c => c.textContent));
+
+    test('the button `table` shows the rows shown as a table instead of the plots and the chart again', async () => {
+        const def = lineDef({ title: 'Bevölkerung' });
+        def.mapping.c.categories.Tirol.visible = false;
+        def.mapping.c.categories.Wien.name = 'Vienna';
+        const { el, vis } = await mountVis({ def, data: lineData, table: true, csv: true });
+        const button = el.querySelector('.vis-buttons .vis-table');
+        // the first one of the buttons, a toggle of a constant name
+        expect([...el.querySelectorAll('.vis-buttons > button')].map(b => b.classList[1])).toEqual(['vis-table', 'vis-csv']);
+        expect([button.title, button.getAttribute('aria-label'), button.getAttribute('aria-pressed')]).toEqual(['Als Tabelle zeigen', 'Als Tabelle zeigen', 'false']);
+        expect(el.querySelector('.vis-table-wrapper')).toBeNull();
+
+        button.click();
+        await vi.waitFor(() => expect(el.querySelector('table.vis-table')).not.toBeNull());
+        expect([button.title, button.getAttribute('aria-pressed')]).toEqual(['Als Diagramm zeigen', 'true']);
+        // the plots are hidden, the title, the legend and the footer stay
+        expect(el.querySelector('.vis-body').hidden).toBe(true);
+        expect(el.querySelector('.vis-legend')).not.toBeNull();
+        const wrapper = el.querySelector('.vis-table-wrapper');
+        expect([wrapper.getAttribute('tabindex'), wrapper.getAttribute('role'), wrapper.getAttribute('aria-label')]).toEqual(['0', 'region', 'Bevölkerung']);
+        expect(wrapper.nextElementSibling.classList.contains('vis-footer')).toBe(true);
+        expect(el.querySelector('table.vis-table caption').textContent).toBe('Bevölkerung');
+        // the columns of the CSV, the values as the hover has them, numbers at the right
+        expect(tableRows(el)).toEqual([['year', 'value', 'land'], ['2020', '1,0', 'Vienna'], ['2021', '', 'Vienna'], ['2022', '3,0', 'Vienna'], ['2023', '4,0', 'Vienna']]);
+        expect([...el.querySelectorAll('thead th')].map(th => [th.scope, th.className])).toEqual([['col', 'vis-number'], ['col', 'vis-number'], ['col', '']]);
+
+        // a change of the legend changes the rows
+        el.querySelector('.vis-legend-entry[data-key="Tirol"]').click();
+        await nextTick();
+        expect(tableRows(el).length).toBe(9);
+        expect(tableRows(el)[5]).toEqual(['2020', '2,0', 'Tirol']);
+
+        // the chart again, with the plots of the rows of now
+        button.click();
+        await nextTick();
+        expect(el.querySelector('.vis-table-wrapper')).toBeNull();
+        expect(el.querySelector('.vis-body').hidden).toBe(false);
+        expect(el.querySelectorAll('g.vis-mark circle').length).toBe(7);
+        expect(button.getAttribute('aria-pressed')).toBe('false');
+
+        // of the page, and without the prop the chart
+        vis.showTable(true);
+        await vi.waitFor(() => expect(el.querySelector('table.vis-table')).not.toBeNull());
+        vis.update({ table: false });
+        await nextTick();
+        expect(el.querySelector('.vis-table-wrapper')).toBeNull();
+        expect(el.querySelector('.vis-buttons .vis-table')).toBeNull();
+        expect(errors).toEqual([]);
+    });
+
+    test('the table of many rows draws the first ones, the CSV and the images are the ones of the chart', async () => {
+        const rows = Array.from({ length: 1205 }, (_, i) => ({ year: 2000 + (i % 20), value: i * 100, land: i % 2 ? 'Wien' : 'Tirol' }));
+        const def = lineDef({ title: 'Viele', locale: 'en' });
+        def.mapping.y.hover = {};
+        const saved = {};
+        URL.createObjectURL = blob => { saved.blob = blob; return 'blob:csv'; };
+        URL.revokeObjectURL = () => {};
+        vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () { saved.name = this.download; });
+        const { el, vis } = await mountVis({ def, data: rows, table: true, csv: true });
+        vis.showTable();
+        await vi.waitFor(() => expect(el.querySelector('table.vis-table')).not.toBeNull());
+        expect(el.querySelectorAll('table.vis-table tbody tr').length).toBe(1000);
+        expect(el.querySelector('.vis-table-more').textContent).toBe('… and 205 more rows');
+        expect(el.querySelector('.vis-buttons .vis-table').title).toBe('Show chart');
+        // numbers of the column with thousands separators, as the hover of its scale
+        expect(tableRows(el)[2]).toEqual(['2001', '100', 'Wien']);
+        expect(tableRows(el)[1000]).toEqual(['2019', '99,900', 'Wien']);
+        // the CSV has the values of the data
+        el.querySelector('.vis-csv').click();
+        await vi.waitFor(() => expect(saved.name).toBe('Viele.csv'));
+        const csv = (await saved.blob.text()).split('\n');
+        expect([csv.length, csv[0], csv[1000]]).toEqual([1206, 'year,value,land', '2019,99900,Wien']);
+        // the image is a copy without the table
+        await vis.image();
+        expect(screenshot.copy.querySelector('.vis-table-wrapper, table')).toBeNull();
+        expect(screenshot.copy.querySelector('.vis-body').hidden).toBe(false);
+        expect(screenshot.copy.querySelectorAll('g.vis-mark circle').length).toBeGreaterThan(0);
+    });
+
+    test('the slot `buttons` toggles the table, data-table is a flag', async () => {
+        const seen = [];
+        const { el } = await mountVis({ def: lineDef(), data: lineData, slots: { buttons: ({ table, tableShown }) => {
+            seen.push(tableShown);
+            return Object.assign(document.createElement('button'), { className: 'own', onclick: () => table() });
+        } } });
+        expect(el.querySelector('.vis-buttons .vis-table')).toBeNull();
+        el.querySelector('.own').click();
+        await vi.waitFor(() => expect(el.querySelector('table.vis-table')).not.toBeNull());
+        // without a title the caption is the kind of the chart
+        expect(el.querySelector('table.vis-table caption').textContent).toBe('Diagramm');
+        expect(seen).toEqual([false, true]);
+        el.querySelector('.own').click();
+        await nextTick();
+        expect(el.querySelector('.vis-table-wrapper')).toBeNull();
+
+        const element = document.body.appendChild(document.createElement('div'));
+        element.dataset.table = 'false';
+        expect(mountGenVisElement(element, { def: lineDef(), data: lineData }).props.table).toBe(false);
+        element.dataset.table = '';
+        expect(mountGenVisElement(element, { def: lineDef(), data: lineData }).props.table).toBe(true);
+    });
 });
 
 describe('layout shifts', () => {

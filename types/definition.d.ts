@@ -68,6 +68,18 @@ export type Locale =
                */
               svg?: string;
               /**
+               * The button of the table (the prop table), also its name while the table is shown.
+               */
+              table?: string;
+              /**
+               * The title of the button of the table while it is shown.
+               */
+              showChart?: string;
+              /**
+               * The note below the table of the rows not drawn, {n} is their number, e.g. "… and {n} more rows".
+               */
+              more?: string;
+              /**
                * The kind of a facet with a hover, e.g. chart.
                */
               chart?: string;

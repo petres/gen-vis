@@ -218,7 +218,23 @@ describe('the component', () => {
         expect(document.querySelectorAll('.vis')).toHaveLength(1);
         chart.value.setHighlight({ c: 'Wien' });
         expect(el.querySelectorAll('circle.vis-highlight').length).toBe(0);
+        // the rows as a table and the chart again
+        chart.value.showTable(true);
+        await vi.waitFor(() => expect(el.querySelector('table.vis-table')).not.toBeNull());
+        chart.value.showTable(false);
+        await nextTick();
+        expect(el.querySelector('table.vis-table')).toBeNull();
         expect(errors).toEqual([]);
+    });
+
+    test('the prop table, a button of the table', async () => {
+        const table = ref(true);
+        const { el } = await mountApp(() => h(GenVis, { def: lineDef(), data: lineData, table: table.value }), { table });
+        expect(el.querySelector('.vis-buttons .vis-table')).not.toBeNull();
+        table.value = false;
+        await vueTick();
+        await nextTick();
+        expect(el.querySelector('.vis-buttons .vis-table')).toBeNull();
     });
 
     test('the element of the component, e.g. for its position on the page', async () => {

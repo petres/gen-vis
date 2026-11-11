@@ -486,7 +486,9 @@ the browser, the currency is the euro and the texts are in English (German
 for German languages). `timeTicks` of the object are the tick formats of
 time axes without `format`, by the interval of the date (`millisecond`,
 `second`, `minute`, `hour`, `day`, `week`, `month`, `year`), `texts` the
-titles of the buttons (`download`, `copy`, `copied`, `csv` and `svg`), the
+titles of the buttons (`download`, `copy`, `copied`, `csv`, `svg`, `table`
+and `showChart`, the one of the table while it is shown), `more` (the note
+of the rows of a table not drawn, `{n}` their number), the
 texts of screen readers (`chart`, the kind of a facet with a hover, and
 `keys`, the description of its keys) and `total`, the name of the total of
 the hover.

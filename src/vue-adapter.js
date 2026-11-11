@@ -20,6 +20,7 @@ const props = {
     copy: { type: Boolean, default: false },
     csv: { type: [Boolean, String], default: false },
     svg: { type: [Boolean, String], default: false },
+    table: { type: Boolean, default: false },
     imageWidth: { type: [Number, String], default: null },
     lazy: { type: [Boolean, String, Number], default: false },
 };
@@ -134,6 +135,7 @@ const createVueComponent = Vue => {
             exportPng(name) { return this.vis.exportPng(name) },
             exportCsv(name) { return this.vis.exportCsv(name) },
             copyPng() { return this.vis.copyPng() },
+            showTable(on) { return this.vis.showTable(on) },
             setHighlight(entry) { return this.vis.setHighlight(entry) },
         },
     };

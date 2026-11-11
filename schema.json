@@ -397,6 +397,18 @@
                                 "copied": { "type": "string", "description": "The title of the copy after a copy." },
                                 "csv": { "type": "string", "description": "The button of the CSV." },
                                 "svg": { "type": "string", "description": "The button of the SVG." },
+                                "table": {
+                                    "type": "string",
+                                    "description": "The button of the table (the prop table), also its name while the table is shown."
+                                },
+                                "showChart": {
+                                    "type": "string",
+                                    "description": "The title of the button of the table while it is shown."
+                                },
+                                "more": {
+                                    "type": "string",
+                                    "description": "The note below the table of the rows not drawn, {n} is their number, e.g. \"… and {n} more rows\"."
+                                },
                                 "chart": { "type": "string", "description": "The kind of a facet with a hover, e.g. chart." },
                                 "keys": { "type": "string", "description": "The description of the keys of the hover." },
                                 "total": {

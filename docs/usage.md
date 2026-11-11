@@ -173,11 +173,12 @@ plugin of another Vue, the types are the ones of `@preschen/gen-vis/vue`.
 | `copy`     | `data-copy`     | a button at the right of the footer to copy the PNG to the clipboard (only on https or localhost) |
 | `csv`      | `data-csv`      | a button at the right of the footer to save the data shown as CSV, a string is the name of the file (default the title) |
 | `svg`      | `data-svg`      | a button at the right of the footer to save it as an SVG, see [static export](export.md#static-export), a string is the name of the file (default the title) |
+| `table`    | `data-table`    | a button at the right of the footer which shows the rows shown as a table instead of the plots, and the chart again, see [the data](#accessibility-and-the-data) |
 | `imageWidth` | `data-image-width` | the width of the PNG in pixels (the chart is laid out at it, also a definition with a `width` of its own), the one of the definition otherwise or 800, `screen` for the one on the screen (as it is seen, e.g. on a phone) |
 | `lazy`     | `data-lazy`     | draws the visualisation only when it is near the viewport, `true` within one height of the viewport, a string is the `rootMargin` of the `IntersectionObserver`, e.g. `"800px 0px"`, a number or a length without a unit is pixels, e.g. `800` or `"800"` (a margin the browser refuses is the default one, with a warning); its files are loaded ahead (three heights) when the browser is idle, see [lazy loading](#lazy-loading) |
 
 The attributes are strings: `data-download`, `data-csv`, `data-svg`,
-`data-copy`, `data-check`, `data-debug` and `data-lazy` without a value or
+`data-copy`, `data-table`, `data-check`, `data-debug` and `data-lazy` without a value or
 `"true"` are on, `"false"` is off, another value of `data-download`,
 `data-csv` or `data-svg` is the name of the file, of `data-lazy` the margin.
 
@@ -217,10 +218,11 @@ of the dims (the categories as strings, of every format of the data, see
 The slots replace parts of the visualisation, `hover` the content of the
 hover (it also has `entries`, the formatted values of the default table),
 `header` the title and the subtitle and `footer` the footer. `buttons` adds
-buttons of the page at the right of the footer, before the ones of `copy`,
+buttons of the page at the right of the footer, before the ones of `table`, `copy`,
 `csv`, `svg` and `download`, e.g. own icons, with `save()`, `copy()` and
-`canCopy` of the [PNG](#png), `svg()` of the [SVG](export.md#static-export) and
-`csv()` of the [data](#accessibility-and-the-data):
+`canCopy` of the [PNG](#png), `svg()` of the [SVG](export.md#static-export),
+`csv()` and `table(on)` (`tableShown` while the table is shown) of the
+[data](#accessibility-and-the-data):
 
 ```html
 <GenVis def-file="/data/bev/def.json" @select="open">
@@ -390,6 +392,23 @@ data. A text which a spreadsheet would read as a formula (starting with
 `=`, `+`, `-`, `@`, a tab or a carriage return, e.g. `=HYPERLINK(...)`)
 gets a `'` before it; numbers, also negative ones, stay as they are.
 
+The button of `table` (or `showTable(on)` of the visualisation, `true` the
+table, `false` the chart, without an argument the other one, also of a
+button of the page in the slot `buttons`) shows the same rows and columns
+as a table instead of the plots, e.g. for screen readers and for the
+numbers: the title, the controls, the legends and the footer stay, a change
+of a control, of a legend, of the state or of the data changes its rows. The
+values are the ones of the hover, numbers and dates in the format of their
+dim or of the `locale`, the categories by their names; the header names the
+columns as the CSV. It is a `<table class="vis-table">` with a `<caption>`
+of the title (for screen readers, the title is above it), numbers at the
+right, of at most the height of the plots it replaces, a region which
+scrolls (also by the keyboard) below its header; of more than 1000 rows the
+first 1000 and a note of the others (`more` of the locale). The button is a
+toggle (`aria-pressed`), its module is loaded with its first click. The
+images always show the chart; the table is not part of the [state](#state),
+without `table` (e.g. `update({ table: false })`) the chart is shown.
+
 ## State
 
 The state holds what the user changed compared to the definition: the
@@ -449,7 +468,8 @@ and the lines of the axes, `tick` and `domain`, as the ones of d3:
 | axes | `vis-axis` and `vis-axis-bottom`, `-top`, `-left`, `-right`, `-angular` or `-radial` (the dim as `data-dim`, `vis-axis-at` of an axis at a value), `vis-axis-title` (`vis-axis-title-top`), `vis-grid` |
 | annotations | `vis-annotations` (the plot), `vis-annotation` and `vis-band`, `vis-line`, `vis-text` or `vis-circle`, `vis-annotation-label`, `vis-annotation-labels` |
 | hover | `vis-hover` (`vis-hover-title`, `vis-hover-entries`, `vis-hover-entry`, `vis-hover-row` of a template, `vis-nearest`, the key of the category of every categorical dim of a row as `data-` attribute, e.g. `data-type="load"` of the dim `type` (`data-land-name` of `landName`), the cells of the values `vis-value`, the dim of a cell as `data-dim`, the hover prop of a category other than its name as `data-prop`, `vis-hover-total` the row of the total), `vis-hover-marker`, `vis-events` |
-| footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-button` and `vis-copy`, `vis-csv`, `vis-download-svg` or `vis-download`) |
+| footer | `vis-footer` (`vis-footer-content`, `vis-buttons`, the buttons `vis-button` and `vis-table`, `vis-copy`, `vis-csv`, `vis-download-svg` or `vis-download`) |
+| table | `vis-table-wrapper` (instead of the plots, `vis-body` is `hidden`), `table.vis-table` (`vis-number` of the cells of numbers), `vis-table-more` (the note of the rows not drawn) |
 
 Styles of the page which are in a cascade layer themselves only override the
 package if their layer is declared after it, e.g. `@layer gen-vis, page;`.
@@ -468,7 +488,7 @@ page (the default in brackets):
     --gen-vis-hover-border-color: #444;        /* #E3E5E8, the border and lines of the hover */
     --gen-vis-halo-color: #111;                /* white, behind labels on the plots */
     --gen-vis-text-color: #EEE;                /* #1F2328, the texts of marks without a fill */
-    --gen-vis-background: #111;                /* #FFF, of the PNG */
+    --gen-vis-background: #111;                /* #FFF, of the PNG and of the header of the table */
     color: #EEE;                               /* the titles, legends and the hover */
 }
 ```

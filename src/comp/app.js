@@ -51,6 +51,9 @@ const defaults = {
     csv: false,
     // a button in the footer to save it as an SVG, a string is the name of the file
     svg: false,
+    // a button in the footer which shows the rows as a table instead of the
+    // plots and the chart again, see showTable
+    table: false,
     // the width of the images, independent of the screen, the one of the
     // definition otherwise or 800, `screen` is the one on the screen
     imageWidth: null,
@@ -88,7 +91,7 @@ const copyOf = v => v ? JSON.parse(JSON.stringify(v)) : null;
  * highlight are applied), `on(event, fn)` and `off(event, fn)` of the
  * events, `destroy()` removes it (of `root` the element stays, without
  * its content, its classes and its min-height), the methods of the files (`exportPng`,
- * `copyPng`, `image`, `exportSvg`, `exportCsv`), `setHighlight(entry)`, `state` (the
+ * `copyPng`, `image`, `exportSvg`, `exportCsv`), `showTable(on)`, `setHighlight(entry)`, `state` (the
  * changes of the user) and `el`, its element.
  */
 const createGenVis = (element, given = {}, { root = false } = {}) => {
@@ -117,6 +120,9 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
     let pending = null;
     // the listeners of the props, see setListeners
     const propListeners = {};
+    // the table instead of the plots, also of a definition loaded again,
+    // not of the state, see showTable
+    let tableShown = false;
 
     const emit = (name, ...args) => {
         if (!removed)
@@ -239,6 +245,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         slots: () => props.slots,
         emit,
         files: { save: () => exportPng(), copy: () => copyPng(), csv: () => exportCsv(), svg: () => saveSvg() },
+        table: { shown: () => tableShown, show: on => showTable(on) },
         stateChanged: () => emit('update:state', store.state),
         // after every draw, e.g. of a new width or a legend toggled
         drawn: () => {
@@ -492,6 +499,14 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         saveFile(new Blob([csvOf(store, rows)], { type: 'text/csv' }), `${name ?? fileName(props.csv)}.csv`);
     };
     const copyPng = () => copyImage(image());
+
+    // the rows shown as a table instead of the plots (true) or the chart
+    // (false), without an argument the other one, e.g. of a button of the
+    // page, see drawTable of utils/table.js
+    const showTable = (on = !tableShown) => {
+        tableShown = Boolean(on);
+        vis?.invalidate();
+    };
     const saveSvg = async () => {
         const svg = await exportSvg();
         const { saveFile } = await lazy.exporting();
@@ -527,7 +542,10 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         }
         if ('highlight' in next)
             setHighlight(props.highlight);
-        if (['download', 'copy', 'csv', 'svg', 'slots'].some(changed))
+        // without the button the chart is shown
+        if (changed('table') && !props.table)
+            tableShown = false;
+        if (['download', 'copy', 'csv', 'svg', 'table', 'slots'].some(changed))
             vis?.invalidate();
         if (changed('debug'))
             render();
@@ -557,6 +575,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         exportPng,
         exportCsv,
         copyPng,
+        showTable,
         setHighlight,
         destroy() {
             if (removed)

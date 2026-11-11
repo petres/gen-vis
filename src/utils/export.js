@@ -5,7 +5,7 @@ export { selection, staticCopy, parts, selectParts, partsBox, backgroundOf, rend
 import { facetMappings } from "@/utils/normalize";
 import * as d3 from "@/utils/d3";
 import { selectedEntry } from "@/utils/def";
-import { columnValues } from "@/utils/data";
+import { tableOf } from "@/utils/table";
 import { lazy } from "@/utils/lazy";
 
 // the space around the visualisation in the images
@@ -235,14 +235,10 @@ const csvCell = value => typeof value == 'string' && value.length > 1 && /^[=+\-
 
 // the rows shown as CSV, in the columns of the mappings, the values as the
 // ones of the data, e.g. dates as they are in the file, also the columns of
-// transforms; the names and the texts guarded by csvCell
+// transforms (see tableOf of utils/table.js); the names and the texts
+// guarded by csvCell
 const csvOf = (store, rows) => {
-    const positions = new Map(store.data.map((r, i) => [r, i]));
-    const columns = [...new Set(Object.values(store.def.mapping).map(m => m.column).filter(c => typeof c == 'string'))];
-    const values = columns.map(c => columnValues(store.rows, store.columns, c));
-    return d3.csvFormat(rows.map(r => {
-        const i = positions.get(r);
-        return Object.fromEntries(columns.map((c, j) => [csvCell(c), csvCell(values[j](i))]));
-    }), columns.map(csvCell));
+    const { columns, cells } = tableOf(store, rows);
+    const names = columns.map(csvCell);
+    return d3.csvFormat(cells.map(row => Object.fromEntries(names.map((c, j) => [c, csvCell(row[j])]))), names);
 };
-

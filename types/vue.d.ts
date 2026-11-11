@@ -14,8 +14,8 @@ export interface GenVisSlots {
     footer?(props: { footer?: string }): VNodeChild;
     /** The content of the hover instead of the table or the templates of `hover`. */
     hover?(props: HoverSlotProps): VNodeChild;
-    /** Buttons of the PNG, the CSV and the SVG, `canCopy` if the clipboard takes images. */
-    buttons?(props: { save: () => Promise<void>; copy: () => Promise<void>; csv: () => Promise<void>; svg: () => Promise<void>; canCopy: boolean }): VNodeChild;
+    /** Buttons of the PNG, the CSV, the SVG and the table, `canCopy` if the clipboard takes images, `table(on?)` shows the rows as a table (true) or the chart (false), without an argument the other one, `tableShown` while the table is shown. */
+    buttons?(props: { save: () => Promise<void>; copy: () => Promise<void>; csv: () => Promise<void>; svg: () => Promise<void>; canCopy: boolean; table: (on?: boolean) => void; tableShown: boolean }): VNodeChild;
 }
 
 /** The component of a ref, its props and the methods of the visualisation. */

@@ -13,6 +13,7 @@ import { createFacets } from "@/comp/facets";
 import { createLegends, annotationsLegend } from "@/comp/legends";
 import { createControl } from "@/comp/control";
 import { highlightStyle } from "@/utils/highlight";
+import { lazy } from "@/utils/lazy";
 
 // the width of the visualisation inside its padding and border, e.g. of a card
 // styled by the page, the svg fills only this part
@@ -24,13 +25,14 @@ const innerWidth = el => {
 };
 
 // the icons of the buttons, copy, check, file-text, image and download of
-// the feather icons
+// the feather icons, table of the lucide icons
 const icons = {
     copy: 'M11 9h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1',
     copied: 'M20 6L9 17l-5-5',
     csv: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8',
     download: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3',
     svg: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM21 15l-5-5L5 21',
+    table: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM3 9h18M3 15h18M12 3v18',
 };
 
 // a button of the footer with its icon, type="button" does not submit a
@@ -184,7 +186,11 @@ const createVis = app => {
     const parts = { top: null, left: null, right: null, bottom: null };
     const legends = {};
     let body = null, bodyKind = null, plots = null, sides = null, facets = null, facetsIn = null, drawnView = null;
-    let buttons = null, copyButton = null, csvButton = null, svgButton = null, downloadButton = null;
+    let buttons = null, copyButton = null, csvButton = null, svgButton = null, downloadButton = null, tableButton = null;
+    // the table instead of the plots (see app.table), its module, loaded
+    // with the first one, and the view drawn in it
+    let table = null, tableModule = null, tableLoad = null, tableView = null;
+    const toggleTable = on => app.table.show(on);
     const headerSlot = slotPart(), footerSlot = slotPart(), buttonsSlot = slotPart();
     root.appendChild(footer);
 
@@ -365,9 +371,28 @@ const createVis = app => {
             facetsIn = facets ? container : null;
             drawnView = null;
         }
-        if (facets && drawnView !== view) {
+        // the plots hidden by the table are drawn when they are shown again
+        if (facets && drawnView !== view && !table) {
             drawnView = view;
             facets.update(view);
+        }
+    };
+
+    // the rows of the view in the table, its module is loaded with the first one
+    const drawTable = caption => {
+        if (!tableModule) {
+            tableLoad ??= lazy.table().then(m => {
+                tableModule = m;
+                invalidate();
+            }, app.showError);
+            return;
+        }
+        // a region of its own which keyboards can scroll
+        patch(table, { class: 'vis-table-wrapper', tabindex: '0', role: 'region', 'aria-label': caption });
+        if (tableView !== view || table.dataset.caption !== caption) {
+            tableView = view;
+            table.dataset.caption = caption;
+            tableModule.drawTable(table, store, view.rows, { caption });
         }
     };
 
@@ -410,6 +435,21 @@ const createVis = app => {
         const at = legendsAt();
         sides = sidesOf(at);
         const shown = text === null;
+        // the rows as a table instead of the plots, the height of the
+        // plots at most, so the page does not move
+        const tableOn = shown && Boolean(view) && app.table.shown();
+        if (tableOn && !table) {
+            const height = body?.getBoundingClientRect().height;
+            table = el('div');
+            table.style.maxHeight = height > 200 ? `${height}px` : '';
+            tableView = null;
+        } else if (!tableOn && table) {
+            table.remove();
+            table = tableView = null;
+            // the width of plots beside legends, not measured while they were hidden
+            if (sides)
+                queueMicrotask(() => guard(resized));
+        }
         // the legends beside the plots, the plots have the width of the rest
         const bodySides = shown && sides;
         const wantBody = shown && (sides || Boolean(view));
@@ -428,7 +468,11 @@ const createVis = app => {
             setText(message, text);
         parts.top = keepIf(parts.top, shown, () => el('div', { class: 'vis-legends' }));
         parts.bottom = keepIf(parts.bottom, shown && at.bottom.length > 0, () => el('div', { class: 'vis-legends vis-legends-bottom' }));
-        [message, parts.top, body, parts.bottom].filter(Boolean).reduceRight((after, n) => place(root, n, after), footer);
+        if (body)
+            body.hidden = tableOn;
+        [message, parts.top, body, table, parts.bottom].filter(Boolean).reduceRight((after, n) => place(root, n, after), footer);
+        if (table)
+            drawTable(head.title || head.subtitle || texts().chart);
         if (parts.top)
             drawLegends('top', parts.top, at.top);
         if (bodySides) {
@@ -459,23 +503,30 @@ const createVis = app => {
         app.drawn();
     };
 
-    // the buttons of the page (the slot buttons), copy, csv, svg and download,
-    // at the right end of the plots
+    // the buttons of the page (the slot buttons), table, copy, csv, svg and
+    // download, at the right end of the plots
     const drawButtons = own => {
-        const { copy, csv, svg, download } = app.props();
-        if (!(own.buttons || (copy && clipboard) || csv || svg || download)) {
+        const { copy, csv, svg, download, table: tableProp } = app.props();
+        if (!(own.buttons || (copy && clipboard) || csv || svg || download || tableProp)) {
             buttons?.remove();
             buttonsSlot.clear();
-            buttons = copyButton = csvButton = svgButton = downloadButton = null;
+            buttons = copyButton = csvButton = svgButton = downloadButton = tableButton = null;
             return;
         }
         buttons ??= footer.appendChild(el('div', { class: 'vis-buttons' }));
         patch(buttons, { class: 'vis-buttons', style: { marginRight: `${view?.facets[0]?.margins.right ?? 0}px` } });
         const t = texts();
+        const tableShown = app.table.shown();
+        tableButton = keepIf(tableButton, tableProp, () => button('vis-table', () => toggleTable()));
         copyButton = keepIf(copyButton, copy && clipboard, () => button('vis-copy', () => copyPng()));
         csvButton = keepIf(csvButton, csv, () => button('vis-csv', () => files.csv().catch(app.showError)));
         svgButton = keepIf(svgButton, svg, () => button('vis-download-svg', () => files.svg().catch(console.error)));
         downloadButton = keepIf(downloadButton, download, () => button('vis-download', () => savePng()));
+        // a toggle of a constant name, pressed while the table is shown
+        if (tableButton) {
+            patch(tableButton, { type: 'button', class: 'vis-button vis-table', title: tableShown ? t.showChart : t.table, 'aria-label': t.table, 'aria-pressed': String(tableShown) });
+            patch(tableButton.querySelector('path'), { d: icons.table });
+        }
         if (copyButton) {
             patch(copyButton, { type: 'button', class: 'vis-button vis-copy', title: copied ? t.copied : t.copy, 'aria-label': copied ? t.copied : t.copy });
             patch(copyButton.querySelector('path'), { d: icons[copied ? 'copied' : 'copy'] });
@@ -492,10 +543,10 @@ const createVis = app => {
             patch(downloadButton, { type: 'button', class: 'vis-button vis-download', title: t.download, 'aria-label': t.download });
             patch(downloadButton.querySelector('path'), { d: icons.download });
         }
-        const order = [copyButton, csvButton, svgButton, downloadButton].filter(Boolean);
+        const order = [tableButton, copyButton, csvButton, svgButton, downloadButton].filter(Boolean);
         order.reduceRight((after, b) => place(buttons, b, after), null);
         if (own.buttons)
-            buttonsSlot.draw(buttons, own.buttons, { save: files.save, copy: files.copy, csv: files.csv, svg: files.svg, canCopy: clipboard }, order[0] ?? null);
+            buttonsSlot.draw(buttons, own.buttons, { save: files.save, copy: files.copy, csv: files.csv, svg: files.svg, canCopy: clipboard, table: toggleTable, tableShown }, order[0] ?? null);
         else
             buttonsSlot.clear();
     };

@@ -76,6 +76,8 @@ export interface GenVisProps {
     csv?: boolean | string;
     /** A button to save the SVG, a string is the name of the file. */
     svg?: boolean | string;
+    /** A button which shows the rows shown as a table instead of the plots, and the chart again. */
+    table?: boolean;
     /** The width of the PNG in pixels, `screen` for the one on the screen. */
     imageWidth?: number | 'screen' | null;
     /** Loads the definition and the data when it is near the viewport, `true` within one height of the viewport, a string is the `rootMargin`, e.g. `'800px 0px'`, a number (also one of the string without a unit) pixels. */
@@ -98,6 +100,8 @@ export interface GenVisMethods {
     /** The SVG of the image (a string), made for Word and editors, see docs/export.md. */
     exportSvg(options?: ExportSvgOptions): Promise<string>;
     exportCsv(name?: string): Promise<void>;
+    /** Shows the rows as a table instead of the plots (true) or the chart (false), without an argument the other one. */
+    showTable(on?: boolean): void;
     /** Highlights the rows of the values of dims, e.g. `{ country: 'AT' }`, null ends it. */
     setHighlight(entry: Record<string, unknown> | null): void;
 }
@@ -192,8 +196,8 @@ export interface GenVisSlotFunctions {
     footer?(props: { footer?: string }): SlotContent;
     /** The content of the hover instead of the table or the templates of `hover`. */
     hover?(props: HoverSlotProps): SlotContent;
-    /** Buttons of the PNG, the CSV and the SVG, `canCopy` if the clipboard takes images. */
-    buttons?(props: { save: () => Promise<void>; copy: () => Promise<void>; csv: () => Promise<void>; svg: () => Promise<void>; canCopy: boolean }): SlotContent;
+    /** Buttons of the PNG, the CSV, the SVG and the table, `canCopy` if the clipboard takes images, `table(on?)` shows the rows as a table (true) or the chart (false), without an argument the other one, `tableShown` while the table is shown. */
+    buttons?(props: { save: () => Promise<void>; copy: () => Promise<void>; csv: () => Promise<void>; svg: () => Promise<void>; canCopy: boolean; table: (on?: boolean) => void; tableShown: boolean }): SlotContent;
 }
 
 /** The listeners of the events as props, e.g. `{ onSelect: e => … }` of mountGenVisElement. */
