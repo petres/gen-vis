@@ -310,8 +310,14 @@ visualisation (of `createGenVis`, `mountGenVisElement` and a ref of the
 component) are `exportPng(name)` (saves the file), `copyPng()` (copies it, in the click
 of the user) and `image()` (the PNG as a `Blob`), e.g. for a button of the
 page, `exportSvg(options)` is the SVG, see [static export](export.md#static-export).
-They and `exportCsv` are an error while the visualisation is loaded, also
-while a new definition or new data is loaded, e.g. after `rendered` again:
+The copy of the images is drawn next to the chart, with the styles of the
+page; of a chart in a hidden element (e.g. `display: none`, a tab not
+shown) or a transformed one (e.g. `scale(0.5)`) it is drawn at the end of
+the body with the `--gen-vis-*` variables, the font and the color of the
+place of the chart (styles of its ancestors' selectors, e.g. `.tab .vis-title`,
+do not apply there). They and `exportCsv` are an error while the
+visualisation is loaded, also while a new definition or new data is
+loaded, e.g. after `rendered` again:
 
 ```html
 <GenVis ref="chart" def-file="/data/bev/def.json"/>

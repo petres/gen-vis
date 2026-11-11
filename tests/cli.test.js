@@ -297,6 +297,39 @@ describe.skipIf(!browser)('gen-vis export', () => {
         }
     }, 60000);
 
+    test('the images of a chart in a hidden or a scaled element are the ones of a chart in a normal place', async () => {
+        const exporter = await createExporter({ browser });
+        try {
+            const r = await exporter.evaluate(`import('/__gen-vis/esm/gen-vis.js').then(async ({ createGenVis }) => {
+                const style = document.head.appendChild(document.createElement('style'));
+                style.textContent = '.house { --gen-vis-muted-color: rgb(0, 0, 200); line-height: 2; letter-spacing: 0.5px; }';
+                const def = { title: 'Titel', source: 'Quelle', height: 200, dims: { x: { column: 'year', type: 'numeric' }, y: 'value' }, marks: { type: 'line' } };
+                const charts = ['', 'display: none', 'transform: scale(0.5)'].map(css => {
+                    const place = document.body.appendChild(document.createElement('div'));
+                    place.className = 'house';
+                    place.style.cssText = css;
+                    return new Promise((resolve, reject) => {
+                        const vis = createGenVis(place, { def, data: 'year,value\\n2020,1\\n2021,3\\n', onError: reject });
+                        setTimeout(() => resolve(vis), 500);
+                    });
+                });
+                const out = [];
+                for (const vis of await Promise.all(charts)) {
+                    const png = await vis.image();
+                    out.push([await vis.exportSvg(), png.size]);
+                }
+                return out;
+            })`);
+            const [normal, hidden, scaled] = r;
+            expect(normal[0]).toMatch(/viewBox="0 0 (\d+) \d+"/);
+            expect(normal[0]).toContain('fill="#0000C8"');
+            expect(hidden).toEqual(normal);
+            expect(scaled).toEqual(normal);
+        } finally {
+            await exporter.close();
+        }
+    }, 60000);
+
     test('the symbols of units in Inter of the package, e.g. CO₂, m³, ≤, →', async () => {
         writeFileSync(path.join(dir, 'units.csv'), 'year,value\n2020,1\n2021,2\n');
         writeFileSync(path.join(dir, 'units.json'), JSON.stringify({

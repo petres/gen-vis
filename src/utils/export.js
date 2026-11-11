@@ -127,6 +127,47 @@ const staticCopy = async (place, mount, { width, space = padding, visible = fals
     }
 };
 
+// the inherited properties of the place of a chart which its copy keeps
+// when it is moved (see placeNear), the texts are laid out with them
+const inheritedProps = ['color', 'font-family', 'font-size', 'font-style', 'font-weight', 'font-stretch', 'font-variant', 'font-feature-settings',
+    'line-height', 'letter-spacing', 'word-spacing', 'text-transform', 'text-align', 'direction', 'writing-mode'];
+
+/**
+ * The place of the static copy of a chart (see staticCopy): next to it
+ * (`outer`), so the styles of the page apply, if the chart is laid out there
+ * as it is; if it (or an ancestor) is hidden (e.g. `display: none`) or
+ * transformed (e.g. `scale(0.5)`, its rectangle is not the size of its
+ * box), at the end of the body, with what it inherits of its place: the
+ * custom properties of gen-vis (e.g. of a house style), the font, the color
+ * and the language.
+ */
+const placeNear = outer => wrapper => {
+    const r = outer.getBoundingClientRect();
+    if (outer.getClientRects().length > 0 && Math.abs(r.width - outer.offsetWidth) < 0.5 && Math.abs(r.height - outer.offsetHeight) < 0.5) {
+        outer.after(wrapper);
+        return;
+    }
+    const from = outer.parentElement ?? outer;
+    const cs = getComputedStyle(from);
+    [...[...cs].filter(n => n.startsWith('--gen-vis-')), ...inheritedProps].forEach(n => {
+        const v = cs.getPropertyValue(n);
+        if (v)
+            wrapper.style.setProperty(n, v);
+    });
+    // a line height of a number (e.g. 1.5) is computed in pixels, the one of
+    // a probe of another font size is of that number
+    const probe = from.appendChild(document.createElement('span'));
+    probe.style.fontSize = '100px';
+    const lineHeight = parseFloat(getComputedStyle(probe).lineHeight);
+    probe.remove();
+    if (lineHeight && lineHeight != parseFloat(cs.lineHeight))
+        wrapper.style.lineHeight = String(lineHeight / 100);
+    const lang = outer.closest('[lang]')?.getAttribute('lang');
+    if (lang)
+        wrapper.lang = lang;
+    document.body.append(wrapper);
+};
+
 // the parts of the images, see docs/export.md
 const parts = ['title', 'subtitle', 'selection', 'legend', 'plot', 'footer'];
 
@@ -180,13 +221,13 @@ const scaleOf = width => Math.max(2, Math.ceil(defaultWidth / width));
 
 /**
  * The PNG (a Blob, see scaleOf) of the static copy of a visualisation of
- * the given `width` next to `outer`, see staticCopy: the SVG of the copy
+ * the given `width` next to `outer` (see placeNear and staticCopy): the SVG of the copy
  * (see renderSvg, the same image as the SVG file) drawn on a canvas, see
  * utils/raster.js.
  */
 const renderImage = async (outer, mount, { width, fixed = false }) => {
     const [{ composeSvg }, { rasterize }] = await Promise.all([lazy.svg(), lazy.raster()]);
-    const { copy, remove } = await staticCopy(wrapper => outer.after(wrapper), mount, { width, fixed });
+    const { copy, remove } = await staticCopy(placeNear(outer), mount, { width, fixed });
     try {
         const background = backgroundOf(copy);
         copy.style.background = background;
@@ -200,13 +241,13 @@ const renderImage = async (outer, mount, { width, fixed = false }) => {
 
 /**
  * The SVG (a string) of the static copy of a visualisation of the given
- * `width` next to `outer` (see staticCopy), of the `parts` chosen (default
+ * `width` next to `outer` (see placeNear and staticCopy), of the `parts` chosen (default
  * all), its size in `unit`, on its `background` (by default the one of the
  * PNG, null none), see docs/export.md and utils/export-svg.js.
  */
 const renderSvg = async (outer, mount, { width, fixed = false, parts = null, unit = 'px', background }) => {
     const { composeSvg } = await lazy.svg();
-    const { copy, remove } = await staticCopy(wrapper => outer.after(wrapper), mount, { width, fixed });
+    const { copy, remove } = await staticCopy(placeNear(outer), mount, { width, fixed });
     try {
         selectParts(copy, parts);
         copy.style.background = background === undefined ? backgroundOf(copy) : (background ?? 'none');
