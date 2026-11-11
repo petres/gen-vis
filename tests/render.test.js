@@ -4261,6 +4261,27 @@ describe('the ticks of whole numbers and of periods', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the ticks of quarters, halves and several units are the starts of the periods, not of their months', async () => {
+        const ticks = el => [...el.querySelectorAll('g.vis-axis-bottom g.tick')].map(t => new Date(t[itemOf]).toISOString().slice(0, 7));
+        const monthly = n => 'date,value\n' + Array.from({ length: n }, (_, i) => `2024-${String(3*i + 1).padStart(2, '0')}-01,${i + 1}`).join('\n');
+        const utc = interval => {
+            const def = dated(interval);
+            def.mapping.x.scale.type = 'utc';
+            return def;
+        };
+        const quarters = await mount({ def: utc('quarter'), data: monthly(3) });
+        expect(ticks(quarters)).toEqual(['2024-01', '2024-04', '2024-07', '2024-10']);
+        const halves = await mount({ def: utc('half'), data: 'date,value\n2024-04-01,1\n2024-10-01,2' });
+        expect(ticks(halves)).toEqual(['2024-04', '2024-10', '2025-04']);
+        const six = await mount({ def: utc('6 months'), data: 'date,value\n2024-01-01,1\n2024-07-01,2' });
+        expect(ticks(six)).toEqual(['2024-01', '2024-07', '2025-01']);
+        // many periods: every n-th start
+        const years = await mount({ def: utc('quarter'), data: 'date,value\n' + Array.from({ length: 40 }, (_, i) => `${2010 + Math.floor(i/4)}-${String(3*(i % 4) + 1).padStart(2, '0')}-01,1`).join('\n') });
+        expect(ticks(years).every(t => ['01', '04', '07', '10'].includes(t.slice(5)))).toBe(true);
+        expect(ticks(years).length).toBeGreaterThan(3);
+        expect(errors).toEqual([]);
+    });
+
     test('an unknown interval is an error naming it, not one of the width of bars', async () => {
         const el = await mount({ def: dated('fortnight'), data: 'date,value\n2024-03-01,1\n2024-03-15,2' });
         expect(el.querySelector('.vis-error')?.textContent ?? errors.join(' ')).toMatch(/Unknown interval 'fortnight' of 'x', expected minute, hour, day/);

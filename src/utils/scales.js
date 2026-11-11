@@ -8,7 +8,7 @@ import { comparison } from "@/utils/values";
 // the periods of the dates of a mapping (`interval`): minute, hour, day,
 // week, month, quarter, half (a year), year or a number of them, e.g.
 // "6 months", of the time zone of the scale, null without one or of another
-// value; `floor(date)` is the start of the unit of a date, e.g. the day
+// value
 // (the intervals of d3 by name, not d3[name], which would keep all of d3's
 // parts of the bundle)
 const units = {
@@ -27,8 +27,14 @@ const intervalOf = (spec, utc = false) => {
     const base = utc ? inUtc : local;
     // the period starts at the date, e.g. a half year in April, so it is
     // `count` units long, not up to the next multiple of them (d3's `every`)
-    // (`range` the starts of the units from `lo` to before `hi`, e.g. ticks)
-    return count > 0 ? { offset: d => base.offset(d instanceof Date ? d : new Date(d), count), floor: d => base.floor(d), range: (lo, hi) => base.range(lo, hi) } : null;
+    // (`range` the starts of the units from `lo` to before `hi`, e.g. ticks,
+    // `starts(lo)` whether a date is the start of a period of the ones
+    // from the unit of `lo`, e.g. every third month of quarters)
+    const starts = lo => {
+        const first = base.floor(lo);
+        return d => +base.floor(d) == +d && base.count(first, d) % count == 0;
+    };
+    return count > 0 ? { offset: d => base.offset(d instanceof Date ? d : new Date(d), count), range: (lo, hi) => base.range(lo, hi), starts } : null;
 };
 
 // the offset of the center of a band, the position of band scales is its start
@@ -504,8 +510,8 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     s.domain(domain);
     // the ticks of data of whole numbers are whole numbers (`integers`, e.g.
     // years: 2001 and 2002, not 2001.5, see tickFormat of utils/locale.js),
-    // the ones of periods the starts of their units (e.g. days, not noons);
-    // not with other values on the scale: the ones of the dims with this
+    // the ones of periods the starts of the periods (e.g. days, not noons,
+    // quarters, not their months); not with other values on the scale: the ones of the dims with this
     // scale (`also`) or a fixed end of the domain, e.g. 0.5 of [0, 0.5],
     // and not if fewer than two ticks are whole
     if (s.ticks && !log && mapping.type == 'numeric' && !mapping.stacked && found.extent && found.whole && ends.every(Number.isInteger)) {
@@ -521,13 +527,16 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         const ticks = s.ticks;
         s.ticks = count => {
             const all = ticks.call(s, count);
-            const whole = all.filter(t => +period.floor(t) == +t);
+            // the starts of the periods from the start of the domain, e.g.
+            // of quarters every third month, not the months between
+            const [lo, hi] = d3.extent(s.domain());
+            const start = period.starts(lo);
+            const whole = all.filter(start);
             if (whole.length >= 2)
                 return whole;
             // a domain of a few periods (e.g. 3 months, d3 ticks weeks):
             // the starts of its periods, every n-th of more than `count`
-            const [lo, hi] = d3.extent(s.domain());
-            const starts = period.range(lo, new Date(+hi + 1));
+            const starts = period.range(lo, new Date(+hi + 1)).filter(start);
             const every = Math.ceil(starts.length/Math.max(1, count ?? 10));
             return starts.length ? starts.filter((t, i) => i % every == 0) : all;
         };

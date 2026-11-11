@@ -942,7 +942,9 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   values are all whole numbers (e.g. years) are whole numbers (not with a
   fixed end of the `domain` or values of a dim of the same scale which
   are none, e.g. `"domain": [0, 0.5]`), the ones
-  of an `interval` the starts of its units (days of `day`, not noons).
+  of an `interval` the starts of its periods (days of `day`, not noons;
+  of `quarter`, `half` or a number of units, e.g. `"6 months"`, the
+  starts of the periods from the first one, not the months between).
 - `format`: a d3 number or time format. Without one numbers have the
   decimals of the distance of the ticks (none of whole numbers) and
   thousands separators only if the domain reaches 10 000, as the hover, so
