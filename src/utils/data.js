@@ -114,8 +114,10 @@ const duplicateColumns = (rows, warn) => {
  * decimal commas, see decimalCommas. The parquet
  * reader is only loaded for parquet data, it reads only the `columns`
  * given, all without them. A page of HTML is an error (e.g. of a wrong url);
- * rows which are no objects (e.g. null) are left out and a column in the
- * header of CSV more than once is used once, `warn(message)` tells of them.
+ * rows which are no objects (e.g. null) are left out, a column in the
+ * header of CSV more than once is used once and a text of another encoding
+ * than UTF-8 has characters which are none (U+FFFD), `warn(message)` tells
+ * of them, once each.
  */
 const parseData = async (data, format, columns = null, warn = null) => {
     if (isBinary(data)) {
@@ -134,6 +136,9 @@ const parseData = async (data, format, columns = null, warn = null) => {
     if (format == 'parquet')
         throw new Error('Parquet data needs to be binary, e.g. an ArrayBuffer.');
     data = data.replace(/^\uFEFF/, '');
+    // U+FFFD is of bytes which are no UTF-8, read as text
+    if (data.includes('\uFFFD'))
+        warn?.(`the text has characters which could not be read (U+FFFD, '\uFFFD'): the file is not UTF-8, e.g. Latin-1 or Windows-1252 of a spreadsheet, save it as UTF-8 (in Excel "CSV UTF-8")`);
     if (format == 'tsv')
         return duplicateColumns(delimited(data, '\t', warn), warn);
     if (format == 'json' || (format != 'csv' && /^\s*[[{]/.test(data))) {

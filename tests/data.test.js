@@ -73,6 +73,23 @@ describe('parseData', () => {
         expect([[...blank], blank.columns]).toEqual([[], []]);
     });
 
+    test('a text which is not UTF-8 warns once, e.g. Latin-1 of a spreadsheet', async () => {
+        const warnings = [];
+        const warn = w => warnings.push(w);
+        // "Land;Wert", "Kärnten;1,5" and "Oberösterreich;2" in Latin-1
+        const latin1 = Uint8Array.from('Land;Wert\nK\u00e4rnten;1,5\nOber\u00f6sterreich;2', c => c.charCodeAt(0));
+        const rows = await parseData(latin1, 'csv', null, warn);
+        expect(rows.map(r => r.Land)).toEqual(['K\uFFFDrnten', 'Ober\uFFFDsterreich']);
+        expect(warnings).toEqual([`the text has characters which could not be read (U+FFFD, '\uFFFD'): the file is not UTF-8, e.g. Latin-1 or Windows-1252 of a spreadsheet, save it as UTF-8 (in Excel "CSV UTF-8")`]);
+        // also of a text already decoded, e.g. of fetch, and of JSON
+        await parseData('[{"a": "K\uFFFDrnten"}]', undefined, null, warn);
+        expect(warnings).toHaveLength(2);
+        // none of UTF-8
+        await parseData(new TextEncoder().encode('Land,Wert\nKärnten,1'), undefined, null, warn);
+        await parseData('Land,Wert\nKärnten,1', 'csv', null, warn);
+        expect(warnings).toHaveLength(2);
+    });
+
     test('a byte order mark is removed', async () => {
         expect((await parseData('\uFEFFa,b\n1,2')).columns).toEqual(['a', 'b']);
         expect(await parseData('\uFEFF[{"a": 1}]')).toEqual([{ a: 1 }]);
