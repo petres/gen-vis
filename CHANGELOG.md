@@ -13,24 +13,32 @@ one expression language with a string syntax. The engine reads a form
 of the same names (`dims`, `marks` with the `props` of the scaled
 positions, `controls`, the options at the top level), the shorthands of a
 definition written out, so the charts are drawn as before; definitions of 4.x
-are migrated when they are loaded, `gen-vis migrate` writes them as ones of
-5.0. Besides the language: margins measured of the axes, dodged bars,
+are not read, an error names their keys (see "Upgrading from 4.x"). Besides
+the language: margins measured of the axes, dodged bars,
 labels, cells and rules of ranges, the highlight by classes and a
 stylesheet, PNG tests in a browser, the schema of one source and fewer
 builds and dependencies. The design is in `docs/design-5.0.md`.
 
 ### Upgrading from 4.x
 
-The details are in [the migration from 4.x](docs/definition.md#migration-from-4x)
-and in the sections below. What a page, a script or a definition of 4.x
-meets:
+The details are in the sections below, the keys of 4.x and their words in
+5.0 in the table after this list. What a page, a script or a definition
+of 4.x meets:
 
-- **Definitions of 4.x still load**: they are migrated while they are
-  loaded (with an info in the console). `gen-vis migrate <def.json>...
-  --write` writes them as definitions of 5.0, children with their parents;
-  some defaults changed (see "Semantics decided"), the migration writes
-  what keeps a 4.x chart as it was.
-- **A definition file needs its `$schema`**, the one of 5 (4 is migrated):
+- **Definitions of 4.x are not read.** A definition (or a parent) with the
+  keys `mapping`, `plot`, `formElements` or `options`, or with a `$schema`
+  of another major version than 5, fails to load with one error which
+  names the file and the keys (or the version of its `$schema`), e.g.
+  `'<url>' is a definition of gen-vis 4 (its "mapping", "plot"): gen-vis 5
+  reads "dims", "marks", "controls" and the options at the top level`;
+  `validateDef` returns that one message, `gen-vis check` and `gen-vis
+  export` fail of it (exit code 1). There is no migration, neither while a
+  definition is loaded nor as a command: rewrite the files by the table
+  below. (The alphas up to 5.0.0-alpha.2 had `gen-vis migrate`; `npx
+  @preschen/gen-vis@5.0.0-alpha.2 migrate --write <files>` still writes a
+  definition of 4.x as one of 5.0.)
+- **A definition file needs its `$schema`**, the one of 5 (the one of 4 is
+  refused, see above):
   `"$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json"`. A file
   without one (or with an unversioned or a 3.x schema) fails to load with
   `'<url>' is no definition of gen-vis 5: its $schema is missing, e.g.
@@ -57,8 +65,8 @@ meets:
   `marks(groups, mark, ctx)`.
 - **`@preschen/gen-vis/check`** no longer exports `translate` and
   `normalize`: the form the engine reads is internal.
-  `resolveParents`, `validateDef`, `migrate`, `resolve`, `variants` and the
-  others stay.
+  `resolveParents`, `validateDef`, `resolve`, `variants` and the others
+  stay.
 - **Dependencies**: `deepmerge` and `modern-screenshot` are no
   dependencies (the merge is the package's own, the PNG is the export SVG);
   the optional peer `vue` is `^3.3`.
@@ -71,7 +79,7 @@ meets:
   and without listed categories.
 - **Vertical band and point scales run from the top down** (were from the
   bottom up), as the rows of a table; `"reverse": true` puts the first
-  category at the bottom, `gen-vis migrate` writes it for such dims.
+  category at the bottom, as 4.x drew it.
 - **Ticks**: the ticks of a numeric dim of whole numbers (e.g. years) are
   whole numbers, and the default tick format has thousands separators
   only if the domain reaches 10 000, as the hover (4.x drew "2.001,5" of
@@ -86,6 +94,96 @@ meets:
 - **The CSV of the data shown** puts a `'` before texts which a
   spreadsheet reads as formulas (`=`, `+`, `-`, `@`, a tab first), numbers
   stay.
+
+The language of 5.0 says the same as the one of 4.x with fewer keys: the
+options are keys of the top level, the mappings are dims with shorthands of
+their scale and axis, the plots are marks whose channels name dims instead
+of props of scaled positions, the form elements are controls of globals and
+their patches are expressions of the globals. The keys of 4.x and their
+words in 5.0:
+
+| 4.x | 5.0 |
+|-----|-----|
+| `"options": {"title": ..., "height": ...}` | `"title": ..., "height": ...` at the top level |
+| `options.footer` | `source` |
+| `mapping` | `dims` |
+| `"domain": [0, null]` | `"zero": true` (the domain includes 0: the same of values from 0, negative ones are drawn below it) |
+| `"axis": {"grid": true}`, `"axis": {"ticks": 5}` | `"grid": true`, `"ticks": 5` (the axis parts stay valid) |
+| `"scale": {"domainRel": [-0.1, 0.1]}` | `"scale": {"pad": [0.1, 0.1]}` (`pad` of the dim too) |
+| `"categories": {"Wien": {"color": "#C3423F"}}` | `"categories": {"Wien": "#C3423F"}` (both are valid) |
+| `"fromData": true` of a dim with a legend | the categories of the data by default (in the order of the rows); listed categories are all of them, `fromData` adds the others |
+| a legend without a `symbol`: names only | `"symbol": "auto"` by default, the symbols of the marks; `"symbol": null` for none |
+| `plot` | `marks` |
+| `"props": {"stroke-width": 2}` | `"stroke-width": 2` beside the type |
+| `"props": {"cx": "@x:scaled", "cy": "@y:scaled"}` | the default channels `x` and `y`, or `"x": "lo"` of another dim |
+| `"props": {"y1": "@hi:scaled"}` with `"hi": {"scale": {"of": "y"}}` | `"y1": "hi"` (the scale of the axis is set) |
+| `"stacked": true` of a dim and `"y0": "@y:start:scaled", "y1": "@y:end:scaled"` | `"stack": true` of the mark |
+| `"type": "svg:text"` with `"y": "@y:scaled:center", "dominant-baseline": "middle"` | `"type": "label"`, `"anchor": "end"` |
+| grouped bars by hand | `"dodge": true` |
+| `formElements` with `ref` | `controls` with `global` |
+| `patch` of an entry | expressions of the global at the patched places, e.g. `"=match(@scale, {log: 'log'}, 'linear')"` |
+| `filter` conditions with `not` and `range` | expressions, e.g. `"@type != 'load'"`; an object of values stays |
+| `{"*": ["@innerWidth", 0.5]}` | `"=@innerWidth * 0.5"` (the object stays valid) |
+| `"hover": {}` of the dims of the plots' `by` | the default; `hover.columns` lists the dims of the hover |
+| `facets.dim` | `facets.by` |
+| `facets.cols` and `rows` of the dims of a grid | `"by": {"cols": ..., "rows": ...}` |
+| `"scales": []` of facets | `"own"` (the default), `"shared"` all dims |
+| margins of 0 by default | measured by default |
+
+Removed (their replacements are above): `options`, `mapping`, `plot` and
+the `props` of a plot, `formElements`, `patch`, `domainRel`. Kept for the
+rare case: `stacked` and `stackBy` of a dim (values stacked by no mark,
+e.g. of a histogram of a bin), `scale.of`, `domainAbs`, `domainIgnores`,
+`once`, `place`, `dataFormat`, `width`, the conditions `not` and `range`
+of filters.
+
+To rewrite a definition of 4.x by hand so that its chart stays as it was:
+
+- **Defaults which changed** (see "Semantics decided"): keep the `margins`
+  of the definition (4.x had 0) or leave them out to have them measured; a
+  definition whose marks are by a dim without a `hover` lists the dims of
+  the hover of 4.x in `hover.columns` (`[]` for none: 4.x had only the dims
+  with a `hover`); a legend without a symbol gets `"symbol": null`; a dim
+  with `fromData: true` keeps it (ascending order).
+- **Vertical categories**: a categorical vertical dim without a range of
+  its scale gets `"reverse": true` (4.x had its first category at the
+  bottom, 5.0 at the top), a `reverse` of 4.x goes.
+- **Lines and areas**: 4.x drew them in the order of the rows, 5.0 along
+  x: `"order": "rows"` where that is wanted, e.g. a connected scatter plot.
+- **Texts and numbers**: a text which starts with `=` (a title `"= Summe"`,
+  an axis title `"=100"`) is an expression in 5.0, write the expression of
+  the text, `"='= Summe'"`; a number of 4.x (pixels) at a channel of a
+  value on the scale is `"=literal(10)"`, a rule at `@x:scaled:0` is
+  `"x1": 0`, a position at the start of the band of a category
+  (`@y:scaled` of a categorical dim) stays an attribute; a `before` of
+  the id `plot-<n>` is `mark-<n>`. Texts of maps
+  are centered on their place, a `text-anchor` of their own keeps them as
+  they were.
+- **Filters**: a reference in a condition is written `@globals.<name>`
+  (4.x read the globals there); conditions of dates (e.g. `{"range":
+  ["2020-01-01", null]}`) may stay the object of 4.x.
+- **Patches of parts of a parent.** A patch becomes a `match` of the
+  global at the leaf it changes, without a default if the part has no value
+  of the leaf: a switch over the value of the other parts, which applies
+  after the merge as the patch did (see `spec/merge.md`). A mixin which
+  switches the column of `y` reads `"column": "=match(@values, {share:
+  'value.share'})"`, a child which gives `"column": "value"` keeps it. Two
+  mixins which patch the same leaf by the same global merge their cases; by
+  different globals the later one is the switch over the earlier one, a
+  child's value is the default of the innermost one, so both apply.
+- **Patches of whole parts.** A patch of the plots, the annotations or the
+  filter is a `match` of the whole list or filter (the marks of every
+  value in it), or of only the attribute which differs.
+- **Several form elements at one place.** Patches of different form
+  elements of the same leaf, or of a part and a leaf in it (e.g. one
+  removes the axis, another changes its title), are nested switches: a
+  `match` of the later form element whose cases and default are the
+  `match` of the earlier one, e.g. `"column": "=match(@b, {b2: 'vb'},
+  match(@a, {a2: 'va'}, 'v'))"`, the patches applied in their order as in
+  4.x. A patch which removes the scale, the axis, the legend or the hover
+  of a dim (null) is `false` in the switch.
+- **Parts without keys of 4.x** (e.g. a parent of only `data` or `geo`)
+  need only the `$schema` of 5.
 
 Also new in the last steps: `interval` of `minute` and `hour` (an unknown
 interval is an error naming it), a warning of a `text` or `label` mark
@@ -194,11 +292,8 @@ them as unknown).
   default, was `[]`), `"shared"` (all dims), a list or an object of a grid
   as before.
 - `$schema` of gen-vis 5 (`https://unpkg.com/@preschen/gen-vis@5/schema.json`);
-  the one of 4 is accepted, a definition of 4.x (by its keys) is migrated
-  while it is loaded, with a notice in the console (also of an inline one;
-  the warnings of its check say that their paths are the ones of 5.0). In
-  a chain of parents of parts of 4.x and 5.0 every part of 4.x is migrated
-  before the merge (with the parts of 4.x before it as its parents).
+  the one of 4 and the keys of 4.x (also in a parent, also of an inline
+  definition) are an error of the load, see "Upgrading from 4.x".
 - The mark `tick`: a short rule at the value across the band of its
   category (`size`, the share of the band, 1 by default), vertical across
   the band of a categorical `y`, across the slot of a dodged one; e.g. the
@@ -246,21 +341,20 @@ them.
   color of the mark type or `@color`, or a `fill`/`stroke` naming the dim)
   has the categories of the data, so a line per country has the colors of
   the default scheme (4.x drew all of them in one color); `"fromData":
-  false` keeps it without, `gen-vis migrate` writes that for such dims of
-  4.x. A `by` of marks of a color of their own groups rows of any type,
-  e.g. a line per id.
+  false` keeps it without, as 4.x drew it. A `by` of marks of a color of
+  their own groups rows of any type, e.g. a line per id.
 - A legend without a `symbol` has the symbols of the marks of its
   categories (`"auto"`: a box of bars and areas, a line of lines, a dot of
-  points); 4.x had none. A migrated legend gets `"symbol": null`.
+  points); 4.x had none, `"symbol": null` keeps a legend without.
 - An option of `null` is none, e.g. a `message` of a `match` without a
   case; an expression of the globals without a value leaves its key out
   (a `match` without a default over the value of another part is a switch
   over it, see below).
 - The default dims of the hover are the ones the marks use (their `by`
   and the dims of their positions), not the dims of the facets (their
-  panels have titles). The migration leaves the implied `"hover": {}` out;
-  a migrated definition which uses a dim without a `hover` lists
-  `hover.columns`, so its hover stays the one of 4.x.
+  panels have titles), so the implied `"hover": {}` of 4.x is not needed;
+  `hover.columns` lists the dims of a hover as the one of 4.x (which had
+  only the dims with a `hover`).
 - A `match` of a global without a default is a switch over the value of
   the other parts of the definition, merged as the patches of 4.x applied:
   the value of a parent or a child becomes its default, two matches of the
@@ -373,7 +467,7 @@ are not in the margins.
 - A number at `x` or `y` of a point or a text of a cartesian chart is a
   value on the scale of its axis, as of rules and bars, e.g. a label at
   250 of x (`"x": 250`, was `"x": "@x:scaled:250"`); pixels are
-  `"=literal(34)"` (`gen-vis migrate` writes the numbers of texts of 4.x so).
+  `"=literal(34)"` (the numbers of texts of 4.x are written so).
 - A legend symbol `auto` of a box and dots without a line is the box (the
   dots of a strip below a histogram were drawn over it).
 - The dot of a legend symbol `auto` of points has their radius (a number),
@@ -394,8 +488,8 @@ are not in the margins.
   the position.
 - The names of 4.x in the page and the API are the ones of 5.0: the group
   of a mark is `g.vis-mark` with `data-mark` (was `vis-plot`, `data-plot`),
-  the default id of a mark `mark-<index>` (was `plot-<index>`; the
-  migration writes a `before` of such an id as the new one), the cells of
+  the default id of a mark `mark-<index>` (was `plot-<index>`; a `before`
+  names the new one), the cells of
   the hover and the axes have `data-dim` (was `data-mapping`, the legends
   had `data-dim` already), the extension API is `registerMarkType` and the
   types `MarkType` and `MarkGroup` (was `registerPlotType`, `PlotType`,
@@ -403,10 +497,10 @@ are not in the margins.
 - The categories of a vertical band or point scale without a range of
   its own run from the top down (were from the bottom up), as the rows of a
   table, e.g. horizontal bars and heatmaps; `"reverse": true` puts the first
-  category at the bottom, `gen-vis migrate` writes it for such dims of 4.x
-  (and removes a `reverse` of 4.x, which put the first one at the top).
+  category at the bottom, as 4.x drew it (a `reverse` of 4.x, which put
+  the first one at the top, is left out).
 - Snapshots were re-baselined once for the highlight; `data/` and the site
-  examples are migrated, their images are the ones of 4.x.
+  examples are written in 5.0, their images are the ones of 4.x.
 
 ### Transforms
 
@@ -433,7 +527,7 @@ their rows replace the rows or follow them. Fixtures in `spec/transforms`.
   week of the year (`%W`) and the weekday (`%u`) of a calendar heatmap; the
   names of months and days (`%b`, `%a`) of the locale of the chart.
 
-### Schema, check and migration
+### Schema and check
 
 - The schema is written in JavaScript, `src/schema/definition.js` (a
   vocabulary of JSON Schema nodes in `src/schema/dsl.js`), with the text of
@@ -443,69 +537,18 @@ their rows replace the rows or follow them. Fixtures in `spec/transforms`.
   systems, curves, locales, scales, projections, transforms) are the code's.
   The structural check of `validateDef` walks the same source (the
   `schema.json?check` plugin of the build is gone).
-- `validateDef` takes a definition of 5.0 (one of 4.x is migrated first):
+- `validateDef` takes a definition of 5.0 (one of 4.x has the one message
+  of the refusal, see "Upgrading from 4.x"):
   the schema on the definition with the expressions of the globals
   evaluated, the semantic checks on the translated form with their paths
   and words mapped back (`dims`, `marks[0].fill`, `controls`), and the
   definition of every other value of the controls (`controls[0].values[1]
   > ...`), as the patches were checked before. It knows `@globals.<name>`,
   `@dim:index`, `@dim:count` and filters which are expressions.
-- `gen-vis migrate <def.json>... [--write]` writes definitions of 4.x as
-  ones of 5.0, to the standard output or into the files. A child is
-  migrated with its parents merged (all files are read before any is
-  written), so its form elements may give only the ids of the patched
-  entries. A patch becomes a `match` of its global at the patched leaf
-  (`"=match(@scale, {log: 'log'}, 'linear')"`), a patch of the plots, the
-  annotations or the filter a `match` of the whole part, a patch of
-  `scale.domainRel` one of `scale.pad`, a patch whose cases are all the
-  base the base. Places which several form elements patch (the same leaf,
-  or a part and a leaf in it) are nested switches: a `match` of the later
-  form element whose cases and default are the ones of the earlier, the
-  patches applied in their order as in 4.x; a patch of a part of a mapping
-  given as its column keeps the column, null of a patch of its scale,
-  axis, legend or hover is `false`. A rule at `@x:scaled:0` is `"x1": 0`
-  (a value on the scale), a number of 4.x (pixels) at a channel of a value
-  on the scale is `"=literal(10)"`; a position at the start of the band of
-  a category (`@y:scaled` of a dim of a type categorical) stays an attribute.
-  A text of 4.x which starts with `=` is the expression of the text
-  (`"='= Summe'"`). The conditions of filters become expressions (a
-  reference is `@globals.<name>`), objects of values stay, and so do
-  conditions of dates (of a dim of dates or with texts of dates), which
-  compare as dates; the objects of expressions are written in the string
-  syntax. The chart stays the same:
-  the margins stay, `"hover": {"columns": []}` and `"symbol": null` keep
-  the hover and the legends of 4.x. `@preschen/gen-vis/check` exports
-  `migrate`, `formatJson`, `translate`, `resolve`, `variants`,
-  `isDefinition4`, `isDefinition5` and `normalize` (which resolves and
-  translates a definition of 5.0 first).
-- Every definition of `data/`, `site/examples/` and `site/public/charts/`
-  is migrated; the 4.x originals of `data/` are fixtures
-  (`tests/fixtures/v4/`), `tests/migrate.test.js` draws them as 4.x drew
-  them (its merge and patches, `tests/v4.js`) for every combination of the
-  values of the form elements and compares the migration of the merged
-  definition and the migrated files with it.
-
-Migration notes, to check by hand after `gen-vis migrate`:
-
-- A patch of a part of a parent becomes a `match` of the global at the
-  leaf it changes, without a default if the part has no value of the
-  leaf: a switch over the value of the other parts, which applies after
-  the merge as the patch did; a child which gives the leaf (e.g.
-  `"column": "value"`) is its default.
-- Two mixins which patch the same leaf by the same global merge their
-  cases; by different globals the later one is the switch over the earlier
-  one, a child's value is the default of the innermost one.
-- A patch of the plots, the annotations or the filter is a `match` of the
-  whole part; shorten it by hand if only an attribute differs.
-- Remove `margins`, `"hover": {"columns": []}` and `"symbol": null` where
-  the new defaults are wanted.
-- A condition of `not` in the filter of the hover of 4.x is migrated as a
-  comparison (it was a text of the string syntax, the hover had no rows).
-- Texts of maps (`geo:text`) are centered on their place by default (4.x
-  started them at it, shifted right by half their width); a migrated map
-  label with a `text-anchor` of its own is as it was.
-- A part without keys of 4.x (e.g. a parent of only `data`) is not
-  rewritten, its `$schema` of 4 stays valid.
+- `@preschen/gen-vis/check` exports `resolve` (the definition with the
+  expressions of its globals evaluated) and `variants` (the one of every
+  value of the controls) beside `resolveParents` and `validateDef`; the
+  form the engine reads (`translate`, `normalize`) is internal.
 
 ### Messages, check and CLI
 
@@ -562,8 +605,8 @@ Migration notes, to check by hand after `gen-vis migrate`:
 - `zero: true` includes 0 (`scale.zero`: an end of the data at 0 is not
   extended), it was the domain `[0, null]`: negative values are drawn below
   0 now (they hung below the plot), only negative ones end at 0. The same
-  of the `"domain": [0, null]` of 4.x, which `gen-vis migrate` writes as
-  `zero`; of values from 0 the charts are the same.
+  of the `"domain": [0, null]` of 4.x, written as `zero` in 5.0; of values
+  from 0 the charts are the same.
 - Bars on a log scale, which has no 0, start at the end of the domain
   nearest to 0, areas at its start (`@y:scaled:min`); they were not drawn
   (NaN).
@@ -690,9 +733,8 @@ Migration notes, to check by hand after `gen-vis migrate`:
   `select: "first"` and `"last"` are the ends along `x` (were the first and
   the last row). The new key `order` of a mark (`"x"`, `"y"`, `"rows"`)
   names the dim or keeps the order of the rows, e.g. of a connected
-  scatter plot. The migration of a definition of 4.x (`gen-vis migrate`
-  and while it is loaded) writes `"order": "rows"` of its lines and areas,
-  so they are drawn as 4.x drew them, e.g. a connected scatter plot.
+  scatter plot. 4.x drew lines and areas in the order of the rows:
+  `"order": "rows"` where that is wanted.
 - One text among numbers no longer makes a column categorical (the ticks
   read "10, NA, 30", bars had NaN heights and the chart was empty, also
   with `zero`). The usual texts of missing values (`NA`, `NaN`, `n/a`,
@@ -804,6 +846,10 @@ Drawing:
   the starts of every month).
 - Stacked areas do not overlap where a group has no row at a position of
   the others: it has a point of no height at its place in the stack.
+- `y1` is the end of an area and of a vertical bar, as documented (it was
+  ignored, the end was the value of `y`, which it still is without a
+  `y1`); the base of a `y1` without a `y0` is the 0 of its scale; not of
+  polar areas.
 
 Data:
 
@@ -827,6 +873,9 @@ Data:
   (`'-Infinity'` of `steps`).
 - Values of the same text are one entry of a control and one category (`1`
   and `"1"` of JSON).
+- The data and the geometry are requested ahead only of a plain url: a
+  `geo.data` or `data` of an expression of the globals was requested as a
+  url (one failing request per load).
 
 Security, the events and the exports:
 
@@ -909,6 +958,9 @@ Security, the events and the exports:
   sets `mountGenVisElement`, `mountGenVisByClass` and
   `unmountGenVisElement` as globals of the window.
 - `modern-screenshot` is no dependency (the PNG is the export SVG).
+- The chunk of the migration is gone from the builds;
+  `@preschen/gen-vis/check` does not export `migrate`, `formatJson`,
+  `schemaMajor`, `isDefinition4` and `isDefinition5` anymore.
 - `tests/png.test.js` draws every definition of `data/` and the site
   examples with the CLI in one Chromium, 720 pixels wide, and compares the
   images pixel by pixel with `tests/png/` (a test fails above 0.2% of the

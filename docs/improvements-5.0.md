@@ -114,7 +114,7 @@ lazy chunk). Z1 to Z4 below give more than that back.
 | Z3 | The hover as a lazy chunk (`comp/facet-hover.js`, `comp/hover.js`, `coords/hover.js`), loaded when the browser is idle after the first draw or with the first pointer or key event. | 5–6 kB | open |
 | Z4 | The curves which few charts use (basis, catmullRom, cardinal, natural, their closed forms) loaded as the colors of d3 are, by `requirements` of `utils/load.js`. | about 2 kB | open |
 | Z5 | The PNG has only the faces of Inter its texts use, not all six (188 kB of base64 in every rasterised image). | size and time of every PNG, not the bundle | done |
-| Z6 | One vocabulary in the engine, see A1. | 0.3 kB (104.6 → 104.3 kB): the renames were a small part of the translation, the expansion of the marks stays | done |
+| Z6 | One vocabulary in the engine, see A1; the language of 4.x and its migration are removed (its lazy chunk of 6.4 kB is gone). | 0.5 kB of the first load (104.6 → 104.1 kB): the renames were a small part of the translation, the expansion of the marks stays | done |
 | Z7 | A lazy chunk of the times (`scaleTime`, `d3-time`, `d3-time-format`, the periods) for charts without dates. | about 7 kB for charts without dates, one more request for all others | not worth it: most charts are time series |
 
 Z1 to Z4 are 10–12 kB without a change of a feature. The size of 4.1 is not
