@@ -7,8 +7,8 @@ import { isOperator, refNames } from '@/utils/expr';
  * The normalization of the form the engine reads (of a definition of 5.0
  * merged with its parents, resolved and translated, see translate of
  * utils/language.js) into the form the renderer reads, see spec/normalize.
- * It keeps the names of the engine (`dims`, `marks`, ...) and writes out
- * what the form may leave out. It is pure, JSON to JSON, the parts which
+ * Both forms have the names of the definition (`dims`, `marks`, ...), the
+ * normalization writes out what the form may leave out. It is pure, JSON to JSON, the parts which
  * need the rows, the types of dims without a type, follow when the rows
  * are loaded, see inferTypes of utils/data.js and prepareDim of
  * utils/def.js.

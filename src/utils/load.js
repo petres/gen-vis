@@ -314,8 +314,9 @@ const loadParts = need => {
     return parts;
 };
 
-// an error of the engine's form with the path of the definition, e.g.
-// "marks[0].fill: ..." of "marks[0].props.fill: ..."
+// an error of the engine's form with the path of the definition, where
+// they differ (see authoredPath), e.g. "marks[0].fill: ..." of
+// "marks[0].props.fill: ..."
 const authoredError = error => {
     const m = /^(marks|facets)\b([^\s:]*): /.exec(error?.message ?? '');
     return m ? new Error(`${authoredPath(m[1] + m[2])}: ${error.message.slice(m[0].length)}`, { cause: error }) : error;
@@ -564,7 +565,8 @@ const columnReferences = (prepared, rows, columns) => {
                 return;
             }
             [...new Set(names.filter(n => typeof n == 'string').map(n => n.split(':')[0]))].filter(n => columnNames.has(n) && !own.has(n)).forEach(n => {
-                const path = authoredPath(part == 'props' ? `marks[${i}].props.${k}` : `marks[${i}].${part}.${k}`);
+                // the attributes of a mark are its `props`
+                const path = part == 'props' ? `marks[${i}].${k}` : `marks[${i}].${part}.${k}`;
                 warnings.push(dimOf.has(n) ? `${path}: '@${n}' is the column of the dim '${dimOf.get(n)}', a reference names the dim: @${dimOf.get(n)}`
                     : `${path}: '@${n}' is a column of the data without a dim, it has no value: a reference names a dim, e.g. "dims": { "${n}": "${n}" }`);
             });

@@ -896,12 +896,14 @@ const checkDims = def => {
 };
 
 // the path of a part of the engine's form as the one of the definition,
-// e.g. "marks[0].props.fill" is "marks[0].fill", "facets.rows" (the dim of the rows of a grid)
-// is "facets.by.rows". "facets.cols" stays: it is the number of columns of
-// facets of a dim in both forms; the dim of the columns of a grid, also
-// `cols` of the engine, is "facets.by.cols", which its checks name
-// themselves (see checkFacets of utils/validate.js and facetDim of
-// layout.js), a path does not tell the two apart
+// where the forms differ: the attributes of a mark are its `props`
+// ("marks[0].props.fill" is "marks[0].fill"), the dim of the facets and
+// the dim of the rows of a grid are `dim` and `rows` of the facets
+// ("facets.by", "facets.by.rows", see facetsOf). "facets.cols" stays: it is
+// the number of columns of facets of a dim in both forms; the dim of the
+// columns of a grid, also `cols` of the engine, is "facets.by.cols", which
+// its checks name themselves (see checkFacets of utils/validate.js and
+// facetDim of layout.js), a path does not tell the two apart
 const authoredPath = path => String(path)
     .replace(/^marks\[(\d+)\]\.props\./, 'marks[$1].')
     .replace(/^facets\.dim\b/, 'facets.by')
