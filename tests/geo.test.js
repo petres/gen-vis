@@ -11,16 +11,16 @@ const square = (id, x) => ({ type: 'Feature', id, properties: { name: `Region ${
     geometry: { type: 'Polygon', coordinates: [[[x, 0], [x + 1, 0], [x + 1, 1], [x, 1], [x, 0]]] } });
 const regions = { type: 'FeatureCollection', features: [square('01', 0), square('02', 1), square(3, 2)] };
 const mapDef = (geo = {}) => ({
-    options: { coord: 'geo', width: 300, height: 100, margins: { top: 0, right: 0, bottom: 0, left: 0 } },
+    coord: 'geo', width: 300, height: 100, margins: { top: 0, right: 0, bottom: 0, left: 0 },
     geo: { data: regions, join: 'region', ...geo },
-    mapping: {
+    dims: {
         region: { column: 'region', type: 'categorical' },
         value: { column: 'value', type: 'numeric', hover: {} },
     },
-    plot: [
-        { type: 'geo:base', props: { fill: '#EEE' } },
-        { type: 'geo:region', by: ['region'], props: { fill: 'red' } },
-        { type: 'geo:circle', by: ['region'], props: { r: 3 } },
+    marks: [
+        { type: 'base', fill: '#EEE' },
+        { type: 'region', by: 'region', fill: 'red' },
+        { type: 'point', by: 'region', r: 3 },
     ],
 });
 const regionsDrawn = el => [...el.querySelectorAll('g.vis-mark.mark-1 path')]
@@ -56,7 +56,7 @@ describe('the join of rows to the features', () => {
         const el = await mount({ def: mapDef({ key: 'properties.name' }), data: 'region,value\nX,1\nY,2\nZ,3\nW,4' });
         expect(regionsDrawn(el)).toEqual([]);
         expect(el.querySelectorAll('g.vis-mark.mark-2 circle')).toHaveLength(0);
-        // one warning of both plots
+        // one warning of both marks
         expect(warnings()).toEqual([expect.stringMatching(/no value of the join 'region' \('X', 'Y', 'Z', \.\.\.\) matches a feature by its key 'properties\.name'/)]);
     });
 
