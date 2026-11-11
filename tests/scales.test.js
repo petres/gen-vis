@@ -228,6 +228,14 @@ describe('values of the definition of a mapping with the scale of another one', 
     });
 });
 
+describe('the fixed values of the ticks of an axis', () => {
+    test('a value without a position is no tick, e.g. 0 of a log scale, nor one outside of the domain', () => {
+        const mapping = { type: 'numeric', scale: { type: 'log', orientation: 'vertical', domain: [1, 100] } };
+        const s = makeScale('y', mapping, [{ y: 1 }, { y: 100 }], options);
+        expect(tickValues({ values: [0, -1, 1, 10, 100, 1000] }, s, 5, mapping)).toEqual([1, 10, 100]);
+    });
+});
+
 describe('zero: the domain of the data includes 0, an end at 0 is exact', () => {
     const scale = (s, rows, type = 'linear') => makeScale('y', { type: 'numeric', scale: { type, orientation: 'vertical', domain: [null, null], ...s } }, rows, options);
 

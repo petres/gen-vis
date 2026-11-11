@@ -6,12 +6,12 @@ import { convert } from "@/utils/data";
 import { textWidth } from "@/utils/measure";
 
 // fixed values outside of the range of the scale are not drawn, e.g. 10 of a
-// log scale from 14, d3 would draw them in the margins, also the ones which
-// are no category of a band or point scale, they have no position
+// log scale from 14, d3 would draw them in the margins, also the ones
+// without a position: no category of a band or point scale, 0 of a log scale
 const inRange = (scale, v) => {
     const p = scale(v);
     if (typeof p != 'number' || !isFinite(p))
-        return !scale.step;
+        return false;
     const [a, b] = [...scale.range()].sort((x, y) => x - y);
     return p >= a - 0.5 && p <= b + 0.5;
 };
