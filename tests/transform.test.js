@@ -561,3 +561,37 @@ describe('the classes of a step of a bin (review of 5.0)', () => {
         expect(applyTransforms([{ v: 0.09999999999999999 }], [{ type: 'bin', column: 'v', edges: [0.1, 0.2], replace: true }]).notes).toHaveLength(1);
     });
 });
+
+describe('the names of an expression after a transform of rows (review of 5.0)', () => {
+    test('the column of a fold which is kept, not the global of its name, as of all transforms computed', () => {
+        const data = [{ id: 'a', 2019: 1, 2020: 2 }];
+        const transforms = [{ type: 'fold', columns: ['2019', '2020'], key: 'year', value: 'v' }, { type: 'calc', expr: { cat: ['@year', '-', '@k'] }, as: 'out' }];
+        const before = applyTransforms(data, transforms, { year: 'GLOBAL', k: 1 });
+        expect(before.get('out')).toEqual(['2019-1', '2020-1']);
+        const fresh = applyTransforms(data, transforms, { year: 'GLOBAL', k: 2 });
+        const next = applyTransforms(data, transforms, { year: 'GLOBAL', k: 2 }, new Set(), before);
+        expect(fresh.get('out')).toEqual(['2019-2', '2020-2']);
+        expect(next.get('out')).toEqual(['2019-2', '2020-2']);
+        // the fold is kept
+        expect(next.rows).toBe(before.rows);
+        // and of the transforms after the next ones
+        const again = applyTransforms(data, transforms, { year: 'GLOBAL', k: 3 }, new Set(), next);
+        expect(again.get('out')).toEqual(['2019-3', '2020-3']);
+    });
+
+    test('the columns of a bin and of an aggregate of rows which are kept', () => {
+        const data = [{ v: 1, g: 'a' }, { v: 3, g: 'a' }, { v: 7, g: 'b' }];
+        const bin = [{ type: 'bin', column: 'v', step: 5, replace: true }, { type: 'calc', expr: { '*': ['@count', '@k'] }, as: 'out' }];
+        const binned = applyTransforms(data, bin, { count: 100, k: 1 });
+        expect(applyTransforms(data, bin, { count: 100, k: 2 }, new Set(), binned).get('out')).toEqual([4, 2]);
+        const aggregate = [{ type: 'aggregate', column: 'v', op: 'sum', by: 'g', rows: true, as: 'total' }, { type: 'calc', expr: { '*': ['@total', '@k'] }, as: 'out' }];
+        const sums = applyTransforms(data, aggregate, { total: 100, k: 1 });
+        expect(applyTransforms(data, aggregate, { total: 100, k: 2 }, new Set(), sums).get('out')).toEqual([8, 14]);
+    });
+
+    test('a column of a later row of JSON is one, not the global of its name', () => {
+        const data = [{ id: 1 }, { id: 2, k: 5 }];
+        const columns = applyTransforms(data, [{ type: 'calc', expr: '@k', as: 'out' }], { k: 9 });
+        expect(columns.get('out')).toEqual([null, 5]);
+    });
+});

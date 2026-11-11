@@ -702,12 +702,17 @@ const rowColumns = t => t.type == 'bin' ? [t.start ?? 'start', t.end ?? 'end', t
 const rowNames = rows => {
     if (Array.isArray(rows.columns))
         return rows.columns;
-    const names = new Set();
-    for (const r of rows)
-        for (const k in r)
-            names.add(k);
-    return [...names];
+    if (!namesOf.has(rows)) {
+        const names = new Set();
+        for (const r of rows)
+            for (const k in r)
+                names.add(k);
+        namesOf.set(rows, [...names]);
+    }
+    return namesOf.get(rows);
 };
+// (once per list of rows, e.g. not of every change of a global)
+const namesOf = new WeakMap();
 
 // the strings of a transform with the values of the globals
 const filled = (t, globals) => {
@@ -743,7 +748,8 @@ const timeLocale = locale => {
  * months of a format.
  */
 const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null, locale = undefined) => {
-    const present = new Set(rows.length ? Object.keys(rows[0]) : []);
+    // the columns of the rows, of all of them, e.g. of a later row of JSON
+    const present = new Set(rowNames(rows));
     // the columns of the transforms before, the names of an expression which
     // are none of them or of the rows are globals
     const own = new Set();
@@ -774,7 +780,11 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
     // their order and the rows of the filters (`kept`, the indexes of the
     // rows, null without a filter), the later transforms compute the values
     // of these rows, the others have none
-    const state = steps[first - 1]?.state ?? { rows, columns: [], kept: null, notes: [] };
+    const state = steps[first - 1]?.state ?? { rows, columns: [], kept: null, notes: [], made: [] };
+    // (the columns of the rows of the transforms of rows which are kept are
+    // columns too, e.g. the key of a fold, not a global of its name)
+    const made = [...state.made];
+    made.forEach(c => present.add(c));
     let base = state.rows;
     const columns = new Map(state.columns);
     columns.steps = steps.slice(0, first);
@@ -785,7 +795,7 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
     // (a name of the prototype of objects is no column, e.g. "constructor")
     const read = (i, c) => columns.has(c) ? columns.get(c)[i] ?? null : (inherited(c) ? ownValue(base[i], c) : base[i][c]);
     const save = (key, names) => columns.steps.push({ key, names,
-        state: { rows: base, columns: [...columns], kept: columns.kept, notes: [...notes] } });
+        state: { rows: base, columns: [...columns], kept: columns.kept, notes: [...notes], made: [...made] } });
     for (const [k, { t, inUtc }] of list.entries()) {
         if (k < first)
             continue;
@@ -851,7 +861,12 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
                 columns.kept = null;
                 base = result.rows;
             }
-            result.rows.forEach(r => Object.keys(r).forEach(c => present.add(c)));
+            result.rows.forEach(r => Object.keys(r).forEach(c => {
+                if (!present.has(c)) {
+                    present.add(c);
+                    made.push(c);
+                }
+            }));
             save(keys[k], []);
             continue;
         }
@@ -861,8 +876,8 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
             continue;
         }
         // the columns of the transform, of an aggregate of several ops one per op
-        const made = result.columns ?? [[t.as ?? t.column, result]];
-        made.forEach(([name, values]) => {
+        const added = result.columns ?? [[t.as ?? t.column, result]];
+        added.forEach(([name, values]) => {
             // the values of all rows, none of the ones of the filters before
             const all = index ? new Array(base.length).fill(null) : values;
             if (index)
@@ -870,7 +885,7 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
             columns.set(name, all);
             columns.changed.add(name);
         });
-        save(keys[k], made.map(([name]) => name));
+        save(keys[k], added.map(([name]) => name));
     }
     columns.rows = base === rows ? null : base;
     columns.notes = notes;
