@@ -295,6 +295,24 @@ them.
 - A comparison of more than two operands is a chain of every pair of
   neighbours, also `==` and `!=`: `@a == @b == @c` is true if all three
   are the same.
+- **`==`, `!=` and `match` compare numbers by their value**, as `<` does:
+  `"1.0" == 1`, `"2020.0" == 2020` and `" 5" == 5` are true (they compared
+  as texts), also `"01" == "1"`; a `match` takes the case of the same text
+  first, then the one of the same number. The values of globals and entries
+  of controls are compared as texts, as before.
+- **The texts `"0"`, `"false"` (of any case) and an empty one are false** in
+  conditions (`if`, `and`, `or`, `not`, `filter`), so a flag of a column of
+  CSV filters its rows (`"filter": "@keep"`); they were true.
+- **Timestamps of UTC of parquet are dates** (texts of ISO with a `Z`), a dim
+  of them is one of dates; they were numbers of milliseconds.
+- **Blank lines of CSV and TSV are no rows**, the header is the first line
+  which is none.
+- **The HTML of a definition is cleaned**: the `source` (footer) and the
+  templates of the hover keep the tags a, b, i, em, strong, u, s, br, span,
+  sub, sup, small, code, p and div, the attributes title, class, style
+  (properties of the text, the box and a grid or flex, nothing positioned
+  or loaded) and of links href (http, https, mailto, relative), target and
+  rel (`noopener` added); other tags keep only their text.
 
 ### Margins
 
@@ -697,6 +715,163 @@ Migration notes, to check by hand after `gen-vis migrate`:
   integer keys JavaScript puts first and ascending; `order` sets another
   order.) A category `__proto__` keeps its props and rows (was lost), also
   as a key of a merged part and of an object of an expression.
+
+### Fixes and features of the second review of the release
+
+The review of 2026-11-10 (speed, size, architecture: see
+[docs/improvements-5.0.md](docs/improvements-5.0.md)) and its fixes.
+
+Features:
+
+- **A table of the data shown**: the prop `table` (`data-table`) adds a
+  button which shows the rows shown as a table instead of the plots (the
+  columns of the CSV, the values formatted as in the hover, a caption, a
+  sticky header, at most 1000 rows), and the chart again, for screen
+  readers and for the numbers; `showTable(on)` and `table` of the slot
+  `buttons` toggle it, the images always show the chart, its module is
+  loaded with the first click.
+- **`clip` of a mark**: `true` clips its elements to the plot area of its
+  facet, e.g. the bars and lines of values outside of a fixed `domain`,
+  which are drawn over the axes otherwise (the default, as a clip also
+  cuts a stroke or a point at the edge); the export keeps it.
+- **CSV of semicolons with decimal commas** is read (e.g. of a spreadsheet
+  in German): a header of semicolons and no comma, the columns of numbers
+  of decimal commas are numbers; a comma of CSV of commas is never a
+  decimal one, separators of thousands stay no numbers.
+- **Charts of the same data file read it once** and share its rows (was:
+  the request only); the warnings of the data are the ones of every chart.
+- CSV and TSV are read without `new Function`, so a page with a Content
+  Security Policy without `unsafe-eval` reads its data; a column
+  `__proto__` is left out with a warning.
+- A text of data which is not UTF-8 warns (U+FFFD, e.g. Latin-1 of a
+  spreadsheet).
+
+Speed (all 72 examples mounted one after another: 1376 ms → 966 ms; all
+destroyed: 141 ms → 10 ms, in Chromium):
+
+- The dates of a column are read once per text: the rows of a time series
+  are prepared several times faster.
+- Removing many charts no longer lays out the page once per chart (the
+  height is measured in the frame after each draw), a resize uses the
+  width of the ResizeObserver instead of measuring the chart again, the
+  hover reads the pointer position once per move.
+- `--gen-vis-tick-inset` of the styles is read once with the sizes of the
+  chart (was a style recalculation per axis per draw; an axis of its own
+  inset has `tickMarks.inset`, a rule of the page only for the element of
+  an axis no longer moves its labels), the values of all rows of bars and
+  arcs are computed once.
+- The rows of a mark's own `data` keep their elements from one draw to the
+  next (were re-created on every draw), so they move with a `transition`,
+  also a row whose values change with a global.
+- The PNG embeds only the faces of Inter its texts draw (by weight and
+  characters), about 125 kB less of its SVG; the images are the same.
+- `gen-vis export` ends at once after its work (it waited 2 s for a timer).
+
+Drawing:
+
+- Lines and areas on a band scale run through the centers of the bands
+  (were at their starts, the left edges of the bars), e.g. a line on bars,
+  also along a categorical `y`; the points and labels of a dim of no type
+  (its type follows from the rows) are at the centers too.
+- Marks without a position are not drawn (were elements with `NaN`
+  attributes): values a log scale has no position of (0), categories
+  outside a fixed `domain` of a band scale; a line has a gap there.
+- A row of a mark's own `data` without a value of a dim of its position is
+  not drawn (was drawn at `NaN`), the warning names the dim; a rule of
+  rows of only a `y` (`{"type": "rule", "data": [{"y": 2}]}`) is horizontal.
+- An annotation at a value without a position is not drawn (was a `NaN`
+  rect or line); a category which is not in the data at all, or 0 of a log
+  scale, warns.
+- Fixed `values` of an axis without a position (0 of a log scale) are no
+  ticks and no grid lines.
+- `facets.cols` of 0, a negative number or no number is one column (was
+  Infinity/NaN sizes); the schema wants a whole number of at least 1.
+- `transition`: the arcs of polar charts move by their angles and radii
+  (the path was interpolated as text, invalid arcs on the way); a path of
+  other commands, e.g. a line of another number of points, is set at once.
+- The ticks of whole numbers keep the ticks between them with a fixed end
+  of the `domain` or values of a dim of the same scale (`"scale": {"of":
+  ...}`) which are not whole, and when fewer than two ticks would stay
+  (`"domain": [0, 0.5]` had the single tick 0).
+- A fixed end of the `domain` of a log scale without a position (0, or of
+  the other sign than the values) is taken from the data, with a warning
+  (drew nothing, silently).
+- An axis title with a negative `offset` has a valid transform (was
+  `translate(-185 --5)`).
+- The ticks of an `interval` of `quarter`, `half` or several units
+  (`"6 months"`) are the starts of the periods, from the first one (were
+  the starts of every month).
+- Stacked areas do not overlap where a group has no row at a position of
+  the others: it has a point of no height at its place in the stack.
+
+Data:
+
+- A dim of a column of a transform of a global keeps the type of its
+  values when the global changes (`"{measure}_idx"` turned categorical), a
+  column which is nowhere has no type.
+- Parquet reads the column of the `names` of the values of a control, and
+  all columns of a column template of a global without a control of fixed
+  values (the page sets it; its values were missing), also the columns of
+  `{global:field}`.
+- A name of a `calc` or a `filter` after a `fold`, a `bin` or an
+  `aggregate` of rows is their column also after a change of a global (it
+  was the global of the name), and a column of any row of JSON, not only
+  of the first.
+- A `bin` of more than 10 000 classes is an error naming the range and the
+  step (it ran out of memory); a value next to an edge of a `step` is on
+  it (one ulp below the first edge was left out).
+- A name of the prototype of objects is no column (`"filter":
+  "@constructor"` kept all rows).
+- The text of an expression quotes a key which is no finite number
+  (`'-Infinity'` of `steps`).
+- Values of the same text are one entry of a control and one category (`1`
+  and `"1"` of JSON).
+
+Security, the events and the exports:
+
+- The HTML of a definition runs no script (see "Semantics decided"); the
+  footer of the slot is the cleaned HTML. Props of marks and legends set
+  no handlers (`on…`) and no links of `javascript:`, the symbols of
+  legends draw no `script`, `foreignObject`, `iframe` or animations of
+  SVG, the exported SVG carries none.
+- The props of `highlight` and `others` are CSS: a name which is none or a
+  value which could leave its rule (`;{}`, comments, quotes, urls other
+  than `url(#id)`) is left out with a warning naming the mark (could hide
+  the page).
+- An error thrown by a listener of an event (`on`, `onHover`, …) is
+  reported as an uncaught error of the page (`reportError`); the other
+  listeners still run and the chart stays drawn (an error of
+  `update:state` or `select` replaced the chart with it, one of `hover`
+  left the box undrawn).
+- `hover` with `null` is emitted when a hover shown ends because the chart
+  is drawn anew (e.g. a new definition) or destroyed, so linked charts do
+  not keep a stale highlight.
+- `setHighlight(entry)` sets the prop `highlight`: a highlight set before
+  the chart is loaded is shown once it is drawn (it was lost), and
+  `props.highlight` shows it.
+- `lazy`: a number or a margin without a unit is pixels (`800`,
+  `data-lazy="800"`); a margin the browser refuses is the default one with
+  a warning (createGenVis threw and left an empty element).
+- `destroy()` of `{ root: true }` (the Vue component) removes the classes
+  `vis-outer` and `vis-loading` and the min-height it set; a min-height of
+  the page is kept, also while the chart is loaded.
+- The PNG and the SVG of a chart in a hidden element (`display: none`, a
+  tab) or a transformed one (`scale()`) are the ones of a normal place
+  (were empty, "could not be drawn", or half the size): the copy is drawn
+  in the body with the `--gen-vis-*` variables, the font and the color of
+  the place.
+- The ids of an exported SVG (clips, gradients of color legends) have a
+  prefix of a hash of its content, so several SVGs inlined in one page
+  keep their own; the same chart is the same file.
+- The browser of the CLI is driven over a pipe, so it ends also when the
+  CLI is killed.
+- `gen-vis check` reads only local files: data of another origin
+  (`https://…`) is not checked (a note, was "the file /data.csv does not
+  exist" or the check of an unrelated local file of `--root`), a remote
+  parent is an error naming it.
+- CLI: `--globals` and `--state` are JSON objects, an output of another
+  format (e.g. `.jpg`) names its extension and the formats, `gen-vis`
+  without a command is a usage error (exit 2).
 
 ### Package and builds
 
