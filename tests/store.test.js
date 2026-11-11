@@ -2,7 +2,6 @@
 import { describe, test, expect, vi, afterEach, onTestFinished } from 'vitest';
 import { createStore } from '@/store';
 import { resolveUrl, resolveParents, clearCache, requirements } from '@/utils/load';
-import { migrate } from '@/utils/migrate';
 import { translate } from '@/utils/language';
 import { resolve, variants, namesOfGlobals } from '@/utils/resolve';
 import { variantsOf } from '@/utils/def';
@@ -29,12 +28,13 @@ const schema = 'https://unpkg.com/@preschen/gen-vis@5/schema.json';
 const def = {
     $schema: schema,
     data: 'data.csv',
-    options: { width: 500, height: 300 },
-    mapping: {
-        x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' } },
-        y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' } },
+    width: 500,
+    height: 300,
+    dims: {
+        x: { column: 'year', type: 'numeric' },
+        y: { column: 'value', type: 'numeric' },
     },
-    plot: { type: 'cartesian:line', props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
+    marks: { type: 'line' },
 };
 const csv = 'year,value\n2020,1\n2021,\n2022,3';
 
@@ -54,39 +54,41 @@ describe('resolveUrl', () => {
 describe('resolveParents', () => {
     test('merges the parents, relative to the def referencing them', async () => {
         const files = {
-            'http://h/data/shared/base.json': JSON.stringify({ parent: 'root.json', options: { width: 1, height: 2 }, plot: [{ type: 'a' }] }),
-            'http://h/data/shared/root.json': JSON.stringify({ options: { width: 0, title: 'root' } }),
+            'http://h/data/shared/base.json': JSON.stringify({ parent: 'root.json', width: 1, height: 2, margins: { left: 1, top: 2 }, marks: [{ type: 'a' }] }),
+            'http://h/data/shared/root.json': JSON.stringify({ width: 0, title: 'root', margins: { left: 0, right: 9 } }),
         };
         const loaded = [];
         const merged = await resolveParents(
-            { $schema: schema, parent: '../shared/base.json', options: { width: 3 }, plot: [{ type: 'b' }] },
+            { $schema: schema, parent: '../shared/base.json', width: 3, margins: { left: 3 }, marks: [{ type: 'b' }] },
             'http://h/data/bev/def.json',
             url => { loaded.push(url); return files[url]; },
         );
         expect(loaded).toEqual(['http://h/data/shared/base.json', 'http://h/data/shared/root.json']);
-        expect(merged.options).toEqual({ width: 3, height: 2, title: 'root' });
+        expect(merged).toMatchObject({ width: 3, height: 2, title: 'root' });
+        // objects are merged key by key
+        expect(merged.margins).toEqual({ left: 3, right: 9, top: 2 });
         // arrays are replaced, not merged
-        expect(merged.plot).toEqual([{ type: 'b' }]);
+        expect(merged.marks).toEqual([{ type: 'b' }]);
     });
 
     test('mixins are merged in their order, with their own parents', async () => {
         const files = {
-            'http://h/data/root.json': JSON.stringify({ options: { title: 'root', height: 1, width: 1 } }),
-            'http://h/data/lines.json': JSON.stringify({ parent: 'root.json', options: { height: 2 }, plot: [{ type: 'a' }] }),
-            'http://h/data/facets.json': JSON.stringify({ parent: 'root.json', options: { width: 3 }, facets: { dim: ['type'] } }),
+            'http://h/data/root.json': JSON.stringify({ title: 'root', height: 1, width: 1 }),
+            'http://h/data/lines.json': JSON.stringify({ parent: 'root.json', height: 2, marks: [{ type: 'a' }] }),
+            'http://h/data/facets.json': JSON.stringify({ parent: 'root.json', width: 3, facets: { by: 'type' } }),
         };
         const loaded = [];
         const merged = await resolveParents(
-            { $schema: schema, parent: ['../lines.json', '../facets.json'], options: { title: 'def' } },
+            { $schema: schema, parent: ['../lines.json', '../facets.json'], title: 'def' },
             'http://h/data/bev/def.json',
             url => { loaded.push(url); return files[url]; },
         );
         // the shared parent is loaded and merged once, it does not override lines.json,
         // the parents of a def are requested at once
         expect(loaded).toEqual(['http://h/data/lines.json', 'http://h/data/facets.json', 'http://h/data/root.json']);
-        expect(merged.options).toEqual({ title: 'def', height: 2, width: 3 });
-        expect(merged.plot).toEqual([{ type: 'a' }]);
-        expect(merged.facets).toEqual({ dim: ['type'] });
+        expect(merged).toMatchObject({ title: 'def', height: 2, width: 3 });
+        expect(merged.marks).toEqual([{ type: 'a' }]);
+        expect(merged.facets).toEqual({ by: 'type' });
     });
 
     test('cyclic parents', async () => {
@@ -99,7 +101,7 @@ describe('resolveParents', () => {
 
     test('a file of a definition declares gen-vis 5 (or 4) by its $schema, in itself or in a parent, an inline one may omit it', async () => {
         const load = files => url => files[url];
-        const of = s => JSON.stringify({ $schema: s, options: {} });
+        const of = s => JSON.stringify({ $schema: s, title: 'p' });
         // the major version of unpkg or jsdelivr, a full one or the schema of the installed package
         for (const s of [schema, 'https://unpkg.com/@preschen/gen-vis@4.1.0/schema.json', 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4.0.0-beta.1/schema.json',
             '../../node_modules/@preschen/gen-vis/schema.json'])
@@ -107,9 +109,9 @@ describe('resolveParents', () => {
         // in a parent
         expect((await resolveParents({ parent: 'p.json' }, 'http://h/a.json', load({ 'http://h/p.json': of(schema) }))).$schema).toBe(schema);
         // an inline definition without one, its parents need none
-        expect(await resolveParents({ parent: 'p.json', options: { title: 'a' } }, undefined, () => '{}')).toEqual({ parent: 'p.json', options: { title: 'a' } });
+        expect(await resolveParents({ parent: 'p.json', title: 'a' }, undefined, () => '{}')).toEqual({ parent: 'p.json', title: 'a' });
         const error = what => `'http://h/a.json' is no definition of gen-vis 5: ${what}, e.g. "$schema": "${schema}", see the changelog of gen-vis 5.0.0 of the changes of the definitions`;
-        await expect(resolveParents({ options: {} }, 'http://h/a.json')).rejects.toThrow(error('its $schema is missing'));
+        await expect(resolveParents({ title: 'a' }, 'http://h/a.json')).rejects.toThrow(error('its $schema is missing'));
         await expect(resolveParents({ $schema: 'https://unpkg.com/@preschen/gen-vis@3/schema.json' }, 'http://h/a.json')).rejects.toThrow(error('its $schema is the one of gen-vis 3'));
         await expect(resolveParents({ $schema: 'https://unpkg.com/@preschen/gen-vis/schema.json' }, 'http://h/a.json'))
             .rejects.toThrow(error('its $schema "https://unpkg.com/@preschen/gen-vis/schema.json" names no major version of gen-vis'));
@@ -136,7 +138,7 @@ describe('Store.init', () => {
         const requested = [];
         const files = {
             'http://h/data/def.json': JSON.stringify({ ...def, parent: 'base.json' }),
-            'http://h/data/base.json': JSON.stringify({ options: { title: 'base' } }),
+            'http://h/data/base.json': JSON.stringify({ title: 'base' }),
             'http://h/data/data.csv': csv,
         };
         vi.stubGlobal('fetch', async url => {
@@ -221,71 +223,68 @@ describe('Store.init', () => {
         expect(store.data).toEqual([{ x: 1, y: 2 }]);
     });
 
-    // the legend of a scale of colors, of the definition or of a patch of a form element
+    // the legend of a scale of colors, of the definition or of another value of a control
     test('loads the legend of a scale of colors', async () => {
         const color = { column: 'value', type: 'numeric', scale: { type: 'sequential', interpolator: 'Blues' } };
         const withLegend = createStore();
-        await withLegend.init({ def: { ...def, data: undefined, mapping: { ...def.mapping, color: { ...color, legend: {} } } }, data: csv });
+        await withLegend.init({ def: { ...def, data: undefined, dims: { ...def.dims, color: { ...color, legend: {} } } }, data: csv });
         expect(withLegend.colorLegend).not.toBe(null);
 
-        const patched = createStore();
-        await patched.init({ def: { ...def, data: undefined, mapping: { ...def.mapping, color },
+        const switched = createStore();
+        await switched.init({ def: { ...def, data: undefined,
             globals: { legend: 'no' },
-            formElements: [{ id: 'legend', ref: 'legend', type: 'radio', values: [
-                { id: 'no', value: 'no' },
-                { id: 'yes', value: 'yes', patch: { mapping: { color: { legend: {} } } } },
-            ] }] }, data: csv });
-        expect(patched.colorLegend).not.toBe(null);
+            controls: [{ type: 'radio', global: 'legend', values: ['no', 'yes'] }],
+            dims: { ...def.dims, color: { ...color, legend: "=match(@legend, {yes: literal({})})" } } }, data: csv });
+        expect(switched.def.dims.color.legend).toBeUndefined();
+        expect(switched.colorLegend).not.toBe(null);
 
         const without = createStore();
-        await without.init({ def: { ...def, data: undefined, mapping: { ...def.mapping, color } }, data: csv });
+        await without.init({ def: { ...def, data: undefined, dims: { ...def.dims, color } }, data: csv });
         expect(without.colorLegend).toBe(null);
     });
 
-    // the transforms of a patch, the definition has none
-    test('the transforms of a patch of a form element', async () => {
+    // the transforms of a value of a control, the definition has none of the other values
+    test('the transforms of a value of a control', async () => {
         const store = createStore();
         await store.init({ def: { ...def, data: undefined,
-            mapping: { ...def.mapping, y: { column: 'sum', type: 'numeric', scale: { orientation: 'vertical' } } },
             globals: { mode: 'sum' },
-            formElements: [{ id: 'mode', ref: 'mode', type: 'radio', values: [
-                { id: 'value', value: 'value' },
-                { id: 'sum', value: 'sum', patch: { transform: [{ type: 'cumulative', column: 'value', as: 'sum' }] } },
-            ] }] }, data: 'year,value\n2020,1\n2021,2' });
+            controls: [{ type: 'radio', global: 'mode', values: ['value', 'sum'] }],
+            transform: "=match(@mode, {sum: literal([{type: 'cumulative', column: 'value', as: 'sum'}])})",
+            dims: { ...def.dims, y: { column: 'sum', type: 'numeric' } } }, data: 'year,value\n2020,1\n2021,2' });
         expect(store.data.map(r => r.y)).toEqual([1, 3]);
     });
 
     // only with `check`, the check is not loaded otherwise
     test('warnings for the definition', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        const wrong = { ...def, plot: { ...def.plot, type: 'path' } };
+        const wrong = { ...def, marks: [{ type: 'path' }] };
         await createStore().init({ def: wrong, data: csv });
         expect(warn).not.toHaveBeenCalled();
         const store = createStore();
         await store.init({ def: wrong, data: csv, check: true });
-        // the places of the warnings are the ones of the definition of 5.0
-        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition \(migrated from gen-vis 4, the paths are the ones of 5\): marks\[0\]\.type: unknown type 'path'/));
+        // the places of the warnings are the ones of the definition
+        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^gen-vis inline definition: marks\[0\]\.type: unknown type 'path'/));
     });
 
     // the check reads the definition, not the normalized one, e.g. of the
     // default props
-    test('no warnings of a definition of the parts of 4.0', async () => {
+    test('no warnings of a definition of the short forms', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        const short = { mapping: { x: 'year', y: 'value', k: { column: 'k', categories: { a: { color: 'red' } } } },
-            plot: { type: 'line', by: 'k', highlight: { 'stroke-width': 3 } } };
+        const short = { dims: { x: 'year', y: 'value', k: { column: 'k', categories: { a: 'red' } } },
+            marks: { type: 'line', by: 'k', highlight: { 'stroke-width': 3 } } };
         await createStore().init({ def: short, data: 'year,value,k\n2020,1,a\n2021,2,a', check: true });
         expect(warn).not.toHaveBeenCalled();
     });
 
-    // the check has the rows, e.g. of years as numbers of a date mapping,
+    // the check has the rows, e.g. of years as numbers of a date dim,
     // and warns also if the data could not be loaded
     test('warnings of the rows and of a failed load', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        const dated = { mapping: { x: { column: 'year', type: 'date' }, y: { column: 'value' } }, plot: { type: 'cartesian:line' } };
+        const dated = { dims: { x: { column: 'year', type: 'date' }, y: 'value' }, marks: { type: 'line' } };
         await createStore().init({ def: dated, data: [{ year: 2020, value: 1 }], check: true });
         expect(warn).toHaveBeenCalledWith(expect.stringMatching(/dims\.x\.type: the values of 'year' are numbers, e\.g\. 2020/));
         warn.mockClear();
-        const wrong = { ...def, data: 'http://h/missing.csv', plot: { ...def.plot, type: 'path' } };
+        const wrong = { ...def, data: 'http://h/missing.csv', marks: [{ type: 'path' }] };
         await expect(createStore().init({ def: wrong, check: true })).rejects.toThrow(/Could not load/);
         expect(warn).toHaveBeenCalledWith(expect.stringMatching(/marks\[0\]\.type: unknown type 'path'/));
     });
@@ -301,9 +300,9 @@ describe('Store.init', () => {
 
     test('the definition before is kept while a new one is loaded', async () => {
         serve({
-            'http://h/a/def.json': JSON.stringify({ ...def, options: { title: 'a' } }),
+            'http://h/a/def.json': JSON.stringify({ ...def, title: 'a' }),
             'http://h/a/data.csv': csv,
-            'http://h/b/def.json': JSON.stringify({ ...def, options: { title: 'b' } }),
+            'http://h/b/def.json': JSON.stringify({ ...def, title: 'b' }),
             'http://h/b/data.csv': csv,
         }, { 'http://h/b/data.csv': 30 });
         const store = createStore();
@@ -317,9 +316,9 @@ describe('Store.init', () => {
 
     test('an outdated init does not overwrite a newer one', async () => {
         serve({
-            'http://h/slow/def.json': JSON.stringify({ ...def, options: { title: 'slow' } }),
+            'http://h/slow/def.json': JSON.stringify({ ...def, title: 'slow' }),
             'http://h/slow/data.csv': csv,
-            'http://h/fast/def.json': JSON.stringify({ ...def, options: { title: 'fast' } }),
+            'http://h/fast/def.json': JSON.stringify({ ...def, title: 'fast' }),
             'http://h/fast/data.csv': csv,
         }, { 'http://h/slow/data.csv': 50 });
         const store = createStore();
@@ -331,17 +330,15 @@ describe('Store.init', () => {
 });
 
 describe('requirements', () => {
-    const entries = patches => [{ id: 'e', ref: 'e', values: patches.map((patch, i) => ({ value: String(i), patch })) }];
-    // the definition of the engine with the ones of all values of its form elements, as the load keeps them
-    const engineOf = def4 => {
-        const source = migrate(def4);
+    // the definition of the engine with the ones of all values of its controls, as the load keeps them
+    const engineOf = source => {
         const engine = translate(resolve(source, namesOfGlobals(source.globals, source.controls)));
         engine[variantsOf] = variants(source).map(translate);
         return engine;
     };
 
     test('nothing of a plain definition but the coordinate system and the locale', () => {
-        expect(requirements(def)).toEqual({
+        expect(requirements(engineOf(def))).toEqual({
             colors: false, coords: [undefined], geo: false, transforms: false, colorLegend: false, inside: false, locales: [undefined],
         });
     });
@@ -363,16 +360,21 @@ describe('requirements', () => {
         expect(requirements({ dims: { k: { fromData: true, legend: {} } } }).colorLegend).toBe(false);
     });
 
-    test('the parts of the patches of form elements', () => {
-        const need = requirements(engineOf({ ...def, formElements: entries([
-            { mapping: { c: { scale: { interpolator: 'Reds' }, legend: {} } } },
-            { transform: [{ type: 'rank', column: 'value', as: 'rank' }], options: { transition: true, locale: 'en' } },
-            null,
-            { mapping: { y: null } },
-        ]) }));
+    test('the parts of the other values of controls', () => {
+        const need = requirements(engineOf({ ...def,
+            controls: [{ global: 'e', values: ['0', '1', '2', '3'] }],
+            transform: "=match(@e, {1: literal([{type: 'rank', column: 'value', as: 'rank'}])})",
+            transition: "=match(@e, {1: true})",
+            locale: "=match(@e, {1: 'en'})",
+            dims: {
+                x: def.dims.x,
+                y: "=match(@e, {3: null}, literal({column: 'value', type: 'numeric'}))",
+                c: { scale: { interpolator: "=match(@e, {0: 'Reds'})" }, legend: "=match(@e, {0: literal({})})" },
+            } }));
         expect(need).toEqual({ colors: true, coords: [undefined], geo: false, transforms: true, colorLegend: true, inside: false, locales: [undefined, 'en'] });
-        // the placement of labels inside the bands of an area, also of a patch
-        expect(requirements(engineOf({ plot: [{ id: 'a', type: 'area' }], formElements: [{ ref: 'e', values: [{ value: 'a' }, { value: 'b', patch: { plot: [{ id: 't', type: 'text', place: { in: 'a' } }] } }] }] })).inside).toBe(true);
+        // the placement of labels inside the bands of an area, also of the marks of another value
+        expect(requirements(engineOf({ controls: [{ global: 'e', values: ['a', 'b'] }],
+            marks: "=match(@e, {b: literal([{type: 'area', id: 'a'}, {type: 'text', id: 't', place: {in: 'a'}}])}, literal([{type: 'area', id: 'a'}]))" })).inside).toBe(true);
     });
 
     test('a name of a color which is no part of a scale or of props needs no colors', () => {
@@ -388,13 +390,13 @@ describe('the entry for scripts', () => {
     });
 });
 
-describe('form elements of globals, coordinate systems and maps', () => {
+describe('controls of globals, coordinate systems and maps', () => {
     const lookupDef = {
         globals: { lang: 'de' },
-        formElements: [{ ref: 'lang', type: 'select', values: [{ value: 'de' }, { value: 'en' }] }],
+        controls: [{ type: 'select', global: 'lang', values: ['de', 'en'] }],
         transform: [{ type: 'lookup', column: 'land', data: 'names.csv', key: 'code', value: '{lang}', as: 'label' }],
-        mapping: { c: { column: 'label', fromData: true, legend: {} }, x: { column: 'year', type: 'numeric' } },
-        plot: [],
+        dims: { c: { column: 'label', fromData: true, legend: {} }, x: 'year' },
+        marks: [],
     };
     const lookupRows = [{ land: 'W', year: 1 }, { land: 'T', year: 1 }];
     const names = { 'http://localhost:3000/names.csv': 'code,de,en\nW,Wien,Vienna\nT,Tirol,Tyrol\n' };
@@ -417,16 +419,17 @@ describe('form elements of globals, coordinate systems and maps', () => {
         expect(store.def.dims.c.keys).toEqual(['Tyrol', 'Vienna']);
     });
 
-    test('the globals of an entry select the entry of a later form element', async () => {
+    test('the globals of an entry select the entry of a later control', async () => {
         const store = createStore();
         await store.init({ def: {
             globals: { a: '2', b: 'x' },
-            formElements: [
-                { ref: 'a', type: 'select', values: [{ value: '1', globals: { b: 'y' } }, { value: '2' }] },
-                { ref: 'b', type: 'select', values: [{ value: 'x', patch: { mapping: { y: { column: 'cx' } } } }, { value: 'y', patch: { mapping: { y: { column: 'cy' } } } }] },
+            controls: [
+                { type: 'select', global: 'a', values: [{ value: '1', globals: { b: 'y' } }, '2'] },
+                { type: 'select', global: 'b', values: ['x', 'y'] },
             ],
-            mapping: { y: { column: 'c0', type: 'numeric' } }, plot: [],
-        }, data: [{ cx: 1, cy: 2, c0: 0 }] });
+            dims: { y: "=match(@b, {x: 'cx', y: 'cy'})" }, marks: [],
+        }, data: [{ cx: 1, cy: 2 }] });
+        expect(store.def.dims.y.column).toBe('cx');
         store.def.globals.a = '1';
         store.applyControls();
         expect(store.def.dims.y.column).toBe('cy');
@@ -438,11 +441,8 @@ describe('form elements of globals, coordinate systems and maps', () => {
         await store.init({ def: {
             ...def,
             globals: { coord: 'cartesian' },
-            formElements: [{ ref: 'coord', type: 'radio', values: [
-                { value: 'cartesian' },
-                { value: 'polar', patch: { options: { coord: 'polar' }, mapping: {
-                    x: { scale: { orientation: 'angular' } }, y: { scale: { orientation: 'radial' } } } } },
-            ] }],
+            controls: [{ type: 'radio', global: 'coord', values: ['cartesian', 'polar'] }],
+            coord: '=@coord',
         }, data: csv });
         expect(store.coord).toBe(coords.cartesian);
         store.def.globals.coord = 'polar';
@@ -453,11 +453,10 @@ describe('form elements of globals, coordinate systems and maps', () => {
         store.applyControls();
         expect(store.coord).toBe(coords.cartesian);
 
-        // the one of a patch selected at the load
+        // the one of a value which is not the first, selected at the load
         const polar = createStore();
-        await polar.init({ def: { ...def, globals: { coord: 'polar' }, formElements: [{ ref: 'coord', type: 'radio', values: [
-            { value: 'cartesian' }, { value: 'polar', patch: { options: { coord: 'polar' } } },
-        ] }] }, data: csv });
+        await polar.init({ def: { ...def, globals: { coord: 'polar' }, controls: [{ type: 'radio', global: 'coord', values: ['cartesian', 'polar'] }],
+            coord: "=match(@coord, {polar: 'polar'})" }, data: csv });
         expect(polar.coord).toBe(coords.polar);
     });
 
@@ -472,15 +471,13 @@ describe('form elements of globals, coordinate systems and maps', () => {
         });
         const store = createStore();
         await store.init({ def: {
-            options: { coord: 'geo' },
+            coord: 'geo',
             globals: { level: 'states' },
-            geo: { data: 'states.json', join: 'region' },
-            formElements: [{ ref: 'level', type: 'radio', values: [
-                { value: 'states' },
-                { value: 'districts', patch: { geo: { data: 'districts.json' } } },
-            ] }],
-            mapping: { region: { column: 'region' } },
-            plot: [{ type: 'geo:base' }],
+            // the geometry as a whole: a `geo.data` of an expression is requested as a url before the globals are known
+            geo: "=match(@level, {districts: literal({data: 'districts.json', join: 'region'})}, literal({data: 'states.json', join: 'region'}))",
+            controls: [{ type: 'radio', global: 'level', values: ['states', 'districts'] }],
+            dims: { region: 'region' },
+            marks: [{ type: 'base' }],
         }, data: [{ region: 'W' }] });
         expect(requested.sort()).toEqual(['http://localhost:3000/districts.json', 'http://localhost:3000/states.json']);
         expect(store.geo.features.map(store.geo.key)).toEqual(['W', 'T']);
@@ -498,19 +495,19 @@ describe('form elements of globals, coordinate systems and maps', () => {
         const listener = e => unhandled.push(e);
         process.on('unhandledRejection', listener);
         onTestFinished(() => process.off('unhandledRejection', listener));
-        const failing = { ...def, data: undefined, formElements: [{ ref: 'c', values: [{ value: 'x', patch: { options: { coord: 'unknown' } } }] }] };
+        const failing = { ...def, data: undefined, controls: [{ global: 'c', values: ['x'] }], coord: "=match(@c, {x: 'unknown'})" };
         await expect(createStore().init({ def: failing })).rejects.toThrow();
         await new Promise(r => setTimeout(r, 10));
         expect(unhandled).toEqual([]);
     });
 });
 
-describe('form elements of the values of a column (review of 4.1)', () => {
+describe('controls of the values of a column (review of 4.1)', () => {
     const binDef = () => ({ globals: { step: '5' },
         transform: [{ type: 'bin', column: 'v', step: '{step}', start: 'lo', end: 'hi' }],
-        formElements: [{ id: 'lo', ref: 'lo', type: 'select', values: { column: 'lo' } }],
-        mapping: { x: { column: 'v', type: 'numeric', scale: { orientation: 'horizontal' } }, y: { column: 'count', type: 'numeric', scale: { orientation: 'vertical' } } },
-        plot: [{ type: 'bar', props: { x0: '@x:scaled', y1: '@y:scaled' } }] });
+        controls: [{ type: 'select', global: 'lo', values: { column: 'lo' } }],
+        dims: { x: 'v', y: 'count' },
+        marks: { type: 'bar', x0: 'lo', x1: 'hi' } });
     const binData = 'v,g\n1,a\n3,a\n7,b\n9,b';
 
     test('a global which is none of the values of other classes is the last one', async () => {
@@ -531,10 +528,10 @@ describe('form elements of the values of a column (review of 4.1)', () => {
         expect(s.def.globals.lo).toBe('5');
     });
 
-    const monthDef = (format, language) => ({ options: { width: 500, height: 300, language }, globals: { lang: 'de', m: '2026-10' },
-        formElements: [{ id: 'm', type: 'select', ref: 'm', values: { column: 'month', format } }],
-        mapping: { x: { column: 'month', type: 'categorical', scale: { type: 'band', orientation: 'horizontal' } }, y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' } } },
-        plot: { type: 'cartesian:bar' } });
+    const monthDef = (format, language) => ({ width: 500, height: 300, language, globals: { lang: 'de', m: '2026-10' },
+        controls: [{ type: 'select', global: 'm', values: { column: 'month', format } }],
+        dims: { x: { column: 'month', type: 'categorical' }, y: 'value' },
+        marks: { type: 'bar' } });
     const monthData = 'month,value\n2026-09,1\n2026-10,2';
     const names = s => s.def.controls[0].values.map(v => v.name);
 
@@ -604,9 +601,9 @@ describe('charts of the same data file share its rows (review of 5.0)', () => {
         });
         const a = createStore();
         const b = createStore();
-        await Promise.all([a.init({ def: lineDef() }), b.init({ def: lineDef({ options: { width: 300, height: 200 } }) })]);
+        await Promise.all([a.init({ def: lineDef() }), b.init({ def: lineDef({ width: 300, height: 200 }) })]);
         const c = createStore();
-        await c.init({ def: lineDef({ mapping: { x: { column: 'year' }, y: { column: 'value' } } }) });
+        await c.init({ def: lineDef({ dims: { x: 'year', y: 'value' } }) });
         expect(fetched).toHaveLength(1);
         expect(b.rows).toBe(a.rows);
         expect(c.rows).toBe(a.rows);
@@ -653,10 +650,10 @@ describe('charts of the same data file share its rows (review of 5.0)', () => {
         ] });
         serve({ [new URL('data.parquet', base).href]: buffer });
         const stores = [createStore(), createStore(), createStore()];
-        const y = column => ({ ...def.mapping, y: { ...def.mapping.y, column } });
+        const y = column => ({ ...def.dims, y: { ...def.dims.y, column } });
         await stores[0].init({ def: lineDef({ data: 'data.parquet' }) });
         await stores[1].init({ def: lineDef({ data: 'data.parquet' }) });
-        await stores[2].init({ def: lineDef({ data: 'data.parquet', mapping: y('other') }) });
+        await stores[2].init({ def: lineDef({ data: 'data.parquet', dims: y('other') }) });
         expect(stores[1].rows).toBe(stores[0].rows);
         expect(Object.keys(stores[0].rows[0])).toEqual(['year', 'value']);
         expect(Object.keys(stores[2].rows[0])).toEqual(['year', 'other']);
