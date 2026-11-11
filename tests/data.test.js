@@ -451,6 +451,15 @@ describe('the categories of the data', () => {
         expect(def.formElements[0].values.map(v => v.value)).toEqual(['2019', '2021']);
         expect(def.globals.y).toBe('2021');
     });
+
+    test('values of the same text are one entry and one category, e.g. 1 and "1" of JSON', () => {
+        const rows = [{ k: 2 }, { k: 1 }, { k: '1' }, { k: '2' }, { k: 10 }];
+        const def = { formElements: [{ id: 'k', ref: 'k', values: { column: 'k' } }] };
+        addDataValues(def, rows);
+        expect(def.formElements[0].values.map(v => v.id)).toEqual(['1', '2', '10']);
+        expect(distinctValues(rows, null, 'k')).toEqual([1, 2, 10]);
+        expect(distinctValues(rows, null, 'k', true)).toEqual([2, 1, 10]);
+    });
 });
 
 describe('stack', () => {

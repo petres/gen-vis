@@ -711,10 +711,17 @@ const expressionColumns = def => {
 
 // the distinct values of a column of the rows (or of a transform, see
 // columnValues), without missing ones, ascending, numbers by their value,
-// or in the order of the rows (`inOrder`)
+// or in the order of the rows (`inOrder`); values of the same text are one,
+// the first one, e.g. 1 and "1" of JSON, the same category and entry
 const distinctValues = (rows, columns, column, inOrder = false) => {
     const value = columnValues(rows, columns, column);
-    const values = [...new Set(sourceRows(rows, columns).map((r, i) => value(i)))].filter(v => v !== null && v !== undefined && v !== '');
+    const texts = new Set();
+    const values = [...new Set(sourceRows(rows, columns).map((r, i) => value(i)))].filter(v => {
+        if (v === null || v === undefined || v === '' || texts.has(String(v)))
+            return false;
+        texts.add(String(v));
+        return true;
+    });
     return inOrder ? values : values.sort(comparison(values));
 };
 
