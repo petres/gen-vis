@@ -13,19 +13,18 @@ vi.mock('@/utils/raster.js', () => ({
 useDom();
 
 const defOf = (title, extra = {}) => ({
-    $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json',
+    $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json',
     data: 'd.csv',
-    options: { width: 600, height: 300, title },
-    mapping: {
-        x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' }, axis: { position: 'bottom' } },
-        y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' }, axis: { position: 'left' } },
-    },
-    plot: [{ type: 'svg:circle', props: { r: 3, cx: '@x:scaled', cy: '@y:scaled' } }],
+    width: 600,
+    height: 300,
+    title,
+    dims: { x: 'year', y: 'value' },
+    marks: { type: 'point' },
     ...extra,
 });
-// a definition with a form element of a global
-const globalDef = title => defOf(title, { globals: { col: 'value' }, formElements: [{ id: 'col', name: 'C', ref: 'col', type: 'radio', values: [
-    { id: 'value', name: 'V', value: 'value' }, { id: 'other', name: 'O', value: 'other' }] }] });
+// a definition with a control of a global
+const globalDef = title => defOf(title, { globals: { col: 'value' }, controls: [{ type: 'radio', global: 'col', name: 'C', values: [
+    { value: 'value', name: 'V' }, { value: 'other', name: 'O' }] }] });
 const csv = 'year,value\n2020,1\n2021,2';
 
 // the files by their name, a delay per name simulates slow responses
@@ -171,8 +170,8 @@ test('the buttons of the footer do not submit a form, the label of the copy show
 });
 
 test('a highlight set while it is loaded is shown once it is drawn, it is the prop highlight', async () => {
-    const def = defOf('h', { mapping: { ...defOf('h').mapping, c: { column: 'land', type: 'categorical' } },
-        plot: [{ type: 'svg:circle', by: ['c'], highlight: { r: 6 }, props: { r: 3, cx: '@x:scaled', cy: '@y:scaled' } }] });
+    const def = defOf('h', { dims: { ...defOf('h').dims, c: 'land' },
+        marks: { type: 'point', by: 'c', highlight: { r: 6 } } });
     const data = 'year,value,land\n2020,1,Wien\n2021,2,Tirol';
     const { el, vis } = create({ def, data });
     vis.setHighlight({ c: 'Wien' });
@@ -189,7 +188,7 @@ test('a highlight set while it is loaded is shown once it is drawn, it is the pr
     expect(vis.props.highlight).toBeNull();
     expect(el.querySelectorAll('.vis-highlight')).toHaveLength(0);
     // also while a new definition is loaded
-    vis.update({ def: { ...def, options: { ...def.options, title: 'h2' } } });
+    vis.update({ def: { ...def, title: 'h2' } });
     await nextTick();
     vis.setHighlight({ c: 'Tirol' });
     await vi.waitFor(() => expect(title(el)).toBe('h2'));
