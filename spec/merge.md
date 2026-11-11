@@ -157,7 +157,7 @@ texts in several languages, objects elsewhere stay as they are (e.g. `{"of":
 `legend.format`, `legend.missing.name`, `common.name`, the `name` of every
 category and of every entry of `ranks`; of every annotation `label` and
 `text`; the `name` of every control and of every entry of its
-`values` (the package chooses them of the form the engine reads, of
-`options`, `mapping` and `formElements`, see `normalize.md`). Without
+`values` (the package chooses them of the form the engine reads, see
+`normalize.md`). Without
 `locale` the language is also the locale, if it is one (see `locale` of
 `docs/definition.md`).

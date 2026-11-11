@@ -33,7 +33,7 @@ const schemaErrors = (def, warnings = []) => {
         types.set(e.instancePath, [...(types.get(e.instancePath) ?? []), reference(e) ? 'a reference "@name"' : e.params.type]));
     return [...new Set(errors
         .filter(e => !reference(e) || !errors.some(o => o.keyword == 'type' && o.instancePath == e.instancePath))
-        // the type of an alternative which is not taken, e.g. a plot of a list of plots
+        // the type of an alternative which is not taken, e.g. a mark of a list of marks
         .filter(e => !(e.keyword == 'type' && errors.some(o => o.instancePath.startsWith(`${e.instancePath}/`))))
         .filter(e => !(e.keyword == 'enum' && warnings.some(w => w.includes(`'${e.data}'`))))
         .map(e => e.keyword == 'type' || reference(e) ? `${e.instancePath || 'the definition'}: must be ${types.get(e.instancePath).join(' or ')}` : message(e)))]

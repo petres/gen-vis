@@ -1,7 +1,7 @@
 # Expressions
 
 The props of a definition (most of its values, e.g. the attributes of the
-elements of a plot, the height, the margins, the ticks of an axis) and the
+elements of a mark, the height, the margins, the ticks of an axis) and the
 `expr` of the transforms `calc` and `filter` are expressions, close to
 [JSON Logic](https://jsonlogic.com/). The fixtures are
 `expressions/*.json`, `{ "name", "scope", "expr", "result" }`, and the
@@ -44,7 +44,7 @@ and texts of decimal numbers, others are no number.
 | `not` | true if its argument is false |
 | `if` | `[condition, then, condition, then, ..., else]`: the value of the first condition which is true, otherwise `else` (no value without one) |
 | `cat` | the arguments as texts, joined, missing ones are empty |
-| `format` | `[value, format]`: the value as a text of a d3 format (numbers, e.g. `",.1f"`, or a time format of a mapping of dates, e.g. `"%b %Y"`) in the locale of the definition, a missing value is the empty text |
+| `format` | `[value, format]`: the value as a text of a d3 format (numbers, e.g. `",.1f"`, or a time format of a dim of dates, e.g. `"%b %Y"`) in the locale of the definition, a missing value is the empty text |
 | `steps` | `[value, {"cut": expression, ...}]`: the expression of the largest cut below the value (`value > cut`, the cuts as numbers), no value if there is none, e.g. `{"steps": ["@totalWidth", {"0": 220, "550": 250}]}` |
 | `match` | `[value, {"case": expression, ...}, default]`: the expression of the case of the value (as a text, then of a number the first case of the same number, e.g. `"2024"` of `"2024.0"`), otherwise `default` (no value without one), a missing value has no case, e.g. not `"null"` |
 | `literal` | its argument, not evaluated, e.g. `{"literal": "@a"}` |
@@ -59,7 +59,7 @@ which are empty (also of only whitespace), a number 0 (e.g. `"0"`, `"0.0"`,
 other values are true (also `"no"` and `"1"`).
 
 Of `format` the fixtures use the d3 locale en-US (`.` and `,`), the format
-of a reference to a mapping of dates is a time format.
+of a reference to a dim of dates is a time format.
 
 ## String syntax
 

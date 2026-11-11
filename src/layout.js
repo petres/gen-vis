@@ -861,7 +861,7 @@ const markGroups = (mark, rows, ctx) => {
     const complete = row => !needed.some(m => missing(row, m));
     // not without data, e.g. the empty classes of a bin of no rows
     if (needed.length > 0 && rows.length > 0 && ctx.store.rows?.length > 0 && !rows.some(complete))
-        warnOnce(ctx.store, `plot:${mark.id}:missing`, `${markPath(ctx.store.def, mark, true)}: none of its ${rows.length} rows is drawn, `
+        warnOnce(ctx.store, `mark:${mark.id}:missing`, `${markPath(ctx.store.def, mark, true)}: none of its ${rows.length} rows is drawn, `
             + needed.map(m => [m, rows.filter(r => missing(r, m)).length]).filter(([, n]) => n > 0)
                 .map(([m, n]) => `${n} without a value of dim '${m}'${mark.data === undefined ? absentColumn(ctx.store, dims[m].column) : ''}`).join(', '));
     // the rows without a value of a dim of categories of `by` are in

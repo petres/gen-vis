@@ -133,21 +133,21 @@ needs Z6.
   the transforms, the colors and the exports.
 - The registries of mark types and coordinate systems.
 
-### A1: one vocabulary (later, in 5.x, internal)
+### A1: one vocabulary (done, internal)
 
-A definition of 5.0 (`dims`, `marks`, `controls`, the options at the top) is
+A definition of 5.0 (`dims`, `marks`, `controls`, the options at the top) was
 translated at every load into the form of the engine of 4.x (`mapping`,
-`plot`, `formElements`, `options`), and the paths of errors are translated
-back (`authoredPath`). `utils/language.js`, `utils/normalize.js` and
-`utils/resolve.js` are about 9 kB gzip of the first load, and everybody who
-reads the code has to know both vocabularies: the tests, the messages, the
-types and the docs speak 5, the engine speaks 4.
+`plot`, `formElements`, `options`), and the paths of errors were translated
+back (`authoredPath`): everybody who read the code had to know both
+vocabularies, the tests, the messages, the types and the docs spoke 5, the
+engine spoke 4.
 
-The engine renamed to the vocabulary of 5 makes the translation a set of
-shorthand expansions, drops the translation of paths and lets the schema
-describe what the engine reads. Nothing changes for a definition. The order:
-`mapping` → `dims`, `plot` → `marks`, `formElements` → `controls`, then the
-options to the top, each with the tests green.
+The engine has the vocabulary of 5 now (`dims`, `marks`, `controls` of a
+`global`, the options at the top level, `src/marks/`): the translation is a
+set of shorthand expansions, the paths of the checks are the ones of the
+definition (but for the `props` of a mark and the dims of the facets), and
+nothing changes for a definition. Open: the facets of the engine are still
+`dim`, `rows` and `cols` (a dim or the number of columns), not `by`.
 
 ### A2: data in columns (later)
 

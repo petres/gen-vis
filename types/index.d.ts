@@ -263,7 +263,7 @@ export interface Layer {
     fit?: boolean;
 }
 
-/** A mark type, see docs/extensions.md and src/plots/index.js. */
+/** A mark type, see docs/extensions.md and src/marks/index.js. */
 export interface MarkType {
     /** The shapes of the groups of rows of a mark (`mark` with its attributes and channels as `props`), null draws nothing. */
     marks(groups: MarkGroup[], mark: Record<string, any>, ctx: Record<string, any>): Layer | null;

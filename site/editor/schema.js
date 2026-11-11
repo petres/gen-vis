@@ -5,7 +5,7 @@ import { syntaxTree } from '@codemirror/language';
 
 export { schemaCompletion };
 
-// the schema of a `$ref` of the definitions, e.g. #/definitions/plot
+// the schema of a `$ref` of the definitions, e.g. #/definitions/mark
 const resolve = (root, s) => s?.$ref ? resolve(root, s.$ref.split('/').slice(1).reduce((o, k) => o[k], root)) : s;
 
 // the alternatives of a schema, e.g. a mark or a list of marks, also the

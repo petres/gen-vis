@@ -39,8 +39,8 @@ const checkDef = def => {
     return [...new Set([...warnings, ...schemaErrors(def, warnings).filter(e => !named(e))])];
 };
 
-// JSON with the short objects and lists in one line, e.g. the props of a
-// plot, in the width of the editor beside a chart, `prefix` is the length of
+// JSON with the short objects and lists in one line, e.g. the attributes of a
+// mark, in the width of the editor beside a chart, `prefix` is the length of
 // the key before it
 const width = 64;
 const json = (value, indent = '', prefix = 0) => {

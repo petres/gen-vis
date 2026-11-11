@@ -98,11 +98,11 @@ definition 5.0 (JSON, schema.json)
    │ resolveParents     merge of the parents and mixins (spec/merge)          portable
    │ migrate            a definition of 4.x (by its keys) as one of 5.0       portable
    │ resolve            the expressions of the globals evaluated              portable, JSON → JSON
-   │ translate          5.0 → the form the engine reads (options, mapping,   portable, JSON → JSON
-   │                    plot with props, formElements)
+   │ translate          the shorthands written out: the form the engine      portable, JSON → JSON
+   │                    reads (dims, marks with props, controls)
    │ normalize          the defaults written out (spec/normalize)             portable, JSON → JSON
    ▼
-normalized definition (the one of 4.x)
+normalized definition
    │ inferTypes, transforms (spec/transforms), prepare
    │ layout             scales, facets, auto margins (measure, layout again)
    ▼
@@ -127,17 +127,21 @@ renderer (JS only): facets, drawLayer joins, hover, highlight stylesheet
   all values are loaded with the definition) and `validateDef` checks each
   of them, as it checked the patches.
 - `translate` (`src/utils/language.js`) is pure: it does not know the rows,
-  the types of the dims follow later as before. It compiles the string
-  syntax, moves the options, writes the shorthands of the dims into their
-  scale and axis, the channels into the props of the plot type (per kind
-  and coordinate system), `stack` into `stacked` of the value dim, `dodge`
+  the types of the dims follow later as before. The form the engine reads
+  has the names of the definition (`dims`, `marks`, `controls`, the options
+  at the top level), `translate` writes out its shorthands: it compiles the
+  string syntax, writes the shorthands of the dims into their scale and
+  axis, the channels into the `props` of the mark type (per kind and
+  coordinate system), `stack` into `stacked` of the value dim, `dodge`
   into expressions of `@dim:index` and `@dim:count`, `anchor` into the
   attributes of the text, the hover columns into the `hover` of the dims,
-  the controls into form elements, and `facets.by` into `dim` or `rows` and
-  `cols`. `authoredPath` maps the paths of the engine's form back, so
-  errors and warnings name `dims.y`, `marks[1].fill`, `controls[0]`.
-- `normalize` is the one of 4.0 (`docs/design-4.0.md`): defaults of the
-  positions, the types of scales, the default props of the plot types.
+  the values of the controls into entries, and `facets.by` into `dim` or
+  `rows` and `cols` of the facets. `authoredPath` maps the paths of the two
+  places where the forms differ back (the `props` of a mark, the dims of the
+  facets), so errors and warnings name `marks[1].fill` and `facets.by`.
+- `normalize` is the one of 4.0 (`docs/design-4.0.md`) in the names of 5:
+  defaults of the positions, the types of scales, the default props of the
+  mark types.
 - The layout builds the facets with provisional margins where a side is
   `auto`, measures the axes of every facet (`src/utils/margins.js`, texts on
   a canvas in the font of the chart, `src/utils/measure.js`) and builds them
@@ -176,10 +180,10 @@ Places which take an expression of the globals are written so
 checked after it is resolved.
 
 `validateDef` checks the definition of 5.0 as written (the schema, with
-the expressions of the globals resolved), then the semantic checks of 4.x
-on the translated form (dims, references, operators, the data), and maps
-their paths and words back (`authoredPath`, `authoredText`: mapping → dim,
-plot → mark, form element → control).
+the expressions of the globals resolved), then the semantic checks on the
+translated form (dims, references, operators, the data), whose paths and
+words are the ones of the definition (`authoredPath` maps the `props` of a
+mark and the dims of the facets).
 
 ## 4. The migration
 

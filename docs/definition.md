@@ -1236,7 +1236,7 @@ center of polar charts is their origin), their attributes are the ones of
 the element, e.g. `"cx"`. `annotation:band`, `annotation:line`,
 `annotation:text` and `annotation:circle` draw an annotation per row, see
 [annotations](#annotations). A registered type of an extension is named
-with or without its prefix, see [extensions](extensions.md#plot-types).
+with or without its prefix, see [extensions](extensions.md#mark-types).
 
 `label` is a `text` without the color of its category (`"fill": null`, the
 text color of the page, `--gen-vis-text-color`), placed beside its

@@ -1,19 +1,20 @@
 # Normalize
 
 A definition of 5.0 may leave out parts which the renderer reads, e.g. the
-scale of `x`, and it names them with the words of 5.0 (`dims`, `marks`
-with channels, `controls`). The engine reads the form of 4.x with the
-`dims` of 5.0: `options`, `dims`, `plot` with `props`, `formElements`. This form is internal and
-unstable (it is not exported by the package and may change in any
-release); the fixtures describe what the renderer of the JS implementation
-reads. The load goes through four steps, each JSON to JSON:
+scale of `x`, and it has shorthands, e.g. the channels of a mark. The
+engine reads a form of the same names (`dims`, `marks`, `controls`, the
+options at the top level) with the shorthands written out, e.g. marks with
+the `props` of the scaled positions. This form is internal and unstable (it
+is not exported by the package and may change in any release); the fixtures
+describe what the renderer of the JS implementation reads. The load goes
+through four steps, each JSON to JSON:
 
 1. the parents are merged (see `merge.md`), a definition of 4.x is
    migrated (`migrate`, `src/utils/migrate.js`);
 2. `resolve`: the expressions of the globals are evaluated (see
    `expressions.md` and `src/utils/resolve.js`);
-3. `translate`: the definition of 5.0 in the form the engine reads (below,
-   `src/utils/language.js`);
+3. `translate`: the shorthands of the definition written out, the form the
+   engine reads (below, `src/utils/language.js`);
 4. `normalize`: the parts the form leaves out written out (below,
    `src/utils/normalize.js`); then the types of the dims without one
    follow from their values (the rows are loaded then).
@@ -28,8 +29,8 @@ engine reads; `tests/language.test.js` has cases of step 3.
   `dataFormat`, `column`, `columns`, `key`, `as`) starting with `@`.
 - The options of the top level (`title`, `subtitle`, `source`, `height`,
   `width`, `margins`, `coord`, `locale`, `language`, `transition`, `class`,
-  `message`, `empty`, `hover`, `highlight`, `fontFamily`) are `options`,
-  `source` is `options.footer`; `hover.columns` is no option, see below.
+  `message`, `empty`, `hover`, `highlight`, `fontFamily`) stay as they
+  are; `hover.columns` is no option, see below.
 - A dim of `dims` of `null` or `false` is left out. Of a dim:
   `zero: true` is `"domain": [0, null]` (unless it has a domain); `pad`,
   `include`, `reverse` and `range` are parts of `scale`; `grid`, `ticks`
@@ -39,14 +40,14 @@ engine reads; `tests/language.test.js` has cases of step 3.
   categories (`scheme`, `common`, `ranks`, `order`), a legend (not
   `false`, without a scale, not of a numeric or date type) or is a dim of
   the facets.
-- `controls` are `formElements`: `global` is `ref`, `id` is the global by
-  default; a value of the list of `values` which is no object is the entry
+- Of a control of `controls`: `id` is the global by default; a value of the
+  list of `values` which is no object is the entry
   `{"id": text, "name": text, "value": value}`, an entry without `id` or
   `name` has the text of its value.
 - `facets.by` of a text is `facets.dim`, of an object its `rows` and
   `cols`; `scales` `"own"` is `[]`, `"shared"` the list of the dims whose
   scale has an orientation (not `null`).
-- `marks` (a mark or a list) are `plot`, `by` a list. The type of the
+- `marks` (a mark or a list) are a list, `by` of a mark a list. The type of the
   coordinate system (`coord`, `cartesian` by default): `point` is
   `svg:circle` (`polar:circle`, `geo:circle`), `label` and `text` are
   `svg:text` (`polar:text`, `geo:text`), `cell` is `svg:rect`, `tick` is
@@ -112,7 +113,7 @@ engine reads; `tests/language.test.js` has cases of step 3.
 ## normalize
 
 The fixtures are `normalize/*.json`. The input is the form `translate`
-writes: the dims are objects, `plot` is a list of objects.
+writes: the dims are objects, `marks` is a list of objects.
 
 ### Dims
 
@@ -135,25 +136,25 @@ writes: the dims are objects, `plot` is a list of objects.
   categories (any of their parts) or a `band`, `point` or `ordinal` scale, date with a
   `time` or `utc` scale, numeric with another scale, categorical if it is a
   dim of the facets (`facets.dim`) or of the groups of a scale
-  (`scale.groups.by`), not of the categories of a plot (`by`), they group the
+  (`scale.groups.by`), not of the categories of a mark (`by`), they group the
   rows of any type. Otherwise it is the type
   of the values of the column (when the rows are known): numeric if all
   values which are not missing are numbers, date if all of them are dates,
   otherwise categorical (see `docs/definition.md` of the values).
 - The type of a scale without one follows from the type of the dim:
   numeric `linear`, date `time`, categorical `band` of a position of the
-  bars of a plot (`cartesian:bar`, `polar:arc`, a prop of `@name:scaled`),
+  bars of a mark (`cartesian:bar`, `polar:arc`, a prop of `@name:scaled`),
   `point` of other positions, `ordinal` without an orientation.
 
-### Plots
+### Marks
 
 - `by`, `highlight` and `others` stay as they are.
 - A type without the prefix of a coordinate system (`line`) is the one of
-  the coordinate system of the definition (`options.coord`, `cartesian` by
+  the coordinate system of the definition (`coord`, `cartesian` by
   default), `<coord>:<name>`, otherwise `svg:<name>`, otherwise the only
   registered type `<prefix>:<name>` of the coordinate system (`translate`
   writes the full names of the built-in types).
-- The props of a plot of a registered type, of its short or its full name
+- The props of a mark of a registered type, of its short or its full name
   (`line` and `cartesian:line` alike), are merged into the default props of
   the type: nested props (objects which are no operators, e.g. `d`) deeply,
   `null` removes a default. The order of the props is the one of the defaults, then the other

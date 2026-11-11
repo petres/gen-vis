@@ -252,8 +252,8 @@ See `merge.md`.
 ## Normalize
 
 `normalize/*.json` are `{ "name", "def", "result" }`: a definition in the
-form the engine reads (`options`, `dims`, `plot`; a
-definition of 5.0 is translated into it first, see `normalize.md`), merged
-with its parents, and its normalized form `result`, the one which the
-renderer reads. The plot types are the
+form the engine reads (`dims`, `marks` with `props`, the options at the top
+level; the shorthands of a definition of 5.0 are written out first, see
+`normalize.md`), merged with its parents, and its normalized form `result`,
+the one which the renderer reads. The mark types are the
 built-in ones, their default props are the ones of `src/marks/defaults.js`.

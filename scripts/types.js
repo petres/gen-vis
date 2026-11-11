@@ -40,7 +40,7 @@ const typed = node => {
 
 export const definitionTypes = async () => {
     const schema = typed(JSON.parse(JSON.stringify(schemaSource)));
-    // the names of registered plot types and coordinate systems beside the
+    // the names of registered mark types and coordinate systems beside the
     // built-in ones, `string & {}` keeps the built-in ones for the completion
     // of editors, `string` would replace them; the names of the else branch
     // are the ones of the enums before
