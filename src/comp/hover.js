@@ -1,8 +1,7 @@
 export { createHover, byOrder };
 
-import { join, setAttr } from "@/utils/dom";
+import { create, join, setAttr } from "@/utils/dom";
 import { fillHtml } from "@/utils/def";
-import { create } from "@/utils/dom";
 import { drawSymbol } from "@/comp/legend";
 import { el, patch, setHtml, setText, slotNodes, takeRange } from "@/comp/html";
 

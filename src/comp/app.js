@@ -492,10 +492,10 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         saveFile(new Blob([csvOf(store, rows)], { type: 'text/csv' }), `${name ?? fileName(props.csv)}.csv`);
     };
     const copyPng = () => copyImage(image());
-    const saveSvg = async name => {
+    const saveSvg = async () => {
         const svg = await exportSvg();
         const { saveFile } = await lazy.exporting();
-        saveFile(new Blob([svg], { type: 'image/svg+xml' }), `${name ?? fileName(props.svg)}.svg`);
+        saveFile(new Blob([svg], { type: 'image/svg+xml' }), `${fileName(props.svg)}.svg`);
     };
 
     // the props given since the last update, applied together: a new

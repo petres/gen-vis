@@ -465,7 +465,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
                 data: entriesOf(rows, nearest),
                 title: p.title,
                 payload: p,
-                total: total === null ? null : { value: total, name: format.v(total) },
+                total: total === null ? null : { name: format.v(total) },
             });
             emit('hover', p);
             render();

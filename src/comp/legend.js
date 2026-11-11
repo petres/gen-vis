@@ -87,7 +87,7 @@ const createLegend = (vis, legend) => {
     // e.g. headers, they stay visible, also the ones which are not in the rows
     const categories = () => { const m = info(); return m.keys.filter(key => m.categoryProps[key].legend !== false) };
 
-    const changed = () => vis.changeSelected({ dim: legend });
+    const changed = () => vis.changeSelected();
     const switched = entry => {
         entry.props.visible = !entry.props.visible;
         changed();
