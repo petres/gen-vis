@@ -16,18 +16,19 @@ vi.mock('@/utils/raster.js', () => ({
 useDom();
 
 const lineDef = (options = {}) => ({
-    options: { width: 600, height: 300, margins: { top: 10, right: 10, bottom: 40, left: 40 }, title: 'Titel', footer: 'Quelle', ...options },
+    width: 600, height: 300, margins: { top: 10, right: 10, bottom: 40, left: 40 }, title: 'Titel', source: 'Quelle',
     globals: { column: 'value' },
-    formElements: [{ id: 'column', name: 'Wert', ref: 'column', type: 'radio', values: [
-        { id: 'value', name: 'Value', value: 'value', patch: { mapping: { y: { column: 'value' } } } },
-        { id: 'other', name: 'Other', value: 'other', patch: { mapping: { y: { column: 'other' } } } },
+    controls: [{ id: 'column', name: 'Wert', global: 'column', type: 'radio', values: [
+        { id: 'value', name: 'Value', value: 'value' },
+        { id: 'other', name: 'Other', value: 'other' },
     ] }],
-    mapping: {
-        x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' }, axis: { position: 'bottom' } },
-        y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' }, axis: { position: 'left' }, hover: { format: ',.1f' } },
-        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } },
+    dims: {
+        x: { column: 'year', type: 'numeric' },
+        y: { column: '{column}', type: 'numeric', hover: { format: ',.1f' } },
+        c: { column: 'land', legend: {}, hover: {}, categories: { Wien: 'red', Tirol: 'blue' } },
     },
-    plot: [{ type: 'svg:circle', by: ['c'], props: { fill: '@color', r: 3, cx: '@x:scaled', cy: '@y:scaled' } }],
+    marks: [{ type: 'point', by: 'c', r: 3 }],
+    ...options,
 });
 
 const lineData = `year,value,other,land
