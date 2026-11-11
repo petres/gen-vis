@@ -19,7 +19,7 @@ const def = () => prepareDef({
         c: { column: 'land', type: 'categorical', legend: {}, categories: { Wien: {}, Tirol: { visible: false } } },
         f: { column: 'type', type: 'categorical', categories: { a: {}, b: {} } },
     },
-    plot: { type: 'cartesian:line', props: {} },
+    marks: [{ type: 'cartesian:line', props: {} }],
 });
 
 describe('snapshot', () => {
