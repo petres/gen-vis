@@ -6,7 +6,7 @@ import { quantile } from "d3-array";
 import { toDate, toNumber } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
 import { bind, constant, refNames } from "@/utils/expr";
-import { missing } from "@/utils/values";
+import { inherited, missing, ownValue } from "@/utils/values";
 import { madeBy } from "@/utils/transform";
 import { getLocale } from "@/utils/locale";
 
@@ -774,7 +774,8 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
     const notes = [...state.notes];
     // also the columns which are not computed anymore, e.g. of another `as`
     columns.changed = new Set(steps.slice(first).flatMap(s => s.names));
-    const read = (i, c) => columns.has(c) ? columns.get(c)[i] ?? null : base[i][c];
+    // (a name of the prototype of objects is no column, e.g. "constructor")
+    const read = (i, c) => columns.has(c) ? columns.get(c)[i] ?? null : (inherited(c) ? ownValue(base[i], c) : base[i][c]);
     const save = (key, names) => columns.steps.push({ key, names,
         state: { rows: base, columns: [...columns], kept: columns.kept, notes: [...notes] } });
     for (const [k, { t, inUtc }] of list.entries()) {

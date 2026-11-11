@@ -1,6 +1,6 @@
 // the comparisons of the values of definitions and of the data, e.g. of
 // categories, used by the other parts, so they import no part of their own
-export { isObject, missing, compareCategories, comparison, toNumber, sameValue };
+export { isObject, missing, compareCategories, comparison, toNumber, sameValue, inherited, ownValue };
 
 // an object of a definition, e.g. a mapping, not a list and not null
 const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
@@ -8,6 +8,13 @@ const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
 // a missing value: null, undefined or a text of only whitespace, e.g. an
 // empty cell of csv
 const missing = v => v === null || v === undefined || (typeof v == 'string' && v.trim() === '');
+
+// a name every object has of its prototype, e.g. "constructor" or
+// "__proto__": no column of a row which has none of the name, its value is
+// only the one of the row itself (`ownValue`), checked once per name, not
+// per row
+const inherited = name => (typeof name == 'string' || typeof name == 'symbol') && name in Object.prototype;
+const ownValue = (row, name) => row !== null && row !== undefined && Object.hasOwn(row, name) ? row[name] : undefined;
 
 // a number or the text of one, e.g. the category "2004", not an empty text
 const numericText = v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v));

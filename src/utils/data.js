@@ -5,7 +5,7 @@ import { fillTemplate, inLanguage, sameValue, templateRefs, variants } from "@/u
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
 import { bind, constant, evaluate, isOperator, refNames } from "@/utils/expr";
-import { comparison, compareCategories, isObject, missing, toNumber } from "@/utils/values";
+import { comparison, compareCategories, inherited, isObject, missing, ownValue, toNumber } from "@/utils/values";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
@@ -234,7 +234,10 @@ const sourceRows = (rows, columns) => columns?.rows ?? rows;
 // (`columns`, see utils/transform.js) or of the rows
 const columnValues = (rows, columns, column) => {
     const source = sourceRows(rows, columns);
-    return columns?.has(column) ? (values => i => values[i])(columns.get(column)) : i => source[i]?.[column];
+    if (columns?.has(column))
+        return (values => i => values[i])(columns.get(column));
+    // a name of the prototype of objects is no column, e.g. "constructor"
+    return inherited(column) ? i => ownValue(source[i], column) : i => source[i]?.[column];
 };
 
 // the values of mappings of the parsed rows in the prepared ones, e.g. of
@@ -385,7 +388,7 @@ const rowName = (mapping, columns, scope) => name => {
             return raw && Object.hasOwn(raw, name) ? raw[name] : value;
         };
     }
-    return row => rawOf(row)?.[name];
+    return inherited(name) ? row => ownValue(rawOf(row), name) : row => rawOf(row)?.[name];
 };
 
 /**

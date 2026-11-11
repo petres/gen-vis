@@ -90,3 +90,35 @@ describe('filters of dates compare dates', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('names of the prototype of objects are no columns (review of 5.0)', () => {
+    const filtered = async filter => {
+        const el = await mount({ def: {
+            $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json',
+            height: 200,
+            filter,
+            dims: { x: { column: 'value', zero: true }, y: { column: 'year', type: 'categorical' } },
+            marks: { type: 'bar', 'data-c': '@x' },
+        }, data: 'year,value\n2020,1\n2021,2\n' });
+        return el.querySelectorAll('g.vis-mark rect').length;
+    };
+
+    test('a filter of a name which is no column keeps no row, also "constructor" and "__proto__"', async () => {
+        expect(await filtered('@nothing')).toBe(0);
+        expect(await filtered('@constructor')).toBe(0);
+        expect(await filtered('@__proto__')).toBe(0);
+        expect(await filtered('@toString')).toBe(0);
+        expect(await filtered('@value')).toBe(2);
+    });
+
+    test('a column of such a name is one', async () => {
+        const el = await mount({ def: {
+            $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json',
+            height: 200,
+            filter: "@constructor == 'a'",
+            dims: { x: { column: 'value', zero: true }, y: { column: 'constructor', type: 'categorical' } },
+            marks: { type: 'bar', 'data-c': '@x' },
+        }, data: 'constructor,value\na,1\nb,2\n' });
+        expect([...el.querySelectorAll('g.vis-mark rect')].map(r => r.getAttribute('data-c'))).toEqual(['1']);
+    });
+});

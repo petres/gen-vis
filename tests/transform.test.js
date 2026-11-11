@@ -529,3 +529,13 @@ describe('fold, aggregate and window: rows of JSON, collisions, values', () => {
         expect(run([{ v: '1' }, { v: '' }, { v: 3 }], { type: 'window', column: 'v', op: 'lag', as: 'p' }).get('p')).toEqual([null, 1, null]);
     });
 });
+
+describe('names of the prototype of objects are no columns (review of 5.0)', () => {
+    test('a filter and a calc of "constructor" or "__proto__" have no value', () => {
+        const data = [{ v: 1 }, { v: 2 }];
+        expect(applyTransforms(data, [{ type: 'filter', expr: '@constructor' }]).kept).toEqual([]);
+        expect(applyTransforms(data, [{ type: 'filter', expr: '@__proto__' }]).kept).toEqual([]);
+        expect(applyTransforms(data, [{ type: 'calc', expr: '@toString', as: 'out' }]).get('out')).toEqual([null, null]);
+        expect(applyTransforms([{ constructor: 'a' }, { constructor: 'b' }], [{ type: 'calc', expr: '@constructor', as: 'out' }]).get('out')).toEqual(['a', 'b']);
+    });
+});
