@@ -1,12 +1,13 @@
 # gen-vis 5.0: the definition language
 
 Goals: definitions which say what is drawn, not how its pixels are
-computed; one mechanism of state (globals) instead of patches; margins and
-the parts of marks which were arithmetic of the author computed by the
-library; one source of the description of the language. The engine of 4.x
-stays: 5.0 rewrites the front of the pipeline, the vocabulary of the
-definition, its translation into the form the engine reads, the validation
-and the state.
+computed; one mechanism of state (globals); margins and the parts of marks
+which are arithmetic computed by the library, not by the author; one
+source of the description of the language. The engine stays: 5.0 rewrites
+the front of the pipeline, the vocabulary of the definition, its
+translation into the form the engine reads, the validation and the state.
+A definition of gen-vis 4 is not read (an error of the load), the changelog
+of 5.0.0 lists what to write instead.
 
 This document is the design as implemented in 5.0; it follows
 the review of 4.1 (not in the repository), "Deviations" at the end lists
@@ -16,10 +17,8 @@ where it differs from it and why. The reference of the language is
 
 ## 1. The language
 
-The bars of the housing stock by legal form, two facets, in 4.x 96 lines
-with `xx`/`yy` dims, a `domainAbs` to make room for bars on a linear scale,
-`y0`/`y1` of `@yy:start:scaled`, `stacked` on the dim, a hand-drawn legend
-symbol and `facets.scales: []`; in 5.0:
+The bars of the housing stock by legal form, two facets, stacked, with a
+legend of the symbols of the bars:
 
 ```json
 {
@@ -44,14 +43,13 @@ The decisions:
 
 1. **Marks with channels, not svg attributes of scaled references.** A mark
    names dims per channel (`x`, `y`, `x0`, `x1`, `y0`, `y1`, `x2`, `y2`,
-   `lon`, `lat`), the translation writes the props of the scaled positions
-   which an author of 4.x wrote (`"cx": "@x:scaled"`, `"y0":
-   "@y:start:scaled"`). The escape hatch stays: every channel and attribute
-   is an expression, the `svg:` types take attributes as in 4.x. Why: the
-   most common props of 4.x were the defaults and the arithmetic of
-   positions (centers of bands, starts and ends of stacks, the slots of
-   grouped bars, which 4.x could not do), and they are the part authors got
-   wrong.
+   `lon`, `lat`), the translation writes the attributes of the scaled
+   positions (`"cx": "@x:scaled"`, `"y0": "@y:start:scaled"`). The escape
+   hatch stays: every channel and attribute is an expression, the `svg:`
+   types take the attributes of their elements. Why: the attributes an
+   author would write most are the defaults and the arithmetic of positions
+   (centers of bands, starts and ends of stacks, the slots of grouped
+   bars), and they are the part authors get wrong.
 2. **Flat marks and a flat top level.** The style of a mark is beside its
    channels, without `props`; a list of the keys which are options of a mark
    (`type`, `by`, `filter`, `stack`, `dodge`, ...) separates them from the
@@ -69,34 +67,32 @@ The decisions:
    listed categories are all of them.
 4. **Globals are the only state.** A control sets a global, any part of the
    definition is an expression of the globals (`match` of a global per
-   value), evaluated before the definition is read. The patches of 4.x (a
-   partial definition merged per selected entry, after the parents) are
-   gone; their semantics was a second merge with its own order. The state
-   of a chart is its globals and the visibility of its categories.
+   value), evaluated before the definition is read. An entry of a control
+   has no partial definition which is merged when it is selected: that
+   would be a second merge with its own order. The state of a chart is its
+   globals and the visibility of its categories.
 5. **One expression language with a string syntax.** The objects of the
-   expressions of 4.x (close to JSON Logic) stay the canonical form and the
+   expressions (close to JSON Logic) are the canonical form and the
    form of the spec; a text starting with `=` (or `@`) is the same
    expression in a syntax of operators and calls (`"=@innerWidth * 0.5"`),
    parsed to the objects (`src/utils/expr-parse.js`, fixtures
    `spec/expressions/syntax.json`). Filters and stack conditions are
-   expressions of the row (the condition objects of 4.x stay readable). The
-   `{name}` templates of texts stay as they are.
+   expressions of the row (an object of conditions of dims is read too). The
+   `{name}` templates of texts are a mechanism of their own.
 6. **Auto margins.** The margins are measured of the axes by default, a
    side given stays; a page gives the margins of a house style once (css
-   variables or `registerDefaults`). Why: 57 of 63 definitions of 4.x set
-   margins by hand, mostly to fit the labels of an axis.
+   variables or `registerDefaults`). Why: margins set by hand are mostly
+   set to fit the labels of an axis.
 7. **Highlight by classes and a stylesheet.** The hover toggles classes, the
    attributes of `highlight` and `others` are the rules of a stylesheet of
-   the chart. The definitions are the same; the 200 lines of attribute
-   bookkeeping of 4.x (`default-*` attributes, two animation channels) are
-   gone.
+   the chart, so the engine keeps no attributes of the elements to restore
+   them after a hover.
 
 ## 2. The pipeline
 
 ```
 definition 5.0 (JSON, schema.json)
    │ resolveParents     merge of the parents and mixins (spec/merge)          portable
-   │ migrate            a definition of 4.x (by its keys) as one of 5.0       portable
    │ resolve            the expressions of the globals evaluated              portable, JSON → JSON
    │ translate          the shorthands written out: the form the engine      portable, JSON → JSON
    │                    reads (dims, marks with props, controls)
@@ -109,12 +105,12 @@ normalized definition
 renderer (JS only): facets, drawLayer joins, hover, highlight stylesheet
 ```
 
-- `src/utils/load.js` merges the parents (`resolveParents`), migrates a
-  definition of 4.x with a notice, keeps the merged definition of 5.0 as
+- `src/utils/load.js` merges the parents (`resolveParents`, which refuses a
+  part of gen-vis 4), keeps the merged definition as
   the `source` of the store, and reads `normalize(translate(resolve(source,
   globals)))`. A change of the globals resolves the source again and
   prepares only the parts which change (`applyResolved` of
-  `src/utils/def.js`, which replaced `applyPatches`).
+  `src/utils/def.js`).
 - `resolve` (`src/utils/resolve.js`) replaces every expression whose names
   are all globals (or fields of the selected entries, `year:name`, or
   `globals.<name>`) by its value. Other expressions (of rows, categories,
@@ -125,9 +121,9 @@ renderer (JS only): facets, drawLayer joins, hover, highlight stylesheet
 - `variants(def)` is the definition resolved with every value of every
   control: the load prepares them (e.g. the coordinate systems and maps of
   all values are loaded with the definition) and `validateDef` checks each
-  of them, as it checked the patches.
+  of them.
 - `translate` (`src/utils/language.js`) is pure: it does not know the rows,
-  the types of the dims follow later as before. The form the engine reads
+  the types of the dims follow later. The form the engine reads
   has the names of the definition (`dims`, `marks`, `controls`, the options
   at the top level), `translate` writes out its shorthands: it compiles the
   string syntax, writes the shorthands of the dims into their scale and
@@ -148,11 +144,10 @@ renderer (JS only): facets, drawLayer joins, hover, highlight stylesheet
   page (read by the measure of `src/comp/vis.js`), else the defaults
   (`registerDefaults`, the prop `defaults`), else measured.
 
-The engine reading the form of 4.x is deliberate: the renderer, the
-snapshots and the PNG baselines of 4.x are the test that a translated
-definition draws the same picture (`tests/migrate.test.js` compares the
-normalized definitions of the migrated files with the ones of the 4.x
-fixtures, `tests/png.test.js` the images).
+The engine reading a form of its own, with the shorthands written out, is
+deliberate: the renderer does not know the shorthands, and the snapshots
+(`tests/snapshots.test.js`) and the PNG baselines (`tests/png.test.js`) are
+the test that a translated definition draws the same picture.
 
 ## 3. The schema of one source
 
@@ -170,57 +165,21 @@ Of it:
   locales, scales, projections, transforms), which `tests/schema.test.js`
   compares with the code.
 
-4.x had a hand-written `schema.json`, the types generated of it, a copy of
-it in the check (a plugin of the build), the defaults in three files and
-the docs: five descriptions of one language. The texts of the schema are
+One source instead of a hand-written `schema.json`, types generated of
+it, a copy of it in the check, the defaults and the docs: five descriptions
+of one language. The texts of the schema are
 the per-key reference; `docs/definition.md` is the prose around them.
 Places which take an expression of the globals are written so
 (`ofGlobals`): a text starting with `=` or `@` passes the schema and is
 checked after it is resolved.
 
-`validateDef` checks the definition of 5.0 as written (the schema, with
+`validateDef` checks the definition as written (the schema, with
 the expressions of the globals resolved), then the semantic checks on the
 translated form (dims, references, operators, the data), whose paths and
 words are the ones of the definition (`authoredPath` maps the `props` of a
 mark).
 
-## 4. The migration
-
-4.0 dropped the compatibility with 3.x and left the migration to the
-maintainer; 5.0 has a migration, since the definitions of 4.x are in use on
-several pages (FTI, energy monitor) and the patches of form elements can
-not be ported by hand reliably. `src/utils/migrate.js` is pure, `gen-vis
-migrate` writes files with it, the load migrates a definition of 4.x
-while it is loaded.
-
-- The mechanical parts: `options` up, `footer` → `source`, `mapping` →
-  `dims` with shorthands (`"domain": [0, null]` → `zero`, `axis.grid` →
-  `grid`, `domainRel` → `pad`), plots → marks (the props of scaled positions
-  which are the defaults of a channel are left out, others become channels,
-  the rest stays as attributes), `stacked` of a dim → `stack` of the marks
-  which draw it, form elements → controls, condition objects → expressions,
-  expression objects → the string syntax.
-- The patches: every leaf a patch changes becomes a `match` of the global of
-  the control at that leaf, with the base as the default; a patch of the
-  plots, the annotations or the filter (lists merged by id, conditions
-  merged) is a `match` of the whole part. 4.x applied the patches after the
-  merge with the parents; in 5.0 the merge does the same for a `match` of
-  a global: without a default it is a switch over the value of the other
-  parts (the value below or above it becomes its default, two matches of
-  the same global merge their cases), so a mixin's switch applies to the
-  value of a parent or a child, and a child writes only its own cases. A
-  child is migrated with its parents merged (`migrate(def, { parents })`)
-  for the ids of its controls and the hover; the CLI reads all files
-  before it writes one.
-- The same chart: the hovers of 4.x which the default of 5.0 implies (the
-  dims the marks use) are left out, a definition with such a dim without a
-  hover lists `hover.columns` (the implied ones of its parents, `[]` of a
-  definition of its own), a legend without a symbol gets `"symbol": null`,
-  the margins stay. The test of the migration compares, for every value of
-  every control, the normalized 4.x definition with the normalized
-  translation of the migrated files.
-
-## 5. What was kept
+## 4. What was kept
 
 - The engine: `layout()` computes a view, the facets draw into the
   elements of the draw before by key, props are diffed, transitions move
@@ -267,12 +226,13 @@ while it is loaded.
 - **A categorical `y` is top-down by default** (decided 2026-11-08): a
   vertical band or point scale without a range of its own runs from the
   top, as the rows of a table and as in Vega-Lite and Plot; `reverse: true`
-  puts the first category at the bottom. The migration writes `reverse`
-  for such dims of 4.x, so their pictures stay.
+  puts the first category at the bottom.
 - **The `{name}` templates stay a mechanism of their own** (not specified
   as `cat`): they are texts with holes, which an author reads as text.
 - **The `$schema` gate stays an error** of a file without one or of another
-  version; the one of 4 is accepted, the migration decides by the keys.
+  version, also the one of 4; a definition with the keys of gen-vis 4 is an
+  error which names them (decided 2026-11-11: no migration, neither while
+  a definition is loaded nor by the CLI).
 - **Not done in 5.0:** dark CSS variables. (Arrows of rules, lines and
   annotations, `"marker-end": "arrow"`, and `hover.cross` came with the
   release review; `gen-vis check`, `--strict` and the checks of the data

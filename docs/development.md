@@ -13,7 +13,7 @@ npm run build   # es modules for bundlers in dist/: gen-vis.js (the core), vue.j
 npm run watch   # rebuilds dist/ on changes, e.g. for `npm link`
 npm run lib     # the browser module in dist-lib/esm/ and the export page dist-lib/export.html
 node bin/gen-vis.js export data/bev/def.json bev.svg   # the CLI of the static export, of dist-lib/
-node bin/gen-vis.js migrate old/def.json               # a definition of gen-vis 4 as one of gen-vis 5, of dist/check.js
+node bin/gen-vis.js check data/bev/def.json            # the check of definition files without a browser, of dist/check.js
 npm run upload  # compresses dist-lib/ and copies all of it to GEN_VIS_UPLOAD (user@host:/path) in .env
 npm run deploy  # npm run lib, then npm run upload
 npm run site    # dev server of the examples site (site/), with the package built in dist/ and dist-lib/
@@ -60,7 +60,7 @@ before a push (`npm test`, or `npm run test:png`).
 languages can implement ([spec/README.md](../spec/README.md)),
 `tests/spec.test.js` runs them. The design of the definition language of
 5.0 (the language, the translation into the form the engine reads, the
-schema of one source, the migration) is in [design-5.0.md](design-5.0.md),
+schema of one source) is in [design-5.0.md](design-5.0.md),
 the one of 4.0 (the expressions, the normalized form) in
 [design-4.0.md](design-4.0.md).
 
@@ -79,12 +79,6 @@ globals (`"=..."`), the types of TypeScript make the branches a union and
 the expression a template literal type (`scripts/types.js`). A change of
 the language is a change of the source, `npm run schema`, the translator
 (`src/utils/language.js`) and its tests (`tests/language.test.js`).
-
-`tests/fixtures/v4/` has the definitions of `data/` of gen-vis 4, as they
-were before `gen-vis migrate`: `tests/migrate.test.js` compares the
-migration of every merged 4.x definition with the migrated files, for every
-value of its controls, and the translated definition with the normalized
-one of 4.x.
 
 `tests/snapshots/` has the html of every definition in `data/`, drawn,
 hovered and with the first entry of the legend toggled, so changes of the

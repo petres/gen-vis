@@ -181,7 +181,7 @@ export type Key = string | number;
  */
 export interface GenVisDefinition {
     /**
-     * The version of the definition language, the schema of gen-vis 5 (https://unpkg.com/@preschen/gen-vis@5/schema.json, also of jsdelivr, a full version, e.g. @5.0.0, or node_modules/@preschen/gen-vis/schema.json of the installed package), a definition file needs it, in itself or in a parent; a definition of gen-vis 4 is migrated when it is loaded, 'gen-vis migrate' writes it as one of gen-vis 5.
+     * The version of the definition language, the schema of gen-vis 5 (https://unpkg.com/@preschen/gen-vis@5/schema.json, also of jsdelivr, a full version, e.g. @5.0.0, or node_modules/@preschen/gen-vis/schema.json of the installed package), a definition file needs it, in itself or in a parent; a definition of gen-vis 4 is not read.
      */
     $schema?: string;
     /**

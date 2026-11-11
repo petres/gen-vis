@@ -139,8 +139,7 @@ The result (sizes in CSS pixels):
 `await window.genVisExport.resolve(options)` (since 4.0.0, of protocol
 version 1) is the definition of `def` or `defUrl` with its parents and
 mixins, merged as the load of the chart merges them (`parent`, relative to
-`baseUrl` or to `defUrl`, the files of the chart), as it is written (a
-definition of gen-vis 4 is not migrated), not yet resolved with its
+`baseUrl` or to `defUrl`, the files of the chart), as it is written, not yet resolved with its
 globals; it takes the options of `genVisExport` (unknown ones are an
 error, the others than `def`, `defUrl` and `baseUrl` are not used), leaves
 the chart before as it is and rejects as `genVisExport` does, e.g. with
@@ -169,9 +168,7 @@ options and new keys of the result are added without a new version.
 
 `gen-vis export` is the package's `bin` (node 22 or newer, no
 dependencies beside the package's); [`gen-vis check`](#check) of the same
-`bin` checks definition files without a browser, `gen-vis migrate` writes
-definitions of gen-vis 4 as ones of gen-vis 5, see
-[migration](definition.md#migration-from-4x), `gen-vis --version` prints the
+`bin` checks definition files without a browser, `gen-vis --version` prints the
 version of the package. `export` draws definition files on the export page in a Chromium,
 Chrome or Edge of the system and writes SVG, PNG and PDF files, chosen by
 their extensions. Each definition is followed by its outputs, and one
@@ -289,8 +286,11 @@ p6.json: marks[0].strok-width: no attribute of svg, did you mean 'stroke-width'?
 ```
 
 and a summary to the standard error (`gen-vis: 11 definitions, 6
-warnings in 6, 2 not read`). A definition of gen-vis 4 is checked as
-migrated (a `note:` line says so). The check reads only local files: data
+warnings in 6, 2 not read`). A definition of gen-vis 4 (of its keys
+`mapping`, `plot`, `formElements` or `options`, also of a parent, or of
+its `$schema`) is not read: one line of the standard error names the file
+and the keys, the exit code is 1; `gen-vis export` fails of it in the same
+way. The check reads only local files: data
 of an url of another origin (e.g. `https://example.org/data.csv`) is not
 checked (a `note:` line says so, `--data <file>` checks a local copy), a
 parent of one is not read. The exit code is 1 if a definition could

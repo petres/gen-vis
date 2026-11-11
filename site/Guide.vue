@@ -43,8 +43,8 @@
                     That has its price. A definition is longer than the one of a library which decides more for
                     you, there are a few kinds of marks which are combined rather than many chart types, it is
                     SVG only, and a new major version changes definitions when a better way turns up (2.0 to
-                    5.0 did; 5.0 migrates the definitions of 4.x, while they are loaded or with
-                    <code>gen-vis migrate</code>). There is one author, no company and no promise of support.
+                    5.0 did, and a definition of the version before is not read: the changelog says what to
+                    write instead). There is one author, no company and no promise of support.
                 </p>
                 <p>
                     If it fits your charts, use it. If it nearly fits, fork it: the code is about 13 000 lines of
@@ -60,8 +60,7 @@
                 <ol class="pipeline">
                     <li>
                         <strong>Load</strong> <code>src/utils/load.js</code>: the definition is merged with its
-                        parents and mixins, a definition of gen-vis 4 is migrated (<code>src/utils/migrate.js</code>,
-                        loaded only then), the parts of the package it needs are loaded with the data (e.g. the ones
+                        parents and mixins, the parts of the package it needs are loaded with the data (e.g. the ones
                         of maps only for a map), the data is read, CSV, TSV, JSON or the columns used of parquet.
                     </li>
                     <li>

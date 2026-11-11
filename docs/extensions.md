@@ -174,7 +174,7 @@ types, coordinate systems and schemes.
 
 ## Checks outside the browser
 
-`@preschen/gen-vis/check` merges, checks and migrates definitions in
+`@preschen/gen-vis/check` merges and checks definitions in
 scripts, e.g. all definitions of a page before a deploy, `load` reads the
 file of an url:
 
@@ -189,8 +189,7 @@ const def = await resolveParents(JSON.parse(readFileSync(new URL(url), 'utf8')),
 console.log(validateDef(def));  // the warnings, e.g. unknown mark types
 ```
 
-`validateDef(def, rows)` checks a definition of 5.0 (one of 4.x is
-migrated first, as by the load): the keys and values of the schema, then
+`validateDef(def, rows)` checks a definition: the keys and values of the schema, then
 the meaning, e.g. unknown dims and references, with the paths of the
 definition (`marks[0].fill: ...`), also the definition of every other
 value of the controls (`controls[0].values[1] > marks[0].type: ...`).
@@ -208,13 +207,15 @@ globals (without rows any plain name may be a column). Dims without a type
 get the type the load infers from the values (also for transform
 columns). `gen-vis check` runs it on files, see [export](export.md#check).
 
+A definition of gen-vis 4 is not read: `resolveParents` rejects of a part
+(the definition or a parent) with the keys of 4.x (`mapping`, `plot`,
+`formElements`, `options`) or with a `$schema` of another version than 5,
+as the load of a chart does, see [`$schema`](definition.md#schema);
+`validateDef` of such a definition returns that one message and checks
+nothing else.
+
 The steps of the load are exported as well, each JSON to JSON:
 
-- `migrate(def, { parents })`: a definition of gen-vis 4 as one of 5.0
-  (`parents` the merged parents of a child, see
-  [migration](definition.md#migration-from-4x)), `formatJson(def)` its text
-  as the files of gen-vis are written, `isDefinition4(def)` and
-  `isDefinition5(def)` tell them apart;
 - `resolve(def, names)`: the expressions of the globals evaluated, `names`
   are the globals (and the fields of the entries of the controls), e.g.
   `{ "scale": "log" }`; `variants(def)` the definition resolved with its

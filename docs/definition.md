@@ -67,9 +67,7 @@ part which is merged into its parent):
 | `geo` | the geometry of a map, see [maps](#maps) |
 
 Every key of every part in a table: the [reference](reference.md); common charts step by step: the [recipes](recipes.md). Values are [expressions](#expressions) almost everywhere, e.g.
-`"=@innerWidth * 0.5"` or a `match` of a global. Definitions of gen-vis 4
-are migrated when they are loaded, `gen-vis migrate` writes them as ones
-of gen-vis 5, see [migration from 4.x](#migration-from-4x).
+`"=@innerWidth * 0.5"` or a `match` of a global.
 
 ## Parents and mixins
 
@@ -165,10 +163,10 @@ the definition with it:
 ```
 
 - A definition file (`defFile`, also `resolveParents` of a url) needs a
-  `$schema` of gen-vis 5 (or 4, see below), in itself or in one of its
+  `$schema` of gen-vis 5, in itself or in one of its
   parents, otherwise the load fails, e.g. "'…/def.json' is no definition of
-  gen-vis 5: its $schema is missing" (or "is the one of gen-vis 3"); every
-  part with a `$schema` (a parent too) needs one of gen-vis 5 or 4.
+  gen-vis 5: its $schema is missing" (or "is the one of gen-vis 4"); every
+  part with a `$schema` (a parent too) needs one of gen-vis 5.
 - A definition object or text (`def`) may have none.
 - A `$schema` of gen-vis 5 is a url or a path which ends in
   `@preschen/gen-vis@<version>/schema.json` of the major version 5: `@5`,
@@ -179,11 +177,13 @@ the definition with it:
   `"./node_modules/@preschen/gen-vis/schema.json"`. A schema of gen-vis
   without a version (the newest one of unpkg) is none of 5, the one of
   another major version neither, nor any other schema.
-- A `$schema` of gen-vis 4 is accepted too. Whether a merged definition is
-  one of 4.x follows from its keys (`options`, `mapping`, `plot` or
-  `formElements`, without `dims`, `marks` or `controls`): it is migrated
-  while it is loaded, with a notice in the console, see
-  [migration from 4.x](#migration-from-4x).
+- A definition of gen-vis 4 is not read: one with its `$schema` or with
+  its keys (`mapping`, `plot`, `formElements` or `options`, also in a
+  parent) is an error of the load which names the file and the keys, e.g.
+  "'…/def.json' is a definition of gen-vis 4 (its "mapping", "plot"):
+  gen-vis 5 reads "dims", "marks", "controls" and the options at the top
+  level"; the changelog of 5.0.0 lists what to write instead ("Upgrading
+  from 4.x").
 
 The schema also allows parts of definitions, e.g. definitions with a
 `parent`. The definitions of `data/` and of the site have the `$schema` in
@@ -2216,7 +2216,7 @@ the ones which are numbers by their value:
 is `"@year == @globals.year and (@land == 'Wien' or @land == 'Tirol')"`.
 The objects of a parent and a child are merged, an expression replaces the
 filter of the parent, `null` removes it. (The conditions `{"not": ...}` and
-`{"range": [from, to]}` of 4.x are still read, an expression says the same,
+`{"range": [from, to]}` of a dim are read too, an expression says the same,
 e.g. `"@type != 'load'"` or `"=2000 <= @year <= 2020"`.)
 
 The same expressions and objects are the `filter` of a mark (its rows),
@@ -2486,124 +2486,3 @@ The values of a row of a dim `x`:
 Other names of a row of the `data` of a mark are its keys, e.g. `@label`.
 Inner names replace outer ones, in a mark the dims replace globals of the
 same name, e.g. `@year` is the one of the row, `@globals.year` the global.
-
-## Migration from 4.x
-
-The language of 5.0 says the same as the one of 4.x with fewer keys: the
-options are keys of the top level, the mappings are dims with shorthands of
-their scale and axis, the plots are marks whose channels name dims instead
-of props of scaled positions, the form elements are controls of globals and
-their patches are expressions of the globals. The engine reads the same
-form as before, a definition of 5.0 is translated into it (see
-[design-5.0.md](design-5.0.md)), so a migrated chart is drawn as before.
-
-| 4.x | 5.0 |
-|-----|-----|
-| `"options": {"title": ..., "height": ...}` | `"title": ..., "height": ...` at the top level |
-| `options.footer` | `source` |
-| `mapping` | `dims` |
-| `"domain": [0, null]` | `"zero": true` (the domain includes 0: the same of values from 0, negative ones are drawn below it) |
-| `"axis": {"grid": true}`, `"axis": {"ticks": 5}` | `"grid": true`, `"ticks": 5` (the axis parts stay valid) |
-| `"scale": {"domainRel": [-0.1, 0.1]}` | `"scale": {"pad": [0.1, 0.1]}` (`pad` of the dim too) |
-| `"categories": {"Wien": {"color": "#C3423F"}}` | `"categories": {"Wien": "#C3423F"}` (both are valid) |
-| `"fromData": true` of a dim with a legend | the categories of the data by default (in the order of the rows); listed categories are all of them, `fromData` adds the others |
-| a legend without a `symbol`: names only | `"symbol": "auto"` by default, the symbols of the marks; `"symbol": null` for none |
-| `plot` | `marks` |
-| `"props": {"stroke-width": 2}` | `"stroke-width": 2` beside the type |
-| `"props": {"cx": "@x:scaled", "cy": "@y:scaled"}` | the default channels `x` and `y`, or `"x": "lo"` of another dim |
-| `"props": {"y1": "@hi:scaled"}` with `"hi": {"scale": {"of": "y"}}` | `"y1": "hi"` (the scale of the axis is set) |
-| `"stacked": true` of a dim and `"y0": "@y:start:scaled", "y1": "@y:end:scaled"` | `"stack": true` of the mark |
-| `"type": "svg:text"` with `"y": "@y:scaled:center", "dominant-baseline": "middle"` | `"type": "label"`, `"anchor": "end"` |
-| grouped bars by hand | `"dodge": true` |
-| `formElements` with `ref` | `controls` with `global` |
-| `patch` of an entry | expressions of the global at the patched places, e.g. `"=match(@scale, {log: 'log'}, 'linear')"` |
-| `filter` conditions with `not` and `range` | expressions, e.g. `"@type != 'load'"`; an object of values stays |
-| `{"*": ["@innerWidth", 0.5]}` | `"=@innerWidth * 0.5"` (the object stays valid) |
-| `"hover": {}` of the dims of the plots' `by` | the default; `hover.columns` lists the dims of the hover |
-| `facets.dim` | `facets.by` |
-| `facets.cols` and `rows` of the dims of a grid | `"by": {"cols": ..., "rows": ...}` |
-| `"scales": []` of facets | `"own"` (the default), `"shared"` all dims |
-| margins of 0 by default | measured by default |
-
-Removed (their replacements are above): `options`, `mapping`,
-`plot` and the `props` of a plot, `formElements`, `patch`, `domainRel`.
-Kept for the rare case: `stacked` and `stackBy` of a dim (values stacked
-by no mark, e.g. of a histogram of a bin), `scale.of`, `domainAbs`,
-`domainIgnores`, `once`, `place`, `dataFormat`, `width`, the conditions
-`not` and `range` of filters.
-
-`gen-vis migrate` writes definitions of 4.x as ones of 5.0, to the
-standard output, with `--write` into the files themselves:
-
-```sh
-npx gen-vis migrate data/energy/_years.json data/energy/mobility/*.json --write
-```
-
-A child is migrated with its parents merged, the files are read before any
-of them is written, so give a directory's parents and children in one call;
-a part which has no keys of 4.x (e.g. a parent of only `data` or `geo`)
-stays as it is, its `$schema` too (the one of 4 is accepted, change it by
-hand). The migration keeps the chart as it was:
-
-- The margins of the definition stay, remove them to have them measured.
-- A definition whose marks are by a dim without a `hover` gets
-  `"hover": {"columns": []}`, the hover of 4.x had only the dims with a
-  `hover`; remove it for the dims of `by` in the hover.
-- A legend without a symbol gets `"symbol": null`, remove it for the
-  symbols of the marks.
-- A dim with `fromData: true` keeps it (ascending order).
-- A categorical vertical dim without a range of its scale gets
-  `"reverse": true` (4.x had its first category at the bottom, 5.0 at the
-  top), a `reverse` of 4.x is removed.
-- Lines and areas get `"order": "rows"`: 4.x drew them in the order of
-  the rows, 5.0 along x. Remove it where the rows are in the order of x
-  (or a line should run along x), keep it of a connected scatter plot.
-- A reference of a condition of a filter is written `@globals.<name>`,
-  4.x read the globals there.
-- Conditions of dates (of a dim of dates or with texts of dates, e.g.
-  `{"range": ["2020-01-01", null]}`) stay the object of 4.x, which compares
-  dates; an expression compares the texts of the rows. Of a patch of the
-  filter they are expressions (check them by hand).
-- The objects of expressions are written in the string syntax where it has
-  a text of them.
-- A text which starts with `=` (a title `"= Summe"`, an axis title
-  `"=100"`), an expression in 5.0, is written as the expression of the
-  text, `"='= Summe'"`.
-
-To check by hand:
-
-- **Patches of parts of a parent.** A patch becomes a `match` of the
-  global at the leaf it changes, without a default if the part has no
-  value of the leaf: a switch over the value of the other parts, which
-  applies after the merge as the patch did (see [parents and
-  mixins](#parents-and-mixins)). A mixin which switches the column of `y`
-  reads `"column": "=match(@values, {share: 'value.share'})"`, a child
-  which gives `"column": "value"` keeps it. Two mixins which patch the
-  same leaf by the same global merge their cases; by different globals the
-  later one is the switch over the earlier one, a child's value is the
-  default of the innermost one, so both apply.
-- **Patches of whole parts.** A patch of the plots, the annotations or the
-  filter is a `match` of the whole list or filter (the marks of every value
-  in it), shorten it by hand if only an attribute differs.
-- **Several form elements at one place.** Patches of different form
-  elements of the same leaf, or of a part and a leaf in it (e.g. one
-  removes the axis, another changes its title), are nested switches: a
-  `match` of the later form element whose cases and default are the
-  `match` of the earlier one, e.g. `"column": "=match(@b, {b2: 'vb'},
-  match(@a, {a2: 'va'}, 'v'))"`, the patches applied in their order as in
-  4.x. A patch which removes the scale, the axis, the legend or the hover
-  of a dim (null) is `false` in the switch.
-- **Types of dims.** A dim with a legend gets the categories of the data
-  and is categorical, a dim only used as `by` is not, as in 4.x.
-
-A definition of 4.x which is loaded (by its keys, also with the `$schema`
-of 4) is migrated while it is loaded, with a notice in the console
-(`a definition of gen-vis 4, migrated while it is loaded`, also of an
-inline one), so pages keep working until their files are migrated; the
-warnings of its check name the places of 5.0 (`dims.y`, `marks[0]`) and
-say so. A chain of parents of parts of 4.x and 5.0 (e.g. a child of 5.0
-of a parent which is still one of 4.x) is merged as one of 5.0: every
-part of 4.x is migrated first, with the parts of 4.x before it as its
-parents, as `gen-vis migrate` writes the files one by one. `@preschen/gen-vis/check` exports
-`migrate(def, {parents})` and `formatJson(def)` of a script of its own, see
-[checks outside the browser](extensions.md#checks-outside-the-browser).

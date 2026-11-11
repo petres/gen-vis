@@ -7,10 +7,7 @@ then the expressions of the globals are evaluated (see `expressions.md`
 and `resolve` of the package), then the definition is translated and
 normalized (see `normalize.md`): an expression of a parent is merged as
 any other value, a later part replaces it, except a `match` of a global,
-which is a switch (see below). (The patches of the form
-elements of 4.x, merged into the patchable parts after the parents, are
-gone; a definition of 4.x is migrated after the merge, its patches become
-expressions of the globals.)
+which is a switch (see below).
 
 ## `merge(parts)`
 
@@ -29,15 +26,14 @@ The parts are merged in their order, a later part overrides an earlier one
   the entry of the later array of the same key (compared as strings, `1`
   and `"1"` are the same), then the entries of the later one with new keys
   are appended.
-- The `values` of a control (of 4.x of a form element) are entries: if
+- The `values` of a control are entries: if
   one of the two lists has an object, a value of the other one (e.g.
   `"2024"`) is the entry `{"value": "2024"}`, so a child's
   `[{"value": "x", "name": "X"}]` onto a parent's `["x", "y"]` is
   `[{"value": "x", "name": "X"}, {"value": "y"}]`; two lists of values
   replace each other, as other arrays.
 - A text of a dim (the column, e.g. `"facet": "group"`) and an object of
-  the same dim (of the keys `dims` and `mapping`, the latter of 4.x and of
-  the form the engine reads) are merged as the object `{"column": "group"}`
+  the same dim (of the key `dims`) are merged as the object `{"column": "group"}`
   and the other one, in both orders: a child adds the categories of the
   column of its parent, or a text changes only the column of an object. Two
   texts replace each other.
@@ -45,7 +41,7 @@ The parts are merged in their order, a later part overrides an earlier one
   'value.share'})"` in the string syntax, or the operator object `{"match":
   ["@values", {...}]}`) is a switch of cases over the value of the other
   parts. A global is a name of the `globals` or the `global` of a control
-  (of 4.x the `ref` of a form element) of any of the parts merged; the
+  of any of the parts merged; the
   reference may be `@name`, `@globals.name` or a field `@name:field`. A
   match of another name (e.g. of the categories in the `props` of a
   legend, of the rows in `stacked` or a `filter`, or of a global which only
@@ -55,8 +51,7 @@ The parts are merged in their order, a later part overrides an earlier one
     operator object).
   - A value merged onto a match of a global (with or without a default)
     becomes its default, so the switch of a mixin applies to the value of
-    a child merged after it (as the patches of 4.x applied after the
-    merge). An object onto a default which is an object is merged into it
+    a child merged after it. An object onto a default which is an object is merged into it
     (by these rules), e.g. `{"nice": true}` of a child onto `"scale":
     "=match(@s, {log: literal({type: 'log'})})"` over `{"type": "linear"}`
     of a parent is the default `{"type": "linear", "nice": true}`; the
@@ -96,12 +91,11 @@ The parts are merged in their order, a later part overrides an earlier one
 `null` is kept by the merge, the parts of a definition which it removes treat
 it as missing: a dim (`"dims": {"y": null}`), the parts `scale`, `axis`,
 `legend` and `hover` of a dim (also `false`), `geo`, `filter`, `facets`,
-`marks`, `annotations` and `transform` (of 4.x a mapping, `mapping`, the
-`props` of a mapping and `plot`).
+`marks`, `annotations` and `transform`.
 
 (The JS implementation is `src/utils/merge.js`, `mergeAll` of
 `src/utils/def.js` with the keys of the arrays and the merge of the
-mappings.)
+dims.)
 
 ## Parents
 
@@ -121,22 +115,24 @@ definition `def` of the url `url`, `files` are the definitions of the urls,
   meaning anymore).
 - A parent which is its own ancestor is an error (`Cyclic parent definition '<url>'`).
 - The version of the definition language is the `$schema` of a part: every
-  part with one is a definition of gen-vis 5 or 4, the merged definition of
+  part with one is a definition of gen-vis 5, the merged definition of
   a url (a file) has one (of itself or of a parent), a definition without a
   url (inline) may have none. Otherwise it is an error (`'<url>' is no
   definition of gen-vis 5: its $schema is missing`, `... is the one of
-  gen-vis 3`, `... names no major version of gen-vis`, `... is none of
+  gen-vis 4`, `... names no major version of gen-vis`, `... is none of
   gen-vis`; `the inline definition` instead of the url). A `$schema` of
   gen-vis 5 is a url or a path ending in
   `@preschen/gen-vis@<version>/schema.json` of the major version 5 (`@5`,
   `@5.1`, `@5.0.2`, `@5.0.0-alpha.1`), e.g.
   `https://unpkg.com/@preschen/gen-vis@5/schema.json` (the `$id` of
   `schema.json`) or the one of jsdelivr, or the schema of the installed
-  package, a path ending in `node_modules/@preschen/gen-vis/schema.json`; the
-  same of the major version 4 is accepted. Whether the merged definition is
-  one of 4.x follows from its keys, not from its `$schema` (`options`,
-  `mapping`, `plot` or `formElements` without `dims`, `marks` or
-  `controls`): it is migrated after the merge.
+  package, a path ending in `node_modules/@preschen/gen-vis/schema.json`.
+- A part (the definition or a parent, of a url or inline) with a key of the
+  language of gen-vis 4, `mapping`, `plot`, `formElements` or `options`, is
+  an error which names the part and the keys it has, in this order
+  (`'<url>' is a definition of gen-vis 4 (its "mapping", "plot"): gen-vis 5
+  reads "dims", "marks", "controls" and the options at the top level, ...`),
+  before the one of its `$schema`: a definition of gen-vis 4 is not read.
 
 ## Texts in several languages
 

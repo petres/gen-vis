@@ -55,8 +55,7 @@ mountGenVisByClass('genVis');
 
 The `$schema` declares the definition language version (gen-vis 5).
 Editors like VS Code use it to complete and check the definition. The
-definition language is described in [docs/definition.md](docs/definition.md);
-`npx gen-vis migrate` writes definitions of gen-vis 4 as ones of gen-vis 5.
+definition language is described in [docs/definition.md](docs/definition.md).
 
 ## Usage
 
@@ -146,7 +145,7 @@ dependency). All three take the same props, events and methods (see
   Edge. Other programs, e.g. Python or R wrappers, drive the same export
   page.
 - **Checks**: `check` warns about mistakes while you write a definition,
-  `@preschen/gen-vis/check` checks and migrates definitions in scripts, and
+  `@preschen/gen-vis/check` checks definitions in scripts, and
   the JSON Schema and TypeScript types describe the definitions.
 - **Extensions**: register your own mark types, coordinate systems
   and color schemes.
@@ -154,7 +153,6 @@ dependency). All three take the same props, events and methods (see
 ```sh
 npx gen-vis export data/bev/def.json bev.svg bev.png bev.pdf --width 16cm --font-size 8pt --dpi 300
 npx gen-vis check data/*/def*.json --strict   # the schema, the checks and the data, without a browser
-npx gen-vis migrate old/*.json --write   # definitions of gen-vis 4 as ones of gen-vis 5
 ```
 
 ## Documentation
@@ -177,8 +175,7 @@ npx gen-vis migrate old/*.json --write   # definitions of gen-vis 4 as ones of g
   [`filter`](docs/definition.md#filter), [globals and
   controls](docs/definition.md#globals-and-controls),
   [expressions](docs/definition.md#expressions) and their
-  [names](docs/definition.md#names), the [migration from
-  4.x](docs/definition.md#migration-from-4x).
+  [names](docs/definition.md#names).
 - [Usage](docs/usage.md): the [browser
   module](docs/usage.md#browser-module), the
   [JavaScript](docs/usage.md#javascript) API, the [Vue
@@ -196,7 +193,7 @@ npx gen-vis migrate old/*.json --write   # definitions of gen-vis 4 as ones of g
 - [Extensions](docs/extensions.md): `registerMarkType`, `registerCoord`,
   `registerScheme`, `registerDefaults`, the schema and the types, [checks
   outside the browser](docs/extensions.md#checks-outside-the-browser)
-  (`validateDef`, `migrate`, `@preschen/gen-vis/check`).
+  (`validateDef`, `@preschen/gen-vis/check`).
 - [Development](docs/development.md): the dev server, tests and
   snapshots, builds, publishing, the examples site, `spec/`; the design of
   the definition language of [5.0](docs/design-5.0.md) and of

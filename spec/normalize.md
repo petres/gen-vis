@@ -9,8 +9,7 @@ is not exported by the package and may change in any release); the fixtures
 describe what the renderer of the JS implementation reads. The load goes
 through four steps, each JSON to JSON:
 
-1. the parents are merged (see `merge.md`), a definition of 4.x is
-   migrated (`migrate`, `src/utils/migrate.js`);
+1. the parents are merged (see `merge.md`);
 2. `resolve`: the expressions of the globals are evaluated (see
    `expressions.md` and `src/utils/resolve.js`);
 3. `translate`: the shorthands of the definition written out, the form the
