@@ -52,9 +52,45 @@ const order = (a, b) => {
     const [s, t] = [String(a), String(b)];
     return s < t ? -1 : (s > t ? 1 : 0);
 };
-// the case of a value of match, by its text, none of a missing value, e.g.
-// not a case "null"
-const caseOf = (cases, v) => missing(v) ? undefined : cases.get(String(v));
+// the same values of `==`, `!=`: numbers and texts of numbers by their
+// value, as `<` and `<=` compare them, e.g. "1.0" of a column and 1, others
+// as the values of globals, see sameValue
+const same = (a, b) => {
+    if (a === b && typeof a == 'string')
+        return true;
+    const x = toNumber(a);
+    if (x !== null) {
+        const y = toNumber(b);
+        if (y !== null)
+            return x === y;
+    }
+    return sameValue(a, b);
+};
+
+// the cases of a match by their keys, `entries` of [key, case]: the ones of
+// keys which are numbers also by their number (`numbers`), e.g. "2020" of
+// the value "2020.0"
+const casesOf = entries => {
+    const cases = new Map(entries);
+    cases.numbers = new Map();
+    for (const [k, c] of entries) {
+        const n = toNumber(k);
+        if (n !== null && !cases.numbers.has(n))
+            cases.numbers.set(n, c);
+    }
+    return cases;
+};
+// the case of a value of match, by its text, then of a number by its value,
+// none of a missing value, e.g. not a case "null"
+const caseOf = (cases, v) => {
+    if (missing(v))
+        return undefined;
+    const c = cases.get(String(v));
+    if (c !== undefined || cases.numbers.size == 0)
+        return c;
+    const n = toNumber(v);
+    return n === null ? undefined : cases.numbers.get(n);
+};
 
 // a chain of comparisons, every pair of neighbours, e.g. { "<": [0, "@x",
 // 10] } of a value between two or { "==": ["@a", "@b", "@c"] } of three
@@ -81,8 +117,8 @@ const strict = {
     'max': v => numbers(v, n => n.length ? Math.max(...n) : NaN),
     // halves are rounded up, as Math.round, e.g. of -2.5 -2, with `digits`
     'round': v => numbers(v, ([x, digits = 0]) => Math.round(x*10**digits)/10**digits),
-    '==': chain(sameValue),
-    '!=': chain((a, b) => !sameValue(a, b)),
+    '==': chain(same),
+    '!=': chain((a, b) => !same(a, b)),
     '<': ordered(d => d < 0),
     '<=': ordered(d => d <= 0),
     '>': ordered(d => d > 0),
@@ -140,7 +176,7 @@ const opNode = (op, raw) => {
             return {
                 kind: 'match',
                 of: compile(args[0]),
-                cases: new Map(Object.entries(isObject(args[1]) ? args[1] : {}).map(([k, v]) => [k, compile(v)])),
+                cases: casesOf(Object.entries(isObject(args[1]) ? args[1] : {}).map(([k, v]) => [k, compile(v)])),
                 fallback: compile(args[2] ?? null),
             };
         case 'format': {
@@ -325,7 +361,7 @@ const bindNode = (n, resolve) => {
         }
         case 'match': {
             const value = bindNode(n.of, resolve);
-            const cases = new Map([...n.cases].map(([k, c]) => [k, bindNode(c, resolve)]));
+            const cases = casesOf([...n.cases].map(([k, c]) => [k, bindNode(c, resolve)]));
             const fallback = bindNode(n.fallback, resolve);
             const at = v => caseOf(cases, v) ?? fallback;
             return value.constant ? at(value()) : row => at(value(row))(row);

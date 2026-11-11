@@ -12,5 +12,6 @@
   { "name": "match without a default has no value", "scope": { "year": 2023 }, "expr": { "match": ["@year", { "2024": "red" }] }, "result": null },
   { "name": "match of a missing value is the default, not a case \"null\" or \"\"", "scope": { "n": null, "e": "" }, "expr": [{ "match": ["@n", { "null": "a", "undefined": "b" }, "c"] }, { "match": ["@a", { "undefined": "b" }, "c"] }, { "match": ["@e", { "": "d" }, "c"] }], "result": ["c", "c", "c"] },
   { "name": "match of a number by its text", "scope": { "year": 2024 }, "expr": { "match": ["@year", { "2024": "red" }] }, "result": "red" },
+  { "name": "match of a number by its value if no case is its text", "scope": { "year": "2024.0", "code": "01", "n": 1 }, "expr": [{ "match": ["@year", { "2024": "red" }] }, { "match": ["@code", { "1": "one", "01": "zero one" }] }, { "match": ["@n", { "01": "zero one" }] }, { "match": ["@n", { "1.0": "a", "x": "b" }, "c"] }, { "match": ["x1", { "1": "a" }, "c"] }], "result": ["red", "zero one", "zero one", "a", "c"] },
   { "name": "match of an expression", "scope": { "a": 1 }, "expr": { "match": [{ "+": ["@a", 1] }, { "2": "two" }] }, "result": "two" }
 ]

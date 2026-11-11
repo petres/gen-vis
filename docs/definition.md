@@ -2359,14 +2359,14 @@ The operators and their string syntax:
 |----------|---------------|-------|
 | `+`, `-`, `*`, `/` | `a + b`, `a - b`, `-a`, `a * b`, `a / b` | the sum, the difference (of one argument its negation), the product, the quotient; no value if a value is no number (also a text of the data which is no decimal number) or of a division by 0 |
 | `min`, `max`, `round` | `min(a, b)`, `max(a, b)`, `round(a, digits)` | the least, the largest value, the value rounded to digits (0 by default), halves up |
-| `==`, `!=` | `a == b`, `a != b` | the same as texts, e.g. `2024` and `"2024"`, missing values are the same, e.g. `null` and `""`; more values are a chain, e.g. `@a == @b == @c` (all the same) |
+| `==`, `!=` | `a == b`, `a != b` | the same values: numbers and texts of numbers by their value, as `<`, e.g. `2024`, `"2024"` and `"2024.0"` of a column, others as texts, missing values are the same, e.g. `null` and `""`; more values are a chain, e.g. `@a == @b == @c` (all the same) |
 | `<`, `<=`, `>`, `>=` | `a < b`, `0 < @x < 10` | numbers by their value, otherwise texts, false of a missing value, also of `""`, more values are a chain |
 | `and`, `or`, `not` | `a and b`, `a or b`, `not a` | the first false value, the first true value (e.g. a default `@color or 'black'`), the negation |
 | `if` | `c ? a : b`, `if(c, a, c2, b, d)` | the value of the first true condition, otherwise the last one |
 | `cat` | `cat(@name, ': ', @y)` | the values as a text |
 | `format` | `format(@y, ',.1f')`, `format(@x, '%b %Y')` | a value as a text of a d3 format in the locale, of a date dim a time format |
 | `steps` | `steps(@totalWidth, {0: 220, 550: 250})` | the value of the largest cut below the value |
-| `match` | `match(@level, {header: 4.5, item: @r}, 0)` | the value of the case of a value (as a text), otherwise (also of a missing value) the default (no value without one) |
+| `match` | `match(@level, {header: 4.5, item: @r}, 0)` | the value of the case of a value (as a text, a number also of the case of the same number), otherwise (also of a missing value) the default (no value without one) |
 | `literal` | `literal([1, 2])`, `literal('@a')` | a value which is not evaluated, e.g. an object or a text starting with `@` |
 
 Texts in the string syntax are quoted with `'` or `"`, a quoted text

@@ -359,6 +359,11 @@ describe('sameValue', () => {
         expect(sameValue(1, 2)).toBe(false);
     });
 
+    test('the values of globals and entries are texts, not numbers as of the == of expressions, e.g. the categories "01" and "1"', () => {
+        expect(sameValue('01', '1')).toBe(false);
+        expect(sameValue('1.0', 1)).toBe(false);
+    });
+
     test('0 and missing values are different, missing ones are the same, also empty texts', () => {
         expect(sameValue(0, '')).toBe(false);
         expect(sameValue(0, null)).toBe(false);
