@@ -1485,8 +1485,10 @@ Bars with error bars and a target line, rules of two dims and at a value:
 
 A rule with `x` (by default the dim `x`) is vertical, from `y1` to `y2`
 (by default the edges of the plot area), one with only `y` horizontal,
-from `x1` to `x2`; a rule at a category of a band is at the middle of its
-band, as bars and points.
+from `x1` to `x2` (also one of rows of its own `data` of only a `y`, e.g.
+`{"type": "rule", "data": [{"y": 2}]}`); a rule at a category of a band
+is at the middle of its band, as bars and points. A row of the `data` of
+a mark without a value of a dim of its position is not drawn.
 
 A `tick` is a short rule at the value of `y` across the band of the
 category of `x` (of a categorical `y` and an `x` which is not, as the

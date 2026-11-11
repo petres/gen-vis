@@ -529,8 +529,12 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
             // at the center of the band of a categorical position, as bars and
             // points, of dodged bars the middle of the slot of the category
             // (horizontal also of only the ends of x, e.g. of the rows of the
-            // mark, which have their y)
-            if (raw.x === undefined && (raw.y !== undefined || raw.x1 !== undefined || raw.x2 !== undefined)) {
+            // mark, which have their y, and of rows of the mark of only a y,
+            // e.g. { "y": 2 } of a target)
+            const own = Array.isArray(p.data) && p.data.length > 0 && p.data.every(isObject) ? p.data : null;
+            const onlyY = raw.y === undefined && own !== null && x?.dim !== undefined && y?.dim !== undefined
+                && own.every(r => Object.hasOwn(r, y.dim) && !Object.hasOwn(r, x.dim));
+            if (raw.x === undefined && (raw.y !== undefined || raw.x1 !== undefined || raw.x2 !== undefined || onlyY)) {
                 props.y = dodgeGroup !== undefined && y ? dodged(y.dim, dodgeGroup).center : at(y);
                 if (x1)
                     props.x1 = x1.value;

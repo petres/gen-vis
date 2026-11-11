@@ -658,3 +658,32 @@ describe('marks without a position are not drawn', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('rows of the data of a mark without a dim of its position', () => {
+    const data = 'k,v\na,1\nb,2\nc,3';
+    const dims = { x: { column: 'k', type: 'categorical' }, y: 'v' };
+    const second = el => el.querySelectorAll('g.vis-mark')[1];
+
+    test('a point and a label without one of their positions are not drawn, a warning names the dim', async () => {
+        const point = await mount({ def: { dims, marks: [{ type: 'bar' }, { type: 'point', data: [{ y: 2 }] }] }, data });
+        expect(second(point).querySelectorAll('circle').length).toBe(0);
+        expect(errors).toEqual([`gen-vis inline definition: marks[1]: none of its 1 rows is drawn, 1 without a value of dim 'x'`]);
+        errors.length = 0;
+        const label = await mount({ def: { dims, marks: [{ type: 'bar' }, { type: 'label', data: [{ x: 'b' }, { x: 'b', y: 2 }], text: 'hi' }] }, data });
+        expect(second(label).querySelectorAll('text').length).toBe(1);
+        expect(label.querySelector('.vis-svg').outerHTML).not.toMatch(/NaN/);
+        expect(errors).toEqual([]);
+    });
+
+    test('a rule of rows of only a y is horizontal, across the plot area, of only an x vertical', async () => {
+        const h = await mount({ def: { dims, marks: [{ type: 'bar' }, { type: 'rule', data: [{ y: 2 }] }] }, data });
+        const line = second(h).querySelector('line');
+        expect([num(line, 'x1'), num(line, 'x2')]).toEqual([0, 776]);
+        expect(num(line, 'y1')).toBeCloseTo(128.67, 2);
+        expect(line.getAttribute('y2')).toBe(line.getAttribute('y1'));
+        const v = await mount({ def: { dims, marks: [{ type: 'bar' }, { type: 'rule', data: [{ x: 'b' }] }] }, data });
+        const up = second(v).querySelector('line');
+        expect([num(up, 'x1'), num(up, 'x2'), num(up, 'y1'), num(up, 'y2')]).toEqual([388.5, 388.5, 0, 370]);
+        expect(errors).toEqual([]);
+    });
+});

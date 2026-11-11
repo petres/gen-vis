@@ -823,11 +823,13 @@ const plotGroups = (plot, rows, ctx) => {
     const mapping = ctx.store.def.mapping;
     const needed = [...new Set(refNames(plot.props).filter(n => !ofScale.test(n.split(':').slice(1).join(':')))
         .map(n => n.split(':')[0]))].filter(m => Object.hasOwn(mapping, m));
-    const complete = row => needed.every(m => row[m] !== null);
+    // (a row of the data of a mark may lack a dim, e.g. { "y": 2 } of a point)
+    const missing = (row, m) => row[m] === null || row[m] === undefined;
+    const complete = row => !needed.some(m => missing(row, m));
     // not without data, e.g. the empty classes of a bin of no rows
     if (needed.length > 0 && rows.length > 0 && ctx.store.rows?.length > 0 && !rows.some(complete))
         warnOnce(ctx.store, `plot:${plot.id}:missing`, `${markPath(ctx.store.def, plot, true)}: none of its ${rows.length} rows is drawn, `
-            + needed.map(m => [m, rows.filter(r => r[m] === null).length]).filter(([, n]) => n > 0)
+            + needed.map(m => [m, rows.filter(r => missing(r, m)).length]).filter(([, n]) => n > 0)
                 .map(([m, n]) => `${n} without a value of dim '${m}'${plot.data === undefined ? absentColumn(ctx.store, mapping[m].column) : ''}`).join(', '));
     // the rows without a value of a mapping of categories of `by` are in
     // no category, e.g. rows of other plots
