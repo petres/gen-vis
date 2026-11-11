@@ -268,4 +268,16 @@ describe('objects of expressions (review of 5.0)', () => {
             expect(o.__proto__).toBe(2);
         }
     });
+
+    test('the text of a key which is no finite number is quoted, the expression of the text is the same', () => {
+        const expr = { steps: ['@v', { '-Infinity': 'a', 0: 'b' }] };
+        const text = formatExpression(expr);
+        expect(text).toBe("steps(@v, {0: 'b', '-Infinity': 'a'})");
+        expect(parseExpression(text)).toEqual(expr);
+        expect(evaluate(parseExpression(text), { v: -5 })).toBe('a');
+        // the texts of numbers which are keys of the syntax are not quoted
+        const keys = { '-1': 1, '0.5': 2, '1e-7': 3, Infinity: 4, NaN: 5, '-0': 6, '1e21': 7, '1e+21': 8 };
+        expect(formatExpression({ literal: keys })).toBe("literal({-1: 1, 0.5: 2, 1e-7: 3, Infinity: 4, NaN: 5, '-0': 6, '1e21': 7, 1e+21: 8})");
+        expect(parseExpression(formatExpression({ literal: keys }))).toEqual({ literal: keys });
+    });
 });

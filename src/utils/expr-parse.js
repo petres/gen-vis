@@ -335,8 +335,9 @@ const parseExpression = text => {
 const escaped = { '\\': '\\\\', "'": "\\'", '\n': '\\n', '\r': '\\r', '\t': '\\t', '\b': '\\b', '\f': '\\f' };
 // a text in single quotes
 const quote = s => `'${s.replace(/[\\'\u0000-\u001f]/g, c => escaped[c] ?? `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)}'`;
-// the key of an object, quoted unless it is a word or the text of a number
-const keyText = k => wholeWord.test(k) || String(Number(k)) === k ? k : quote(k);
+// the key of an object, quoted unless it is a word or the text of a finite
+// number, e.g. '-Infinity', which is no key of the syntax
+const keyText = k => wholeWord.test(k) || (String(Number(k)) === k && Number.isFinite(Number(k))) ? k : quote(k);
 
 // an operator of the name, e.g. the left operand of a run of the operator
 const sameOp = (ast, op) => isOperator(ast) && Object.keys(ast)[0] == op;
