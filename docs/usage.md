@@ -271,7 +271,8 @@ and a list of the countries beside it: the hover of one chart highlights the
 row of the other one (the prop `highlight`, values of dims, as an entry
 of a legend highlights its category, see `highlight` and `others`
 of the [marks](definition.md#highlight-and-others)), a hover of the chart itself replaces it while
-it is shown, the method `setHighlight(entry)` does the same. With
+it is shown, the method `setHighlight(entry)` does the same (it sets the
+prop, also while the chart is loaded, `null` ends it). With
 `v-model:state` and `globals` they share their controls and the
 globals of the page:
 

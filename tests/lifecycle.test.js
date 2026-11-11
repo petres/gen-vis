@@ -169,3 +169,31 @@ test('the buttons of the footer do not submit a form, the label of the copy show
     expect(submitted).not.toHaveBeenCalled();
     expect(errors).toEqual([]);
 });
+
+test('a highlight set while it is loaded is shown once it is drawn, it is the prop highlight', async () => {
+    const def = defOf('h', { mapping: { ...defOf('h').mapping, c: { column: 'land', type: 'categorical' } },
+        plot: [{ type: 'svg:circle', by: ['c'], highlight: { r: 6 }, props: { r: 3, cx: '@x:scaled', cy: '@y:scaled' } }] });
+    const data = 'year,value,land\n2020,1,Wien\n2021,2,Tirol';
+    const { el, vis } = create({ def, data });
+    vis.setHighlight({ c: 'Wien' });
+    expect(vis.props.highlight).toEqual({ c: 'Wien' });
+    await rendered(el);
+    await nextTick();
+    expect(vis.store.highlighted).toEqual({ c: 'Wien' });
+    expect(el.querySelectorAll('.vis-highlight').length).toBeGreaterThan(0);
+    // a later update wins, null ends it
+    vis.update({ highlight: { c: 'Tirol' } });
+    await nextTick();
+    expect(vis.store.highlighted).toEqual({ c: 'Tirol' });
+    vis.setHighlight(null);
+    expect(vis.props.highlight).toBeNull();
+    expect(el.querySelectorAll('.vis-highlight')).toHaveLength(0);
+    // also while a new definition is loaded
+    vis.update({ def: { ...def, options: { ...def.options, title: 'h2' } } });
+    await nextTick();
+    vis.setHighlight({ c: 'Tirol' });
+    await vi.waitFor(() => expect(title(el)).toBe('h2'));
+    await nextTick();
+    expect(vis.store.highlighted).toEqual({ c: 'Tirol' });
+    expect(errors).toEqual([]);
+});

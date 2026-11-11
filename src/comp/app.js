@@ -356,8 +356,10 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
 
     // the elements of the rows of the values of mappings in all facets,
     // e.g. { "country": "AT" }, null ends it, the hover of the chart
-    // replaces it while it is shown
+    // replaces it while it is shown; it is the prop `highlight`, so one
+    // set while it is loaded is shown once it is drawn
     const setHighlight = entry => {
+        props.highlight = entry ?? null;
         store.highlighted = copyOf(entry);
         vis?.highlight({});
     };
