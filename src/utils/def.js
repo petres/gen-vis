@@ -35,12 +35,12 @@ const arrayMerge = (target, source, options) => {
 const entriesMerge = (target, source, options) => Array.isArray(target) && Array.isArray(source) && [...target, ...source].some(isObject)
     ? arrayMerge(target.map(entryOf), source.map(entryOf), options) : deepMerge(target, source, options);
 
-// the mappings of two parts, a text of one which the other one writes as
-// an object is the mapping of its column, e.g. "facet": "group" of a parent
+// the dims of two parts, a text of one which the other one writes as
+// an object is the dim of its column, e.g. "facet": "group" of a parent
 // and "facet": { "categories": {} } of its child is the column with the
 // categories
 const columnOf = (m, other) => typeof m == 'string' && isObject(other) ? { column: m } : m;
-const mergeMappings = (target, source, options) => {
+const mergeDims = (target, source, options) => {
     const t = { ...target };
     const s = { ...source };
     Object.keys(s).filter(k => Object.hasOwn(t, k)).forEach(k => {
@@ -73,7 +73,7 @@ const withoutOtherTicks = (target, source) => {
 // the attributes of marks and annotations are expressions of the rows, a
 // `match` of them is no switch of a global: no leaf merge in them
 const withoutLeaves = (t, s, options) => (Array.isArray(t) && Array.isArray(s) ? arrayMerge : deepMerge)(t, s, { ...options, leafMerge: undefined });
-const customMerge = key => key == 'mapping' || key == 'dims' ? mergeMappings : key == 'marks' || key == 'annotations' ? withoutLeaves
+const customMerge = key => key == 'mapping' || key == 'dims' ? mergeDims : key == 'marks' || key == 'annotations' ? withoutLeaves
     : key == 'controls' || key == 'formElements' ? controlsMerge : undefined;
 // the controls (of 4.x the form elements) merged by their keys, their
 // entries (`values`) as entries, see entriesMerge
@@ -294,7 +294,7 @@ const autoSymbol = (symbol, name, plots, names, defaults, key) => {
 };
 
 // a symbol of a shortcut (e.g. "line") with the highlight of the first plot
-// of its kind which draws the categories of the mapping `name`, e.g. the
+// of its kind which draws the categories of the dim `name`, e.g. the
 // line of a year of the lines by year
 const ofPlots = (symbol, name, plots) => ({ ...symbol, elements: symbol.elements.map(e => {
     const types = symbolKinds.find(([kind]) => kind == e.type)?.[1] ?? [];
@@ -315,8 +315,8 @@ const symbolHighlight = (kind, plot) => {
     return keys.length == 0 ? {} : { mark: plot.id, highlight: Object.fromEntries(keys.map(k => [k, plot.highlight[k]])) };
 };
 
-// whether a plot draws a category of a mapping by its `filter` on the
-// mapping, e.g. { "land": "Wien" } or { "land": { "not": ["Wien"] } }; the
+// whether a plot draws a category of a dim by its `filter` on the
+// dim, e.g. { "land": "Wien" } or { "land": { "not": ["Wien"] } }; the
 // conditions of globals and ranges are of all categories (undecided here)
 const draws = (filter, name, key) => {
     if (!isObject(filter) || !Object.hasOwn(filter, name))
@@ -334,7 +334,7 @@ const draws = (filter, name, key) => {
 // most color vision deficiencies
 const defaultColors = ['#4269D0', '#EFB118', '#FF725C', '#6CC5B0', '#3CA951', '#FF8AB7', '#A463F2', '#97BBF5', '#9C6B4E', '#9498A0'];
 
-// an entry of a definition which is an object, e.g. a mapping or a plot, an
+// an entry of a definition which is an object, e.g. a dim or a plot, an
 // error otherwise, e.g. of null, `path` names it
 const object = (v, path, expected) => {
     if (!isObject(v))
@@ -345,14 +345,14 @@ const object = (v, path, expected) => {
 // `dataKeys(column)` are the distinct values of a column of the data as
 // strings, see distinctValues of utils/data.js, the categories of `fromData`
 // (the templates of the column are filled, see resolvedParts)
-const prepareMapping = (m, name, dataKeys = () => [], plots = [], symbols = {}) => {
-    object(m, `mapping.${name}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`);
+const prepareDim = (m, name, dataKeys = () => [], plots = [], symbols = {}) => {
+    object(m, `dims.${name}`, `a dim, e.g. { "column": "value", "type": "numeric" }`);
     // null or false removes a part, e.g. the hover of a parent
     ['scale', 'axis', 'legend', 'hover'].forEach(k => {
         if (m[k] === null || m[k] === false)
             delete m[k];
         else if (m[k] !== undefined)
-            object(m[k], `mapping.${name}.${k}`, 'an object, e.g. {}');
+            object(m[k], `dims.${name}.${k}`, 'an object, e.g. {}');
     });
     if (hasCategories(m)) {
         // the props of a category (`categoryProps`, by its key): the color of
@@ -397,8 +397,8 @@ const prepareMapping = (m, name, dataKeys = () => [], plots = [], symbols = {}) 
         }))
     }
 
-    // the scale of another mapping (`of`) has no parts of its own, the type
-    // of the scale follows from the one of the mapping, see defaultScaleType
+    // the scale of another dim (`of`) has no parts of its own, the type
+    // of the scale follows from the one of the dim, see defaultScaleType
     if (m.scale && m.scale.of === undefined) {
         m.scale.type ??= defaultScaleType(m, name, plots);
         m.scale.domain ??= [null, null];
@@ -421,7 +421,7 @@ const prepareMapping = (m, name, dataKeys = () => [], plots = [], symbols = {}) 
         const auto = m.legend.symbol === 'auto' || m.legend.symbol?.type == 'auto' ? m.legend.symbol : null;
         m.legend.symbol = prepared(m.legend.symbol);
         Object.values(m.categoryProps ?? {}).filter(p => p.symbol !== undefined).forEach(p => p.symbol = prepared(p.symbol));
-        // "auto" of plots of some categories (a filter of the mapping): the
+        // "auto" of plots of some categories (a filter of the dim): the
         // symbol of each category of the plots which draw it, e.g. a line of
         // one and bars of the others
         if (auto && [plots ?? []].flat().some(p => [p?.by ?? []].flat().includes(name) && isObject(p.filter) && Object.hasOwn(p.filter, name)))
@@ -528,7 +528,7 @@ const prepareDef = (def, options = {}) => {
         if (!Array.isArray(e.values))
             e.values = [];
     });
-    def.mapping ??= {};
+    def.dims ??= {};
     applyResolved(def, org, options);
     return def;
 };
@@ -579,13 +579,13 @@ const languageOf = (options, globals = {}) => {
 // objects of short keys are not texts, e.g. { "of": "x" } of a scale
 const textPaths = {
     options: [['title'], ['subtitle'], ['footer'], ['empty'], ['hover', 'title'], ['hover', 'row'], ['hover', 'total']],
-    mapping: [['*', 'name'], ['*', 'format'], ['*', 'axis', 'format'], ['*', 'axis', 'title', 'name'], ['*', 'hover', 'format'],
+    dims: [['*', 'name'], ['*', 'format'], ['*', 'axis', 'format'], ['*', 'axis', 'title', 'name'], ['*', 'hover', 'format'],
         ['*', 'legend', 'format'], ['*', 'legend', 'missing', 'name'], ['*', 'common', 'name'], ['*', 'categories', '*', 'name'], ['*', 'ranks', '*', 'name']],
     annotations: [['*', 'label'], ['*', 'text']],
 };
 
 /**
- * A part of a definition (`options`, `mapping` or `annotations`) with its
+ * A part of a definition (`options`, `dims` or `annotations`) with its
  * texts in several languages in the one of `language` (see inLanguage), at
  * their places (textPaths), a copy of the objects on the way to them.
  */
@@ -605,7 +605,7 @@ const textsIn = (name, part, language) => {
 };
 
 // the parts of a definition which the globals can change, see resolvedParts
-const patchable = ['options', 'mapping', 'plot', 'annotations', 'filter', 'facets', 'geo', 'transform'];
+const patchable = ['options', 'dims', 'plot', 'annotations', 'filter', 'facets', 'geo', 'transform'];
 
 // the definitions of the engine of all values of the controls of a
 // definition, kept on the one of its load (see load of utils/load.js), e.g.
@@ -622,7 +622,7 @@ const selectedEntry = (def, e) => e.values.find(v => sameValue(v.value, def.glob
 const selectedEntries = def => (def.formElements ?? []).map(e => selectedEntry(def, e)).filter(Boolean);
 
 // the sources of the prepared parts of a definition, a part whose source is
-// the same is kept, e.g. a mapping with its categories of the data
+// the same is kept, e.g. a dim with its categories of the data
 const sources = Symbol('sources');
 
 /**
@@ -657,16 +657,16 @@ const resolvedParts = (def, defOrg, source = null, plotTypes = {}) => {
  * control, `plotTypes` of its normalization), prepared into `def`, `defOrg`
  * is the definition of the load. Column templates are filled with the
  * globals, e.g. "{values}{share}". Only the parts which differ from the
- * ones prepared before are prepared again, e.g. a mapping with the categories
- * of the data of another column (`dataKeys`, see prepareMapping), the
+ * ones prepared before are prepared again, e.g. a dim with the categories
+ * of the data of another column (`dataKeys`, see prepareDim), the
  * entries of the legends of the same categories keep their state shown or
  * hidden (`keepVisible`). `transform()` is called once the transforms are
- * the new ones, before the mappings, their categories can be the ones of a
- * transform, `types(part)` sets the types of the mappings of a part
+ * the new ones, before the dims, their categories can be the ones of a
+ * transform, `types(part)` sets the types of the dims of a part
  * without one from the values then (see inferTypes of utils/data.js), `files`
  * are the rows of the files of plots, by their url, `symbols` the defaults
  * of the symbols of legends, see symbolDefaults. Returns the names of the
- * mappings whose values change, the ones of another column or type.
+ * dims whose values change, the ones of another column or type.
  */
 const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {}, source = null, plotTypes = {}, types = null } = {}) => {
     const merged = resolvedParts(def, defOrg, source, plotTypes);
@@ -675,7 +675,7 @@ const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, t
     // without one of its own
     const language = languageOf(merged.options, def.globals);
     const patched = { ...merged };
-    ['options', 'mapping', 'annotations'].filter(k => merged[k] !== undefined).forEach(k => patched[k] = textsIn(k, merged[k], language));
+    ['options', 'dims', 'annotations'].filter(k => merged[k] !== undefined).forEach(k => patched[k] = textsIn(k, merged[k], language));
     if (hasLocale(language) && patched.options?.locale === undefined)
         patched.options = { ...patched.options, locale: language };
     // the names of the form elements and of their entries
@@ -692,7 +692,7 @@ const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, t
             });
     });
     const before = def[sources] ?? {};
-    const after = { mapping: {} };
+    const after = { dims: {} };
     // a part prepared again if its source differs from the one before
     const part = (name, raw, prepare) => {
         const source = JSON.stringify(raw ?? null);
@@ -721,16 +721,16 @@ const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, t
     // the types of the values, after the transforms of the globals: a
     // column of them is one of the new ones, e.g. "{measure}_idx" of
     // another measure
-    if (patched.mapping && types)
-        types({ mapping: patched.mapping, globals: def.globals });
+    if (patched.dims && types)
+        types({ dims: patched.dims, globals: def.globals });
 
     const changed = [];
-    const mapping = {};
+    const dims = {};
     const names = templateNames(def);
-    Object.entries(patched.mapping ?? {}).forEach(([n, raw]) => {
+    Object.entries(patched.dims ?? {}).forEach(([n, raw]) => {
         if (raw === null || raw === undefined)
             return;
-        object(raw, `mapping.${n}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`);
+        object(raw, `dims.${n}`, `a dim, e.g. { "column": "value", "type": "numeric" }`);
         const merged = JSON.parse(JSON.stringify(raw));
         if (typeof merged.column == 'string')
             merged.column = fillTemplate(merged.column, names);
@@ -742,27 +742,27 @@ const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, t
         const auto = [merged.legend?.symbol, ...Object.values(isObject(merged.categories) ? merged.categories : {}).map(c => c?.symbol)]
             .some(s => s === 'auto' || s?.type == 'auto');
         const source = JSON.stringify([merged, keys, auto ? after.plot : null]);
-        after.mapping[n] = source;
-        const old = def.mapping?.[n];
+        after.dims[n] = source;
+        const old = def.dims?.[n];
         // without `keepVisible` the entries of the legend are the ones of the definition
-        if (old && keepVisible && before.mapping?.[n] === source) {
-            mapping[n] = old;
+        if (old && keepVisible && before.dims?.[n] === source) {
+            dims[n] = old;
             return;
         }
-        const m = prepareMapping(merged, n, dataKeys, def.plot, symbols);
+        const m = prepareDim(merged, n, dataKeys, def.plot, symbols);
         if (keepVisible && old?.categoryProps && m.categoryProps)
             m.keys.filter(k => Object.hasOwn(old.categoryProps, k)).forEach(k => m.categoryProps[k].visible = old.categoryProps[k].visible);
         if (old?.column !== m.column || old?.type !== m.type)
             changed.push(n);
-        mapping[n] = m;
+        dims[n] = m;
     });
-    def.mapping = mapping;
+    def.dims = dims;
     return changed;
 };
 
-// the d3 format of the values of a mapping in a part of the visualisation:
-// of the axis its own or the one of the mapping (`format`), of the hover its
-// own, the one of the mapping or the one of the axis, of the
+// the d3 format of the values of a dim in a part of the visualisation:
+// of the axis its own or the one of the dim (`format`), of the hover its
+// own, the one of the dim or the one of the axis, of the
 // legend of colors its own or the one of the hover, undefined for the
 // default of the part, see coords/ticks.js, ColorLegend.vue and
 // valueFormat of utils/locale.js

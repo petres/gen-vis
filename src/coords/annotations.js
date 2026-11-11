@@ -6,20 +6,20 @@ import { evaluate } from "@/utils/expr";
 import { bandCenter } from "@/utils/scales";
 import { directOf, elementOf } from "@/utils/draw";
 
-// the keys of an annotation which are not mappings
+// the keys of an annotation which are not dims
 const annotationKeys = ['type', 'props', 'label', 'text', 'above', 'layer', 'before', 'legend', 'facet', 'lon', 'lat'];
 
-// the mappings of an annotation with their values, e.g. { "x": ["2025-07-01", null] },
-// the values are converted as the ones of the rows, e.g. dates, a mapping
+// the dims of an annotation with their values, e.g. { "x": ["2025-07-01", null] },
+// the values are converted as the ones of the rows, e.g. dates, a dim
 // with null is one without a value, e.g. a line over the whole plot area
 const constraints = (ctx, a) => Object.entries(a)
     .filter(([k, v]) => !annotationKeys.includes(k) && ctx.scales[k] && v !== null && v !== undefined)
     .map(([name, value]) => {
-        const mapping = ctx.store.mapping(name);
-        const toRow = v => v === null ? null : convert(mapping, v);
+        const dim = ctx.store.dim(name);
+        const toRow = v => v === null ? null : convert(dim, v);
         return {
             name,
-            orientation: mapping.scale.orientation,
+            orientation: dim.scale.orientation,
             scale: ctx.scales[name],
             value: Array.isArray(value) ? value.map(toRow) : toRow(value),
         };

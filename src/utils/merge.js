@@ -5,7 +5,7 @@ export { deepMerge, mergeAll };
 // merged into the ones of `target`, values are copied, so the parts are not
 // shared with the result; `arrayMerge(target, source, options)` merges two
 // lists (by default the source replaces the target), `customMerge(key)`
-// returns the merge of the values of a key, e.g. of the mappings, or
+// returns the merge of the values of a key, e.g. of the dims, or
 // undefined for the default; `leafMerge(target, source, options)` merges
 // two values of which one is no object or list or an operator (see
 // def.js), e.g. a switch of a global over the value below it, undefined for

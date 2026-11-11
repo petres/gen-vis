@@ -132,7 +132,7 @@ describe('transforms', () => {
             { type: 'rolling', column: 'index', size: 2, order: 'date' },
         ];
         expect(transformColumns(transforms)).toEqual(['date', 'value', 'type']);
-        expect(usedColumns({ mapping: { y: { column: 'index' } }, transform: transforms })).toEqual(['index', 'date', 'value', 'type']);
+        expect(usedColumns({ dims: { y: { column: 'index' } }, transform: transforms })).toEqual(['index', 'date', 'value', 'type']);
     });
 
     test('calc of the values of columns combined', () => {
@@ -251,7 +251,7 @@ describe('bin and random in a chart', () => {
         expect(store.data).toHaveLength(9);
         expect(jitter()).toEqual(before);
         // a hidden category does not change the numbers
-        store.def.mapping.g.categoryProps.a.visible = false;
+        store.def.dims.g.categoryProps.a.visible = false;
         expect(jitter()).toEqual(before);
     });
 
@@ -270,7 +270,7 @@ describe('bin and random in a chart', () => {
         store.setGlobals({ step: '2' });
         expect(classes()).toEqual([['a', 2, 4, 0.5], ['b', 6, 8, 0.5], ['b', 8, 10, 0.5]]);
         expect(store.data).toHaveLength(8);
-        expect(store.def.mapping.g.keys).toEqual(['a', 'b']);
+        expect(store.def.dims.g.keys).toEqual(['a', 'b']);
     });
 
     // the values of a form element are the ones of the transforms of the globals of the definition
@@ -489,7 +489,7 @@ describe('fold, aggregate and window', () => {
     test('the columns of the data: the folded ones, unknown of a pattern', () => {
         expect(transformColumns([{ type: 'fold', columns: ['a', 'b'], key: 'k', value: 'v' }, { type: 'calc', as: 'c', expr: { '+': ['@value', '@k', '@v'] } }])).toEqual(['a', 'b', 'value']);
         expect(transformColumns([{ type: 'fold', columns: 'v_*' }])).toBeNull();
-        expect(usedColumns({ mapping: { y: { column: 'value' } }, transform: { type: 'fold', columns: 'v_*' } })).toBeNull();
+        expect(usedColumns({ dims: { y: { column: 'value' } }, transform: { type: 'fold', columns: 'v_*' } })).toBeNull();
         expect(transformColumns([{ type: 'aggregate', column: 'v', by: 'g', order: 'd', op: 'sum', rows: true }, { type: 'window', column: 'v', op: 'lag', order: 'd' }])).toEqual(['v', 'g', 'd']);
     });
 });

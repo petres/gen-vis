@@ -260,18 +260,18 @@ const geoOf = (module, json, def = {}) => {
  * of the schemes registered by the page), the
  * coordinate systems (`coords`, the one of the definition first, undefined
  * for the default), the parts of maps (`geo`), the transforms, the legend
- * of a scale of colors (`colorLegend`, a mapping with a legend without
+ * of a scale of colors (`colorLegend`, a dim with a legend without
  * categories) and the locales (`locales`, the one of the definition first).
  */
 const requirements = defOrg => {
     const all = variants(defOrg);
-    const mappings = all.flatMap(d => Object.values(d.mapping ?? {})).filter(isObject);
+    const dims = all.flatMap(d => Object.values(d.dims ?? {})).filter(isObject);
     return {
-        colors: mappings.some(m => Boolean(m.scale?.interpolator || [m.scale?.scheme, m.scheme].some(s => s && !ownScheme(s)))),
+        colors: dims.some(m => Boolean(m.scale?.interpolator || [m.scale?.scheme, m.scheme].some(s => s && !ownScheme(s)))),
         coords: [...new Set(all.filter((d, i) => i == 0 || d.options?.coord != null).map(d => d.options?.coord ?? undefined))],
         geo: all.some(d => Boolean(d.geo?.data)),
         transforms: all.some(d => Boolean(d.transform)),
-        colorLegend: mappings.some(m => m.legend && !hasCategories(m)),
+        colorLegend: dims.some(m => m.legend && !hasCategories(m)),
         // labels inside the bands of an area, see plots/inside.js
         inside: all.some(d => [d.plot ?? []].flat().some(p => isObject(p) && isObject(p.place) && p.place.in !== undefined)),
         locales: [...new Set([...all.filter((d, i) => i == 0 || d.options?.locale != null).map(d => d.options?.locale ?? undefined), ...languagesOf(defOrg)])],
@@ -315,9 +315,9 @@ const loadParts = need => {
 };
 
 // an error of the engine's form with the path of the definition, e.g.
-// "dims.y.scale: ..." of "mapping.y.scale: ..."
+// "marks[0].by: ..." of "plot[0].by: ..."
 const authoredError = error => {
-    const m = /^(mapping|plot|options|formElements|facets)\b([^\s:]*): /.exec(error?.message ?? '');
+    const m = /^(plot|options|formElements|facets)\b([^\s:]*): /.exec(error?.message ?? '');
     return m ? new Error(`${authoredPath(m[1] + m[2])}: ${error.message.slice(m[0].length)}`, { cause: error }) : error;
 };
 
@@ -452,11 +452,11 @@ const loadFiles = async (defOrg, url) => {
 
 /**
  * The prepared definition of the rows with the state and the globals of the
- * page (the types of the mappings without one are the ones of their values,
+ * page (the types of the dims without one are the ones of their values,
  * see inferTypes), its defaults (the state of the definition, see utils/state.js) and
  * the columns of the transforms. The form elements can have the values of
  * the data, the state needs them. The transforms of the globals of the
- * state are computed before the mappings, their categories can be the ones
+ * state are computed before the dims, their categories can be the ones
  * of a transform, and again after them, e.g. of a global of a scale of
  * dates to utc, the entries of the legends are the ones of the state, e.g. of the
  * categories of another column.
@@ -482,7 +482,7 @@ const prepare = (defOrg, source, rows, files, state, globals, symbols = {}) => {
     const transform = () => {
         columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns, files, prepared.options?.locale);
     };
-    // the types of the mappings of the definition resolved again from the values
+    // the types of the dims of the definition resolved again from the values
     const types = part => inferTypes(part, rows, columns);
     const resolving = { dataKeys: keysOf, files, symbols, source, plotTypes, types };
     const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), resolving);
@@ -549,10 +549,10 @@ const columnReferences = (prepared, rows, columns) => {
     const data = sourceRows(rows, columns);
     if (!data?.length)
         return [];
-    const mapping = prepared.mapping ?? {};
-    const own = new Set([...Object.keys(mapping), ...Object.keys(prepared.globals ?? {}),
-        ...Object.values(mapping).flatMap(m => Object.values(m?.categoryProps ?? {}).flatMap(p => Object.keys(p ?? {})))]);
-    const dimOf = new Map(Object.entries(mapping).map(([n, m]) => [m?.column, n]));
+    const dims = prepared.dims ?? {};
+    const own = new Set([...Object.keys(dims), ...Object.keys(prepared.globals ?? {}),
+        ...Object.values(dims).flatMap(m => Object.values(m?.categoryProps ?? {}).flatMap(p => Object.keys(p ?? {})))]);
+    const dimOf = new Map(Object.entries(dims).map(([n, m]) => [m?.column, n]));
     const columnNames = new Set([...Object.keys(data[0]), ...columns.keys()]);
     const warnings = [];
     [].concat(prepared.plot ?? []).forEach((p, i) => [['props', p?.props], ['highlight', p?.highlight], ['others', p?.others]]

@@ -279,7 +279,7 @@ const textWidth = (text, size, weight, family) => {
 };
 
 // the categories of a group of the label are the ones of a group of the
-// area, of the mappings of both
+// area, of the dims of both
 const sameBand = (label, band) => Object.keys(label.categories ?? {}).filter(k => Object.hasOwn(band.categories ?? {}, k))
     .every(k => String(label.categories[k]) === String(band.categories[k]));
 
@@ -339,7 +339,7 @@ const placeInside = (groups, plot, ctx, polar) => {
             }
         });
         const prefer = plot.place.near !== undefined
-            ? (polar ? ctx.scales[mappingOf(plot.props.angle)]?.(plot.place.near) + profile.offset : ctx.scales[mappingOf(plot.props.x)]?.(plot.place.near))
+            ? (polar ? ctx.scales[dimOf(plot.props.angle)]?.(plot.place.near) + profile.offset : ctx.scales[dimOf(plot.props.x)]?.(plot.place.near))
             : (positions[0] + positions.at(-1))/2;
         const spots = bestSpots(profile, { w, h: size, pad, allowed, prefer: Number.isFinite(prefer) ? prefer : undefined, fit: plot.fit !== false });
         return [{ g, rows, spots, offset: profile.offset ?? 0 }];
@@ -358,5 +358,5 @@ const placeInside = (groups, plot, ctx, polar) => {
     });
 };
 
-// the mapping of a reference, e.g. x of "@x:scaled"
-const mappingOf = prop => typeof prop == 'string' && prop.startsWith('@') ? prop.slice(1).split(':')[0] : undefined;
+// the dim of a reference, e.g. x of "@x:scaled"
+const dimOf = prop => typeof prop == 'string' && prop.startsWith('@') ? prop.slice(1).split(':')[0] : undefined;

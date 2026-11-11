@@ -7,7 +7,7 @@ import { isObject } from "@/utils/values";
 import { autoMargins } from "@/utils/margins";
 import { bandCenter, logProblems, makeScale } from "@/utils/scales";
 import { compareCategories } from "@/utils/values";
-import { facetMappings } from "@/utils/normalize";
+import { facetBy } from "@/utils/normalize";
 import { markPath, sizeOf, warnOnce, withPath } from "@/utils/warn";
 import { highlightVars } from "@/utils/highlight";
 import { textWidth } from "@/utils/measure";
@@ -15,8 +15,8 @@ import { directOf, elementOf, replaceRow } from "@/utils/draw";
 import { plotTypes } from "@/plots";
 import { alongRows } from "@/plots/elements";
 
-// the warning of a condition of a filter of no mapping, e.g. of a column
-// instead of the mapping of it, which no row has, see rowFilter
+// the warning of a condition of a filter of no dim, e.g. of a column
+// instead of the dim of it, which no row has, see rowFilter
 const unknownOf = store => (path, dim) => warnOnce(store, `unknown ${path}`,
     `${path}: unknown dim '${dim}', the keys of a filter object are the names of dims, not columns (an expression reads columns, e.g. "@${dim} == 1"), no row is drawn`);
 
@@ -29,96 +29,96 @@ const unknownOf = store => (path, dim) => warnOnce(store, `unknown ${path}`,
  * the stacks, are kept beside them.
  */
 
-// the names of the mappings of the positions (h) and of the values (v) of
+// the names of the dims of the positions (h) and of the values (v) of
 // the hover and the stacks, e.g. of the horizontal and the vertical axis.
-// Of several mappings of an orientation the stacked one, the one with a
+// Of several dims of an orientation the stacked one, the one with a
 // hover or the first one. In a coordinate system with `flip` the positions
 // are the vertical ones and the values the horizontal ones if these are
 // stacked or the vertical ones are categories and the horizontal ones not,
 // e.g. of horizontal bars, with `"flip": "stacked"` only if they are
-// stacked, e.g. the angles of a pie in polar plots. A stacked mapping of the
+// stacked, e.g. the angles of a pie in polar plots. A stacked dim of the
 // positions without one of the values is the one of the values, e.g. the
 // angle of a pie without a radius.
 const axisNames = store => {
     if (store.coord.names)
         return store.coord.names(store);
-    const mapping = store.def.mapping;
+    const dims = store.def.dims;
     const of = orientation => {
-        const names = Object.keys(mapping).filter(n => mapping[n].scale?.orientation == orientation);
-        return names.find(n => mapping[n].stacked) ?? names.find(n => mapping[n].hover) ?? names[0];
+        const names = Object.keys(dims).filter(n => dims[n].scale?.orientation == orientation);
+        return names.find(n => dims[n].stacked) ?? names.find(n => dims[n].hover) ?? names[0];
     };
     let h = of(store.coord.axis.h);
     let v = of(store.coord.axis.v);
-    const categorical = n => n !== undefined && !['numeric', 'date'].includes(mapping[n].type);
+    const categorical = n => n !== undefined && !['numeric', 'date'].includes(dims[n].type);
     const flip = store.coord.flip;
-    if (flip && h !== undefined && (v === undefined ? mapping[h].stacked
-        : (mapping[h].stacked && !mapping[v].stacked) || (flip !== 'stacked' && categorical(v) && !categorical(h))))
+    if (flip && h !== undefined && (v === undefined ? dims[h].stacked
+        : (dims[h].stacked && !dims[v].stacked) || (flip !== 'stacked' && categorical(v) && !categorical(h))))
         [h, v] = [v, h];
     // the positions of the stacks of `stackBy` are the ones of the hover,
     // e.g. the start of the class of a bin, not the values of the rows
-    const by = v === undefined ? undefined : mapping[v].stacked && mapping[v].stackBy;
-    if (by && Object.hasOwn(mapping, by))
+    const by = v === undefined ? undefined : dims[v].stacked && dims[v].stackBy;
+    if (by && Object.hasOwn(dims, by))
         h = by;
     return { ...(h === undefined ? {} : { h }), ...(v === undefined ? {} : { v }) };
 };
 
-// the visible categories of the mappings with categories, e.g. of the legends,
+// the visible categories of the dims with categories, e.g. of the legends,
 // in the order of the categories
-const visibleKeys = def => Object.entries(def.mapping)
+const visibleKeys = def => Object.entries(def.dims)
     .filter(([, m]) => m.categoryProps)
     .map(([dim, m]) => ({ dim, key: m.keys.filter(k => m.categoryProps[k].visible) }));
 
 // the conditions of the visible categories (see visibleKeys): the rows of a
 // hidden category are left out, the ones without a value are in no category
-// and stay, e.g. rows of other plots which do not use the mapping
+// and stay, e.g. rows of other plots which do not use the dim
 const visibleRows = visible => visible.map(({ dim, key }) => {
     const keys = new Set(key.map(String));
     return { dim, key: v => v === null || v === undefined || keys.has(String(v)) };
 });
 
-// the props of a category of a mapping, e.g. of a value of the data,
+// the props of a category of a dim, e.g. of a value of the data,
 // undefined for other values
 const ownProp = (props, key) => props && Object.hasOwn(props, key) ? props[key] : undefined;
 
-// the facets in the order of the categories of their mapping, not of the
+// the facets in the order of the categories of their dim, not of the
 // rows, only the ones with rows
 /**
- * The mappings of the rows and the columns of a grid of facets
+ * The dims of the rows and the columns of a grid of facets
  * (`"facets": { "rows": "band", "cols": "group" }`, a string of `cols` is a
- * mapping, a number the columns of the facets of `dim`), null otherwise.
+ * dim, a number the columns of the facets of `dim`), null otherwise.
  */
 const gridOf = def => {
-    const { grid, rows, cols } = facetMappings(def.facets);
+    const { grid, rows, cols } = facetBy(def.facets);
     return grid ? { rows, cols } : null;
 };
 
-// the mappings of the facets, e.g. of their groups of rows and stacks
+// the dims of the facets, e.g. of their groups of rows and stacks
 const facetDims = def => {
     const g = gridOf(def);
     return g ? [g.rows, g.cols].filter(Boolean) : def.facets ? [def.facets.dim] : [];
 };
 
-// the key of the facet of the values of the mappings of the facets (`values`,
+// the key of the facet of the values of the dims of the facets (`values`,
 // e.g. a row or a group), of a grid the pair of its row and its column
 const facetKey = (def, values) => {
     const g = gridOf(def);
     return g ? JSON.stringify([g.rows ? String(values[g.rows]) : '', g.cols ? String(values[g.cols]) : '']) : values[def.facets.dim];
 };
 
-// the mapping of the facets (of a part of a grid, `part`) with its
+// the dim of the facets (of a part of a grid, `part`) with its
 // categories, an error names the path of the definition, e.g. facets.by.rows
-const facetMapping = (store, part, d) => {
-    const m = Object.hasOwn(store.def.mapping, d) ? store.mapping(d) : null;
+const facetDim = (store, part, d) => {
+    const m = Object.hasOwn(store.def.dims, d) ? store.dim(d) : null;
     const path = part ? `facets.by.${part}` : 'facets.by';
     if (!m)
-        throw new Error(`${path}: unknown dim '${d}', the dims are ${Object.keys(store.def.mapping).map(n => `'${n}'`).join(', ') || 'none'}`);
+        throw new Error(`${path}: unknown dim '${d}', the dims are ${Object.keys(store.def.dims).map(n => `'${n}'`).join(', ') || 'none'}`);
     if (!m.categoryProps)
         throw new Error(`${path}: the facets are the categories of a dim, '${d}' has none${m.type ? ` (a ${m.type} dim)` : ''}, e.g. "type": "categorical"`);
     return m;
 };
 
 /**
- * The cells of a grid of facets: a facet per category of the mapping of the
+ * The cells of a grid of facets: a facet per category of the dim of the
  * rows and of the columns which are in the rows, in the order of their
  * categories, also of the combinations without rows (`empty`, a box of
  * the size of a facet), each with its `cell`: the keys, the names and the
@@ -129,7 +129,7 @@ const gridEntries = (store, rows, grid) => {
     const keysOf = (part, d) => {
         if (!d)
             return [{ key: undefined, name: undefined }];
-        const m = facetMapping(store, part, d);
+        const m = facetDim(store, part, d);
         const present = new Set(rows.map(r => String(r[d])));
         return m.keys.filter(k => present.has(k)).map(k => ({ key: k, name: m.categoryProps[k].name }));
     };
@@ -154,7 +154,7 @@ const facetEntries = (store, rows) => {
     if (grid)
         return gridEntries(store, rows, grid);
     const d = store.def.facets.dim;
-    const { categoryProps: props, keys } = facetMapping(store, null, d);
+    const { categoryProps: props, keys } = facetDim(store, null, d);
     return groupBy(rows, [d])
         .filter(g => keys.includes(String(g.group[d])))
         .sort((a, b) => keys.indexOf(String(a.group[d])) - keys.indexOf(String(b.group[d])))
@@ -186,12 +186,12 @@ const scaleSizes = scales => Object.fromEntries(Object.entries(scales).filter(([
  * with the space of the groups of the scale, undefined without one.
  */
 const stepHeight = (store, rowsOf, scope) => {
-    const mapping = store.def.mapping;
-    const name = Object.keys(mapping).find(n => mapping[n].scale?.step !== undefined && mapping[n].scale.orientation == 'vertical'
-        && ['band', 'point'].includes(mapping[n].scale.type));
+    const dims = store.def.dims;
+    const name = Object.keys(dims).find(n => dims[n].scale?.step !== undefined && dims[n].scale.orientation == 'vertical'
+        && ['band', 'point'].includes(dims[n].scale.type));
     if (name === undefined)
         return undefined;
-    const m = mapping[name];
+    const m = dims[name];
     const step = Number(evaluate(m.scale.step, scope));
     if (!(step > 0))
         return undefined;
@@ -205,32 +205,32 @@ const stepHeight = (store, rowsOf, scope) => {
     return Math.round(steps*step);
 };
 
-// the rows and the positions of the stacks of the stacked mapping: the ones
-// of the positions (`axis.h`) or of `stackBy` of the mapping, e.g. the
+// the rows and the positions of the stacks of the stacked dim: the ones
+// of the positions (`axis.h`) or of `stackBy` of the dim, e.g. the
 // start of the class of a bin (`lo`) of a histogram whose x are the values
 // of the rows, the rows without one are not stacked; the slices of a pie
 // (stacked angles) have no negative size, see aroundOf
 const stackSource = (def, axis, rows) => {
-    const by = def.mapping[axis.v]?.stackBy;
-    const around = aroundOf(def, axis) ? { positive: true } : def.mapping[axis.v]?.stackDiverging ? { diverging: true } : {};
+    const by = def.dims[axis.v]?.stackBy;
+    const around = aroundOf(def, axis) ? { positive: true } : def.dims[axis.v]?.stackDiverging ? { diverging: true } : {};
     return by === undefined ? [rows, { ...axis, ...around }] : [rows.filter(r => r[by] !== null && r[by] !== undefined), { ...axis, ...around, h: by }];
 };
 // stacks around the circle (of an angular scale), e.g. the slices of a pie:
 // a negative value is left out (a slice of no size at the end of the
 // stack), it would overlap the others
-const aroundOf = (def, axis) => def.mapping[axis.v]?.scale?.orientation == 'angular';
+const aroundOf = (def, axis) => def.dims[axis.v]?.scale?.orientation == 'angular';
 
 // the dims of the groups of the stacks besides the facets: the slots of
 // dodged stacked bars (`stackGroups` of the stacked dim, see translate of
 // utils/language.js), a stack per position and slot
-const stackGroups = (def, axis) => [...facetDims(def), ...(def.mapping[axis.v]?.stackGroups ?? [])];
+const stackGroups = (def, axis) => [...facetDims(def), ...(def.dims[axis.v]?.stackGroups ?? [])];
 
 // the rows of a view, see layout
 const rowsOf = (store, def, axis, scope, stacked) => {
     // the rows of the conditions of `filter`, e.g. of a global of a form
     // element, see rowFilter, and of them the ones of the visible categories
     const visible = visibleKeys(def);
-    const filtered = filterRows(keptRows(store.data, store.columns), def.filter, def.mapping, scope, { columns: store.columns, path: 'filter', unknown: unknownOf(store) });
+    const filtered = filterRows(keptRows(store.data, store.columns), def.filter, def.dims, scope, { columns: store.columns, path: 'filter', unknown: unknownOf(store) });
     const shown = visibleRows(visible);
     const rows = shown.length > 0 ? filter(filtered, shown) : filtered;
 
@@ -241,7 +241,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
     // on stacked areas
     const stackOrder = categoryOrder(visible.map(f => ({ dim: f.dim, keys: f.key })));
     const stackedRows = stacked && stacked !== true
-        ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `dims.${axis.v}.stacked` }) : rows;
+        ? filterRows(rows, stacked, def.dims, scope, { columns: store.columns, path: `dims.${axis.v}.stacked` }) : rows;
     const stacks = stacked ? stack(...stackSource(def, axis, stackedRows), stackGroups(def, axis), stackOrder) : null;
     const negative = stacks && aroundOf(def, axis) ? stackedRows.filter(r => r[axis.v] < 0).length : 0;
     if (negative > 0)
@@ -256,7 +256,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
         domains: domainRows(store, def, axis, scope, stacked, shown, stackOrder),
         // the categories of the filtered rows of the legends with `onlyData`,
         // also the hidden ones, e.g. the sources of the selected year
-        inData: Object.fromEntries(Object.keys(def.mapping).filter(n => def.mapping[n].legend?.onlyData)
+        inData: Object.fromEntries(Object.keys(def.dims).filter(n => def.dims[n].legend?.onlyData)
             .map(n => [n, new Set(filtered.map(r => String(r[n])))])),
         // the rows are kept for another width if their conditions do not
         // depend on it, see layout
@@ -266,7 +266,7 @@ const rowsOf = (store, def, axis, scope, stacked) => {
 
 /**
  * The rows of the domains of the scales with `domainIgnores` by their
- * mapping: the rows of the other conditions of `filter`, e.g. of all months
+ * dim: the rows of the other conditions of `filter`, e.g. of all months
  * of a slider, of the visible categories, as the ones of a facet
  * (`facets`, by the key of the facet), the stacks of them (`stackOf`) are
  * also the ones of the values of the ignored conditions, e.g. per month.
@@ -278,7 +278,7 @@ const domainRows = (store, def, axis, scope, stacked, shown, stackOrder) => {
     const conditions = def.filter === undefined || def.filter === null ? [] : expression ? [...new Set(refNames(def.filter).map(n => n.split(':')[0]))] : Object.keys(def.filter);
     const kept = new Map();
     const domains = {};
-    Object.entries(def.mapping).forEach(([n, m]) => {
+    Object.entries(def.dims).forEach(([n, m]) => {
         const ignores = m.scale?.of === undefined ? m.scale?.domainIgnores : undefined;
         const names = ignores ? conditions.filter(c => ignores === true || ignores.includes(c)) : [];
         if (names.length == 0)
@@ -286,13 +286,13 @@ const domainRows = (store, def, axis, scope, stacked, shown, stackOrder) => {
         const key = names.join('\0');
         if (!kept.has(key)) {
             const others = ignores === true ? undefined : withoutConditions(def.filter, names);
-            kept.set(key, filter(filterRows(keptRows(store.data, store.columns), others, def.mapping, scope, { columns: store.columns }), shown));
+            kept.set(key, filter(filterRows(keptRows(store.data, store.columns), others, def.dims, scope, { columns: store.columns }), shown));
         }
         const rows = kept.get(key);
         const dims = facetDims(def);
         let stackOf = null;
         if (n == axis.v && stacked) {
-            const stackedRows = stacked !== true ? filterRows(rows, stacked, def.mapping, scope, { columns: store.columns, path: `dims.${n}.stacked` }) : rows;
+            const stackedRows = stacked !== true ? filterRows(rows, stacked, def.dims, scope, { columns: store.columns, path: `dims.${n}.stacked` }) : rows;
             const stacks = stack(...stackSource(def, axis, stackedRows), [...stackGroups(def, axis), ...names], stackOrder);
             stackOf = row => stacks.get(row) ?? [row[n], row[n]];
         }
@@ -323,7 +323,7 @@ const layout = (store, width, before = null) => {
     const def = store.def;
     const axis = axisNames(store);
     const scope = { ...store.names, totalWidth: width, [formatter]: store.scope[formatter] };
-    const stacked = axis.v ? store.mapping(axis.v).stacked : undefined;
+    const stacked = axis.v ? store.dim(axis.v).stacked : undefined;
     const kept = before?.[rowsKept];
     const reuse = kept?.keep && kept.store === store && kept.def === def && kept.data === store.data && kept.columns === store.columns
         && kept.coord === store.coord && kept.stateSets === store.stateSets && kept.loads === store.loads
@@ -343,7 +343,7 @@ const layout = (store, width, before = null) => {
     };
 
     const faceted = entries.length > 0;
-    // the distinct values of a mapping of all rows, e.g. the slots of dodged
+    // the distinct values of a dim of all rows, e.g. the slots of dodged
     // bars of a dim without categories, see rowValue
     const slots = new Map();
     const slotKeys = name => {
@@ -353,7 +353,7 @@ const layout = (store, width, before = null) => {
     };
 
     // values a log scale has no position of, e.g. 0, once per dim
-    Object.keys(def.mapping).forEach(n => logProblems(n, def.mapping[n], rows, scope)
+    Object.keys(def.dims).forEach(n => logProblems(n, def.dims[n], rows, scope)
         .forEach(p => warnOnce(store, `log:${n}:${p.split(',')[0]}`, `dims.${n}.scale: ${p}`)));
 
     // the sizes of a facet
@@ -380,11 +380,11 @@ const layout = (store, width, before = null) => {
     // the width of the facets of a grid without the one of the headers of
     // its rows, see facets.js
     const usable = grid ? Math.max(0, width - (store.rowHeaderWidth ?? 0)) : width;
-    // the scales of all facets (a list of mappings) or of each row or column
+    // the scales of all facets (a list of dims) or of each row or column
     // of a grid (`{ "y": "row", "x": "all" }`)
     const raw = faceted && def.facets.scales ? evaluate(def.facets.scales, scope) : [];
     const sharing = Array.isArray(raw) ? Object.fromEntries(raw.map(n => [n, 'all'])) : (raw && typeof raw == 'object' ? raw : {});
-    // the facets of the scale of a mapping of a facet of a grid shared by its
+    // the facets of the scale of a dim of a facet of a grid shared by its
     // row or its column, the facet alone otherwise
     const partOf = (n, f) => {
         if (!f.cell || !['row', 'col'].includes(sharing[n]))
@@ -415,17 +415,17 @@ const layout = (store, width, before = null) => {
         // the radius of polar plots is a size of the facet, e.g. of the hole of a donut
         const facetScope = { ...scope, ...size, ...(dims.radius === undefined ? {} : { radius: dims.radius }), ...plotArea(store.coord, size) };
 
-        // the mappings with the scale of another one (`"scale": { "of": "y" }`),
+        // the dims with the scale of another one (`"scale": { "of": "y" }`),
         // e.g. the end of a band, their values are in its domain
-        const borrowed = Object.keys(def.mapping).filter(n => def.mapping[n].scale?.of !== undefined);
-        const also = name => borrowed.filter(n => def.mapping[n].scale.of === name);
+        const borrowed = Object.keys(def.dims).filter(n => def.dims[n].scale?.of !== undefined);
+        const also = name => borrowed.filter(n => def.dims[n].scale.of === name);
 
-        // the scale of a mapping for the rows, in the sizes of a facet, of the
+        // the scale of a dim for the rows, in the sizes of a facet, of the
         // facet `key` (undefined of all rows), of the rows of `domain` if given
         // an error names the dim, e.g. of a domain which is no list
         const scaleOf = (name, rows, key, domain = domainOf(name, key)) => {
             try {
-                return makeScale(name, store.mapping(name), rows, { dims, coord: store.coord, scope: facetScope, mappings: def.mapping,
+                return makeScale(name, store.dim(name), rows, { dims, coord: store.coord, scope: facetScope, allDims: def.dims,
                     stackOf: name == axis.v ? stackOf : null, also: also(name), domainRows: domain?.rows, domainStackOf: domain?.stackOf });
             } catch (error) {
                 throw withPath(error, `dims.${name}.scale`);
@@ -434,8 +434,8 @@ const layout = (store, width, before = null) => {
 
         // the scales of all facets: the shared ones and the ones without
         // orientation, e.g. of colors
-        const scaled = Object.keys(def.mapping).filter(n => def.mapping[n].scale && !borrowed.includes(n));
-        const colors = scaled.filter(n => !def.mapping[n].scale.orientation);
+        const scaled = Object.keys(def.dims).filter(n => def.dims[n].scale && !borrowed.includes(n));
+        const colors = scaled.filter(n => !def.dims[n].scale.orientation);
         // of the dims with a scale ("shared" names all dims, also the ones without one)
         const shared = Object.keys(sharing).filter(n => sharing[n] == 'all' && scaled.includes(n));
         const common = Object.fromEntries([...new Set([...shared, ...colors])].map(n => [n, scaleOf(n, rows)]));
@@ -467,7 +467,7 @@ const layout = (store, width, before = null) => {
                 ...Object.fromEntries(scaled.filter(n => !Object.hasOwn(common, n))
                     .map(n => [n, f.cell && ['row', 'col'].includes(sharing[n]) ? partScale(n, f) : scaleOf(n, f.rows, f.key)])),
             };
-            borrowed.filter(n => Object.hasOwn(scales, def.mapping[n].scale.of)).forEach(n => scales[n] = scales[def.mapping[n].scale.of]);
+            borrowed.filter(n => Object.hasOwn(scales, def.dims[n].scale.of)).forEach(n => scales[n] = scales[def.dims[n].scale.of]);
             return {
                 ...f,
                 ...size,
@@ -479,7 +479,7 @@ const layout = (store, width, before = null) => {
                 stackOrder,
                 outer: outerOf(i, f.cell),
                 slotKeys,
-                // the mappings whose scale is the one of all facets or of the row or the column
+                // the dims whose scale is the one of all facets or of the row or the column
                 sharing,
                 // the sizes of the bands of the scales, e.g. "@y:bandwidth" of annotations
                 // also the key and the name of the facet, e.g. of a text once per facet
@@ -513,9 +513,9 @@ const layout = (store, width, before = null) => {
 
 // a value of a row of the data of a plot as the ones of the data, e.g. a
 // date, also the values of a range, e.g. ["2020-01-01", null] of a band
-const convertValue = (mapping, v) => Array.isArray(v)
-    ? v.map(e => e === null ? null : convert(mapping, e))
-    : (v === null ? null : convert(mapping, v));
+const convertValue = (dim, v) => Array.isArray(v)
+    ? v.map(e => e === null ? null : convert(dim, e))
+    : (v === null ? null : convert(dim, v));
 
 // the rows of the `filter` of a plot of the rows of a facet, kept for the
 // same rows if the filter has only references to globals, e.g. of the
@@ -531,7 +531,7 @@ const keptPlotRows = (store, plot, facet) => {
     const hit = kept?.get(plot);
     if (key !== null && hit?.key === key)
         return hit.rows;
-    const rows = filterRows(facet.rows, plot.filter, store.def.mapping, facet.scope, { columns: store.columns, path: `${markPath(store.def, plot)}.filter`, unknown: unknownOf(store) });
+    const rows = filterRows(facet.rows, plot.filter, store.def.dims, facet.scope, { columns: store.columns, path: `${markPath(store.def, plot)}.filter`, unknown: unknownOf(store) });
     if (key !== null) {
         if (!kept)
             plotRowsKept.set(facet.rows, kept = new Map());
@@ -542,11 +542,11 @@ const keptPlotRows = (store, plot, facet) => {
 
 /**
  * The rows of a plot in a facet: the rows of the facet or the ones of the
- * `data` of the plot, e.g. events. These have the names of the mappings and
- * others, e.g. a `label`, the values of the mappings are converted as the
+ * `data` of the plot, e.g. events. These have the names of the dims and
+ * others, e.g. a `label`, the values of the dims are converted as the
  * ones of the data, e.g. dates, the values of rows of the definition are
  * props of the facet, e.g. references to globals. A row with a value of the
- * mapping of the facets is only in its facet. `filter` of the plot leaves
+ * dim of the facets is only in its facet. `filter` of the plot leaves
  * out rows, see rowFilter.
  */
 const plotRows = (store, plot, facet) => {
@@ -559,10 +559,10 @@ const plotRows = (store, plot, facet) => {
     }
     if (!plot.data && plot.filter)
         return keptPlotRows(store, plot, facet);
-    const filtered = rows => filterRows(rows, plot.filter, store.def.mapping, facet.scope, { columns: store.columns, path: `${markPath(store.def, plot)}.filter`, unknown: unknownOf(store) });
+    const filtered = rows => filterRows(rows, plot.filter, store.def.dims, facet.scope, { columns: store.columns, path: `${markPath(store.def, plot)}.filter`, unknown: unknownOf(store) });
     if (!plot.data)
         return filtered(facet.rows);
-    const mapping = store.def.mapping;
+    const dims = store.def.dims;
     const dim = store.def.facets?.dim;
     const inline = !plot.loaded;
     // the rows of the draw before of the same values are kept, the others
@@ -573,7 +573,7 @@ const plotRows = (store, plot, facet) => {
         .map((r, i) => {
             const row = Object.fromEntries(Object.entries(r).map(([k, v]) => {
                 const value = inline ? evaluate(v, facet.scope) : v;
-                return [k, Object.hasOwn(mapping, k) ? convertValue(mapping[k], value) : value];
+                return [k, Object.hasOwn(dims, k) ? convertValue(dims[k], value) : value];
             }));
             return before[i] = !before[i] ? row : sameRow(before[i], row) ? before[i] : replaceRow(before[i], row);
         })
@@ -607,7 +607,7 @@ const sameRow = (a, b) => {
     return keys.length == Object.keys(b).length && keys.every(k => Object.hasOwn(b, k) && same(a[k], b[k]));
 };
 
-// a row of a plot is in a cell of a grid if its values of the mappings of
+// a row of a plot is in a cell of a grid if its values of the dims of
 // the rows and the columns are the ones of the cell (or it has none)
 const inCell = (def, cell, r) => {
     const g = gridOf(def);
@@ -617,7 +617,7 @@ const inCell = (def, cell, r) => {
 
 /**
  * The facets of a plot or an annotation (`facet`): a key or a list of keys
- * of the facets of `dim`, of a grid also the values of the mappings of its
+ * of the facets of `dim`, of a grid also the values of the dims of its
  * rows and columns, e.g. { "group": "Bau" } (a column, a row or a cell);
  * all facets without one.
  */
@@ -637,17 +637,17 @@ const inFacet = (def, part, facet) => {
 // one row of the rows of a group: the first or the last one along the dim
 // of the position of the plot (as the points of a line, see alongRows, in
 // the order of the rows with `"order": "rows"`), or the one with the least
-// or the most value of a mapping, e.g. { "max": "x" }, of the rows with
-// values of the mappings of the props, categories as numbers if they are
+// or the most value of a dim, e.g. { "max": "x" }, of the rows with
+// values of the dims of the props, categories as numbers if they are
 // numbers, e.g. "10" after "9"
-const selected = (rows, select, mapping, plot, ctx) => {
+const selected = (rows, select, dims, plot, ctx) => {
     if (select == 'first' || select == 'last') {
         const along = alongRows(rows, plot, ctx);
         return select == 'first' ? along.slice(0, 1) : along.slice(-1);
     }
     const [kind, name] = Object.entries(select ?? {})[0] ?? [];
     const values = rows.filter(r => r[name] !== null && r[name] !== undefined);
-    const compare = Object.hasOwn(mapping, name) && !continuous(mapping[name])
+    const compare = Object.hasOwn(dims, name) && !continuous(dims[name])
         ? (a, b) => compareCategories(a[name], b[name])
         : r => r[name];
     const row = kind == 'min' ? d3.least(values, compare) : (kind == 'max' ? d3.greatest(values, compare) : undefined);
@@ -658,18 +658,18 @@ const selected = (rows, select, mapping, plot, ctx) => {
 // "x:scaled", undefined for other names, see docs/definition.md "Expressions" > "Names"
 const rowValue = (ctx, name, rows) => {
     // the place of the row among the rows of the plot in the facet, from 0,
-    // e.g. the line of a small table, without a mapping `row`
-    if (name == 'row:index' && !Object.hasOwn(ctx.store.def.mapping, 'row')) {
+    // e.g. the line of a small table, without a dim `row`
+    if (name == 'row:index' && !Object.hasOwn(ctx.store.def.dims, 'row')) {
         const index = new Map(rows.map((r, i) => [r, i]));
         return row => index.get(row);
     }
     const [m, ...parts] = name.split(':');
     // the other names of the rows of the data of a plot, e.g. a label
-    if (!Object.hasOwn(ctx.store.def.mapping, m))
+    if (!Object.hasOwn(ctx.store.def.dims, m))
         return rows !== ctx.rows && rows.some(r => Object.hasOwn(r, name)) ? (row => row[name]) : undefined;
     const s = ctx.scales[m];
     const stackOf = ctx.axis.v == m ? ctx.stackOf : null;
-    // the format of the hover of the mapping or the one of the locale
+    // the format of the hover of the dim or the one of the locale
     const format = () => {
         const f = ctx.store.valueFormat(m, s);
         return row => row[m] === null || row[m] === undefined ? '' : f(row[m]);
@@ -707,8 +707,8 @@ const rowValue = (ctx, name, rows) => {
         'mid': () => stackOf && (row => (start(row) + end(row))/2),
         'mid:scaled': () => stackOf && s && (row => s((start(row) + end(row))/2)),
         // the place of the category of the row among the visible categories
-        // of the mapping, from 0, and their number, e.g. of dodged bars (see
-        // `dodge` of utils/language.js); of a mapping without categories the
+        // of the dim, from 0, and their number, e.g. of dodged bars (see
+        // `dodge` of utils/language.js); of a dim without categories the
         // distinct values of the rows of the chart (of all facets, before the
         // filters of the marks, see slotKeys of layout) in their order, so
         // the slots are the same in all facets and marks; a row without a
@@ -724,9 +724,9 @@ const rowValue = (ctx, name, rows) => {
     const categoryKeys = () => {
         if (keysOf)
             return keysOf;
-        const mapping = ctx.store.def.mapping[m];
-        keysOf = Array.isArray(mapping?.keys)
-            ? mapping.keys.filter(k => mapping.categoryProps?.[k]?.visible !== false).map(String)
+        const dim = ctx.store.def.dims[m];
+        keysOf = Array.isArray(dim?.keys)
+            ? dim.keys.filter(k => dim.categoryProps?.[k]?.visible !== false).map(String)
             : (ctx.slotKeys?.(m) ?? distinctKeys(rows, m));
         return keysOf;
     };
@@ -734,11 +734,11 @@ const rowValue = (ctx, name, rows) => {
     // the position of a value, e.g. "@x:scaled:0" or "@y:scaled:100"
     const at = /^scaled:(-?\d+(?:\.\d+)?)$/.exec(kind);
     if (at)
-        return s ? constant(s(convert(ctx.store.mapping(m), at[1]))) : undefined;
+        return s ? constant(s(convert(ctx.store.dim(m), at[1]))) : undefined;
     return Object.hasOwn(values, kind) ? values[kind]() || undefined : undefined;
 };
 
-// the distinct values of a mapping of rows as texts, in the order of the
+// the distinct values of a dim of rows as texts, in the order of the
 // rows, without missing ones
 const distinctKeys = (rows, name) => {
     const keys = new Set();
@@ -752,7 +752,7 @@ const distinctKeys = (rows, name) => {
 
 // the props of categories (a list of them, the later ones override the ones
 // before) and, if none of them has a color, the default color of the first
-// one which has one, see prepareMapping of utils/def.js
+// one which has one, see prepareDim of utils/def.js
 const withColor = parts => {
     const props = Object.assign({}, ...parts);
     if (props.color === undefined) {
@@ -764,7 +764,7 @@ const withColor = parts => {
 };
 
 // the names of the rows which are not values of the row, e.g. "@y:scaled:max"
-// of the end of the scale, a row needs no value of their mapping, see rowValue
+// of the end of the scale, a row needs no value of their dim, see rowValue
 const ofScale = /^(scaled:(min|max|-?\d+(\.\d+)?)|bandwidth|step)$/;
 
 /**
@@ -774,7 +774,7 @@ const ofScale = /^(scaled:(min|max|-?\d+(\.\d+)?)|bandwidth|step)$/;
  * the ones which are the same for all rows (`attrs`), e.g. the color of a
  * line. The names of the props are the props of the categories, the names
  * of the rows (see rowValue) and the ones of the facet (`ctx.scope`), in
- * this order. `complete(row)` is false if a mapping of the props has no
+ * this order. `complete(row)` is false if a dim of the props has no
  * value, e.g. a point is not drawn.
  */
 // the length of an attribute of a text in pixels, e.g. dy of "0.35em"
@@ -853,9 +853,9 @@ const absentColumn = (store, column) => {
 };
 
 const plotGroups = (plot, rows, ctx) => {
-    const mapping = ctx.store.def.mapping;
+    const dims = ctx.store.def.dims;
     const needed = [...new Set(refNames(plot.props).filter(n => !ofScale.test(n.split(':').slice(1).join(':')))
-        .map(n => n.split(':')[0]))].filter(m => Object.hasOwn(mapping, m));
+        .map(n => n.split(':')[0]))].filter(m => Object.hasOwn(dims, m));
     // (a row of the data of a mark may lack a dim, e.g. { "y": 2 } of a point)
     const missing = (row, m) => row[m] === null || row[m] === undefined;
     const complete = row => !needed.some(m => missing(row, m));
@@ -863,13 +863,13 @@ const plotGroups = (plot, rows, ctx) => {
     if (needed.length > 0 && rows.length > 0 && ctx.store.rows?.length > 0 && !rows.some(complete))
         warnOnce(ctx.store, `plot:${plot.id}:missing`, `${markPath(ctx.store.def, plot, true)}: none of its ${rows.length} rows is drawn, `
             + needed.map(m => [m, rows.filter(r => missing(r, m)).length]).filter(([, n]) => n > 0)
-                .map(([m, n]) => `${n} without a value of dim '${m}'${plot.data === undefined ? absentColumn(ctx.store, mapping[m].column) : ''}`).join(', '));
-    // the rows without a value of a mapping of categories of `by` are in
+                .map(([m, n]) => `${n} without a value of dim '${m}'${plot.data === undefined ? absentColumn(ctx.store, dims[m].column) : ''}`).join(', '));
+    // the rows without a value of a dim of categories of `by` are in
     // no category, e.g. rows of other plots
-    const categorized = plot.by.filter(c => mapping[c].categoryProps);
+    const categorized = plot.by.filter(c => dims[c].categoryProps);
     const groups = groupBy(rows, plot.by);
     return (categorized.length ? groups.filter(g => categorized.every(c => g.group[c] !== null && g.group[c] !== undefined)) : groups).map(g => {
-        const props = withColor(plot.by.map(c => ownProp(mapping[c].categoryProps, g.group[c])));
+        const props = withColor(plot.by.map(c => ownProp(dims[c].categoryProps, g.group[c])));
         const scoped = name => Object.hasOwn(ctx.scope, name) ? constant(ctx.scope[name]) : undefined;
         const resolve = name => typeof name == 'symbol' ? scoped(name) : (Object.hasOwn(props, name) ? constant(props[name])
             : rowValue(ctx, name, rows) ?? scoped(name));
@@ -877,7 +877,7 @@ const plotGroups = (plot, rows, ctx) => {
         return {
             categories: g.group,
             props,
-            rows: plot.select === undefined ? g.entries : selected(g.entries.filter(complete), plot.select, mapping, plot, ctx),
+            rows: plot.select === undefined ? g.entries : selected(g.entries.filter(complete), plot.select, dims, plot, ctx),
             at,
             prop: name => at.entries.get(name) ?? constant(undefined),
             attrs: Object.fromEntries([...at.entries].filter(([, f]) => f.constant).map(([k, f]) => [k, f()])),

@@ -351,16 +351,16 @@ describe('requirements', () => {
             options: { coord: 'polar', transition: 300, locale: 'de' },
             geo: { data: 'map.json' },
             transform: { type: 'share', column: 'value', as: 'share' },
-            mapping: {
+            dims: {
                 c: { column: 'c', scale: { type: 'sequential', interpolator: 'Blues' }, legend: {} },
                 k: { column: 'k', scheme: 'Tableau10', fromData: true, legend: {} },
             },
         });
         expect(need).toEqual({ colors: true, coords: ['polar'], geo: true, transforms: true, colorLegend: true, inside: false, locales: ['de'] });
-        expect(requirements({ mapping: { c: { scale: { scheme: 'Blues' } } } }).colors).toBe(true);
-        expect(requirements({ mapping: { k: { scheme: 'Tableau10' } } }).colors).toBe(true);
+        expect(requirements({ dims: { c: { scale: { scheme: 'Blues' } } } }).colors).toBe(true);
+        expect(requirements({ dims: { k: { scheme: 'Tableau10' } } }).colors).toBe(true);
         // a legend of categories is no legend of colors
-        expect(requirements({ mapping: { k: { fromData: true, legend: {} } } }).colorLegend).toBe(false);
+        expect(requirements({ dims: { k: { fromData: true, legend: {} } } }).colorLegend).toBe(false);
     });
 
     test('the parts of the patches of form elements', () => {
@@ -376,7 +376,7 @@ describe('requirements', () => {
     });
 
     test('a name of a color which is no part of a scale or of props needs no colors', () => {
-        expect(requirements({ options: { title: '"scheme": "Blues"' }, mapping: { c: { column: 'interpolator' } } }).colors).toBe(false);
+        expect(requirements({ options: { title: '"scheme": "Blues"' }, dims: { c: { column: 'interpolator' } } }).colors).toBe(false);
     });
 });
 
@@ -403,9 +403,9 @@ describe('form elements of globals, coordinate systems and maps', () => {
         serve(names);
         const store = createStore();
         await store.init({ def: lookupDef, data: lookupRows });
-        expect(store.def.mapping.c.keys).toEqual(['Tirol', 'Wien']);
+        expect(store.def.dims.c.keys).toEqual(['Tirol', 'Wien']);
         store.setGlobals({ lang: 'en' });
-        expect(store.def.mapping.c.keys).toEqual(['Tyrol', 'Vienna']);
+        expect(store.def.dims.c.keys).toEqual(['Tyrol', 'Vienna']);
         expect(store.data.map(r => r.c)).toEqual(['Vienna', 'Tyrol']);
         expect(store.prop('c', 'Vienna')).toMatchObject({ name: 'Vienna', visible: true });
     });
@@ -414,7 +414,7 @@ describe('form elements of globals, coordinate systems and maps', () => {
         serve(names);
         const store = createStore();
         await store.init({ def: lookupDef, data: lookupRows, globals: { lang: 'en' } });
-        expect(store.def.mapping.c.keys).toEqual(['Tyrol', 'Vienna']);
+        expect(store.def.dims.c.keys).toEqual(['Tyrol', 'Vienna']);
     });
 
     test('the globals of an entry select the entry of a later form element', async () => {
@@ -429,7 +429,7 @@ describe('form elements of globals, coordinate systems and maps', () => {
         }, data: [{ cx: 1, cy: 2, c0: 0 }] });
         store.def.globals.a = '1';
         store.applyFormElements();
-        expect(store.def.mapping.y.column).toBe('cy');
+        expect(store.def.dims.y.column).toBe('cy');
         expect(store.data[0].y).toBe(2);
     });
 
@@ -570,24 +570,24 @@ describe('the type of a dim of a column of a transform of a global (review of 5.
     test('numeric of another value of its control, the values are numbers', async () => {
         const s = createStore();
         await s.init({ def: indexDef(), data: indexData });
-        expect(s.def.mapping.y).toMatchObject({ column: 'value_idx', type: 'numeric' });
+        expect(s.def.dims.y).toMatchObject({ column: 'value_idx', type: 'numeric' });
         expect(s.data.map(r => r.y)).toEqual([100, 200, 400]);
         s.setState({ globals: { measure: 'other' } });
-        expect(s.def.mapping.y).toMatchObject({ column: 'other_idx', type: 'numeric' });
+        expect(s.def.dims.y).toMatchObject({ column: 'other_idx', type: 'numeric' });
         expect(s.data.map(r => r.y)).toEqual([100, 400, 800]);
         s.setState({ globals: { measure: 'value' } });
-        expect(s.def.mapping.y).toMatchObject({ column: 'value_idx', type: 'numeric' });
+        expect(s.def.dims.y).toMatchObject({ column: 'value_idx', type: 'numeric' });
         expect(s.data.map(r => r.y)).toEqual([100, 200, 400]);
     });
 
     test('also of a visualisation of that state and of the globals of the page', async () => {
         const s = createStore();
         await s.init({ def: indexDef(), data: indexData, state: { globals: { measure: 'other' } } });
-        expect(s.def.mapping.y).toMatchObject({ column: 'other_idx', type: 'numeric' });
+        expect(s.def.dims.y).toMatchObject({ column: 'other_idx', type: 'numeric' });
         expect(s.data.map(r => r.y)).toEqual([100, 400, 800]);
         const t = createStore();
         await t.init({ def: indexDef(), data: indexData, globals: { measure: 'other' } });
-        expect(t.def.mapping.y.type).toBe('numeric');
+        expect(t.def.dims.y.type).toBe('numeric');
         expect(t.data.map(r => r.y)).toEqual([100, 400, 800]);
     });
 });
@@ -610,7 +610,7 @@ describe('charts of the same data file share its rows (review of 5.0)', () => {
         expect(fetched).toHaveLength(1);
         expect(b.rows).toBe(a.rows);
         expect(c.rows).toBe(a.rows);
-        expect(c.def.mapping.y.type).toBe('numeric');
+        expect(c.def.dims.y.type).toBe('numeric');
         // the rows of the dims are the ones of each chart
         expect(b.data).not.toBe(a.data);
         expect(b.data).toEqual(a.data);

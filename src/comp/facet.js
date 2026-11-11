@@ -262,7 +262,7 @@ const createFacet = (vis, initial) => {
             outer,
             cell,
             sharing,
-            // the distinct values of a mapping of all facets, see rowValue of layout.js
+            // the distinct values of a dim of all facets, see rowValue of layout.js
             slotKeys,
             // the groups of a plot of the facet by its id, of this draw, e.g.
             // the bands of an area of labels inside them (plots/inside.js)

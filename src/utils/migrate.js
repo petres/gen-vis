@@ -892,8 +892,8 @@ const hoverDefault = part => {
     Object.values(isObject(probe.dims) ? probe.dims : {}).forEach(d => isObject(d) && delete d.hover);
     delete probe.hover;
     try {
-        const mapping = translate(resolve(probe, namesOfGlobals(probe.globals, probe.controls))).mapping;
-        return Object.keys(mapping).filter(n => isObject(mapping[n]) && mapping[n].hover !== undefined);
+        const dims = translate(resolve(probe, namesOfGlobals(probe.globals, probe.controls))).dims;
+        return Object.keys(dims).filter(n => isObject(dims[n]) && dims[n].hover !== undefined);
     } catch {
         return [];
     }

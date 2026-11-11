@@ -78,7 +78,7 @@ class Store {
     listeners = new Set();
     // the globals of the page, see setGlobals
     globals = null;
-    // the rows highlighted by the page, values of mappings, see comp/app.js
+    // the rows highlighted by the page, values of dims, see comp/app.js
     highlighted = null;
     // the categories of the data of the last column, see dataKeys
     keyCache = null;
@@ -94,15 +94,15 @@ class Store {
     // the changes of the user compared to the definition, see utils/state.js
     get state() { return this.loaded ? diffState(snapshot(this.def), this.defaults) : null }
 
-    // the names of the mappings of the positions (h) and of the values (v) of
+    // the names of the dims of the positions (h) and of the values (v) of
     // the hover and the stacks, see layout.js
     get axis() { return axisNames(this) }
 
-    // the format of the values of a mapping in the hover and in labels: its
+    // the format of the values of a dim in the hover and in labels: its
     // own, the one of its axis or the default of the locale, `scale` is the
     // one of the facet, see valueFormat of utils/locale.js
     valueFormat(n, scale) {
-        const m = this.def.mapping[n];
+        const m = this.def.dims[n];
         const format = formatOf(m, 'hover');
         return format ? this.format(format, n) : this.locale.valueFormat(m, scale);
     }
@@ -112,13 +112,13 @@ class Store {
     // props of the categories and the row, see docs/definition.md "Expressions" > "Names"
     get scope() { return { ...this.names, totalWidth: this.totalWidth, [formatter]: (format, name) => this.format(format, name) } }
 
-    // a d3 format in the locale of the values of a mapping, of times if it is
-    // a mapping of dates or of a time scale, e.g. "%Y", local or UTC of a
+    // a d3 format in the locale of the values of a dim, of times if it is
+    // a dim of dates or of a time scale, e.g. "%Y", local or UTC of a
     // `utc` scale, of numbers otherwise, see also the prop format of
     // utils/expr.js
     format(format, name) {
-        const m = Object.hasOwn(this.def.mapping, name) ? this.def.mapping[name] : undefined;
-        const type = scaleDef(this.def.mapping, m)?.type;
+        const m = Object.hasOwn(this.def.dims, name) ? this.def.dims[name] : undefined;
+        const type = scaleDef(this.def.dims, m)?.type;
         if (type == 'utc' || type == 'time' || m?.type == 'date')
             return this.locale.time[type == 'utc' ? 'utcFormat' : 'format'](format);
         // an invalid format of numbers names its dim, e.g. "%,.0f" of a time
@@ -130,7 +130,7 @@ class Store {
         }
     }
 
-    mapping(n) { return this.def.mapping[n] }
+    dim(n) { return this.def.dims[n] }
 
     // the defaults of the axes of a position, e.g. "left", see
     // axisDefaults of utils/defaults.js
@@ -166,8 +166,8 @@ class Store {
         return v === null || v === undefined ? '' : String(v);
     }
     // the props of a category, e.g. of a value of the data, undefined for other values
-    prop(n, k) { const props = this.def.mapping[n].categoryProps; return Object.hasOwn(props, k) ? props[k] : undefined }
-    mappingNamesWithKey(k) { return Object.keys(this.def.mapping).filter(n => Boolean(this.def.mapping[n][k])) }
+    prop(n, k) { const props = this.def.dims[n].categoryProps; return Object.hasOwn(props, k) ? props[k] : undefined }
+    dimNamesWithKey(k) { return Object.keys(this.def.dims).filter(n => Boolean(this.def.dims[n][k])) }
 
     /**
      * def is an object or a JSON string, if it is null the def is loaded from
@@ -208,13 +208,13 @@ class Store {
     }
 
     // the parts of the definition of the values of the globals (of the
-    // controls), see applyResolved of utils/def.js, the columns of mappings
+    // controls), see applyResolved of utils/def.js, the columns of dims
     // might have changed, and the ones of transforms of the globals, e.g. an
     // index of a base year, the transforms are computed from the first one of
-    // a changed global before the mappings, their categories can be the ones
+    // a changed global before the dims, their categories can be the ones
     // of a transform, and again after them, e.g. of a global of a scale of
     // dates to utc, `keepVisible` keeps the entries shown or hidden of the
-    // mappings prepared again
+    // dims prepared again
     applyFormElements(keepVisible = true) {
         const changedColumns = new Set();
         const transform = () => {
@@ -235,7 +235,7 @@ class Store {
                 symbols: symbolDefaults(this.chartDefaults), source: this.source, plotTypes,
                 types: part => inferTypes(part, this.rows, this.columns) }).forEach(n => changed.includes(n) || changed.push(n));
             transform();
-            Object.keys(this.def.mapping).filter(n => changedColumns.has(this.def.mapping[n].column) && !changed.includes(n))
+            Object.keys(this.def.dims).filter(n => changedColumns.has(this.def.dims[n].column) && !changed.includes(n))
                 .forEach(n => changed.push(n));
             // the values of form elements of columns of transforms computed
             // again, e.g. the classes of other edges of a bin, and their names
@@ -292,7 +292,7 @@ class Store {
         applyState(this.def, this.defaults);
         applyState(this.def, state);
         applyGlobals(this.def, this.globals);
-        // the entries of the legends of the mappings prepared again are the
+        // the entries of the legends of the dims prepared again are the
         // ones of the definition and of the state, not the ones before
         this.applyFormElements(false);
         applyState(this.def, { visible: state?.visible });

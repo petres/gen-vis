@@ -2,7 +2,7 @@
 // first one, see comp/app.js, the SVG is composed by utils/export-svg.js
 export { selection, staticCopy, parts, selectParts, partsBox, backgroundOf, renderImage, renderSvg, saveFile, csvOf, csvCell, defaultWidth, padding };
 
-import { facetMappings } from "@/utils/normalize";
+import { facetBy } from "@/utils/normalize";
 import * as d3 from "@/utils/d3";
 import { selectedEntry } from "@/utils/def";
 import { tableOf } from "@/utils/table";
@@ -116,7 +116,7 @@ const staticCopy = async (place, mount, { width, space = padding, visible = fals
         const own = fixed ? width : (shown.store.visWidth || width);
         shot.style.cssText = `margin: 0; width: ${own + 2*space}px;`;
         const def = shown.store.def;
-        const copy = shot.appendChild(prepare(root.querySelector('.vis'), { text: selection(def), facets: facetMappings(def.facets).all, space }));
+        const copy = shot.appendChild(prepare(root.querySelector('.vis'), { text: selection(def), facets: facetBy(def.facets).all, space }));
         return { copy, remove: () => wrapper.remove(), width: own };
     } catch (error) {
         wrapper.remove();
@@ -274,7 +274,7 @@ const saveFile = (blob, name) => {
 const csvCell = value => typeof value == 'string' && value.length > 1 && /^[=+\-@\t\r]/.test(value)
     && !/^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(value) ? `'${value}` : value;
 
-// the rows shown as CSV, in the columns of the mappings, the values as the
+// the rows shown as CSV, in the columns of the dims, the values as the
 // ones of the data, e.g. dates as they are in the file, also the columns of
 // transforms (see tableOf of utils/table.js); the names and the texts
 // guarded by csvCell

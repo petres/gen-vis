@@ -5,6 +5,7 @@ import { plotTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import * as d3 from 'd3-scale-chromatic';
 import { prepareDef } from '@/utils/def';
+import { engineNames } from './v4.js';
 import { createStore } from '@/store';
 import { clearCache } from '@/utils/load';
 import { selection } from '@/utils/export';
@@ -340,7 +341,7 @@ describe('rendering', () => {
         const def = lineDef();
         def.mapping.c = { ...def.mapping.c, fromData: true, scheme: 'test-sizes', categories: {} };
         // the colors of the entries of the legend, in the order of the categories
-        const colors = async data => Object.values((await mountVis({ def, data })).vis.store.def.mapping.c.categoryProps).map(p => p.color);
+        const colors = async data => Object.values((await mountVis({ def, data })).vis.store.def.dims.c.categoryProps).map(p => p.color);
         // 2 categories of the entry of 2 colors
         expect(await colors(lineData)).toEqual(['#000002', '#000003']);
         // 3 categories of the next larger one, the first 3 colors
@@ -1646,7 +1647,7 @@ describe('the hover of the nearest point', () => {
         const { scaleLinear } = await import('d3-scale');
         const orientations = { a: 'angular', r: 'radial' };
         const ctx = { scales: { a: scaleLinear([0, 4], [0, Math.PI*2]), r: scaleLinear([0, 10], [0, 100]) }, stackOf: null,
-            store: { mapping: n => ({ scale: { orientation: orientations[n] } }) } };
+            store: { dim: n => ({ scale: { orientation: orientations[n] } }) } };
         const [x, y] = polar.hover.point(ctx, { a: 1, r: 5 }, { h: 'a', v: 'r' });
         expect([Math.round(x), Math.round(y)]).toEqual([50, 0]);
     });
@@ -3601,7 +3602,7 @@ describe('images', () => {
             { id: 'shared', name: 'Geteilt', value: 'shared' },
             { id: 'free', name: 'Getrennt', value: 'free' },
         ] });
-        expect(selection(prepareDef(d))).toBe('Einheit: Absolut');
+        expect(selection(prepareDef(engineNames(d)))).toBe('Einheit: Absolut');
     });
 
     test('the image has no legend of the facets, their titles name them', async () => {

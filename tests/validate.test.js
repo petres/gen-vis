@@ -41,7 +41,7 @@ test('the conditions of a filter: values, not, range and expressions, not other 
     def.filter = { x: { var: 'lo' }, y: { max: ['@lo', 1] }, c: { not: { range: ['@lo', null] } } };
     expect(validateDef(def)).toEqual([]);
     // the renderer reads them, see rowFilter
-    const tests = rowFilter(def.filter, translate(def).mapping, def.globals);
+    const tests = rowFilter(def.filter, translate(def).dims, def.globals);
     expect(tests.map(t => t.key(2020))).toEqual([true, true, false]);
     def.filter = { x: { prop: 'lo' }, y: { var: 'hi' }, c: { a: 1, b: 2 } };
     expect(validateDef(def)).toEqual([
@@ -757,7 +757,7 @@ describe('validateDef of the types of the rows', () => {
             marks: { type: 'region', by: 'country', fill: '@value:scaled' },
         };
         expect(validateDef(def, [{ country: 'AT', share: 0.5 }])).toEqual([]);
-        expect(normalize(translate(def), { plotTypes }).mapping.value.type).toBe('numeric');
+        expect(normalize(translate(def), { plotTypes }).dims.value.type).toBe('numeric');
     });
 
     test('bars on a continuous scale without a width: the dims of the orientation as declared', () => {

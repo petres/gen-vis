@@ -33,8 +33,8 @@ const autoMargins = (store, facets, given, texts = () => []) => {
     const hasAxes = (store.coord?.positions ?? []).length > 0;
     // the texts along the width of the plot area, see below
     const spans = [];
-    facets.forEach(f => store.mappingNamesWithKey('axis').forEach(n => {
-        const m = store.mapping(n);
+    facets.forEach(f => store.dimNamesWithKey('axis').forEach(n => {
+        const m = store.dim(n);
         const i = m.axis;
         const s = f.scales[n];
         if (!s || !i)
@@ -44,7 +44,7 @@ const autoMargins = (store, facets, given, texts = () => []) => {
         const length = Math.abs(range[range.length - 1] - range[0]);
         const ticks = tickCount(i, f.scope, length);
         const format = tickFormat(store, n, s, ticks) || (s.tickFormat ? s.tickFormat(ticks) : (d => d));
-        const values = tickValues(i, s, ticks, m, f.scope, def.mapping);
+        const values = tickValues(i, s, ticks, m, f.scope, def.dims);
         // the labels of a shared scale only at the outer facets of a grid, see axes of coords/cartesian.js
         const across = ['left', 'right'].includes(pos) ? 'row' : 'col';
         const hidden = f.cell && ['all', across].includes(f.sharing?.[n]) && f.outer?.[pos] === false;

@@ -2,6 +2,7 @@ import { loadColors } from '@/utils/d3';
 import { migrate } from '@/utils/migrate';
 import { plotTypes } from '@/plots';
 import { describe, test, expect, beforeAll } from 'vitest';
+import { engineNames } from './v4.js';
 import { resolve, namesOfGlobals } from '@/utils/resolve';
 import { evaluate } from '@/utils/expr';
 import { sameValue, applyResolved, variantsOf, fillTemplate, formatOf, mergeAll, prepareDef, selectedEntry, templateNames, templateRefs, variants } from '@/utils/def';
@@ -12,15 +13,15 @@ beforeAll(loadColors);
 describe('prepareDef', () => {
     test('defaults', () => {
         const def = prepareDef({
-            mapping: {
+            dims: {
                 x: { column: 'a', scale: { orientation: 'horizontal' }, axis: { format: 'c' }, hover: {} },
                 c: { column: 'b', common: { r: 3 }, categories: { a: {}, b: { visible: false, name: 'B' } } },
             },
             plot: { type: 'svg:circle', props: { r: '@r' }, highlight: { mode: 'row', r: 5 }, others: { opacity: 0.3 } },
         });
-        expect(def.mapping.x.scale).toMatchObject({ type: 'linear', domain: [null, null] });
+        expect(def.dims.x.scale).toMatchObject({ type: 'linear', domain: [null, null] });
         // without colors of the categories the default colors, see withColor of layout.js
-        expect(def.mapping.c.categoryProps).toEqual({ a: { r: 3, name: 'a', visible: true, defaultColor: '#4269D0' }, b: { r: 3, name: 'B', visible: false, defaultColor: '#EFB118' } });
+        expect(def.dims.c.categoryProps).toEqual({ a: { r: 3, name: 'a', visible: true, defaultColor: '#4269D0' }, b: { r: 3, name: 'B', visible: false, defaultColor: '#EFB118' } });
         expect(def.plot).toHaveLength(1);
         // the names of the props of the highlight and of the others, of the stylesheet of the highlight, see utils/highlight.js
         expect(def.plot[0]).toMatchObject({ id: 'mark-0', by: [], highlightProps: ['r'], othersProps: ['opacity'], props: { r: '@r' } });
@@ -30,11 +31,11 @@ describe('prepareDef', () => {
 });
 
 describe('the props of categories', () => {
-    const prepared = parts => prepareDef({ mapping: { c: { column: 'c', ...parts } }, plot: [] }).mapping.c;
+    const prepared = parts => prepareDef({ dims: { c: { column: 'c', ...parts } }, plot: [] }).dims.c;
 
     test('"order": "rows": all categories in the order of the rows, also the listed ones', () => {
         const dataKeys = () => ['b', 'all', 'a', 'c'];
-        const c = prepareDef({ mapping: { c: { column: 'c', order: 'rows', fromData: 'rows', scheme: 'Tableau10', categories: { all: { color: '#111' } } } }, plot: [] }, { dataKeys }).mapping.c;
+        const c = prepareDef({ dims: { c: { column: 'c', order: 'rows', fromData: 'rows', scheme: 'Tableau10', categories: { all: { color: '#111' } } } }, plot: [] }, { dataKeys }).dims.c;
         expect(c.keys).toEqual(['b', 'all', 'a', 'c']);
         expect(c.categoryProps.all.color).toBe('#111');
     });
@@ -43,7 +44,7 @@ describe('the props of categories', () => {
         // an object would put the integers first and ascending, and make
         // __proto__ its prototype
         const dataKeys = () => ['2024', '2023', 'Total', '2022', '01', '1', '__proto__', 'constructor'];
-        const c = prepareDef({ mapping: { c: { column: 'c', fromData: 'rows', legend: {} } }, plot: [] }, { dataKeys }).mapping.c;
+        const c = prepareDef({ dims: { c: { column: 'c', fromData: 'rows', legend: {} } }, plot: [] }, { dataKeys }).dims.c;
         expect(c.keys).toEqual(['2024', '2023', 'Total', '2022', '01', '1', '__proto__', 'constructor']);
         expect(Object.hasOwn(c.categoryProps, '__proto__')).toBe(true);
         expect(c.categoryProps.__proto__.name).toBe('__proto__');
@@ -51,7 +52,7 @@ describe('the props of categories', () => {
         // the colors of the default palette in the order of the rows
         expect(c.categoryProps['2024'].defaultColor).toBe('#4269D0');
         // the listed ones first, then the ones of the data in their order
-        const listed = prepareDef({ mapping: { c: { column: 'c', fromData: 'rows', categories: { Total: { color: '#000' } } } }, plot: [] }, { dataKeys }).mapping.c;
+        const listed = prepareDef({ dims: { c: { column: 'c', fromData: 'rows', categories: { Total: { color: '#000' } } } }, plot: [] }, { dataKeys }).dims.c;
         expect(listed.keys.slice(0, 4)).toEqual(['Total', '2024', '2023', '2022']);
     });
 
@@ -66,7 +67,7 @@ describe('the props of categories', () => {
     });
 
     test('the shortcuts of the symbols of legends, with the props the categories have', () => {
-        const symbol = (symbol, props = {}) => prepareDef({ mapping: { c: { column: 'c', legend: { symbol }, categories: { a: props } } }, plot: [] }).mapping.c.legend.symbol;
+        const symbol = (symbol, props = {}) => prepareDef({ dims: { c: { column: 'c', legend: { symbol }, categories: { a: props } } }, plot: [] }).dims.c.legend.symbol;
         expect(symbol('line')).toEqual({ width: 16, height: 16, elements: [{ type: 'line', props: { x1: 0, x2: 16, y1: 8, y2: 8, stroke: '@color', 'stroke-width': 2 } }] });
         expect(symbol('line', { 'stroke-width': 3, 'stroke-dasharray': '2 2', opacity: 0.5 }).elements[0].props).toEqual({
             x1: 0, x2: 16, y1: 8, y2: 8, stroke: '@color', 'stroke-width': '@stroke-width', 'stroke-dasharray': '@stroke-dasharray', opacity: '@opacity',
@@ -82,37 +83,37 @@ describe('the props of categories', () => {
     });
 
     test('a symbol of the plots of the categories: a light area under a line, the style which is the same for a category', () => {
-        const def = prepareDef({ mapping: { c: { column: 'c', legend: { symbol: 'auto' }, categories: { a: { dash: '4 2' } } } }, plot: [
+        const def = prepareDef({ dims: { c: { column: 'c', legend: { symbol: 'auto' }, categories: { a: { dash: '4 2' } } } }, plot: [
             { type: 'cartesian:bar', by: 'c', props: { x: '@x:scaled', y1: '@y:scaled', fill: '@color', 'fill-opacity': 0.08, opacity: '@y' } },
             { type: 'cartesian:line', by: 'c', props: { 'stroke-width': 1.4, 'stroke-dasharray': '@dash', d: { x: '@x:scaled', y: '@y:scaled' } } },
             { type: 'cartesian:line', props: { stroke: 'black' } },
             // a rule of the categories before the line, the symbol is the one of the line
         ].toSpliced(0, 0, { type: 'cartesian:rule', by: 'c', props: { 'stroke-dasharray': '1 1' } }) }, { symbols: { line: { width: 18, height: 9 } } });
-        expect(def.mapping.c.legend.symbol).toEqual({ width: 18, height: 9, elements: [
+        expect(def.dims.c.legend.symbol).toEqual({ width: 18, height: 9, elements: [
             { type: 'rect', props: { x: 0, y: 0.5, width: 18, height: 8, fill: '@color', 'fill-opacity': 0.08 } },
             { type: 'line', props: { x1: 0, x2: 18, y1: 4.5, y2: 4.5, stroke: '@color', 'stroke-width': 1.4, 'stroke-dasharray': '@dash' } },
         ] });
         // without plots of the categories a box
-        const none = prepareDef({ mapping: { c: { column: 'c', legend: { symbol: 'auto' }, categories: { a: {} } } }, plot: [] });
-        expect(none.mapping.c.legend.symbol.elements[0].type).toBe('rect');
+        const none = prepareDef({ dims: { c: { column: 'c', legend: { symbol: 'auto' }, categories: { a: {} } } }, plot: [] });
+        expect(none.dims.c.legend.symbol.elements[0].type).toBe('rect');
     });
 
     test('"auto" of plots of some categories: the symbol of each category of the plots which draw it', () => {
-        const def = prepareDef({ globals: { year: '2024' }, mapping: { c: { column: 'c', legend: { symbol: 'auto' }, categories: { a: {}, b: {}, c: { symbol: 'circle' }, d: {} } } }, plot: [
+        const def = prepareDef({ globals: { year: '2024' }, dims: { c: { column: 'c', legend: { symbol: 'auto' }, categories: { a: {}, b: {}, c: { symbol: 'circle' }, d: {} } } }, plot: [
             { type: 'cartesian:line', by: 'c', filter: { c: 'a' }, props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
             { type: 'cartesian:bar', by: 'c', filter: { c: { not: ['a', 'd'] } }, props: { x: '@x:scaled', y1: '@y:scaled' } },
             // a condition of a global is of all categories
             { type: 'svg:circle', by: 'c', filter: { c: '@year' }, props: {} },
         ] });
-        const kinds = k => def.mapping.c.categoryProps[k].symbol.elements.map(e => e.type);
+        const kinds = k => def.dims.c.categoryProps[k].symbol.elements.map(e => e.type);
         // (a dot beside a box without a line: the box)
         expect([kinds('a'), kinds('b'), kinds('c'), kinds('d')]).toEqual([['line', 'circle'], ['rect'], ['circle'], ['circle']]);
         // the one of the legend of all plots
-        expect(def.mapping.c.legend.symbol.elements.map(e => e.type)).toEqual(['rect', 'line', 'circle']);
+        expect(def.dims.c.legend.symbol.elements.map(e => e.type)).toEqual(['rect', 'line', 'circle']);
     });
 
     test('a symbol of a category instead of the one of the legend', () => {
-        const c = prepareDef({ mapping: { c: { column: 'c', legend: { symbol: 'line' }, categories: { a: { symbol: 'rect' }, b: {} } } }, plot: [] }).mapping.c;
+        const c = prepareDef({ dims: { c: { column: 'c', legend: { symbol: 'line' }, categories: { a: { symbol: 'rect' }, b: {} } } }, plot: [] }).dims.c;
         expect(c.categoryProps.a.symbol.elements[0].type).toBe('rect');
         expect(c.categoryProps.b.symbol).toBeUndefined();
         expect(c.legend.symbol.elements[0].type).toBe('line');
@@ -132,13 +133,13 @@ describe('the props of categories', () => {
     });
 
     test('the colors of a scheme in the order of the categories, the given ones are kept', () => {
-        const def = prepareDef({ mapping: { c: { column: 'c', scheme: 'Blues', common: { r: 2 }, categories: { a: {}, b: { color: 'red' }, c: {} } } }, plot: [] });
-        expect(def.mapping.c.categoryProps).toEqual({
+        const def = prepareDef({ dims: { c: { column: 'c', scheme: 'Blues', common: { r: 2 }, categories: { a: {}, b: { color: 'red' }, c: {} } } }, plot: [] });
+        expect(def.dims.c.categoryProps).toEqual({
             a: { color: '#deebf7', r: 2, name: 'a', visible: true },
             b: { color: 'red', r: 2, name: 'b', visible: true },
             c: { color: '#3182bd', r: 2, name: 'c', visible: true },
         });
-        expect(() => prepareDef({ mapping: { c: { scheme: 'Nope', categories: {} } }, plot: [] })).toThrow("Unknown scheme 'Nope'");
+        expect(() => prepareDef({ dims: { c: { scheme: 'Nope', categories: {} } }, plot: [] })).toThrow("Unknown scheme 'Nope'");
     });
 });
 
@@ -175,20 +176,20 @@ describe('applyResolved (the parts of the definition of its globals)', () => {
         plot: { type: 'cartesian:line', props: {} },
     };
 
-    test('the selected entries change the mappings', () => {
+    test('the selected entries change the dims', () => {
         const source = sourceOf(defOrg);
         expect(source.dims.y.column).toBe("=match(@value, {a: 'A', b: 'B'}, 'A')");
-        const def = prepareDef(JSON.parse(JSON.stringify(defOrg)), options(source));
-        expect(def.mapping.y.column).toBe('A');
+        const def = prepareDef(engineNames(defOrg), options(source));
+        expect(def.dims.y.column).toBe('A');
         def.globals.value = 'b';
-        expect(applyResolved(def, defOrg, options(source))).toEqual(['y']);
-        expect(def.mapping.y).toMatchObject({ column: 'B', type: 'numeric', scale: { type: 'linear' } });
+        expect(applyResolved(def, engineNames(defOrg), options(source))).toEqual(['y']);
+        expect(def.dims.y).toMatchObject({ column: 'B', type: 'numeric', scale: { type: 'linear' } });
         expect(defOrg.mapping.y.column).toBe('A');
     });
 
     test('nothing to do without a source', () => {
-        const def = prepareDef({ mapping: {} });
-        expect(applyResolved(def, { mapping: {} })).toEqual([]);
+        const def = prepareDef({ dims: {} });
+        expect(applyResolved(def, { dims: {} })).toEqual([]);
     });
 
     test('the other parts of the definition, unchanged ones are kept', () => {
@@ -210,28 +211,28 @@ describe('applyResolved (the parts of the definition of its globals)', () => {
             plot: [{ id: 'dots', type: 'svg:circle', props: { r: 4, fill: 'red' } }],
         };
         const source = sourceOf(org);
-        const def = prepareDef(JSON.parse(JSON.stringify(org)), options(source));
-        const region = def.mapping.region;
+        const def = prepareDef(engineNames(org), options(source));
+        const region = def.dims.region;
         expect(def.options).toMatchObject({ title: 'World', height: 400 });
         // the filter of the rows is the expression of the global, all rows of the other values
         expect(def.filter).toEqual({ match: ['@globals.view', { europe: { '==': ['@region', 'EU'] } }, true] });
 
         def.globals.view = 'europe';
-        applyResolved(def, org, options(source));
+        applyResolved(def, engineNames(org), options(source));
         expect(def.options).toMatchObject({ title: 'Europe', height: 300, margins: {} });
         expect(def.geo).toEqual({ data: 'world.json', fit: 'data' });
         expect(def.filter).toEqual({ match: ['@globals.view', { europe: { '==': ['@region', 'EU'] } }, true] });
         expect(def.plot[0].props).toMatchObject({ r: 2, fill: 'red' });
-        // null removes a part, the mappings which are the same are kept
-        expect(Object.keys(def.mapping)).toEqual(['region']);
-        expect(def.mapping.region).toBe(region);
+        // null removes a part, the dims which are the same are kept
+        expect(Object.keys(def.dims)).toEqual(['region']);
+        expect(def.dims.region).toBe(region);
 
         def.globals.view = 'world';
-        applyResolved(def, org, options(source));
+        applyResolved(def, engineNames(org), options(source));
         expect(def.geo).toEqual({ data: 'world.json' });
         // the filter of the rows is the expression of the global, all rows of the other values
         expect(def.filter).toEqual({ match: ['@globals.view', { europe: { '==': ['@region', 'EU'] } }, true] });
-        expect(Object.keys(def.mapping)).toEqual(['x', 'region']);
+        expect(Object.keys(def.dims)).toEqual(['x', 'region']);
     });
 
     test('an entry sets globals', () => {
@@ -241,7 +242,7 @@ describe('applyResolved (the parts of the definition of its globals)', () => {
                 { value: 'inno', globals: { label: 'Innovation Leaders' } },
                 { value: 'eu', globals: { label: 'EU-27' } },
             ] }],
-            mapping: {},
+            dims: {},
         };
         const def = prepareDef(JSON.parse(JSON.stringify(org)));
         def.globals.group = 'eu';
@@ -263,14 +264,14 @@ describe('applyResolved (the parts of the definition of its globals)', () => {
             plot: { type: 'cartesian:line', props: {} },
         };
         const source = sourceOf(org);
-        const def = prepareDef(JSON.parse(JSON.stringify(org)), options(source));
-        expect(def.mapping.y).toMatchObject({ column: 'twh', axis: { format: ',.1f' } });
+        const def = prepareDef(engineNames(org), options(source));
+        expect(def.dims.y).toMatchObject({ column: 'twh', axis: { format: ',.1f' } });
         // the same column, e.g. a form element of other globals
-        expect(applyResolved(def, org, options(source))).toEqual([]);
+        expect(applyResolved(def, engineNames(org), options(source))).toEqual([]);
 
         Object.assign(def.globals, { values: 'co2', share: '.share' });
-        expect(applyResolved(def, org, options(source))).toEqual(['y']);
-        expect(def.mapping.y).toMatchObject({ column: 'co2.share', axis: { format: '.0%' } });
+        expect(applyResolved(def, engineNames(org), options(source))).toEqual(['y']);
+        expect(def.dims.y).toMatchObject({ column: 'co2.share', axis: { format: '.0%' } });
         expect(org.mapping.y.column).toBe('{values}{share}');
     });
 });
@@ -297,9 +298,9 @@ describe('column templates', () => {
             globals: { group: 'eu' },
             formElements: [{ ref: 'group', type: 'radio', values: [
                 { id: 'inno', name: 'Innovation Leaders', value: 'inno' },
-                { id: 'eu', name: 'EU-27', value: 'eu', short: 'EU', patch: { mapping: {} } },
+                { id: 'eu', name: 'EU-27', value: 'eu', short: 'EU', patch: { dims: {} } },
             ] }],
-            mapping: {},
+            dims: {},
         });
         const names = templateNames(def);
         expect(names).toMatchObject({ group: 'eu', 'group:name': 'EU-27', 'group:id': 'eu', 'group:short': 'EU' });
@@ -311,11 +312,11 @@ describe('column templates', () => {
 
 describe('variants and selectedEntry', () => {
     test('the definitions of the engine of all values of the controls of the load, the definition itself without them', () => {
-        const def = { mapping: { y: { column: 'value' } } };
+        const def = { dims: { y: { column: 'value' } } };
         expect(variants(def)).toEqual([def]);
-        const own = { mapping: { y: { column: 'value' } } };
-        own[variantsOf] = [own, { mapping: { y: { column: 'share' } } }];
-        expect(variants(own)).toEqual([own, { mapping: { y: { column: 'share' } } }]);
+        const own = { dims: { y: { column: 'value' } } };
+        own[variantsOf] = [own, { dims: { y: { column: 'share' } } }];
+        expect(variants(own)).toEqual([own, { dims: { y: { column: 'share' } } }]);
     });
 });
 
@@ -392,15 +393,15 @@ describe('applyResolved of globals and of the categories of the data', () => {
             mapping: { y: { column: 'c0', type: 'numeric' } },
         };
         const source = migrate(org);
-        const def = prepareDef(JSON.parse(JSON.stringify(org)), { source, plotTypes });
-        expect(def.mapping.y.column).toBe('cx');
+        const def = prepareDef(engineNames(org), { source, plotTypes });
+        expect(def.dims.y.column).toBe('cx');
         def.globals.a = '1';
-        expect(applyResolved(def, org, { source, plotTypes })).toEqual(['y']);
+        expect(applyResolved(def, engineNames(org), { source, plotTypes })).toEqual(['y']);
         expect(def.globals.b).toBe('y');
-        expect(def.mapping.y.column).toBe('cy');
+        expect(def.dims.y.column).toBe('cy');
         // a second one changes nothing
-        expect(applyResolved(def, org, { source, plotTypes })).toEqual([]);
-        expect(def.mapping.y.column).toBe('cy');
+        expect(applyResolved(def, engineNames(org), { source, plotTypes })).toEqual([]);
+        expect(def.dims.y.column).toBe('cy');
     });
 
     test('entries which set each other\'s globals end', () => {
@@ -414,22 +415,22 @@ describe('applyResolved of globals and of the categories of the data', () => {
         expect(() => prepareDef(JSON.parse(JSON.stringify(org)))).not.toThrow();
     });
 
-    test('a mapping of the categories of the data is prepared again with other values of its column', () => {
+    test('a dim of the categories of the data is prepared again with other values of its column', () => {
         const org = { globals: { lang: 'de' }, formElements: [{ ref: 'lang', values: [{ value: 'de' }, { value: 'en' }] }],
-            mapping: { c: { column: 'name', fromData: true, legend: {} } } };
+            dims: { c: { column: 'name', fromData: true, legend: {} } } };
         let keys = ['Österreich', 'Deutschland'];
         const def = prepareDef(JSON.parse(JSON.stringify(org)), { dataKeys: () => keys });
-        expect(def.mapping.c.keys).toEqual(['Österreich', 'Deutschland']);
+        expect(def.dims.c.keys).toEqual(['Österreich', 'Deutschland']);
         def.globals.lang = 'en';
         keys = ['Austria', 'Germany'];
         applyResolved(def, org, { dataKeys: () => keys });
-        expect(def.mapping.c.keys).toEqual(['Austria', 'Germany']);
-        expect(Object.keys(def.mapping.c.categoryProps)).toEqual(['Austria', 'Germany']);
-        // the same values keep the mapping, e.g. its entries hidden
-        def.mapping.c.categoryProps.Austria.visible = false;
-        const mapping = def.mapping.c;
+        expect(def.dims.c.keys).toEqual(['Austria', 'Germany']);
+        expect(Object.keys(def.dims.c.categoryProps)).toEqual(['Austria', 'Germany']);
+        // the same values keep the dim, e.g. its entries hidden
+        def.dims.c.categoryProps.Austria.visible = false;
+        const dim = def.dims.c;
         applyResolved(def, org, { dataKeys: () => [...keys] });
-        expect(def.mapping.c).toBe(mapping);
+        expect(def.dims.c).toBe(dim);
     });
 });
 

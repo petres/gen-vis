@@ -1,5 +1,5 @@
 // the definitions of the json files in data/, e.g. of import.meta.glob, they
-// have a mapping or a parent, mixins (_*.json) and shared parents only if
+// have a dim or a parent, mixins (_*.json) and shared parents only if
 // `mixins` is set, not the data or geometries
 export const definitions = (files, mixins = false) => Object.entries(files)
     .map(([file, def]) => ({ path: file.replace(/^.*?data\//, ''), def }))

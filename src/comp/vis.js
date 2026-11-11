@@ -143,15 +143,15 @@ const createVis = app => {
         }
     };
 
-    // the mappings of the legends by their position, `top` by default, a
+    // the dims of the legends by their position, `top` by default, a
     // global can change them
     const legendsAt = () => {
         const at = { top: [], bottom: [], left: [], right: [] };
         // a prop of the width of the visualisation, e.g. below the plots of a phone
         const scope = { ...store.scope, totalWidth: fullWidth };
         // the legends of the width of the visualisation, see color-legend.js
-        store.mappingNamesWithKey('legend').forEach(n => at[evaluate(store.mapping(n).legend.position, scope) ?? 'top']?.push(n));
-        // the annotations with a name after the legends of the mappings, at
+        store.dimNamesWithKey('legend').forEach(n => at[evaluate(store.dim(n).legend.position, scope) ?? 'top']?.push(n));
+        // the annotations with a name after the legends of the dims, at
         // the position of the first one
         if (store.def.plot.some(p => p.type?.startsWith('annotation:') && p.legend !== undefined && p.legend !== null))
             (Object.values(at).find(names => names.length > 0) ?? at.top).push(annotationsLegend);
@@ -262,7 +262,7 @@ const createVis = app => {
     // measured in elements of their class, see facets.js
     const rowHeaderWidth = () => {
         const grid = store.def?.facets ? gridOf(store.def) : null;
-        const m = grid?.rows ? store.def.mapping[grid.rows] : null;
+        const m = grid?.rows ? store.def.dims[grid.rows] : null;
         if (!m?.categoryProps)
             return 0;
         const { side, vertical } = rowHeadersOf(store.def.facets);

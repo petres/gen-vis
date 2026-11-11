@@ -1,4 +1,4 @@
-export { normalize, scaleTypeOf, defaultScaleType, categoryKeys, hasCategories, isCategorical, facetMappings, rowHeadersOf };
+export { normalize, scaleTypeOf, defaultScaleType, categoryKeys, hasCategories, isCategorical, facetBy, rowHeadersOf };
 
 import { isObject } from '@/utils/values';
 import { isOperator, refNames } from '@/utils/expr';
@@ -7,22 +7,22 @@ import { isOperator, refNames } from '@/utils/expr';
  * The normalization of the form the engine reads (of a definition of 5.0
  * merged with its parents, resolved and translated, see translate of
  * utils/language.js) into the form the renderer reads, see spec/normalize.
- * It keeps the names of the engine (`mapping`, `plot`, ...) and writes out
+ * It keeps the names of the engine (`dims`, `plot`, ...) and writes out
  * what the form may leave out. It is pure, JSON to JSON, the parts which
- * need the rows, the types of mappings without a type, follow when the rows
- * are loaded, see inferTypes of utils/data.js and prepareMapping of
+ * need the rows, the types of dims without a type, follow when the rows
+ * are loaded, see inferTypes of utils/data.js and prepareDim of
  * utils/def.js.
  *
- * - `domain` and `nice` of a mapping are the ones of its scale
- * - the mappings of the positions of the coordinate system (`x` and `y`,
+ * - `domain` and `nice` of a dim are the ones of its scale
+ * - the dims of the positions of the coordinate system (`x` and `y`,
  *   polar also `angle` and `radius`) have a scale of the orientation of the
  *   name and an axis, unless they are false (an orientation null is none), an axis is at the position of
  *   the orientation of its scale
- * - the type of a mapping follows from its parts: categories (see
+ * - the type of a dim follows from its parts: categories (see
  *   hasCategories) or a band, point or ordinal scale are categorical, a time
- *   or utc scale a date, other scales numeric, a mapping of the facets or of
+ *   or utc scale a date, other scales numeric, a dim of the facets or of
  *   the groups of a scale is categorical, the type of a scale follows from
- *   the type of the mapping, see scaleTypeOf
+ *   the type of the dim, see scaleTypeOf
  * - the type of a plot without the prefix of the coordinate system (translate
  *   writes the full names of the built-in types) is the one of the coordinate
  *   system, of svg elements or the only registered one of the name
@@ -33,14 +33,14 @@ import { isOperator, refNames } from '@/utils/expr';
  * `plotTypes` are the plot types by name, see plots/index.js.
  */
 
-// the parts of the categories of a mapping, a mapping with any of them has
-// categories, see prepareMapping of utils/def.js
+// the parts of the categories of a dim, a dim with any of them has
+// categories, see prepareDim of utils/def.js
 const categoryKeys = ['categories', 'scheme', 'common', 'fromData', 'ranks', 'order'];
 const hasCategories = m => isObject(m) && categoryKeys.some(k => m[k] !== undefined);
-// the parts of the scale which may stand at the mapping
+// the parts of the scale which may stand at the dim
 const scaleKeys = ['domain', 'nice'];
 
-// the orientations of the scales of the names of the mappings of the
+// the orientations of the scales of the names of the dims of the
 // positions of the coordinate systems
 const positions = {
     cartesian: { x: 'horizontal', y: 'vertical' },
@@ -52,7 +52,7 @@ const axisPositions = { horizontal: 'bottom', vertical: 'left', angular: 'angula
 const categoricalScales = ['band', 'point', 'ordinal'];
 const dateScales = ['time', 'utc'];
 
-// a mapping (or a dim of 5.0) of categories by its parts: categories (see
+// a dim (or a dim of 5.0) of categories by its parts: categories (see
 // hasCategories) or a band, point or ordinal scale
 // (a scale without a type of the parts of a scale of categories, e.g. the
 // order of the categories or the space between the bands, is one of them)
@@ -61,7 +61,7 @@ const ofCategories = m => hasCategories(m) || (isObject(m.scale) && (categorical
     || (m.scale.type === undefined && categoryScaleParts.some(k => m.scale[k] !== undefined))));
 
 /**
- * Whether a mapping (or a dim of 5.0) is categorical before the types of
+ * Whether a dim (or a dim of 5.0) is categorical before the types of
  * the rows are known: of its type, without one of its parts (see
  * ofCategories), e.g. the center of the band of its position, the color of
  * its categories of a fill (see utils/language.js), of the migration.
@@ -103,11 +103,11 @@ const withDefaults = (defaults, props) => {
 };
 
 /**
- * The type of the scale of a mapping of a type: `linear` of numeric ones,
+ * The type of the scale of a dim of a type: `linear` of numeric ones,
  * `time` of dates, of categorical ones `band` of the positions of bars,
  * `point` of other positions and `ordinal` otherwise, e.g. colors, undefined
  * without a type. `plots` are the plots of the normalized definition,
- * `name` the one of the mapping.
+ * `name` the one of the dim.
  */
 const scaleTypeOf = (m, name, plots = []) => {
     if (m.type == 'numeric')
@@ -123,11 +123,11 @@ const scaleTypeOf = (m, name, plots = []) => {
         ? 'band' : 'point';
 };
 
-// the type of the scale of its own of a mapping, see scaleTypeOf, linear of a
-// mapping without a type, e.g. of no column
+// the type of the scale of its own of a dim, see scaleTypeOf, linear of a
+// dim without a type, e.g. of no column
 const defaultScaleType = (m, name, plots = []) => scaleTypeOf(m, name, plots) ?? 'linear';
 
-// the type of a mapping of its parts, see normalize, undefined if they do not tell
+// the type of a dim of its parts, see normalize, undefined if they do not tell
 const typeOf = (m, name, used) => {
     if (ofCategories(m))
         return 'categorical';
@@ -139,8 +139,8 @@ const typeOf = (m, name, used) => {
     return used.has(name) ? 'categorical' : undefined;
 };
 
-// the normalized mapping, `orientation` the one of its name in the coordinate system
-const normalizeMapping = (raw, orientation) => {
+// the normalized dim, `orientation` the one of its name in the coordinate system
+const normalizeDim = (raw, orientation) => {
     const m = { ...raw };
     const scaled = scaleKeys.filter(k => k in m);
     if (scaled.length > 0) {
@@ -183,12 +183,12 @@ const normalizePlot = (raw, coord, plotTypes) => {
     return p;
 };
 
-// the normalized mappings, `coord` the coordinate system of the
-// definition, `used` the names of the mappings of categories
-const normalizeMappings = (mapping, coord, plots = [], used = new Set()) => {
+// the normalized dims, `coord` the coordinate system of the
+// definition, `used` the names of the dims of categories
+const normalizeDims = (dims, coord, plots = [], used = new Set()) => {
     const names = positions[coord] ?? {};
-    return Object.fromEntries(Object.entries(mapping).map(([n, raw]) => {
-        const m = normalizeMapping(raw, Object.hasOwn(names, n) ? names[n] : undefined);
+    return Object.fromEntries(Object.entries(dims).map(([n, raw]) => {
+        const m = normalizeDim(raw, Object.hasOwn(names, n) ? names[n] : undefined);
         m.type ??= typeOf(m, n, used);
         if (m.type === undefined)
             delete m.type;
@@ -198,18 +198,18 @@ const normalizeMappings = (mapping, coord, plots = [], used = new Set()) => {
     }));
 };
 
-// the names of the mappings of the facets and of the groups of scales, they
+// the names of the dims of the facets and of the groups of scales, they
 // are categorical, the categories of a plot (`by`) are not, they group the
 // rows of any type, e.g. of a year
 /**
- * The mappings of the facets: of a grid (`rows` and `cols`, the mappings of
+ * The dims of the facets: of a grid (`rows` and `cols`, the dims of
  * its rows and its columns) or `dim`, `cols` of `dim` is the number of
- * columns, also a reference to a global ("@cols"), which is no mapping.
+ * columns, also a reference to a global ("@cols"), which is no dim.
  */
-const facetMappings = facets => {
-    const mapping = v => typeof v == 'string' && !v.startsWith('@') ? v : null;
-    const rows = mapping(facets?.rows);
-    const cols = mapping(facets?.cols);
+const facetBy = facets => {
+    const dim = v => typeof v == 'string' && !v.startsWith('@') ? v : null;
+    const rows = dim(facets?.rows);
+    const cols = dim(facets?.cols);
     return rows || cols ? { grid: true, rows, cols, all: [rows, cols].filter(Boolean) }
         : { grid: false, rows: null, cols: null, all: typeof facets?.dim == 'string' ? [facets.dim] : [] };
 };
@@ -228,8 +228,8 @@ const rowHeadersOf = facets => {
 };
 
 const categoryNames = def => new Set([
-    ...(isObject(def.facets) ? facetMappings(def.facets).all : []),
-    ...Object.values(isObject(def.mapping) ? def.mapping : {}).filter(m => isObject(m) && isObject(m.scale)).map(m => m.scale.groups?.by),
+    ...(isObject(def.facets) ? facetBy(def.facets).all : []),
+    ...Object.values(isObject(def.dims) ? def.dims : {}).filter(m => isObject(m) && isObject(m.scale)).map(m => m.scale.groups?.by),
 ].filter(n => typeof n == 'string'));
 
 /**
@@ -242,7 +242,7 @@ const normalize = (raw, { plotTypes = {} } = {}) => {
     if (def.plot !== undefined)
         def.plot = def.plot.map(p => normalizePlot(p, coord, plotTypes));
     const used = categoryNames(def);
-    if (def.mapping !== undefined)
-        def.mapping = normalizeMappings(def.mapping, coord, def.plot, used);
+    if (def.dims !== undefined)
+        def.dims = normalizeDims(def.dims, coord, def.plot, used);
     return def;
 };

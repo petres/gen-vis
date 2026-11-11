@@ -42,11 +42,11 @@ const conditions = v => v && typeof v == 'object' && !Array.isArray(v) && !isOpe
 
 // the parts which 5.0 writes differently but means the same
 const same = def => JSON.parse(JSON.stringify(def, function (k, v) {
-    if ((k == 'filter' || k == 'stacked') && this.column !== undefined || k == 'filter' && (this.type !== undefined || this.mapping !== undefined || this.box !== undefined || this.title !== undefined))
+    if ((k == 'filter' || k == 'stacked') && this.column !== undefined || k == 'filter' && (this.type !== undefined || this.dims !== undefined || this.box !== undefined || this.title !== undefined))
         v = conditions(v);
     if (k == 'by' && Array.isArray(v) && v.length == 0)
         return undefined;
-    // null and false remove a part of a mapping
+    // null and false remove a part of a dim
     if (['scale', 'axis', 'legend', 'hover'].includes(k) && v === null && this.column !== undefined)
         return false;
     if (k == 'fromData' || k == 'domainRel' || k == 'pad' || k == '$schema')
@@ -123,7 +123,7 @@ describe('the migration of the definitions of 4.x', () => {
         expect(def.subtitle).toBe("=match(@scale, {log: 'log'}, 'linear')");
         expect(def.dims.y.scale.type).toBe("=match(@scale, {log: 'log'}, 'linear')");
         // resolved with the global
-        expect(translate(resolve(def, { scale: 'log' })).mapping.y.scale.type).toBe('log');
+        expect(translate(resolve(def, { scale: 'log' })).dims.y.scale.type).toBe('log');
         expect(translate(resolve(def, { scale: 'lin' })).options.subtitle).toBe('linear');
     });
 
@@ -184,7 +184,7 @@ const engine4 = def => {
         n.facets.scales = def.globals[scales.slice(1)];
     // the categories of a vertical scale without a range of its own were
     // from the bottom up in 4.x, from the top down in 5.0 (reverse turns them)
-    Object.values(n.mapping ?? {}).forEach(m => {
+    Object.values(n.dims ?? {}).forEach(m => {
         const s = m?.scale;
         if (isObject(s) && s.orientation == 'vertical' && ['band', 'point'].includes(s.type) && !Array.isArray(s.range) && !s.scheme)
             s.reverse = !s.reverse;
@@ -218,15 +218,15 @@ const engine5 = (def, globals) => {
     ['globals', 'formElements', 'controls'].forEach(k => delete out[k]);
     if (isObject(out.options) && Object.keys(out.options).length == 0)
         delete out.options;
-    Object.values(out.mapping ?? {}).forEach(m => m?.scale?.reverse === false && delete m.scale.reverse);
+    Object.values(out.dims ?? {}).forEach(m => m?.scale?.reverse === false && delete m.scale.reverse);
     return out;
 };
 // the dims of the marks' `by` are categorical in 5.0, 4.x infers their type from the values
-const byTypes = (a, b) => Object.keys(b.mapping ?? {}).forEach(n => {
-    if (a.mapping?.[n] && a.mapping[n].type === undefined && b.mapping[n].type == 'categorical') {
-        delete b.mapping[n].type;
-        if (a.mapping[n].scale?.type === undefined && b.mapping[n].scale)
-            delete b.mapping[n].scale.type;
+const byTypes = (a, b) => Object.keys(b.dims ?? {}).forEach(n => {
+    if (a.dims?.[n] && a.dims[n].type === undefined && b.dims[n].type == 'categorical') {
+        delete b.dims[n].type;
+        if (a.dims[n].scale?.type === undefined && b.dims[n].scale)
+            delete b.dims[n].scale.type;
     }
 });
 // the center of a position of a dim which is no band (a continuous or a
@@ -234,7 +234,7 @@ const byTypes = (a, b) => Object.keys(b.mapping ?? {}).forEach(n => {
 // wrote `@d:scaled` of a dim beside a continuous one (it can be a band),
 // the same place unless the dim is one of a band scale, which stays a difference
 const centers = (a, b) => {
-    const same = d => !isCategorical(a.mapping?.[d]) || a.mapping[d].scale?.type == 'point';
+    const same = d => !isCategorical(a.dims?.[d]) || a.dims[d].scale?.type == 'point';
     const walk = (x, y) => {
         if (!isObject(x) || !isObject(y))
             return;
@@ -252,8 +252,8 @@ const centers = (a, b) => {
 // (the same of values from 0, negative ones are in the domain in 5.0), the
 // value dims of bars and areas from 0 include it in 5.0 (the bars of 4.x
 // started below the plot if 0 was not in the domain of the data)
-const zeros = (a, b) => Object.keys(b.mapping ?? {}).forEach(n => {
-    const s = b.mapping[n]?.scale, s4 = a.mapping?.[n]?.scale;
+const zeros = (a, b) => Object.keys(b.dims ?? {}).forEach(n => {
+    const s = b.dims[n]?.scale, s4 = a.dims?.[n]?.scale;
     if (s?.zero !== true || !isObject(s4))
         return;
     if (Array.isArray(s4.domain) && s4.domain.length == 2 && s4.domain[0] === 0 && s4.domain[1] === null) {
@@ -302,7 +302,7 @@ describe('the dims of groups of marks in the colors of their categories', () => 
     test('one of 4.x without categories keeps none: fromData false', () => {
         const def = migrate({ mapping: { x: 'year', y: 'value', land: 'land' }, plot: { type: 'cartesian:line', by: ['land'] } });
         expect(def.dims.land).toEqual({ column: 'land', fromData: false });
-        expect(translate(def).mapping.land.fromData).toBeUndefined();
+        expect(translate(def).dims.land.fromData).toBeUndefined();
         // a mark of a color of its own, a dim of categories: as it is
         expect(migrate({ mapping: { x: 'year', y: 'value', land: 'land' }, plot: { type: 'cartesian:line', by: ['land'], props: { stroke: '#333' } } }).dims.land).toBe('land');
         expect(migrate({ mapping: { x: 'year', y: 'value', land: { column: 'land', fromData: true } }, plot: { type: 'cartesian:line', by: ['land'] } }).dims.land).toEqual({ column: 'land', fromData: true });
@@ -384,7 +384,7 @@ describe('patches, rules and texts of 4.x, drawn as 4.x drew them', () => {
             formElements: [radio('m', [{ value: 'a' }, { value: 'b', patch: { options: { subtitle: '=B' }, mapping: { y: { axis: { title: '=200' } } } } }])] };
         drawsAs4(def4);
         const t = translate(resolve(migrate(def4), namesOfGlobals({ m: 'b' }, migrate(def4).controls)));
-        expect([t.options.title, t.options.footer, t.options.subtitle, t.mapping.y.axis.title, t.plot[0].props.text]).toEqual(['= Summe der Länder', '=Quelle', '=B', '=200', '=Total']);
+        expect([t.options.title, t.options.footer, t.options.subtitle, t.dims.y.axis.title, t.plot[0].props.text]).toEqual(['= Summe der Länder', '=Quelle', '=B', '=200', '=Total']);
     });
 });
 
@@ -406,7 +406,7 @@ describe('a chain of parents of parts of 4.x and 5.0', () => {
         for (const scale of ['lin', 'log'])
             expect(engine5(merged, { scale })).toEqual(engine5(expected, { scale }));
         const t = engine5(merged, { scale: 'log' });
-        expect([t.options.title, t.options.height, t.mapping.y.column, t.mapping.y.format, t.mapping.y.scale.type, t.plot[0].props['stroke-width']])
+        expect([t.options.title, t.options.height, t.dims.y.column, t.dims.y.format, t.dims.y.scale.type, t.plot[0].props['stroke-width']])
             .toEqual(['Child', 300, 'v', '.1f', 'log', 2]);
     });
     test('a child of 4.x of a parent of 5.0, and of 4.x of both', async () => {
@@ -415,7 +415,7 @@ describe('a chain of parents of parts of 4.x and 5.0', () => {
         const files = { 'file:///p/parent.json': parent4, 'file:///p/mid.json': mid, 'file:///p/child.json': child4 };
         const merged = await resolved(files, 'file:///p/child.json');
         const t = engine5(merged, { scale: 'log' });
-        expect([t.options.title, t.options.subtitle, t.mapping.y.column, t.mapping.y.format, t.mapping.y.scale.type]).toEqual(['Mid', 'Child', 'v', '.1f', 'log']);
+        expect([t.options.title, t.options.subtitle, t.dims.y.column, t.dims.y.format, t.dims.y.scale.type]).toEqual(['Mid', 'Child', 'v', '.1f', 'log']);
         // a chain of 4.x only stays one of 4.x, migrated as a whole
         const old = await resolved({ ...files, 'file:///p/child.json': { ...child4, parent: 'parent.json' } }, 'file:///p/child.json');
         expect(old.mapping.y).toEqual({ column: 'v', axis: { grid: true }, format: '.1f' });

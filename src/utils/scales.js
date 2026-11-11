@@ -5,7 +5,7 @@ import { evaluate } from "@/utils/expr";
 import { continuous, convert } from "@/utils/data";
 import { comparison } from "@/utils/values";
 
-// the periods of the dates of a mapping (`interval`): minute, hour, day,
+// the periods of the dates of a dim (`interval`): minute, hour, day,
 // week, month, quarter, half (a year), year or a number of them, e.g.
 // "6 months", of the time zone of the scale, null without one or of another
 // value
@@ -90,7 +90,7 @@ const rightClosed = s => {
 
 /**
  * A band or point scale `s` whose categories are in groups of the values of
- * the mapping `by` of their rows, in the order of their first category, with
+ * the dim `by` of their rows, in the order of their first category, with
  * a space of `padding` steps between the groups (1 by default), the
  * categories of a group are next to each other. `groupExtent(category)` is
  * the start of the first band and the end of the last band of its group.
@@ -139,7 +139,7 @@ const grouped = (s, rows, name, { by, padding: gap = 1 }) => {
 /**
  * The categories of the data in the `order` of a scale: in the order of the
  * rows (by default), `"ascending"` or `"descending"` (numbers by their value)
- * or by the value of a mapping of their first row, e.g. bars by their length,
+ * or by the value of a dim of their first row, e.g. bars by their length,
  * `{ "by": "x", "descending": true }`, categories without a value last.
  */
 const sortCategories = (values, rows, name, order) => {
@@ -163,7 +163,7 @@ const sortCategories = (values, rows, name, order) => {
     return [...keyed, ...values.filter(v => !first.has(v))];
 };
 
-// the categories in the order of the categories of the mapping (`keys`,
+// the categories in the order of the categories of the dim (`keys`,
 // e.g. of `categories`), the others after them in their order, e.g. of the
 // rows, as the legend, the stacks and the facets
 const byKeys = (values, keys) => {
@@ -185,16 +185,16 @@ const logValues = values => {
 };
 
 /**
- * The problems of a numeric mapping of a log scale (log, sequentialLog,
+ * The problems of a numeric dim of a log scale (log, sequentialLog,
  * divergingLog, not symlog) of the rows as texts of a warning, none of
  * another scale: values without a position (0, the ones of the other sign,
  * see logValues), which are not drawn, `zero` (a log scale has no 0), a
  * fixed end of the `domain` without a position (of the names of `scope`,
  * the one of the data is used, see makeScale) and stacks (they start at 0).
  */
-const logProblems = (name, mapping, rows, scope = {}) => {
-    const type = mapping?.scale?.type;
-    if (mapping?.type != 'numeric' || typeof type != 'string' || !isLog(type) || mapping.scale.of !== undefined)
+const logProblems = (name, dim, rows, scope = {}) => {
+    const type = dim?.scale?.type;
+    if (dim?.type != 'numeric' || typeof type != 'string' || !isLog(type) || dim.scale.of !== undefined)
         return [];
     const values = rows.map(r => r[name]).filter(v => typeof v == 'number' && !Number.isNaN(v));
     const kept = new Set(logValues(values));
@@ -204,27 +204,27 @@ const logProblems = (name, mapping, rows, scope = {}) => {
         const shown = [...new Set(dropped)].slice(0, 3).join(', ');
         problems.push(`a ${type} scale has no position of 0 and of values of the other sign, ${dropped.length} of ${values.length} values of dim '${name}' are not drawn (${shown}${new Set(dropped).size > 3 ? ', ...' : ''}), e.g. "type": "symlog" has them`);
     }
-    if (mapping.scale.zero === true)
+    if (dim.scale.zero === true)
         problems.push(`a ${type} scale has no 0, \`zero\` is ignored`);
     // (a domain which is no list is the error of makeScale)
     const sign = kept.size ? Math.sign([...kept][0]) : 1;
     let domain = [];
     try {
-        domain = [evaluate(mapping.scale.domain, scope) ?? []].flat();
+        domain = [evaluate(dim.scale.domain, scope) ?? []].flat();
     } catch {}
     const ends = domain.filter(v => v !== null && v !== undefined && v !== '' && Number.isFinite(+v) && !(+v*sign > 0));
     if (ends.length > 0)
         problems.push(`a ${type} scale has no position of ${ends.join(' and ')} of its \`domain\`${ends.some(v => +v !== 0) ? ` (its values are ${sign > 0 ? 'positive' : 'negative'})` : ''}, that end is the one of the data, e.g. "domain": [${sign > 0 ? '1, 1000' : '-1000, -1'}]`);
-    if (mapping.stacked !== undefined && mapping.stacked !== false)
+    if (dim.stacked !== undefined && dim.stacked !== false)
         problems.push(`stacks start at 0, which a ${type} scale has no position of, the stacked marks are not drawn`);
     return problems;
 };
 
-// the values of a mapping in the rows, continuous ones sorted for the lookup
+// the values of a dim in the rows, continuous ones sorted for the lookup
 // of the nearest value (sorted when they are read, e.g. not for a scale
 // which only needs the extent), and their extent, of stacked values
 // (`stackOf`, see layout.js) the one of the stacks, e.g. from 0, the extent
-// and the categories include the values of the mappings with this scale
+// and the categories include the values of the dims with this scale
 // (`also`, `"scale": { "of": ... }`), e.g. of a band between two columns, of
 // a log scale (`log`) only the ones with a position, see logValues, the
 // extent is null without values. The values are read only, they are kept
@@ -263,9 +263,9 @@ const computeValues = (name, numeric, rows, stackOf, also, log) => {
 // the values of computeValues of the rows, kept per rows: the rows of a
 // view are new ones after a change of the data or the state, see layout.js
 const valueCache = new WeakMap();
-const valuesOf = (name, mapping, rows, stackOf, also = [], log = false) => {
-    const numeric = mapping.type == 'numeric' || mapping.type == 'date';
-    const stacks = numeric && mapping.stacked && stackOf ? stackOf : null;
+const valuesOf = (name, dim, rows, stackOf, also = [], log = false) => {
+    const numeric = dim.type == 'numeric' || dim.type == 'date';
+    const stacks = numeric && dim.stacked && stackOf ? stackOf : null;
     const key = JSON.stringify([name, also, numeric, log]);
     let cached = valueCache.get(rows);
     if (!cached)
@@ -279,18 +279,18 @@ const valuesOf = (name, mapping, rows, stackOf, also = [], log = false) => {
 };
 
 /**
- * The scale of a mapping for the values of the rows, a d3 scale, `nearest(p)`
+ * The scale of a dim for the values of the rows, a d3 scale, `nearest(p)`
  * is the value with data nearest to a position, e.g. of the hover. The range
  * is the one of the definition or of the orientation of the coordinate
  * system (`coord`), the references of the range are the names of `scope`
  * and the sizes `dims` of the coordinate system, e.g. its `radius`, values
  * of the definition are converted as the ones of the rows, also of the
- * `mappings` of the definition, e.g. dates of a scale of another mapping.
+ * dims of the definition (`allDims`), e.g. dates of a scale of another dim.
  * The values of the domain are the ones of `domainRows` if given, e.g. the
  * rows of `domainIgnores` (see layout.js), with their stacks `domainStackOf`.
  */
-const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, stackOf, also = [], mappings, domainRows, domainStackOf } = {}) => {
-    const scaleDef = mapping.scale;
+const makeScale = (name, dim, rows, { dims = {}, coord = {}, scope = {}, stackOf, also = [], allDims, domainRows, domainStackOf } = {}) => {
+    const scaleDef = dim.scale;
     const ranges = coord.ranges ?? {};
     // the end of a cyclic range is its start, e.g. of the angles of a circle
     const cyclic = (coord.cyclic ?? []).includes(scaleDef.orientation);
@@ -298,26 +298,26 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     // the domain is the one of `domainRows` (and their stacks), e.g. of all
     // months of `domainIgnores`, the nearest value with data is one of `rows`
     const all = domainRows ?? rows;
-    const found = valuesOf(name, mapping, all, domainRows ? domainStackOf : stackOf, also, log);
+    const found = valuesOf(name, dim, all, domainRows ? domainStackOf : stackOf, also, log);
     // computed once, at the first hover
     let nearValues = null;
-    const near = () => nearValues ??= (domainRows ? valuesOf(name, mapping, rows, stackOf, also, log) : found).values;
+    const near = () => nearValues ??= (domainRows ? valuesOf(name, dim, rows, stackOf, also, log) : found).values;
     let extent = found.extent;
     // the periods of the dates (`interval`) of a time scale: the domain of
     // the data reaches the end of the last one
-    const period = mapping.type == 'date' && ['time', 'utc'].includes(scaleDef.type) ? intervalOf(mapping.interval, scaleDef.type == 'utc') : null;
+    const period = dim.type == 'date' && ['time', 'utc'].includes(scaleDef.type) ? intervalOf(dim.interval, scaleDef.type == 'utc') : null;
     if (period && extent)
         extent = [extent[0], +period.offset(extent[1])];
-    else if (!period && mapping.interval !== undefined && mapping.type == 'date' && ['time', 'utc'].includes(scaleDef.type))
-        throw new Error(`Unknown interval '${mapping.interval}' of '${name}', expected minute, hour, day, week, month, quarter, half, year or a number of them, e.g. "6 months"`);
+    else if (!period && dim.interval !== undefined && dim.type == 'date' && ['time', 'utc'].includes(scaleDef.type))
+        throw new Error(`Unknown interval '${dim.interval}' of '${name}', expected minute, hour, day, week, month, quarter, half, year or a number of them, e.g. "6 months"`);
     // the extent of the data includes the values of `include`, e.g. 0 or
     // 100, around `center` it is symmetric, e.g. of 0 of changes
     // a value of the definition as the ones of the data, e.g. a date or a category as a string
-    const valueOf = v => v === null || v === undefined ? null : convert(mapping, v, mappings);
+    const valueOf = v => v === null || v === undefined ? null : convert(dim, v, allDims);
     // `zero`: the domain of the data includes 0 and an end at 0 is not
     // extended, e.g. the base of bars and areas, not of a log scale (no 0)
-    const zero = scaleDef.zero === true && mapping.type == 'numeric' && !log;
-    if (continuous(mapping)) {
+    const zero = scaleDef.zero === true && dim.type == 'numeric' && !log;
+    if (continuous(dim)) {
         let included = scaleDef.include === undefined ? []
             : [evaluate(scaleDef.include, scope)].flat().map(valueOf).filter(v => v !== null && v !== undefined);
         if (zero)
@@ -330,7 +330,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
             included.push(...(log ? [1, 10] : [0, 1]));
         extent = d3.extent([...(extent ?? []), ...included]);
     }
-    if (continuous(mapping) && scaleDef.center !== undefined) {
+    if (continuous(dim) && scaleDef.center !== undefined) {
         const c = valueOf(evaluate(scaleDef.center, scope));
         if (c !== null) {
             const d = Math.max(Math.abs(extent[0] - c), Math.abs(extent[1] - c));
@@ -447,7 +447,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
 
         // round values for the ends taken from the data, e.g. 0.951 to 1, `true`
         // for steps of about a tenth of the domain or the number of steps
-        if (scaleDef.nice && mapping.type == 'numeric') {
+        if (scaleDef.nice && dim.type == 'numeric') {
             const [lo, hi] = niceEnds(scaleDef.type, domain[0], domain[last], scaleDef.nice === true ? 10 : scaleDef.nice);
             if (fromData[0])
                 domain[0] = lo;
@@ -481,7 +481,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         const byText = new Map(values.map(v => [String(v), v]));
         domain = given.length > 0 && given.every(v => v !== null)
             ? [...new Set(given.map(v => byText.get(String(v)) ?? v))]
-            : sortCategories(scaleDef.order === undefined ? byKeys(values, mapping.keys) : values, all, name, scaleDef.order);
+            : sortCategories(scaleDef.order === undefined ? byKeys(values, dim.keys) : values, all, name, scaleDef.order);
         // the positions of the categories, e.g. of a band scale, not the
         // colors of an ordinal scale
         // a point scale has no inner padding (its bandwidth is 0)
@@ -514,7 +514,7 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
     // quarters, not their months); not with other values on the scale: the ones of the dims with this
     // scale (`also`) or a fixed end of the domain, e.g. 0.5 of [0, 0.5],
     // and not if fewer than two ticks are whole
-    if (s.ticks && !log && mapping.type == 'numeric' && !mapping.stacked && found.extent && found.whole && ends.every(Number.isInteger)) {
+    if (s.ticks && !log && dim.type == 'numeric' && !dim.stacked && found.extent && found.whole && ends.every(Number.isInteger)) {
         const ticks = s.ticks;
         s.integers = true;
         s.ticks = count => {

@@ -185,7 +185,7 @@ export default {
                 });
             }
             const xScale = once(() => barScale(plot, ctx, 'x', type));
-            // of the periods of dates (`interval` of the mapping of x): a bar
+            // of the periods of dates (`interval` of the dim of x): a bar
             // in the middle of its period (@x:scaled), 80% of its length by default
             const periodOf = once(() => {
                 const s = xScale();

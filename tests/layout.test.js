@@ -148,7 +148,7 @@ describe('layout', () => {
     test('without rows of a facet one of all rows', async () => {
         const store = createStore();
         await store.init({ def: { options: { height: 200 }, mapping: mapping(), plot, facets: { dim: 'c', cols: 2 } }, data });
-        Object.values(store.def.mapping.c.categoryProps).forEach(p => p.visible = false);
+        Object.values(store.def.dims.c.categoryProps).forEach(p => p.visible = false);
         const v = layout(store, 400);
         expect(v.faceted).toBe(false);
         expect(v.facets).toHaveLength(1);
@@ -214,7 +214,7 @@ describe('rows without a value', () => {
         const f = v.facets[0];
         const groups = id => {
             const p = store.def.plot.find(e => e.id == id);
-            return plotGroups(p, filterRows(f.rows, p.filter, store.def.mapping, f.scope), { store, ...f });
+            return plotGroups(p, filterRows(f.rows, p.filter, store.def.dims, f.scope), { store, ...f });
         };
         return { store, v, groups };
     };
@@ -235,7 +235,7 @@ describe('rows without a value', () => {
         const caps = groups('caps');
         expect(caps.flatMap(g => g.rows.filter(g.complete)).length).toBe(2);
         // no category of rows without a value on the scales of categories
-        store.def.mapping.label.categoryProps['n=5'].visible = false;
+        store.def.dims.label.categoryProps['n=5'].visible = false;
         expect(layout(store, 400).rows.map(r => r.kind)).toEqual(['step', 'step', 'cap', 'cap']);
         expect(v.rows.length).toBe(5);
     });

@@ -8,20 +8,20 @@ import { pixelOffset, tickPosition } from "@/utils/axis";
 import { convert } from "@/utils/data";
 import { evaluate } from "@/utils/expr";
 
-// the mapping of the other orientation, e.g. y of an axis of x, the one of
+// the dim of the other orientation, e.g. y of an axis of x, the one of
 // the positions or the values of the facet first
-const otherMapping = (ctx, n) => {
-    const other = ctx.store.mapping(n).scale?.orientation == 'horizontal' ? 'vertical' : 'horizontal';
-    const of = k => k !== undefined && ctx.scales[k] && ctx.store.mapping(k).scale?.orientation == other;
+const otherDim = (ctx, n) => {
+    const other = ctx.store.dim(n).scale?.orientation == 'horizontal' ? 'vertical' : 'horizontal';
+    const of = k => k !== undefined && ctx.scales[k] && ctx.store.dim(k).scale?.orientation == other;
     return [ctx.axis?.h, ctx.axis?.v].find(of) ?? Object.keys(ctx.scales).find(of);
 };
 
-// the value of `at` of an axis as a value of the other mapping, e.g. a date,
+// the value of `at` of an axis as a value of the other dim, e.g. a date,
 // undefined without one
 const atValue = (ctx, n, at) => {
-    const o = otherMapping(ctx, n);
+    const o = otherDim(ctx, n);
     const v = at === undefined || o === undefined ? null : evaluate(at, ctx.scope);
-    return v === null || v === undefined ? undefined : { name: o, value: convert(ctx.store.mapping(o), v, ctx.store.def.mapping) };
+    return v === null || v === undefined ? undefined : { name: o, value: convert(ctx.store.dim(o), v, ctx.store.def.dims) };
 };
 
 // the position of the line of an axis at a value of the other axis
@@ -41,7 +41,7 @@ const crossing = (ctx, n, at) => {
 };
 
 // the positions of the hover are vertical, e.g. of horizontal bars
-const isVertical = (ctx, names) => ctx.store.mapping(names.h).scale?.orientation == 'vertical';
+const isVertical = (ctx, names) => ctx.store.dim(names.h).scale?.orientation == 'vertical';
 
 // horizontal lines for a vertical axis and vice versa, the part of the
 // axes, the lines of the draw before are moved, e.g. with a transition
@@ -65,13 +65,13 @@ const grid = (ctx, n, s, values, vertical) => {
     };
 };
 
-// the parts of the axes of the mappings with an axis (see `axes` of
+// the parts of the axes of the dims with an axis (see `axes` of
 // coords/index.js): the grid lines, the axis, its ticks are its values and
 // their labels (see drawAxis of utils/axis.js), and its title
 const axes = ctx => {
     const { store, innerWidth, innerHeight } = ctx;
-    return store.mappingNamesWithKey('axis').flatMap(n => {
-        const m = store.mapping(n);
+    return store.dimNamesWithKey('axis').flatMap(n => {
+        const m = store.dim(n);
         const i = m.axis;
         const s = ctx.scales[n];
         const ticks = tickCount(i, ctx.scope, Math.abs(s.range()[1] - s.range()[0]));
@@ -99,15 +99,15 @@ const axes = ctx => {
         const cross = crossing(ctx, n, i.at);
         const edge = { bottom: innerHeight, right: innerWidth }[i.position] ?? 0;
         const withLine = i.labels?.at == 'axis';
-        const other = otherMapping(ctx, n);
-        const crossed = withLine && other !== undefined && store.mapping(other).axis && crossing(ctx, other, store.mapping(other).axis.at) !== null
-            ? atValue(ctx, other, store.mapping(other).axis.at) : undefined;
+        const other = otherDim(ctx, n);
+        const crossed = withLine && other !== undefined && store.dim(other).axis && crossing(ctx, other, store.dim(other).axis.at) !== null
+            ? atValue(ctx, other, store.dim(other).axis.at) : undefined;
         if (crossed?.name == n) {
             const shown = format;
             format = d => String(+d === +d ? +d : d) == String(+crossed.value === +crossed.value ? +crossed.value : crossed.value) ? '' : shown(d);
         }
 
-        const values = i.values ? tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.mapping) : (s.ticks ? s.ticks(ticks) : s.domain());
+        const values = i.values ? tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.dims) : (s.ticks ? s.ticks(ticks) : s.domain());
         // the labels of an axis of dates which repeat the one before are left
         // out, e.g. of quarterly ticks of the format "%Y" (the year at its
         // first tick); the tick marks stay. (Not of numbers: a rounded label
@@ -151,7 +151,7 @@ const axes = ctx => {
         const parts = [];
         // the grid lines are at the ticks of the axis
         if (i.grid)
-            parts.push(grid(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.mapping), ['left', 'right'].includes(i.position)));
+            parts.push(grid(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.dims), ['left', 'right'].includes(i.position)));
 
         // the axis of the draw before, its ticks are moved with a transition
         parts.push({
@@ -212,7 +212,7 @@ const axes = ctx => {
     });
 };
 
-// a band, a line, a text or a circle at values of the mappings of the axes,
+// a band, a line, a text or a circle at values of the dims of the axes,
 // without a value of an axis over the whole plot area, e.g. a band of the
 // horizontal axis has the height of the plot area, the items of a layer
 const annotate = (ctx, a) => {

@@ -2,7 +2,7 @@
   {
     "name": "a plot of a type with its default props, the props given after them",
     "def": {
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "cartesian:line",
@@ -20,7 +20,7 @@
       ]
     },
     "result": {
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "cartesian:line",
@@ -48,7 +48,7 @@
   {
     "name": "the props are merged into the defaults, null removes one",
     "def": {
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "cartesian:line",
@@ -75,7 +75,7 @@
       ]
     },
     "result": {
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "cartesian:line",
@@ -104,7 +104,7 @@
   {
     "name": "highlight and others are objects of props, mode the one of the highlight",
     "def": {
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "cartesian:bar",
@@ -124,7 +124,7 @@
       ]
     },
     "result": {
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "cartesian:bar",
@@ -147,7 +147,7 @@
   {
     "name": "a type without the prefix of the coordinate system is the one of the coordinate system, of svg elements otherwise",
     "def": {
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "line",
@@ -176,7 +176,7 @@
       ]
     },
     "result": {
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "cartesian:line",
@@ -223,7 +223,7 @@
   {
     "name": "the bars of a bin from x0 to x1 have crisp edges, other bars not",
     "def": {
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "cartesian:bar",
@@ -243,7 +243,7 @@
       ]
     },
     "result": {
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "cartesian:bar",
@@ -282,7 +282,7 @@
       "options": {
         "coord": "polar"
       },
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "polar:line",
@@ -312,7 +312,7 @@
       "options": {
         "coord": "polar"
       },
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "polar:line",
@@ -365,7 +365,7 @@
       "options": {
         "coord": "geo"
       },
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "geo:region",
@@ -388,7 +388,7 @@
       "options": {
         "coord": "geo"
       },
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "geo:region",
@@ -413,7 +413,7 @@
   {
     "name": "an unknown type stays as it is",
     "def": {
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "dots"
@@ -421,7 +421,7 @@
       ]
     },
     "result": {
-      "mapping": {},
+      "dims": {},
       "plot": [
         {
           "type": "dots"

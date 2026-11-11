@@ -162,7 +162,7 @@ const createHover = (store, slots) => {
             }
             tr.replaceChildren(...swatch, ...d.cells.map(c => {
                 const td = document.createElement('td');
-                setAttr(td, 'data-dim', c.mapping);
+                setAttr(td, 'data-dim', c.dim);
                 setAttr(td, 'data-prop', c.prop);
                 if (c.value)
                     td.setAttribute('class', 'vis-value');

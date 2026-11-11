@@ -151,7 +151,18 @@ const normalize4 = def => {
             const props = isObject(p.props) ? p.props : {};
             return { ...p, type, props: withPositions(positions4[type]?.(props) ?? {}, props) };
         });
-    return normalize(d, { plotTypes });
+    return normalize(engineNames(d), { plotTypes });
 };
 
-export { mergeAll4, resolveParents4, patched4, globalSets, normalize4 };
+/**
+ * A definition of 4.x in the names of the engine, which are the ones of
+ * 5.0: the form of 4.x normalized was the one the engine read, the tests of
+ * the engine which are written of a definition of 4.x (e.g. one which is
+ * also migrated) read it so; `mapping` are `dims`. A copy.
+ */
+const engineNames = def => {
+    const { mapping, ...rest } = structuredClone(def);
+    return { ...rest, ...(mapping === undefined ? {} : { dims: mapping }) };
+};
+
+export { mergeAll4, resolveParents4, patched4, globalSets, normalize4, engineNames };

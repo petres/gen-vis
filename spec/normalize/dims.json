@@ -2,7 +2,7 @@
   {
     "name": "x and y have a scale and an axis of their orientation",
     "def": {
-      "mapping": {
+      "dims": {
         "x": {
           "column": "year"
         },
@@ -12,7 +12,7 @@
       }
     },
     "result": {
-      "mapping": {
+      "dims": {
         "x": {
           "column": "year",
           "scale": {
@@ -35,9 +35,9 @@
     }
   },
   {
-    "name": "the parts of the categories stay at the mapping, it is categorical",
+    "name": "the parts of the categories stay at the dim, it is categorical",
     "def": {
-      "mapping": {
+      "dims": {
         "land": {
           "column": "Bundesland",
           "scheme": "Tableau10",
@@ -60,7 +60,7 @@
       }
     },
     "result": {
-      "mapping": {
+      "dims": {
         "land": {
           "column": "Bundesland",
           "categories": {
@@ -85,9 +85,9 @@
     }
   },
   {
-    "name": "domain and nice at the mapping are the ones of the scale",
+    "name": "domain and nice at the dim are the ones of the scale",
     "def": {
-      "mapping": {
+      "dims": {
         "y": {
           "column": "v",
           "type": "numeric",
@@ -103,7 +103,7 @@
       }
     },
     "result": {
-      "mapping": {
+      "dims": {
         "y": {
           "column": "v",
           "type": "numeric",
@@ -125,9 +125,9 @@
     }
   },
   {
-    "name": "the format of the mapping stays, it is the default of the axis and the hover",
+    "name": "the format of the dim stays, it is the default of the axis and the hover",
     "def": {
-      "mapping": {
+      "dims": {
         "y": {
           "column": "v",
           "type": "numeric",
@@ -137,7 +137,7 @@
       }
     },
     "result": {
-      "mapping": {
+      "dims": {
         "y": {
           "column": "v",
           "type": "numeric",
@@ -157,7 +157,7 @@
   {
     "name": "an explicit orientation and position stay, an axis without a position is the one of the orientation",
     "def": {
-      "mapping": {
+      "dims": {
         "x": {
           "column": "n",
           "type": "numeric",
@@ -175,7 +175,7 @@
       }
     },
     "result": {
-      "mapping": {
+      "dims": {
         "x": {
           "column": "n",
           "type": "numeric",
@@ -204,7 +204,7 @@
   {
     "name": "false is no scale or axis, an orientation null is none",
     "def": {
-      "mapping": {
+      "dims": {
         "x": {
           "column": "a",
           "type": "numeric",
@@ -228,7 +228,7 @@
       }
     },
     "result": {
-      "mapping": {
+      "dims": {
         "x": {
           "column": "a",
           "type": "numeric",
@@ -257,9 +257,9 @@
     }
   },
   {
-    "name": "other mappings have no scale by default, an axis is at the position of the orientation of its scale",
+    "name": "other dims have no scale by default, an axis is at the position of the orientation of its scale",
     "def": {
-      "mapping": {
+      "dims": {
         "c": {
           "column": "c",
           "type": "categorical"
@@ -275,7 +275,7 @@
       }
     },
     "result": {
-      "mapping": {
+      "dims": {
         "c": {
           "column": "c",
           "type": "categorical"
@@ -295,9 +295,9 @@
     }
   },
   {
-    "name": "a mapping of the scale of another one has no parts of its own",
+    "name": "a dim of the scale of another one has no parts of its own",
     "def": {
-      "mapping": {
+      "dims": {
         "y": {
           "column": "v",
           "type": "numeric"
@@ -312,7 +312,7 @@
       }
     },
     "result": {
-      "mapping": {
+      "dims": {
         "y": {
           "column": "v",
           "type": "numeric",
@@ -337,7 +337,7 @@
   {
     "name": "the type of the parts: categories, scales of categories, of dates and others",
     "def": {
-      "mapping": {
+      "dims": {
         "c": {
           "column": "c",
           "categories": {
@@ -372,7 +372,7 @@
       }
     },
     "result": {
-      "mapping": {
+      "dims": {
         "c": {
           "column": "c",
           "categories": {
@@ -412,9 +412,9 @@
     }
   },
   {
-    "name": "mappings of the facets are categorical, the ones of the categories of plots (by) keep the type of their values",
+    "name": "dims of the facets are categorical, the ones of the categories of plots (by) keep the type of their values",
     "def": {
-      "mapping": {
+      "dims": {
         "g": {
           "column": "g"
         },
@@ -441,7 +441,7 @@
       ]
     },
     "result": {
-      "mapping": {
+      "dims": {
         "g": {
           "column": "g"
         },
@@ -479,7 +479,7 @@
   {
     "name": "the scale of the type: linear, time, band of the positions of bars, point of other positions, ordinal otherwise",
     "def": {
-      "mapping": {
+      "dims": {
         "x": {
           "column": "c",
           "type": "categorical"
@@ -524,7 +524,7 @@
       ]
     },
     "result": {
-      "mapping": {
+      "dims": {
         "x": {
           "column": "c",
           "type": "categorical",
@@ -598,7 +598,7 @@
       "options": {
         "coord": "polar"
       },
-      "mapping": {
+      "dims": {
         "x": {
           "column": "m",
           "type": "categorical"
@@ -613,7 +613,7 @@
       "options": {
         "coord": "polar"
       },
-      "mapping": {
+      "dims": {
         "x": {
           "column": "m",
           "type": "categorical",
@@ -645,7 +645,7 @@
       "options": {
         "coord": "geo"
       },
-      "mapping": {
+      "dims": {
         "x": {
           "column": "a",
           "type": "numeric"
@@ -656,7 +656,7 @@
       "options": {
         "coord": "geo"
       },
-      "mapping": {
+      "dims": {
         "x": {
           "column": "a",
           "type": "numeric"

@@ -22,10 +22,10 @@ const angleDistance = (a, b) => {
     return Math.min(d, tau - d);
 };
 
-// the mapping of an orientation, `angular` or `radial`, the one of the
+// the dim of an orientation, `angular` or `radial`, the one of the
 // positions or the values (e.g. of a stacked angle) or another one
 const nameOf = (ctx, orientation) => [ctx.axis.v, ctx.axis.h, ...Object.keys(ctx.scales)]
-    .find(n => n !== undefined && ctx.store.mapping(n).scale?.orientation == orientation);
+    .find(n => n !== undefined && ctx.store.dim(n).scale?.orientation == orientation);
 
 // the inner and outer radius of the radius scale, the circle of the facet without it
 const radiusRange = ctx => {
@@ -35,7 +35,7 @@ const radiusRange = ctx => {
 
 // the values are the angles, they are stacked, e.g. the slices of a pie, the
 // positions are the rings of the radius, if there is one
-const flipped = (ctx, names) => ctx.store.mapping(names.v).scale?.orientation == 'angular';
+const flipped = (ctx, names) => ctx.store.dim(names.v).scale?.orientation == 'angular';
 
 // the angles of the slice of a row of stacked angles, its inner and outer
 // radius, the ones of its ring or of the circle
@@ -64,7 +64,7 @@ const stepTo = (a, b, direction) => {
     return direction < 0 ? d - tau : d;
 };
 
-// a part of an id of the name of a mapping, which can have a space, the
+// a part of an id of the name of a dim, which can have a space, the
 // other characters as their codes, so the ids of two names differ
 const idOf = name => name.replace(/[^A-Za-z0-9-]/g, c => `_${c.codePointAt(0).toString(16)}_`);
 
@@ -175,9 +175,9 @@ const radialAxis = (ctx, n, s, values, label, domain, axis) => {
         const angle = h && ctx.scales[h];
         let items;
         if (axis.gridShape == "polygon" && angle) {
-            const hAxis = ctx.store.mapping(h).axis;
+            const hAxis = ctx.store.dim(h).axis;
             const arc = Math.abs(angle.range()[1] - angle.range()[0])*radiusRange(ctx)[1];
-            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, tickCount(hAxis, ctx.scope, arc), ctx.store.mapping(h), ctx.scope, ctx.store.def.mapping) : angle.domain());
+            const angles = angleTicks(angle, hAxis ? tickValues(hAxis, angle, tickCount(hAxis, ctx.scope, arc), ctx.store.dim(h), ctx.scope, ctx.store.def.dims) : angle.domain());
             items = values.map(v => ({ [elementOf]: "path", [directOf]: { d: lineRadial().curve(d3.curveLinearClosed)
                 .angle(w => angleOf(angle, w))
                 .radius(() => s(v))(angles) } }));
@@ -232,8 +232,8 @@ const radialAxis = (ctx, n, s, values, label, domain, axis) => {
 // of radial axes the title, see `axes` of coords/index.js
 const axes = ctx => {
     const { store } = ctx;
-    return store.mappingNamesWithKey('axis').flatMap(n => {
-        const m = store.mapping(n);
+    return store.dimNamesWithKey('axis').flatMap(n => {
+        const m = store.dim(n);
         const i = m.axis;
         const s = ctx.scales[n];
         // the length of a radial axis, of an angular one the arc at the outer radius
@@ -250,7 +250,7 @@ const axes = ctx => {
             return { text: !('text' in i.labels.props) ? format(v) : (text === null || text === undefined ? '' : String(text)), props };
         };
         const draw = { angular: angularAxis, radial: radialAxis }[i.position];
-        const [before, items, after = []] = draw(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.mapping), label, domainProps(ctx, i) ?? {}, i);
+        const [before, items, after = []] = draw(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.dims), label, domainProps(ctx, i) ?? {}, i);
         return [
             ...before,
             {

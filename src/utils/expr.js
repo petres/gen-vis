@@ -21,7 +21,7 @@ import { isObject, missing, sameValue, toNumber, truthy } from '@/utils/values';
  */
 
 // the name of the formatter of a scope, `(format, name) => function`, e.g. of
-// the locale and the type of the mapping of `name`, see layout.js
+// the locale and the type of the dim of `name`, see layout.js
 const formatter = Symbol('formatter');
 
 // the numbers of arithmetic, no value if one is missing or no number, e.g.
@@ -178,7 +178,7 @@ const opNode = (op, raw) => {
             };
         case 'format': {
             const of = compile(args[0]);
-            // the name of a reference, e.g. of a mapping of dates
+            // the name of a reference, e.g. of a dim of dates
             return { kind: 'format', of, spec: compile(args[1] ?? null), name: of.kind == 'ref' ? of.name : undefined };
         }
     }

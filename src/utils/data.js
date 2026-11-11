@@ -335,38 +335,38 @@ const dateReader = (utc = false) => {
     };
 };
 
-// the values of the mapping are numbers or dates (timestamps), the others,
-// also of a mapping without a type, are categories
-const continuous = mapping => mapping?.type == 'numeric' || mapping?.type == 'date';
+// the values of the dim are numbers or dates (timestamps), the others,
+// also of a dim without a type, are categories
+const continuous = dim => dim?.type == 'numeric' || dim?.type == 'date';
 
 // the categories are strings, as the values of csv, so the values of JSON and
 // parquet are the same ones, e.g. the year 2004 is "2004" of every format, a
 // missing one is null, also an empty cell of csv, as the null of JSON
 const toCategory = v => missing(v) ? null : String(v);
 
-// the definition of the scale of a mapping, of a mapping with the scale of
+// the definition of the scale of a dim, of a dim with the scale of
 // another one (`"scale": { "of": "y" }`) the one of the other one, of the
-// `mappings` of the definition
-const scaleDef = (mappings, m) => m?.scale?.of !== undefined ? mappings?.[m.scale.of]?.scale : m?.scale;
+// `dims` of the definition
+const scaleDef = (dims, m) => m?.scale?.of !== undefined ? dims?.[m.scale.of]?.scale : m?.scale;
 
-// the conversion of the values of a mapping, e.g. the dates of a `utc` scale
-// (also the one of another mapping, of the `mappings` of the definition) or
+// the conversion of the values of a dim, e.g. the dates of a `utc` scale
+// (also the one of another dim, of the `dims` of the definition) or
 // the categories as strings; of the values of a column (`column`) the
 // dates of the same text are read once, see dateReader
-const converter = (mapping, mappings, column = false) => {
-    if (mapping?.type == 'numeric')
+const converter = (dim, dims, column = false) => {
+    if (dim?.type == 'numeric')
         return toNumber;
-    if (mapping?.type == 'date') {
-        const utc = scaleDef(mappings, mapping)?.type == 'utc';
+    if (dim?.type == 'date') {
+        const utc = scaleDef(dims, dim)?.type == 'utc';
         return column ? dateReader(utc) : v => toDate(v, utc);
     }
     return toCategory;
 };
 
-// a value as the ones of the rows of a mapping, e.g. "2022-06-01" of a date,
-// of the time zone of its scale, also the one of another mapping (`"scale":
-// { "of": "x" }`) of the `mappings` of the definition
-const convert = (mapping, v, mappings) => converter(mapping, mappings)(v);
+// a value as the ones of the rows of a dim, e.g. "2022-06-01" of a date,
+// of the time zone of its scale, also the one of another dim (`"scale":
+// { "of": "x" }`) of the `dims` of the definition
+const convert = (dim, v, dims) => converter(dim, dims)(v);
 
 // the prepared rows of the filters of the transforms (`columns.kept`, see
 // utils/transform-types.js), all without one
@@ -387,24 +387,24 @@ const columnValues = (rows, columns, column) => {
     return inherited(column) ? i => ownValue(source[i], column) : i => source[i]?.[column];
 };
 
-// the values of mappings of the parsed rows in the prepared ones, e.g. of
+// the values of dims of the parsed rows in the prepared ones, e.g. of
 // another column of a form element, the rows are the same objects
 const updateData = (rows, data, def, names, columns = null) => {
-    const mapping = names.map(n => ({
+    const dims = names.map(n => ({
         name: n,
-        value: columnValues(rows, columns, def.mapping[n].column),
-        convert: converter(def.mapping[n], def.mapping, true),
+        value: columnValues(rows, columns, def.dims[n].column),
+        convert: converter(def.dims[n], def.dims, true),
     }));
     sourceRows(rows, columns).forEach((r, i) => {
         const e = data[i];
-        for (const c of mapping)
+        for (const c of dims)
             e[c.name] = c.convert(c.value(i));
     });
     return data;
 };
 
 // the row of the data a prepared row was made of and its index, e.g. for
-// the columns of a filter which are no mappings, see rowResolver: private
+// the columns of a filter which are no dims, see rowResolver: private
 // fields of the prepared rows, so a row is only its values (e.g. of a copy
 // or of toEqual) and is made as fast as a plain object (two properties
 // defined per row cost three times as much, e.g. 40 ms of 253k rows)
@@ -426,26 +426,26 @@ class PreparedRow {
 const rawOf = PreparedRow.raw;
 const rawIndexOf = PreparedRow.index;
 
-// maps the parsed rows to the mappings, e.g. column `share` to `y`, also the
-// columns of transforms; `odd` collects the values the mappings cannot use,
+// maps the parsed rows to the dims, e.g. column `share` to `y`, also the
+// columns of transforms; `odd` collects the values the dims cannot use,
 // see oddValues
 const prepareData = (data, def, columns = null, odd = null) => {
-    const mapping = Object.keys(def.mapping).map(n => ({
+    const dims = Object.keys(def.dims).map(n => ({
         name: n,
-        value: columnValues(data, columns, def.mapping[n].column),
-        convert: odd ? checked(n, def.mapping[n], converter(def.mapping[n], def.mapping, true), odd) : converter(def.mapping[n], def.mapping, true),
+        value: columnValues(data, columns, def.dims[n].column),
+        convert: odd ? checked(n, def.dims[n], converter(def.dims[n], def.dims, true), odd) : converter(def.dims[n], def.dims, true),
     }));
 
     return sourceRows(data, columns).map((d, i) => {
         const e = new PreparedRow(d, i);
-        for (const c of mapping)
+        for (const c of dims)
             e[c.name] = c.convert(c.value(i));
         return e;
     })
 };
 
-// the conversion of the values of a mapping `n` which collects the ones it
-// cannot use in `odd` (a map of the names of the mappings), by their text:
+// the conversion of the values of a dim `n` which collects the ones it
+// cannot use in `odd` (a map of the names of the dims), by their text:
 // of numbers and dates the ones which are none (`values`, not the usual
 // texts of missing values, see missingToken) and of every type objects and
 // lists (`objects`), e.g. of nested JSON, which are no values of a dim
@@ -470,7 +470,7 @@ const counted = (values, max = 4) => {
 };
 
 /**
- * The warnings of the values the mappings of the prepared definition `def`
+ * The warnings of the values the dims of the prepared definition `def`
  * could not use (`odd` of prepareData), once per column: texts of a dim of
  * numbers or dates which are none, e.g. "1,234" or "<5" (the usual texts of
  * missing values, e.g. NA or ":", are missing values without a warning, see
@@ -479,7 +479,7 @@ const counted = (values, max = 4) => {
 const oddValues = (def, odd) => {
     const warned = new Set();
     return [...odd].flatMap(([n, { values, objects }]) => {
-        const m = def.mapping[n];
+        const m = def.dims[n];
         const column = fillTemplate(m.column, def.globals ?? {});
         if (warned.has(column))
             return [];
@@ -496,11 +496,11 @@ const oddValues = (def, odd) => {
 
 /**
  * The resolver of the names of an expression of a row, e.g. of a filter:
- * the value of a mapping of the prepared row, else of a column of the
+ * the value of a dim of the prepared row, else of a column of the
  * transforms (`columns`) or of the data (see rawOf), else of the `scope`,
  * e.g. a global; as the functions of the row of `bind`.
  */
-const rowResolver = (mapping, columns, scope = {}, converted = null) => {
+const rowResolver = (dims, columns, scope = {}, converted = null) => {
     const resolve = name => {
         if (typeof name == 'symbol')
             return Object.hasOwn(scope, name) ? constant(scope[name]) : undefined;
@@ -508,16 +508,16 @@ const rowResolver = (mapping, columns, scope = {}, converted = null) => {
         if (converted?.has(name)) {
             const { m, raw } = converted.get(name);
             const value = bind(raw, resolve);
-            return value.constant ? constant(convert(m, value(), mapping)) : row => convert(m, value(row), mapping);
+            return value.constant ? constant(convert(m, value(), dims)) : row => convert(m, value(row), dims);
         }
         return resolveName(name);
     };
-    const resolveName = rowName(mapping, columns, scope);
+    const resolveName = rowName(dims, columns, scope);
     return resolve;
 };
-const rowName = (mapping, columns, scope) => name => {
+const rowName = (dims, columns, scope) => name => {
     // the value of the row, of a date its time, see datesAsDates
-    if (Object.hasOwn(mapping, name))
+    if (Object.hasOwn(dims, name))
         return row => row[name];
     if (columns?.has(name)) {
         const values = columns.get(name);
@@ -540,22 +540,22 @@ const rowName = (mapping, columns, scope) => name => {
 
 /**
  * The rows of a filter `spec`: an expression of the row (see rowResolver,
- * the names are the mappings, the columns and the `scope`), e.g.
- * `"@year == @selected"`, true are all rows; or the conditions of mappings
+ * the names are the dims, the columns and the `scope`), e.g.
+ * `"@year == @selected"`, true are all rows; or the conditions of dims
  * of 4.x, see rowFilter. `path` names it in errors, `unknown(path, dim)`
- * reports a condition of no mapping.
+ * reports a condition of no dim.
  */
-const filterRows = (rows, spec, mapping, scope = {}, { columns = null, path = 'filter', unknown = null } = {}) => {
+const filterRows = (rows, spec, dims, scope = {}, { columns = null, path = 'filter', unknown = null } = {}) => {
     if (spec === undefined || spec === null || spec === true)
         return rows;
     if (spec === false)
         return [];
     if (isObject(spec) && !isOperator(spec)) {
-        const conditions = rowFilter(spec, mapping, scope, path, unknown);
+        const conditions = rowFilter(spec, dims, scope, path, unknown);
         return conditions.length > 0 ? filter(rows, conditions) : rows;
     }
-    const { expression, converted } = datesAsDates(spec, mapping);
-    const test = bind(expression, rowResolver(mapping, columns, scope, converted));
+    const { expression, converted } = datesAsDates(spec, dims);
+    const test = bind(expression, rowResolver(dims, columns, scope, converted));
     if (test.constant)
         return truthy(test()) ? rows : [];
     return rows.filter(row => truthy(test(row)));
@@ -564,25 +564,25 @@ const filterRows = (rows, spec, mapping, scope = {}, { columns = null, path = 'f
 /**
  * An expression of the rows whose comparisons of a date dim compare dates:
  * the other values of a comparison (`==`, `!=`, `<`, ...) of a reference to
- * a mapping of dates, e.g. `"@date >= '2020-06-01'"` or `"@year == @selected"`,
+ * a dim of dates, e.g. `"@date >= '2020-06-01'"` or `"@year == @selected"`,
  * and the cases of a `match` of one are converted as the values of the
- * mapping (timestamps, see convert), as the conditions of the object form,
+ * dim (timestamps, see convert), as the conditions of the object form,
  * so dates of every format compare, e.g. of a transform, of JSON timestamps
  * or "01.06.2020". `converted` are the names of the references which replace
  * the values converted at the row, see rowResolver; kept per expression.
  */
 const dateComparisons = ['==', '!=', '<', '<=', '>', '>='];
 const convertedOf = new WeakMap();
-const datesAsDates = (spec, mapping) => {
+const datesAsDates = (spec, dims) => {
     if (!isObject(spec) && !Array.isArray(spec))
         return { expression: spec, converted: null };
     const kept = convertedOf.get(spec);
-    if (kept?.mapping === mapping && kept.types === typesKey(mapping))
+    if (kept?.dims === dims && kept.types === typesKey(dims))
         return kept.result;
     const converted = new Map();
     const dateOf = raw => {
         const name = typeof raw == 'string' && raw.startsWith('@') ? raw.slice(1) : undefined;
-        return name !== undefined && Object.hasOwn(mapping, name) && mapping[name]?.type == 'date' ? mapping[name] : undefined;
+        return name !== undefined && Object.hasOwn(dims, name) && dims[name]?.type == 'date' ? dims[name] : undefined;
     };
     const rewrite = raw => {
         if (Array.isArray(raw))
@@ -608,18 +608,18 @@ const datesAsDates = (spec, mapping) => {
         }
         if (op == 'match' && dateOf(list[0]) && isObject(list[1])) {
             const m = dateOf(list[0]);
-            const cases = Object.fromEntries(Object.entries(list[1]).map(([k, v]) => [String(convert(m, k, mapping)), rewrite(v)]));
+            const cases = Object.fromEntries(Object.entries(list[1]).map(([k, v]) => [String(convert(m, k, dims)), rewrite(v)]));
             return { match: [list[0], cases, ...list.slice(2).map(rewrite)] };
         }
         return { [op]: Array.isArray(args) ? args.map(rewrite) : rewrite(args) };
     };
     const expression = rewrite(spec);
     const result = { expression: converted.size > 0 || expression !== spec ? expression : spec, converted: converted.size > 0 ? converted : null };
-    convertedOf.set(spec, { mapping, types: typesKey(mapping), result });
+    convertedOf.set(spec, { dims, types: typesKey(dims), result });
     return result;
 };
-// the types of the mappings, of the date ones, e.g. inferred after a change of the globals
-const typesKey = mapping => Object.keys(mapping).filter(n => mapping[n]?.type == 'date').join('\0');
+// the types of the dims, of the date ones, e.g. inferred after a change of the globals
+const typesKey = dims => Object.keys(dims).filter(n => dims[n]?.type == 'date').join('\0');
 
 /**
  * A filter expression without its conditions of the dims `names`: a
@@ -748,48 +748,48 @@ const filter = (data, conditions) => {
 };
 
 
-// a condition of the values of a mapping `m` of a filter: a value or a list
+// a condition of the values of a dim `m` of a filter: a value or a list
 // of values, compared as the ones of the rows, e.g. dates, `null` the rows
 // without a value, `{ "not": condition }` and `{ "range": [from, to] }`
 // (`null` is open), the values are evaluated already, e.g. of globals, the
-// `mappings` of the definition are the ones of a scale of another mapping
+// `dims` of the definition are the ones of a scale of another dim
 const missingValue = v => v === null || v === undefined;
-const condition = (m, c, path, mappings) => {
+const condition = (m, c, path, dims) => {
     if (missingValue(c))
         return missingValue;
     if (Array.isArray(c)) {
-        const keys = new Set(c.map(k => String(convert(m, k, mappings))));
+        const keys = new Set(c.map(k => String(convert(m, k, dims))));
         return v => !missingValue(v) && keys.has(String(v));
     }
     if (typeof c == 'object') {
         if ('not' in c) {
-            const test = condition(m, c.not, path, mappings);
+            const test = condition(m, c.not, path, dims);
             return v => !test(v);
         }
         if (Array.isArray(c.range)) {
             // categories as numbers if they are numbers, e.g. "9" is below "10"
-            const [from, to] = c.range.map(e => missingValue(e) ? null : convert(m, e, mappings));
+            const [from, to] = c.range.map(e => missingValue(e) ? null : convert(m, e, dims));
             const compare = continuous(m) ? (a, b) => a - b : compareCategories;
             return v => !missingValue(v) && (from === null || compare(v, from) >= 0) && (to === null || compare(v, to) <= 0);
         }
         throw new Error(`${path}: expected a value, a list of values, null, { "not": ... } or { "range": [from, to] }`);
     }
-    const key = String(convert(m, c, mappings));
+    const key = String(convert(m, c, dims));
     return v => !missingValue(v) && String(v) === key;
 };
 
 /**
  * The test of the rows of a filter, e.g. { "year": "@year", "value": { "not":
- * null } }, the conditions of the values of mappings, see `condition`, as
- * props of the `scope`, e.g. the globals, `mapping` are the mappings of the
+ * null } }, the conditions of the values of dims, see `condition`, as
+ * props of the `scope`, e.g. the globals, `dims` are the dims of the
  * definition, `path` names it in errors, a list of { dim, key } of `filter`.
  */
-const rowFilter = (conditions, mapping, scope = {}, path = 'filter', unknown = null) => Object.entries(conditions ?? {}).map(([dim, c]) => {
-    // a condition of no mapping is one of no value of the rows, e.g. of a
-    // column instead of its mapping, `unknown(path)` reports it
-    if (unknown && !Object.hasOwn(mapping, dim))
+const rowFilter = (conditions, dims, scope = {}, path = 'filter', unknown = null) => Object.entries(conditions ?? {}).map(([dim, c]) => {
+    // a condition of no dim is one of no value of the rows, e.g. of a
+    // column instead of its dim, `unknown(path)` reports it
+    if (unknown && !Object.hasOwn(dims, dim))
         unknown(`${path}.${dim}`, dim);
-    return { dim, key: condition(Object.hasOwn(mapping, dim) ? mapping[dim] : undefined, conditionValues(c, scope), `${path}.${dim}`, mapping) };
+    return { dim, key: condition(Object.hasOwn(dims, dim) ? dims[dim] : undefined, conditionValues(c, scope), `${path}.${dim}`, dims) };
 });
 
 // the values of a condition evaluated, `not` and `range` are parts of the
@@ -804,7 +804,7 @@ const conditionValues = (c, scope) => {
 
 /**
  * The columns of the data a definition can use, null if they are not known:
- * the ones of the mappings, also of the other values of the controls (see
+ * the ones of the dims, also of the other values of the controls (see
  * variants), and of the values of the controls and of their names. A column
  * template is a column of every value of its globals, e.g. "{values}{share}"
  * of the entries of two form elements, or of the field of every entry, e.g.
@@ -844,7 +844,7 @@ const usedColumns = def => {
     if (ofTransforms === null)
         return null;
     const columns = [
-        ...variants(def).flatMap(d => Object.values(d.mapping ?? {}).map(m => m?.column)),
+        ...variants(def).flatMap(d => Object.values(d.dims ?? {}).map(m => m?.column)),
         ...ofTransforms,
     ].map(expand);
     if (columns.includes(null))
@@ -855,13 +855,13 @@ const usedColumns = def => {
 };
 
 // the names of the expressions of the rows a definition filters by, which
-// can be columns of the data, not only mappings, see rowResolver: of the
+// can be columns of the data, not only dims, see rowResolver: of the
 // `filter` of the definition and of its plots, the conditions of the
-// stacked mappings and of the hover (conditions of 4.x, objects, name
-// mappings), e.g. "@region == 'W'" of a column `region`
+// stacked dims and of the hover (conditions of 4.x, objects, name
+// dims), e.g. "@region == 'W'" of a column `region`
 const expressionColumns = def => {
     const expressions = [def.filter, ...[def.plot ?? []].flat().map(p => p?.filter),
-        ...Object.values(def.mapping ?? {}).map(m => m?.stacked), def.options?.hover?.filter];
+        ...Object.values(def.dims ?? {}).map(m => m?.stacked), def.options?.hover?.filter];
     return expressions.filter(e => e !== undefined && e !== null && typeof e != 'boolean' && !(isObject(e) && !isOperator(e)))
         .flatMap(e => refNames(e)).filter(n => typeof n == 'string').map(n => n.split(':')[0]);
 };
@@ -1047,9 +1047,9 @@ const inferType = (values, n = values.length, hint = undefined) => {
 const numberFormat = /^(?:(.)?([<>=^]))?([+\-( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?(~)?([a-z%])?$/i;
 
 /**
- * Whether the parts of a mapping without a type say that its values are
+ * Whether the parts of a dim without a type say that its values are
  * numbers or dates, not categories, e.g. "NA" among numbers: 'numeric' of a
- * number format (of the mapping, its axis, hover or legend), of a domain or
+ * number format (of the dim, its axis, hover or legend), of a domain or
  * an `include` of numbers, 'continuous' of the
  * other parts of a continuous scale (an open domain, `nice`, `pad`,
  * `center`, `zero`, e.g. of the value of bars, an `interval`), undefined otherwise. A scale type and the
@@ -1071,17 +1071,17 @@ const typeHint = m => {
 // a d3 time format, e.g. "%b %Y", not a number format, e.g. ".0%"
 const timeFormat = /%[-_0]?[a-zA-Z]/;
 
-// the type of a mapping without values, e.g. of empty data: date of a time
-// format of the mapping, otherwise categorical (e.g. a band scale of bars)
+// the type of a dim without values, e.g. of empty data: date of a time
+// format of the dim, otherwise categorical (e.g. a band scale of bars)
 const formatType = m => [m.format, m.axis?.format, m.hover?.format, m.legend?.format]
     .some(f => typeof f == 'string' && timeFormat.test(f)) ? 'date' : 'categorical';
 
 /**
- * The types of the mappings without a type of the values of their columns
+ * The types of the dims without a type of the values of their columns
  * (see inferType, of a column without values see formatType), of the rows
  * and the columns of the transforms, a column template of the globals, also
- * the ones of the mappings of the other values of the controls which are
- * not mappings of the definition, the definition is changed. Only the columns which are `known`
+ * the ones of the dims of the other values of the controls which are
+ * not dims of the definition, the definition is changed. Only the columns which are `known`
  * (all by default), e.g. of the check of the definition.
  */
 // the types of the columns of a source of values (the rows of the data or
@@ -1113,7 +1113,7 @@ const inferTypes = (def, rows, columns = null, known = () => true) => {
         // of a column of the rows of a mark only (the ends of an arrow), has
         // the type of that one (below), so the values of the rows are
         // converted as its ones
-        if (types.get(key) === undefined && typeof m.scale?.of == 'string' && isObject(def.mapping?.[m.scale.of])) {
+        if (types.get(key) === undefined && typeof m.scale?.of == 'string' && isObject(def.dims?.[m.scale.of])) {
             ofScale.push(m);
             return;
         }
@@ -1123,9 +1123,9 @@ const inferTypes = (def, rows, columns = null, known = () => true) => {
         m.type = types.get(key) ?? (hint && formatType(m) != 'date' ? 'numeric' : formatType(m));
     };
     const ofScale = [];
-    Object.values(def.mapping ?? {}).forEach(infer);
-    variants(def).slice(1).forEach(variant => Object.entries(isObject(variant.mapping) ? variant.mapping : {})
-        .filter(([n]) => !Object.hasOwn(def.mapping ?? {}, n)).forEach(([, m]) => infer(m)));
-    ofScale.forEach(m => m.type = def.mapping[m.scale.of].type ?? (typeHint(m) && formatType(m) != 'date' ? 'numeric' : formatType(m)));
+    Object.values(def.dims ?? {}).forEach(infer);
+    variants(def).slice(1).forEach(variant => Object.entries(isObject(variant.dims) ? variant.dims : {})
+        .filter(([n]) => !Object.hasOwn(def.dims ?? {}, n)).forEach(([, m]) => infer(m)));
+    ofScale.forEach(m => m.type = def.dims[m.scale.of].type ?? (typeHint(m) && formatType(m) != 'date' ? 'numeric' : formatType(m)));
 };
 

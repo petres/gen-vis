@@ -15,7 +15,7 @@ const userElements = def => (def.formElements ?? []).filter(e => e.type != 'hidd
 // the complete state of a prepared definition
 const snapshot = def => ({
     globals: Object.fromEntries(userElements(def).map(e => [e.ref, def.globals?.[e.ref]])),
-    visible: Object.fromEntries(Object.entries(def.mapping)
+    visible: Object.fromEntries(Object.entries(def.dims)
         .filter(([n, m]) => m.legend && m.categoryProps)
         .map(([n, m]) => [n, Object.fromEntries(Object.entries(m.categoryProps).map(([k, p]) => [k, p.visible]))])),
 });
@@ -38,7 +38,7 @@ const diffState = (state, defaults) => {
 };
 
 // a (partial) state is applied to the prepared definition, unknown globals,
-// values, mappings and entries are ignored, e.g. of an older definition
+// values, dims and entries are ignored, e.g. of an older definition
 const applyState = (def, state) => {
     Object.entries(state?.globals ?? {}).forEach(([r, v]) => {
         const entry = userElements(def).filter(e => e.ref == r)
@@ -48,7 +48,7 @@ const applyState = (def, state) => {
     });
 
     Object.entries(state?.visible ?? {}).forEach(([n, keys]) => {
-        const m = Object.hasOwn(def.mapping, n) ? def.mapping[n] : null;
+        const m = Object.hasOwn(def.dims, n) ? def.dims[n] : null;
         if (!m?.legend || !m.categoryProps)
             return;
         Object.entries(keys ?? {}).forEach(([k, v]) => {

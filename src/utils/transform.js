@@ -37,10 +37,10 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
     return types.applyTransforms(rows, transforms, globals, utc, before, files, locale);
 };
 
-// the columns of the mappings of dates of `utc` scales, with the values of
+// the columns of the dims of dates of `utc` scales, with the values of
 // the globals, the transforms of them are in UTC
-const utcColumns = def => new Set(Object.values(def.mapping ?? {})
-    .filter(m => scaleDef(def.mapping, m)?.type == 'utc' && typeof m.column == 'string')
+const utcColumns = def => new Set(Object.values(def.dims ?? {})
+    .filter(m => scaleDef(def.dims, m)?.type == 'utc' && typeof m.column == 'string')
     .map(m => fillTemplate(m.column, def.globals ?? {})));
 
 // the columns of the data the transforms use, e.g. for parquet, the ones of

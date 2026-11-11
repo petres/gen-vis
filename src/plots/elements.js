@@ -146,7 +146,7 @@ const areaPoints = (groups, plot, ctx, keys) => {
     return result;
 };
 
-// the scale of the mapping a prop of a plot refers to, e.g. the one of `x`
+// the scale of the dim a prop of a plot refers to, e.g. the one of `x`
 // of "@x:scaled" or of `d.angle`, undefined if it is no reference
 const propScale = (plot, ctx, path) => {
     const value = path.split('.').reduce((p, k) => p?.[k], plot.props);

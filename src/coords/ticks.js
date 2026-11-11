@@ -27,27 +27,27 @@ const tickCount = (axis, scope, length) => {
 };
 
 // the values of the ticks of an axis, also of the grid lines, fixed ones are
-// converted as the values of the data of the `mapping`, e.g. dates of
+// converted as the values of the data of the `dim`, e.g. dates of
 // "2020-04-01" or the categories as strings, e.g. "2004" of 2004, they can be
 // a prop of the names of the facet (`scope`), dates in the time zone of the
-// scale, also of the one of another mapping (`"scale": { "of": "x" }`) of
-// the `mappings` of the definition
-const tickValues = (axis, scale, ticks, mapping, scope = {}, mappings) => {
+// scale, also of the one of another dim (`"scale": { "of": "x" }`) of
+// the `dims` of the definition
+const tickValues = (axis, scale, ticks, dim, scope = {}, dims) => {
     // a list or a prop, e.g. steps of the width
     const values = axis.values === undefined ? undefined : evaluate(axis.values, scope);
     return Array.isArray(values)
-        ? values.map(v => mapping ? convert(mapping, v, mappings) : v).filter(v => v !== null && inRange(scale, v))
+        ? values.map(v => dim ? convert(dim, v, dims) : v).filter(v => v !== null && inRange(scale, v))
         : (scale.ticks ? scale.ticks(ticks) : scale.domain());
 };
 
-// the format of the ticks of the axis of a mapping, by default as the one of
+// the format of the ticks of the axis of a dim, by default as the one of
 // d3 but in the locale, null for the default of d3; the categories with a
 // name of their own are labelled by it, as in the legend, e.g. "Mon" of the
 // key 1 (`labels.props.text` of the axis comes before it)
 const tickFormat = (store, name, scale, ticks) => {
-    const mapping = store.mapping(name);
-    const format = numberFormat(store, mapping, name, scale, ticks);
-    const props = mapping.categoryProps;
+    const dim = store.dim(name);
+    const format = numberFormat(store, dim, name, scale, ticks);
+    const props = dim.categoryProps;
     if (!props || !Object.entries(props).some(([k, p]) => p.name !== undefined && p.name !== null && String(p.name) !== k))
         return format;
     const other = format ?? (scale.tickFormat ? scale.tickFormat(ticks) : d => d);
@@ -56,21 +56,21 @@ const tickFormat = (store, name, scale, ticks) => {
         return p?.name !== undefined && p.name !== null && String(p.name) !== String(d) ? String(p.name) : other(d);
     };
 };
-const numberFormat = (store, mapping, name, scale, ticks) => {
-    const format = formatOf(mapping, 'axis');
+const numberFormat = (store, dim, name, scale, ticks) => {
+    const format = formatOf(dim, 'axis');
     if (format)
         return store.format(format, name);
-    if (mapping.axis.values)
+    if (dim.axis.values)
         return null;
-    return store.locale.tickFormat(scale, mapping.scale.type, ticks);
+    return store.locale.tickFormat(scale, dim.scale.type, ticks);
 };
 
 /**
- * The props of the labels of the ticks of the axis of the mapping `n` as a
+ * The props of the labels of the ticks of the axis of the dim `n` as a
  * function of the tick, `axis.labels.props`, e.g. { "font-weight": "@weight",
  * "text": "@short", "max-width": 300 }, of the names of the facet, the values
  * of the first row of the tick (e.g. `@short`), the props of the categories
- * of the tick and of the mappings `axis.labels.by` of its row (e.g.
+ * of the tick and of the dims `axis.labels.by` of its row (e.g.
  * `@weight` of a category of a level), null without props, of the axes of
  * all coordinate systems.
  */
@@ -78,7 +78,7 @@ const labelProps = (ctx, n, labels) => {
     if (!labels?.props)
         return null;
     const store = ctx.store;
-    const categories = [labels.by ?? []].flat().filter(c => store.mapping(c)?.categoryProps);
+    const categories = [labels.by ?? []].flat().filter(c => store.dim(c)?.categoryProps);
     const rows = new Map();
     ctx.rows.forEach(r => {
         const k = String(r[n]);
@@ -87,7 +87,7 @@ const labelProps = (ctx, n, labels) => {
     });
     return d => {
         const row = rows.get(String(d)) ?? {};
-        const props = Object.assign({}, store.mapping(n).categoryProps ? store.prop(n, String(d)) : undefined,
+        const props = Object.assign({}, store.dim(n).categoryProps ? store.prop(n, String(d)) : undefined,
             ...categories.map(c => store.prop(c, String(row[c]))));
         return evaluate(labels.props, { ...ctx.scope, ...row, [n]: d, ...props });
     };

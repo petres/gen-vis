@@ -15,11 +15,11 @@ import { defaults } from "@/plots/defaults";
  *   of its categories (`props`), the values of the props of the plot of a
  *   row, `at(row)`, of one prop `prop(name)(row)`, the ones which are the
  *   same for all rows (`attrs`), e.g. the color of a line, and
- *   `complete(row)`, false if a mapping of the props has no value, see
+ *   `complete(row)`, false if a dim of the props has no value, see
  *   plotGroups of layout.js. The values are plain values, e.g. numbers of
  *   positions. `ctx` is the facet: the `store`, `inner` (the element `g`
  *   of the plots and axes, a DOM element), the `rows`, the `scales` by
- *   the names of the mappings, `axis` (the names of the positions and the
+ *   the names of the dims, `axis` (the names of the positions and the
  *   values), `stackOf(row)` (the start and the end of a stacked value),
  *   `scope` (the names of the references of the facet), `innerWidth`,
  *   `innerHeight` and `dims` (the sizes of the coordinate system), maps also

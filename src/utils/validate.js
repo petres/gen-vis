@@ -12,7 +12,7 @@ import { projectionNames } from "@/coords/geo.js";
 import { applyTransforms, madeBy, transformNames, utcColumns } from "@/utils/transform";
 import { isObject, missing, toNumber } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
-import { defaultScaleType, facetMappings, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
+import { defaultScaleType, facetBy, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
 import { inferTypes } from "@/utils/data";
 import { versionError } from "@/utils/version";
 import { translate, isDefinition4, authoredPath, markKeys, positionChannels } from "@/utils/language";
@@ -36,8 +36,8 @@ const choices = (name, names) => {
     return names.length <= 24 ? `, expected one of ${list(names)}` : '';
 };
 
-// the parts of a mapping which are objects, see prepareMapping of utils/def.js
-const mappingParts = ['scale', 'axis', 'legend', 'hover'];
+// the parts of a dim which are objects, see prepareDim of utils/def.js
+const dimParts = ['scale', 'axis', 'legend', 'hover'];
 
 // the names of a template of html, e.g. "land.unit" of "{land.unit}"
 const templateNames = text => typeof text == 'string' ? [...text.matchAll(/\{([\p{L}\p{N}_.:-]+)\}/gu)].map(m => m[1]) : [];
@@ -104,12 +104,12 @@ const checkProp = (value, path, warn, names = null) => {
     return each(args);
 };
 
-// the values of the rows of a mapping, e.g. `x:scaled`, see rowValue of
+// the values of the rows of a dim, e.g. `x:scaled`, see rowValue of
 // layout.js
 const rowNames = (n, m) => [
     n,
     `${n}:formatted`,
-    // the place of the category of the row among the categories of the mapping and their number, e.g. of dodged bars
+    // the place of the category of the row among the categories of the dim and their number, e.g. of dodged bars
     `${n}:index`,
     `${n}:count`,
     ...(m.scale ? [`${n}:scaled`, `${n}:scaled:center`, `${n}:scaled:min`, `${n}:scaled:max`, `${n}:bandwidth`, `${n}:step`] : []),
@@ -119,14 +119,14 @@ const rowNames = (n, m) => [
     ...(m.stacked && m.scale ? [`${n}:start:scaled`, `${n}:end:scaled`, `${n}:height:scaled`, `${n}:mid:scaled`] : []),
 ];
 
-// the props of the categories of a mapping, `name` and `visible` are set by
+// the props of the categories of a dim, `name` and `visible` are set by
 // default, `color` by a scheme or the default colors
 const categoryNames = m => hasCategories(m) ? ['name', 'visible', 'color',
     ...Object.keys(m.common ?? {}),
     ...[m.ranks ?? []].flat().flatMap(e => Object.keys(e ?? {})),
     ...Object.values(m.categories ?? {}).flatMap(e => Object.keys(e ?? {}))] : [];
 
-// the names of a plot, also the positions of values of the scaled mappings,
+// the names of a plot, also the positions of values of the scaled dims,
 // e.g. `x:scaled:0` or `y:scaled:100`
 class PlotNames extends Set {
     has(name) {
@@ -164,7 +164,7 @@ const resolveNode = node => {
 };
 
 // the values of these parts are the ones of the coordinate system, also of
-// registered ones, they are checked by checkMappings
+// registered ones, they are checked by checkDims
 const registered = new Set([schema.definitions.scale.properties.orientation, schema.definitions.axis.properties.position]);
 
 const kind = v => v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v;
@@ -282,11 +282,11 @@ const schemaWarnings = (v, node, path = '', key = 'value', out = []) => {
 
 // --- the parts of a definition ---
 
-// the mappings: their columns, types, scales, axes, legends and hovers
-const checkMappings = ctx => {
-    const { def, mapping, names, warn, coord, coordName } = ctx;
-    Object.entries(mapping).forEach(([n, m]) => {
-        const path = `mapping.${n}`;
+// the dims: their columns, types, scales, axes, legends and hovers
+const checkDims = ctx => {
+    const { def, dims, names, warn, coord, coordName } = ctx;
+    Object.entries(dims).forEach(([n, m]) => {
+        const path = `dims.${n}`;
         if (typeof m.column != 'string')
             warn(path, `no 'column'`);
         const categorical = hasCategories(m);
@@ -312,8 +312,8 @@ const checkMappings = ctx => {
                 const other = m.scale?.orientation == 'horizontal' ? 'vertical' : 'horizontal';
                 if (!['top', 'bottom', 'left', 'right'].includes(m.axis.position))
                     warn(`${path}.axis.at`, `only cartesian axes are at a value of the other axis`);
-                else if (!Object.values(mapping).some(o => o?.scale?.orientation == other || (o?.scale?.of !== undefined && mapping[o.scale.of]?.scale?.orientation == other)))
-                    warn(`${path}.axis.at`, `a value of the mapping of the other axis, there is no mapping with a ${other} scale`);
+                else if (!Object.values(dims).some(o => o?.scale?.orientation == other || (o?.scale?.of !== undefined && dims[o.scale.of]?.scale?.orientation == other)))
+                    warn(`${path}.axis.at`, `a value of the dim of the other axis, there is no dim with a ${other} scale`);
                 checkProp(m.axis.at, `${path}.axis.at`, warn, names.facet);
             }
             if (isObject(m.axis.title) && m.axis.title.position !== undefined && (!['side', 'top'].includes(m.axis.title.position)
@@ -330,9 +330,9 @@ const checkMappings = ctx => {
                 if (labels.curved !== undefined && (![true, false, 'between'].includes(labels.curved) || (labels.curved && m.axis.position != 'angular')))
                     warn(`${path}.axis.labels.curved`, `the labels along the circle of an angular axis, true or 'between'`);
                 const categories = [labels.by ?? []].flat();
-                categories.filter(c => !Object.hasOwn(mapping, c)).forEach(c => warn(`${path}.axis.labels.by`, `unknown mapping '${c}'`));
-                checkProp(labels.props, `${path}.axis.labels.props`, warn, new Set([...names.facet, ...Object.keys(mapping),
-                    ...categoryNames(m), ...categories.flatMap(c => categoryNames(mapping[c]))]));
+                categories.filter(c => !Object.hasOwn(dims, c)).forEach(c => warn(`${path}.axis.labels.by`, `unknown dim '${c}'`));
+                checkProp(labels.props, `${path}.axis.labels.props`, warn, new Set([...names.facet, ...Object.keys(dims),
+                    ...categoryNames(m), ...categories.flatMap(c => categoryNames(dims[c]))]));
             }
             checkProp(m.axis.tickSpacing, `${path}.axis.tickSpacing`, warn, names.facet);
             const marks = m.axis.tickMarks;
@@ -356,7 +356,7 @@ const checkMappings = ctx => {
         checkProp(m.legend?.position, `${path}.legend.position`, warn, names.global);
         checkProp(m.legend?.orientation, `${path}.legend.orientation`, warn, names.global);
         if (isObject(m.hover?.row) && !categorical)
-            warn(`${path}.hover.row`, `the styles of the rows of the hover are props of the categories, the mapping needs 'categories' or 'fromData'`);
+            warn(`${path}.hover.row`, `the styles of the rows of the hover are props of the categories, the dim needs 'categories' or 'fromData'`);
         if (m.legend?.onlyData !== undefined && (typeof m.legend.onlyData != 'boolean' || !categorical))
             warn(`${path}.legend.onlyData`, `only the entries of the categories of the rows, true or false, of a legend of categories`);
         if (m.legend && !categorical && m.scale?.orientation !== undefined)
@@ -374,38 +374,38 @@ const checkMappings = ctx => {
         checkDates(ctx, n, m, path);
         checkFormats(n, m, path, warn);
     });
-    // the rows which are stacked, `true` all, the conditions of mappings, e.g. { "type": { "not": "load" } }
-    Object.entries(mapping).filter(([, m]) => m.stacked !== undefined && typeof m.stacked != 'boolean').forEach(([n, m]) => isObject(m.stacked)
-        ? checkFilter(ctx, m.stacked, `mapping.${n}.stacked`, names.global)
-        : warn(`mapping.${n}.stacked`, `expected true or the conditions of the rows which are stacked, e.g. { "type": { "not": "load" } }`));
-    Object.entries(mapping).filter(([, m]) => m.interval !== undefined).forEach(([n, m]) => {
+    // the rows which are stacked, `true` all, the conditions of dims, e.g. { "type": { "not": "load" } }
+    Object.entries(dims).filter(([, m]) => m.stacked !== undefined && typeof m.stacked != 'boolean').forEach(([n, m]) => isObject(m.stacked)
+        ? checkFilter(ctx, m.stacked, `dims.${n}.stacked`, names.global)
+        : warn(`dims.${n}.stacked`, `expected true or the conditions of the rows which are stacked, e.g. { "type": { "not": "load" } }`));
+    Object.entries(dims).filter(([, m]) => m.interval !== undefined).forEach(([n, m]) => {
         if (m.type !== undefined && m.type != 'date')
-            warn(`mapping.${n}.interval`, `the periods of the values of a date mapping, not of a ${m.type} one`);
+            warn(`dims.${n}.interval`, `the periods of the values of a date dim, not of a ${m.type} one`);
         else if (!intervalOf(m.interval))
-            warn(`mapping.${n}.interval`, `expected minute, hour, day, week, month, quarter, half, year or a number of them, e.g. "6 months"`);
+            warn(`dims.${n}.interval`, `expected minute, hour, day, week, month, quarter, half, year or a number of them, e.g. "6 months"`);
         else if (m.scale?.type !== undefined && !['time', 'utc'].includes(m.scale.type))
-            warn(`mapping.${n}.interval`, `the periods of a time or utc scale, not of a ${m.scale.type} one`);
+            warn(`dims.${n}.interval`, `the periods of a time or utc scale, not of a ${m.scale.type} one`);
     });
-    Object.entries(mapping).filter(([, m]) => m.stackBy !== undefined).forEach(([n, m]) => {
+    Object.entries(dims).filter(([, m]) => m.stackBy !== undefined).forEach(([n, m]) => {
         if (!m.stacked)
-            warn(`mapping.${n}.stackBy`, `the positions of the stacks of a stacked mapping, without 'stacked' none`);
-        else if (!Object.hasOwn(mapping, m.stackBy))
-            warn(`mapping.${n}.stackBy`, `unknown mapping '${m.stackBy}'`);
+            warn(`dims.${n}.stackBy`, `the positions of the stacks of a stacked dim, without 'stacked' none`);
+        else if (!Object.hasOwn(dims, m.stackBy))
+            warn(`dims.${n}.stackBy`, `unknown dim '${m.stackBy}'`);
     });
-    if (!def.mapping)
-        warn('mapping', 'missing');
+    if (!def.dims)
+        warn('dims', 'missing');
 };
 
-// the scale of a mapping, of its own or the one of another mapping (`of`)
+// the scale of a dim, of its own or the one of another dim (`of`)
 const checkScale = (ctx, n, m, path) => {
     const { def, names, warn, coordName, orientations } = ctx;
-    // `domain` and `nice` may be written at the mapping, see utils/normalize.js
-    const raw = ctx.raw?.mapping?.[n];
+    // `domain` and `nice` may be written at the dim, see utils/normalize.js
+    const raw = ctx.raw?.dims?.[n];
     const at = k => isObject(raw) && ['domain', 'nice'].includes(k) && k in raw ? `${path}.${k}` : `${path}.scale.${k}`;
     if (m.scale.of !== undefined) {
-        const other = Object.hasOwn(def.mapping ?? {}, m.scale.of) ? def.mapping[m.scale.of] : undefined;
+        const other = Object.hasOwn(def.dims ?? {}, m.scale.of) ? def.dims[m.scale.of] : undefined;
         if (!other?.scale || other.scale.of !== undefined)
-            warn(`${path}.scale.of`, `expected a mapping with a scale of its own, e.g. "y"`);
+            warn(`${path}.scale.of`, `expected a dim with a scale of its own, e.g. "y"`);
         Object.keys(m.scale).filter(k => k != 'of').forEach(k =>
             warn(at(k), `not used, the scale is the one of '${m.scale.of}'`));
         return;
@@ -415,7 +415,7 @@ const checkScale = (ctx, n, m, path) => {
     const type = lower ?? m.scale.type ?? defaultScaleType(m, n, def.plot);
     const scale = d3.named(d3.scales, type);
     const typeName = `the type '${m.type}'`;
-    // the type of a mapping without one follows from the rows, see inferTypes
+    // the type of a dim without one follows from the rows, see inferTypes
     const typed = m.type !== undefined;
     if (lower)
         warn(`${path}.scale.type`, `use '${lower}'`);
@@ -448,7 +448,7 @@ const checkScale = (ctx, n, m, path) => {
         warn(`${path}.scale.type`, `the positions of dates need a 'time' or a 'utc' scale`);
     // the ends of the domain of dates and categories are not rounded, see utils/scales.js
     if (typed && m.scale.nice !== undefined && m.scale.nice !== false && m.type != 'numeric')
-        warn(at('nice'), `only the domains of numeric mappings are rounded, not the ones of ${typeName}`);
+        warn(at('nice'), `only the domains of numeric dims are rounded, not the ones of ${typeName}`);
     const domain = Array.isArray(m.scale.domain) ? m.scale.domain : [];
     if (scale && typeof scale().step == 'function' && domain.some(v => v === null) && domain.some(v => v !== null))
         warn(at('domain'), `the categories of a ${type} scale are all the ones of the data (null) or a list of them`);
@@ -459,24 +459,24 @@ const checkScale = (ctx, n, m, path) => {
     [m.scale.include ?? []].flat().forEach(v => checkProp(v, `${path}.scale.include`, warn, names.facet));
     checkProp(m.scale.center, `${path}.scale.center`, warn, names.facet);
     if (typed && (m.scale.include !== undefined || m.scale.center !== undefined) && !['numeric', 'date'].includes(m.type))
-        warn(`${path}.scale`, `'include' and 'center' are values of numeric or date mappings`);
+        warn(`${path}.scale`, `'include' and 'center' are values of numeric or date dims`);
     if (m.scale.step !== undefined && (!['band', 'point'].includes(type) || m.scale.orientation != 'vertical'))
         warn(`${path}.scale.step`, `the pixels of a category of a vertical band or point scale`);
     checkProp(m.scale.step, `${path}.scale.step`, warn, names.global);
     const order = m.scale.order;
     if (order !== undefined && !['ascending', 'descending'].includes(order) && !(isObject(order) && typeof order.by == 'string'))
-        warn(`${path}.scale.order`, `expected 'ascending', 'descending' or the mapping of the values, e.g. { "by": "x", "descending": true }`);
-    else if (isObject(order) && !Object.hasOwn(def.mapping ?? {}, order.by))
-        warn(`${path}.scale.order.by`, `unknown mapping '${order.by}'`);
+        warn(`${path}.scale.order`, `expected 'ascending', 'descending' or the dim of the values, e.g. { "by": "x", "descending": true }`);
+    else if (isObject(order) && !Object.hasOwn(def.dims ?? {}, order.by))
+        warn(`${path}.scale.order.by`, `unknown dim '${order.by}'`);
     if (m.scale.groups !== undefined && (!['band', 'point'].includes(type) || !isObject(m.scale.groups)))
         warn(`${path}.scale.groups`, `the groups of the categories of a band or a point scale, e.g. { "by": "group", "padding": 1 }`);
-    else if (m.scale.groups !== undefined && !Object.hasOwn(def.mapping ?? {}, m.scale.groups.by))
-        warn(`${path}.scale.groups.by`, `unknown mapping '${m.scale.groups.by}'`);
+    else if (m.scale.groups !== undefined && !Object.hasOwn(def.dims ?? {}, m.scale.groups.by))
+        warn(`${path}.scale.groups.by`, `unknown dim '${m.scale.groups.by}'`);
     const ignores = m.scale.domainIgnores;
     if (ignores !== undefined && typeof ignores != 'boolean' && !(Array.isArray(ignores) && ignores.every(c => typeof c == 'string')))
-        warn(`${path}.scale.domainIgnores`, `expected the mappings of conditions of 'filter', e.g. ["month"], or true (all)`);
+        warn(`${path}.scale.domainIgnores`, `expected the dims of conditions of 'filter', e.g. ["month"], or true (all)`);
     else if (Array.isArray(ignores))
-        ignores.filter(c => !Object.hasOwn(def.mapping ?? {}, c)).forEach(c => warn(`${path}.scale.domainIgnores`, `unknown mapping '${c}'`));
+        ignores.filter(c => !Object.hasOwn(def.dims ?? {}, c)).forEach(c => warn(`${path}.scale.domainIgnores`, `unknown dim '${c}'`));
     // a positive start of domainAbs moves the start up, the domain shrinks and cuts off data, e.g. of bars below the plot area
     if (Array.isArray(m.scale.domainAbs) && m.scale.domainAbs[0] > 0)
         warn(`${path}.scale.domainAbs`, `a positive start shrinks the domain at its start and cuts off data (the value is added), it extends with a negative one, e.g. [-1, 1]; "pad": 0.1 extends both ends`);
@@ -488,7 +488,7 @@ const checkScale = (ctx, n, m, path) => {
             : `the coordinate system '${coordName}' has no orientations, e.g. a scale of colors has none`);
 };
 
-// the formats of the values of a mapping which is no date one (of a time
+// the formats of the values of a dim which is no date one (of a time
 // scale): a d3 format of numbers, e.g. not "%,.0f", see Store.format; a
 // format with a template or an expression is known when it is drawn
 const numberFormat = d3.formatLocale({ decimal: '.', thousands: ',', grouping: [3], currency: ['', ''] });
@@ -506,7 +506,7 @@ const checkFormats = (n, m, path, warn) => {
         });
 };
 
-// the values of a date mapping which are numbers are milliseconds since
+// the values of a date dim which are numbers are milliseconds since
 // 1970, small ones are probably years, e.g. 2024, only if the rows are given
 const checkDates = ({ rows, warn }, n, m, path) => {
     if (m.type != 'date' || !Array.isArray(rows) || typeof m.column != 'string')
@@ -516,7 +516,7 @@ const checkDates = ({ rows, warn }, n, m, path) => {
         warn(`${path}.type`, `the values of '${m.column}' are numbers, e.g. ${year}, which are milliseconds since 1970 as dates, years are numeric or strings, e.g. "${year}"`);
 };
 
-// the conditions of the rows of mappings, see rowFilter of utils/data.js:
+// the conditions of the rows of dims, see rowFilter of utils/data.js:
 // values, lists, null, { "not": ... }, { "range": [from, to] } and
 // expressions of the names `known`, e.g. { "var": "lo" }, other objects are
 // none, e.g. { "prop": ... } of 3.x
@@ -537,10 +537,10 @@ const checkFilter = (ctx, conditions, path, known) => {
     if (isOperator(conditions))
         return checkProp(conditions, path, ctx.warn, ctx.names.rows);
     if (!isObject(conditions))
-        return ctx.warn(path, `expected the conditions of mappings, e.g. { "year": "@year" }, or an expression`);
+        return ctx.warn(path, `expected the conditions of dims, e.g. { "year": "@year" }, or an expression`);
     Object.entries(conditions).forEach(([n, c]) => {
-        if (!Object.hasOwn(ctx.mapping, n))
-            ctx.warn(`${path}.${n}`, `unknown mapping '${n}'`);
+        if (!Object.hasOwn(ctx.dims, n))
+            ctx.warn(`${path}.${n}`, `unknown dim '${n}'`);
         checkCondition(ctx, c, `${path}.${n}`, known);
     });
 };
@@ -550,7 +550,7 @@ const aliases = ['point', 'label', 'cell', 'tick'];
 
 // the plots: their types, categories, data and props
 const checkPlots = ctx => {
-    const { def, mapping, names, warn, coord, coordName } = ctx;
+    const { def, dims, names, warn, coord, coordName } = ctx;
     const types = Object.keys(plotTypes);
     const curvePlots = types.filter(t => plotTypes[t].curve);
     const plotList = [].concat(def.plot ?? []);
@@ -575,11 +575,11 @@ const checkPlots = ctx => {
         else if (plotTypes[p.type].coords && coordName in coords && !plotTypes[p.type].coords.includes(coordName))
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
         if (![p.by ?? []].flat().every(c => typeof c == 'string'))
-            warn(`${path}.by`, `expected a mapping or a list of mappings, e.g. ["land"]`);
+            warn(`${path}.by`, `expected a dim or a list of dims, e.g. ["land"]`);
         const categories = [p.by ?? []].flat().filter(c => typeof c == 'string');
-        categories.filter(c => !Object.hasOwn(mapping, c)).forEach(c =>
-            warn(`${path}.by`, ctx.columns?.has(c) ? `unknown mapping '${c}', a column of the data: a dim of it is needed, e.g. "dims": { "${c}": "${c}" }`
-                : `unknown mapping '${c}'${choices(c, Object.keys(mapping))}`));
+        categories.filter(c => !Object.hasOwn(dims, c)).forEach(c =>
+            warn(`${path}.by`, ctx.columns?.has(c) ? `unknown dim '${c}', a column of the data: a dim of it is needed, e.g. "dims": { "${c}": "${c}" }`
+                : `unknown dim '${c}'${choices(c, Object.keys(dims))}`));
         if (p.curve !== undefined && curveNames.includes(p.curve) && types.includes(p.type) && !curvePlots.includes(p.type))
             warn(`${path}.curve`, `only used by ${list(curvePlots)}`);
         // the data of the plot: rows of the definition, their names are known
@@ -591,9 +591,9 @@ const checkPlots = ctx => {
         if (p.select !== undefined && !['first', 'last'].includes(p.select)) {
             const [which, name] = Object.entries(isObject(p.select) ? p.select : {})[0] ?? [];
             if (!['min', 'max'].includes(which))
-                warn(`${path}.select`, `expected 'first', 'last' or the min or max of a mapping, e.g. { "max": "x" }`);
-            else if (!Object.hasOwn(mapping, name))
-                warn(`${path}.select.${which}`, `unknown mapping '${name}'`);
+                warn(`${path}.select`, `expected 'first', 'last' or the min or max of a dim, e.g. { "max": "x" }`);
+            else if (!Object.hasOwn(dims, name))
+                warn(`${path}.select.${which}`, `unknown dim '${name}'`);
         }
         if (p.order !== undefined && !['x', 'y', 'rows'].includes(p.order))
             warn(`${path}.order`, `the order of the points of a line or an area, 'x' or 'y' (along the dim, the default is x) or 'rows' (the order of the rows)`);
@@ -623,7 +623,7 @@ const checkPlots = ctx => {
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
         // the names of the rows of a url are not known
         const plotNames = typeof p.data == 'string' ? null
-            : new PlotNames([...names.plot(categories.filter(c => Object.hasOwn(mapping, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
+            : new PlotNames([...names.plot(categories.filter(c => Object.hasOwn(dims, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
         checkProp(p.props, `${path}.props`, warn, plotNames);
         // labels inside the bands of an area plot, see plots/inside.js
         if (isObject(p.place)) {
@@ -654,7 +654,7 @@ const checkPlots = ctx => {
 const scaledDim = v => typeof v == 'string' ? /^@([^:\s]+):scaled(?::center)?$/.exec(v)?.[1] : undefined;
 // a dim of numbers or dates without the bands of an interval, by its type
 // of the definition or of the rows (see withTypes)
-const continuousMapping = m => isObject(m) && (m.type == 'numeric' || m.type == 'date') && m.interval === undefined
+const continuousDim = m => isObject(m) && (m.type == 'numeric' || m.type == 'date') && m.interval === undefined
     && !(isObject(m.scale) && ['band', 'point', 'ordinal'].includes(m.scale.type));
 
 // bars need bands: the dim of their position (x of vertical bars, y of
@@ -663,29 +663,29 @@ const continuousMapping = m => isObject(m) && (m.type == 'numeric' || m.type == 
 // dims, not from the rows (see horizontalOf of utils/language.js), so a
 // column of names as y beside numbers as x gives vertical bars on a
 // continuous x, which the draw refuses
-const checkBarBands = ({ mapping, warn }, path, props) => {
+const checkBarBands = ({ dims, warn }, path, props) => {
     if (('x0' in props && 'x1' in props) || ('y0' in props && 'y1' in props && !('x' in props)))
         return;
     const horizontal = 'x1' in props && !('x' in props);
     const [size, band, value] = horizontal ? ['height', props.y ?? '@y:scaled', props.x1] : ['width', props.x ?? '@x:scaled', props.y1 ?? '@y:scaled'];
     const name = scaledDim(band);
-    if (size in props || !name || !Object.hasOwn(mapping, name) || !continuousMapping(mapping[name]))
+    if (size in props || !name || !Object.hasOwn(dims, name) || !continuousDim(dims[name]))
         return;
     const other = scaledDim(value);
-    const flip = !horizontal && other && Object.hasOwn(mapping, other) && !continuousMapping(mapping[other]);
+    const flip = !horizontal && other && Object.hasOwn(dims, other) && !continuousDim(dims[other]);
     warn(path, `the bars are ${horizontal ? 'horizontal' : 'vertical'} on the continuous scale of the dim '${name}', they need a '${size}' in pixels`
         + (flip ? `; horizontal bars along '${name}' need "orient": "horizontal" or "type": "categorical" of the dim '${other}' (the orientation follows from the dims as the definition declares them, not from the types of the data)`
             : `, a categorical dim of their position or an "interval" of dates`));
 };
 
 // the geometry of a map
-const checkGeo =({ def, mapping, warn, coordName }) => {
+const checkGeo =({ def, dims, warn, coordName }) => {
     if (coordName != 'geo')
         return;
     if (typeof def.geo?.data != 'string' && !isObject(def.geo?.data))
         warn('geo.data', `a map needs its geometry, GeoJSON or TopoJSON or their url`);
-    if (def.geo?.join !== undefined && !Object.hasOwn(mapping, def.geo.join))
-        warn('geo.join', `unknown mapping '${def.geo.join}'`);
+    if (def.geo?.join !== undefined && !Object.hasOwn(dims, def.geo.join))
+        warn('geo.join', `unknown dim '${def.geo.join}'`);
     const projection = def.geo?.projection?.type ?? 'mercator';
     const lower = otherCase(projection, projectionNames);
     if (lower)
@@ -700,24 +700,24 @@ const checkFilters = ctx => {
     checkFilter(ctx, def.filter, 'filter', names.global);
     ctx.plots.forEach(([i, p]) => checkFilter(ctx, p.filter, `plot[${i}].filter`, names.facet));
     checkFilter(ctx, def.options?.hover?.filter, 'options.hover.filter', names.facet);
-    if (def.options?.hover?.total && !Object.values(ctx.mapping).some(m => m.stacked))
-        warn('options.hover.total', `the sum of the stacked values, there is no stacked mapping`);
+    if (def.options?.hover?.total && !Object.values(ctx.dims).some(m => m.stacked))
+        warn('options.hover.total', `the sum of the stacked values, there is no stacked dim`);
     // the facets of plots and annotations: keys of facets or, of a grid, an
-    // object of the values of the mappings of its rows and columns
-    const facets = facetMappings(def.facets);
+    // object of the values of the dims of its rows and columns
+    const facets = facetBy(def.facets);
     [...ctx.plots.map(([i, p]) => [`plot[${i}]`, p]), ...ctx.annotations.map(([i, a]) => [`annotations[${i}]`, a])]
         .filter(([, p]) => isObject(p.facet)).forEach(([path, p]) => {
             if (!facets.grid)
                 warn(`${path}.facet`, `an object of the rows and columns of a grid of facets ("rows", "cols"), of other facets their keys, e.g. "Wien"`);
             else
                 Object.keys(p.facet).filter(k => !facets.all.includes(k)).forEach(k =>
-                    warn(`${path}.facet.${k}`, `expected the mapping of the rows or the columns of the grid, ${list(facets.all)}`));
+                    warn(`${path}.facet.${k}`, `expected the dim of the rows or the columns of the grid, ${list(facets.all)}`));
         });
 };
 
-// the values of an annotation are of mappings with a scale, of maps `lon` and `lat`
+// the values of an annotation are of dims with a scale, of maps `lon` and `lat`
 const checkAnnotations = ctx => {
-    const { mapping, names, warn, coord, coordName } = ctx;
+    const { dims, names, warn, coord, coordName } = ctx;
     const annotationTypes = coord.annotations ?? [];
     ctx.annotations.forEach(([i, a]) => {
         const path = `annotations[${i}]`;
@@ -728,10 +728,10 @@ const checkAnnotations = ctx => {
                 ? `a ${a.type} is not available in the coordinate system '${coordName}', expected one of ${list(annotationTypes)}`
                 : `unknown type '${a.type}'${choices(a.type, annotationTypes)}`);
         Object.keys(a).filter(k => !annotationKeys.includes(k)).forEach(k => {
-            if (!Object.hasOwn(mapping, k))
-                warn(`${path}.${k}`, `unknown mapping '${k}'`);
-            else if (!mapping[k].scale)
-                warn(`${path}.${k}`, `the mapping has no scale`);
+            if (!Object.hasOwn(dims, k))
+                warn(`${path}.${k}`, `unknown dim '${k}'`);
+            else if (!dims[k].scale)
+                warn(`${path}.${k}`, `the dim has no scale`);
             // the values can be references, e.g. to a global
             [a[k]].flat().forEach(v => checkProp(v, `${path}.${k}`, warn, names.facet));
         });
@@ -768,40 +768,40 @@ const checkFormElements = ({ formElements, warn }) => {
     });
 };
 
-// the facets, a plot per category of a mapping
-const checkFacets = ({ def, mapping, names, warn }) => {
+// the facets, a plot per category of a dim
+const checkFacets = ({ def, dims, names, warn }) => {
     if (!def.facets)
         return;
-    // a grid of the categories of `rows` and `cols` (a mapping), or the
+    // a grid of the categories of `rows` and `cols` (a dim), or the
     // facets of `dim` in `cols` columns (a number)
-    const { grid } = facetMappings(def.facets);
-    const parts = grid ? ['rows', 'cols'].filter(k => facetMappings(def.facets)[k] !== null) : ['dim'];
+    const { grid } = facetBy(def.facets);
+    const parts = grid ? ['rows', 'cols'].filter(k => facetBy(def.facets)[k] !== null) : ['dim'];
     if (grid && def.facets.dim !== undefined)
         warn('facets.dim', `a grid of 'rows' and 'cols' has no 'dim'`);
     if (!grid && typeof def.facets.dim != 'string' && def.facets.rows === undefined)
-        warn('facets.dim', `expected the name of a mapping`);
+        warn('facets.dim', `expected the name of a dim`);
     // the dims of a grid are the ones of facets.by.rows and facets.by.cols
     const at = k => k == 'cols' ? 'facets.by.cols' : `facets.${k}`;
     parts.filter(k => typeof def.facets[k] == 'string').forEach(k => {
-        if (!Object.hasOwn(mapping, def.facets[k]))
-            warn(at(k), `unknown mapping '${def.facets[k]}'${choices(def.facets[k], Object.keys(mapping))}`);
-        else if (!hasCategories(mapping[def.facets[k]]))
-            warn(at(k), `the mapping '${def.facets[k]}' needs categories, e.g. "type": "categorical"`);
+        if (!Object.hasOwn(dims, def.facets[k]))
+            warn(at(k), `unknown dim '${def.facets[k]}'${choices(def.facets[k], Object.keys(dims))}`);
+        else if (!hasCategories(dims[def.facets[k]]))
+            warn(at(k), `the dim '${def.facets[k]}' needs categories, e.g. "type": "categorical"`);
     });
     if (def.facets.rows !== undefined && typeof def.facets.rows != 'string')
-        warn('facets.rows', `expected the mapping of the rows of a grid`);
+        warn('facets.rows', `expected the dim of the rows of a grid`);
     const headers = def.facets.rowHeaders;
     if (headers !== undefined && !['left', 'right'].includes(headers) && !(isObject(headers)
         && (headers.side === undefined || ['left', 'right'].includes(headers.side)) && (headers.vertical === undefined || typeof headers.vertical == 'boolean')))
         warn('facets.rowHeaders', `expected 'left' (horizontal), 'right' (vertical, the default) or { "side": "left", "vertical": true }`);
     const scales = def.facets.scales;
     if (Array.isArray(scales))
-        scales.filter(n => !Object.hasOwn(mapping, n)).forEach(n =>
-            warn('facets.scales', `unknown mapping '${n}'${choices(n, Object.keys(mapping))}`));
+        scales.filter(n => !Object.hasOwn(dims, n)).forEach(n =>
+            warn('facets.scales', `unknown dim '${n}'${choices(n, Object.keys(dims))}`));
     if (isObject(scales))
         Object.entries(scales).forEach(([n, v]) => {
-            if (!Object.hasOwn(mapping, n))
-                warn(`facets.scales.${n}`, `unknown mapping '${n}'`);
+            if (!Object.hasOwn(dims, n))
+                warn(`facets.scales.${n}`, `unknown dim '${n}'`);
             if (!['all', 'row', 'col'].includes(v) || (!grid && v != 'all'))
                 warn(`facets.scales.${n}`, grid ? `expected 'all', 'row' or 'col'` : `expected 'all', a scale per row or column is one of a grid of 'rows' and 'cols'`);
         });
@@ -811,7 +811,7 @@ const checkFacets = ({ def, mapping, names, warn }) => {
         warn('facets.axisTitles', `expected 'all' (in every facet, the default) or 'outer' (only at the outer facets)`);
     // the props of the titles: of the category of the facet, of a grid the
     // one of the column or of the row
-    const own = facetMappings(def.facets).all.filter(d => Object.hasOwn(mapping, d)).flatMap(d => categoryNames(mapping[d]));
+    const own = facetBy(def.facets).all.filter(d => Object.hasOwn(dims, d)).flatMap(d => categoryNames(dims[d]));
     if (isObject(def.facets.title))
         checkProp(def.facets.title.props, 'facets.title.props', warn, new Set([...names.global, 'facet', 'facet:name', ...own]));
     if (!isObject(scales) && !Array.isArray(scales))
@@ -819,11 +819,11 @@ const checkFacets = ({ def, mapping, names, warn }) => {
 };
 
 // the templates of the columns, the texts and the hover
-const checkTexts = ({ def, mapping, globals, warn, annotations }) => {
+const checkTexts = ({ def, dims, globals, warn, annotations }) => {
     // column templates, e.g. "{values}{share}", need the globals, also the
     // ones of form elements, e.g. of the values of a column
-    Object.entries(mapping).forEach(([n, m]) => templateRefs(m.column).filter(r => !globals.has(r)).forEach(r =>
-        warn(`mapping.${n}.column`, `unknown global '${r}' in the column template`)));
+    Object.entries(dims).forEach(([n, m]) => templateRefs(m.column).filter(r => !globals.has(r)).forEach(r =>
+        warn(`dims.${n}.column`, `unknown global '${r}' in the column template`)));
     // and the ones of the texts, e.g. "Durchschnitt {base} = 100" of the subtitle
     const checkText = (text, path) => templateRefs(text).filter(r => !globals.has(r)).forEach(r =>
         warn(path, `unknown global '${r}' in the text`));
@@ -836,14 +836,14 @@ const checkTexts = ({ def, mapping, globals, warn, annotations }) => {
     // a global or a field of its entry, e.g. `group:name`
     const isGlobal = r => globals.has(r) || (r.includes(':') && globals.has(r.split(':')[0]));
     // the title has the names of the nearest row as well, e.g. {definition}
-    checkHover(hover.title, 'options.hover.title', r => r == 'title' || r == 'total' || isGlobal(r) || Object.hasOwn(mapping, r.split('.')[0]));
-    checkHover(hover.row, 'options.hover.row', r => isGlobal(r) || Object.hasOwn(mapping, r.split('.')[0]));
-    Object.entries(mapping).forEach(([n, m]) => {
-        checkText(m.name, `mapping.${n}.name`);
-        checkText(m.axis?.title?.name, `mapping.${n}.axis.title.name`);
-        checkText(m.legend?.missing?.name, `mapping.${n}.legend.missing.name`);
-        checkText(m.common?.name, `mapping.${n}.common.name`);
-        Object.entries(m.categories ?? {}).forEach(([k, e]) => checkText(e?.name, `mapping.${n}.categories.${k}.name`));
+    checkHover(hover.title, 'options.hover.title', r => r == 'title' || r == 'total' || isGlobal(r) || Object.hasOwn(dims, r.split('.')[0]));
+    checkHover(hover.row, 'options.hover.row', r => isGlobal(r) || Object.hasOwn(dims, r.split('.')[0]));
+    Object.entries(dims).forEach(([n, m]) => {
+        checkText(m.name, `dims.${n}.name`);
+        checkText(m.axis?.title?.name, `dims.${n}.axis.title.name`);
+        checkText(m.legend?.missing?.name, `dims.${n}.legend.missing.name`);
+        checkText(m.common?.name, `dims.${n}.common.name`);
+        Object.entries(m.categories ?? {}).forEach(([k, e]) => checkText(e?.name, `dims.${n}.categories.${k}.name`));
     });
     annotations.forEach(([i, a]) => ['label', 'text'].forEach(k => checkText(a[k], `annotations[${i}].${k}`)));
 };
@@ -1054,7 +1054,7 @@ const checkTransforms = ({ def, globals, warn, rows }) => {
 
 // the data, of the rows given: the columns of the dims (of a channel naming
 // no dim, an implicit dim of its column) and the texts of numeric dims
-const checkData = ({ raw, mapping, rows, columns, warn, source }) => {
+const checkData = ({ raw, dims, rows, columns, warn, source }) => {
     if (!columns)
         return;
     const named = isObject(source?.dims) ? source.dims : {};
@@ -1070,7 +1070,7 @@ const checkData = ({ raw, mapping, rows, columns, warn, source }) => {
     // the columns of the rows of the marks of their own (`data`), e.g. the
     // ends of an arrow
     const own = new Set([source?.marks ?? []].flat().flatMap(m => isObject(m) && Array.isArray(m.data) ? m.data.flatMap(r => isObject(r) ? Object.keys(r) : []) : []));
-    Object.entries(mapping).forEach(([n, m]) => {
+    Object.entries(dims).forEach(([n, m]) => {
         const column = typeof m.column == 'string' ? fillTemplate(m.column, raw.globals ?? {}) : undefined;
         if (column === undefined || templateNames(column).length > 0)
             return;
@@ -1080,33 +1080,33 @@ const checkData = ({ raw, mapping, rows, columns, warn, source }) => {
             if (implicit.has(n))
                 warn(implicit.get(n), `'${n}' is neither a dim nor a column of the data${choices(n, [...Object.keys(named), ...names])}`);
             else
-                warn(`mapping.${n}.column`, unknownColumn(column));
+                warn(`dims.${n}.column`, unknownColumn(column));
             return;
         }
         // the texts of a numeric dim, of the rows of the data
-        if (raw.mapping?.[n]?.type == 'numeric' && Array.isArray(rows)) {
+        if (raw.dims?.[n]?.type == 'numeric' && Array.isArray(rows)) {
             const texts = rows.map(r => r?.[column]).filter(v => typeof v == 'string' && !missing(v) && toNumber(v) === null);
             if (texts.length > 0)
-                warn(`mapping.${n}.type`, `numeric, but ${texts.length} of the values of '${column}' are texts, e.g. ${JSON.stringify(texts[0])}, they are no values (left out); "type": "categorical" keeps them`);
+                warn(`dims.${n}.type`, `numeric, but ${texts.length} of the values of '${column}' are texts, e.g. ${JSON.stringify(texts[0])}, they are no values (left out); "type": "categorical" keeps them`);
         }
     });
 };
 
-// the context of the checks of the parts of a definition: the mappings, the
+// the context of the checks of the parts of a definition: the dims, the
 // form elements, the plots and the annotations which are objects (the others
 // are warnings), the coordinate system and the names of the references
 const context = (def, warn, rows, columns = null) => {
     // the entries which are objects, the others are warnings, e.g. null
     const objects = (entries, path, expected) => entries.filter(([k, e]) => isObject(e) || (warn(path(k), `expected ${expected}`), false));
-    // the mappings, their parts which are no objects are left out of the checks
-    // null removes a mapping, e.g. of a parent
-    const mapping = Object.fromEntries(objects(Object.entries(def.mapping ?? {}).filter(([, m]) => m !== null), n => `mapping.${n}`, `a mapping, e.g. { "column": "value", "type": "numeric" }`)
+    // the dims, their parts which are no objects are left out of the checks
+    // null removes a dim, e.g. of a parent
+    const dims = Object.fromEntries(objects(Object.entries(def.dims ?? {}).filter(([, m]) => m !== null), n => `dims.${n}`, `a dim, e.g. { "column": "value", "type": "numeric" }`)
         .map(([n, m]) => [n, Object.fromEntries(Object.entries(m).filter(([k, v]) => {
-            if (!mappingParts.includes(k) || isObject(v))
+            if (!dimParts.includes(k) || isObject(v))
                 return true;
             // null or false removes a part, e.g. the hover of a parent
             if (v !== null && v !== false)
-                warn(`mapping.${n}.${k}`, `expected an object, e.g. {}`);
+                warn(`dims.${n}.${k}`, `expected an object, e.g. {}`);
             return false;
         }))]));
     // the form elements with their index
@@ -1129,34 +1129,34 @@ const context = (def, warn, rows, columns = null) => {
     // a global also as `globals.<name>`, e.g. of a global a dim of the same name shadows
     const globalNames = [...globals, ...[...globals].map(g => `globals.${g}`), 'totalWidth'];
     // the sizes of the bands of the scales of positions, e.g. `y:bandwidth`
-    const bandNames = Object.entries(def.mapping ?? {}).filter(([, m]) => m?.scale?.orientation !== undefined && ['band', 'point'].includes(m.scale.type))
+    const bandNames = Object.entries(def.dims ?? {}).filter(([, m]) => m?.scale?.orientation !== undefined && ['band', 'point'].includes(m.scale.type))
         .flatMap(([n]) => [`${n}:bandwidth`, `${n}:step`]);
     const facetNames = [...globalNames, 'width', 'innerWidth', 'height', 'innerHeight', ...(coordName == 'polar' ? ['radius'] : []), ...bandNames,
         'plot:left', 'plot:top', 'plot:right', 'plot:bottom', 'plot:width', 'plot:height', ...(def.facets ? ['facet', 'facet:name'] : []),
-        ...(facetMappings(def.facets).grid ? ['facet:row', 'facet:col', 'facet:row:name', 'facet:col:name'] : [])];
+        ...(facetBy(def.facets).grid ? ['facet:row', 'facet:col', 'facet:row:name', 'facet:col:name'] : [])];
     const names = {
         global: new Set(globalNames),
         facet: new Set(facetNames),
-        category: n => new Set([...globalNames, ...categoryNames(mapping[n])]),
+        category: n => new Set([...globalNames, ...categoryNames(dims[n])]),
         plot: categories => new PlotNames([
             ...facetNames,
             'row:index',
-            ...Object.entries(mapping).flatMap(([n, m]) => rowNames(n, m ?? {})),
-            ...categories.flatMap(c => categoryNames(mapping[c])),
+            ...Object.entries(dims).flatMap(([n, m]) => rowNames(n, m ?? {})),
+            ...categories.flatMap(c => categoryNames(dims[c])),
         ]),
         range: new Set([...facetNames, ...Object.keys(coord.dims?.(1, 1) ?? {})]),
         // the expressions of the rows, e.g. of a filter, also of the columns
-        rows: new RowNames([...facetNames, 'row:index', ...Object.entries(mapping).flatMap(([n, m]) => rowNames(n, m ?? {}))], columns),
+        rows: new RowNames([...facetNames, 'row:index', ...Object.entries(dims).flatMap(([n, m]) => rowNames(n, m ?? {}))], columns),
     };
     return {
-        def, warn, rows, columns, mapping, formElements, globals, names, coord, coordName,
+        def, warn, rows, columns, dims, formElements, globals, names, coord, coordName,
         orientations: Object.keys(coord.ranges),
         plots: objects([...[].concat(def.plot ?? []).entries()], i => `plot[${i}]`, 'a plot, e.g. { "type": "svg:circle", "props": {} }'),
         annotations: objects([...[].concat(def.annotations ?? []).entries()], i => `annotations[${i}]`, 'an annotation, e.g. { "type": "line", "y": 0 }'),
     };
 };
 
-// the types of the mappings without one of the values of their columns, as
+// the types of the dims without one of the values of their columns, as
 // the ones of the load (inferTypes of utils/data.js), of the columns of the
 // rows and of the transforms, the transforms are computed if they are
 // loaded (e.g. by the store), the types of other columns are not known
@@ -1171,8 +1171,8 @@ const withTypes = (def, rows) => {
     }
     const present = new Set(Object.keys(rows[0] ?? {}));
     inferTypes(def, rows, columns, column => present.has(column) || columns?.has(column));
-    // the type of the scale of the type, see prepareMapping
-    Object.entries(isObject(def.mapping) ? def.mapping : {}).filter(([, m]) => isObject(m) && m.type !== undefined
+    // the type of the scale of the type, see prepareDim
+    Object.entries(isObject(def.dims) ? def.dims : {}).filter(([, m]) => isObject(m) && m.type !== undefined
         && isObject(m.scale) && m.scale.of === undefined && m.scale.type === undefined)
         .forEach(([n, m]) => m.scale.type = scaleTypeOf(m, n, def.plot));
     return def;
@@ -1184,7 +1184,7 @@ const checkDef = (def, normalized, rows, extra = {}) => {
     const warnings = [];
     const warn = (path, message) => warnings.push([path, message]);
     const ctx = { ...context(normalized, warn, rows, extra.columns), raw: def, ...extra };
-    [checkMappings, checkPlots, checkGeo, checkFilters, checkAnnotations, checkFormElements, checkFacets, checkTexts, checkOptions, checkTransforms, checkData]
+    [checkDims, checkPlots, checkGeo, checkFilters, checkAnnotations, checkFormElements, checkFacets, checkTexts, checkOptions, checkTransforms, checkData]
         .forEach(check => check(ctx));
     return warnings;
 };
@@ -1237,7 +1237,6 @@ const defaultProps = (def, normalized, marks = []) => {
 // a warning of the engine's form in the words of the definition: the paths
 // (see authoredPath) and the names of its parts, dims, marks and controls
 const authoredText = m => m
-    .replace(/\bmappings\b/g, 'dims').replace(/\bmapping\b/g, 'dim')
     .replace(/\bplot\[(\d+)\]\.props\./g, 'marks[$1].').replace(/\bplot\[(\d+)\]/g, 'marks[$1]')
     .replace(/\bplots\b(?! area)/g, 'marks').replace(/(?<![:'])\bplot\b(?!:|-| area| type)/g, 'mark')
     .replace(/\bform elements\b/g, 'controls').replace(/\bform element\b/g, 'control')

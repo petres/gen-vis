@@ -57,7 +57,7 @@ const drawSymbol = (svg, info, scope) => {
     });
 };
 
-// the symbol of the entry of a category (its props, of the mapping `m`):
+// the symbol of the entry of a category (its props, of the dim `m`):
 // the one of the category or the one of the legend, null of none or of an
 // empty one (no elements or a box of no size), e.g. of "symbol": null
 const entrySymbol = (m, props) => {
@@ -67,7 +67,7 @@ const entrySymbol = (m, props) => {
 };
 
 /**
- * The legend of the categories of the mapping `legend`: an entry is a
+ * The legend of the categories of the dim `legend`: an entry is a
  * checkbox, also of the keyboard (enter, space), a double click shows only
  * it, the next one all entries. `update(inData)` draws it again, `inData`
  * are the categories of the filtered rows of a legend with `onlyData`.
@@ -81,8 +81,8 @@ const createLegend = (vis, legend) => {
     const list = root.appendChild(el('div'));
     let before = null;
 
-    // the mapping, a form element can replace it, e.g. by another column
-    const info = () => store.mapping(legend);
+    // the dim, a form element can replace it, e.g. by another column
+    const info = () => store.dim(legend);
     // the categories of the entries, without the ones with `"legend": false`,
     // e.g. headers, they stay visible, also the ones which are not in the rows
     const categories = () => { const m = info(); return m.keys.filter(key => m.categoryProps[key].legend !== false) };
@@ -208,7 +208,7 @@ const annotationEntries = store => {
         seen.add(name);
         const type = p.type.split(':')[1];
         const row = p.data?.[0] ?? {};
-        const vertical = Object.keys(row).some(k => row[k] !== null && store.def.mapping[k]?.scale?.orientation == 'horizontal');
+        const vertical = Object.keys(row).some(k => row[k] !== null && store.def.dims[k]?.scale?.orientation == 'horizontal');
         const kind = type == 'band' ? 'rect' : type == 'circle' ? 'circle' : 'line';
         // the box of the shortcut of the defaults, the shape without the
         // colors of categories, the ones of the annotation and its class

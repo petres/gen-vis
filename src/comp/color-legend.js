@@ -57,7 +57,7 @@ const fixedFormat = (locale, ticks) => {
 };
 
 /**
- * The legend of the colors of a scale without orientation of the mapping
+ * The legend of the colors of a scale without orientation of the dim
  * `legend`, a gradient of a continuous scale, the classes of a threshold,
  * quantize or quantile scale, `update(scale)` draws the scale of the plots,
  * the one of all facets, see layout.js. Loaded with the definitions which
@@ -76,7 +76,7 @@ function createColorLegend(vis, legend) {
     let scale = null;
     let drawnVertical = null;
 
-    const options = () => store.mapping(legend).legend ?? {};
+    const options = () => store.dim(legend).legend ?? {};
     // the length of the scale, 240 pixels by default
     const size = () => Number(options().size) || 240;
     // a vertical scale has the high values at the top, a prop of the width
@@ -89,7 +89,7 @@ function createColorLegend(vis, legend) {
     let drawnBreadth = null;
     const draw = vertical => {
         drawnBreadth = null;
-        const m = store.mapping(legend);
+        const m = store.dim(legend);
         const s = scale;
         const opts = options();
         svg.replaceChildren();
@@ -198,7 +198,7 @@ function createColorLegend(vis, legend) {
 
     // the parts of the legend, the title, the image and the missing values
     const render = vertical => {
-        const m = store.mapping(legend);
+        const m = store.dim(legend);
         const name = store.text(m.name);
         patch(root, { class: 'vis-legend vis-color-legend', 'data-dim': legend });
         setText(title, name);

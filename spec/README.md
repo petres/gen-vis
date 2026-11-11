@@ -252,7 +252,7 @@ See `merge.md`.
 ## Normalize
 
 `normalize/*.json` are `{ "name", "def", "result" }`: a definition in the
-form the engine reads (the keys of 4.x, `options`, `mapping`, `plot`; a
+form the engine reads (`options`, `dims`, `plot`; a
 definition of 5.0 is translated into it first, see `normalize.md`), merged
 with its parents, and its normalized form `result`, the one which the
 renderer reads. The plot types are the

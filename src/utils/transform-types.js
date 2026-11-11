@@ -18,7 +18,7 @@ import { getLocale } from "@/utils/locale";
  * `column` in the groups of the rows of the same values of the columns `by`,
  * in the order of the column `order` (by default the one of the rows). The
  * columns of the transforms before are columns of the later ones and of the
- * mappings. Strings of a transform are templates of the globals, e.g.
+ * dims. Strings of a transform are templates of the globals, e.g.
  * "{base}", it is computed again if the globals change. Dates are the ones
  * of the time zone of the scale of `column` or `as`, local or UTC (`utc`).
  */

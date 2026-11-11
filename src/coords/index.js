@@ -9,14 +9,14 @@ import geo from "@/coords/geo";
  * - `ranges`: the default ranges of the scales by their orientation, in the
  *   sizes of `dims`, `cyclic` are the orientations whose end is their start,
  *   e.g. the angle
- * - `axis`: the orientations of the mappings of the positions (`h`) and of
+ * - `axis`: the orientations of the dims of the positions (`h`) and of
  *   the values (`v`) of the hover and the stacks
  * - `positions`: the positions of the axes
  * - `dims(innerWidth, innerHeight)`: the sizes of a facet the ranges refer to,
  *   `origin(innerWidth, innerHeight)` is the origin of the plots and axes,
  *   [0, 0] if it is not given, `centered`: the plots are in the center of
  *   the facet, its title is centered, e.g. above the circle of a polar plot
- * - `names(store)`: the mappings of the hover and the stacks instead of the
+ * - `names(store)`: the dims of the hover and the stacks instead of the
  *   ones of `axis`, e.g. of a map, `flip` swaps them, see axisNames of
  *   layout.js
  * The `ctx` is the facet, as the one of the plot types, see plots/index.js,
@@ -27,7 +27,7 @@ import geo from "@/coords/geo";
  * - `annotations`: the types of the annotations, `annotate(ctx, a)` returns
  *   the items of one (see drawLayer of utils/draw.js), see
  *   coords/annotations.js
- * - `axes(ctx)`: the parts of the axes and grid lines of the mappings, in
+ * - `axes(ctx)`: the parts of the axes and grid lines of the dims, in
  *   their order, an element per part (`key`), kept from one draw to the
  *   next: an axis of the positions top, right, bottom or left (`axis`, see
  *   drawAxis of utils/axis.js) or an element (`element`, `g` by default)
@@ -38,13 +38,13 @@ import geo from "@/coords/geo";
  * - `hover.area(ctx, parent)`: appends the element of the pointer events to
  *   the element `parent` (`ctx.inner`) and returns it, e.g. a rect,
  *   `hover.locate(ctx, pointer, names, event)` returns the `key` (a value of
- *   the position mapping) and the `value` at the pointer, null if there is no
+ *   the position dim) and the `value` at the pointer, null if there is no
  *   key, without a value the elements of the key are highlighted,
  *   `hover.marker(ctx, key, names, line, nearest)` places the marker line of
  *   the key (and of the nearest row), the svg element `line`, by its
  *   attributes `x1`, `y1`, `x2` and `y2` (removed without a line, see
  *   placeLine of coords/hover.js), and returns the position of the hover,
- *   `{x, y, side}`, `hover.values`: the hover of the values without a mapping
+ *   `{x, y, side}`, `hover.values`: the hover of the values without a dim
  *   of the positions, e.g. of a pie, the key is undefined, `hover.title(ctx, key,
  *   names)` the title of the hover, the formatted key by default,
  *   `hover.point(ctx, row, names)` the position of the point of a row, of

@@ -3,7 +3,7 @@ import { directOf } from "@/utils/draw";
 import { convert } from "@/utils/data";
 
 // the annotations of the coordinate systems as plot types, a band, a line, a
-// text or a circle per row at its values of the mappings (the items of
+// text or a circle per row at its values of the dims (the items of
 // `annotate` of the coordinate system, see coords/annotations.js), e.g. of the
 // `annotations` of a definition (see prepareDef) or of the rows of a plot of
 // its own `data`, e.g. events, `label` and `text` of the rows are templates
@@ -30,7 +30,7 @@ const pathOf = (ctx, plot) => {
 // log scale (not without rows, the scale has no domain)
 const unknownOf = (ctx, row) => Object.keys(row).filter(k => ctx.scales[k] && row[k] !== null && row[k] !== undefined).filter(k => {
     const s = ctx.scales[k];
-    const m = ctx.store.mapping(k);
+    const m = ctx.store.dim(k);
     const values = [row[k]].flat().filter(v => v !== null && v !== undefined);
     if (s.step) {
         const known = new Set([...s.domain().map(String), ...(m.keys ?? []), ...(typeof m.column == 'string' ? ctx.store.dataKeys(m.column) : [])]);

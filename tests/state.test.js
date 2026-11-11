@@ -14,7 +14,7 @@ const def = () => prepareDef({
             { id: 'free', name: 'Getrennt', value: [] },
         ] },
     ],
-    mapping: {
+    dims: {
         x: { column: 'year', type: 'numeric' },
         c: { column: 'land', type: 'categorical', legend: {}, categories: { Wien: {}, Tirol: { visible: false } } },
         f: { column: 'type', type: 'categorical', categories: { a: {}, b: {} } },
@@ -38,7 +38,7 @@ describe('diffState', () => {
         expect(diffState(snapshot(d), defaults)).toEqual({});
 
         d.globals.scales = [];
-        d.mapping.c.categoryProps.Tirol.visible = true;
+        d.dims.c.categoryProps.Tirol.visible = true;
         expect(diffState(snapshot(d), defaults)).toEqual({
             globals: { scales: [] },
             visible: { c: { Tirol: true } },
@@ -51,21 +51,21 @@ describe('applyState', () => {
         const d = def();
         applyState(d, { globals: { column: 'other', scales: [] }, visible: { c: { Wien: false, Tirol: true } } });
         expect(d.globals).toEqual({ column: 'other', scales: [] });
-        expect(d.mapping.c.categoryProps.Wien.visible).toBe(false);
-        expect(d.mapping.c.categoryProps.Tirol.visible).toBe(true);
+        expect(d.dims.c.categoryProps.Wien.visible).toBe(false);
+        expect(d.dims.c.categoryProps.Tirol.visible).toBe(true);
     });
 
-    test('ignores unknown globals, values, mappings and entries', () => {
+    test('ignores unknown globals, values, dims and entries', () => {
         const d = def();
         applyState(d, {
             globals: { column: 'missing', unknown: 1 },
             visible: { c: { Wien: false, Vorarlberg: true }, f: { a: false }, missing: { a: false } },
         });
         expect(d.globals).toEqual({ column: 'value', scales: ['y'] });
-        expect(Object.keys(d.mapping.c.categoryProps)).toEqual(['Wien', 'Tirol']);
-        expect(d.mapping.c.categoryProps.Wien.visible).toBe(false);
+        expect(Object.keys(d.dims.c.categoryProps)).toEqual(['Wien', 'Tirol']);
+        expect(d.dims.c.categoryProps.Wien.visible).toBe(false);
         // no legend, the user can not change it
-        expect(d.mapping.f.categoryProps.a.visible).toBe(true);
+        expect(d.dims.f.categoryProps.a.visible).toBe(true);
     });
 
     test('the keys of the prototype of objects are unknown, e.g. of a state of a url', () => {

@@ -168,7 +168,7 @@ const ticks = (ga, moving, orient, scale, { values, format, tickSizeInner, tickS
 /**
  * Draws an axis of the scene into its element `ga` (an element, or a d3
  * selection of one), kept from one draw to the next, with the animation of
- * the draw (see withMotion of utils/draw.js): the mapping `name`, its
+ * the draw (see withMotion of utils/draw.js): the dim `name`, its
  * `position` (top, right, bottom or left), `scale`, the `values` of the
  * ticks and their labels (`format(value)`), the props of the labels
  * (`labels(value)`, e.g. their font weight or a `max-width`), the `padding`

@@ -2,8 +2,8 @@
 
 A definition of 5.0 may leave out parts which the renderer reads, e.g. the
 scale of `x`, and it names them with the words of 5.0 (`dims`, `marks`
-with channels, `controls`). The engine reads the form of 4.x: `options`,
-`mapping`, `plot` with `props`, `formElements`. This form is internal and
+with channels, `controls`). The engine reads the form of 4.x with the
+`dims` of 5.0: `options`, `dims`, `plot` with `props`, `formElements`. This form is internal and
 unstable (it is not exported by the package and may change in any
 release); the fixtures describe what the renderer of the JS implementation
 reads. The load goes through four steps, each JSON to JSON:
@@ -30,7 +30,7 @@ engine reads; `tests/language.test.js` has cases of step 3.
   `width`, `margins`, `coord`, `locale`, `language`, `transition`, `class`,
   `message`, `empty`, `hover`, `highlight`, `fontFamily`) are `options`,
   `source` is `options.footer`; `hover.columns` is no option, see below.
-- `dims` are `mapping`, a dim of `null` or `false` is left out. Of a dim:
+- A dim of `dims` of `null` or `false` is left out. Of a dim:
   `zero: true` is `"domain": [0, null]` (unless it has a domain); `pad`,
   `include`, `reverse` and `range` are parts of `scale`; `grid`, `ticks`
   and `tickSpacing` parts of `axis`; a category which is a text is
@@ -112,35 +112,35 @@ engine reads; `tests/language.test.js` has cases of step 3.
 ## normalize
 
 The fixtures are `normalize/*.json`. The input is the form `translate`
-writes: the mappings are objects, `plot` is a list of objects.
+writes: the dims are objects, `plot` is a list of objects.
 
-### Mappings
+### Dims
 
 - `categories`, `scheme`, `common`, `fromData`, `ranks` and `order` stay at
-  the mapping, they are the parts of its categories.
-- `domain` and `nice` of a mapping are the ones of its scale.
-- `format` stays at the mapping, it is the format of the axis and of the
+  the dim, they are the parts of its categories.
+- `domain` and `nice` of a dim are the ones of its scale.
+- `format` stays at the dim, it is the format of the axis and of the
   hover which have none of their own (the hover: its own, the one of the
-  mapping, the one of the axis).
-- The mappings of the positions of the coordinate system have a scale of the
+  dim, the one of the axis).
+- The dims of the positions of the coordinate system have a scale of the
   orientation of their name and an axis, unless they have the scale or the
-  axis `false` (none), an orientation `null` is none (e.g. a mapping `y` of
+  axis `false` (none), an orientation `null` is none (e.g. a dim `y` of
   the sizes of points): cartesian `x` horizontal, `y` vertical, polar `x`
-  and `angle` angular, `y` and `radius` radial. A mapping of the scale of
+  and `angle` angular, `y` and `radius` radial. A dim of the scale of
   another one (`"scale": {"of": "y"}`) has none of these.
 - An axis without a `position` is at the one of the orientation of its
   scale: horizontal `bottom`, vertical `left`, angular `angular`, radial
   `radial`.
-- The type of a mapping without one follows from its parts: categorical with
+- The type of a dim without one follows from its parts: categorical with
   categories (any of their parts) or a `band`, `point` or `ordinal` scale, date with a
   `time` or `utc` scale, numeric with another scale, categorical if it is a
-  mapping of the facets (`facets.dim`) or of the groups of a scale
+  dim of the facets (`facets.dim`) or of the groups of a scale
   (`scale.groups.by`), not of the categories of a plot (`by`), they group the
   rows of any type. Otherwise it is the type
   of the values of the column (when the rows are known): numeric if all
   values which are not missing are numbers, date if all of them are dates,
   otherwise categorical (see `docs/definition.md` of the values).
-- The type of a scale without one follows from the type of the mapping:
+- The type of a scale without one follows from the type of the dim:
   numeric `linear`, date `time`, categorical `band` of a position of the
   bars of a plot (`cartesian:bar`, `polar:arc`, a prop of `@name:scaled`),
   `point` of other positions, `ordinal` without an orientation.

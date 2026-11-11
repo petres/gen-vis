@@ -36,7 +36,7 @@ const defaults = {
     // the globals of the page, e.g. the language, also of hidden form
     // elements, they are applied without loading it again
     globals: null,
-    // the rows highlighted by the page, values of mappings, e.g. the
+    // the rows highlighted by the page, values of dims, e.g. the
     // country under the mouse of another chart, { "country": "AT" }
     highlight: null,
     // the defaults of the parts of the chart instead of the built-in ones,
@@ -401,7 +401,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             store.setGlobals(copyOf(props.globals));
     };
 
-    // the elements of the rows of the values of mappings in all facets,
+    // the elements of the rows of the values of dims in all facets,
     // e.g. { "country": "AT" }, null ends it, the hover of the chart
     // replaces it while it is shown; it is the prop `highlight`, so one
     // set while it is loaded is shown once it is drawn
@@ -491,7 +491,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         const { saveFile } = await lazy.exporting();
         saveFile(png, `${name ?? fileName(props.download)}.png`);
     };
-    // the rows shown in the columns of their mappings, see utils/export.js
+    // the rows shown in the columns of their dims, see utils/export.js
     const exportCsv = async name => {
         assertLoaded();
         const { saveFile, csvOf } = await lazy.exporting();

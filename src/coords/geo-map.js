@@ -325,7 +325,7 @@ export default {
             const f = featureByKey(ctx.store.geo, key);
             const property = (ctx.store.def.geo.name ?? 'name').replace(/^properties\./, '');
             // the name of the category if it has one of its own, not the key
-            const props = ctx.store.mapping(names.h).categoryProps;
+            const props = ctx.store.dim(names.h).categoryProps;
             const own = props && Object.hasOwn(props, key) && props[key].name !== key ? props[key].name : undefined;
             return ctx.store.text(own) ?? f?.properties?.[property] ?? key;
         },

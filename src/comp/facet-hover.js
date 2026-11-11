@@ -208,7 +208,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         step = null;
         selectShown = null;
 
-        // the hover needs the mappings of the positions and of the values,
+        // the hover needs the dims of the positions and of the values,
         // of a coordinate system with `values` of the hover only the ones
         // of the values, e.g. of a pie without rings, all rows are one position
         const names = ctx.axis;
@@ -225,21 +225,21 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // the place of a row in the hover, see orderOf
         const stacks = { v, stackOf, isStacked: ctx.isStacked, stackOrder: ctx.stackOrder };
 
-        // categorical mappings, and other values with a hover, e.g. of a second vertical axis
-        const categories = store.mappingNamesWithKey('hover')
-            .filter(n => n != names.h && n != v && store.mapping(n).categoryProps);
+        // categorical dims, and other values with a hover, e.g. of a second vertical axis
+        const categories = store.dimNamesWithKey('hover')
+            .filter(n => n != names.h && n != v && store.dim(n).categoryProps);
         // the other dims with a hover: numbers and dates in their format, the
         // values of a dim of texts without categories as they are
-        const others = store.mappingNamesWithKey('hover')
-            .filter(n => n != names.h && n != v && !store.mapping(n).categoryProps);
-        const formats = Object.fromEntries(others.map(n => [n, ['numeric', 'date'].includes(store.mapping(n).type)
+        const others = store.dimNamesWithKey('hover')
+            .filter(n => n != names.h && n != v && !store.dim(n).categoryProps);
+        const formats = Object.fromEntries(others.map(n => [n, ['numeric', 'date'].includes(store.dim(n).type)
             ? store.valueFormat(n, ctx.scales[n]) : (x => String(x))]));
         // the value of the position is a cell unless `"value": false`, e.g. a
         // hover of only the categories of a map or of other dims
         const valueCell = hoverOptions().value !== false;
         // the label of a column, the name of its dim, its axis title or its name
         const labelOf = n => {
-            const m = store.mapping(n);
+            const m = store.dim(n);
             return store.text(m.name ?? m.axis?.title?.name ?? n) ?? n;
         };
         // the color of the category of a row, of the first dim of categories
@@ -249,7 +249,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // (also a default color of the categories, e.g. of observable10, if
         // no other dim of the row has a color of its own, which the marks
         // draw instead, e.g. of a line by country and trend)
-        const colorDims = Object.keys(store.def.mapping).filter(n => store.mapping(n).categoryProps);
+        const colorDims = Object.keys(store.def.dims).filter(n => store.dim(n).categoryProps);
         const ownColor = (row, but) => colorDims.some(o => o != but && typeof store.prop(o, row[o])?.color == 'string');
         const swatchOf = row => {
             for (const n of categories) {
@@ -258,16 +258,16 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
                 const color = colored?.color;
                 if (typeof color != 'string' || !color)
                     continue;
-                const m = store.mapping(n);
+                const m = store.dim(n);
                 const symbol = m.legend ? entrySymbol(m, props) : null;
                 return symbol ? { color, symbol, scope: { ...scope, ...colored } } : { color };
             }
             return null;
         };
-        // the mappings whose categories style the rows (`hover.row.props`),
+        // the dims whose categories style the rows (`hover.row.props`),
         // and the ones of categories as attributes of the rows, e.g. data-type="load"
-        const styled = categories.filter(n => store.mapping(n).hover.row?.props);
-        const keyed = Object.keys(store.def.mapping).filter(n => store.mapping(n).categoryProps && dataAttribute(n));
+        const styled = categories.filter(n => store.dim(n).hover.row?.props);
+        const keyed = Object.keys(store.def.dims).filter(n => store.dim(n).categoryProps && dataAttribute(n));
 
         const line = marker.querySelector("line");
         // the lines of the crosshair (`cross`) through the point of the
@@ -293,7 +293,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // the rows of the hover, with a value and of its `filter`, by their
         // key, e.g. of the horizontal axis, compared as strings
         const options = hoverOptions();
-        const hoverRows = filterRows(ctx.rows.filter(e => e[v] !== null), options.filter, store.def.mapping, ctx.scope, { columns: store.columns, path: 'hover.filter', unknown: unknownOf(store) });
+        const hoverRows = filterRows(ctx.rows.filter(e => e[v] !== null), options.filter, store.def.dims, ctx.scope, { columns: store.columns, path: 'hover.filter', unknown: unknownOf(store) });
         const rowsByKey = d3.group(hoverRows, e => String(e[names.h]));
         // the nearest key is one with rows, e.g. not one of null values, of
         // the coordinate systems with the `nearest` of the context, unless
@@ -303,7 +303,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // the last start not after it, its marker in its middle, up to the
         // next start (the last class as wide as the one before)
         const hs = ctx.scales[names.h];
-        const classes = names.v && store.mapping(names.v).stackBy === names.h && hs?.invert ? (() => {
+        const classes = names.v && store.dim(names.v).stackBy === names.h && hs?.invert ? (() => {
             const starts = [...rowsByKey.values()].map(rows => rows[0][names.h]).sort((a, b) => a - b);
             const index = k => d3.bisectLeft(starts, +k);
             const end = i => i + 1 < starts.length ? starts[i + 1] : 2*starts[i] - (starts[i - 1] ?? starts[i]);
@@ -372,34 +372,34 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
             const present = new Set(others.filter(n => rows.some(r => r[n] !== null && r[n] !== undefined)));
             return rows.map(row => {
                 const cells = [];
-                // the values of the mappings with `"cell": false` are names of
+                // the values of the dims with `"cell": false` are names of
                 // the templates, without a cell of the table
-                const celled = n => store.mapping(n).hover.cell !== false;
+                const celled = n => store.dim(n).hover.cell !== false;
                 const entries = Object.fromEntries(categories.map(n => {
-                    const values = evaluate(store.mapping(n).hover.props, { ...scope, ...store.prop(n, row[n]) });
+                    const values = evaluate(store.dim(n).hover.props, { ...scope, ...store.prop(n, row[n]) });
                     const texts = Object.fromEntries(Object.entries(values).map(([k, t]) => [k, store.text(t)]));
                     // of a point the categories are the title, see pointTitle
                     Object.entries(texts).filter(([, t]) => t !== null && t !== undefined && celled(n) && !(pointMode && names.h))
-                        .forEach(([k, t]) => cells.push({ mapping: n, prop: k == 'name' ? null : k, text: t }));
+                        .forEach(([k, t]) => cells.push({ dim: n, prop: k == 'name' ? null : k, text: t }));
                     return [n, texts];
                 }));
                 entries[v] = { value: row[v], name: format.v(row[v]) };
                 // of a point (a scatter plot) the horizontal value is a cell, the title names the categories
                 if (pointMode && names.h && categories.length > 0) {
                     entries[names.h] = { value: row[names.h], name: format.h(row[names.h]) };
-                    cells.push({ mapping: names.h, value: true, text: entries[names.h].name, label: labelOf(names.h) });
+                    cells.push({ dim: names.h, value: true, text: entries[names.h].name, label: labelOf(names.h) });
                 }
                 if (valueCell)
-                    cells.push({ mapping: v, value: true, text: entries[v].name, label: labelOf(v) });
+                    cells.push({ dim: v, value: true, text: entries[v].name, label: labelOf(v) });
                 others.forEach(n => {
                     entries[n] = { value: row[n], name: row[n] === null || row[n] === undefined ? '' : formats[n](row[n]) };
                     if (celled(n) && present.has(n))
-                        cells.push({ mapping: n, value: true, text: entries[n].name, label: labelOf(n) });
+                        cells.push({ dim: n, value: true, text: entries[n].name, label: labelOf(n) });
                 });
                 // the styles of the row, of the props of its categories, the
-                // later mappings override the ones before, see hover.js
+                // later dims override the ones before, see hover.js
                 const style = {};
-                styled.forEach(n => Object.entries(evaluate(store.mapping(n).hover.row.props, { ...scope, ...store.prop(n, row[n]) }))
+                styled.forEach(n => Object.entries(evaluate(store.dim(n).hover.row.props, { ...scope, ...store.prop(n, row[n]) }))
                     .filter(([, s]) => s !== null && s !== undefined && s !== '')
                     .forEach(([k, s]) => style[k] = String(s)));
                 const attrs = Object.fromEntries(keyed.filter(n => row[n] !== null && row[n] !== undefined)
@@ -408,7 +408,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
             });
         };
 
-        // the rows of the events and the slot, copies of the values of the mappings
+        // the rows of the events and the slot, copies of the values of the dims
         const plain = row => Object.fromEntries(Object.entries(row));
         // the title of a point: the names of the categories of its row, e.g.
         // the country of a point of a scatter plot, else the horizontal value

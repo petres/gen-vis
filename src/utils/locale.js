@@ -169,7 +169,7 @@ const withHalves = time => {
     return { ...time, format: half(time.format, false), utcFormat: half(time.utcFormat, true) };
 };
 
-// the formats of the values of dates of periods (`interval` of a mapping),
+// the formats of the values of dates of periods (`interval` of a dim),
 // e.g. of the hover of half years, and the name of the period of an interval
 const periodFormats = { minute: '%x %H:%M', hour: '%x %H:%M', month: '%b %Y', quarter: 'Q%q %Y', half: 'H%K %Y', year: '%Y' };
 const periodName = interval => typeof interval == 'string' ? /^\s*(?:1\s*)?([a-z]+?)s?\s*$/.exec(interval)?.[1] : undefined;
@@ -209,10 +209,10 @@ const getLocale = (locale = 'de') => {
         // 6 decimals without trailing zeros, with thousands separators if the
         // domain of the scale reaches 10 000, so years are e.g. 2024, other
         // values as they are
-        valueFormat(mapping, scale) {
-            if (mapping.type == 'date')
-                return (mapping.scale?.type == 'utc' ? time.utcFormat : time.format)(periodFormats[periodName(mapping.interval)] ?? '%x');
-            if (mapping.type != 'numeric')
+        valueFormat(dim, scale) {
+            if (dim.type == 'date')
+                return (dim.scale?.type == 'utc' ? time.utcFormat : time.format)(periodFormats[periodName(dim.interval)] ?? '%x');
+            if (dim.type != 'numeric')
                 return v => v;
             const plain = number.format('.6~f');
             const grouped = number.format(',.6~f');

@@ -2,7 +2,7 @@
 // categories, used by the other parts, so they import no part of their own
 export { isObject, missing, compareCategories, comparison, toNumber, sameValue, inherited, ownValue, truthy };
 
-// an object of a definition, e.g. a mapping, not a list and not null
+// an object of a definition, e.g. a dim, not a list and not null
 const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
 
 // a missing value: null, undefined or a text of only whitespace, e.g. an

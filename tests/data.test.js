@@ -10,7 +10,7 @@ import { addDataValues, categoryOrder, dataFormat, distinctValues, filter, group
 import { prepareDef } from '@/utils/def';
 
 const def = {
-    mapping: {
+    dims: {
         x: { column: 'year', type: 'numeric' },
         t: { column: 'date', type: 'date' },
         c: { column: 'land', type: 'categorical' },
@@ -310,7 +310,7 @@ describe('parseData', () => {
 });
 
 describe('the columns a definition uses', () => {
-    test('of the mappings, the columns of all values of the controls and the values of form elements', () => {
+    test('of the dims, the columns of all values of the controls and the values of form elements', () => {
         // the definitions of all values of the controls, as the load keeps them, see utils/resolve.js
         const def = {
             globals: { col: 'a' },
@@ -334,7 +334,7 @@ describe('the columns a definition uses', () => {
     test('a template is a column of every value of its globals', () => {
         expect(usedColumns({
             globals: { values: 'twh', share: '' },
-            mapping: { y: { column: '{values}{share}' } },
+            dims: { y: { column: '{values}{share}' } },
             formElements: [
                 { ref: 'values', values: [{ value: 'twh' }, { value: 'co2' }] },
                 { ref: 'share', values: [{ value: '' }, { value: '.share' }] },
@@ -342,14 +342,14 @@ describe('the columns a definition uses', () => {
         })).toEqual(['twh', 'twh.share', 'co2', 'co2.share']);
         // the values of a column are not known before the data
         expect(usedColumns({
-            mapping: { y: { column: 'value.{year}' } },
+            dims: { y: { column: 'value.{year}' } },
             formElements: [{ ref: 'year', values: { column: 'year' } }],
         })).toBeNull();
     });
 
     test('a template of a global without a control is a column of any value, the page sets it: all columns', async () => {
-        expect(usedColumns({ globals: { col: 'value' }, mapping: { x: { column: 'year' }, y: { column: '{col}' } } })).toBeNull();
-        expect(usedColumns({ globals: { col: 'value' }, mapping: { x: { column: 'year' } },
+        expect(usedColumns({ globals: { col: 'value' }, dims: { x: { column: 'year' }, y: { column: '{col}' } } })).toBeNull();
+        expect(usedColumns({ globals: { col: 'value' }, dims: { x: { column: 'year' } },
             transform: [{ type: 'index', column: '{col}', as: 'index' }] })).toBeNull();
         // parquet of the globals of the page, as csv
         const { createStore } = await import('@/store');
@@ -362,19 +362,19 @@ describe('the columns a definition uses', () => {
         const store = createStore();
         await store.init({ def, data: buffer, globals: { col: 'other' } });
         expect(store.data.map(r => r.y)).toEqual([10, 20]);
-        expect(store.def.mapping.y.type).toBe('numeric');
+        expect(store.def.dims.y.type).toBe('numeric');
     });
 
     test('a template of the field of an entry is a column of the fields of all entries', () => {
         expect(usedColumns({
             globals: { group: 'a' },
-            mapping: { y: { column: '{group:col}.{group}' } },
+            dims: { y: { column: '{group:col}.{group}' } },
             formElements: [{ ref: 'group', values: [{ value: 'a', col: 'A' }, { value: 'b', col: 'B' }] }],
         })).toEqual(['A.a', 'A.b', 'B.a', 'B.b']);
     });
 
     test('the column of the names of the values of a control', async () => {
-        expect(usedColumns({ mapping: { y: { column: 'value' } },
+        expect(usedColumns({ dims: { y: { column: 'value' } },
             formElements: [{ ref: 'c', values: { column: 'code', names: 'label' } }] })).toEqual(['value', 'code', 'label']);
         const buffer = parquetWriteBuffer({ columnData: [
             { name: 'code', data: ['a', 'b'], type: 'STRING' },
@@ -382,7 +382,7 @@ describe('the columns a definition uses', () => {
             { name: 'value', data: [1, 2], type: 'DOUBLE' },
             { name: 'unused', data: [1, 2], type: 'DOUBLE' },
         ] });
-        const def = { mapping: { y: { column: 'value' } }, formElements: [{ ref: 'c', values: { column: 'code', names: 'label' } }] };
+        const def = { dims: { y: { column: 'value' } }, formElements: [{ ref: 'c', values: { column: 'code', names: 'label' } }] };
         const rows = await parseData(buffer, 'parquet', usedColumns(def));
         expect(Object.keys(rows[0])).toEqual(['code', 'label', 'value']);
         addDataValues(def, rows);
@@ -392,7 +392,7 @@ describe('the columns a definition uses', () => {
 
 describe('values of other formats than csv', () => {
     test('numbers and dates', () => {
-        const def = { mapping: { n: { column: 'n', type: 'numeric' }, d: { column: 'd', type: 'date' } } };
+        const def = { dims: { n: { column: 'n', type: 'numeric' }, d: { column: 'd', type: 'date' } } };
         expect(prepareData([{ n: 5n, d: new Date(0) }, { n: 2, d: 86400000n }], def))
             .toEqual([{ n: 5, d: 0 }, { n: 2, d: 86400000 }]);
     });
@@ -416,13 +416,13 @@ describe('prepareData', () => {
         try {
             // west of UTC, where the midnight of UTC is the day before
             process.env.TZ = 'America/New_York';
-            const mapping = type => ({ mapping: { t: { column: 'date', type: 'date', scale: { type } } } });
+            const dims = type => ({ dims: { t: { column: 'date', type: 'date', scale: { type } } } });
             const rows = [{ date: '2023-05-01' }, { date: '2023-05' }, { date: '2023' }, { date: '2023-02-30' }, { date: '2023-05-01T12:00:00Z' }];
-            const local = prepareData(rows, mapping('time')).map(r => r.t);
+            const local = prepareData(rows, dims('time')).map(r => r.t);
             expect(local.slice(0, 3).map(t => new Date(t).toString().slice(4, 24)))
                 .toEqual(['May 01 2023 00:00:00', 'May 01 2023 00:00:00', 'Jan 01 2023 00:00:00']);
             expect(local.slice(3)).toEqual([null, Date.parse('2023-05-01T12:00:00Z')]);
-            expect(prepareData(rows, mapping('utc')).map(r => r.t))
+            expect(prepareData(rows, dims('utc')).map(r => r.t))
                 .toEqual([Date.UTC(2023, 4, 1), Date.UTC(2023, 4, 1), Date.UTC(2023, 0, 1), null, Date.parse('2023-05-01T12:00:00Z')]);
         } finally {
             process.env.TZ = zone;
@@ -433,12 +433,12 @@ describe('prepareData', () => {
         const zone = process.env.TZ;
         try {
             process.env.TZ = 'America/New_York';
-            const mapping = type => ({ mapping: { t: { column: 'date', type: 'date', scale: { type } } } });
+            const dims = type => ({ dims: { t: { column: 'date', type: 'date', scale: { type } } } });
             const rows = ['2024-06-01 13:00', '2024-06-01T13:00:00', '2024-06-01T13:00:00.5', '2024-06-01 25:00', '2024-06-01T13:00:00+02:00'].map(date => ({ date }));
-            expect(prepareData(rows, mapping('utc')).map(r => r.t)).toEqual([
+            expect(prepareData(rows, dims('utc')).map(r => r.t)).toEqual([
                 Date.UTC(2024, 5, 1, 13), Date.UTC(2024, 5, 1, 13), Date.UTC(2024, 5, 1, 13, 0, 0, 500), null, Date.UTC(2024, 5, 1, 11),
             ]);
-            expect(prepareData(rows, mapping('time')).map(r => r.t)).toEqual([
+            expect(prepareData(rows, dims('time')).map(r => r.t)).toEqual([
                 new Date(2024, 5, 1, 13).getTime(), new Date(2024, 5, 1, 13).getTime(), new Date(2024, 5, 1, 13, 0, 0, 500).getTime(), null, Date.UTC(2024, 5, 1, 11),
             ]);
         } finally {
@@ -447,14 +447,14 @@ describe('prepareData', () => {
     });
 
     test('fractions of seconds are cut to milliseconds, 24:00 is the end of a day', () => {
-        const mapping = { mapping: { t: { column: 'date', type: 'date', scale: { type: 'utc' } } } };
-        expect(prepareData(['2024-12-31T23:59:59.9999', '2024-06-01 13:00:00.123456', '2024-06-01T24:00', '2024-06-01T24:01'].map(date => ({ date })), mapping).map(r => r.t))
+        const dims = { dims: { t: { column: 'date', type: 'date', scale: { type: 'utc' } } } };
+        expect(prepareData(['2024-12-31T23:59:59.9999', '2024-06-01 13:00:00.123456', '2024-06-01T24:00', '2024-06-01T24:01'].map(date => ({ date })), dims).map(r => r.t))
             .toEqual([Date.UTC(2024, 11, 31, 23, 59, 59, 999), Date.UTC(2024, 5, 1, 13, 0, 0, 123), Date.UTC(2024, 5, 2), null]);
     });
 
     test('dates of the day first, e.g. German, not the month as of Date.parse', () => {
-        const mapping = { mapping: { t: { column: 'date', type: 'date', scale: { type: 'utc' } } } };
-        expect(prepareData(['01.06.2024', '1.6.2024 13:05', '31.02.2024'].map(date => ({ date })), mapping).map(r => r.t))
+        const dims = { dims: { t: { column: 'date', type: 'date', scale: { type: 'utc' } } } };
+        expect(prepareData(['01.06.2024', '1.6.2024 13:05', '31.02.2024'].map(date => ({ date })), dims).map(r => r.t))
             .toEqual([Date.UTC(2024, 5, 1), Date.UTC(2024, 5, 1, 13, 5), null]);
     });
 
@@ -477,7 +477,7 @@ describe('prepareData', () => {
         expect(inferType([])).toBeUndefined();
         expect(inferType(['', null, ' '])).toBeUndefined();
         expect(inferType(['NA', ':'])).toBeUndefined();
-        const def = { mapping: {
+        const def = { dims: {
             t: { column: 't', axis: { format: '%Y' } },
             h: { column: 'h', hover: { format: '%b %y' } },
             p: { column: 'p', format: '.0%' },
@@ -485,7 +485,7 @@ describe('prepareData', () => {
             c: { column: 'c' },
         } };
         inferTypes(def, []);
-        expect(Object.values(def.mapping).map(m => m.type)).toEqual(['date', 'date', 'numeric', 'numeric', 'categorical']);
+        expect(Object.values(def.dims).map(m => m.type)).toEqual(['date', 'date', 'numeric', 'numeric', 'categorical']);
     });
 
     test('the usual texts of missing values among numbers and dates are missing ones (review of 5.0)', () => {
@@ -497,9 +497,9 @@ describe('prepareData', () => {
         // categories stay categories, also with such texts
         expect(inferType(['A', '-', 'B'])).toBe('categorical');
         const rows = [{ v: '10' }, { v: 'NA' }, { v: ':' }, { v: '30' }];
-        const def = { mapping: { y: { column: 'v' } } };
+        const def = { dims: { y: { column: 'v' } } };
         inferTypes(def, rows);
-        expect(def.mapping.y.type).toBe('numeric');
+        expect(def.dims.y.type).toBe('numeric');
         const odd = new Map();
         expect(prepareData(rows, def, null, odd).map(r => r.y)).toEqual([10, null, null, 30]);
         // without a warning
@@ -518,9 +518,9 @@ describe('prepareData', () => {
         // dates stay dates
         expect(inferType(['2001', '2002', '2003-01-01'])).toBe('date');
         const rows = [{ v: '10' }, { v: '1,234' }, { v: '30' }, { v: '1,234' }, { v: '<5' }, { v: '7' }, { v: 'NA' }, { v: '8' }];
-        const def = { mapping: { y: { column: 'v' } } };
+        const def = { dims: { y: { column: 'v' } } };
         inferTypes(def, rows);
-        expect(def.mapping.y.type).toBe('numeric');
+        expect(def.dims.y.type).toBe('numeric');
         const odd = new Map();
         expect(prepareData(rows, def, null, odd).map(r => r.y)).toEqual([10, null, 30, null, null, 7, null, 8]);
         expect(oddValues(def, odd)).toEqual([
@@ -531,9 +531,9 @@ describe('prepareData', () => {
     test('the parts of numbers make a dim numeric, also with other texts (review of 5.0)', () => {
         const rows = ['A', 'B', 'C', 'D'].map((a, i) => ({ a, b: ['10', 'n.a', 'Total', '30'][i] }));
         const typeOf = m => {
-            const def = { mapping: { y: { column: 'b', ...m } } };
+            const def = { dims: { y: { column: 'b', ...m } } };
             inferTypes(def, rows);
-            return def.mapping.y.type;
+            return def.dims.y.type;
         };
         expect(typeOf({})).toBe('categorical');
         for (const parts of [{ scale: { domain: [0, null] } }, { domain: [0, 100] }, { scale: { include: 0 } }, { format: ',.1f' }, { axis: { format: '.0%' } },
@@ -565,13 +565,13 @@ describe('prepareData', () => {
 });
 
 describe('updateData', () => {
-    test('only the given mappings, in the same rows', () => {
+    test('only the given dims, in the same rows', () => {
         const rows = [{ year: '2020', a: '1', b: '2' }];
-        const def = { mapping: { x: { column: 'year', type: 'numeric' }, y: { column: 'a', type: 'numeric' } } };
+        const def = { dims: { x: { column: 'year', type: 'numeric' }, y: { column: 'a', type: 'numeric' } } };
         const data = prepareData(rows, def);
         const row = data[0];
-        def.mapping.y.column = 'b';
-        def.mapping.x.column = 'a';
+        def.dims.y.column = 'b';
+        def.dims.x.column = 'a';
         expect(updateData(rows, data, def, ['y'])).toBe(data);
         expect(data[0]).toBe(row);
         expect(row).toEqual({ x: 2020, y: 2 });
@@ -582,10 +582,10 @@ describe('the categories of the data', () => {
     test('after the listed ones, in ascending order', () => {
         const rows = [{ a: 'y', b: 'q' }, { a: 'x', b: 'p' }, { a: 'x', b: '' }, { a: 'x', b: 'z' }];
         const keysOf = column => distinctValues(rows, null, column).map(String);
-        const def = prepareDef({ globals: { col: 'b' }, mapping: { c: { column: '{col}', fromData: true, categories: { z: {} } }, d: { column: 'a', categories: { x: {} } } } }, { dataKeys: keysOf });
-        expect(def.mapping.c.keys).toEqual(['z', 'p', 'q']);
+        const def = prepareDef({ globals: { col: 'b' }, dims: { c: { column: '{col}', fromData: true, categories: { z: {} } }, d: { column: 'a', categories: { x: {} } } } }, { dataKeys: keysOf });
+        expect(def.dims.c.keys).toEqual(['z', 'p', 'q']);
         // only with fromData
-        expect(def.mapping.d.keys).toEqual(['x']);
+        expect(def.dims.d.keys).toEqual(['x']);
     });
 
     test('the values of a column of a form element', () => {
@@ -719,7 +719,7 @@ describe('parquet, values as the ones of csv', () => {
         const rows = await parseData(buffer);
         expect(rows).toEqual([{ day: '2024-06-01' }, { day: '1960-03-01' }, { day: null }]);
         const csv = await parseData('day\n2024-06-01\n1960-03-01\n');
-        const d = prepareDef({ mapping: { t: { column: 'day', type: 'date' } } });
+        const d = prepareDef({ dims: { t: { column: 'day', type: 'date' } } });
         expect(prepareData(rows, d).slice(0, 2)).toEqual(prepareData(csv, d));
     });
 
@@ -752,13 +752,13 @@ describe('parquet, values as the ones of csv', () => {
         expect(rows.some(bigints)).toBe(false);
         expect(rows[0]).toEqual({ l: [1, String(2n**60n), null], s: { a: 1, b: 'ä' }, t: 'Wien' });
         expect(rows[2]).toEqual({ l: [], s: { a: String(2n**60n), b: null }, t: '' });
-        const d = prepareDef({ mapping: { v: { column: 'l', type: 'numeric' } } });
+        const d = prepareDef({ dims: { v: { column: 'l', type: 'numeric' } } });
         expect(prepareData(rows, d)[0].v).toBeNull();
     });
 });
 
 describe('numbers, only finite numbers and texts of decimal numbers', () => {
-    const d = prepareDef({ mapping: { v: { column: 'v', type: 'numeric' } } });
+    const d = prepareDef({ dims: { v: { column: 'v', type: 'numeric' } } });
     const values = rows => prepareData(rows, d).map(r => r.v);
 
     test('of csv, with spaces, signs and exponents', async () => {
@@ -774,18 +774,18 @@ describe('numbers, only finite numbers and texts of decimal numbers', () => {
     });
 });
 
-describe('filters of a mapping with the scale of another one', () => {
-    test('dates of a utc scale of another mapping', () => {
-        const d = prepareDef({ mapping: {
+describe('filters of a dim with the scale of another one', () => {
+    test('dates of a utc scale of another dim', () => {
+        const d = prepareDef({ dims: {
             x: { column: 'd', type: 'date', scale: { type: 'utc' } },
             x2: { column: 'e', type: 'date', scale: { of: 'x' } },
         } });
         const data = prepareData([{ d: '2020-01-01', e: '2020-01-01' }, { d: '2020-01-02', e: '2020-01-03' }], d);
         expect(data[0].x2).toBe(Date.UTC(2020, 0, 1));
-        expect(filter(data, rowFilter({ x2: '2020-01-01' }, d.mapping))).toEqual([data[0]]);
-        expect(filter(data, rowFilter({ x2: ['2020-01-03'] }, d.mapping))).toEqual([data[1]]);
-        expect(filter(data, rowFilter({ x2: { range: ['2020-01-02', null] } }, d.mapping))).toEqual([data[1]]);
-        expect(filter(data, rowFilter({ x2: { not: '2020-01-01' } }, d.mapping))).toEqual([data[1]]);
+        expect(filter(data, rowFilter({ x2: '2020-01-01' }, d.dims))).toEqual([data[0]]);
+        expect(filter(data, rowFilter({ x2: ['2020-01-03'] }, d.dims))).toEqual([data[1]]);
+        expect(filter(data, rowFilter({ x2: { range: ['2020-01-02', null] } }, d.dims))).toEqual([data[1]]);
+        expect(filter(data, rowFilter({ x2: { not: '2020-01-01' } }, d.dims))).toEqual([data[1]]);
     });
 });
 
@@ -879,7 +879,7 @@ describe('the faster dates and types are the ones of before', () => {
                 }
                 const rows = values.filter(v => typeof v == 'string').map(date => ({ date }));
                 for (const type of ['time', 'utc'])
-                    expect(prepareData(rows, { mapping: { t: { column: 'date', type: 'date', scale: { type } } } }).map(r => r.t))
+                    expect(prepareData(rows, { dims: { t: { column: 'date', type: 'date', scale: { type } } } }).map(r => r.t))
                         .toEqual(rows.map(r => toDate(r.date, type == 'utc')));
             }
         } finally {
@@ -923,16 +923,16 @@ describe('the faster dates and types are the ones of before', () => {
 describe('the type of a column which is nowhere (review of 5.0)', () => {
     test('none, and none is kept: it is the one of its values once a transform makes it', () => {
         const rows = [{ year: '2000', value: '1' }, { year: '2001', value: '2' }];
-        const def = { mapping: { x: { column: 'year' }, y: { column: 'index' } } };
+        const def = { dims: { x: { column: 'year' }, y: { column: 'index' } } };
         inferTypes(def, rows, new Map());
-        expect(def.mapping.x.type).toBe('numeric');
-        expect(def.mapping.y.type).toBeUndefined();
+        expect(def.dims.x.type).toBe('numeric');
+        expect(def.dims.y.type).toBeUndefined();
         inferTypes(def, rows, new Map([['index', [100, 200]]]));
-        expect(def.mapping.y.type).toBe('numeric');
+        expect(def.dims.y.type).toBe('numeric');
         // without rows the columns are not known: the type of the parts of the dim
-        const empty = { mapping: { y: { column: 'index', zero: true }, c: { column: 'land' } } };
+        const empty = { dims: { y: { column: 'index', zero: true }, c: { column: 'land' } } };
         inferTypes(empty, [], new Map());
-        expect(empty.mapping.y.type).toBe('numeric');
-        expect(empty.mapping.c.type).toBe('categorical');
+        expect(empty.dims.y.type).toBe('numeric');
+        expect(empty.dims.c.type).toBe('categorical');
     });
 });

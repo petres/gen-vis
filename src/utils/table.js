@@ -11,7 +11,7 @@ import { columnValues } from "@/utils/data";
 const maxRows = 1000;
 
 /**
- * The rows in the columns of the mappings: `columns` (their names, each
+ * The rows in the columns of the dims: `columns` (their names, each
  * once, also the columns of transforms), `cells` (a list per row) and
  * `numeric` (per column, of a numeric dim). The values are the ones of the
  * data (e.g. dates as they are in the file), `formatted` ones are the texts
@@ -19,10 +19,10 @@ const maxRows = 1000;
  * locale, the categories by their names, empty without a value.
  */
 const tableOf = (store, rows, { formatted = false } = {}) => {
-    const columns = [...new Set(Object.values(store.def.mapping).map(m => m.column).filter(c => typeof c == 'string'))];
+    const columns = [...new Set(Object.values(store.def.dims).map(m => m.column).filter(c => typeof c == 'string'))];
     // the first dim of a column, its type and format
-    const dims = columns.map(c => Object.keys(store.def.mapping).find(n => store.def.mapping[n].column === c));
-    const numeric = dims.map(n => store.def.mapping[n].type == 'numeric');
+    const dims = columns.map(c => Object.keys(store.def.dims).find(n => store.def.dims[n].column === c));
+    const numeric = dims.map(n => store.def.dims[n].type == 'numeric');
     if (!formatted) {
         const positions = new Map(store.data.map((r, i) => [r, i]));
         const values = columns.map(c => columnValues(store.rows, store.columns, c));
@@ -32,7 +32,7 @@ const tableOf = (store, rows, { formatted = false } = {}) => {
         }) };
     }
     const formats = dims.map(n => {
-        const m = store.def.mapping[n];
+        const m = store.def.dims[n];
         if (m.type == 'numeric' || m.type == 'date') {
             // the thousands separators of the values of the column, as of
             // the domain of a scale, see valueFormat of utils/locale.js

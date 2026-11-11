@@ -161,7 +161,7 @@ const unclass = (node, name) => {
  * plots of the definition, `nodeOf(plot)` the element of a plot, `inner`
  * the element of the plots of the facet (it gets `vis-highlighting`).
  * Returns `highlight(dataEntry, now)`: the elements of the categories of
- * the row `dataEntry` (values of the mappings of the plots' `by`) are
+ * the row `dataEntry` (values of the dims of the plots' `by`) are
  * highlighted, null ends it; the groups of the plots are found once, at the
  * first highlight. A highlight of the same elements changes nothing.
  */

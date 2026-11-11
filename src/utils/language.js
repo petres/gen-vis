@@ -8,12 +8,12 @@ import { categoryKeys, isCategorical } from '@/utils/normalize';
 /**
  * The definition language of gen-vis 5 (see docs/definition.md) translated
  * into the form the engine reads (the one of 4.x normalized, see
- * utils/normalize.js: `options`, `mapping`, `plot` with `props`,
- * `formElements`): the top-level options into `options`, `dims` into
- * `mapping`, `marks` with their channels into `plot` with the props of the
+ * utils/normalize.js: `options`, `dims`, `plot` with `props`,
+ * `formElements`): the top-level options into `options`, the shorthands
+ * of the `dims` written out, `marks` with their channels into `plot` with the props of the
  * scaled positions, `controls` into `formElements`, the hover columns into
- * the `hover` of the mappings, `stack` and `dodge` of marks into the parts of
- * the mappings and the props, the string syntax of expressions into their
+ * the `hover` of the dims, `stack` and `dodge` of marks into the parts of
+ * the dims and the props, the string syntax of expressions into their
  * objects. `translate` is pure, JSON to JSON; the rows are not known, the
  * types of the dims follow later (see inferTypes of utils/data.js).
  */
@@ -108,7 +108,7 @@ const isContinuous = d => isObject(d) && (d.type == 'numeric' || d.type == 'date
         || [d.domain, d.scale?.domain].some(v => Array.isArray(v) && v.includes(null))
         || d.interval !== undefined || continuousParts.some(k => d[k] !== undefined || (isObject(d.scale) && d.scale[k] !== undefined)))));
 
-// a dim of the definition as a mapping of the engine
+// a dim of the definition as the engine reads it, its shorthands written out
 const dim = (raw, name) => {
     if (typeof raw == 'string')
         return { column: raw };
@@ -285,7 +285,7 @@ const anchors = {
 
 /**
  * A mark as a plot of the engine: its channels as the props of the scaled
- * positions, `dims` are the mappings (implicit dims of columns are added),
+ * positions, `dims` are the dims of the definition (implicit dims of columns are added),
  * `stacks` collects the stacked value dims (`{ dim, by, condition }`),
  * `bases` the value dims of bars and areas from their base (0 of the scale,
  * see translate), `coord` is the coordinate system.
@@ -870,7 +870,7 @@ const translated = raw => {
         if (Object.hasOwn(dims, n) && isObject(dims[n]) && dims[n].hover === undefined)
             dims[n].hover = {};
     });
-    out.mapping = dims;
+    out.dims = dims;
     out.plot = marks;
     if (facets !== undefined)
         out.facets = facets;
@@ -888,24 +888,22 @@ const checkDims = def => {
         const other = (p?.by ?? []).find(b => typeof b != 'string');
         if (other !== undefined)
             throw new Error(`marks[${i}].by: expected a dim or a list of dims, e.g. "land", not ${JSON.stringify(other)}`);
-        const unknown = (p?.by ?? []).find(b => typeof b == 'string' && !Object.hasOwn(def.mapping ?? {}, b));
+        const unknown = (p?.by ?? []).find(b => typeof b == 'string' && !Object.hasOwn(def.dims ?? {}, b));
         if (unknown !== undefined)
-            throw new Error(`marks[${i}].by: unknown dim '${unknown}', the dims are ${Object.keys(def.mapping ?? {}).map(n => `'${n}'`).join(', ') || 'none'}`);
+            throw new Error(`marks[${i}].by: unknown dim '${unknown}', the dims are ${Object.keys(def.dims ?? {}).map(n => `'${n}'`).join(', ') || 'none'}`);
     });
     return def;
 };
 
 // the path of a part of the engine's form as the one of the definition,
-// e.g. "mapping.y.scale" is "dims.y.scale", "plot[0].props.fill" is
-// "marks[0].fill", "options.title" is "title", "options.footer" is
+// e.g. "plot[0].props.fill" is "marks[0].fill", "options.title" is "title", "options.footer" is
 // "source" (see translated), "facets.rows" (the dim of the rows of a grid)
 // is "facets.by.rows". "facets.cols" stays: it is the number of columns of
 // facets of a dim in both forms; the dim of the columns of a grid, also
 // `cols` of the engine, is "facets.by.cols", which its checks name
-// themselves (see checkFacets of utils/validate.js and facetMapping of
+// themselves (see checkFacets of utils/validate.js and facetDim of
 // layout.js), a path does not tell the two apart
 const authoredPath = path => String(path)
-    .replace(/^mapping\./, 'dims.')
     .replace(/^plot\[(\d+)\]\.props\./, 'marks[$1].')
     .replace(/^plot\[/, 'marks[')
     .replace(/^plot\./, 'marks.')

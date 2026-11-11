@@ -35,7 +35,7 @@ export const featureByKey = (geo, key) => {
     return byInteger(geo).get(integer(k)) ?? undefined;
 };
 
-// the feature of a row, joined by the mapping `join` of the geometry
+// the feature of a row, joined by the dim `join` of the geometry
 const featureOf = (ctx, row) => featureByKey(ctx.store.geo, keyOf(ctx, row));
 
 // the rows without a feature are not drawn, e.g. of a region the geometry
