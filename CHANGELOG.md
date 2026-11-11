@@ -976,7 +976,9 @@ Security, the events and the exports:
 - `registerDefaults` and the prop `defaults` also take `margins`.
 - 5.0.0-alpha.0 and 5.0.0-alpha.1 were tested from git and a tarball,
   neither was published; 5.0.0-alpha.2 is the first one on npm (`npm
-  install @preschen/gen-vis@alpha`). The `@5` urls (the `$schema`, the
+  install @preschen/gen-vis@alpha`), 5.0.0-alpha.3 has the second review
+  of the release, the engine in the names of 5.0 and no reading of
+  definitions of 4.x. The `@5` urls (the `$schema`, the
   CDN) resolve with 5.0.0.
 
 ## 4.1.0
