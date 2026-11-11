@@ -2369,6 +2369,12 @@ The operators and their string syntax:
 | `match` | `match(@level, {header: 4.5, item: @r}, 0)` | the value of the case of a value (as a text, a number also of the case of the same number), otherwise (also of a missing value) the default (no value without one) |
 | `literal` | `literal([1, 2])`, `literal('@a')` | a value which is not evaluated, e.g. an object or a text starting with `@` |
 
+A condition (of `if`, `and`, `or`, `not`, a `filter`) is false of `false`,
+`0`, `null`, no value, an empty list and of the texts which are empty, a
+number 0 or `"false"` (of any case), so a flag of a column of CSV filters
+its rows, e.g. `"filter": "@keep"` of the values `1` and `0` or `true` and
+`false`; all other values are true.
+
 Texts in the string syntax are quoted with `'` or `"`, a quoted text
 starting with `@` is a text, not a reference; objects are `{key: value}`,
 lists `[a, b]`. The texts of names are no expressions: a `column`,

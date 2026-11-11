@@ -1,6 +1,6 @@
 export { evaluate, bind, constant, refNames, refOf, formatter, operators, isOperator, isMatch };
 
-import { isObject, missing, sameValue, toNumber } from '@/utils/values';
+import { isObject, missing, sameValue, toNumber, truthy } from '@/utils/values';
 
 /**
  * The expressions of a definition, the values of its props, close to JSON
@@ -37,9 +37,6 @@ const numbers = (values, f) => {
     const v = f(n);
     return Number.isFinite(v) ? v : undefined;
 };
-
-// false, 0, "", null, no value, NaN and empty lists are false, as in JSON Logic
-const truthy = v => Array.isArray(v) ? v.length > 0 : Boolean(v);
 
 // the order of two values: numbers by their value, others as texts, no
 // order of a missing value (NaN), e.g. of ""

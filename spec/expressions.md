@@ -53,8 +53,10 @@ The arithmetic operators (`+`, `-`, `*`, `/`, `min`, `max`, `round`) have no
 value if an argument is no number or the result is not finite, e.g. a
 division by 0.
 
-False are `false`, `0`, `""`, `null`, no value, `NaN` and empty lists, all
-other values are true (also `"0"`).
+False are `false`, `0`, `null`, no value, `NaN`, empty lists and the texts
+which are empty (also of only whitespace), a number 0 (e.g. `"0"`, `"0.0"`,
+`" 0 "`) or `"false"` of any case, e.g. the flags of a column of CSV; all
+other values are true (also `"no"` and `"1"`).
 
 Of `format` the fixtures use the d3 locale en-US (`.` and `,`), the format
 of a reference to a mapping of dates is a time format.

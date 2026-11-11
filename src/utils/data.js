@@ -5,7 +5,7 @@ import { fillTemplate, inLanguage, sameValue, templateRefs, variants } from "@/u
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
 import { bind, constant, evaluate, isOperator, refNames } from "@/utils/expr";
-import { comparison, compareCategories, inherited, isObject, missing, ownValue, toNumber } from "@/utils/values";
+import { comparison, compareCategories, inherited, isObject, missing, ownValue, toNumber, truthy } from "@/utils/values";
 
 const dataFormats = ['csv', 'tsv', 'json', 'parquet'];
 
@@ -473,10 +473,6 @@ const datesAsDates = (spec, mapping) => {
 };
 // the types of the mappings, of the date ones, e.g. inferred after a change of the globals
 const typesKey = mapping => Object.keys(mapping).filter(n => mapping[n]?.type == 'date').join('\0');
-
-// false, 0, "", null, no value, NaN and empty lists are false, as the
-// conditions of expressions
-const truthy = v => Array.isArray(v) ? v.length > 0 : Boolean(v);
 
 /**
  * A filter expression without its conditions of the dims `names`: a

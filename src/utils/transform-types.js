@@ -6,7 +6,7 @@ import { quantile } from "d3-array";
 import { toDate, toNumber } from "@/utils/data";
 import { fillTemplate } from "@/utils/def";
 import { bind, constant, refNames } from "@/utils/expr";
-import { inherited, missing, ownValue } from "@/utils/values";
+import { inherited, missing, ownValue, truthy } from "@/utils/values";
 import { madeBy } from "@/utils/transform";
 import { getLocale } from "@/utils/locale";
 
@@ -22,9 +22,6 @@ import { getLocale } from "@/utils/locale";
  * "{base}", it is computed again if the globals change. Dates are the ones
  * of the time zone of the scale of `column` or `as`, local or UTC (`utc`).
  */
-
-// the truth of a value of an expression, as the one of `if` of utils/expr.js
-const truthy = v => Array.isArray(v) ? v.length > 0 : Boolean(v);
 
 // the comparable values of a column: numbers if all are numbers, otherwise
 // timestamps of dates if all are dates, otherwise strings

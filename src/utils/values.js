@@ -1,6 +1,6 @@
 // the comparisons of the values of definitions and of the data, e.g. of
 // categories, used by the other parts, so they import no part of their own
-export { isObject, missing, compareCategories, comparison, toNumber, sameValue, inherited, ownValue };
+export { isObject, missing, compareCategories, comparison, toNumber, sameValue, inherited, ownValue, truthy };
 
 // an object of a definition, e.g. a mapping, not a list and not null
 const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
@@ -51,3 +51,11 @@ const sameValue = (a, b) => {
         return missing(a) && missing(b);
     return String(a) === String(b);
 };
+
+// the truth of a value of a condition, e.g. of `if`, `and` or a filter:
+// false are false, 0, NaN, null, no value, empty lists and the texts which
+// are empty (also of whitespace, a missing value), a number 0 or "false" of
+// any case, e.g. the flags "0" and "FALSE" of a column of csv, all other
+// values are true
+const falseText = /^\s*(?:false|[+-]?(?:0+\.?0*|\.0+)(?:e[+-]?\d+)?)?\s*$/i;
+const truthy = v => typeof v == 'string' ? !falseText.test(v) : (Array.isArray(v) ? v.length > 0 : Boolean(v));

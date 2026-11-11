@@ -122,3 +122,27 @@ describe('names of the prototype of objects are no columns (review of 5.0)', () 
         expect([...el.querySelectorAll('g.vis-mark rect')].map(r => r.getAttribute('data-c'))).toEqual(['1']);
     });
 });
+
+describe('the flags of a column of csv (review of 5.0)', () => {
+    const flags = 'year,value,keep\n2020,1,1\n2021,2,0\n2022,3,false\n2023,4,TRUE\n2024,5,\n2025,6,0.0\n';
+    const shown = async more => {
+        const el = await mount({ def: {
+            $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json',
+            height: 200,
+            dims: { x: { column: 'value', zero: true }, y: { column: 'year', type: 'categorical' } },
+            marks: { type: 'bar', 'data-c': '@x' },
+            ...more,
+        }, data: flags });
+        return [...el.querySelectorAll('g.vis-mark rect')].map(r => r.getAttribute('data-c'));
+    };
+
+    test('"0", "false" and an empty text are false in the filter of the definition', async () => {
+        expect(await shown({ filter: '@keep' })).toEqual(['1', '4']);
+        expect(await shown({ filter: '=not @keep' })).toEqual(['2', '3', '5', '6']);
+    });
+
+    test('in the filter transform and in an if of a calc', async () => {
+        expect(await shown({ transform: [{ type: 'filter', expr: '@keep' }] })).toEqual(['1', '4']);
+        expect(await shown({ transform: [{ type: 'calc', expr: "@keep ? @value : 0", as: 'value' }] })).toEqual(['1', '0', '0', '4', '0', '0']);
+    });
+});
