@@ -237,18 +237,60 @@ describe('the columns a definition uses', () => {
 
     test('a template is a column of every value of its globals', () => {
         expect(usedColumns({
-            globals: { values: 'twh', share: '', other: 'x' },
-            mapping: { y: { column: '{values}{share}' }, z: { column: 'z.{other}' } },
+            globals: { values: 'twh', share: '' },
+            mapping: { y: { column: '{values}{share}' } },
             formElements: [
                 { ref: 'values', values: [{ value: 'twh' }, { value: 'co2' }] },
                 { ref: 'share', values: [{ value: '' }, { value: '.share' }] },
             ],
-        })).toEqual(['twh', 'twh.share', 'co2', 'co2.share', 'z.x']);
+        })).toEqual(['twh', 'twh.share', 'co2', 'co2.share']);
         // the values of a column are not known before the data
         expect(usedColumns({
             mapping: { y: { column: 'value.{year}' } },
             formElements: [{ ref: 'year', values: { column: 'year' } }],
         })).toBeNull();
+    });
+
+    test('a template of a global without a control is a column of any value, the page sets it: all columns', async () => {
+        expect(usedColumns({ globals: { col: 'value' }, mapping: { x: { column: 'year' }, y: { column: '{col}' } } })).toBeNull();
+        expect(usedColumns({ globals: { col: 'value' }, mapping: { x: { column: 'year' } },
+            transform: [{ type: 'index', column: '{col}', as: 'index' }] })).toBeNull();
+        // parquet of the globals of the page, as csv
+        const { createStore } = await import('@/store');
+        const buffer = parquetWriteBuffer({ columnData: [
+            { name: 'year', data: [2020, 2021], type: 'DOUBLE' },
+            { name: 'value', data: [1, 2], type: 'DOUBLE' },
+            { name: 'other', data: [10, 20], type: 'DOUBLE' },
+        ] });
+        const def = { globals: { col: 'value' }, mapping: { x: { column: 'year' }, y: { column: '{col}' } }, plot: { type: 'line' } };
+        const store = createStore();
+        await store.init({ def, data: buffer, globals: { col: 'other' } });
+        expect(store.data.map(r => r.y)).toEqual([10, 20]);
+        expect(store.def.mapping.y.type).toBe('numeric');
+    });
+
+    test('a template of the field of an entry is a column of the fields of all entries', () => {
+        expect(usedColumns({
+            globals: { group: 'a' },
+            mapping: { y: { column: '{group:col}.{group}' } },
+            formElements: [{ ref: 'group', values: [{ value: 'a', col: 'A' }, { value: 'b', col: 'B' }] }],
+        })).toEqual(['A.a', 'A.b', 'B.a', 'B.b']);
+    });
+
+    test('the column of the names of the values of a control', async () => {
+        expect(usedColumns({ mapping: { y: { column: 'value' } },
+            formElements: [{ ref: 'c', values: { column: 'code', names: 'label' } }] })).toEqual(['value', 'code', 'label']);
+        const buffer = parquetWriteBuffer({ columnData: [
+            { name: 'code', data: ['a', 'b'], type: 'STRING' },
+            { name: 'label', data: ['Alpha', 'Beta'], type: 'STRING' },
+            { name: 'value', data: [1, 2], type: 'DOUBLE' },
+            { name: 'unused', data: [1, 2], type: 'DOUBLE' },
+        ] });
+        const def = { mapping: { y: { column: 'value' } }, formElements: [{ ref: 'c', values: { column: 'code', names: 'label' } }] };
+        const rows = await parseData(buffer, 'parquet', usedColumns(def));
+        expect(Object.keys(rows[0])).toEqual(['code', 'label', 'value']);
+        addDataValues(def, rows);
+        expect(def.formElements[0].values.map(v => v.name)).toEqual(['Alpha', 'Beta']);
     });
 });
 

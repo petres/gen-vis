@@ -1,4 +1,4 @@
-export { escapeHtml, mergeAll, sameValue, prepareDef, applyResolved, variants, variantsOf, selectedEntry, templateNames, templateRefs, fillTemplate, fillText, fillHtml, formatOf, symbolOf, symbolShape, inLanguage, languageOf };
+export { escapeHtml, mergeAll, sameValue, prepareDef, applyResolved, variants, variantsOf, selectedEntry, templateNames, templateRefs, templateKeys, fillTemplate, fillText, fillHtml, formatOf, symbolOf, symbolShape, inLanguage, languageOf };
 
 import { deepMerge, mergeAll as mergeParts } from '@/utils/merge';
 import { ownColors, schemeColors } from '@/utils/d3';
@@ -782,6 +782,10 @@ const templateName = /\{([\p{L}\p{N}_]+(?::[\p{L}\p{N}_]+)?)\}/gu;
 // "{values}{share}", `group` of "{group:name}"
 const templateRefs = column => typeof column == 'string' ?
     [...column.matchAll(templateName)].map(m => m[1].split(':')[0]) : [];
+
+// the names of a column template as they are, also of the field of an
+// entry, e.g. `group:name` of "{group:name}"
+const templateKeys = column => typeof column == 'string' ? [...column.matchAll(templateName)].map(m => m[1]) : [];
 
 // unknown names are kept as they are
 const fillTemplate = (column, names = {}) =>

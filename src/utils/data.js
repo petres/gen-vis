@@ -1,7 +1,7 @@
 export { oddValues, sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
-import { fillTemplate, inLanguage, sameValue, templateRefs, variants } from "@/utils/def";
+import { fillTemplate, inLanguage, sameValue, templateKeys, variants } from "@/utils/def";
 import { transformColumns } from "@/utils/transform";
 import { lazy } from "@/utils/lazy";
 import { bind, constant, evaluate, isOperator, refNames } from "@/utils/expr";
@@ -658,28 +658,37 @@ const conditionValues = (c, scope) => {
 /**
  * The columns of the data a definition can use, null if they are not known:
  * the ones of the mappings, also of the other values of the controls (see
- * variants), and of the values of the controls. A column template is a column of every value of
- * its globals, e.g. "{values}{share}" of the entries of two form elements,
- * a global of a form element with the values of a column has unknown ones.
+ * variants), and of the values of the controls and of their names. A column
+ * template is a column of every value of its globals, e.g. "{values}{share}"
+ * of the entries of two form elements, or of the field of every entry, e.g.
+ * "{group:name}"; a global of a form element with the values of a column
+ * has unknown ones, also a global without a form element, which the page
+ * sets to any value (the `globals` of the visualisation).
  */
 const usedColumns = def => {
     const elements = def.formElements ?? [];
-    // the values of a global, the one of the definition and the ones of its form elements
-    const valuesOf = ref => {
+    // the values of a name of a template: of a global the one of the
+    // definition and the ones of its form elements, of a field the ones of
+    // their entries (`global:field`)
+    const valuesOf = name => {
+        const [ref, field] = name.split(':');
         const own = elements.filter(e => e.ref == ref);
-        if (own.some(e => !Array.isArray(e.values)))
+        if (own.length == 0 || own.some(e => !Array.isArray(e.values)))
             return null;
-        return [...new Set([def.globals?.[ref], ...own.flatMap(e => e.values.map(v => v.value))].map(String))];
+        const entries = own.flatMap(e => e.values);
+        if (field !== undefined)
+            return [...new Set(entries.map(v => v?.[field]).filter(v => v === null || typeof v != 'object').map(String))];
+        return [...new Set([def.globals?.[ref], ...entries.map(v => v.value)].map(String))];
     };
     const expand = column => {
         if (typeof column != 'string')
             return [];
         let columns = [column];
-        for (const ref of new Set(templateRefs(column))) {
-            const values = valuesOf(ref);
+        for (const name of new Set(templateKeys(column))) {
+            const values = valuesOf(name);
             if (values === null)
                 return null;
-            columns = columns.flatMap(c => values.map(v => c.replaceAll(`{${ref}}`, v)));
+            columns = columns.flatMap(c => values.map(v => c.replaceAll(`{${name}}`, v)));
         }
         return columns;
     };
@@ -693,8 +702,9 @@ const usedColumns = def => {
     ].map(expand);
     if (columns.includes(null))
         return null;
-    return [...new Set([...columns.flat(), ...elements.map(e => e.values?.column).filter(c => typeof c == 'string'),
-        ...variants(def).flatMap(expressionColumns)])];
+    // the columns of the values of the form elements and of their names
+    const ofValues = elements.flatMap(e => [e.values?.column, e.values?.names]).filter(c => typeof c == 'string');
+    return [...new Set([...columns.flat(), ...ofValues, ...variants(def).flatMap(expressionColumns)])];
 };
 
 // the names of the expressions of the rows a definition filters by, which

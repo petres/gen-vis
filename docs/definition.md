@@ -192,8 +192,10 @@ Parquet is read with [hyparquet](https://github.com/hyparam/hyparquet) (no
 wasm), it is only loaded for parquet data. Only the columns the definition
 can use are read: the ones of the dims (also of every value of the
 controls, a column template in every value of its globals), of the
-transforms and of the values of controls, so a wide file costs only its
-columns which are used. Integers of 64 bits are numbers, unless they are too
+transforms and of the values of controls and their names, so a wide file
+costs only its columns which are used (all columns are read of a column
+template of a global without a control of fixed values, which the page
+sets to any column). Integers of 64 bits are numbers, unless they are too
 large for them, e.g. ids, then they are strings, also in lists and structs, timestamps of UTC are
 dates of ISO with a `Z`, e.g. `2024-06-01T13:00:00.000Z` (so a dim of them
 is one of dates, the same time everywhere), dates (without a time) and timestamps without a time zone
