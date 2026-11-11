@@ -316,21 +316,27 @@ const readDef = async (def, defUrl) => {
     return { def: typeof def == 'string' ? parseDef(def, 'attribute') : def, url: defUrl ? resolveUrl(defUrl) : undefined };
 };
 
+// a url as it is written, which can be requested before the definition is
+// read: no expression of the globals ("=match(@level, {...})"), a url only
+// once they are resolved, and no text of braces, e.g. "{region}.csv"
+const plainUrl = v => typeof v == 'string' && !v.includes('{') && !v.startsWith('=');
+
 // the definition of the attribute or of its url, with its parents, the
 // warnings of its check (`check`), the data and the geometry are requested together
-// with the parents, if the def names them, the data if its format is known,
-// it can be the one of a parent, `url` is undefined for inline definitions
+// with the parents, if the def names them by a plain url (see plainUrl), the
+// data if its format is known, it can be the one of a parent, `url` is
+// undefined for inline definitions
 const resolveDef = async ({ def: given, defUrl, data, check }) => {
     const checks = check ? loadValidator() : null;
     const { def, url } = await readDef(given, defUrl);
 
-    if (data === null && typeof def.data == 'string' && !def.data.includes('{')) {
+    if (data === null && plainUrl(def.data)) {
         const dataUrl = resolveUrl(def.data, url);
         const format = dataFormat(dataUrl, def.dataFormat);
         if (format !== undefined || def.parent === undefined)
             fetchData(dataUrl, format).catch(() => {});
     }
-    if (typeof def.geo?.data == 'string')
+    if (plainUrl(def.geo?.data))
         fetchText(resolveUrl(def.geo.data, url)).catch(() => {});
 
     // the merged definition (`authored`), resolved with its globals,

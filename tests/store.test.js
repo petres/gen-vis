@@ -495,7 +495,6 @@ describe('controls of globals, coordinate systems and maps', () => {
         await store.init({ def: {
             coord: 'geo',
             globals: { level: 'states' },
-            // the geometry as a whole: a `geo.data` of an expression is requested as a url before the globals are known
             geo: "=match(@level, {districts: literal({data: 'districts.json', join: 'region'})}, literal({data: 'states.json', join: 'region'}))",
             controls: [{ type: 'radio', global: 'level', values: ['states', 'districts'] }],
             dims: { region: 'region' },
@@ -510,6 +509,36 @@ describe('controls of globals, coordinate systems and maps', () => {
         store.applyControls();
         expect(store.geo.features.map(store.geo.key)).toEqual(['W', 'T']);
         expect(requested).toHaveLength(2);
+    });
+
+    test('a geometry and data of an expression of the globals are requested once the globals are resolved, not as urls as written', async () => {
+        const topo = (object, ids) => JSON.stringify({ type: 'Topology', objects: { [object]: { type: 'GeometryCollection',
+            geometries: ids.map(id => ({ type: 'Polygon', id, arcs: [[0]] })) } }, arcs: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]] });
+        const requested = [];
+        const files = { 'http://localhost:3000/states.json': topo('states', ['W', 'T']), 'http://localhost:3000/districts.json': topo('districts', ['901', '701', '702']),
+            'http://localhost:3000/regions-states.csv': 'region\nW\n', 'http://localhost:3000/plain.csv': 'region\nT\n' };
+        vi.stubGlobal('fetch', async url => {
+            requested.push(url);
+            return url in files ? new Response(files[url]) : new Response('', { status: 404, statusText: 'Not Found' });
+        });
+        const map = more => ({
+            coord: 'geo',
+            globals: { level: 'states' },
+            controls: [{ type: 'radio', global: 'level', values: ['states', 'districts'] }],
+            dims: { region: 'region' },
+            marks: [{ type: 'base' }],
+            ...more,
+        });
+        const store = createStore();
+        await store.init({ def: map({ geo: { data: "=match(@level, {districts: 'districts.json'}, 'states.json')", join: 'region' }, data: "=match(@level, {states: 'regions-states.csv'})" }) });
+        // no request of the text of the expressions, e.g. http://localhost:3000/=match(@level,…
+        expect(requested.sort()).toEqual(['http://localhost:3000/districts.json', 'http://localhost:3000/regions-states.csv', 'http://localhost:3000/states.json']);
+        expect(store.geo.features.map(store.geo.key)).toEqual(['W', 'T']);
+        // plain urls, each once
+        clearCache();
+        requested.length = 0;
+        await createStore().init({ def: map({ geo: { data: 'states.json', join: 'region' }, data: 'plain.csv' }) });
+        expect(requested.sort()).toEqual(['http://localhost:3000/plain.csv', 'http://localhost:3000/states.json']);
     });
 
     test('an error of the data and of the parts is the one of the load, not an unhandled one', async () => {
