@@ -797,3 +797,20 @@ describe('the faster dates and types are the ones of before', () => {
         expect(differences).toEqual([]);
     });
 });
+
+describe('the type of a column which is nowhere (review of 5.0)', () => {
+    test('none, and none is kept: it is the one of its values once a transform makes it', () => {
+        const rows = [{ year: '2000', value: '1' }, { year: '2001', value: '2' }];
+        const def = { mapping: { x: { column: 'year' }, y: { column: 'index' } } };
+        inferTypes(def, rows, new Map());
+        expect(def.mapping.x.type).toBe('numeric');
+        expect(def.mapping.y.type).toBeUndefined();
+        inferTypes(def, rows, new Map([['index', [100, 200]]]));
+        expect(def.mapping.y.type).toBe('numeric');
+        // without rows the columns are not known: the type of the parts of the dim
+        const empty = { mapping: { y: { column: 'index', zero: true }, c: { column: 'land' } } };
+        inferTypes(empty, [], new Map());
+        expect(empty.mapping.y.type).toBe('numeric');
+        expect(empty.mapping.c.type).toBe('categorical');
+    });
+});

@@ -555,3 +555,39 @@ describe('form elements of the values of a column (review of 4.1)', () => {
         expect(names(s)).toEqual(['September', 'October']);
     });
 });
+
+describe('the type of a dim of a column of a transform of a global (review of 5.0)', () => {
+    const indexDef = () => ({
+        $schema: schema,
+        globals: { measure: 'value' },
+        transform: [{ type: 'index', column: '{measure}', base: { year: '2000' }, as: '{measure}_idx' }],
+        dims: { x: 'year', y: '{measure}_idx' },
+        controls: [{ type: 'select', global: 'measure', values: ['value', 'other'] }],
+        marks: { type: 'line' },
+    });
+    const indexData = 'year,value,other\n2000,1,2\n2001,2,8\n2002,4,16';
+
+    test('numeric of another value of its control, the values are numbers', async () => {
+        const s = createStore();
+        await s.init({ def: indexDef(), data: indexData });
+        expect(s.def.mapping.y).toMatchObject({ column: 'value_idx', type: 'numeric' });
+        expect(s.data.map(r => r.y)).toEqual([100, 200, 400]);
+        s.setState({ globals: { measure: 'other' } });
+        expect(s.def.mapping.y).toMatchObject({ column: 'other_idx', type: 'numeric' });
+        expect(s.data.map(r => r.y)).toEqual([100, 400, 800]);
+        s.setState({ globals: { measure: 'value' } });
+        expect(s.def.mapping.y).toMatchObject({ column: 'value_idx', type: 'numeric' });
+        expect(s.data.map(r => r.y)).toEqual([100, 200, 400]);
+    });
+
+    test('also of a visualisation of that state and of the globals of the page', async () => {
+        const s = createStore();
+        await s.init({ def: indexDef(), data: indexData, state: { globals: { measure: 'other' } } });
+        expect(s.def.mapping.y).toMatchObject({ column: 'other_idx', type: 'numeric' });
+        expect(s.data.map(r => r.y)).toEqual([100, 400, 800]);
+        const t = createStore();
+        await t.init({ def: indexDef(), data: indexData, globals: { measure: 'other' } });
+        expect(t.def.mapping.y.type).toBe('numeric');
+        expect(t.data.map(r => r.y)).toEqual([100, 400, 800]);
+    });
+});

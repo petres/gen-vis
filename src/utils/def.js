@@ -663,15 +663,13 @@ const resolvedParts = (def, defOrg, source = null, plotTypes = {}) => {
  * hidden (`keepVisible`). `transform()` is called once the transforms are
  * the new ones, before the mappings, their categories can be the ones of a
  * transform, `types(part)` sets the types of the mappings of a part
- * without one from the values (see inferTypes of utils/data.js), `files`
+ * without one from the values then (see inferTypes of utils/data.js), `files`
  * are the rows of the files of plots, by their url, `symbols` the defaults
  * of the symbols of legends, see symbolDefaults. Returns the names of the
  * mappings whose values change, the ones of another column or type.
  */
 const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {}, source = null, plotTypes = {}, types = null } = {}) => {
     const merged = resolvedParts(def, defOrg, source, plotTypes);
-    if (merged.mapping && types)
-        types({ mapping: merged.mapping, globals: def.globals });
     // the texts in the language of the definition, e.g. of a global of a
     // form element; the locale of the numbers and dates is the language
     // without one of its own
@@ -720,6 +718,11 @@ const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, t
         delete def.transform;
     def[sources] = after;
     transform();
+    // the types of the values, after the transforms of the globals: a
+    // column of them is one of the new ones, e.g. "{measure}_idx" of
+    // another measure
+    if (patched.mapping && types)
+        types({ mapping: patched.mapping, globals: def.globals });
 
     const changed = [];
     const mapping = {};

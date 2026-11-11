@@ -941,6 +941,8 @@ const formatType = m => [m.format, m.axis?.format, m.hover?.format, m.legend?.fo
 // the values of a column of a transform), inferred once: a change of the
 // globals infers the types of the definition again, the values are the same
 const typesOf = new WeakMap();
+// a column of no row, of rows (without rows the columns are not known)
+const nowhere = (rows, column) => rows.length > 0 && !rows.some(r => isRow(r) && Object.hasOwn(r, column));
 const inferTypes = (def, rows, columns = null, known = () => true) => {
     const infer = m => {
         if (!isObject(m) || m.type !== undefined || typeof m.column != 'string')
@@ -954,7 +956,11 @@ const inferTypes = (def, rows, columns = null, known = () => true) => {
         const types = typesOf.get(source);
         const hint = typeHint(m);
         const key = `${hint ?? ''}\0${column}`;
-        if (!types.has(key))
+        // a column which is neither one of the transforms nor of the rows
+        // has no type, and none is kept of it: it can be one of a transform
+        // later, e.g. of other globals
+        const unknown = !types.has(key) && !columns?.has(column) && nowhere(sourceRows(rows, columns), column);
+        if (!types.has(key) && !unknown)
             types.set(key, inferType(columnValues(rows, columns, column), sourceRows(rows, columns).length, hint));
         // a dim on the scale of another one without values of its own, e.g.
         // of a column of the rows of a mark only (the ends of an arrow), has
@@ -964,6 +970,8 @@ const inferTypes = (def, rows, columns = null, known = () => true) => {
             ofScale.push(m);
             return;
         }
+        if (unknown)
+            return;
         // without values of the parts of a continuous dim numeric, e.g. of `"zero": true`
         m.type = types.get(key) ?? (hint && formatType(m) != 'date' ? 'numeric' : formatType(m));
     };
