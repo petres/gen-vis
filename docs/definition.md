@@ -180,6 +180,7 @@ them (a definition file needs it only in itself or in a parent).
 by the extension of the url (`.csv`, `.tsv`, `.json`, `.parquet`), without one
 by the content: parquet (which begins with `PAR1`), JSON or CSV. `dataFormat` sets it, e.g. for an url of an api,
 also the one of a parent, data which can not be read is an error of its url.
+Blank lines of CSV and TSV are no rows.
 CSV is of commas and decimal points; a file of semicolons (e.g. of a
 spreadsheet in German) is read as one column, a warning (in the console and
 of `gen-vis check`) says so, as of a `.csv` of tabs (`"dataFormat": "tsv"`):

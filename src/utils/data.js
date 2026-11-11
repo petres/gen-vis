@@ -58,7 +58,8 @@ const rowsOf = (rows, warn) => {
  * The rows of CSV, TSV or other text of a `delimiter`: objects of the
  * columns of the header (the first line) with the texts of their values,
  * '' of the ones a line lacks, `columns` of the rows are the names of the
- * header, as csvParse of d3-dsv, which compiles a function of the header
+ * header, blank lines are left out (the header is the first line which is
+ * none); otherwise as csvParse of d3-dsv, which compiles a function of the header
  * (`new Function`): a page with a Content Security Policy without
  * `unsafe-eval` could not read its data. A column `__proto__` is no column
  * (it would be the prototype of its rows), `warn(message)` tells of it.
@@ -70,6 +71,9 @@ const delimited = (text, delimiter, warn) => {
     let header = false;
     // (the rows are made line by line, not of a list of all lines)
     const rows = (formats[delimiter] ??= d3.dsvFormat(delimiter)).parseRows(text, line => {
+        // a blank line is no row and no header, e.g. the ones at the end of a file
+        if (line.length == 1 && line[0].trim() === '')
+            return null;
         if (!header) {
             header = true;
             if (line.includes('__proto__'))

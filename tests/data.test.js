@@ -61,6 +61,18 @@ describe('parseData', () => {
         expect(warnings).toEqual(["the column '__proto__' is left out, it is no name of a column"]);
     });
 
+    test('blank lines of csv and tsv are no rows, the header is the first line which is none', async () => {
+        const rows = await parseData('a,b\n1,2\n\n3,4\n\n');
+        expect([...rows]).toEqual([{ a: '1', b: '2' }, { a: '3', b: '4' }]);
+        const leading = await parseData('\n\r\n  \na,b\r\n\r\n1,2\r\n', 'csv');
+        expect([[...leading], leading.columns]).toEqual([[{ a: '1', b: '2' }], ['a', 'b']]);
+        expect([...await parseData('a\tb\n\n1\t2\n\n\n', 'tsv')]).toEqual([{ a: '1', b: '2' }]);
+        // a line of empty values is a row
+        expect([...await parseData('a,b\n,\n1,2')]).toEqual([{ a: '', b: '' }, { a: '1', b: '2' }]);
+        const blank = await parseData('\n\n', 'csv');
+        expect([[...blank], blank.columns]).toEqual([[], []]);
+    });
+
     test('a byte order mark is removed', async () => {
         expect((await parseData('\uFEFFa,b\n1,2')).columns).toEqual(['a', 'b']);
         expect(await parseData('\uFEFF[{"a": 1}]')).toEqual([{ a: 1 }]);
@@ -700,8 +712,9 @@ describe('numbers, only finite numbers and texts of decimal numbers', () => {
     const values = rows => prepareData(rows, d).map(r => r.v);
 
     test('of csv, with spaces, signs and exponents', async () => {
+        // (the blank line is no row)
         expect(values(await parseData('v\n 12 \n-.5\n+1e3\n2.5E-1\n007\n\nNA\n-\n0x10\n0b1\n"1,234"\nInfinity\n1e999'))).toEqual(
-            [12, -0.5, 1000, 0.25, 7, null, null, null, null, null, null, null, null]);
+            [12, -0.5, 1000, 0.25, 7, null, null, null, null, null, null, null]);
     });
 
     test('of json, no booleans, lists or objects', async () => {
