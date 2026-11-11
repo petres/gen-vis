@@ -52,6 +52,30 @@ describe('the language of 5.0', () => {
         expect(def.marks[0].props).toEqual({ opacity: 0.7, x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' });
     });
 
+    test('y0 and y1 are the start and the end of an area and of a bar, y is the end without a y1', () => {
+        const of = mark => {
+            const def = translate({ dims: { x: 'year', y: 'value', lo: 'lo', hi: 'hi' }, marks: [mark] });
+            return { props: def.marks[0].props, y: def.dims.y.scale, hi: def.dims.hi.scale, lo: def.dims.lo.scale };
+        };
+        // a band from lo to hi, both on the scale of y, which keeps its domain
+        const band = { x: '@x:scaled', y0: '@lo:scaled', y1: '@hi:scaled' };
+        expect(of({ type: 'area', y0: 'lo', y1: 'hi' })).toEqual({ props: { d: band }, y: undefined, hi: { of: 'y' }, lo: { of: 'y' } });
+        // the same of y instead of y1
+        expect(of({ type: 'area', y0: 'lo', y: 'hi' }).props).toEqual({ d: band });
+        // y1 alone: from the base 0 of the scale, which includes it
+        expect(of({ type: 'area', y1: 'hi' })).toMatchObject({ props: { d: { x: '@x:scaled', y0: '@hi:scaled:0', y1: '@hi:scaled' } }, y: { zero: true } });
+        // an expression of pixels: the base is the one of y
+        expect(of({ type: 'area', y1: '=@y:scaled - 5' }).props.d).toEqual({ x: '@x:scaled', y0: '@y:scaled:0', y1: { '-': ['@y:scaled', 5] } });
+        // without y0 and y1 as before
+        expect(of({ type: 'area' }).props.d).toEqual({ x: '@x:scaled', y0: '@y:scaled:0', y1: '@y:scaled' });
+        // bars
+        expect(of({ type: 'bar', y0: 'lo', y1: 'hi' })).toMatchObject({ props: band, hi: { of: 'y' } });
+        expect(of({ type: 'bar', y1: 'hi' })).toMatchObject({ props: { x: '@x:scaled', y1: '@hi:scaled' }, y: { zero: true } });
+        expect(of({ type: 'bar', x0: 'lo', x1: 'hi', y0: 3, y1: 'hi' }).props).toEqual({ x0: '@lo:scaled', x1: '@hi:scaled', y0: '@y:scaled:3', y1: '@hi:scaled' });
+        // a stack is the one of y
+        expect(of({ type: 'area', stack: true, y1: 'hi' }).props.d).toEqual({ x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' });
+    });
+
     test('the value dims of bars and areas from their base 0 include 0, of a log scale they start at the domain', () => {
         const scale = (marks, y = 'v', x = 'a', coord) => {
             const def = translate({ ...(coord ? { coord } : {}), dims: { x, y }, marks });

@@ -171,7 +171,7 @@ See [definition.md](definition.md#marks).
 | `x1` | dim, number or expression |  | The end of a bar of a class of a bin, or of an area; of a rule its start (a number on the scale of x). |
 | `x2` | dim, number or expression |  | The other end of a rule (a number on the scale of x). |
 | `y0` | dim, number or expression |  | The start of a bar or an area (a dim, a number on the scale of y), 0 by default. |
-| `y1` | dim, number or expression |  | The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start (its other end is y2, a number on the scale of y). |
+| `y1` | dim, number or expression |  | The end of a bar or an area, e.g. the upper edge of a band of a range, by default the value of y; of a rule its start (its other end is y2, a number on the scale of y). |
 | `y2` | dim, number or expression |  | The other end of a rule, e.g. "hi" of an error bar (a number on the scale of y). |
 | `lon` | dim, number or expression |  | Of a map: the dim of the longitude of a point or a text, or an expression of the row. |
 | `lat` | dim, number or expression |  | Of a map: the dim of the latitude, or an expression of the row. |

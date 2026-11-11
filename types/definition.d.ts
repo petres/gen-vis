@@ -1385,7 +1385,7 @@ export interface Mark {
      */
     y0?: string | number | Expression;
     /**
-     * The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start (its other end is y2, a number on the scale of y).
+     * The end of a bar or an area, e.g. the upper edge of a band of a range, by default the value of y; of a rule its start (its other end is y2, a number on the scale of y).
      */
     y1?: string | number | Expression;
     /**

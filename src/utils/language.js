@@ -437,10 +437,14 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
                     stacked(y.dim, x0 ? x0.dim : undefined, stack);
                     d.y0 ??= ref(y.dim, 'start:scaled');
                     d.y1 ??= ref(y.dim, 'end:scaled');
-                } else if (y) {
-                    d.y1 ??= y.value;
+                } else if (y1 || y) {
+                    // the upper edge is `y1`, without one the value of `y`;
+                    // the base is the one of the dim of the edge (of `y` if
+                    // the edge is an expression of pixels)
+                    const top = y1 ?? y, value = top.dim !== undefined ? top : y ?? top;
+                    d.y1 ??= top.value;
                     if (d.y0 === undefined)
-                        d.y0 = y0 ? y0.value : based(y) ?? `@${y.dim}:scaled:0`;
+                        d.y0 = y0 ? y0.value : based(value) ?? (value.dim !== undefined ? `@${value.dim}:scaled:0` : undefined);
                 }
             }
             props.d = d;
@@ -455,11 +459,12 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
                     props.y0 = ref(y.dim, 'start:scaled');
                     props.y1 = ref(y.dim, 'end:scaled');
                 } else {
-                    props.y1 = y.value;
+                    // the end is `y1`, without one the value of `y`
+                    props.y1 = (y1 ?? y).value;
                     if (y0)
                         props.y0 = y0.value;
                     else
-                        based(y);
+                        based(y1?.dim !== undefined ? y1 : y);
                 }
             } else if (horizontal) {
                 if (y)
@@ -492,11 +497,12 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
                         props.y0 = ref(y.dim, 'start:scaled');
                         props.y1 = ref(y.dim, 'end:scaled');
                     } else {
-                        props.y1 = y.value;
+                        // the end is `y1`, without one the value of `y`
+                        props.y1 = (y1 ?? y).value;
                         if (y0)
                             props.y0 = y0.value;
                         else
-                            based(y);
+                            based(y1?.dim !== undefined ? y1 : y);
                     }
                 }
                 if (dodge && x) {

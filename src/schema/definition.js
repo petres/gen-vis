@@ -346,7 +346,7 @@ const definitions = {
             x1: ref('channel', 'The end of a bar of a class of a bin, or of an area; of a rule its start (a number on the scale of x).'),
             x2: ref('channel', 'The other end of a rule (a number on the scale of x).'),
             y0: ref('channel', 'The start of a bar or an area (a dim, a number on the scale of y), 0 by default.'),
-            y1: ref('channel', 'The end of a bar or an area, e.g. the upper edge of a band of a range; of a rule its start (its other end is y2, a number on the scale of y).'),
+            y1: ref('channel', 'The end of a bar or an area, e.g. the upper edge of a band of a range, by default the value of y; of a rule its start (its other end is y2, a number on the scale of y).'),
             y2: ref('channel', 'The other end of a rule, e.g. "hi" of an error bar (a number on the scale of y).'),
             lon: ref('channel', 'Of a map: the dim of the longitude of a point or a text, or an expression of the row.'),
             lat: ref('channel', 'Of a map: the dim of the latitude, or an expression of the row.'),

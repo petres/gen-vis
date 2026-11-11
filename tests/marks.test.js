@@ -491,6 +491,17 @@ describe('the base of bars and areas', () => {
         expect(errors).toEqual([]);
     });
 
+    test('an area from y0 to y1, e.g. a band of a range: the edges are the ones of the two dims, not of y', async () => {
+        const def = { height: 200, margins: { top: 0, right: 0, bottom: 0, left: 0 },
+            dims: { x: { column: 'a', type: 'numeric' }, y: { column: 'v', domain: [0, 10] }, lo: 'lo', hi: 'hi' },
+            marks: { type: 'area', y0: 'lo', y1: 'hi' } };
+        const el = await mount({ def, data: 'a,v,lo,hi\n1,5,2,8\n2,5,4,6' });
+        // the upper edge along x, then the lower one back: 8 and 6, then 4 and 2 of a domain of 0 to 10 on 200 pixels
+        const points = [...el.querySelector('g.vis-mark path').getAttribute('d').matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map(m => Number(m[2]));
+        expect(points).toEqual([40, 80, 120, 160]);
+        expect(errors).toEqual([]);
+    });
+
     test('zero: true includes 0, negative values hang below it within the plot', async () => {
         const [a, b] = ends(await bars({ column: 'b', zero: true }, 'a,b\nA,-5\nB,10'));
         expect(a[1]).toBeLessThanOrEqual(100);

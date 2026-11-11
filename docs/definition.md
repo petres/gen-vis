@@ -1271,7 +1271,7 @@ which names neither a dim nor a column of the data (e.g. a typo, `"x":
 |---------|-|
 | `x`, `y` | the dims of the horizontal and the vertical position, `x` and `y` by default; of polar charts the angle and the radius |
 | `x0`, `x1` | the start and the end of a bar or an area on the horizontal axis, e.g. the start and the end of a class of a [bin](#transform) |
-| `y0`, `y1` | the start (0 by default) and the end of a bar or an area, e.g. the lower and the upper edge of a band; `y1` of a rule its start |
+| `y0`, `y1` | the start (0 by default) and the end of a bar or an area, e.g. the lower and the upper edge of a band, `"y0": "lo", "y1": "hi"`; without `y1` the end is the value of `y` (`"y0": "lo", "y": "hi"` is the same band), a stack is the one of `y`; not of polar charts; `y1` of a rule its start |
 | `x2`, `y2` | the other end of a rule, e.g. `"y1": "lo", "y2": "hi"` of an error bar |
 | `lon`, `lat` | of maps: the dims of the longitude and the latitude of a point or a text, or expressions of the row (e.g. `"=@lng + 0.1"`) |
 
