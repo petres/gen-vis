@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, test, expect, onTestFinished } from 'vitest';
+import { describe, test, expect, onTestFinished, vi } from 'vitest';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { orderOf, sortedByOrder, nearestWithRows, nearestRow, pointFinder, pointPosition, placed, positionsInOrder, clamp } from '@/comp/facet-hover';
 import { byOrder } from '@/comp/hover';
@@ -329,5 +329,38 @@ describe('the listeners of the page', () => {
         expect(el.querySelector('svg.vis-svg')).not.toBeNull();
         expect(seen).toEqual(['update:state', 'hover', 'select']);
         expect(errors.map(String)).toEqual(['update:state', 'hover', 'select'].map(n => expect.stringContaining(`bug of the page ${n}`)));
+    });
+});
+
+describe('the end of the hover', () => {
+    const data = 'year,value,land\n2020,1,Wien\n2021,2,Wien';
+    test('a chart drawn anew while a hover is shown emits hover null once, also its destroy', async () => {
+        const { el, vis } = await mountVis({ def: lineDef(), data });
+        const events = [];
+        vis.on('hover', p => events.push(p?.key ?? null));
+        await move(el, 10);
+        expect(events).toEqual([2020]);
+        vis.update({ def: lineDef({ title: 'Andere' }) });
+        await vi.waitFor(() => expect(el.querySelector('.vis-title').textContent).toBe('Andere'));
+        await nextTick();
+        expect(el.querySelector('.vis-hover')).toBeNull();
+        expect(events).toEqual([2020, null]);
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointerleave'));
+        await nextTick();
+        expect(events).toEqual([2020, null]);
+
+        // a hover shown ends with the chart, before its listeners are removed,
+        // also if a listener destroys it again
+        await move(el, 10);
+        vis.on('hover', () => vis.destroy());
+        vis.destroy();
+        expect(events).toEqual([2020, null, 2020, null]);
+        // none without a hover shown
+        const other = await mountVis({ def: lineDef(), data });
+        const none = [];
+        other.vis.on('hover', p => none.push(p));
+        other.vis.destroy();
+        expect(none).toEqual([]);
+        expect(errors).toEqual([]);
     });
 });

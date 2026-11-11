@@ -143,8 +143,8 @@ const clamp = (index, length) => Math.max(0, Math.min(length - 1, index));
  * draw (`ctx` of the plot types, see plots/index.js), e.g. its rows, and
  * shows the one of the draw before, `render()` places the marker and the
  * box, `key(e)` moves the hover by the keyboard, `hide()` hides it,
- * `keyboard` tells whether the facet has a hover, `visible` whether it is
- * shown.
+ * `end()` ends it with the facet, `keyboard` tells whether the facet has
+ * a hover, `visible` whether it is shown.
  */
 const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin, facetOf }) => {
     // the hover shown and its position
@@ -595,6 +595,14 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         render,
         key,
         hide: () => hide?.(),
+        // the end of the facet, e.g. of a new draw of the chart: a hover
+        // shown ends for the page (`hover` null), nothing is drawn anymore
+        end() {
+            const shown = hover.visible;
+            hover.visible = false;
+            if (shown)
+                emit('hover', null);
+        },
         get keyboard() { return keyboard },
         get visible() { return hover.visible },
     };

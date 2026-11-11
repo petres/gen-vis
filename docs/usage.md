@@ -193,7 +193,8 @@ the visualisation, e.g. of a definition which can not be drawn.
 Besides `update:state` (see [state](#state)) the visualisation emits `rendered`
 once it is drawn the first time, `error` with the message of an error and
 `hover` and `select` (a click, a tap or enter and space of the hover by the
-keyboard) with the rows under the mouse, `hover` with `null` at its end, the
+keyboard) with the rows under the mouse, `hover` with `null` at its end (also
+when the chart is drawn anew, e.g. of a new definition, or destroyed), the
 events of the component, the listeners of `on(event, fn)` of
 [createGenVis](#javascript) and of its props `onHover`, `onSelect`,
 `onRendered`, `onError` and `'onUpdate:state'` (also of `mountGenVisElement`).

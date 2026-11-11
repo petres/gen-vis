@@ -202,13 +202,15 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
                 rendered();
         });
     };
+    // (also of a listener of the last `hover` which destroys it meanwhile)
     const dropVis = () => {
-        if (!vis)
+        const drop = vis;
+        if (!drop)
             return;
-        vis.destroy();
-        vis.el.remove();
         vis = null;
         visLoads = null;
+        drop.destroy();
+        drop.el.remove();
     };
 
     // the parts of the visualisation of the props, the slots and the files
@@ -519,10 +521,12 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
                 return;
             stopObserving();
             remember();
-            removed = true;
             // a definition still loaded is not shown, nor its error
             store.cancel();
+            // a hover shown ends with `hover` null, e.g. for the highlights
+            // of other charts linked by the page, the last event
             dropVis();
+            removed = true;
             bus.clear();
             if (root) {
                 outer.replaceChildren();

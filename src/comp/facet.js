@@ -319,8 +319,9 @@ const createFacet = (vis, initial) => {
         highlight: highlightEntry,
         // the animations of the elements end with the facet, so their frames do
         // not set the attributes of removed elements: the ones of the plots and
-        // of the axes (see utils/dom.js)
+        // of the axes (see utils/dom.js), a hover shown ends (`hover` null)
         destroy() {
+            hover.end();
             interruptAll(inner);
             document.removeEventListener("pointerdown", hideOnPointerOutside);
         },
