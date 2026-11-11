@@ -1,9 +1,9 @@
 // the plot area is a circle in the center of the facet, the angle (clockwise
 // from the top) and the radius are the positions. The axes, the annotations,
-// the hover and the plot types (polar:line, ...) are loaded with the first
+// the hover and the mark types (polar:line, ...) are loaded with the first
 // polar plot, see coords/polar-plot.js and loadCoord of coords/index.js.
 import { lazy } from '@/utils/lazy';
-import { plotTypes } from '@/plots';
+import { markTypes } from '@/plots';
 
 const tau = 2*Math.PI;
 
@@ -20,7 +20,7 @@ export default {
     origin: (width, height) => [width/2, height/2],
     annotations: ['band', 'line', 'text', 'circle'],
     load: () => lazy.polar().then(m => {
-        Object.assign(plotTypes, m.plotTypes);
+        Object.assign(markTypes, m.markTypes);
         return m;
     }),
 };

@@ -23,7 +23,7 @@ const defaults = {
     // shows the prepared definition, its warnings are logged, see check
     debug: false,
     // the warnings of the check of the definition in the console, e.g.
-    // unknown plot types, while it is written, the check is only loaded then
+    // unknown mark types, while it is written, the check is only loaded then
     check: false,
     defFile: null,
     // an object or a JSON string

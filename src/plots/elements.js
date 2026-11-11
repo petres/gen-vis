@@ -7,7 +7,7 @@ import { bandCenter } from "@/utils/scales";
 
 const finite = (...values) => values.every(v => Number.isFinite(v));
 
-const curve = plot => curves[plot.curve ?? 'linear'] ?? d3.curveLinear;
+const curve = mark => curves[mark.curve ?? 'linear'] ?? d3.curveLinear;
 
 // a value which is the same for all rows of a mark, computed at the first
 // row which needs it, e.g. the error of a missing width only with rows,
@@ -24,10 +24,10 @@ const once = f => {
     };
 };
 
-// the dim of a prop of a plot (`path`, e.g. `d.x`) and its scale: of a
+// the dim of a prop of a mark (`path`, e.g. `d.x`) and its scale: of a
 // reference to its scaled value, also in an expression, e.g. "@x:scaled"
-const propDim = (plot, ctx, path) => {
-    const value = path.split('.').reduce((p, k) => p?.[k], plot?.props);
+const propDim = (mark, ctx, path) => {
+    const value = path.split('.').reduce((p, k) => p?.[k], mark?.props);
     const ref = refOf(value) ?? refNames(value).find(n => n.split(':')[1] == 'scaled');
     const name = ref?.split(':')[0];
     const scale = name === undefined ? undefined : ctx?.scales?.[name];
@@ -58,13 +58,13 @@ const rankOf = ({ name, scale }) => {
  * "y" (of polar charts the angle or the radius) is the dim, "rows" keeps
  * the order of the rows, e.g. of a connected scatter plot.
  */
-const alongRows = (rows, plot, ctx, prefix = '') => {
-    const order = plot?.order;
+const alongRows = (rows, mark, ctx, prefix = '') => {
+    const order = mark?.order;
     if (order == 'rows' || rows.length < 2)
         return rows;
-    const polar = /^polar:/.test(plot?.type ?? '');
-    const first = propDim(plot, ctx, `${prefix}${polar ? 'angle' : 'x'}`);
-    const other = propDim(plot, ctx, `${prefix}${polar ? 'radius' : 'y'}`);
+    const polar = /^polar:/.test(mark?.type ?? '');
+    const first = propDim(mark, ctx, `${prefix}${polar ? 'angle' : 'x'}`);
+    const other = propDim(mark, ctx, `${prefix}${polar ? 'radius' : 'y'}`);
     const dim = order == 'x' ? first : order == 'y' ? other
         : (!polar && other?.scale.step && !first?.scale.step ? other : first);
     const rank = dim && rankOf(dim);
@@ -83,9 +83,9 @@ const alongRows = (rows, plot, ctx, prefix = '') => {
 // the points of the path of a group, the values of `d` of its rows in the
 // order along its dim (see alongRows), e.g. a line or the polygon of a radar
 // through the categories in the order of `categories`
-const points = (g, plot, ctx, path) => {
+const points = (g, mark, ctx, path) => {
     const d = g.prop('d');
-    const rows = plot ? alongRows(g.rows, plot, ctx, path.includes('.') ? `${path.split('.')[0]}.` : '') : g.rows;
+    const rows = mark ? alongRows(g.rows, mark, ctx, path.includes('.') ? `${path.split('.')[0]}.` : '') : g.rows;
     return rows.map(row => d(row) ?? {});
 };
 
@@ -101,16 +101,16 @@ const points = (g, plot, ctx, path) => {
  * areas (see plots/inside.js).
  */
 const stackedPoints = new WeakMap();
-const areaPoints = (groups, plot, ctx, keys) => {
-    if (stackedPoints.get(groups)?.plot === plot)
+const areaPoints = (groups, mark, ctx, keys) => {
+    if (stackedPoints.get(groups)?.mark === mark)
         return stackedPoints.get(groups).points;
     const [pos, lo, hi] = keys;
-    const lists = groups.map(g => points(g, plot, ctx, `d.${pos}`));
+    const lists = groups.map(g => points(g, mark, ctx, `d.${pos}`));
     const result = new Map(groups.map((g, i) => [g, lists[i]]));
-    stackedPoints.set(groups, { plot, points: result });
+    stackedPoints.set(groups, { mark, points: result });
     const v = ctx.axis?.v;
-    const stacked = v !== undefined && refOf(plot.props.d?.[lo]) == `${v}:start:scaled` && refOf(plot.props.d?.[hi]) == `${v}:end:scaled`;
-    if (!stacked || plot.order == 'rows' || groups.length < 2)
+    const stacked = v !== undefined && refOf(mark.props.d?.[lo]) == `${v}:start:scaled` && refOf(mark.props.d?.[hi]) == `${v}:end:scaled`;
+    if (!stacked || mark.order == 'rows' || groups.length < 2)
         return result;
     // the groups in the order of the stack, their points by their position
     const order = groups.map((g, i) => i).filter(i => groups[i].rows.length > 0)
@@ -146,10 +146,10 @@ const areaPoints = (groups, plot, ctx, keys) => {
     return result;
 };
 
-// the scale of the dim a prop of a plot refers to, e.g. the one of `x`
+// the scale of the dim a prop of a mark refers to, e.g. the one of `x`
 // of "@x:scaled" or of `d.angle`, undefined if it is no reference
-const propScale = (plot, ctx, path) => {
-    const value = path.split('.').reduce((p, k) => p?.[k], plot.props);
+const propScale = (mark, ctx, path) => {
+    const value = path.split('.').reduce((p, k) => p?.[k], mark.props);
     // a reference, or the scaled position in an expression, e.g. "@x:scaled" of dodged bars
     const ref = refOf(value) ?? refNames(value).find(n => n.split(':')[1] == 'scaled');
     return ref === undefined ? undefined : ctx.scales[ref.split(':')[0]];
@@ -160,8 +160,8 @@ const propScale = (plot, ctx, path) => {
 // ("@x:scaled", its start), so a line runs through the centers of the bars
 // of its categories, 0 of other scales and of other names, e.g.
 // "@x:scaled:center"
-const bandOffset = (plot, ctx, path) => {
-    const value = path.split('.').reduce((p, k) => p?.[k], plot.props);
+const bandOffset = (mark, ctx, path) => {
+    const value = path.split('.').reduce((p, k) => p?.[k], mark.props);
     const name = refNames(value).map(n => n.split(':')).find(n => n.length == 2 && n[1] == 'scaled')?.[0];
     const scale = name === undefined ? undefined : ctx.scales?.[name];
     return scale ? bandCenter(scale) : 0;
@@ -232,13 +232,13 @@ const dodge = (ys, gap) => {
     return moved;
 };
 
-// the props of the halo of texts (`halo` of the plot, true or its width in
-// pixels), in the color of `--gen-vis-halo-color`, the props of the plot
+// the props of the halo of texts (`halo` of the mark, true or its width in
+// pixels), in the color of `--gen-vis-halo-color`, the props of the mark
 // replace them, e.g. a `stroke`
-const halo = plot => !plot.halo ? {} : {
+const halo = mark => !mark.halo ? {} : {
     "paint-order": "stroke",
     stroke: "var(--gen-vis-halo-color, white)",
-    "stroke-width": plot.halo === true ? 3 : plot.halo,
+    "stroke-width": mark.halo === true ? 3 : mark.halo,
     "stroke-linejoin": "round",
 };
 
@@ -255,23 +255,23 @@ export default {
     'svg:circle': element("circle"),
     'svg:line': element("line"),
     'svg:rect': element("rect"),
-    // `dodge` of the plot moves the texts apart vertically, to at least this
+    // `dodge` of the mark moves the texts apart vertically, to at least this
     // distance, e.g. labels at the ends of lines, `halo` draws a halo
     // `max-width` of the props cuts or wraps the texts, see fitText
     'svg:text': {
         update: true,
-        marks(groups, plot, ctx) {
-            const props = halo(plot);
-            // inside the bands of an area plot (`place`), see plots/inside.js
-            if (plot.place?.in !== undefined) {
-                const { groups: placed, spots } = inside(ctx.store.inside.placeInside(groups, plot, ctx, false));
+        marks(groups, mark, ctx) {
+            const props = halo(mark);
+            // inside the bands of an area mark (`place`), see plots/inside.js
+            if (mark.place?.in !== undefined) {
+                const { groups: placed, spots } = inside(ctx.store.inside.placeInside(groups, mark, ctx, false));
                 return { ...perRow(placed, "text", (v, row) => ({ ...props, ...v, ...centered, x: spots.get(row).x, y: spots.get(row).y })), fit: true };
             }
-            if (!plot.dodge)
+            if (!mark.dodge)
                 return { ...perRow(groups, "text", v => ({ ...props, ...v })), fit: true };
             // the positions of the texts of all groups, moved apart
             const rows = groups.flatMap(g => g.rows.filter(g.complete).map(row => [row, parseFloat(g.at(row).y)]));
-            const moved = dodge(rows.map(([, y]) => y), plot.dodge);
+            const moved = dodge(rows.map(([, y]) => y), mark.dodge);
             const ys = new Map(rows.map(([row], i) => [row, moved[i]]));
             return { ...perRow(groups, "text", (v, row) => ({ ...props, ...v, y: ys.get(row) })), fit: true };
         },

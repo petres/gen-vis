@@ -248,7 +248,7 @@ const symbolShape = (kind, width, height) => kind == 'line'
     : kind == 'rect' ? { x: 0, y: 0.5, width, height: height - 1, fill: '@color' }
     : { cx: width/2, cy: height/2, r: Math.min(width, height)/2 - 2, fill: '@color' };
 
-// the plot types drawn as a filled box, a line or a dot in a symbol of "auto"
+// the mark types drawn as a filled box, a line or a dot in a symbol of "auto"
 const symbolKinds = [
     ['rect', ['cartesian:area', 'cartesian:bar', 'polar:area', 'polar:arc', 'svg:rect', 'geo:region'], ['fill', 'fill-opacity', 'opacity']],
     ['line', ['cartesian:line', 'cartesian:rule', 'polar:line', 'svg:line'], ['stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity', 'opacity']],
@@ -256,27 +256,27 @@ const symbolKinds = [
 ];
 
 /**
- * The symbol of a legend of the plots of its categories (`"symbol": "auto"`):
+ * The symbol of a legend of the marks of its categories (`"symbol": "auto"`):
  * a box of the ones which fill an area (e.g. bars, areas), a line of the
  * lines and a circle of the dots, in this order, e.g. a light area under a
  * line, with the props of their style which are the same for all rows of a
  * category: values or references to the props of the categories, e.g.
  * `@color` or `@dash`, not to values of the rows. The box is the one of the
  * shortcut of the line (or of the box or the dot) of the `defaults`, a
- * rect without plots of the categories.
+ * rect without marks of the categories.
  */
-const autoSymbol = (symbol, name, plots, names, defaults, key) => {
+const autoSymbol = (symbol, name, marks, names, defaults, key) => {
     const given = typeof symbol == 'string' ? {} : symbol;
     const own = v => !refNames(v).some(n => typeof n != 'string' || (n != 'color' && !names.has(n)));
     const parts = symbolKinds.flatMap(([kind, types, keys]) => {
-        // the first plot of the first type of the kind, e.g. a line before a
+        // the first mark of the first type of the kind, e.g. a line before a
         // rule, of the ones which draw the category `key` (all without one)
-        const of = [plots ?? []].flat().filter(p => [p?.by ?? []].flat().includes(name) && (key === undefined || draws(p.filter, name, key)));
-        const plot = types.map(t => of.find(p => p?.type == t)).find(Boolean);
-        if (!plot)
+        const of = [marks ?? []].flat().filter(p => [p?.by ?? []].flat().includes(name) && (key === undefined || draws(p.filter, name, key)));
+        const mark = types.map(t => of.find(p => p?.type == t)).find(Boolean);
+        if (!mark)
             return [];
-        const props = Object.fromEntries(keys.filter(k => plot.props?.[k] !== undefined && own(plot.props[k])).map(k => [k, plot.props[k]]));
-        return [{ kind, props, plot }];
+        const props = Object.fromEntries(keys.filter(k => mark.props?.[k] !== undefined && own(mark.props[k])).map(k => [k, mark.props[k]]));
+        return [{ kind, props, mark }];
     });
     // a dot joins a line (a line with points), beside a box without a line
     // the box is the symbol, e.g. of a strip of points below a histogram
@@ -288,34 +288,34 @@ const autoSymbol = (symbol, name, plots, names, defaults, key) => {
     const base = symbolOf({ ...given, type: parts.find(p => p.kind == 'line')?.kind ?? parts[0].kind, props: {} }, names, defaults);
     const { width, height } = base;
     // the dot of points in the size of their radius (a number), within its box
-    const radius = p => p.kind == 'circle' && typeof p.plot?.props?.r == 'number' ? { r: Math.min(p.plot.props.r, Math.min(width, height)/2 - 1) } : {};
+    const radius = p => p.kind == 'circle' && typeof p.mark?.props?.r == 'number' ? { r: Math.min(p.mark.props.r, Math.min(width, height)/2 - 1) } : {};
     return { width, height, elements: parts.map(p => ({ type: p.kind, props: { ...symbolShape(p.kind, width, height), ...p.props, ...radius(p), ...given.props },
-        ...symbolHighlight(p.kind, p.plot)})) };
+        ...symbolHighlight(p.kind, p.mark)})) };
 };
 
-// a symbol of a shortcut (e.g. "line") with the highlight of the first plot
+// a symbol of a shortcut (e.g. "line") with the highlight of the first mark
 // of its kind which draws the categories of the dim `name`, e.g. the
 // line of a year of the lines by year
-const ofPlots = (symbol, name, plots) => ({ ...symbol, elements: symbol.elements.map(e => {
+const ofMarks = (symbol, name, marks) => ({ ...symbol, elements: symbol.elements.map(e => {
     const types = symbolKinds.find(([kind]) => kind == e.type)?.[1] ?? [];
-    const of = [plots ?? []].flat().filter(p => [p?.by ?? []].flat().includes(name));
-    const plot = types.map(t => of.find(p => p?.type == t)).find(Boolean);
-    return plot ? { ...e, ...symbolHighlight(e.type, plot) } : e;
+    const of = [marks ?? []].flat().filter(p => [p?.by ?? []].flat().includes(name));
+    const mark = types.map(t => of.find(p => p?.type == t)).find(Boolean);
+    return mark ? { ...e, ...symbolHighlight(e.type, mark) } : e;
 }) });
 
-// the highlight of the element of a symbol of a plot: the id of the plot
+// the highlight of the element of a symbol of a mark: the id of the mark
 // (`mark`) and the props of its highlight which the element has (`highlight`),
 // e.g. the stroke-width of a line, so the symbol of the entry of the legend
 // of a highlighted category and the one of the nearest row of the hover are
-// highlighted as the plot, see highlightStyle of utils/highlight.js
+// highlighted as the mark, see highlightStyle of utils/highlight.js
 const highlightKeys = { rect: ['fill', 'fill-opacity', 'opacity', 'stroke', 'stroke-width'], line: ['stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity', 'opacity'],
     circle: ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'opacity'] };
-const symbolHighlight = (kind, plot) => {
-    const keys = (plot.highlightProps ?? []).filter(k => highlightKeys[kind].includes(k));
-    return keys.length == 0 ? {} : { mark: plot.id, highlight: Object.fromEntries(keys.map(k => [k, plot.highlight[k]])) };
+const symbolHighlight = (kind, mark) => {
+    const keys = (mark.highlightProps ?? []).filter(k => highlightKeys[kind].includes(k));
+    return keys.length == 0 ? {} : { mark: mark.id, highlight: Object.fromEntries(keys.map(k => [k, mark.highlight[k]])) };
 };
 
-// whether a plot draws a category of a dim by its `filter` on the
+// whether a mark draws a category of a dim by its `filter` on the
 // dim, e.g. { "land": "Wien" } or { "land": { "not": ["Wien"] } }; the
 // conditions of globals and ranges are of all categories (undecided here)
 const draws = (filter, name, key) => {
@@ -334,7 +334,7 @@ const draws = (filter, name, key) => {
 // most color vision deficiencies
 const defaultColors = ['#4269D0', '#EFB118', '#FF725C', '#6CC5B0', '#3CA951', '#FF8AB7', '#A463F2', '#97BBF5', '#9C6B4E', '#9498A0'];
 
-// an entry of a definition which is an object, e.g. a dim or a plot, an
+// an entry of a definition which is an object, e.g. a dim or a mark, an
 // error otherwise, e.g. of null, `path` names it
 const object = (v, path, expected) => {
     if (!isObject(v))
@@ -345,7 +345,7 @@ const object = (v, path, expected) => {
 // `dataKeys(column)` are the distinct values of a column of the data as
 // strings, see distinctValues of utils/data.js, the categories of `fromData`
 // (the templates of the column are filled, see resolvedParts)
-const prepareDim = (m, name, dataKeys = () => [], plots = [], symbols = {}) => {
+const prepareDim = (m, name, dataKeys = () => [], marks = [], symbols = {}) => {
     object(m, `dims.${name}`, `a dim, e.g. { "column": "value", "type": "numeric" }`);
     // null or false removes a part, e.g. the hover of a parent
     ['scale', 'axis', 'legend', 'hover'].forEach(k => {
@@ -377,8 +377,8 @@ const prepareDim = (m, name, dataKeys = () => [], plots = [], symbols = {}) => {
         const own = [...categories.keys()];
         const keys = rowsOrder ? orderKeys(own, [...rowsOrder, ...own]) : orderKeys(own, m.order);
         // the colors of a scheme, without one and without colors of the
-        // categories the default colors, `defaultColor`, the color of a plot
-        // or a legend if no category of it has a color, see plotGroups
+        // categories the default colors, `defaultColor`, the color of a mark
+        // or a legend if no category of it has a color, see markGroups
         const given = [m.common, ...[m.ranks ?? []].flat(), ...categories.values()].some(c => c?.color !== undefined);
         const colors = m.scheme ? schemeColors(m.scheme, keys.length) : undefined;
         if (m.scheme && !colors)
@@ -400,33 +400,33 @@ const prepareDim = (m, name, dataKeys = () => [], plots = [], symbols = {}) => {
     // the scale of another dim (`of`) has no parts of its own, the type
     // of the scale follows from the one of the dim, see defaultScaleType
     if (m.scale && m.scale.of === undefined) {
-        m.scale.type ??= defaultScaleType(m, name, plots);
+        m.scale.type ??= defaultScaleType(m, name, marks);
         m.scale.domain ??= [null, null];
     }
 
     if (m.legend) {
         if (m.legend.props === undefined)
             m.legend.props = {};
-        // the symbols of the plots of the categories by default, `null` is none
+        // the symbols of the marks of the categories by default, `null` is none
         if (m.legend.symbol === undefined && m.categoryProps)
             m.legend.symbol = 'auto';
 
         // the symbols of the legend and of its categories, e.g. a rect of
         // one category and lines of the others
         const names = new Set(Object.values(m.categoryProps ?? {}).flatMap(p => Object.keys(p)));
-        // a shortcut (e.g. "line") is of the first plot of its kind of the
-        // categories, as one of "auto", so it has the highlight of the plot
-        const prepared = symbol => symbol === 'auto' || symbol?.type == 'auto' ? autoSymbol(symbol, name, plots, names, symbols)
-            : (typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type) ? ofPlots(symbolOf(symbol, names, symbols), name, plots) : symbol);
+        // a shortcut (e.g. "line") is of the first mark of its kind of the
+        // categories, as one of "auto", so it has the highlight of the mark
+        const prepared = symbol => symbol === 'auto' || symbol?.type == 'auto' ? autoSymbol(symbol, name, marks, names, symbols)
+            : (typeof symbol == 'string' || symbolShortcuts.includes(symbol?.type) ? ofMarks(symbolOf(symbol, names, symbols), name, marks) : symbol);
         const auto = m.legend.symbol === 'auto' || m.legend.symbol?.type == 'auto' ? m.legend.symbol : null;
         m.legend.symbol = prepared(m.legend.symbol);
         Object.values(m.categoryProps ?? {}).filter(p => p.symbol !== undefined).forEach(p => p.symbol = prepared(p.symbol));
-        // "auto" of plots of some categories (a filter of the dim): the
-        // symbol of each category of the plots which draw it, e.g. a line of
+        // "auto" of marks of some categories (a filter of the dim): the
+        // symbol of each category of the marks which draw it, e.g. a line of
         // one and bars of the others
-        if (auto && [plots ?? []].flat().some(p => [p?.by ?? []].flat().includes(name) && isObject(p.filter) && Object.hasOwn(p.filter, name)))
+        if (auto && [marks ?? []].flat().some(p => [p?.by ?? []].flat().includes(name) && isObject(p.filter) && Object.hasOwn(p.filter, name)))
             Object.entries(m.categoryProps ?? {}).filter(([, p]) => p.symbol === undefined)
-                .forEach(([k, p]) => p.symbol = autoSymbol(auto, name, plots, names, symbols, k));
+                .forEach(([k, p]) => p.symbol = autoSymbol(auto, name, marks, names, symbols, k));
 
         if (!('name' in m.legend.props)) {
              m.legend.props.name = "@name"
@@ -440,11 +440,11 @@ const prepareDim = (m, name, dataKeys = () => [], plots = [], symbols = {}) => {
     return m;
 }
 
-// the annotations are plots of a row of their values, of the types of
-// plots/annotations.js, below the axes and the plots (`layer`, `"above"` or
-// `above` above the plots), or right before the plot `before` in its layer,
-// see preparePlots
-const annotationPlots = (annotations = []) => [annotations].flat().map((a, i) => {
+// the annotations are marks of a row of their values, of the types of
+// plots/annotations.js, below the axes and the marks (`layer`, `"above"` or
+// `above` above the marks), or right before the mark `before` in its layer,
+// see prepareMarks
+const annotationMarks = (annotations = []) => [annotations].flat().map((a, i) => {
     const { type, props = {}, above, layer, before, legend, facet, ...row } = object(a, `annotations[${i}]`, 'an annotation, e.g. { "type": "line", "y": 0 }');
     return {
         type: `annotation:${type}`,
@@ -458,11 +458,11 @@ const annotationPlots = (annotations = []) => [annotations].flat().map((a, i) =>
     };
 });
 
-// the annotations with `before` right before their plot, in its layer, e.g.
+// the annotations with `before` right before their mark, in its layer, e.g.
 // lines above the bars but below the labels whose halo cuts them
-const placed = plots => {
-    const moved = plots.filter(p => p?.before !== undefined && plots.some(q => q?.id === p.before && q !== p));
-    const rest = plots.filter(p => !moved.includes(p));
+const placed = marks => {
+    const moved = marks.filter(p => p?.before !== undefined && marks.some(q => q?.id === p.before && q !== p));
+    const rest = marks.filter(p => !moved.includes(p));
     moved.forEach(p => {
         const target = rest.findIndex(q => q?.id === p.before);
         const { layer, ...own } = p;
@@ -485,19 +485,19 @@ const prepareOptions = options => {
     return { height: 400, ...given, margins };
 };
 
-// the props of a highlight or of the others of a plot, without the mode of
+// the props of a highlight or of the others of a mark, without the mode of
 // the highlight, e.g. "highlight": { "mode": "row", "r": 5 }
 const partProps = part => isObject(part) ? Object.keys(part).filter(n => n != 'mode') : [];
 
-// the plots and the annotations, which are plots of their own, the rows of
-// files of plots are the ones loaded, see `files` of applyResolved. The names
+// the marks and the annotations, which are marks of their own, the rows of
+// files of marks are the ones loaded, see `files` of applyResolved. The names
 // of the props of the highlight and of the others (`highlightProps`,
 // `othersProps`) are the ones of the stylesheet of the highlight, see
 // utils/highlight.js.
-const preparePlots = (plot, annotations, files) => {
-    const plots = placed([...[plot ?? []].flat(), ...annotationPlots(annotations ?? [])]);
-    return plots.map((raw, i) => {
-        const p = { ...object(raw, `plot[${i}]`, 'a plot, e.g. { "type": "svg:circle", "props": {} }') };
+const prepareMarks = (marks, annotations, files) => {
+    const all = placed([...[marks ?? []].flat(), ...annotationMarks(annotations ?? [])]);
+    return all.map((raw, i) => {
+        const p = { ...object(raw, `marks[${i}]`, 'a mark, e.g. { "type": "svg:circle", "props": {} }') };
         // translate writes the props and `by` of the marks, an annotation has none
         p.by ??= [];
         p.id ??= `mark-${i}`;
@@ -605,7 +605,7 @@ const textsIn = (name, part, language) => {
 };
 
 // the parts of a definition which the globals can change, see resolvedParts
-const patchable = ['options', 'dims', 'plot', 'annotations', 'filter', 'facets', 'geo', 'transform'];
+const patchable = ['options', 'dims', 'marks', 'annotations', 'filter', 'facets', 'geo', 'transform'];
 
 // the definitions of the engine of all values of the controls of a
 // definition, kept on the one of its load (see load of utils/load.js), e.g.
@@ -629,14 +629,14 @@ const sources = Symbol('sources');
  * The patchable parts of the definition `source` (the one of gen-vis 5 with
  * its expressions of the globals, see utils/resolve.js) of the globals of
  * `def`: resolved with them and the fields of the selected entries of the
- * controls, translated and normalized (`plotTypes` are the plot types,
+ * controls, translated and normalized (`markTypes` are the mark types,
  * see utils/normalize.js); without a source the parts of `defOrg`. The
  * globals of an entry can select the entry of a later form element, e.g. a
  * language selects its names, they are set in `def.globals` until no entry
  * changes them anymore, at most once per form element, e.g. of entries
  * which set each other's globals.
  */
-const resolvedParts = (def, defOrg, source = null, plotTypes = {}) => {
+const resolvedParts = (def, defOrg, source = null, markTypes = {}) => {
     for (let i = 0; i <= (def.formElements ?? []).length; i++) {
         const selected = selectedEntries(def);
         const globals = JSON.stringify(def.globals);
@@ -648,13 +648,13 @@ const resolvedParts = (def, defOrg, source = null, plotTypes = {}) => {
     if (!source)
         return pick(JSON.parse(JSON.stringify(pick(defOrg))));
     const names = namesOfGlobals(def.globals, source.controls);
-    return pick(normalize(checkDims(translate(resolve(source, names))), { plotTypes }));
+    return pick(normalize(checkDims(translate(resolve(source, names))), { markTypes }));
 };
 
 /**
  * The parts of a definition of its globals (see resolvedParts: the
  * `source` of gen-vis 5 resolved with them, e.g. a column or a scale of a
- * control, `plotTypes` of its normalization), prepared into `def`, `defOrg`
+ * control, `markTypes` of its normalization), prepared into `def`, `defOrg`
  * is the definition of the load. Column templates are filled with the
  * globals, e.g. "{values}{share}". Only the parts which differ from the
  * ones prepared before are prepared again, e.g. a dim with the categories
@@ -664,12 +664,12 @@ const resolvedParts = (def, defOrg, source = null, plotTypes = {}) => {
  * the new ones, before the dims, their categories can be the ones of a
  * transform, `types(part)` sets the types of the dims of a part
  * without one from the values then (see inferTypes of utils/data.js), `files`
- * are the rows of the files of plots, by their url, `symbols` the defaults
+ * are the rows of the files of marks, by their url, `symbols` the defaults
  * of the symbols of legends, see symbolDefaults. Returns the names of the
  * dims whose values change, the ones of another column or type.
  */
-const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {}, source = null, plotTypes = {}, types = null } = {}) => {
-    const merged = resolvedParts(def, defOrg, source, plotTypes);
+const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {}, source = null, markTypes = {}, types = null } = {}) => {
+    const merged = resolvedParts(def, defOrg, source, markTypes);
     // the texts in the language of the definition, e.g. of a global of a
     // form element; the locale of the numbers and dates is the language
     // without one of its own
@@ -711,7 +711,7 @@ const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, t
     part('geo', patched.geo ?? null, g => g ?? undefined);
     if (!def.geo)
         delete def.geo;
-    part('plot', [patched.plot ?? null, patched.annotations ?? null], ([p, a]) => preparePlots(p, a, files));
+    part('marks', [patched.marks ?? null, patched.annotations ?? null], ([p, a]) => prepareMarks(p, a, files));
     delete def.annotations;
     part('transform', patched.transform ?? null, t => t ?? undefined);
     if (!def.transform)
@@ -738,10 +738,10 @@ const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, t
         // of a transform of the globals, such as the names of a language
         const keys = merged.fromData && typeof merged.column == 'string' ? dataKeys(merged.column, merged.fromData == 'rows') : null;
         // a symbol "auto" of the legend or of a category is the one of the
-        // plots, e.g. bars of a value of a control instead of lines
+        // marks, e.g. bars of a value of a control instead of lines
         const auto = [merged.legend?.symbol, ...Object.values(isObject(merged.categories) ? merged.categories : {}).map(c => c?.symbol)]
             .some(s => s === 'auto' || s?.type == 'auto');
-        const source = JSON.stringify([merged, keys, auto ? after.plot : null]);
+        const source = JSON.stringify([merged, keys, auto ? after.marks : null]);
         after.dims[n] = source;
         const old = def.dims?.[n];
         // without `keepVisible` the entries of the legend are the ones of the definition
@@ -749,7 +749,7 @@ const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, t
             dims[n] = old;
             return;
         }
-        const m = prepareDim(merged, n, dataKeys, def.plot, symbols);
+        const m = prepareDim(merged, n, dataKeys, def.marks, symbols);
         if (keepVisible && old?.categoryProps && m.categoryProps)
             m.keys.filter(k => Object.hasOwn(old.categoryProps, k)).forEach(k => m.categoryProps[k].visible = old.categoryProps[k].visible);
         if (old?.column !== m.column || old?.type !== m.type)

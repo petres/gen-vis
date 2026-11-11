@@ -36,7 +36,7 @@ const drawn = Symbol('symbol');
 
 // the symbol of an entry, its elements with the props of the category, drawn
 // again if they change, e.g. of the globals of a form element; an element
-// of a plot with a highlight (`mark`, see symbolHighlight of utils/def.js)
+// of a mark with a highlight (`mark`, see symbolHighlight of utils/def.js)
 // is of the stylesheet of its highlight (`data-symbol-of`), with the values
 // of the category of its props, e.g. "@color" (see symbolVars)
 const drawSymbol = (svg, info, scope) => {
@@ -201,7 +201,7 @@ const symbolBox = (svg, width, height) => patch(svg, { width, height,
 const annotationEntries = store => {
     const defaults = symbolDefaults(store.chartDefaults);
     const seen = new Set();
-    return store.def.plot.filter(p => p.type?.startsWith('annotation:') && p.legend !== undefined && p.legend !== null).flatMap(p => {
+    return store.def.marks.filter(p => p.type?.startsWith('annotation:') && p.legend !== undefined && p.legend !== null).flatMap(p => {
         const name = store.text(String(p.legend));
         if (seen.has(name))
             return [];

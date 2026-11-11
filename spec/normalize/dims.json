@@ -412,7 +412,7 @@
     }
   },
   {
-    "name": "dims of the facets are categorical, the ones of the categories of plots (by) keep the type of their values",
+    "name": "dims of the facets are categorical, the ones of the categories of marks (by) keep the type of their values",
     "def": {
       "dims": {
         "g": {
@@ -425,7 +425,7 @@
       "facets": {
         "dim": "f"
       },
-      "plot": [
+      "marks": [
         {
           "type": "cartesian:line",
           "by": [
@@ -453,7 +453,7 @@
       "facets": {
         "dim": "f"
       },
-      "plot": [
+      "marks": [
         {
           "type": "cartesian:line",
           "by": [
@@ -513,7 +513,7 @@
           }
         }
       },
-      "plot": [
+      "marks": [
         {
           "type": "cartesian:bar",
           "props": {
@@ -575,7 +575,7 @@
           }
         }
       },
-      "plot": [
+      "marks": [
         {
           "type": "cartesian:bar",
           "props": {

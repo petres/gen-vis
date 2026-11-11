@@ -23,7 +23,7 @@ describe('the language of 5.0', () => {
         // listed categories are all of them, the hover has the dims of `by`
         expect(def.dims.land).toEqual({ column: 'Bundesland', scheme: 'Tableau10', 'stroke-width': 2.5, hover: {},
             categories: { Wien: { color: '#123' }, Tirol: { name: 'T' } } });
-        expect(def.plot).toEqual([
+        expect(def.marks).toEqual([
             { type: 'cartesian:line', by: ['land'], highlight: { opacity: 1 }, props: { opacity: 0.7, d: { x: '@x:scaled', y: '@y:scaled' } } },
             // x of no type beside a continuous y is no band (e.g. years), only a vertical dim beside a continuous x is one
             { type: 'svg:circle', by: ['land'], props: { r: 4, cx: '@x:scaled:center', cy: '@y:scaled' } },
@@ -47,13 +47,13 @@ describe('the language of 5.0', () => {
         expect(def.dims.geo).toEqual({ column: 'Geo', fromData: 'rows' });
         expect(def.facets).toEqual({ dim: 'geo', cols: 2, scales: [] });
         expect(def.options.hover).toEqual({ total: true });
-        expect(def.plot[0].props).toEqual({ opacity: 0.7, x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' });
+        expect(def.marks[0].props).toEqual({ opacity: 0.7, x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' });
     });
 
     test('the value dims of bars and areas from their base 0 include 0, of a log scale they start at the domain', () => {
         const scale = (marks, y = 'v', x = 'a', coord) => {
             const def = translate({ ...(coord ? { coord } : {}), dims: { x, y }, marks });
-            return { y: def.dims.y.scale, x: def.dims.x.scale, props: def.plot[0].props };
+            return { y: def.dims.y.scale, x: def.dims.x.scale, props: def.marks[0].props };
         };
         expect(scale({ type: 'bar' }).y).toEqual({ zero: true });
         expect(scale({ type: 'bar', dodge: 'c', by: 'c' }).y).toEqual({ zero: true });
@@ -91,8 +91,8 @@ describe('the language of 5.0', () => {
         });
         expect(def.filter).toEqual({ '==': ['@Jahr', '@year'] });
         expect(def.formElements).toEqual([{ id: 'year', type: 'slider', ref: 'year', name: 'Jahr', values: { column: 'Jahr' }, inImage: false }]);
-        expect(def.plot[0]).toEqual({ type: 'cartesian:bar', by: [], highlight: { fill: '#5BC5F2' }, props: { fill: '#1E4F77', y: '@y:scaled', x1: '@x:scaled' } });
-        expect(def.plot[1].props).toEqual({ text: '@x:formatted', 'font-size': 11, x: '@x:scaled', y: '@y:scaled:center', dx: 4, 'text-anchor': 'start', 'dominant-baseline': 'middle', fill: null });
+        expect(def.marks[0]).toEqual({ type: 'cartesian:bar', by: [], highlight: { fill: '#5BC5F2' }, props: { fill: '#1E4F77', y: '@y:scaled', x1: '@x:scaled' } });
+        expect(def.marks[1].props).toEqual({ text: '@x:formatted', 'font-size': 11, x: '@x:scaled', y: '@y:scaled:center', dx: 4, 'text-anchor': 'start', 'dominant-baseline': 'middle', fill: null });
     });
 
     test('dodged bars, cells, rules of ranges, numbers as values of the scale', () => {
@@ -108,18 +108,18 @@ describe('the language of 5.0', () => {
         });
         // the band, of a scale without bands 80% of the step or the period
         const band = { if: ['@x:bandwidth', '@x:bandwidth', { '*': [0.8, '@x:step'] }] };
-        expect(def.plot[0].props).toEqual({
+        expect(def.marks[0].props).toEqual({
             x: { '+': ['@x:scaled', { '*': [band, { '-': [{ '/': [{ '+': ['@c:index', 0.5] }, '@c:count'] }, 0.5] }] }] },
             width: { '/': [band, '@c:count'] },
             y1: '@y:scaled',
         });
         // at the center of the band of the categorical x
-        expect(def.plot[1].props).toEqual({ stroke: '#333', x: '@x:scaled:center', y1: '@lo:scaled', y2: '@hi:scaled' });
-        expect(def.plot[2].props).toEqual({ fill: '@v:scaled', x: '@x:scaled', width: '@x:bandwidth', y: '@y:scaled', height: '@y:bandwidth' });
-        expect(def.plot[3].props).toEqual({ 'stroke-dasharray': '2 2', y: '@y:scaled:100' });
+        expect(def.marks[1].props).toEqual({ stroke: '#333', x: '@x:scaled:center', y1: '@lo:scaled', y2: '@hi:scaled' });
+        expect(def.marks[2].props).toEqual({ fill: '@v:scaled', x: '@x:scaled', width: '@x:bandwidth', y: '@y:scaled', height: '@y:bandwidth' });
+        expect(def.marks[3].props).toEqual({ 'stroke-dasharray': '2 2', y: '@y:scaled:100' });
         // a fill of a dim of only a column is the color of its categories (the ones of the
         // data); the cell made y a band scale, so the point is at the center of the band
-        expect(def.plot[4]).toEqual({ type: 'svg:circle', by: ['c'], props: { fill: '@color', cx: '@lo:scaled:center', cy: '@y:scaled:center' } });
+        expect(def.marks[4]).toEqual({ type: 'svg:circle', by: ['c'], props: { fill: '@color', cx: '@lo:scaled:center', cy: '@y:scaled:center' } });
         expect(def.dims.y.scale.type).toBe('band');
         // the dims of the ranges of the rule are on the scale of y
         expect(def.dims.lo.scale).toEqual({ of: 'y' });
@@ -130,13 +130,13 @@ describe('the language of 5.0', () => {
     test('polar and geo marks', () => {
         const polar = translate({ coord: 'polar', dims: { x: 'angle', y: 'share', c: 'c' },
             marks: [{ type: 'arc', by: 'c', stack: true, innerRadius: 50 }, { type: 'line', by: 'c', curve: 'linearClosed' }] });
-        expect(polar.plot[0].props).toEqual({ innerRadius: 50, startAngle: '@x:start:scaled', endAngle: '@x:end:scaled' });
-        expect(polar.plot[1]).toEqual({ type: 'polar:line', by: ['c'], curve: 'linearClosed', props: { d: { angle: '@x:scaled', radius: '@y:scaled' } } });
+        expect(polar.marks[0].props).toEqual({ innerRadius: 50, startAngle: '@x:start:scaled', endAngle: '@x:end:scaled' });
+        expect(polar.marks[1]).toEqual({ type: 'polar:line', by: ['c'], curve: 'linearClosed', props: { d: { angle: '@x:scaled', radius: '@y:scaled' } } });
         expect(polar.dims.x.stacked).toBe(true);
         const geo = translate({ coord: 'geo', geo: { data: 'a.json', key: 'id', join: 'nuts' }, dims: { nuts: 'nuts2', lon: 'lon', lat: 'lat' },
             marks: [{ type: 'base', fill: '#eee' }, { type: 'region', by: 'nuts', fill: '#ccc' }, { type: 'point', lon: 'lon', lat: 'lat', r: 3 }] });
-        expect(geo.plot.map(p => p.type)).toEqual(['geo:base', 'geo:region', 'geo:circle']);
-        expect(geo.plot[2].props).toEqual({ r: 3, lon: '@lon', lat: '@lat' });
+        expect(geo.marks.map(p => p.type)).toEqual(['geo:base', 'geo:region', 'geo:circle']);
+        expect(geo.marks[2].props).toEqual({ r: 3, lon: '@lon', lat: '@lat' });
     });
 
     test('the string syntax of expressions, names stay texts', () => {
@@ -149,10 +149,9 @@ describe('the language of 5.0', () => {
         expect(isDefinition4({ mapping: {}, plot: [] })).toBe(true);
         expect(isDefinition5({ dims: {}, marks: [] })).toBe(true);
         expect(isDefinition5({ data: 'x.csv' })).toBe(true);
-        expect(authoredPath('plot[1].props.fill')).toBe('marks[1].fill');
+        expect(authoredPath('marks[1].props.fill')).toBe('marks[1].fill');
         expect(authoredPath('options.footer')).toBe('source');
         expect(authoredPath('formElements[0].ref')).toBe('controls[0].global');
-        expect(authoredPath('plot')).toBe('marks');
         expect(authoredPath('facets.rows')).toBe('facets.by.rows');
         expect(authoredPath('facets.dim')).toBe('facets.by');
         expect(authoredPath('facets.cols')).toBe('facets.cols');
@@ -164,11 +163,11 @@ describe('the language of 5.0', () => {
             marks: [{ type: "=match(@s, {p: 'point'}, 'line')", by: "=match(@s, {p: 'kind'}, 'land')", curve: "=match(@s, {p: 'step'})",
                 stroke: "=match(@s, {p: 'red'}, 'blue')", 'stroke-width': '=@w * 2' }],
         };
-        const p = translate(resolve(def, { s: 'p', w: 1 })).plot[0];
+        const p = translate(resolve(def, { s: 'p', w: 1 })).marks[0];
         expect(p.type).toBe('svg:circle');
         expect(p.by).toEqual(['kind']);
         expect(p.curve).toBe('step');
-        const l = translate(resolve(def, { s: 'l', w: 1 })).plot[0];
+        const l = translate(resolve(def, { s: 'l', w: 1 })).marks[0];
         expect(l.type).toBe('cartesian:line');
         expect(l.by).toEqual(['land']);
         // a match without a case of the value and without a default: no curve
@@ -226,7 +225,7 @@ describe('the dims of the channels (review of 5.0)', () => {
     test('a channel of an axis without the dim of the axis is the dim of the axis, of no other dim\'s scale', () => {
         const t = translate({ marks: { type: 'point', x: 'year', y: 'value' } });
         expect(t.dims).toEqual({ x: { column: 'year', hover: {} }, y: { column: 'value', hover: {} } });
-        expect(t.plot[0].props).toMatchObject({ cx: '@x:scaled:center', cy: '@y:scaled:center' });
+        expect(t.marks[0].props).toMatchObject({ cx: '@x:scaled:center', cy: '@y:scaled:center' });
         // another column on the axis of x without a dim x: its own scale
         const r = translate({ dims: { y: 'v' }, marks: { type: 'rule', y: 'v', x1: 'lo', x2: 'hi' } });
         expect(r.dims.lo.scale).toBeUndefined();
@@ -242,20 +241,20 @@ describe('the dims of the channels (review of 5.0)', () => {
     test('a channel of the column of the dim of its axis is that dim, not a dim of its own', () => {
         const t = translate({ dims: { x: { column: 'year', type: 'categorical' }, y: 'value' }, marks: [{ type: 'line', x: 'year' }, { type: 'point', y: 'value', x: 'year' }] });
         expect(Object.keys(t.dims)).toEqual(['x', 'y']);
-        expect(t.plot[0].props.d.x).toBe('@x:scaled');
+        expect(t.marks[0].props.d.x).toBe('@x:scaled');
         expect(implicitDims({ dims: { x: 'year', y: 'value' }, marks: { type: 'point', x: 'year', y: 'value' } })).toEqual([]);
         // the column of another axis stays a dim of its own on the scale of the axis, e.g. y2 of the column of y
         expect(translate({ dims: { x: 'year', y: 'v' }, marks: { type: 'rule', y1: 'v', y2: 'hi' } }).dims.hi.scale).toEqual({ of: 'y' });
     });
     test('a fill of a categorical dim is in the default hover, as a by', () => {
         const t = translate({ dims: { x: 'a', y: 'b', land: { column: 'land', categories: { W: 'red', T: 'blue' } } }, marks: { type: 'point', fill: 'land' } });
-        expect(t.plot[0].by).toEqual(['land']);
+        expect(t.marks[0].by).toEqual(['land']);
         expect(t.dims.land.hover).toEqual({});
     });
     test('lon and lat of expressions and references are the ones of the props', () => {
         const t = translate({ coord: 'geo', geo: { data: 'x.json' }, dims: { lng: 'lng', lt: 'lat' }, marks: { type: 'point', lon: '=@lng + 1', lat: 'lt' } });
-        expect(t.plot[0].props).toMatchObject({ lon: { '+': ['@lng', 1] }, lat: '@lt' });
-        expect(translate({ coord: 'geo', marks: { type: 'point', lon: '@lng', lat: '@lat' } }).plot[0].props).toMatchObject({ lon: '@lng', lat: '@lat' });
+        expect(t.marks[0].props).toMatchObject({ lon: { '+': ['@lng', 1] }, lat: '@lt' });
+        expect(translate({ coord: 'geo', marks: { type: 'point', lon: '@lng', lat: '@lat' } }).marks[0].props).toMatchObject({ lon: '@lng', lat: '@lat' });
     });
 });
 
@@ -266,21 +265,21 @@ test('a control of 5.0 sets its global, `ref` is no key of it (review of 5.0)', 
 
 test('stack of arcs: of categories around the circle the radius (a rose), else the angle (a pie)', () => {
     const rose = translate({ coord: 'polar', dims: { x: { column: 'year', type: 'categorical' }, y: 'n', t: { column: 't', legend: {} } }, marks: { type: 'arc', by: 't', stack: true } });
-    expect(rose.plot[0].props).toMatchObject({ angle: '@x:scaled', innerRadius: '@y:start:scaled', outerRadius: '@y:end:scaled' });
+    expect(rose.marks[0].props).toMatchObject({ angle: '@x:scaled', innerRadius: '@y:start:scaled', outerRadius: '@y:end:scaled' });
     expect(rose.dims.y.stacked).toBe(true);
     const pie = translate({ coord: 'polar', dims: { x: 'share', t: { column: 't', legend: {} } }, marks: { type: 'arc', by: 't', stack: true } });
-    expect(pie.plot[0].props).toMatchObject({ startAngle: '@x:start:scaled', endAngle: '@x:end:scaled' });
+    expect(pie.marks[0].props).toMatchObject({ startAngle: '@x:start:scaled', endAngle: '@x:end:scaled' });
 });
 
 test('numbers at x and y of points and texts of cartesian charts are values on the scale, literals pixels', () => {
-    const p = translate({ dims: { x: 'v', y: 'w' }, marks: [{ type: 'label', x: 250, text: 'a' }, { type: 'point', y: 3 }, { type: 'text', x: '=literal(34)', text: 'b' }] }).plot;
+    const p = translate({ dims: { x: 'v', y: 'w' }, marks: [{ type: 'label', x: 250, text: 'a' }, { type: 'point', y: 3 }, { type: 'text', x: '=literal(34)', text: 'b' }] }).marks;
     expect(p[0].props.x).toBe('@x:scaled:250');
     expect(p[1].props.cy).toBe('@y:scaled:3');
     expect(p[2].props.x).toBe(34);
 });
 
 test('the corners as anchors of labels', () => {
-    const p = translate({ dims: { x: 'v', y: 'w' }, marks: [{ type: 'label', anchor: 'top-end', text: 'a' }, { type: 'label', anchor: 'bottom-start', dx: 2, text: 'b' }] }).plot;
+    const p = translate({ dims: { x: 'v', y: 'w' }, marks: [{ type: 'label', anchor: 'top-end', text: 'a' }, { type: 'label', anchor: 'bottom-start', dx: 2, text: 'b' }] }).marks;
     expect(p[0].props).toMatchObject({ dx: 4, dy: -4, 'text-anchor': 'start', 'dominant-baseline': 'auto' });
     expect(p[1].props).toMatchObject({ dx: 2, dy: 4, 'text-anchor': 'end', 'dominant-baseline': 'hanging' });
 });

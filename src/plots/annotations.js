@@ -2,12 +2,12 @@ import { markPath, warnOnce } from "@/utils/warn";
 import { directOf } from "@/utils/draw";
 import { convert } from "@/utils/data";
 
-// the annotations of the coordinate systems as plot types, a band, a line, a
+// the annotations of the coordinate systems as mark types, a band, a line, a
 // text or a circle per row at its values of the dims (the items of
 // `annotate` of the coordinate system, see coords/annotations.js), e.g. of the
-// `annotations` of a definition (see prepareDef) or of the rows of a plot of
+// `annotations` of a definition (see prepareDef) or of the rows of a mark of
 // its own `data`, e.g. events, `label` and `text` of the rows are templates
-// of the globals, the props of the plot can have the names of the rows,
+// of the globals, the props of the mark can have the names of the rows,
 // nothing is drawn in a coordinate system without the type, e.g. a band on a
 // map, it warns once
 // the items of an annotation have a place: the attributes of their
@@ -18,9 +18,9 @@ const placed = items => items.every(item => Object.values(item[directOf] ?? {})
 
 // the path of an annotation in the definition, e.g. "annotations[0]", of
 // the rows of a mark the one of the mark
-const pathOf = (ctx, plot) => {
-    const m = /^annotation-(\d+)$/.exec(String(plot.id));
-    return m ? `annotations[${m[1]}]` : markPath(ctx.store.def, plot, true);
+const pathOf = (ctx, mark) => {
+    const m = /^annotation-(\d+)$/.exec(String(mark.id));
+    return m ? `annotations[${m[1]}]` : markPath(ctx.store.def, mark, true);
 };
 
 // the dims of the values of an annotation (`row`) which are never on their
@@ -40,7 +40,7 @@ const unknownOf = (ctx, row) => Object.keys(row).filter(k => ctx.scales[k] && ro
 });
 
 const annotation = type => ({
-    marks(groups, plot, ctx) {
+    marks(groups, mark, ctx) {
         const coord = ctx.store.coord;
         if (!coord.annotate || !(coord.annotations ?? []).includes(type)) {
             const name = ctx.store.def.options?.coord ?? 'cartesian';
@@ -56,7 +56,7 @@ const annotation = type => ({
                     type,
                     label: ctx.store.text(row.label),
                     text: ctx.store.text(row.text),
-                    props: plot.props,
+                    props: mark.props,
                     scope: { ...ctx.scope, ...row },
                 });
                 if (placed(items))
@@ -67,7 +67,7 @@ const annotation = type => ({
                 const unknown = unknownOf(ctx, row);
                 if (unknown.length > 0) {
                     const values = unknown.map(k => `${k}: ${JSON.stringify(row[k])}`).join(', ');
-                    warnOnce(ctx.store, `annotation:${plot.id}:${values}`, `${pathOf(ctx, plot)}: the ${type} has no position (${values}), a value which is not on its scale, e.g. a category which is not in the data, it is not drawn`);
+                    warnOnce(ctx.store, `annotation:${mark.id}:${values}`, `${pathOf(ctx, mark)}: the ${type} has no position (${values}), a value which is not on its scale, e.g. a category which is not in the data, it is not drawn`);
                 }
                 return [];
             })),

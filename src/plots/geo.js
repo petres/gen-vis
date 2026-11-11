@@ -79,12 +79,12 @@ const without = (layer, drop) => {
 const positioned = (type, x, y, labels = false) => ({
     coords: ['geo'],
     update: true,
-    marks(groups, plot, ctx) {
+    marks(groups, mark, ctx) {
         const join = joined(ctx);
-        const atPole = labels && plot.place != 'centroid';
+        const atPole = labels && mark.place != 'centroid';
         const places = new Map();
         // the halo of the texts (`halo`), as of the texts of other charts
-        const around = labels ? halo(plot) : {};
+        const around = labels ? halo(mark) : {};
         const layer = perRow(groups, type, (v, row) => {
             const { lon, lat, ...own } = v;
             const props = { ...around, ...own };
@@ -96,7 +96,7 @@ const positioned = (type, x, y, labels = false) => ({
                 join.add(row, f);
                 // the room around the pole of the area also of a label at the
                 // centroid, of `fit`
-                const place = f && (atPole || (labels && plot.fit)) ? ctx.store.coord.labelPlace(ctx, f) : null;
+                const place = f && (atPole || (labels && mark.fit)) ? ctx.store.coord.labelPlace(ctx, f) : null;
                 p = place && atPole ? [place.x, place.y] : f && ctx.path.centroid(f);
                 if (place)
                     places.set(row, place);
@@ -106,24 +106,24 @@ const positioned = (type, x, y, labels = false) => ({
         });
         join.warn();
         without(layer, v => !finite(v[x], v[y]));
-        if (!labels || (!plot.fit && plot.overlap !== false))
+        if (!labels || (!mark.fit && mark.overlap !== false))
             return layer;
         // the labels which fit into their area and do not overlap, see
         // fitLabels of coords/geo-map.js
-        const dropped = ctx.store.coord.fitLabels(layer.groups.flatMap(g => g.items), plot, x, y, v => places.get(v[rowOf]));
+        const dropped = ctx.store.coord.fitLabels(layer.groups.flatMap(g => g.items), mark, x, y, v => places.get(v[rowOf]));
         return without(layer, v => dropped.has(v));
     },
 });
 
-// the plot types of maps, the geometry is drawn in the projection of the facet
+// the mark types of maps, the geometry is drawn in the projection of the facet
 export default {
     // all features, e.g. as background or borders, the props are the ones of
     // the facet, e.g. of the globals
     'geo:base': {
         coords: ['geo'],
         update: true,
-        marks(groups, plot, ctx) {
-            const props = evaluate(plot.props, ctx.scope);
+        marks(groups, mark, ctx) {
+            const props = evaluate(mark.props, ctx.scope);
             const { features, key } = ctx.store.geo;
             return {
                 class: "vis-features",
@@ -140,7 +140,7 @@ export default {
     'geo:region': {
         coords: ['geo'],
         update: true,
-            marks(groups, plot, ctx) {
+            marks(groups, mark, ctx) {
             const join = joined(ctx);
             const layer = perRow(groups, "path", (v, row) => {
                 const f = featureOf(ctx, row);
@@ -162,9 +162,9 @@ export default {
     'geo:mesh': {
         coords: ['geo'],
         update: true,
-        marks(groups, plot, ctx) {
-            const props = evaluate(plot.props, ctx.scope);
-            const mesh = ctx.store.geo.mesh(plot.object, plot.borders);
+        marks(groups, mark, ctx) {
+            const props = evaluate(mark.props, ctx.scope);
+            const mesh = ctx.store.geo.mesh(mark.object, mark.borders);
             return { class: "vis-mesh", element: "path", items: [{ [directOf]: { d: ctx.path(mesh), fill: "none" }, ...props }] };
         },
     },

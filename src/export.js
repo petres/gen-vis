@@ -6,7 +6,7 @@
 // takes a screenshot of it (PNG) or prints the SVG (PDF). The protocol is
 // the one of docs/export.md, of `genVisExport.version`;
 // `genVisExport.resolve(options)` returns the merged definition, e.g. of
-// the plot types a wrapper chooses its colors by.
+// the mark types a wrapper chooses its colors by.
 import { createGenVis } from '@/index.js';
 import { registerScheme } from '@/utils/d3';
 import { clearCache, fetchData, readDef, resolveParents, resolveUrl } from '@/utils/load';

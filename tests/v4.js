@@ -10,7 +10,7 @@ import { deepMerge } from '@/utils/merge.js';
 import { sameValue, isObject } from '@/utils/values.js';
 import { isOperator } from '@/utils/expr.js';
 import { normalize } from '@/utils/normalize.js';
-import { plotTypes } from '@/plots';
+import { markTypes } from '@/plots';
 
 // lists whose entries all have an `id` merge by it (4.x knew no other keys)
 const hasIds = a => a.length > 0 && a.every(e => e !== null && typeof e == 'object' && !Array.isArray(e) && 'id' in e);
@@ -147,22 +147,22 @@ const normalize4 = def => {
             if (!isObject(p) || typeof p.type != 'string')
                 return p;
             const name = p.type == 'point' ? 'circle' : p.type;
-            const type = normalize({ options: { coord }, plot: [{ type: name }] }, { plotTypes }).plot[0].type;
+            const type = normalize({ options: { coord }, marks: [{ type: name }] }, { markTypes }).marks[0].type;
             const props = isObject(p.props) ? p.props : {};
             return { ...p, type, props: withPositions(positions4[type]?.(props) ?? {}, props) };
         });
-    return normalize(engineNames(d), { plotTypes });
+    return normalize(engineNames(d), { markTypes });
 };
 
 /**
  * A definition of 4.x in the names of the engine, which are the ones of
  * 5.0: the form of 4.x normalized was the one the engine read, the tests of
  * the engine which are written of a definition of 4.x (e.g. one which is
- * also migrated) read it so; `mapping` are `dims`. A copy.
+ * also migrated) read it so; `mapping` are `dims`, `plot` are `marks`. A copy.
  */
 const engineNames = def => {
-    const { mapping, ...rest } = structuredClone(def);
-    return { ...rest, ...(mapping === undefined ? {} : { dims: mapping }) };
+    const { mapping, plot, ...rest } = structuredClone(def);
+    return { ...rest, ...(mapping === undefined ? {} : { dims: mapping }), ...(plot === undefined ? {} : { marks: plot }) };
 };
 
 export { mergeAll4, resolveParents4, patched4, globalSets, normalize4, engineNames };

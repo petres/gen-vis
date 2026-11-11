@@ -51,13 +51,13 @@ const sizeOf = (store, value, name, fallback) => {
     return px ?? fallback;
 };
 
-// the path of a plot of the engine (`def.plot`) in the definition, the mark
+// the path of a mark of the engine (`def.marks`) in the definition, the one
 // of the same index, e.g. "marks[0]", `named` adds an id of its own, e.g.
 // "marks[1] ('caps')"
-const markPath = (def, plot, named = false) => {
-    const i = [def?.plot ?? []].flat().indexOf(plot);
+const markPath = (def, mark, named = false) => {
+    const i = [def?.marks ?? []].flat().indexOf(mark);
     const at = i < 0 ? 'marks' : `marks[${i}]`;
-    return named && plot?.id !== undefined && plot.id !== `mark-${i}` ? `${at} ('${plot.id}')` : at;
+    return named && mark?.id !== undefined && mark.id !== `mark-${i}` ? `${at} ('${mark.id}')` : at;
 };
 
 // a message which begins with the path of a part of the definition, e.g.

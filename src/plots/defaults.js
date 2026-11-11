@@ -1,9 +1,9 @@
-// the default props of the built-in plot types, the `defaults` of the types
-// (see plots/index.js), of the plots of the type, "line" and
+// the default props of the built-in mark types, the `defaults` of the types
+// (see plots/index.js), of the marks of the type, "line" and
 // "cartesian:line" alike, see utils/normalize.js, a definition writes only
 // the props which differ, null removes one. The positions are no defaults,
 // translate writes them of the channels of the marks (see mark of
-// utils/language.js). The color of a plot without categories is the one of
+// utils/language.js). The color of a mark without categories is the one of
 // the text, the fill of bars, areas and arcs the first color of the default
 // colors of categories (observable10, see utils/def.js), not a black block.
 const color = { or: ['@color', 'currentColor'] };

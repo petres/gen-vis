@@ -153,7 +153,7 @@ const createVis = app => {
         store.dimNamesWithKey('legend').forEach(n => at[evaluate(store.dim(n).legend.position, scope) ?? 'top']?.push(n));
         // the annotations with a name after the legends of the dims, at
         // the position of the first one
-        if (store.def.plot.some(p => p.type?.startsWith('annotation:') && p.legend !== undefined && p.legend !== null))
+        if (store.def.marks.some(p => p.type?.startsWith('annotation:') && p.legend !== undefined && p.legend !== null))
             (Object.values(at).find(names => names.length > 0) ?? at.top).push(annotationsLegend);
         return at;
     };
@@ -173,7 +173,7 @@ const createVis = app => {
     // the elements, see render
     const uid = count++;
     const root = el('div', { 'data-vis': uid });
-    // the stylesheet of the highlights of the plots, see utils/highlight.js
+    // the stylesheet of the highlights of the marks, see utils/highlight.js
     const style = root.appendChild(el('style'));
     const header = root.appendChild(el('div', { class: 'vis-header' }));
     const form = root.appendChild(el('div', { class: 'vis-controls' }));
@@ -411,8 +411,8 @@ const createVis = app => {
             .filter(([k, v]) => dataAttribute(k, 'global-') && ['string', 'number', 'boolean'].includes(typeof v))
             .map(([k, v]) => [dataAttribute(k, 'global-'), String(v)]));
         patch(root, { class: rootClass ? `vis ${rootClass}` : 'vis', 'data-vis': uid, ...globalAttrs, style: { '--gen-vis-font-family': opts.fontFamily } });
-        const css = highlightStyle(store.def.plot, { scope: `.vis[data-vis="${uid}"]`, transition: Number(opts.highlight?.transition) || 0,
-            warn: (plot, message) => warnOnce(store, `highlight:${plot.id}:${message}`, `${markPath(store.def, plot, true)}.${message}`) });
+        const css = highlightStyle(store.def.marks, { scope: `.vis[data-vis="${uid}"]`, transition: Number(opts.highlight?.transition) || 0,
+            warn: (mark, message) => warnOnce(store, `highlight:${mark.id}:${message}`, `${markPath(store.def, mark, true)}.${message}`) });
         if (style.textContent !== css)
             style.textContent = css;
 

@@ -5,9 +5,9 @@ import { arrowheads, defsOf } from "@/utils/arrows";
 import { highlighter } from "@/utils/highlight";
 import { drawAxis } from "@/utils/axis";
 import { create, interruptAll, setAttr } from "@/utils/dom";
-import { plotTypes } from "@/plots";
+import { markTypes } from "@/plots";
 import { markPath, similar, withPath } from "@/utils/warn";
-import { inFacet, plotGroups, plotRows } from "@/layout";
+import { inFacet, markGroups, markRows } from "@/layout";
 import { el, patch, place, setText } from "@/comp/html";
 import { createFacetHover } from "@/comp/facet-hover";
 
@@ -16,8 +16,8 @@ import { createFacetHover } from "@/comp/facet-hover";
 // the coordinate system, a full name of the ones of the registry
 const aliases = ['point', 'label', 'cell', 'tick'];
 const unknownType = (type, coord) => {
-    const full = Object.keys(plotTypes).filter(t => !t.startsWith('annotation:'));
-    const names = String(type).includes(':') ? full : [...new Set([...full.filter(t => !plotTypes[t].coords || plotTypes[t].coords.includes(coord))
+    const full = Object.keys(markTypes).filter(t => !t.startsWith('annotation:'));
+    const names = String(type).includes(':') ? full : [...new Set([...full.filter(t => !markTypes[t].coords || markTypes[t].coords.includes(coord))
         .map(t => t.split(':')[1]), ...aliases])];
     const close = similar(type, names);
     return `unknown mark type '${type}'${close !== undefined ? `, did you mean '${close}'?` : `, e.g. 'line', 'bar' or 'point'`}`;
@@ -41,7 +41,7 @@ let count = 0;
 const createFacet = (vis, initial) => {
     const { store, slots, emit } = vis;
     // the elements which are kept from one draw to the next by their key,
-    // e.g. the groups of the plots, see keep
+    // e.g. the groups of the marks, see keep
     const kept = new Map();
     const uid = `gen-vis-facet-${count++}`;
     let facet = initial;
@@ -49,7 +49,7 @@ const createFacet = (vis, initial) => {
     let cursor = null;
     let ctx = null;
     let highlight = null;
-    // the origin of the plots and axes in the inner area, e.g. its center
+    // the origin of the marks and axes in the inner area, e.g. its center
     const origin = () => store.coord.origin?.(facet.innerWidth, facet.innerHeight) ?? [0, 0];
     const innerTransform = () => { const o = origin(); return `translate(${facet.margins.left + o[0]} ${facet.margins.top + o[1]})` };
     // the name of the chart for screen readers, the title and the facet,
@@ -114,7 +114,7 @@ const createFacet = (vis, initial) => {
     // returns a new one, it is placed after the element drawn
     // before (the cursor), so the elements are in the order of the draw,
     // an element in its place is not moved, as a move costs the browser
-    // the style of all its elements, e.g. of the circles of a plot
+    // the style of all its elements, e.g. of the circles of a mark
     const keep = (key, make) => {
         let node = kept.get(key);
         if (!node)
@@ -150,7 +150,7 @@ const createFacet = (vis, initial) => {
 
     // the id of the clip of the plot area of the facet (`clip` of a mark):
     // a <clipPath> of the edges of the plot area in the coordinates of the
-    // plots in the <defs> of the svg, with the id of the facet, so it is
+    // marks in the <defs> of the svg, with the id of the facet, so it is
     // unique on the page and an export of the svg copies it
     const clipOf = () => {
         const id = `${uid}-clip`;
@@ -165,37 +165,37 @@ const createFacet = (vis, initial) => {
         return id;
     };
 
-    // the key of the group of a plot, its place in the definition (the ids
-    // of two plots can be the same, e.g. of a parent), its id and type,
-    // e.g. a plot of a value of a control is not drawn into the elements of
+    // the key of the group of a mark, its place in the definition (the ids
+    // of two marks can be the same, e.g. of a parent), its id and type,
+    // e.g. a mark of a value of a control is not drawn into the elements of
     // another one
-    const plotKey = plot => `plot ${store.def.plot.indexOf(plot)} ${plot.id} ${plot.type}`;
+    const markKey = mark => `mark ${store.def.marks.indexOf(mark)} ${mark.id} ${mark.type}`;
 
-    // a group per plot, kept from one draw to the next, the layer of the
+    // a group per mark, kept from one draw to the next, the layer of the
     // marks of its type (see plots/index.js) is drawn into it, of the
     // types with `update` into the elements of the draw before, the
     // elements of the others are removed
-    const plot = plots => {
-        plots.forEach(plot => {
-            const path = markPath(store.def, plot);
+    const drawMarks = marks => {
+        marks.forEach(mark => {
+            const path = markPath(store.def, mark);
             const coord = store.def.options.coord ?? 'cartesian';
-            if (!Object.hasOwn(plotTypes, plot.type))
-                throw new Error(`${path}.type: ${unknownType(plot.type, coord)}`);
-            const type = plotTypes[plot.type];
+            if (!Object.hasOwn(markTypes, mark.type))
+                throw new Error(`${path}.type: ${unknownType(mark.type, coord)}`);
+            const type = markTypes[mark.type];
             // the types of a coordinate system, e.g. no bars in a map
             if (type.coords && !type.coords.includes(coord))
-                throw new Error(`${path}.type: the mark type '${plot.type}' is not available in the coordinate system '${coord}'`);
-            const parent = keep(plotKey(plot), () => {
+                throw new Error(`${path}.type: the mark type '${mark.type}' is not available in the coordinate system '${coord}'`);
+            const parent = keep(markKey(mark), () => {
                 const g = create("g");
                 // an id with spaces is several classes, e.g. "1st line"
-                g.classList.add("vis-mark", ...String(plot.id).trim().split(/^|\s+/));
-                g.setAttribute("data-mark", plot.id);
-                if (plot.layer)
-                    g.classList.add(`vis-${plot.layer}`);
+                g.classList.add("vis-mark", ...String(mark.id).trim().split(/^|\s+/));
+                g.setAttribute("data-mark", mark.id);
+                if (mark.layer)
+                    g.classList.add(`vis-${mark.layer}`);
                 return g;
             });
             // the elements of a mark with `clip` only in the plot area
-            if (plot.clip)
+            if (mark.clip)
                 parent.setAttribute('clip-path', `url(#${clipOf()})`);
             else if (parent.hasAttribute('clip-path'))
                 parent.removeAttribute('clip-path');
@@ -204,9 +204,9 @@ const createFacet = (vis, initial) => {
             // an error of the type names the mark, e.g. "marks[0]: ..."
             let layer;
             try {
-                layer = type.marks(ctx.groupsOf(plot.id), plot, ctx);
+                layer = type.marks(ctx.groupsOf(mark.id), mark, ctx);
             } catch (error) {
-                throw withPath(error, markPath(store.def, plot, true));
+                throw withPath(error, markPath(store.def, mark, true));
             }
             // the arrowheads of "marker-end": "arrow", see utils/arrows.js
             drawLayer(parent, arrowheads(layer, svg, uid));
@@ -226,7 +226,7 @@ const createFacet = (vis, initial) => {
         // the elements are the ones without a highlight, also the one of
         // the page, at once, a transition would replace the new values
         highlight?.(null, true);
-        // the position of the plots of the new facet already, e.g. of the
+        // the position of the marks of the new facet already, e.g. of the
         // hover of the draw before at its pointer in the center of a polar
         // plot of a new width
         inner.setAttribute('transform', innerTransform());
@@ -236,14 +236,14 @@ const createFacet = (vis, initial) => {
         used = new Set();
         cursor = marker;
 
-        // the context of the plot types and the coordinate system, see
+        // the context of the mark types and the coordinate system, see
         // plots/index.js, the scales are only replaced with the facet
         const { key, rows, scales, axis, stackOf, isStacked, stackOrder, scope, dims, innerWidth, innerHeight, margins, outer, cell, sharing, slotKeys } = facet;
         ctx = {
             store,
             // the id of the facet on the page, e.g. of the ids of elements
             uid,
-            // the element of the plots and axes, the origin is the one of the coordinate system
+            // the element of the marks and axes, the origin is the one of the coordinate system
             inner,
             key,
             rows,
@@ -264,12 +264,12 @@ const createFacet = (vis, initial) => {
             sharing,
             // the distinct values of a dim of all facets, see rowValue of layout.js
             slotKeys,
-            // the groups of a plot of the facet by its id, of this draw, e.g.
+            // the groups of a mark of the facet by its id, of this draw, e.g.
             // the bands of an area of labels inside them (plots/inside.js)
             groupsOf: id => {
                 if (!drawnGroups.has(id)) {
-                    const p = store.def.plot.find(q => q.id === id);
-                    drawnGroups.set(id, p ? plotGroups(p, plotRows(store, p, facet), ctx) : []);
+                    const p = store.def.marks.find(q => q.id === id);
+                    drawnGroups.set(id, p ? markGroups(p, markRows(store, p, facet), ctx) : []);
                 }
                 return drawnGroups.get(id);
             },
@@ -277,17 +277,17 @@ const createFacet = (vis, initial) => {
         const drawnGroups = new Map();
 
         store.coord.prepare?.(ctx);
-        // the plots below the axes and grid lines, e.g. the bands of annotations,
-        // the ones above the other plots, e.g. labels, the elements of the
+        // the marks below the axes and grid lines, e.g. the bands of annotations,
+        // the ones above the other marks, e.g. labels, the elements of the
         // draw before move with the transition of the view, see utils/draw.js
-        const plots = store.def.plot.filter(p => inFacet(store.def, p, facet));
+        const marks = store.def.marks.filter(p => inFacet(store.def, p, facet));
         withMotion(facet.transition ?? 0, () => {
-            plot(plots.filter(p => p.layer == 'below'));
+            drawMarks(marks.filter(p => p.layer == 'below'));
             drawParts(store.coord.axes(ctx));
-            plot(plots.filter(p => p.layer != 'below' && p.layer != 'above'));
-            plot(plots.filter(p => p.layer == 'above'));
+            drawMarks(marks.filter(p => p.layer != 'below' && p.layer != 'above'));
+            drawMarks(marks.filter(p => p.layer == 'above'));
         });
-        // the labels of the annotations are above the plots, also the ones below them
+        // the labels of the annotations are above the marks, also the ones below them
         const labels = inner.querySelectorAll(".vis-annotation-label");
         if (labels.length > 0) {
             const g = inner.appendChild(create("g"));
@@ -297,7 +297,7 @@ const createFacet = (vis, initial) => {
         store.coord.raise?.(ctx);
 
         // the clip of the plot area without a mark with `clip`
-        if (!plots.some(p => p.clip))
+        if (!marks.some(p => p.clip))
             svg.querySelector(':scope > defs.vis-defs > clipPath.vis-clip')?.remove();
         // the elements of the draw before which are not drawn again
         kept.forEach((node, k) => {
@@ -308,7 +308,7 @@ const createFacet = (vis, initial) => {
         });
         // the classes of the highlight, its styles are the ones of the chart,
         // see highlightStyle of utils/highlight.js and comp/vis.js
-        highlight = highlighter(store.def.plot, plot => kept.get(plotKey(plot)), inner);
+        highlight = highlighter(store.def.marks, mark => kept.get(markKey(mark)), inner);
         hover.init(ctx);
         // the highlight of the page
         if (store.highlighted)
@@ -343,7 +343,7 @@ const createFacet = (vis, initial) => {
         },
         highlight: highlightEntry,
         // the animations of the elements end with the facet, so their frames do
-        // not set the attributes of removed elements: the ones of the plots and
+        // not set the attributes of removed elements: the ones of the marks and
         // of the axes (see utils/dom.js), a hover shown ends (`hover` null)
         destroy() {
             hover.end();

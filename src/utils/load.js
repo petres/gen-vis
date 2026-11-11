@@ -15,7 +15,7 @@ import { isObject } from "@/utils/values";
 import { hasCategories, normalize } from "@/utils/normalize";
 import { versionError } from "@/utils/version";
 import { refNames } from "@/utils/expr";
-import { plotTypes } from "@/plots";
+import { markTypes } from "@/plots";
 import { symbolDefaults } from "@/utils/defaults";
 
 // the load of a visualisation: its definition with its parents, the parts
@@ -240,7 +240,7 @@ const geoOf = (module, json, def = {}) => {
     const exclude = new Set((def.exclude ?? []).map(String));
     const keep = f => (!include || include.has(key(f))) && !exclude.has(key(f));
     const features = geoFeatures(json, def.object).filter(keep);
-    // the borders of an object of TopoJSON by the plots of geo:mesh, of the
+    // the borders of an object of TopoJSON by the marks of geo:mesh, of the
     // object of the features also without the ones left out
     const objectName = object => object ?? def.object ?? Object.keys(json.objects ?? {})[0];
     const meshes = new Map();
@@ -273,7 +273,7 @@ const requirements = defOrg => {
         transforms: all.some(d => Boolean(d.transform)),
         colorLegend: dims.some(m => m.legend && !hasCategories(m)),
         // labels inside the bands of an area, see plots/inside.js
-        inside: all.some(d => [d.plot ?? []].flat().some(p => isObject(p) && isObject(p.place) && p.place.in !== undefined)),
+        inside: all.some(d => [d.marks ?? []].flat().some(p => isObject(p) && isObject(p.place) && p.place.in !== undefined)),
         locales: [...new Set([...all.filter((d, i) => i == 0 || d.options?.locale != null).map(d => d.options?.locale ?? undefined), ...languagesOf(defOrg)])],
     };
 };
@@ -315,9 +315,9 @@ const loadParts = need => {
 };
 
 // an error of the engine's form with the path of the definition, e.g.
-// "marks[0].by: ..." of "plot[0].by: ..."
+// "marks[0].fill: ..." of "marks[0].props.fill: ..."
 const authoredError = error => {
-    const m = /^(plot|options|formElements|facets)\b([^\s:]*): /.exec(error?.message ?? '');
+    const m = /^(marks|options|formElements|facets)\b([^\s:]*): /.exec(error?.message ?? '');
     return m ? new Error(`${authoredPath(m[1] + m[2])}: ${error.message.slice(m[0].length)}`, { cause: error }) : error;
 };
 
@@ -366,7 +366,7 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
     const source = old ? (await lazy.migrate()).migrate(merged) : merged;
     const engine = v => {
         try {
-            return normalize(checkDims(translate(v)), { plotTypes });
+            return normalize(checkDims(translate(v)), { markTypes });
         } catch (error) {
             throw authoredError(error);
         }
@@ -433,14 +433,14 @@ const loadRows = async (defOrg, url, data) => {
     return rows;
 };
 
-// the data of plots of their own, e.g. events, and of the lookups of
+// the data of marks of their own, e.g. events, and of the lookups of
 // transforms, also of the other values of the controls, by their url relative
 // to the def, the rows are not evaluated as the ones of the definition, see
 // layout.js
 const loadFiles = async (defOrg, url) => {
     const all = variants(defOrg);
     const withFiles = [
-        ...all.flatMap(d => [d.plot ?? []].flat()).filter(p => typeof p?.data == 'string'),
+        ...all.flatMap(d => [d.marks ?? []].flat()).filter(p => typeof p?.data == 'string'),
         ...all.flatMap(d => [d.transform ?? []].flat()).filter(t => t?.type == 'lookup' && typeof t.data == 'string'),
     ];
     return new Map(await Promise.all([...new Set(withFiles.map(p => p.data))].map(async data => {
@@ -484,7 +484,7 @@ const prepare = (defOrg, source, rows, files, state, globals, symbols = {}) => {
     };
     // the types of the dims of the definition resolved again from the values
     const types = part => inferTypes(part, rows, columns);
-    const resolving = { dataKeys: keysOf, files, symbols, source, plotTypes, types };
+    const resolving = { dataKeys: keysOf, files, symbols, source, markTypes, types };
     const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), resolving);
     const defaults = snapshot(prepared);
     applyState(prepared, state);
@@ -555,7 +555,7 @@ const columnReferences = (prepared, rows, columns) => {
     const dimOf = new Map(Object.entries(dims).map(([n, m]) => [m?.column, n]));
     const columnNames = new Set([...Object.keys(data[0]), ...columns.keys()]);
     const warnings = [];
-    [].concat(prepared.plot ?? []).forEach((p, i) => [['props', p?.props], ['highlight', p?.highlight], ['others', p?.others]]
+    [].concat(prepared.marks ?? []).forEach((p, i) => [['props', p?.props], ['highlight', p?.highlight], ['others', p?.others]]
         .filter(([, props]) => isObject(props)).forEach(([part, props]) => Object.entries(props).forEach(([k, v]) => {
             let names;
             try {
@@ -564,7 +564,7 @@ const columnReferences = (prepared, rows, columns) => {
                 return;
             }
             [...new Set(names.filter(n => typeof n == 'string').map(n => n.split(':')[0]))].filter(n => columnNames.has(n) && !own.has(n)).forEach(n => {
-                const path = authoredPath(part == 'props' ? `plot[${i}].props.${k}` : `plot[${i}].${part}.${k}`);
+                const path = authoredPath(part == 'props' ? `marks[${i}].props.${k}` : `marks[${i}].${part}.${k}`);
                 warnings.push(dimOf.has(n) ? `${path}: '@${n}' is the column of the dim '${dimOf.get(n)}', a reference names the dim: @${dimOf.get(n)}`
                     : `${path}: '@${n}' is a column of the data without a dim, it has no value: a reference names a dim, e.g. "dims": { "${n}": "${n}" }`);
             });
@@ -595,7 +595,7 @@ const loadGeo = (geometries, module, prepared) => {
 
 // see Store.init, urls of inline defs are relative to the page: the
 // definition, then at once the parts it needs, its data, the files of its
-// plots and transforms and the geometries of maps (an error of one is the
+// marks and transforms and the geometries of maps (an error of one is the
 // one of the load, the others are handled by Promise.all), the prepared
 // definition and the geometry of its map. The coordinate systems and the
 // geometries of all values of the controls are kept, a control can switch

@@ -257,19 +257,19 @@ const textBox = v => {
 // the items of labels (`x` and `y`) which do not fit into the area around
 // their place (`fit`, `placeOf(item)`, see labelPlace) or overlap the label
 // of a larger area (`"overlap": false`), of the larger areas first
-const fitLabels = (items, plot, x, y, placeOf) => {
+const fitLabels = (items, mark, x, y, placeOf) => {
     const kept = [];
     const dropped = new Set();
     items.map(v => ({ v, box: textBox(v), place: placeOf(v) }))
         .sort((a, b) => (b.place?.area ?? 0) - (a.place?.area ?? 0))
         .forEach(({ v, box, place }) => {
-            if (plot.fit && place && (box.w/2 > 1.5*place.d || box.h/2 > place.d)) {
+            if (mark.fit && place && (box.w/2 > 1.5*place.d || box.h/2 > place.d)) {
                 dropped.add(v);
                 return;
             }
             // 2 pixels around a label
             const r = { x0: v[x] - box.w/2 - 2, x1: v[x] + box.w/2 + 2, y0: v[y] - box.h/2 - 2, y1: v[y] + box.h/2 + 2 };
-            if (plot.overlap === false && kept.some(k => r.x0 < k.x1 && k.x0 < r.x1 && r.y0 < k.y1 && k.y0 < r.y1)) {
+            if (mark.overlap === false && kept.some(k => r.x0 < k.x1 && k.x0 < r.x1 && r.y0 < k.y1 && k.y0 < r.y1)) {
                 dropped.add(v);
                 return;
             }

@@ -181,7 +181,7 @@ const directOf = Symbol('direct');
 const shapeOf = Symbol('shape');
 const childrenOf = Symbol('children');
 
-// the key of a group of a plot, the keys of its categories, so an element
+// the key of a group of a mark, the keys of its categories, so an element
 // of a group is the one of the same group of the draw before
 const groupKey = g => JSON.stringify(Object.values(g.categories));
 
@@ -198,7 +198,7 @@ const rowKey = v => idOf(v[rowOf]);
 
 // a row which replaces the row `before` has its key, so its element is the
 // one of the row before, e.g. a row of the data of a mark of another value
-// of a global, see plotRows of layout.js
+// of a global, see markRows of layout.js
 const replaceRow = (before, row) => {
     ids.set(row, idOf(before));
     return row;
@@ -231,18 +231,18 @@ function drawItem(item) {
 }
 
 /**
- * Draws a layer of a plot (see `marks` of the plot types, plots/index.js)
- * into the group of the plot `parent`, an element, into the elements of the draw before (see join of utils/dom.js),
+ * Draws a layer of a mark (see `marks` of the mark types, plots/index.js)
+ * into the group of the mark `parent`, an element, into the elements of the draw before (see join of utils/dom.js),
  * returns the elements of the items, an array:
  * - `groups`: an element `g.vis-group` per group (its `categories` are its
  *   data-group- attributes), in it an element `element` per item of its
  *   `items`, e.g. a circle per row, the ones of the same group and of the
  *   same `key(item)` (by default the row of the item) are the ones of the
  *   draw before
- * - `items`: an element per item directly in the group of the plot, e.g. a
+ * - `items`: an element per item directly in the group of the mark, e.g. a
  *   path per group of a line, `element` or the one of an item (`elementOf`),
  *   the ones of the same `key(item)` or index are the ones of the draw before
- * - `class`: a class of the group of the plot, e.g. `vis-features`
+ * - `class`: a class of the group of the mark, e.g. `vis-features`
  * - `fit`: the texts with a `max-width` are cut or wrapped, also the ones
  *   in the elements, e.g. the labels of the ticks of an axis, see fitText
  * An item has the props of its element (see setProps, `text` is its text),

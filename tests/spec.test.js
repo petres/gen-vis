@@ -8,7 +8,7 @@ import { evaluate, bind, formatter } from '@/utils/expr';
 import { parseExpression } from '@/utils/expr-parse';
 import { format } from 'd3-format';
 import { normalize } from '@/utils/normalize';
-import { plotTypes } from '@/plots';
+import { markTypes } from '@/plots';
 
 // the fixtures of a directory of spec/ by the name of their file, e.g. "rolling"
 const fixtures = files => Object.entries(files).map(([file, cases]) => [file.split('/').pop().replace(/\.json$/, ''), cases]);
@@ -126,7 +126,7 @@ describe('spec/normalize', () => {
     describe.each(fixtures(files))('%s', (file, cases) => {
         test.each(cases.map(c => [c.name, c]))('%s', (name, c) => {
             const def = clone(c.def);
-            expect(normalize(def, { plotTypes })).toEqual(c.result);
+            expect(normalize(def, { markTypes })).toEqual(c.result);
             // the definition is not changed
             expect(def).toEqual(c.def);
         });

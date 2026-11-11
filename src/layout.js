@@ -1,4 +1,4 @@
-export { layout, axisNames, visibleKeys, plotRows, plotGroups, withColor, unknownOf, gridOf, facetDims, inFacet };
+export { layout, axisNames, visibleKeys, markRows, markGroups, withColor, unknownOf, gridOf, facetDims, inFacet };
 
 import { categoryOrder, continuous, convert, filter, filterRows, groupBy, keptRows, sourceRows, stack, withoutConditions } from "@/utils/data";
 import * as d3 from "@/utils/d3";
@@ -12,7 +12,7 @@ import { markPath, sizeOf, warnOnce, withPath } from "@/utils/warn";
 import { highlightVars } from "@/utils/highlight";
 import { textWidth } from "@/utils/measure";
 import { directOf, elementOf, replaceRow } from "@/utils/draw";
-import { plotTypes } from "@/plots";
+import { markTypes } from "@/plots";
 import { alongRows } from "@/plots/elements";
 
 // the warning of a condition of a filter of no dim, e.g. of a column
@@ -70,7 +70,7 @@ const visibleKeys = def => Object.entries(def.dims)
 
 // the conditions of the visible categories (see visibleKeys): the rows of a
 // hidden category are left out, the ones without a value are in no category
-// and stay, e.g. rows of other plots which do not use the dim
+// and stay, e.g. rows of other marks which do not use the dim
 const visibleRows = visible => visible.map(({ dim, key }) => {
     const keys = new Set(key.map(String));
     return { dim, key: v => v === null || v === undefined || keys.has(String(v)) };
@@ -162,7 +162,7 @@ const facetEntries = (store, rows) => {
 };
 
 /**
- * The edges and the size of the plot area in the coordinates of the plots
+ * The edges and the size of the plot area in the coordinates of the marks
  * (`@plot:top`, ...), e.g. 0 to innerHeight of cartesian plots and around the
  * center of polar ones, unlike `height` of the facet, which includes the
  * margins (the `height` of a range of a scale is the one of the plot area).
@@ -180,7 +180,7 @@ const scaleSizes = scales => Object.fromEntries(Object.entries(scales).filter(([
 /**
  * The inner height of the facets of a vertical band or point scale with a
  * `step`, the pixels of a category, e.g. of a row of horizontal bars, so
- * the bars keep their size if categories are hidden and the plot is less
+ * the bars keep their size if categories are hidden and the mark is less
  * high, of the most categories of the scales of the facets (`rowsOf(name)`,
  * the rows of each and the ones of its domain, see domainOf of layout), also
  * with the space of the groups of the scale, undefined without one.
@@ -511,65 +511,65 @@ const layout = (store, width, before = null) => {
     };
 };
 
-// a value of a row of the data of a plot as the ones of the data, e.g. a
+// a value of a row of the data of a mark as the ones of the data, e.g. a
 // date, also the values of a range, e.g. ["2020-01-01", null] of a band
 const convertValue = (dim, v) => Array.isArray(v)
     ? v.map(e => e === null ? null : convert(dim, e))
     : (v === null ? null : convert(dim, v));
 
-// the rows of the `filter` of a plot of the rows of a facet, kept for the
+// the rows of the `filter` of a mark of the rows of a facet, kept for the
 // same rows if the filter has only references to globals, e.g. of the
 // facet of a new width, see layout
-const plotRowsKept = new WeakMap();
+const markRowsKept = new WeakMap();
 const onceRows = new WeakMap();
-const keptPlotRows = (store, plot, facet) => {
+const keptMarkRows = (store, mark, facet) => {
     const globals = store.def.globals ?? {};
-    const names = refNames(plot.filter);
+    const names = refNames(mark.filter);
     const own = names.every(n => Object.hasOwn(globals, n) && facet.scope[n] === globals[n]);
     const key = own ? JSON.stringify(names.map(n => globals[n])) : null;
-    let kept = plotRowsKept.get(facet.rows);
-    const hit = kept?.get(plot);
+    let kept = markRowsKept.get(facet.rows);
+    const hit = kept?.get(mark);
     if (key !== null && hit?.key === key)
         return hit.rows;
-    const rows = filterRows(facet.rows, plot.filter, store.def.dims, facet.scope, { columns: store.columns, path: `${markPath(store.def, plot)}.filter`, unknown: unknownOf(store) });
+    const rows = filterRows(facet.rows, mark.filter, store.def.dims, facet.scope, { columns: store.columns, path: `${markPath(store.def, mark)}.filter`, unknown: unknownOf(store) });
     if (key !== null) {
         if (!kept)
-            plotRowsKept.set(facet.rows, kept = new Map());
-        kept.set(plot, { key, rows });
+            markRowsKept.set(facet.rows, kept = new Map());
+        kept.set(mark, { key, rows });
     }
     return rows;
 };
 
 /**
- * The rows of a plot in a facet: the rows of the facet or the ones of the
- * `data` of the plot, e.g. events. These have the names of the dims and
+ * The rows of a mark in a facet: the rows of the facet or the ones of the
+ * `data` of the mark, e.g. events. These have the names of the dims and
  * others, e.g. a `label`, the values of the dims are converted as the
  * ones of the data, e.g. dates, the values of rows of the definition are
  * props of the facet, e.g. references to globals. A row with a value of the
- * dim of the facets is only in its facet. `filter` of the plot leaves
+ * dim of the facets is only in its facet. `filter` of the mark leaves
  * out rows, see rowFilter.
  */
-const plotRows = (store, plot, facet) => {
+const markRows = (store, mark, facet) => {
     // one row without values per facet, e.g. a header or a unit label at
     // the edges of the plot area (@plot:top), the same one of a facet
-    if (plot.once) {
+    if (mark.once) {
         if (!onceRows.has(facet.rows))
             onceRows.set(facet.rows, [{}]);
         return onceRows.get(facet.rows);
     }
-    if (!plot.data && plot.filter)
-        return keptPlotRows(store, plot, facet);
-    const filtered = rows => filterRows(rows, plot.filter, store.def.dims, facet.scope, { columns: store.columns, path: `${markPath(store.def, plot)}.filter`, unknown: unknownOf(store) });
-    if (!plot.data)
+    if (!mark.data && mark.filter)
+        return keptMarkRows(store, mark, facet);
+    const filtered = rows => filterRows(rows, mark.filter, store.def.dims, facet.scope, { columns: store.columns, path: `${markPath(store.def, mark)}.filter`, unknown: unknownOf(store) });
+    if (!mark.data)
         return filtered(facet.rows);
     const dims = store.def.dims;
     const dim = store.def.facets?.dim;
-    const inline = !plot.loaded;
+    const inline = !mark.loaded;
     // the rows of the draw before of the same values are kept, the others
     // have their keys, so the elements are the ones of the draw before, see
     // ownRows
-    const before = ownRows(plot, facet.key);
-    const rows = plot.data
+    const before = ownRows(mark, facet.key);
+    const rows = mark.data
         .map((r, i) => {
             const row = Object.fromEntries(Object.entries(r).map(([k, v]) => {
                 const value = inline ? evaluate(v, facet.scope) : v;
@@ -582,23 +582,23 @@ const plotRows = (store, plot, facet) => {
     return filtered(rows);
 };
 
-// the rows of the `data` of a plot of its last draw in the facet of `key`,
+// the rows of the `data` of a mark of its last draw in the facet of `key`,
 // by their index: the elements of a draw are the ones of the same rows (see
 // rowKey of utils/draw.js), a row of the same values is the same object in
 // every draw, one of other values (e.g. of a global) has the key of the
 // row before (see replaceRow), so their elements are kept and move with a
-// transition; not the ones of other data of the plot
+// transition; not the ones of other data of the mark
 const ownRowsKept = new WeakMap();
-const ownRows = (plot, key) => {
-    let kept = ownRowsKept.get(plot);
-    if (kept?.data !== plot.data)
-        ownRowsKept.set(plot, kept = { data: plot.data, facets: new Map() });
+const ownRows = (mark, key) => {
+    let kept = ownRowsKept.get(mark);
+    if (kept?.data !== mark.data)
+        ownRowsKept.set(mark, kept = { data: mark.data, facets: new Map() });
     if (!kept.facets.has(key))
         kept.facets.set(key, []);
     return kept.facets.get(key);
 };
 
-// two rows of a plot have the same values: the same keys, dates of the same
+// two rows of a mark have the same values: the same keys, dates of the same
 // time and ranges of the same values, e.g. ["2020-01-01", null] of a band
 const sameRow = (a, b) => {
     const keys = Object.keys(a);
@@ -607,7 +607,7 @@ const sameRow = (a, b) => {
     return keys.length == Object.keys(b).length && keys.every(k => Object.hasOwn(b, k) && same(a[k], b[k]));
 };
 
-// a row of a plot is in a cell of a grid if its values of the dims of
+// a row of a mark is in a cell of a grid if its values of the dims of
 // the rows and the columns are the ones of the cell (or it has none)
 const inCell = (def, cell, r) => {
     const g = gridOf(def);
@@ -616,7 +616,7 @@ const inCell = (def, cell, r) => {
 };
 
 /**
- * The facets of a plot or an annotation (`facet`): a key or a list of keys
+ * The facets of a mark or an annotation (`facet`): a key or a list of keys
  * of the facets of `dim`, of a grid also the values of the dims of its
  * rows and columns, e.g. { "group": "Bau" } (a column, a row or a cell);
  * all facets without one.
@@ -635,14 +635,14 @@ const inFacet = (def, part, facet) => {
 };
 
 // one row of the rows of a group: the first or the last one along the dim
-// of the position of the plot (as the points of a line, see alongRows, in
+// of the position of the mark (as the points of a line, see alongRows, in
 // the order of the rows with `"order": "rows"`), or the one with the least
 // or the most value of a dim, e.g. { "max": "x" }, of the rows with
 // values of the dims of the props, categories as numbers if they are
 // numbers, e.g. "10" after "9"
-const selected = (rows, select, dims, plot, ctx) => {
+const selected = (rows, select, dims, mark, ctx) => {
     if (select == 'first' || select == 'last') {
-        const along = alongRows(rows, plot, ctx);
+        const along = alongRows(rows, mark, ctx);
         return select == 'first' ? along.slice(0, 1) : along.slice(-1);
     }
     const [kind, name] = Object.entries(select ?? {})[0] ?? [];
@@ -657,14 +657,14 @@ const selected = (rows, select, dims, plot, ctx) => {
 // a name of the rows of a facet as a function of the row, e.g. "x" or
 // "x:scaled", undefined for other names, see docs/definition.md "Expressions" > "Names"
 const rowValue = (ctx, name, rows) => {
-    // the place of the row among the rows of the plot in the facet, from 0,
+    // the place of the row among the rows of the mark in the facet, from 0,
     // e.g. the line of a small table, without a dim `row`
     if (name == 'row:index' && !Object.hasOwn(ctx.store.def.dims, 'row')) {
         const index = new Map(rows.map((r, i) => [r, i]));
         return row => index.get(row);
     }
     const [m, ...parts] = name.split(':');
-    // the other names of the rows of the data of a plot, e.g. a label
+    // the other names of the rows of the data of a mark, e.g. a label
     if (!Object.hasOwn(ctx.store.def.dims, m))
         return rows !== ctx.rows && rows.some(r => Object.hasOwn(r, name)) ? (row => row[name]) : undefined;
     const s = ctx.scales[m];
@@ -768,9 +768,9 @@ const withColor = parts => {
 const ofScale = /^(scaled:(min|max|-?\d+(\.\d+)?)|bandwidth|step)$/;
 
 /**
- * The groups of the rows of a plot by its categories, see plots/index.js:
+ * The groups of the rows of a mark by its categories, see plots/index.js:
  * the props of their categories (`props`), their `rows`, the values of the
- * props of the plot of a row (`at(row)`, `prop(name)(row)` of one prop) and
+ * props of the mark of a row (`at(row)`, `prop(name)(row)` of one prop) and
  * the ones which are the same for all rows (`attrs`), e.g. the color of a
  * line. The names of the props are the props of the categories, the names
  * of the rows (see rowValue) and the ones of the facet (`ctx.scope`), in
@@ -790,7 +790,7 @@ const lengthOf = (v, fontSize) => {
  * ones of `svg:text`, e.g. labels at the ends of lines or bars), in the
  * coordinates of the plot area, `{ left, right, top, bottom }`, measured in
  * the font of the visualisation, see autoMargins of utils/margins.js: texts
- * of the plot types as they are drawn (positions, `dx`, `dy`, anchors and
+ * of the mark types as they are drawn (positions, `dx`, `dy`, anchors and
  * baselines, `max-width`), not the rotated ones (a transform).
  */
 const textBoxes = (store, f) => {
@@ -798,22 +798,22 @@ const textBoxes = (store, f) => {
     // of cartesian charts (the positions of polar ones are around the center, maps have no margins)
     if ((store.def.options?.coord ?? 'cartesian') != 'cartesian')
         return [];
-    const plots = (store.def.plot ?? []).filter(p => (p.type == 'svg:text' || String(p.type).startsWith('annotation:'))
+    const marks = (store.def.marks ?? []).filter(p => (p.type == 'svg:text' || String(p.type).startsWith('annotation:'))
         && p.place?.in === undefined && inFacet(store.def, p, f));
-    if (plots.length == 0)
+    if (marks.length == 0)
         return [];
     const groups = new Map();
     const ctx = { ...f, store, groupsOf: id => {
         if (!groups.has(id)) {
-            const p = store.def.plot.find(q => q.id === id);
-            groups.set(id, p ? plotGroups(p, plotRows(store, p, f), ctx) : []);
+            const p = store.def.marks.find(q => q.id === id);
+            groups.set(id, p ? markGroups(p, markRows(store, p, f), ctx) : []);
         }
         return groups.get(id);
     } };
-    return plots.flatMap(p => {
+    return marks.flatMap(p => {
         let layer;
         try {
-            layer = plotTypes[p.type].marks(ctx.groupsOf(p.id), p, ctx);
+            layer = markTypes[p.type].marks(ctx.groupsOf(p.id), p, ctx);
         } catch {
             return [];
         }
@@ -852,37 +852,37 @@ const absentColumn = (store, column) => {
     return rows.some(r => r && Object.hasOwn(r, column)) ? '' : ` (column '${column}' is not in the data)`;
 };
 
-const plotGroups = (plot, rows, ctx) => {
+const markGroups = (mark, rows, ctx) => {
     const dims = ctx.store.def.dims;
-    const needed = [...new Set(refNames(plot.props).filter(n => !ofScale.test(n.split(':').slice(1).join(':')))
+    const needed = [...new Set(refNames(mark.props).filter(n => !ofScale.test(n.split(':').slice(1).join(':')))
         .map(n => n.split(':')[0]))].filter(m => Object.hasOwn(dims, m));
     // (a row of the data of a mark may lack a dim, e.g. { "y": 2 } of a point)
     const missing = (row, m) => row[m] === null || row[m] === undefined;
     const complete = row => !needed.some(m => missing(row, m));
     // not without data, e.g. the empty classes of a bin of no rows
     if (needed.length > 0 && rows.length > 0 && ctx.store.rows?.length > 0 && !rows.some(complete))
-        warnOnce(ctx.store, `plot:${plot.id}:missing`, `${markPath(ctx.store.def, plot, true)}: none of its ${rows.length} rows is drawn, `
+        warnOnce(ctx.store, `plot:${mark.id}:missing`, `${markPath(ctx.store.def, mark, true)}: none of its ${rows.length} rows is drawn, `
             + needed.map(m => [m, rows.filter(r => missing(r, m)).length]).filter(([, n]) => n > 0)
-                .map(([m, n]) => `${n} without a value of dim '${m}'${plot.data === undefined ? absentColumn(ctx.store, dims[m].column) : ''}`).join(', '));
+                .map(([m, n]) => `${n} without a value of dim '${m}'${mark.data === undefined ? absentColumn(ctx.store, dims[m].column) : ''}`).join(', '));
     // the rows without a value of a dim of categories of `by` are in
-    // no category, e.g. rows of other plots
-    const categorized = plot.by.filter(c => dims[c].categoryProps);
-    const groups = groupBy(rows, plot.by);
+    // no category, e.g. rows of other marks
+    const categorized = mark.by.filter(c => dims[c].categoryProps);
+    const groups = groupBy(rows, mark.by);
     return (categorized.length ? groups.filter(g => categorized.every(c => g.group[c] !== null && g.group[c] !== undefined)) : groups).map(g => {
-        const props = withColor(plot.by.map(c => ownProp(dims[c].categoryProps, g.group[c])));
+        const props = withColor(mark.by.map(c => ownProp(dims[c].categoryProps, g.group[c])));
         const scoped = name => Object.hasOwn(ctx.scope, name) ? constant(ctx.scope[name]) : undefined;
         const resolve = name => typeof name == 'symbol' ? scoped(name) : (Object.hasOwn(props, name) ? constant(props[name])
             : rowValue(ctx, name, rows) ?? scoped(name));
-        const at = bind(plot.props, resolve);
+        const at = bind(mark.props, resolve);
         return {
             categories: g.group,
             props,
-            rows: plot.select === undefined ? g.entries : selected(g.entries.filter(complete), plot.select, dims, plot, ctx),
+            rows: mark.select === undefined ? g.entries : selected(g.entries.filter(complete), mark.select, dims, mark, ctx),
             at,
             prop: name => at.entries.get(name) ?? constant(undefined),
             attrs: Object.fromEntries([...at.entries].filter(([, f]) => f.constant).map(([k, f]) => [k, f()])),
             // the custom properties of the highlight of the group, of its first row
-            vars: highlightVars(plot, value => bind(value, resolve), g.entries[0]),
+            vars: highlightVars(mark, value => bind(value, resolve), g.entries[0]),
             complete,
         };
     });

@@ -5,7 +5,7 @@ import * as d3 from "@/utils/d3";
 import { checkLocale } from "@/utils/locale";
 import { fillTemplate, templateRefs } from "@/utils/def";
 import { curves } from "@/utils/draw";
-import { plotTypes } from "@/plots";
+import { markTypes } from "@/plots";
 import { coords } from "@/coords";
 import { annotationKeys } from "@/coords/annotations.js";
 import { projectionNames } from "@/coords/geo.js";
@@ -21,7 +21,7 @@ import { resolve, namesOfGlobals } from "@/utils/resolve";
 import { schema, markNames } from "@/schema/definition.js";
 import { similar } from "@/utils/warn";
 
-// the interpolations of the plot types with a curve, e.g. cartesian:line
+// the interpolations of the mark types with a curve, e.g. cartesian:line
 const curveNames = Object.keys(curves);
 
 const show = v => typeof v == 'string' ? `'${v}'` : String(v);
@@ -126,9 +126,9 @@ const categoryNames = m => hasCategories(m) ? ['name', 'visible', 'color',
     ...[m.ranks ?? []].flat().flatMap(e => Object.keys(e ?? {})),
     ...Object.values(m.categories ?? {}).flatMap(e => Object.keys(e ?? {}))] : [];
 
-// the names of a plot, also the positions of values of the scaled dims,
+// the names of a mark, also the positions of values of the scaled dims,
 // e.g. `x:scaled:0` or `y:scaled:100`
-class PlotNames extends Set {
+class MarkNames extends Set {
     has(name) {
         const at = /^(.+):scaled:-?\d+(?:\.\d+)?$/.exec(name);
         return super.has(name) || (at !== null && super.has(`${at[1]}:scaled`));
@@ -139,7 +139,7 @@ class PlotNames extends Set {
 // ones of the mark and the columns (`columns`, of the data and the
 // transforms); without the rows any plain name may be a column, e.g.
 // "@type", not one of a part of a dim, e.g. "@x:index"
-class RowNames extends PlotNames {
+class RowNames extends MarkNames {
     constructor(names, columns) {
         super(names);
         this.columns = columns;
@@ -412,7 +412,7 @@ const checkScale = (ctx, n, m, path) => {
     }
     // the name of the schema, e.g. "linear" of "Linear"
     const lower = otherCase(m.scale.type, Object.keys(d3.scales));
-    const type = lower ?? m.scale.type ?? defaultScaleType(m, n, def.plot);
+    const type = lower ?? m.scale.type ?? defaultScaleType(m, n, def.marks);
     const scale = d3.named(d3.scales, type);
     const typeName = `the type '${m.type}'`;
     // the type of a dim without one follows from the rows, see inferTypes
@@ -545,34 +545,34 @@ const checkFilter = (ctx, conditions, path, known) => {
     });
 };
 
-// the names of marks of 5.0 which are no kind of a plot type, see typeOf of utils/language.js
+// the names of marks of 5.0 which are no kind of a mark type, see typeOf of utils/language.js
 const aliases = ['point', 'label', 'cell', 'tick'];
 
-// the plots: their types, categories, data and props
-const checkPlots = ctx => {
+// the marks: their types, categories, data and props
+const checkMarks = ctx => {
     const { def, dims, names, warn, coord, coordName } = ctx;
-    const types = Object.keys(plotTypes);
-    const curvePlots = types.filter(t => plotTypes[t].curve);
-    const plotList = [].concat(def.plot ?? []);
-    if (plotList.length == 0)
-        warn('plot', 'missing');
-    // the ids name the plots, e.g. of their classes and of the merge with a parent
-    const ids = plotList.map((p, i) => p?.id ?? `mark-${i}`);
+    const types = Object.keys(markTypes);
+    const curveMarks = types.filter(t => markTypes[t].curve);
+    const markList = [].concat(def.marks ?? []);
+    if (markList.length == 0)
+        warn('marks', 'missing');
+    // the ids name the marks, e.g. of their classes and of the merge with a parent
+    const ids = markList.map((p, i) => p?.id ?? `mark-${i}`);
     ids.forEach((id, i) => {
         if (ids.indexOf(id) < i)
-            warn(`plot[${i}].id`, `the id '${id}' is the one of plot[${ids.indexOf(id)}]`);
+            warn(`marks[${i}].id`, `the id '${id}' is the one of marks[${ids.indexOf(id)}]`);
     });
-    ctx.plots.forEach(([i, p]) => {
-        const path = `plot[${i}]`;
+    ctx.marks.forEach(([i, p]) => {
+        const path = `marks[${i}]`;
         // a type without the prefix of the coordinate system is one which normalize did not find
         const short = typeof p.type == 'string' && !p.type.includes(':')
-            ? [...new Set([...types.filter(t => !t.startsWith('annotation:') && (!plotTypes[t].coords || plotTypes[t].coords.includes(coordName))).map(t => t.split(':')[1]),
+            ? [...new Set([...types.filter(t => !t.startsWith('annotation:') && (!markTypes[t].coords || markTypes[t].coords.includes(coordName))).map(t => t.split(':')[1]),
                 ...aliases.filter(n => markNames.includes(n))])] : null;
         if (short)
             warn(`${path}.type`, `unknown type '${p.type}' of the coordinate system '${coordName}'${choices(p.type, short)}`);
         else if (!types.includes(p.type))
             warn(`${path}.type`, `unknown type '${p.type}'${choices(p.type, types)}`);
-        else if (plotTypes[p.type].coords && coordName in coords && !plotTypes[p.type].coords.includes(coordName))
+        else if (markTypes[p.type].coords && coordName in coords && !markTypes[p.type].coords.includes(coordName))
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
         if (![p.by ?? []].flat().every(c => typeof c == 'string'))
             warn(`${path}.by`, `expected a dim or a list of dims, e.g. ["land"]`);
@@ -580,9 +580,9 @@ const checkPlots = ctx => {
         categories.filter(c => !Object.hasOwn(dims, c)).forEach(c =>
             warn(`${path}.by`, ctx.columns?.has(c) ? `unknown dim '${c}', a column of the data: a dim of it is needed, e.g. "dims": { "${c}": "${c}" }`
                 : `unknown dim '${c}'${choices(c, Object.keys(dims))}`));
-        if (p.curve !== undefined && curveNames.includes(p.curve) && types.includes(p.type) && !curvePlots.includes(p.type))
-            warn(`${path}.curve`, `only used by ${list(curvePlots)}`);
-        // the data of the plot: rows of the definition, their names are known
+        if (p.curve !== undefined && curveNames.includes(p.curve) && types.includes(p.type) && !curveMarks.includes(p.type))
+            warn(`${path}.curve`, `only used by ${list(curveMarks)}`);
+        // the data of the mark: rows of the definition, their names are known
         // to the props, their values are props of the facet, or a url
         const rows = Array.isArray(p.data) ? p.data : [];
         if (p.data !== undefined && typeof p.data != 'string' && !(Array.isArray(p.data) && p.data.every(isObject)))
@@ -602,48 +602,48 @@ const checkPlots = ctx => {
         if (p.once !== undefined && typeof p.once != 'boolean')
             warn(`${path}.once`, `true: an element per facet, of no row, e.g. a header`);
         else if (p.once && (p.data !== undefined || [p.by ?? []].flat().length > 0 || p.filter !== undefined))
-            warn(`${path}.once`, `a plot once per facet has no rows, no 'data', 'by' or 'filter'`);
+            warn(`${path}.once`, `a mark once per facet has no rows, no 'data', 'by' or 'filter'`);
         if (p.dodge !== undefined && (typeof p.dodge != 'number' || !['svg:text', 'polar:text'].includes(p.type)))
-            warn(`${path}.dodge`, `the distance of the texts of a plot of 'svg:text' or 'polar:text', a number`);
+            warn(`${path}.dodge`, `the distance of the texts of a mark of 'svg:text' or 'polar:text', a number`);
         // a text or label mark without a text draws empty texts
         if (['text', 'svg:text', 'polar:text', 'geo:text'].includes(p.type) && (!isObject(p.props) || p.props.text === undefined)
-            && plotTypes[p.type]?.defaults?.text === undefined)
+            && markTypes[p.type]?.defaults?.text === undefined)
             warn(`${path}.props.text`, `missing: the texts of a ${ctx.written?.get(i) ?? 'text'} mark are empty without it, e.g. "text": "@y" or "=format(@y, ',.0f')"`);
         if (p.type == 'cartesian:bar' && coordName == 'cartesian')
             checkBarBands(ctx, path, isObject(p.props) ? p.props : {});
         if (p.halo !== undefined && (!['boolean', 'number'].includes(typeof p.halo) || !['svg:text', 'polar:text', 'geo:text'].includes(p.type)))
             warn(`${path}.halo`, `a halo behind the texts of a text or label mark (also of polar charts and maps), true or its width`);
         if (p.object !== undefined && (typeof p.object != 'string' || p.type != 'geo:mesh'))
-            warn(`${path}.object`, `the object of the TopoJSON of a plot of 'geo:mesh', a string`);
+            warn(`${path}.object`, `the object of the TopoJSON of a mark of 'geo:mesh', a string`);
         if (p.borders !== undefined && p.type != 'geo:mesh')
-            warn(`${path}.borders`, `the borders of a plot of 'geo:mesh', one of 'all', 'inner', 'outer'`);
+            warn(`${path}.borders`, `the borders of a mark of 'geo:mesh', one of 'all', 'inner', 'outer'`);
         // the annotations of the coordinate system, e.g. no bands of maps
         const annotation = typeof p.type == 'string' && p.type.startsWith('annotation:') && p.type.substring(11);
         if (annotation && types.includes(p.type) && !(coord.annotations ?? []).includes(annotation))
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
         // the names of the rows of a url are not known
-        const plotNames = typeof p.data == 'string' ? null
-            : new PlotNames([...names.plot(categories.filter(c => Object.hasOwn(dims, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
-        checkProp(p.props, `${path}.props`, warn, plotNames);
-        // labels inside the bands of an area plot, see plots/inside.js
+        const namesOfMark = typeof p.data == 'string' ? null
+            : new MarkNames([...names.mark(categories.filter(c => Object.hasOwn(dims, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
+        checkProp(p.props, `${path}.props`, warn, namesOfMark);
+        // labels inside the bands of an area mark, see plots/inside.js
         if (isObject(p.place)) {
-            const area = plotList.find(q => q?.id === p.place.in);
+            const area = markList.find(q => q?.id === p.place.in);
             if (!['svg:text', 'polar:text', 'text'].includes(p.type))
-                warn(`${path}.place`, `the labels inside the bands of an area plot are of svg:text or polar:text`);
+                warn(`${path}.place`, `the labels inside the bands of an area mark are of svg:text or polar:text`);
             else if (!area)
-                warn(`${path}.place.in`, `unknown plot '${p.place.in}', expected the id of an area plot`);
+                warn(`${path}.place.in`, `unknown mark '${p.place.in}', expected the id of an area mark`);
             else if (!['area', 'cartesian:area', 'polar:area'].includes(area.type))
-                warn(`${path}.place.in`, `expected an area plot, not one of '${area.type}'`);
+                warn(`${path}.place.in`, `expected an area mark, not one of '${area.type}'`);
             if (p.select !== undefined)
                 warn(`${path}.select`, `the labels inside of bands are placed at the positions of all their rows, without a select`);
         }
-        // the props of the highlight and of the other elements, see preparePlots of utils/def.js
+        // the props of the highlight and of the other elements, see prepareMarks of utils/def.js
         ['highlight', 'others'].filter(k => isObject(p[k])).forEach(k => Object.entries(p[k])
-            .filter(([n]) => k != 'highlight' || n != 'mode').forEach(([n, v]) => checkProp(v, `${path}.${k}.${n}`, warn, plotNames)));
+            .filter(([n]) => k != 'highlight' || n != 'mode').forEach(([n, v]) => checkProp(v, `${path}.${k}.${n}`, warn, namesOfMark)));
         // the references of the default props of the type, e.g. "@x:scaled" of a line
         const defaults = ctx.defaults?.get(i);
-        if (defaults && plotNames)
-            [...new Set(refNames(defaults).filter(r => r != 'color' && !plotNames.has(r)))].forEach(r => {
+        if (defaults && namesOfMark)
+            [...new Set(refNames(defaults).filter(r => r != 'color' && !namesOfMark.has(r)))].forEach(r => {
                 const dim = r.split(':')[0];
                 warn(path, `a mark of the type '${ctx.written?.get(i) ?? p.type}' reads '@${r}': it needs a dim '${dim}' with a scale (the channel ${dim}), e.g. "dims": { "${dim}": "value" }, or the attributes which replace its defaults`);
             });
@@ -694,18 +694,18 @@ const checkGeo =({ def, dims, warn, coordName }) => {
         warn('geo.projection.type', `unknown projection '${projection}'${choices(projection, projectionNames)}`);
 };
 
-// the conditions of the rows of the definition, of the plots and of the hover
+// the conditions of the rows of the definition, of the marks and of the hover
 const checkFilters = ctx => {
     const { def, names, warn } = ctx;
     checkFilter(ctx, def.filter, 'filter', names.global);
-    ctx.plots.forEach(([i, p]) => checkFilter(ctx, p.filter, `plot[${i}].filter`, names.facet));
+    ctx.marks.forEach(([i, p]) => checkFilter(ctx, p.filter, `marks[${i}].filter`, names.facet));
     checkFilter(ctx, def.options?.hover?.filter, 'options.hover.filter', names.facet);
     if (def.options?.hover?.total && !Object.values(ctx.dims).some(m => m.stacked))
         warn('options.hover.total', `the sum of the stacked values, there is no stacked dim`);
-    // the facets of plots and annotations: keys of facets or, of a grid, an
+    // the facets of marks and annotations: keys of facets or, of a grid, an
     // object of the values of the dims of its rows and columns
     const facets = facetBy(def.facets);
-    [...ctx.plots.map(([i, p]) => [`plot[${i}]`, p]), ...ctx.annotations.map(([i, a]) => [`annotations[${i}]`, a])]
+    [...ctx.marks.map(([i, p]) => [`marks[${i}]`, p]), ...ctx.annotations.map(([i, a]) => [`annotations[${i}]`, a])]
         .filter(([, p]) => isObject(p.facet)).forEach(([path, p]) => {
             if (!facets.grid)
                 warn(`${path}.facet`, `an object of the rows and columns of a grid of facets ("rows", "cols"), of other facets their keys, e.g. "Wien"`);
@@ -741,10 +741,10 @@ const checkAnnotations = ctx => {
         const row = Object.keys(a).filter(k => !['type', 'props', 'above', 'layer', 'before', 'legend', 'facet'].includes(k));
         checkProp(a.props, `${path}.props`, warn, new Set([...names.facet, ...row]));
         if (a.layer !== undefined && !['below', 'above'].includes(a.layer))
-            warn(`${path}.layer`, `expected 'below' (below the plots, the default) or 'above' (above them), or 'before' a plot`);
-        const ids = [ctx.def.plot ?? []].flat().map((p, j) => p?.id ?? `mark-${j}`);
+            warn(`${path}.layer`, `expected 'below' (below the marks, the default) or 'above' (above them), or 'before' a mark`);
+        const ids = [ctx.def.marks ?? []].flat().map((p, j) => p?.id ?? `mark-${j}`);
         if (a.before !== undefined && !ids.includes(a.before))
-            warn(`${path}.before`, `unknown plot '${a.before}'${ids.length ? `, expected one of ${list(ids)}` : ''}`);
+            warn(`${path}.before`, `unknown mark '${a.before}'${ids.length ? `, expected one of ${list(ids)}` : ''}`);
     });
 };
 
@@ -1093,7 +1093,7 @@ const checkData = ({ raw, dims, rows, columns, warn, source }) => {
 };
 
 // the context of the checks of the parts of a definition: the dims, the
-// form elements, the plots and the annotations which are objects (the others
+// form elements, the marks and the annotations which are objects (the others
 // are warnings), the coordinate system and the names of the references
 const context = (def, warn, rows, columns = null) => {
     // the entries which are objects, the others are warnings, e.g. null
@@ -1120,7 +1120,7 @@ const context = (def, warn, rows, columns = null) => {
 
     // the names of the references, see docs/definition.md "Expressions" > "Names": everywhere the globals
     // (also the ones of form elements) and the width of the visualisation, in
-    // a facet its sizes, in a plot the props of its categories and the rows,
+    // a facet its sizes, in a mark the props of its categories and the rows,
     // in a range the sizes of the coordinate system, e.g. `radius`
     const globals = new Set([
         ...Object.keys(def.globals ?? {}),
@@ -1138,7 +1138,7 @@ const context = (def, warn, rows, columns = null) => {
         global: new Set(globalNames),
         facet: new Set(facetNames),
         category: n => new Set([...globalNames, ...categoryNames(dims[n])]),
-        plot: categories => new PlotNames([
+        mark: categories => new MarkNames([
             ...facetNames,
             'row:index',
             ...Object.entries(dims).flatMap(([n, m]) => rowNames(n, m ?? {})),
@@ -1151,7 +1151,7 @@ const context = (def, warn, rows, columns = null) => {
     return {
         def, warn, rows, columns, dims, formElements, globals, names, coord, coordName,
         orientations: Object.keys(coord.ranges),
-        plots: objects([...[].concat(def.plot ?? []).entries()], i => `plot[${i}]`, 'a plot, e.g. { "type": "svg:circle", "props": {} }'),
+        marks: objects([...[].concat(def.marks ?? []).entries()], i => `marks[${i}]`, 'a mark, e.g. { "type": "svg:circle", "props": {} }'),
         annotations: objects([...[].concat(def.annotations ?? []).entries()], i => `annotations[${i}]`, 'an annotation, e.g. { "type": "line", "y": 0 }'),
     };
 };
@@ -1174,7 +1174,7 @@ const withTypes = (def, rows) => {
     // the type of the scale of the type, see prepareDim
     Object.entries(isObject(def.dims) ? def.dims : {}).filter(([, m]) => isObject(m) && m.type !== undefined
         && isObject(m.scale) && m.scale.of === undefined && m.scale.type === undefined)
-        .forEach(([n, m]) => m.scale.type = scaleTypeOf(m, n, def.plot));
+        .forEach(([n, m]) => m.scale.type = scaleTypeOf(m, n, def.marks));
     return def;
 };
 
@@ -1184,17 +1184,17 @@ const checkDef = (def, normalized, rows, extra = {}) => {
     const warnings = [];
     const warn = (path, message) => warnings.push([path, message]);
     const ctx = { ...context(normalized, warn, rows, extra.columns), raw: def, ...extra };
-    [checkDims, checkPlots, checkGeo, checkFilters, checkAnnotations, checkFormElements, checkFacets, checkTexts, checkOptions, checkTransforms, checkData]
+    [checkDims, checkMarks, checkGeo, checkFilters, checkAnnotations, checkFormElements, checkFacets, checkTexts, checkOptions, checkTransforms, checkData]
         .forEach(check => check(ctx));
     return warnings;
 };
 
-// the plot types without their default props, the props a definition writes
-const withoutDefaults = () => Object.fromEntries(Object.entries(plotTypes).map(([n, t]) => [n, { ...t, defaults: undefined }]));
+// the mark types without their default props, the props a definition writes
+const withoutDefaults = () => Object.fromEntries(Object.entries(markTypes).map(([n, t]) => [n, { ...t, defaults: undefined }]));
 
 // the positions of the marks of the built-in types which translate writes
 // of the dims of the axes (see mark of utils/language.js): a position the
-// plot has not, e.g. the y of a point without a dim y, is one of the dim of
+// mark has not, e.g. the y of a point without a dim y, is one of the dim of
 // its axis, which does not exist, see defaultProps (the defaults of the
 // types have no positions, see plots/defaults.js)
 const positions = {
@@ -1211,24 +1211,24 @@ const positions = {
     'polar:text': () => ({ angle: '@x:scaled', radius: '@y:scaled' }),
 };
 
-// the plots of a registered type: their default props and positions (see
-// positions) which the plot does not write (`defaults`) and the type as it
+// the marks of a registered type: their default props and positions (see
+// positions) which the mark does not write (`defaults`) and the type as it
 // is written (`written`, of the `marks` of the definition), by the index of
-// the plot
+// the mark
 const defaultProps = (def, normalized, marks = []) => {
     const written = new Map();
     const defaults = new Map();
-    const raw = [].concat(def.plot ?? []);
-    [].concat(normalized.plot ?? []).forEach((p, i) => {
+    const raw = [].concat(def.marks ?? []);
+    [].concat(normalized.marks ?? []).forEach((p, i) => {
         const type = isObject(marks[i]) && typeof marks[i].type == 'string' ? marks[i].type : raw[i]?.type;
-        if (typeof type != 'string' || !isObject(p) || !Object.hasOwn(plotTypes, p.type))
+        if (typeof type != 'string' || !isObject(p) || !Object.hasOwn(markTypes, p.type))
             return;
         written.set(i, type);
         const props = isObject(raw[i].props) ? raw[i].props : {};
-        const d = plotTypes[p.type].defaults;
+        const d = markTypes[p.type].defaults;
         const typed = typeof d == 'function' ? d(props) : d;
         const own = { ...positions[p.type]?.(props), ...(isObject(typed) ? typed : {}) };
-        // the defaults which the plot does not replace
+        // the defaults which the mark does not replace
         defaults.set(i, Object.fromEntries(Object.entries(own).filter(([k]) => !Object.hasOwn(props, k))));
     });
     return { written, defaults };
@@ -1237,8 +1237,6 @@ const defaultProps = (def, normalized, marks = []) => {
 // a warning of the engine's form in the words of the definition: the paths
 // (see authoredPath) and the names of its parts, dims, marks and controls
 const authoredText = m => m
-    .replace(/\bplot\[(\d+)\]\.props\./g, 'marks[$1].').replace(/\bplot\[(\d+)\]/g, 'marks[$1]')
-    .replace(/\bplots\b(?! area)/g, 'marks').replace(/(?<![:'])\bplot\b(?!:|-| area| type)/g, 'mark')
     .replace(/\bform elements\b/g, 'controls').replace(/\bform element\b/g, 'control')
     .replace(/\boptions\.hover\b/g, 'hover').replace(/\boptions\.height\b/g, 'height');
 const authored = ([p, m]) => [authoredPath(p), authoredText(m)];
@@ -1248,7 +1246,7 @@ const authored = ([p, m]) => [authoredPath(p), authoredText(m)];
 const checkResolved = (source, names, rows) => {
     const resolved = resolve(source, names);
     const engine = translate(resolved);
-    const normalized = withTypes(normalize(engine, { plotTypes: withoutDefaults() }), rows);
+    const normalized = withTypes(normalize(engine, { markTypes: withoutDefaults() }), rows);
     // the columns of the rows given, of the data and of the transforms
     const columns = Array.isArray(rows) && rows.length > 0
         ? transformedColumns(engine.transform, new Set(rows.slice(0, 1000).flatMap(r => isObject(r) ? Object.keys(r) : [])), engine.globals) : null;

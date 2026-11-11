@@ -138,9 +138,9 @@ const clamp = (index, length) => Math.max(0, Math.min(length - 1, index));
  * the position (`marker`), the box of the rows beside it (see comp/hover.js)
  * in `live`, which screen readers read when the keyboard moves it, and the
  * hover and select events (`emit`). `facetOf()` is the facet drawn,
- * `origin()` the origin of its plots, `highlight(entry)` highlights the
+ * `origin()` the origin of its marks, `highlight(entry)` highlights the
  * elements of the categories of a row. `init(ctx)` prepares the hover of a
- * draw (`ctx` of the plot types, see plots/index.js), e.g. its rows, and
+ * draw (`ctx` of the mark types, see plots/index.js), e.g. its rows, and
  * shows the one of the draw before, `render()` places the marker and the
  * box, `key(e)` moves the hover by the keyboard, `hide()` hides it,
  * `end()` ends it with the facet, `keyboard` tells whether the facet has

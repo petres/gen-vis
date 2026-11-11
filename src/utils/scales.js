@@ -232,7 +232,7 @@ const logProblems = (name, dim, rows, scope = {}) => {
 const computeValues = (name, numeric, rows, stackOf, also, log) => {
     const values = [...new Set(rows.map(d => d[name]))];
     const others = also.flatMap(n => rows.map(d => d[n])).filter(v => v !== null && v !== undefined);
-    // a row without a value is in no category, e.g. one of another plot
+    // a row without a value is in no category, e.g. one of another mark
     if (!numeric)
         return { values: [...new Set([...values, ...others])].filter(v => v !== null && v !== undefined) };
     const present = values.filter(v => v !== null && v !== undefined);

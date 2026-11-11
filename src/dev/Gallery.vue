@@ -53,11 +53,13 @@ export default {
         single: new URLSearchParams(location.search).get('def'),
     }),
     computed: {
-        // the words of the filter are in the path, the title or the plot types
+        // the words of the filter are in the path, the title or the marks
+        // (of a definition of 4.x in its options and its plots)
         shown() {
             const words = this.query.toLowerCase().split(/\s+/).filter(w => w);
             return this.defs.filter(d => {
-                const text = `${d.path} ${d.def.options?.title ?? ''} ${d.def.options?.coord ?? ''} ${JSON.stringify(d.def.plot ?? '')}`.toLowerCase();
+                const { title, coord } = { ...d.def.options, ...d.def };
+                const text = `${d.path} ${title ?? ''} ${coord ?? ''} ${JSON.stringify(d.def.marks ?? d.def.plot ?? '')}`.toLowerCase();
                 return words.every(w => text.includes(w));
             });
         },

@@ -13,16 +13,16 @@ import geo from "@/coords/geo";
  *   the values (`v`) of the hover and the stacks
  * - `positions`: the positions of the axes
  * - `dims(innerWidth, innerHeight)`: the sizes of a facet the ranges refer to,
- *   `origin(innerWidth, innerHeight)` is the origin of the plots and axes,
+ *   `origin(innerWidth, innerHeight)` is the origin of the marks and axes,
  *   [0, 0] if it is not given, `centered`: the plots are in the center of
  *   the facet, its title is centered, e.g. above the circle of a polar plot
  * - `names(store)`: the dims of the hover and the stacks instead of the
  *   ones of `axis`, e.g. of a map, `flip` swaps them, see axisNames of
  *   layout.js
- * The `ctx` is the facet, as the one of the plot types, see plots/index.js,
- * `ctx.inner` is the element of the plots and axes. The elements of the
+ * The `ctx` is the facet, as the one of the mark types, see plots/index.js,
+ * `ctx.inner` is the element of the marks and axes. The elements of the
  * functions are DOM elements, no d3 selections.
- * - `prepare(ctx)`: adds to the context before the axes and plots are drawn,
+ * - `prepare(ctx)`: adds to the context before the axes and marks are drawn,
  *   e.g. the projection of a map
  * - `annotations`: the types of the annotations, `annotate(ctx, a)` returns
  *   the items of one (see drawLayer of utils/draw.js), see
@@ -33,7 +33,7 @@ import geo from "@/coords/geo";
  *   drawAxis of utils/axis.js) or an element (`element`, `g` by default)
  *   with the attributes `attrs`, the `text` and the elements of a `layer`
  *   (see drawLayer of utils/draw.js), `fresh` ones are drawn anew, see
- *   drawParts of comp/facet.js, `raise(ctx)` is called after the plots, e.g. to
+ *   drawParts of comp/facet.js, `raise(ctx)` is called after the marks, e.g. to
  *   move axes in the plot area (elements of `ctx.inner`) above them
  * - `hover.area(ctx, parent)`: appends the element of the pointer events to
  *   the element `parent` (`ctx.inner`) and returns it, e.g. a rect,

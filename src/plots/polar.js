@@ -1,4 +1,4 @@
-// the plot types of polar plots, loaded with the first one, see coords/polar.js
+// the mark types of polar plots, loaded with the first one, see coords/polar.js
 import { arc, areaRadial, lineRadial, pointRadial } from 'd3-shape';
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
@@ -9,8 +9,8 @@ import { defaults } from "@/plots/defaults";
 import { shapeOf } from "@/utils/draw";
 
 // the angles of a band scale are in the center of the band, as the ones of the axis
-const angleOffset = (plot, ctx, path) => {
-    const scale = propScale(plot, ctx, path);
+const angleOffset = (mark, ctx, path) => {
+    const scale = propScale(mark, ctx, path);
     return scale ? bandCenter(scale) : 0;
 };
 
@@ -47,20 +47,20 @@ const dodgedRadii = (groups, gap, r0) => {
 const positioned = (name, type, x, y) => ({
     coords: ['polar'],
     update: true,
-    marks(groups, plot, ctx) {
-        const offset = angleOffset(plot, ctx, 'angle');
+    marks(groups, mark, ctx) {
+        const offset = angleOffset(mark, ctx, 'angle');
         const text = type == 'text';
-        const below = text ? halo(plot) : {};
+        const below = text ? halo(mark) : {};
         const [r0] = radiusRange(ctx);
-        // inside the bands of an area plot (`place`), see plots/inside.js
-        if (text && plot.place?.in !== undefined) {
-            const { groups: placed, spots } = inside(ctx.store.inside.placeInside(groups, plot, ctx, true));
+        // inside the bands of an area mark (`place`), see plots/inside.js
+        if (text && mark.place?.in !== undefined) {
+            const { groups: placed, spots } = inside(ctx.store.inside.placeInside(groups, mark, ctx, true));
             return perRow(placed, type, (v, row) => {
                 const { angle, radius, ...props } = v;
                 return { ...below, ...props, ...centered, [x]: spots.get(row).x, [y]: spots.get(row).y };
             });
         }
-        const radii = text && plot.dodge ? dodgedRadii(groups, plot.dodge, r0) : null;
+        const radii = text && mark.dodge ? dodgedRadii(groups, mark.dodge, r0) : null;
         return perRow(groups, type, (v, row) => {
             if (!('angle' in v && 'radius' in v))
                 throw new Error(`a ${name.split(':')[1]} of a polar chart needs an angle and a radius, the channels x and y (or the attributes angle and radius)`);
@@ -75,7 +75,7 @@ const arcPath = a => arc().padAngle(a.padAngle).cornerRadius(a.cornerRadius)(a);
 
 const arcProps = ['angle', 'width', 'startAngle', 'endAngle', 'innerRadius', 'outerRadius', 'padAngle', 'cornerRadius'];
 
-// the plot types of the polar coordinate system, the angles are in radians,
+// the mark types of the polar coordinate system, the angles are in radians,
 // clockwise from the top, missing values are gaps in paths and areas
 const types = {
     // a line per group, `d` with `angle` and `radius`
@@ -83,15 +83,15 @@ const types = {
         curve: true,
         coords: ['polar'],
         update: true,
-        marks(groups, plot, ctx) {
-            const offset = angleOffset(plot, ctx, 'd.angle');
+        marks(groups, mark, ctx) {
+            const offset = angleOffset(mark, ctx, 'd.angle');
             const [r0] = radiusRange(ctx);
             return perGroup(groups, g => lineRadial()
-                .curve(curve(plot))
+                .curve(curve(mark))
                 .defined(e => finite(e.angle, e.radius))
                 .angle(e => e.angle + offset)
                 .radius(e => clampRadius(e.radius, r0))
-                (points(g, plot, ctx, 'd.angle'))
+                (points(g, mark, ctx, 'd.angle'))
             );
         },
     },
@@ -101,13 +101,13 @@ const types = {
         curve: true,
         coords: ['polar'],
         update: true,
-        marks(groups, plot, ctx) {
-            const offset = angleOffset(plot, ctx, 'd.angle');
+        marks(groups, mark, ctx) {
+            const offset = angleOffset(mark, ctx, 'd.angle');
             const [r0] = radiusRange(ctx);
             // of stacked areas with a point of no height where a group has no row
-            const pts = areaPoints(groups, plot, ctx, ['angle', 'innerRadius', 'outerRadius']);
+            const pts = areaPoints(groups, mark, ctx, ['angle', 'innerRadius', 'outerRadius']);
             return perGroup(groups, g => areaRadial()
-                .curve(curve(plot))
+                .curve(curve(mark))
                 .defined(e => finite(e.angle, e.innerRadius, e.outerRadius))
                 .angle(e => e.angle + offset)
                 .innerRadius(e => clampRadius(e.innerRadius, r0))
@@ -121,14 +121,14 @@ const types = {
     // centered at the `angle`, `width` defaults to the width of a band or the
     // step of a point scale, or from `startAngle` to `endAngle`, e.g. the
     // slices of a pie of stacked angles, `innerRadius` defaults to the inner
-    // radius of the plot, `outerRadius` to its outer radius
+    // radius of the mark, `outerRadius` to its outer radius
     'polar:arc': {
         coords: ['polar'],
         update: true,
-        marks(groups, plot, ctx) {
+        marks(groups, mark, ctx) {
             // the scale of the angle, the default width and the radii of the
-            // plot are the same for all rows, see once
-            const scale = once(() => barScale(plot, ctx, 'angle', 'polar:arc'));
+            // mark are the same for all rows, see once
+            const scale = once(() => barScale(mark, ctx, 'angle', 'polar:arc'));
             const band = once(() => barWidth(scale(), 'polar:arc'));
             const [inner, outer] = radiusRange(ctx);
             return perRow(groups, "path", v => {
@@ -154,7 +154,7 @@ const types = {
     },
 
     'polar:circle': positioned('polar:circle', 'circle', 'cx', 'cy'),
-    // `halo` of the plot draws a halo behind the texts, `dodge` moves the
+    // `halo` of the mark draws a halo behind the texts, `dodge` moves the
     // texts of the same angle apart along the radius, to at least this distance
     'polar:text': positioned('polar:text', 'text', 'x', 'y'),
 };

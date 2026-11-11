@@ -2,7 +2,7 @@ import { loadColors } from '@/utils/d3';
 import { describe, test, expect, beforeAll, vi } from 'vitest';
 import { createStore } from '@/store';
 import { filterRows } from '@/utils/data';
-import { layout, plotGroups } from '@/layout';
+import { layout, markGroups } from '@/layout';
 
 // the colors of d3 are loaded by the store, see loadColors
 beforeAll(loadColors);
@@ -156,13 +156,13 @@ describe('layout', () => {
     });
 });
 
-describe('plotGroups', () => {
+describe('markGroups', () => {
     const groups = async (plot, def = {}) => {
         const store = createStore();
         await store.init({ def: { options: { height: 200 }, mapping: mapping(), plot, ...def }, data });
         const v = layout(store, 400);
         const f = v.facets[0];
-        return { groups: plotGroups(store.def.plot[0], f.rows, { store, ...f }), facet: f };
+        return { groups: markGroups(store.def.marks[0], f.rows, { store, ...f }), facet: f };
     };
 
     test('the props of one group do not leak into others', async () => {
@@ -213,8 +213,8 @@ describe('rows without a value', () => {
         const v = layout(store, 400);
         const f = v.facets[0];
         const groups = id => {
-            const p = store.def.plot.find(e => e.id == id);
-            return plotGroups(p, filterRows(f.rows, p.filter, store.def.dims, f.scope), { store, ...f });
+            const p = store.def.marks.find(e => e.id == id);
+            return markGroups(p, filterRows(f.rows, p.filter, store.def.dims, f.scope), { store, ...f });
         };
         return { store, v, groups };
     };
@@ -226,7 +226,7 @@ describe('rows without a value', () => {
         // the label of the n row is its category
         expect(groups('labels').map(g => g.categories.label)).toEqual(['n=5']);
         // a plot by the categories of all rows has none of the rows without one
-        const all = plotGroups(store.def.plot[2], v.rows, { store, ...v.facets[0] });
+        const all = markGroups(store.def.marks[2], v.rows, { store, ...v.facets[0] });
         expect(all.map(g => [g.categories.label, g.rows.length])).toEqual([['n=5', 1]]);
     });
 
@@ -254,8 +254,8 @@ describe('filters of columns', () => {
         const store = createStore();
         await store.init({ def: { options: { height: 200 }, mapping: mapping(), plot: { ...plot, filter: '@year == 2020' } }, data });
         const v = layout(store, 400);
-        const p = store.def.plot[0];
-        const groups = plotGroups(p, (await import('@/layout')).plotRows(store, p, v.facets[0]), { store, ...v.facets[0] });
+        const p = store.def.marks[0];
+        const groups = markGroups(p, (await import('@/layout')).markRows(store, p, v.facets[0]), { store, ...v.facets[0] });
         expect(groups.flatMap(g => g.rows).every(r => r.x == 2020)).toBe(true);
         expect(groups.flatMap(g => g.rows).length).toBeGreaterThan(0);
     });

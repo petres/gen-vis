@@ -294,7 +294,7 @@ const transformTypes = {
     },
 
     // the rows whose expression `expr` is true (see utils/expr.js, the names
-    // are the ones of calc), the later transforms and the plots have only
+    // are the ones of calc), the later transforms and the marks have only
     // them, e.g. { ">": ["@value", 0] }, see applyTransforms
     filter: (t, { n, expr }) => {
         const f = expr(t.expr ?? true);

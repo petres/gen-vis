@@ -5,7 +5,7 @@ import { warnOnce } from "@/utils/warn";
 import { applyTransforms, utcColumns } from "@/utils/transform";
 import { applyResolved, escapeHtml, fillHtml, fillText, formatOf, languageOf, templateNames } from "@/utils/def";
 import { inferTypes } from "@/utils/data";
-import { plotTypes } from "@/plots";
+import { markTypes } from "@/plots";
 import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { evaluate, formatter, isOperator, refNames } from "@/utils/expr";
@@ -49,7 +49,7 @@ class Store {
     rows = null;
     // the columns of the transforms, see utils/transform.js
     columns = null;
-    // the rows of the files of plots by their url, see applyResolved of
+    // the rows of the files of marks by their url, see applyResolved of
     // utils/def.js
     files = null;
     data = null;
@@ -108,7 +108,7 @@ class Store {
     }
 
     // the names of the references in all parts of the definition, the globals
-    // and the width of the visualisation, a facet adds its sizes, a plot the
+    // and the width of the visualisation, a facet adds its sizes, a mark the
     // props of the categories and the row, see docs/definition.md "Expressions" > "Names"
     get scope() { return { ...this.names, totalWidth: this.totalWidth, [formatter]: (format, name) => this.format(format, name) } }
 
@@ -232,7 +232,7 @@ class Store {
             const before = sourceRows(this.rows, this.columns);
             const columnsBefore = new Set(changedColumns);
             applyResolved(this.def, this.defOrg, { dataKeys: (column, inOrder) => this.dataKeys(column, inOrder), keepVisible, transform, files: this.files,
-                symbols: symbolDefaults(this.chartDefaults), source: this.source, plotTypes,
+                symbols: symbolDefaults(this.chartDefaults), source: this.source, markTypes,
                 types: part => inferTypes(part, this.rows, this.columns) }).forEach(n => changed.includes(n) || changed.push(n));
             transform();
             Object.keys(this.def.dims).filter(n => changedColumns.has(this.def.dims[n].column) && !changed.includes(n))

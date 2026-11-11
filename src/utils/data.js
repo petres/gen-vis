@@ -856,11 +856,11 @@ const usedColumns = def => {
 
 // the names of the expressions of the rows a definition filters by, which
 // can be columns of the data, not only dims, see rowResolver: of the
-// `filter` of the definition and of its plots, the conditions of the
+// `filter` of the definition and of its marks, the conditions of the
 // stacked dims and of the hover (conditions of 4.x, objects, name
 // dims), e.g. "@region == 'W'" of a column `region`
 const expressionColumns = def => {
-    const expressions = [def.filter, ...[def.plot ?? []].flat().map(p => p?.filter),
+    const expressions = [def.filter, ...[def.marks ?? []].flat().map(p => p?.filter),
         ...Object.values(def.dims ?? {}).map(m => m?.stacked), def.options?.hover?.filter];
     return expressions.filter(e => e !== undefined && e !== null && typeof e != 'boolean' && !(isObject(e) && !isOperator(e)))
         .flatMap(e => refNames(e)).filter(n => typeof n == 'string').map(n => n.split(':')[0]);

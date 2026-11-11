@@ -9,11 +9,11 @@ import { evaluate, refNames } from '@/utils/expr';
  * see docs/definition.md "Highlight and others" (`highlight`, `others` of marks): the elements of
  * the categories of a row (of the hover, of an entry of a legend or of the
  * page) get the class `vis-highlight` (their group, with `"mode": "row"`
- * only the element of the row, its group `vis-highlight-group`), the plots
+ * only the element of the row, its group `vis-highlight-group`), the marks
  * of the facet `vis-highlighting` while a highlight is shown, and the
  * stylesheet of the chart (see highlightStyle) has the props of the
- * `highlight` of every plot as the styles of `.vis-highlight` and the ones
- * of `others` as the styles of the other elements of the plot. Props of the
+ * `highlight` of every mark as the styles of `.vis-highlight` and the ones
+ * of `others` as the styles of the other elements of the mark. Props of the
  * categories, e.g. `"@color"`, are custom properties of the groups
  * (`--vis-hl-<prop>`, see highlightVars), set when the group is drawn, so a
  * category has its own values. Styles win over the attributes of the
@@ -21,7 +21,7 @@ import { evaluate, refNames } from '@/utils/expr';
  */
 
 // the name of the custom property of a prop of the highlight (`hl`) or the
-// others (`ot`) of a plot
+// others (`ot`) of a mark
 const varName = (kind, prop) => `--vis-${kind}-${prop}`;
 
 // the props of texts whose numbers need a unit in a stylesheet (the ones
@@ -44,25 +44,25 @@ const unsafeValue = v => /[;{}<>"'\\@]|\/\*|\*\/|[\u0000-\u001f]/.test(v)
 const cssValue = (v, n) => v === null || v === undefined ? null
     : typeof v == 'number' ? (lengths.has(n) ? `${v}px` : String(v)) : typeof v == 'string' && !unsafeValue(v) ? v : null;
 
-// the value of a prop which is the same for all groups of the plot, e.g.
+// the value of a prop which is the same for all groups of the mark, e.g.
 // 3 or "black", undefined of one of the categories or the rows, e.g. "@color"
 const fixed = v => refNames(v).length == 0 ? evaluate(v, {}) : undefined;
 
-// the names of the props of the highlight and the others of a plot whose
+// the names of the props of the highlight and the others of a mark whose
 // values are the ones of the groups, see highlightVars
-const varNames = plot => [
-    ...plot.highlightProps.filter(n => fixed(plot.highlight[n]) === undefined).map(n => ['hl', n, plot.highlight[n]]),
-    ...plot.othersProps.filter(n => fixed(plot.others[n]) === undefined).map(n => ['ot', n, plot.others[n]]),
+const varNames = mark => [
+    ...mark.highlightProps.filter(n => fixed(mark.highlight[n]) === undefined).map(n => ['hl', n, mark.highlight[n]]),
+    ...mark.othersProps.filter(n => fixed(mark.others[n]) === undefined).map(n => ['ot', n, mark.others[n]]),
 ];
 
 /**
- * The custom properties of a group of a plot (see plotGroups of layout.js):
+ * The custom properties of a group of a mark (see markGroups of layout.js):
  * the values of the props of the highlight and the others which are the
  * ones of the categories of the group, e.g. `"@color"` or `"@weight"`, of
  * its first row, `bound(value)` is the function of the row of a value.
  */
-const highlightVars = (plot, bound, row) => {
-    const names = varNames(plot);
+const highlightVars = (mark, bound, row) => {
+    const names = varNames(mark);
     if (names.length == 0)
         return null;
     return Object.fromEntries(names.map(([kind, n, value]) => [varName(kind, n), cssValue(bound(value)(row), n)]));
@@ -80,13 +80,13 @@ const symbolVars = (highlight, scope) => Object.fromEntries(Object.entries(highl
     .filter(([, v]) => fixed(v) === undefined)
     .map(([n, v]) => [varName('hl', n), refNames(v).every(r => r.startsWith('globals.') || scope?.[r.split(':')[0]] !== undefined) ? cssValue(evaluate(v, scope), n) : null]));
 
-// the selector of the attribute of the plot, its id quoted
-const plotSelector = id => `[data-mark="${String(id).replace(/["\\]/g, '\\$&')}"]`;
+// the selector of the attribute of the mark, its id quoted
+const markSelector = id => `[data-mark="${String(id).replace(/["\\]/g, '\\$&')}"]`;
 // the props of the highlight of the symbols, see symbolHighlight of utils/def.js
 const symbolProps = new Set(['fill', 'fill-opacity', 'opacity', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity']);
 const quoted = id => `"${String(id).replace(/["\\]/g, '\\$&')}"`;
 
-// the declarations of the props of a plot: the values which are the same
+// the declarations of the props of a mark: the values which are the same
 // for all groups as they are, the others as their custom properties
 const declarations = (kind, names, values) => names.map(n => {
     const v = fixed(values[n]);
@@ -94,40 +94,40 @@ const declarations = (kind, names, values) => names.map(n => {
     return css === null ? null : `${n}: ${css}`;
 }).filter(Boolean).join('; ');
 
-// the props of the highlight or the others (`part`) of a plot which the
+// the props of the highlight or the others (`part`) of a mark which the
 // stylesheet has: names of css (see cssName) and safe values (see
-// unsafeValue), the others with a `warn(plot, message)`
-const usable = (plot, part, warn) => plot[`${part}Props`].filter(n => {
-    const v = fixed(plot[part][n]);
+// unsafeValue), the others with a `warn(mark, message)`
+const usable = (mark, part, warn) => mark[`${part}Props`].filter(n => {
+    const v = fixed(mark[part][n]);
     const message = !cssName(n) ? `${part}: "${n}" is no name of a property of css, it is left out`
         : typeof v == 'string' && unsafeValue(v) ? `${part}.${n}: ${JSON.stringify(v)} is no value gen-vis writes into its stylesheet (it has no ;{}<>, quotes, backslashes, @, comments or urls other than url(#id)), it is left out`
         : null;
     if (message)
-        warn?.(plot, message);
+        warn?.(mark, message);
     return !message;
 });
 
 /**
- * The stylesheet of the highlights of the plots of a definition (a text),
+ * The stylesheet of the highlights of the marks of a definition (a text),
  * in `scope` (the selector of the root of the chart, e.g. `.vis[data-vis="3"]`):
  * the elements of a highlight (`.vis-highlight` and the elements in it, not
  * the groups, so the values are not applied twice, e.g. an opacity) have
- * the props of `highlight`, the other elements of the plots the ones of
+ * the props of `highlight`, the other elements of the marks the ones of
  * `others` while one is shown (`.vis-highlighting`), the props move in
  * `transition` milliseconds (`options.highlight.transition`). Props which
- * are no css (see usable) are left out, with `warn(plot, message)`.
+ * are no css (see usable) are left out, with `warn(mark, message)`.
  */
-const highlightStyle = (plots, { scope = '', transition = 0, warn = null } = {}) => {
+const highlightStyle = (marks, { scope = '', transition = 0, warn = null } = {}) => {
     const rules = [];
     const leaves = '*:not(g)';
-    plots = plots.map(p => ({ ...p, highlightProps: usable(p, 'highlight', warn), othersProps: usable(p, 'others', warn) }));
-    plots.forEach(p => {
-        const plot = `${scope} ${plotSelector(p.id)}`;
+    marks = marks.map(p => ({ ...p, highlightProps: usable(p, 'highlight', warn), othersProps: usable(p, 'others', warn) }));
+    marks.forEach(p => {
+        const selector = `${scope} ${markSelector(p.id)}`;
         if (p.highlightProps.length > 0) {
             const css = declarations('hl', p.highlightProps, p.highlight);
             if (css)
-                rules.push(`${plot} .vis-highlight${leaves.slice(1)}, ${plot} .vis-highlight ${leaves} { ${css}; }`);
-            // the symbols of the plot of the highlighted entry of a legend and
+                rules.push(`${selector} .vis-highlight${leaves.slice(1)}, ${selector} .vis-highlight ${leaves} { ${css}; }`);
+            // the symbols of the mark of the highlighted entry of a legend and
             // of the nearest row of the hover (their elements have only the
             // props of the highlight they have, see symbolHighlight)
             const symbol = `[data-symbol-of=${quoted(p.id)}]`;
@@ -138,11 +138,11 @@ const highlightStyle = (plots, { scope = '', transition = 0, warn = null } = {})
         if (p.othersProps.length > 0) {
             const css = declarations('ot', p.othersProps, p.others);
             if (css)
-                rules.push(`${scope} .vis-highlighting ${plotSelector(p.id)} ${leaves}:not(.vis-highlight):not(.vis-highlight *) { ${css}; }`);
+                rules.push(`${scope} .vis-highlighting ${markSelector(p.id)} ${leaves}:not(.vis-highlight):not(.vis-highlight *) { ${css}; }`);
         }
     });
     if (rules.length > 0 && transition > 0) {
-        const props = [...new Set(plots.flatMap(p => [...p.highlightProps, ...p.othersProps]))];
+        const props = [...new Set(marks.flatMap(p => [...p.highlightProps, ...p.othersProps]))];
         rules.push(`${scope} [data-mark] ${leaves} { transition-property: ${props.join(', ')}; transition-duration: ${transition}ms; }`);
         rules.push(`@media (prefers-reduced-motion: reduce) { ${scope} [data-mark] ${leaves} { transition-duration: 0s; } }`);
     }
@@ -157,51 +157,51 @@ const unclass = (node, name) => {
 };
 
 /**
- * The highlight of the elements of a facet, see above: `plotDefs` are the
- * plots of the definition, `nodeOf(plot)` the element of a plot, `inner`
- * the element of the plots of the facet (it gets `vis-highlighting`).
+ * The highlight of the elements of a facet, see above: `markDefs` are the
+ * marks of the definition, `nodeOf(mark)` the element of a mark, `inner`
+ * the element of the marks of the facet (it gets `vis-highlighting`).
  * Returns `highlight(dataEntry, now)`: the elements of the categories of
- * the row `dataEntry` (values of the dims of the plots' `by`) are
- * highlighted, null ends it; the groups of the plots are found once, at the
+ * the row `dataEntry` (values of the dims of the marks' `by`) are
+ * highlighted, null ends it; the groups of the marks are found once, at the
  * first highlight. A highlight of the same elements changes nothing.
  */
-const highlighter = (plotDefs, nodeOf, inner) => {
-    // (a plot without `by` highlights the elements of the row, e.g. a bar)
-    const plots = plotDefs.filter(p => p.highlightProps.length > 0);
+const highlighter = (markDefs, nodeOf, inner) => {
+    // (a mark without `by` highlights the elements of the row, e.g. a bar)
+    const marks = markDefs.filter(p => p.highlightProps.length > 0);
     let index = null;
 
-    const build = () => plots.map(plot => {
-        const node = nodeOf(plot);
-        const attrs = plot.by.map(c => `data-group-${c}`);
+    const build = () => marks.map(mark => {
+        const node = nodeOf(mark);
+        const attrs = mark.by.map(c => `data-group-${c}`);
         return {
-            plot,
+            mark,
             node,
-            // the groups of the plot and the elements per group, e.g. the path of a line
+            // the groups of the mark and the elements per group, e.g. the path of a line
             groups: node ? [...node.querySelectorAll('*')].filter(g => attrs.some(a => g.hasAttribute(a))).map(node => ({
                 node,
-                keys: Object.fromEntries(plot.by.map((c, i) => [c, node.getAttribute(attrs[i])])),
+                keys: Object.fromEntries(mark.by.map((c, i) => [c, node.getAttribute(attrs[i])])),
             })) : [],
         };
     });
 
     // the elements of a highlight of a group: the group, with `"mode": "row"`
     // the elements of the row, the group if it has none of the row
-    const targetsOf = (plot, group, dataEntry) => {
-        if (plot.highlight?.mode != 'row')
+    const targetsOf = (mark, group, dataEntry) => {
+        if (mark.highlight?.mode != 'row')
             return [group.node];
         const rows = [...group.node.querySelectorAll('*')].filter(node => node[itemOf]?.[rowOf] === dataEntry);
         return rows.length > 0 ? rows : [group.node];
     };
 
-    // the groups and the elements of the plots of a highlight
+    // the groups and the elements of the marks of a highlight
     const selection = dataEntry => {
         const found = { active: Boolean(dataEntry), groups: [], targets: [] };
         if (!dataEntry)
             return found;
         index ??= build();
-        index.forEach(({ plot, node, groups: all }) => {
-            // a plot without groups: the elements of the row, e.g. the bar under the pointer
-            if (plot.by.length == 0) {
+        index.forEach(({ mark, node, groups: all }) => {
+            // a mark without groups: the elements of the row, e.g. the bar under the pointer
+            if (mark.by.length == 0) {
                 const rows = node ? [...node.querySelectorAll('*')].filter(n => n[itemOf]?.[rowOf] === dataEntry) : [];
                 rows.forEach(n => {
                     found.targets.push(n);
@@ -210,12 +210,12 @@ const highlighter = (plotDefs, nodeOf, inner) => {
                 return;
             }
             // the values are compared as strings, as the ones of the attributes
-            const conditions = plot.by.filter(c => c in dataEntry).map(c => [c, String(dataEntry[c])]);
+            const conditions = mark.by.filter(c => c in dataEntry).map(c => [c, String(dataEntry[c])]);
             if (conditions.length == 0)
                 return;
             all.filter(g => conditions.every(([c, v]) => g.keys[c] === v)).forEach(g => {
                 found.groups.push(g.node);
-                found.targets.push(...targetsOf(plot, g, dataEntry));
+                found.targets.push(...targetsOf(mark, g, dataEntry));
             });
         });
         return found;

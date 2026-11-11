@@ -15,7 +15,7 @@ import { isObject, missing, sameValue, toNumber, truthy } from '@/utils/values';
  *
  * An expression is compiled once (objects and lists are kept by their
  * identity), then evaluated with a scope (the values of the names) or bound
- * to the rows of a plot (`bind`), a function of the row whose parts which are
+ * to the rows of a mark (`bind`), a function of the row whose parts which are
  * the same for all rows are computed once. An unknown name is undefined, no
  * value (null in JSON), validateDef warns of it.
  */
@@ -386,7 +386,7 @@ const pick = (branches, fallback) => row => {
 };
 
 /**
- * The expression as a function of a row, e.g. the props of a plot.
+ * The expression as a function of a row, e.g. the props of a mark.
  * `resolve(name)` is a function of the row for a name, e.g. of a value of the
  * row, or a `constant`, e.g. of a global, undefined for unknown names. The
  * function of an object or a list has the functions of its entries as

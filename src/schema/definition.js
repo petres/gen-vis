@@ -4,7 +4,7 @@
 // scripts/types.js) and of the structural check of the definitions (the
 // unknown keys and the values which are not of their type, see
 // schemaWarnings of utils/validate.js); the names of the registries of the
-// code (plot types, coordinate systems, ...) are listed here and checked
+// code (mark types, coordinate systems, ...) are listed here and checked
 // against the code by tests/schema.test.js
 export { schema, markTypes, markNames, coordNames, curveNames, localeNames, dataFormats, scaleTypes, projectionNames, transformTypes, controlTypes };
 
@@ -48,7 +48,7 @@ const isOperator = { type: 'object', maxProperties: 1, propertyNames: { enum: []
 // reference or an operator), e.g. a legend position of steps of totalWidth
 const optionOfSizes = (values, description) => cases([[{ type: 'string', pattern: '^[=@]' }, expressionText], [isOperator, expression]], { enum: values }, description);
 
-// the name of a registered plot type or coordinate system, e.g. "my-coord:dots"
+// the name of a registered mark type or coordinate system, e.g. "my-coord:dots"
 const registeredName = '^[a-z][\\w-]*(:[\\w-]+)?$';
 
 // a part of a definition which expressions of the globals replace, e.g. a list of a match

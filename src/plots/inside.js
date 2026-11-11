@@ -1,6 +1,6 @@
-// the labels inside the bands of an area plot (`"place": { "in": "<id>" }`
+// the labels inside the bands of an area mark (`"place": { "in": "<id>" }`
 // of svg:text and polar:text), loaded for definitions with them, see
-// utils/lazy.js and the plots of plots/elements.js and plots/polar.js
+// utils/lazy.js and the marks of plots/elements.js and plots/polar.js
 export { placeInside, bandProfile, bestSpots, chooseSpots };
 
 import { line, lineRadial } from 'd3-shape';
@@ -87,18 +87,18 @@ const unwrapped = lines => lines.map(l => {
 });
 
 /**
- * The band of a group of an area plot on a grid of positions: of cartesian
- * plots the pixels of x (`start`, `step`, `n`) and the edges `lo`, `hi` in
+ * The band of a group of an area mark on a grid of positions: of cartesian
+ * marks the pixels of x (`start`, `step`, `n`) and the edges `lo`, `hi` in
  * pixels of y, of polar plots the angles (0 to 2π, `cyclic`) and the edges
- * in radii; of the curve of the plot, as the area is drawn, e.g. with the
- * points of the stack of the `groups` of the plot, see areaPoints.
+ * in radii; of the curve of the mark, as the area is drawn, e.g. with the
+ * points of the stack of the `groups` of the mark, see areaPoints.
  */
-const bandProfile = (group, plot, ctx, polar, groups = [group]) => {
-    const c = curve(plot);
+const bandProfile = (group, mark, ctx, polar, groups = [group]) => {
+    const c = curve(mark);
     if (!polar) {
         // at the centers of the bands of a band scale, as the area is drawn
-        const dx = bandOffset(plot, ctx, 'd.x');
-        const pts = areaPoints(groups, plot, ctx, ['x', 'y0', 'y1']).get(group).filter(p => finite(p.x)).map(p => dx ? { ...p, x: p.x + dx } : p);
+        const dx = bandOffset(mark, ctx, 'd.x');
+        const pts = areaPoints(groups, mark, ctx, ['x', 'y0', 'y1']).get(group).filter(p => finite(p.x)).map(p => dx ? { ...p, x: p.x + dx } : p);
         if (pts.length < 2)
             return null;
         const edge = key => {
@@ -112,10 +112,10 @@ const bandProfile = (group, plot, ctx, polar, groups = [group]) => {
         const [a, b] = [resample(edge('y0'), start, 1, n), resample(edge('y1'), start, 1, n)];
         return { start, step: 1, n, lo: a.map((v, i) => Math.min(v, b[i])), hi: a.map((v, i) => Math.max(v, b[i])), cyclic: false };
     }
-    const scale = propScale(plot, ctx, 'd.angle');
+    const scale = propScale(mark, ctx, 'd.angle');
     const offset = scale ? bandCenter(scale) : 0;
     const r0 = ctx.dims?.innerRadius ?? 0;
-    const pts = areaPoints(groups, plot, ctx, ['angle', 'innerRadius', 'outerRadius']).get(group).filter(p => finite(p.angle));
+    const pts = areaPoints(groups, mark, ctx, ['angle', 'innerRadius', 'outerRadius']).get(group).filter(p => finite(p.angle));
     if (pts.length < 2)
         return null;
     const edge = key => {
@@ -140,7 +140,7 @@ const indexOf = (band, p) => {
 /**
  * The spots of a label of `w` × `h` pixels (and `pad` around it) inside a
  * band (see bandProfile) at the allowed positions (`allowed[i]` of the
- * grid), each { p, x, y, clearance, box }: of cartesian plots the center of
+ * grid), each { p, x, y, clearance, box }: of cartesian marks the center of
  * the text in pixels, the largest clearance of the vertical interval free
  * over the width of the text; of polar plots the center (relative to the
  * center of the circle) and the clearance of points of the box to the band
@@ -284,22 +284,22 @@ const sameBand = (label, band) => Object.keys(label.categories ?? {}).filter(k =
     .every(k => String(label.categories[k]) === String(band.categories[k]));
 
 /**
- * The places of the labels of a text plot inside the bands of the area plot
- * of `plot.place.in`: a label per group of the plot, the text and the font
+ * The places of the labels of a text mark inside the bands of the area mark
+ * of `mark.place.in`: a label per group of the mark, the text and the font
  * of its first row, at the allowed positions of its rows (each row the
  * space to its neighbours), see bestSpots and chooseSpots; [group, row,
  * spot] of the labels placed, of polar plots `polar` the angle offset of
- * its plot.
+ * its mark.
  */
-const placeInside = (groups, plot, ctx, polar) => {
-    const area = ctx.store.def.plot.find(p => p.id === plot.place.in);
+const placeInside = (groups, mark, ctx, polar) => {
+    const area = ctx.store.def.marks.find(p => p.id === mark.place.in);
     const bands = area ? ctx.groupsOf(area.id) : [];
     // the font of the texts, read once per chart (a style of the page)
     ctx.store.labelFont ??= (typeof getComputedStyle == 'function' && ctx.inner ? getComputedStyle(ctx.inner).getPropertyValue('--gen-vis-font-family').trim() : '')
         || 'Inter, system-ui, sans-serif';
     const family = ctx.store.labelFont;
-    const halo = plot.halo ? (plot.halo === true ? 3 : Number(plot.halo))/2 : 0;
-    const pad = Number(plot.place.padding ?? 2) + halo;
+    const halo = mark.halo ? (mark.halo === true ? 3 : Number(mark.halo))/2 : 0;
+    const pad = Number(mark.place.padding ?? 2) + halo;
     const profiles = new Map();
     const labels = groups.flatMap(g => {
         const rows = g.rows.filter(g.complete);
@@ -338,13 +338,13 @@ const placeInside = (groups, plot, ctx, polar) => {
                     break;
             }
         });
-        const prefer = plot.place.near !== undefined
-            ? (polar ? ctx.scales[dimOf(plot.props.angle)]?.(plot.place.near) + profile.offset : ctx.scales[dimOf(plot.props.x)]?.(plot.place.near))
+        const prefer = mark.place.near !== undefined
+            ? (polar ? ctx.scales[dimOf(mark.props.angle)]?.(mark.place.near) + profile.offset : ctx.scales[dimOf(mark.props.x)]?.(mark.place.near))
             : (positions[0] + positions.at(-1))/2;
-        const spots = bestSpots(profile, { w, h: size, pad, allowed, prefer: Number.isFinite(prefer) ? prefer : undefined, fit: plot.fit !== false });
+        const spots = bestSpots(profile, { w, h: size, pad, allowed, prefer: Number.isFinite(prefer) ? prefer : undefined, fit: mark.fit !== false });
         return [{ g, rows, spots, offset: profile.offset ?? 0 }];
     });
-    const chosen = chooseSpots(labels, { fit: plot.fit !== false, overlap: plot.overlap === true });
+    const chosen = chooseSpots(labels, { fit: mark.fit !== false, overlap: mark.overlap === true });
     return labels.map((l, i) => [l, chosen[i]]).filter(([, s]) => s).map(([l, s]) => {
         // the row nearest to the place, e.g. of a prop of its values, of
         // the positions of the profile (angles with the offset of a band

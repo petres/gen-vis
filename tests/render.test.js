@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi, beforeEach, onTestFinished } from 'vitest';
 import { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerMarkType, registerScheme, perRow } from '@/index.js';
-import { plotTypes } from '@/plots';
+import { markTypes } from '@/plots';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import * as d3 from 'd3-scale-chromatic';
 import { prepareDef } from '@/utils/def';
@@ -937,8 +937,8 @@ describe('the data of a plot', () => {
         const store = createStore();
         vi.stubGlobal('fetch', async url => new Response(url.endsWith('events.csv') ? 'x,label\n2021,A' : ''));
         await store.init({ def: { ...lineDef(), plot: [{ type: 'svg:text', data: 'http://h/data/events.csv', props: { text: '@label' } }] }, data: lineData });
-        expect(store.def.plot[0].data).toEqual([{ x: '2021', label: 'A' }]);
-        expect(store.def.plot[0].loaded).toBe(true);
+        expect(store.def.marks[0].data).toEqual([{ x: '2021', label: 'A' }]);
+        expect(store.def.marks[0].loaded).toBe(true);
     });
 });
 
@@ -1900,7 +1900,7 @@ describe('the update of the facets', () => {
         expect(el.querySelectorAll('g.vis-mark rect')).toHaveLength(4);
         await toggle(el, 'Tirol');
         expect(el.querySelectorAll('g.vis-mark rect')).toHaveLength(8);
-        delete plotTypes['test:append'];
+        delete markTypes['test:append'];
     });
 
     // jsdom has no transforms of svg, d3 interpolates the translations of the ticks of axes by them
@@ -1970,7 +1970,7 @@ describe('the update of the facets', () => {
     test('a new width moves the plots before they are drawn, e.g. the center of a polar plot', async () => {
         const seen = [];
         registerMarkType('test:origin', { marks: (groups, plot, ctx) => { seen.push(ctx.inner.getAttribute('transform')); return null; } });
-        onTestFinished(() => delete plotTypes['test:origin']);
+        onTestFinished(() => delete markTypes['test:origin']);
         const def = lineDef({ coord: 'polar', width: undefined, margins: { top: 0, right: 0, bottom: 0, left: 0 } });
         def.mapping.x.scale.orientation = 'angular';
         def.mapping.y.scale.orientation = 'radial';
@@ -2007,8 +2007,8 @@ describe('the update of the facets', () => {
         expect(measured).not.toContain(el.querySelector('.vis'));
     });
 
-    test('the built-in plot types update their elements, the annotations are drawn anew', () => {
-        const types = Object.entries(plotTypes).filter(([, t]) => !t.update).map(([n]) => n);
+    test('the built-in mark types update their elements, the annotations are drawn anew', () => {
+        const types = Object.entries(markTypes).filter(([, t]) => !t.update).map(([n]) => n);
         expect(types).toEqual(['annotation:band', 'annotation:line', 'annotation:text', 'annotation:circle']);
     });
 
@@ -2040,7 +2040,7 @@ describe('extensions', () => {
         expect(rects[0].getAttribute('fill')).toBe('red');
         expect(await hover(el)).toBe(2);
         expect(errors).toEqual([]);
-        delete plotTypes['test:square'];
+        delete markTypes['test:square'];
     });
 
     test('the groups of a plot type, the values of the props are plain values', async () => {
@@ -2062,7 +2062,7 @@ describe('extensions', () => {
         expect(wien.rows.map(wien.complete)).toEqual([true, false, true, true]);
         expect(Object.keys(seen.ctx)).toEqual(expect.arrayContaining(['store', 'inner', 'rows', 'scales', 'axis', 'scope', 'innerWidth', 'innerHeight']));
         expect(seen.ctx.scales.x.domain()).toEqual([2019.94, 2023.06]);
-        delete plotTypes['test:groups'];
+        delete markTypes['test:groups'];
     });
 
     test('an unknown coordinate system is an error', async () => {
@@ -2315,7 +2315,7 @@ describe('polar', () => {
         expect(errors).toEqual([]);
     });
 
-    test('cartesian plot types are not available', async () => {
+    test('cartesian mark types are not available', async () => {
         const def = polarDef();
         def.plot = { type: 'cartesian:bar', by: ['c'], props: { x: '@x:scaled', y1: '@y:scaled' } };
         const el = await mount({ def, data: polarData });
@@ -3584,11 +3584,11 @@ describe('images', () => {
     });
 
     test('an error of the copy rejects the image', async () => {
-        registerMarkType('test:once', plotTypes['cartesian:line']);
+        registerMarkType('test:once', markTypes['cartesian:line']);
         const vm = createGenVis(document.body.appendChild(document.createElement('div')), { def: { ...def(), plot: [{ ...def().plot[0], type: 'test:once' }] }, data: lineData });
         await rendered(vm.el);
         // the copy is drawn again, without the plot type
-        delete plotTypes['test:once'];
+        delete markTypes['test:once'];
         await expect(vm.image()).rejects.toThrow("marks[0].type: unknown mark type 'test:once'");
         expect(document.querySelectorAll('.vis')).toHaveLength(1);
         vm.destroy();

@@ -7,7 +7,7 @@ import { isOperator, refNames } from '@/utils/expr';
  * The normalization of the form the engine reads (of a definition of 5.0
  * merged with its parents, resolved and translated, see translate of
  * utils/language.js) into the form the renderer reads, see spec/normalize.
- * It keeps the names of the engine (`dims`, `plot`, ...) and writes out
+ * It keeps the names of the engine (`dims`, `marks`, ...) and writes out
  * what the form may leave out. It is pure, JSON to JSON, the parts which
  * need the rows, the types of dims without a type, follow when the rows
  * are loaded, see inferTypes of utils/data.js and prepareDim of
@@ -23,14 +23,14 @@ import { isOperator, refNames } from '@/utils/expr';
  *   or utc scale a date, other scales numeric, a dim of the facets or of
  *   the groups of a scale is categorical, the type of a scale follows from
  *   the type of the dim, see scaleTypeOf
- * - the type of a plot without the prefix of the coordinate system (translate
+ * - the type of a mark without the prefix of the coordinate system (translate
  *   writes the full names of the built-in types) is the one of the coordinate
  *   system, of svg elements or the only registered one of the name
- * - the props of a plot are merged into the `defaults` of its type, of a
+ * - the props of a mark are merged into the `defaults` of its type, of a
  *   short name and of a full one alike (`line` is `cartesian:line`), null
  *   removes a default
  *
- * `plotTypes` are the plot types by name, see plots/index.js.
+ * `markTypes` are the mark types by name, see plots/index.js.
  */
 
 // the parts of the categories of a dim, a dim with any of them has
@@ -68,21 +68,21 @@ const ofCategories = m => hasCategories(m) || (isObject(m.scale) && (categorical
  */
 const isCategorical = m => isObject(m) && (m.type == 'categorical' || (m.type === undefined && ofCategories(m)));
 
-// the plot types of bars, a categorical scale of their position is a band scale
+// the mark types of bars, a categorical scale of their position is a band scale
 const barTypes = ['cartesian:bar', 'polar:arc'];
 
 const clone = v => v === undefined ? undefined : JSON.parse(JSON.stringify(v));
 
 /**
- * The plot type of a name without the prefix of a coordinate system, e.g.
+ * The mark type of a name without the prefix of a coordinate system, e.g.
  * "cartesian:line" of "line", see normalize, undefined if there is none.
  */
-const resolveType = (n, coord, plotTypes) => {
+const resolveType = (n, coord, markTypes) => {
     for (const t of [`${coord}:${n}`, `svg:${n}`])
-        if (Object.hasOwn(plotTypes, t) && (!plotTypes[t].coords || plotTypes[t].coords.includes(coord)))
+        if (Object.hasOwn(markTypes, t) && (!markTypes[t].coords || markTypes[t].coords.includes(coord)))
             return t;
-    const named = Object.keys(plotTypes).filter(t => t.endsWith(`:${n}`) && !t.startsWith('annotation:')
-        && (!plotTypes[t].coords || plotTypes[t].coords.includes(coord)));
+    const named = Object.keys(markTypes).filter(t => t.endsWith(`:${n}`) && !t.startsWith('annotation:')
+        && (!markTypes[t].coords || markTypes[t].coords.includes(coord)));
     return named.length == 1 ? named[0] : undefined;
 };
 
@@ -90,7 +90,7 @@ const resolveType = (n, coord, plotTypes) => {
 const nested = v => isObject(v) && !isOperator(v);
 
 /**
- * The props of a plot merged into the defaults of its type, nested props
+ * The props of a mark merged into the defaults of its type, nested props
  * deeply (e.g. `d`), null removes a default.
  */
 const withDefaults = (defaults, props) => {
@@ -106,10 +106,10 @@ const withDefaults = (defaults, props) => {
  * The type of the scale of a dim of a type: `linear` of numeric ones,
  * `time` of dates, of categorical ones `band` of the positions of bars,
  * `point` of other positions and `ordinal` otherwise, e.g. colors, undefined
- * without a type. `plots` are the plots of the normalized definition,
+ * without a type. `marks` are the marks of the normalized definition,
  * `name` the one of the dim.
  */
-const scaleTypeOf = (m, name, plots = []) => {
+const scaleTypeOf = (m, name, marks = []) => {
     if (m.type == 'numeric')
         return 'linear';
     if (m.type == 'date')
@@ -118,14 +118,14 @@ const scaleTypeOf = (m, name, plots = []) => {
         return undefined;
     if (m.scale?.orientation === undefined)
         return 'ordinal';
-    const bars = [plots ?? []].flat().filter(p => isObject(p) && barTypes.includes(p.type));
+    const bars = [marks ?? []].flat().filter(p => isObject(p) && barTypes.includes(p.type));
     return bars.some(p => refNames(p.props ?? {}).some(r => r == `${name}:scaled` || r.startsWith(`${name}:scaled:`) || r.startsWith(`${name}:start:scaled`) || r.startsWith(`${name}:end:scaled`)))
         ? 'band' : 'point';
 };
 
 // the type of the scale of its own of a dim, see scaleTypeOf, linear of a
 // dim without a type, e.g. of no column
-const defaultScaleType = (m, name, plots = []) => scaleTypeOf(m, name, plots) ?? 'linear';
+const defaultScaleType = (m, name, marks = []) => scaleTypeOf(m, name, marks) ?? 'linear';
 
 // the type of a dim of its parts, see normalize, undefined if they do not tell
 const typeOf = (m, name, used) => {
@@ -167,14 +167,14 @@ const normalizeDim = (raw, orientation) => {
     return m;
 };
 
-// the normalized plot, its type of the coordinate system `coord`
-const normalizePlot = (raw, coord, plotTypes) => {
+// the normalized mark, its type of the coordinate system `coord`
+const normalizeMark = (raw, coord, markTypes) => {
     const p = { ...raw };
     if (typeof p.type == 'string') {
-        const type = p.type.includes(':') ? p.type : resolveType(p.type, coord, plotTypes);
-        if (type !== undefined && Object.hasOwn(plotTypes, type)) {
+        const type = p.type.includes(':') ? p.type : resolveType(p.type, coord, markTypes);
+        if (type !== undefined && Object.hasOwn(markTypes, type)) {
             p.type = type;
-            const defaults = plotTypes[type].defaults;
+            const defaults = markTypes[type].defaults;
             const own = typeof defaults == 'function' ? defaults(isObject(p.props) ? p.props : {}) : defaults;
             if (isObject(own))
                 p.props = withDefaults(clone(own), isObject(p.props) ? p.props : {});
@@ -185,7 +185,7 @@ const normalizePlot = (raw, coord, plotTypes) => {
 
 // the normalized dims, `coord` the coordinate system of the
 // definition, `used` the names of the dims of categories
-const normalizeDims = (dims, coord, plots = [], used = new Set()) => {
+const normalizeDims = (dims, coord, marks = [], used = new Set()) => {
     const names = positions[coord] ?? {};
     return Object.fromEntries(Object.entries(dims).map(([n, raw]) => {
         const m = normalizeDim(raw, Object.hasOwn(names, n) ? names[n] : undefined);
@@ -193,13 +193,13 @@ const normalizeDims = (dims, coord, plots = [], used = new Set()) => {
         if (m.type === undefined)
             delete m.type;
         if (isObject(m.scale) && m.scale.of === undefined && m.scale.type === undefined && m.type !== undefined)
-            m.scale = { ...m.scale, type: scaleTypeOf(m, n, plots) };
+            m.scale = { ...m.scale, type: scaleTypeOf(m, n, marks) };
         return [n, m];
     }));
 };
 
 // the names of the dims of the facets and of the groups of scales, they
-// are categorical, the categories of a plot (`by`) are not, they group the
+// are categorical, the categories of a mark (`by`) are not, they group the
 // rows of any type, e.g. of a year
 /**
  * The dims of the facets: of a grid (`rows` and `cols`, the dims of
@@ -236,13 +236,13 @@ const categoryNames = def => new Set([
  * The normalized form of a translated definition, see above, the
  * definition is not changed.
  */
-const normalize = (raw, { plotTypes = {} } = {}) => {
+const normalize = (raw, { markTypes = {} } = {}) => {
     const def = clone(raw);
     const coord = def.options?.coord ?? 'cartesian';
-    if (def.plot !== undefined)
-        def.plot = def.plot.map(p => normalizePlot(p, coord, plotTypes));
+    if (def.marks !== undefined)
+        def.marks = def.marks.map(p => normalizeMark(p, coord, markTypes));
     const used = categoryNames(def);
     if (def.dims !== undefined)
-        def.dims = normalizeDims(def.dims, coord, def.plot, used);
+        def.dims = normalizeDims(def.dims, coord, def.marks, used);
     return def;
 };

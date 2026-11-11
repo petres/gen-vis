@@ -8,10 +8,10 @@ import { categoryKeys, isCategorical } from '@/utils/normalize';
 /**
  * The definition language of gen-vis 5 (see docs/definition.md) translated
  * into the form the engine reads (the one of 4.x normalized, see
- * utils/normalize.js: `options`, `dims`, `plot` with `props`,
+ * utils/normalize.js: `options`, `dims`, `marks` with `props`,
  * `formElements`): the top-level options into `options`, the shorthands
- * of the `dims` written out, `marks` with their channels into `plot` with the props of the
- * scaled positions, `controls` into `formElements`, the hover columns into
+ * of the `dims` written out, `marks` with their channels into marks with the
+ * `props` of the scaled positions, `controls` into `formElements`, the hover columns into
  * the `hover` of the dims, `stack` and `dodge` of marks into the parts of
  * the dims and the props, the string syntax of expressions into their
  * objects. `translate` is pure, JSON to JSON; the rows are not known, the
@@ -239,7 +239,7 @@ const typeOf = (type, coord) => {
 };
 
 // the expressions of a dodged bar: the band of the position dim `pos` split
-// among the categories of `group`, its position (the bar plot adds half a
+// among the categories of `group`, its position (the bar mark adds half a
 // band, see plots/cartesian.js) and its width; `center` is the middle of
 // the slot of the category, e.g. of a label on a dodged bar. The band of a
 // scale without one (a date of an `interval`, a point scale) is 80% of the
@@ -284,7 +284,7 @@ const anchors = {
 };
 
 /**
- * A mark as a plot of the engine: its channels as the props of the scaled
+ * A mark as the engine reads it: its channels as the `props` of the scaled
  * positions, `dims` are the dims of the definition (implicit dims of columns are added),
  * `stacks` collects the stacked value dims (`{ dim, by, condition }`),
  * `bases` the value dims of bars and areas from their base (0 of the scale,
@@ -871,7 +871,7 @@ const translated = raw => {
             dims[n].hover = {};
     });
     out.dims = dims;
-    out.plot = marks;
+    out.marks = marks;
     if (facets !== undefined)
         out.facets = facets;
     return { def: out, implicit };
@@ -884,7 +884,7 @@ const translated = raw => {
  * warnings, with the others.
  */
 const checkDims = def => {
-    [def.plot ?? []].flat().forEach((p, i) => {
+    [def.marks ?? []].flat().forEach((p, i) => {
         const other = (p?.by ?? []).find(b => typeof b != 'string');
         if (other !== undefined)
             throw new Error(`marks[${i}].by: expected a dim or a list of dims, e.g. "land", not ${JSON.stringify(other)}`);
@@ -896,7 +896,7 @@ const checkDims = def => {
 };
 
 // the path of a part of the engine's form as the one of the definition,
-// e.g. "plot[0].props.fill" is "marks[0].fill", "options.title" is "title", "options.footer" is
+// e.g. "marks[0].props.fill" is "marks[0].fill", "options.title" is "title", "options.footer" is
 // "source" (see translated), "facets.rows" (the dim of the rows of a grid)
 // is "facets.by.rows". "facets.cols" stays: it is the number of columns of
 // facets of a dim in both forms; the dim of the columns of a grid, also
@@ -904,10 +904,7 @@ const checkDims = def => {
 // themselves (see checkFacets of utils/validate.js and facetDim of
 // layout.js), a path does not tell the two apart
 const authoredPath = path => String(path)
-    .replace(/^plot\[(\d+)\]\.props\./, 'marks[$1].')
-    .replace(/^plot\[/, 'marks[')
-    .replace(/^plot\./, 'marks.')
-    .replace(/^plot$/, 'marks')
+    .replace(/^marks\[(\d+)\]\.props\./, 'marks[$1].')
     .replace(/^options\.footer\b/, 'source')
     .replace(/^options\./, '')
     .replace(/^formElements\[(\d+)\]\.ref\b/, 'controls[$1].global')

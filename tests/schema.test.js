@@ -5,7 +5,7 @@ import { dataFormats } from '@/utils/data';
 import schemaFile from '../schema.json';
 import { schema, markTypes, coordNames, curveNames, localeNames, dataFormats as formats, scaleTypes, projectionNames, transformTypes, controlTypes } from '@/schema/definition.js';
 import { curveNames as curves } from '@/utils/validate';
-import { plotTypes } from '@/plots';
+import { markTypes as registered } from '@/plots';
 import { coords } from '@/coords';
 import { definitions } from '@/dev/definitions.js';
 import { localeNames as locales } from '@/utils/locale';
@@ -44,8 +44,8 @@ describe('the schema', () => {
         expect(readFileSync(new URL('../types/definition.d.ts', import.meta.url), 'utf8')).toBe(await definitionTypes());
     });
 
-    test('knows the plot types, the names of the marks, coordinate systems, curves, locales, scales, projections and transforms of the code', () => {
-        expect(markTypes).toEqual(Object.keys(plotTypes));
+    test('knows the mark types, the names of the marks, coordinate systems, curves, locales, scales, projections and transforms of the code', () => {
+        expect(markTypes).toEqual(Object.keys(registered));
         // every name of a mark is a type of a coordinate system
         markNames.forEach(n => expect(markTypes.includes(typeOf(n, 'cartesian')) || markTypes.includes(typeOf(n, 'polar')) || markTypes.includes(typeOf(n, 'geo'))).toBe(true));
         expect(coordNames).toEqual(Object.keys(coords));
@@ -181,7 +181,7 @@ describe('the schema', () => {
         expect(own({ title: 5 })).toEqual(['/title type']);
     });
 
-    test('registered plot types and coordinate systems beside the built-in ones', () => {
+    test('registered mark types and coordinate systems beside the built-in ones', () => {
         expect(errors({ marks: { type: 'my-coord:dots' }, coord: 'my-coord' })).toEqual([]);
         expect(errors({ coord: 'test:coord' })).toEqual([]);
         expect(errors({ marks: { type: 'dots' } })).toEqual([]);
@@ -192,7 +192,7 @@ describe('the schema', () => {
         expect(errors({ dims: { x: { scale: { type: 'Linear' } } } })).not.toEqual([]);
     });
 
-    test('the types of TypeScript keep the built-in plot types and coordinate systems of registered ones', async () => {
+    test('the types of TypeScript keep the built-in mark types and coordinate systems of registered ones', async () => {
         const types = readFileSync(new URL('../types/definition.d.ts', import.meta.url), 'utf8');
         expect(types).toContain('coord?: `=${string}` | (\'cartesian\' | \'polar\' | \'geo\') | (string & {});');
         expect(types).toMatch(/'annotation:circle'\n\s+\)\n\s+\| \(string & \{\}\);/);

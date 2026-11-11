@@ -5,7 +5,7 @@ import { prepareDef } from '@/utils/def';
 import { normalize } from '@/utils/normalize';
 import { rowFilter, parseData, dataFormat } from '@/utils/data';
 import { loadTransforms } from '@/utils/transform';
-import { plotTypes, registerMarkType } from '@/plots';
+import { markTypes, registerMarkType } from '@/plots';
 import { coords, registerCoord } from '@/coords';
 import { resolveParents } from '@/utils/load';
 import { translate } from '@/utils/language';
@@ -115,7 +115,7 @@ describe('the example definitions', () => {
             }
         }
         const def = translate(resolve(source, namesOfGlobals(source.globals, source.controls)));
-        expect(() => prepareDef(normalize(def, { plotTypes }))).not.toThrow();
+        expect(() => prepareDef(normalize(def, { markTypes }))).not.toThrow();
     });
 });
 
@@ -174,8 +174,8 @@ describe('validateDef', () => {
         expect(validateDef(def)).toEqual([`marks[0].curve: only used by 'cartesian:line', 'cartesian:area', 'polar:line', 'polar:area'`]);
     });
 
-    test('all plot types are implemented', () => {
-        expect(Object.keys(plotTypes).filter(t => typeof plotTypes[t].marks != 'function')).toEqual([]);
+    test('all mark types are implemented', () => {
+        expect(Object.keys(markTypes).filter(t => typeof markTypes[t].marks != 'function')).toEqual([]);
     });
 
     test('coordinate systems and the mark types of them', () => {
@@ -216,13 +216,13 @@ describe('validateDef', () => {
         expect(validateDef(def)).toEqual([]);
     });
 
-    test('registered plot types', () => {
+    test('registered mark types', () => {
         const def = base();
         def.marks.type = 'test:type';
         expect(validateDef(def)).toEqual([expect.stringMatching(/^marks\[0\]\.type: unknown type 'test:type'/)]);
         registerMarkType('test:type', { marks() {} });
         expect(validateDef(def)).toEqual([]);
-        delete plotTypes['test:type'];
+        delete markTypes['test:type'];
     });
 
     test('the ids of the marks are unique', () => {
@@ -660,7 +660,7 @@ describe('validateDef and the schema', () => {
         expect(validateDef(def)).toContain("dims.y.type: unknown type 'number', expected one of 'numeric', 'date', 'categorical'");
     });
 
-    test('registered plot types and coordinate systems are valid in the schema, unknown ones are warnings', () => {
+    test('registered mark types and coordinate systems are valid in the schema, unknown ones are warnings', () => {
         const def = base();
         def.marks.type = 'my:plot';
         def.coord = 'mine';
@@ -757,7 +757,7 @@ describe('validateDef of the types of the rows', () => {
             marks: { type: 'region', by: 'country', fill: '@value:scaled' },
         };
         expect(validateDef(def, [{ country: 'AT', share: 0.5 }])).toEqual([]);
-        expect(normalize(translate(def), { plotTypes }).dims.value.type).toBe('numeric');
+        expect(normalize(translate(def), { markTypes }).dims.value.type).toBe('numeric');
     });
 
     test('bars on a continuous scale without a width: the dims of the orientation as declared', () => {

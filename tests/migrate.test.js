@@ -10,7 +10,7 @@ import { parseExpression } from '@/utils/expr-parse.js';
 import { isOperator } from '@/utils/expr.js';
 import { isObject } from '@/utils/values.js';
 import { resolveParents } from '@/utils/load.js';
-import { plotTypes } from '@/plots';
+import { markTypes } from '@/plots';
 import { definitions } from '@/dev/definitions.js';
 import { resolveParents4, patched4, globalSets, normalize4 } from './v4.js';
 
@@ -60,7 +60,7 @@ const same = def => JSON.parse(JSON.stringify(def, function (k, v) {
         return undefined;
     if (k == 'by' && typeof v == 'string')
         return [v];
-    if (k == 'plot' && v && !Array.isArray(v))
+    if (k == 'marks' && v && !Array.isArray(v))
         return [v];
     if ((k == 'stroke' || k == 'fill') && v && v.or && v.or[0] == '@color')
         return '@color';
@@ -214,7 +214,7 @@ const engine5 = (def, globals) => {
         if (n.filter === true || n.filter === null)
             delete n.filter;
     }
-    const out = same(normalize(n, { plotTypes }));
+    const out = same(normalize(n, { markTypes }));
     ['globals', 'formElements', 'controls'].forEach(k => delete out[k]);
     if (isObject(out.options) && Object.keys(out.options).length == 0)
         delete out.options;
@@ -246,7 +246,7 @@ const centers = (a, b) => {
                 walk(x[k], y[k]);
         });
     };
-    (b.plot ?? []).forEach((p, i) => walk(a.plot?.[i], p));
+    (b.marks ?? []).forEach((p, i) => walk(a.marks?.[i], p));
 };
 // `zero` of a scale of 5.0: a domain from 0 of 4.x (`[0, null]`) includes 0
 // (the same of values from 0, negative ones are in the domain in 5.0), the
@@ -264,9 +264,9 @@ const zeros = (a, b) => Object.keys(b.dims ?? {}).forEach(n => {
 });
 // `"order": "rows"` of lines and areas of 5.0 is the order of 4.x, which
 // drew them in the order of the rows (5.0 along x by default)
-const orders = (a, b) => (b.plot ?? []).forEach((p, i) => {
-    if (p?.order == 'rows' && a.plot?.[i] && a.plot[i].order === undefined)
-        a.plot[i].order = 'rows';
+const orders = (a, b) => (b.marks ?? []).forEach((p, i) => {
+    if (p?.order == 'rows' && a.marks?.[i] && a.marks[i].order === undefined)
+        a.marks[i].order = 'rows';
 });
 // a definition of 4.x (merged with its parents) and one of 5.0 (by default
 // its migration) with every combination of the values of the form
@@ -384,7 +384,7 @@ describe('patches, rules and texts of 4.x, drawn as 4.x drew them', () => {
             formElements: [radio('m', [{ value: 'a' }, { value: 'b', patch: { options: { subtitle: '=B' }, mapping: { y: { axis: { title: '=200' } } } } }])] };
         drawsAs4(def4);
         const t = translate(resolve(migrate(def4), namesOfGlobals({ m: 'b' }, migrate(def4).controls)));
-        expect([t.options.title, t.options.footer, t.options.subtitle, t.dims.y.axis.title, t.plot[0].props.text]).toEqual(['= Summe der Länder', '=Quelle', '=B', '=200', '=Total']);
+        expect([t.options.title, t.options.footer, t.options.subtitle, t.dims.y.axis.title, t.marks[0].props.text]).toEqual(['= Summe der Länder', '=Quelle', '=B', '=200', '=Total']);
     });
 });
 
@@ -406,7 +406,7 @@ describe('a chain of parents of parts of 4.x and 5.0', () => {
         for (const scale of ['lin', 'log'])
             expect(engine5(merged, { scale })).toEqual(engine5(expected, { scale }));
         const t = engine5(merged, { scale: 'log' });
-        expect([t.options.title, t.options.height, t.dims.y.column, t.dims.y.format, t.dims.y.scale.type, t.plot[0].props['stroke-width']])
+        expect([t.options.title, t.options.height, t.dims.y.column, t.dims.y.format, t.dims.y.scale.type, t.marks[0].props['stroke-width']])
             .toEqual(['Child', 300, 'v', '.1f', 'log', 2]);
     });
     test('a child of 4.x of a parent of 5.0, and of 4.x of both', async () => {

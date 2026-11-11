@@ -59,7 +59,7 @@ const fixedFormat = (locale, ticks) => {
 /**
  * The legend of the colors of a scale without orientation of the dim
  * `legend`, a gradient of a continuous scale, the classes of a threshold,
- * quantize or quantile scale, `update(scale)` draws the scale of the plots,
+ * quantize or quantile scale, `update(scale)` draws the scale of the marks,
  * the one of all facets, see layout.js. Loaded with the definitions which
  * have one, see utils/lazy.js.
  */

@@ -1,10 +1,10 @@
-// the axes, the annotations and the hover of polar plots and their plot
+// the axes, the annotations and the hover of polar plots and their mark
 // types, loaded with the first polar plot, see coords/polar.js
-export { angleOf, radiusRange, plotTypes };
+export { angleOf, radiusRange, markTypes };
 
 import * as d3 from "@/utils/d3";
 import { arc as arcShape, lineRadial, pointRadial } from 'd3-shape';
-import plotTypes from "@/plots/polar";
+import markTypes from "@/plots/polar";
 import { bandCenter } from "@/utils/scales";
 import { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
@@ -308,7 +308,7 @@ const annotate = (ctx, a) => {
 export default {
     axes,
     annotate,
-    // the labels of the radial axes are in the plot area, they are above the plots
+    // the labels of the radial axes are in the plot area, they are above the marks
     raise: ctx => ctx.inner.querySelectorAll(".vis-axis-radial").forEach(node => {
         if (node.nextSibling)
             node.parentNode.appendChild(node);
@@ -350,7 +350,7 @@ export default {
                 return pointRadial((a0 + a1)/2, (inner + outer)/2);
             }
             const value = ctx.stackOf ? d3.mean(ctx.stackOf(row)) : row[names.v];
-            // not through the center, as the plots, see plots/polar.js
+            // not through the center, as the marks, see plots/polar.js
             const s = ctx.scales[names.v];
             return pointRadial(angleOf(ctx.scales[names.h], row[names.h]), Math.max(d3.min(s.range()), s(value)));
         },

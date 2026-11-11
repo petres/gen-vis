@@ -8,8 +8,8 @@ import { refOf, refNames } from "@/utils/expr";
 import { markPath, warnOnce } from "@/utils/warn";
 
 // the scale of a prop of a bar, e.g. of "@x:scaled"
-const barScale = (plot, ctx, prop, type) => {
-    const scale = propScale(plot, ctx, prop);
+const barScale = (mark, ctx, prop, type) => {
+    const scale = propScale(mark, ctx, prop);
     if (!scale)
         throw new Error(`the position of a ${type.split(':')[1]} is no value of the scale of a dim, e.g. "@x:scaled"`);
     return scale;
@@ -60,7 +60,7 @@ const stairs = (points, base, fill = false, open = false) => {
     return end === null ? null : open ? path : `${path}V${end.y0}${close}`;
 };
 
-// the plot types of the cartesian coordinate system, missing values are gaps
+// the mark types of the cartesian coordinate system, missing values are gaps
 // in lines and areas
 export default {
     // a line per group, `d` with `x` and `y`
@@ -68,21 +68,21 @@ export default {
         curve: true,
         coords: ['cartesian'],
         update: true,
-        marks(groups, plot, ctx) {
+        marks(groups, mark, ctx) {
             // stairs of `x0` and `x1`, e.g. the outline of a histogram
-            if (plot.props.d && ('x0' in plot.props.d || 'x1' in plot.props.d)) {
-                const scale = propScale(plot, ctx, 'd.y');
+            if (mark.props.d && ('x0' in mark.props.d || 'x1' in mark.props.d)) {
+                const scale = propScale(mark, ctx, 'd.y');
                 const base = scale ? baseOf(scale) : ctx.innerHeight;
-                return perGroup(groups, g => stairs(points(g), base, false, plot.ends == 'open'));
+                return perGroup(groups, g => stairs(points(g), base, false, mark.ends == 'open'));
             }
             // through the centers of the bands of a band scale, as the bars
-            const [dx, dy] = [bandOffset(plot, ctx, 'd.x'), bandOffset(plot, ctx, 'd.y')];
+            const [dx, dy] = [bandOffset(mark, ctx, 'd.x'), bandOffset(mark, ctx, 'd.y')];
             return perGroup(groups, g => d3.line()
-                .curve(curve(plot))
+                .curve(curve(mark))
                 .defined(e => finite(e.x, e.y))
                 .x(e => e.x + dx)
                 .y(e => e.y + dy)
-                (points(g, plot, ctx, 'd.x'))
+                (points(g, mark, ctx, 'd.x'))
             );
         },
     },
@@ -92,19 +92,19 @@ export default {
         curve: true,
         coords: ['cartesian'],
         update: true,
-        marks(groups, plot, ctx) {
+        marks(groups, mark, ctx) {
             // filled stairs of `x0` and `x1`, e.g. of the classes of a bin
-            if (plot.props.d && ('x0' in plot.props.d || 'x1' in plot.props.d)) {
-                const scale = propScale(plot, ctx, 'd.y1');
+            if (mark.props.d && ('x0' in mark.props.d || 'x1' in mark.props.d)) {
+                const scale = propScale(mark, ctx, 'd.y1');
                 const base = scale ? baseOf(scale) : ctx.innerHeight;
                 return perGroup(groups, g => stairs(points(g), base, true));
             }
             // through the centers of the bands of a band scale, as the bars
-            const dx = bandOffset(plot, ctx, 'd.x');
+            const dx = bandOffset(mark, ctx, 'd.x');
             // of stacked areas with a point of no height where a group has no row
-            const pts = areaPoints(groups, plot, ctx, ['x', 'y0', 'y1']);
+            const pts = areaPoints(groups, mark, ctx, ['x', 'y0', 'y1']);
             return perGroup(groups, g => d3.area()
-                .curve(curve(plot))
+                .curve(curve(mark))
                 .defined(e => finite(e.x, e.y0, e.y1))
                 .x(e => e.x + dx)
                 .y1(e => e.y1)
@@ -121,9 +121,9 @@ export default {
     'cartesian:rule': {
         coords: ['cartesian'],
         update: true,
-        marks(groups, plot, ctx) {
+        marks(groups, mark, ctx) {
             const o = pixelOffset();
-            const vertical = 'x' in plot.props;
+            const vertical = 'x' in mark.props;
             const layer = perRow(groups, "line", v => {
                 const { x, y, x1, x2, y1, y2, ...props } = v;
                 return vertical
@@ -135,9 +135,9 @@ export default {
             // continuous scale, which has no bands
             const [a, b] = vertical ? ['y1', 'y2'] : ['x1', 'x2'];
             const items = [...(layer.items ?? []), ...(layer.groups ?? []).flatMap(g => g.items)];
-            const tick = refNames(plot.props[a]).some(n => /:bandwidth$/.test(n));
+            const tick = refNames(mark.props[a]).some(n => /:bandwidth$/.test(n));
             if (tick && items.length && items.every(e => !(Math.abs(e[a] - e[b]) > 0)))
-                warnOnce(ctx.store, `rule:${plot.id}`, `${markPath(ctx.store?.def, plot, true)}: the rules have no length, e.g. ticks across a continuous ${vertical ? 'y' : 'x'}: a tick runs across the band of a categorical dim or the period of an "interval" of dates`);
+                warnOnce(ctx.store, `rule:${mark.id}`, `${markPath(ctx.store?.def, mark, true)}: the rules have no length, e.g. ticks across a continuous ${vertical ? 'y' : 'x'}: a tick runs across the band of a categorical dim or the period of an "interval" of dates`);
             return layer;
         },
     },
@@ -151,15 +151,15 @@ export default {
     'cartesian:bar': {
         coords: ['cartesian'],
         update: true,
-        marks(groups, plot, ctx) {
+        marks(groups, mark, ctx) {
             const type = 'cartesian:bar';
             // the scales, the default width and the base of the bars are the
             // same for all rows, they are taken at the first row which needs
             // them, e.g. the error of a missing width only with rows
             // a vertical bar from `x0` to `x1`, e.g. a class of a bin, from `y0`
             // (by default the position of 0) to `y1`
-            if ('x1' in plot.props && 'y1' in plot.props) {
-                const base = once(() => baseOf(barScale(plot, ctx, 'y1', type)));
+            if ('x1' in mark.props && 'y1' in mark.props) {
+                const base = once(() => baseOf(barScale(mark, ctx, 'y1', type)));
                 return perRow(groups, "rect", v => {
                     const { x0, x1 } = v;
                     const y0 = 'y0' in v ? v.y0 : base();
@@ -167,10 +167,10 @@ export default {
                     return { ...props, x: Math.min(x0, x1), width: Math.abs(x1 - x0), y: Math.min(y0, v.y1), height: Math.abs(v.y1 - y0) };
                 });
             }
-            if ('x1' in plot.props) {
-                const yScale = once(() => barScale(plot, ctx, 'y', type));
+            if ('x1' in mark.props) {
+                const yScale = once(() => barScale(mark, ctx, 'y', type));
                 const thickness = once(() => barWidth(yScale(), type));
-                const base = once(() => baseOf(barScale(plot, ctx, 'x1', type)));
+                const base = once(() => baseOf(barScale(mark, ctx, 'x1', type)));
                 return perRow(groups, "rect", v => {
                     const height = v.height ?? thickness();
                     const x0 = 'x0' in v ? v.x0 : base();
@@ -184,17 +184,17 @@ export default {
                     };
                 });
             }
-            const xScale = once(() => barScale(plot, ctx, 'x', type));
+            const xScale = once(() => barScale(mark, ctx, 'x', type));
             // of the periods of dates (`interval` of the dim of x): a bar
             // in the middle of its period (@x:scaled), 80% of its length by default
             const periodOf = once(() => {
                 const s = xScale();
-                const name = refOf(plot.props.x)?.split(':');
+                const name = refOf(mark.props.x)?.split(':');
                 return s.period && name?.length == 2 && name[1] == 'scaled'
                     ? row => (s(s.period.offset(row[name[0]])) - s(row[name[0]])) : null;
             });
             const thickness = once(() => barWidth(xScale(), type));
-            const base = once(() => baseOf(barScale(plot, ctx, 'y1', type)));
+            const base = once(() => baseOf(barScale(mark, ctx, 'y1', type)));
             return perRow(groups, "rect", (v, row) => {
                 const period = periodOf()?.(row);
                 const width = v.width ?? (period === undefined ? thickness() : 0.8*period);

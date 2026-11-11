@@ -168,7 +168,7 @@ describe('a resize after a change draws the new rows', () => {
     });
 });
 
-describe('the rows of the filter of a plot', () => {
+describe('the rows of the filter of a mark', () => {
     const def = () => {
         const d = { ...lineDef(), globals: { land: 'Wien' } };
         d.plot[1] = { ...d.plot[1], filter: { c: '@land' } };
