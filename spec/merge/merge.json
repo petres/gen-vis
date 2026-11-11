@@ -3,32 +3,26 @@
     "name": "objects are merged deeply, later parts override earlier ones",
     "parts": [
       {
-        "options": {
-          "width": 1,
-          "height": 2,
-          "margins": {
-            "top": 1,
-            "left": 2
-          }
+        "width": 1,
+        "height": 2,
+        "margins": {
+          "top": 1,
+          "left": 2
         }
       },
       {
-        "options": {
-          "width": 3,
-          "margins": {
-            "left": 5
-          }
+        "width": 3,
+        "margins": {
+          "left": 5
         }
       }
     ],
     "result": {
-      "options": {
-        "width": 3,
-        "height": 2,
-        "margins": {
-          "top": 1,
-          "left": 5
-        }
+      "width": 3,
+      "height": 2,
+      "margins": {
+        "top": 1,
+        "left": 5
       }
     }
   },
@@ -36,27 +30,27 @@
     "name": "arrays are replaced",
     "parts": [
       {
-        "plot": [
+        "marks": [
           {
-            "type": "a"
+            "type": "line"
           },
           {
-            "type": "b"
+            "type": "point"
           }
         ]
       },
       {
-        "plot": [
+        "marks": [
           {
-            "type": "c"
+            "type": "bar"
           }
         ]
       }
     ],
     "result": {
-      "plot": [
+      "marks": [
         {
-          "type": "c"
+          "type": "bar"
         }
       ]
     }
@@ -65,7 +59,7 @@
     "name": "arrays of numbers and strings are replaced, also by an empty one",
     "parts": [
       {
-        "mapping": {
+        "dims": {
           "y": {
             "scale": {
               "domain": [
@@ -77,7 +71,7 @@
         }
       },
       {
-        "mapping": {
+        "dims": {
           "y": {
             "scale": {
               "domain": [
@@ -88,20 +82,20 @@
         }
       },
       {
-        "options": {
-          "a": [
-            "x"
+        "hover": {
+          "columns": [
+            "land"
           ]
         }
       },
       {
-        "options": {
-          "a": []
+        "hover": {
+          "columns": []
         }
       }
     ],
     "result": {
-      "mapping": {
+      "dims": {
         "y": {
           "scale": {
             "domain": [
@@ -110,8 +104,8 @@
           }
         }
       },
-      "options": {
-        "a": []
+      "hover": {
+        "columns": []
       }
     }
   },
@@ -119,53 +113,55 @@
     "name": "arrays whose entries all have an id are merged by it, new ids are appended",
     "parts": [
       {
-        "plot": [
+        "marks": [
           {
             "id": "line",
-            "type": "cartesian:line",
-            "props": {
-              "stroke": "red",
-              "fill": "none"
+            "type": "line",
+            "stroke": "red",
+            "highlight": {
+              "stroke-width": 3
             }
           },
           {
             "id": "dots",
-            "type": "svg:circle"
+            "type": "point"
           }
         ]
       },
       {
-        "plot": [
+        "marks": [
           {
             "id": "label",
-            "type": "svg:text"
+            "type": "label"
           },
           {
             "id": "line",
-            "props": {
-              "stroke": "blue"
+            "stroke": "blue",
+            "highlight": {
+              "opacity": 1
             }
           }
         ]
       }
     ],
     "result": {
-      "plot": [
+      "marks": [
         {
           "id": "line",
-          "type": "cartesian:line",
-          "props": {
-            "stroke": "blue",
-            "fill": "none"
+          "type": "line",
+          "stroke": "blue",
+          "highlight": {
+            "stroke-width": 3,
+            "opacity": 1
           }
         },
         {
           "id": "dots",
-          "type": "svg:circle"
+          "type": "point"
         },
         {
           "id": "label",
-          "type": "svg:text"
+          "type": "label"
         }
       ]
     }
@@ -174,28 +170,26 @@
     "name": "arrays of entries with ids are replaced if one entry of either has no id",
     "parts": [
       {
-        "plot": [
+        "marks": [
           {
             "id": "line",
-            "type": "a"
+            "type": "line"
           },
           {
-            "type": "b"
+            "type": "point"
           }
         ]
       },
       {
-        "plot": [
+        "marks": [
           {
             "id": "line",
-            "props": {
-              "r": 1
-            }
+            "stroke-width": 1
           }
         ]
       },
       {
-        "formElements": [
+        "controls": [
           {
             "id": "a",
             "name": "A"
@@ -203,7 +197,7 @@
         ]
       },
       {
-        "formElements": [
+        "controls": [
           {
             "id": "a",
             "name": "B"
@@ -215,15 +209,13 @@
       }
     ],
     "result": {
-      "plot": [
+      "marks": [
         {
           "id": "line",
-          "props": {
-            "r": 1
-          }
+          "stroke-width": 1
         }
       ],
-      "formElements": [
+      "controls": [
         {
           "id": "a",
           "name": "B"
@@ -235,20 +227,22 @@
     }
   },
   {
-    "name": "the entries of entries with ids are merged by their ids as well, e.g. the values of form elements",
+    "name": "the entries of entries with ids are merged by their ids as well, e.g. the values of controls",
     "parts": [
       {
-        "formElements": [
+        "controls": [
           {
             "id": "unit",
-            "ref": "unit",
+            "global": "unit",
             "values": [
               {
                 "id": "twh",
+                "value": "twh",
                 "name": "TWh"
               },
               {
                 "id": "pj",
+                "value": "pj",
                 "name": "PJ"
               }
             ]
@@ -256,22 +250,17 @@
         ]
       },
       {
-        "formElements": [
+        "controls": [
           {
             "id": "unit",
             "values": [
               {
                 "id": "pj",
-                "patch": {
-                  "mapping": {
-                    "y": {
-                      "column": "pj"
-                    }
-                  }
-                }
+                "column": "value.pj"
               },
               {
                 "id": "mtoe",
+                "value": "mtoe",
                 "name": "Mtoe"
               }
             ]
@@ -280,28 +269,25 @@
       }
     ],
     "result": {
-      "formElements": [
+      "controls": [
         {
           "id": "unit",
-          "ref": "unit",
+          "global": "unit",
           "values": [
             {
               "id": "twh",
+              "value": "twh",
               "name": "TWh"
             },
             {
               "id": "pj",
+              "value": "pj",
               "name": "PJ",
-              "patch": {
-                "mapping": {
-                  "y": {
-                    "column": "pj"
-                  }
-                }
-              }
+              "column": "value.pj"
             },
             {
               "id": "mtoe",
+              "value": "mtoe",
               "name": "Mtoe"
             }
           ]
@@ -313,34 +299,28 @@
     "name": "ids are compared as text",
     "parts": [
       {
-        "plot": [
+        "marks": [
           {
             "id": 1,
-            "props": {
-              "a": 1
-            }
+            "stroke-width": 1
           }
         ]
       },
       {
-        "plot": [
+        "marks": [
           {
             "id": "1",
-            "props": {
-              "b": 2
-            }
+            "opacity": 0.5
           }
         ]
       }
     ],
     "result": {
-      "plot": [
+      "marks": [
         {
           "id": "1",
-          "props": {
-            "a": 1,
-            "b": 2
-          }
+          "stroke-width": 1,
+          "opacity": 0.5
         }
       ]
     }
@@ -352,7 +332,7 @@
         "geo": {
           "data": "map.json"
         },
-        "mapping": {
+        "dims": {
           "y": {
             "hover": {
               "format": ".1f"
@@ -362,7 +342,7 @@
       },
       {
         "geo": null,
-        "mapping": {
+        "dims": {
           "y": {
             "hover": null
           }
@@ -371,7 +351,7 @@
     ],
     "result": {
       "geo": null,
-      "mapping": {
+      "dims": {
         "y": {
           "hover": null
         }
@@ -382,27 +362,12 @@
     "name": "a value replaces an object and an object replaces a value",
     "parts": [
       {
-        "options": {
-          "message": {
-            "a": 1
-          },
-          "height": 300
-        }
+        "message": {
+          "a": 1
+        },
+        "height": 300
       },
       {
-        "options": {
-          "message": "text",
-          "height": {
-            "*": [
-              "@totalWidth",
-              0.5
-            ]
-          }
-        }
-      }
-    ],
-    "result": {
-      "options": {
         "message": "text",
         "height": {
           "*": [
@@ -411,15 +376,24 @@
           ]
         }
       }
+    ],
+    "result": {
+      "message": "text",
+      "height": {
+        "*": [
+          "@totalWidth",
+          0.5
+        ]
+      }
     }
   },
   {
     "name": "an object replaces an array and an array an object",
     "parts": [
       {
-        "plot": [
+        "marks": [
           {
-            "type": "a"
+            "type": "line"
           }
         ],
         "transform": {
@@ -428,8 +402,8 @@
         }
       },
       {
-        "plot": {
-          "type": "b"
+        "marks": {
+          "type": "bar"
         },
         "transform": [
           {
@@ -440,8 +414,8 @@
       }
     ],
     "result": {
-      "plot": {
-        "type": "b"
+      "marks": {
+        "type": "bar"
       },
       "transform": [
         {
@@ -452,31 +426,25 @@
     }
   },
   {
-    "name": "a single plot object is merged with a single plot object",
+    "name": "a single mark object is merged with a single mark object",
     "parts": [
       {
-        "plot": {
-          "type": "cartesian:line",
-          "props": {
-            "stroke": "red"
-          }
+        "marks": {
+          "type": "line",
+          "stroke": "red"
         }
       },
       {
-        "plot": {
-          "props": {
-            "stroke-width": 2
-          }
+        "marks": {
+          "stroke-width": 2
         }
       }
     ],
     "result": {
-      "plot": {
-        "type": "cartesian:line",
-        "props": {
-          "stroke": "red",
-          "stroke-width": 2
-        }
+      "marks": {
+        "type": "line",
+        "stroke": "red",
+        "stroke-width": 2
       }
     }
   },
@@ -506,10 +474,10 @@
     }
   },
   {
-    "name": "a text of a mapping is the mapping of its column, merged with an object of the same mapping",
+    "name": "a text of a dim is the dim of its column, merged with an object of the same dim",
     "parts": [
       {
-        "mapping": {
+        "dims": {
           "facet": "group",
           "x": {
             "column": "year",
@@ -521,7 +489,7 @@
         }
       },
       {
-        "mapping": {
+        "dims": {
           "facet": {
             "categories": {
               "a": {
@@ -535,7 +503,7 @@
       }
     ],
     "result": {
-      "mapping": {
+      "dims": {
         "facet": {
           "column": "group",
           "categories": {
@@ -689,7 +657,7 @@
     }
   },
   {
-    "name": "a value merged onto a match of a global becomes its default, with or without one: the switch applies after the merge as a patch of 4.x",
+    "name": "a value merged onto a match of a global becomes its default, with or without one: the switch applies after the merge",
     "parts": [
       {
         "globals": {

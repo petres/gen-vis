@@ -5,46 +5,38 @@
     "files": {
       "http://h/data/shared/base.json": {
         "parent": "root.json",
-        "options": {
-          "width": 1,
-          "height": 2
-        },
-        "plot": [
+        "width": 1,
+        "height": 2,
+        "marks": [
           {
-            "type": "a"
+            "type": "line"
           }
         ]
       },
       "http://h/data/shared/root.json": {
-        "options": {
-          "width": 0,
-          "title": "root"
-        }
+        "width": 0,
+        "title": "root"
       }
     },
     "def": {
-      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+      "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
       "parent": "../shared/base.json",
-      "options": {
-        "width": 3
-      },
-      "plot": [
+      "width": 3,
+      "marks": [
         {
-          "type": "b"
+          "type": "bar"
         }
       ]
     },
     "result": {
-      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
-      "options": {
-        "width": 3,
-        "title": "root",
-        "height": 2
-      },
+      "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+      "width": 3,
+      "title": "root",
+      "height": 2,
       "parent": "../shared/base.json",
-      "plot": [
+      "marks": [
         {
-          "type": "b"
+          "type": "bar"
         }
       ]
     }
@@ -54,129 +46,105 @@
     "url": "http://h/data/bev/def.json",
     "files": {
       "http://h/data/root.json": {
-        "options": {
-          "title": "root",
-          "height": 1,
-          "width": 1
-        }
+        "title": "root",
+        "height": 1,
+        "width": 1
       },
       "http://h/data/lines.json": {
         "parent": "root.json",
-        "options": {
-          "height": 2
-        },
-        "plot": [
+        "height": 2,
+        "marks": [
           {
-            "type": "a"
+            "type": "line"
           }
         ]
       },
       "http://h/data/facets.json": {
         "parent": "root.json",
-        "options": {
-          "width": 3
-        },
+        "width": 3,
         "facets": {
-          "dim": [
-            "type"
-          ]
+          "by": "type"
         }
       }
     },
     "def": {
-      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+      "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
       "parent": [
         "../lines.json",
         "../facets.json"
       ],
-      "options": {
-        "title": "def"
-      }
+      "title": "def"
     },
     "result": {
-      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
-      "options": {
-        "title": "def",
-        "height": 2,
-        "width": 3
-      },
+      "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+      "title": "def",
+      "height": 2,
+      "width": 3,
       "parent": [
         "../lines.json",
         "../facets.json"
       ],
-      "plot": [
+      "marks": [
         {
-          "type": "a"
+          "type": "line"
         }
       ],
       "facets": {
-        "dim": [
-          "type"
-        ]
+        "by": "type"
       }
     }
   },
   {
-    "name": "a later mixin overrides an earlier one, plots of ids are merged across mixins",
+    "name": "a later mixin overrides an earlier one, marks of ids are merged across mixins",
     "url": "http://h/def.json",
     "files": {
       "http://h/a.json": {
-        "plot": [
+        "marks": [
           {
             "id": "l",
-            "type": "cartesian:line",
-            "props": {
-              "stroke": "red"
-            }
+            "type": "line",
+            "stroke": "red"
           }
         ]
       },
       "http://h/b.json": {
-        "plot": [
+        "marks": [
           {
             "id": "l",
-            "props": {
-              "stroke": "blue"
-            }
+            "stroke": "blue"
           },
           {
             "id": "p",
-            "type": "svg:circle"
+            "type": "point"
           }
         ]
       }
     },
     "def": {
-      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+      "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
       "parent": [
         "a.json",
         "b.json"
       ],
-      "plot": [
+      "marks": [
         {
           "id": "p",
-          "props": {
-            "r": 2
-          }
+          "r": 2
         }
       ]
     },
     "result": {
-      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
-      "plot": [
+      "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+      "marks": [
         {
           "id": "l",
-          "type": "cartesian:line",
-          "props": {
-            "stroke": "blue"
-          }
+          "type": "line",
+          "stroke": "blue"
         },
         {
           "id": "p",
-          "type": "svg:circle",
-          "props": {
-            "r": 2
-          }
+          "type": "point",
+          "r": 2
         }
       ],
       "parent": [
@@ -200,6 +168,26 @@
       "parent": "b.json"
     },
     "error": "Cyclic parent definition 'http://h/b.json'"
+  },
+  {
+    "name": "a definition of a url declares gen-vis 5 by its $schema, it may be the one of a parent",
+    "url": "http://h/def.json",
+    "files": {
+      "http://h/base.json": {
+        "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+        "width": 1
+      }
+    },
+    "def": {
+      "parent": "base.json",
+      "height": 2
+    },
+    "result": {
+      "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+      "width": 1,
+      "height": 2,
+      "parent": "base.json"
+    }
   },
   {
     "name": "a definition of a url declares gen-vis 4 by its $schema, it may be the one of a parent",
@@ -231,14 +219,10 @@
     "name": "a definition without a url (inline) may have no $schema",
     "files": {},
     "def": {
-      "options": {
-        "height": 2
-      }
+      "height": 2
     },
     "result": {
-      "options": {
-        "height": 2
-      }
+      "height": 2
     }
   },
   {
@@ -246,9 +230,7 @@
     "url": "http://h/def.json",
     "files": {},
     "def": {
-      "options": {
-        "height": 2
-      }
+      "height": 2
     },
     "error": "'http://h/def.json' is no definition of gen-vis 5: its $schema is missing"
   },
@@ -258,13 +240,11 @@
     "files": {
       "http://h/base.json": {
         "$schema": "https://unpkg.com/@preschen/gen-vis@3/schema.json",
-        "options": {
-          "width": 1
-        }
+        "width": 1
       }
     },
     "def": {
-      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
+      "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
       "parent": "base.json"
     },
     "error": "'http://h/base.json' is no definition of gen-vis 5: its $schema is the one of gen-vis 3"
