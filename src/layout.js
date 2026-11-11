@@ -353,7 +353,7 @@ const layout = (store, width, before = null) => {
     };
 
     // values a log scale has no position of, e.g. 0, once per dim
-    Object.keys(def.mapping).forEach(n => logProblems(n, def.mapping[n], rows)
+    Object.keys(def.mapping).forEach(n => logProblems(n, def.mapping[n], rows, scope)
         .forEach(p => warnOnce(store, `log:${n}:${p.split(',')[0]}`, `dims.${n}.scale: ${p}`)));
 
     // the sizes of a facet

@@ -646,6 +646,17 @@ describe('marks without a position are not drawn', () => {
         errors.length = 0;
     });
 
+    test('a log scale of a fixed domain from 0 draws its marks from the values of the data, with a warning', async () => {
+        const def = { dims: { x: { column: 'k', type: 'categorical' }, y: { column: 'v', domain: [0, 1000], scale: { type: 'log' } } }, marks: [{ type: 'bar' }, { type: 'line' }] };
+        const el = await mount({ def, data: 'k,v\na,1\nb,10\nc,100' });
+        expect(rects(el).length).toBe(3);
+        rects(el).forEach(r => expect(num(r, 'height')).toBeGreaterThanOrEqual(0));
+        expect(el.querySelector('g.vis-mark path').getAttribute('d')).toMatch(/^M[\d.,]+L[\d.,]+L[\d.,]+$/);
+        noNaN(el);
+        expect(errors).toEqual(['gen-vis inline definition: dims.y.scale: a log scale has no position of 0 of its `domain`, that end is the one of the data, e.g. "domain": [1, 1000]']);
+        errors.length = 0;
+    });
+
     test('a category which is not in a fixed domain of a band scale', async () => {
         const def = { dims: { x: { column: 'k', type: 'categorical', scale: { domain: ['a', 'b'] } }, y: 'v' },
             marks: [{ type: 'bar' }, { type: 'point' }, { type: 'label', text: '@y' }, { type: 'rule' }] };

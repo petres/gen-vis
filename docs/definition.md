@@ -817,7 +817,8 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   dates or numbers of strings, categories as strings, e.g. `[2004, 2008]`
   of the years of any data, entries can be references, e.g. `[0, "@max"]`
   of a global, the domain of a `point` or `band` scale are its categories
-  in their order.
+  in their order. A `log` scale has no 0: a fixed end of 0 (or of the
+  other sign than the values) is taken from the data, with a warning.
 - `pad` (also of the dim) extends the ends taken from the data relative to
   the size of the domain (a fixed end stays, e.g. `0` of bars), positive
   values extend: a number, e.g. `0.1` of 10% below and above, or `[start,

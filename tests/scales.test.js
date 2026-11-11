@@ -1,7 +1,7 @@
 import * as d3 from 'd3-scale-chromatic';
 import { loadColors } from '@/utils/d3';
 import { describe, test, expect, beforeAll } from 'vitest';
-import { makeScale, bandCenter } from '@/utils/scales';
+import { makeScale, bandCenter, logProblems } from '@/utils/scales';
 import coord from '@/coords/cartesian';
 import { tickValues } from '@/coords/ticks';
 
@@ -194,6 +194,19 @@ describe('makeScale, log scales and rows without values', () => {
         // the stacks from 0, e.g. of bars
         const stacked = { ...log, stacked: true };
         expect(makeScale('y', stacked, [{ y: 10 }, { y: 100 }], { ...options, stackOf: r => [0, r.y] }).domain()).toEqual([10, 100]);
+    });
+
+    test('a fixed end of the domain without a position (0, the other sign) is the one of the data, with a warning', () => {
+        const fixed = domain => ({ ...log, scale: { ...log.scale, domain } });
+        const rows = [{ y: 10 }, { y: 100 }];
+        expect(makeScale('y', fixed([0, 1000]), rows, options).domain()).toEqual([10, 1000]);
+        expect(makeScale('y', fixed([-5, null]), rows, options).domain()).toEqual([10, 100]);
+        expect(makeScale('y', fixed([1, 1000]), rows, options).domain()).toEqual([1, 1000]);
+        expect(makeScale('y', fixed([-1000, 0]), [{ y: -10 }, { y: -100 }], options).domain()).toEqual([-1000, -10]);
+        expect(logProblems('y', fixed([0, 1000]), rows)).toEqual(
+            ['a log scale has no position of 0 of its `domain`, that end is the one of the data, e.g. "domain": [1, 1000]']);
+        expect(logProblems('y', fixed(['@lo', 1000]), rows, { lo: -5 })[0]).toContain('no position of -5 of its `domain` (its values are positive)');
+        expect(logProblems('y', fixed([1, 1000]), rows)).toEqual([]);
     });
 
     test('without rows the domain is 0 to 1 or the one of the values of include or center', () => {

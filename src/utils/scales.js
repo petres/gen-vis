@@ -182,10 +182,11 @@ const logValues = values => {
  * The problems of a numeric mapping of a log scale (log, sequentialLog,
  * divergingLog, not symlog) of the rows as texts of a warning, none of
  * another scale: values without a position (0, the ones of the other sign,
- * see logValues), which are not drawn, `zero` (a log scale has no 0) and
- * stacks (they start at 0).
+ * see logValues), which are not drawn, `zero` (a log scale has no 0), a
+ * fixed end of the `domain` without a position (of the names of `scope`,
+ * the one of the data is used, see makeScale) and stacks (they start at 0).
  */
-const logProblems = (name, mapping, rows) => {
+const logProblems = (name, mapping, rows, scope = {}) => {
     const type = mapping?.scale?.type;
     if (mapping?.type != 'numeric' || typeof type != 'string' || !isLog(type) || mapping.scale.of !== undefined)
         return [];
@@ -199,6 +200,15 @@ const logProblems = (name, mapping, rows) => {
     }
     if (mapping.scale.zero === true)
         problems.push(`a ${type} scale has no 0, \`zero\` is ignored`);
+    // (a domain which is no list is the error of makeScale)
+    const sign = kept.size ? Math.sign([...kept][0]) : 1;
+    let domain = [];
+    try {
+        domain = [evaluate(mapping.scale.domain, scope) ?? []].flat();
+    } catch {}
+    const ends = domain.filter(v => v !== null && v !== undefined && v !== '' && Number.isFinite(+v) && !(+v*sign > 0));
+    if (ends.length > 0)
+        problems.push(`a ${type} scale has no position of ${ends.join(' and ')} of its \`domain\`${ends.some(v => +v !== 0) ? ` (its values are ${sign > 0 ? 'positive' : 'negative'})` : ''}, that end is the one of the data, e.g. "domain": [${sign > 0 ? '1, 1000' : '-1000, -1'}]`);
     if (mapping.stacked !== undefined && mapping.stacked !== false)
         problems.push(`stacks start at 0, which a ${type} scale has no position of, the stacked marks are not drawn`);
     return problems;
@@ -383,6 +393,10 @@ const makeScale = (name, mapping, rows, { dims = {}, coord = {}, scope = {}, sta
         domain = found.values;
     } else if (extent && !['ordinal', 'band', 'point'].includes(scaleDef.type)) {
         domain = fixed();
+        // a fixed end of a log scale without a position (0, or of the other
+        // sign than the values) is the one of the data, see logProblems
+        if (log)
+            domain = domain.map(v => v !== null && !(v*(Math.sign(extent[0]) || 1) > 0) ? null : v);
         ends = domain.filter(v => v !== null);
         // the first and the last entry, a diverging domain has a middle one
         // (of a domain of two entries or none it is taken from the data)
