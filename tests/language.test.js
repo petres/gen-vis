@@ -26,7 +26,7 @@ describe('the language of 5.0', () => {
         expect(def.plot).toEqual([
             { type: 'cartesian:line', by: ['land'], highlight: { opacity: 1 }, props: { opacity: 0.7, d: { x: '@x:scaled', y: '@y:scaled' } } },
             // x of no type beside a continuous y is no band (e.g. years), only a vertical dim beside a continuous x is one
-            { type: 'svg:circle', by: ['land'], props: { r: 4, cx: '@x:scaled', cy: '@y:scaled' } },
+            { type: 'svg:circle', by: ['land'], props: { r: 4, cx: '@x:scaled:center', cy: '@y:scaled' } },
         ]);
         expect(def.formElements).toBeUndefined();
     });
@@ -119,7 +119,7 @@ describe('the language of 5.0', () => {
         expect(def.plot[3].props).toEqual({ 'stroke-dasharray': '2 2', y: '@y:scaled:100' });
         // a fill of a dim of only a column is the color of its categories (the ones of the
         // data); the cell made y a band scale, so the point is at the center of the band
-        expect(def.plot[4]).toEqual({ type: 'svg:circle', by: ['c'], props: { fill: '@color', cx: '@lo:scaled', cy: '@y:scaled:center' } });
+        expect(def.plot[4]).toEqual({ type: 'svg:circle', by: ['c'], props: { fill: '@color', cx: '@lo:scaled:center', cy: '@y:scaled:center' } });
         expect(def.mapping.y.scale.type).toBe('band');
         // the dims of the ranges of the rule are on the scale of y
         expect(def.mapping.lo.scale).toEqual({ of: 'y' });
@@ -227,7 +227,7 @@ describe('the dims of the channels (review of 5.0)', () => {
     test('a channel of an axis without the dim of the axis is the dim of the axis, of no other dim\'s scale', () => {
         const t = translate({ marks: { type: 'point', x: 'year', y: 'value' } });
         expect(t.mapping).toEqual({ x: { column: 'year', hover: {} }, y: { column: 'value', hover: {} } });
-        expect(t.plot[0].props).toMatchObject({ cx: '@x:scaled', cy: '@y:scaled' });
+        expect(t.plot[0].props).toMatchObject({ cx: '@x:scaled:center', cy: '@y:scaled:center' });
         // another column on the axis of x without a dim x: its own scale
         const r = translate({ dims: { y: 'v' }, marks: { type: 'rule', y: 'v', x1: 'lo', x2: 'hi' } });
         expect(r.mapping.lo.scale).toBeUndefined();

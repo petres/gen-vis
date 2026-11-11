@@ -612,6 +612,20 @@ describe('lines and areas of a band scale', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the points and the labels of a dim of no type are at the centers of the bars too, its type is the one of the rows', async () => {
+        const def = { dims: { x: 'k', y: 'v' }, marks: [{ type: 'bar' }, { type: 'line' }, { type: 'point' }, { type: 'label', text: '@y' }] };
+        const el = await mount({ def, data });
+        const mid = centers(el).map(c => c[0]);
+        const points = [...el.querySelectorAll('g.vis-mark circle')].map(c => num(c, 'cx'));
+        const labels = [...el.querySelectorAll('g.vis-mark text')].map(t => num(t, 'x'));
+        expect(points).toHaveLength(3);
+        expect(labels).toHaveLength(3);
+        paths(el)[0].forEach((p, i) => expect(p[0]).toBeCloseTo(mid[i], 2));
+        points.forEach((p, i) => expect(p).toBeCloseTo(mid[i], 2));
+        labels.forEach((p, i) => expect(p).toBeCloseTo(mid[i], 2));
+        expect(errors).toEqual([]);
+    });
+
     test('a line with horizontal bars runs through the centers of the bands of y', async () => {
         const def = { dims: { y: { column: 'k', type: 'categorical' }, x: 'v' }, marks: [{ type: 'bar' }, { type: 'line' }] };
         const el = await mount({ def, data });

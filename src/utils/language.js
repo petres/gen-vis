@@ -357,8 +357,12 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
         || (x && isContinuous(ofDim(x.dim)) && ofDim(x.dim)?.interval === undefined && !isContinuous(ofDim(y.dim)) && !centered(x.dim))));
     // the dims of positions which are bands by the other one, see banded
     const bands = new Set();
+    // a dim whose type follows from the rows, e.g. a column of names: the
+    // center of its band if it has bands (of bars beside it), the position
+    // itself on a continuous scale, which has no bands
+    const untyped = d => d && Object.hasOwn(dims, d) && !isContinuous(ofDim(d));
     // the position of a dim, of a categorical one the center of its band
-    const at = (c, kind = 'scaled') => c ? (c.fixed === undefined && kind == 'scaled' && (centered(c.dim) || bands.has(c.dim)) ? ref(c.dim, 'scaled:center') : c.value) : undefined;
+    const at = (c, kind = 'scaled') => c ? (c.fixed === undefined && kind == 'scaled' && (centered(c.dim) || bands.has(c.dim) || untyped(c.dim)) ? ref(c.dim, 'scaled:center') : c.value) : undefined;
     // `group` of dodged stacked bars: a stack per slot, e.g. per year and type,
     // the stacks start at 0, the base
     // `"diverging"` stacks all rows, the negative values in the reverse
