@@ -2,7 +2,7 @@
 import { arc, areaRadial, lineRadial, pointRadial } from 'd3-shape';
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, points, areaPoints, propScale, dodge, halo, inside, centered } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, points, areaPoints, propScale, once, dodge, halo, inside, centered } from "@/plots/elements";
 import { barScale, barWidth } from "@/plots/cartesian";
 import { radiusRange } from "@/coords/polar-plot";
 import { defaults } from "@/plots/defaults";
@@ -125,27 +125,32 @@ const types = {
     'polar:arc': {
         coords: ['polar'],
         update: true,
-        marks: (groups, plot, ctx) => perRow(groups, "path", v => {
-            let [start, end] = [v.startAngle, v.endAngle];
-            if (!('startAngle' in v && 'endAngle' in v)) {
-                if (!('angle' in v))
-                    throw new Error(`an arc needs an angle, the channel x (or the attribute angle, or startAngle and endAngle)`);
-                const s = barScale(plot, ctx, 'angle', 'polar:arc');
-                const width = v.width ?? barWidth(s, 'polar:arc');
-                const a = v.angle + bandCenter(s);
-                [start, end] = [a - width/2, a + width/2];
-            }
+        marks(groups, plot, ctx) {
+            // the scale of the angle, the default width and the radii of the
+            // plot are the same for all rows, see once
+            const scale = once(() => barScale(plot, ctx, 'angle', 'polar:arc'));
+            const band = once(() => barWidth(scale(), 'polar:arc'));
             const [inner, outer] = radiusRange(ctx);
-            const [r0, r1] = [clampRadius(v.innerRadius ?? inner, inner), clampRadius(v.outerRadius ?? outer, inner)];
-            // no arc without a position, e.g. of 0 of a log scale
-            if (!finite(start, end, r0, r1))
-                return null;
-            // the path of the values of an arc, a transition moves these, not
-            // the numbers of the path (the flags of its arcs are 0 or 1)
-            const values = { startAngle: start, endAngle: end, innerRadius: r0, outerRadius: r1, padAngle: v.padAngle ?? 0, cornerRadius: v.cornerRadius ?? 0 };
-            const props = Object.fromEntries(Object.entries(v).filter(([k]) => !arcProps.includes(k)));
-            return { ...props, d: arcPath(values), [shapeOf]: { d: { values, build: arcPath } } };
-        }),
+            return perRow(groups, "path", v => {
+                let [start, end] = [v.startAngle, v.endAngle];
+                if (!('startAngle' in v && 'endAngle' in v)) {
+                    if (!('angle' in v))
+                        throw new Error(`an arc needs an angle, the channel x (or the attribute angle, or startAngle and endAngle)`);
+                    const width = v.width ?? band();
+                    const a = v.angle + bandCenter(scale());
+                    [start, end] = [a - width/2, a + width/2];
+                }
+                const [r0, r1] = [clampRadius(v.innerRadius ?? inner, inner), clampRadius(v.outerRadius ?? outer, inner)];
+                // no arc without a position, e.g. of 0 of a log scale
+                if (!finite(start, end, r0, r1))
+                    return null;
+                // the path of the values of an arc, a transition moves these, not
+                // the numbers of the path (the flags of its arcs are 0 or 1)
+                const values = { startAngle: start, endAngle: end, innerRadius: r0, outerRadius: r1, padAngle: v.padAngle ?? 0, cornerRadius: v.cornerRadius ?? 0 };
+                const props = Object.fromEntries(Object.entries(v).filter(([k]) => !arcProps.includes(k)));
+                return { ...props, d: arcPath(values), [shapeOf]: { d: { values, build: arcPath } } };
+            });
+        },
     },
 
     'polar:circle': positioned('polar:circle', 'circle', 'cx', 'cy'),

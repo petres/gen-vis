@@ -1,4 +1,4 @@
-export { perRow, perGroup, finite, curve, points, areaPoints, alongRows, propScale, bandOffset, dodge, halo, inside, centered };
+export { perRow, perGroup, finite, curve, points, areaPoints, alongRows, propScale, bandOffset, once, dodge, halo, inside, centered };
 
 import * as d3 from "@/utils/d3";
 import { refOf, refNames } from '@/utils/expr';
@@ -8,6 +8,21 @@ import { bandCenter } from "@/utils/scales";
 const finite = (...values) => values.every(v => Number.isFinite(v));
 
 const curve = plot => curves[plot.curve ?? 'linear'] ?? d3.curveLinear;
+
+// a value which is the same for all rows of a mark, computed at the first
+// row which needs it, e.g. the error of a missing width only with rows,
+// also a value of null only once
+const once = f => {
+    let done = false;
+    let value;
+    return () => {
+        if (!done) {
+            value = f();
+            done = true;
+        }
+        return value;
+    };
+};
 
 // the dim of a prop of a plot (`path`, e.g. `d.x`) and its scale: of a
 // reference to its scaled value, also in an expression, e.g. "@x:scaled"

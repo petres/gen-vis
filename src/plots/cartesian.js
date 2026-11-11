@@ -2,7 +2,7 @@ export { barScale, barWidth };
 
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, points, areaPoints, propScale, bandOffset } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, points, areaPoints, propScale, bandOffset, once } from "@/plots/elements";
 import { pixelOffset } from "@/utils/axis";
 import { refOf, refNames } from "@/utils/expr";
 import { markPath, warnOnce } from "@/utils/warn";
@@ -156,10 +156,6 @@ export default {
             // the scales, the default width and the base of the bars are the
             // same for all rows, they are taken at the first row which needs
             // them, e.g. the error of a missing width only with rows
-            const once = f => {
-                let value;
-                return () => value ??= f();
-            };
             // a vertical bar from `x0` to `x1`, e.g. a class of a bin, from `y0`
             // (by default the position of 0) to `y1`
             if ('x1' in plot.props && 'y1' in plot.props) {

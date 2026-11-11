@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { dodge } from '@/plots/elements';
+import { dodge, once } from '@/plots/elements';
 
 describe('dodge', () => {
     test('positions far enough apart are kept', () => {
@@ -34,5 +34,18 @@ describe('the names of the values of a column', () => {
         expect(store.def.formElements[0].values.map(e => [e.value, e.name])).toEqual([['2026-09', 'September 2026'], ['2026-10', 'Oktober 2026']]);
         await store.init({ def: def({ names: 'label' }), data });
         expect(store.def.formElements[0].values.map(e => e.name)).toEqual(['Sept.', 'Okt.']);
+    });
+});
+
+describe('once', () => {
+    test('a value of all rows is computed at its first use, also one of null', () => {
+        let calls = 0;
+        const none = once(() => {
+            calls++;
+            return null;
+        });
+        expect(calls).toBe(0);
+        expect([none(), none(), none()]).toEqual([null, null, null]);
+        expect(calls).toBe(1);
     });
 });
