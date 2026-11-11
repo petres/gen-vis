@@ -129,8 +129,8 @@ e.g. the title, the names of the legends and the hover and the titles of
 the axes, are text, `<` is shown as it is.
 
 The charts of a page share their requests of the last 5 minutes, e.g. a parent
-used by all of them or a csv of two charts is loaded once, later ones load
-again, e.g. for updated data. The parents of a definition and its data are
+used by all of them or a csv of two charts is loaded once (and read once,
+the charts share its rows), later ones load again, e.g. for updated data. The parents of a definition and its data are
 requested at once. The export page loads the files of each chart fresh, see
 [export](export.md#export-page).
 

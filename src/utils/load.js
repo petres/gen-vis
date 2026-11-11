@@ -43,7 +43,8 @@ const request = async (url, type) => {
     return response[type]();
 };
 
-const fetchCached = (url, type = 'text') => {
+// the entry of the cache of a url, its `content` a promise
+const cached = (url, type = 'text') => {
     const key = `${type} ${url}`;
     if (!cache.has(key)) {
         const forget = entry => {
@@ -63,15 +64,56 @@ const fetchCached = (url, type = 'text') => {
         entry.timer.unref?.();
         cache.set(key, entry);
     }
-    return cache.get(key).content;
+    return cache.get(key);
 };
+
+const fetchCached = (url, type = 'text') => cached(url, type).content;
 
 const fetchText = url => fetchCached(url);
 
 // parquet is binary, the other formats are text, data of an unknown format
 // (e.g. of an url without an extension) is binary, parseData reads parquet
 // of its content and the others of its text
-const fetchData = (url, format) => fetchCached(url, format == 'parquet' || format === undefined ? 'arrayBuffer' : 'text');
+const contentType = format => format == 'parquet' || format === undefined ? 'arrayBuffer' : 'text';
+const fetchData = (url, format) => fetchCached(url, contentType(format));
+
+/**
+ * The rows of the data of a url, parsed once per request of the cache: the
+ * charts of a page which share a file share its rows, the same list (see
+ * raw), so the types of its columns are inferred once too (see inferTypes
+ * of utils/data.js); kept with the request, by the format and, of binary
+ * data (parquet reads only the columns used), the `columns`, and released
+ * with it. The warnings of the data (see parseData) are kept with the rows,
+ * `warn` tells them of every chart. A chart does not change the rows: the
+ * columns of its transforms are beside them, its rows of the dims are
+ * others (see prepareData).
+ */
+const fetchRows = async (url, format, columns = null, warn = null) => {
+    const type = contentType(format);
+    const entry = cached(url, type);
+    const key = JSON.stringify([format ?? null, type == 'arrayBuffer' && columns ? [...columns].sort() : null]);
+    entry.rows ??= new Map();
+    if (!entry.rows.has(key)) {
+        // an error of the data is kept as the rows are, one of the request is
+        // the one of the content
+        const parsed = entry.content.then(async data => {
+            const messages = [];
+            try {
+                return { rows: raw(await parseData(data, format, columns, message => messages.push(message))), messages };
+            } catch (error) {
+                return { error };
+            }
+        });
+        // (an error of the request is the one of the charts which wait for it)
+        parsed.catch(() => {});
+        entry.rows.set(key, parsed);
+    }
+    const { rows, messages, error } = await entry.rows.get(key);
+    if (error)
+        throw new Error(`Could not read the data '${url}': ${error.message}`);
+    messages.forEach(message => warn?.(message));
+    return rows;
+};
 
 const parseDef = (text, source, what = 'definition') => {
     try {
@@ -159,8 +201,17 @@ const readData = async (data, format, source, columns = null, warn = null) => {
     }
 };
 
-// the rows as an array of their own, they can be large and are only replaced as a whole
-const raw = rows => Array.from(rows);
+// the rows as an array of their own, they can be large and are only
+// replaced as a whole; the columns of the header of CSV and TSV (`columns`
+// of the parsed rows) are kept beside them, also without rows, see
+// missingColumns
+const raw = rows => {
+    const list = Array.from(rows);
+    if (Array.isArray(rows.columns))
+        headers.set(list, rows.columns);
+    return list;
+};
+const headers = new WeakMap();
 
 // the check of the definitions (`check` of Store.init, e.g. while a
 // definition is written), loaded with the first one, together with its
@@ -360,30 +411,27 @@ const engineVariants = (resolved, own, engine) => {
 // read in the columns which are used
 const loadRows = async (defOrg, url, data) => {
     let format = defOrg.dataFormat;
-    let source = 'of the attribute';
+    let rows;
+    let warn;
     if (data === null) {
         if (!defOrg.data)
             throw new Error('No data given, neither in the definition nor as attribute.');
         const dataUrl = resolveUrl(defOrg.data, url);
         format = dataFormat(dataUrl, format);
-        data = await fetchData(dataUrl, format);
-        source = `'${dataUrl}'`;
+        warn = dataWarning(url, `'${dataUrl}'`);
+        // (the rows of a url are shared by the charts of its file, see fetchRows)
+        rows = await fetchRows(dataUrl, format, usedColumns(defOrg), warn);
+    } else {
+        warn = dataWarning(url, 'of the attribute');
+        rows = raw(await readData(data, format, 'of the attribute', usedColumns(defOrg), warn));
     }
-    const warn = dataWarning(url, source);
-    const parsed = await readData(data, format, source, usedColumns(defOrg), warn);
-    const rows = raw(parsed);
-    // the columns of the header of CSV, also without rows, see missingColumns
-    if (Array.isArray(parsed.columns))
-        headers.set(rows, parsed.columns);
     // a chart of no rows is blank, a text of `empty` says why; not of rows
     // of the page, e.g. none while they are loaded
+    const header = headers.get(rows);
     if (rows.length == 0 && !Array.isArray(data) && !defOrg.options?.empty)
-        warn(`no rows${Array.isArray(parsed.columns) && parsed.columns.some(c => c !== '') ? ` (only the header ${parsed.columns.map(c => `'${c}'`).join(', ')})` : ''}, the chart is empty; 'empty' is a text instead of the marks`);
+        warn(`no rows${header?.some(c => c !== '') ? ` (only the header ${header.map(c => `'${c}'`).join(', ')})` : ''}, the chart is empty; 'empty' is a text instead of the marks`);
     return rows;
 };
-
-// the columns of the headers of the rows of CSV and TSV
-const headers = new WeakMap();
 
 // the data of plots of their own, e.g. events, and of the lookups of
 // transforms, also of the other values of the controls, by their url relative
@@ -398,7 +446,7 @@ const loadFiles = async (defOrg, url) => {
     return new Map(await Promise.all([...new Set(withFiles.map(p => p.data))].map(async data => {
         const dataUrl = resolveUrl(data, url);
         const format = dataFormat(dataUrl, withFiles.find(p => p.data == data).dataFormat);
-        return [data, raw(await readData(await fetchData(dataUrl, format), format, `'${dataUrl}'`, null, dataWarning(url, `'${dataUrl}'`)))];
+        return [data, await fetchRows(dataUrl, format, null, dataWarning(url, `'${dataUrl}'`))];
     })));
 };
 

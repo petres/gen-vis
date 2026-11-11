@@ -591,3 +591,92 @@ describe('the type of a dim of a column of a transform of a global (review of 5.
         expect(t.data.map(r => r.y)).toEqual([100, 400, 800]);
     });
 });
+
+describe('charts of the same data file share its rows (review of 5.0)', () => {
+    const lineDef = (more = {}) => ({ ...def, ...more });
+    const base = document.baseURI;
+
+    test('the file is requested and read once, the rows are the same list', async () => {
+        const fetched = [];
+        vi.stubGlobal('fetch', async url => {
+            fetched.push(url);
+            return new Response('year,value\n2020,1\n2021,2\n2022,3');
+        });
+        const a = createStore();
+        const b = createStore();
+        await Promise.all([a.init({ def: lineDef() }), b.init({ def: lineDef({ options: { width: 300, height: 200 } }) })]);
+        const c = createStore();
+        await c.init({ def: lineDef({ mapping: { x: { column: 'year' }, y: { column: 'value' } } }) });
+        expect(fetched).toHaveLength(1);
+        expect(b.rows).toBe(a.rows);
+        expect(c.rows).toBe(a.rows);
+        expect(c.def.mapping.y.type).toBe('numeric');
+        // the rows of the dims are the ones of each chart
+        expect(b.data).not.toBe(a.data);
+        expect(b.data).toEqual(a.data);
+        // after the cache new rows
+        clearCache();
+        const d = createStore();
+        await d.init({ def: lineDef() });
+        expect(fetched).toHaveLength(2);
+        expect(d.rows).not.toBe(a.rows);
+        expect(d.rows).toEqual(a.rows);
+    });
+
+    test('the warnings of the data are the ones of every chart, also the header of a file without rows', async () => {
+        serve({ [new URL('data.csv', base).href]: 'year,value,value\n2020,1,2\n', [new URL('empty.csv', base).href]: 'year,value\n' });
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const a = createStore();
+        await a.init({ def: lineDef() });
+        const b = createStore();
+        await b.init({ def: lineDef() });
+        const twice = warn.mock.calls.map(c => c[0]).filter(m => m.includes("the column 'value' is in the header 2 times"));
+        expect(twice).toHaveLength(2);
+        expect(b.rows).toBe(a.rows);
+        warn.mockClear();
+        for (const store of [createStore(), createStore()])
+            await store.init({ def: lineDef({ data: 'empty.csv' }) });
+        expect(warn.mock.calls.map(c => c[0]).filter(m => m.includes("no rows (only the header 'year', 'value')"))).toHaveLength(2);
+    });
+
+    test('data which can not be read is the error of every chart', async () => {
+        serve({ [new URL('data.csv', base).href]: '<!doctype html><html></html>' });
+        for (const store of [createStore(), createStore()])
+            await expect(store.init({ def: lineDef() })).rejects.toThrow(`Could not read the data '${new URL('data.csv', base).href}': it is a page of HTML`);
+    });
+
+    test('parquet by the columns which are read, a chart of other columns reads them', async () => {
+        const buffer = parquetWriteBuffer({ columnData: [
+            { name: 'year', data: [2020, 2021], type: 'DOUBLE' },
+            { name: 'value', data: [1, 2], type: 'DOUBLE' },
+            { name: 'other', data: [10, 20], type: 'DOUBLE' },
+        ] });
+        serve({ [new URL('data.parquet', base).href]: buffer });
+        const stores = [createStore(), createStore(), createStore()];
+        const y = column => ({ ...def.mapping, y: { ...def.mapping.y, column } });
+        await stores[0].init({ def: lineDef({ data: 'data.parquet' }) });
+        await stores[1].init({ def: lineDef({ data: 'data.parquet' }) });
+        await stores[2].init({ def: lineDef({ data: 'data.parquet', mapping: y('other') }) });
+        expect(stores[1].rows).toBe(stores[0].rows);
+        expect(Object.keys(stores[0].rows[0])).toEqual(['year', 'value']);
+        expect(Object.keys(stores[2].rows[0])).toEqual(['year', 'other']);
+        expect(stores[2].data.map(r => r.y)).toEqual([10, 20]);
+    });
+
+    test('a chart does not change the shared rows, e.g. of its transforms and of a change of its globals', async () => {
+        serve({ [new URL('data.csv', base).href]: 'year,value\n2020,1\n2021,2\n2022,4' });
+        const withTransform = () => lineDef({ globals: { factor: 2 },
+            transform: [{ type: 'calc', expr: { '*': ['@value', '@factor'] }, as: 'value' }, { type: 'filter', expr: { '>': ['@year', 2020] } }] });
+        const a = createStore();
+        await a.init({ def: lineDef() });
+        const before = JSON.stringify(a.rows);
+        const b = createStore();
+        await b.init({ def: withTransform() });
+        b.setGlobals({ factor: 10 });
+        expect(b.rows).toBe(a.rows);
+        expect(b.data.map(r => r.y)).toEqual([10, 20, 40]);
+        expect(b.columns.kept).toEqual([1, 2]);
+        expect(JSON.stringify(a.rows)).toBe(before);
+        expect(a.data.map(r => r.y)).toEqual([1, 2, 4]);
+    });
+});
