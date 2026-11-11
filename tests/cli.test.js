@@ -385,10 +385,10 @@ describe.skipIf(!browser)('gen-vis export', () => {
     test('the symbols of units in Inter of the package, e.g. CO₂, m³, ≤, →', async () => {
         writeFileSync(path.join(dir, 'units.csv'), 'year,value\n2020,1\n2021,2\n');
         writeFileSync(path.join(dir, 'units.json'), JSON.stringify({
-            $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', data: 'units.csv',
-            options: { title: 'CO₂ in m³ ≤ 2 → ½ ℃ ●', subtitle: 'Mt CO₂-Äquivalente ≥ 0', height: 200 },
-            mapping: { x: { column: 'year', type: 'numeric' }, y: { column: 'value', type: 'numeric' } },
-            plot: { type: 'line' },
+            $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', data: 'units.csv',
+            title: 'CO₂ in m³ ≤ 2 → ½ ℃ ●', subtitle: 'Mt CO₂-Äquivalente ≥ 0', height: 200,
+            dims: { x: { column: 'year', type: 'numeric' }, y: { column: 'value', type: 'numeric' } },
+            marks: { type: 'line' },
         }));
         const pdf = path.join(dir, 'units.pdf');
         const r = await run(['export', path.join(dir, 'units.json'), pdf]);
@@ -400,8 +400,8 @@ describe.skipIf(!browser)('gen-vis export', () => {
     }, 60000);
 
     test('the message of an error of gen-vis', async () => {
-        writeFileSync(path.join(dir, 'broken.json'), JSON.stringify({ $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json',
-            data: bevData(dir), mapping: { x: 'Jahr' }, plot: { type: 'nope' } }));
+        writeFileSync(path.join(dir, 'broken.json'), JSON.stringify({ $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json',
+            data: bevData(dir), dims: { x: 'Jahr' }, marks: { type: 'nope' } }));
         const r = await run(['export', path.join(dir, 'broken.json'), path.join(dir, 'broken.svg'), 'data/bev/missing.json', path.join(dir, 'missing.svg')]);
         expect(r.code).toBe(1);
         expect(r.stderr).toMatch(/broken\.json: .*marks\[0\]\.type: unknown mark type 'nope'/);
