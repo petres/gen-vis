@@ -153,7 +153,12 @@ const place = (parent, node, before = null) => {
     return node;
 };
 
-// the listeners of events by their name, see on, off and emit of createGenVis
+// an error of a listener of the page is reported as an uncaught one (the
+// console, window.onerror), not thrown into the visualisation
+const report = error => typeof reportError == 'function' ? reportError(error) : console.error(error);
+
+// the listeners of events by their name, see on, off and emit of createGenVis,
+// an error of one does not stop the others nor the visualisation
 const emitter = () => {
     const listeners = new Map();
     return {
@@ -169,7 +174,13 @@ const emitter = () => {
                 listeners.delete(name);
         },
         emit(name, ...args) {
-            [...(listeners.get(name) ?? [])].forEach(fn => fn(...args));
+            [...(listeners.get(name) ?? [])].forEach(fn => {
+                try {
+                    fn(...args);
+                } catch (error) {
+                    report(error);
+                }
+            });
         },
         clear() { listeners.clear(); },
     };

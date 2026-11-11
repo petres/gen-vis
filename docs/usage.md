@@ -196,7 +196,10 @@ once it is drawn the first time, `error` with the message of an error and
 keyboard) with the rows under the mouse, `hover` with `null` at its end, the
 events of the component, the listeners of `on(event, fn)` of
 [createGenVis](#javascript) and of its props `onHover`, `onSelect`,
-`onRendered`, `onError` and `'onUpdate:state'` (also of `mountGenVisElement`):
+`onRendered`, `onError` and `'onUpdate:state'` (also of `mountGenVisElement`).
+An error thrown by a listener is reported as an uncaught error of the page
+(`reportError`, e.g. in the console), the other listeners still run and the
+visualisation stays as it is.
 
 The events and the slots have types, e.g. of `@hover` and of the props of
 the slot `hover`.

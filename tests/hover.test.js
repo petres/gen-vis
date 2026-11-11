@@ -309,3 +309,25 @@ describe('the highlight of a mark without groups', () => {
         expect(el.querySelector('.vis-highlighting')).not.toBeNull();
     });
 });
+
+describe('the listeners of the page', () => {
+    test('an error of a listener is reported, the chart stays and the other listeners run', async () => {
+        const { el, vis } = await mountVis({ def: lineDef(), data: 'year,value,land\n2020,1,Wien\n2021,2,Wien\n2020,2,Tirol\n2021,3,Tirol' });
+        const seen = [];
+        ['update:state', 'select', 'hover'].forEach(name => {
+            vis.on(name, () => { throw new Error(`bug of the page ${name}`) });
+            vis.on(name, p => seen.push(name));
+        });
+        el.querySelector('.vis-legend-entry[data-key="Wien"]').click();
+        await nextTick();
+        await move(el, 10);
+        // the box of the hover is drawn after the event
+        expect(el.querySelector('.vis-hover')).not.toBeNull();
+        el.querySelector('svg.vis-svg').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        await nextTick();
+        expect(el.querySelector('.vis-error')).toBeNull();
+        expect(el.querySelector('svg.vis-svg')).not.toBeNull();
+        expect(seen).toEqual(['update:state', 'hover', 'select']);
+        expect(errors.map(String)).toEqual(['update:state', 'hover', 'select'].map(n => expect.stringContaining(`bug of the page ${n}`)));
+    });
+});
