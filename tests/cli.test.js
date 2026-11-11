@@ -409,6 +409,16 @@ describe.skipIf(!browser)('gen-vis export', () => {
         }
     }, 60000);
 
+    test('the close of the browser leaves no timer, the process ends at once', () => {
+        const script = `import { createExporter } from ${JSON.stringify(path.join(root, 'bin/export.js'))};
+            const exporter = await createExporter({ browser: ${JSON.stringify(browser)} });
+            await exporter.close();
+            console.log(JSON.stringify(process.getActiveResourcesInfo()));`;
+        const r = spawnSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8' });
+        expect(r.status).toBe(0);
+        expect(JSON.parse(r.stdout)).not.toContain('Timeout');
+    }, 60000);
+
     test('a browser which does not start leaves no profile', async () => {
         const tmp = mkdtempSync(path.join(tmpdir(), 'gen-vis-cli-tmp-'));
         try {

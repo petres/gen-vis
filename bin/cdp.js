@@ -212,10 +212,14 @@ const connect = async (executable, b, sandbox, wait, note) => {
         });
     });
 
+    // (the timer of the wait is cleared, else the process waits for it)
     const close = async () => {
+        let timer;
         try {
-            await Promise.race([send('Browser.close'), new Promise(r => setTimeout(r, 2000))]);
-        } catch { /* closed already */ }
+            await Promise.race([send('Browser.close'), new Promise(r => timer = setTimeout(r, 2000))]);
+        } catch { /* closed already */ } finally {
+            clearTimeout(timer);
+        }
         ws.close();
         await ended(child, 3000);
         await stop(b);
