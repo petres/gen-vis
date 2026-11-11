@@ -58,11 +58,9 @@ before a push (`npm test`, or `npm run test:png`).
 
 `spec/` has the fixtures of the parts of the definitions which other
 languages can implement ([spec/README.md](../spec/README.md)),
-`tests/spec.test.js` runs them. The design of the definition language of
-5.0 (the language, the translation into the form the engine reads, the
-schema of one source) is in [design-5.0.md](design-5.0.md),
-the one of 4.0 (the expressions, the normalized form) in
-[design-4.0.md](design-4.0.md).
+`tests/spec.test.js` runs them. The design of the definition language
+(the language, the translation into the form the engine reads, the
+schema of one source, the engine) is in [design-5.0.md](design-5.0.md).
 
 The schema of the definitions is written in JavaScript,
 `src/schema/definition.js` (with the vocabulary of `src/schema/dsl.js`),

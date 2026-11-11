@@ -196,8 +196,7 @@ npx gen-vis check data/*/def*.json --strict   # the schema, the checks and the d
   (`validateDef`, `@preschen/gen-vis/check`).
 - [Development](docs/development.md): the dev server, tests and
   snapshots, builds, publishing, the examples site, `spec/`; the design of
-  the definition language of [5.0](docs/design-5.0.md) and of
-  [4.0](docs/design-4.0.md).
+  the [definition language](docs/design-5.0.md).
 
 Changes by version are in the [changelog](CHANGELOG.md).
 

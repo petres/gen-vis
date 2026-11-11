@@ -3,15 +3,12 @@
 Goals: definitions which say what is drawn, not how its pixels are
 computed; one mechanism of state (globals); margins and the parts of marks
 which are arithmetic computed by the library, not by the author; one
-source of the description of the language. The engine stays: 5.0 rewrites
-the front of the pipeline, the vocabulary of the definition, its
-translation into the form the engine reads, the validation and the state.
-A definition of gen-vis 4 is not read (an error of the load), the changelog
-of 5.0.0 lists what to write instead.
+source of the description of the language.
 
-This document is the design as implemented in 5.0; it follows
-the review of 4.1 (not in the repository), "Deviations" at the end lists
-where it differs from it and why. The reference of the language is
+This document is the design of the language and of the way from a
+definition to the picture: the decisions of the language, the pipeline, the
+schema, the engine, and the decisions of details with their reasons. The
+reference of the language is
 `docs/definition.md`, the per-key texts are the ones of
 `src/schema/definition.js`, the portable rules are in `spec/`.
 
@@ -44,8 +41,8 @@ The decisions:
 1. **Marks with channels, not svg attributes of scaled references.** A mark
    names dims per channel (`x`, `y`, `x0`, `x1`, `y0`, `y1`, `x2`, `y2`,
    `lon`, `lat`), the translation writes the attributes of the scaled
-   positions (`"cx": "@x:scaled"`, `"y0": "@y:start:scaled"`). The escape
-   hatch stays: every channel and attribute is an expression, the `svg:`
+   positions (`"cx": "@x:scaled"`, `"y0": "@y:start:scaled"`). There is an
+   escape hatch: every channel and attribute is an expression, the `svg:`
    types take the attributes of their elements. Why: the attributes an
    author would write most are the defaults and the arithmetic of positions
    (centers of bands, starts and ends of stacks, the slots of grouped
@@ -53,10 +50,9 @@ The decisions:
 2. **Flat marks and a flat top level.** The style of a mark is beside its
    channels, without `props`; a list of the keys which are options of a mark
    (`type`, `by`, `filter`, `stack`, `dodge`, ...) separates them from the
-   attributes. The options of the chart are keys of the top level. Why: two
-   levels of nesting less in every definition, and the keys read as what
-   they are.
-3. **Dims keep their name and their category tables.** A dim is a column
+   attributes. The options of the chart are keys of the top level. Why: little
+   nesting in a definition, and the keys read as what they are.
+3. **Named dims with category tables.** A dim is a column
    with its type, scale, axis, legend, categories and hover; the shorthands
    (`zero`, `grid`, `pad`, `include`, `reverse`, `range`, `ticks`,
    `tickSpacing`) cover the common parts of the scale and the axis. Named
@@ -80,7 +76,7 @@ The decisions:
    expressions of the row (an object of conditions of dims is read too). The
    `{name}` templates of texts are a mechanism of their own.
 6. **Auto margins.** The margins are measured of the axes by default, a
-   side given stays; a page gives the margins of a house style once (css
+   side given is used as it is; a page gives the margins of a house style once (css
    variables or `registerDefaults`). Why: margins set by hand are mostly
    set to fit the labels of an axis.
 7. **Highlight by classes and a stylesheet.** The hover toggles classes, the
@@ -91,7 +87,7 @@ The decisions:
 ## 2. The pipeline
 
 ```
-definition 5.0 (JSON, schema.json)
+definition (JSON, schema.json)
    │ resolveParents     merge of the parents and mixins (spec/merge)          portable
    │ resolve            the expressions of the globals evaluated              portable, JSON → JSON
    │ translate          the shorthands written out: the form the engine      portable, JSON → JSON
@@ -106,9 +102,10 @@ renderer (JS only): facets, drawLayer joins, hover, highlight stylesheet
 ```
 
 - `src/utils/load.js` merges the parents (`resolveParents`, which refuses a
-  part of gen-vis 4), keeps the merged definition as
-  the `source` of the store, and reads `normalize(translate(resolve(source,
-  globals)))`. A change of the globals resolves the source again and
+  part of another version, see the `$schema` below), keeps the merged
+  definition as written (`authored` of the store), and reads
+  `normalize(translate(resolve(authored, globals)))`. A change of the
+  globals resolves the definition as written again and
   prepares only the parts which change (`applyResolved` of
   `src/utils/def.js`).
 - `resolve` (`src/utils/resolve.js`) replaces every expression whose names
@@ -134,9 +131,13 @@ renderer (JS only): facets, drawLayer joins, hover, highlight stylesheet
   the values of the controls into entries. `authoredPath` maps the paths
   of the one place where the forms differ back (the `props` of a mark), so
   errors and warnings name `marks[1].fill`.
-- `normalize` is the one of 4.0 (`docs/design-4.0.md`) in the names of 5:
-  defaults of the positions, the types of scales, the default props of the
-  mark types.
+- `normalize` (`src/utils/normalize.js`, `spec/normalize`) is pure, JSON
+  to JSON: it writes out every default which does not depend on the rows,
+  the defaults of the positions, the types of scales, the default props of
+  the mark types, so the renderer reads one form without shorthands. The
+  type of a dim is inferred in two stages: of the definition where it
+  follows from it (categories, the type of the scale), of the rows
+  otherwise (`inferTypes`).
 - The layout builds the facets with provisional margins where a side is
   `auto`, measures the axes of every facet (`src/utils/margins.js`, texts on
   a canvas in the font of the chart, `src/utils/measure.js`) and builds them
@@ -165,9 +166,8 @@ Of it:
   locales, scales, projections, transforms), which `tests/schema.test.js`
   compares with the code.
 
-One source instead of a hand-written `schema.json`, types generated of
-it, a copy of it in the check, the defaults and the docs: five descriptions
-of one language. The texts of the schema are
+One source, so the schema, the types, the check and the texts of the
+reference cannot differ. The texts of the schema are
 the per-key reference; `docs/definition.md` is the prose around them.
 Places which take an expression of the globals are written so
 (`ofGlobals`): a text starting with `=` or `@` passes the schema and is
@@ -179,7 +179,7 @@ translated form (dims, references, operators, the data), whose paths and
 words are the ones of the definition (`authoredPath` maps the `props` of a
 mark).
 
-## 4. What was kept
+## 4. The engine and the portable parts
 
 - The engine: `layout()` computes a view, the facets draw into the
   elements of the draw before by key, props are diffed, transitions move
@@ -187,56 +187,49 @@ mark).
   registry (cartesian, polar, geo, lazy chunks); the hover with the
   keyboard and the live region; the export SVG and the CLI with its own CDP
   client.
-- The normalized form of 4.0 as the form the engine reads, and its
-  fixtures (`spec/normalize`).
-- The expression AST and its fixtures; the string syntax compiles to it.
-- The merge of parents and mixins (`spec/merge`), now with an own deep
-  merge, and lists merged by `id`, `global` or `value`.
+- The portable parts, which other languages can implement, each with its
+  rules and fixtures in `spec/`: the merge of parents and mixins
+  (`spec/merge`: a deep merge, lists merged by `id`, `global` or `value`),
+  the expressions (`spec/expressions`: the objects are the canonical form,
+  the string syntax compiles to them), the normalized form
+  (`spec/normalize`) and the transforms (`spec/transforms`).
 - Named dims with category tables, `common`, `ranks`, `order`, `scheme`.
 - Templates `{name}` of texts, texts in several languages (`language`).
-- The transforms and their fixtures (`fold`, `aggregate` and `window` are
-  new).
 - The props of the chart (`defaults`, `globals`, `state`, `highlight`),
   `registerDefaults`, CSS variables and the cascade layer.
-- Rare keys which cost one code path: `dataFormat`, `width`, `hover.mode`
-  and `hover.radius`, `domainIgnores`, `domainAbs`, `scale.of`, `once`,
-  `place`, `stacked` and `stackBy` of a dim, the transforms `rolling`,
-  `cumulative` and `filter`.
+- Rare keys which cost one code path each: `dataFormat`, `width`,
+  `hover.mode` and `hover.radius`, `domainIgnores`, `domainAbs`, `scale.of`,
+  `once`, `place`, `stacked` and `stackBy` of a dim, the transforms
+  `rolling`, `cumulative` and `filter`.
 
-## Deviations from the review, and why
+## 5. Decisions of details, and why
 
-- **`scale.of`, `once`, `place`, `domainIgnores`, `domainAbs` stay.** The
-  review dropped them for channels, `data: [{}]`, `anchor: "inside"` and a
-  `domain: {"of": "all"}`. They are one code path each and used by
-  examples; `scale.of` is written by the translation of channels, so
-  authors rarely see it.
-- **`stacked` and `stackBy` of a dim stay** for values which no mark
+- **`scale.of`, `once`, `place`, `domainIgnores`, `domainAbs`** beside the
+  channels, `data: [{}]`, `anchor: "inside"` and a domain of all dims, which
+  could express them: they are one code path each and used by examples;
+  `scale.of` is written by the translation of channels, so authors rarely
+  see it.
+- **`stacked` and `stackBy` of a dim** are for values which no mark
   stacks, e.g. the hover of a stacked histogram above a strip plot; `stack`
   of a mark is the common case.
-- **`fromData` stays, with a new default.** The categories of the data are
-  the default of dims with a legend, parts of categories or facets (in the
-  order of the rows), and (decided 2026-11-08) of a dim of only a column
-  which marks draw in the colors of its categories, e.g. a line `by` it
-  without a stroke of its own: lines of one color were the most common
-  surprise of a new author. A `by` of marks of their own color stays of any
-  type (a line per id), `"fromData": false` opts out.
+- **`fromData` and its default.** The categories of the data are the
+  default of dims with a legend, parts of categories or facets (in the
+  order of the rows), and of a dim of only a column which marks draw in the
+  colors of its categories, e.g. a line `by` it without a stroke of its
+  own: lines of one color are the most common surprise of an author. A
+  `by` of marks of their own color is of any type (a line per id),
+  `"fromData": false` opts out.
 - **The default dims of the hover are the ones the marks use**, their
   `by` and the dims of their positions, not the dims of the facets (their
   panels are titled).
-- **A categorical `y` is top-down by default** (decided 2026-11-08): a
-  vertical band or point scale without a range of its own runs from the
-  top, as the rows of a table and as in Vega-Lite and Plot; `reverse: true`
-  puts the first category at the bottom.
-- **The `{name}` templates stay a mechanism of their own** (not specified
+- **A categorical `y` is top-down by default**: a vertical band or point
+  scale without a range of its own runs from the top, as the rows of a
+  table and as in Vega-Lite and Plot; `reverse: true` puts the first
+  category at the bottom.
+- **The `{name}` templates are a mechanism of their own** (not specified
   as `cat`): they are texts with holes, which an author reads as text.
-- **The `$schema` gate stays an error** of a file without one or of another
-  version, also the one of 4; a definition with the keys of gen-vis 4 is an
-  error which names them (decided 2026-11-11: no migration, neither while
-  a definition is loaded nor by the CLI).
-- **Not done in 5.0:** dark CSS variables. (Arrows of rules, lines and
-  annotations, `"marker-end": "arrow"`, and `hover.cross` came with the
-  release review; `gen-vis check`, `--strict` and the checks of the data
-  in `validateDef`, unknown columns and texts in numeric dims, came with
-  the review of the alpha.) (The site has a gallery of one chart
-  of every kind, `site/gallery.html`; `npm run dev` keeps the gallery of
-  all of `data/`.)
+- **The `$schema` is a gate**: a file without one or of another major
+  version is an error of the load, so a definition is never drawn by a
+  version which reads it differently; an inline definition may have none.
+- **Not part of the language:** dark CSS variables (a page sets the
+  variables of its theme).
