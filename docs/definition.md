@@ -472,8 +472,10 @@ The texts, the sizes and the look are keys of the top level:
 - `transition`: the elements move to their new values in this many
   milliseconds (`true` for 300) after a change of a legend, a control or
   the state, e.g. `"transition": 400`: the points, bars and lines of the
-  draw before and the axes of cartesian charts move, new elements are drawn
-  at once, a new width is drawn at once, nothing moves if the user prefers
+  draw before and the axes of cartesian charts move (the arcs of polar
+  charts by their angles and radii), new elements are drawn at once, also a
+  line or an area of another number of points, a new width is drawn at
+  once, nothing moves if the user prefers
   less motion (`prefers-reduced-motion` of the system).
 - `message`: a text instead of the marks and the legends, an expression of
   the globals and `totalWidth` (a template), e.g. of a narrow screen, `null`

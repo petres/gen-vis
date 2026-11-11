@@ -188,3 +188,35 @@ describe('marks without a position are not drawn', () => {
         errors.length = 0;
     });
 });
+
+describe('transitions of polar charts', () => {
+    // the arcs of a path: the flags of each are 0 or 1, all numbers finite
+    const valid = d => !/NaN/.test(d) && [...d.matchAll(/A([^A-Za-z]*)/g)].every(m => {
+        const n = m[1].split(/[\s,]+/).filter(Boolean);
+        return n.length == 7 && ['0', '1'].includes(n[3]) && ['0', '1'].includes(n[4]);
+    });
+
+    test('the slices of a pie move by their angles, their paths are valid on the way', async () => {
+        const def = { coord: 'polar', transition: 120, dims: { x: 'v', c: { column: 'c', legend: {} } }, marks: [{ type: 'arc', by: 'c', stack: true }] };
+        const el = await mount({ def, data: 'c,v\na,1\nb,2\nc,3' });
+        const paths = () => [...el.querySelectorAll('g.vis-mark path')];
+        const [, b, c] = paths();
+        const start = c.getAttribute('d');
+        el.querySelector('.vis-legend-entry[data-key="a"]').click();
+        await nextTick();
+        expect(paths()).toEqual([b, c]);
+        const seen = new Set();
+        for (let i = 0; i < 12; i++) {
+            paths().forEach(p => expect(p.getAttribute('d')).toSatisfy(valid));
+            seen.add(c.getAttribute('d'));
+            await new Promise(resolve => setTimeout(resolve, 15));
+        }
+        // on its way, then the slice of a new chart: b a third, c two thirds
+        expect(seen.size).toBeGreaterThan(2);
+        expect(c.getAttribute('d')).not.toBe(start);
+        const fresh = await mount({ def: { ...def, transition: 0 }, data: 'c,v\nb,2\nc,3' });
+        expect(paths().map(p => p.getAttribute('d'))).toEqual([...fresh.querySelectorAll('g.vis-mark path')].map(p => p.getAttribute('d')));
+        expect(errors).toEqual([]);
+    });
+});
+

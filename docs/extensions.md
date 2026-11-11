@@ -20,8 +20,11 @@ and the values of the props of the mark: of a row `at(row)`, of one prop
 e.g. the color of a line, `complete(row)` is false if a dim of the props
 has no value. The values are plain values, e.g. the position of
 `"@x:scaled"`. `perRow(groups, element, translate, key)` are the marks of an
-element per row (without the rows of missing values) with the values of its
-props as attributes, `translate(values, row, group)` changes them,
+element per row (without the rows of missing values and the ones without
+a position: an `x`, `y`, `cx`, `cy`, `x1`, `x2`, `y1`, `y2`, `width` or
+`height` which is no finite number, e.g. of 0 of a log scale) with the
+values of its props as attributes, `translate(values, row, group)` changes
+them (null leaves the row out),
 `perGroup(groups, d)` the ones of a path per group with `attrs` and the path
 `d(group)`, both move their elements with the `transition` of the options:
 

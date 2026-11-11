@@ -1906,6 +1906,24 @@ describe('the update of the facets', () => {
         expect(errors).toEqual([]);
     });
 
+    test('a line of another number of points is set at once, its path does not move to other commands', async () => {
+        svgTransforms();
+        const def = transition => ({ transition, globals: { from: 2020 }, filter: '=@x >= @from',
+            dims: { x: { column: 'year', type: 'numeric' }, y: 'value', c: 'land' }, marks: [{ type: 'line', by: 'c' }] });
+        const { el, vis } = await mountVis({ def: def(80), data: lineData });
+        const line = el.querySelector('path[data-group-c="Tirol"]');
+        const points = d => d.match(/[ML]/g).length;
+        expect(points(line.getAttribute('d'))).toBe(4);
+        vis.update({ globals: { from: 2021 } });
+        await nextTick();
+        expect(el.querySelector('path[data-group-c="Tirol"]')).toBe(line);
+        const fresh = await mount({ def: def(0), data: lineData, globals: { from: 2021 } });
+        expect(points(line.getAttribute('d'))).toBe(3);
+        expect(line.getAttribute('d')).toBe(fresh.querySelector('path[data-group-c="Tirol"]').getAttribute('d'));
+        await new Promise(resolve => setTimeout(resolve, 150));
+        expect(errors).toEqual([]);
+    });
+
     test('a highlight during a transition keeps the values of its end', async () => {
         svgTransforms();
         const def = lineDef({ transition: 80 });

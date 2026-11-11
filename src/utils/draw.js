@@ -1,4 +1,4 @@
-export { curves, setProps, setAttrs, groupAttrs, groupKey, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, reducedMotion, dataAttribute, fitText };
+export { curves, setProps, setAttrs, groupAttrs, groupKey, rowOf, keyOf, elementOf, directOf, childrenOf, shapeOf, drawLayer, motion, withMotion, reducedMotion, dataAttribute, fitText };
 
 import * as d3 from "@/utils/d3";
 import { animate, create, finish as finishAnimation, interrupt, itemOf, join, scriptAttr, setAttr, targetOf } from "@/utils/dom";
@@ -74,6 +74,19 @@ const withMotion = (duration, draw) => {
     }
 };
 
+// the commands of a path without their numbers, e.g. "MLL" of a line of
+// three points
+const commands = d => d.replace(/[^a-df-zA-DF-Z]/g, '');
+
+// the paths of a transition whose numbers can move from one to the other:
+// of the same commands, e.g. not a line of another number of points, and
+// without arcs, whose flags are no numbers between 0 and 1 (see shapeOf)
+const samePath = (a, b) => !/[Aa]/.test(a + b) && commands(a) === commands(b);
+
+// the shapes of an element by their attribute, the values of now (`now`,
+// e.g. on the way of a transition) and of their end (`end`), see shapeOf
+const shapes = Symbol('shapes');
+
 // the values of props as the attributes of an element, `text` is its text,
 // objects are nested props, e.g. `d` of a line, null removes an attribute,
 // only the attributes which change are set, e.g. of an element of the draw
@@ -82,10 +95,16 @@ const withMotion = (duration, draw) => {
 // new ones are set at once, a transition of the draw before stops where it
 // is. The end values of a transition are the ones of its animation (see
 // targetOf of utils/dom.js), see finish. Values with css variables are
-// styles, set at once, see writeValue.
+// styles, set at once, see writeValue. A path (`d`) moves only to one of
+// the same commands (see samePath), another one is set at once; an
+// attribute with a shape (`shapeOf` of the values) moves by the values of
+// its shape, e.g. the angles of an arc, and is built of the ones between.
 const setProps = function(values) {
+    const running = targetOf(this, 'vis') !== null;
     interrupt(this, 'vis');
     let moving = null;
+    let tweens = null;
+    const shaped = values[shapeOf];
     for (const k in values) {
         const v = values[k];
         if (v !== null && (typeof v == 'object' || typeof v == 'function'))
@@ -102,16 +121,31 @@ const setProps = function(values) {
         } else {
             const value = String(v);
             const before = readValue(this, k);
+            // the values of the shape of the draw before, of a transition
+            // which was stopped the ones where it was
+            const shape = shaped?.[k];
+            const kept = shape && this[shapes]?.[k];
+            const from = kept && (running ? kept.now : kept.end);
+            if (shape)
+                (this[shapes] ??= {})[k] = { now: shape.values, end: shape.values };
             if (before === value)
                 continue;
-            if (motion.duration > 0 && before !== null && !isStyle(k, value) && !this[styles]?.has(k))
-                (moving ??= {})[k] = value;
-            else
+            if (!(motion.duration > 0 && before !== null && !isStyle(k, value) && !this[styles]?.has(k)))
                 writeValue(this, k, value);
+            else if (shape && from) {
+                const between = d3.interpolate(from, shape.values);
+                const state = this[shapes][k];
+                state.now = from;
+                (tweens ??= {})[k] = t => shape.build(state.now = between(t));
+                (moving ??= {})[k] = value;
+            } else if (shape || (k == 'd' && !samePath(before, value)))
+                writeValue(this, k, value);
+            else
+                (moving ??= {})[k] = value;
         }
     }
     if (moving)
-        animate(this, moving, { channel: 'vis', duration: motion.duration });
+        animate(this, moving, { channel: 'vis', duration: motion.duration, tweens });
 };
 
 // the attributes of the keys of the categories of a group, e.g. for the highlight
@@ -140,6 +174,11 @@ const rowOf = Symbol('row');
 const keyOf = Symbol('key');
 const elementOf = Symbol('element');
 const directOf = Symbol('direct');
+// the shapes of attributes of an item which are built of numbers, by the
+// name of the attribute: `{ values, build(values) }`, e.g. the angles and
+// the radii of the path of an arc, a transition moves the numbers and
+// builds the attribute of the ones between, see setProps
+const shapeOf = Symbol('shape');
 const childrenOf = Symbol('children');
 
 // the key of a group of a plot, the keys of its categories, so an element

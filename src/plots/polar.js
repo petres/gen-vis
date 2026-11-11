@@ -6,6 +6,7 @@ import { perGroup, perRow, finite, curve, points, propScale, dodge, halo, inside
 import { barScale, barWidth } from "@/plots/cartesian";
 import { radiusRange } from "@/coords/polar-plot";
 import { defaults } from "@/plots/defaults";
+import { shapeOf } from "@/utils/draw";
 
 // the angles of a band scale are in the center of the band, as the ones of the axis
 const angleOffset = (plot, ctx, path) => {
@@ -69,6 +70,8 @@ const positioned = (name, type, x, y) => ({
         });
     },
 });
+
+const arcPath = a => arc().padAngle(a.padAngle).cornerRadius(a.cornerRadius)(a);
 
 const arcProps = ['angle', 'width', 'startAngle', 'endAngle', 'innerRadius', 'outerRadius', 'padAngle', 'cornerRadius'];
 
@@ -135,11 +138,11 @@ const types = {
             // no arc without a position, e.g. of 0 of a log scale
             if (!finite(start, end, r0, r1))
                 return null;
-            const d = arc()
-                .padAngle(v.padAngle ?? 0)
-                .cornerRadius(v.cornerRadius ?? 0)({ startAngle: start, endAngle: end, innerRadius: r0, outerRadius: r1 });
+            // the path of the values of an arc, a transition moves these, not
+            // the numbers of the path (the flags of its arcs are 0 or 1)
+            const values = { startAngle: start, endAngle: end, innerRadius: r0, outerRadius: r1, padAngle: v.padAngle ?? 0, cornerRadius: v.cornerRadius ?? 0 };
             const props = Object.fromEntries(Object.entries(v).filter(([k]) => !arcProps.includes(k)));
-            return { ...props, d };
+            return { ...props, d: arcPath(values), [shapeOf]: { d: { values, build: arcPath } } };
         }),
     },
 

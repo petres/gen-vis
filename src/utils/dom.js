@@ -251,9 +251,12 @@ const end = (a, done) => {
  * With `remove` the element is removed at the end, e.g. one which leaves a
  * join (see exit of join), it is removed when the animation is stopped,
  * too. A duration of 0 sets the values at once (and removes the element).
+ * `tweens` are the values of attributes on their way (by name, a function
+ * of the eased time from 0 to 1), e.g. the path of an arc of the angles
+ * between, instead of the interpolated text.
  * All animations move in one loop of frames of the browser, see tick.
  */
-const animate = (node, attrs, { channel = 'vis', duration = 250, ease = cubicInOut, remove = false } = {}) => {
+const animate = (node, attrs, { channel = 'vis', duration = 250, ease = cubicInOut, remove = false, tweens: custom = null } = {}) => {
     interrupt(node, channel);
     const target = {};
     const tweens = [];
@@ -271,7 +274,7 @@ const animate = (node, attrs, { channel = 'vis', duration = 250, ease = cubicInO
         // without the transforms of svg, is set at once
         let tween;
         try {
-            tween = (name == 'transform' ? interpolateTransformSvg : interpolate)(before, value);
+            tween = custom?.[name] ?? (name == 'transform' ? interpolateTransformSvg : interpolate)(before, value);
         } catch {
             setAttr(node, name, value);
             delete target[name];
