@@ -99,11 +99,11 @@ describe('resolveParents', () => {
             .rejects.toThrow("Cyclic parent definition 'http://h/b.json'");
     });
 
-    test('a file of a definition declares gen-vis 5 (or 4) by its $schema, in itself or in a parent, an inline one may omit it', async () => {
+    test('a file of a definition declares gen-vis 5 by its $schema, in itself or in a parent, an inline one may omit it', async () => {
         const load = files => url => files[url];
         const of = s => JSON.stringify({ $schema: s, title: 'p' });
         // the major version of unpkg or jsdelivr, a full one or the schema of the installed package
-        for (const s of [schema, 'https://unpkg.com/@preschen/gen-vis@4.1.0/schema.json', 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4.0.0-beta.1/schema.json',
+        for (const s of [schema, 'https://unpkg.com/@preschen/gen-vis@5.1.0/schema.json', 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@5.0.0-alpha.1/schema.json',
             '../../node_modules/@preschen/gen-vis/schema.json'])
             expect((await resolveParents({ $schema: s }, 'http://h/a.json')).$schema).toBe(s);
         // in a parent
@@ -117,7 +117,9 @@ describe('resolveParents', () => {
             .rejects.toThrow(error('its $schema "https://unpkg.com/@preschen/gen-vis/schema.json" names no major version of gen-vis'));
         await expect(resolveParents({ $schema: 'https://vega.github.io/schema/vega-lite/v5.json' }, 'http://h/a.json'))
             .rejects.toThrow(error('its $schema "https://vega.github.io/schema/vega-lite/v5.json" is none of gen-vis'));
-        // every part with one, also a parent of a file with the one of 4 and of an inline definition
+        for (const s of ['https://unpkg.com/@preschen/gen-vis@4/schema.json', 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4.1.0/schema.json'])
+            await expect(resolveParents({ $schema: s }, 'http://h/a.json')).rejects.toThrow(error('its $schema is the one of gen-vis 4'));
+        // every part with one, also a parent of a file and an inline definition
         await expect(resolveParents({ $schema: schema, parent: 'p.json' }, 'http://h/a.json', load({ 'http://h/p.json': of('https://unpkg.com/@preschen/gen-vis@3/schema.json') })))
             .rejects.toThrow("'http://h/p.json' is no definition of gen-vis 5: its $schema is the one of gen-vis 3");
         await expect(resolveParents({ $schema: 'https://unpkg.com/@preschen/gen-vis@3.1.0/schema.json' }, undefined))
@@ -125,6 +127,26 @@ describe('resolveParents', () => {
         // the load of a file
         serve({ 'http://h/data/def.json': JSON.stringify({ ...def, $schema: undefined }), 'http://h/data/data.csv': csv });
         await expect(createStore().init({ defUrl: 'http://h/data/def.json' })).rejects.toThrow("'http://h/data/def.json' is no definition of gen-vis 5: its $schema is missing");
+    });
+
+    test('a definition of the keys of gen-vis 4 is not read: inline, a file, a parent of a definition of 5, one error which names the keys', async () => {
+        const reads = 'gen-vis 5 reads "dims", "marks", "controls" and the options at the top level, see "Upgrading from 4.x" of the changelog of gen-vis 5.0.0';
+        const old = { mapping: { x: { column: 'year' }, y: { column: 'value' } }, plot: { type: 'line' } };
+        await expect(resolveParents({ ...old }, undefined)).rejects.toThrow(`the inline definition is a definition of gen-vis 4 (its "mapping", "plot"): ${reads}`);
+        // also with the $schema of 5, and one key beside the ones of 5
+        await expect(resolveParents({ $schema: schema, ...old, formElements: [], options: {} }, 'http://h/a.json'))
+            .rejects.toThrow(`'http://h/a.json' is a definition of gen-vis 4 (its "mapping", "plot", "formElements", "options"): ${reads}`);
+        await expect(resolveParents({ $schema: schema, dims: { x: 'year' }, options: { title: 'T' } }, 'http://h/a.json'))
+            .rejects.toThrow(`'http://h/a.json' is a definition of gen-vis 4 (its "options"): ${reads}`);
+        // a parent, of a file and of an inline definition: the error names its url
+        const files = { 'http://h/p.json': JSON.stringify({ formElements: [{ ref: 'g', type: 'radio' }] }) };
+        for (const url of ['http://h/a.json', undefined])
+            await expect(resolveParents({ $schema: schema, parent: 'http://h/p.json', dims: { x: 'year' }, marks: { type: 'line' } }, url, u => files[u]))
+                .rejects.toThrow(`'http://h/p.json' is a definition of gen-vis 4 (its "formElements"): ${reads}`);
+        // the load of a store: of the attribute and of a file
+        await expect(createStore().init({ def: { ...old, data: 'data.csv' }, data: csv })).rejects.toThrow('the inline definition is a definition of gen-vis 4 (its "mapping", "plot"): ');
+        serve({ 'http://h/data/def.json': JSON.stringify({ $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', ...old }), 'http://h/data/data.csv': csv });
+        await expect(createStore().init({ defUrl: 'http://h/data/def.json' })).rejects.toThrow("'http://h/data/def.json' is a definition of gen-vis 4 (its \"mapping\", \"plot\"): ");
     });
 
     test('invalid JSON', async () => {

@@ -190,30 +190,40 @@
     }
   },
   {
-    "name": "a definition of a url declares gen-vis 4 by its $schema, it may be the one of a parent",
+    "name": "a definition which declares gen-vis 4 by its $schema is an error, also in a parent",
     "url": "http://h/def.json",
     "files": {
       "http://h/base.json": {
         "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
-        "options": {
-          "width": 1
-        }
+        "width": 1
       }
     },
     "def": {
       "parent": "base.json",
-      "options": {
-        "height": 2
+      "height": 2
+    },
+    "error": "'http://h/base.json' is no definition of gen-vis 5: its $schema is the one of gen-vis 4"
+  },
+  {
+    "name": "a part with keys of the language of gen-vis 4 is an error which names them, also a parent of a definition of 5",
+    "url": "http://h/def.json",
+    "files": {
+      "http://h/base.json": {
+        "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+        "options": {
+          "width": 1
+        },
+        "formElements": []
       }
     },
-    "result": {
-      "$schema": "https://unpkg.com/@preschen/gen-vis@4/schema.json",
-      "options": {
-        "width": 1,
-        "height": 2
-      },
-      "parent": "base.json"
-    }
+    "def": {
+      "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json",
+      "parent": "base.json",
+      "dims": {
+        "x": "year"
+      }
+    },
+    "error": "'http://h/base.json' is a definition of gen-vis 4 (its \"formElements\", \"options\"): gen-vis 5 reads \"dims\", \"marks\", \"controls\" and the options at the top level"
   },
   {
     "name": "a definition without a url (inline) may have no $schema",

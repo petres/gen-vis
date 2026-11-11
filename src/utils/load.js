@@ -4,7 +4,7 @@ export { valueFormat, resolveUrl, clearCache, resolveParents, readDef, requireme
 import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, oddValues, parseData, prepareData, sourceRows, toDate, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, madeColumns, utcColumns } from "@/utils/transform";
 import { applyResolved, fillTemplate, languageOf, mergeAll, prepareDef, variants, variantsOf } from "@/utils/def";
-import { translate, checkDims, implicitDims, isDefinition4, isDefinition5, optionKeys, authoredPath } from "@/utils/language";
+import { translate, checkDims, implicitDims, authoredPath } from "@/utils/language";
 import { resolve, namesOfGlobals, variants as resolvedVariants } from "@/utils/resolve";
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
 import { checkLocale, getLocale, loadLocale } from "@/utils/locale";
@@ -13,7 +13,7 @@ import { loadColors, ownScheme } from "@/utils/d3";
 import { lazy } from "@/utils/lazy";
 import { isObject } from "@/utils/values";
 import { hasCategories, normalize } from "@/utils/normalize";
-import { versionError } from "@/utils/version";
+import { versionError, languageError } from "@/utils/version";
 import { refNames } from "@/utils/expr";
 import { markTypes } from "@/marks";
 import { symbolDefaults } from "@/utils/defaults";
@@ -123,9 +123,13 @@ const parseDef = (text, source, what = 'definition') => {
     }
 };
 
-// a definition of another version than gen-vis 5 or 4 (see utils/version.js),
-// `source` is its url or the inline definition
+// a definition of another version than gen-vis 5 is not read (see
+// utils/version.js): one of the keys of gen-vis 4, also a parent, or of a
+// `$schema` of another version, `source` is its url or the inline definition
 const checkVersion = (def, source, required = false) => {
+    const old = languageError(def);
+    if (old)
+        throw new Error(`${source} is ${old}`);
     const error = versionError(def?.$schema, required);
     if (error)
         throw new Error(`${source} is no definition of gen-vis 5: ${error}`);
@@ -136,14 +140,9 @@ const checkVersion = (def, source, required = false) => {
 // earlier ones. A parent shared by several mixins is merged once, before the
 // first one using it, so it does not override the mixins in between. The
 // parents of a def are requested at once, but merged in their order. Every
-// part with a `$schema` is one of gen-vis 4, a definition of a file (of its
-// `url`, undefined of an inline one) has one, in itself or in a parent.
-// A chain of parts of gen-vis 4 and 5 (by their keys, see isDefinition4)
-// is merged as one of 5: every part of 4 is migrated first, with the parts
-// of 4 before it as its parents (as `gen-vis migrate` does per file), the
-// merged definition then has `migratedKey`; a chain of parts of 4 only is
-// merged as one of 4 (readDef migrates it).
-const migratedKey = Symbol('migrated');
+// part is one of gen-vis 5 (see checkVersion), a definition of a file (of
+// its `url`, undefined of an inline one) has a `$schema`, in itself or in a
+// parent.
 const resolveParents = async (def, url, load = fetchText) => {
     const parts = [];
     const included = new Set();
@@ -164,28 +163,10 @@ const resolveParents = async (def, url, load = fetchText) => {
         parts.push(def);
     };
     await add(def, url, []);
-    const old = parts.map(isDefinition4);
-    const mixed = old.some(Boolean) && parts.some((p, i) => !old[i] && ofKeys5(p));
-    const merged = mixed ? mergeAll(await migratedParts(parts, old)) : mergeAll(parts);
-    if (mixed)
-        merged[migratedKey] = true;
+    const merged = mergeAll(parts);
     if (url !== undefined)
         checkVersion(merged, `'${url}'`, true);
     return merged;
-};
-// a part of keys of 5 (not one of only keys of both, e.g. a parent of only
-// `data` or `geo`): dims, marks, controls or the options at the top level
-const ofKeys5 = def => isDefinition5(def) && ['dims', 'marks', 'controls', ...optionKeys].some(k => def[k] !== undefined);
-// the parts of a chain with the ones of 4 (`old`) migrated, each with the
-// parts of 4 before it merged as its parents
-const migratedParts = async (parts, old) => {
-    const { migrate } = await lazy.migrate();
-    return parts.map((p, i) => {
-        if (!old[i])
-            return p;
-        const before = parts.slice(0, i).filter((q, j) => old[j]);
-        return migrate(p, { parents: before.length ? mergeAll(before) : undefined });
-    });
 };
 
 // the warnings of the data of the definition of `url` (`source` names the
@@ -352,19 +333,12 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
     if (typeof def.geo?.data == 'string')
         fetchText(resolveUrl(def.geo.data, url)).catch(() => {});
 
-    // the merged definition of gen-vis 5 (`authored`, one of gen-vis 4 is
-    // migrated, see utils/migrate.js), resolved with its globals, translated
-    // and normalized as the engine reads it, see utils/language.js and
-    // utils/normalize.js, with the definitions of all values of its controls
-    const merged = await resolveParents(JSON.parse(JSON.stringify(def)), url);
-    const old = isDefinition4(merged);
-    // also an inline one, its warnings name the paths of 5.0
-    const migrated = old || merged[migratedKey] === true;
+    // the merged definition (`authored`), resolved with its globals,
+    // translated and normalized as the engine reads it, see
+    // utils/language.js and utils/normalize.js, with the definitions of all
+    // values of its controls
+    const authored = await resolveParents(JSON.parse(JSON.stringify(def)), url);
     const name = url === undefined ? 'inline definition' : url;
-    if (migrated)
-        console.info(`gen-vis ${url === undefined ? 'inline definition' : `'${url}'`}: ${old ? 'a definition' : 'parts of a definition'} of gen-vis 4, migrated while it is loaded, 'gen-vis migrate' writes ${old ? 'it' : 'them'} as one of gen-vis 5`);
-    // the migration is a chunk of its own, definitions of 5.0 do not need it
-    const authored = old ? (await lazy.migrate()).migrate(merged) : merged;
     const engine = v => {
         try {
             return normalize(checkDims(translate(v)), { markTypes });
@@ -374,10 +348,10 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
     };
     const defOrg = engine(resolve(authored, namesOfGlobals(authored.globals, authored.controls)));
     defOrg[variantsOf] = engineVariants(resolvedVariants(authored), defOrg, engine);
-    // the check of the definition (of 5.0, as written) with the rows, e.g.
+    // the check of the definition (as written) with the rows, e.g.
     // of years as dates, see load, it is loaded meanwhile
     const validate = async rows => (await checks)?.validateDef(authored, rows)
-        .forEach(w => console.warn(`gen-vis ${name}${migrated ? ' (migrated from gen-vis 4, the paths are the ones of 5)' : ''}: ${w}`));
+        .forEach(w => console.warn(`gen-vis ${name}: ${w}`));
     return { url, defOrg, authored, validate };
 };
 

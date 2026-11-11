@@ -14,9 +14,8 @@ import { isObject, missing, toNumber } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
 import { defaultScaleType, facetBy, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
 import { inferTypes } from "@/utils/data";
-import { versionError } from "@/utils/version";
-import { translate, isDefinition4, authoredPath, markKeys, positionChannels } from "@/utils/language";
-import { migrate } from "@/utils/migrate";
+import { versionError, languageError } from "@/utils/version";
+import { translate, authoredPath, markKeys, positionChannels } from "@/utils/language";
 import { resolve, namesOfGlobals } from "@/utils/resolve";
 import { schema, markNames } from "@/schema/definition.js";
 import { similar } from "@/utils/warn";
@@ -1278,10 +1277,8 @@ const markKeyWarnings = resolved => {
 };
 
 /**
- * Returns warnings for common mistakes in a (merged) definition of gen-vis 5
- * (one of gen-vis 4 is migrated first, as by the load): a `$schema` of
- * another version (the load of a file needs one, see resolveParents of
- * utils/load.js, an object may have none), unknown mark types, keys which
+ * Returns warnings for common mistakes in a (merged) definition of gen-vis 5:
+ * unknown mark types, keys which
  * are not in the schema (checked in the definition as written, see
  * src/schema/definition.js) or expressions which are not evaluated. The
  * parts are checked in the form the engine reads (resolved with the
@@ -1292,13 +1289,19 @@ const markKeyWarnings = resolved => {
  * have the entry before the path, e.g. "controls[0].values[1] >
  * dims.y.column: …". The `rows` of the data, if given, are checked as well,
  * e.g. years of a date dim, the types of the dims without one are the ones
- * of their values.
+ * of their values. A definition of another version, which the load does not
+ * read (see checkVersion of utils/load.js), has that one message and is not
+ * checked: one of the keys of gen-vis 4 or of a `$schema` of another
+ * version (the load of a file needs one, an object may have none).
  */
 const validateDef = (raw, rows = null) => {
-    // a $schema of another version, a definition object may have none, see utils/version.js
+    const old = languageError(raw);
+    if (old)
+        return [`the definition is ${old}`];
     const version = versionError(raw?.$schema);
-    const head = version ? [`$schema: no definition of gen-vis 5, ${version}`] : [];
-    const authored = isObject(raw) ? (isDefinition4(raw) ? migrate(raw) : raw) : {};
+    if (version)
+        return [`$schema: no definition of gen-vis 5, ${version}`];
+    const authored = isObject(raw) ? raw : {};
     const controls = Array.isArray(authored.controls) ? authored.controls : [];
     const globals = isObject(authored.globals) ? authored.globals : {};
     let own, resolved;
@@ -1306,7 +1309,7 @@ const validateDef = (raw, rows = null) => {
         ({ warnings: own, resolved } = checkResolved(authored, namesOfGlobals(globals, controls), rows));
     } catch (error) {
         // the shape of a part is none the engine reads, e.g. a dim of a number
-        return [...head, error.message];
+        return [error.message];
     }
     // the schema of the definition as written, with the expressions of the
     // globals resolved (their values are checked), a warning of the schema
@@ -1318,7 +1321,7 @@ const validateDef = (raw, rows = null) => {
     const below = p => values.some(v => p.startsWith(`${v}.`) || p.startsWith(`${v}[`));
     const listed = { ...resolved, ...Object.fromEntries(['marks', 'annotations', 'transform'].filter(k => isObject(resolved[k])).map(k => [k, [resolved[k]]])) };
     const fromSchema = schemaWarnings(listed, schema).filter(([p]) => !paths.has(p) && !below(p));
-    const warnings = [...head, ...new Set([...own, ...fromSchema].map(([p, m]) => `${p}: ${m}`))];
+    const warnings = [...new Set([...own, ...fromSchema].map(([p, m]) => `${p}: ${m}`))];
     const known = new Set(warnings);
     // the definitions of the other values of the controls
     controls.forEach((c, i) => {

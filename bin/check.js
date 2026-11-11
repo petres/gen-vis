@@ -62,12 +62,11 @@ const schemaErrors = (errors, def) => {
 
 /**
  * The checker of definition files: `check(file, { data })` resolves to the
- * warnings of the file (texts "path: message", `migrated` of a definition
- * of gen-vis 4, which is checked as migrated, `notes` of the parts not
+ * warnings of the file (texts "path: message", `notes` of the parts not
  * checked, e.g. data of an url of another origin), `data` is a file of the
  * data instead of the one of the definition; it rejects of an error, e.g.
- * a missing parent (or one of another origin, e.g. of https:) or invalid
- * JSON or a file outside of the directories it reads (as the ones of the export, see chartDirs). `root` is the
+ * a missing parent (or one of another origin, e.g. of https:), invalid
+ * JSON, a definition or a parent of gen-vis 4 or a file outside of the directories it reads (as the ones of the export, see chartDirs). `root` is the
  * directory of site-absolute paths, `allow` more directories it reads,
  * `schemes` the schemes of colors the page registers (names, or an object
  * of names and colors, e.g. the ones of --scheme of the export or of a
@@ -149,17 +148,15 @@ export const createChecker = async ({ root = null, allow = [], schemes = [] } = 
         const read = [], notes = [];
         const rows = await rowsOf(def, url, data, dirs, message => read.push(message), message => notes.push(message));
         const warnings = [...read, ...gv.validateDef(def, rows)];
-        // the errors of the schema of a definition of 5.0, not the ones validateDef names
-        const old = gv.isDefinition4(def);
+        // the errors of the schema, not the ones validateDef names
         // (of the file as it is written, as an editor checks it: the merge
         // writes the switches of the parts as operator objects, e.g. a match
         // at a text, which no file has)
-        const schema = validate && !old && !gv.isDefinition4(raw) && !validate(raw) ? schemaErrors(validate.errors, raw) : [];
+        const schema = validate && !validate(raw) ? schemaErrors(validate.errors, raw) : [];
         const named = warnings.map(w => w.split(': ')[0]);
         const extra = schema.filter(([p]) => !named.some(n => n == p || p.startsWith(`${n}.`) || p.startsWith(`${n}[`) || n.startsWith(`${p}.`)));
-        // `migrated`: a definition of 4.x, the warnings are the ones of its
-        // migration, `notes` what is not checked, e.g. remote data
-        return Object.assign([...warnings, ...extra.map(([p, m]) => `${p || 'the definition'}: ${m}`)], { migrated: old, notes });
+        // `notes` what is not checked, e.g. remote data
+        return Object.assign([...warnings, ...extra.map(([p, m]) => `${p || 'the definition'}: ${m}`)], { notes });
     };
     return { check };
 };

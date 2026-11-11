@@ -88,21 +88,6 @@ describe('lines and areas along x, not in the order of the rows', () => {
         expect(errors).toEqual([]);
     });
 
-    test('a definition of 4.x, which drew lines in the order of the rows, is migrated with "order": "rows", an explicit order stays', async () => {
-        const v4 = (plot, column = 'a') => ({ $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', options: { width: 600 },
-            mapping: { x: { column, type: column == 'a' ? 'numeric' : 'date', scale: { orientation: 'horizontal' } }, y: { column: 'b', type: 'numeric', scale: { orientation: 'vertical' } } },
-            plot: { type: 'cartesian:line', props: { d: { x: '@x:scaled', y: '@y:scaled' } }, ...plot } });
-        const { migrate } = await import('@/utils/migrate');
-        expect(migrate(v4({})).marks.order).toBe('rows');
-        expect(migrate(v4({ order: 'x' })).marks.order).toBe('x');
-        // a connected scatter plot of 4.x: the path through the rows in their order
-        const el = await mount({ def: v4({}), data: 'a,b\n3,2\n1,3\n2,4' });
-        const x = xs(paths(el)[0]);
-        expect(x[0]).toBeGreaterThan(x[1]);
-        expect(x[2]).toBeGreaterThan(x[1]);
-        expect(errors).toEqual([]);
-    });
-
     test('"order": "rows" keeps the order of the rows, e.g. a connected scatter plot', async () => {
         const el = await mount({ def: def([{ type: 'line', order: 'rows' }, { type: 'label', order: 'rows', select: 'last', text: 'last' }]), data: 'a,b\n3,2\n1,3\n2,4' });
         const x = xs(paths(el)[0]);

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // the messages of the load and the draw in the words and paths of the
-// definition of 5.0: marks[0], dims, channels, "facets.by"
+// definition: marks[0], dims, channels, "facets.by"; a definition of gen-vis
+// 4 is not read
 import { describe, test, expect, vi } from 'vitest';
 import { errors, useDom, mount } from './dom.js';
 
@@ -97,5 +98,65 @@ describe('the messages of the draw', () => {
             warn.mockRestore();
             errors.length = 0;
         }
+    });
+});
+
+describe('a definition of gen-vis 4 is not read, the chart shows the one error', () => {
+    const reads = 'gen-vis 5 reads "dims", "marks", "controls" and the options at the top level, see "Upgrading from 4.x" of the changelog of gen-vis 5.0.0';
+    const schema5 = 'https://unpkg.com/@preschen/gen-vis@5/schema.json';
+    // the keys of 4.x
+    const old = (more = {}) => ({
+        options: { height: 200 },
+        mapping: { x: { column: 'year', type: 'numeric' }, y: { column: 'value', type: 'numeric' } },
+        plot: { type: 'cartesian:line', props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
+        ...more,
+    });
+    // the files of a host, the urls of the requests in `requested`
+    const serve = files => {
+        const requested = [];
+        vi.stubGlobal('fetch', async url => {
+            requested.push(url);
+            return url in files ? new Response(typeof files[url] == 'string' ? files[url] : JSON.stringify(files[url])) : new Response('', { status: 404, statusText: 'Not Found' });
+        });
+        return requested;
+    };
+
+    test('an inline definition: the keys found, no chart, no warnings of the check', async () => {
+        const el = await mount({ def: old(), data });
+        expect(el.querySelector('.vis-error').textContent).toBe(`the inline definition is a definition of gen-vis 4 (its "mapping", "plot", "options"): ${reads}`);
+        expect(el.querySelector('svg.vis-svg')).toBeNull();
+        // one key of 4.x beside the ones of 5.0
+        expect(await errorOf(def({ formElements: [{ ref: 'g', type: 'radio', values: [] }] })))
+            .toBe(`the inline definition is a definition of gen-vis 4 (its "formElements"): ${reads}`);
+        // the console has the error of each load, no warnings of the check
+        expect(errors).toEqual([expect.stringContaining('(its "mapping", "plot", "options")'), expect.stringContaining('(its "formElements")')]);
+        errors.length = 0;
+    });
+
+    test('a file, and a parent of 4.x of a definition of 5.0: the error names the url of the part', async () => {
+        serve({
+            'http://h/old.json': old({ $schema: schema5, data: 'data.csv' }),
+            'http://h/child.json': def({ $schema: schema5, data: 'data.csv', parent: 'theme/old-parent.json' }),
+            'http://h/theme/old-parent.json': { options: { title: 'T' } },
+            'http://h/data.csv': data,
+        });
+        expect((await mount({ defFile: 'http://h/old.json' })).querySelector('.vis-error').textContent)
+            .toBe(`'http://h/old.json' is a definition of gen-vis 4 (its "mapping", "plot", "options"): ${reads}`);
+        const el = await mount({ defFile: 'http://h/child.json' });
+        expect(el.querySelector('.vis-error').textContent).toBe(`'http://h/theme/old-parent.json' is a definition of gen-vis 4 (its "options"): ${reads}`);
+        expect(el.querySelector('svg.vis-svg')).toBeNull();
+        // an inline definition of 5.0 with that parent
+        expect(await errorOf(def({ parent: 'http://h/theme/old-parent.json' }))).toBe(`'http://h/theme/old-parent.json' is a definition of gen-vis 4 (its "options"): ${reads}`);
+    });
+
+    test('a $schema of gen-vis 4, also of a definition written in the keys of 5.0', async () => {
+        const schema4 = 'https://unpkg.com/@preschen/gen-vis@4/schema.json';
+        const hint = `e.g. "$schema": "${schema5}", see the changelog of gen-vis 5.0.0 of the changes of the definitions`;
+        expect(await errorOf(def({ $schema: schema4 }))).toBe(`the inline definition is no definition of gen-vis 5: its $schema is the one of gen-vis 4, ${hint}`);
+        serve({ 'http://h/def.json': def({ $schema: 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4.1.0/schema.json', data: 'data.csv' }), 'http://h/data.csv': data });
+        expect((await mount({ defFile: 'http://h/def.json' })).querySelector('.vis-error').textContent)
+            .toBe(`'http://h/def.json' is no definition of gen-vis 5: its $schema is the one of gen-vis 4, ${hint}`);
+        // the keys of 4.x with their $schema: the error of the keys
+        expect(await errorOf(old({ $schema: schema4 }))).toBe(`the inline definition is a definition of gen-vis 4 (its "mapping", "plot", "options"): ${reads}`);
     });
 });

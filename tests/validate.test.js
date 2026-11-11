@@ -89,7 +89,8 @@ test('the names of 1.x and 4.x are unknown', () => {
         expect.stringMatching(/^dims\.c\.manual: unknown key/),
         "controls[0].type: unknown type 'switch', expected one of 'radio', 'select', 'slider', 'hidden'",
     ]);
-    expect(validateDef({ ...base(), options: { title: 'A' } })).toEqual([expect.stringMatching(/^options: unknown key/)]);
+    // a top-level key of 4.x: the definition is not read, see 'a definition of the keys of gen-vis 4' below
+    expect(validateDef({ ...base(), options: { title: 'A' } })).toEqual([expect.stringMatching(/^the definition is a definition of gen-vis 4 \(its "options"\): /)]);
 });
 
 describe('the example definitions', () => {
@@ -124,23 +125,28 @@ describe('validateDef', () => {
         expect(validateDef(base())).toEqual([]);
     });
 
-    test('a $schema of gen-vis 5 (or 4, migrated), an object may have none', () => {
+    test('a $schema of gen-vis 5, an object may have none; one of another version is the one message', () => {
         expect(validateDef({ ...base(), $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json' })).toEqual([]);
-        expect(validateDef({ ...base(), $schema: 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4.2.1/schema.json' })).toEqual([]);
         const hint = 'e.g. "$schema": "https://unpkg.com/@preschen/gen-vis@5/schema.json", see the changelog of gen-vis 5.0.0 of the changes of the definitions';
         expect(validateDef({ ...base(), $schema: 'https://unpkg.com/@preschen/gen-vis@3/schema.json' }))
             .toEqual([`$schema: no definition of gen-vis 5, its $schema is the one of gen-vis 3, ${hint}`]);
+        // not checked further, as it is not loaded
+        expect(validateDef({ ...base(), marks: { type: 'nope' }, $schema: 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@4.2.1/schema.json' }))
+            .toEqual([`$schema: no definition of gen-vis 5, its $schema is the one of gen-vis 4, ${hint}`]);
         expect(validateDef({ ...base(), $schema: 'http://json-schema.org/draft-07/schema#' }))
             .toEqual([`$schema: no definition of gen-vis 5, its $schema "http://json-schema.org/draft-07/schema#" is none of gen-vis, ${hint}`]);
     });
 
-    test('a definition of gen-vis 4 is migrated, as by the load, the warnings are the ones of the definition of 5', () => {
+    test('a definition of the keys of gen-vis 4 is not read, as by the load: the one message, no warnings of its keys', () => {
+        const reads = 'gen-vis 5 reads "dims", "marks", "controls" and the options at the top level, see "Upgrading from 4.x" of the changelog of gen-vis 5.0.0';
         const def = {
-            $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json',
-            mapping: { x: { column: 'year', type: 'numeric' }, y: { column: 'value', type: 'numeric', nice: 5 }, c: { column: 'land', categories: { Wien: {} } } },
+            mapping: { x: { column: 'year', type: 'numeric' }, y: { column: 'value', type: 'numeric', nice: 5 } },
             plot: { type: 'cartesian:line', by: ['z'], props: { d: { x: '@x:scaled', y: '@y:scaled' } } },
         };
-        expect(validateDef(def)).toEqual(["marks[0].by: unknown dim 'z', expected one of 'x', 'y', 'c'"]);
+        expect(validateDef(def)).toEqual([`the definition is a definition of gen-vis 4 (its "mapping", "plot"): ${reads}`]);
+        // also with the $schema of 5 and beside the keys of 5
+        expect(validateDef({ ...base(), $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', options: { title: 'T' }, formElements: [] }))
+            .toEqual([`the definition is a definition of gen-vis 4 (its "formElements", "options"): ${reads}`]);
     });
 
     test('the keys of 3.x are unknown: categories of a mark, props of a dim, a text of the highlight', () => {

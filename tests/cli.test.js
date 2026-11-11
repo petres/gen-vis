@@ -118,20 +118,30 @@ describe('gen-vis check', () => {
         expect(tabs.stdout).toContain(`data/bev/def.json: data ${path.join(dir, 'tabs.csv')}: the CSV has one column 'year\\tvalue' of tabs, it is TSV`);
     }, 60000);
 
-    test('errors: a missing file or parent, invalid JSON, no $schema; a definition of 4.x is checked as migrated', async () => {
+    test('errors: a missing file or parent, invalid JSON, no $schema, a definition of gen-vis 4 by its keys or its $schema, also a parent', async () => {
         const broken = file('broken.json', '{ "dims": ');
         const orphan = file('orphan.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', parent: 'nothing.json' });
         const none = file('none.json', { dims: {} });
-        const old = file('old.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', data: bevData(dir),
+        // the keys of gen-vis 4: one error of the load, no warnings of unknown keys
+        const old = file('old.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', data: bevData(dir),
             mapping: { x: { column: 'Jahr', type: 'numeric' }, y: { column: 'Wert', type: 'numeric' } }, plot: { type: 'line' } });
-        const r = await run(['check', broken, orphan, none, path.join(dir, 'missing.json'), old]);
+        const schema4 = file('schema4.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', data: bevData(dir),
+            dims: { x: 'Jahr', y: 'Wert' }, marks: { type: 'line' } });
+        file('old-parent.json', { options: { title: 'T' }, formElements: [] });
+        const child = file('child.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', parent: 'old-parent.json', data: bevData(dir),
+            dims: { x: 'Jahr', y: 'Wert' }, marks: { type: 'line' } });
+        const r = await run(['check', broken, orphan, none, path.join(dir, 'missing.json'), old, schema4, child]);
         expect(r.code).toBe(1);
         expect(r.stderr).toContain(`gen-vis: ${broken}: invalid JSON:`);
         expect(r.stderr).toContain(`gen-vis: ${orphan}: the file ${path.join(dir, 'nothing.json')} does not exist`);
         expect(r.stderr).toMatch(new RegExp(`gen-vis: ${none}: '${none}' is no definition of gen-vis 5: its \\$schema is missing`));
         expect(r.stderr).toContain(`gen-vis: ${path.join(dir, 'missing.json')}: the definition ${path.join(dir, 'missing.json')} does not exist`);
-        expect(r.stdout).toContain(`${old}: note: a definition of gen-vis 4, checked as migrated`);
-        expect(r.stderr).toMatch(/gen-vis: 5 definitions, \d+ warnings?( in 1)?, 4 not read\n$/);
+        const reads = 'gen-vis 5 reads "dims", "marks", "controls" and the options at the top level, see "Upgrading from 4.x" of the changelog of gen-vis 5.0.0';
+        expect(r.stderr).toContain(`gen-vis: ${old}: '${old}' is a definition of gen-vis 4 (its "mapping", "plot"): ${reads}\n`);
+        expect(r.stderr).toContain(`gen-vis: ${schema4}: '${schema4}' is no definition of gen-vis 5: its $schema is the one of gen-vis 4, e.g. "$schema"`);
+        expect(r.stderr).toContain(`gen-vis: ${child}: '${path.join(dir, 'old-parent.json')}' is a definition of gen-vis 4 (its "formElements", "options"): ${reads}\n`);
+        expect(r.stdout).toBe('');
+        expect(r.stderr).toMatch(/gen-vis: 7 definitions, 0 warnings, 7 not read\n$/);
     }, 60000);
 
     test('only the files the export reads: of the directories of the definition, --root and --data, not of its parents', async () => {
@@ -152,15 +162,6 @@ describe('gen-vis check', () => {
         const rooted = await run(['check', path.join(inner, 'leak.json'), '--root', sub]);
         expect(rooted.stdout).toContain("'nope' is not a column of the data");
     }, 60000);
-
-    test('gen-vis migrate: a missing file fails alone, without a stack; lines get "order": "rows"', async () => {
-        const old = file('old-line.json', { $schema: 'https://unpkg.com/@preschen/gen-vis@4/schema.json', data: 'x.csv',
-            mapping: { x: { column: 'a', type: 'numeric' }, y: { column: 'b', type: 'numeric' } }, plot: { type: 'line' } });
-        const r = await run(['migrate', path.join(dir, 'nope.json'), old]);
-        expect(r.code).toBe(1);
-        expect(r.stderr).toBe(`gen-vis: ${path.join(dir, 'nope.json')}: the file does not exist\n`);
-        expect(JSON.parse(r.stdout).marks).toEqual({ type: 'line', order: 'rows' });
-    });
 
     test('the schemes of --scheme are known to the check, a name alone or with its colors', async () => {
         file('house.csv', 'land,wert\nWien,1\n');

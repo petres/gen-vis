@@ -1,4 +1,4 @@
-export { schemaUrl, schemaMajor, versionError };
+export { schemaUrl, versionError, languageError };
 
 // the version of the definition language of a definition is its `$schema`,
 // the url of the schema of gen-vis which editors validate it with, the
@@ -25,20 +25,33 @@ const schemaMajor = schema => {
 };
 
 /**
- * Why a definition of its `$schema` is none of gen-vis 5 (or 4, which is
- * migrated while it is loaded, see utils/migrate.js), e.g. "its $schema is
- * the one of gen-vis 3", null if it is one. A definition file needs one
+ * Why a definition of its `$schema` is none of gen-vis 5, e.g. "its $schema
+ * is the one of gen-vis 4", null if it is one. A definition file needs one
  * (`required`), an inline definition may have none.
  */
 const versionError = (schema, required = false) => {
     if (schema === undefined && !required)
         return null;
     const major = schemaMajor(schema);
-    if (major === 5 || major === 4)
+    if (major === 5)
         return null;
     const reason = schema === undefined ? 'its $schema is missing'
         : major === undefined ? `its $schema ${JSON.stringify(schema)} names no major version of gen-vis`
             : major === null ? `its $schema ${JSON.stringify(schema)} is none of gen-vis`
                 : `its $schema is the one of gen-vis ${major}`;
     return `${reason}, e.g. "$schema": "${schemaUrl}", see the changelog of gen-vis 5.0.0 of the changes of the definitions`;
+};
+
+// the keys of the definition language of gen-vis 4, gen-vis 5 reads none of them
+const keys4 = ['mapping', 'plot', 'formElements', 'options'];
+
+/**
+ * Why a definition (or a part of one, e.g. a parent) is none of gen-vis 5
+ * by its keys: it has the ones of gen-vis 4, e.g. 'a definition of gen-vis
+ * 4 (its "mapping", "plot"): …', null if it has none of them. It is not
+ * read, see checkVersion of utils/load.js and validateDef.
+ */
+const languageError = def => {
+    const found = def !== null && typeof def == 'object' ? keys4.filter(k => def[k] !== undefined) : [];
+    return found.length ? `a definition of gen-vis 4 (its ${found.map(k => `"${k}"`).join(', ')}): gen-vis 5 reads "dims", "marks", "controls" and the options at the top level, see "Upgrading from 4.x" of the changelog of gen-vis 5.0.0` : null;
 };

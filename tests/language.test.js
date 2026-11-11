@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { translate, compileStrings, implicitDims, isDefinition4, isDefinition5, authoredPath, optionKeys } from '@/utils/language.js';
+import { translate, compileStrings, implicitDims, authoredPath, optionKeys } from '@/utils/language.js';
 import { resolve } from '@/utils/resolve.js';
 
 describe('the language of 5.0', () => {
@@ -147,10 +147,7 @@ describe('the language of 5.0', () => {
         expect(() => compileStrings({ marks: [{ fill: '@a +' }] })).toThrow('marks[0].fill: expression');
     });
 
-    test('the version of a definition and the paths', () => {
-        expect(isDefinition4({ mapping: {}, plot: [] })).toBe(true);
-        expect(isDefinition5({ dims: {}, marks: [] })).toBe(true);
-        expect(isDefinition5({ data: 'x.csv' })).toBe(true);
+    test('the paths of the definition of the ones of the engine\'s form', () => {
         expect(authoredPath('marks[1].props.fill')).toBe('marks[1].fill');
         expect(authoredPath('facets.by.rows')).toBe('facets.by.rows');
     });

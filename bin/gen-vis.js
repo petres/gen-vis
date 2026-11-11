@@ -2,7 +2,6 @@
 // the command line of gen-vis, see docs/export.md:
 //   gen-vis export <def.json> <out.svg|out.png|out.pdf>... [<def.json> <out>...]... [options]
 //   gen-vis check <def.json>... [--data <file>] [--root <dir>] [--strict]
-//   gen-vis migrate <def.json>... [--write]
 import { parseArgs } from 'node:util';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -14,7 +13,6 @@ const version = JSON.parse(readFileSync(new URL('../package.json', import.meta.u
 
 const usage = `Usage: gen-vis export <def.json> <out.svg|out.png|out.pdf>... [<def.json> <out>...]... [options]
        gen-vis check <def.json>... [--data <file>] [--root <dir>] [--strict]
-       gen-vis migrate <def.json>... [--write]
        gen-vis --version
 
 export draws gen-vis definitions in a headless Chromium (Chrome, Edge) of
@@ -63,11 +61,6 @@ prints a line per warning, "<def.json>: <path>: <message>"; the exit code is
   --scheme <name[=colors]> a scheme of colors the page has, e.g. of a wrapper which registers
                           it, repeatable (its colors are optional, e.g. --scheme wifo-blue)
   --strict                exit code 1 of a warning
-
-migrate writes definitions of gen-vis 4 as ones of gen-vis 5 (also parents
-and mixins, file by file): to the standard output, with --write into the
-files themselves. A patch of a form element becomes an expression of its
-global (a match); check the fallback of a patch of a part of a parent.
 `;
 
 const fail = (message, code = 2) => {
@@ -237,57 +230,6 @@ const exportCommand = async args => {
     return failed ? 1 : 0;
 };
 
-// the migration of definitions of 4.x, see docs/definition.md and utils/migrate.js
-const migrateCommand = async args => {
-    let parsed;
-    try {
-        parsed = parseArgs({ args, allowPositionals: true, strict: true, options: { write: { type: 'boolean' }, help: { type: 'boolean', short: 'h' } } });
-    } catch (error) {
-        fail(`${error.message}\n\n${usage}`);
-    }
-    const { values: o, positionals: files } = parsed;
-    if (o.help || !files.length) {
-        process.stdout.write(usage);
-        return o.help ? 0 : 2;
-    }
-    const { migrate, formatJson, isDefinition4, resolveParents, schemaMajor } = await import('../dist/check.js');
-    const { writeFileSync } = await import('node:fs');
-    const { pathToFileURL, fileURLToPath } = await import('node:url');
-    // all files are read first: the parents of a child are migrated with it
-    // as they are, also when they are written before it in this run
-    // (a file which cannot be read fails alone, see below)
-    const texts = new Map(files.flatMap(f => existsSync(f) ? [[pathToFileURL(path.resolve(f)).href, readFileSync(f, 'utf8')]] : []));
-    const loadFile = async url => texts.get(url) ?? readFileSync(fileURLToPath(url), 'utf8');
-    let failed = 0;
-    for (const file of files) {
-        let text;
-        try {
-            const url = pathToFileURL(path.resolve(file)).href;
-            if (!texts.has(url))
-                throw new Error('the file does not exist');
-            const def = JSON.parse(texts.get(url));
-            if (!isDefinition4(def) && schemaMajor(def.$schema) !== 4) {
-                process.stderr.write(`gen-vis: ${file}: already a definition of gen-vis 5\n`);
-                continue;
-            }
-            // the parents of a child, merged: the patches of their form
-            // elements and the ones of the child are expressions of the child
-            const parents = def.parent === undefined ? undefined : await resolveParents({ parent: def.parent }, url, loadFile);
-            text = `${formatJson(migrate(def, { parents }))}\n`;
-        } catch (error) {
-            failed++;
-            process.stderr.write(`gen-vis: ${file}: ${error.message}\n`);
-            continue;
-        }
-        if (o.write) {
-            writeFileSync(file, text);
-            process.stdout.write(`${file}: migrated\n`);
-        } else
-            process.stdout.write(text);
-    }
-    return failed ? 1 : 0;
-};
-
 // the check of definitions in node, see bin/check.js
 // the schemes of --scheme of check: name or name=#hex,#hex (the colors are optional)
 const checkSchemesOf = list => Object.assign({}, ...list.map(s => s.includes('=') ? schemesOf([s]) : { [s.trim()]: null }));
@@ -319,8 +261,6 @@ const checkCommand = async args => {
     for (const file of files) {
         try {
             const warnings = await checker.check(file, { data: o.data ?? null });
-            if (warnings.migrated)
-                process.stdout.write(`${file}: note: a definition of gen-vis 4, checked as migrated (gen-vis migrate writes it as one of 5.0)\n`);
             warnings.notes?.forEach(n => process.stdout.write(`${file}: note: ${n}\n`));
             warnings.forEach(w => process.stdout.write(`${file}: ${w}\n`));
             count += warnings.length;
@@ -342,8 +282,6 @@ else if (command == 'check')
     process.exitCode = await checkCommand(rest);
 else if (command == '-v' || command == '--version' || command == 'version')
     process.stdout.write(`gen-vis ${version}\n`);
-else if (command == 'migrate')
-    process.exitCode = await migrateCommand(rest);
 else if (command == '-h' || command == '--help')
     process.stdout.write(usage);
 else if (command === undefined)

@@ -1,20 +1,10 @@
 // the rules of the definitions for scripts outside the browser, see docs/extensions.md
 import type { Definition, MarkType } from './index.js';
 
-/** The definition merged with its parents, `load(url)` reads a file, by default with fetch. */
+/** The definition merged with its parents, `load(url)` reads a file, by default with fetch; it rejects of a part which is none of gen-vis 5 (the keys of 4.x, e.g. `mapping`, or a `$schema` of another version). */
 export declare function resolveParents(def: Definition, url: string, load?: (url: string) => string | Promise<string>): Promise<Definition>;
-/** The warnings of common mistakes of a merged definition of 5.0 (one of 4.x is migrated first): the schema, the semantic checks, also of every value of its controls, and of its `rows` if given, e.g. a dim of dates whose values are no dates; the paths are the ones of the definition, e.g. `dims.y.scale`, `marks[1].fill`. */
+/** The warnings of common mistakes of a merged definition: the schema, the semantic checks, also of every value of its controls, and of its `rows` if given, e.g. a dim of dates whose values are no dates; the paths are the ones of the definition, e.g. `dims.y.scale`, `marks[1].fill`. A definition which is none of gen-vis 5 (the keys of 4.x or a `$schema` of another version) has that one message and is not checked. */
 export declare function validateDef(def: Definition, rows?: Record<string, unknown>[] | null): string[];
-/** A definition of 4.x as one of 5.0, `parents` the merged definitions of its parents (of the ids of their controls and their hover), see docs/definition.md "Migration from 4.x". */
-export declare function migrate(def: Record<string, unknown>, options?: { parents?: Record<string, unknown>[]; noHover?: boolean }): Definition;
-/** The JSON of a definition as the files of gen-vis are written: an indent of four spaces, objects and lists which fit into a line of `width` characters on one line. */
-export declare function formatJson(value: unknown, indent?: number, width?: number): string;
-/** The major version of a `$schema` url of gen-vis (e.g. 5 of `https://unpkg.com/@preschen/gen-vis@5/schema.json`), undefined of one without a version, null of another url. */
-export declare function schemaMajor(schema: unknown): number | null | undefined;
-/** Whether a definition is one of 5.0 (by its keys: `dims`, `marks`, `controls`, or none of 4.x). */
-export declare function isDefinition5(def: unknown): boolean;
-/** Whether a definition is one of 4.x (by its keys: `mapping`, `plot`, `options`, `formElements`). */
-export declare function isDefinition4(def: unknown): boolean;
 /** The definition with the expressions of its globals evaluated, `names` are the globals and the fields of the selected entries (`year:name`, `globals.year`), the other expressions stay. */
 export declare function resolve(def: Definition, names: Record<string, unknown>): Definition;
 /** The definition resolved with its globals and, one at a time, with every value of every control. */
