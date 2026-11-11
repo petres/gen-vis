@@ -1,7 +1,7 @@
 // the CLI of the static export (bin/gen-vis.js) in a browser of the system,
 // only if there is one (see browser.js), skipped otherwise; the export page
 // is built if it is missing or older than the sources
-import { describe, test, expect, beforeAll, afterAll } from 'vitest';
+import { describe, test, expect, beforeAll, afterAll, vi } from 'vitest';
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -438,6 +438,19 @@ describe.skipIf(!browser)('gen-vis export', () => {
         expect(JSON.parse(r.stdout)).not.toContain('Timeout');
     }, 60000);
 
+    test('a SIGKILL of the program ends the browser (its pipe closes)', async () => {
+        const tmp = mkdtempSync(path.join(tmpdir(), 'gen-vis-cli-tmp-'));
+        try {
+            const charts = Array.from({ length: 30 }, (_, i) => ['data/bev/def.json', path.join(dir, `kill-${i}.svg`)]).flat();
+            const r = run(['export', ...charts], { env: { TMPDIR: tmp }, started: c => c.stdout.once('data', () => c.kill('SIGKILL')) });
+            expect((await r).signal).toBe('SIGKILL');
+            await vi.waitFor(() => expect(processesOf(tmp)).toEqual([]), { timeout: 10000, interval: 100 });
+        } finally {
+            // (the profile stays, nothing removes it after a SIGKILL)
+            rmSync(tmp, { recursive: true, force: true, maxRetries: 5 });
+        }
+    }, 60000);
+
     test('a browser which does not start leaves no profile', async () => {
         const tmp = mkdtempSync(path.join(tmpdir(), 'gen-vis-cli-tmp-'));
         try {
@@ -520,6 +533,18 @@ describe.skipIf(!browser)('gen-vis export', () => {
         const r = await run(['export', 'data/bev/def.json']);
         expect(r.code).toBe(2);
         expect(r.stderr).toContain('has no output');
+        const jpg = await run(['export', 'data/bev/def.json', path.join(dir, 'x.jpg')]);
+        expect(jpg.code).toBe(2);
+        expect(jpg.stderr).toMatch(/the output .*x\.jpg is of no format gen-vis writes \(\.jpg\), the formats are \.svg, \.png, \.pdf/);
+        for (const [option, value] of [['--globals', '[1]'], ['--state', '"x"'], ['--globals', 'null']]) {
+            const o = await run(['export', 'data/bev/def.json', path.join(dir, 'x.svg'), option, value]);
+            expect(o.code).toBe(2);
+            expect(o.stderr).toContain(`${option} is a JSON object, e.g.`);
+        }
+        const none = await run([]);
+        expect(none.code).toBe(2);
+        expect(none.stderr).toMatch(/^gen-vis: no command\n\nUsage: gen-vis export/);
+        expect(none.stdout).toBe('');
         expect((await run(['--help'])).stdout).toContain('Usage: gen-vis export');
         expect((await run(['--help'])).stdout).toContain('--no-check');
     });

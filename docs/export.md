@@ -196,7 +196,7 @@ options above:
   `@font-face`) are in the directory of the stylesheet or under `--root`,
   others are refused (an error line, the chart falls back to another
   font).
-- `--globals` and `--state` (JSON), `--defaults` (JSON or a JSON file, e.g.
+- `--globals` and `--state` (JSON objects), `--defaults` (JSON or a JSON file, e.g.
   `--defaults house-defaults.json`, also the `margins` of a house style), `--data` (a CSV, JSON or parquet file
   instead of the definition's data), `--scheme name=color,color,...`
   (repeatable).
@@ -254,7 +254,13 @@ How it works and what to expect:
 - A chart that fails is reported with gen-vis's message, the others are
   still drawn, and the exit code is 1.
 - SIGINT, SIGTERM and SIGHUP close the browser and remove its profile; the
-  exit code is the shell's (130, 143, 129).
+  exit code is the shell's (130, 143, 129). The browser is driven over a
+  pipe (`--remote-debugging-pipe`), so it also ends when the program is
+  killed (SIGKILL), its profile (`gen-vis-*` in the temporary directory)
+  stays then.
+- Wrong arguments (e.g. an output of another format than `.svg`, `.png`
+  and `.pdf`, `--globals` or `--state` which are no JSON object, no
+  command) are a message to the standard error and the exit code 2.
 - The PDF is a print of the SVG, so PDF and SVG are the same drawing.
 
 ## Check

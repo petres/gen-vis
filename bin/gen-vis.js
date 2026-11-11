@@ -85,6 +85,14 @@ const json = (value, name) => {
     }
 };
 
+// a JSON object of an option, e.g. --globals, an error of other JSON
+const objectOf = (value, name, example) => {
+    const v = json(value, name);
+    if (v !== undefined && (v === null || typeof v != 'object' || Array.isArray(v)))
+        fail(`--${name} is a JSON object, e.g. '${example}', not ${JSON.stringify(v)}`);
+    return v;
+};
+
 // the defaults of --defaults, a JSON text (it begins with a {) or a file of one
 const defaultsOf = value => {
     if (value === undefined)
@@ -117,6 +125,11 @@ const chartsOf = positionals => {
         } else
             charts.push({ def: p, outputs: [] });
     }
+    // a file after a definition without outputs which is no JSON is an
+    // output of another format, e.g. out.jpg
+    const other = charts.find((c, i) => i > 0 && !charts[i - 1].outputs.length && !['.json', ''].includes(path.extname(c.def).toLowerCase()));
+    if (other)
+        fail(`the output ${other.def} is of no format gen-vis writes (${path.extname(other.def)}), the formats are ${formats.map(f => `.${f}`).join(', ')}`);
     const without = charts.filter(c => !c.outputs.length);
     if (!charts.length || without.length)
         fail(without.length ? `the definition ${without[0].def} has no output (.svg, .png or .pdf)` : 'no definition given\n\n' + usage);
@@ -163,7 +176,7 @@ const exportCommand = async args => {
     const options = Object.fromEntries(Object.entries({
         width, parts: o.parts?.split(',').map(p => p.trim()).filter(Boolean), css: o.css ?? [], classes: o.class,
         fontSize: o['font-size'], dpi: number(o.dpi, 'dpi'), scale: number(o.scale, 'scale'),
-        globals: json(o.globals, 'globals'), state: json(o.state, 'state'), defaults: defaultsOf(o.defaults), data: o.data,
+        globals: objectOf(o.globals, 'globals', '{"lang": "en"}'), state: objectOf(o.state, 'state', '{"visible": {"land": {"Wien": false}}}'), defaults: defaultsOf(o.defaults), data: o.data,
         background: o.background === undefined ? undefined : o.background == 'none' ? null : o.background,
         schemes: schemesOf(o.scheme ?? []), unit: o.unit, padding: number(o.padding, 'padding', true),
         timeout: number(o.timeout, 'timeout'), strict: o.strict || undefined,
@@ -331,7 +344,9 @@ else if (command == '-v' || command == '--version' || command == 'version')
     process.stdout.write(`gen-vis ${version}\n`);
 else if (command == 'migrate')
     process.exitCode = await migrateCommand(rest);
-else if (command == '-h' || command == '--help' || command === undefined)
+else if (command == '-h' || command == '--help')
     process.stdout.write(usage);
+else if (command === undefined)
+    fail(`no command\n\n${usage}`);
 else
     fail(`unknown command ${command}\n\n${usage}`);

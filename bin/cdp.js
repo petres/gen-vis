@@ -1,6 +1,6 @@
 // a Chromium (or Chrome, Edge) of the system driven by the DevTools protocol
-// (CDP) over the WebSocket of node (22 or newer), without dependencies,
-// see bin/export.js
+// (CDP) over a pipe (--remote-debugging-pipe), without dependencies, see
+// bin/export.js
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -93,11 +93,15 @@ process.on('exit', () => running.forEach(b => {
     } catch { /* a process of the browser writes it */ }
 }));
 
-// the browser started with its DevTools on a port of its own, resolves
-// with the url of its WebSocket, rejects with its output if it ends first;
-// `started(child)` gets it at once, its temporary files are in the profile
+// the browser started with its DevTools on a pipe (fds 3 and 4, messages of
+// JSON ended by a NUL), so it ends with the program, also with one which is
+// killed (its end of the pipe closes); resolves once it answers a first
+// command with the browser and its pipe (`send(message)`, `receive(fn)` of
+// the messages, `closed(fn)` of the end of the pipe), rejects with its
+// output if it ends first; `started(child)` gets it at once, its temporary
+// files are in the profile
 const start = (executable, args, profile, wait, started) => new Promise((resolve, reject) => {
-    const child = spawn(executable, args, { stdio: ['ignore', 'ignore', 'pipe'], detached: grouped, env: { ...process.env, TMPDIR: profile } });
+    const child = spawn(executable, args, { stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'], detached: grouped, env: { ...process.env, TMPDIR: profile } });
     started(child);
     let output = '';
     const timer = setTimeout(() => {
@@ -105,16 +109,31 @@ const start = (executable, args, profile, wait, started) => new Promise((resolve
         reject(new Error(`the browser did not start within ${wait / 1000} s`));
     }, wait);
     child.stderr.setEncoding('utf8');
-    child.stderr.on('data', chunk => {
-        output += chunk;
-        const m = output.match(/DevTools listening on (ws:\/\/\S+)/);
-        if (m) {
-            clearTimeout(timer);
-            child.stderr.removeAllListeners('data');
-            child.stderr.resume();
-            resolve({ child, url: m[1] });
-        }
+    // (the last lines of the output, of the error of an end)
+    child.stderr.on('data', chunk => output = (output + chunk).slice(-20000));
+    const [, , , input, messages] = child.stdio;
+    // (a write after the end of the browser, its exit tells)
+    input.on('error', () => {});
+    let receiver = null, onClosed = null, buffer = '';
+    messages.setEncoding('utf8');
+    messages.on('data', chunk => {
+        const parts = (buffer + chunk).split('\0');
+        buffer = parts.pop();
+        parts.forEach(text => {
+            const m = JSON.parse(text);
+            if (m.id === 0) {
+                clearTimeout(timer);
+                resolve({ child, pipe });
+            } else
+                receiver?.(m);
+        });
     });
+    messages.on('close', () => onClosed?.());
+    const pipe = {
+        send: message => input.write(`${JSON.stringify(message)}\0`),
+        receive: fn => receiver = fn,
+        closed: fn => onClosed = fn,
+    };
     child.on('error', error => {
         clearTimeout(timer);
         reject(error);
@@ -123,6 +142,7 @@ const start = (executable, args, profile, wait, started) => new Promise((resolve
         clearTimeout(timer);
         reject(Object.assign(new Error(`the browser ended (${code}): ${output.trim().split('\n').slice(-3).join(' ')}`), { output }));
     });
+    pipe.send({ id: 0, method: 'Browser.getVersion' });
 });
 
 /**
@@ -133,8 +153,6 @@ const start = (executable, args, profile, wait, started) => new Promise((resolve
  * if the browser can not start one, e.g. in a container (`note` tells).
  */
 export const launch = async (executable, { sandbox = true, wait = 30000, note = () => {} } = {}) => {
-    if (typeof WebSocket != 'function')
-        throw new Error(`the export needs node 22 or newer (its WebSocket), this is ${process.version}`);
     const b = { child: null, profile: mkdtempSync(path.join(tmpdir(), 'gen-vis-')) };
     running.add(b);
     try {
@@ -149,7 +167,7 @@ export const launch = async (executable, { sandbox = true, wait = 30000, note = 
 const connect = async (executable, b, sandbox, wait, note) => {
     const { profile } = b;
     const started = child => b.child = child;
-    const args = ['--headless', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run',
+    const args = ['--headless', '--remote-debugging-pipe', `--user-data-dir=${profile}`, '--no-first-run',
         '--no-default-browser-check', '--disable-gpu', '--hide-scrollbars', '--mute-audio', '--font-render-hinting=none',
         '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows',
         '--disable-extensions', '--window-size=1600,1200', 'about:blank'];
@@ -163,19 +181,13 @@ const connect = async (executable, b, sandbox, wait, note) => {
         note('the browser has no sandbox here (e.g. in a container), it runs without one');
         browser = await start(executable, ['--no-sandbox', ...args], profile, wait, started);
     }
-    const { child, url } = browser;
+    const { child, pipe } = browser;
 
-    const ws = new WebSocket(url);
-    await new Promise((resolve, reject) => {
-        ws.onopen = resolve;
-        ws.onerror = () => reject(new Error(`no connection to the browser at ${url}`));
-    });
     let id = 0;
     const pending = new Map();
     const listeners = new Map();
     let closed = null;
-    ws.onmessage = message => {
-        const m = JSON.parse(message.data);
+    pipe.receive(m => {
         if (m.id !== undefined) {
             const p = pending.get(m.id);
             pending.delete(m.id);
@@ -185,18 +197,18 @@ const connect = async (executable, b, sandbox, wait, note) => {
                 p?.resolve(m.result);
         } else
             (listeners.get(m.method) ?? []).forEach(fn => fn(m.params, m.sessionId));
-    };
-    ws.onclose = () => {
+    });
+    pipe.closed(() => {
         closed = new Error('the browser closed the connection');
         pending.forEach(p => p.reject(closed));
         pending.clear();
-    };
+    });
 
     const send = (method, params = {}, sessionId) => new Promise((resolve, reject) => {
         if (closed)
             return reject(closed);
         pending.set(++id, { resolve, reject, method });
-        ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+        pipe.send({ id, method, params, ...(sessionId ? { sessionId } : {}) });
     });
     const on = (method, fn) => {
         listeners.set(method, [...(listeners.get(method) ?? []), fn]);
@@ -220,7 +232,7 @@ const connect = async (executable, b, sandbox, wait, note) => {
         } catch { /* closed already */ } finally {
             clearTimeout(timer);
         }
-        ws.close();
+        child.stdio[3].end();
         await ended(child, 3000);
         await stop(b);
     };
