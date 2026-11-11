@@ -1,7 +1,7 @@
 export { curves, setProps, setAttrs, groupAttrs, groupKey, rowOf, keyOf, elementOf, directOf, childrenOf, drawLayer, motion, withMotion, reducedMotion, dataAttribute, fitText };
 
 import * as d3 from "@/utils/d3";
-import { animate, create, finish as finishAnimation, interrupt, itemOf, join, setAttr, targetOf } from "@/utils/dom";
+import { animate, create, finish as finishAnimation, interrupt, itemOf, join, scriptAttr, setAttr, targetOf } from "@/utils/dom";
 
 // the interpolations of the paths and areas between their points, `monotoneX`
 // is smooth without overshooting the values, e.g. for monthly data
@@ -32,13 +32,13 @@ const readValue = (node, k) => node[styles]?.has(k) ? node.style.getPropertyValu
 
 // the value of a prop of an element at once, a value with a css variable as
 // its style, another one as its attribute (without a style of it), null
-// removes it
+// removes it, an attribute which runs script (see scriptAttr) is not set
 const writeValue = (node, k, v) => {
     if (node[styles]?.has(k) && !isStyle(k, v)) {
         node.style.removeProperty(k);
         node[styles].delete(k);
     }
-    if (v === null || v === undefined)
+    if (v === null || v === undefined || scriptAttr(k, v))
         node.removeAttribute(k);
     else if (isStyle(k, v)) {
         node.style.setProperty(k, v);

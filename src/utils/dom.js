@@ -1,4 +1,4 @@
-export { itemOf, create, setAttr, getAttr, join, pointer, cubicInOut, animate, interrupt, interruptAll, finish, targetOf, onEnd };
+export { itemOf, create, setAttr, getAttr, scriptAttr, scriptElement, join, pointer, cubicInOut, animate, interrupt, interruptAll, finish, targetOf, onEnd };
 
 import { interpolate, interpolateTransformSvg } from 'd3-interpolate';
 
@@ -28,12 +28,28 @@ const qualified = name => {
     return Object.hasOwn(namespaces, prefix) ? { space: namespaces[prefix], local: prefix == 'xmlns' ? name : name.slice(i + 1) } : null;
 };
 
+// the elements which run script or load a document (or change the
+// attributes of others, e.g. an href of an animation), never drawn of a
+// definition, e.g. of the elements of a symbol of a legend
+const scriptElements = new Set(['script', 'foreignobject', 'iframe', 'frame', 'frameset', 'object', 'embed', 'style', 'link', 'meta', 'base',
+    'animate', 'set', 'animatemotion', 'animatetransform', 'discard', 'handler', 'listener']);
+const scriptElement = name => scriptElements.has(String(name).toLowerCase());
+
 // a new element of the name `tag`, of svg, or of the namespace of its
-// prefix, e.g. `xhtml:div`
+// prefix, e.g. `xhtml:div`, an error of the ones of scriptElements
 const create = tag => {
     const q = qualified(tag);
-    return document.createElementNS(q?.space ?? namespaces.svg, q?.local ?? tag);
+    const local = q?.local ?? tag;
+    if (scriptElement(local))
+        throw new Error(`gen-vis does not draw ${local} elements`);
+    return document.createElementNS(q?.space ?? namespaces.svg, local);
 };
+
+// an attribute which runs script, of a definition, e.g. of the props of a
+// mark or of a legend: a handler (e.g. onclick) or a link of javascript:,
+// vbscript: or data: (other than of an image), they are not set
+const scriptAttr = (name, value) => /^(?:[\w-]+:)?on/i.test(name)
+    || (/^(?:[\w-]+:)?(?:href|src|action|formaction)$/i.test(name) && /^(?:javascript|vbscript|data(?!:image\/)):/i.test(String(value).replace(/[\u0000-\u0020]/g, '')));
 
 // the value of an attribute of an element, also of a name with a namespace,
 // null without one
@@ -46,7 +62,7 @@ const getAttr = (node, name) => {
 // `xlink:href`, null and undefined remove it
 const setAttr = (node, name, value) => {
     const q = qualified(name);
-    if (value === null || value === undefined)
+    if (value === null || value === undefined || scriptAttr(name, value))
         q ? node.removeAttributeNS(q.space, q.local) : node.removeAttribute(name);
     else
         q ? node.setAttributeNS(q.space, q.local, value) : node.setAttribute(name, value);

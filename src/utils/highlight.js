@@ -28,10 +28,21 @@ const varName = (kind, prop) => `--vis-${kind}-${prop}`;
 // of the geometry, e.g. r or stroke-width, take numbers as pixels)
 const lengths = new Set(['font-size', 'letter-spacing', 'word-spacing']);
 
-// the value of a prop `n` in the stylesheet, none of a value which would end
-// the declaration or the rule, numbers of lengths of texts in pixels
+// a name of a prop of the stylesheet, e.g. stroke-width (no selector or
+// declaration of its own, see highlightStyle)
+const cssName = n => /^-{0,2}[a-z][a-z0-9-]*$/i.test(n);
+
+// a value of the stylesheet which would end the declaration or the rule,
+// open a comment or a string, or load something (a url other than the one
+// of an element of the svg, e.g. url(#gradient))
+const unsafeValue = v => /[;{}<>"'\\@]|\/\*|\*\/|[\u0000-\u001f]/.test(v)
+    || /(?:image|image-set|element|cross-fade|expression|src)\s*\(/i.test(v)
+    || /url\s*\((?!\s*#[\w-]+\s*\))/i.test(v);
+
+// the value of a prop `n` in the stylesheet, none of an unsafe value (see
+// unsafeValue), numbers of lengths of texts in pixels
 const cssValue = (v, n) => v === null || v === undefined ? null
-    : typeof v == 'number' ? (lengths.has(n) ? `${v}px` : String(v)) : typeof v == 'string' && !/[;{}]/.test(v) ? v : null;
+    : typeof v == 'number' ? (lengths.has(n) ? `${v}px` : String(v)) : typeof v == 'string' && !unsafeValue(v) ? v : null;
 
 // the value of a prop which is the same for all groups of the plot, e.g.
 // 3 or "black", undefined of one of the categories or the rows, e.g. "@color"
@@ -83,6 +94,19 @@ const declarations = (kind, names, values) => names.map(n => {
     return css === null ? null : `${n}: ${css}`;
 }).filter(Boolean).join('; ');
 
+// the props of the highlight or the others (`part`) of a plot which the
+// stylesheet has: names of css (see cssName) and safe values (see
+// unsafeValue), the others with a `warn(plot, message)`
+const usable = (plot, part, warn) => plot[`${part}Props`].filter(n => {
+    const v = fixed(plot[part][n]);
+    const message = !cssName(n) ? `${part}: "${n}" is no name of a property of css, it is left out`
+        : typeof v == 'string' && unsafeValue(v) ? `${part}.${n}: ${JSON.stringify(v)} is no value gen-vis writes into its stylesheet (it has no ;{}<>, quotes, backslashes, @, comments or urls other than url(#id)), it is left out`
+        : null;
+    if (message)
+        warn?.(plot, message);
+    return !message;
+});
+
 /**
  * The stylesheet of the highlights of the plots of a definition (a text),
  * in `scope` (the selector of the root of the chart, e.g. `.vis[data-vis="3"]`):
@@ -90,11 +114,13 @@ const declarations = (kind, names, values) => names.map(n => {
  * the groups, so the values are not applied twice, e.g. an opacity) have
  * the props of `highlight`, the other elements of the plots the ones of
  * `others` while one is shown (`.vis-highlighting`), the props move in
- * `transition` milliseconds (`options.highlight.transition`).
+ * `transition` milliseconds (`options.highlight.transition`). Props which
+ * are no css (see usable) are left out, with `warn(plot, message)`.
  */
-const highlightStyle = (plots, { scope = '', transition = 0 } = {}) => {
+const highlightStyle = (plots, { scope = '', transition = 0, warn = null } = {}) => {
     const rules = [];
     const leaves = '*:not(g)';
+    plots = plots.map(p => ({ ...p, highlightProps: usable(p, 'highlight', warn), othersProps: usable(p, 'others', warn) }));
     plots.forEach(p => {
         const plot = `${scope} ${plotSelector(p.id)}`;
         if (p.highlightProps.length > 0) {

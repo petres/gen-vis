@@ -4,11 +4,11 @@ import { gridOf, layout } from "@/layout";
 import { clearMeasures } from '@/utils/measure';
 import { rowHeadersOf } from "@/utils/normalize";
 import { evaluate } from "@/utils/expr";
-import { sizeOf } from "@/utils/warn";
+import { markPath, sizeOf, warnOnce } from "@/utils/warn";
 import { dataAttribute, reducedMotion } from "@/utils/draw";
 import { canCopy } from "@/utils/clipboard.js";
 import { create } from "@/utils/dom";
-import { el, patch, place, setHtml, setText, slotNodes, takeRange } from "@/comp/html";
+import { cleanHtml, el, patch, place, setHtml, setText, slotNodes, takeRange } from "@/comp/html";
 import { createFacets } from "@/comp/facets";
 import { createLegends, annotationsLegend } from "@/comp/legends";
 import { createControl } from "@/comp/control";
@@ -407,7 +407,8 @@ const createVis = app => {
             .filter(([k, v]) => dataAttribute(k, 'global-') && ['string', 'number', 'boolean'].includes(typeof v))
             .map(([k, v]) => [dataAttribute(k, 'global-'), String(v)]));
         patch(root, { class: rootClass ? `vis ${rootClass}` : 'vis', 'data-vis': uid, ...globalAttrs, style: { '--gen-vis-font-family': opts.fontFamily } });
-        const css = highlightStyle(store.def.plot, { scope: `.vis[data-vis="${uid}"]`, transition: Number(opts.highlight?.transition) || 0 });
+        const css = highlightStyle(store.def.plot, { scope: `.vis[data-vis="${uid}"]`, transition: Number(opts.highlight?.transition) || 0,
+            warn: (plot, message) => warnOnce(store, `highlight:${plot.id}:${message}`, `${markPath(store.def, plot, true)}.${message}`) });
         if (style.textContent !== css)
             style.textContent = css;
 
@@ -488,12 +489,13 @@ const createVis = app => {
         drawFacets(bodySides ? plots : body);
 
         // the footer, html of the definition, e.g. a link of the source,
-        // the values of the globals are text
+        // the values of the globals are text, cleaned (see parsed of
+        // comp/html.js), also the one of the slot
         const footerHtml = store.html(opts.footer);
         if (own.footer) {
             footerSpan?.remove();
             footerSpan = null;
-            footerSlot.draw(footerContent, own.footer, { footer: footerHtml });
+            footerSlot.draw(footerContent, own.footer, { footer: cleanHtml(footerHtml) });
         } else {
             footerSlot.clear();
             footerSpan ??= footerContent.appendChild(el('span'));

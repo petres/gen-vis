@@ -112,6 +112,16 @@ describe('exportSvg', () => {
         expect(out.querySelector('text').hasAttribute('fill-opacity')).toBe(false);
     });
 
+    test('no scripts and no handlers of events in the file, e.g. of a slot of the page', () => {
+        const root = document.body.appendChild(document.createElement('div'));
+        root.innerHTML = '<svg><circle r="3" onclick="alert(1)"/><a href="javascript:alert(2)"><text>A</text></a>'
+            + '<script>alert(3)</script><foreignObject><div>B</div></foreignObject><set attributeName="href" to="javascript:x"/></svg>';
+        const svg = composeSvg(root);
+        expect(svg).not.toMatch(/onclick|javascript|<script|foreignObject|<set\b|alert/);
+        expect(parse(svg).querySelector('circle')).not.toBeNull();
+        root.remove();
+    });
+
     test('the opacity of an svg once, lengths of texts in pixels, href also as xlink:href', () => {
         const root = document.body.appendChild(document.createElement('div'));
         root.innerHTML = '<svg style="opacity: 0.5"><path id="p" d="M0,0L100,0"/>'

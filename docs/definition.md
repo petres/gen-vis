@@ -121,12 +121,28 @@ console, the check is only loaded then, see also [checks outside the
 browser](extensions.md#checks-outside-the-browser); a definition which can
 not be drawn, e.g. a dim which is no object, is an error which names the
 part. Only the `source` and the templates of the hover are HTML, e.g. the
-link of a source, so a definition is trusted, texts of users, e.g. of a
-form of a page, must not be part of it, and so are its urls (`defFile`,
-`data`, the parents, maps and files), they are loaded as they are, the
-values of the globals and of the data in them are text. All other texts,
-e.g. the title, the names of the legends and the hover and the titles of
-the axes, are text, `<` is shown as it is.
+link of a source, the values of the globals and of the data in them are
+text. The HTML runs no script: it has only the tags `a`, `b`, `i`, `em`,
+`strong`, `u`, `s`, `br`, `span`, `sub`, `sup`, `small`, `code`, `p` and
+`div` (of other tags only their text stays, `script`, `style`, `svg` and
+the like are removed with their content), the attributes `title`, `class`
+and `style`, of links `href` (`http:`, `https:`, `mailto:` or a relative
+url), `target` and `rel` (a link with a `target` gets `rel="noopener"`); a
+`style` keeps the properties of the text, of the box and of a grid or a
+flex of the children (e.g. `color`, `font-weight`, `font-size`,
+`text-align`, `margin`, `padding`, `border`, `width`, `display: grid`,
+`column-gap`), not the position (`position`, `top`, `transform` and the like)
+and nothing which loads a file (`url()`). The props of marks and legends
+set no handlers of events (`on...`) and no links of `javascript:`, the
+symbols of the legends draw no `script`, `foreignObject`, `iframe`,
+`style` or animations of SVG, and the props of the
+[highlight](#highlight-and-others) are names of CSS properties with values
+without `;{}<>`, quotes, comments and urls other than `url(#id)`. Still,
+texts of users, e.g. of a form of a page, must not be part of a
+definition, and so are its urls (`defFile`, `data`, the parents, maps and
+files), they are loaded as they are. All other texts, e.g. the title, the
+names of the legends and the hover and the titles of the axes, are text,
+`<` is shown as it is.
 
 The charts of a page share their requests of the last 5 minutes, e.g. a parent
 used by all of them or a csv of two charts is loaded once (and read once,
@@ -433,8 +449,9 @@ which they change. The CSV of the data has the computed values. See
 
 The texts, the sizes and the look are keys of the top level:
 
-- `title`, `subtitle` and `source` (below the chart, HTML, e.g. a link)
-  are texts, templates of the globals: `{name}` is the value of the global,
+- `title`, `subtitle` and `source` (below the chart, HTML, e.g. a link,
+  of the tags of texts and links, without script, see [parents and
+  mixins](#parents-and-mixins)) are texts, templates of the globals: `{name}` is the value of the global,
   e.g. `"Durchschnitt {base} = 100"` of a control of the base year, also in
   the image and the name of its file, see [templates](#templates).
 - `height`: the height of a facet in pixels, 400 by default, an

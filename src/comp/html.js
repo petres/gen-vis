@@ -1,4 +1,6 @@
-export { el, patch, setText, setHtml, slotNodes, takeRange, place, emitter };
+export { el, patch, setText, setHtml, cleanHtml, slotNodes, takeRange, place, emitter };
+
+import { scriptAttr } from "@/utils/dom";
 
 // the html elements of the visualisation without a framework: an element
 // with its attributes (el), the attributes of an element patched (patch),
@@ -78,8 +80,9 @@ const patch = (node, attrs) => {
     return node;
 };
 
+// (an attribute which runs script, e.g. onclick of the props of a legend, is not set)
 const set = (node, name, v) => {
-    if (v === null || v === undefined)
+    if (v === null || v === undefined || scriptAttr(name, v))
         node.removeAttribute(name);
     else if (node.getAttribute(name) !== String(v))
         node.setAttribute(name, v);
@@ -104,11 +107,91 @@ const setText = (node, v) => {
     return node;
 };
 
-// html as the content of an element, e.g. of the definition, only set if it differs
+// the tags of the html of a definition (the footer, the templates of the
+// hover), the attributes of all of them and the ones of links; the elements
+// of `dropped` are removed with their content, the ones of other tags
+// without, their texts stay
+const tags = new Set(['a', 'b', 'i', 'em', 'strong', 'u', 's', 'br', 'span', 'sub', 'sup', 'small', 'code', 'p', 'div']);
+const attributes = new Set(['title', 'class', 'style']);
+const linkAttributes = new Set(['href', 'target', 'rel']);
+const dropped = new Set(['script', 'style', 'template', 'iframe', 'object', 'embed', 'noscript', 'textarea', 'title', 'select', 'svg', 'math']);
+
+// the properties of the styles of the html of a definition (of the text,
+// the box of an element and the grid or flex of its children, not its
+// position, nothing loaded), as the browser reads them, e.g. the longhands
+// of `margin`
+const styleProperty = new RegExp(`^(${['color', 'background-color', 'opacity', 'display', 'vertical-align', 'line-height', 'letter-spacing', 'word-spacing',
+    'white-space(-collapse)?', 'font(-[a-z-]+)?', 'text-[a-z-]+', '(margin|padding)(-[a-z-]+)?', 'border(?!-image)(-[a-z-]+)?', '(max-|min-)?(width|height)',
+    '(column-|row-)?gap', 'grid(-[a-z-]+)?', 'flex(-[a-z-]+)?', 'order', '(justify|align)-(content|items|self)', 'overflow-wrap', 'word-break', 'hyphens'].join('|')})$`);
+const loads = /url\(|image\(|image-set\(|element\(|expression|@import|\\/i;
+
+// a link of http(s), mailto or a relative one, not of javascript: or data:
+const safeUrl = url => {
+    const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(String(url).replace(/[\u0000-\u0020]/g, ''));
+    return !scheme || ['http', 'https', 'mailto'].includes(scheme[1].toLowerCase());
+};
+
+// the attributes of an element of the html of a definition: the ones of
+// `attributes` and of links, styles of styleProperty, a link with a target
+// opens without access to the page (rel="noopener")
+const cleanAttributes = e => {
+    const link = e.localName == 'a';
+    [...e.attributes].forEach(a => {
+        const name = a.name.toLowerCase();
+        if (!(attributes.has(name) || (link && linkAttributes.has(name))) || (name == 'href' && !safeUrl(a.value)))
+            e.removeAttribute(a.name);
+    });
+    if (e.hasAttribute('style')) {
+        const style = e.style;
+        Array.from({ length: style.length }, (_, i) => style.item(i)).filter(p => !styleProperty.test(p) || loads.test(style.getPropertyValue(p))).forEach(p => style.removeProperty(p));
+        if (style.length == 0)
+            e.removeAttribute('style');
+    }
+    if (link && e.hasAttribute('target')) {
+        const rel = new Set((e.getAttribute('rel') ?? '').split(/\s+/).filter(Boolean));
+        rel.add('noopener');
+        e.setAttribute('rel', [...rel].join(' '));
+    }
+};
+
+// the children of a node of the html of a definition cleaned, see tags
+const cleanNodes = parent => [...parent.childNodes].forEach(n => {
+    if (n.nodeType == Node.TEXT_NODE)
+        return;
+    if (n.nodeType != Node.ELEMENT_NODE || dropped.has(n.localName) || n.namespaceURI != 'http://www.w3.org/1999/xhtml') {
+        n.remove();
+        return;
+    }
+    cleanNodes(n);
+    if (tags.has(n.localName))
+        cleanAttributes(n);
+    else
+        n.replaceWith(...n.childNodes);
+});
+
+/**
+ * The html of a definition (e.g. the footer or the templates of the hover)
+ * in a template, parsed without running or loading anything (the content of
+ * a template is inert, e.g. an image of `<img onerror>` is not loaded), only
+ * the elements of `tags` and their safe attributes, see cleanNodes.
+ */
+const parsed = html => {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    cleanNodes(template.content);
+    return template;
+};
+
+// the html of a definition, cleaned (see parsed), a text, e.g. the footer
+// of a slot of the page
+const cleanHtml = html => html === null || html === undefined || html === '' ? '' : parsed(String(html)).innerHTML;
+
+// html of the definition as the content of an element, cleaned (see
+// parsed), only set if it differs
 const setHtml = (node, html) => {
-    html = html === null || html === undefined ? '' : String(html);
-    if (node.innerHTML !== html)
-        node.innerHTML = html;
+    const template = parsed(html === null || html === undefined ? '' : String(html));
+    if (node.innerHTML !== template.innerHTML)
+        node.replaceChildren(document.importNode(template.content, true));
     return node;
 };
 

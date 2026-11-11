@@ -7,13 +7,17 @@
 // backgrounds and borders <rect> and <line> elements, the svg elements of
 // the plots are copied with every style resolved into presentation
 // attributes. It has no foreignObject, no <style>, no classes, no style
-// attributes, no css variables, no images and no fonts of its own; colors
-// are hex colors with opacities of their own (no rgba), lengths have no
-// units, the baselines of the texts (dominant-baseline) are offsets, the
-// halos of labels (paint-order) are two texts, nested svg elements are
-// groups (with a clip only where their content overflows them), lengths of
-// texts in em are pixels, an href is also an xlink:href (SVG 1.1).
+// attributes, no css variables, no images and no fonts of its own, no
+// scripts and no handlers of events (see scriptElement and scriptAttr of
+// utils/dom.js); colors are hex colors with opacities of their own (no
+// rgba), lengths have no units, the baselines of the texts
+// (dominant-baseline) are offsets, the halos of labels (paint-order) are
+// two texts, nested svg elements are groups (with a clip only where their
+// content overflows them), lengths of texts in em are pixels, an href is
+// also an xlink:href (SVG 1.1).
 export { composeSvg, units };
+
+import { scriptAttr, scriptElement } from "@/utils/dom";
 
 const ns = 'http://www.w3.org/2000/svg';
 const xlink = 'http://www.w3.org/1999/xlink';
@@ -215,7 +219,7 @@ const inlineSvg = (orig, copy, parent, shifts, halos) => {
     if (copy.hasAttribute('href'))
         copy.setAttributeNS(xlink, 'xlink:href', copy.getAttribute('href'));
     dropped.forEach(a => copy.removeAttribute(a));
-    [...copy.attributes].filter(a => a.name.startsWith('data-') || a.name.startsWith('aria-')).forEach(a => copy.removeAttribute(a.name));
+    [...copy.attributes].filter(a => a.name.startsWith('data-') || a.name.startsWith('aria-') || scriptAttr(a.name, a.value)).forEach(a => copy.removeAttribute(a.name));
     if (cs.textTransform && cs.textTransform != 'none' && (tag == 'text' || tag == 'tspan'))
         copy.childNodes.forEach(n => {
             if (n.nodeType == Node.TEXT_NODE)
@@ -462,6 +466,8 @@ const compose = (root, B, unit, asked) => {
         const unpin = pinnedArrows(s);
         inlineSvg(s, copy, {}, baselineShifts(s), halos);
         unpin();
+        // no script of the page in the file, e.g. of a slot (see scriptElement)
+        [...copy.querySelectorAll('*')].filter(e => scriptElement(e.localName)).forEach(e => e.remove());
         splitHalos(halos);
         const g = svgEl('g');
         // the opacity of the svg element itself is in the one of the walk

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi } from 'vitest';
-import { itemOf, create, setAttr, getAttr, join, pointer, cubicInOut, animate, interrupt, interruptAll, finish, targetOf, onEnd } from '@/utils/dom';
+import { itemOf, create, setAttr, getAttr, scriptAttr, join, pointer, cubicInOut, animate, interrupt, interruptAll, finish, targetOf, onEnd } from '@/utils/dom';
 
 const svg = () => document.body.appendChild(create('svg'));
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -23,6 +23,29 @@ describe('elements and attributes', () => {
         expect(node.getAttribute('x')).toBe('1');
         setAttr(node, 'x', undefined);
         expect(node.hasAttribute('x')).toBe(false);
+    });
+});
+
+describe('attributes and elements which run script', () => {
+    test('handlers and links of javascript are not set', () => {
+        const node = create('a');
+        ['onclick', 'onLoad', 'xlink:onclick'].forEach(name => {
+            setAttr(node, name, 'window.pwned=1');
+            expect(scriptAttr(name, 'x')).toBe(true);
+        });
+        setAttr(node, 'href', ' java\nscript:alert(1)');
+        setAttr(node, 'xlink:href', 'data:text/html,<script>alert(1)</script>');
+        expect(node.attributes).toHaveLength(0);
+        setAttr(node, 'href', '#clip');
+        setAttr(node, 'xlink:href', 'data:image/png;base64,AAAA');
+        expect(node.attributes).toHaveLength(2);
+        expect(scriptAttr('opacity', 'javascript:x')).toBe(false);
+    });
+
+    test('no elements of script', () => {
+        ['script', 'svg:script', 'xhtml:script', 'foreignObject', 'iframe', 'animate', 'set', 'style'].forEach(tag =>
+            expect(() => create(tag)).toThrow(/does not draw/));
+        expect(create('textPath').localName).toBe('textPath');
     });
 });
 

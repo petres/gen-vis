@@ -2868,6 +2868,76 @@ describe('accessibility and the data', () => {
         expect(cell.querySelector('i')).toBeNull();
     });
 
+    test('the html of the definition runs no script: only the tags, attributes, links and styles of text', async () => {
+        const def = lineDef({
+            footer: '<img src=x onerror="window.pwned=1"><script>window.pwned=2</script><b onclick="window.pwned=3">Quelle</b> '
+                + '<a href="javascript:window.pwned=4">a</a> <a href=" JaVa\tScript:x">b</a> <a href="https://example.org" target="_blank" id="x">c</a> '
+                + '<a href="mailto:a@b.at">d</a> <a href="data.csv">e</a> <svg><a href="javascript:x">f</a></svg><font color="red">g</font>'
+                + '<span style="font-weight: normal; position: fixed; color: red; background-image: url(https://example.org/x.png)">h</span>',
+            hover: { title: '<img src=x onerror="window.pwned=5">{title}', row: '<style>body { display: none }</style><em title="t" onmouseover="x">{c}</em>' },
+        });
+        const el = await mount({ def, data: lineData });
+        const footer = el.querySelector('.vis-footer-content span');
+        expect(footer.querySelector('img, script, svg, font, [onclick], [id]')).toBeNull();
+        expect(footer.textContent).toBe('Quelle a b c d e gh');
+        expect([...footer.querySelectorAll('a')].map(a => a.getAttribute('href'))).toEqual([null, null, 'https://example.org', 'mailto:a@b.at', 'data.csv']);
+        expect(footer.querySelector('a[target]').getAttribute('rel')).toBe('noopener');
+        const span = footer.querySelector('span');
+        expect(span.style.fontWeight).toBe('normal');
+        expect(span.style.color).toBe('red');
+        expect(span.style.position).toBe('');
+        expect(span.getAttribute('style')).not.toContain('url(');
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+        await nextTick();
+        expect(el.querySelector('.vis-hover-title').innerHTML).toBe('2020');
+        expect([...el.querySelectorAll('.vis-hover-row')].map(r => r.innerHTML)).toEqual(['<em title="t">Tirol</em>', '<em title="t">Wien</em>']);
+        expect(window.pwned).toBeUndefined();
+        expect(errors).toEqual([]);
+    });
+
+    test('the footer of the slot is the cleaned html', async () => {
+        let given = null;
+        await mount({ def: lineDef({ footer: '<b onclick="x">Quelle</b><img src=x>' }), data: lineData, slots: { footer: ({ footer }) => { given = footer; return null; } } });
+        expect(given).toBe('<b>Quelle</b>');
+    });
+
+    test('the props of marks and legends set no handlers and no links of javascript, a symbol has no script', async () => {
+        const def = lineDef();
+        def.plot[1].props = { ...def.plot[1].props, onclick: 'window.pwned=1', 'xlink:href': 'javascript:x', href: 'javascript:x' };
+        def.mapping.c.legend = { props: { onmouseover: 'window.pwned=2', title: 'Land' } };
+        const el = await mount({ def, data: lineData });
+        expect(el.querySelectorAll('g.vis-mark circle').length).toBeGreaterThan(0);
+        expect(el.querySelector('[onclick], [onmouseover], [href]')).toBeNull();
+        expect(el.querySelector('.vis-legend-entry').getAttribute('title')).toBe('Land');
+        expect(errors).toEqual([]);
+
+        const symbol = lineDef();
+        symbol.mapping.c.legend = { symbol: { elements: [{ type: 'script', props: { text: 'window.pwned=3' } }] } };
+        const failed = await mount({ def: symbol, data: lineData });
+        expect(failed.querySelector('script')).toBeNull();
+        expect(failed.querySelector('.vis-error').textContent).toContain('gen-vis does not draw script elements');
+        expect(window.pwned).toBeUndefined();
+        errors.length = 0;
+    });
+
+    test('the props of a highlight are css: other names and unsafe values are left out with a warning', async () => {
+        const def = lineDef();
+        def.plot[0].highlight = { 'opacity: 1 } body { display: none } x': 1, stroke: 'red /*', 'stroke-width': 3, fill: 'url(https://example.org/x)' };
+        def.plot[1].highlight = { fill: 'url(#pattern)', r: 5 };
+        const el = await mount({ def, data: lineData });
+        const css = highlightCss(el);
+        expect(css).not.toContain('body');
+        expect(css).not.toContain('/*');
+        expect(css).not.toContain('example.org');
+        expect(css).toContain('stroke-width: 3');
+        expect(css).toContain('fill: url(#pattern); r: 5');
+        expect(errors).toHaveLength(3);
+        expect(errors[0]).toContain('marks[0].highlight: "opacity: 1 } body { display: none } x" is no name of a property of css');
+        expect(errors[1]).toContain('marks[0].highlight.stroke: "red /*" is no value');
+        expect(errors[2]).toContain('marks[0].highlight.fill');
+        errors.length = 0;
+    });
+
     test('the values of the globals in the footer are text, e.g. of the data', async () => {
         const def = lineDef({ footer: '<b>Land</b>: {land}' });
         def.formElements = [{ id: 'land', name: 'Land', ref: 'land', type: 'select', values: { column: 'land' } }];

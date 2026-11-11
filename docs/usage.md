@@ -217,7 +217,9 @@ of the dims (the categories as strings, of every format of the data, see
 
 The slots replace parts of the visualisation, `hover` the content of the
 hover (it also has `entries`, the formatted values of the default table),
-`header` the title and the subtitle and `footer` the footer. `buttons` adds
+`header` the title and the subtitle and `footer` the footer (its prop
+`footer` is the HTML of the `source`, cleaned as the one the chart shows,
+see [the options](definition.md#the-options)). `buttons` adds
 buttons of the page at the right of the footer, before the ones of `table`, `copy`,
 `csv`, `svg` and `download`, e.g. own icons, with `save()`, `copy()` and
 `canCopy` of the [PNG](#png), `svg()` of the [SVG](export.md#static-export),
