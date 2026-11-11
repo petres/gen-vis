@@ -93,10 +93,10 @@ describe('gen-vis check', () => {
         writeFileSync(path.join(dir, 'other.csv'), 'year,value\n2020,1\n');
         const other = await run(['check', 'data/bev/def.json', '--data', path.join(dir, 'other.csv')]);
         expect(other.stdout).toMatch(/is not a column of the data/);
-        // the warnings of the data, e.g. CSV of semicolons
-        writeFileSync(path.join(dir, 'semi.csv'), 'year;value\n2020;1,5\n');
-        const semi = await run(['check', 'data/bev/def.json', '--data', path.join(dir, 'semi.csv')]);
-        expect(semi.stdout).toContain(`data/bev/def.json: data ${path.join(dir, 'semi.csv')}: the CSV has one column 'year;value', its values are separated by semicolons`);
+        // the warnings of the data, e.g. CSV of tabs
+        writeFileSync(path.join(dir, 'tabs.csv'), 'year\tvalue\n2020\t1.5\n');
+        const tabs = await run(['check', 'data/bev/def.json', '--data', path.join(dir, 'tabs.csv')]);
+        expect(tabs.stdout).toContain(`data/bev/def.json: data ${path.join(dir, 'tabs.csv')}: the CSV has one column 'year\\tvalue' of tabs, it is TSV`);
     }, 60000);
 
     test('errors: a missing file or parent, invalid JSON, no $schema; a definition of 4.x is checked as migrated', async () => {

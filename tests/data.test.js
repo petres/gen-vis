@@ -113,12 +113,9 @@ describe('parseData', () => {
         expect(warnings).toEqual(["the column 'b' is in the header 2 times, the rows have the values of the last one"]);
     });
 
-    test('CSV of one column of semicolons or of tabs: a hint how to read it', async () => {
+    test('CSV of one column of tabs: a hint how to read it', async () => {
         const warnings = [];
         const parse = (text, format) => parseData(text, format, null, w => warnings.push(w));
-        expect([...await parse('jahr;wert\n2024;1,5')]).toEqual([{ 'jahr;wert': '2024;1' }]);
-        expect(warnings).toEqual([`the CSV has one column 'jahr;wert', its values are separated by semicolons: gen-vis reads CSV of commas (with decimal points) or TSV ("dataFormat": "tsv"), save the file in one of them`]);
-        warnings.length = 0;
         await parse('jahr\twert\n2024\t1.5', 'csv');
         expect(warnings).toEqual([`the CSV has one column 'jahr\\twert' of tabs, it is TSV: "dataFormat": "tsv" reads it`]);
         // one column, of commas, or TSV: none
@@ -127,6 +124,42 @@ describe('parseData', () => {
         await parse('a;b,c\n1;2,3');
         await parse('a;b\tc\n1;2\t3', 'tsv');
         expect(warnings).toEqual([]);
+    });
+
+    test('CSV of semicolons, e.g. of a spreadsheet in German: its columns, numbers of decimal commas are numbers', async () => {
+        const warnings = [];
+        const parse = (text, format) => parseData(text, format, null, w => warnings.push(w));
+        const rows = await parse('\uFEFFJahr;Wert;Anteil;Land;Notiz\r\n2024;1,5;-0,25;Wien;"a;b"\r\n2025;2;,5;"Graz, Stadt";3,4 kg\r\n\r\n2026;;1e3;Linz;\r\n');
+        expect(rows.columns).toEqual(['Jahr', 'Wert', 'Anteil', 'Land', 'Notiz']);
+        expect([...rows]).toEqual([
+            { Jahr: '2024', Wert: '1.5', Anteil: '-0.25', Land: 'Wien', Notiz: 'a;b' },
+            { Jahr: '2025', Wert: '2', Anteil: '.5', Land: 'Graz, Stadt', Notiz: '3,4 kg' },
+            { Jahr: '2026', Wert: '', Anteil: '1e3', Land: 'Linz', Notiz: '' },
+        ]);
+        expect(inferType(rows.map(r => r.Wert))).toBe('numeric');
+        expect(rows.map(r => toNumber(r.Anteil))).toEqual([-0.25, 0.5, 1000]);
+        // of the format csv and of bytes too, the names of the header quoted
+        expect([...await parse('"year";"value"\n2020;1,5', 'csv')]).toEqual([{ year: '2020', value: '1.5' }]);
+        expect([...await parse(new TextEncoder().encode('year;value\n2020;1,5'))]).toEqual([{ year: '2020', value: '1.5' }]);
+        expect(warnings).toEqual([]);
+    });
+
+    test('decimal commas only of CSV of semicolons and of columns of numbers', async () => {
+        // a comma of CSV of commas is never a decimal one, also of a header of a name with a semicolon
+        expect([...await parseData('year,value\n2020,"1,5"')]).toEqual([{ year: '2020', value: '1,5' }]);
+        expect([...await parseData('a;b,c\n1;2,"3,5"')]).toEqual([{ 'a;b': '1;2', c: '3,5' }]);
+        expect([...await parseData('"a;b"\n"1,5"')]).toEqual([{ 'a;b': '1,5' }]);
+        // nor of TSV
+        expect([...await parseData('a;b\tc\n1;2\t3,5', 'tsv')]).toEqual([{ 'a;b': '1;2', c: '3,5' }]);
+        // the texts of missing values and a few other texts of digits aside
+        const rows = await parseData('v;w;t;k;d\n1,5;1,5;1,5;1.234,5;01.06.2022\nNA;<5;Wien;2,5;02.06.2022\n2,5;2,5;2,5;12.500;\n:;3;3;3,5;03.06.2022');
+        expect(rows.map(r => r.v)).toEqual(['1.5', 'NA', '2.5', ':']);
+        expect(rows.map(r => r.w)).toEqual(['1.5', '<5', '2.5', '3']);
+        // a column of texts stays as it is
+        expect(rows.map(r => r.t)).toEqual(['1,5', 'Wien', '2,5', '3']);
+        // a column of separators of thousands too: its values are no numbers, see oddValues
+        expect(rows.map(r => r.k)).toEqual(['1.234,5', '2,5', '12.500', '3,5']);
+        expect(rows.map(r => r.d)).toEqual(['01.06.2022', '02.06.2022', '', '03.06.2022']);
     });
 
     test('binary data of another realm, e.g. of a worker (review of 5.0)', async () => {

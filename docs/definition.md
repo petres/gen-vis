@@ -181,9 +181,15 @@ by the extension of the url (`.csv`, `.tsv`, `.json`, `.parquet`), without one
 by the content: parquet (which begins with `PAR1`), JSON or CSV. `dataFormat` sets it, e.g. for an url of an api,
 also the one of a parent, data which can not be read is an error of its url.
 Blank lines of CSV and TSV are no rows.
-CSV is of commas and decimal points; a file of semicolons (e.g. of a
-spreadsheet in German) is read as one column, a warning (in the console and
-of `gen-vis check`) says so, as of a `.csv` of tabs (`"dataFormat": "tsv"`):
+CSV is of commas and decimal points, or of semicolons and decimal commas
+(e.g. the CSV of a spreadsheet in German): a file whose header has
+semicolons and no comma is read as one of semicolons, and its columns of
+numbers of decimal commas are numbers, e.g. `1,5` and `-0,25` (never the
+ones of CSV of commas, where `"1,5"` is a text). Separators of thousands
+are no part of a number, e.g. `1.234,5` or `1,234.5`: such values are
+missing, with a warning. A `.csv` of tabs is read as one column, a warning
+(in the console and of `gen-vis check`) says so (`"dataFormat": "tsv"`
+reads it):
 
 ```json
 { "data": "/api/prices?year=2024", "dataFormat": "json" }

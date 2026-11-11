@@ -109,7 +109,9 @@ const duplicateColumns = (rows, warn) => {
  * The rows of the data: binary data is parquet if it begins with PAR1 (or
  * of the `format` parquet), otherwise the text of its bytes (UTF-8), strings
  * are parsed in their `format`, without one as JSON (a list of rows) or CSV
- * by their content, already parsed rows are passed through. The parquet
+ * by their content, already parsed rows are passed through. CSV is of commas
+ * or, if its header has semicolons and no comma, of semicolons, then with
+ * decimal commas, see decimalCommas. The parquet
  * reader is only loaded for parquet data, it reads only the `columns`
  * given, all without them. A page of HTML is an error (e.g. of a wrong url);
  * rows which are no objects (e.g. null) are left out and a column in the
@@ -140,12 +142,84 @@ const parseData = async (data, format, columns = null, warn = null) => {
             throw new Error('the JSON is not a list of rows');
         return rowsOf(rows, warn);
     }
+    // of semicolons, e.g. of a spreadsheet in German, with decimal commas
+    if (semicolons(data))
+        return duplicateColumns(decimalCommas(delimited(data, ';', warn)), warn);
     return separators(duplicateColumns(delimited(data, ',', warn), warn), warn);
 };
 
-// CSV of one column whose name has semicolons or tabs is of another
-// separator, e.g. of a spreadsheet in German (semicolons, decimal commas),
-// `warn(message)` tells how to read it, before the dims miss its columns
+// CSV of semicolons: the header (the first line which is not blank) has
+// semicolons and no comma, quoted names aside, e.g. `Jahr;Wert` of the CSV
+// of a spreadsheet in German and other languages of a decimal comma
+const semicolons = text => {
+    let i = 0;
+    while (i < text.length && text.charCodeAt(i) <= 32)
+        i++;
+    let quoted = false;
+    let found = false;
+    for (; i < text.length; i++) {
+        const c = text.charCodeAt(i);
+        if (c == 34)
+            quoted = !quoted;
+        else if (!quoted) {
+            if (c == 10 || c == 13)
+                break;
+            if (c == 44)
+                return false;
+            if (c == 59)
+                found = true;
+        }
+    }
+    return found;
+};
+
+// a number of a decimal comma, e.g. "1,5" or "-0,25", and a whole number
+const commaNumber = /^\s*[+-]?(?:\d+,\d*|,\d+)(?:e[+-]?\d+)?\s*$/i;
+const wholeNumber = /^\s*[+-]?\d+(?:e[+-]?\d+)?\s*$/i;
+
+/**
+ * The rows of CSV of semicolons with the numbers of decimal commas as the
+ * ones of decimal points, e.g. "1.5" of "1,5", once per file, so the values
+ * are read as the ones of every CSV (see toNumber of utils/values.js): of
+ * the columns whose values are numbers of a decimal comma or whole numbers,
+ * the texts of missing values aside (see missingToken) and fewer other
+ * texts of digits and no letters, e.g. "<5", as the numbers of inferType.
+ * A column with a decimal point too stays as it is, e.g. "1.234,5" or
+ * "12.500" of a separator of thousands, which is no number of it (see
+ * oddValues), and a comma of CSV of commas is never a decimal one.
+ */
+const decimalCommas = rows => {
+    for (const column of new Set(rows.columns)) {
+        let commas = 0;
+        let whole = 0;
+        let others = 0;
+        let numbers = true;
+        for (let i = 0; i < rows.length && numbers; i++) {
+            const v = rows[i][column];
+            if (absent(v))
+                continue;
+            if (commaNumber.test(v))
+                commas++;
+            else if (wholeNumber.test(v))
+                whole++;
+            else if (v.includes('.') || !/\d/.test(v) || /\p{L}/u.test(v))
+                numbers = false;
+            else
+                others++;
+        }
+        if (!numbers || commas == 0 || commas + whole <= others)
+            continue;
+        for (const row of rows) {
+            const v = row[column];
+            if (commaNumber.test(v))
+                row[column] = v.replace(',', '.');
+        }
+    }
+    return rows;
+};
+
+// CSV of one column whose name has tabs is TSV, `warn(message)` tells how to
+// read it, before the dims miss its columns
 const separators = (rows, warn) => {
     const columns = rows.columns ?? [];
     const name = columns[0];
@@ -154,8 +228,6 @@ const separators = (rows, warn) => {
     const short = name.length > 40 ? `${name.slice(0, 40)}…` : name;
     if (name.includes('\t'))
         warn?.(`the CSV has one column '${short.replaceAll('\t', '\\t')}' of tabs, it is TSV: "dataFormat": "tsv" reads it`);
-    else if (name.includes(';'))
-        warn?.(`the CSV has one column '${short}', its values are separated by semicolons: gen-vis reads CSV of commas (with decimal points) or TSV ("dataFormat": "tsv"), save the file in one of them`);
     return rows;
 };
 
