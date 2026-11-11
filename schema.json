@@ -1843,8 +1843,16 @@
                     "description": "The dim of the facets, or the dims of the rows and the columns of a grid."
                 },
                 "cols": {
-                    "$ref": "#/definitions/number",
-                    "description": "The number of the columns of the facets of `by`, 1 by default, e.g. steps of totalWidth."
+                    "anyOf": [
+                        { "type": "integer", "minimum": 1 },
+                        {
+                            "type": "string",
+                            "pattern": "^[=@]",
+                            "description": "An expression in its string syntax, e.g. \"=@innerWidth * 0.5\", or a reference \"@name\", e.g. to a global."
+                        },
+                        { "$ref": "#/definitions/expression" }
+                    ],
+                    "description": "The number of the columns of the facets of `by`, at least 1, 1 by default, e.g. steps of totalWidth."
                 },
                 "rowHeaders": {
                     "anyOf": [

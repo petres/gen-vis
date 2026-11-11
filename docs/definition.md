@@ -2099,7 +2099,7 @@ motion). The attributes of the highlight are the ones of the marks, see
 ## `facets`
 
 A plot for every category of the dim `by`, in `cols` columns (1 by
-default); the dim of the facets has the categories of the data in the
+default, a whole number of at least 1, less is 1); the dim of the facets has the categories of the data in the
 order of the rows, unless it lists them. `cols` can be an expression of
 `totalWidth`, e.g. `"=steps(@totalWidth, {0: 1, 600: 2})"`. `scales`: every
 facet has its own scales (`"own"`, the default), all facets share the

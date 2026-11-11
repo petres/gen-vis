@@ -375,7 +375,8 @@ const layout = (store, width, before = null) => {
         [k, side(def.options.margins?.[k]) ?? store.styleMargins?.[k] ?? side(marginDefaults[k]) ?? 'auto']));
     const auto = Object.values(given).includes('auto');
     const grid = faceted ? gridOf(def) : null;
-    const cols = grid ? entries[0].cell.cols : (faceted ? evaluate(def.facets.cols, scope) : 1);
+    // (at least one column, e.g. of 0 or of an expression without a number)
+    const cols = grid ? entries[0].cell.cols : (faceted ? Math.max(1, Math.floor(Number(evaluate(def.facets.cols, scope))) || 1) : 1);
     // the width of the facets of a grid without the one of the headers of
     // its rows, see facets.js
     const usable = grid ? Math.max(0, width - (store.rowHeaderWidth ?? 0)) : width;

@@ -1751,7 +1751,7 @@ export interface Facets {
               cols?: string;
           };
     /**
-     * A number, a reference "@name", e.g. to a global, or an expression, e.g. of totalWidth.
+     * The number of the columns of the facets of `by`, at least 1, 1 by default, e.g. steps of totalWidth.
      */
     cols?: number | `=${string}` | `@${string}` | Expression;
     /**

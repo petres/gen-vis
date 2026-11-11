@@ -256,7 +256,7 @@ See [definition.md](definition.md#facets).
 | Key | Type | Default | |
 |-----|------|---------|-|
 | `by` | string \| object |  | The dim of the facets, or the dims of the rows and the columns of a grid. |
-| `cols` | number |  | The number of the columns of the facets of `by`, 1 by default, e.g. steps of totalWidth. |
+| `cols` | integer \| expression |  | The number of the columns of the facets of `by`, at least 1, 1 by default, e.g. steps of totalWidth. |
 | `rowHeaders` | expression \| `"left"`, `"right"` \| object | `"right"` | The headers of the rows of a grid: right of them vertical (default), left of them horizontal, in a column of the width of the longest one, or { "side": "left", "vertical": true }, e.g. as a title of an axis. |
 | `axisTitles` | expression \| `"all"`, `"outer"` | `"all"` | The titles of the axes in every facet (all) or only at the outer ones (outer): of the bottom axis in the bottom row, of the left one in the first column, of the right one in the last column, of the top one in the first row. |
 | `title` | object |  | The titles of the facets (.vis-facet-title). |

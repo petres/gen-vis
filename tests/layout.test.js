@@ -359,6 +359,19 @@ describe('facets of 5.0', () => {
         expect(v.facets[0].scales.y.domain()).toEqual(v.facets[1].scales.y.domain());
         expect(v.facets[0].scales.y.domain()[1]).toBeGreaterThanOrEqual(20);
     });
+
+    test('`cols` of 0, of no number or of an expression of them is one column, a part of a column is none', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        for (const [cols, width] of [[0, 400], ['=@n*0', 400], ['=@n/0 - @n/0', 400], [-2, 400], [2.5, 200]]) {
+            const store = createStore();
+            await store.init({ def: { height: 120, globals: { n: 1 }, dims: { x: { column: 'year', type: 'numeric' }, y: 'value', land: 'land' },
+                facets: { by: 'land', cols }, marks: { type: 'line' } }, data });
+            const v = layout(store, 400);
+            expect(v.facets.map(f => f.width)).toEqual([width, width, width]);
+            expect(v.facets.every(f => Number.isFinite(f.innerWidth) && f.scales.x.range().every(Number.isFinite))).toBe(true);
+        }
+        warn.mockRestore();
+    });
 });
 
 describe('named errors of the marks', () => {

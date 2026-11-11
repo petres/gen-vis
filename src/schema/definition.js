@@ -415,7 +415,7 @@ const definitions = {
                 cols: string('The dim of the columns of a grid, its categories are the columns (their names the headers above them).'),
             }, 'A grid of the categories of the dims of its rows and columns, one of them alone is one column or one row.'),
         ], 'The dim of the facets, or the dims of the rows and the columns of a grid.'),
-        cols: ref('number', 'The number of the columns of the facets of `by`, 1 by default, e.g. steps of totalWidth.'),
+        cols: ofGlobals({ type: 'integer', minimum: 1 }, 'The number of the columns of the facets of `by`, at least 1, 1 by default, e.g. steps of totalWidth.'),
         rowHeaders: anyOf([
             option(['left', 'right']),
             object({
