@@ -10,16 +10,18 @@ import { examples, errors, useDom, mount, mountVis, pointer, nextTick, resize } 
 
 useDom();
 
-const lineDef = (options = {}) => ({
-    options: { height: 300, margins: { top: 10, right: 10, bottom: 40, left: 40 }, ...options },
-    mapping: {
-        x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' }, axis: { position: 'bottom', ticks: 5 } },
-        y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' }, axis: { position: 'left', ticks: 5 } },
-        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } },
+const lineDef = (more = {}) => ({
+    height: 300,
+    margins: { top: 10, right: 10, bottom: 40, left: 40 },
+    ...more,
+    dims: {
+        x: { column: 'year', axis: { ticks: 5 } },
+        y: { column: 'value', axis: { ticks: 5 } },
+        c: { column: 'land', legend: {}, hover: {}, categories: { Wien: 'red', Tirol: 'blue' } },
     },
-    plot: [
-        { type: 'cartesian:line', by: ['c'], props: { stroke: '@color', fill: 'none', d: { x: '@x:scaled', y: '@y:scaled' } } },
-        { type: 'svg:circle', by: ['c'], props: { fill: '@color', r: 3, cx: '@x:scaled', cy: '@y:scaled' } },
+    marks: [
+        { type: 'line', by: 'c' },
+        { type: 'point', by: 'c' },
     ],
 });
 
@@ -141,19 +143,20 @@ describe('a resize after a change draws the new rows', () => {
         expect(drawing(el)).toBe(drawing(await mount({ def: lineDef(), data })));
     });
 
-    test('of a patch of a form element, which changes the rows in place', async () => {
-        const withForm = () => {
+    test('of a control of the column of a dim, which changes the rows in place', async () => {
+        const withControl = () => {
             const def = lineDef();
             def.globals = { column: 'value' };
-            def.formElements = [{ id: 'column', name: 'Wert', ref: 'column', type: 'radio', values: [
-                { id: 'value', name: 'Value', value: 'value', patch: { mapping: { y: { column: 'value' } } } },
-                { id: 'other', name: 'Other', value: 'other', patch: { mapping: { y: { column: 'other' } } } },
+            def.controls = [{ type: 'radio', global: 'column', name: 'Wert', values: [
+                { value: 'value', name: 'Value' },
+                { value: 'other', name: 'Other' },
             ] }];
+            def.dims.y.column = '{column}';
             return def;
         };
-        const fresh = withForm();
+        const fresh = withControl();
         fresh.globals.column = 'other';
-        const el = await resizedAfter({ def: withForm(), data: lineData },
+        const el = await resizedAfter({ def: withControl(), data: lineData },
             el => el.querySelectorAll('.vis-control .vis-radio input')[1].click(),
             { def: fresh, data: lineData });
         const ticks = [...el.querySelectorAll('g.vis-axis-left g.tick text')].map(t => parseFloat(t.textContent));
@@ -171,7 +174,7 @@ describe('a resize after a change draws the new rows', () => {
 describe('the rows of the filter of a mark', () => {
     const def = () => {
         const d = { ...lineDef(), globals: { land: 'Wien' } };
-        d.plot[1] = { ...d.plot[1], filter: { c: '@land' } };
+        d.marks[1] = { ...d.marks[1], filter: { c: '@land' } };
         return d;
     };
 
@@ -189,7 +192,7 @@ describe('the rows of the filter of a mark', () => {
 
     test('of the width are new ones of a new width', async () => {
         const d = lineDef();
-        d.plot[1] = { ...d.plot[1], filter: { x: { range: [{ steps: ['@totalWidth', { 0: 2022, 700: 2020 }] }, null] } } };
+        d.marks[1] = { ...d.marks[1], filter: { x: { range: [{ steps: ['@totalWidth', { 0: 2022, 700: 2020 }] }, null] } } };
         const el = await mount({ def: d, data: lineData });
         expect(cys(el)).toHaveLength(8);
         await resizeTo(600);
