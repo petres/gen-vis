@@ -233,7 +233,7 @@ const renderImage = async (outer, mount, { width, fixed = false }) => {
         copy.style.background = background;
         const box = partsBox(copy, null);
         const svg = composeSvg(copy, { box });
-        return await rasterize(copy, { svg, width: box.width, height: box.height, scale: scaleOf(width), background });
+        return await rasterize({ svg, width: box.width, height: box.height, scale: scaleOf(width), background });
     } finally {
         remove();
     }

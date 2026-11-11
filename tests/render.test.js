@@ -12,11 +12,13 @@ import { itemOf } from '@/utils/dom';
 import { rowOf } from '@/utils/draw';
 import { examples, errors, useDom, rendered, mount, mountVis, pointer, hover, nextTick, html, resize, highlighted, highlightCss } from './dom.js';
 
-// the image of the copy of the visualisation, the copy and the width of its
+// the image of the copy of the visualisation, the copy (the last chart of
+// the page, see placeNear of utils/export.js) and the width of its
 // container are kept for the tests
 const screenshot = vi.hoisted(() => ({ copy: null, width: null, scale: null }));
 vi.mock('@/utils/raster.js', () => ({
-    rasterize: async (node, options) => {
+    rasterize: async options => {
+        const node = [...document.querySelectorAll('.vis')].at(-1);
         screenshot.copy = node.cloneNode(true);
         screenshot.width = node.parentElement.style.width;
         screenshot.scale = options.scale;

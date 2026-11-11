@@ -301,7 +301,8 @@ has no controls, their selection is a line below the subtitle, e.g.
 `Einheit: Anteil · Jahr: 2024`, the legends only have the entries shown and
 the legend of the facets is left out, their titles name them. The PNG is
 the SVG of the [static export](export.md#exportsvg) drawn on a canvas, with
-the fonts of the package, so the PNG, the SVG and the PDF of the CLI are
+the faces of the fonts of the package its texts draw (their weights and
+characters), so the PNG, the SVG and the PDF of the CLI are
 the same drawing. The titles of the buttons are in the language of
 `locale`, see [the options](definition.md#the-options).
 

@@ -349,6 +349,39 @@ describe.skipIf(!browser)('gen-vis export', () => {
         }
     }, 60000);
 
+    test('the PNG of the page has only the faces of Inter its texts draw', async () => {
+        const exporter = await createExporter({ browser });
+        try {
+            // the faces (weight, the first range) in the SVG drawn on the canvas
+            const facesOf = title => exporter.evaluate(`import('/__gen-vis/esm/gen-vis.js').then(async ({ createGenVis }) => {
+                const place = document.body.appendChild(document.createElement('div'));
+                const def = { title: ${JSON.stringify(title)}, height: 200, dims: { x: { column: 'year', type: 'numeric' }, y: 'value' }, marks: { type: 'line' } };
+                const vis = await new Promise((resolve, reject) => {
+                    const vis = createGenVis(place, { def, data: 'year,value\\n2020,1\\n2021,3\\n', onRendered: () => resolve(vis), onError: reject });
+                });
+                const blobs = [];
+                const create = URL.createObjectURL;
+                URL.createObjectURL = blob => (blobs.push(blob), create(blob));
+                try {
+                    await vis.image();
+                } finally {
+                    URL.createObjectURL = create;
+                }
+                vis.destroy();
+                place.remove();
+                const svg = await blobs[0].text();
+                return [...svg.matchAll(/@font-face[^}]*?font-weight: (\\d+);[^}]*?url\\("?data:font\\/woff2;base64,[^}]*unicode-range: (U\\+[0-9A-F]+)/gi)].map(m => m[1] + ' ' + m[2]);
+            })`);
+            // the numbers and the title in latin, 400 and 600
+            expect((await facesOf('Titel')).sort()).toEqual(['400 U+0', '600 U+0']);
+            // the symbols of 600 (the title) too, nothing of latin-ext
+            expect((await facesOf('CO₂ → x')).sort()).toEqual(['400 U+0', '600 U+0', '600 U+2070']);
+            expect((await facesOf('Łódź')).sort()).toEqual(['400 U+0', '600 U+0', '600 U+100']);
+        } finally {
+            await exporter.close();
+        }
+    }, 60000);
+
     test('the symbols of units in Inter of the package, e.g. CO₂, m³, ≤, →', async () => {
         writeFileSync(path.join(dir, 'units.csv'), 'year,value\n2020,1\n2021,2\n');
         writeFileSync(path.join(dir, 'units.json'), JSON.stringify({
