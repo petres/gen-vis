@@ -1,4 +1,4 @@
-export { builtInDefaults, registerDefaults, axisDefaults, symbolDefaults, marginDefaults, withMarkDefaults };
+export { builtInDefaults, registerDefaults, axisDefaults, symbolDefaults, marginDefaults, withMarkDefaults, rankDefaults };
 
 import { mergeAll } from '@/utils/merge';
 import { isObject } from '@/utils/values';
@@ -116,3 +116,8 @@ const withMarkDefaults = (types, own) => {
         return [name, { ...type, defaults: props => ({ ...(typeof base == 'function' ? base(props) : base), ...added }) }];
     }));
 };
+
+// the named lists of the props of categories by rank (`ranks` of the
+// defaults) of the page and of the chart (`own`), e.g. { "lines": [{ "dash":
+// "none" }, { "dash": "4 2" }] } of a house style, `"ranks": "lines"` of a dim
+const rankDefaults = own => Object.assign({}, ...[registered, own].map(d => d?.ranks).filter(isObject));

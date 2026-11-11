@@ -824,9 +824,9 @@ export interface Dim {
      */
     order?: (`=${string}` | ('ascending' | 'descending' | 'rows')) | Key[];
     /**
-     * The props of the categories by their rank in the order: of the first one, the second one, ..., the last entry is the one of all others, e.g. the newest year red.
+     * The props of the categories by their rank in the order: of the first one, the second one, ..., the last entry is the one of all others, e.g. the newest year red; or the name of such a list of the defaults (ranks), e.g. the dashes of the lines of a house style.
      */
-    ranks?: CategoryProps[];
+    ranks?: CategoryProps[] | string;
     /**
      * Of a dim of values which no mark stacks (`stack` of a mark stacks its values): the values are stacked, true all rows or the condition of the rows which are stacked, the others have their own value as start and end.
      */

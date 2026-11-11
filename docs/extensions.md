@@ -140,7 +140,8 @@ restore();
 `registerDefaults(defaults)` replaces built-in defaults of the parts of all
 charts of the page, see [defaults](definition.md#defaults): of the axes
 (of all, of a type of scale, of a position), of the attributes of the
-marks of a type, of the symbols of the legends and the margins of the
+marks of a type, named lists of the props of categories by rank
+(`"ranks": "lines"` of a dim), of the symbols of the legends and the margins of the
 charts, e.g. of a house style:
 
 ```js
@@ -149,7 +150,8 @@ import { registerDefaults } from '@preschen/gen-vis';
 registerDefaults({
     axis: { padding: 2, tickMarks: { size: 4, inset: 0 } },
     bandAxis: { tickMarks: false },
-    marks: { line: { 'stroke-width': 1.33 }, point: { r: 2 } },
+    marks: { line: { 'stroke-width': 1.33, 'stroke-dasharray': '@dash' }, point: { r: 2 } },
+    ranks: { lines: [{ dash: 'none' }, { dash: '8 3' }, { dash: '1 1' }] },
     margins: { left: 64, right: 16 },
 });
 ```

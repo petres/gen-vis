@@ -640,6 +640,14 @@ the lines of all dims with dashes (see `ranks`), its legends with them (the
 symbols follow the lines). The defaults of marks are not checked by
 `gen-vis check`, which reads the definition alone.
 
+`ranks` are named lists of the props of categories by rank, a dim takes
+one by its name (`"ranks": "lines"`, see [categories](#categories)), e.g.
+the dashes of a house style: with `{"marks": {"line":
+{"stroke-dasharray": "@dash"}}}` the lines of a dim with `"ranks":
+"lines"` are dashed in the order of its categories, the ones of other dims
+are not, and so are the symbols of its legend. The lists of the prop of a
+chart replace the ones of the same name of the page.
+
 `legend.symbol` is the box of the symbols of the shortcuts (`size`, or
 `width` and `height`), for all and per shortcut, with props of their own,
 e.g. smaller symbols of a house style, `{"legend": {"symbol": {"rect":
@@ -1081,6 +1089,12 @@ a text is the color, `"Wien": "#C3423F"` is `"Wien": {"color": "#C3423F"}`:
   { "dims": { "year": { "column": "year", "order": "descending", "common": { "stroke-width": 2 },
       "ranks": [{ "color": "#C3423F", "opacity": 1 }, { "color": "#CF8E02", "opacity": 0.7 }, { "color": "#BBB", "opacity": 0.3 }] } } }
   ```
+  `ranks` can also be the name of such a list of the
+  [defaults](#defaults) (`ranks`), e.g. the dashes of the lines of a house
+  style, `"ranks": "lines"` with `{"ranks": {"lines": [{"dash": "none"},
+  {"dash": "8 3"}, {"dash": "1 1"}]}}` in the defaults; an unknown name is
+  an error which names the lists. `gen-vis check` does not know their
+  props, it takes any plain reference of the marks of the dim for one.
 - Categories without a `color` (none of the dim has one, no `scheme`)
   have the default colors of d3's scheme Observable10 in their order, a mark
   or a legend uses the default color of the first of its categories if none

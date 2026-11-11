@@ -11,7 +11,7 @@ import { getLocale } from "@/utils/locale";
 import { evaluate, formatter, isOperator, refNames } from "@/utils/expr";
 import { formatExpression } from "@/utils/expr-parse";
 import { axisNames } from "@/layout";
-import { axisDefaults, symbolDefaults, marginDefaults, withMarkDefaults } from "@/utils/defaults";
+import { axisDefaults, symbolDefaults, marginDefaults, withMarkDefaults, rankDefaults } from "@/utils/defaults";
 import { geoParts, load, loadGeo, raw, valueFormat } from "@/utils/load";
 
 // the formatters of the locales by their definition, the last ones are kept
@@ -232,7 +232,7 @@ class Store {
             const before = sourceRows(this.rows, this.columns);
             const columnsBefore = new Set(changedColumns);
             applyResolved(this.def, this.defOrg, { dataKeys: (column, inOrder) => this.dataKeys(column, inOrder), keepVisible, transform, files: this.files,
-                symbols: symbolDefaults(this.chartDefaults), authored: this.authored, markTypes: withMarkDefaults(markTypes, this.chartDefaults),
+                symbols: symbolDefaults(this.chartDefaults), ranks: rankDefaults(this.chartDefaults), authored: this.authored, markTypes: withMarkDefaults(markTypes, this.chartDefaults),
                 types: part => inferTypes(part, this.rows, this.columns) }).forEach(n => changed.includes(n) || changed.push(n));
             transform();
             Object.keys(this.def.dims).filter(n => changedColumns.has(this.def.dims[n].column) && !changed.includes(n))

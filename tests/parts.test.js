@@ -1330,6 +1330,35 @@ describe('the defaults of the parts', () => {
         expect(errors).toEqual([]);
     });
 
+    test('named lists of ranks (`ranks`), of the page and of the chart, with the mark defaults the dashes of a house style', async () => {
+        const defaults = { ranks: { lines: [{ dash: 'none' }, { dash: '4 2', color: 'green' }] }, marks: { line: { 'stroke-dasharray': '@dash' } } };
+        const def = lineDef();
+        def.dims.c.ranks = 'lines';
+        const el = await mount({ def, data: lineData, defaults });
+        // the categories in their order (Wien, Tirol), the colors of the categories win
+        expect([...el.querySelectorAll('g.vis-mark-line path')].map(p => [p.getAttribute('stroke'), p.getAttribute('stroke-dasharray')]))
+            .toEqual([['red', 'none'], ['blue', '4 2']]);
+        // the legend of dashed lines
+        expect([...el.querySelectorAll('.vis-legend-entry line')].map(l => l.getAttribute('stroke-dasharray'))).toEqual(['none', '4 2']);
+        // a list of the page, the chart's of the same name wins
+        const { registerDefaults } = await import('@/index.js');
+        onTestFinished(() => registerDefaults(null));
+        registerDefaults({ ranks: { lines: [{ dash: '1 1' }], other: [] } });
+        const page = await mount({ def, data: lineData });
+        // without the mark defaults no dash: the props of the categories are only the ones the marks read
+        expect(page.querySelector('g.vis-mark-line path').hasAttribute('stroke-dasharray')).toBe(false);
+        expect(page.querySelector('.vis-legend-entry line').hasAttribute('stroke-dasharray')).toBe(false);
+        const both = await mount({ def: { ...def, marks: [{ ...def.marks[0], 'stroke-dasharray': '@dash' }] }, data: lineData, defaults });
+        expect(both.querySelector('g.vis-mark-line path').getAttribute('stroke-dasharray')).toBe('none');
+        expect(errors).toEqual([]);
+        // an unknown name is an error which names the lists
+        const { mount: mountError } = await import('./dom.js');
+        def.dims.c.ranks = 'dashes';
+        const failed = await mountError({ def, data: lineData, defaults });
+        expect(failed.textContent).toMatch(/dims\.c\.ranks: unknown list 'dashes' of the defaults \(ranks\), expected one of 'lines', 'other'/);
+        errors.length = 0;
+    });
+
     test('of the page (registerDefaults), the prop takes precedence, of a data attribute and of an update', async () => {
         const { registerDefaults, mountGenVisElement } = await import('@/index.js');
         onTestFinished(() => registerDefaults(null));

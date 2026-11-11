@@ -69,13 +69,23 @@ test('the symbols of legends, the order and the ranks of categories', () => {
     def.dims.c.ranks = { color: 'red' };
     expect(validateDef(def)).toEqual([
         "dims.c.order: expected 'ascending', 'descending', 'rows' or a list of keys",
-        "dims.c.ranks: expected a list of props, of the first category, the second one, ...",
+        "dims.c.ranks: expected a list of props, of the first category, the second one, ..., or the name of a list of the defaults (ranks)",
         "dims.c.legend.onlyData: only the entries of the categories of the rows, true or false, of a legend of categories",
         expect.stringMatching(/^dims.c.legend.symbol.props.fill: unknown reference 'nope'/),
         // the ranks are no list, so their props are unknown
         expect.stringMatching(/^marks\[0\].stroke: unknown reference 'dash'/),
         "dims.c.legend.symbol.type: unknown type 'star', expected one of 'line', 'rect', 'circle', 'auto'",
     ]);
+});
+
+test('the name of a list of ranks of the defaults: its props are not known, plain names are none of the warnings', () => {
+    const def = base();
+    def.dims.c.ranks = 'lines';
+    def.marks.stroke = '@dash';
+    def.marks['stroke-width'] = '@c:nope';
+    expect(validateDef(def)).toEqual([expect.stringMatching(/^marks\[0\]\.stroke-width: unknown reference 'c:nope'/)]);
+    def.dims.c.ranks = '';
+    expect(validateDef(def)[0]).toMatch(/^dims.c.ranks: expected a list of props/);
 });
 
 test('the names of 1.x and 4.x are unknown', () => {

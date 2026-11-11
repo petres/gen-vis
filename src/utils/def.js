@@ -347,10 +347,20 @@ const object = (v, path, expected) => {
     return v;
 };
 
+// the list of the props of the categories by rank named `ranks` of the
+// defaults (`lists`, the `ranks` of the defaults of the page and of the
+// chart), an error names the ones there are
+const namedRanks = (ranks, name, lists) => {
+    if (Object.hasOwn(lists ?? {}, ranks) && Array.isArray(lists[ranks]))
+        return lists[ranks].map(e => isObject(e) ? e : {});
+    const known = Object.keys(lists ?? {}).filter(k => Array.isArray(lists[k]));
+    throw new Error(`dims.${name}.ranks: unknown list '${ranks}' of the defaults (ranks), ${known.length ? `expected one of ${known.map(k => `'${k}'`).join(', ')}` : 'the defaults have none, e.g. { "ranks": { "lines": [{ "dash": "none" }, { "dash": "4 2" }] } }'}`);
+};
+
 // `dataKeys(column)` are the distinct values of a column of the data as
 // strings, see distinctValues of utils/data.js, the categories of `fromData`
 // (the templates of the column are filled, see resolvedParts)
-const prepareDim = (m, name, dataKeys = () => [], marks = [], symbols = {}) => {
+const prepareDim = (m, name, dataKeys = () => [], marks = [], symbols = {}, rankLists = {}) => {
     object(m, `dims.${name}`, `a dim, e.g. { "column": "value", "type": "numeric" }`);
     // null or false removes a part, e.g. the hover of a parent
     ['scale', 'axis', 'legend', 'hover'].forEach(k => {
@@ -381,14 +391,15 @@ const prepareDim = (m, name, dataKeys = () => [], marks = [], symbols = {}) => {
         const rowsOrder = m.order == 'rows' && typeof m.column == 'string' ? dataKeys(m.column, true) : null;
         const own = [...categories.keys()];
         const keys = rowsOrder ? orderKeys(own, [...rowsOrder, ...own]) : orderKeys(own, m.order);
+        // the props by rank, a name of the lists of the defaults (`ranks`), e.g. the dashes of a house style
+        const ranks = typeof m.ranks == 'string' ? namedRanks(m.ranks, name, rankLists) : (Array.isArray(m.ranks) ? m.ranks : []);
         // the colors of a scheme, without one and without colors of the
         // categories the default colors, `defaultColor`, the color of a mark
         // or a legend if no category of it has a color, see markGroups
-        const given = [m.common, ...[m.ranks ?? []].flat(), ...categories.values()].some(c => c?.color !== undefined);
+        const given = [m.common, ...ranks, ...categories.values()].some(c => c?.color !== undefined);
         const colors = m.scheme ? schemeColors(m.scheme, keys.length) : undefined;
         if (m.scheme && !colors)
             throw new Error(`Unknown scheme '${m.scheme}', e.g. 'Tableau10' or 'Blues'`);
-        const ranks = m.ranks ?? [];
         const palette = colors || given ? null : ownColors('observable10', keys.length) ?? defaultColors;
         m.keys = keys;
         m.categoryProps = Object.fromEntries(keys.map((k, i) => {
@@ -672,10 +683,11 @@ const resolvedParts = (def, defOrg, authored = null, markTypes = {}) => {
  * transform, `types(part)` sets the types of the dims of a part
  * without one from the values then (see inferTypes of utils/data.js), `files`
  * are the rows of the files of marks, by their url, `symbols` the defaults
- * of the symbols of legends, see symbolDefaults. Returns the names of the
+ * of the symbols of legends, see symbolDefaults, `ranks` the named lists of
+ * props by rank of the defaults, see rankDefaults. Returns the names of the
  * dims whose values change, the ones of another column or type.
  */
-const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {}, authored = null, markTypes = {}, types = null } = {}) => {
+const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {}, ranks = {}, authored = null, markTypes = {}, types = null } = {}) => {
     const merged = resolvedParts(def, defOrg, authored, markTypes);
     // the texts in the language of the definition, e.g. of a global of a
     // control; the locale of the numbers and dates is the language
@@ -762,7 +774,7 @@ const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, t
             dims[n] = old;
             return;
         }
-        const m = prepareDim(merged, n, dataKeys, def.marks, symbols);
+        const m = prepareDim(merged, n, dataKeys, def.marks, symbols, ranks);
         if (keepVisible && old?.categoryProps && m.categoryProps)
             m.keys.filter(k => Object.hasOwn(old.categoryProps, k)).forEach(k => m.categoryProps[k].visible = old.categoryProps[k].visible);
         if (old?.column !== m.column || old?.type !== m.type)

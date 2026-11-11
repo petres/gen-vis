@@ -963,6 +963,13 @@ From the wishes of the WIFO styles, useful to any house style:
   `"stroke-dasharray": "@dash"` of a house style dashes only the lines of
   dims with dashes.
 
+- Named lists of the props of categories by rank, `ranks` of the defaults,
+  e.g. `{"ranks": {"lines": [{"dash": "none"}, {"dash": "8 3"}]}}`, a dim
+  takes one by its name (`"ranks": "lines"`); with the defaults of the
+  marks the dashes of a house style are one word of a definition. An
+  unknown name is an error naming the lists; `gen-vis check` takes plain
+  references of the marks of such a dim for its props.
+
 ### Package and builds
 
 - One vocabulary: the engine reads the names of 5.0. The translated and

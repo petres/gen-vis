@@ -16,7 +16,7 @@ import { hasCategories, normalize } from "@/utils/normalize";
 import { versionError, languageError } from "@/utils/version";
 import { refNames } from "@/utils/expr";
 import { markTypes as builtInTypes } from "@/marks";
-import { symbolDefaults, withMarkDefaults } from "@/utils/defaults";
+import { symbolDefaults, withMarkDefaults, rankDefaults } from "@/utils/defaults";
 
 // the load of a visualisation: its definition with its parents, the parts
 // of the package it needs, its data and the files and geometries of it and
@@ -455,7 +455,7 @@ const valueFormat = locale => format => {
     };
 };
 
-const prepare = (defOrg, authored, rows, files, state, globals, symbols = {}, markTypes = builtInTypes) => {
+const prepare = (defOrg, authored, rows, files, state, globals, { symbols = {}, ranks = {}, markTypes = builtInTypes } = {}) => {
     let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files, defOrg.locale);
     addDataValues(defOrg, rows, columns, valueFormat(defOrg.locale));
     inferTypes(defOrg, rows, columns);
@@ -465,7 +465,7 @@ const prepare = (defOrg, authored, rows, files, state, globals, symbols = {}, ma
     };
     // the types of the dims of the definition resolved again from the values
     const types = part => inferTypes(part, rows, columns);
-    const resolving = { dataKeys: keysOf, files, symbols, authored, markTypes, types };
+    const resolving = { dataKeys: keysOf, files, symbols, ranks, authored, markTypes, types };
     const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), resolving);
     const defaults = snapshot(prepared);
     applyState(prepared, state);
@@ -604,7 +604,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     await validate(rows);
     let ready;
     try {
-        ready = prepare(defOrg, authored, rows, files, state, globals, symbolDefaults(chartDefaults), markTypes);
+        ready = prepare(defOrg, authored, rows, files, state, globals, { symbols: symbolDefaults(chartDefaults), ranks: rankDefaults(chartDefaults), markTypes });
     } catch (error) {
         throw authoredError(error);
     }

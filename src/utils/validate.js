@@ -119,18 +119,32 @@ const rowNames = (n, m) => [
 ];
 
 // the props of the categories of a dim, `name` and `visible` are set by
-// default, `color` by a scheme or the default colors
+// default, `color` by a scheme or the default colors; the props of a list
+// of the defaults (`"ranks": "lines"`) are not known, any plain name may be
+// one of them (`anyProp`)
+const anyProp = Symbol('any prop of the categories');
 const categoryNames = m => hasCategories(m) ? ['name', 'visible', 'color',
     ...Object.keys(m.common ?? {}),
-    ...[m.ranks ?? []].flat().flatMap(e => Object.keys(e ?? {})),
+    ...(typeof m.ranks == 'string' ? [anyProp] : [m.ranks ?? []].flat().flatMap(e => Object.keys(e ?? {}))),
     ...Object.values(m.categories ?? {}).flatMap(e => Object.keys(e ?? {}))] : [];
 
 // the names of a mark, also the positions of values of the scaled dims,
-// e.g. `x:scaled:0` or `y:scaled:100`
+// e.g. `x:scaled:0` or `y:scaled:100`, and any plain name of the categories
+// of a list of ranks of the defaults (see categoryNames)
 class MarkNames extends Set {
+    constructor(names = []) {
+        const list = [...names];
+        super(list.filter(n => n !== anyProp));
+        this.anyProp = list.includes(anyProp);
+    }
+    // the names and `more`, e.g. the columns of the rows of a mark
+    with(more) {
+        return new MarkNames([...this, ...more, ...(this.anyProp ? [anyProp] : [])]);
+    }
     has(name) {
         const at = /^(.+):scaled:-?\d+(?:\.\d+)?$/.exec(name);
-        return super.has(name) || (at !== null && super.has(`${at[1]}:scaled`));
+        return super.has(name) || (at !== null && super.has(`${at[1]}:scaled`))
+            || (this.anyProp && typeof name == 'string' && !name.includes(':') && !name.startsWith('globals.'));
     }
 }
 
@@ -293,8 +307,8 @@ const checkDims = ctx => {
             warn(path, `the categories need 'categories' or the ones of the data ('fromData'), 'common' are the props of all of them`);
         if (m.order !== undefined && !['ascending', 'descending', 'rows'].includes(m.order) && !Array.isArray(m.order))
             warn(`${path}.order`, `expected 'ascending', 'descending', 'rows' or a list of keys`);
-        if (m.ranks !== undefined && !(Array.isArray(m.ranks) && m.ranks.every(isObject)))
-            warn(`${path}.ranks`, `expected a list of props, of the first category, the second one, ...`);
+        if (m.ranks !== undefined && !(Array.isArray(m.ranks) && m.ranks.every(isObject)) && !(typeof m.ranks == 'string' && m.ranks))
+            warn(`${path}.ranks`, `expected a list of props, of the first category, the second one, ..., or the name of a list of the defaults (ranks)`);
         if (m.scheme !== undefined && !d3.named(d3.schemeNames, m.scheme))
             warn(`${path}.scheme`, `unknown scheme '${m.scheme}', e.g. 'Tableau10'`);
         if (m.scale)
@@ -330,7 +344,7 @@ const checkDims = ctx => {
                     warn(`${path}.axis.labels.curved`, `the labels along the circle of an angular axis, true or 'between'`);
                 const categories = [labels.by ?? []].flat();
                 categories.filter(c => !Object.hasOwn(dims, c)).forEach(c => warn(`${path}.axis.labels.by`, `unknown dim '${c}'`));
-                checkProp(labels.props, `${path}.axis.labels.props`, warn, new Set([...names.facet, ...Object.keys(dims),
+                checkProp(labels.props, `${path}.axis.labels.props`, warn, new MarkNames([...names.facet, ...Object.keys(dims),
                     ...categoryNames(m), ...categories.flatMap(c => categoryNames(dims[c]))]));
             }
             checkProp(m.axis.tickSpacing, `${path}.axis.tickSpacing`, warn, names.facet);
@@ -622,7 +636,7 @@ const checkMarks = ctx => {
             warn(`${path}.type`, `not available in the coordinate system '${coordName}'`);
         // the names of the rows of a url are not known
         const namesOfMark = typeof p.data == 'string' ? null
-            : new MarkNames([...names.mark(categories.filter(c => Object.hasOwn(dims, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
+            : names.mark(categories.filter(c => Object.hasOwn(dims, c))).with(rows.flatMap(r => Object.keys(r ?? {})));
         checkProp(p.props, `${path}.props`, warn, namesOfMark);
         // labels inside the bands of an area mark, see marks/inside.js
         if (isObject(p.place)) {
@@ -809,7 +823,7 @@ const checkFacets = ({ def, dims, names, warn }) => {
     // one of the column or of the row
     const own = facetBy(def.facets).all.filter(d => Object.hasOwn(dims, d)).flatMap(d => categoryNames(dims[d]));
     if (isObject(def.facets.title))
-        checkProp(def.facets.title.props, 'facets.title.props', warn, new Set([...names.global, 'facet', 'facet:name', ...own]));
+        checkProp(def.facets.title.props, 'facets.title.props', warn, new MarkNames([...names.global, 'facet', 'facet:name', ...own]));
     if (!isObject(scales) && !Array.isArray(scales))
         checkProp(def.facets.scales, 'facets.scales', warn, names.global);
 };
@@ -1132,7 +1146,7 @@ const context = (def, warn, rows, columns = null) => {
     const names = {
         global: new Set(globalNames),
         facet: new Set(facetNames),
-        category: n => new Set([...globalNames, ...categoryNames(dims[n])]),
+        category: n => new MarkNames([...globalNames, ...categoryNames(dims[n])]),
         mark: categories => new MarkNames([
             ...facetNames,
             'row:index',
