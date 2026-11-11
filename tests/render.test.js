@@ -3688,6 +3688,22 @@ describe('axis titles', () => {
     });
 });
 
+describe('axis titles of a negative offset', () => {
+    test('inside the plot area, a valid transform of every position', async () => {
+        const transform = async (xPosition, yPosition) => {
+            const def = lineDef();
+            def.mapping.x.axis = { position: xPosition, title: { name: 'Jahr', offset: -5 } };
+            def.mapping.y.axis = { position: yPosition, title: { name: 'Wert', offset: -5 } };
+            const el = await mount({ def, data: lineData });
+            return ['Jahr', 'Wert'].map(n => [...el.querySelectorAll('.vis-axis-title')].find(t => t.textContent == n).getAttribute('transform'));
+        };
+        // inner size 550 x 250
+        expect(await transform('bottom', 'left')).toEqual(['translate(275 245)', 'rotate(-90) translate(-125 5)']);
+        expect(await transform('top', 'right')).toEqual(['translate(275 5)', 'rotate(90) translate(125 -545)']);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('axes at a value of the other axis (`at`)', () => {
     // inner size 550 x 250, x from 2020 to 2023, y from -2 to 4
     const def = (x = {}, y = {}) => {

@@ -194,9 +194,9 @@ const axes = ctx => {
             // the axis, e.g. the unit at the top left
             const top = vertical && i.title.position == 'top';
             const transform = top ? `translate(${i.position == 'left' ? -offset : innerWidth + offset} ${lo - (i.title.gap ?? 8)})` : {
-                left: `rotate(-90) translate(-${middle} -${offset})`,
-                right: `rotate(90) translate(${middle} -${innerWidth + offset})`,
-                top: `translate(${middle} -${offset})`,
+                left: `rotate(-90) translate(${-middle} ${-offset})`,
+                right: `rotate(90) translate(${middle} ${-(innerWidth + offset)})`,
+                top: `translate(${middle} ${-offset})`,
                 bottom: `translate(${middle} ${innerHeight + offset})`,
             }[i.position];
             parts.push({
