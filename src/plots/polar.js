@@ -2,7 +2,7 @@
 import { arc, areaRadial, lineRadial, pointRadial } from 'd3-shape';
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, points, propScale, dodge, halo, inside, centered } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, points, areaPoints, propScale, dodge, halo, inside, centered } from "@/plots/elements";
 import { barScale, barWidth } from "@/plots/cartesian";
 import { radiusRange } from "@/coords/polar-plot";
 import { defaults } from "@/plots/defaults";
@@ -104,13 +104,15 @@ const types = {
         marks(groups, plot, ctx) {
             const offset = angleOffset(plot, ctx, 'd.angle');
             const [r0] = radiusRange(ctx);
+            // of stacked areas with a point of no height where a group has no row
+            const pts = areaPoints(groups, plot, ctx, ['angle', 'innerRadius', 'outerRadius']);
             return perGroup(groups, g => areaRadial()
                 .curve(curve(plot))
                 .defined(e => finite(e.angle, e.innerRadius, e.outerRadius))
                 .angle(e => e.angle + offset)
                 .innerRadius(e => clampRadius(e.innerRadius, r0))
                 .outerRadius(e => clampRadius(e.outerRadius, r0))
-                (points(g, plot, ctx, 'd.angle'))
+                (pts.get(g))
             );
         },
     },

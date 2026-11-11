@@ -1364,6 +1364,9 @@ attributes are merged into the defaults, e.g. `d` of a path.
       ]
   }
   ```
+  A stacked area of a group without a row at a position of the others has
+  no height there (at its place in the stack), so the areas do not overlap,
+  e.g. a series which starts later.
   The value dim of a stacked mark has the start and the end of the stacked
   value of a row, `@y:start`, `@y:end`, `@y:start:scaled`, `@y:end:scaled`,
   `@y:height:scaled` the difference and `@y:mid`, `@y:mid:scaled` the

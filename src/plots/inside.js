@@ -4,7 +4,7 @@
 export { placeInside, bandProfile, bestSpots, chooseSpots };
 
 import { line, lineRadial } from 'd3-shape';
-import { curve, finite, points, propScale, bandOffset } from '@/plots/elements';
+import { areaPoints, curve, finite, propScale, bandOffset } from '@/plots/elements';
 import { bandCenter } from '@/utils/scales';
 
 const tau = 2*Math.PI;
@@ -90,14 +90,15 @@ const unwrapped = lines => lines.map(l => {
  * The band of a group of an area plot on a grid of positions: of cartesian
  * plots the pixels of x (`start`, `step`, `n`) and the edges `lo`, `hi` in
  * pixels of y, of polar plots the angles (0 to 2π, `cyclic`) and the edges
- * in radii; of the curve of the plot, as the area is drawn.
+ * in radii; of the curve of the plot, as the area is drawn, e.g. with the
+ * points of the stack of the `groups` of the plot, see areaPoints.
  */
-const bandProfile = (group, plot, ctx, polar) => {
+const bandProfile = (group, plot, ctx, polar, groups = [group]) => {
     const c = curve(plot);
     if (!polar) {
         // at the centers of the bands of a band scale, as the area is drawn
         const dx = bandOffset(plot, ctx, 'd.x');
-        const pts = points(group, plot, ctx, 'd.x').filter(p => finite(p.x)).map(p => dx ? { ...p, x: p.x + dx } : p);
+        const pts = areaPoints(groups, plot, ctx, ['x', 'y0', 'y1']).get(group).filter(p => finite(p.x)).map(p => dx ? { ...p, x: p.x + dx } : p);
         if (pts.length < 2)
             return null;
         const edge = key => {
@@ -114,7 +115,7 @@ const bandProfile = (group, plot, ctx, polar) => {
     const scale = propScale(plot, ctx, 'd.angle');
     const offset = scale ? bandCenter(scale) : 0;
     const r0 = ctx.dims?.innerRadius ?? 0;
-    const pts = points(group, plot, ctx, 'd.angle').filter(p => finite(p.angle));
+    const pts = areaPoints(groups, plot, ctx, ['angle', 'innerRadius', 'outerRadius']).get(group).filter(p => finite(p.angle));
     if (pts.length < 2)
         return null;
     const edge = key => {
@@ -306,7 +307,7 @@ const placeInside = (groups, plot, ctx, polar) => {
         if (!band || rows.length == 0)
             return [];
         if (!profiles.has(band))
-            profiles.set(band, bandProfile(band, area, ctx, polar));
+            profiles.set(band, bandProfile(band, area, ctx, polar, bands));
         const profile = profiles.get(band);
         if (!profile)
             return [];

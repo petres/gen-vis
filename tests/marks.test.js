@@ -698,3 +698,35 @@ describe('rows of the data of a mark without a dim of its position', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('stacked areas of groups without a row at a position', () => {
+    // the points of the upper line and of the lower line of an area, the lower one in the order of the upper one
+    const edges = d => {
+        const p = [...d.matchAll(/[ML](-?[\d.]+),(-?[\d.]+)/g)].map(m => [Number(m[1]), Number(m[2])]);
+        return [p.slice(0, p.length/2), p.slice(p.length/2).reverse()];
+    };
+
+    test('a point of no height at the place of the group in the stack, the areas do not overlap', async () => {
+        const def = { dims: { x: 'x', y: 'v', c: 'c' }, marks: [{ type: 'area', by: 'c', stack: true }] };
+        const el = await mount({ def, data: 'c,x,v\np,1,1\np,3,1\nq,1,2\nq,2,2\nq,3,2\nr,2,1' });
+        const [p, q, r] = [...el.querySelectorAll('g.vis-mark path')].map(e => edges(e.getAttribute('d')));
+        // p has no row at the second position: no height there, at the base
+        expect(p[0].length).toBe(3);
+        expect(p[0][1]).toEqual(p[1][1]);
+        // the lower line of q is the upper line of p, the one of r the upper line of q
+        expect(q[1]).toEqual(p[0]);
+        expect(r[1]).toEqual(q[0]);
+        // r has a height only at its row
+        expect(r[0].map((e, i) => r[1][i][1] - e[1] > 0)).toEqual([false, true, false]);
+        expect(errors).toEqual([]);
+    });
+
+    test('areas which are not stacked and `"order": "rows"` keep their points', async () => {
+        const data = 'c,x,v\np,1,1\np,3,1\nq,1,2\nq,2,2\nq,3,2';
+        const plain = await mount({ def: { dims: { x: 'x', y: 'v', c: 'c' }, marks: [{ type: 'area', by: 'c' }] }, data });
+        expect(edges(plain.querySelector('g.vis-mark path').getAttribute('d'))[0].length).toBe(2);
+        const rows = await mount({ def: { dims: { x: 'x', y: 'v', c: 'c' }, marks: [{ type: 'area', by: 'c', stack: true, order: 'rows' }] }, data });
+        expect(edges(rows.querySelector('g.vis-mark path').getAttribute('d'))[0].length).toBe(2);
+        expect(errors).toEqual([]);
+    });
+});

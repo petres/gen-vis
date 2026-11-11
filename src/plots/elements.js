@@ -1,4 +1,4 @@
-export { perRow, perGroup, finite, curve, points, alongRows, propScale, bandOffset, dodge, halo, inside, centered };
+export { perRow, perGroup, finite, curve, points, areaPoints, alongRows, propScale, bandOffset, dodge, halo, inside, centered };
 
 import * as d3 from "@/utils/d3";
 import { refOf, refNames } from '@/utils/expr';
@@ -72,6 +72,63 @@ const points = (g, plot, ctx, path) => {
     const d = g.prop('d');
     const rows = plot ? alongRows(g.rows, plot, ctx, path.includes('.') ? `${path.split('.')[0]}.` : '') : g.rows;
     return rows.map(row => d(row) ?? {});
+};
+
+/**
+ * The points of the paths of the groups of an area (see points) by their
+ * group, `keys` are the names of the position, the start and the end of a
+ * point, e.g. `x`, `y0` and `y1`. Of stacked areas a group without a row at
+ * a position of another group has a point of no height there, at its place
+ * in the stack (the start of the next group of the stack, or the end of the
+ * one before), so the areas of the others do not overlap it between its
+ * neighbours, e.g. a series without a row of a year; not of `"order":
+ * "rows"`. Kept for the groups of a draw, e.g. of the labels inside the
+ * areas (see plots/inside.js).
+ */
+const stackedPoints = new WeakMap();
+const areaPoints = (groups, plot, ctx, keys) => {
+    if (stackedPoints.get(groups)?.plot === plot)
+        return stackedPoints.get(groups).points;
+    const [pos, lo, hi] = keys;
+    const lists = groups.map(g => points(g, plot, ctx, `d.${pos}`));
+    const result = new Map(groups.map((g, i) => [g, lists[i]]));
+    stackedPoints.set(groups, { plot, points: result });
+    const v = ctx.axis?.v;
+    const stacked = v !== undefined && refOf(plot.props.d?.[lo]) == `${v}:start:scaled` && refOf(plot.props.d?.[hi]) == `${v}:end:scaled`;
+    if (!stacked || plot.order == 'rows' || groups.length < 2)
+        return result;
+    // the groups in the order of the stack, their points by their position
+    const order = groups.map((g, i) => i).filter(i => groups[i].rows.length > 0)
+        .sort((a, b) => ctx.stackOrder?.(groups[a].rows[0], groups[b].rows[0]) || a - b);
+    const at = new Map();
+    order.forEach(i => lists[i].filter(p => finite(p[pos])).forEach(p => {
+        if (!at.has(p[pos]))
+            at.set(p[pos], new Map());
+        at.get(p[pos]).set(i, p);
+    }));
+    // the direction of the points along the position, e.g. of a reversed scale
+    const run = lists.map(l => l.filter(p => finite(p[pos]))).find(l => l.length > 1 && l[0][pos] !== l.at(-1)[pos]);
+    const direction = run && run.at(-1)[pos] < run[0][pos] ? -1 : 1;
+    const added = new Set();
+    at.forEach((of, x) => {
+        if (of.size == order.length)
+            return;
+        order.forEach((i, k) => {
+            if (of.has(i))
+                return;
+            const after = order.slice(k + 1).find(j => of.has(j));
+            const before = order.slice(0, k).findLast(j => of.has(j));
+            const level = after !== undefined ? of.get(after)[lo] : of.get(before)[hi];
+            if (!finite(level))
+                return;
+            lists[i].push({ [pos]: x, [lo]: level, [hi]: level });
+            added.add(i);
+        });
+    });
+    // along the position again
+    added.forEach(i => result.set(groups[i], lists[i].filter(p => finite(p[pos])).map((p, j) => [p, j])
+        .sort(([p, a], [q, b]) => direction*(p[pos] - q[pos]) || a - b).map(([p]) => p)));
+    return result;
 };
 
 // the scale of the mapping a prop of a plot refers to, e.g. the one of `x`

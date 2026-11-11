@@ -2,7 +2,7 @@ export { barScale, barWidth };
 
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, points, propScale, bandOffset } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, points, areaPoints, propScale, bandOffset } from "@/plots/elements";
 import { pixelOffset } from "@/utils/axis";
 import { refOf, refNames } from "@/utils/expr";
 import { markPath, warnOnce } from "@/utils/warn";
@@ -101,13 +101,15 @@ export default {
             }
             // through the centers of the bands of a band scale, as the bars
             const dx = bandOffset(plot, ctx, 'd.x');
+            // of stacked areas with a point of no height where a group has no row
+            const pts = areaPoints(groups, plot, ctx, ['x', 'y0', 'y1']);
             return perGroup(groups, g => d3.area()
                 .curve(curve(plot))
                 .defined(e => finite(e.x, e.y0, e.y1))
                 .x(e => e.x + dx)
                 .y1(e => e.y1)
                 .y0(e => e.y0)
-                (points(g, plot, ctx, 'd.x'))
+                (pts.get(g))
             );
         },
     },
